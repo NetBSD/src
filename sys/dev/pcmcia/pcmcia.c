@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.90 2009/03/15 20:30:57 cegger Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.91 2009/04/02 00:09:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.90 2009/03/15 20:30:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.91 2009/04/02 00:09:34 dyoung Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -87,9 +87,9 @@ int	pcmcia_rescan(struct device *, const char *, const int *);
 void	pcmcia_childdetached(struct device *, struct device *);
 int	pcmcia_print(void *, const char *);
 
-CFATTACH_DECL2_NEW(pcmcia, sizeof(struct pcmcia_softc),
+CFATTACH_DECL3_NEW(pcmcia, sizeof(struct pcmcia_softc),
     pcmcia_match, pcmcia_attach, pcmcia_detach, NULL,
-    pcmcia_rescan, pcmcia_childdetached);
+    pcmcia_rescan, pcmcia_childdetached, DVF_DETACH_SHUTDOWN);
 
 int
 pcmcia_ccr_read(struct pcmcia_function *pf, int ccr)

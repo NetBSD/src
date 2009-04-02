@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.173 2009/03/28 18:43:20 christos Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.174 2009/04/02 00:09:34 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.173 2009/03/28 18:43:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.174 2009/04/02 00:09:34 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -104,10 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.173 2009/03/28 18:43:20 christos
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
 #include <sys/callout.h>
-#include <sys/mutex.h>
-#include <sys/condvar.h>
 #include <sys/devmon.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
 
 #include <sys/disk.h>
 
@@ -129,14 +128,6 @@ extern struct splash_progress *splash_progress_state;
 /*
  * Autoconfiguration subroutines.
  */
-
-typedef struct pmf_private {
-	int		pp_nwait;
-	int		pp_nlock;
-	lwp_t		*pp_holder;
-	kmutex_t	pp_mtx;
-	kcondvar_t	pp_cv;
-} pmf_private_t;
 
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
@@ -226,6 +217,8 @@ static lwp_t *alldevs_writer = NULL;
 static int config_pending;		/* semaphore for mountroot */
 static kmutex_t config_misc_lock;
 static kcondvar_t config_misc_cv;
+
+static int detachall = 0;
 
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
@@ -1185,6 +1178,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	device_t dev;
 	void *dev_private;
 	const struct cfiattrdata *ia;
+	device_lock_t dvl;
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
@@ -1242,6 +1236,11 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");
 
+	dvl = device_getlock(dev);
+
+	mutex_init(&dvl->dvl_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&dvl->dvl_cv, "pmfsusp");
+
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_cfdriver = cd;
@@ -1282,7 +1281,11 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 static void
 config_devdealloc(device_t dev)
 {
+	device_lock_t dvl = device_getlock(dev);
 	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
+
+	cv_destroy(&dvl->dvl_cv);
+	mutex_destroy(&dvl->dvl_mtx);
 
 	KASSERT(dev->dv_properties != NULL);
 	prop_object_release(dev->dv_properties);
@@ -1493,7 +1496,11 @@ config_detach(device_t dev, int flags)
 	 * remain set.  Otherwise, if DVF_ACTIVE is still set, the
 	 * device is busy, and the detach fails.
 	 */
-	if (ca->ca_activate != NULL)
+	if (!detachall &&
+	    (flags & (DETACH_SHUTDOWN|DETACH_FORCE)) == DETACH_SHUTDOWN &&
+	    (dev->dv_flags & DVF_DETACH_SHUTDOWN) == 0) {
+		rv = EBUSY;	/* XXX EOPNOTSUPP? */
+	} else if (ca->ca_activate != NULL)
 		rv = config_deactivate(dev);
 
 	/*
@@ -2093,14 +2100,6 @@ device_pmf_driver_register(device_t dev,
     bool (*resume)(device_t PMF_FN_PROTO),
     bool (*shutdown)(device_t, int))
 {
-	pmf_private_t *pp;
-
-	if ((pp = kmem_zalloc(sizeof(*pp), KM_SLEEP)) == NULL)
-		return false;
-	mutex_init(&pp->pp_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&pp->pp_cv, "pmfsusp");
-	dev->dv_pmf_private = pp;
-
 	dev->dv_driver_suspend = suspend;
 	dev->dv_driver_resume = resume;
 	dev->dv_driver_shutdown = shutdown;
@@ -2120,34 +2119,25 @@ curlwp_name(void)
 void
 device_pmf_driver_deregister(device_t dev)
 {
-	pmf_private_t *pp = dev->dv_pmf_private;
-
-	/* XXX avoid crash in case we are not initialized */
-	if (!pp)
-		return;
+	device_lock_t dvl = device_getlock(dev);
 
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;
 
-	mutex_enter(&pp->pp_mtx);
+	mutex_enter(&dvl->dvl_mtx);
 	dev->dv_flags &= ~DVF_POWER_HANDLERS;
-	while (pp->pp_nlock > 0 || pp->pp_nwait > 0) {
+	while (dvl->dvl_nlock > 0 || dvl->dvl_nwait > 0) {
 		/* Wake a thread that waits for the lock.  That
 		 * thread will fail to acquire the lock, and then
 		 * it will wake the next thread that waits for the
 		 * lock, or else it will wake us.
 		 */
-		cv_signal(&pp->pp_cv);
+		cv_signal(&dvl->dvl_cv);
 		pmflock_debug(dev, __func__, __LINE__);
-		cv_wait(&pp->pp_cv, &pp->pp_mtx);
+		cv_wait(&dvl->dvl_cv, &dvl->dvl_mtx);
 		pmflock_debug(dev, __func__, __LINE__);
 	}
-	dev->dv_pmf_private = NULL;
-	mutex_exit(&pp->pp_mtx);
-
-	cv_destroy(&pp->pp_cv);
-	mutex_destroy(&pp->pp_mtx);
-	kmem_free(pp, sizeof(*pp));
+	mutex_exit(&dvl->dvl_mtx);
 }
 
 bool
@@ -2200,46 +2190,46 @@ device_pmf_self_suspend(device_t dev PMF_FN_ARGS)
 static void
 pmflock_debug(device_t dev, const char *func, int line)
 {
-	pmf_private_t *pp = device_pmf_private(dev);
+	device_lock_t dvl = device_getlock(dev);
 
-	aprint_debug_dev(dev, "%s.%d, %s pp_nlock %d pp_nwait %d dv_flags %x\n",
-	    func, line, curlwp_name(), pp->pp_nlock, pp->pp_nwait,
+	aprint_debug_dev(dev, "%s.%d, %s dvl_nlock %d dvl_nwait %d dv_flags %x\n",
+	    func, line, curlwp_name(), dvl->dvl_nlock, dvl->dvl_nwait,
 	    dev->dv_flags);
 }
 
 static void
 pmflock_debug_with_flags(device_t dev, const char *func, int line PMF_FN_ARGS)
 {
-	pmf_private_t *pp = device_pmf_private(dev);
+	device_lock_t dvl = device_getlock(dev);
 
-	aprint_debug_dev(dev, "%s.%d, %s pp_nlock %d pp_nwait %d dv_flags %x "
+	aprint_debug_dev(dev, "%s.%d, %s dvl_nlock %d dvl_nwait %d dv_flags %x "
 	    "flags " PMF_FLAGS_FMT "\n", func, line, curlwp_name(),
-	    pp->pp_nlock, pp->pp_nwait, dev->dv_flags PMF_FN_CALL);
+	    dvl->dvl_nlock, dvl->dvl_nwait, dev->dv_flags PMF_FN_CALL);
 }
 
 static bool
 device_pmf_lock1(device_t dev PMF_FN_ARGS)
 {
-	pmf_private_t *pp = device_pmf_private(dev);
+	device_lock_t dvl = device_getlock(dev);
 
 	while (device_pmf_is_registered(dev) &&
-	    pp->pp_nlock > 0 && pp->pp_holder != curlwp) {
-		pp->pp_nwait++;
+	    dvl->dvl_nlock > 0 && dvl->dvl_holder != curlwp) {
+		dvl->dvl_nwait++;
 		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-		cv_wait(&pp->pp_cv, &pp->pp_mtx);
+		cv_wait(&dvl->dvl_cv, &dvl->dvl_mtx);
 		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-		pp->pp_nwait--;
+		dvl->dvl_nwait--;
 	}
 	if (!device_pmf_is_registered(dev)) {
 		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
 		/* We could not acquire the lock, but some other thread may
 		 * wait for it, also.  Wake that thread.
 		 */
-		cv_signal(&pp->pp_cv);
+		cv_signal(&dvl->dvl_cv);
 		return false;
 	}
-	pp->pp_nlock++;
-	pp->pp_holder = curlwp;
+	dvl->dvl_nlock++;
+	dvl->dvl_holder = curlwp;
 	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
 	return true;
 }
@@ -2248,11 +2238,11 @@ bool
 device_pmf_lock(device_t dev PMF_FN_ARGS)
 {
 	bool rc;
-	pmf_private_t *pp = device_pmf_private(dev);
+	device_lock_t dvl = device_getlock(dev);
 
-	mutex_enter(&pp->pp_mtx);
+	mutex_enter(&dvl->dvl_mtx);
 	rc = device_pmf_lock1(dev PMF_FN_CALL);
-	mutex_exit(&pp->pp_mtx);
+	mutex_exit(&dvl->dvl_mtx);
 
 	return rc;
 }
@@ -2260,21 +2250,21 @@ device_pmf_lock(device_t dev PMF_FN_ARGS)
 void
 device_pmf_unlock(device_t dev PMF_FN_ARGS)
 {
-	pmf_private_t *pp = device_pmf_private(dev);
+	device_lock_t dvl = device_getlock(dev);
 
-	KASSERT(pp->pp_nlock > 0);
-	mutex_enter(&pp->pp_mtx);
-	if (--pp->pp_nlock == 0)
-		pp->pp_holder = NULL;
-	cv_signal(&pp->pp_cv);
+	KASSERT(dvl->dvl_nlock > 0);
+	mutex_enter(&dvl->dvl_mtx);
+	if (--dvl->dvl_nlock == 0)
+		dvl->dvl_holder = NULL;
+	cv_signal(&dvl->dvl_cv);
 	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-	mutex_exit(&pp->pp_mtx);
+	mutex_exit(&dvl->dvl_mtx);
 }
 
-void *
-device_pmf_private(device_t dev)
+device_lock_t
+device_getlock(device_t dev)
 {
-	return dev->dv_pmf_private;
+	return &dev->dv_lock;
 }
 
 void *
@@ -2687,4 +2677,25 @@ deviter_release(deviter_t *di)
 		cv_signal(&alldevs_cv);
 	}
 	mutex_exit(&alldevs_mtx);
+}
+
+SYSCTL_SETUP(sysctl_detach_setup, "sysctl detach setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, &node,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "kern", NULL,
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_EOL);
+
+	if (node == NULL)
+		return;
+
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "detachall",
+		SYSCTL_DESCR("Detach all devices at shutdown"),
+		NULL, 0, &detachall, 0,
+		CTL_CREATE, CTL_EOL);
 }

@@ -1,9 +1,7 @@
-/*	$NetBSD: pic.h,v 1.5 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: pic.h,v 1.6 2009/04/02 00:09:32 dyoung Exp $	*/
 
 #ifndef _X86_PIC_H
 #define _X86_PIC_H
-
-#include <sys/device.h>
 
 struct cpu_info;
 

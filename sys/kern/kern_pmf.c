@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.21 2009/02/06 01:19:33 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.22 2009/04/02 00:09:34 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.21 2009/02/06 01:19:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.22 2009/04/02 00:09:34 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -297,13 +297,19 @@ pmf_system_shutdown(int how)
 	static struct shutdown_state s;
 	device_t curdev;
 
+	(void)pmf_check_system_drivers();
+
 	aprint_debug("Shutting down devices:");
+	suspendsched();
 
 	for (curdev = shutdown_first(&s); curdev != NULL;
 	     curdev = shutdown_next(&s)) {
 		aprint_debug(" attempting %s shutdown",
 		    device_xname(curdev));
-		if (!device_pmf_is_registered(curdev))
+		if ((boothowto & RB_NOSYNC) == 0 &&
+		    config_detach(curdev, DETACH_SHUTDOWN) == 0)
+			aprint_debug("(detached)");
+		else if (!device_pmf_is_registered(curdev))
 			aprint_debug("(skipped)");
 #if 0 /* needed? */
 		else if (!device_pmf_class_shutdown(curdev, how))
