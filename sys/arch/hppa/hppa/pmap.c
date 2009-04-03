@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.43 2009/03/28 11:00:47 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.44 2009/04/03 14:07:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.43 2009/03/28 11:00:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.44 2009/04/03 14:07:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,6 +511,7 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 {
 	bool nonequiv = false;
 	struct pv_entry *tpve;
+	u_int attrs;
 
 	/* we should only be looking if we're not PVF_NC */
 	KASSERT((pg->mdpage.pvh_attrs & PVF_NC) == 0);
@@ -521,15 +522,13 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 	    ptep));
 
 	if (ptep) {
-		/* Reset page flags with flags for new mapping */
-		pg->mdpage.pvh_attrs = pmap_pvh_attrs(*ptep);
+		attrs = pmap_pvh_attrs(*ptep);
 
 		DPRINTF(PDB_FOLLOW|PDB_ALIAS,
 		    ("%s: va 0x%08x attrs 0x%08x (new)\n", __func__, (int)va,
-		    pmap_pvh_attrs(*ptep)));
+		    attrs));
 	} else {
-		/* Reset page flags. */
-		pg->mdpage.pvh_attrs = 0;
+		attrs = 0;
 
 		DPRINTF(PDB_FOLLOW|PDB_ALIAS,
 		    ("%s: va 0x%08x (removed)\n", __func__, (int)va));
@@ -544,7 +543,7 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 
 		/* XXX LOCK */
 		pte = pmap_vp_find(tpve->pv_pmap, tpve->pv_va);
-		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+		attrs |= pmap_pvh_attrs(pte);
 
 		if (((va ^ tpve->pv_va) & HPPA_PGAOFF) != 0)
 			nonequiv = true;
@@ -555,21 +554,29 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 		    pmap_pvh_attrs(pte), nonequiv ? "alias" : ""));
 	}
 
-	/* No more to be done. */
-	if (!nonequiv)
+	if (!nonequiv) {
+		/*
+		 * Inherit uncacheable attribute if set as it means we already
+		 * have non-equiv aliases
+		 */
+		if (ptep && (attrs & PVF_UNCACHEABLE) != 0)
+			*ptep |= PTE_PROT(TLB_UNCACHEABLE);
+
+		/* No more to be done. */
 		return;
+	}
 
 	if (ptep) {
-		if ((pg->mdpage.pvh_attrs & (PVF_WRITE|PVF_MOD)) != 0) {
+		if ((attrs & (PVF_WRITE|PVF_MOD)) != 0) {
 			/*
-			 * We have non-equiv aliases and the new (some)
-			 * mapping(s are) is writable (or modified). We must
-			 * mark the all mappings as uncacheable
-			 * (if they're not already marked as such).
+			 * We have non-equiv aliases and the new/some 
+			 * mapping(s) is/are is writable (or modified). We must
+			 * mark the all mappings as uncacheable (if they're not
+			 * already marked as such).
 			 */
 			pg->mdpage.pvh_aliases++;
 
-			if ((pg->mdpage.pvh_attrs & PVF_UNCACHEABLE) == 0)
+			if ((attrs & PVF_UNCACHEABLE) == 0)
 				__changebit(pg, PVF_UNCACHEABLE, 0);
 
 			*ptep |= PTE_PROT(TLB_UNCACHEABLE);
@@ -578,7 +585,7 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 			    ("%s: page marked uncacheable\n", __func__));
 		}
 	} else {
-		if ((pg->mdpage.pvh_attrs & PVF_UNCACHEABLE) != 0) {
+		if ((attrs & PVF_UNCACHEABLE) != 0) {
 			/*
 			 * We've removed a non-equiv aliases. We can check
 			 * marked uncacheable. We can now mark it cacheable.
@@ -1385,7 +1392,10 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				pmap_check_alias(pg, pg->mdpage.pvh_list,
 				    sva, NULL);
 
+				pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+
 				mutex_exit(&pg->mdpage.pvh_lock);
+
 				if (pve != NULL)
 					pmap_pv_free(pve);
 			}
@@ -1549,8 +1559,13 @@ __changebit(struct vm_page *pg, u_int set, u_int clear)
 	int res;
 
 	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
+	KASSERT(((set | clear) &
+	    ~(PVF_MOD|PVF_REF|PVF_UNCACHEABLE|PVF_WRITE)) == 0);
 
-	res = pg->mdpage.pvh_attrs = 0;
+	/* preserve other bits */
+	res = pg->mdpage.pvh_attrs & (set | clear);
+	pg->mdpage.pvh_attrs ^= res;
+
 	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		pmap_t pmap = pve->pv_pmap;
 		vaddr_t va = pve->pv_va;
@@ -1845,13 +1860,15 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
 
 			mutex_enter(&pg->mdpage.pvh_lock);
-			pg->mdpage.pvh_attrs &= ~PVF_KENTER;
 
-			/* just in case we have enter/kenter mismatch */
 			pve = pmap_pv_remove(pg, pmap, va);
-			if ((pte & PVF_NC) != 0)
+
+			if ((pg->mdpage.pvh_attrs & PVF_NC) == 0) {
 				pmap_check_alias(pg, pg->mdpage.pvh_list, va,
 				    NULL);
+			}
+
+			pg->mdpage.pvh_attrs &= ~PVF_NC;
 
 			mutex_exit(&pg->mdpage.pvh_lock);
 			if (pve != NULL)
