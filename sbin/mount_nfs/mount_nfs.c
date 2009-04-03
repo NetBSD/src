@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.66 2009/02/20 15:37:22 yamt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.67 2009/04/03 07:26:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.66 2009/02/20 15:37:22 yamt Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.67 2009/04/03 07:26:07 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 void
 mount_nfs_dogetargs(struct nfs_args *nfsargsp, int mntflags, const char *spec)
 {
-	struct sockaddr_storage sa;
+	static struct sockaddr_storage sa;
 	char *tspec;
 
 	if ((mntflags & MNT_GETARGS) != 0) {
