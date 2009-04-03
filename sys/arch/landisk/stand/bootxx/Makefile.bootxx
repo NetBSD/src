@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.1 2006/09/01 21:26:19 uwe Exp $
+#	$NetBSD: Makefile.bootxx,v 1.2 2009/04/03 10:38:13 tsutsui Exp $
 
 PROG?=		bootxx_${FS}
 
@@ -26,8 +26,6 @@ CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 		-DLIBSA_NO_RAW_ACCESS \
 		-DLIBSA_NO_FS_WRITE \
 		-DLIBSA_NO_FS_SEEK \
-		-DLIBSA_USE_MEMCPY \
-		-DLIBSA_USE_MEMSET \
 		-DLIBSA_SINGLE_DEVICE=blkdev \
 		-DLIBKERN_OPTIMISE_SPACE \
 		-D"blkdevioctl(x,y,z)=EINVAL" \

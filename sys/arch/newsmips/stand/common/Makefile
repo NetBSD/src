@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/01/12 06:52:15 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2009/04/03 10:38:13 tsutsui Exp $
 
 WARNS?= 1
 S= ${.CURDIR}/../../../..
@@ -10,7 +10,6 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -DHAVE_CHANGEDISK_HOOK
-CPPFLAGS+= -DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY
 CPPFLAGS+= -I. -I${S}
 CPPFLAGS+= -D__daddr_t=int32_t
 

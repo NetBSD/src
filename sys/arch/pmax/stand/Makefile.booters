@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.48 2009/03/17 00:45:46 he Exp $
+# $NetBSD: Makefile.booters,v 1.49 2009/04/03 10:38:14 tsutsui Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -64,8 +64,7 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 		-DLIBSA_NO_FD_CHECKING \
 		-DLIBSA_NO_RAW_ACCESS \
 		-DLIBSA_NO_DISKLABEL_MSGS \
-		-DALLOC_FIRST_FIT \
-		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+		-DALLOC_FIRST_FIT
 
 CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
