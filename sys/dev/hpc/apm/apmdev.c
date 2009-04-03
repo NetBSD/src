@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.21 2009/04/03 02:08:38 uwe Exp $ */
+/*	$NetBSD: apmdev.c,v 1.22 2009/04/03 04:13:17 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.21 2009/04/03 02:08:38 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.22 2009/04/03 04:13:17 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -80,24 +80,6 @@ int	apmdebug = 0;
 #define	DPRINTF(f, x)		/**/
 #endif /* APMDEBUG */
 
-#define APM_NEVENTS 16
-
-struct apm_softc {
-	device_t sc_dev;
-	struct selinfo sc_rsel;
-	struct selinfo sc_xsel;
-	int	sc_flags;
-	int	sc_event_count;
-	int	sc_event_ptr;
-	int	sc_power_state;
-	lwp_t	*sc_thread;
-	kmutex_t sc_lock;
-	struct apm_event_info sc_event_list[APM_NEVENTS];
-	struct apm_accessops *sc_ops;
-	int	sc_vers;
-	int	sc_detail;
-	void *sc_cookie;
-};
 #define	SCFLAG_OREAD	0x0000001
 #define	SCFLAG_OWRITE	0x0000002
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
@@ -117,11 +99,6 @@ struct apm_softc {
 	(void) mutex_enter(&(apmsc)->sc_lock)
 #define	APM_UNLOCK(apmsc)						\
 	(void) mutex_exit(&(apmsc)->sc_lock)
-
-/* in real dev/apm/apmvar.h */
-static int apm_match(void);
-static void apm_attach(struct apm_softc *);
-static const char *apm_strerror(int);
 
 static void	apmdevattach(device_t, device_t, void *);
 static int	apmdevmatch(device_t, cfdata_t, void *);
@@ -495,7 +472,7 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 
 	case APM_POWER_CHANGE:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: power status change\n"));
-		error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, &pi);
+		error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, 0, &pi);
 #ifdef APM_POWER_PRINT
 		/* only print if nobody is catching events. */
 		if (error == 0 &&
@@ -545,7 +522,7 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 			u_int numbatts, capflags;
 			(*sc->sc_ops->aa_get_capabilities)(sc->sc_cookie,
 			    &numbatts, &capflags);
-			(*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, &pi);
+			(*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, 0, &pi);
 		}
 		break;
 
@@ -718,7 +695,7 @@ apm_attach(struct apm_softc *sc)
 	 */
 	(*sc->sc_ops->aa_enable)(sc->sc_cookie, 1);
 
-	error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, &pinfo);
+	error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, 0, &pinfo);
 	if (error == 0) {
 #ifdef APM_POWER_PRINT
 		apm_power_print(sc, &pinfo);
@@ -895,7 +872,7 @@ apmdevioctl(dev_t dev, u_long cmd, void *data, int flag,
 	case OAPM_IOC_GETPOWER:
 	case APM_IOC_GETPOWER:
 		powerp = (struct apm_power_info *)data;
-		if ((error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie,
+		if ((error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, 0,
 		    powerp)) != 0) {
 			apm_perror("ioctl get power status", error);
 			error = EIO;

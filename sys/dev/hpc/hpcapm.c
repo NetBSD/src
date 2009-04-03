@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.14 2009/03/30 06:17:39 uwe Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.15 2009/04/03 04:13:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.14 2009/03/30 06:17:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.15 2009/04/03 04:13:17 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.14 2009/03/30 06:17:39 uwe Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/selinfo.h> /* XXX: for apm_softc that is exposed here */
 
 #include <dev/hpc/apm/apmvar.h>
 
@@ -67,7 +68,7 @@ static int	hpcapm_hook(void *, int, long, void *);
 static void	hpcapm_disconnect(void *);
 static void	hpcapm_enable(void *, int);
 static int	hpcapm_set_powstate(void *, u_int, u_int);
-static int	hpcapm_get_powstat(void *, struct apm_power_info *);
+static int	hpcapm_get_powstat(void *, u_int, struct apm_power_info *);
 static int	hpcapm_get_event(void *, u_int *, u_int *);
 static void	hpcapm_cpu_busy(void *);
 static void	hpcapm_cpu_idle(void *);
@@ -367,7 +368,7 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 }
 
 static int
-hpcapm_get_powstat(void *scx, struct apm_power_info *pinfo)
+hpcapm_get_powstat(void *scx, u_int batteryid, struct apm_power_info *pinfo)
 {
 	struct apmhpc_softc *sc;
 	int val;
