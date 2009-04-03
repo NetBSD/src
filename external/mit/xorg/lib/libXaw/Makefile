@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/12 20:20:49 hubertf Exp $
+#	$NetBSD: Makefile,v 1.4 2009/04/03 16:21:08 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,6 @@ SYMLINKS+=	lib${LIB}_p.a ${X11USRLIBDIR}/lib${LIBOLD}_p.a
 
 .if ${MKPIC} != "no"
 SYMLINKS+=	lib${LIB}.so ${X11USRLIBDIR}/lib${LIBOLD}.so
-SYMLINKS+=	lib${LIB}.so.8 ${X11USRLIBDIR}/lib${LIBOLD}.so.8
 .endif
 
 .PATH:	${X11SRCDIR.Xaw}/src

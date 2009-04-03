@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.21 2009/01/11 23:14:53 jnemeth Exp $
+# $NetBSD: shl.elf,v 1.22 2009/04/03 16:21:08 perry Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -132,9 +132,6 @@
 ./usr/X11R7/lib/libXau.so			-unknown-		xorg
 ./usr/X11R7/lib/libXau.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXaw.so			-unknown-		xorg
-./usr/X11R7/lib/libXaw.so.6			-unknown-		xorg
-./usr/X11R7/lib/libXaw.so.7			-unknown-		xorg
-./usr/X11R7/lib/libXaw.so.8			-unknown-		xorg
 ./usr/X11R7/lib/libXaw6.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXaw7.so			-unknown-		xorg
 ./usr/X11R7/lib/libXaw7.so.8			-unknown-		xorg

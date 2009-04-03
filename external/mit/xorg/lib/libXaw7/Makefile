@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2008/11/05 19:50:06 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2009/04/03 16:21:08 perry Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xaw7
 LIBOLD=	Xaw
-
-.if ${MKPIC} != "no"
-SYMLINKS+=	lib${LIB}.so.7 ${X11USRLIBDIR}/lib${LIBOLD}.so.7
-.endif
 
 .PATH:	${X11SRCDIR.Xaw}/src
 
