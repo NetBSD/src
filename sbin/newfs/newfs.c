@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.102 2008/08/01 15:32:30 simonb Exp $	*/
+/*	$NetBSD: newfs.c,v 1.103 2009/04/03 13:22:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.102 2008/08/01 15:32:30 simonb Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.103 2009/04/03 13:22:05 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -468,6 +468,10 @@ main(int argc, char *argv[])
 		special = device;
 		if (fsi < 0 || fstat(fsi, &sb) == -1)
 			err(1, "%s: open for read", special);
+		if (S_ISBLK(sb.st_mode)) {
+			errx(1, "%s is a block device. use raw device",
+			    special);
+		}
 
 		if (!Nflag) {
 			fso = open(special, O_WRONLY, 0);
