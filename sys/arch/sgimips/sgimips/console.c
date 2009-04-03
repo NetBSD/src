@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.39 2009/03/18 10:22:35 cegger Exp $	*/
+/*	$NetBSD: console.c,v 1.40 2009/04/03 15:41:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,13 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.39 2009/03/18 10:22:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.40 2009/04/03 15:41:14 uebayasi Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/machtype.h>
