@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2009/03/15 13:57:57 tsutsui Exp $
+# $NetBSD: Makefile,v 1.8 2009/04/03 10:38:12 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -28,7 +28,6 @@ CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2
 CFLAGS+=   -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CPPFLAGS+= -nostdinc -I. -I${S}
 CPPFLAGS+= -D_STANDALONE -DNO_ABICALLS -D${MACHINE}
-CPPFLAGS+= -DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 #CPPFLAGS+= -DBOOT_DEBUG
 LDSCRIPT=  ${S}/arch/mips/conf/stand.ldscript

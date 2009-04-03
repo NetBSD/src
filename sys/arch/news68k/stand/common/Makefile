@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2009/03/20 13:59:49 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13 2009/04/03 10:38:13 tsutsui Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -8,7 +8,6 @@ CFLAGS= -Os -Wall
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -D_STANDALONE
-CPPFLAGS+= -DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S} -I.
 CPPFLAGS+= -D__daddr_t=int32_t
 AFLAGS= -D_LOCORE
