@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.34 2008/03/16 07:02:22 lukem Exp $
+#	$NetBSD: makesrctars,v 1.35 2009/04/03 22:36:35 perry Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -14,7 +14,7 @@ rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 xsrcdir=
 quiet=false
 
-GZIP=-9
+GZIP=-9n
 export GZIP
 
 usage()
