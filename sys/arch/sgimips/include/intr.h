@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2007/12/03 15:34:17 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.26 2009/04/03 14:47:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -57,7 +57,7 @@
 
 #include <sys/queue.h>
 #include <sys/types.h>
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 
