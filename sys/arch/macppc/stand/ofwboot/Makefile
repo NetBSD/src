@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2009/03/15 14:54:24 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.49 2009/04/03 10:38:13 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -12,7 +12,6 @@ CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
-CPPFLAGS+=	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 DBG=		-Os
 
 LIBCRT0=	# nothing
