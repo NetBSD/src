@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.22 2009/04/03 04:13:17 uwe Exp $ */
+/*	$NetBSD: apmdev.c,v 1.23 2009/04/03 05:01:10 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.22 2009/04/03 04:13:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.23 2009/04/03 05:01:10 uwe Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_apmdev.h"
+#include "opt_apm.h"
 #endif
 
 #ifdef APM_NOIDLE
