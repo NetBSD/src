@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.23 2009/03/18 16:00:19 cegger Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.24 2009/04/03 00:14:42 dyoung Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.23 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.24 2009/04/03 00:14:42 dyoung Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -348,8 +348,8 @@ void	bnx_tick(void *);
 /****************************************************************************/
 /* OpenBSD device dispatch table.                                           */
 /****************************************************************************/
-CFATTACH_DECL_NEW(bnx, sizeof(struct bnx_softc),
-    bnx_probe, bnx_attach, bnx_detach, NULL);
+CFATTACH_DECL3_NEW(bnx, sizeof(struct bnx_softc),
+    bnx_probe, bnx_attach, bnx_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 /****************************************************************************/
 /* Device probe function.                                                   */
@@ -4332,16 +4332,26 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) &&
-			    ((ifp->if_flags ^ sc->bnx_if_flags) &
-			    (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
+		/* XXX set an ifflags callback and let ether_ioctl
+		 * handle all of this.
+		 */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP|IFF_RUNNING:
+			if (((ifp->if_flags ^ sc->bnx_if_flags) &
+			    (IFF_ALLMULTI | IFF_PROMISC)) != 0)
 				bnx_set_rx_mode(sc);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
-				bnx_init(ifp);
-
-		} else if (ifp->if_flags & IFF_RUNNING)
+			break;
+		case IFF_UP:
+			bnx_init(ifp);
+			break;
+		case IFF_RUNNING:
 			bnx_stop(ifp, 1);
+			break;
+		case 0:
+			break;
+		}
 
 		sc->bnx_if_flags = ifp->if_flags;
 		break;
