@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.124 2009/04/01 22:33:20 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.125 2009/04/03 18:04:06 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5639,4 +5639,50 @@ sys/sys/siginfo.h				1.18
 
 	Fix typo for POLL_HUP.
 	[rmind, ticket #631]
+
+common/lib/libc/arch/i386/atomic/atomic.S	1.17
+sys/arch/amd64/amd64/spl.S			1.21
+sys/arch/x86/x86/patch.c			1.17
+
+	So that profile kernel runs again,
+	- Adjust the size of functions used to patch.
+	- Fix the jump offset of mcount call when patching functions.
+	[enami, ticket #645]
+
+sys/dev/sbus/zx.c				1.25
+sys/dev/sbus/zxreg.h				1.6
+sys/dev/sbus/zxvar.h				1.3
+
+	Use bus_space(9) to access registers.  SETREG() macro using
+	bogus casts against packed structures doesn't work on gcc4.
+	[tsutsui, ticket #647]
+
+lib/libpthread/pthread.c			1.109
+
+	Fix the comparision function used by the red-black tree global
+	thread list implementation:
+	-don't return a difference, this can overflow
+	-don't try to substract typed pointers which don't belong to
+	 the same object, this gives undefined results
+
+	This fixes instabilities of programs which use more than a
+	handful of threads, eg spuriously failing pthread_join().
+	[drochner, ticket #648]
+
+usr.sbin/postinstall/postinstall		1.84-1.86
+
+	Add MAKEDEV.local to postinstall's makedev check.
+	[dyoung, ticket #649]
+
+sys/net/route.c					1.117
+sys/net/route.h					1.73
+sys/net/rtsock.c				1.125
+usr.sbin/arp/arp.c				1.48
+usr.sbin/pppd/pppd/sys-bsd.c			1.59
+
+	Centralize the ROUNDUP and ADVANCE macro in a header file,
+	give them an RT_ prefix and use them appropriately, instead
+	of making copies. Make pppd use the RT_ROUNDUP macro; fixes
+	proxyarp setting on 64 bit hosts.
+	[christos, ticket #650]
 
