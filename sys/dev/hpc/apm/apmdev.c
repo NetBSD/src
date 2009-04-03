@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.20 2009/03/30 06:22:25 uwe Exp $ */
+/*	$NetBSD: apmdev.c,v 1.21 2009/04/03 02:08:38 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.20 2009/03/30 06:22:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.21 2009/04/03 02:08:38 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -103,9 +103,9 @@ struct apm_softc {
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
 #define	APMUNIT(dev)	(minor(dev)&0xf0)
-#define	APMDEV(dev)	(minor(dev)&0x0f)
-#define APMDEV_NORMAL	0
-#define APMDEV_CTL	8
+#define	APM(dev)	(minor(dev)&0x0f)
+#define APM_NORMAL	0
+#define APM_CTL	8
 
 /*
  * A brief note on the locking protocol: it's very simple; we
@@ -118,8 +118,13 @@ struct apm_softc {
 #define	APM_UNLOCK(apmsc)						\
 	(void) mutex_exit(&(apmsc)->sc_lock)
 
-static void	apmattach(device_t, device_t, void *);
-static int	apmmatch(device_t, cfdata_t, void *);
+/* in real dev/apm/apmvar.h */
+static int apm_match(void);
+static void apm_attach(struct apm_softc *);
+static const char *apm_strerror(int);
+
+static void	apmdevattach(device_t, device_t, void *);
+static int	apmdevmatch(device_t, cfdata_t, void *);
 
 static void	apm_event_handle(struct apm_softc *, u_int, u_int);
 static void	apm_periodic_check(struct apm_softc *);
@@ -132,12 +137,11 @@ static void	apm_power_print(struct apm_softc *, struct apm_power_info *);
 static int	apm_record_event(struct apm_softc *, u_int);
 static void	apm_set_ver(struct apm_softc *);
 static void	apm_standby(struct apm_softc *);
-static const char *apm_strerror(int);
 static void	apm_suspend(struct apm_softc *);
 static void	apm_resume(struct apm_softc *, u_int, u_int);
 
 CFATTACH_DECL_NEW(apmdev, sizeof(struct apm_softc),
-    apmmatch, apmattach, NULL, NULL);
+    apmdevmatch, apmdevattach, NULL, NULL);
 
 extern struct cfdriver apmdev_cd;
 
@@ -189,7 +193,7 @@ int	apm_evindex;
 
 static int apm_spl;		/* saved spl while suspended */
 
-static const char *
+const char *
 apm_strerror(int code)
 {
 	switch (code) {
@@ -334,6 +338,9 @@ apm_suspend(struct apm_softc *sc)
 
 	error = (*sc->sc_ops->aa_set_powstate)(sc->sc_cookie, APM_DEV_ALLDEVS,
 	    APM_SYS_SUSPEND);
+
+	if (error)
+		apm_resume(sc, 0, 0);
 }
 
 static void
@@ -359,6 +366,8 @@ apm_standby(struct apm_softc *sc)
 
 	error = (*sc->sc_ops->aa_set_powstate)(sc->sc_cookie, APM_DEV_ALLDEVS,
 	    APM_SYS_STANDBY);
+	if (error)
+		apm_resume(sc, 0, 0);
 }
 
 static void
@@ -424,7 +433,7 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 	case APM_USER_STANDBY_REQ:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: user standby request\n"));
 		if (apm_do_standby) {
-			if (apm_record_event(sc, event_code))
+			if (apm_op_inprog == 0 && apm_record_event(sc, event_code))
 				apm_userstandbys++;
 			apm_op_inprog++;
 			(void)(*sc->sc_ops->aa_set_powstate)(sc->sc_cookie,
@@ -446,7 +455,8 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 			apm_damn_fool_bios = 1;
 		}
 		if (apm_do_standby) {
-			if (apm_record_event(sc, event_code))
+			if (apm_op_inprog == 0 &&
+			    apm_record_event(sc, event_code))
 				apm_standbys++;
 			apm_op_inprog++;
 			(void)(*sc->sc_ops->aa_set_powstate)(sc->sc_cookie,
@@ -461,7 +471,7 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 
 	case APM_USER_SUSPEND_REQ:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: user suspend request\n"));
-		if (apm_record_event(sc, event_code))
+		if (apm_op_inprog == 0 && apm_record_event(sc, event_code))
 			apm_suspends++;
 		apm_op_inprog++;
 		(void)(*sc->sc_ops->aa_set_powstate)(sc->sc_cookie,
@@ -476,7 +486,7 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 			/* just give up the fight */
 			apm_damn_fool_bios = 1;
 		}
-		if (apm_record_event(sc, event_code))
+		if (apm_op_inprog == 0 && apm_record_event(sc, event_code))
 			apm_suspends++;
 		apm_op_inprog++;
 		(void)(*sc->sc_ops->aa_set_powstate)(sc->sc_cookie,
@@ -631,20 +641,17 @@ ok:
 }
 
 static int
-apmmatch(device_t parent, cfdata_t match, void *aux)
+apmdevmatch(device_t parent, cfdata_t match, void *aux)
 {
-	static int got;
-	return !got++;
+
+	return apm_match();
 }
 
 static void
-apmattach(device_t parent, device_t self, void *aux)
+apmdevattach(device_t parent, device_t self, void *aux)
 {
 	struct apm_softc *sc;
 	struct apmdev_attach_args *aaa = aux;
-	struct apm_power_info pinfo;
-	u_int numbatts, capflags;
-	int error;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -654,6 +661,35 @@ apmattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ops = aaa->accessops;
 	sc->sc_cookie = aaa->accesscookie;
+
+	apm_attach(sc);
+}
+
+/*
+ * Print function (for parent devices).
+ */
+int
+apmprint(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("apm at %s", pnp);
+
+	return (UNCONF);
+}
+
+int
+apm_match(void)
+{
+	static int got;
+	return !got++;
+}
+
+void
+apm_attach(struct apm_softc *sc)
+{
+	struct apm_power_info pinfo;
+	u_int numbatts, capflags;
+	int error;
 
 	aprint_naive("\n");
 	aprint_normal(": ");
@@ -719,18 +755,6 @@ apmattach(device_t parent, device_t self, void *aux)
 	}
 }
 
-/*
- * Print function (for parent devices).
- */
-int
-apmprint(void *aux, const char *pnp)
-{
-	if (pnp)
-		aprint_normal("apm at %s", pnp);
-
-	return (UNCONF);
-}
-
 void
 apm_thread(void *arg)
 {
@@ -750,7 +774,7 @@ apm_thread(void *arg)
 int
 apmdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int ctl = APMDEV(dev);
+	int ctl = APM(dev);
 	int error = 0;
 	struct apm_softc *sc;
 
@@ -766,7 +790,7 @@ apmdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	APM_LOCK(sc);
 	switch (ctl) {
-	case APMDEV_CTL:
+	case APM_CTL:
 		if (!(flag & FWRITE)) {
 			error = EINVAL;
 			break;
@@ -777,7 +801,7 @@ apmdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 		sc->sc_flags |= SCFLAG_OWRITE;
 		break;
-	case APMDEV_NORMAL:
+	case APM_NORMAL:
 		if (!(flag & FREAD) || (flag & FWRITE)) {
 			error = EINVAL;
 			break;
@@ -798,17 +822,17 @@ apmdevclose(dev_t dev, int flag, int mode,
 	    struct lwp *l)
 {
 	struct apm_softc *sc = device_lookup_private(&apmdev_cd, APMUNIT(dev));
-	int ctl = APMDEV(dev);
+	int ctl = APM(dev);
 
 	DPRINTF(APMDEBUG_DEVICE,
 	    ("apmclose: pid %d flag %x mode %x\n", l->l_proc->p_pid, flag, mode));
 
 	APM_LOCK(sc);
 	switch (ctl) {
-	case APMDEV_CTL:
+	case APM_CTL:
 		sc->sc_flags &= ~SCFLAG_OWRITE;
 		break;
-	case APMDEV_NORMAL:
+	case APM_NORMAL:
 		sc->sc_flags &= ~SCFLAG_OREAD;
 		break;
 	}
