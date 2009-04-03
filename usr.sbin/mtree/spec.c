@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.68 2009/01/18 12:09:38 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.69 2009/04/03 21:18:59 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.68 2009/01/18 12:09:38 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.69 2009/04/03 21:18:59 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,8 @@ static	dev_t	parsedev(char *);
 static	void	replacenode(NODE *, NODE *);
 static	void	set(char *, NODE *);
 static	void	unset(char *, NODE *);
+static	void	addchild(NODE *, NODE *);
+static	int	nodecmp(const NODE *, const NODE *);
 
 #define REPLACEPTR(x,v)	do { if ((x)) free((x)); (x) = (v); } while (0)
 
@@ -219,32 +221,11 @@ noparent:		mtree_err("no parent node");
 			root->parent = root;
 		} else if (pathparent != NULL) {
 				/*
-				 * full path entry
+				 * full path entry; add or replace
 				 */
 			centry->parent = pathparent;
-			cur = pathparent->child;
-			if (cur == NULL) {
-				pathparent->child = centry;
-				last = centry;
-			} else {
-				for (; cur != NULL; cur = cur->next) {
-					if (strcmp(cur->name, centry->name)
-					    == 0) {
-						/* existing entry; replace */
-						replacenode(cur, centry);
-						break;
-					}
-					if (cur->next == NULL) {
-						/* last entry; add new */
-						cur->next = centry;
-						centry->prev = cur;
-						break;
-					}
-				}
-				last = cur;
-				while (last->next != NULL)
-					last = last->next;
-			}
+			addchild(pathparent, centry);
+			last = centry;
 		} else if (strcmp(centry->name, ".") == 0) {
 				/*
 				 * duplicate "." entry; always replace
@@ -252,19 +233,21 @@ noparent:		mtree_err("no parent node");
 			replacenode(root, centry);
 		} else if (last->type == F_DIR && !(last->flags & F_DONE)) {
 				/*
-				 * new relative child
-				 * (no duplicate check)
+				 * new relative child in current dir;
+				 * add or replace
 				 */
 			centry->parent = last;
-			last = last->child = centry;
+			addchild(last, centry);
+			last = centry;
 		} else {
 				/*
-				 * relative entry, up one directory
-				 * (no duplicate check)
+				 * new relative child in parent dir
+				 * (after encountering ".." entry);
+				 * add or replace
 				 */
 			centry->parent = last->parent;
-			centry->prev = last;
-			last = last->next = centry;
+			addchild(last->parent, centry);
+			last = centry;
 		}
 	}
 	return (root);
@@ -665,4 +648,86 @@ unset(char *t, NODE *ip)
 			continue;
 		ip->flags &= ~parsekey(p, NULL);
 	}
+}
+
+/*
+ * addchild --
+ *	Add the centry node as a child of the pathparent node.	If
+ *	centry is a duplicate, call replacenode().  If centry is not
+ *	a duplicate, insert it into the linked list referenced by
+ *	pathparent->child.  Keep the list sorted.
+ */
+static void
+addchild(NODE *pathparent, NODE *centry)
+{
+	NODE *cur, *insertpos;
+	int cmp;
+
+	cur = pathparent->child;
+	if (cur == NULL) {
+		/* centry is pathparent's first and only child node so far */
+		pathparent->child = centry;
+		return;
+	}
+
+	/*
+	 * pathparent already has at least one other child, so add the
+	 * centry node to the list.
+	 *
+	 * To keep the list sorted, the new centry node will be
+	 * inserted just after the existing insertpos node, if any;
+	 * otherwise it will be inserted at the start of the list.
+	 */
+	insertpos = NULL;
+	for (; cur != NULL; cur = cur->next) {
+		cmp = nodecmp(centry, cur);
+		if (cmp == 0) {
+			/* existing entry; replace */
+			replacenode(cur, centry);
+			break;
+		} else if (cmp > 0) {
+			/* centry appears after cur in sort order */
+			insertpos = cur;
+		}
+		if (cmp < 0 || cur->next == NULL) {
+			/*
+			 * centry appears before cur in sort order,
+			 * or we reached the end of the list; insert
+			 * centry either just after insertpos, or at the
+			 * beginning of the list.
+			 */
+			if (insertpos) {
+				centry->next = insertpos->next;
+				insertpos->next = centry;
+				if (centry->next)
+					centry->next->prev = centry;
+			} else {
+				centry->next = pathparent->child;
+				pathparent->child = centry;
+			}
+			break;
+		}
+	}
+	return;
+}
+
+/*
+ * nodecmp --
+ *	used as a comparison function by addchild() to control the order
+ *	in which entries appear within a list of sibling nodes.	 We make
+ *	directories sort after non-directories, but otherwise sort in
+ *	strcmp() order.
+ *
+ * Keep this in sync with dcmp() in create.c.
+ */
+static int
+nodecmp(const NODE *a, const NODE *b)
+{
+
+	if ((a->type & F_DIR) != 0) {
+		if ((b->type & F_DIR) == 0)
+			return 1;
+	} else if ((b->type & F_DIR) != 0)
+		return -1;
+	return strcmp(a->name, b->name);
 }
