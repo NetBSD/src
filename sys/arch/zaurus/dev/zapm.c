@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.5 2009/03/11 09:04:31 nonaka Exp $	*/
+/*	$NetBSD: zapm.c,v 1.6 2009/04/03 04:13:17 uwe Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,12 +18,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.5 2009/03/11 09:04:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.6 2009/04/03 04:13:17 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/callout.h>
+#include <sys/selinfo.h> /* XXX: for apm_softc that is exposed here */
 
 #include <dev/hpc/apm/apmvar.h>
 
@@ -86,7 +87,7 @@ static int	zapm_hook(void *, int, long, void *);
 static void     zapm_disconnect(void *);
 static void     zapm_enable(void *, int);
 static int      zapm_set_powstate(void *, u_int, u_int);
-static int      zapm_get_powstat(void *, struct apm_power_info *);
+static int      zapm_get_powstat(void *, u_int, struct apm_power_info *);
 static int      zapm_get_event(void *, u_int *, u_int *);
 static void     zapm_cpu_busy(void *);
 static void     zapm_cpu_idle(void *);
@@ -389,7 +390,7 @@ zapm_set_powstate(void *v, u_int devid, u_int powstat)
 }
 
 static int
-zapm_get_powstat(void *v, struct apm_power_info *pinfo)
+zapm_get_powstat(void *v, u_int batteryid, struct apm_power_info *pinfo)
 {
 	struct zapm_softc *sc = (struct zapm_softc *)v;
 	int val;
