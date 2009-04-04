@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.119 2008/10/07 09:58:15 abs Exp $ */
+/*	$NetBSD: md.c,v 1.120 2009/04/04 11:03:24 ad Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,7 +96,7 @@ edit:
 		return 0;
 
 	root_limit = 0;
-	if (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13)) {
+	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13) == 0) {
 		if (mbr_root_above_chs()) {
 			msg_display(MSG_partabovechs);
 			process_menu(MENU_noyes, NULL);
