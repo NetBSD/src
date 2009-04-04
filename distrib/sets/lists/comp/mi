@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1240 2009/04/04 01:36:31 perry Exp $
+#	$NetBSD: mi,v 1.1241 2009/04/04 01:45:18 perry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4845,7 +4845,17 @@
 ./usr/share/man/cat3/bindresvport.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bindresvport_sa.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bindtextdomain.0		comp-c-catman		.cat
+./usr/share/man/cat3/bit_alloc.0		comp-c-catman		.cat
+./usr/share/man/cat3/bit_clear.0		comp-c-catman		.cat
+./usr/share/man/cat3/bit_decl.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_ffc.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_ffs.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_nclear.0		comp-c-catman		.cat
+./usr/share/man/cat3/bit_nset.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_set.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_test.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bits.0			comp-c-catman		.cat
+./usr/share/man/cat3/bitstr_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bitstring.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bkgd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bkgdset.0			comp-c-catman		.cat
@@ -15478,7 +15488,17 @@
 ./usr/share/man/man3/bindresvport.3		comp-c-man		.man
 ./usr/share/man/man3/bindresvport_sa.3		comp-c-man		.man
 ./usr/share/man/man3/bindtextdomain.3		comp-c-man		.man
+./usr/share/man/man3/bit_alloc.3		comp-c-man		.man
+./usr/share/man/man3/bit_clear.3		comp-c-man		.man
+./usr/share/man/man3/bit_decl.3			comp-c-man		.man
+./usr/share/man/man3/bit_ffc.3			comp-c-man		.man
+./usr/share/man/man3/bit_ffs.3			comp-c-man		.man
+./usr/share/man/man3/bit_nclear.3		comp-c-man		.man
+./usr/share/man/man3/bit_nset.3			comp-c-man		.man
+./usr/share/man/man3/bit_set.3			comp-c-man		.man
+./usr/share/man/man3/bit_test.3			comp-c-man		.man
 ./usr/share/man/man3/bits.3			comp-c-man		.man
+./usr/share/man/man3/bitstr_size.3		comp-c-man		.man
 ./usr/share/man/man3/bitstring.3		comp-c-man		.man
 ./usr/share/man/man3/bkgd.3			comp-c-man		.man
 ./usr/share/man/man3/bkgdset.3			comp-c-man		.man
