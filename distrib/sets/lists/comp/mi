@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1239 2009/03/31 16:11:59 tsutsui Exp $
+#	$NetBSD: mi,v 1.1240 2009/04/04 01:36:31 perry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1865,8 +1865,8 @@
 ./usr/include/rpcsvc/yppasswd.x			comp-c-include
 ./usr/include/rump/p2k.h			comp-puffs-include
 ./usr/include/rump/rump.h			comp-c-include
-./usr/include/rump/rump_syscalls.h		comp-c-include
 ./usr/include/rump/rump_namei.h			comp-c-include
+./usr/include/rump/rump_syscalls.h		comp-c-include
 ./usr/include/rump/rumpdefs.h			comp-c-include
 ./usr/include/rump/rumpuser.h			comp-c-include
 ./usr/include/rump/rumpvnode_if.h		comp-c-include
@@ -2305,7 +2305,6 @@
 ./usr/lib/libcrypt_g.a				-unknown-		debuglib
 ./usr/lib/libcrypt_p.a				comp-c-proflib		profile
 ./usr/lib/libcrypto.a				comp-c-lib		crypto
-./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_g.a				-unknown-		debuglib,crypto
 ./usr/lib/libcrypto_idea.a			comp-c-lib		crypto_idea
 ./usr/lib/libcrypto_idea_g.a			-unknown-		debuglib,crypto_idea
@@ -2313,6 +2312,7 @@
 ./usr/lib/libcrypto_mdc2.a			comp-c-lib		crypto_mdc2
 ./usr/lib/libcrypto_mdc2_g.a			-unknown-		debuglib,crypto_mdc2
 ./usr/lib/libcrypto_mdc2_p.a			comp-c-proflib		profile,crypto_mdc2
+./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_rc5.a			comp-c-lib		crypto_rc5
 ./usr/lib/libcrypto_rc5_g.a			-unknown-		debuglib,crypto_rc5
@@ -2551,7 +2551,6 @@
 ./usr/lib/librumpfs_ufs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet.a				comp-c-lib
 ./usr/lib/librumpnet_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_local.a			comp-c-lib
 ./usr/lib/librumpnet_local_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_local_p.a			comp-c-proflib		profile
@@ -2561,6 +2560,7 @@
 ./usr/lib/librumpnet_netinet.a			comp-c-lib
 ./usr/lib/librumpnet_netinet_g.a		-unknown-		debuglib
 ./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile
+./usr/lib/librumpnet_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_shmif.a			comp-c-lib
 ./usr/lib/librumpnet_shmif_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		profile
@@ -8097,8 +8097,8 @@
 ./usr/share/man/cat9/be64dec.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/be64enc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/be64toh.0			comp-sys-catman		.cat
-./usr/share/man/cat9/bintobcd.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bintime.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bintobcd.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/binuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/biodone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/biowait.0			comp-sys-catman		.cat
@@ -8216,17 +8216,17 @@
 ./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/closef.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cltom.0			comp-sys-catman		.cat
+./usr/share/man/cat9/cn_check_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_destroy_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_get_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_init_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_isconsole.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_set_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_trap.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cnbell.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cngetc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cngetsn.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cnmagic.0			comp-sys-catman		.cat
-./usr/share/man/cat9/cn_trap.0			comp-sys-catman		.cat
-./usr/share/man/cat9/cn_isconsole.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_check_magic.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_init_magic.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_set_magic.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_get_magic.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_destroy_magic.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cnpollc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cnputc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/condvar.0			comp-sys-catman		.cat
@@ -8427,8 +8427,8 @@
 ./usr/share/man/cat9/geteblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf_nowait.0		comp-obsolete		obsolete
-./usr/share/man/cat9/getmicrouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getmicrotime.0		comp-sys-catman		.cat
+./usr/share/man/cat9/getmicrouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanotime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
@@ -10711,8 +10711,8 @@
 ./usr/share/man/html3/fdopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdopendir.html		comp-c-htmlman		html
 ./usr/share/man/html3/feof.html			comp-c-htmlman		html
-./usr/share/man/html3/fetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ferror.html		comp-c-htmlman		html
+./usr/share/man/html3/fetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/fflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/ffs.html			comp-c-htmlman		html
 ./usr/share/man/html3/fgetc.html		comp-c-htmlman		html
@@ -13355,8 +13355,8 @@
 ./usr/share/man/html9/be64dec.html		comp-sys-htmlman	html
 ./usr/share/man/html9/be64enc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/be64toh.html		comp-sys-htmlman	html
-./usr/share/man/html9/bintobcd.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bintime.html		comp-sys-htmlman	html
+./usr/share/man/html9/bintobcd.html		comp-sys-htmlman	html
 ./usr/share/man/html9/binuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biodone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biowait.html		comp-sys-htmlman	html
@@ -13470,17 +13470,17 @@
 ./usr/share/man/html9/clock_ymdhms_to_secs.html	comp-sys-htmlman	html
 ./usr/share/man/html9/closef.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cltom.html		comp-sys-htmlman	html
+./usr/share/man/html9/cn_check_magic.html	comp-sys-htmlman	html
+./usr/share/man/html9/cn_destroy_magic.html	comp-sys-htmlman	html
+./usr/share/man/html9/cn_get_magic.html		comp-sys-htmlman	html
+./usr/share/man/html9/cn_init_magic.html	comp-sys-htmlman	html
+./usr/share/man/html9/cn_isconsole.html		comp-sys-htmlman	html
+./usr/share/man/html9/cn_set_magic.html		comp-sys-htmlman	html
+./usr/share/man/html9/cn_trap.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnbell.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cngetc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cngetsn.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnmagic.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_trap.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_isconsole.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_check_magic.html	comp-sys-htmlman	html
-./usr/share/man/html9/cn_init_magic.html	comp-sys-htmlman	html
-./usr/share/man/html9/cn_set_magic.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_get_magic.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_destroy_magic.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cnpollc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnputc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/condvar.html		comp-sys-htmlman	html
@@ -18725,8 +18725,8 @@
 ./usr/share/man/man9/be64dec.9			comp-sys-man		.man
 ./usr/share/man/man9/be64enc.9			comp-sys-man		.man
 ./usr/share/man/man9/be64toh.9			comp-sys-man		.man
-./usr/share/man/man9/bintobcd.9			comp-sys-man		.man
 ./usr/share/man/man9/bintime.9			comp-sys-man		.man
+./usr/share/man/man9/bintobcd.9			comp-sys-man		.man
 ./usr/share/man/man9/binuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/biodone.9			comp-sys-man		.man
 ./usr/share/man/man9/biowait.9			comp-sys-man		.man
@@ -18844,17 +18844,17 @@
 ./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-sys-man		.man
 ./usr/share/man/man9/closef.9			comp-sys-man		.man
 ./usr/share/man/man9/cltom.9			comp-sys-man		.man
+./usr/share/man/man9/cn_check_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_destroy_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_get_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_init_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_isconsole.9		comp-sys-man		.man
+./usr/share/man/man9/cn_set_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_trap.9			comp-sys-man		.man
 ./usr/share/man/man9/cnbell.9			comp-sys-man		.man
 ./usr/share/man/man9/cngetc.9			comp-sys-man		.man
 ./usr/share/man/man9/cngetsn.9			comp-sys-man		.man
 ./usr/share/man/man9/cnmagic.9			comp-sys-man		.man
-./usr/share/man/man9/cn_trap.9			comp-sys-man		.man
-./usr/share/man/man9/cn_isconsole.9		comp-sys-man		.man
-./usr/share/man/man9/cn_check_magic.9		comp-sys-man		.man
-./usr/share/man/man9/cn_init_magic.9		comp-sys-man		.man
-./usr/share/man/man9/cn_set_magic.9		comp-sys-man		.man
-./usr/share/man/man9/cn_get_magic.9		comp-sys-man		.man
-./usr/share/man/man9/cn_destroy_magic.9		comp-sys-man		.man
 ./usr/share/man/man9/cnpollc.9			comp-sys-man		.man
 ./usr/share/man/man9/cnputc.9			comp-sys-man		.man
 ./usr/share/man/man9/condvar.9			comp-sys-man		.man
