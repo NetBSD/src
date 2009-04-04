@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.15 2009/03/03 06:05:28 mrg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.16 2009/04/04 23:13:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.15 2009/03/03 06:05:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.16 2009/04/04 23:13:18 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,6 +86,9 @@ struct lpcib_softc {
 	uint32_t		sc_hpet_reg;
 #endif
 
+	/* Speedstep */
+	pcireg_t		sc_pmcon_orig;
+
 	/* Power management */
 	pcireg_t		sc_pirq[2];
 	pcireg_t		sc_pmcon;
@@ -96,6 +99,7 @@ static int lpcibmatch(device_t, cfdata_t, void *);
 static void lpcibattach(device_t, device_t, void *);
 static bool lpcib_suspend(device_t PMF_FN_PROTO);
 static bool lpcib_resume(device_t PMF_FN_PROTO);
+static bool lpcib_shutdown(device_t, int);
 
 static void pmtimer_configure(device_t);
 
@@ -205,6 +209,9 @@ lpcibattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_pmcon_orig = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
+	    LPCIB_PCI_GEN_PMCON_1);
+
 	/* For ICH6 and later, always enable RCBA */
 	if (sc->sc_has_rcba) {
 		pcireg_t rcba;
@@ -241,8 +248,20 @@ lpcibattach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* Install power handler */
-	if (!pmf_device_register(self, lpcib_suspend, lpcib_resume))
+	if (!pmf_device_register1(self, lpcib_suspend, lpcib_resume,
+	    lpcib_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static bool
+lpcib_shutdown(device_t dv, int howto)
+{
+	struct lpcib_softc *sc = device_private(dv);
+
+	pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
+	    LPCIB_PCI_GEN_PMCON_1, sc->sc_pmcon_orig);
+
+	return true;
 }
 
 static bool
