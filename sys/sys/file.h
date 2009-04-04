@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.66 2009/03/11 06:05:29 mrg Exp $	*/
+/*	$NetBSD: file.h,v 1.67 2009/04/04 10:12:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -100,6 +100,9 @@ struct file {
 		int	(*fo_stat)	(struct file *, struct stat *);
 		int	(*fo_close)	(struct file *);
 		int	(*fo_kqfilter)	(struct file *, struct knote *);
+		void	(*fo_drain)	(struct file *);
+		void	(*fo_spare1)	(void);
+		void	(*fo_spare2)	(void);
 	} *f_ops;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
 	LIST_ENTRY(file) f_list;	/* list of active files */
@@ -162,6 +165,7 @@ int	fbadop_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 int	fbadop_ioctl(struct file *, u_long, void *);
 int	fbadop_close(struct file *);
 int	fbadop_stat(struct file *, struct stat *);
+void	fnullop_drain(struct file *);
 
 #endif /* _KERNEL */
 

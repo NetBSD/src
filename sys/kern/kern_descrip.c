@@ -1,8 +1,11 @@
-/*	$NetBSD: kern_descrip.c,v 1.189 2009/03/29 04:40:01 rmind Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.190 2009/04/04 10:12:51 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.189 2009/03/29 04:40:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.190 2009/04/04 10:12:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,15 +581,20 @@ fd_close(unsigned fd)
 		 *
 		 */
 		atomic_or_uint(&ff->ff_refcnt, FR_CLOSING);
+
 		/*
 		 * Remove any knotes attached to the file.  A knote
 		 * attached to the descriptor can hold references on it.
 		 */
+		mutex_exit(&ff->ff_lock);
 		if (!SLIST_EMPTY(&ff->ff_knlist)) {
-			mutex_exit(&ff->ff_lock);
 			knote_fdclose(fd);
-			mutex_enter(&ff->ff_lock);
 		}
+
+		/* Try to drain out descriptor references. */
+		(*fp->f_ops->fo_drain)(fp);
+		mutex_enter(&ff->ff_lock);
+
 		/*
 		 * We need to see the count drop to zero at least once,
 		 * in order to ensure that all pre-existing references
@@ -1705,6 +1713,12 @@ fnullop_kqfilter(file_t *fp, struct knote *kn)
 {
 
 	return 0;
+}
+
+void
+fnullop_drain(file_t *fp)
+{
+
 }
 
 int

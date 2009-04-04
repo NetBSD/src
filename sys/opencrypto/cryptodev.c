@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.46 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.47 2009/04/04 10:12:52 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.46 2009/03/25 01:26:13 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.47 2009/04/04 10:12:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,14 +144,15 @@ static int	cryptof_close(struct file *);
 static int 	cryptof_poll(struct file *, int);
 
 static const struct fileops cryptofops = {
-	cryptof_read,
-	cryptof_write,
-	cryptof_ioctl,
-	fnullop_fcntl,
-	cryptof_poll,
-	fbadop_stat,
-	cryptof_close,
-	fnullop_kqfilter
+	.fo_read = cryptof_read,
+	.fo_write = cryptof_write,
+	.fo_ioctl = cryptof_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = cryptof_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = cryptof_close,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 struct csession *cryptodev_csefind(struct fcrypt *, u_int);
