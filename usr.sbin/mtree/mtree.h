@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.26 2007/02/04 08:03:18 elad Exp $	*/
+/*	$NetBSD: mtree.h,v 1.27 2009/04/04 21:49:49 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,7 +59,9 @@ typedef struct _node {
 	char	*sha256digest;			/* SHA256 digest */
 	char	*sha384digest;			/* SHA384 digest */
 	char	*sha512digest;			/* SHA512 digest */
-	char	*tags;				/* tags, comma delimited */
+	char	*tags;				/* tags, comma delimited,
+						 * also with leading and
+						 * trailing commas */
 	size_t	lineno;				/* line # entry came from */
 
 #define	F_CKSUM		0x00000001		/* cksum(1) check sum */

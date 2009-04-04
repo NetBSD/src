@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.69 2009/04/03 21:18:59 apb Exp $	*/
+/*	$NetBSD: spec.c,v 1.70 2009/04/04 21:49:49 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.69 2009/04/03 21:18:59 apb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.70 2009/04/04 21:49:49 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,6 +290,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 	char	path[MAXPATHLEN];
 	const char *name;
 	char	*str;
+	char	*p, *q;
 
 	for (cur = root; cur != NULL; cur = cur->next) {
 		if (cur->type != F_DIR && !matchtags(cur))
@@ -358,8 +359,16 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			printf("ignore ");
 		if (MATCHFLAG(F_OPT))
 			printf("optional ");
-		if (MATCHFLAG(F_TAGS))
-			printf("tags=%s ", cur->tags);
+		if (MATCHFLAG(F_TAGS)) {
+			/* don't output leading or trailing commas */
+			p = cur->tags;
+			while (*p == ',')
+				p++;
+			q = p + strlen(p);
+			while(q > p && q[-1] == ',')
+				q--;
+			printf("tags=%.*s ", q - p, p);
+		}
 		puts(pathlast ? vispath(path) : "");
 
 		if (cur->child)
