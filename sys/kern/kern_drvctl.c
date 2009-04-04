@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.23 2009/04/04 10:12:51 ad Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.24 2009/04/04 21:49:05 joerg Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.23 2009/04/04 10:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.24 2009/04/04 21:49:05 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,11 @@ listdevbyname(struct devlistargs *l)
 	deviter_t di;
 	int cnt = 0, idx, error = 0;
 
-	if ((d = device_find_by_xname(l->l_devname)) == NULL)
+	if (*l->l_devname == '\0')
+		d = (device_t)NULL;
+	else if (memchr(l->l_devname, 0, sizeof(l->l_devname)) == NULL)
+		return EINVAL;
+	else if ((d = device_find_by_xname(l->l_devname)) == NULL)
 		return ENXIO;
 
 	for (child = deviter_first(&di, 0); child != NULL;
