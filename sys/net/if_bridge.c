@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.62.6.3 2009/04/04 18:02:21 snj Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.62.6.4 2009/04/04 18:03:06 snj Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.62.6.3 2009/04/04 18:02:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.62.6.4 2009/04/04 18:03:06 snj Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.62.6.3 2009/04/04 18:02:21 snj Exp $
 #include <sys/mbuf.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include </sys/socketvar.h> /* for softnet_lock */
+#include <sys/socketvar.h> /* for softnet_lock */
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
