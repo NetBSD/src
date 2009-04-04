@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.65 2009/04/04 10:00:23 bouyer Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.66 2009/04/04 15:31:47 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.65 2009/04/04 10:00:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.66 2009/04/04 15:31:47 bouyer Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -418,8 +418,6 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	/* Tear down the routing table. */
 	bridge_rtable_fini(sc);
-
-
 
 	softint_disestablish(sc->sc_softintr);
 
@@ -1327,10 +1325,13 @@ bridge_forward(void *v)
 	struct ether_header *eh;
 	int s;
 
-	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
+	mutex_enter(softnet_lock);
+	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
+		mutex_exit(softnet_lock);
 		return;
+	}
 
-	s = splbio();
+	s = splnet();
 	while (1) {
 		IFQ_POLL(&sc->sc_if.if_snd, m);
 		if (m == NULL)
@@ -1451,6 +1452,7 @@ bridge_forward(void *v)
 		bridge_enqueue(sc, dst_if, m, 1);
 	}
 	splx(s);
+	mutex_exit(softnet_lock);
 }
 
 /*
