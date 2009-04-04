@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.20 2008/09/16 19:55:31 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20.4.1 2009/04/04 17:39:09 snj Exp $	*/
 
 /*
  *
@@ -162,15 +162,12 @@ struct pmap {
 	int pm_flags;			/* see below */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
-	int pm_ldt_len;			/* number of LDT entries */
+	size_t pm_ldt_len;		/* size of LDT in bytes */
 	int pm_ldt_sel;			/* LDT selector */
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
 };
-
-/* pm_flags */
-#define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
 
 /* macro to access pm_pdirpa */
 #ifdef PAE
@@ -225,6 +222,7 @@ void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 void		pmap_remove_all(struct pmap *);
+void		pmap_ldt_sync(struct pmap *);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
