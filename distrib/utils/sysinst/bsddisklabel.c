@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.46 2009/04/04 10:38:00 ad Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.47 2009/04/04 11:04:28 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,10 +72,6 @@
 #endif
 #ifndef PART_USR
 #define PART_USR	PART_ANY
-#endif
-
-#ifndef DEFSWAPRAM
-#define DEFSWAPRAM	32
 #endif
 
 #ifndef DEFVARSIZE
@@ -378,8 +374,17 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 	msg_table_add(MSG_ptnheaders);
 
 	if (pi.menu_no < 0) {
-		/* If there is a swap partition elsewhere, don't add one here.*/		if (no_swap)
+		/* If there is a swap partition elsewhere, don't add one here.*/
+		if (no_swap) {
 			pi.ptn_sizes[PI_SWAP].size = 0;
+		} else {
+#if DEFSWAPSIZE == -1
+			/* Dynamic swap size. */
+			pi.ptn_sizes[PI_SWAP].dflt_size = (get_mem_size() >> 20);
+			pi.ptn_sizes[PI_SWAP].size = pi.ptn_sizes[PI_SWAP].dflt_size;
+#endif
+		}
+			
 		/* If installing X increase default size of /usr */
 		if (set_X11_selected())
 			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
