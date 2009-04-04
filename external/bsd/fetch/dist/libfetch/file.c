@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.4 2009/03/10 00:44:20 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.5 2009/04/04 23:26:04 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -106,6 +106,7 @@ fetchXGetFile(struct url *u, struct url_stat *us, const char *flags)
 
 	if (if_modified_since && u->last_modified > 0 &&
 	    u->last_modified >= us->mtime) {
+		close(fd);
 		fetchLastErrCode = FETCH_UNCHANGED;
 		snprintf(fetchLastErrString, MAXERRSTRING, "Unchanged");
 		return NULL;
@@ -252,6 +253,8 @@ fetchListFile(struct url_list *ue, struct url *u, const char *pattern, const cha
 			continue;
 		fetch_add_entry(ue, u, de->d_name, 0);
 	}
+
+	closedir(dir);
 
 	return 0;
 }

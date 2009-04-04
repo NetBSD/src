@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.4 2009/03/10 00:44:23 joerg Exp $	*/
+/*	$NetBSD: http.c,v 1.1.1.5 2009/04/04 23:26:06 joerg Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -63,10 +63,13 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __linux__
-/* Keep this down to Linux, it can create surprises else where. */
+#if defined(__linux__) || defined(__MINT__)
+/* Keep this down to Linux or MiNT, it can create surprises elsewhere. */
 #define _GNU_SOURCE
 #endif
+
+/* Needed for gmtime_r on Interix */
+#define _REENTRANT
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -83,10 +86,8 @@
 #include <locale.h>
 #include <stdarg.h>
 #ifndef NETBSD
-#include <nbcompat/netdb.h>
 #include <nbcompat/stdio.h>
 #else
-#include <netdb.h>
 #include <stdio.h>
 #endif
 #include <stdlib.h>
@@ -94,10 +95,16 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <arpa/inet.h>
-
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+
+#ifndef NETBSD
+#include <nbcompat/netdb.h>
+#else
+#include <netdb.h>
+#endif
+
+#include <arpa/inet.h>
 
 #include "fetch.h"
 #include "common.h"

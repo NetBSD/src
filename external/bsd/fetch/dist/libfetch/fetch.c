@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.1.1.6 2009/03/10 00:44:18 joerg Exp $	*/
+/*	$NetBSD: fetch.c,v 1.1.1.7 2009/04/04 23:26:04 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
