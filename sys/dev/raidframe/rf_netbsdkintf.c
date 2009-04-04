@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.3 2009/03/02 20:58:27 snj Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.4 2009/04/04 17:15:14 snj Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.3 2009/03/02 20:58:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.4 2009/04/04 17:15:14 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2308,15 +2308,15 @@ raidgetdisklabel(dev_t dev)
 		 */
 		if (lp->d_secperunit != rs->sc_size)
 			printf("raid%d: WARNING: %s: "
-			    "total sector size in disklabel (%d) != "
-			    "the size of raid (%ld)\n", unit, rs->sc_xname,
-			    lp->d_secperunit, (long) rs->sc_size);
+			    "total sector size in disklabel (%" PRIu32 ") != "
+			    "the size of raid (%" PRIu64 ")\n", unit, rs->sc_xname,
+			    lp->d_secperunit, rs->sc_size);
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
 			if (pp->p_offset + pp->p_size > rs->sc_size)
 				printf("raid%d: WARNING: %s: end of partition `%c' "
-				       "exceeds the size of raid (%ld)\n",
-				       unit, rs->sc_xname, 'a' + i, (long) rs->sc_size);
+				       "exceeds the size of raid (%" PRIu64 ")\n",
+				       unit, rs->sc_xname, 'a' + i, rs->sc_size);
 		}
 	}
 
