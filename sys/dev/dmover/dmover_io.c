@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.31 2008/03/26 13:33:58 ad Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.31.14.1 2009/04/04 23:36:27 snj Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.31 2008/03/26 13:33:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.31.14.1 2009/04/04 23:36:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -729,14 +729,15 @@ dmio_close(struct file *fp)
 }
 
 static const struct fileops dmio_fileops = {
-	dmio_read,
-	dmio_write,
-	dmio_ioctl,
-	fnullop_fcntl,
-	dmio_poll,
-	fbadop_stat,
-	dmio_close,
-	fnullop_kqfilter
+	.fo_read = dmio_read,
+	.fo_write = dmio_write,
+	.fo_ioctl = dmio_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = dmio_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = dmio_close,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*

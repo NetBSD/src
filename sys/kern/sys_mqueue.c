@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.12 2008/09/29 10:27:53 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.12.4.1 2009/04/04 23:36:27 snj Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12 2008/09/29 10:27:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12.4.1 2009/04/04 23:36:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -89,8 +89,15 @@ static int	mq_close_fop(file_t *);
 #define	FNOVAL	-1
 
 static const struct fileops mqops = {
-	fbadop_read, fbadop_write, fbadop_ioctl, fnullop_fcntl, mq_poll_fop,
-	fbadop_stat, mq_close_fop, fnullop_kqfilter
+	.fo_read = fbadop_read,
+	.fo_write = fbadop_write,
+	.fo_ioctl = fbadop_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = mq_poll_fop,
+	.fo_stat = fbadop_stat,
+	.fo_close = mq_close_fop,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*
