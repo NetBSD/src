@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.125 2009/04/03 18:04:06 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.126 2009/04/04 18:28:14 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5685,4 +5685,134 @@ usr.sbin/pppd/pppd/sys-bsd.c			1.59
 	of making copies. Make pppd use the RT_ROUNDUP macro; fixes
 	proxyarp setting on 64 bit hosts.
 	[christos, ticket #650]
+
+sys/kern/subr_workqueue.c			1.27
+
+	workqueue_finiqueue: our stack could be swapped out while
+	enqueued to a worker thread.
+	[ad, ticket #651]
+
+sys/dev/raidframe/rf_disks.c			1.71
+sys/dev/raidframe/rf_netbsdkintf.c		1.260
+
+	Switch various printfs from %ld and %d to PRIu64, etc. to be
+	more consistent about types.
+	[sborrill, ticket #652]
+
+sys/dev/cgd.c					1.57
+sys/dev/vnd.c					1.194, 1.195
+
+	vnd(4): handle the DIOCCACHESYNC ioctl by calling VOP_FSYNC() on
+	the underlying file.  Addresses PR 41015.
+	cgd(4): handle the DIOCCACHESYNC ioctl by passing it through
+	to the underlying disk.  Addresses PR 41016.
+	[apb, ticket #653]
+
+distrib/sets/maketars				1.66
+
+	Explicitly sort entries on preparing set files from METALOG.
+	METALOG could have different order due to install(1) race
+	on parallel builds, and mtree(8) doesn't sort files.
+	[tsutsui, ticket #654]
+
+sys/ufs/ffs/ffs_vfsops.c			1.245 via patch
+sys/ufs/ffs/ffs_vnops.c				1.112 via patch
+
+	fsync:
+	- atime updates were not being synced.
+	ffs_sync:
+	- In some cases the sync vnode was acting like now dead
+	/usr/sbin/update.  It was examining vnodes that it should have
+	ignored.
+	- It would find dirty inodes and try to flush them. Often
+	ffs_fsync() cheerfully ignored the flush request due to the
+	fsync bug. Such inodes remained dirty and were repeatedly
+	re-examined by the syncer until vnode reclaim or system shutdown.
+	- We were marking our place in the per-mount vnode list even
+	though in most cases there was not flush to perform. While not
+	a bug, this wasted CPU cycles because a TAILQ_NEXT would have
+	sufficed.
+	[add, ticket #655]
+
+sys/arch/amd64/amd64/gdt.c			1.21 via patch
+sys/arch/amd64/amd64/machdep.c			1.129 via patch
+sys/arch/i386/i386/gdt.c			1.47 via patch
+sys/arch/i386/i386/kvm86.c			1.17 via patch
+sys/arch/i386/i386/locore.S			1.85 via patch
+sys/arch/i386/i386/machdep.c			1.666 via patch
+sys/arch/i386/i386/vector.S			1.45 via patch
+sys/arch/i386/include/pcb.h			1.47 via patch
+sys/arch/x86/include/pmap.h			1.22 via patch
+sys/arch/x86/include/sysarch.h			1.8 via patch
+sys/arch/x86/x86/pmap.c				1.80 via patch
+sys/arch/x86/x86/sys_machdep.c			1.17 via patch
+sys/compat/linux/arch/i386/linux_machdep.c	1.143 via patch
+sys/kern/init_main.c				1.384 via patch
+
+	Fix numerous problems:
+	1. LDT updates are not atomic.
+	2. Number of processes running with private LDTs and/or I/O
+	bitmaps is not capped. System with high maxprocs can be paniced.
+	3. LDTR can be leaked over context switch.
+	4. GDT slot allocations can race, giving the same LDT slot to
+	two procs.
+	5. Incomplete interrupt/trap frames can be stacked.
+	6. In some rare cases segment faults are not handled correctly.
+	Fixes PR port-i386/40143.
+	[ad, ticket #656]
+
+sys/kern/subr_disk.c				1.95
+sys/kern/subr_iostat.c				1.17
+sys/sys/disk.h					1.52
+sys/sys/iostat.h				1.10
+
+	Add disk_isbusy(), iostat_isbusy().
+	[ad, ticket #657]
+
+distrib/sets/sets.subr				1.82
+
+	All non-error messages printed to stderr by makeplist must
+	begin with "DEBUG:", or else regpkg assumes that they are
+	error messages.  Make the verbose messages printed by the
+	list_set_files function follow that convention.
+	Fixes PR 41077.
+	[apb, ticket #659]
+
+sys/net/if_bridge.c				1.65-1.68
+sys/net/if_bridgevar.h				1.14
+
+	Fix for if_start() and pfil_hook() being called from hardware
+	interrupt context (reported on various mailing-lists, and part
+	of PR kern/41114, causing panic in pf(4) and possibly ipf(4)
+	when BRIDGE_IPF is used).  Defer bridge_forward() to a software
+	interrupt; bridge_input() enqueues mbufs to ifp->if_snd which
+	is handled in bridge_forward().
+	[bouyer, ticket #660]
+
+sys/ufs/lfs/lfs_vfsops.c			1.272
+
+	Turn up the volume on the warning message a bit.
+	[ad, ticket #662]
+
+sys/fs/union/union_vfsops.c			1.59
+
+	Turn up the volume on the warning message a bit and note that
+	unionfs can corrupt the underlying file system. This is an old
+	problem but is now much easier to trigger because VFS has gone
+	fully multithreaded.
+	[ad, ticket #663]
+
+sys/miscfs/genfs/genfs_io.c			1.16
+
+	Check that the filesystem acutally uses WAPBL before initiating
+	a transaction for the directio case. Fixes PR 39929 and similiar
+	issues seen with PostgreSQL.
+	[joerg, ticket #664]
+
+sbin/ifconfig/ifconfig.c			1.215
+
+	Because the IFF_NOARP flag is a negative option it needs to be
+	negated when being applied from the "arp" option which itself
+	is positive.
+	[plunky, ticket #665]
 
