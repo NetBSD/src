@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.187.4.1 2008/11/20 03:42:11 snj Exp $	*/
+/*	$NetBSD: vnd.c,v 1.187.4.2 2009/04/04 17:17:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.4.1 2008/11/20 03:42:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.4.2 2009/04/04 17:17:38 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1004,6 +1004,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCKLABEL:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
+	case DIOCCACHESYNC:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
 	case ODIOCSDINFO:
@@ -1442,6 +1443,12 @@ unlock_and_exit:
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
+	case DIOCCACHESYNC:
+		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
+		error = VOP_FSYNC(vnd->sc_vp, vnd->sc_cred,
+		    FSYNC_WAIT|FSYNC_DATAONLY, 0, 0);
+		VOP_UNLOCK(vnd->sc_vp, 0);
+		return error;
 
 	default:
 		return (ENOTTY);
