@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42.6.1 2009/03/27 17:25:15 msaitoh Exp $	*/
+/*	$NetBSD: vector.S,v 1.42.6.2 2009/04/04 17:39:09 snj Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.6.1 2009/03/27 17:25:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.6.2 2009/04/04 17:39:09 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -886,6 +886,7 @@ IDTVEC(trap0d)
 IDTVEC(trap0e)
 	pushl	$T_PAGEFLT
 	INTRENTRY
+	STI(%eax)
 	testb	$PGEX_U,TF_ERR(%esp)
 	jnz	calltrap
 	movl	%cr2,%eax
@@ -996,6 +997,7 @@ IDTVEC(trap0f)
 	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
 	INTRENTRY
+	STI(%eax)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
@@ -1084,6 +1086,7 @@ IDTVEC(tss_trap08)
 /* LINTSTUB: Ignore */
 NENTRY(alltraps)
 	INTRENTRY
+	STI(%eax)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx

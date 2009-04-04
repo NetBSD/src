@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_machdep.c,v 1.141 2008/10/25 23:38:28 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.141.4.1 2009/04/04 17:39:09 snj Exp $	*/
 
 /*-
- * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Frank van der Linden.
+ * by Frank van der Linden, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.141 2008/10/25 23:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.141.4.1 2009/04/04 17:39:09 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.141 2008/10/25 23:38:28 christos
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -553,8 +554,8 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 {
 	struct x86_get_ldt_args gl;
 	int error;
-	int num_ldt;
 	union descriptor *ldt_buf;
+	size_t sz;
 
 	/*
 	 * I've checked the linux code - this function is asymetric with
@@ -564,19 +565,11 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 
 	DPRINTF(("linux_read_ldt!"));
 
-	num_ldt = x86_get_ldt_len(l);
-	if (num_ldt <= 0)
-		return EINVAL;
-
+	sz = 8192 * sizeof(*ldt_buf);
+	ldt_buf = kmem_zalloc(sz, KM_SLEEP);
 	gl.start = 0;
 	gl.desc = NULL;
 	gl.num = SCARG(uap, bytecount) / sizeof(union descriptor);
-
-	if (gl.num > num_ldt)
-		gl.num = num_ldt;
-
-	ldt_buf = malloc(gl.num * sizeof *ldt, M_TEMP, M_WAITOK);
-
 	error = x86_get_ldt1(l, &gl, ldt_buf);
 	/* NB gl.num might have changed */
 	if (error == 0) {
@@ -584,7 +577,7 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 		error = copyout(ldt_buf, SCARG(uap, ptr),
 		    gl.num * sizeof *ldt_buf);
 	}
-	free(ldt_buf, M_TEMP);
+	kmem_free(ldt_buf, sz);
 
 	return error;
 }

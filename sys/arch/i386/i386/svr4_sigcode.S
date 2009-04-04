@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.12 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.12.10.1 2009/04/04 17:39:09 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sigcode.S,v 1.12 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sigcode.S,v 1.12.10.1 2009/04/04 17:39:09 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -100,6 +100,7 @@ IDTVEC(svr4_fasttrap)
 	pushl	$2		# size of instruction for restart
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	STI(%eax)
 	call	_C_LABEL(svr4_fasttrap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
