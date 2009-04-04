@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.45 2008/05/24 11:06:53 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.46 2009/04/04 10:38:00 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -132,6 +132,13 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 		}
 		strlcpy(p->pi_mount, mountpt, sizeof p->pi_mount);
 		p->pi_flags |= PIF_MOUNT;
+		/* Default to logging, UFS2. */
+		if (p->pi_fstype == FS_BSDFFS) {
+			p->pi_flags |= PIF_LOG;
+#ifdef __HAVE_UFS2_BOOT
+			p->pi_flags |= PIF_FFSv2;
+#endif
+		}
 	}
 
 	return ptn;
