@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.679 2009/03/26 03:15:05 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.680 2009/04/04 12:30:43 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -186,7 +186,7 @@ main trunc has Citrus code in the following places:
 
 Package:	cron
 Version:	3.0
-Current Vers:	4.3
+Current Vers:	4.1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/cron/
 Home Page:
