@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.5,v 1.11 2004/09/02 11:41:27 jmmv Exp $
+.\"	$NetBSD: crontab.5,v 1.12 2009/04/04 16:05:10 perry Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -135,6 +135,20 @@ with a hyphen.  The specified range is inclusive.  For example,
 8-11 for an ``hours'' entry specifies execution at hours 8, 9, 10
 and 11.
 .PP
+A field may begin with a question mark (?), which indicates a
+single value randomly selected when the crontab file is read.
+If the field contains only a question mark, the value is randomly
+selected from the range of all possible values for the field.
+If the question mark precedes a range, the value is randomly selected
+from the range.
+For example, ``? ?2-5 * * *'' specifies that a task will be performed
+daily between 2:00am and and 5:59am at a time randomly selected when
+the crontab file is first read.
+As just one example, this feature can be used to prevent a large
+number of hosts from contacting a server simultaneously and
+overloading it by staggering the time at which a download script is
+executed.
+.PP
 Lists are allowed.  A list is a set of numbers (or ranges)
 separated by commas.  Examples: ``1,2,5,9'', ``0-4,8-12''.
 .PP
@@ -211,6 +225,7 @@ MAILTO=paul
 0 22 * * 1-5    mail -s "It's 10pm" joe%Joe,%%Where are your kids?%
 23 0-23/2 * * * echo "run 23 minutes after midn, 2am, 4am ..., everyday"
 5 4 * * sun     echo "run at 5 after 4 every sunday"
+? ?2-4 1,15 * * echo "random between 2am-4:59am on the 1st and 15th"
 .fi
 .SH SEE ALSO
 cron(8), crontab(1)
