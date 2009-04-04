@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.19.6.1 2008/11/25 04:01:28 snj Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.19.6.2 2009/04/04 23:36:27 snj Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19.6.1 2008/11/25 04:01:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19.6.2 2009/04/04 23:36:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,14 +79,15 @@ static int	drvctl_poll(struct file *, int);
 static int	drvctl_close(struct file *);
 
 static const struct fileops drvctl_fileops = {
-	drvctl_read,
-	drvctl_write,
-	drvctl_ioctl,
-	fnullop_fcntl,
-	drvctl_poll,
-	fbadop_stat,
-	drvctl_close,
-	fnullop_kqfilter
+	.fo_read = drvctl_read,
+	.fo_write = drvctl_write,
+	.fo_ioctl = drvctl_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = drvctl_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = drvctl_close,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 #define MAXLOCATORS 100
