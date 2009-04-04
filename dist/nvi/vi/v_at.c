@@ -1,4 +1,4 @@
-/*	$NetBSD: v_at.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
+/*	$NetBSD: v_at.c,v 1.1.1.2.6.2 2009/04/04 23:47:47 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -94,9 +94,9 @@ v_at(SCR *sp, VICMD *vp)
 	for (tp = cbp->textq.cqh_last;
 	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev) {
 		static CHAR_T nl[] = { '\n', 0 };
-		if ((F_ISSET(cbp, CB_LMODE) ||
-		    ((tp->q.cqe_next != (void *)&cbp->textq) &&
-		    v_event_push(sp, NULL, nl, 1, 0))) ||
+		if (((F_ISSET(cbp, CB_LMODE) ||
+		    tp->q.cqe_next != (void *)&cbp->textq) &&
+		    v_event_push(sp, NULL, nl, 1, 0)) ||
 		    v_event_push(sp, NULL, tp->lb, tp->len, 0))
 			return (1);
 	}
