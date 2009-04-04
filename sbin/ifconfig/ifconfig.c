@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.213 2008/08/01 22:29:13 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.213.2.1 2009/04/04 18:22:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.213 2008/08/01 22:29:13 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.213.2.1 2009/04/04 18:22:54 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -131,7 +131,7 @@ static void status(const struct sockaddr_dl *, prop_dictionary_t,
 static void usage(void);
 
 static const struct kwinst ifflagskw[] = {
-	  IFKW("arp", IFF_NOARP)
+	  IFKW("arp", -IFF_NOARP)
 	, IFKW("debug", IFF_DEBUG)
 	, IFKW("link0", IFF_LINK0)
 	, IFKW("link1", IFF_LINK1)
