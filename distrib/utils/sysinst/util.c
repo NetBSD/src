@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.156 2009/04/04 11:04:28 ad Exp $	*/
+/*	$NetBSD: util.c,v 1.157 2009/04/04 11:24:24 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1317,17 +1317,4 @@ check_lfs_progs(void)
 	return (access("/sbin/fsck_lfs", X_OK) == 0 &&
 		access("/sbin/mount_lfs", X_OK) == 0 &&
 		access("/sbin/newfs_lfs", X_OK) == 0);
-}
-
-uint64_t
-get_mem_size(void)
-{
-	int mib[2] = { CTL_HW, HW_PHYSMEM64 };
-	uint64_t v;
-	size_t sz;
-
-	v = 128*1024*1024;
-	sz = sizeof(v);
-	(void)sysctl(mib, 2, &v, &sz, NULL, 0);
-	return v;
 }
