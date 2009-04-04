@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.71 2009/02/14 16:08:22 ahoka Exp $ */
+/* $NetBSD: envstat.c,v 1.72 2009/04/04 18:43:01 christos Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.71 2009/02/14 16:08:22 ahoka Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.72 2009/04/04 18:43:01 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -990,9 +990,9 @@ do {								\
 						ilen = 16 + 1;
 					}
 					if (sensor->warncap_value) {
-						ilen = 24 + 2;
+						ilen = 24 + 2 - 1;
 						(void)printf("%*.2f%% ", (int)ilen,
-						    (sensor->critcap_value * 100.0) /
+						    (sensor->warncap_value * 100.0) /
 						    sensor->max_value);
 						ilen = 8;
 					}
@@ -1015,7 +1015,7 @@ do {								\
 					}
 
 					if (sensor->critcap_value) {
-						ilen = 24 + 2;
+						ilen = 24 + 2 - 1;
 						(void)printf("%*.2f%% ", (int)ilen,
 						    (sensor->critcap_value * 100.0) /
 						    sensor->max_value);
