@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.141 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.141.6.1 2009/04/04 23:36:28 snj Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.141 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.141.6.1 2009/04/04 23:36:28 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -156,14 +156,15 @@ static int	bpf_kqfilter(struct file *, struct knote *);
 static void	bpf_softintr(void *);
 
 static const struct fileops bpf_fileops = {
-	bpf_read,
-	bpf_write,
-	bpf_ioctl,
-	fnullop_fcntl,
-	bpf_poll,
-	fbadop_stat,
-	bpf_close,
-	bpf_kqfilter,
+	.fo_read = bpf_read,
+	.fo_write = bpf_write,
+	.fo_ioctl = bpf_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = bpf_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = bpf_close,
+	.fo_kqfilter = bpf_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 dev_type_open(bpfopen);
