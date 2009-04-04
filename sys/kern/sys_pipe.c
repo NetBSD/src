@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.108 2009/02/15 00:07:54 enami Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.109 2009/04/04 10:12:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.108 2009/02/15 00:07:54 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.109 2009/04/04 10:12:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,15 @@ static int pipe_stat(struct file *fp, struct stat *sb);
 static int pipe_ioctl(struct file *fp, u_long cmd, void *data);
 
 static const struct fileops pipeops = {
-	pipe_read, pipe_write, pipe_ioctl, fnullop_fcntl, pipe_poll,
-	pipe_stat, pipe_close, pipe_kqfilter
+	.fo_read = pipe_read,
+	.fo_write = pipe_write,
+	.fo_ioctl = pipe_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = pipe_poll,
+	.fo_stat = pipe_stat,
+	.fo_close = pipe_close,
+	.fo_kqfilter = pipe_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*
