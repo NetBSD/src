@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: fetch.3,v 1.64 2007/12/18 11:03:26 des Exp $
-.\" $NetBSD: fetch.3,v 1.1.1.5 2009/03/10 00:44:17 joerg Exp $
+.\" $NetBSD: fetch.3,v 1.1.1.6 2009/04/04 23:26:04 joerg Exp $
 .\"
 .Dd February 4, 2009
 .Dt FETCH 3
@@ -148,8 +148,8 @@ takes a URL in the form of a null-terminated string and splits it into
 its components function according to the Common Internet Scheme Syntax
 detailed in RFC 1738.
 A regular expression which produces this syntax is:
-.Bd -literal
-    \*[Lt]scheme\*[Gt]:(//(\*[Lt]user\*[Gt](:\*[Lt]pwd\*[Gt])?@)?\*[Lt]host\*[Gt](:\*[Lt]port\*[Gt])?)?/(\*[Lt]document\*[Gt])?
+.Bd -literal -offset indent
+\*[Lt]scheme\*[Gt]:(//(\*[Lt]user\*[Gt](:\*[Lt]pwd\*[Gt])?@)?\*[Lt]host\*[Gt](:\*[Lt]port\*[Gt])?)?/(\*[Lt]document\*[Gt])?
 .Ed
 .Pp
 If the URL does not seem to begin with a scheme name, it is assumed to be a local path.
