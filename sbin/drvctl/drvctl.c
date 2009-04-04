@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.7 2009/03/16 13:35:37 lukem Exp $ */
+/* $NetBSD: drvctl.c,v 1.8 2009/04/04 22:05:47 joerg Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -49,7 +49,7 @@ usage(void)
 
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
 	    "       %s -d device\n"
-	    "       %s -l device\n"
+	    "       %s -l [device]\n"
 	    "       %s -p device\n"
 	    "       %s -Q device\n"
 	    "       %s -R device\n"
@@ -104,7 +104,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1 || mode == 0)
+	if ((argc < 1 && mode != 'l') || mode == 0)
 		usage();
 
 	fd = open(DRVCTLDEV, OPEN_MODE(mode), 0);
@@ -134,7 +134,10 @@ main(int argc, char **argv)
 			err(3, "DRVDETACHDEV");
 		break;
 	case 'l':
-		strlcpy(laa.l_devname, argv[0], sizeof(laa.l_devname));
+		if (argc == 0)
+			*laa.l_devname = '\0';
+		else
+			strlcpy(laa.l_devname, argv[0], sizeof(laa.l_devname));
 
 		if (ioctl(fd, DRVLISTDEV, &laa) == -1)
 			err(3, "DRVLISTDEV");
@@ -149,8 +152,10 @@ main(int argc, char **argv)
 		if (laa.l_children > children)
 			err(6, "DRVLISTDEV: number of children grew");
 
-		for (i = 0; i < (int)laa.l_children; i++)
-			printf("%s %s\n", laa.l_devname, laa.l_childname[i]);
+		for (i = 0; i < (int)laa.l_children; i++) {
+			printf("%s%s%s\n", laa.l_devname, (argc ? " " : ""),
+			    laa.l_childname[i]);
+		}
 		break;
 	case 'r':
 		memset(&raa, 0, sizeof(raa));
