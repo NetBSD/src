@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.128 2009/03/03 21:55:06 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.129 2009/04/04 22:34:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  *	LSZOMB:
  *
  *		Dead or dying: the LWP has released most of its resources
- *		and is: a) about to switch away into oblivion b) has already
+ *		and is about to switch away into oblivion, or has already
  *		switched away.  When it switches away, its few remaining
  *		resources can be collected.
  *
@@ -121,22 +121,23 @@
  *	LWPs may transition states in the following ways:
  *
  *	 RUN -------> ONPROC		ONPROC -----> RUN
- *		    > STOPPED			    > SLEEP
- *		    > SUSPENDED			    > STOPPED
+ *		    				    > SLEEP
+ *		    				    > STOPPED
  *						    > SUSPENDED
  *						    > ZOMB
+ *						    > IDL (special cases)
  *
  *	 STOPPED ---> RUN		SUSPENDED --> RUN
- *	            > SLEEP			    > SLEEP
+ *	            > SLEEP
  *
  *	 SLEEP -----> ONPROC		IDL --------> RUN
  *		    > RUN			    > SUSPENDED
  *		    > STOPPED			    > STOPPED
- *		    > SUSPENDED
+ *						    > ONPROC (special cases)
  *
- *	Other state transitions are possible with kernel threads (eg
- *	ONPROC -> IDL), but only happen under tightly controlled
- *	circumstances the side effects are understood.
+ *	Some state transitions are only possible with kernel threads (eg
+ *	ONPROC -> IDL) and happen under tightly controlled circumstances
+ *	free of unwanted side effects.
  *
  * Migration
  *
@@ -162,17 +163,17 @@
  *	LSONPROC, LSZOMB:
  *
  *		Always covered by spc_lwplock, which protects running LWPs.
- *		This is a per-CPU lock.
+ *		This is a per-CPU lock and matches lwp::l_cpu.
  *
  *	LSIDL, LSRUN:
  *
  *		Always covered by spc_mutex, which protects the run queues.
- *		This is a per-CPU lock.
+ *		This is a per-CPU lock and matches lwp::l_cpu.
  *
  *	LSSLEEP:
  *
  *		Covered by a lock associated with the sleep queue that the
- *		LWP resides on.
+ *		LWP resides on.  Matches lwp::l_sleepq::sq_mutex.
  *
  *	LSSTOP, LSSUSPENDED:
  *
@@ -196,17 +197,20 @@
  *
  *		LSIDL, LSZOMB, LSSTOP, LSSUSPENDED
  *
+ *	(But not always for kernel threads.  There are some special cases
+ *	as mentioned above.  See kern_softint.c.)
+ *
  *	Note that an LWP is considered running or likely to run soon if in
  *	one of the following states.  This affects the value of p_nrlwps:
  *
  *		LSRUN, LSONPROC, LSSLEEP
  *
  *	p_lock does not need to be held when transitioning among these
- *	three states.
+ *	three states, hence p_lock is rarely taken for state transitions.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.128 2009/03/03 21:55:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.129 2009/04/04 22:34:03 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
