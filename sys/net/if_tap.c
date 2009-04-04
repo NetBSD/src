@@ -1,7 +1,7 @@
-/*	$NetBSD: if_tap.c,v 1.54 2009/03/13 18:40:10 plunky Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.55 2009/04/04 10:12:51 ad Exp $	*/
 
 /*
- *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
+ *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.54 2009/03/13 18:40:10 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.55 2009/04/04 10:12:51 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -148,14 +148,15 @@ static int	tap_fops_poll(file_t *, int);
 static int	tap_fops_kqfilter(file_t *, struct knote *);
 
 static const struct fileops tap_fileops = {
-	tap_fops_read,
-	tap_fops_write,
-	tap_fops_ioctl,
-	fnullop_fcntl,
-	tap_fops_poll,
-	fbadop_stat,
-	tap_fops_close,
-	tap_fops_kqfilter,
+	.fo_read = tap_fops_read,
+	.fo_write = tap_fops_write,
+	.fo_ioctl = tap_fops_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = tap_fops_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = tap_fops_close,
+	.fo_kqfilter = tap_fops_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /* Helper for cloning open() */

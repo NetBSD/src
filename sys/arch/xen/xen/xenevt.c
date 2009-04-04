@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.31 2009/03/10 20:05:31 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.32 2009/04/04 10:12:51 ad Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.31 2009/03/10 20:05:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.32 2009/04/04 10:12:51 ad Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -80,14 +80,15 @@ static int	xenevt_fclose(struct file *);
 /* static int	xenevt_fkqfilter(struct file *, struct knote *); */
 
 static const struct fileops xenevt_fileops = {
-	xenevt_fread,
-	xenevt_fwrite,
-	xenevt_fioctl,
-	fnullop_fcntl,
-	xenevt_fpoll,
-	fbadop_stat,
-	xenevt_fclose,
-	/* xenevt_fkqfilter */ fnullop_kqfilter
+	.fo_read = xenevt_fread,
+	.fo_write = xenevt_fwrite,
+	.fo_ioctl = xenevt_fioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = xenevt_fpoll,
+	.fo_stat = fbadop_stat,
+	.fo_close = xenevt_fclose,
+	.fo_kqfilter = /* xenevt_fkqfilter */ fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 dev_type_open(xenevtopen);
