@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.47 2009/04/04 11:04:28 ad Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.48 2009/04/04 11:24:24 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -380,8 +380,9 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		} else {
 #if DEFSWAPSIZE == -1
 			/* Dynamic swap size. */
-			pi.ptn_sizes[PI_SWAP].dflt_size = (get_mem_size() >> 20);
-			pi.ptn_sizes[PI_SWAP].size = pi.ptn_sizes[PI_SWAP].dflt_size;
+			pi.ptn_sizes[PI_SWAP].dflt_size = get_ramsize();
+			pi.ptn_sizes[PI_SWAP].size =
+			    pi.ptn_sizes[PI_SWAP].dflt_size;
 #endif
 		}
 			
@@ -441,6 +442,12 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		if (pi.free_space > i) {
 			pi.ptn_sizes[PI_ROOT].size += i;
 			pi.free_space -= i;
+		}
+
+		/* If no /usr and still free space, give to / */
+		if (pi.ptn_sizes[PI_USR].size == 0 && pi.free_space != 0) {
+			pi.ptn_sizes[PI_ROOT].size += pi.free_space;
+			pi.free_space = 0;
 		}
 
 		/* Ensure all of / is readable by the system boot code */
