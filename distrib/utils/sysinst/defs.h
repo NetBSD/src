@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.139 2009/04/04 11:04:28 ad Exp $	*/
+/*	$NetBSD: defs.h,v 1.140 2009/04/04 11:24:24 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -420,7 +420,6 @@ int	check_lfs_progs(void);
 void	init_set_status(int);
 void	customise_sets(void);
 void	umount_mnt2(void);
-uint64_t get_mem_size(void);
 
 /* from target.c */
 const	char *concat_paths(const char *, const char *);
