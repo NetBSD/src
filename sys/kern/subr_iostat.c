@@ -1,8 +1,8 @@
-/*	$NetBSD: subr_iostat.c,v 1.15 2008/05/20 16:03:31 ad Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.15.8.1 2009/04/04 17:49:21 snj Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.15 2008/05/20 16:03:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.15.8.1 2009/04/04 17:49:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -220,6 +220,16 @@ iostat_unbusy(struct io_stats *stats, long bcount, int read)
 			stats->io_wxfer++;
 		}
 	}
+}
+
+/*
+ * Return non-zero if a device has an I/O request in flight.
+ */
+bool
+iostat_isbusy(struct io_stats *stats)
+{
+
+	return stats->io_busy != 0;
 }
 
 /*
