@@ -1,7 +1,7 @@
-/*	$NetBSD: init_main.c,v 1.371.2.2 2009/03/31 23:23:15 snj Exp $	*/
+/*	$NetBSD: init_main.c,v 1.371.2.3 2009/04/04 17:39:10 snj Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.2 2009/03/31 23:23:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.3 2009/04/04 17:39:10 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -294,6 +294,7 @@ main(void)
 
 	kernel_lock_init();
 	once_init();
+	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	uvm_init();
 
@@ -363,7 +364,6 @@ main(void)
 	time_init();
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
-	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
