@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.44 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.44.4.1 2009/04/04 23:42:48 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: makewhatis.c,v 1.44 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.44.4.1 2009/04/04 23:42:48 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -477,6 +477,7 @@ addwhatis(whatis **tree, char *data, char *prefix)
 
 	while ((wi = *tree) != NULL) {
 		result = strcmp(data, wi->wi_data);
+		if (result == 0) result = strcmp(prefix, wi->wi_prefix);
 		if (result == 0) return;
 		tree = result < 0 ? &wi->wi_left : &wi->wi_right;
 	}
