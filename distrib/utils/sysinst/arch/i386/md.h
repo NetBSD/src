@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.63 2008/04/30 15:29:11 ad Exp $	*/
+/*	$NetBSD: md.h,v 1.64 2009/04/04 11:04:28 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,8 +50,9 @@
 #include "mbr.h"
 
 /* constants and defines */
-
-#define DEFROOTSIZE	32
+#define	DEFUSRSIZE	0
+#define	DEFSWAPSIZE	(-1)
+#define	DEFROOTSIZE	32
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
