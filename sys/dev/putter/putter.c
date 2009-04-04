@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.20 2009/03/18 10:22:41 cegger Exp $	*/
+/*	$NetBSD: putter.c,v 1.21 2009/04/04 10:12:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.20 2009/03/18 10:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.21 2009/04/04 10:12:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,14 +176,15 @@ static int putter_fop_kqfilter(file_t *, struct knote *);
 
 
 static const struct fileops putter_fileops = {
-	putter_fop_read,
-	putter_fop_write,
-	putter_fop_ioctl,
-	fnullop_fcntl,
-	putter_fop_poll,
-	fbadop_stat,
-	putter_fop_close,
-	putter_fop_kqfilter
+	.fo_read = putter_fop_read,
+	.fo_write = putter_fop_write,
+	.fo_ioctl = putter_fop_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = putter_fop_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = putter_fop_close,
+	.fo_kqfilter = putter_fop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 static int
