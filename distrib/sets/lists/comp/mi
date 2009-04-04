@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1241 2009/04/04 01:45:18 perry Exp $
+#	$NetBSD: mi,v 1.1242 2009/04/04 15:27:48 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10272,7 +10272,17 @@
 ./usr/share/man/html3/bindresvport.html		comp-c-htmlman		html
 ./usr/share/man/html3/bindresvport_sa.html	comp-c-htmlman		html
 ./usr/share/man/html3/bindtextdomain.html	comp-c-htmlman		html
+./usr/share/man/html3/bit_alloc.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_clear.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_decl.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_ffc.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_ffs.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_nclear.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_nset.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_set.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_test.html		comp-c-htmlman		html
 ./usr/share/man/html3/bits.html			comp-c-htmlman		html
+./usr/share/man/html3/bitstr_size.html		comp-c-htmlman		html
 ./usr/share/man/html3/bitstring.html		comp-c-htmlman		html
 ./usr/share/man/html3/bkgd.html			comp-c-htmlman		html
 ./usr/share/man/html3/bkgdset.html		comp-c-htmlman		html
