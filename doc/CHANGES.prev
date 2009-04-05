@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.93 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.94 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9882,4 +9882,40 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		SGI's O2 workstations. [macallan 20090219]
 	mount_procfs(8): Default to -o linux. [pooka 20090223]
 	sgimips: build Xorg by default [macallan 20090223]
+	wm(4): Add support for 82574L. [sborrill 20090227]
 	azalia(4): Add proper Realtek ALC268 support. [jmcneill 20090228]
+	wm(4): Fix the multicast hash bug on ICH9. [msaitoh 20090228]
+	compat_sa: Disable PTHREAD_CONCURRENCY until the bugs are fixed.
+		[christos 20090306]
+	build.sh: In build.sh and bsd.own.mk, if uname -p fails, or
+		prints "unknown", or prints something that does not
+		look like an identifier, then use uname -m instead.
+		[apb 20090306]
+	ddb(4): Change value for ddb.onpanic to 0 in sysctl.conf(5).
+		[martin 20090311]
+	compat_sa: Disable SA via sysctl.conf(5), to keep binary compatibility
+		for incomplete (kernel only) updates. [martin 20090312]
+	atari: Use separate free lists for TT and ST ram, and give TT
+		a lower id so all TT ram will be used before any ST ram.
+		[abs 20090313]
+	cpuctl(8): Print some L2 cache size properly. [tsutsui 20090316]
+	re(4): Fix reset issue on newer 8168C/8111C/8102E chipes.
+		[tsutsui 20090320]
+	wdc(4): Work around a problem with PCMCIA adapter drivers (eg for hpc*)
+		which attach pcmcia devices before interrupts are enabled.
+		[drochner 20090321]
+	savecore(8): Use ksyms(4) if it's available. [tls 20090321]
+	httpd(8): Fix redirection core dump as reported in PR#41042.
+		[reinoud 20080323]
+	rc.conf(5), rc.d(8): Add flags to rc.d/ipfilter. [hannken 20090323]
+	ahcisata(4): Handle quirks of more NVIDIA MCP65 SATA controllers.
+		[dholland 20090327]
+	openssl(1): Apply patches from upstream to fix security problems,
+		ASN1 printing crash (CVE-2009-0590),
+		Incorrect Error Checking During CMS verification
+		(CVE-2009-0591), and Invalid ASN1 clearing check
+		(CVE-2009-0789). [drochner 20090327]
+	zx(4): Use bus_space(9) to access registers so that this works on gcc4.
+		[tsutsui 20090327]
+	sysctl(8): Add sysctl -w name?=value syntax which doesn't print
+		an error even if name does not exist. [christos 20090401]
