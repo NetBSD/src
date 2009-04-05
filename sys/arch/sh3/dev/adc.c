@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.10 2008/12/16 22:35:25 christos Exp $ */
+/*	$NetBSD: adc.c,v 1.11 2009/04/05 00:22:27 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.10 2008/12/16 22:35:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.11 2009/04/05 00:22:27 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,6 +79,15 @@ adc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search_ia(adc_search, self, "adc", NULL);
+
+	/*
+	 * XXX: TODO: provide hooks to manage power.  For now register
+	 * null hooks which is no worse than before.
+	 *
+	 * NB: ADC registers are reset by standby!
+	 */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 
