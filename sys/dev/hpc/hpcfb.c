@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.49 2009/04/05 01:48:47 uwe Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.50 2009/04/05 02:14:41 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.49 2009/04/05 01:48:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.50 2009/04/05 02:14:41 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -195,9 +195,13 @@ static void	hpcfb_free_screen(void *, void *);
 static int	hpcfb_show_screen(void *, void *, int,
 		    void (*) (void *, int, int), void *);
 static void     hpcfb_pollc(void *, int);
-static void	hpcfb_power(int, void *);
 static void	hpcfb_cmap_reorder(struct hpcfb_fbconf *,
 		    struct hpcfb_devconfig *);
+
+static void	hpcfb_power(int, void *);
+static bool	hpcfb_suspend(device_t PMF_FN_PROTO);
+static bool	hpcfb_resume(device_t PMF_FN_PROTO);
+
 
 void    hpcfb_cursor(void *, int, int, int);
 int     hpcfb_mapchar(void *, int, unsigned int *);
@@ -318,12 +322,6 @@ hpcfbattach(device_t parent, device_t self, void *aux)
 	sc->sc_mapping = 0; /* XXX */
 	callout_init(&sc->sc_switch_callout, 0);
 
-	/* Add a power hook to power management */
-	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
-	    hpcfb_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error_dev(sc->sc_dev, "WARNING: unable to establish power hook\n");
-
 	wa.console = hpcfbconsole;
 	wa.scrdata = &hpcfb_screenlist;
 	wa.accessops = &hpcfb_accessops;
@@ -345,6 +343,20 @@ hpcfbattach(device_t parent, device_t self, void *aux)
 		    "hpcfb scroll support disabled\n");
 	}
 #endif /* HPCFB_JUMP */
+
+	/*
+	 * apmdev(4) uses dopowerhooks(9), apm(4) uses pmf(9), and the
+	 * two apm drivers are mutually exclusive.  Register power
+	 * hooks with both.
+	 */
+	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
+	    hpcfb_power, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error_dev(self,
+				 "WARNING: unable to establish power hook\n");
+
+	if (!pmf_device_register(self, hpcfb_suspend, hpcfb_resume))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 #ifdef HPCFB_JUMP
@@ -657,6 +669,24 @@ hpcfb_power(int why, void *arg)
 			    sc->sc_screen_resumed, 1 /* waitok */);
 		break;
 	}
+}
+
+static bool
+hpcfb_suspend(device_t self PMF_FN_ARGS)
+{
+	struct hpcfb_softc *sc = device_private(self);
+
+	hpcfb_power(PWR_SOFTSUSPEND, sc);
+	return true;
+}
+
+static bool
+hpcfb_resume(device_t self PMF_FN_ARGS)
+{
+	struct hpcfb_softc *sc = device_private(self);
+
+	hpcfb_power(PWR_SOFTRESUME, sc);
+	return true;
 }
 
 void
