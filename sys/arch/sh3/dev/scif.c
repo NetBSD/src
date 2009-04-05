@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.58 2009/03/18 10:22:36 cegger Exp $ */
+/*	$NetBSD: scif.c,v 1.59 2009/04/05 00:22:53 uwe Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.58 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.59 2009/04/05 00:22:53 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -494,6 +494,10 @@ scif_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ebuf = sc->sc_rbuf + (scif_rbuf_size << 1);
 
 	tty_attach(tp);
+
+	/* XXX: TODO */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 /*
