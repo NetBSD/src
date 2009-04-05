@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.55 2009/04/03 14:47:40 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.56 2009/04/05 15:10:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.55 2009/04/03 14:47:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.56 2009/04/05 15:10:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -652,10 +652,7 @@ tmpfs_remove(void *v)
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 	de = tmpfs_dir_lookup(dnode, cnp);
-	if (de == NULL) {
-		error = ENOENT;
-		goto out;
-	}
+	KASSERT(de);
 	KASSERT(de->td_node == node);
 
 	/* Files marked as immutable or append-only cannot be deleted. */
@@ -1031,10 +1028,7 @@ tmpfs_rmdir(void *v)
 
 	/* Get the directory entry associated with node (vp). */
 	de = tmpfs_dir_lookup(dnode, cnp);
-	if (de == NULL) {
-		error = ENOENT;
-		goto out;
-	}
+	KASSERT(de);
 	KASSERT(de->td_node == node);
 
 	/* Check flags to see if we are allowed to remove the directory. */
