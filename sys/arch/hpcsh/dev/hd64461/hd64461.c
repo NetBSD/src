@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.21 2009/03/22 02:25:11 uwe Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.22 2009/04/05 00:56:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.21 2009/03/22 02:25:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.22 2009/04/05 00:56:20 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,10 @@ hd64461_attach(device_t parent, device_t self, void *aux)
 		ha.ha_module_id = i;
 		config_found(self, &ha, hd64461_print);
 	}
+
+	/* XXX: TODO */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 STATIC int
