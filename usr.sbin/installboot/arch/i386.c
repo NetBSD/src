@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.31 2009/02/18 20:06:27 christos Exp $ */
+/* $NetBSD: i386.c,v 1.32 2009/04/05 11:55:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.31 2009/02/18 20:06:27 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.32 2009/04/05 11:55:39 lukem Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -201,7 +201,7 @@ show_i386_boot_params(struct x86_boot_params  *bpp)
 	printf("speed %d, ", le32toh(bpp->bp_conspeed));
 	printf("ioaddr %x, ", le32toh(bpp->bp_consaddr));
 	for (i = 0; i < nelem(consoles); i++) {
-		if (consoles[i].dev == le32toh(bpp->bp_consdev))
+		if (consoles[i].dev == (int)le32toh(bpp->bp_consdev))
 			break;
 	}
 	if (i == nelem(consoles))
@@ -222,7 +222,7 @@ static int
 update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 {
 	struct x86_boot_params bp;
-	int bplen;
+	uint32_t bplen;
 	size_t i;
 
 	bplen = le32toh(bpp->bp_length);
@@ -306,7 +306,7 @@ i386_setboot(ib_params *params)
 	 * There is only 8k of space in a UFSv1 partition (and ustarfs)
 	 * so ensure we don't splat over anything important.
 	 */
-	if (params->s1stat.st_size > sizeof bootstrap) {
+	if (params->s1stat.st_size > (off_t)(sizeof bootstrap)) {
 		warnx("stage1 bootstrap `%s' (%u bytes) is larger than 8192 bytes",
 			params->stage1, (unsigned int)params->s1stat.st_size);
 		return 0;

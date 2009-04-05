@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.61 2008/08/15 01:31:02 matt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.62 2009/04/05 11:50:51 lukem Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.61 2008/08/15 01:31:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.62 2009/04/05 11:50:51 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -388,7 +388,7 @@ kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 int
 kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 {
-	int i;
+	uint32_t i;
 
 	KASSERT(cred != NULL);
 	KASSERT(resultp != NULL);
@@ -632,7 +632,7 @@ kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
 
 	if (cred->cr_euid == uuc->cr_uid &&
 	    cred->cr_egid == uuc->cr_gid &&
-	    cred->cr_ngroups == uuc->cr_ngroups) {
+	    cred->cr_ngroups == (uint32_t)uuc->cr_ngroups) {
 		int i;
 
 		/* Check if all groups from uuc appear in cred. */
