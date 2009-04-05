@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.140 2009/04/04 11:24:24 ad Exp $	*/
+/*	$NetBSD: defs.h,v 1.141 2009/04/05 02:18:41 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -413,7 +413,6 @@ void	scripting_vfprintf(FILE *, const char *, va_list);
 void	add_rc_conf(const char *, ...);
 void	add_sysctl_conf(const char *, ...);
 void	enable_rc_conf(void);
-int	check_partitions(void);
 void	set_sizemultname_cyl(void);
 void	set_sizemultname_meg(void);
 int	check_lfs_progs(void);
