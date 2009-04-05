@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.60 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.61 2009/04/05 03:37:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.60 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.61 2009/04/05 03:37:07 uwe Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -922,4 +922,39 @@ ne2000_power(int why, void *arg)
 		break;
 	}
 	splx(s);
+}
+
+bool
+ne2000_suspend(device_t self PMF_FN_ARGS)
+{
+	struct ne2000_softc *sc = device_private(self);
+	struct dp8390_softc *dsc = &sc->sc_dp8390;
+	int s;
+
+	s = splnet();
+
+	dp8390_stop(dsc);
+	dp8390_disable(dsc);
+
+	splx(s);
+	return true;
+}
+
+bool
+ne2000_resume(device_t self PMF_FN_ARGS)
+{
+	struct ne2000_softc *sc = device_private(self);
+	struct dp8390_softc *dsc = &sc->sc_dp8390;
+	struct ifnet *ifp = &dsc->sc_ec.ec_if;
+	int s;
+
+	s = splnet();
+
+	if (ifp->if_flags & IFF_UP) {
+		if (dp8390_enable(dsc) == 0)
+			dp8390_init(dsc);
+	}
+
+	splx(s);
+	return true;
 }
