@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.70 2009/04/04 21:49:49 apb Exp $	*/
+/*	$NetBSD: spec.c,v 1.71 2009/04/05 12:15:07 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.70 2009/04/04 21:49:49 apb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.71 2009/04/05 12:15:07 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,7 +367,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			q = p + strlen(p);
 			while(q > p && q[-1] == ',')
 				q--;
-			printf("tags=%.*s ", q - p, p);
+			printf("tags=%.*s ", (int)(q - p), p);
 		}
 		puts(pathlast ? vispath(path) : "");
 
