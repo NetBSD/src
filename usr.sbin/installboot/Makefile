@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2008/08/29 00:02:25 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.41 2009/04/05 12:04:04 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -39,7 +39,7 @@ SRCS+= ffs_bswap.c
 #SRCS+= ext2fs.c ext2fs_bswap.c
 .endif
 
-WARNS?=	3
+WARNS?=	4
 
 UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 CPPFLAGS+=	-I${.CURDIR} -I.
