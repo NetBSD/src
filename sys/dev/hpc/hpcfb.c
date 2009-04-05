@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.48 2009/03/14 21:04:19 dsl Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.49 2009/04/05 01:48:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.48 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.49 2009/04/05 01:48:47 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -153,12 +153,12 @@ struct hpcfb_devconfig {
 #define HPCFB_MAX_JUMP 5
 
 struct hpcfb_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	hpcfb_devconfig *sc_dc;	/* device configuration */
 	const struct hpcfb_accessops	*sc_accessops;
 	void *sc_accessctx;
 	void *sc_powerhook;	/* power management hook */
-	struct device *sc_wsdisplay;
+	device_t sc_wsdisplay;
 	int sc_screen_resumed;
 	int sc_polling;
 	int sc_mapping;
@@ -174,8 +174,8 @@ struct hpcfb_softc {
 /*
  *  function prototypes
  */
-int	hpcfbmatch(struct device *, struct cfdata *, void *);
-void	hpcfbattach(struct device *, struct device *, void *);
+int	hpcfbmatch(device_t, cfdata_t, void *);
+void	hpcfbattach(device_t, device_t, void *);
 int	hpcfbprint(void *, const char *);
 
 int	hpcfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
@@ -231,7 +231,7 @@ struct wsdisplay_emulops hpcfb_emulops = {
 /*
  *  static variables
  */
-CFATTACH_DECL(hpcfb, sizeof(struct hpcfb_softc),
+CFATTACH_DECL_NEW(hpcfb, sizeof(struct hpcfb_softc),
     hpcfbmatch, hpcfbattach, NULL, NULL);
 
 struct wsscreen_descr hpcfb_stdscreen = {
@@ -280,19 +280,20 @@ struct hpcfb_tvrow hpcfb_console_tvram[HPCFB_MAX_ROW];
  */
 
 int
-hpcfbmatch(struct device *parent,
-	   struct cfdata *match, void *aux)
+hpcfbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	return (1);
 }
 
 void
-hpcfbattach(struct device *parent,
-	    struct device *self, void *aux)
+hpcfbattach(device_t parent, device_t self, void *aux)
 {
-	struct hpcfb_softc *sc = device_private(self);
+	struct hpcfb_softc *sc;
 	struct hpcfb_attach_args *ha = aux;
 	struct wsemuldisplaydev_attach_args wa;
+
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	sc->sc_accessops = ha->ha_accessops;
 	sc->sc_accessctx = ha->ha_accessctx;
@@ -318,10 +319,10 @@ hpcfbattach(struct device *parent,
 	callout_init(&sc->sc_switch_callout, 0);
 
 	/* Add a power hook to power management */
-	sc->sc_powerhook = powerhook_establish(device_xname(&sc->sc_dev),
+	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
 	    hpcfb_power, sc);
 	if (sc->sc_powerhook == NULL)
-		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish power hook\n");
+		aprint_error_dev(sc->sc_dev, "WARNING: unable to establish power hook\n");
 
 	wa.console = hpcfbconsole;
 	wa.scrdata = &hpcfb_screenlist;
@@ -335,12 +336,12 @@ hpcfbattach(struct device *parent,
 	 * Create a kernel thread to scroll,
 	 */
 	if (kthread_create(PRI_NONE, 0, NULL, hpcfb_thread, sc,
-	    &sc->sc_thread, "%s", device_xname(&sc->sc_dev)) != 0) {
+	    &sc->sc_thread, "%s", device_xname(sc->sc_dev)) != 0) {
 		/*
 		 * We were unable to create the HPCFB thread; bail out.
 		 */
 		sc->sc_thread = 0;
-		aprint_error_dev(&sc->sc_dev, "unable to create thread, kernel "
+		aprint_error_dev(sc->sc_dev, "unable to create thread, kernel "
 		    "hpcfb scroll support disabled\n");
 	}
 #endif /* HPCFB_JUMP */
