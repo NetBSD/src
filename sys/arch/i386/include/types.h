@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.63 2009/04/05 00:54:21 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.64 2009/04/05 00:57:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_CPU_LWP_SETPRIVATE
 
 #if defined(_KERNEL)
-#define __HAVE_RAS
+#define	__HAVE_RAS
 #endif
 
 #endif	/* _I386_MACHTYPES_H_ */
