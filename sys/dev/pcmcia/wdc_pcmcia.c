@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.114 2009/03/21 12:35:17 drochner Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.115 2009/04/05 02:35:03 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.114 2009/03/21 12:35:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.115 2009/04/05 02:35:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -320,6 +320,10 @@ wdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 	tsleep(wdc_pcmcia_attach, PWAIT, "wdcattach", hz / 2);
 
 	wdcattach(&sc->ata_channel);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
+
 	config_pending_decr();
 	ata_delref(&sc->ata_channel);
 	sc->sc_state = WDC_PCMCIA_ATTACHED;
@@ -337,6 +341,8 @@ wdc_pcmcia_detach(device_t self, int flags)
 
 	if (sc->sc_state != WDC_PCMCIA_ATTACHED)
 		return (0);
+
+	pmf_device_deregister(self);
 
 	if ((error = wdcdetach(self, flags)) != 0)
 		return (error);

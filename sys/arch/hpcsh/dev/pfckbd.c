@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.26 2009/03/18 10:22:30 cegger Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.27 2009/04/05 02:29:40 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.26 2009/03/18 10:22:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.27 2009/04/05 02:29:40 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -147,6 +147,9 @@ pfckbd_attach(device_t parent, device_t self, void *aux)
 	callout_init(&pfckbd_core.pc_soft_ch, 0);
 	callout_reset(&pfckbd_core.pc_soft_ch, 1,
 		      pfckbd_core.pc_callout, &pfckbd_core);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 static void
