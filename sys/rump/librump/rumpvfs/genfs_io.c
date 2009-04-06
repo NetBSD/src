@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.10 2009/03/26 08:22:22 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.11 2009/04/06 20:41:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.10 2009/03/26 08:22:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.11 2009/04/06 20:41:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -41,6 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.10 2009/03/26 08:22:22 pooka Exp $");
 #include <miscfs/genfs/genfs.h>
 
 #include "rump_private.h"
+
+#if 0
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 void
 genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
