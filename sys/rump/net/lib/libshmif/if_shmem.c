@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.5 2009/03/18 15:32:27 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.6 2009/04/06 20:41:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.5 2009/03/18 15:32:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.6 2009/04/06 20:41:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -47,6 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.5 2009/03/18 15:32:27 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+
+#if 0
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 /*
  * A virtual ethernet interface which uses shared memory from a
