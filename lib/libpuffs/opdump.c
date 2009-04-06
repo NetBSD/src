@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.26 2009/04/06 14:45:11 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.27 2009/04/06 20:47:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.26 2009/04/06 14:45:11 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.27 2009/04/06 20:47:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -190,6 +190,9 @@ puffsdump_req(struct puffs_req *preq)
 		case PUFFS_VN_LINK:
 			puffsdump_targ(preq);
 			break;
+		case PUFFS_VN_READDIR:
+			puffsdump_readdir(preq);
+			break;
 		default:
 			break;
 		}
@@ -327,6 +330,14 @@ puffsdump_targ(struct puffs_req *preq)
 	struct puffs_vnmsg_remove *remove_msg = (void *)preq; /* XXX! */
 
 	printf("\t\ttarget cookie: %p\n", remove_msg->pvnr_cookie_targ);
+}
+
+void
+puffsdump_readdir(struct puffs_req *preq)
+{
+	struct puffs_vnmsg_readdir *readdir_msg = (void *)preq;
+
+	printf("\t\tread offset: %" PRId64 "\n", readdir_msg->pvnr_offset);
 }
 
 void
