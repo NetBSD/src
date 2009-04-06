@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.117 2009/01/18 21:15:14 apb Exp $ */
+/*	$NetBSD: fdisk.c,v 1.118 2009/04/06 12:18:19 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.117 2009/01/18 21:15:14 apb Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.118 2009/04/06 12:18:19 lukem Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1451,7 +1451,8 @@ configure_bootsel(daddr_t default_ptn)
 void
 intuit_translated_geometry(void)
 {
-	int xcylinders = -1, xheads = -1, xsectors = -1, i, j;
+	uint32_t xcylinders;
+	int xheads = -1, xsectors = -1, i, j;
 	unsigned int c1, h1, s1, c2, h2, s2;
 	unsigned long a1, a2;
 	uint64_t num, denom;
@@ -1471,9 +1472,9 @@ intuit_translated_geometry(void)
 		if (dl != NULL) {
 			/* BIOS may use 256 heads or 1024 cylinders */
 			for (i = 0; i < dl->dl_nbiosdisks; i++) {
-				if (h1 < dl->dl_biosdisks[i].bi_head)
+				if (h1 < (unsigned int)dl->dl_biosdisks[i].bi_head)
 					h1 = dl->dl_biosdisks[i].bi_head;
-				if (c1 < dl->dl_biosdisks[i].bi_cyl)
+				if (c1 < (unsigned int)dl->dl_biosdisks[i].bi_cyl)
 					c1 = dl->dl_biosdisks[i].bi_cyl;
 			}
 		}
@@ -1508,6 +1509,11 @@ intuit_translated_geometry(void)
 
 	if (xheads == -1) {
 		warnx("Cannot determine the number of heads");
+		return;
+	}
+
+	if (xsectors == -1) {
+		warnx("Cannot determine the number of sectors");
 		return;
 	}
 
@@ -2442,7 +2448,7 @@ validate_bootsel(struct mbr_bootsel *mbs)
 {
 	unsigned int key = mbs->mbrbs_defkey;
 	unsigned int tmo;
-	int i;
+	size_t i;
 
 	if (v_flag)
 		return 0;
