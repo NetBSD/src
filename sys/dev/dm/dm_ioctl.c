@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.9 2009/03/08 02:07:38 agc Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.10 2009/04/06 22:58:10 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #include "dm.h"
 
 static uint64_t      sc_minor_num; 
+extern const struct dkdriver dmdkdriver;
 uint64_t dev_counter;
 
 #define DM_REMOVE_FLAG(flag, name) do {					\
@@ -247,9 +248,12 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
-	disk_init(dmv->diskp, dmv->name, NULL);
-
+	disk_init(dmv->diskp, dmv->name, &dmdkdriver);
+	disk_attach(dmv->diskp);
+	
 	if ((r = dm_dev_insert(dmv)) != 0){
+		mutex_destroy(&dmv->dev_mtx);
+		cv_destroy(&dmv->dev_cv);
 		dm_dev_free(dmv);
 	}
 	
@@ -398,6 +402,10 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 
 	mutex_destroy(&dmv->dev_mtx);
 	cv_destroy(&dmv->dev_cv);
+
+	/* Destroy disk device structure */
+	disk_detach(dmv->diskp);
+	disk_destroy(dmv->diskp);
 	
 	/* Destroy device */
 	(void)dm_dev_free(dmv);
@@ -535,15 +543,11 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 
 	atomic_and_32(&dmv->flags, ~(DM_SUSPEND_FLAG | DM_INACTIVE_PRESENT_FLAG));
 	atomic_or_32(&dmv->flags, DM_ACTIVE_PRESENT_FLAG);
-
 	
 	dm_table_switch_tables(&dmv->table_head);
 		
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
 
-	dmgetdisklabel(dmv->diskp->dk_label, &dmv->table_head);
-
-	disk_attach(dmv->diskp);
 	dmgetdisklabel(dmv->diskp->dk_label, &dmv->table_head);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
