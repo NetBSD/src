@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.22 2009/02/11 14:35:58 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.23 2009/04/06 03:27:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -269,6 +269,7 @@ ukfs_release(struct ukfs *fs, int flags)
 		kauth_cred_t cred;
 
 		rump_vp_rele(fs->ukfs_cdir);
+		rump_vp_rele(fs->ukfs_rvp);
 		cred = rump_cred_suserget();
 		rv = rump_vfs_sync(fs->ukfs_mp, 1, cred);
 		rump_cred_suserput(cred);
