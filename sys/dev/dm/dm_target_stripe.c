@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.4 2009/03/07 22:17:18 reinoud Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.5 2009/04/06 22:48:26 haad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -177,7 +177,8 @@ dm_target_stripe_status(void *target_config)
 	if ((params = kmem_alloc(tsc->params_len, KM_NOSLEEP)) == NULL)
 		return NULL;
 
-	snprintf(params, tsc->params_len, "%d %lld %s %lld %s %lld", tsc->stripe_num, tsc->stripe_chunksize,
+	snprintf(params, tsc->params_len, "%d %"PRIu64" %s %"PRIu64" %s %"PRIu64,
+	    tsc->stripe_num, tsc->stripe_chunksize,
 	    tsc->stripe_devs[0].pdev->name, tsc->stripe_devs[0].offset,
 	    tsc->stripe_devs[1].pdev->name, tsc->stripe_devs[1].offset);
 	
