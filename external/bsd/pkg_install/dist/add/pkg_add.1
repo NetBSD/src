@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.4 2009/02/28 19:33:37 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.5 2009/04/06 18:49:08 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -32,7 +32,10 @@
 .Op Fl p Ar prefix
 .Op Fl W Ar viewbase
 .Op Fl w Ar view
-.Ar \fR[[ftp|http]://[\fIuser\fR[:\fIpassword]\fR@]\fIhost\fR[:\fIport\fR]][/\fIpath/\fR]pkg-name ...
+.Ar Oo Oo Li ftp|http Oc Ns Li :// Ns Oo Ar user Oc Ns \
+Oo Li \&: Ns Ar password Oc \
+Ns Li @ Oc Ns Ar host Ns Oo Li \&: Ns Ar port Oc Ns \
+Oo Li / Ns Ar path/ Oc Ns Ar pkg-name ...
 .Sh DESCRIPTION
 The
 .Nm
