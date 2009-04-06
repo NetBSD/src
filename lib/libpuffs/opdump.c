@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.25 2008/12/28 22:45:05 christos Exp $	*/
+/*	$NetBSD: opdump.c,v 1.26 2009/04/06 14:45:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.25 2008/12/28 22:45:05 christos Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.26 2009/04/06 14:45:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -208,10 +208,6 @@ void
 puffsdump_rv(struct puffs_req *preq)
 {
 
-	printf("\tRV reqid: %" PRIu64 ", result: %d %s\n",
-	    preq->preq_id, preq->preq_rv,
-	    preq->preq_rv ? strerror(preq->preq_rv) : "");
-
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
 		switch (preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
@@ -227,10 +223,17 @@ puffsdump_rv(struct puffs_req *preq)
 		case PUFFS_VN_WRITE:
 			puffsdump_readwrite_rv(preq);
 			break;
+		case PUFFS_VN_READDIR:
+			puffsdump_readdir_rv(preq);
+			break;
 		default:
 			break;
 		}
 	}
+
+	printf("\tRV reqid: %" PRIu64 ", result: %d %s\n",
+	    preq->preq_id, preq->preq_rv,
+	    preq->preq_rv ? strerror(preq->preq_rv) : "");
 }
 
 void
@@ -299,6 +302,15 @@ puffsdump_readwrite_rv(struct puffs_req *preq)
 	struct puffs_vnmsg_rw *rw_msg = (void *)preq;
 
 	printf("\t\tresid after op: %zu\n", rw_msg->pvnr_resid);
+}
+
+void
+puffsdump_readdir_rv(struct puffs_req *preq)
+{
+	struct puffs_vnmsg_readdir *readdir_msg = (void *)preq;
+
+	printf("\t\tresid after op: %zu, eofflag %d\n",
+	    readdir_msg->pvnr_resid, readdir_msg->pvnr_eofflag);
 }
 
 void
