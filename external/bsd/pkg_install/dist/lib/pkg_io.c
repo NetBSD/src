@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.1.1.5 2009/03/10 00:48:50 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.1.1.6 2009/04/06 18:49:13 joerg Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.1.1.5 2009/03/10 00:48:50 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.1.1.6 2009/04/06 18:49:13 joerg Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -189,7 +189,7 @@ find_best_package(struct url *url, const char *pattern, struct url **best_url)
 	if (fetchList(&ue, url, url_pattern, fetch_flags)) {
 		char *base_url;
 		base_url = fetchStringifyURL(url);
-		warnx("Can't process %s%s: %s", base_url, url_pattern,
+		warnx("Can't process %s/%s: %s", base_url, url_pattern,
 		    fetchLastErrString);
 		free(base_url);
 		free(url_pattern);
