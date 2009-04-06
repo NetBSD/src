@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.79 2009/03/21 19:32:44 tls Exp $	*/
+/*	$NetBSD: savecore.c,v 1.80 2009/04/06 12:32:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.79 2009/03/21 19:32:44 tls Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.80 2009/04/06 12:32:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ int	check_space(void);
 void	clear_dump(void);
 int	Create(char *, int);
 int	dump_exists(void);
-char	*find_dev(dev_t, int);
+char	*find_dev(dev_t, mode_t);
 int	get_crashtime(void);
 void	kmem_setup(void);
 void	Lseek(int, off_t, int);
@@ -566,7 +566,7 @@ static int
 ksymsget(u_long addr, void *ptr, size_t size)
 {
 
-	if (kvm_read(kd_dump, addr, ptr, size) != size) {
+	if ((size_t)kvm_read(kd_dump, addr, ptr, size) != size) {
 		if (verbose)
 			syslog(LOG_WARNING, "kvm_read: %s",
 			    kvm_geterr(kd_dump));
@@ -751,7 +751,7 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 		humanize_number(nbuf, 7, dumpbytes, "", HN_AUTOSCALE, 0);
 		(void)printf("%7s\r", nbuf);
 		(void)fflush(stdout);
-		nr = read(ifd, buf, MIN(dumpbytes, sizeof(buf)));
+		nr = read(ifd, buf, MIN(dumpbytes, (off_t)sizeof(buf)));
 		if (nr <= 0) {
 			if (nr == 0)
 				syslog(LOG_WARNING,
@@ -816,7 +816,7 @@ err2:			syslog(LOG_WARNING,
 }
 
 char *
-find_dev(dev_t dev, int type)
+find_dev(dev_t dev, mode_t type)
 {
 	DIR *dfd;
 	struct dirent *dir;
