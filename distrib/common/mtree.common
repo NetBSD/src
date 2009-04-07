@@ -1,4 +1,4 @@
-#	$NetBSD: mtree.common,v 1.8 2007/08/24 17:11:58 skd Exp $
+#	$NetBSD: mtree.common,v 1.9 2009/04/07 11:49:17 joerg Exp $
 
 /set				type=dir uname=root gname=wheel mode=0755
 
@@ -7,6 +7,7 @@
 ./dev
 ./etc
 ./libexec
+./libexec/dhcpcd-hooks
 ./mnt
 ./mnt2
 ./kern
