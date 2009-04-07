@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.72 2009/04/05 15:47:03 apb Exp $	*/
+/*	$NetBSD: spec.c,v 1.73 2009/04/07 18:06:41 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.72 2009/04/05 15:47:03 apb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.73 2009/04/07 18:06:41 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -708,6 +708,7 @@ addchild(NODE *pathparent, NODE *centry)
 			if (insertpos) {
 				centry->next = insertpos->next;
 				insertpos->next = centry;
+				centry->prev = insertpos;
 				if (centry->next)
 					centry->next->prev = centry;
 			} else {
