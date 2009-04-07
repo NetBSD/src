@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.38 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.39 2009/04/07 18:25:26 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.39 2009/04/07 18:25:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,9 +243,9 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-CFATTACH_DECL2_NEW(ehci_pci, sizeof(struct ehci_pci_softc),
+CFATTACH_DECL3_NEW(ehci_pci, sizeof(struct ehci_pci_softc),
     ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate, NULL,
-    ehci_childdet);
+    ehci_childdet, DVF_DETACH_SHUTDOWN);
 
 #ifdef EHCI_DEBUG
 static void
