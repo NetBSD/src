@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.24 2009/04/03 00:14:42 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.25 2009/04/07 18:07:10 dyoung Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.24 2009/04/03 00:14:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.25 2009/04/07 18:07:10 dyoung Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -738,6 +738,7 @@ bnx_detach(device_t dev, int flags)
 	splx(s);
 
 	pmf_device_deregister(dev);
+	callout_destroy(&sc->bnx_timeout);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	mii_detach(&sc->bnx_mii, MII_PHY_ANY, MII_OFFSET_ANY);
