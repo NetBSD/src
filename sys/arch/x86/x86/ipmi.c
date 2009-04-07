@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.30 2009/04/07 17:53:45 dyoung Exp $ */
+/*	$NetBSD: ipmi.c,v 1.31 2009/04/07 21:00:30 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.30 2009/04/07 17:53:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.31 2009/04/07 21:00:30 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1881,10 +1881,9 @@ ipmi_detach(device_t self, int flags)
 
 	ipmi_enabled = 0;
 
-	sysmon_envsys_unregister(sc->sc_envsys);
-
 	if (sc->sc_envsys != NULL) {
-		sysmon_envsys_destroy(sc->sc_envsys);
+		/* _unregister also destroys */
+		sysmon_envsys_unregister(sc->sc_envsys);
 		sc->sc_envsys = NULL;
 	}
 
