@@ -1,0 +1,110 @@
+## Process this file with automake to produce Makefile.in
+# Makefile for GNU CVS contributed sources.
+# Do not use this makefile directly, but only from `../Makefile'.
+#
+# Copyright (C) 1986-2005 The Free Software Foundation, Inc.
+#
+# Portions Copyright (C) 1998-2005 Derek Price, Ximbiot <http://ximbiot.com>,
+#                                  and others.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+SUBDIRS = pam
+
+contribdir = $(pkgdatadir)/contrib
+
+contrib_SCRIPTS = \
+	clmerge \
+	cln_hist \
+	commit_prep \
+	cvs2vendor \
+	cvs_acls \
+	debug_check_log \
+	log \
+	log_accum \
+	mfpipe \
+	newcvsroot \
+	pvcs2rcs \
+	rcs-to-cvs \
+	rcs2log \
+	rcslock \
+	sandbox_status \
+	sccs2rcs \
+	validate_repo
+
+contrib_DATA = \
+	README \
+	intro.doc \
+	rcs-5.7-commitid.patch
+
+contrib_MANS = \
+	rcs2log.1 \
+	sandbox_status.man
+
+bin_LINKS = \
+	rcs2log
+
+EXTRA_DIST = \
+	.cvsignore \
+	$(contrib_DATA) \
+	$(contrib_MANS) \
+	cvs2vendor.sh \
+	sandbox_status.sh \
+	cvshelp.man \
+	cvs_acls.html \
+	debug_check_log.sh \
+	descend.sh \
+	descend.man \
+	dirfns.shar \
+	newcvsroot.sh \
+	rcs-5.7-commitid.patch \
+	rcs-to-cvs.sh \
+	rcs2log.sh \
+	rcs2sccs.sh
+
+CLEANFILES = $(bin_LINKS) $(contrib_SCRIPTS)
+
+# we'd rather have a link here rather than two copies of a script
+install-data-local:
+	: FIXME - this path should be determined dynamically from bindir
+	: and contribdir
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	@list='$(bin_LINKS)'; for p in $$list; do \
+	    echo "test ! -f $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`"; \
+	    echo "  && cd $(DESTDIR)$(bindir) && $(LN_S) ../share/$(PACKAGE)/contrib/`echo $$p|sed '$(transform)'` ."; \
+	    (test ! -f $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'` \
+	        && cd $(DESTDIR)$(bindir) && $(LN_S) ../share/$(PACKAGE)/contrib/`echo $$p|sed '$(transform)'` .) \
+	      || (echo "Link creation failed" && if test -f $$p; then \
+	           echo " $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`"; \
+	           $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
+	         else if test -f $(srcdir)/$$p; then \
+	           echo " $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`"; \
+	           $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
+	         else :; fi; fi); \
+	done
+
+uninstall-local:
+	@$(NORMAL_UNINSTALL)
+	list='$(bin_LINKS)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
+	done
+
+SUFFIXES = .sh
+
+.sh:
+	rm -f $@
+	cp $< $@
+	chmod +x $@
+
+# for backwards compatibility with the old makefiles
+realclean: maintainer-clean
+.PHONY: realclean
