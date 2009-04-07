@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.981 2009/03/10 03:31:36 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.982 2009/04/07 18:41:06 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.981 2009/03/10 03:30:55 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.982 2009/04/07 18:40:39 msaitoh Exp
  */
 
 /*
@@ -2251,6 +2251,7 @@
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801J_D_BM_LF	0x10cd		/* i82801J (LF) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN Controller */
 #define	PCI_PRODUCT_INTEL_82574L	0x10d3		/* i82574L 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82567LM_3	0x10de		/* i82567LM-3 LAN Controller */
