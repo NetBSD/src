@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.104 2009/04/03 21:31:08 dyoung Exp $	*/
+/*	$NetBSD: ata.c,v 1.105 2009/04/07 18:01:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.104 2009/04/03 21:31:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.105 2009/04/07 18:01:20 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -162,6 +162,7 @@ ata_channel_attach(struct ata_channel *chp)
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
 
+	/* XXX callout_destroy */
 	callout_init(&chp->ch_callout, 0);
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
