@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.24 2009/02/22 15:28:43 yamt Exp $	*/
+/*	$NetBSD: symtab.c,v 1.25 2009/04/07 12:38:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.24 2009/02/22 15:28:43 yamt Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.25 2009/04/07 12:38:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -450,6 +450,7 @@ dumpsymtable(const char *filename, int32_t checkpt)
 {
 	struct entry *ep, *tep;
 	ino_t i;
+	long l;
 	struct entry temp, *tentry;
 	long mynum = 1, stroff = 0;
 	FILE *fd;
@@ -505,11 +506,11 @@ dumpsymtable(const char *filename, int32_t checkpt)
 	/*
 	 * Convert entry pointers to indexes, and output
 	 */
-	for (i = 0; i < entrytblsize; i++) {
-		if (entry[i] == NULL)
+	for (l = 0; l < entrytblsize; l++) {
+		if (entry[l] == NULL)
 			tentry = NULL;
 		else
-			tentry = (struct entry *)(long)entry[i]->e_index;
+			tentry = (struct entry *)(long)entry[l]->e_index;
 		(void) fwrite((char *)&tentry, sizeof(struct entry *), 1, fd);
 	}
 	hdr.volno = checkpt;
