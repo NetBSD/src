@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.10 2009/03/20 08:30:52 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.11 2009/04/07 18:35:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.10 2009/03/20 08:30:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.11 2009/04/07 18:35:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -135,7 +135,7 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
 	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
 	vp->v_size = vp->v_writesize = size;
 	vp->v_type = vt;
-	if (vp->v_type == VREG)
+	if (vp->v_type == VREG || vp->v_type == VCHR)
 		vp->v_type = VBLK;
 
 	if (vp->v_type != VBLK && vp->v_type != VDIR)
@@ -204,6 +204,9 @@ rump_vop_lookup(void *v)
 		break;
 	case RUMPUSER_FT_BLK:
 		vt = VBLK;
+		break;
+	case RUMPUSER_FT_CHR:
+		vt = VCHR;
 		break;
 	default:
 		vt = VBAD;
