@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2006/06/02 22:11:52 hubertf Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/07 11:49:16 joerg Exp $
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	5000k
-IMAGEDEPENDS= 	disktab.preinstall \
-		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script
+IMAGEDEPENDS= 	disktab.preinstall
 USE_SYSINST=	yes
 SMALLPROG_INET6=1
 
