@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.277 2009/01/13 13:35:54 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.278 2009/04/07 18:35:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.277 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.278 2009/04/07 18:35:17 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -129,8 +129,8 @@ static int	sdactivate(struct device *, enum devact);
 static int	sddetach(struct device *, int);
 static void	sd_set_properties(struct sd_softc *);
 
-CFATTACH_DECL_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
-    sdactivate);
+CFATTACH_DECL3_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
+    sdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver sd_cd;
 
@@ -388,6 +388,8 @@ sddetach(struct device *self, int flags)
 	/* Detach from the disk list. */
 	disk_detach(&sd->sc_dk);
 	disk_destroy(&sd->sc_dk);
+
+	callout_destroy(&sd->sc_callout);
 
 	pmf_device_deregister(self);
 	shutdownhook_disestablish(sd->sc_sdhook);

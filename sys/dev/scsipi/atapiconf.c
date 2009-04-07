@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.77 2008/03/24 14:44:26 cube Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.78 2009/04/07 18:35:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.77 2008/03/24 14:44:26 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.78 2009/04/07 18:35:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,9 @@ static int	atapi_probe_bus(struct atapibus_softc *, int);
 
 static int	atapibusprint(void *, const char *);
 
-CFATTACH_DECL2_NEW(atapibus, sizeof(struct atapibus_softc),
+CFATTACH_DECL3_NEW(atapibus, sizeof(struct atapibus_softc),
     atapibusmatch, atapibusattach, atapibusdetach, atapibusactivate, NULL,
-    atapibuschilddet);
+    atapibuschilddet, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver atapibus_cd;
 
