@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.38 2009/02/22 20:28:05 ad Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.39 2009/04/07 12:25:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.38 2009/02/22 20:28:05 ad Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.39 2009/04/07 12:25:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,7 +356,7 @@ change_log_info(long long logfilesize)
 	if (!in_fs_log)
 		errx(1, "Can't change size of non-in-filesystem log");
 
-	if (old_size == logfilesize && logfilesize > 0) {
+	if (logfilesize > 0 && old_size == (uint64_t)logfilesize) {
 		/* no action */
 		warnx("log file size remains unchanged at %lld", logfilesize);
 		return;
