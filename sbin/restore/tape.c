@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.62 2009/02/18 13:13:27 yamt Exp $	*/
+/*	$NetBSD: tape.c,v 1.63 2009/04/07 12:38:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.62 2009/02/18 13:13:27 yamt Exp $");
+__RCSID("$NetBSD: tape.c,v 1.63 2009/04/07 12:38:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -864,7 +864,7 @@ loop:
 	for (i = 0; i < spcl.c_count; i++) {
 		if (spcl.c_addr[i]) {
 			readtape(&buf[curblk++][0]);
-			if (curblk == fssize / TP_BSIZE) {
+			if ((uint32_t)curblk == fssize / TP_BSIZE) {
 				(*fill)((char *)buf, (long)(size > TP_BSIZE ?
 				     fssize : (curblk - 1) * TP_BSIZE + size));
 				curblk = 0;
