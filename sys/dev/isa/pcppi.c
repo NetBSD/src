@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.33 2009/03/14 11:08:28 ad Exp $ */
+/* $NetBSD: pcppi.c,v 1.34 2009/04/07 22:30:09 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.33 2009/03/14 11:08:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.34 2009/04/07 22:30:09 dyoung Exp $");
 
 #include "attimer.h"
 
@@ -68,6 +68,7 @@ static void pcppi_bell_stop(void*);
 
 #if NATTIMER > 0
 static void pcppi_attach_speaker(device_t);
+static void pcppi_detach_speaker(struct pcppi_softc *);
 #endif
 
 #define PCPPIPRI (PZERO - 1)
@@ -180,6 +181,10 @@ pcppi_detach(device_t self, int flags)
 	int rc;
 	struct pcppi_softc *sc = device_private(self);
 
+#if NATTIMER > 0
+	pcppi_detach_speaker(sc);
+#endif
+
 	if ((rc = config_detach_children(sc->sc_dv, flags)) != 0)
 		return rc;
 
@@ -233,6 +238,15 @@ pcppisearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 }
 
 #if NATTIMER > 0
+static void
+pcppi_detach_speaker(struct pcppi_softc *sc)
+{
+	if (sc->sc_timer != NULL) {
+		attimer_detach_speaker(sc->sc_timer);
+		sc->sc_timer = NULL;
+	}
+}
+
 static void
 pcppi_attach_speaker(device_t self)
 {
