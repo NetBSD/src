@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.36 2009/04/07 13:52:08 apb Exp $
+# $NetBSD: mi,v 1.37 2009/04/07 19:28:40 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -986,6 +986,9 @@
 ./usr/tests/util/make/t_make			tests-util-tests
 ./usr/tests/util/mtree				tests-util-tests
 ./usr/tests/util/mtree/Atffile			tests-util-tests
+./usr/tests/util/mtree/d_convert.in		tests-util-tests
+./usr/tests/util/mtree/d_convert_C.out		tests-util-tests
+./usr/tests/util/mtree/d_convert_D.out		tests-util-tests
 ./usr/tests/util/mtree/d_create.out		tests-util-tests
 ./usr/tests/util/mtree/t_mtree			tests-util-tests
 ./usr/tests/util/ps				tests-util-tests
