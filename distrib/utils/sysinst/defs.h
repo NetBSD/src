@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.141 2009/04/05 02:18:41 tsutsui Exp $	*/
+/*	$NetBSD: defs.h,v 1.142 2009/04/07 10:45:04 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -339,6 +339,7 @@ int	make_fstab(void);
 int	mount_disks(void);
 int	set_swap(const char *, partinfo *);
 int	check_swap(const char *, int);
+char	*bootxx_name(void);
 
 /* from disks_lfs.c */
 int	fs_is_lfs(void *);

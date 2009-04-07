@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.103 2009/02/23 23:12:24 ad Exp $ */
+/*	$NetBSD: disks.c,v 1.104 2009/04/07 10:45:04 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -823,3 +823,49 @@ check_swap(const char *disk, int remove_swap)
 	rval = -1;
 	goto done;
 }
+
+#ifdef HAVE_BOOTXX_xFS
+char *
+bootxx_name(void)
+{
+	int fstype;
+	const char *bootxxname;
+	char *bootxx;
+
+	/* check we have boot code for the root partition type */
+	fstype = bsdlabel[rootpart].pi_fstype;
+	switch (fstype) {
+#if defined(BOOTXX_FFSV1) || defined(BOOTXX_FFSV2)
+	case FS_BSDFFS:
+		if (bsdlabel[rootpart].pi_flags & PIF_FFSv2) {
+#ifdef BOOTXX_FFSV2
+			bootxxname = BOOTXX_FFSV2;
+#else
+			bootxxname = NULL;
+#endif
+		} else {
+#ifdef BOOTXX_FFSV1
+			bootxxname = BOOTXX_FFSV1;
+#else
+			bootxxname = NULL;
+#endif
+		}
+		break;
+#endif
+#ifdef BOOTXX_LFS
+	case FS_BSDLFS:
+		bootxxname = BOOTXX_LFS;
+		break;
+#endif
+	default:
+		bootxxname = NULL;
+		break;
+	}
+
+	if (bootxxname == NULL)
+		return NULL;
+
+	asprintf(&bootxx, "%s/%s", BOOTXXDIR, bootxxname);
+	return bootxx;
+}
+#endif
