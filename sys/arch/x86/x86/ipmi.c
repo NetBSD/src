@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.31 2009/04/07 21:00:30 dyoung Exp $ */
+/*	$NetBSD: ipmi.c,v 1.32 2009/04/07 21:47:58 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.31 2009/04/07 21:00:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.32 2009/04/07 21:47:58 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1859,6 +1859,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 static int
 ipmi_detach(device_t self, int flags)
 {
+	struct ipmi_sensor *i;
 	int rc;
 	struct ipmi_softc *sc = device_private(self);
 
@@ -1885,6 +1886,11 @@ ipmi_detach(device_t self, int flags)
 		/* _unregister also destroys */
 		sysmon_envsys_unregister(sc->sc_envsys);
 		sc->sc_envsys = NULL;
+	}
+
+	while ((i = SLIST_FIRST(&ipmi_sensor_list)) != NULL) {
+		SLIST_REMOVE_HEAD(&ipmi_sensor_list, i_list);
+		free(i, M_DEVBUF);
 	}
 
 	if (sc->sc_sensor != NULL) {
