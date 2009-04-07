@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.120 2009/04/04 11:03:24 ad Exp $ */
+/*	$NetBSD: md.c,v 1.121 2009/04/07 10:45:05 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,6 @@ static int mbr_root_above_chs(void);
 static void md_upgrade_mbrtype(void);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
-static char *md_bootxx_name(void);
 
 
 int
@@ -342,7 +341,7 @@ md_post_newfs(void)
 
 	snprintf(bootxx, sizeof bootxx, "/dev/r%s%c", diskdev, 'a' + rootpart);
 	td = open(bootxx, O_RDWR, 0);
-	bootxx_filename = md_bootxx_name();
+	bootxx_filename = bootxx_name();
 	if (bootxx_filename != NULL) {
 		sd = open(bootxx_filename, O_RDONLY);
 		free(bootxx_filename);
@@ -406,7 +405,7 @@ md_check_partitions(void)
 	char *bootxx;
 
 	/* check we have boot code for the root partition type */
-	bootxx = md_bootxx_name();
+	bootxx = bootxx_name();
 	rval = access(bootxx, R_OK);
 	free(bootxx);
 	if (rval == 0)
@@ -612,32 +611,6 @@ md_init_set_status(int minimal)
 
 	/* Default to install same type of kernel as we are running */
 	set_kernel_set(get_bootmodel());
-}
-
-static char *
-md_bootxx_name(void)
-{
-	int fstype;
-	const char *bootfs = 0;
-	char *bootxx;
-
-	/* check we have boot code for the root partition type */
-	fstype = bsdlabel[rootpart].pi_fstype;
-	if (fstype == FS_BSDFFS)
-		if (bsdlabel[rootpart].pi_flags & PIF_FFSv2)
-			bootfs = "ffsv2";
-		else
-			bootfs = "ffsv1";
-	else if (fstype == FS_BSDLFS)
-			bootfs = "lfsv2";
-	else
-		bootfs = mountnames[fstype];
-
-	if (bootfs == NULL)
-		return NULL;
-
-	asprintf(&bootxx, "/usr/mdec/bootxx_%s", bootfs);
-	return bootxx;
 }
 
 int
