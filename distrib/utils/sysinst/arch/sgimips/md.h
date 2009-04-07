@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.23 2007/11/12 15:07:36 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.24 2009/04/07 10:45:05 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,6 +57,9 @@
 #define DEFVARSIZE	32	/* Default /var size, if created */
 #define DEFUSRSIZE	120	/* Default /usr size, if /home */
 #define XNEEDMB		100	/* Extra megs for full X installation */
+
+/* have support for booting from UFS2 */
+#define	HAVE_UFS2_BOOT
 
 /*
  * Machine-specific command to write a new label to a disk.
