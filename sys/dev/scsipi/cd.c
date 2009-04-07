@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.291 2009/04/01 12:19:04 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.292 2009/04/07 18:35:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.291 2009/04/01 12:19:04 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.292 2009/04/07 18:35:17 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -181,8 +181,8 @@ static int	mmc_setup_writeparams(struct scsipi_periph *, struct mmc_writeparams 
 
 static void	cd_set_properties(struct cd_softc *);
 
-CFATTACH_DECL_NEW(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
-    cdactivate);
+CFATTACH_DECL3_NEW(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
+    cdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver cd_cd;
 
@@ -353,12 +353,6 @@ cddetach(device_t self, int flags)
 	/* Detach from the disk list. */
 	disk_detach(&cd->sc_dk);
 	disk_destroy(&cd->sc_dk);
-
-#if 0
-	/* Get rid of the shutdown hook. */
-	if (cd->sc_sdhook != NULL)
-		shutdownhook_disestablish(cd->sc_sdhook);
-#endif
 
 #if NRND > 0
 	/* Unhook the entropy source. */
