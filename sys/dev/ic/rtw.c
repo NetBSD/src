@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.107 2009/04/02 00:57:20 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.108 2009/04/07 18:02:04 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.107 2009/04/02 00:57:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.108 2009/04/07 18:02:04 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1422,11 +1422,7 @@ rtw_io_enable(struct rtw_softc *sc, uint8_t flags, int enable)
 
 	/* XXX reference source does not enable MULRW */
 	/* enable PCI Read/Write Multiple */
-#if 1
 	cr |= RTW_CR_MULRW;
-#else
-	cr &= ~RTW_CR_MULRW;
-#endif
 
 	/* The receive engine will always start at RDSAR.  */
 	if (enable && (flags & ~cr & RTW_CR_RE)) {
