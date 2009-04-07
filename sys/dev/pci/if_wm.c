@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.173 2009/04/07 18:23:37 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.174 2009/04/07 18:42:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -73,13 +73,10 @@
  * TODO (in order of importance):
  *
  *	- Rework how parameters are loaded from the EEPROM.
- *	- Figure out what to do with the i82545GM and i82546GB
- *	  SERDES controllers.
- *	- Fix hw VLAN assist.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.173 2009/04/07 18:23:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.174 2009/04/07 18:42:30 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -885,6 +882,9 @@ static const struct wm_product {
 	  WM_T_ICH10,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82567LF_3,
 	  "82567LF-3 LAN Controller",
+	  WM_T_ICH10,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_LF,
+	  "i82801J (LF) LAN Controller",
 	  WM_T_ICH10,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
@@ -3076,6 +3076,9 @@ wm_reset(struct wm_softc *sc)
 		/* check EECD_EE_AUTORD */
 		wm_get_auto_rd_done(sc);
 	}
+
+	/* reload sc_ctrl */
+	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 
 #if 0
 	for (i = 0; i < 1000; i++) {
