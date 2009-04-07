@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.23 2009/04/02 22:19:48 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.24 2009/04/07 18:16:28 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.23 2009/04/02 22:19:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.24 2009/04/07 18:16:28 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -302,8 +302,7 @@ pmf_system_shutdown(int how)
 
 	for (curdev = shutdown_first(&s); curdev != NULL;
 	     curdev = shutdown_next(&s)) {
-		aprint_debug(" attempting %s shutdown",
-		    device_xname(curdev));
+		aprint_debug(" attempting %s shutdown", device_xname(curdev));
 		if ((boothowto & RB_NOSYNC) == 0 &&
 		    config_detach(curdev, DETACH_SHUTDOWN) == 0)
 			aprint_debug("(detached)");
