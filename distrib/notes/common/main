@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.439 2009/02/25 17:51:25 sno Exp $
+.\"	$NetBSD: main,v 1.440 2009/04/07 19:52:04 tez Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1650,6 +1650,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Reinoud Zandijk Ta Mt reinoud@NetBSD.org
 .It Ta S.P.Zeidler Ta Mt spz@NetBSD.org
 .It Ta Maria Zevenhoven Ta Mt maria7@NetBSD.org
+.It Ta Tim Zingelman Ta Mt tez@NetBSD.org
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.org
 .It Ta Ta
 .
