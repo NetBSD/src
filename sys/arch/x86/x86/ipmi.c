@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.29 2009/02/22 07:14:46 dholland Exp $ */
+/*	$NetBSD: ipmi.c,v 1.30 2009/04/07 17:53:45 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.29 2009/02/22 07:14:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.30 2009/04/07 17:53:45 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -187,6 +187,7 @@ int	ipmi_watchdog_tickle(struct sysmon_wdog *);
 int	ipmi_intr(void *);
 int	ipmi_match(device_t, cfdata_t, void *);
 void	ipmi_attach(device_t, device_t, void *);
+static int ipmi_detach(device_t, int);
 
 long	ipow(long, int);
 long	ipmi_convert(uint8_t, struct sdrtype1 *, long);
@@ -209,7 +210,7 @@ int	ipmi_sensor_type(int, int, int);
 void	ipmi_smbios_probe(struct smbios_ipmi *, struct ipmi_attach_args *);
 void	ipmi_refresh_sensors(struct ipmi_softc *sc);
 int	ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
-void	ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
+void	ipmi_unmap_regs(struct ipmi_softc *sc);
 
 void	*scan_sig(long, long, int, int, const void *);
 
@@ -869,7 +870,7 @@ struct ipmi_bmc_response {
 
 
 CFATTACH_DECL2_NEW(ipmi, sizeof(struct ipmi_softc),
-    ipmi_match, ipmi_attach, NULL, NULL, NULL, NULL);
+    ipmi_match, ipmi_attach, ipmi_detach, NULL, NULL, NULL);
 
 /* Scan memory for signature */
 void *
@@ -1655,7 +1656,7 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 }
 
 void
-ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
+ipmi_unmap_regs(struct ipmi_softc *sc)
 {
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_if->nregs * sc->sc_if_iospacing);
@@ -1731,7 +1732,7 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	dbg_dump(1, "bmc data", len, cmd);
 	rv = 1; /* GETID worked, we got IPMI */
 unmap:
-	ipmi_unmap_regs(&sc, ia);
+	ipmi_unmap_regs(&sc);
 
 	return rv;
 }
@@ -1853,6 +1854,51 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	aprint_normal("\n");
 	config_interrupts(self, ipmi_attach2);
+}
+
+static int
+ipmi_detach(device_t self, int flags)
+{
+	int rc;
+	struct ipmi_softc *sc = device_private(self);
+
+	sc->sc_thread_running = 0;
+	wakeup(&sc->sc_thread_running);
+
+	if ((rc = sysmon_wdog_unregister(&sc->sc_wdog)) != 0) {
+		if (rc == ERESTART)
+			rc = EINTR;
+		return rc;
+	}
+
+	/* cancel any pending countdown */
+	sc->sc_wdog.smw_mode &= ~WDOG_MODE_MASK;
+	sc->sc_wdog.smw_mode |= WDOG_MODE_DISARMED;
+	sc->sc_wdog.smw_period = WDOG_PERIOD_DEFAULT;
+
+	if ((rc = ipmi_watchdog_setmode(&sc->sc_wdog)) != 0)
+		return rc;
+
+	ipmi_enabled = 0;
+
+	sysmon_envsys_unregister(sc->sc_envsys);
+
+	if (sc->sc_envsys != NULL) {
+		sysmon_envsys_destroy(sc->sc_envsys);
+		sc->sc_envsys = NULL;
+	}
+
+	if (sc->sc_sensor != NULL) {
+		free(sc->sc_sensor, M_DEVBUF);
+		sc->sc_sensor = NULL;
+	}
+
+	ipmi_unmap_regs(sc);
+
+	callout_destroy(&sc->sc_callout);
+	mutex_destroy(&sc->sc_lock);
+
+	return 0;
 }
 
 int
