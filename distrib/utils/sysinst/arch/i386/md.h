@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.65 2009/04/05 00:50:52 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.66 2009/04/07 10:45:05 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,12 +54,20 @@
 #define	DEFSWAPSIZE	(-1)
 #define	DEFROOTSIZE	32
 
-/* use UFS2 by default for ffs */
-#define	DEFAULT_UFS2
-#define	HAVE_UFS2_BOOT
-
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
+
+/* use UFS2 by default for ffs */
+#define	DEFAULT_UFS2
+
+/* have support for booting from UFS2 */
+#define	HAVE_UFS2_BOOT
+
+/* have file system specific primary boot loader */
+#define	HAVE_BOOTXX_xFS
+#define	BOOTXXDIR	"/usr/mdec"
+#define	BOOTXX_FFSV1	"bootxx_ffsv1"
+#define	BOOTXX_FFSV2	"bootxx_ffsv2"
 
 /*
  *  Default filesets to fetch and install during installation

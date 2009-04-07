@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.50 2009/04/05 00:50:51 tsutsui Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.51 2009/04/07 10:45:04 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,6 +55,8 @@
 #include "endian.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+static int check_partitions(void);
 
 /* For the current state of this file blame abs@NetBSD.org */
 /* Even though he wasn't the last to hack it, but he did admit doing so :-) */
@@ -704,7 +706,7 @@ make_bsd_partitions(void)
 		msg_display(MSG_abort);
 		return 0;
 	}
-	if (md_check_partitions() == 0)
+	if (check_partitions() == 0)
 		goto edit_check;
 
 	/* Disk name */
@@ -715,4 +717,42 @@ make_bsd_partitions(void)
 
 	/* Everything looks OK. */
 	return (1);
+}
+
+/*
+ * check that there is at least a / somewhere.
+ */
+static int
+check_partitions(void)
+{
+#ifdef HAVE_BOOTXX_xFS
+	int rv;
+	char *bootxx;
+#endif
+#ifndef HAVE_UFS2_BOOT
+	int fstype;
+#endif
+
+#ifdef HAVE_BOOTXX_xFS
+	/* check if we have boot code for the root partition type */
+	bootxx = bootxx_name();
+	if (bootxx != NULL) {
+		rv = access(bootxx, R_OK);
+		free(bootxx);
+	}
+	if (bootxx == NULL || rv != 0) {
+		process_menu(MENU_ok, deconst(MSG_No_Bootcode));
+		return 0;
+	}
+#endif
+#ifndef HAVE_UFS2_BOOT
+	fstype = bsdlabel[rootpart].pi_fstype;
+	if (fstype == FS_BSDFFS &&
+	    (bsdlabel[rootpart].pi_flags & PIF_FFSv2) != 0) {
+		process_menu(MENU_ok, deconst(MSG_cannot_ufs2_root));
+		return 0;
+	}
+#endif
+
+	return md_check_partitions();
 }
