@@ -6,13 +6,13 @@
 # .
 /set type=file nlink=1
 .               type=dir nlink=4
-    a.symlink.1 type=link
+    a.symlink.1 type=link link=a.file.1
     top.dangling \
-                type=link
+                type=link link=nonexistent
     top.file.1  size=18 \
                 sha256=74c53aaf0cd9543b7efad969de1058ee38859134ba467500b849811fc3513195
     top.symlink.b \
-                type=link
+                type=link link=b
 
 # ./a
 a               type=dir nlink=4

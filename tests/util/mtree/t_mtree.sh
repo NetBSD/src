@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.1 2009/04/07 13:52:08 apb Exp $
+# $NetBSD: t_mtree.sh,v 1.2 2009/04/07 19:28:40 apb Exp $
 #
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -77,7 +77,7 @@ create_body()
 	create_setup
 
 	# run mtree and check output
-	( cd create && mtree -c -k type,nlink,size,sha256 ) >output.raw \
+	( cd create && mtree -c -k type,nlink,link,size,sha256 ) >output.raw \
 	|| atf_fail "mtree exit status $?"
 	h_postprocess <output.raw >output
 	h_check "$(atf_get_srcdir)/d_create.out" output
@@ -99,8 +99,32 @@ check_body()
 	h_check /dev/null output
 }
 
+atf_test_case convert_C
+convert_C_head()
+{
+	atf_set "descr" "Convert a specfile to mtree -C format"
+}
+convert_C_body()
+{
+	mtree -C -K all <"$(atf_get_srcdir)/d_convert.in" >output
+	h_check "$(atf_get_srcdir)/d_convert_C.out" output
+}
+
+atf_test_case convert_D
+convert_D_head()
+{
+	atf_set "descr" "Convert a specfile to mtree -D format"
+}
+convert_D_body()
+{
+	mtree -D -K all <"$(atf_get_srcdir)/d_convert.in" >output
+	h_check "$(atf_get_srcdir)/d_convert_D.out" output
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case create
 	atf_add_test_case check
+	atf_add_test_case convert_C
+	atf_add_test_case convert_D
 }
