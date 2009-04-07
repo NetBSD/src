@@ -1,5 +1,5 @@
 Content-Type: application/X-atf-atffile; version="1"
-X-NetBSD-Id: "$NetBSD: Atffile,v 1.4 2007/12/30 09:13:32 jmmv Exp $"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.5 2009/04/07 20:51:46 pooka Exp $"
 
 prop: test-suite = "NetBSD"
 
@@ -28,3 +28,4 @@ tp: t_pipes
 tp: t_sockets
 tp: t_readdir
 tp: t_vnd
+tp: t_renamerace
