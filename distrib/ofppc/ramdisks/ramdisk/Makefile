@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2008/01/02 11:39:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/07 11:49:18 joerg Exp $
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	5000k
-IMAGEDEPENDS= 	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script
 USE_SYSINST=	yes
 SMALLPROG_INET6=1
 
