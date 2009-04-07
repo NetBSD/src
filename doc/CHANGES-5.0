@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.127 2009/04/04 23:56:06 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.128 2009/04/07 20:49:29 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5707,13 +5707,6 @@ sys/dev/vnd.c					1.194, 1.195
 	cgd(4): handle the DIOCCACHESYNC ioctl by passing it through
 	to the underlying disk.  Addresses PR 41016.
 	[apb, ticket #653]
-
-distrib/sets/maketars				1.66
-
-	Explicitly sort entries on preparing set files from METALOG.
-	METALOG could have different order due to install(1) race
-	on parallel builds, and mtree(8) doesn't sort files.
-	[tsutsui, ticket #654]
 
 sys/ufs/ffs/ffs_vfsops.c			1.245 via patch
 sys/ufs/ffs/ffs_vnops.c				1.112 via patch
