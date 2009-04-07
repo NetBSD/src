@@ -1,0 +1,453 @@
+How to write code for CVS
+
+* License of CVS
+
+    CVS is Copyright (C) 1989-2005 The Free Software Foundation, Inc.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 1, or (at your option)
+    any later version.
+
+    More details are available in the COPYING file but, in simplified
+    terms, this means that any distributed modifications you make to
+    this software must also be released under the GNU General Public
+    License.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+* Source
+
+Patches against the development version of CVS are most likely to be accepted:
+
+	$ export CVS_RSH="ssh"
+	$ cvs -z3 -d:ext:anoncvs@savannah.nongnu.org:/cvsroot/cvs co ccvs
+
+* Compiler options
+
+If you are using GCC, you'll want to configure with -Wall, which can
+detect many programming errors.  This is not the default because it
+might cause spurious warnings, but at least on some machines, there
+should be no spurious warnings.  For example:
+
+	$ ./configure CPPFLAGS=-Wall
+
+* Backwards Compatibility
+
+Only bug fixes are accepted into the stable branch.  New features should be
+applied to the trunk.
+
+If it is not inextricable from a bug fix, CVS's output (to stdout/stderr)
+should not be changed on the stable branch in order to best support scripts and
+other tools which parse CVS's output.  It is ok to change output between
+feature releases (on the trunk), though such changes should be noted in the
+NEWS file.
+
+Changes in the way CVS responds to command line options, config options, etc.
+should be accompanied by deprecation warnings for an entire stable series of
+releases before being changed permanently, if at all possible.
+
+* Indentation style
+
+CVS mostly uses a consistent indentation style which looks like this:
+
+void
+foo (char *arg, int c)
+{
+    long aflag;
+
+    if (arg)
+    {
+	bar (arg);
+	baz (arg);
+    }
+
+    switch (c)
+    {
+      case 'A':
+        aflag = 1;
+        break;
+      case 'E':
+        go to myerr;
+    }
+
+    printf ("Literal string line 1\n"
+	    "Literal string line 2\n"
+	    "Literal string line 3\n");
+    return;
+
+  myerr:
+    printf ("Error argument found\n");
+}
+
+  - Do not cast NULL unless it is a stdarg argument to a function.
+
+  - Do not cast functions returning (void *), e.g., xmalloc ().
+
+  - Do not cast non-stdarg arguments to a function to '(void *)'
+    except to drop a 'const' modifier.
+
+  - Snuggle ! close to its expression (i.e., '! foo' => '!foo').
+
+  - Functions and C statements have a space before the "("
+    and the expression does not have a leading or trailing space
+    (i.e., 'if( foo )' => 'if (foo)'), although it is sometimes
+    desirable to add a newline after the "(" for #ifdef'd code.
+	
+  - For switch statements, indent 'case' by 2 and the body of the case
+    by an additional 2 spaces.
+
+  - Labels should be indented by 2 spaces rather than the 4 spaces
+    used by the rest of the current block level.
+
+
+    while ((var = next_arg ()) != 0)
+    {
+      again:
+        switch (var)
+        {
+          case ONE:
+            code_for_case_one ();
+            break;
+          case TWO:
+            code_for_case_two ();
+            break;
+          case THREE:
+            push_arg (RESET_ONE);
+            var = ONE;
+	    go to again;
+          default:
+            code_for_default_case ():
+            break;
+        }
+    }
+
+  - NULL-protected free goes on one line if possible, for example:
+        
+	if (var)
+            free (var);
+	if (var2 != NULL)
+            free (var2);
+
+    should be written as:
+          
+        if (var) free (var);
+        if (var2) free (var2);
+
+    if the value needs to be set to NULL after the free, then use
+
+	if (var)
+	{
+            free (var):
+            var = NULL;
+	}
+
+    as the idiom. 
+
+  - Use whitespace in arithmetic expressions, for example
+
+	foo (arg+2);
+
+    should be written as
+
+	foo (arg + 2);
+
+    likewise for normal arithmetic expression assignments.
+
+  - Argument lists get a space after a comma.
+
+  - Do not parenthesize return values unless the expression needs to
+    span multiple lines.
+
+  - Cast negative constants when used in assignments or comparisons
+    with unsigned types.
+
+  - Try to be consistent with block comments:
+
+    /* This is a good block comment (spanning multiple lines of text).
+     * It starts with slash-star, leads each line with a star aligned with
+     * the first, and ends with a similarly aligned star-slash on a line
+     * by itself.
+     */
+
+    /* This is a bad block comment,
+       because it can make it hard to tell what is code
+       and what is not code. */
+
+  - Sentences in comments should have a double space between each
+    period (.) and the beginning of the next sentence.
+
+  - Conditional expressions that need to be split should put the ?
+    operator on the new line.
+
+  - Follow GNU standards for breaking logical expressions over
+    multiple lines where possible.
+
+  - Do not snuggle open-lbrace blocks.
+
+  - Remove '#if 0' code where possible. Add a comment FIXME if it
+    really is a possible problem.
+
+  - Remove commented-out code where possible (FIXME blocks are
+    excepted). 
+
+The file cvs-format.el contains settings for emacs and the NEWS file
+contains a set of options for the indent program which I haven't tried
+but which are correct as far as I know.  You will find some code which
+does not conform to this indentation style; the plan is to re-indent it
+as those sections of the code are changed (one function at a time,
+perhaps).
+
+In a submitted patch it is acceptable to refrain from changing the
+indentation of large blocks of code to minimize the size of the patch;
+the person checking in such a patch should re-indent it.
+
+* Portability
+
+The general rule for portability is that it is only worth including
+portability cruft for systems on which people are actually testing and
+using new CVS releases.  Without testing, CVS will fail to be portable
+for any number of unanticipated reasons.
+
+CVS is now assuming a freestanding C89 compiler.  If you don't have one, you
+should find an old release of GCC that did not require a freestanding C89
+compiler to build, build that on your system, build a newer release of GCC
+if you wish, then build CVS using GCC as your freestanding C89 compiler.
+
+A freestanding C89 compiler is guaranteed to support function prototypes,
+void *, and assert().
+
+The following headers can be assumed and are included from lib/system.h for a
+freestanding C89 implementation: <float.h>, <limits.h>, <stdarg.h>, <stddef.h>.
+We are not assuming the other standard headers listed by C89 (hosted headers)
+because these four headers are the only headers guaranteed to be shipped with
+a C89 compiler (freestanding compiler).  We are not currently assuming that the
+system the compiler is running on provides the rest of the C89 headers.
+
+The following C89 hosted headers can be assumed due to their presence in UNIX
+version 7 and are included from lib/system.h: <assert.h>, <ctype.h>, <errno.h>,
+<math.h>, <setjmp.h>, <signal.h>, <stdio.h>.  <time.h> can also be assumed but
+is included via lib/xtime.h via lib/system.h to include some Autoconf magic
+which avoids including <time.h> and <sys/time.h> on systems that can't handle
+both.
+
+The following C89 headers are also assumed since we believe GCC includes them
+even on systems where it is installed as a freestanding compiler when the
+system lacks them, despite their not being required: <stdlib.h>, <string.h>.
+When the system does not lack these headers, they can sometimes not be
+standards compatible, but GCC provides a script, `fixincludes', for the purpose
+of fixing ANSI conformance problems and we think we can rely on asking users to
+either use GCC or run this script to fix conformance problems manually.  A
+GNULIB developer has made a statement that if this turns out to be a problem,
+GNULIB <stdlib.h> and <string.h> substitutes could be included in GNULIB, so if
+we discover the problem, this should be discussed on <bug-gnulib@gnu.org>.
+
+A substitute C99 <stdbool.h> is included from GNULIB for platforms that lack
+this header.  Please see the comments in the lib/stdbool_.h file for its
+limitations.
+
+<sys/types.h> can be assumed despite a lack of a presence in even C99, since
+it has been around nearly forever and no-one has ever complained about our code
+assuming its existence.
+
+CVS has also been assuming <pwd.h> for some time.  I am unsure of the
+rationale.
+
+GNULIB also assumes <sys/stat.h>.  I am unsure of the rationale.
+
+A substitute POSIX.2 <fnmatch.h> header and fnmatch() function is provided for
+systems that lack them.  Similarly for the non-standard <alloca.h> header and
+alloca() function.  Other substitute headers and functions are also provided
+when needed.  See the lib directory or the maint-aux/srclist.txt file for more
+information.
+
+Please do not use multi-line strings.  Despite their common acceptance by many
+compilers, they are not part of the ANSI C specification.  As of GCC version
+3.3, they are no longer supported.  See the Indentation Style section above for
+an example of a literal string which is not multi-line but which will print
+multiple lines.
+
+* Other style issues
+
+When composing header files, do not declare function prototypes using the
+`extern' storage-class identifier.  Under C89, there is no functional
+difference between a function declaration with and without `extern', unless the 
+function is declared `static'.  This is NOT the case for global variables.
+Global variables declared in header files MUST be declared `extern'.  For
+example:
+
+/* Global variables */
+extern int foo;
+extern char *bar;
+
+/* Function declarations */
+int make_foo(void);
+char *make_bar(int _foobar);
+
+* Run-time behaviors
+
+Use assert() to check "can't happen" conditions internal to CVS.  We
+realize that there are functions in CVS which instead return NULL or
+some such value (thus confusing the meaning of such a returned value),
+but we want to fix that code.  Of course, bad input data, a corrupt
+repository, bad options, etc., should always print a real error
+message instead.
+
+Do not use arbitrary limits (such as PATH_MAX) except perhaps when the
+operating system or some external interface requires it.  We spent a
+lot of time getting rid of them, and we don't want to put them back.
+If you find any that we missed, please report it as with other bugs.
+In most cases such code will create security holes (for example, for
+anonymous read-only access via the CVS protocol, or if a WWW cgi script
+passes client-supplied arguments to CVS).
+
+Although this is a long-term goal, it also would be nice to move CVS
+in the direction of reentrancy.  This reduces the size of the data
+segment and will allow a multi-threaded server if that is desirable.
+It is also useful to write the code so that it can be easily be made
+reentrant later.  For example, if you need to pass data to some functions,
+you need a static variable, but use a single pointer so that when the function
+is fixed to pass along the argument, then the code can easily use that
+argument.
+
+* Coding standards in general
+
+Generally speaking the GNU coding standards are mostly used by CVS
+(but see the exceptions mentioned above, such as indentation style,
+and perhaps an exception or two we haven't mentioned).  This is the
+file standards.text at the GNU FTP sites. The primary URL for this
+information is http://www.gnu.org/prep/standards/ which contains links
+to many different formats of the standards.
+
+* Regenerating Build Files (UNIX)
+
+On UNIX, if you wish to change the build files, you will need Autoconf and
+Automake.
+
+Some combinations of Automake and Autoconf versions may break the
+CVS build if file timestamps aren't set correctly and people don't
+have the same versions the developers do, so the rules to run them
+automatically aren't included in the generated Makefiles unless you run
+configure with --enable-maintainer-mode.
+
+The CVS Makefiles and configure script were built using Automake 1.9.6 and
+Autoconf 2.59, respectively.
+
+There is a known bug in Autoconf 2.57 that will prevent the configure
+scripts it generates from working on some platforms.  Other combinations of
+autotool versions may or may not work.  If you get other versions to work,
+please send a report to <bug-cvs@nongnu.org>.
+
+* Regenerating Build Files (Windows)
+
+If for some reason you end up regenerating the *.mak files to submit a patch,
+please run windows-NT/fix-msvc-mak.pl to remove the absolute paths from the
+generated *.mak files before generating any patches.
+
+* Rebuilding Yacc sources
+
+The lib/getdate.y file requires GNU Bison 1.875 to rebuild lib/getdate.c.  Not
+having GNU Bison 1.875 should not stop the build unless the lib/getdate.c file
+is actually missing, perhaps deleted via `make maintainerclean'.
+
+* Writing patches (strategy)
+
+Only some kinds of changes are suitable for inclusion in the
+"official" CVS.  Bugfixes, where CVS's behavior contradicts the
+documentation and/or expectations that everyone agrees on, should be
+OK (strategically).  For features, the desirable attributes are that
+the need is clear and that they fit nicely into the architecture of
+CVS.  Is it worth the cost (in terms of complexity or any other
+tradeoffs involved)?  Are there better solutions?
+
+If the design is not yet clear (which is true of most features), then
+the design is likely to benefit from more work and community input.
+Make a list of issues, or write documentation including rationales for
+how one would use the feature.  Discuss it with coworkers, a
+newsgroup, or a mailing list, and see what other people think.
+Distribute some experimental patches and see what people think.  The
+intention is arrive at some kind of rough community consensus before
+changing the "official" CVS.  Features like zlib, encryption, and
+the RCS library have benefited from this process in the past.
+
+If longstanding CVS behavior, that people may be relying on, is
+clearly deficient, it can be changed, but only slowly and carefully.
+For example, the global -q option was introduced in CVS 1.3 but the
+command -q options, which the global -q replaced, were not removed
+until CVS 1.6.
+
+* Writing patches (tactics)
+
+When you first distribute a patch it may be suitable to just put forth
+a rough patch, or even just an idea.  But before the end of the
+process the following should exist:
+
+  - ChangeLog entry (see the GNU coding standards for details).
+
+  - Changes to the NEWS file and cvs.texinfo, if the change is a
+    user-visible change worth mentioning.
+
+  - Somewhere, a description of what the patch fixes (often in
+    comments in the code, or maybe the ChangeLog or documentation).
+
+  - Most of the time, a test case (see TESTS).  It can be quite
+    frustrating to fix a bug only to see it reappear later, and adding
+    the case to the testsuite, where feasible, solves this and other
+    problems.  See the TESTS file for notes on writing new tests.
+
+If you solve several unrelated problems, it is generally easier to
+consider the desirability of the changes if there is a separate patch
+for each issue.  Use context diffs or unidiffs for patches.
+
+Include words like "I grant permission to distribute this patch under
+the terms of the GNU Public License" with your patch.  By sending a
+patch to bug-cvs@nongnu.org, you implicitly grant this permission.
+
+Submitting a patch to bug-cvs is the way to reach the people who have
+signed up to receive such submissions (including CVS developers), but
+there may or may not be much (or any) response.  If you want to pursue
+the matter further, you are probably best off working with the larger
+CVS community.  Distribute your patch as widely as desired (mailing
+lists, newsgroups, web sites, whatever).  Write a web page or other
+information describing what the patch is for.  It is neither practical
+nor desirable for all/most contributions to be distributed through the
+"official" (whatever that means) mechanisms of CVS releases and CVS
+developers.  Now, the "official" mechanisms do try to incorporate
+those patches which seem most suitable for widespread usage, together
+with test cases and documentation.  So if a patch becomes sufficiently
+popular in the CVS community, it is likely that one of the CVS
+developers will eventually try to do something with it.  But dealing
+with the CVS developers may be the last step of the process rather
+than the first.
+
+* What is the schedule for the next release?
+
+There isn't one.  That is, upcoming releases are not announced (or
+even hinted at, really) until the feature freeze which is
+approximately 2 weeks before the final release (at this time test
+releases start appearing and are announced on info-cvs).  This is
+intentional, to avoid a last minute rush to get new features in.
+
+* Mailing lists
+
+In addition to the mailing lists listed in the README file, developers should
+take particular note of the following mailling lists:
+
+    bug-cvs:  This is the list which users are requested to send bug reports
+      to.  General CVS development and design discussions also take place on
+      this list.
+    info-cvs:  This list is intended for user questions, but general CVS
+      development and design discussions sometimes take place on this list.
+    cvs-cvs:  The only messages sent to this list are sent
+      automatically, via the CVS `loginfo' mechanism, when someone
+      checks something in to the master CVS repository.
+    cvs-test-results:  The only messages sent to this list are sent
+      automatically, daily, by a script which runs "make check"
+      and "make remotecheck" on the master CVS sources.
+
+To subscribe to any of these lists, send mail to <list>-request@nongnu.org
+or visit http://savannah.nongnu.org/mail/?group=cvs and follow the instructions
+for the list you wish to subscribe to.

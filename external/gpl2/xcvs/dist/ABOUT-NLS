@@ -1,0 +1,5 @@
+Automake started requiring this file after I included the gettext support from
+GNULIB <http://savannah.gnu.org/projects/gnulib>.  I'm not sure why, exactly,
+but there was an nls.m4 macro I had to import which claims that NLS stands for
+"Native Language Support".  If someone would like to replace this ABOUT-NLS
+file with a more appropriate one, please do.

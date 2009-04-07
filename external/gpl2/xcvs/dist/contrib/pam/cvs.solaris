@@ -1,0 +1,9 @@
+# This is a sample PAM configuration for Sun/Solaris
+# which does standard unix authentication against
+# the password in /etc/passwd or /etc/shadow.
+# The contents of this file should be inserted
+# at an appropriate position in /etc/pam.conf
+
+cvs     auth        required    /usr/lib/security/$ISA/pam_unix.so.1
+cvs     account     required    /usr/lib/security/$ISA/pam_unix.so.1
+cvs     session     required    /usr/lib/security/$ISA/pam_unix.so.1

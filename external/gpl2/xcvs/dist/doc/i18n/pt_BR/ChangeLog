@@ -1,0 +1,68 @@
+2005-09-01  Derek Price  <derek@ximbiot.com>
+
+	* README, cvs.texinfo: Update email addresses and links.
+
+2005-07-20  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo: s/cvshome.org/nongnu.org.etc.../.
+
+2005-05-01  Mark D. Baushke  <mdb@cvshome.org>
+
+	* Makefile.in: Regenerated.
+
+2005-03-22  Mark D. Baushke  <mdb@cvshome.org>
+
+	* Makefile.in: Regenerated.
+
+2004-12-14  Derek Price  <derek@ximbiot.com>
+
+	* .cvsignore, Makefile.am: New files.
+
+2004-12-07  Mark D. Baushke  <mdb@cvshome.org>
+
+	* cvs.texinfo (BUGS, What is CVS?): Remove references to Dr.
+	Pascal Molli's cvs document which is no longer available.
+
+2004-11-29  Mark D. Baushke  <mdb@cvshome.org>
+
+	* cvs.texinfo: Add some missing text.
+
+2004-10-29  Mark D. Baushke  <mdb@cvshome.org>
+
+	* cvs.texinfo (Common options): The -r TAG option works with
+	the cvs annotate command.
+	(Original patch from Ville Skytta <scop@cvshome.org>.)
+
+2004-04-01  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo: Latest update.
+	(From Fred Ulisses Maranhão <fred.maranhao@click21.com.br>.)
+
+2004-02-04  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo: Explain English words Fred could not translate in
+	English again.
+
+2004-02-04  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo: Latest update.
+	(From Fred Ulisses Maranhão <fredm@chesf.gov.br>.)
+
+2003-12-24  Mark D. Baushke  <mdb@cvshome.org>
+
+	* cvs.texinfo: Latest update.
+	(From Fred Ulisses Maranhão <fredm@chesf.gov.br>.)
+
+2003-12-16  Mark D. Baushke  <mdb@cvshome.org>
+
+	* cvs.texinfo: Lastest update from Fred.
+
+2003-12-15  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo: Explain in the English comments what some English
+	colloquialisms that Fred did not know how to translate mean.
+
+2003-12-15  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo: Translation of the Cederqvist to Brazilian Portuguese.
+	(From Fred Ulisses Maranhão <fredm@chesf.gov.br>.)
