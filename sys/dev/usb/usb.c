@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.115 2008/05/26 18:00:33 drochner Exp $	*/
+/*	$NetBSD: usb.c,v 1.116 2009/04/07 18:15:45 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.115 2008/05/26 18:00:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.116 2009/04/07 18:15:45 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -162,8 +162,9 @@ static void usb_doattach(device_t);
 
 extern struct cfdriver usb_cd;
 
-CFATTACH_DECL2_NEW(usb, sizeof(struct usb_softc),
-    usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet);
+CFATTACH_DECL3_NEW(usb, sizeof(struct usb_softc),
+    usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet,
+    DVF_DETACH_SHUTDOWN);
 
 USB_MATCH(usb)
 {
