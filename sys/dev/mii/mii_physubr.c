@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.62 2009/01/16 20:51:18 cegger Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.63 2009/04/07 18:05:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.62 2009/01/16 20:51:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.63 2009/04/07 18:05:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -559,6 +559,8 @@ mii_phy_detach(struct device *self, int flags)
 
 	if (sc->mii_flags & MIIF_DOINGAUTO)
 		callout_stop(&sc->mii_nway_ch);
+
+	callout_destroy(&sc->mii_nway_ch);
 
 	mii_phy_delete_media(sc);
 	LIST_REMOVE(sc, mii_list);
