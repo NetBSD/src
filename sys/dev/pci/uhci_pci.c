@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.44 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.45 2009/04/07 18:25:26 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.44 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.45 2009/04/07 18:25:26 dyoung Exp $");
 
 #include "ehci.h"
 
@@ -234,6 +234,6 @@ uhci_pci_resume(device_t dv PMF_FN_ARGS)
 	return uhci_resume(dv PMF_FN_CALL);
 }
 
-CFATTACH_DECL2_NEW(uhci_pci, sizeof(struct uhci_pci_softc),
+CFATTACH_DECL3_NEW(uhci_pci, sizeof(struct uhci_pci_softc),
     uhci_pci_match, uhci_pci_attach, uhci_pci_detach, uhci_activate,
-    NULL, uhci_childdet);
+    NULL, uhci_childdet, DVF_DETACH_SHUTDOWN);
