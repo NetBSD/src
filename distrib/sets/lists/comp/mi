@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1242 2009/04/04 15:27:48 apb Exp $
+#	$NetBSD: mi,v 1.1243 2009/04/08 19:33:01 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5623,6 +5623,7 @@
 ./usr/share/man/cat3/getyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gid_from_group.0		comp-c-catman		.cat
 ./usr/share/man/cat3/glob.0			comp-c-catman		.cat
+./usr/share/man/cat3/glob_pattern_p.0		comp-c-catman		.cat
 ./usr/share/man/cat3/globfree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gmtime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gmtime_r.0			comp-c-catman		.cat
@@ -10991,6 +10992,7 @@
 ./usr/share/man/html3/getyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/gid_from_group.html	comp-c-htmlman		html
 ./usr/share/man/html3/glob.html			comp-c-htmlman		html
+./usr/share/man/html3/glob_pattern_p.html	comp-c-htmlman		html
 ./usr/share/man/html3/globfree.html		comp-c-htmlman		html
 ./usr/share/man/html3/gmtime.html		comp-c-htmlman		html
 ./usr/share/man/html3/gmtime_r.html		comp-c-htmlman		html
@@ -16276,6 +16278,7 @@
 ./usr/share/man/man3/getyx.3			comp-c-man		.man
 ./usr/share/man/man3/gid_from_group.3		comp-c-man		.man
 ./usr/share/man/man3/glob.3			comp-c-man		.man
+./usr/share/man/man3/glob_pattern_p.3		comp-c-man		.man
 ./usr/share/man/man3/globfree.3			comp-c-man		.man
 ./usr/share/man/man3/gmtime.3			comp-c-man		.man
 ./usr/share/man/man3/gmtime_r.3			comp-c-man		.man
