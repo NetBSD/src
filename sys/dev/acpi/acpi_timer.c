@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.13 2009/03/15 15:42:55 cegger Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.14 2009/04/08 00:15:45 dyoung Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.13 2009/03/15 15:42:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.14 2009/04/08 00:15:45 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -55,6 +55,12 @@ acpitimer_init(void)
 	aprint_verbose("%s %d-bit timer\n", acpi_timecounter.tc_name, bits);
 
 	return (0);
+}
+
+int
+acpitimer_detach(void)
+{
+	return tc_detach(&acpi_timecounter);
 }
 
 static u_int
