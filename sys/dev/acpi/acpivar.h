@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.34 2008/11/17 23:29:49 joerg Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.35 2009/04/08 00:23:30 dyoung Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -136,6 +136,7 @@ struct acpi_softc {
 	 * Scopes we manage.
 	 */
 	TAILQ_HEAD(, acpi_scope) sc_scopes;
+	device_t	sc_apmbus;
 };
 
 /*
