@@ -293,6 +293,11 @@ new_config (void)
     new->logHistory = xstrdup (ALL_HISTORY_REC_TYPES);
     new->RereadLogAfterVerify = LOGMSG_REREAD_ALWAYS;
     new->UserAdminOptions = xstrdup ("k");
+#ifdef CVS_ADMIN_GROUP
+    new->UserAdminGroup = xstrdup (CVS_ADMIN_GROUP);
+#else
+    new->UserAdminGroup = NULL;
+#endif
     new->MaxCommentLeaderLength = 20;
 #ifdef SERVER_SUPPORT
     new->MaxCompressionLevel = 9;
@@ -553,7 +558,8 @@ parse_config (const char *cvsroot, const char *path)
 	    readBool (infopath, "SystemAuth", p, &dummy);
 	}
 #endif
-	else if (strcmp (line, "LocalKeyword") == 0)
+	else if (strcmp (line, "LocalKeyword") == 0 ||
+	    strcmp (line, "tag") == 0)
 	    RCS_setlocalid (infopath, ln, &retval->keywords, p);
 	else if (strcmp (line, "KeywordExpand") == 0)
 	    RCS_setincexc (&retval->keywords, p);
@@ -656,7 +662,11 @@ parse_config (const char *cvsroot, const char *path)
 	     * tries to create a temp file.
 	     */
 	}
-	else if (strcmp (line, "UserAdminOptions") == 0)
+	else if (strcmp (line, "UserAdminGroup") == 0
+	    || strcmp (line, "AdminGroup") == 0)
+	    retval->UserAdminGroup = xstrdup (p);
+	else if (strcmp (line, "UserAdminOptions") == 0
+	    || strcmp (line, "AdminOptions") == 0)
 	    retval->UserAdminOptions = xstrdup (p);
 	else if (strcmp (line, "UseNewInfoFmtStrings") == 0)
 #ifdef SUPPORT_OLD_INFO_FMT_STRINGS

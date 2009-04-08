@@ -224,6 +224,8 @@ do_editor (const char *dir, char **messagep, const char *repository,
 	    (*messagep)[strlen (*messagep) - 1] != '\n')
 	    (void) fprintf (fp, "\n");
     }
+    else
+	(void) fprintf (fp, "\n");
 
     if (repository != NULL)
 	/* tack templates on if necessary */
@@ -290,7 +292,7 @@ do_editor (const char *dir, char **messagep, const char *repository,
     run_setup (Editor);
     run_add_arg (fname);
     if ((retcode = run_exec (RUN_TTY, RUN_TTY, RUN_TTY,
-			     RUN_NORMAL | RUN_SIGIGNORE)) != 0)
+			     RUN_NORMAL | RUN_SIGIGNORE | RUN_UNSETXID)) != 0)
 	error (0, retcode == -1 ? errno : 0, "warning: editor session failed");
 
     /* put the entire message back into the *messagep variable */
@@ -632,6 +634,7 @@ logmsg_list_to_args_proc (Node *p, void *closure)
 		arg = p->key;
 		break;
 	    case 'T':
+	    case 't':
 		li = p->data;
 		arg = li->tag ? li->tag : "";
 		break;

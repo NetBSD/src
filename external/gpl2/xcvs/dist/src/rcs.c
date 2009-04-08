@@ -6985,7 +6985,8 @@ linevector_copy (struct linevector *to, struct linevector *from)
 				sizeof (*to->vector));
     }
     memcpy (to->vector, from->vector,
-	    xtimes (from->nlines, sizeof (*to->vector)));
+	    /* XXX: wrong int cast to avoid gcc warning */
+	    xtimes ((int)from->nlines, sizeof (*to->vector)));
     to->nlines = from->nlines;
     for (ln = 0; ln < to->nlines; ++ln)
 	++to->vector[ln]->refcount;
@@ -8375,6 +8376,11 @@ count_delta_actions (Node *np, void *ignore)
 static void
 rcs_cleanup (void)
 {
+    static int reenter = 0;
+
+    if (reenter++)
+	_exit(1);
+
     TRACE (TRACE_FUNCTION, "rcs_cleanup()");
 
     /* FIXME: Do not perform buffered I/O from an interrupt handler like

@@ -534,7 +534,8 @@ static const char *const config_contents[] = {
     "#\n",
     "# The following string would enable all `cvs admin' commands for all\n",
     "# users:\n",
-    "#UserAdminOptions=aAbceIklLmnNostuU\n",
+    "#AdminGroup=wheel\n",
+    "#AdminOptions=aAbceIklLmnNostuU\n",
 #ifdef SUPPORT_OLD_INFO_FMT_STRINGS
     "\n",
     "# Set `UseNewInfoFmtStrings' to `no' if you must support a legacy system by\n",
@@ -596,6 +597,9 @@ static const char *const config_contents[] = {
     "# For example:\n",
     "#\n",
     "#   UseArchiveCommentLeader=no\n",
+    "#\n",
+    "# Set this to the name of a local tag to use in addition to Id\n",
+    "#tag=OurTag\n",
     NULL
 };
 
@@ -1154,6 +1158,10 @@ init (int argc, char **argv)
     const struct admin_file *fileptr;
 
     umask (cvsumask);
+
+    if (config->UserAdminGroup && !admin_group_member ())
+	error (1, 0, "usage is restricted to members of the group %s",
+	       config->UserAdminGroup);
 
     if (argc == -1 || argc > 1)
 	usage (init_usage);

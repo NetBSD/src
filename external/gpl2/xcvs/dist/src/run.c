@@ -237,6 +237,13 @@ run_exec (const char *stin, const char *stout, const char *sterr, int flags)
 #endif
     if (pid == 0)
     {
+#ifdef SETXID_SUPPORT
+	if (flags & RUN_UNSETXID) {
+	    (void) setgid (getgid ());
+	    (void) setuid (getuid ());
+	}   
+#endif 
+
 	if (shin != 0)
 	{
 	    (void) dup2 (shin, 0);

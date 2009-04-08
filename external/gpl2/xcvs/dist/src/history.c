@@ -36,6 +36,7 @@
  *		M	"Commit" cmd - "Modified" file.
  *		A	"Commit" cmd - "Added" file.
  *		R	"Commit" cmd - "Removed" file.
+ *		X	"Admin"  cmd.
  *
  *  date	is a fixed length 8-char hex representation of a Unix time_t.
  *		[Starting here, variable fields are delimited by '|' chars.]
@@ -781,7 +782,7 @@ history_write (int type, const char *update_dir, const char *revs,
     if (!strchr (config->logHistory, type))	
 	return;
 
-    if (noexec)
+    if (nolock)
 	goto out;
 
     repos = Short_Repository (repository);

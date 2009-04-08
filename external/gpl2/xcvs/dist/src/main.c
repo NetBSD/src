@@ -41,8 +41,10 @@ int really_quiet = 0;
 int quiet = 0;
 int trace = 0;
 int noexec = 0;
+int nolock = 0;
 int readonlyfs = 0;
 int logoff = 0;
+const char *cvsDir = "CVS";
 
 
 
@@ -284,6 +286,7 @@ static const char *const opt_usage[] =
     "    -r           Make checked-out files read-only.\n",
     "    -w           Make checked-out files read-write (default).\n",
     "    -n           Do not execute anything that will change the disk.\n",
+    "    -u           Don't create locks (implies -l).\n",
     "    -t           Show trace of program execution (repeat for more\n",
     "                 verbosity) -- try with -n.\n",
     "    -R           Assume repository is read-only, such as CDROM\n",
@@ -291,6 +294,7 @@ static const char *const opt_usage[] =
     "    -T tmpdir    Use 'tmpdir' for temporary files.\n",
     "    -e editor    Use 'editor' for editing log information.\n",
     "    -d CVS_root  Overrides $CVSROOT as the root of the CVS tree.\n",
+    "    -D dir       Use DIR as the bookkeeping directory instead of CVS.\n"
     "    -f           Do not use the ~/.cvsrc file.\n",
 #ifdef CLIENT_SUPPORT
     "    -z #         Request compression level '#' for net traffic.\n",
@@ -397,6 +401,10 @@ main_cleanup (int sig)
 #ifndef DONT_USE_SIGNALS
     const char *name;
     char temp[10];
+    static int reenter = 0;
+
+    if (reenter++)
+	_exit(1);
 
     switch (sig)
     {
@@ -511,7 +519,7 @@ main (int argc, char **argv)
     int help = 0;		/* Has the user asked for help?  This
 				   lets us support the `cvs -H cmd'
 				   convention to give help for cmd. */
-    static const char short_options[] = "+QqrwtnRvb:T:e:d:Hfz:s:xa";
+    static const char short_options[] = "+QqrwtlnRvb:T:e:d:D:Hfz:s:xa";
     static struct option long_options[] =
     {
         {"help", 0, NULL, 'H'},
@@ -667,6 +675,9 @@ main (int argc, char **argv)
 		break;
 	    case 'n':
 		noexec = 1;
+	    case 'u':			/* Fall through */
+		nolock = 1;
+	    case 'l':			/* Fall through */
 		logoff = 1;
 		break;
 	    case 'v':
@@ -752,6 +763,11 @@ distribution kit for a complete list of contributors and copyrights.\n",
                    have it in their .cvsrc and not cause any trouble.
                    We will issue an error later if stream
                    authentication is not supported.  */
+		break;
+	    case 'D':
+		cvsDir = xstrdup (optarg);
+		if (strchr (cvsDir, '/') != NULL)
+		    error (1, 0, "cvsDir is not allowed to have slashes");
 		break;
 	    case '?':
 	    default:
@@ -1070,7 +1086,7 @@ cause intermittent sandbox corruption.");
 		/*
 		 * Check to see if the repository exists.
 		 */
-		if (!current_parsed_root->isremote)
+		if (!current_parsed_root->isremote && !nolock)
 		{
 		    char *path;
 		    int save_errno;
@@ -1290,6 +1306,29 @@ date_from_time_t (time_t unixtime)
 		    ftm->tm_min, ftm->tm_sec);
     ret = xstrdup (date);
     return ret;
+}
+
+
+const char *
+getCVSDir (const char *suffix)
+{
+    static const char *buf[20][2];
+    size_t i, len;
+
+    for (i = 0; i < 20; i++) {
+	if (buf[i][0] == NULL)
+	    break;
+	if (strcmp (buf[i][0], suffix) == 0)
+	    return buf[i][1];
+    }
+
+    if (i == 20)
+	error (1, 0, "Out of static buffer space");
+
+    buf[i][0] = suffix;
+    buf[i][1] = xmalloc (len = strlen(cvsDir) + strlen(suffix) + 1);
+    snprintf ((char *)buf[i][1], len, "%s%s", cvsDir, suffix);
+    return buf[i][1];
 }
 
 

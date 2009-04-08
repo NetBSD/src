@@ -704,7 +704,8 @@ module `%s' is a request for a file in a module which is not a directory",
 		    cvs_output ("'\n", 0);
 		    cvs_flushout ();
 		}
-		err += run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);
+		err += run_exec (RUN_TTY, RUN_TTY, RUN_TTY,
+		    RUN_NORMAL | RUN_UNSETXID);
 		free (expanded_path);
 	    }
 	    if (real_prog) free (real_prog);

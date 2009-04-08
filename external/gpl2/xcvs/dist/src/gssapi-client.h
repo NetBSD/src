@@ -51,7 +51,7 @@ struct buffer* cvs_gssapi_wrap_buffer_initialize( struct buffer *buf,
 						   gss_ctx_id_t gcontext,
 						   void (*memory) (struct buffer *) );
 
-int connect_to_gserver (cvsroot_t *, int, struct hostent *);
+int connect_to_gserver (cvsroot_t *, int, const char *);
 
 extern void initialize_gssapi_buffers (struct buffer **to_server_p,
 					     struct buffer **from_server_p);

@@ -77,7 +77,7 @@ recv_bytes (int sock, char *buf, int need)
  */
 #define BUFSIZE 1024
 int
-connect_to_gserver (cvsroot_t *root, int sock, struct hostent *hostinfo)
+connect_to_gserver (cvsroot_t *root, int sock, const char *hostname)
 {
     char *str;
     char buf[BUFSIZE];
@@ -90,9 +90,9 @@ connect_to_gserver (cvsroot_t *root, int sock, struct hostent *hostinfo)
     if (send (sock, str, strlen (str), 0) < 0)
 	error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
 
-    if (strlen (hostinfo->h_name) > BUFSIZE - 5)
+    if (strlen (hostname) > BUFSIZE - 5)
 	error (1, 0, "Internal error: hostname exceeds length of buffer");
-    sprintf (buf, "cvs@%s", hostinfo->h_name);
+    snprintf (buf, sizeof(buf), "cvs@%s", hostname);
     tok_in.length = strlen (buf);
     tok_in.value = buf;
     gss_import_name (&stat_min, &tok_in, GSS_C_NT_HOSTBASED_SERVICE,

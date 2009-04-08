@@ -773,6 +773,11 @@ patch_cleanup (int sig)
        called from a signal handler, without SIG_begincrsect, so
        we don't know whether the files got created.  */
 
+    static int reenter = 0;
+
+    if (reenter++)
+	_exit(1);
+
     if (tmpfile1 != NULL)
     {
 	if (unlink_file (tmpfile1) < 0
