@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.73 2009/04/07 18:06:41 apb Exp $	*/
+/*	$NetBSD: spec.c,v 1.74 2009/04/08 19:03:13 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.73 2009/04/07 18:06:41 apb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.74 2009/04/08 19:03:13 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ __RCSID("$NetBSD: spec.c,v 1.73 2009/04/07 18:06:41 apb Exp $");
 size_t	mtree_lineno;			/* Current spec line number */
 int	mtree_Mflag;			/* Merge duplicate entries */
 int	mtree_Wflag;			/* Don't "whack" permissions */
+int	mtree_Sflag;			/* Sort entries */
 
 static	dev_t	parsedev(char *);
 static	void	replacenode(NODE *, NODE *);
@@ -664,7 +665,7 @@ unset(char *t, NODE *ip)
  *	Add the centry node as a child of the pathparent node.	If
  *	centry is a duplicate, call replacenode().  If centry is not
  *	a duplicate, insert it into the linked list referenced by
- *	pathparent->child.  Keep the list sorted.
+ *	pathparent->child.  Keep the list sorted if Sflag is set.
  */
 static void
 addchild(NODE *pathparent, NODE *centry)
@@ -698,13 +699,16 @@ addchild(NODE *pathparent, NODE *centry)
 			/* centry appears after cur in sort order */
 			insertpos = cur;
 		}
-		if (cmp < 0 || cur->next == NULL) {
+		if ((mtree_Sflag && cmp < 0) || cur->next == NULL) {
 			/*
 			 * centry appears before cur in sort order,
 			 * or we reached the end of the list; insert
 			 * centry either just after insertpos, or at the
-			 * beginning of the list.
+			 * beginning of the list.  If we are not sorting,
+			 * then always append to the list.
 			 */
+			if (!mtree_Sflag)
+				insertpos = cur;
 			if (insertpos) {
 				centry->next = insertpos->next;
 				insertpos->next = centry;

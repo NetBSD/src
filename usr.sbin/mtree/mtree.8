@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.48 2009/03/11 18:10:05 joerg Exp $
+.\"	$NetBSD: mtree.8,v 1.49 2009/04/08 19:03:13 apb Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd February 1, 2009
+.Dd April 8, 2009
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCdDelLMPruUWx
+.Op Fl cCdDelLMPrSuUWx
 .Bk -words
 .Op Fl i | Fl m
 .Ek
@@ -131,6 +131,9 @@ and
 and
 .Fl I
 can be used to control which files are printed.
+The
+.Fl S
+option can be used to sort the output.
 .It Fl D
 As per
 .Fl C ,
@@ -245,6 +248,27 @@ of the files for which the keyword
 .Sy cksum
 was specified.
 The checksum is seeded with the specified value.
+.It Fl S
+When reading a specification into an internal data structure,
+sort the entries.
+This will affect the order in which the
+.Fl c
+option checks entries, and the order of the output produced by the
+.Fl C
+or
+.Fl D
+options.
+It will
+The sort order is the same as that used by the
+.Fl c
+option, which is that entries within the same directory are
+sorted in the order used by
+.Xr strcmp 3 ,
+except that entries for subdirectories sort after other entries.
+By default, if the
+.Fl S
+option is not used, entries within the same directory are collected
+together (separated from entries for other directories), but not sorted.
 .It Fl u
 Modify the owner, group, permissions, and flags of existing files,
 the device type of devices, and symbolic link targets,
