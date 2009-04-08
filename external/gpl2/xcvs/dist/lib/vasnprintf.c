@@ -25,8 +25,13 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
+#ifdef __SSP__
+#undef HAVE_ALLOCA
+#endif
+#ifndef __NetBSD__
 #ifndef IN_LIBINTL
 # include <alloca.h>
+#endif
 #endif
 
 /* Specification.  */

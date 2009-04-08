@@ -27,7 +27,7 @@ static int   fputentent (FILE *, Entnode *);
 static Entnode *subdir_record (int, const char *, const char *);
 
 static FILE *entfile;
-static char *entfilename;		/* for error messages */
+static const char *entfilename;		/* for error messages */
 
 
 
@@ -821,6 +821,7 @@ static Entnode *
 subdir_record (int cmd, const char *parent, const char *dir)
 {
     Entnode *entnode;
+    char *aef;
 
     /* None of the information associated with a directory is
        currently meaningful.  */
@@ -832,7 +833,7 @@ subdir_record (int cmd, const char *parent, const char *dir)
 	if (parent == NULL)
 	    entfilename = CVSADM_ENTLOG;
 	else
-	    entfilename = Xasprintf ("%s/%s", parent, CVSADM_ENTLOG);
+	    entfilename = aef = Xasprintf ("%s/%s", parent, CVSADM_ENTLOG);
 
 	entfile = CVS_FOPEN (entfilename, "a");
 	if (entfile == NULL)
@@ -850,11 +851,11 @@ subdir_record (int cmd, const char *parent, const char *dir)
 	    }
 	    else
 	    {
-		free (entfilename);
-		entfilename = Xasprintf ("%s/%s", parent, CVSADM);
+		free (aef);
+		entfilename = aef = Xasprintf ("%s/%s", parent, CVSADM);
 		if (! isdir (entfilename))
 		{
-		    free (entfilename);
+		    free (aef);
 		    entfilename = NULL;
 		    return entnode;
 		}
@@ -874,7 +875,7 @@ subdir_record (int cmd, const char *parent, const char *dir)
 
 	if (parent != NULL)
 	{
-	    free (entfilename);
+	    free (aef);
 	    entfilename = NULL;
 	}
     }

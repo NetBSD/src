@@ -588,7 +588,8 @@ quotearg_n_options (int n, char const *arg, size_t argsize,
     {
       unsigned int n1 = n0 + 1;
 
-      if (xalloc_oversized (n1, sizeof *slotvec))
+      /* XXX: wrong int cast to avoid gcc warning */
+      if (xalloc_oversized ((int)n1, sizeof *slotvec))
 	xalloc_die ();
 
       if (slotvec == &slotvec0)

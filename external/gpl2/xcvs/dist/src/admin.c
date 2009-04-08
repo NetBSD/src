@@ -15,9 +15,7 @@
  */
 
 #include "cvs.h"
-#ifdef CVS_ADMIN_GROUP
 #include <grp.h>
-#endif
 
 static Dtype admin_dirproc (void *callerdat, const char *dir,
                             const char *repos, const char *update_dir,
@@ -109,6 +107,11 @@ struct admin_data
     int ac;
     char **av;
     int av_alloc;
+
+    /* This contains a printable version of the command line used
+     * for logging
+     */
+    char *cmdline;
 };
 
 /* Add an argument.  OPT is the option letter, e.g. 'a'.  ARG is the
@@ -205,15 +208,103 @@ admin_filesdoneproc (void *callerdat, int err, const char *repository,
 }
 
 
+static size_t
+wescape (char *dst, const char *src)
+{
+    const unsigned char *s = src;
+    char *d = dst;
+    for (; *s; s++) {
+	if (!isprint(*s) || isspace(*s) || *s == '|') {
+	    *d++ = '\\';
+	    *d++ = ((*s >> 6) & 3) + '0';
+	    *d++ = ((*s >> 3) & 7) + '0';
+	    *d++ = ((*s >> 0) & 7) + '0';
+	} else  {
+	    *d++ = *s;
+	}
+    }
+    *d = '\0';
+    return d - dst;
+}
+
+static char *
+makecmdline (int argc, char **argv)
+{
+    size_t clen = 1024, wlen = 1024, len, cpos = 0, i;
+    char *cmd = xmalloc(clen);
+    char *word = xmalloc(wlen);
+
+    for (i = 0; i < argc; i++) {
+	char *arg = (strncmp(argv[i], "cvs ", 4) == 0) ? argv[i] + 4 : argv[i];
+	len = strlen(arg);
+	if (len * 4 < wlen) {
+	    wlen += len * 4;
+	    word = xrealloc(word, wlen);
+	}
+	len = wescape(word, arg);
+	if (clen - cpos < len + 2) {
+	    clen += len + 2;
+	    cmd = xrealloc(cmd, clen);
+	}
+	memcpy(&cmd[cpos], word, len);
+	cpos += len;
+	cmd[cpos++] = ' ';
+    }
+    if (cpos != 0)
+	cmd[cpos - 1] = '\0';
+    else
+	cmd[cpos] = '\0';
+    free(word);
+    return cmd;
+}
+
+int
+admin_group_member (void)
+{
+    struct group *grp;
+    int i;
+
+    if (config->UserAdminGroup == NULL)
+	return 1;
+
+    if ((grp = getgrnam(CVS_ADMIN_GROUP)) == NULL)
+	return 0;
+
+    {
+#ifdef HAVE_GETGROUPS
+	gid_t *grps;
+	int n;
+
+	/* get number of auxiliary groups */
+	n = getgroups (0, NULL);
+	if (n < 0)
+	    error (1, errno, "unable to get number of auxiliary groups");
+	grps = (gid_t *) xmalloc((n + 1) * sizeof *grps);
+	n = getgroups (n, grps);
+	if (n < 0)
+	    error (1, errno, "unable to get list of auxiliary groups");
+	grps[n] = getgid();
+	for (i = 0; i <= n; i++)
+	    if (grps[i] == grp->gr_gid) break;
+	free (grps);
+	if (i > n)
+	    return 0;
+#else
+	char *me = getcaller();
+	char **grnam;
+	
+	for (grnam = grp->gr_mem; *grnam; grnam++)
+	    if (strcmp (*grnam, me) == 0) break;
+	if (!*grnam && getgid() != grp->gr_gid)
+	    return 0;
+#endif
+    }
+}
 
 int
 admin (int argc, char **argv)
 {
     int err;
-#ifdef CVS_ADMIN_GROUP
-    struct group *grp;
-    struct group *getgrnam (const char *);
-#endif
     struct admin_data admin_data;
     int c;
     int i;
@@ -225,6 +316,7 @@ admin (int argc, char **argv)
     wrap_setup ();
 
     memset (&admin_data, 0, sizeof admin_data);
+    admin_data.cmdline = makecmdline (argc, argv);
 
     /* TODO: get rid of `-' switch notation in admin_data.  For
        example, admin_data->branch should be not `-bfoo' but simply `foo'. */
@@ -234,12 +326,7 @@ admin (int argc, char **argv)
     while ((c = getopt (argc, argv,
 			"+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
     {
-	if (
-# ifdef CLIENT_SUPPORT
-	    !current_parsed_root->isremote &&
-# endif	/* CLIENT_SUPPORT */
-	    c != 'q' && !strchr (config->UserAdminOptions, c)
-	   )
+	if (c != 'q' && !strchr (config->UserAdminOptions, c))
 	    only_allowed_options = false;
 
 	switch (c)
@@ -437,7 +524,6 @@ admin (int argc, char **argv)
     argc -= optind;
     argv += optind;
 
-#ifdef CVS_ADMIN_GROUP
     /* The use of `cvs admin -k' is unrestricted.  However, any other
        option is restricted if the group CVS_ADMIN_GROUP exists on the
        server.  */
@@ -446,40 +532,9 @@ admin (int argc, char **argv)
      * check anyhow.  The alternative would be to check only when
      * (server_active) rather than when not on the client.
      */
-    if (!current_parsed_root->isremote && !only_allowed_options &&
-	(grp = getgrnam(CVS_ADMIN_GROUP)) != NULL)
-    {
-#ifdef HAVE_GETGROUPS
-	gid_t *grps;
-	int n;
-
-	/* get number of auxiliary groups */
-	n = getgroups (0, NULL);
-	if (n < 0)
-	    error (1, errno, "unable to get number of auxiliary groups");
-	grps = xnmalloc (n + 1, sizeof *grps);
-	n = getgroups (n, grps);
-	if (n < 0)
-	    error (1, errno, "unable to get list of auxiliary groups");
-	grps[n] = getgid ();
-	for (i = 0; i <= n; i++)
-	    if (grps[i] == grp->gr_gid) break;
-	free (grps);
-	if (i > n)
-	    error (1, 0, "usage is restricted to members of the group %s",
-		   CVS_ADMIN_GROUP);
-#else
-	char *me = getcaller ();
-	char **grnam;
-	
-	for (grnam = grp->gr_mem; *grnam; grnam++)
-	    if (strcmp (*grnam, me) == 0) break;
-	if (!*grnam && getgid () != grp->gr_gid)
-	    error (1, 0, "usage is restricted to members of the group %s",
-		   CVS_ADMIN_GROUP);
-#endif
-    }
-#endif /* defined CVS_ADMIN_GROUP */
+    if (!only_allowed_options && !admin_group_member())
+	error (1, 0, "usage is restricted to members of the group %s",
+	       CVS_ADMIN_GROUP);
 
     for (i = 0; i < admin_data.ac; ++i)
     {
@@ -587,6 +642,8 @@ admin (int argc, char **argv)
 #ifdef CLIENT_SUPPORT
  return_it:
 #endif /* CLIENT_SUPPORT */
+    if (admin_data.cmdline != NULL)
+	free (admin_data.cmdline);
     if (admin_data.branch != NULL)
 	free (admin_data.branch);
     if (admin_data.comment != NULL)
@@ -631,6 +688,8 @@ admin_fileproc (void *callerdat, struct file_info *finfo)
 	goto exitfunc;
     }
 
+    history_write ('X', finfo->update_dir, admin_data->cmdline, finfo->file,
+	finfo->repository);
     rcs = vers->srcfile;
     if (rcs == NULL)
     {
