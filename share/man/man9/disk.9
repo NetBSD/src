@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.29 2009/03/14 20:47:08 apb Exp $
+.\"	$NetBSD: disk.9,v 1.30 2009/04/08 12:51:43 joerg Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -215,7 +215,7 @@ Specify whether to keep or drop the in-memory disklabel
 when the device is closed.
 .It Dv DIOCWLABEL "int"
 Enable or disable writing to the part of the disk that contains the label.
-.It Dv DIOCSBAD	"struct dkbad"
+.It Dv DIOCSBAD "struct dkbad"
 Set kernel dkbad.
 .It Dv DIOCEJECT "int"
 Eject removable disk.
