@@ -935,40 +935,40 @@
 #define SERVER_SUPPORT 1
 
 /* The size of a `char', as computed by sizeof. */
-#define SIZEOF_CHAR 1
+#define SIZEOF_CHAR sizeof(char)
 
 /* The size of a `double', as computed by sizeof. */
-#define SIZEOF_DOUBLE 8
+#define SIZEOF_DOUBLE sizeof(double)
 
 /* The size of a `float', as computed by sizeof. */
-#define SIZEOF_FLOAT 4
+#define SIZEOF_FLOAT sizeof(float)
 
 /* The size of a `int', as computed by sizeof. */
-#define SIZEOF_INT 4
+#define SIZEOF_INT sizeof(int)
 
 /* The size of a `intmax_t', as computed by sizeof. */
-#define SIZEOF_INTMAX_T 8
+#define SIZEOF_INTMAX_T sizeof(intmax_t)
 
 /* The size of a `long', as computed by sizeof. */
-#define SIZEOF_LONG 8
+#define SIZEOF_LONG sizeof(long)
 
 /* The size of a `long double', as computed by sizeof. */
-#define SIZEOF_LONG_DOUBLE 16
+#define SIZEOF_LONG_DOUBLE sizeof(long double)
 
 /* The size of a `long long', as computed by sizeof. */
-#define SIZEOF_LONG_LONG 8
+#define SIZEOF_LONG_LONG sizeof(long long)
 
 /* The size of a `ptrdiff_t', as computed by sizeof. */
-#define SIZEOF_PTRDIFF_T 8
+#define SIZEOF_PTRDIFF_T sizeof(ptrdiff_t)
 
 /* The size of a `short', as computed by sizeof. */
-#define SIZEOF_SHORT 2
+#define SIZEOF_SHORT sizeof(short)
 
 /* The size of a `size_t', as computed by sizeof. */
-#define SIZEOF_SIZE_T 8
+#define SIZEOF_SIZE_T sizeof(size_t)
 
 /* The size of a `wint_t', as computed by sizeof. */
-#define SIZEOF_WINT_T 4
+#define SIZEOF_WINT_T sizeof(wint_t)
 
 /* Define as the maximum value of type 'size_t', if the system doesn't define
    it. */
@@ -1025,6 +1025,9 @@
    which is interpreted as an octal number. */
 #define UMASK_DFLT 002
 
+#include <float.h>	/* for LDBL_BITS */
+#include <limits.h>	/* for DBL_BITS */
+
 /* Define if double is the first floating point type detected with its size.
    */
 #define UNIQUE_FLOAT_TYPE_DOUBLE 1
@@ -1034,7 +1037,9 @@
 
 /* Define if long double is the first floating point type detected with its
    size. */
+#if DBL_BITS != LDBL_BITS
 #define UNIQUE_FLOAT_TYPE_LONG_DOUBLE 1
+#endif
 
 /* Define if char is the first integer type detected with its size. */
 #define UNIQUE_INT_TYPE_CHAR 1
