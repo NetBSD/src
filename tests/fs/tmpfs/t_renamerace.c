@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.2 2009/04/08 08:57:24 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.3 2009/04/08 09:05:16 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -9,7 +9,6 @@
 #include <sys/mount.h>
 
 #include <atf-c.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -67,7 +66,7 @@ ATF_TC_BODY(renamerace, tc)
   ukfs_init();
   fs = ukfs_mount(MOUNT_TMPFS, "tmpfs", UKFS_DEFAULTMP, 0, &args, sizeof(args));
   if (fs == NULL)
-    err(1, "ukfs_mount");
+    atf_tc_fail("could not mount tmpfs: %d (%s)", errno, strerror(errno));
 
   pthread_create(&pt1, NULL, w1, fs);
   pthread_create(&pt2, NULL, w2, fs);
