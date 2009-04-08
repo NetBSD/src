@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.394 2009/04/08 06:55:09 apb Exp $
+#	$NetBSD: NetBSD.dist,v 1.395 2009/04/08 13:32:26 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -545,6 +545,7 @@
 ./usr/libdata/debug/usr/tests/crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto
 ./usr/libdata/debug/usr/tests/fs
+./usr/libdata/debug/usr/tests/fs/ffs
 ./usr/libdata/debug/usr/tests/fs/puffs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
 ./usr/libdata/debug/usr/tests/ipf
@@ -1410,6 +1411,7 @@
 ./usr/tests/crypto
 ./usr/tests/crypto/libcrypto
 ./usr/tests/fs
+./usr/tests/fs/ffs
 ./usr/tests/fs/puffs
 ./usr/tests/fs/tmpfs
 ./usr/tests/games
