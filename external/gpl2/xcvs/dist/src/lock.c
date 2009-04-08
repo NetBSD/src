@@ -152,6 +152,42 @@ static struct lock global_val_tags_lock = {NULL, NULL, CVSVALTAGSLCK, NULL,
 static List *lock_tree_list;
 
 
+/*
+ * Find the root directory in the repository directory
+ */
+static int
+find_root (const char *repository, char *rootdir)
+{
+    struct stat strep, stroot;
+    char *p = NULL, *q = NULL;
+    size_t len;
+
+    if (stat (rootdir, &stroot) == -1)
+	return -1;
+    len = strlen (repository);
+    do {
+	if (p != NULL) {
+	    len = p - repository;
+	    *p = '\0';
+	}
+	if (q != NULL)
+	    *q = '/';
+	if (stat(repository, &strep) == -1) {
+	    if (p != NULL)
+		*p = '/';
+	    return -1;
+	}
+	if (strep.st_dev == stroot.st_dev && strep.st_ino == stroot.st_ino) {
+	    if (p != NULL)
+		*p = '/';
+	    if (q != NULL)
+		*q = '/';
+	    return len;
+	}
+	q = p;
+    } while ((p = strrchr (repository, '/')) != NULL);
+    return -1;
+}
 
 /* Return a newly malloc'd string containing the name of the lock for the
    repository REPOSITORY and the lock file name within that directory
@@ -167,7 +203,7 @@ lock_name (const char *repository, const char *name)
     char *q;
     const char *short_repos;
     mode_t save_umask = 0000;
-    int saved_umask = 0;
+    int saved_umask = 0, len;
 
     TRACE (TRACE_FLOW, "lock_name (%s, %s)",
 	   repository  ? repository : "(null)", name ? name : "(null)");
@@ -189,9 +225,13 @@ lock_name (const char *repository, const char *name)
 	   to CVSROOT.  */
 	assert (current_parsed_root != NULL);
 	assert (current_parsed_root->directory != NULL);
-	assert (strncmp (repository, current_parsed_root->directory,
-			 strlen (current_parsed_root->directory)) == 0);
-	short_repos = repository + strlen (current_parsed_root->directory) + 1;
+	/* 
+	 * Unfortunately, string comparisons are not enough because we
+	 * might have symlinks present
+	 */
+	len = find_root(repository, current_parsed_root->directory);
+	assert(len != -1);
+	short_repos = repository + len + 1;
 
 	if (strcmp (repository, current_parsed_root->directory) == 0)
 	    short_repos = ".";
@@ -511,6 +551,9 @@ Reader_Lock (char *xrepository)
 {
     int err = 0;
     FILE *fp;
+
+    if (nolock)
+	return (0);
 
     TRACE (TRACE_FUNCTION, "Reader_Lock(%s)", xrepository);
 
@@ -909,6 +952,8 @@ lock_list_promotably (List *list)
 
     TRACE (TRACE_FLOW, "lock_list_promotably ()");
 
+    if (nolock)
+	return (0);
     if (noexec)
 	return 0;
 

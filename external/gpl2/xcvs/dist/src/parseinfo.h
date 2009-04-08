@@ -31,6 +31,7 @@ struct config
     int RereadLogAfterVerify;
 
     char *UserAdminOptions;
+    char *UserAdminGroup;
 
     /* Control default behavior of 'cvs import' (-X option on or off) in
      * CVSROOT/config.  Defaults to off, for backward compatibility.

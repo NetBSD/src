@@ -982,6 +982,7 @@ error ENOMEM Virtual memory exhausted.\n");
 		     config->MaxCompressionLevel);
     }
 
+    if (!nolock) {
     path = xmalloc (strlen (current_parsed_root->directory)
 		   + sizeof (CVSROOTADM)
 		   + 2);
@@ -999,6 +1000,7 @@ error ENOMEM Virtual memory exhausted.\n");
 	pending_error = save_errno;
     }
     free (path);
+    }
 
     setenv (CVSROOT_ENV, current_parsed_root->directory, 1);
 }
@@ -3074,6 +3076,9 @@ serve_global_option (char *arg)
 	case 'n':
 	    noexec = 1;
 	    logoff = 1;
+	    break;
+	case 'u':
+	    nolock = 1;
 	    break;
 	case 'q':
 	    quiet = 1;
@@ -5880,6 +5885,8 @@ struct request requests[] =
   REQ_LINE("Max-dotdot", serve_max_dotdot, 0),
   REQ_LINE("Static-directory", serve_static_directory, 0),
   REQ_LINE("Sticky", serve_sticky, 0),
+  REQ_LINE("Checkin-prog", serve_noop, 0),
+  REQ_LINE("Update-prog", serve_noop, 0),
   REQ_LINE("Entry", serve_entry, RQ_ESSENTIAL),
   REQ_LINE("Kopt", serve_kopt, 0),
   REQ_LINE("Checkin-time", serve_checkin_time, 0),
@@ -6523,6 +6530,7 @@ static void
 switch_to_user (const char *cvs_username, const char *username)
 {
     struct passwd *pw;
+    int rc;
 #ifdef HAVE_PAM
     int retval;
     char *pam_stage = "open session";
@@ -6629,7 +6637,14 @@ error 0 %s: no such system user\n", username);
 	}
     }
 
-    if (setuid (pw->pw_uid) < 0)
+#ifdef SETXID_SUPPORT
+    /* Honor the setuid bit iff set. */
+    if (getuid() != geteuid())
+	rc = setuid (geteuid ());
+    else
+#endif
+	rc = setuid (pw->pw_uid);
+    if (rc < 0)
     {
 	/* Note that this means that if run as a non-root user,
 	   CVSROOT/passwd must contain the user we are running as
@@ -7292,19 +7307,20 @@ kserver_authenticate_connection( void )
 {
     int status;
     char instance[INST_SZ];
-    struct sockaddr_in peer;
-    struct sockaddr_in laddr;
-    int len;
+    struct sockaddr_storage peer;
+    struct sockaddr_storage laddr;
+    int plen, llen;
     KTEXT_ST ticket;
     AUTH_DAT auth;
     char version[KRB_SENDAUTH_VLEN];
     char user[ANAME_SZ];
 
     strcpy (instance, "*");
-    len = sizeof peer;
-    if (getpeername (STDIN_FILENO, (struct sockaddr *) &peer, &len) < 0
+    plen = sizeof peer;
+    llen = sizeof laddr;
+    if (getpeername (STDIN_FILENO, (struct sockaddr *) &peer, &plen) < 0
 	|| getsockname (STDIN_FILENO, (struct sockaddr *) &laddr,
-			&len) < 0)
+			&llen) < 0)
     {
 	printf ("E Fatal error, aborting.\n\
 error %s getpeername or getsockname failed\n", strerror (errno));
@@ -7526,7 +7542,7 @@ krb_encrypt_input( void *fnclosure, const char *input, char *output, int size )
     struct krb_encrypt_data *kd = (struct krb_encrypt_data *) fnclosure;
     int tcount;
 
-    des_cbc_encrypt ((C_Block *) input, (C_Block *) output,
+    des_cbc_encrypt ((char *) input, (char *) output,
 		     size, kd->sched, &kd->block, 0);
 
     /* SIZE is the size of the buffer, which is set by the encryption
@@ -7570,7 +7586,7 @@ krb_encrypt_output( void *fnclosure, const char *input, char *output,
        fail over a long network connection.  We trust krb_recvauth to
        guard against a replay attack.  */
 
-    des_cbc_encrypt ((C_Block *) input, (C_Block *) output, aligned,
+    des_cbc_encrypt ((char *) input, (char *) output, aligned,
 		     kd->sched, &kd->block, 1);
 
     *translated = aligned;
