@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rtclocaltime,v 1.8 2009/04/08 13:18:56 martin Exp $
+# $NetBSD: rtclocaltime,v 1.9 2009/04/08 13:29:59 martin Exp $
 #
 
 # PROVIDE: rtclocaltime
@@ -17,7 +17,7 @@ stop_cmd=":"
 rtclocaltime_start()
 {
 	rtcoff=$(awk 'BEGIN{
-		offset = -int(strftime("%z", systime()));
+		offset = -int(strftime("%z"));
 		if (offset < 0) {
 			sign = -1;
 			offset = -offset;
