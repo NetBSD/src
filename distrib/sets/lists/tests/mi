@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37 2009/04/07 19:28:40 apb Exp $
+# $NetBSD: mi,v 1.38 2009/04/08 13:32:26 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -98,6 +98,8 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
@@ -459,6 +461,9 @@
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests
+./usr/tests/fs/ffs				tests-fs-tests
+./usr/tests/fs/ffs/Atffile			tests-fs-tests
+./usr/tests/fs/ffs/t_renamerace			tests-fs-tests
 ./usr/tests/fs/puffs				tests-fs-tests
 ./usr/tests/fs/puffs/Atffile			tests-fs-tests
 ./usr/tests/fs/puffs/h_have_puffs		tests-fs-tests
