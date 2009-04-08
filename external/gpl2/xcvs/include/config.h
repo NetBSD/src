@@ -1045,11 +1045,13 @@
 /* Define if intmax_t is the first integer type detected with its size. */
 /* #undef UNIQUE_INT_TYPE_INTMAX_T */
 
+#ifdef __LP64__
 /* Define if long int is the first integer type detected with its size. */
 #define UNIQUE_INT_TYPE_LONG 1
-
+#else
 /* Define if long long is the first integer type detected with its size. */
-/* #undef UNIQUE_INT_TYPE_LONG_LONG */
+#define UNIQUE_INT_TYPE_LONG_LONG  1
+#endif
 
 /* Define if ptrdiff_t is the first integer type detected with its size. */
 /* #undef UNIQUE_INT_TYPE_PTRDIFF_T */
