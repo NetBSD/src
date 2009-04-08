@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.95 2009/03/27 19:33:22 reed Exp $
+.\"	$NetBSD: ifconfig.8,v 1.96 2009/04/08 14:32:05 joerg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -210,7 +210,6 @@ Enable driver dependent debugging code; usually, this turns on
 extra console error logging.
 .It Fl debug
 Disable driver dependent debugging code.
-.ne 1i
 .It Cm delete
 Remove the network address specified.
 This would be used if you incorrectly specified an alias, or it
@@ -485,7 +484,6 @@ to be used for IEEE 802.11-based wireless network interfaces.
 Unset the desired channel to be used
 for IEEE 802.11-based wireless network interfaces.
 It doesn't affect the channel to be created for IBSS or hostap mode.
-.It Bk -words
 .It Cm list scan
 .Pq IEEE 802.11 devices only
 Display the access points and/or ad-hoc neighbors
@@ -498,7 +496,6 @@ also causes received information elements to be displayed symbolicaly.
 Only the super-user can use this command.
 .It Cm tunnel Ar src_addr Ns Op Ar ,src_port
 .Ar dest_addr Ns Op Ar ,dest_port
-.Ek
 .Pq IP tunnel devices only
 Configure the physical source and destination address for IP tunnel
 interfaces, including
