@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.21 2009/04/07 18:31:12 dyoung Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.22 2009/04/08 00:12:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.21 2009/04/07 18:31:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.22 2009/04/08 00:12:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,10 @@ midi_pcppi_attach(device_t parent, device_t self, void *aux)
 	struct midi_pcppi_softc *sc = device_private(self);
 	struct pcppi_attach_args *pa = (struct pcppi_attach_args *)aux;
 	midisyn *ms;
+
+	KASSERT(midi_pcppi_attached > 0);
+
+	midi_pcppi_attached--;
 
 	sc->sc_mididev.dev = self;
 	ms = &sc->sc_midisyn;
