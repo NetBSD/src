@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.129 2009/04/08 00:12:21 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.130 2009/04/08 23:13:05 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5922,4 +5922,29 @@ distrib/sets/sets.subr				1.83
 	it is >= 2.  MAKEVERBOSE=2 is the default, and the messages
 	are too noisy.
 	[apb, ticket #677]
+
+sys/dev/scsipi/cd.c				1.291
+sys/dev/scsipi/scsipi_cd.h			1.21
+
+	Implement MMC_TRACKINFO_DATA and MMC_TRACKINFO_AUDIO detection
+	for cdrom and dvdrom devices. These two compatibility codes
+	were forgotten when those were introduced.
+	[reinoud, ticket #633]
+
+usr.sbin/quot/quot.8				1.13
+
+	Fix markup.
+	[joerg, ticket #679]
+
+sys/fs/tmpfs/tmpfs_vnops.c			1.55
+
+	Fix yet another recent crashy bug in tmpfs rename.
+	Fixes PR kern/41128.
+	[tron, ticket #680]
+
+sys/kern/sys_socket.c				1.60
+
+	Patch out soo_drain, in effect reverting the bugfix
+	in ticket #661.
+	[ad, ticket #681]
 
