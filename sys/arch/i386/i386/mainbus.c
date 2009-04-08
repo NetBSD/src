@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.82 2009/04/07 22:01:38 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.83 2009/04/08 17:08:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.82 2009/04/07 22:01:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.83 2009/04/08 17:08:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.82 2009/04/07 22:01:38 dyoung Exp $");
 
 void	mainbus_childdetached(device_t, device_t);
 int	mainbus_match(device_t, cfdata_t, void *);
-void	mainbus_attach(device_t, device_t, void *);
 void	mainbus_attach(device_t, device_t, void *);
 
 static int	mainbus_rescan(device_t, const char *, const int *);
@@ -362,7 +361,9 @@ static int
 mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct mainbus_softc *sc = device_private(self);
+#if NPNPBIOS > 0 || NACPI > 0 || NIPMI > 0 || NMCA > 0
 	union mainbus_attach_args mba;
+#endif
 
 	if (ifattr_match(ifattr, "acpibus") && sc->sc_acpi == NULL &&
 	    sc->sc_acpi_present) {
