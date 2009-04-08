@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.39 2009/04/02 00:09:32 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.40 2009/04/08 23:53:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.39 2009/04/02 00:09:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.40 2009/04/08 23:53:10 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,15 @@ struct elansc_softc {
 	device_t sc_pex;
 	device_t sc_pci;
 
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_tag;
-	bus_space_tag_t sc_memt;
-	bus_space_handle_t sc_memh;
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
+	bus_dma_tag_t		sc_dmat;
+	bus_dma_tag_t		sc_dmat64;
+	bus_space_tag_t		sc_iot;
+	bus_space_tag_t		sc_memt;
+	bus_space_handle_t	sc_memh;
+	int			sc_pciflags;
+
 	int sc_echobug;
 
 	kmutex_t sc_mtx;
@@ -123,6 +128,7 @@ static bool elanpar_shutdown(device_t, int);
 static void elanpex_intr_establish(device_t, struct elansc_softc *);
 static void elanpex_intr_disestablish(struct elansc_softc *);
 static bool elanpex_shutdown(device_t, int);
+static int elansc_rescan(device_t, const char *, const int *);
 
 static void elansc_protect(struct elansc_softc *, int, paddr_t, uint32_t);
 
@@ -139,10 +145,8 @@ elansc_childdetached(device_t self, device_t child)
 		sc->sc_pex = NULL;
 	if (child == sc->sc_pci)
 		sc->sc_pci = NULL;
-
-	/* elansc does not presently keep a pointer to 
-	 * the gpio, so there is nothing to do if it is detached.
-	 */
+	if (child == sc->sc_gpio)
+		sc->sc_gpio = NULL;
 }
 
 static int
@@ -1270,11 +1274,15 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	sc->sc_pc = pba->pba_pc;
+	sc->sc_pciflags = pba->pba_flags;
+	sc->sc_dmat = pba->pba_dmat;
+	sc->sc_dmat64 = pba->pba_dmat64;
 	sc->sc_tag = pci_make_tag(sc->sc_pc, 0, 0, 0);
 
 	aprint_naive(": System Controller\n");
 	aprint_normal(": AMD Elan SC520 System Controller\n");
 
+	sc->sc_iot = pba->pba_iot;
 	sc->sc_memt = pba->pba_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, PAGE_SIZE, 0,
 	    &sc->sc_memh) != 0) {
@@ -1386,12 +1394,11 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = ELANSC_PIO_NPINS;
 
-	sc->sc_par = config_found_ia(sc->sc_dev, "elanparbus", NULL, NULL);
-	sc->sc_pex = config_found_ia(sc->sc_dev, "elanpexbus", NULL, NULL);
-	/* Attach GPIO framework */
-	sc->sc_gpio = config_found_ia(sc->sc_dev, "gpiobus", &gba,
-	    gpiobus_print);
 #endif /* NGPIO */
+
+	elansc_rescan(sc->sc_dev, "elanparbus", NULL);
+	elansc_rescan(sc->sc_dev, "elanpexbus", NULL);
+	elansc_rescan(sc->sc_dev, "gpiobus", NULL);
 
 	/*
 	 * Hook up the watchdog timer.
@@ -1406,7 +1413,19 @@ elansc_attach(device_t parent, device_t self, void *aux)
 		    "unable to register watchdog with sysmon\n");
 	}
 	elansc_attached = true;
+#if 0
+	pba.pba_iot = sc->sc_iot;
+	pba.pba_memt = sc->sc_memt;
+	pba.pba_dmat = sc->sc_dmat;
+	pba.pba_dmat64 = sc->sc_dmat64;
+	pba.pba_pc = sc->sc_pc;
+	pba.pba_flags = sc->sc_pciflags;
+	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	sc->sc_pci = config_found_ia(self, "pcibus", pba, pcibusprint);
+#else
+	elansc_rescan(sc->sc_dev, "pcibus", NULL);
+#endif
 }
 
 static int
@@ -1437,9 +1456,21 @@ elansc_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct elansc_softc *sc = device_private(self);
 
+	if (ifattr_match(ifattr, "elanparbus") && sc->sc_par == NULL) {
+		sc->sc_par = config_found_ia(sc->sc_dev, "elanparbus", NULL,
+		    NULL);
+	}
+
+	if (ifattr_match(ifattr, "elanpexbus") && sc->sc_pex == NULL) {
+		sc->sc_pex = config_found_ia(sc->sc_dev, "elanpexbus", NULL,
+		    NULL);
+	}
+
 	if (ifattr_match(ifattr, "gpiobus") && sc->sc_gpio == NULL) {
 #if NGPIO > 0
 		struct gpiobus_attach_args gba;
+
+		memset(&gba, 0, sizeof(gba));
 
 		gba.gba_gc = &sc->sc_gpio_gc;
 		gba.gba_pins = sc->sc_gpio_pins;
@@ -1449,18 +1480,21 @@ elansc_rescan(device_t self, const char *ifattr, const int *locators)
 #endif
 	}
 
-	if (ifattr_match(ifattr, "elanparbus") && sc->sc_par == NULL)
-		sc->sc_par = config_found_ia(sc->sc_dev, ifattr, NULL, NULL);
-
-	if (ifattr_match(ifattr, "elanpexbus") && sc->sc_pex == NULL)
-		sc->sc_pex = config_found_ia(sc->sc_dev, ifattr, NULL, NULL);
-
 	if (ifattr_match(ifattr, "pcibus") && sc->sc_pci == NULL) {
-#if 0
-		/* TBD */
-		sc->sc_pci = config_found_ia(self, "pcibus", pba, pcibusprint);
-#endif
+		struct pcibus_attach_args pba;
+
+		memset(&pba, 0, sizeof(pba));
+		pba.pba_iot = sc->sc_iot;
+		pba.pba_memt = sc->sc_memt;
+		pba.pba_dmat = sc->sc_dmat;
+		pba.pba_dmat64 = sc->sc_dmat64;
+		pba.pba_pc = sc->sc_pc;
+		pba.pba_flags = sc->sc_pciflags;
+		pba.pba_bus = 0;
+		pba.pba_bridgetag = NULL;
+		sc->sc_pci = config_found_ia(self, "pcibus", &pba, pcibusprint);
 	}
+
 	return 0;
 }
 
