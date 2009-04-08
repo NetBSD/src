@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.2 2009/03/24 20:22:44 snj Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.3 2009/04/08 23:08:07 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.2 2009/03/24 20:22:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.3 2009/04/08 23:08:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -833,26 +833,20 @@ tmpfs_rename(void *v)
 			goto out_unlocked;
 	}
 
+	/*
+	 * If the node we were renaming has scarpered, just give up.
+	 */
 	de = tmpfs_dir_lookup(fdnode, fcnp);
-	if (de == NULL) {
+	if (de == NULL || de->td_node != fnode) {
 		error = ENOENT;
 		goto out;
 	}
-	KASSERT(de->td_node == fnode);
 
 	/* If source and target are the same file, there is nothing to do. */
 	if (fvp == tvp) {
 		error = 0;
 		goto out;
 	}
-
-	/* Avoid manipulating '.' and '..' entries. */
-	if (de == NULL) {
-		KASSERT(fvp->v_type == VDIR);
-		error = EINVAL;
-		goto out;
-	}
-	KASSERT(de->td_node == fnode);
 
 	/* If replacing an existing entry, ensure we can do the operation. */
 	if (tvp != NULL) {
