@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.38 2009/04/08 13:32:26 pooka Exp $
+# $NetBSD: mi,v 1.39 2009/04/08 13:34:46 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -104,6 +104,7 @@
 ./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug
+./usr/libdata/debug/usr/tests/fs/tmpfs/t_renamerace.debug		tests-fs-debug		debug
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests
@@ -490,6 +491,7 @@
 ./usr/tests/fs/tmpfs/t_readdir			tests-fs-tests
 ./usr/tests/fs/tmpfs/t_remove			tests-fs-tests
 ./usr/tests/fs/tmpfs/t_rename			tests-fs-tests
+./usr/tests/fs/tmpfs/t_renamerace		tests-fs-tests
 ./usr/tests/fs/tmpfs/t_rmdir			tests-fs-tests
 ./usr/tests/fs/tmpfs/t_setattr			tests-fs-tests
 ./usr/tests/fs/tmpfs/t_sizes			tests-fs-tests
