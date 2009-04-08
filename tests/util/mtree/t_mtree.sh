@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.2 2009/04/07 19:28:40 apb Exp $
+# $NetBSD: t_mtree.sh,v 1.3 2009/04/08 19:06:30 apb Exp $
 #
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -102,7 +102,7 @@ check_body()
 atf_test_case convert_C
 convert_C_head()
 {
-	atf_set "descr" "Convert a specfile to mtree -C format"
+	atf_set "descr" "Convert a specfile to mtree -C format, unsorted"
 }
 convert_C_body()
 {
@@ -110,10 +110,21 @@ convert_C_body()
 	h_check "$(atf_get_srcdir)/d_convert_C.out" output
 }
 
+atf_test_case convert_C_S
+convert_C_S_head()
+{
+	atf_set "descr" "Convert a specfile to mtree -C format, sorted"
+}
+convert_C_S_body()
+{
+	mtree -C -S -K all <"$(atf_get_srcdir)/d_convert.in" >output
+	h_check "$(atf_get_srcdir)/d_convert_C_S.out" output
+}
+
 atf_test_case convert_D
 convert_D_head()
 {
-	atf_set "descr" "Convert a specfile to mtree -D format"
+	atf_set "descr" "Convert a specfile to mtree -D format, unsorted"
 }
 convert_D_body()
 {
@@ -121,10 +132,23 @@ convert_D_body()
 	h_check "$(atf_get_srcdir)/d_convert_D.out" output
 }
 
+atf_test_case convert_D_S
+convert_D_S_head()
+{
+	atf_set "descr" "Convert a specfile to mtree -D format, sorted"
+}
+convert_D_S_body()
+{
+	mtree -D -S -K all <"$(atf_get_srcdir)/d_convert.in" >output
+	h_check "$(atf_get_srcdir)/d_convert_D_S.out" output
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case create
 	atf_add_test_case check
 	atf_add_test_case convert_C
+	atf_add_test_case convert_C_S
 	atf_add_test_case convert_D
+	atf_add_test_case convert_D_S
 }
