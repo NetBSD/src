@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.124 2009/04/08 00:23:30 dyoung Exp $	*/
+/*	$NetBSD: acpi.c,v 1.125 2009/04/08 12:39:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.124 2009/04/08 00:23:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.125 2009/04/08 12:39:27 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -519,7 +519,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 #endif
 	acpi_build_tree(sc);
 
-	sprintf(acpi_supported_states, "%s%s%s%s%s%s",
+	snprintf(acpi_supported_states, sizeof(acpi_supported_states),
+	    "%s%s%s%s%s%s",
 	    is_available_state(sc, ACPI_STATE_S0) ? "S0 " : "",
 	    is_available_state(sc, ACPI_STATE_S1) ? "S1 " : "",
 	    is_available_state(sc, ACPI_STATE_S2) ? "S2 " : "",
