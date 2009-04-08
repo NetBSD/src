@@ -71,7 +71,7 @@ int update (int argc, char **argv);
 static size_t try_read_from_server (char *, size_t);
 
 static void auth_server (cvsroot_t *, struct buffer *, struct buffer *,
-			 int, int, struct hostent *);
+			 int, int);
 
 
 
@@ -1132,7 +1132,7 @@ handle_copy_file (char *args, size_t len)
    extend this to deal with compressed files and make update_entries
    use it.  On error, gives a fatal error.  */
 static void
-read_counted_file (char *filename, char *fullname)
+read_counted_file (const char *filename, const char *fullname)
 {
     char *size_string;
     size_t size;
@@ -3500,42 +3500,30 @@ connect_to_pserver (cvsroot_t *root, struct buffer **to_server_p,
     int sock;
     int port_number,
 	proxy_port_number = 0; /* Initialize to silence -Wall.  Dumb.  */
-    union sai {
-	struct sockaddr_in addr_in;
-	struct sockaddr addr;
-    } client_sai;
-    struct hostent *hostinfo;
+    char no_passwd = 0;   /* gets set if no password found */
     struct buffer *to_server, *from_server;
 
-    sock = socket (AF_INET, SOCK_STREAM, 0);
-    if (sock == -1)
-	error (1, 0, "cannot create socket: %s", SOCK_STRERROR (SOCK_ERRNO));
     port_number = get_cvs_port_number (root);
 
     /* if we have a proxy connect to that instead */
     if (root->proxy_hostname)
     {
-        proxy_port_number = get_proxy_port_number (root);
-	hostinfo = init_sockaddr (&client_sai.addr_in, root->proxy_hostname,
-                                  proxy_port_number);
-        TRACE (TRACE_FUNCTION, "Connecting to %s:%d via proxy %s(%s):%d.",
+        TRACE (TRACE_FUNCTION, "Connecting to %s:%d via proxy %s:%d.",
                root->hostname, port_number, root->proxy_hostname,
-               inet_ntoa (client_sai.addr_in.sin_addr), proxy_port_number);
+	       proxy_port_number);
+        proxy_port_number = get_proxy_port_number (root);
+	sock = connect_to(root->proxy_hostname, proxy_port_number);
     }
     else
     {
-	hostinfo = init_sockaddr (&client_sai.addr_in, root->hostname,
-				  port_number);
-        TRACE (TRACE_FUNCTION, "Connecting to %s(%s):%d.",
-               root->hostname,
-               inet_ntoa (client_sai.addr_in.sin_addr), port_number);
+        TRACE (TRACE_FUNCTION, "Connecting to %s:%d.",
+               root->hostname, port_number);
+	sock = connect_to(root->hostname, port_number);
     }
 
-    if (connect (sock, &client_sai.addr, sizeof (client_sai))
-	< 0)
-	error (1, 0, "connect to %s(%s):%d failed: %s",
+    if (sock == -1)
+	error (1, 0, "connect to %s:%d failed: %s",
 	       root->proxy_hostname ? root->proxy_hostname : root->hostname,
-	       inet_ntoa (client_sai.addr_in.sin_addr),
 	       root->proxy_hostname ? proxy_port_number : port_number,
                SOCK_STRERROR (SOCK_ERRNO));
 
@@ -3579,8 +3567,7 @@ connect_to_pserver (cvsroot_t *root, struct buffer **to_server_p,
 	}
     }
 
-    auth_server (root, to_server, from_server, verify_only, do_gssapi,
-                 hostinfo);
+    auth_server (root, to_server, from_server, verify_only, do_gssapi);
 
     if (verify_only)
     {
@@ -3615,8 +3602,7 @@ connect_to_pserver (cvsroot_t *root, struct buffer **to_server_p,
 
 static void
 auth_server (cvsroot_t *root, struct buffer *to_server,
-             struct buffer *from_server, int verify_only, int do_gssapi,
-             struct hostent *hostinfo)
+             struct buffer *from_server, int verify_only, int do_gssapi)
 {
     char *username = NULL;		/* the username we use to connect */
     char no_passwd = 0;			/* gets set if no password found */
@@ -3634,7 +3620,7 @@ auth_server (cvsroot_t *root, struct buffer *to_server,
                    "gserver currently only enabled for socket connections");
 	}
 
-	if (! connect_to_gserver (root, fd, hostinfo))
+	if (! connect_to_gserver (root, fd, root->hostname))
 	{
 	    error (1, 0,
 		    "authorization failed: server %s rejected access to %s",
@@ -3692,7 +3678,8 @@ auth_server (cvsroot_t *root, struct buffer *to_server,
 	send_to_server_via(to_server, "\012", 1);
 
         /* Paranoia. */
-        memset (password, 0, strlen (password));
+        free_cvs_password (password);
+	password = NULL;
 # else /* ! AUTH_CLIENT_SUPPORT */
 	error (1, 0, "INTERNAL ERROR: This client does not support pserver authentication");
 # endif /* AUTH_CLIENT_SUPPORT */
@@ -4065,6 +4052,16 @@ start_server (void)
 #endif /* ! ENCRYPTION */
 	}
 
+	if (nolock && !noexec)
+	{
+	    if (have_global)
+	    {
+		send_to_server ("Global_option -u\012", 0);
+	    }
+	    else
+		error (1, 0,
+		       "This server does not support the global -u option.");
+	}
 	/* Send this before compression to enable supression of the
 	 * "Forcing compression level Z" messages.
 	 */
@@ -5154,23 +5151,40 @@ send_init_command (void)
 
 #if defined AUTH_CLIENT_SUPPORT || defined HAVE_KERBEROS || defined HAVE_GSSAPI
 
-struct hostent *
-init_sockaddr (struct sockaddr_in *name, char *hostname, unsigned int port)
+int
+connect_to(char *hostname, unsigned int port)
 {
-    struct hostent *hostinfo;
-    unsigned short shortport = port;
+    struct addrinfo hints, *res, *res0 = NULL;
+    char pbuf[10];
+    int e, sock;
 
-    memset (name, 0, sizeof (*name));
-    name->sin_family = AF_INET;
-    name->sin_port = htons (shortport);
-    hostinfo = gethostbyname (hostname);
-    if (!hostinfo)
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
+
+    snprintf(pbuf, sizeof(pbuf), "%d", port);
+    e = getaddrinfo(hostname, pbuf, &hints, &res0);
+    if (e)
     {
-	fprintf (stderr, "Unknown host %s.\n", hostname);
-	exit (EXIT_FAILURE);
+	error (1, 0, "%s", gai_strerror(e));
     }
-    name->sin_addr = *(struct in_addr *) hostinfo->h_addr;
-    return hostinfo;
+    sock = -1;
+    for (res = res0; res; res = res->ai_next) {
+	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock < 0)
+	    continue;
+
+	TRACE (TRACE_FUNCTION, " -> Connecting to %s\n", hostname);
+	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+	    close(sock);
+	    sock = -1;
+	    continue;
+	}
+	break;
+    }
+    freeaddrinfo(res0);
+    return sock;
 }
 
 #endif /* defined AUTH_CLIENT_SUPPORT || defined HAVE_KERBEROS

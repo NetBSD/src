@@ -1046,7 +1046,9 @@ warning: file `%s' seems to still contain conflict indicators",
             }
 
 	    li->tag = xstrdup (vers->tag);
-	    li->rev_old = xstrdup (vers->vn_rcs);
+	    /* If the file was re-added, we want the revision in the commitlog
+	       to be NONE, not the previous dead revision. */
+	    li->rev_old = status == T_ADDED ? NULL : xstrdup (vers->vn_rcs);
 	    li->rev_new = NULL;
 	    p->data = li;
 	    (void) addnode (ulist, p);
@@ -1271,7 +1273,8 @@ precommit_proc (const char *repository, const char *filter, void *closure)
     run_setup (cmdline);
     free (cmdline);
 
-    return run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL | RUN_REALLY);
+    return run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL|RUN_REALLY|
+	(server_active ? 0 : RUN_UNSETXID));
 }
 
 
