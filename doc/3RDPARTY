@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.680 2009/04/04 12:30:43 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.681 2009/04/08 17:27:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -196,8 +196,8 @@ License:	BSD-like
 Notes:
 
 Package:	cvs
-Version:	1.11.22
-Current Vers:	1.11.23/1.12.13
+Version:	1.12.13
+Current Vers:	1.12.13
 Maintainer:	cvshome
 Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
@@ -209,8 +209,6 @@ Use src/gnu/dist/xcvs/cvs2netbsd for preparing the source tree
 for the import.
 Do not forget to update gnu/usr.bin/xcvs/include/config.h to match
 gnu/dist/xcvs/config.h.in.
-If you want to upgrade to 1.12.XX, please talk to christos first.
-I have merged all the changes already.
 
 Package:	db
 Version:	1.85
