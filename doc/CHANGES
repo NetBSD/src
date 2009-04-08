@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1204 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1205 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -166,3 +166,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[christos 20090320]
 	kmem_alloc(9): Add more extensive runtime debugging facilities.
 		[ad 20090329]
+	cvs: Import 1.12.13 [christos 20090408]
