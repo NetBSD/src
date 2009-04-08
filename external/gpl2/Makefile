@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2009/04/08 16:30:12 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2009/04/08 17:24:55 christos Exp $
 
 .include <bsd.own.mk>
 
-.if (${MKCVS} != "no"
+.if (${MKCVS} != "no")
 SUBDIR+= xcvs
 .endif
 .if (${MKLVM} != "no")
