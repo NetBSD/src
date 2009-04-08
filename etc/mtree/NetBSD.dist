@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.393 2009/03/03 06:01:56 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.394 2009/04/08 06:55:09 apb Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1440,6 +1440,7 @@
 ./usr/tests/util/id
 ./usr/tests/util/m4
 ./usr/tests/util/make
+./usr/tests/util/mtree
 ./usr/tests/util/ps
 ./usr/tests/util/sdiff
 ./usr/tests/util/sh
