@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.283.4.1 2009/03/24 20:16:58 snj Exp $	*/
+/*	$NetBSD: cd.c,v 1.283.4.2 2009/04/08 23:02:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283.4.1 2009/03/24 20:16:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283.4.2 2009/04/08 23:02:15 snj Exp $");
 
 #include "rnd.h"
 
@@ -3174,7 +3174,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
 	uint8_t *buffer;
 	uint8_t track_sessionnr, last_tracknr, sessionnr, adr, tno, point;
-	uint8_t tmin, tsec, tframe, pmin, psec, pframe;
+	uint8_t control, tmin, tsec, tframe, pmin, psec, pframe;
 	int size, req_size;
 	int error, flags;
 
@@ -3218,6 +3218,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 
 	/* read in complete raw toc */
 	req_size = _2btol(toc_hdr->length);
+	req_size = 2*((req_size + 1) / 2);	/* for ATAPI */
 	_lto2b(req_size, gtoc_cmd.data_len);
 
 	error = scsipi_command(periph,
@@ -3248,6 +3249,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 		tno       = rawtoc->tno;
 		sessionnr = rawtoc->sessionnr;
 		adr       = rawtoc->adrcontrol >> 4;
+		control   = rawtoc->adrcontrol & 0xf;
 		point     = rawtoc->point;
 		tmin      = rawtoc->min;
 		tsec      = rawtoc->sec;
@@ -3283,6 +3285,14 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 			if (sessionnr == track_sessionnr) {
 				next_writable = lba;
 			}
+		}
+
+		if ((control & (3<<2)) == 4)		/* 01xxb */
+			flags |= MMC_TRACKINFO_DATA;
+		if ((control & (1<<2)) == 0) {		/* x0xxb */
+			flags |= MMC_TRACKINFO_AUDIO;
+			if (control & 1)		/* xxx1b */
+				flags |= MMC_TRACKINFO_PRE_EMPH;
 		}
 
 		rawtoc++;
@@ -3344,7 +3354,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	uint32_t lba, lead_out;
 	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
 	uint8_t *buffer;
-	uint8_t last_tracknr;
+	uint8_t control, last_tracknr;
 	int size, req_size;
 	int error, flags;
 
@@ -3410,12 +3420,15 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	track_start  = 0;
 	track_size   = 0;
 	lead_out     = 0;
+	flags        = 0;
 
 	size = req_size - sizeof(struct scsipi_toc_header) + 1;
 	while (size > 0) {
 		/* remember, DVD-ROM: tracknr == sessionnr */
 		lba     = _4btol(toc->msf_lba);
 		tracknr = toc->tracknr;
+		control = toc->adrcontrol & 0xf;
+
 		if (trackinfo->tracknr == tracknr) {
 			track_start = lba;
 		}
@@ -3426,6 +3439,17 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 		if (tracknr == 0xAA) {
 			lead_out = lba;
 		}
+
+		if ((control & (3<<2)) == 4)		/* 01xxb */
+			flags |= MMC_TRACKINFO_DATA;
+		if ((control & (1<<2)) == 0) {		/* x0xxb */
+			flags |= MMC_TRACKINFO_AUDIO;
+			if (control & (1<<3))		/* 10xxb */
+				flags |= MMC_TRACKINFO_AUDIO_4CHAN;
+			if (control & 1)		/* xxx1b */
+				flags |= MMC_TRACKINFO_PRE_EMPH;
+		}
+
 		toc++;
 		size -= sizeof(struct scsipi_toc_formatted);
 	}
@@ -3439,7 +3463,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	trackinfo->track_mode = 0;	/* unknown */
 	trackinfo->data_mode  = 8;	/* 2048 bytes mode1   */
 
-	trackinfo->flags         = 0;
+	trackinfo->flags         = flags;
 	trackinfo->track_start   = track_start;
 	trackinfo->next_writable = 0;
 	trackinfo->free_blocks   = 0;
