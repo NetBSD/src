@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.128 2009/04/07 20:49:29 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.129 2009/04/08 00:12:21 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5873,4 +5873,53 @@ dist/nvi/vi/v_at.c				1.3
 	r1.2 added parens in the wrong place such that '@' did nothing.
 	Fixes PR 41134.
 	[jld, ticket #668]
+
+sys/sys/timex.h					1.18
+
+	PR#41144: ntpd dies when syncing, use octal format to avoid
+	\xcCLOCK to be parsed as \xcc
+	[mhitch, ticket #671]
+
+sys/arch/x86/pci/ichlpcib.c			1.16
+
+	Restore SpeedStep settings on shutdown. Some BIOSes don't like
+	it if SpeedStep is enabled and powerdown fails otherwise.
+	Fixes PR kern/40487.
+	[joerg, ticket #669]
+
+usr.sbin/postinstall/postinstall		1.93 via patch
+
+	Now that we use ?= to optionally set ddb.onpanic and
+        kern.no_sa_support, match that when testing existing
+        configurations too.
+	[martin, ticket #672]
+
+xsrc/external/mit/libdrm/dist/shared-core/drm.h	1.3
+
+	Fix type of DRM_IOCTL_SG_ALLOC ioctl -- it should be input/output
+	instead of just input.
+	[rafal, ticket #673]
+
+sys/kern/uipc_mbuf.c				1.132
+
+	m_split0(): If the newly allocated mbuf holds only the
+	header, don't forget to set m_len to 0. Otherwise whatever will
+	compute the size of this chain (including s_split() itself if
+	called again on this chain) will get it wrong, leading to
+	various issues.  Bug exposed by the NFS server code with linux
+	clients using TCP mounts.
+	[bouyer, ticket #674]
+
+dist/bzip2/bzip2.c				1.7
+
+	Fix null references introduced while merging bzip2 1.0.5
+	Fixes PR/41032
+	[kefren, ticket #676]
+
+distrib/sets/sets.subr				1.83
+
+	Print debug messages only when MAKEVERBOSE >= 3, not when
+	it is >= 2.  MAKEVERBOSE=2 is the default, and the messages
+	are too noisy.
+	[apb, ticket #677]
 
