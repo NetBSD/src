@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.49 2009/04/08 19:03:13 apb Exp $
+.\"	$NetBSD: mtree.8,v 1.50 2009/04/08 19:39:23 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,40 +64,18 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCdDelLMPrSuUWx
-.Bk -words
+.Op Fl CcDdeLlMPrSUuWx
 .Op Fl i | Fl m
-.Ek
-.Bk -words
-.Op Fl f Ar spec
-.Ek
-.Bk -words
-.Op Fl p Ar path
-.Ek
-.Bk -words
-.Op Fl k Ar keywords
-.Ek
-.Bk -words
-.Op Fl K Ar keywords
-.Ek
-.Bk -words
-.Op Fl R Ar keywords
-.Ek
-.Bk -words
 .Op Fl E Ar tags
-.Ek
-.Bk -words
+.Op Fl f Ar spec
 .Op Fl I Ar tags
-.Ek
-.Bk -words
+.Op Fl K Ar keywords
+.Op Fl k Ar keywords
 .Op Fl N Ar dbdir
-.Ek
-.Bk -words
+.Op Fl p Ar path
+.Op Fl R Ar keywords
 .Op Fl s Ar seed
-.Ek
-.Bk -words
 .Op Fl X Ar exclude-file
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -108,12 +86,7 @@ characteristics do not match the specification, or which are
 missing from either the file hierarchy or the specification.
 .Pp
 The options are as follows:
-.Bl -tag -width flag
-.It Fl c
-Print a specification for the file hierarchy originating at
-the current working directory to the standard output.
-.It Fl d
-Ignore everything except directory type files.
+.Bl -tag -width Xxxexcludexfilexx
 .It Fl C
 Print
 .Pq Sq dump
@@ -125,8 +98,7 @@ The full path name is always printed as the first field, and
 .Fl K ,
 and
 .Fl R
-can be used to control which other keywords are printed,
-and
+can be used to control which other keywords are printed, and
 .Fl E
 and
 .Fl I
@@ -134,11 +106,16 @@ can be used to control which files are printed.
 The
 .Fl S
 option can be used to sort the output.
+.It Fl c
+Print a specification for the file hierarchy originating at
+the current working directory to the standard output.
 .It Fl D
 As per
 .Fl C ,
 except that the path name is always printed as the last field instead of
 the first.
+.It Fl d
+Ignore everything except directory type files.
 .It Fl E Ar tags
 Add the comma separated tags to the
 .Dq exclusion
@@ -183,6 +160,8 @@ If the
 .Sy type
 keyword is not desired, suppress it with
 .Fl R Ar type .
+.It Fl L
+Follow all symbolic links in the file hierarchy.
 .It Fl l
 Do
 .Dq loose
@@ -200,8 +179,9 @@ This flag may not be set at the same time as the
 or
 .Fl U
 flags.
-.It Fl L
-Follow all symbolic links in the file hierarchy.
+.It Fl M
+Permit merging of specification entries with different types,
+with the last entry take precedence.
 .It Fl m
 If the schg and/or sappnd flags are specified, reset these flags.
 Note that this is only possible with securelevel less than 1 (i.e.,
@@ -210,9 +190,6 @@ mode).
 See
 .Xr init 8
 for information on security levels.
-.It Fl M
-Permit merging of specification entries with different types,
-with the last entry take precedence.
 .It Fl N Ar dbdir
 Use the user database text file
 .Pa master.passwd
@@ -225,29 +202,23 @@ rather than using the results from the system's
 and
 .Xr getgrnam 3
 (and related) library calls.
-.It Fl p Ar path
-Use the file hierarchy rooted in
-.Ar path  ,
-instead of the current directory.
 .It Fl P
 Don't follow symbolic links in the file hierarchy, instead consider
 the symbolic link itself in any comparisons.
 This is the default.
-.It Fl r
-Remove any files in the file hierarchy that are not described in the
-specification.
+.It Fl p Ar path
+Use the file hierarchy rooted in
+.Ar path  ,
+instead of the current directory.
 .It Fl R Ar keywords
 Remove the specified (whitespace or comma separated) keywords from the current
 set of keywords.
 If
 .Ql all
 is specified, remove all of the other keywords.
-.It Fl s Ar seed
-Display a single checksum to the standard error output that represents all
-of the files for which the keyword
-.Sy cksum
-was specified.
-The checksum is seeded with the specified value.
+.It Fl r
+Remove any files in the file hierarchy that are not described in the
+specification.
 .It Fl S
 When reading a specification into an internal data structure,
 sort the entries.
@@ -258,7 +229,6 @@ option checks entries, and the order of the output produced by the
 or
 .Fl D
 options.
-It will
 The sort order is the same as that used by the
 .Fl c
 option, which is that entries within the same directory are
@@ -269,6 +239,16 @@ By default, if the
 .Fl S
 option is not used, entries within the same directory are collected
 together (separated from entries for other directories), but not sorted.
+.It Fl s Ar seed
+Display a single checksum to the standard error output that represents all
+of the files for which the keyword
+.Sy cksum
+was specified.
+The checksum is seeded with the specified value.
+.It Fl U
+Same as
+.Fl u
+except that a mismatch is not considered to be an error if it was corrected.
 .It Fl u
 Modify the owner, group, permissions, and flags of existing files,
 the device type of devices, and symbolic link targets,
@@ -286,10 +266,6 @@ is given, these flags will be reset.
 Exit with a status of 0 on success,
 2 if the file hierarchy did not match the specification, and
 1 if any other error occurred.
-.It Fl U
-Same as
-.Fl u
-except that a mismatch is not considered to be an error if it was corrected.
 .It Fl W
 Don't attempt to set various file attributes such as the
 ownership, mode, flags, or time
@@ -298,8 +274,6 @@ This option will be most useful when used in conjunction with
 .Fl u
 or
 .Fl U .
-.It Fl x
-Don't descend below mount points in the file hierarchy.
 .It Fl X Ar exclude-file
 The specified file contains
 .Xr fnmatch 3
@@ -314,6 +288,8 @@ Comments are permitted in
 the
 .Ar exclude-list
 file.
+.It Fl x
+Don't descend below mount points in the file hierarchy.
 .El
 .Pp
 Specifications are mostly composed of
@@ -324,7 +300,7 @@ No keywords have default values, and if a keyword has no value set, no
 checks based on it are performed.
 .Pp
 Currently supported keywords are as follows:
-.Bl -tag -width Sy
+.Bl -tag -width sha384digestxx
 .It Sy cksum
 The checksum of the file using the default algorithm specified by
 the
