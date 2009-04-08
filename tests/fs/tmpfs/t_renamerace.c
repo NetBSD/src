@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.3 2009/04/08 09:05:16 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.4 2009/04/08 09:11:34 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -29,52 +29,55 @@ ATF_TC_HEAD(renamerace, tc)
 	    "unlinked mid-operation, kern/41128");
 }
 
-void *
+static void *
 w1(void *arg)
 {
-  int fd;
+	int fd;
 
-  for (;;) {
-    fd = rump_sys_open("/rename.test1", O_WRONLY|O_CREAT|O_TRUNC, 0666);
-    rump_sys_unlink("/rename.test1");
-    rump_sys_close(fd);
-  }
-  return NULL;
+	for (;;) {
+		fd = rump_sys_open("/rename.test1",
+		    O_WRONLY|O_CREAT|O_TRUNC, 0666);
+		rump_sys_unlink("/rename.test1");
+		rump_sys_close(fd);
+	}
+	return NULL;
 }
 
-void *
+static void *
 w2(void *arg)
 {
 
-  for (;;) {
-    rump_sys_rename("/rename.test1", "/rename.test2");
-  }
-  return NULL;
+	for (;;) {
+		rump_sys_rename("/rename.test1", "/rename.test2");
+	}
+	return NULL;
 }
 
 ATF_TC_BODY(renamerace, tc)
 {
-  struct tmpfs_args args;
-  struct ukfs *fs;
-  pthread_t pt1, pt2;
-  int fail = 0, succ = 0, i;
+	struct tmpfs_args args;
+	struct ukfs *fs;
+	pthread_t pt1, pt2;
 
-  memset(&args, 0, sizeof(args));
-  args.ta_version = TMPFS_ARGS_VERSION;
-  args.ta_root_mode = 0777;
+	memset(&args, 0, sizeof(args));
+	args.ta_version = TMPFS_ARGS_VERSION;
+	args.ta_root_mode = 0777;
 
-  ukfs_init();
-  fs = ukfs_mount(MOUNT_TMPFS, "tmpfs", UKFS_DEFAULTMP, 0, &args, sizeof(args));
-  if (fs == NULL)
-    atf_tc_fail("could not mount tmpfs: %d (%s)", errno, strerror(errno));
+	ukfs_init();
+	fs = ukfs_mount(MOUNT_TMPFS, "tmpfs", UKFS_DEFAULTMP, 0,
+	    &args, sizeof(args));
+	if (fs == NULL)
+		atf_tc_fail("could not mount tmpfs: %d (%s)",
+		    errno, strerror(errno));
 
-  pthread_create(&pt1, NULL, w1, fs);
-  pthread_create(&pt2, NULL, w2, fs);
+	pthread_create(&pt1, NULL, w1, fs);
+	pthread_create(&pt2, NULL, w2, fs);
 
-  sleep(10);
+	sleep(10);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, renamerace);
+	return 0; /*XXX?*/
 }
