@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.1 2009/04/07 20:51:46 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.2 2009/04/08 08:57:24 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -23,8 +23,6 @@
 
 #include <fs/tmpfs/tmpfs_args.h>
 
-#define NROUND (1<<16) /* usually triggered with this amount of rounds */
-
 ATF_TC(renamerace);
 ATF_TC_HEAD(renamerace, tc)
 {
@@ -35,12 +33,22 @@ ATF_TC_HEAD(renamerace, tc)
 void *
 w1(void *arg)
 {
-  int fd, i;
+  int fd;
 
-  for (i = 0; i < NROUND; i++) {
+  for (;;) {
     fd = rump_sys_open("/rename.test1", O_WRONLY|O_CREAT|O_TRUNC, 0666);
     rump_sys_unlink("/rename.test1");
     rump_sys_close(fd);
+  }
+  return NULL;
+}
+
+void *
+w2(void *arg)
+{
+
+  for (;;) {
+    rump_sys_rename("/rename.test1", "/rename.test2");
   }
   return NULL;
 }
@@ -49,7 +57,7 @@ ATF_TC_BODY(renamerace, tc)
 {
   struct tmpfs_args args;
   struct ukfs *fs;
-  pthread_t pt;
+  pthread_t pt1, pt2;
   int fail = 0, succ = 0, i;
 
   memset(&args, 0, sizeof(args));
@@ -61,24 +69,10 @@ ATF_TC_BODY(renamerace, tc)
   if (fs == NULL)
     err(1, "ukfs_mount");
 
-  pthread_create(&pt, NULL, w1, fs);
+  pthread_create(&pt1, NULL, w1, fs);
+  pthread_create(&pt2, NULL, w2, fs);
 
-  for (i = 0; i < NROUND; i++) {
-    int rv;
-    rv = rump_sys_rename("/rename.test1", "/rename.test2");
-#if 0
-    if (rv == 0) {
-      if (succ++ % 10000 == 0)
-        printf("success\n");
-    } else {
-      if (fail++ % 10000 == 0)
-        printf("fail\n");
-    }
-#endif
-  }
-
-  pthread_join(pt, NULL);
-  ukfs_release(fs, 0);
+  sleep(10);
 }
 
 ATF_TP_ADD_TCS(tp)
