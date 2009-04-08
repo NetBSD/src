@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/08 16:27:52 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/08 17:12:52 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -11,7 +11,7 @@ DIST=	${IDIST}/lib
 CPPFLAGS+=-I${DIST}
 
 SRCS=	__fpending.c asnprintf.c basename.c canon-host.c canonicalize.c \
-	chdir-long.c cycle-check.c dirname.c dup-safer.c exitfail.c \
+	chdir-long.c closeout.c cycle-check.c dirname.c dup-safer.c exitfail.c \
 	fd-safer.c getdate.c getdelim.c getline.c gettime.c md5.c \
 	memrchr.c openat.c pagealign_alloc.c printf-args.c printf-parse.c \
 	quotearg.c regex.c rpmatch.c save-cwd.c sighandle.c strftime.c \
