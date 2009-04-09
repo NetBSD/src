@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.101 2009/01/21 06:59:29 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.102 2009/04/09 00:43:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.101 2009/01/21 06:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.102 2009/04/09 00:43:38 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -247,6 +247,8 @@ sonewconn(struct socket *head, int connstatus)
 	struct socket	*so;
 	int		soqueue, error;
 
+	KASSERT(connstatus == 0 || connstatus == SS_ISCONFIRMING ||
+	    connstatus == SS_ISCONNECTED);
 	KASSERT(solocked(head));
 
 	if ((head->so_options & SO_ACCEPTFILTER) != 0)
