@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.26 2008/09/04 12:28:14 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.27 2009/04/09 07:55:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.26 2008/09/04 12:28:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.27 2009/04/09 07:55:55 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,15 +179,20 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return error;
 
 	/* Get partition information */
-	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred)) != 0)
+	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred)) != 0) {
+		VOP_CLOSE(devvp, oflags, NOCRED);
 		return error;
+	}
 
 	bmp = malloc(sizeof(struct sysvbfs_mount), M_SYSVBFS_VFS, M_WAITOK);
-	if (bmp == NULL)
+	if (bmp == NULL) {
+		VOP_CLOSE(devvp, oflags, NOCRED);
 		return ENOMEM;
+	}
 	bmp->devvp = devvp;
 	bmp->mountp = mp;
 	if ((error = sysvbfs_bfs_init(&bmp->bfs, devvp)) != 0) {
+		VOP_CLOSE(devvp, oflags, NOCRED);
 		free(bmp, M_SYSVBFS_VFS);
 		return error;
 	}
