@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.27 2009/04/09 07:55:55 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.28 2009/04/09 09:56:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.27 2009/04/09 07:55:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.28 2009/04/09 09:56:30 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -339,12 +339,24 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		DPRINTF("bfs_inode_lookup failed.\n");
 		return ENOENT;
 	}
+
+ retry:
+	mutex_enter(&mntvnode_lock);
 	for (bnode = LIST_FIRST(&bmp->bnode_head); bnode != NULL;
 	    bnode = LIST_NEXT(bnode, link)) {
 		if (bnode->inode->number == ino) {
-			*vpp = bnode->vnode;
+			vp = bnode->vnode;
+			mutex_enter(&vp->v_interlock);
+			mutex_exit(&mntvnode_lock);
+			if (vget(vp, LK_EXCLUSIVE|LK_RETRY|LK_INTERLOCK) == 0) {
+				*vpp = vp;
+				return 0;
+			} else {
+				goto retry;
+			}
 		}
 	}
+	mutex_exit(&mntvnode_lock);
 
 	/* Allocate v-node. */
 	if ((error = getnewvnode(VT_SYSVBFS, mp, sysvbfs_vnodeop_p, &vp)) !=
