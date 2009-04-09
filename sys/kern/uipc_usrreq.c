@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.123 2009/04/09 00:44:32 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.124 2009/04/09 00:57:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.123 2009/04/09 00:44:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.124 2009/04/09 00:57:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -985,7 +985,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		KASSERT((so->so_options & SO_ACCEPTCONN) == 0 ||
 		    so2->so_lock == uipc_lock);
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
-		    (so3 = sonewconn(so2, 0)) == 0) {
+		    (so3 = sonewconn(so2, 0)) == NULL) {
 			error = ECONNREFUSED;
 			sounlock(so);
 			goto bad;
