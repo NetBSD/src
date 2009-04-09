@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.121 2009/03/11 06:05:29 mrg Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.122 2009/04/09 00:37:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.121 2009/03/11 06:05:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.122 2009/04/09 00:37:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif
 	p = l ? l->l_proc : NULL;
 	if (req != PRU_ATTACH) {
-		if (unp == 0) {
+		if (unp == NULL) {
 			error = EINVAL;
 			goto release;
 		}
@@ -385,7 +385,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (unp != 0) {
+		if (unp != NULL) {
 			error = EISCONN;
 			break;
 		}
@@ -407,7 +407,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * locked by uipc_lock.
 		 */
 		unp_resetlock(so);
-		if (unp->unp_vnode == 0)
+		if (unp->unp_vnode == NULL)
 			error = EINVAL;
 		break;
 
@@ -602,7 +602,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		KASSERT(so->so_head == NULL);
 #ifdef DIAGNOSTIC
-		if (so->so_pcb == 0)
+		if (so->so_pcb == NULL)
 			panic("uipc 5: drop killed pcb");
 #endif
 		unp_detach(unp);
