@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.122 2009/04/09 00:37:32 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.123 2009/04/09 00:44:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.122 2009/04/09 00:37:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.123 2009/04/09 00:44:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,7 +784,7 @@ unp_attach(struct socket *so)
 	unp = malloc(sizeof(*unp), M_PCB, M_NOWAIT);
 	if (unp == NULL)
 		return (ENOBUFS);
-	memset((void *)unp, 0, sizeof(*unp));
+	memset(unp, 0, sizeof(*unp));
 	unp->unp_socket = so;
 	so->so_pcb = unp;
 	nanotime(&unp->unp_ctime);
