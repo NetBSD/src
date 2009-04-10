@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1243 2009/04/08 19:33:01 wiz Exp $
+#	$NetBSD: mi,v 1.1244 2009/04/10 23:16:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6669,6 +6669,7 @@
 ./usr/share/man/cat3/memmem.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memmove.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memory.0			comp-c-catman		.cat
+./usr/share/man/cat3/memrchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menu_attributes.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_cursor.0		comp-c-catman		.cat
@@ -12002,6 +12003,7 @@
 ./usr/share/man/html3/memmem.html		comp-c-htmlman		html
 ./usr/share/man/html3/memmove.html		comp-c-htmlman		html
 ./usr/share/man/html3/memory.html		comp-c-htmlman		html
+./usr/share/man/html3/memrchr.html		comp-c-htmlman		html
 ./usr/share/man/html3/memset.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_attributes.html	comp-c-htmlman		html
 ./usr/share/man/html3/menu_cursor.html		comp-c-htmlman		html
@@ -17324,6 +17326,7 @@
 ./usr/share/man/man3/memmem.3			comp-c-man		.man
 ./usr/share/man/man3/memmove.3			comp-c-man		.man
 ./usr/share/man/man3/memory.3			comp-c-man		.man
+./usr/share/man/man3/memrchr.3			comp-c-man		.man
 ./usr/share/man/man3/memset.3			comp-c-man		.man
 ./usr/share/man/man3/menu_attributes.3		comp-c-man		.man
 ./usr/share/man/man3/menu_cursor.3		comp-c-man		.man
