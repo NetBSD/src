@@ -30,13 +30,13 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memchr.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memchr.3,v 1.9 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: memchr.3,v 1.10 2009/04/10 23:13:38 christos Exp $
 .\"
-.Dd June 4, 1993
+.Dd April 10, 2009
 .Dt MEMCHR 3
 .Os
 .Sh NAME
-.Nm memchr
+.Nm memchr, memrchr
 .Nd locate byte in byte string
 .Sh LIBRARY
 .Lb libc
@@ -44,6 +44,8 @@
 .In string.h
 .Ft void *
 .Fn memchr "const void *b" "int c" "size_t len"
+.Ft void *
+.Fn memrchr "const void *b" "int c" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn memchr
@@ -53,11 +55,21 @@ locates the first occurrence of
 (converted to an unsigned char)
 in string
 .Fa b .
+The
+.Fn memrchr
+function
+locates the last occurrence of
+.Fa c
+(converted to an unsigned char)
+in string
+.Fa b .
 .Sh RETURN VALUES
 The
 .Fn memchr
-function
-returns a pointer to the byte located, or
+and
+.Fn memrchr
+functions
+return a pointer to the byte located, or
 .Dv NULL
 if no such byte exists within
 .Fa len
