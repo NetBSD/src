@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_sysvbfs.c,v 1.4 2009/04/09 10:37:55 pooka Exp $	*/
+/*	$NetBSD: newfs_sysvbfs.c,v 1.5 2009/04/10 13:48:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-FsZ] special-device\n",
+	(void)fprintf(stderr, "usage: %s [-FZ] [-s sectors] special-device\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
