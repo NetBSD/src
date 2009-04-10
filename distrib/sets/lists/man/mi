@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1129 2009/03/12 00:16:56 jmcneill Exp $
+# $NetBSD: mi,v 1.1130 2009/04/10 03:50:38 reed Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2300,6 +2300,7 @@
 ./usr/share/man/cat8/named-bootconf.0		man-obsolete		obsolete
 ./usr/share/man/cat8/named-checkconf.0		man-bind-catman		.cat
 ./usr/share/man/cat8/named-checkzone.0		man-bind-catman		.cat
+./usr/share/man/cat8/named-compilezone.0	man-bind-catman		.cat
 ./usr/share/man/cat8/named-xfer.0		man-obsolete		obsolete
 ./usr/share/man/cat8/named.0			man-bind-catman		.cat
 ./usr/share/man/cat8/named.reload.0		man-obsolete		obsolete
@@ -4678,6 +4679,7 @@
 ./usr/share/man/html8/mvme68k/installboot.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/named-checkconf.html	man-bind-htmlman	html
 ./usr/share/man/html8/named-checkzone.html	man-bind-htmlman	html
+./usr/share/man/html8/named-compilezone.html	man-bind-htmlman	html
 ./usr/share/man/html8/named.html		man-bind-htmlman	html
 ./usr/share/man/html8/ncdcs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ndbootd.html		man-bootserver-htmlman	html
@@ -7250,6 +7252,7 @@
 ./usr/share/man/man8/named-bootconf.8		man-obsolete		obsolete
 ./usr/share/man/man8/named-checkconf.8		man-bind-man		.man
 ./usr/share/man/man8/named-checkzone.8		man-bind-man		.man
+./usr/share/man/man8/named-compilezone.8	man-bind-man		.man
 ./usr/share/man/man8/named-xfer.8		man-obsolete		obsolete
 ./usr/share/man/man8/named.8			man-bind-man		.man
 ./usr/share/man/man8/named.reload.8		man-obsolete		obsolete
