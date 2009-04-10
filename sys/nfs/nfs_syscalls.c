@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.146 2009/03/15 17:20:10 cegger Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.147 2009/04/10 19:04:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.146 2009/03/15 17:20:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.147 2009/04/10 19:04:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,6 @@ nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 	u_quad_t cur_usec;
 	int error = 0, cacherep, siz, sotype, writes_todo;
 	struct proc *p = l->l_proc;
-	int s;
 	bool doreinit;
 
 #ifndef nolint
@@ -682,14 +681,14 @@ nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 			getmicrotime(&tv);
 			cur_usec = (u_quad_t)tv.tv_sec * 1000000 +
 			    (u_quad_t)tv.tv_usec;
-			s = splsoftclock();
+			mutex_enter(&nfsd_lock);
 			if (LIST_FIRST(&slp->ns_tq) &&
 			    LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec) {
 				cacherep = RC_DOIT;
 				writes_todo = 1;
 			} else
 				writes_todo = 0;
-			splx(s);
+			mutex_exit(&nfsd_lock);
 		} while (writes_todo);
 		if (nfsrv_dorec(slp, nfsd, &nd, &dummy)) {
 			nfsd->nfsd_slp = NULL;
@@ -748,8 +747,6 @@ nfsrv_zapsock(struct nfssvc_sock *slp)
 	soshutdown(so, SHUT_RDWR);
 	sounlock(so);
 
-	if (slp->ns_nam)
-		m_free(slp->ns_nam);
 	m_freem(slp->ns_raw);
 	m = slp->ns_rec;
 	while (m != NULL) {
@@ -759,6 +756,7 @@ nfsrv_zapsock(struct nfssvc_sock *slp)
 		m_freem(m);
 		m = n;
 	}
+	/* XXX what about freeing ns_frag ? */
 	for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != 0;
 	    nuidp = nnuidp) {
 		nnuidp = TAILQ_NEXT(nuidp, nu_lru);
@@ -790,11 +788,9 @@ nfsrv_slpderef(struct nfssvc_sock *slp)
 	mutex_enter(&nfsd_lock);
 	KASSERT(slp->ns_sref > 0);
 	ref = --slp->ns_sref;
-	mutex_exit(&nfsd_lock);
 	if (ref == 0 && (slp->ns_flags & SLP_VALID) == 0) {
 		file_t *fp;
 
-		mutex_enter(&nfsd_lock);
 		KASSERT((slp->ns_gflags & SLP_G_DOREC) == 0);
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
 		mutex_exit(&nfsd_lock);
@@ -808,9 +804,12 @@ nfsrv_slpderef(struct nfssvc_sock *slp)
 			closef(fp);
 			slp->ns_so = NULL;
 		}
-
+		
+		if (slp->ns_nam)
+			m_free(slp->ns_nam);
 		nfsrv_sockfree(slp);
-	}
+	} else
+		mutex_exit(&nfsd_lock);
 }
 
 /*
