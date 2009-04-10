@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_sysvbfs.8,v 1.4 2009/04/09 10:37:55 pooka Exp $
+.\"	$NetBSD: newfs_sysvbfs.8,v 1.5 2009/04/10 13:47:31 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,10 +56,10 @@ The following arguments are supported:
 .Bl -tag -width Fl
 .It Fl F
 Create file system to a regular file.
-.It Fl Z
-Fill file with zeroes instead of creating a sparse file.
 .It Fl s Ar sectors
 Create file system with specified number of disk sectors.
+.It Fl Z
+Fill file with zeroes instead of creating a sparse file.
 .El
 .Sh SEE ALSO
 .Xr disklabel 5 ,
