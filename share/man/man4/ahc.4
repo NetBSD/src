@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.31 2007/07/16 14:06:07 gdt Exp $
+.\"	$NetBSD: ahc.4,v 1.32 2009/04/10 15:05:06 joerg Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -35,27 +35,23 @@
 .Nm ahc
 .Nd Adaptec VL/EISA/PCI/CardBus SCSI host adapter driver
 .Sh SYNOPSIS
-.ie 0 \{
-For one or more VL/EISA cards:
-.Cd device eisa
-.Cd device ahc
-\}
-\{For VL cards:
+.\" For one or more VL/EISA cards:
+.\" .Cd device eisa
+.\" .Cd device ahc
+For VL cards:
 .Cd "ahc0 at isa? port ? irq ?"
 .Pp
 For EISA cards:
-.Cd "ahc* at eisa? slot ?"\}
+.Cd "ahc* at eisa? slot ?"
 .Pp
-.ie 0 \{
-For one or more PCI cards:
-.Cd device pci
-.Cd device ahc
-\}
-\{For PCI cards:
+.\" For one or more PCI cards:
+.\" .Cd device pci
+.\" .Cd device ahc
+For PCI cards:
 .Cd "ahc* at pci? dev ? function ?"
 .Pp
 For CardBus cards:
-.Cd "ahc* at cardbus? function ?"\}
+.Cd "ahc* at cardbus? function ?"
 .Pp
 To allow PCI adapters to use memory mapped I/O if enabled:
 .Cd options AHC_ALLOW_MEMIO
@@ -66,76 +62,70 @@ Disable tagged queuing (avoids hangs on some hardware under load)
 Change the default SCSI id for cards without a SEEPROM (default 7):
 .Cd options AHC_CARDBUS_DEFAULT_SCSI_ID=integer
 .Pp
-.if 0 \{
-To configure one or more controllers to assume the target role:
-.Cd options AHC_TMODE_ENABLE \*[Lt]bitmask of units\*[Gt]
-.Pp
-\}
-.ie 0 \{
-For one or more SCSI buses:
-.Cd device scbus0 at ahc0
-\}
-\{For
+.\" To configure one or more controllers to assume the target role:
+.\" .Cd options AHC_TMODE_ENABLE \*[Lt]bitmask of units\*[Gt]
+.\" .Pp
+.\" For one or more SCSI buses:
+.\" .Cd device scbus0 at ahc0
+For
 .Tn SCSI
 buses:
-.Cd scsibus* at ahc?\}
+.Cd scsibus* at ahc?
 .Sh DESCRIPTION
-.ie 0 \{
-This driver provides access to the
-.Tn SCSI
-bus(es) connected to Adaptec
-.Tn AIC7770 ,
-.Tn AIC7850 ,
-.Tn AIC7860 ,
-.Tn AIC7870 ,
-.Tn AIC7880 ,
-.Tn AIC7890 ,
-.Tn AIC7891 ,
-.Tn AIC7892 ,
-.Tn AIC7895 ,
-.Tn AIC7896 ,
-.Tn AIC7897
-and
-.Tn AIC7899
-host adapter chips.
-These chips are found on many motherboards as well as the following
-Adaptec SCSI controller cards:
-.Tn 274X(W) ,
-.Tn 274X(T) ,
-.Tn 284X ,
-.Tn 2910 ,
-.Tn 2915 ,
-.Tn 2920C ,
-.Tn 2930C ,
-.Tn 2930U2 ,
-.Tn 2940 ,
-.Tn 2940U ,
-.Tn 2940AU ,
-.Tn 2940UW ,
-.Tn 2940UW Dual ,
-.Tn 2940UW Pro ,
-.Tn 2940U2W ,
-.Tn 2940U2B ,
-.Tn 2950U2W ,
-.Tn 2950U2B ,
-.Tn 19160B ,
-.Tn 29160 ,
-.Tn 29160B ,
-.Tn 29160N ,
-.Tn 3940 ,
-.Tn 3940U ,
-.Tn 3940AU ,
-.Tn 3940UW ,
-.Tn 3940AUW ,
-.Tn 3940U2W ,
-.Tn 3950U2 ,
-.Tn 3960 ,
-.Tn 39160 ,
-.Tn 3985 ,
-and
-.Tn 4944UW .
-\}
-\{The
+.\" This driver provides access to the
+.\" .Tn SCSI
+.\" bus(es) connected to Adaptec
+.\" .Tn AIC7770 ,
+.\" .Tn AIC7850 ,
+.\" .Tn AIC7860 ,
+.\" .Tn AIC7870 ,
+.\" .Tn AIC7880 ,
+.\" .Tn AIC7890 ,
+.\" .Tn AIC7891 ,
+.\" .Tn AIC7892 ,
+.\" .Tn AIC7895 ,
+.\" .Tn AIC7896 ,
+.\" .Tn AIC7897
+.\" and
+.\" .Tn AIC7899
+.\" host adapter chips.
+.\" These chips are found on many motherboards as well as the following
+.\" Adaptec SCSI controller cards:
+.\" .Tn 274X(W) ,
+.\" .Tn 274X(T) ,
+.\" .Tn 284X ,
+.\" .Tn 2910 ,
+.\" .Tn 2915 ,
+.\" .Tn 2920C ,
+.\" .Tn 2930C ,
+.\" .Tn 2930U2 ,
+.\" .Tn 2940 ,
+.\" .Tn 2940U ,
+.\" .Tn 2940AU ,
+.\" .Tn 2940UW ,
+.\" .Tn 2940UW Dual ,
+.\" .Tn 2940UW Pro ,
+.\" .Tn 2940U2W ,
+.\" .Tn 2940U2B ,
+.\" .Tn 2950U2W ,
+.\" .Tn 2950U2B ,
+.\" .Tn 19160B ,
+.\" .Tn 29160 ,
+.\" .Tn 29160B ,
+.\" .Tn 29160N ,
+.\" .Tn 3940 ,
+.\" .Tn 3940U ,
+.\" .Tn 3940AU ,
+.\" .Tn 3940UW ,
+.\" .Tn 3940AUW ,
+.\" .Tn 3940U2W ,
+.\" .Tn 3950U2 ,
+.\" .Tn 3960 ,
+.\" .Tn 39160 ,
+.\" .Tn 3985 ,
+.\" and
+.\" .Tn 4944UW .
+The
 .Nm
 device driver supports
 .Tn SCSI
@@ -148,15 +138,12 @@ and
 host adapter chips found on many motherboards as well as
 .Tn Adaptec
 .Tn SCSI
-controller cards.\}
+controller cards.
 .Pp
 Driver features include support for twin and wide buses,
 fast, ultra or ultra2 synchronous transfers depending on controller type,
-.ie 0 \{
-tagged queuing, SCB paging, and target mode.
-\}
-\{
-tagged queuing and SCB paging.\}
+.\" tagged queuing, SCB paging, and target mode.
+tagged queuing and SCB paging.
 .Pp
 Memory mapped I/O can be enabled for PCI devices with the
 .Dq Dv AHC_ALLOW_MEMIO
@@ -172,15 +159,13 @@ is attempted.
 Most modern motherboards perform the initialization correctly and work fine
 with this option enabled.
 .Pp
-.if 0 \{
-Individual controllers may be configured to operate in the target role
-through the
-.Dq Dv AHC_TMODE_ENABLE
-configuration option.  The value assigned to this option should be a bitmap
-of all units where target mode is desired.
-For example, a value of 0x25, would enable target mode on units 0, 2, and 5.
-.Pp
-\}
+.\" Individual controllers may be configured to operate in the target role
+.\" through the
+.\" .Dq Dv AHC_TMODE_ENABLE
+.\" configuration option.  The value assigned to this option should be a bitmap
+.\" of all units where target mode is desired.
+.\" For example, a value of 0x25, would enable target mode on units 0, 2, and 5.
+.\" .Pp
 Per target configuration performed in the
 .Tn SCSI-Select
 menu, accessible at boot
@@ -231,23 +216,23 @@ driver.  Note that wide and twin channel features, although always supported
 by a particular chip, may be disabled in a particular motherboard or card
 design.
 .Pp
-.Bd -filled -offset indent
-.Bl -column "aic7770 " "10 " "EISA/VL  " "10MHz " "16bit " "SCBs " Features
-.Em "Chip       MIPS    Bus      MaxSync   MaxWidth  SCBs  Features"
-aic7770     10    EISA/VL    10MHz     16Bit     4    1
-aic7850     10    PCI/32     10MHz      8Bit     3
-aic7860     10    PCI/32     20MHz      8Bit     3
-aic7870     10    PCI/32     10MHz     16Bit    16
-aic7880     10    PCI/32     20MHz     16Bit    16
-aic7890     20    PCI/32     40MHz     16Bit    16        3 4 5 6 7 8
-aic7891     20    PCI/64     40MHz     16Bit    16        3 4 5 6 7 8
-aic7892     20    PCI/64     80MHz     16Bit    16        3 4 5 6 7 8
-aic7895     15    PCI/32     20MHz     16Bit    16      2 3 4 5
-aic7895C    15    PCI/32     20MHz     16Bit    16      2 3 4 5     8
-aic7896     20    PCI/32     40MHz     16Bit    16      2 3 4 5 6 7 8
-aic7897     20    PCI/64     40MHz     16Bit    16      2 3 4 5 6 7 8
-aic7899     20    PCI/64     80MHz     16Bit    16      2 3 4 5 6 7 8
+.Bl -column "aic7895c" "MIPS" "EISA/VL" "MaxSync" "MaxWidth" "SCBs" "2 3 4 5 6 7 8"
+.It Sy Chip  Ta Sy MIPS Ta Sy Bus Ta Sy MaxSync Ta Sy MaxWidth Ta Sy SCBs Ta Sy Features
+.It aic7770  Ta 10   Ta EISA/VL Ta 10MHz   Ta 16Bit    Ta  4   Ta 1
+.It aic7850  Ta 10   Ta PCI/32  Ta 10MHz   Ta  8Bit    Ta  3   Ta ""
+.It aic7860  Ta 10   Ta PCI/32  Ta 20MHz   Ta  8Bit    Ta  3   Ta ""
+.It aic7870  Ta 10   Ta PCI/32  Ta 10MHz   Ta 16Bit    Ta 16   Ta ""
+.It aic7880  Ta 10   Ta PCI/32  Ta 20MHz   Ta 16Bit    Ta 16   Ta ""
+.It aic7890  Ta 20   Ta PCI/32  Ta 40MHz   Ta 16Bit    Ta 16   Ta 3 4 5 6 7 8
+.It aic7891  Ta 20   Ta PCI/64  Ta 40MHz   Ta 16Bit    Ta 16   Ta 3 4 5 6 7 8
+.It aic7892  Ta 20   Ta PCI/64  Ta 80MHz   Ta 16Bit    Ta 16   Ta 3 4 5 6 7 8
+.It aic7895  Ta 15   Ta PCI/32  Ta 20MHz   Ta 16Bit    Ta 16   Ta 2 3 4 5
+.It aic7895C Ta 15   Ta PCI/32  Ta 20MHz   Ta 16Bit    Ta 16   Ta 2 3 4 5     8
+.It aic7896  Ta 20   Ta PCI/32  Ta 40MHz   Ta 16Bit    Ta 16   Ta 2 3 4 5 6 7 8
+.It aic7897  Ta 20   Ta PCI/64  Ta 40MHz   Ta 16Bit    Ta 16   Ta 2 3 4 5 6 7 8
+.It aic7899  Ta 20   Ta PCI/64  Ta 80MHz   Ta 16Bit    Ta 16   Ta 2 3 4 5 6 7 8
 .El
+.Pp
 .Bl -enum -compact
 .It
 Multiplexed Twin Channel Device - One controller servicing two buses.
@@ -271,7 +256,6 @@ sequencer.
 Multiple Target IDs - Allows the controller to respond to selection as a
 target on multiple SCSI IDs.
 .El
-.Ed
 .Sh HARDWARE
 Supported
 .Tn SCSI
@@ -479,20 +463,18 @@ of 8MHz in the
 .Tn SCSI-Select
 utility will allow normal operation.
 .Pp
-.ie 0 \{
-Although the Ultra2 and Ultra160 products have sufficient instruction
-ram space to support both the initiator and target roles concurrently,
-this configuration is disabled in favor of allowing the target role
-to respond on multiple target ids.  A method for configuring dual
-role mode should be provided.
-.Pp
-Tagged Queuing is not supported in target mode.
-.Pp
-Reselection in target mode fails to function correctly on all high
-voltage differential boards as shipped by Adaptec.  Information on
-how to modify HVD board to work correctly in target mode is available
-from Adaptec.
-\}
-\{Target mode is not supported on
+.\" Although the Ultra2 and Ultra160 products have sufficient instruction
+.\" ram space to support both the initiator and target roles concurrently,
+.\" this configuration is disabled in favor of allowing the target role
+.\" to respond on multiple target ids.  A method for configuring dual
+.\" role mode should be provided.
+.\" .Pp
+.\" Tagged Queuing is not supported in target mode.
+.\" .Pp
+.\" Reselection in target mode fails to function correctly on all high
+.\" voltage differential boards as shipped by Adaptec.  Information on
+.\" how to modify HVD board to work correctly in target mode is available
+.\" from Adaptec.
+Target mode is not supported on
 .Nx
-version of this driver.\}
+version of this driver.
