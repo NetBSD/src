@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.240 2008/11/24 02:13:08 cube Exp $
+#	$NetBSD: bsd.prog.mk,v 1.241 2009/04/10 16:16:12 apb Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -442,6 +442,9 @@ scriptsinstall::
 .PHONY:		scriptsinstall
 
 ##### Pull in related .mk logic
+LINKSOWN?= ${BINOWN}
+LINKSGRP?= ${BINGRP}
+LINKSMODE?= ${BINMODE}
 .include <bsd.man.mk>
 .include <bsd.nls.mk>
 .include <bsd.files.mk>
