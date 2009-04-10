@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.130 2009/04/08 23:13:05 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.131 2009/04/10 18:13:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5947,4 +5947,22 @@ sys/kern/sys_socket.c				1.60
 	Patch out soo_drain, in effect reverting the bugfix
 	in ticket #661.
 	[ad, ticket #681]
+
+lib/libc/rpc/rpc_clnt_create.3			1.10
+
+	Fix markup
+	[joerg, ticket #682]
+
+sys/arch/i386/i386/kvm86.c			1.18
+
+	Add missing cpu.h include.
+	[sborrill, ticket #683]
+
+sys/dev/ir/irframe_tty.c			1.56
+
+	Avoid crash under LOCKDEBUG by destroying a mutex correctly.
+	Also: move mutex init/destroy into attach/detach functions and
+	handle case where line discipline is closed before the irframe
+	device. Fixes PR kern/40271.
+	[mlelstv, ticket #684]
 
