@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47.2.2 2008/09/16 18:49:33 bouyer Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.2.3 2009/04/10 20:27:45 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47.2.2 2008/09/16 18:49:33 bouyer Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.2.3 2009/04/10 20:27:45 snj Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -220,8 +220,10 @@ __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	pthread_t self;
 	int retval;
 
-	if ((sig <= 0) || (sig >= _NSIG))
-		return EINVAL;
+	if ((sig <= 0) || (sig >= _NSIG)) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	self = pthread__self();
 	pthread_spinlock(self, &pt_sigacts_lock);
