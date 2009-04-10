@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.4,v 1.11 2008/08/06 07:08:31 skrll Exp $
+.\"	$NetBSD: bluetooth.4,v 1.12 2009/04/10 15:14:06 joerg Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -288,7 +288,7 @@ structure defined as follows as their parameter and unless otherwise
 specified, use the
 .Ar btr_name
 field to identify the device.
-.Bd -literal -offset
+.Bd -literal
 struct btreq {
     char btr_name[HCI_DEVNAME_SIZE];	/* device name */
 
