@@ -1,4 +1,4 @@
-.\" $NetBSD: bootpref.8,v 1.11 2009/03/11 13:52:49 joerg Exp $
+.\" $NetBSD: bootpref.8,v 1.12 2009/04/10 14:59:35 joerg Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,6 @@ The program options are:
 .Bl -tag -width Ar
 .It Fl V
 verbose output (when setting preferences)
-.sp
 .It Fl b Ar netbsd
 set the boot OS to
 .Nx
@@ -78,14 +77,12 @@ set the boot OS to Linux
 set the boot OS to System V
 .It Fl b Ar none
 set the boot OS to none
-.sp
 .It Fl d Ar delay
 set the boot delay to
 .Ar delay
 seconds, where
 .Ar delay
 is a value between 0 and 255
-.sp
 .It Fl l Ar english
 set the language to English
 .It Fl l Ar german
@@ -96,7 +93,6 @@ set the language to French
 set the language to Spanish
 .It Fl l Ar italian
 set the language to Italian
-.sp
 .It Fl k Ar american
 set the keyboard layout to American
 .It Fl k Ar german
@@ -115,34 +111,28 @@ set the keyboard layout to Swiss (French)
 .It Fl k Ar sw g
 .It Fl k Ar swiss german
 set the keyboard layout to Swiss (German)
-.sp
 .It Fl s Ar id
 set the SCSI id to
 .Ar id ,
 where
 .Ar id
 is a value between 0 and 7
-.sp
 .It Fl f Ar mmddyy
 .It Fl f Ar ddmmyy
 .It Fl f Ar yymmdd
 .It Fl f Ar yyddmm
 set the date format
-.sp
 .It Fl 1
 set the date format to 12 hour clock
 .It Fl 2
 set the date format to 24 hour clock
-.sp
 .It Fl e Ar sep
 set the date format separator to
 .Ar sep
-.sp
 .It Fl c Ar colours
 set the number of
 .Ar colours
 - 2, 4, 16, 256 or 65535
-.sp
 .It Fl n
 set the video mode to
 .Ar NTSC
