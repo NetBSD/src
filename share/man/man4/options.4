@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.376 2009/04/10 15:28:24 joerg Exp $
+.\"	$NetBSD: options.4,v 1.377 2009/04/10 22:26:10 ad Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 6, 2009
+.Dd April 10, 2009
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1054,16 +1054,6 @@ for details.
 Reduce the size of the NFS client code by omitting code that's only required
 for NFSv3 and NQNFS support, leaving only that code required to use NFSv2
 servers.
-.It Cd options SOFTDEP
-Enable kernel support for soft-dependencies in FFS file systems.
-Softdep improves write performance by aggregating and properly
-ordering disk metadata writes, achieving near-asynchronous write
-performance while maintaining the file system consistency of
-synchronous writes.
-Soft-dependencies are enabled on a per-mount basis.
-See
-.Xr mount 8
-for details.
 .It Cd options UFS_DIRHASH
 Increase lookup performance by maintaining in-core hash tables
 for large directories.
