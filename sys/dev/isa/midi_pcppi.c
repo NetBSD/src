@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.22 2009/04/08 00:12:27 dyoung Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.23 2009/04/10 10:18:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.22 2009/04/08 00:12:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.23 2009/04/10 10:18:50 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ struct midi_pcppi_softc {
 
 static int	midi_pcppi_match(device_t, cfdata_t , void *);
 static void	midi_pcppi_attach(device_t, device_t, void *);
+static int	midi_pcppi_detach(device_t, int);
 
 void	midi_pcppi_on   (midisyn *, uint_fast16_t, midipitch_t, int16_t);
 void	midi_pcppi_off  (midisyn *, uint_fast16_t, uint_fast8_t);
@@ -69,7 +70,7 @@ void	midi_pcppi_close(midisyn *);
 static void midi_pcppi_repitchv(midisyn *, uint_fast16_t, midipitch_t);
 
 CFATTACH_DECL3_NEW(midi_pcppi, sizeof(struct midi_pcppi_softc),
-    midi_pcppi_match, midi_pcppi_attach, mididetach, NULL, NULL, NULL,
+    midi_pcppi_match, midi_pcppi_attach, midi_pcppi_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
 struct midisyn_methods midi_pcppi_hw = {
@@ -94,10 +95,6 @@ midi_pcppi_attach(device_t parent, device_t self, void *aux)
 	struct pcppi_attach_args *pa = (struct pcppi_attach_args *)aux;
 	midisyn *ms;
 
-	KASSERT(midi_pcppi_attached > 0);
-
-	midi_pcppi_attached--;
-
 	sc->sc_mididev.dev = self;
 	ms = &sc->sc_midisyn;
 	ms->mets = &midi_pcppi_hw;
@@ -114,6 +111,15 @@ midi_pcppi_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "couldn't establish power handler\n"); 
 }
+
+static int
+midi_pcppi_detach(device_t self, int flags)
+{
+	KASSERT(midi_pcppi_attached > 0);
+
+	midi_pcppi_attached--;
+	return mididetach(self, flags);
+} 
 
 void
 midi_pcppi_on(midisyn *ms,
