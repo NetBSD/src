@@ -62,7 +62,7 @@ annotate (int argc, char **argv)
     if (argc == -1)
 	usage (annotate_usage);
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+lr:D:fFR")) != -1)
     {
 	switch (c)

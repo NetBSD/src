@@ -121,7 +121,7 @@ cvstag (int argc, char **argv)
     if (argc == -1)
 	usage (is_rtag ? rtag_usage : tag_usage);
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, is_rtag ? rtag_opts : tag_opts)) != -1)
     {
 	switch (c)

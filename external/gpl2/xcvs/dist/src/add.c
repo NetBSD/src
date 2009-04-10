@@ -73,7 +73,7 @@ add (int argc, char **argv)
     wrap_setup ();
 
     /* parse args */
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+k:m:")) != -1)
     {
 	switch (c)
