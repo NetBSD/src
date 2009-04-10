@@ -311,7 +311,7 @@ diff (int argc, char **argv)
     diff_date1 = NULL;
     diff_date2 = NULL;
 
-    optind = 0;
+    getoptreset ();
     /* FIXME: This should really be allocating an argv to be passed to diff
      * later rather than strcatting onto the opts variable.  We have some
      * handling routines that can already handle most of the argc/argv

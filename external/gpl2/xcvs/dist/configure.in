@@ -21,6 +21,7 @@ AC_CONFIG_SRCDIR(src/cvs.h)
 AC_CONFIG_AUX_DIR(build-aux)
 AM_INIT_AUTOMAKE([gnu 1.9.2 dist-bzip2 no-define])
 AC_PREREQ(2.59)
+AM_GNU_GETTEXT_VERSION(0.14.6)
 
 AC_PREFIX_PROGRAM(cvs)
 AM_CONFIG_HEADER(config.h)
@@ -189,6 +190,15 @@ fi
 AC_REPLACE_FUNCS(\
 	waitpid \
 )
+
+AC_CACHE_CHECK([for getopt optreset variable], db_cv_optreset, [
+AC_TRY_LINK([#include <unistd.h>], extern int optreset; optreset = 1;,
+    [db_cv_optreset=yes], [db_cv_optreset=no])])
+if test "$db_cv_optreset" = "yes"; then
+	AC_DEFINE(HAVE_GETOPT_OPTRESET)
+	AH_TEMPLATE(HAVE_GETOPT_OPTRESET,
+	    [Define to 1 if getopt supports the optreset variable.])
+fi
 
 #
 # Special hack for a SunOS 5.7 (aka Solaris 7) select() problem.

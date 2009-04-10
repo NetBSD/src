@@ -1,5 +1,5 @@
-# size_max.m4 serial 3
-dnl Copyright (C) 2003, 2005 Free Software Foundation, Inc.
+# size_max.m4 serial 2
+dnl Copyright (C) 2003 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -26,9 +26,9 @@ Found it
     dnl than the type 'unsigned long'.
     dnl The _AC_COMPUTE_INT macro works up to LONG_MAX, since it uses 'expr',
     dnl which is guaranteed to work from LONG_MIN to LONG_MAX.
-    _AC_COMPUTE_INT([(size_t)~(size_t)0 / 10], res_hi,
+    _AC_COMPUTE_INT([~(size_t)0 / 10], res_hi,
       [#include <stddef.h>], result=?)
-    _AC_COMPUTE_INT([(size_t)~(size_t)0 % 10], res_lo,
+    _AC_COMPUTE_INT([~(size_t)0 % 10], res_lo,
       [#include <stddef.h>], result=?)
     _AC_COMPUTE_INT([sizeof (size_t) <= sizeof (unsigned int)], fits_in_uint,
       [#include <stddef.h>], result=?)
@@ -48,7 +48,7 @@ Found it
       fi
     else
       dnl Shouldn't happen, but who knows...
-      result='((size_t)~(size_t)0)'
+      result='~(size_t)0'
     fi
   fi
   AC_MSG_RESULT([$result])

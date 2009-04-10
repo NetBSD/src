@@ -153,7 +153,7 @@ release (int argc, char **argv)
     /* Everything from here on is client or local.  */
     if (argc == -1)
 	usage (release_usage);
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+Qdq")) != -1)
     {
 	switch (c)

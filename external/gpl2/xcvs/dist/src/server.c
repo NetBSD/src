@@ -6291,7 +6291,7 @@ parseServerOptions (int argc, char **argv)
 {
     int c;
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+c:")) != -1)
     {
 	switch (c)

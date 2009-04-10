@@ -411,7 +411,7 @@ my_module (DBM *db, char *mname, enum mtype m_type, char *msg,
     modargv = xmodargv;
 
     /* parse the args */
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (modargc, modargv, CVSMODULE_OPTS)) != -1)
     {
 	switch (c)
@@ -948,7 +948,7 @@ cat_module (int status)
 	argc = moduleargc;
 	argv = moduleargv;
 
-	optind = 0;
+	getoptreset ();
 	wid = 0;
 	while ((c = getopt (argc, argv, CVSMODULE_OPTS)) != -1)
 	{

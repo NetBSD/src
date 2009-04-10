@@ -54,7 +54,7 @@ cvsremove (int argc, char **argv)
     if (argc == -1)
 	usage (remove_usage);
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+flR")) != -1)
     {
 	switch (c)
