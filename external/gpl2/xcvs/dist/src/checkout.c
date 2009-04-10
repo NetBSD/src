@@ -153,7 +153,7 @@ checkout (int argc, char **argv)
     ign_setup ();
     wrap_setup ();
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, valid_options)) != -1)
     {
 	switch (c)
