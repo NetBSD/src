@@ -66,7 +66,7 @@ ls (int argc, char **argv)
     ls_prune_dirs = false;
     show_dead_revs = false;
 
-    optind = 0;
+    getoptreset ();
 
     while ((c = getopt (argc, argv,
 #ifdef SERVER_SUPPORT

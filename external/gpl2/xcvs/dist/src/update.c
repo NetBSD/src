@@ -159,7 +159,7 @@ update (int argc, char **argv)
     wrap_setup ();
 
     /* parse the args */
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+ApCPflRQqduk:r:D:j:I:W:")) != -1)
     {
 	switch (c)

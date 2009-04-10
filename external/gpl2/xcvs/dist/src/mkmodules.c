@@ -1159,7 +1159,7 @@ init (int argc, char **argv)
 
     umask (cvsumask);
 
-    if (config->UserAdminGroup && !admin_group_member ())
+    if (!admin_group_member ())
 	error (1, 0, "usage is restricted to members of the group %s",
 	       config->UserAdminGroup);
 

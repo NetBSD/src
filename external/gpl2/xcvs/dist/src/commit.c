@@ -369,7 +369,7 @@ commit (int argc, char **argv)
     }
 #endif /* CVS_BADROOT */
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, COMMIT_OPTIONS)) != -1)
     {
 	switch (c)

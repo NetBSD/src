@@ -896,6 +896,7 @@ int cvstag (int argc, char **argv);
 int version (int argc, char **argv);
 int admin_group_member (void);
 void free_cvs_password (char *);
+void getoptreset (void);
 
 unsigned long int lookup_command_attribute (const char *);
 

@@ -335,6 +335,9 @@
 /* Define to 1 if you have the `getopt_long_only' function. */
 /* #undef HAVE_GETOPT_LONG_ONLY */
 
+/* Define to 1 if getopt supports the optreset variable. */
+#define HAVE_GETOPT_OPTRESET 1
+
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1
 

@@ -235,7 +235,7 @@ cvslog (int argc, char **argv)
     memset (&log_data, 0, sizeof log_data);
     prl = &log_data.revlist;
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+bd:hlNSRr::s:tw::")) != -1)
     {
 	switch (c)

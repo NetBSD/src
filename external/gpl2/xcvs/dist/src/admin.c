@@ -264,10 +264,10 @@ admin_group_member (void)
     struct group *grp;
     int i;
 
-    if (config->UserAdminGroup == NULL)
+    if (config == NULL || config->UserAdminGroup == NULL)
 	return 1;
 
-    if ((grp = getgrnam(CVS_ADMIN_GROUP)) == NULL)
+    if ((grp = getgrnam(config->UserAdminGroup)) == NULL)
 	return 0;
 
     {
@@ -299,6 +299,7 @@ admin_group_member (void)
 	    return 0;
 #endif
     }
+    return 1;
 }
 
 int
@@ -321,7 +322,7 @@ admin (int argc, char **argv)
     /* TODO: get rid of `-' switch notation in admin_data.  For
        example, admin_data->branch should be not `-bfoo' but simply `foo'. */
 
-    optind = 0;
+    getoptreset ();
     only_allowed_options = true;
     while ((c = getopt (argc, argv,
 			"+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)

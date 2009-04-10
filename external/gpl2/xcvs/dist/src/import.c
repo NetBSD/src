@@ -98,7 +98,7 @@ import (int argc, char **argv)
     wrap_setup ();
 
     vbranch = xstrdup (CVSBRANCH);
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+Qqdb:m:I:k:W:X")) != -1)
     {
 	switch (c)

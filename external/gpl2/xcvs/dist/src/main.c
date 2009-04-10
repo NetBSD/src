@@ -585,7 +585,7 @@ main (int argc, char **argv)
 
     /* Set this to 0 to force getopt initialization.  getopt() sets
        this to 1 internally.  */
-    optind = 0;
+    getoptreset ();
 
     /* We have to parse the options twice because else there is no
        chance to avoid reading the global options from ".cvsrc".  Set
@@ -627,9 +627,7 @@ main (int argc, char **argv)
     if (use_cvsrc)
 	read_cvsrc (&argc, &argv, "cvs");
 
-    optind = 0;
-    opterr = 1;
-
+    getoptreset();
     while ((c = getopt_long
             (argc, argv, short_options, long_options, &option_index))
            != EOF)
@@ -1490,6 +1488,17 @@ format_date_alloc (char *datestr)
     return xstrdup (datestr);
 }
 
+void
+getoptreset (void)
+{
+#ifdef HAVE_GETOPT_OPTRESET
+	optreset = 1;
+	optind = 1;
+#else
+	optind = 0;
+#endif
+	opterr = 1;
+}
 
 
 void

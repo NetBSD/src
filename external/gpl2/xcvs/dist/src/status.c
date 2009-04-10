@@ -44,7 +44,7 @@ cvsstatus (int argc, char **argv)
     if (argc == -1)
 	usage (status_usage);
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+vlR")) != -1)
     {
 	switch (c)

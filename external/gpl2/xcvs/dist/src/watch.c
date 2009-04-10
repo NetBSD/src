@@ -264,7 +264,7 @@ watch_addremove (int argc, char **argv)
     the_args.dirs = NULL;
     the_args.local = 0;
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+lRa:")) != -1)
     {
 	switch (c)
@@ -498,7 +498,7 @@ watchers (int argc, char **argv)
     if (argc == -1)
 	usage (watchers_usage);
 
-    optind = 0;
+    getoptreset ();
     while ((c = getopt (argc, argv, "+lR")) != -1)
     {
 	switch (c)
