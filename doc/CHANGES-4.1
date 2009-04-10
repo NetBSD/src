@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.141 2009/03/31 21:15:06 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.142 2009/04/10 20:34:17 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2954,4 +2954,33 @@ common/lib/libprop/prop_object.c	patch
 	Fix crash where user was able to crash proplib with trying to
 	internalize bad xml file with non-existing data type e.g. <number>.
 	[haad, ticket #1296]
+
+sys/kern/kern_sig.c				1.296
+
+	In sigput(), save the siginfo no matter whether SA_SIGINFO is
+	set or not.  There are also sigtimedwait(2) et al. to catch
+	signals without invoking a signal handler. Addresses the first
+	test case in PR kern/41076.
+	[drochner, ticket #1299]
+
+lib/libpthread/pthread_sig.c			patch
+
+	In the pthreads wrapper for __sigaction14, return -1 and set errno
+	rather than returning an error number directly like many pthreads
+	functions do. Fixes a problem where sigaction(-1, ...) returns
+	EINVAL instead of failing with EINVAL, reported by Matteo Beccati
+	in PR lib/41085.
+	[dholland, ticket #1301]
+
+sys/sys/file.h					patch
+sys/kern/uipc_usrreq.c				patch
+
+	Avoid deep recursion and file descriptor exhaustion.
+	1. unp_detach: go not call unp_gc directly for descriptors
+	that are unixdomain sockets themselves. Instead mark them
+	for cleanup during garbage collection.
+	2. unp_gc: handle detach of descriptors that were marked earlier.
+	3. prohibit transfer of descriptors within SCM_RIGHTS messages if
+	(num_files_in_transit > maxfiles / unp_rights_ratio)                    
+	[mlelstv, ticket #1303]
 
