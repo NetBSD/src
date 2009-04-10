@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.5 2009/03/18 16:00:12 cegger Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.6 2009/04/10 19:41:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -118,6 +118,21 @@ parsebootconf(const char *conf)
 
 	err = fstat(fd, &st);
 	if (err == -1) {
+		close(fd);
+		return;
+	}
+
+	/*
+	 * Check the size. A bootconf file is normally only a few
+	 * hundred bytes long. If it is much bigger than expected,
+	 * don't try to load it. We can't load something big into
+	 * an 8086 real mode segment anyway, and in pxeboot this is
+	 * probably a case of the loader getting a filename for the
+	 * kernel and thinking it is boot.cfg by accident. (The 32k
+	 * number is arbitrary but 8086 real mode data segments max
+	 * out at 64k.)
+	 */
+	if (st.st_size > 32768) {
 		close(fd);
 		return;
 	}
