@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.50 2007/03/04 06:03:38 christos Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.51 2009/04/10 18:58:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -444,8 +444,10 @@
 		} \
 		mreq = *mrq; \
 		if (error && (!(nfsd->nd_flag & ND_NFSV3) || \
-			error == EBADRPC)) \
-			return(0); \
+			error == EBADRPC)) {\
+			error = 0; \
+			goto nfsmout; \
+			} \
 		}
 
 #define	nfsm_writereply(s, v3) \
