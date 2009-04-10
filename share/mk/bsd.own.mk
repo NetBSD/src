@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.560 2009/03/27 19:36:55 drochner Exp $
+#	$NetBSD: bsd.own.mk,v 1.561 2009/04/10 16:14:54 bouyer Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -683,15 +683,14 @@ ${var}?=no
 #
 # Do we default to XFree86 or Xorg for this platform?
 #
-.if ${MACHINE} == "acorn32" || ${MACHINE} == "amiga" || \
-    ${MACHINE} == "cats" || ${MACHINE} == "dreamcast" || \
-    ${MACHINE} == "ews4800mips" || ${MACHINE} == "hpcarm" || \
-    ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh" || \
-    ${MACHINE} == "mac68k" || ${MACHINE} == "netwinder" || \
-    ${MACHINE} == "newsmips" || ${MACHINE} == "ofppc" || \
-    ${MACHINE} == "pmax" || \
-    ${MACHINE} == "sparc" || ${MACHINE} == "sun3" || \
-    ${MACHINE} == "x68k" 
+.if ${MACHINE} == "alpha" || ${MACHINE} == "acorn32" || \
+	${MACHINE} == "amiga" || ${MACHINE} == "cats" || \
+	${MACHINE} == "dreamcast" || ${MACHINE} == "ews4800mips" || \
+	${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || \
+	${MACHINE} == "hpcsh" || ${MACHINE} == "mac68k" || \
+	${MACHINE} == "netwinder" || ${MACHINE} == "newsmips" || \
+	${MACHINE} == "ofppc" || ${MACHINE} == "pmax" || \
+	${MACHINE} == "sparc" || ${MACHINE} == "sun3" || ${MACHINE} == "x68k"
 X11FLAVOUR?=	XFree86
 .else
 X11FLAVOUR?=	Xorg
