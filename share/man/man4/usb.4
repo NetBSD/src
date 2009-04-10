@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.88 2008/04/30 13:10:54 martin Exp $
+.\" $NetBSD: usb.4,v 1.89 2009/04/10 15:02:03 joerg Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Cd "ohci*   at cardbus? function ?"
 .Cd "ohci*   at pci? dev ? function ?"
 .Cd "slhci*  at isa? port ? irq ?"
-.Cd "slhci*  at pcmcia? function ?
+.Cd "slhci*  at pcmcia? function ?"
 .Cd "uhci*   at cardbus? function ?"
 .Cd "uhci*   at pci? dev ? function ?"
 .Cd "usb*    at ehci? flags X"
@@ -501,23 +501,24 @@ struct usb_event {
         } u;
 };
 .Ed
+.Pp
 The
 .Va ue_type
 field identifies the type of event that is described.
 The possible events are attach/detach of a host controller,
 a device, or a device driver.  The union contains information
 pertinent to the different types of events.
-.br
+.Pp
 The
 .Va ue_bus
 contains the number of the
 .Tn USB
 bus for host controller events.
-.br
+.Pp
 The
 .Va ue_device
 record contains information about the device in a device event event.
-.br
+.Pp
 The
 .Va ue_cookie
 is an opaque value that uniquely determines which
