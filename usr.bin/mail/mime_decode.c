@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.14 2009/01/18 01:29:57 lukem Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.15 2009/04/10 13:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,14 +34,13 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.14 2009/01/18 01:29:57 lukem Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.15 2009/04/10 13:08:25 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
 #include <err.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

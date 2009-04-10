@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.11 2009/03/11 01:10:05 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.12 2009/04/10 13:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.11 2009/03/11 01:10:05 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.12 2009/04/10 13:08:25 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: mime_attach.c,v 1.11 2009/03/11 01:10:05 christos Exp $");
 #include <fcntl.h>
 #include <libgen.h>
 #include <magic.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +59,7 @@ __RCSID("$NetBSD: mime_attach.c,v 1.11 2009/03/11 01:10:05 christos Exp $");
 #include "mime_child.h"
 #endif
 #include "glob.h"
+#include "sig.h"
 
 #if 0
 /*
@@ -373,7 +373,7 @@ content_type_by_name(char *filename)
 	}
 	cp = magic_file(magic, filename);
 	if (cp == NULL) {
-		warnx("magic_file: %s", magic_error(magic));
+		warnx("magic_load: %s", magic_error(magic));
 		return NULL;
 	}
 	if (filename &&
@@ -787,9 +787,15 @@ get_line(el_mode_t *em, const char *pr, const char *str, int i)
 	 * seems to handle it badly.
 	 */
 	(void)easprintf(&prompt, "#%-7d %s: ", i, pr);
-	line = my_getline(em, prompt, __UNCONST(str));
-	/* LINTED */
-	line = line ? savestr(line) : __UNCONST("");
+	line = my_gets(em, prompt, __UNCONST(str));
+	if (line != NULL) {
+		(void)strip_WSP(line);	/* strip trailing whitespace */
+		line = skip_WSP(line);	/* skip leading white space */
+		line = savestr(line);	/* XXX - do we need this? */
+	}
+	else {
+		line = __UNCONST("");
+	}
 	free(prompt);
 
 	return line;
@@ -800,8 +806,8 @@ sget_line(el_mode_t *em, const char *pr, const char **str, int i)
 {
 	char *line;
 	line = get_line(em, pr, *str, i);
-	if (strcmp(line, *str) != 0)
-		*str = savestr(line);
+	if (line != NULL && strcmp(line, *str) != 0)
+		*str = line;
 }
 
 static void
@@ -949,14 +955,14 @@ edit_attachlist(struct attachment *alist)
  * Hook used by the '~@' escape to attach files.
  */
 PUBLIC struct attachment*
-mime_attach_files(struct attachment *attach, char *linebuf)
+mime_attach_files(struct attachment * volatile attach, char *linebuf)
 {
 	struct attachment *ap;
 	char *argv[MAXARGC];
 	int argc;
 	int attach_num;
 
-	argc = getrawlist(linebuf, argv, sizeofarray(argv));
+	argc = getrawlist(linebuf, argv, (int)__arraycount(argv));
 	attach_num = 1;
 	for (ap = attach; ap && ap->a_flink; ap = ap->a_flink)
 			attach_num++;
@@ -1004,7 +1010,8 @@ mime_attach_optargs(struct name *optargs)
 		int i;
 
 		if (expand_optargs != NULL)
-			argc = getrawlist(np->n_name, argv, sizeofarray(argv));
+			argc = getrawlist(np->n_name,
+			    argv, (int)__arraycount(argv));
 		else {
 			if (np->n_name == '\0')
 				argc = 0;
