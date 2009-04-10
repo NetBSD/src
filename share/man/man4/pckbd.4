@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.18 2009/04/06 17:34:13 mkirby Exp $
+.\" $NetBSD: pckbd.4,v 1.19 2009/04/10 15:11:41 joerg Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -131,8 +131,7 @@ and sending an ESC character before the key symbol if the ALT
 key is pressed simultaneously, use
 .Ic wsconsctl Fl w Ar encoding=de.nodead.metaesc .
 To set it at kernel build time, add
-.Cd options PCKBD_LAYOUT="(KB_DE | KB_NODEAD | KB_METAESC)"
-.br
+.D1 Cd options PCKBD_LAYOUT="(KB_DE | KB_NODEAD | KB_METAESC)"
 to the kernel configuration file.
 .Sh SEE ALSO
 .Xr isa 4 ,
