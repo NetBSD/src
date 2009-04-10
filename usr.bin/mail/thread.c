@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.7 2009/01/18 01:29:57 lukem Exp $	*/
+/*	$NetBSD: thread.c,v 1.8 2009/04/10 13:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.7 2009/01/18 01:29:57 lukem Exp $");
+__RCSID("$NetBSD: thread.c,v 1.8 2009/04/10 13:08:25 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -780,7 +780,7 @@ link_array(struct key_sort_s *marray, size_t mcount)
 	struct message *lastmp;
 	lastmp = NULL;
 	for (i = 0; i < mcount; i++) {
-		marray[i].mp->m_index = i + 1;
+		marray[i].mp->m_index = (int)i + 1;
 		marray[i].mp->m_blink = lastmp;
 		marray[i].mp->m_flink = NULL;
 		if (lastmp)
