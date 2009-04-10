@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.240.2.2 2007/10/07 14:21:11 xtraeme Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.240.2.3 2009/04/10 20:20:45 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.240.2.2 2007/10/07 14:21:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.240.2.3 2009/04/10 20:20:45 snj Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -180,20 +180,16 @@ out:
 }
 
 /*
- * Append a new ksiginfo element to the list of pending ksiginfo's, if
- * we need to (SA_SIGINFO was requested). We replace non RT signals if
- * they already existed in the queue and we add new entries for RT signals,
- * or for non RT signals with non-existing entries.
+ * Append a new ksiginfo element to the list of pending ksiginfo's.
+ * We replace non RT signals if they already existed in the queue
+ * and we add new entries for RT signals, or for non RT signals
+ * with non-existing entries.
  */
 static void
 ksiginfo_queue(struct proc *p, const ksiginfo_t *ksi, ksiginfo_t **newkp)
 {
 	ksiginfo_t *kp;
-	struct sigaction *sa = &SIGACTION_PS(p->p_sigacts, ksi->ksi_signo);
 	int s;
-
-	if ((sa->sa_flags & SA_SIGINFO) == 0)
-		return;
 
 	/*
 	 * If there's no info, don't save it.
