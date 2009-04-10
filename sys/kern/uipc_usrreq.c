@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.94.2.1 2007/08/21 19:33:57 liamjfoy Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.94.2.1.4.1 2009/04/10 20:35:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.94.2.1 2007/08/21 19:33:57 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.94.2.1.4.1 2009/04/10 20:35:24 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,6 +538,7 @@ u_long	unpdg_sendspace = 2*1024;	/* really max datagram size */
 u_long	unpdg_recvspace = 4*1024;
 
 int	unp_rights;			/* file descriptors in flight */
+int	unp_rights_ratio = 2;		/* limit, fraction of maxfiles */
 
 int
 unp_attach(struct socket *so)
@@ -976,6 +977,7 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 	int i, fd, *fdp;
 	int nfds;
 	u_int neededspace;
+	u_int maxmsg;
 
 	/* Sanity check the control message header */
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
@@ -984,6 +986,11 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 
 	/* Verify that the file descriptors are valid */
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof(int);
+
+	maxmsg = maxfiles / unp_rights_ratio;
+	if (unp_rights + nfds > maxmsg)
+		return (EAGAIN);
+
 	fdp = (int *)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
@@ -1167,6 +1174,8 @@ unp_gc(void)
 				if (fp->f_count == fp->f_msgcount)
 					continue;
 			}
+			if (fp->f_iflags & FIF_DISCARDED)
+				continue;
 			fp->f_flag |= FMARK;
 
 			if (fp->f_type != DTYPE_SOCKET ||
@@ -1272,6 +1281,14 @@ unp_gc(void)
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
 		simple_lock(&fp->f_slock);
+		if (fp->f_iflags & FIF_DISCARDED) {
+			fp->f_usecount++;
+			fp->f_msgcount--;
+			simple_unlock(&fp->f_slock);
+			unp_rights--;
+			(void) closef(fp, (struct lwp *)0);
+			simple_lock(&fp->f_slock);
+		}
 		FILE_USE(fp);
 		(void) closef(fp, (struct lwp *)0);
 	}
@@ -1356,7 +1373,24 @@ unp_discard(struct file *fp)
 {
 	if (fp == NULL)
 		return;
+
 	simple_lock(&fp->f_slock);
+	/*
+	 * closing unix domain sockets may cause a deep
+	 * recursion, so leave them open and mark them
+	 * for the garbage collector to discard them safely.
+	 */
+	if (fp->f_type == DTYPE_SOCKET && fp->f_count == 1) {
+		struct socket *so;
+
+		so = (struct socket *)fp->f_data;
+		if (so && so->so_proto->pr_domain == &unixdomain &&
+		    (so->so_proto->pr_flags&PR_RIGHTS) != 0) {
+			fp->f_iflags |= FIF_DISCARDED;
+			simple_unlock(&fp->f_slock);
+			return;
+		}
+	}
 	fp->f_usecount++;	/* i.e. FILE_USE(fp) sans locking */
 	fp->f_msgcount--;
 	simple_unlock(&fp->f_slock);
