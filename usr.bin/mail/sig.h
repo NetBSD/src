@@ -1,11 +1,8 @@
-/*	$NetBSD: complete.h,v 1.6 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: sig.h,v 1.1 2009/04/10 13:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Anon Ymous.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,34 +26,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef __SIG_H__
+#define __SIG_H__
 
-#ifndef __COMPLETE_H__
-#define __COMPLETE_H__
+int sig_ignore(int, struct sigaction *, sigset_t *);
+int sig_restore(int, struct sigaction *, sigset_t *);
+int sig_setflags(int, int, struct sigaction *);
 
-#include <histedit.h>
+void sig_hold(void);
+void sig_release(void);		/* XXX: should this be named sig_relse()? */
 
-typedef struct {
-	EditLine	*el;			/* editline(3) editline structure */
-	History		*hist;			/* editline(3) history structure */
-} el_mode_t;
+void sig_check(void);
+void sig_setup(void);
+sig_t sig_signal(int, sig_t);
 
-struct el_modes_s {
-	el_mode_t command;
-	el_mode_t string;
-	el_mode_t filec;
-	el_mode_t mime_enc;
-};
+#endif /* __SIG_H__ */
 
-extern struct el_modes_s elm;
-
-char *my_gets(el_mode_t *, const char *, char *);
-void init_editline(void);
-
-/*
- * User knobs: environment names used by this module.
- */
-#define ENAME_EL_COMPLETION_KEYS	"el-completion-keys"
-#define ENAME_EL_EDITOR			"el-editor"
-#define ENAME_EL_HISTORY_SIZE		"el-history-size"
-
-#endif /* __COMPLETE_H__ */

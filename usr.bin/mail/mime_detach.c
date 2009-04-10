@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_detach.c,v 1.3 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_detach.c,v 1.4 2009/04/10 13:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_detach.c,v 1.3 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: mime_detach.c,v 1.4 2009/04/10 13:08:25 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: mime_detach.c,v 1.3 2008/04/28 20:24:14 martin Exp $");
 #include "mime_codecs.h"
 #include "mime_detach.h"
 #endif
+#include "sig.h"
 
 
 static struct {
@@ -95,8 +96,12 @@ detach_get_fname(char *prompt, char *pathname)
 {
 	if (!detach_ctl.batch) {
 		char *fname;
+
 		fname = my_gets(&elm.filec, prompt, pathname);
-		fname = skip_WSP(fname); /* XXX - do this? */
+		if (fname == NULL)	/* ignore this attachment */
+			return NULL;
+		(void)strip_WSP(fname);
+		fname = skip_WSP(fname);
 		if (*fname == '\0')	/* ignore this attachment */
 			return NULL;
 		pathname = savestr(fname);	/* save this or it gets trashed */
@@ -130,7 +135,12 @@ detach_open_core(char *fname, const char *partstr)
 		(void)sasprintf(&p, "%-7s overwrite: Always/Never/once/next/rename (ANonr)[n]? ",
 		    partstr, fname);
 		p = my_gets(&elm.string, p, NULL);
+		if (p == NULL)
+			goto start;
+
+		(void)strip_WSP(p);
 		p = skip_WSP(p);
+
 		switch (*p) {
 		case 'A':	detach_ctl.overwrite = 1;
 				detach_ctl.batch = 1;
