@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.44 2009/04/03 14:07:26 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.45 2009/04/10 09:18:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.44 2009/04/03 14:07:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.45 2009/04/10 09:18:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.44 2009/04/03 14:07:26 skrll Exp $")
 #if defined(DDB)
 #include <ddb/db_output.h>
 #endif
-
-#define PMAPDEBUG
 
 #ifdef PMAPDEBUG
 
