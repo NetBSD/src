@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.48 2008/06/19 19:03:44 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.49 2009/04/10 03:40:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.48 2008/06/19 19:03:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.49 2009/04/10 03:40:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -585,9 +585,9 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
-	bool found;
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
 	KASSERT(IMPLIES(cnp->cn_namelen == 2, !(cnp->cn_nameptr[0] == '.' &&
 	    cnp->cn_nameptr[1] == '.')));
@@ -595,17 +595,15 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	found = 0;
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
 		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
-			found = 1;
 			break;
 		}
 	}
 
-	return found ? de : NULL;
+	return de;
 }
 
 /* --------------------------------------------------------------------- */
@@ -708,6 +706,8 @@ tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 {
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
+
 	if (cookie == node->tn_spec.tn_dir.tn_readdir_lastn &&
 	    node->tn_spec.tn_dir.tn_readdir_lastp != NULL) {
 		return node->tn_spec.tn_dir.tn_readdir_lastp;
@@ -739,6 +739,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 	struct dirent *dentp;
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	TMPFS_VALIDATE_DIR(node);
 
 	/* Locate the first directory entry we have to return.  We have cached
