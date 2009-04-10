@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.377 2009/04/10 22:26:10 ad Exp $
+.\"	$NetBSD: options.4,v 1.378 2009/04/10 22:58:33 perry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -616,6 +616,17 @@ Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
 structures is detected.
 These checks can decrease performance up to 15%.
+.It Cd options LOCKDEBUG
+Adds code to the kernel to detect incorrect use of locking primitives
+(mutex, rwlock, simplelock).
+This code will cause the kernel to check for dead lock conditions.
+It will also check for memory being freed to not contain initialised
+lock primitives.
+Functions for use in
+.Xr ddb 4
+to check lock chains etc. are also enabled.
+These checks are very expensive and can decrease performance on
+multi-processor machines by a factor of three.
 .It Cd options KSTACK_CHECK_MAGIC
 Check kernel stack usage and panic if stack overflow is detected.
 This check is performance sensitive because it scans stack on each context
