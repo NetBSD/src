@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.143 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.144 2009/04/10 18:58:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.143 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.144 2009/04/10 18:58:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1392,7 +1392,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	int32_t t1;
 	char *bpos;
 	int error = 0, cache = 0, len, tsize, dirfor_ret = 1, diraft_ret = 1;
-	int rdev = 0;
+	int rdev = 0, abort = 0;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), how, exclusive_flag = 0;
 	char *cp2;
 	struct mbuf *mb, *mreq;
@@ -1419,6 +1419,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			vrele(dirp);
 		return (0);
 	}
+	abort = 1;
 	VATTR_NULL(&va);
 	if (v3) {
 		va.va_mode = 0;
@@ -1494,6 +1495,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			    KAUTH_SYSTEM_MKNOD, 0, NULL, NULL, NULL))) {
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
+				abort = 0;
 				nfsm_reply(0);
 				return (error);
 			} else
@@ -1509,12 +1511,14 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 				vrele(nd.ni_dvp);
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				error = EINVAL;
+				abort = 0;
 				nfsm_reply(0);
 			}
 		} else {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			error = ENXIO;
+			abort = 0;
 		}
 		vp = nd.ni_vp;
 	} else {
@@ -1524,6 +1528,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
+		abort = 0;
 		if (!error && va.va_size != -1) {
 			error = nfsrv_access(vp, VWRITE, cred,
 			    (nd.ni_cnd.cn_flags & RDONLY), lwp, 0);
@@ -1561,7 +1566,9 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	}
 	if (dirp) {
 		vrele(dirp);
+		dirp = NULL;
 	}
+	abort = 0;
 	nfsm_reply(NFSX_SRVFH(&nsfh, v3) + NFSX_FATTR(v3) + NFSX_WCCDATA(v3));
 	if (v3) {
 		if (!error) {
@@ -1578,13 +1585,15 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 nfsmout:
 	if (dirp)
 		vrele(dirp);
-	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-	if (nd.ni_dvp == nd.ni_vp)
-		vrele(nd.ni_dvp);
-	else
-		vput(nd.ni_dvp);
-	if (nd.ni_vp)
-		vput(nd.ni_vp);
+	if (abort) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (nd.ni_vp)
+			vput(nd.ni_vp);
+	}
 	return (error);
 }
 
@@ -1604,6 +1613,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 	int32_t t1;
 	char *bpos;
 	int error = 0, cache = 0, len, dirfor_ret = 1, diraft_ret = 1;
+	int abort = 0;
 	u_int32_t major, minor;
 	enum vtype vtyp;
 	char *cp2;
@@ -1629,6 +1639,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 			vrele(dirp);
 		return (0);
 	}
+	abort = 1;
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 	vtyp = nfsv3tov_type(*tl);
 	if (vtyp != VCHR && vtyp != VBLK && vtyp != VSOCK && vtyp != VFIFO) {
@@ -1700,7 +1711,9 @@ out:
 	if (dirp) {
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		vrele(dirp);
+		dirp = NULL;
 	}
+	abort = 0;
 	nfsm_reply(NFSX_SRVFH(&nsfh, true) + NFSX_POSTOPATTR(1) +
 	    NFSX_WCCDATA(1));
 	if (!error) {
@@ -1710,13 +1723,15 @@ out:
 	nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 	return (0);
 nfsmout:
-	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-	if (nd.ni_dvp == nd.ni_vp)
-		vrele(nd.ni_dvp);
-	else
-		vput(nd.ni_dvp);
-	if (nd.ni_vp)
-		vput(nd.ni_vp);
+	if (abort) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (nd.ni_vp)
+			vput(nd.ni_vp);
+	}
 	if (dirp)
 		vrele(dirp);
 	return (error);
@@ -2006,21 +2021,26 @@ out:
 	}
 	vrele(tond.ni_startdir);
 	PNBUF_PUT(tond.ni_cnd.cn_pnbuf);
+	tond.ni_cnd.cn_nameiop = 0;
 out1:
 	if (fdirp) {
 		if (v3) {
 			fdiraft_ret = VOP_GETATTR(fdirp, &fdiraft, cred);
 		}
 		vrele(fdirp);
+		fdirp = NULL;
 	}
 	if (tdirp) {
 		if (v3) {
 			tdiraft_ret = VOP_GETATTR(tdirp, &tdiraft, cred);
 		}
 		vrele(tdirp);
+		tdirp = NULL;
 	}
 	vrele(fromnd.ni_startdir);
 	PNBUF_PUT(fromnd.ni_cnd.cn_pnbuf);
+	fromnd.ni_cnd.cn_nameiop = 0;
+	localfs = NULL;
 	nfsm_reply(2 * NFSX_WCCDATA(v3));
 	if (v3) {
 		nfsm_srvwcc_data(fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft);
@@ -2159,7 +2179,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *
 	char *bpos, *pathcp = NULL, *cp2;
 	struct uio io;
 	struct iovec iv;
-	int error = 0, cache = 0, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, cache = 0, dirfor_ret = 1, diraft_ret = 1, abort = 0;
 	uint32_t len, len2;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	struct mbuf *mb, *mreq;
@@ -2180,6 +2200,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *
 	}
 	if (error)
 		goto out;
+	abort = 1;
 	VATTR_NULL(&va);
 	va.va_type = VLNK;
 	if (v3) {
@@ -2244,7 +2265,9 @@ out:
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		}
 		vrele(dirp);
+		dirp = NULL;
 	}
+	abort = 0;
 	nfsm_reply(NFSX_SRVFH(&nsfh, v3) + NFSX_POSTOPATTR(v3) +
 	    NFSX_WCCDATA(v3));
 	if (v3) {
@@ -2256,13 +2279,15 @@ out:
 	}
 	return (0);
 nfsmout:
-	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-	if (nd.ni_dvp == nd.ni_vp)
-		vrele(nd.ni_dvp);
-	else
-		vput(nd.ni_dvp);
-	if (nd.ni_vp)
-		vrele(nd.ni_vp);
+	if (abort) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (nd.ni_vp)
+			vrele(nd.ni_vp);
+	}
 	if (dirp)
 		vrele(dirp);
 	if (pathcp)
@@ -2288,6 +2313,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 	int32_t t1;
 	char *bpos;
 	int error = 0, cache = 0, len, dirfor_ret = 1, diraft_ret = 1;
+	int abort = 0;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
@@ -2312,6 +2338,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 			vrele(dirp);
 		return (0);
 	}
+	abort = 1;
 	VATTR_NULL(&va);
 	if (v3) {
 		va.va_mode = 0;
@@ -2347,7 +2374,9 @@ out:
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		}
 		vrele(dirp);
+		dirp = NULL;
 	}
+	abort = 0;
 	nfsm_reply(NFSX_SRVFH(&nsfh, v3) + NFSX_POSTOPATTR(v3) +
 	    NFSX_WCCDATA(v3));
 	if (v3) {
@@ -2363,13 +2392,15 @@ out:
 	}
 	return (0);
 nfsmout:
-	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-	if (nd.ni_dvp == nd.ni_vp)
-		vrele(nd.ni_dvp);
-	else
-		vput(nd.ni_dvp);
-	if (nd.ni_vp)
-		vrele(nd.ni_vp);
+	if (abort) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (nd.ni_vp)
+			vrele(nd.ni_vp);
+	}
 	if (dirp)
 		vrele(dirp);
 	return (error);
@@ -3353,6 +3384,7 @@ nfsrv_null(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	u_quad_t frev;
 
 	nfsm_reply(0);
+nfsmout:
 	return (0);
 }
 
@@ -3375,6 +3407,7 @@ nfsrv_noop(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	else
 		error = EPROCUNAVAIL;
 	nfsm_reply(0);
+nfsmout:
 	return (0);
 }
 
