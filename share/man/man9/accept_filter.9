@@ -1,3 +1,4 @@
+.\" $NetBSD: accept_filter.9,v 1.5 2009/04/10 18:15:26 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Alfred Perlstein
 .\"
@@ -53,9 +54,9 @@
 .Fn accept_filt_get "char *name"
 .Sh DESCRIPTION
 Accept filters allow an application to request
-that the kernel pre-process incoming connections.  This manual page describes
-the kernel interface for accept filters.  User applications
-request accept filters via the
+that the kernel pre-process incoming connections.
+This manual page describes the kernel interface for accept filters.
+User applications request accept filters via the
 .Xr setsockopt 2
 system call, passing in an
 .Fa optname
@@ -151,9 +152,9 @@ by Coyote Point Systems, Inc. and appeared in
 This manual page was written by
 .An -nosplit
 .An Alfred Perlstein ,
-.An Sheldon Hearn
+.An Sheldon Hearn ,
 and
-.An Jeroen Ruigrok van der Werven.
+.An Jeroen Ruigrok van der Werven .
 .Pp
 The accept filter concept was pioneered by
 .An David Filo
