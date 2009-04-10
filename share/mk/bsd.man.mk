@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.99 2009/03/31 21:00:34 perry Exp $
+#	$NetBSD: bsd.man.mk,v 1.100 2009/04/10 16:16:12 apb Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -54,8 +54,10 @@ __installpage: .USE
 # XXX consider including bsd.links.mk and using __linkinstall instead
 __linkinstallpage: .USE
 	${_MKSHMSG_INSTALL} ${.TARGET}; \
-	${_MKSHECHO} "${INSTALL_LINK} ${.ALLSRC} ${.TARGET}" && \
-	${INSTALL_LINK} ${.ALLSRC} ${.TARGET}
+	${_MKSHECHO} "${INSTALL_LINK} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+	    ${.ALLSRC} ${.TARGET}" && \
+	${INSTALL_LINK} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+	    ${.ALLSRC} ${.TARGET}
 
 ##### Build and install rules (source form pages)
 
