@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 2009/04/11 09:49:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2009/04/11 09:49:23 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1180,11 +1180,6 @@ syscall(struct trapframe *frame, int *args)
 	 * will probably screw up any and all emulation.
 	 */
 	switch (code) {
-	/*
-	 * BEGIN automatically generated
-	 * by /home/fredette/project/hppa/makescargfix.pl
-	 * do not edit!
-	 */
 	case SYS_pread:
 		/*
 		 * 	syscallarg(int) fd;
@@ -1277,13 +1272,31 @@ syscall(struct trapframe *frame, int *args)
 		args[4] = args[4 + 1];
 		args[4 + 1] = tmp;
 		break;
+	case SYS___posix_fadvise50:
+		/*
+		 *	syscallarg(int) fd;
+		 *	syscallarg(int) pad;
+		 *	syscallarg(off_t) offset;
+		 *	syscallarg(off_t) len;
+		 *	syscallarg(int) advice;
+		 */
+		tmp = args[2];
+		args[2] = args[2 + 1];
+		args[2 + 1] = tmp;
+		tmp = args[4];
+		args[4] = args[4 + 1];
+		args[4 + 1] = tmp;
+	case SYS___mknod50:
+		/*
+		 *	syscallarg(const char *) path;
+		 *	syscallarg(mode_t) mode;
+		 *	syscallarg(dev_t) dev;
+		 */
+		tmp = args[2];
+		args[2] = args[2 + 1];
+		args[2 + 1] = tmp;
 	default:
 		break;
-	/*
-	 * END automatically generated
-	 * by /home/fredette/project/hppa/makescargfix.pl
-	 * do not edit!
-	 */
 	}
 
 #ifdef USERTRACE
