@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.16 2005/06/24 04:33:25 lukem Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.17 2009/04/11 09:41:18 apb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,4 +47,7 @@
 #define	_PATH_DEFSYSMK		"sys.mk"
 #ifndef _PATH_DEFSYSPATH
 #define	_PATH_DEFSYSPATH	"/usr/share/mk"
+#endif
+#ifndef _PATH_TMP
+#define	_PATH_TMP		"/tmp/"		/* with trailing slash */
 #endif
