@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.164 2009/04/04 10:12:51 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.165 2009/04/11 23:05:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.164 2009/04/04 10:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.165 2009/04/11 23:05:26 christos Exp $");
 
 #include "veriexec.h"
 
@@ -544,9 +544,13 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 static int
 vn_statfile(file_t *fp, struct stat *sb)
 {
-	struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = fp->f_data;
+	int error;
 
-	return vn_stat(vp, sb);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_stat(vp, sb);
+	VOP_UNLOCK(vp, 0);
+	return error;
 }
 
 int
