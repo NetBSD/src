@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.47 2009/04/04 10:12:52 ad Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.48 2009/04/11 15:47:34 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.47 2009/04/04 10:12:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.48 2009/04/11 15:47:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.47 2009/04/04 10:12:52 ad Exp $");
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/atomic.h>
+#include <sys/stat.h>
 
 #include "opt_ocf.h"
 #include <opencrypto/cryptodev.h>
@@ -122,6 +123,9 @@ struct fcrypt {
 	int		sesn;
 	struct selinfo	sinfo;
 	u_int32_t	requestid;
+	struct timespec atime;
+	struct timespec mtime;
+	struct timespec btime;
 };
 
 /* For our fixed-size allocations */
@@ -142,6 +146,7 @@ static int	cryptof_write(struct file *, off_t *, struct uio *,
 static int	cryptof_ioctl(struct file *, u_long, void *);
 static int	cryptof_close(struct file *);
 static int 	cryptof_poll(struct file *, int);
+static int 	cryptof_stat(struct file *, struct stat *);
 
 static const struct fileops cryptofops = {
 	.fo_read = cryptof_read,
@@ -149,7 +154,7 @@ static const struct fileops cryptofops = {
 	.fo_ioctl = cryptof_ioctl,
 	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = cryptof_poll,
-	.fo_stat = fbadop_stat,
+	.fo_stat = cryptof_stat,
 	.fo_close = cryptof_close,
 	.fo_kqfilter = fnullop_kqfilter,
 	.fo_drain = fnullop_drain,
@@ -228,6 +233,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	struct fcrypt *criofcr;
 	int criofd;
 
+	getnanotime(&fcr->atime);
+
 	switch (cmd) {
         case CRIOGET:   /* XXX deprecated, remove after 5.0 */
 		if ((error = fd_allocfile(&criofp, &criofd)) != 0)
@@ -265,6 +272,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 			goto mbail;
 		}
 
+		fcr->mtime = fcr->atime;
 		error = cryptodev_msession(fcr, snop, sgop->count);
 		if (error) {
 			goto mbail;
@@ -276,6 +284,7 @@ mbail:
 		kmem_free(snop, sgop->count * sizeof(struct session_n_op));
 		break;
 	case CIOCFSESSION:
+		fcr->mtime = fcr->atime;
 		mutex_spin_enter(&crypto_mtx);
 		ses = *(u_int32_t *)data;
 		cse = csefind(fcr, ses);
@@ -286,6 +295,7 @@ mbail:
 		mutex_spin_exit(&crypto_mtx);
 		break;
 	case CIOCNFSESSION:
+		fcr->mtime = fcr->atime;
 		sfop = (struct crypt_sfop *)data;
 		sesid = kmem_alloc((sfop->count * sizeof(u_int32_t)), 
 		    KM_SLEEP);
@@ -297,6 +307,7 @@ mbail:
 		kmem_free(sesid, (sfop->count * sizeof(u_int32_t)));
 		break;
 	case CIOCCRYPT:
+		fcr->mtime = fcr->atime;
 		mutex_spin_enter(&crypto_mtx);
 		cop = (struct crypt_op *)data;
 		cse = csefind(fcr, cop->ses);
@@ -309,6 +320,7 @@ mbail:
 		DPRINTF(("cryptodev_op error = %d\n", error));
 		break;
 	case CIOCNCRYPTM:
+		fcr->mtime = fcr->atime;
 		mop = (struct crypt_mop *)data;
 		cnop = kmem_alloc((mop->count * sizeof(struct crypt_n_op)),
 		    KM_SLEEP);
@@ -328,6 +340,7 @@ mbail:
 		DPRINTF(("cryptodev_key error = %d\n", error));
 		break;
 	case CIOCNFKEYM:
+		fcr->mtime = fcr->atime;
 		mkop = (struct crypt_mkop *)data;
 		knop = kmem_alloc((mkop->count * sizeof(struct crypt_n_kop)),
 		    KM_SLEEP);
@@ -345,6 +358,7 @@ mbail:
 		error = crypto_getfeat((int *)data);
 		break;
 	case CIOCNCRYPTRETM:
+		fcr->mtime = fcr->atime;
 		crypt_ret = (struct cryptret *)data;
 		count = crypt_ret->count;
 		crypt_res = kmem_alloc((count * sizeof(struct crypt_result)),  
@@ -1010,6 +1024,8 @@ cryptoopen(dev_t dev, int flag, int mode,
 		return error;
 
 	fcr = pool_get(&fcrpl, PR_WAITOK);
+	getnanotime(&fcr->btime);
+	fcr->atime = fcr->mtime = fcr->btime;
 	mutex_spin_enter(&crypto_mtx);
 	TAILQ_INIT(&fcr->csessions);
 	TAILQ_INIT(&fcr->crp_ret_mq);
@@ -1936,6 +1952,21 @@ fail:
 	}
 	mutex_spin_exit(&crypto_mtx);
 	return EINPROGRESS;			
+}
+
+static int      
+cryptof_stat(struct file *fp, struct stat *st)
+{
+	struct fcrypt *fcr = fp->f_data;
+
+	(void)memset(st, 0, sizeof(st));
+	KERNEL_LOCK(1, NULL);
+	st->st_dev = makedev(cdevsw_lookup_major(&crypto_cdevsw), fcr->sesn);
+	st->st_atimespec = fcr->atime;
+	st->st_mtimespec = fcr->mtime;
+	st->st_ctimespec = st->st_birthtimespec = fcr->btime;
+	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }
 
 static int      
