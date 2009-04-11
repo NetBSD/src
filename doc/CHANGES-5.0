@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.131 2009/04/10 18:13:57 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.132 2009/04/11 07:01:28 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5965,4 +5965,21 @@ sys/dev/ir/irframe_tty.c			1.56
 	handle case where line discipline is closed before the irframe
 	device. Fixes PR kern/40271.
 	[mlelstv, ticket #684]
+
+share/man/man4/bpf.4				1.40
+share/man/man4/ses.4				1.7
+
+	Fix markup.
+	[joerg, ticket #685]
+
+sys/arch/vax/vax/subr.S				1.26
+
+	Make copyin(9) and copyout(9) work with 64KB or larger data
+	blocks.  Fixes broken pipe(2) problem mentioned in PR 41139.
+	[mhitch, ticket #686]
+
+share/man/man4/wapbl.4				1.7-1.9
+
+	Sync with reality.
+	[ad, ticket #687]
 
