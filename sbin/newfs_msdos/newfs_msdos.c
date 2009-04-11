@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.33 2009/03/28 21:34:33 he Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.34 2009/04/11 06:59:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.33 2009/03/28 21:34:33 he Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.34 2009/04/11 06:59:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -655,7 +655,7 @@ main(int argc, char *argv[])
 	    if (opt_B && x < bss) {
 		if ((n = read(fd1, img, bpb.bps)) == -1)
 		    err(1, "%s", bname);
-		if (n != bpb.bps)
+		if ((size_t)n != bpb.bps)
 		    errx(1, "%s: can't read sector %u", bname, x);
 	    } else
 		memset(img, 0, bpb.bps);
@@ -743,7 +743,7 @@ main(int argc, char *argv[])
 	    }
 	    if ((n = write(fd, img, bpb.bps)) == -1)
 		err(1, "%s", fname);
-	    if (n != bpb.bps)
+	    if ((size_t)n != bpb.bps)
 		errx(1, "%s: can't write sector %u", fname, lsn);
 	}
     }
