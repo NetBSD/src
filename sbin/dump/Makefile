@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2008/08/29 00:02:23 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.36 2009/04/11 07:58:11 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -19,6 +19,8 @@
 #	WRITEDEBUG		trace slave writes
 #	STATS			read cache statistics
 #	DIAGNOSTICS		read cache diagnostic checks
+
+WARNS?=	3	# XXX: sign-compare issues
 
 .include <bsd.own.mk>
 
