@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.103 2009/04/03 13:22:05 pooka Exp $	*/
+/*	$NetBSD: newfs.c,v 1.104 2009/04/11 07:20:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.103 2009/04/03 13:22:05 pooka Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.104 2009/04/11 07:20:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -551,7 +551,7 @@ main(int argc, char *argv[])
 			errx(1, "Unable to determine file system size");
 	}
 
-	if (dkw.dkw_parent[0] && fssize > dkw.dkw_size)
+	if (dkw.dkw_parent[0] && (uint64_t)fssize > dkw.dkw_size)
 		errx(1, "size %" PRIu64 " exceeds maximum file system size on "
 		    "`%s' of %" PRIu64 " sectors",
 		    fssize, special, dkw.dkw_size);
@@ -723,7 +723,7 @@ mfs_group(const char *gname)
 
 	if (!(gp = getgrnam(gname)) && !isdigit((unsigned char)*gname))
 		errx(1, "unknown gname %s", gname);
-	return gp ? gp->gr_gid : atoi(gname);
+	return gp ? gp->gr_gid : (gid_t)atoi(gname);
 }
 
 static uid_t
@@ -733,7 +733,7 @@ mfs_user(const char *uname)
 
 	if (!(pp = getpwnam(uname)) && !isdigit((unsigned char)*uname))
 		errx(1, "unknown user %s", uname);
-	return pp ? pp->pw_uid : atoi(uname);
+	return pp ? pp->pw_uid : (uid_t)atoi(uname);
 }
 
 static int64_t
