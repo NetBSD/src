@@ -1,4 +1,4 @@
-/*	$NetBSD: special.c,v 1.12 2007/08/21 14:09:54 christos Exp $	*/
+/*	$NetBSD: special.c,v 1.13 2009/04/11 12:16:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)special.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: special.c,v 1.12 2007/08/21 14:09:54 christos Exp $");
+__RCSID("$NetBSD: special.c,v 1.13 2009/04/11 12:16:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: special.c,v 1.12 2007/08/21 14:09:54 christos Exp $");
 #include "extern.h"
 
 void
-c_special(int fd1, char *file1, off_t skip1, int fd2, char *file2, off_t skip2)
+c_special(int fd1, const char *file1, off_t skip1, int fd2, const char *file2, off_t skip2)
 {
 	int ch1, ch2;
 	off_t byte, line;
