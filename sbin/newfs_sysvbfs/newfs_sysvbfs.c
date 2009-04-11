@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_sysvbfs.c,v 1.5 2009/04/10 13:48:00 wiz Exp $	*/
+/*	$NetBSD: newfs_sysvbfs.c,v 1.6 2009/04/11 07:16:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 			while (filesize > 0) {
 				size_t writenow = MIN(filesize, sizeof(zbuf));
 
-				if (write(fd, zbuf, writenow) != writenow) {
+				if ((size_t)write(fd, zbuf, writenow) != writenow) {
 					perror("zwrite");
 					exit(EXIT_FAILURE);
 				}
