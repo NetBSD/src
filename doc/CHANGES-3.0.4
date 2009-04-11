@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.41 2009/03/27 10:45:16 msaitoh Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.42 2009/04/11 06:22:11 snj Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -1257,3 +1257,16 @@ usr.sbin/pstat/pstat.c				1.113
 	convert getfiles() to use KERN_FILE2 sysctl.
 	Now it can survive "struct file" changing, as is upcoming.
 	[mrg, ticket #2000]
+
+sys/kern/uipc_usrreq.c                          patch
+sys/sys/file.h                                  patch
+
+        Avoid deep recursion and file descriptor exhaustion.
+        1. unp_detach: go not call unp_gc directly for descriptors
+           that are unixdomain sockets themselves. Instead mark them
+           for cleanup during garbage collection.
+        2. unp_gc: handle detach of descriptors that were marked earlier.
+        3. prohibit transfer of descriptors within SCM_RIGHTS messages if
+           (num_files_in_transit > maxfiles / unp_rights_ratio)
+        [mlelstv, ticket #2004]
+
