@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.29 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.30 2009/04/11 15:47:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -93,6 +93,9 @@ struct bpf_d {
 	pid_t		bd_pid;		/* corresponding PID */
 	LIST_ENTRY(bpf_d) bd_list;	/* list of all BPF's */
 	void		*bd_sih;	/* soft interrupt handle */
+	struct timespec bd_atime;	/* access time */
+	struct timespec bd_mtime;	/* modification time */
+	struct timespec bd_btime;	/* birth time */
 };
 
 
