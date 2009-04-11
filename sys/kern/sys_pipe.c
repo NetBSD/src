@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.111 2009/04/11 15:46:18 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.112 2009/04/11 23:05:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.111 2009/04/11 15:46:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.112 2009/04/11 23:05:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1185,6 +1185,7 @@ pipe_stat(struct file *fp, struct stat *ub)
 {
 	struct pipe *pipe = fp->f_data;
 
+	mutex_enter(pipe->pipe_lock);
 	memset(ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
@@ -1202,7 +1203,8 @@ pipe_stat(struct file *fp, struct stat *ub)
 	 * Left as 0: st_dev, st_ino, st_nlink, st_rdev, st_flags, st_gen.
 	 * XXX (st_dev, st_ino) should be unique.
 	 */
-	return (0);
+	mutex_exit(pipe->pipe_lock);
+	return 0;
 }
 
 /* ARGSUSED */

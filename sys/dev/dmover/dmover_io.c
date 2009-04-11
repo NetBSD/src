@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.33 2009/04/11 15:47:33 christos Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.34 2009/04/11 23:05:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.33 2009/04/11 15:47:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.34 2009/04/11 23:05:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -585,6 +585,8 @@ dmio_stat(struct file *fp, struct stat *st)
 	st->st_atime = ds->ds_atime;
 	st->st_mtime = ds->ds_mtime;
 	st->st_ctime = st->st_birthtime = ds->ds_btime;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
 	KERNEL_UNLOCK(NULL);
 	return 0;
 }
