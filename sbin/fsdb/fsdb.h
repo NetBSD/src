@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.h,v 1.10 2008/04/28 20:23:08 martin Exp $	*/
+/*	$NetBSD: fsdb.h,v 1.11 2009/04/11 06:53:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@ extern int markclean;
 struct cmdtable {
 	const char *cmd;
 	const char *helptxt;
-	unsigned int minargc;
-	unsigned int maxargc;
+	int minargc;
+	int maxargc;
 	int (*handler)(int argc, char *argv[]);
 };
 extern union dinode *curinode;

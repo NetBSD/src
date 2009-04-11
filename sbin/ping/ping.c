@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.88 2009/03/31 19:51:11 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.89 2009/04/11 06:49:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.88 2009/03/31 19:51:11 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.89 2009/04/11 06:49:50 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -344,11 +344,12 @@ main(int argc, char *argv[])
 			options |= SO_DONTROUTE;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtol(optarg, &p, 0);
-			if (*p != '\0' || datalen < 0)
+			l = strtol(optarg, &p, 0);
+			if (*p != '\0' || l < 0)
 				errx(1, "Bad/invalid packet size %s", optarg);
-			if (datalen > MAXPACKET)
+			if (l > MAXPACKET)
 				errx(1, "packet size is too large");
+			datalen = (int)l;
 			break;
 		case 'v':
 			pingflags |= F_VERBOSE;
@@ -453,7 +454,7 @@ main(int argc, char *argv[])
 	loc_addr.sin_len = sizeof(struct sockaddr_in);
 	loc_addr.sin_addr.s_addr = htonl((127<<24)+1);
 
-	if (datalen >= PHDR_LEN)	/* can we time them? */
+	if (datalen >= (int)PHDR_LEN)	/* can we time them? */
 		pingflags |= F_TIMING;
 	packlen = datalen + 60 + 76;	/* MAXIP + MAXICMP */
 	if ((packet = (u_char *)malloc(packlen)) == NULL)
@@ -1070,7 +1071,7 @@ pr_pack(u_char *buf,
 			PR_PACK_SUB();
 
 		/* check the data */
-		if (datalen > PHDR_LEN
+		if (datalen > (int)PHDR_LEN
 		    && !(pingflags & F_PING_RANDOM)
 		    && memcmp(&icp->icmp_data[PHDR_LEN],
 			    &opack_icmp.icmp_data[PHDR_LEN],
