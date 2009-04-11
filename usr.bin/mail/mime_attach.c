@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.12 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.13 2009/04/11 14:22:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.12 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.13 2009/04/11 14:22:32 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -337,10 +337,11 @@ content_type_by_name(char *filename)
 	magic_t magic;
 	struct stat sb;
 
+#ifdef BROKEN_MAGIC
 	/*
-	 * libmagic produces annoying results on very short files.
-	 * The common case is with mime-encode-message defined and an
-	 * empty message body.
+	 * libmagic(3) produces annoying results on very short files.
+	 * The common case is MIME encoding an empty message body.
+	 * XXX - it would be better to fix libmagic(3)!
 	 *
 	 * Note: a 1-byte message body always consists of a newline,
 	 * so size determines all there.  However, 1-byte attachments
@@ -351,6 +352,7 @@ content_type_by_name(char *filename)
 		if (sb.st_size < 2 && S_ISREG(sb.st_mode)) {
 			FILE *fp;
 			int ch;
+
 			if (sb.st_size == 0 || filename == NULL ||
 			    (fp = Fopen(filename, "r")) == NULL)
 				return "text/plain";
@@ -362,6 +364,7 @@ content_type_by_name(char *filename)
 			    "text/plain" : "application/octet-stream";
 		}
 	}
+#endif
 	magic = magic_open(MAGIC_MIME);
 	if (magic == NULL) {
 		warnx("magic_open: %s", magic_error(magic));

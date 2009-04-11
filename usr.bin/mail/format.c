@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.14 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.15 2009/04/11 14:22:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.14 2009/04/10 13:08:24 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.15 2009/04/11 14:22:32 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -912,7 +912,7 @@ get_display_name(char *name)
 			if (!quoted && q < qend) {
 				*q++ = *p;
 				if (!is_WSP(*p)
-				    /* && !is_specials((unsigned char)*p) */ )
+				    /* && !is_specials((unsigned char)*p) */)
 					lastq = q;
 			}
 			break;
