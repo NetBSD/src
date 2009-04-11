@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.74 2009/04/08 19:03:13 apb Exp $	*/
+/*	$NetBSD: spec.c,v 1.75 2009/04/11 14:32:51 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.74 2009/04/08 19:03:13 apb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.75 2009/04/11 14:32:51 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,7 @@ noparent:		mtree_err("no parent node");
 				}
 				if (cur == NULL || cur->type != F_DIR) {
 					mtree_err("%s: %s", tname,
-					    strerror(ENOENT));
+					"missing directory in specification");
 				}
 				*e = '/';
 				pathparent = cur;
