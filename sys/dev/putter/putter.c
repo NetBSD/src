@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.22 2009/04/11 15:47:33 christos Exp $	*/
+/*	$NetBSD: putter.c,v 1.23 2009/04/11 23:05:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.22 2009/04/11 15:47:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.23 2009/04/11 23:05:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.22 2009/04/11 15:47:33 christos Exp $")
 #include <sys/stat.h>
 #include <sys/socketvar.h>
 #include <sys/module.h>
+#include <sys/kauth.h>
 
 #include <dev/putter/putter_sys.h>
 
@@ -216,8 +217,8 @@ putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 	size_t origres, moved;
 	int error;
 
-	getnanotime(&pi->pi_atime);
 	KERNEL_LOCK(1, NULL);
+	getnanotime(&pi->pi_atime);
 
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
 		printf("putter_fop_read: private %d not inited\n", pi->pi_idx);
@@ -265,8 +266,8 @@ putter_fop_write(file_t *fp, off_t *off, struct uio *uio,
 	size_t frsize;
 	int error;
 
-	getnanotime(&pi->pi_mtime);
 	KERNEL_LOCK(1, NULL);
+	getnanotime(&pi->pi_mtime);
 
 	DPRINTF(("putter_fop_write (%p): writing response, resid %zu\n",
 	    pi->pi_private, uio->uio_resid));
@@ -416,6 +417,8 @@ putter_fop_stat(file_t *fp, struct stat *st)
 	st->st_atimespec = pi->pi_atime;
 	st->st_mtimespec = pi->pi_mtime;
 	st->st_ctimespec = st->st_birthtimespec = pi->pi_btime;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
 	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }

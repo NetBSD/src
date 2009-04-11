@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.56 2009/04/11 15:47:33 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.57 2009/04/11 23:05:26 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.56 2009/04/11 15:47:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.57 2009/04/11 23:05:26 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -139,7 +139,6 @@ static int	tap_dev_read(int, struct uio *, int);
 static int	tap_dev_write(int, struct uio *, int);
 static int	tap_dev_ioctl(int, u_long, void *, struct lwp *);
 static int	tap_dev_poll(int, int, struct lwp *);
-static int	tap_dev_stat(int , struct stat *);
 static int	tap_dev_kqfilter(int, struct knote *);
 
 /* Fileops access routines */
@@ -979,27 +978,27 @@ static int
 tap_fops_stat(file_t *fp, struct stat *st)
 {
 	int error;
-	KERNEL_LOCK(1, NULL);
-	error = tap_dev_stat((intptr_t)fp->f_data, st);
-	KERNEL_UNLOCK_ONE(NULL);
-	return error;
-}
-	
-static int
-tap_dev_stat(int unit, struct stat *st)
-{
-	struct tap_softc *sc =
-	    device_lookup_private(&tap_cd, unit);
-
-	if (sc == NULL)
-		return ENXIO;
+	struct tap_softc *sc;
+	int unit = (uintptr_t)fp->f_data;
 
 	(void)memset(st, 0, sizeof(*st));
+
+	KERNEL_LOCK(1, NULL);
+	sc = device_lookup_private(&tap_cd, unit);
+	if (sc == NULL) {
+		error = ENXIO;
+		goto out;
+	}
+
 	st->st_dev = makedev(cdevsw_lookup_major(&tap_cdevsw), unit);
 	st->st_atimespec = sc->sc_atime;
 	st->st_mtimespec = sc->sc_mtime;
 	st->st_ctimespec = st->st_birthtimespec = sc->sc_btime;
-	return 0;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+out:
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int

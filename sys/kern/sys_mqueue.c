@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.15 2009/04/11 15:47:33 christos Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.16 2009/04/11 23:05:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.15 2009/04/11 15:47:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.16 2009/04/11 23:05:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -246,14 +246,18 @@ mq_stat_fop(file_t *fp, struct stat *st)
 	struct mqueue *mq = fp->f_data;
 
 	(void)memset(st, 0, sizeof(*st));
-	KERNEL_LOCK(1, NULL);
+
+	mutex_enter(&mq->mq_mtx);
 	st->st_mode = mq->mq_mode;
 	st->st_uid = mq->mq_euid;
 	st->st_gid = mq->mq_egid;
 	st->st_atimespec = mq->mq_atime;
 	st->st_mtimespec = mq->mq_mtime;
 	st->st_ctimespec = st->st_birthtimespec = mq->mq_btime;
-	KERNEL_UNLOCK_ONE(NULL);
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	mutex_exit(&mq->mq_mtx);
+
 	return 0;
 }
 

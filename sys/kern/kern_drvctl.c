@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.25 2009/04/11 15:47:33 christos Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.26 2009/04/11 23:05:26 christos Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.25 2009/04/11 15:47:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.26 2009/04/11 23:05:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.25 2009/04/11 15:47:33 christos Ex
 #include <sys/drvctlio.h>
 #include <sys/devmon.h>
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 struct drvctl_event {
 	TAILQ_ENTRY(drvctl_event) dce_link;
@@ -375,6 +376,8 @@ static int
 drvctl_stat(struct file *fp, struct stat *st)
 {
 	(void)memset(st, 0, sizeof(*st));
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
 	return 0;
 }
 
