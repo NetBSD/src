@@ -1,4 +1,4 @@
-/*	$NetBSD: C.c,v 1.17 2009/03/27 21:48:26 christos Exp $	*/
+/*	$NetBSD: C.c,v 1.18 2009/04/11 12:58:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: C.c,v 1.17 2009/03/27 21:48:26 christos Exp $");
+__RCSID("$NetBSD: C.c,v 1.18 2009/04/11 12:58:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -323,7 +324,7 @@ fnd:
 		} else {
 			if (intoken(c)) {
 				if (anext - maybe_attribute 
-				 < sizeof attribute - 1)
+				 < (ptrdiff_t)(sizeof attribute - 1))
 					*anext++ = c;
 				else	break;
 				continue;
