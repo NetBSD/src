@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.161 2009/03/26 20:27:54 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.162 2009/04/11 06:20:11 snj Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5197,4 +5197,16 @@ sys/dev/pci/if_wm.c				1.166
 	Fix the multicast hash bug on ICH9's wm.
 	Now we can catch ff02::9 on ICH9's wm. Fixes PR#37976.
 	[msaitoh, ticket #2002]
+
+sys/kern/uipc_usrreq.c				patch
+sys/sys/file.h					patch
+
+	Avoid deep recursion and file descriptor exhaustion.
+	1. unp_detach: go not call unp_gc directly for descriptors
+	   that are unixdomain sockets themselves. Instead mark them
+	   for cleanup during garbage collection.
+	2. unp_gc: handle detach of descriptors that were marked earlier.
+	3. prohibit transfer of descriptors within SCM_RIGHTS messages if
+	   (num_files_in_transit > maxfiles / unp_rights_ratio)
+	[mlelstv, ticket #2003]
 
