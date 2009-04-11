@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.49 2009/04/10 03:40:05 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.50 2009/04/11 11:59:04 markd Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.49 2009/04/10 03:40:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.50 2009/04/11 11:59:04 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1099,7 +1099,7 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
 	if ((kauth_cred_geteuid(cred) != node->tn_uid || uid != node->tn_uid ||
-	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == node->tn_gid ||
+	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == gid ||
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 	    NULL)) != 0))
