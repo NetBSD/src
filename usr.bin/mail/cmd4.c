@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd4.c,v 1.5 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: cmd4.c,v 1.6 2009/04/11 14:22:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd4.c,v 1.5 2009/04/10 13:08:24 christos Exp $");
+__RCSID("$NetBSD: cmd4.c,v 1.6 2009/04/11 14:22:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,13 +137,13 @@ printsmoptstbl(void)
 	int cnt;
 
 	cnt = 1;
-	for (h = 0; h < (int)__arraycount(smoptstbl); h++ )
+	for (h = 0; h < (int)__arraycount(smoptstbl); h++)
 		for (sp = smoptstbl[h]; sp && sp->s_name != NULL; sp = sp->s_link)
 			cnt++;
 
 	argv = salloc(cnt * sizeof(*argv));
 	ap = argv;
-	for (h = 0; h < (int)__arraycount(smoptstbl); h++ )
+	for (h = 0; h < (int)__arraycount(smoptstbl); h++)
 		for (sp = smoptstbl[h]; sp && sp->s_name != NULL; sp = sp->s_link)
 			*ap++ = sp->s_name;
 	*ap = NULL;

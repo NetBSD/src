@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.8 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.9 2009/04/11 14:22:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.8 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: thread.c,v 1.9 2009/04/11 14:22:32 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -450,7 +450,11 @@ thread_fix_old_links(struct message *nmessage, struct message *message, int omsg
 	message_array.t_head = nmessage; /* for assert check in thread_fix_new_links */
 #endif
 
-# define FIX_LINK(p)	do { if (p) p = nmessage + (p - message); } while(/*CONSTCOND*/0)
+# define FIX_LINK(p)	do {\
+	if (p)\
+		p = nmessage + (p - message);\
+  } while (/*CONSTCOND*/0)
+
 	FIX_LINK(current_thread.t_head);
 	for (i = 0; i < omsgCount; i++) {
 		FIX_LINK(nmessage[i].m_blink);
@@ -458,7 +462,7 @@ thread_fix_old_links(struct message *nmessage, struct message *message, int omsg
 		FIX_LINK(nmessage[i].m_clink);
 		FIX_LINK(nmessage[i].m_plink);
 	}
-	for (i = 0; i < current_thread.t_msgCount; i++ )
+	for (i = 0; i < current_thread.t_msgCount; i++)
 		FIX_LINK(current_thread.t_msgtbl[i]);
 
 # undef FIX_LINK
@@ -1095,7 +1099,7 @@ tagbelowcmd(void *v)
 	if (mp) {
 		depth = mp->m_depth;
 		for (mp = first_message(current_thread.t_head); mp; mp = next_message(mp))
-			if (mp->m_depth > depth ) {
+			if (mp->m_depth > depth) {
 				mp->m_flag |= MTAGGED;
 				touch(mp);
 			}
@@ -1449,7 +1453,7 @@ subj_load(struct key_sort_s *marray, size_t mcount, struct message *mp,
 #endif
 	for (i = 0; i < mcount; i++) {
 		char *subj = hfield(key, mp);
-		while( strncasecmp(subj, "Re:", 3) == 0 )
+		while (strncasecmp(subj, "Re:", 3) == 0)
 			subj = skip_WSP(subj + 3);
 		marray[i].mp = mp;
 		marray[i].key.str = subj;
@@ -1716,7 +1720,7 @@ deldupscmd(void *v __unused)
 	redepth(&current_thread);
 	depth = current_thread.t_head->m_depth;
 	for (mp = first_message(current_thread.t_head); mp; mp = next_message(mp)) {
-		if (mp->m_depth > depth ) {
+		if (mp->m_depth > depth) {
 			mp->m_flag &= ~(MPRESERVE | MSAVED | MBOX);
 			mp->m_flag |= MDELETED | MTOUCH;
 			touch(mp);
