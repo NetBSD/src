@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.55 2009/04/04 10:12:51 ad Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.56 2009/04/11 15:47:33 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.55 2009/04/04 10:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.56 2009/04/11 15:47:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.55 2009/04/04 10:12:51 ad Exp $");
 #include <sys/mutex.h>
 #include <sys/simplelock.h>
 #include <sys/intr.h>
+#include <sys/stat.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -115,6 +116,9 @@ struct tap_softc {
 	kmutex_t	sc_rdlock;
 	struct simplelock	sc_kqlock;
 	void		*sc_sih;
+	struct timespec sc_atime;
+	struct timespec sc_mtime;
+	struct timespec sc_btime;
 };
 
 /* autoconf(9) glue */
@@ -135,6 +139,7 @@ static int	tap_dev_read(int, struct uio *, int);
 static int	tap_dev_write(int, struct uio *, int);
 static int	tap_dev_ioctl(int, u_long, void *, struct lwp *);
 static int	tap_dev_poll(int, int, struct lwp *);
+static int	tap_dev_stat(int , struct stat *);
 static int	tap_dev_kqfilter(int, struct knote *);
 
 /* Fileops access routines */
@@ -145,6 +150,7 @@ static int	tap_fops_write(file_t *, off_t *, struct uio *,
     kauth_cred_t, int);
 static int	tap_fops_ioctl(file_t *, u_long, void *);
 static int	tap_fops_poll(file_t *, int);
+static int	tap_fops_stat(file_t *, struct stat *);
 static int	tap_fops_kqfilter(file_t *, struct knote *);
 
 static const struct fileops tap_fileops = {
@@ -153,7 +159,7 @@ static const struct fileops tap_fileops = {
 	.fo_ioctl = tap_fops_ioctl,
 	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = tap_fops_poll,
-	.fo_stat = fbadop_stat,
+	.fo_stat = tap_fops_stat,
 	.fo_close = tap_fops_close,
 	.fo_kqfilter = tap_fops_kqfilter,
 	.fo_drain = fnullop_drain,
@@ -268,6 +274,8 @@ tap_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
+	getnanotime(&sc->sc_btime);
+	sc->sc_atime = sc->sc_mtime = sc->sc_btime;
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -891,6 +899,8 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	if (sc == NULL)
 		return (ENXIO);
 
+	getnanotime(&sc->sc_atime);
+
 	ifp = &sc->sc_ec.ec_if;
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return (EHOSTDOWN);
@@ -966,6 +976,33 @@ out:
 }
 
 static int
+tap_fops_stat(file_t *fp, struct stat *st)
+{
+	int error;
+	KERNEL_LOCK(1, NULL);
+	error = tap_dev_stat((intptr_t)fp->f_data, st);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
+}
+	
+static int
+tap_dev_stat(int unit, struct stat *st)
+{
+	struct tap_softc *sc =
+	    device_lookup_private(&tap_cd, unit);
+
+	if (sc == NULL)
+		return ENXIO;
+
+	(void)memset(st, 0, sizeof(*st));
+	st->st_dev = makedev(cdevsw_lookup_major(&tap_cdevsw), unit);
+	st->st_atimespec = sc->sc_atime;
+	st->st_mtimespec = sc->sc_mtime;
+	st->st_ctimespec = st->st_birthtimespec = sc->sc_btime;
+	return 0;
+}
+
+static int
 tap_cdev_write(dev_t dev, struct uio *uio, int flags)
 {
 	return tap_dev_write(minor(dev), uio, flags);
@@ -996,6 +1033,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	if (sc == NULL)
 		return (ENXIO);
 
+	getnanotime(&sc->sc_mtime);
 	ifp = &sc->sc_ec.ec_if;
 
 	/* One write, one packet, that's the rule */

@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.21 2009/04/04 10:12:51 ad Exp $	*/
+/*	$NetBSD: putter.c,v 1.22 2009/04/11 15:47:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.21 2009/04/04 10:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.22 2009/04/11 15:47:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,10 +44,27 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.21 2009/04/04 10:12:51 ad Exp $");
 #include <sys/filedesc.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
+#include <sys/stat.h>
 #include <sys/socketvar.h>
 #include <sys/module.h>
 
 #include <dev/putter/putter_sys.h>
+
+/*
+ * Device routines.  These are for when /dev/puffs is initially
+ * opened before it has been cloned.
+ */
+
+dev_type_open(puttercdopen);
+dev_type_close(puttercdclose);
+dev_type_ioctl(puttercdioctl);
+
+/* dev */
+const struct cdevsw putter_cdevsw = {
+	puttercdopen,	puttercdclose,	noread,		nowrite,
+	noioctl,	nostop,		notty,		nopoll,
+	nommap,		nokqfilter,	D_OTHER
+};
 
 /*
  * Configuration data.
@@ -111,6 +128,9 @@ struct putter_instance {
 	uint8_t			*pi_curput;
 	size_t			pi_curres;
 	void			*pi_curopaq;
+	struct timespec		pi_atime;
+	struct timespec		pi_mtime;
+	struct timespec		pi_btime;
 
 	TAILQ_ENTRY(putter_instance) pi_entries;
 };
@@ -171,6 +191,7 @@ static int putter_fop_write(file_t *, off_t *, struct uio *,
 			    kauth_cred_t, int);
 static int putter_fop_ioctl(file_t*, u_long, void *);
 static int putter_fop_poll(file_t *, int);
+static int putter_fop_stat(file_t *, struct stat *);
 static int putter_fop_close(file_t *);
 static int putter_fop_kqfilter(file_t *, struct knote *);
 
@@ -181,7 +202,7 @@ static const struct fileops putter_fileops = {
 	.fo_ioctl = putter_fop_ioctl,
 	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = putter_fop_poll,
-	.fo_stat = fbadop_stat,
+	.fo_stat = putter_fop_stat,
 	.fo_close = putter_fop_close,
 	.fo_kqfilter = putter_fop_kqfilter,
 	.fo_drain = fnullop_drain,
@@ -195,6 +216,7 @@ putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 	size_t origres, moved;
 	int error;
 
+	getnanotime(&pi->pi_atime);
 	KERNEL_LOCK(1, NULL);
 
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
@@ -243,6 +265,7 @@ putter_fop_write(file_t *fp, off_t *off, struct uio *uio,
 	size_t frsize;
 	int error;
 
+	getnanotime(&pi->pi_mtime);
 	KERNEL_LOCK(1, NULL);
 
 	DPRINTF(("putter_fop_write (%p): writing response, resid %zu\n",
@@ -383,6 +406,21 @@ putter_fop_close(file_t *fp)
 }
 
 static int
+putter_fop_stat(file_t *fp, struct stat *st)
+{
+	struct putter_instance *pi = fp->f_data;
+
+	(void)memset(st, 0, sizeof(*st));
+	KERNEL_LOCK(1, NULL);
+	st->st_dev = makedev(cdevsw_lookup_major(&putter_cdevsw), pi->pi_idx);
+	st->st_atimespec = pi->pi_atime;
+	st->st_mtimespec = pi->pi_mtime;
+	st->st_ctimespec = st->st_birthtimespec = pi->pi_btime;
+	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
+}
+
+static int
 putter_fop_ioctl(file_t *fp, u_long cmd, void *data)
 {
 
@@ -467,21 +505,6 @@ putter_fop_kqfilter(file_t *fp, struct knote *kn)
 	return 0;
 }
 
-/*
- * Device routines.  These are for when /dev/puffs is initially
- * opened before it has been cloned.
- */
-
-dev_type_open(puttercdopen);
-dev_type_close(puttercdclose);
-dev_type_ioctl(puttercdioctl);
-
-/* dev */
-const struct cdevsw putter_cdevsw = {
-	puttercdopen,	puttercdclose,	noread,		nowrite,
-	noioctl,	nostop,		notty,		nopoll,
-	nommap,		nokqfilter,	D_OTHER
-};
 int
 puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
@@ -500,6 +523,8 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	pi->pi_curput = NULL;
 	pi->pi_curres = 0;
 	pi->pi_curopaq = NULL;
+	getnanotime(&pi->pi_btime);
+	pi->pi_atime = pi->pi_mtime = pi->pi_btime;
 	selinit(&pi->pi_sel);
 	mutex_exit(&pi_mtx);
 
