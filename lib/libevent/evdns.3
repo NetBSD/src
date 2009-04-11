@@ -1,4 +1,4 @@
-.\"	$NetBSD: evdns.3,v 1.2 2009/04/11 15:29:50 joerg Exp $
+.\"	$NetBSD: evdns.3,v 1.3 2009/04/11 16:55:04 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -85,40 +85,48 @@ Welcome, gentle reader
 .Pp
 Async DNS lookups are really a whole lot harder than they should be,
 mostly stemming from the fact that the libc resolver has never been
-very good at them. Before you use this library you should see if libc
+very good at them.
+Before you use this library you should see if libc
 can do the job for you with the modern async call getaddrinfo_a
-(see http://www.imperialviolet.org/page25.html#e498). Otherwise,
-please continue.
+(see http://www.imperialviolet.org/page25.html#e498).
+Otherwise, please continue.
 .Pp
 This code is based on libevent and you must call event_init before
-any of the APIs in this file. You must also seed the OpenSSL random
+any of the APIs in this file.
+You must also seed the OpenSSL random
 source if you are using OpenSSL for ids (see below).
 .Pp
 This library is designed to be included and shipped with your source
-code. You statically link with it. You should also test for the
-existence of strtok_r and define HAVE_STRTOK_R if you have it.
+code.
+You statically link with it.
+You should also test for the existence of strtok_r and define
+HAVE_STRTOK_R if you have it.
 .Pp
 The DNS protocol requires a good source of id numbers and these
-numbers should be unpredictable for spoofing reasons. There are
-three methods for generating them here and you must define exactly
-one of them. In increasing order of preference:
+numbers should be unpredictable for spoofing reasons.
+There are three methods for generating them here and you must define
+exactly one of them.
+In increasing order of preference:
 .Pp
 .Bl -tag -width "DNS_USE_GETTIMEOFDAY_FOR_ID" -compact -offset indent
 .It DNS_USE_GETTIMEOFDAY_FOR_ID
-Using the bottom 16 bits of the usec result from gettimeofday. This
-is a pretty poor solution but should work anywhere.
+Using the bottom 16 bits of the usec result from gettimeofday.
+This is a pretty poor solution but should work anywhere.
 .It DNS_USE_CPU_CLOCK_FOR_ID
 Using the bottom 16 bits of the nsec result from the CPU's time
-counter. This is better, but may not work everywhere. Requires
-POSIX realtime support and you'll need to link against -lrt on
-glibc systems at least.
+counter.
+This is better, but may not work everywhere.
+Requires POSIX realtime support and you'll need to link against
+-lrt on glibc systems at least.
 .It DNS_USE_OPENSSL_FOR_ID
-Uses the OpenSSL RAND_bytes call to generate the data. You must
-have seeded the pool before making any calls to this library.
+Uses the OpenSSL RAND_bytes call to generate the data.
+You must have seeded the pool before making any calls to this
+library.
 .El
 .Pp
 The library keeps track of the state of nameservers and will avoid
-them when they go down. Otherwise it will round robin between them.
+them when they go down.
+Otherwise it will round robin between them.
 .Pp
 Quick start guide:
 .Bd -literal
@@ -130,8 +138,8 @@ evdns_resolv_conf_parse(DNS_OPTIONS_ALL, "/etc/resolv.conf");
 evdns_resolve("www.hostname.com", 0, callback, NULL);
 .Ed
 .Pp
-When the lookup is complete the callback function is called. The
-first argument will be one of the DNS_ERR_* defines in evdns.h.
+When the lookup is complete the callback function is called.
+The first argument will be one of the DNS_ERR_* defines in evdns.h.
 Hopefully it will be DNS_ERR_NONE, in which case type will be
 DNS_IPv4_A, count will be the number of IP addresses, ttl is the time
 which the data can be cached for (in seconds), addresses will point
@@ -141,19 +149,22 @@ evdns_resolve.
 Searching:
 .Pp
 In order for this library to be a good replacement for glibc's resolver it
-supports searching. This involves setting a list of default domains, in
-which names will be queried for. The number of dots in the query name
-determines the order in which this list is used.
+supports searching.
+This involves setting a list of default domains, in which names
+will be queried for.
+The number of dots in the query name determines the order in which
+this list is used.
 .Pp
 Searching appears to be a single lookup from the point of view of the API,
 although many DNS queries may be generated from a single call to
-evdns_resolve. Searching can also drastically slow down the resolution
-of names.
+evdns_resolve.
+Searching can also drastically slow down the resolution of names.
 .Pp
 To disable searching:
 .Bl -enum -compact -offset indent
 .It
-Never set it up. If you never call
+Never set it up.
+If you never call
 .Fn evdns_resolv_conf_parse ,
 .Fn evdns_init ,
 or
@@ -175,9 +186,10 @@ pass the
 flag.
 .El
 .Pp
-The order of searches depends on the number of dots in the name. If the
-number is greater than the ndots setting then the names is first tried
-globally. Otherwise each search domain is appended in turn.
+The order of searches depends on the number of dots in the name.
+If the number is greater than the ndots setting then the names is
+first tried globally.
+Otherwise each search domain is appended in turn.
 .Pp
 The ndots setting can either be set from a resolv.conf, or by calling
 evdns_search_ndots_set.
@@ -189,24 +201,26 @@ For example, with ndots set to 1 (the default) and a search domain list of
 .Pp
  Query: www.abc
  Order: www.abc., www.abc.myhome.net
-.Sh API reference
+.Ss API reference
 .Bl -tag -width 0123456
 .It Ft int Fn evdns_init
 Initializes support for non-blocking name resolution by calling
 .Fn evdns_resolv_conf_parse .
 .It Ft int Fn evdns_nameserver_add "unsigned long int address"
-Add a nameserver. The address should be an IP address in
-network byte order. The type of address is chosen so that
-it matches in_addr.s_addr.
+Add a nameserver.
+The address should be an IP address in network byte order.
+The type of address is chosen so that it matches in_addr.s_addr.
 Returns non-zero on error.
 .It Ft int Fn evdns_nameserver_ip_add "const char *ip_as_string"
 This wraps the above function by parsing a string as an IP
 address and adds it as a nameserver.
 Returns non-zero on error
 .It Ft int Fn evdns_resolve "const char *name" "int flags" "evdns_callback_type callback" "void *ptr"
-Resolve a name. The name parameter should be a DNS name.
-The flags parameter should be 0, or DNS_QUERY_NO_SEARCH
-which disables searching for this query. (see defn of
+Resolve a name.
+The name parameter should be a DNS name.
+The flags parameter should be 0, or
+.Dv DNS_QUERY_NO_SEARCH
+which disables searching for this query (see defn of
 searching above).
 .Pp
 The callback argument is a function which is called when
@@ -223,12 +237,13 @@ Set the number of dots which, when found in a name, causes
 the first query to be without any search domain.
 .It Ft int Fn evdns_count_nameservers "void"
 Return the number of configured nameservers (not necessarily the
-number of running nameservers).  This is useful for double-checking
-whether our calls to the various nameserver configuration functions
-have been successful.
+number of running nameservers).
+This is useful for double-checking whether our calls to the various
+nameserver configuration functions have been successful.
 .It Ft int Fn evdns_clear_nameservers_and_suspend "void"
 Remove all currently configured nameservers, and suspend all pending
-resolves.  Resolves will not necessarily be re-attempted until
+resolves.
+Resolves will not necessarily be re-attempted until
 .Fn evdns_resume
 is called.
 .It Ft int Fn evdns_resume "void"
@@ -270,22 +285,27 @@ out of memory
 short read from file
 .El
 .El
-.Sh Internals
-Requests are kept in two queues. The first is the inflight queue. In
-this queue requests have an allocated transaction id and nameserver.
+.Ss Internals
+Requests are kept in two queues.
+The first is the inflight queue.
+In this queue requests have an allocated transaction id and
+nameserver.
 They will soon be transmitted if they haven't already been.
 .Pp
-The second is the waiting queue. The size of the inflight ring is
-limited and all other requests wait in waiting queue for space. This
-bounds the number of concurrent requests so that we don't flood the
-nameserver. Several algorithms require a full walk of the inflight
+The second is the waiting queue.
+The size of the inflight ring is limited and all other requests
+wait in waiting queue for space.
+This bounds the number of concurrent requests so that we don't
+flood the nameserver.
+Several algorithms require a full walk of the inflight
 queue and so bounding its size keeps thing going nicely under huge
 (many thousands of requests) loads.
 .Pp
 If a nameserver loses too many requests it is considered down and we
-try not to use it. After a while we send a probe to that nameserver
-(a lookup for google.com) and, if it replies, we consider it working
-again. If the nameserver fails a probe we wait longer to try again
+try not to use it.
+After a while we send a probe to that nameserver (a lookup for
+google.com) and, if it replies, we consider it working again.
+If the nameserver fails a probe we wait longer to try again
 with the next probe.
 .Sh SEE ALSO
 .Xr event 3 ,
