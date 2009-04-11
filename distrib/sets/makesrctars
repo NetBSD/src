@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.35 2009/04/03 22:36:35 perry Exp $
+#	$NetBSD: makesrctars,v 1.36 2009/04/11 15:09:32 apb Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -87,7 +87,7 @@ makeset()
 		egrep='.'
 	fi
 	set -f
-	${MTREE} -c -X "${intmp}" | ${MTREE} -C -k type | \
+	${MTREE} -c -X "${intmp}" | ${MTREE} -CS -k type | \
 		${EGREP} -v 'type=link' | ${EGREP} ${egrep} | \
 		${SED} -e 's:type=file:& mode=0664:' \
 			-e 's:type=dir:& mode=0775:' \

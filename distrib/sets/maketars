@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.67 2009/04/03 22:36:35 perry Exp $
+# $NetBSD: maketars,v 1.68 2009/04/11 15:09:32 apb Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -144,14 +144,13 @@ for setname in ${lists}; do
 	if [ -n "${metalog}" ]; then
 		${setfilesonly} && msg "Creating ${setlistdir}/set.${setname}"
 		${AWK} -f "${rundir}/getdirs.awk" "${SDIR}/flist.${setname}" \
-		    | ${SORT} -u > "${SDIR}/flist.${setname}.full"
+		    > "${SDIR}/flist.${setname}.full"
 		(
 			echo "/set uname=root gname=wheel"
 			${AWK} -f "${rundir}/join.awk" \
-				"${SDIR}/flist.${setname}.full" "${metalog}" \
-				    | ${SORT} -u
+				"${SDIR}/flist.${setname}.full" "${metalog}"
 			echo "./etc/mtree/set.${setname} type=file mode=0444"
-		) | ${MTREE} -C -k all -R time -N "${etcdir}" \
+		) | ${MTREE} -CS -k all -R time -N "${etcdir}" \
 		    > "${setlistdir}/set.${setname}"
 		# We deliberately do not add set.${setname} to ${metalog},
 		# because we depend on it as an input.
