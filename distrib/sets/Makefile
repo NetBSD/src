@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2008/11/13 20:40:11 apb Exp $
+#	$NetBSD: Makefile,v 1.66 2009/04/11 15:09:32 apb Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -89,7 +89,7 @@ ${METALOG.sanitised}: ${METALOG}
 	( cat ${NETBSDSRCDIR}/etc/mtree/NetBSD.dist ; \
 		echo '/unset all' ; \
 		cat ${METALOG} ) \
-	| ${TOOL_MTREE} -C -k all -N ${NETBSDSRCDIR}/etc > ${METALOG}.new && \
+	| ${TOOL_MTREE} -CS -k all -N ${NETBSDSRCDIR}/etc > ${METALOG}.new && \
 		( rm -f ${METALOG} ; \
 		mv ${METALOG}.new ${METALOG} )
 	cat ${METALOG} | ${GREP} -v " optional" > ${.TARGET}
