@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.24 2009/04/04 21:49:05 joerg Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.25 2009/04/11 15:47:33 christos Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.24 2009/04/04 21:49:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.25 2009/04/11 15:47:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.24 2009/04/04 21:49:05 joerg Exp $
 #include <sys/poll.h>
 #include <sys/drvctlio.h>
 #include <sys/devmon.h>
+#include <sys/stat.h>
 
 struct drvctl_event {
 	TAILQ_ENTRY(drvctl_event) dce_link;
@@ -75,6 +76,7 @@ static int	drvctl_write(struct file *, off_t *, struct uio *,
 			     kauth_cred_t, int);
 static int	drvctl_ioctl(struct file *, u_long, void *);
 static int	drvctl_poll(struct file *, int);
+static int	drvctl_stat(struct file *, struct stat *);
 static int	drvctl_close(struct file *);
 
 static const struct fileops drvctl_fileops = {
@@ -83,7 +85,7 @@ static const struct fileops drvctl_fileops = {
 	.fo_ioctl = drvctl_ioctl,
 	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = drvctl_poll,
-	.fo_stat = fbadop_stat,
+	.fo_stat = drvctl_stat,
 	.fo_close = drvctl_close,
 	.fo_kqfilter = fnullop_kqfilter,
 	.fo_drain = fnullop_drain,
@@ -367,6 +369,13 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 		return (EPASSTHROUGH);
 	}
 	return (res);
+}
+
+static int
+drvctl_stat(struct file *fp, struct stat *st)
+{
+	(void)memset(st, 0, sizeof(*st));
+	return 0;
 }
 
 static int
