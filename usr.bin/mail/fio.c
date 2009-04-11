@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.32 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.33 2009/04/11 14:22:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.32 2009/04/10 13:08:24 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.33 2009/04/11 14:22:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ setptr(FILE *ibuf, off_t offset)
 		(void)fwrite(linebuf, sizeof(*linebuf), len, otf);
 		if (ferror(otf))
 			err(EXIT_FAILURE, "/tmp");
-		if(len)
+		if (len)
 			linebuf[len - 1] = 0;
 		if (maybe && linebuf[0] == 'F' && ishead(linebuf)) {
 			nmsgCount++;

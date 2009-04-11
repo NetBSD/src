@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2009/04/10 13:08:24 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2009/04/11 14:22:32 christos Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -15,6 +15,7 @@ THREAD_SUPPORT?=yes	# EXPERIMENTAL
 #
 CPPFLAGS+=	-DBROKEN_EXEC_TTY_RESTORE	# broken since 4.99.10
 CPPFLAGS+=	-DBROKEN_CLONE_STAT		# see PRs 37878 and 37550
+CPPFLAGS+=	-DBROKEN_MAGIC			# bad MIME type on short files
 
 # Debugging options (most should go away - please leave for now).
 #
