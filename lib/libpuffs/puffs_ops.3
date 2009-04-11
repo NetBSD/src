@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.24 2009/04/11 15:37:12 joerg Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.25 2009/04/11 16:48:53 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -698,8 +698,8 @@ In case the flag
 .Dv PUFFS_IO_APPEND
 is specified, the data should be appended to the end of the file.
 .It Fn puffs_node_print "pu" "opc"
-Print information about node.  This is used only for kernel-initiated
-diagnostic purposes.
+Print information about node.
+This is used only for kernel-initiated diagnostic purposes.
 .It Fn puffs_node_reclaim "pu" "opc"
 The kernel will no longer reference the cookie and resources associated
 with it may be freed.
