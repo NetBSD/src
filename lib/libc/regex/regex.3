@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.18 2003/12/29 17:36:12 wiz Exp $
+.\"	$NetBSD: regex.3,v 1.19 2009/04/11 15:44:42 joerg Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -514,7 +514,9 @@ An empty string is not a legal RE.
 .Pp
 A `{' followed by a digit is considered the beginning of bounds for a
 bounded repetition, which must then follow the syntax for bounds.
-A `{' \fInot\fR followed by a digit is considered an ordinary character.
+A `{'
+.Em not
+followed by a digit is considered an ordinary character.
 .Pp
 `^' and `$' beginning and ending subexpressions in obsolete (``basic'')
 REs are anchors, not ordinary characters.
