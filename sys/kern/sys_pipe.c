@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.109 2009/04/04 10:12:51 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.110 2009/04/11 14:42:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.109 2009/04/04 10:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.110 2009/04/11 14:42:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ pipe_create(struct pipe **pipep, pool_cache_t cache, kmutex_t *mutex)
 	KASSERT(pipe != NULL);
 	*pipep = pipe;
 	error = 0;
-	getmicrotime(&pipe->pipe_ctime);
+	getnanotime(&pipe->pipe_ctime);
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	pipe->pipe_lock = mutex;
@@ -585,7 +585,7 @@ again:
 	}
 
 	if (error == 0)
-		getmicrotime(&rpipe->pipe_atime);
+		getnanoime(&rpipe->pipe_atime);
 	pipeunlock(rpipe);
 
 unlocked_error:
@@ -1032,7 +1032,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		error = 0;
 
 	if (error == 0)
-		getmicrotime(&wpipe->pipe_mtime);
+		getnanotime(&wpipe->pipe_mtime);
 
 	/*
 	 * We have something to offer, wake up select/poll.
@@ -1186,16 +1186,16 @@ pipe_stat(struct file *fp, struct stat *ub)
 {
 	struct pipe *pipe = fp->f_data;
 
-	memset((void *)ub, 0, sizeof(*ub));
+	memset(ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	if (ub->st_blksize == 0 && pipe->pipe_peer)
 		ub->st_blksize = pipe->pipe_peer->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
+	ub->st_atimespec = pipe->pipe_atime;
+	ub->st_mtimespec = pipe->pipe_mtime;
+	ub->st_ctimespec = ub->st_birthtimespec = pipe->pipe_ctime;
 	ub->st_uid = kauth_cred_geteuid(fp->f_cred);
 	ub->st_gid = kauth_cred_getegid(fp->f_cred);
 
