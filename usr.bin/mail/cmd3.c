@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.40 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.41 2009/04/11 14:22:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.40 2009/04/10 13:08:24 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.41 2009/04/11 14:22:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -477,7 +477,7 @@ forward(void *v)
 		(void)printf("address missing!\n");
 		return 1;
 	}
-	for ( ip = msgvec; *ip; ip++) {
+	for (ip = msgvec; *ip; ip++) {
 		int e;
 		if ((e = forward_one(*ip, hdr.h_to)) != 0)
 			return e;
@@ -578,7 +578,7 @@ bounce(void *v)
 		return 1;
 
 	smargs = unpack(hdr.h_to);
-	for ( ip = msgvec; *ip; ip++) {
+	for (ip = msgvec; *ip; ip++) {
 		int e;
 		if ((e = bounce_one(*ip, smargs, hdr.h_to)) != 0)
 			return e;
