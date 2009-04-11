@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.12 2009/03/13 20:44:59 cube Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.13 2009/04/11 12:41:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -280,7 +280,7 @@ static void
 emitdefs(FILE *fp)
 {
 	struct nvlist *nv;
-	char *sp;
+	const char *sp;
 
 	fprintf(fp, "KERNEL_BUILD=%s\n", conffile);
 	fputs("IDENT=", fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.5 2006/12/27 17:50:27 alc Exp $	*/
+/*	$NetBSD: hash.c,v 1.6 2009/04/11 12:41:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -209,7 +209,7 @@ ht_new(void)
 void
 ht_free(struct hashtab *ht)
 {
-	int i;
+	size_t i;
 	struct hashent *hp;
 	struct hashenthead *hpp;
 
@@ -305,7 +305,7 @@ ht_enumerate(struct hashtab *ht, ht_callback cbfunc, void *arg)
 {
 	struct hashent *hp;
 	struct hashenthead *hpp;
-	u_int i;
+	size_t i;
 	int rval = 0;
 	
 	for (i = 0; i < ht->ht_size; i++) {
