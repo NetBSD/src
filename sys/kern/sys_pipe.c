@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.110 2009/04/11 14:42:28 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.111 2009/04/11 15:46:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.110 2009/04/11 14:42:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.111 2009/04/11 15:46:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,9 +349,8 @@ pipe_create(struct pipe **pipep, pool_cache_t cache, kmutex_t *mutex)
 	KASSERT(pipe != NULL);
 	*pipep = pipe;
 	error = 0;
-	getnanotime(&pipe->pipe_ctime);
-	pipe->pipe_atime = pipe->pipe_ctime;
-	pipe->pipe_mtime = pipe->pipe_ctime;
+	getnanotime(&pipe->pipe_btime);
+	pipe->pipe_atime = pipe->pipe_mtime = pipe->pipe_btime;
 	pipe->pipe_lock = mutex;
 	if (cache == pipe_rd_cache) {
 		error = pipespace(pipe, PIPE_SIZE);
@@ -585,7 +584,7 @@ again:
 	}
 
 	if (error == 0)
-		getnanoime(&rpipe->pipe_atime);
+		getnanotime(&rpipe->pipe_atime);
 	pipeunlock(rpipe);
 
 unlocked_error:
@@ -1195,7 +1194,7 @@ pipe_stat(struct file *fp, struct stat *ub)
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
 	ub->st_atimespec = pipe->pipe_atime;
 	ub->st_mtimespec = pipe->pipe_mtime;
-	ub->st_ctimespec = ub->st_birthtimespec = pipe->pipe_ctime;
+	ub->st_ctimespec = ub->st_birthtimespec = pipe->pipe_btime;
 	ub->st_uid = kauth_cred_geteuid(fp->f_cred);
 	ub->st_gid = kauth_cred_getegid(fp->f_cred);
 
