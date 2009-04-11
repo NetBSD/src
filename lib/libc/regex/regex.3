@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.19 2009/04/11 15:44:42 joerg Exp $
+.\"	$NetBSD: regex.3,v 1.20 2009/04/11 16:58:21 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,7 +105,7 @@ frees any dynamically-allocated storage used by the internal form
 of an RE.
 .Pp
 The header
-.Em \*[Lt]regex.h\*[Gt]
+.Aq Pa regex.h
 declares two structure types,
 .Fa regex_t
 and
@@ -529,7 +529,8 @@ include the following:
 .Pp
 .Bl -tag -width XXXREG_ECOLLATE -compact
 .It Dv REG_NOMATCH
-regexec() failed to match
+.Fn regexec
+failed to match
 .It Dv REG_BADPAT
 invalid regular expression
 .It Dv REG_ECOLLATE
