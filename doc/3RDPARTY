@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.682 2009/04/12 11:13:55 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.683 2009/04/12 17:28:06 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -90,9 +90,9 @@ License:	GPLv2, LGPGv2.1
 Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
-Package:	bind/named
-Version:	libc/includes: 9.5.0, bind: 9.5.0
-Current Vers:	9.5.1-P1/9.6.0-P1
+Package:	bind [named and utils]
+Version:	9.6.1-P1
+Current Vers:	9.6.1-P1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
@@ -100,10 +100,23 @@ Mailing List:
 Responsible:	vixie, christos
 License:	BSD-like (2-clause)
 Notes:
-First bind2netbsd script to import into src/dist/bind.
-The Makefiles in src/usr.sbin/bind are not handled by the script.
+First bind2netbsd script to import into src/external/bsd/bind/dist.
+The Makefiles in src/external/bsd/bind are not handled by the script.
 Build bind to generate the include files.
-Then binclude4netbsd script to import into src/usr.sbin/bind/include.
+Then binclude4netbsd script to import into src/external/bsd/bind/include.
+The libc and include parts of the resolver are now part of libbind.
+
+Package:	libbind [libc resolver and includes]
+Version:	bind-9.5.0
+Current Vers:	libbind-6.0-rc1
+Maintainer:	Paul Vixie <vixie@vix.com>
+Archive Site:	ftp://ftp.isc.org/isc/libbind/
+Home Page:	http://www.isc.org/sw/bind/
+Mailing List:
+Responsible:	vixie, christos
+License:	BSD-like (2-clause)
+Notes:
+First libbind2netbsd script to import into src/external/bsd/libbind/dist.
 Then include4netbsd script to import into src/include.
 Then libc4netbsd script to update the resolver in libc.
 Todo[1]: Update libresolv if needed.
@@ -115,6 +128,7 @@ Todo[2]: A few files in libc/net were imported in the ISC branch but now
 Todo[3]: net/base64.c is imported from bind but should be moved from net
 	 to isc/base64.c.
 Todo[4]: Re-entrant functions of net/*
+Todo[5]: Reconcile the doc directory.
 
 Package:	binutils
 Version:	2.16.1
