@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatastructpre.h,v 1.1.1.1 2009/03/22 15:01:50 christos Exp $	*/
+/*	$NetBSD: rdatastructpre.h,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -41,4 +41,4 @@ typedef struct dns_rdatacommon {
 		(_data)->common.rdtype = (_rdtype); \
 		(_data)->common.rdclass = (_rdclass); \
 		ISC_LINK_INIT(&(_data)->common, link); \
-	} while (0)
+	} while (/*CONSTCOND*/0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.1.1.1 2009/03/22 15:01:27 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -966,6 +966,8 @@ log_edns(fetchctx_t *fctx) {
 	if (fctx->reason == NULL)
 		return;
 
+	if (!isc_log_wouldlog(dns_lctx, ISC_LOG_DEBUG(3)))
+		return;
 	dns_name_format(&fctx->domain, domainbuf, sizeof(domainbuf));
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_EDNS_DISABLED,
 		      DNS_LOGMODULE_RESOLVER, ISC_LOG_INFO,

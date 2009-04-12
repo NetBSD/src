@@ -1,4 +1,4 @@
-/*	$NetBSD: fixedname.h,v 1.1.1.1 2009/03/22 15:01:42 christos Exp $	*/
+/*	$NetBSD: fixedname.h,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -78,7 +78,7 @@ struct dns_fixedname {
 		isc_buffer_init(&((fn)->buffer), (fn)->data, \
                                   DNS_NAME_MAXWIRE); \
 		dns_name_setbuffer(&((fn)->name), &((fn)->buffer)); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define dns_fixedname_invalidate(fn) \
 	dns_name_invalidate(&((fn)->name))

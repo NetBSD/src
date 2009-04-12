@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.1.1.1 2009/03/22 15:02:13 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -194,22 +194,22 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
 	do { \
 		isc__mem_put((c), (p), (s) _ISC_MEM_FILELINE); \
 		(p) = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define isc_mem_putanddetach(c, p, s) \
 	do { \
 		isc__mem_putanddetach((c), (p), (s) _ISC_MEM_FILELINE); \
 		(p) = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define isc_mem_free(c, p) \
 	do { \
 		isc__mem_free((c), (p) _ISC_MEM_FILELINE); \
 		(p) = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define isc_mempool_put(c, p) \
 	do { \
 		isc__mempool_put((c), (p) _ISC_MEM_FILELINE); \
 		(p) = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
 #define isc_mem_put(c, p, s)	isc__mem_put((c), (p), (s) _ISC_MEM_FILELINE)
 #define isc_mem_putanddetach(c, p, s) \

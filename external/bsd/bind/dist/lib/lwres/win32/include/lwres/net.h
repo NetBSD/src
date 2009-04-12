@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.1.1.1 2009/03/22 15:02:48 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.2 2009/04/12 03:46:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -90,7 +90,7 @@
             break; \
         } \
     } \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #undef FD_SET
 #define FD_SET(fd, set) do { \
@@ -106,7 +106,7 @@
             ((fd_set FAR *)(set))->fd_count++; \
         } \
     } \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /*
  * Windows Sockets errors redefined as regular Berkeley error constants.

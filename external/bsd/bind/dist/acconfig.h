@@ -1,4 +1,4 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.1 2009/03/22 14:55:11 christos Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.2 2009/04/12 03:46:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -119,7 +119,7 @@ int sigwait(const unsigned int *set, int *sig);
 		union { const void *konst; long *var; } _u; \
 		_u.konst = &(last); \
 		ap = (va_list)(_u.var + __va_words(__typeof(last))); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif /** SHUTUP_STDARG_CAST && __GNUC__ */
 
 /** define if the system has a random number generating device */

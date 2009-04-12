@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.1.1.1 2009/03/22 15:01:49 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -1721,7 +1721,7 @@ dns_zone_signwithkey(dns_zone_t *zone, dns_secalg_t algorithm,
 isc_result_t
 dns_zone_addnsec3chain(dns_zone_t *zone, dns_rdata_nsec3param_t *nsec3param);
 /*%<
- * Incrementally add a NSEC3 chain that corresponds to 'nsec3param'.
+ * Incrementally add a NSEC3 chain that corresponds to nsec3param.
  */
 
 void

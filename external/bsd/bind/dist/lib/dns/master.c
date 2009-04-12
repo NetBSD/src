@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.1.1.1 2009/03/22 15:01:09 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.2 2009/04/12 03:46:07 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -271,7 +271,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 				SETRESULT(lctx, result); \
 				LOGIT(result); \
 				read_till_eol = ISC_TRUE; \
-				continue; \
+				/* continue; */ \
 			} else if (result != ISC_R_SUCCESS) \
 				goto log_and_cleanup; \
 		} \

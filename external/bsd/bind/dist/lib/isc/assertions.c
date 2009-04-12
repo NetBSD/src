@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.1.1.1 2009/03/22 15:02:00 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -85,6 +85,7 @@ isc_assertion_typetotext(isc_assertiontype_t type) {
  * Private.
  */
 
+/* coverity[+kill] */
 static void
 default_callback(const char *file, int line, isc_assertiontype_t type,
 		 const char *cond)

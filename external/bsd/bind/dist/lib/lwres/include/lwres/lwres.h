@@ -1,4 +1,4 @@
-/*	$NetBSD: lwres.h,v 1.1.1.1 2009/03/22 15:02:40 christos Exp $	*/
+/*	$NetBSD: lwres.h,v 1.2 2009/04/12 03:46:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -215,9 +215,9 @@ typedef struct {
  * resolv.conf data
  */
 
-#define LWRES_CONFMAXNAMESERVERS 3	/*%< max 3 "nameserver" entries */
-#define LWRES_CONFMAXLWSERVERS 1	/*%< max 1 "lwserver" entry */
-#define LWRES_CONFMAXSEARCH 8		/*%< max 8 domains in "search" entry */
+#define LWRES_CONFMAXNAMESERVERS 3	/*%< max 3 nameserver entries */
+#define LWRES_CONFMAXLWSERVERS 1	/*%< max 1 lwserver entry */
+#define LWRES_CONFMAXSEARCH 8		/*%< max 8 domains in search entry */
 #define LWRES_CONFMAXLINELEN 256	/*%< max size of a line */
 #define LWRES_CONFMAXSORTLIST 10	/*%< max 10 */
 
