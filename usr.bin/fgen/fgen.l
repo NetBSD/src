@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.27 2006/04/22 17:51:09 christos Exp $	*/
+/*	$NetBSD: fgen.l,v 1.28 2009/04/12 03:13:09 lukem Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -47,7 +47,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.27 2006/04/22 17:51:09 christos Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.28 2009/04/12 03:13:09 lukem Exp $");
 #endif
 
 %}
@@ -100,7 +100,7 @@ int tokenizer = 0;
 Cell parse_stack[PSTKSIZ];
 int parse_stack_ptr = 0;
 
-void	token_err __P((int, char *, char *, char *, ...))
+void	token_err(int, char *, char *, char *, ...)
 	__attribute__((__format__(__printf__, 4, 5)));
 YY_DECL;
 
@@ -289,22 +289,22 @@ fload		{ token.type = TOK_FLOAD; token.text = yytext;
 %%
 
 /* Function definitions */
-void push __P((Cell));
-Cell pop __P((void));
-int depth __P((void));
-int fadd __P((struct fcode *, struct fcode *));
-struct fcode *flookup __P((struct fcode *, char *));
-int aadd __P((struct macro *, struct macro *));
-struct macro *alookup __P((struct macro *, char *));
-void initdic __P((void));
-void usage __P((char *));
-void tokenize __P((YY_BUFFER_STATE));
-int emit __P((char *));
-int spit __P((long));
-void sspit __P((char *));
-int apply_macros __P((YY_BUFFER_STATE, char *));
-int main __P((int argc, char *argv[]));
-Cell cvt __P((char *, char **, int base));
+void push(Cell);
+Cell pop(void);
+int depth(void);
+int fadd(struct fcode *, struct fcode *);
+struct fcode *flookup(struct fcode *, char *);
+int aadd(struct macro *, struct macro *);
+struct macro *alookup(struct macro *, char *);
+void initdic(void);
+void usage(char *);
+void tokenize(YY_BUFFER_STATE);
+int emit(char *);
+int spit(long);
+void sspit(char *);
+int apply_macros(YY_BUFFER_STATE, char *);
+int main(int argc, char *argv[]);
+Cell cvt(char *, char **, int base);
 
 /*
  * Standard FCode names and numbers.  Includes standard
@@ -733,9 +733,7 @@ struct macro macros[] = {
  */
 #define strtol(x, y, z)		cvt(x, y, z)
 Cell
-cvt(s, e, base)
-char *s, **e; 
-int base;
+cvt(char *s, char **e, int base)
 {
 	Cell v = 0;
 	int c, n = 0;
@@ -771,8 +769,7 @@ int base;
  */
 
 void
-push(val)
-Cell val;
+push(Cell val)
 {
 	parse_stack[parse_stack_ptr++] = val;
 	if (parse_stack_ptr >= PSTKSIZ) {
@@ -782,14 +779,14 @@ Cell val;
 }
 
 Cell
-pop()
+pop(void)
 {
 	ASSERT(parse_stack_ptr);
 	return parse_stack[--parse_stack_ptr];
 }
 
 int
-depth()
+depth(void)
 {
 	return (parse_stack_ptr);
 }
@@ -798,8 +795,7 @@ depth()
  * Insert fcode into dictionary.
  */
 int
-fadd(dict, new)
-struct fcode *dict, *new;
+fadd(struct fcode *dict, struct fcode *new)
 {
 	int res = strcmp(dict->name, new->name);
 
@@ -841,9 +837,7 @@ struct fcode *dict, *new;
  * Look for a code in the dictionary.
  */
 struct fcode *
-flookup(dict, str)
-struct fcode *dict;
-char *str;
+flookup(struct fcode *dict, char *str)
 {
 	int res;
 	if (!dict) return (dict);
@@ -867,8 +861,7 @@ char *str;
  * Insert alias into macros.
  */
 int
-aadd(dict, new)
-	struct macro *dict, *new;
+aadd(struct macro *dict, struct macro *new)
 {
 	int res = strcmp(dict->name, new->name);
 
@@ -910,9 +903,7 @@ aadd(dict, new)
  * Look for a macro in the aliases.
  */
 struct macro *
-alookup(dict, str)
-struct macro *dict;
-char *str;
+alookup(struct macro *dict, char *str)
 {
 	int res;
 	if (!dict) return (dict);
@@ -934,7 +925,7 @@ char *str;
  * all the standard FCodes.
  */
 void
-initdic()
+initdic(void)
 {
 	struct fcode *code = fcodes;
 	struct macro *alias = macros;
@@ -971,9 +962,7 @@ initdic()
 }
 
 int
-apply_macros(input, str) 
-	YY_BUFFER_STATE input;
-	char *str;
+apply_macros(YY_BUFFER_STATE input, char *str)
 {
 	struct macro *xform = alookup(aliases, str);
 	
@@ -990,17 +979,14 @@ apply_macros(input, str)
 }
 
 void
-usage(me)
-	char *me;
+usage(char *me)
 {
 	(void)fprintf(stderr, "%s: [-d level] [-o outfile] infile\n", me);
 	exit(1);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int bflag, ch;
 	FILE *inf;
@@ -1082,8 +1068,7 @@ main(argc, argv)
  */
 
 void
-tokenize(input) 
-	YY_BUFFER_STATE input;
+tokenize(YY_BUFFER_STATE input)
 {
 	FILE *inf;
 	YY_BUFFER_STATE inbuf;
@@ -2010,8 +1995,7 @@ token_err(int lineno, char *infile, char *text, char *fmt, ...)
  * Fcode must be in dictionary.  No alias conversion done.
  */
 int
-emit(str)
-	char *str;
+emit(char *str)
 {
 	struct fcode *code;
 	if ((code = flookup( dictionary, str)))
@@ -2034,8 +2018,7 @@ emit(str)
  * non-zero.
  */
 int
-spit(n)
-	long n;
+spit(long n)
 {
 	int count = 1;
 
@@ -2058,8 +2041,7 @@ spit(n)
  * Spit out an FCode string.
  */
 void
-sspit(s)
-	char *s;
+sspit(char *s)
 {
 	int len = strlen(s);
 
@@ -2077,7 +2059,7 @@ sspit(s)
 }
 
 int 
-yywrap()
+yywrap(void)
 {
 	/* Always generate EOF */
 	return (1);
