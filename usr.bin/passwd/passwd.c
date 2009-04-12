@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.28 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.29 2009/04/12 23:59:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.28 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.29 2009/04/12 23:59:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static const struct pw_module_s {
 	/* default -- use whatever PAM decides */
 	{ NULL, NULL, 0, NULL, pwpam_process },
 
-	{ 0 }
+	{ NULL, NULL, 0, NULL, NULL }
 };
 
 static const struct pw_module_s *personality;
