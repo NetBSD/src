@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.11 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.12 2009/04/12 19:43:37 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_mkquery.c,v 1.10 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.11 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.12 2009/04/12 19:43:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -309,7 +309,7 @@ res_nopt_rdata(res_state statp,
 	ns_put16(len, cp);
 	cp += INT16SZ;
 
-	memcpy(cp, data, len);
+	memcpy(cp, data, (size_t)len);
 	cp += len;
 
 	len = cp - rdata;

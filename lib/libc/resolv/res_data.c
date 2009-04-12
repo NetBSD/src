@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.12 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.13 2009/04/12 19:43:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: res_data.c,v 1.7 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_data.c,v 1.12 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: res_data.c,v 1.13 2009/04/12 19:43:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -327,7 +327,7 @@ u_int
 res_randomid(void) {
 	if ((_nres.options & RES_INIT) == 0U && res_init() == -1) {
 		RES_SET_H_ERRNO(&_res, NETDB_INTERNAL);
-		return (-1);
+		return (u_int)-1;
 	}
 
 	return (res_nrandomid(&_nres));
