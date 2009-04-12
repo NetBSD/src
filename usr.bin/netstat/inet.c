@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.89 2009/02/22 07:43:01 dholland Exp $	*/
+/*	$NetBSD: inet.c,v 1.90 2009/04/12 16:08:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.89 2009/02/22 07:43:01 dholland Exp $");
+__RCSID("$NetBSD: inet.c,v 1.90 2009/04/12 16:08:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,10 +87,6 @@ __RCSID("$NetBSD: inet.c,v 1.89 2009/02/22 07:43:01 dholland Exp $");
 #include <err.h>
 #include "netstat.h"
 
-struct	inpcb inpcb;
-struct	tcpcb tcpcb;
-struct	socket sockb;
-
 char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, u_int16_t, const char *, int);
 
@@ -123,7 +119,7 @@ static void
 protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 	 struct in_addr *laddr, u_int16_t lport,
 	 struct in_addr *faddr, u_int16_t fport,
-	 short t_state, char *name)
+	 short t_state, const char *name, int inp_flags)
 {
 	static const char *shorttcpstates[] = {
 		"CLOSED",	"LISTEN",	"SYNSEN",	"SYSRCV",
@@ -142,7 +138,7 @@ protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 	if (numeric_port) {
 		inetprint(laddr, lport, name, 1);
 		inetprint(faddr, fport, name, 1);
-	} else if (inpcb.inp_flags & INP_ANONPORT) {
+	} else if (inp_flags & INP_ANONPORT) {
 		inetprint(laddr, lport, name, 1);
 		inetprint(faddr, fport, name, 0);
 	} else {
@@ -160,11 +156,13 @@ protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 }
 
 void
-protopr(u_long off, char *name)
+protopr(u_long off, const char *name)
 {
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
+	struct tcpcb tcpcb;
+	struct socket sockb;
 	int istcp;
 	static int first = 1;
 
@@ -228,7 +226,8 @@ protopr(u_long off, char *name)
 				 pcblist[i].ki_rcvq, pcblist[i].ki_sndq,
 				 &src.sin_addr, src.sin_port,
 				 &dst.sin_addr, dst.sin_port,
-				 pcblist[i].ki_tstate, name);
+				 pcblist[i].ki_tstate, name,
+				 pcblist[i].ki_pflags);
 		}
 
 		free(pcblist);
@@ -273,7 +272,7 @@ protopr(u_long off, char *name)
 			 sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc,
 			 &inpcb.inp_laddr, inpcb.inp_lport,
 			 &inpcb.inp_faddr, inpcb.inp_fport,
-			 tcpcb.t_state, name);
+			 tcpcb.t_state, name, inpcb.inp_flags);
 	}
 }
 
@@ -281,7 +280,7 @@ protopr(u_long off, char *name)
  * Dump TCP statistics structure.
  */
 void
-tcp_stats(u_long off, char *name)
+tcp_stats(u_long off, const char *name)
 {
 	uint64_t tcpstat[TCP_NSTATS];
 
@@ -406,7 +405,7 @@ tcp_stats(u_long off, char *name)
  * Dump UDP statistics structure.
  */
 void
-udp_stats(u_long off, char *name)
+udp_stats(u_long off, const char *name)
 {
 	uint64_t udpstat[UDP_NSTATS];
 	u_quad_t delivered;
@@ -460,7 +459,7 @@ udp_stats(u_long off, char *name)
  * Dump IP statistics structure.
  */
 void
-ip_stats(u_long off, char *name)
+ip_stats(u_long off, const char *name)
 {
 	uint64_t ipstat[IP_NSTATS];
 
@@ -544,7 +543,7 @@ static	const char *icmpnames[] = {
  * Dump ICMP statistics.
  */
 void
-icmp_stats(u_long off, char *name)
+icmp_stats(u_long off, const char *name)
 {
 	uint64_t icmpstat[ICMP_NSTATS];
 	int i, first;
@@ -599,7 +598,7 @@ icmp_stats(u_long off, char *name)
  * Dump IGMP statistics structure.
  */
 void
-igmp_stats(u_long off, char *name)
+igmp_stats(u_long off, const char *name)
 {
 	uint64_t igmpstat[IGMP_NSTATS];
 
@@ -637,7 +636,7 @@ igmp_stats(u_long off, char *name)
  * Dump CARP statistics structure.
  */
 void
-carp_stats(u_long off, char *name)
+carp_stats(u_long off, const char *name)
 {
 	uint64_t carpstat[CARP_NSTATS];
 
@@ -689,7 +688,7 @@ carp_stats(u_long off, char *name)
  * Dump PIM statistics structure.
  */
 void
-pim_stats(u_long off, char *name)
+pim_stats(u_long off, const char *name)
 {
 	struct pimstat pimstat;
 
@@ -723,7 +722,7 @@ pim_stats(u_long off, char *name)
  * Dump the ARP statistics structure.
  */
 void
-arp_stats(u_long off, char *name)
+arp_stats(u_long off, const char *name)
 {
 	uint64_t arpstat[ARP_NSTATS];
 
@@ -784,7 +783,7 @@ arp_stats(u_long off, char *name)
  */
 void
 inetprint(struct in_addr *in, uint16_t port, const char *proto,
-	  int numeric_port)
+	  int port_numeric)
 {
 	struct servent *sp = 0;
 	char line[80], *cp;
@@ -793,7 +792,7 @@ inetprint(struct in_addr *in, uint16_t port, const char *proto,
 	(void)snprintf(line, sizeof line, "%.*s.",
 	    (Aflag && !numeric_addr) ? 12 : 16, inetname(in));
 	cp = strchr(line, '\0');
-	if (!numeric_port && port)
+	if (!port_numeric && port)
 		sp = getservbyport((int)port, proto);
 	space = sizeof line - (cp-line);
 	if (sp || port == 0)
