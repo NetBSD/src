@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.31 2008/01/25 19:36:27 christos Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.32 2009/04/12 23:59:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.31 2008/01/25 19:36:27 christos Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.32 2009/04/12 23:59:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ getnewpasswd(struct passwd *pw, int min_pw_len)
 			(void)printf("Password unchanged.\n");
 			pw_error(NULL, 0, 0);
 		}
-		if (min_pw_len > 0 && strlen(p) < min_pw_len) {
+		if (min_pw_len > 0 && (int)strlen(p) < min_pw_len) {
 			(void) printf("Password is too short.\n");
 			continue;
 		}
