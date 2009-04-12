@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.1.1 2009/03/22 15:02:28 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2 2009/04/12 03:46:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -52,6 +52,6 @@ TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 /*
  * This is a placeholder for now since we are not keeping any mutex stats
  */
-#define isc_mutex_stats(fp) do {} while (0)
+#define isc_mutex_stats(fp) do {} while (/*CONSTCOND*/0)
 
 #endif /* ISC_MUTEX_H */

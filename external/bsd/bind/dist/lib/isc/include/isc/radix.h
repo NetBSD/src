@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.1.1.1 2009/03/22 15:02:14 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -237,6 +237,6 @@ do { \
 		Xrn = (isc_radix_node_t *) 0; \
 	    } \
 	} \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 #endif /* _RADIX_H */
