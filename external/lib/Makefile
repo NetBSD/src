@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/01/24 01:15:26 agc Exp $
+#	$NetBSD: Makefile,v 1.7 2009/04/12 17:10:22 christos Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -23,5 +23,6 @@ SUBDIR+= ../../crypto/external/lib
 SUBDIR+= ../bsd/fetch/lib
 SUBDIR+= ../bsd/libarchive/lib
 SUBDIR+= ../bsd/am-utils/lib
+SUBDIR+= ../bsd/bind/lib
 
 .include <bsd.subdir.mk>
