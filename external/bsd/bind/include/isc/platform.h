@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.1 2009/04/12 03:46:09 christos Exp $ */
+/* $Id: platform.h,v 1.2 2009/04/12 22:40:56 christos Exp $ */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -25,6 +25,7 @@
 /*****
  ***** Platform-dependent defines.
  *****/
+#include <sys/atomic.h>
 
 /***
  *** Network.
@@ -250,7 +251,9 @@
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
+#ifdef __HAVE_ATOMIC64_OP
 #define ISC_PLATFORM_HAVEXADDQ 1
+#endif
 
 /*
  * If the "atomic swap" operation is available on this architecture,
