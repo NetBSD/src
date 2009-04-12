@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.114 2009/04/12 07:07:41 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.115 2009/04/12 10:18:52 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.114 2009/04/12 07:07:41 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.115 2009/04/12 10:18:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ __RCSID("$NetBSD: main.c,v 1.114 2009/04/12 07:07:41 lukem Exp $");
 #define	NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
-static void	setupoption(char *, char *, char *);
+static void	setupoption(const char *, const char *, const char *);
 int		main(int, char *[]);
 
 int
@@ -137,7 +137,8 @@ main(int volatile argc, char **volatile argv)
 {
 	int ch, rval;
 	struct passwd *pw;
-	char *cp, *ep, *anonuser, *anonpass, *upload_path, *src_addr;
+	char *cp, *ep, *anonpass, *upload_path, *src_addr;
+	const char *anonuser;
 	int dumbterm, s, isupload;
 	size_t len;
 	socklen_t slen;
@@ -391,10 +392,12 @@ main(int volatile argc, char **volatile argv)
 		{
 			int targc;
 			char *targv[6], *oac;
+			char cmdbuf[MAX_C_NAME];
 
 				/* look for `dir,max[,incr]' */
 			targc = 0;
-			targv[targc++] = "-T";
+			(void)strlcpy(cmdbuf, "-T", sizeof(cmdbuf));
+			targv[targc++] = cmdbuf;
 			oac = ftp_strdup(optarg);
 
 			while ((cp = strsep(&oac, ",")) != NULL) {
@@ -544,6 +547,7 @@ main(int volatile argc, char **volatile argv)
 				goto sigint_or_rval_exit;
 		} else {
 			char *xargv[4], *uuser, *host;
+			char cmdbuf[MAXPATHLEN];
 
 			if ((rval = sigsetjmp(toplevel, 1)))
 				goto sigint_or_rval_exit;
@@ -557,8 +561,8 @@ main(int volatile argc, char **volatile argv)
 				uuser = host;
 				host = cp + 1;
 			}
-			/* XXX discards const */
-			xargv[0] = (char *)getprogname();
+			(void)strlcpy(cmdbuf, getprogname(), sizeof(cmdbuf));
+			xargv[0] = cmdbuf;
 			xargv[1] = host;
 			xargv[2] = argv[1];
 			xargv[3] = NULL;
@@ -570,7 +574,7 @@ main(int volatile argc, char **volatile argv)
 					anonftp = 0;
 					autologin = 0;
 				}
-				setpeer(argc+1, xargv);
+				setpeer(3, xargv);
 				autologin = oautologin;
 				if (connected == 1 && uuser != NULL)
 					(void)ftp_login(host, uuser, NULL);
@@ -656,6 +660,7 @@ cmdscanner(void)
 	size_t		 num;
 #endif
 	int		 len;
+	char		 cmdbuf[MAX_C_NAME];
 
 	for (;;) {
 #ifndef NO_EDITCOMPLETE
@@ -742,7 +747,8 @@ cmdscanner(void)
 			continue;
 		}
 		confirmrest = 0;
-		margv[0] = c->c_name;
+		(void)strlcpy(cmdbuf, c->c_name, sizeof(cmdbuf));
+		margv[0] = cmdbuf;
 		(*c->c_handler)(margc, margv);
 		if (bell && c->c_bell)
 			(void)putc('\007', ttyout);
@@ -836,6 +842,8 @@ makeargv(void)
 char *
 slurpstring(void)
 {
+	static char bangstr[2] = { '!', '\0' };
+	static char dollarstr[2] = { '$', '\0' };
 	int got_one = 0;
 	char *sb = stringbase;
 	char *ap = argbase;
@@ -846,7 +854,7 @@ slurpstring(void)
 			case 0:
 				slrflag++;
 				INC_CHKCURSOR(stringbase);
-				return ((*sb == '!') ? "!" : "$");
+				return ((*sb == '!') ? bangstr : dollarstr);
 				/* NOTREACHED */
 			case 1:
 				slrflag++;
@@ -969,7 +977,8 @@ void
 help(int argc, char *argv[])
 {
 	struct cmd *c;
-	char *nargv[1], *p, *cmd;
+	char *nargv[1], *cmd;
+	const char *p;
 	int isusage;
 
 	cmd = argv[0];
@@ -987,9 +996,9 @@ help(int argc, char *argv[])
 		    proxy ? "Proxy c" : "C");
 		for (c = cmdtab; (p = c->c_name) != NULL; c++)
 			if (!proxy || c->c_proxy)
-				ftp_sl_add(buf, p);
+				ftp_sl_add(buf, ftp_strdup(p));
 		list_vertical(buf);
-		sl_free(buf, 0);
+		sl_free(buf, 1);
 		return;
 	}
 
@@ -997,6 +1006,7 @@ help(int argc, char *argv[])
 
 	while (--argc > 0) {
 		char *arg;
+		char cmdbuf[MAX_C_NAME];
 
 		arg = *++argv;
 		c = getcmd(arg);
@@ -1008,7 +1018,8 @@ help(int argc, char *argv[])
 			    cmd, arg);
 		else {
 			if (isusage) {
-				nargv[0] = c->c_name;
+				(void)strlcpy(cmdbuf, c->c_name, sizeof(cmdbuf));
+				nargv[0] = cmdbuf;
 				(*c->c_handler)(0, nargv);
 			} else
 				fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
@@ -1047,18 +1058,9 @@ getoptionvalue(const char *name)
 }
 
 static void
-setupoption(char *name, char *value, char *defaultvalue)
+setupoption(const char *name, const char *value, const char *defaultvalue)
 {
-	char *nargv[3];
-	int overbose;
-
-	nargv[0] = "setupoption()";
-	nargv[1] = name;
-	nargv[2] = (value ? value : defaultvalue);
-	overbose = verbose;
-	verbose = 0;
-	setoption(3, nargv);
-	verbose = overbose;
+	set_option(name, value ? value : defaultvalue, 0);
 }
 
 void
