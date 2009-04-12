@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.156 2008/05/10 00:05:31 skd Exp $	*/
+/*	$NetBSD: ftp.c,v 1.157 2009/04/12 07:07:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.156 2008/05/10 00:05:31 skd Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.157 2009/04/12 07:07:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ int
 getreply(int expecteof)
 {
 	char current_line[BUFSIZ];	/* last line of previous reply */
-	int c, n, line;
+	int c, n, lineno;
 	int dig;
 	int originalcode = 0, continuation = 0;
 	sigfunc oldsigint, oldsigalrm;
@@ -375,7 +375,7 @@ getreply(int expecteof)
 	oldsigint = xsignal(SIGINT, cmdabort);
 	oldsigalrm = xsignal(SIGALRM, cmdtimeout);
 
-	for (line = 0 ;; line++) {
+	for (lineno = 0 ;; lineno++) {
 		dig = n = code = 0;
 		cp = current_line;
 		while (alarmtimer(quit_time ? quit_time : 60),
@@ -480,10 +480,10 @@ getreply(int expecteof)
 		if (cp[-1] == '\r')
 			cp[-1] = '\0';
 		*cp = '\0';
-		if (line == 0)
+		if (lineno == 0)
 			(void)strlcpy(reply_string, current_line,
 			    sizeof(reply_string));
-		if (line > 0 && code == 0 && reply_callback != NULL)
+		if (lineno > 0 && code == 0 && reply_callback != NULL)
 			(*reply_callback)(current_line);
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)
@@ -507,14 +507,14 @@ getreply(int expecteof)
 }
 
 static int
-empty(FILE *cin, FILE *din, int sec)
+empty(FILE *ecin, FILE *din, int sec)
 {
 	int		nr, nfd;
 	struct pollfd	pfd[2];
 
 	nfd = 0;
-	if (cin) {
-		pfd[nfd].fd = fileno(cin);
+	if (ecin) {
+		pfd[nfd].fd = fileno(ecin);
 		pfd[nfd++].events = POLLIN;
 	}
 
@@ -528,7 +528,7 @@ empty(FILE *cin, FILE *din, int sec)
 
 	nr = 0;
 	nfd = 0;
-	if (cin)
+	if (ecin)
 		nr |= (pfd[nfd++].revents & POLLIN) ? 1 : 0;
 	if (din)
 		nr |= (pfd[nfd++].revents & POLLIN) ? 2 : 0;
@@ -1530,7 +1530,6 @@ initconn(void)
 
 	if (sendport) {
 		char hname[NI_MAXHOST], sname[NI_MAXSERV];
-		int af;
 		struct sockinet tmp;
 
 		switch (data_addr.su_family) {
@@ -1561,7 +1560,7 @@ initconn(void)
 				overbose = verbose;
 				if (ftp_debug == 0)
 					verbose = -1;
-				result = command("EPRT |%d|%s|%s|", af, hname,
+				result = command("EPRT |%u|%s|%s|", af, hname,
 				    sname);
 				verbose = overbose;
 				if (verbose > 0 &&
