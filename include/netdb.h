@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.1.1.6 2007/03/30 19:48:20 ghen Exp $	*/
+/*	$NetBSD: netdb.h,v 1.1.1.7 2009/04/12 16:06:26 christos Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -88,7 +88,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.15.18.6 2006/10/02 01:23:09 marka Exp
+ *	Id: netdb.h,v 1.22 2008/02/28 05:34:17 marka Exp
  */
 
 #ifndef _NETDB_H_
@@ -124,7 +124,7 @@
 #define __h_errno __h_errno_location
 #endif
 __BEGIN_DECLS
-extern int * __h_errno __P((void));
+extern int * __h_errno(void);
 __END_DECLS
 #if defined(_REENTRANT) || \
     (__GLIBC__ > 2 || __GLIBC__ == 2 &&  __GLIBC_MINOR__ >= 3)
@@ -379,188 +379,188 @@ struct	servent_data {
 #endif
 #endif
 __BEGIN_DECLS
-void		endhostent __P((void));
-void		endnetent __P((void));
-void		endprotoent __P((void));
-void		endservent __P((void));
-void		freehostent __P((struct hostent *));
-struct hostent	*gethostbyaddr __P((const char *, int, int));
-struct hostent	*gethostbyname __P((const char *));
-struct hostent	*gethostbyname2 __P((const char *, int));
-struct hostent	*gethostent __P((void));
-struct hostent	*getipnodebyaddr __P((const void *, size_t, int, int *));
-struct hostent	*getipnodebyname __P((const char *, int, int, int *));
-struct netent	*getnetbyaddr __P((unsigned long, int));
-struct netent	*getnetbyname __P((const char *));
-struct netent	*getnetent __P((void));
-struct protoent	*getprotobyname __P((const char *));
-struct protoent	*getprotobynumber __P((int));
-struct protoent	*getprotoent __P((void));
-struct servent	*getservbyname __P((const char *, const char *));
-struct servent	*getservbyport __P((int, const char *));
-struct servent	*getservent __P((void));
-void		herror __P((const char *));
-const char	*hstrerror __P((int));
-void		sethostent __P((int));
-/* void		sethostfile __P((const char *)); */
-void		setnetent __P((int));
-void		setprotoent __P((int));
-void		setservent __P((int));
-int		getaddrinfo __P((const char *, const char *,
-				 const struct addrinfo *, struct addrinfo **));
-int		getnameinfo __P((const struct sockaddr *, size_t, char *,
-				 size_t, char *, size_t, int));
-void		freeaddrinfo __P((struct addrinfo *));
-const char	*gai_strerror __P((int));
-struct hostent  *getipnodebyname __P((const char *, int, int, int *));
-struct hostent	*getipnodebyaddr __P((const void *, size_t, int, int *));
-void		freehostent __P((struct hostent *));
+void		endhostent(void);
+void		endnetent(void);
+void		endprotoent(void);
+void		endservent(void);
+void		freehostent(struct hostent *);
+struct hostent	*gethostbyaddr(const char *, int, int);
+struct hostent	*gethostbyname(const char *);
+struct hostent	*gethostbyname2(const char *, int);
+struct hostent	*gethostent(void);
+struct hostent	*getipnodebyaddr(const void *, size_t, int, int *);
+struct hostent	*getipnodebyname(const char *, int, int, int *);
+struct netent	*getnetbyaddr(unsigned long, int);
+struct netent	*getnetbyname(const char *);
+struct netent	*getnetent(void);
+struct protoent	*getprotobyname(const char *);
+struct protoent	*getprotobynumber(int);
+struct protoent	*getprotoent(void);
+struct servent	*getservbyname(const char *, const char *);
+struct servent	*getservbyport(int, const char *);
+struct servent	*getservent(void);
+void		herror(const char *);
+const char	*hstrerror(int);
+void		sethostent(int);
+/* void		sethostfile(const char *); */
+void		setnetent(int);
+void		setprotoent(int);
+void		setservent(int);
+int		getaddrinfo(const char *, const char *,
+				 const struct addrinfo *, struct addrinfo **);
+int		getnameinfo(const struct sockaddr *, size_t, char *,
+				 size_t, char *, size_t, int);
+void		freeaddrinfo(struct addrinfo *);
+const char	*gai_strerror(int);
+struct hostent  *getipnodebyname(const char *, int, int, int *);
+struct hostent	*getipnodebyaddr(const void *, size_t, int, int *);
+void		freehostent(struct hostent *);
 #ifdef __GLIBC__
-int		getnetgrent __P((/* const */ char **, /* const */ char **,
-				 /* const */ char **));
-void		setnetgrent __P((const char *));
-void		endnetgrent __P((void));
-int		innetgr __P((const char *, const char *, const char *,
-			     const char *));
+int		getnetgrent(/* const */ char **, /* const */ char **,
+				 /* const */ char **);
+void		setnetgrent(const char *);
+void		endnetgrent(void);
+int		innetgr(const char *, const char *, const char *,
+			     const char *);
 #endif
 
 #ifdef _REENTRANT
 #if defined(__hpux) || defined(__osf__) || defined(_AIX)
-int		gethostbyaddr_r __P((const char *, int, int, struct hostent *,
-					struct hostent_data *));
-int		gethostbyname_r __P((const char *, struct hostent *, 
-					struct hostent_data *));
-int		gethostent_r __P((struct hostent *, struct hostent_data *));
+int		gethostbyaddr_r(const char *, int, int, struct hostent *,
+					struct hostent_data *);
+int		gethostbyname_r(const char *, struct hostent *, 
+					struct hostent_data *);
+int		gethostent_r(struct hostent *, struct hostent_data *);
 #if defined(_AIX)
-void		sethostent_r __P((int, struct hostent_data *));
+void		sethostent_r(int, struct hostent_data *);
 #else
-int		sethostent_r __P((int, struct hostent_data *));
+int		sethostent_r(int, struct hostent_data *);
 #endif 
 #if defined(__hpux)
-int		endhostent_r __P((struct hostent_data *));
+int		endhostent_r(struct hostent_data *);
 #else
-void		endhostent_r __P((struct hostent_data *));
+void		endhostent_r(struct hostent_data *);
 #endif
 
 #if defined(__hpux) || defined(__osf__)
-int		getnetbyaddr_r __P((int, int,
-				struct netent *, struct netent_data *));
+int		getnetbyaddr_r(int, int,
+				struct netent *, struct netent_data *);
 #else
-int		getnetbyaddr_r __P((long, int,
-				struct netent *, struct netent_data *));
+int		getnetbyaddr_r(long, int,
+				struct netent *, struct netent_data *);
 #endif
-int		getnetbyname_r __P((const char *,
-				struct netent *, struct netent_data *));
-int		getnetent_r __P((struct netent *, struct netent_data *));
-int		setnetent_r __P((int, struct netent_data *));
+int		getnetbyname_r(const char *,
+				struct netent *, struct netent_data *);
+int		getnetent_r(struct netent *, struct netent_data *);
+int		setnetent_r(int, struct netent_data *);
 #ifdef __hpux
-int		endnetent_r __P((struct netent_data *buffer));
+int		endnetent_r(struct netent_data *buffer);
 #else
-void		endnetent_r __P((struct netent_data *buffer));
-#endif
-
-int		getprotobyname_r __P((const char *,
-				struct protoent *, struct protoent_data *));
-int		getprotobynumber_r __P((int,
-				struct protoent *, struct protoent_data *));
-int		getprotoent_r __P((struct protoent *, struct protoent_data *));
-int		setprotoent_r __P((int, struct protoent_data *));
-#ifdef __hpux
-int		endprotoent_r __P((struct protoent_data *));
-#else
-void		endprotoent_r __P((struct protoent_data *));
+void		endnetent_r(struct netent_data *buffer);
 #endif
 
-int		getservbyname_r __P((const char *, const char *,
-				struct servent *, struct servent_data *));
-int		getservbyport_r __P((int, const char *,
-				struct servent *, struct servent_data *));
-int		getservent_r __P((struct servent *, struct servent_data *));
-int		setservent_r __P((int, struct servent_data *));
+int		getprotobyname_r(const char *,
+				struct protoent *, struct protoent_data *);
+int		getprotobynumber_r(int,
+				struct protoent *, struct protoent_data *);
+int		getprotoent_r(struct protoent *, struct protoent_data *);
+int		setprotoent_r(int, struct protoent_data *);
 #ifdef __hpux
-int		endservent_r __P((struct servent_data *));
+int		endprotoent_r(struct protoent_data *);
 #else
-void		endservent_r __P((struct servent_data *));
+void		endprotoent_r(struct protoent_data *);
+#endif
+
+int		getservbyname_r(const char *, const char *,
+				struct servent *, struct servent_data *);
+int		getservbyport_r(int, const char *,
+				struct servent *, struct servent_data *);
+int		getservent_r(struct servent *, struct servent_data *);
+int		setservent_r(int, struct servent_data *);
+#ifdef __hpux
+int		endservent_r(struct servent_data *);
+#else
+void		endservent_r(struct servent_data *);
 #endif
 #ifdef _AIX
-int		setnetgrent_r __P((const char *, void **));
-void		endnetgrent_r __P((void **));
+int		setnetgrent_r(char *, void **);
+void		endnetgrent_r(void **);
 /*
  * Note: AIX's netdb.h declares innetgr_r() as: 
  *	int innetgr_r(char *, char *, char *, char *, struct innetgr_data *);
  */
-int		innetgr_r __P((const char *, const char *, const char *,
-			       const char *));
+int		innetgr_r(const char *, const char *, const char *,
+			       const char *);
 #endif
 #else
  /* defined(sun) || defined(bsdi) */
 #if defined(__GLIBC__) || defined(__FreeBSD__) && (__FreeBSD_version + 0 >= 601103)
-int gethostbyaddr_r __P((const char *, int, int, struct hostent *,
-		         char *, size_t, struct hostent **, int *));
-int gethostbyname_r __P((const char *, struct hostent *,
-		        char *, size_t, struct hostent **, int *));
-int gethostent_r __P((struct hostent *, char *, size_t,
-			 struct hostent **, int *));
+int gethostbyaddr_r(const char *, int, int, struct hostent *,
+		         char *, size_t, struct hostent **, int *);
+int gethostbyname_r(const char *, struct hostent *,
+		        char *, size_t, struct hostent **, int *);
+int gethostent_r(struct hostent *, char *, size_t,
+			 struct hostent **, int *);
 #else
-struct hostent	*gethostbyaddr_r __P((const char *, int, int, struct hostent *,
-					char *, int, int *));
-struct hostent	*gethostbyname_r __P((const char *, struct hostent *,
-					char *, int, int *));
-struct hostent	*gethostent_r __P((struct hostent *, char *, int, int *));
+struct hostent	*gethostbyaddr_r(const char *, int, int, struct hostent *,
+					char *, int, int *);
+struct hostent	*gethostbyname_r(const char *, struct hostent *,
+					char *, int, int *);
+struct hostent	*gethostent_r(struct hostent *, char *, int, int *);
 #endif
-void		sethostent_r __P((int));
-void		endhostent_r __P((void));
+void		sethostent_r(int);
+void		endhostent_r(void);
 
 #if defined(__GLIBC__) || defined(__FreeBSD__) && (__FreeBSD_version + 0 >= 601103)
-int getnetbyname_r __P((const char *, struct netent *,
-			char *, size_t, struct netent **, int*));
-int getnetbyaddr_r __P((unsigned long int, int, struct netent *,
-			char *, size_t, struct netent **, int*));
-int getnetent_r __P((struct netent *, char *, size_t, struct netent **, int*));
+int getnetbyname_r(const char *, struct netent *,
+			char *, size_t, struct netent **, int*);
+int getnetbyaddr_r(unsigned long int, int, struct netent *,
+			char *, size_t, struct netent **, int*);
+int getnetent_r(struct netent *, char *, size_t, struct netent **, int*);
 #else
-struct netent	*getnetbyname_r __P((const char *, struct netent *,
-					char *, int));
-struct netent	*getnetbyaddr_r __P((long, int, struct netent *,
-					char *, int));
-struct netent	*getnetent_r __P((struct netent *, char *, int));
+struct netent	*getnetbyname_r(const char *, struct netent *,
+					char *, int);
+struct netent	*getnetbyaddr_r(long, int, struct netent *,
+					char *, int);
+struct netent	*getnetent_r(struct netent *, char *, int);
 #endif
-void		setnetent_r __P((int));
-void		endnetent_r __P((void));
+void		setnetent_r(int);
+void		endnetent_r(void);
 
 #if defined(__GLIBC__) || defined(__FreeBSD__) && (__FreeBSD_version + 0 >= 601103)
-int getprotobyname_r __P((const char *, struct protoent *, char *,
-			  size_t, struct protoent **));
-int getprotobynumber_r __P((int, struct protoent *, char *, size_t,
-			    struct protoent **));
-int getprotoent_r __P((struct protoent *, char *, size_t, struct protoent **));
+int getprotobyname_r(const char *, struct protoent *, char *,
+			  size_t, struct protoent **);
+int getprotobynumber_r(int, struct protoent *, char *, size_t,
+			    struct protoent **);
+int getprotoent_r(struct protoent *, char *, size_t, struct protoent **);
 #else
-struct protoent	*getprotobyname_r __P((const char *,
-				struct protoent *, char *, int));
-struct protoent	*getprotobynumber_r __P((int,
-				struct protoent *, char *, int));
-struct protoent	*getprotoent_r __P((struct protoent *, char *, int));
+struct protoent	*getprotobyname_r(const char *,
+				struct protoent *, char *, int);
+struct protoent	*getprotobynumber_r(int,
+				struct protoent *, char *, int);
+struct protoent	*getprotoent_r(struct protoent *, char *, int);
 #endif
-void		setprotoent_r __P((int));
-void		endprotoent_r __P((void));
+void		setprotoent_r(int);
+void		endprotoent_r(void);
 
 #if defined(__GLIBC__) || defined(__FreeBSD__) && (__FreeBSD_version + 0 >= 601103)
-int getservbyname_r __P((const char *name, const char *,
-			 struct servent *, char *, size_t, struct servent **));
-int getservbyport_r __P((int port, const char *,
-			 struct servent *, char *, size_t, struct servent **));
-int getservent_r __P((struct servent *, char *, size_t, struct servent **));
+int getservbyname_r(const char *name, const char *,
+			 struct servent *, char *, size_t, struct servent **);
+int getservbyport_r(int port, const char *,
+			 struct servent *, char *, size_t, struct servent **);
+int getservent_r(struct servent *, char *, size_t, struct servent **);
 #else
-struct servent	*getservbyname_r __P((const char *name, const char *,
-					struct servent *, char *, int));
-struct servent	*getservbyport_r __P((int port, const char *,
-					struct servent *, char *, int));
-struct servent	*getservent_r __P((struct servent *, char *, int));
+struct servent	*getservbyname_r(const char *name, const char *,
+					struct servent *, char *, int);
+struct servent	*getservbyport_r(int port, const char *,
+					struct servent *, char *, int);
+struct servent	*getservent_r(struct servent *, char *, int);
 #endif
-void		setservent_r __P((int));
-void		endservent_r __P((void));
+void		setservent_r(int);
+void		endservent_r(void);
 
 #ifdef __GLIBC__
-int		getnetgrent_r __P((char **, char **, char **, char *, size_t));
+int		getnetgrent_r(char **, char **, char **, char *, size_t);
 #endif
 
 #endif
@@ -581,4 +581,3 @@ struct rpcent	*getrpcbyname(), *getrpcbynumber(), *getrpcent();
 #endif /* __GNU_LIBRARY__ */
 #endif /* sun */
 #endif /* !_NETDB_H_ */
-/*! \file */
