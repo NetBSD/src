@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.16 2009/01/11 02:46:29 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.17 2009/04/12 17:07:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -74,9 +74,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
-static const char rcsid[] = "Id: res_init.c,v 1.23 2007/07/09 01:43:23 marka Exp";
+static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.16 2009/01/11 02:46:29 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.17 2009/04/12 17:07:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,6 +98,20 @@ __RCSID("$NetBSD: res_init.c,v 1.16 2009/01/11 02:46:29 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+
+#define HAVE_MD5
+#include <md5.h>
+
+#ifndef HAVE_MD5
+# include "../dst/md5.h"
+#else
+# ifdef SOLARIS2
+#  include <sys/md5.h>
+# endif
+#endif
+#ifndef _MD5_H_
+# define _MD5_H_ 1	/*%< make sure we do not include rsaref md5.h file */
+#endif
 
 #include "port_after.h"
 
@@ -190,16 +204,18 @@ __res_vinit(res_state statp, int preinit) {
 #endif
 	int dots;
 	union res_sockaddr_union u[2];
-
 	int maxns = MAXNS;
 
 	RES_SET_H_ERRNO(statp, 0);
+	if (statp->_u._ext.ext != NULL)
+		res_ndestroy(statp);
 
 	if (!preinit) {
 		statp->retrans = RES_TIMEOUT;
 		statp->retry = RES_DFLRETRY;
 		statp->options = RES_DEFAULT;
-		statp->id = res_randomid();
+		res_rndinit(statp);
+		statp->id = res_nrandomid(statp);
 	}
 
 	if ((statp->options & RES_INIT) != 0U)
@@ -523,7 +539,6 @@ __res_vinit(res_state statp, int preinit) {
 	if ((cp = getenv("RES_OPTIONS")) != NULL)
 		res_setoptions(statp, cp, "env");
 	statp->options |= RES_INIT;
-
 	return (statp->res_h_errno);
 }
 
@@ -672,13 +687,44 @@ net_mask(in)		/*!< XXX - should really use system's version of this  */
 }
 #endif
 
-u_int
-res_randomid(void) {
+void
+res_rndinit(res_state statp)
+{
 	struct timeval now;
+	u_int32_t u32;
+	u_int16_t u16;
 
 	gettimeofday(&now, NULL);
-	return (0xffff &
-	    ((u_int)now.tv_sec ^ (u_int)now.tv_usec ^ (u_int)getpid()));
+	u32 = now.tv_sec;
+	memcpy(statp->_rnd, &u32, 4);
+	u32 = now.tv_usec;
+	memcpy(statp->_rnd + 4, &u32, 4);
+	u32 += now.tv_sec;
+	memcpy(statp->_rnd + 8, &u32, 4);
+	u16 = getpid();
+	memcpy(statp->_rnd + 12, &u16, 2);
+}
+
+u_int
+res_nrandomid(res_state statp) {
+	struct timeval now;
+	u_int16_t u16;
+	MD5_CTX ctx;
+
+	gettimeofday(&now, NULL);
+	u16 = (u_int16_t) (now.tv_sec ^ now.tv_usec);
+	memcpy(statp->_rnd + 14, &u16, 2);
+#ifndef HAVE_MD5
+	MD5_Init(&ctx);
+	MD5_Update(&ctx, statp->_rnd, 16);
+	MD5_Final(statp->_rnd, &ctx);
+#else
+	MD5Init(&ctx);
+	MD5Update(&ctx, statp->_rnd, 16);
+	MD5Final(statp->_rnd, &ctx);
+#endif
+	memcpy(&u16, statp->_rnd + 14, 2);
+	return ((u_int) u16);
 }
 
 /*%
