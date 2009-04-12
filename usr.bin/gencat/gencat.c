@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.27 2009/02/18 20:04:43 christos Exp $	*/
+/*	$NetBSD: gencat.c,v 1.28 2009/04/12 10:25:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.27 2009/02/18 20:04:43 christos Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.28 2009/04/12 10:25:35 lukem Exp $");
 #endif
 
 /***********************************************************
@@ -345,7 +345,7 @@ static char *
 getmsg(int fd, char *cptr, char quote)
 {
 	static char *msg = NULL;
-	static long msglen = 0;
+	static size_t msglen = 0;
 	size_t    clen, i;
 	char   *tptr;
 
@@ -541,13 +541,14 @@ MCReadCat(int fd)
 	struct _nls_set_hdr *set_hdr;
 	struct _nls_msg_hdr *msg_hdr;
 	char   *strings;
-	int	m, n, s;
+	ssize_t	n;
+	int	m, s;
 	int	msgno, setno;
 
 	/* XXX init sethead? */
 
 	n = read(fd, &cat_hdr, sizeof(cat_hdr));
-	if (n < sizeof(cat_hdr)) {
+	if (n < (ssize_t)sizeof(cat_hdr)) {
 		if (n == 0)
 			return;		/* empty file */
 		else if (n == -1)
@@ -566,7 +567,7 @@ MCReadCat(int fd)
 	if ((cat_hdr.__mem < 0) ||
 	    (cat_hdr.__msg_hdr_offset < 0) ||
 	    (cat_hdr.__msg_txt_offset < 0) ||
-	    (cat_hdr.__mem < (cat_hdr.__nsets * sizeof(struct _nls_set_hdr))) ||
+	    (cat_hdr.__mem < (int32_t)(cat_hdr.__nsets * sizeof(struct _nls_set_hdr))) ||
 	    (cat_hdr.__mem < cat_hdr.__msg_hdr_offset) ||
 	    (cat_hdr.__mem < cat_hdr.__msg_txt_offset))
 		errx(1, "%s: catalog header", CORRUPT);
@@ -710,7 +711,7 @@ MCWriteCat(int fd)
 		nmsgs = 0;
 		for (msg = set->msghead.lh_first; msg != NULL;
 		    msg = msg->entries.le_next) {
-			int     msg_len = strlen(msg->str) + 1;
+			int32_t     msg_len = strlen(msg->str) + 1;
 
 			msg_hdr->__msgno = htonl(msg->msgId);
 			msg_hdr->__msglen = htonl(msg_len);
