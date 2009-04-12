@@ -17,7 +17,7 @@
 
 # Id: named-bootconf.sh,v 1.12 2007/06/19 23:47:07 tbox Exp
 
-# $NetBSD: named-bootconf.sh,v 1.1.1.1 2009/03/22 14:57:55 christos Exp $
+# $NetBSD: named-bootconf.sh,v 1.2 2009/04/12 03:46:07 christos Exp $
 #
 # Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,13 +33,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by the NetBSD
-#	Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 # ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

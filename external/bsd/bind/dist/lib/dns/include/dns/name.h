@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.1.1.1 2009/03/22 15:01:45 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -1245,7 +1245,7 @@ do { \
 	(n)->buffer = NULL; \
 	ISC_LINK_INIT((n), link); \
 	ISC_LIST_INIT((n)->list); \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define DNS_NAME_RESET(n) \
 do { \
@@ -1255,7 +1255,7 @@ do { \
 	(n)->attributes &= ~DNS_NAMEATTR_ABSOLUTE; \
 	if ((n)->buffer != NULL) \
 		isc_buffer_clear((n)->buffer); \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define DNS_NAME_SETBUFFER(n, b) \
 	(n)->buffer = (b)
@@ -1270,7 +1270,7 @@ do { \
 do { \
 	(r)->base = (n)->ndata; \
 	(r)->length = (n)->length; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define DNS_NAME_SPLIT(n, l, p, s) \
 do { \
@@ -1282,7 +1282,7 @@ do { \
 		dns_name_getlabelsequence(_n, 0, _n->labels - _l, _p); \
 	if (_s != NULL) \
 		dns_name_getlabelsequence(_n, _n->labels - _l, _l, _s); \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #ifdef DNS_NAME_USEINLINE
 
