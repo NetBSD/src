@@ -1,9 +1,26 @@
-/*	$NetBSD: res_debug.c,v 1.1.1.4 2007/03/30 20:16:21 ghen Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.1.1.5 2009/04/12 16:35:47 christos Exp $	*/
+
+/*
+ * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1996-2003  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
 
 /*
  * Copyright (c) 1985
  *    The Regents of the University of California.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +36,7 @@
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,14 +52,14 @@
 
 /*
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
- * 
+ *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies, and that
  * the name of Digital Equipment Corporation not be used in advertising or
  * publicity pertaining to distribution of the document or software without
  * specific, written prior permission.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
  * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
@@ -78,26 +95,9 @@
  * IF IBM IS APPRISED OF THE POSSIBILITY OF SUCH DAMAGES.
  */
 
-/*
- * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
- * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 1.10.18.5 2005/07/28 07:38:11 marka Exp";
+static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -191,10 +191,56 @@ do_section(const res_state statp,
 				p_type(ns_rr_type(rr)),
 				p_class(ns_rr_class(rr)));
 		else if (section == ns_s_ar && ns_rr_type(rr) == ns_t_opt) {
+			u_int16_t optcode, optlen, rdatalen = ns_rr_rdlen(rr);
 			u_int32_t ttl = ns_rr_ttl(rr);
+
 			fprintf(file,
 				"; EDNS: version: %u, udp=%u, flags=%04x\n",
 				(ttl>>16)&0xff, ns_rr_class(rr), ttl&0xffff);
+
+			while (rdatalen >= 4) {
+				const u_char *cp = ns_rr_rdata(rr);
+				int i;
+
+				GETSHORT(optcode, cp);
+				GETSHORT(optlen, cp);
+
+				if (optcode == NS_OPT_NSID) {
+					fputs("; NSID: ", file);
+					if (optlen == 0) {
+						fputs("; NSID\n", file);
+					} else {
+						fputs("; NSID: ", file);
+						for (i = 0; i < optlen; i++)
+							fprintf(file, "%02x ",
+								cp[i]);
+						fputs(" (",file);
+						for (i = 0; i < optlen; i++)
+							fprintf(file, "%c",
+								isprint(cp[i])?
+								cp[i] : '.');
+						fputs(")\n", file);
+					}
+				} else {
+					if (optlen == 0) {
+						fprintf(file, "; OPT=%u\n",
+							optcode);
+					} else {
+						fprintf(file, "; OPT=%u: ",
+							optcode);
+						for (i = 0; i < optlen; i++)
+							fprintf(file, "%02x ",
+								cp[i]);
+						fputs(" (",file);
+						for (i = 0; i < optlen; i++)
+							fprintf(file, "%c",
+								isprint(cp[i]) ?
+									cp[i] : '.');
+						fputs(")\n", file);
+					}
+				}
+				rdatalen -= 4 + optlen;
+			}
 		} else {
 			n = ns_sprintrr(handle, &rr, NULL, NULL,
 					buf, buflen);
@@ -206,7 +252,7 @@ do_section(const res_state statp,
 						buf = malloc(buflen += 1024);
 					if (buf == NULL) {
 						fprintf(file,
-				              ";; memory allocation failure\n");
+					      ";; memory allocation failure\n");
 					      return;
 					}
 					continue;
@@ -285,7 +331,7 @@ res_pquery(const res_state statp, const u_char *msg, int len, FILE *file) {
 		fprintf(file, ", %s: %d",
 			p_section(ns_s_ar, opcode), arcount);
 	}
-	if ((!statp->pfcode) || (statp->pfcode & 
+	if ((!statp->pfcode) || (statp->pfcode &
 		(RES_PRF_HEADX | RES_PRF_HEAD2 | RES_PRF_HEAD1))) {
 		putc('\n',file);
 	}
@@ -383,7 +429,7 @@ const struct res_sym __p_default_section_syms[] = {
 	{ns_s_an,	"ANSWER",	(char *)0},
 	{ns_s_ns,	"AUTHORITY",	(char *)0},
 	{ns_s_ar,	"ADDITIONAL",	(char *)0},
-	{0,             (char *)0,	(char *)0}
+	{0,		(char *)0,	(char *)0}
 };
 
 const struct res_sym __p_update_section_syms[] = {
@@ -391,7 +437,7 @@ const struct res_sym __p_update_section_syms[] = {
 	{S_PREREQ,	"PREREQUISITE",	(char *)0},
 	{S_UPDATE,	"UPDATE",	(char *)0},
 	{S_ADDT,	"ADDITIONAL",	(char *)0},
-	{0,             (char *)0,	(char *)0}
+	{0,		(char *)0,	(char *)0}
 };
 
 const struct res_sym __p_key_syms[] = {
@@ -452,6 +498,24 @@ const struct res_sym __p_type_syms[] = {
 	{ns_t_nimloc,	"NIMLOC",	"NIMROD locator (unimplemented)"},
 	{ns_t_srv,	"SRV",		"server selection"},
 	{ns_t_atma,	"ATMA",		"ATM address (unimplemented)"},
+	{ns_t_naptr,	"NAPTR",	"naptr"},
+	{ns_t_kx,	"KX",		"key exchange"},
+	{ns_t_cert,	"CERT",		"certificate"},
+	{ns_t_a6,	"A",		"IPv6 address (experminental)"},
+	{ns_t_dname,	"DNAME",	"non-terminal redirection"},
+	{ns_t_opt,	"OPT",		"opt"},
+	{ns_t_apl,	"apl",		"apl"},
+	{ns_t_ds,	"DS",		"delegation signer"},
+	{ns_t_sshfp,	"SSFP",		"SSH fingerprint"},
+	{ns_t_ipseckey,	"IPSECKEY",	"IPSEC key"},
+	{ns_t_rrsig,	"RRSIG",	"rrsig"},
+	{ns_t_nsec,	"NSEC",		"nsec"},
+	{ns_t_dnskey,	"DNSKEY",	"DNS key"},
+	{ns_t_dhcid,	"DHCID",       "dynamic host configuration identifier"},
+	{ns_t_nsec3,	"NSEC3",	"nsec3"},
+	{ns_t_nsec3param, "NSEC3PARAM", "NSEC3 parameters"},
+	{ns_t_hip,	"HIP",		"host identity protocol"},
+	{ns_t_spf,	"SPF",		"sender policy framework"},
 	{ns_t_tkey,	"TKEY",		"tkey"},
 	{ns_t_tsig,	"TSIG",		"transaction signature"},
 	{ns_t_ixfr,	"IXFR",		"incremental zone transfer"},
@@ -467,6 +531,7 @@ const struct res_sym __p_type_syms[] = {
 	{ns_t_sink,	"SINK",		"Kitchen Sink (experimental)"},
 	{ns_t_opt,	"OPT",		"EDNS Options"},
 	{ns_t_any,	"ANY",		"\"any\""},
+	{ns_t_dlv,	"DLV",		"DNSSEC look-aside validation"},
 	{0, 		NULL,		NULL}
 };
 
@@ -619,6 +684,7 @@ p_option(u_long option) {
 	case RES_USE_INET6:	return "inet6";
 #ifdef RES_USE_EDNS0	/*%< KAME extension */
 	case RES_USE_EDNS0:	return "edns0";
+	case RES_NSID:		return "nsid";
 #endif
 #ifdef RES_USE_DNAME
 	case RES_USE_DNAME:	return "dname";
@@ -893,7 +959,7 @@ loc_aton(ascii, binary)
 		altsign = -1;
 		cp++;
 	}
-    
+
 	if (*cp == '+')
 		cp++;
 
@@ -922,7 +988,7 @@ loc_aton(ascii, binary)
 		goto defaults;
 
 	siz = precsize_aton(&cp);
-	
+
 	while (!isspace((unsigned char)*cp) && (cp < maxcp))	/*%< if trailing garbage or m */
 		cp++;
 
@@ -955,7 +1021,7 @@ loc_aton(ascii, binary)
 	PUTLONG(latit,bcp);
 	PUTLONG(longit,bcp);
 	PUTLONG(alt,bcp);
-    
+
 	return (16);		/*%< size of RR in octets */
 }
 
@@ -981,7 +1047,7 @@ loc_ntoa(binary, ascii)
 	int32_t latval, longval, altval;
 	u_int32_t templ;
 	u_int8_t sizeval, hpval, vpval, versionval;
-    
+
 	char *sizestr, *hpstr, *vpstr;
 
 	versionval = *cp++;
@@ -1095,7 +1161,7 @@ dn_count_labels(const char *name) {
 }
 
 /*%
- * Make dates expressed in seconds-since-Jan-1-1970 easy to read.  
+ * Make dates expressed in seconds-since-Jan-1-1970 easy to read.
  * SIG records are required to be printed like this, by the Secure DNS RFC.
  */
 char *
@@ -1105,7 +1171,7 @@ p_secstodate (u_long secs) {
 	struct tm *time;
 #ifdef HAVE_TIME_R
 	struct tm res;
-	
+
 	time = gmtime_r(&clock, &res);
 #else
 	time = gmtime(&clock);

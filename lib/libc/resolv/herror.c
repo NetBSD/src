@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.1.1.3 2007/03/30 20:16:21 ghen Exp $	*/
+/*	$NetBSD: herror.c,v 1.1.1.4 2009/04/12 16:35:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -52,7 +52,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: herror.c,v 1.3.18.1 2005/04/27 05:01:09 sra Exp";
+static const char rcsid[] = "Id: herror.c,v 1.4 2005/04/27 04:56:41 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_pton.c,v 1.1.1.3 2007/03/30 20:16:19 ghen Exp $	*/
+/*	$NetBSD: inet_cidr_pton.c,v 1.1.1.4 2009/04/12 16:35:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.5.18.1 2005/04/27 05:00:53 sra Exp";
+static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.6 2005/04/27 04:56:19 sra Exp";
 #endif
 
 #include "port_before.h"

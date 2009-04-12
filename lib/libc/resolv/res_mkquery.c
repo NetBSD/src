@@ -1,9 +1,26 @@
-/*	$NetBSD: res_mkquery.c,v 1.1.1.3 2007/03/30 20:16:22 ghen Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.1.1.4 2009/04/12 16:35:48 christos Exp $	*/
+
+/*
+ * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1996, 1997, 1988, 1999, 2001, 2003  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
 
 /*
  * Copyright (c) 1985, 1993
  *    The Regents of the University of California.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +36,7 @@
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,14 +52,14 @@
 
 /*
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
- * 
+ *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies, and that
  * the name of Digital Equipment Corporation not be used in advertising or
  * publicity pertaining to distribution of the document or software without
  * specific, written prior permission.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
  * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
@@ -53,26 +70,9 @@
  * SOFTWARE.
  */
 
-/*
- * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
- * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_mkquery.c,v 1.5.18.1 2005/04/27 05:01:11 sra Exp";
+static const char rcsid[] = "Id: res_mkquery.c,v 1.10 2008/12/11 09:59:00 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -125,7 +125,8 @@ res_nmkquery(res_state statp,
 		return (-1);
 	memset(buf, 0, HFIXEDSZ);
 	hp = (HEADER *) buf;
-	hp->id = htons(++statp->id);
+	statp->id = res_nrandomid(statp);
+	hp->id = htons(statp->id);
 	hp->opcode = op;
 	hp->rd = (statp->options & RES_RECURSE) != 0U;
 	hp->rcode = NOERROR;
@@ -205,9 +206,6 @@ res_nmkquery(res_state statp,
 
 #ifdef RES_USE_EDNS0
 /* attach OPT pseudo-RR, as documented in RFC2671 (EDNS0). */
-#ifndef T_OPT
-#define T_OPT	41
-#endif
 
 int
 res_nopt(res_state statp,
@@ -232,13 +230,14 @@ res_nopt(res_state statp,
 	if ((ep - cp) < 1 + RRFIXEDSZ)
 		return (-1);
 
-	*cp++ = 0;	/*%< "." */
-	ns_put16(T_OPT, cp);	/*%< TYPE */
+	*cp++ = 0;				/*%< "." */
+	ns_put16(ns_t_opt, cp);			/*%< TYPE */
 	cp += INT16SZ;
-	ns_put16(anslen & 0xffff, cp);	/*%< CLASS = UDP payload size */
+	ns_put16(anslen & 0xffff, cp);		/*%< CLASS = UDP payload size */
 	cp += INT16SZ;
-	*cp++ = NOERROR;	/*%< extended RCODE */
-	*cp++ = 0;		/*%< EDNS version */
+	*cp++ = NOERROR;			/*%< extended RCODE */
+	*cp++ = 0;				/*%< EDNS version */
+
 	if (statp->options & RES_USE_DNSSEC) {
 #ifdef DEBUG
 		if (statp->options & RES_DEBUG)
@@ -248,9 +247,57 @@ res_nopt(res_state statp,
 	}
 	ns_put16(flags, cp);
 	cp += INT16SZ;
-	ns_put16(0, cp);	/*%< RDLEN */
+
+	ns_put16(0U, cp);			/*%< RDLEN */
 	cp += INT16SZ;
+
 	hp->arcount = htons(ntohs(hp->arcount) + 1);
+
+	return (cp - buf);
+}
+
+/*
+ * Construct variable data (RDATA) block for OPT psuedo-RR, append it
+ * to the buffer, then update the RDLEN field (previously set to zero by
+ * res_nopt()) with the new RDATA length.
+ */
+int
+res_nopt_rdata(res_state statp,
+	  int n0,	 	/*%< current offset in buffer */
+	  u_char *buf,	 	/*%< buffer to put query */
+	  int buflen,		/*%< size of buffer */
+	  u_char *rdata,	/*%< ptr to start of opt rdata */
+	  u_short code,		/*%< OPTION-CODE */
+	  u_short len,		/*%< OPTION-LENGTH */
+	  u_char *data)		/*%< OPTION_DATA */
+{
+	register u_char *cp, *ep;
+
+#ifdef DEBUG
+	if ((statp->options & RES_DEBUG) != 0U)
+		printf(";; res_nopt_rdata()\n");
+#endif
+
+	cp = buf + n0;
+	ep = buf + buflen;
+
+	if ((ep - cp) < (4 + len))
+		return (-1);
+
+	if (rdata < (buf + 2) || rdata >= ep)
+		return (-1);
+
+	ns_put16(code, cp);
+	cp += INT16SZ;
+
+	ns_put16(len, cp);
+	cp += INT16SZ;
+
+	memcpy(cp, data, len);
+	cp += len;
+
+	len = cp - rdata;
+	ns_put16(len, rdata - 2);	/* Update RDLEN field */
 
 	return (cp - buf);
 }

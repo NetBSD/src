@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.1.1.3 2007/03/30 20:16:21 ghen Exp $	*/
+/*	$NetBSD: res_data.c,v 1.1.1.4 2009/04/12 16:35:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: res_data.c,v 1.3.18.1 2005/04/27 05:01:10 sra Exp";
+static const char rcsid[] = "Id: res_data.c,v 1.7 2008/12/11 09:59:00 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -42,7 +42,6 @@ static const char rcsid[] = "Id: res_data.c,v 1.3.18.1 2005/04/27 05:01:10 sra E
 #include <unistd.h>
 
 #include "port_after.h"
-#undef _res
 
 const char *_res_opcodes[] = {
 	"QUERY",
@@ -72,12 +71,17 @@ const char *_res_sectioncodes[] = {
 };
 #endif
 
+#undef _res
 #ifndef __BIND_NOSTATIC
 struct __res_state _res
 # if defined(__BIND_RES_TEXT)
 	= { RES_TIMEOUT, }	/*%< Motorola, et al. */
 # endif
         ;
+
+#if defined(DO_PTHREADS) || defined(__linux)
+#define _res (*__res_state())
+#endif
 
 /* Proto. */
 
@@ -118,7 +122,7 @@ res_init(void) {
 	 * has set it to something in particular, we can randomize it now.
 	 */
 	if (!_res.id)
-		_res.id = res_randomid();
+		_res.id = res_nrandomid(&_res);
 
 	return (__res_vinit(&_res, 1));
 }
@@ -264,6 +268,16 @@ res_querydomain(const char *name,
 	return (res_nquerydomain(&_res, name, domain,
 				 class, type,
 				 answer, anslen));
+}
+
+u_int
+res_randomid(void) {
+	if ((_res.options & RES_INIT) == 0U && res_init() == -1) {
+		RES_SET_H_ERRNO(&_res, NETDB_INTERNAL);
+		return (-1);
+	}
+
+	return (res_nrandomid(&_res));
 }
 
 const char *
