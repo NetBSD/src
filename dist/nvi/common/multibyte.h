@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.2 2009/01/02 00:32:11 tnozaki Exp $ */
+/*	$NetBSD: multibyte.h,v 1.3 2009/04/12 14:47:51 tnozaki Exp $ */
 
 #ifndef MULTIBYTE_H
 #define MULTIBYTE_H
@@ -10,10 +10,8 @@
 typedef wchar_t		RCHAR_T;
 typedef wchar_t		CHAR_T;
 #if defined(__NetBSD__)
-#define RCHAR_T_MAX	0xffffffff
 #define MAX_CHAR_T	0xffffffff
 #else
-#define RCHAR_T_MAX	WCHAR_MAX
 #define MAX_CHAR_T	WCHAR_MAX
 #endif
 typedef u_int		UCHAR_T;
@@ -31,7 +29,6 @@ typedef u_int		UCHAR_T;
 
 #else
 typedef	char		RCHAR_T;
-#define RCHAR_T_MAX	CHAR_MAX
 typedef	u_char		CHAR_T;
 #define	MAX_CHAR_T	0xff
 typedef	u_char		UCHAR_T;
