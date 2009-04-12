@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.5 2008/06/21 20:41:48 christos Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.6 2009/04/12 17:07:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: nsap_addr.c,v 1.5 2005/07/28 06:51:48 marka Exp";
 #else
-__RCSID("$NetBSD: nsap_addr.c,v 1.5 2008/06/21 20:41:48 christos Exp $");
+__RCSID("$NetBSD: nsap_addr.c,v 1.6 2009/04/12 17:07:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
