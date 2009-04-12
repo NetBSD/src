@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.1 2009/04/12 03:46:06 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.2 2009/04/12 15:05:59 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,11 +42,8 @@
 #	$ run make
 #	- use the binclude4netbsd to create and import the new headers in
 #	  /usr/src/usr.sbin/bind/include
-#	- use the include4netbsd to create and import the new headers in
-#	  /usr/src/include
 #	- check makefiles to see if any extra sources have been added.
 #	- update distrib/sets if necessary.
-#	- to update the libc resolver code use libc4netbsd
 
 if [ $# -ne 2 ]; then echo "bind2netbsd src dest"; exit 1; fi
 
