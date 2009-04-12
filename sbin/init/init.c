@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.97 2009/01/18 00:25:13 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.98 2009/04/12 09:31:32 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.97 2009/01/18 00:25:13 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.98 2009/04/12 09:31:32 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1678,11 +1678,12 @@ mfs_dev(void)
 	default:
 		if (waitpid(pid, &status, 0) == -1)
 			break;
-		if (status != 0) {
-			errno = EINVAL;
-			break;
-		}
-		/* Check /dev/console got created */
+		if (status != 0)
+			warn("MAKEDEV exit status %d\n", status);
+		/*
+		 * If /dev/console got created, then return 0
+		 * regardless of MAKEDEV exit status.
+		 */
 		if (access(_PATH_CONSOLE, F_OK) == 0)
 			return 0;
 		_exit(11);
