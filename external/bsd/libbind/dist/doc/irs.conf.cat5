@@ -1,0 +1,120 @@
+IRS.CONF(5)                 BSD File Formats Manual                IRS.CONF(5)
+
+NNAAMMEE
+     iirrss..ccoonnff - Information Retrieval System configuration file
+
+SSYYNNOOPPSSIISS
+     iirrss..ccoonnff
+
+DDEESSCCRRIIPPTTIIOONN
+     The irs(3) functions are a set of routines in the C library which provide
+     access to various system maps.  The maps that irs currently controls are
+     the following: passwd, group, services, protocols, hosts, networks and
+     netgroup.  When a program first calls a function that accesses one of
+     these maps, the irs configuration file is read, and the source of each
+     map is determined for the life of the process.
+
+     If this file does not exist, the irs routines default to using local
+     sources for all information, with the exception of the host and networks
+     maps, which use the Domain Name System (DNS).
+
+     Each record in the file consists of one line.  A record consists of a
+     map-name, an access-method and possibly a (comma delimited) set of
+     options, separated by tabs or spaces.  Blank lines, and text between a #
+     and a newline are ignored.
+
+     Available maps:
+
+           Map name        Information in map
+           =========       ==================================
+           passwd          User authentication information
+           group           User group membership information
+           services        Network services directory
+           protocols       Network protocols directory
+           hosts           Network hosts directory
+           networks        Network "network names" directory
+           netgroup        Network "host groups" directory
+
+     Available access methods:
+
+           Access method   Description
+           =============   =================================================
+           local           Use a local file, usually in /etc
+           dns             Use the domain name service (includes hesiod)
+           nis             Use the Sun-compatible Network Information Service
+           irp             Use the IRP daemon on the localhost.
+
+     Available options:
+
+           Option          Description
+           ========        ================================================
+           continue        don’t stop searching if you can’t find something
+           merge           don’t stop searching if you CAN find something
+
+     The continue option creates “union namespaces” whereby subsequent access
+     methods of the same map type can be tried if a name cannot be found using
+     earlier access methods.  This can be quite confusing in the case of host
+     names, since the name to address and address to name mappings can be vis‐
+     ibly asymmetric even though the data used by any given access method is
+     entirely consistent.  This behavior is, therefore, not the default.
+
+     The merge option only affects lookups in the groups map.  If set, subse‐
+     quent access methods will be tried in order to cause local users to
+     appear in NIS (or other remote) groups in addition to the local groups.
+
+EEXXAAMMPPLLEE
+           # Get password entries from local file, or failing that, NIS
+           passwd          local   continue
+           passwd          nis
+
+           # Build group membership from both local file, and NIS.
+           group           local   continue,merge
+           group           nis
+
+           # Services comes from just the local file.
+           services        local
+
+           protocols       local
+
+           # Hosts comes first from DNS, failing that, the local file
+           hosts           dns     continue
+           hosts           local
+
+           # Networks comes first from the local file, and failing
+           # that the, irp daemon
+           networks        local   continue
+           networks        irp
+
+           netgroup        local
+
+NNOOTTEESS
+     If a local user needs to be in the local host’s “wheel” group but not in
+     every host’s “wheel” group, put them in the local host’s _/_e_t_c_/_g_r_o_u_p
+     “wheel” entry and set up the “groups” portion of your _/_e_t_c_/_i_r_s_._c_o_n_f file
+     as:
+
+           group   local   continue,merge
+           group   nis
+
+     NIS takes a long time to time out.  Especially for hosts if you use the
+     --dd option to your server’s “ypserv” daemon.
+
+     It is important that the _i_r_s_._c_o_n_f file contain an entry for each map.  If
+     a map is not mentioned in the _i_r_s_._c_o_n_f file, all queries to that map will
+     fail.
+
+     The classic NIS mechanism for specifying union namespaces is to add an
+     entry to a local map file whose name is ‘‘+’’.  In IRS, this is done via
+     ‘‘continue’’ and/or ‘‘merge’’ map options.  While this results in a small
+     incompatibility when local map files are imported from non-IRS systems to
+     IRS systems, there are compensating advantages in security and configura‐
+     bility.
+
+FFIILLEESS
+     /etc/irs.conf      The file iirrss..ccoonnff resides in _/_e_t_c.
+
+SSEEEE AALLSSOO
+     groups(5), hosts(5), netgroup(5), networks(5), passwd(5), protocols(5),
+     services(5)
+
+BIND 8.1                       November 16, 1997                      BIND 8.1
