@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 2009/02/26 17:30:51 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 2009/04/12 06:36:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.3 2009/02/26 17:30:51 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.4 2009/04/12 06:36:12 lukem Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -149,7 +149,7 @@ pmisc(struct file *f, const char *name)
 			warnx("Could not find %d symbols", n);
 	}
 	for (i = 0; i < NL_MAX; i++)
-		if ((intptr_t)f->f_ops == nl[i].n_value)
+		if ((uintptr_t)f->f_ops == nl[i].n_value)
 			break;
 	switch (i) {
 	case NL_BPF:
