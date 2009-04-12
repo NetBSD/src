@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2008/10/25 22:27:35 apb Exp $
+# $NetBSD: Makefile,v 1.25 2009/04/12 17:56:35 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
 
@@ -26,7 +26,7 @@ NORMALFILES=	mandoc.tmac andoc.tmac an-old.tmac \
 		ps.tmac psold.tmac pspic.tmac psatk.tmac \
 		dvi.tmac \
 		tty.tmac tty-char.tmac \
-		latin1.tmac latin2.tmac latin9.tmac cp1047.tmac \
+		latin1.tmac latin2.tmac latin9.tmac cp1047.tmac ascii.tmac \
 		unicode.tmac \
 		X.tmac Xps.tmac \
 		lj4.tmac \
