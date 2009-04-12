@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.17 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.18 2009/04/12 19:43:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.17 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.18 2009/04/12 19:43:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -695,11 +695,11 @@ res_rndinit(res_state statp)
 	u_int16_t u16;
 
 	gettimeofday(&now, NULL);
-	u32 = now.tv_sec;
+	u32 = (u_int32_t)now.tv_sec;
 	memcpy(statp->_rnd, &u32, 4);
 	u32 = now.tv_usec;
 	memcpy(statp->_rnd + 4, &u32, 4);
-	u32 += now.tv_sec;
+	u32 += (u_int32_t)now.tv_sec;
 	memcpy(statp->_rnd + 8, &u32, 4);
 	u16 = getpid();
 	memcpy(statp->_rnd + 12, &u16, 2);
