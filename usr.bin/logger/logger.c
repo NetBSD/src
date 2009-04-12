@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.13 2008/11/13 15:51:07 christos Exp $	*/
+/*	$NetBSD: logger.c,v 1.14 2009/04/12 13:53:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: logger.c,v 1.13 2008/11/13 15:51:07 christos Exp $");
+__RCSID("$NetBSD: logger.c,v 1.14 2009/04/12 13:53:48 lukem Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 	/* log input line if appropriate */
 	if (argc > 0) {
 		char *p, *endp;
-		int len;
+		size_t len;
 
 		for (p = buf, endp = buf + sizeof(buf) - 2; *argv != NULL;) {
 			len = strlen(*argv);
