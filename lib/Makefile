@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133 2009/01/26 06:27:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.134 2009/04/12 17:09:46 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -86,12 +86,6 @@ SUBDIR+=	libkrb5		# depends on libcrypto and more
 
 SUBDIR+=	librefuse	# depends on libpuffs
 SUBDIR+=	librumpuser	# depends on libpthread
-
-# XXX These bind9/ISC libraries should depend on each other but the
-# XXX dependency ordering requires considerable investigation.
-# XXX Please preserve the order below so we know the order ISC links
-# XXX them in in their Makefiles.
-SUBDIR+= libbind9 libdns liblwres libisccfg libisccc libisc # dep. libpthread
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
