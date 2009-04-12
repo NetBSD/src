@@ -1,4 +1,4 @@
-/*	$NetBSD: res_update.h,v 1.1.1.3 2007/03/30 19:48:20 ghen Exp $	*/
+/*	$NetBSD: res_update.h,v 1.1.1.4 2009/04/12 16:06:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,13 +18,12 @@
  */
 
 /*
- *	Id: res_update.h,v 1.2.18.1 2005/04/27 05:00:49 sra Exp
+ *	Id: res_update.h,v 1.3 2005/04/27 04:56:15 sra Exp
  */
 
 #ifndef __RES_UPDATE_H
 #define __RES_UPDATE_H
 
-/*! \file */
 
 #include <sys/types.h>
 #include <arpa/nameser.h>
@@ -40,7 +39,7 @@ struct ns_updrec {
 	char *		r_dname;	/*%< owner of the RR */
 	ns_class	r_class;	/*%< class number */
 	ns_type		r_type;		/*%< type number */
-	u_int32_t	r_ttl;		/*%< time to live */
+	uint32_t	r_ttl;		/*%< time to live */
 	u_char *	r_data;		/*%< rdata fields as text string */
 	u_int		r_size;		/*%< size of r_data field */
 	int		r_opcode;	/*%< type of operation */
@@ -59,13 +58,12 @@ typedef	LIST(ns_updrec)	ns_updque;
 #define res_nmkupdate		__res_nmkupdate
 #define res_nupdate		__res_nupdate
 
-int		res_mkupdate __P((ns_updrec *, u_char *, int));
-int		res_update __P((ns_updrec *));
-ns_updrec *	res_mkupdrec __P((int, const char *, u_int, u_int, u_long));
-void		res_freeupdrec __P((ns_updrec *));
-int		res_nmkupdate __P((res_state, ns_updrec *, u_char *, int));
-int		res_nupdate __P((res_state, ns_updrec *, ns_tsig_key *));
+int		res_mkupdate(ns_updrec *, u_char *, int);
+int		res_update(ns_updrec *);
+ns_updrec *	res_mkupdrec(int, const char *, u_int, u_int, u_long);
+void		res_freeupdrec(ns_updrec *);
+int		res_nmkupdate(res_state, ns_updrec *, u_char *, int);
+int		res_nupdate(res_state, ns_updrec *, ns_tsig_key *);
 
 #endif /*__RES_UPDATE_H*/
 
-/*! \file */

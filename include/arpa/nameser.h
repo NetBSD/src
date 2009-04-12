@@ -1,9 +1,26 @@
-/*	$NetBSD: nameser.h,v 1.1.1.6 2007/03/30 19:48:21 ghen Exp $	*/
+/*	$NetBSD: nameser.h,v 1.1.1.7 2009/04/12 16:06:27 christos Exp $	*/
+
+/*
+ * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1996-2003  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
 
 /*
  * Copyright (c) 1983, 1989, 1993
  *    The Regents of the University of California.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +36,7 @@
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -34,30 +51,12 @@
  */
 
 /*
- * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 1996-1999 by Internet Software Consortium.
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
- * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- *	Id: nameser.h,v 1.7.18.1 2005/04/27 05:00:50 sra Exp
+ *	Id: nameser.h,v 1.16 2009/03/03 01:52:48 each Exp
  */
 
 #ifndef _ARPA_NAMESER_H_
 #define _ARPA_NAMESER_H_
 
-/*! \file */
 
 #define BIND_4_COMPAT
 
@@ -77,20 +76,23 @@
  * contains a new enough lib/nameser/ to support the feature you need.
  */
 
-#define __NAMESER	19991006	/*%< New interface version stamp. */
+#define __NAMESER	20090302	/*%< New interface version stamp. */
 /*
  * Define constants based on RFC0883, RFC1034, RFC 1035
  */
 #define NS_PACKETSZ	512	/*%< default UDP packet size */
-#define NS_MAXDNAME	1025	/*%< maximum domain name */
+#define NS_MAXDNAME	1025	/*%< maximum domain name (presentation format)*/
 #define NS_MAXMSG	65535	/*%< maximum message size */
 #define NS_MAXCDNAME	255	/*%< maximum compressed domain name */
 #define NS_MAXLABEL	63	/*%< maximum length of domain label */
+#define NS_MAXLABELS	128	/*%< theoretical max #/labels per domain name */
+#define NS_MAXNNAME	256	/*%< maximum uncompressed (binary) domain name*/
+#define	NS_MAXPADDR	(sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
 #define NS_HFIXEDSZ	12	/*%< #/bytes of fixed data in header */
 #define NS_QFIXEDSZ	4	/*%< #/bytes of fixed data in query */
 #define NS_RRFIXEDSZ	10	/*%< #/bytes of fixed data in r record */
-#define NS_INT32SZ	4	/*%< #/bytes of data in a u_int32_t */
-#define NS_INT16SZ	2	/*%< #/bytes of data in a u_int16_t */
+#define NS_INT32SZ	4	/*%< #/bytes of data in a uint32_t */
+#define NS_INT16SZ	2	/*%< #/bytes of data in a uint16_t */
 #define NS_INT8SZ	1	/*%< #/bytes of data in a u_int8_t */
 #define NS_INADDRSZ	4	/*%< IPv4 T_A */
 #define NS_IN6ADDRSZ	16	/*%< IPv6 T_AAAA */
@@ -112,18 +114,41 @@ typedef enum __ns_sect {
 } ns_sect;
 
 /*%
+ * Network name (compressed or not) type.  Equivilent to a pointer when used
+ * in a function prototype.  Can be const'd.
+ */
+typedef u_char ns_nname[NS_MAXNNAME];
+typedef const u_char *ns_nname_ct;
+typedef u_char *ns_nname_t;
+
+struct ns_namemap { ns_nname_ct base; int len; };
+typedef struct ns_namemap *ns_namemap_t;
+typedef const struct ns_namemap *ns_namemap_ct;
+
+/*%
  * This is a message handle.  It is caller allocated and has no dynamic data.
  * This structure is intended to be opaque to all but ns_parse.c, thus the
  * leading _'s on the member names.  Use the accessor functions, not the _'s.
  */
 typedef struct __ns_msg {
 	const u_char	*_msg, *_eom;
-	u_int16_t	_id, _flags, _counts[ns_s_max];
+	uint16_t	_id, _flags, _counts[ns_s_max];
 	const u_char	*_sections[ns_s_max];
 	ns_sect		_sect;
 	int		_rrnum;
 	const u_char	*_msg_ptr;
 } ns_msg;
+
+/*
+ * This is a newmsg handle, used when constructing new messages with
+ * ns_newmsg_init, et al.
+ */
+struct ns_newmsg {
+	ns_msg		msg;
+	const u_char	*dnptrs[25];
+	const u_char	**lastdnptr;
+};
+typedef struct ns_newmsg ns_newmsg;
 
 /* Private data structure - do not use from outside library. */
 struct _ns_flagdata {  int mask, shift;  };
@@ -142,15 +167,30 @@ extern struct _ns_flagdata _ns_flagdata[];
  */
 typedef	struct __ns_rr {
 	char		name[NS_MAXDNAME];
-	u_int16_t	type;
-	u_int16_t	rr_class;
-	u_int32_t	ttl;
-	u_int16_t	rdlength;
+	uint16_t	type;
+	uint16_t	rr_class;
+	uint32_t	ttl;
+	uint16_t	rdlength;
 	const u_char *	rdata;
 } ns_rr;
 
+/*
+ * Same thing, but using uncompressed network binary names, and real C types.
+ */
+typedef	struct __ns_rr2 {
+	ns_nname	nname;
+	size_t		nnamel;
+	int		type;
+	int		rr_class;
+	u_int		ttl;
+	int		rdlength;
+	const u_char *	rdata;
+} ns_rr2;
+
 /* Accessor macros - this is part of the public interface. */
 #define ns_rr_name(rr)	(((rr).name[0] != '\0') ? (rr).name : ".")
+#define ns_rr_nname(rr)	((const ns_nname_t)(rr).nname)
+#define ns_rr_nnamel(rr) ((rr).nnamel + 0)
 #define ns_rr_type(rr)	((ns_type)((rr).type + 0))
 #define ns_rr_class(rr)	((ns_class)((rr).rr_class + 0))
 #define ns_rr_ttl(rr)	((rr).ttl + 0)
@@ -225,9 +265,9 @@ typedef enum __ns_update_operation {
  * This structure is used for TSIG authenticated messages
  */
 struct ns_tsig_key {
-        char name[NS_MAXDNAME], alg[NS_MAXDNAME];
-        unsigned char *data;
-        int len;
+	char name[NS_MAXDNAME], alg[NS_MAXDNAME];
+	unsigned char *data;
+	int len;
 };
 typedef struct ns_tsig_key ns_tsig_key;
 
@@ -283,7 +323,7 @@ typedef enum __ns_type {
 	ns_t_key = 25,		/*%< Security key. */
 	ns_t_px = 26,		/*%< X.400 mail mapping. */
 	ns_t_gpos = 27,		/*%< Geographical position (withdrawn). */
-	ns_t_aaaa = 28,		/*%< Ip6 Address. */
+	ns_t_aaaa = 28,		/*%< IPv6 Address. */
 	ns_t_loc = 29,		/*%< Location Information. */
 	ns_t_nxt = 30,		/*%< Next domain (security). */
 	ns_t_eid = 31,		/*%< Endpoint identifier. */
@@ -293,11 +333,22 @@ typedef enum __ns_type {
 	ns_t_naptr = 35,	/*%< Naming Authority PoinTeR */
 	ns_t_kx = 36,		/*%< Key Exchange */
 	ns_t_cert = 37,		/*%< Certification record */
-	ns_t_a6 = 38,		/*%< IPv6 address (deprecates AAAA) */
-	ns_t_dname = 39,	/*%< Non-terminal DNAME (for IPv6) */
+	ns_t_a6 = 38,		/*%< IPv6 address (experimental) */
+	ns_t_dname = 39,	/*%< Non-terminal DNAME */
 	ns_t_sink = 40,		/*%< Kitchen sink (experimentatl) */
 	ns_t_opt = 41,		/*%< EDNS0 option (meta-RR) */
 	ns_t_apl = 42,		/*%< Address prefix list (RFC3123) */
+	ns_t_ds = 43,		/*%< Delegation Signer */
+	ns_t_sshfp = 44,	/*%< SSH Fingerprint */
+	ns_t_ipseckey = 45,	/*%< IPSEC Key */
+	ns_t_rrsig = 46,	/*%< RRset Signature */
+	ns_t_nsec = 47,		/*%< Negative security */
+	ns_t_dnskey = 48,	/*%< DNS Key */
+	ns_t_dhcid = 49,	/*%< Dynamic host configuratin identifier */
+	ns_t_nsec3 = 50,	/*%< Negative security type 3 */
+	ns_t_nsec3param = 51,	/*%< Negative security type 3 parameters */
+	ns_t_hip = 55,		/*%< Host Identity Protocol */
+	ns_t_spf = 99,		/*%< Sender Policy Framework */
 	ns_t_tkey = 249,	/*%< Transaction key */
 	ns_t_tsig = 250,	/*%< Transaction signature. */
 	ns_t_ixfr = 251,	/*%< Incremental zone transfer. */
@@ -306,6 +357,7 @@ typedef enum __ns_type {
 	ns_t_maila = 254,	/*%< Transfer mail agent records. */
 	ns_t_any = 255,		/*%< Wildcard match. */
 	ns_t_zxfr = 256,	/*%< BIND-specific, nonstandard. */
+	ns_t_dlv = 32769,	/*%< DNSSEC look-aside validatation. */
 	ns_t_max = 65536
 } ns_type;
 
@@ -429,33 +481,34 @@ typedef enum __ns_cert_types {
 #define NS_NXT_MAX 127
 
 /*%
- * EDNS0 extended flags, host order.
+ * EDNS0 extended flags and option codes, host order.
  */
 #define NS_OPT_DNSSEC_OK	0x8000U
+#define NS_OPT_NSID             3
 
 /*%
  * Inline versions of get/put short/long.  Pointer is advanced.
  */
 #define NS_GET16(s, cp) do { \
 	register const u_char *t_cp = (const u_char *)(cp); \
-	(s) = ((u_int16_t)t_cp[0] << 8) \
-	    | ((u_int16_t)t_cp[1]) \
+	(s) = ((uint16_t)t_cp[0] << 8) \
+	    | ((uint16_t)t_cp[1]) \
 	    ; \
 	(cp) += NS_INT16SZ; \
 } while (0)
 
 #define NS_GET32(l, cp) do { \
 	register const u_char *t_cp = (const u_char *)(cp); \
-	(l) = ((u_int32_t)t_cp[0] << 24) \
-	    | ((u_int32_t)t_cp[1] << 16) \
-	    | ((u_int32_t)t_cp[2] << 8) \
-	    | ((u_int32_t)t_cp[3]) \
+	(l) = ((uint32_t)t_cp[0] << 24) \
+	    | ((uint32_t)t_cp[1] << 16) \
+	    | ((uint32_t)t_cp[2] << 8) \
+	    | ((uint32_t)t_cp[3]) \
 	    ; \
 	(cp) += NS_INT32SZ; \
 } while (0)
 
 #define NS_PUT16(s, cp) do { \
-	register u_int16_t t_s = (u_int16_t)(s); \
+	register uint16_t t_s = (uint16_t)(s); \
 	register u_char *t_cp = (u_char *)(cp); \
 	*t_cp++ = t_s >> 8; \
 	*t_cp   = t_s; \
@@ -463,7 +516,7 @@ typedef enum __ns_cert_types {
 } while (0)
 
 #define NS_PUT32(l, cp) do { \
-	register u_int32_t t_l = (u_int32_t)(l); \
+	register uint32_t t_l = (uint32_t)(l); \
 	register u_char *t_cp = (u_char *)(cp); \
 	*t_cp++ = t_l >> 24; \
 	*t_cp++ = t_l >> 16; \
@@ -483,6 +536,7 @@ typedef enum __ns_cert_types {
 #define ns_initparse		__ns_initparse
 #define ns_skiprr		__ns_skiprr
 #define ns_parserr		__ns_parserr
+#define ns_parserr2		__ns_parserr2
 #define	ns_sprintrr		__ns_sprintrr
 #define	ns_sprintrrf		__ns_sprintrrf
 #define	ns_format_ttl		__ns_format_ttl
@@ -491,12 +545,19 @@ typedef enum __ns_cert_types {
 #define	ns_name_ntol		__ns_name_ntol
 #define	ns_name_ntop		__ns_name_ntop
 #define	ns_name_pton		__ns_name_pton
+#define	ns_name_pton2		__ns_name_pton2
 #define	ns_name_unpack		__ns_name_unpack
+#define	ns_name_unpack2		__ns_name_unpack2
 #define	ns_name_pack		__ns_name_pack
 #define	ns_name_compress	__ns_name_compress
 #define	ns_name_uncompress	__ns_name_uncompress
 #define	ns_name_skip		__ns_name_skip
 #define	ns_name_rollback	__ns_name_rollback
+#define	ns_name_length		__ns_name_length
+#define	ns_name_eq		__ns_name_eq
+#define	ns_name_owned		__ns_name_owned
+#define	ns_name_map		__ns_name_map
+#define	ns_name_labels		__ns_name_labels
 #define	ns_sign			__ns_sign
 #define	ns_sign2		__ns_sign2
 #define	ns_sign_tcp		__ns_sign_tcp
@@ -510,62 +571,101 @@ typedef enum __ns_cert_types {
 #define	ns_subdomain		__ns_subdomain
 #define	ns_makecanon		__ns_makecanon
 #define	ns_samename		__ns_samename
+#define	ns_newmsg_init		__ns_newmsg_init
+#define	ns_newmsg_copy		__ns_newmsg_copy
+#define	ns_newmsg_id		__ns_newmsg_id
+#define	ns_newmsg_flag		__ns_newmsg_flag
+#define	ns_newmsg_q		__ns_newmsg_q
+#define	ns_newmsg_rr		__ns_newmsg_rr
+#define	ns_newmsg_done		__ns_newmsg_done
+#define	ns_rdata_unpack		__ns_rdata_unpack
+#define	ns_rdata_equal		__ns_rdata_equal
+#define	ns_rdata_refers		__ns_rdata_refers
 
 __BEGIN_DECLS
-int		ns_msg_getflag __P((ns_msg, int));
-u_int		ns_get16 __P((const u_char *));
-u_long		ns_get32 __P((const u_char *));
-void		ns_put16 __P((u_int, u_char *));
-void		ns_put32 __P((u_long, u_char *));
-int		ns_initparse __P((const u_char *, int, ns_msg *));
-int		ns_skiprr __P((const u_char *, const u_char *, ns_sect, int));
-int		ns_parserr __P((ns_msg *, ns_sect, int, ns_rr *));
-int		ns_sprintrr __P((const ns_msg *, const ns_rr *,
-				 const char *, const char *, char *, size_t));
-int		ns_sprintrrf __P((const u_char *, size_t, const char *,
+int		ns_msg_getflag(ns_msg, int);
+u_int		ns_get16(const u_char *);
+u_long		ns_get32(const u_char *);
+void		ns_put16(u_int, u_char *);
+void		ns_put32(u_long, u_char *);
+int		ns_initparse(const u_char *, int, ns_msg *);
+int		ns_skiprr(const u_char *, const u_char *, ns_sect, int);
+int		ns_parserr(ns_msg *, ns_sect, int, ns_rr *);
+int		ns_parserr2(ns_msg *, ns_sect, int, ns_rr2 *);
+int		ns_sprintrr(const ns_msg *, const ns_rr *,
+				 const char *, const char *, char *, size_t);
+int		ns_sprintrrf(const u_char *, size_t, const char *,
 				  ns_class, ns_type, u_long, const u_char *,
 				  size_t, const char *, const char *,
-				  char *, size_t));
-int		ns_format_ttl __P((u_long, char *, size_t));
-int		ns_parse_ttl __P((const char *, u_long *));
-u_int32_t	ns_datetosecs __P((const char *cp, int *errp));
-int		ns_name_ntol __P((const u_char *, u_char *, size_t));
-int		ns_name_ntop __P((const u_char *, char *, size_t));
-int		ns_name_pton __P((const char *, u_char *, size_t));
-int		ns_name_unpack __P((const u_char *, const u_char *,
-				    const u_char *, u_char *, size_t));
-int		ns_name_pack __P((const u_char *, u_char *, int,
-				  const u_char **, const u_char **));
-int		ns_name_uncompress __P((const u_char *, const u_char *,
-					const u_char *, char *, size_t));
-int		ns_name_compress __P((const char *, u_char *, size_t,
-				      const u_char **, const u_char **));
-int		ns_name_skip __P((const u_char **, const u_char *));
-void		ns_name_rollback __P((const u_char *, const u_char **,
-				      const u_char **));
-int		ns_sign __P((u_char *, int *, int, int, void *,
-			     const u_char *, int, u_char *, int *, time_t));
-int		ns_sign2 __P((u_char *, int *, int, int, void *,
+				  char *, size_t);
+int		ns_format_ttl(u_long, char *, size_t);
+int		ns_parse_ttl(const char *, u_long *);
+uint32_t	ns_datetosecs(const char *cp, int *errp);
+int		ns_name_ntol(const u_char *, u_char *, size_t);
+int		ns_name_ntop(const u_char *, char *, size_t);
+int		ns_name_pton(const char *, u_char *, size_t);
+int		ns_name_pton2(const char *, u_char *, size_t, size_t *);
+int		ns_name_unpack(const u_char *, const u_char *,
+				    const u_char *, u_char *, size_t);
+int		ns_name_unpack2(const u_char *, const u_char *,
+				     const u_char *, u_char *, size_t,
+				     size_t *);
+int		ns_name_pack(const u_char *, u_char *, int,
+				  const u_char **, const u_char **);
+int		ns_name_uncompress(const u_char *, const u_char *,
+					const u_char *, char *, size_t);
+int		ns_name_compress(const char *, u_char *, size_t,
+				      const u_char **, const u_char **);
+int		ns_name_skip(const u_char **, const u_char *);
+void		ns_name_rollback(const u_char *, const u_char **,
+				      const u_char **);
+ssize_t		ns_name_length(ns_nname_ct, size_t);
+int		ns_name_eq(ns_nname_ct, size_t, ns_nname_ct, size_t);
+int		ns_name_owned(ns_namemap_ct, int, ns_namemap_ct, int);
+int		ns_name_map(ns_nname_ct, size_t, ns_namemap_t, int);
+int		ns_name_labels(ns_nname_ct, size_t);
+int		ns_sign(u_char *, int *, int, int, void *,
+			     const u_char *, int, u_char *, int *, time_t);
+int		ns_sign2(u_char *, int *, int, int, void *,
 			      const u_char *, int, u_char *, int *, time_t,
-			      u_char **, u_char **));
-int		ns_sign_tcp __P((u_char *, int *, int, int,
-				 ns_tcp_tsig_state *, int));
-int		ns_sign_tcp2 __P((u_char *, int *, int, int,
+			      u_char **, u_char **);
+int		ns_sign_tcp(u_char *, int *, int, int,
+				 ns_tcp_tsig_state *, int);
+int		ns_sign_tcp2(u_char *, int *, int, int,
 				  ns_tcp_tsig_state *, int,
-				  u_char **, u_char **));
-int		ns_sign_tcp_init __P((void *, const u_char *, int,
-					ns_tcp_tsig_state *));
-u_char		*ns_find_tsig __P((u_char *, u_char *));
-int		ns_verify __P((u_char *, int *, void *,
+				  u_char **, u_char **);
+int		ns_sign_tcp_init(void *, const u_char *, int,
+					ns_tcp_tsig_state *);
+u_char		*ns_find_tsig(u_char *, u_char *);
+int		ns_verify(u_char *, int *, void *,
 			       const u_char *, int, u_char *, int *,
-			       time_t *, int));
-int		ns_verify_tcp __P((u_char *, int *, ns_tcp_tsig_state *, int));
-int		ns_verify_tcp_init __P((void *, const u_char *, int,
-					ns_tcp_tsig_state *));
-int		ns_samedomain __P((const char *, const char *));
-int		ns_subdomain __P((const char *, const char *));
-int		ns_makecanon __P((const char *, char *, size_t));
-int		ns_samename __P((const char *, const char *));
+			       time_t *, int);
+int		ns_verify_tcp(u_char *, int *, ns_tcp_tsig_state *, int);
+int		ns_verify_tcp_init(void *, const u_char *, int,
+					ns_tcp_tsig_state *);
+int		ns_samedomain(const char *, const char *);
+int		ns_subdomain(const char *, const char *);
+int		ns_makecanon(const char *, char *, size_t);
+int		ns_samename(const char *, const char *);
+int		ns_newmsg_init(u_char *buffer, size_t bufsiz, ns_newmsg *);
+int		ns_newmsg_copy(ns_newmsg *, ns_msg *);
+void		ns_newmsg_id(ns_newmsg *handle, uint16_t id);
+void		ns_newmsg_flag(ns_newmsg *handle, ns_flag flag, u_int value);
+int		ns_newmsg_q(ns_newmsg *handle, ns_nname_ct qname,
+			    ns_type qtype, ns_class qclass);
+int		ns_newmsg_rr(ns_newmsg *handle, ns_sect sect,
+			     ns_nname_ct name, ns_type type,
+			     ns_class rr_class, uint32_t ttl,
+			     uint16_t rdlen, const u_char *rdata);
+size_t		ns_newmsg_done(ns_newmsg *handle);
+ssize_t		ns_rdata_unpack(const u_char *, const u_char *, ns_type,
+				const u_char *, size_t, u_char *, size_t);
+int		ns_rdata_equal(ns_type,
+			       const u_char *, size_t,
+			       const u_char *, size_t);
+int		ns_rdata_refers(ns_type,
+				const u_char *, size_t,
+				const u_char *);
 __END_DECLS
 
 #ifdef BIND_4_COMPAT
@@ -573,4 +673,3 @@ __END_DECLS
 #endif
 
 #endif /* !_ARPA_NAMESER_H_ */
-/*! \file */
