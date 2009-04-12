@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.12 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.13 2009/04/12 14:28:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mkstr.c,v 1.12 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: mkstr.c,v 1.13 2009/04/12 14:28:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ char	name[100], *np;
 
 void process __P((void));
 int main __P((int, char **));
-int match __P((char *));
+int match __P((const char *));
 int octdigit __P((char));
 void inithash __P((void));
 int hashit __P((char *, char, unsigned));
@@ -151,9 +151,9 @@ process()
 
 int
 match(ocp)
-	char *ocp;
+	const char *ocp;
 {
-	char *cp;
+	const char *cp;
 	int c;
 
 	for (cp = ocp + 1; *cp; cp++) {
