@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.44 2008/09/30 03:41:53 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.45 2009/04/12 07:07:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.44 2008/09/30 03:41:53 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.45 2009/04/12 07:07:41 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -347,7 +347,7 @@ complete_remote(char *word, int list)
  * Generic complete routine
  */
 unsigned char
-complete(EditLine *el, int ch)
+complete(EditLine *cel, int ch)
 {
 	static char word[FTPBUFLEN];
 	static int lastc_argc, lastc_argo;
@@ -357,7 +357,7 @@ complete(EditLine *el, int ch)
 	int celems, dolist, cmpltype;
 	size_t len;
 
-	lf = el_line(el);
+	lf = el_line(cel);
 	len = lf->lastchar - lf->buffer;
 	if (len >= sizeof(line))
 		return (CC_ERROR);

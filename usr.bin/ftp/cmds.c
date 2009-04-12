@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.127 2008/12/05 05:28:12 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.128 2009/04/12 07:07:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.127 2008/12/05 05:28:12 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.128 2009/04/12 07:07:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ static int
 confirm(const char *cmd, const char *file)
 {
 	const char *errormsg;
-	char line[BUFSIZ];
+	char cline[BUFSIZ];
 	const char *promptleft, *promptright;
 
 	if (!interactive || confirmrest)
@@ -172,12 +172,12 @@ confirm(const char *cmd, const char *file)
 	while (1) {
 		fprintf(ttyout, "%s %s [anpqy?]? ", promptleft, promptright);
 		(void)fflush(ttyout);
-		if (getline(stdin, line, sizeof(line), &errormsg) < 0) {
+		if (getline(stdin, cline, sizeof(cline), &errormsg) < 0) {
 			mflag = 0;
 			fprintf(ttyout, "%s; %s aborted\n", errormsg, cmd);
 			return (0);
 		}
-		switch (tolower((unsigned char)*line)) {
+		switch (tolower((unsigned char)*cline)) {
 			case 'a':
 				confirmrest = 1;
 				fprintf(ttyout,
@@ -571,7 +571,7 @@ get(int argc, char *argv[])
  * If restartit is -1, restart the xfer only if the remote file is newer.
  */
 int
-getit(int argc, char *argv[], int restartit, const char *mode)
+getit(int argc, char *argv[], int restartit, const char *gmode)
 {
 	int	loc, rval;
 	char	*remfile, *olocfile;
@@ -630,7 +630,7 @@ getit(int argc, char *argv[], int restartit, const char *mode)
 		}
 	}
 
-	recvrequest("RETR", locfile, remfile, mode,
+	recvrequest("RETR", locfile, remfile, gmode,
 	    remfile != argv[1] || locfile != argv[2], loc);
 	restart_point = 0;
  freegetit:
@@ -747,7 +747,7 @@ mget(int argc, char *argv[])
 void
 fget(int argc, char *argv[])
 {
-	char	*mode;
+	char	*gmode;
 	FILE	*fp;
 	char	buf[MAXPATHLEN];
 
@@ -765,13 +765,13 @@ fget(int argc, char *argv[])
 	}
 
 	argv[0] = "get";
-	mode = restart_point ? "r+" : "w";
+	gmode = restart_point ? "r+" : "w";
 
 	while (getline(fp, buf, sizeof(buf), NULL) >= 0) {
 		if (buf[0] == '\0')
 			continue;
 		argv[1] = buf;
-		(void)getit(argc, argv, 0, mode);
+		(void)getit(argc, argv, 0, gmode);
 	}
 	fclose(fp);
 }
@@ -1362,7 +1362,7 @@ mls(int argc, char *argv[])
 	sigfunc oldintr;
 	int ointer, i;
 	int dolist;
-	char *mode, *dest, *odest;
+	char *lmode, *dest, *odest;
 
 	if (argc == 0)
 		goto usage;
@@ -1388,8 +1388,8 @@ mls(int argc, char *argv[])
 	if (sigsetjmp(jabort, 1))
 		mabort(argv[0]);
 	for (i = 1; mflag && i < argc-1 && connected; i++) {
-		mode = (i == 1) ? "w" : "a";
-		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode,
+		lmode = (i == 1) ? "w" : "a";
+		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], lmode,
 		    0, 0);
 		if (!mflag && fromatty) {
 			ointer = interactive;
@@ -1415,7 +1415,7 @@ shell(int argc, char *argv[])
 {
 	pid_t pid;
 	sigfunc oldintr;
-	char shellnam[MAXPATHLEN], *shell, *namep;
+	char shellnam[MAXPATHLEN], *shellp, *namep;
 	int wait_status;
 
 	if (argc == 0) {
@@ -1428,26 +1428,26 @@ shell(int argc, char *argv[])
 		for (pid = 3; pid < 20; pid++)
 			(void)close(pid);
 		(void)xsignal(SIGINT, SIG_DFL);
-		shell = getenv("SHELL");
-		if (shell == NULL)
-			shell = _PATH_BSHELL;
-		namep = strrchr(shell, '/');
+		shellp = getenv("SHELL");
+		if (shellp == NULL)
+			shellp = _PATH_BSHELL;
+		namep = strrchr(shellp, '/');
 		if (namep == NULL)
-			namep = shell;
+			namep = shellp;
 		else
 			namep++;
 		(void)strlcpy(shellnam, namep, sizeof(shellnam));
 		if (ftp_debug) {
-			fputs(shell, ttyout);
+			fputs(shellp, ttyout);
 			putc('\n', ttyout);
 		}
 		if (argc > 1) {
-			execl(shell, shellnam, "-c", altarg, (char *)0);
+			execl(shellp, shellnam, "-c", altarg, (char *)0);
 		}
 		else {
-			execl(shell, shellnam, (char *)0);
+			execl(shellp, shellnam, (char *)0);
 		}
-		warn("Can't execute `%s'", shell);
+		warn("Can't execute `%s'", shellp);
 		code = -1;
 		exit(1);
 	}

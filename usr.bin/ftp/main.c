@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.113 2008/09/09 00:48:28 gmcgarry Exp $	*/
+/*	$NetBSD: main.c,v 1.114 2009/04/12 07:07:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.113 2008/09/09 00:48:28 gmcgarry Exp $");
+__RCSID("$NetBSD: main.c,v 1.114 2009/04/12 07:07:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -543,18 +543,18 @@ main(int volatile argc, char **volatile argv)
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				goto sigint_or_rval_exit;
 		} else {
-			char *xargv[4], *user, *host;
+			char *xargv[4], *uuser, *host;
 
 			if ((rval = sigsetjmp(toplevel, 1)))
 				goto sigint_or_rval_exit;
 			(void)xsignal(SIGINT, intr);
 			(void)xsignal(SIGPIPE, lostpeer);
-			user = NULL;
+			uuser = NULL;
 			host = argv[0];
 			cp = strchr(host, '@');
 			if (cp) {
 				*cp = '\0';
-				user = host;
+				uuser = host;
 				host = cp + 1;
 			}
 			/* XXX discards const */
@@ -566,14 +566,14 @@ main(int volatile argc, char **volatile argv)
 				int oautologin;
 
 				oautologin = autologin;
-				if (user != NULL) {
+				if (uuser != NULL) {
 					anonftp = 0;
 					autologin = 0;
 				}
 				setpeer(argc+1, xargv);
 				autologin = oautologin;
-				if (connected == 1 && user != NULL)
-					(void)ftp_login(host, user, NULL);
+				if (connected == 1 && uuser != NULL)
+					(void)ftp_login(host, uuser, NULL);
 				if (!retry_connect)
 					break;
 				if (!connected) {
@@ -607,18 +607,18 @@ main(int volatile argc, char **volatile argv)
 char *
 prompt(void)
 {
-	static char	**prompt;
+	static char	**promptopt;
 	static char	  buf[MAXPATHLEN];
 
-	if (prompt == NULL) {
+	if (promptopt == NULL) {
 		struct option *o;
 
 		o = getoption("prompt");
 		if (o == NULL)
 			errx(1, "prompt: no such option `prompt'");
-		prompt = &(o->value);
+		promptopt = &(o->value);
 	}
-	formatbuf(buf, sizeof(buf), *prompt ? *prompt : DEFAULTPROMPT);
+	formatbuf(buf, sizeof(buf), *promptopt ? *promptopt : DEFAULTPROMPT);
 	return (buf);
 }
 
@@ -628,18 +628,18 @@ prompt(void)
 char *
 rprompt(void)
 {
-	static char	**rprompt;
+	static char	**rpromptopt;
 	static char	  buf[MAXPATHLEN];
 
-	if (rprompt == NULL) {
+	if (rpromptopt == NULL) {
 		struct option *o;
 
 		o = getoption("rprompt");
 		if (o == NULL)
 			errx(1, "rprompt: no such option `rprompt'");
-		rprompt = &(o->value);
+		rpromptopt = &(o->value);
 	}
-	formatbuf(buf, sizeof(buf), *rprompt ? *rprompt : DEFAULTRPROMPT);
+	formatbuf(buf, sizeof(buf), *rpromptopt ? *rpromptopt : DEFAULTRPROMPT);
 	return (buf);
 }
 
