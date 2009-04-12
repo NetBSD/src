@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.25 2009/03/18 10:22:42 cegger Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.26 2009/04/12 22:37:50 elad Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.25 2009/03/18 10:22:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.26 2009/04/12 22:37:50 elad Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -1082,7 +1082,7 @@ check_ipkdb(struct ipkdb_if *ifp, struct in_addr *shost, char *p, int l)
 
 #ifndef	IPKDBSECURE
 	if (kauth_authorize_system(curlwp->l_cred, KAUTH_SYSTEM_DEBUG,
-	    KAUTH_ARG(KAUTH_REQ_SYSTEM_DEBUG_IPKDB), NULL, NULL, NULL))
+	    KAUTH_REQ_SYSTEM_DEBUG_IPKDB, NULL, NULL, NULL))
 		return 0;
 #endif
 	if (ipkdbcmp(chksum(p, l), p + l, LENCHK))
