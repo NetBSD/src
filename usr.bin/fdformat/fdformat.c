@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.15 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.16 2009/04/12 02:53:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdformat.c,v 1.15 2008/04/28 20:24:12 martin Exp $");
+__RCSID("$NetBSD: fdformat.c,v 1.16 2009/04/12 02:53:56 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -106,7 +106,7 @@ verify_track(int fd, int cyl, int trk, struct fdformat_parms *parms, char *buf)
 		(void)printf("- SEEK ERROR\n");
 		return 1;
 	}
-	if (read(fd, buf, tracksize) != tracksize) {
+	if ((size_t)read(fd, buf, tracksize) != tracksize) {
 		(void)printf("- VERIFY ERROR\n");
 		return 1;
 	}
@@ -286,9 +286,9 @@ main(int argc, char *argv[])
 	}
 
 	cmd.formatcmd_version = FDFORMAT_VERSION;
-	for (cyl = 0; cyl < parms.ncyl; cyl++) {
+	for (cyl = 0; (unsigned int)cyl < parms.ncyl; cyl++) {
 		cmd.cylinder = cyl;
-		for (trk = 0; trk < parms.ntrk; trk++) {
+		for (trk = 0; (unsigned int)trk < parms.ntrk; trk++) {
 			cmd.head = trk;
 			(void)printf("\rFormatting track %i / head %i ", cyl, trk);
 			(void)fflush(stdout);
