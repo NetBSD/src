@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.166 2009/02/28 15:32:29 pooka Exp $
+# $NetBSD: shl.elf,v 1.167 2009/04/12 20:54:41 christos Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -94,7 +94,7 @@
 ./usr/lib/libasn1.so.8				base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.10				base-sys-shlib		bfd
 ./usr/lib/libbind9.so				base-bind-shlib
-./usr/lib/libbind9.so.2				base-bind-shlib
+./usr/lib/libbind9.so.3				base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.4			base-sys-shlib
 ./usr/lib/libbsdmalloc.so			base-sys-shlib
@@ -117,7 +117,7 @@
 ./usr/lib/libdevmapper.so			base-lvm-shlib		lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		lvm
 ./usr/lib/libdns.so				base-bind-shlib
-./usr/lib/libdns.so.2				base-bind-shlib
+./usr/lib/libdns.so.3				base-bind-shlib
 ./usr/lib/libedit.so				base-sys-shlib
 ./usr/lib/libedit.so.3				base-sys-shlib
 ./usr/lib/libevent.so				base-sys-shlib
@@ -145,11 +145,11 @@
 ./usr/lib/libipsec.so				base-net-shlib
 ./usr/lib/libipsec.so.3				base-net-shlib
 ./usr/lib/libisc.so				base-bind-shlib
-./usr/lib/libisc.so.2				base-bind-shlib
+./usr/lib/libisc.so.3				base-bind-shlib
 ./usr/lib/libisccc.so				base-bind-shlib
-./usr/lib/libisccc.so.2				base-bind-shlib
+./usr/lib/libisccc.so.3				base-bind-shlib
 ./usr/lib/libisccfg.so				base-bind-shlib
-./usr/lib/libisccfg.so.2			base-bind-shlib
+./usr/lib/libisccfg.so.3			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.1				base-iscsi-shlib	iscsi
 ./usr/lib/libkadm.so				base-obsolete		obsolete
@@ -173,7 +173,7 @@
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.3			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so				base-bind-shlib
-./usr/lib/liblwres.so.2				base-bind-shlib
+./usr/lib/liblwres.so.3				base-bind-shlib
 ./usr/lib/libm.so				base-sys-shlib
 ./usr/lib/libm.so.0				base-sys-shlib
 ./usr/lib/libmagic.so				base-sys-shlib
