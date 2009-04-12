@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1206 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1207 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -168,3 +168,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[ad 20090329]
 	cvs: Import 1.12.13 [christos 20090408]
 	mtree(8): Add -S option to sort entries.  [apb 20090408]
+	bind: Update to 9.6.1-P1 [christos 20090412]
+	libbind: Update to 6.0-rc1 [christos 20090412]
