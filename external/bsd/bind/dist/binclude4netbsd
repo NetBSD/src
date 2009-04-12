@@ -4,10 +4,11 @@
 # after you've imported and built the latest bind code. After you run this,
 # cvs import the resulting directory
 #
-# $ cd /usr/src/external/bind/dist
+# $ cd /usr/src/external/bsd/bind/dist
 # $ configure
 # $ make
 # $ ./binclude4netbsd . /tmp/include
+# Fix manually the config.h file to disable things controlled by the Makefiles
 # $ cd /tmp/include
 # $ cvs -d cvs.netbsd.org:/cvsroot import src/usr.sbin/bind/include \
 #	ISC bind-X-Y-Z
