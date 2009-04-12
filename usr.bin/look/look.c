@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.12 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: look.c,v 1.13 2009/04/12 14:01:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: look.c,v 1.12 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: look.c,v 1.13 2009/04/12 14:01:20 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -101,7 +101,8 @@ main(argc, argv)
 {
 	struct stat sb;
 	int ch, fd, termchar;
-	char *back, *file, *front, *string, *p;
+	char *back, *front, *string, *p;
+	const char *file;
 
 	string = NULL;
 	file = _PATH_WORDS;
@@ -142,7 +143,7 @@ main(argc, argv)
 
 	if ((fd = open(file, O_RDONLY, 0)) < 0 || fstat(fd, &sb))
 		err(2, "%s", file);
-	if (sb.st_size > SIZE_T_MAX)
+	if (sb.st_size > (off_t)SIZE_T_MAX)
 		err(2, "%s: %s", file, strerror(EFBIG));
 	if ((front = mmap(NULL, (size_t)sb.st_size,
 	    PROT_READ, MAP_FILE|MAP_SHARED, fd, (off_t)0)) == NULL)
