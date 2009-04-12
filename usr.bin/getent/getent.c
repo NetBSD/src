@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.15 2009/02/24 06:10:52 yamt Exp $	*/
+/*	$NetBSD: getent.c,v 1.16 2009/04/12 10:27:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.15 2009/02/24 06:10:52 yamt Exp $");
+__RCSID("$NetBSD: getent.c,v 1.16 2009/04/12 10:27:08 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -594,7 +594,8 @@ handlecap(const char *db, int argc, char *argv[])
 	static const char sfx[] = "=#:";
 	const char *db_array[] = { db, NULL };
 	char	*b, *cap;
-	int	i, j, rv, c;
+	int	i, rv, c;
+	size_t	j;
 	int	expand = 1, recurse = 0, pretty = 0;
 
 	assert(argc > 1);
