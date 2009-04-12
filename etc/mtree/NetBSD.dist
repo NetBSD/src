@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.395 2009/04/08 13:32:26 pooka Exp $
+#	$NetBSD: NetBSD.dist,v 1.396 2009/04/12 17:35:16 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1463,6 +1463,8 @@
 ./var/chroot/named/usr/libexec
 ./var/chroot/named/var
 ./var/chroot/named/var/run	mode=0775 gname=named
+./var/chroot/named/var/run/lwresd	mode=0775 gname=named
+./var/chroot/named/var/run/named	mode=0775 gname=named
 ./var/chroot/named/var/tmp	mode=01775 gname=named
 ./var/chroot/ntpd
 ./var/chroot/ntpd/dev
@@ -1495,6 +1497,8 @@
 ./var/preserve
 ./var/quotas			gname=operator mode=0750
 ./var/run
+./var/run/lwresd		mode=0775 gname=named
+./var/run/named			mode=0775 gname=named
 ./var/rwho			uname=_rwhod gname=_rwhod
 ./var/spool
 ./var/spool/ftp
