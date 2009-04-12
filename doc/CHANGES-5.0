@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.132 2009/04/11 07:01:28 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.133 2009/04/12 02:36:33 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5982,4 +5982,57 @@ share/man/man4/wapbl.4				1.7-1.9
 
 	Sync with reality.
 	[ad, ticket #687]
+
+sys/arch/mvme68k/stand/Makefile.booters		1.18
+sys/arch/mvme68k/stand/bootst/dev_tape.c	1.11
+sys/arch/mvme68k/stand/bootst/version		1.5
+
+	Fix for install/40961: The RAMDISK kernel has grown significantly
+	since bootst was written. Grab 3MB of the kernel image from tape
+	in hackprom_diskrd() instead of 2MB.
+	Bump bootst version on account of the above fix.
+	While here, use -Os instead of -O2 to compile mvme68k stand code.
+	[scw, ticket #688]
+
+sys/fs/tmpfs/tmpfs_subr.c			1.50
+
+	For chown make auth checks consistent with UFS.
+	Fixes PR kern/40933.
+	[markd, ticket #689]
+
+lib/libpuffs/puffs_ops.3			1.24
+
+	Fix markup.
+	[joerg, ticket #691]
+
+lib/libc/rpc/rpc.3				1.21
+
+	Fix markup.
+	[joerg, ticket #692]
+
+lib/libc/rpc/rpc_xdr.3				1.8
+lib/libc/rpc/rpcbind.3				1.11
+
+	Fix markup.
+	[joerg, ticket #693]
+
+lib/libutil/sockaddr_snprintf.3			1.7
+
+	Fix markup.
+	[joerg, ticket #694]
+
+lib/libc/stdlib/tsearch.3			1.10
+
+	Fix markup.
+	[joerg, ticket #695]
+
+share/man/man4/man4.vax/up.4			1.15
+
+	Fix markup.
+	[joerg, ticket #696]
+
+share/man/man4/man4.vax/hk.4			1.14
+
+	Fix markup.
+	[joerg, ticket #697]
 
