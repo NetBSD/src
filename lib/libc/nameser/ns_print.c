@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.9 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.10 2009/04/12 19:43:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_print.c,v 1.12 2009/03/03 05:29:58 each Exp";
 #else
-__RCSID("$NetBSD: ns_print.c,v 1.9 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: ns_print.c,v 1.10 2009/04/12 19:43:37 christos Exp $");
 #endif
 #endif
 
@@ -720,21 +720,21 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			t = ns_get16(rdata);
 			rdata += NS_INT16SZ;
 			len = SPRINTF((tmp, "%u ", t));
-			T(addstr(tmp, len, &buf, &buflen));
+			T(addstr(tmp, (size_t)len, &buf, &buflen));
 		} else
 			if (rdlen < 2U) goto formerr;
 
 		len = SPRINTF((tmp, "%u ", *rdata));
-		T(addstr(tmp, len, &buf, &buflen));
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
 		len = SPRINTF((tmp, "%u ", *rdata));
-		T(addstr(tmp, len, &buf, &buflen));
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
 		while (rdata < edata) {
 			len = SPRINTF((tmp, "%02X", *rdata));
-			T(addstr(tmp, len, &buf, &buflen));
+			T(addstr(tmp, (size_t)len, &buf, &buflen));
 			rdata++;
 		}
 		break;
@@ -745,17 +745,17 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		u_int t, w, l, j, k, c;
 		
 		len = SPRINTF((tmp, "%u ", *rdata));
-		T(addstr(tmp, len, &buf, &buflen));
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
 		len = SPRINTF((tmp, "%u ", *rdata));
-		T(addstr(tmp, len, &buf, &buflen));
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
 		t = ns_get16(rdata);
 		rdata += NS_INT16SZ;
 		len = SPRINTF((tmp, "%u ", t));
-		T(addstr(tmp, len, &buf, &buflen));
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		t = *rdata++;
 		if (t == 0) {
@@ -763,7 +763,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		} else {
 			while (t-- > 0) {
 				len = SPRINTF((tmp, "%02X", *rdata));
-				T(addstr(tmp, len, &buf, &buflen));
+				T(addstr(tmp, (size_t)len, &buf, &buflen));
 				rdata++;
 			}
 		}
@@ -775,54 +775,54 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		while (t > 0) {
 			switch (t) {
 			case 1:
-				tmp[0] = base32hex[((rdata[0]>>3)&0x1f)];
-				tmp[1] = base32hex[((rdata[0]<<2)&0x1c)];
+				tmp[0] = base32hex[(((uint32_t)rdata[0]>>3)&0x1f)];
+				tmp[1] = base32hex[(((uint32_t)rdata[0]<<2)&0x1c)];
 				tmp[2] = tmp[3] = tmp[4] = '=';
 				tmp[5] = tmp[6] = tmp[7] = '=';
 				break;
 			case 2:
-				tmp[0] = base32hex[((rdata[0]>>3)&0x1f)];
-				tmp[1] = base32hex[((rdata[0]<<2)&0x1c)|
-						   ((rdata[1]>>6)&0x03)];
-				tmp[2] = base32hex[((rdata[1]>>1)&0x1f)];
-				tmp[3] = base32hex[((rdata[1]<<4)&0x10)];
+				tmp[0] = base32hex[(((uint32_t)rdata[0]>>3)&0x1f)];
+				tmp[1] = base32hex[(((uint32_t)rdata[0]<<2)&0x1c)|
+						   (((uint32_t)rdata[1]>>6)&0x03)];
+				tmp[2] = base32hex[(((uint32_t)rdata[1]>>1)&0x1f)];
+				tmp[3] = base32hex[(((uint32_t)rdata[1]<<4)&0x10)];
 				tmp[4] = tmp[5] = tmp[6] = tmp[7] = '=';
 				break;
 			case 3:
-				tmp[0] = base32hex[((rdata[0]>>3)&0x1f)];
-				tmp[1] = base32hex[((rdata[0]<<2)&0x1c)|
-						   ((rdata[1]>>6)&0x03)];
-				tmp[2] = base32hex[((rdata[1]>>1)&0x1f)];
-				tmp[3] = base32hex[((rdata[1]<<4)&0x10)|
-						   ((rdata[2]>>4)&0x0f)];
-				tmp[4] = base32hex[((rdata[2]<<1)&0x1e)];
+				tmp[0] = base32hex[(((uint32_t)rdata[0]>>3)&0x1f)];
+				tmp[1] = base32hex[(((uint32_t)rdata[0]<<2)&0x1c)|
+						   (((uint32_t)rdata[1]>>6)&0x03)];
+				tmp[2] = base32hex[(((uint32_t)rdata[1]>>1)&0x1f)];
+				tmp[3] = base32hex[(((uint32_t)rdata[1]<<4)&0x10)|
+						   (((uint32_t)rdata[2]>>4)&0x0f)];
+				tmp[4] = base32hex[(((uint32_t)rdata[2]<<1)&0x1e)];
 				tmp[5] = tmp[6] = tmp[7] = '=';
 				break;
 			case 4:
-				tmp[0] = base32hex[((rdata[0]>>3)&0x1f)];
-				tmp[1] = base32hex[((rdata[0]<<2)&0x1c)|
-						   ((rdata[1]>>6)&0x03)];
-				tmp[2] = base32hex[((rdata[1]>>1)&0x1f)];
-				tmp[3] = base32hex[((rdata[1]<<4)&0x10)|
-						   ((rdata[2]>>4)&0x0f)];
-				tmp[4] = base32hex[((rdata[2]<<1)&0x1e)|
-						   ((rdata[3]>>7)&0x01)];
-				tmp[5] = base32hex[((rdata[3]>>2)&0x1f)];
-				tmp[6] = base32hex[(rdata[3]<<3)&0x18];
+				tmp[0] = base32hex[(((uint32_t)rdata[0]>>3)&0x1f)];
+				tmp[1] = base32hex[(((uint32_t)rdata[0]<<2)&0x1c)|
+						   (((uint32_t)rdata[1]>>6)&0x03)];
+				tmp[2] = base32hex[(((uint32_t)rdata[1]>>1)&0x1f)];
+				tmp[3] = base32hex[(((uint32_t)rdata[1]<<4)&0x10)|
+						   (((uint32_t)rdata[2]>>4)&0x0f)];
+				tmp[4] = base32hex[(((uint32_t)rdata[2]<<1)&0x1e)|
+						   (((uint32_t)rdata[3]>>7)&0x01)];
+				tmp[5] = base32hex[(((uint32_t)rdata[3]>>2)&0x1f)];
+				tmp[6] = base32hex[((uint32_t)rdata[3]<<3)&0x18];
 				tmp[7] = '=';
 				break;
 			default:
-				tmp[0] = base32hex[((rdata[0]>>3)&0x1f)];
-				tmp[1] = base32hex[((rdata[0]<<2)&0x1c)|
-						   ((rdata[1]>>6)&0x03)];
-				tmp[2] = base32hex[((rdata[1]>>1)&0x1f)];
-				tmp[3] = base32hex[((rdata[1]<<4)&0x10)|
-						   ((rdata[2]>>4)&0x0f)];
-				tmp[4] = base32hex[((rdata[2]<<1)&0x1e)|
-						   ((rdata[3]>>7)&0x01)];
-				tmp[5] = base32hex[((rdata[3]>>2)&0x1f)];
-				tmp[6] = base32hex[((rdata[3]<<3)&0x18)|
-						   ((rdata[4]>>5)&0x07)];
+				tmp[0] = base32hex[(((uint32_t)rdata[0]>>3)&0x1f)];
+				tmp[1] = base32hex[(((uint32_t)rdata[0]<<2)&0x1c)|
+						   (((uint32_t)rdata[1]>>6)&0x03)];
+				tmp[2] = base32hex[(((uint32_t)rdata[1]>>1)&0x1f)];
+				tmp[3] = base32hex[(((uint32_t)rdata[1]<<4)&0x10)|
+						   (((uint32_t)rdata[2]>>4)&0x0f)];
+				tmp[4] = base32hex[(((uint32_t)rdata[2]<<1)&0x1e)|
+						   (((uint32_t)rdata[3]>>7)&0x01)];
+				tmp[5] = base32hex[(((uint32_t)rdata[3]>>2)&0x1f)];
+				tmp[6] = base32hex[(((uint32_t)rdata[3]<<3)&0x18)|
+						   (((uint32_t)rdata[4]>>5)&0x07)];
 				tmp[7] = base32hex[(rdata[4]&0x1f)];
 				break;
 			}
@@ -846,8 +846,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 					if ((rdata[j] & (0x80 >> k)) == 0)
 						continue;
 					c = w * 256 + j * 8 + k;
-					len = SPRINTF((tmp, " %s", p_type(c)));
-					T(addstr(tmp, len, &buf, &buflen));
+					len = SPRINTF((tmp, " %s", p_type((ns_type)c)));
+					T(addstr(tmp, (size_t)len, &buf, &buflen));
 				}
 			}
 			rdata += l;
@@ -870,8 +870,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 					if ((rdata[j] & (0x80 >> k)) == 0)
 						continue;
 					c = w * 256 + j * 8 + k;
-					len = SPRINTF((tmp, " %s", p_type(c)));
-					T(addstr(tmp, len, &buf, &buflen));
+					len = SPRINTF((tmp, " %s", p_type((ns_type)c)));
+					T(addstr(tmp, (size_t)len, &buf, &buflen));
 				}
 			}
 			rdata += l;
@@ -890,7 +890,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			const char *str = "record too long to print";
 			T(addstr(str, strlen(str), &buf, &buflen));
 		} else {
-			len = b64_ntop(rdata, edata-rdata, base64_dhcid, siz);
+			len = b64_ntop(rdata, (size_t)(edata-rdata),
+			    base64_dhcid, siz);
 		
 			if (len < 0)
 				goto formerr;
@@ -906,12 +907,13 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			for (n = 0; n < len; n += 48) {
 				T(addstr(leader, strlen(leader),
 					 &buf, &buflen));
-				T(addstr(base64_dhcid + n, MIN(len - n, 48),
-					 &buf, &buflen));
+				T(addstr(base64_dhcid + n,
+				    (size_t)MIN(len - n, 48), &buf, &buflen));
 			}
 			if (len > 15)
 				T(addstr(" )", 2, &buf, &buflen));
 		}
+		break;
 	}
 
 	case ns_t_ipseckey: {
@@ -943,15 +945,15 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		}
 
 		len = SPRINTF((tmp, "%u ", *rdata));
-		T(addstr(tmp, len, &buf, &buflen));
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
 		len = SPRINTF((tmp, "%u ", *rdata));
-		T(addstr(tmp, len, &buf, &buflen));
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 		
 		len = SPRINTF((tmp, "%u ", *rdata));
-		T(addstr(tmp, len, &buf, &buflen));
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
 		switch (rdata[-2]) {
@@ -981,7 +983,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			const char *str = "record too long to print";
 			T(addstr(str, strlen(str), &buf, &buflen));
 		} else {
-			len = b64_ntop(rdata, edata-rdata, base64_key, siz);
+			len = b64_ntop(rdata, (size_t)(edata-rdata),
+			    base64_key, siz);
 
 			if (len < 0)
 				goto formerr;
@@ -997,12 +1000,13 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			for (n = 0; n < len; n += 48) {
 				T(addstr(leader, strlen(leader),
 					 &buf, &buflen));
-				T(addstr(base64_key + n, MIN(len - n, 48),
-					 &buf, &buflen));
+				T(addstr(base64_key + n,
+				    (size_t)MIN(len - n, 48), &buf, &buflen));
 			}
 			if (len > 15)
 				T(addstr(" )", 2, &buf, &buflen));
 		}
+		break;
 	}
 
 	case ns_t_hip: {
@@ -1022,11 +1026,11 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			T(addstr(str, strlen(str), &buf, &buflen));
 		} else {
 			len = sprintf(tmp, "( %u ", algorithm);
-			T(addstr(tmp, len, &buf, &buflen));
+			T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 			for (i = 0; i < hip_len; i++) {
 				len = sprintf(tmp, "%02X", *rdata);
-				T(addstr(tmp, len, &buf, &buflen));
+				T(addstr(tmp, (size_t)len, &buf, &buflen));
 				rdata++;
 			}
 			T(addstr(leader, strlen(leader), &buf, &buflen));
@@ -1035,7 +1039,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			if (len < 0)
 				goto formerr;
 
-			T(addstr(base64_key, len, &buf, &buflen));
+			T(addstr(base64_key, (size_t)len, &buf, &buflen));
 				
 			rdata += key_len;
 			while (rdata < edata) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.7 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.8 2009/04/12 19:43:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_name.c,v 1.11 2009/01/23 19:59:16 each Exp";
 #else
-__RCSID("$NetBSD: ns_name.c,v 1.7 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.8 2009/04/12 19:43:37 christos Exp $");
 #endif
 #endif
 
@@ -760,7 +760,8 @@ ns_name_eq(ns_nname_ct a, size_t as, ns_nname_ct b, size_t bs) {
 			return (-1);
 		}
 		if (ac != bc || strncasecmp((const char *) ++a,
-					    (const char *) ++b, ac) != 0)
+					    (const char *) ++b,
+					    (size_t)ac) != 0)
 			return (0);
 		a += ac, b += bc;
 	}
@@ -779,7 +780,7 @@ ns_name_owned(ns_namemap_ct a, int an, ns_namemap_ct b, int bn) {
 	while (bn > 0) {
 		if (a->len != b->len ||
 		    strncasecmp((const char *) a->base,
-				(const char *) b->base, a->len) != 0)
+				(const char *) b->base, (size_t)a->len) != 0)
 			return (0);
 		a++, an--;
 		b++, bn--;
