@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.34 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.35 2009/04/12 22:47:39 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.34 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.35 2009/04/12 22:47:39 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -655,7 +655,7 @@ static struct name *
 ncopy(struct name *np)
 {
 	struct name *rv;
-	struct name *lp;
+	struct name *lp = NULL; /* XXX gcc -Wuninitialized sh3 */
 	struct name *tp;
 
 	rv = NULL;
