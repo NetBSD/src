@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/01/19 07:19:09 jmmv Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/12 22:42:36 christos Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -11,5 +11,7 @@
 .if (${MKATF} != "no")
 SUBDIR+= ../bsd/atf/lib
 .endif
+
+SUBDIR+= ../bsd/bind/lib
 
 .include <bsd.subdir.mk>
