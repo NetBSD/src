@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.2 2009/04/12 15:05:59 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.3 2009/04/12 15:23:22 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,18 +26,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# bind2netbsd:  convert an bind bind tree into a
-# netbsd bind source tree, under src/dist,
+# bind2netbsd:  convert a bind tree into a
+# netbsd bind source tree, under src/external/bsd/bind/dist,
 # based on bind2netbsd by Bernd Ernesti and changes by Simon Burge
 #
 # Rough instructions for importing new bind release:
 #
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/bind/release/tar/file
-#	$ sh /usr/src/external/bsd/dist/bind/bind2netbsd bind-9.x.y `pwd`
+#	$ sh /usr/src/external/bsd/bind/dist/bind2netbsd bind-9.x.y `pwd`
 #	$ cd src/external/bsd/bind/dist
 #	$ cvs import -m "Import bind 9.x.y" src/external/bsd/bind/dist ISC bind-9-x-y
-#	$ cd ../../../../../bind-9.0.3beta3
+#	$ cd ../../../../../bind-9.x.y
 #	$ run ./configure
 #	$ run make
 #	- use the binclude4netbsd to create and import the new headers in
