@@ -1,7 +1,7 @@
-/*	$NetBSD: progressbar.h,v 1.7 2008/09/30 03:41:53 lukem Exp $	*/
+/*	$NetBSD: progressbar.h,v 1.8 2009/04/12 10:18:52 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,7 +59,7 @@ GLOBAL	int	fromatty;	/* input is from a terminal */
 GLOBAL	int	verbose;	/* print messages coming back from server */
 GLOBAL	int	quit_time;	/* maximum time to wait if stalled */
 
-GLOBAL	char   *direction;	/* direction transfer is occurring */
+GLOBAL	const char  *direction;	/* direction transfer is occurring */
 
 GLOBAL	sigjmp_buf toplevel;	/* non-local goto stuff for cmd scanner */
 #endif	/* !STANDALONE_PROGRESS */

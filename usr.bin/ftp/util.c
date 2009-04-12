@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.149 2009/04/12 07:07:41 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.150 2009/04/12 10:18:52 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.149 2009/04/12 07:07:41 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.150 2009/04/12 10:18:52 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -103,7 +103,7 @@ void
 setpeer(int argc, char *argv[])
 {
 	char *host;
-	char *port;
+	const char *port;
 
 	if (argc == 0)
 		goto usage;
@@ -808,7 +808,8 @@ updatelocalcwd(void)
 void
 updateremotecwd(void)
 {
-	int	 overbose, ocode, i;
+	int	 overbose, ocode;
+	size_t	 i;
 	char	*cp;
 
 	overbose = verbose;
@@ -877,8 +878,8 @@ fileindir(const char *file, const char *dir)
 void
 list_vertical(StringList *sl)
 {
-	int i, j;
-	int columns, lines;
+	size_t i, j;
+	size_t columns, lines;
 	char *p;
 	size_t w, width;
 
@@ -1067,7 +1068,7 @@ setupsockbufsize(int sock)
 void
 ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
 {
-	int	di, si;
+	size_t	di, si;
 
 	for (di = si = 0;
 	    src[si] != '\0' && di < dstlen && si < srclen;
@@ -1097,7 +1098,8 @@ void
 formatbuf(char *buf, size_t len, const char *src)
 {
 	const char	*p, *p2, *q;
-	int		 i, op, updirs, pdirs;
+	size_t		 i;
+	int		 op, updirs, pdirs;
 
 #define ADDBUF(x) do { \
 		if (i >= len - 1) \

@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.157 2009/04/12 07:07:41 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.158 2009/04/12 10:18:52 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.157 2009/04/12 07:07:41 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.158 2009/04/12 10:18:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ struct sockinet {
 struct sockinet myctladdr, hisctladdr, data_addr;
 
 char *
-hookup(char *host, char *port)
+hookup(const char *host, const char *port)
 {
 	int s = -1, error;
 	struct addrinfo hints, *res, *res0;
@@ -598,7 +598,7 @@ copy_bytes(int infd, int outfd, char *buf, size_t bufsize,
 					/* copy bufchunk at a time */
 		bufrem = bufchunk;
 		while (bufrem > 0) {
-			inc = read(infd, buf, MIN(bufsize, bufrem));
+			inc = read(infd, buf, MIN((off_t)bufsize, bufrem));
 			if (inc <= 0)
 				goto copy_done;
 			bytes += inc;
@@ -660,7 +660,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	sigfunc volatile oldintp;
 	off_t volatile hashbytes;
 	int hash_interval;
-	char *volatile lmode;
+	const char *lmode;
 	static size_t bufsize;
 	static char *buf;
 	int oprogress;
@@ -764,7 +764,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	if (dout == NULL)
 		goto abort;
 
-	if (sndbuf_size > bufsize) {
+	if ((size_t)sndbuf_size > bufsize) {
 		if (buf)
 			(void)free(buf);
 		bufsize = sndbuf_size;
@@ -1025,7 +1025,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 		progress = 0;
 		preserve = 0;
 	}
-	if (rcvbuf_size > bufsize) {
+	if ((size_t)rcvbuf_size > bufsize) {
 		if (buf)
 			(void)free(buf);
 		bufsize = rcvbuf_size;
@@ -1199,7 +1199,7 @@ initconn(void)
 	unsigned int addr[16], port[2];
 	unsigned int af, hal, pal;
 	socklen_t len;
-	char *pasvcmd = NULL;
+	const char *pasvcmd = NULL;
 	int overbose;
 
 #ifdef INET6
@@ -1423,7 +1423,7 @@ initconn(void)
 				data_addr.su_family = AF_INET6;
 				data_addr.su_len = sizeof(struct sockaddr_in6);
 			    {
-				int i;
+				size_t i;
 				for (i = 0; i < sizeof(struct in6_addr); i++) {
 					data_addr.si_su.su_sin6.sin6_addr.s6_addr[i] =
 					    UC(addr[i]);
@@ -1831,7 +1831,7 @@ proxtrans(const char *cmd, const char *local, const char *remote)
 	sigfunc volatile oldintr;
 	int prox_type, nfnd;
 	int volatile secndflag;
-	char *volatile cmd2;
+	const char *volatile cmd2;
 
 	oldintr = NULL;
 	secndflag = 0;
