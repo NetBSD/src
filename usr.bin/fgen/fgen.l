@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.28 2009/04/12 03:13:09 lukem Exp $	*/
+/*	$NetBSD: fgen.l,v 1.29 2009/04/12 03:15:35 lukem Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -47,7 +47,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.28 2009/04/12 03:13:09 lukem Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.29 2009/04/12 03:15:35 lukem Exp $");
 #endif
 
 %}
@@ -704,13 +704,13 @@ struct macro macros[] = {
 	{ "/c*",	"chars" },
 	{ "ca1+",	"char+" },
 	{ "carret",	"b(lit) 00 00 00 0x0d" },
-	{ ".d"		"base @ swap 0x0a base ! . base !" },
+	{ ".d",		"base @ swap 0x0a base ! . base !" },
 	{ "decode-bytes", ">r over r@ + swap r@ - rot r>" },
 	{ "3drop",	"drop 2drop" },
 	{ "3dup",	"2 pick 2 pick 2 pick" },
 	{ "erase",	"0 fill" },
 	{ "false",	"0" },
-	{ ".h"		"base @ swap 0x10 base ! . base !" },
+	{ ".h",		"base @ swap 0x10 base ! . base !" },
 	{ "linefeed",	"b(lit) 00 00 00 0x0a" },
 	{ "/n*",	"cells" },
 	{ "na1+",	"cell+", },
