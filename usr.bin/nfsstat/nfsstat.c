@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.22 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.23 2009/04/12 23:34:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.22 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.23 2009/04/12 23:34:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,8 @@ __RCSID("$NetBSD: nfsstat.c,v 1.22 2008/07/21 14:19:24 lukem Exp $");
 
 struct nlist nl[] = {
 #define	N_NFSSTAT	0
-	{ "_nfsstats" },
-	{ "" },
+	{ "_nfsstats", 0, 0, 0, 0 },
+	{ "", 0, 0, 0, 0 },
 };
 
 #define	MASK(a)	(1 << NFSPROC_##a)
@@ -404,7 +404,7 @@ sidewaysintpr(interval)
 	memset(&last, 0, sizeof(last));
 
 	for (hdrcnt = 1;;) {
-		int i;
+		size_t i;
 
 		if (!--hdrcnt) {
 			printhdr();
@@ -453,7 +453,7 @@ sidewaysintpr(interval)
 void
 printhdr()
 {
-	int i;
+	size_t i;
 
 	printf("        ");
 	for (i = 0; i < NSHORTPROC; i++)
