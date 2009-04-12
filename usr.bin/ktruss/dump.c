@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.32 2009/01/11 03:05:23 christos Exp $	*/
+/*	$NetBSD: dump.c,v 1.33 2009/04/12 11:24:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.32 2009/01/11 03:05:23 christos Exp $");
+__RCSID("$NetBSD: dump.c,v 1.33 2009/04/12 11:24:18 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -573,7 +573,7 @@ syscallprint(struct ktr_header *kth)
 
 	case SYS_ptrace :
 		if ((long)*ap >= 0 &&
-		    *ap < sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
+		    *ap < (register_t)(sizeof(ptrace_ops) / sizeof(ptrace_ops[0])))
 			wprintf("(%s", ptrace_ops[*ap]);
 		else
 			wprintf("(%ld", (long)*ap);
@@ -637,7 +637,7 @@ sysretprint(struct ktr_header *kth)
 			break;
 		default:
 			wprintf(" = %ld", (long)ret);
-			if (kth->ktr_len > offsetof(struct ktr_sysret,
+			if (kth->ktr_len > (int)offsetof(struct ktr_sysret,
 			    ktr_retval_1) && ktr->ktr_retval_1 != 0)
 				wprintf(", %ld", (long)ktr->ktr_retval_1);
 			break;
