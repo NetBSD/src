@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.802 2009/04/12 17:24:51 christos Exp $
+# $NetBSD: mi,v 1.803 2009/04/12 19:55:05 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4931,6 +4931,8 @@
 ./var/chroot/named/usr/libexec			base-bind-root
 ./var/chroot/named/var				base-bind-root
 ./var/chroot/named/var/run			base-bind-root
+./var/chroot/named/var/run/lwresd		base-bind-root
+./var/chroot/named/var/run/named		base-bind-root
 ./var/chroot/named/var/tmp			base-bind-root
 ./var/chroot/ntpd				base-ntp-root
 ./var/chroot/ntpd/dev				base-ntp-root
@@ -4985,6 +4987,8 @@
 ./var/preserve					base-util-root
 ./var/quotas					base-util-root
 ./var/run					base-sys-root
+./var/run/lwresd				base-bind-root
+./var/run/named					base-bind-root
 ./var/rwho					base-netutil-root
 ./var/spool					base-sys-root
 ./var/spool/ftp					base-netutil-root
