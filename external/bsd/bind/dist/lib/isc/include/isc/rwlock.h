@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.1.1 2009/03/22 15:02:14 christos Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2 2009/04/13 21:20:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -38,6 +38,7 @@ typedef enum {
 } isc_rwlocktype_t;
 
 #ifdef ISC_PLATFORM_USETHREADS
+#ifndef ISC_PLATFORM_USE_NATIVE_RWLOCKS
 #if defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
 #define ISC_RWLOCK_USEATOMIC 1
 #endif
@@ -101,6 +102,7 @@ struct isc_rwlock {
 	isc_rwlocktype_t	original;
 #endif  /* ISC_PLATFORM_HAVEXADD && ISC_PLATFORM_HAVECMPXCHG */
 };
+#endif /* !ISC_PLATFORM_USE_NATIVE_RWLOCKS */
 #else /* ISC_PLATFORM_USETHREADS */
 struct isc_rwlock {
 	unsigned int		magic;
