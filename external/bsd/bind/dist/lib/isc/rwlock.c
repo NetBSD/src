@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.c,v 1.1.1.1 2009/03/22 15:02:07 christos Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.2 2009/04/13 21:20:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #include <config.h>
 
 #include <stddef.h>
+#include <stdlib.h>
 
 #include <isc/atomic.h>
 #include <isc/magic.h>
@@ -36,6 +37,111 @@
 #define VALID_RWLOCK(rwl)	ISC_MAGIC_VALID(rwl, RWLOCK_MAGIC)
 
 #ifdef ISC_PLATFORM_USETHREADS
+#ifdef ISC_PLATFORM_USE_NATIVE_RWLOCKS
+
+isc_result_t
+isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
+		unsigned int write_quota)
+{
+	REQUIRE(rwl != NULL);
+
+	UNUSED(read_quota);
+	UNUSED(write_quota);
+
+	return pthread_rwlock_init(rwl, NULL) == 0 ?
+	    ISC_R_SUCCESS : ISC_R_FAILURE;
+}
+
+isc_result_t
+isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type)
+{
+	REQUIRE(rwl != NULL);
+
+	switch (type) {
+	case isc_rwlocktype_none:
+		return ISC_R_SUCCESS;
+
+	case isc_rwlocktype_read:
+		return pthread_rwlock_rdlock(rwl) == 0 ?
+		    ISC_R_SUCCESS : ISC_R_LOCKBUSY;
+
+	case isc_rwlocktype_write:
+		return pthread_rwlock_wrlock(rwl) == 0 ?
+		    ISC_R_SUCCESS : ISC_R_LOCKBUSY;
+
+	default:
+		abort();
+		return (ISC_R_FAILURE);
+	}
+}
+
+isc_result_t
+isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type)
+{
+	REQUIRE(rwl != NULL);
+
+	switch (type) {
+	case isc_rwlocktype_none:
+		return ISC_R_SUCCESS;
+
+	case isc_rwlocktype_read:
+		return pthread_rwlock_tryrdlock(rwl) == 0 ?
+		    ISC_R_SUCCESS : ISC_R_LOCKBUSY;
+
+	case isc_rwlocktype_write:
+		return pthread_rwlock_trywrlock(rwl) == 0 ?
+		    ISC_R_SUCCESS : ISC_R_LOCKBUSY;
+
+	default:
+		abort();
+		return (ISC_R_FAILURE);
+	}
+}
+
+isc_result_t
+isc_rwlock_tryupgrade(isc_rwlock_t *rwl)
+{
+	REQUIRE(rwl != NULL);
+
+	/*
+	 * XXX: we need to make sure we are holding a read lock here
+	 * but how to do it atomically?
+	 */
+	return pthread_rwlock_trywrlock(rwl) == 0 ?
+	    ISC_R_SUCCESS : ISC_R_LOCKBUSY;
+}
+
+void
+isc_rwlock_downgrade(isc_rwlock_t *rwl)
+{
+	REQUIRE(rwl != NULL);
+
+	/*
+	 * XXX: we need to make sure we are holding a write lock here
+	 * and then give it up and get a read lock but how to do it atomically?
+	 */
+	pthread_rwlock_unlock(rwl);
+	REQUIRE(pthread_rwlock_tryrdlock(rwl) == 0);
+}
+
+isc_result_t
+isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type)
+{
+	REQUIRE(rwl != NULL);
+	UNUSED(type);
+
+	pthread_rwlock_unlock(rwl);
+
+	return (ISC_R_SUCCESS);
+}
+
+void
+isc_rwlock_destroy(isc_rwlock_t *rwl)
+{
+	REQUIRE(rwl != NULL);
+}
+
+#else /* !ISC_PLATFORM_USE_NATIVE_RWLOCKS */
 
 #ifndef RWLOCK_DEFAULT_READ_QUOTA
 #define RWLOCK_DEFAULT_READ_QUOTA 4
@@ -720,6 +826,7 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 }
 
 #endif /* ISC_PLATFORM_HAVEXADD && ISC_PLATFORM_HAVECMPXCHG */
+#endif /* !ISC_PLATFORM_USE_NATIVE_RWLOCKS */
 #else /* ISC_PLATFORM_USETHREADS */
 
 isc_result_t
