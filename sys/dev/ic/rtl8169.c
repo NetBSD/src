@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.115 2009/04/13 12:33:05 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.116 2009/04/13 12:38:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.115 2009/04/13 12:33:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.116 2009/04/13 12:38:06 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -638,6 +638,9 @@ re_attach(struct rtk_softc *sc)
 			aprint_normal_dev(sc->sc_dev,
 			    "Unknown revision (0x%08x)\n", hwrev);
 			sc->sc_rev = 0;
+			/* assume the latest features */
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 		}
 
 		/* Set RX length mask */
