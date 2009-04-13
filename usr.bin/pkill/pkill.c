@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.24 2009/02/28 18:16:11 christos Exp $	*/
+/*	$NetBSD: pkill.c,v 1.25 2009/04/13 00:12:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.24 2009/02/28 18:16:11 christos Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.25 2009/04/13 00:12:16 lukem Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 					continue;
 
 				j = 0;
-				while (j < sizeof(buf) && *pargv != NULL) {
+				while (j < (int)sizeof(buf) && *pargv != NULL) {
 					j += snprintf(buf + j, sizeof(buf) - j,
 					    pargv[1] != NULL ? "%s " : "%s",
 					    pargv[0]);
@@ -275,7 +275,7 @@ main(int argc, char **argv)
 			if (rv == 0) {
 				if (fullmatch) {
 					if (regmatch.rm_so == 0 &&
-					    regmatch.rm_eo == strlen(mstr))
+					    regmatch.rm_eo == (regoff_t)strlen(mstr))
 						selected[i] = 1;
 				} else
 					selected[i] = 1;
@@ -319,7 +319,7 @@ main(int argc, char **argv)
 		}
 
 		SLIST_FOREACH(li, &ppidlist, li_chain)
-			if (kp->p_ppid == (uid_t)li->li_number)
+			if ((uid_t)kp->p_ppid == (uid_t)li->li_number)
 				break;
 		if (SLIST_FIRST(&ppidlist) != NULL && li == NULL) {
 			selected[i] = 0;
@@ -327,7 +327,7 @@ main(int argc, char **argv)
 		}
 
 		SLIST_FOREACH(li, &pgrplist, li_chain)
-			if (kp->p__pgid == (uid_t)li->li_number)
+			if (kp->p__pgid == (pid_t)li->li_number)
 				break;
 		if (SLIST_FIRST(&pgrplist) != NULL && li == NULL) {
 			selected[i] = 0;
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 		}
 
 		SLIST_FOREACH(li, &sidlist, li_chain)
-			if (kp->p_sid == (uid_t)li->li_number)
+			if (kp->p_sid == (pid_t)li->li_number)
 				break;
 		if (SLIST_FIRST(&sidlist) != NULL && li == NULL) {
 			selected[i] = 0;
