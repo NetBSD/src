@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.1 2006/09/01 21:26:18 uwe Exp $
+# $NetBSD: Makefile.bootprogs,v 1.2 2009/04/13 12:54:45 nonaka Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -21,7 +21,7 @@ LIBC=		# nothing
 
 .PATH:	${.CURDIR}/..
 
-COPTS=		-Os -ffreestanding
+COPTS=		-m4-nofpu -Os -ffreestanding
 
 LDFLAGS+=	-N
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes
@@ -29,22 +29,7 @@ CPPFLAGS+=	-nostdinc -D_STANDALONE
 CPPFLAGS+=	-DSH4
 CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../boot -I${S}
 
-LANDISK_STAND_DIR?= $S/arch/landisk/stand
-
-CLEANFILES+=	machine sh3
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine sh3
-.NOPATH: machine sh3
-
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-sh3::
-	-rm -f $@
-	ln -s ${S}/arch/sh3/include $@
-.endif
+.include <bsd.klinks.mk>
 
 lib:
 .ifdef LIBOBJ
