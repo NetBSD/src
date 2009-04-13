@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.27 2009/03/18 16:00:14 cegger Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.28 2009/04/13 11:54:58 he Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.27 2009/03/18 16:00:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.28 2009/04/13 11:54:58 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.27 2009/03/18 16:00:14 cegger E
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
