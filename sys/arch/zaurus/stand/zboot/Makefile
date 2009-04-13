@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/03/03 09:20:55 nonaka Exp $
+#	$NetBSD: Makefile,v 1.3 2009/04/13 12:25:36 nonaka Exp $
 
 PROG=		zboot
 
@@ -29,20 +29,6 @@ LIBCRTEND=	# nothing
 NEWVERSWHAT?=   "Boot"
 VERSIONFILE?=	${.CURDIR}/version
 
-.if !make(obj) && !make(clean) && !make(cleandir) && !make(release)
-.BEGIN: machine arm
-.NOPATH: machine arm
-
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-arm::
-	-rm -f $@
-	ln -s ${S}/arch/arm/include $@
-.endif
-CLEANFILES+=	machine arm
-
 ### find out what to use for libkern
 KERN_AS=		library
 .include "${S}/lib/libkern/Makefile.inc"
@@ -64,6 +50,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${CC} -c vers.c
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 cleandir distclean: cleanlibdir
