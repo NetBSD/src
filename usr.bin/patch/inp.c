@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/inp.c,v 1.6 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: inp.c,v 1.19 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: inp.c,v 1.20 2009/04/13 00:07:26 lukem Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inp.c,v 1.19 2008/09/19 18:33:34 joerg Exp $");
+__RCSID("$NetBSD: inp.c,v 1.20 2009/04/13 00:07:26 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -253,7 +253,7 @@ plan_a(const char *filename)
 		out_of_mem = false;
 		return false;	/* force plan b because plan a bombed */
 	}
-	if (i_size > SIZE_MAX) {
+	if (i_size > (off_t)SIZE_MAX) {
 		say("block too large to mmap\n");
 		return false;
 	}
