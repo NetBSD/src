@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.2 2009/04/12 22:40:56 christos Exp $ */
+/* $Id: platform.h,v 1.3 2009/04/13 20:23:27 christos Exp $ */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -251,7 +251,7 @@
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
-#ifdef __HAVE_ATOMIC64_OP
+#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADDQ 1
 #endif
 
