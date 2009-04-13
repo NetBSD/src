@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.35 2009/04/12 22:47:39 he Exp $	*/
+/*	$NetBSD: send.c,v 1.36 2009/04/13 10:03:58 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.35 2009/04/12 22:47:39 he Exp $");
+__RCSID("$NetBSD: send.c,v 1.36 2009/04/13 10:03:58 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -655,16 +655,16 @@ static struct name *
 ncopy(struct name *np)
 {
 	struct name *rv;
-	struct name *lp = NULL; /* XXX gcc -Wuninitialized sh3 */
+	struct name *lp;
 	struct name *tp;
 
+	lp = NULL; /* XXX gcc -Wuninitialized sh3 */
 	rv = NULL;
 	for (/*EMPTY*/; np; np = np->n_flink) {
 		tp = nalloc(np->n_name, np->n_type);
 		if (rv == NULL)
 			rv = tp;
 		else {
-			/*LINTED*/
 			lp->n_flink = tp;
 			tp->n_blink = lp;
 		}
