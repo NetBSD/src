@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.72 2009/03/09 19:48:02 njoly Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.73 2009/04/13 23:20:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.72 2009/03/09 19:48:02 njoly Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.73 2009/04/13 23:20:27 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -548,7 +548,7 @@ showvmstat(void)
 
 	/* Disks */
 	for (l = 0, i = 0, r = DISKROW, c = DISKCOL;
-	     i < ndrive; i++) {
+	     i < (int)ndrive; i++) {
 		if (!drv_select[i])
 			continue;
 
@@ -739,7 +739,7 @@ putint(int n, int l, int c, int w)
 		return;
 	}
 	(void)snprintf(b, sizeof b, "%*d", w, n);
-	if (strlen(b) > w) {
+	if ((int)strlen(b) > w) {
 		if (display_mode == TIME)
 			hline('*', w);
 		else
@@ -761,7 +761,7 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 		return;
 	}
 	(void)snprintf(b, sizeof b, "%*.*f", w, d, f);
-	if (strlen(b) > w) {
+	if ((int)strlen(b) > w) {
 		hline('*', w);
 		return;
 	}
