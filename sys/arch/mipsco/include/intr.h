@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: intr.h,v 1.18 2009/04/13 09:37:50 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -53,7 +53,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 #include <sys/types.h>
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <mips/locore.h>
 
