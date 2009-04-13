@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.84 2009/04/13 18:58:08 snj Exp $
+#	 $NetBSD: mi,v 1.85 2009/04/13 20:11:59 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5637,7 +5637,7 @@
 ./usr/X11R7/include/freetype2/freetype/config/ftoption.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/config/ftstdlib.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/freetype.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/fftadvanc.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftadvanc.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbbox.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbdf.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
