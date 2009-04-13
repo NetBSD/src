@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.4 2009/03/18 10:22:39 cegger Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.5 2009/04/13 18:51:54 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -319,6 +319,9 @@ int
 dm_dev_free(dm_dev_t *dmv)
 {
 	KASSERT(dmv != NULL);
+
+	mutex_destroy(&dmv->dev_mtx);
+	cv_destroy(&dmv->dev_cv);
 
 	if(dmv->diskp != NULL)
 		(void)kmem_free(dmv->diskp, sizeof(struct disk));
