@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.103 2009/04/12 11:23:12 lukem Exp $	*/
+/*	$NetBSD: kdump.c,v 1.104 2009/04/13 14:39:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.103 2009/04/12 11:23:12 lukem Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.104 2009/04/13 14:39:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,33 @@ main(int argc, char **argv)
 	char *cp;
 
 	setprogname(argv[0]);
+
+	if (strcmp(getprogname(), "ioctlname") == 0) {
+		int i;
+
+		while ((ch = getopt(argc, argv, "e:")) != -1)
+			switch (ch) {
+			case 'e':
+				emul_name = optarg;
+				break;
+			default:
+				usage();
+				break;
+			}
+		setemul(emul_name, 0, 0);
+		argv += optind;
+		argc -= optind;
+
+		if (argc < 1)
+			usage();
+
+		for (i = 0; i < argc; i++) {
+			ioctldecode(strtoul(argv[i], NULL, 0));
+			(void)putchar('\n');
+		}
+		return 0;
+	}
+		
 	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:xX:")) != -1) {
 		switch (ch) {
 		case 'e':
@@ -455,9 +482,9 @@ ioctldecode(u_long cmd)
 
 	c = (cmd >> 8) & 0xff;
 	if (isprint(c))
-		printf(",_IO%s('%c',", dirbuf, c);
+		printf("_IO%s('%c',", dirbuf, c);
 	else
-		printf(",_IO%s(0x%02x,", dirbuf, c);
+		printf("_IO%s(0x%02x,", dirbuf, c);
 	output_long(cmd & 0xff, decimal == 0);
 	if ((cmd & IOC_VOID) == 0) {
 		putchar(',');
@@ -515,8 +542,10 @@ ktrsyscall(struct ktr_syscall *ktr)
 			argcount--;
 			if ((cp = ioctlname(*ap)) != NULL)
 				(void)printf(",%s", cp);
-			else
+			else {
+				(void)putchar(',');
 				ioctldecode(*ap);
+			}
 			ap++;
 			argcount--;
 			c = ',';
@@ -1060,9 +1089,13 @@ signame(long sig, int xlat)
 static void
 usage(void)
 {
-
-	(void)fprintf(stderr, "Usage: %s [-dlNnRT] [-e emulation] "
-	   "[-f file] [-m maxdata] [-p pid]\n             [-t trstr] "
-	   "[-x | -X size] [file]\n", getprogname());
+	if (strcmp(getprogname(), "ioctlname") == 0) {
+		(void)fprintf(stderr, "Usage: %s [-e emulation] <ioctl> ...\n",
+		    getprogname());
+	} else {
+		(void)fprintf(stderr, "Usage: %s [-dlNnRT] [-e emulation] "
+		   "[-f file] [-m maxdata] [-p pid]\n             [-t trstr] "
+		   "[-x | -X size] [file]\n", getprogname());
+	}
 	exit(1);
 }
