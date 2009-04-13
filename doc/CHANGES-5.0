@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.133 2009/04/12 02:36:33 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.134 2009/04/13 21:43:38 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6035,4 +6035,53 @@ share/man/man4/man4.vax/hk.4			1.14
 
 	Fix markup.
 	[joerg, ticket #697]
+
+bin/pax/extern.h				1.56
+bin/pax/file_subs.c				1.62
+bin/pax/options.c				1.104
+bin/pax/pat_rep.c				1.29
+bin/pax/pax.h					1.30
+
+	tar(1): do not glob when passed filenames on the command line.
+	Evidently this was missed upon switching to pax-as-tar.  Brings
+	us in line with other tar implementations and fixes PR 41167.
+	[christos, ticket #678]
+
+dist/nvi/common/multibyte.h			1.3
+dist/nvi/regex/engine.c				1.6 via patch
+
+	Fix PR/41136: \<word search doesn't work in vi.  Don't reuse
+	RCHAR_T(=wchar_t)'s bits, CSI wchar_t is opaque object.
+	[tnozaki, ticket #698]
+
+share/man/man4/man4.hp300/rd.4			1.11
+
+	Fix markup.
+	[joerg, ticket #699]
+
+sys/nfs/nfs_serv.c				1.144
+sys/nfs/nfsm_subs.h				1.51
+
+	nfsrv_rename() can exit without calling genfs_renamelock_exit()
+	because the nfsm_reply() can do return (0) on error.  Change
+	nfsm_reply to use 'error = 0; goto nfsmout' instead.  Fix a few
+	places so it's safe to goto nfsmout from nfsm_reply, or other
+	macros calling it.  As a side effect it could fix a missing
+	vrele(dirp) in various place where nfsm_reply could return(0).
+	Addresses PR 41158.
+	[ad, ticket #700]
+
+sys/nfs/nfs_syscalls.c				1.147
+
+	Fix some of the races (but probably not all of them) in the NFS
+	server code.  nfssvc_nfsd(): change a splsoftclock()/spx() to
+	mutex_enter/exit(&nfsd_lock).  m_freem(nd_nam) in
+	nfsrv_slpderef() instead of nfsrv_zapsock() to avoid possible
+	use after free in nfssvc_nfsd(). Fix nfsrv_slpderef() to not
+	release nfsd_lock before testing SLP_VALID and reaquiring it
+	just after. This could cause a use after free of the slp if
+	one thread is in nfsrv_slpderef() and the other one grabs slp
+	from nfssvc_sockpending and zap it.
+	Addresses PR kern/41154: possible races in NFS server code.
+	[ad, ticket #701]
 
