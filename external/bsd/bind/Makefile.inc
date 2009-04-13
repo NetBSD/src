@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2009/04/12 03:46:04 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2009/04/13 21:20:40 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -59,6 +59,8 @@ CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
 .endif
 
 .if ${NAMED_USE_PTHREADS} == "yes"
+# XXX: Not ready yet
+# CPPFLAGS+=	-DISC_PLATFORM_USE_NATIVE_RWLOCKS
 .if !defined (LIB) || empty(LIB)
 LDADD+= -lpthread
 DPADD+= ${LIBPTHREAD}
