@@ -1,4 +1,4 @@
-/*	$NetBSD: rev.c,v 1.8 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: rev.c,v 1.9 2009/04/13 04:36:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: rev.c,v 1.8 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: rev.c,v 1.9 2009/04/13 04:36:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *filename, *p, *t;
+	const char *filename;
+	char *p, *t;
 	FILE *fp;
 	size_t len;
 	int ch, rval;
