@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.28 2008/02/24 20:42:46 joerg Exp $	*/
+/*	$NetBSD: pax.h,v 1.28.8.1 2009/04/13 20:42:59 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -89,6 +89,7 @@ typedef struct pattern {
 	int		flgs;		/* processing/state flags */
 #define MTCH		0x1		/* pattern has been matched */
 #define DIR_MTCH	0x2		/* pattern matched a directory */
+#define NOGLOB_MTCH	0x4		/* non-globbing match */
 	struct pattern	*fow;		/* next pattern */
 } PATTERN;
 
