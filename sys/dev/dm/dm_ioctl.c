@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.10 2009/04/06 22:58:10 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.11 2009/04/13 18:51:54 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -219,10 +219,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	if ((dmv = dm_dev_alloc()) == NULL)
 		return ENOMEM;
-	
-	if ((dmv->diskp = kmem_alloc(sizeof(struct disk), KM_NOSLEEP)) == NULL)
-		return ENOMEM;
-	
+		
 	if (uuid)
 		strncpy(dmv->uuid, uuid, DM_UUID_LEN);
 	else 
@@ -251,11 +248,8 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	disk_init(dmv->diskp, dmv->name, &dmdkdriver);
 	disk_attach(dmv->diskp);
 	
-	if ((r = dm_dev_insert(dmv)) != 0){
-		mutex_destroy(&dmv->dev_mtx);
-		cv_destroy(&dmv->dev_cv);
+	if ((r = dm_dev_insert(dmv)) != 0)		
 		dm_dev_free(dmv);
-	}
 	
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);
 	DM_REMOVE_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
@@ -399,9 +393,6 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
 	
 	dm_table_head_destroy(&dmv->table_head);
-
-	mutex_destroy(&dmv->dev_mtx);
-	cv_destroy(&dmv->dev_cv);
 
 	/* Destroy disk device structure */
 	disk_detach(dmv->diskp);
