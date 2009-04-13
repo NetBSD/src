@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.26 2009/01/14 07:07:12 jnemeth Exp $
+# $NetBSD: shl.mi,v 1.27 2009/04/13 18:58:08 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -102,7 +102,7 @@
 ./usr/X11R7/lib/libexpat.so.2.0			-unknown-		xorg
 ./usr/X11R7/lib/libfontconfig.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libfontenc.so.2.0		-unknown-		xorg
-./usr/X11R7/lib/libfreetype.so.7.0		-unknown-		xorg
+./usr/X11R7/lib/libfreetype.so.7.1		-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4.0			-unknown-		xorg
 ./usr/X11R7/lib/liblbxutil.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so.1.0		-unknown-		xorg
