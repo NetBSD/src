@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.55 2009/03/02 20:53:11 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.56 2009/04/13 21:17:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.55 2009/03/02 20:53:11 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.56 2009/04/13 21:17:37 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1258,6 +1258,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
 	mod_t	*mp;
 	const	char *lts, *rts;
+	char lbuf[128], rbuf[128];
 
 	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
 		lst = (lstp = ltp->t_subt)->t_tspec;
@@ -1309,19 +1310,21 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		    ((!lstp->t_const && rstp->t_const) ||
 		     (!lstp->t_volatile && rstp->t_volatile))) {
 			/* left side has not all qualifiers of right */
+			tyname(lbuf, sizeof(lbuf), lstp);
+			tyname(rbuf, sizeof(rbuf), lstp);
 			switch (op) {
 			case INIT:
 			case RETURN:
 				/* incompatible pointer types */
-				warning(182);
+				warning(182, lbuf, rbuf);
 				break;
 			case FARG:
 				/* argument has incompat. ptr. type, arg #%d */
-				warning(153, arg);
+				warning(153, arg, lbuf, rbuf);
 				break;
 			default:
 				/* operands have incompat. ptr. types, op %s */
-				warning(128, mp->m_name);
+				warning(128, mp->m_name, lbuf, rbuf);
 				break;
 			}
 		}
@@ -1355,7 +1358,8 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			break;
 		case FARG:
 			/* argument has incompatible pointer type, arg #%d */
-			warning(153, arg);
+			warning(153, arg, tyname(lbuf, sizeof(lbuf), ltp),
+			    tyname(rbuf, sizeof(rbuf), rtp));
 			break;
 		default:
 			illptrc(mp, ltp, rtp);
