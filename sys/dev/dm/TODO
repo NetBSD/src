@@ -2,7 +2,7 @@ Important unimplemented features in current device-mapper implementation
 
 * Implement dm_dev_event_ioctl and dm_target_msg_ioctl functions
 
-* Write more targets mirror, stripe.
+* Write more targets mirror.
 
 * Snapshot target, there is some code in repository already
 
@@ -12,6 +12,8 @@ Important unimplemented features in current device-mapper implementation
 
 * Integrate LVM with the sysinst, so we can configure LVM during installation
 
+* Parse whole config line for every target in NetBSD libdevmapper and do not 
+  work with strings in the kernel.
 
 			Pain in the sky tasks
 
