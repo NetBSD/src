@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.34 2009/02/16 20:53:55 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.35 2009/04/14 11:53:40 apb Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.166 2008/07/17 08:48:00 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.34 2009/02/16 20:53:55 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.35 2009/04/14 11:53:40 apb Exp $");
 
 #include <sys/queue.h>
 
@@ -420,11 +420,11 @@ input_userauth_banner(int type, u_int32_t seq, void *ctxt)
 	debug3("input_userauth_banner");
 	raw = packet_get_string(&len);
 	lang = packet_get_string(NULL);
-	if (options.log_level >= SYSLOG_LEVEL_INFO) {
+	if (len > 0 && options.log_level >= SYSLOG_LEVEL_INFO) {
 		if (len > 65536)
 			len = 65536;
-		msg = xmalloc(len * 4); /* max expansion from strnvis() */
-		strvisx(msg, raw, len * 4, VIS_SAFE|VIS_OCTAL);
+		msg = xmalloc(len * 4 + 1); /* max expansion from strnvis() */
+		strvisx(msg, raw, len * 4 + 1, VIS_SAFE|VIS_OCTAL);
 		fprintf(stderr, "%s", msg);
 		xfree(msg);
 	}
