@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.40 2008/08/29 00:44:48 gmcgarry Exp $ */
+/* $NetBSD: xlint.c,v 1.41 2009/04/14 09:08:39 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.40 2008/08/29 00:44:48 gmcgarry Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.41 2009/04/14 09:08:39 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -312,6 +312,7 @@ main(int argc, char *argv[])
 	int	c;
 	char	flgbuf[3], *tmp, *s;
 	size_t	len;
+	const char *ks;
 
 	setprogname(argv[0]);
 
@@ -578,9 +579,9 @@ main(int argc, char *argv[])
 		terminate(0);
 
 	if (!oflag) {
-		if ((s = getenv("LIBDIR")) == NULL || strlen(s) == 0)
-			s = PATH_LINTLIB;
-		appcstrg(&libsrchpath, s);
+		if ((ks = getenv("LIBDIR")) == NULL || strlen(ks) == 0)
+			ks = PATH_LINTLIB;
+		appcstrg(&libsrchpath, ks);
 		findlibs(libs);
 		findlibs(deflibs);
 	}
@@ -606,7 +607,8 @@ static void
 fname(const char *name)
 {
 	const	char *bn, *suff;
-	char	**args, *ofn, *pathname, *CC;
+	char	**args, *ofn, *pathname;
+	const char *CC;
 	size_t	len;
 	int is_stdin;
 	int	fd;
