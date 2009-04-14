@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2005/01/12 14:41:29 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.5 2009/04/14 22:15:17 lukem Exp $
 
 PROG=	asa
-WARNS=	3
 
 .include <bsd.prog.mk>

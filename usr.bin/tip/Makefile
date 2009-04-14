@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2006/05/22 12:32:20 dan Exp $
+#	$NetBSD: Makefile,v 1.28 2009/04/14 22:15:27 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -27,7 +27,6 @@
 
 .include <bsd.own.mk>
 
-WARNS=4
 PROG=	tip
 LINKS=	${BINDIR}/tip ${BINDIR}/cu
 MLINKS=	tip.1 cu.1

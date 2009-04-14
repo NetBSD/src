@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2003/09/25 18:32:10 dsl Exp $
+#	$NetBSD: Makefile,v 1.16 2009/04/14 22:15:24 lukem Exp $
+
+WARNS?= 1	# XXX -Wshadow -Wcast-qual issues
 
 .include <bsd.own.mk>
 

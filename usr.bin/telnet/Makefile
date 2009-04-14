@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.43 2009/04/14 22:15:27 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,6 +33,8 @@
 #
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
+
+WARNS?=	1	# XXX -Wshadow etc.  fix asap
 
 .include <bsd.own.mk>
 

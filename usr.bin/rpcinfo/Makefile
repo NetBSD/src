@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.12 2007/05/28 18:12:06 tls Exp $
+#	$NetBSD: Makefile,v 1.13 2009/04/14 22:15:25 lukem Exp $
 #	from: @(#)Makefile	5.2 (Berkeley) 5/11/90
+
+WARNS?=	2	# XXX -Wcast-qual issues
 
 .include <bsd.own.mk>
 

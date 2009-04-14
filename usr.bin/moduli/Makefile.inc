@@ -1,8 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/01/24 18:59:23 elad Exp $
+# $NetBSD: Makefile.inc,v 1.2 2009/04/14 22:15:24 lukem Exp $
 
 .include <bsd.own.mk>
 
-WARNS=4
 DPADD+= ${LIBCRYPTO}
 LDADD+= -lcrypto
 

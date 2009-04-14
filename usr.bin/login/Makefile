@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.49 2008/10/19 22:05:23 apb Exp $
+#	$NetBSD: Makefile,v 1.50 2009/04/14 22:15:22 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
+
+WARNS?=	2	# XXX -Wcast-qual issues
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# setuid
-WARNS=	2
 PROG=	login
 SRCS=	copyrightstr.c
 DPADD+=	${LIBUTIL} ${LIBCRYPT}

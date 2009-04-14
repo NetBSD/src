@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.16 2005/01/10 03:11:18 lukem Exp $
+# $NetBSD: Makefile,v 1.17 2009/04/14 22:15:18 lukem Exp $
+
+WARNS?=	2	# XXX -Wextra -Wsign-compare
 
 NOLINT= # defined
 
@@ -6,8 +8,6 @@ NOLINT= # defined
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/com_err
-
-WARNS?=  1
 
 PROG= compile_et
 

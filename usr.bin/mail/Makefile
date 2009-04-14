@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2009/04/11 14:22:32 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2009/04/14 22:15:23 lukem Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -62,7 +62,6 @@ SRCS+=	thread.c
 CPPFLAGS+=	-DTHREAD_SUPPORT
 .endif
 
-WARNS=	4
 CWARNFLAGS+=	-Wextra
 
 .PATH: ${.CURDIR}/misc
