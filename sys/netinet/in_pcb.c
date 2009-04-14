@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.130 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.131 2009/04/14 21:25:20 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.130 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.131 2009/04/14 21:25:20 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -262,7 +262,6 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		if (so->so_options & SO_REUSEADDR)
 			reuseport = SO_REUSEADDR|SO_REUSEPORT;
 	} else if (!in_nullhost(sin->sin_addr)) {
-		sin->sin_port = 0;		/* yech... */
 		INADDR_TO_IA(sin->sin_addr, ia);
 		/* check for broadcast addresses */
 		if (ia == NULL)
