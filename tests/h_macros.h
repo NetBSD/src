@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.1 2009/02/20 21:40:55 jmmv Exp $ */
+/* $NetBSD: h_macros.h,v 1.2 2009/04/14 10:19:38 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #endif
 
 #include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <atf-c.h>
@@ -44,3 +46,20 @@
 	ATF_CHECK_MSG((x) != (v), "%s: %s", #x, strerror(errno))
 
 #define RL(x) REQUIRE_LIBC(x, -1)
+
+static __inline void
+atf_tc_fail_errno(const char *fmt, ...)
+{
+	va_list ap;
+	char buf[1024];
+	int sverrno = errno;
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	strlcat(buf, ": ", sizeof(buf));
+	strlcat(buf, strerror(sverrno), sizeof(buf));
+
+	atf_tc_fail(buf);
+}
