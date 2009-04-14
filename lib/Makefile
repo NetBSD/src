@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.134 2009/04/12 17:09:46 christos Exp $
+#	$NetBSD: Makefile,v 1.135 2009/04/14 17:49:45 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -13,10 +13,6 @@ SUBDIR=	csu libc .WAIT libarch \
 
 # libform and libmenu need libcurses
 SUBDIR+=	.WAIT libform libmenu 
-
-.if (${MKATF} != "no")
-SUBDIR+= ../external/bsd/atf/lib/libatf-c ../external/bsd/atf/lib/libatf-c++
-.endif
 
 .if (${MKSKEY} != "no")
 SUBDIR+= libskey
@@ -95,11 +91,6 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libheimntlm
 SUBDIR+=	.WAIT libgssapi libhdb
 SUBDIR+=	.WAIT libkadm5srv libkadm5clnt libkafs libsl libss
-.endif
-
-.if (${MKLDAP} != "no")
-				# depends on libcrypto - only if ${MKCRYPTO}
-SUBDIR+=	../external/bsd/openldap/lib
 .endif
 
 SUBDIR+=	librump		# depends on librumpuser
