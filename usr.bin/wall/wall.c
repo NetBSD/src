@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.27 2009/02/15 06:06:55 dholland Exp $	*/
+/*	$NetBSD: wall.c,v 1.28 2009/04/14 07:54:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.27 2009/02/15 06:06:55 dholland Exp $");
+__RCSID("$NetBSD: wall.c,v 1.28 2009/04/14 07:54:51 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -198,8 +198,8 @@ makemsg(const char *fname)
 	time_t now;
 	FILE *fp;
 	int fd;
-	const char *whom;
-	char *p, *tty, tmpname[MAXPATHLEN], lbuf[100],
+	const char *whom, *tty;
+	char *p, tmpname[MAXPATHLEN], lbuf[100],
 	    hostname[MAXHOSTNAMELEN+1];
 
 	(void)snprintf(tmpname, sizeof tmpname, "%s/wall.XXXXXX", _PATH_TMP);
@@ -257,7 +257,7 @@ makemsg(const char *fname)
 
 	if (fstat(fd, &sbuf))
 		err(1, "can't stat temporary file");
-	if (sbuf.st_size > SIZE_T_MAX)
+	if ((uint64_t)sbuf.st_size > SIZE_T_MAX)
 		errx(1, "file too big");
 	mbufsize = sbuf.st_size;
 	if (!(mbuf = malloc(mbufsize)))
