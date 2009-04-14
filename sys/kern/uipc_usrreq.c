@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.80.2.1.2.2 2009/04/11 06:21:23 snj Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.80.2.1.2.3 2009/04/14 08:50:41 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80.2.1.2.2 2009/04/11 06:21:23 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80.2.1.2.3 2009/04/14 08:50:41 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1269,7 +1269,7 @@ unp_gc(void)
 			fp->f_msgcount--;
 			simple_unlock(&fp->f_slock);
 			unp_rights--;
-			(void) closef(fp, (struct lwp *)0);
+			(void) closef(fp, (struct proc *)0);
 			simple_lock(&fp->f_slock);
 		}
 		FILE_USE(fp);
