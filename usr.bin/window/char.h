@@ -1,4 +1,4 @@
-/*	$NetBSD: char.h,v 1.4 2003/08/07 11:17:21 agc Exp $	*/
+/*	$NetBSD: char.h,v 1.5 2009/04/14 08:50:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -47,7 +47,7 @@
  * using unctrl() by wwwrite() if ww_unctrl is set.
  */
 
-extern char *_unctrl[];
+extern const char *_unctrl[];
 extern char _cmap[];
 #define ctrl(c)		(c & 0x1f)
 #define unctrl(c)	(_unctrl[(unsigned char) (c)])
