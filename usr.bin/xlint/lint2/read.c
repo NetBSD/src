@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.23 2008/09/26 22:52:24 matt Exp $ */
+/* $NetBSD: read.c,v 1.24 2009/04/14 09:06:25 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.23 2008/09/26 22:52:24 matt Exp $");
+__RCSID("$NetBSD: read.c,v 1.24 2009/04/14 09:06:25 lukem Exp $");
 #endif
 
 #include <ctype.h>
@@ -360,10 +360,10 @@ static void
 decldef(pos_t *posp, const char *cp)
 {
 	sym_t	*symp, sym;
-	char	c, *ep, *pos1;
+	char	c, *ep, *pos1, *tname;
 	int	used, renamed;
 	hte_t	*hte, *renamehte = NULL;
-	const char *name, *rename;
+	const char *name, *newname;
 
 	(void)memset(&sym, 0, sizeof (sym));
 	STRUCT_ASSIGN(sym.s_pos, *posp);
@@ -444,22 +444,22 @@ decldef(pos_t *posp, const char *cp)
 	renamed = 0;
 	if (*cp == 'r') {
 		cp++;
-		name = xstrdup(name);
-		rename = inpname(cp, &cp);
+		tname = xstrdup(name);
+		newname = inpname(cp, &cp);
 
 		/* enter it and see if it's already been renamed */
-		renamehte = _hsearch(renametab, name, 1);
+		renamehte = _hsearch(renametab, tname, 1);
 		if (renamehte->h_hte == NULL) {
-			hte = hsearch(rename, 1);
+			hte = hsearch(newname, 1);
 			renamehte->h_hte = hte;
 			renamed = 1;
-		} else if (strcmp((hte = renamehte->h_hte)->h_name, rename)) {
+		} else if (strcmp((hte = renamehte->h_hte)->h_name, newname)) {
 			pos1 = xstrdup(mkpos(&renamehte->h_syms->s_pos));
 			/* %s renamed multiple times\t%s  ::  %s */
-			msg(18, name, pos1, mkpos(&sym.s_pos));
+			msg(18, tname, pos1, mkpos(&sym.s_pos));
 			free(pos1);
 		}
-		free((char *)name);
+		free(tname);
 	} else {
 		/* it might be a previously-done rename */
 		hte = _hsearch(renametab, name, 0);
