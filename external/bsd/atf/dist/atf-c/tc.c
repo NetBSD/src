@@ -404,11 +404,24 @@ body_parent(const atf_tc_t *tc, const atf_fs_path_t *workdir, pid_t pid,
             err = atf_libc_error(errno, "Error waiting for child process "
                                  "%d", pid);
     } else {
-        if (!WIFEXITED(state) || WEXITSTATUS(state) != EXIT_SUCCESS)
-            err = atf_tcr_init_reason_fmt(tcr, atf_tcr_failed_state,
-                                          "Test case did not exit cleanly; "
-                                          "state was %d", state);
-        else
+        if (!WIFEXITED(state) || WEXITSTATUS(state) != EXIT_SUCCESS) {
+            if (WIFEXITED(state))
+                err = atf_tcr_init_reason_fmt(tcr, atf_tcr_failed_state,
+                                             "Test case did not exit cleanly; "
+                                             "exit status was %d",
+                                             WEXITSTATUS(state));
+            else if (WIFSIGNALED(state))
+                err = atf_tcr_init_reason_fmt(tcr, atf_tcr_failed_state,
+                                             "Test case did not exit cleanly: "
+                                             "%s%s",
+                                             strsignal(WTERMSIG(state)),
+                                             WCOREDUMP(state) ?
+                                               " (core dumped)" : "");
+            else
+                err = atf_tcr_init_reason_fmt(tcr, atf_tcr_failed_state,
+                                             "Test case did not exit cleanly; "
+                                             "state was %d", state);
+        } else
             err = get_tc_result(workdir, tcr);
     }
 
