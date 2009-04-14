@@ -1,4 +1,4 @@
-/* $Id: vndcompress.c,v 1.5 2009/04/14 07:28:23 lukem Exp $ */
+/* $Id: vndcompress.c,v 1.6 2009/04/14 07:36:16 lukem Exp $ */
 
 /*
  * Copyright (c) 2005 by Florian Stoehr <netbsd@wolfnode.de>
@@ -260,7 +260,7 @@ readheader(int fd, struct cloop_header *clh, off_t *dstart)
 	offtable_size = (clh->num_blocks + 1) * sizeof(uint64_t);
 	offt = (uint64_t *)malloc(offtable_size);
 	
-	if (read(fd, offt, offtable_size) < offtable_size) {
+	if ((uint32_t)read(fd, offt, offtable_size) != offtable_size) {
 		free(offt);
 		return NULL;
 	}
