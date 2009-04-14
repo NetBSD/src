@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.8 2006/10/08 17:52:29 peter Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2009/04/14 22:15:16 lukem Exp $
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/6/93
 
-WARNS?=	1
+WARNS?=	4
 BINDIR?=/usr/bin

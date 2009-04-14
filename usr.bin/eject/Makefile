@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/03/28 12:19:51 he Exp $
+#	$NetBSD: Makefile,v 1.9 2009/04/14 22:15:19 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,5 @@ CPPFLAGS+=	-I${LIBAMUOBJDIR}
 
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
-
-WARNS=	4
 
 .include <bsd.prog.mk>

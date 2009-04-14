@@ -1,9 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2008/12/11 11:18:35 roy Exp $
+# $NetBSD: Makefile,v 1.2 2009/04/14 22:15:27 lukem Exp $
 
 PROG=	tabs
 DPADD=	${LIBTERMCAP}
 LDADD=	-ltermcap
-
-WARNS?=	4
 
 .include <bsd.prog.mk>

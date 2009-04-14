@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.4 2008/04/10 15:05:23 tsutsui Exp $
+# $NetBSD: Makefile,v 1.5 2009/04/14 22:15:21 lukem Exp $
+
+WARNS?=	2	# XXX -Wextra
 
 NOLINT= # defined
 
@@ -8,8 +10,6 @@ USE_FORT?= yes	# cryptographic software
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/kuser
-
-WARNS?=  1
 
 PROG= kgetcred
 

@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2008/10/17 20:42:47 ginsbach Exp $
+#	$NetBSD: Makefile,v 1.9 2009/04/14 22:15:20 lukem Exp $
 
 PROG=	gencat
 MAN=	gencat.1
-
-WARNS=	3
 
 .include <bsd.prog.mk>

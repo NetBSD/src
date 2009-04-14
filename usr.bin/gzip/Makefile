@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.13 2009/04/14 22:15:20 lukem Exp $
 
 USE_FORT?= yes	# data-driven bugs?
 
@@ -7,7 +7,6 @@ MAN=		gzip.1 gzexe.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 
 DPADD=		${LIBZ} ${LIBBZ2}
 LDADD=		-lz -lbz2
-WARNS=		3
 
 SCRIPTS=	gzexe zdiff zforce zgrep zmore znew
 

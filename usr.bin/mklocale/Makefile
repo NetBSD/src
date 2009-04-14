@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2009/01/05 06:11:43 tnozaki Exp $
+#	$NetBSD: Makefile,v 1.16 2009/04/14 22:15:24 lukem Exp $
+
+WARNS?=	2	# XXX -Wextra -Wsign-compare issues
 
 .ifndef HOSTPROG
 .include <bsd.own.mk>
