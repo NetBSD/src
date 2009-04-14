@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.134 2009/04/13 21:43:38 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.135 2009/04/14 11:44:54 jdc Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6084,4 +6084,9 @@ sys/nfs/nfs_syscalls.c				1.147
 	from nfssvc_sockpending and zap it.
 	Addresses PR kern/41154: possible races in NFS server code.
 	[ad, ticket #701]
+
+sys/dist/pf/net/pf.c				1.54
+
+	Fix http://www.securityfocus.com/archive/1/502634, from OpenBSD.
+	[christos, ticket #702]
 
