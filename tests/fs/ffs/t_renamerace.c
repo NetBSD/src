@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.2 2009/04/08 12:29:05 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.3 2009/04/14 10:19:39 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -22,6 +22,8 @@
 #include <rump/ukfs.h>
 
 #include <ufs/ufs/ufsmount.h>
+
+#include "../../h_macros.h"
 
 ATF_TC_WITH_CLEANUP(renamerace);
 ATF_TC_HEAD(renamerace, tc)
@@ -70,8 +72,7 @@ ATF_TC_BODY(renamerace, tc)
 #if 0
 	strcpy(image, TMPPATH);
 	if (mkdtemp(image) == NULL)
-		atf_tc_fail("can't create tmpdir %s: %d (%s)",
-		    TMPPATH, errno, strerror(errno));
+		atf_tc_fail_errno("can't create tmpdir %s", TMPPATH);
 	strcat(image, "/ffsatf.img");
 #else
 	strcpy(image, IMAGENAME);
@@ -81,7 +82,7 @@ ATF_TC_BODY(renamerace, tc)
 	strcat(cmd, image);
 
 	if (system(cmd) == -1)
-		atf_tc_fail("newfs failed: %d (%s)", errno, strerror(errno));
+		atf_tc_fail_errno("newfs failed");
 
 	memset(&args, 0, sizeof(args));
 	args.fspec = image;
@@ -90,8 +91,7 @@ ATF_TC_BODY(renamerace, tc)
 	fs = ukfs_mount(MOUNT_FFS, "ffs", UKFS_DEFAULTMP,
 	    MNT_LOG, &args, sizeof(args));
 	if (fs == NULL)
-		atf_tc_fail("ukfs_mount failed: %d (%s)",
-		    errno, strerror(errno));
+		atf_tc_fail_errno("ukfs_mount failed");
 
 	pthread_create(&pt1, NULL, w1, fs);
 	pthread_create(&pt2, NULL, w2, fs);
