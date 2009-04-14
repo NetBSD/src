@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.106 2009/04/07 22:07:54 apb Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.107 2009/04/14 08:54:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.106 2009/04/07 22:07:54 apb Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.107 2009/04/14 08:54:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ char	*metafile;
 u_long	fileflags;
 char	*stripArgs;
 char	*afterinstallcmd;
-char	*suffix = BACKUP_SUFFIX;
+const char *suffix = BACKUP_SUFFIX;
 char	*destdir;
 
 enum {
@@ -890,7 +890,7 @@ strip(char *to_name)
 {
 	static const char exec_failure[] = ": exec of strip failed: ";
 	int	serrno, status;
-	const char *stripprog, *progname;
+	const char * volatile stripprog, *progname;
 	char *cmd;
 
 	if ((stripprog = getenv("STRIP")) == NULL) {
@@ -1064,7 +1064,7 @@ install_dir(char *path, u_int flags)
  */
 void
 metadata_log(const char *path, const char *type, struct timeval *tv,
-	const char *link, const char *digestresult, off_t size)
+	const char *slink, const char *digestresult, off_t size)
 {
 	static const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 	const char	*p;
@@ -1108,8 +1108,8 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	if (group)
 		fprintf(metafp, " gname=%s", group);
 	fprintf(metafp, " mode=%#o", mode);
-	if (link) {
-		strsvis(buf, link, VIS_CSTYLE, extra);	/* encode link */
+	if (slink) {
+		strsvis(buf, slink, VIS_CSTYLE, extra);	/* encode link */
 		fprintf(metafp, " link=%s", buf);
 	}
 	if (*type == 'f') /* type=file */
