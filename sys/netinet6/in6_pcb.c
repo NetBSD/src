@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.101 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.102 2009/04/14 21:25:20 elad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.101 2009/03/18 17:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.102 2009/04/14 21:25:20 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -251,7 +251,6 @@ in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			struct ifaddr *ia = NULL;
 
-			sin6->sin6_port = 0;		/* yech... */
 			if ((in6p->in6p_flags & IN6P_FAITH) == 0 &&
 			    (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
 				return (EADDRNOTAVAIL);
