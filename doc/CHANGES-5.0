@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.135 2009/04/14 11:44:54 jdc Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.136 2009/04/14 17:25:28 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6089,4 +6089,10 @@ sys/dist/pf/net/pf.c				1.54
 
 	Fix http://www.securityfocus.com/archive/1/502634, from OpenBSD.
 	[christos, ticket #702]
+
+gnu/usr.bin/groff/tmac/mdoc.local               patched by hand
+sys/sys/param.h                                 patched by hand
+        
+        Welcome to 5.0_RC4!
+        [snj] 
 
