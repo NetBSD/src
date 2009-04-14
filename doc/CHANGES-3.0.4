@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.42 2009/04/11 06:22:11 snj Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.43 2009/04/14 09:03:48 jdc Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -1270,3 +1270,6 @@ sys/sys/file.h                                  patch
            (num_files_in_transit > maxfiles / unp_rights_ratio)
         [mlelstv, ticket #2004]
 
+sys/kern/uipc_usrreq.c				patch
+	Fix a problem with a failure path (PR#38391).
+	[mlelstv, ticket #2005]
