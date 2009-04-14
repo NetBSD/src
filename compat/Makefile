@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/02/14 13:24:32 abs Exp $
+#	$NetBSD: Makefile,v 1.3 2009/04/14 17:51:57 christos Exp $
 
 # Build 32-bit compat versions of:
 #	src/gnu/lib/libgcc4 into ${DESTDIR}/usr/lib/<32arch>
@@ -19,6 +19,7 @@ SUBDIR=	gnu/lib/crtstuff4 .WAIT \
 	lib/libc .WAIT \
 	lib/libutil .WAIT \
 	lib gnu/lib .WAIT \
+	external/lib .WAIT \
 	libexec/ld.elf_so
 .endif
 
