@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.34 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.35 2009/04/14 06:14:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.34 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.35 2009/04/14 06:14:10 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -213,7 +213,7 @@ hidtestrule(struct Susbvar *var, struct usagedata *cache)
 		if (numpage >= 0) {
 			/* Valid numeric */
 
-			if (numpage != HID_PAGE(usage_id))
+			if (numpage != (int)HID_PAGE(usage_id))
 				/* Numeric didn't match page ID */
 				return -1;
 		} else {
@@ -251,7 +251,7 @@ hidtestrule(struct Susbvar *var, struct usagedata *cache)
 	if (numusage >= 0) {
 		/* Valid numeric */
 
-		if (numusage != HID_USAGE(usage_id))
+		if (numusage != (int)HID_USAGE(usage_id))
 			/* Numeric didn't match usage ID */
 			return -1;
 	} else {
