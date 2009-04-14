@@ -1,13 +1,16 @@
-#	$NetBSD: Makefile,v 1.26 2008/05/09 21:55:30 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2009/04/14 22:15:24 lukem Exp $
+
+WARNS?=	2	# XXX -Wcast-qual
 
 NOMAN=	# defined
+
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# cryptographic software
 
 # RCSid:
-#	$Id: Makefile,v 1.26 2008/05/09 21:55:30 christos Exp $
+#	$Id: Makefile,v 1.27 2009/04/14 22:15:24 lukem Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -21,9 +24,6 @@ USE_FORT?= yes	# cryptographic software
 #	Please send copies of changes and bug-fixes to:
 #	sjg@quick.com.au
 #
-
-# XXX There's a bit of work to do before we can enable warnings.
-WARNS=0
 
 PROG=	openssl
 

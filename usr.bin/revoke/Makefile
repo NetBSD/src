@@ -1,7 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2006/10/07 08:48:03 elad Exp $
+# $NetBSD: Makefile,v 1.2 2009/04/14 22:15:25 lukem Exp $
 
 PROG=  revoke
 MAN=   revoke.8
-WARNS?=        4
 
 .include <bsd.prog.mk>

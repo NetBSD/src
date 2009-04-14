@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2002/06/14 00:34:58 wiz Exp $
+#	$NetBSD: Makefile,v 1.4 2009/04/14 22:15:26 lukem Exp $
 
 PROG=   shlock
-WARNS=	2
 
 .include <bsd.prog.mk>

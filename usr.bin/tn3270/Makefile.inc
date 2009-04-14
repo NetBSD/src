@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.11 2007/05/28 12:06:32 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2009/04/14 22:15:27 lukem Exp $
+
+WARNS?=	1	# XXX -Wcast-qual -Wshadow issues
 
 USE_FORT?= yes	# network client
 
