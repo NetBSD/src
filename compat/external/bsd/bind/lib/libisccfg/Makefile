@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 23:04:48 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/14 10:39:38 martin Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
-LIBDPLIBS=	pthread  ${.CURDIR}/../../../../../lib/libpthread \
-		crypto	${.CURDIR}/../../../../../lib/libcrypto
+LIBDPLIBS=	pthread  ${NETBSDSRCDIR}/lib/libpthread \
+		crypto	${NETBSDSRCDIR}/lib/libcrypto
 
 NOCHECKVER=	# defined
 
