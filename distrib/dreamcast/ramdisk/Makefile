@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/04/14 12:09:48 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7 2009/04/14 12:18:36 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,7 +19,8 @@ MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
+		${NETBSDSRCDIR}/etc/netconfig \
+		${NETBSDSRCDIR}/distrib/common/protocols \
 		${NETBSDSRCDIR}/distrib/common/services \
 		${NETBSDSRCDIR}/distrib/common/termcap.mini \
 		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script
