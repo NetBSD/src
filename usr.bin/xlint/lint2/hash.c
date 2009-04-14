@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.9 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: hash.c,v 1.10 2009/04/14 08:59:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.9 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: hash.c,v 1.10 2009/04/14 08:59:45 lukem Exp $");
 #endif
 
 /*
@@ -159,7 +159,7 @@ _destroyhash(hte_t **table)
 
 	for (i = 0; i < HSHSIZ2; i++) {
 		for (hte = table[i]; hte != NULL; hte = nexthte) {
-			free((void *)hte->h_name);
+			free((void *)__UNCONST(hte->h_name));
 			nexthte = hte->h_link;
 			free(hte);
 		}
