@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/02/04 08:37:37 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2009/04/14 09:09:59 lukem Exp $
+
+WARNS?=		3	# XXX: fails -Wsign-compare
 
 .include <bsd.own.mk>
 
