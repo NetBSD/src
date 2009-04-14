@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.80.2.5 2009/04/14 08:50:29 jdc Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.80.2.6 2009/04/14 09:02:25 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80.2.5 2009/04/14 08:50:29 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80.2.6 2009/04/14 09:02:25 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,30 +305,30 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(control, p))) {
-			goto die;
+		if (control) {
+			if ((error = unp_internalize(control, p)) != 0) {
+				m_freem(control);
+				m_freem(m);
+				break;
+			}
 		}
 		switch (so->so_type) {
 
 		case SOCK_DGRAM: {
 			if (nam) {
-				if ((so->so_state & SS_ISCONNECTED) != 0) {
+				if ((so->so_state & SS_ISCONNECTED) != 0)
 					error = EISCONN;
-					goto die;
-				}
-				error = unp_connect(so, nam, p);
-				if (error) {
-				die:
-					unp_dispose(control);
-					m_freem(control);
-					m_freem(m);
-					break;
-				}
+				else
+					error = unp_connect(so, nam, p);
 			} else {
-				if ((so->so_state & SS_ISCONNECTED) == 0) {
+				if ((so->so_state & SS_ISCONNECTED) == 0)
 					error = ENOTCONN;
-					goto die;
-				}
+			}
+			if (error) {
+				unp_dispose(control);
+				m_freem(control);
+				m_freem(m);
+				break;
 			}
 			error = unp_output(m, control, unp, p);
 			if (nam)
