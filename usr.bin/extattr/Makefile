@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/01/02 17:55:48 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/14 22:15:19 lukem Exp $
 
 PROG=	getextattr
 
@@ -9,7 +9,5 @@ LINKS+=	${BINDIR}/getextattr ${BINDIR}/lsextattr
 MLINKS+= getextattr.1 setextattr.1
 MLINKS+= getextattr.1 rmextattr.1
 MLINKS+= getextattr.1 lsextattr.1
-
-WARNS?=	3
 
 .include <bsd.prog.mk>

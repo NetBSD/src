@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.21 2008/07/22 22:58:04 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2009/04/14 22:15:20 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# setuid
-WARNS=	3
 PROG=	fstat
 SRCS=	fstat.c isofs.c ntfs.c ptyfs.c tmpfs.c misc.c
 DPADD=	${LIBKVM}

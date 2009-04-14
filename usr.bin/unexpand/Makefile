@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2008/12/21 02:33:13 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2009/04/14 22:15:28 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-WARNS ?= 4
 NOMAN=	# defined
 
 PROG=	unexpand

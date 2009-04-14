@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/15 19:46:39 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/14 22:15:25 lukem Exp $
 
 PROG=	pathchk
 SRCS=	pathchk.c
-
-WARNS=	2
 
 .include <bsd.prog.mk>

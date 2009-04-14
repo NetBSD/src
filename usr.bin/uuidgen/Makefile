@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2004/09/13 23:35:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/14 22:15:28 lukem Exp $
 
 PROG=	uuidgen
-WARNS=	2
 
 .include <bsd.prog.mk>
