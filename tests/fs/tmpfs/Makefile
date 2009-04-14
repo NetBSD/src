@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.3 2009/04/07 20:51:46 pooka Exp $
+# $NetBSD: Makefile,v 1.4 2009/04/14 10:20:22 pooka Exp $
 
 TESTSDIR=	${TESTSBASE}/fs/tmpfs
+WARNS=		4
 
 TESTS_SH=	t_create
 TESTS_SH+=	t_devices
