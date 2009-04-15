@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.158 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.159 2009/04/15 03:42:33 jld Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.158 2009/04/12 10:18:52 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.159 2009/04/15 03:42:33 jld Exp $");
 #endif
 #endif /* not lint */
 
@@ -1624,8 +1624,9 @@ initconn(void)
 	if (data_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS,
-				(void *)&on, sizeof(on)) == -1)
+				(void *)&on, sizeof(on)) == -1) {
 			DWARN("setsockopt %s (ignored)", "IPTOS_THROUGHPUT");
+		}
 	}
 #endif
 	return (0);
