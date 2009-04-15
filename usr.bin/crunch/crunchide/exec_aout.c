@@ -1,4 +1,4 @@
-/* $NetBSD: exec_aout.c,v 1.9 2000/06/14 06:49:20 cgd Exp $ */
+/* $NetBSD: exec_aout.c,v 1.10 2009/04/15 02:07:20 dogcow Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_aout.c,v 1.9 2000/06/14 06:49:20 cgd Exp $");
+__RCSID("$NetBSD: exec_aout.c,v 1.10 2009/04/15 02:07:20 dogcow Exp $");
 #endif
  
 #include <unistd.h>
@@ -83,7 +83,7 @@ int check_aout(int inf, const char *filename)
 
     if(fstat(inf, &infstat) == -1)
 	return 0;
-    if(infstat.st_size < sizeof eh)
+    if(infstat.st_size < (ssize_t)sizeof eh)
 	return 0;
     if(read(inf, &eh, sizeof eh) != sizeof eh)
 	return 0;
