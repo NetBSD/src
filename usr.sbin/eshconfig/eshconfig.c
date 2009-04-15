@@ -1,4 +1,4 @@
-/*	$NetBSD: eshconfig.c,v 1.8 2008/05/02 19:59:19 xtraeme Exp $	*/
+/*	$NetBSD: eshconfig.c,v 1.9 2009/04/15 05:50:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eshconfig.c,v 1.8 2008/05/02 19:59:19 xtraeme Exp $");
+__RCSID("$NetBSD: eshconfig.c,v 1.9 2009/04/15 05:50:20 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -189,7 +189,7 @@ do_map(int value, struct map_dma *map)
  */
  
 static int
-do_map_dma(int value, struct map_dma *map)
+do_map_dma(uint32_t value, struct map_dma *map)
 {
 	int i;
 
