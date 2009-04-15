@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.75 2009/01/16 01:59:23 haad Exp $
+# $NetBSD: Makefile,v 1.76 2009/04/15 22:36:04 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,8 @@
 #	src/etc/mtree/special
 #	src/usr.sbin/postinstall/postinstall
 #
+# You can find a script to visualize the dependency graph in
+# src/sbin/rcorder.
 
 CONFIGFILES=\
 		DAEMON LOGIN NETWORKING SERVERS \
