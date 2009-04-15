@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.11 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: mem1.c,v 1.12 2009/04/15 01:20:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.11 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.12 2009/04/15 01:20:57 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -250,7 +250,7 @@ initmem(void)
  * Allocate memory associated with level l.
  */
 void *
-getlblk(int l, size_t s)
+getlblk(size_t l, size_t s)
 {
 
 	while (l >= nmblks) {

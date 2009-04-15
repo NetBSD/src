@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.39 2009/04/13 21:17:37 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.40 2009/04/15 01:20:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.39 2009/04/13 21:17:37 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.40 2009/04/15 01:20:57 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -392,10 +392,10 @@ const	char *msgs[] = {
 void
 msglist(void)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(msgs) / sizeof(msgs[0]); i++)
-		printf("%d\t%s\n", i, msgs[i]);
+		printf("%zu\t%s\n", i, msgs[i]);
 }
 
 /*
