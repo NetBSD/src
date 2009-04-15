@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.16 2008/05/02 19:22:10 xtraeme Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.17 2009/04/15 00:23:29 lukem Exp $");
 #endif
 
 
@@ -495,7 +495,8 @@ readtab(int force)
 PRIVATE void
 read_entry(FILE *fp, char *buffer, unsigned int *bufsiz)
 {
-	int c, length;
+	int c;
+	unsigned int length;
 
 	length = 0;
 
