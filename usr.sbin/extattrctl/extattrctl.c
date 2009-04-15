@@ -1,4 +1,4 @@
-/*	$NetBSD: extattrctl.c,v 1.1 2005/08/28 19:37:59 thorpej Exp $	*/
+/*	$NetBSD: extattrctl.c,v 1.2 2009/04/15 06:01:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -162,7 +162,7 @@ initattr(int argc, char *argv[])
 			size_t x = (easize > sizeof(zero_buf)) ?
 			    sizeof(zero_buf) : easize;
 			wlen = write(i, zero_buf, x);
-			if (wlen != x) {
+			if ((size_t)wlen != x) {
 				warn("unable to write attribute file");
 				error = -1;
 				break;
