@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.87 2009/03/15 15:52:12 cegger Exp $	*/
+/*	$NetBSD: midway.c,v 1.88 2009/04/15 20:44:25 elad Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.87 2009/03/15 15:52:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.88 2009/04/15 20:44:25 elad Exp $");
 
 #include "opt_natm.h"
 
@@ -1285,8 +1285,10 @@ STATIC int en_ioctl(struct ifnet *ifp, EN_IOCTL_CMDT cmd, void *data)
 		break;
 
 	case SIOCSPVCTX:
-		if ((error = kauth_authorize_generic(curlwp->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) == 0)
+		if ((error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL)) == 0)
 			error = en_pvctx(sc, (struct pvctxreq *)data);
 		break;
 

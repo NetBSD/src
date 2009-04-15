@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.54 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: an.c,v 1.55 2009/04/15 20:44:25 elad Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.54 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.55 2009/04/15 20:44:25 elad Exp $");
 
 #include "bpfilter.h"
 
@@ -1265,8 +1265,11 @@ an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;
 		/* do not show any keys to non-root user */
-		if ((error = kauth_authorize_generic(curlwp->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		/* XXX-elad: why is this inside a loop? */
+		if ((error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, sc->sc_ic.ic_ifp,
+		    KAUTH_ARG(SIOCG80211NWKEY), NULL)) != 0)
 			break;
 		nwkey->i_key[i].i_keylen = sc->sc_wepkeys[i].an_wep_keylen;
 		if (nwkey->i_key[i].i_keylen < 0) {
