@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.150 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.151 2009/04/15 04:19:39 jld Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.150 2009/04/12 10:18:52 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.151 2009/04/15 04:19:39 jld Exp $");
 #endif /* not lint */
 
 /*
@@ -755,11 +755,12 @@ remotemodtime(const char *file, int noisy)
 				goto bad_parse_time;
 			else
 				goto cleanup_parse_time;
-		} else
+		} else {
 			DPRINTF("remotemodtime: parsed date `%s' as " LLF
 			    ", %s",
 			    timestr, (LLT)rtime,
 			    rfc2822time(localtime(&rtime)));
+		}
 	} else {
 		if (r == ERROR && code == 500 && features[FEAT_MDTM] == -1)
 			features[FEAT_MDTM] = 0;
