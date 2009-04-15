@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.5 2008/04/20 19:34:23 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.6 2009/04/15 00:35:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.5 2008/04/20 19:34:23 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.6 2009/04/15 00:35:04 lukem Exp $");
 
 #include <sys/types.h>
 
@@ -154,7 +154,8 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 {
 	prop_dictionary_t dict;
 	void *ss;
-	int rv, i;
+	int rv;
+	size_t i;
 
 	dict = prop_dictionary_create();
 	if (dict == NULL)
@@ -212,7 +213,7 @@ config_hid(prop_dictionary_t dict)
 		normally_connectable, hid_length;
 	uint8_t *hid_descriptor;
 	const char *mode;
-	int i;
+	size_t i;
 
 	control_psm = -1;
 	interrupt_psm = -1;
@@ -313,7 +314,7 @@ config_hset(prop_dictionary_t dict)
 {
 	prop_object_t obj;
 	uint32_t channel;
-	int i;
+	size_t i;
 
 	channel = -1;
 
@@ -328,7 +329,7 @@ config_hset(prop_dictionary_t dict)
 		}
 	}
 
-	if (channel == -1)
+	if (channel == (uint32_t)-1)
 		return ENOATTR;
 
 	obj = prop_string_create_cstring_nocopy("btsco");
@@ -354,7 +355,7 @@ config_hf(prop_dictionary_t dict)
 {
 	prop_object_t obj;
 	uint32_t channel;
-	int i;
+	size_t i;
 
 	channel = -1;
 
@@ -369,7 +370,7 @@ config_hf(prop_dictionary_t dict)
 		}
 	}
 
-	if (channel == -1)
+	if (channel == (uint32_t)-1)
 		return ENOATTR;
 
 	obj = prop_string_create_cstring_nocopy("btsco");
