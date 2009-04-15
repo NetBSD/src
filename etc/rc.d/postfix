@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.14 2007/08/27 10:59:06 pavel Exp $
+# $NetBSD: postfix,v 1.15 2009/04/15 22:03:54 perry Exp $
 #
 
-# PROVIDE: mail
+# PROVIDE: MAIL
 # REQUIRE: LOGIN
 #	we make mail start late, so that things like .forward's are not
 #	processed until the system is fully operational
