@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.51 2008/08/07 22:26:14 oster Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.52 2009/04/15 05:43:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.51 2008/08/07 22:26:14 oster Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.52 2009/04/15 05:43:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 int
 dumpfs(const char *name)
 {
-	const static off_t sblock_try[] = SBLOCKSEARCH;
+	static const off_t sblock_try[] = SBLOCKSEARCH;
 	char device[MAXPATHLEN];
 	int fd, i;
 	int rval = 1;
@@ -232,7 +232,7 @@ void
 fix_superblock(struct fs *fs, uint16_t *opostbl)
 {
 	if (needswap &&
-	    ((bswap32(fs->fs_old_postblformat) == FS_42POSTBLFMT) ||
+	    (((int32_t)bswap32(fs->fs_old_postblformat) == FS_42POSTBLFMT) ||
 	     (bswap32(fs->fs_old_postbloff) == offsetof(struct fs, fs_old_postbl_start)))) {
 		int i;
 		memcpy(opostbl, &fs->fs_old_postbl_start, 512);
