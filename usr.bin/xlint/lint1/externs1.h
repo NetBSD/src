@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.25 2009/03/02 20:53:10 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.26 2009/04/15 01:20:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -99,7 +99,7 @@ extern	int	getfnid(const char *);
 extern	void	initmem(void);
 
 extern	void	*getblk(size_t);
-extern	void	*getlblk(int, size_t);
+extern	void	*getlblk(size_t, size_t);
 extern	void	freeblk(void);
 extern	void	freelblk(int);
 

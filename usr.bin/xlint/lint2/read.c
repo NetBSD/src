@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.24 2009/04/14 09:06:25 lukem Exp $ */
+/* $NetBSD: read.c,v 1.25 2009/04/15 01:20:57 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.24 2009/04/14 09:06:25 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.25 2009/04/15 01:20:57 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -252,10 +252,10 @@ static void
 setfnid(int fid, const char *cp)
 {
 
-	if (fid == -1)
+	if (fid < 0)
 		inperr("bad fid");
 
-	if (fid >= ninpfns) {
+	if ((size_t)fid >= ninpfns) {
 		inpfns = xrealloc(inpfns, (ninpfns * 2) * sizeof (short));
 		(void)memset(inpfns + ninpfns, 0, ninpfns * sizeof (short));
 		ninpfns *= 2;
@@ -264,7 +264,7 @@ setfnid(int fid, const char *cp)
 	 * Should always be true because indices written in the output
 	 * file by lint1 are always the previous index + 1.
 	 */
-	if (fid >= ninpfns)
+	if ((size_t)fid >= ninpfns)
 		errx(1, "internal error: setfnid()");
 	inpfns[fid] = (u_short)getfnidx(cp);
 }
@@ -1103,7 +1103,7 @@ inpqstrg(const char *src, const char **epp)
 			}
 		}
 		/* keep space for trailing '\0' */
-		if (dst - strg == slen - 1) {
+		if ((size_t)(dst - strg) == slen - 1) {
 			strg = xrealloc(strg, slen * 2);
 			dst = strg + (slen - 1);
 			slen *= 2;
