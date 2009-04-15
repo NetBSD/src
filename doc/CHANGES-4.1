@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.142 2009/04/10 20:34:17 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.143 2009/04/15 21:07:13 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2983,4 +2983,30 @@ sys/kern/uipc_usrreq.c				patch
 	3. prohibit transfer of descriptors within SCM_RIGHTS messages if
 	(num_files_in_transit > maxfiles / unp_rights_ratio)                    
 	[mlelstv, ticket #1303]
+
+sys/dist/pf/net/pf.c				1.54 via patch
+
+	Fix http://www.securityfocus.com/archive/1/502634.
+	[christos, ticket #1305]
+
+sys/dev/sbus/zx.c				1.25 via patch
+sys/dev/sbus/zxreg.h				1.6 via patch
+sys/dev/sbus/zxvar.h				1.3
+
+	Use bus_space(9) to access registers.  SETREG() macro using bogus
+	casts against packed structures doesn't work on gcc4. (no
+	character on screen).  See also:
+	http://mail-index.NetBSD.org/port-sparc/2003/11/11/0002.html
+	[tsutsui, ticket #1300]
+
+sys/arch/mvme68k/stand/Makefile.booters		1.18
+sys/arch/mvme68k/stand/bootst/dev_tape.c	1.11
+sys/arch/mvme68k/stand/bootst/version		1.5
+
+	Fix for install/40961: The RAMDISK kernel has grown significantly
+	since bootst was written. Grab 3MB of the kernel image from tape
+	in hackprom_diskrd() instead of 2MB.
+	Bump bootst version on account of the above fix.
+	While here, use -Os instead of -O2 to compile mvme68k stand code.
+	[scw, ticket #1304]
 
