@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.19 2009/01/12 06:52:14 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.20 2009/04/15 17:15:13 tsutsui Exp $
 
-S= ${.CURDIR}/../../../..
+S!= cd ${.CURDIR}/../../../..; pwd
 
 PROG= boot
 SRCS= locore.S boot.c bootinfo.c devopen.c net.c netif_news.c
@@ -23,7 +23,7 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+= -DSUN_BOOTPARAMS
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
-CPPFLAGS+= -I${.CURDIR} -I${COMMON} -I${S}
+CPPFLAGS+= -I${.CURDIR} -I. -I${S}
 CPPFLAGS+= -D__daddr_t=int32_t
 
 AFLAGS= -D_LOCORE -mno-abicalls
@@ -39,4 +39,5 @@ ${PROG}: ${OBJS}
 	-${SIZE} ${PROG}.elf
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

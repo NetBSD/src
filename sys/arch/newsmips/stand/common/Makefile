@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.10 2009/04/03 10:38:13 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2009/04/15 17:15:13 tsutsui Exp $
 
 WARNS?= 1
-S= ${.CURDIR}/../../../..
+S!= cd ${.CURDIR}/../../../..; pwd
 
 OBJS= romcalls.o
 
@@ -25,17 +25,10 @@ AFLAGS= -D_LOCORE -mno-abicalls
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h mips ] || ln -s ${S}/arch/mips/include mips
-.NOPATH: machine mips
-.endif
-CLEANFILES+= machine mips
-
 realall: ${OBJS} ${KERNLIB} ${ZLIB} ${SALIB}
 #	ln -s ${KERNLIB}
 #	ln -s ${ZLIB}
 #	ln -s ${SALIB}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
