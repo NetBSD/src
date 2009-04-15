@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.45 2009/03/02 20:53:10 christos Exp $ */
+/* $NetBSD: decl.c,v 1.46 2009/04/15 01:20:57 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.45 2009/03/02 20:53:10 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.46 2009/04/15 01:20:57 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -863,7 +863,7 @@ length(type_t *tp, const char *name)
 int
 getbound(type_t *tp)
 {
-	int	a;
+	size_t	a;
 	tspec_t	t;
 
 	while (tp && tp->t_tspec == ARRAY)
@@ -1079,7 +1079,7 @@ decl1str(sym_t *dsym)
 					tp->t_flen = size(t);
 			}
 		}
-		if ((len = tp->t_flen) < 0 || len > size(t)) {
+		if ((len = tp->t_flen) < 0 || len > (ssize_t)size(t)) {
 			/* illegal bit-field size */
 			error(36);
 			tp->t_flen = size(t);

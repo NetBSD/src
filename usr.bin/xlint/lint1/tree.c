@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.56 2009/04/13 21:17:37 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.57 2009/04/15 01:20:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.56 2009/04/13 21:17:37 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.57 2009/04/15 01:20:57 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1010,10 +1010,10 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			if (!isutyp(rt) && rn->tn_val->v_quad < 0) {
 				/* negative shift */
 				warning(121);
-			} else if ((uint64_t)rn->tn_val->v_quad == size(lt)) {
+			} else if ((uint64_t)rn->tn_val->v_quad == (uint64_t)size(lt)) {
 				/* shift equal to size fo object */
 				warning(267);
-			} else if ((uint64_t)rn->tn_val->v_quad > size(lt)) {
+			} else if ((uint64_t)rn->tn_val->v_quad > (uint64_t)size(lt)) {
 				/* shift greater than size of object */
 				warning(122);
 			}
@@ -1546,7 +1546,7 @@ promote(op_t op, int farg, tnode_t *tn)
 {
 	tspec_t	t;
 	type_t	*ntp;
-	int	len;
+	u_int	len;
 
 	t = tn->tn_type->t_tspec;
 
@@ -2025,7 +2025,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			nv->v_ldbl = v->v_ldbl;
 		} else {
 			nv->v_quad = (nt == PTR || isutyp(nt)) ?
-				(uint64_t)v->v_ldbl : (int64_t)v->v_ldbl;
+				(int64_t)v->v_ldbl : (int64_t)v->v_ldbl;
 		}
 	} else {
 		if (nt == FLOAT) {
@@ -2792,7 +2792,7 @@ fold(tnode_t *tn)
 			error(139);
 			q = utyp ? UQUAD_MAX : QUAD_MAX;
 		} else {
-			q = utyp ? ul / ur : sl / sr;
+			q = utyp ? (int64_t)(ul / ur) : sl / sr;
 		}
 		break;
 	case MOD:
@@ -2801,11 +2801,11 @@ fold(tnode_t *tn)
 			error(140);
 			q = 0;
 		} else {
-			q = utyp ? ul % ur : sl % sr;
+			q = utyp ? (int64_t)(ul % ur) : sl % sr;
 		}
 		break;
 	case PLUS:
-		q = utyp ? ul + ur : sl + sr;
+		q = utyp ? (int64_t)(ul + ur) : sl + sr;
 		if (msb(sl, t, -1)  != 0 && msb(sr, t, -1) != 0) {
 			if (msb(q, t, -1) == 0)
 				ovfl = 1;
@@ -2815,7 +2815,7 @@ fold(tnode_t *tn)
 		}
 		break;
 	case MINUS:
-		q = utyp ? ul - ur : sl - sr;
+		q = utyp ? (int64_t)(ul - ur) : sl - sr;
 		if (msb(sl, t, -1) != 0 && msb(sr, t, -1) == 0) {
 			if (msb(q, t, -1) == 0)
 				ovfl = 1;
@@ -2825,7 +2825,7 @@ fold(tnode_t *tn)
 		}
 		break;
 	case SHL:
-		q = utyp ? ul << sr : sl << sr;
+		q = utyp ? (int64_t)(ul << sr) : sl << sr;
 		break;
 	case SHR:
 		/*
@@ -2854,20 +2854,21 @@ fold(tnode_t *tn)
 		q = utyp ? ul != ur : sl != sr;
 		break;
 	case AND:
-		q = utyp ? ul & ur : sl & sr;
+		q = utyp ? (int64_t)(ul & ur) : sl & sr;
 		break;
 	case XOR:
-		q = utyp ? ul ^ ur : sl ^ sr;
+		q = utyp ? (int64_t)(ul ^ ur) : sl ^ sr;
 		break;
 	case OR:
-		q = utyp ? ul | ur : sl | sr;
+		q = utyp ? (int64_t)(ul | ur) : sl | sr;
 		break;
 	default:
 		LERROR("fold()");
 	}
 
 	/* XXX does not work for quads. */
-	if (ovfl || ((q | mask) != ~(uint64_t)0 && (q & ~mask) != 0)) {
+	if (ovfl || ((uint64_t)(q | mask) != ~(uint64_t)0 &&
+	    (q & ~mask) != 0)) {
 		if (hflag)
 			/* integer overflow detected, op %s */
 			warning(141, modtab[tn->tn_op].m_name);
@@ -3743,7 +3744,7 @@ chkaidx(tnode_t *tn, int amper)
 	if (!isutyp(rn->tn_type->t_tspec) && con < 0) {
 		/* array subscript cannot be negative: %ld */
 		warning(167, (long)con);
-	} else if (dim > 0 && (uint64_t)con >= dim) {
+	} else if (dim > 0 && (uint64_t)con >= (uint64_t)dim) {
 		/* array subscript cannot be > %d: %ld */
 		warning(168, dim - 1, (long)con);
 	}
