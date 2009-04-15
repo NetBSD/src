@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.c,v 1.1 2005/07/11 15:35:25 kiyohara Exp $	*/
+/*	$NetBSD: eui64.c,v 1.2 2009/04/15 06:02:37 lukem Exp $	*/
 /*
  * Copyright 2004 The Aerospace Corporation.  All rights reserved.
  *
@@ -213,7 +213,7 @@ eui64_ntoa(const struct eui64 *id, char *a, size_t len)
         i = snprintf(a, len, "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
 	    id->octet[0], id->octet[1], id->octet[2], id->octet[3],
 	    id->octet[4], id->octet[5], id->octet[6], id->octet[7]);
-        if (i < 23 || i >= len)
+        if (i < 23 || i >= (int)len)
                 return (-1);
         return (0);
 }
