@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.261 2009/03/28 21:43:16 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.262 2009/04/15 11:44:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.261 2009/03/28 21:43:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.262 2009/04/15 11:44:20 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -376,6 +376,7 @@ preempt(void)
 static char	in_critical_section;
 static char	kernel_lock_held;
 static char	is_softint;
+static char	cpu_kpreempt_enter_fail;
 
 bool
 kpreempt(uintptr_t where)
@@ -434,6 +435,7 @@ kpreempt(uintptr_t where)
 			 * interrupt to retry later.
 			 */
 			splx(s);
+			failed = (uintptr_t)&cpu_kpreempt_enter_fail;
 			break;
 		}
 		/* Do it! */
