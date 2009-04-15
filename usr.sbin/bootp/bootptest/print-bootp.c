@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.9 2008/05/02 19:22:10 xtraeme Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.10 2009/04/15 00:23:29 lukem Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -380,7 +380,7 @@ cmu_print(u_char *bp, int length)
 	printf("-cmu");
 
 	v = (struct cmu_vend *) bp;
-	if (length < sizeof(*v)) {
+	if (length < (int)sizeof(*v)) {
 		printf(" |L=%d", length);
 		return;
 	}
