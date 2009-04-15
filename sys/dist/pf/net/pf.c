@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.28 2006/11/16 01:33:34 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.28.8.1 2009/04/15 20:40:25 snj Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -6036,6 +6036,15 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		break;
 	}
 
+#ifdef INET6
+	case IPPROTO_ICMPV6: {
+		action = PF_DROP;
+		DPFPRINTF(PF_DEBUG_MISC,
+		    ("pf: dropping IPv4 packet with ICMPv6 payload\n"));
+		goto done;
+	}
+#endif
+
 	default:
 		action = pf_test_state_other(&s, dir, kif, &pd);
 		if (action == PF_PASS) {
@@ -6383,6 +6392,15 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
 		break;
 	}
+
+#ifdef INET
+	case IPPROTO_ICMP: {
+		action = PF_DROP;
+		DPFPRINTF(PF_DEBUG_MISC,
+		    ("pf: dropping IPv6 packet with ICMPv4 payload\n"));
+		goto done;
+	}
+#endif
 
 	default:
 		action = pf_test_state_other(&s, dir, kif, &pd);
