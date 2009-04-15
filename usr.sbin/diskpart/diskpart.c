@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.17 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.18 2009/04/15 05:41:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,9 +123,9 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-
 	struct disklabel *dp;
-	int curcyl, spc, def, part, layout, j, ch;
+	int spc, def, part, layout, j, ch;
+	uint32_t curcyl;
 	int threshhold, numcyls[NPARTITIONS], startcyl[NPARTITIONS];
 	off_t totsize = 0;
 	const char *tyname;
