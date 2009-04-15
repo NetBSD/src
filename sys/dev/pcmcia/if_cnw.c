@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.48 2009/03/14 21:04:22 dsl Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.49 2009/04/15 20:44:25 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.48 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.49 2009/04/15 20:44:25 elad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1017,9 +1017,18 @@ cnw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCSCNWDOMAIN:
 	case SIOCSCNWKEY:
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL);
+		if (error)
+			return (error);
+		break;
 	case SIOCGCNWSTATUS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL);
 		if (error)
 			return (error);
 		break;
