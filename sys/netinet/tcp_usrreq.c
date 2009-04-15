@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.152 2009/03/11 05:55:22 mrg Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.153 2009/04/15 20:44:25 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.152 2009/03/11 05:55:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.153 2009/04/15 20:44:25 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1154,23 +1154,6 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 	return (0);
 }
 
-/*
- * The superuser can drop any connection.  Normal users can only drop
- * their own connections.
- */
-static inline int
-check_sockuid(struct socket *sockp, kauth_cred_t cred)
-{
-	uid_t sockuid;
-
-	sockuid = sockp->so_uidinfo->ui_uid;
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-	    sockuid == kauth_cred_getuid(cred) ||
-	    sockuid == kauth_cred_geteuid(cred))
-		return 0;
-	return EACCES;
-}
-
 static inline int
 copyout_uid(struct socket *sockp, void *oldp, size_t *oldlenp)
 {
@@ -1205,13 +1188,16 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
 
 	if (dodrop) {
 		struct tcpcb *tp;
+		int error;
 		
 		if (inp == NULL || (tp = intotcpcb(inp)) == NULL ||
 		    (inp->inp_socket->so_options & SO_ACCEPTCONN) != 0)
 			return ESRCH;
-		
-		if (check_sockuid(inp->inp_socket, l->l_cred) != 0)
-			return EACCES;
+
+		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_DROP, inp->inp_socket, tp, NULL);
+		if (error)
+			return (error);
 		
 		(void)tcp_drop(tp, ECONNABORTED);
 		return 0;
@@ -1237,13 +1223,16 @@ inet6_ident_core(struct in6_addr *raddr, u_int rport,
 	
 	if (dodrop) {
 		struct tcpcb *tp;
+		int error;
 		
 		if (in6p == NULL || (tp = in6totcpcb(in6p)) == NULL ||
 		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) != 0)
 			return ESRCH;
 
-		if (check_sockuid(in6p->in6p_socket, l->l_cred) != 0)
-			return EACCES;
+		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_DROP, in6p->in6p_socket, tp, NULL);
+		if (error)
+			return (error);
 
 		(void)tcp_drop(tp, ECONNABORTED);
 		return 0;
