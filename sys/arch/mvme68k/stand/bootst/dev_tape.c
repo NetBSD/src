@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.7 2005/12/11 12:18:19 christos Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.7.34.1 2009/04/15 21:05:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ hackprom_diskrd(struct mvmeprom_dskio *ti)
 	static int blkoffset = 0;
 
 #define	hackload_addr	((char *) 0x080000)	/* Load tape segment here */
-#define hackload_blocks 0x2000			/* 2Mb worth */
+#define hackload_blocks 0x3000			/* 3Mb worth */
 
 	if ( (ti->flag & IGNORE_FILENUM) == 0 ) {
 		/*
