@@ -1,7 +1,7 @@
 #!/bin/sh
-# $NetBSD: rcorder-visualize.sh,v 1.3 2009/04/15 22:44:26 joerg Exp $
+# $NetBSD: rcorder-visualize.sh,v 1.4 2009/04/15 23:03:34 joerg Exp $
 #
-# Writte by Joerg Sonnenberger.  You may freely use and redistribute
+# Written by Joerg Sonnenberger.  You may freely use and redistribute
 # this script.
 #
 # Simple script to show the dependency graph for rc scripts.
