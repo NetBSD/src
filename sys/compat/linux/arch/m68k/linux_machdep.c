@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.40 2009/03/18 17:06:48 cegger Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.41 2009/04/15 20:44:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2009/04/15 20:44:26 elad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -846,8 +846,8 @@ linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap,
 	 * LINUX_FLUSH_SCOPE_ALL (flush whole cache) is limited to super users.
 	 */
 	if (scope == LINUX_FLUSH_SCOPE_ALL) {
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		if ((error = kauth_authorize_machdep(l->l_cred,
+		    KAUTH_MACHDEP_CACHEFLUSH, NULL, NULL, NULL, NULL)) != 0)
 			return error;
 #if defined(M68040) || defined(M68060)
 		/* entire cache */

@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.73 2009/03/15 14:11:08 joerg Exp $
+.\" $NetBSD: kauth.9,v 1.74 2009/04/15 20:44:24 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2008
+.Dd April 15, 2009
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -305,6 +305,12 @@ node is allowed.
 Check if adding description to a
 .Xr sysctl 9
 node is allowed.
+.It Dv KAUTH_REQ_SYSTEM_SYSCTL_MODIFY
+Check if modifying a
+.Xr sysctl 9
+node variable that doesn't have a custom sysctl helper function is allowed.
+.Pp
+This request might be deprecated in the future.
 .It Dv KAUTH_REQ_SYSTEM_SYSCTL_PRVT
 Check if accessing private
 .Xr sysctl 9
@@ -642,6 +648,24 @@ Checks if looking at the socket passed is allowed.
 is a
 .Ft struct socket *
 describing the socket.
+.It Dv KAUTH_REQ_NETWORK_SOCKET_DROP
+Checks if a connection can be dropped.
+.Pp
+.Ar arg1
+is a
+.Ft struct socket *
+describing the socket.
+.It Dv KAUTH_REQ_NETWORK_SOCKET_SETPRIV
+Checks if setting privileged socket options is allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct socket *
+describing the socket,
+.Ar arg2
+is a
+.Ft u_long
+describing the socket option.
 .El
 .El
 .Ss Machine-dependent Scope
@@ -659,6 +683,11 @@ platforms.
 Below is a list of available actions, along with which platforms are affected
 by each.
 .Bl -tag -width compact
+.It Dv KAUTH_MACHDEP_CACHEFLUSH
+Request to flush the whole CPU cache.
+Affects
+.Em m68k
+Linux emulation.
 .It Dv KAUTH_MACHDEP_IOPERM_GET
 Request to get the I/O permission level.
 Affects
@@ -701,6 +730,10 @@ Affects
 .Em amd64 ,
 .Em i386 ,
 .Em xen .
+.It Dv KAUTH_MACHDEP_NVRAM
+Request to access (read/write) the NVRAM.
+Affects
+.Em i386 .
 .It Dv KAUTH_MACHDEP_UNMANAGEDMEM
 Request to access unmanaged memory.
 Affects
@@ -1343,7 +1376,7 @@ Adding a new scope should happen only when an entire subsystem is
 introduced and it is assumed other parts of the kernel may want to
 interfere with its inner-workings.
 When a subsystem that has the potential of impacting the security
-if the system is introduced, existing security modules must be updated
+of the system is introduced, existing security modules must be updated
 to also handle actions on the newly added scope.
 .Pp
 New actions should be added when sets of operations not covered at all
