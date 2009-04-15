@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.268 2009/02/25 22:28:36 sketch Exp $
+#	$NetBSD: Makefile,v 1.269 2009/04/15 10:18:34 tsutsui Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -96,8 +96,6 @@
 #   do-sys-rump-net-lib: builds and installs prerequisites from sys/rump/net/lib
 #   do-sys-modules:  builds and installs kernel modules (used by rump binaries)
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
-#   do-compat-external-lib: builds and installs prerequisites from
-#                    compat/external/lib if ${MKCOMPAT} != "no".
 #   do-compat-lib-csu: builds and installs prerequisites from compat/lib/csu
 #                    if ${MKCOMPAT} != "no".
 #   do-compat-libgcc: builds and installs prerequisites from
@@ -245,7 +243,6 @@ BUILDTARGETS+=	do-sys-modules
 BUILDTARGETS+=	do-compat-lib-csu
 BUILDTARGETS+=	do-compat-libgcc
 BUILDTARGETS+=	do-compat-lib-libc
-BUILDTARGETS+=	do-compat-external-lib
 .endif
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
@@ -406,7 +403,6 @@ BUILD_CC_LIB+= external/bsd/pcc/libpcc
 
 .if ${MKCOMPAT} != "no"
 BUILD_COMPAT_LIBS=	compat/lib/csu ${BUILD_CC_LIB:S/^/compat\//} compat/lib/libc
-BUILD_COMPAT_LIBS+=	compat/external/lib
 .else
 BUILD_COMPAT_LIBS=
 .endif
