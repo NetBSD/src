@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.23 2009/04/10 20:35:58 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.24 2009/04/15 20:44:32 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -194,4 +194,9 @@ sys/kern/uipc_usrreq.c                          patch
         3. prohibit transfer of descriptors within SCM_RIGHTS messages if
         (num_files_in_transit > maxfiles / unp_rights_ratio)
         [mlelstv, ticket #1303]
+
+sys/dist/pf/net/pf.c				1.54
+
+	Fix http://www.securityfocus.com/archive/1/502634.
+	[christos, ticket #1305]
 
