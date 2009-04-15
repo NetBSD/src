@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.11 2009/01/12 06:52:15 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.12 2009/04/15 17:15:13 tsutsui Exp $
+
+S!= cd ${.CURDIR}/../../../..; pwd
 
 PROG= bootxx
 SRCS= start.S bootxx.c
@@ -17,7 +19,7 @@ CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -D_STANDALONE #-DBOOTXX_DEBUG
-CPPFLAGS+= -nostdinc -I${COMMON} -I${.CURDIR}/../../../..
+CPPFLAGS+= -nostdinc -I. -I${S}
 
 AFLAGS= -D_LOCORE -mno-abicalls
 
@@ -37,4 +39,5 @@ ${PROG}: ${OBJS}
 	tail -c +177 ${.TARGET}.tmp > ${.TARGET}.bin
 	mv ${.TARGET}.bin ${.TARGET}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
