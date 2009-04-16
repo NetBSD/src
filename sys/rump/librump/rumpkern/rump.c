@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.100 2009/03/29 18:22:08 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.101 2009/04/16 14:07:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.100 2009/03/29 18:22:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.101 2009/04/16 14:07:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.100 2009/03/29 18:22:08 pooka Exp $");
 
 #include <rump/rumpuser.h>
 
+#include <secmodel/secmodel.h>
+
 #include "rump_private.h"
 #include "rump_net_private.h"
 #include "rump_vfs_private.h"
@@ -84,6 +86,9 @@ struct filedesc rump_filedesc0;
 struct proclist allproc;
 char machine[] = "rump";
 static kauth_cred_t rump_susercred;
+
+/* pretend the master rump proc is init */
+struct proc *initproc = &proc0;
 
 struct rumpuser_mtx *rump_giantlock;
 
@@ -211,6 +216,7 @@ rump__init(int rump_version)
 	softint_init(&rump_cpu);
 	cold = 0;
 	devsw_init();
+	secmodel_start();
 
 	/* these do nothing if not present */
 	rump_vfs_init();
