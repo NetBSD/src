@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.37 2009/03/18 17:06:53 cegger Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.38 2009/04/16 22:22:06 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.37 2009/03/18 17:06:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.38 2009/04/16 22:22:06 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -502,8 +502,9 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 #define INA(t) (((struct inpcb *)(t->tp_npcb))->inp_laddr.s_addr)
 #define ISOA(t) (((struct isopcb *)(t->tp_npcb))->isop_laddr->siso_addr)
 
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL))) {
+		if (l == NULL || (error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_SOCKET, KAUTH_REQ_NETWORK_SOCKET_SETPRIV,
+		    KAUTH_ARG(optname), NULL, NULL))) {
 			error = EPERM;
 		} else if (cmd != PRCO_SETOPT || tpcb->tp_state != TP_CLOSED ||
 			   (tpcb->tp_flags & TPF_GENERAL_ADDR) ||
