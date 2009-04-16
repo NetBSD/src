@@ -1,4 +1,4 @@
-/* $NetBSD: dnload.c,v 1.6 2008/04/28 20:24:16 martin Exp $ */
+/* $NetBSD: dnload.c,v 1.7 2009/04/16 05:56:32 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ download(fd, controller, filename)
 		exit(1);
 	}
 	rlen = fread(data, 1, sb.st_size, f);
-	if (rlen != sb.st_size) {
+	if ((off_t)rlen != sb.st_size) {
 		fprintf(stderr, "error reading microcode, read %lu bytes: %s\n",
 			(unsigned long)rlen, strerror(errno));
 		exit(1);

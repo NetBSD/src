@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration parser
  *	-----------------------------------------
  *
- *	$Id: rc_parse.y,v 1.5 2006/05/27 20:11:14 martin Exp $ 
+ *	$Id: rc_parse.y,v 1.6 2009/04/16 05:56:32 lukem Exp $ 
  *
  * $FreeBSD$
  *
@@ -249,7 +249,7 @@ sysentry:	sysfileentry
 sysmonitorstart:
 		MONITOR '=' STRING '\n'
 			{
-			    char *err = NULL;
+			    const char *err = NULL;
 			    switch (monitor_start_rights($3)) {
 			    	case I4BMAR_OK:
 			    		break;
