@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.159 2009/03/22 18:54:59 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.160 2009/04/16 01:35:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.159 2009/03/22 18:54:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.160 2009/04/16 01:35:24 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1617,8 +1617,8 @@ bge_chipinit(struct bge_softc *sc)
 		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
 		   (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
-		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 ||
-		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
+		if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5705 &&
+		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5750)
 			dma_rw_ctl |= 0x0F;
 	}
 
