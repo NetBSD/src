@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.24 2009/04/07 18:16:28 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.25 2009/04/16 07:47:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.24 2009/04/07 18:16:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.25 2009/04/16 07:47:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -234,7 +234,7 @@ pmf_system_suspend(PMF_FN_ARGS1)
 	if (wsdisplay_handlex(0))
 		return false;
 #endif
-	KERNEL_LOCK(1, 0);
+	KERNEL_LOCK(1, NULL);
 
 	/*
 	 * Flush buffers only if the shutdown didn't do so
