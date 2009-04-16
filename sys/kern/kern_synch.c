@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.263 2009/04/16 00:17:19 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.264 2009/04/16 21:19:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.263 2009/04/16 00:17:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.264 2009/04/16 21:19:23 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -383,7 +383,7 @@ kpreempt(uintptr_t where)
 {
 	uintptr_t failed;
 	lwp_t *l;
-	int s, dop;
+	int s, dop, lsflag;
 
 	l = curlwp;
 	failed = 0;
@@ -452,26 +452,27 @@ kpreempt(uintptr_t where)
 		l->l_nopreempt--;
 	}
 
-	/* Record preemption failure for reporting via lockstat. */
-	if (__predict_false(failed)) {
-		int lsflag = 0;
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_COUNTED);
-		LOCKSTAT_ENTER(lsflag);
-		/* Might recurse, make it atomic. */
-		if (__predict_false(lsflag)) {
-			if (where == 0) {
-				where = (uintptr_t)__builtin_return_address(0);
-			}
-			if (atomic_cas_ptr_ni((void *)&l->l_pfailaddr,
-			    NULL, (void *)where) == NULL) {
-				LOCKSTAT_START_TIMER(lsflag, l->l_pfailtime);
-				l->l_pfaillock = failed;
-			}
-		}
-		LOCKSTAT_EXIT(lsflag);
+	if (__predict_true(!failed)) {
+		return false;
 	}
 
-	return failed;
+	/* Record preemption failure for reporting via lockstat. */
+	atomic_or_uint(&l->l_dopreempt, DOPREEMPT_COUNTED);
+	lsflag = 0;
+	LOCKSTAT_ENTER(lsflag);
+	if (__predict_false(lsflag)) {
+		if (where == 0) {
+			where = (uintptr_t)__builtin_return_address(0);
+		}
+		/* Preemption is on, might recurse, so make it atomic. */
+		if (atomic_cas_ptr_ni((void *)&l->l_pfailaddr, NULL,
+		    (void *)where) == NULL) {
+			LOCKSTAT_START_TIMER(lsflag, l->l_pfailtime);
+			l->l_pfaillock = failed;
+		}
+	}
+	LOCKSTAT_EXIT(lsflag);
+	return true;
 }
 
 /*
