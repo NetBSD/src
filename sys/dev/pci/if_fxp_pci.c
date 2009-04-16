@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.67 2009/03/19 15:28:04 tsutsui Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.68 2009/04/16 12:41:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.67 2009/03/19 15:28:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.68 2009/04/16 12:41:51 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -328,7 +328,6 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 
 	switch (fpp->fpp_prodid) {
 	case PCI_PRODUCT_INTEL_82557:
-	case PCI_PRODUCT_INTEL_82559ER:
 	case PCI_PRODUCT_INTEL_IN_BUSINESS:
 	    {
 		const char *chipname = NULL;
@@ -365,6 +364,24 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		    fpp->fpp_name, sc->sc_rev);
 		break;
 	    }
+
+	case PCI_PRODUCT_INTEL_82559ER:
+		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
+
+		/*
+		 * i82559ER doesn't support RX hardware checksumming
+		 * even though it has a newer revision number than 82559_A0.
+		 */
+
+		/* All i82559 have the "resume bug". */
+		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+
+		/* Enable the MWI command for memory writes. */
+		if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+			sc->sc_flags |= FXPF_MWI;
+
+		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+		break;
 
 	case PCI_PRODUCT_INTEL_82801BA_LAN:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
