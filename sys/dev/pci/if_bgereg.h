@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.49 2009/03/22 16:20:06 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.50 2009/04/16 01:38:34 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -262,7 +262,7 @@
 #define BGE_CHIPID_BCM5750_A1		0x40010000
 #define BGE_CHIPID_BCM5750_A3		0x40030000
 #define BGE_CHIPID_BCM5750_B0		0x40100000
-#define BGE_CHIPID_BCM5751_A1		0x41010000
+#define BGE_CHIPID_BCM5750_B1		0x41010000
 #define BGE_CHIPID_BCM5750_C0		0x42000000
 #define BGE_CHIPID_BCM5750_C1		0x42010000
 #define BGE_CHIPID_BCM5750_C2		0x42020000
@@ -300,9 +300,6 @@
 #define BGE_ASICREV_BCM5714		0x09
 #define BGE_ASICREV_BCM5755		0x0a
 #define BGE_ASICREV_BCM5787		0x0b
-/* is this one mistyped ??? */
-#define BGE_ASICREV_BCM5706		0x0c
-
 #define BGE_ASICREV_BCM5906		0x0c
 
 /* chip revisions */
@@ -361,7 +358,7 @@
  * register is set.
  */
 #define BGE_PCISTATE_FORCE_RESET	0x00000001
-#define BGE_PCISTATE_INTR_STATE		0x00000002
+#define BGE_PCISTATE_INTR_NOT_ACTIVE	0x00000002
 #define BGE_PCISTATE_PCI_BUSMODE	0x00000004 /* 1 = PCI, 0 = PCI-X */
 #define BGE_PCISTATE_PCI_BUSSPEED	0x00000008 /* 1 = 33/66, 0 = 66/133 */
 #define BGE_PCISTATE_32BIT_BUS		0x00000010 /* 1 = 32bit, 0 = 64bit */
@@ -607,6 +604,9 @@
 #define BGE_RX_BD_RULES_MASKVAL15	0x04FC
 #define BGE_RX_RULES_CFG		0x0500
 #define BGE_MAX_RX_FRAME_LOWAT		0x0504
+#define BGE_SERDES_CFG			0x0590
+#define BGE_SGDIG_CFG			0x05B0
+#define BGE_SGDIG_STS			0x05B4
 #define BGE_RX_STATS			0x0800
 #define BGE_TX_STATS			0x0880
 
@@ -736,6 +736,15 @@
 /* Receive Rules Mask register */
 #define BGE_RXRULEMASK_VALUE		0x0000FFFF
 #define BGE_RXRULEMASK_MASKVAL		0xFFFF0000
+
+/* SGDIG config (not documented) */
+#define BGE_SGDIGCFG_PAUSE_CAP		0x00000800
+#define BGE_SGDIGCFG_ASYM_PAUSE		0x00001000
+#define BGE_SGDIGCFG_SEND		0x40000000
+#define BGE_SGDIGCFG_AUTO		0x80000000
+
+/* SGDIG status (not documented) */
+#define BGE_SGDIGSTS_DONE		0x00000002
 
 /* MI communication register */
 #define BGE_MICOMM_DATA			0x0000FFFF
@@ -1785,7 +1794,11 @@
 /* Misc. config register */
 #define BGE_MISCCFG_RESET_CORE_CLOCKS	0x00000001
 #define BGE_MISCCFG_TIMER_PRESCALER	0x000000FE
+#define BGE_MISCCFG_BOARD_ID_5788	0x00010000
+#define BGE_MISCCFG_BOARD_ID_5788M	0x00018000
+#define BGE_MISCCFG_BOARD_ID_MASK	0x0001e000
 #define BGE_MISCCFG_EPHY_IDDQ		0x00200000
+#define BGE_MISCCFG_KEEP_GPHY_POWER	0x04000000
 
 #define BGE_32BITTIME_66MHZ		(0x41 << 1)
 
@@ -2424,8 +2437,6 @@ struct bge_type {
 	char			*bge_name;
 };
 
-#define BGE_HWREV_TIGON		0x01
-#define BGE_HWREV_TIGON_II	0x02
 #define BGE_TIMEOUT		1000
 #define BGE_TXCONS_UNSET		0xFFFF	/* impossible value */
 
@@ -2454,6 +2465,8 @@ struct txdmamap_pool_entry {
 #define BGE_PCIX		0x00000020
 #define BGE_PCIE		0x00000040
 #define BGE_PHY_FIBER_TBI	0x00000800
+#define BGE_PHY_FIBER_MII	0x00001000
+#define BGE_IS_5788		0x00100000
 
 struct bge_softc {
 	device_t		bge_dev;
@@ -2488,6 +2501,13 @@ struct bge_softc {
 	u_int32_t		bge_rx_max_coal_bds;
 	u_int32_t		bge_tx_max_coal_bds;
 	u_int32_t		bge_tx_buf_ratio;
+	uint32_t		bge_sts;
+#define BGE_STS_LINK		0x00000001	/* MAC link status */
+#define BGE_STS_LINK_EVT	0x00000002	/* pending link event */
+#define BGE_STS_AUTOPOLL	0x00000004	/* PHY auto-polling  */
+#define BGE_STS_BIT(sc, x)	((sc)->bge_sts & (x))
+#define BGE_STS_SETBIT(sc, x)	((sc)->bge_sts |= (x))
+#define BGE_STS_CLRBIT(sc, x)	((sc)->bge_sts &= ~(x))
 	int			bge_if_flags;
 	int			bge_flags;
 	int			bge_flowflags;
@@ -2504,7 +2524,6 @@ struct bge_softc {
 	struct evcnt bge_ev_xoffentered;/* XOFF state entered */
 #endif /* BGE_EVENT_COUNTERS */
 	int			bge_txcnt;
-	int			bge_link;
 	struct callout		bge_timeout;
 	char			*bge_vpd_prodname;
 	char			*bge_vpd_readonly;
