@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaattach.c,v 1.7 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: irdaattach.c,v 1.8 2009/04/16 02:11:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ main(int argc, char **argv)
 {
 	int fd;
 	char *dev, devbuf[100];
-	char *donglename = "none";
+	const char *donglename = "none";
 	struct termios tty;
 	tcflag_t cflag = HUPCL;
 	int ch;
