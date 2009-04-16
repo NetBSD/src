@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.74 2009/03/29 07:33:52 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.75 2009/04/16 14:08:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.74 2009/03/29 07:33:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.75 2009/04/16 14:08:18 tsutsui Exp $");
 
 /* #define HMEDEBUG */
 
@@ -360,7 +360,7 @@ hme_stop(struct hme_softc *sc, bool chip_only)
 			  (HME_SEB_RESET_ETX | HME_SEB_RESET_ERX));
 
 	for (n = 0; n < 20; n++) {
-		u_int32_t v = bus_space_read_4(t, seb, HME_SEBI_RESET);
+		uint32_t v = bus_space_read_4(t, seb, HME_SEBI_RESET);
 		if ((v & (HME_SEB_RESET_ETX | HME_SEB_RESET_ERX)) == 0)
 			return;
 		DELAY(20);
@@ -458,8 +458,8 @@ hme_init(struct hme_softc *sc)
 	bus_space_handle_t etx = sc->sc_etx;
 	bus_space_handle_t erx = sc->sc_erx;
 	bus_space_handle_t mac = sc->sc_mac;
-	u_int8_t *ea;
-	u_int32_t v;
+	uint8_t *ea;
+	uint32_t v;
 	int rc;
 
 	/*
@@ -669,7 +669,7 @@ hme_put(struct hme_softc *sc, int ri, struct mbuf *m)
  * we copy into clusters.
  */
 struct mbuf *
-hme_get(struct hme_softc *sc, int ri, u_int32_t flags)
+hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m, *m0, *newm;
@@ -831,7 +831,7 @@ bad:
  * Pass a packet to the higher levels.
  */
 void
-hme_read(struct hme_softc *sc, int ix, u_int32_t flags)
+hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -1028,7 +1028,7 @@ hme_rint(struct hme_softc *sc)
 	void *xdr = sc->sc_rb.rb_rxd;
 	unsigned int nrbuf = sc->sc_rb.rb_nrbuf;
 	unsigned int ri;
-	u_int32_t flags;
+	uint32_t flags;
 
 	ri = sc->sc_rb.rb_rdtail;
 
@@ -1067,7 +1067,7 @@ hme_eint(struct hme_softc *sc, u_int status)
 	if ((status & HME_SEB_STAT_MIFIRQ) != 0) {
 		bus_space_tag_t t = sc->sc_bustag;
 		bus_space_handle_t mif = sc->sc_mif;
-		u_int32_t cf, st, sm;
+		uint32_t cf, st, sm;
 		cf = bus_space_read_4(t, mif, HME_MIFI_CFG);
 		st = bus_space_read_4(t, mif, HME_MIFI_STAT);
 		sm = bus_space_read_4(t, mif, HME_MIFI_SM);
@@ -1087,7 +1087,7 @@ hme_intr(void *v)
 	struct hme_softc *sc = (struct hme_softc *)v;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
-	u_int32_t status;
+	uint32_t status;
 	int r = 0;
 
 	status = bus_space_read_4(t, seb, HME_SEBI_STAT);
@@ -1130,7 +1130,7 @@ hme_mifinit(struct hme_softc *sc)
 	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
 	int instance, phy;
-	u_int32_t v;
+	uint32_t v;
 
 	if (sc->sc_mii.mii_media.ifm_cur != NULL) {
 		instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
@@ -1163,7 +1163,7 @@ hme_mii_readreg(struct device *self, int phy, int reg)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
-	u_int32_t v, xif_cfg, mifi_cfg;
+	uint32_t v, xif_cfg, mifi_cfg;
 	int n;
 
 	/* We can at most have two PHYs */
@@ -1234,7 +1234,7 @@ hme_mii_writereg(struct device *self, int phy, int reg, int val)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
-	u_int32_t v, xif_cfg, mifi_cfg;
+	uint32_t v, xif_cfg, mifi_cfg;
 	int n;
 
 	/* We can at most have two PHYs */
@@ -1300,7 +1300,7 @@ hme_mii_statchg(struct device *dev)
 	struct hme_softc *sc = (void *)dev;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
-	u_int32_t v;
+	uint32_t v;
 
 #ifdef HMEDEBUG
 	if (sc->sc_debug)
@@ -1332,7 +1332,7 @@ hme_mediachange(struct ifnet *ifp)
 	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
 	int phy = sc->sc_phys[instance];
 	int rc;
-	u_int32_t v;
+	uint32_t v;
 
 #ifdef HMEDEBUG
 	if (sc->sc_debug)
@@ -1487,9 +1487,9 @@ hme_setladrf(struct hme_softc *sc)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
 	u_char *cp;
-	u_int32_t crc;
-	u_int32_t hash[4];
-	u_int32_t v;
+	uint32_t crc;
+	uint32_t hash[4];
+	uint32_t v;
 	int len;
 
 	/* Clear hash table */
