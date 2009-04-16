@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.74 2009/04/15 20:44:24 elad Exp $
+.\" $NetBSD: kauth.9,v 1.75 2009/04/16 08:03:52 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -380,7 +380,7 @@ is
 .Dv KAUTH_REQ_PROCESS_KTRACE_PERSISTENT ,
 this checks if persistent tracing can be done.
 Persistent tracing maintains the trace across a set-user-id/set-group-id
-.Xr exec 2 ,
+.Xr exec 3 ,
 and normally requires privileged credentials.
 .It Dv KAUTH_PROCESS_PROCFS
 Checks whether object with passed credentials can use
