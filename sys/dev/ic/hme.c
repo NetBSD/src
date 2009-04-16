@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.75 2009/04/16 14:08:18 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.76 2009/04/16 14:39:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.75 2009/04/16 14:08:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.76 2009/04/16 14:39:11 tsutsui Exp $");
 
 /* #define HMEDEBUG */
 
@@ -675,6 +675,9 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 	struct mbuf *m, *m0, *newm;
 	char *bp;
 	int len, totlen;
+#ifdef INET
+	int csum_flags;
+#endif
 
 	totlen = HME_XD_DECODE_RSIZE(flags);
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
@@ -719,6 +722,7 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 
 #ifdef INET
 	/* hardware checksum */
+	csum_flags = 0;
 	if (ifp->if_csum_flags_rx & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
 		struct ether_header *eh;
 		struct ether_vlan_header *evh;
@@ -726,7 +730,7 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 		struct udphdr *uh;
 		uint16_t *opts;
 		int32_t hlen, pktlen;
-		uint32_t temp;
+		uint32_t csum_data;
 
 		eh = mtod(m0, struct ether_header *);
 		if (ntohs(eh->ether_type) == ETHERTYPE_IP) {
@@ -755,20 +759,22 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 		 * bail if too short, has random trailing garbage, truncated,
 		 * fragment, or has ethernet pad.
 		 */
-		if ((ntohs(ip->ip_len) < hlen) || (ntohs(ip->ip_len) != pktlen)
-		    || (ntohs(ip->ip_off) & (IP_MF | IP_OFFMASK)))
+		if (ntohs(ip->ip_len) < hlen ||
+		    ntohs(ip->ip_len) != pktlen ||
+		    (ntohs(ip->ip_off) & (IP_MF | IP_OFFMASK)) != 0)
 			goto swcsum;
 
 		switch (ip->ip_p) {
 		case IPPROTO_TCP:
-			if (! (ifp->if_csum_flags_rx & M_CSUM_TCPv4))
+			if ((ifp->if_csum_flags_rx & M_CSUM_TCPv4) == 0)
 				goto swcsum;
 			if (pktlen < (hlen + sizeof(struct tcphdr)))
 				goto swcsum;
-			m0->m_pkthdr.csum_flags = M_CSUM_TCPv4;
+			csum_flags =
+			    M_CSUM_TCPv4 | M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
 			break;
 		case IPPROTO_UDP:
-			if (! (ifp->if_csum_flags_rx & M_CSUM_UDPv4))
+			if ((ifp->if_csum_flags_rx & M_CSUM_UDPv4) == 0)
 				goto swcsum;
 			if (pktlen < (hlen + sizeof(struct udphdr)))
 				goto swcsum;
@@ -776,48 +782,47 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 			/* no checksum */
 			if (uh->uh_sum == 0)
 				goto swcsum;
-			m0->m_pkthdr.csum_flags = M_CSUM_UDPv4;
+			csum_flags =
+			    M_CSUM_UDPv4 | M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
 			break;
 		default:
 			goto swcsum;
 		}
 
 		/* w/ M_CSUM_NO_PSEUDOHDR, the uncomplemented sum is expected */
-		m0->m_pkthdr.csum_data = (~flags) & HME_XD_RXCKSUM;
+		csum_data = ~flags & HME_XD_RXCKSUM;
 
 		/*
 		 * If data offset is different from RX cksum start offset,
 		 * we have to deduct them.
 		 */
-		temp = ((char *)ip + hlen) -
+		hlen = ((char *)ip + hlen) -
 		    ((char *)eh + ETHER_HDR_LEN + sizeof(struct ip));
-		if (temp > 1) {
+		if (hlen > 1) {
 			uint32_t optsum;
 
 			optsum = 0;
 			opts = (uint16_t *)((char *)eh +
 			    ETHER_HDR_LEN + sizeof(struct ip));
 
-			while (temp > 1) {
+			while (hlen > 1) {
 				optsum += ntohs(*opts++);
-				temp -= 2;
+				hlen -= 2;
 			}
 			while (optsum >> 16)
 				optsum = (optsum >> 16) + (optsum & 0xffff);
 
 			/* Deduct the ip opts sum from the hwsum. */
-			m0->m_pkthdr.csum_data += (uint16_t)~optsum;
+			csum_data += (uint16_t)~optsum;
 
-			while (m0->m_pkthdr.csum_data >> 16)
-				m0->m_pkthdr.csum_data =
-					(m0->m_pkthdr.csum_data >> 16) +
-					(m0->m_pkthdr.csum_data & 0xffff);
+			while (csum_data >> 16)
+				csum_data =
+				    (csum_data >> 16) + (csum_data & 0xffff);
 		}
-
-		m0->m_pkthdr.csum_flags |= M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
-	} else
+		m0->m_pkthdr.csum_data = csum_data;
+	}
 swcsum:
-		m0->m_pkthdr.csum_flags = 0;
+	m0->m_pkthdr.csum_flags = csum_flags;
 #endif
 
 	return (m0);
