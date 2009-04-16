@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.20 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.21 2009/04/16 14:08:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -288,21 +288,21 @@
  */
 #ifdef notdef
 struct hme_xd {
-	volatile u_int32_t	xd_flags;
-	volatile u_int32_t	xd_addr;	/* Buffer address (DMA) */
+	volatile uint32_t	xd_flags;
+	volatile uint32_t	xd_addr;	/* Buffer address (DMA) */
 };
 #endif
 #define HME_XD_SIZE			8
 #define HME_XD_FLAGS(b, i)		((char *)(b) + ((i) * HME_XD_SIZE) + 0)
 #define HME_XD_ADDR(b, i)		((char *)(b) + ((i) * HME_XD_SIZE) + 4)
 #define HME_XD_GETFLAGS(p, b, i)					\
-	(p) ? le32toh(*((u_int32_t *)HME_XD_FLAGS(b,i))) :		\
-		(*((u_int32_t *)HME_XD_FLAGS(b,i)))
+	(p) ? le32toh(*((uint32_t *)HME_XD_FLAGS(b,i))) :		\
+		(*((uint32_t *)HME_XD_FLAGS(b,i)))
 #define HME_XD_SETFLAGS(p, b, i, f)	do {				\
-	*((u_int32_t *)HME_XD_FLAGS(b,i)) = ((p) ? htole32((f)) : (f));	\
+	*((uint32_t *)HME_XD_FLAGS(b,i)) = ((p) ? htole32((f)) : (f));	\
 } while(/* CONSTCOND */ 0)
 #define HME_XD_SETADDR(p, b, i, a)	do {				\
-	*((u_int32_t *)HME_XD_ADDR(b,i)) = ((p) ? htole32((a)) : (a));	\
+	*((uint32_t *)HME_XD_ADDR(b,i)) = ((p) ? htole32((a)) : (a));	\
 } while(/* CONSTCOND */ 0)
 
 /* Descriptor control word flag values */
