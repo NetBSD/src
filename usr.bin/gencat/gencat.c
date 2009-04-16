@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.28 2009/04/12 10:25:35 lukem Exp $	*/
+/*	$NetBSD: gencat.c,v 1.29 2009/04/16 13:52:52 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.28 2009/04/12 10:25:35 lukem Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.29 2009/04/16 13:52:52 tron Exp $");
 #endif
 
 /***********************************************************
@@ -556,7 +556,7 @@ MCReadCat(int fd)
 		else
 			errx(1, CORRUPT);
 	}
-	if (ntohl(cat_hdr.__magic) != _NLS_MAGIC)
+	if (ntohl((uint32_t)cat_hdr.__magic) != _NLS_MAGIC)
 		errx(1, "%s: bad magic number (%#x)", CORRUPT, cat_hdr.__magic);
 
 	cat_hdr.__mem = ntohl(cat_hdr.__mem);
