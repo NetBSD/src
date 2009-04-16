@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.38 2009/03/18 16:00:22 cegger Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.39 2009/04/16 21:37:17 elad Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.38 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.39 2009/04/16 21:37:17 elad Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -263,14 +263,17 @@ at_pcbsetaddr(struct ddpcb *ddp, struct mbuf *addr, struct lwp *l)
 				return (EADDRNOTAVAIL);
 		}
 		if (sat->sat_port != ATADDR_ANYPORT) {
+			int error;
+
 			if (sat->sat_port < ATPORT_FIRST ||
 			    sat->sat_port >= ATPORT_LAST)
 				return (EINVAL);
 
 			if (sat->sat_port < ATPORT_RESERVED && l &&
-			    kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL))
-				return (EACCES);
+			    (error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_BIND, KAUTH_REQ_NETWORK_BIND_PRIVPORT,
+			    ddpcb->ddp_socket, sat, NULL)) != 0)
+				return (error);
 		}
 	} else {
 		memset((void *) & lsat, 0, sizeof(struct sockaddr_at));
