@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.1.2.3 2009/02/23 13:24:41 mjf Exp $	*/
+/*	$NetBSD: power.c,v 1.1.2.4 2009/04/16 16:52:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -259,6 +259,7 @@ pwr_sw_init(struct power_softc *sc)
 {
 	struct sysctllog *sysctl_log = NULL;
 	const struct sysctlnode *pwr_sw_node;
+	const char *errmsg;
 	int error = EINVAL;
 
 	/*
@@ -270,6 +271,7 @@ pwr_sw_init(struct power_softc *sc)
 		return error;
 	}
 
+	errmsg = "Can't create sysctl machdep.power_switch (or children)\n";
 	error = sysctl_createv(&sysctl_log, 0, NULL, NULL, 0, 
 	    CTLTYPE_NODE, "machdep", NULL, NULL, 0, NULL, 0, 
 	    CTL_MACHDEP, CTL_EOL);
@@ -300,12 +302,14 @@ pwr_sw_init(struct power_softc *sc)
 	if (error)
 		goto err_sysctl;
 
+	errmsg = "Can't alloc sysmon power switch.\n";
 	pwr_sw_sysmon = kmem_zalloc(sizeof(*pwr_sw_sysmon), KM_SLEEP);
 	if (pwr_sw_sysmon == NULL) {
 		error = ENOMEM;
 		goto err_kmem;
 	}
 
+	errmsg = "Can't register power switch with sysmon.\n";
 	sysmon_task_queue_init();
 	pwr_sw_sysmon->smpsw_name = "power switch";
 	pwr_sw_sysmon->smpsw_type = PSWITCH_TYPE_POWER;
@@ -320,17 +324,15 @@ pwr_sw_init(struct power_softc *sc)
 	return error;
 
 err_sysmon:
-	aprint_error_dev(sc->sc_dev,
-	    "Can't register power switch with sysmon.\n");
+	/* Nothing to do */
 
 err_kmem:
-	aprint_error_dev(sc->sc_dev, "Can't alloc sysmon power switch.\n");
 	kmem_free(pwr_sw_sysmon, sizeof(*pwr_sw_sysmon));
 
 err_sysctl:
-	aprint_error_dev(sc->sc_dev,
-	    "Can't create sysctl machdep.power_switch\n");
 	sysctl_teardown(&sysctl_log);
+
+	aprint_error_dev(sc->sc_dev, errmsg);
 
 	return error;
 }
