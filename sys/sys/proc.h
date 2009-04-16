@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.284 2009/03/28 21:41:06 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.285 2009/04/16 00:17:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -565,6 +565,9 @@ _proclist_skipmarker(struct proc *p0)
 #ifdef KSTACK_CHECK_MAGIC
 void kstack_setup_magic(const struct lwp *);
 void kstack_check_magic(const struct lwp *);
+#else
+#define	kstack_setup_magic(x)
+#define	kstack_check_magic(x)
 #endif
 
 /*
