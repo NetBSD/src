@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.9 2009/03/06 14:00:40 christos Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.10 2009/04/16 07:42:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.9 2009/03/06 14:00:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.10 2009/04/16 07:42:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1752,7 +1752,7 @@ sa_switchcall(void *arg)
 		} else {
 			/*
 			 * Oops! We're in trouble. The app hasn't
-			 * passeed us in any stacks on which to deliver
+			 * passed us in any stacks on which to deliver
 			 * the upcall.
 			 *
 			 * WRS: I think this code is wrong. If we can't
