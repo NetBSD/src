@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.17 2009/04/07 18:34:18 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.18 2009/04/16 10:26:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,13 +43,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.17 2009/04/07 18:34:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.18 2009/04/16 10:26:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/condvar.h>
 #include <sys/disklabel.h>
+#include <sys/evcnt.h>
 #include <sys/fcntl.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
@@ -100,6 +101,10 @@ static struct rblkdev {
 	struct disklabel rblk_dl;
 } minors[RUMPBLK_SIZE];
 
+static struct evcnt memblk_ev_reqs;
+static struct evcnt memblk_ev_hits;
+static struct evcnt memblk_ev_busy;
+
 dev_type_open(rumpblk_open);
 dev_type_close(rumpblk_close);
 dev_type_read(rumpblk_read);
@@ -136,6 +141,7 @@ getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
 	struct blkwin *win;
 
 	mutex_enter(&rblk->rblk_memmtx);
+	memblk_ev_reqs.ev_count++;
  retry:
 	/* search for window */
 	TAILQ_FOREACH(win, &rblk->rblk_lruq, win_lru) {
@@ -145,6 +151,7 @@ getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
 
 	/* found?  return */
 	if (win) {
+		memblk_ev_hits.ev_count++;
 		TAILQ_REMOVE(&rblk->rblk_lruq, win, win_lru);
 		goto good;
 	}
@@ -180,6 +187,8 @@ getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
 		}
 	} else {
 		DPRINTF(("memwin wait\n"));
+		memblk_ev_busy.ev_count++;
+
 		rblk->rblk_waiting = true;
 		cv_wait(&rblk->rblk_memcv, &rblk->rblk_memmtx);
 		goto retry;
@@ -256,6 +265,13 @@ rumpblk_init(void)
 		mutex_init(&minors[i].rblk_memmtx, MUTEX_DEFAULT, IPL_NONE);
 		cv_init(&minors[i].rblk_memcv, "rblkmcv");
 	}
+
+	evcnt_attach_dynamic(&memblk_ev_reqs, EVCNT_TYPE_MISC, NULL,
+	    "rumpblk", "memblk requests");
+	evcnt_attach_dynamic(&memblk_ev_hits, EVCNT_TYPE_MISC, NULL,
+	    "rumpblk", "memblk window hits");
+	evcnt_attach_dynamic(&memblk_ev_busy, EVCNT_TYPE_MISC, NULL,
+	    "rumpblk", "memblk all windows busy");
 
 	if (blkfail) {
 		return devsw_attach("rumpblk", &rumpblk_bdevsw_fail, &rumpblk,
