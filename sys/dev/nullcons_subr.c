@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.8 2009/03/14 15:36:16 dsl Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.9 2009/04/16 12:57:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.8 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.9 2009/04/16 12:57:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.8 2009/03/14 15:36:16 dsl Exp $"
 #include <sys/vnode.h>
 
 #include <dev/cons.h>
-
-
-extern struct consdev *cn_tab;		/* physical console device info */
 
 static struct tty *nulltty;		/* null console tty */
 
@@ -80,13 +77,13 @@ nullcndev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	error = (*nulltty->t_linesw->l_ioctl)(nulltty, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	error = ttioctl(nulltty, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
 struct tty*
@@ -128,8 +125,9 @@ int
 nullcngetc(dev_t dev)
 {
 
-	for(;;);
-	return (0);
+	for (;;)
+		;
+	return 0;
 }
 
 /*
@@ -151,14 +149,14 @@ nullcons_newdev(struct consdev *cn)
 	int bmajor = -1, cmajor = -1;
 
 	if ((cn == NULL) || (cn->cn_pri != CN_NULL) || (cn->cn_dev != NODEV))
-		return (0);
+		return 0;
 
 	/*
 	 * Attach no-op device to the device list.
 	 */
 	error = devsw_attach("nullcn", NULL, &bmajor, &nullcn_devsw, &cmajor);
 	if (error != 0)
-		return (error);
+		return error;
 
 	/*
 	 * Allocate tty (mostly to have sane ioctl()).
@@ -168,7 +166,7 @@ nullcons_newdev(struct consdev *cn)
 	tty_attach(nulltty);
 	cn->cn_dev = nulltty->t_dev;
 
-	return (0);
+	return 0;
 }
 
 /*
