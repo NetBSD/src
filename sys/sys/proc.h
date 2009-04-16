@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.285 2009/04/16 00:17:19 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.286 2009/04/16 14:56:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -418,8 +418,6 @@ struct proclist_desc {
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_EMULDATA);
-MALLOC_DECLARE(M_PROC);
-MALLOC_DECLARE(M_SESSION);
 MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 
 /*

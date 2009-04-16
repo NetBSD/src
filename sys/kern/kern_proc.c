@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.149 2009/04/16 00:17:19 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.150 2009/04/16 14:56:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.149 2009/04/16 00:17:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.150 2009/04/16 14:56:41 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.149 2009/04/16 00:17:19 rmind Exp $"
 #include <sys/file.h>
 #include <ufs/ufs/quota.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/pset.h>
 #include <sys/mbuf.h>
@@ -214,7 +213,6 @@ int maxuprc = MAXUPRC;
 int cmask = CMASK;
 
 MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
-MALLOC_DEFINE(M_PROC, "proc", "Proc structures");
 MALLOC_DEFINE(M_SUBPROC, "subproc", "Proc sub-structures");
 
 /*
@@ -242,16 +240,16 @@ void
 procinit(void)
 {
 	const struct proclist_desc *pd;
-	int i;
+	u_int i;
 #define	LINK_EMPTY ((PID_MAX + INITIAL_PID_TABLE_SIZE) & ~(INITIAL_PID_TABLE_SIZE - 1))
 
 	for (pd = proclists; pd->pd_list != NULL; pd++)
 		LIST_INIT(pd->pd_list);
 
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	pid_table = kmem_alloc(INITIAL_PID_TABLE_SIZE
+	    * sizeof(struct pid_table), KM_SLEEP);
 
-	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
-			    M_PROC, M_WAITOK);
 	/* Set free list running through table...
 	   Preset 'use count' above PID_MAX so we allocate pid 1 next. */
 	for (i = 0; i <= pid_tbl_mask; i++) {
@@ -484,20 +482,22 @@ pg_find(pid_t pgid, uint flags)
 static void
 expand_pid_table(void)
 {
-	uint pt_size = pid_tbl_mask + 1;
+	size_t pt_size, tsz;
 	struct pid_table *n_pt, *new_pt;
 	struct proc *proc;
 	struct pgrp *pgrp;
-	int i;
 	pid_t pid;
+	u_int i;
 
-	new_pt = malloc(pt_size * 2 * sizeof *new_pt, M_PROC, M_WAITOK);
+	pt_size = pid_tbl_mask + 1;
+	tsz = pt_size * 2 * sizeof(struct pid_table);
+	new_pt = kmem_alloc(tsz, KM_SLEEP);
 
 	mutex_enter(proc_lock);
 	if (pt_size != pid_tbl_mask + 1) {
 		/* Another process beat us to it... */
 		mutex_exit(proc_lock);
-		free(new_pt, M_PROC);
+		kmem_free(new_pt, tsz);
 		return;
 	}
 
@@ -540,7 +540,8 @@ expand_pid_table(void)
 			break;
 	}
 
-	/* Switch tables */
+	/* Save old table size and switch tables */
+	tsz = pt_size * sizeof(struct pid_table);
 	n_pt = pid_table;
 	pid_table = new_pt;
 	pid_tbl_mask = pt_size * 2 - 1;
@@ -556,7 +557,7 @@ expand_pid_table(void)
 		pid_alloc_lim <<= 1;	/* doubles number of free slots... */
 
 	mutex_exit(proc_lock);
-	free(n_pt, M_PROC);
+	kmem_free(n_pt, tsz);
 }
 
 struct proc *
