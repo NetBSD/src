@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2009/03/30 09:51:37 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2009/04/16 15:34:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -197,6 +197,23 @@ struct cpu_info {
 	int		ci_want_resched __aligned(64);
 	int		ci_padout __aligned(64);
 };
+
+/*
+ * Macros to handle (some) trapframe registers for common x86 code.
+ */
+#ifdef __x86_64__
+#define	X86_TF_RAX(tf)		tf->tf_rax
+#define	X86_TF_RDX(tf)		tf->tf_rdx
+#define	X86_TF_RSP(tf)		tf->tf_rsp
+#define	X86_TF_RIP(tf)		tf->tf_rip
+#define	X86_TF_RFLAGS(tf)	tf->tf_rflags
+#else
+#define	X86_TF_RAX(tf)		tf->tf_eax
+#define	X86_TF_RDX(tf)		tf->tf_edx
+#define	X86_TF_RSP(tf)		tf->tf_esp
+#define	X86_TF_RIP(tf)		tf->tf_eip
+#define	X86_TF_RFLAGS(tf)	tf->tf_eflags
+#endif
 
 /*
  * Processor flag notes: The "primary" CPU has certain MI-defined
