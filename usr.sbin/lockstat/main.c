@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2009/03/21 13:02:19 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2009/04/16 06:14:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.16 2009/03/21 13:02:19 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2009/04/16 06:14:13 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -159,7 +159,8 @@ lock_t	*morelocks(void);
 int
 main(int argc, char **argv)
 {
-	int eventtype, locktype, ch, nlfd, fd, i;
+	int eventtype, locktype, ch, nlfd, fd;
+	size_t i;
 	bool sflag, pflag, mflag, Mflag;
 	const char *nlistf, *outf;
 	char *lockname, *funcname;
@@ -327,7 +328,7 @@ main(int argc, char **argv)
 	}
 	if ((bufs = malloc(ld.ld_size)) == NULL)
 		err(EXIT_FAILURE, "cannot allocate memory for user buffers");
-	if (read(lsfd, bufs, ld.ld_size) != ld.ld_size)
+	if ((size_t)read(lsfd, bufs, ld.ld_size) != ld.ld_size)
 		err(EXIT_FAILURE, "reading from " _PATH_DEV_LOCKSTAT);
 	if (close(lsfd))
 		err(EXIT_FAILURE, "close(" _PATH_DEV_LOCKSTAT ")");
@@ -554,7 +555,7 @@ spawn(int argc, char **argv)
 lock_t *
 morelocks(void)
 {
-	const static int batch = 32;
+	const int batch = 32;
 	lock_t *l, *lp, *max;
 
 	l = (lock_t *)malloc(sizeof(*l) * batch);
