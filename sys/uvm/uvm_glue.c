@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.136 2009/03/29 01:02:51 mrg Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.137 2009/04/16 00:17:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.136 2009/03/29 01:02:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.137 2009/04/16 00:17:19 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -253,12 +253,8 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2->l_flag |= LW_INMEM;
 	}
 
-#ifdef KSTACK_CHECK_MAGIC
-	/*
-	 * fill stack with magic number
-	 */
+	/* Fill stack with magic number. */
 	kstack_setup_magic(l2);
-#endif
 
 	/*
 	 * cpu_lwp_fork() copy and update the pcb, and make the child ready

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.262 2009/04/15 11:44:20 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.263 2009/04/16 00:17:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.262 2009/04/15 11:44:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.263 2009/04/16 00:17:19 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -583,9 +583,7 @@ mi_switch(lwp_t *l)
 	KASSERT(kpreempt_disabled());
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
 
-#ifdef KSTACK_CHECK_MAGIC
 	kstack_check_magic(l);
-#endif
 
 	binuptime(&bt);
 
@@ -828,9 +826,7 @@ lwp_exit_switchaway(lwp_t *l)
 	KASSERT(ci == curcpu());
 	LOCKDEBUG_BARRIER(NULL, 0);
 
-#ifdef KSTACK_CHECK_MAGIC
 	kstack_check_magic(l);
-#endif
 
 	/* Count time spent in current system call */
 	SYSCALL_TIME_SLEEP(l);

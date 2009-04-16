@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.148 2009/03/28 21:41:05 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.149 2009/04/16 00:17:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.148 2009/03/28 21:41:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.149 2009/04/16 00:17:19 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1067,9 +1067,8 @@ pidtbl_dump(void)
 #define	KSTACK_MAGIC	0xdeadbeaf
 
 /* XXX should be per process basis? */
-int kstackleftmin = KSTACK_SIZE;
-int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is
-					  less than this */
+static int	kstackleftmin = KSTACK_SIZE;
+static int	kstackleftthres = KSTACK_SIZE / 8;
 
 void
 kstack_setup_magic(const struct lwp *l)
