@@ -27,7 +27,7 @@
  *	FSM for isdnd
  *	-------------
  *
- *	$Id: fsm.c,v 1.7 2006/03/17 21:10:02 elad Exp $ 
+ *	$Id: fsm.c,v 1.8 2009/04/16 05:56:32 lukem Exp $ 
  *
  * $FreeBSD$
  *
@@ -39,7 +39,7 @@
 
 /* table of state descriptions */
 
-static char *state_text[N_STATES] = {
+static const char *state_text[N_STATES] = {
 	"idle",
 	"dialing",
 	"waitdialretry",
@@ -65,7 +65,7 @@ static char *state_text[N_STATES] = {
 
 /* table of event descriptions */
 
-static char *event_text[N_EVENTS] = {
+static const char *event_text[N_EVENTS] = {
 
 	/* incoming messages */
 	
@@ -439,10 +439,10 @@ next_state(struct cfg_entry *cep, int event)
 /*---------------------------------------------------------------------------*
  *	return pointer to current state description
  *---------------------------------------------------------------------------*/	
-char *
+const char *
 printstate(struct cfg_entry *cep)
 {
-	return((char *) state_text[cep->state]);
+	return(state_text[cep->state]);
 }
 
 /* EOF */
