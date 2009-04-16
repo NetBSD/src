@@ -27,7 +27,7 @@
  *	pcause1tr6.h - 1TR6 causes definitions
  *	--------------------------------------
  *
- *	$Id: pcause_1tr6.h,v 1.1.1.1 2001/01/06 13:00:30 martin Exp $
+ *	$Id: pcause_1tr6.h,v 1.2 2009/04/16 05:56:33 lukem Exp $
  *
  * $FreeBSD$
  *
@@ -35,7 +35,7 @@
  *
  *---------------------------------------------------------------------------*/
 
-char *print_cause_1tr6(unsigned char code);
+const char *print_cause_1tr6(unsigned char code);
 
 /* 1TR6 protocol causes */
 
