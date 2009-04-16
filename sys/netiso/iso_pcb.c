@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.47 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.48 2009/04/16 21:37:17 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.47 2009/03/18 17:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.48 2009/04/16 21:37:17 elad Exp $");
 
 #include "opt_iso.h"
 
@@ -222,10 +222,20 @@ iso_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 	if (siso->siso_tlen <= 2) {
 		memcpy( suf.data, TSEL(siso), sizeof(suf.data));
 		suf.s = ntohs(suf.s);
-		if (suf.s < ISO_PORT_RESERVED &&
-		    (l == NULL || kauth_authorize_generic(l->l_cred,
-		     KAUTH_GENERIC_ISSUSER, NULL)))
-			return EACCES;
+		if (suf.s < ISO_PORT_RESERVED) {
+			int error;
+
+			if (l == NULL)
+				error = EACCES;
+			else
+				error = kauth_authorize_network(l->l_cred,
+				    KAUTH_NETWORK_BIND,
+				    KAUTH_REQ_NETWORK_BIND_PRIVPORT,
+				    isop->isop_socket, siso, NULL);
+
+			if (error)
+				return (error);
+		}
 	} else {
 		char  *cp;
 noname:
