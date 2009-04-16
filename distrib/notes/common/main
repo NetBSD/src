@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.441 2009/04/10 10:26:24 stacktic Exp $
+.\"	$NetBSD: main,v 1.442 2009/04/16 02:44:18 ver Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1416,6 +1416,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Chris Gilbert Ta Mt chris@NetBSD.org
 .It Ta Eric Gillespie Ta Mt epg@NetBSD.org
 .It Ta Brian Ginsbach Ta Mt ginsbach@NetBSD.org
+.It Ta Oliver V. Gould Ta Mt ver@NetBSD.org
 .It Ta Paul Goyette Ta Mt pgoyette@NetBSD.org
 .It Ta Michael Graff Ta Mt explorer@NetBSD.org
 .It Ta Brian C. Grayson Ta Mt bgrayson@NetBSD.org
