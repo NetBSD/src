@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.14 2009/03/31 17:38:27 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.15 2009/04/16 19:39:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.14 2009/03/31 17:38:27 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.15 2009/04/16 19:39:37 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -93,16 +93,16 @@ prompt_print(EditLine *el, int op)
 		elp = &el->el_prompt;
 	else
 		elp = &el->el_rprompt;
-	p = (elp->p_func) (el);
-	while (*p) {
+
+	for (p = (*elp->p_func)(el); *p; p++) {
 		if (elp->p_ignore == *p) {
 			ignore = !ignore;
 			continue;
 		}
 		if (ignore)
-			term__putc(el, *p++);
+			term__putc(el, *p);
 		else
-			re_putc(el, *p++, 1);
+			re_putc(el, *p, 1);
 	}
 
 	elp->p_pos.v = el->el_refresh.r_cursor.v;
