@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.291 2009/03/18 17:06:46 cegger Exp $ */
+/*	$NetBSD: machdep.c,v 1.292 2009/04/16 16:55:00 macallan Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.291 2009/03/18 17:06:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.292 2009/04/16 16:55:00 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1982,9 +1982,30 @@ static	vaddr_t iobase;
 }
 
 int
+sparc_bus_map_large(bus_space_tag_t t, int slot, bus_size_t offset,
+		    bus_size_t size, int flags, bus_space_handle_t *hp)
+{
+	bus_addr_t pa = BUS_ADDR(slot,offset);
+	vaddr_t v = 0;
+
+	if (uvm_map(kernel_map, &v, size, NULL, 0, PAGE_SIZE,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_NORMAL,
+			0)) == 0) {
+		return sparc_bus_map(t, pa, size, flags, v, hp);
+	}
+	return -1;
+}
+
+int
 sparc_bus_unmap(bus_space_tag_t t, bus_space_handle_t bh, bus_size_t size)
 {
 	vaddr_t va = trunc_page((vaddr_t)bh);
+
+	/*
+	 * XXX
+	 * mappings from sparc_bus_map_large() probably need additional care
+	 * here
+	 */
 
 	pmap_kremove(va, round_page(size));
 	pmap_update(pmap_kernel());
