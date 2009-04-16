@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.1 2009/03/07 22:08:08 ad Exp $	*/
+/*	$NetBSD: crash.c,v 1.2 2009/04/16 06:52:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.1 2009/03/07 22:08:08 ad Exp $");
+__RCSID("$NetBSD: crash.c,v 1.2 2009/04/16 06:52:08 lukem Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -99,7 +99,7 @@ void
 db_write_bytes(db_addr_t addr, size_t size, const char *str)
 {
 
-	if (kvm_write(kd, addr, str, size) != size) {
+	if ((size_t)kvm_write(kd, addr, str, size) != size) {
 		warnx("kvm_write(%p, %zd): %s", (void *)addr, size,
 		    kvm_geterr(kd));
 		longjmp(db_recover);
@@ -110,7 +110,7 @@ void
 db_read_bytes(db_addr_t addr, size_t size, char *str)
 {
 
-	if (kvm_read(kd, addr, str, size) != size) {
+	if ((size_t)kvm_read(kd, addr, str, size) != size) {
 		warnx("kvm_read(%p, %zd): %s", (void *)addr, size,
 		    kvm_geterr(kd));
 		longjmp(db_recover);
