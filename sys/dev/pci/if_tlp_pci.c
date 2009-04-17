@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.107 2009/04/17 10:20:32 cegger Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.108 2009/04/17 12:59:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.107 2009/04/17 10:20:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.108 2009/04/17 12:59:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ struct tulip_pci_softc {
 
 	/* PCI-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
+	bus_size_t sc_mapsize;
 
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset */
 	pcitag_t sc_pcitag;		/* our PCI tag */
@@ -107,9 +108,11 @@ struct tulip_pci_softc {
 
 static int	tlp_pci_match(device_t, struct cfdata *, void *);
 static void	tlp_pci_attach(device_t, device_t, void *);
+static int	tlp_pci_detach(device_t, int);
 
-CFATTACH_DECL_NEW(tlp_pci, sizeof(struct tulip_pci_softc),
-    tlp_pci_match, tlp_pci_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(tlp_pci, sizeof(struct tulip_pci_softc),
+    tlp_pci_match, tlp_pci_attach, tlp_pci_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static const struct tulip_pci_product {
 	uint32_t	tpp_vendor;	/* PCI vendor ID */
@@ -357,6 +360,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	uint32_t val = 0;
 	pcireg_t reg;
 	int error;
+	bus_size_t iosize = 0, memsize = 0;
 
 	sc->sc_dev = self;
 	sc->sc_devno = pa->pa_device;
@@ -532,18 +536,28 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 
 	ioh_valid = (pci_mapreg_map(pa, TULIP_PCI_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL) == 0);
+	    &iot, &ioh, NULL, &iosize) == 0);
 	memh_valid = (pci_mapreg_map(pa, TULIP_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL) == 0);
+	    &memt, &memh, NULL, &memsize) == 0);
 	if (memh_valid) {
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
+		psc->sc_mapsize = memsize;
+		if (ioh_valid)
+			bus_space_unmap(iot, ioh, iosize);
 	} else if (ioh_valid) {
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
+		psc->sc_mapsize = iosize;
+		if (memh_valid)
+			bus_space_unmap(iot, ioh, memsize);
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
+		if (ioh_valid)
+			bus_space_unmap(iot, ioh, iosize);
+		if (memh_valid)
+			bus_space_unmap(iot, ioh, memsize);
 		return;
 	}
 
@@ -1019,6 +1033,30 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	 * Finish off the attach.
 	 */
 	tlp_attach(sc, enaddr);
+}
+
+static int
+tlp_pci_detach(device_t self, int flags)
+{
+	struct tulip_pci_softc *psc = device_private(self);
+	struct tulip_softc *sc = &psc->sc_tulip;
+	int rv;
+
+	rv = tlp_detach(sc);
+	if (rv)
+		return rv;
+
+	if (psc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
+	}
+
+	if (psc->sc_mapsize) {
+		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->sc_mapsize);
+		psc->sc_mapsize = 0;
+	}
+
+	return 0;
 }
 
 static int
