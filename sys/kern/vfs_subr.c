@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.370 2009/03/30 16:38:05 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.371 2009/04/17 20:22:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.370 2009/03/30 16:38:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.371 2009/04/17 20:22:52 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2230,14 +2230,15 @@ vfs_mountedon(vnode_t *vp)
  * We traverse the list in reverse order under the assumption that doing so
  * will avoid needing to worry about dependencies.
  */
-void
+bool
 vfs_unmountall(struct lwp *l)
 {
 	struct mount *mp, *nmp;
-	int allerror, error;
+	bool any_error, progress;
+	int error;
 
 	printf("unmounting file systems...");
-	for (allerror = 0, mp = CIRCLEQ_LAST(&mountlist);
+	for (any_error = false, mp = CIRCLEQ_LAST(&mountlist);
 	     !CIRCLEQ_EMPTY(&mountlist);
 	     mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
@@ -2246,15 +2247,18 @@ vfs_unmountall(struct lwp *l)
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
 		atomic_inc_uint(&mp->mnt_refcnt);
-		if ((error = dounmount(mp, MNT_FORCE, l)) != 0) {
+		if ((error = dounmount(mp, MNT_FORCE, l)) == 0)
+			progress = true;
+		else {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
-			allerror = 1;
+			any_error = true;
 		}
 	}
 	printf(" done\n");
-	if (allerror)
+	if (any_error)
 		printf("WARNING: some file systems would not unmount\n");
+	return progress;
 }
 
 /*
