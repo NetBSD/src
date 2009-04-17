@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.32 2009/04/12 23:59:37 lukem Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.33 2009/04/17 20:25:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.32 2009/04/12 23:59:37 lukem Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.33 2009/04/17 20:25:08 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,9 +228,9 @@ local_init(progname)
 }
 
 int
-local_arg(char arg, const char *optarg)
+local_arg(char ch, const char *arg)
 {
-	switch (arg) {
+	switch (ch) {
 	case 'l':
 		force_local = 1;
 		break;
