@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.39 2009/04/07 18:25:26 dyoung Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.40 2009/04/17 17:21:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.39 2009/04/07 18:25:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.40 2009/04/17 17:21:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,12 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
+
+	/* disable interrupts */
+	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
+	/* XXX grotty hack to flush the write */
+	EOREAD2(&sc->sc, EHCI_USBINTR);
+
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;

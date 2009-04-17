@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.45 2009/04/07 18:25:26 dyoung Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.46 2009/04/17 17:21:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.45 2009/04/07 18:25:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.46 2009/04/17 17:21:31 dyoung Exp $");
 
 #include "ehci.h"
 
@@ -208,6 +208,12 @@ uhci_pci_detach(device_t self, int flags)
 	rv = uhci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
+
+	/* disable interrupts and acknowledge any pending */
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
+	    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
+
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
