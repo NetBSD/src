@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.108 2009/04/17 12:59:19 cegger Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.109 2009/04/17 13:15:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.108 2009/04/17 12:59:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.109 2009/04/17 13:15:53 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,23 +463,23 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	printf(": %s Ethernet, pass %d.%d\n",
+	aprint_normal(": %s Ethernet, pass %d.%d\n",
 	    tlp_chip_names[sc->sc_chip],
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
 		if (sc->sc_rev < 0x20) {
-			printf("%s: 21040 must be at least pass 2.0\n",
-			    device_xname(self));
+			aprint_normal_dev(self,
+			    "21040 must be at least pass 2.0\n");
 			return;
 		}
 		break;
 
 	case TULIP_CHIP_21140:
 		if (sc->sc_rev < 0x11) {
-			printf("%s: 21140 must be at least pass 1.1\n",
-			    device_xname(self));
+			aprint_normal_dev(self,
+			    "21140 must be at least pass 1.1\n");
 			return;
 		}
 		break;
@@ -625,8 +625,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 					break;
 			}
 			if (val & PNIC_MIIROM_BUSY) {
-				printf("%s: EEPROM timed out\n",
-				    device_xname(self));
+				aprint_error_dev(self, "EEPROM timed out\n");
 				return;
 			}
 			val &= PNIC_MIIROM_DATA;
@@ -660,13 +659,13 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			    M_NOWAIT|M_ZERO);
 			memcpy(sc->sc_srom, enaddr, sizeof(enaddr));
 			if (tlp_srom_debug) {
-				printf("SROM CONTENTS:");
+				aprint_normal("SROM CONTENTS:");
 				for (i = 0; i < TULIP_ROM_SIZE(6); i++) {
 					if ((i % 8) == 0)
-						printf("\n\t");
-					printf("0x%02x ", sc->sc_srom[i]);
+						aprint_normal("\n\t");
+					aprint_normal("0x%02x ", sc->sc_srom[i]);
 				}
-				printf("\n");
+				aprint_normal("\n");
 			}
 			break;
 		}
@@ -981,8 +980,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 
 	default:
  cant_cope:
-		printf("%s: sorry, unable to handle your board\n",
-		    device_xname(self));
+		aprint_error_dev(self, "sorry, unable to handle your board\n");
 		return;
 	}
 
@@ -1003,8 +1001,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (psc->sc_flags & TULIP_PCI_SLAVEINTR) {
-		printf("%s: sharing interrupt with %s\n",
-		    device_xname(self),
+		aprint_normal_dev(self, "sharing interrupt with %s\n",
 		    device_xname(psc->sc_master->sc_tulip.sc_dev));
 	} else {
 		/*
@@ -1021,11 +1018,11 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		if (psc->sc_ih == NULL) {
 			aprint_error_dev(self, "unable to establish interrupt");
 			if (intrstr != NULL)
-				printf(" at %s", intrstr);
-			printf("\n");
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
 			return;
 		}
-		printf("%s: interrupting at %s\n", device_xname(self),
+		aprint_normal_dev(self, "interrupting at %s\n",
 		    intrstr);
 	}
 
