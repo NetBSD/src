@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.34 2009/04/07 22:30:09 dyoung Exp $ */
+/* $NetBSD: pcppi.c,v 1.35 2009/04/17 20:46:37 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.34 2009/04/07 22:30:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.35 2009/04/17 20:46:37 dyoung Exp $");
 
 #include "attimer.h"
 
@@ -60,8 +60,9 @@ int	pcppi_match(device_t, cfdata_t, void *);
 void	pcppi_isa_attach(device_t, device_t, void *);
 void	pcppi_childdet(device_t, device_t);
 
-CFATTACH_DECL2_NEW(pcppi, sizeof(struct pcppi_softc),
-    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, NULL, pcppi_childdet);
+CFATTACH_DECL3_NEW(pcppi, sizeof(struct pcppi_softc),
+    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, NULL, pcppi_childdet,
+    DVF_DETACH_SHUTDOWN);
 
 static int pcppisearch(device_t, cfdata_t, const int *, void *);
 static void pcppi_bell_stop(void*);
