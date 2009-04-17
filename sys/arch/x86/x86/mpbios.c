@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.53 2009/02/13 20:51:19 bouyer Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.54 2009/04/17 21:07:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.53 2009/02/13 20:51:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.54 2009/04/17 21:07:59 dyoung Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -1194,29 +1194,9 @@ mpbios_pci_attach_hook(device_t parent, device_t self,
 		printf("\n%s: added to list as bus %d", device_xname(parent),
 		    pba->pba_bus);
 
-	mpb->mb_configured = 1;
+	mpb->mb_dev = self;
 	mpb->mb_pci_bridge_tag = pba->pba_bridgetag;
 	mpb->mb_pci_chipset_tag = pba->pba_pc;
-	return 0;
-}
-
-int
-mpbios_scan_pci(device_t self, struct pcibus_attach_args *pba,
-	        cfprint_t print)
-{
-	int i;
-	struct mp_bus *mpb;
-	struct pci_attach_args;
-
-	for (i = 0; i < mp_nbus; i++) {
-		mpb = &mp_busses[i];
-		if (mpb->mb_name == NULL)
-			continue;
-		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
-			pba->pba_bus = i;
-			config_found_ia(self, "pcibus", pba, print);
-		}
-	}
 	return 0;
 }
 

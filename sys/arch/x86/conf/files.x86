@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.50 2009/04/16 15:34:23 rmind Exp $
+#	$NetBSD: files.x86,v 1.51 2009/04/17 21:07:58 dyoung Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -77,6 +77,9 @@ file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 # MP configuration using Intel SMP specification 1.4
 file 	arch/x86/x86/mpbios.c		mpbios
+
+# MP configuration using either ACPI or Intel SMP specification 1.4
+file 	arch/x86/x86/mp.c		acpi | mpbios
 
 # MP configuration using ACPI
 file 	arch/x86/x86/mpacpi.c		acpi
