@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.25 2009/04/07 18:07:10 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.26 2009/04/17 23:23:23 dyoung Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.25 2009/04/07 18:07:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.26 2009/04/17 23:23:23 dyoung Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -2203,7 +2203,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 void
 bnx_release_resources(struct bnx_softc *sc)
 {
-	int i;
 	struct pci_attach_args	*pa = &(sc->bnx_pa);
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
@@ -2215,10 +2214,6 @@ bnx_release_resources(struct bnx_softc *sc)
 
 	if (sc->bnx_size)
 		bus_space_unmap(sc->bnx_btag, sc->bnx_bhandle, sc->bnx_size);
-
-	for (i = 0; i < TOTAL_RX_BD; i++)
-		if (sc->rx_mbuf_map[i])
-			bus_dmamap_destroy(sc->bnx_dmatag, sc->rx_mbuf_map[i]);
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 }
