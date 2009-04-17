@@ -1389,7 +1389,12 @@ handle_dhcp(struct if_state *state, struct dhcp_message **dhcpp,
 
 	/* We have to have DHCP type to work */
 	if (get_option_uint8(&type, dhcp, DHO_MESSAGETYPE) == -1) {
-		log_dhcp(LOG_ERR, "no DHCP type in", dhcp);
+		logger(LOG_ERR, "ignoring message; no DHCP type");
+		return 0;
+	}
+	/* Every DHCP message should include ServerID */
+	if (get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID) == -1) {
+		logger(LOG_ERR, "ignoring message; no Server ID");
 		return 0;
 	}
 
@@ -1548,7 +1553,7 @@ handle_dhcp_packet(struct if_state *state, const struct options *options)
 		}
 		if (bytes == -1)
 			break;
-		if (valid_udp_packet(packet) == -1)
+		if (valid_udp_packet(packet, bytes) == -1)
 			continue;
 		bytes = get_udp_data(&pp, packet);
 		if ((size_t)bytes > sizeof(*dhcp)) {
