@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.62 2009/04/17 08:30:55 cegger Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.63 2009/04/17 10:20:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -330,7 +330,7 @@ struct tulip_stats {
  * Software state per device.
  */
 struct tulip_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
