@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.40 2009/04/17 17:31:01 dyoung Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.41 2009/04/17 19:44:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.40 2009/04/17 17:31:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.41 2009/04/17 19:44:13 dyoung Exp $");
 
 #include "ehci.h"
 
@@ -66,16 +66,16 @@ struct ohci_pci_softc {
 };
 
 static int
-ohci_pci_match(device_t parent, struct cfdata *match, void *aux)
+ohci_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -163,14 +163,14 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-ohci_pci_detach(device_ptr_t self, int flags)
+ohci_pci_detach(device_t self, int flags)
 {
 	struct ohci_pci_softc *sc = device_private(self);
 	int rv;
 
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
-		return (rv);
+		return rv;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
@@ -187,7 +187,7 @@ ohci_pci_detach(device_ptr_t self, int flags)
 #if NEHCI > 0
 	usb_pci_rem(&sc->sc_pci);
 #endif
-	return (0);
+	return 0;
 }
 
 CFATTACH_DECL2_NEW(ohci_pci, sizeof(struct ohci_pci_softc),
