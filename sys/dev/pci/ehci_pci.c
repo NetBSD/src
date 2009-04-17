@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.40 2009/04/17 17:21:31 dyoung Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.41 2009/04/17 19:44:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.40 2009/04/17 17:21:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.41 2009/04/17 19:44:13 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,21 +77,20 @@ struct ehci_pci_softc {
 #define EHCI_MAX_BIOS_WAIT		1000 /* ms */
 
 static int
-ehci_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ehci_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_EHCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
-ehci_pci_attach(struct device *parent, struct device *self, void *aux)
+ehci_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct ehci_pci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -221,7 +220,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ehci_pci_detach(device_ptr_t self, int flags)
+ehci_pci_detach(device_t self, int flags)
 {
 	struct ehci_pci_softc *sc = device_private(self);
 	int rv;
@@ -229,7 +228,7 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	pmf_device_deregister(self);
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
-		return (rv);
+		return rv;
 
 	/* disable interrupts */
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
@@ -246,7 +245,7 @@ ehci_pci_detach(device_ptr_t self, int flags)
 		sc->sc.sc_size = 0;
 	}
 
-	return (0);
+	return 0;
 }
 
 CFATTACH_DECL3_NEW(ehci_pci, sizeof(struct ehci_pci_softc),
