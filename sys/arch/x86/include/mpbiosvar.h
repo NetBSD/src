@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosvar.h,v 1.7 2008/11/09 15:34:14 cegger Exp $ */
+/* $NetBSD: mpbiosvar.h,v 1.8 2009/04/17 21:07:58 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@ void mpbios_scan(device_t, int *);
 int mpbios_probe(device_t);
 int mpbios_pci_attach_hook(device_t, device_t,
 			   struct pcibus_attach_args *);
-int mpbios_scan_pci(device_t, struct pcibus_attach_args *, cfprint_t);
-
 
 extern int mpbios_scanned;
 #endif
