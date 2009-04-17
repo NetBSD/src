@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.27 2008/11/12 12:35:54 ad Exp $
+.\"     $NetBSD: pci.9,v 1.28 2009/04/17 18:28:39 cegger Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17, 2006
+.Dd April 17, 2009
 .Dt PCI 9
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@
 .In dev/pci/pcireg.h
 .In dev/pci/pcidevs.h
 .Ft int
-.Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "int reg" "void *sc" \
+.Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "void *sc" \
 "int (*wakeup)(pci_chipset_tag_t pc, pcitag_t tag" \
 "\t\tvoid *sc, pcireg_t reg)"
 .Ft pcireg_t
