@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.167 2009/04/17 10:20:33 cegger Exp $	*/
+/*	$NetBSD: tulip.c,v 1.168 2009/04/17 15:16:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.167 2009/04/17 10:20:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.168 2009/04/17 15:16:52 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -415,6 +415,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct tulip_control_data), 1,
 	    sizeof(struct tulip_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
+		sc->sc_cddmamap = NULL;
 		aprint_error_dev(self, "unable to create control data DMA map, "
 		    "error = %d\n", error);
 		goto fail_2;
@@ -455,6 +456,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    sc->sc_ntxsegs, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
+			sc->sc_txsoft[i].txs_dmamap = NULL;
 			aprint_error_dev(self, "unable to create tx DMA map %d, "
 			    "error = %d\n", i, error);
 			goto fail_4;
@@ -467,6 +469,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	for (i = 0; i < TULIP_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
+		        sc->sc_rxsoft[i].rxs_dmamap = NULL;
 			aprint_error_dev(self, "unable to create rx DMA map %d, "
 			    "error = %d\n", i, error);
 			goto fail_5;
