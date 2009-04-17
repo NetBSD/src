@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.106 2008/06/08 18:18:34 tsutsui Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.107 2009/04/17 10:20:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.106 2008/06/08 18:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.107 2009/04/17 10:20:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ struct tulip_pci_softc {
 static int	tlp_pci_match(device_t, struct cfdata *, void *);
 static void	tlp_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(tlp_pci, sizeof(struct tulip_pci_softc),
+CFATTACH_DECL_NEW(tlp_pci, sizeof(struct tulip_pci_softc),
     tlp_pci_match, tlp_pci_attach, NULL, NULL);
 
 static const struct tulip_pci_product {
@@ -310,8 +310,8 @@ tlp_pci_check_slaved(struct tulip_pci_softc *psc, int shared, int slaved)
 	for (i = 0; i < tlp_cd.cd_ndevs; i++) {
 		if ((cur = device_lookup_private(&tlp_cd, i)) == NULL)
 			continue;
-		if (device_parent(&cur->sc_tulip.sc_dev) !=
-		    device_parent(&sc->sc_dev))
+		if (device_parent(cur->sc_tulip.sc_dev) !=
+		    device_parent(sc->sc_dev))
 			continue;
 		if ((cur->sc_flags & shared) == 0)
 			continue;
@@ -329,7 +329,7 @@ tlp_pci_check_slaved(struct tulip_pci_softc *psc, int shared, int slaved)
 }
 
 static int
-tlp_pci_match(device_t parent, struct cfdata *match, void *aux)
+tlp_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -358,6 +358,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t reg;
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_devno = pa->pa_device;
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
@@ -466,7 +467,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	case TULIP_CHIP_21040:
 		if (sc->sc_rev < 0x20) {
 			printf("%s: 21040 must be at least pass 2.0\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(self));
 			return;
 		}
 		break;
@@ -474,7 +475,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	case TULIP_CHIP_21140:
 		if (sc->sc_rev < 0x11) {
 			printf("%s: 21140 must be at least pass 1.1\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(self));
 			return;
 		}
 		break;
@@ -520,7 +521,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
+		aprint_error_dev(self, "cannot activate %d\n",
 		    error);
 		return;
 	}
@@ -542,7 +543,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 
@@ -611,7 +612,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			}
 			if (val & PNIC_MIIROM_BUSY) {
 				printf("%s: EEPROM timed out\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(self));
 				return;
 			}
 			val &= PNIC_MIIROM_DATA;
@@ -630,7 +631,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		 * XXX logic, and for now we can at least remove a machine-
 		 * XXX dependent wart from the PCI front-end.
 		 */
-		ea = prop_dictionary_get(device_properties(&sc->sc_dev),
+		ea = prop_dictionary_get(device_properties(self),
 					 "mac-addr");
 		if (ea != NULL) {
 			extern int tlp_srom_debug;
@@ -967,7 +968,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	default:
  cant_cope:
 		printf("%s: sorry, unable to handle your board\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(self));
 		return;
 	}
 
@@ -989,14 +990,14 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (psc->sc_flags & TULIP_PCI_SLAVEINTR) {
 		printf("%s: sharing interrupt with %s\n",
-		    device_xname(&sc->sc_dev),
-		    device_xname(&psc->sc_master->sc_tulip.sc_dev));
+		    device_xname(self),
+		    device_xname(psc->sc_master->sc_tulip.sc_dev));
 	} else {
 		/*
 		 * Map and establish our interrupt.
 		 */
 		if (pci_intr_map(pa, &ih)) {
-			aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
+			aprint_error_dev(self, "unable to map interrupt\n");
 			return;
 		}
 		intrstr = pci_intr_string(pc, ih);
@@ -1004,13 +1005,13 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		    (psc->sc_flags & TULIP_PCI_SHAREDINTR) ?
 		    tlp_pci_shared_intr : tlp_intr, sc);
 		if (psc->sc_ih == NULL) {
-			aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
+			aprint_error_dev(self, "unable to establish interrupt");
 			if (intrstr != NULL)
 				printf(" at %s", intrstr);
 			printf("\n");
 			return;
 		}
-		printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev),
+		printf("%s: interrupting at %s\n", device_xname(self),
 		    intrstr);
 	}
 
@@ -1156,7 +1157,7 @@ tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 	case 0x2b:	/* ZX244 */
 	case 0x2c:	/* ZX424 */
 	case 0x2e:	/* ZX422 */
-		printf("%s: QS6611 PHY\n", device_xname(&sc->sc_dev));
+		printf("%s: QS6611 PHY\n", device_xname(sc->sc_dev));
 		sc->sc_reset = tlp_pci_znyx_21142_qs6611_reset;
 		break;
 	}
@@ -1350,7 +1351,7 @@ tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	printf("%s: ", device_xname(&sc->sc_dev));
+	printf("%s: ", device_xname(sc->sc_dev));
 
 #define	ADD(m, c) \
 	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);		\
@@ -1510,7 +1511,7 @@ tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 
 		default:
 			printf("%s: unknown Cogent board ID 0x%02x\n",
-			    device_xname(&sc->sc_dev), id0);
+			    device_xname(sc->sc_dev), id0);
 		}
 		return;
 	}
@@ -1543,7 +1544,7 @@ tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 	default:
  unknown:
 		printf("%s: unknown Adaptec/Cogent board ID 0x%04x/0x%04x\n",
-		    device_xname(&sc->sc_dev), id1, id2);
+		    device_xname(sc->sc_dev), id1, id2);
 	}
 }
 
@@ -1559,7 +1560,7 @@ tlp_cogent_em1x0_tmsw_init(struct tulip_softc *sc)
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	printf("%s: ", device_xname(&sc->sc_dev));
+	printf("%s: ", device_xname(sc->sc_dev));
 
 #define	ADD(m, c) \
 	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);		\
