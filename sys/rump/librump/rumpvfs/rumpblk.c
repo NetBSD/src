@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.18 2009/04/16 10:26:34 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.19 2009/04/17 12:29:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.18 2009/04/16 10:26:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.19 2009/04/17 12:29:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -68,11 +68,13 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.18 2009/04/16 10:26:34 pooka Exp $");
 #define DPRINTF(x)
 #endif
 
-#define MEMWINSIZE (1<<20)	/* 1MB */
-#define MEMWINCOUNT 16		/* max 16 windows == 16 megs of memory */
-#define STARTWIN(off)		((off) & ~(MEMWINSIZE-1))
+/* Default: 16 x 1MB windows */
+unsigned memwinsize = (1<<20);
+unsigned memwincnt = 16;
+
+#define STARTWIN(off)		((off) & ~(memwinsize-1))
 #define INWIN(win,off)		((win)->win_off == STARTWIN(off))
-#define WINSIZE(rblk, win)	(MIN((rblk->rblk_size-win->win_off),MEMWINSIZE))
+#define WINSIZE(rblk, win)	(MIN((rblk->rblk_size-win->win_off),memwinsize))
 #define WINVALID(win)		((win)->win_off != (off_t)-1)
 #define WINVALIDATE(win)	((win)->win_off = (off_t)-1)
 struct blkwin {
@@ -199,7 +201,7 @@ getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
 	win->win_refcnt++;
 	TAILQ_INSERT_HEAD(&rblk->rblk_lruq, win, win_lru);
 	mutex_exit(&rblk->rblk_memmtx);
-	*wsize = MIN(*wsize, MEMWINSIZE - (off-win->win_off));
+	*wsize = MIN(*wsize, memwinsize - (off-win->win_off));
 	KASSERT(*wsize);
 
 	return win;
@@ -240,6 +242,7 @@ rumpblk_init(void)
 {
 	char buf[64];
 	int rumpblk = RUMPBLK;
+	unsigned tmp;
 	int error, i;
 
 	if (rumpuser_getenv("RUMP_BLKFAIL", buf, sizeof(buf), &error) == 0) {
@@ -258,6 +261,25 @@ rumpblk_init(void)
 		    randstate);
 	} else {
 		blkfail = 0;
+	}
+
+	if (rumpuser_getenv("RUMP_BLKWINSIZE", buf, sizeof(buf), &error) == 0) {
+		printf("rumpblk: ");
+		tmp = strtoul(buf, NULL, 10);
+		if (tmp && !(tmp & (tmp-1)))
+			memwinsize = tmp;
+		else
+			printf("invalid RUMP_BLKWINSIZE %d, ", tmp);
+		printf("using %d for memwinsize\n", memwinsize);
+	}
+	if (rumpuser_getenv("RUMP_BLKWINCOUNT", buf, sizeof(buf), &error) == 0){
+		printf("rumpblk: ");
+		tmp = strtoul(buf, NULL, 10);
+		if (tmp)
+			memwincnt = tmp;
+		else
+			printf("invalid RUMP_BLKWINCOUNT %d, ", tmp);
+		printf("using %d for memwincount\n", memwincnt);
 	}
 
 	memset(minors, 0, sizeof(minors));
@@ -345,7 +367,7 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		rblk->rblk_size = fsize;
 		rblk->rblk_fd = fd;
 
-		for (i = 0; i < MEMWINCOUNT && i * MEMWINSIZE < fsize; i++) {
+		for (i = 0; i < memwincnt && i * memwinsize < fsize; i++) {
 			win = kmem_zalloc(sizeof(*win), KM_SLEEP);
 			WINVALIDATE(win);
 			TAILQ_INSERT_TAIL(&rblk->rblk_lruq, win, win_lru);
@@ -356,7 +378,7 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 			 * necessary VA available
 			 */
 			winsize = 1;
-			win = getwindow(rblk, i*MEMWINSIZE, &winsize, &error); 
+			win = getwindow(rblk, i*memwinsize, &winsize, &error); 
 			if (win) {
 				putwindow(rblk, win);
 			} else {
@@ -511,6 +533,7 @@ dostrategy(struct buf *bp)
 		rump_biodone(bp, bp->b_bcount, 0);
 		return;
 	}
+
 
 	/*
 	 * Do I/O.  We have different paths for async and sync I/O.
