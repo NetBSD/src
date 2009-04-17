@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1208 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1209 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -177,3 +177,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	    sequential id, add suppport for DS, SSHFP, RRSIG, NSEC, DNSKEY,
 	    DHCID, NSEC3, NSEC3PARAM, HIP and DLV, various new api functions.
 	    [christos 20090412]
+	dhcpcd: Import dhcpcd-4.0.13 [roy 20090417]
