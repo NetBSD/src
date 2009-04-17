@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.6.18.2 2009/02/28 14:47:48 skrll Exp $	*/
+/*	$NetBSD: reg.h,v 1.6.18.3 2009/04/17 11:44:52 skrll Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -92,7 +92,7 @@
 #define	CR_TR3		27	/* tr3: (TLS?)				*/
 #define	CR_HVTP		28	/* tr4: faulted HVT slot ptr on LC cpus */
 #define	CR_TR5		29	/* tr5: emu / TLB_STATS_{PRE,AFT}	*/
-#define	CR_UPADDR	30	/* tr6: paddr of U-area of curproc	*/
+#define	CR_UPADDR	30	/* tr6: paddr of U-area of curlwp	*/
 #define	CR_TR7		31	/* tr7: trap temporary register		*/
 
 /*
