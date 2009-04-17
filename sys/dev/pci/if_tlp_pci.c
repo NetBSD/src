@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.109 2009/04/17 13:15:53 cegger Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.110 2009/04/17 14:07:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.109 2009/04/17 13:15:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.110 2009/04/17 14:07:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,21 +544,21 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
 		psc->sc_mapsize = memsize;
-		if (ioh_valid)
+		if (ioh_valid) {
 			bus_space_unmap(iot, ioh, iosize);
+			ioh_valid = 0;
+		}
 	} else if (ioh_valid) {
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 		psc->sc_mapsize = iosize;
-		if (memh_valid)
-			bus_space_unmap(iot, ioh, memsize);
+		if (memh_valid) {
+			bus_space_unmap(memt, memh, memsize);
+			memh_valid = 0;
+		}
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
-		if (ioh_valid)
-			bus_space_unmap(iot, ioh, iosize);
-		if (memh_valid)
-			bus_space_unmap(iot, ioh, memsize);
-		return;
+		goto fail;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -626,7 +626,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			}
 			if (val & PNIC_MIIROM_BUSY) {
 				aprint_error_dev(self, "EEPROM timed out\n");
-				return;
+				goto fail;
 			}
 			val &= PNIC_MIIROM_DATA;
 			sc->sc_srom[i] = val >> 8;
@@ -981,7 +981,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	default:
  cant_cope:
 		aprint_error_dev(self, "sorry, unable to handle your board\n");
-		return;
+		goto fail;
 	}
 
 	/*
@@ -1009,7 +1009,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		 */
 		if (pci_intr_map(pa, &ih)) {
 			aprint_error_dev(self, "unable to map interrupt\n");
-			return;
+			goto fail;
 		}
 		intrstr = pci_intr_string(pc, ih);
 		psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET,
@@ -1020,7 +1020,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			if (intrstr != NULL)
 				aprint_error(" at %s", intrstr);
 			aprint_error("\n");
-			return;
+			goto fail;
 		}
 		aprint_normal_dev(self, "interrupting at %s\n",
 		    intrstr);
@@ -1030,6 +1030,20 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	 * Finish off the attach.
 	 */
 	tlp_attach(sc, enaddr);
+	return;
+
+fail:
+	if (psc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
+	}
+
+	if (ioh_valid)
+		bus_space_unmap(iot, ioh, iosize);
+	if (memh_valid)
+		bus_space_unmap(memt, memh, memsize);
+	psc->sc_mapsize = 0;
+	return;
 }
 
 static int
