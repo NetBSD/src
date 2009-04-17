@@ -1,4 +1,4 @@
-/*	$NetBSD: put.h,v 1.3 1997/10/16 23:25:03 lukem Exp $	*/
+/*	$NetBSD: put.h,v 1.4 2009/04/17 04:16:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: put.h,v 1.3 1997/10/16 23:25:03 lukem Exp $
+ *	$NetBSD: put.h,v 1.4 2009/04/17 04:16:57 lukem Exp $
  *
  */
 
@@ -39,7 +39,7 @@ __BEGIN_DECLS
 void	mopPutChar __P((u_char *, int *, u_char));
 void	mopPutShort __P((u_char *, int *, u_short));
 void	mopPutLong __P((u_char *, int *, u_int32_t));
-void	mopPutMulti __P((u_char *, int *, u_char *, int));
+void	mopPutMulti __P((u_char *, int *, const u_char *, int));
 void	mopPutTime __P((u_char *, int *, time_t));
 void	mopPutHeader __P((u_char *, int *, u_char *, u_char *, u_short, int));
 void	mopPutLength __P((u_char *, int, u_short));
