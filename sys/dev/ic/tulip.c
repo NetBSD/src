@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.168 2009/04/17 15:16:52 cegger Exp $	*/
+/*	$NetBSD: tulip.c,v 1.169 2009/04/17 15:22:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.168 2009/04/17 15:16:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.169 2009/04/17 15:22:35 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -186,7 +186,7 @@ int	tlp_srom_debug = 0;
  *
  *	Attach a Tulip interface to the system.
  */
-void
+int
 tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -540,7 +540,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	else
 		pmf_class_network_register(self, ifp);
 
-	return;
+	return 0;
 
 	/*
 	 * Free any resources we've allocated during the failed attach
@@ -567,7 +567,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
  fail_0:
-	return;
+	return error;
 }
 
 /*
