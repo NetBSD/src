@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.39 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.40 2009/04/17 17:31:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.39 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.40 2009/04/17 17:31:01 dyoung Exp $");
 
 #include "ehci.h"
 
@@ -171,6 +171,11 @@ ohci_pci_detach(device_ptr_t self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
+
+	/* Disable interrupts, so we don't get any spurious ones. */
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
+			  OHCI_ALL_INTRS);
+
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
