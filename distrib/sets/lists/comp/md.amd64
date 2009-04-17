@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.46 2009/04/17 20:38:04 dyoung Exp $
+# $NetBSD: md.amd64,v 1.47 2009/04/17 21:33:38 dyoung Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -448,9 +448,9 @@
 ./usr/lib/i386/libi386.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libi386_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libi386_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libiberty.a			comp-c-lib		compat,debuglib
-./usr/lib/i386/libiberty_p.a			comp-c-proflib		compat,profile,debuglib
-./usr/lib/i386/libiberty_pic.a			comp-c-piclib		compat,pic,debuglib
+./usr/lib/i386/libiberty.a			comp-c-lib		compat,bfd
+./usr/lib/i386/libiberty_p.a			comp-c-proflib		compat,profile,bfd
+./usr/lib/i386/libiberty_pic.a			comp-c-piclib		compat,pic,bfd
 ./usr/lib/i386/libintl.a			comp-c-lib		compat
 ./usr/lib/i386/libintl.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libintl_p.a			comp-c-proflib		compat,profile
@@ -668,9 +668,9 @@
 ./usr/lib/i386/libutil.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libutil_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libutil_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libvers.a			comp-c-lib		compat,debuglib
-./usr/lib/i386/libvers_p.a			comp-c-proflib		compat,profile,debuglib
-./usr/lib/i386/libvers_pic.a			comp-c-piclib		compat,pic,debuglib
+./usr/lib/i386/libvers.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libvers_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libvers_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/i386/libwrap.a			comp-c-lib		compat
 ./usr/lib/i386/libwrap.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libwrap_p.a			comp-c-proflib		compat,profile
