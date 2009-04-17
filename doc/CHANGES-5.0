@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.136 2009/04/14 17:25:28 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.137 2009/04/17 03:44:23 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6095,4 +6095,14 @@ sys/sys/param.h                                 patched by hand
         
         Welcome to 5.0_RC4!
         [snj] 
+
+dist/ntp/ntpq/ntpq.c				1.12
+
+	Fix CVE-2009-0159.
+	[christos, ticket #706]
+
+sys/arch/hp700/gsc/harmony.c			1.14
+
+	Get audio capture fully working with harmony(4) and fix PR/35239.
+	[mjf, ticket #704]
 
