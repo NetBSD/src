@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.68 2009/04/16 12:41:51 tsutsui Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.69 2009/04/17 15:37:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.68 2009/04/16 12:41:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.69 2009/04/17 15:37:43 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -252,6 +252,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const struct fxp_pci_product *fpp;
+	const char *chipname = NULL;
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -329,8 +330,6 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	switch (fpp->fpp_prodid) {
 	case PCI_PRODUCT_INTEL_82557:
 	case PCI_PRODUCT_INTEL_IN_BUSINESS:
-	    {
-		const char *chipname = NULL;
 
 		if (sc->sc_rev >= FXP_REV_82558_A4) {
 			chipname = "i82558 Ethernet";
@@ -352,6 +351,8 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 			sc->sc_flags &= ~FXPF_82559_RXCSUM;
 			sc->sc_flags |= FXPF_EXT_RFA;
 		}
+		if (sc->sc_rev >= FXP_REV_82551)
+			chipname = "i82551 Ethernet";
 
 		/*
 		 * Mark all i82559 and i82550 revisions as having
@@ -363,13 +364,12 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
 		    fpp->fpp_name, sc->sc_rev);
 		break;
-	    }
 
 	case PCI_PRODUCT_INTEL_82559ER:
 		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 
 		/*
-		 * i82559ER doesn't support RX hardware checksumming
+		 * i82559ER/82551ER don't support RX hardware checksumming
 		 * even though it has a newer revision number than 82559_A0.
 		 */
 
@@ -380,7 +380,11 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
 			sc->sc_flags |= FXPF_MWI;
 
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+		if (sc->sc_rev >= FXP_REV_82551)
+			chipname = "Intel i82551ER Ethernet";
+
+		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
+		    fpp->fpp_name, sc->sc_rev);
 		break;
 
 	case PCI_PRODUCT_INTEL_82801BA_LAN:
