@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.38 2009/04/07 18:35:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.39 2009/04/17 00:39:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.38 2009/04/07 18:35:49 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.39 2009/04/17 00:39:26 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -128,9 +128,6 @@ rumpuser__malloc(size_t howmuch, int canfail, const char *func, int line)
 		warn("malloc failed %s (%d)", func, line);
 		abort();
 	}
-
-	if (rv)
-		memset(rv, 0, howmuch);
 
 	return rv;
 }
