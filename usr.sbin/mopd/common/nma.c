@@ -1,4 +1,4 @@
-/*	$NetBSD: nma.c,v 1.3 1997/10/16 23:24:48 lukem Exp $	*/
+/*	$NetBSD: nma.c,v 1.4 2009/04/17 04:16:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nma.c,v 1.3 1997/10/16 23:24:48 lukem Exp $");
+__RCSID("$NetBSD: nma.c,v 1.4 2009/04/17 04:16:57 lukem Exp $");
 #endif
 
 #include "os.h"
@@ -40,8 +40,8 @@ __RCSID("$NetBSD: nma.c,v 1.3 1997/10/16 23:24:48 lukem Exp $");
 
 struct commDev {
 	int		val;
-	char		*sname;
-	char		*name;
+	const char	*sname;
+	const char	*name;
 };
 
 struct commDev nmaCommDev[] = {
@@ -192,7 +192,7 @@ struct commDev nmaCommDev[] = {
 	{ 0, 0, 0 },
 };
 
-char *
+const char *
 nmaGetShort(devno)
 	int devno;
 {
@@ -209,7 +209,7 @@ nmaGetShort(devno)
 	return(current->sname);
 }
 
-char *
+const char *
 nmaGetDevice(devno)
 	int devno;
 {
