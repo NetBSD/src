@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.107 2009/04/14 08:54:59 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.108 2009/04/17 06:09:08 apb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.107 2009/04/14 08:54:59 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.108 2009/04/17 06:09:08 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -594,17 +594,18 @@ void
 install(char *from_name, char *to_name, u_int flags)
 {
 	struct stat	from_sb;
-#if ! HAVE_NBTOOL_CONFIG_H
 	struct stat	to_sb;
-#endif
 	struct timeval	tv[2];
+	off_t		size;
 	int		devnull, from_fd, to_fd, serrno, tmpmode;
 	char		*p, tmpl[MAXPATHLEN], *oto_name, *digestresult;
 
+	size = -1;
 	if (!dolink) {
 			/* ensure that from_sb & tv are sane if !dolink */
 		if (stat(from_name, &from_sb))
 			err(1, "%s: stat", from_name);
+		size = from_sb.st_size;
 #if BSD4_4 && !HAVE_NBTOOL_CONFIG_H
 		TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &from_sb.st_mtimespec);
@@ -616,7 +617,8 @@ install(char *from_name, char *to_name, u_int flags)
 #endif
 	}
 
-	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL)) {
+	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL) != 0) {
+		devnull = 0;
 		if (!dolink) {
 			if (!S_ISREG(from_sb.st_mode))
 				errx(1, "%s: not a regular file", from_name);
@@ -628,12 +630,12 @@ install(char *from_name, char *to_name, u_int flags)
 			    (p = strrchr(from_name, '/')) ? ++p : from_name);
 			to_name = pathbuf;
 		}
-		devnull = 0;
 	} else {
+		devnull = 1;
+		size = 0;
 #if HAVE_STRUCT_STAT_ST_FLAGS
 		from_sb.st_flags = 0;	/* XXX */
 #endif
-		devnull = 1;
 	}
 
 	/*
@@ -694,6 +696,16 @@ install(char *from_name, char *to_name, u_int flags)
 		close(to_fd);
 		if ((to_fd = open(to_name, O_RDONLY, S_IRUSR | S_IWUSR)) < 0)
 			err(1, "stripping %s", to_name);
+
+		/*
+		 * Recalculate size and digestresult after stripping.
+		 */
+		if (fstat(to_fd, &to_sb) != 0)
+			err(1, "%s: fstat", to_name);
+		size = to_sb.st_size;
+		digestresult =
+		    copy(to_fd, to_name, -1, NULL, size);
+
 	}
 
 	if (afterinstallcmd != NULL) {
@@ -761,14 +773,15 @@ install(char *from_name, char *to_name, u_int flags)
 	}
 #endif
 
-	metadata_log(to_name, "file", tv, NULL, digestresult,
-	    (devnull ? 0 : from_sb.st_size));
+	metadata_log(to_name, "file", tv, NULL, digestresult, size);
 	free(digestresult);
 }
 
 /*
  * copy --
- *	copy from one file to another
+ *	copy from one file to another, returning a digest.
+ *
+ *	If to_fd < 0, just calculate a digest, don't copy.
  */
 char *
 copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
@@ -792,6 +805,8 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 		SHA1Init(&ctxSHA1);
 		break;
 	case DIGEST_NONE:
+		if (to_fd < 0)
+			return NULL; /* no need to do anything */
 	default:
 		break;
 	}
@@ -819,7 +834,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 				warnx("madvise: %s", strerror(errno));
 #endif
 
-			if (write(to_fd, p, size) != size) {
+			if (to_fd >= 0 && write(to_fd, p, size) != size) {
 				serrno = errno;
 				(void)unlink(to_name);
 				errx(1, "%s: write: %s",
@@ -842,7 +857,8 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 		} else {
  mmap_failed:
 			while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {
-				if ((nw = write(to_fd, buf, nr)) != nr) {
+				if (to_fd >= 0 &&
+				    (nw = write(to_fd, buf, nr)) != nr) {
 					serrno = errno;
 					(void)unlink(to_name);
 					errx(1, "%s: write: %s", to_name,
