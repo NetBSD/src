@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.83 2009/04/08 17:08:02 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.84 2009/04/17 21:07:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.83 2009/04/08 17:08:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.84 2009/04/17 21:07:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +104,11 @@ struct mainbus_softc {
 	device_t	sc_acpi;
 	device_t	sc_dev;
 	device_t	sc_ipmi;
+	device_t	sc_pci;
 	device_t	sc_mca;
 	device_t	sc_pnpbios;
 	bool		sc_acpi_present;
+	bool		sc_mpacpi_active;
 };
 
 CFATTACH_DECL2_NEW(mainbus, sizeof(struct mainbus_softc),
@@ -185,6 +187,10 @@ mainbus_childdetached(device_t self, device_t child)
 		sc->sc_mca = NULL;
 	if (sc->sc_pnpbios == child)
 		sc->sc_pnpbios = NULL;
+	if (sc->sc_pci == child)
+		sc->sc_pci = NULL;
+
+	mp_pci_childdetached(self, child);
 }
 
 /*
@@ -211,7 +217,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if defined(PCI_BUS_FIXUP)
 	int pci_maxbus = 0;
 #endif
-	int mpacpi_active = 0;
 	int numcpus = 0;
 
 	sc->sc_dev = self;
@@ -251,10 +256,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * be done later (via a callback).
 	 */
 	if (sc->sc_acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self, &numcpus);
+		sc->sc_mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
 #endif
 
-	if (!mpacpi_active) {
+	if (!sc->sc_mpacpi_active) {
 #ifdef MPBIOS
 		if (mpbios_present)
 			mpbios_scan(self, &numcpus);
@@ -286,39 +291,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	mainbus_rescan(self, "ipmibus", NULL);
 
-	/*
-	 * XXX Note also that the presence of a PCI bus should
-	 * XXX _always_ be checked, and if present the bus should be
-	 * XXX 'found'.  However, because of the structure of the code,
-	 * XXX that's not currently possible.
-	 */
-#if NPCI > 0
-	if (pci_mode != 0) {
-		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
-		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
-		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
-		mba.mba_pba.pba_dmat64 = NULL;
-		mba.mba_pba.pba_pc = NULL;
-		mba.mba_pba.pba_flags = pci_bus_flags();
-		mba.mba_pba.pba_bus = 0;
-		mba.mba_pba.pba_bridgetag = NULL;
-#if NACPI > 0 && defined(ACPI_SCANPCI)
-		if (mpacpi_active)
-			mpacpi_scan_pci(self, &mba.mba_pba, pcibusprint);
-		else
-#endif
-#if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
-		if (mpbios_scanned != 0)
-			mpbios_scan_pci(self, &mba.mba_pba, pcibusprint);
-		else
-#endif
-		config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
-#if NACPI > 0
-		if (mp_verbose)
-			acpi_pci_link_state();
-#endif
-	}
-#endif
+	mainbus_rescan(self, "pcibus", NULL);
 
 	mainbus_rescan(self, "mcabus", NULL);
 
@@ -361,7 +334,7 @@ static int
 mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct mainbus_softc *sc = device_private(self);
-#if NPNPBIOS > 0 || NACPI > 0 || NIPMI > 0 || NMCA > 0
+#if NACPI > 0 || NIPMI > 0 || NMCA > 0 || NPCI > 0 || NPNPBIOS > 0
 	union mainbus_attach_args mba;
 #endif
 
@@ -414,6 +387,44 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		}
 #endif
 	}
+
+	/*
+	 * XXX Note also that the presence of a PCI bus should
+	 * XXX _always_ be checked, and if present the bus should be
+	 * XXX 'found'.  However, because of the structure of the code,
+	 * XXX that's not currently possible.
+	 */
+#if NPCI > 0
+	if (pci_mode != 0 && ifattr_match(ifattr, "pcibus")) {
+		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
+		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
+		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+		mba.mba_pba.pba_dmat64 = NULL;
+		mba.mba_pba.pba_pc = NULL;
+		mba.mba_pba.pba_flags = pci_bus_flags();
+		mba.mba_pba.pba_bus = 0;
+		mba.mba_pba.pba_bridgetag = NULL;
+#if NACPI > 0 && defined(ACPI_SCANPCI)
+		if (sc->sc_mpacpi_active)
+			mp_pci_scan(self, &mba.mba_pba, pcibusprint);
+		else
+#endif
+#if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
+		if (mpbios_scanned != 0)
+			mp_pci_scan(self, &mba.mba_pba, pcibusprint);
+		else
+#endif
+		if (sc->sc_pci == NULL) {
+			sc->sc_pci = config_found_ia(self, "pcibus",
+			    &mba.mba_pba, pcibusprint);
+		}
+#if NACPI > 0
+		if (mp_verbose)
+			acpi_pci_link_state();
+#endif
+	}
+#endif
+
 
 	if (ifattr_match(ifattr, "mcabus") && sc->sc_mca == NULL) {
 #if NMCA > 0
