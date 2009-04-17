@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.165 2009/04/17 08:04:49 cegger Exp $	*/
+/*	$NetBSD: tulip.c,v 1.166 2009/04/17 08:19:09 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.165 2009/04/17 08:04:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.166 2009/04/17 08:19:09 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -575,7 +575,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 int
 tlp_activate(device_t self, enum devact act)
 {
-	struct tulip_softc *sc = (void *) self;
+	struct tulip_softc *sc = device_private(self);
 	int s, error = 0;
 
 	s = splnet();
@@ -3231,7 +3231,7 @@ tlp_mii_tick(void *arg)
 static void
 tlp_mii_statchg(device_t self)
 {
-	struct tulip_softc *sc = (struct tulip_softc *)self;
+	struct tulip_softc *sc = device_private(self);
 
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
@@ -3262,7 +3262,7 @@ tlp_mii_statchg(device_t self)
 static void
 tlp_winb_mii_statchg(device_t self)
 {
-	struct tulip_softc *sc = (struct tulip_softc *)self;
+	struct tulip_softc *sc = device_private(self);
 
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
@@ -3291,7 +3291,7 @@ tlp_winb_mii_statchg(device_t self)
 static void
 tlp_dm9102_mii_statchg(device_t self)
 {
-	struct tulip_softc *sc = (struct tulip_softc *)self;
+	struct tulip_softc *sc = device_private(self);
 
 	/*
 	 * Don't idle the transmit and receive processes, here.  It
@@ -3362,7 +3362,7 @@ tlp_mii_setmedia(struct tulip_softc *sc)
 static int
 tlp_bitbang_mii_readreg(device_t self, int phy, int reg)
 {
-	struct tulip_softc *sc = (void *) self;
+	struct tulip_softc *sc = device_private(self);
 
 	return (mii_bitbang_readreg(self, sc->sc_bitbang_ops, phy, reg));
 }
@@ -3375,7 +3375,7 @@ tlp_bitbang_mii_readreg(device_t self, int phy, int reg)
 static void
 tlp_bitbang_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct tulip_softc *sc = (void *) self;
+	struct tulip_softc *sc = device_private(self);
 
 	mii_bitbang_writereg(self, sc->sc_bitbang_ops, phy, reg, val);
 }
@@ -3388,7 +3388,7 @@ tlp_bitbang_mii_writereg(device_t self, int phy, int reg, int val)
 static uint32_t
 tlp_sio_mii_bitbang_read(device_t self)
 {
-	struct tulip_softc *sc = (void *) self;
+	struct tulip_softc *sc = device_private(self);
 
 	return (TULIP_READ(sc, CSR_MIIROM));
 }
@@ -3401,7 +3401,7 @@ tlp_sio_mii_bitbang_read(device_t self)
 static void
 tlp_sio_mii_bitbang_write(device_t self, uint32_t val)
 {
-	struct tulip_softc *sc = (void *) self;
+	struct tulip_softc *sc = device_private(self);
 
 	TULIP_WRITE(sc, CSR_MIIROM, val);
 }
@@ -3414,7 +3414,7 @@ tlp_sio_mii_bitbang_write(device_t self, uint32_t val)
 static int
 tlp_pnic_mii_readreg(device_t self, int phy, int reg)
 {
-	struct tulip_softc *sc = (void *) self;
+	struct tulip_softc *sc = device_private(self);
 	uint32_t val;
 	int i;
 
@@ -3445,7 +3445,7 @@ tlp_pnic_mii_readreg(device_t self, int phy, int reg)
 static void
 tlp_pnic_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct tulip_softc *sc = (void *) self;
+	struct tulip_softc *sc = device_private(self);
 	int i;
 
 	TULIP_WRITE(sc, CSR_PNIC_MII,
@@ -3486,7 +3486,7 @@ static const int tlp_al981_phy_regmap_size = sizeof(tlp_al981_phy_regmap) /
 static int
 tlp_al981_mii_readreg(device_t self, int phy, int reg)
 {
-	struct tulip_softc *sc = (struct tulip_softc *)self;
+	struct tulip_softc *sc = device_private(self);
 
 	/* AL981 only has an internal PHY. */
 	if (phy != 0)
@@ -3507,7 +3507,7 @@ tlp_al981_mii_readreg(device_t self, int phy, int reg)
 static void
 tlp_al981_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct tulip_softc *sc = (struct tulip_softc *)self;
+	struct tulip_softc *sc = device_private(self);
 
 	/* AL981 only has an internal PHY. */
 	if (phy != 0)
@@ -5166,7 +5166,7 @@ tlp_2114x_nway_set(struct tulip_softc *sc)
 static void
 tlp_2114x_nway_statchg(device_t self)
 {
-	struct tulip_softc *sc = (struct tulip_softc *)self;
+	struct tulip_softc *sc = device_private(self);
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife;
 
@@ -5589,7 +5589,7 @@ tlp_pnic_tmsw_set(struct tulip_softc *sc)
 static void
 tlp_pnic_nway_statchg(device_t self)
 {
-	struct tulip_softc *sc = (struct tulip_softc *)self;
+	struct tulip_softc *sc = device_private(self);
 
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
