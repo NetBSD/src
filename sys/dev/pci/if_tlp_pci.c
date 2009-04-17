@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.110 2009/04/17 14:07:32 cegger Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.111 2009/04/17 16:57:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.110 2009/04/17 14:07:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.111 2009/04/17 16:57:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1029,7 +1029,9 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Finish off the attach.
 	 */
-	tlp_attach(sc, enaddr);
+	error = tlp_attach(sc, enaddr);
+	if (error)
+		goto fail;
 	return;
 
 fail:
