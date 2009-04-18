@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.5 2009/01/15 23:17:00 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.6 2009/04/18 13:53:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: server.c,v 1.5 2009/01/15 23:17:00 plunky Exp $
+ * $Id: server.c,v 1.6 2009/04/18 13:53:59 lukem Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/server.c,v 1.2 2005/12/06 17:56:36 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.5 2009/01/15 23:17:00 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.6 2009/04/18 13:53:59 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -476,8 +476,8 @@ server_process_request(server_p srv, int32_t fd)
 	    	srv->fdidx[fd].priv =
 		    server_auth_check(srv, (struct sockcred *)CMSG_DATA(cmsg));
 
-	if (len >= sizeof(*pdu)
-	    && (sizeof(*pdu) + (pdu->len = ntohs(pdu->len))) == len) {
+	if ((uint32_t)len >= sizeof(*pdu)
+	    && (sizeof(*pdu) + (pdu->len = ntohs(pdu->len))) == (uint32_t)len) {
 		switch (pdu->pid) {
 		case SDP_PDU_SERVICE_SEARCH_REQUEST:
 			error = server_prepare_service_search_response(srv, fd);
