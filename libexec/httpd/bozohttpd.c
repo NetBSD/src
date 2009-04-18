@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.11 2009/03/23 12:49:28 reinoud Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.12 2009/04/18 07:28:24 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.c,v 1.142 2008/03/03 03:36:11 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.152 2009/04/18 05:36:04 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +15,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -111,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20080303"
+#define SERVER_SOFTWARE		"bozohttpd/20090417"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -195,28 +193,25 @@ static	void	alarmer(int);
 volatile sig_atomic_t	alarmhit;
 
 static	void	parse_request(char *, char **, char **, char **, char **);
+static	void	clean_request(http_req *request);
 static	http_req *read_request(void);
-static	struct headers *addmerge_header(http_req *request, char *val,
-					char *str, ssize_t len);
+static	struct headers *addmerge_header(http_req *, char *, char *, ssize_t);
+static int mmap_and_write_part(int, off_t, size_t);
 static	void	process_request(http_req *);
 static	int	check_direct_access(http_req *request);
-static	char	*transform_request(http_req *, int *);
+static	int	transform_request(http_req *, int *);
 static	void	handle_redirect(http_req *, const char *, int);
 
-static	void	check_virtual(http_req *);
+static	int	check_virtual(http_req *);
 static	void	check_bzredirect(http_req *);
 static	void	fix_url_percent(http_req *);
-static	void	process_method(http_req *, const char *);
-static	void	process_proto(http_req *, const char *);
+static	int	process_proto(http_req *, const char *);
+static	int	process_method(http_req *, const char *);
 static	void	escape_html(http_req *);
 
 static	const char *http_errors_short(int);
 static	const char *http_errors_long(int);
 
-
-void	*bozomalloc(size_t);
-void	*bozorealloc(void *, size_t);
-char	*bozostrdup(const char *);
 
 /* bozotic io */
 int	(*bozoprintf)(const char *, ...) = printf;
@@ -277,7 +272,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	http_req *http_request;
+	http_req *request;
 	extern	char **environ;
 	char	*cleanenv[1];
 	uid_t	uid;
@@ -531,9 +526,10 @@ main(int argc, char **argv)
 	 * read and process the HTTP request.
 	 */
 	do {
-		http_request = read_request();
-		if (http_request) {
-			process_request(http_request);
+		request = read_request();
+		if (request) {
+			process_request(request);
+			clean_request(request);
 			return (0);
 		}
 	} while (bflag);
@@ -556,7 +552,9 @@ http_date(void)
 }
 
 /*
- * convert "in" into the three parts of a request (first line)
+ * convert "in" into the three parts of a request (first line).
+ * we allocate into file and query, but return pointers into
+ * "in" for proto and method.
  */
 static void
 parse_request(char *in, char **method, char **file, char **query, char **proto)
@@ -564,13 +562,15 @@ parse_request(char *in, char **method, char **file, char **query, char **proto)
 	ssize_t	len;
 	char	*val;
 	
-	*method = *file = *query = *proto = NULL;		/* set them up */
+	debug((DEBUG_EXPLODING, "parse in: %s", in));
+	*method = *file = *query = *proto = NULL;
 
 	len = (ssize_t)strlen(in);
 	val = bozostrnsep(&in, " \t\n\r", &len);
 	if (len < 1 || val == NULL)
 		return;
 	*method = val;
+
 	while (*in == ' ' || *in == '\t')
 		in++;
 	val = bozostrnsep(&in, " \t\n\r", &len);
@@ -581,23 +581,26 @@ parse_request(char *in, char **method, char **file, char **query, char **proto)
 			*file = in;
 		return;
 	}
-
 	*file = val;
+
 	*query = strchr(*file, '?');
-	if (*query)  {
-	  *query = *query + 1;
-	  *(*query - 1) = '\0';
-	}
+	if (*query)
+		*(*query)++ = '\0';
 
 	if (in) {
 		while (*in && (*in == ' ' || *in == '\t'))
 			in++;
 		if (*in)
 			*proto = in;
-	}	
-	debug((DEBUG_FAT, "URL INFO: |m: %s |f: %s |q: %s |p: %s |", 
-	       *method, *file, *query, *proto));
+	}
 
+	/* allocate private copies */
+	*file = strdup(*file);
+	if (*query)
+		*query = strdup(*query);
+
+	debug((DEBUG_FAT, "url: method: \"%s\" file: \"%s\" query: \"%s\" proto: \"%s\"", 
+	       *method, *file, *query, *proto));
 }
 
 /*
@@ -608,6 +611,40 @@ static void
 alarmer(int sig)
 {
 	alarmhit = 1;
+}
+
+/*
+ * cleanup a http_req after use
+ */
+static void
+clean_request(http_req *request)
+{
+	struct	headers *hdr, *ohdr = NULL;
+
+	if (request == NULL)
+		return;
+
+	/* clean up request */
+#define MF(x)	if (request->x) free(request->x)
+	MF(hr_remotehost);
+	MF(hr_remoteaddr);
+	MF(hr_serverport);
+	MF(hr_file);
+	MF(hr_query);
+#undef MF
+	auth_cleanup(request);
+	for (hdr = SIMPLEQ_FIRST(&request->hr_headers); hdr;
+	    hdr = SIMPLEQ_NEXT(hdr, h_next)) {
+		free(hdr->h_value);
+		free(hdr->h_header);
+		if (ohdr)
+			free(ohdr);
+		ohdr = hdr;
+	}
+	if (ohdr)
+		free(ohdr);
+
+	free(request);
 }
 
 /*
@@ -640,8 +677,9 @@ read_request(void)
 	request->hr_allow = request->hr_host = NULL;
 	request->hr_content_type = request->hr_content_length = NULL;
 	request->hr_range = NULL;
-	request->hr_if_modified_since = NULL;
 	request->hr_last_byte_pos = -1;
+	request->hr_if_modified_since = NULL;
+	request->hr_file = NULL;
 
 	slen = sizeof(ss);
 	if (getpeername(0, (struct sockaddr *)&ss, &slen) < 0)
@@ -687,38 +725,54 @@ read_request(void)
 	alarm(MAX_WAIT_TIME);
 	while ((str = bozodgetln(STDIN_FILENO, &len, bozoread)) != NULL) {
 		alarm(0);
-		if (alarmhit)
-			http_error(408, NULL, "request timed out");
+		if (alarmhit) {
+			(void)http_error(408, NULL, "request timed out");
+			goto cleanup;
+		}
 		line++;
 
 		if (line == 1) {
-			str = bozostrdup(str);	/* we use this copy */
 
-			if (len < 1)
-				http_error(404, NULL, "null method");
+			if (len < 1) {
+				(void)http_error(404, NULL, "null method");
+				goto cleanup;
+			}
+
 			warning("got request ``%s'' from host %s to port %s",
 			    str,
 			    host ? host : addr ? addr : "<local>",
 			    port ? port : "<stdin>");
+#if 0
 			debug((DEBUG_FAT, "read_req, getting request: ``%s''",
 			    str));
+#endif
 
+			/* we allocate return space in file and query only */
 			parse_request(str, &method, &file, &query, &proto);
-
-			if (method == NULL)
-				http_error(404, NULL, "null method");
-			if (file == NULL)
-				http_error(404, NULL, "null file");
+			request->hr_file = file;
+			request->hr_query = query;
+			if (method == NULL) {
+				(void)http_error(404, NULL, "null method");
+				goto cleanup;
+			}
+			if (file == NULL) {
+				(void)http_error(404, NULL, "null file");
+				goto cleanup;
+			}
 
 			/*
 			 * note that we parse the proto first, so that we
 			 * can more properly parse the method and the url.
 			 */
-			request->hr_file = file;
-			request->hr_query = query;
 
-			process_proto(request, proto);
-			process_method(request, method);
+			if (process_proto(request, proto) ||
+			    process_method(request, method)) {
+				goto cleanup;
+			}
+
+			debug((DEBUG_FAT, "got file \"%s\" query \"%s\"",
+			    request->hr_file,
+			    request->hr_query ? request->hr_query : "<none>"));
 
 			/* http/0.9 has no header processing */
 			if (request->hr_proto == http_09)
@@ -733,8 +787,10 @@ read_request(void)
 			debug((DEBUG_EXPLODING,
 			    "read_req2: after bozostrnsep: str ``%s'' val ``%s''",
 			    str, val));
-			if (val == NULL || len == -1)
-				http_error(404, request, "no header");
+			if (val == NULL || len == -1) {
+				(void)http_error(404, request, "no header");
+				goto cleanup;
+			}
 			while (*str == ' ' || *str == '\t')
 				len--, str++;
 			while (*val == ' ' || *val == '\t')
@@ -752,8 +808,10 @@ read_request(void)
 			else if (strcasecmp(hdr->h_header, "host") == 0)
 				request->hr_host = hdr->h_value;
 			/* HTTP/1.1 rev06 draft spec: 14.20 */
-			else if (strcasecmp(hdr->h_header, "expect") == 0)
-				http_error(417, request, "we don't support Expect:");
+			else if (strcasecmp(hdr->h_header, "expect") == 0) {
+				(void)http_error(417, request, "we don't support Expect:");
+				goto cleanup;
+			}
 			else if (strcasecmp(hdr->h_header, "referrer") == 0 ||
 			         strcasecmp(hdr->h_header, "referer") == 0)
 				request->hr_referrer = hdr->h_value;
@@ -774,12 +832,44 @@ next_header:
 	signal(SIGALRM, SIG_DFL);
 
 	/* RFC1945, 8.3 */
-	if (request->hr_method == HTTP_POST && request->hr_content_length == NULL)
-		http_error(400, request, "missing content length");
+	if (request->hr_method == HTTP_POST && request->hr_content_length == NULL) {
+		(void)http_error(400, request, "missing content length");
+		goto cleanup;
+	}
 
 	/* HTTP/1.1 draft rev-06, 14.23 & 19.6.1.1 */
-	if (request->hr_proto == http_11 && request->hr_host == NULL)
-		http_error(400, request, "missing Host header");
+	if (request->hr_proto == http_11 && request->hr_host == NULL) {
+		(void)http_error(400, request, "missing Host header");
+		goto cleanup;
+	}
+
+	if (request->hr_range != NULL) {
+		debug((DEBUG_FAT, "hr_range: %s", request->hr_range));
+		/* support only simple ranges %d- and %d-%d */
+		if (strchr(request->hr_range, ',') == NULL) {
+			const char *rstart, *dash;
+
+			rstart = strchr(request->hr_range, '=');
+			if (rstart != NULL) {
+				rstart++;
+				dash = strchr(rstart, '-');
+				if (dash != NULL && dash != rstart) {
+					dash++;
+					request->hr_have_range = 1;
+					request->hr_first_byte_pos =
+					    strtoll(rstart, NULL, 10);
+					if (request->hr_first_byte_pos < 0)
+						request->hr_first_byte_pos = 0;
+					if (*dash != '\0') {
+						request->hr_last_byte_pos =
+						    strtoll(dash, NULL, 10);
+						if (request->hr_last_byte_pos < 0)
+							request->hr_last_byte_pos = -1;
+					}
+				}
+			}
+		}
+	}
 
 	if (request->hr_range != NULL) {
 		debug((DEBUG_FAT, "hr_range: %s", request->hr_range));
@@ -812,6 +902,14 @@ next_header:
 	debug((DEBUG_FAT, "read_request returns url %s in request", 
 	       request->hr_file));
 	return (request);
+
+cleanup:
+	clean_request(request);
+
+	/* If SSL enabled cleanup SSL structure. */
+	ssl_destroy();
+
+	return NULL;
 }
 
 /*
@@ -821,7 +919,6 @@ static struct headers *
 addmerge_header(http_req *request, char *val, char *str, ssize_t len)
 {
 	struct	headers *hdr;
-	static char space[2] = { ' ', 0 };
 
 	/* do we exist already? */
 	SIMPLEQ_FOREACH(hdr, &request->hr_headers, h_next) {
@@ -831,17 +928,15 @@ addmerge_header(http_req *request, char *val, char *str, ssize_t len)
 
 	if (hdr) {
 		/* yup, merge it in */
-		if (hdr->h_value == space)
-			hdr->h_value = bozostrdup(str);
-		else  {
-			char *nval;
+		char *nval;
 
-			if (asprintf(&nval, "%s, %s", hdr->h_value, str) == -1)
-				http_error(500, NULL,
-				     "memory allocation failure");
-			free(hdr->h_value);
-			hdr->h_value = nval;
+		if (asprintf(&nval, "%s, %s", hdr->h_value, str) == -1) {
+			(void)http_error(500, NULL,
+			     "memory allocation failure");
+			return NULL;
 		}
+		free(hdr->h_value);
+		hdr->h_value = nval;
 	} else {
 		/* nope, create a new one */
 
@@ -850,13 +945,54 @@ addmerge_header(http_req *request, char *val, char *str, ssize_t len)
 		if (str && *str)
 			hdr->h_value = bozostrdup(str);
 		else
-			hdr->h_value = space;
+			hdr->h_value = bozostrdup(" ");
 
 		SIMPLEQ_INSERT_TAIL(&request->hr_headers, hdr, h_next);
 		request->hr_nheaders++;
 	}
 
 	return hdr;
+}
+
+static int
+mmap_and_write_part(int fd, off_t first_byte_pos, size_t sz)
+{
+	size_t mappedsz; 
+	char *addr;
+	void *oaddr;
+
+	addr = mmap(0, sz, PROT_READ, MAP_SHARED, fd, first_byte_pos);
+	if (addr == (char *)-1) {
+		warning("mmap failed: %s", strerror(errno));
+		return -1;
+	}
+	oaddr = addr;
+	mappedsz = sz;
+
+#ifdef MADV_SEQUENTIAL
+	(void)madvise(addr, sz, MADV_SEQUENTIAL);
+#endif
+	while (sz > WRSZ) {
+		if (bozowrite(STDOUT_FILENO, addr, WRSZ) != WRSZ) {
+			warning("write failed: %s", strerror(errno));
+			goto out;
+		}
+		debug((DEBUG_OBESE, "wrote %d bytes", WRSZ));
+		sz -= WRSZ;
+		addr += WRSZ;
+	}
+	if (sz && (size_t)bozowrite(STDOUT_FILENO, addr, sz) != sz) {
+		warning("final write failed: %s", strerror(errno));
+		goto out;
+	}
+	debug((DEBUG_OBESE, "wrote %d bytes", (int)sz));
+ out:
+	if (munmap(oaddr, mappedsz) < 0) {
+		warning("munmap failed");
+		return -1;
+	}
+
+	return 0;
 }
 
 static int
@@ -895,30 +1031,37 @@ process_request(http_req *request)
 
 	/*
 	 * note that transform_request chdir()'s if required.  also note
-	 * that cgi is handed here, and a cgi request will never return
-	 * back here.
+	 * that cgi is handed here.  if transform_request() returns 0
+	 * then the request has been handled already.
 	 */
-	file = transform_request(request, &isindex);
-	if (file == NULL)
-		http_error(404, request, "empty file after transform");
+	if (transform_request(request, &isindex) == 0)
+		return;
+
+	file = request->hr_file;
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0) {
 		debug((DEBUG_FAT, "open failed: %s", strerror(errno)));
 		if (errno == EPERM)
-			http_error(403, request, "no permission to open file");
+			(void)http_error(403, request, "no permission to open file");
 		else if (errno == ENOENT) {
-			if (directory_index(request, file, isindex))
-				return;
-			http_error(404, request, "no file");
+			if (directory_index(request, file, isindex)) 
+				;
+			else
+				(void)http_error(404, request, "no file");
 		} else
-			http_error(500, request, "open file");
+			(void)http_error(500, request, "open file");
+		return;
 	}
-	if (fstat(fd, &sb) < 0)
-		http_error(500, request, "can't fstat");
-	if (S_ISDIR(sb.st_mode))
+	if (fstat(fd, &sb) < 0) {
+		(void)http_error(500, request, "can't fstat");
+		goto cleanup;
+	}
+	if (S_ISDIR(sb.st_mode)) {
 		handle_redirect(request, NULL, 0);
-		/* NOTREACHED */
+		goto cleanup;
+	}
+
 	if (request->hr_if_modified_since &&
 	    parse_http_date(request->hr_if_modified_since, &timestamp) &&
 	    timestamp >= sb.st_mtime) {
@@ -926,7 +1069,7 @@ process_request(http_req *request)
 		bozoprintf("%s 304 Not Modified\r\n", request->hr_proto);
 		bozoprintf("\r\n");
 		bozoflush(stdout);
-		exit(0);
+		goto cleanup;
 	}
 
 	/* validate requested range */
@@ -957,37 +1100,27 @@ process_request(http_req *request)
 	bozoflush(stdout);
 
 	if (request->hr_method != HTTP_HEAD) {
-		char *addr;
-		void *oaddr;
-		size_t mappedsz; 
-		size_t sz;
+		off_t szleft, cur_byte_pos;
 
-		sz = mappedsz = request->hr_last_byte_pos - request->hr_first_byte_pos + 1;
-		oaddr = addr = mmap(0, mappedsz, PROT_READ,
-		    MAP_SHARED, fd, request->hr_first_byte_pos);
-		if (addr == (char *)-1)
-			error(1, "mmap failed: %s", strerror(errno));
+		szleft =
+		     request->hr_last_byte_pos - request->hr_first_byte_pos + 1;
+		cur_byte_pos = request->hr_first_byte_pos;
 
-#ifdef MADV_SEQUENTIAL
-		madvise(addr, sz, MADV_SEQUENTIAL);
-#endif
-		while (sz > WRSZ) {
-			if (bozowrite(STDOUT_FILENO, addr, WRSZ) != WRSZ)
-				error(1, "write failed: %s", strerror(errno));
-			debug((DEBUG_OBESE, "wrote %d bytes", WRSZ));
-			sz -= WRSZ;
-			addr += WRSZ;
+		while (szleft) {
+			size_t sz;
+
+			if (MMAPSZ < szleft)
+				sz = MMAPSZ;
+			else
+				sz = szleft;
+			if (mmap_and_write_part(fd, cur_byte_pos, sz))
+				goto cleanup;
+			cur_byte_pos += sz;
+			szleft -= sz;
 		}
-		if (sz && (size_t)bozowrite(STDOUT_FILENO, addr, sz) != sz)
-			error(1, "final write failed: %s", strerror(errno));
-		debug((DEBUG_OBESE, "wrote %d bytes", (int)sz));
-		if (munmap(oaddr, mappedsz) < 0)
-			warning("munmap failed");
 	}
-	/* If SSL enabled cleanup SSL structure. */
-	ssl_destroy();
+cleanup:
 	close(fd);
-	free(file);
 }
 
 /*
@@ -997,7 +1130,7 @@ process_request(http_req *request)
  *	directory exists under vpath.  if it does, use this as the
  #	new slashdir.
  */
-static void
+static int
 check_virtual(http_req *request)
 {
 	char *file = request->hr_file, *s;
@@ -1052,7 +1185,7 @@ check_virtual(http_req *request)
 		if (s == 0) {
 			if (Vflag)
 				goto use_slashdir;
-			http_error(404, request, "unknown URL");
+			return http_error(404, request, "unknown URL");
 		}
 	} else
 use_slashdir:
@@ -1062,24 +1195,25 @@ use_slashdir:
 	 * ok, nailed the correct slashdir, chdir to it
 	 */
 	if (chdir(s) < 0)
-		error(1, "can't chdir %s: %s", s, strerror(errno));
+		return http_error(404, request, "can't chdir to slashdir");
+	return 0;
 }
 
 /* make sure we're not trying to access special files */
-void
+int
 check_special_files(http_req *request, const char *name)
 {
 	/* ensure basename(name) != special files */
 	if (strcmp(name, DIRECT_ACCESS_FILE) == 0)
-		http_error(403, request,
+		return http_error(403, request,
 		    "no permission to open direct access file");
 	if (strcmp(name, REDIRECT_FILE) == 0)
-		http_error(403, request,
+		return http_error(403, request,
 		    "no permission to open redirect file");
 	if (strcmp(name, ABSREDIRECT_FILE) == 0)
-		http_error(403, request,
+		return http_error(403, request,
 		    "no permission to open redirect file");
-	auth_check_special_files(request, name);
+	return auth_check_special_files(request, name);
 }
 
 /*
@@ -1190,23 +1324,27 @@ check_direct_access(http_req *request)
  *	- disallow anything ending up with a file starting
  *	  at "/" or having ".." in it.
  *	- anything else is a really weird internal error
+ *	- returns malloced file to serve, if unhandled
  */
-static char *
+int
 transform_request(http_req *request, int *isindex)
 {
-        char	*new_file;  // the new file name we're going to fetch
-	char	*req_file;  // the original file in the request
+	char	*file, *newfile = NULL;
 	size_t	len;
 
-	new_file = NULL;
+	file = NULL;
 	*isindex = 0;
-	debug((DEBUG_FAT, "tf_req: url %s", request->hr_file));
+	debug((DEBUG_FAT, "tf_req: file %s", request->hr_file));
 	fix_url_percent(request);
-	check_virtual(request);
-	req_file = request->hr_file;
+	if (check_virtual(request)) {
+		goto bad_done;
+	}
+	file = request->hr_file;
 
-	if (req_file[0] != '/')
-		http_error(404, request, "unknown URL");
+	if (file[0] != '/') {
+		(void)http_error(404, request, "unknown URL");
+		goto bad_done;
+	}
 
 	check_bzredirect(request);
 
@@ -1233,14 +1371,14 @@ transform_request(http_req *request, int *isindex)
 			   "checking referrer \"%s\" vs myname %s", r, myname));
 			if (strncmp(r, "http://", 7) != 0 ||
 			    (strncasecmp(r + 7, myname, strlen(myname)) != 0 &&
-			     !TOP_PAGE(req_file)))
+			     !TOP_PAGE(file)))
 				to_indexhtml = 1;
 		} else {
 			const char *h = request->hr_host;
 
 			debug((DEBUG_FAT, "url has no referrer at all"));
 			/* if there's no referrer, let / or /index.html past */
-			if (!TOP_PAGE(req_file) ||
+			if (!TOP_PAGE(file) ||
 			    (h && strncasecmp(h, myname, strlen(myname)) != 0))
 				to_indexhtml = 1;
 		}
@@ -1250,43 +1388,52 @@ transform_request(http_req *request, int *isindex)
 
 			if (asprintf(&slashindexhtml, "/%s", index_html) < 0)
 				error(1, "asprintf");
-			debug((DEBUG_FAT, "rflag: redirecting %s to %s", req_file, slashindexhtml));
+			debug((DEBUG_FAT, "rflag: redirecting %s to %s", file, slashindexhtml));
 			handle_redirect(request, slashindexhtml, 0);
-			/* NOTREACHED */
+			free(slashindexhtml);
+			return 0;
 		}
 	}
 
-	len = strlen(req_file);
+	len = strlen(file);
 	if (0) {
 #ifndef NO_USER_SUPPORT
-	} else if (len > 1 && uflag && req_file[1] == '~') {
-		if (req_file[2] == '\0')
-			http_error(404, request, "missing username");
-		if (strchr(req_file + 2, '/') == NULL)
+	} else if (len > 1 && uflag && file[1] == '~') {
+		if (file[2] == '\0') {
+			(void)http_error(404, request, "missing username");
+			goto bad_done;
+		}
+		if (strchr(file + 2, '/') == NULL) {
 			handle_redirect(request, NULL, 0);
-			/* NOTREACHED */
+			return 0;
+		}
 		debug((DEBUG_FAT, "calling user_transform"));
+
 		return (user_transform(request, isindex));
 #endif /* NO_USER_SUPPORT */
 	} else if (len > 1) {
-		debug((DEBUG_FAT, "url[len-1] == %c", req_file[len-1]));
-		if (req_file[len-1] == '/') {	/* append index.html */
+		debug((DEBUG_FAT, "file[len-1] == %c", file[len-1]));
+		if (file[len-1] == '/') {	/* append index.html */
 			*isindex = 1;
 			debug((DEBUG_FAT, "appending index.html"));
-			new_file = bozomalloc(len + strlen(index_html) + 1);
-			strcpy(new_file, req_file + 1);
-			strcat(new_file, index_html);
+			newfile = bozomalloc(len + strlen(index_html) + 1);
+			strcpy(newfile, file + 1);
+			strcat(newfile, index_html);
 		} else
-			new_file = bozostrdup(req_file + 1);
+			newfile = bozostrdup(file + 1);
 	} else if (len == 1) {
 		debug((DEBUG_EXPLODING, "tf_req: len == 1"));
-		new_file = bozostrdup(index_html);
+		newfile = bozostrdup(index_html);
 		*isindex = 1;
-	} else		/* len == 0 ? */
-		http_error(500, request, "request->hr_file is nul?");
+	} else {	/* len == 0 ? */
+		(void)http_error(500, request, "request->hr_file is nul?");
+		goto bad_done;
+	}
 
-	if (new_file == NULL)
-		http_error(500, request, "internal failure");
+	if (newfile == NULL) {
+		(void)http_error(500, request, "internal failure");
+		goto bad_done;
+	}
 
 	/*
 	 * look for "http://myname/" and deal with it as necessary.
@@ -1298,21 +1445,28 @@ transform_request(http_req *request, int *isindex)
 	 * XXX true security only comes from our parent using chroot(2)
 	 * before execve(2)'ing us.  or our own built in chroot(2) support.
 	 */
-	if (*new_file == '/' || strcmp(new_file, "..") == 0 ||
-	    strstr(new_file, "/..") || strstr(new_file, "../"))
-		http_error(403, request, "illegal request");
-
-	auth_check(request, new_file);
-
-	if (new_file && strlen(new_file)) {
-	  free(request->hr_file);
-	  request->hr_file = new_file;
+	if (*newfile == '/' || strcmp(newfile, "..") == 0 ||
+	    strstr(newfile, "/..") || strstr(newfile, "../")) {
+		(void)http_error(403, request, "illegal request");
+		goto bad_done;
 	}
 
-	process_cgi(request);	
-	
-	debug((DEBUG_FAT, "transform_request returned: %s", new_file));
-	return (new_file);
+	if (auth_check(request, newfile))
+		goto bad_done;
+
+	if (strlen(newfile))
+		request->hr_file = newfile;
+
+	if (process_cgi(request))
+		return 0;
+
+	debug((DEBUG_FAT, "transform_request set: %s", newfile));
+	return 1;
+bad_done:
+	debug((DEBUG_FAT, "transform_request returning: 0"));
+	if (newfile)
+		free(newfile);
+	return 0;
 }
 
 /*
@@ -1325,15 +1479,16 @@ handle_redirect(http_req *request, const char *url, int absolute)
 	char *urlbuf;
 	char portbuf[20];
 	int query = 0;
-
+	
 	if (url == NULL) {
 		if (asprintf(&urlbuf, "/%s/", request->hr_file) < 0)
 			error(1, "asprintf");
 		url = urlbuf;
-	}
-	
+	} else
+		urlbuf = NULL;
+
 	if (request->hr_query && strlen(request->hr_query)) {
-	  query = 1;
+		query = 1;
 	}
 
 	if (request->hr_serverport && strcmp(request->hr_serverport, "80") != 0)
@@ -1377,7 +1532,8 @@ handle_redirect(http_req *request, const char *url, int absolute)
 	bozoprintf("</body></html>\n");
 head:
 	bozoflush(stdout);
-	exit(0);
+	if (urlbuf)
+		free(urlbuf);
 }
 
 /* generic header printing routine */
@@ -1471,10 +1627,7 @@ escape_html(http_req *request)
 	}
 	tmp[j] = 0;
 
-	/*
-	 * original "url" is a substring of an allocation, so we
-	 * can't touch it.  so, ignore it and replace the request.
-	 */
+	free(request->hr_file);
 	request->hr_file = tmp;
 }
 
@@ -1503,22 +1656,30 @@ fix_url_percent(http_req *request)
 		}
 		debug((DEBUG_EXPLODING, "fu_%%: got s == %%, s[1]s[2] == %c%c",
 		    s[1], s[2]));
-		if (s[1] == '\0' || s[2] == '\0')
-			http_error(400, request,
+		if (s[1] == '\0' || s[2] == '\0') {
+			(void)http_error(400, request,
 			    "percent hack missing two chars afterwards");
-		if (s[1] == '0' && s[2] == '0')
-			http_error(404, request, "percent hack was %00");
-		if (s[1] == '2' && s[2] == 'f')
-			http_error(404, request, "percent hack was %2f (/)");
+			goto copy_rest;
+		}
+		if (s[1] == '0' && s[2] == '0') {
+			(void)http_error(404, request, "percent hack was %00");
+			goto copy_rest;
+		}
+		if (s[1] == '2' && s[2] == 'f') {
+			(void)http_error(404, request, "percent hack was %2f (/)");
+			goto copy_rest;
+		}
 			
 		buf[0] = *++s;
 		buf[1] = *++s;
 		buf[2] = '\0';
 		s++;
 		*t = (char)strtol(buf, NULL, 16);
-		debug((DEBUG_EXPLODING, "fu_%%: strtol put '%c' into *t", *t));
-		if (*t++ == '\0')
-			http_error(400, request, "percent hack got a 0 back");
+		debug((DEBUG_EXPLODING, "fu_%%: strtol put '%02x' into *t", *t));
+		if (*t++ == '\0') {
+			(void)http_error(400, request, "percent hack got a 0 back");
+			goto copy_rest;
+		}
 
 		while (*s && *s != '%') {
 			if (end && s >= end)
@@ -1526,6 +1687,12 @@ fix_url_percent(http_req *request)
 			*t++ = *s++;
 		}
 	} while (*s);
+copy_rest:
+	while (*s) {
+		if (s >= end)
+			break;
+		*t++ = *s++;
+	}
 	*t = '\0';
 	debug((DEBUG_FAT, "fix_url_percent returns %s in url", request->hr_file));
 }
@@ -1551,28 +1718,29 @@ static struct method_map {
 	{ NULL,		0, },
 };
 
-static void
+static int
 process_method(http_req *request, const char *method)
 {
 	struct	method_map *mmp;
+
+	if (request->hr_proto == http_11)
+		request->hr_allow = "GET, HEAD, POST";
 
 	for (mmp = method_map; mmp->name; mmp++)
 		if (strcasecmp(method, mmp->name) == 0) {
 			request->hr_method = mmp->type;
 			request->hr_methodstr = mmp->name;
-			return;
+			return 0;
 		}
 
-	if (request->hr_proto == http_11)
-		request->hr_allow = "GET, HEAD, POST";
-	http_error(404, request, "unknown method");
+	return http_error(404, request, "unknown method");
 }
 
 /*
  * as the prototype string is not constant (eg, "HTTP/1.1" is equivalent
  * to "HTTP/001.01"), we MUST parse this.
  */
-static void
+static int
 process_proto(http_req *request, const char *proto)
 {
 	char	majorstr[16], *minorstr;
@@ -1582,7 +1750,7 @@ process_proto(http_req *request, const char *proto)
 got_proto_09:
 		request->hr_proto = http_09;
 		debug((DEBUG_FAT, "request %s is http/0.9", request->hr_file));
-		return;
+		return 0;
 	}
 
 	if (strncasecmp(proto, "HTTP/", 5) != 0)
@@ -1614,10 +1782,10 @@ got_proto_09:
 		    request->hr_proto));
 		SIMPLEQ_INIT(&request->hr_headers);
 		request->hr_nheaders = 0;
-		return;
+		return 0;
 	}
 bad:
-	http_error(404, NULL, "unknown prototype");
+	return http_error(404, NULL, "unknown prototype");
 }
 
 #ifdef DEBUG
@@ -1675,7 +1843,7 @@ error(int code, const char *fmt, ...)
 
 /* the follow functions and variables are used in handling HTTP errors */
 /* ARGSUSED */
-void
+int
 http_error(int code, http_req *request, const char *msg)
 {
 	static	char buf[BUFSIZ];
@@ -1686,9 +1854,11 @@ http_error(int code, http_req *request, const char *msg)
 	int	size;
 
 	debug((DEBUG_FAT, "http_error %d: %s", code, msg));
-	if (header == NULL || reason == NULL)
+	if (header == NULL || reason == NULL) {
 		error(1, "http_error() failed (short = %p, long = %p)",
 		    header, reason);
+		return code;
+	}
 
 	if (request && request->hr_serverport &&
 	    strcmp(request->hr_serverport, "80") != 0)
@@ -1706,8 +1876,10 @@ http_error(int code, http_req *request, const char *msg)
 		    "</body></html>\n",
 		    header, header, request->hr_file, reason,
 		    myname, portbuf, myname, portbuf);
-		if (size >= (int)sizeof buf)
+		if (size >= (int)sizeof buf) {
 			warning("http_error buffer too small, truncated");
+			size = (int)sizeof buf;
+		}
 	} else
 		size = 0;
 
@@ -1724,7 +1896,7 @@ http_error(int code, http_req *request, const char *msg)
 		bozoprintf("%s", buf);
 	bozoflush(stdout);
 
-	exit(1);
+	return code;
 }
 
 /* short map between error code, and short/long messages */
@@ -1885,8 +2057,10 @@ bozorealloc(void *ptr, size_t size)
 	void	*p;
 
 	p = realloc(ptr, size);
-	if (p == NULL)
-		http_error(500, NULL, "memory allocation failure");
+	if (p == NULL) {
+		(void)http_error(500, NULL, "memory allocation failure");
+		exit(1);
+	}
 	return (p);
 }
 
@@ -1896,8 +2070,10 @@ bozomalloc(size_t size)
 	void	*p;
 
 	p = malloc(size);
-	if (p == NULL)
-		http_error(500, NULL, "memory allocation failure");
+	if (p == NULL) {
+		(void)http_error(500, NULL, "memory allocation failure");
+		exit(1);
+	}
 	return (p);
 }
 
@@ -1907,7 +2083,9 @@ bozostrdup(const char *str)
 	char	*p;
 
 	p = strdup(str);
-	if (p == NULL)
-		http_error(500, NULL, "memory allocation failure");
+	if (p == NULL) {
+		(void)http_error(500, NULL, "memory allocation failure");
+		exit(1);
+	}
 	return (p);
 }

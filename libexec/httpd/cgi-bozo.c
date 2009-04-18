@@ -1,9 +1,9 @@
-/*	$NetBSD: cgi-bozo.c,v 1.11 2009/03/11 06:53:25 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.12 2009/04/18 07:28:24 mrg Exp $	*/
 
-/*	$eterna: cgi-bozo.c,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.28 2009/04/18 05:36:04 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +15,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -85,9 +83,10 @@ spsetenv(const char *env, const char *val, char **envp)
 /*
  * Checks if the request has asked for a cgi-bin.  Should only be called if
  * cgibin is set.  If it starts CGIBIN_PREFIX or has a ncontent handler,
- * process the cgi, otherwise just return.
+ * process the cgi, otherwise just return.  Returns 0 if it did not handle
+ * the request.
  */
-void
+int
 process_cgi(http_req *request)
 {
 	char	buf[WRSZ];
@@ -102,16 +101,19 @@ process_cgi(http_req *request)
 	int	sv[2];
 
 	if (!cgibin && !Cflag)
-		return;
+		return 0;
 
 	asprintf(&file, "/%s", request->hr_file);
-	if (request->hr_query && strlen(request->hr_query)) {
-	  query = bozostrdup(request->hr_query);
-	} else {
-	  query = NULL;
-	}
-	
-	asprintf(&url, "%s%c%s", file, query?'?':0, query);
+	if (file == NULL)
+		return 0;
+	if (request->hr_query && strlen(request->hr_query))
+		query = bozostrdup(request->hr_query);
+	else
+		query = NULL;
+
+	asprintf(&url, "%s%s%s", file, query ? "?" : "", query ? query : "");
+	if (url == NULL)
+		goto out;
 	debug((DEBUG_NORMAL, "process_cgi: url `%s'", url));
 
 	path = NULL;
@@ -121,14 +123,14 @@ process_cgi(http_req *request)
 	info = NULL;
 	len = strlen(url);
 
-	auth_check(request, url + 1);
+	if (auth_check(request, url + 1))
+		goto out;
+
 	if (!cgibin || strncmp(url + 1, CGIBIN_PREFIX, CGIBIN_PREFIX_LEN) != 0) {
 		cgihandler = content_cgihandler(request, file + 1);
 		if (cgihandler == NULL) {
-		        debug((DEBUG_FAT, "process_cgi: no handler, returning"));
-			free(file);
-			free(url);
-			return;
+			debug((DEBUG_FAT, "process_cgi: no handler, returning"));
+			goto out;
 		}
 		if (len == 0 || file[len - 1] == '/')
 			append_index_html(&file);
@@ -136,6 +138,7 @@ process_cgi(http_req *request)
 		    cgihandler));
 	} else if (len - 1 == CGIBIN_PREFIX_LEN)	/* url is "/cgi-bin/" */
 		append_index_html(&file);
+
 	ix = 0;
 	if (cgihandler) {
 		command = file + 1;
@@ -220,7 +223,7 @@ process_cgi(http_req *request)
 	spsetenv("SCRIPT_NAME", file, curenvp++);
 	spsetenv("SCRIPT_FILENAME", file + 1, curenvp++);
 	spsetenv("SERVER_SOFTWARE", server_software, curenvp++);
-	spsetenv("REQUEST_URI", url, curenvp++);
+	spsetenv("REQUEST_URI", request->hr_file, curenvp++);
 	spsetenv("DATE_GMT", http_date(), curenvp++);
 	if (query && *query)
 		spsetenv("QUERY_STRING", query, curenvp++);
@@ -240,6 +243,9 @@ process_cgi(http_req *request)
 
 	free(file);
 	free(url);
+
+	debug((DEBUG_FAT, "process_cgi: going exec %s, %s %s %s",
+	    path, argv[0], strornull(argv[1]), strornull(argv[2])));
 
 	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sv))
 		error(1, "child socketpair failed: %s", strerror(errno));
@@ -302,6 +308,15 @@ process_cgi(http_req *request)
 	}
 	debug((DEBUG_FAT, "done processing cgi input"));
 	exit(0);
+
+ out:
+	if (query)
+		free(query);
+	if (file)
+		free(file);
+	if (url)
+		free(url);
+	return 0;
 }
 
 /*
@@ -323,7 +338,7 @@ finish_cgi_output(http_req *request, int in, int nph)
 	SIMPLEQ_INIT(&headers);
 	write_header = nph == 0;
 	while (nph == 0 && (str = bozodgetln(in, &len, read)) != NULL) {
-		char * hdr_name, * hdr_value;
+		char	*hdr_name, *hdr_value;
 
 		if (parse_header(str, len, &hdr_name, &hdr_value))
 			break;
@@ -393,15 +408,15 @@ finish_cgi_output(http_req *request, int in, int nph)
 }
 
 static int
-parse_header(const char * str, ssize_t len, char ** hdr_str, char ** hdr_val)
+parse_header(const char *str, ssize_t len, char **hdr_str, char **hdr_val)
 {
-	char * name, * value;
+	char	*name, *value;
 
 	/* if the string passed is zero-length bail out */
 	if (*str == '\0')
 		return -1;
 
-	name = value = bozostrdup(str);
+	value = bozostrdup(str);
 
 	/* locate the ':' separator in the header/value */
 	name = bozostrnsep(&value, ":", &len);
@@ -430,7 +445,6 @@ content_cgihandler(http_req *request, const char *file)
 	struct	content_map	*map;
 
 	debug((DEBUG_FAT, "content_cgihandler: trying file %s", file));
-
 	map = match_content_map(file, 0);
 	if (map)
 		return (map->cgihandler);
