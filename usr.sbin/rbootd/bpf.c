@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.18 2004/12/01 23:13:09 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.19 2009/04/18 09:18:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.18 2004/12/01 23:13:09 christos Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.19 2009/04/18 09:18:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,7 +359,7 @@ BpfRead(rconn, doread)
 			syslog(LOG_ERR,
 			       "bpf: short packet dropped (%d of %d bytes)",
 			       caplen, datlen);
-		else if (caplen > sizeof(struct rmp_packet))
+		else if (caplen > (int)sizeof(struct rmp_packet))
 			syslog(LOG_ERR, "bpf: large packet dropped (%d bytes)",
 			       caplen);
 		else {
