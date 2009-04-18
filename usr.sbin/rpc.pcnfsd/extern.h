@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1997/10/25 13:45:55 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 2009/04/18 13:02:36 lukem Exp $	*/
 
 extern	int		interrupted;
 extern	pr_list		printers;
@@ -13,7 +13,7 @@ int		check_cache __P((char *, char *, int *, int *));
 void		free_mapreq_results __P((mapreq_res));
 void            fillin_extra_groups __P((char *, u_int, int *, u_int[]));
 #ifdef USE_YP
-char	       *find_entry __P((char *, char *));
+char	       *find_entry __P((const char *, const char *));
 #endif
 void		free_pr_list_item __P((pr_list));
 void		free_pr_queue_item __P((pr_queue));
