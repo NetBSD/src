@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.14 2009/03/18 10:22:45 cegger Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.15 2009/04/18 16:33:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/conf.h>
 #include <sys/filedesc.h>
 #include <sys/lockf.h>
+#include <sys/kthread.h>
 #include <sys/module.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
@@ -44,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/syncfs/syncfs.h>
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
@@ -109,6 +111,14 @@ rump_vfs_init(void)
 	rump_cwdi.cwdi_cdir = rootvnode;
 	vref(rump_cwdi.cwdi_cdir);
 	proc0.p_cwdi = &rump_cwdi;
+
+	if (rump_threads) {
+		int rv;
+
+		if ((rv = kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL,
+		    sched_sync, NULL, NULL, "ioflush")) != 0)
+			panic("syncer thread create failed: %d", rv);
+	}
 }
 
 struct mount *
