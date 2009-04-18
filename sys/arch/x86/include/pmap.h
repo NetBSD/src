@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 2009/03/21 14:41:30 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 2009/04/18 08:51:45 cegger Exp $	*/
 
 /*
  *
@@ -174,6 +174,11 @@ struct pmap {
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa + (index) * sizeof(pd_entry_t))
 #endif
+
+/*
+ * MD flags that we use for pmap_enter:
+ */
+#define PMAP_NOCACHE	0x00000100	/* set the non-cacheable bit */
 
 /*
  * global kernel variables

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2009/03/21 22:55:08 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2009/04/18 08:51:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2009/03/21 22:55:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2009/04/18 08:51:45 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4044,6 +4044,8 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	npte = ma | protection_codes[prot] | PG_V;
 	if (wired)
 	        npte |= PG_W;
+	if (flags & PMAP_NOCACHE)
+		npte |= PG_N;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
