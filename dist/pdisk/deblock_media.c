@@ -103,7 +103,7 @@ new_deblock_media(void)
 
 
 MEDIA
-open_deblock_media(long new_block_size, MEDIA m)
+open_deblock_media(unsigned long new_block_size, MEDIA m)
 {
     DEBLOCK_MEDIA   a;
     unsigned long   block_size;
