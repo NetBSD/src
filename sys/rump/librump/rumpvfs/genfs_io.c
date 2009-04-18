@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.11 2009/04/06 20:41:29 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.12 2009/04/18 15:40:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.11 2009/04/06 20:41:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.12 2009/04/18 15:40:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -450,17 +450,6 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	mutex_enter(&uobj->vmobjlock);
 	goto restart;
-}
-
-int
-genfs_null_putpages(void *v)
-{
-	struct vop_putpages_args *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	KASSERT(vp->v_uobj.uo_npages == 0);
-	mutex_exit(&vp->v_interlock);
-	return 0;
 }
 
 int

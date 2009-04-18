@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.167 2008/04/28 20:24:08 martin Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.168 2009/04/18 15:40:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.167 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.168 2009/04/18 15:40:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,6 +344,26 @@ int
 genfs_mmap(void *v)
 {
 
+	return (0);
+}
+
+/*
+ * VOP_PUTPAGES() for vnodes which never have pages.
+ */
+
+int
+genfs_null_putpages(void *v)
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	KASSERT(vp->v_uobj.uo_npages == 0);
+	mutex_exit(&vp->v_interlock);
 	return (0);
 }
 
