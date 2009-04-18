@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.686 2009/04/18 07:50:59 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.687 2009/04/18 21:22:37 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1070,8 +1070,8 @@ Notes:
 Imported all except for linux-core into src/sys/external/bsd/drm/dist.
 
 Package:	bozohttpd 
-Version:	20090417
-Current Vers:	20090417
+Version:	20090418
+Current Vers:	20090418
 Maintainer:	mrg@eterna.com.au
 Archive Site:	ftp.netbsd.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS
 Home Page:	http://eterna.com.au/bozohttpd/
