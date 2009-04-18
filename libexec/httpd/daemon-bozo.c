@@ -1,6 +1,6 @@
-/*	$NetBSD: daemon-bozo.c,v 1.5 2009/04/18 07:28:24 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.6 2009/04/18 21:22:03 mrg Exp $	*/
 
-/*	$eterna: daemon-bozo.c,v 1.13 2009/04/17 22:52:20 mrg Exp $	*/
+/*	$eterna: daemon-bozo.c,v 1.16 2009/04/18 13:06:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -120,12 +120,7 @@ void
 daemon_fork()
 {
 	struct pollfd *fds = NULL;
-
-	while (bflag) {
-		struct	sockaddr_storage ss;
-		socklen_t slen;
-		int fd;
-		int i;
+	int i, j;
 
 #ifndef POLLRDNORM
 #define POLLRDNORM 0
@@ -136,14 +131,23 @@ daemon_fork()
 #ifndef INFTIM
 #define INFTIM -1
 #endif
-		if (fds == NULL) {
-			fds = bozomalloc(nsock * sizeof *fds);
-			for (i = 0; i < nsock; i++) {
-				fds[i].events = POLLIN | POLLPRI | POLLRDNORM |
-						POLLRDBAND | POLLERR;
-				fds[i].fd = sock[i];
-			}
-		}
+
+	fds = bozomalloc(nsock * sizeof *fds);
+	for (i = 0; i < nsock; i++) {
+		if (sock[i] == -1)
+			continue;
+		fds[i].events = POLLIN | POLLPRI | POLLRDNORM |
+				POLLRDBAND | POLLERR;
+		fds[i].fd = sock[i];
+	}
+
+	while (bflag) {
+		struct	sockaddr_storage ss;
+		socklen_t slen;
+		int fd;
+
+		if (nsock == 0)
+			exit(0);
 
 		/*
 		 * wait for a connection, then fork() and return NULL in
@@ -153,25 +157,53 @@ daemon_fork()
 		 */
 again:
 		if (poll(fds, nsock, INFTIM) == -1) {
-			if (errno != EINTR)
+			/* fail on programmer errors */
+			if (errno == EFAULT ||
+			    errno == EINVAL)
 				error(1, "poll: %s", strerror(errno));
+
+			/* sleep on some temporary kernel failures */
+			if (errno == ENOMEM ||
+			    errno == EAGAIN)
+				sleep(1);
+
 			goto again;
 		}
 
 		for (i = 0; i < nsock; i++) {
 			if (fds[i].revents & (POLLNVAL|POLLERR|POLLHUP)) {
-				warning("poll on fd %d: %s", fds[i].fd,
-				    strerror(errno));
-				continue;
+				warning("poll on fd %d pid %d revents %d: %s",
+				    fds[i].fd, getpid(), fds[i].revents, strerror(errno));
+				warning("nsock = %d", nsock);
+				close(sock[i]);
+				nsock--;
+				warning("nsock now = %d", nsock);
+				/* no sockets left */
+				if (nsock == 0)
+					exit(0);
+				/* last socket; easy case */
+				if (nsock == i)
+					break;
+				memmove(&fds[i], &fds[i+i],
+					(nsock - i) * sizeof(*fds));
+				memmove(&sock[i], &sock[i+i],
+					(nsock - i) * sizeof(*sock));
+				break;
 			}
 			if (fds[i].revents == 0)
 				continue;
 
 			slen = sizeof(ss);
-			fd = accept(sock[i], (struct sockaddr *)&ss, &slen);
+			fd = accept(fds[i].fd, (struct sockaddr *)&ss, &slen);
 			if (fd == -1) {
-				if (errno != EAGAIN)
+				if (errno == EFAULT ||
+				    errno == EINVAL)
 					error(1, "accept: %s", strerror(errno));
+
+				if (errno == ENOMEM ||
+				    errno == EAGAIN)
+					sleep(1);
+
 				continue;
 			}
 			switch (fork()) {
@@ -187,7 +219,11 @@ again:
 				dup2(fd, 0);
 				dup2(fd, 1);
 				/*dup2(fd, 2);*/
+				free(fds);
+				free(sock);
 				close(fd);
+				for (j = 0; j < nsock; j++)
+					close(sock[j]);
 				return;
 
 			default: /* parent */
@@ -196,6 +232,7 @@ again:
 			}
 		}
 	}
+	free(fds);
 }
 
 #endif /* NO_DAEMON_MODE */
