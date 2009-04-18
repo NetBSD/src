@@ -235,7 +235,7 @@ read_partition_map(partition_map_header *map)
 {
     DPME *data;
     u32 limit;
-    int ix;
+    unsigned int ix;
     int old_logical;
     double d;
 
@@ -701,7 +701,7 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
     } else {
 	limit = map->maximum_in_map;
     }
-    if (map->blocks_in_map + act > limit) {
+    if (map->blocks_in_map + (int)act > limit) {
 	printf("the map is not big enough\n");
 	return 0;
     }
@@ -1302,11 +1302,11 @@ insert_in_base_order(partition_map *entry)
 
 
 void
-resize_map(long new_size, partition_map_header *map)
+resize_map(unsigned long new_size, partition_map_header *map)
 {
     partition_map * entry;
     partition_map * next;
-    int incr;
+    unsigned int incr;
 
     // find map entry
     entry = find_entry_by_type(kMapType, map);

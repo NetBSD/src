@@ -861,7 +861,7 @@ int
 get_max_base_or_length(partition_map_header *map)
 {
     partition_map * entry;
-    int max;
+    unsigned int max;
 
     if (map == NULL) {
 	return 0;
