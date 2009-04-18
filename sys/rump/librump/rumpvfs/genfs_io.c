@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.12 2009/04/18 15:40:33 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.13 2009/04/18 16:30:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.12 2009/04/18 15:40:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.13 2009/04/18 16:30:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -87,6 +87,7 @@ genfs_getpages(void *v)
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1<<bshift;
 	int count = *ap->a_count;
+	int opflags = ap->a_flags;
 	int async;
 	int i, error;
 
@@ -103,7 +104,8 @@ genfs_getpages(void *v)
 		panic("%s: centeridx != not supported", __func__);
 
 	if (ap->a_access_type & VM_PROT_WRITE)
-		vp->v_iflag |= VI_ONWORKLST;
+		if ((vp->v_iflag & VI_ONWORKLST) == 0)
+			vn_syncer_add_to_worklist(vp, filedelay);
 
 	curoff = ap->a_offset & ~PAGE_MASK;
 	for (i = 0; i < count; i++, curoff += PAGE_SIZE) {
@@ -128,7 +130,8 @@ genfs_getpages(void *v)
 
 	/* got everything?  if so, just return */
 	if (i == count) {
-		mutex_exit(&uobj->vmobjlock);
+		if ((opflags & PGO_LOCKED) == 0)
+			mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
 
@@ -255,6 +258,8 @@ genfs_getpages(void *v)
 
 	kmem_free(tmpbuf, bufsize);
 
+	if (opflags & PGO_LOCKED)
+		mutex_enter(&uobj->vmobjlock);
 	return 0;
 }
 
@@ -345,7 +350,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	/* all done? */
 	if (TAILQ_EMPTY(&uobj->memq)) {
-		vp->v_iflag &= ~VI_ONWORKLST;
+		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+			vn_syncer_remove_from_worklist(vp);
 		mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
