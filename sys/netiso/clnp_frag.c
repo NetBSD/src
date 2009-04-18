@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.24 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.25 2009/04/18 14:58:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.24 2009/03/18 17:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.25 2009/04/18 14:58:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,8 +435,8 @@ clnp_newpkt(
 		return (0);
 	}
 	/* Fill in rest of fragl structure */
-	memcpy( (void *) & cfh->cfl_src, (void *) src, sizeof(struct iso_addr));
-	memcpy( (void *) & cfh->cfl_dst, (void *) dst, sizeof(struct iso_addr));
+	memcpy((void *) & cfh->cfl_src, (void *) src, sizeof(struct iso_addr));
+	memcpy((void *) & cfh->cfl_dst, (void *) dst, sizeof(struct iso_addr));
 	cfh->cfl_id = seg->cng_id;
 	cfh->cfl_ttl = clnp->cnf_ttl;
 	cfh->cfl_last = (seg->cng_tot_len - clnp->cnf_hdr_len) - 1;

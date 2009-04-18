@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.67 2009/03/18 17:06:49 cegger Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.68 2009/04/18 14:58:03 tsutsui Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.67 2009/03/18 17:06:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.68 2009/04/18 14:58:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -424,14 +424,14 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 
 	case DIOCGDINFO:
-		memcpy( data, lp, sizeof (struct disklabel));
+		memcpy(data, lp, sizeof (struct disklabel));
 		break;
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
-		memcpy( &newlabel, lp, sizeof disklabel);
+		memcpy(&newlabel, lp, sizeof disklabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;
-		memcpy( data, &newlabel, sizeof (struct olddisklabel));
+		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
 
@@ -827,7 +827,7 @@ rxioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 
 	case DIOCGDINFO:
-		memcpy( data, lp, sizeof (struct disklabel));
+		memcpy(data, lp, sizeof (struct disklabel));
 		break;
 
 	case DIOCGPART:

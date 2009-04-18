@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.15 2009/03/18 17:06:53 cegger Exp $	*/
+/*	$NetBSD: sets.c,v 1.16 2009/04/18 14:58:06 tsutsui Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.15 2009/03/18 17:06:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.16 2009/04/18 14:58:06 tsutsui Exp $");
 
 #include "main.h"
 #include "malloc.h"
@@ -375,7 +375,7 @@ member(struct Object *o, char *adr)
 			fprintf(stderr, "Sets cannot be members of sets; %s\n", adr);
 			exit(1);
 		}
-		memcpy( onew, oold, sizeof(struct Object));
+		memcpy(onew, oold, sizeof(struct Object));
 		onew->obj_members = onew->obj_left = onew->obj_right = NULL;
 	}
 	onew->obj_members = o->obj_members;

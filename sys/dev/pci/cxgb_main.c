@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.13 2009/03/18 17:06:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.14 2009/04/18 14:58:03 tsutsui Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_main.c,v 1.36 2007/09/11 23:49:27 kmacy Exp $");
@@ -1659,7 +1659,7 @@ t3_os_set_hw_addr(adapter_t *adapter, int port_idx, u8 hw_addr[])
 	printf("set_hw_addr on idx %d addr %02x:%02x:%02x:%02x:%02x:%02x\n", 
 		port_idx, hw_addr[0], hw_addr[1], hw_addr[2], hw_addr[3], hw_addr[4], hw_addr[5]);
 #endif
-    memcpy( adapter->port[port_idx].hw_addr, hw_addr, ETHER_ADDR_LEN);
+    memcpy(adapter->port[port_idx].hw_addr, hw_addr, ETHER_ADDR_LEN);
 }
 
 /**

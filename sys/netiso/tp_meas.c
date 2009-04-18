@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_meas.c,v 1.15 2009/03/18 17:06:53 cegger Exp $	*/
+/*	$NetBSD: tp_meas.c,v 1.16 2009/04/18 14:58:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.15 2009/03/18 17:06:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.16 2009/04/18 14:58:06 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -108,7 +108,7 @@ Tpmeas(u_int ref, u_int kind, struct timeval *timev, u_int seq, u_int win,
 	tpm->tpm_tseq = mseq++;
 	tpm->tpm_ref = ref;
 	if (kind == TPtime_from_ll)
-		memcpy( (void *) & tpm->tpm_time, (void *) timev, sizeof(struct timeval));
+		memcpy((void *) & tpm->tpm_time, (void *) timev, sizeof(struct timeval));
 	else
 		getmicrotime(& tpm->tpm_time);
 	tpm->tpm_seq = seq;
