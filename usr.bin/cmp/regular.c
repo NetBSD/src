@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.21 2009/04/11 12:16:12 lukem Exp $	*/
+/*	$NetBSD: regular.c,v 1.22 2009/04/18 06:24:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.21 2009/04/11 12:16:12 lukem Exp $");
+__RCSID("$NetBSD: regular.c,v 1.22 2009/04/18 06:24:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ c_regular(int fd1, const char *file1, off_t skip1, off_t len1,
 	dfound = 0;
 	length = MIN(len1, len2);
 	for (blk_sz = 1024 * 1024; length != 0; length -= blk_sz) {
-		if (blk_sz > (uint64_t)length)
+		if ((uintmax_t)blk_sz > (uintmax_t)length)
 			blk_sz = length;
 		p1 = mmap(NULL, blk_sz, PROT_READ, MAP_FILE|MAP_SHARED,
 		    fd1, skip1);
