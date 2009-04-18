@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.45 2009/03/10 17:17:30 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.46 2009/04/18 09:51:21 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.45 2009/03/10 17:17:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.46 2009/04/18 09:51:21 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,12 +313,12 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_bus = 0;
 #if NACPI > 0 && defined(ACPI_SCANPCI)
 	if (mpacpi_active)
-		mpacpi_scan_pci(self, &hac.hac_pba, pcibusprint);
+		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
 	if (mpbios_scanned != 0)
-		mpbios_scan_pci(self, &hac.hac_pba, pcibusprint);
+		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
 #endif
 	config_found_ia(self, "pcibus", &hac.hac_pba, pcibusprint);
