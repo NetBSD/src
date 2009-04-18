@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.97 2009/04/16 18:00:35 cegger Exp $
+#	$NetBSD: files.xen,v 1.98 2009/04/18 11:26:58 cegger Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -254,6 +254,9 @@ file	arch/x86/x86/i8259.c		xen3
 
 # MP configuration using Intel SMP specification 1.4
 file	arch/x86/x86/mpbios.c		mpbios
+
+# MP configuration using either ACPI or Intel SMP specification 1.4
+file 	arch/x86/x86/mp.c		acpi | mpbios
 
 file	arch/x86/pci/pci_bus_fixup.c	pci_bus_fixup
 file	arch/x86/pci/pci_addr_fixup.c	pci_addr_fixup
