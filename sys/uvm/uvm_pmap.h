@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.25 2008/12/10 11:10:20 pooka Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.26 2009/04/18 08:48:47 cegger Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -99,6 +99,9 @@ typedef struct pmap_statistics	*pmap_statistics_t;
  */
 #define	PMAP_WIRED	0x00000010	/* wired mapping */
 #define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
+
+#define	PMAP_MD_MASK	0x0000ff00	/* Machine-dependent bits */
+
 /*
  * Flags passed to pmap_kenter_pa().  Note the bottom 3 bits are VM_PROT_*
  * bits, used to indicate the access type.
