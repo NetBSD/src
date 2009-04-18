@@ -1,6 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.7 2000/05/25 12:49:32 kleink Exp $
-# $OpenBSD: $
-# $FreeBSD: $
+# $NetBSD: Makefile.inc,v 1.8 2009/04/18 13:55:11 lukem Exp $
 #
 # Copyright (c) 2000 by Matthew Jacob
 # All rights reserved.
