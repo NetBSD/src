@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.17 2009/03/18 17:06:50 cegger Exp $ */
+/*	$NetBSD: raster_op.c,v 1.18 2009/04/18 15:04:26 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raster_op.c,v 1.17 2009/03/18 17:06:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raster_op.c,v 1.18 2009/04/18 15:04:26 tsutsui Exp $");
 
 #include <sys/types.h>
 #ifdef _KERNEL
@@ -1044,7 +1044,7 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	if ( op == RAS_SRC && src->width == w && dst->width == w &&
 	     src->linelongs == dst->linelongs && src->linelongs == w >> 2 )
 	    {
-	    memcpy( (char*) dstlin1,  (char*) srclin1,
+	    bcopy( (char*) srclin1, (char*) dstlin1,
 		   h * src->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
