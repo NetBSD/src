@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.113 2009/03/11 06:00:11 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.114 2009/04/18 08:05:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.113 2009/03/11 06:00:11 mrg Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.114 2009/04/18 08:05:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,19 +84,19 @@ __RCSID("$NetBSD: pstat.c,v 1.113 2009/03/11 06:00:11 mrg Exp $");
 
 struct nlist nl[] = {
 #define	V_MOUNTLIST	0
-	{ "_mountlist" },	/* address of head of mount list. */
+	{ "_mountlist", 0, 0, 0, 0 },	/* address of head of mount list. */
 #define	V_NUMV		1
-	{ "_numvnodes" },
+	{ "_numvnodes", 0, 0, 0, 0 },
 #define	FNL_NFILE	2
-	{ "_nfiles" },
+	{ "_nfiles", 0, 0, 0, 0 },
 #define FNL_MAXFILE	3
-	{ "_maxfiles" },
+	{ "_maxfiles", 0, 0, 0, 0 },
 #define TTY_NTTY	4
-	{ "_tty_count" },
+	{ "_tty_count", 0, 0, 0, 0 },
 #define TTY_TTYLIST	5
-	{ "_ttylist" },
+	{ "_ttylist", 0, 0, 0, 0 },
 #define NLMANDATORY TTY_TTYLIST	/* names up to here are mandatory */
-	{ "" }
+	{ "", 0, 0, 0, 0 }
 };
 
 int	usenumflag;
@@ -400,7 +400,8 @@ vnode_header(void)
 int
 vnode_print(struct vnode *avnode, struct vnode *vp)
 {
-	char *type, flags[sizeof(vnode_flags) / sizeof(vnode_flags[0])];
+	const char *type;
+	char flags[sizeof(vnode_flags) / sizeof(vnode_flags[0])];
 	int ovflw;
 
 	/*
@@ -656,7 +657,7 @@ mount_print(struct mount *mp)
 	(void)printf("*** MOUNT %s %s on %s", ST.f_fstypename,
 	    ST.f_mntfromname, ST.f_mntonname);
 	if ((flags = mp->mnt_flag) != 0) {
-		int i;
+		size_t i;
 		const char *sep = " (";
 
 		for (i = 0; i < sizeof mnt_flags / sizeof mnt_flags[0]; i++) {
@@ -711,7 +712,7 @@ loadvnodes(int *avnodes)
 char *
 kinfo_vnodes(int *avnodes)
 {
-	struct mntlist mountlist;
+	struct mntlist mlist;
 	struct mount *mp, mount;
 	struct vnode *vp, vnode;
 	char *beg, *bp, *ep;
@@ -722,8 +723,8 @@ kinfo_vnodes(int *avnodes)
 		err(1, "malloc");
 	beg = bp;
 	ep = bp + (numvnodes + 20) * (VPTRSZ + VNODESZ);
-	KGET(V_MOUNTLIST, mountlist);
-	for (mp = mountlist.cqh_first;;
+	KGET(V_MOUNTLIST, mlist);
+	for (mp = mlist.cqh_first;;
 	    mp = mount.mnt_list.cqe_next) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		TAILQ_FOREACH(vp, &mount.mnt_vnodelist, v_mntvnodes) {
@@ -736,7 +737,7 @@ kinfo_vnodes(int *avnodes)
 			memmove(bp, &vnode, VNODESZ);
 			bp += VNODESZ;
 		}
-		if (mp == mountlist.cqh_last)
+		if (mp == mlist.cqh_last)
 			break;
 	}
 	*avnodes = (bp - beg) / (VPTRSZ + VNODESZ);
@@ -879,7 +880,7 @@ filemode(void)
 		PRWORD(ovflw, " %*d", 5, 1, ki->ki_msgcount);
 		PRWORD(ovflw, "  %*lx", PTRSTRWIDTH + 1, 2, (long)ki->ki_fdata);
 		PRWORD(ovflw, " %*x", 5, 1, 0);
-		if (ki->ki_foffset < 0)
+		if ((off_t)ki->ki_foffset < 0)
 			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
 			    (long long)ki->ki_foffset);
 		else
