@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.43 2009/04/14 09:03:48 jdc Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.44 2009/04/18 00:28:06 snj Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -1273,3 +1273,9 @@ sys/sys/file.h                                  patch
 sys/kern/uipc_usrreq.c				patch
 	Fix a problem with a failure path (PR#38391).
 	[mlelstv, ticket #2005]
+
+dist/ntp/ntpq/ntpq.c				1.12
+
+	Fix CVE-2009-0159.
+	[christos, ticket #2009]
+
