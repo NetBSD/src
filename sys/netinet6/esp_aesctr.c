@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.11 2009/03/19 08:22:29 he Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.12 2009/04/18 14:58:05 tsutsui Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.11 2009/03/19 08:22:29 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.12 2009/04/18 14:58:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ esp_aesctr_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 
 	/* setup counter block */
 	nonce = _KEYBUF(sav->key_enc) + _KEYLEN(sav->key_enc) - NONCESIZE;
-	memcpy( cblock.v.nonce, nonce, NONCESIZE);
+	memcpy(cblock.v.nonce, nonce, NONCESIZE);
 	m_copydata(m, ivoff, ivlen, cblock.v.iv);
 	ctr = 1;
 
@@ -335,7 +335,7 @@ esp_aesctr_encrypt(
 
 	/* setup counter block */
 	nonce = _KEYBUF(sav->key_enc) + _KEYLEN(sav->key_enc) - NONCESIZE;
-	memcpy( cblock.v.nonce, nonce, NONCESIZE);
+	memcpy(cblock.v.nonce, nonce, NONCESIZE);
 	m_copydata(m, ivoff, ivlen, cblock.v.iv);
 	ctr = 1;
 

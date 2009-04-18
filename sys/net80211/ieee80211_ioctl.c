@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.53 2009/03/18 17:06:51 cegger Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.54 2009/04/18 14:58:05 tsutsui Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.53 2009/03/18 17:06:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.54 2009/04/18 14:58:05 tsutsui Exp $");
 #endif
 
 /*
@@ -1364,7 +1364,7 @@ ieee80211_ioctl_get80211_fbsd(struct ieee80211com *ic, u_long cmd,
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp, NULL,
 		    NULL) == 0) {
-			memcpy( tmpkey, ic->ic_nw_keys[kid].wk_key, len);
+			memcpy(tmpkey, ic->ic_nw_keys[kid].wk_key, len);
 		} else {
 			memset(tmpkey, 0, len);
 		}

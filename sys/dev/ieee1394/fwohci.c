@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.119 2009/03/18 17:06:49 cegger Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.120 2009/04/18 14:58:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.119 2009/03/18 17:06:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.120 2009/04/18 14:58:02 tsutsui Exp $");
 
 #define ATRQ_CH 0
 #define ATRS_CH 1
@@ -2924,13 +2924,13 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch, int count)
 					char *p;
 
 					p = (char *)&pktbuf;
-					memcpy( p, buf, rlen);
+					memcpy(p, buf, rlen);
 					p += rlen;
 					/* this must be too long but harmless */
 					rlen = sizeof(pktbuf) - rlen;
 					if (rlen < 0)
 						printf("why rlen < 0\n");
-					memcpy( p, db_tr->buf, rlen);
+					memcpy(p, db_tr->buf, rlen);
 					ld += rlen;
 					len -= rlen;
 					hlen = fwohci_arcv_swap(&pktbuf, sizeof(pktbuf));

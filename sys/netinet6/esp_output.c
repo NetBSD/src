@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.35 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.36 2009/04/18 14:58:05 tsutsui Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.35 2009/03/18 17:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.36 2009/04/18 14:58:05 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -650,7 +650,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		m->m_pkthdr.len += siz;
 		p = mtod(nn, u_char *);
 	}
-	memcpy( p, authbuf, siz);
+	memcpy(p, authbuf, siz);
 
 	/* modify IP header (for ESP header part only) */
 	switch (af) {
