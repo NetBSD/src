@@ -1,4 +1,10 @@
-$eterna: CHANGES,v 1.65 2009/04/18 05:36:04 mrg Exp $
+$eterna: CHANGES,v 1.67 2009/04/18 11:42:39 mrg Exp $
+
+changes since bozohttpd 20090417:
+	o  avoid dying in daemon mode for some uncommon, but recoverable, errors
+	o  close leaking file descriptors for CGI and daemon mode
+	o  handle poll errors properly
+	o  don't try to handle more than one request per process yet
 
 changes since bozohttpd 20080303:
 	o  make bozohttpd internally more modular, preparing the way

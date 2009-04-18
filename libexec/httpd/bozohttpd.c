@@ -1,6 +1,6 @@
-/*	$NetBSD: bozohttpd.c,v 1.12 2009/04/18 07:28:24 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.13 2009/04/18 21:22:03 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.c,v 1.152 2009/04/18 05:36:04 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.155 2009/04/18 20:53:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20090417"
+#define SERVER_SOFTWARE		"bozohttpd/20090418"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -532,7 +532,7 @@ main(int argc, char **argv)
 			clean_request(request);
 			return (0);
 		}
-	} while (bflag);
+	} while (bflag && 0);
 
 	return (0);
 }
@@ -1454,8 +1454,10 @@ transform_request(http_req *request, int *isindex)
 	if (auth_check(request, newfile))
 		goto bad_done;
 
-	if (strlen(newfile))
+	if (strlen(newfile)) {
+		free(request->hr_file);
 		request->hr_file = newfile;
+	}
 
 	if (process_cgi(request))
 		return 0;
