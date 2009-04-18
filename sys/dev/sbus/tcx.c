@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.28 2009/03/18 17:06:50 cegger Exp $ */
+/*	$NetBSD: tcx.c,v 1.29 2009/04/18 14:58:03 tsutsui Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.28 2009/03/18 17:06:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.29 2009/04/18 14:58:03 tsutsui Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -253,7 +253,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 			device_xname(self), sa->sa_nreg);
 		return;
 	}
-	memcpy( sc->sc_physadr, sa->sa_reg,
+	memcpy(sc->sc_physadr, sa->sa_reg,
 	      sa->sa_nreg * sizeof(struct openprom_addr));
 
 	/* XXX - fix THC and TEC offsets */

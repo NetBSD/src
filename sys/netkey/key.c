@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.173 2009/03/19 08:33:14 he Exp $	*/
+/*	$NetBSD: key.c,v 1.174 2009/04/18 14:58:06 tsutsui Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.173 2009/03/19 08:33:14 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.174 2009/04/18 14:58:06 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -806,7 +806,7 @@ key_allocsa(
 			memset(&sin, 0, sizeof(sin));
 			sin.sin_family = AF_INET;
 			sin.sin_len = sizeof(sin);
-			memcpy( &sin.sin_addr, src,
+			memcpy(&sin.sin_addr, src,
 			    sizeof(sin.sin_addr));
 #ifdef IPSEC_NAT_T
 			sin.sin_port = sport;
@@ -822,7 +822,7 @@ key_allocsa(
 			memset(&sin6, 0, sizeof(sin6));
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_len = sizeof(sin6);
-			memcpy( &sin6.sin6_addr, src,
+			memcpy(&sin6.sin6_addr, src,
 			    sizeof(sin6.sin6_addr));
 #ifdef IPSEC_NAT_T
 			sin6.sin6_port = sport;
@@ -849,7 +849,7 @@ key_allocsa(
 			memset(&sin, 0, sizeof(sin));
 			sin.sin_family = AF_INET;
 			sin.sin_len = sizeof(sin);
-			memcpy( &sin.sin_addr, dst,
+			memcpy(&sin.sin_addr, dst,
 			    sizeof(sin.sin_addr));
 #ifdef IPSEC_NAT_T
 			sin.sin_port = dport;
@@ -865,7 +865,7 @@ key_allocsa(
 			memset(&sin6, 0, sizeof(sin6));
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_len = sizeof(sin6);
-			memcpy( &sin6.sin6_addr, dst,
+			memcpy(&sin6.sin6_addr, dst,
 			    sizeof(sin6.sin6_addr));
 #ifdef IPSEC_NAT_T
 			sin6.sin6_port = dport;
@@ -1345,7 +1345,7 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 					*error = EINVAL;
 					return NULL;
 				}
-				memcpy( &(*p_isr)->saidx.src, paddr,
+				memcpy(&(*p_isr)->saidx.src, paddr,
 					paddr->sa_len);
 
 				paddr = (struct sockaddr *)((char *)paddr
@@ -1360,7 +1360,7 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 					*error = EINVAL;
 					return NULL;
 				}
-				memcpy( &(*p_isr)->saidx.dst, paddr,
+				memcpy(&(*p_isr)->saidx.dst, paddr,
 					paddr->sa_len);
 			}
 
@@ -1459,9 +1459,9 @@ key_sp2msg(struct secpolicy *sp)
 			xisr->sadb_x_ipsecrequest_reqid = isr->saidx.reqid;
 
 			p += sizeof(*xisr);
-			memcpy( p, &isr->saidx.src, isr->saidx.src.ss_len);
+			memcpy(p, &isr->saidx.src, isr->saidx.src.ss_len);
 			p += isr->saidx.src.ss_len;
-			memcpy( p, &isr->saidx.dst, isr->saidx.dst.ss_len);
+			memcpy(p, &isr->saidx.dst, isr->saidx.dst.ss_len);
 			p += isr->saidx.src.ss_len;
 
 			xisr->sadb_x_ipsecrequest_len =
@@ -2720,7 +2720,7 @@ key_newsah(struct secasindex *saidx)
 	if (newsah == NULL)
 		return NULL;
 
-	memcpy( &newsah->saidx, saidx, sizeof(newsah->saidx));
+	memcpy(&newsah->saidx, saidx, sizeof(newsah->saidx));
 
 	/* add to saidxtree */
 	newsah->state = SADB_SASTATE_MATURE;
@@ -4094,7 +4094,7 @@ key_newbuf(const void *src, u_int len)
 		ipseclog((LOG_DEBUG, "key_newbuf: No more memory.\n"));
 		return NULL;
 	}
-	memcpy( new, src, len);
+	memcpy(new, src, len);
 
 	return new;
 }
@@ -5656,8 +5656,8 @@ key_setident(struct secashead *sah, struct mbuf *m, const struct sadb_msghdr *mh
 		ipseclog((LOG_DEBUG, "key_setident: No more memory.\n"));
 		return ENOBUFS;
 	}
-	memcpy( sah->idents, idsrc, idsrclen);
-	memcpy( sah->identd, iddst, iddstlen);
+	memcpy(sah->idents, idsrc, idsrclen);
+	memcpy(sah->identd, iddst, iddstlen);
 
 	return 0;
 }
@@ -6382,7 +6382,7 @@ key_acquire(struct secasindex *saidx, struct secpolicy *sp)
 		id->sadb_ident_len = PFKEY_UNIT64(sizeof(*id) + PFKEY_ALIGN8(fqdnlen));
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_FQDN;
-		memcpy( id + 1, fqdn, fqdnlen);
+		memcpy(id + 1, fqdn, fqdnlen);
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(fqdnlen);
 	}
 
@@ -6405,7 +6405,7 @@ key_acquire(struct secasindex *saidx, struct secpolicy *sp)
 		if (curlwp)
 			id->sadb_ident_id = kauth_cred_getuid(curlwp->l_cred);
 		if (userfqdn && userfqdnlen)
-			memcpy( id + 1, userfqdn, userfqdnlen);
+			memcpy(id + 1, userfqdn, userfqdnlen);
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(userfqdnlen);
 	}
 #endif
@@ -6476,7 +6476,7 @@ key_newacq(struct secasindex *saidx)
 	memset(newacq, 0, sizeof(*newacq));
 
 	/* copy secindex */
-	memcpy( &newacq->saidx, saidx, sizeof(newacq->saidx));
+	memcpy(&newacq->saidx, saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
 	newacq->created = time_second;
 	newacq->count = 1;
@@ -6528,7 +6528,7 @@ key_newspacq(struct secpolicyindex *spidx)
 	memset(acq, 0, sizeof(*acq));
 
 	/* copy secindex */
-	memcpy( &acq->spidx, spidx, sizeof(acq->spidx));
+	memcpy(&acq->spidx, spidx, sizeof(acq->spidx));
 	acq->created = time_second;
 	acq->count = 0;
 
@@ -6953,7 +6953,7 @@ key_expire(struct secasvar *sav)
 	lt->sadb_lifetime_addtime = sav->lft_c->sadb_lifetime_addtime;
 	lt->sadb_lifetime_usetime = sav->lft_c->sadb_lifetime_usetime;
 	lt = (struct sadb_lifetime *)(mtod(m, char *) + len / 2);
-	memcpy( lt, sav->lft_s, sizeof(*lt));
+	memcpy(lt, sav->lft_s, sizeof(*lt));
 	m_cat(result, m);
 
 	/* set sadb_address for source */
@@ -7970,7 +7970,7 @@ key_getfqdn(void)
 
 	/* NOTE: hostname may not be NUL-terminated. */
 	memset(fqdn, 0, sizeof(fqdn));
-	memcpy( fqdn, hostname, hostnamelen);
+	memcpy(fqdn, hostname, hostnamelen);
 	fqdn[hostnamelen] = '\0';
 	return fqdn;
 }
@@ -7993,11 +7993,11 @@ key_getuserfqdn(void)
 
 	/* NOTE: s_login may not be-NUL terminated. */
 	memset(userfqdn, 0, sizeof(userfqdn));
-	memcpy( userfqdn, p->p_pgrp->pg_session->s_login, MAXLOGNAME);
+	memcpy(userfqdn, p->p_pgrp->pg_session->s_login, MAXLOGNAME);
 	userfqdn[MAXLOGNAME] = '\0';	/* safeguard */
 	q = userfqdn + strlen(userfqdn);
 	*q++ = '@';
-	memcpy( q, host, strlen(host));
+	memcpy(q, host, strlen(host));
 	q += strlen(host);
 	*q++ = '\0';
 

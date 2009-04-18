@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.71 2009/04/15 20:44:25 elad Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.72 2009/04/18 14:58:05 tsutsui Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.71 2009/04/15 20:44:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.72 2009/04/18 14:58:05 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -315,7 +315,7 @@ stf_getsrcifa6(struct ifnet *ifp)
 		if (!IN6_IS_ADDR_6TO4(&sin6->sin6_addr))
 			continue;
 
-		memcpy( &in, GET_V4(&sin6->sin6_addr), sizeof(in));
+		memcpy(&in, GET_V4(&sin6->sin6_addr), sizeof(in));
 		INADDR_TO_IA(in, ia4);
 		if (ia4 == NULL)
 			continue;
@@ -406,7 +406,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	bcopy(GET_V4(&((struct sockaddr_in6 *)&ia6->ia_addr)->sin6_addr),
 	    &ip->ip_src, sizeof(ip->ip_src));
-	memcpy( &ip->ip_dst, in4, sizeof(ip->ip_dst));
+	memcpy(&ip->ip_dst, in4, sizeof(ip->ip_dst));
 	ip->ip_p = IPPROTO_IPV6;
 	ip->ip_ttl = ip_gif_ttl;	/*XXX*/
 	ip->ip_len = htons(m->m_pkthdr.len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.24 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.25 2009/04/18 14:58:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.24 2009/03/18 17:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.25 2009/04/18 14:58:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -508,7 +508,7 @@ clnp_output(struct mbuf *m0, ...)
 		 * the option was not specified previously
 		 */
 		if ((m->m_len + sizeof(qos_option)) < MLEN) {
-			memcpy( hoff, (void *) qos_option, sizeof(qos_option));
+			memcpy(hoff, (void *) qos_option, sizeof(qos_option));
 			clnp->cnf_hdr_len += sizeof(qos_option);
 			hdrlen += sizeof(qos_option);
 			m->m_len += sizeof(qos_option);

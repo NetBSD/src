@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.38 2009/03/18 17:06:48 cegger Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.39 2009/04/18 14:58:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.38 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.39 2009/04/18 14:58:02 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -310,7 +310,7 @@ pdq_eisa_attach(
 	return -1;
     }
 
-    memcpy( sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
+    memcpy(sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
     pdq_ifattach(sc, pdq_eisa_ifwatchdog);
 
     ed->kdc->kdc_state = DC_BUSY;	 /* host adapters always busy */
@@ -413,7 +413,7 @@ pdq_eisa_attach(
 	return;
     }
 
-    memcpy( sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
+    memcpy(sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
 
     pdq_ifattach(sc, pdq_eisa_ifwatchdog);
 

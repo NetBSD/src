@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.29 2009/03/18 17:06:53 cegger Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.30 2009/04/18 14:58:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.29 2009/03/18 17:06:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.30 2009/04/18 14:58:06 tsutsui Exp $");
 
 #include "opt_iso.h"
 
@@ -643,9 +643,9 @@ tp_emit(
 				subseq = htons(tpcb->tp_r_subseq);
 				fcredit = htons(tpcb->tp_fcredit);
 
-				memcpy( (void *) & bogus[0], (void *) & lwe, sizeof(SeqNum));
-				memcpy( (void *) & bogus[2], (void *) & subseq, sizeof(u_short));
-				memcpy( (void *) & bogus[3], (void *) & fcredit, sizeof(u_short));
+				memcpy((void *) & bogus[0], (void *) & lwe, sizeof(SeqNum));
+				memcpy((void *) & bogus[2], (void *) & subseq, sizeof(u_short));
+				memcpy((void *) & bogus[3], (void *) & fcredit, sizeof(u_short));
 
 #ifdef TPPT
 				if (tp_traceflags[D_ACKSEND]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.33 2009/03/18 22:08:57 he Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.34 2009/04/18 14:58:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.33 2009/03/18 22:08:57 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.34 2009/04/18 14:58:06 tsutsui Exp $");
 
 #include "opt_iso.h"
 
@@ -149,7 +149,7 @@ tp_inputprep(struct mbuf *m)
 		void *        ocp = m->m_data;
 
 		m->m_data = (void *) (((long) m->m_data) & ~0x3);
-		memcpy( m->m_data, ocp, (unsigned) m->m_len);
+		memcpy(m->m_data, ocp, (unsigned) m->m_len);
 	}
 	CHANGE_MTYPE(m, TPMT_DATA);
 
@@ -315,7 +315,7 @@ tp_newsocket(
 	newtpcb->tp_lcredit = tpcb->tp_lcredit;
 	newtpcb->tp_l_tpdusize = tpcb->tp_l_tpdusize;
 	newtpcb->tp_lsuffixlen = tpcb->tp_lsuffixlen;
-	memcpy( newtpcb->tp_lsuffix, tpcb->tp_lsuffix, newtpcb->tp_lsuffixlen);
+	memcpy(newtpcb->tp_lsuffix, tpcb->tp_lsuffix, newtpcb->tp_lsuffixlen);
 
 	if ( /* old */ tpcb->tp_ucddata) {
 		/*
@@ -911,7 +911,7 @@ again:
 
 			/* stash the f suffix in the new tpcb */
 			if ((tpcb->tp_fsuffixlen = fsufxlen) != 0) {
-				memcpy( tpcb->tp_fsuffix, fsufxloc, fsufxlen);
+				memcpy(tpcb->tp_fsuffix, fsufxloc, fsufxlen);
 				(tpcb->tp_nlproto->nlp_putsufx)
 					(tpcb->tp_npcb, fsufxloc, fsufxlen, TP_FOREIGN);
 			}

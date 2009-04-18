@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.36 2009/03/18 17:06:51 cegger Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.37 2009/04/18 14:58:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.36 2009/03/18 17:06:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.37 2009/04/18 14:58:05 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -189,7 +189,7 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		l->llc_dsap = l->llc_ssap = LLC_SNAP_LSAP;
 		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] =
 			l->llc_snap.org_code[2] = 0;
-		memcpy( (void *) &l->llc_snap.ether_type, (void *) &htype,
+		memcpy((void *) &l->llc_snap.ether_type, (void *) &htype,
 		      sizeof(uint16_t));
 	}
 
