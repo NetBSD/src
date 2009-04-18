@@ -404,7 +404,7 @@ get_multiplier(long divisor)
 	    } else {
 		result *= extra;
 	    }
-	} else if (result >= divisor) {
+	} else if ((long long)result >= divisor) {
 	    result /= divisor;
 	} else {
 	    result = 1;

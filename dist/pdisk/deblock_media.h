@@ -54,6 +54,6 @@
 /*
  * Forward declarations
  */
-MEDIA open_deblock_media(long new_block_size, MEDIA m);
+MEDIA open_deblock_media(unsigned long new_block_size, MEDIA m);
 
 #endif /* __deblock_media__ */
