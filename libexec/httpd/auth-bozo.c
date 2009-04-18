@@ -1,4 +1,4 @@
-/*	$eterna: auth-bozo.c,v 1.12 2009/04/17 22:52:19 mrg Exp $	*/
+/*	$eterna: auth-bozo.c,v 1.13 2009/04/18 07:38:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "bozohttpd.h"
@@ -75,7 +76,7 @@ auth_check(http_req *request, const char *file)
 		debug((DEBUG_NORMAL,
 		    "auth_check realm `%s' dir `%s' authfile `%s' missing",
 		    dir, file, authfile));
-		return;
+		return 0;
 	}
 	if ((fp = fopen(authfile, "r")) == NULL)
 		return http_error(403, request, "no permission to open "
@@ -100,7 +101,7 @@ auth_check(http_req *request, const char *file)
 			if (strcmp(crypt(request->hr_authpass, pass), pass))
 				break;
 			fclose(fp);
-			return;
+			return 0;
 		}
 	}
 	fclose(fp);

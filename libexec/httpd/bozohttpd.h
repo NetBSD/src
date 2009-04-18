@@ -1,4 +1,4 @@
-/*	$eterna: bozohttpd.h,v 1.25 2009/04/18 05:36:04 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.26 2009/04/18 07:38:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -72,9 +72,9 @@ typedef struct {
 	/*const*/ char *hr_remoteaddr;
 	/*const*/ char *hr_serverport;
 #ifdef DO_HTPASSWD
-	const char *hr_authrealm;
-	const char *hr_authuser;
-	const char *hr_authpass;
+	/*const*/ char *hr_authrealm;
+	/*const*/ char *hr_authuser;
+	/*const*/ char *hr_authpass;
 #endif
 	SIMPLEQ_HEAD(, headers)	hr_headers;
 	int	hr_nheaders;

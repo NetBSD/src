@@ -1,5 +1,5 @@
-/*	$eterna: queue.h,v 1.5 2009/04/18 01:48:18 mrg Exp $	*/
-/* from: NetBSD: queue.h,v 1.45 2006/03/07 17:56:00 pooka Exp */
+/*	$eterna: queue.h,v 1.6 2009/04/18 08:36:03 mrg Exp $	*/
+/* from: NetBSD: queue.h,v 1.51 2009/03/11 06:51:53 mrg Exp */
 
 /*
  * Copyright (c) 1991, 1993
