@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.19 2009/02/23 21:27:51 rmind Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.20 2009/04/18 15:40:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.19 2009/02/23 21:27:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.20 2009/04/18 15:40:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1389,26 +1389,6 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	splx(s);
 	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
 	return (error);
-}
-
-/*
- * VOP_PUTPAGES() for vnodes which never have pages.
- */
-
-int
-genfs_null_putpages(void *v)
-{
-	struct vop_putpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offlo;
-		voff_t a_offhi;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	KASSERT(vp->v_uobj.uo_npages == 0);
-	mutex_exit(&vp->v_interlock);
-	return (0);
 }
 
 int
