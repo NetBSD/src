@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.143 2009/04/15 21:07:13 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.144 2009/04/18 00:31:54 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3009,4 +3009,9 @@ sys/arch/mvme68k/stand/bootst/version		1.5
 	Bump bootst version on account of the above fix.
 	While here, use -Os instead of -O2 to compile mvme68k stand code.
 	[scw, ticket #1304]
+
+dist/ntp/ntpq/ntpq.c				1.12
+
+	Fix CVE-2009-0159.
+	[christos, ticket #1308]
 
