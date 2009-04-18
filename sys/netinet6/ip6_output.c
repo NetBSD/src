@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.136 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.137 2009/04/18 12:40:52 drochner Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.136 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.137 2009/04/18 12:40:52 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2809,7 +2809,8 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 	if (control->m_next)
 		return (EINVAL);
 
-	for (; control->m_len; control->m_data += CMSG_ALIGN(cm->cmsg_len),
+	/* XXX if cm->cmsg_len is not aligned, control->m_len can become <0 */
+	for (; control->m_len > 0; control->m_data += CMSG_ALIGN(cm->cmsg_len),
 	    control->m_len -= CMSG_ALIGN(cm->cmsg_len)) {
 		int error;
 
