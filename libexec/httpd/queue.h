@@ -1,4 +1,4 @@
-/*	$eterna: queue.h,v 1.4 2008/03/03 03:36:12 mrg Exp $	*/
+/*	$eterna: queue.h,v 1.5 2009/04/18 01:48:18 mrg Exp $	*/
 /* from: NetBSD: queue.h,v 1.45 2006/03/07 17:56:00 pooka Exp */
 
 /*
@@ -67,6 +67,11 @@ struct {								\
 	for ((var) = ((head)->sqh_first);				\
 		(var);							\
 		(var) = ((var)->field.sqe_next))
+
+#define	SIMPLEQ_FOREACH_SAFE(var, head, field, next)			\
+	for ((var) = ((head)->sqh_first);				\
+		(var) && ((next = ((var)->field.sqe_next)), 1);		\
+		(var) = (next))
 
 /*
  * Simple queue access methods.

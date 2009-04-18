@@ -1,4 +1,4 @@
-/*	$eterna: ssl-bozo.c,v 1.7 2008/03/03 03:36:12 mrg Exp $	*/
+/*	$eterna: ssl-bozo.c,v 1.9 2008/11/06 05:08:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 Matthew R. Green
@@ -13,8 +13,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -42,7 +40,7 @@
 #include "bozohttpd.h"
 
 static	SSL_CTX		*ssl_context;
-static	SSL_METHOD	*ssl_method;
+static	const SSL_METHOD	*ssl_method;
 static	SSL		*bozossl;
 static	char		*certificate_file;
 static	char		*privatekey_file;

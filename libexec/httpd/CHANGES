@@ -1,4 +1,18 @@
-$eterna: CHANGES,v 1.58 2008/03/03 03:37:10 mrg Exp $
+$eterna: CHANGES,v 1.65 2009/04/18 05:36:04 mrg Exp $
+
+changes since bozohttpd 20080303:
+	o  make bozohttpd internally more modular, preparing the way
+	   to handle more than one request per process
+	o  fix http-auth, set $REMOTE_USER not $REMOTEUSER.  also fix
+	   cgi-bin with cvsweb, from Holger Weiss <holger@CIS.FU-Berlin.DE>
+	o  fix an uninitialised variable use in daemon mode
+	o  fix ssl mode with newer OpenSSL
+	o  mmap large files in manageable sizes so we can serve any size file
+	o  refactor url processing to handle query strings correctly for CGI
+	   from Sergey Katsev at Coyote Point
+	o  add If-Modified-Since support, from Joerg Sonnenberger
+	   <joerg@netbsd.org>
+	o  many more manual fixes, from NetBSD
 
 changes since bozohttpd 20060710:
 	o  fix some cgi header processing, from <thelsdj@gmail.com>

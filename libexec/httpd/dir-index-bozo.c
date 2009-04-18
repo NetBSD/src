@@ -1,7 +1,7 @@
-/*	$eterna: dir-index-bozo.c,v 1.10 2008/03/03 03:36:11 mrg Exp $	*/
+/*	$eterna: dir-index-bozo.c,v 1.14 2009/04/18 01:48:18 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,8 +13,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,6 +37,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 #include <assert.h>
 
@@ -66,6 +65,7 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	DIR *dp;
 	char buf[MAXPATHLEN];
 	char spacebuf[48];
+	char *file = NULL;
 	int l, i;
 
 	if (!isindex || !Xflag)
@@ -74,7 +74,7 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	if (strlen(dirname) <= strlen(index_html))
 		dirname = ".";
 	else {
-		char *file = bozostrdup(dirname);
+		file = bozostrdup(dirname);
 
 		file[strlen(file) - strlen(index_html)] = '\0';
 		dirname = file;
@@ -83,12 +83,13 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	if (stat(dirname, &sb) < 0 ||
 	    (dp = opendir(dirname)) == NULL) {
 		if (errno == EPERM)
-			http_error(403, request,
+			(void)http_error(403, request,
 			    "no permission to open directory");
 		else if (errno == ENOENT)
-			http_error(404, request, "no file");
+			(void)http_error(404, request, "no file");
 		else
-			http_error(500, request, "open directory");
+			(void)http_error(500, request, "open directory");
+		goto done;
 		/* NOTREACHED */
 	}
 
@@ -102,12 +103,12 @@ directory_index(http_req *request, const char *dirname, int isindex)
 
 	if (request->hr_method == HTTP_HEAD) {
 		closedir(dp);
-		return 1;
+		goto done;
 	}
 
 	bozoprintf("<html><head><title>Index of %s</title></head>\r\n",
-	    request->hr_url);
-	bozoprintf("<body><h1>Index of %s</h1>\r\n", request->hr_url);
+	    request->hr_file);
+	bozoprintf("<body><h1>Index of %s</h1>\r\n", request->hr_file);
 	bozoprintf("<pre>\r\n");
 #define NAMELEN 40
 #define LMODLEN 19
@@ -180,6 +181,9 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	bozoprintf("</body></html>\r\n\r\n");
 	bozoflush(stdout);
 	
+done:
+	if (file)
+		free(file);
 	return 1;
 }
 #endif /* NO_DIRINDEX_SUPPORT */

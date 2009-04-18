@@ -1,6 +1,6 @@
-.\"	$eterna: bozohttpd.8,v 1.78 2008/03/03 03:36:11 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.84 2009/04/18 01:48:18 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2008 Matthew R. Green
+.\" Copyright (c) 1997-2009 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -11,8 +11,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -26,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 3, 2008
+.Dd April 17, 2009
 .Dt BOZOHTTPD 8
 .Os BOZOS
 .Sh NAME
@@ -42,6 +40,7 @@
 .Op Fl c Ar cgibin
 .Op Fl i Ar address
 .Op Fl p Ar pubdir
+.Op Fl t Ar chrootdir
 .Op Fl v Ar virtualroot
 .Op Fl x Ar index
 .Op Fl Z Ar cert privkey
@@ -67,7 +66,7 @@ option for virtual hosting.)
 .Nm
 is designed to be small, simple and relatively featureless,
 hopefully increasing its security.
-.Sh OPTIONS
+.Ss OPTIONS
 The following options are available:
 .Bl -tag -width xxxcgibin
 .It Fl b
@@ -94,9 +93,9 @@ The
 directory is expected to contain the CGI programs to be used.
 .Nm
 looks for URL's in the form of
-.Em /cgi-bin/<scriptname>
+.Em /cgi-bin/\*[Lt]scriptname\*[Gt]
 where
-.Em <scriptname>
+.Em \*[Lt]scriptname\*[Gt]
 is a valid CGI program in the
 .Ar cgibin
 directory.
@@ -122,7 +121,8 @@ Also see
 .It Fl I Ar port
 This option is only valid with the
 .Fl b
-option.  It causes
+option.
+It causes
 .Ar port
 to use used as the port to bind daemon mode.
 The default is the
@@ -131,7 +131,8 @@ port.
 .It Fl i Ar address
 This option is only valid with the
 .Fl b
-option.  It causes
+option.
+It causes
 .Ar address
 to use used as the address to bind daemon mode.
 If otherwise unspecified, the address used to bind is derived from the
@@ -144,13 +145,13 @@ content type and encoding.
 This option takes four additional arguments containing
 the file prefix, its
 .Dq Content-Type ,
-.Dq Content-Encoding
+.Dq Content-Encoding ,
 and
 .Dq Content-Encoding
 for HTTP/1.1 connections, respectively.
-If any of these are a single
-.Dq -
-(dash), the empty string is used instead.
+If any of these are a single dash
+.Pq Dq - ,
+the empty string is used instead.
 Multiple
 .Fl M
 options may be passed.
@@ -252,7 +253,8 @@ to
 .Ar index .
 .It Fl Z Ar certificate_path privatekey_path
 This option sets the path to the server certificate file and the private key file
-in pem format.  It also causes
+in pem format.
+It also causes
 .Nm
 to start SSL mode.
 .El
@@ -268,7 +270,7 @@ since version 20040828, they take multiple options (2 in the case of
 .Fl C
 and 4 in the case of
 .Fl M . )
-.Sh INETD CONFIGURATION
+.Ss INETD CONFIGURATION
 As
 .Nm
 uses
@@ -303,33 +305,10 @@ Using the
 .Xr inetd 8 ,
 you can provide multiple IP-address based HTTP servers by having multiple
 listening ports with different configurations.
-.Sh EXAMPLES
-To configure set of virtual hosts, one would use an
-.Xr inetd.conf 5
-entry like:
-.Bd -literal
-http stream tcp  nowait:600 httpd /usr/pkg/libexec/bozohttpd bozohttpd -v /var/vroot /var/www
-.Ed
-.Pp
-and inside
-.Pa /var/vroot
-create a directory (or a symlink to a directory) with the same name as
-the virtual host, for each virtual host.
-Lookups for these names are done in a case-insensitive manner.
-.Pp
-To use
-.Nm
-with PHP, one must use the
-.Fl C
-option to specify a CGI handler for a particular file type.
-Typically this, this will be like:
-.Bd -literal
-bozohttpd -C .php /usr/pkg/bin/php /var/www
-.Ed
-.Sh NOTES
+.Ss NOTES
 This server supports the
 .Em HTTP/0.9 ,
-.Em HTTP/1.0
+.Em HTTP/1.0 ,
 and
 .Em HTTP/1.1
 standards.
@@ -343,7 +322,7 @@ daemon mode support (NO_DAEMON_MODE), and dynamic MIME content
 (NO_DYNAMIC_CONTENT), and SSL support (NO_SSL_SUPPORT) by defining the listed
 macros when building
 .Nm .
-.Sh HTTP BASIC AUTHORISATION
+.Ss HTTP BASIC AUTHORISATION
 .Nm
 has support for HTTP Basic Authorisation.
 If a file named
@@ -365,7 +344,7 @@ usernames and passwords hashed with
 .Xr crypt 3 ,
 for example:
 .Bd -literal
-heather:$1$pZWI4tH/$DzDPl63i6VvVRv2lJNV7k1 
+heather:$1$pZWI4tH/$DzDPl63i6VvVRv2lJNV7k1
 jeremy:A.xewbx2DpQ8I
 .Ed
 .Pp
@@ -380,7 +359,7 @@ While
 distributed with
 .Nx
 has support for HTTP Basic Authorisation enabled by default,
-the portable distribution it is excluded.
+in the portable distribution it is excluded.
 Compile
 .Nm
 with
@@ -424,6 +403,29 @@ To disable SSL SUPPORT compile
 with
 .Dq -DNO_SSL_SUPPORT
 on the compiler command line.
+.Sh EXAMPLES
+To configure set of virtual hosts, one would use an
+.Xr inetd.conf 5
+entry like:
+.Bd -literal
+http stream tcp  nowait:600 httpd /usr/pkg/libexec/bozohttpd bozohttpd -v /var/vroot /var/www
+.Ed
+.Pp
+and inside
+.Pa /var/vroot
+create a directory (or a symlink to a directory) with the same name as
+the virtual host, for each virtual host.
+Lookups for these names are done in a case-insensitive manner.
+.Pp
+To use
+.Nm
+with PHP, one must use the
+.Fl C
+option to specify a CGI handler for a particular file type.
+Typically this, this will be like:
+.Bd -literal
+bozohttpd -C .php /usr/pkg/bin/php /var/www
+.Ed
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
 .Xr inetd 8
@@ -438,7 +440,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20080303.
+version 20090417.
 .Sh AUTHORS
 .Nm
 was written by Matthew R. Green
@@ -448,7 +450,7 @@ The large list of contributors includes:
 .Bl -dash
 .It
 Arnaud Lacombe
-.Aq alc@netbs.dorg
+.Aq alc@netbsd.org
 provided some clean up for memory leaks
 .It
 Christoph Badura
@@ -463,6 +465,10 @@ Chuck Cranor
 .Aq chuck@research.att.com
 provided cgi-bin support fixes, and more
 .It
+DEGROOTE Arnaud
+.Aq degroote@netbsd.org
+provided a fix for daemon mode
+.It
 Andrew Doran
 .Aq ad@netbsd.org
 provided directory indexing support
@@ -470,10 +476,6 @@ provided directory indexing support
 Per Ekman
 .Aq pek@pdc.kth.se
 provided a fix for a minor (non-security) buffer overflow condition
-.It
-Zak Johnson
-.Aq zakj@nox.cx
-provided cgi-bin enhancements
 .It
 Jun-ichiro itojun Hagino, KAME
 .Aq itojun@iijlab.net
@@ -483,9 +485,17 @@ Martin Husemann
 .Aq martin@netbsd.org
 provided .bzabsredirect support
 .It
+Arto Huusko
+.Aq arto.huusko@pp2.inet.fi
+provided fixes cgi-bin
+.It
 Roland Illig
 .Aq roland.illig@gmx.de
 provided some off-by-one fixes
+.It
+Zak Johnson
+.Aq zakj@nox.cx
+provided cgi-bin enhancements
 .It
 Nicolas Jombart
 .Aq ecu@ipv42.net
@@ -501,7 +511,7 @@ provided man page fixes
 .It
 Luke Mewburn
 .Aq lukem@netbsd.org
-provided many various fixes, including cgi-bin fixes & enhancements,
+provided many various fixes, including cgi-bin fixes and enhancements,
 HTTP basic authorisation support and much code clean up
 .It
 Jeremey Reed
@@ -522,15 +532,31 @@ provided the
 .Fl V
 option.
 .It
+Joerg Sonnenberger
+.Aq joerg@netbsd.org
+implemented If-Modified-Since support
+.It
 ISIHARA Takanori
 .Aq ishit@oak.dti.ne.jp
 provided a man page fix
 .It
+Holger Weiss
+.Aq holger@CIS.FU-Berlin.DE
+provided http authorisation fixes
+.It
 .Aq xs@kittenz.org
 provided chroot and change-to-user support, and other various fixes
+.It
+Coyote Point provided various CGI fixes
 .El
 .Pp
 There are probably others I have forgotten (let me know if you care)
+.Pp
+Please send all updates to
+.Nm
+to
+.Aq mrg@eterna.com.au
+for inclusion in future releaases.
 .Sh BUGS
 .Nm
 does not handled HTTP/1.1 chunked input from the client yet.

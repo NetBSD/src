@@ -1,7 +1,7 @@
-/*	$eterna: daemon-bozo.c,v 1.9 2008/03/03 03:36:11 mrg Exp $	*/
+/*	$eterna: daemon-bozo.c,v 1.13 2009/04/17 22:52:20 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,8 +13,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -114,7 +112,7 @@ daemon_init()
 
 /*
  * the parent never returns from this function, only children that
- * are ready to run...
+ * are ready to run... XXXMRG - still true in fork-lesser bozo?
  */
 void
 daemon_fork()
@@ -167,6 +165,7 @@ again:
 			if (fds[i].revents == 0)
 				continue;
 
+			slen = sizeof(ss);
 			fd = accept(sock[i], (struct sockaddr *)&ss, &slen);
 			if (fd == -1) {
 				if (errno != EAGAIN)
