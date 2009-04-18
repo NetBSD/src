@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.8 2009/04/18 07:28:24 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.9 2009/04/18 07:37:08 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.25 2009/04/18 05:36:04 mrg Exp $	*/
 
@@ -72,9 +72,9 @@ typedef struct {
 	/*const*/ char *hr_remoteaddr;
 	/*const*/ char *hr_serverport;
 #ifdef DO_HTPASSWD
-	const char *hr_authrealm;
-	const char *hr_authuser;
-	const char *hr_authpass;
+	/*const*/ char *hr_authrealm;
+	/*const*/ char *hr_authuser;
+	/*const*/ char *hr_authpass;
 #endif
 	SIMPLEQ_HEAD(, headers)	hr_headers;
 	int	hr_nheaders;
