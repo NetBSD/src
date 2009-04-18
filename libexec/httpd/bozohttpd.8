@@ -1,6 +1,6 @@
-.\"	$NetBSD: bozohttpd.8,v 1.12 2009/04/18 12:35:51 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.13 2009/04/18 21:22:03 mrg Exp $
 .\"
-.\"	$eterna: bozohttpd.8,v 1.84 2009/04/18 01:48:18 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.87 2009/04/18 20:53:58 mrg Exp $
 .\"
 .\" Copyright (c) 1997-2009 Matthew R. Green
 .\" All rights reserved.
@@ -141,6 +141,9 @@ If otherwise unspecified, the address used to bind is derived from the
 .Ar myname ,
 which defaults to the name returned by
 .Xr gethostname 3 .
+Only the last
+.Fl i
+option is used.
 .It Fl M Ar suffix type encoding encoding11
 This option adds a new entry to the table that converts file suffixes to
 content type and encoding.
@@ -450,7 +453,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20090417.
+version 20090418.
 .Sh AUTHORS
 .Nm
 was written by Matthew R. Green

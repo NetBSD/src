@@ -1,6 +1,6 @@
-/*	$NetBSD: cgi-bozo.c,v 1.12 2009/04/18 07:28:24 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.13 2009/04/18 21:22:03 mrg Exp $	*/
 
-/*	$eterna: cgi-bozo.c,v 1.28 2009/04/18 05:36:04 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.30 2009/04/18 12:39:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -43,6 +43,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include <netinet/in.h>
@@ -121,6 +122,7 @@ process_cgi(http_req *request)
 	cgihandler = NULL;
 	command = NULL;
 	info = NULL;
+
 	len = strlen(url);
 
 	if (auth_check(request, url + 1))
@@ -180,9 +182,6 @@ process_cgi(http_req *request)
 	    auth_cgi_count(request) +
 	    (request->hr_serverport && *request->hr_serverport ? 1 : 0);
 
-	debug((DEBUG_FAT,
-	       "process_cgi: envpsize `%d'", envpsize));
-
 	envp = bozomalloc(sizeof(*envp) * envpsize);
 	for (ix = 0; ix < envpsize; ix++)
 		envp[ix] = NULL;
@@ -209,7 +208,7 @@ process_cgi(http_req *request)
 		spsetenv(env, headp->h_value, curenvp++);
 		free(env);
 	}
-
+		
 #ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH "/usr/bin:/bin"
 #endif
@@ -263,12 +262,13 @@ process_cgi(http_req *request)
 		close(sv[0]);
 		dup2(sv[1], STDIN_FILENO);
 		dup2(sv[1], STDOUT_FILENO);
-
-		debug((DEBUG_FAT, "process_cgi: going exec %s, %s %s %s",
-		       path, argv[0], strornull(argv[1]), strornull(argv[2])));
+		close(2);
+		close(sv[1]);
+		closelog();
 
 		if (-1 == execve(path, argv, envp))
-			error(1, "child exec failed: %s", path);
+			error(1, "child exec failed: %s: %s",
+			      path, strerror(errno));
 		/* NOT REACHED */
 		error(1, "child execve returned?!");
 	}
