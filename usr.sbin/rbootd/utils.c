@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.15 2004/07/06 13:05:25 mycroft Exp $	*/
+/*	$NetBSD: utils.c,v 1.16 2009/04/18 09:18:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utils.c,v 1.15 2004/07/06 13:05:25 mycroft Exp $");
+__RCSID("$NetBSD: utils.c,v 1.16 2009/04/18 09:18:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ DspFlnm(size, flnm)
 	u_int size;
 	char *flnm;
 {
-	int i;
+	size_t i;
 
 	(void) fprintf(DbgFp, "\n\t\tFile Name (%u): <", size);
 	for (i = 0; i < size; i++)
