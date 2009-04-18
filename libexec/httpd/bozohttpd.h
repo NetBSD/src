@@ -1,6 +1,6 @@
-/*	$NetBSD: bozohttpd.h,v 1.9 2009/04/18 07:37:08 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.10 2009/04/18 21:22:03 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.h,v 1.25 2009/04/18 05:36:04 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.26 2009/04/18 07:38:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
