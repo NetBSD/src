@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.39 2009/03/06 19:05:11 apb Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.40 2009/04/18 08:08:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.39 2009/03/06 19:05:11 apb Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.40 2009/04/18 08:08:36 lukem Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -416,7 +416,7 @@ main(int argc, char *argv[])
 		} else if (rv == -1 ||
 			strcmp(username, tpwd->pw_name) != 0)
 			inconsistancy();
-		else if (olduid != pwd.pw_uid) {
+		else if ((uid_t)olduid != pwd.pw_uid) {
 			/*
 			 * If we're changing UID, remove the BYUID
 			 * record for the old UID only if it has the
@@ -676,7 +676,7 @@ checkversion(DB *dp)
 		bailout();
 	}
 
-	if (ret == 1 || *(int *)data.data != getversion()) {
+	if (ret == 1 || (uint32_t)(*(int *)data.data) != getversion()) {
 		warnx("databases are laid out according to an old version");
 		warnx("re-build the databases without -u");
 		bailout();
@@ -913,7 +913,7 @@ putyptoken(DB *dp, const char *fn)
 {
 	DBT data, key;
 
-	key.data = (u_char *)__yp_token;
+	key.data = __UNCONST(__yp_token);
 	key.size = strlen(__yp_token);
 	data.data = (u_char *)NULL;
 	data.size = 0;
