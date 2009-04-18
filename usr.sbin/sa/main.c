@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.22 2008/07/21 13:36:59 lukem Exp $ */
+/* $NetBSD: main.c,v 1.23 2009/04/18 13:37:04 lukem Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  Christopher G. Demetriou.  All rights reserved.");
 
-__RCSID("$NetBSD: main.c,v 1.22 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2009/04/18 13:37:04 lukem Exp $");
 #endif
 
 /*
@@ -76,7 +76,7 @@ int aflag, bflag, cflag, dflag, Dflag, fflag, iflag, jflag, kflag;
 int Kflag, lflag, mflag, qflag, rflag, sflag, tflag, uflag, vflag;
 int cutoff = 1;
 
-static char	*dfltargv[] = { _PATH_ACCT };
+static char	*dfltargv[] = { __UNCONST(_PATH_ACCT), 0 };
 static int	dfltargc = (sizeof(dfltargv)/sizeof(char *));
 
 /* default to comparing by sum of user + system time */
@@ -303,7 +303,7 @@ acct_load(pn, wr)
 {
 	struct acct ac;
 	struct cmdinfo ci;
-	int i;
+	size_t i;
 	FILE *fp;
 
 	/*
