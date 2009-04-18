@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.38 2009/04/08 13:12:20 joerg Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.39 2009/04/18 14:55:50 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd November 9, 2007
+.Dd April 18, 2009
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -384,8 +384,6 @@ The simplest way to invoke
 .Nm
 is with a command like:
 .Pp
-.Dl "mount remotehost:/filesystem /localmountpoint"
-or:
 .Dl "mount -t nfs remotehost:/filesystem /localmountpoint"
 .Pp
 It is also possible to automatically mount filesystems at boot from your
