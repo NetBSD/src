@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.33 2009/03/18 17:06:50 cegger Exp $ */
+/* $NetBSD: if_txp.c,v 1.34 2009/04/18 14:58:03 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.33 2009/03/18 17:06:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.34 2009/04/18 14:58:03 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -555,7 +555,7 @@ txp_download_fw_section(struct txp_softc *sc, const struct txp_fw_section_header
 		return (-1);
 	}
 
-	memcpy( dma.dma_vaddr, ((const u_int8_t *)sect) + sizeof(*sect),
+	memcpy(dma.dma_vaddr, ((const u_int8_t *)sect) + sizeof(*sect),
 	    le32toh(sect->nbytes));
 
 	/*
@@ -682,7 +682,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 		}
 
 		/* retrieve stashed pointer */
-		memcpy( &sd, __UNVOLATILE(&rxd->rx_vaddrlo), sizeof(sd));
+		memcpy(&sd, __UNVOLATILE(&rxd->rx_vaddrlo), sizeof(sd));
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -718,7 +718,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 			mnew->m_pkthdr.rcvif = ifp;
 			mnew->m_pkthdr.len = mnew->m_len = m->m_len;
 			mnew->m_data += 2;
-			memcpy( mnew->m_data, m->m_data, m->m_len);
+			memcpy(mnew->m_data, m->m_data, m->m_len);
 			m_freem(m);
 			m = mnew;
 		}
@@ -822,7 +822,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 		    sizeof(struct txp_rxbuf_desc), BUS_DMASYNC_POSTWRITE);
 
 		/* stash away pointer */
-		memcpy( __UNVOLATILE(&rbd->rb_vaddrlo), &sd, sizeof(sd));
+		memcpy(__UNVOLATILE(&rbd->rb_vaddrlo), &sd, sizeof(sd));
 
 		rbd->rb_paddrlo = ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr)
 		    & 0xffffffff;
@@ -1072,7 +1072,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
 		    M_DEVBUF, M_NOWAIT);
 		/* stash away pointer */
-		memcpy( __UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), &sd, sizeof(sd));
+		memcpy(__UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), &sd, sizeof(sd));
 		if (sd == NULL)
 			break;
 
@@ -1162,7 +1162,7 @@ bail_rxbufring:
 	if (nb == RXBUF_ENTRIES)
 		nb--;
 	for (i = 0; i <= nb; i++) {
-		memcpy( &sd, __UNVOLATILE(&sc->sc_rxbufs[i].rb_vaddrlo),
+		memcpy(&sd, __UNVOLATILE(&sc->sc_rxbufs[i].rb_vaddrlo),
 		    sizeof(sd));
 		if (sd)
 			free(sd, M_DEVBUF);
@@ -1607,7 +1607,7 @@ txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2, u
 
 	for (i = 0; i < in_extn; i++) {
 		ext = (struct txp_ext_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
-		memcpy( ext, in_extp, sizeof(struct txp_ext_desc));
+		memcpy(ext, in_extp, sizeof(struct txp_ext_desc));
 		in_extp++;
 		idx += sizeof(struct txp_cmd_desc);
 		if (idx == sc->sc_cmdring.size)
@@ -1704,7 +1704,7 @@ txp_rsp_fixup(struct txp_softc *sc, struct txp_rsp_desc *rsp, struct txp_rsp_des
 
 	for (i = 0; i < rsp->rsp_numdesc + 1; i++) {
 		if (dst != NULL)
-			memcpy( dst++, src, sizeof(struct txp_rsp_desc));
+			memcpy(dst++, src, sizeof(struct txp_rsp_desc));
 		ridx += sizeof(struct txp_rsp_desc);
 		if (ridx == sc->sc_rspring.size) {
 			src = sc->sc_rspring.base;

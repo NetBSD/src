@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.51 2009/03/18 17:06:49 cegger Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.52 2009/04/18 14:58:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.51 2009/03/18 17:06:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.52 2009/04/18 14:58:03 tsutsui Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -223,7 +223,7 @@ pdq_pci_attach(
 	free((void *) sc, M_DEVBUF);
 	return;
     }
-    memcpy( sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
+    memcpy(sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
     pdqs_pci[unit] = sc;
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
     pci_map_int(config_id, pdq_pci_ifintr, (void*) sc, &net_imask);
@@ -365,7 +365,7 @@ pdq_pci_attach(
 	return;
     }
 
-    memcpy( sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
+    memcpy(sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
 
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 

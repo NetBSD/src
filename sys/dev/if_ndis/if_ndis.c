@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.26 2009/04/15 20:44:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.27 2009/04/18 14:58:03 tsutsui Exp $");
 #endif
 
 
@@ -285,7 +285,7 @@ ndis_setmulti(struct ndis_softc *sc)
  * But for right now I'm assuming there is only a single address.
  *****************************************************************************
  */
-		memcpy( mclist + (ETHER_ADDR_LEN * len), ifma->enm_addrlo,
+		memcpy(mclist + (ETHER_ADDR_LEN * len), ifma->enm_addrlo,
 			ETHER_ADDR_LEN);
 		len++;
 		if (len > mclistsz) {
@@ -1807,7 +1807,7 @@ ic = &sc->ic;
 	if (ssid.ns_ssidlen == 0) {
 		ssid.ns_ssidlen = 1;
 	} else
-		memcpy( ssid.ns_ssid, ic->ic_des_essid, ssid.ns_ssidlen);
+		memcpy(ssid.ns_ssid, ic->ic_des_essid, ssid.ns_ssidlen);
 	rval = ndis_set_info(sc, OID_802_11_SSID, &ssid, &len);
 
 	if (rval)
@@ -1913,7 +1913,7 @@ ndis_get_assoc(struct ndis_softc *sc, ndis_wlan_bssid_ex **assoc)
 				free(bl, M_TEMP);
 				return(ENOMEM);
 			}
-			memcpy( (char *)*assoc, (char *)bs, bs->nwbx_len);
+			memcpy((char *)*assoc, (char *)bs, bs->nwbx_len);
 			free(bl, M_TEMP);
 			return(0);
 		}	
@@ -1978,7 +1978,7 @@ ndis_getstate_80211(struct ndis_softc *sc)
 
 	if (rval)
 		aprint_error_dev(sc->ndis_dev, "get ssid failed: %d\n", rval);
-	memcpy( ic->ic_bss->ni_essid, ssid.ns_ssid, ssid.ns_ssidlen);
+	memcpy(ic->ic_bss->ni_essid, ssid.ns_ssid, ssid.ns_ssidlen);
 	ic->ic_bss->ni_esslen = ssid.ns_ssidlen;
 
 	len = sizeof(arg);
@@ -2209,10 +2209,10 @@ ndis_wi_ioctl_get(struct ifnet *ifp, u_long command, void * data)
 		wb = bl->nblx_bssid;
 		while (maxaps--) {
 			memset(api, 0, sizeof(*api));
-			memcpy( &api->bssid, &wb->nwbx_macaddr,
+			memcpy(&api->bssid, &wb->nwbx_macaddr,
 			    sizeof(api->bssid));
 			api->namelen = wb->nwbx_ssid.ns_ssidlen;
-			memcpy( &api->name, &wb->nwbx_ssid.ns_ssid, api->namelen);
+			memcpy(&api->name, &wb->nwbx_ssid.ns_ssid, api->namelen);
 			if (wb->nwbx_privacy)
 				api->capinfo |= IEEE80211_CAPINFO_PRIVACY;
 			/* XXX Where can we get noise information? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.32 2009/03/18 17:06:50 cegger Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.33 2009/04/18 14:58:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.32 2009/03/18 17:06:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.33 2009/04/18 14:58:04 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -264,7 +264,7 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 	if (boff) {
 		int xfer;
 		xfer = min(len, 16 - boff);
-		memcpy( bptr + boff, from, xfer);
+		memcpy(bptr + boff, from, xfer);
 		from += xfer;
 		bptr += 32;
 		len -= xfer;
@@ -317,7 +317,7 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 		default:
 		/* Does odd-aligned case ever happen? */
 		do {
-			memcpy( bptr, from, 16);
+			memcpy(bptr, from, 16);
 			from += 16;
 			bptr += 32;
 			len -= 16;
@@ -325,7 +325,7 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 		break;
 	}
 	if (len)
-		memcpy( bptr, from, len);
+		memcpy(bptr, from, len);
 }
 
 void
@@ -343,7 +343,7 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 	if (boff) {
 		int xfer;
 		xfer = min(len, 16 - boff);
-		memcpy( to, bptr + boff, xfer);
+		memcpy(to, bptr + boff, xfer);
 		to += xfer;
 		bptr += 32;
 		len -= xfer;
@@ -391,7 +391,7 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 	/* XXX Does odd-byte-aligned case ever happen? */
 	default:
 		do {
-			memcpy( to, bptr, 16);
+			memcpy(to, bptr, 16);
 			to += 16;
 			bptr += 32;
 			len -= 16;
@@ -399,7 +399,7 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 		break;
 	}
 	if (len)
-		memcpy( to, bptr, len);
+		memcpy(to, bptr, len);
 }
 
 void

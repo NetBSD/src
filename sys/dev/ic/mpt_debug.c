@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.5 2009/03/18 17:06:49 cegger Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.6 2009/04/18 14:58:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.5 2009/03/18 17:06:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.6 2009/04/18 14:58:02 tsutsui Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -474,7 +474,7 @@ mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *orig_msg)
 	MSG_SCSI_IO_REQUEST local, *msg = &local;
 	int i;
 
-	memcpy( msg, orig_msg, sizeof (MSG_SCSI_IO_REQUEST));
+	memcpy(msg, orig_msg, sizeof (MSG_SCSI_IO_REQUEST));
 	mpt_print_request_hdr((MSG_REQUEST_HEADER *)msg);
 	printf("\tBus:                %d\n", msg->Bus);
 	printf("\tTargetID            %d\n", msg->TargetID);

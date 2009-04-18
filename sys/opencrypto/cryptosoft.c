@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.24 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.25 2009/04/18 14:58:07 tsutsui Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.24 2009/03/25 01:26:13 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.25 2009/04/18 14:58:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		/* IV explicitly provided ? */
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			memcpy( iv, crd->crd_iv, blks);
+			memcpy(iv, crd->crd_iv, blks);
 		else {
 			/* Get random IV */
 			for (i = 0;
@@ -99,7 +99,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 			    i += sizeof (u_int32_t)) {
 				u_int32_t temp = arc4random();
 
-				memcpy( iv + i, &temp, sizeof(u_int32_t));
+				memcpy(iv + i, &temp, sizeof(u_int32_t));
 			}
 			/*
 			 * What if the block size is not a multiple
@@ -122,7 +122,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 	} else {	/* Decryption */
 			/* IV explicitly provided ? */
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			memcpy( iv, crd->crd_iv, blks);
+			memcpy(iv, crd->crd_iv, blks);
 		else {
 			/* Get IV off buf */
 			COPYDATA(outtype, buf, crd->crd_inject, blks, iv);
@@ -194,7 +194,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 					 * Keep encrypted block for XOR'ing
 					 * with next block
 					 */
-					memcpy( iv, blk, blks);
+					memcpy(iv, blk, blks);
 					ivp = iv;
 				} else {	/* decrypt */
 					/*
@@ -202,9 +202,9 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 					 * with next block
 					 */
 					if (ivp == iv)
-						memcpy( piv, blk, blks);
+						memcpy(piv, blk, blks);
 					else
-						memcpy( iv, blk, blks);
+						memcpy(iv, blk, blks);
 
 					exf->decrypt(sw->sw_kschedule, blk);
 
@@ -213,7 +213,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 						blk[j] ^= ivp[j];
 
 					if (ivp == iv)
-						memcpy( iv, piv, blks);
+						memcpy(iv, piv, blks);
 					else
 						ivp = iv;
 				}
@@ -266,9 +266,9 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 					 * in next block's processing.
 					 */
 					if (ivp == iv)
-						memcpy( piv, idat, blks);
+						memcpy(piv, idat, blks);
 					else
-						memcpy( iv, idat, blks);
+						memcpy(iv, idat, blks);
 
 					exf->decrypt(sw->sw_kschedule, idat);
 
@@ -277,7 +277,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 						idat[j] ^= ivp[j];
 
 					if (ivp == iv)
-						memcpy( iv, piv, blks);
+						memcpy(iv, piv, blks);
 					else
 						ivp = iv;
 				}
@@ -321,7 +321,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 					 * Keep encrypted block for XOR'ing
 					 * with next block
 					 */
-					memcpy( iv, blk, blks);
+					memcpy(iv, blk, blks);
 					ivp = iv;
 				} else {	/* decrypt */
 					/*
@@ -329,9 +329,9 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 					 * with next block
 					 */
 					if (ivp == iv)
-						memcpy( piv, blk, blks);
+						memcpy(piv, blk, blks);
 					else
-						memcpy( iv, blk, blks);
+						memcpy(iv, blk, blks);
 
 					exf->decrypt(sw->sw_kschedule, blk);
 
@@ -340,7 +340,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 						blk[j] ^= ivp[j];
 
 					if (ivp == iv)
-						memcpy( iv, piv, blks);
+						memcpy(iv, piv, blks);
 					else
 						ivp = iv;
 				}
@@ -384,9 +384,9 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 					 * in next block's processing.
 					 */
 					if (ivp == iv)
-						memcpy( piv, idat, blks);
+						memcpy(piv, idat, blks);
 					else
-						memcpy( iv, idat, blks);
+						memcpy(iv, idat, blks);
 
 					exf->decrypt(sw->sw_kschedule, idat);
 
@@ -395,7 +395,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 						idat[j] ^= ivp[j];
 
 					if (ivp == iv)
-						memcpy( iv, piv, blks);
+						memcpy(iv, piv, blks);
 					else
 						ivp = iv;
 				}
@@ -430,7 +430,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 
 	axf = sw->sw_axf;
 
-	memcpy( &ctx, sw->sw_ictx, axf->auth_hash->ctxsize);
+	memcpy(&ctx, sw->sw_ictx, axf->auth_hash->ctxsize);
 
 	switch (outtype) {
 	case CRYPTO_BUF_CONTIG:
@@ -468,7 +468,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 			return EINVAL;
 
 		axf->Final(aalg, &ctx);
-		memcpy( &ctx, sw->sw_octx, axf->auth_hash->ctxsize);
+		memcpy(&ctx, sw->sw_octx, axf->auth_hash->ctxsize);
 		axf->Update(&ctx, aalg, axf->auth_hash->hashsize);
 		axf->Final(aalg, &ctx);
 		break;
@@ -500,7 +500,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		    axf->auth_hash->authsize, aalg);
 		break;
 	case CRYPTO_BUF_IOV:
-		memcpy( crp->crp_mac, aalg, axf->auth_hash->authsize);
+		memcpy(crp->crp_mac, aalg, axf->auth_hash->authsize);
 		break;
 	default:
 		return EINVAL;
@@ -612,7 +612,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 
 		/* Copy existing sessions */
 		if (swcr_sessions) {
-			memcpy( swd, swcr_sessions,
+			memcpy(swd, swcr_sessions,
 			    (swcr_sesnum / 2) * sizeof(struct swcr_data *));
 			free(swcr_sessions, M_CRYPTO_DATA);
 		}
@@ -757,7 +757,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			}
 
 			(*swd)->sw_klen = cri->cri_klen / 8;
-			memcpy( (*swd)->sw_octx, cri->cri_key, cri->cri_klen / 8);
+			memcpy((*swd)->sw_octx, cri->cri_key, cri->cri_klen / 8);
 			axf->Init((*swd)->sw_ictx);
 			axf->Update((*swd)->sw_ictx, cri->cri_key,
 			    cri->cri_klen / 8);

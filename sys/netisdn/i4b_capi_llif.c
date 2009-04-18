@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_llif.c,v 1.4 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: i4b_capi_llif.c,v 1.5 2009/04/18 14:58:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_llif.c,v 1.4 2009/03/18 17:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_llif.c,v 1.5 2009/04/18 14:58:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,7 +79,7 @@ capi_ll_control(capi_softc_t *sc, int op, int arg)
 	break;
 
     case CAPI_CTRL_PROFILE:
-	memcpy( &sc->sc_profile, (char*) arg, sizeof(sc->sc_profile));
+	memcpy(&sc->sc_profile, (char*) arg, sizeof(sc->sc_profile));
 	break;
 
     case CAPI_CTRL_NEW_NCCI:
