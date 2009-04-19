@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.29 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: makphy.c,v 1.30 2009/04/19 11:10:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.29 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.30 2009/04/19 11:10:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,10 +167,24 @@ static void
 makphy_reset(struct mii_softc *sc)
 {
 	uint16_t pscr;
+#if 0
+	uint16_t reg;
+#endif
 
 	/* Assert CRS on transmit */
 	pscr = PHY_READ(sc, MII_MAKPHY_PSCR);
-	PHY_WRITE(sc, MII_MAKPHY_PSCR, pscr | PSCR_CRS_ON_TX);
+	pscr |= PSCR_CRS_ON_TX;
+#if 0
+	pscr &= ~PSCR_MDI_XOVER_MODE(XOVER_MODE_AUTO | XOVER_MODE_MDIX);
+#endif
+	PHY_WRITE(sc, MII_MAKPHY_PSCR, pscr);
+#if 0
+	reg = PHY_READ(sc, MII_MAKPHY_EPSC);
+	reg &= ~(EPSC_MASTER_DOWNSHIFT_MASK | EPSC_SLABE_DOWNSHIFT_MASK);
+	reg |= EPSC_MASTER_DOWNSHIFT_1X | EPSC_SLABE_DOWNSHIFT_1X;
+	reg |= EPSC_TX_CLK_25;
+	PHY_WRITE(sc, MII_MAKPHY_EPSC, reg);
+#endif
 
 	mii_phy_reset(sc);
 }

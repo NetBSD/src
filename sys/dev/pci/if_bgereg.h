@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.50 2009/04/16 01:38:34 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.51 2009/04/19 11:10:36 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -62,6 +62,11 @@
  *    Flat mode consumes so much host address space that it is not
  *    recommended.
  */
+
+#include <machine/bus.h>
+#include <net/if_ether.h>
+#include <dev/pci/pcivar.h>
+
 #define BGE_PAGE_ZERO			0x00000000
 #define BGE_PAGE_ZERO_END		0x000000FF
 #define BGE_SEND_RING_RCB		0x00000100
@@ -2466,6 +2471,12 @@ struct txdmamap_pool_entry {
 #define BGE_PCIE		0x00000040
 #define BGE_PHY_FIBER_TBI	0x00000800
 #define BGE_PHY_FIBER_MII	0x00001000
+#define BGE_PHY_CRC_BUG		0x00002000
+#define BGE_PHY_ADC_BUG		0x00004000
+#define BGE_PHY_5704_A0_BUG	0x00008000
+#define BGE_PHY_JITTER_BUG	0x00010000
+#define BGE_PHY_BER_BUG		0x00020000
+#define BGE_PHY_ADJUST_TRIM	0x00040000
 #define BGE_IS_5788		0x00100000
 
 struct bge_softc {
