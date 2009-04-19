@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.68 2009/04/19 08:45:09 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.69 2009/04/19 22:15:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -268,9 +268,11 @@ void		sched_print_runqueue(void (*pr)(const char *, ...));
 /* Dispatching */
 bool		kpreempt(uintptr_t);
 void		preempt(void);
+void		yield(void);
 int		mi_switch(struct lwp *);
 void		updatertime(lwp_t *, const struct bintime *);
 void		sched_idle(void);
+void		suspendsched(void);
 
 int		do_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 int		do_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
