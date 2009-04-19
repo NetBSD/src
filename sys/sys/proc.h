@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.286 2009/04/16 14:56:41 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.287 2009/04/19 22:15:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -458,9 +458,6 @@ extern kmutex_t		*proc_lock;
 extern struct proclist	allproc;	/* List of all processes */
 extern struct proclist	zombproc;	/* List of zombie processes */
 
-extern SLIST_HEAD(deadprocs, proc) deadprocs;	/* List of dead processes */
-extern struct simplelock deadproc_slock;
-
 extern struct proc	*initproc;	/* Process slots for init, pager */
 
 extern const struct proclist_desc proclists[];
@@ -484,10 +481,8 @@ int	enterpgrp(struct proc *, pid_t, pid_t, int);
 void	leavepgrp(struct proc *);
 void	fixjobc(struct proc *, struct pgrp *, int);
 void	sessdelete(struct session *);
-void	yield(void);
-void	pgdelete(struct pgrp *);
 void	procinit(void);
-void	suspendsched(void);
+
 int	ltsleep(wchan_t, pri_t, const char *, int, volatile struct simplelock *);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
@@ -521,27 +516,21 @@ void	child_return(void *);
 int	proc_isunder(struct proc *, struct lwp *);
 void	proc_stop(struct proc *, int, int);
 
-void	p_sugid(struct proc *);
-
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
 void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);
 void	proc_crmod_enter(void);
-int	proc_addref(struct proc *);
-void	proc_delref(struct proc *);
-void	proc_drainrefs(struct proc *);
 
 int	proc_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	proc_specific_key_delete(specificdata_key_t);
-void 	proc_initspecific(struct proc *);
-void 	proc_finispecific(struct proc *);
+void	proc_initspecific(struct proc *);
+void	proc_finispecific(struct proc *);
 void *	proc_getspecific(struct proc *, specificdata_key_t);
 void	proc_setspecific(struct proc *, specificdata_key_t, void *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
-static __inline struct proc *_proclist_skipmarker(struct proc *);
 
-static __inline struct proc *
+static inline struct proc *
 _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;
@@ -561,8 +550,8 @@ _proclist_skipmarker(struct proc *p0)
 	ltsleep(chan, pri, wmesg, timo, NULL)
 
 #ifdef KSTACK_CHECK_MAGIC
-void kstack_setup_magic(const struct lwp *);
-void kstack_check_magic(const struct lwp *);
+void	kstack_setup_magic(const struct lwp *);
+void	kstack_check_magic(const struct lwp *);
 #else
 #define	kstack_setup_magic(x)
 #define	kstack_check_magic(x)
