@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.1.1.2.6.2 2009/01/20 02:48:58 snj Exp $ */
+/*	$NetBSD: vs_line.c,v 1.1.1.2.6.3 2009/04/19 15:48:10 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -442,7 +442,7 @@ display:
 			/* XXXX this needs some rethinking */
 			if (INTISWIDE(ch)) {
 				/* Put a space before non-spacing char. */
-				if (!CHAR_WIDTH(sp, ch))
+				if (CHAR_WIDTH(sp, ch) <= 0)
 					*cbp++ = L(' ');
 				*cbp++ = ch;
 			} else
