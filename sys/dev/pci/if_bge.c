@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.161 2009/04/16 01:38:34 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.162 2009/04/19 11:10:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.161 2009/04/16 01:38:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.162 2009/04/19 11:10:36 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -536,7 +536,6 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5750_C0, "BCM5750 C0" },
 	{ BGE_CHIPID_BCM5750_C1, "BCM5750 C1" },
 	{ BGE_CHIPID_BCM5750_C2, "BCM5750 C2" },
-	{ BGE_CHIPID_BCM5714_A0, "BCM5714 A0" },
 	{ BGE_CHIPID_BCM5752_A0, "BCM5752 A0" },
 	{ BGE_CHIPID_BCM5752_A1, "BCM5752 A1" },
 	{ BGE_CHIPID_BCM5752_A2, "BCM5752 A2" },
@@ -568,13 +567,14 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5703, "unknown BCM5703" },
 	{ BGE_ASICREV_BCM5704, "unknown BCM5704" },
 	{ BGE_ASICREV_BCM5705, "unknown BCM5705" },
-	{ BGE_ASICREV_BCM5750, "unknown BCM575x family" },
+	{ BGE_ASICREV_BCM5750, "unknown BCM5750" },
 	{ BGE_ASICREV_BCM5714_A0, "unknown BCM5714" },
 	{ BGE_ASICREV_BCM5714, "unknown BCM5714" },
 	{ BGE_ASICREV_BCM5752, "unknown BCM5752 family" },
 	{ BGE_ASICREV_BCM5755, "unknown BCM5755" },
 	{ BGE_ASICREV_BCM5780, "unknown BCM5780" },
-	{ BGE_ASICREV_BCM5787, "unknown BCM5787" },
+	/* 5754 and 5787 share the same ASIC ID */
+	{ BGE_ASICREV_BCM5787, "unknown BCM5787/5787" },
 	{ BGE_ASICREV_BCM5906, "unknown BCM5906" }, 
 	{ 0, NULL }
 };
@@ -2423,8 +2423,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DELAY(1000);	/* 27 usec is allegedly sufficent */
 
 	/*
-	 * Save ASIC rev.  Look up any quirks associated with this
-	 * ASIC.
+	 * Save ASIC rev.
 	 */
 	sc->bge_chipid =
 	    pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL) &
@@ -2444,6 +2443,27 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if ((pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
 		BGE_PCISTATE_PCI_BUSMODE) == 0)
 		sc->bge_flags |= BGE_PCIX;
+
+	if (sc->bge_chipid == BGE_CHIPID_BCM5701_A0 ||
+	    sc->bge_chipid == BGE_CHIPID_BCM5701_B0)
+		sc->bge_flags |= BGE_PHY_CRC_BUG;
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5703_AX ||
+	    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_AX)
+		sc->bge_flags |= BGE_PHY_ADC_BUG;
+	if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0)
+		sc->bge_flags |= BGE_PHY_5704_A0_BUG;
+
+	if (BGE_IS_5705_OR_BEYOND(sc)) {
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787) {
+			if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5722 &&
+			    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5756)
+				sc->bge_flags |= BGE_PHY_JITTER_BUG;
+			if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5755M)
+				sc->bge_flags |= BGE_PHY_ADJUST_TRIM;
+		} else if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)
+			sc->bge_flags |= BGE_PHY_BER_BUG;
+	}
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
@@ -2617,8 +2637,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		ifmedia_set(&sc->bge_ifmedia, IFM_ETHER|IFM_AUTO);
 		/* Pretend the user requested this setting */
-		sc->bge_ifmedia.ifm_media =
-			sc->bge_ifmedia.ifm_cur->ifm_media;
+		sc->bge_ifmedia.ifm_media = sc->bge_ifmedia.ifm_cur->ifm_media;
 	} else {
 		/*
 		 * Do transceiver setup.
@@ -2737,10 +2756,7 @@ bge_reset(struct bge_softc *sc)
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
 	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
 
-	/*
-	 * Disable the firmware fastboot feature on 5752 ASIC
-	 * to avoid firmware timeout.
-	 */
+	/* Disable fastboot on controllers that support it. */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
