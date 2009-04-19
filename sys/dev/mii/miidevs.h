@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.88 2009/04/19 11:10:36 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.89 2009/04/19 11:18:07 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.84 2009/03/25 06:49:56 cegger Exp
+ *	NetBSD: miidevs,v 1.87 2009/04/19 11:17:46 msaitoh Exp
  */
 
 /*-
@@ -270,8 +270,6 @@
 #define	MII_STR_yyINTEL_I82566	"i82566 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
-#define	MII_MODEL_xxMARVELL_I82567	0x000b
-#define	MII_STR_xxMARVELL_I82567	"i82567 10/100/1000 media interface"
 
 #define	MII_MODEL_yyINTEL_IGP01E1000	0x0038
 #define	MII_STR_yyINTEL_IGP01E1000	"Intel IGP01E1000 Gigabit PHY"
