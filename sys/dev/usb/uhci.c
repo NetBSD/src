@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.225 2009/03/06 23:40:50 bouyer Exp $	*/
+/*	$NetBSD: uhci.c,v 1.226 2009/04/19 12:32:52 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.225 2009/03/06 23:40:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.226 2009/04/19 12:32:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -619,6 +619,9 @@ uhci_detach(struct uhci_softc *sc, int flags)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 		free(xfer, M_USB);
 	}
+
+	callout_halt(&sc->sc_poll_handle, NULL);
+	callout_destroy(&sc->sc_poll_handle);
 
 	/* XXX free other data structures XXX */
 
