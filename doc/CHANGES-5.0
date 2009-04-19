@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.137 2009/04/17 03:44:23 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.138 2009/04/19 15:54:04 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6105,4 +6105,40 @@ sys/arch/hp700/gsc/harmony.c			1.14
 
 	Get audio capture fully working with harmony(4) and fix PR/35239.
 	[mjf, ticket #704]
+
+sys/fs/tmpfs/tmpfs_vnops.c			1.57, 1.58
+
+	SAVENAME was not set for rename and delete as required.
+	Fixes pr 41183.  Plug some pnbuf leaks.
+	[christos/ad, ticket #690]
+
+sbin/mount_nfs/mount_nfs.8			1.37-1.39
+
+	resvport is not an option; change it to resport.
+	Remove example showing deprecated hostname:/path mount
+	syntax. Fixes PR 41238.
+	[wiz, ticket #707]
+
+sys/uvm/uvm_km.c				1.102
+sys/uvm/uvm_km.h				1.18
+sys/uvm/uvm_map.c				1.264
+
+	Change some assertions to partially allow for
+	VM_MAP_IS_KERNEL(map) where map is outside the range of
+	kernel_map.  Fixes PR port-amd64/32816, making LKMs
+	loadable on amd64.
+	[mrg, ticket #708]
+
+dist/nvi/common/conv.h				1.4 via patch
+dist/nvi/vi/vs_line.c				1.5 via patch
+
+	Fix reliability issue.
+	If wcwidth(3) return -1, nvi may crash by memory fault.
+	[tnozaki, ticket #709]
+
+sys/dist/ipf/netinet/ip_nat.c			1.39
+
+	Fix problems on UDP NFS with ipnat as mentioned in PRs
+	kern/38773 and kern/41074.
+	[tsutsui, ticket #710]
 
