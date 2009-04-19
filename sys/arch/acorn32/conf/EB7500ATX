@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.36 2009/03/06 20:31:46 joerg Exp $
+#	$NetBSD: EB7500ATX,v 1.37 2009/04/19 03:07:04 tsutsui Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.36 $"
+#ident		"EB7500ATX-$Revision: 1.37 $"
 
 # estimated number of users
 maxusers	32
@@ -244,7 +244,7 @@ cs*	at rsbus?
 # Not functioning (yet) 
 #ds1687rtc*	at rsbus?
 
-pseudo-device	loop	1		# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
@@ -252,7 +252,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter 1		# ip filter
+#pseudo-device	ipfilter		# ip filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
