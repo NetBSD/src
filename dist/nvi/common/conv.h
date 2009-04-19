@@ -1,8 +1,8 @@
-/*	$NetBSD: conv.h,v 1.3 2009/01/18 03:43:45 lukem Exp $ */
+/*	$NetBSD: conv.h,v 1.4 2009/04/19 02:28:19 tnozaki Exp $ */
 
 #define KEY_COL(sp, ch)							\
 	(INTISWIDE(ch) ? 						\
-	    (size_t)CHAR_WIDTH(sp, ch) ?				\
+	    (CHAR_WIDTH(sp, ch) >= 0) ?					\
 	       (size_t)CHAR_WIDTH(sp, ch) : 1 /* extra space */		\
 	    : KEY_LEN(sp,ch))
 
