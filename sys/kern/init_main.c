@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.388 2009/04/07 10:49:54 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.389 2009/04/19 14:04:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.388 2009/04/07 10:49:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.389 2009/04/19 14:04:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -308,6 +308,7 @@ main(void)
 
 	/* Initialize lock caches. */
 	mutex_obj_init();
+	rw_obj_init();
 
 	/* Initialize the extent manager. */
 	extent_init();
