@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.263.4.2 2009/02/02 18:31:37 snj Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.263.4.3 2009/04/19 15:43:14 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.2 2009/02/02 18:31:37 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3 2009/04/19 15:43:14 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1198,8 +1198,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 #if defined(DEBUG)
 	if (!error && VM_MAP_IS_KERNEL(map)) {
-		uvm_km_check_empty(*startp, *startp + size,
-		    (map->flags & VM_MAP_INTRSAFE) != 0);
+		uvm_km_check_empty(map, *startp, *startp + size);
 	}
 #endif /* defined(DEBUG) */
 
@@ -2328,7 +2327,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 */
 
 			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
-				uvm_km_pgremove_intrsafe(entry->start,
+				uvm_km_pgremove_intrsafe(map, entry->start,
 				    entry->end);
 				pmap_kremove(entry->start, len);
 			}
@@ -2406,8 +2405,8 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			}
 
 			if (VM_MAP_IS_KERNEL(map)) {
-				uvm_km_check_empty(entry->start, entry->end,
-				    (map->flags & VM_MAP_INTRSAFE) != 0);
+				uvm_km_check_empty(map, entry->start,
+				    entry->end);
 			}
 		}
 #endif /* defined(DEBUG) */
