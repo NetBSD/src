@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.49 2009/03/06 20:31:46 joerg Exp $
+#	$NetBSD: NC,v 1.50 2009/04/19 03:07:04 tsutsui Exp $
 #
 #	NC - with wscons
 #
@@ -262,12 +262,12 @@ podulebus0	at root
 #eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
 
-pseudo-device	loop	1		# network loopback
+pseudo-device	loop			# network loopback
 #pseudo-device	bpfilter		# packet filter
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
-#pseudo-device	ipfilter 1		# ip filter
+#pseudo-device	ipfilter		# ip filter
 #pseudo-device	strip			# STRIP
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
