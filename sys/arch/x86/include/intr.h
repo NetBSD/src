@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.38 2009/03/27 16:09:24 dyoung Exp $	*/
+/*	$NetBSD: intr.h,v 1.39 2009/04/19 14:11:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ struct intrhand {
 	int	(*ih_realfun)(void *);
 	void	*ih_realarg;
 	struct	intrhand *ih_next;
+	struct	intrhand **ih_prevp;
 	int	ih_pin;
 	int	ih_slot;
 	struct cpu_info *ih_cpu;
@@ -176,9 +177,7 @@ const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int, int, int *);
 struct pic *intr_findpic(int);
-#ifdef INTRDEBUG
 void intr_printconfig(void);
-#endif
 
 int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
