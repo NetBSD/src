@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.h,v 1.6 2009/04/02 00:09:32 dyoung Exp $	*/
+/*	$NetBSD: pic.h,v 1.7 2009/04/19 14:11:37 ad Exp $	*/
 
 #ifndef _X86_PIC_H
 #define _X86_PIC_H
@@ -18,6 +18,7 @@ struct pic {
 	void (*pic_hwunmask)(struct pic *, int);
 	void (*pic_addroute)(struct pic *, struct cpu_info *, int, int, int);
 	void (*pic_delroute)(struct pic *, struct cpu_info *, int, int, int);
+	bool (*pic_trymask)(struct pic *, int);
 	struct intrstub *pic_level_stubs;
 	struct intrstub *pic_edge_stubs;
 	struct ioapic_softc *pic_ioapic; /* if pic_type == PIC_IOAPIC */
