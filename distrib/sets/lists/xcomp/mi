@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.85 2009/04/13 20:11:59 snj Exp $
+#	 $NetBSD: mi,v 1.86 2009/04/19 21:36:46 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6019,9 +6019,9 @@
 ./usr/X11R7/lib/libXaw7.a				-unknown-	xorg
 ./usr/X11R7/lib/libXaw7_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXaw7_p.a				-unknown-	profile,xorg
-./usr/X11R7/lib/libXaw8.a				-unknown-	xorg
-./usr/X11R7/lib/libXaw8_g.a				-unknown-	debuglib,xorg
-./usr/X11R7/lib/libXaw8_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libXaw8.a				-obsolete-	obsolete
+./usr/X11R7/lib/libXaw8_g.a				-obsolete-	obsolete
+./usr/X11R7/lib/libXaw8_p.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libXaw_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXcomposite.a				-unknown-	xorg
 ./usr/X11R7/lib/libXcomposite_g.a			-unknown-	debuglib,xorg
@@ -6185,7 +6185,7 @@
 ./usr/X11R7/lib/pkgconfig/xau.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xaw6.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xaw7.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/xaw8.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xaw8.pc			-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/xbitmaps.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcmiscproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcomposite.pc			-unknown-	xorg
@@ -9219,7 +9219,7 @@
 ./usr/libdata/lint/llib-lXau.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXaw.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXaw7.ln			-unknown-	lint,xorg
-./usr/libdata/lint/llib-lXaw8.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXaw8.ln			-obsolete-	obsolete
 ./usr/libdata/lint/llib-lXcomposite.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXcursor.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXcursor.ln			-unknown-	lint,xorg

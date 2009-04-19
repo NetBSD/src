@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.11 2008/11/11 16:13:50 cube Exp $
+#	$NetBSD: shl.mi,v 1.12 2009/04/19 21:36:46 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -59,7 +59,7 @@
 ./usr/X11R7/lib/libXTrap_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXau_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXaw7_pic.a				-unknown-	xorg
-./usr/X11R7/lib/libXaw8_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libXaw8_pic.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libXcomposite_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXcursor_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXdamage_pic.a			-unknown-	xorg
