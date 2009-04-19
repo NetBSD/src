@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.27 2009/04/13 18:58:08 snj Exp $
+# $NetBSD: shl.mi,v 1.28 2009/04/19 21:36:46 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -67,8 +67,8 @@
 ./usr/X11R7/lib/libXTrap.so.7.0			-unknown-		xorg
 ./usr/X11R7/lib/libXau.so.7.0			-unknown-		xorg
 ./usr/X11R7/lib/libXaw6.so.7.0			-unknown-		xorg
-./usr/X11R7/lib/libXaw7.so.8.0			-unknown-		xorg
-./usr/X11R7/lib/libXaw8.so.9.0			-unknown-		xorg
+./usr/X11R7/lib/libXaw7.so.10.0			-unknown		xorg
+./usr/X11R7/lib/libXaw8.so.9.0			-obsolete-		obsolete
 ./usr/X11R7/lib/libXcomposite.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libXcursor.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libXdamage.so.2.0		-unknown-		xorg
