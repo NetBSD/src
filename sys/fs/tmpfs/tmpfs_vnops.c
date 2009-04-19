@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.4 2009/04/19 15:26:35 snj Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.5 2009/04/19 15:27:32 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.4 2009/04/19 15:26:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.5 2009/04/19 15:27:32 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -691,6 +691,7 @@ out:
 		vrele(dvp);
 	else
 		vput(dvp);
+	PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }
@@ -1076,6 +1077,7 @@ tmpfs_rmdir(void *v)
 	/* Release the nodes. */
 	vput(dvp);
 	vput(vp);
+	PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }
