@@ -1,4 +1,4 @@
-/*	$NetBSD: makphyreg.h,v 1.4 2009/04/19 11:10:36 msaitoh Exp $	*/
+/*	$NetBSD: makphyreg.h,v 1.5 2009/04/19 11:17:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,14 +88,8 @@
 
 #define	MII_MAKPHY_EPSC		0x14	/* extended PHY specific control */
 #define	EPSC_TX_CLK(x)		((x) << 4)  /* transmit clock */
-#define	EPSC_TX_CLK_2_5			0x0060
-#define	EPSC_TX_CLK_25			0x0070
-#define	EPSC_TX_CLK_0			0x0000
-#define	EPSC_MASTER_DOWNSHIFT_MASK	0x0c00
-#define	EPSC_MASTER_DOWNSHIFT_1X	0x0000
-#define	EPSC_SLABE_DOWNSHIFT_MASK	0x0300
-#define	EPSC_SLABE_DOWNSHIFT_1X		0x0100
-
+#define	EPSC_TBI_RCLK_DIS	(1U << 12)  /* TBI RCLK disable */
+#define	EPSC_TBI_RX_CLK125_EN	(1U << 13)  /* TBI RX_CLK125 enable */
 #define	EPSC_LINK_DOWN_NO_IDLES	(1U << 15)  /* 1 = lost lock detect */
 
 #define	MII_MAKPHY_REC		0x15	/* receive error counter */
