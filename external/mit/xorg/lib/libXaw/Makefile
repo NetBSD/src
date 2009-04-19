@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2009/04/03 16:21:08 perry Exp $
+#	$NetBSD: Makefile,v 1.5 2009/04/19 21:36:47 mrg Exp $
 
 .include <bsd.own.mk>
 
-LIB=	Xaw8
+LIB=	Xaw7
 LIBOLD=	Xaw
 
 .if ${MKSTATICLIB} != "no"
@@ -22,7 +22,7 @@ SRCS=	Actions.c AllWidgets.c AsciiSink.c AsciiSrc.c \
 	AsciiText.c Box.c Command.c Converters.c Dialog.c \
 	DisplayList.c Form.c Grip.c Label.c List.c MenuButton.c \
 	MultiSrc.c MultiSink.c OS.c Paned.c Panner.c Pixmap.c \
-	Porthole.c PrintShell.c Repeater.c Scrollbar.c Simple.c \
+	Porthole.c Repeater.c Scrollbar.c Simple.c \
 	SimpleMenu.c Sme.c SmeBSB.c SmeLine.c StripChart.c \
 	Text.c TextSink.c TextSrc.c TextAction.c TextPop.c \
 	TextTr.c Tip.c Toggle.c Tree.c Vendor.c Viewport.c \
@@ -49,22 +49,22 @@ INCS=	AllWidgets.h AsciiSink.h AsciiSinkP.h AsciiSrc.h \
 
 INCSDIR=${X11INCDIR}/X11/Xaw
 
+
 CPPFLAGS+=	-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H -DHAVE_ISWALNUM
-CPPFLAGS+=	-DPROJECT_ROOT=\"${X11ROOTDIR}\"
+CPPFLAGS+=	-DPROJECT_ROOT=\"${X11ROOTDIR}\" -DXAW7
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xaw
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/extensions
 
 LIBDPLIBS=\
 	Xmu	${.CURDIR}/../libXmu \
 	Xt	${.CURDIR}/../libXt \
-	Xp	${.CURDIR}/../libXp \
 	SM	${.CURDIR}/../libSM \
 	ICE	${.CURDIR}/../libICE \
 	Xpm	${.CURDIR}/../libXpm \
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
 
-PKGCONFIG=	xaw8
+PKGCONFIG=	xaw7
 PKGDIST=	${LIBOLD}
 
 .include <bsd.x11.mk>
