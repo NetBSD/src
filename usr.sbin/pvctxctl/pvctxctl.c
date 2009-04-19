@@ -1,4 +1,4 @@
-/*	$NetBSD: pvctxctl.c,v 1.5 2007/01/16 17:32:05 hubertf Exp $	*/
+/*	$NetBSD: pvctxctl.c,v 1.6 2009/04/19 08:53:37 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998
@@ -184,19 +184,19 @@ main(int argc, char **argv)
 }
 
 static int 
-str2vc(char *str, int *vpi, int *vci)
+str2vc(char *str, int *vpip, int *vcip)
 {
 	char *c;
 
 	if ((c = strchr(str, ':')) != NULL) {
 		*c = '\0';
-		*vpi = strtol(str, NULL, 0);
+		*vpip = strtol(str, NULL, 0);
 		str = c + 1;
 	}
 	else
-		*vpi = 0;
+		*vpip = 0;
 
-	*vci = strtol(str, NULL, 0);
+	*vcip = strtol(str, NULL, 0);
 	return (0);
 }
 
