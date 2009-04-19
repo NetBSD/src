@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.3 2009/04/08 23:08:07 snj Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.4 2009/04/19 15:26:35 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.3 2009/04/08 23:08:07 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.4 2009/04/19 15:26:35 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -219,6 +219,7 @@ tmpfs_lookup(void *v)
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (error != 0)
 					goto out;
+				cnp->cn_flags |= SAVENAME;
 			} else
 				de = NULL;
 
