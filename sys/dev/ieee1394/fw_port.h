@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.31 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.32 2009/04/20 09:56:07 mschuett Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1312,19 +1312,6 @@ typedef struct scsipi_inquiry_data sbp_scsi_inquiry_data;
 #ifndef rounddown
 #define rounddown(x, y) ((x) / (y) * (y))
 #endif
-
-
-/*
- * additional queue macros for NetBSD
- */
-#define STAILQ_LAST(head, type, field) \
-	(STAILQ_EMPTY((head)) ? (struct type *)NULL : \
-	(struct type *) \
-	((char *)(head)->stqh_last - (size_t)&((struct type *)0)->field))
-#define STAILQ_FOREACH_SAFE(var, head, field, _var)	\
-				(void)(_var);		\
-				STAILQ_FOREACH(var, head, field)
-
 
 /*
  * additional mbuf macros for NetBSD
