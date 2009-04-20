@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.116 2008/03/09 14:57:10 tnn Exp $ */
+/*	$NetBSD: fdisk.c,v 1.116.6.1 2009/04/20 23:16:45 snj Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.116 2008/03/09 14:57:10 tnn Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.116.6.1 2009/04/20 23:16:45 snj Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -296,8 +296,8 @@ main(int argc, char *argv[])
 	char *cbootmenu = 0;
 #endif
 
-	int csysid, cstart, csize;	/* For the b_flag. */
-
+	int csysid;	/* For the b_flag. */
+	unsigned int cstart, csize;
 	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
 	v_flag = 0;
 	E_flag = 0;
@@ -355,7 +355,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':	/* Partition details */
 			s_flag = 1;
-			if (sscanf(optarg, "%d/%d/%d%n", &csysid, &cstart,
+			if (sscanf(optarg, "%d/%u/%u%n", &csysid, &cstart,
 			    &csize, &n) == 3) {
 				if (optarg[n] == 0)
 					break;
