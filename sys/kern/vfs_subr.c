@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.371 2009/04/17 20:22:52 dyoung Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.372 2009/04/20 18:06:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.371 2009/04/17 20:22:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.372 2009/04/20 18:06:26 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -3206,3 +3206,147 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	}
 }
 #endif /* DDB */
+
+/*
+ * Common routine to check if chmod() is allowed.
+ *
+ * Policy:
+ *   - You must be root, or
+ *   - You must own the file, and
+ *     - You must not set the "sticky" bit (meaningless, see chmod(2))
+ *     - You must be a member of the group if you're trying to set the
+ *       SGIDf bit
+ *
+ * cred - credentials of the invoker
+ * vp - vnode of the file-system object
+ * cur_uid, cur_gid - current uid/gid of the file-system object
+ * new_mode - new mode for the file-system object
+ *
+ * Returns 0 if the change is allowed, or an error value otherwise.
+ */
+int
+common_chmod_allowed(kauth_cred_t cred, struct vnode *vp, uid_t cur_uid,
+    gid_t cur_gid, mode_t new_mode)
+{
+	int error;
+
+	/* Superuser can always change mode. */
+	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    NULL);
+	if (!error) {
+		goto out;
+	}
+
+	/* Otherwise, user must own the file. */
+	if (kauth_cred_geteuid(cred) != cur_uid) {
+		goto out;
+	}
+
+	/*
+	 * Non-root users can't set the sticky bit on files.
+	 */
+	if ((vp->v_type != VDIR) && (new_mode & S_ISTXT)) {
+		error = EFTYPE;
+		goto out;
+	}
+
+	/*
+	 * If the invoker is trying to set the SGID bit on the file,
+	 * check group membership.
+	 */
+	if (new_mode & S_ISGID) {
+		int ismember;
+
+		error = kauth_cred_ismember_gid(cred, cur_gid,
+		    &ismember);
+		if (error)
+			goto out;
+
+		if (!ismember) {
+			error = EPERM;
+			goto out;
+		}
+	}
+
+	error = 0;
+
+ out:
+	return (error);
+}
+
+/*
+ * Common routine to check if chown() is allowed.
+ *
+ * Policy:
+ *   - You must be root, or
+ *   - You must own the file, and
+ *     - You must not try to change ownership, and
+ *     - You must be member of the new group
+ *
+ * cred - credentials of the invoker
+ * cur_uid, cur_gid - current uid/gid of the file-system object
+ * new_uid, new_gid - target uid/gid of the file-system object
+ *
+ * Returns 0 if the change is allowed, or an error value otherwise.
+ */
+int	
+common_chown_allowed(kauth_cred_t cred, uid_t cur_uid, gid_t cur_gid,
+    uid_t new_uid, gid_t new_gid)
+{
+	int error, ismember;
+
+	/*
+	 * You can only change ownership of a file if:
+	 * You are the superuser, or...
+	 */
+	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    NULL);
+	if (!error) {
+		goto out;
+	}
+
+	/*
+	 * You own the file and...
+	 */
+	if (kauth_cred_geteuid(cred) == cur_uid) {
+		/*
+		 * You don't try to change ownership, and...
+		 */
+		 if (new_uid != cur_uid) {
+			goto out;
+		}
+
+		/*
+		 * You don't try to change group (no-op), or...
+		 */
+		if (new_gid == cur_gid) {
+			error = 0;
+			goto out;
+		}
+
+		/*
+		 * Your effective gid is the new gid, or...
+		 */
+		if (kauth_cred_getegid(cred) == new_gid) {
+			error = 0;
+			goto out;
+		}
+
+		/*
+		 * The new gid is one you're a member of.
+		 */
+		ismember = 0;
+		error = kauth_cred_ismember_gid(cred, new_gid,
+		    &ismember);
+		if (error || !ismember) {
+			error = EPERM;
+			goto out;
+		}
+
+		error = 0;
+	}
+
+ out:
+	return (error);
+}
+
