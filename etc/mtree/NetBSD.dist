@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.396 2009/04/12 17:35:16 christos Exp $
+#	$NetBSD: NetBSD.dist,v 1.397 2009/04/20 03:56:59 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -260,8 +260,6 @@
 ./usr/X11R7/include/X11/Xcursor
 ./usr/X11R7/include/X11/Xft
 ./usr/X11R7/include/X11/Xmu
-./usr/X11R7/include/X11/XprintAppUtil
-./usr/X11R7/include/X11/XprintUtil
 ./usr/X11R7/include/X11/Xtrans
 ./usr/X11R7/include/X11/bitmaps
 ./usr/X11R7/include/X11/extensions
