@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2009/02/14 08:31:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.85 2009/04/20 16:05:29 drochner Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -34,7 +34,7 @@ LFLAGS+=-L
 YFLAGS+=-l
 .endif
 
-CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
+CPPFLAGS+=-DSHELL -I. -I${.CURDIR} -DYY_NO_INPUT
 #XXX: For testing only.
 #CPPFLAGS+=-DDEBUG=1
 #CFLAGS+=-funsigned-char
