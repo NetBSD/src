@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.41 2009/04/20 20:49:22 cegger Exp $
+# $NetBSD: XEN3_DOM0,v 1.42 2009/04/20 20:50:37 cegger Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -298,6 +298,7 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 
 
 # PCI network interfaces
+age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
