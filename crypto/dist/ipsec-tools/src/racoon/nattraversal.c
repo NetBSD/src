@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.6.6.1 2009/04/20 13:27:12 tteras Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -319,6 +319,15 @@ natt_handle_vendorid (struct ph1handle *iph1, int vid_numeric)
       iph1->natt_flags |= NAT_ANNOUNCED;
 }
 
+static void
+natt_keepalive_delete (struct natt_ka_addrs *ka)
+{
+  TAILQ_REMOVE (&ka_tree, ka, chain);
+  racoon_free (ka->src);
+  racoon_free (ka->dst);
+  racoon_free (ka);
+}
+
 /* NAT keepalive functions */
 static void
 natt_keepalive_send (void *param)
@@ -333,8 +342,7 @@ natt_keepalive_send (void *param)
     
     s = getsockmyaddr(ka->src);
     if (s == -1) {
-      TAILQ_REMOVE (&ka_tree, ka, chain);
-      racoon_free (ka);
+      natt_keepalive_delete(ka);
       continue;
     }
     plog (LLV_DEBUG, LOCATION, NULL, "KA: %s\n", 
@@ -435,8 +443,7 @@ natt_keepalive_remove (struct sockaddr *src, struct sockaddr *dst)
 
       plog (LLV_DEBUG, LOCATION, NULL, "KA removing this one...\n");
 
-      TAILQ_REMOVE (&ka_tree, ka, chain);
-      racoon_free (ka);
+      natt_keepalive_delete (ka);
       /* Should we break here? Every pair of addresses should 
          be inserted only once, but who knows :-) Lets traverse 
 	 the whole list... */
