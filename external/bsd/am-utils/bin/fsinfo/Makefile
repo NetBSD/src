@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/19 21:38:40 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/20 16:05:29 drochner Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -20,7 +20,7 @@ CPPFLAGS.fsinfo.c += -Dyyparse=fsi_yyparse
 
 FSINFOOBJDIR!=cd ${.CURDIR} && ${PRINTOBJDIR}
 
-CPPFLAGS+=	-I${DIST} -I${FSINFOOBJDIR}
+CPPFLAGS+=	-I${DIST} -I${FSINFOOBJDIR} -DYY_NO_INPUT
 YHEADER=	1
 
 .include <bsd.prog.mk>
