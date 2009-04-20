@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.687 2009/04/18 21:22:37 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.688 2009/04/20 04:11:26 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1011,18 +1011,6 @@ Notes:
  files which we don't need in our tree.
  ALL changes must be sent back to the XFree86 repository. Patches should
  be submitted back via http://bugzilla.xfree86.org.
-
-Package:	Xorg
-Version:	7.0
-Current Vers:	7.0
-Maintainer:	The X.Org Foundation
-Archive Site:	http://xorg.freedesktop.org/releases/X11R7.0/src/
-Home Page:	http://www.x.org/
-Mailing List:	xorg@lists.freedesktop.org
-Responsible:	macallan
-License:	XFree
-Notes:		This is the modular branch tagged as XORG-7_0 pulled from
-		xorg's cvs repository.
 
 Package:	zlib
 Version:	1.2.3
