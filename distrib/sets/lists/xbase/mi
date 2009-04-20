@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.73 2009/04/20 03:07:13 mrg Exp $
+# $NetBSD: mi,v 1.74 2009/04/20 04:03:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1198,7 +1198,7 @@
 ./usr/X11R7/bin/iceauth					-unknown-	xorg
 ./usr/X11R7/bin/ico					-unknown-	xorg
 ./usr/X11R7/bin/imake					-unknown-	xorg
-./usr/X11R7/bin/lbxproxy				-unknown-	xorg
+./usr/X11R7/bin/lbxproxy				-obsolete	obsolete
 ./usr/X11R7/bin/listres					-unknown-	xorg
 ./usr/X11R7/bin/luit					-unknown-	xorg
 ./usr/X11R7/bin/makedepend				-unknown-	xorg
@@ -1930,7 +1930,7 @@
 ./usr/X11R7/man/cat1/iceauth.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/ico.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/imake.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/lbxproxy.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/lbxproxy.0				-obsolete	obsolete
 ./usr/X11R7/man/cat1/listres.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/luit.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/makedepend.0			-unknown-	.cat,xorg
@@ -2050,7 +2050,7 @@
 ./usr/X11R7/man/html1/iceauth.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/ico.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/imake.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/lbxproxy.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/lbxproxy.html			-obsolete		obsolete
 ./usr/X11R7/man/html1/listres.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/luit.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/makedepend.html			-unknown-	html,xorg
@@ -2170,7 +2170,7 @@
 ./usr/X11R7/man/man1/iceauth.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/ico.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/imake.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/lbxproxy.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/lbxproxy.1				-obsolete	obsolete
 ./usr/X11R7/man/man1/listres.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/luit.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/makedepend.1			-unknown-	.man,xorg
