@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2003/08/06 22:11:48 jmmv Exp $
+# $NetBSD: Makefile,v 1.7 2009/04/20 16:05:30 drochner Exp $
 #
 
 PROG=	wsmoused
@@ -19,7 +19,7 @@ CPPFLAGS+=	-DWSMOUSED_SELECTION_MODE
 SRCS+=		selection.c
 .endif
 
-CPPFLAGS+=	-I${.CURDIR} -I.
+CPPFLAGS+=	-I${.CURDIR} -I. -DYY_NO_INPUT
 LDADD+=		-lutil
 
 YHEADER=	yes
