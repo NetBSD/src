@@ -1,4 +1,4 @@
-.\" $NetBSD: drvctl.8,v 1.6 2009/04/04 22:05:47 joerg Exp $
+.\" $NetBSD: drvctl.8,v 1.7 2009/04/20 21:40:42 dyoung Exp $
 .\"
 .\" Copyright (c) 2004
 .\" 	Matthias Drochner.  All rights reserved.
@@ -80,7 +80,16 @@ List the children of the device specified by the
 argument.
 If
 .Ar device
-is not specified, query for roots of the device tree instead.
+is not specified, list roots of the device tree instead.
+Output comes in two columns.
+The first column is
+.Ar device ,
+or
+.Dq root
+if
+.Ar device
+is not specified. 
+The second column is the child.
 .It Fl p
 Get the properties for the device specified by the
 .Ar device
