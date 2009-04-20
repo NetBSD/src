@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.13 2009/04/20 03:07:13 mrg Exp $
+#	$NetBSD: shl.mi,v 1.14 2009/04/20 04:03:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -95,7 +95,7 @@
 ./usr/X11R7/lib/libfontenc_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libfreetype_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libglut_pic.a				-unknown-	xorg
-./usr/X11R7/lib/liblbxutil_pic.a			-unknown-	xorg
+./usr/X11R7/lib/liblbxutil_pic.a			-obsolete-	obsolete
 ./usr/X11R7/lib/liblisp_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libmp_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libpixman-1_pic.a			-unknown-	xorg

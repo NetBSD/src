@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.87 2009/04/20 03:07:13 mrg Exp $
+#	 $NetBSD: mi,v 1.88 2009/04/20 04:03:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6128,9 +6128,9 @@
 ./usr/X11R7/lib/libglut.a				-unknown-	xorg
 ./usr/X11R7/lib/libglut_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libglut_p.a				-unknown-	profile,xorg
-./usr/X11R7/lib/liblbxutil.a				-unknown-	xorg
-./usr/X11R7/lib/liblbxutil_g.a				-unknown-	debuglib,xorg
-./usr/X11R7/lib/liblbxutil_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/liblbxutil.a				-obsolete-	obsolete
+./usr/X11R7/lib/liblbxutil_g.a				-obsolete-	obsolete
+./usr/X11R7/lib/liblbxutil_p.a				-obsolete-	obsolete
 ./usr/X11R7/lib/liblisp.a				-unknown-	xorg
 ./usr/X11R7/lib/liblisp_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/liblisp_p.a				-unknown-	profile,xorg
@@ -6168,7 +6168,7 @@
 ./usr/X11R7/lib/pkgconfig/ice.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/inputproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/kbproto.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/lbxutil.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/lbxutil.pc			-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/libdrm.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libfs.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/pixman-1.pc			-unknown-	xorg
@@ -9100,7 +9100,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/iceauth.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/ico.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/imake.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/lbxproxy.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/lbxproxy.debug	-obsolete-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/listres.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/luit.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/makedepend.debug	-unknown-	debug,xorg
@@ -9283,7 +9283,7 @@
 ./usr/libdata/lint/llib-lfreetype.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lglut.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-llbxutil.ln			-unknown-	lint,x11
-./usr/libdata/lint/llib-llbxutil.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-llbxutil.ln			-obsolete-	obsolete
 ./usr/libdata/lint/llib-llisp.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lmp.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-loldX.ln			-unknown-	lint,x11
