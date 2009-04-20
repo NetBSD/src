@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.104 2009/04/20 18:14:30 elad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.105 2009/04/20 19:57:18 elad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.104 2009/04/20 18:14:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.105 2009/04/20 19:57:18 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -263,25 +263,28 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 	struct inpcbtable *table = in6p->in6p_table;
 	struct socket *so = in6p->in6p_socket;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
+	int error;
 
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
 	   ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
 	    (so->so_options & SO_ACCEPTCONN) == 0))
 		wild = 1;
 
-#ifndef IPNOPRIVPORTS
-	int priv;
+	if (sin6->sin6_port != 0) {
+		enum kauth_network_req req;
 
-	/*
-	 * NOTE: all operating systems use suser() for
-	 * privilege check!  do not rewrite it into SS_PRIV.
-	 */
-	priv = (l && !kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) ? 1 : 0;
-	/* GROSS */
-	if (ntohs(sin6->sin6_port) < IPV6PORT_RESERVED && !priv)
-		return (EACCES);
-#endif
+#ifndef IPNOPRIVPORTS
+		if (ntohs(sin6->sin6_port) < IPV6PORT_RESERVED)
+			req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
+		else
+#endif /* IPNOPRIVPORTS */
+			req = KAUTH_REQ_NETWORK_BIND_PORT;
+
+		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_BIND,
+		    req, so, sin6, NULL);
+		if (error)
+			return (error);
+	}
 
 	if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
 		/*
