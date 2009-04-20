@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.50 2009/04/11 11:59:04 markd Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.51 2009/04/20 18:06:27 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.50 2009/04/11 11:59:04 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.51 2009/04/20 18:06:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1018,7 +1018,7 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 int
 tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 {
-	int error, ismember = 0;
+	int error;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1033,21 +1033,10 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	/* XXX: The following comes from UFS code, and can be found in
-	 * several other file systems.  Shouldn't this be centralized
-	 * somewhere? */
-	if (kauth_cred_geteuid(cred) != node->tn_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)))
-		return error;
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		if (vp->v_type != VDIR && (mode & S_ISTXT))
-			return EFTYPE;
-
-		if ((kauth_cred_ismember_gid(cred, node->tn_gid,
-		    &ismember) != 0 || !ismember) && (mode & S_ISGID))
-			return EPERM;
-	}
+	error = common_chmod_allowed(cred, vp, node->tn_uid, node->tn_gid,
+	    mode);
+	if (error)
+		return (error);
 
 	node->tn_mode = (mode & ALLPERMS);
 
@@ -1072,7 +1061,7 @@ int
 tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     struct lwp *l)
 {
-	int error, ismember = 0;
+	int error;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1095,15 +1084,10 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	/* XXX: The following comes from UFS code, and can be found in
-	 * several other file systems.  Shouldn't this be centralized
-	 * somewhere? */
-	if ((kauth_cred_geteuid(cred) != node->tn_uid || uid != node->tn_uid ||
-	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == gid ||
-	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
-	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0))
-		return error;
+	error = common_chown_allowed(cred, node->tn_uid, node->tn_gid, uid,
+	    gid);
+	if (error)
+		return (error);
 
 	node->tn_uid = uid;
 	node->tn_gid = gid;
