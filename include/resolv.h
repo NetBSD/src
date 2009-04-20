@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.36 2009/04/12 17:07:33 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.37 2009/04/20 14:42:12 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -179,11 +179,10 @@ struct __res_state {
 	int	res_h_errno;		/*%< last one set for this context */
 	int	_vcsock;		/*%< PRIVATE: for res_send VC i/o */
 	u_int	_flags;			/*%< PRIVATE: see below */
-	u_char	_rnd[16];		/*%< PRIVATE: random state */
 	u_int	_pad;			/*%< make _u 64 bit aligned */
 	union {
 		/* On an 32-bit arch this means 512b total. */
-		char	pad[56 - 4*sizeof (int) - 2*sizeof (void *)];
+		char	pad[56 - 4*sizeof (int) - 3*sizeof (void *)];
 		struct {
 			uint16_t		nscount;
 			uint16_t		nstimes[MAXNS];	/*%< ms. */
@@ -191,6 +190,7 @@ struct __res_state {
 			struct __res_state_ext *ext;	/*%< extention for IPv6 */
 		} _ext;
 	} _u;
+	u_char	*_rnd;			/*%< PRIVATE: random state */
 #endif
 };
 
