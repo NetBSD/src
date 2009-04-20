@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/12/11 20:40:19 veego Exp $
+#	$NetBSD: Makefile,v 1.6 2009/04/20 15:39:46 jnemeth Exp $
 
 # Top level Makefile to cross build xorg inside the NetBSD tree.
 
@@ -51,7 +51,6 @@ afterinstall: .PHONY
 
 
 DISTRIBTARGETS=	\
-	bin/lbxproxy \
 	bin/proxymngr \
 	bin/twm \
 	bin/xdm/config \
