@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.9 2009/04/20 21:40:42 dyoung Exp $ */
+/* $NetBSD: drvctl.c,v 1.10 2009/04/20 21:41:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -50,7 +50,7 @@ usage(void)
 
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
 	    "       %s -d device\n"
-	    "       %s -l [device]\n"
+	    "       %s [-n] -l [device]\n"
 	    "       %s -p device\n"
 	    "       %s -Q device\n"
 	    "       %s -R device\n"
