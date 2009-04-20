@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.14.4.15 2008/09/17 12:49:50 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.14.4.16 2009/04/20 13:35:36 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -339,8 +339,7 @@ isakmp_info_recv_n(iph1, notify, msgid, encrypted)
 {
 	u_int type;
 	vchar_t *pbuf;
-	vchar_t *ndata;
-	char *nraw;
+	char *nraw, *ndata;
 	size_t l;
 	char *spi;
 
@@ -430,12 +429,12 @@ isakmp_info_recv_n(iph1, notify, msgid, encrypted)
 		if (l > 0) {
 			nraw = (char*)notify;	
 			nraw += sizeof(*notify) + notify->spi_size;
-			if ((ndata = vmalloc(l)) != NULL) {
-				memcpy(ndata->v, nraw, ndata->l);
+			ndata = binsanitize(nraw, l);
+			if (ndata != NULL) {
 				plog(LLV_ERROR, LOCATION, iph1->remote,
 				    "Message: '%s'.\n", 
-				    binsanitize(ndata->v, ndata->l));
-				vfree(ndata);
+				    ndata);
+				racoon_free(ndata);
 			} else {
 				plog(LLV_ERROR, LOCATION, iph1->remote,
 				    "Cannot allocate memory\n");

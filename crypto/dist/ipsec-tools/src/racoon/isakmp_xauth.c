@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.11.6.1 2007/08/07 04:49:24 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.11.6.2 2009/04/20 13:35:36 tteras Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1372,8 +1372,7 @@ isakmp_xauth_req(iph1, attr)
 	int ashort = 0;
 	int value = 0;
 	vchar_t *buffer = NULL;
-	char* mraw = NULL;
-	vchar_t *mdata = NULL;
+	char *mraw = NULL, *mdata;
 	char *data;
 	vchar_t *usr = NULL;
 	vchar_t *pwd = NULL;
@@ -1460,16 +1459,16 @@ isakmp_xauth_req(iph1, attr)
 			dlen = ntohs(attr->lorv);
 			if (dlen > 0) {
 				mraw = (char*)(attr + 1);
-				if ((mdata = vmalloc(dlen)) == NULL) {
+				mdata = binsanitize(mraw, dlen);
+				if (mdata == NULL) {
 					plog(LLV_ERROR, LOCATION, iph1->remote,
 					    "Cannot allocate memory\n");
 					return NULL;
 				}
-				memcpy(mdata->v, mraw, mdata->l);
 				plog(LLV_NOTIFY,LOCATION, iph1->remote,
 					"XAUTH Message: '%s'.\n",
-					binsanitize(mdata->v, mdata->l));
-				vfree(mdata);
+					mdata);
+				racoon_free(mdata);
 			}
 		}
 		return NULL;
@@ -1529,8 +1528,7 @@ isakmp_xauth_set(iph1, attr)
 	char *data;
 	struct xauth_state *xst;
 	size_t dlen = 0;
-	char* mraw = NULL;
-	vchar_t *mdata = NULL;
+	char* mraw = NULL, *mdata;
 
 	if ((iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH) == 0) {
 		plog(LLV_ERROR, LOCATION, NULL, 
@@ -1587,16 +1585,16 @@ isakmp_xauth_set(iph1, attr)
 			dlen = ntohs(attr->lorv);
 			if (dlen > 0) {
 				mraw = (char*)(attr + 1);
-				if ((mdata = vmalloc(dlen)) == NULL) {
+				mdata = binsanitize(mraw, dlen);
+				if (mdata == NULL) {
 					plog(LLV_ERROR, LOCATION, iph1->remote,
 					    "Cannot allocate memory\n");
 					return NULL;
 				}
-				memcpy(mdata->v, mraw, mdata->l);
 				plog(LLV_NOTIFY,LOCATION, iph1->remote,
 					"XAUTH Message: '%s'.\n",
-					binsanitize(mdata->v, mdata->l));
-				vfree(mdata);
+					mdata);
+				racoon_free(mdata);
 			}
 		}
 
