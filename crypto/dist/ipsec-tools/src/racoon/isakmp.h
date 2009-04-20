@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.h,v 1.5 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: isakmp.h,v 1.6 2009/04/20 13:24:36 tteras Exp $	*/
 
 /* Id: isakmp.h,v 1.11 2005/04/25 22:19:39 manubsd Exp */
 
@@ -379,7 +379,8 @@ struct isakmp_pl_d {
 struct payload_list {
 	struct payload_list	*next, *prev;
 	vchar_t			*payload;
-	int			payload_type;
+	u_int8_t		payload_type;
+	u_int8_t		free_payload;
 };
 
 

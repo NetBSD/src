@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.14 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.15 2009/04/20 13:24:36 tteras Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -106,8 +106,19 @@ extern caddr_t set_isakmp_header1 __P((vchar_t *, struct ph1handle *, int));
 extern caddr_t set_isakmp_header2 __P((vchar_t *, struct ph2handle *, int));
 extern caddr_t set_isakmp_payload __P((caddr_t, vchar_t *, int));
 
-extern struct payload_list *isakmp_plist_append __P((struct payload_list *plist, 
-	vchar_t *payload, int payload_type));
+extern struct payload_list *isakmp_plist_append_full __P((
+	struct payload_list *plist, vchar_t *payload,
+	u_int8_t payload_type, u_int8_t free));
+
+static inline struct payload_list *isakmp_plist_append(plist, payload, payload_type)
+	struct payload_list *plist;
+	vchar_t *payload;
+	u_int8_t payload_type;
+{
+	return isakmp_plist_append_full(plist, payload, payload_type, 0);
+}
+
+
 extern vchar_t *isakmp_plist_set_all __P((struct payload_list **plist,
 	struct ph1handle *iph1));
 
