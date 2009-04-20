@@ -519,7 +519,7 @@ main (int argc, char **argv)
     int help = 0;		/* Has the user asked for help?  This
 				   lets us support the `cvs -H cmd'
 				   convention to give help for cmd. */
-    static const char short_options[] = "+QqrwtlnRvb:T:e:d:D:Hfz:s:xa";
+    static const char short_options[] = "+QqrwtlnRuvb:T:e:d:D:Hfz:s:xa";
     static struct option long_options[] =
     {
         {"help", 0, NULL, 'H'},
