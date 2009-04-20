@@ -257,8 +257,40 @@ item:
       { pc->days_seen++; }
   | rel
       { pc->rels_seen = true; }
+  | cvsstamp
+      {
+        pc->dates_seen++;
+        pc->zones_seen++;
+        pc->times_seen++;
+      }
   | number
   ;
+
+cvsstamp: tUDECIMAL_NUMBER '.' tUDECIMAL_NUMBER '.' tUDECIMAL_NUMBER
+  {
+    int i;
+    pc->year.negative = 0;
+    pc->year.value = $1.tv_sec;
+
+    if (pc->year.value < 70)
+      pc->year.value += 2000;
+    else if (pc->year.value < 100)
+      pc->year.value += 1900;
+
+    for (i = pc->year.value, pc->year.digits = 0; i; i /= 10, pc->year.digits++)
+      continue;
+    if (pc->year.digits == 0)
+      pc->year.digits++;
+
+    pc->month = $1.tv_nsec / 10000000;
+    pc->day = $3.tv_sec;
+    pc->hour = $3.tv_nsec / 10000000;
+    pc->minutes = $5.tv_sec;
+    pc->seconds.tv_sec = $5.tv_nsec / 10000000;
+    pc->seconds.tv_nsec = 0;
+    pc->meridian = MER24;
+    pc->time_zone = 0;
+  }
 
 time:
     tUNUMBER tMERIDIAN
