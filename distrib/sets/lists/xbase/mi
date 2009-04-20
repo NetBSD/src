@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.72 2009/02/14 11:23:13 abs Exp $
+# $NetBSD: mi,v 1.73 2009/04/20 03:07:13 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1274,12 +1274,12 @@
 ./usr/X11R7/bin/xmlwf					-unknown-	xorg
 ./usr/X11R7/bin/xmodmap					-unknown-	xorg
 ./usr/X11R7/bin/xmore					-unknown-	xorg
-./usr/X11R7/bin/xphelloworld				-unknown-	xorg
-./usr/X11R7/bin/xplsprinters				-unknown-	xorg
-./usr/X11R7/bin/xprehashprinterlist			-unknown-	xorg
+./usr/X11R7/bin/xphelloworld				-obsolete-	obsolete
+./usr/X11R7/bin/xplsprinters				-obsolete-	obsolete
+./usr/X11R7/bin/xprehashprinterlist			-obsolete-	obsolete
 ./usr/X11R7/bin/xprop					-unknown-	xorg
-./usr/X11R7/bin/xpsimplehelloworld			-unknown-	xorg
-./usr/X11R7/bin/xpxthelloworld				-unknown-	xorg
+./usr/X11R7/bin/xpsimplehelloworld			-obsolete-	obsolete
+./usr/X11R7/bin/xpxthelloworld				-obsolete-	obsolete
 ./usr/X11R7/bin/xrandr					-unknown-	xorg
 ./usr/X11R7/bin/xrdb					-unknown-	xorg
 ./usr/X11R7/bin/xrefresh				-unknown-	xorg
@@ -1998,12 +1998,12 @@
 ./usr/X11R7/man/cat1/xmlwf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmodmap.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmore.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xphelloworld.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xplsprinters.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xprehashprinterlist.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xphelloworld.0			-obsolete-	obsolete
+./usr/X11R7/man/cat1/xplsprinters.0			-obsolete-	obsolete
+./usr/X11R7/man/cat1/xprehashprinterlist.0		-obsolete-	obsolete
 ./usr/X11R7/man/cat1/xprop.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xpsimplehelloworld.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xpxthelloworld.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xpsimplehelloworld.0		-obsolete-	obsolete
+./usr/X11R7/man/cat1/xpxthelloworld.0			-obsolete-	obsolete
 ./usr/X11R7/man/cat1/xrandr.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xrdb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xrefresh.0				-unknown-	.cat,xorg
@@ -2118,12 +2118,12 @@
 ./usr/X11R7/man/html1/xmlwf.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmodmap.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmore.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xphelloworld.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xplsprinters.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xprehashprinterlist.html		-unknown-	html,xorg
+./usr/X11R7/man/html1/xphelloworld.html			-obsolete-	obsolete
+./usr/X11R7/man/html1/xplsprinters.html			-obsolete-	obsolete
+./usr/X11R7/man/html1/xprehashprinterlist.html		-obsolete-	obsolete
 ./usr/X11R7/man/html1/xprop.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xpsimplehelloworld.html		-unknown-	html,xorg
-./usr/X11R7/man/html1/xpxthelloworld.html		-unknown-	html,xorg
+./usr/X11R7/man/html1/xpsimplehelloworld.html		-obsolete-	obsolete
+./usr/X11R7/man/html1/xpxthelloworld.html		-obsolete-	obsolete
 ./usr/X11R7/man/html1/xrandr.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xrdb.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/xrefresh.html			-unknown-	html,xorg
@@ -2239,12 +2239,12 @@
 ./usr/X11R7/man/man1/xmlwf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmodmap.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmore.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xphelloworld.1			-unknown-	.man,xorg
-./usr/X11R7/man/man1/xplsprinters.1			-unknown-	.man,xorg
-./usr/X11R7/man/man1/xprehashprinterlist.1		-unknown-	.man,xorg
+./usr/X11R7/man/man1/xphelloworld.1			-obsolete-	obsolete
+./usr/X11R7/man/man1/xplsprinters.1			-obsolete-	obsolete
+./usr/X11R7/man/man1/xprehashprinterlist.1		-obsolete-	obsolete
 ./usr/X11R7/man/man1/xprop.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xpsimplehelloworld.1		-unknown-	.man,xorg
-./usr/X11R7/man/man1/xpxthelloworld.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/xpsimplehelloworld.1		-obsolete-	obsolete
+./usr/X11R7/man/man1/xpxthelloworld.1			-obsolete-	obsolete
 ./usr/X11R7/man/man1/xrandr.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xrdb.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xrefresh.1				-unknown-	.man,xorg

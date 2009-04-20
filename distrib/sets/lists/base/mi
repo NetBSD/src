@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.803 2009/04/12 19:55:05 christos Exp $
+# $NetBSD: mi,v 1.804 2009/04/20 03:07:13 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -492,8 +492,8 @@
 ./usr/X11R7/include/X11/Xcursor			base-x11-root
 ./usr/X11R7/include/X11/Xft			base-x11-root
 ./usr/X11R7/include/X11/Xmu			base-x11-root
-./usr/X11R7/include/X11/XprintAppUtil		base-x11-root
-./usr/X11R7/include/X11/XprintUtil		base-x11-root
+./usr/X11R7/include/X11/XprintAppUtil		base-obsolete		obsolete
+./usr/X11R7/include/X11/XprintUtil		base-obsolete		obsolete
 ./usr/X11R7/include/X11/Xtrans			base-x11-root
 ./usr/X11R7/include/X11/bitmaps			base-x11-root
 ./usr/X11R7/include/X11/extensions		base-x11-root

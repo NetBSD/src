@@ -1,6 +1,6 @@
 #! /bin/sh
 
-list='expat fontconfig freetype libFS libICE libSM libX11 libXScrnSaver libXTrap libXau libXcomposite libXcursor libXdamage libXdmcp libXevie libXext libXfixes libXfont libXft libXi libXinerama libXmu libXp libXpm libXprintUtil libXrandr libXrender libXres libXt libXtst libXv libXvMC libXxf86dga libXxf86misc libXxf86vm libdrm libfontenc libxkbfile libxkbui'
+list='expat fontconfig freetype libFS libICE libSM libX11 libXScrnSaver libXTrap libXau libXcomposite libXcursor libXdamage libXdmcp libXevie libXext libXfixes libXfont libXft libXi libXinerama libXmu libXp libXpm libXrandr libXrender libXres libXt libXtst libXv libXvMC libXxf86dga libXxf86misc libXxf86vm libdrm libfontenc libxkbfile libxkbui'
 
 DISTFILES=${DISTFILES-/usr/pkgsrc/distfiles}
 
