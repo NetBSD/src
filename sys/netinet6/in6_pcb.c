@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.103 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.104 2009/04/20 18:14:30 elad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.103 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.104 2009/04/20 18:14:30 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.103 2009/04/18 14:58:05 tsutsui Exp $"
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -183,150 +184,202 @@ in6_pcballoc(struct socket *so, void *v)
 	return (0);
 }
 
+/*
+ * Bind address from sin6 to in6p.
+ */
 int
-in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
+in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 {
-	struct in6pcb *in6p = v;
-	struct socket *so = in6p->in6p_socket;
+	int error;
+
+	/*
+	 * We should check the family, but old programs
+	 * incorrectly fail to intialize it.
+	 */
+	if (sin6->sin6_family != AF_INET6)
+		return (EAFNOSUPPORT);
+
+#ifndef INET
+	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
+		return (EADDRNOTAVAIL);
+#endif
+
+	if ((error = sa6_embedscope(sin6, ip6_use_defzone)) != 0)
+		return (error);
+
+	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+		if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY) != 0)
+			return (EINVAL);
+		if (sin6->sin6_addr.s6_addr32[3]) {
+			struct sockaddr_in sin;
+
+			memset(&sin, 0, sizeof(sin));
+			sin.sin_len = sizeof(sin);
+			sin.sin_family = AF_INET;
+			bcopy(&sin6->sin6_addr.s6_addr32[3],
+			    &sin.sin_addr, sizeof(sin.sin_addr));
+			if (ifa_ifwithaddr((struct sockaddr *)&sin) == 0)
+				return EADDRNOTAVAIL;
+		}
+	} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
+		struct ifaddr *ia = NULL;
+
+		if ((in6p->in6p_flags & IN6P_FAITH) == 0 &&
+		    (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
+			return (EADDRNOTAVAIL);
+
+		/*
+		 * bind to an anycast address might accidentally
+		 * cause sending a packet with an anycast source
+		 * address, so we forbid it.
+		 *
+		 * We should allow to bind to a deprecated address,
+		 * since the application dare to use it.
+		 * But, can we assume that they are careful enough
+		 * to check if the address is deprecated or not?
+		 * Maybe, as a safeguard, we should have a setsockopt
+		 * flag to control the bind(2) behavior against
+		 * deprecated addresses (default: forbid bind(2)).
+		 */
+		if (ia &&
+		    ((struct in6_ifaddr *)ia)->ia6_flags &
+		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
+			return (EADDRNOTAVAIL);
+	}
+
+
+	in6p->in6p_laddr = sin6->sin6_addr;
+
+
+	return (0);
+}
+
+/*
+ * Bind port from sin6 to in6p.
+ */
+int
+in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
+{
 	struct inpcbtable *table = in6p->in6p_table;
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)NULL;
-	u_int16_t lport = 0;
+	struct socket *so = in6p->in6p_socket;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 
-	if (in6p->in6p_af != AF_INET6)
-		return (EINVAL);
-
-	if (in6p->in6p_lport || !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
-		return (EINVAL);
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
 	   ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
 	    (so->so_options & SO_ACCEPTCONN) == 0))
 		wild = 1;
-	if (nam) {
-		int error;
 
-		sin6 = mtod(nam, struct sockaddr_in6 *);
-		if (nam->m_len != sizeof(*sin6))
-			return (EINVAL);
-		/*
-		 * We should check the family, but old programs
-		 * incorrectly fail to intialize it.
-		 */
-		if (sin6->sin6_family != AF_INET6)
-			return (EAFNOSUPPORT);
-
-#ifndef INET
-		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
-			return (EADDRNOTAVAIL);
-#endif
-
-		if ((error = sa6_embedscope(sin6, ip6_use_defzone)) != 0)
-			return (error);
-
-		lport = sin6->sin6_port;
-		if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
-			/*
-			 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
-			 * allow compepte duplication of binding if
-			 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
-			 * and a multicast address is bound on both
-			 * new and duplicated sockets.
-			 */
-			if (so->so_options & SO_REUSEADDR)
-				reuseport = SO_REUSEADDR|SO_REUSEPORT;
-		} else if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
-			if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY) != 0)
-				return (EINVAL);
-			if (sin6->sin6_addr.s6_addr32[3]) {
-				struct sockaddr_in sin;
-
-				memset(&sin, 0, sizeof(sin));
-				sin.sin_len = sizeof(sin);
-				sin.sin_family = AF_INET;
-				bcopy(&sin6->sin6_addr.s6_addr32[3],
-				    &sin.sin_addr, sizeof(sin.sin_addr));
-				if (ifa_ifwithaddr((struct sockaddr *)&sin) == 0)
-					return EADDRNOTAVAIL;
-			}
-		} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-			struct ifaddr *ia = NULL;
-
-			if ((in6p->in6p_flags & IN6P_FAITH) == 0 &&
-			    (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
-				return (EADDRNOTAVAIL);
-
-			/*
-			 * bind to an anycast address might accidentally
-			 * cause sending a packet with an anycast source
-			 * address, so we forbid it.
-			 *
-			 * We should allow to bind to a deprecated address,
-			 * since the application dare to use it.
-			 * But, can we assume that they are careful enough
-			 * to check if the address is deprecated or not?
-			 * Maybe, as a safeguard, we should have a setsockopt
-			 * flag to control the bind(2) behavior against
-			 * deprecated addresses (default: forbid bind(2)).
-			 */
-			if (ia &&
-			    ((struct in6_ifaddr *)ia)->ia6_flags &
-			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
-				return (EADDRNOTAVAIL);
-		}
-		if (lport) {
 #ifndef IPNOPRIVPORTS
-			int priv;
+	int priv;
 
-			/*
-			 * NOTE: all operating systems use suser() for
-			 * privilege check!  do not rewrite it into SS_PRIV.
-			 */
-			priv = (l && !kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL)) ? 1 : 0;
-			/* GROSS */
-			if (ntohs(lport) < IPV6PORT_RESERVED && !priv)
-				return (EACCES);
+	/*
+	 * NOTE: all operating systems use suser() for
+	 * privilege check!  do not rewrite it into SS_PRIV.
+	 */
+	priv = (l && !kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) ? 1 : 0;
+	/* GROSS */
+	if (ntohs(sin6->sin6_port) < IPV6PORT_RESERVED && !priv)
+		return (EACCES);
 #endif
 
-			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
-#ifdef INET
-				struct inpcb *t;
-
-				t = in_pcblookup_port(table,
-				    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
-				    lport, wild);
-				if (t && (reuseport & t->inp_socket->so_options) == 0)
-					return (EADDRINUSE);
-#else
-				return (EADDRNOTAVAIL);
-#endif
-			}
-
-			{
-				struct in6pcb *t;
-
-				t = in6_pcblookup_port(table, &sin6->sin6_addr,
-				    lport, wild);
-				if (t && (reuseport & t->in6p_socket->so_options) == 0)
-					return (EADDRINUSE);
-			}
-		}
-		in6p->in6p_laddr = sin6->sin6_addr;
+	if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+		/*
+		 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
+		 * allow compepte duplication of binding if
+		 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
+		 * and a multicast address is bound on both
+		 * new and duplicated sockets.
+		 */
+		if (so->so_options & SO_REUSEADDR)
+			reuseport = SO_REUSEADDR|SO_REUSEPORT;
 	}
 
-	if (lport == 0) {
+	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+#ifdef INET
+		struct inpcb *t;
+
+		t = in_pcblookup_port(table,
+		    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
+		    sin6->sin6_port, wild);
+		if (t && (reuseport & t->inp_socket->so_options) == 0)
+			return (EADDRINUSE);
+#else
+		return (EADDRNOTAVAIL);
+#endif
+	}
+
+	{
+		struct in6pcb *t;
+
+		t = in6_pcblookup_port(table, &sin6->sin6_addr,
+		    sin6->sin6_port, wild);
+		if (t && (reuseport & t->in6p_socket->so_options) == 0)
+			return (EADDRINUSE);
+	}
+
+	if (sin6->sin6_port == 0) {
 		int e;
 		e = in6_pcbsetport(&in6p->in6p_laddr, in6p, l);
 		if (e != 0)
 			return (e);
 	} else {
-		in6p->in6p_lport = lport;
+		in6p->in6p_lport = sin6->sin6_port;
 		in6_pcbstate(in6p, IN6P_BOUND);
 	}
 
 	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
 	LIST_INSERT_HEAD(IN6PCBHASH_PORT(table, in6p->in6p_lport),
 	    &in6p->in6p_head, inph_lhash);
+
+	return (0);
+}
+
+int
+in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
+{
+	struct in6pcb *in6p = v;
+	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)NULL;
+	int error;
+
+	if (in6p->in6p_af != AF_INET6)
+		return (EINVAL);
+
+	/*
+	 * If we already have a local port or a local address it means we're
+	 * bounded.
+	 */
+	if (in6p->in6p_lport || !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
+		return (EINVAL);
+
+	if (nam != NULL) {
+		/* We were provided a sockaddr_in6 to use. */
+		sin6 = mtod(nam, struct sockaddr_in6 *);
+		if (nam->m_len != sizeof(*sin6))
+			return (EINVAL);
+	} else {
+		/* We always bind to *something*, even if it's "anything". */
+		sin6 = (struct sockaddr_in6 *)
+		    __UNCONST(in6p->in6p_socket->so_proto->pr_domain->dom_sa_any);
+	}
+
+	/* Bind address. */
+	error = in6_pcbbind_addr(in6p, sin6, l);
+	if (error)
+		return (error);
+
+	/* Bind port. */
+	error = in6_pcbbind_port(in6p, sin6, l);
+	if (error) {
+		/*
+		 * Reset the address here to "any" so we don't "leak" the
+		 * in6pcb.
+		 */
+		in6p->in6p_laddr = in6addr_any;
+
+		return (error);
+	}
+
 
 #if 0
 	in6p->in6p_flowinfo = 0;	/* XXX */
