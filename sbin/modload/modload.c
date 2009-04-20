@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.51 2005/06/27 01:00:05 christos Exp $	*/
+/*	$NetBSD: modload.c,v 1.51.28.1 2009/04/20 22:24:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.51 2005/06/27 01:00:05 christos Exp $");
+__RCSID("$NetBSD: modload.c,v 1.51.28.1 2009/04/20 22:24:37 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -356,6 +356,7 @@ main(int argc, char **argv)
 			    modobj);
 	}
 
+#if 0
 	/*
 	 * Check if /dev/ksyms can be used.
 	 */
@@ -368,6 +369,7 @@ main(int argc, char **argv)
 			kname = _PATH_KSYMS;
 		}
 	}
+#endif
 
 	/*
 	 * Determine name of kernel to use
