@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.89 2009/04/20 05:12:21 mrg Exp $
+#	 $NetBSD: mi,v 1.90 2009/04/20 21:33:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9242,7 +9242,7 @@
 ./usr/libdata/lint/llib-lXmuu.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXmuu.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXp.ln				-unknown-	lint,x11
-./usr/libdata/lint/llib-lXp.ln				-obsolete-	obsolete
+./usr/libdata/lint/llib-lXp.ln				-obsolete-	obsolete,xorg
 ./usr/libdata/lint/llib-lXpm.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXpm.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXprintAppUtil.ln		-obsolete-	obsolete
@@ -9283,7 +9283,7 @@
 ./usr/libdata/lint/llib-lfreetype.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lglut.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-llbxutil.ln			-unknown-	lint,x11
-./usr/libdata/lint/llib-llbxutil.ln			-obsolete-	obsolete
+./usr/libdata/lint/llib-llbxutil.ln			-obsolete-	obsolete,xorg
 ./usr/libdata/lint/llib-llisp.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lmp.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-loldX.ln			-unknown-	lint,x11
