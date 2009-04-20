@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.17 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.18 2009/04/20 13:22:41 tteras Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -959,12 +959,14 @@ eay_check_x509sign(source, sig, cert)
 	evp = X509_get_pubkey(x509);
 	if (! evp) {
 		plog(LLV_ERROR, LOCATION, NULL, "X509_get_pubkey(): %s\n", eay_strerror());
+		X509_free(x509);
 		return -1;
 	}
 
 	res = eay_rsa_verify(source, sig, evp->pkey.rsa);
 
 	EVP_PKEY_free(evp);
+	X509_free(x509);
 
 	return res;
 }
