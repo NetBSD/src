@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.29 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.30 2009/04/20 13:22:00 tteras Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -325,16 +325,18 @@ admin_process(so2, combuf)
 #ifdef ENABLE_HYBRID
 	case ADMIN_LOGOUT_USER: {
 		struct ph1handle *iph1;
-		char *user;
-		int found = 0;
+		char user[LOGINLEN+1];
+		int found = 0, len = com->ac_len - sizeof(com);
 
-		if (com->ac_len > sizeof(com) + LOGINLEN + 1) {
+		if (len > LOGINLEN) {
 			plog(LLV_ERROR, LOCATION, NULL,
 			    "malformed message (login too long)\n");
 			break;
 		}
 
-		user = (char *)(com + 1);
+		memcpy(user, (char *)(com + 1), len);
+		user[len] = 0;
+
 		found = purgeph1bylogin(user);
 		plog(LLV_INFO, LOCATION, NULL, 
 		    "deleted %d SA for user \"%s\"\n", found, user);
