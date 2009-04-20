@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2009/04/20 03:07:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2009/04/20 04:03:49 mrg Exp $
 
 # build libraries for xorg
 
 SUBDIR=	expat libfontenc freetype libFS libICE libOSMesa \
 	libXau libXdmcp libdrm pixman xkbdata \
 	.WAIT \
-	dri fontconfig libSM libX11 liblbxutil \
+	dri fontconfig libSM libX11 \
 	.WAIT \
 	libXcomposite libXdamage libXext libXfixes libXt \
 	libxkbfile \
