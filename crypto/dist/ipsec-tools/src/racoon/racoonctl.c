@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.7.6.1 2008/07/15 00:55:48 mgrooms Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.7.6.2 2009/04/20 13:32:57 tteras Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -834,15 +834,17 @@ f_logoutusr(ac, av)
 	vchar_t *buf;
 	struct admin_com *head;
 	char *user;
+	size_t userlen;
 
 	/* need username */
 	if (ac < 1)
 		errx(1, "insufficient arguments");
 	user = av[0];
-	if ((user == NULL) || (strlen(user) > LOGINLEN))
+	userlen = strlen(user);
+	if ((user == NULL) || (userlen > LOGINLEN))
 		errx(1, "bad login (too long?)");
 
-	buf = vmalloc(sizeof(*head) + strlen(user) + 1);
+	buf = vmalloc(sizeof(*head) + userlen);
 	if (buf == NULL)
 		return NULL;
 
@@ -852,7 +854,7 @@ f_logoutusr(ac, av)
 	head->ac_errno = 0;
 	head->ac_proto = 0;
 
-	strncpy((char *)(head + 1), user, LOGINLEN);
+	strncpy((char *)(head + 1), user, userlen);
 
 	return buf;
 }
