@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.53 2009/03/12 23:05:27 he Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.54 2009/04/20 13:24:36 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -3029,7 +3029,8 @@ log_ph1established(iph1)
 }
 
 struct payload_list *
-isakmp_plist_append (struct payload_list *plist, vchar_t *payload, int payload_type)
+isakmp_plist_append_full (struct payload_list *plist, vchar_t *payload,
+			  u_int8_t payload_type, u_int8_t free_payload)
 {
 	if (! plist) {
 		plist = racoon_malloc (sizeof (struct payload_list));
@@ -3044,6 +3045,7 @@ isakmp_plist_append (struct payload_list *plist, vchar_t *payload, int payload_t
 	plist->next = NULL;
 	plist->payload = payload;
 	plist->payload_type = payload_type;
+	plist->free_payload = free_payload;
 
 	return plist;
 }
@@ -3084,6 +3086,8 @@ isakmp_plist_set_all (struct payload_list **plist, struct ph1handle *iph1)
 		p = set_isakmp_payload (p, ptr->payload, ptr->next ? ptr->next->payload_type : ISAKMP_NPTYPE_NONE);
 		first = ptr;
 		ptr = ptr->next;
+		if (first->free_payload)
+			vfree(first->payload);
 		racoon_free (first);
 		/* ptr->prev = NULL; first = NULL; ... omitted.  */
 		n++;
