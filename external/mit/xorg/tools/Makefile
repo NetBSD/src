@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/20 05:11:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SUBDIR+= makestrs .WAIT
 
 # XXX pswrap/gen_matypes -- missing
 
-SUBDIR+=bdftopcf fc-cache ucs2any mkg3states
+SUBDIR+=bdftopcf fc-cache ucs2any
 SUBDIR+=makekeys mkfontscale .WAIT xkbcomp
 
 .include <bsd.subdir.mk>
