@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.c,v 1.4.6.1 2007/11/06 16:41:27 vanhu Exp $	*/
+/*	$NetBSD: plog.c,v 1.4.6.2 2009/04/20 13:35:36 tteras Exp $	*/
 
 /* Id: plog.c,v 1.11 2006/06/20 09:57:31 vanhu Exp */
 
@@ -251,15 +251,18 @@ binsanitize(binstr, n)
 {
 	int p,q;
 	char* d;
+
+	d = racoon_malloc(n + 1);
 	for (p = 0, q = 0; p < n; p++) {
-                 if (isgraph((int)binstr[p])) {
-			binstr[q++] = binstr[p];
+		if (isgraph((int)binstr[p])) {
+			d[q++] = binstr[p];
 		} else {
-			if (q && binstr[q - 1] != ' ')
-				 binstr[q++] = ' ';
+			if (q && d[q - 1] != ' ')
+				d[q++] = ' ';
 		}
 	}
-	binstr[q++] = '\0';
-	return binstr;
+	d[q++] = '\0';
+
+	return d;
 }
 	
