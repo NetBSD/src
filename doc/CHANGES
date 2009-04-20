@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1209 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1210 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -178,3 +178,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	    DHCID, NSEC3, NSEC3PARAM, HIP and DLV, various new api functions.
 	    [christos 20090412]
 	dhcpcd: Import dhcpcd-4.0.13 [roy 20090417]
+	ale(4):	Add a driver for Attensic/Atheros L1E Gigabit Ethernet.
+		From OpenBSD and improvements from Kevin Lahey. [cegger 20090420]
