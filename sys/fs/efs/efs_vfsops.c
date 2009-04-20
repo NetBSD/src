@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.17 2008/12/01 14:34:50 pooka Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.18 2009/04/20 21:29:01 elad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.17 2008/12/01 14:34:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.18 2009/04/20 21:29:01 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * permissions on the device.
 	 */
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		err = VOP_ACCESS(devvp, mode, l->l_cred);
+		err = VOP_ACCESS(devvp, VREAD, l->l_cred);
 		if (err) {
 			vput(devvp);
 			return (err);
