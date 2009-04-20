@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.37 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.38 2009/04/20 13:23:54 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -340,8 +340,7 @@ isakmp_log_notify(iph1, notify, exchange)
 	const char *exchange;
 {
 	u_int type;
-	vchar_t *ndata;
-	char *nraw, *nhex;
+	char *nraw, *ndata, *nhex;
 	size_t l;
 
 	type = ntohs(notify->type);
@@ -361,13 +360,12 @@ isakmp_log_notify(iph1, notify, exchange)
 	if (l > 0) {
 		if (type >= ISAKMP_NTYPE_MINERROR &&
 		    type <= ISAKMP_NTYPE_MAXERROR) {
-			ndata = vmalloc(l);
+			ndata = binsanitize(nraw, l);
 			if (ndata != NULL) {
-				memcpy(ndata->v, nraw, ndata->l);
 				plog(LLV_ERROR, LOCATION, iph1->remote,
 					"error message: '%s'.\n",
-					binsanitize(ndata->v, ndata->l));
-				vfree(ndata);
+					ndata);
+				racoon_free(ndata);
 			} else {
 				plog(LLV_ERROR, LOCATION, iph1->remote,
 					"Cannot allocate memory\n");
