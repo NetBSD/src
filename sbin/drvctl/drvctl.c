@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.8 2009/04/04 22:05:47 joerg Exp $ */
+/* $NetBSD: drvctl.c,v 1.9 2009/04/20 21:40:42 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -35,7 +36,7 @@
 #include <sys/ioctl.h>
 #include <sys/drvctlio.h>
 
-#define OPTS "QRSa:dlpr"
+#define OPTS "QRSa:dlnpr"
 
 #define	OPEN_MODE(mode)							\
 	(((mode) == 'd' || (mode) == 'r') ? O_RDWR			\
@@ -62,6 +63,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
+	bool nflag = false;
 	int c, mode;
 	char *attr = 0;
 	extern char *optarg;
@@ -94,6 +96,9 @@ main(int argc, char **argv)
 			break;
 		case 'a':
 			attr = optarg;
+			break;
+		case 'n':
+			nflag = true;
 			break;
 		case '?':
 		default:
@@ -153,8 +158,11 @@ main(int argc, char **argv)
 			err(6, "DRVLISTDEV: number of children grew");
 
 		for (i = 0; i < (int)laa.l_children; i++) {
-			printf("%s%s%s\n", laa.l_devname, (argc ? " " : ""),
-			    laa.l_childname[i]);
+			if (!nflag) {
+				printf("%s ",
+				    (argc == 0) ? "root" : laa.l_devname);
+			}
+			printf("%s\n", laa.l_childname[i]);
 		}
 		break;
 	case 'r':
