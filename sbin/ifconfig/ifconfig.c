@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.217 2009/04/21 22:13:10 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.218 2009/04/21 22:46:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.217 2009/04/21 22:13:10 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.218 2009/04/21 22:46:39 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1152,7 +1152,6 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	statistics_func_t *statistics_f;
 	struct ifdatareq ifdr;
 	struct ifreq ifr;
-	char hbuf[NI_MAXHOST];
 	char fbuf[BUFSIZ];
 	int af, s;
 	const char *ifname;
@@ -1202,11 +1201,7 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	SIMPLEQ_FOREACH(status_f, &status_funcs, f_next)
 		(*status_f->f_func)(env, oenv);
 
-	if (sdl != NULL &&
-	    getnameinfo(sdl, sdl->sa_len,
-		hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0 &&
-	    hbuf[0] != '\0')
-		printf("\taddress: %s\n", hbuf);
+	print_link_addresses(env, true);
 
 	media_status(env, oenv);
 
