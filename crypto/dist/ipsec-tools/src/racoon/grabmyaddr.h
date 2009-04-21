@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.h,v 1.5 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.h,v 1.6 2009/04/21 18:38:32 tteras Exp $	*/
 
 /* Id: grabmyaddr.h,v 1.5 2004/06/11 16:00:16 ludvigm Exp */
 
@@ -34,6 +34,7 @@
 #ifndef _GRABMYADDR_H
 #define _GRABMYADDR_H
 
+extern void myaddr_init_lists __P((void));
 extern int myaddr_init __P((void));
 extern void myaddr_close __P((void));
 
