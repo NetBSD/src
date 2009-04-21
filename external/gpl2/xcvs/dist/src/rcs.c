@@ -3511,6 +3511,11 @@ new_keywords (void)
     KEYWORD_INIT (new, KEYWORD_REVISION, "Revision");
     KEYWORD_INIT (new, KEYWORD_SOURCE, "Source");
     KEYWORD_INIT (new, KEYWORD_STATE, "State");
+    KEYWORD_INIT (new, KEYWORD_STATE, "State");
+    new[KEYWORD_LOCALID].string = NULL;
+    new[KEYWORD_LOCALID].len = 0;
+    new[KEYWORD_LOCALID].expandto = KEYWORD_LOCALID;
+    new[KEYWORD_LOCALID].expandit = false;
 
     return new;
 }
