@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2006/11/14 14:09:54 drochner Exp $
+# $NetBSD: Makefile,v 1.3 2009/04/21 15:17:58 tsutsui Exp $
 
-SUBDIR=	bootxx_ffsv1
+SUBDIR=	bootxx_ffsv1 bootxx_ffsv2
 
 LIBOBJ= ${.OBJDIR}
 .MAKEOVERRIDES+= LIBOBJ
