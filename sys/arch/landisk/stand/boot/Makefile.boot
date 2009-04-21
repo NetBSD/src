@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.1 2006/09/01 21:26:18 uwe Exp $
+# $NetBSD: Makefile.boot,v 1.2 2009/04/21 15:17:58 tsutsui Exp $
 
 PROG?=		boot
 
@@ -17,7 +17,8 @@ SRCS+=	vers.c
 LDFLAGS+=	-e boot_start
 
 CFLAGS=
-CPPFLAGS=	-DSUPPORT_UFS
+CPPFLAGS=	-DSUPPORT_FFSv1
+CPPFLAGS+=	-DSUPPORT_FFSv2
 CPPFLAGS+=	-DSUPPORT_DOSFS
 CPPFLAGS+=	-DDBMONITOR
 #CPPFLAGS+=	-DDEBUG
