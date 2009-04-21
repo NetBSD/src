@@ -1,10 +1,10 @@
-/*	$NetBSD: sdmmcdevs.h,v 1.1 2009/04/21 03:00:31 nonaka Exp $	*/
+/*	$NetBSD: sdmmcdevs.h,v 1.2 2009/04/21 03:10:41 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		NetBSD
+ *		NetBSD: sdmmcdevs,v 1.1 2009/04/21 03:00:31 nonaka Exp 
  */
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
