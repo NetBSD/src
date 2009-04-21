@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.138 2009/04/19 15:54:04 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.139 2009/04/21 01:58:59 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6119,6 +6119,7 @@ sbin/mount_nfs/mount_nfs.8			1.37-1.39
 	syntax. Fixes PR 41238.
 	[wiz, ticket #707]
 
+sbin/modload/modload.c				patch
 sys/uvm/uvm_km.c				1.102
 sys/uvm/uvm_km.h				1.18
 sys/uvm/uvm_map.c				1.264
@@ -6127,7 +6128,10 @@ sys/uvm/uvm_map.c				1.264
 	VM_MAP_IS_KERNEL(map) where map is outside the range of
 	kernel_map.  Fixes PR port-amd64/32816, making LKMs
 	loadable on amd64.
-	[mrg, ticket #708]
+	--
+	Disable ksyms support in modload(8), falling back to using
+	sysctl to obtain the name of the booted kernel.
+	[mrg/ad, ticket #708]
 
 dist/nvi/common/conv.h				1.4 via patch
 dist/nvi/vi/vs_line.c				1.5 via patch
@@ -6141,4 +6145,23 @@ sys/dist/ipf/netinet/ip_nat.c			1.39
 	Fix problems on UDP NFS with ipnat as mentioned in PRs
 	kern/38773 and kern/41074.
 	[tsutsui, ticket #710]
+
+sys/netinet6/ip6_output.c			1.137
+
+	Fix traversing of a control mbuf in the case that a message
+	len is not aligned wrt CMSG_ALIGN - the length counter drops
+	below 0 in this case which was not checked for.
+	[drochner, ticket #713]
+
+sbin/fdisk/fdisk.c				1.119
+
+	When using -s flag, read start and size as unsigned to allow
+	for larger disks.
+	[sborrill, ticket #712]
+
+external/mit/xorg/bin/xterm/Makefile		1.3
+
+	Turn on PASTE64 to handle large cut-n-paste buffers like the
+	old xterm did.
+	[agc, ticket #711]
 
