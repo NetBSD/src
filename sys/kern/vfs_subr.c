@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.372 2009/04/20 18:06:26 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.373 2009/04/21 00:02:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.372 2009/04/20 18:06:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.373 2009/04/21 00:02:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -3312,7 +3312,7 @@ common_chown_allowed(kauth_cred_t cred, uid_t cur_uid, gid_t cur_gid,
 		/*
 		 * You don't try to change ownership, and...
 		 */
-		 if (new_uid != cur_uid) {
+		if (new_uid != cur_uid) {
 			goto out;
 		}
 
