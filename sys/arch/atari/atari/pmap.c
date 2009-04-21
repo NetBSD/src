@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 2009/04/21 21:29:59 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2009/03/18 16:00:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2009/04/21 21:29:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,7 +915,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 extern int kernel_copyback;
 
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	u_int *pte;
 	int npte;

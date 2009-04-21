@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2009/03/18 10:22:36 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2009/04/21 21:30:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2009/04/21 21:30:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ pmap_deactivate(struct lwp *l)
 }
 
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct vm_page *pg;
 	struct vm_page_md *pvh;
