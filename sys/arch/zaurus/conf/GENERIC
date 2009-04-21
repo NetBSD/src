@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.23 2009/03/13 13:55:18 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.24 2009/04/21 03:00:30 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -324,15 +324,14 @@ ukphy*  at mii? phy ?                   # generic unknown PHYs
 urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
 
 
-
 # integrated MMC/SD contoller
-#pxamci0 at pxaip? addr 0x41100000 size 0x48
-#sdmmc* at pxamci?
+pxamci0 at pxaip? addr 0x41100000 size 0x48
+sdmmc* at pxamci?
 #options 	PXAMCI_DEBUG
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 
-#ld* at sdmmc?				# MMC/SD/SDHC card
+ld* at sdmmc?				# MMC/SD/SDHC card
 
 
 # Pseudo-Devices
