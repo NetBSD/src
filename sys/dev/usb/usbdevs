@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.523 2009/02/14 17:01:23 jakllsch Exp $
+$NetBSD: usbdevs,v 1.524 2009/04/21 16:23:36 taca Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1910,6 +1910,7 @@ product RALINK_2 RT2573		0x2573	RT2573
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial adapter REX-USB60
+product RATOC REXUSB60F		0xb020	USB serial adapter REX-USB60F
 
 /* Realtek products */
 product REALTEK RTL8150L	0x8150	RTL8150L USB-Ethernet Bridge
