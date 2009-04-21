@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.19 2009/03/18 17:06:44 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.20 2009/04/21 21:29:59 cegger Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2009/03/18 17:06:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2009/04/21 21:29:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1391,7 +1391,7 @@ pmap_phys_address(paddr_t ppn)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
         pmap_t oldpmap;
         vaddr_t opa;

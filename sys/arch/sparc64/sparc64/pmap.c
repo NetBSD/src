@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.235 2009/03/18 17:06:47 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.236 2009/04/21 21:30:00 cegger Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235 2009/03/18 17:06:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236 2009/04/21 21:30:00 cegger Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1683,7 +1683,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
  */
 
 int
-pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pte_t tte;
 	int64_t data;

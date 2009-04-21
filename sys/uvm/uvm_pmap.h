@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.26 2009/04/18 08:48:47 cegger Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.27 2009/04/21 21:30:01 cegger Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -135,7 +135,7 @@ void		pmap_copy_page(paddr_t, paddr_t);
 #endif
 struct pmap	*pmap_create(void);
 void		pmap_destroy(pmap_t);
-int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #if defined(PMAP_GROWKERNEL)
 vaddr_t		pmap_growkernel(vaddr_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.167 2009/03/18 17:06:48 cegger Exp $	   */
+/*	$NetBSD: pmap.c,v 1.168 2009/04/21 21:30:00 cegger Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2009/04/21 21:30:00 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1056,7 +1056,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
  * upgrades mappings to more "rights".
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t v, paddr_t p, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t v, paddr_t p, vm_prot_t prot, u_int flags)
 {
 	struct pv_entry *pv, *tmp;
 	int s, newpte, oldpte;
