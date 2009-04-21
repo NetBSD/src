@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.76 2009/04/15 22:36:04 joerg Exp $
+# $NetBSD: Makefile,v 1.77 2009/04/21 16:08:57 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,12 +14,12 @@
 # src/sbin/rcorder.
 
 CONFIGFILES=\
-		DAEMON LOGIN NETWORKING SERVERS \
+		DAEMON DISKS LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
 		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
-		fsck ftp_proxy ftpd \
+		fsck fsck_root ftp_proxy ftpd \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \
