@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.933 2009/04/20 20:49:21 cegger Exp $
+# $NetBSD: GENERIC,v 1.934 2009/04/21 03:00:29 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.933 $"
+#ident 		"GENERIC-$Revision: 1.934 $"
 
 maxusers	64		# estimated number of users
 
@@ -1240,6 +1240,15 @@ fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*  at pci?				# SD Host Controller
+sdmmc* at sdhc?				# SD/MMC bus
+
+ld*	at sdmmc?
+
+
 # Audio Devices
 
 # PCI audio devices
@@ -1356,6 +1365,9 @@ radio* at bktr?
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
+# Bluetooth SDIO Controller
+sbt* at sdmmc?
+
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
@@ -1364,6 +1376,7 @@ bthub* at bcsp?
 bthub* at bt3c?
 bthub* at btbc?
 bthub* at btuart?
+bthub* at sbt?
 bthub* at ubt?
 
 # Bluetooth HID support

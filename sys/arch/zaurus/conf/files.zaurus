@@ -1,4 +1,4 @@
-#	$NetBSD: files.zaurus,v 1.7 2009/03/11 09:02:04 nonaka Exp $
+#	$NetBSD: files.zaurus,v 1.8 2009/04/21 03:00:30 nonaka Exp $
 #
 # Sharp Zaurus specific configuration info
 #
@@ -16,7 +16,7 @@ include "dev/ata/files.ata"
 include "dev/i2o/files.i2o"
 
 # Machine-independent SD/MMC drivers
-#include "dev/sdmmc/files.sdmmc"
+include "dev/sdmmc/files.sdmmc"
 
 # HPC
 include "arch/hpc/conf/files.hpc"
@@ -98,8 +98,8 @@ attach zusb at pxaip
 file arch/zaurus/dev/zusb.c		zusb
 
 # MMC/SD controller
-#attach pxamci at pxaip with zmci
-#file arch/zaurus/dev/zmci.c		zmci
+attach pxamci at pxaip with zmci
+file arch/zaurus/dev/zmci.c		zmci
 
 # PCMCIA drivers
 include "dev/pcmcia/files.pcmcia"
