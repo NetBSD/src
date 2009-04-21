@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.43 2009/03/14 21:04:11 dsl Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.44 2009/04/21 21:29:59 cegger Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.43 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.44 2009/04/21 21:29:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1128,7 +1128,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte;
 	int npte;

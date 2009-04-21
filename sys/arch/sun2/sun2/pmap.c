@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2008/12/10 11:10:19 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 2009/04/21 21:30:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2008/12/10 11:10:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2009/04/21 21:30:00 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1939,7 +1939,7 @@ pmap_reference(pmap_t pmap)
  *	insert this page into the given map NOW.
  */
 int 
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int new_pte, s;
 	bool wired = (flags & PMAP_WIRED) != 0;

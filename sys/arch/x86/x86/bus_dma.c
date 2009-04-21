@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.50 2009/04/18 08:51:45 cegger Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.51 2009/04/21 21:30:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.50 2009/04/18 08:51:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.51 2009/04/21 21:30:01 cegger Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1022,7 +1022,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int curseg;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
-	int pmapflags = PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE;
+	u_int pmapflags = PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE;
 
 	size = round_page(size);
 	if (flags & BUS_DMA_NOCACHE)

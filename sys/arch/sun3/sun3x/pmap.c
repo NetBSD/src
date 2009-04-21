@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2009/03/18 17:06:47 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2009/04/21 21:30:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2009/03/18 17:06:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2009/04/21 21:30:00 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1662,7 +1662,7 @@ pmap_stroll(pmap_t pmap, vaddr_t va, a_tmgr_t **a_tbl, b_tmgr_t **b_tbl,
  * This function ought to be easier to read.
  */
 int 
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	bool insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */
