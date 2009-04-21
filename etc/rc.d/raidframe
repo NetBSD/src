@@ -1,9 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: raidframe,v 1.9 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: raidframe,v 1.10 2009/04/21 16:08:57 joerg Exp $
 #
 
-# PROVIDE: disks
+# PROVIDE: raidframe
+# BEFORE:  DISKS
 
 $_rc_subr_loaded . /etc/rc.subr
 
