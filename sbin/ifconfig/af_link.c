@@ -1,4 +1,4 @@
-/*	$NetBSD: af_link.c,v 1.4 2009/04/21 18:00:25 dyoung Exp $	*/
+/*	$NetBSD: af_link.c,v 1.5 2009/04/21 21:42:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_link.c,v 1.4 2009/04/21 18:00:25 dyoung Exp $");
+__RCSID("$NetBSD: af_link.c,v 1.5 2009/04/21 21:42:35 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -74,12 +74,12 @@ static void link_constructor(void) __attribute__((constructor));
 static void
 link_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
-	const char *delim, *ifname;
-	int i, s;
+	char hbuf[NI_MAXHOST];
+	const char *ifname;
+	int s;
 	struct ifaddrs *ifa, *ifap;
 	const struct sockaddr_dl *sdl;
 	struct if_laddrreq iflr;
-	const uint8_t *octets;
 
 	if ((ifname = getifname(env)) == NULL)
 		err(EXIT_FAILURE, "%s: getifname", __func__);
@@ -115,15 +115,12 @@ link_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		if ((iflr.flags & IFLR_ACTIVE) != 0)
 			continue;
 
-		octets = (const uint8_t *)&sdl->sdl_data[sdl->sdl_nlen];
-
-		delim = "\tlink ";
-		for (i = 0; i < sdl->sdl_alen; i++) {
-			printf("%s%02" PRIx8, delim, octets[i]);
-			delim = ":";
-		}
-		printf("\n");
+		if (getnameinfo(ifa->ifa_addr, ifa->ifa_addr->sa_len,
+			hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0 &&
+		    hbuf[0] != '\0')
+			printf("\tlink %s\n", hbuf);
 	}
+	freeifaddrs(ifap);
 }
 
 static int
