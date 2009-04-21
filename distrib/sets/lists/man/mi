@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1132 2009/04/20 20:14:21 cegger Exp $
+# $NetBSD: mi,v 1.1133 2009/04/21 22:25:05 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1348,8 +1348,11 @@
 ./usr/share/man/cat4/rum.0			man-sys-catman		.cat
 ./usr/share/man/cat4/satalink.0			man-sys-catman		.cat
 ./usr/share/man/cat4/savagedrm.0		man-sys-catman		.cat
+./usr/share/man/cat4/sdhc.0			man-sys-catman		.cat
+./usr/share/man/cat4/sdmmc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sbp.0			man-sys-catman		.cat
+./usr/share/man/cat4/sbt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scc.0			man-sys-catman		.cat
@@ -3872,8 +3875,11 @@
 ./usr/share/man/html4/rum.html			man-sys-htmlman		html
 ./usr/share/man/html4/satalink.html		man-sys-htmlman		html
 ./usr/share/man/html4/savagedrm.html		man-sys-htmlman		html
+./usr/share/man/html4/sdhc.html			man-sys-htmlman		html
+./usr/share/man/html4/sdmmc.html		man-sys-htmlman		html
 ./usr/share/man/html4/sb.html			man-sys-htmlman		html
 ./usr/share/man/html4/sbp.html			man-sys-htmlman		html
+./usr/share/man/html4/sbt.html			man-sys-htmlman		html
 ./usr/share/man/html4/sbus.html			man-sys-htmlman		html
 ./usr/share/man/html4/sc.html			man-sys-htmlman		html
 ./usr/share/man/html4/scc.html			man-sys-htmlman		html
@@ -6308,8 +6314,11 @@
 ./usr/share/man/man4/rum.4			man-sys-man		.man
 ./usr/share/man/man4/satalink.4			man-sys-man		.man
 ./usr/share/man/man4/savagedrm.4		man-sys-man		.man
+./usr/share/man/man4/sdhc.4			man-sys-man		.man
+./usr/share/man/man4/sdmmc.4			man-sys-man		.man
 ./usr/share/man/man4/sb.4			man-sys-man		.man
 ./usr/share/man/man4/sbp.4			man-sys-man		.man
+./usr/share/man/man4/sbt.4			man-sys-man		.man
 ./usr/share/man/man4/sbus.4			man-sys-man		.man
 ./usr/share/man/man4/sc.4			man-sys-man		.man
 ./usr/share/man/man4/scc.4			man-sys-man		.man
