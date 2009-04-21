@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.215 2009/04/04 17:10:19 plunky Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.216 2009/04/21 21:57:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.215 2009/04/04 17:10:19 plunky Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.216 2009/04/21 21:57:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -126,7 +126,7 @@ static int setifmetric(prop_dictionary_t, prop_dictionary_t);
 static int setifmtu(prop_dictionary_t, prop_dictionary_t);
 static int setifnetmask(prop_dictionary_t, prop_dictionary_t);
 static int setifprefixlen(prop_dictionary_t, prop_dictionary_t);
-static void status(const struct sockaddr_dl *, prop_dictionary_t,
+static void status(const struct sockaddr *, prop_dictionary_t,
     prop_dictionary_t);
 static void usage(void);
 
@@ -724,7 +724,7 @@ printall(const char *ifname, prop_dictionary_t env0)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct ifreq ifr;
-	const struct sockaddr_dl *sdl = NULL;
+	const struct sockaddr *sdl = NULL;
 	prop_dictionary_t env, oenv;
 	int idx;
 	char *p;
@@ -754,7 +754,7 @@ printall(const char *ifname, prop_dictionary_t env0)
 		if (ifname != NULL && strcmp(ifname, ifa->ifa_name) != 0)
 			continue;
 		if (ifa->ifa_addr->sa_family == AF_LINK)
-			sdl = (const struct sockaddr_dl *) ifa->ifa_addr;
+			sdl = ifa->ifa_addr;
 		if (p && strcmp(p, ifa->ifa_name) == 0)
 			continue;
 		if (!prop_dictionary_set_cstring(env, "if", ifa->ifa_name))
@@ -1144,7 +1144,7 @@ print_human_bytes(bool humanize, uint64_t n)
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
+status(const struct sockaddr *sdl, prop_dictionary_t env,
     prop_dictionary_t oenv)
 {
 	const struct if_data *ifi;
@@ -1203,7 +1203,7 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 		(*status_f->f_func)(env, oenv);
 
 	if (sdl != NULL &&
-	    getnameinfo((const struct sockaddr *)sdl, sdl->sdl_len,
+	    getnameinfo(sdl, sdl->sa_len,
 		hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0 &&
 	    hbuf[0] != '\0')
 		printf("\taddress: %s\n", hbuf);
