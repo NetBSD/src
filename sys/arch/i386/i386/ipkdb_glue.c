@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.11 2009/03/18 10:22:30 cegger Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.12 2009/04/21 14:51:49 elad Exp $	*/
 
 /*
  * Copyright (C) 2000 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.11 2009/03/18 10:22:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.12 2009/04/21 14:51:49 elad Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -72,7 +72,7 @@ void
 ipkdb_trap(void)
 {
 	ipkdb_mode = IPKDB_CMD_STEP;
-	x86_write_eflags(x86_read_eflags() | PSL_T));
+	x86_write_eflags(x86_read_eflags() | PSL_T);
 }
 
 int
