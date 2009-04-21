@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.216 2009/04/21 21:57:14 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.217 2009/04/21 22:13:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.216 2009/04/21 21:57:14 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.217 2009/04/21 22:13:10 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1215,7 +1215,7 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 
 	estrlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name));
 
-	if (ioctl(s, zflag ? SIOCZIFDATA:SIOCGIFDATA, &ifdr) == -1)
+	if (ioctl(s, zflag ? SIOCZIFDATA : SIOCGIFDATA, &ifdr) == -1)
 		err(EXIT_FAILURE, zflag ? "SIOCZIFDATA" : "SIOCGIFDATA");
 
 	ifi = &ifdr.ifdr_data;
