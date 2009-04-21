@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.25 2009/03/03 23:28:44 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.26 2009/04/21 13:16:36 tsutsui Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.25 2009/03/03 23:28:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.26 2009/04/21 13:16:36 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -736,7 +736,7 @@ age_dma_alloc(struct age_softc *sc)
 		printf("%s: could not load DMA'able memory for Tx ring, "
 		    "error = %i\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat, 
-		    (bus_dma_segment_t *)&sc->age_rdata.age_tx_ring, 1);
+		    &sc->age_rdata.age_tx_ring_seg, 1);
 		return error;
 	}
 
@@ -778,7 +778,7 @@ age_dma_alloc(struct age_softc *sc)
 		printf("%s: could not load DMA'able memory for Rx ring, "
 		    "error = %i.\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat,
-		    (bus_dma_segment_t *)sc->age_rdata.age_rx_ring, 1);
+		    &sc->age_rdata.age_rx_ring_seg, 1);
 		return error;
 	}
 
@@ -821,7 +821,7 @@ age_dma_alloc(struct age_softc *sc)
 		printf("%s: could not load DMA'able memory for Rx return ring, "
 		    "error = %i\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat,
-		    (bus_dma_segment_t *)&sc->age_rdata.age_rr_ring, 1);
+		    &sc->age_rdata.age_rr_ring_seg, 1);
 		return error;
 	}
 
@@ -865,7 +865,7 @@ age_dma_alloc(struct age_softc *sc)
 		printf("%s: could not load DMA'able memory for CMB block, "
 		    "error = %i\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat,
-		    (bus_dma_segment_t *)&sc->age_rdata.age_cmb_block, 1);
+		    &sc->age_rdata.age_cmb_block_seg, 1);
 		return error;
 	}
 
@@ -909,7 +909,7 @@ age_dma_alloc(struct age_softc *sc)
 		printf("%s: could not load DMA'able memory for SMB block, "
 		    "error = %i\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat,
-		    (bus_dma_segment_t *)&sc->age_rdata.age_smb_block, 1);
+		    &sc->age_rdata.age_smb_block_seg, 1);
 		return error;
 	}
 
@@ -992,7 +992,7 @@ age_dma_free(struct age_softc *sc)
 	if (sc->age_cdata.age_tx_ring_map != NULL &&
 	    sc->age_rdata.age_tx_ring != NULL)
 		bus_dmamem_free(sc->sc_dmat,
-		    (bus_dma_segment_t *)sc->age_rdata.age_tx_ring, 1);
+		    &sc->age_rdata.age_tx_ring_seg, 1);
 	sc->age_rdata.age_tx_ring = NULL;
 	sc->age_cdata.age_tx_ring_map = NULL;
 
@@ -1002,7 +1002,7 @@ age_dma_free(struct age_softc *sc)
 	if (sc->age_cdata.age_rx_ring_map != NULL &&
 	    sc->age_rdata.age_rx_ring != NULL)
 		bus_dmamem_free(sc->sc_dmat, 
-		    (bus_dma_segment_t *)sc->age_rdata.age_rx_ring, 1);
+		    &sc->age_rdata.age_rx_ring_seg, 1);
 	sc->age_rdata.age_rx_ring = NULL;
 	sc->age_cdata.age_rx_ring_map = NULL;
 
@@ -1012,7 +1012,7 @@ age_dma_free(struct age_softc *sc)
 	if (sc->age_cdata.age_rr_ring_map != NULL &&
 	    sc->age_rdata.age_rr_ring != NULL)
 		bus_dmamem_free(sc->sc_dmat, 
-		    (bus_dma_segment_t *)sc->age_rdata.age_rr_ring, 1);
+		    &sc->age_rdata.age_rr_ring_seg, 1);
 	sc->age_rdata.age_rr_ring = NULL;
 	sc->age_cdata.age_rr_ring_map = NULL;
 
@@ -1022,7 +1022,7 @@ age_dma_free(struct age_softc *sc)
 	if (sc->age_cdata.age_cmb_block_map != NULL &&
 	    sc->age_rdata.age_cmb_block != NULL)
 		bus_dmamem_free(sc->sc_dmat,
-		    (bus_dma_segment_t *)sc->age_rdata.age_cmb_block, 1);
+		    &sc->age_rdata.age_cmb_block_seg, 1);
 	sc->age_rdata.age_cmb_block = NULL;
 	sc->age_cdata.age_cmb_block_map = NULL;
 
@@ -1032,7 +1032,7 @@ age_dma_free(struct age_softc *sc)
 	if (sc->age_cdata.age_smb_block_map != NULL &&
 	    sc->age_rdata.age_smb_block != NULL)
 		bus_dmamem_free(sc->sc_dmat, 
-		    (bus_dma_segment_t *)sc->age_rdata.age_smb_block, 1);
+		    &sc->age_rdata.age_smb_block_seg, 1);
 	sc->age_rdata.age_smb_block = NULL;
 	sc->age_cdata.age_smb_block_map = NULL;
 }
