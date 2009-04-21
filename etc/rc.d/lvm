@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: lvm,v 1.4 2009/04/13 18:48:14 haad Exp $
+# $NetBSD: lvm,v 1.5 2009/04/21 16:08:57 joerg Exp $
 #
 
-# PROVIDE: disks
+# PROVIDE: lvm
 # REQUIRE: root
+# BEFORE:  DISKS
 
 $_rc_subr_loaded . /etc/rc.subr
 
