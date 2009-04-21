@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.197 2009/03/15 22:20:10 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.198 2009/04/21 21:29:58 cegger Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2009/03/15 22:20:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.198 2009/04/21 21:29:58 cegger Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2743,8 +2743,8 @@ pmap_create(void)
 }
 
 /*
- * void pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
- *     int flags)
+ * int pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
+ *      u_int flags)
  *  
  *      Insert the given physical page (p) at
  *      the specified virtual address (v) in the
@@ -2755,7 +2755,7 @@ pmap_create(void)
  *      insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct l2_bucket *l2b;
 	struct vm_page *pg, *opg;

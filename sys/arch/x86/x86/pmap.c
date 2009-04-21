@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2009/04/18 08:51:45 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2009/04/21 21:30:01 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2009/04/18 08:51:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2009/04/21 21:30:01 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -592,12 +592,12 @@ static bool		 pmap_is_curpmap(struct pmap *);
 static bool		 pmap_is_active(struct pmap *, struct cpu_info *, bool);
 static void		 pmap_map_ptes(struct pmap *, struct pmap **,
 				       pt_entry_t **, pd_entry_t * const **);
-static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
+static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, u_int);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
-					 pt_entry_t *, vaddr_t, int,
+					 pt_entry_t *, vaddr_t, u_int,
 					 struct pv_entry **);
 static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
-					  vaddr_t, vaddr_t, vaddr_t, int,
+					  vaddr_t, vaddr_t, vaddr_t, u_int,
 					  struct pv_entry **);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
@@ -2123,7 +2123,7 @@ pmap_pdp_dtor(void *arg, void *v)
 /* pmap_pdp_alloc: Allocate a page for the pdp memory pool. */
 
 void *
-pmap_pdp_alloc(struct pool *pp, int flags)
+pmap_pdp_alloc(struct pool *pp, u_int flags)
 {
 	return (void *)uvm_km_alloc(kernel_map,
 	    PAGE_SIZE * PDP_SIZE, PAGE_SIZE * PDP_SIZE,
@@ -3193,7 +3193,7 @@ pmap_unmap_pte(void)
 
 static pt_entry_t
 pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
-		 vaddr_t startva, vaddr_t endva, int flags,
+		 vaddr_t startva, vaddr_t endva, u_int flags,
 		 struct pv_entry **pv_tofree)
 {
 	struct pv_entry *pve;
@@ -3293,7 +3293,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 
 static bool
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
-		vaddr_t va, int flags, struct pv_entry **pv_tofree)
+		vaddr_t va, u_int flags, struct pv_entry **pv_tofree)
 {
 	pt_entry_t opte;
 	struct pv_entry *pve;
@@ -3383,7 +3383,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
  */
 
 static void
-pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
+pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, u_int flags)
 {
 	pt_entry_t *ptes, xpte = 0;
 	pd_entry_t pde;
@@ -3999,12 +3999,12 @@ pmap_collect(struct pmap *pmap)
 #ifdef XEN
 int
 pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
-	   vm_prot_t prot, int flags, int domid)
+	   vm_prot_t prot, u_int flags, int domid)
 {
 #else /* XEN */
 int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
-	   int flags)
+	   u_int flags)
 {
 	paddr_t ma = pa;
 #endif /* XEN */
@@ -4221,7 +4221,7 @@ out2:
 
 #ifdef XEN
 int
-pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
         paddr_t ma;
 
