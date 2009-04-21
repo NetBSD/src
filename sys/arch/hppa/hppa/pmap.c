@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.45 2009/04/10 09:18:36 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.46 2009/04/21 13:48:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.45 2009/04/10 09:18:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.46 2009/04/21 13:48:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1777,7 +1777,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 			mutex_enter(&pg->mdpage.pvh_lock);
 
-			KASSERT((pg->mdpage.pvh_attrs & PVF_KENTER) == 0);
 			pg->mdpage.pvh_attrs |= PVF_KENTER;
 			if (prot & PMAP_NC)
 				pg->mdpage.pvh_attrs |= PVF_NC;
