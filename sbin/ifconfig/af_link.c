@@ -1,4 +1,4 @@
-/*	$NetBSD: af_link.c,v 1.3 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: af_link.c,v 1.4 2009/04/21 18:00:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_link.c,v 1.3 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: af_link.c,v 1.4 2009/04/21 18:00:25 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -112,7 +112,7 @@ link_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		if (ioctl(s, SIOCGLIFADDR, &iflr) == -1)
 			err(EXIT_FAILURE, "%s: ioctl", __func__);
 
-                if ((iflr.flags & IFLR_ACTIVE) != 0)
+		if ((iflr.flags & IFLR_ACTIVE) != 0)
 			continue;
 
 		octets = (const uint8_t *)&sdl->sdl_data[sdl->sdl_nlen];
