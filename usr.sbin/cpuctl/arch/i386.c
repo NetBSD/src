@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.16 2009/03/16 12:25:40 tsutsui Exp $	*/
+/*	$NetBSD: i386.c,v 1.17 2009/04/22 18:10:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.16 2009/03/16 12:25:40 tsutsui Exp $");
+__RCSID("$NetBSD: i386.c,v 1.17 2009/04/22 18:10:38 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -625,7 +625,7 @@ identifycpu_cpuids(struct cpu_info *ci)
 	u_int lp_max = 1;	/* logical processors per package */
 	u_int smt_max;		/* smt per core */
 	u_int core_max = 1;	/* core per package */
-	int smt_bits, core_bits;
+	u_int smt_bits, core_bits;
 	uint32_t descs[4];
 
 	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
@@ -666,7 +666,7 @@ identifycpu_cpuids(struct cpu_info *ci)
 		aprint_verbose("%s: Core ID %u\n", cpuname, ci->ci_coreid);
 	}
 	if (smt_bits) {
-		u_int smt_mask = __BITS(0, smt_bits - 1);
+		u_int smt_mask = __BITS((int)0, (int)(smt_bits - 1));
 
 		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid, smt_mask);
 		aprint_verbose("%s: SMT ID %u\n", cpuname, ci->ci_smtid);
@@ -1074,7 +1074,7 @@ amd_family6_probe(struct cpu_info *ci)
 {
 	uint32_t descs[4];
 	char *p;
-	int i;
+	size_t i;
 
 	x86_cpuid(0x80000000, descs);
 
@@ -1202,7 +1202,7 @@ identifycpu(const char *cpuname)
 	cpu_probe_features(ci);
 
 	if (ci->ci_cpuid_level == -1) {
-		if (cpu < 0 || cpu >= __arraycount(i386_nocpuid_cpus))
+		if ((size_t)cpu >= __arraycount(i386_nocpuid_cpus))
 			errx(1, "unknown cpu type %d", cpu);
 		name = i386_nocpuid_cpus[cpu].cpu_name;
 		cpu_vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
