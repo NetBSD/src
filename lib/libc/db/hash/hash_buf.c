@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.15 2009/04/22 18:44:06 christos Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.16 2009/04/22 21:52:59 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_buf.c,v 1.15 2009/04/22 18:44:06 christos Exp $");
+__RCSID("$NetBSD: hash_buf.c,v 1.16 2009/04/22 21:52:59 njoly Exp $");
 
 /*
  * PACKAGE: hash
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: hash_buf.c,v 1.15 2009/04/22 18:44:06 christos Exp $");
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 #include <db.h>
