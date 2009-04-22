@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.61 2009/04/19 14:11:37 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.62 2009/04/22 21:20:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.61 2009/04/19 14:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.62 2009/04/22 21:20:52 ad Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -510,10 +510,14 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 			if ((lci->ci_schedstate.spc_flags & SPCF_NOINTR) != 0) {
 				continue;
 			}
+#if 0
 			if (ci == NULL ||
 			    ci->ci_nintrhand > lci->ci_nintrhand) {
 			    	ci = lci;
 			}
+#else
+			ci = &cpu_info_primary;
+#endif
 		}
 		KASSERT(ci != NULL);
 		error = intr_allocate_slot_cpu(ci, pic, pin, &slot);
