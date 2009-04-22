@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2008/06/18 09:06:28 yamt Exp $
+#	$NetBSD: Makefile,v 1.4 2009/04/22 15:23:06 lukem Exp $
 #	$OpenBSD: Makefile,v 1.3 2006/11/26 11:31:13 deraadt Exp $
 
 PROG=	ftp-proxy
 SRCS=	ftp-proxy.c filter.c
 MAN=	ftp-proxy.8
-
-WARNS?=	2
 
 CFLAGS+= -I${.CURDIR}
 LDADD+=	-levent

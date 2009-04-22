@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2003/05/18 07:57:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2009/04/22 15:23:10 lukem Exp $
+
+WARNS?=	2	# XXX -Wcast-qual in lib/libc/time
 
 .include <bsd.own.mk>
 
