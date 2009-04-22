@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.84 2009/04/20 18:06:27 elad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.85 2009/04/22 22:57:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.84 2009/04/20 18:06:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.85 2009/04/22 22:57:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	struct inode *ip = VTOI(vp);
 	int error;
 
-	error = common_chmod_allowed(cred, vp, ip->i_uid, ip->i_gid, mode);
+	error = genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode);
 	if (error)
 		return (error);
 
@@ -472,7 +472,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
 
-	error = common_chown_allowed(cred, ip->i_uid, ip->i_gid, uid, gid);
+	error = genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid);
 	if (error)
 		return (error);
 
