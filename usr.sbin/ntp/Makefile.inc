@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.19 2008/07/15 18:28:10 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2009/04/22 15:23:06 lukem Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
+
+WARNS?=	1	# XXX -Wcast-qual -Wshadow -Wsign-compare
+
 NTP_MAKEFILE_INC=1
 
 .include <bsd.own.mk>

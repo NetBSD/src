@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2008/01/01 21:33:26 yamt Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/22 15:23:09 lukem Exp $
 
 PROG=	tprof
 NOMAN=	
-
-WARNS?=	4
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys/
 

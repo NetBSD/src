@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2005/08/28 19:37:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/22 15:23:03 lukem Exp $
 
 PROG=	extattrctl
 MAN=	extattrctl.8
-
-WARNS?=	3
 
 .include <bsd.prog.mk>
