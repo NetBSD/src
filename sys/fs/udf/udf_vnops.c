@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.39 2009/04/20 18:06:26 elad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.40 2009/04/22 22:57:09 elad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.39 2009/04/20 18:06:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.40 2009/04/22 22:57:09 elad Exp $");
 #endif /* not lint */
 
 
@@ -965,7 +965,7 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 		return EINVAL;
 
 	/* check permissions */
-	error = common_chown_allowed(cred, uid, gid, new_uid, new_gid);
+	error = genfs_can_chown(vp, cred, uid, gid, new_uid, new_gid);
 	if (error)
 		return (error);
 
@@ -1001,7 +1001,7 @@ udf_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 	udf_getownership(udf_node, &uid, &gid);
 
 	/* check permissions */
-	error = common_chmod_allowed(cred, vp, uid, gid, mode);
+	error = genfs_can_chmod(vp, cred, uid, gid, mode);
 	if (error)
 		return (error);
 

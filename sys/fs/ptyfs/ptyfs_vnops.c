@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.28 2009/04/20 18:06:27 elad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.29 2009/04/22 22:57:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.28 2009/04/20 18:06:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.29 2009/04/22 22:57:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,7 +464,7 @@ ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	int error;
 
-	error = common_chmod_allowed(cred, vp, ptyfs->ptyfs_uid,
+	error = genfs_can_chmod(vp, cred, ptyfs->ptyfs_uid,
 	    ptyfs->ptyfs_gid, mode);
 	if (error)
 		return (error);
@@ -490,8 +490,8 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (gid == (gid_t)VNOVAL)
 		gid = ptyfs->ptyfs_gid;
 
-	error = common_chown_allowed(cred, ptyfs->ptyfs_uid, ptyfs->ptyfs_gid,
-	    uid, gid);
+	error = genfs_can_chown(vp, cred, ptyfs->ptyfs_uid,
+	    ptyfs->ptyfs_gid, uid, gid);
 	if (error)
 		return (error);
 
