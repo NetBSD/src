@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2009/04/07 11:49:17 joerg Exp $
+#	$NetBSD: list,v 1.5 2009/04/22 12:15:03 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -77,3 +77,4 @@ COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
 # we need the boot 
 COPY    ${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 COPY    ${DESTDIR}/usr/mdec/bootxx_ffsv1	usr/mdec/bootxx_ffsv1
+COPY    ${DESTDIR}/usr/mdec/bootxx_ffsv2	usr/mdec/bootxx_ffsv2
