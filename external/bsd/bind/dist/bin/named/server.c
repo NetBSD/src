@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.1.1 2009/03/22 14:56:08 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.2 2009/04/22 18:25:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -3451,6 +3451,7 @@ load_configuration(const char *filename, ns_server_t *server,
 	if (first_time)
 		ns_os_changeuser();
 
+#ifdef notdef
 	/*
 	 * Check that the working directory is writable.
 	 */
@@ -3459,6 +3460,7 @@ load_configuration(const char *filename, ns_server_t *server,
 			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
 			      "the working directory is not writable");
 	}
+#endif
 
 	/*
 	 * Configure the logging system.
