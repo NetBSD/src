@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2009/04/22 16:53:15 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2009/04/22 17:21:47 tsutsui Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -104,14 +104,22 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
+	char *bootxx;
+	int error;
 
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
-	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
-	    "/usr/sbin/installboot -v -m landisk /dev/r%sa /usr/mdec/bootxx_ffsv1",
-	    diskdev))
+	bootxx = bootxx_name();
+	if (bootxx != NULL) {
+		error = run_program(RUN_DISPLAY | RUN_NO_CLEAR,
+		    "/usr/sbin/installboot -v /dev/r%sa %s", diskdev, bootxx);
+		free(bootxx);
+	} else
+		error = -1;
+
+	if (error != 0)
 		process_menu(MENU_ok,
-			 deconst("Warning: disk is probably not bootable"));
+		    deconst("Warning: disk is probably not bootable"));
 
 	return 0;
 }
