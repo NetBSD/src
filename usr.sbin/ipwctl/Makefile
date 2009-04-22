@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.6 2009/02/14 13:56:41 abs Exp $
+#	$NetBSD: Makefile,v 1.7 2009/04/22 15:23:04 lukem Exp $
 
-WARNS=3
 .if ${MACHINE_ARCH} == "i386"
 PROG=	ipwctl
 .endif

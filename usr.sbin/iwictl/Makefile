@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/10/29 08:15:46 scw Exp $
-
-WARNS=3
+#	$NetBSD: Makefile,v 1.5 2009/04/22 15:23:04 lukem Exp $
 
 PROG	= iwictl
 MAN	= iwictl.8

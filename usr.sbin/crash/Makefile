@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2009/03/07 22:08:08 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2009/04/22 15:23:02 lukem Exp $
 
 PROG=	crash
 MAN=	crash.8
-
-WARNS=	3
 
 LDADD+=	-lkvm -ledit -ltermcap
 DPADD+=	${LIBKVM} ${LIBEDIT} ${LIBTERMCAP}

@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.19 2008/04/10 15:42:06 tsutsui Exp $
+# $NetBSD: Makefile,v 1.20 2009/04/22 15:23:05 lukem Exp $
 
+WARNS?=	2	# XXX -Wextra -Wsign-compare
 NOLINT= # defined
 
 .include <bsd.own.mk>
@@ -8,8 +9,6 @@ USE_FORT?= yes	# network client
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/admin
-
-WARNS?=  1
 
 PROG= ktutil
 

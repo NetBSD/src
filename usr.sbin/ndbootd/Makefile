@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2008/04/27 03:06:46 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.6 2009/04/22 15:23:05 lukem Exp $
+
+WARNS?=	1	# XXX -Wsign-compare -Wshadow
 
 USE_FORT?= yes	# network server
 

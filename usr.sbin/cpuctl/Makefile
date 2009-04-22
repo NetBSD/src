@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2008/12/16 22:44:50 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2009/04/22 15:23:02 lukem Exp $
+
+WARNS?=	3	# XXX -Wsign-compare issues in arch/i386.c
 
 .PATH:	${.CURDIR}/arch
 

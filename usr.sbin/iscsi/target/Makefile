@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2007/10/26 19:04:21 agc Exp $
+# $NetBSD: Makefile,v 1.4 2009/04/22 15:23:04 lukem Exp $
 
 .sinclude "${.CURDIR}/../../Makefile.inc"
 
@@ -17,6 +17,5 @@ CPPFLAGS+= -pthread
 LDADD+=  -liscsi
 LDFLAGS+= -pthread
 MAN=iscsi-target.8 targets.5
-WARNS=4
 
 .include <bsd.prog.mk>

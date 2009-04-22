@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.24 2009/01/16 19:39:52 pooka Exp $
+#	$NetBSD: Makefile,v 1.25 2009/04/22 15:23:05 lukem Exp $
 #
+
+WARNS?=	3	# XXX -Wsign-compare
 
 .include <bsd.own.mk>
 
@@ -25,7 +27,5 @@ CPPFLAGS+=	-I${.CURDIR} -I${MKNODSRC} -I${MTREESRC}
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 .endif
-
-WARNS?=	3
 
 .include <bsd.prog.mk>
