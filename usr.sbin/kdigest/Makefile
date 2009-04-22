@@ -1,13 +1,12 @@
-# $NetBSD: Makefile,v 1.2 2008/04/10 15:42:06 tsutsui Exp $
+# $NetBSD: Makefile,v 1.3 2009/04/22 15:23:04 lukem Exp $
 
+WARNS?=	2	# XXX -Wextra -Wsign-compare
 NOLINT= # defined
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/kuser
-
-WARNS?=  1
 
 PROG= kdigest
 # no man-page yet

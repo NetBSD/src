@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.16 2008/04/10 15:42:06 tsutsui Exp $
+# $NetBSD: Makefile,v 1.17 2009/04/22 15:23:04 lukem Exp $
 
+WARNS?=	1	# XXX -Wshadow -Wextra -Wsign-compare
 NOLINT= # defined
 
 .include <bsd.own.mk>
@@ -8,8 +9,6 @@ USE_FORT?= yes	# network server
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/kdc
-
-WARNS?=  1
 
 PROG= kdc
 

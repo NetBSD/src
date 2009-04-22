@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2009/02/14 13:56:42 abs Exp $
+#	$NetBSD: Makefile,v 1.11 2009/04/22 15:23:08 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
-WARNS=3
 .if ${MACHINE} == "pmax" || ${MACHINE} == "sun3" || ${MACHINE} == "sun3x" \
    || ${MACHINE_ARCH} == "sparc" || ${MACHINE} == "amiga"
 CPPFLAGS+=-DHAVE_FBIO

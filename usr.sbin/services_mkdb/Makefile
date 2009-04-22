@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 2009/02/13 16:02:05 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.6 2009/04/22 15:23:08 lukem Exp $
 
-WARNS?=	4
 PROG=	services_mkdb
 MAN=	services_mkdb.8
 SRCS=	services_mkdb.c uniq.c
