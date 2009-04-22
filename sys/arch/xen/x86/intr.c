@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2009/03/10 17:21:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2009/04/22 21:16:40 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -456,3 +456,19 @@ intr_printconfig(void)
 	}
 }
 #endif
+
+void
+cpu_intr_redistribute(void)
+{
+
+	/* XXX nothing */
+}
+
+u_int
+cpu_intr_count(struct cpu_info *ci)
+{
+
+	KASSERT(ci->ci_nintrhand >= 0);
+
+	return ci->ci_nintrhand;
+}
