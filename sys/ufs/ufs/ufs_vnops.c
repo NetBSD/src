@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.174 2009/04/20 18:06:27 elad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.175 2009/04/22 22:57:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.174 2009/04/20 18:06:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.175 2009/04/22 22:57:09 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.174 2009/04/20 18:06:27 elad Exp $")
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
+#include <miscfs/genfs/genfs.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
@@ -646,7 +647,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 
 	ip = VTOI(vp);
 
-	error = common_chmod_allowed(cred, vp, ip->i_uid, ip->i_gid, mode);
+	error = genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode);
 	if (error)
 		return (error);
 
@@ -681,7 +682,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
 
-	error = common_chown_allowed(cred, ip->i_uid, ip->i_gid, uid, gid);
+	error = genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid);
 	if (error)
 		return (error);
 

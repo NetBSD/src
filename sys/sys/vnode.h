@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.204 2009/04/20 18:06:26 elad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.205 2009/04/22 22:57:08 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -664,9 +664,6 @@ void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));
 #endif /* DDB */
 
-int	common_chmod_allowed(kauth_cred_t, struct vnode *, uid_t, gid_t,
-	    mode_t);
-int	common_chown_allowed(kauth_cred_t, uid_t, gid_t, uid_t, gid_t);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_VNODE_H_ */

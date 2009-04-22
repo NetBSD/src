@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.51 2009/04/20 18:06:27 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.52 2009/04/22 22:57:09 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.51 2009/04/20 18:06:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.52 2009/04/22 22:57:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1033,7 +1033,7 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	error = common_chmod_allowed(cred, vp, node->tn_uid, node->tn_gid,
+	error = genfs_can_chmod(vp, cred, node->tn_uid, node->tn_gid,
 	    mode);
 	if (error)
 		return (error);
@@ -1084,7 +1084,7 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	error = common_chown_allowed(cred, node->tn_uid, node->tn_gid, uid,
+	error = genfs_can_chown(vp, cred, node->tn_uid, node->tn_gid, uid,
 	    gid);
 	if (error)
 		return (error);
