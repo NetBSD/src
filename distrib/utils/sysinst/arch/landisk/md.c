@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2009/04/22 16:51:02 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2009/04/22 16:53:15 tsutsui Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -119,17 +119,21 @@ md_post_newfs(void)
 int
 md_pre_disklabel(void)
 {
+
 	if (no_mbr)
 		return 0;
 
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, 1) != 0 ||
+	    run_program(RUN_SILENT | RUN_ERROR_OK,
+	    "/sbin/fdisk -f -i -c /usr/mdec/mbr %s", diskdev)) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
 	}
+
 	return 0;
 }
 
