@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.46 2009/04/07 10:45:04 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.47 2009/04/22 12:35:46 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -127,14 +127,21 @@ int
 md_post_newfs(void)
 {
 	char *bootxx;
+	int error;
 
-	printf (msg_string(MSG_dobootblks), diskdev);
+	printf(msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
 	bootxx = bootxx_name();
-	if (bootxx == NULL || run_program(RUN_DISPLAY | RUN_NO_CLEAR,
-	    "/usr/sbin/installboot /dev/r%sc %s", diskdev, bootxx))
+	if (bootxx != NULL) {
+		error = run_program(RUN_DISPLAY | RUN_NO_CLEAR,
+		    "/usr/sbin/installboot /dev/r%sc %s", diskdev, bootxx);
+		free(bootxx);
+	} else
+		error = -1;
+
+	if (error != 0)
 		process_menu(MENU_ok,
-			 deconst("Warning: disk is probably not bootable"));
+		    deconst("Warning: disk is probably not bootable"));
 
 	return 0;
 }
