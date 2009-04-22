@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 2009/04/18 08:51:45 cegger Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 2009/04/22 10:17:48 cegger Exp $	*/
 
 /*
  *
@@ -178,7 +178,7 @@ struct pmap {
 /*
  * MD flags that we use for pmap_enter:
  */
-#define PMAP_NOCACHE	0x00000100	/* set the non-cacheable bit */
+#define PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
 /*
  * global kernel variables
@@ -398,7 +398,7 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 /* pmap functions with machine addresses */
 void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
-	    vm_prot_t, int, int);
+	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 
 paddr_t	vtomach(vaddr_t);
