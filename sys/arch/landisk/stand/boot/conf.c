@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2009/04/21 15:17:58 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2009/04/22 17:13:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -38,6 +38,7 @@
 
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/dosfs.h>
+#include <lib/libsa/ustarfs.h>
 
 #include "biosdisk.h"
 
@@ -56,6 +57,9 @@ struct fs_ops file_system[] = {
 #endif
 #ifdef SUPPORT_DOSFS
 	FS_OPS(dosfs),
+#endif
+#ifdef SUPPORT_USTARFS
+	FS_OPS(ustarfs),
 #endif
 };
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
