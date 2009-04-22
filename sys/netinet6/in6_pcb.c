@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.105 2009/04/20 19:57:18 elad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.106 2009/04/22 18:35:01 elad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.105 2009/04/20 19:57:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.106 2009/04/22 18:35:01 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -298,27 +298,29 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 			reuseport = SO_REUSEADDR|SO_REUSEPORT;
 	}
 
-	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+	if (sin6->sin6_port != 0) {
+		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
 #ifdef INET
-		struct inpcb *t;
+			struct inpcb *t;
 
-		t = in_pcblookup_port(table,
-		    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
-		    sin6->sin6_port, wild);
-		if (t && (reuseport & t->inp_socket->so_options) == 0)
-			return (EADDRINUSE);
+			t = in_pcblookup_port(table,
+			    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
+			    sin6->sin6_port, wild);
+			if (t && (reuseport & t->inp_socket->so_options) == 0)
+				return (EADDRINUSE);
 #else
-		return (EADDRNOTAVAIL);
+			return (EADDRNOTAVAIL);
 #endif
-	}
+		}
 
-	{
-		struct in6pcb *t;
+		{
+			struct in6pcb *t;
 
-		t = in6_pcblookup_port(table, &sin6->sin6_addr,
-		    sin6->sin6_port, wild);
-		if (t && (reuseport & t->in6p_socket->so_options) == 0)
-			return (EADDRINUSE);
+			t = in6_pcblookup_port(table, &sin6->sin6_addr,
+			    sin6->sin6_port, wild);
+			if (t && (reuseport & t->in6p_socket->so_options) == 0)
+				return (EADDRINUSE);
+		}
 	}
 
 	if (sin6->sin6_port == 0) {
