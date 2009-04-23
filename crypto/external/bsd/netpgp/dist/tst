@@ -1,0 +1,33 @@
+#! /bin/sh
+
+#mkdir $HOME/netpgp
+./configure --prefix=$HOME/netpgp
+make clean
+make
+(cd src/lib && make install)
+echo "======> sign/verify 180938 file"
+cp configure a
+src/bin/netpgp --sign a
+src/bin/netpgp --verify a.gpg
+echo "======> attempt to verify an unsigned file"
+src/bin/netpgp --verify a 
+echo "======> encrypt/decrypt 10809 file"
+cp src/bin/netpgp.1 b
+src/bin/netpgp --encrypt b
+src/bin/netpgp --decrypt b.gpg
+diff src/bin/netpgp.1 b && echo "No differences found"
+echo "======> encrypt/decrypt 180938 file"
+cp configure c
+src/bin/netpgp --encrypt c
+src/bin/netpgp --decrypt c.gpg
+diff configure c && echo "No differences found"
+echo "======> encrypt/decrypt bigass file"
+cat configure configure configure configure configure configure > d
+ls -l d
+cp d e
+src/bin/netpgp --encrypt d
+src/bin/netpgp --decrypt d.gpg
+diff e d && echo "No differences found"
+echo "======> version information"
+src/bin/netpgp --version
+rm -f a a.gpg b b.gpg c c.gpg d d.gpg e
