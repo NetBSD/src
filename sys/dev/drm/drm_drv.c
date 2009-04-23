@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.19 2008/07/03 17:36:44 drochner Exp $ */
+/* $NetBSD: drm_drv.c,v 1.19.6.1 2009/04/23 02:17:13 snj Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.19 2008/07/03 17:36:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.19.6.1 2009/04/23 02:17:13 snj Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -298,6 +298,7 @@ static int drm_firstopen(drm_device_t *dev)
 	int i;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
+	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
 
 	/* prebuild the SAREA */
 	i = drm_addmap(dev, 0, SAREA_MAX, _DRM_SHM,
@@ -431,6 +432,8 @@ static int drm_lastclose(drm_device_t *dev)
 		TAILQ_REMOVE(&dev->files, filep, link);
 		free(filep, M_DRM);
 	}
+
+	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;
 }
