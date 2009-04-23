@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.59 2009/03/18 16:00:19 cegger Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.60 2009/04/23 09:18:25 kefren Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.59 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.60 2009/04/23 09:18:25 kefren Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -209,6 +209,10 @@ u_int32_t sk_yukon_hash(void *);
 void sk_setfilt(struct sk_if_softc *, void *, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
+
+static bool skc_suspend(device_t dv PMF_FN_ARGS);
+static bool skc_resume(device_t dv PMF_FN_ARGS);
+static bool sk_resume(device_t dv PMF_FN_ARGS);
 
 /* #define SK_DEBUG 2 */
 #ifdef SK_DEBUG
@@ -1458,6 +1462,11 @@ sk_attach(device_t parent, device_t self, void *aux)
             RND_TYPE_NET, 0);
 #endif
 
+	if (!pmf_device_register(self, NULL, sk_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
+
 	DPRINTFN(2, ("sk_attach: end\n"));
 
 	return;
@@ -1814,6 +1823,9 @@ skc_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(sc->sk_dev, "couldn't create int_mod sysctl node\n");
 		goto fail_1;
 	}
+
+	if (!pmf_device_register(self, skc_suspend, skc_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
@@ -2937,6 +2949,43 @@ sk_stop(struct ifnet *ifp, int disable)
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+}
+
+/* Power Management Framework */
+
+static bool
+skc_suspend(device_t dv PMF_FN_ARGS)
+{
+	struct sk_softc *sc = device_private(dv);
+
+	DPRINTFN(2, ("skc_suspend\n"));
+
+	/* Turn off the driver is loaded LED */
+	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_OFF);
+
+	return true;
+}
+
+static bool
+skc_resume(device_t dv PMF_FN_ARGS)
+{
+	struct sk_softc *sc = device_private(dv);
+
+	DPRINTFN(2, ("skc_resume\n"));
+
+	sk_reset(sc);
+	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_ON);
+
+	return true;
+}
+
+static bool
+sk_resume(device_t dv PMF_FN_ARGS)
+{
+	struct sk_if_softc *sc_if = device_private(dv);
+
+	sk_init_yukon(sc_if);
+	return true;
 }
 
 CFATTACH_DECL_NEW(skc, sizeof(struct sk_softc),
