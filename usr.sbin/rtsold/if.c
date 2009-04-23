@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.13 2004/01/03 01:40:31 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.13.6.1 2009/04/23 02:06:15 snj Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ if_nametosdl(char *name)
 			}
 		}
 	}
-	if (next == lim) {
+	if (next == lim || sdl == NULL) {
 		/* search failed */
 		free(buf);
 		return(NULL);
