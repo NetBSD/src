@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1215 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1216 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -184,3 +184,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		From OpenBSD and improvements from Kevin Lahey.
 		[cegger 20090420]
 	sdmmc(4): Add a driver for SD/MMC from OpenBSD. [nonaka 20090421]
+	zx(4): Add wscons support [macallan 20090423]
