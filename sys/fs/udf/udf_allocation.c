@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.18.4.1 2009/03/31 23:06:13 snj Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.18.4.2 2009/04/23 02:22:25 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.18.4.1 2009/03/31 23:06:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.18.4.2 2009/04/23 02:22:25 snj Exp $");
 #endif /* not lint */
 
 
@@ -507,10 +507,7 @@ translate_again:
 		lb_num   = udf_rw32(s_icb_loc.loc.lb_num);
 		vpart    = udf_rw16(s_icb_loc.loc.part_num);
 		lb_num  += (ext_offset + lb_size -1) / lb_size;
-		len     -= ext_offset;
 		ext_offset = 0;
-
-		flags = UDF_EXT_FLAGS(s_icb_loc.len);
 
 		UDF_UNLOCK_NODE(ump->metadata_node, 0);
 		if (flags != UDF_EXT_ALLOCATED) {
