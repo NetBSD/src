@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.52 2009/02/18 14:30:43 njoly Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.53 2009/04/23 17:40:57 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.52 2009/02/18 14:30:43 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.53 2009/04/23 17:40:57 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -209,33 +209,27 @@ linux_sys_semctl(struct lwp *l, const struct linux_sys_semctl_args *uap, registe
 
 	lcmd = SCARG(uap, cmd);
 #ifdef LINUX_IPC_FORCE64
-	if (lcmd == LINUX_IPC_STAT || lcmd == LINUX_IPC_SET)
-		lcmd |= LINUX_IPC_64;
+	lcmd |= LINUX_IPC_64;
 #endif
 
-	switch (lcmd) {
+	switch (lcmd & ~LINUX_IPC_64) {
 	case LINUX_IPC_SET:
-		error = copyin(SCARG(uap, arg).l_buf, &lsembuf,
-		    sizeof(lsembuf));
+		if (lcmd & LINUX_IPC_64) {
+			error = copyin(SCARG(uap, arg).l_buf, &lsembuf64,
+		    	    sizeof(lsembuf64));
+			linux_to_bsd_semid64_ds(&lsembuf64, &sembuf);
+		} else {
+			error = copyin(SCARG(uap, arg).l_buf, &lsembuf,
+		    	   sizeof(lsembuf));
+			linux_to_bsd_semid_ds(&lsembuf, &sembuf);
+		}
 		if (error)
 			return (error);
-		linux_to_bsd_semid_ds(&lsembuf, &sembuf);
-		pass_arg = &sembuf;
-		cmd = IPC_SET;
-		break;
-
-	case LINUX_IPC_SET | LINUX_IPC_64:
-		error = copyin(SCARG(uap, arg).l_buf, &lsembuf64,
-		    sizeof(lsembuf64));
-		if (error)
-			return (error);
-		linux_to_bsd_semid64_ds(&lsembuf64, &sembuf);
 		pass_arg = &sembuf;
 		cmd = IPC_SET;
 		break;
 
 	case LINUX_IPC_STAT:
-	case LINUX_IPC_STAT | LINUX_IPC_64:
 		pass_arg = &sembuf;
 		cmd = IPC_STAT;
 		break;
@@ -385,27 +379,24 @@ linux_sys_msgctl(struct lwp *l, const struct linux_sys_msgctl_args *uap, registe
 
 	lcmd = SCARG(uap, cmd);
 #ifdef LINUX_IPC_FORCE64
-	if (lcmd == LINUX_IPC_STAT || lcmd == LINUX_IPC_SET)
-		lcmd |= LINUX_IPC_64;
+	lcmd |= LINUX_IPC_64;
 #endif
 
-	switch (lcmd) {
+	switch (lcmd & ~LINUX_IPC_64) {
 	case LINUX_IPC_STAT:
-	case LINUX_IPC_STAT|LINUX_IPC_64:
 		cmd = IPC_STAT;
 		bmp = &bm;
 		break;
 	case LINUX_IPC_SET:
-		if ((error = copyin(SCARG(uap, buf), &lm, sizeof lm)))
+		if (lcmd & LINUX_IPC_64) {
+			error = copyin(SCARG(uap, buf), &lm64, sizeof lm64);
+			linux_to_bsd_msqid64_ds(&lm64, &bm);
+		} else {
+			error = copyin(SCARG(uap, buf), &lm, sizeof lm);
+			linux_to_bsd_msqid_ds(&lm, &bm);
+		}
+		if (error)
 			return error;
-		linux_to_bsd_msqid_ds(&lm, &bm);
-		cmd = IPC_SET;
-		bmp = &bm;
-		break;
-	case LINUX_IPC_SET|LINUX_IPC_64:
-		if ((error = copyin(SCARG(uap, buf), &lm64, sizeof lm64)))
-			return error;
-		linux_to_bsd_msqid64_ds(&lm64, &bm);
 		cmd = IPC_SET;
 		bmp = &bm;
 		break;
