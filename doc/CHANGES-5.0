@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.140 2009/04/23 02:36:10 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.141 2009/04/23 17:50:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6206,4 +6206,10 @@ lib/libc/db/mpool/mpool.c			1.19
 
 	Avoid information leaks by zeroing memory.
 	[christos, ticket #719]
+
+sys/kern/kern_synch.c				1.262
+
+	kpreempt: report a failure of cpu_kpreempt_enter.  Otherwise x86
+	trap() loops infinitely.  Fixes PR 41202.
+	[yamt, ticket #720]
 
