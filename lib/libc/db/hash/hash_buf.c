@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.11.14.1 2009/04/23 02:41:55 snj Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.11.14.2 2009/04/23 02:44:22 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-__RCSID("$NetBSD: hash_buf.c,v 1.11.14.1 2009/04/23 02:41:55 snj Exp $");
+__RCSID("$NetBSD: hash_buf.c,v 1.11.14.2 2009/04/23 02:44:22 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: hash_buf.c,v 1.11.14.1 2009/04/23 02:41:55 snj Exp $");
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef DEBUG
 #include <assert.h>
