@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.17 2009/04/23 03:49:39 agc Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.18 2009/04/23 22:09:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_buf.c,v 1.17 2009/04/23 03:49:39 agc Exp $");
+__RCSID("$NetBSD: hash_buf.c,v 1.18 2009/04/23 22:09:23 christos Exp $");
 
 /*
  * PACKAGE: hash
@@ -315,7 +315,7 @@ __buf_free(HTAB *hashp, int do_free, int to_disk)
 		/* Check if we are freeing stuff */
 		if (do_free) {
 			if (bp->page) {
-				(void)memset(bp->page, 0, (unsigned)hashp->BSIZE);
+				(void)memset(bp->page, 0, (size_t)hashp->BSIZE);
 				free(bp->page);
 			}
 			BUF_REMOVE(bp);
