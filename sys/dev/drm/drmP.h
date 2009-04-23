@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.32 2008/07/07 00:33:23 mrg Exp $ */
+/* $NetBSD: drmP.h,v 1.32.6.1 2009/04/23 02:28:59 snj Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -698,11 +698,13 @@ typedef struct drm_agp_head {
 } drm_agp_head_t;
 
 typedef struct drm_sg_mem {
-	unsigned long   handle;
-	void            *virtual;
-	int             pages;
-	dma_addr_t	*busaddr;
-	drm_dma_handle_t *dmah;	/* Handle to PCI memory for ATI PCIGART table */
+	unsigned long		  handle;
+	void			 *virtual;
+	int			  pages;
+	dma_addr_t		 *busaddr;
+	struct drm_dma_handle	 *sg_dmah;	/* Handle for sg_pages   */
+	struct drm_dma_handle	 *dmah;		/* Handle to PCI memory  */
+						/* for ATI PCIGART table */
 } drm_sg_mem_t;
 
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
@@ -1057,6 +1059,7 @@ int	drm_agp_unbind(drm_device_t *dev, drm_agp_binding_t *request);
 
 /* Scatter Gather Support (drm_scatter.c) */
 void	drm_sg_cleanup(drm_sg_mem_t *entry);
+int	drm_sg_alloc(struct drm_device *dev, struct drm_scatter_gather * request);
 
 #if defined(__FreeBSD__) || defined (__NetBSD__)
 /* sysctl support (drm_sysctl.h) */
@@ -1131,8 +1134,8 @@ int	drm_agp_unbind_ioctl(DRM_IOCTL_ARGS);
 int	drm_agp_bind_ioctl(DRM_IOCTL_ARGS);
 
 /* Scatter Gather Support (drm_scatter.c) */
-int	drm_sg_alloc(DRM_IOCTL_ARGS);
-int	drm_sg_free(DRM_IOCTL_ARGS);
+int	drm_sg_alloc_ioctl(DRM_IOCTL_ARGS);
+int	drm_sg_free_ioctl(DRM_IOCTL_ARGS);
 
 /* consistent PCI memory functions (drm_pci.c) */
 drm_dma_handle_t *drm_pci_alloc(drm_device_t *dev, size_t size, size_t align,
