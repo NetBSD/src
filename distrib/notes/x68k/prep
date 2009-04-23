@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8 2002/06/30 13:06:06 lukem Exp $
+.\"	$NetBSD: prep,v 1.9 2009/04/23 01:56:51 snj Exp $
 .
 .(Note
 Currently
@@ -13,7 +13,6 @@ on the hard disk on which
 or any other operating systems reside.
 This is because of the poor installer, and the system itself
 can share a single disk with other OSs.
-This problem should be fixed in the next release.
 .Note)
 .Pp
 What you have to do to prepare the disk is only to physically format
