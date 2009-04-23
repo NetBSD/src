@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.40 2004/05/22 23:21:28 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.40.2.1 2009/04/23 02:03:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.40 2004/05/22 23:21:28 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.40.2.1 2009/04/23 02:03:55 snj Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -472,8 +472,12 @@ term_alloc_display(EditLine *el)
 		return (-1);
 	for (i = 0; i < c->v; i++) {
 		b[i] = (char *) el_malloc((size_t) (sizeof(char) * (c->h + 1)));
-		if (b[i] == NULL)
+		if (b[i] == NULL) {
+			while (--i >= 0)
+				el_free((ptr_t) b[i]);
+			el_free((ptr_t) b);
 			return (-1);
+		}
 	}
 	b[c->v] = NULL;
 	el->el_display = b;
@@ -483,8 +487,12 @@ term_alloc_display(EditLine *el)
 		return (-1);
 	for (i = 0; i < c->v; i++) {
 		b[i] = (char *) el_malloc((size_t) (sizeof(char) * (c->h + 1)));
-		if (b[i] == NULL)
+		if (b[i] == NULL) {
+			while (--i >= 0)
+				el_free((ptr_t) b[i]);
+			el_free((ptr_t) b);
 			return (-1);
+		}
 	}
 	b[c->v] = NULL;
 	el->el_vdisplay = b;
