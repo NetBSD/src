@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.132 2009/04/23 16:42:56 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.133 2009/04/23 17:02:26 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.132 2009/04/23 16:42:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.133 2009/04/23 17:02:26 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -307,7 +307,7 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 	struct inpcbtable *table = inp->inp_table;
 	struct socket *so = inp->inp_socket;
 	int reuseport = (so->so_options & SO_REUSEPORT);
-	int wild = 0;
+	int wild = 0, error;
 
 	if (IN_MULTICAST(sin->sin_addr.s_addr)) {
 		/*
@@ -322,8 +322,6 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 	} 
 
 	if (sin->sin_port == 0) {
-		int error;
-
 		error = in_pcbsetport(&inp->inp_laddr, inp, sin, cred);
 		if (error)
 			return (error);
@@ -333,19 +331,23 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		struct in6pcb *t6;
 		struct in6_addr mapped;
 #endif
+		enum kauth_network_req req;
 
 		if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0)
 			wild = 1;
 
 #ifndef IPNOPRIVPORTS
-		/* GROSS */
-		if (ntohs(sin->sin_port) < IPPORT_RESERVED &&
-		    kauth_authorize_network(cred,
-		    KAUTH_NETWORK_BIND,
-		    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so, sin,
-		    NULL))
-			return (EACCES);
-#endif
+		if (ntohs(sin->sin_port) < IPPORT_RESERVED)
+			req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
+		else
+#endif /* !IPNOPRIVPORTS */
+			req = KAUTH_REQ_NETWORK_BIND_PORT;
+
+		error = kauth_authorize_network(cred, KAUTH_NETWORK_BIND, req,
+		    so, sin, NULL);
+		if (error)
+			return (error);
+
 #ifdef INET6
 		memset(&mapped, 0, sizeof(mapped));
 		mapped.s6_addr16[5] = 0xffff;
@@ -355,13 +357,15 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		if (t6 && (reuseport & t6->in6p_socket->so_options) == 0)
 			return (EADDRINUSE);
 #endif
+
+		/* XXX-kauth */
 		if (so->so_uidinfo->ui_uid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
 			t = in_pcblookup_port(table, sin->sin_addr, sin->sin_port, 1);
-		/*
-		 * XXX:	investigate ramifications of loosening this
-		 *	restriction so that as long as both ports have
-		 *	SO_REUSEPORT allow the bind
-		 */
+			/*
+			 * XXX:	investigate ramifications of loosening this
+			 *	restriction so that as long as both ports have
+			 *	SO_REUSEPORT allow the bind
+			 */
 			if (t &&
 			    (!in_nullhost(sin->sin_addr) ||
 			     !in_nullhost(t->inp_laddr) ||
