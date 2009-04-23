@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.144 2009/04/18 00:31:54 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.145 2009/04/23 02:40:38 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3014,4 +3014,11 @@ dist/ntp/ntpq/ntpq.c				1.12
 
 	Fix CVE-2009-0159.
 	[christos, ticket #1308]
+
+lib/libc/db/btree/bt_split.c			1.19
+lib/libc/db/hash/hash_buf.c			1.15, 1.16
+lib/libc/db/mpool/mpool.c			1.19
+
+	Avoid information leaks by zeroing memory, from FreeBSD.
+	[christos, ticket #1310]
 
