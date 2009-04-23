@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.3 2009/04/23 20:24:23 kefren Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -790,5 +790,9 @@ bwi_rf_lo_update(struct bwi_mac *_mac)
 int		bwi_intr(void *);
 int		bwi_attach(struct bwi_softc *);
 void		bwi_detach(struct bwi_softc *);
+
+/* Power Management Framework */
+bool		bwi_suspend(device_t db PMF_FN_ARGS);
+bool		bwi_resume(device_t db PMF_FN_ARGS);
 
 #endif	/* !_DEV_IC_BWIVAR_H */

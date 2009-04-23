@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.3 2009/01/10 12:55:45 cegger Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.4 2009/04/23 20:24:23 kefren Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -25,7 +25,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.3 2009/01/10 12:55:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.4 2009/04/23 20:24:23 kefren Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -161,6 +161,9 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pci_subvid = PCI_VENDOR(reg);
 	sc->sc_pci_subdid = PCI_PRODUCT(reg);
 
+	if (!pmf_device_register(self, bwi_suspend, bwi_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	bwi_attach(sc);
 }
 
@@ -169,6 +172,8 @@ bwi_pci_detach(struct device *self, int flags)
 {
 	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
 	struct bwi_softc *sc = &psc->psc_bwi;
+
+	pmf_device_deregister(self);
 
 	bwi_detach(sc);
 
