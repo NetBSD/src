@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.26 2009/03/29 07:24:56 tsutsui Exp $	*/
+/*	$NetBSD: zx.c,v 1.27 2009/04/23 20:46:49 macallan Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.26 2009/03/29 07:24:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.27 2009/04/23 20:46:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,45 +66,58 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.26 2009/03/29 07:24:56 tsutsui Exp $");
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 
+#include "wsdisplay.h"
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsconsio.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
+
+#include "opt_wsemul.h"
+#endif
+
 #include <dev/sbus/zxreg.h>
 #include <dev/sbus/zxvar.h>
 #include <dev/sbus/sbusvar.h>
 
 #include <dev/wscons/wsconsio.h>
 
-#ifndef RASTERCONSOLE
-#error Sorry, this driver needs the RASTERCONSOLE option
+#if (NWSDISPLAY == 0) && !defined(RASTERCONSOLE)
+#error Sorry, this driver needs WSCONS or RASTERCONSOLE
+#endif
+
+#if (NWSDISPLAY > 0) && defined(RASTERCONSOLE)
+#error Sorry, RASTERCONSOLE and WSCONS are mutually exclusive
 #endif
 
 #define	ZX_STD_ROP	(ZX_ROP_NEW | ZX_ATTR_WE_ENABLE | \
     ZX_ATTR_OE_ENABLE | ZX_ATTR_FORCE_WID)
 
-void	zx_attach(struct device *, struct device *, void *);
-int	zx_match(struct device *, struct cfdata *, void *);
+static void	zx_attach(device_t, device_t, void *);
+static int	zx_match(device_t, struct cfdata *, void *);
 
-void	zx_blank(struct device *);
-int	zx_cmap_put(struct zx_softc *);
-void	zx_copyrect(struct rasops_info *, int, int, int, int, int, int);
-int	zx_cross_loadwid(struct zx_softc *, u_int, u_int, u_int);
-int	zx_cross_wait(struct zx_softc *);
-void	zx_fillrect(struct rasops_info *, int, int, int, int, long, int);
-int	zx_intr(void *);
-void	zx_reset(struct zx_softc *);
-void	zx_unblank(struct device *);
+static void	zx_blank(device_t);
+static int	zx_cmap_put(struct zx_softc *);
+static void	zx_copyrect(struct zx_softc *, int, int, int, int, int, int);
+static int	zx_cross_loadwid(struct zx_softc *, u_int, u_int, u_int);
+static int	zx_cross_wait(struct zx_softc *);
+static void	zx_fillrect(struct zx_softc *, int, int, int, int, uint32_t, int);
+static int	zx_intr(void *);
+static void	zx_reset(struct zx_softc *);
+static void	zx_unblank(device_t);
 
-void	zx_cursor_blank(struct zx_softc *);
-void	zx_cursor_color(struct zx_softc *);
-void	zx_cursor_move(struct zx_softc *);
-void	zx_cursor_set(struct zx_softc *);
-void	zx_cursor_unblank(struct zx_softc *);
+static void	zx_cursor_blank(struct zx_softc *);
+static void	zx_cursor_color(struct zx_softc *);
+static void	zx_cursor_move(struct zx_softc *);
+static void	zx_cursor_set(struct zx_softc *);
+static void	zx_cursor_unblank(struct zx_softc *);
 
-void	zx_copycols(void *, int, int, int, int);
-void	zx_copyrows(void *, int, int, int);
-void	zx_cursor(void *, int, int, int);
-void	zx_do_cursor(struct rasops_info *);
-void	zx_erasecols(void *, int, int, int, long);
-void	zx_eraserows(void *, int, int, long);
-void	zx_putchar(void *, int, int, u_int, long);
+static void	zx_copycols(void *, int, int, int, int);
+static void	zx_copyrows(void *, int, int, int);
+static void	zx_do_cursor(void *, int, int, int);
+static void	zx_erasecols(void *, int, int, int, long);
+static void	zx_eraserows(void *, int, int, long);
+static void	zx_putchar(void *, int, int, u_int, long);
 
 struct zx_mmo {
 	off_t	mo_va;
@@ -124,22 +137,66 @@ struct zx_mmo {
 	{ ZX_LD_GBL_VOFF,	ZX_OFF_LD_GBL,		0x00001000 },
 };
 
-CFATTACH_DECL(zx, sizeof(struct zx_softc),
+CFATTACH_DECL_NEW(zx, sizeof(struct zx_softc),
     zx_match, zx_attach, NULL, NULL);
 
 extern struct cfdriver zx_cd;
 
-dev_type_open(zxopen);
-dev_type_close(zxclose);
-dev_type_ioctl(zxioctl);
-dev_type_mmap(zxmmap);
+static dev_type_open(zxopen);
+static dev_type_close(zxclose);
+static dev_type_ioctl(zxioctl);
+static dev_type_mmap(zxmmap);
 
 static struct fbdriver zx_fbdriver = {
 	zx_unblank, zxopen, zxclose, zxioctl, nopoll, zxmmap
 };
 
-int
-zx_match(struct device *parent, struct cfdata *cf, void *aux)
+#if NWSDISPLAY > 0
+struct wsscreen_descr zx_defaultscreen = {
+	"std",
+	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
+		/* doesn't matter - you can't really have more than one leo */
+	NULL,		/* textops */
+	8, 16,	/* font width/height */
+	WSSCREEN_WSCOLORS,	/* capabilities */
+	NULL	/* modecookie */
+};
+
+static int 	zx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t	zx_mmap(void *, void *, off_t, int);
+static void	zx_init_screen(void *, struct vcons_screen *, int, long *);
+
+static int	zx_putcmap(struct zx_softc *, struct wsdisplay_cmap *);
+static int	zx_getcmap(struct zx_softc *, struct wsdisplay_cmap *);
+
+struct wsdisplay_accessops zx_accessops = {
+	zx_ioctl,
+	zx_mmap,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL, 	/* load_font */
+	NULL,	/* pollc */
+	NULL	/* scroll */
+};
+
+const struct wsscreen_descr *_zx_scrlist[] = {
+	&zx_defaultscreen
+};
+
+struct wsscreen_list zx_screenlist = {
+	sizeof(_zx_scrlist) / sizeof(struct wsscreen_descr *),
+	_zx_scrlist
+};
+
+
+extern const u_char rasops_cmap[768];
+
+static struct vcons_screen zx_console_screen;
+#endif /* NWSDISPLAY > 0 */
+
+static int
+zx_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa;
 
@@ -148,28 +205,31 @@ zx_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (strcmp(sa->sa_name, "SUNW,leo") == 0);
 }
 
-void
-zx_attach(struct device *parent, struct device *self, void *args)
+static void
+zx_attach(device_t parent, device_t self, void *args)
 {
 	struct zx_softc *sc;
 	struct sbus_attach_args *sa;
 	bus_space_handle_t bh;
 	bus_space_tag_t bt;
 	struct fbdevice *fb;
-	struct rasops_info *ri;
-	int width, height;
+#if NWSDISPLAY > 0
+	struct wsemuldisplaydev_attach_args aa;
+	struct rasops_info *ri = &zx_console_screen.scr_ri;
+	unsigned long defattr;
+#endif
 	int isconsole;
 
 	sc = device_private(self);
+	sc->sc_dv = self;
+
 	sa = args;
 	fb = &sc->sc_fb;
-	ri = &fb->fb_rinfo;
 	bt = sa->sa_bustag;
 	sc->sc_bt = bt;
-
 	sc->sc_paddr = sbus_bus_addr(bt, sa->sa_slot, sa->sa_offset);
 
-	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_SS0,
+	if (sparc_bus_map_large(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_SS0,
 	    0x800000, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		aprint_error_dev(self, "can't map bits\n");
 		return;
@@ -182,6 +242,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 		aprint_error_dev(self, "can't map zc\n");
 		return;
 	}
+
 	sc->sc_bhzc = bh;
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LD_SS0,
@@ -213,8 +274,8 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_bhzcu = bh;
 
 	fb->fb_driver = &zx_fbdriver;
-	fb->fb_device = &sc->sc_dv;
-	fb->fb_flags = device_cfdata(&sc->sc_dv)->cf_flags & FB_USERMASK;
+	fb->fb_device = sc->sc_dv;
+	fb->fb_flags = device_cfdata(sc->sc_dv)->cf_flags & FB_USERMASK;
 	fb->fb_pfour = NULL;
 	fb->fb_linebytes = prom_getpropint(sa->sa_node, "linebytes", 8192);
 
@@ -233,40 +294,68 @@ zx_attach(struct device *parent, struct device *self, void *args)
 		printf(" (console)");
 	printf("\n");
 
-	sbus_establish(&sc->sc_sd, &sc->sc_dv);
+	sbus_establish(&sc->sc_sd, sc->sc_dv);
 	if (sa->sa_nintr != 0)
 		bus_intr_establish(bt, sa->sa_pri, IPL_NONE, zx_intr, sc);
 
 	sc->sc_cmap = malloc(768, M_DEVBUF, M_NOWAIT);
-	fb_attach(&sc->sc_fb, isconsole);
 	zx_reset(sc);
 
-	/*
-	 * Attach to rcons.  XXX At this point, rasops_do_cursor() will be
-	 * called before we get our hooks in place.  So, we mask off access
-	 * to the framebuffer until it's done.
-	 */
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontt, 1);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontmsk, 0);
+#if NWSDISPLAY > 0
+	sc->sc_width = fb->fb_type.fb_width;
+	sc->sc_stride = 8192; /* 32 bit */
+	sc->sc_height = fb->fb_type.fb_height;
 
-	fbrcons_init(&sc->sc_fb);
+	/* setup rasops and so on for wsdisplay */
+	wsfont_init();
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	sc->sc_bg = WS_DEFAULT_BG;
 
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontt, 0);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontmsk, 0xffffffff);
+	vcons_init(&sc->vd, sc, &zx_defaultscreen, &zx_accessops);
+	sc->vd.init_screen = zx_init_screen;
 
-	ri->ri_hw = sc;
-	ri->ri_do_cursor = zx_do_cursor;
-	ri->ri_ops.copycols = zx_copycols;
-	ri->ri_ops.copyrows = zx_copyrows;
-	ri->ri_ops.erasecols = zx_erasecols;
-	ri->ri_ops.eraserows = zx_eraserows;
-	ri->ri_ops.putchar = zx_putchar;
+	if (isconsole) {
+		/* we mess with zx_console_screen only once */
+		vcons_init_screen(&sc->vd, &zx_console_screen, 1,
+		    &defattr);
+		zx_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+		
+		zx_defaultscreen.textops = &ri->ri_ops;
+		zx_defaultscreen.capabilities = WSSCREEN_WSCOLORS;
+		zx_defaultscreen.nrows = ri->ri_rows;
+		zx_defaultscreen.ncols = ri->ri_cols;
+		wsdisplay_cnattach(&zx_defaultscreen, ri, 0, 0, defattr);	
+	} else {
+		/* 
+		 * we're not the console so we just clear the screen and don't 
+		 * set up any sort of text display
+		 */
+		if (zx_defaultscreen.textops == NULL) {
+			/* 
+			 * ugly, but...
+			 * we want the console settings to win, so we only
+			 * touch anything when we find an untouched screen
+			 * definition. In this case we fill it from fb to
+			 * avoid problems in case no zx is the console
+			 */
+			ri = &sc->sc_fb.fb_rinfo;
+			zx_defaultscreen.textops = &ri->ri_ops;
+			zx_defaultscreen.capabilities = ri->ri_caps;
+			zx_defaultscreen.nrows = ri->ri_rows;
+			zx_defaultscreen.ncols = ri->ri_cols;
+		}
+	}
 
-	sc->sc_fontw = ri->ri_font->fontwidth;
-	sc->sc_fonth = ri->ri_font->fontheight;
+	aa.scrdata = &zx_screenlist;
+	aa.console = isconsole;
+	aa.accessops = &zx_accessops;
+	aa.accesscookie = &sc->vd;
+	config_found(sc->sc_dv, &aa, wsemuldisplaydevprint);
+#endif
+	fb_attach(&sc->sc_fb, isconsole);
 }
 
-int
+static int
 zxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
@@ -275,7 +364,7 @@ zxopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 zxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct zx_softc *sc;
@@ -287,7 +376,7 @@ zxclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct zx_softc *sc;
@@ -323,9 +412,9 @@ zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 
 	case FBIOSVIDEO:
 		if (*(int *)data)
-			zx_unblank(&sc->sc_dv);
+			zx_unblank(sc->sc_dv);
 		else
-			zx_blank(&sc->sc_dv);
+			zx_blank(sc->sc_dv);
 		break;
 
 	case FBIOGETCMAP:
@@ -474,14 +563,14 @@ zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 zx_intr(void *cookie)
 {
 
 	return (1);
 }
 
-void
+static void
 zx_reset(struct zx_softc *sc)
 {
 	struct fbtype *fbt;
@@ -498,14 +587,14 @@ zx_reset(struct zx_softc *sc)
 	i |= ZX_SS1_MISC_ENABLE;
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss1, zd_misc, i);
 
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_wid, 0xffffffff);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_wid, 1);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_widclip, 0);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_wmask, 0xffff);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_vclipmin, 0);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_vclipmax,
 	    (fbt->fb_width - 1) | ((fbt->fb_height - 1) << 16));
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg, 0);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_planemask, 0xff000000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_planemask, 0xffffffff);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, ZX_STD_ROP);
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent,
@@ -523,7 +612,7 @@ zx_reset(struct zx_softc *sc)
 	zx_cmap_put(sc);
 }
 
-int
+static int
 zx_cross_wait(struct zx_softc *sc)
 {
 	int i;
@@ -541,7 +630,7 @@ zx_cross_wait(struct zx_softc *sc)
 	return (i);
 }
 
-int
+static int
 zx_cross_loadwid(struct zx_softc *sc, u_int type, u_int index, u_int value)
 {
 	u_int tmp = 0;
@@ -565,15 +654,15 @@ zx_cross_loadwid(struct zx_softc *sc, u_int type, u_int index, u_int value)
 	return (0);
 }
 
-int
+static int
 zx_cmap_put(struct zx_softc *sc)
 {
 	const u_char *b;
 	u_int i, t;
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type, ZX_CROSS_TYPE_CLUT0);
-	if (zx_cross_wait(sc))
-		return (1);
+
+	zx_cross_wait(sc);
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type,
 	    ZX_CROSS_TYPE_CLUTDATA);
@@ -592,7 +681,7 @@ zx_cmap_put(struct zx_softc *sc)
 	return (0);
 }
 
-void
+static void
 zx_cursor_move(struct zx_softc *sc)
 {
 	int sx, sy, x, y;
@@ -628,7 +717,7 @@ zx_cursor_move(struct zx_softc *sc)
 	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x80);
 }
 
-void
+static void
 zx_cursor_set(struct zx_softc *sc)
 {
 	int i, j, data;
@@ -655,7 +744,7 @@ zx_cursor_set(struct zx_softc *sc)
 		    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x80);
 }
 
-void
+static void
 zx_cursor_blank(struct zx_softc *sc)
 {
 
@@ -664,7 +753,7 @@ zx_cursor_blank(struct zx_softc *sc)
 	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) & ~0x80);
 }
 
-void
+static void
 zx_cursor_unblank(struct zx_softc *sc)
 {
 
@@ -673,7 +762,7 @@ zx_cursor_unblank(struct zx_softc *sc)
 	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x80);
 }
 
-void
+static void
 zx_cursor_color(struct zx_softc *sc)
 {
 	u_int8_t tmp;
@@ -692,8 +781,8 @@ zx_cursor_color(struct zx_softc *sc)
 	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x03);
 }
 
-void
-zx_blank(struct device *dv)
+static void
+zx_blank(device_t dv)
 {
 	struct zx_softc *sc;
 
@@ -709,8 +798,8 @@ zx_blank(struct device *dv)
 	    ~ZX_CROSS_CSR_ENABLE);
 }
 
-void
-zx_unblank(struct device *dv)
+static void
+zx_unblank(device_t dv)
 {
 	struct zx_softc *sc;
 
@@ -726,7 +815,7 @@ zx_unblank(struct device *dv)
 	    ZX_CROSS_CSR_ENABLE);
 }
 
-paddr_t
+static paddr_t
 zxmmap(dev_t dev, off_t off, int prot)
 {
 	struct zx_softc *sc;
@@ -747,48 +836,28 @@ zxmmap(dev_t dev, off_t off, int prot)
 	return (-1);
 }
 
-void
-zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
+static void
+zx_fillrect(struct zx_softc *sc, int x, int y, int w, int h, uint32_t bg,
 	    int rop)
 {
-	struct zx_softc *sc;
-	int fg, bg;
 
-	sc = ri->ri_hw;
-
-	rasops_unpack_attr(attr, &fg, &bg, NULL);
-	x = x * sc->sc_fontw + ri->ri_xorigin;
-	y = y * sc->sc_fonth + ri->ri_yorigin;
-	w = sc->sc_fontw * w - 1;
-	h = sc->sc_fonth * h - 1;
 
 	while ((bus_space_read_4(sc->sc_bt, sc->sc_bhzc, zc_csr) &
 	    ZX_CSR_BLT_BUSY) != 0)
 		;
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, rop);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg,
-	    (bg & 7) ? 0x00000000 : 0xff000000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg, bg);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent, w | (h << 11));
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fill,
 	    x | (y << 11) | 0x80000000);
 }
 
-void
-zx_copyrect(struct rasops_info *ri, int sx, int sy, int dx, int dy, int w,
+static void
+zx_copyrect(struct zx_softc *sc, int sx, int sy, int dx, int dy, int w,
 	    int h)
 {
-	struct zx_softc *sc;
-	int dir;
-
-	sc = ri->ri_hw;
-
-	sx = sx * sc->sc_fontw + ri->ri_xorigin;
-	sy = sy * sc->sc_fonth + ri->ri_yorigin;
-	dx = dx * sc->sc_fontw + ri->ri_xorigin;
-	dy = dy * sc->sc_fonth + ri->ri_yorigin;
-	w = w * sc->sc_fontw - 1;
-	h = h * sc->sc_fonth - 1;
+	uint32_t dir;
 
 	if (sy < dy || sx < dx) {
 		dir = 0x80000000;
@@ -810,102 +879,161 @@ zx_copyrect(struct rasops_info *ri, int sx, int sy, int dx, int dy, int w,
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_copy, dx | (dy << 11));
 }
 
-void
-zx_do_cursor(struct rasops_info *ri)
+static void
+zx_do_cursor(void *cookie, int on, int row, int col)
 {
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct zx_softc *sc = scr->scr_cookie;
+	int x, y, wi, he;
 
-	zx_fillrect(ri, ri->ri_ccol, ri->ri_crow, 1, 1, 0,
-	    ZX_ROP_NEW_XOR_OLD | ZX_ATTR_WE_ENABLE | ZX_ATTR_OE_ENABLE |
-	    ZX_ATTR_FORCE_WID);
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+
+	if (ri->ri_flg & RI_CURSOR) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		zx_fillrect(sc, x, y, wi, he, 0xff000000,
+		  ZX_ROP_NEW_XOR_OLD | ZX_ATTR_WE_ENABLE | ZX_ATTR_OE_ENABLE |
+		  ZX_ATTR_FORCE_WID);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+	ri->ri_crow = row;
+	ri->ri_ccol = col;
+
+	if (on)
+	{
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		zx_fillrect(sc, x, y, wi, he, 0xff000000,
+		  ZX_ROP_NEW_XOR_OLD | ZX_ATTR_WE_ENABLE | ZX_ATTR_OE_ENABLE |
+		  ZX_ATTR_FORCE_WID);
+		ri->ri_flg |= RI_CURSOR;
+	}
 }
 
-void
-zx_erasecols(void *cookie, int row, int col, int num, long attr)
+static void
+zx_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct zx_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, bg;
 
-	ri = (struct rasops_info *)cookie;
-
-	zx_fillrect(ri, col, row, num, 1, attr, ZX_STD_ROP);
+	x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;
+	bg = ((uint32_t)ri->ri_devcmap[(attr >> 16) & 0xff]) << 24;
+	zx_fillrect(sc, x, y, width, height, bg, ZX_STD_ROP);
 }
 
-void
-zx_eraserows(void *cookie, int row, int num, long attr)
+static void
+zx_eraserows(void *cookie, int row, int nrows, long attr)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct zx_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, bg;
 
-	ri = (struct rasops_info *)cookie;
-
-	zx_fillrect(ri, 0, row, ri->ri_cols, num, attr, ZX_STD_ROP);
+	if ((row == 0) && (nrows == ri->ri_rows)) {
+		x = y = 0;
+		width = ri->ri_width;
+		height = ri->ri_height;
+	} else {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+	}
+	bg = ((uint32_t)ri->ri_devcmap[(attr >> 16) & 0xff]) << 24;
+	zx_fillrect(sc, x, y, width, height, bg, ZX_STD_ROP);
 }
 
-void
-zx_copyrows(void *cookie, int src, int dst, int num)
+static void
+zx_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct zx_softc *sc = scr->scr_cookie;
+	int32_t x, ys, yd, width, height;
 
-	ri = (struct rasops_info *)cookie;
-
-	zx_copyrect(ri, 0, src, 0, dst, ri->ri_cols, num);
+	x = ri->ri_xorigin;
+	ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+	yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+	width = ri->ri_emuwidth;
+	height = ri->ri_font->fontheight * nrows;
+	zx_copyrect(sc, x, ys, x, yd, width, height);
 }
 
-void
-zx_copycols(void *cookie, int row, int src, int dst, int num)
+static void
+zx_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct zx_softc *sc = scr->scr_cookie;
+	int32_t xs, xd, y, width, height;
 
-	ri = (struct rasops_info *)cookie;
-
-	zx_copyrect(ri, src, row, dst, row, num, 1);
+	xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+	xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;
+	zx_copyrect(sc, xs, y, xd, y, width, height);
 }
 
-void
+static void
 zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
-	struct rasops_info *ri;
-	struct zx_softc *sc;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct zx_softc *sc = scr->scr_cookie;
 	struct wsdisplay_font *font;
 	volatile u_int32_t *dp;
 	u_int8_t *fb;
-	int fs, i, fg, bg, ul;
-
-	ri = (struct rasops_info *)cookie;
-
+	int fs, i, ul;
+	uint32_t fg, bg;
+	
+	rasops_unpack_attr(attr, &fg, &bg, &ul);
+	bg = ((uint32_t)ri->ri_devcmap[bg]) << 24;
+	fg = ((uint32_t)ri->ri_devcmap[fg]) << 24;
 	if (uc == ' ') {
-		zx_fillrect(ri, col, row, 1, 1, attr, ZX_STD_ROP);
+		int x, y;
+
+		x = ri->ri_xorigin + ri->ri_font->fontwidth * col;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		zx_fillrect(sc, x, y, ri->ri_font->fontwidth,
+			    ri->ri_font->fontheight, bg, ZX_STD_ROP);
 		return;
 	}
 
-	sc = (struct zx_softc *)ri->ri_hw;
 	font = ri->ri_font;
 
 	dp = (volatile u_int32_t *)sc->sc_pixels +
-	    ((row * sc->sc_fonth + ri->ri_yorigin) << 11) +
-	    (col * sc->sc_fontw + ri->ri_xorigin);
+	    ((row * font->fontheight + ri->ri_yorigin) << 11) +
+	    (col * font->fontwidth + ri->ri_xorigin);
 	fb = (u_int8_t *)font->data + (uc - font->firstchar) *
 	    ri->ri_fontscale;
 	fs = font->stride;
-	rasops_unpack_attr(attr, &fg, &bg, &ul);
 
 	while ((bus_space_read_4(sc->sc_bt, sc->sc_bhzc, zc_csr) &
 	    ZX_CSR_BLT_BUSY) != 0)
 		;
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, ZX_STD_ROP);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg,
-	    (fg & 7) ? 0x00000000 : 0xff000000);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_bg,
-	    (bg & 7) ? 0x00000000 : 0xff000000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg, fg);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_bg, bg);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontmsk,
-	    0xffffffff << (32 - sc->sc_fontw));
+	    0xffffffff << (32 - font->fontwidth));
 
-	if (sc->sc_fontw <= 8) {
-		for (i = sc->sc_fonth; i != 0; i--, dp += 2048) {
+	if (font->fontwidth <= 8) {
+		for (i = font->fontheight; i != 0; i--, dp += 2048) {
 			*dp = *fb << 24;
 			fb += fs;
 		}
 	} else {
-		for (i = sc->sc_fonth; i != 0; i--, dp += 2048) {
+		for (i = font->fontheight; i != 0; i--, dp += 2048) {
 			*dp = *((u_int16_t *)fb) << 16;
 			fb += fs;
 		}
@@ -916,3 +1044,146 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		*dp = 0xffffffff;
 	}
 }
+
+#if NWSDISPLAY > 0
+static int
+zx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
+	struct lwp *l)
+{
+	/* we'll probably need to add more stuff here */
+	struct vcons_data *vd = v;
+	struct zx_softc *sc = vd->cookie;
+	struct wsdisplay_fbinfo *wdf;
+	struct rasops_info *ri = &sc->sc_fb.fb_rinfo;
+	struct vcons_screen *ms = sc->vd.active;
+	switch (cmd) {
+		case WSDISPLAYIO_GTYPE:
+			*(u_int *)data = WSDISPLAY_TYPE_SUNTCX;
+			return 0;
+		case WSDISPLAYIO_GINFO:
+			wdf = (void *)data;
+			wdf->height = ri->ri_height;
+			wdf->width = ri->ri_width;
+			wdf->depth = ri->ri_depth;
+			wdf->cmsize = 256;
+			return 0;
+
+		case WSDISPLAYIO_GETCMAP:
+			return zx_getcmap(sc, 
+			    (struct wsdisplay_cmap *)data);
+		case WSDISPLAYIO_PUTCMAP:
+			return zx_putcmap(sc, 
+			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_SMODE:
+			{
+				int new_mode = *(int*)data;
+				if (new_mode != sc->sc_mode)
+				{
+					sc->sc_mode = new_mode;
+					if(new_mode == WSDISPLAYIO_MODE_EMUL)
+					{
+						vcons_redraw_screen(ms);
+					}
+				}
+			}
+	}
+	return EPASSTHROUGH;
+}
+
+static paddr_t
+zx_mmap(void *v, void *vs, off_t offset, int prot)
+{
+	/* I'm not at all sure this is the right thing to do */
+	return zxmmap(0, offset, prot); /* assume minor dev 0 for now */
+}
+
+static int
+zx_putcmap(struct zx_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error,i;
+	if (index >= 256 || count > 256 || index + count > 256)
+		return EINVAL;
+
+	for (i = 0; i < count; i++)
+	{
+		error = copyin(&cm->red[i],
+		    &sc->sc_cmap[index + i], 1);
+		if (error)
+			return error;
+		error = copyin(&cm->green[i],
+		    &sc->sc_cmap[index + i + 256], 1);
+		if (error)
+			return error;
+		error = copyin(&cm->blue[i],
+		    &sc->sc_cmap[index + i + 512], 1);
+		if (error)
+			return error;
+	}
+	zx_cmap_put(sc);
+
+	return 0;
+}
+
+static int
+zx_getcmap(struct zx_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error,i;
+
+	if (index >= 256 || count > 256 || index + count > 256)
+		return EINVAL;
+
+	for (i = 0; i < count; i++)
+	{
+		error = copyout(&sc->sc_cmap[index + i],
+		    &cm->red[i], 1);
+		if (error)
+			return error;
+		error = copyout(&sc->sc_cmap[index + i + 256],
+		    &cm->green[i], 1);
+		if (error)
+			return error;
+		error = copyout(&sc->sc_cmap[index + i + 256],
+		    &cm->blue[i], 1);
+		if (error)
+			return error;
+	}
+
+	return 0;
+}
+
+static void
+zx_init_screen(void *cookie, struct vcons_screen *scr,
+    int existing, long *defattr)
+{
+	struct zx_softc *sc = cookie;
+	struct rasops_info *ri = &scr->scr_ri;
+
+	ri->ri_depth = 8; /*sc->sc_fb.fb_type.fb_depth = 32;*/
+	ri->ri_width = sc->sc_width;
+	ri->ri_height = sc->sc_height;
+	ri->ri_stride = sc->sc_stride;
+	ri->ri_flg = RI_CENTER;
+
+	ri->ri_bits = (void *)sc->sc_pixels;
+	
+	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
+	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
+		    sc->sc_width / ri->ri_font->fontwidth);
+
+	ri->ri_hw = scr;
+
+	ri->ri_ops.cursor = zx_do_cursor;
+	ri->ri_ops.copycols = zx_copycols;
+	ri->ri_ops.copyrows = zx_copyrows;
+	ri->ri_ops.erasecols = zx_erasecols;
+	ri->ri_ops.eraserows = zx_eraserows;
+	ri->ri_ops.putchar = zx_putchar;
+}
+
+#endif /* NWSDISPLAY > 0 */
