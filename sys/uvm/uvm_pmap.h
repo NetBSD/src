@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.27 2009/04/21 21:30:01 cegger Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.28 2009/04/23 06:22:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -100,7 +100,7 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #define	PMAP_WIRED	0x00000010	/* wired mapping */
 #define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
 
-#define	PMAP_MD_MASK	0x0000ff00	/* Machine-dependent bits */
+#define	PMAP_MD_MASK	0xff000000	/* Machine-dependent bits */
 
 /*
  * Flags passed to pmap_kenter_pa().  Note the bottom 3 bits are VM_PROT_*
