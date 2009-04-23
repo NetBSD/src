@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.50 2009/04/23 16:35:20 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.51 2009/04/23 16:37:44 tsutsui Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -120,7 +120,7 @@ ${PROG}: ${OBJS} ${LIBS}
 .include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
-CLEANFILES+=	${PROG}.map
+CLEANFILES+=	${PROG}.map ${PROG}.elf
 
 cleandir distclean: cleanlibdir
 
