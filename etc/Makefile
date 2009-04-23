@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.365 2009/02/26 19:43:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.366 2009/04/23 11:29:29 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -393,16 +393,12 @@ TOOL_MTREE.unpriv=	-W
 
 distrib-dirs: .PHONY check_DESTDIR
 .if !defined(DISTRIBUTION_DONE)						# {
-# XXX: If METALOG=${DESTDIR}/METALOG (as is normal), and if ${DESTDIR}
-# does not yet exist (as often happens), then the INSTALL_DIR command
-# immediately below will create ${DESTDIR} but will fail to register
-# an entry for "." in the metalog.  We ignore the problem, because the
-# TOOL_MTREE commands a little further below will soon register an entry
-# for "." in the metalog.
-	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
-# XXX: It would be nice if a single mtree invocation could both
-# append to the metalog and do real work.  Instead, we have to
-# repeat the command twice in slightly different ways.
+# Create DESTDIR using HOST_INSTALL_DIR, not INSTALL_DIR, because
+# INSTALL_DIR would want to write to the metalog, and it can't do that
+# if the metalog is inside DESTDIR but DESTDIR doesn't yet exist.
+	${HOST_INSTALL_DIR} -m 755 ${DESTDIR}
+# Inkoke mtree to create the directories listed in NetBSD.dist;
+# then invoke mtree again to register those directories in the metalog.
 	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
 	    -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
 .if ${MKUNPRIVED} != "no"						# {
