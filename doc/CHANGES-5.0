@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.141 2009/04/23 17:50:16 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.142 2009/04/23 23:33:09 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6212,4 +6212,9 @@ sys/kern/kern_synch.c				1.262
 	kpreempt: report a failure of cpu_kpreempt_enter.  Otherwise x86
 	trap() loops infinitely.  Fixes PR 41202.
 	[yamt, ticket #720]
+
+lib/libc/db/hash/hash_buf.c			1.17, 1.18
+
+	Fix build fallout from ticket 719.
+	[agc, ticket #723]
 
