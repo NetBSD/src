@@ -1,0 +1,43 @@
+To Do
+=====
+need a netpgp_set_{pub,sec}key()? vs _init()?
+default compression when signing
+get rid of ops_memory after used literal_data_body
+sort out callback - ops_export_key, packet-parse callback etc
+Simplify IO
+Make into SHA1Init, SHA1End, SHA1File style of calls
+Work out a way to get text out of a signed file
+Multiple recipients for encryption
+Look at inefficiencies - read() etc
+
+Done
+====
+autoconf
+libtool
+name change
+content_ naming scheme
+Brief test script
+get rid of C global
+put all readers and writers together in one file
+Add mmapped method
+merge mmap'ed and fd reads - if mmap fails, fall back to read
+Make sure all openpgpsdk changes are brought forward
+look at header file fun
+new version number in autoconf
+Make decrypt work with files > 8192 bytes
+dynamically size literal_data_body before decompressing?
+restore ops_export_key functionality
+match keyids using case insensitive matching - (c0596823 == C0596823)
+use PRIsize appropriately
+make a high-level interface
+get rid of multiple local headers
+get rid of long identifier names - all done internally now
+Finish name change for everything
+work out what's exported and what's not
+finish off main header file
+init(&netpgp, userid, pubring, secring)
+__ops
+real naming scheme
+get rid of malloc() instances -> calloc()
+change include directory
+Install man pages
