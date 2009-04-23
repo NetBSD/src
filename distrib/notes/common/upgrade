@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.26 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: upgrade,v 1.27 2009/04/23 01:56:49 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,9 +59,7 @@ utility and the installation kernel you chose, or the
 boot floppies available to do the upgrade.
 .\}
 .el \{\
-To do the upgrade, you must have the boot floppy
-.if \n[alpha]:\n[i386] set
-available.
+To do the upgrade, you must have one form of boot media available.
 .\}\}\}\}
 You must also have at least the
 .Sy base
