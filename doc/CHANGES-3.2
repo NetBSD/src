@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.164 2009/04/14 09:03:30 jdc Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.165 2009/04/23 02:13:33 snj Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5213,3 +5213,26 @@ sys/sys/file.h					patch
 sys/kern/uipc_usrreq.c				patch
 	Fix a problem with a failure path (PR#38391).
 	[mlelstv, ticket #2005]
+
+lib/libedit/common.c				1.23
+
+	Fix mis-evaluating whether a char is digit or not.
+	[msaitoh, ticket #2006]
+
+lib/libedit/term.c				1.44-1.45 via patch
+
+	Coverity CID 1668: Plug memory leak when malloc() failed.
+	[msaitoh, ticket #2007]
+
+usr.sbin/rtsold/if.c				1.14-1.15
+
+	Fix two memory leaks; CID 990.
+	[msaitoh, ticket #2008]
+
+sys/arch/vax/vax/subr.S				1.26
+
+	Make copyin(9) and copyout(9) work with 64KB or larger data
+	blocks.  Fixes broken pipe(2) problem mentioned in
+	PR port-vax/41139.
+	[mhitch, ticket #2010]
+
