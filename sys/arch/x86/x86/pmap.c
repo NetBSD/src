@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2009/04/21 21:30:01 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2009/04/23 12:18:41 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2009/04/21 21:30:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2009/04/23 12:18:41 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2123,7 +2123,7 @@ pmap_pdp_dtor(void *arg, void *v)
 /* pmap_pdp_alloc: Allocate a page for the pdp memory pool. */
 
 void *
-pmap_pdp_alloc(struct pool *pp, u_int flags)
+pmap_pdp_alloc(struct pool *pp, int flags)
 {
 	return (void *)uvm_km_alloc(kernel_map,
 	    PAGE_SIZE * PDP_SIZE, PAGE_SIZE * PDP_SIZE,
