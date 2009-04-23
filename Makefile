@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.269 2009/04/15 10:18:34 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.270 2009/04/23 09:43:49 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -219,6 +219,7 @@ BUILDTARGETS+=	do-tools
 .if ${MKOBJDIRS} != "no"
 BUILDTARGETS+=	obj
 .endif
+BUILDTARGETS+=	clean_METALOG
 .if !defined(NODISTRIBDIRS)
 BUILDTARGETS+=	do-distrib-dirs
 .endif
@@ -379,6 +380,12 @@ check-tools: .PHONY
 .endif
 .if defined(NBUILDJOBS)
 	@echo '*** WARNING: NBUILDJOBS is obsolete; use -j directly instead!'
+.endif
+
+# Delete or sanitise a leftover METALOG from a previous build.
+clean_METALOG: .PHONY .MAKE
+.if ${MKUPDATE} != "no"
+	${MAKEDIRTARGET} distrib/sets clean_METALOG
 .endif
 
 do-distrib-dirs: .PHONY .MAKE
