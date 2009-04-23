@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.139 2009/04/21 01:58:59 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.140 2009/04/23 02:36:10 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6164,4 +6164,46 @@ external/mit/xorg/bin/xterm/Makefile		1.3
 	Turn on PASTE64 to handle large cut-n-paste buffers like the
 	old xterm did.
 	[agc, ticket #711]
+
+sys/dev/drm/drm_drv.c				1.23
+sys/dev/drm/drm_irq.c				1.17
+
+	Move initialisation of the irq spinlock into the device
+	handling code, at least the Intel driver depends on it whether
+	the IRQ is currently enabled or not.
+	[joerg, ticket #714]
+
+sys/dev/mii/mii_physubr.c			1.62
+sys/dev/mii/miivar.h				1.53
+
+	Add (unused) mii_anar(), to make life easier for people who wish
+	to test the ale(4) driver in netbsd-5.
+	[sborrill, ticket #715]
+
+sys/fs/udf/udf_allocation.c			1.21
+
+	Fix endian related bug when using discs with a meta-data
+	partition on big-endian machines.
+	[reinoud, ticket #716]
+
+external/mit/xorg/server/drivers/xf86-video-r128/Makefile 1.2
+
+	Fix part of xsrc/40322: r128 driver does not restore VGA state
+	on exit from X.
+	[rafal, ticket #718]
+
+sys/dev/drm/drmP.h				1.34
+sys/dev/drm/drm_drv.c				1.24
+sys/dev/drm/drm_scatter.c			1.8
+
+	Rework scatter / gather page allocation.  Fixes some instances of
+	screen corruption and lockups when using DRM with certain Radeons.
+	[rafal, ticket #717]
+
+lib/libc/db/btree/bt_split.c			1.19
+lib/libc/db/hash/hash_buf.c			1.15, 1.16
+lib/libc/db/mpool/mpool.c			1.19
+
+	Avoid information leaks by zeroing memory.
+	[christos, ticket #719]
 
