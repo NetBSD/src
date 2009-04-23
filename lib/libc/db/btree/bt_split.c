@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_split.c,v 1.13 2003/08/07 16:42:41 agc Exp $	*/
+/*	$NetBSD: bt_split.c,v 1.13.20.1 2009/04/23 02:41:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_split.c	8.9 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: bt_split.c,v 1.13 2003/08/07 16:42:41 agc Exp $");
+__RCSID("$NetBSD: bt_split.c,v 1.13.20.1 2009/04/23 02:41:55 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -391,7 +391,7 @@ bt_page(t, h, lp, rp, skip, ilen)
 	}
 
 	/* Put the new left page for the split into place. */
-	if ((l = (PAGE *)malloc(t->bt_psize)) == NULL) {
+	if ((l = calloc(1, t->bt_psize)) == NULL) {
 		mpool_put(t->bt_mp, r, 0);
 		return (NULL);
 	}
