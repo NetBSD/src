@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.163 2009/04/23 10:43:31 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.164 2009/04/23 10:47:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.163 2009/04/23 10:43:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.164 2009/04/23 10:47:44 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -133,8 +133,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.163 2009/04/23 10:43:31 msaitoh Exp $")
 #include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/if_bgereg.h>
+#include <dev/pci/if_bgevar.h>
 
 #include <uvm/uvm_extern.h>
+#include <prop/proplib.h>
 
 #define ETHER_MIN_NOPAD (ETHER_MIN_LEN - ETHER_CRC_LEN) /* i.e., 60 */
 
@@ -2279,6 +2281,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 {
 	struct bge_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
+	prop_dictionary_t dict;
 	const struct bge_product *bp;
 	const struct bge_revision *br;
 	pci_chipset_tag_t	pc;
@@ -2664,6 +2667,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
+
+	dict = device_properties(self);
+	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_flags);
 }
 
 static void

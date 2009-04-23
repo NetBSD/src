@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.43 2009/04/19 11:10:36 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.44 2009/04/23 10:47:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.43 2009/04/19 11:10:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.44 2009/04/23 10:47:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.43 2009/04/19 11:10:36 msaitoh Exp $");
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
+#include <prop/proplib.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -82,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.43 2009/04/19 11:10:36 msaitoh Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-
 #include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/if_bgereg.h>
@@ -93,7 +93,15 @@ __KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.43 2009/04/19 11:10:36 msaitoh Exp $");
 static int	brgphymatch(device_t, cfdata_t, void *);
 static void	brgphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL3_NEW(brgphy, sizeof(struct mii_softc),
+struct brgphy_softc {
+	struct mii_softc sc_mii;
+	int sc_isbge;
+	int sc_isbnx;
+	int sc_bge_flags;
+	int sc_bnx_flags;
+};
+
+CFATTACH_DECL3_NEW(brgphy, sizeof(struct brgphy_softc),
     brgphymatch, brgphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
@@ -193,10 +201,13 @@ brgphymatch(struct device *parent, struct cfdata *match,
 static void
 brgphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = device_private(self);
+	struct brgphy_softc *bsc = device_private(self);
+	struct mii_softc *sc = &bsc->sc_mii;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
+	prop_dictionary_t dict;
+	const char *devname;
 
 	mpd = mii_phy_match(ma, brgphys);
 	aprint_naive(": Media interface\n");
@@ -226,6 +237,20 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	parent = device_parent(sc->mii_dev);
+	devname = parent->dv_cfdriver->cd_name;
+	if (strcmp(devname, "bge") == 0) {
+		bsc->sc_isbge = 1;
+		dict = device_properties(parent);
+		prop_dictionary_get_uint32(dict, "phyflags",
+		    &bsc->sc_bge_flags);
+	} else if (strcmp(devname, "bnx") == 0) {
+		bsc->sc_isbnx = 1;
+		dict = device_properties(parent);
+		prop_dictionary_get_uint32(dict, "phyflags",
+		    &bsc->sc_bnx_flags);
+	}
 }
 
 static int
@@ -476,13 +501,7 @@ brgphy_loop(struct mii_softc *sc)
 static void
 brgphy_reset(struct mii_softc *sc)
 {
-	struct bge_softc *bge_sc = NULL;
-#if 0
-	struct bnx_softc *bnx_sc = NULL;
-#endif
-	const char *devname;
-
-	devname = device_parent(sc->mii_dev)->dv_cfdriver->cd_name;
+	struct brgphy_softc *bsc = (void *)sc;
 
 	mii_phy_reset(sc);
 
@@ -506,22 +525,21 @@ brgphy_reset(struct mii_softc *sc)
 	}
 
 	/* Handle any bge (NetXtreme/NetLink) workarounds. */
-	if (strcmp(devname, "bge") == 0) {
+	if (bsc->sc_isbge != 0) {
 		if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
-			bge_sc = sc->mii_pdata->mii_ifp->if_softc;
 
-			if (bge_sc->bge_flags & BGE_PHY_ADC_BUG)
+			if (bsc->sc_bge_flags & BGE_PHY_ADC_BUG)
 				brgphy_adc_bug(sc);
-			if (bge_sc->bge_flags & BGE_PHY_5704_A0_BUG)
+			if (bsc->sc_bge_flags & BGE_PHY_5704_A0_BUG)
 				brgphy_5704_a0_bug(sc);
-			if (bge_sc->bge_flags & BGE_PHY_BER_BUG)
+			if (bsc->sc_bge_flags & BGE_PHY_BER_BUG)
 				brgphy_ber_bug(sc);
-			else if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG) {
+			else if (bsc->sc_bge_flags & BGE_PHY_JITTER_BUG) {
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
 				PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG,
 				    0x000a);
 
-				if (bge_sc->bge_flags & BGE_PHY_ADJUST_TRIM) {
+				if (bsc->sc_bge_flags & BGE_PHY_ADJUST_TRIM) {
 					PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
 					    0x110b);
 					PHY_WRITE(sc, BRGPHY_TEST1,
@@ -533,12 +551,12 @@ brgphy_reset(struct mii_softc *sc)
 
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
 			}
-			if (bge_sc->bge_flags & BGE_PHY_CRC_BUG)
+			if (bsc->sc_bge_flags & BGE_PHY_CRC_BUG)
 				brgphy_crc_bug(sc);
 
 #if 0
 			/* Set Jumbo frame settings in the PHY. */
-			if (bge_sc->bge_flags & BGE_JUMBO_CAP)
+			if (bsc->sc_bge_flags & BGE_JUMBO_CAP)
 				brgphy_jumbo_settings(sc);
 #endif
 
@@ -548,11 +566,11 @@ brgphy_reset(struct mii_softc *sc)
 
 #if 0
 			/* Enable Ethernet@Wirespeed */
-			if (!(bge_sc->bge_flags & BGE_NO_ETH_WIRE_SPEED))
+			if (!(bsc->sc_bge_flags & BGE_NO_ETH_WIRE_SPEED))
 				brgphy_eth_wirespeed(sc);
 
 			/* Enable Link LED on Dell boxes */
-			if (bge_sc->bge_flags & BGE_NO_3LED) {
+			if (bsc->sc_bge_flags & BGE_NO_3LED) {
 				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
 				PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 					& ~BRGPHY_PHY_EXTCTL_3_LED);
@@ -561,7 +579,7 @@ brgphy_reset(struct mii_softc *sc)
 		}
 #if 0 /* not yet */
 	/* Handle any bnx (NetXtreme II) workarounds. */
-	} else if (strcmp(devname, "bnx") == 0) {
+	} else if (sc->sc_isbnx != 0) {
 		bnx_sc = sc->mii_pdata->mii_ifp->if_softc;
 
 		if (sc->mii_mpd_model == MII_MODEL_xxBROADCOM2_BCM5708S) {
