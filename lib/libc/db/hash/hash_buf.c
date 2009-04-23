@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.11 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.11.14.1 2009/04/23 02:41:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-__RCSID("$NetBSD: hash_buf.c,v 1.11 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: hash_buf.c,v 1.11.14.1 2009/04/23 02:41:55 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -332,8 +332,10 @@ __buf_free(hashp, do_free, to_disk)
 		}
 		/* Check if we are freeing stuff */
 		if (do_free) {
-			if (bp->page)
+			if (bp->page) {
+				(void)memset(bp->page, 0, hashp->BSIZE);
 				free(bp->page);
+			}
 			BUF_REMOVE(bp);
 			free(bp);
 			bp = LRU;
