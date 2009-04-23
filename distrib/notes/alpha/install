@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.34 2008/09/06 21:29:21 tsutsui Exp $
+.\"	$NetBSD: install,v 1.35 2009/04/23 01:56:48 snj Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,16 +113,12 @@ The 3.5", 1.44 MB boot floppy set is found under the
 .Nx*M
 \*V distribution directory in
 .Pa \*M/installation/floppy/
-as two files called
-.Pa disk1of2
-and
-.Pa disk2of2 ,
-or as three files called
+as three files called
 .Pa disk1of3 ,
 .Pa disk2of3 ,
 and
 .Pa disk3of3 .
-You need to put these disk images on two or three floppy disks.
+You need to put these disk images on three floppy disks.
 .Pp
 If you have a
 .Ul
@@ -252,8 +248,7 @@ You will need to set up servers for BOOTP, TFTP and NFS.
 If you want to run a full system
 from the network, untar the
 .Nx
-snapshot or distribution
-into a directory on your server and NFS export that directory
+distribution into a directory on your server and NFS export that directory
 to the client.
 Make sure you put a kernel there as well, and create the device nodes in
 .Pa /dev
@@ -541,17 +536,6 @@ to the
 .Pa /
 (root) partition.
 .Pp
-If you have more space, we recommend devoting at least 32 MB,
-and preferably 48 MB, to the
-.Pa /
-(root) partition.
-.Pa /usr
-will need 150 MB or so if you're not installing X, 200 MB or so if you are.
-A typical organization is 50 MB for
-.Pa /
-(root), 150-250 MB for
-swap, and the remaining space for
-.Pa /usr .
 With enough swap space configured, you can make
 .Pa /tmp
 a nice, fast mfs.

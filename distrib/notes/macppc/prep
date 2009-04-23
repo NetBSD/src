@@ -1,15 +1,15 @@
-.\"	$NetBSD: prep,v 1.42 2007/12/14 21:15:59 pavel Exp $
+.\"	$NetBSD: prep,v 1.43 2009/04/23 01:56:49 snj Exp $
 .
 .Ss2 Prepare yourself
 .
 Take a deep breath.
 .Pp
 Good.
-Now, make sure you are reading the PDF (if available), PostScript,
-or HTML version of this document, as the
+Now, make sure you are reading the PostScript or HTML version of this
+document, as the
 .Pa \&.txt No and Pa \&.more
 versions lack important formatting information that will prevent you from
-following the twisted path you must follow.
+following the twisted path documented below.
 OK, good.
 Now, print out this document.
 .Pp

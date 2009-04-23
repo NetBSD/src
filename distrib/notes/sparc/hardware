@@ -1,10 +1,9 @@
-.\"	$NetBSD: hardware,v 1.34 2008/09/06 20:14:21 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.35 2009/04/23 01:56:50 snj Exp $
 .
 .Pp
-The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
-To install the entire system requires about 260 MB (not including swap).
-To install the X window system you need at least 295 MB (not including 
-swap) and 8 MB RAM.
+The minimum configuration requires 4 MB of RAM and 100 MB of disk space.
+To install the entire system requires considerably more space, and more
+RAM to achieve reasonable performance.
 .Nx
 with 4 MB of RAM feels like
 .Tn Solaris
