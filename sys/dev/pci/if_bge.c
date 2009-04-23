@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.162 2009/04/19 11:10:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.163 2009/04/23 10:43:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.162 2009/04/19 11:10:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.163 2009/04/23 10:43:31 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1520,7 +1520,6 @@ int bge_swapindex = 0;
 static int
 bge_chipinit(struct bge_softc *sc)
 {
-	u_int32_t		cachesize;
 	int			i;
 	u_int32_t		dma_rw_ctl;
 
@@ -1653,57 +1652,6 @@ bge_chipinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS |
 		    BGE_MODECTL_MAC_ATTN_INTR | BGE_MODECTL_HOST_SEND_BDS |
 		    BGE_MODECTL_TX_NO_PHDR_CSUM | BGE_MODECTL_RX_NO_PHDR_CSUM);
-
-	/* Get cache line size. */
-	cachesize = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ);
-
-	/*
-	 * Avoid violating PCI spec on certain chip revs.
-	 */
-	if (pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD) &
-	    PCIM_CMD_MWIEN) {
-		switch(cachesize) {
-		case 1:
-			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
-				   BGE_PCI_WRITE_BNDRY_16BYTES);
-			break;
-		case 2:
-			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
-				   BGE_PCI_WRITE_BNDRY_32BYTES);
-			break;
-		case 4:
-			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
-				   BGE_PCI_WRITE_BNDRY_64BYTES);
-			break;
-		case 8:
-			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
-				   BGE_PCI_WRITE_BNDRY_128BYTES);
-			break;
-		case 16:
-			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
-				   BGE_PCI_WRITE_BNDRY_256BYTES);
-			break;
-		case 32:
-			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
-				   BGE_PCI_WRITE_BNDRY_512BYTES);
-			break;
-		case 64:
-			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
-				   BGE_PCI_WRITE_BNDRY_1024BYTES);
-			break;
-		default:
-		/* Disable PCI memory write and invalidate. */
-#if 0
-			if (bootverbose)
-				aprint_error_dev(sc->bge_dev,
-				    "cache line size %d not supported "
-				    "disabling PCI MWI\n",
-#endif
-			PCI_CLRBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD,
-			    PCIM_CMD_MWIEN);
-			break;
-		}
-	}
 
 	/*
 	 * Disable memory write invalidate.  Apparently it is not supported
