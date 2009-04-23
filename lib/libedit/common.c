@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.16 2003/08/07 16:44:30 agc Exp $	*/
+/*	$NetBSD: common.c,v 1.16.6.1 2009/04/23 02:00:19 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.16 2003/08/07 16:44:30 agc Exp $");
+__RCSID("$NetBSD: common.c,v 1.16.6.1 2009/04/23 02:00:19 snj Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -383,7 +383,7 @@ protected el_action_t
 ed_digit(EditLine *el, int c)
 {
 
-	if (!isdigit(c))
+	if (!isdigit((unsigned char)c))
 		return (CC_ERROR);
 
 	if (el->el_state.doingarg) {
@@ -411,7 +411,7 @@ protected el_action_t
 ed_argument_digit(EditLine *el, int c)
 {
 
-	if (!isdigit(c))
+	if (!isdigit((unsigned char)c))
 		return (CC_ERROR);
 
 	if (el->el_state.doingarg) {
