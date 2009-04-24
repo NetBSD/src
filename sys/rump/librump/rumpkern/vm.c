@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.53 2009/03/18 10:22:45 cegger Exp $	*/
+/*	$NetBSD: vm.c,v 1.54 2009/04/24 13:27:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.53 2009/03/18 10:22:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.54 2009/04/24 13:27:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -444,6 +444,13 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
  */
 
 #ifndef RUMP_USE_REAL_ALLOCATORS
+void
+kmem_init()
+{
+
+	/* nothing to do */
+}
+
 void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {
