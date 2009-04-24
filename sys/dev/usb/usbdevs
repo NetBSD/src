@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.525 2009/04/21 16:34:41 cube Exp $
+$NetBSD: usbdevs,v 1.526 2009/04/24 14:06:22 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ vendor MYSON		0x04cf	Myson Technology
 vendor DIGI2		0x04d0	Digi
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
+vendor MICROCHIP	0x04d8	Microchip Technology
 vendor HOLTEK		0x04d9	Holtek Semiconductor
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor SHARP		0x04dd	Sharp
@@ -1532,6 +1533,10 @@ product MSI RT2573		0x6874	RT2573
 product MSI RT2573_2		0x6877	RT2573
 product MSI RT2573_3		0xa861	RT2573
 product MSI RT2573_4		0xa874	RT2573
+
+/* Microchip Technology products */
+product MICROCHIP PICKIT1	0x0032	PICkit(TM) 1 FLASH Starter Kit
+product MICROCHIP PICKIT2	0x0033	PICkit 2 Microcontroller Programmer
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
