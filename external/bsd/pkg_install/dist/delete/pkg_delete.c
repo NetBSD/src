@@ -34,7 +34,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.3 2009/04/06 18:49:10 joerg Exp $");
+__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.4 2009/04/24 14:17:02 joerg Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
@@ -53,7 +53,6 @@ static const char *destdir;
 static const char *prefix;
 
 static int no_deinstall;
-static int prune_empty;
 static int find_by_filename;
 static int unregister_only;
 static int pkgdb_update_only;
@@ -64,7 +63,7 @@ static int delete_automatic_leaves;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pkg_delete [-DdFfNnORrVv] [-K pkg_dbdir]"
+	fprintf(stderr, "usage: pkg_delete [-DFfNnORrVv] [-K pkg_dbdir]"
 	    " [-P destdir] [-p prefix] pkg-name ...\n");
 	exit(1);
 }
@@ -671,6 +670,12 @@ remove_pkg(const char *pkg)
 		return 1;
 	}
 
+	if (find_plist(&plist, PLIST_NAME) == NULL) {
+		/* Cheat a bit to allow removal of such bad packages. */
+		warnx("Package `%s' doesn't have a name", pkg);
+		add_plist_top(&plist, PLIST_NAME, pkg);
+	}
+
 	setenv(PKG_PREFIX_VNAME, p->name, 1);
 	fname = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
 	setenv(PKG_METADATA_DIR_VNAME, fname, 1);
@@ -685,7 +690,7 @@ remove_pkg(const char *pkg)
 
 	if (Fake)
 		printf("Attempting to delete package `%s'\n", pkg);
-	else if (delete_package(FALSE, prune_empty, &plist, unregister_only,
+	else if (delete_package(FALSE, &plist, unregister_only,
 			        destdir) == FAIL) {
 		warnx("couldn't entirely delete package `%s'", pkg);
 		/*
@@ -768,16 +773,13 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&sorted_pkgs);
 
 	setprogname(argv[0]);
-	while ((ch = getopt(argc, argv, "ADdFfNnORrVvK:P:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "ADFfNnORrVvK:P:p:")) != -1) {
 		switch (ch) {
 		case 'A':
 			delete_automatic_leaves = 1;
 			break;
 		case 'D':
 			no_deinstall = 1;
-			break;
-		case 'd':
-			prune_empty = 1;
 			break;
 		case 'F':
 			find_by_filename = 1;

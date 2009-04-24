@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.1.1.4 2009/03/08 14:51:39 joerg Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.1.1.5 2009/04/24 14:17:50 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.4 2009/03/08 14:51:39 joerg Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.5 2009/04/24 14:17:50 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -179,9 +179,11 @@ retry:
 		if (r == ARCHIVE_FATAL) {
 			warnx("Cannot read from archive: %s",
 			    archive_error_string(archive));
-			return -1;
+		} else {
+			warnx("Premature end of archive");
 		}
-		return 1;
+		*entry = NULL;
+		return -1;
 	}
 	if (strcmp(archive_entry_pathname(*entry), "//") == 0) {
 		archive_read_data_skip(archive);
