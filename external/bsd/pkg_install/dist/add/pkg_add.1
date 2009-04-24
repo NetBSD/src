@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.5 2009/04/06 18:49:08 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.6 2009/04/24 14:16:44 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd February 27, 2009
+.Dd April 10, 2009
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -489,9 +489,9 @@ like this:
 (The quotes are needed because semicolon
 .Pq Sq \&;
 is a shell meta-character.)
-If you do this, consider installing and using the
-.Pa security/audit-packages
-package and running it after every
+If you do this, consider using the audit capabilities in
+.Xr pkg_admin 1
+and running it after every
 .Nm .
 .Sh CONFIGURATION VARIABLES
 The following variables change the behavior of
