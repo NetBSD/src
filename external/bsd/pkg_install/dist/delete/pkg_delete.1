@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.1.1.3 2009/02/25 21:21:44 joerg Exp $
+.\" $NetBSD: pkg_delete.1,v 1.1.1.4 2009/04/24 14:17:00 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd February 25, 2009
+.Dd April 24, 2009
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl ADdFfNnORrVv
+.Op Fl ADFfNnORrVv
 .Bk -words
 .Op Fl K Ar pkg_dbdir
 .Ek
@@ -109,16 +109,6 @@ See also the
 flag.
 .It Fl D
 If a deinstallation script exists for a given package, do not execute it.
-.It Fl d
-Remove empty directories created by file cleanup.
-By default, only files/directories explicitly listed in a package's
-contents (either as normal files/directories or with the
-.Cm @dirrm
-directive) will be removed at deinstallation time.
-This option tells
-.Nm
-to also remove any directories that were emptied as a result of removing
-the package.
 .It Fl F
 Any pkg-name given will be interpreted as pathname which is
 subsequently transformed in a (real) package name via the Package

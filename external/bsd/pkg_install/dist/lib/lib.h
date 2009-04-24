@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.5 2009/03/08 14:51:38 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.6 2009/04/24 14:17:21 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -165,12 +165,11 @@ typedef enum pl_ent_t {
 	PLIST_SRC,		/* 10 */
 	PLIST_DISPLAY,		/* 11 */
 	PLIST_PKGDEP,		/* 12 */
-	PLIST_MTREE,		/* 13 */
-	PLIST_DIR_RM,		/* 14 */
-	PLIST_IGNORE_INST,	/* 15 */
-	PLIST_OPTION,		/* 16 */
-	PLIST_PKGCFL,		/* 17 */
-	PLIST_BLDDEP		/* 18 */
+	PLIST_DIR_RM,		/* 13 */
+	PLIST_OPTION,		/* 14 */
+	PLIST_PKGCFL,		/* 15 */
+	PLIST_BLDDEP,		/* 16 */
+	PLIST_PKGDIR		/* 17 */
 }       pl_ent_t;
 
 /* Enumerated constants for build info */
@@ -304,12 +303,15 @@ Boolean isfile(const char *);
 Boolean isbrokenlink(const char *);
 Boolean isempty(const char *);
 int     URLlength(const char *);
-Boolean make_preserve_name(char *, size_t, char *, char *);
+Boolean make_preserve_name(char *, size_t, const char *, const char *);
 void    remove_files(const char *, const char *);
-int     delete_hierarchy(const char *, Boolean, Boolean);
 int     format_cmd(char *, size_t, const char *, const char *, const char *);
 
 int	recursive_remove(const char *, int);
+
+void	add_pkgdir(const char *, const char *, const char *);
+void	delete_pkgdir(const char *, const char *, const char *);
+int	has_pkgdir(const char *);
 
 /* pkg_io.c: Local and remote archive handling */
 struct archive;
@@ -336,7 +338,7 @@ void	stringify_plist(package_t *, char **, size_t *, const char *);
 void	parse_plist(package_t *, const char *);
 void    read_plist(package_t *, FILE *);
 void    append_plist(package_t *, FILE *);
-int     delete_package(Boolean, Boolean, package_t *, Boolean, const char *);
+int     delete_package(Boolean, package_t *, Boolean, const char *);
 
 /* Package Database */
 int     pkgdb_open(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.7 2009/03/10 00:48:44 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.8 2009/04/24 14:17:07 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.7 2009/03/10 00:48:44 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.8 2009/04/24 14:17:07 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -183,8 +183,10 @@ read_meta_data_from_archive(struct archive *archive,
 	meta = xcalloc(1, sizeof(*meta));
 
 	last_descr = 0;
-	if (entry != NULL)
+	if (entry != NULL) {
+		r = ARCHIVE_OK;
 		goto has_entry;
+	}
 
 	while ((r = archive_read_next_header(archive, &entry)) == ARCHIVE_OK) {
 has_entry:
@@ -228,12 +230,12 @@ has_entry:
 		if (descr->required_file)
 			--found_required;
 	}
-	if (found_required != 0) {
+
+	meta->is_installed = 0;
+	if (found_required != 0 && r != ARCHIVE_OK && r != ARCHIVE_EOF) {
 		free_pkg_meta(meta);
 		meta = NULL;
 	}
-
-	meta->is_installed = 0;
 
 	return meta;
 }
