@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.7 2009/04/06 18:49:08 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.8 2009/04/24 14:16:43 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.7 2009/04/06 18:49:08 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.8 2009/04/24 14:16:43 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -665,6 +665,13 @@ extract_files(struct pkg_task *pkg)
 			if (Verbose)
 				printf("%s", p->name);
 			break;
+
+		case PLIST_PKGDIR:
+			fullpath = xasprintf("%s/%s", pkg->prefix, p->name);
+			mkdir_p(fullpath);
+			free(fullpath);
+			add_pkgdir(pkg->pkgname, pkg->prefix, p->name);
+			continue;
 
 		case PLIST_CMD:
 			if (format_cmd(cmd, sizeof(cmd), p->name, pkg->prefix, last_file))
@@ -1386,7 +1393,7 @@ nuke_pkg:
 			    pkg->other_version, pkg->pkgname);
 			warnx("Remember to run pkg_admin rebuild-tree after fixing this.");
 		}
-		delete_package(FALSE, FALSE, &pkg->plist, FALSE, Destdir);
+		delete_package(FALSE, &pkg->plist, FALSE, Destdir);
 	}
 
 nuke_pkgdb:
