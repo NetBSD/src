@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.4.10.1 2009/04/23 21:30:39 snj Exp $
+#	$NetBSD: README.files,v 1.4.10.2 2009/04/24 06:33:06 snj Exp $
 
 What's in this directory:
 
@@ -12,15 +12,9 @@ LAST_MINUTE	Last minute changes and notes about the release.
 
 README.files	This file.
 
-patches/	Post-release binary code patches.
-
 shared/		Binary sets shared between multiple ports.
 
-source/		Source code.
-
 source/sets/	Source distribution sets; see below.
-
-source/patches/	Post-release source code patches.
 
 
 
