@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.151 2009/04/23 01:56:49 snj Exp $
+.\"	$NetBSD: contents,v 1.152 2009/04/24 23:11:07 ad Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,29 +80,13 @@ Symbols for
 .\}
 .
 .if \n[i386] \{\
-.			It Pa netbsd-GENERIC_LAPTOP.gz
-A version of
-.Li GENERIC
-that has USB, PCMCIA and CardBus enabled to allow
-installing on laptop machines.
-.
 .			It Pa netbsd-INSTALL.gz
-A somewhat smaller installation kernel, which you can use to boot the system
-on memory-tight systems.
-This is the same kernel as present on the miniroot and on many
-install floppies.
+The installation kernel.
 .
-.			It Pa netbsd-INSTALL_LAPTOP.gz
+.			It Pa netbsd-INSTALL_FLOPPY.gz
 A version of
 .Li INSTALL
-that has USB, PCMCIA and CardBus enabled to allow
-installing on laptop machines.
-.			It Pa netbsd-INSTALL_LARGE.gz
-A version of
-.Li INSTALL
-that has ACPI and some large disk and network drivers, to allow installing
-on the newest machines.
-This is the default boot kernel from the ISO images.
+for older machines without CD-ROM drives.
 .\}
 .if \n[mac68k] \{\
 .			It Pa netbsd-GENERIC.gz
@@ -504,8 +488,6 @@ It contains the base
 .Nx
 utilities that are necessary for the
 system to run and be minimally functional.
-It includes shared library support, and excludes
-everything described below.
 .\"
 .\" XXX set sizes can be calculated using list-setsizes.sh
 .\"
