@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.115 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.116 2009/04/24 08:57:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.115 2009/04/12 10:18:52 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.116 2009/04/24 08:57:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -574,7 +574,7 @@ main(int volatile argc, char **volatile argv)
 					anonftp = 0;
 					autologin = 0;
 				}
-				setpeer(3, xargv);
+				setpeer(argc+1, xargv);
 				autologin = oautologin;
 				if (connected == 1 && uuser != NULL)
 					(void)ftp_login(host, uuser, NULL);
