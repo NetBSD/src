@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.6 2009/04/22 16:43:43 tsutsui Exp $
+#	$NetBSD: list,v 1.7 2009/04/25 18:38:32 tsutsui Exp $
 
-SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
+SRCDIRS	bin sbin usr.bin usr.sbin
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -60,8 +60,8 @@ ARGVLN	sh -sh
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group			etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd		etc/master.passwd
-COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/etc/netconfig			etc/netconfig
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # and the common installation tools
