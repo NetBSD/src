@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.56 2009/03/15 17:15:57 cegger Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.57 2009/04/25 18:53:44 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.56 2009/03/15 17:15:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.57 2009/04/25 18:53:44 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -137,17 +137,15 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		if (error) {
-			vput(devvp);
-			return (error);
-		}
-		VOP_UNLOCK(devvp, 0);
+	accessmode = VREAD;
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
+	if (error) {
+		vrele(devvp);
+		return (error);
 	}
 /* MNT_UPDATE? */
 	if ((error = adosfs_mountfs(devvp, mp, l)) != 0) {

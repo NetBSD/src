@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.58 2009/03/18 10:22:42 cegger Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.59 2009/04/25 18:53:44 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.58 2009/03/18 10:22:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.59 2009/04/25 18:53:44 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -288,14 +288,12 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			vrele(devvp);
-			return (error);
-		}
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, VREAD, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
+	if (error) {
+		vrele(devvp);
+		return (error);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = filecore_mountfs(devvp, mp, l, args);

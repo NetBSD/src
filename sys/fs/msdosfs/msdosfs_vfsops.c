@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.73 2009/03/15 17:15:57 cegger Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.74 2009/04/25 18:53:44 elad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73 2009/03/15 17:15:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.74 2009/04/25 18:53:44 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -351,18 +351,20 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			/*
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
+			 *
+			 * Permission to update a mount is checked higher, so here we presume
+			 * updating the mount is okay (for example, as far as securelevel goes)
+			 * which leaves us with the normal check.
 			 */
-			if (kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-				devvp = pmp->pm_devvp;
-				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   l->l_cred);
-				VOP_UNLOCK(devvp, 0);
-				DPRINTF(("VOP_ACCESS %d\n", error));
-				if (error)
-					return (error);
-			}
+			devvp = pmp->pm_devvp;
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			error = genfs_can_mount(devvp, VREAD | VWRITE,
+			    l->l_cred);
+			VOP_UNLOCK(devvp, 0);
+			DPRINTF(("genfs_can_mount %d\n", error));
+			if (error)
+				return (error);
+
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 		}
 		if (args->fspec == NULL) {
@@ -395,18 +397,16 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			DPRINTF(("VOP_ACCESS2 %d\n", error));
-			vrele(devvp);
-			return (error);
-		}
+	accessmode = VREAD;
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
+	if (error) {
+		DPRINTF(("genfs_can_mount %d\n", error));
+		vrele(devvp);
+		return (error);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
 		int xflags;
