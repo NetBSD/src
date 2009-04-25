@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16.4.5 2009/02/24 15:01:10 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.16.4.6 2009/04/25 15:43:02 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.4.5 2009/02/24 15:01:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.4.6 2009/04/25 15:43:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,8 +403,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	 * Allow access only in RAM.
 	 */
 #if 0
-	if (off < ctob(firstusablepage) ||
-	    off >= ctob(lastusablepage + 1))
+	if (off < ptoa(firstusablepage) ||
+	    off >= ptoa(lastusablepage + 1))
 		return (-1);
 #endif
 	return (btop(off));
