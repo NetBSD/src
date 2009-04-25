@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.132 2009/03/15 17:14:40 cegger Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.133 2009/04/25 15:06:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.132 2009/03/15 17:14:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.133 2009/04/25 15:06:32 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -512,7 +512,7 @@ tprintf_open(struct proc *p)
 
 	mutex_enter(proc_lock);
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
-		SESSHOLD(p->p_session);
+		proc_sesshold(p->p_session);
 		cookie = (tpr_t)p->p_session;
 	}
 	mutex_exit(proc_lock);
@@ -530,8 +530,8 @@ tprintf_close(tpr_t sess)
 
 	if (sess) {
 		mutex_enter(proc_lock);
-		SESSRELE((struct session *) sess);
-		mutex_exit(proc_lock);
+		/* Releases proc_lock. */
+		proc_sessrele((struct session *)sess);
 	}
 }
 
