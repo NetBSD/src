@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.14 2009/03/15 20:08:43 rmind Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.15 2009/04/25 19:38:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _STANDALONE
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.14 2009/03/15 20:08:43 rmind Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.15 2009/04/25 19:38:25 rmind Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -284,12 +284,23 @@ kcpuset_isset(cpuid_t i, const kcpuset_t *c)
 }
 
 bool
+kcpuset_iszero(const kcpuset_t *c)
+{
+	unsigned long j;
+
+	for (j = 0; j < cpuset_nentries; j++)
+		if (c->bits[j] != 0)
+			return false;
+	return true;
+}
+
+bool
 kcpuset_match(const kcpuset_t *c1, const kcpuset_t *c2)
 {
 	unsigned long j;
 
 	for (j = 0; j < cpuset_nentries; j++)
-		if ((c1->bits[0] & c2->bits[0]) != c2->bits[0])
+		if ((c1->bits[j] & c2->bits[j]) != c2->bits[j])
 			return false;
 	return true;
 }
