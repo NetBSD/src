@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.48 2009/04/25 14:45:06 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.49 2009/04/25 15:26:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.48 2009/04/25 14:45:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.49 2009/04/25 15:26:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1660,10 +1660,10 @@ pmap_activate(struct lwp *l)
 	pa_space_t space = pmap->pm_space;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 
+	KASSERT(pcb->pcb_uva == (vaddr_t)l->l_addr);
+	
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcb->pcb_space = space;
-	/* XXXNH */
-// 	pcb->pcb_uva = (vaddr_t)p->p_addr;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb, PAGE_SIZE);
 
 	if (p == curproc)
