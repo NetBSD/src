@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.374 2009/04/22 22:57:09 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.375 2009/04/25 18:53:44 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.374 2009/04/22 22:57:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.375 2009/04/25 18:53:44 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2125,10 +2125,9 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		}
 		savebp = bp;
 		/* Allocate a marker vnode. */
-		if ((mvp = vnalloc(mp)) == NULL) {
-			sysctl_relock();
-			return (ENOMEM);
-		}
+		mvp = vnalloc(mp);
+		/* Should never fail for mp != NULL */
+		KASSERT(mvp != NULL);
 		mutex_enter(&mntvnode_lock);
 		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 			vmark(mvp, vp);
