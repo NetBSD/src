@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.444 2009/04/25 01:33:12 snj Exp $
+.\"	$NetBSD: main,v 1.445 2009/04/25 10:34:43 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -464,7 +464,7 @@ new and updated kernel subsystems, and many user-land enhancements.
 The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
-It is impossible to completely summarize more than a year of development that
+It is impossible to completely summarize the massive development that
 went into the
 .Nx
 \*V release.
@@ -1986,8 +1986,7 @@ ifconfig_xxN variables may now have multi-line values, just like /etc/ifconfig.x
 Added the -A option, to display information about all processes. Use
 .Dq O
 for LSONPROC like Solaris instead of bundling LSIDL, LSRUN, and LSONPROC to
-.Dq R
-.
+.Dq R .
 .It
 .Xr ksh 1 :
 Fixed POSIX mode interpretation of backslashes inside backquotes inside double quotes.
@@ -2062,6 +2061,8 @@ gdb cannot debug running threaded programs correctly.
 Workaround: generate a core file from the program using
 .Xr gcore 1
 and pass the core to gdb, instead of debugging the running program.
+.Pp
+Statically linked binaries using pthreads are currently broken.
 .
 .\} \" \n[FOR_RELEASE]
 .
@@ -2116,14 +2117,14 @@ worldwide.
 More information on the
 .Nx
 Foundation, its composition, aims, and work can be found at:
-.Lk http://www.NetBSD.org/foundation/
+.Lk http://www.NetBSD.org/foundation/ .
 .br_ne 10P
 .
 .Ss "Sources of NetBSD"
 .Pp
 .
 Refer to
-.Lk http://www.NetBSD.org/mirrors/.
+.Lk http://www.NetBSD.org/mirrors/ .
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
@@ -2342,7 +2343,7 @@ Running a 5.0 kernel with an older userland.
 .It
 Running an older userland inside a chroot'ed environment on a 5.0 system.
 .It
-Running older statically-linked pthread applications.
+Running older statically linked pthread applications.
 .bullet)
 .Pp
 The 5.0 kernel defaults to

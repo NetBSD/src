@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.97 2009/04/25 01:33:12 snj Exp $
+.\"	$NetBSD: sysinst,v 1.98 2009/04/25 10:34:43 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -178,10 +178,8 @@ an example.
 What you need.
 .(bullet
 The distribution sets (in this example, they are on CD).
-.if !\n[i386]:\n[pmax]:\n[sgimips]:\n[sparc64] \{\
+.if !\n[alpha]:\n[amd64]:\n[i386]:\n[pmax]:\n[sgimips]:\n[sparc64] \{\
 .It
-.ie \n[alpha] Three floppy disks.
-.el \{\
 .ie \n[ews4800mips] Two floppy disks.
 .el \{\
 .ie \n[hp700] \{\
@@ -202,8 +200,8 @@ sysinst.fs image.
 See the "prepare" section about obtaining those.
 .\}
 .el One 1.44 MB 3.5" floppy.
-.\}\}\}\}\}\}
-.\} \" !\n[pmax]:\n[sgimips]:\n[sparc64]
+.\}\}\}\}
+.\} \" !\n[alpha]:\n[i386]:\n[pmax]:\n[sgimips]:\n[sparc64]
 .if \n[mac68k] \{\
 .It
 A Macintosh with a 68020 and MMU, 68030 or 68RC040 processor.
@@ -212,8 +210,9 @@ An FPU is not required but will be used if present
 .\}
 .It
 A CD-ROM drive
-.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[cats]:\n[evbppc]:\n[i386]:\n[macppc]:\n[sparc64] (SCSI or ATAPI),
+.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[amd64]:\n[cats]:\n[evbppc]:\n[i386]:\n[macppc]:\n[sparc64] (SCSI or ATAPI),
 .el (SCSI),
+.ie !\n[amd64] \{\
 a hard disk and a minimum of
 .if \n[acorn26] 8 MB
 .if \n[alpha] 32 MB
@@ -233,10 +232,13 @@ a hard disk and a minimum of
 .if \n[sparc64] 32 MB
 .if \n[sgimips] 16 MB
 of memory installed.
+\}
+.el and a hard disk.
 .It
 The hard disk should have at least
 .if \n[acorn26] 200
 .if \n[alpha] 200
+.if \n[amd64] 200
 .if \n[arc] 200
 .if \n[atari] 120
 .if \n[cats] 200
@@ -262,7 +264,7 @@ main memory in your system.
 If you wish to install the X Window System as well, you will need at least
 215 MB more.
 .bullet)
-.if \n[alpha]:\n[ews4800mips]:\n[news68k]:\n[newsmips] \{\
+.if \n[ews4800mips]:\n[news68k]:\n[newsmips] \{\
 .It
 Creating the boot floppies.
 You can create the floppies needed for installation
@@ -277,7 +279,7 @@ following from an
 command prompt:
 .Pp
 .Dl Ic "e:"
-.Dl Ic "cd \eNetBSD-\*V\alpha\einstallation\emisc"
+.Dl Ic "cd \eNetBSD-\*V\ei386\einstallation\emisc"
 .Dl Ic "rawrite"
 .Pp
 When asked for a source filename, answer
@@ -287,7 +289,6 @@ for the first diskette and
 .Dl Pa \&..\efloppy\eboot2.fs
 for the second diskette.
 .\}
-.if \n[alpha] .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of3
 .if \n[news68k] .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
 .Pp
 When asked for a destination drive answer
@@ -301,7 +302,7 @@ system, you would type something like:
 .Pp
 .Dl # Ic "dd if=.../boot1.fs of=/dev/rfd0a bs=18k"
 .Pp
-.\} \" \n[alpha]:\n[ews4800mips]:\n[news68k]:\n[newsmips]
+.\} \" \n[ews4800mips]:\n[news68k]:\n[newsmips]
 .if \n[mac68k] \{\
 .It
 The NetBSD Boot Tools folder.
@@ -388,17 +389,21 @@ progress as this may leave the keyboard locked to
 .Pp
 The main menu will be displayed.
 .\} \" \n[mac68k]
-.ie \n[i386] \{\
-Insert the CD-ROM or DVD into the drive and boot the computer.
-.\}
-.el \{\
-Insert the first boot floppy you just created and boot the computer.
+.ie \n[alpha]:\n[amd64]:\n[i386] \{\
+Insert the CD into the drive and boot the computer.
 .if \n[alpha] \{\
 Type
 .Pp
-.Dl \&\*[Gt]\*[Gt]\*[Gt] Ic "B DVA0"
-.Pp
+.Dl \&\*[Gt]\*[Gt]\*[Gt] Ic "B DQA0"
+.(Note
+This is only an example, and
+.Dv DQA0
+may not be the proper device, depending on your hardware configuration.
+.Note)
 .\}
+.\}
+.el \{\
+Insert the first boot floppy you just created and boot the computer.
 .if \n[ews4800mips] \{\
 Change boot device to floppy on the PROM menu which is invoked by
 pressing ESC key right after hardware checks, and boot the computer again.
@@ -500,7 +505,7 @@ The default values for the path and device should be ok.
 .It
 After all the files have been unpacked, go back to
 the main menu and select
-.ie \n[i386]:\n[mac68k]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
+.ie \n[alpha]:\n[amd64]:\n[i386]:\n[mac68k]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 .Me reboot.
 .\}
 .el \{\
@@ -661,7 +666,7 @@ Boot the system as described in the "Booting the installer" section above.
 .el \{\
 Boot your machine.
 The boot loader will start, and will print a countdown and begin booting.
-.if !\n[i386] \{
+.if !\n[alpha]:\n[amd64]:\n[i386] \{
 .Pp
 If the boot loader messages do not appear in a reasonable
 amount of time, you either have a bad boot floppy or a
@@ -680,7 +685,7 @@ This may take a little while also, as
 .Nx
 will be probing your system to discover which hardware devices are
 installed.
-.\}
+.\} \" !\n[alpha]:\n[i386]
 .if \n[atari]:\n[i386] \{\
 You may want to read the
 boot messages, to notice your disk's name and geometry.
@@ -710,7 +715,7 @@ is your first SCSI disk,
 .Li sd1
 the second, etc.
 .Pp
-.if !\n[atari]:\n[i386]:\n[mac68k] \{\
+.if !\n[alpha]:\n[amd64]:\n[atari]:\n[i386]:\n[mac68k] \{\
 Note that once the system has finished booting, you need not
 leave the floppy in the disk drive.
 .\}
@@ -736,7 +741,7 @@ If you only want to temporarily
 use networking during the installation, you can specify these
 parameters later.
 If you are not using the Domain Name System (DNS),
-you can give an empty response to questions about this.
+you can give an empty response when asked to provide a server.
 .if \n[mac68k] \{\
 .It
 .To 2 "Preparing a disk for Mac OS and NetBSD"
@@ -1481,7 +1486,7 @@ your network setup if you haven't already done so.
 .Ic sysinst
 will do this for you, asking you
 if you want to use DHCP.
-If you do not use DHCP, you can enter in network configuration
+If you do not use DHCP, you can enter network configuration
 details yourself.
 If you do not have DNS set up for the machine that you
 are installing on, you can just press
@@ -1508,7 +1513,7 @@ your network setup if you haven't already done so.
 .Ic sysinst
 will do this for you, asking you
 if you want to use DHCP.
-If you do not use DHCP, you can enter in network configuration
+If you do not use DHCP, you can enter network configuration
 details yourself.
 If you do not have DNS set up for the machine that you
 are installing on, you can just press
@@ -1594,7 +1599,7 @@ Before extraction begins, you can elect to watch the files being
 extracted; the name of each file that is extracted will be shown.
 This can slow down the installation process considerably
 on machines with slow graphics consoles or serial consoles.
-Alternatively, you choose to see a progress bar.
+Alternatively, you can choose to see a progress bar.
 This is the preferred option as it shows progress without significantly
 slowing down the installation process.
 .Pp
@@ -1606,7 +1611,7 @@ option, then you will need to create the device nodes in
 otherwise,
 .\}
 .el After all the files have been extracted,
-all the necessary device node files will be created.
+the device node files will be created.
 If you have already configured networking, you will be asked if you want to
 use this configuration for normal operation.
 If so, these values will be installed in the network configuration files.
