@@ -23,6 +23,8 @@
  */
 #include "config.h"
 
+#include <openssl/rand.h>
+
 #include "errors.h"
 #include "packet.h"
 #include "crypto.h"
@@ -30,14 +32,13 @@
 #include "packet-parse.h"
 #include "packet-show.h"
 #include "signature.h"
-
-#include <openssl/rand.h>
-
+#include "netpgpsdk.h"
 #include "netpgpdefs.h"
 #include "memory.h"
 #include "keyring_local.h"
 #include "parse_local.h"
 #include "readerwriter.h"
+#include "loccreate.h"
 #include "version.h"
 
 #ifdef HAVE_ASSERT_H
@@ -301,10 +302,10 @@ __ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode, int sys_err
 	       const char *file, int line, const char *fmt,...)
 {
 	/* first get the varargs and generate the comment */
+	__ops_error_t  *err;
+	unsigned	maxbuf = 128;
+	va_list		args;
 	char           *comment;
-	int             maxbuf = 128;
-	va_list         args;
-	__ops_error_t    *err;
 
 	comment = calloc(1, maxbuf + 1);
 	assert(comment);
@@ -410,8 +411,8 @@ __ops_fingerprint(__ops_fingerprint_t * fp, const __ops_public_key_t * key)
 {
 	if (key->version == 2 || key->version == 3) {
 		unsigned char  *bn;
-		int             n;
-		__ops_hash_t      md5;
+		size_t		n;
+		__ops_hash_t	md5;
 
 		assert(key->algorithm == OPS_PKA_RSA
 		       || key->algorithm == OPS_PKA_RSA_ENCRYPT_ONLY
@@ -714,7 +715,7 @@ __ops_is_hash_alg_supported(const __ops_hash_algorithm_t * hash_alg)
 void 
 __ops_random(void *dest, size_t length)
 {
-	RAND_bytes(dest, length);
+	RAND_bytes(dest, (int)length);
 }
 
 /**

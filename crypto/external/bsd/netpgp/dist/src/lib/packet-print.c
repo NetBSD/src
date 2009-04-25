@@ -91,7 +91,7 @@ void
 __ops_print_public_key(const __ops_public_key_t * pkey)
 {
 	printf("------- PUBLIC KEY ------\n");
-	print_unsigned_int("Version", pkey->version);
+	print_unsigned_int("Version", (unsigned)pkey->version);
 	print_time("Creation Time", pkey->creation_time);
 	if (pkey->version == OPS_V3)
 		print_unsigned_int("Days Valid", pkey->days_valid);
@@ -366,8 +366,8 @@ static void
 print_packet_hex(const __ops_packet_t * packet)
 {
 	unsigned char  *cur;
+	unsigned	rem;
 	int             i;
-	int             rem;
 	int             blksz = 4;
 
 	printf("\nhexdump of packet contents follows:\n");
@@ -375,7 +375,7 @@ print_packet_hex(const __ops_packet_t * packet)
 
 	for (i = 1, cur = packet->raw; cur < (packet->raw + packet->length); cur += blksz, i++) {
 		rem = packet->raw + packet->length - cur;
-		hexdump(cur, rem <= blksz ? rem : blksz, "");
+		hexdump(cur, (rem <= blksz) ? rem : blksz, "");
 		printf(" ");
 		if (!(i % 8))
 			printf("\n");
@@ -421,7 +421,7 @@ print_duration(const char *name, time_t t)
 	printf("%s: ", name);
 	printf("duration %" PRItime "d seconds", (long long) t);
 
-	mins = t / 60;
+	mins = (int)(t / 60);
 	hours = mins / 60;
 	days = hours / 24;
 	years = days / 365;
@@ -558,7 +558,7 @@ __ops_print_pk_session_key(__ops_content_tag_t tag,
 }
 
 static void 
-start_subpacket(unsigned type)
+start_subpacket(int type)
 {
 	indent++;
 	print_indent();
@@ -667,7 +667,7 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 		print_tagname("SIGNATURE");
 		print_indent();
 		print_unsigned_int("Signature Version",
-				   content->signature.info.version);
+				   (unsigned)content->signature.info.version);
 		if (content->signature.info.creation_time_set)
 			print_time("Signature Creation Time",
 				   content->signature.info.creation_time);
@@ -720,13 +720,15 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 
 	case OPS_PTAG_CT_COMPRESSED:
 		print_tagname("COMPRESSED");
-		print_unsigned_int("Compressed Data Type", content->compressed.type);
+		print_unsigned_int("Compressed Data Type",
+			(unsigned)content->compressed.type);
 		break;
 
 	case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
 		print_tagname("ONE PASS SIGNATURE");
 
-		print_unsigned_int("Version", content->one_pass_signature.version);
+		print_unsigned_int("Version",
+			(unsigned)content->one_pass_signature.version);
 		print_string_and_value("Signature Type",
 		    __ops_show_sig_type(content->one_pass_signature.sig_type),
 				       content->one_pass_signature.sig_type);
@@ -755,7 +757,8 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 		assert(!contents->critical);
 		start_subpacket(contents->tag);
 		print_unsigned_int("Raw Signature Subpacket: tag",
-		   content->ss_raw.tag - OPS_PTAG_SIGNATURE_SUBPACKET_BASE);
+			(unsigned)(content->ss_raw.tag -
+		   	OPS_PTAG_SIGNATURE_SUBPACKET_BASE));
 		print_hexdump("Raw Data",
 			      content->ss_raw.raw,
 			      content->ss_raw.length);
@@ -783,9 +786,9 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 		start_subpacket(contents->tag);
 		print_string("Trust Signature", "");
 		print_unsigned_int("Level",
-				   content->ss_trust.level);
+				   (unsigned)content->ss_trust.level);
 		print_unsigned_int("Amount",
-				   content->ss_trust.amount);
+				   (unsigned)content->ss_trust.amount);
 		end_subpacket();
 		break;
 
@@ -1014,9 +1017,10 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 		print_tagname("SIGNATURE");
 		print_indent();
 		print_unsigned_int("Signature Version",
-				   content->signature.info.version);
+				   (unsigned)content->signature.info.version);
 		if (content->signature.info.creation_time_set)
-			print_time("Signature Creation Time", content->signature.info.creation_time);
+			print_time("Signature Creation Time",
+				content->signature.info.creation_time);
 
 		print_string_and_value("Signature Type",
 			    __ops_show_sig_type(content->signature.info.type),

@@ -26,9 +26,14 @@
 #include "memory.h"
 #include "parse_local.h"
 #include "netpgpdefs.h"
+#include "signature.h"
 
 #ifdef HAVE_ASSERT_H
 #include <assert.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 #include <string.h>
@@ -69,7 +74,7 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM
 		}
 		fprintf(stderr, "\n");
 	}
-	n = __ops_rsa_private_decrypt(mpibuf, encmpibuf, (BN_num_bits(encmpi) + 7) / 8,
+	n = __ops_rsa_private_decrypt(mpibuf, encmpibuf, (unsigned)(BN_num_bits(encmpi) + 7) / 8,
 				 &skey->key.rsa, &skey->public_key.key.rsa);
 	assert(n != -1);
 
@@ -84,7 +89,7 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf(" decrypted=%d ", n);
-		hexdump(mpibuf, n, "");
+		hexdump(mpibuf, (unsigned)n, "");
 		printf("\n");
 	}
 	/* Decode EME-PKCS1_V1_5 (RFC 2437). */
@@ -103,7 +108,7 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM
 
 	/* this is the unencoded m buf */
 	if ((unsigned) (n - i) <= buflen)
-		(void) memcpy(buf, mpibuf + i, n - i);
+		(void) memcpy(buf, mpibuf + i, (unsigned)(n - i));
 
 	if (__ops_get_debug_level(__FILE__)) {
 		int             j;
@@ -174,7 +179,7 @@ __ops_encrypt_file(const char *input_filename, const char *output_filename, cons
 
 	unsigned char  *buf;
 	size_t          bufsz;
-	int             done;
+	size_t		done;
 
 #ifdef O_BINARY
 	fd_in = open(input_filename, O_RDONLY | O_BINARY);
