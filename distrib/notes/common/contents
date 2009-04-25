@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.154 2009/04/25 10:34:43 snj Exp $
+.\"	$NetBSD: contents,v 1.155 2009/04/25 21:21:48 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@ subdirectory of the distribution:
 .el .Pa Pf \&.../arch/\*M/snapshot/ Ar yyyymmdd/ .
 It contains the following files and directories:
 .Pp
-.(tag INSTALL.html -compact
+.(tag INSTALL.html -compact \" top level
 .	It Pa INSTALL.html
 .	It Pa INSTALL.ps
 .	It Pa INSTALL.txt
@@ -46,9 +46,9 @@ file contains underlined text using the
 .Xr more 1
 conventions for indicating italic and bold display.
 .	It Pa binary/
-.	(tag kernel/ -compact
+.	(tag kernel/ -compact \" binary/
 .		It Pa kernel/
-.		(tag netbsd.gz -compact
+.		(tag netbsd.gz -compact \" binary/kernel
 .if !\n[atari]:\n[mac68k]:\n[sgimips]:\n[evbppc] \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
@@ -231,14 +231,14 @@ It also includes a RAM-disk installer with
 Same as the above, but in the format expected by the firmware.
 .\}
 .
-.		tag)
+.		tag) \" binary/kernel/
 .		It Pa sets/
 \*M binary distribution sets;
 see below.
-.	tag)
+.	tag) \" binary/
 .	It Pa installation/
 .
-.	(tag kernel/ -compact
+.	(tag miniroot/ -compact \" installation/
 .
 .if \n[i386]:\n[amd64] \{\
 .		It Pa cdrom/
@@ -363,9 +363,9 @@ Two programs needed to boot \*M kernels over the network.
 Tape boot programs, and a RAMDISK kernel.
 .\}
 .
-.	tag)
+.	tag) \" installation/
 .
-.tag)
+.tag) \" top level
 .
 .
 .if \n[alpha] \{\
@@ -469,7 +469,7 @@ procedure, not the sparc instructions.
 Most people will want the 64-bit \*M distribution tree:
 .\}
 .el distribution tree, and are as follows:
-.(tag xserver
+.(tag xserver \" sets
 .
 .It Sy base
 The
@@ -1048,7 +1048,7 @@ all related programs, and their manual pages.
 .if \n[x68k] .setsize 3 10
 .showsize
 .
-.tag)
+.tag) \" sets
 .
 .
 .\" ---------------------------- X SETS
@@ -1071,7 +1071,7 @@ XFree86 4.5.0.
 Binary sets for the X Window System are distributed with
 .Nx .
 The sets are:
-.(tag xserver
+.(tag xserver \" x sets
 .
 .It Sy xbase
 The basic files needed for a complete X
@@ -1269,6 +1269,7 @@ This includes the Xpmax server with man page.
 .\}
 .if \n[shark] \{\
 This includes the modular Xorg and Xvfb servers.
+.\}
 .if \n[sparc] \{\
 This includes Xsun, Xsun24, XsunMono and Xvfb servers with man pages.
 .\}
@@ -1331,7 +1332,7 @@ servers with man pages and the runtime configuration file.
 .if \n[x68k] .setsize 4 11
 .showsize
 .
-.tag)
+.tag) \" x sets
 .
 .\} \" !\n[sun2]
 .
@@ -1405,7 +1406,7 @@ There are gzipped versions of each available, for easier downloading.
 (The gzipped versions have the
 .Pa \&.gz
 extension added to their names.)
-.(tag indent
+.(tag indent \" atari
 .It Em Bootable\ Kernel\ floppies
 These
 .Tn TOS
@@ -1459,7 +1460,7 @@ and
 .Pa miniroot.fs.2 .
 There is also an image for an 1.44 MB disk:
 .Pa miniroot.fs .
-.tag)
+.tag) \" atari
 .Pp
 There are also
 .Tn TOS
@@ -1810,7 +1811,7 @@ to it and make the disk bootable.
 This must be the third file written to the tape.
 .	tag)
 .tag)
-.\}
+.\} \" \n[mvme68k]
 .
 .
 .if \n[sgimips] \{\

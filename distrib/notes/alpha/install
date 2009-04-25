@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.36 2009/04/25 10:34:42 snj Exp $
+.\"	$NetBSD: install,v 1.37 2009/04/25 21:21:47 snj Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -238,7 +238,7 @@ Make sure you put a kernel there as well, and create the device nodes in
 with
 .Ic sh ./MAKEDEV all .
 Detailed instructions on netbooting can be found by visiting
-.Lk http://www.NetBSD.org/docs/network/netboot/ .
+.Lk http://www.NetBSD.org/docs/network/netboot/
 .Pp
 You'll want to map root to
 .Li root
