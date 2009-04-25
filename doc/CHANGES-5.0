@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.142 2009/04/23 23:33:09 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.143 2009/04/25 23:17:58 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6217,4 +6217,83 @@ lib/libc/db/hash/hash_buf.c			1.17, 1.18
 
 	Fix build fallout from ticket 719.
 	[agc, ticket #723]
+
+dist/pf/usr.sbin/ftp-proxy/ftp-proxy.8		1.5
+
+	Fix roff formatting for ->.  Closes PR 41276.
+	[reed, ticket #724]
+
+lib/libc/gen/makecontext.3			1.6
+lib/libc/sys/sigaltstack.2			1.22
+lib/libpthread/pthread.3			1.11
+
+	Add CAVEATS section: Due to limitations in the current
+	pthread implementation, makecontext(3) and sigaltstack(2) should
+	not be used in programs which link against libpthread (whether
+	threads are used or not).
+	[rmind, ticket #727]
+
+distrib/alpha/README.files			1.14
+distrib/notes/acorn26/upgrade			1.2
+distrib/notes/acorn32/hardware			1.2
+distrib/notes/acorn32/prep			1.14
+distrib/notes/acorn32/prep.RISCOS		1.20
+distrib/notes/alpha/hardware			1.16-1.17
+distrib/notes/alpha/install			1.35-1.37
+distrib/notes/amd64/prep			1.2
+distrib/notes/amiga/hardware			1.46
+distrib/notes/amiga/install			1.35
+distrib/notes/amiga/prep			1.28
+distrib/notes/amiga/upgrade			1.28
+distrib/notes/arc/prep				1.2
+distrib/notes/atari/hardware			1.22
+distrib/notes/atari/prep			1.13
+distrib/notes/cats/hardware			1.7
+distrib/notes/cats/prep				1.11
+distrib/notes/cats/upgrade			1.4
+distrib/notes/common/contents			1.150-1.155
+distrib/notes/common/legal.common		1.52
+distrib/notes/common/main			1.444-1.446
+distrib/notes/common/postinstall		1.73, 1.74
+distrib/notes/common/sysinst			1.97, 1.98
+distrib/notes/common/upgrade			1.27, 1.28
+distrib/notes/common/xfer			1.64-1.66
+distrib/notes/evbarm/prep			1.10
+distrib/notes/evbarm/upgrade			1.2
+distrib/notes/evbppc/hardware			1.5
+distrib/notes/evbppc/upgrade			1.2
+distrib/notes/hp300/prep			1.24
+distrib/notes/i386/upgrade			1.23
+distrib/notes/i386/prep				1.14
+distrib/notes/mac68k/hardware			1.24
+distrib/notes/mac68k/prep			1.16
+distrib/notes/mac68k/upgrade			1.21
+distrib/notes/mac68k/xfer			1.20
+distrib/notes/macppc/prep			1.43, 1.44
+distrib/notes/macppc/prep.OPENFIRMWARE		1.13
+distrib/notes/macppc/hardware			1.47
+distrib/notes/macppc/prep.OPENFIRMWARE		1.12
+distrib/notes/mvme68k/hardware			1.11
+distrib/notes/mvme68k/install			1.21
+distrib/notes/next68k/prep			1.8
+distrib/notes/pmax/hardware			1.17
+distrib/notes/pmax/install			1.41
+distrib/notes/sgimips/hardware			1.14
+distrib/notes/sgimips/prep			1.10
+distrib/notes/shark/install			1.5
+distrib/notes/sparc/hardware			1.35, 1.36
+distrib/notes/sparc/prep			1.26
+distrib/notes/sparc/upgrade			1.16
+distrib/notes/sparc64/prep			1.15
+distrib/notes/sun2/hardware			1.4
+distrib/notes/sun3/hardware			1.10
+distrib/notes/vax/hardware			1.10
+distrib/notes/vax/install			1.18
+distrib/notes/vax/prep				1.7
+distrib/notes/xen/xfer				1.4
+distrib/notes/x68k/hardware			1.17
+distrib/notes/x68k/prep				1.9
+
+	Sync release notes.
+	[rmind, ticket #728]
 
