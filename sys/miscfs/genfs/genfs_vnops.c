@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.169 2009/04/22 22:57:08 elad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.170 2009/04/25 18:53:44 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.169 2009/04/22 22:57:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.170 2009/04/25 18:53:44 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,3 +642,26 @@ genfs_can_chown(vnode_t *vp, kauth_cred_t cred, uid_t cur_uid,
 	return (0);
 }
 
+/*
+ * Common routine to check if the device can be mounted.
+ *
+ * devvp - the locked vnode of the device
+ * cred - credentials of the invoker
+ * accessmode - the accessmode (VREAD, VWRITE)
+ *
+ * Returns 0 if the mount is allowed, or an error value otherwise.
+ */
+int
+genfs_can_mount(vnode_t *devvp, mode_t accessmode, kauth_cred_t cred)
+{
+	int error;
+
+	/* Always allow for root. */
+	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
+	if (!error)
+		return (0);
+
+	error = VOP_ACCESS(devvp, accessmode, cred);
+
+	return (error);
+}
