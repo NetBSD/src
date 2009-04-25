@@ -1,4 +1,6 @@
+/*	$NetBSD: if_alereg.h,v 1.2 2009/04/25 17:04:40 tsutsui Exp $	*/
 /*	$OpenBSD: if_alereg.h,v 1.1 2009/02/25 03:05:32 kevlo Exp $	*/
+
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
