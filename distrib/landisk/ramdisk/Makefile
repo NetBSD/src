@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/04/07 11:49:17 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2009/04/25 18:39:47 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -21,7 +21,8 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig \
 		${NETBSDSRCDIR}/distrib/common/protocols \
-		${NETBSDSRCDIR}/distrib/common/services
+		${NETBSDSRCDIR}/distrib/common/services \
+		${NETBSDSRCDIR}/distrib/common/termcap.mini
 
 IMAGETAR_RELEASEDIR=	installation/netboot
 
