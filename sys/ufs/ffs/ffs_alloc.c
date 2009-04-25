@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.122 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.123 2009/04/25 08:32:32 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.122 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.123 2009/04/25 08:32:32 sborrill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1138,7 +1138,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 	ufs_add32(cgp->cg_frsum[allocsiz], -1, needswap);
 	if (frags != allocsiz)
 		ufs_add32(cgp->cg_frsum[allocsiz - frags], 1, needswap);
-	blkno = cg * fs->fs_fpg + bno;
+	blkno = cgbase(fs, cg) + bno;
 	ACTIVECG_CLR(fs, cg);
 	mutex_exit(&ump->um_lock);
 	bdwrite(bp);
@@ -1167,6 +1167,7 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref, int flags)
 	struct ufsmount *ump;
 	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
+	int cg;
 	daddr_t blkno;
 	int32_t bno;
 	u_int8_t *blksfree;
@@ -1225,7 +1226,8 @@ gotit:
 		ufs_add32(old_cg_blktot(cgp, needswap)[cylno], -1, needswap);
 	}
 	fs->fs_fmod = 1;
-	blkno = ufs_rw32(cgp->cg_cgx, needswap) * fs->fs_fpg + bno;
+	cg = ufs_rw32(cgp->cg_cgx, needswap);
+	blkno = cgbase(fs, cg) + bno;
 	return (blkno);
 }
 
