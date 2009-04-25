@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.3 2009/02/28 19:33:45 joerg Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.4 2009/04/25 21:38:21 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.3 2009/02/28 19:33:45 joerg Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.4 2009/04/25 21:38:21 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -68,18 +68,20 @@ const char *pkg_vulnerabilities_dir;
 const char *pkg_vulnerabilities_file;
 const char *pkg_vulnerabilities_url;
 const char *ignore_advisories = NULL;
-
 const char tnf_vulnerability_base[] = "ftp://ftp.NetBSD.org/pub/NetBSD/packages/vulns";
+const char *acceptable_licenses = NULL;
 
 static struct config_variable {
 	const char *name;
 	const char **var;
 } config_variables[] = {
+	{ "ACCEPTABLE_LICENSES", &acceptable_licenses },
 	{ "ACTIVE_FTP", &active_ftp },
 	{ "CERTIFICATE_ANCHOR_PKGS", &certs_packages },
 	{ "CERTIFICATE_ANCHOR_PKGVULN", &certs_pkg_vulnerabilities },
 	{ "CERTIFICATE_CHAIN", &cert_chain_file },
 	{ "CHECK_VULNERABILITIES", &check_vulnerabilities },
+	{ "DEFAULT_ACCEPTABLE_LICENSES", &default_acceptable_licenses },
 	{ "GPG", &gpg_cmd },
 	{ "GPG_KEYRING_PKGVULN", &gpg_keyring_pkgvuln },
 	{ "GPG_KEYRING_SIGN", &gpg_keyring_sign },

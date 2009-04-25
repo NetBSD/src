@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.6 2009/04/24 14:17:21 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.7 2009/04/25 21:38:21 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -399,6 +399,13 @@ int detached_gpg_verify(const char *, size_t, const char *, size_t,
 int detached_gpg_sign(const char *, size_t, char **, size_t *, const char *,
     const char *);
 
+/* License handling */
+int add_licenses(const char *);
+int acceptable_license(const char *);
+int acceptable_pkg_license(const char *);
+void load_license_lists(void);
+
+/* Helper functions for memory allocation */
 char *xstrdup(const char *);
 void *xrealloc(void *, size_t);
 void *xcalloc(size_t, size_t);
@@ -428,5 +435,8 @@ extern const char *pkg_vulnerabilities_file;
 extern const char *pkg_vulnerabilities_url;
 extern const char *ignore_advisories;
 extern const char tnf_vulnerability_base[];
+
+extern const char *acceptable_licenses;
+extern const char *default_acceptable_licenses;
 
 #endif				/* _INST_LIB_LIB_H_ */
