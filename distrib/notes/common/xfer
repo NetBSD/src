@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.63 2008/09/13 15:43:07 tsutsui Exp $
+.\"	$NetBSD: xfer,v 1.64 2009/04/25 01:33:12 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,46 +73,15 @@ If you are not booting off a CD-ROM, you will need to have some floppy
 disks to boot off;
 either three 1.44 MB floppies or one 1.2 MB floppy.
 .Pp
-For laptops that have cardbus slots, you should use the
-.Pa bootlap1.fs
-and
-.Pa bootlap2.fs
-floppy images.
-.Pp
-For older machines with little RAM, use
-.Pa boot-tiny.fs .
-This image is tailored towards old, small-memory systems, and thus does
-not contain any PCI or SCSI support.
-It should work on systems with 4M of RAM.
-Note that this means 4M available to NetBSD; systems that
-are said to have 4M may have 640k of base memory and 3072k of extended
-memory, which currently will not work, as this is a total of 3712k.
-.Pp
-For old machines that may have EISA, SCSI and more RAM, but only
-have a 1.2M floppy drive, use
-.Pa boot-small1.fs
-and
-.Pa boot-small2.fs .
-.Pp
-For old IBM PS/2 machines with MCA, use
-.Pa boot-ps2-1.fs
-and
-.Pa boot-ps2-2.fs
-floppy images.
-.Pp
-For all other systems, use
+Use
 .Pa boot1.fs
 and
 .Pa boot2.fs
-.
-.Pp
-For the 2-floppy sets (and the CD boot image), utilities to repair
-a badly crashed systems are included.
-The
-.Pa boot-tiny.fs
-image has a separate
-.Pa rescue-tiny.fs
-rescue floppy image because of lack of space.
+for VGA installation.
+.Pa boot-com1.fs
+and 
+.Pa boot-com2.fs
+are available if you wish to use a serial console.
 .Pp
 If you are using a
 .Ul
@@ -594,7 +563,7 @@ Likely locations are
 and
 .Pa \*M/binary/sets .
 .Pp
-Proceed to the instruction on installation.
+Proceed to the instructions on installation.
 .
 .It Em MS-DOS floppy
 .Nx
@@ -688,8 +657,8 @@ installation, the IPv4 address of
 is
 .Li 204.152.190.13
 and the IPv6 address is
-.Li 2001:4f8:4:7:230:48ff:fe31:43f2
-(as of December, 2007).
+.Li 2001:4f8:3:7:230:48ff:fe31:43f2
+(as of April, 2009).
 .Pp
 Once you have this information, you can proceed to the next
 step in the installation or upgrade process.

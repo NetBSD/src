@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.152 2009/04/24 23:11:07 ad Exp $
+.\"	$NetBSD: contents,v 1.153 2009/04/25 01:33:12 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,6 +87,14 @@ The installation kernel.
 A version of
 .Li INSTALL
 for older machines without CD-ROM drives.
+.			It Pa netbsd-INSTALL_XEN2_DOMU.gz
+.			It Pa netbsd-INSTALL_XEN3PAE_DOMU.gz
+.			It Pa netbsd-INSTALL_XEN3_DOMU.gz
+.			It Pa netbsd-XEN2_DOM0.gz
+.			It Pa netbsd-XEN2_DOMU.gz
+.			It Pa netbsd-XEN3PAE_DOMU.gz
+.			It Pa netbsd-XEN3_DOM0.gz
+.			It Pa netbsd-XEN3_DOMU.gz
 .\}
 .if \n[mac68k] \{\
 .			It Pa netbsd-GENERIC.gz
@@ -987,7 +995,7 @@ that are included in the other sets.
 .showsize 12 50
 .
 .It Sy misc
-This set includes the (rather large) system dictionaries,
+This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
 .\" MI
