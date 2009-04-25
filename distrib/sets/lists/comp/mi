@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1245 2009/04/12 17:24:51 christos Exp $
+#	$NetBSD: mi,v 1.1246 2009/04/25 05:54:50 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1663,6 +1663,7 @@
 ./usr/include/objc/sarray.h			comp-c-include
 ./usr/include/objc/thr.h			comp-c-include
 ./usr/include/objc/typedstream.h		comp-c-include
+./usr/include/netpgp.h				comp-c-include		crypto
 ./usr/include/openpgpsdk/accumulate.h		comp-c-include		crypto
 ./usr/include/openpgpsdk/armour.h		comp-c-include		crypto
 ./usr/include/openpgpsdk/callback.h		comp-c-include		crypto
@@ -2444,6 +2445,9 @@
 ./usr/lib/libmenu_g.a				-unknown-		debuglib
 ./usr/lib/libmenu_p.a				comp-c-proflib		profile
 ./usr/lib/libmilter.a				comp-obsolete		obsolete
+./usr/lib/libnetpgp.a				comp-c-lib		crypto
+./usr/lib/libnetpgp_g.a				-unknown-		debuglib
+./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
@@ -2970,6 +2974,7 @@
 ./usr/libdata/debug/usr/bin/msguniq.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/nbsvtool.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netgroup.debug	comp-nis-debug		debug
+./usr/libdata/debug/usr/bin/netpgp.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netstat.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/newgrp.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/newsyslog.debug	comp-util-debug		debug
@@ -3555,6 +3560,7 @@
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
@@ -6574,6 +6580,7 @@
 ./usr/share/man/cat3/libarchive.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libarchive_internals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/libmagic.0			comp-c-catman		.cat
+./usr/share/man/cat3/libnetpgp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
@@ -11921,6 +11928,7 @@
 ./usr/share/man/html3/libarchive.html		comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_internals.html	comp-c-htmlman		html
 ./usr/share/man/html3/libmagic.html		comp-c-htmlman		html
+./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_addr.html		comp-c-htmlman		html
@@ -17231,6 +17239,7 @@
 ./usr/share/man/man3/libarchive.3		comp-c-man		.man
 ./usr/share/man/man3/libarchive_internals.3	comp-c-man		.man
 ./usr/share/man/man3/libmagic.3			comp-c-man		.man
+./usr/share/man/man3/libnetpgp.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man		.man
