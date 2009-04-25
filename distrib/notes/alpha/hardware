@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.15 2008/09/06 21:36:40 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.16 2009/04/25 10:34:42 snj Exp $
 .
 .Nx*M
 \*V runs on most of the
@@ -166,7 +166,7 @@ NS16450 and NS16550 UARTs
 .It
 ISA multi-port 16x50 boards
 .Em ( ast , boca ;
-Only the latter has been tested )
+Only the latter has been tested)
 .bullet)
 .bullet)
 .
@@ -207,7 +207,7 @@ Although these boards are supported by
 .Nx*M
 since there is no keyboard or mouse support available for the
 TurboChannel systems, they aren't very useful.
-XXX: is this still true now that the MI sfb.c is used???
+.\" XXX: is this still true now that the MI sfb.c is used???
 .Note)
 .It
 Network Cards
