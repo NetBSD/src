@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.10 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.11 2009/04/25 05:11:37 lukem Exp $	*/
 
 /*
  *	vi command editing
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.10 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.11 2009/04/25 05:11:37 lukem Exp $");
 #endif
 
 #include "config.h"
@@ -244,7 +244,7 @@ x_vi(buf, len)
 
 	x_putc('\r'); x_putc('\n'); x_flush();
 
-	if (c == -1 || len <= es->linelen)
+	if (c == -1 || len <= (size_t)es->linelen)
 		return -1;
 
 	if (es->cbuf != buf)
