@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2009/04/21 21:30:00 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2009/04/25 15:32:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2009/04/21 21:30:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2009/04/25 15:32:30 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2475,7 +2475,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_kenter_pa(srcva, srcpa, VM_PROT_READ);
 	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE);
 
-	/* Hand-optimized version of memcpy( dst, src, PAGE_SIZE) */
+	/* Hand-optimized version of memcpy(dst, src, PAGE_SIZE) */
 	copypage((char *)srcva, (char *)dstva);
 
 	pmap_kremove(srcva, PAGE_SIZE);
