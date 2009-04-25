@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.82 2008/04/25 11:27:19 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.83 2009/04/25 18:27:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.82 2008/04/25 11:27:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.83 2009/04/25 18:27:39 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1029,7 +1029,7 @@ rtk_rxeof(struct rtk_softc *sc)
 		else
 			new_rx = cur_rx + total_len;
 		/* Round up to 32-bit boundary. */
-		new_rx = ((new_rx + 3) & ~3) % RTK_RXBUFLEN;
+		new_rx = roundup2(new_rx, sizeof(uint32_t)) % RTK_RXBUFLEN;
 
 		/*
 		 * The RealTek chip includes the CRC with every
