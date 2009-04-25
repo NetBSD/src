@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.287 2009/04/19 22:15:39 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.288 2009/04/25 15:06:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -428,13 +428,6 @@ MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 #define	NO_PGID		((pid_t)-1)
 
 #define	SESS_LEADER(p)	((p)->p_session->s_leader == (p))
-#define	SESSHOLD(s)	((s)->s_count++)
-#define	SESSRELE(s)							\
-do {									\
-	if (--(s)->s_count == 0)					\
-		sessdelete(s);						\
-} while (/* CONSTCOND */ 0)
-
 
 /*
  * Flags passed to fork1().
@@ -477,11 +470,13 @@ struct pgrp *pg_find(pid_t, uint);	/* Find process group by id */
 #define pgfind(pgid) pg_find((pgid), PFIND_UNLOCK)
 
 struct simplelock;
-int	enterpgrp(struct proc *, pid_t, pid_t, int);
-void	leavepgrp(struct proc *);
-void	fixjobc(struct proc *, struct pgrp *, int);
-void	sessdelete(struct session *);
+
 void	procinit(void);
+int	proc_enterpgrp(struct proc *, pid_t, pid_t, bool);
+void	proc_leavepgrp(struct proc *);
+void	proc_sesshold(struct session *);
+void	proc_sessrele(struct session *);
+void	fixjobc(struct proc *, struct pgrp *, int);
 
 int	ltsleep(wchan_t, pri_t, const char *, int, volatile struct simplelock *);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);

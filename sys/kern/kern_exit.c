@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.219 2009/03/28 21:38:55 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.220 2009/04/25 15:06:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.219 2009/03/28 21:38:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.220 2009/04/25 15:06:31 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -378,8 +378,8 @@ exit1(struct lwp *l, int rv)
 
 		if (vprevoke != NULL || vprele != NULL) {
 			if (vprevoke != NULL) {
-				SESSRELE(sp);
-				mutex_exit(proc_lock);
+				/* Releases proc_lock. */
+				proc_sessrele(sp);
 				VOP_REVOKE(vprevoke, REVOKEALL);
 			} else
 				mutex_exit(proc_lock);
@@ -890,12 +890,6 @@ proc_free(struct proc *p, struct rusage *ru)
 		return;
 	}
 
-	/*
-	 * Finally finished with old proc entry.  Unlink it from its process
-	 * group.
-	 */
-	leavepgrp(p);
-
 	sched_proc_exit(parent, p);
 
 	/*
@@ -933,7 +927,12 @@ proc_free(struct proc *p, struct rusage *ru)
 	 * Let pid be reallocated.
 	 */
 	proc_free_pid(p);
-	mutex_exit(proc_lock);
+
+	/*
+	 * Unlink process from its process group.
+	 * Releases the proc_lock.
+	 */
+	proc_leavepgrp(p);
 
 	/*
 	 * Delay release until after lwp_free.
