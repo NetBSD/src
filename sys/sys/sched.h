@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.69 2009/04/19 22:15:39 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.70 2009/04/25 19:38:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ void	kcpuset_zero(kcpuset_t *);
 void	kcpuset_fill(kcpuset_t *);
 void	kcpuset_set(cpuid_t, kcpuset_t *);
 int	kcpuset_isset(cpuid_t, const kcpuset_t *);
+bool	kcpuset_iszero(const kcpuset_t *);
 bool	kcpuset_match(const kcpuset_t *, const kcpuset_t *);
 
 #else
