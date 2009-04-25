@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.73 2009/04/25 01:33:12 snj Exp $
+.\"	$NetBSD: postinstall,v 1.74 2009/04/25 21:21:48 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -397,7 +397,7 @@ for more information about NetBSD's release numbering scheme.
 .It
 The framework for compiling packages can be obtained by
 retrieving the file
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc.tar.gz .
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc.tar.gz
 It is typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine) with the commands:

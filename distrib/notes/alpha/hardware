@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.16 2009/04/25 10:34:42 snj Exp $
+.\"	$NetBSD: hardware,v 1.17 2009/04/25 21:21:47 snj Exp $
 .
 .Nx*M
 \*V runs on most of the
@@ -23,12 +23,12 @@ only one type of console loaded at any one time.
 If your system comes up with the ARC firmware, it may be possible
 to switch it to SRM with a menu or
 to download SRM from
-.Lk ftp://gatekeeper.dec.com/pub/Digital/Alpha/firmware/index.html .
+.Lk ftp://gatekeeper.dec.com/pub/Digital/Alpha/firmware/index.html
 You may want to buy a firmware update CD from Compaq Computer Corporation.
 .Pp
 More information on supported platforms and devices can be found on the
 \*M port web pages at
-.Lk http://www.NetBSD.org/ .
+.Lk http://www.NetBSD.org/
 .Pp
 A basic system will fit on a 200 MB disk (including swap) without too
 much difficulty, but you will probably want at least 500 MB of disk
