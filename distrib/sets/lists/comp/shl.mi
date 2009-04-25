@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.77 2009/02/28 15:32:29 pooka Exp $
+# $NetBSD: shl.mi,v 1.78 2009/04/25 05:54:50 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -59,6 +59,7 @@
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib
 ./usr/lib/libmenu_pic.a				comp-c-piclib
+./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
 ./usr/lib/libopcodes.so.3			comp-c-shlib		bfd
 ./usr/lib/libopcodes.so.3.0			comp-c-shlib		bfd
