@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ale.c,v 1.2 2009/04/25 17:04:40 tsutsui Exp $	*/
+
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -28,6 +30,9 @@
  */
 
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.2 2009/04/25 17:04:40 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
