@@ -40,10 +40,10 @@
 #include "packet-parse.h"
 #include "crypto.h"
 #include "errors.h"
-
 #include "netpgpdefs.h"
 #include "parse_local.h"
 #include "memory.h"
+#include "writer.h"
 
 #define DECOMPRESS_BUFFER	1024
 
@@ -358,52 +358,52 @@ __ops_decompress(__ops_region_t *region, __ops_parse_info_t *parse_info,
 bool 
 __ops_write_compressed(const unsigned char *data,
 		     const unsigned int len,
-		     __ops_create_info_t * cinfo)
+		     __ops_create_info_t *cinfo)
 {
-	int             r = 0;
-	int             sz_in = 0;
-	int             sz_out = 0;
-	compress_t *compression = calloc(1, sizeof(compress_t));
+	compress_t	*zip = calloc(1, sizeof(compress_t));
+	size_t		 sz_in = 0;
+	size_t		 sz_out = 0;
+	int              r = 0;
 
 	/* compress the data */
 	const int       level = Z_DEFAULT_COMPRESSION;	/* \todo allow varying
 							 * levels */
-	compression->stream.zalloc = Z_NULL;
-	compression->stream.zfree = Z_NULL;
-	compression->stream.opaque = NULL;
+	zip->stream.zalloc = Z_NULL;
+	zip->stream.zfree = Z_NULL;
+	zip->stream.opaque = NULL;
 
 	/* all other fields set to zero by use of calloc */
 
-	if (deflateInit(&compression->stream, level) != Z_OK) {
+	if (deflateInit(&zip->stream, level) != Z_OK) {
 		/* can't initialise */
-		assert(0);
+		assert(/* CONSTCOND */0);
 	}
 	/* do necessary transformation */
 	/* copy input to maintain const'ness of src */
-	assert(compression->src == NULL);
-	assert(compression->dst == NULL);
+	assert(zip->src == NULL);
+	assert(zip->dst == NULL);
 
 	sz_in = len * sizeof(unsigned char);
 	sz_out = (sz_in * 1.01) + 12;	/* from zlib webpage */
-	compression->src = calloc(1, sz_in);
-	compression->dst = calloc(1, sz_out);
-	(void) memcpy(compression->src, data, len);
+	zip->src = calloc(1, sz_in);
+	zip->dst = calloc(1, sz_out);
+	(void) memcpy(zip->src, data, len);
 
 	/* setup stream */
-	compression->stream.next_in = compression->src;
-	compression->stream.avail_in = sz_in;
-	compression->stream.total_in = 0;
+	zip->stream.next_in = zip->src;
+	zip->stream.avail_in = sz_in;
+	zip->stream.total_in = 0;
 
-	compression->stream.next_out = compression->dst;
-	compression->stream.avail_out = sz_out;
-	compression->stream.total_out = 0;
+	zip->stream.next_out = zip->dst;
+	zip->stream.avail_out = sz_out;
+	zip->stream.total_out = 0;
 
-	r = deflate(&compression->stream, Z_FINISH);
+	r = deflate(&zip->stream, Z_FINISH);
 	assert(r == Z_STREAM_END);	/* need to loop if not */
 
 	/* write it out */
-	return (__ops_write_ptag(OPS_PTAG_CT_COMPRESSED, cinfo)
-		&& __ops_write_length(1 + compression->stream.total_out, cinfo)
-		&& __ops_write_scalar(OPS_C_ZLIB, 1, cinfo)
-		&& __ops_write(compression->dst, compression->stream.total_out, cinfo));
+	return (__ops_write_ptag(OPS_PTAG_CT_COMPRESSED, cinfo) &&
+		__ops_write_length((unsigned)(zip->stream.total_out + 1), cinfo) &&
+		__ops_write_scalar(OPS_C_ZLIB, 1, cinfo) &&
+		__ops_write(zip->dst, (unsigned)zip->stream.total_out, cinfo));
 }

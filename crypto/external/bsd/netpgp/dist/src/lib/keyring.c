@@ -330,14 +330,14 @@ __ops_get_user_id(const __ops_keydata_t * key, unsigned subscript)
 */
 
 bool 
-__ops_is_key_supported(const __ops_keydata_t * keydata)
+__ops_is_key_supported(const __ops_keydata_t *keydata)
 {
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
 		if (keydata->key.pkey.algorithm == OPS_PKA_RSA) {
 			return true;
 		}
 	} else if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (keydata->key.skey.algorithm == OPS_PKA_RSA) {
+		if (keydata->key.pkey.algorithm == OPS_PKA_DSA) {
 			return true;
 		}
 	}
@@ -708,6 +708,7 @@ __ops_keyring_read_from_file(__ops_keyring_t * keyring, const bool armour, const
 	return res;
 }
 
+#if 0
 /**
    \ingroup HighLevel_KeyringRead
 
@@ -767,6 +768,7 @@ __ops_keyring_read_from_mem(__ops_keyring_t * keyring, const bool armour, __ops_
 
 	return res;
 }
+#endif
 
 /**
    \ingroup HighLevel_KeyringRead

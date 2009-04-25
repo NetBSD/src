@@ -7,8 +7,10 @@
  * packet_tag_map_t *packet_tag_map) -> char *__ops_str_from_map(int
  * packet_tag, __ops_map_t *packet_tag_map)
  */
-const char     *__ops_str_from_map(int packet_tag, __ops_map_t * packet_tag_map);
-#define show_packet_tag(packet_tag,packet_tag_map) __ops_str_from_map(CHECKED_INSTANCE_OF(__ops_packet_tag_t , packet_tag),CHECKED_INSTANCE_OF( packet_tag_map_t *, packet_tag_map))
+const char     *__ops_str_from_map(int packet_tag, __ops_map_t *packet_tag_map);
+#define show_packet_tag(packet_tag,packet_tag_map)			\
+	__ops_str_from_map(CHECKED_INSTANCE_OF(__ops_packet_tag_t, packet_tag),\
+		CHECKED_INSTANCE_OF( packet_tag_map_t *, packet_tag_map))
 typedef char   *show_packet_tag_t(__ops_packet_tag_t, packet_tag_map_t *);
 
 /*

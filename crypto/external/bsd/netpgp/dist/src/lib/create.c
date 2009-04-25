@@ -63,8 +63,8 @@ bool
 __ops_write_ss_header(unsigned length, __ops_content_tag_t type,
 		    __ops_create_info_t * info)
 {
-	return __ops_write_length(length, info)
-	&& __ops_write_scalar(type - OPS_PTAG_SIGNATURE_SUBPACKET_BASE, 1, info);
+	return __ops_write_length(length, info) &&
+		__ops_write_scalar((unsigned)(type - OPS_PTAG_SIGNATURE_SUBPACKET_BASE), 1, info);
 }
 
 /*
@@ -189,14 +189,14 @@ static bool
 write_public_key_body(const __ops_public_key_t * key,
 		      __ops_create_info_t * info)
 {
-	if (!(__ops_write_scalar(key->version, 1, info)
-	      && __ops_write_scalar(key->creation_time, 4, info)))
+	if (!(__ops_write_scalar((unsigned)key->version, 1, info) &&
+	      __ops_write_scalar((unsigned)key->creation_time, 4, info)))
 		return false;
 
 	if (key->version != 4 && !__ops_write_scalar(key->days_valid, 2, info))
 		return false;
 
-	if (!__ops_write_scalar(key->algorithm, 1, info))
+	if (!__ops_write_scalar((unsigned)key->algorithm, 1, info))
 		return false;
 
 	switch (key->algorithm) {
@@ -249,21 +249,21 @@ write_secret_key_body(const __ops_secret_key_t * key,
 		return false;
 
 	assert(key->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED);	/* = 254 */
-	if (!__ops_write_scalar(key->s2k_usage, 1, info))
+	if (!__ops_write_scalar((unsigned)key->s2k_usage, 1, info))
 		return false;
 
 	assert(key->algorithm == OPS_SA_CAST5);
-	if (!__ops_write_scalar(key->algorithm, 1, info))
+	if (!__ops_write_scalar((unsigned)key->algorithm, 1, info))
 		return false;
 
 	assert(key->s2k_specifier == OPS_S2KS_SIMPLE || key->s2k_specifier == OPS_S2KS_SALTED);	/* = 1 \todo could also
 												 * be
 												 * iterated-and-salted */
-	if (!__ops_write_scalar(key->s2k_specifier, 1, info))
+	if (!__ops_write_scalar((unsigned)key->s2k_specifier, 1, info))
 		return false;
 
 	assert(key->hash_algorithm == OPS_HASH_SHA1);
-	if (!__ops_write_scalar(key->hash_algorithm, 1, info))
+	if (!__ops_write_scalar((unsigned)key->hash_algorithm, 1, info))
 		return false;
 
 	switch (key->s2k_specifier) {
@@ -333,7 +333,7 @@ write_secret_key_body(const __ops_secret_key_t * key,
 			 * if more in hash than is needed by session key, use
 			 * the leftmost octets
 			 */
-			(void) memcpy(session_key + (i * SHA_DIGEST_LENGTH), hashed, use);
+			(void) memcpy(session_key + (i * SHA_DIGEST_LENGTH), hashed, (unsigned)use);
 			done += use;
 			assert(done <= CAST_KEY_LENGTH);
 		}
@@ -759,7 +759,7 @@ __ops_write_struct_secret_key(const __ops_secret_key_t * key,
 
 	return __ops_write_ptag(OPS_PTAG_CT_SECRET_KEY, info)
 	/* && __ops_write_length(1+4+1+1+secret_key_length(key)+2,info) */
-		&& __ops_write_length(length, info)
+		&& __ops_write_length((unsigned)length, info)
 		&& write_secret_key_body(key, passphrase, pplen, info);
 }
 
@@ -815,13 +815,15 @@ __ops_calc_session_key_checksum(__ops_pk_session_key_t * session_key, unsigned c
 	}
 	checksum = checksum % 65536;
 
-	cs[0] = checksum >> 8;
-	cs[1] = checksum & 0xFF;
+	cs[0] = (unsigned char)((checksum >> 8) & 0xff);
+	cs[1] = (unsigned char)(checksum & 0xff);
 
+	if (__ops_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr,"\nm buf checksum: ");
+		(void) fprintf(stderr," %2x",cs[0]);
+		(void) fprintf(stderr," %2x\n",cs[1]);
+	}
 	return true;
-	/* fprintf(stderr,"\nm buf checksum: "); */
-	/* fprintf(stderr," %2x",cs[0]); */
-	/* fprintf(stderr," %2x\n",cs[1]); */
 }
 
 static bool 
@@ -997,10 +999,10 @@ __ops_write_pk_session_key(__ops_create_info_t * info,
 	assert(pksk->algorithm == OPS_PKA_RSA);
 
 	return __ops_write_ptag(OPS_PTAG_CT_PK_SESSION_KEY, info)
-		&& __ops_write_length(1 + 8 + 1 + BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2, info)
-		&& __ops_write_scalar(pksk->version, 1, info)
+		&& __ops_write_length((unsigned)(1 + 8 + 1 + BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2), info)
+		&& __ops_write_scalar((unsigned)pksk->version, 1, info)
 		&& __ops_write(pksk->key_id, 8, info)
-		&& __ops_write_scalar(pksk->algorithm, 1, info)
+		&& __ops_write_scalar((unsigned)pksk->algorithm, 1, info)
 		&& __ops_write_mpi(pksk->parameters.rsa.encrypted_m, info)
 	/* ??	&& __ops_write_scalar(0, 2, info); */
 		;
@@ -1046,11 +1048,11 @@ __ops_write_literal_data_from_buf(const unsigned char *data,
          */
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
 	return __ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info)
-	&& __ops_write_length(1 + 1 + 4 + maxlen, info)
-	&& __ops_write_scalar(type, 1, info)
+	&& __ops_write_length((unsigned)(1 + 1 + 4 + maxlen), info)
+	&& __ops_write_scalar((unsigned)type, 1, info)
 	&& __ops_write_scalar(0, 1, info)
 	&& __ops_write_scalar(0, 4, info)
-	&& __ops_write(data, maxlen, info);
+	&& __ops_write(data, (unsigned)maxlen, info);
 }
 
 /**
@@ -1089,7 +1091,7 @@ __ops_write_literal_data_from_file(const char *filename,
 		n = read(fd, buf, 1024);
 		if (!n)
 			break;
-		__ops_memory_add(mem, &buf[0], n);
+		__ops_memory_add(mem, &buf[0], (unsigned)n);
 	}
 	close(fd);
 
@@ -1097,7 +1099,7 @@ __ops_write_literal_data_from_file(const char *filename,
 	len = __ops_memory_get_length(mem);
 	rtn = __ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info)
 		&& __ops_write_length(1 + 1 + 4 + len, info)
-		&& __ops_write_scalar(type, 1, info)
+		&& __ops_write_scalar((unsigned)type, 1, info)
 		&& __ops_write_scalar(0, 1, info)	/* filename */
 		&&__ops_write_scalar(0, 4, info)	/* date */
 		&&__ops_write(__ops_memory_get_data(mem), len, info);
@@ -1150,7 +1152,7 @@ __ops_write_mem_from_file(const char *filename, int *errnum)
 		}
 		if (!n)
 			break;
-		__ops_memory_add(mem, &buf[0], n);
+		__ops_memory_add(mem, &buf[0], (unsigned)n);
 	}
 	close(fd);
 	return mem;
@@ -1159,7 +1161,7 @@ __ops_write_mem_from_file(const char *filename, int *errnum)
 /**
    \ingroup HighLevel_General
 
-   \brief Reads contents of buffer into file
+   \brief Writes contents of buffer into file
 
    \param filename Filename to write to
    \param buf Buffer to write to file
@@ -1212,11 +1214,11 @@ __ops_write_symmetrically_encrypted_data(const unsigned char *data,
 				       const int len,
 				       __ops_create_info_t * info)
 {
+	unsigned char  *encrypted = (unsigned char *) NULL;
+		/* buffer to write encrypted data to */
+	__ops_crypt_t	crypt_info;
+	size_t		encrypted_sz = 0;	/* size of encrypted data */
 	int             done = 0;
-	__ops_crypt_t     crypt_info;
-	int             encrypted_sz = 0;	/* size of encrypted data */
-	unsigned char  *encrypted = (unsigned char *) NULL;	/* buffer to write
-								 * encrypted data to */
 
 	/* \todo assume AES256 for now */
 	__ops_crypt_any(&crypt_info, OPS_SA_AES_256);
@@ -1225,13 +1227,13 @@ __ops_write_symmetrically_encrypted_data(const unsigned char *data,
 	encrypted_sz = len + crypt_info.blocksize + 2;
 	encrypted = calloc(1, encrypted_sz);
 
-	done = __ops_encrypt_se(&crypt_info, encrypted, data, len);
+	done = __ops_encrypt_se(&crypt_info, encrypted, data, (unsigned)len);
 	assert(done == len);
 	/* printf("len=%d, done: %d\n", len, done); */
 
 	return __ops_write_ptag(OPS_PTAG_CT_SE_DATA, info)
 		&& __ops_write_length(1 + encrypted_sz, info)
-		&& __ops_write(data, len, info);
+		&& __ops_write(data, (unsigned)len, info);
 }
 
 /**
@@ -1258,9 +1260,9 @@ __ops_write_one_pass_sig(const __ops_secret_key_t * skey,
 	return __ops_write_ptag(OPS_PTAG_CT_ONE_PASS_SIGNATURE, info)
 		&& __ops_write_length(1 + 1 + 1 + 1 + 8 + 1, info)
 		&& __ops_write_scalar(3, 1, info)	/* version */
-		&&__ops_write_scalar(sig_type, 1, info)
-		&& __ops_write_scalar(hash_alg, 1, info)
-		&& __ops_write_scalar(skey->public_key.algorithm, 1, info)
+		&& __ops_write_scalar((unsigned)sig_type, 1, info)
+		&& __ops_write_scalar((unsigned)hash_alg, 1, info)
+		&& __ops_write_scalar((unsigned)skey->public_key.algorithm, 1, info)
 		&& __ops_write(keyid, 8, info)
 		&& __ops_write_scalar(1, 1, info);
 }

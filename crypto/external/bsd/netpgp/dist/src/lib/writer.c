@@ -122,7 +122,7 @@ bool
 __ops_write_mpi(const BIGNUM * bn, __ops_create_info_t * info)
 {
 	unsigned char   buf[NETPGP_BUFSIZ];
-	int             bits = BN_num_bits(bn);
+	unsigned	bits = (unsigned)BN_num_bits(bn);
 
 	assert(bits <= 65535);
 	BN_bn2bin(bn, buf);
@@ -421,7 +421,7 @@ dash_escaped_writer(const unsigned char *src,
 		if (src[n] == ' ' || src[n] == '\t') {
 			__ops_memory_add(dash->trailing, &src[n], 1);
 		} else {
-			if ((l = __ops_memory_get_length(dash->trailing))) {
+			if ((l = __ops_memory_get_length(dash->trailing)) != 0) {
 				if (!dash->seen_nl && !dash->seen_cr) {
 					__ops_signature_add_data(dash->sig,
 					 __ops_memory_get_data(dash->trailing),
@@ -505,7 +505,7 @@ base64_writer(const unsigned char *src,
 		base64->checksum = __ops_crc24(base64->checksum, src[n]);
 		if (base64->pos == 0) {
 			/* XXXXXX00 00000000 00000000 */
-			if (!__ops_stacked_write(&b64map[src[n] >> 2], 1, errors, winfo)) {
+			if (!__ops_stacked_write(&b64map[(unsigned)src[n] >> 2], 1, errors, winfo)) {
 				return false;
 			}
 
@@ -514,7 +514,7 @@ base64_writer(const unsigned char *src,
 			base64->pos = 1;
 		} else if (base64->pos == 1) {
 			/* 000000xx XXXX0000 00000000 */
-			base64->t += src[n] >> 4;
+			base64->t += (unsigned)src[n] >> 4;
 			if (!__ops_stacked_write(&b64map[base64->t], 1, errors, winfo)) {
 				return false;
 			}
@@ -524,7 +524,7 @@ base64_writer(const unsigned char *src,
 			base64->pos = 2;
 		} else if (base64->pos == 2) {
 			/* 00000000 0000xxxx XX000000 */
-			base64->t += src[n] >> 6;
+			base64->t += (unsigned)src[n] >> 6;
 			if (!__ops_stacked_write(&b64map[base64->t], 1, errors, winfo)) {
 				return false;
 			}
@@ -727,7 +727,7 @@ armoured_finaliser(__ops_armor_type_t type, __ops_error_t ** errors,
 		break;
 
 	default:
-		assert(0);
+		assert(/* CONSTCOND */0);
 	}
 
 	base64 = __ops_writer_get_arg(winfo);
@@ -808,7 +808,7 @@ __ops_writer_push_armoured(__ops_create_info_t * info, __ops_armor_type_t type)
 		break;
 
 	default:
-		assert(0);
+		assert(/* CONSTCOND */0);
 	}
 
 	__ops_write(header, sz_hdr, info);
@@ -845,17 +845,17 @@ encrypt_writer(const unsigned char *src,
 	unsigned        remaining = length;
 	unsigned        done = 0;
 
-	crypt_t    *encrypt = (crypt_t *) __ops_writer_get_arg(winfo);
+	crypt_t    *pgp_encrypt = (crypt_t *) __ops_writer_get_arg(winfo);
 
-	if (!__ops_is_sa_supported(encrypt->crypt->algorithm)) {
-		assert(0);	/* \todo proper error handling */
+	if (!__ops_is_sa_supported(pgp_encrypt->crypt->algorithm)) {
+		assert(/* CONSTCOND */0);/* \todo proper error handling */
 	}
 
 	while (remaining) {
 		unsigned        len = remaining < BUFSZ ? remaining : BUFSZ;
 		/* memcpy(buf,src,len); // \todo copy needed here? */
 
-		encrypt->crypt->cfb_encrypt(encrypt->crypt, encbuf, src + done, len);
+		pgp_encrypt->crypt->cfb_encrypt(pgp_encrypt->crypt, encbuf, src + done, len);
 
 		if (__ops_get_debug_level(__FILE__)) {
 			int             i = 0;
@@ -887,12 +887,12 @@ encrypt_writer(const unsigned char *src,
 static void 
 encrypt_destroyer(__ops_writer_info_t * winfo)
 {
-	crypt_t    *encrypt = (crypt_t *) __ops_writer_get_arg(winfo);
+	crypt_t    *pgp_encrypt = (crypt_t *) __ops_writer_get_arg(winfo);
 
-	if (encrypt->free_crypt) {
-		free(encrypt->crypt);
+	if (pgp_encrypt->free_crypt) {
+		free(pgp_encrypt->crypt);
 	}
-	free(encrypt);
+	free(pgp_encrypt);
 }
 
 /**
@@ -901,20 +901,20 @@ encrypt_destroyer(__ops_writer_info_t * winfo)
 */
 void 
 __ops_writer_push_encrypt_crypt(__ops_create_info_t * cinfo,
-			      __ops_crypt_t * crypt)
+			      __ops_crypt_t * pgp_crypt)
 {
 	/* Create encrypt to be used with this writer */
 	/* Remember to free this in the destroyer */
 
-	crypt_t    *encrypt = calloc(1, sizeof(*encrypt));
+	crypt_t    *pgp_encrypt = calloc(1, sizeof(*pgp_encrypt));
 
 	/* Setup the encrypt */
 
-	encrypt->crypt = crypt;
-	encrypt->free_crypt = 0;
+	pgp_encrypt->crypt = pgp_crypt;
+	pgp_encrypt->free_crypt = 0;
 
 	/* And push writer on stack */
-	__ops_writer_push(cinfo, encrypt_writer, NULL, encrypt_destroyer, encrypt);
+	__ops_writer_push(cinfo, encrypt_writer, NULL, encrypt_destroyer, pgp_encrypt);
 
 }
 
@@ -991,7 +991,7 @@ encrypt_se_ip_writer(const unsigned char *src,
 	__ops_setup_memory_write(&my_cinfo, &my_mem, bufsz);
 
 	/* create literal data packet from source data */
-	__ops_write_literal_data_from_buf(src, length, OPS_LDT_BINARY, cinfo_literal);
+	__ops_write_literal_data_from_buf(src, (const int)length, OPS_LDT_BINARY, cinfo_literal);
 	assert(__ops_memory_get_length(mem_literal) > length);
 
 	/* create compressed packet from literal data packet */
@@ -1219,10 +1219,13 @@ skey_checksum_writer(const unsigned char *src, const unsigned length, __ops_erro
 }
 
 static bool
-skey_checksum_finaliser(__ops_error_t ** errors __attribute__((unused)), __ops_writer_info_t * winfo)
+skey_checksum_finaliser(__ops_error_t **errors, __ops_writer_info_t * winfo)
 {
 	skey_checksum_t *sum = __ops_writer_get_arg(winfo);
 
+	if (errors) {
+		printf("errors in skey_checksum_finaliser\n");
+	}
 	sum->hash.finish(&sum->hash, sum->hashed);
 	return true;
 }
@@ -1407,7 +1410,7 @@ __ops_stream_write_literal_data_first(const unsigned char *data,
 	assert(sz_pd >= 512);
 	__ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info);
 	__ops_write_partial_data_length(sz_pd, info);
-	__ops_write_scalar(type, 1, info);
+	__ops_write_scalar((unsigned)type, 1, info);
 	__ops_write_scalar(0, 1, info);
 	__ops_write_scalar(0, 4, info);
 	__ops_write(data, sz_pd - 6, info);
@@ -1608,8 +1611,9 @@ stream_encrypt_se_ip_finaliser(__ops_error_t ** errors,
 				 __ops_memory_get_length(se_ip->mem_data) + 32);
 
 		__ops_write_literal_data_from_buf(__ops_memory_get_data(se_ip->mem_data),
-				       __ops_memory_get_length(se_ip->mem_data),
-					OPS_LDT_BINARY, se_ip->cinfo_literal);
+			(const int)__ops_memory_get_length(se_ip->mem_data),
+			OPS_LDT_BINARY,
+			se_ip->cinfo_literal);
 
 		/* create SE IP packet set from this literal data */
 		__ops_write_se_ip_pktset(__ops_memory_get_data(se_ip->mem_literal),

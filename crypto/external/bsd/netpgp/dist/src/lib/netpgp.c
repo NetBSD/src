@@ -44,7 +44,8 @@
 #include "packet-show.h"
 #include "create.h"
 #include "netpgpsdk.h"
-
+#include "memory.h"
+#include "validate.h"
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "parse_local.h"
@@ -91,7 +92,7 @@ conffile(char *homedir, char *userid, size_t length, int verbose)
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		if (regexec(&r, buf, 10, matchv, 0) == 0) {
 			(void) memcpy(userid, &buf[(int)matchv[1].rm_so],
-				MIN(matchv[1].rm_eo - matchv[1].rm_so, length));
+				MIN((unsigned)(matchv[1].rm_eo - matchv[1].rm_so), length));
 			if (verbose) {
 				printf("setting default key to \"%.*s\"\n",
 					(int)(matchv[1].rm_eo - matchv[1].rm_so),
@@ -122,7 +123,7 @@ userid_to_id(const unsigned char *userid, char *id)
 	int		   i;
 
 	for (i = 0; i < 8 ; i++) {
-		id[i * 2] = hexes[(userid[i] & 0xf0) >> 4];
+		id[i * 2] = hexes[(unsigned)(userid[i] & 0xf0) >> 4];
 		id[(i * 2) + 1] = hexes[userid[i] & 0xf];
 	}
 	id[8 * 2] = 0x0;
@@ -227,6 +228,7 @@ int
 netpgp_list_keys(netpgp_t *netpgp)
 {
 	__ops_keyring_list(netpgp->pubring);
+	return 1;
 }
 
 /* find a key in a keyring */
@@ -285,7 +287,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 
 	(void) memset(&uid, 0x0, sizeof(uid));
 	uid.user_id = (unsigned char *) id;
-	if ((keypair = __ops_rsa_create_selfsigned_keypair(numbits, 65537, &uid)) == NULL) {
+	if ((keypair = __ops_rsa_create_selfsigned_keypair(numbits, (const unsigned long)65537, &uid)) == NULL) {
 		(void) fprintf(stderr, "Cannot generate key\n");
 		return 0;
 	}
@@ -339,7 +341,9 @@ netpgp_encrypt_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armo
 int
 netpgp_decrypt_file(netpgp_t *netpgp, char *f, char *out, int armored)
 {
-	__ops_decrypt_file(f, out, netpgp->secring, armored, true, get_passphrase_cb);
+	__ops_decrypt_file(f, out, netpgp->secring, armored, true,
+		get_passphrase_cb);
+	return 1;
 }
 
 /* sign a file */
@@ -398,15 +402,7 @@ netpgp_verify_file(netpgp_t *netpgp, char *f, int armored)
 	return 0;
 }
 
-/* small useful functions for setting the file-level debugging levels */
-/* if the debugv list contains the filename in question, we're debugging it */
-
-enum {
-	MAX_DEBUG_NAMES = 32
-};
-
-static int      debugc;
-static char    *debugv[MAX_DEBUG_NAMES];
+/* wrappers for the ops_debug_level functions we added to openpgpsdk */
 
 /* set the debugging level per filename */
 int

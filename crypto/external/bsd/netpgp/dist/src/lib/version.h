@@ -21,11 +21,19 @@
 #ifndef VERSION_H_
 #define VERSION_H_	1
 
+#ifndef NETPGP_AUTOCONF_VERSION
+#define NETPGP_AUTOCONF_VERSION	PACKAGE_VERSION
+#endif
+
+#ifndef NETPGP_MAINTAINER
+#define NETPGP_MAINTAINER	PACKAGE_BUGREPORT
+#endif
+
 /* development versions have .99 suffix */
 #define NETPGP_BASE_VERSION	"0.99.1"
 
-#define NETPGP_VERSION_CAT(a, b, c)	"NetPGP portable " a " [src=" b "/bin=" c "]"
+#define NETPGP_VERSION_CAT(a, b)	"NetPGP portable " a "/[" b "]"
 #define NETPGP_VERSION_STRING \
-	NETPGP_VERSION_CAT(NETPGP_BASE_VERSION, NETPGP_AUTOCONF_VERSION, NETPGP_BUILD_TIME)
+	NETPGP_VERSION_CAT(NETPGP_BASE_VERSION, NETPGP_AUTOCONF_VERSION)
 
 #endif /* !VERSION_H_ */

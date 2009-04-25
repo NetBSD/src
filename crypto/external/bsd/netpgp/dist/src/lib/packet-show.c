@@ -532,7 +532,7 @@ showall_octets_bits(__ops_data_t * data, __ops_bit_map_t ** map,
 	/* ! for each octet in field ... */
 	for (i = 0; i < data->len; i++) {
 		/* ! for each bit in octet ... */
-		for (j = 0, mask = 0x80; j < 8; j++, mask = mask >> 1) {
+		for (j = 0, mask = 0x80; j < 8; j++, mask = (unsigned)mask >> 1) {
 			bit = data->contents[i] & mask;
 			if (bit) {
 				if (i >= nmap)
@@ -562,9 +562,9 @@ showall_octets_bits(__ops_data_t * data, __ops_bit_map_t ** map,
 const char     *
 __ops_show_packet_tag(__ops_packet_tag_t packet_tag)
 {
-	const char     *rtn = NULL;
-	rtn = show_packet_tag(packet_tag, packet_tag_map);
+	const char     *rtn;
 
+	rtn = show_packet_tag(packet_tag, packet_tag_map);
 	if (!rtn)
 		rtn = "Unknown Tag";
 
@@ -751,7 +751,7 @@ __ops_showall_ss_features(__ops_ss_features_t ss_features)
 	__ops_text_init(text);
 
 	for (i = 0; i < ss_features.data.len; i++) {
-		for (j = 0, mask = 0x80; j < 8; j++, mask = mask >> 1) {
+		for (j = 0, mask = 0x80; j < 8; j++, mask = (unsigned)mask >> 1) {
 			bit = ss_features.data.contents[i] & mask;
 			if (bit) {
 				str = __ops_show_ss_feature(bit, i);
@@ -802,7 +802,7 @@ __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
 
 	/* xxx - TBD: extend to handle multiple octets of bits - rachel */
 
-	for (i = 0, mask = 0x80; i < 8; i++, mask = mask >> 1) {
+	for (i = 0, mask = 0x80; i < 8; i++, mask = (unsigned)mask >> 1) {
 		bit = ss_key_flags.data.contents[0] & mask;
 		if (bit) {
 			str = __ops_show_ss_key_flag(bit, &ss_key_flags_map[0]);
@@ -859,7 +859,7 @@ __ops_showall_ss_key_server_prefs(__ops_ss_key_server_prefs_t ss_key_server_pref
 
 	/* xxx - TBD: extend to handle multiple octets of bits - rachel */
 
-	for (i = 0, mask = 0x80; i < 8; i++, mask = mask >> 1) {
+	for (i = 0, mask = 0x80; i < 8; i++, mask = (unsigned)mask >> 1) {
 		bit = ss_key_server_prefs.data.contents[0] & mask;
 		if (bit) {
 			str = __ops_show_ss_key_server_prefs(bit,

@@ -48,11 +48,11 @@ check_binary_signature(const unsigned len,
 {
 	/* Does the signed hash match the given hash? */
 
-	int             n = 0;
 	__ops_hash_t      hash;
 	unsigned char   hashout[OPS_MAX_HASH_SIZE];
 	unsigned char   trailer[6];
 	unsigned int    hashedlen;
+	unsigned	n = 0;
 
 	/* common_init_signature(&hash,sig); */
 	__ops_hash_any(&hash, sig->info.hash_algorithm);
@@ -61,10 +61,10 @@ check_binary_signature(const unsigned len,
 	switch (sig->info.version) {
 	case OPS_V3:
 		trailer[0] = sig->info.type;
-		trailer[1] = sig->info.creation_time >> 24;
-		trailer[2] = sig->info.creation_time >> 16;
-		trailer[3] = sig->info.creation_time >> 8;
-		trailer[4] = sig->info.creation_time;
+		trailer[1] = (unsigned)(sig->info.creation_time) >> 24;
+		trailer[2] = (unsigned)(sig->info.creation_time) >> 16;
+		trailer[3] = (unsigned)(sig->info.creation_time) >> 8;
+		trailer[4] = (unsigned char)(sig->info.creation_time);
 		hash.add(&hash, &trailer[0], 5);
 		break;
 
@@ -288,7 +288,7 @@ __ops_validate_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_in
 
 	default:
 		fprintf(stderr, "unexpected tag=0x%x\n", contents->tag);
-		assert(0);
+		assert(/* CONSTCOND */0);
 		break;
 	}
 	return OPS_RELEASE_MEMORY;

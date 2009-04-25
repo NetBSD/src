@@ -8,7 +8,7 @@
 #define HAVE_BZLIB_H 1
 
 /* Define to 1 if you have the <CommonCrypto/CommonDigest.h> header file. */
-#define HAVE_COMMONCRYPTO_COMMONDIGEST_H 1
+/* #undef HAVE_COMMONCRYPTO_COMMONDIGEST_H */
 
 /* Define to 1 if you have the <direct.h> header file. */
 /* #undef HAVE_DIRECT_H */
@@ -25,14 +25,23 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `bz2' library (-lbz2). */
+#define HAVE_LIBBZ2 1
+
+/* Define to 1 if you have the `crypto' library (-lcrypto). */
+#define HAVE_LIBCRYPTO 1
+
 /* Define to 1 if you have the <libgen.h> header file. */
 #define HAVE_LIBGEN_H 1
+
+/* Define to 1 if you have the `z' library (-lz). */
+#define HAVE_LIBZ 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the <malloc.h> header file. */
-/* #undef HAVE_MALLOC_H */
+#define HAVE_MALLOC_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -56,7 +65,7 @@
 #define HAVE_OPENSSL_ERR_H 1
 
 /* Define to 1 if you have the <openssl/idea.h> header file. */
-/* #undef HAVE_OPENSSL_IDEA_H */
+#define HAVE_OPENSSL_IDEA_H 1
 
 /* Define to 1 if you have the <openssl/md5.h> header file. */
 #define HAVE_OPENSSL_MD5_H 1
@@ -113,39 +122,35 @@
 #define HAVE_ZLIB_H 1
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "agc@netbsd.org"
+#define PACKAGE_BUGREPORT "Alistair Crooks agc@netbsd.org c0596823"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "netpgp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netpgp 20090408"
+#define PACKAGE_STRING "netpgp 20090423"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netpgp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20090408"
+#define PACKAGE_VERSION "20090423"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
-/* Define to 1 if your processor stores words with the most significant byte
-   first (like Motorola and SPARC, unlike Intel and VAX). */
-/* #undef WORDS_BIGENDIAN */
-
 /* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
-   <pthread.h>, or <semaphore.h> is not used. If the typedef was allowed, the
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
 /* #undef _UINT32_T */
 
 /* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
-   <pthread.h>, or <semaphore.h> is not used. If the typedef was allowed, the
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
 /* #undef _UINT64_T */
 
 /* Define for Solaris 2.5.1 so the uint8_t typedef from <sys/synch.h>,
-   <pthread.h>, or <semaphore.h> is not used. If the typedef was allowed, the
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
 /* #undef _UINT8_T */
 
