@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.47 2009/04/25 13:54:07 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.48 2009/04/25 14:45:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.47 2009/04/25 13:54:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.48 2009/04/25 14:45:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -766,8 +766,8 @@ pmap_bootstrap(vaddr_t vstart)
 			pmap_hpt = 0;
 		} else
 			DPRINTF(PDB_INIT,
-			    ("%s: HPT installed for %ld entries @ 0x%x\n", __func__,
-			    pmap_hptsize / sizeof(struct hpt_entry),
+			    ("%s: HPT installed for %ld entries @ 0x%x\n",
+			    __func__, pmap_hptsize / sizeof(struct hpt_entry),
 			    (int)addr));
 	}
 #endif
@@ -1513,7 +1513,8 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	volatile pt_entry_t *pde;
 	pt_entry_t pte = 0;
 
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p, 0x%x)\n", __func__, pmap, (int)va));
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p, 0x%x)\n", __func__, pmap,
+	    (int)va));
 
 	PMAP_LOCK(pmap);
 	if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
@@ -1781,7 +1782,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 			if (prot & PMAP_NC)
 				pg->mdpage.pvh_attrs |= PVF_NC;
 			else
-				pmap_check_alias(pg, pg->mdpage.pvh_list, va, &pte);
+				pmap_check_alias(pg, pg->mdpage.pvh_list, va,
+				    &pte);
 			mutex_exit(&pg->mdpage.pvh_lock);
 		}
 	}
@@ -1860,10 +1862,9 @@ pmap_kremove(vaddr_t va, vsize_t size)
 
 			pve = pmap_pv_remove(pg, pmap, va);
 
-			if ((pg->mdpage.pvh_attrs & PVF_NC) == 0) {
+			if ((pg->mdpage.pvh_attrs & PVF_NC) == 0)
 				pmap_check_alias(pg, pg->mdpage.pvh_list, va,
 				    NULL);
-			}
 
 			pg->mdpage.pvh_attrs &= ~PVF_NC;
 
