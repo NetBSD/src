@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.153 2009/04/25 01:33:12 snj Exp $
+.\"	$NetBSD: contents,v 1.154 2009/04/25 10:34:43 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,11 +54,18 @@ conventions for indicating italic and bold display.
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
+.if \n[amd64] \{\
+.			It Pa netbsd-INSTALL.gz
+The installation kernel.
+.			It Pa netbsd-INSTALL_XEN3_DOMU.gz
+.			It Pa netbsd-XEN3_DOM0.gz
+.			It Pa netbsd-XEN3_DOMU.gz
+.\} \" amd64
 .if \n[hpcmips] \{\
 This kernel runs on Vr41xx and TX3922 CPUs only.
 .\} \" hpcmips
 .\} \" !atari/mac68k/sgimips/evgppc
-.if \n[macppc]:\n[sparc]:\n[sparc64] \{\
+.if \n[alpha]:\n[macppc]:\n[sparc]:\n[sparc64]:\n[vax] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
 .Nx
@@ -233,6 +240,10 @@ see below.
 .
 .	(tag kernel/ -compact
 .
+.if \n[i386]:\n[amd64] \{\
+.		It Pa cdrom/
+\*M bootable cdrom images; see below.
+.\}
 .if \n[sparc] \{\
 .		It Pa bootfs/
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
@@ -243,26 +254,14 @@ Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
 .\}
-.if \n[i386]:\n[amd64] \{\
-.		It Pa cdrom/
-\*M bootable cdrom images; see below.
-.\}
 .
 .if \n[alpha] \{\
 .		It Pa diskimage/
-.		It Pa tapeimage/
 an image file
 .Pa cdhdtape
 is included for the case where the installer is written to
 a CD, hard drive, or tape.
-This image file is the same for the CD, HD, and tape cases, but a separate
-.Pa tapeimage/
-directory exists to hold a copy of the
-.Pa README
-file and to meet the
-.Nx
-.Xr release 7
-standard.
+This image file is the same for the CD, HD, and tape cases.
 .		It Pa instkernel/
 contains a
 .Pa netbsd.gz
@@ -290,24 +289,14 @@ Method), below.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen] \{\
+.if !\n[alpha]:\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen] \{\
 .		It Pa misc/
 .
-.ie \n[alpha] \{\
-contains
-.Pa GENERIC.fs ,
-a
-.Li GENERIC
-kernel in a bootable file system image.
-This is used in some unusual installations as described in the next section.
-.\}
-.el \{\
 Miscellaneous \*M installation utilities; see
 .if \n[mac68k] \{\
 the Traditional method
 .\}
-installation section, below.
-.\}
+installation section below.
 .\}
 .
 .if \n[hp300] \{\
