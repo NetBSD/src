@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.46 2009/04/21 13:48:21 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.47 2009/04/25 13:54:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.46 2009/04/21 13:48:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.47 2009/04/25 13:54:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,13 +511,13 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 	struct pv_entry *tpve;
 	u_int attrs;
 
-	/* we should only be looking if we're not PVF_NC */
-	KASSERT((pg->mdpage.pvh_attrs & PVF_NC) == 0);
-	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
-
 	DPRINTF(PDB_FOLLOW|PDB_ALIAS,
 	    ("%s(%p, %p, 0x%x, %p)\n", __func__, pg, pve, (int)va,
 	    ptep));
+
+	/* we should only be looking if we're not PVF_NC */
+	KASSERT((pg->mdpage.pvh_attrs & PVF_NC) == 0);
+	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
 
 	if (ptep) {
 		attrs = pmap_pvh_attrs(*ptep);
@@ -632,10 +632,10 @@ static inline void
 pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
     vaddr_t va, struct vm_page *pdep, pt_entry_t *ptep)
 {
-	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
-
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s(%p, %p, %p, 0x%x, %p)\n", __func__,
 	    pg, pve, pm, (int)va, pdep));
+
+	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
 
 	pve->pv_pmap = pm;
 	pve->pv_va = va;
