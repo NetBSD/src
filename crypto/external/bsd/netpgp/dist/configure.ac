@@ -1,7 +1,7 @@
-dnl $Id: configure.ac,v 1.1.1.1 2009/04/23 06:31:56 agc Exp $
+dnl $Id: configure.ac,v 1.2 2009/04/25 01:29:14 agc Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
-AC_INIT([netpgp],[20090422],[Alistair Crooks <agc@netbsd.org> c0596823])
+AC_INIT([netpgp],[20090423],[Alistair Crooks <agc@netbsd.org> c0596823])
 AC_CONFIG_SRCDIR([src/bin/netpgp.c])
 AC_CONFIG_HEADER(src/lib/config.h)
 AC_ARG_PROGRAM
@@ -37,7 +37,10 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 
-AC_C_BIGENDIAN
+# check for libraries
+AC_CHECK_LIB(z, gzopen)
+AC_CHECK_LIB(bz2, BZ2_bzDecompress)
+AC_CHECK_LIB(crypto, RSA_public_encrypt)
 
 # Checks for library functions.
 

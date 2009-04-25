@@ -179,7 +179,7 @@ typedef struct {
 	enum {
 		OUTSIDE_BLOCK = 0,
 		BASE64,
-		AT_TRAILER_NAME,
+		AT_TRAILER_NAME
 	}               state;
 
 	enum {
@@ -844,12 +844,13 @@ decode64(dearmour_t * dearmour, __ops_error_t ** errors,
 		assert(dearmour->buffered);
 
 	for (n = 0; n < dearmour->buffered; ++n) {
-		dearmour->buffer[n] = l;
+		dearmour->buffer[n] = (unsigned char)l;
 		l >>= 8;
 	}
 
 	for (n2 = dearmour->buffered - 1; n2 >= 0; --n2)
-		dearmour->checksum = __ops_crc24(dearmour->checksum, dearmour->buffer[n2]);
+		dearmour->checksum = __ops_crc24((unsigned)dearmour->checksum,
+					dearmour->buffer[n2]);
 
 	if (dearmour->eof64 && dearmour->read_checksum != dearmour->checksum) {
 		OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Checksum mismatch");
@@ -1982,7 +1983,7 @@ get_secret_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t
 				CALLBACK(cbinfo, OPS_PARSER_CMD_GET_SK_PASSPHRASE, &seckey);
 				if (!cbinfo->cryptinfo.passphrase) {
 					fprintf(stderr, "can't get passphrase\n");
-					assert(0);
+					assert(/*CONSTCOND*/0);
 				}
 			}
 			/* then it must be encrypted */
@@ -2056,14 +2057,14 @@ static int
 hash_reader(void *dest, size_t length, __ops_error_t ** errors,
 	    __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
 {
-	__ops_hash_t     *hash = __ops_reader_get_arg(rinfo);
-	int             r = __ops_stacked_read(dest, length, errors, rinfo, cbinfo);
-
+	__ops_hash_t	*hash = __ops_reader_get_arg(rinfo);
+	int		 r;
+	
+	r = __ops_stacked_read(dest, length, errors, rinfo, cbinfo);
 	if (r <= 0)
 		return r;
 
-	hash->add(hash, dest, r);
-
+	hash->add(hash, dest, (unsigned)r);
 	return r;
 }
 
@@ -2095,11 +2096,13 @@ mmap_reader(void *dest, size_t length, __ops_error_t **errors,
 {
 	mmap_reader_t	*mem = __ops_reader_get_arg(rinfo);
 	char		*cmem = mem->mem;
-	int		 n = MIN(length, mem->size - mem->offset);
+	int		 n;
 
+	(void)&errors;
+	n = MIN(length, (int)(mem->size - mem->offset));
 	OPS_USED(cbinfo);
 	if (n > 0) {
-		(void) memcpy(dest, &cmem[mem->offset], n);
+		(void) memcpy(dest, &cmem[(int)mem->offset], (unsigned)n);
 		mem->offset += n;
 	}
 	return n;
@@ -2111,7 +2114,7 @@ mmap_destroyer(__ops_reader_info_t * rinfo)
 {
 	mmap_reader_t *mem = __ops_reader_get_arg(rinfo);
 
-	(void) munmap(mem->mem, mem->size);
+	(void) munmap(mem->mem, (unsigned)mem->size);
 	(void) close(mem->fd);
 	free(__ops_reader_get_arg(rinfo));
 }

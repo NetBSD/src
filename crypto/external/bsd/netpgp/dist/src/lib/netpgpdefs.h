@@ -50,9 +50,9 @@
  * This is a copy of the macro defined in openssl/asn1.h.
  */
 #ifndef CHECKED_PTR_OF
-#define CHECKED_PTR_OF(type, p) ((void*) (1 ? p : (type *)0))
+#define CHECKED_PTR_OF(type, p) ((void*) (/*CONSTCOND*/1 ? p : (type *)0))
 #endif
-#define CHECKED_INSTANCE_OF(type, p) (1 ? p : (type)0)
+#define CHECKED_INSTANCE_OF(type, p) (/*CONSTCOND*/1 ? p : (type)0)
 
 /* number of elements in an array */
 #define OPS_ARRAY_SIZE(a)       (sizeof(a)/sizeof(*(a)))
