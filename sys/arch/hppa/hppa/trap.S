@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.10 2009/04/25 07:45:37 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.11 2009/04/25 07:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1244,7 +1244,7 @@ EXIT(hppa_fpu_swap)
 	dep	sp, 31, 16, t		/* put in the space id */	! \
 	depi	1, 0, 1, t		/* and set the valid bit */
 
-#if 1
+#if 0
 	.section .bss
 	.export	dtlb_c, data
 	.export	tlbd_c, data
