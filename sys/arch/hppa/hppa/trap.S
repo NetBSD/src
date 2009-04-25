@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.9 2009/02/19 21:34:43 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.10 2009/04/25 07:45:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1617,8 +1617,8 @@ LEAF_ENTRY_NOPROFILE($dtlb_l)
 	combt,=,n %r0, %r17, $dtlb_done_l
 	copy	%r17, %r16
 	depi	0, 21, 1, %r17
-	sub,=	%r16, %r17, %r0		/* do not store if unchanged */
-	stws	%r17, 0(%r25)		/* store back w/ the bits */
+	sub,=	%r16, %r17, %r0			/* do not store if unchanged */
+	stws	%r17, 0(%r25)			/* store back w/ the bits */
 	shd	%r17, %r0, 13, %r25
 	dep	%r8, 30, 15, %r25		/* mix0r the pid from the sid */
 	dep	%r0, 31, 12, %r17		/* needed ? */
