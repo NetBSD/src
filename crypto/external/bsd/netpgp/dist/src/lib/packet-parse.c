@@ -57,9 +57,9 @@
 #include <limits.h>
 #endif
 
-#define ERRP(info, cont, err)	do {					\
+#define ERRP(cbinfo, cont, err)	do {					\
 	cont.u.error.error = err;					\
-	CBP(info, OPS_PARSER_ERROR, &cont);				\
+	CALLBACK(cbinfo, OPS_PARSER_ERROR, &cont);			\
 	return false;							\
 	/*NOTREACHED*/							\
 } while(/*CONSTCOND*/0)
@@ -108,12 +108,12 @@ static int
 read_data(__ops_data_t * data, __ops_region_t * subregion,
 	  __ops_parse_info_t * pinfo)
 {
-	int             len;
+	int	len;
 
 	len = subregion->length - subregion->length_read;
 
 	if (len >= 0) {
-		return (limited_read_data(data, len, subregion, pinfo));
+		return (limited_read_data(data, (unsigned)len, subregion, pinfo));
 	}
 	return 0;
 }
@@ -127,7 +127,7 @@ static int
 read_unsigned_string(unsigned char **str, __ops_region_t * subregion,
 		     __ops_parse_info_t * pinfo)
 {
-	int             len = 0;
+	size_t	len = 0;
 
 	len = subregion->length - subregion->length_read;
 
@@ -374,9 +374,7 @@ __ops_limited_read(unsigned char *dest, size_t length,
 	do {
 		region->length_read += r;
 		assert(!region->parent || region->length <= region->parent->length);
-	}
-	while ((region = region->parent));
-
+	} while ((region = region->parent) != NULL);
 	return true;
 }
 
@@ -434,7 +432,8 @@ limited_skip(unsigned length, __ops_region_t * region,
 	unsigned char   buf[NETPGP_BUFSIZ];
 
 	while (length) {
-		int             n = length % NETPGP_BUFSIZ;
+		unsigned	n = length % NETPGP_BUFSIZ;
+
 		if (!limited_read(buf, n, region, pinfo))
 			return 0;
 		length -= n;
@@ -468,7 +467,7 @@ limited_read_scalar(unsigned *dest, unsigned length,
 	unsigned        n;
 
 	assert(length <= 4);
-	assert(sizeof(*dest) >= 4);
+	assert(/*CONSTCOND*/sizeof(*dest) >= sizeof(uint32_t));
 	if (!limited_read(c, length, region, pinfo))
 		return 0;
 
@@ -505,8 +504,6 @@ limited_read_size_t_scalar(size_t * dest, unsigned length,
 {
 	unsigned        tmp;
 
-	assert(sizeof(*dest) >= 4);
-
 	/*
 	 * Note that because the scalar is at most 4 bytes, we don't care if
 	 * size_t is bigger than usigned
@@ -536,27 +533,27 @@ limited_read_size_t_scalar(size_t * dest, unsigned length,
  * \see RFC4880 3.5
  */
 static int 
-limited_read_time(time_t * dest, __ops_region_t * region,
+limited_read_time(time_t *dest, __ops_region_t * region,
 		  __ops_parse_info_t * pinfo)
 {
+	unsigned char   c[1];
+	time_t          mytime = 0;
+	int             i = 0;
+
 	/*
          * Cannot assume that time_t is 4 octets long -
-         * there is at least one architecture (SunOS 5.10) where it is 8.
+	 * SunOS 5.10 and NetBSD both have 64-bit time_ts.
          */
-	if (sizeof(*dest) == 4) {
-		return limited_read_scalar((unsigned *) dest, 4, region, pinfo);
-	} else {
-		time_t          mytime = 0;
-		int             i = 0;
-		unsigned char   c[1];
-		for (i = 0; i < 4; i++) {
-			if (!limited_read(c, 1, region, pinfo))
-				return 0;
-			mytime = (mytime << 8) + c[0];
-		}
-		*dest = mytime;
-		return 1;
+	if (/* CONSTCOND */sizeof(time_t) == sizeof(uint32_t)) {
+		return limited_read_scalar((unsigned *)(void *)dest, 4, region, pinfo);
 	}
+	for (i = 0; i < 4; i++) {
+		if (!limited_read(c, 1, region, pinfo))
+			return 0;
+		mytime = (mytime << 8) + c[0];
+	}
+	*dest = mytime;
+	return 1;
 }
 
 /**
@@ -587,17 +584,17 @@ static int
 limited_read_mpi(BIGNUM ** pbn, __ops_region_t * region,
 		 __ops_parse_info_t * pinfo)
 {
-	unsigned        length;
-	unsigned        nonzero;
-	unsigned char   buf[NETPGP_BUFSIZ] = "";	/* an MPI has a 2 byte length part.
+	unsigned char   buf[NETPGP_BUFSIZ] = "";
+					/* an MPI has a 2 byte length part.
 					 * Length is given in bits, so the
 					 * largest we should ever need for
 					 * the buffer is NETPGP_BUFSIZ bytes. */
-	bool   ret;
+	unsigned        length;
+	unsigned        nonzero;
+	bool   		ret;
 
 	pinfo->reading_mpi_length = true;
 	ret = limited_read_scalar(&length, 2, region, pinfo);
-
 
 	pinfo->reading_mpi_length = false;
 	if (!ret)
@@ -620,15 +617,17 @@ limited_read_mpi(BIGNUM ** pbn, __ops_region_t * region,
 	if (!limited_read(buf, length, region, pinfo))
 		return 0;
 
-	if ((buf[0] >> nonzero) != 0 || !(buf[0] & (1 << (nonzero - 1)))) {
-		OPS_ERROR(&pinfo->errors, OPS_E_P_MPI_FORMAT_ERROR, "MPI Format error");	/* XXX: Ben, one part of
-												 * this constraint does
-												 * not apply to
-												 * encrypted MPIs the
-												 * draft says. -- peter */
+	if (((unsigned)buf[0] >> nonzero) != 0 ||
+	    !((unsigned)buf[0] & (1U << (nonzero - 1U)))) {
+		OPS_ERROR(&pinfo->errors, OPS_E_P_MPI_FORMAT_ERROR, "MPI Format error");
+		/* XXX: Ben, one part of
+		 * this constraint does
+		 * not apply to
+		 * encrypted MPIs the
+		 * draft says. -- peter */
 		return 0;
 	}
-	*pbn = BN_bin2bn(buf, length, NULL);
+	*pbn = BN_bin2bn(buf, (int)length, NULL);
 	return 1;
 }
 
@@ -814,7 +813,7 @@ ss_reserved_free(__ops_ss_unknown_t * ss_unknown)
    \ingroup Core_Create
    \brief Free the memory used when parsing this packet type
 */
-void 
+static void 
 trust_free(__ops_trust_t * trust)
 {
 	data_free(&trust->data);
@@ -847,7 +846,7 @@ free_BN(BIGNUM ** pp)
  * \brief Free the memory used when parsing a signature
  * \param sig
  */
-void 
+static void 
 signature_free(__ops_signature_t * sig)
 {
 	switch (sig->info.key_algorithm) {
@@ -1475,8 +1474,9 @@ parse_v3_signature(__ops_region_t * region,
 	/* hash info length */
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	if (c[0] != 5)
-		ERRP(pinfo, content, "bad hash info length");
+	if (c[0] != 5) {
+		ERRP(&pinfo->cbinfo, content, "bad hash info length");
+	}
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
@@ -1577,7 +1577,7 @@ parse_one_signature_subpacket(__ops_signature_t * sig,
 		return 0;
 
 	if (subregion.length > region->length)
-		ERRP(pinfo, content, "Subpacket too long");
+		ERRP(&pinfo->cbinfo, content, "Subpacket too long");
 
 	if (!limited_read(c, 1, &subregion, pinfo))
 		return 0;
@@ -1585,7 +1585,7 @@ parse_one_signature_subpacket(__ops_signature_t * sig,
 	t8 = (c[0] & 0x7f) / 8;
 	t7 = 1 << (c[0] & 7);
 
-	content.critical = c[0] >> 7;
+	content.critical = (unsigned)c[0] >> 7;
 	content.tag = OPS_PTAG_SIGNATURE_SUBPACKET_BASE + (c[0] & 0x7f);
 
 	/* Application wants it delivered raw */
@@ -1823,7 +1823,7 @@ parse_signature_subpackets(__ops_signature_t * sig,
 		return 0;
 
 	if (subregion.length > region->length)
-		ERRP(pinfo, content, "Subpacket set too long");
+		ERRP(&pinfo->cbinfo, content, "Subpacket set too long");
 
 	while (subregion.length_read < subregion.length)
 		if (!parse_one_signature_subpacket(sig, &subregion, pinfo))
@@ -1832,8 +1832,8 @@ parse_signature_subpackets(__ops_signature_t * sig,
 	if (subregion.length_read != subregion.length) {
 		if (!limited_skip(subregion.length - subregion.length_read, &subregion,
 				  pinfo))
-			ERRP(pinfo, content, "Read failed while recovering from subpacket length mismatch");
-		ERRP(pinfo, content, "Subpacket length mismatch");
+			ERRP(&pinfo->cbinfo, content, "Read failed while recovering from subpacket length mismatch");
+		ERRP(&pinfo->cbinfo, content, "Subpacket length mismatch");
 	}
 	return 1;
 }
@@ -1952,7 +1952,7 @@ parse_v4_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
 			return 0;
 		}
 		if (!limited_read_mpi(&content.u.signature.info.signature.dsa.s, region, pinfo))
-			ERRP(pinfo, content, "Error reading DSA s field in signature");
+			ERRP(&pinfo->cbinfo, content, "Error reading DSA s field in signature");
 		break;
 
 	case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
@@ -2165,8 +2165,8 @@ parse_literal_data(__ops_region_t * region, __ops_parse_info_t * pinfo)
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	if (!limited_read((unsigned char *) content.u.literal_data_header.filename, c[0],
-			  region, pinfo))
+	if (!limited_read((unsigned char *) content.u.literal_data_header.filename,
+			(unsigned)c[0], region, pinfo))
 		return 0;
 	content.u.literal_data_header.filename[c[0]] = '\0';
 
@@ -2176,7 +2176,7 @@ parse_literal_data(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_LITERAL_DATA_HEADER, &content);
 
 	mem = content.u.literal_data_body.mem = __ops_memory_new();
-	__ops_memory_init(content.u.literal_data_body.mem, (region->length * 1.01) + 12);
+	__ops_memory_init(content.u.literal_data_body.mem, (unsigned)(region->length * 1.01) + 12);
 	content.u.literal_data_body.data = mem->buf;
 
 	while (region->length_read < region->length) {
@@ -2237,7 +2237,7 @@ consume_packet(__ops_region_t * region, __ops_parse_info_t * pinfo,
 	__ops_parser_content_t content;
 
 	if (region->indeterminate)
-		ERRP(pinfo, content, "Can't consume indeterminate packets");
+		ERRP(&pinfo->cbinfo, content, "Can't consume indeterminate packets");
 
 	if (read_data(&remainder, region, pinfo)) {
 		/* now throw it away */
@@ -2261,16 +2261,18 @@ consume_packet(__ops_region_t * region, __ops_parse_info_t * pinfo,
 static int 
 parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 {
-	__ops_parser_content_t content;
-	unsigned char   c[1] = "";
-	__ops_crypt_t     decrypt;
-	int             ret = 1;
-	__ops_region_t    encregion;
-	__ops_region_t   *saved_region = NULL;
-	size_t          checksum_length = 2;
-	__ops_hash_t      checkhash;
-	int             blocksize;
-	bool   crypted;
+	__ops_parser_content_t	content;
+	__ops_region_t		encregion;
+	__ops_region_t	       *saved_region = NULL;
+	unsigned char		c[1] = "";
+	__ops_crypt_t		decrypt;
+	__ops_hash_t		checkhash;
+	unsigned		blocksize;
+#if 0
+	size_t			checksum_length = 2;
+#endif
+	bool			crypted;
+	int			ret = 1;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "\n---------\nparse_secret_key:\n");
@@ -2289,8 +2291,10 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
 	content.u.secret_key.s2k_usage = c[0];
+#if 0
 	if (content.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED)
 		checksum_length = 20;
+#endif
 
 	if (content.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED
 	    || content.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
@@ -2317,11 +2321,16 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		if (content.u.secret_key.s2k_specifier == OPS_S2KS_ITERATED_AND_SALTED) {
 			if (!limited_read(c, 1, region, pinfo))
 				return 0;
-			content.u.secret_key.octet_count = (16 + (c[0] & 15)) << ((c[0] >> 4) + 6);
+			content.u.secret_key.octet_count = (16 + ((unsigned)c[0] & 15)) << (((unsigned)c[0] >> 4) + 6);
 		}
 	} else if (content.u.secret_key.s2k_usage != OPS_S2KU_NONE) {
 		/* this is V3 style, looks just like a V4 simple hash */
+#if 0
 		content.u.secret_key.algorithm = content.u.secret_key.s2k_usage;
+#else
+		/* XXX - if we get problems, this may be the source - agc */
+		content.u.secret_key.algorithm = c[0];
+#endif
 		content.u.secret_key.s2k_usage = OPS_S2KU_ENCRYPTED;
 		content.u.secret_key.s2k_specifier = OPS_S2KS_SIMPLE;
 		content.u.secret_key.hash_algorithm = OPS_HASH_MD5;
@@ -2334,7 +2343,7 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		__ops_parser_content_t seckey;
 		char           *passphrase;
 		unsigned char   key[OPS_MAX_KEY_SIZE + OPS_MAX_HASH_SIZE];
-		__ops_hash_t      hashes[(OPS_MAX_KEY_SIZE + OPS_MIN_HASH_SIZE - 1) / OPS_MIN_HASH_SIZE];
+		__ops_hash_t	hashes[(OPS_MAX_KEY_SIZE + OPS_MIN_HASH_SIZE - 1) / OPS_MIN_HASH_SIZE];
 		int             keysize;
 		int             hashsize;
 		size_t          len;
@@ -2393,13 +2402,15 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 
 			case OPS_S2KS_ITERATED_AND_SALTED:
 				for (i = 0; i < content.u.secret_key.octet_count; i += len + OPS_SALT_SIZE) {
-					int             j = len + OPS_SALT_SIZE;
+					unsigned	j = len + OPS_SALT_SIZE;
 
 					if (i + j > content.u.secret_key.octet_count && i != 0)
 						j = content.u.secret_key.octet_count - i;
 
-					hashes[n].add(&hashes[n], content.u.secret_key.salt,
-						      j > OPS_SALT_SIZE ? OPS_SALT_SIZE : j);
+					hashes[n].add(&hashes[n],
+						content.u.secret_key.salt,
+						(unsigned)(j > OPS_SALT_SIZE) ?
+							OPS_SALT_SIZE : j);
 					if (j > OPS_SALT_SIZE)
 						hashes[n].add(&hashes[n], (unsigned char *) passphrase, j - OPS_SALT_SIZE);
 				}
@@ -2503,7 +2514,7 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 				return 0;
 
 			if (memcmp(hash, content.u.secret_key.checkhash, 20))
-				ERRP(pinfo, content, "Hash mismatch in secret key");
+				ERRP(&pinfo->cbinfo, content, "Hash mismatch in secret key");
 		}
 	} else {
 		unsigned short  sum;
@@ -2520,7 +2531,7 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 				return 0;
 
 			if (sum != content.u.secret_key.checksum)
-				ERRP(pinfo, content, "Checksum mismatch in secret key");
+				ERRP(&pinfo->cbinfo, content, "Checksum mismatch in secret key");
 		}
 	}
 
@@ -2631,7 +2642,7 @@ parse_pk_session_key(__ops_region_t * region,
 		sizeof(unencoded_m_buf), enc_m, secret);
 
 	if (n < 1) {
-		ERRP(pinfo, content, "decrypted message too short");
+		ERRP(&pinfo->cbinfo, content, "decrypted message too short");
 		return 0;
 	}
 	/* PKA */
@@ -2832,7 +2843,8 @@ parse_mdc(__ops_region_t * region, __ops_parse_info_t * pinfo)
 {
 	__ops_parser_content_t content;
 
-	if (!limited_read((unsigned char *) &content.u.mdc, OPS_SHA1_HASH_SIZE, region, pinfo))
+	if (!limited_read((unsigned char *)(void *)&content.u.mdc,
+			OPS_SHA1_HASH_SIZE, region, pinfo))
 		return 0;
 
 	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_MDC, &content);
@@ -2893,7 +2905,8 @@ __ops_parse_packet(__ops_parse_info_t * pinfo, unsigned long *pktlen)
 		bool   rb;
 
 		rb = false;
-		content.u.ptag.content_tag = (*ptag & OPS_PTAG_OF_CONTENT_TAG_MASK)
+		content.u.ptag.content_tag = ((unsigned)*ptag &
+				OPS_PTAG_OF_CONTENT_TAG_MASK)
 			>> OPS_PTAG_OF_CONTENT_TAG_SHIFT;
 		content.u.ptag.length_type = *ptag & OPS_PTAG_OF_LENGTH_TYPE_MASK;
 		switch (content.u.ptag.length_type) {
@@ -3101,10 +3114,9 @@ __ops_parse(__ops_parse_info_t * pinfo)
 int 
 __ops_parse_and_print_errors(__ops_parse_info_t * pinfo)
 {
-	int             r;
-	r = __ops_parse(pinfo);
+	__ops_parse(pinfo);
 	__ops_print_errors(pinfo->errors);
-	return pinfo->errors ? 0 : 1;
+	return (pinfo->errors == NULL);
 }
 
 /**

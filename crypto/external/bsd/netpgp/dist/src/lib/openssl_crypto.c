@@ -443,7 +443,7 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 	if (qlen < hash_length)
 		hash_length = qlen;
 	/* ret=DSA_do_verify(hash,hash_length,osig,odsa); */
-	ret = DSA_do_verify(hash, hash_length, osig, odsa);
+	ret = DSA_do_verify(hash, (int)hash_length, osig, odsa);
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "ret=%d\n", ret);
 	}
@@ -478,7 +478,7 @@ __ops_rsa_public_decrypt(unsigned char *out, const unsigned char *in,
 	orsa->n = rsa->n;
 	orsa->e = rsa->e;
 
-	n = RSA_public_decrypt(length, in, out, orsa, RSA_NO_PADDING);
+	n = RSA_public_decrypt((int)length, in, out, orsa, RSA_NO_PADDING);
 
 	orsa->n = orsa->e = NULL;
 	RSA_free(orsa);
@@ -519,7 +519,7 @@ __ops_rsa_private_encrypt(unsigned char *out, const unsigned char *in,
 	assert(RSA_check_key(orsa) == 1);
 	/* end debug */
 
-	n = RSA_private_encrypt(length, in, out, orsa, RSA_NO_PADDING);
+	n = RSA_private_encrypt((int)length, in, out, orsa, RSA_NO_PADDING);
 
 	orsa->n = orsa->d = orsa->p = orsa->q = NULL;
 	RSA_free(orsa);
@@ -557,7 +557,7 @@ __ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
 	assert(RSA_check_key(orsa) == 1);
 	/* end debug */
 
-	n = RSA_private_decrypt(length, in, out, orsa, RSA_NO_PADDING);
+	n = RSA_private_decrypt((int)length, in, out, orsa, RSA_NO_PADDING);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("__ops_rsa_private_decrypt: n=%d\n",n);
@@ -599,7 +599,7 @@ __ops_rsa_public_encrypt(unsigned char *out, const unsigned char *in,
 	/* printf("len: %ld\n", length); */
 	/* __ops_print_bn("n: ", orsa->n); */
 	/* __ops_print_bn("e: ", orsa->e); */
-	n = RSA_public_encrypt(length, in, out, orsa, RSA_NO_PADDING);
+	n = RSA_public_encrypt((int)length, in, out, orsa, RSA_NO_PADDING);
 
 	if (n == -1) {
 		BIO            *fd_out;
@@ -638,7 +638,7 @@ void
 __ops_crypto_finish()
 {
 	CRYPTO_cleanup_all_ex_data();
-	ERR_remove_state(0);
+	ERR_remove_state((unsigned long)0);
 #ifdef DMALLOC
 	CRYPTO_mem_leaks_fp(stderr);
 #endif
@@ -817,7 +817,7 @@ __ops_dsa_sign(unsigned char *hashbuf, unsigned hashsize, const __ops_dsa_secret
 	odsa->pub_key = dsa->y;
 	odsa->priv_key = sdsa->x;
 
-	dsasig = DSA_do_sign(hashbuf, hashsize, odsa);
+	dsasig = DSA_do_sign(hashbuf, (int)hashsize, odsa);
 
 	odsa->p = odsa->q = odsa->g = odsa->pub_key = odsa->priv_key = NULL;
 	DSA_free(odsa);
