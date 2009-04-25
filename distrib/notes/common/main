@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.445 2009/04/25 10:34:43 snj Exp $
+.\"	$NetBSD: main,v 1.446 2009/04/25 21:21:48 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -155,10 +155,9 @@ boot prompt.
 Type 
 .Ic boot -2
 to boot with ACPI disabled.
-.\}
+.\} \" amd64:i386
 .if \n[macppc] \{\
-Fetch files necessary to boot your system.
-The files depend on what model you
+The files depend on which model you
 are using and how you plan to boot your machine.
 For systems with built-in floppy drives (Open Firmware 1 or 2), 
 fetch the pair of boot floppy images
@@ -362,7 +361,7 @@ You will need to get to the
 .if \n[sparc64] OpenFirmware
 .Dq Ic "ok"
 prompt.
-After your system first powers on, and displays some initial information,
+After your system first powers on and displays some initial information,
 press the
 .Key STOP-A
 keys, or send a BREAK if you're on a serial console.
@@ -1513,7 +1512,7 @@ Converted to shared powerpc major numbers.
 .It
 sgimips:
 .(bullet
-Added support for SGI O2 PS/2 controller
+Added support for the SGI O2 PS/2 controller
 .Xr macekbc 4 ,
 onboard display adapter
 .Xr crmfb 4 ,
@@ -2063,6 +2062,21 @@ Workaround: generate a core file from the program using
 and pass the core to gdb, instead of debugging the running program.
 .Pp
 Statically linked binaries using pthreads are currently broken.
+.Pp
+Certain early revision AMD Opteron and Athlon 64 processors contain a bug
+that may cause system instability when running with more than one CPU core
+active.
+An OS-level workaround for this issue has been prepared but was not ready
+in time for inclusion in
+.Nx
+5.0.
+It will be available as part of a later release in the 5.0 series.
+.Pp
+Large filesystems
+.Pq over 2TB
+may sometimes falsely claim to be out of space.
+A fix for this is available, but was not made in time for 5.0.
+It will be available as part of a later release in the 5.0 series.
 .
 .\} \" \n[FOR_RELEASE]
 .
@@ -2117,14 +2131,14 @@ worldwide.
 More information on the
 .Nx
 Foundation, its composition, aims, and work can be found at:
-.Lk http://www.NetBSD.org/foundation/ .
+.Lk http://www.NetBSD.org/foundation/
 .br_ne 10P
 .
 .Ss "Sources of NetBSD"
 .Pp
 .
 Refer to
-.Lk http://www.NetBSD.org/mirrors/ .
+.Lk http://www.NetBSD.org/mirrors/
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
@@ -2444,7 +2458,7 @@ A number of things were removed in the
 release, including: the evbsh5 port, the Fortran 77 compiler (g77), NETCCITT,
 NETNS, Sendmail, Sushi, UUCP, and Vinum.  If you were using any of these,
 please see the "Components removed from NetBSD" at
-.Lk http://www.NetBSD.org/releases/formal-4/NetBSD-4.0.html#removals .
+.Lk http://www.NetBSD.org/releases/formal-4/NetBSD-4.0.html#removals
 .It
 The replacement of Sendmail by Postfix can be handled automatically by
 .Em postinstall
@@ -2648,13 +2662,14 @@ and fill in as much information about the problem as you can.
 Good bug reports include lots of details.
 .Pp
 Bugs also can be submitted and queried with the web interface at
-.Lk http://www.NetBSD.org/support/send-pr.html .
+.Lk http://www.NetBSD.org/support/send-pr.html
 .Pp
 There are also port-specific mailing lists, to discuss aspects of
 each port of
 .Nx .
 Use majordomo to find their addresses, or visit
-.Lk http://www.NetBSD.org/mailinglists/ .
+.Lk http://www.NetBSD.org/mailinglists/
+.Pp
 If
 you're interested in doing a serious amount of work on a specific
 port, you probably should contact the
@@ -2718,7 +2733,7 @@ We list the individuals and organizations
 that have made donations or loans of hardware and/or money, to support
 .Nx
 development, and deserve credit for it at
-.Lk http://www.NetBSD.org/donations/ .
+.Lk http://www.NetBSD.org/donations/
 (If you're not on that list and should be, tell us!
 We probably were not able to get in touch with you, to verify that you
 wanted to be listed.)
