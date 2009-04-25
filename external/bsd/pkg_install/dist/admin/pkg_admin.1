@@ -1,6 +1,6 @@
-.\"	$NetBSD: pkg_admin.1,v 1.1.1.4 2009/04/24 14:16:52 joerg Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.1.1.5 2009/04/25 21:38:18 joerg Exp $
 .\"
-.\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 30, 2008
+.Dd April 25, 2009
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -160,6 +160,12 @@ A warning message is printed if the expected checksum differs from the
 checksum of the file on disk.
 Symbolic links are also checked, ensuring that the targets on disk are
 the same as the contents recorded at package installation time.
+.It Cm check-license Ar condition
+Check if
+.Ar condition
+can be fulfilled with the currently set of accepted licenses.
+Prints either yes or no to stdout if the condition can be parsed,
+otherwise it exits with error.
 .It Cm check-pkg-vulnerabilities Oo Fl s Oc Ar file
 Check format and hashes in the pkg-vulnerabilities file
 .Ar file .
@@ -170,6 +176,12 @@ is given, also check the embedded signature.
 Reports if
 .Ar file
 is a correctly signed package.
+.It Cm check-single-license Ar liccense
+Check if
+.Ar license
+is a valid license name and if it is in the set of acceptable licenses.
+Prints either yes or no to stdout if the condition can be parsed,
+otherwise it exits with error.
 .It Cm config-var Ar variable
 Print the current value of
 .Ar variable
