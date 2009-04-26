@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.2 2009/04/26 07:21:13 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.3 2009/04/26 13:05:55 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 #define MMC_READ_OCR			58	/* R3 */
 
 /* SD commands */			/* response type */
-#define SD_SET_RELATIVE_ADDR 	  	3	/* R6 */
+#define SD_SEND_RELATIVE_ADDR 	  	3	/* R6 */
 #define SD_SEND_IF_COND			8	/* R7 */
 
 /* SD application commands */			/* response type */
