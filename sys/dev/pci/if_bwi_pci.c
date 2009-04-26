@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.6 2009/04/26 10:07:48 cegger Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.7 2009/04/26 10:26:54 cegger Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -25,7 +25,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.6 2009/04/26 10:07:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.7 2009/04/26 10:26:54 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -112,6 +112,9 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 
+	aprint_naive("\n");
+	aprint_normal(": Broadcom Wireless");
+
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
@@ -122,21 +125,24 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, BWI_PCI_BAR0,
-		    memtype, 0, &sc->sc_mem_bt, &sc->sc_mem_bh,
-		    NULL, &psc->psc_mapsize) == 0)
-			break;
+		break;
 	default:
-		aprint_error(": could not map memory space\n");
+		aprint_error_dev(self, "invalid base address register\n");
 		return;
 	}
 
-        aprint_normal("\n");
+	if (pci_mapreg_map(pa, BWI_PCI_BAR0,
+	    memtype, 0, &sc->sc_mem_bt, &sc->sc_mem_bh,
+	    NULL, &psc->psc_mapsize) != 0)
+	{
+		aprint_error_dev(self, "could not map mem space\n");
+		return;
+	}
 
 	/* map interrupt */
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(self, "could not map interrupt\n");
-		return;
+		goto fail;
 	}
 
 	/* establish interrupt */
@@ -147,7 +153,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -166,6 +172,18 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	bwi_attach(sc);
+	return;
+
+fail:
+	if (sc->sc_ih) {
+		pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (psc->psc_mapsize) {
+		bus_space_unmap(sc->sc_mem_bt, sc->sc_mem_bh, psc->psc_mapsize);
+		psc->psc_mapsize = 0;
+	}
+	return;
 }
 
 int
