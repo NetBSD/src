@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.11 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.12 2009/04/26 01:51:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ struct	opiocdesc;
  * `just print' or don't know how to deal with.
  */
 struct	extabent {
-	char	*ex_keyword;		/* keyword for this entry */
+	const char *ex_keyword;		/* keyword for this entry */
 	void	(*ex_handler) (struct extabent *,
 		    struct opiocdesc *, char *);
 					/* handler function for this entry */
@@ -92,7 +92,7 @@ struct	extabent {
 
 #ifdef USE_OPENFIRM
 struct	extabent {
-	char	*ex_keyword;		/* keyword for this entry */
+	const char *ex_keyword;		/* keyword for this entry */
 	void	(*ex_handler) (struct extabent *,
 		    struct ofiocdesc *, char *);
 					/* handler function for this entry */
@@ -101,7 +101,7 @@ struct	extabent {
 
 #ifdef USE_PREPNVRAM
 struct	extabent {
-	char	*ex_keyword;		/* keyword for this entry */
+	const char *ex_keyword;		/* keyword for this entry */
 	void	(*ex_handler) (struct extabent *,
 		    struct pnviocdesc *, char *);
 					/* handler function for this entry */
