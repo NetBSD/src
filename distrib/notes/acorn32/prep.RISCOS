@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.20 2009/04/23 01:56:48 snj Exp $
+	$NetBSD: prep.RISCOS,v 1.21 2009/04/26 16:44:51 sborrill Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
@@ -66,7 +66,7 @@ Additionally you will require the following:
 
 	The Bootloader and RiscOS tools: BtNetBSD.tar.Z as found in
 	the installation/misc directory. This archive, which can be
-	unpacked with !SparcPlug, *includes the installation-kernel*
+	unpacked with !SparkPlug, *includes the installation-kernel*
 	so you don't have to download it separately.
 
 	The NetBSD/acorn32 distribution sets (Will be on the CD-ROM, or
