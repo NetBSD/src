@@ -192,7 +192,7 @@ netpgp_init(netpgp_t *netpgp, char *userid, char *pubring, char *secring)
 		(void) snprintf(ringname, sizeof(ringname), "%s/.gnupg/secring.gpg", homedir);
 		secring = ringname;
 	}
-	keyring = calloc(1, sizeof(keyring));
+	keyring = calloc(1, sizeof(*keyring));
 	if (!__ops_keyring_read_from_file(keyring, false, secring)) {
 		(void) fprintf(stderr, "Cannot read sec keyring %s\n", secring);
 		return 0;
