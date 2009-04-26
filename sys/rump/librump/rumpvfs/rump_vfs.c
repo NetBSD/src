@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.15 2009/04/18 16:33:37 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.16 2009/04/26 21:36:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/evcnt.h>
 #include <sys/filedesc.h>
 #include <sys/lockf.h>
 #include <sys/kthread.h>
@@ -83,16 +84,15 @@ rump_vfs_init(void)
 	char buf[64];
 	int error;
 
-	syncdelay = 0;
 	dovfsusermount = 1;
-
-	rumpblk_init();
 
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
 	} else {
 		desiredvnodes = 1<<16;
 	}
+
+	rumpblk_init();
 
 	cache_cpu_init(&rump_cpu);
 	vfsinit();
@@ -118,6 +118,8 @@ rump_vfs_init(void)
 		if ((rv = kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL,
 		    sched_sync, NULL, NULL, "ioflush")) != 0)
 			panic("syncer thread create failed: %d", rv);
+	} else {
+		syncdelay = 0;
 	}
 }
 
@@ -462,6 +464,13 @@ rump_vp_interlock(struct vnode *vp)
 int
 rump_vfs_unmount(struct mount *mp, int mntflags)
 {
+#if 0
+	struct evcnt *ev;
+
+	printf("event counters:\n");
+	TAILQ_FOREACH(ev, &allevents, ev_list)
+		printf("%s: %llu\n", ev->ev_name, ev->ev_count);
+#endif
 
 	return VFS_UNMOUNT(mp, mntflags);
 }
