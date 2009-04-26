@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.43 2009/04/26 09:12:33 cegger Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.44 2009/04/26 09:47:31 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.43 2009/04/26 09:12:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.44 2009/04/26 09:47:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ CFATTACH_DECL3_NEW(ehci_pci, sizeof(struct ehci_pci_softc),
 static void
 ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
-	u_int32_t cparams, legctlsts, addr, cap, id;
+	uint32_t cparams, legctlsts, addr, cap, id;
 	int maxdump = 10;
 
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
@@ -303,7 +303,7 @@ static void
 ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	const char *devname = device_xname(sc->sc_dev);
-	u_int32_t cparams, addr, cap;
+	uint32_t cparams, addr, cap;
 	pcireg_t legsup;
 	int maxcap = 10;
 
@@ -331,7 +331,7 @@ static void
 ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	const char *devname = device_xname(sc->sc_dev);
-	u_int32_t cparams, addr, cap;
+	uint32_t cparams, addr, cap;
 	pcireg_t legsup;
 	int maxcap = 10;
 	int ms;
