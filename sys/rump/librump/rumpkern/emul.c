@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.85 2009/03/30 12:47:49 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.86 2009/04/26 14:37:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.85 2009/03/30 12:47:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.86 2009/04/26 14:37:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -671,10 +671,17 @@ kpreempt_enable(void)
 }
 
 void
-sessdelete(struct session *ss)
+proc_sesshold(struct session *ss)
 {
 
-	panic("sessdelete() impossible, session %p", ss);
+	panic("proc_sesshold() impossible, session %p", ss);
+}
+
+void
+proc_sessrele(struct session *ss)
+{
+
+	panic("proc_sessrele() impossible, session %p", ss);
 }
 
 int
