@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.84 2009/04/26 02:25:57 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.85 2009/04/26 16:17:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.84 2009/04/26 02:25:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.85 2009/04/26 16:17:08 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -125,37 +125,31 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.84 2009/04/26 02:25:57 tsutsui Exp $")
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
 
-#if defined(DEBUG)
-#define STATIC
-#else
-#define STATIC static
-#endif
+static void rtk_reset(struct rtk_softc *);
+static void rtk_rxeof(struct rtk_softc *);
+static void rtk_txeof(struct rtk_softc *);
+static void rtk_start(struct ifnet *);
+static int rtk_ioctl(struct ifnet *, u_long, void *);
+static int rtk_init(struct ifnet *);
+static void rtk_stop(struct ifnet *, int);
 
-STATIC void rtk_reset(struct rtk_softc *);
-STATIC void rtk_rxeof(struct rtk_softc *);
-STATIC void rtk_txeof(struct rtk_softc *);
-STATIC void rtk_start(struct ifnet *);
-STATIC int rtk_ioctl(struct ifnet *, u_long, void *);
-STATIC int rtk_init(struct ifnet *);
-STATIC void rtk_stop(struct ifnet *, int);
+static void rtk_watchdog(struct ifnet *);
 
-STATIC void rtk_watchdog(struct ifnet *);
+static void rtk_eeprom_putbyte(struct rtk_softc *, int, int);
+static void rtk_mii_sync(struct rtk_softc *);
+static void rtk_mii_send(struct rtk_softc *, uint32_t, int);
+static int rtk_mii_readreg(struct rtk_softc *, struct rtk_mii_frame *);
+static int rtk_mii_writereg(struct rtk_softc *, struct rtk_mii_frame *);
 
-STATIC void rtk_eeprom_putbyte(struct rtk_softc *, int, int);
-STATIC void rtk_mii_sync(struct rtk_softc *);
-STATIC void rtk_mii_send(struct rtk_softc *, uint32_t, int);
-STATIC int rtk_mii_readreg(struct rtk_softc *, struct rtk_mii_frame *);
-STATIC int rtk_mii_writereg(struct rtk_softc *, struct rtk_mii_frame *);
+static int rtk_phy_readreg(device_t, int, int);
+static void rtk_phy_writereg(device_t, int, int, int);
+static void rtk_phy_statchg(device_t);
+static void rtk_tick(void *);
 
-STATIC int rtk_phy_readreg(device_t, int, int);
-STATIC void rtk_phy_writereg(device_t, int, int, int);
-STATIC void rtk_phy_statchg(device_t);
-STATIC void rtk_tick(void *);
+static int rtk_enable(struct rtk_softc *);
+static void rtk_disable(struct rtk_softc *);
 
-STATIC int rtk_enable(struct rtk_softc *);
-STATIC void rtk_disable(struct rtk_softc *);
-
-STATIC void rtk_list_tx_init(struct rtk_softc *);
+static void rtk_list_tx_init(struct rtk_softc *);
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RTK_EECMD,			\
@@ -172,7 +166,7 @@ STATIC void rtk_list_tx_init(struct rtk_softc *);
 /*
  * Send a read command and address to the EEPROM, check for ACK.
  */
-STATIC void
+static void
 rtk_eeprom_putbyte(struct rtk_softc *sc, int addr, int addr_len)
 {
 	int d, i;
@@ -251,7 +245,7 @@ rtk_read_eeprom(struct rtk_softc *sc, int addr, int addr_len)
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-STATIC void
+static void
 rtk_mii_sync(struct rtk_softc *sc)
 {
 	int i;
@@ -269,7 +263,7 @@ rtk_mii_sync(struct rtk_softc *sc)
 /*
  * Clock a series of bits through the MII.
  */
-STATIC void
+static void
 rtk_mii_send(struct rtk_softc *sc, uint32_t bits, int cnt)
 {
 	int i;
@@ -292,7 +286,7 @@ rtk_mii_send(struct rtk_softc *sc, uint32_t bits, int cnt)
 /*
  * Read an PHY register through the MII.
  */
-STATIC int
+static int
 rtk_mii_readreg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 {
 	int i, ack, s;
@@ -382,7 +376,7 @@ rtk_mii_readreg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 /*
  * Write to a PHY register through the MII.
  */
-STATIC int
+static int
 rtk_mii_writereg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 {
 	int s;
@@ -425,7 +419,7 @@ rtk_mii_writereg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 	return 0;
 }
 
-STATIC int
+static int
 rtk_phy_readreg(device_t self, int phy, int reg)
 {
 	struct rtk_softc *sc = device_private(self);
@@ -472,7 +466,7 @@ rtk_phy_readreg(device_t self, int phy, int reg)
 	return frame.mii_data;
 }
 
-STATIC void
+static void
 rtk_phy_writereg(device_t self, int phy, int reg, int data)
 {
 	struct rtk_softc *sc = device_private(self);
@@ -518,7 +512,7 @@ rtk_phy_writereg(device_t self, int phy, int reg, int data)
 	rtk_mii_writereg(sc, &frame);
 }
 
-STATIC void
+static void
 rtk_phy_statchg(device_t v)
 {
 
@@ -779,7 +773,7 @@ rtk_attach(struct rtk_softc *sc)
 /*
  * Initialize the transmit descriptors.
  */
-STATIC void
+static void
 rtk_list_tx_init(struct rtk_softc *sc)
 {
 	struct rtk_tx_desc *txd;
@@ -922,7 +916,7 @@ rtk_disable(struct rtk_softc *sc)
  * on a 32-bit boundary. To achieve this, we copy the data to mbuf
  * shifted forward 2 bytes.
  */
-STATIC void
+static void
 rtk_rxeof(struct rtk_softc *sc)
 {
 	struct mbuf *m;
@@ -1111,7 +1105,7 @@ rtk_rxeof(struct rtk_softc *sc)
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-STATIC void
+static void
 rtk_txeof(struct rtk_softc *sc)
 {
 	struct ifnet *ifp;
@@ -1242,7 +1236,7 @@ rtk_intr(void *arg)
  * Main transmit routine.
  */
 
-STATIC void
+static void
 rtk_start(struct ifnet *ifp)
 {
 	struct rtk_softc *sc;
@@ -1353,7 +1347,7 @@ rtk_start(struct ifnet *ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 }
 
-STATIC int
+static int
 rtk_init(struct ifnet *ifp)
 {
 	struct rtk_softc *sc = ifp->if_softc;
@@ -1456,7 +1450,7 @@ rtk_init(struct ifnet *ifp)
 	return error;
 }
 
-STATIC int
+static int
 rtk_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct rtk_softc *sc = ifp->if_softc;
@@ -1479,7 +1473,7 @@ rtk_ioctl(struct ifnet *ifp, u_long command, void *data)
 	return error;
 }
 
-STATIC void
+static void
 rtk_watchdog(struct ifnet *ifp)
 {
 	struct rtk_softc *sc;
@@ -1497,7 +1491,7 @@ rtk_watchdog(struct ifnet *ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-STATIC void
+static void
 rtk_stop(struct ifnet *ifp, int disable)
 {
 	struct rtk_softc *sc = ifp->if_softc;
@@ -1528,7 +1522,7 @@ rtk_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 }
 
-STATIC void
+static void
 rtk_tick(void *arg)
 {
 	struct rtk_softc *sc = arg;
