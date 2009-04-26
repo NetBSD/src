@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.26 2009/04/06 20:41:29 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.27 2009/04/26 20:41:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -62,6 +62,7 @@ void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
 void		rumpvm_flushva(struct uvm_object *);
 
 void		rump_gettime(struct timespec *);
+void		rump_getuptime(struct timespec *);
 
 lwpid_t		rump_nextlid(void);
 
