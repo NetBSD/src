@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.7 2009/04/26 10:26:54 cegger Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.8 2009/04/26 10:45:19 cegger Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -25,7 +25,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.7 2009/04/26 10:26:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.8 2009/04/26 10:45:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -111,6 +111,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
+	int error = 0;
 
 	aprint_naive("\n");
 	aprint_normal(": Broadcom Wireless");
@@ -171,7 +172,9 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, bwi_suspend, bwi_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	bwi_attach(sc);
+	error = bwi_attach(sc);
+	if (error)
+		goto fail;
 	return;
 
 fail:
