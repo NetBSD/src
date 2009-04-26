@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.39 2009/04/17 00:39:26 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.40 2009/04/26 21:30:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.39 2009/04/17 00:39:26 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.40 2009/04/26 21:30:43 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -278,7 +278,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	ssize_t rv;
 	int error = 0;
 
-	KLOCK_WRAP(rv = rumpuser_pread(fd, data, size, offset, &error));
+	rv = rumpuser_pread(fd, data, size, offset, &error);
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
@@ -318,7 +318,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	ssize_t rv;
 	int error = 0;
 
-	KLOCK_WRAP(rv = rumpuser_pwrite(fd, data, size, offset, &error));
+	rv = rumpuser_pwrite(fd, data, size, offset, &error);
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
