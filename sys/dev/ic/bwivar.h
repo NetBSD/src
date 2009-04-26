@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.3 2009/04/23 20:24:23 kefren Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.4 2009/04/26 10:07:48 cegger Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -523,7 +523,7 @@ struct bwi_node {
 };
 
 struct bwi_softc {
-	struct device		 sc_dev;
+	device_t		 sc_dev;
 	struct ethercom		 sc_ec;
 	struct ieee80211com	 sc_ic;
 #define sc_if sc_ec.ec_if
