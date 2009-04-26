@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.86 2009/04/26 14:37:03 pgoyette Exp $	*/
+/*	$NetBSD: emul.c,v 1.87 2009/04/26 20:41:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.86 2009/04/26 14:37:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.87 2009/04/26 20:41:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -243,25 +243,17 @@ device_class(device_t dev)
 void
 getnanouptime(struct timespec *ts)
 {
-	uint64_t sec, nsec;
-	int error;
 
-	/* XXX: this is wrong, does not report *uptime* */
-	rumpuser_gettime(&sec, &nsec, &error);
-	ts->tv_sec = sec;
-	ts->tv_nsec = nsec;
+	rump_getuptime(ts);
 }
 
 void
 getmicrouptime(struct timeval *tv)
 {
-	uint64_t sec, nsec;
-	int error;
+	struct timespec ts;
 
-	/* XXX: this is wrong, does not report *uptime* */
-	rumpuser_gettime(&sec, &nsec, &error);
-	tv->tv_sec = sec;
-	tv->tv_usec = nsec / 1000;
+	getnanouptime(&ts);
+	TIMESPEC_TO_TIMEVAL(tv, &ts);
 }
 
 void
