@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.83 2009/04/25 18:27:39 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.84 2009/04/26 02:25:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.83 2009/04/25 18:27:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.84 2009/04/26 02:25:57 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -463,7 +463,7 @@ rtk_phy_readreg(device_t self, int phy, int reg)
 		return rval;
 	}
 
-	memset((char *)&frame, 0, sizeof(frame));
+	memset(&frame, 0, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -509,7 +509,7 @@ rtk_phy_writereg(device_t self, int phy, int reg, int data)
 		return;
 	}
 
-	memset((char *)&frame, 0, sizeof(frame));
+	memset(&frame, 0, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -768,7 +768,7 @@ rtk_attach(struct rtk_softc *sc)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->rtk_rx_buf,
+	bus_dmamem_unmap(sc->sc_dmat, sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
@@ -862,7 +862,7 @@ rtk_detach(struct rtk_softc *sc)
 			bus_dmamap_destroy(sc->sc_dmat, txd->txd_dmamap);
 	}
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->rtk_rx_buf,
+	bus_dmamem_unmap(sc->sc_dmat, sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
 
@@ -927,7 +927,7 @@ rtk_rxeof(struct rtk_softc *sc)
 {
 	struct mbuf *m;
 	struct ifnet *ifp;
-	char *rxbufpos, *dst;
+	uint8_t *rxbufpos, *dst;
 	u_int total_len, wrap;
 	uint32_t rxstat;
 	uint16_t cur_rx, new_rx;
@@ -948,7 +948,7 @@ rtk_rxeof(struct rtk_softc *sc)
 	rx_bytes = 0;
 
 	while ((CSR_READ_1(sc, RTK_COMMAND) & RTK_CMD_EMPTY_RXBUF) == 0) {
-		rxbufpos = (char *)sc->rtk_rx_buf + cur_rx;
+		rxbufpos = sc->rtk_rx_buf + cur_rx;
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, cur_rx,
 		    RTK_RXSTAT_LEN, BUS_DMASYNC_POSTREAD);
 		rxstat = le32toh(*(uint32_t *)rxbufpos);
@@ -1013,7 +1013,7 @@ rtk_rxeof(struct rtk_softc *sc)
 		 * of the Rx area, if necessary.
 		 */
 		cur_rx = (cur_rx + RTK_RXSTAT_LEN) % RTK_RXBUFLEN;
-		rxbufpos = (char *)sc->rtk_rx_buf + cur_rx;
+		rxbufpos = sc->rtk_rx_buf + cur_rx;
 
 		/*
 		 * Compute the number of bytes at which the packet
