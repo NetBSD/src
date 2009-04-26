@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16 2009/04/26 20:41:24 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.17 2009/04/26 20:44:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16 2009/04/26 20:41:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2009/04/26 20:44:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -95,7 +95,7 @@ static unsigned clkgen;
 void
 rump_getuptime(struct timespec *ts)
 {
-	int startgen, i;
+	int startgen, i = 0;
 
 	do {
 		startgen = clkgen;
