@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.4 2009/04/25 23:16:34 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.5 2009/04/26 01:35:25 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1131,9 +1131,8 @@ Added support for numerous NVIDIA chipsets.
 .
 .Ss2 Platforms
 .(bullet
-x86 (
-i386,
-amd64):
+x86
+.Pq i386, amd64 :
 .(bullet
 Removed GENERIC.MP and made MULTIPROCESSOR mandatory.
 .It
@@ -2078,6 +2077,8 @@ may sometimes falsely claim to be out of space.
 A fix for this is available, but was not made in time for 5.0.
 It will be available as part of a later release in the 5.0 series.
 .
+.Pp
+The sparc port does not have functional SMP support in this release.
 .\} \" \n[FOR_RELEASE]
 .
 .Ss "Features to be removed in a later release"
