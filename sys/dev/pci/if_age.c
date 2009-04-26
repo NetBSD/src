@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.26 2009/04/21 13:16:36 tsutsui Exp $ */
+/*	$NetBSD: if_age.c,v 1.27 2009/04/26 07:01:29 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.26 2009/04/21 13:16:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.27 2009/04/26 07:01:29 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -490,8 +490,13 @@ age_intr(void *arg)
 		return 0;
 
 	cmb = sc->age_rdata.age_cmb_block;
-	if (cmb == NULL)
+	if (cmb == NULL) {
+		/* Happens when bringing up the interface
+		 * w/o having a carrier. Ack. the interrupt.
+		 */
+		CSR_WRITE_4(sc, AGE_INTR_STATUS, status);
 		return 0;
+	}
 
 	/* Disable interrupts. */
 	CSR_WRITE_4(sc, AGE_INTR_STATUS, status | INTR_DIS_INT);
