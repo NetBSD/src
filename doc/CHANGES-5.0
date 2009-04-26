@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.143 2009/04/25 23:17:58 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.144 2009/04/26 01:39:54 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -6296,4 +6296,10 @@ distrib/notes/x68k/prep				1.9
 
 	Sync release notes.
 	[rmind, ticket #728]
+
+gnu/usr.bin/groff/tmac/mdoc.local               patched by hand
+sys/sys/param.h                                 patched by hand
+        
+        Welcome to NetBSD 5.0!
+        [snj] 
 
