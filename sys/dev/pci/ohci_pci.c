@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.41 2009/04/17 19:44:13 dyoung Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.42 2009/04/26 08:46:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.41 2009/04/17 19:44:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.42 2009/04/26 08:46:10 cegger Exp $");
 
 #include "ehci.h"
 
@@ -91,18 +91,19 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	usbd_status r;
 	const char *vendor;
-	const char *devname = device_xname(self);
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n",
+	    devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf("%s: can't map mem space\n", devname);
+		sc->sc.sc_size = 0;
+		aprint_error_dev(self, "can't map mem space\n");
 		return;
 	}
 
@@ -121,19 +122,23 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", devname);
-		return;
+		aprint_error_dev(self, "couldn't map interrupt\n");
+		goto fail;
 	}
+
+	/*
+	 * Allocate IRQ
+	 */
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ohci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", devname);
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
+		goto fail;
 	}
-	printf("%s: interrupting at %s\n", devname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
@@ -146,8 +151,8 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", devname, r);
-		return;
+		aprint_error_dev(self, "init failed, error=%d\n", r);
+		goto fail;
 	}
 
 #if NEHCI > 0
@@ -160,6 +165,18 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	return;
+
+fail:
+	if (sc->sc_ih) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (sc->sc.sc_size) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
+	}
+	return;
 }
 
 static int
@@ -168,13 +185,16 @@ ohci_pci_detach(device_t self, int flags)
 	struct ohci_pci_softc *sc = device_private(self);
 	int rv;
 
+	pmf_device_deregister(self);
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return rv;
 
-	/* Disable interrupts, so we don't get any spurious ones. */
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
-			  OHCI_ALL_INTRS);
+	if (sc->sc.sc_size) {
+		/* Disable interrupts, so we don't get any spurious ones. */
+		bus_space_write_4(sc->sc.iot, sc->sc.ioh,
+				  OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
+	}
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
