@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.5 2009/04/26 09:56:46 cegger Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.6 2009/04/26 10:07:48 cegger Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -25,7 +25,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.5 2009/04/26 09:56:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.6 2009/04/26 10:07:48 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -72,7 +72,7 @@ struct bwi_pci_softc {
 	bus_size_t		 psc_mapsize;
 };
 
-CFATTACH_DECL(bwi_pci, sizeof(struct bwi_pci_softc),
+CFATTACH_DECL_NEW(bwi_pci, sizeof(struct bwi_pci_softc),
     bwi_pci_match, bwi_pci_attach, bwi_pci_detach, NULL);
 
 static int
@@ -112,6 +112,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 
+	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
