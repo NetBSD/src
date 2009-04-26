@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.15 2009/03/15 15:43:40 cegger Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.16 2009/04/26 07:53:43 elad Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.15 2009/03/15 15:43:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.16 2009/04/26 07:53:43 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -378,8 +378,8 @@ bcspopen(dev_t device __unused, struct tty *tp)
 	int error, unit, s;
 	static char name[] = "bcsp";
 
-	if ((error = kauth_authorize_device_tty(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, tp)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return error;
 
 	s = spltty();
