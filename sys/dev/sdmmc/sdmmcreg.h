@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.1 2009/04/21 03:00:31 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.2 2009/04/26 07:21:13 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -24,9 +24,12 @@
 #define MMC_GO_IDLE_STATE		0	/* R0 */
 #define MMC_SEND_OP_COND		1	/* R3 */
 #define MMC_ALL_SEND_CID		2	/* R2 */
-#define MMC_SET_RELATIVE_ADDR   	3	/* R1 */
+#define MMC_SET_RELATIVE_ADDR 	  	3	/* R1 */
+#define MMC_SWITCH			6	/* R1b */
 #define MMC_SELECT_CARD			7	/* R1 */
+#define MMC_SEND_EXT_CSD		8	/* R1 */
 #define MMC_SEND_CSD			9	/* R2 */
+#define MMC_SEND_CID			10	/* R2 */
 #define MMC_STOP_TRANSMISSION		12	/* R1b */
 #define MMC_SEND_STATUS			13	/* R1 */
 #define MMC_INACTIVE_STATE		15	/* R0 */
@@ -36,32 +39,33 @@
 #define MMC_SET_BLOCK_COUNT		23	/* R1 */
 #define MMC_WRITE_BLOCK_SINGLE		24	/* R1 */
 #define MMC_WRITE_BLOCK_MULTIPLE	25	/* R1 */
-#define	MMC_PROGRAM_CSD			27	/* R1 */
-#define	MMC_SET_WRITE_PROT		28	/* R1b */
-#define	MMC_SET_CLR_WRITE_PROT		29	/* R1b */
-#define	MMC_SET_SEND_WRITE_PROT		30	/* R1 */
-#define	MMC_TAG_SECTOR_START		32	/* R1 */
-#define	MMC_TAG_SECTOR_END		33	/* R1 */
-#define	MMC_UNTAG_SECTOR		34	/* R1 */
-#define	MMC_TAG_ERASE_GROUP_START	35	/* R1 */
-#define	MMC_TAG_ERASE_GROUP_END		36	/* R1 */
-#define	MMC_UNTAG_ERASE_GROUP		37	/* R1 */
-#define	MMC_ERASE			38	/* R1b */
-#define	MMC_LOCK_UNLOCK			42	/* R1b */
+#define MMC_PROGRAM_CSD			27	/* R1 */
+#define MMC_SET_WRITE_PROT		28	/* R1b */
+#define MMC_SET_CLR_WRITE_PROT		29	/* R1b */
+#define MMC_SET_SEND_WRITE_PROT		30	/* R1 */
+#define MMC_TAG_SECTOR_START		32	/* R1 */
+#define MMC_TAG_SECTOR_END		33	/* R1 */
+#define MMC_UNTAG_SECTOR		34	/* R1 */
+#define MMC_TAG_ERASE_GROUP_START	35	/* R1 */
+#define MMC_TAG_ERASE_GROUP_END		36	/* R1 */
+#define MMC_UNTAG_ERASE_GROUP		37	/* R1 */
+#define MMC_ERASE			38	/* R1b */
+#define MMC_LOCK_UNLOCK			42	/* R1b */
 #define MMC_APP_CMD			55	/* R1 */
+#define MMC_READ_OCR			58	/* R3 */
 
-/* SD commands */				/* response type */
-#define SD_SEND_RELATIVE_ADDR		3	/* R6 */
+/* SD commands */			/* response type */
+#define SD_SET_RELATIVE_ADDR 	  	3	/* R6 */
 #define SD_SEND_IF_COND			8	/* R7 */
 
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
 #define SD_APP_OP_COND			41	/* R3 */
-#define	SD_APP_SEND_SCR			51	/* R1 */
+#define SD_APP_SEND_SCR			51	/* R1 */
 
 /* OCR bits */
 #define MMC_OCR_MEM_READY		(1U<<31)/* memory power-up status bit */
-#define	MMC_OCR_HCS			(1<<30)
+#define MMC_OCR_HCS			(1<<30)
 #define MMC_OCR_3_5V_3_6V		(1<<23)
 #define MMC_OCR_3_4V_3_5V		(1<<22)
 #define MMC_OCR_3_3V_3_4V		(1<<21)
@@ -225,20 +229,20 @@
 #define SD_CID_MDT(resp)		MMC_RSP_BITS((resp), 8, 12)
 
 /* SCR (SD Configuration Register) */
-#define	SCR_STRUCTURE(scr)		MMC_RSP_BITS((scr), 60, 4)
-#define	 SCR_STRUCTURE_VER_1_0		0 /* Version 1.0 */
-#define	SCR_SD_SPEC(scr)		MMC_RSP_BITS((scr), 56, 4)
-#define	 SCR_SD_SPEC_VER_1_0		0 /* Version 1.0 */
-#define	SCR_DATA_STAT_AFTER_ERASE(scr)	MMC_RSP_BITS((scr), 55, 1)
-#define	SCR_SD_SECURITY(scr)		MMC_RSP_BITS((scr), 52, 3)
-#define	 SCR_SD_SECURITY_NONE		0 /* no security */
-#define	 SCR_SD_SECURITY_1_0		1 /* security protocol 1.0 */
-#define	 SCR_SD_SECURITY_1_0_2		2 /* security protocol 1.0 */
-#define	SCR_SD_BUS_WIDTHS(scr)		MMC_RSP_BITS((scr), 48, 4)
-#define	 SCR_SD_BUS_WIDTHS_1BIT		(1 << 0) /* 1bit (DAT0) */
-#define	 SCR_SD_BUS_WIDTHS_4BIT		(1 << 2) /* 4bit (DAT0-3) */
-#define	SCR_RESERVED(scr)		MMC_RSP_BITS((scr), 32, 16)
-#define	SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
+#define SCR_STRUCTURE(scr)		MMC_RSP_BITS((scr), 60, 4)
+#define  SCR_STRUCTURE_VER_1_0		0 /* Version 1.0 */
+#define SCR_SD_SPEC(scr)		MMC_RSP_BITS((scr), 56, 4)
+#define  SCR_SD_SPEC_VER_1_0		0 /* Version 1.0 */
+#define SCR_DATA_STAT_AFTER_ERASE(scr)	MMC_RSP_BITS((scr), 55, 1)
+#define SCR_SD_SECURITY(scr)		MMC_RSP_BITS((scr), 52, 3)
+#define  SCR_SD_SECURITY_NONE		0 /* no security */
+#define  SCR_SD_SECURITY_1_0		1 /* security protocol 1.0 */
+#define  SCR_SD_SECURITY_1_0_2		2 /* security protocol 1.0 */
+#define SCR_SD_BUS_WIDTHS(scr)		MMC_RSP_BITS((scr), 48, 4)
+#define  SCR_SD_BUS_WIDTHS_1BIT		(1 << 0) /* 1bit (DAT0) */
+#define  SCR_SD_BUS_WIDTHS_4BIT		(1 << 2) /* 4bit (DAT0-3) */
+#define SCR_RESERVED(scr)		MMC_RSP_BITS((scr), 32, 16)
+#define SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
 
 /* Might be slow, but it should work on big and little endian systems. */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))
