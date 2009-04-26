@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.42 2009/04/17 20:32:27 christos Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.43 2009/04/26 09:12:33 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.42 2009/04/17 20:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.43 2009/04/26 09:12:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	const char *vendor;
-	const char *devname = device_xname(self);
 	char devinfo[256];
 	usbd_status r;
 	int ncomp;
@@ -118,9 +117,15 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		aprint_error("%s: can't map memory space\n", devname);
+		sc->sc.sc_size = 0;
+		aprint_error_dev(self, "can't map memory space\n");
 		return;
 	}
+
+	/* Disable interrupts, so we don't get any spurious ones. */
+	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
+	DPRINTF(("%s: offs=%d\n", device_xname(self), sc->sc.sc_offs));
+	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
@@ -131,33 +136,32 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	/* Disable interrupts, so we don't get any spurious ones. */
-	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
-	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
-	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
-
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n", devname);
-		return;
+		aprint_error_dev(self, "couldn't map interrupt\n");
+		goto fail;
 	}
+
+	/*
+	 * Allocate IRQ
+	 */
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt", devname);
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", devname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
 	case PCI_USBREV_1_0:
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
-		aprint_verbose("%s: pre-2.0 USB rev\n", devname);
+		aprint_verbose_dev(self, "pre-2.0 USB rev\n");
 		return;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
@@ -181,7 +185,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_VENDOR_ATI:
 	case PCI_VENDOR_VIATECH:
 		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
-		aprint_normal("%s: dropped intr workaround enabled\n", devname);
+		aprint_normal_dev(self, "dropped intr workaround enabled\n");
 		break;
 	default:
 		break;
@@ -207,8 +211,8 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error("%s: init failed, error=%d\n", devname, r);
-		return;
+		aprint_error_dev(self, "init failed, error=%d\n", r);
+		goto fail;
 	}
 
 	if (!pmf_device_register1(self, ehci_pci_suspend, ehci_pci_resume,
@@ -217,6 +221,19 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	return;
+
+fail:
+	if (sc->sc_ih) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (sc->sc.sc_size) {
+		ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
+	}
+	return;
 }
 
 static int
