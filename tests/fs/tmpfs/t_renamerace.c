@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.5 2009/04/14 10:19:39 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.6 2009/04/26 15:15:38 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -18,7 +18,6 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-#include <rump/ukfs.h>
 
 #include <fs/tmpfs/tmpfs_args.h>
 
@@ -58,21 +57,18 @@ w2(void *arg)
 ATF_TC_BODY(renamerace, tc)
 {
 	struct tmpfs_args args;
-	struct ukfs *fs;
 	pthread_t pt1, pt2;
 
 	memset(&args, 0, sizeof(args));
 	args.ta_version = TMPFS_ARGS_VERSION;
 	args.ta_root_mode = 0777;
 
-	ukfs_init();
-	fs = ukfs_mount(MOUNT_TMPFS, "tmpfs", UKFS_DEFAULTMP, 0,
-	    &args, sizeof(args));
-	if (fs == NULL)
+	rump_init();
+	if (rump_sys_mount(MOUNT_TMPFS, "/", 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("could not mount tmpfs");
 
-	pthread_create(&pt1, NULL, w1, fs);
-	pthread_create(&pt2, NULL, w2, fs);
+	pthread_create(&pt1, NULL, w1, NULL);
+	pthread_create(&pt2, NULL, w2, NULL);
 
 	sleep(10);
 }
