@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.31 2009/03/23 11:48:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.32 2009/04/26 22:26:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.31 2009/03/23 11:48:32 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.32 2009/04/26 22:26:59 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -313,10 +313,10 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 }
 
 void
-rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
+rumpuser_rw_enter(struct rumpuser_rw *rw, int iswrite)
 {
 
-	if (write) {
+	if (iswrite) {
 		KLOCK_WRAP(NOFAIL_ERRNO(pthread_rwlock_wrlock(&rw->pthrw)));
 		RURW_SETWRITE(rw);
 	} else {
@@ -326,11 +326,11 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
 }
 
 int
-rumpuser_rw_tryenter(struct rumpuser_rw *rw, int write)
+rumpuser_rw_tryenter(struct rumpuser_rw *rw, int iswrite)
 {
 	int rv;
 
-	if (write) {
+	if (iswrite) {
 		rv = pthread_rwlock_trywrlock(&rw->pthrw);
 		if (rv == 0)
 			RURW_SETWRITE(rw);
