@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.4 2009/04/23 20:24:23 kefren Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.5 2009/04/26 09:56:46 cegger Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -25,7 +25,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.4 2009/04/23 20:24:23 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.5 2009/04/26 09:56:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.4 2009/04/23 20:24:23 kefren Exp $"
 /* Base Address Register */
 #define BWI_PCI_BAR0	0x10
 
-static int	bwi_pci_match(struct device *, struct cfdata *, void *);
-static void	bwi_pci_attach(struct device *, struct device *, void *);
-static int	bwi_pci_detach(struct device *, int);
+static int	bwi_pci_match(device_t, cfdata_t, void *);
+static void	bwi_pci_attach(device_t, device_t, void *);
+static int	bwi_pci_detach(device_t, int);
 static void	bwi_pci_conf_write(void *, uint32_t, uint32_t);
 static uint32_t	bwi_pci_conf_read(void *, uint32_t);
 
@@ -76,7 +76,7 @@ CFATTACH_DECL(bwi_pci, sizeof(struct bwi_pci_softc),
     bwi_pci_match, bwi_pci_attach, bwi_pci_detach, NULL);
 
 static int
-bwi_pci_match(struct device *parent, struct cfdata *match, void *aux)
+bwi_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -103,9 +103,9 @@ bwi_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-bwi_pci_attach(struct device *parent, struct device *self, void *aux)
+bwi_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
+	struct bwi_pci_softc *psc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct bwi_softc *sc = &psc->psc_bwi;
 	const char *intrstr = NULL;
@@ -168,9 +168,9 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-bwi_pci_detach(struct device *self, int flags)
+bwi_pci_detach(device_t self, int flags)
 {
-	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
+	struct bwi_pci_softc *psc = device_private(self);
 	struct bwi_softc *sc = &psc->psc_bwi;
 
 	pmf_device_deregister(self);
@@ -186,17 +186,17 @@ bwi_pci_detach(struct device *self, int flags)
 }
 
 static void
-bwi_pci_conf_write(void *self, uint32_t reg, uint32_t val)
+bwi_pci_conf_write(void *sc, uint32_t reg, uint32_t val)
 {
-	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
+	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)sc;
 
 	pci_conf_write(psc->psc_pc, psc->psc_pcitag, reg, val);
 }
 
 static uint32_t
-bwi_pci_conf_read(void *self, uint32_t reg)
+bwi_pci_conf_read(void *sc, uint32_t reg)
 {
-	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
+	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)sc;
 
 	return (pci_conf_read(psc->psc_pc, psc->psc_pcitag, reg));
 }
