@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.36 2009/04/01 17:51:12 perry Exp $
+#	$NetBSD: Makefile.rump,v 1.37 2009/04/26 20:45:37 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -61,6 +61,7 @@ __archivebuild: .USE
 	    $$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
 	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
 	    | sort | uniq  > renametab.${.TARGET}
-	${OBJCOPY} --preserve-dates --redefine-syms renametab.${.TARGET} ${.TARGET}
+	${OBJCOPY} --preserve-dates --redefine-syms \
+	    renametab.${.TARGET} ${.TARGET}
 	rm -f renametab.${.TARGET}
 	${AR} ${_ARRANFL} ${.TARGET}
