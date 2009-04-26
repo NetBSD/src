@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.3 2009/04/14 10:19:39 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.4 2009/04/26 15:15:38 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -19,7 +19,6 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-#include <rump/ukfs.h>
 
 #include <ufs/ufs/ufsmount.h>
 
@@ -66,7 +65,6 @@ ATF_TC_BODY(renamerace, tc)
 {
 	struct ufs_args args;
 	char cmd[256];
-	struct ukfs *fs;
 	pthread_t pt1, pt2;
 
 #if 0
@@ -87,14 +85,12 @@ ATF_TC_BODY(renamerace, tc)
 	memset(&args, 0, sizeof(args));
 	args.fspec = image;
 
-	ukfs_init();
-	fs = ukfs_mount(MOUNT_FFS, "ffs", UKFS_DEFAULTMP,
-	    MNT_LOG, &args, sizeof(args));
-	if (fs == NULL)
+	rump_init();
+	if (rump_sys_mount(MOUNT_FFS, "/", MNT_LOG, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("ukfs_mount failed");
 
-	pthread_create(&pt1, NULL, w1, fs);
-	pthread_create(&pt2, NULL, w2, fs);
+	pthread_create(&pt1, NULL, w1, NULL);
+	pthread_create(&pt2, NULL, w2, NULL);
 
 	sleep(10);
 
@@ -102,7 +98,7 @@ ATF_TC_BODY(renamerace, tc)
 	pthread_join(pt1, NULL);
 	pthread_join(pt2, NULL);
 
-	ukfs_release(fs, 0);
+	rump_sys_unmount("/", MNT_FORCE); /* XXX: MNT_FORCE */
 }
 
 ATF_TC_CLEANUP(renamerace, tc)
