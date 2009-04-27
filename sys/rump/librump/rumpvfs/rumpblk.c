@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.19 2009/04/17 12:29:08 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.20 2009/04/27 14:28:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.19 2009/04/17 12:29:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.20 2009/04/27 14:28:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -89,6 +89,9 @@ struct blkwin {
 static struct rblkdev {
 	char *rblk_path;
 	int rblk_fd;
+#ifdef HAS_ODIRECT
+	int rblk_dfd;
+#endif
 
 	/* for mmap */
 	int rblk_mmflags;
@@ -103,9 +106,15 @@ static struct rblkdev {
 	struct disklabel rblk_dl;
 } minors[RUMPBLK_SIZE];
 
-static struct evcnt memblk_ev_reqs;
-static struct evcnt memblk_ev_hits;
-static struct evcnt memblk_ev_busy;
+static struct evcnt ev_io_total;
+static struct evcnt ev_io_async;
+
+static struct evcnt ev_memblk_hits;
+static struct evcnt ev_memblk_busy;
+
+static struct evcnt ev_bwrite_total;
+static struct evcnt ev_bwrite_async;
+static struct evcnt ev_bread_total;
 
 dev_type_open(rumpblk_open);
 dev_type_close(rumpblk_close);
@@ -143,7 +152,6 @@ getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
 	struct blkwin *win;
 
 	mutex_enter(&rblk->rblk_memmtx);
-	memblk_ev_reqs.ev_count++;
  retry:
 	/* search for window */
 	TAILQ_FOREACH(win, &rblk->rblk_lruq, win_lru) {
@@ -153,7 +161,7 @@ getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
 
 	/* found?  return */
 	if (win) {
-		memblk_ev_hits.ev_count++;
+		ev_memblk_hits.ev_count++;
 		TAILQ_REMOVE(&rblk->rblk_lruq, win, win_lru);
 		goto good;
 	}
@@ -189,7 +197,7 @@ getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
 		}
 	} else {
 		DPRINTF(("memwin wait\n"));
-		memblk_ev_busy.ev_count++;
+		ev_memblk_busy.ev_count++;
 
 		rblk->rblk_waiting = true;
 		cv_wait(&rblk->rblk_memcv, &rblk->rblk_memmtx);
@@ -288,11 +296,21 @@ rumpblk_init(void)
 		cv_init(&minors[i].rblk_memcv, "rblkmcv");
 	}
 
-	evcnt_attach_dynamic(&memblk_ev_reqs, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "memblk requests");
-	evcnt_attach_dynamic(&memblk_ev_hits, EVCNT_TYPE_MISC, NULL,
+	evcnt_attach_dynamic(&ev_io_total, EVCNT_TYPE_MISC, NULL,
+	    "rumpblk", "rumpblk I/O reqs");
+	evcnt_attach_dynamic(&ev_io_async, EVCNT_TYPE_MISC, NULL,
+	    "rumpblk", "rumpblk async I/O");
+
+	evcnt_attach_dynamic(&ev_bread_total, EVCNT_TYPE_MISC, NULL,
+	    "rumpblk", "rumpblk bytes read");
+	evcnt_attach_dynamic(&ev_bwrite_total, EVCNT_TYPE_MISC, NULL,
+	    "rumpblk", "rumpblk bytes written");
+	evcnt_attach_dynamic(&ev_bwrite_async, EVCNT_TYPE_MISC, NULL,
+	    "rumpblk", "rumpblk bytes written async");
+
+	evcnt_attach_dynamic(&ev_memblk_hits, EVCNT_TYPE_MISC, NULL,
 	    "rumpblk", "memblk window hits");
-	evcnt_attach_dynamic(&memblk_ev_busy, EVCNT_TYPE_MISC, NULL,
+	evcnt_attach_dynamic(&ev_memblk_busy, EVCNT_TYPE_MISC, NULL,
 	    "rumpblk", "memblk all windows busy");
 
 	if (blkfail) {
@@ -344,6 +362,13 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		rumpuser_close(fd, &dummy);
 		return error;
 	}
+
+#ifdef HAS_ODIRECT
+	rblk->rblk_dfd = rumpuser_open(rblk->rblk_path,
+	    OFLAGS(flag) | O_DIRECT, &error);
+	if (error)
+		return error;
+#endif
 
 	if (ft == RUMPUSER_FT_REG) {
 		struct blkwin *win;
@@ -465,6 +490,18 @@ dostrategy(struct buf *bp)
 	off_t off;
 	int async, error;
 
+	/* collect statistics */
+	ev_io_total.ev_count++;
+	if (async)
+		ev_io_async.ev_count++;
+	if (BUF_ISWRITE(bp)) {
+		ev_bwrite_total.ev_count += bp->b_bcount;
+		if (async)
+			ev_bwrite_async.ev_count += bp->b_bcount;
+	} else {
+		ev_bread_total.ev_count++;
+	}
+
 	off = bp->b_blkno << DEV_BSHIFT;
 	/*
 	 * Do bounds checking if we're working on a file.  Otherwise
@@ -492,9 +529,9 @@ dostrategy(struct buf *bp)
 
 	async = bp->b_flags & B_ASYNC;
 	DPRINTF(("rumpblk_strategy: 0x%x bytes %s off 0x%" PRIx64
-	    " (0x%" PRIx64 " - 0x%" PRIx64 ")\n",
+	    " (0x%" PRIx64 " - 0x%" PRIx64 "), %ssync\n",
 	    bp->b_bcount, BUF_ISREAD(bp) ? "READ" : "WRITE",
-	    off, off, (off + bp->b_bcount)));
+	    off, off, (off + bp->b_bcount), async ? "a" : ""));
 
 	/* mmap?  handle here and return */
 	if (rblk->rblk_mmflags) {
@@ -534,7 +571,6 @@ dostrategy(struct buf *bp)
 		return;
 	}
 
-
 	/*
 	 * Do I/O.  We have different paths for async and sync I/O.
 	 * Async I/O is done by passing a request to rumpuser where
@@ -547,32 +583,47 @@ dostrategy(struct buf *bp)
 	 * 
 	 * Using bufq here might be a good idea.
 	 */
+
 	if (rump_threads) {
 		struct rumpuser_aio *rua;
+		int op, fd;
+
+		fd = rblk->rblk_fd;
+		if (BUF_ISREAD(bp)) {
+			op = RUA_OP_READ;
+		} else {
+			op = RUA_OP_WRITE;
+			if (!async) {
+				/* O_DIRECT not fully automatic yet */
+#ifdef HAS_ODIRECT
+				if ((off & (DEV_BSIZE-1)) == 0
+				    && ((intptr_t)bp->b_data&(DEV_BSIZE-1)) == 0
+				    && (bp->b_bcount & (DEV_BSIZE-1)) == 0)
+					fd = rblk->rblk_dfd;
+				else
+#endif
+					op |= RUA_OP_SYNC;
+			}
+		}
 
 		rumpuser_mutex_enter(&rumpuser_aio_mtx);
-		while ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail)
+		while ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail) {
 			rumpuser_cv_wait(&rumpuser_aio_cv, &rumpuser_aio_mtx);
+		}
 
 		rua = &rumpuser_aios[rumpuser_aio_head];
 		KASSERT(rua->rua_bp == NULL);
-		rua->rua_fd = rblk->rblk_fd;
+		rua->rua_fd = fd;
 		rua->rua_data = bp->b_data;
 		rua->rua_dlen = bp->b_bcount;
 		rua->rua_off = off;
 		rua->rua_bp = bp;
-		rua->rua_op = BUF_ISREAD(bp);
+		rua->rua_op = op;
 
 		/* insert into queue & signal */
 		rumpuser_aio_head = (rumpuser_aio_head+1) % N_AIOS;
 		rumpuser_cv_signal(&rumpuser_aio_cv);
 		rumpuser_mutex_exit(&rumpuser_aio_mtx);
-
-		/* make sure non-async writes end up on backing media */
-		if (BUF_ISWRITE(bp) && !async) {
-			biowait(bp);
-			rumpuser_fsync(rblk->rblk_fd, &error);
-		}
 	} else {
 		if (BUF_ISREAD(bp)) {
 			rumpuser_read_bio(rblk->rblk_fd, bp->b_data,
@@ -581,10 +632,8 @@ dostrategy(struct buf *bp)
 			rumpuser_write_bio(rblk->rblk_fd, bp->b_data,
 			    bp->b_bcount, off, rump_biodone, bp);
 		}
-		if (!async) {
-			if (BUF_ISWRITE(bp))
-				rumpuser_fsync(rblk->rblk_fd, &error);
-		}
+		if (BUF_ISWRITE(bp) && !async)
+			rumpuser_fsync(rblk->rblk_fd, &error);
 	}
 }
 
