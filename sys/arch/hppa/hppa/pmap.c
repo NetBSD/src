@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.53 2009/04/27 08:21:51 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.54 2009/04/27 08:25:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.53 2009/04/27 08:21:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.54 2009/04/27 08:25:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1811,7 +1811,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 
 	/*
 	 * If we're being told to unmap page zero, we can't call printf() at
-	 * all as printf required page zero to be mapped.
+	 * all as printf requires page zero to be mapped.
 	 */
 	if (va == 0)
 		pmapdebug = 0;
