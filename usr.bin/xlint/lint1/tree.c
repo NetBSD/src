@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.57 2009/04/15 01:20:57 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.58 2009/04/27 15:08:10 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.57 2009/04/15 01:20:57 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.58 2009/04/27 15:08:10 ginsbach Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1311,7 +1311,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		     (!lstp->t_volatile && rstp->t_volatile))) {
 			/* left side has not all qualifiers of right */
 			tyname(lbuf, sizeof(lbuf), lstp);
-			tyname(rbuf, sizeof(rbuf), lstp);
+			tyname(rbuf, sizeof(rbuf), rstp);
 			switch (op) {
 			case INIT:
 			case RETURN:
