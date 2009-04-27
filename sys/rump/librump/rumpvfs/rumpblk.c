@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.20 2009/04/27 14:28:58 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.21 2009/04/27 18:36:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.20 2009/04/27 14:28:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.21 2009/04/27 18:36:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -488,7 +488,8 @@ dostrategy(struct buf *bp)
 {
 	struct rblkdev *rblk = &minors[minor(bp->b_dev)];
 	off_t off;
-	int async, error;
+	int async = bp->b_flags & B_ASYNC;
+	int error;
 
 	/* collect statistics */
 	ev_io_total.ev_count++;
@@ -527,7 +528,6 @@ dostrategy(struct buf *bp)
 		bp->b_bcount = sz;
 	}
 
-	async = bp->b_flags & B_ASYNC;
 	DPRINTF(("rumpblk_strategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64 "), %ssync\n",
 	    bp->b_bcount, BUF_ISREAD(bp) ? "READ" : "WRITE",
