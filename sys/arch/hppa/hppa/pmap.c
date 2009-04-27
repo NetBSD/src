@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.51 2009/04/27 08:11:19 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.52 2009/04/27 08:19:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.51 2009/04/27 08:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.52 2009/04/27 08:19:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,9 +499,13 @@ pmap_dump_pv(paddr_t pa)
 #endif
 
 /*
- * Check for non-equiv aliases for this PA. If we find any then mark
- * all PTEs as uncacheable including the one we're checking.
+ * Check for non-equiv aliases for this page and the mapping being added or
+ * removed. If, when adding, we find a new non-equiv alias then mark all PTEs
+ * as uncacheable including the one we're checking. If, when removing, there
+ * are no non-equiv aliases left then we mark PTEs as cacheable.
  *
+ * - Shouldn't be called for pages that have been marked uncacheable by
+ *   pmap_kenter_pa.
  * - Must be called with pg->mdpage.pvh_lock held.
  */
 void
@@ -569,8 +573,8 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 		if ((attrs & (PVF_WRITE|PVF_MOD)) != 0) {
 			/*
 			 * We have non-equiv aliases and the new/some 
-			 * mapping(s) is/are is writable (or modified). We must
-			 * mark the all mappings as uncacheable (if they're not
+			 * mapping(s) is/are writable (or modified). We must
+			 * mark all mappings as uncacheable (if they're not
 			 * already marked as such).
 			 */
 			pg->mdpage.pvh_aliases++;
@@ -586,8 +590,8 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 	} else {
 		if ((attrs & PVF_UNCACHEABLE) != 0) {
 			/*
-			 * We've removed a non-equiv aliases. We can check
-			 * marked uncacheable. We can now mark it cacheable.
+			 * We've removed a non-equiv aliases. We can now mark
+			 * it cacheable if all non-equiv aliases are gone.
 			 */
 
 			pg->mdpage.pvh_aliases--;
@@ -737,7 +741,7 @@ pmap_bootstrap(vaddr_t vstart)
 	/*
 	 * cpuid() found out how big the HPT should be, so align addr to
 	 * what will be its beginning.  We don't waste the pages skipped
-	 * for the alignment; they become struct pv_entry pages.
+	 * for the alignment.
 	 */
 #ifdef USE_HPT
 	if (pmap_hptsize) {
@@ -1093,7 +1097,7 @@ pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
  * pmap_create()
  *
  * Create and return a physical map.
- * the map is an actual physical map, and may be referenced by the hardware.
+ * The map is an actual physical map, and may be referenced by the hardware.
  */
 pmap_t
 pmap_create(void)
@@ -1709,10 +1713,7 @@ pmap_zero_page(paddr_t pa)
 /*
  * pmap_copy_page(src, dst)
  *
- * pmap_copy_page copies the src page to the destination page. If a mapping
- * can be found for the source, we use that virtual address. Otherwise, a
- * slower physical page copy must be done. The destination is always a
- * physical address since there is usually no mapping for it.
+ * pmap_copy_page copies the source page to the destination page.
  */
 void
 pmap_copy_page(paddr_t spa, paddr_t dpa)
@@ -1744,9 +1745,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	int opmapdebug = pmapdebug;
 
 	/*
-	 * If we're being told to map page zero, we can't
-	 * call printf() at all, because doing so would 
-	 * lead to an infinite recursion on this call.
+	 * If we're being told to map page zero, we can't call printf() at all,
+	 * because doing so would lead to an infinite recursion on this call.
 	 * (printf requires page zero to be mapped).
 	 */
 	if (va == 0)
@@ -1810,10 +1810,8 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	int opmapdebug = pmapdebug;
 
 	/*
-	 * If we're being told to unmap page zero, we can't
-	 * call printf() at all, because doing so would 
-	 * lead to an infinite recursion on this call.
-	 * (printf requires page zero to be mapped).
+	 * If we're being told to unmap page zero, we can't call printf() at
+	 * all as printf required page zero to be mapped.
 	 */
 	if (va == 0)
 		pmapdebug = 0;
@@ -1824,10 +1822,10 @@ pmap_kremove(vaddr_t va, vsize_t size)
 #ifdef PMAPDEBUG
 
 	/*
-	 * Don't allow the VA == PA mappings, apart from
-	 * page zero, to be removed. Page zero is special
-	 * so that we get TLB faults when the kernel tries
-	 * to de-reference NULL.
+	 * Don't allow the VA == PA mappings, apart from page zero, to be
+	 * removed. Page zero is given special treatment so that we get TLB
+	 * faults when the kernel tries to de-reference NULL or anything else
+	 * in the first page when it shouldn't.
 	 */
 	if (va != 0 && va < ptoa(physmem)) {
 		DPRINTF(PDB_FOLLOW|PDB_REMOVE,
