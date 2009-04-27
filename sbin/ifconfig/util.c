@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 2009/04/21 22:46:39 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.11 2009/04/27 20:10:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.10 2009/04/21 22:46:39 dyoung Exp $");
+__RCSID("$NetBSD: util.c,v 1.11 2009/04/27 20:10:49 dyoung Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -263,8 +263,6 @@ print_link_addresses(prop_dictionary_t env, bool print_active_only)
 		if (strcmp(ifname, ifa->ifa_name) != 0)
 			continue;
 		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-		if (ifa->ifa_data != NULL)
 			continue;
 
 		sdl = satocsdl(ifa->ifa_addr);
