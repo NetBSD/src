@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.242 2009/04/21 03:00:29 nonaka Exp $
+# $NetBSD: GENERIC,v 1.243 2009/04/27 12:02:10 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.242 $"
+#ident 		"GENERIC-$Revision: 1.243 $"
 
 maxusers	64		# estimated number of users
 
@@ -327,6 +327,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and Speedstep support.
+#hpet* 	at ichlpcib?
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 
