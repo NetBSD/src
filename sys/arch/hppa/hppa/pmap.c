@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.55 2009/04/27 08:56:06 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.56 2009/04/27 09:27:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.55 2009/04/27 08:56:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.56 2009/04/27 09:27:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1606,6 +1606,7 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 {
 	struct pv_entry *pve;
 	pt_entry_t pte;
+	int ret;
 
 	DPRINTF(PDB_FOLLOW|PDB_BITS, ("%s(%p, %x)\n", __func__, pg, bit));
 
@@ -1618,9 +1619,10 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 
 		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 	}
+	ret = ((pg->mdpage.pvh_attrs & bit) != 0);
 	mutex_exit(&pg->mdpage.pvh_lock);
 
-	return ((pg->mdpage.pvh_attrs & bit) != 0);
+	return ret;
 }
 
 /*
