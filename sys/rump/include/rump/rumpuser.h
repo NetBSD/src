@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.22 2009/04/26 21:39:10 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.23 2009/04/27 14:28:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -155,6 +155,9 @@ struct rumpuser_aio {
 	void	*rua_bp;
 	int	rua_op;
 };
+#define RUA_OP_READ	0x01
+#define RUA_OP_WRITE	0x02
+#define RUA_OP_SYNC	0x04
 
 #define N_AIOS 1024
 extern struct rumpuser_mtx rumpuser_aio_mtx;
