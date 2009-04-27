@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.62 2009/04/22 21:20:52 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.63 2009/04/27 20:02:29 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.62 2009/04/22 21:20:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.63 2009/04/27 20:02:29 cegger Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -922,19 +922,20 @@ intr_string(int ih)
 	if (ih & APIC_INT_VIA_APIC) {
 		pic = ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic != NULL) {
-			sprintf(irqstr, "%s pin %d",
+			snprintf(irqstr, sizeof(irqstr), "%s pin %d",
 			    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih));
 		} else {
-			sprintf(irqstr, "apic %d int %d (irq %d)",
+			snprintf(irqstr, sizeof(irqstr),
+			    "apic %d int %d (irq %d)",
 			    APIC_IRQ_APIC(ih),
 			    APIC_IRQ_PIN(ih),
 			    ih&0xff);
 		}
 	} else
-		sprintf(irqstr, "irq %d", ih&0xff);
+		snprintf(irqstr, sizeof(irqstr), "irq %d", ih&0xff);
 #else
 
-	sprintf(irqstr, "irq %d", ih&0xff);
+	snprintf(irqstr, sizeof(irqstr), "irq %d", ih&0xff);
 #endif
 	return (irqstr);
 
