@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.50 2009/04/25 15:28:16 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.51 2009/04/27 08:11:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -60,11 +60,12 @@
  * References:
  * 1. PA7100LC ERS, Hewlett-Packard, March 30 1999, Public version 1.0
  * 2. PA7300LC ERS, Hewlett-Packard, March 18 1996, Version 1.0
- *
+ * 3. PA-RISC 1.1 Architecture and Instruction Set Reference Manual,
+ *    Hewlett-Packard, February 1994, Third Edition
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.50 2009/04/25 15:28:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.51 2009/04/27 08:11:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
