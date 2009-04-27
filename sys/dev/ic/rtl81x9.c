@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.85 2009/04/26 16:17:08 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.86 2009/04/27 14:52:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.85 2009/04/26 16:17:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.86 2009/04/27 14:52:50 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1155,7 +1155,9 @@ rtk_txeof(struct rtk_softc *sc)
 					    sc->sc_txthresh * 32);
 #endif
 				}
+#ifdef DEBUG
 				printf("\n");
+#endif
 			}
 			if (txstat & (RTK_TXSTAT_TXABRT|RTK_TXSTAT_OUTOFWIN))
 				CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
