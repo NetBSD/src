@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.3 2009/02/18 14:40:14 njoly Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.4 2009/04/27 13:24:18 njoly Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.3 2009/02/18 14:40:14 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.4 2009/04/27 13:24:18 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -253,7 +253,7 @@ static int
 linux32_semctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
     register_t *retval)
 {
-	int cmd, error;
+	int lcmd, cmd, error;
 	struct semid_ds bs;
 	struct linux32_semid_ds ls;
 	struct linux32_semid64_ds ls64;
@@ -264,28 +264,28 @@ linux32_semctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	if ((error = copyin(SCARG_P32(uap, ptr), &lsem, sizeof lsem)))
 		return error;
 
-	switch (SCARG(uap, a3)) {
+	lcmd = SCARG(uap, a3);
+
+	switch (lcmd & ~LINUX32_IPC_64) {
 	case LINUX32_IPC_RMID:
 		cmd = IPC_RMID;
 		break;
 	case LINUX32_IPC_STAT:
-	case LINUX32_IPC_STAT|LINUX32_IPC_64:
 		cmd = IPC_STAT;
 		buf = &bs;
 		break;
 	case LINUX32_IPC_SET:
-		error = copyin(NETBSD32PTR64(lsem.l_buf), &ls, sizeof ls);
+		if (lcmd & LINUX32_IPC_64) {
+			error = copyin(NETBSD32PTR64(lsem.l_buf), &ls64,
+			    sizeof ls64);
+			linux32_to_bsd_semid64_ds(&ls64, &bs);
+		} else {
+			error = copyin(NETBSD32PTR64(lsem.l_buf), &ls,
+			    sizeof ls);
+			linux32_to_bsd_semid_ds(&ls, &bs);
+		}
 		if (error)
 			return error;
-		linux32_to_bsd_semid_ds(&ls, &bs);
-		cmd = IPC_SET;
-		buf = &bs;
-		break;
-	case LINUX32_IPC_SET|LINUX32_IPC_64:
-		error = copyin(NETBSD32PTR64(lsem.l_buf), &ls64, sizeof ls64);
-		if (error)
-			return error;
-		linux32_to_bsd_semid64_ds(&ls64, &bs);
 		cmd = IPC_SET;
 		buf = &bs;
 		break;
@@ -324,7 +324,7 @@ linux32_semctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	if (error)
 		return error;
 
-	switch (SCARG(uap, a3)) {
+	switch (lcmd) {
 	case LINUX32_IPC_STAT:
 		bsd_to_linux32_semid_ds(&bs, &ls);
 		error = copyout(&ls, NETBSD32PTR64(lsem.l_buf), sizeof ls);
