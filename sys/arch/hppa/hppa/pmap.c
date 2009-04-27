@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.54 2009/04/27 08:25:30 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.55 2009/04/27 08:56:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.54 2009/04/27 08:25:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.55 2009/04/27 08:56:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1845,11 +1845,9 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			}
 		}
 		if (!(pte = pmap_pte_get(pde, va))) {
-#if 0
 			DPRINTF(PDB_FOLLOW|PDB_REMOVE,
 			    ("%s: unmapping unmapped 0x%x\n", __func__,
 			    (int)va));
-#endif
 			continue;
 		}
 
