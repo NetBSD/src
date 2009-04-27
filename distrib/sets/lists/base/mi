@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.805 2009/04/25 05:54:50 agc Exp $
+# $NetBSD: mi,v 1.806 2009/04/27 14:22:40 njoly Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1189,6 +1189,7 @@
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
 ./usr/libdata/debug/usr/libexec/postfix		base-sys-usr
 ./usr/libdata/debug/usr/libexec/uucp		base-obsolete		obsolete
+./usr/libdata/debug/usr/mdec			base-sys-usr
 ./usr/libdata/debug/usr/sbin			base-sys-usr
 ./usr/libdata/firmware				base-sys-usr
 ./usr/libdata/ldscripts				base-c-usr

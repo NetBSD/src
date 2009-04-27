@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.397 2009/04/20 03:56:59 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.398 2009/04/27 14:22:40 njoly Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -532,6 +532,7 @@
 ./usr/libdata/debug/usr/libexec/ching
 ./usr/libdata/debug/usr/libexec/lpr
 ./usr/libdata/debug/usr/libexec/postfix
+./usr/libdata/debug/usr/mdec
 ./usr/libdata/debug/usr/sbin
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
