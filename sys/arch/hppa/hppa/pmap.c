@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.52 2009/04/27 08:19:59 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.53 2009/04/27 08:21:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.52 2009/04/27 08:19:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.53 2009/04/27 08:21:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -560,7 +560,7 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 	if (!nonequiv) {
 		/*
 		 * Inherit uncacheable attribute if set as it means we already
-		 * have non-equiv aliases
+		 * have non-equiv aliases.
 		 */
 		if (ptep && (attrs & PVF_UNCACHEABLE) != 0)
 			*ptep |= PTE_PROT(TLB_UNCACHEABLE);
