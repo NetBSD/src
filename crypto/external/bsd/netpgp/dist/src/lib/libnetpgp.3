@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.2 2009/04/28 00:40:45 agc Exp $
+.\" $NetBSD: libnetpgp.3,v 1.3 2009/04/28 07:59:35 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Sh LIBRARY
 .Lb libnetpgp
 .Sh SYNOPSIS
-.In <netpgp.h>
+.In netpgp.h
 .Ft int
 .Fo netpgp_init
 .Fa "netpgp_t *netpgp" "char *userid" "char *pubringfile" "char *secringfile"
@@ -115,12 +115,12 @@ user identity to the
 argument passed to the function.
 If no public key ring file is provided, initial values will be taken from those
 in the
-.Ar .gnupg/pubring.gpg
+.Pa .gnupg/pubring.gpg
 file in the user's home directory.
 Similarily, if no secret key ring file is provided,
 initial values will be taken from those
 in the
-.Ar .gnupg/secring.gpg
+.Pa .gnupg/secring.gpg
 file in the user's home directory.
 The
 .Fn netpgp_init
@@ -141,7 +141,7 @@ is used.
 The name of the file containing the key to be imported is provided
 as the filename argument.
 .Pp
-To generate a key, the 
+To generate a key, the
 .Fn netpgp_generate_key
 is used.
 It takes an argument of the number of bits to use in the key.
@@ -199,8 +199,8 @@ The
 library first appeared in
 .Nx 6.0 .
 .Sh AUTHORS
-.An Ben Laurie
-.An Rachel Willmer.
+.An Ben Laurie ,
+.An Rachel Willmer .
 .An Alistair Crooks
 wrote this high-level interface.
 .Pp
