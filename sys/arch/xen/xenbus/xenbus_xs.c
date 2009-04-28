@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.17 2008/10/29 13:53:15 cegger Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.18 2009/04/28 05:44:43 cegger Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.17 2008/10/29 13:53:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.18 2009/04/28 05:44:43 cegger Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -651,7 +651,7 @@ register_xenbus_watch(struct xenbus_watch *watch)
 	int err;
 	int s;
 
-	sprintf(token, "%lX", (long)watch);
+	snprintf(token, sizeof(token), "%lX", (long)watch);
 
 	s = spltty();
 
@@ -681,7 +681,7 @@ unregister_xenbus_watch(struct xenbus_watch *watch)
 	char token[sizeof(watch) * 2 + 1];
 	int err, s;
 
-	sprintf(token, "%lX", (long)watch);
+	snprintf(token, sizeof(token), "%lX", (long)watch);
 
 	s = spltty();
 
@@ -725,7 +725,7 @@ xs_resume(void)
 	char token[sizeof(watch) * 2 + 1];
 	/* No need for watches_lock: the suspend_mutex is sufficient. */
 	SLIST_FOREACH(watch, &watches, watch_next) {
-		sprintf(token, "%lX", (long)watch);
+		snprintf(token, sizeof(token), "%lX", (long)watch);
 		xs_watch(watch->node, token);
 	}
 
