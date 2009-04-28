@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.43 2009/04/16 18:54:16 dyoung Exp $	*/
+/*	$NetBSD: ffs.c,v 1.44 2009/04/28 22:49:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.43 2009/04/16 18:54:16 dyoung Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.44 2009/04/28 22:49:26 joerg Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -477,7 +477,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	assert (fsopts != NULL);
 
 		/* create image */
-	if ((fsopts->fd = open(image, O_RDWR | O_CREAT | O_TRUNC, 0777))
+	if ((fsopts->fd = open(image, O_RDWR | O_CREAT | O_TRUNC, 0666))
 	    == -1) {
 		warn("Can't open `%s' for writing", image);
 		return (-1);
