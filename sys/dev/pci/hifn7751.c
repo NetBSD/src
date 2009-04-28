@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.41 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.42 2009/04/28 22:43:50 dyoung Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.41 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.42 2009/04/28 22:43:50 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -105,9 +105,9 @@ int hifn_debug = 1;
 #ifdef __OpenBSD__
 static int hifn_probe((struct device *, void *, void *);
 #else
-static int hifn_probe(struct device *, struct cfdata *, void *);
+static int hifn_probe(device_t, cfdata_t, void *);
 #endif
-static void hifn_attach(struct device *, struct device *, void *);
+static void hifn_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(hifn, sizeof(struct hifn_softc),
     hifn_probe, hifn_attach, NULL, NULL);
@@ -227,21 +227,20 @@ hifn_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-hifn_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+hifn_probe(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa = aux;
 
 	if (hifn_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
-hifn_attach(struct device *parent, struct device *self, void *aux)
+hifn_attach(device_t parent, device_t self, void *aux)
 {
-	struct hifn_softc *sc = (struct hifn_softc *)self;
+	struct hifn_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	const struct hifn_product *hp;
 	pci_chipset_tag_t pc = pa->pa_pc;
