@@ -544,7 +544,7 @@ limited_read_time(time_t *dest, __ops_region_t * region,
          * Cannot assume that time_t is 4 octets long -
 	 * SunOS 5.10 and NetBSD both have 64-bit time_ts.
          */
-	if (/* CONSTCOND */sizeof(time_t) == sizeof(uint32_t)) {
+	if (/* CONSTCOND */sizeof(time_t) == 4) {
 		return limited_read_scalar((unsigned *)(void *)dest, 4, region, pinfo);
 	}
 	for (i = 0; i < 4; i++) {
