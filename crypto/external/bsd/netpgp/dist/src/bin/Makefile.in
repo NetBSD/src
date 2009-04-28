@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.1.1.1 2009/04/23 06:32:02 agc Exp $
+# $Id: Makefile.in,v 1.2 2009/04/28 20:51:16 agc Exp $
 
 @SET_MAKE@
 SHELL = @SHELL@
@@ -48,7 +48,7 @@ OBJS= netpgp.o
 
 SRCS+= netpgp.c
 
-LIBS= -L${prefix}/lib -L../lib -lnetpgpsdk
+LIBS= -L${prefix}/lib -L../lib -lnetpgp
 
 DISTFILES= $(SRCS) AUTHORS COPYING DESCR INSTALL Makefile.in NEWS aclocal.m4 \
 config.guess config.h.in config.sub configure configure.ac install-sh \
@@ -76,10 +76,10 @@ maintainer-clean: distclean
 	rm -f configure config.h.in
 
 install: netpgp
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir) ${DESTDIR}${mandir}/man1
 	@f=`echo netpgp|sed '$(transform)'`; \
 		echo "$(INSTALL_PROGRAM) netpgp $(DESTDIR)$(bindir)/$$f"; \
-		$(INSTALL_PROGRAM) netpgp $(DESTDIR)$(bindir)/$$f
+		${LIBTOOL} --mode=install $(INSTALL_PROGRAM) netpgp $(DESTDIR)$(bindir)/$$f
 	$(mkinstalldirs) $(DESTDIR)$(mandir)/man1
 	@f=`echo netpgp.1|sed '$(transform)'`; \
 		echo "$(INSTALL_DATA) netpgp.1 $(DESTDIR)$(mandir)/man1/$$f"; \
