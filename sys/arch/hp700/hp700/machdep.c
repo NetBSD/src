@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.16 2009/04/28 07:34:02 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.17 2009/04/28 13:20:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.16 2009/04/28 07:34:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.17 2009/04/28 13:20:06 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -728,6 +728,7 @@ cpuid(void)
 			usebtlb = 1;
 		}
 	}
+	usebtlb = 0;
 
 	error = pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb);
 	if (error == 0 && pdc_hwtlb.min_size != 0 && pdc_hwtlb.max_size != 0) {
