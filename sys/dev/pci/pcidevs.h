@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.983 2009/04/25 15:30:17 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.984 2009/04/28 14:32:43 ginsbach Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.983 2009/04/25 15:29:18 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.984 2009/04/28 14:27:16 ginsbach Exp
  */
 
 /*
@@ -593,6 +593,7 @@
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom (SiByte) */
 #define	PCI_VENDOR_MYSON	0x1516		/* Myson-Century Technology */
+#define	PCI_VENDOR_MELLANOX	0x15b3		/* Mellanox Technologies */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics */
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros Communications */
@@ -2834,6 +2835,21 @@
 
 /* MediaQ products */
 #define	PCI_PRODUCT_MEDIAQ_MQ200	0x0200		/* MQ200 */
+
+/* Mellanox Technologies */
+#define	PCI_PRODUCT_MELLANOX_MT23108	0x5a44		/* InfiniHost (Tavor) */
+#define	PCI_PRODUCT_MELLANOX_MT23108_PCI	0x5a46		/* InfiniHost PCI Bridge (Tavor) */
+#define	PCI_PRODUCT_MELLANOX_MT25204_OLD	0x5e8c		/* InfiniHost III Lx (old Sinai) */
+#define	PCI_PRODUCT_MELLANOX_MT25204	0x6274		/* InfiniHost III Lx (Sinai) */
+#define	PCI_PRODUCT_MELLANOX_MT25208_COMPAT	0x6278		/* InfiniHost III Ex (Arbel in Tavor compatility) */
+#define	PCI_PRODUCT_MELLANOX_MT25208	0x6282		/* InfiniHost III Ex (Arbel) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_SDR	0x6340		/* ConnectX SDR (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_DDR	0x634a		/* ConnectX DDR (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_QDR	0x6354		/* ConnectX QDR PCIe 2.0 2.5GT/s (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_EN	0x6368		/* ConnectX EN 10GigE PCIe 2.0 2.5GT/s (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_DDR_2	0x6732		/* ConnectX DDR PCIe 2.0 5GT/s (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_QDR_2	0x673c		/* ConnectX QDR PCIe 2.0 5GT/s (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_EN_2	0x6750		/* ConnectX EN 10GigE PCIe 2.0 5GT/s (Hermon) */
 
 /* Microsoft products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 Ethernet Notebook Adapter */
