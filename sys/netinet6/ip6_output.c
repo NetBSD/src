@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.134.2.1 2009/01/19 13:20:14 skrll Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.134.2.2 2009/04/28 07:37:23 skrll Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.134.2.1 2009/01/19 13:20:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.134.2.2 2009/04/28 07:37:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -237,7 +237,7 @@ ip6_output(
 	}								\
     } while (/*CONSTCOND*/ 0)
 
-	bzero(&exthdrs, sizeof(exthdrs));
+	memset(&exthdrs, 0, sizeof(exthdrs));
 	if (opt) {
 		/* Hop-by-Hop options header */
 		MAKE_EXTHDR(opt->ip6po_hbh, &exthdrs.ip6e_hbh);
@@ -467,7 +467,7 @@ ip6_output(
 			rh->ip6r_segleft = 0;
 		}
 
-		bzero(&state, sizeof(state));
+		memset(&state, 0, sizeof(state));
 		state.m = m;
 		error = ipsec6_output_trans(&state, nexthdrp, mprev, sp, flags,
 		    &needipsectun);
@@ -613,10 +613,10 @@ skip_ipsec2:;
 		 *
 		 * IPv6 [ESP|AH] IPv6 [extension headers] payload
 		 */
-		bzero(&exthdrs, sizeof(exthdrs));
+		memset(&exthdrs, 0, sizeof(exthdrs));
 		exthdrs.ip6e_ip6 = m;
 
-		bzero(&state, sizeof(state));
+		memset(&state, 0, sizeof(state));
 		state.m = m;
 		state.ro = ro;
 		state.dst = rtcache_getdst(ro);
@@ -941,7 +941,7 @@ skip_ipsec2:;
 		struct ip6ctlparam ip6cp;
 
 		mtu32 = (u_int32_t)mtu;
-		bzero(&ip6cp, sizeof(ip6cp));
+		memset(&ip6cp, 0, sizeof(ip6cp));
 		ip6cp.ip6c_cmdarg = (void *)&mtu32;
 		pfctlinput2(PRC_MSGSIZE,
 		    rtcache_getdst(ro_pmtu), &ip6cp);
@@ -1038,7 +1038,7 @@ skip_ipsec2:;
 
 		/* Notify a proper path MTU to applications. */
 		mtu32 = (u_int32_t)mtu;
-		bzero(&ip6cp, sizeof(ip6cp));
+		memset(&ip6cp, 0, sizeof(ip6cp));
 		ip6cp.ip6c_cmdarg = (void *)&mtu32;
 		pfctlinput2(PRC_MSGSIZE,
 		    rtcache_getdst(ro_pmtu), &ip6cp);
@@ -2809,7 +2809,8 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 	if (control->m_next)
 		return (EINVAL);
 
-	for (; control->m_len; control->m_data += CMSG_ALIGN(cm->cmsg_len),
+	/* XXX if cm->cmsg_len is not aligned, control->m_len can become <0 */
+	for (; control->m_len > 0; control->m_data += CMSG_ALIGN(cm->cmsg_len),
 	    control->m_len -= CMSG_ALIGN(cm->cmsg_len)) {
 		int error;
 

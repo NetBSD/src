@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.2 2009/03/03 18:29:06 skrll Exp $
+# $NetBSD: GENERIC,v 1.6.2.3 2009/04/28 07:34:36 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.6.2.2 $"
+#ident		"GENERIC-$Revision: 1.6.2.3 $"
 
 maxusers	32
 
@@ -46,7 +46,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 

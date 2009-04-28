@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.5.8.1 2009/03/03 18:29:06 skrll Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.5.8.2 2009/04/28 07:34:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.5.8.1 2009/03/03 18:29:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.5.8.2 2009/04/28 07:34:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,7 +146,7 @@ iic_eumb_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-iic_bootstrap_init()
+iic_bootstrap_init(void)
 {
 
 	CSR_WRITE(I2CCR, 0);

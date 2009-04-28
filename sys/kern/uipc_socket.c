@@ -1,11 +1,11 @@
-/*	$NetBSD: uipc_socket.c,v 1.177.2.2 2009/03/03 18:32:57 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.177.2.3 2009/04/28 07:37:01 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of Wasabi Systems, Inc.
+ * by Jason R. Thorpe of Wasabi Systems, Inc, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177.2.2 2009/03/03 18:32:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177.2.3 2009/04/28 07:37:01 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1547,6 +1547,20 @@ soshutdown(struct socket *so, int how)
 	return error;
 }
 
+int
+sodrain(struct socket *so)
+{
+	int error;
+
+	solock(so);
+	so->so_state |= SS_ISDRAINING;
+	cv_broadcast(&so->so_cv);
+	error = soshutdown(so, SHUT_RDWR);
+	sounlock(so);
+
+	return error;
+}
+
 void
 sorflush(struct socket *so)
 {
@@ -2310,7 +2324,7 @@ sysctl_kern_somaxkva(SYSCTLFN_ARGS)
 }
 
 static void
-sysctl_kern_somaxkva_setup()
+sysctl_kern_somaxkva_setup(void)
 {
 
 	KASSERT(socket_sysctllog == NULL);

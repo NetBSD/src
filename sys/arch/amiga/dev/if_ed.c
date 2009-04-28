@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.55.28.1 2009/01/19 13:15:55 skrll Exp $ */
+/*	$NetBSD: if_ed.c,v 1.55.28.2 2009/04/28 07:33:40 skrll Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55.28.1 2009/01/19 13:15:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55.28.2 2009/04/28 07:33:40 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -263,7 +263,7 @@ ed_zbus_attach(struct device *parent, struct device *self, void *aux)
 	ed_stop(sc);
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;
@@ -1127,7 +1127,7 @@ ed_getmcaf(struct ethercom *ac, u_long *af)
 	af[0] = af[1] = 0;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * We must listen to a range of multicast addresses.

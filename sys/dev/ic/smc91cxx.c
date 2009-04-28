@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.70.2.1 2009/01/19 13:17:56 skrll Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.70.2.2 2009/04/28 07:35:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.70.2.1 2009/01/19 13:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.70.2.2 2009/04/28 07:35:27 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -201,8 +201,7 @@ int	smc91cxx_ioctl(struct ifnet *, u_long, void *);
 
 static inline int ether_cmp(const void *, const void *);
 static inline int
-ether_cmp(va, vb)
-	const void *va, *vb;
+ether_cmp(const void *va, const void *vb)
 {
 	const u_int8_t *a = va;
 	const u_int8_t *b = vb;
@@ -247,9 +246,7 @@ smc91cxx_intr_ack_write(bus_space_tag_t bst, bus_space_handle_t bsh,
 }
 
 void
-smc91cxx_attach(sc, myea)
-	struct smc91cxx_softc *sc;
-	u_int8_t *myea;
+smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -407,8 +404,7 @@ smc91cxx_attach(sc, myea)
  * Change media according to request.
  */
 int
-smc91cxx_mediachange(ifp)
-	struct ifnet *ifp;
+smc91cxx_mediachange(struct ifnet *ifp)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 
@@ -416,9 +412,7 @@ smc91cxx_mediachange(ifp)
 }
 
 int
-smc91cxx_set_media(sc, media)
-	struct smc91cxx_softc *sc;
-	int media;
+smc91cxx_set_media(struct smc91cxx_softc *sc, int media)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -464,9 +458,7 @@ smc91cxx_set_media(sc, media)
  * Notify the world which media we're using.
  */
 void
-smc91cxx_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+smc91cxx_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -499,8 +491,7 @@ smc91cxx_mediastatus(ifp, ifmr)
  * Reset and initialize the chip.
  */
 void
-smc91cxx_init(sc)
-	struct smc91cxx_softc *sc;
+smc91cxx_init(struct smc91cxx_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -643,8 +634,7 @@ smc91cxx_init(sc)
  * Must be called at splnet or interrupt level.
  */
 void
-smc91cxx_start(ifp)
-	struct ifnet *ifp;
+smc91cxx_start(struct ifnet *ifp)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -847,9 +837,7 @@ smc91cxx_start(ifp)
  * Squirt a (possibly misaligned) mbuf to the device
  */
 uint8_t
-smc91cxx_copy_tx_frame(sc, m0)
-	struct smc91cxx_softc *sc;
-	struct mbuf *m0;
+smc91cxx_copy_tx_frame(struct smc91cxx_softc *sc, struct mbuf *m0)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -930,8 +918,7 @@ smc91cxx_copy_tx_frame(sc, m0)
  * Interrupt service routine.
  */
 int
-smc91cxx_intr(arg)
-	void *arg;
+smc91cxx_intr(void *arg)
 {
 	struct smc91cxx_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -1165,8 +1152,7 @@ out:
  * NOTE!  WE EXPECT TO BE IN REGISTER WINDOW 2!
  */
 void
-smc91cxx_read(sc)
-	struct smc91cxx_softc *sc;
+smc91cxx_read(struct smc91cxx_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -1340,10 +1326,7 @@ smc91cxx_read(sc)
  * Process an ioctl request.
  */
 int
-smc91cxx_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+smc91cxx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1441,8 +1424,7 @@ smc91cxx_ioctl(ifp, cmd, data)
  * Reset the interface.
  */
 void
-smc91cxx_reset(sc)
-	struct smc91cxx_softc *sc;
+smc91cxx_reset(struct smc91cxx_softc *sc)
 {
 	int s;
 
@@ -1456,8 +1438,7 @@ smc91cxx_reset(sc)
  * Watchdog timer.
  */
 void
-smc91cxx_watchdog(ifp)
-	struct ifnet *ifp;
+smc91cxx_watchdog(struct ifnet *ifp)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 
@@ -1470,8 +1451,7 @@ smc91cxx_watchdog(ifp)
  * Stop output on the interface.
  */
 void
-smc91cxx_stop(sc)
-	struct smc91cxx_softc *sc;
+smc91cxx_stop(struct smc91cxx_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1499,8 +1479,7 @@ smc91cxx_stop(sc)
  * Enable power on the interface.
  */
 int
-smc91cxx_enable(sc)
-	struct smc91cxx_softc *sc;
+smc91cxx_enable(struct smc91cxx_softc *sc)
 {
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 && sc->sc_enable != NULL) {
@@ -1518,8 +1497,7 @@ smc91cxx_enable(sc)
  * Disable power on the interface.
  */
 void
-smc91cxx_disable(sc)
-	struct smc91cxx_softc *sc;
+smc91cxx_disable(struct smc91cxx_softc *sc)
 {
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) != 0 && sc->sc_disable != NULL) {
@@ -1529,9 +1507,7 @@ smc91cxx_disable(sc)
 }
 
 int
-smc91cxx_activate(self, act)
-	struct device *self;
-	enum devact act;
+smc91cxx_activate(struct device *self, enum devact act)
 {
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	int rv = 0, s;
@@ -1579,8 +1555,7 @@ smc91cxx_detach(struct device *self, int flags)
 }
 
 u_int32_t
-smc91cxx_mii_bitbang_read(self)
-	struct device *self;
+smc91cxx_mii_bitbang_read(struct device *self)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 
@@ -1589,9 +1564,7 @@ smc91cxx_mii_bitbang_read(self)
 }
 
 void
-smc91cxx_mii_bitbang_write(self, val)
-	struct device *self;
-	u_int32_t val;
+smc91cxx_mii_bitbang_write(struct device *self, u_int32_t val)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 
@@ -1600,9 +1573,7 @@ smc91cxx_mii_bitbang_write(self, val)
 }
 
 int
-smc91cxx_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+smc91cxx_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 	int val;
@@ -1617,9 +1588,7 @@ smc91cxx_mii_readreg(self, phy, reg)
 }
 
 void
-smc91cxx_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+smc91cxx_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 
@@ -1631,8 +1600,7 @@ smc91cxx_mii_writereg(self, phy, reg, val)
 }
 
 void
-smc91cxx_statchg(self)
-	struct device *self;
+smc91cxx_statchg(struct device *self)
 {
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -1653,8 +1621,7 @@ smc91cxx_statchg(self)
  * One second timer, used to tick the MII.
  */
 void
-smc91cxx_tick(arg)
-	void *arg;
+smc91cxx_tick(void *arg)
 {
 	struct smc91cxx_softc *sc = arg;
 	int s;

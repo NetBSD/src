@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.39.4.1 2009/01/19 13:19:00 skrll Exp $	*/
+/*	$NetBSD: rl.c,v 1.39.4.2 2009/04/28 07:36:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.39.4.1 2009/01/19 13:19:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.39.4.2 2009/04/28 07:36:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -433,7 +433,7 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bcopy(lp, addr, sizeof (struct disklabel));
+		memcpy(addr, lp, sizeof (struct disklabel));
 		break;
 
 #ifdef __HAVE_OLD_DISKLABEL
@@ -441,7 +441,7 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		newlabel = *lp;
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;
-		bcopy(&newlabel, addr, sizeof (struct olddisklabel));
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
 

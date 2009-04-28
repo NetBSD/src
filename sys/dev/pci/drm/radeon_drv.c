@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.9.2.1 2009/01/19 13:18:48 skrll Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.9.2.2 2009/04/28 07:36:20 skrll Exp $	*/
 
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.9.2.1 2009/01/19 13:18:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.9.2.2 2009/04/28 07:36:20 skrll Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -102,7 +102,7 @@ radeon_attach(device_t nbdev)
 {
 	drm_device_t *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	memset(dev, 0, sizeof(drm_device_t));
 	radeon_configure(dev);
 	return drm_attach(nbdev, radeon_pciidlist);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.17.12.1 2009/03/03 18:31:06 skrll Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.17.12.2 2009/04/28 07:35:45 skrll Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.17.12.1 2009/03/03 18:31:06 skrll Exp $
+ * $Id: if_ntwoc_isa.c,v 1.17.12.2 2009/04/28 07:35:45 skrll Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.12.1 2009/03/03 18:31:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.12.2 2009/04/28 07:35:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -802,8 +802,7 @@ ntwoc_isa_setup_memory(struct sca_softc *sc)
  * get the base clock frequency
  */
 static void
-ntwoc_isa_config_interrupts(self)
-	struct device *self;
+ntwoc_isa_config_interrupts(struct device *self)
 {
 	struct ntwoc_isa_softc *sc;
 

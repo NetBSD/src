@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.39 2008/06/27 17:28:24 degroote Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.39.4.1 2009/04/28 07:37:34 skrll Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.39 2008/06/27 17:28:24 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.39.4.1 2009/04/28 07:37:34 skrll Exp $");
 
 /*
  * IPsec controller part.
@@ -298,7 +298,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		 * have matched the packet. 
 		 */
 
-		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx, sizeof(spidx))) 
+		if (memcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx, sizeof(spidx))) 
 			return NULL;
 		
 	} else {
@@ -390,7 +390,7 @@ ipsec_invalpcbcache(struct inpcbpolicy *pcbsp, int dir)
 		pcbsp->sp_cache[i].cachesp = NULL;
 		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_MAYBE;
 		pcbsp->sp_cache[i].cachegen = 0;
-		bzero(&pcbsp->sp_cache[i].cacheidx,
+		memset(&pcbsp->sp_cache[i].cacheidx, 0,
 			  sizeof(pcbsp->sp_cache[i].cacheidx));
 	}
 	return 0;
@@ -666,7 +666,7 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 	if (*error != 0) {
 		DPRINTF(("ipsec_getpolicybyaddr: setpidx failed,"
 			" dir %u flag %u\n", dir, flag));
-		bzero(&spidx, sizeof (spidx));
+		memset(&spidx, 0, sizeof (spidx));
 		return NULL;
 	}
 
@@ -798,9 +798,9 @@ ipsec4_setspidx_inpcb(struct mbuf *m ,struct inpcb *pcb)
 		pcb->inp_sp->sp_out->spidx = pcb->inp_sp->sp_in->spidx;
 		pcb->inp_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
 	} else {
-		bzero(&pcb->inp_sp->sp_in->spidx,
+		memset(&pcb->inp_sp->sp_in->spidx, 0,
 			sizeof (pcb->inp_sp->sp_in->spidx));
-		bzero(&pcb->inp_sp->sp_out->spidx,
+		memset(&pcb->inp_sp->sp_out->spidx, 0,
 			sizeof (pcb->inp_sp->sp_in->spidx));
 	}
 	return error;
@@ -818,8 +818,8 @@ ipsec6_setspidx_in6pcb(struct mbuf *m, struct in6pcb *pcb)
 	IPSEC_ASSERT(pcb->in6p_sp->sp_out != NULL && pcb->in6p_sp->sp_in != NULL,
 		("ipsec6_setspidx_in6pcb: null sp_in || sp_out"));
 
-	bzero(&pcb->in6p_sp->sp_in->spidx, sizeof(*spidx));
-	bzero(&pcb->in6p_sp->sp_out->spidx, sizeof(*spidx));
+	memset(&pcb->in6p_sp->sp_in->spidx, 0, sizeof(*spidx));
+	memset(&pcb->in6p_sp->sp_out->spidx, 0, sizeof(*spidx));
 
 	spidx = &pcb->in6p_sp->sp_in->spidx;
 	error = ipsec_setspidx(m, spidx, 1);
@@ -836,8 +836,8 @@ ipsec6_setspidx_in6pcb(struct mbuf *m, struct in6pcb *pcb)
 	return 0;
 
 bad:
-	bzero(&pcb->in6p_sp->sp_in->spidx, sizeof(*spidx));
-	bzero(&pcb->in6p_sp->sp_out->spidx, sizeof(*spidx));
+	memset(&pcb->in6p_sp->sp_in->spidx, 0, sizeof(*spidx));
+	memset(&pcb->in6p_sp->sp_out->spidx, 0, sizeof(*spidx));
 	return error;
 }
 #endif
@@ -1120,10 +1120,10 @@ ipsec6_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 	}
 
 	sin6 = (struct sockaddr_in6 *)&spidx->src;
-	bzero(sin6, sizeof(*sin6));
+	memset(sin6, 0, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_src, &sin6->sin6_addr, sizeof(ip6->ip6_src));
+	memcpy(&sin6->sin6_addr, &ip6->ip6_src, sizeof(ip6->ip6_src));
 	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
 		sin6->sin6_addr.s6_addr16[1] = 0;
 		sin6->sin6_scope_id = ntohs(ip6->ip6_src.s6_addr16[1]);
@@ -1131,10 +1131,10 @@ ipsec6_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 	spidx->prefs = sizeof(struct in6_addr) << 3;
 
 	sin6 = (struct sockaddr_in6 *)&spidx->dst;
-	bzero(sin6, sizeof(*sin6));
+	memset(sin6, 0, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_dst, &sin6->sin6_addr, sizeof(ip6->ip6_dst));
+	memcpy(&sin6->sin6_addr, &ip6->ip6_dst, sizeof(ip6->ip6_dst));
 	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
 		sin6->sin6_addr.s6_addr16[1] = 0;
 		sin6->sin6_scope_id = ntohs(ip6->ip6_dst.s6_addr16[1]);
@@ -1244,7 +1244,7 @@ ipsec_deepcopy_policy(struct secpolicy *src)
 			M_SECA, M_NOWAIT);
 		if (*q == NULL)
 			goto fail;
-		bzero(*q, sizeof(**q));
+		memset(*q, 0, sizeof(**q));
 		(*q)->next = NULL;
 
 		(*q)->saidx.proto = p->saidx.proto;
@@ -1252,8 +1252,8 @@ ipsec_deepcopy_policy(struct secpolicy *src)
 		(*q)->level = p->level;
 		(*q)->saidx.reqid = p->saidx.reqid;
 
-		bcopy(&p->saidx.src, &(*q)->saidx.src, sizeof((*q)->saidx.src));
-		bcopy(&p->saidx.dst, &(*q)->saidx.dst, sizeof((*q)->saidx.dst));
+		memcpy(&(*q)->saidx.src, &p->saidx.src, sizeof((*q)->saidx.src));
+		memcpy(&(*q)->saidx.dst, &p->saidx.dst, sizeof((*q)->saidx.dst));
 
 		(*q)->sav = NULL;
 		(*q)->sp = dst;
@@ -2010,7 +2010,7 @@ ipsec_updatereplay(u_int32_t seq, struct secasvar *sav)
 	/* first time */
 	if (replay->count == 0) {
 		replay->lastseq = seq;
-		bzero(replay->bitmap, replay->wsize);
+		memset(replay->bitmap, 0, replay->wsize);
 		(replay->bitmap)[frlast] = 1;
 		goto ok;
 	}
@@ -2027,7 +2027,7 @@ ipsec_updatereplay(u_int32_t seq, struct secasvar *sav)
 			(replay->bitmap)[frlast] |= 1;
 		} else {
 			/* this packet has a "way larger" */
-			bzero(replay->bitmap, replay->wsize);
+			memset(replay->bitmap, 0, replay->wsize);
 			(replay->bitmap)[frlast] = 1;
 		}
 		replay->lastseq = seq;

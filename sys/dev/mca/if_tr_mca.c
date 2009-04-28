@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.18 2008/05/04 13:11:14 martin Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.18.8.1 2009/04/28 07:35:53 skrll Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.18 2008/05/04 13:11:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.18.8.1 2009/04/28 07:35:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,7 @@ static const struct tr_mca_product {
 static const struct tr_mca_product *tr_mca_lookup(int);
 
 static const struct tr_mca_product *
-tr_mca_lookup(id)
-	int id;
+tr_mca_lookup(int id)
 {
 	const struct tr_mca_product *trp;
 

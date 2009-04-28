@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.24.12.1 2009/03/03 18:34:31 skrll Exp $ */
+/* $NetBSD: pipe.h,v 1.24.12.2 2009/04/28 07:37:53 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -109,9 +109,9 @@ struct pipe {
 	struct	pipebuf pipe_buffer;	/* data storage */
 	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */
 	struct	selinfo pipe_sel;	/* for compat with select */
-	struct	timeval pipe_atime;	/* time of last access */
-	struct	timeval pipe_mtime;	/* time of last modify */
-	struct	timeval pipe_ctime;	/* time of status change */
+	struct	timespec pipe_atime;	/* time of last access */
+	struct	timespec pipe_mtime;	/* time of last modify */
+	struct	timespec pipe_btime;	/* time of creation */
 	pid_t	pipe_pgid;		/* process group for sigio */
 	struct	pipe *pipe_peer;	/* link with other direction */
 	u_int	pipe_state;		/* pipe status info */

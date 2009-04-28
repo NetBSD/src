@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.2.6.2 2009/03/03 18:34:40 skrll Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.2.6.3 2009/04/28 07:37:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.2.6.2 2009/03/03 18:34:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.2.6.3 2009/04/28 07:37:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -357,6 +357,7 @@ wapbl_ufs_rename(void *v)
 	} else {
 		error = VOP_LOOKUP(fdvp, &fvp, fcnp);
 		if (error && (error != EJUSTRETURN)) {
+			vput(fdvp);
 			vrele(ap->a_fvp);
 			goto out2;
 		}

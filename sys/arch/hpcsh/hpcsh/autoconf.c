@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2008/02/12 21:47:46 uwe Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21.18.1 2009/04/28 07:34:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2008/02/12 21:47:46 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21.18.1 2009/04/28 07:34:06 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -103,7 +103,7 @@ static void get_device(char *name);
 #endif
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	config_hook_init();
@@ -129,7 +129,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 #ifndef MEMORY_DISK_IS_ROOT

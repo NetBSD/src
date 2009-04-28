@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.12.1 2009/01/19 13:17:02 skrll Exp $ */
+/*	$NetBSD: autoconf.c,v 1.26.12.2 2009/04/28 07:34:49 skrll Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -62,7 +62,7 @@ long *bootregs;
  */
 
 void
-autoconf()
+autoconf(void)
 {
 	int copyrpb = 1;
 	int fromnet = (bootregs[12] != -1);
@@ -127,7 +127,7 @@ autoconf()
 volatile int tickcnt;
 
 satime_t
-getsecs()
+getsecs(void)
 {
 	return tickcnt/100;
 }
@@ -152,7 +152,7 @@ mcheck(void *arg)
  * to detect unwanted interrupts.
  */
 void
-scbinit()
+scbinit(void)
 {
 	int i, addr;
 

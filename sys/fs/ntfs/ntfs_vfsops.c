@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.72.4.1 2009/01/19 13:19:33 skrll Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.72.4.2 2009/04/28 07:36:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.72.4.1 2009/01/19 13:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.72.4.2 2009/04/28 07:36:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static const struct genfs_ops ntfs_genfsops = {
 static struct sysctllog *ntfs_sysctl_log;
 
 static int
-ntfs_mountroot()
+ntfs_mountroot(void)
 {
 	struct mount *mp;
 	struct lwp *l = curlwp;	/* XXX */
@@ -127,7 +127,7 @@ ntfs_mountroot()
 }
 
 static void
-ntfs_init()
+ntfs_init(void)
 {
 
 	malloc_type_attach(M_NTFSMNT);
@@ -143,13 +143,13 @@ ntfs_init()
 }
 
 static void
-ntfs_reinit()
+ntfs_reinit(void)
 {
 	ntfs_nthashreinit();
 }
 
 static void
-ntfs_done()
+ntfs_done(void)
 {
 	ntfs_nthashdone();
 	malloc_type_detach(M_NTFSMNT);
@@ -304,11 +304,7 @@ fail:
  * Common code for mount and mountroot
  */
 int
-ntfs_mountfs(devvp, mp, argsp, l)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct ntfs_args *argsp;
-	struct lwp *l;
+ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, struct lwp *l)
 {
 	struct buf *bp;
 	struct ntfsmount *ntmp;
@@ -335,7 +331,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	if (error)
 		goto out;
 	ntmp = malloc( sizeof *ntmp, M_NTFSMNT, M_WAITOK|M_ZERO);
-	bcopy( bp->b_data, &ntmp->ntm_bootfile, sizeof(struct bootfile) );
+	memcpy( &ntmp->ntm_bootfile,  bp->b_data, sizeof(struct bootfile) );
 	brelse( bp , 0 );
 	bp = NULL;
 

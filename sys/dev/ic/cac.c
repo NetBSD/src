@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.47 2008/06/08 12:43:51 tsutsui Exp $	*/
+/*	$NetBSD: cac.c,v 1.47.6.1 2009/04/28 07:35:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.47 2008/06/08 12:43:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.47.6.1 2009/04/28 07:35:26 skrll Exp $");
 
 #include "bio.h"
 
@@ -721,7 +721,7 @@ cac_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (edata->sensor >= sc->sc_nunits)
 		return;
 
-	bzero(&bv, sizeof(bv));
+	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
 	s = splbio();
 	if (cac_ioctl_vol(sc, &bv)) {

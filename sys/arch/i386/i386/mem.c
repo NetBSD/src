@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.70.2.1 2009/01/19 13:16:16 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.70.2.2 2009/04/28 07:34:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -106,9 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.70.2.1 2009/01/19 13:16:16 skrll Exp $");
-
-#include "opt_compat_freebsd.h"
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.70.2.2 2009/04/28 07:34:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -126,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.70.2.1 2009/01/19 13:16:16 skrll Exp $");
 
 #define	DEV_IO	14		/* iopl for compat_10 */
 
-extern char *vmmap;            /* poor name! */
+extern void *vmmap;            /* poor name! */
 void *zeropage;
 static kmutex_t mm_lock;
 
@@ -137,12 +135,11 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	mmopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER | D_MPSAFE,
+	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER | D_MPSAFE
 };
 
 int check_pa_acc(paddr_t, vm_prot_t);
 
-/*ARGSUSED*/
 int
 mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -153,7 +150,7 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 		again = true;
 		mutex_init(&mm_lock, MUTEX_DEFAULT, IPL_NONE);
 		zeropage = kmem_zalloc(PAGE_SIZE, KM_SLEEP);
-	}			
+	}
 
 	switch (minor(dev)) {
 	/* This is done by i386_iopl(3) now. */
@@ -178,7 +175,6 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
@@ -267,9 +263,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != DEV_MEM)
 		return -1;
 
-	if (check_pa_acc(off, prot) != 0) {
+	if (check_pa_acc(off, prot) != 0)
 		return -1;
-	}
 
 	return x86_btop(off);
 }

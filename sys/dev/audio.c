@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243 2008/06/10 22:53:08 cegger Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.4.1 2009/04/28 07:35:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243 2008/06/10 22:53:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.4.1 2009/04/28 07:35:13 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -262,8 +262,9 @@ const struct audio_params audio_default = {
 	.channels = 1,
 };
 
-CFATTACH_DECL_NEW(audio, sizeof(struct audio_softc),
-    audioprobe, audioattach, audiodetach, audioactivate);
+CFATTACH_DECL3_NEW(audio, sizeof(struct audio_softc),
+    audioprobe, audioattach, audiodetach, audioactivate, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver audio_cd;
 

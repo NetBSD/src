@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.34.18.2 2009/03/03 18:33:36 skrll Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.34.18.3 2009/04/28 07:37:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.34.18.2 2009/03/03 18:33:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.34.18.3 2009/04/28 07:37:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ static struct synclist *syncer_workitem_pending;
 struct lwp *updateproc = NULL;
 
 void
-vn_initialize_syncerd()
+vn_initialize_syncerd(void)
 {
 	int i;
 
@@ -150,9 +150,7 @@ vn_initialize_syncerd()
  * Add an item to the syncer work queue.
  */
 static void
-vn_syncer_add1(vp, delayx)
-	struct vnode *vp;
-	int delayx;
+vn_syncer_add1(struct vnode *vp, int delayx)
 {
 	struct synclist *slp;
 
@@ -183,9 +181,7 @@ vn_syncer_add1(vp, delayx)
 }
 
 void
-vn_syncer_add_to_worklist(vp, delayx)
-	struct vnode *vp;
-	int delayx;
+vn_syncer_add_to_worklist(struct vnode *vp, int delayx)
 {
 
 	KASSERT(mutex_owned(&vp->v_interlock));
@@ -199,8 +195,7 @@ vn_syncer_add_to_worklist(vp, delayx)
  * Remove an item from the syncer work queue.
  */
 void
-vn_syncer_remove_from_worklist(vp)
-	struct vnode *vp;
+vn_syncer_remove_from_worklist(struct vnode *vp)
 {
 	struct synclist *slp;
 
@@ -333,7 +328,7 @@ sched_sync(void *v)
  * normal turn time, otherwise it could take over the CPU.
  */
 int
-speedup_syncer()
+speedup_syncer(void)
 {
 
 	mutex_enter(&syncer_data_lock);

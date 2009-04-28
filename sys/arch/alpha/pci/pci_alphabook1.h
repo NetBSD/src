@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.h,v 1.1 1998/06/26 05:42:35 thorpej Exp $ */
+/* $NetBSD: pci_alphabook1.h,v 1.1.162.1 2009/04/28 07:33:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,4 +27,4 @@
  * rights to redistribute these changes.
  */
 
-void	pci_alphabook1_pickintr __P((struct lca_config *));
+void	pci_alphabook1_pickintr(struct lca_config *);

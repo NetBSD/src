@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.41.2.2 2009/03/03 18:34:07 skrll Exp $	*/
+/*	$NetBSD: vm.c,v 1.41.2.3 2009/04/28 07:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.41.2.2 2009/03/03 18:34:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.41.2.3 2009/04/28 07:37:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -249,7 +249,7 @@ uao_detach(struct uvm_object *uobj)
 static kmutex_t cachepgmtx;
 
 void
-rumpvm_init()
+rumpvm_init(void)
 {
 
 	uvmexp.free = 1024*1024; /* XXX */
@@ -444,6 +444,13 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
  */
 
 #ifndef RUMP_USE_REAL_ALLOCATORS
+void
+kmem_init()
+{
+
+	/* nothing to do */
+}
+
 void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.14.8.1 2009/01/19 13:17:18 skrll Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.14.8.2 2009/04/28 07:35:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.14.8.1 2009/01/19 13:17:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.14.8.2 2009/04/28 07:35:03 skrll Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ darwin_ifaddrs(int af, char *dst, size_t *sizep)
 					continue;
 			}
 
-			bzero(&diam, sizeof(diam));
+			memset(&diam, 0, sizeof(diam));
 
 			diam.diam_len = sizeof(diam);
 			diam.diam_vers = DARWIN_RTM_VERSION;

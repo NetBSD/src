@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.c,v 1.15.8.1 2009/01/19 13:17:44 skrll Exp $	 */
+/*	$NetBSD: svr4_32_resource.c,v 1.15.8.2 2009/04/28 07:35:12 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.15.8.1 2009/01/19 13:17:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.15.8.2 2009/04/28 07:35:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ svr4_to_native_rl(int rl)
 	case SVR4_RLIMIT_NOFILE:
 		return RLIMIT_NOFILE;
 	case SVR4_RLIMIT_VMEM:
-		return RLIMIT_RSS;
+		return RLIMIT_AS;
 	default:
 		return -1;
 	}

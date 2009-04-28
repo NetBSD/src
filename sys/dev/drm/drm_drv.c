@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.19.4.2 2009/03/03 18:30:44 skrll Exp $ */
+/* $NetBSD: drm_drv.c,v 1.19.4.3 2009/04/28 07:35:21 skrll Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.19.4.2 2009/03/03 18:30:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.19.4.3 2009/04/28 07:35:21 skrll Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -114,8 +114,8 @@ static drm_ioctl_desc_t		  drm_ioctls[256] = {
 	[DRM_IOCTL_NR(DRM_IOCTL_AGP_BIND)]      = { drm_agp_bind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
 	[DRM_IOCTL_NR(DRM_IOCTL_AGP_UNBIND)]    = { drm_agp_unbind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
 
-	[DRM_IOCTL_NR(DRM_IOCTL_SG_ALLOC)]      = { drm_sg_alloc,    DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
-	[DRM_IOCTL_NR(DRM_IOCTL_SG_FREE)]       = { drm_sg_free,     DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
+	[DRM_IOCTL_NR(DRM_IOCTL_SG_ALLOC)]      = { drm_sg_alloc_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
+	[DRM_IOCTL_NR(DRM_IOCTL_SG_FREE)]       = { drm_sg_free_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
 
 	[DRM_IOCTL_NR(DRM_IOCTL_WAIT_VBLANK)]   = { drm_wait_vblank, 0 },
 };
@@ -302,6 +302,7 @@ static int drm_firstopen(drm_device_t *dev)
 	int i;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
+	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
 
 	/* prebuild the SAREA */
 	i = drm_addmap(dev, 0, SAREA_MAX, _DRM_SHM,
@@ -435,6 +436,8 @@ static int drm_lastclose(drm_device_t *dev)
 		TAILQ_REMOVE(&dev->files, filep, link);
 		free(filep, M_DRM);
 	}
+
+	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.4.2.2 2009/03/03 18:34:31 skrll Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.4.2.3 2009/04/28 07:37:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.4.2.2 2009/03/03 18:34:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.4.2.3 2009/04/28 07:37:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -47,6 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.4.2.2 2009/03/03 18:34:31 skrll Exp $
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+
+#if 0
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 /*
  * A virtual ethernet interface which uses shared memory from a
@@ -197,7 +203,8 @@ rump_shmif_create(const char *path, int *ifnum)
 	if (sc->sc_memfd == -1)
 		goto fail;
 	sc->sc_busmem = rumpuser_filemmap(sc->sc_memfd, 0, BUSMEM_SIZE,
-	    1, 1, &error);
+	    RUMPUSER_FILEMMAP_TRUNCATE | RUMPUSER_FILEMMAP_SHARED
+	    | RUMPUSER_FILEMMAP_READ | RUMPUSER_FILEMMAP_WRITE, &error);
 	if (error)
 		goto fail;
 

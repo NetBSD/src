@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.35.6.1 2009/01/19 13:16:33 skrll Exp $
+# $NetBSD: SLAB,v 1.35.6.2 2009/04/28 07:34:30 skrll Exp $
 #
 # deberg's development machine
 #
@@ -17,7 +17,6 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE	# POSIX semaphore support
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support

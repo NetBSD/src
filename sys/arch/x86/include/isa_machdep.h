@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.6.4.1 2009/03/03 18:29:37 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6.4.2 2009/04/28 07:34:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #define _X86_ISA_MACHDEP_H_			/* XXX */
 
 #include <machine/bus.h>
+#include <sys/device.h>
 #include <dev/isa/isadmavar.h>
 
 /*

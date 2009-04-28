@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.23.2.1 2009/01/19 13:20:31 skrll Exp $	*/
+/*	$NetBSD: timevar.h,v 1.23.2.2 2009/04/28 07:37:53 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -173,8 +173,8 @@ void	timers_free(struct proc *, int);
 void	timer_tick(struct lwp *, bool);
 int	tstohz(const struct timespec *);
 int	tvtohz(const struct timeval *);
-int	inittimeleft(struct timeval *, struct timeval *);
-int	gettimeleft(struct timeval *, struct timeval *);
+int	inittimeleft(struct timespec *, struct timespec *);
+int	gettimeleft(struct timespec *, struct timespec *);
 void	timerupcall(struct lwp *);
 void	time_init(void);
 void	time_init2(void);

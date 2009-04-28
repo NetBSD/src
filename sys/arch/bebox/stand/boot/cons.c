@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.10 2008/06/07 03:56:20 kiyohara Exp $	*/
+/*	$NetBSD: cons.c,v 1.10.6.1 2009/04/28 07:33:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -153,7 +153,7 @@ cninit(int *addr, int *speed)
 }
 
 int
-cngetc()
+cngetc(void)
 {
 
 	if (cn_tab)
@@ -170,7 +170,7 @@ cnputc(int c)
 }
 
 int
-cnscan()
+cnscan(void)
 {
 
 	if (cn_tab)

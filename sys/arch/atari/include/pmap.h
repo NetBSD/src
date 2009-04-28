@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36.18.1 2009/01/19 13:16:01 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36.18.2 2009/04/28 07:33:52 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -88,6 +88,7 @@ struct memseg {
 	paddr_t start;		/* PA of first page in segment	*/
 	paddr_t end;		/* PA of last  page in segment	*/
 	int     first_page;	/* relative page# of 'start'	*/
+	int	free_list;	/* Memory priority, lower = faster */
 };
 
 #ifdef	_KERNEL

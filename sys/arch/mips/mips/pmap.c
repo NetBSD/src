@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.8.1 2009/01/19 13:16:30 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.8.2 2009/04/28 07:34:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.8.1 2009/01/19 13:16:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.8.2 2009/04/28 07:34:25 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1102,7 +1102,7 @@ pmap_page_cache(struct vm_page *pg, int mode)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte;
 	u_int npte;

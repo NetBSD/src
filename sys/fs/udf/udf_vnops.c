@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.30.2.2 2009/03/03 18:32:36 skrll Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.30.2.3 2009/04/28 07:36:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.2.2 2009/03/03 18:32:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.2.3 2009/04/28 07:36:58 skrll Exp $");
 #endif /* not lint */
 
 
@@ -935,9 +935,8 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 	  kauth_cred_t cred)
 {
 	struct udf_node  *udf_node = VTOI(vp);
-	uid_t euid, uid;
-	gid_t egid, gid;
-	int issuperuser, ismember;
+	uid_t uid;
+	gid_t gid;
 	int error;
 
 #ifdef notyet
@@ -965,26 +964,10 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 	if ((gid_t) ((uint32_t) gid) != gid)
 		return EINVAL;
 
-	/*
-	 * If we don't own the file, are trying to change the owner of the
-	 * file, or are not a member of the target group, the caller's
-	 * credentials must imply super-user privilege or the call fails.
-	 */
-
 	/* check permissions */
-	euid  = kauth_cred_geteuid(cred);
-	egid  = kauth_cred_getegid(cred);
-	if ((error = kauth_cred_ismember_gid(cred, new_gid, &ismember)))
-		return error;
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
-	issuperuser = (error == 0);
-
-	if (!issuperuser) {
-		if ((new_uid != uid) || (euid != uid))
-			return EPERM;
-		if ((new_gid != gid) && !(egid == new_gid || ismember)) 
-			return EPERM;
-	}
+	error = genfs_can_chown(vp, cred, uid, gid, new_uid, new_gid);
+	if (error)
+		return (error);
 
 	/* change the ownership */
 	udf_setownership(udf_node, new_uid, new_gid);
@@ -1000,9 +983,8 @@ static int
 udf_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 {
 	struct udf_node  *udf_node = VTOI(vp);
-	uid_t euid, uid;
-	gid_t egid, gid;
-	int issuperuser, ismember;
+	uid_t uid;
+	gid_t gid;
 	int error;
 
 #ifdef notyet
@@ -1019,22 +1001,9 @@ udf_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 	udf_getownership(udf_node, &uid, &gid);
 
 	/* check permissions */
-	euid  = kauth_cred_geteuid(cred);
-	egid  = kauth_cred_getegid(cred);
-	if ((error = kauth_cred_ismember_gid(cred, gid, &ismember)))
-		return error;
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
-	issuperuser = (error == 0);
-
-	if ((euid != uid) && !issuperuser)
-		return EPERM;
-	if (euid != 0) {
-		if (vp->v_type != VDIR && (mode & S_ISTXT))
-			return EFTYPE;
-
-		if ((!ismember) && (mode & S_ISGID))
-			return EPERM;
-	}
+	error = genfs_can_chmod(vp, cred, uid, gid, mode);
+	if (error)
+		return (error);
 
 	/* change mode */
 	udf_setaccessmode(udf_node, mode);
@@ -1659,13 +1628,10 @@ udf_do_symlink(struct udf_node *udf_node, char *target)
 		pathbuf, pathlen, 0,
 		UIO_SYSSPACE, IO_NODELOCKED | IO_ALTSEMANTICS,
 		FSCRED, NULL, NULL);
-	if (error) {
-		/* failed to write out symlink contents */
-		free(pathbuf, M_UDFTEMP);
-		return error;
-	}
 
-	return 0;
+	/* return status of symlink contents writeout */
+	free(pathbuf, M_UDFTEMP);
+	return error;
 }
 
 
@@ -2202,7 +2168,7 @@ udf_advlock(void *v)
 
 
 /* Global vfs vnode data structures for udfs */
-int (**udf_vnodeop_p) __P((void *));
+int (**udf_vnodeop_p)(void *);
 
 const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },

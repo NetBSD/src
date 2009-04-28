@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.24.12.1 2009/01/19 13:17:02 skrll Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.24.12.2 2009/04/28 07:34:53 skrll Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.24.12.1 2009/01/19 13:17:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.24.12.2 2009/04/28 07:34:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -309,9 +309,7 @@ dw780_init(struct uba_softc *sc)
 
 #ifdef notyet
 void
-dw780_purge(sc, bdp)
-	struct uba_softc *sc;
-	int bdp;
+dw780_purge(struct uba_softc *sc, int bdp)
 {
 	struct uba_vsoftc *vc = (void *)sc;
 

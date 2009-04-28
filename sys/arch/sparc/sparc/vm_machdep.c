@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.95.2.1 2009/01/19 13:16:46 skrll Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.95.2.2 2009/04/28 07:34:41 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.95.2.1 2009/01/19 13:16:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.95.2.2 2009/04/28 07:34:41 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -208,7 +208,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 		opcb->pcb_psr = getpsr();
 	}
 
-	bcopy((void *)opcb, (void *)npcb, sizeof(struct pcb));
+	memcpy( (void *)npcb, (void *)opcb, sizeof(struct pcb));
 	if (l1->l_md.md_fpstate != NULL) {
 		struct cpu_info *cpi;
 		int s;
@@ -229,7 +229,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 					1 << cpi->ci_cpuid);
 #endif
 		}
-		bcopy(l1->l_md.md_fpstate, l2->l_md.md_fpstate,
+		memcpy( l2->l_md.md_fpstate, l1->l_md.md_fpstate,
 		    sizeof(struct fpstate));
 		FPU_UNLOCK(s);
 	} else

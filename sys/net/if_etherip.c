@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.22.2.1 2009/01/19 13:20:11 skrll Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.22.2.2 2009/04/28 07:37:16 skrll Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.22.2.1 2009/01/19 13:20:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.22.2.2 2009/04/28 07:37:16 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -519,8 +519,8 @@ etherip_set_tunnel(struct ifnet *ifp,
 		    sc2->sc_src->sa_len    != src->sa_len)
 			continue;
 		/* can't configure same pair of address onto two tunnels */
-		if (bcmp(sc2->sc_dst, dst, dst->sa_len) == 0 &&
-		    bcmp(sc2->sc_src, src, src->sa_len) == 0) {
+		if (memcmp(sc2->sc_dst, dst, dst->sa_len) == 0 &&
+		    memcmp(sc2->sc_src, src, src->sa_len) == 0) {
 			error = EADDRNOTAVAIL;
 			goto out;
 		}

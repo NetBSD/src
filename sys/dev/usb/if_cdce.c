@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.18.2.1 2009/01/19 13:19:08 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.18.2.2 2009/04/28 07:36:39 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.18.2.1 2009/01/19 13:19:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.18.2.2 2009/04/28 07:36:39 skrll Exp $");
 #include "bpfilter.h"
 #ifdef	__NetBSD__
 #include "opt_inet.h"
@@ -344,7 +344,7 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 		u_int32_t crc;
 
 		crc = cdce_crc32(c->cdce_buf, m->m_pkthdr.len);
-		bcopy(&crc, c->cdce_buf + m->m_pkthdr.len, 4);
+		memcpy(c->cdce_buf + m->m_pkthdr.len, &crc, 4);
 		extra = 4;
 	}
 	c->cdce_mbuf = m;

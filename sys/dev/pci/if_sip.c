@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.134.8.1 2009/01/19 13:18:26 skrll Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.134.8.2 2009/04/28 07:35:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.134.8.1 2009/01/19 13:18:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.134.8.2 2009/04/28 07:35:57 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -613,10 +613,12 @@ static bool	sipcom_suspend(device_t PMF_FN_PROTO);
 int	gsip_copy_small = 0;
 int	sip_copy_small = 0;
 
-CFATTACH_DECL(gsip, sizeof(struct sip_softc),
-    sipcom_match, sipcom_attach, sipcom_detach, NULL);
-CFATTACH_DECL(sip, sizeof(struct sip_softc),
-    sipcom_match, sipcom_attach, sipcom_detach, NULL);
+CFATTACH_DECL3(gsip, sizeof(struct sip_softc),
+    sipcom_match, sipcom_attach, sipcom_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
+CFATTACH_DECL3(sip, sizeof(struct sip_softc),
+    sipcom_match, sipcom_attach, sipcom_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 /*
  * Descriptions of the variants of the SiS900.
@@ -2844,15 +2846,17 @@ sipcom_stop(struct ifnet *ifp, int disable)
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
 
-	/*
-	 * Disable interrupts.
-	 */
-	bus_space_write_4(st, sh, SIP_IER, 0);
+	if (device_is_active(&sc->sc_dev)) {
+		/*
+		 * Disable interrupts.
+		 */
+		bus_space_write_4(st, sh, SIP_IER, 0);
 
-	/*
-	 * Stop receiver and transmitter.
-	 */
-	bus_space_write_4(st, sh, SIP_CR, CR_RXD | CR_TXD);
+		/*
+		 * Stop receiver and transmitter.
+		 */
+		bus_space_write_4(st, sh, SIP_CR, CR_RXD | CR_TXD);
+	}
 
 	/*
 	 * Release any queued transmit buffers.
@@ -3935,6 +3939,11 @@ sipcom_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct sip_softc *sc = ifp->if_softc;
 
+	if (!device_is_active(&sc->sc_dev)) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
 	ether_mediastatus(ifp, ifmr);
 	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK) |
 			   sc->sc_flowflags;

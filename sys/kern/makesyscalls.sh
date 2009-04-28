@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.73.2.2 2009/03/03 18:32:56 skrll Exp $
+#	$NetBSD: makesyscalls.sh,v 1.73.2.3 2009/04/28 07:37:00 skrll Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -246,6 +246,9 @@ NR == 1 {
 	printf "#ifdef _RUMPKERNEL\n" > rumpcallshdr
 	printf "#error Interface not supported inside rump kernel\n" > rumpcallshdr
 	printf "#endif /* _RUMPKERNEL */\n\n" > rumpcallshdr
+	printf "#include <sys/types.h>\n" > rumpcallshdr
+	printf "#include <sys/select.h>\n\n" > rumpcallshdr
+	printf "#include <signal.h>\n\n" > rumpcallshdr
 
 	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
 	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
@@ -616,12 +619,12 @@ function putent(type, compatwrap) {
 	argarg = "NULL"
 	argsize = 0;
 	if (argc) {
-		argarg = "&arg"
-		argsize = "sizeof(arg)"
-		printf("\tstruct %s%s_args arg;\n\n", compatwrap_, funcname) \
+		argarg = "&callarg"
+		argsize = "sizeof(callarg)"
+		printf("\tstruct %s%s_args callarg;\n\n",compatwrap_,funcname) \
 		    > rumpcalls
 		for (i = 1; i <= argc; i++) {
-			printf("\tSPARG(&arg, %s) = %s;\n", \
+			printf("\tSPARG(&callarg, %s) = %s;\n", \
 			    argname[i], argname[i]) > rumpcalls
 		}
 		printf("\n") > rumpcalls

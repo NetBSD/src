@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.5.8.1 2009/01/19 13:17:09 skrll Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.5.8.2 2009/04/28 07:34:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.8.1 2009/01/19 13:17:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.8.2 2009/04/28 07:34:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/cpu.h>
 
 #include <machine/specialreg.h>

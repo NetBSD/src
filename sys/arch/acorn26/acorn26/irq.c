@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.8.26.1 2009/01/19 13:15:50 skrll Exp $ */
+/* $NetBSD: irq.c,v 1.8.26.2 2009/04/28 07:33:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8.26.1 2009/01/19 13:15:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8.26.2 2009/04/28 07:33:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -303,7 +303,7 @@ irq_enable(struct irq_handler *h)
 }
 
 
-void irq_genmasks()
+void irq_genmasks(void)
 {
 	struct irq_handler *h;
 	int s, i;

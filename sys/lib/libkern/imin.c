@@ -1,4 +1,4 @@
-/*	$NetBSD: imin.c,v 1.5 2005/12/11 12:24:37 christos Exp $	*/
+/*	$NetBSD: imin.c,v 1.5.84.1 2009/04/28 07:37:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
@@ -35,8 +35,7 @@
 #include <lib/libkern/libkern.h>
 
 int
-imin(a, b)
-	int a, b;
+imin(int a, int b)
 {
 	return (a < b ? a : b);
 }

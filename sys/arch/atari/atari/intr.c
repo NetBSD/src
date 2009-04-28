@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15.4.1 2009/01/19 13:16:00 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.15.4.2 2009/04/28 07:33:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15.4.1 2009/01/19 13:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15.4.2 2009/04/28 07:33:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ int idepth;
 volatile int ssir;
 
 void
-intr_init()
+intr_init(void)
 {
 	int i;
 
@@ -107,12 +107,7 @@ intr_init()
  */
 
 struct intrhand *
-intr_establish(vector, type, pri, ih_fun, ih_arg)
-	void		*ih_arg;
-        int		vector;
-        int		type;
-        int		pri;
-        hw_ifun_t	ih_fun;
+intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 {
 	struct intrhand	*ih, *cur_vec;
 	ih_list_t	*vec_list;
@@ -223,8 +218,7 @@ intr_establish(vector, type, pri, ih_fun, ih_arg)
 }
 
 int
-intr_disestablish(ih)
-struct intrhand	*ih;
+intr_disestablish(struct intrhand *ih)
 {
 	ih_list_t	*vec_list;
 	u_long		*hard_vec;
@@ -278,8 +272,7 @@ struct intrhand	*ih;
  * assembly language interrupt-glue routine.
  */
 void
-intr_dispatch(frame)
-struct clockframe	frame;
+intr_dispatch(struct clockframe frame)
 {
 	static int	unexpected, straycount;
 	int		vector;

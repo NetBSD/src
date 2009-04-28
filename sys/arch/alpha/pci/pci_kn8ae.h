@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.h,v 1.4 2000/06/05 21:47:28 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.h,v 1.4.140.1 2009/04/28 07:33:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -30,4 +30,4 @@
  * SUCH DAMAGE.
  */
 
-void	pci_kn8ae_pickintr __P((struct dwlpx_config *, int));
+void	pci_kn8ae_pickintr(struct dwlpx_config *, int);

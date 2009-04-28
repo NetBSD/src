@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.51.2.2 2009/03/03 18:32:35 skrll Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.51.2.3 2009/04/28 07:36:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.51.2.2 2009/03/03 18:32:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.51.2.3 2009/04/28 07:36:58 skrll Exp $");
 #endif /* not lint */
 
 
@@ -378,17 +378,15 @@ udf_mount(struct mount *mp, const char *path,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			vrele(devvp);
-			return error;
-		}
+	accessmode = VREAD;
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
+	if (error) {
+		vrele(devvp);
+		return error;
 	}
 
 	/*

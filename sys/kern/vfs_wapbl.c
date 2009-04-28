@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.3.6.2 2009/03/03 18:32:57 skrll Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.3.6.3 2009/04/28 07:37:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.6.2 2009/03/03 18:32:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.6.3 2009/04/28 07:37:01 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -257,7 +257,7 @@ struct wapbl_ops wapbl_ops = {
 };
 
 void
-wapbl_init()
+wapbl_init(void)
 {
 
 	malloc_type_attach(M_WAPBL);
@@ -2074,8 +2074,7 @@ wapbl_blkhash_init(struct wapbl_replay *wr, u_int size)
 #else /* ! _KERNEL */
 	/* Manually implement hashinit */
 	{
-		int i;
-		unsigned long hashsize;
+		unsigned long i, hashsize;
 		for (hashsize = 1; hashsize < size; hashsize <<= 1)
 			continue;
 		wr->wr_blkhash = wapbl_malloc(hashsize * sizeof(*wr->wr_blkhash));
@@ -2145,7 +2144,7 @@ wapbl_blkhash_rem(struct wapbl_replay *wr, daddr_t blk)
 static void
 wapbl_blkhash_clear(struct wapbl_replay *wr)
 {
-	int i;
+	unsigned long i;
 	for (i = 0; i <= wr->wr_blkhashmask; i++) {
 		struct wapbl_blk *wb;
 

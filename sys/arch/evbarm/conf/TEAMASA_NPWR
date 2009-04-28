@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.57.2.1 2009/01/19 13:16:03 skrll Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.57.2.2 2009/04/28 07:33:58 skrll Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -105,7 +105,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

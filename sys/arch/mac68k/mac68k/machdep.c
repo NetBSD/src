@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.322.2.2 2009/03/03 18:29:02 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.322.2.3 2009/04/28 07:34:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.322.2.2 2009/03/03 18:29:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.322.2.3 2009/04/28 07:34:18 skrll Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -597,7 +597,7 @@ cpu_init_kcore_hdr(void)
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	int i;
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.
@@ -684,7 +684,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
-	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
+	memcpy( chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);

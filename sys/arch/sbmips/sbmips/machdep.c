@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.4.2 2009/03/03 18:29:13 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.38.4.3 2009/04/28 07:34:37 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.4.2 2009/03/03 18:29:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.4.3 2009/04/28 07:34:37 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -184,7 +184,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		    sizeof bootinfo);
 	else if (reserved == CFE_EPTSEAL) {
 		magic = BOOTINFO_MAGIC;
-		bzero(&bootinfo, sizeof bootinfo);
+		memset(&bootinfo, 0, sizeof bootinfo);
 		bootinfo.version = BOOTINFO_VERSION;
 		bootinfo.fwhandle = fwhandle;
 		bootinfo.fwentry = bootdata;

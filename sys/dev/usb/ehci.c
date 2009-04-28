@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.154.2.1 2009/01/19 13:19:08 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.154.2.2 2009/04/28 07:36:39 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.2.1 2009/01/19 13:19:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.2.2 2009/04/28 07:36:39 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1368,7 +1368,7 @@ ehci_dump_regs(ehci_softc_t *sc)
  * debugger.
  */
 void
-ehci_dump()
+ehci_dump(void)
 {
 	ehci_dump_regs(theehci);
 }

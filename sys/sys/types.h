@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.80.14.2 2009/03/03 18:34:32 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.80.14.3 2009/04/28 07:37:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -319,7 +319,7 @@ typedef int pri_t;
 
 #endif
 
-#if defined(__STDC__) && defined(_KERNEL)
+#if defined(__STDC__) && (defined(_KERNEL) || defined(_KMEMUSER))
 /*
  * Forward structure declarations for function prototypes.  We include the
  * common structures that cross subsystem boundaries here; others are mostly

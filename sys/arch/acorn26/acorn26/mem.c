@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10.52.1 2009/01/19 13:15:50 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.10.52.2 2009/04/28 07:33:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.52.1 2009/01/19 13:15:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.52.2 2009/04/28 07:33:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -107,10 +107,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vm_offset_t v;
 	register int c;
@@ -196,10 +193,7 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	int ppn;
 

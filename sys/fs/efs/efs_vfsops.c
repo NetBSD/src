@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.16.2.1 2009/01/19 13:19:33 skrll Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.16.2.2 2009/04/28 07:36:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.16.2.1 2009/01/19 13:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.16.2.2 2009/04/28 07:36:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.16.2.1 2009/01/19 13:19:33 skrll Ex
 #include <sys/module.h>
 
 #include <miscfs/genfs/genfs_node.h>
+#include <miscfs/genfs/genfs.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -213,12 +214,10 @@ efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		err = VOP_ACCESS(devvp, mode, l->l_cred);
-		if (err) {
-			vput(devvp);
-			return (err);
-		}
+	err = genfs_can_mount(devvp, VREAD, l->l_cred);
+	if (err) {
+		vput(devvp);
+		return (err);
 	}
 
 	if ((err = VOP_OPEN(devvp, mode, l->l_cred))) {

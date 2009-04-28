@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.169.2.2 2009/03/03 18:34:40 skrll Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.169.2.3 2009/04/28 07:37:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169.2.2 2009/03/03 18:34:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169.2.3 2009/04/28 07:37:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169.2.2 2009/03/03 18:34:40 skrll Ex
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
+#include <miscfs/genfs/genfs.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
@@ -640,21 +641,16 @@ static int
 ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct inode	*ip;
-	int		error, ismember = 0;
+	int		error;
 
 	UFS_WAPBL_JLOCK_ASSERT(vp->v_mount);
 
 	ip = VTOI(vp);
-	if (kauth_cred_geteuid(cred) != ip->i_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)))
+
+	error = genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode);
+	if (error)
 		return (error);
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		if (vp->v_type != VDIR && (mode & S_ISTXT))
-			return (EFTYPE);
-		if ((kauth_cred_ismember_gid(cred, ip->i_gid, &ismember) != 0 ||
-		    !ismember) && (mode & ISGID))
-			return (EPERM);
-	}
+
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
@@ -672,7 +668,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     	struct lwp *l)
 {
 	struct inode	*ip;
-	int		error, ismember = 0;
+	int		error = 0;
 #ifdef QUOTA
 	uid_t		ouid;
 	gid_t		ogid;
@@ -685,19 +681,9 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		uid = ip->i_uid;
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
-	/*
-	 * If we don't own the file, are trying to change the owner
-	 * of the file, or are not a member of the target group,
-	 * the caller's credentials must imply super-user privilege
-	 * or the call fails.
-	 */
-	if ((kauth_cred_geteuid(cred) != ip->i_uid || uid != ip->i_uid ||
-	    (gid != ip->i_gid &&
-	    !(kauth_cred_getegid(cred) == gid ||
-	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
-	    ismember)))) &&
-	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0))
+
+	error = genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid);
+	if (error)
 		return (error);
 
 #ifdef QUOTA

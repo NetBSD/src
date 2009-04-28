@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.9.8.1 2009/03/03 18:29:37 skrll Exp $	*/
+/*	$NetBSD: est.c,v 1.9.8.2 2009/04/28 07:34:57 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,10 +81,11 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.9.8.1 2009/03/03 18:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.9.8.2 2009/04/28 07:34:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>

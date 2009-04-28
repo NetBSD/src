@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.4.8.1 2009/01/19 13:16:15 skrll Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.4.8.2 2009/04/28 07:34:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.4.8.1 2009/01/19 13:16:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.4.8.2 2009/04/28 07:34:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ dump_misc_init(void)
 		if (max_paddr < top)
 			max_paddr = top;
 	}
-#ifdef DEBUG
+#ifdef DUMP_DEBUG
 	printf("dump_misc_init: max_paddr = 0x%lx\n",
 	    (unsigned long)max_paddr);
 #endif

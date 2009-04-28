@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.4.2.2 2009/03/03 18:34:31 skrll Exp $	*/
+/*	$NetBSD: sockin.c,v 1.4.2.3 2009/04/28 07:37:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.4.2.2 2009/03/03 18:34:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.4.2.3 2009/04/28 07:37:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -328,7 +328,7 @@ sockinworker(void *arg)
 }
 
 static void
-sockin_init()
+sockin_init(void)
 {
 	int rv;
 

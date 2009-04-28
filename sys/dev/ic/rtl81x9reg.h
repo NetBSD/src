@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.32.2.1 2009/01/19 13:17:56 skrll Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.32.2.2 2009/04/28 07:35:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -158,6 +158,8 @@
 #define RTK_HWREV_8169_8110SB	0x10000000
 #define RTK_HWREV_8169_8110SC	0x18000000
 #define RTK_HWREV_8102EL	0x24800000
+#define RTK_HWREV_8102EL_SPIN2	0x24C00000
+#define RTK_HWREV_8168D		0x28000000
 #define RTK_HWREV_8168_SPIN1	0x30000000
 #define RTK_HWREV_8100E		0x30800000
 #define RTK_HWREV_8101E		0x34000000
@@ -167,6 +169,7 @@
 #define RTK_HWREV_8100E_SPIN2	0x38800000
 #define RTK_HWREV_8168C		0x3C000000
 #define RTK_HWREV_8168C_SPIN2	0x3C400000
+#define RTK_HWREV_8168CP	0x3C800000
 #define RTK_HWREV_8139		0x60000000
 #define RTK_HWREV_8139A		0x70000000
 #define RTK_HWREV_8139AG	0x70800000
@@ -475,6 +478,9 @@ struct re_desc {
 
 #define RE_TDESC_VLANCTL_TAG	0x00020000	/* Insert VLAN tag */
 #define RE_TDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
+#define RE_TDESC_VLANCTL_UDPCSUM 0x80000000	/* DESCV2 UDP cksum enable */
+#define RE_TDESC_VLANCTL_TCPCSUM 0x40000000	/* DESCV2 TCP cksum enable */
+#define RE_TDESC_VLANCTL_IPCSUM	0x20000000	/* DESCV2 IP hdr cksum enable */
 
 /*
  * Error bits are valid only on the last descriptor of a frame
@@ -521,6 +527,8 @@ struct re_desc {
 #define RE_RDESC_VLANCTL_TAG	0x00010000	/* VLAN tag available
 						   (re_vlandata valid)*/
 #define RE_RDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
+#define RE_RDESC_VLANCTL_IPV6	0x80000000	/* DESCV2 IPV6 packet */
+#define RE_RDESC_VLANCTL_IPV4	0x40000000	/* DESCV2 IPV4 packet */
 
 #define RE_PROTOID_NONIP	0x00000000
 #define RE_PROTOID_TCPIP	0x00010000

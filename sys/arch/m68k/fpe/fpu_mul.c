@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_mul.c,v 1.5 2005/12/11 12:17:52 christos Exp $ */
+/*	$NetBSD: fpu_mul.c,v 1.5.86.1 2009/04/28 07:34:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.5 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.5.86.1 2009/04/28 07:34:18 skrll Exp $");
 
 #include <sys/types.h>
 
@@ -99,8 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.5 2005/12/11 12:17:52 christos Exp $")
  * until we reach a nonzero word.
  */
 struct fpn *
-fpu_mul(fe)
-	register struct fpemu *fe;
+fpu_mul(register struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
 	register u_int a2, a1, a0, x2, x1, x0, bit, m;

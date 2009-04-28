@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.8 2008/07/08 06:50:22 mrg Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.8.2.1 2009/04/28 07:36:20 skrll Exp $	*/
 
 /* i915_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.8 2008/07/08 06:50:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.8.2.1 2009/04/28 07:36:20 skrll Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_drv.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */
@@ -94,7 +94,7 @@ i915_attach(device_t nbdev)
 {
 	drm_device_t *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	memset(dev, 0, sizeof(drm_device_t));
 	i915_configure(dev);
 	return drm_attach(nbdev, i915_pciidlist);
 }

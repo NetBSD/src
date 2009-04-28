@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.34.12.1 2009/01/19 13:15:52 skrll Exp $	*/
+/*	$NetBSD: boot32.c,v 1.34.12.2 2009/04/28 07:33:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -818,7 +818,7 @@ main(int argc, char **argv)
 	kernel_free_vm_start = (marks[MARK_END] + nbpp-1) & ~(nbpp-1);
 
 	/* we seem to be forced to clear the marks[] ? */
-	bzero(marks, sizeof(marks));
+	memset(marks, 0, sizeof(marks));
 
 	/* really load it ! */
 	ret = loadfile(booted_file, marks, LOAD_KERNEL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvramvar.h,v 1.1 1996/01/06 20:11:09 leo Exp $	*/
+/*	$NetBSD: nvramvar.h,v 1.1.178.1 2009/04/28 07:33:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -48,7 +48,7 @@ struct	nvr_softc {
 /*
  * Kernel internal interface to read config info from nvram
  */
-int nvr_get_byte __P((int));
+int nvr_get_byte(int);
 
 /*
  * Error return from nvr_get_byte

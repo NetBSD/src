@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.48 2008/06/19 19:03:44 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.48.4.1 2009/04/28 07:36:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.48 2008/06/19 19:03:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.48.4.1 2009/04/28 07:36:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -585,9 +585,9 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
-	bool found;
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
 	KASSERT(IMPLIES(cnp->cn_namelen == 2, !(cnp->cn_nameptr[0] == '.' &&
 	    cnp->cn_nameptr[1] == '.')));
@@ -595,17 +595,15 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	found = 0;
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
 		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
-			found = 1;
 			break;
 		}
 	}
 
-	return found ? de : NULL;
+	return de;
 }
 
 /* --------------------------------------------------------------------- */
@@ -708,6 +706,8 @@ tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 {
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
+
 	if (cookie == node->tn_spec.tn_dir.tn_readdir_lastn &&
 	    node->tn_spec.tn_dir.tn_readdir_lastp != NULL) {
 		return node->tn_spec.tn_dir.tn_readdir_lastp;
@@ -739,6 +739,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 	struct dirent *dentp;
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	TMPFS_VALIDATE_DIR(node);
 
 	/* Locate the first directory entry we have to return.  We have cached
@@ -1017,7 +1018,7 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 int
 tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 {
-	int error, ismember = 0;
+	int error;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1032,21 +1033,10 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	/* XXX: The following comes from UFS code, and can be found in
-	 * several other file systems.  Shouldn't this be centralized
-	 * somewhere? */
-	if (kauth_cred_geteuid(cred) != node->tn_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)))
-		return error;
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		if (vp->v_type != VDIR && (mode & S_ISTXT))
-			return EFTYPE;
-
-		if ((kauth_cred_ismember_gid(cred, node->tn_gid,
-		    &ismember) != 0 || !ismember) && (mode & S_ISGID))
-			return EPERM;
-	}
+	error = genfs_can_chmod(vp, cred, node->tn_uid, node->tn_gid,
+	    mode);
+	if (error)
+		return (error);
 
 	node->tn_mode = (mode & ALLPERMS);
 
@@ -1071,7 +1061,7 @@ int
 tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     struct lwp *l)
 {
-	int error, ismember = 0;
+	int error;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1094,15 +1084,10 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	/* XXX: The following comes from UFS code, and can be found in
-	 * several other file systems.  Shouldn't this be centralized
-	 * somewhere? */
-	if ((kauth_cred_geteuid(cred) != node->tn_uid || uid != node->tn_uid ||
-	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == node->tn_gid ||
-	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
-	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0))
-		return error;
+	error = genfs_can_chown(vp, cred, node->tn_uid, node->tn_gid, uid,
+	    gid);
+	if (error)
+		return (error);
 
 	node->tn_uid = uid;
 	node->tn_gid = gid;

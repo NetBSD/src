@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.21.12.1 2009/01/19 13:20:36 skrll Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.21.12.2 2009/04/28 07:37:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.21.12.1 2009/01/19 13:20:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.21.12.2 2009/04/28 07:37:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -604,7 +604,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	strncpy(attribute->uele_attrname, attrname,
 	    UFS_EXTATTR_MAXEXTATTRNAME);
 	attribute->uele_attrnamespace = attrnamespace;
-	bzero(&attribute->uele_fileheader,
+	memset(&attribute->uele_fileheader, 0,
 	    sizeof(struct ufs_extattr_fileheader));
 	
 	attribute->uele_backing_vnode = backing_vnode;
@@ -1294,14 +1294,14 @@ ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l)
 }
 
 void
-ufs_extattr_init()
+ufs_extattr_init(void)
 {
 
 	malloc_type_attach(M_UFS_EXTATTR);
 }
 
 void
-ufs_extattr_done()
+ufs_extattr_done(void)
 {
 
 	malloc_type_detach(M_UFS_EXTATTR);

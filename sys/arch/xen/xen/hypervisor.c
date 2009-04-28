@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.42.2.2 2009/03/03 18:29:49 skrll Exp $ */
+/* $NetBSD: hypervisor.c,v 1.42.2.3 2009/04/28 07:35:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.2.2 2009/03/03 18:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.2.3 2009/04/28 07:35:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,17 +240,17 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
+#ifdef DOM0OPS
+	if (xendomain_is_privileged()) {
+		xenkernfs_init();
+	}
+#endif
 #ifdef XEN3
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
 	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
 	       xen_version & 0x0000ffff);
 
 	xengnt_init();
-#ifdef DOM0OPS
-	if (xendomain_is_privileged()) {
-		xenkernfs_init();
-	}
-#endif
 
 	memset(&hac.hac_vcaa, 0, sizeof(hac.hac_vcaa));
 	hac.hac_vcaa.vcaa_name = "vcpu";
@@ -313,12 +313,12 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_bus = 0;
 #if NACPI > 0 && defined(ACPI_SCANPCI)
 	if (mpacpi_active)
-		mpacpi_scan_pci(self, &hac.hac_pba, pcibusprint);
+		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
 	if (mpbios_scanned != 0)
-		mpbios_scan_pci(self, &hac.hac_pba, pcibusprint);
+		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
 #endif
 	config_found_ia(self, "pcibus", &hac.hac_pba, pcibusprint);

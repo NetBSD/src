@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.197.2.2 2009/03/03 18:34:32 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.197.2.3 2009/04/28 07:37:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,8 @@ enum vtagtype	{
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
-	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS
+	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS,
+	VT_RUMP
 };
 
 #define	VNODE_TAGS \
@@ -112,7 +113,8 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", "VT_ZFS"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS","VT_EFS","VT_ZFS",\
+    "VT_RUMP"
 
 struct vnode;
 struct buf;
@@ -243,7 +245,7 @@ typedef struct vnode vnode_t;
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
     "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
-    "\28INACTNOW\31DIROP" 
+    "\30INACTNOW\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -661,6 +663,7 @@ void	vfs_timestamp(struct timespec *);
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));
 #endif /* DDB */
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_VNODE_H_ */

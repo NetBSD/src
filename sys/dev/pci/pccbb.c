@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.180.2.2 2009/03/03 18:31:07 skrll Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.180.2.3 2009/04/28 07:35:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.180.2.2 2009/03/03 18:31:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.180.2.3 2009/04/28 07:35:57 skrll Exp $");
 
 /*
 #define CBB_DEBUG
@@ -211,8 +211,9 @@ static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
     bus_space_tag_t memt, bus_space_handle_t memh);
 #endif
 
-CFATTACH_DECL_NEW(cbb_pci, sizeof(struct pccbb_softc),
-    pcicbbmatch, pccbbattach, pccbbdetach, NULL);
+CFATTACH_DECL3_NEW(cbb_pci, sizeof(struct pccbb_softc),
+    pcicbbmatch, pccbbattach, pccbbdetach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static const struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_mem_alloc,
@@ -946,7 +947,7 @@ pccbb_intrinit(struct pccbb_softc *sc)
 
 	/*
 	 * XXX pccbbintr should be called under the priority lower
-	 * than any other hard interupts.
+	 * than any other hard interrupts.
 	 */
 	KASSERT(sc->sc_ih == NULL);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);

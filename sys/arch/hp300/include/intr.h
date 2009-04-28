@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31.4.1 2009/01/19 13:16:13 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.31.4.2 2009/04/28 07:34:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _HP300_INTR_H_
 #define	_HP300_INTR_H_
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <machine/psl.h>
 

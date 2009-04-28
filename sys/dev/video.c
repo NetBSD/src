@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.17.6.2 2009/03/03 18:30:31 skrll Exp $ */
+/* $NetBSD: video.c,v 1.17.6.3 2009/04/28 07:35:13 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.17.6.2 2009/03/03 18:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.17.6.3 2009/04/28 07:35:13 skrll Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -760,7 +760,7 @@ video_set_format(struct video_softc *sc, struct v4l2_format *fmt)
 	int err;
 
 	hw = sc->hw_if;
-	if (hw->get_format == NULL)
+	if (hw->set_format == NULL)
 		return ENOTTY;
 
 	v4l2_format_to_video_format(fmt, &vfmt);

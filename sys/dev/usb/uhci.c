@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.223.4.1 2009/01/19 13:19:09 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.223.4.2 2009/04/28 07:36:39 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.223.4.1 2009/01/19 13:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.223.4.2 2009/04/28 07:36:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,10 +563,11 @@ uhci_init(uhci_softc_t *sc)
 	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
 	DPRINTFN(1,("uhci_init: enabling\n"));
+
+	err =  uhci_run(sc, 1);		/* and here we go... */
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE |
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
-
-	return (uhci_run(sc, 1));		/* and here we go... */
+	return err;
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -618,6 +619,9 @@ uhci_detach(struct uhci_softc *sc, int flags)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 		free(xfer, M_USB);
 	}
+
+	callout_halt(&sc->sc_poll_handle, NULL);
+	callout_destroy(&sc->sc_poll_handle);
 
 	/* XXX free other data structures XXX */
 
@@ -1309,7 +1313,7 @@ uhci_intr(void *arg)
 	if (sc->sc_dying || !device_has_power(sc->sc_dev))
 		return (0);
 
-	if (sc->sc_bus.use_polling) {
+	if (sc->sc_bus.use_polling || UREAD2(sc, UHCI_INTR) == 0) {
 #ifdef DIAGNOSTIC
 		DPRINTFN(16, ("uhci_intr: ignored interrupt while polling\n"));
 #endif

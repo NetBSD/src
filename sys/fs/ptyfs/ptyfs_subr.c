@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.16.8.1 2009/01/19 13:19:36 skrll Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.16.8.2 2009/04/28 07:36:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.16.8.1 2009/01/19 13:19:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.16.8.2 2009/04/28 07:36:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,10 @@ ptyfs_rehash(kmutex_t *hlock, struct ptyfs_hashhead **hhead,
 void
 ptyfs_hashdone(void)
 {
-
+	
+	mutex_destroy(&ptyfs_hashlock);
+	mutex_destroy(&ptyfs_used_slock);
+	mutex_destroy(&ptyfs_free_slock);
 	hashdone(ptyfs_used_tbl, HASH_LIST, ptyfs_used_mask);
 	hashdone(ptyfs_free_tbl, HASH_LIST, ptyfs_free_mask);
 }

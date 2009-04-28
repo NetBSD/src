@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.187.2.2 2009/03/03 18:30:31 skrll Exp $	*/
+/*	$NetBSD: vnd.c,v 1.187.2.3 2009/04/28 07:35:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.2.2 2009/03/03 18:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.2.3 2009/04/28 07:35:13 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1004,6 +1004,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCKLABEL:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
+	case DIOCCACHESYNC:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
 	case ODIOCSDINFO:
@@ -1125,7 +1126,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			vnd->sc_comp_buffblk = -1;
  
 			/* Initialize decompress stream */
-			bzero(&vnd->sc_comp_stream, sizeof(z_stream));
+			memset(&vnd->sc_comp_stream, 0, sizeof(z_stream));
 			vnd->sc_comp_stream.zalloc = vnd_alloc;
 			vnd->sc_comp_stream.zfree = vnd_free;
 			error = inflateInit2(&vnd->sc_comp_stream, MAX_WBITS);
@@ -1442,6 +1443,13 @@ unlock_and_exit:
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
+
+	case DIOCCACHESYNC:
+		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
+		error = VOP_FSYNC(vnd->sc_vp, vnd->sc_cred,
+		    FSYNC_WAIT | FSYNC_DATAONLY | FSYNC_CACHE, 0, 0);
+		VOP_UNLOCK(vnd->sc_vp, 0);
+		return error;
 
 	default:
 		return (ENOTTY);

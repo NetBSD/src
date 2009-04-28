@@ -279,7 +279,7 @@ int drm_irq_install(struct drm_device *dev)
 	}
 #endif
 #ifdef __NetBSD__
-	aprint_normal_dev(&dev->device, "interrupting at %s\n", istr);
+	aprint_normal_dev(dev->device, "interrupting at %s\n", istr);
 #endif
 
 				/* After installing handler */

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.42.2.1 2009/01/19 13:16:56 skrll Exp $
+# $NetBSD: INSTALL,v 1.42.2.2 2009/04/28 07:34:48 skrll Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -25,7 +25,6 @@ maxusers	2
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

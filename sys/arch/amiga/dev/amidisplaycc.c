@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.20.52.1 2009/01/19 13:15:55 skrll Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.20.52.2 2009/04/28 07:33:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.20.52.1 2009/01/19 13:15:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.20.52.2 2009/04/28 07:33:39 skrll Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -893,10 +893,10 @@ amidisplaycc_copyrows(void *screen, int srcrow, int dstrow, int nrows)
 
 				if (copysize > 0) {
 					/* Do it all */
-					bzero(dst, copysize);
+					memset(dst, 0, copysize);
 				} else {
 					for (i = 0 ; i < fontheight ; i++) {
-						bzero(dst, widthbytes);
+						memset(dst, 0, widthbytes);
 						dst += linebytes;
 					}
 				}

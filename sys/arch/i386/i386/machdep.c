@@ -1,12 +1,14 @@
-/*	$NetBSD: machdep.c,v 1.644.2.2 2009/03/03 18:28:59 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.2.3 2009/04/28 07:34:08 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum, by Jason R. Thorpe of the Numerical Aerospace
- * Simulation Facility, NASA Ames Research Center and by Julio M. Merino Vidal.
+ * Simulation Facility NASA Ames Research Center, by Julio M. Merino Vidal,
+ * and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.2.2 2009/03/03 18:28:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.2.3 2009/04/28 07:34:08 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -248,6 +250,7 @@ int	physmem;
 unsigned int cpu_feature;
 unsigned int cpu_feature2;
 unsigned int cpu_feature_padlock;
+
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -431,12 +434,11 @@ native_loader(int bl_boothowto, int bl_bootdev,
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	int x, y;
 	vaddr_t minaddr, maxaddr;
 	psize_t sz;
-	char pbuf[9];
 
 	/*
 	 * For console drivers that require uvm and pmap to be initialized,
@@ -469,8 +471,6 @@ cpu_startup()
 
 	initmsgbuf((void *)msgbuf_vaddr, sz);
 
-	printf("%s%s", copyright, version);
-
 #ifdef MULTIBOOT
 	multiboot_print_info();
 #endif
@@ -481,9 +481,6 @@ cpu_startup()
 	 */
 	wrmsr(MSR_DEBUGCTLMSR, 0x1);
 #endif
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
-	printf("total memory = %s\n", pbuf);
 
 #if NCARDBUS > 0
 	/* Tell RBUS how much RAM we have, so it can use heuristics. */
@@ -499,13 +496,13 @@ cpu_startup()
 				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
-	 * Finally, allocate mbuf cluster submap.
+	 * Allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	/* Say hello. */
+	banner();
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 #if NISA > 0 || NPCI > 0
@@ -527,7 +524,7 @@ cpu_startup()
  * Set up proc0's TSS and LDT.
  */
 void
-i386_proc0_tss_ldt_init()
+i386_proc0_tss_ldt_init(void)
 {
 	struct lwp *l;
 	struct pcb *pcb;
@@ -535,7 +532,7 @@ i386_proc0_tss_ldt_init()
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
@@ -544,7 +541,7 @@ i386_proc0_tss_ldt_init()
 	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 #ifndef XEN
-	lldt(pcb->pcb_ldt_sel);
+	lldt(pmap_kernel()->pm_ldt_sel);
 #else
 	HYPERVISOR_fpu_taskswitch();
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
@@ -1120,7 +1117,7 @@ int xen_idt_idx;
 #endif
 
 #ifndef XEN
-void cpu_init_idt()
+void cpu_init_idt(void)
 {
 	struct region_descriptor region;
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
@@ -1516,18 +1513,17 @@ init386(paddr_t first_avail)
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
 		idt_vec_reserve(x);
-		setgate(&idt[x], IDTVEC(exceptions)[x], 0,
-		    (x == 7 || x == 16) ? SDT_SYS386IGT : SDT_SYS386TGT,
+		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 	}
 
 	/* new-style interrupt gate for syscalls */
 	idt_vec_reserve(128);
-	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
+	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 	idt_vec_reserve(0xd2);
-	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
+	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386IGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
@@ -1631,7 +1627,7 @@ init386(paddr_t first_avail)
 #include <i386/isa/nvram.h>		/* for NVRAM POST */
 
 void
-cpu_reset()
+cpu_reset(void)
 {
 #ifdef XEN
 	HYPERVISOR_reboot();
@@ -1875,7 +1871,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	(*initclock_func)();

@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.8.4.1 2009/01/19 13:20:11 skrll Exp $ */
+/* $NetBSD: if_srt.c,v 1.8.4.2 2009/04/28 07:37:16 skrll Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.8.4.1 2009/01/19 13:20:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.8.4.2 2009/04/28 07:37:16 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -114,7 +114,7 @@ static RT *find_rt(SOFTC *sc, int af, ...)
 	  if ((ia.s_addr & ipv4_masks[r->srcmask]) == r->srcmatch.v4.s_addr) return(r);
 	  break;
        case AF_INET6:
-	  if ((r->srcmask >= 8) && bcmp(&ia6,&r->srcmatch.v6,r->srcmask/8)) continue;
+	  if ((r->srcmask >= 8) && memcmp(&ia6,&r->srcmatch.v6,r->srcmask/8)) continue;
 	  if ( (r->srcmask % 8) &&
 	       ( ( ia6.s6_addr[r->srcmask/8] ^
 		   r->srcmatch.v6.s6_addr[r->srcmask/8] ) &
@@ -234,7 +234,7 @@ static int srt_clone_create(struct if_clone *cl, int unit)
  if ((unit < 0) || (unit > SRT_MAXUNIT)) return(ENXIO);
  if (softcv[unit]) return(EBUSY);
  sc = malloc(sizeof(SOFTC),M_DEVBUF,M_WAIT);
- bzero(&sc->intf,sizeof(sc->intf)); /* XXX */
+ memset(&sc->intf, 0,sizeof(sc->intf)); /* XXX */
  sc->unit = unit;
  sc->nrt = 0;
  sc->rts = 0;

@@ -1,8 +1,8 @@
-/*	$NetBSD: x86_machdep.c,v 1.23.6.2 2009/03/03 18:29:37 skrll Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.23.6.3 2009/04/28 07:34:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
- * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.23.6.2 2009/03/03 18:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.23.6.3 2009/04/28 07:34:57 skrll Exp $");
 
 #include "opt_modular.h"
 
@@ -379,7 +379,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 #endif
 
 	if (seg_end > TOPLIMIT) {
-		printf("WARNING: skipping large memory map entry: "
+		aprint_verbose("WARNING: skipping large memory map entry: "
 		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
 		    seg_start,
 		    (seg_end - seg_start),

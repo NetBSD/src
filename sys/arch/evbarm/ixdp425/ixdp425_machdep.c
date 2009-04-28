@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.17.8.1 2009/01/19 13:16:07 skrll Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.17.8.2 2009/04/28 07:33:59 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.17.8.1 2009/01/19 13:16:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.17.8.2 2009/04/28 07:33:59 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -188,7 +188,7 @@ struct user *proc0paddr;
 /* Prototypes */
 
 void	consinit(void);
-u_int	cpu_get_control   __P((void));
+u_int	cpu_get_control(void);
 
 /*
  * Define the default console speed for the board.  This is generally

@@ -1,4 +1,4 @@
-/* $NetBSD: printf.c,v 1.5.8.1 2009/01/19 13:16:39 skrll Exp $ */
+/* $NetBSD: printf.c,v 1.5.8.2 2009/04/28 07:34:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -252,8 +252,7 @@ static void pr_int(lval, base, s)
 }
 
 static void
-sputchar(c)
-	int c;
+sputchar(int c)
 {
 
 	if (sbuf < ebuf)

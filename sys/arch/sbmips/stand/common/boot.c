@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.3.86.1 2009/01/19 13:16:42 skrll Exp $ */
+/* $NetBSD: boot.c,v 1.3.86.2 2009/04/28 07:34:37 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,7 +144,7 @@ main(long fwhandle,long fd,long fwentry)
 
 	cfe_flushcache(0);
 
-	bzero(&bootinfo,sizeof(bootinfo));
+	memset(&bootinfo, 0,sizeof(bootinfo));
 	bootinfo.version = BOOTINFO_VERSION;
 	bootinfo.reserved = 0;
 	bootinfo.ssym = marks[MARK_SYM];

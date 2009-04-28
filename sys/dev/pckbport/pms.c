@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.26.12.1 2009/01/19 13:18:59 skrll Exp $ */
+/* $NetBSD: pms.c,v 1.26.12.2 2009/04/28 07:36:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.26.12.1 2009/01/19 13:18:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.26.12.2 2009/04/28 07:36:21 skrll Exp $");
 
 #include "opt_pms.h"
 
@@ -149,9 +149,7 @@ pmsprobe(device_t parent, cfdata_t match, void *aux)
 	cmd[0] = PMS_RESET;
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 	if (res) {
-#ifdef DEBUG
-		printf("pmsprobe: reset error %d\n", res);
-#endif
+		aprint_debug("pmsprobe: reset error %d\n", res);
 		return 0;
 	}
 	if (resp[0] != PMS_RSTDONE) {
@@ -161,9 +159,7 @@ pmsprobe(device_t parent, cfdata_t match, void *aux)
 
 	/* get type number (0 = mouse) */
 	if (resp[1] != 0) {
-#ifdef DEBUG
-		printf("pmsprobe: type 0x%x\n", resp[1]);
-#endif
+		aprint_debug("pmsprobe: type 0x%x\n", resp[1]);
 		return 0;
 	}
 
@@ -192,12 +188,10 @@ pmsattach(device_t parent, device_t self, void *aux)
 	/* reset the device */
 	cmd[0] = PMS_RESET;
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
-#ifdef DEBUG
 	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
-		aprint_error("pmsattach: reset error\n");
+		aprint_debug("pmsattach: reset error\n");
 		return;
 	}
-#endif
 	sc->inputstate = 0;
 	sc->buttons = 0;
 	sc->protocol = PMS_UNKNOWN;

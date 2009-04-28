@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.21.8.1 2009/04/28 07:36:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.21.8.1 2009/04/28 07:36:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,10 +121,7 @@ CFATTACH_DECL(cgthree_sbus, sizeof(struct cgthree_softc),
  * Match a cgthree.
  */
 int
-cgthreematch_sbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cgthreematch_sbus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -135,9 +132,7 @@ cgthreematch_sbus(parent, cf, aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-cgthreeattach_sbus(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+cgthreeattach_sbus(struct device *parent, struct device *self, void *args)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct sbusdev *sd = &((struct cgthree_sbus_softc *)self)->bss_sd;

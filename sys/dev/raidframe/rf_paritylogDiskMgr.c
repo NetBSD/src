@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.22 2007/03/04 06:02:38 christos Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.22.50.1 2009/04/28 07:36:27 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.22 2007/03/04 06:02:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.22.50.1 2009/04/28 07:36:27 skrll Exp $");
 
 #include "rf_archs.h"
 
@@ -60,8 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.22 2007/03/04 06:02:38 chr
 static void *AcquireReintBuffer(RF_RegionBufferQueue_t *);
 
 static void *
-AcquireReintBuffer(pool)
-	RF_RegionBufferQueue_t *pool;
+AcquireReintBuffer(RF_RegionBufferQueue_t *pool)
 {
 	void *bufPtr = NULL;
 

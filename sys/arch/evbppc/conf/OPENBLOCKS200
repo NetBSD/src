@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.19.2.1 2009/01/19 13:16:08 skrll Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.19.2.2 2009/04/28 07:34:00 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -28,8 +28,6 @@ maxusers	32
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
-
 
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

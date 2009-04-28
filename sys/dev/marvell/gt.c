@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.18 2008/06/17 22:41:30 he Exp $	*/
+/*	$NetBSD: gt.c,v 1.18.4.1 2009/04/28 07:35:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.18 2008/06/17 22:41:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.18.4.1 2009/04/28 07:35:53 skrll Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -863,7 +863,7 @@ gt_watchdog_service(void)
  * gt_watchdog_reset - force a watchdog reset using Preset_VAL=0
  */
 void
-gt_watchdog_reset()
+gt_watchdog_reset(void)
 {
 	struct gt_softc *gt = gt_watchdog_sc;
 	u_int32_t r;

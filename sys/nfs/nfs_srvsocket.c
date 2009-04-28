@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsocket.c,v 1.1.8.2 2009/01/19 13:20:20 skrll Exp $	*/
+/*	$NetBSD: nfs_srvsocket.c,v 1.1.8.3 2009/04/28 07:37:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.1.8.2 2009/01/19 13:20:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.1.8.3 2009/04/28 07:37:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.1.8.2 2009/01/19 13:20:20 skrll 
 
 static void nfsrv_wakenfsd_locked(struct nfssvc_sock *);
 
-int (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
+int (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 				    struct nfssvc_sock *, struct lwp *,
-				    struct mbuf **)) = {
+				    struct mbuf **) = {
 	nfsrv_null,
 	nfsrv_getattr,
 	nfsrv_setattr,
@@ -275,9 +275,7 @@ done:
  * can sleep.
  */
 int
-nfsrv_getstream(slp, waitflag)
-	struct nfssvc_sock *slp;
-	int waitflag;
+nfsrv_getstream(struct nfssvc_sock *slp, int waitflag)
 {
 	struct mbuf *m, **mpp;
 	struct mbuf *recm;

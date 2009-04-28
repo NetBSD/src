@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.7 2005/12/11 12:18:51 christos Exp $	*/
+/*	$NetBSD: installboot.c,v 1.7.86.1 2009/04/28 07:34:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 NONAKA Kimihiro (nonaka@NetBSD.org).
@@ -48,7 +48,7 @@ int load_prep_partition(int, struct mbr_partition *);
 int main(int, char **);
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-n] [-v] <boot> <device>\n",

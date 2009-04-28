@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.267.4.2 2009/03/03 18:34:40 skrll Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.267.4.3 2009/04/28 07:37:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.267.4.2 2009/03/03 18:34:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.267.4.3 2009/04/28 07:37:57 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -468,7 +468,7 @@ lfs_writerd(void *arg)
  * Initialize the filesystem, most work done by ufs_init.
  */
 void
-lfs_init()
+lfs_init(void)
 {
 
 	malloc_type_attach(M_SEGMENT);
@@ -491,13 +491,13 @@ lfs_init()
 }
 
 void
-lfs_reinit()
+lfs_reinit(void)
 {
 	ufs_reinit();
 }
 
 void
-lfs_done()
+lfs_done(void)
 {
 	ufs_done();
 	mutex_destroy(&lfs_lock);
@@ -514,7 +514,7 @@ lfs_done()
  * Called by main() when ufs is going to be mounted as root.
  */
 int
-lfs_mountroot()
+lfs_mountroot(void)
 {
 	extern struct vnode *rootvp;
 	struct mount *mp;
@@ -1047,8 +1047,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
 
-	printf("WARNING: the log-structured file system is experimental and "
-	    "may be unstable\n");
+	printf("WARNING: the log-structured file system is experimental\n"
+	    "WARNING: it may cause system crashes and/or corrupt data\n");
 
 	return (0);
 

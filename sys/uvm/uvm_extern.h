@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.148.2.2 2009/03/03 18:34:40 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.148.2.3 2009/04/28 07:37:58 skrll Exp $	*/
 
 /*
  *
@@ -176,7 +176,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 /*
  * the following defines the strategies for uvm_pagealloc_strat()
  */
-#define	UVM_PGA_STRAT_NORMAL	0	/* high -> low free list walk */
+#define	UVM_PGA_STRAT_NORMAL	0	/* priority (low id to high) walk */
 #define	UVM_PGA_STRAT_ONLY	1	/* only specified free list */
 #define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
 
@@ -241,7 +241,6 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
-struct pool;
 struct simplelock;
 struct vm_map_entry;
 struct vm_map;
@@ -502,6 +501,7 @@ struct vmspace {
 	segsz_t vm_tsize;	/* text size (pages) XXX */
 	segsz_t vm_dsize;	/* data size (pages) XXX */
 	segsz_t vm_ssize;	/* stack size (pages) */
+	segsz_t vm_issize;	/* initial unmapped stack size (pages) */
 	void *	vm_taddr;	/* user virtual address of text XXX */
 	void *	vm_daddr;	/* user virtual address of data XXX */
 	void *vm_maxsaddr;	/* user VA at max stack growth */
@@ -511,8 +511,6 @@ struct vmspace {
 #define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
 #ifdef _KERNEL
-
-extern struct pool *uvm_aiobuf_pool;
 
 /*
  * used to keep state while iterating over the map for a core dump.

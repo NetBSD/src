@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.15 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.15.8.1 2009/04/28 07:35:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -120,9 +120,7 @@ bad:
 }
 
 static void
-daic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+daic_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct daic_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -148,8 +146,7 @@ daic_isa_attach(parent, self, aux)
  * Controller interrupt.
  */
 static int
-daic_isa_intr(arg)
-	void *arg;
+daic_isa_intr(void *arg)
 {
 	struct daic_isa_softc *sc = arg;
 	return daic_intr(&sc->sc_daic);

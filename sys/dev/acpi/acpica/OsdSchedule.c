@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.8.6.1 2009/03/03 18:30:43 skrll Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.8.6.2 2009/04/28 07:35:19 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8.6.1 2009/03/03 18:30:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8.6.2 2009/04/28 07:35:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -165,7 +165,7 @@ AcpiOsSleep(ACPI_INTEGER Milliseconds)
 {
 	ACPI_FUNCTION_TRACE(__func__);
 
-	if (cold || acpi_suspended)
+	if (cold || doing_shutdown || acpi_suspended)
 		DELAY(Milliseconds * 1000);
 	else {
 		mutex_enter(&acpi_osd_sleep_mtx);

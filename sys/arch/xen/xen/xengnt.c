@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.10.2.2 2009/03/03 18:29:49 skrll Exp $      */
+/*      $NetBSD: xengnt.c,v 1.10.2.3 2009/04/28 07:35:01 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.10.2.2 2009/03/03 18:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.10.2.3 2009/04/28 07:35:01 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,7 @@ static void xengnt_resume(void);
 static int xengnt_more_entries(void);
 
 void
-xengnt_init()
+xengnt_init(void)
 {
 	struct gnttab_query_size query;
 	int rc;
@@ -114,7 +114,7 @@ xengnt_init()
  * Resume grant table state
  */
 static void
-xengnt_resume()
+xengnt_resume(void)
 {
 	int previous_nr_grant_frames = gnt_nr_grant_frames;
 	gnt_nr_grant_frames = 0;
@@ -192,7 +192,7 @@ xengnt_more_entries(void)
  * Returns a reference to the first free entry in grant table
  */
 static grant_ref_t
-xengnt_get_entry()
+xengnt_get_entry(void)
 {
 	grant_ref_t entry;
 	int s = splvm();

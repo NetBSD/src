@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.26.2.2 2009/03/03 18:29:00 skrll Exp $	*/
+/*	$NetBSD: libi386.h,v 1.26.2.3 2009/04/28 07:34:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -38,7 +38,7 @@ ssize_t pread(int, void *, size_t);
 void startprog(physaddr_t, int, unsigned long *, physaddr_t);
 void multiboot(physaddr_t, physaddr_t, physaddr_t);
 
-int exec_netbsd(const char *, physaddr_t, int, int);
+int exec_netbsd(const char *, physaddr_t, int, int, void (*)(void));
 int exec_multiboot(const char *, char *);
 
 void delay(int);

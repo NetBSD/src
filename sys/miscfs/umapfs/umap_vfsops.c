@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.80.4.1 2009/01/19 13:20:07 skrll Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.80.4.2 2009/04/28 07:37:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.80.4.1 2009/01/19 13:20:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.80.4.2 2009/04/28 07:37:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,11 +68,7 @@ static struct sysctllog *umapfs_sysctl_log;
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, data_len)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	size_t *data_len;
+umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;

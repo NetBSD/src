@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.72.2.2 2009/03/03 18:34:07 skrll Exp $	*/
+/*	$NetBSD: rump.c,v 1.72.2.3 2009/04/28 07:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.72.2.2 2009/03/03 18:34:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.72.2.3 2009/04/28 07:37:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.72.2.2 2009/03/03 18:34:07 skrll Exp $");
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
+#include <sys/evcnt.h>
+#include <sys/event.h>
 #include <sys/filedesc.h>
 #include <sys/iostat.h>
 #include <sys/kauth.h>
@@ -57,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.72.2.2 2009/03/03 18:34:07 skrll Exp $");
 #include <sys/vmem.h>
 
 #include <rump/rumpuser.h>
+
+#include <secmodel/secmodel.h>
 
 #include "rump_private.h"
 #include "rump_net_private.h"
@@ -82,6 +86,9 @@ struct filedesc rump_filedesc0;
 struct proclist allproc;
 char machine[] = "rump";
 static kauth_cred_t rump_susercred;
+
+/* pretend the master rump proc is init */
+struct proc *initproc = &proc0;
 
 struct rumpuser_mtx *rump_giantlock;
 
@@ -161,14 +168,15 @@ rump__init(int rump_version)
 	rumpuser_mutex_recursive_init(&rump_giantlock);
 	ksyms_init();
 	rumpvm_init();
+	evcnt_init();
 
 	once_init();
 
 	rump_sleepers_init();
-#ifdef RUMP_USE_REAL_ALLOCATORS
+
 	pool_subsystem_init();
 	kmem_init();
-#endif
+
 	kprintf_init();
 	loginit();
 
@@ -188,7 +196,7 @@ rump__init(int rump_version)
 	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = 1;
-	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INIT(&allproc);
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
@@ -198,6 +206,7 @@ rump__init(int rump_version)
 	callout_startup();
 	callout_init_cpu(&rump_cpu);
 
+	kqueue_init();
 	iostat_init();
 	uid_init();
 	percpu_init();
@@ -207,6 +216,7 @@ rump__init(int rump_version)
 	softint_init(&rump_cpu);
 	cold = 0;
 	devsw_init();
+	secmodel_start();
 
 	/* these do nothing if not present */
 	rump_vfs_init();
@@ -325,7 +335,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 }
 
 void
-rump_clear_curlwp()
+rump_clear_curlwp(void)
 {
 	struct lwp *l;
 
@@ -341,7 +351,7 @@ rump_clear_curlwp()
 }
 
 struct lwp *
-rump_get_curlwp()
+rump_get_curlwp(void)
 {
 	struct lwp *l;
 
@@ -381,7 +391,7 @@ rump_cred_destroy(kauth_cred_t cred)
 }
 
 kauth_cred_t
-rump_cred_suserget()
+rump_cred_suserget(void)
 {
 
 	kauth_cred_hold(rump_susercred);
@@ -392,7 +402,7 @@ rump_cred_suserget()
  * Return the next system lwpid
  */
 lwpid_t
-rump_nextlid()
+rump_nextlid(void)
 {
 	lwpid_t retid;
 

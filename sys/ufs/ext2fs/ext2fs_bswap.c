@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.13.26.1 2009/01/19 13:20:31 skrll Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.13.26.2 2009/04/28 07:37:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.13.26.1 2009/01/19 13:20:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.13.26.2 2009/04/28 07:37:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -90,7 +90,7 @@ void e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
 {
 	int i;
 
-	for (i = 0; i < (size / sizeof(struct  ext2_gd)); i++) {
+	for (i = 0; i < (size / (int)sizeof(struct  ext2_gd)); i++) {
 		new[i].ext2bgd_b_bitmap	= bswap32(old[i].ext2bgd_b_bitmap);
 		new[i].ext2bgd_i_bitmap	= bswap32(old[i].ext2bgd_i_bitmap);
 		new[i].ext2bgd_i_tables	= bswap32(old[i].ext2bgd_i_tables);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsoftc.c,v 1.3 2005/11/23 09:43:37 yamt Exp $	*/
+/*	$NetBSD: if_agrsoftc.c,v 1.3.84.1 2009/04/28 07:37:22 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsoftc.c,v 1.3 2005/11/23 09:43:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsoftc.c,v 1.3.84.1 2009/04/28 07:37:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agrsoftc.c,v 1.3 2005/11/23 09:43:37 yamt Exp $")
  */
 
 struct agr_softc *
-agr_alloc_softc()
+agr_alloc_softc(void)
 {
 	struct agr_softc *sc;
 	union {

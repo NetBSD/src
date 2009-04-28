@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.21.8.1 2009/04/28 07:36:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.21.8.1 2009/04/28 07:36:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,10 +122,7 @@ static void	bwtwo_set_video (struct bwtwo_softc *, int);
  * Match a bwtwo.
  */
 static int
-bwtwomatch_sbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+bwtwomatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -137,9 +134,7 @@ bwtwomatch_sbus(parent, cf, aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-bwtwoattach_sbus(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+bwtwoattach_sbus(struct device *parent, struct device *self, void *args)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	struct sbusdev *sd = &((struct bwtwo_sbus_softc *)self)->bss_sd;
@@ -204,9 +199,7 @@ bwtwoattach_sbus(parent, self, args)
 }
 
 static void
-bwtwo_set_video(sc, enable)
-	struct bwtwo_softc *sc;
-	int enable;
+bwtwo_set_video(struct bwtwo_softc *sc, int enable)
 {
 
 	if (enable)
@@ -223,8 +216,7 @@ bwtwo_set_video(sc, enable)
 }
 
 static int
-bwtwo_get_video(sc)
-	struct bwtwo_softc *sc;
+bwtwo_get_video(struct bwtwo_softc *sc)
 {
 
 	return ((sc->sc_reg->fbc_ctrl & FBC_VENAB) != 0);

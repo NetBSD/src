@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.112.2.1 2009/01/19 13:19:40 skrll Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.112.2.2 2009/04/28 07:37:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.112.2.1 2009/01/19 13:19:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.112.2.2 2009/04/28 07:37:01 skrll Exp $");
 
 #define SYSVSHM
 
@@ -973,7 +973,11 @@ shminit(void)
 	shm_cv = (void *)((uintptr_t)shmsegs +
 	    ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)));
 
-	shminfo.shmmax *= PAGE_SIZE;
+	if (shminfo.shmmax == 0)
+		shminfo.shmmax = max(physmem / 4, 1024) * PAGE_SIZE;
+	else
+		shminfo.shmmax *= PAGE_SIZE;
+	shminfo.shmall = shminfo.shmmax / PAGE_SIZE;
 
 	for (i = 0; i < shminfo.shmmni; i++) {
 		cv_init(&shm_cv[i], "shmwait");

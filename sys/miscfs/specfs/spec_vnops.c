@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.119.6.2 2009/03/03 18:33:36 skrll Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.119.6.3 2009/04/28 07:37:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.119.6.2 2009/03/03 18:33:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.119.6.3 2009/04/28 07:37:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -940,8 +940,8 @@ spec_close(void *v)
 				sess->s_ttyp->t_pgrp = NULL;
 				sess->s_ttyp->t_session = NULL;
 				mutex_spin_exit(&tty_lock);
-				SESSRELE(sess);
-				mutex_exit(proc_lock);
+				/* Releases proc_lock. */
+				proc_sessrele(sess);
 			} else {
 				mutex_spin_exit(&tty_lock);
 				if (sess->s_ttyp->t_pgrp != NULL)

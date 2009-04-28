@@ -1,5 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.3.4.3 2009/03/03 18:30:44 skrll Exp $      */
->>>>>>> 1.4
+/*        $NetBSD: dm_target_linear.c,v 1.3.4.4 2009/04/28 07:35:21 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8.2.2 2009/03/03 18:34:07 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.8.2.3 2009/04/28 07:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.2.2 2009/03/03 18:34:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.2.3 2009/04/28 07:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -89,19 +89,31 @@ makeworker(bool bootstrap)
 /* rumpuser structures since we call rumpuser interfaces directly */
 static struct rumpuser_cv *clockcv;
 static struct rumpuser_mtx *clockmtx;
-static struct timespec rump_clock;
+static struct timespec clockbase, clockup;
+static unsigned clkgen;
+
+void
+rump_getuptime(struct timespec *ts)
+{
+	int startgen, i = 0;
+
+	do {
+		startgen = clkgen;
+		if (__predict_false(i++ > 10)) {
+			yield();
+			i = 0;
+		}
+		*ts = clockup;
+	} while (startgen != clkgen || clkgen % 2 != 0);
+}
 
 void
 rump_gettime(struct timespec *ts)
 {
-	struct timespec attempt;
+	struct timespec ts_up;
 
-	/* XXX: this is completely bogus */
-	do {
-		attempt = rump_clock;
-	} while (memcmp(&attempt, &rump_clock, sizeof(struct timespec)) != 0);
-
-	*ts = attempt;
+	rump_getuptime(&ts_up);
+	timespecadd(&clockbase, &ts_up, ts);
 }
 
 /*
@@ -110,15 +122,15 @@ rump_gettime(struct timespec *ts)
 static void
 doclock(void *noarg)
 {
-	struct timespec tick;
+	struct timespec tick, curtime;
 	uint64_t sec, nsec;
-	static int ticks = 0;
+	int ticks = 0, error;
 	extern int hz;
-	int error;
 
 	rumpuser_gettime(&sec, &nsec, &error);
-	rump_clock.tv_sec = sec;
-	rump_clock.tv_nsec = nsec;
+	clockbase.tv_sec = sec;
+	clockbase.tv_nsec = nsec;
+	curtime = clockbase;
 	tick.tv_sec = 0;
 	tick.tv_nsec = 1000000000/hz;
 
@@ -133,11 +145,15 @@ doclock(void *noarg)
 			ticks = 0;
 		}
 
-		/* wait until the next tick */
+		/* wait until the next tick. XXX: what if the clock changes? */
 		while (rumpuser_cv_timedwait(clockcv, clockmtx,
-		    &rump_clock) != EWOULDBLOCK)
+		    &curtime) != EWOULDBLOCK)
 			continue;
-		timespecadd(&rump_clock, &tick, &rump_clock);
+
+		clkgen++;
+		timespecadd(&clockup, &tick, &clockup);
+		clkgen++;
+		timespecadd(&clockup, &clockbase, &curtime);
 	}
 }
 

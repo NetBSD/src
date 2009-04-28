@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2007/12/17 19:54:32 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.26.1 2009/04/28 07:34:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -235,7 +235,7 @@ exec_kernel(char *name)
 	u_long marks[MARK_MAX];
 #ifdef DBMONITOR
 	int go_monitor;
-	extern int db_monitor __P((void));
+	extern int db_monitor(void);
 
 ret:
 #endif /* DBMONITOR */

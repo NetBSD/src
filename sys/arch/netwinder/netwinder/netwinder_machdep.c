@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.66.8.1 2009/01/19 13:16:32 skrll Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.66.8.2 2009/04/28 07:34:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.66.8.1 2009/01/19 13:16:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.66.8.2 2009/04/28 07:34:29 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -971,12 +971,7 @@ consinit(void)
 
 #if NIGSFB > 0
 static int
-nw_footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+nw_footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
 {
 	bus_addr_t startpa, endpa;
 
@@ -1007,10 +1002,7 @@ nw_footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 
 
 static void
-nw_footbridge_mem_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+nw_footbridge_mem_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/*

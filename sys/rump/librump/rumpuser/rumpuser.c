@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.21.2.2 2009/03/03 18:34:30 skrll Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.21.2.3 2009/04/28 07:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.21.2.2 2009/03/03 18:34:30 skrll Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.21.2.3 2009/04/28 07:37:51 skrll Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -86,6 +86,9 @@ rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 	case S_IFBLK:
 		*ft = RUMPUSER_FT_BLK;
 		break;
+	case S_IFCHR:
+		*ft = RUMPUSER_FT_CHR;
+		break;
 	default:
 		*ft = RUMPUSER_FT_OTHER;
 		break;
@@ -125,9 +128,6 @@ rumpuser__malloc(size_t howmuch, int canfail, const char *func, int line)
 		warn("malloc failed %s (%d)", func, line);
 		abort();
 	}
-
-	if (rv)
-		memset(rv, 0, howmuch);
 
 	return rv;
 }
@@ -182,22 +182,27 @@ rumpuser_unmap(void *addr, size_t len)
 }
 
 void *
-rumpuser_filemmap(int fd, off_t offset, size_t len, int shared,
-	int dotruncate, int *error)
+rumpuser_filemmap(int fd, off_t offset, size_t len, int flags, int *error)
 {
 	void *rv;
-	int flags;
+	int mmflags, prot;
 
-	if (dotruncate)
+	if (flags & RUMPUSER_FILEMMAP_TRUNCATE)
 		ftruncate(fd, offset + len);
 
-	flags = MAP_FILE;
-	if (shared)
-		flags |= MAP_SHARED;
+	mmflags = MAP_FILE;
+	if (flags & RUMPUSER_FILEMMAP_SHARED)
+		mmflags |= MAP_SHARED;
 	else
-		flags |= MAP_PRIVATE;
+		mmflags |= MAP_PRIVATE;
 
-	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, flags, fd, offset);
+	prot = 0;
+	if (flags & RUMPUSER_FILEMMAP_READ)
+		prot |= PROT_READ;
+	if (flags & RUMPUSER_FILEMMAP_WRITE)
+		prot |= PROT_WRITE;
+
+	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, mmflags, fd, offset);
 	if (rv == MAP_FAILED) {
 		*error = errno;
 		return NULL;
@@ -205,6 +210,13 @@ rumpuser_filemmap(int fd, off_t offset, size_t len, int shared,
 
 	*error = 0;
 	return rv;
+}
+
+int
+rumpuser_memsync(void *addr, size_t len, int *error)
+{
+
+	DOCALL_KLOCK(int, (msync(addr, len, MS_SYNC)));
 }
 
 int
@@ -266,7 +278,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	ssize_t rv;
 	int error = 0;
 
-	KLOCK_WRAP(rv = rumpuser_pread(fd, data, size, offset, &error));
+	rv = rumpuser_pread(fd, data, size, offset, &error);
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
@@ -306,7 +318,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	ssize_t rv;
 	int error = 0;
 
-	KLOCK_WRAP(rv = rumpuser_pwrite(fd, data, size, offset, &error));
+	rv = rumpuser_pwrite(fd, data, size, offset, &error);
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
@@ -430,7 +442,7 @@ rumpuser_putchar(int c, int *error)
 }
 
 void
-rumpuser_panic()
+rumpuser_panic(void)
 {
 
 	abort();

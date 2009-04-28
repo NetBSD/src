@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.8.4.3 2009/03/03 18:30:44 skrll Exp $      */
+/*        $NetBSD: dm.h,v 1.8.4.4 2009/04/28 07:35:21 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
+
+#include <sys/disklabel.h>
+
+#include <prop/proplib.h>
 
 #define DM_MAX_TYPE_NAME 16
 #define DM_NAME_LEN 128
@@ -130,7 +134,6 @@ typedef struct dm_dev {
 
 	struct dm_dev_head upcalls;
 	
-	struct disklabel *dk_label;    /* Disklabel for this table. */
 	struct disk *diskp;
 	
 	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.39.12.1 2009/01/19 13:17:55 skrll Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.39.12.2 2009/04/28 07:35:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.39.12.1 2009/01/19 13:17:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.39.12.2 2009/04/28 07:35:26 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -926,10 +926,7 @@ sca_output(
 }
 
 static int
-sca_ioctl(ifp, cmd, data)
-     struct ifnet *ifp;
-     u_long cmd;
-     void *data;
+sca_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr;
 	struct ifaddr *ifa;
@@ -1023,8 +1020,7 @@ sca_ioctl(ifp, cmd, data)
  * MUST BE CALLED AT splnet()
  */
 static void
-sca_start(ifp)
-	struct ifnet *ifp;
+sca_start(struct ifnet *ifp)
 {
 	sca_port_t *scp = ifp->if_softc;
 	struct sca_softc *sc = scp->sca;

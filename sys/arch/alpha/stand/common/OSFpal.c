@@ -1,4 +1,4 @@
-/* $NetBSD: OSFpal.c,v 1.8 2001/07/22 15:17:30 wiz Exp $ */
+/* $NetBSD: OSFpal.c,v 1.8.136.1 2009/04/28 07:33:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1996 Carnegie-Mellon University.
@@ -39,7 +39,7 @@ paddr_t ptbr_save;
 #include "common.h"
 
 void
-OSFpal()
+OSFpal(void)
 {
 	struct rpb *r;
 	struct pcs *p;

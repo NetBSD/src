@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.21.2.1 2009/01/19 13:16:03 skrll Exp $
+#	$NetBSD: ARMADILLO9,v 1.21.2.2 2009/04/28 07:33:57 skrll Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -93,7 +93,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options		P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options

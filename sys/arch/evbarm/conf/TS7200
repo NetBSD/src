@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.33.2.2 2009/03/03 18:28:53 skrll Exp $
+#	$NetBSD: TS7200,v 1.33.2.3 2009/04/28 07:33:58 skrll Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -107,7 +107,6 @@ options 	SEMMNS=60	# number of semaphores in system
 options 	SEMUME=10	# max number of undo entries per process
 options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.6.8.1 2009/01/19 13:17:08 skrll Exp $	*/
+/*	$NetBSD: mboot.c,v 1.6.8.2 2009/04/28 07:34:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -132,8 +132,7 @@ IOCS_S_READEXT (int pos, int blk, int id, int size, void *buf)
 
 
 int
-bootmain(scsiid)
-	int scsiid;
+bootmain(int scsiid)
 {
 	struct iocs_readcap cap;
 	int size;

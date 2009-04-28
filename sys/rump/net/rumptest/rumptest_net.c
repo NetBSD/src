@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.3.4.2 2009/03/03 18:34:31 skrll Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.3.4.3 2009/04/28 07:37:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,6 @@
 #define MYGW "10.181.181.1"
 #define IFNAME "virt0" /* XXX: hardcoded */
 
-int rump_virtif_create(void *, void *); /* XXX: bad hack, prototype is wrong */
 static void
 configure_interface(void)
 {
@@ -85,7 +84,7 @@ configure_interface(void)
 	uint8_t *bp = &m_rtmsg.m_space;
 	int s, rv;
 
-	if ((rv = rump_virtif_create(NULL, NULL)) != 0) {
+	if ((rv = rump_virtif_create(0)) != 0) {
 		printf("could not configure interface %d\n", rv);
 		exit(1);
 	}
