@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fsck_root,v 1.1 2009/04/21 16:08:57 joerg Exp $
+# $NetBSD: fsck_root,v 1.2 2009/04/28 13:08:51 apb Exp $
 #
 
 # PROVIDE: fsck_root
@@ -10,6 +10,7 @@ $_rc_subr_loaded . /etc/rc.subr
 name="fsck_root"
 start_cmd="fsck_root_start"
 stop_cmd=":"
+fstab_file=/etc/fstab
 
 fsck_root_start()
 {
@@ -19,6 +20,22 @@ fsck_root_start()
 	fi
 	trap : 2 		# Ignore SIGINT, SIGQUIT, so we
 	trap : 3		# enter single-user mode on failure.
+
+	# Do nothing if root file system has fs_passno=0 in /etc/fstab.
+	while read fs_spec fs_file fs_vfstype fs_mntops fs_freq fs_passno
+	do
+		case "${fs_spec}:${fs_file}:${fs_passno}" in
+		\#*|'':*)
+			continue # skip comment or blank line
+			;;
+		*:/:0)
+			echo "Not checking /: fs_passno = 0 in ${fstab_file}"
+			return
+			;;
+		*:/:*)	break
+			;;
+		esac
+	done <"${fstab_file}"
 
 	echo "Starting root file system check:"
 	fsck $fsck_flags /
