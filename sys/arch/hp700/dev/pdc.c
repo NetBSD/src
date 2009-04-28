@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.25.4.1 2008/10/27 08:02:40 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.25.4.2 2009/04/28 12:54:40 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.25.4.1 2008/10/27 08:02:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.25.4.2 2009/04/28 12:54:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.25.4.1 2008/10/27 08:02:40 skrll Exp $");
 #include <machine/autoconf.h>
 
 #include <hp700/hp700/machdep.h>
-
-#include <machine/db_machdep.h>         /* type definitions */
-#include <ddb/db_interface.h>
-
 
 typedef
 struct pdc_softc {
