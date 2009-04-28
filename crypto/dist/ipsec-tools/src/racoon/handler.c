@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.27 2009/04/20 13:16:52 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.28 2009/04/28 13:54:07 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -736,6 +736,17 @@ initph2(iph2)
 		oakley_delivm(iph2->ivm);
 		iph2->ivm = NULL;
 	}
+
+#ifdef ENABLE_NATT
+	if (iph2->natoa_src) {
+		racoon_free(iph2->natoa_src);
+		iph2->natoa_src = NULL;
+	}
+	if (iph2->natoa_dst) {
+		racoon_free(iph2->natoa_dst);
+		iph2->natoa_dst = NULL;
+	}
+#endif
 }
 
 /*
