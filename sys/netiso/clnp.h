@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.26 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: clnp.h,v 1.26.2.1 2009/04/28 07:37:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -428,7 +428,7 @@ extern float    troll_random;
  */
 #define CLNP_INSERT_ADDR(hoff, isoa)\
 	*hoff++ = (isoa).isoa_len;\
-	(void) bcopy((void *)((isoa).isoa_genaddr), hoff, (isoa).isoa_len);\
+	(void) memcpy( hoff, (void *)((isoa).isoa_genaddr), (isoa).isoa_len);\
 	hoff += (isoa).isoa_len;
 
 /*

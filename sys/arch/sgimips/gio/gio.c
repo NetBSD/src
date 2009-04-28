@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.29.54.1 2009/03/03 18:29:14 skrll Exp $	*/
+/*	$NetBSD: gio.c,v 1.29.54.2 2009/04/28 07:34:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.29.54.1 2009/03/03 18:29:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.29.54.2 2009/04/28 07:34:38 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -358,7 +358,7 @@ gio_submatch(struct device *parent, struct cfdata *cf,
 }
 
 int
-gio_cnattach()
+gio_cnattach(void)
 {
 	struct gio_attach_args ga;
 	int i;

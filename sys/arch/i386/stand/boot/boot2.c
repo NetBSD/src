@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.38.2.2 2009/03/03 18:29:00 skrll Exp $	*/
+/*	$NetBSD: boot2.c,v 1.38.2.3 2009/04/28 07:34:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -220,6 +220,14 @@ sprint_bootsel(const char *filename)
 	return "(invalid)";
 }
 
+static void
+clearit(void)
+{
+
+	if (bootconf.clear)
+		clear_pc_screen();
+}
+
 void
 bootit(const char *filename, int howto, int tell)
 {
@@ -231,7 +239,7 @@ bootit(const char *filename, int howto, int tell)
 		printf("\n");
 	}
 
-	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80) < 0)
+	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
@@ -241,9 +249,8 @@ bootit(const char *filename, int howto, int tell)
 void
 print_banner(void)
 {
-	if (bootconf.clear)
-		clear_pc_screen();
 
+	clearit();
 #ifndef SMALL
 	int n;
 	if (bootconf.banner[0]) {
@@ -402,7 +409,7 @@ command_boot(char *arg)
 	int howto;
 
 	if (parseboot(arg, &filename, &howto))
-		bootit(filename, howto, 1);
+		bootit(filename, howto, (howto & AB_VERBOSE) != 0);
 }
 
 void

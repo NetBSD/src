@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.7.8.1 2009/01/19 13:16:38 skrll Exp $ */
+/* $NetBSD: devopen.c,v 1.7.8.2 2009/04/28 07:34:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,10 +64,7 @@ struct fs_ops file_system[1];
 int nfsys = 1;
 
 int
-devopen(of, name, file)
-	struct open_file *of;
-	const char *name;
-	char **file;
+devopen(struct open_file *of, const char *name, char **file)
 {
 	int error, unit, part;
 	extern char bootfile[]; /* handed by DHCP */
@@ -104,10 +101,7 @@ devopen(of, name, file)
 
 /* ARGSUSED */
 int
-noioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+noioctl(struct open_file *f, u_long cmd, void *data)
 {
 
 	return EINVAL;

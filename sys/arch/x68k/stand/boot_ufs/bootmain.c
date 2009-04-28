@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.8.86.1 2009/01/19 13:17:07 skrll Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.8.86.2 2009/04/28 07:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -76,9 +76,9 @@ void bootufs (void) __attribute__ ((__noreturn__));
 
 #ifdef BOOT_DEBUG
 void
-print_hex(x, l)
-	unsigned int x;	/* 表示する数字 */
-	int l;		/* 表示する桁数 */
+print_hex(unsigned int x, int l)
+	/* x:	 表示する数字 */
+	/* l:		 表示する桁数 */
 {
 
 	if (l > 0) {
@@ -102,7 +102,7 @@ print_hex(x, l)
 const unsigned char partition_conv[MAXPART + 1] = { 0, 1, 3, 4, 5, 6, 7 };
 
 static int
-get_scsi_part()
+get_scsi_part(void)
 {
 	struct {
 		u_int32_t	magic;		/* 0x5836384B ("X68K") */
@@ -200,21 +200,15 @@ get_scsi_host_adapter(void)
 }
 
 static int
-load_file(path, addr, header)
-	const char *path;
-	unsigned int addr;
-	struct exec *header;
+load_file(const char *path, unsigned int addr, struct exec *header)
 {
 
 	return load_file_ino(ufs_lookup_path(path), path, addr, header);
 }
 
 static int
-load_file_ino(ino, fn, addr, header)
-	ino32_t ino;
-	const char *fn;		/* for message only */
-	unsigned int addr;
-	struct exec *header;
+load_file_ino(ino32_t ino, const char *fn, unsigned int addr, struct exec *header)
+	/* fn:		 for message only */
 {
 	union ufs_dinode dinode;
 

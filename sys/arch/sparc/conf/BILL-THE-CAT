@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.42.28.2 2009/03/03 18:29:25 skrll Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.42.28.3 2009/04/28 07:34:40 skrll Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -52,7 +52,6 @@ options 	KTRACE
 #options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
 

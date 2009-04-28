@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.17.2.2 2009/03/03 18:31:07 skrll Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.17.2.3 2009/04/28 07:35:56 skrll Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.17.2.2 2009/03/03 18:31:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.17.2.3 2009/04/28 07:35:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -174,7 +174,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = ichsmb_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = ichsmb_i2c_exec;
 
-	bzero(&iba, sizeof(iba));
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.58.2.1 2009/01/19 13:15:57 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.58.2.2 2009/04/28 07:33:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.58.2.1 2009/01/19 13:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.58.2.2 2009/04/28 07:33:43 skrll Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -94,9 +94,9 @@ char *booted_kernel;
 
 /* Prototypes */
 
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-extern void configure		__P((void));
+void data_abort_handler(trapframe_t *frame);
+void prefetch_abort_handler(trapframe_t *frame);
+extern void configure(void);
 
 /*
  * arm32_vector_init:
@@ -159,7 +159,7 @@ arm32_vector_init(vaddr_t va, int which)
  */
 
 void
-halt()
+halt(void)
 {
 	while (1)
 		cpu_sleep(0);
@@ -353,8 +353,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 void
-parse_mi_bootargs(args)
-	char *args;
+parse_mi_bootargs(char *args)
 {
 	int integer;
 

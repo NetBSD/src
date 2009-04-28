@@ -1,4 +1,4 @@
-/*	$NetBSD: ati_pcigart.c,v 1.5.2.1 2009/01/19 13:18:48 skrll Exp $	*/
+/*	$NetBSD: ati_pcigart.c,v 1.5.2.2 2009/04/28 07:36:20 skrll Exp $	*/
 
 /* ati_pcigart.h -- ATI PCI GART support -*- linux-c -*-
  * Created: Wed Dec 13 21:52:19 2000 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ati_pcigart.c,v 1.5.2.1 2009/01/19 13:18:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ati_pcigart.c,v 1.5.2.2 2009/04/28 07:36:20 skrll Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/ati_pcigart.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -71,7 +71,7 @@ int drm_ati_pcigart_init(drm_device_t *dev, struct drm_ati_pcigart_info *gart_in
 	
 	pages = DRM_MIN(dev->sg->pages, gart_info->table_size / sizeof(u32));
 
-	bzero(pci_gart, gart_info->table_size);
+	memset(pci_gart, 0, gart_info->table_size);
 
 #ifdef __FreeBSD__
 	KASSERT(PAGE_SIZE >= ATI_PCIGART_PAGE_SIZE, ("page size too small"));
@@ -99,7 +99,9 @@ int drm_ati_pcigart_init(drm_device_t *dev, struct drm_ati_pcigart_info *gart_in
 		}
 	}
 
+#ifndef DRM_NO_AGP
 	agp_flush_cache();
+#endif
 
 	return 1;
 }

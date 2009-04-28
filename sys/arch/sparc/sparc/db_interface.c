@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.79.2.1 2009/01/19 13:16:46 skrll Exp $ */
+/*	$NetBSD: db_interface.c,v 1.79.2.2 2009/04/28 07:34:41 skrll Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.79.2.1 2009/01/19 13:16:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.79.2.2 2009/04/28 07:34:41 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -463,7 +463,7 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		db_printf("%ld: CPU out of range\n", addr);
 		return;
 	}
-	ci = cpus[addr];
+	ci = &cpus[addr].ci;
 	if (ci == NULL) {
 		db_printf("CPU %ld not configured\n", addr);
 		return;

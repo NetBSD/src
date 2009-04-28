@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.114.6.2 2009/03/03 18:28:59 skrll Exp $
+#	$NetBSD: GENERIC_TINY,v 1.114.6.3 2009/04/28 07:34:07 skrll Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -40,7 +40,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	NMBCLUSTERS=256

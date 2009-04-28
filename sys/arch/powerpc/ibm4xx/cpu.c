@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26 2007/11/19 02:18:33 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.26.26.1 2009/04/28 07:34:34 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2007/11/19 02:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26.26.1 2009/04/28 07:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
  * work.
  */
 void
-cpu_probe_cache()
+cpu_probe_cache(void)
 {
 	/*
 	 * First we need to identify the CPU and determine the

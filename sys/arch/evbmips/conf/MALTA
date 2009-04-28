@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.48.2.1 2009/01/19 13:16:08 skrll Exp $
+#	$NetBSD: MALTA,v 1.48.2.2 2009/04/28 07:34:00 skrll Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.48.2.1 $"
+#ident 		"MALTA-$Revision: 1.48.2.2 $"
 
 maxusers	32
 
@@ -25,7 +25,6 @@ options 	KTRACE		# system call tracing support
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	NTP		# network time protocol
 
 # Debugging options

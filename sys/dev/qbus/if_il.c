@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.19.12.1 2009/01/19 13:18:59 skrll Exp $	*/
+/*	$NetBSD: if_il.c,v 1.19.12.2 2009/04/28 07:36:26 skrll Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.19.12.1 2009/01/19 13:18:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.19.12.2 2009/04/28 07:36:26 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -304,7 +304,7 @@ ilinit(struct ifnet *ifp)
 	 * wedge the board.
 	 */
 	if (sc->sc_flags & ILF_SETADDR) {
-		bcopy(CLLADDR(ifp->if_sadl), &sc->sc_isu, ETHER_ADDR_LEN);
+		memcpy(&sc->sc_isu, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, ETHER_ADDR_LEN);
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_LDPA);
@@ -606,7 +606,7 @@ il_setaddr(u_char *physaddr, struct il_softc *sc)
 	if (! (sc->sc_flags & ILF_RUNNING))
 		return;
 
-	bcopy((void *)physaddr, (void *)is->is_addr, sizeof is->is_addr);
+	memcpy((void *)is->is_addr, (void *)physaddr, sizeof is->is_addr);
 	sc->sc_flags &= ~ILF_RUNNING;
 	sc->sc_flags |= ILF_SETADDR;
 	ilinit(&sc->sc_if);

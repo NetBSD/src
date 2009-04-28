@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.78.2.2 2009/03/03 18:28:59 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.78.2.3 2009/04/28 07:34:08 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -71,11 +71,11 @@
 
 
 /*-
- * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2006, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.78.2.2 2009/03/03 18:28:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.78.2.3 2009/04/28 07:34:08 skrll Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1047,6 +1047,7 @@ ENTRY(cpu_switchto)
 
 .Lcopy_iobitmap:
 	/* Copy I/O bitmap. */
+	incl	_C_LABEL(pmap_iobmp_evcnt)+EV_COUNT
 	movl	$(IOMAPSIZE/4),%ecx
 	pushl	%esi
 	pushl	%edi
@@ -1079,8 +1080,10 @@ END(savectx)
  * Old call gate entry for syscall
  */
 IDTVEC(osyscall)
+	cli			# must be first instruction
 	pushfl			# set eflags in trap frame
 	popl	8(%esp)
+	orl	$PSL_I,(%esp)	# re-enable ints on return to user
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 IDTVEC_END(osyscall)
@@ -1095,12 +1098,13 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	STI(%eax)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
 	jz	1f
 	pushl	$5f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 #ifdef DDB
 	int	$3
@@ -1151,14 +1155,14 @@ syscall1:
 	INTRFASTEXIT
 3:	STI(%eax)
 	pushl	$4f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 	pushl	$IPL_NONE
 	call	_C_LABEL(spllower)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
+4:	.asciz	"SPL NOT LOWERED ON SYSCALL EXIT\n"
+5:	.asciz	"SPL NOT ZERO ON SYSCALL ENTRY\n"
 #endif /* DIAGNOSTIC */
 9:
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
@@ -1181,6 +1185,7 @@ IDTVEC(svr4_fasttrap)
 	pushl	$2		# size of instruction for restart
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	STI(%eax)
 	pushl	$RW_READER
 	pushl	$_C_LABEL(svr4_fasttrap_lock)
 	call	_C_LABEL(rw_enter)

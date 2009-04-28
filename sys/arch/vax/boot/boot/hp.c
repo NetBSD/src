@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.8 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: hp.c,v 1.8.86.1 2009/04/28 07:34:49 skrll Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -87,7 +87,7 @@ hpopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		bootrpb.adpphy = adpadr;
 		bootrpb.unit = unit;
 	}
-	bzero(&hplabel, sizeof(struct disklabel));
+	memset(&hplabel, 0, sizeof(struct disklabel));
 
 	hplabel.d_secpercyl = 32;
 	hplabel.d_nsectors = 32;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.13.8.2 2009/03/03 18:28:50 skrll Exp $	*/
+/*	$NetBSD: bios32.c,v 1.13.8.3 2009/04/28 07:33:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.13.8.2 2009/03/03 18:28:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.13.8.3 2009/04/28 07:33:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ struct smbios_entry smbios_entry;
  * Initialize the BIOS32 interface.
  */
 void
-bios32_init()
+bios32_init(void)
 {
 #if 0	/* XXXfvdl need to set up compatibility segment for this */
 	paddr_t entry = 0;
@@ -306,7 +306,7 @@ smbios_get_string(struct smbtable *st, uint8_t indx, char *dest, size_t len)
 	if (i == indx) {
 		if (va + len < end) {
 			ret = dest;
-			bcopy(va, ret, len);
+			memcpy( ret, va, len);
 			ret[len - 1] = '\0';
 		}
 	}

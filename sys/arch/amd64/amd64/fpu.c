@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.26.4.1 2009/01/19 13:15:54 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.26.4.2 2009/04/28 07:33:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26.4.1 2009/01/19 13:15:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26.4.2 2009/04/28 07:33:38 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -180,8 +180,7 @@ fpuinit(struct cpu_info *ci)
  */
 
 void
-fputrap(frame)
-	struct trapframe *frame;
+fputrap(struct trapframe *frame)
 {
 	register struct lwp *l = curcpu()->ci_fpcurlwp;
 	struct savefpu *sfp = &l->l_addr->u_pcb.pcb_savefpu;

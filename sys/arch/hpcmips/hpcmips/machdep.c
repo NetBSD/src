@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96.4.2 2009/03/03 18:28:58 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96.4.3 2009/04/28 07:34:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.4.2 2009/03/03 18:28:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.4.3 2009/04/28 07:34:04 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -292,7 +292,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		}
 		esym = (char*)esym + symbolsz;
 		kernend = (void *)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	{
@@ -542,7 +542,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
  * allocate memory for variable-sized tables, initialize CPU.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -672,7 +672,7 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 void
-consinit()
+consinit(void)
 {
 	/* platform.cons_init() do it */
 }

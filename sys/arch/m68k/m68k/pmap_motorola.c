@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.39.4.1 2009/01/19 13:16:24 skrll Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.39.4.2 2009/04/28 07:34:18 skrll Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.39.4.1 2009/01/19 13:16:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.39.4.2 2009/04/28 07:34:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,8 +330,7 @@ void pmap_check_wiring(const char *, vaddr_t);
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_virtual_space(vstartp, vendp)
-	vaddr_t	*vstartp, *vendp;
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
 	*vstartp = virtual_avail;
@@ -1129,7 +1128,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte;
 	int npte;

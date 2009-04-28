@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.170.2.1 2009/01/19 13:19:39 skrll Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.170.2.2 2009/04/28 07:37:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.170.2.1 2009/01/19 13:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.170.2.2 2009/04/28 07:37:00 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2621,6 +2621,7 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 	pcg_t *pcg;
 	int s;
 
+	KASSERT(object != NULL);
 	FREECHECK_IN(&pc->pc_freecheck, object);
 
 	/* Lock out interrupts and disable preemption. */

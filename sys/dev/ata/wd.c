@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.363.6.2 2009/03/03 18:30:43 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.363.6.3 2009/04/28 07:35:20 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.363.6.2 2009/03/03 18:30:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.363.6.3 2009/04/28 07:35:20 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -136,8 +136,8 @@ void	wdperror(const struct wd_softc *);
 static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
-CFATTACH_DECL_NEW(wd, sizeof(struct wd_softc),
-    wdprobe, wdattach, wddetach, wdactivate);
+CFATTACH_DECL3_NEW(wd, sizeof(struct wd_softc),
+    wdprobe, wdattach, wddetach, wdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver wd_cd;
 

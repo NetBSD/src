@@ -1,7 +1,7 @@
-/*	$NetBSD: syscall.c,v 1.57 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.2.2 2009/04/28 07:34:57 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.57 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.2 2009/04/28 07:34:57 skrll Exp $");
 
-#include "opt_vm86.h"
 #include "opt_sa.h"
 
 #include <sys/param.h>
@@ -40,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.57 2008/10/21 12:16:59 ad Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#include <sys/ktrace.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/ktrace.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syscall_stats.h>
@@ -53,15 +52,32 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.57 2008/10/21 12:16:59 ad Exp $");
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-void syscall(struct trapframe *);
-int x86_copyargs(void *, void *, size_t);
+#ifndef __x86_64__
+#include "opt_vm86.h"
 #ifdef VM86
-void syscall_vm86(struct trapframe *);
+void		syscall_vm86(struct trapframe *);
+#endif
+int		x86_copyargs(void *, void *, size_t);
 #endif
 
+void		syscall_intern(struct proc *);
+static void	syscall(struct trapframe *);
+
 void
-syscall_intern(p)
-	struct proc *p;
+child_return(void *arg)
+{
+	struct lwp *l = arg;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	X86_TF_RAX(tf) = 0;
+	X86_TF_RFLAGS(tf) &= ~PSL_C;
+
+	userret(l);
+	ktrsysret(SYS_fork, 0, 0);
+}
+
+void
+syscall_intern(struct proc *p)
 {
 
 	p->p_md.md_syscall = syscall;
@@ -70,58 +86,83 @@ syscall_intern(p)
 /*
  * syscall(frame):
  *	System call request from POSIX system call gate interface to kernel.
- * Like trap(), argument is call by reference.
+ *	Like trap(), argument is call by reference.
  */
-void
+static void
 syscall(struct trapframe *frame)
 {
 	const struct sysent *callp;
+	struct proc *p;
 	struct lwp *l;
 	int error;
-	register_t code, args[2 + SYS_MAXSYSARGS], rval[2];
+	register_t code, rval[2];
+#ifdef __x86_64__
+	/* Verify that the syscall args will fit in the trapframe space */
+	CTASSERT(offsetof(struct trapframe, tf_arg9) >=
+	    sizeof(register_t) * (2 + SYS_MAXSYSARGS - 1));
+#define args (&frame->tf_rdi)
+#else
+	register_t args[2 + SYS_MAXSYSARGS];
+#endif
 
 	l = curlwp;
-	LWP_CACHE_CREDS(l, l->l_proc);
+	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
-	code = frame->tf_eax & (SYS_NSYSENT - 1);
-	callp = l->l_proc->p_emul->e_sysent + code;
+	code = X86_TF_RAX(frame) & (SYS_NSYSENT - 1);
+	callp = p->p_emul->e_sysent + code;
 
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 
 #ifdef KERN_SA
 	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+	    && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
 		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
+#ifdef __x86_64__
+	/*
+	 * The first 6 syscall args are passed in rdi, rsi, rdx, r10, r8 and r9
+	 * (rcx gets copied to r10 in the libc stub because the syscall
+	 * instruction overwrites %cx) and are together in the trap frame
+	 * with space following for 4 more entries.
+	 */
+	if (__predict_false(callp->sy_argsize > 6 * 8)) {
+		error = copyin((register_t *)frame->tf_rsp + 1,
+		    &frame->tf_arg6, callp->sy_argsize - 6 * 8);
+		if (error != 0)
+			goto bad;
+		/* Refetch to avoid register spill to stack */
+		code = frame->tf_rax & (SYS_NSYSENT - 1);
+	}
+#else
 	if (callp->sy_argsize) {
 		error = x86_copyargs((char *)frame->tf_esp + sizeof(int), args,
 			    callp->sy_argsize);
 		if (__predict_false(error != 0))
 			goto bad;
 	}
-
-	if (!__predict_false(l->l_proc->p_trace_enabled)
+#endif
+	if (!__predict_false(p->p_trace_enabled)
 	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(frame->tf_eax & (SYS_NSYSENT - 1),
-		    args, callp->sy_narg)) == 0) {
+	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
 		KASSERT(l->l_holdcnt == 0);
 		error = sy_call(callp, l, args, rval);
 	}
 
-	if (__predict_false(l->l_proc->p_trace_enabled)
+	if (__predict_false(p->p_trace_enabled)
 	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
-		code = frame->tf_eax & (SYS_NSYSENT - 1);
+		code = X86_TF_RAX(frame) & (SYS_NSYSENT - 1);
 		trace_exit(code, rval, error);
 	}
 
 	if (__predict_true(error == 0)) {
-		frame->tf_eax = rval[0];
-		frame->tf_edx = rval[1];
-		frame->tf_eflags &= ~PSL_C;	/* carry bit */
+		X86_TF_RAX(frame) = rval[0];
+		X86_TF_RDX(frame) = rval[1];
+		X86_TF_RFLAGS(frame) &= ~PSL_C;	/* carry bit */
 	} else {
 		switch (error) {
 		case ERESTART:
@@ -130,15 +171,15 @@ syscall(struct trapframe *frame)
 			 * entered the kernel through the trap or call gate.
 			 * We saved the instruction size in tf_err on entry.
 			 */
-			frame->tf_eip -= frame->tf_err;
+			X86_TF_RIP(frame) -= frame->tf_err;
 			break;
 		case EJUSTRETURN:
 			/* nothing to do */
 			break;
 		default:
 		bad:
-			frame->tf_eax = error;
-			frame->tf_eflags |= PSL_C;	/* carry bit */
+			X86_TF_RAX(frame) = error;
+			X86_TF_RFLAGS(frame) |= PSL_C;	/* carry bit */
 			break;
 		}
 	}
@@ -148,9 +189,9 @@ syscall(struct trapframe *frame)
 }
 
 #ifdef VM86
+
 void
-syscall_vm86(frame)
-	struct trapframe *frame;
+syscall_vm86(struct trapframe *frame)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -168,25 +209,12 @@ syscall_vm86(frame)
 #ifdef KERN_SA
 	/* While this is probably not needed, it's probably better to include than not */
 	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+	    && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
 		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	userret(l);
 }
+
 #endif
-
-void
-child_return(arg)
-	void *arg;
-{
-	struct lwp *l = arg;
-	struct trapframe *tf = l->l_md.md_regs;
-
-	tf->tf_eax = 0;
-	tf->tf_eflags &= ~PSL_C;
-
-	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
-}

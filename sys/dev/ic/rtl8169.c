@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.105.2.1 2009/01/19 13:17:56 skrll Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.105.2.2 2009/04/28 07:35:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.105.2.1 2009/01/19 13:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.105.2.2 2009/04/28 07:35:27 skrll Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -389,10 +389,10 @@ re_reset(struct rtk_softc *sc)
 		    device_xname(sc->sc_dev));
 
 	/*
-	 * NB: Realtek-supplied Linux driver does this only for
-	 * MCFG_METHOD_2, which corresponds to sc->sc_rev == 3.
+	 * NB: Realtek-supplied FreeBSD driver does this only for MACFG_3,
+	 *     but also says "Rtl8169s sigle chip detected".
 	 */
-	if (1) /* XXX check softc flag for 8169s version */
+	if ((sc->sc_quirk & RTKQ_MACLDPS) != 0)
 		CSR_WRITE_1(sc, RTK_LDPS, 1);
 
 }
@@ -562,9 +562,6 @@ re_attach(struct rtk_softc *sc)
 	struct ifnet *ifp;
 	int error = 0, i, addr_len;
 
-	/* Reset the adapter. */
-	re_reset(sc);
-
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		uint32_t hwrev;
 
@@ -580,15 +577,19 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8169S:
 		case RTK_HWREV_8110S:
 			sc->sc_rev = 3;
+			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
 		case RTK_HWREV_8169_8110SB:
 			sc->sc_rev = 4;
+			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
 		case RTK_HWREV_8169_8110SC:
 			sc->sc_rev = 5;
+			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
 		case RTK_HWREV_8101E:
 			sc->sc_rev = 11;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168_SPIN1:
 			sc->sc_rev = 21;
@@ -601,33 +602,62 @@ re_attach(struct rtk_softc *sc)
 			break;
 		case RTK_HWREV_8168C:
 		case RTK_HWREV_8168C_SPIN2:
+		case RTK_HWREV_8168CP:
+		case RTK_HWREV_8168D:
 			sc->sc_rev = 24;
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
+			/*
+			 * From FreeBSD driver:
+			 * 
+			 * These (8168/8111) controllers support jumbo frame
+			 * but it seems that enabling it requires touching
+			 * additional magic registers. Depending on MAC
+			 * revisions some controllers need to disable
+			 * checksum offload. So disable jumbo frame until
+			 * I have better idea what it really requires to
+			 * make it support.
+			 * RTL8168C/CP : supports up to 6KB jumbo frame.
+			 * RTL8111C/CP : supports up to 9KB jumbo frame.
+			 */
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8102E:
 		case RTK_HWREV_8102EL:
+		case RTK_HWREV_8102EL_SPIN2:
 			sc->sc_rev = 25;
+			sc->sc_quirk |=
+			    RTKQ_DESCV2 | RTKQ_NOEECMD | RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
 			/* XXX not in the Realtek driver */
 			sc->sc_rev = 0;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
 			    "Unknown revision (0x%08x)\n", hwrev);
 			sc->sc_rev = 0;
+			/* assume the latest features */
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 		}
 
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_GFRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8169;
 	} else {
+		sc->sc_quirk |= RTKQ_NOJUMBO;
+
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_FRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
 	}
 
-	if (sc->sc_rev == 24 || sc->sc_rev == 25) {
+	/* Reset the adapter. */
+	re_reset(sc);
+
+	if ((sc->sc_quirk & RTKQ_NOEECMD) != 0) {
 		/*
 		 * Get station address from ID registers.
 		 */
@@ -789,6 +819,15 @@ re_attach(struct rtk_softc *sc)
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_TSOv4;
+
+	/*
+	 * XXX
+	 * Still have no idea how to make TSO work on 8168C, 8168CP,
+	 * 8102E, 8111C and 8111CP.
+	 */
+	if ((sc->sc_quirk & RTKQ_DESCV2) != 0)
+		ifp->if_capabilities &= ~IFCAP_TSOv4;
+
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
 	ifp->if_snd.ifq_maxlen = RE_IFQ_MAXLEN;
@@ -1235,7 +1274,9 @@ re_rxeof(struct rtk_softc *sc)
 		/* Do RX checksumming */
 
 		/* Check IP header checksum */
-		if (rxstat & RE_RDESC_STAT_PROTOID) {
+		if ((rxstat & RE_RDESC_STAT_PROTOID) != 0 &&
+		    ((sc->sc_quirk & RTKQ_DESCV2) == 0 ||
+		     (rxvlan & RE_RDESC_VLANCTL_IPV4) != 0)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
@@ -1450,6 +1491,7 @@ re_start(struct ifnet *ifp)
 		 * chip. I'm not sure if this is a requirement or a bug.)
 		 */
 
+		vlanctl = 0;
 		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
 			uint32_t segsz = m->m_pkthdr.segsz;
 
@@ -1465,12 +1507,28 @@ re_start(struct ifnet *ifp)
 			if ((m->m_pkthdr.csum_flags &
 			    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4))
 			    != 0) {
-				re_flags |= RE_TDESC_CMD_IPCSUM;
-				if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
-					re_flags |= RE_TDESC_CMD_TCPCSUM;
-				} else if (m->m_pkthdr.csum_flags &
-				    M_CSUM_UDPv4) {
-					re_flags |= RE_TDESC_CMD_UDPCSUM;
+				if ((sc->sc_quirk & RTKQ_DESCV2) == 0) {
+					re_flags |= RE_TDESC_CMD_IPCSUM;
+					if (m->m_pkthdr.csum_flags &
+					    M_CSUM_TCPv4) {
+						re_flags |=
+						    RE_TDESC_CMD_TCPCSUM;
+					} else if (m->m_pkthdr.csum_flags &
+					    M_CSUM_UDPv4) {
+						re_flags |=
+						    RE_TDESC_CMD_UDPCSUM;
+					}
+				} else {
+					vlanctl |= RE_TDESC_VLANCTL_IPCSUM;
+					if (m->m_pkthdr.csum_flags &
+					    M_CSUM_TCPv4) {
+						vlanctl |=
+						    RE_TDESC_VLANCTL_TCPCSUM;
+					} else if (m->m_pkthdr.csum_flags &
+					    M_CSUM_UDPv4) {
+						vlanctl |=
+						    RE_TDESC_VLANCTL_UDPCSUM;
+					}
 				}
 			}
 		}
@@ -1494,7 +1552,8 @@ re_start(struct ifnet *ifp)
 		nsegs = map->dm_nsegs;
 		pad = false;
 		if (__predict_false(m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
-		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0)) {
+		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0 &&
+		    (sc->sc_quirk & RTKQ_DESCV2) == 0)) {
 			pad = true;
 			nsegs++;
 		}
@@ -1522,9 +1581,8 @@ re_start(struct ifnet *ifp)
 		 * appear in all descriptors of a multi-descriptor
 		 * transmission attempt.
 		 */
-		vlanctl = 0;
 		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL)
-			vlanctl = bswap16(VLAN_TAG_VALUE(mtag)) |
+			vlanctl |= bswap16(VLAN_TAG_VALUE(mtag)) |
 			    RE_TDESC_VLANCTL_TAG;
 
 		/*
@@ -1856,14 +1914,9 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 	switch (command) {
 	case SIOCSIFMTU:
 		/*
-		 * According to FreeBSD, 8102E/8102EL use a different DMA
-		 * descriptor format. 8168C/8111C requires touching additional
-		 * magic registers. Depending on MAC revisions some controllers
-		 * need to disable checksum offload.
-		 *
-		 * Disable jumbo frames for those parts.
+		 * Disable jumbo frames if it's not supported.
 		 */
-		if ((sc->sc_rev == 24 || sc->sc_rev == 25) &&
+		if ((sc->sc_quirk & RTKQ_NOJUMBO) != 0 &&
 		    ifr->ifr_mtu > ETHERMTU) {
 			error = EINVAL;
 			break;

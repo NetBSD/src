@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.22.2.2 2009/03/03 18:28:48 skrll Exp $
+# $NetBSD: INSTALL,v 1.22.2.3 2009/04/28 07:33:30 skrll Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -88,7 +88,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -193,8 +192,8 @@ wsdisplay0	at arcvideo0
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
-#pseudo-device	ipfilter	1
-pseudo-device	loop		1
+#pseudo-device	ipfilter
+pseudo-device	loop
 pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_ROOT_SIZE=

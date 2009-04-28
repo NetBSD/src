@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121.2.2 2009/03/03 18:29:14 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.2.3 2009/04/28 07:34:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.2.2 2009/03/03 18:29:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.2.3 2009/04/28 07:34:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -763,7 +763,7 @@ sgimips_count_cpus(struct arcbios_component *node,
  * Allocate memory for variable-sized tables.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -914,14 +914,14 @@ badaddr_workaround(void *addr, size_t size)
  *  Ensure all platform vectors are always initialized.
  */
 static void
-unimpl_bus_reset()
+unimpl_bus_reset(void)
 {
 
 	panic("target init didn't set bus_reset");
 }
 
 static void
-unimpl_cons_init()
+unimpl_cons_init(void)
 {
 
 	panic("target init didn't set cons_init");
@@ -941,14 +941,14 @@ unimpl_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 }
 
 static unsigned long
-nulllong()
+nulllong(void)
 {
 	printf("nulllong\n");
 	return (0);
 }
 
 static void
-nullvoid()
+nullvoid(void)
 {
 	printf("nullvoid\n");
 	return;

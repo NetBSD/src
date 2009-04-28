@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.13.6.1 2009/01/19 13:16:04 skrll Exp $
+#	$NetBSD: VIPER,v 1.13.6.2 2009/04/28 07:33:58 skrll Exp $
 #
 #	Arcom Viper
 #
@@ -97,7 +97,6 @@ options 	SEMMNS=60	# number of semaphores in system
 options 	SEMUME=10	# max number of undo entries per process
 options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

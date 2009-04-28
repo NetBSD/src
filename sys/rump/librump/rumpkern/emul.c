@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.53.2.2 2009/03/03 18:34:07 skrll Exp $	*/
+/*	$NetBSD: emul.c,v 1.53.2.3 2009/04/28 07:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.53.2.2 2009/03/03 18:34:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.53.2.3 2009/04/28 07:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -101,6 +101,7 @@ const char *domainname;
 int domainnamelen;
 
 const struct filterops seltrue_filtops;
+const struct filterops sig_filtops;
 
 #define DEVSW_SIZE 255
 const struct bdevsw *bdevsw0[DEVSW_SIZE]; /* XXX storage size */
@@ -150,6 +151,16 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	strlcpy(kaddr, uaddr, len);
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
+	return 0;
+}
+
+int
+copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
+{
+
+	strlcpy(uaddr, kaddr, len);
+	if (done)
+		*done = strlen(uaddr)+1; /* includes termination */
 	return 0;
 }
 
@@ -230,15 +241,19 @@ device_class(device_t dev)
 }
 
 void
-getmicrouptime(struct timeval *tvp)
+getnanouptime(struct timespec *ts)
 {
-	uint64_t sec, nsec;
-	int error;
 
-	/* XXX: this is wrong, does not report *uptime* */
-	rumpuser_gettime(&sec, &nsec, &error);
-	tvp->tv_sec = sec;
-	tvp->tv_usec = nsec / 1000;
+	rump_getuptime(ts);
+}
+
+void
+getmicrouptime(struct timeval *tv)
+{
+	struct timespec ts;
+
+	getnanouptime(&ts);
+	TIMESPEC_TO_TIMEVAL(tv, &ts);
 }
 
 void
@@ -493,20 +508,6 @@ sigpending1(struct lwp *l, sigset_t *ss)
 	panic("%s: not implemented", __func__);
 }
 
-void
-knote_fdclose(int fd)
-{
-
-	/* since we don't add knotes, we don't have to remove them */
-}
-
-int
-seltrue_kqfilter(dev_t dev, struct knote *kn)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
 int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
@@ -531,7 +532,7 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 }
 
 void
-suspendsched()
+suspendsched(void)
 {
 
 	panic("%s: not implemented", __func__);
@@ -605,7 +606,7 @@ tc_setclock(const struct timespec *ts)
 }
 
 void
-proc_crmod_enter()
+proc_crmod_enter(void)
 {
 
 	panic("%s: not implemented", __func__);
@@ -619,7 +620,7 @@ proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
 }
 
 void
-module_init_md()
+module_init_md(void)
 {
 
 	/*
@@ -646,7 +647,7 @@ rump_delay(unsigned int us)
 void (*delay_func)(unsigned int) = rump_delay;
 
 void
-kpreempt_disable()
+kpreempt_disable(void)
 {
 
 	/* XXX: see below */
@@ -654,7 +655,7 @@ kpreempt_disable()
 }
 
 void
-kpreempt_enable()
+kpreempt_enable(void)
 {
 
 	/* try to make sure kpreempt_disable() is only used from panic() */
@@ -662,10 +663,17 @@ kpreempt_enable()
 }
 
 void
-sessdelete(struct session *ss)
+proc_sesshold(struct session *ss)
 {
 
-	panic("sessdelete() impossible, session %p", ss);
+	panic("proc_sesshold() impossible, session %p", ss);
+}
+
+void
+proc_sessrele(struct session *ss)
+{
+
+	panic("proc_sessrele() impossible, session %p", ss);
 }
 
 int
@@ -684,7 +692,7 @@ cnputc(int c)
 }
 
 void
-cnflush()
+cnflush(void)
 {
 
 	/* done */
@@ -710,3 +718,36 @@ cpu_reboot(int howto, char *bootstr)
 #undef curlwp
 struct lwp *curlwp = &lwp0;
 #endif
+
+/*
+ * XXX: from sys_select.c, see that file for license.
+ * (these will go away really soon in favour of the real sys_select.c)
+ * ((really, the select code just needs cleanup))
+ * (((seriously)))
+ */
+int
+inittimeleft(struct timespec *ts, struct timespec *sleepts)
+{
+	if (itimespecfix(ts))
+		return -1;
+	getnanouptime(sleepts);
+	return 0;
+}
+
+int
+gettimeleft(struct timespec *ts, struct timespec *sleepts)
+{
+	/*
+	 * We have to recalculate the timeout on every retry.
+	 */
+	struct timespec sleptts;
+	/*
+	 * reduce ts by elapsed time
+	 * based on monotonic time scale
+	 */
+	getnanouptime(&sleptts);
+	timespecadd(ts, sleepts, ts);
+	timespecsub(ts, &sleptts, ts);
+	*sleepts = sleptts;
+	return tstohz(ts);
+}

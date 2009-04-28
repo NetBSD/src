@@ -1,4 +1,4 @@
-/* $NetBSD: attimer_acpi.c,v 1.11.8.1 2009/03/03 18:30:31 skrll Exp $ */
+/* $NetBSD: attimer_acpi.c,v 1.11.8.2 2009/04/28 07:35:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.11.8.1 2009/03/03 18:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.11.8.2 2009/04/28 07:35:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.11.8.1 2009/03/03 18:30:31 skrll 
 static int	attimer_acpi_match(device_t, cfdata_t, void *);
 static void	attimer_acpi_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(attimer_acpi, sizeof(struct attimer_softc),
-    attimer_acpi_match, attimer_acpi_attach, attimer_detach, NULL);
+CFATTACH_DECL3_NEW(attimer_acpi, sizeof(struct attimer_softc),
+    attimer_acpi_match, attimer_acpi_attach, attimer_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 /*
  * Supported device IDs

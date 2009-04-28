@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.11.4.3 2009/03/03 18:34:30 skrll Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.11.4.4 2009/04/28 07:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -34,8 +34,10 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/evcnt.h>
 #include <sys/filedesc.h>
 #include <sys/lockf.h>
+#include <sys/kthread.h>
 #include <sys/module.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
@@ -44,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/syncfs/syncfs.h>
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
@@ -76,21 +79,20 @@ pvfs_rele(struct proc *p)
 }
 
 void
-rump_vfs_init()
+rump_vfs_init(void)
 {
 	char buf[64];
 	int error;
 
-	syncdelay = 0;
 	dovfsusermount = 1;
-
-	rumpblk_init();
 
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
 	} else {
 		desiredvnodes = 1<<16;
 	}
+
+	rumpblk_init();
 
 	cache_cpu_init(&rump_cpu);
 	vfsinit();
@@ -109,6 +111,16 @@ rump_vfs_init()
 	rump_cwdi.cwdi_cdir = rootvnode;
 	vref(rump_cwdi.cwdi_cdir);
 	proc0.p_cwdi = &rump_cwdi;
+
+	if (rump_threads) {
+		int rv;
+
+		if ((rv = kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL,
+		    sched_sync, NULL, NULL, "ioflush")) != 0)
+			panic("syncer thread create failed: %d", rv);
+	} else {
+		syncdelay = 0;
+	}
 }
 
 struct mount *
@@ -347,7 +359,7 @@ rump_vfs_getopsbyname(const char *name)
 }
 
 struct vattr*
-rump_vattr_init()
+rump_vattr_init(void)
 {
 	struct vattr *vap;
 
@@ -452,6 +464,13 @@ rump_vp_interlock(struct vnode *vp)
 int
 rump_vfs_unmount(struct mount *mp, int mntflags)
 {
+#if 0
+	struct evcnt *ev;
+
+	printf("event counters:\n");
+	TAILQ_FOREACH(ev, &allevents, ev_list)
+		printf("%s: %llu\n", ev->ev_name, ev->ev_count);
+#endif
 
 	return VFS_UNMOUNT(mp, mntflags);
 }
@@ -550,7 +569,7 @@ rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
 }
 
 struct vnode *
-rump_cdir_get()
+rump_cdir_get(void)
 {
 	struct vnode *vp;
 	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;

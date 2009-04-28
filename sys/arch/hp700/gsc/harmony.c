@@ -1,6 +1,35 @@
-/*	$NetBSD: harmony.c,v 1.13 2008/09/23 14:07:11 mjf Exp $	*/
+/*	$NetBSD: harmony.c,v 1.13.2.1 2009/04/28 07:34:02 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
+
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Fleming.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -133,6 +162,8 @@ void harmony_tick_pb(void *);
 void harmony_tick_cp(void *);
 void harmony_try_more(struct harmony_softc *, int, int,
 	struct harmony_channel *);
+static void harmony_empty_input(struct harmony_softc *);
+static void harmony_empty_output(struct harmony_softc *);
 
 #if NRND > 0
 void harmony_acc_tmo(void *);
@@ -243,7 +274,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < CAPTURE_EMPTYS; i++)
 		sc->sc_capture_paddrs[i] =
 		    sc->sc_empty_map->dm_segs[0].ds_addr +
-		    offsetof(struct harmony_empty, playback[i][0]);
+		    offsetof(struct harmony_empty, capture[i][0]);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_empty_map,
 	    offsetof(struct harmony_empty, playback[0][0]),
@@ -663,6 +694,18 @@ harmony_commit_settings(void *vsc)
 	return 0;
 }
 
+static void
+harmony_empty_output(struct harmony_softc *sc)
+{
+
+	WRITE_REG(sc, HARMONY_PNXTADD,
+	    sc->sc_playback_paddrs[sc->sc_playback_empty]);
+	SYNC_REG(sc, HARMONY_PNXTADD, BUS_SPACE_BARRIER_WRITE);
+
+	if (++sc->sc_playback_empty == PLAYBACK_EMPTYS)
+		sc->sc_playback_empty = 0;
+}
+
 int
 harmony_halt_output(void *vsc)
 {
@@ -670,7 +713,21 @@ harmony_halt_output(void *vsc)
 
 	sc = vsc;
 	sc->sc_playing = 0;
+
+	harmony_empty_output(sc);
 	return 0;
+}
+
+static void
+harmony_empty_input(struct harmony_softc *sc)
+{
+
+	WRITE_REG(sc, HARMONY_RNXTADD,
+	    sc->sc_capture_paddrs[sc->sc_capture_empty]);
+	SYNC_REG(sc, HARMONY_RNXTADD, BUS_SPACE_BARRIER_WRITE);
+
+	if (++sc->sc_capture_empty == CAPTURE_EMPTYS)
+		sc->sc_capture_empty = 0;
 }
 
 int
@@ -680,6 +737,8 @@ harmony_halt_input(void *vsc)
 
 	sc = vsc;
 	sc->sc_capturing = 0;
+
+	harmony_empty_input(sc);
 	return 0;
 }
 
@@ -1097,12 +1156,9 @@ harmony_start_cp(struct harmony_softc *sc, int start)
 	bus_size_t togo;
 
 	c = &sc->sc_capture;
-	if (sc->sc_capturing == 0) {
-		WRITE_REG(sc, HARMONY_RNXTADD,
-		    sc->sc_capture_paddrs[sc->sc_capture_empty]);
-		if (++sc->sc_capture_empty == CAPTURE_EMPTYS)
-			sc->sc_capture_empty = 0;
-	} else {
+	if (sc->sc_capturing == 0)
+		harmony_empty_input(sc);
+	else {
 		d = c->c_current;
 		togo = c->c_segsz - c->c_cnt;
 		if (togo == 0) {
@@ -1143,12 +1199,9 @@ harmony_start_pp(struct harmony_softc *sc, int start)
 	bus_size_t togo;
 
 	c = &sc->sc_playback;
-	if (sc->sc_playing == 0) {
-		WRITE_REG(sc, HARMONY_PNXTADD,
-		    sc->sc_playback_paddrs[sc->sc_playback_empty]);
-		if (++sc->sc_playback_empty == PLAYBACK_EMPTYS)
-			sc->sc_playback_empty = 0;
-	} else {
+	if (sc->sc_playing == 0)
+		harmony_empty_output(sc);
+	else {
 		d = c->c_current;
 		togo = c->c_segsz - c->c_cnt;
 		if (togo == 0) {

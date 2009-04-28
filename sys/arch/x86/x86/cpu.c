@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.57.2.2 2009/03/03 18:29:37 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.57.2.3 2009/04/28 07:34:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57.2.2 2009/03/03 18:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57.2.3 2009/04/28 07:34:57 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -503,7 +503,6 @@ cpu_init(struct cpu_info *ci)
 		wbinvd();
 		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 		tsc_sync_ap(ci);
-		tsc_sync_ap(ci);
 	} else {
 		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 	}
@@ -616,7 +615,6 @@ cpu_start_secondary(struct cpu_info *ci)
 		x86_disable_intr();
 		wbinvd();
 		tsc_sync_bp(ci);
-		tsc_sync_bp(ci);
 		x86_write_psl(psl);
 	}
 
@@ -647,7 +645,6 @@ cpu_boot_secondary(struct cpu_info *ci)
 		psl = x86_read_psl();
 		x86_disable_intr();
 		wbinvd();
-		tsc_sync_bp(ci);
 		tsc_sync_bp(ci);
 		x86_write_psl(psl);
 		drift -= ci->ci_data.cpu_cc_skew;
@@ -686,7 +683,6 @@ cpu_hatch(void *v)
 	 */
 	wbinvd();
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
-	tsc_sync_ap(ci);
 	tsc_sync_ap(ci);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.71.2.2 2009/03/03 18:31:07 skrll Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.71.2.3 2009/04/28 07:35:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.71.2.2 2009/03/03 18:31:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.71.2.3 2009/04/28 07:35:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -209,6 +209,12 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0662:
 		this->name = "Realtek ALC662-GR";
+		this->init_dacgroup = alc662_init_dacgroup;
+		this->mixer_init = generic_mixer_autoinit;
+		this->init_widget = generic_mixer_init_widget;
+		break;
+	case 0x10ec0663:
+		this->name = "Realtek ALC663";
 		this->init_dacgroup = alc662_init_dacgroup;
 		this->mixer_init = generic_mixer_autoinit;
 		this->init_widget = generic_mixer_init_widget;

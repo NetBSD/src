@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.2.2 2009/03/03 18:31:51 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.2.3 2009/04/28 07:36:27 skrll Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.2.2 2009/03/03 18:31:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.2.3 2009/04/28 07:36:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -342,9 +342,7 @@ raidattach(int num)
 	int raidID;
 	int i, rc;
 
-#ifdef DEBUG
-	printf("raidattach: Asked for %d units\n", num);
-#endif
+	aprint_debug("raidattach: Asked for %d units\n", num);
 
 	if (num <= 0) {
 #ifdef DIAGNOSTIC
@@ -431,9 +429,7 @@ rf_autoconfig(struct device *self)
 	raidautoconfig = 0;
 
 	/* 1. locate all RAID components on the system */
-#ifdef DEBUG
-	printf("Searching for RAID components...\n");
-#endif
+	aprint_debug("Searching for RAID components...\n");
 	ac_list = rf_find_raid_components();
 
 	/* 2. Sort them into their respective sets. */
@@ -469,18 +465,14 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		    cset->ac->clabel->autoconfigure==1) {
 			retcode = rf_auto_config_set(cset,&raidID);
 			if (!retcode) {
-#ifdef DEBUG
-				printf("raid%d: configured ok\n", raidID);
-#endif
+				aprint_debug("raid%d: configured ok\n", raidID);
 				if (cset->rootable) {
 					rootID = raidID;
 					num_root++;
 				}
 			} else {
 				/* The autoconfig didn't work :( */
-#ifdef DEBUG
-				printf("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
-#endif
+				aprint_debug("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
 				rf_release_all_vps(cset);
 			}
 		} else {
@@ -531,10 +523,8 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 				if (strncmp(devname, device_xname(booted_device), 
 					    strlen(device_xname(booted_device))) != 0)
 					continue;
-#ifdef DEBUG
-				printf("raid%d includes boot device %s\n",
+				aprint_debug("raid%d includes boot device %s\n",
 				       raidID, devname);
-#endif
 				num_root++;
 				rootID = raidID;
 			}
@@ -2318,15 +2308,15 @@ raidgetdisklabel(dev_t dev)
 		 */
 		if (lp->d_secperunit != rs->sc_size)
 			printf("raid%d: WARNING: %s: "
-			    "total sector size in disklabel (%d) != "
-			    "the size of raid (%ld)\n", unit, rs->sc_xname,
-			    lp->d_secperunit, (long) rs->sc_size);
+			    "total sector size in disklabel (%" PRIu32 ") != "
+			    "the size of raid (%" PRIu64 ")\n", unit, rs->sc_xname,
+			    lp->d_secperunit, rs->sc_size);
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
 			if (pp->p_offset + pp->p_size > rs->sc_size)
 				printf("raid%d: WARNING: %s: end of partition `%c' "
-				       "exceeds the size of raid (%ld)\n",
-				       unit, rs->sc_xname, 'a' + i, (long) rs->sc_size);
+				       "exceeds the size of raid (%" PRIu64 ")\n",
+				       unit, rs->sc_xname, 'a' + i, rs->sc_size);
 		}
 	}
 
@@ -2853,7 +2843,7 @@ oomem:
 }
 
 RF_AutoConfig_t *
-rf_find_raid_components()
+rf_find_raid_components(void)
 {
 	struct vnode *vp;
 	struct disklabel label;

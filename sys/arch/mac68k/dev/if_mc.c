@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.34.28.1 2009/01/19 13:16:24 skrll Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.34.28.2 2009/04/28 07:34:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.34.28.1 2009/01/19 13:16:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.34.28.2 2009/04/28 07:34:18 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -94,7 +94,7 @@ static inline u_int16_t ether_cmp(void *, void *);
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and
- * unrolled for speed.  Use this like bcmp().
+ * unrolled for speed.  Use this like memcmp().
  *
  * XXX: Add <machine/inlines.h> for stuff like this?
  * XXX: or maybe add it to libkern.h instead?

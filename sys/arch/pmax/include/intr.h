@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.32 2008/01/04 21:54:05 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.32.18.1 2009/04/28 07:34:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -103,7 +103,7 @@ splraiseipl(ipl_cookie_t icookie)
 #define MIPS_SPL_0_1_2_3 (MIPS_INT_MASK_3|MIPS_SPL_0_1_2)
 
 struct intrhand {
-	int	(*ih_func) __P((void *));
+	int	(*ih_func)(void *);
 	void	*ih_arg;
 	struct evcnt ih_count;
 };

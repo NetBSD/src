@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.9.4.3 2009/03/03 18:34:07 skrll Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.9.4.4 2009/04/28 07:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,10 +40,11 @@ typedef void (*kernel_lockfn)(int);
 typedef void (*kernel_unlockfn)(int, int *);
 
 int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
+#define RUMPUSER_FT_OTHER 0
 #define RUMPUSER_FT_DIR 1
 #define RUMPUSER_FT_REG 2
 #define RUMPUSER_FT_BLK 3
-#define RUMPUSER_FT_OTHER 4
+#define RUMPUSER_FT_CHR 4
 int rumpuser_nanosleep(uint64_t *, uint64_t *, int *);
 
 #define rumpuser_malloc(a,b) rumpuser__malloc(a,b,__func__,__LINE__);
@@ -54,8 +55,13 @@ void *rumpuser__realloc(void *, size_t, int, const char *, int);
 void rumpuser_free(void *);
 
 void *rumpuser_anonmmap(size_t, int, int, int *);
-void *rumpuser_filemmap(int fd, off_t, size_t, int, int, int *);
+#define RUMPUSER_FILEMMAP_READ		0x01
+#define RUMPUSER_FILEMMAP_WRITE		0x02
+#define RUMPUSER_FILEMMAP_TRUNCATE	0x04
+#define RUMPUSER_FILEMMAP_SHARED	0x08
+void *rumpuser_filemmap(int fd, off_t, size_t, int, int *);
 void  rumpuser_unmap(void *, size_t);
+int   rumpuser_memsync(void *, size_t, int *);
 
 int rumpuser_open(const char *, int, int *);
 int rumpuser_ioctl(int, u_long, void *, int *);
@@ -150,7 +156,7 @@ struct rumpuser_aio {
 	int	rua_op;
 };
 
-#define N_AIOS 128
+#define N_AIOS 1024
 extern struct rumpuser_mtx rumpuser_aio_mtx;
 extern struct rumpuser_cv rumpuser_aio_cv;
 extern struct rumpuser_aio rumpuser_aios[N_AIOS];

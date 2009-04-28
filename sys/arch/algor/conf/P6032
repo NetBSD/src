@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.47.2.1 2009/01/19 13:15:52 skrll Exp $
+#	$NetBSD: P6032,v 1.47.2.2 2009/04/28 07:33:33 skrll Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.47.2.1 $"
+#ident 		"P6032-$Revision: 1.47.2.2 $"
 
 maxusers 32
 
@@ -78,7 +78,6 @@ options 	SYSVSEM
 
 # System V-like shared memory
 options 	SYSVSHM
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 
 # Loadable Kernel Modules
 

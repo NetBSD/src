@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.76.10.1 2009/01/19 13:19:40 skrll Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.76.10.2 2009/04/28 07:37:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.76.10.1 2009/01/19 13:19:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.76.10.2 2009/04/28 07:37:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -460,11 +460,9 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 			dp += elem_size;
 			len -= elem_size;
 		}
-		if (elem_count > 0) {
-			needed += elem_size;
-			if (elem_count != INT_MAX)
-				elem_count--;
-		}
+		needed += elem_size;
+		if (elem_count > 0 && elem_count != INT_MAX)
+			elem_count--;
 	}
 	mutex_exit(&filelist_lock);
 	fputdummy(dfp);
@@ -477,7 +475,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 }
 
 static void
-sysctl_net_setup()
+sysctl_net_setup(void)
 {
 
 	KASSERT(domain_sysctllog == NULL);

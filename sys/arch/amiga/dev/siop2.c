@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.30.28.1 2009/01/19 13:15:56 skrll Exp $ */
+/*	$NetBSD: siop2.c,v 1.30.28.2 2009/04/28 07:33:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.30.28.1 2009/01/19 13:15:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.30.28.2 2009/04/28 07:33:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ siopng_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 #endif
 		acb->flags = ACB_ACTIVE;
 		acb->xs = xs;
-		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+		memcpy( &acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->daddr = xs->data;
 		acb->dleft = xs->datalen;
@@ -665,7 +665,7 @@ siopngreset(struct siop_softc *sc)
 	rp->siop_stime0 = 0x0c;		/* XXXXX check */
 
 	/* will need to re-negotiate sync xfers */
-	bzero(&sc->sc_sync, sizeof (sc->sc_sync));
+	memset(&sc->sc_sync, 0, sizeof (sc->sc_sync));
 
 	i = rp->siop_istat;
 	if (i & SIOP_ISTAT_SIP)
@@ -718,12 +718,12 @@ siopngreset(struct siop_softc *sc)
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(struct siop_acb) * SIOP_NACB);
+		memset(acb, 0, sizeof(struct siop_acb) * SIOP_NACB);
 		for (i = 0; i < SIOP_NACB; i++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
-		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 	} else {
 		if (sc->sc_nexus != NULL) {
 			sc->sc_nexus->xs->error = XS_RESET;
@@ -801,7 +801,7 @@ siopng_start(struct siop_softc *sc, int target, int lun, u_char *cbuf,
 	acb->ds.msginbuf = acb->ds.msgbuf + 1;
 	acb->ds.extmsgbuf = acb->ds.msginbuf + 1;
 	acb->ds.synmsgbuf = acb->ds.extmsgbuf + 1;
-	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
+	memset(&acb->ds.chain, 0, sizeof (acb->ds.chain));
 
 	if (sc->sc_sync[target].state == NEG_WIDE) {
 		if (siopng_inhibit_wide[target]) {

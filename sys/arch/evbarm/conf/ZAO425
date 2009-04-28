@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.32.2.1 2009/01/19 13:16:04 skrll Exp $
+#	$NetBSD: ZAO425,v 1.32.2.2 2009/04/28 07:33:58 skrll Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -106,7 +106,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

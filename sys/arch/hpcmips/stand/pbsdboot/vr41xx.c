@@ -1,4 +1,4 @@
-/* $NetBSD: vr41xx.c,v 1.5 2007/03/04 05:59:53 christos Exp $ */
+/* $NetBSD: vr41xx.c,v 1.5.52.1 2009/04/28 07:34:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -39,7 +39,7 @@
 
 extern void vr41xx_asm_code();
 extern void vr41xx_asm_code_end();
-void vr41xx_asm_code_holder __P((void));
+void vr41xx_asm_code_holder(void);
 
 void
 vr41xx_init(SYSTEM_INFO *info)

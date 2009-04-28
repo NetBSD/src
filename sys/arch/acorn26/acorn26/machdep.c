@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.23.4.1 2009/01/19 13:15:50 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.23.4.2 2009/04/28 07:33:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.4.1 2009/01/19 13:15:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.4.2 2009/04/28 07:33:30 skrll Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -63,9 +63,7 @@ struct vm_map *mb_map = NULL; /* and ever more shall be so */
 int waittime = -1;
 
 void
-cpu_reboot(howto, b)
-	int howto;
-	char *b;
+cpu_reboot(int howto, char *b)
 {
 
 	/* If "always halt" was specified as a boot flag, obey. */
@@ -141,7 +139,7 @@ haltsys:
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];

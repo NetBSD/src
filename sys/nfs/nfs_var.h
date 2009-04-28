@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.82.2.1 2009/01/19 13:20:20 skrll Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.82.2.2 2009/04/28 07:37:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -251,7 +251,7 @@ void nfsm_srvpostopattr(struct nfsrv_descript *, int, struct vattr *,
 void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *, struct nfs_fattr *);
 int nfsrv_fhtovp(nfsrvfh_t *, int, struct vnode **, kauth_cred_t,
 	struct nfssvc_sock *, struct mbuf *, int *, int, int);
-int nfs_ispublicfh __P((const nfsrvfh_t *));
+int nfs_ispublicfh(const nfsrvfh_t *);
 int netaddr_match(int, union nethostaddr *, struct mbuf *);
 time_t nfs_attrtimeo(struct nfsmount *, struct nfsnode *);
 

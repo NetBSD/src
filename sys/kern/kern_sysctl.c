@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.218.2.1 2009/01/19 13:19:39 skrll Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.218.2.2 2009/04/28 07:37:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.218.2.1 2009/01/19 13:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.218.2.2 2009/04/28 07:37:00 skrll Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1448,8 +1448,9 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	 */
 	if (l != NULL && newp != NULL &&
 	    !(rnode->sysctl_flags & CTLFLAG_ANYWRITE) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	    (error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_SYSCTL, KAUTH_REQ_SYSTEM_SYSCTL_MODIFY, NULL, NULL,
+	    NULL)) != 0)
 		return (error);
 
 	/*

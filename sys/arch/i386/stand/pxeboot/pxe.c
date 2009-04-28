@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.10.76.1 2009/01/19 13:16:22 skrll Exp $	*/
+/*	$NetBSD: pxe.c,v 1.10.76.2 2009/04/28 07:34:15 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -199,7 +199,7 @@ static int pxe_inited;
 static struct iodesc desc;
 
 int
-pxe_netif_open()
+pxe_netif_open(void)
 {
 	t_PXENV_UDP_OPEN *uo = (void *) pxe_command_buf;
 
@@ -222,7 +222,7 @@ pxe_netif_open()
 		return (-1);
 	}
 
-	bcopy(bootplayer.CAddr, desc.myea, ETHER_ADDR_LEN);
+	memcpy( desc.myea, bootplayer.CAddr, ETHER_ADDR_LEN);
 
 	/*
 	 * Since the PXE BIOS has already done DHCP, make sure we
@@ -234,8 +234,7 @@ pxe_netif_open()
 }
 
 void
-pxe_netif_close(sock)
-	int sock;
+pxe_netif_close(int sock)
 {
 	t_PXENV_UDP_CLOSE *uc = (void *) pxe_command_buf;
 
@@ -254,15 +253,14 @@ pxe_netif_close(sock)
 }
 
 void
-pxe_netif_shutdown()
+pxe_netif_shutdown(void)
 {
 
 	pxe_fini();
 }
 
 struct iodesc *
-socktodesc(sock)
-	int sock;
+socktodesc(int sock)
 {
 
 #ifdef NETIF_DEBUG

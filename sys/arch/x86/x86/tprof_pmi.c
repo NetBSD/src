@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof_pmi.c,v 1.3.6.1 2009/03/03 18:29:37 skrll Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.3.6.2 2009/04/28 07:34:57 skrll Exp $	*/
 
 /*-
- * Copyright (c)2008 YAMAMOTO Takashi,
+ * Copyright (c)2008,2009 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.3.6.1 2009/03/03 18:29:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.3.6.2 2009/04/28 07:34:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/module.h>
 
 #include <sys/cpu.h>
 #include <sys/xcall.h>
@@ -41,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.3.6.1 2009/03/03 18:29:37 skrll Exp 
 #include <x86/tprof.h>
 #include <x86/nmi.h>
 
-#include <machine/db_machdep.h>	/* PC_REGS */
-#include <machine/cpuvar.h>	/* cpu_vendor */
+#include <machine/cpufunc.h>
 #include <machine/cputypes.h>	/* CPUVENDER_* */
+#include <machine/cpuvar.h>	/* cpu_vendor */
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
@@ -102,6 +104,7 @@ static uint64_t counter_reset_val;
 static uint32_t tprof_pmi_lapic_saved[MAXCPUS];
 
 static nmi_handler_t *tprof_pmi_nmi_handle;
+static tprof_backend_cookie_t *tprof_cookie;
 
 static void
 tprof_pmi_start_cpu(void *arg1, void *arg2)
@@ -119,7 +122,7 @@ tprof_pmi_start_cpu(void *arg1, void *arg2)
 	msr = &msrs[ci->ci_smtid];
 	escr = __SHIFTIN(escr_event_mask, ESCR_EVENT_MASK) |
 	    __SHIFTIN(escr_event_select, ESCR_EVENT_SELECT);
-	cccr = CCCR_ENABLE | __SHIFTIN(cccr_escr_select, __BITS(13, 15)) |
+	cccr = CCCR_ENABLE | __SHIFTIN(cccr_escr_select, CCCR_ESCR_SELECT) |
 	    CCCR_MUST_BE_SET;
 	if (ci->ci_smtid == 0) {
 		escr |= ESCR_T0_OS;
@@ -161,6 +164,7 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 	const struct msrs *msr;
 	uint32_t pcint;
 	uint64_t cccr;
+	tprof_frame_info_t tfi;
 
 	KASSERT(dummy == NULL);
 
@@ -178,7 +182,12 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 	}
 
 	/* record a sample */
-	tprof_sample(tf);
+#if defined(__x86_64__)
+	tfi.tfi_pc = tf->tf_rip;
+#else /* defined(__x86_64__) */
+	tfi.tfi_pc = tf->tf_eip;
+#endif /* defined(__x86_64__) */
+	tprof_sample(tprof_cookie, &tfi);
 
 	/* reset counter */
 	wrmsr(msr->msr_counter, counter_reset_val);
@@ -192,8 +201,8 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 	return 1;
 }
 
-uint64_t
-tprof_backend_estimate_freq(void)
+static uint64_t
+tprof_pmi_estimate_freq(void)
 {
 	uint64_t cpufreq = curcpu()->ci_data.cpu_cc_freq;
 	uint64_t freq = 10000;
@@ -206,8 +215,8 @@ tprof_backend_estimate_freq(void)
 	return freq;
 }
 
-int
-tprof_backend_start(void)
+static int
+tprof_pmi_start(tprof_backend_cookie_t *cookie)
 {
 	struct cpu_info * const ci = curcpu();
 	uint64_t xc;
@@ -224,11 +233,14 @@ tprof_backend_start(void)
 	xc = xc_broadcast(0, tprof_pmi_start_cpu, NULL, NULL);
 	xc_wait(xc);
 
+	KASSERT(tprof_cookie == NULL);
+	tprof_cookie = cookie;
+
 	return 0;
 }
 
-void
-tprof_backend_stop(void)
+static void
+tprof_pmi_stop(tprof_backend_cookie_t *cookie)
 {
 	uint64_t xc;
 
@@ -236,6 +248,33 @@ tprof_backend_stop(void)
 	xc_wait(xc);
 
 	KASSERT(tprof_pmi_nmi_handle != NULL);
+	KASSERT(tprof_cookie == cookie);
 	nmi_disestablish(tprof_pmi_nmi_handle);
 	tprof_pmi_nmi_handle = NULL;
+	tprof_cookie = NULL;
+}
+
+static const tprof_backend_ops_t tprof_pmi_ops = {
+	.tbo_estimate_freq = tprof_pmi_estimate_freq,
+	.tbo_start = tprof_pmi_start,
+	.tbo_stop = tprof_pmi_stop,
+};
+
+MODULE(MODULE_CLASS_DRIVER, tprof_pmi, "tprof");
+
+static int
+tprof_pmi_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return tprof_backend_register("tprof_pmi", &tprof_pmi_ops,
+		    TPROF_BACKEND_VERSION);
+
+	case MODULE_CMD_FINI:
+		return tprof_backend_unregister("tprof_pmi");
+
+	default:
+		return ENOTTY;
+	}
 }

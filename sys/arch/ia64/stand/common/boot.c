@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2006/07/02 17:28:11 cherry Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.72.1 2009/04/28 07:34:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -148,7 +148,7 @@ command_autoboot(int argc, char *argv[])
  * we haven't tried already, try now.
  */
 void
-autoboot_maybe()
+autoboot_maybe(void)
 {
     char	*cp;
     

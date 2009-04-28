@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.13.2.2 2009/03/03 18:34:07 skrll Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.13.2.3 2009/04/28 07:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,12 +43,6 @@
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
 
-#if 0
-#define DPRINTF(x) printf x
-#else
-#define DPRINTF(x)
-#endif
-
 extern kauth_cred_t rump_cred;
 extern struct vmspace rump_vmspace;
 
@@ -68,6 +62,7 @@ void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
 void		rumpvm_flushva(struct uvm_object *);
 
 void		rump_gettime(struct timespec *);
+void		rump_getuptime(struct timespec *);
 
 lwpid_t		rump_nextlid(void);
 

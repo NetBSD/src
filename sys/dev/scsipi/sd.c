@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.275.2.1 2009/01/19 13:19:03 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.275.2.2 2009/04/28 07:36:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.275.2.1 2009/01/19 13:19:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.275.2.2 2009/04/28 07:36:33 skrll Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -101,7 +101,7 @@ static void	sdstart(struct scsipi_periph *);
 static void	sdrestart(void *);
 static void	sddone(struct scsipi_xfer *, int);
 static bool	sd_suspend(device_t PMF_FN_PROTO);
-static void	sd_shutdown(void *);
+static bool	sd_shutdown(device_t, int);
 static int	sd_interpret_sense(struct scsipi_xfer *);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
@@ -129,8 +129,8 @@ static int	sdactivate(struct device *, enum devact);
 static int	sddetach(struct device *, int);
 static void	sd_set_properties(struct sd_softc *);
 
-CFATTACH_DECL_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
-    sdactivate);
+CFATTACH_DECL3_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
+    sdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver sd_cd;
 
@@ -305,16 +305,11 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 * Establish a shutdown hook so that we can ensure that
 	 * our data has actually made it onto the platter at
 	 * shutdown time.  Note that this relies on the fact
-	 * that the shutdown hook code puts us at the head of
-	 * the list (thus guaranteeing that our hook runs before
+	 * that the shutdown hooks at the "leaves" of the device tree
+	 * are run, first (thus guaranteeing that our hook runs before
 	 * our ancestors').
 	 */
-	if ((sd->sc_sdhook =
-	    shutdownhook_establish(sd_shutdown, sd)) == NULL)
-		aprint_error_dev(sd->sc_dev,
-			"WARNING: unable to establish shutdown hook\n");
-
-	if (!pmf_device_register(self, sd_suspend, NULL))
+	if (!pmf_device_register1(self, sd_suspend, NULL, sd_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if NRND > 0
@@ -389,8 +384,9 @@ sddetach(struct device *self, int flags)
 	disk_detach(&sd->sc_dk);
 	disk_destroy(&sd->sc_dk);
 
+	callout_destroy(&sd->sc_callout);
+
 	pmf_device_deregister(self);
-	shutdownhook_disestablish(sd->sc_sdhook);
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -1322,10 +1318,10 @@ sdgetdisklabel(struct sd_softc *sd)
 	return 0;
 }
 
-static void
-sd_shutdown(void *arg)
+static bool
+sd_shutdown(device_t self, int how)
 {
-	struct sd_softc *sd = arg;
+	struct sd_softc *sd = device_private(self);
 
 	/*
 	 * If the disk cache needs to be flushed, and the disk supports
@@ -1340,15 +1336,13 @@ sd_shutdown(void *arg)
 		} else
 			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 	}
+	return true;
 }
 
 static bool
 sd_suspend(device_t dv PMF_FN_ARGS)
 {
-	struct sd_softc *sd = device_private(dv);
-
-	sd_shutdown(sd); /* XXX no need to poll */
-	return true;
+	return sd_shutdown(dv, boothowto); /* XXX no need to poll */
 }
 
 /*

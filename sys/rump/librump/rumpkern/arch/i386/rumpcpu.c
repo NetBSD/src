@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcpu.c,v 1.2.4.2 2009/01/19 13:20:26 skrll Exp $	*/
+/*	$NetBSD: rumpcpu.c,v 1.2.4.3 2009/04/28 07:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.2.4.2 2009/01/19 13:20:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.2.4.3 2009/04/28 07:37:51 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -54,7 +54,7 @@ x86_curlwp()
 }
 
 void
-wbinvd()
+wbinvd(void)
 {
 
 	/*

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.NAS,v 1.7.2.2 2009/03/03 18:29:06 skrll Exp $
+# $NetBSD: GENERIC.NAS,v 1.7.2.3 2009/04/28 07:34:36 skrll Exp $
 #
 # machine description file for GENERIC.NAS
 # 
@@ -22,11 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-<<<<<<< GENERIC.NAS
-#ident 		"GENERIC.NAS-$Revision: 1.7.2.2 $"
-=======
-#ident 		"GENERIC.NAS-$Revision: 1.7.2.2 $"
->>>>>>> 1.9
+#ident 		"GENERIC.NAS-$Revision: 1.7.2.3 $"
 
 maxusers	32
 

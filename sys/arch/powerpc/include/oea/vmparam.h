@@ -75,13 +75,6 @@
 #endif
 
 /*
- * Default maximum amount of shared memory pages
- */
-#ifndef SHMMAXPGS
-#define	SHMMAXPGS		1024
-#endif
-
-/*
  * Default number of pages in the user raw I/O map.
  */
 #ifndef USRIOSIZE

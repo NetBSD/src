@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.282.2.2 2009/03/03 18:29:25 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.282.2.3 2009/04/28 07:34:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282.2.2 2009/03/03 18:29:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282.2.3 2009/04/28 07:34:41 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -388,7 +388,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
-	bzero((void *)tf, sizeof *tf);
+	memset((void *)tf, 0, sizeof *tf);
 	tf->tf_psr = psr;
 	tf->tf_global[1] = (int)l->l_proc->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
@@ -682,7 +682,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	/*
 	 * Get the floating point registers
 	 */
-	bcopy(fps->fs_regs, f->__fpu_regs, sizeof(fps->fs_regs));
+	memcpy( f->__fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
 	f->__fp_nqsize = sizeof(struct fp_qentry);
 	f->__fp_nqel = fps->fs_qsize;
 	f->__fp_fsr = fps->fs_fsr;
@@ -794,7 +794,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 			return (EINVAL);
 		}
-		bcopy(f->__fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
+		memcpy( fps->fs_regs, f->__fpu_regs, sizeof(fps->fs_regs));
 		fps->fs_qsize = f->__fp_nqel;
 		fps->fs_fsr = f->__fp_fsr;
 		if (f->__fp_q != NULL) {
@@ -919,7 +919,7 @@ cpu_reboot(int howto, char *user_boot_string)
 		i = strlen(user_boot_string);
 		if (i > sizeof(str) - sizeof(opts) - 1)
 			prom_boot(user_boot_string);	/* XXX */
-		bcopy(user_boot_string, str, i);
+		memcpy( str, user_boot_string, i);
 		if (opts[0] != '\0')
 			str[i] = ' ';
 	}
@@ -1308,7 +1308,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct sparc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -1982,9 +1982,30 @@ static	vaddr_t iobase;
 }
 
 int
+sparc_bus_map_large(bus_space_tag_t t, int slot, bus_size_t offset,
+		    bus_size_t size, int flags, bus_space_handle_t *hp)
+{
+	bus_addr_t pa = BUS_ADDR(slot,offset);
+	vaddr_t v = 0;
+
+	if (uvm_map(kernel_map, &v, size, NULL, 0, PAGE_SIZE,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_NORMAL,
+			0)) == 0) {
+		return sparc_bus_map(t, pa, size, flags, v, hp);
+	}
+	return -1;
+}
+
+int
 sparc_bus_unmap(bus_space_tag_t t, bus_space_handle_t bh, bus_size_t size)
 {
 	vaddr_t va = trunc_page((vaddr_t)bh);
+
+	/*
+	 * XXX
+	 * mappings from sparc_bus_map_large() probably need additional care
+	 * here
+	 */
 
 	pmap_kremove(va, round_page(size));
 	pmap_update(pmap_kernel());

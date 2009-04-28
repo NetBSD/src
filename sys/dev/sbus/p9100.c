@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.39.4.1 2009/01/19 13:19:03 skrll Exp $ */
+/*	$NetBSD: p9100.c,v 1.39.4.2 2009/04/28 07:36:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.39.4.1 2009/01/19 13:19:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.39.4.2 2009/04/28 07:36:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,8 +479,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 }
 
 static void
-p9100_shutdown(arg)
-	void *arg;
+p9100_shutdown(void *arg)
 {
 	struct p9100_softc *sc = arg;
 
