@@ -4,8 +4,8 @@ need_hostname()
 {
 	case "$(hostname)" in
 	""|"(none)"|localhost|localhost.localdomain)
-		[ -n "${new_host_name}" -o -n "${new_fqdn_name}" ];;
-	"${old_host_name}"|"${old_fqdn_name}")
+		[ -n "$new_host_name" -o -n "$new_fqdn_name" ];;
+	"$old_host_name"|"$old_fqdn_name")
 		true;;
 	*)
 		false;;
@@ -15,14 +15,14 @@ need_hostname()
 set_hostname()
 {
 	if need_hostname; then
-		if [ -n "${new_host_name}" ]; then
-			hostname "${new_host_name}"
+		if [ -n "$new_host_name" ]; then
+			hostname "$new_host_name"
 		else
-			hostname "${new_fqdn_name}"
+			hostname "$new_fqdn_name"
 		fi
 	fi
 }
 
-case "${reason}" in
-BOUND|INFORM|REBIND|REBOOT|RENEW|TIMEOUT)	set_hostname;;
+case "$reason" in
+BOUND|INFORM|REBIND|REBOOT|RENEW|TIMEOUT|STATIC)	set_hostname;;
 esac
