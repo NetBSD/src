@@ -1,4 +1,4 @@
-.\"	$NetBSD: evdns.3,v 1.3 2009/04/11 16:55:04 wiz Exp $
+.\"	$NetBSD: evdns.3,v 1.4 2009/04/28 03:11:45 reed Exp $
 .\"
 .\" Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -91,7 +91,9 @@ can do the job for you with the modern async call getaddrinfo_a
 (see http://www.imperialviolet.org/page25.html#e498).
 Otherwise, please continue.
 .Pp
-This code is based on libevent and you must call event_init before
+This code is based on libevent and you must call
+.Fn event_init
+before
 any of the APIs in this file.
 You must also seed the OpenSSL random
 source if you are using OpenSSL for ids (see below).
@@ -99,8 +101,11 @@ source if you are using OpenSSL for ids (see below).
 This library is designed to be included and shipped with your source
 code.
 You statically link with it.
-You should also test for the existence of strtok_r and define
-HAVE_STRTOK_R if you have it.
+You should also test for the existence of
+.Dv strtok_r
+and define
+.Dv HAVE_STRTOK_R
+if you have it.
 .Pp
 The DNS protocol requires a good source of id numbers and these
 numbers should be unpredictable for spoofing reasons.
@@ -109,16 +114,17 @@ exactly one of them.
 In increasing order of preference:
 .Pp
 .Bl -tag -width "DNS_USE_GETTIMEOFDAY_FOR_ID" -compact -offset indent
-.It DNS_USE_GETTIMEOFDAY_FOR_ID
+.It Dv DNS_USE_GETTIMEOFDAY_FOR_ID
 Using the bottom 16 bits of the usec result from gettimeofday.
 This is a pretty poor solution but should work anywhere.
-.It DNS_USE_CPU_CLOCK_FOR_ID
+.It Dv DNS_USE_CPU_CLOCK_FOR_ID
 Using the bottom 16 bits of the nsec result from the CPU's time
 counter.
 This is better, but may not work everywhere.
 Requires POSIX realtime support and you'll need to link against
--lrt on glibc systems at least.
-.It DNS_USE_OPENSSL_FOR_ID
+.Lb librt
+on glibc systems at least.
+.It Dv DNS_USE_OPENSSL_FOR_ID
 Uses the OpenSSL RAND_bytes call to generate the data.
 You must have seeded the pool before making any calls to this
 library.
@@ -140,11 +146,14 @@ evdns_resolve("www.hostname.com", 0, callback, NULL);
 .Pp
 When the lookup is complete the callback function is called.
 The first argument will be one of the DNS_ERR_* defines in evdns.h.
-Hopefully it will be DNS_ERR_NONE, in which case type will be
-DNS_IPv4_A, count will be the number of IP addresses, ttl is the time
+Hopefully it will be 
+.Dv DNS_ERR_NONE ,
+in which case type will be
+.Dv DNS_IPv4_A ,
+count will be the number of IP addresses, ttl is the time
 which the data can be cached for (in seconds), addresses will point
 to an array of uint32_t's and arg will be whatever you passed to
-evdns_resolve.
+.Fn evdns_resolve .
 .Pp
 Searching:
 .Pp
@@ -157,7 +166,7 @@ this list is used.
 .Pp
 Searching appears to be a single lookup from the point of view of the API,
 although many DNS queries may be generated from a single call to
-evdns_resolve.
+.Fn evdns_resolve .
 Searching can also drastically slow down the resolution of names.
 .Pp
 To disable searching:
@@ -174,27 +183,34 @@ then no searching will occur.
 If you do call
 .Fn evdns_resolv_conf_parse
 then don't pass
-.Va DNS_OPTION_SEARCH
+.Dv DNS_OPTION_SEARCH
 (or
-.Va DNS_OPTIONS_ALL ,
+.Dv DNS_OPTIONS_ALL ,
 which implies it).
 .It
 When calling
 .Fn evdns_resolve ,
 pass the
-.Va DNS_QUERY_NO_SEARCH
+.Dv DNS_QUERY_NO_SEARCH
 flag.
 .El
 .Pp
 The order of searches depends on the number of dots in the name.
-If the number is greater than the ndots setting then the names is
-first tried globally.
+If the number is greater than the
+.Sy ndots
+setting then the names is first tried globally.
 Otherwise each search domain is appended in turn.
 .Pp
-The ndots setting can either be set from a resolv.conf, or by calling
-evdns_search_ndots_set.
+The
+.Sy ndots
+setting can either be set from a
+.Pa resolv.conf ,
+or by calling
+.Fn evdns_search_ndots_set .
 .Pp
-For example, with ndots set to 1 (the default) and a search domain list of
+For example, with
+.Sy ndots
+set to 1 (the default) and a search domain list of
 ["myhome.net"]:
  Query: www
  Order: www.myhome.net, www.
@@ -208,7 +224,9 @@ Initializes support for non-blocking name resolution by calling
 .Fn evdns_resolv_conf_parse .
 .It Ft int Fn evdns_nameserver_add "unsigned long int address"
 Add a nameserver.
-The address should be an IP address in network byte order.
+The
+.Ar address
+should be an IP address in network byte order.
 The type of address is chosen so that it matches in_addr.s_addr.
 Returns non-zero on error.
 .It Ft int Fn evdns_nameserver_ip_add "const char *ip_as_string"
@@ -217,14 +235,22 @@ address and adds it as a nameserver.
 Returns non-zero on error
 .It Ft int Fn evdns_resolve "const char *name" "int flags" "evdns_callback_type callback" "void *ptr"
 Resolve a name.
-The name parameter should be a DNS name.
-The flags parameter should be 0, or
+The
+.Ar name
+parameter should be a DNS name.
+The
+.Ar flags
+parameter should be 0, or
 .Dv DNS_QUERY_NO_SEARCH
-which disables searching for this query (see defn of
+which disables searching for this query (see definition of
 searching above).
 .Pp
-The callback argument is a function which is called when
-this query completes and ptr is an argument which is passed
+The
+.Ar callback
+argument is a function which is called when
+this query completes and
+.Ar ptr
+is an argument which is passed
 to that callback function.
 .Pp
 Returns non-zero on error
@@ -252,22 +278,28 @@ Re-attempt resolves left in limbo after an earlier call to
 .It Ft int Fn evdns_resolv_conf_parse "int flags" "const char *filename"
 Parse a resolv.conf like file from the given filename.
 .Pp
-See the man page for resolv.conf for the format of this file.
+See the man page for
+.Xr resolv.conf 5
+for the format of this file.
 The flags argument determines what information is parsed from
 this file:
 .Bl -tag -width "DNS_OPTION_NAMESERVERS" -offset indent -compact -nested
-.It DNS_OPTION_SEARCH
+.It Dv DNS_OPTION_SEARCH
 domain, search and ndots options
 .It DNS_OPTION_NAMESERVERS
 nameserver lines
-.It DNS_OPTION_MISC
+.It Dv DNS_OPTION_MISC
 timeout and attempts options
-.It DNS_OPTIONS_ALL
+.It Dv DNS_OPTIONS_ALL
 all of the above
 .El
 .Pp
 The following directives are not parsed from the file:
-  sortlist, rotate, no-check-names, inet6, debug
+.Sy sortlist ,
+.Sy rotate ,
+.Sy no-check-names ,
+.Sy inet6 ,
+.Sy debug .
 .Pp
 Returns non-zero on error:
 .Bl -tag -width "0" -offset indent -compact -nested
