@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.54 2009/04/24 13:27:03 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.55 2009/04/28 14:00:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.54 2009/04/24 13:27:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.55 2009/04/28 14:00:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -239,6 +239,7 @@ uao_detach(struct uvm_object *uobj)
 
 	mutex_enter(&uobj->vmobjlock);
 	ao_put(uobj, 0, 0, PGO_ALLPAGES | PGO_FREE);
+	mutex_destroy(&uobj->vmobjlock);
 	kmem_free(uobj, sizeof(*uobj));
 }
 
