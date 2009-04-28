@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.1.1.1 2009/04/23 06:32:03 agc Exp $
+.\" $NetBSD: libnetpgp.3,v 1.2 2009/04/28 00:40:45 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -111,16 +111,16 @@ process be initialised using the
 .Fn netpgp_init
 function, which will set up the public and private keyrings, and set the
 user identity to the
-.It userid
+.Ar userid
 argument passed to the function.
 If no public key ring file is provided, initial values will be taken from those
 in the
-.It .gnupg/pubring.gpg
+.Ar .gnupg/pubring.gpg
 file in the user's home directory.
 Similarily, if no secret key ring file is provided,
 initial values will be taken from those
 in the
-.It .gnupg/secring.gpg
+.Ar .gnupg/secring.gpg
 file in the user's home directory.
 The
 .Fn netpgp_init
@@ -188,7 +188,7 @@ file basis).
 The
 .Fn netpgp_get_info
 returns the information depending upon the
-.It type
+.Ar type
 argument.
 .Sh SEE ALSO
 .Xr netpgp 1 ,
