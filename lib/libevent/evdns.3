@@ -1,4 +1,4 @@
-.\"	$NetBSD: evdns.3,v 1.4 2009/04/28 03:11:45 reed Exp $
+.\"	$NetBSD: evdns.3,v 1.5 2009/04/28 07:51:59 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -102,7 +102,7 @@ This library is designed to be included and shipped with your source
 code.
 You statically link with it.
 You should also test for the existence of
-.Dv strtok_r
+.Xr strtok_r 3
 and define
 .Dv HAVE_STRTOK_R
 if you have it.
@@ -146,7 +146,7 @@ evdns_resolve("www.hostname.com", 0, callback, NULL);
 .Pp
 When the lookup is complete the callback function is called.
 The first argument will be one of the DNS_ERR_* defines in evdns.h.
-Hopefully it will be 
+Hopefully it will be
 .Dv DNS_ERR_NONE ,
 in which case type will be
 .Dv DNS_IPv4_A ,
