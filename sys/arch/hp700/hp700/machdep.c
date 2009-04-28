@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.18 2009/04/28 13:35:44 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.19 2009/04/28 15:37:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.18 2009/04/28 13:35:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.19 2009/04/28 15:37:38 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -202,6 +202,7 @@ char	cpu_model[128];
 const struct hppa_cpu_info *hppa_cpu_info;
 enum hppa_cpu_type cpu_type;
 int	cpu_hvers;
+int	cpu_revision;
 
 /*
  * exported methods for cpus
@@ -780,17 +781,14 @@ cpuid(void)
 	cpu_hpt_init = hppa_cpu_info->hptinit;
 	cpu_desidhash = hppa_cpu_info->desidhash;
 
+	cpu_revision = (*cpu_desidhash)();
+
 	/* force strong ordering for now */
 	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B) {
 		kpsw |= PSW_O;
 	}
 
 	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
-#ifdef DEBUG
-	printf("%s: %s, %s level %d\n", __func__, cpu_model, hppa_cpu_info->hci_chip_name, (*cpu_desidhash)() + 0xa);
-#endif
-
-	printf("HP9000/... level %0x\n", (*cpu_desidhash)() + 0xa);
 
 #define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1]);
 	LDILDO(trap_ep_T_TLB_DIRTY , hppa_cpu_info->tlbdh);
