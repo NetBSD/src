@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28.2.4 2009/02/14 13:57:13 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28.2.5 2009/04/28 15:37:38 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -109,6 +109,7 @@ struct hppa_cpu_info {
 #ifdef _KERNEL
 extern const struct hppa_cpu_info *hppa_cpu_info;
 extern int cpu_hvers;
+extern int cpu_revision;
 extern register_t kpsw;
 #endif
 #endif
