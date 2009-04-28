@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.2.6.1 2009/01/19 13:20:31 skrll Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.2.6.2 2009/04/28 07:37:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 
 #if 0
 #define	WAPBL_DEBUG_BUFBYTES
-#define	WAPBL_DEBUG_SERIALIZE
 #endif
 
 #endif

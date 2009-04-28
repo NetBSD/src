@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_stand.h,v 1.1 1997/06/28 21:36:44 leo Exp $	*/
+/*	$NetBSD: atari_stand.h,v 1.1.170.1 2009/04/28 07:33:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.
@@ -31,4 +31,4 @@
  */
 
 /* NetBSD/Atari specific functions */
-int	init_dskio __P((void *, void *, int));
+int	init_dskio(void *, void *, int);

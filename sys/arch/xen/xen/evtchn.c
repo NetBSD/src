@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.39.2.1 2009/01/19 13:17:12 skrll Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.39.2.2 2009/04/28 07:35:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.39.2.1 2009/01/19 13:17:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.39.2.2 2009/04/28 07:35:01 skrll Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.39.2.1 2009/01/19 13:17:12 skrll Exp $"
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/reboot.h>

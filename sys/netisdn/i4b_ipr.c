@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.29.18.1 2009/01/19 13:20:14 skrll Exp $
+ *	$Id: i4b_ipr.c,v 1.29.18.2 2009/04/28 07:37:35 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.29.18.1 2009/01/19 13:20:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.29.18.2 2009/04/28 07:37:35 skrll Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -247,7 +247,7 @@ PDEVSTATIC void iripattach(void *);
 PSEUDO_SET(iripattach, i4b_ipr);
 static int irpioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, void *data);
 #else
-PDEVSTATIC void iripattach __P((void));
+PDEVSTATIC void iripattach(void);
 static int iripioctl(struct ifnet *ifp, u_long cmd, void *data);
 #endif
 
@@ -295,7 +295,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 iripattach(void *dummy)
 #else
-iripattach()
+iripattach(void)
 #endif
 {
 	struct ipr_softc *sc = ipr_softc;

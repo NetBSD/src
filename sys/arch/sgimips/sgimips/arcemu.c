@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.17.28.1 2009/03/03 18:29:14 skrll Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.17.28.2 2009/04/28 07:34:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.17.28.1 2009/03/03 18:29:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.17.28.2 2009/04/28 07:34:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ arcemu_init(const char **env)
  * we don't yet have badaddr to fall back on.
  */
 static int
-arcemu_identify()
+arcemu_identify(void)
 {
 	int mach;
 
@@ -267,7 +267,7 @@ eeprom_read(uint8_t *eeprom_buf, size_t len, int is_cs56,
  * both and see which doesn't give us garbage.
  */
 static void
-arcemu_eeprom_read()
+arcemu_eeprom_read(void)
 {
 	int i;
 
@@ -641,7 +641,7 @@ arcemu_prom_putc(dev_t dummy, int c)
 
 /* Unimplemented Vector */
 static void
-arcemu_unimpl()
+arcemu_unimpl(void)
 {
 
 	panic("arcemu vector not established on IP%d", mach_type);

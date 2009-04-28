@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.111.2.1 2009/01/19 13:19:39 skrll Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.111.2.2 2009/04/28 07:37:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.111.2.1 2009/01/19 13:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.111.2.2 2009/04/28 07:37:00 skrll Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1537,10 +1537,12 @@ veriexec_dump(struct lwp *l, prop_array_t rarray)
 {
 	struct mount *mp;
 
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		fileassoc_table_run(mp, veriexec_hook,
 		    (fileassoc_cb_t)veriexec_file_dump, rarray);
 	}
+	mutex_exit(&mountlist_lock);
 
 	return (0);
 }
@@ -1551,6 +1553,7 @@ veriexec_flush(struct lwp *l)
 	struct mount *mp;
 	int error = 0;
 
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		int lerror;
 
@@ -1558,6 +1561,7 @@ veriexec_flush(struct lwp *l)
 		if (lerror && lerror != ENOENT)
 			error = lerror;
 	}
+	mutex_exit(&mountlist_lock);
 
 	return (error);
 }

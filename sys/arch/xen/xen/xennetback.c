@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.34.2.1 2009/01/19 13:17:12 skrll Exp $      */
+/*      $NetBSD: xennetback.c,v 1.34.2.2 2009/04/28 07:35:01 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.34.2.1 2009/01/19 13:17:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.34.2.2 2009/04/28 07:35:01 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -193,7 +193,7 @@ struct _pages_pool_free {
 } pages_pool_free[NB_XMIT_PAGES_BATCH];
 
 void
-xennetback_init()
+xennetback_init(void)
 {
 	ctrl_msg_t cmsg;
 	netif_be_driver_status_t st;

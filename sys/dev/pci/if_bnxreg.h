@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.7 2008/06/24 10:17:45 gmcgarry Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.7.4.1 2009/04/28 07:35:56 skrll Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.17 2006/11/20 21:26:27 brad Exp $	*/
 
 /*-
@@ -4601,8 +4601,6 @@ struct bnx_softc
 	bus_size_t		bnx_size;
 
 	void				*bnx_intrhand;		/* Interrupt handler */
-	void				*bnx_powerhook;
-	void				*bnx_shutdownhook;
 
 	/* ASIC Chip ID. */
 	u_int32_t					bnx_chipid;

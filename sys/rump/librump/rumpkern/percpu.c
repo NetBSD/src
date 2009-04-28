@@ -1,4 +1,4 @@
-/*	$NetBSD: percpu.c,v 1.2.4.1 2009/01/19 13:20:25 skrll Exp $	*/
+/*	$NetBSD: percpu.c,v 1.2.4.2 2009/04/28 07:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: percpu.c,v 1.2.4.1 2009/01/19 13:20:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: percpu.c,v 1.2.4.2 2009/04/28 07:37:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: percpu.c,v 1.2.4.1 2009/01/19 13:20:25 skrll Exp $")
 static kmutex_t pcmtx;
 
 void
-percpu_init()
+percpu_init(void)
 {
 
 	mutex_init(&pcmtx, MUTEX_DEFAULT, IPL_NONE);

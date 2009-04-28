@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.56 2009/04/27 09:27:28 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.57 2009/04/28 07:34:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.56 2009/04/27 09:27:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.57 2009/04/28 07:34:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1245,7 +1245,7 @@ pmap_collect(pmap_t pmap)
  *	for this mapping.
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte;

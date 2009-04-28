@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.16.6.1 2009/01/19 13:20:15 skrll Exp $	*/
+/*	$NetBSD: natm.c,v 1.16.6.2 2009/04/28 07:37:44 skrll Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.16.6.1 2009/01/19 13:20:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.16.6.2 2009/04/28 07:37:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,11 +274,11 @@ struct proc *p;
 
     case PRU_PEERADDR:			/* fetch peer's address */
       snatm = mtod(nam, struct sockaddr_natm *);
-      bzero(snatm, sizeof(*snatm));
+      memset(snatm, 0, sizeof(*snatm));
       nam->m_len = snatm->snatm_len = sizeof(*snatm);
       snatm->snatm_family = AF_NATM;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-      bcopy(npcb->npcb_ifp->if_xname, snatm->snatm_if, sizeof(snatm->snatm_if));
+      memcpy(snatm->snatm_if, npcb->npcb_ifp->if_xname, sizeof(snatm->snatm_if));
 #elif defined(__FreeBSD__)
       snprintf(snatm->snatm_if, sizeof(snatm->snatm_if), "%s%d",
           npcb->npcb_ifp->if_name, npcb->npcb_ifp->if_unit);
@@ -350,7 +350,7 @@ done:
  */
 
 void
-natmintr()
+natmintr(void)
 
 {
   int s;

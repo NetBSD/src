@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.33.14.1 2009/01/19 13:20:30 skrll Exp $	*/
+/*	$NetBSD: select.h,v 1.33.14.2 2009/04/28 07:37:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,18 +44,18 @@
 
 struct lwp;
 struct proc;
-struct timeval;
+struct timespec;
 struct cpu_info;
 struct socket;
 
 int	selcommon(struct lwp *, register_t *, int, fd_set *, fd_set *,
-	    fd_set *, struct timeval *, sigset_t *);
+    fd_set *, struct timespec *, sigset_t *);
 void	selrecord(struct lwp *selector, struct selinfo *);
 void	selnotify(struct selinfo *, int, long);
 void	selsysinit(struct cpu_info *);
 void	selinit(struct selinfo *);
 void	seldestroy(struct selinfo *);
-int	pollsock(struct socket *, const struct timeval *, int);
+int	pollsock(struct socket *, const struct timespec *, int);
 
 #else /* _KERNEL */
 

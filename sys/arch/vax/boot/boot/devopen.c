@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.15 2008/10/16 13:39:25 hans Exp $ */
+/*	$NetBSD: devopen.c,v 1.15.2.1 2009/04/28 07:34:49 skrll Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,10 +47,7 @@ int	atoi(char *);
 int nexaddr, csrbase;
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	int dev, unit, ctlr, part, adapt, i, a[4], x;
 	int *mapregs;

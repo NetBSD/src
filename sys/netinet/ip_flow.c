@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.56.8.1 2009/03/03 18:33:38 skrll Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.56.8.2 2009/04/28 07:37:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.56.8.1 2009/03/03 18:33:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.56.8.2 2009/04/28 07:37:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ ipflow_lookup(const struct ip *ip)
 }
 
 void
-ipflow_poolinit()
+ipflow_poolinit(void)
 {
 
 	pool_init(&ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl",

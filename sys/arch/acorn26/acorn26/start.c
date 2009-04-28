@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.8.52.2 2009/03/03 18:28:48 skrll Exp $ */
+/* $NetBSD: start.c,v 1.8.52.3 2009/04/28 07:33:30 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8.52.2 2009/03/03 18:28:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8.52.3 2009/04/28 07:33:30 skrll Exp $");
 
 #include "opt_modular.h"
 
@@ -92,8 +92,7 @@ extern char __bss_start__[], __bss_end__[];
  * assembler to get things going.
  */
 void
-start(initbootconfig)
-	struct bootconfig *initbootconfig;
+start(struct bootconfig *initbootconfig)
 {
 	int onstack;
 
@@ -115,7 +114,7 @@ start(initbootconfig)
 #define MSGBUF_PHYSADDR	((paddr_t)0x00090000)
 
 	/* We can't trust the BSS (at least not with my linker) */
-	bzero(__bss_start__, __bss_end__ - __bss_start__);
+	memset(__bss_start__, 0, __bss_end__ - __bss_start__);
 
 	/* Save boot configuration somewhere */
 	memcpy(&bootconfig, initbootconfig, sizeof(struct bootconfig));
@@ -193,7 +192,7 @@ start(initbootconfig)
 	 * stack page.  That's our current stack page too.
 	 */
 	proc0paddr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
-	bzero(proc0paddr, sizeof(*proc0paddr));
+	memset(proc0paddr, 0, sizeof(*proc0paddr));
 
 	/* TODO: anything else? */
 	

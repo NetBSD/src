@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28.4.1 2009/01/19 13:17:08 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.28.4.2 2009/04/28 07:34:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28.4.1 2009/01/19 13:17:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28.4.2 2009/04/28 07:34:56 skrll Exp $");
 
 #include "clock.h"
 
@@ -211,8 +211,7 @@ mfp_get_timecount(struct timecounter *tc)
 
 #if 0
 void
-DELAY(mic)
-	int mic;
+DELAY(int mic)
 {
 	u_long n;
 	short hpos;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.123.4.2 2009/03/03 18:33:38 skrll Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.123.4.3 2009/04/28 07:37:16 skrll Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.123.4.2 2009/03/03 18:33:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.123.4.3 2009/04/28 07:37:16 skrll Exp $");
 
 #include "ppp.h"
 
@@ -498,14 +498,14 @@ pppioctl(struct ppp_softc *sc, u_long cmd, void *data, int flag,
     case PPPIOCSCOMPRESS:
     case PPPIOCSNPMODE:
 	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
-	    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, &sc->sc_if, (void *)cmd,
+	    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, &sc->sc_if, KAUTH_ARG(cmd),
 	    NULL) != 0)
 		return (EPERM);
 	break;
     case PPPIOCXFERUNIT:
 	/* XXX: Why is this privileged?! */
 	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
-	    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, &sc->sc_if, (void *)cmd,
+	    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, &sc->sc_if, KAUTH_ARG(cmd),
 	    NULL) != 0)
 		return (EPERM);
 	break;

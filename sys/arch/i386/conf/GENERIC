@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.914.2.2 2009/03/03 18:28:59 skrll Exp $
+# $NetBSD: GENERIC,v 1.914.2.3 2009/04/28 07:34:07 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,12 +22,9 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.914.2.2 $"
+#ident 		"GENERIC-$Revision: 1.914.2.3 $"
 
 maxusers	64		# estimated number of users
-
-makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
-							# tune for more modern
 
 # For GENERIC, we build the exec formats as modules by default.
 no options	EXEC_AOUT       # exec a.out binaries
@@ -123,6 +120,7 @@ options 	BUFQ_PRIOCSCAN
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
+#options 	LOCKDEBUG	# expensive locking checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
@@ -136,20 +134,20 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
 # Compatibility options, built as modules by default
-#options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
-#options 	COMPAT_09	# NetBSD 0.9
-#options 	COMPAT_10	# NetBSD 1.0
-#options 	COMPAT_11	# NetBSD 1.1
-#options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
-#options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
-#options 	COMPAT_14	# NetBSD 1.4
-#options 	COMPAT_15	# NetBSD 1.5
-#options 	COMPAT_16	# NetBSD 1.6
-#options 	COMPAT_20	# NetBSD 2.0
-#options 	COMPAT_30	# NetBSD 3.0
-#options 	COMPAT_40	# NetBSD 4.0
-#options 	COMPAT_50	# NetBSD 5.0
-#options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
+options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
+options 	COMPAT_09	# NetBSD 0.9
+options 	COMPAT_10	# NetBSD 1.0
+options 	COMPAT_11	# NetBSD 1.1
+options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
+options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
+options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
+options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -885,7 +883,9 @@ ed*	at edc?
 # Network Interfaces
 
 # PCI network interfaces
+age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
@@ -1023,6 +1023,7 @@ le*	at mca? slot ?			# SKNET Personal/MC2+
 # MII/PHY support
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+atphy*	at mii? phy ?			# Attansic/Atheros PHYs
 bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
@@ -1239,6 +1240,15 @@ fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*  at pci?				# SD Host Controller
+sdmmc* at sdhc?				# SD/MMC bus
+
+ld*	at sdmmc?
+
+
 # Audio Devices
 
 # PCI audio devices
@@ -1355,6 +1365,9 @@ radio* at bktr?
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
+# Bluetooth SDIO Controller
+sbt* at sdmmc?
+
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
@@ -1363,6 +1376,7 @@ bthub* at bcsp?
 bthub* at bt3c?
 bthub* at btbc?
 bthub* at btuart?
+bthub* at sbt?
 bthub* at ubt?
 
 # Bluetooth HID support

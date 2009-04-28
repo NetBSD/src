@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.33.12.1 2009/01/19 13:15:52 skrll Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.33.12.2 2009/04/28 07:33:33 skrll Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.33.12.1 2009/01/19 13:15:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.33.12.2 2009/04/28 07:33:33 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -5101,7 +5101,7 @@ tulip_pci_attach(
     sc = (tulip_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
     if (sc == NULL)
 	return;
-    bzero(sc, sizeof(*sc));				/* Zero out the softc*/
+    memset(sc, 0, sizeof(*sc));				/* Zero out the softc*/
 #endif
 
     PCI_GETBUSDEVINFO(sc);
@@ -5339,11 +5339,7 @@ tulip_pci_attach(
 }
 
 static void
-a12_m_copydata(m, off, len, cp)
-	register struct mbuf *m;
-	register int off;
-	register int len;
-	void *cp;
+a12_m_copydata(register struct mbuf *m, register int off, register int len, void *cp)
 {
 static	long packet[200];	/* may seem unwise, but typ a12 ram is 512 MB */
 

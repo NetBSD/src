@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.9.8.1 2009/01/19 13:18:24 skrll Exp $ */
+/* $NetBSD: onewire.c,v 1.9.8.2 2009/04/28 07:35:55 skrll Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.9.8.1 2009/01/19 13:18:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.9.8.2 2009/04/28 07:35:55 skrll Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -419,7 +419,7 @@ onewire_scan(struct onewire_softc *sc)
 			}
 		}
 		if (!present) {
-			bzero(&oa, sizeof(oa));
+			memset(&oa, 0, sizeof(oa));
 			oa.oa_onewire = sc;
 			oa.oa_rom = rom;
 			if ((dev = config_found(sc->sc_dev, &oa,

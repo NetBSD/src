@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.100.2.1 2009/01/19 13:20:14 skrll Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.100.2.2 2009/04/28 07:37:24 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.100.2.1 2009/01/19 13:20:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.100.2.2 2009/04/28 07:37:24 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -130,7 +130,7 @@ static percpu_t *rip6stat_percpu;
  * Initialize raw connection block queue.
  */
 void
-rip6_init()
+rip6_init(void)
 {
 
 	in6_pcbinit(&raw6cbtable, 1, 1);

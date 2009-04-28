@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.29.2.1 2009/01/19 13:17:12 skrll Exp $      */
+/*      $NetBSD: xenevt.c,v 1.29.2.2 2009/04/28 07:35:01 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.29.2.1 2009/01/19 13:17:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.29.2.2 2009/04/28 07:35:01 skrll Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -80,14 +80,15 @@ static int	xenevt_fclose(struct file *);
 /* static int	xenevt_fkqfilter(struct file *, struct knote *); */
 
 static const struct fileops xenevt_fileops = {
-	xenevt_fread,
-	xenevt_fwrite,
-	xenevt_fioctl,
-	fnullop_fcntl,
-	xenevt_fpoll,
-	fbadop_stat,
-	xenevt_fclose,
-	/* xenevt_fkqfilter */ fnullop_kqfilter
+	.fo_read = xenevt_fread,
+	.fo_write = xenevt_fwrite,
+	.fo_ioctl = xenevt_fioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = xenevt_fpoll,
+	.fo_stat = fbadop_stat,
+	.fo_close = xenevt_fclose,
+	.fo_kqfilter = /* xenevt_fkqfilter */ fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 dev_type_open(xenevtopen);
@@ -372,7 +373,7 @@ xenevtmmap(dev_t dev, off_t off, int prot)
 		if (off != 0)
 			return -1;
 		return x86_btop(
-		    xpmap_mtop(xen_start_info.store_mfn << PAGE_SHIFT));
+		   xpmap_mtop((paddr_t)xen_start_info.store_mfn << PAGE_SHIFT));
 	}
 #endif
 	return -1;

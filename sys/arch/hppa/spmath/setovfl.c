@@ -1,4 +1,4 @@
-/*	$NetBSD: setovfl.c,v 1.5 2006/11/27 07:22:07 skrll Exp $	*/
+/*	$NetBSD: setovfl.c,v 1.5.64.1 2009/04/28 07:34:07 skrll Exp $	*/
 
 /*	$OpenBSD: setovfl.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,15 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: setovfl.c,v 1.5 2006/11/27 07:22:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: setovfl.c,v 1.5.64.1 2009/04/28 07:34:07 skrll Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
 #include "../spmath/dbl_float.h"
 
 sgl_floating_point
-sgl_setoverflow(sign)
-	unsigned int sign;
+sgl_setoverflow(unsigned int sign)
 {
 	sgl_floating_point result;
 

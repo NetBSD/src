@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.87.4.1 2009/01/19 13:20:12 skrll Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.87.4.2 2009/04/28 07:37:16 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.87.4.1 2009/01/19 13:20:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.87.4.2 2009/04/28 07:37:16 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1628,7 +1628,7 @@ strip_newpacket(struct strip_softc *sc, u_char *ptr, u_char *end)
 	}
 
 	/* XXX redundant copy */
-	bcopy(sc->sc_rxbuf, sc->sc_pktstart, packetlen );
+	memcpy(sc->sc_pktstart, sc->sc_rxbuf, packetlen );
 	return (packetlen);
 }
 

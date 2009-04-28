@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.149.2.2 2009/03/03 18:32:55 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.149.2.3 2009/04/28 07:36:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.2.2 2009/03/03 18:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.2.3 2009/04/28 07:36:59 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2039,11 +2039,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			} else {
 				mutex_exit(&fp->f_lock);
 			}
-			if (elem_count > 0) {
-				needed += elem_size;
-				if (elem_count != INT_MAX)
-					elem_count--;
-			}
+			needed += elem_size;
+			if (elem_count > 0 && elem_count != INT_MAX)
+				elem_count--;
 		}
 		mutex_exit(&filelist_lock);
 		fputdummy(tp);
@@ -2115,11 +2113,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				} else {
 					mutex_exit(&ff->ff_lock);
 				}
-				if (elem_count > 0) {
-					needed += elem_size;
-					if (elem_count != INT_MAX)
-						elem_count--;
-				}
+				needed += elem_size;
+				if (elem_count > 0 && elem_count != INT_MAX)
+					elem_count--;
 			}
 			mutex_exit(&fd->fd_lock);
 
@@ -2152,7 +2148,7 @@ fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 
 	kp->ki_fileaddr =	PTRTOUINT64(fp);
 	kp->ki_flag =		fp->f_flag;
-	kp->ki_iflags =		fp->f_iflags;
+	kp->ki_iflags =		0;
 	kp->ki_ftype =		fp->f_type;
 	kp->ki_count =		fp->f_count;
 	kp->ki_msgcount =	fp->f_msgcount;
@@ -3035,6 +3031,14 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
+		ki->p_vm_vsize = vm->vm_map.size;
+		/*
+		 * Since the stack is initially mapped mostly with
+		 * PROT_NONE and grown as needed, adjust the "mapped size"
+		 * to skip the unused stack portion.
+		 */
+		ki->p_vm_msize =
+		    atop(vm->vm_map.size) - vm->vm_issize + vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
 		l = proc_active_lwp(p);
@@ -3205,6 +3209,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
+		ep->e_vm.vm_map.size = vm->vm_map.size;
 
 		/* Pick the primary (first) LWP */
 		l = proc_active_lwp(p);

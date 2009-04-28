@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.36.44.1 2009/03/03 18:29:14 skrll Exp $	*/
+/*	$NetBSD: console.c,v 1.36.44.2 2009/04/28 07:34:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,13 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36.44.1 2009/03/03 18:29:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36.44.2 2009/04/28 07:34:38 skrll Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/machtype.h>
@@ -81,7 +82,7 @@ static int	gio_video_init(const char *);
 static int	mace_serial_init(const char *);
 
 void
-consinit()
+consinit(void)
 {
 	const char *consdev;
 	
@@ -235,7 +236,7 @@ mace_serial_init(const char *consdev)
 
 #if defined(KGDB)
 void
-kgdb_port_init()
+kgdb_port_init(void)
 {
 # if (NCOM > 0)
 #  define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)

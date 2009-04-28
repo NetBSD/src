@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.357.2.2 2009/03/03 18:32:57 skrll Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357.2.3 2009/04/28 07:37:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.2.2 2009/03/03 18:32:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.2.3 2009/04/28 07:37:01 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2125,10 +2125,9 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		}
 		savebp = bp;
 		/* Allocate a marker vnode. */
-		if ((mvp = vnalloc(mp)) == NULL) {
-			sysctl_relock();
-			return (ENOMEM);
-		}
+		mvp = vnalloc(mp);
+		/* Should never fail for mp != NULL */
+		KASSERT(mvp != NULL);
 		mutex_enter(&mntvnode_lock);
 		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 			vmark(mvp, vp);
@@ -2230,14 +2229,15 @@ vfs_mountedon(vnode_t *vp)
  * We traverse the list in reverse order under the assumption that doing so
  * will avoid needing to worry about dependencies.
  */
-void
+bool
 vfs_unmountall(struct lwp *l)
 {
 	struct mount *mp, *nmp;
-	int allerror, error;
+	bool any_error, progress;
+	int error;
 
 	printf("unmounting file systems...");
-	for (allerror = 0, mp = CIRCLEQ_LAST(&mountlist);
+	for (any_error = false, mp = CIRCLEQ_LAST(&mountlist);
 	     !CIRCLEQ_EMPTY(&mountlist);
 	     mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
@@ -2246,15 +2246,18 @@ vfs_unmountall(struct lwp *l)
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
 		atomic_inc_uint(&mp->mnt_refcnt);
-		if ((error = dounmount(mp, MNT_FORCE, l)) != 0) {
+		if ((error = dounmount(mp, MNT_FORCE, l)) == 0)
+			progress = true;
+		else {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
-			allerror = 1;
+			any_error = true;
 		}
 	}
 	printf(" done\n");
-	if (allerror)
+	if (any_error)
 		printf("WARNING: some file systems would not unmount\n");
+	return progress;
 }
 
 /*
@@ -2486,7 +2489,7 @@ vattr_null(struct vattr *vap)
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 #define ARRAY_PRINT(idx, arr) \
-    ((idx) > 0 && (idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
+    ((unsigned int)(idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
 
 const char * const vnode_tags[] = { VNODE_TAGS };
 const char * const vnode_types[] = { VNODE_TYPES };
@@ -3202,3 +3205,4 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	}
 }
 #endif /* DDB */
+

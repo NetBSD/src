@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.9.84.1 2009/01/19 13:20:15 skrll Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.9.84.2 2009/04/28 07:37:44 skrll Exp $	*/
 
 /*
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.9.84.1 2009/01/19 13:20:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.9.84.2 2009/04/28 07:37:44 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -77,7 +77,7 @@ int wait;
 #endif
 
   if (npcb) {
-    bzero(npcb, sizeof(*npcb));
+    memset(npcb, 0, sizeof(*npcb));
     npcb->npcb_flags = NPCB_FREE;
   }
   return(npcb);
@@ -177,9 +177,9 @@ done:
 
 #ifdef DDB
 
-int npcb_dump __P((void));
+int npcb_dump(void);
 
-int npcb_dump()
+int npcb_dump(void)
 
 {
   struct natmpcb *cpcb;

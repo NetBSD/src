@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.17.2.2 2009/03/03 18:34:07 skrll Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.17.2.3 2009/04/28 07:37:50 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -8,7 +8,8 @@ LIB=		rump
 .PATH:	${RUMPTOP}/librump/rumpkern				\
 	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../conf					\
-	${RUMPTOP}/../dev
+	${RUMPTOP}/../dev					\
+	${RUMPTOP}/../secmodel/bsd44 ${RUMPTOP}/../secmodel/securelevel
 
 #
 # Source modules, first the ones specifically implemented for librump.
@@ -27,15 +28,19 @@ SRCS+=	rump_syscalls.c
 # Rest are from the std kernel sources.
 #
 # sys/kern
-SRCS+=	kern_auth.c kern_descrip.c kern_ksyms.c kern_malloc_stdtype.c	\
-	kern_module.c kern_rate.c kern_stub.c kern_sysctl.c		\
-	kern_timeout.c kern_uidinfo.c param.c sys_descrip.c		\
-	sys_generic.c
+SRCS+=	kern_auth.c kern_descrip.c kern_event.c kern_ksyms.c		\
+	kern_malloc_stdtype.c kern_module.c kern_rate.c kern_stub.c	\
+	kern_sysctl.c kern_timeout.c kern_uidinfo.c param.c		\
+	sys_descrip.c sys_generic.c
 
 # sys/kern subr (misc)
-SRCS+=	subr_devsw.c subr_callback.c subr_hash.c subr_iostat.c		\
-	subr_kobj.c subr_log.c subr_once.c subr_prf.c			\
+SRCS+=	subr_devsw.c subr_callback.c subr_evcnt.c subr_hash.c		\
+	subr_iostat.c subr_kobj.c subr_log.c subr_once.c subr_prf.c	\
 	subr_specificdata.c subr_time.c subr_workqueue.c
+
+# 4.4BSD secmodel.  selection is hardcoded for now
+SRCS+=	secmodel_bsd44.c secmodel_bsd44_logic.c secmodel_bsd44_suser.c	\
+	secmodel_securelevel.c
 
 # the funny bit.  this doesn't really belong here, but helps with the
 # needs of kern_descrip.c.  And since it's a fully dynamic interface,

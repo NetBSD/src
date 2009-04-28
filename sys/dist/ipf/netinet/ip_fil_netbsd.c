@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.46.6.2 2009/03/03 18:32:35 skrll Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.46.6.3 2009/04/28 07:36:47 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.46.6.2 2009/03/03 18:32:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.46.6.3 2009/04/28 07:36:47 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.59 2008/03/01 23:16:38 darrenr Exp";
@@ -48,10 +48,6 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.59 2008/03/01 23:1
 #include <sys/poll.h>
 #if (__NetBSD_Version__ >= 399002000)
 # include <sys/kauth.h>
-#endif
-
-#if (__NetBSD_Version__ >= 399002000)
-#include <sys/kauth.h>
 #endif
 
 #include <net/if.h>

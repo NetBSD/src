@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.33.8.1 2009/01/19 13:17:51 skrll Exp $	*/
+/*	$NetBSD: db_command.h,v 1.33.8.2 2009/04/28 07:35:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -144,5 +144,8 @@ struct db_command {
 #endif
 };
 
-#endif /*_DDB_COMMAND_*/
+void	*db_alloc(size_t);
+void	*db_zalloc(size_t);
+void	db_free(void *, size_t);
 
+#endif /*_DDB_COMMAND_*/

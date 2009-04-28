@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.227.2.2 2009/03/03 18:32:56 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.227.2.3 2009/04/28 07:37:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.227.2.2 2009/03/03 18:32:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.227.2.3 2009/04/28 07:37:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,11 +344,11 @@ ttyclose(struct tty *tp)
 
 	mutex_spin_exit(&tty_lock);
 
-	mutex_enter(proc_lock);
-	if (sess != NULL)
-		SESSRELE(sess);
-	mutex_exit(proc_lock);
-
+	if (sess != NULL) {
+		mutex_enter(proc_lock);
+		/* Releases proc_lock. */
+		proc_sessrele(sess);
+	}
 	return (0);
 }
 
@@ -1164,9 +1164,9 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		 * it must equal `p_session', in which case the session
 		 * already has the correct reference count.
 		 */
-		if (tp->t_session == NULL)
-			SESSHOLD(p->p_session);
-
+		if (tp->t_session == NULL) {
+			proc_sesshold(p->p_session);
+		}
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;

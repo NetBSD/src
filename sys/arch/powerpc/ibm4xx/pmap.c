@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.28.1 2009/01/19 13:16:37 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.28.2 2009/04/28 07:34:34 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.28.1 2009/01/19 13:16:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.28.2 2009/04/28 07:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -518,8 +518,8 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
  * This is not the most efficient technique but i don't
  * expect it to be called that often.
  */
-extern struct vm_page *vm_page_alloc1 __P((void));
-extern void vm_page_free1 __P((struct vm_page *));
+extern struct vm_page *vm_page_alloc1(void);
+extern void vm_page_free1(struct vm_page *);
 
 vaddr_t kbreak = VM_MIN_KERNEL_ADDRESS;
 
@@ -1636,9 +1636,9 @@ ctx_free(struct pmap *pm)
 /*
  * Test ref/modify handling.
  */
-void pmap_testout __P((void));
+void pmap_testout(void);
 void
-pmap_testout()
+pmap_testout(void)
 {
 	vaddr_t va;
 	volatile int *loc;

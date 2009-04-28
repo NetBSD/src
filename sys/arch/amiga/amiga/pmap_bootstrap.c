@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.2.8.1 2009/01/19 13:15:55 skrll Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2.8.2 2009/04/28 07:33:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.2.8.1 2009/01/19 13:15:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.2.8.2 2009/04/28 07:33:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,7 @@ char	*vmmap;
  *	and just syncs the pmap module with what has already been done.
  */
 void
-pmap_bootstrap(firstaddr, loadaddr)
-	paddr_t firstaddr;
-	paddr_t loadaddr;
+pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 {
 	vaddr_t va;
 	int i;

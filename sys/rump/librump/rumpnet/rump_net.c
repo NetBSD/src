@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.3.4.1 2009/01/19 13:20:26 skrll Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.3.4.2 2009/04/28 07:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.3.4.1 2009/01/19 13:20:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.3.4.2 2009/04/28 07:37:51 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.3.4.1 2009/01/19 13:20:26 skrll Exp $
 #include "rump_net_private.h"
 
 void
-rump_net_init()
+rump_net_init(void)
 {
 
 	mbinit();

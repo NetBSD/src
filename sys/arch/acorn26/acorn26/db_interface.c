@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 2007/10/17 19:52:51 garbled Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.16.28.1 2009/04/28 07:33:30 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16 2007/10/17 19:52:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.28.1 2009/04/28 07:33:30 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -268,7 +268,7 @@ extern u_int end;
 static struct undefined_handler db_uh;
 
 void
-db_machine_init()
+db_machine_init(void)
 {
 
 	/*

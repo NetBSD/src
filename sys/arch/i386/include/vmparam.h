@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.68.18.1 2009/01/19 13:16:20 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.68.18.2 2009/04/28 07:34:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,13 +84,6 @@
  * I386_MAX_EXE_ADDR is the upper boundary for the smaller segment.
  */
 #define I386_MAX_EXE_ADDR	(USRSTACK - MAXSSIZ)
-
-/*
- * Size of shared memory map
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS	2048
-#endif
 
 /*
  * Size of User Raw I/O map

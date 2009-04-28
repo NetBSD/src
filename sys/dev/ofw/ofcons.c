@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.34.4.1 2009/01/19 13:18:24 skrll Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.34.4.2 2009/04/28 07:35:55 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.34.4.1 2009/01/19 13:18:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.34.4.2 2009/04/28 07:35:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -86,10 +86,7 @@ const struct cdevsw ofcons_cdevsw = {
 static int ofcons_probe(void);
 
 static int
-ofcons_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ofcons_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 
@@ -102,9 +99,7 @@ ofcons_match(parent, match, aux)
 }
 
 static void
-ofcons_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofcons_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofcons_softc *sc = device_private(self);
 
@@ -213,8 +208,7 @@ ofcons_tty(dev_t dev)
 }
 
 static void
-ofcons_start(tp)
-	struct tty *tp;
+ofcons_start(struct tty *tp)
 {
 	int s, len;
 	u_char buf[OFBURSTLEN];
@@ -238,9 +232,7 @@ ofcons_start(tp)
 }
 
 static int
-ofcons_param(tp, t)
-	struct tty *tp;
-	struct termios *t;
+ofcons_param(struct tty *tp, struct termios *t)
 {
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
@@ -249,8 +241,7 @@ ofcons_param(tp, t)
 }
 
 static void
-ofcons_pollin(aux)
-	void *aux;
+ofcons_pollin(void *aux)
 {
 	struct ofcons_softc *sc = aux;
 	struct tty *tp = sc->of_tty;
@@ -264,7 +255,7 @@ ofcons_pollin(aux)
 }
 
 static int
-ofcons_probe()
+ofcons_probe(void)
 {
 	int chosen;
 	char stdinbuf[4], stdoutbuf[4];
@@ -287,8 +278,7 @@ ofcons_probe()
 }
 
 void
-ofcons_cnprobe(cd)
-	struct consdev *cd;
+ofcons_cnprobe(struct consdev *cd)
 {
 	int maj;
 
@@ -301,14 +291,12 @@ ofcons_cnprobe(cd)
 }
 
 void
-ofcons_cninit(cd)
-	struct consdev *cd;
+ofcons_cninit(struct consdev *cd)
 {
 }
 
 int
-ofcons_cngetc(dev)
-	dev_t dev;
+ofcons_cngetc(dev_t dev)
 {
 	unsigned char ch = '\0';
 	int l;
@@ -320,9 +308,7 @@ ofcons_cngetc(dev)
 }
 
 void
-ofcons_cnputc(dev, c)
-	dev_t dev;
-	int c;
+ofcons_cnputc(dev_t dev, int c)
 {
 	char ch = c;
 

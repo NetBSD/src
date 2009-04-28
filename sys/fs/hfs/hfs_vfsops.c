@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.19.2.1 2009/01/19 13:19:33 skrll Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.19.2.2 2009/04/28 07:36:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.19.2.1 2009/01/19 13:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.19.2.2 2009/04/28 07:36:52 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -275,18 +275,19 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
+	 *
+	 * Permission to update a mount is checked higher, so here we presume
+	 * updating the mount is okay (for example, as far as securelevel goes)
+	 * which leaves us with the normal check.
 	 */
-	if (error == 0 && kauth_authorize_generic(l->l_cred,
-            KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		accessmode = VREAD;
-		if (update ?
-			(mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
-			(mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-	}
+	accessmode = VREAD;
+	if (update ?
+		(mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+		(mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
 
 	if (error != 0)
 		goto error;

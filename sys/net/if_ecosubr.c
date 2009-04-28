@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.28.12.1 2009/01/19 13:20:11 skrll Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.28.12.2 2009/04/28 07:37:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.28.12.1 2009/01/19 13:20:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.28.12.2 2009/04/28 07:37:16 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -417,7 +417,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 			m1->m_pkthdr.len = m1->m_len;
 			MH_ALIGN(m1, m1->m_len);
 			ah = mtod(m1, struct arphdr *);
-			bzero((void *)ah, m1->m_len);
+			memset((void *)ah, 0, m1->m_len);
 			ah->ar_pro = htons(ETHERTYPE_IP);
 			ah->ar_hln = ifp->if_data.ifi_addrlen;
 			ah->ar_pln = sizeof(struct in_addr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: skiconsole.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: skiconsole.c,v 1.2.82.1 2009/04/28 07:34:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -55,7 +55,7 @@ ski_cons_putchar(int c)
 static int pollchar = -1;
 
 int
-ski_cons_getchar()
+ski_cons_getchar(void)
 {
 	int c;
 
@@ -73,7 +73,7 @@ ski_cons_getchar()
 }
 
 int
-ski_cons_poll()
+ski_cons_poll(void)
 {
 	int c;
 	if (pollchar > 0)

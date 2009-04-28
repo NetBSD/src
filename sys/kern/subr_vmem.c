@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.42.12.2 2009/03/03 18:32:56 skrll Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.42.12.3 2009/04/28 07:37:00 skrll Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.42.12.2 2009/03/03 18:32:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.42.12.3 2009/04/28 07:37:00 skrll Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -1376,7 +1376,7 @@ vmem_check(vmem_t *vm)
 
 #if defined(UNITTEST)
 int
-main()
+main(void)
 {
 	vmem_t *vm;
 	vmem_addr_t p;

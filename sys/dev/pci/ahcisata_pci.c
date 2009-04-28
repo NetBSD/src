@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.12.2.1 2009/01/19 13:18:24 skrll Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.12.2.2 2009/04/28 07:35:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.12.2.1 2009/01/19 13:18:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.12.2.2 2009/04/28 07:35:55 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -53,6 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.12.2.1 2009/01/19 13:18:24 skrll 
 
 static const struct pci_quirkdata ahci_pci_quirks[] = {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA2,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA3,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA4,
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA,
 	    AHCI_PCI_QUIRK_FORCE },

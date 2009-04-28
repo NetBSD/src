@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.13.4.1 2009/01/19 13:17:52 skrll Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.13.4.2 2009/04/28 07:35:20 skrll Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.13.4.1 2009/01/19 13:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.13.4.2 2009/04/28 07:35:20 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -378,8 +378,8 @@ bcspopen(dev_t device __unused, struct tty *tp)
 	int error, unit, s;
 	static char name[] = "bcsp";
 
-	if ((error = kauth_authorize_device_tty(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, tp)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return error;
 
 	s = spltty();
@@ -998,7 +998,7 @@ bcsp_send_ack_command(struct bcsp_softc *sc)
 }
 
 static __inline struct mbuf *
-bcsp_create_ackpkt()
+bcsp_create_ackpkt(void)
 {
 	struct mbuf *m;
 	bcsp_hdr_t *hdrp;

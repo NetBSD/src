@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.107.2.1 2009/01/19 13:17:31 skrll Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.107.2.2 2009/04/28 07:35:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.107.2.1 2009/01/19 13:17:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.107.2.2 2009/04/28 07:35:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,9 +129,7 @@ struct emul emul_linux = {
 };
 
 static void
-linux_e_proc_init(p, parent, forkflags)
-	struct proc *p, *parent;
-	int forkflags;
+linux_e_proc_init(struct proc *p, struct proc *parent, int forkflags)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 	struct linux_emuldata_shared *s;
@@ -266,9 +264,7 @@ linux_e_proc_exit(struct proc *p)
  * Emulation fork hook.
  */
 static void
-linux_e_proc_fork(p, parent, forkflags)
-	struct proc *p, *parent;
-	int forkflags;
+linux_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 {
 
 	/*
@@ -375,10 +371,7 @@ linux_nptl_proc_exit(struct proc *p)
 }
 
 void
-linux_nptl_proc_fork(p, parent, luserret)
-	struct proc *p;
-	struct proc *parent;
-	void (*luserret)(void);
+linux_nptl_proc_fork(struct proc *p, struct proc *parent, void (*luserret)(void))
 {
 	struct linux_emuldata *e = p->p_emuldata;
 

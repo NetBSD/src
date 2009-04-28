@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78.2.2 2009/03/03 18:29:26 skrll Exp $ */
+/*	$NetBSD: cpu.c,v 1.78.2.3 2009/04/28 07:34:47 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.2.2 2009/03/03 18:29:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.2.3 2009/04/28 07:34:47 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -372,7 +372,7 @@ vaddr_t cpu_spinup_trampoline;
  * Start secondary processors in motion.
  */
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	int i, pstate;
 	struct cpu_info *ci;
@@ -414,7 +414,7 @@ cpu_boot_secondary_processors()
 }
 
 void
-cpu_hatch()
+cpu_hatch(void)
 {
 	char *v = (char*)CPUINFO_VA;
 	int i;

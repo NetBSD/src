@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280.2.2 2009/03/03 18:32:55 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280.2.3 2009/04/28 07:36:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.2.2 2009/03/03 18:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.2.3 2009/04/28 07:36:59 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -540,9 +540,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * to call exec in order to do something useful.
 	 */
  retry:
-	if ((p->p_flag & PK_SUGID) &&
-	    chgproccnt(kauth_cred_getuid(l->l_cred), 0) >
-	    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
+	if ((p->p_flag & PK_SUGID) && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0 && chgproccnt(kauth_cred_getuid(
+	    l->l_cred), 0) > p->p_rlimit[RLIMIT_NPROC].rlim_cur)
 		return EAGAIN;
 
 	oldlwpflags = l->l_flag & (LW_SA | LW_SA_UPCALL);
@@ -776,6 +776,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	vm->vm_daddr = (void*)pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
+	vm->vm_issize = 0;
 	vm->vm_maxsaddr = (void *)pack.ep_maxsaddr;
 	vm->vm_minsaddr = (void *)pack.ep_minsaddr;
 

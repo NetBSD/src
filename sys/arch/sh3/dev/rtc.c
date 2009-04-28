@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5.8.1 2009/01/19 13:16:42 skrll Exp $ */
+/*	$NetBSD: rtc.c,v 1.5.8.2 2009/04/28 07:34:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.5.8.1 2009/01/19 13:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.5.8.2 2009/04/28 07:34:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -127,6 +127,9 @@ rtc_attach(device_t parent, device_t self, void *aux)
 		rtc_gettime_ymdhms(&sc->sc_todr, &dt);
 	}
 #endif
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 

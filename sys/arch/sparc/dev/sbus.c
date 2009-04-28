@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.70.4.1 2009/01/19 13:16:44 skrll Exp $ */
+/*	$NetBSD: sbus.c,v 1.70.4.2 2009/04/28 07:34:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.70.4.1 2009/01/19 13:16:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.70.4.2 2009/04/28 07:34:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -440,7 +440,7 @@ sbus_setup_attach_args(struct sbus_softc *sc,
 {
 	int n, error;
 
-	bzero(sa, sizeof(struct sbus_attach_args));
+	memset(sa, 0, sizeof(struct sbus_attach_args));
 	error = prom_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
@@ -497,7 +497,7 @@ sbus_destroy_attach_args(struct sbus_attach_args *sa)
 	if (sa->sa_promvaddrs)
 		free(sa->sa_promvaddrs, M_DEVBUF);
 
-	bzero(sa, sizeof(struct sbus_attach_args));/*DEBUG*/
+	memset(sa, 0, sizeof(struct sbus_attach_args));/*DEBUG*/
 }
 
 bus_addr_t

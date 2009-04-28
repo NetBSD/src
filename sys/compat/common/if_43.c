@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.1.8.2 2009/01/19 13:17:17 skrll Exp $	*/
+/*	$NetBSD: if_43.c,v 1.1.8.3 2009/04/28 07:35:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.1.8.2 2009/01/19 13:17:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.1.8.3 2009/04/28 07:35:03 skrll Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

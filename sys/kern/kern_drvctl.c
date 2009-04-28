@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.19.4.1 2009/01/19 13:19:38 skrll Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.19.4.2 2009/04/28 07:36:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19.4.1 2009/01/19 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19.4.2 2009/04/28 07:36:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19.4.1 2009/01/19 13:19:38 skrll E
 #include <sys/poll.h>
 #include <sys/drvctlio.h>
 #include <sys/devmon.h>
+#include <sys/stat.h>
+#include <sys/kauth.h>
 
 struct drvctl_event {
 	TAILQ_ENTRY(drvctl_event) dce_link;
@@ -75,17 +77,19 @@ static int	drvctl_write(struct file *, off_t *, struct uio *,
 			     kauth_cred_t, int);
 static int	drvctl_ioctl(struct file *, u_long, void *);
 static int	drvctl_poll(struct file *, int);
+static int	drvctl_stat(struct file *, struct stat *);
 static int	drvctl_close(struct file *);
 
 static const struct fileops drvctl_fileops = {
-	drvctl_read,
-	drvctl_write,
-	drvctl_ioctl,
-	fnullop_fcntl,
-	drvctl_poll,
-	fbadop_stat,
-	drvctl_close,
-	fnullop_kqfilter
+	.fo_read = drvctl_read,
+	.fo_write = drvctl_write,
+	.fo_ioctl = drvctl_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = drvctl_poll,
+	.fo_stat = drvctl_stat,
+	.fo_close = drvctl_close,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 #define MAXLOCATORS 100
@@ -196,7 +200,11 @@ listdevbyname(struct devlistargs *l)
 	deviter_t di;
 	int cnt = 0, idx, error = 0;
 
-	if ((d = device_find_by_xname(l->l_devname)) == NULL)
+	if (*l->l_devname == '\0')
+		d = (device_t)NULL;
+	else if (memchr(l->l_devname, 0, sizeof(l->l_devname)) == NULL)
+		return EINVAL;
+	else if ((d = device_find_by_xname(l->l_devname)) == NULL)
 		return ENXIO;
 
 	for (child = deviter_first(&di, 0); child != NULL;
@@ -362,6 +370,15 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 		return (EPASSTHROUGH);
 	}
 	return (res);
+}
+
+static int
+drvctl_stat(struct file *fp, struct stat *st)
+{
+	(void)memset(st, 0, sizeof(*st));
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	return 0;
 }
 
 static int

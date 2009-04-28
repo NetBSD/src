@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52.2.2 2009/03/03 18:28:50 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.52.2.3 2009/04/28 07:33:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.2.2 2009/03/03 18:28:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.2.3 2009/04/28 07:33:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -150,6 +150,31 @@ int	trapdebug = 0;
 #ifdef TRAP_SIGDEBUG
 static void frame_dump(struct trapframe *);
 #endif
+
+static void *
+onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
+{
+	struct onfault_table {
+		uintptr_t start;
+		uintptr_t end;
+		void *handler;
+	};
+	extern const struct onfault_table onfault_table[];
+	const struct onfault_table *p;
+	uintptr_t pc;
+
+	if (pcb->pcb_onfault != NULL) {
+		return pcb->pcb_onfault;
+	}
+
+	pc = tf->tf_rip;
+	for (p = onfault_table; p->start; p++) {
+		if (p->start <= pc && pc < p->end) {
+			return p->handler;
+		}
+	}
+	return NULL;
+}
 
 /*
  * trap(frame):
@@ -250,11 +275,12 @@ trap(struct trapframe *frame)
 		if (p == NULL)
 			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
-		if (pcb->pcb_onfault != 0) {
+		onfault = onfault_handler(pcb, frame);
+		if (onfault != NULL) {
 copyefault:
 			error = EFAULT;
 copyfault:
-			frame->tf_rip = (uint64_t)pcb->pcb_onfault;
+			frame->tf_rip = (uintptr_t)onfault;
 			frame->tf_rax = error;
 			return;
 		}
@@ -412,7 +438,8 @@ copyfault:
 		 * fusuintrfailure is used by [fs]uswintr() to prevent
 		 * page faulting from inside the profiling interrupt.
 		 */
-		if (pcb->pcb_onfault == fusuintrfailure) {
+		onfault = pcb->pcb_onfault;
+		if (onfault == fusuintrfailure) {
 			goto copyefault;
 		}
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
@@ -489,6 +516,7 @@ faultcommon:
  				 */
 				kpreempt_disable();
 				if (curcpu()->ci_want_pmapload) {
+					onfault = onfault_handler(pcb, frame);
 					if (onfault != kcopy_fault) {
 						pmap_load();
 					}
@@ -537,7 +565,8 @@ faultcommon:
 			ksi.ksi_code = SEGV_MAPERR;
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0)
+			onfault = onfault_handler(pcb, frame);
+			if (onfault != NULL)
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);

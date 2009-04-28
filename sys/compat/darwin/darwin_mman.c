@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mman.c,v 1.29.8.1 2009/01/19 13:17:17 skrll Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.29.8.2 2009/04/28 07:35:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.29.8.1 2009/01/19 13:17:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.29.8.2 2009/04/28 07:35:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -191,7 +191,7 @@ darwin_sys_load_shared_file(struct lwp *l, const struct darwin_sys_load_shared_f
 
 	/* Do the actual mapping */
 	for (i = 0; i < SCARG(uap, count); i++) {
-		bzero(&evc, sizeof(evc));
+		memset(&evc, 0, sizeof(evc));
 		evc.ev_addr = base + mapp[i].mapping_offset;
 		evc.ev_len = mapp[i].size;
 		evc.ev_prot = mapp[i].protection & VM_PROT_ALL;

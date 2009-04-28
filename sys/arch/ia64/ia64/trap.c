@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.7 2008/10/15 06:51:18 wrstuden Exp $ */
+/* $NetBSD: trap.c,v 1.7.2.1 2009/04/28 07:34:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 Marcel Moolenaar
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7.2.1 2009/04/28 07:34:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,8 +319,7 @@ trap_decode_break(struct trapframe *tf)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	return;
 }

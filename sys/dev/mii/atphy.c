@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.2.4.3 2009/03/03 18:31:06 skrll Exp $ */
+/*	$NetBSD: atphy.c,v 1.2.4.4 2009/04/28 07:35:53 skrll Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.2.4.3 2009/03/03 18:31:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.2.4.4 2009/04/28 07:35:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,8 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * Reset the PHY so all changes take effect.
 		 */
-		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET);
+		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET | BMCR_AUTOEN |
+		    BMCR_STARTNEG);
 done:
 		break;
 

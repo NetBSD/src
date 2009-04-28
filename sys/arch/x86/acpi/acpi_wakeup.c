@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.10.2.2 2009/03/03 18:29:36 skrll Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.10.2.3 2009/04/28 07:34:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.10.2.2 2009/03/03 18:29:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.10.2.3 2009/04/28 07:34:56 skrll Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -139,7 +139,7 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 #define WAKECODE_BCOPY(offset, type, val) do	{		\
 	void	**addr;						\
 	addr = (void **)(acpi_wakeup_vaddr + offset);		\
-	bcopy(&(val), addr, sizeof(type));			\
+	memcpy( addr, &(val), sizeof(type));			\
 } while (0)
 
 	paddr_t				tmp_pdir;
@@ -147,7 +147,7 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
 	/* Execute Sleep */
-	bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
+	memcpy( (void *)acpi_wakeup_vaddr, wakecode, sizeof(wakecode));
 
 	if (CPU_IS_PRIMARY(ci)) {
 		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
@@ -309,7 +309,6 @@ acpi_cpu_sleep(struct cpu_info *ci)
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
 	tsc_sync_ap(ci);
-	tsc_sync_ap(ci);
 
 	x86_enable_intr();
 }
@@ -395,7 +394,6 @@ out:
 		while ((ci->ci_flags & CPUF_RUNNING) == 0)
 			x86_pause();
 
-		tsc_sync_bp(ci);
 		tsc_sync_bp(ci);
 	}
 #endif

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.23.2.1 2009/01/19 13:19:08 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.23.2.2 2009/04/28 07:36:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.23.2.1 2009/01/19 13:19:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.23.2.2 2009/04/28 07:36:39 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -552,7 +552,7 @@ rum_alloc_tx_list(struct rum_softc *sc)
 		}
 
 		/* clean Tx descriptor */
-		bzero(data->buf, RT2573_TX_DESC_SIZE);
+		memset(data->buf, 0, RT2573_TX_DESC_SIZE);
 	}
 
 	return 0;

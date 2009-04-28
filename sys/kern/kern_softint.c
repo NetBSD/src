@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.23.2.1 2009/01/19 13:19:38 skrll Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.23.2.2 2009/04/28 07:36:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.23.2.1 2009/01/19 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.23.2.2 2009/04/28 07:36:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -407,7 +407,7 @@ softint_disestablish(void *arg)
 	 * all CPUs.  Once softint_disestablish() is called, the caller
 	 * commits to not trigger the interrupt and set SOFTINT_ACTIVE on
 	 * it again.  So, we are only looking for handler records with
-	 * SOFTINT_ACTIVE alreay set.
+	 * SOFTINT_ACTIVE already set.
 	 */
 	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
 	xc_wait(where);

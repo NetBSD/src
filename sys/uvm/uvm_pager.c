@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.92.12.2 2009/03/03 18:34:40 skrll Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.92.12.3 2009/04/28 07:37:58 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.12.2 2009/03/03 18:34:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.12.3 2009/04/28 07:37:58 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.12.2 2009/03/03 18:34:40 skrll Ex
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 
@@ -70,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.12.2 2009/03/03 18:34:40 skrll Ex
 #endif
 
 size_t pager_map_size = PAGER_MAP_SIZE;
-
-struct pool *uvm_aiobuf_pool;
 
 /*
  * list of uvm pagers in the system

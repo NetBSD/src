@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.52.8.1 2009/01/19 13:17:22 skrll Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.52.8.2 2009/04/28 07:35:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.52.8.1 2009/01/19 13:17:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.52.8.2 2009/04/28 07:35:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -260,9 +260,7 @@ irix_e_proc_exit(struct proc *p)
  * fork() hook used to allocate per process structures
  */
 static void
-irix_e_proc_fork(p, parent, forkflags)
-        struct proc *p, *parent;
-	int forkflags;
+irix_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 {
 	struct irix_emuldata *ied1;
 	struct irix_emuldata *ied2;

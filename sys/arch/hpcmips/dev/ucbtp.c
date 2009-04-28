@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.18 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.18.8.1 2009/04/28 07:34:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.18 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.18.8.1 2009/04/28 07:34:04 skrll Exp $");
 
 #include "opt_use_poll.h"
 
@@ -230,7 +230,7 @@ struct calibration_sample_table {
 };
 
 struct wsmouse_calibcoords *
-calibration_sample_lookup()
+calibration_sample_lookup(void)
 {
 	struct calibration_sample_table *tab;
 	platid_mask_t mask;

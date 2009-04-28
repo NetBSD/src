@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.2.4.2 2009/01/19 13:17:53 skrll Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.2.4.3 2009/04/28 07:35:21 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ dm_pdev_decr(dm_pdev_t *dmp)
 }
 
 /*static int
-  dm_pdev_dump_list()
+  dm_pdev_dump_list(void)
   {
   dm_pdev_t *dmp;
 	

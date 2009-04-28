@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.101.2.1 2009/01/19 13:19:09 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.101.2.2 2009/04/28 07:36:39 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.101.2.1 2009/01/19 13:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.101.2.2 2009/04/28 07:36:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.101.2.1 2009/01/19 13:19:09 skrll Exp $")
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>

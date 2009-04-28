@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.7.52.2 2009/03/03 18:28:48 skrll Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.7.52.3 2009/04/28 07:33:30 skrll Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7.52.2 2009/03/03 18:28:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7.52.3 2009/04/28 07:33:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/syslog.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7.52.2 2009/03/03 18:28:48 skrll 
 #endif
 
 void
-consinit()
+consinit(void)
 {
 
 #if NARCVIDEO > 0
