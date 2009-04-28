@@ -1,7 +1,8 @@
-/*
+/* 
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2009 Roy Marples <roy@marples.name>
- *
+ * Copyright 2006-2008 Roy Marples <roy@marples.name>
+ * All rights reserved
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -24,46 +25,10 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef IF_PREF_H
+#define IF_PREF_H
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"5.0.0"
+#include "dhcpcd.h"
 
-/* Some systems do not have a working fork. */
-/* #define THERE_IS_NO_FORK */
-
-/* Paths to things */
-#ifndef SYSCONFDIR
-# define SYSCONFDIR		"/etc"
-#endif
-#ifndef LIBEXECDIR
-# define LIBEXECDIR		"/libexec"
-#endif
-#ifndef RUNDIR
-# define RUNDIR			"/var/run"
-#endif
-#ifndef DBDIR
-# define DBDIR			"/var/db"
-#endif
-
-#ifndef CONFIG
-# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
-#endif
-#ifndef SCRIPT
-# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
-#endif
-#ifndef DUID
-# define DUID			SYSCONFDIR "/" PACKAGE ".duid"
-#endif
-#ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/" PACKAGE "-%s.lease"
-#endif
-#ifndef PIDFILE
-# define PIDFILE		RUNDIR "/" PACKAGE "%s%s.pid"
-#endif
-#ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE ".sock"
-#endif
-
+void sort_interfaces(void);
 #endif
