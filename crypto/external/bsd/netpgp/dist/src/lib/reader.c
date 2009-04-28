@@ -2098,9 +2098,9 @@ mmap_reader(void *dest, size_t length, __ops_error_t **errors,
 	char		*cmem = mem->mem;
 	int		 n;
 
-	(void)&errors;
-	n = MIN(length, (int)(mem->size - mem->offset));
+	OPS_USED(errors);
 	OPS_USED(cbinfo);
+	n = MIN(length, (int)(mem->size - mem->offset));
 	if (n > 0) {
 		(void) memcpy(dest, &cmem[(int)mem->offset], (unsigned)n);
 		mem->offset += n;

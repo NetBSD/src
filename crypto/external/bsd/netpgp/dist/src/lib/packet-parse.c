@@ -467,7 +467,7 @@ limited_read_scalar(unsigned *dest, unsigned length,
 	unsigned        n;
 
 	assert(length <= 4);
-	assert(/*CONSTCOND*/sizeof(*dest) >= sizeof(uint32_t));
+	assert(/*CONSTCOND*/sizeof(*dest) >= 4);
 	if (!limited_read(c, length, region, pinfo))
 		return 0;
 
