@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.49 2009/04/28 03:07:53 reed Exp $
+.\" $NetBSD: mdoc.local,v 1.50 2009/04/28 15:41:52 agc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,6 +73,7 @@
 .\" Bluetooth libraries
 .ds doc-str-Lb-libarchive       Reading and Writing Streaming Archives Library (libarchive, \-larchive)
 .ds doc-str-Lb-libbluetooth     Bluetooth Host Lookup Library (libbluetooth, \-lbluetooth)
+.ds doc-str-Lb-libnetpgp        Netpgp signing, verification, encryption and decryption (libnetpgp, \-lnetpgp)
 .ds doc-str-Lb-libopenpgpsdk    Openpgp signing, verification, encryption and decryption (libopenpgpsdk, \-lopenpgpsdk)
 .ds doc-str-Lb-libprop          Property Container Object Library (libprop, \-lprop)
 .ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
