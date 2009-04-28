@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.1.1.1 2009/04/23 06:32:03 agc Exp $
+# $Id: Makefile.in,v 1.2 2009/04/28 20:50:48 agc Exp $
 
 @SET_MAKE@
 SHELL = @SHELL@
@@ -40,7 +40,7 @@ CCLD= $(CC)
 LIBS= @LIBS@
 CPPFLAGS= @CPPFLAGS@
 DEFS= @DEFS@ -I. -I@srcdir@ -DHOST=\"$(CANONICAL_HOST)\" -DNETPGP_AUTOCONF_VERSION=\"$(PACKAGE_VERSION)\"
-DEFS+= -DNETPGP_MAINTAINER=\"$(PACKAGE_BUGREPORT)\" -I@srcdir@/../../include
+DEFS+= -I@srcdir@/../../include
 CFLAGS= @CFLAGS@
 LDFLAGS= @LDFLAGS@
 
@@ -61,11 +61,10 @@ DISTFILES= $(SRCS) AUTHORS COPYING DESCR INSTALL Makefile.in NEWS aclocal.m4 \
 config.guess config.h.in config.sub configure configure.ac install-sh \
 missing mkinstalldirs regress.sh
 
-LIB=	libnetpgpsdk.a
+LIB=	libnetpgp.a
 
 .c.o:
-	t=`date +%Y%m%d`; \
-	${LIBTOOL} --mode=compile ${COMPILE} -c -DNETPGP_BUILD_TIME=\"$$t\" $< -o $@
+	${LIBTOOL} --mode=compile ${COMPILE} -c $< -o $@
 
 all: ${LIB}
 
@@ -86,14 +85,14 @@ maintainer-clean: distclean
 	rm -f configure config.h.in
 
 install: ${LIB}
-	$(srcdir)/mkinstalldirs ${DESTDIR}$(libdir) ${DESTDIR}$(prefix)/include/netpgpsdk ${DESTDIR}$(mandir)/man3
+	$(srcdir)/mkinstalldirs ${DESTDIR}$(libdir) ${DESTDIR}$(prefix)/include ${DESTDIR}$(mandir)/man3
 	${LIBTOOL} --mode=install ${INSTALL_PROGRAM} ${LIB:.a=.la} ${DESTDIR}${libdir}
 	@f=`echo libnetpgp.3|sed '$(transform)'`; \
 	echo "$(INSTALL_DATA) libnetpgp.3 $(DESTDIR)$(mandir)/man3/$$f"; \
-	$(INSTALL_DATA) libnetpgp.3 $(DESTDIR)$(mandir)/man3/$$f
-	(cd ../../include/netpgpsdk && \
+		$(INSTALL_DATA) libnetpgp.3 $(DESTDIR)$(mandir)/man3/$$f
+	(cd ../../include && \
 		for f in *.h; do \
-			${INSTALL_DATA} $$f ${DESTDIR}${prefix}/include/netpgpsdk; \
+			${INSTALL_DATA} $$f ${DESTDIR}${prefix}/include; \
 		done)
 
 uninstall:
