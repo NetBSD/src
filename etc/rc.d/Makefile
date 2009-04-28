@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.77 2009/04/21 16:08:57 joerg Exp $
+# $NetBSD: Makefile,v 1.78 2009/04/28 23:30:34 roy Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ CONFIGFILES=\
 		accounting altqd amd apmd \
 		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
-		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
+		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck fsck_root ftp_proxy ftpd \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
