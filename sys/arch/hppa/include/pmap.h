@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.12 2009/02/11 22:00:38 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.13 2009/04/28 08:03:46 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -77,7 +77,6 @@ struct pmap {
  */
 
 #define	PVF_NC		0x2000			/* pg is never cacheable */
-#define	PVF_KENTER	0x4000			/* pg has unmanaged mapping */
 
 #define	PVF_MOD		PTE_PROT(TLB_DIRTY)	/* pg/mp is modified */
 #define	PVF_REF		PTE_PROT(TLB_REFTRAP)	/* pg/mp (inv) is referenced */
@@ -99,7 +98,10 @@ struct pmap {
 struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pv_entry	*pv_next;
 	struct pmap	*pv_pmap;	/* the pmap */
-	vaddr_t		pv_va;		/* the virtual address */
+	vaddr_t		pv_va;		/* the virtual address + flags */
+#define	PV_VAMASK	(~(PAGE_SIZE - 1))
+#define	PV_KENTER	0x001
+
 	struct vm_page	*pv_ptp;	/* the vm_page of the PTP */
 };
 
