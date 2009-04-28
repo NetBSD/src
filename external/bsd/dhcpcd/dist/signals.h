@@ -31,7 +31,6 @@
 int signal_init(void);
 int signal_setup(void);
 int signal_reset(void);
-int signal_fd(void);
 int signal_read(void);
 
 #endif
