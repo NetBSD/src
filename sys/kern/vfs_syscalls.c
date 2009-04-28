@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.391 2009/03/13 11:05:26 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.392 2009/04/28 03:01:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.391 2009/03/13 11:05:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.392 2009/04/28 03:01:15 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3034,7 +3034,7 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	if (setbirthtime)
 		vattr.va_birthtime = ts[1];
 	if (vanull)
-		vattr.va_flags |= VA_UTIMES_NULL;
+		vattr.va_vaflags |= VA_UTIMES_NULL;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 
