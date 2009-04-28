@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.2 2009/04/25 17:04:40 tsutsui Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.3 2009/04/28 11:49:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.2 2009/04/25 17:04:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.3 2009/04/28 11:49:15 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -577,6 +577,7 @@ ale_detach(device_t self, int flags)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int s;
 
+	pmf_device_deregister(self);
 	s = splnet();
 	ale_stop(ifp, 0);
 	splx(s);
