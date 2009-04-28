@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.1.1.1 2009/04/23 06:32:02 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.2 2009/04/28 07:56:19 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -134,7 +134,7 @@ For each of the files named on the command line, the signature of the file
 is verified, checking the contents against the user's public signature.
 .It Fl -version
 Print the version information from the
-.Xr libnetpgpsdk 3
+.Xr libnetpgp 3
 library.
 .El
 .Pp
@@ -253,10 +253,10 @@ utility will return 0 for success,
 or 2 if any other error occurs.
 .Sh SEE ALSO
 .Xr getpass 3 ,
-.Xr libbz2 3 ,
+.\" .Xr libbz2 3 ,
 .Xr libnetpgp 3 ,
-.Xr libz 3 ,
-.Xr ssl 3
+.Xr ssl 3 ,
+.Xr zlib 3
 .Sh STANDARDS
 The
 .Nm
