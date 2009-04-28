@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.80 2009/04/28 20:54:50 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.81 2009/04/28 20:56:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.80 2009/04/28 20:54:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.81 2009/04/28 20:56:40 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -145,8 +145,8 @@ pffinddomain(int family)
 
 	DOMAIN_FOREACH(dp)
 		if (dp->dom_family == family)
-			return (dp);
-	return (NULL);
+			return dp;
+	return NULL;
 }
 
 const struct protosw *
@@ -157,13 +157,13 @@ pffindtype(int family, int type)
 
 	dp = pffinddomain(family);
 	if (dp == NULL)
-		return (NULL);
+		return NULL;
 
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 		if (pr->pr_type && pr->pr_type == type)
-			return (pr);
+			return pr;
 
-	return (NULL);
+	return NULL;
 }
 
 const struct protosw *
@@ -174,21 +174,21 @@ pffindproto(int family, int protocol, int type)
 	const struct protosw *maybe = NULL;
 
 	if (family == 0)
-		return (NULL);
+		return NULL;
 
 	dp = pffinddomain(family);
 	if (dp == NULL)
-		return (NULL);
+		return NULL;
 
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
 		if ((pr->pr_protocol == protocol) && (pr->pr_type == type))
-			return (pr);
+			return pr;
 
 		if (type == SOCK_RAW && pr->pr_type == SOCK_RAW &&
 		    pr->pr_protocol == 0 && maybe == NULL)
 			maybe = pr;
 	}
-	return (maybe);
+	return maybe;
 }
 
 void *
@@ -392,10 +392,10 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	int error, elem_count, pf, type, pf2;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		return sysctl_query(SYSCTLFN_CALL(rnode));
 
 	if (namelen != 4)
-		return (EINVAL);
+		return EINVAL;
 
 	if (oldp != NULL) {
 		len = *oldlenp;
@@ -416,7 +416,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	needed = 0;
 
 	if (name - oname != 4)
-		return (EINVAL);
+		return EINVAL;
 
 	pf = oname[1];
 	type = oname[2];
@@ -477,7 +477,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
  	sysctl_relock();
 
-	return (error);
+	return error;
 }
 
 static void
