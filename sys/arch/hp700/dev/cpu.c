@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10.86.3 2009/02/14 15:16:08 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.86.4 2009/04/28 15:37:38 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.86.3 2009/02/14 15:16:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.86.4 2009/04/28 15:37:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", hppa_cpu_info->hci_chip_name);
 	if (hppa_cpu_info->hci_chip_nickname != NULL)
 		printf(" (%s)", hppa_cpu_info->hci_chip_nickname);
-	printf(" rev %d", (*hppa_cpu_info->desidhash)());
+	printf(" rev %d", cpu_revision);
 
 	/* Print the CPU type, spec, level, category, and speed. */
 	printf("\n%s: %s, PA-RISC %s", self->dv_xname,
