@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.17 2009/04/28 13:20:06 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.18 2009/04/28 13:35:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.17 2009/04/28 13:20:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.18 2009/04/28 13:35:44 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -444,7 +444,9 @@ hppa_init(paddr_t start, void *bi)
 #endif
 	error = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_GETSPIDB,
 	    &pdc_spidbits, 0, 0, 0, 0);
+#ifdef DEBUG
 	printf("SPID bits: 0x%x, error = %d\n", pdc_spidbits.spidbits, error);
+#endif
 
 	/* Calculate the OS_HPMC handler checksums. */
 	p = &os_hpmc;
