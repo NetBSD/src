@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16.2.1 2008/10/27 08:02:40 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.16.2.2 2009/04/28 12:53:53 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -90,37 +90,12 @@ export	INT_REG_BIT_REG
 #export	TLB_DIRTY_POS
 #export	TLB_UNMANAGED_POS
 
-# hpt_table fields
-#struct	hpt_entry
-#member	HPT_TLBPROT	hpt_tlbprot
-#member	HPT_TLBPAGE	hpt_tlbpage
-#member	HPT_ENTRY	hpt_entry
-#define	HPT_TAG		0
-
 # struct cpu_info fields
 #define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 #define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 #define	CI_SOFTLWPS		offsetof(struct cpu_info, ci_softlwps)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 #define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-
-# pv_entry fields
-#struct	pv_entry
-#member	PV_HASH	pv_hash
-#member	PV_SPACE	pv_space
-#member	PV_VA		pv_va
-#member	PV_TLBPAGE	pv_tlbpage
-#member	PV_TLBPROT	pv_tlbprot
-#member	PV_NEXT		pv_next
-#member	PV_HPT		pv_hpt
-
-# pv_head fields
-#struct	pv_head
-#member	PV_HEAD_PVS	pv_head_pvs
-#member	PV_HEAD_WRITABLE_DIRTY_REF pv_head_writable_dirty_ref
-#export	PV_HEAD_DIRTY_POS
-#export	PV_HEAD_REF_POS
-#export	PV_HEAD_WRITABLE_POS
 
 define	MTX_IPL			offsetof(struct kmutex, mtx_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, mtx_lock)
