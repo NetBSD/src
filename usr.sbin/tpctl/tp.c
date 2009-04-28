@@ -1,4 +1,4 @@
-/*	$NetBSD: tp.c,v 1.8 2009/03/03 18:43:15 nonaka Exp $	*/
+/*	$NetBSD: tp.c,v 1.9 2009/04/28 10:57:24 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 TAKEMRUA Shin
@@ -43,7 +43,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tp.c,v 1.8 2009/03/03 18:43:15 nonaka Exp $");
+__RCSID("$NetBSD: tp.c,v 1.9 2009/04/28 10:57:24 nonaka Exp $");
 #endif /* not lint */
 
 int
@@ -74,7 +74,7 @@ tp_init(struct tp *tp, int fd)
 		return (-1);
 #endif
 	flags = fcntl(tp->fd, F_GETFL);
-	if (flags == -1)
+	if (flags == (u_int)-1)
 		return (-1);
 	flags |= O_NONBLOCK;
 	if (fcntl(tp->fd, F_SETFL, flags) < 0)
