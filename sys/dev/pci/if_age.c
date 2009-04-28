@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.27 2009/04/26 07:01:29 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.28 2009/04/28 11:47:56 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.27 2009/04/26 07:01:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28 2009/04/28 11:47:56 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -314,6 +314,7 @@ age_detach(device_t self, int flags)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int s;
 
+	pmf_device_deregister(self);
 	s = splnet();
 	age_stop(ifp, 0);
 	splx(s);
@@ -331,7 +332,10 @@ age_detach(device_t self, int flags)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
 		sc->sc_irq_handle = NULL;
 	}
-
+	if (sc->sc_mem_size) {
+		bus_space_unmap(sc->sc_mem_bt, sc->sc_mem_bh, sc->sc_mem_size);
+		sc->sc_mem_size = 0;
+	}
 	return 0;
 }
 
