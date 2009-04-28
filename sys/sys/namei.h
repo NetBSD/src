@@ -1,4 +1,5 @@
-/*	$NetBSD: namei.h,v 1.60.12.2 2009/03/03 18:34:31 skrll Exp $	*/
+/*	$NetBSD: namei.h,v 1.60.12.3 2009/04/28 12:49:33 skrll Exp $	*/
+
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
