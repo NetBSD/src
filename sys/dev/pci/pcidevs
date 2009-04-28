@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.983 2009/04/25 15:29:18 tsutsui Exp $
+$NetBSD: pcidevs,v 1.984 2009/04/28 14:27:16 ginsbach Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -586,6 +586,7 @@ vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	Broadcom (SiByte)
 vendor MYSON		0x1516	Myson-Century Technology
+vendor MELLANOX		0x15b3	Mellanox Technologies
 vendor NDC		0x15e8	National Datacomm
 vendor ACTIONTEC	0x1668	Action Tec Electronics
 vendor ATHEROS		0x168c	Atheros Communications
@@ -2827,6 +2828,21 @@ product MATROX G550_AGP		0x2527	MGA G550 AGP
 
 /* MediaQ products */
 product MEDIAQ MQ200		0x0200	MQ200
+
+/* Mellanox Technologies */
+product MELLANOX MT23108	0x5a44	InfiniHost (Tavor)
+product MELLANOX MT23108_PCI	0x5a46	InfiniHost PCI Bridge (Tavor)
+product MELLANOX MT25204_OLD	0x5e8c	InfiniHost III Lx (old Sinai)
+product MELLANOX MT25204	0x6274	InfiniHost III Lx (Sinai)
+product MELLANOX MT25208_COMPAT	0x6278	InfiniHost III Ex (Arbel in Tavor compatility)
+product MELLANOX MT25208	0x6282	InfiniHost III Ex (Arbel)
+product MELLANOX MT25408_SDR	0x6340	ConnectX SDR (Hermon)
+product MELLANOX MT25408_DDR	0x634a	ConnectX DDR (Hermon)
+product MELLANOX MT25408_QDR	0x6354	ConnectX QDR PCIe 2.0 2.5GT/s (Hermon)
+product MELLANOX MT25408_EN	0x6368	ConnectX EN 10GigE PCIe 2.0 2.5GT/s (Hermon)
+product MELLANOX MT25408_DDR_2	0x6732	ConnectX DDR PCIe 2.0 5GT/s (Hermon)
+product MELLANOX MT25408_QDR_2	0x673c	ConnectX QDR PCIe 2.0 5GT/s (Hermon)
+product MELLANOX MT25408_EN_2	0x6750	ConnectX EN 10GigE PCIe 2.0 5GT/s (Hermon)
 
 /* Microsoft products */
 product MICROSOFT MN120		0x0001	MN-120 10/100 Ethernet Notebook Adapter
