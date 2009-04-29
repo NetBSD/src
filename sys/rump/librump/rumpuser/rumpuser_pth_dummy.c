@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.5 2009/03/18 10:22:45 cegger Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.6 2009/04/29 14:58:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.5 2009/03/18 10:22:45 cegger Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.6 2009/04/29 14:58:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -161,6 +161,7 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
 
 	if (write) {
 		rw->v++;
+		assert(rw->v == 1);
 	} else {
 		assert(rw->v <= 0);
 		rw->v--;
