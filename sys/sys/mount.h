@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.187 2009/04/17 20:22:52 dyoung Exp $	*/
+/*	$NetBSD: mount.h,v 1.188 2009/04/29 10:46:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -400,7 +400,7 @@ struct vfsops *vfs_getopsbyname(const char *);
 void	vfs_delref(struct vfsops *);
 void	vfs_destroy(struct mount *);
 void	vfs_scrubvnlist(struct mount *);
-
+struct mount *vfs_mountalloc(struct vfsops *, struct vnode *);
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *);
 
