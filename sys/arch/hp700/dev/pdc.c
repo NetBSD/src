@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.25.4.2 2009/04/28 12:54:40 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.25.4.3 2009/04/29 14:20:37 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.25.4.2 2009/04/28 12:54:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.25.4.3 2009/04/29 14:20:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,7 +427,6 @@ pdccnputc(dev_t dev, int c)
 	*pdc_consbuf = c;
 	err = pdc_call(pdc_cniodc, 0, pz_cons->pz_hpa, IODC_IO_CONSOUT,
 	    pz_cons->pz_spa, pz_cons->pz_layers, pdcret, 0, pdc_consbuf, 1, 0);
-
 	hp700_pagezero_unmap(pagezero_cookie);
 	splx(s);
 
