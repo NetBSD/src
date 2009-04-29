@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.11.6.5 2009/04/20 13:33:30 tteras Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.11.6.6 2009/04/29 10:50:25 tteras Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -486,7 +486,7 @@ eay_check_x509cert(cert, CApath, CAfile, local)
 	X509_STORE_CTX_set_flags (csc, X509_V_FLAG_CRL_CHECK_ALL);
 #endif
 	error = X509_verify_cert(csc);
-	X509_STORE_CTX_cleanup(csc);
+	X509_STORE_CTX_free(csc);
 
 	/*
 	 * if x509_verify_cert() is successful then the value of error is
