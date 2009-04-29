@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.375 2009/04/25 18:53:44 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.376 2009/04/29 01:03:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.375 2009/04/25 18:53:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.376 2009/04/29 01:03:43 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -455,6 +455,30 @@ vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 	}
 }
 
+struct mount *
+vfs_mountalloc(struct vfsops *vfsops, struct vnode *vp)
+{
+	int error;
+	struct mount *mp;
+
+	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
+	if (mp == NULL)
+		return NULL;
+
+	mp->mnt_op = vfsops;
+	mp->mnt_refcnt = 1;
+	TAILQ_INIT(&mp->mnt_vnodelist);
+	rw_init(&mp->mnt_unmounting);
+	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
+	error = vfs_busy(mp, NULL);
+	KASSERT(error == 0);
+	mp->mnt_vnodecovered = vp;
+	mount_initspecific(mp);
+
+	return mp;
+}
+
 /*
  * Lookup a filesystem type, and if found allocate and initialize
  * a mount structure for it.
@@ -480,18 +504,9 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	vfsp->vfs_refcount++;
 	mutex_exit(&vfs_list_lock);
 
-	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
-	if (mp == NULL)
+	if ((mp = vfs_mountalloc(vfsp, NULL)) == NULL)
 		return ENOMEM;
-	mp->mnt_refcnt = 1;
-	rw_init(&mp->mnt_unmounting);
-	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	(void)vfs_busy(mp, NULL);
-	TAILQ_INIT(&mp->mnt_vnodelist);
-	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
-	mp->mnt_vnodecovered = NULL;
 	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name,
 	    sizeof(mp->mnt_stat.f_fstypename));
 	mp->mnt_stat.f_mntonname[0] = '/';
@@ -500,7 +515,6 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	    '\0';
 	(void)copystr(devname, mp->mnt_stat.f_mntfromname,
 	    sizeof(mp->mnt_stat.f_mntfromname) - 1, 0);
-	mount_initspecific(mp);
 	*mpp = mp;
 	return (0);
 }
