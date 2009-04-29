@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.116 2009/04/13 12:38:06 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.117 2009/04/29 15:10:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.116 2009/04/13 12:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.117 2009/04/29 15:10:57 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -593,19 +593,23 @@ re_attach(struct rtk_softc *sc)
 			break;
 		case RTK_HWREV_8168_SPIN1:
 			sc->sc_rev = 21;
+			sc->sc_quirk |= RTKQ_MACSTAT;
 			break;
 		case RTK_HWREV_8168_SPIN2:
 			sc->sc_rev = 22;
+			sc->sc_quirk |= RTKQ_MACSTAT;
 			break;
 		case RTK_HWREV_8168_SPIN3:
 			sc->sc_rev = 23;
+			sc->sc_quirk |= RTKQ_MACSTAT;
 			break;
 		case RTK_HWREV_8168C:
 		case RTK_HWREV_8168C_SPIN2:
 		case RTK_HWREV_8168CP:
 		case RTK_HWREV_8168D:
 			sc->sc_rev = 24;
-			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP;
 			/*
 			 * From FreeBSD driver:
 			 * 
@@ -625,8 +629,8 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8102EL:
 		case RTK_HWREV_8102EL_SPIN2:
 			sc->sc_rev = 25;
-			sc->sc_quirk |=
-			    RTKQ_DESCV2 | RTKQ_NOEECMD | RTKQ_NOJUMBO;
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
@@ -1719,6 +1723,7 @@ re_init(struct ifnet *ifp)
 	const uint8_t *enaddr;
 	uint32_t rxcfg = 0;
 	uint32_t reg;
+	uint16_t cfg;
 	int error;
 
 	if ((error = re_enable(sc)) != 0)
@@ -1736,32 +1741,27 @@ re_init(struct ifnet *ifp)
 	 * RX checksum offload. We must configure the C+ register
 	 * before all others.
 	 */
-	reg = 0;
-
-	/*
-	 * XXX: Realtek docs say bits 0 and 1 are reserved, for 8169S/8110S.
-	 * FreeBSD  drivers set these bits anyway (for 8139C+?).
-	 * So far, it works.
-	 */
+	cfg = RE_CPLUSCMD_PCI_MRW;
 
 	/*
 	 * XXX: For old 8169 set bit 14.
 	 *      For 8169S/8110S and above, do not set bit 14.
 	 */
 	if ((sc->sc_quirk & RTKQ_8169NONS) != 0)
-		reg |= (0x1 << 14) | RTK_CPLUSCMD_PCI_MRW;
+		cfg |= (0x1 << 14);
 
-	if (1)  {/* not for 8169S ? */
-		reg |=
-		    RTK_CPLUSCMD_VLANSTRIP |
-		    (ifp->if_capenable &
-		    (IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_TCPv4_Rx |
-		     IFCAP_CSUM_UDPv4_Rx) ?
-		    RTK_CPLUSCMD_RXCSUM_ENB : 0);
-	}
+	if ((ifp->if_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
+		cfg |= RE_CPLUSCMD_VLANSTRIP;
+	if ((ifp->if_capenable & (IFCAP_CSUM_IPv4_Rx |
+	     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx)) != 0)
+		cfg |= RE_CPLUSCMD_RXCSUM_ENB;
+	if ((sc->sc_quirk & RTKQ_MACSTAT) != 0) {
+		cfg |= RE_CPLUSCMD_MACSTAT_DIS;
+		cfg |= RE_CPLUSCMD_TXENB;
+	} else
+		cfg |= RE_CPLUSCMD_RXENB | RE_CPLUSCMD_TXENB;
 
-	CSR_WRITE_2(sc, RTK_CPLUS_CMD,
-	    reg | RTK_CPLUSCMD_RXENB | RTK_CPLUSCMD_TXENB);
+	CSR_WRITE_2(sc, RTK_CPLUS_CMD, cfg);
 
 	/* XXX: from Realtek-supplied Linux driver. Wholly undocumented. */
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0)
@@ -1981,8 +1981,14 @@ re_stop(struct ifnet *ifp, int disable)
 
 	mii_down(&sc->mii);
 
-	CSR_WRITE_1(sc, RTK_COMMAND, 0x00);
+	if ((sc->sc_quirk & RTKQ_CMDSTOP) != 0)
+		CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_STOPREQ | RTK_CMD_TX_ENB |
+		    RTK_CMD_RX_ENB);
+	else
+		CSR_WRITE_1(sc, RTK_COMMAND, 0x00);
+	DELAY(1000);
 	CSR_WRITE_2(sc, RTK_IMR, 0x0000);
+	CSR_WRITE_2(sc, RTK_ISR, 0xFFFF);
 
 	if (sc->re_head != NULL) {
 		m_freem(sc->re_head);

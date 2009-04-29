@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.37 2009/04/13 12:33:05 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.38 2009/04/29 15:10:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -309,6 +309,7 @@
 #define RTK_CMD_TX_ENB		0x0004
 #define RTK_CMD_RX_ENB		0x0008
 #define RTK_CMD_RESET		0x0010
+#define RTK_CMD_STOPREQ		0x0080
 
 /*
  * EEPROM control register
@@ -403,12 +404,21 @@
 
 /* C+ mode command register */
 
-#define RTK_CPLUSCMD_TXENB	0x0001	/* enable C+ transmit mode */
-#define RTK_CPLUSCMD_RXENB	0x0002	/* enable C+ receive mode */
-#define RTK_CPLUSCMD_PCI_MRW	0x0008	/* enable PCI multi-read/write */
-#define RTK_CPLUSCMD_PCI_DAC	0x0010	/* PCI dual-address cycle only */
-#define RTK_CPLUSCMD_RXCSUM_ENB	0x0020	/* enable RX checksum offload */
-#define RTK_CPLUSCMD_VLANSTRIP	0x0040	/* enable VLAN tag stripping */
+#define RE_CPLUSCMD_TXENB	0x0001	/* enable C+ transmit mode */
+#define RE_CPLUSCMD_RXENB	0x0002	/* enable C+ receive mode */
+#define RE_CPLUSCMD_PCI_MRW	0x0008	/* enable PCI multi-read/write */
+#define RE_CPLUSCMD_PCI_DAC	0x0010	/* PCI dual-address cycle only */
+#define RE_CPLUSCMD_RXCSUM_ENB	0x0020	/* enable RX checksum offload */
+#define RE_CPLUSCMD_VLANSTRIP	0x0040	/* enable VLAN tag stripping */
+#define RE_CPLUSCMD_MACSTAT_DIS	0x0080	/* 8168B/C/CP */
+#define RE_CPLUSCMD_ASF		0x0100	/* 8168C/CP */
+#define RE_CPLUSCMD_DBG_SEL	0x0200	/* 8168C/CP */
+#define RE_CPLUSCMD_FORCE_TXFC	0x0400	/* 8168C/CP */
+#define RE_CPLUSCMD_FORCE_RXFC	0x0800	/* 8168C/CP */
+#define RE_CPLUSCMD_FORCE_HDPX	0x1000	/* 8168C/CP */
+#define RE_CPLUSCMD_NORMAL_MODE	0x2000	/* 8168C/CP */
+#define RE_CPLUSCMD_DBG_ENB	0x4000	/* 8168C/CP */
+#define RE_CPLUSCMD_BIST_ENB	0x8000	/* 8168C/CP */
 
 /* C+ early transmit threshold */
 
