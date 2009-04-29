@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.392 2009/04/28 03:01:15 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.393 2009/04/29 01:03:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.392 2009/04/28 03:01:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.393 2009/04/29 01:03:43 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -332,24 +332,10 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	if (vp->v_mountedhere != NULL)
 		return EBUSY;
 
-	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
-	if (mp == NULL)
+	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL)
 		return ENOMEM;
 
-	mp->mnt_op = vfsops;
-	mp->mnt_refcnt = 1;
-
-	TAILQ_INIT(&mp->mnt_vnodelist);
-	rw_init(&mp->mnt_unmounting);
- 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
-	error = vfs_busy(mp, NULL);
-	KASSERT(error == 0);
-	mutex_enter(&mp->mnt_updating);
-
-	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
-	mount_initspecific(mp);
 
 	/*
 	 * The underlying file system may refuse the mount for
@@ -363,6 +349,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_LOG | MNT_IGNORE | MNT_RDONLY);
 
+	mutex_enter(&mp->mnt_updating);
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
