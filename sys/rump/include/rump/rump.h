@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.12 2009/03/27 13:47:53 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.13 2009/04/29 18:00:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -127,6 +127,7 @@ int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void	rump_vfs_syncwait(struct mount *);
 
+struct lwp	*rump_newproc_switch(void);
 struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
 struct lwp	*rump_get_curlwp(void);
 void		rump_clear_curlwp(void);
@@ -141,6 +142,8 @@ int rump_virtif_create(int);
 
 typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 int		rump_sysproxy_set(rump_sysproxy_t, void *);
+int		rump_sysproxy_socket_setup_client(int);
+int		rump_sysproxy_socket_setup_server(int);
 
 /*
  * Begin rump syscall conditionals.  Yes, something a little better
