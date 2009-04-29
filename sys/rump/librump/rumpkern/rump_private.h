@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.27 2009/04/26 20:41:24 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.28 2009/04/29 17:51:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #define _SYS_RUMP_PRIVATE_H_
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -54,6 +55,8 @@ extern struct rumpuser_mtx *rump_giantlock;
 
 extern int rump_threads;
 
+extern struct sysent rump_sysent[];
+
 void		rumpvm_init(void);
 void		rump_sleepers_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
@@ -65,6 +68,7 @@ void		rump_gettime(struct timespec *);
 void		rump_getuptime(struct timespec *);
 
 lwpid_t		rump_nextlid(void);
+void		rump_set_vmspace(struct vmspace *);
 
 typedef void	(*rump_proc_vfs_init_fn)(struct proc *);
 typedef void	(*rump_proc_vfs_release_fn)(struct proc *);
@@ -73,8 +77,10 @@ rump_proc_vfs_release_fn rump_proc_vfs_release;
 
 extern struct cpu_info rump_cpu;
 
-extern struct sysent rump_sysent[];
 extern rump_sysproxy_t rump_sysproxy;
 extern void *rump_sysproxy_arg;
+
+int		rump_sysproxy_copyout(const void *, void *, size_t);
+int		rump_sysproxy_copyin(const void *, void *, size_t);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

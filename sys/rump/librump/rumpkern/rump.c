@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.103 2009/04/29 15:49:28 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.104 2009/04/29 17:51:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.103 2009/04/29 15:49:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.104 2009/04/29 17:51:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -303,6 +303,25 @@ rump_uio_free(struct uio *uio)
 	return resid;
 }
 
+/* public interface */
+static pid_t nextpid = 1;
+struct lwp *
+rump_newproc_switch()
+{
+	struct lwp *oldlwp = curlwp;
+	pid_t mypid;
+
+	mypid = atomic_inc_uint_nv(&nextpid);
+	if (__predict_false(mypid == 0))
+		mypid = atomic_inc_uint_nv(&nextpid);
+
+	rumpuser_set_curlwp(NULL);
+	rump_setup_curlwp(mypid, 0, 1);
+
+	return oldlwp;
+}
+
+/* rump private */
 struct lwp *
 rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 {
@@ -335,17 +354,28 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	return l;
 }
 
+/* rump private.  NEEDS WORK! */
+void
+rump_set_vmspace(struct vmspace *vm)
+{
+	struct proc *p = curproc;
+
+	p->p_vmspace = vm;
+}
+
 void
 rump_clear_curlwp(void)
 {
 	struct lwp *l;
+	struct proc *p;
 
 	l = rumpuser_get_curlwp();
-	if (l->l_proc->p_pid != 0) {
+	p = l->l_proc;
+	if (p->p_pid != 0) {
 		fd_free();
-		rump_proc_vfs_release(l->l_proc);
+		rump_proc_vfs_release(p);
 		rump_cred_destroy(l->l_cred);
-		kmem_free(l->l_proc, sizeof(*l->l_proc));
+		kmem_free(p, sizeof(*p));
 	}
 	kmem_free(l, sizeof(*l));
 	rumpuser_set_curlwp(NULL);

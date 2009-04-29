@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.87 2009/04/26 20:41:24 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.88 2009/04/29 17:51:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.87 2009/04/26 20:41:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.88 2009/04/29 17:51:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -125,7 +125,10 @@ int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
 
-	memcpy(kaddr, uaddr, len);
+	if (curproc->p_vmspace == &rump_vmspace)
+		memcpy(kaddr, uaddr, len);
+	else
+		rump_sysproxy_copyin(uaddr, kaddr, len);
 	return 0;
 }
 
@@ -133,7 +136,10 @@ int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
 
-	memcpy(uaddr, kaddr, len);
+	if (curproc->p_vmspace == &rump_vmspace)
+		memcpy(uaddr, kaddr, len);
+	else
+		rump_sysproxy_copyout(kaddr, uaddr, len);
 	return 0;
 }
 
@@ -148,7 +154,10 @@ int
 copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 
-	strlcpy(kaddr, uaddr, len);
+	if (curproc->p_vmspace == &rump_vmspace)
+		strlcpy(kaddr, uaddr, len);
+	else
+		rump_sysproxy_copyin(uaddr, kaddr, len);
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
 	return 0;
@@ -158,7 +167,10 @@ int
 copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 
-	strlcpy(uaddr, kaddr, len);
+	if (curproc->p_vmspace == &rump_vmspace)
+		strlcpy(uaddr, kaddr, len);
+	else
+		rump_sysproxy_copyout(kaddr, uaddr, len);
 	if (done)
 		*done = strlen(uaddr)+1; /* includes termination */
 	return 0;
