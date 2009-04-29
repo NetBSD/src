@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.58 2009/04/15 11:41:25 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.59 2009/04/29 11:01:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.58 2009/04/15 11:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.59 2009/04/29 11:01:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -204,9 +204,7 @@ tmpfs_lookup(void *v)
 				goto out;
 			}
 
-			/* If we are deleting or renaming the entry, keep
-			 * track of its tmpfs_dirent so that it can be
-			 * easily deleted later. */
+			/* Check permissions */
 			if ((cnp->cn_flags & ISLASTCN) &&
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
