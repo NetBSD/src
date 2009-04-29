@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16.2.2 2009/04/28 12:53:53 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.16.2.3 2009/04/29 15:03:10 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -83,12 +83,6 @@ struct	hp700_int_reg
 member	INT_REG_REQ	int_reg_req
 member	INT_REG_BITS_MAP int_reg_bits_map
 export	INT_REG_BIT_REG
-
-# pte things
-#export	TLB_REF_POS
-#export	TLB_NO_RW_ALIAS_POS
-#export	TLB_DIRTY_POS
-#export	TLB_UNMANAGED_POS
 
 # struct cpu_info fields
 #define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
