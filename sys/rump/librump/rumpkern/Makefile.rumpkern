@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.43 2009/04/16 14:07:17 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.44 2009/04/29 17:51:47 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -14,7 +14,8 @@ LIB=		rump
 #
 # Source modules, first the ones specifically implemented for librump.
 # 
-SRCS=	rump.c emul.c intr.c locks.c ltsleep.c percpu.c pool.c sleepq.c vm.c
+SRCS=	rump.c emul.c intr.c locks.c ltsleep.c percpu.c pool.c	\
+	sleepq.c sysproxy_socket.c vm.c
 
 # stubs
 #
