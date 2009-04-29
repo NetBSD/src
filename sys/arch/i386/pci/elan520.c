@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.40 2009/04/08 23:53:10 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.41 2009/04/29 23:18:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.40 2009/04/08 23:53:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.41 2009/04/29 23:18:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -749,15 +749,7 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 
 	protsize = end_pa - start_pa;
 
-#if 0
-	/* set PG_SZ, attribute, target, size, address. */
-	par = MMCR_PAR_TARGET_SDRAM | MMCR_PAR_ATTR_NOWRITE | MMCR_PAR_PG_SZ;
-	par |= __SHIFTIN(protsize / sfkb - 1, MMCR_PAR_64KB_SZ);
-	par |= __SHIFTIN(start_pa / sfkb, MMCR_PAR_64KB_ST_ADR);
-	bus_space_write_4(memt, memh, MMCR_PAR(pidx), par);
-#else
 	elansc_protect(sc, pidx, start_pa, protsize);
-#endif
 
 	sc->sc_textpar[tidx++] = pidx;
 
@@ -840,15 +832,7 @@ elansc_protect_pg0(device_t self, struct elansc_softc *sc)
 
 	aprint_debug_dev(self, "protect page 0\n");
 
-#if 0
-	/* set PG_SZ, attribute, target, size, address. */
-	par = MMCR_PAR_TARGET_SDRAM | MMCR_PAR_ATTR_NOWRITE;
-	par |= __SHIFTIN(PG0_PROT_SIZE / PAGE_SIZE - 1, MMCR_PAR_4KB_SZ);
-	par |= __SHIFTIN(pg0_paddr / PAGE_SIZE, MMCR_PAR_4KB_ST_ADR);
-	bus_space_write_4(memt, memh, MMCR_PAR(pidx), par);
-#else
 	elansc_protect(sc, pidx, pg0_paddr, PG0_PROT_SIZE);
-#endif
 	return pidx;
 }
 
@@ -1413,19 +1397,7 @@ elansc_attach(device_t parent, device_t self, void *aux)
 		    "unable to register watchdog with sysmon\n");
 	}
 	elansc_attached = true;
-#if 0
-	pba.pba_iot = sc->sc_iot;
-	pba.pba_memt = sc->sc_memt;
-	pba.pba_dmat = sc->sc_dmat;
-	pba.pba_dmat64 = sc->sc_dmat64;
-	pba.pba_pc = sc->sc_pc;
-	pba.pba_flags = sc->sc_pciflags;
-	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
-	sc->sc_pci = config_found_ia(self, "pcibus", pba, pcibusprint);
-#else
 	elansc_rescan(sc->sc_dev, "pcibus", NULL);
-#endif
 }
 
 static int
