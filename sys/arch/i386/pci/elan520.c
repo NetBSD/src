@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.41 2009/04/29 23:18:09 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.42 2009/04/29 23:50:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.41 2009/04/29 23:18:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.42 2009/04/29 23:50:53 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ static bool elanpex_shutdown(device_t, int);
 static int elansc_rescan(device_t, const char *, const int *);
 
 static void elansc_protect(struct elansc_softc *, int, paddr_t, uint32_t);
+static bool elansc_shutdown(device_t, int);
 
 static const uint32_t sfkb = 64 * 1024, fkb = 4 * 1024;
 
@@ -877,6 +878,20 @@ elansc_resume(device_t dev PMF_FN_ARGS)
 	return true;
 }
 
+static bool
+elansc_shutdown(device_t self, int how)
+{
+	struct elansc_softc *sc = device_private(self);
+
+	/* Set up the watchdog registers with some defaults. */
+	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
+
+	/* ...and clear it. */
+	elansc_wdogctl_reset(sc);
+
+	return true;
+}
+
 static int
 elansc_detach(device_t self, int flags)
 {
@@ -888,7 +903,8 @@ elansc_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	if ((rc = sysmon_wdog_unregister(&sc->sc_smw)) != 0) {
+	if ((flags & DETACH_SHUTDOWN) == 0 &&
+	    (rc = sysmon_wdog_unregister(&sc->sc_smw)) != 0) {
 		if (rc == ERESTART)
 			rc = EINTR;
 		return rc;
@@ -896,11 +912,7 @@ elansc_detach(device_t self, int flags)
 
 	mutex_enter(&sc->sc_mtx);
 
-	/* Set up the watchdog registers with some defaults. */
-	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
-
-	/* ...and clear it. */
-	elansc_wdogctl_reset(sc);
+	(void)elansc_shutdown(self, 0);
 
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_PICICR, sc->sc_picicr);
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_MPICMODE,
@@ -1344,7 +1356,8 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	elansc_wdogctl_reset(sc);
 	mutex_exit(&sc->sc_mtx);
 
-	if (!pmf_device_register(self, elansc_suspend, elansc_resume))
+	if (!pmf_device_register1(self, elansc_suspend, elansc_resume,
+	    elansc_shutdown))
 		aprint_error_dev(self, "could not establish power hooks\n");
 
 #if NGPIO > 0
