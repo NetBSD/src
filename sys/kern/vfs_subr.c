@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.376 2009/04/29 01:03:43 dyoung Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.377 2009/04/29 15:44:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.376 2009/04/29 01:03:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.377 2009/04/29 15:44:55 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2246,11 +2246,17 @@ vfs_mountedon(vnode_t *vp)
 bool
 vfs_unmountall(struct lwp *l)
 {
+	printf("unmounting file systems...");
+	return vfs_unmountall1(l, true, true);
+}
+
+bool
+vfs_unmountall1(struct lwp *l, bool force, bool verbose)
+{
 	struct mount *mp, *nmp;
 	bool any_error, progress;
 	int error;
 
-	printf("unmounting file systems...");
 	for (any_error = false, mp = CIRCLEQ_LAST(&mountlist);
 	     !CIRCLEQ_EMPTY(&mountlist);
 	     mp = nmp) {
@@ -2260,16 +2266,19 @@ vfs_unmountall(struct lwp *l)
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
 		atomic_inc_uint(&mp->mnt_refcnt);
-		if ((error = dounmount(mp, MNT_FORCE, l)) == 0)
+		if ((error = dounmount(mp, force ? MNT_FORCE : 0, l)) == 0)
 			progress = true;
 		else {
-			printf("unmount of %s failed with error %d\n",
-			    mp->mnt_stat.f_mntonname, error);
+			if (verbose) {
+				printf("unmount of %s failed with error %d\n",
+				    mp->mnt_stat.f_mntonname, error);
+			}
 			any_error = true;
 		}
 	}
-	printf(" done\n");
-	if (any_error)
+	if (verbose)
+		printf(" done\n");
+	if (any_error && verbose)
 		printf("WARNING: some file systems would not unmount\n");
 	return progress;
 }
@@ -2283,9 +2292,7 @@ vfs_shutdown(void)
 	struct lwp *l;
 
 	/* XXX we're certainly not running in lwp0's context! */
-	l = curlwp;
-	if (l == NULL)
-		l = &lwp0;
+	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
 	printf("syncing disks... ");
 
