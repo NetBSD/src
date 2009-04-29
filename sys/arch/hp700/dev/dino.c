@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.6 2008/08/28 08:25:46 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.7 2009/04/29 07:14:58 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.6 2008/08/28 08:25:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.7 2009/04/29 07:14:58 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -387,7 +387,7 @@ dino_intr_establish(void *v, pci_intr_handle_t ih,
 void
 dino_intr_disestablish(void *v, void *cookie)
 {
-	panic("There is no hp700_intr_disestablish()!");
+	/* XXX Implement me */
 }
 
 
