@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.7 2009/04/29 18:07:01 tsutsui Exp $
+#	$NetBSD: list.ramdisk,v 1.8 2009/04/29 18:20:02 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin libexec
 
@@ -12,7 +12,7 @@ LIBS	libhack.o -lbz2 -lutil -ll -lm
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # we need the boot block in /usr/mdec + the MBR copy
