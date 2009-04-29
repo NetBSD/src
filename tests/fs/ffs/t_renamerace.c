@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.4 2009/04/26 15:15:38 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.5 2009/04/29 15:46:01 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -86,8 +86,9 @@ ATF_TC_BODY(renamerace, tc)
 	args.fspec = image;
 
 	rump_init();
+	rump_fakeblk_register(image);
 	if (rump_sys_mount(MOUNT_FFS, "/", MNT_LOG, &args, sizeof(args)) == -1)
-		atf_tc_fail_errno("ukfs_mount failed");
+		atf_tc_fail_errno("rump_sys_mount failed");
 
 	pthread_create(&pt1, NULL, w1, NULL);
 	pthread_create(&pt2, NULL, w2, NULL);
