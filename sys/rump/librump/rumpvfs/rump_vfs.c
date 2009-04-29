@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.16 2009/04/26 21:36:24 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.17 2009/04/29 15:49:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -107,10 +107,12 @@ rump_vfs_init(void)
 	rump_proc_vfs_init = pvfs_init;
 	rump_proc_vfs_release = pvfs_rele;
 
+	/* bootstrap cwdi */
 	rw_init(&rump_cwdi.cwdi_lock);
 	rump_cwdi.cwdi_cdir = rootvnode;
 	vref(rump_cwdi.cwdi_cdir);
 	proc0.p_cwdi = &rump_cwdi;
+	proc0.p_cwdi = cwdinit();
 
 	if (rump_threads) {
 		int rv;
