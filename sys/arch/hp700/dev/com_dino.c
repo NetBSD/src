@@ -42,7 +42,6 @@
 #include <hp700/dev/cpudevs.h>
 #include <hp700/hp700/machdep.h>
 
-
 void *dino_intr_establish(void *sc, int irq, int pri,
     int (*handler)(void *v), void *arg);
 
