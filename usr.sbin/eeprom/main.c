@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2009/04/26 01:51:07 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.20 2009/04/26 01:51:07 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $");
 #endif
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ main(argc, argv)
 #if defined(USE_OPENPROM) || defined(USE_OPENFIRM) || defined(USE_PREPNVRAM)
 	const char *optstring = "-cf:iv";
 #else
-	char *optstring = "-cf:i";
+	const char *optstring = "-cf:i";
 #endif /* USE_OPENPROM */
 
 	while ((ch = getopt(argc, argv, optstring)) != -1)

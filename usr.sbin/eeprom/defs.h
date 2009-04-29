@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.12 2009/04/26 01:51:07 lukem Exp $	*/
+/*	$NetBSD: defs.h,v 1.13 2009/04/29 09:13:58 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  * the function that handles that value.
  */
 struct	keytabent {
-	char	*kt_keyword;		/* keyword for this entry */
+	const char *kt_keyword;		/* keyword for this entry */
 	u_int	kt_offset;		/* offset into prom of value */
 	void	(*kt_handler) (struct keytabent *, char *);
 					/* handler function for this entry */
@@ -71,7 +71,7 @@ struct	keytabent {
  * vice-versa.
  */
 struct	strvaltabent {
-	char	*sv_str;		/* the string ... */
+	const char *sv_str;		/* the string ... */
 	u_char	sv_val;			/* ... and the value */
 };
 
