@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.196 2009/03/18 16:00:17 cegger Exp $	*/
+/*	$NetBSD: vnd.c,v 1.197 2009/04/30 16:07:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.196 2009/03/18 16:00:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.197 2009/04/30 16:07:50 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -348,7 +348,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	}
 
 	if ((error = vndlock(sc)) != 0)
-		return (error);
+		return error;
 
 	lp = sc->sc_dkdev.dk_label;
 
@@ -390,7 +390,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 
  done:
 	vndunlock(sc);
-	return (error);
+	return error;
 }
 
 static int
@@ -409,7 +409,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 		return ENXIO;
 
 	if ((error = vndlock(sc)) != 0)
-		return (error);
+		return error;
 
 	part = DISKPART(dev);
 
@@ -436,7 +436,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -901,9 +901,9 @@ vndread(dev_t dev, struct uio *uio, int flags)
 		return ENXIO;
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
-		return (ENXIO);
+		return ENXIO;
 
-	return (physio(vndstrategy, NULL, dev, B_READ, minphys, uio));
+	return physio(vndstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
 /* ARGSUSED */
@@ -923,9 +923,9 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 		return ENXIO;
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
-		return (ENXIO);
+		return ENXIO;
 
-	return (physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
 static int
@@ -991,7 +991,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCKLABEL:
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-			return (EBADF);
+			return EBADF;
 	}
 
 	/* Must be initialized for these... */
@@ -1012,16 +1012,16 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case ODIOCGDEFLABEL:
 #endif
 		if ((vnd->sc_flags & VNF_INITED) == 0)
-			return (ENXIO);
+			return ENXIO;
 	}
 
 	switch (cmd) {
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
-			return (EBUSY);
+			return EBUSY;
 
 		if ((error = vndlock(vnd)) != 0)
-			return (error);
+			return error;
 
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
@@ -1271,11 +1271,11 @@ unlock_and_exit:
 		}
 #endif /* VND_COMPRESSION */
 		vndunlock(vnd);
-		return (error);
+		return error;
 
 	case VNDIOCCLR:
 		if ((error = vndlock(vnd)) != 0)
-			return (error);
+			return error;
 
 		/*
 		 * Don't unconfigure if any other partitions are open
@@ -1289,7 +1289,7 @@ unlock_and_exit:
 		    (vnd->sc_dkdev.dk_copenmask & pmask))) &&
 			!(vio->vnd_flags & VNDIOF_FORCE)) {
 			vndunlock(vnd);
-			return (EBUSY);
+			return EBUSY;
 		}
 
 		/*
@@ -1382,7 +1382,7 @@ unlock_and_exit:
 		struct disklabel *lp;
 
 		if ((error = vndlock(vnd)) != 0)
-			return (error);
+			return error;
 
 		vnd->sc_flags |= VNF_LABELLING;
 
@@ -1413,7 +1413,7 @@ unlock_and_exit:
 		vndunlock(vnd);
 
 		if (error)
-			return (error);
+			return error;
 		break;
 	}
 
@@ -1452,10 +1452,10 @@ unlock_and_exit:
 		return error;
 
 	default:
-		return (ENOTTY);
+		return ENOTTY;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1500,7 +1500,7 @@ vndsetcred(struct vnd_softc *vnd, kauth_cred_t cred)
 	VOP_UNLOCK(vnd->sc_vp, 0);
 
 	free(tmpbuf, M_TEMP);
-	return (error);
+	return error;
 }
 
 /*
@@ -1590,12 +1590,12 @@ vndclear(struct vnd_softc *vnd, int myminor)
 	vnd->sc_flags &=
 	    ~(VNF_INITED | VNF_READONLY | VNF_VLABEL
 	      | VNF_VUNCONF | VNF_COMP);
-	if (vp == (struct vnode *)0)
+	if (vp == NULL)
 		panic("vndclear: null vp");
 	(void) vn_close(vp, fflags, vnd->sc_cred);
 	kauth_cred_free(vnd->sc_cred);
-	vnd->sc_vp = (struct vnode *)0;
-	vnd->sc_cred = (kauth_cred_t)0;
+	vnd->sc_vp = NULL;
+	vnd->sc_cred = NULL;
 	vnd->sc_size = 0;
 }
 
@@ -1613,14 +1613,14 @@ vndsize(dev_t dev)
 		return -1;
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
-		return (-1);
+		return -1;
 
 	part = DISKPART(dev);
 	omask = sc->sc_dkdev.dk_openmask & (1 << part);
 	lp = sc->sc_dkdev.dk_label;
 
 	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curlwp))	/* XXX */
-		return (-1);
+		return -1;
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
@@ -1629,9 +1629,9 @@ vndsize(dev_t dev)
 		    (lp->d_secsize / DEV_BSIZE);
 
 	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curlwp))	/* XXX */
-		return (-1);
+		return -1;
 
-	return (size);
+	return size;
 }
 
 static int
@@ -1745,10 +1745,10 @@ vndlock(struct vnd_softc *sc)
 	while ((sc->sc_flags & VNF_LOCKED) != 0) {
 		sc->sc_flags |= VNF_WANTED;
 		if ((error = tsleep(sc, PRIBIO | PCATCH, "vndlck", 0)) != 0)
-			return (error);
+			return error;
 	}
 	sc->sc_flags |= VNF_LOCKED;
-	return (0);
+	return 0;
 }
 
 /*
