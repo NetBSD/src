@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.197 2009/04/30 16:07:50 dyoung Exp $	*/
+/*	$NetBSD: vnd.c,v 1.198 2009/04/30 16:38:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.197 2009/04/30 16:07:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.198 2009/04/30 16:38:12 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1055,7 +1055,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = vn_rdwr(UIO_READ, nd.ni_vp, (void *)ch,
 			  sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
-			if(error) {
+			if (error) {
 				free(ch, M_TEMP);
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto close_and_exit;
@@ -1072,7 +1072,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				error = EINVAL;
 				goto close_and_exit;
 			}
-			if(sizeof(struct vnd_comp_header) +
+			if (sizeof(struct vnd_comp_header) +
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs >
 			  vattr.va_size) {
 				VOP_UNLOCK(nd.ni_vp, 0);
@@ -1096,7 +1096,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs,
 			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
-			if(error) {
+			if (error) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto close_and_exit;
 			}
@@ -1130,8 +1130,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			vnd->sc_comp_stream.zalloc = vnd_alloc;
 			vnd->sc_comp_stream.zfree = vnd_free;
 			error = inflateInit2(&vnd->sc_comp_stream, MAX_WBITS);
-			if(error) {
-				if(vnd->sc_comp_stream.msg)
+			if (error) {
+				if (vnd->sc_comp_stream.msg)
 					printf("vnd%d: compressed file, %s\n",
 					  unit, vnd->sc_comp_stream.msg);
 				VOP_UNLOCK(nd.ni_vp, 0);
@@ -1257,15 +1257,15 @@ close_and_exit:
 unlock_and_exit:
 #ifdef VND_COMPRESSION
 		/* free any allocated memory (for compressed file) */
-		if(vnd->sc_comp_offsets) {
+		if (vnd->sc_comp_offsets) {
 			free(vnd->sc_comp_offsets, M_DEVBUF);
 			vnd->sc_comp_offsets = NULL;
 		}
-		if(vnd->sc_comp_buff) {
+		if (vnd->sc_comp_buff) {
 			free(vnd->sc_comp_buff, M_DEVBUF);
 			vnd->sc_comp_buff = NULL;
 		}
-		if(vnd->sc_comp_decombuf) {
+		if (vnd->sc_comp_decombuf) {
 			free(vnd->sc_comp_decombuf, M_DEVBUF);
 			vnd->sc_comp_decombuf = NULL;
 		}
@@ -1293,7 +1293,7 @@ unlock_and_exit:
 		}
 
 		/*
-		 * XXX vndclear() might call vndclose() implicitely;
+		 * XXX vndclear() might call vndclose() implicitly;
 		 * release lock to avoid recursion
 		 */
 		vndunlock(vnd);
@@ -1306,7 +1306,7 @@ unlock_and_exit:
 		/* Destroy the xfer and buffer pools. */
 		pool_destroy(&vnd->sc_vxpool);
 
-		/* Detatch the disk. */
+		/* Detach the disk. */
 		disk_detach(&vnd->sc_dkdev);
 		break;
 
@@ -1572,16 +1572,16 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 #ifdef VND_COMPRESSION
 	/* free the compressed file buffers */
-	if(vnd->sc_flags & VNF_COMP) {
-		if(vnd->sc_comp_offsets) {
+	if (vnd->sc_flags & VNF_COMP) {
+		if (vnd->sc_comp_offsets) {
 			free(vnd->sc_comp_offsets, M_DEVBUF);
 			vnd->sc_comp_offsets = NULL;
 		}
-		if(vnd->sc_comp_buff) {
+		if (vnd->sc_comp_buff) {
 			free(vnd->sc_comp_buff, M_DEVBUF);
 			vnd->sc_comp_buff = NULL;
 		}
-		if(vnd->sc_comp_decombuf) {
+		if (vnd->sc_comp_decombuf) {
 			free(vnd->sc_comp_decombuf, M_DEVBUF);
 			vnd->sc_comp_decombuf = NULL;
 		}
