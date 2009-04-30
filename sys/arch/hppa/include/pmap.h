@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 2009/04/30 15:34:24 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -90,9 +90,11 @@ struct pmap {
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
-#if 0
+
+/*
+ * DON'T CHANGE THIS - this is assumed in lots of places.
+ */
 #define	HPPA_SID_KERNEL	0
-#endif
 #define	HPPA_PID_KERNEL	2
 
 struct pv_entry {			/* locked by its list's pvh_lock */
