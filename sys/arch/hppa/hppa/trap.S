@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.27 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.28 2009/04/30 20:10:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -631,9 +631,7 @@ LDILDO(itlbna_x)
 LDILDO(dtlb_x)
 LDILDO(dtlbna_x)
 LDILDO(tlbd_x)
-#endif
 
-#if defined(HP7100_CPU)
 LDILDO(itlb_s)
 LDILDO(itlbna_s)
 LDILDO(dtlb_s)
@@ -641,7 +639,7 @@ LDILDO(dtlbna_s)
 LDILDO(tlbd_s)
 #endif
 
-#if defined(HP7200_CPU)
+#if defined(HP7100_CPU) || defined(HP7200_CPU)
 LDILDO(itlb_t)
 LDILDO(itlbna_t)
 LDILDO(dtlb_t)
@@ -1749,7 +1747,7 @@ ALTENTRY(desidhash_x)
 EXIT(desidhash_s)
 #endif /* defined(HP7000_CPU) || defined(HP7100_CPU) */
 
-#ifdef HP7200_CPU
+#if defined(HP7100_CPU) || defined(HP7200_CPU)
 /*
  * void desidhash_t(void)
  */
@@ -1771,7 +1769,7 @@ LEAF_ENTRY_NOPROFILE(desidhash_t)
 	bv	0(%rp)
 	extru	%t1, 4, 5, %ret0	/* return chip revision */
 EXIT(desidhash_t)
-#endif /* HP7200_CPU */
+#endif /* defined(HP7100_CPU) || defined(HP7200_CPU) */
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 /*
