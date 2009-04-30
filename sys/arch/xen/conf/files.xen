@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.98 2009/04/18 11:26:58 cegger Exp $
+#	$NetBSD: files.xen,v 1.99 2009/04/30 04:38:01 pgoyette Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -130,6 +130,7 @@ file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/tsc.c
 file	arch/x86/x86/vm_machdep.c
 file	arch/x86/x86/x86_machdep.c
+file	arch/x86/x86/cpu_topology.c
 
 include	"arch/xen/conf/files.compat"
 
