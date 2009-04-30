@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 2009/04/30 15:34:25 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -234,11 +234,6 @@ extern struct cpu_info cpu_info_store;
 
 void	cpu_boot_secondary_processors(void);
 #endif
-
-/*
- * DON'T CHANGE THIS - this is assumed in lots of places.
- */
-#define	HPPA_SID_KERNEL 0
 
 static __inline struct lwp *
 hppa_curlwp(void)
