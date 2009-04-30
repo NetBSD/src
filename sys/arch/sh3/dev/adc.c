@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.11 2009/04/05 00:22:27 uwe Exp $ */
+/*	$NetBSD: adc.c,v 1.12 2009/04/30 05:20:30 nonaka Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.11 2009/04/05 00:22:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.12 2009/04/30 05:20:30 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,8 @@ adc_match(device_t parent, cfdata_t cf, void *aux)
 
 	/* REMINDER: also in 7727 and 7729 */
 	if ((cpu_product != CPU_PRODUCT_7709)
-	    && (cpu_product != CPU_PRODUCT_7709A))
+	    && (cpu_product != CPU_PRODUCT_7709A)
+	    && (cpu_product != CPU_PRODUCT_7706))
 		return (0);
 
 	if (strcmp(cf->cf_name, "adc") != 0)
