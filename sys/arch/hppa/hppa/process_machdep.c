@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10 2009/03/18 17:06:44 cegger Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.11 2009/04/30 15:34:24 skrll Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10 2009/03/18 17:06:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.11 2009/04/30 15:34:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10 2009/03/18 17:06:44 cegger 
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpufunc.h>
+#include <machine/pmap.h>
 #include <machine/frame.h>
 
 #include <hppa/hppa/machdep.h>
