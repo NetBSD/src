@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.106 2009/04/22 18:35:01 elad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.107 2009/04/30 18:18:34 elad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.106 2009/04/22 18:35:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.107 2009/04/30 18:18:34 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -187,7 +187,7 @@ in6_pcballoc(struct socket *so, void *v)
 /*
  * Bind address from sin6 to in6p.
  */
-int
+static int
 in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 {
 	int error;
@@ -257,7 +257,7 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 /*
  * Bind port from sin6 to in6p.
  */
-int
+static int
 in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 {
 	struct inpcbtable *table = in6p->in6p_table;
@@ -325,7 +325,7 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 
 	if (sin6->sin6_port == 0) {
 		int e;
-		e = in6_pcbsetport(&in6p->in6p_laddr, in6p, l);
+		e = in6_pcbsetport(sin6, in6p, l);
 		if (e != 0)
 			return (e);
 	} else {
