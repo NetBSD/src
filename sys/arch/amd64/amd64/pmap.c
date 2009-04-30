@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15.8.1 2005/06/06 12:16:28 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15.8.1.2.1 2009/04/30 20:33:13 snj Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15.8.1 2005/06/06 12:16:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15.8.1.2.1 2009/04/30 20:33:13 snj Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2488,6 +2488,8 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 
 		/* atomically save the old PTE and zap! it */
 		opte = pmap_pte_set(pte, 0);
+		if (!pmap_valid_entry(opte))
+			continue;
 
 		if (opte & PG_W)
 			pmap->pm_stats.wired_count--;
@@ -2570,6 +2572,8 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 
 	/* atomically save the old PTE and zap! it */
 	opte = pmap_pte_set(pte, 0);
+	if (!pmap_valid_entry(opte))
+		return(FALSE);
 
 	if (opte & PG_W)
 		pmap->pm_stats.wired_count--;
