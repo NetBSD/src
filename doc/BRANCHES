@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.276 2009/02/08 21:46:04 jym Exp $
+#	$NetBSD: BRANCHES,v 1.277 2009/04/30 07:14:47 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -444,10 +444,10 @@ Notes:
 
 Branch:		nick-hppapmap
 Description:	Update of hppa pmap with OpenBSD code.
-Status:		Active
+Status: 	Terminated; merged to -current
 Start Date:	27 October 2008
-End Date:
-Base Tag:	nick-hppapmap-base
+End Date:	30 April 2009
+Base Tag:	nick-hppapmap-base3
 Maintainer:	Nick Hudson <skrll@NetBSD.org>
 Scope:		sys/
 Notes:		Port of the OpenBSD pmap including support for PA2.0 CPUs in
