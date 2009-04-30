@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.134 2009/04/30 18:18:34 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.135 2009/04/30 20:26:09 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.134 2009/04/30 18:18:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.135 2009/04/30 20:26:09 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -273,6 +273,7 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 			lport = mymax;
 		if (!in_pcblookup_port(table, sin->sin_addr, htons(lport), 1)) {
 			/* We have a free port, check with the secmodel(s). */
+			sin->sin_port = lport;
 			error = kauth_authorize_network(cred,
 			    KAUTH_NETWORK_BIND, req, so, sin, NULL);
 			if (error) {
