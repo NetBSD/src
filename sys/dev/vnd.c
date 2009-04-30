@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.198 2009/04/30 16:38:12 dyoung Exp $	*/
+/*	$NetBSD: vnd.c,v 1.199 2009/04/30 20:34:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.198 2009/04/30 16:38:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.199 2009/04/30 20:34:08 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -198,6 +198,7 @@ struct vndxfer {
 void	vndattach(int);
 
 static void	vndclear(struct vnd_softc *, int);
+static int	vnddoclear(struct vnd_softc *, int, int, bool);
 static int	vndsetcred(struct vnd_softc *, kauth_cred_t);
 static void	vndthrottle(struct vnd_softc *, struct vnode *);
 static void	vndiodone(struct buf *);
@@ -246,8 +247,8 @@ static int	vnd_match(device_t, cfdata_t, void *);
 static void	vnd_attach(device_t, device_t, void *);
 static int	vnd_detach(device_t, int);
 
-CFATTACH_DECL_NEW(vnd, sizeof(struct vnd_softc),
-    vnd_match, vnd_attach, vnd_detach, NULL);
+CFATTACH_DECL3_NEW(vnd, sizeof(struct vnd_softc),
+    vnd_match, vnd_attach, vnd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 extern struct cfdriver vnd_cd;
 
 static struct vnd_softc	*vnd_spawn(int);
@@ -289,9 +290,14 @@ vnd_attach(device_t parent, device_t self, void *aux)
 static int
 vnd_detach(device_t self, int flags)
 {
+	int error;
 	struct vnd_softc *sc = device_private(self);
-	if (sc->sc_flags & VNF_INITED)
-		return EBUSY;
+
+	if (sc->sc_flags & VNF_INITED) {
+		error = vnddoclear(sc, 0, -1, (flags & DETACH_FORCE) != 0);
+		if (error != 0)
+			return error;
+	}
 
 	pmf_device_deregister(self);
 	bufq_free(sc->sc_tab);
@@ -349,6 +355,9 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if ((error = vndlock(sc)) != 0)
 		return error;
+
+	if ((sc->sc_flags & VNF_CLEARING) != 0)
+		return ENXIO;
 
 	lp = sc->sc_dkdev.dk_label;
 
@@ -948,10 +957,55 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	return VOP_GETATTR(vnd->sc_vp, va, l->l_cred);
 }
 
+static int
+vnddoclear(struct vnd_softc *vnd, int pmask, int minor, bool force)
+{
+	int error;
+
+	if ((error = vndlock(vnd)) != 0)
+		return error;
+
+	/*
+	 * Don't unconfigure if any other partitions are open
+	 * or if both the character and block flavors of this
+	 * partition are open.
+	 */
+	if (((vnd->sc_dkdev.dk_openmask & ~pmask) ||
+	    ((vnd->sc_dkdev.dk_bopenmask & pmask) &&
+	    (vnd->sc_dkdev.dk_copenmask & pmask))) && !force) {
+		vndunlock(vnd);
+		return EBUSY;
+	}
+
+	/*
+	 * XXX vndclear() might call vndclose() implicitly;
+	 * release lock to avoid recursion
+	 *
+	 * Set VNF_CLEARING to prevent vndopen() from
+	 * sneaking in after we vndunlock().
+	 */
+	vnd->sc_flags |= VNF_CLEARING;
+	vndunlock(vnd);
+	vndclear(vnd, minor);
+#ifdef DEBUG
+	if (vnddebug & VDB_INIT)
+		printf("vndioctl: CLRed\n");
+#endif
+
+	/* Destroy the xfer and buffer pools. */
+	pool_destroy(&vnd->sc_vxpool);
+
+	/* Detach the disk. */
+	disk_detach(&vnd->sc_dkdev);
+
+	return 0;
+}
+
 /* ARGSUSED */
 static int
 vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+	bool force;
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
 	struct vnd_ioctl *vio;
@@ -1274,40 +1328,13 @@ unlock_and_exit:
 		return error;
 
 	case VNDIOCCLR:
-		if ((error = vndlock(vnd)) != 0)
-			return error;
-
-		/*
-		 * Don't unconfigure if any other partitions are open
-		 * or if both the character and block flavors of this
-		 * partition are open.
-		 */
 		part = DISKPART(dev);
 		pmask = (1 << part);
-		if (((vnd->sc_dkdev.dk_openmask & ~pmask) ||
-		    ((vnd->sc_dkdev.dk_bopenmask & pmask) &&
-		    (vnd->sc_dkdev.dk_copenmask & pmask))) &&
-			!(vio->vnd_flags & VNDIOF_FORCE)) {
-			vndunlock(vnd);
-			return EBUSY;
-		}
+		force = (vio->vnd_flags & VNDIOF_FORCE) != 0;
 
-		/*
-		 * XXX vndclear() might call vndclose() implicitly;
-		 * release lock to avoid recursion
-		 */
-		vndunlock(vnd);
-		vndclear(vnd, minor(dev));
-#ifdef DEBUG
-		if (vnddebug & VDB_INIT)
-			printf("vndioctl: CLRed\n");
-#endif
+		if ((error = vnddoclear(vnd, pmask, minor(dev), force)) != 0)
+			return error;
 
-		/* Destroy the xfer and buffer pools. */
-		pool_destroy(&vnd->sc_vxpool);
-
-		/* Detach the disk. */
-		disk_detach(&vnd->sc_dkdev);
 		break;
 
 #ifdef COMPAT_30
