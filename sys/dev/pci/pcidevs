@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.985 2009/04/30 15:03:30 skrll Exp $
+$NetBSD: pcidevs,v 1.986 2009/04/30 15:13:58 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2918,6 +2918,7 @@ product NEWBRIDGE CA91L8261		0x8261	PowerSpan II PCI Bridge
 product NATIONALINST MXI3	0x2c30	MXI-3 PCI Extender
 
 /* National Semiconductor products */
+product NS PC87415	0x0002	PC87415 IDE
 product NS PC87560	0x000e	87560 Legacy I/O
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS DP83815	0x0020	DP83815 10/100 Ethernet
