@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.133 2009/04/23 17:02:26 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.134 2009/04/30 18:18:34 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.133 2009/04/23 17:02:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.134 2009/04/30 18:18:34 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -224,8 +224,7 @@ in_pcballoc(struct socket *so, void *v)
 }
 
 static int
-in_pcbsetport(struct in_addr *laddr, struct inpcb *inp,
-    struct sockaddr_in *sin, kauth_cred_t cred)
+in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 {
 	struct inpcbtable *table = inp->inp_table;
 	struct socket *so = inp->inp_socket;
@@ -233,23 +232,33 @@ in_pcbsetport(struct in_addr *laddr, struct inpcb *inp,
 	u_int16_t  mymin, mymax;
 	u_int16_t *lastport;
 	u_int16_t lport = 0;
+	enum kauth_network_req req;
+	int error;
 
 	if (inp->inp_flags & INP_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		if (kauth_authorize_network(cred,
-		    KAUTH_NETWORK_BIND,
-		    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so,
-		    sin, NULL))
-			return (EACCES);
+		req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
+#else
+		req = KAUTH_REQ_NETWORK_BIND_PORT;
 #endif
+
 		mymin = lowportmin;
 		mymax = lowportmax;
 		lastport = &table->inpt_lastlow;
 	} else {
+		req = KAUTH_REQ_NETWORK_BIND_PORT;
+
 		mymin = anonportmin;
 		mymax = anonportmax;
 		lastport = &table->inpt_lastport;
 	}
+
+	/* XXX-kauth: KAUTH_REQ_NETWORK_BIND_AUTOASSIGN_{,PRIV}PORT */
+	error = kauth_authorize_network(cred, KAUTH_NETWORK_BIND, req, so, sin,
+	    NULL);
+	if (error)
+		return (error);
+
 	if (mymin > mymax) {	/* sanity check */
 		u_int16_t swp;
 
@@ -262,9 +271,17 @@ in_pcbsetport(struct in_addr *laddr, struct inpcb *inp,
 	for (cnt = mymax - mymin + 1; cnt; cnt--, lport--) {
 		if (lport < mymin || lport > mymax)
 			lport = mymax;
-		if (!in_pcblookup_port(table, inp->inp_laddr,
-		    htons(lport), 1))
+		if (!in_pcblookup_port(table, sin->sin_addr, htons(lport), 1)) {
+			/* We have a free port, check with the secmodel(s). */
+			error = kauth_authorize_network(cred,
+			    KAUTH_NETWORK_BIND, req, so, sin, NULL);
+			if (error) {
+				/* Secmodel says no. Keep looking. */
+				continue;
+			}
+
 			goto found;
+		}
 	}
 
 	return (EAGAIN);
@@ -322,7 +339,7 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 	} 
 
 	if (sin->sin_port == 0) {
-		error = in_pcbsetport(&inp->inp_laddr, inp, sin, cred);
+		error = in_pcbsetport(sin, inp, cred);
 		if (error)
 			return (error);
 	} else {
@@ -394,6 +411,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct inpcb *inp = v;
 	struct sockaddr_in *sin = NULL; /* XXXGCC */
+	struct sockaddr_in lsin;
 	int error;
 
 	if (inp->inp_af != AF_INET)
@@ -409,8 +427,9 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		if (nam->m_len != sizeof (*sin))
 			return (EINVAL);
 	} else {
-		sin = (struct sockaddr_in *)
-		    __UNCONST(inp->inp_socket->so_proto->pr_domain->dom_sa_any);
+		lsin = *((const struct sockaddr_in *)
+		    inp->inp_socket->so_proto->pr_domain->dom_sa_any);
+		sin = &lsin;
 	}
 
 	/* Bind address. */
