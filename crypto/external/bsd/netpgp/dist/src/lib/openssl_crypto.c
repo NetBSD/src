@@ -52,6 +52,8 @@
 
 /* Apple */
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+#undef MD5_DIGEST_LENGTH
+#undef SHA_DIGEST_LENGTH
 #define COMMON_DIGEST_FOR_OPENSSL	1
 #include <CommonCrypto/CommonDigest.h>
 #endif

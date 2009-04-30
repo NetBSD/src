@@ -2095,12 +2095,12 @@ mmap_reader(void *dest, size_t length, __ops_error_t **errors,
 	  __ops_reader_info_t *rinfo, __ops_parse_cb_info_t *cbinfo)
 {
 	mmap_reader_t	*mem = __ops_reader_get_arg(rinfo);
+	unsigned	 n;
 	char		*cmem = mem->mem;
-	int		 n;
 
 	OPS_USED(errors);
 	OPS_USED(cbinfo);
-	n = MIN(length, (int)(mem->size - mem->offset));
+	n = MIN(length, (unsigned)(mem->size - mem->offset));
 	if (n > 0) {
 		(void) memcpy(dest, &cmem[(int)mem->offset], (unsigned)n);
 		mem->offset += n;

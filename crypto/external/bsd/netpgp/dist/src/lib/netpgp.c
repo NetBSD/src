@@ -135,8 +135,8 @@ static void
 psuccess(char *f, __ops_validation_t *results, __ops_keyring_t *pubring)
 {
 	const __ops_keydata_t	*pubkey;
+	unsigned		 i;
 	char			 id[MAX_ID_LENGTH + 1];
-	int			 i;
 
 	for (i = 0; i < results->validc; i++) {
 		printf("Good signature for %s made %susing %s key %s\n",
