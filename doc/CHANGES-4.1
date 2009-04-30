@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.145 2009/04/23 02:40:38 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.146 2009/04/30 18:27:50 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3021,4 +3021,20 @@ lib/libc/db/mpool/mpool.c			1.19
 
 	Avoid information leaks by zeroing memory, from FreeBSD.
 	[christos, ticket #1310]
+
+lib/libedit/common.c				1.23
+
+	fix mis-evaluating whether a char is digit or not.
+	[msaitoh, ticket #1307]
+
+sys/arch/vax/vax/subr.S				1.26
+
+	Make copyin(9) and copyout(9) work with 64KB or larger data blocks.
+	Fixes broken pipe(2) problem mentioned in PR port-vax/41139.
+	[mhitch, ticket #1309]
+
+lib/libc/db/hash/hash_buf.c			1.17, 1.18
+
+	Fix build fallout from ticket 1310
+	[hauke, ticket #1311]
 
