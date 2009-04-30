@@ -1,13 +1,16 @@
-.\" $NetBSD: gcc.1,v 1.3 2009/04/30 00:30:56 joerg Exp $
+.\" $NetBSD: gcc-contrib.1,v 1.1 2009/04/30 00:30:56 joerg Exp $
 .Dd April 30, 2009
 .Dt GCC 1
 .Os
 .Sh NAME
-.Nm gcc
-.Nd GNU project C and C++ compiler
+gcc - GNU project C and C++ compiler
 .Sh SYNOPSIS
-.Nm
-.Oo Fl c | Fl S | Fl E Oc
+gcc
+.Oo Fl c
+|
+.Fl S
+|
+.Fl E Oc
 .Op Fl std= Ns Ar standard
 .Op Fl g
 .Op Fl pg
@@ -21,8 +24,7 @@
 .Op Fl f Ns Ar option...
 .Op Fl m Ns Ar machine-option...
 .Op Fl o Ar outfile
-.Ar infile
-.Ar ...
+.Em infile . . .
 .Pp
 Only the most useful options are listed here; see below for the remainder.
 .Nm g++
@@ -2828,10 +2830,11 @@ is cast to an
 on machines where integers can only be accessed at two- or four-byte boundaries.
 .Pp
 .It Fl Wwrite-strings
-When compiling C, give string constants the type
-.Va const char [length]
-so that copying the address of one into a non-
-.Va const char *
+When compiling C, give string constants the type C<const char
+.Op Em length
+> so that copying the address of one into a non-
+.Va const
+.Va char *
 pointer will get a warning; when compiling C++, warn about the deprecated conversion from string constants to
 .Va char * .
 These warnings will help you find at compile time code that can try to write into a string constant, but only if you have been very careful about using
@@ -4234,7 +4237,7 @@ Force memory address constants to be copied into registers before doing arithmet
 .It Fl fomit-frame-pointer
 Don't keep the frame pointer in a register for functions that don't need one.
 This avoids the instructions to save, set up and restore frame pointers; it also makes an extra register available in many functions.
-.Sy \&It also makes debugging impossible on some machines.
+.Sy It also makes debugging impossible on some machines.
 .Pp
 On some machines, such as the VAX, this flag has no effect, because the standard calling sequence automatically handles the frame pointer and nothing is saved by pretending it doesn't exist.
 The machine-description macro
@@ -5706,7 +5709,7 @@ The limit specifying large translation unit.
 Growth caused by inlining of units larger than this limit is limited by
 .Fl -param Ar inline-unit-growth .
 For small units this might be too tight (consider unit consisting of function A that is inline and B that just calls A three time.
-If B is small relative to A, the growth of unit is 300% and yet such inlining is very sane.
+If B is small relative to A, the growth of unit is 300\e% and yet such inlining is very sane.
 For very large units consisting of small inlininable functions however the overall unit growth limit is needed to avoid exponential explosion of code size.
 Thus for smaller units, the size is increased to
 .Fl -param Ar large-unit-insns
