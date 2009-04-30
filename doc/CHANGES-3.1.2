@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.42 2009/04/30 17:58:09 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.43 2009/04/30 20:41:45 snj Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -1192,4 +1192,10 @@ gnu/dist/toolchain/gcc/f/com.h			 patch
 	Fix mis-matched function prototype, causing vax build failure with
 	recent host gcc.
 	[mhitch, ticket #2011]
+
+sys/arch/amd64/amd64/pmap.c			patch
+sys/arch/i386/i386/pmap.c			patch
+
+	Fix a pmap race.
+	[bouyer, ticket #2012]
 
