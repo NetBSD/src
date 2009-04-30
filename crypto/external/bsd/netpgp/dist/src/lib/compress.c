@@ -85,8 +85,8 @@ zlib_compressed_data_reader(void *dest, size_t length,
 {
 	z_decompress_t *z = __ops_reader_get_arg(rinfo);
 	size_t           len;
+	size_t		 cc;
 	char		*cdest = dest;
-	int              cc;
 
 	assert(z->type == OPS_C_ZIP || z->type == OPS_C_ZLIB);
 
@@ -168,8 +168,8 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 {
 	bz_decompress_t *bz = __ops_reader_get_arg(rinfo);
 	size_t		len;
+	size_t		 cc;
 	char		*cdest = dest;
-	int		cc;
 
 	assert(bz->type == OPS_C_BZIP2);
 

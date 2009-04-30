@@ -367,21 +367,19 @@ print_packet_hex(const __ops_packet_t * packet)
 {
 	unsigned char  *cur;
 	unsigned	rem;
+	unsigned	blksz = 4;
 	int             i;
-	int             blksz = 4;
 
 	printf("\nhexdump of packet contents follows:\n");
-
-
 	for (i = 1, cur = packet->raw; cur < (packet->raw + packet->length); cur += blksz, i++) {
 		rem = packet->raw + packet->length - cur;
 		hexdump(cur, (rem <= blksz) ? rem : blksz, "");
 		printf(" ");
-		if (!(i % 8))
+		if (i % 8 == 0) {
 			printf("\n");
+		}
 
 	}
-
 	printf("\n");
 }
 
