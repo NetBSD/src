@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1217 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1218 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -186,3 +186,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sdmmc(4): Add a driver for SD/MMC from OpenBSD. [nonaka 20090421]
 	zx(4): Add wscons support [macallan 20090423]
 	dhcpcd(8): Import dhcpcd-5.0.0. [roy 20090428]
+	hppa: Merge the nick-hppapmap branch which includes a port of the OpenBSD
+		pmap, improves support for machines without the PA7100LC or
+		PA7300LC CPUs, and much more.  [skrll 20090429]
