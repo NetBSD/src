@@ -1,6 +1,6 @@
-/*	$NetBSD: vmparam.h,v 1.13 2009/03/06 20:31:49 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2009/04/30 07:01:27 skrll Exp $	*/
 
-/*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -78,14 +78,16 @@
  * It is related to human patience and other factors which don't really
  * change over time.
  */
+/* XXXNH - remove??? */
 #define	MAXSLP 		20
 
 /* user/kernel map constants */
 #define	VM_MIN_ADDRESS		((vaddr_t)0)
 #define	VM_MAXUSER_ADDRESS	((vaddr_t)0xc0000000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xf0000000)
+
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc0001000)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xef000000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
@@ -97,5 +99,26 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+#define __HAVE_VM_PAGE_MD
+
+struct pv_entry;
+
+struct vm_page_md {
+	kmutex_t	pvh_lock;	/* locks every pv on this list */
+	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
+	u_int		pvh_attrs;	/* to preserve ref/mod */
+	int		pvh_aliases;	/* alias counting */
+};
+
+#define	VM_MDPAGE_INIT(pg) \
+do {									\
+	mutex_init(&(pg)->mdpage.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
+	(pg)->mdpage.pvh_list = NULL;					\
+	(pg)->mdpage.pvh_attrs = 0;					\
+	(pg)->mdpage.pvh_aliases = 0;					\
+} while (0)
+#endif
 
 #endif	/* _HPPA_VMPARAM_H_ */
