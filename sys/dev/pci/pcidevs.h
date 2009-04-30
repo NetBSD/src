@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.984 2009/04/28 14:32:43 ginsbach Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.985 2009/04/30 15:07:44 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.984 2009/04/28 14:27:16 ginsbach Exp
+ *	NetBSD: pcidevs,v 1.985 2009/04/30 15:03:30 skrll Exp
  */
 
 /*
@@ -2925,6 +2925,7 @@
 #define	PCI_PRODUCT_NATIONALINST_MXI3	0x2c30		/* MXI-3 PCI Extender */
 
 /* National Semiconductor products */
+#define	PCI_PRODUCT_NS_PC87560	0x000e		/* 87560 Legacy I/O */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 Ethernet */
