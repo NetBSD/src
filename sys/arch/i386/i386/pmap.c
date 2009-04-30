@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.181.2.2 2005/09/26 20:24:52 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.181.2.2.2.1 2009/04/30 20:33:12 snj Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181.2.2 2005/09/26 20:24:52 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181.2.2.2.1 2009/04/30 20:33:12 snj Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2423,6 +2423,9 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 
 		/* atomically save the old PTE and zap! it */
 		opte = x86_atomic_testset_ul(pte, 0);
+		if (!pmap_valid_entry(opte))
+			continue;
+
 		pmap_exec_account(pmap, startva, opte, 0);
 
 		if (opte & PG_W)
@@ -2512,6 +2515,9 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 
 	/* atomically save the old PTE and zap! it */
 	opte = x86_atomic_testset_ul(pte, 0);
+	if (!pmap_valid_entry(opte))
+		return(FALSE);
+
 	pmap_exec_account(pmap, va, opte, 0);
 
 	if (opte & PG_W)
