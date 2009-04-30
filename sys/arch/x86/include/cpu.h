@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2009/04/19 14:11:37 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2009/04/30 00:07:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -352,6 +352,9 @@ void 	tmx86_init_longrun(void);
 /* identcpu.c */
 void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
+
+/* cpu_topology.c */
+void	x86_cpu_toplogy(struct cpu_info *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
