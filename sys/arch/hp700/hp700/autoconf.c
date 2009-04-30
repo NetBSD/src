@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2008/03/30 12:39:32 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 2009/04/30 07:01:26 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,11 +86,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2008/03/30 12:39:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2009/04/30 07:01:26 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
-#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2008/03/30 12:39:32 skrll Exp $");
 #include <dev/cons.h>
 
 #include <hp700/hp700/machdep.h>
-#include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
 
@@ -133,6 +131,8 @@ static struct callout hp700_led_callout;
 static void hp700_led_blinker(void *);
 extern int hz;
 #endif
+
+void (*cold_hook)(int); /* see below */
 
 /*
  * cpu_configure:
@@ -166,11 +166,8 @@ cpu_configure(void)
 	kpsw |= PSW_I;
 	spl0();
 
-	cold = 0;
-#ifdef POWER_SWITCH
-	/* Give OS control over the power switch. */
-	pwr_sw_ctrl(PWR_SW_CTRL_ENABLE);
-#endif /* POWER_SWITCH */
+	if (cold_hook)
+		(*cold_hook)(HPPA_COLD_HOT);
 
 #ifdef USELEDS
 	memset(_hp700_led_on_cycles, 0, sizeof(_hp700_led_on_cycles));
@@ -421,8 +418,6 @@ device_register(struct device *dev, void *aux)
 	return;
 }
 
-
-
 /*
  * Choose root and swap devices.
  */
@@ -458,59 +453,24 @@ cpu_rootconf(void)
 /*static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };*/
 #endif
 
+static struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
+static struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
+static struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
+static struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
+
 void
-pdc_scanbus_memory_map(struct device *self, struct confargs *ca,
+pdc_scanbus(struct device *self, struct confargs *ca,
     void (*callback)(struct device *, struct confargs *))
 {
 	int i;
-	struct confargs nca;
-	struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
-	struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
 
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < ca->ca_nmodules; i++) {
+		struct confargs nca;
+		int error;
+
 		memset(&nca, 0, sizeof(nca));
-		nca.ca_dp.dp_bc[0] = -1;
-		nca.ca_dp.dp_bc[1] = -1;
-		nca.ca_dp.dp_bc[2] = -1;
-		nca.ca_dp.dp_bc[3] = -1;
-		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_mod;
-		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod < 0 ? -1 : 0;
-		nca.ca_dp.dp_mod = i;
-
-		if (pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP, PDC_MEMMAP_HPA, 
-		    &pdc_memmap, &nca.ca_dp) < 0)
-			continue;
-
-		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
-		     &pdc_iodc_read, pdc_memmap.hpa, IODC_DATA,
-		     &nca.ca_type, sizeof(nca.ca_type)) < 0)
-			continue;
-
-		nca.ca_mod = i;
-		nca.ca_hpa = pdc_memmap.hpa;
 		nca.ca_iot = ca->ca_iot;
 		nca.ca_dmatag = ca->ca_dmatag;
-		nca.ca_irq = HP700CF_IRQ_UNDEF;
-		nca.ca_pdc_iodc_read = &pdc_iodc_read;
-		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
-		    nca.ca_type.iodc_sv_model);
-		(*callback)(self, &nca);
-	}
-}
-
-void
-pdc_scanbus_system_map(struct device *self, struct confargs *ca,
-    void (*callback)(struct device *, struct confargs *))
-{
-	int i;
-	int ia;
-	struct confargs nca;
-	struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
-	struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
-	struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
-
-	for (i = 0; i <= 64; i++) {
-		memset(&nca, 0, sizeof(nca));
 		nca.ca_dp.dp_bc[0] = ca->ca_dp.dp_bc[1];
 		nca.ca_dp.dp_bc[1] = ca->ca_dp.dp_bc[2];
 		nca.ca_dp.dp_bc[2] = ca->ca_dp.dp_bc[3];
@@ -518,44 +478,66 @@ pdc_scanbus_system_map(struct device *self, struct confargs *ca,
 		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_bc[5];
 		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod;
 		nca.ca_dp.dp_mod = i;
+		nca.ca_naddrs = 0;
+		nca.ca_hpa = 0;
 
-		if (pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP, 
-		    PDC_SYSTEM_MAP_TRANS_PATH, &pdc_find_mod, &nca.ca_dp) != 0)
-			continue;
-		nca.ca_hpa = pdc_find_mod.hpa;
-		nca.ca_hpasz = pdc_find_mod.size << PGSHIFT;
-		if (pdc_find_mod.naddrs > 0) {
-			nca.ca_naddrs = pdc_find_mod.naddrs;
-			if (nca.ca_naddrs > 16) { 
-				nca.ca_naddrs = 16;
-				printf("WARNING: too many (%d) addrs\n",
-				    pdc_find_mod.naddrs);
-			}
-			for (ia = 0; pdc_call((iodcio_t)pdc, 0, 
-			    PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_ADDR, 
-			    &pdc_find_addr, pdc_find_mod.mod_index, ia) == 0
-			    && ia < nca.ca_naddrs; ia++) {
-				nca.ca_addrs[ia].addr = pdc_find_addr.hpa;
-				nca.ca_addrs[ia].size = 
-				    pdc_find_addr.size << PGSHIFT;
+		if (ca->ca_hpabase) {
+			nca.ca_hpa = ca->ca_hpabase + IOMOD_HPASIZE * i;
+			nca.ca_dp.dp_mod = i;
+		} else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
+		    PDC_MEMMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0)
+			nca.ca_hpa = pdc_memmap.hpa;
+		else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP,
+		    PDC_SYSTEM_MAP_TRANS_PATH, &pdc_memmap, &nca.ca_dp)) == 0) {
+			struct device_path path;
+			int im, ia;
+
+			nca.ca_hpa = pdc_memmap.hpa;
+
+			for (im = 0; !(error = pdc_call((iodcio_t)pdc, 0,
+			    PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_MOD,
+			    &pdc_find_mod, &path, im)) &&
+			    pdc_find_mod.hpa != nca.ca_hpa; im++)
+				;
+
+			if (!error)
+				nca.ca_hpasz = pdc_find_mod.size << PGSHIFT;
+
+			if (!error && pdc_find_mod.naddrs) {
+				nca.ca_naddrs = pdc_find_mod.naddrs;
+				if (nca.ca_naddrs > 16) {
+					nca.ca_naddrs = 16;
+					printf("WARNING: too many (%d) addrs\n",
+					    pdc_find_mod.naddrs);
+				}
+
+				for (ia = 0; !(error = pdc_call((iodcio_t)pdc,
+				    0, PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_ADDR,
+				    &pdc_find_addr, im, ia + 1)) && ia < nca.ca_naddrs; ia++) {
+					nca.ca_addrs[ia].addr = pdc_find_addr.hpa;
+					nca.ca_addrs[ia].size =
+					    pdc_find_addr.size << PGSHIFT;
+
+				}
 			}
 		}
 
-		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
-		     &pdc_iodc_read, nca.ca_hpa, IODC_DATA,
-		     &nca.ca_type, sizeof(nca.ca_type)) < 0) {
+		if (!nca.ca_hpa)
 			continue;
-		}
 
-		nca.ca_mod = i;
-		nca.ca_iot = ca->ca_iot;
-		nca.ca_dmatag = ca->ca_dmatag;
+		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
+		    PDC_IODC_READ, &pdc_iodc_read, nca.ca_hpa, IODC_DATA,
+		    &nca.ca_type, sizeof(nca.ca_type))) < 0)
+			continue;
+
 		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 		    nca.ca_type.iodc_sv_model);
+
 		(*callback)(self, &nca);
 	}
+
 }
 
 static const struct hppa_mod_info hppa_knownmods[] = {
