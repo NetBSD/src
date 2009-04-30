@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.46 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.47 2009/04/30 07:01:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,10 +63,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.46 2009/03/14 15:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.47 2009/04/30 07:01:26 skrll Exp $");
 
 #include "locators.h"
-#include "opt_power_switch.h"
+#include "power.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.46 2009/03/14 15:36:06 dsl Exp $");
 
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/intr.h>
-#include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
 
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
@@ -108,7 +107,6 @@ static int mb_attached;
 /* from machdep.c */
 extern struct extent *hp700_io_extent;
 extern struct extent *dma24_ex;
-extern struct pdc_btlb pdc_btlb;
 
 u_int8_t mbus_r1(void *, bus_space_handle_t, bus_size_t);
 u_int16_t mbus_r2(void *, bus_space_handle_t, bus_size_t);
@@ -214,12 +212,10 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 			if (btlb_size > hppa_btlb_size_max)
 				btlb_size = hppa_btlb_size_max;
 			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_insert(kernel_pmap->pmap_space, 
-						 bpa,
-						 bpa, &btlb_size,
-						 kernel_pmap->pmap_pid |
-					    	 pmap_prot(kernel_pmap,
-							   VM_PROT_ALL));
+			error = hppa_btlb_insert(pmap_kernel()->pmap_space, 
+			    bpa, bpa, &btlb_size,
+			    pmap_kernel()->pmap_pid |
+			    pmap_prot(pmap_kernel(), VM_PROT_READ | VM_PROT_WRITE));
 			if (error == 0) {
 				bpa += btlb_size;
 				frames -= (btlb_size >> PGSHIFT);
@@ -233,7 +229,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		/*
 		 * Enter another single-page mapping.
 		 */
-		pmap_kenter_pa(bpa, bpa, VM_PROT_ALL);
+		pmap_kenter_pa(bpa, bpa, VM_PROT_READ | VM_PROT_WRITE);
 		bpa += PAGE_SIZE;
 		frames--;
 	}
@@ -281,7 +277,7 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 			if (btlb_size > hppa_btlb_size_max)
 				btlb_size = hppa_btlb_size_max;
 			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_purge(kernel_pmap->pmap_space, 
+			error = hppa_btlb_purge(pmap_kernel()->pmap_space, 
 						bpa, &btlb_size);
 			if (error == 0) {
 				bpa += btlb_size;
@@ -1488,23 +1484,18 @@ static void
 mb_cpu_mem_callback(struct device *self, struct confargs *ca)
 {
 	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
-	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY) &&
-	    ca->ca_hpa != pdc_hpa.hpa)
+	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY))
 		config_found_sm_loc(self, "gedoens", NULL, ca, mbprint,
-				    mbsubmatch);
+		    mbsubmatch);
 }
 
 void
 mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
-	struct device_path path PDC_ALIGNMENT;
-	struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
-	struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
-	struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
 	struct confargs nca;
 	bus_space_handle_t ioh;
-	int i;
+	hppa_hpa_t hpabase;
 
 	mb_attached = 1;
 
@@ -1542,75 +1533,52 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
 
-	/*
-	 * Scan mainbus for monarch CPU and attach it.
-	 *
-	 * How to do device scanning? Try to use PDC_SYSTEM_MAP.
-	 * We are on a "new" system if it succedes, so use PDC_SYSTEM_MAP.
-	 * Otherwise we must be on an "old" system, so use PDC_MEMMAP.
-	 */
+#if NPOWER > 0
+	/* get some power */
 	memset(&nca, 0, sizeof(nca));
-	if (pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_MOD,
-	    &pdc_find_mod, &path, 0) == 0) {
-	        pdc_scanbus = pdc_scanbus_system_map;
-		for (i = 0; i <= 64; i++) {
-			nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = 
-			    nca.ca_dp.dp_bc[2] = nca.ca_dp.dp_bc[3] = 
-			    nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
-			nca.ca_dp.dp_mod = i;
-			if (pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP,
-			    PDC_SYSTEM_MAP_TRANS_PATH, &pdc_find_mod, 
-			    &nca.ca_dp) != 0)
-				continue;
-			nca.ca_hpa = pdc_find_mod.hpa;
-			nca.ca_hpasz = pdc_find_mod.size << PGSHIFT;
-			if (pdc_hpa.hpa == pdc_find_mod.hpa)
-				break;
-		}
-	} else {
-	        pdc_scanbus = pdc_scanbus_memory_map;
-		for (i = 0; i < 16; i++) {
-			nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = 
-			    nca.ca_dp.dp_bc[2] = nca.ca_dp.dp_bc[3] = 
-			    nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
-			nca.ca_dp.dp_mod = i;
-			if (pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP, 
-			    PDC_MEMMAP_HPA, &pdc_memmap, &nca.ca_dp) < 0)
-				continue;
-			nca.ca_hpa = pdc_memmap.hpa;
-			if (pdc_hpa.hpa == pdc_memmap.hpa)
-				break;
-		}
-	}
-	if ((i = pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ, 
-	    &pdc_iodc_read, pdc_hpa.hpa, IODC_DATA, &nca.ca_type, 
-	    sizeof(nca.ca_type))) != 0) {
-		aprint_normal("mbattach: PDC_IODC_READ monarch CPU HPA "
-		    "faild err=%d\n", i);
-		nca.ca_name = "PA-RISC";
-	} else {
-		nca.ca_pdc_iodc_read = &pdc_iodc_read;
-		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
-		    nca.ca_type.iodc_sv_model);
-	}
-	if (nca.ca_hpa != pdc_hpa.hpa) {
-		/* Didn't find the CPU in the device tree. Attach hard. */
-		nca.ca_hpa = pdc_hpa.hpa;
-		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = 
-		    nca.ca_dp.dp_bc[2] = nca.ca_dp.dp_bc[3] = 
-		    nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
-		nca.ca_dp.dp_mod = -1;
-	}
-	nca.ca_mod = nca.ca_dp.dp_mod;
+	nca.ca_name = "power";
+	nca.ca_irq = -1;
 	nca.ca_iot = &hppa_bustag;
-	nca.ca_dmatag = &hppa_dmatag;
-	nca.ca_irq = 31;
 	config_found(self, &nca, mbprint);
+#endif
 
-	/* Search and attach additional CPUs and memory controller. */
+	switch (cpu_hvers) {
+	case HPPA_BOARD_HP809:
+	case HPPA_BOARD_HP819:
+	case HPPA_BOARD_HP829:
+	case HPPA_BOARD_HP839:
+	case HPPA_BOARD_HP849:
+	case HPPA_BOARD_HP859:
+	case HPPA_BOARD_HP869:
+#if 0
+	case HPPA_BOARD_HP770_J200:
+	case HPPA_BOARD_HP770_J210:
+	case HPPA_BOARD_HP770_J210XC:
+	case HPPA_BOARD_HP780_J282:
+	case HPPA_BOARD_HP782_J2240:
+#endif
+	case HPPA_BOARD_HP780_C160:
+	case HPPA_BOARD_HP780_C180P:
+	case HPPA_BOARD_HP780_C180XP:
+	case HPPA_BOARD_HP780_C200:
+	case HPPA_BOARD_HP780_C230:
+	case HPPA_BOARD_HP780_C240:
+	case HPPA_BOARD_HP785_C360:
+
+	case HPPA_BOARD_HP800D:
+		hpabase = HPPA_FPA;
+		break;
+	default:
+		hpabase = 0;
+		break;
+	}
+
+	/* Search and attach all CPUs and memory controllers. */
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
+	nca.ca_hpabase = hpabase;
+	nca.ca_nmodules = MAXMODBUS;
 	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
@@ -1623,6 +1591,8 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
+	nca.ca_hpabase = hpabase;
+	nca.ca_nmodules = MAXMODBUS;
 	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
@@ -1630,16 +1600,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 	nca.ca_dp.dp_mod = -1;
 	pdc_scanbus(self, &nca, mb_module_callback);
-
-#ifdef POWER_SWITCH
-	/*
-	 * Initialize soft power switch code. This may need to bus_space_map(9)
-	 * the power switch status register. So call it from here to give it
-	 * a bus space tag. This may need to use the lasi_pwr_sw_reg so call
-	 * it after all IO hardware is found.
-	 */
-	pwr_sw_init(&hppa_bustag);
-#endif /* POWER_SWITCH */
 }
 
 /*

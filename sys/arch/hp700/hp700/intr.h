@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2009/04/30 07:01:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
  * and the maximum number of interrupt registers.
  */
 #define	HP700_INT_BITS	(32)
+#define CPU_NINTS	HP700_INT_BITS		/* Use this one */
 
 /*
  * This describes one HP700 interrupt register.

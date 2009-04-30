@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6 2008/01/10 21:08:41 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.7 2009/04/30 07:01:27 skrll Exp $	*/
 
 /*	$OpenBSD: proc.h,v 1.1 1998/07/07 21:32:44 mickey Exp $	*/
 
@@ -43,8 +43,8 @@ struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 
-	vaddr_t md_bpva;
-	unsigned int md_bpsave[2];
+	vaddr_t	md_bpva;
+	unsigned int	md_bpsave[2];
 };
 
 struct mdproc {
