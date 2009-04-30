@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.26 2009/04/11 23:05:26 christos Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.27 2009/04/30 05:15:36 nonaka Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.26 2009/04/11 23:05:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.27 2009/04/30 05:15:36 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.26 2009/04/11 23:05:26 christos Ex
 #include <sys/devmon.h>
 #include <sys/stat.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 
 struct drvctl_event {
 	TAILQ_ENTRY(drvctl_event) dce_link;
