@@ -39,13 +39,19 @@
 #include "memory.h"
 #include "netpgpdefs.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+
 #include <string.h>
 
 #ifdef HAVE_ASSERT_H
 #include <assert.h>
 #endif
 
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -99,9 +105,9 @@ bool
 __ops_write_struct_user_id(__ops_user_id_t * id,
 			 __ops_create_info_t * info)
 {
-	return __ops_write_ptag(OPS_PTAG_CT_USER_ID, info)
-	&& __ops_write_length(strlen((char *) id->user_id), info)
-	&& __ops_write(id->user_id, strlen((char *) id->user_id), info);
+	return __ops_write_ptag(OPS_PTAG_CT_USER_ID, info) &&
+		__ops_write_length(strlen((char *) id->user_id), info) &&
+		__ops_write(id->user_id, strlen((char *) id->user_id), info);
 }
 
 /**
@@ -359,6 +365,7 @@ write_secret_key_body(const __ops_secret_key_t * key,
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i2 = 0;
+
 		fprintf(stderr, "\nWRITING:\niv=");
 		for (i2 = 0; i2 < __ops_block_size(key->algorithm); i2++) {
 			fprintf(stderr, "%02x ", key->iv[i2]);
@@ -385,12 +392,12 @@ write_secret_key_body(const __ops_secret_key_t * key,
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
 
-		if (!__ops_write_mpi(key->key.rsa.d, info)
-		    || !__ops_write_mpi(key->key.rsa.p, info)
-		    || !__ops_write_mpi(key->key.rsa.q, info)
-		    || !__ops_write_mpi(key->key.rsa.u, info)) {
+		if (!__ops_write_mpi(key->key.rsa.d, info) ||
+		    !__ops_write_mpi(key->key.rsa.p, info) ||
+		    !__ops_write_mpi(key->key.rsa.q, info) ||
+		    !__ops_write_mpi(key->key.rsa.u, info)) {
 			if (__ops_get_debug_level(__FILE__)) {
-				fprintf(stderr, "4 x mpi not written - problem\n");
+				(void) fprintf(stderr, "4 x mpi not written - problem\n");
 			}
 			return false;
 		}
@@ -522,10 +529,12 @@ __ops_write_transferable_public_key(const __ops_keydata_t * keydata, bool armour
 */
 
 bool 
-__ops_write_transferable_secret_key(const __ops_keydata_t * keydata, const unsigned char *passphrase, const size_t pplen, bool armoured, __ops_create_info_t * info)
+__ops_write_transferable_secret_key(const __ops_keydata_t *keydata,
+	const unsigned char *passphrase, const size_t pplen,
+	bool armoured, __ops_create_info_t * info)
 {
-	bool   rtn;
-	unsigned int    i = 0, j = 0;
+	unsigned	i = 0, j = 0;
+	bool		rtn;
 
 	if (armoured) {
 		__ops_writer_push_armoured(info, OPS_PGP_PRIVATE_KEY_BLOCK);
@@ -757,10 +766,10 @@ __ops_write_struct_secret_key(const __ops_secret_key_t * key,
 	/* secret key and public key MPIs */
 	length += secret_key_length(key);
 
-	return __ops_write_ptag(OPS_PTAG_CT_SECRET_KEY, info)
-	/* && __ops_write_length(1+4+1+1+secret_key_length(key)+2,info) */
-		&& __ops_write_length((unsigned)length, info)
-		&& write_secret_key_body(key, passphrase, pplen, info);
+	return __ops_write_ptag(OPS_PTAG_CT_SECRET_KEY, info) &&
+		/* __ops_write_length(1+4+1+1+secret_key_length(key)+2,info) && */
+		__ops_write_length((unsigned)length, info) &&
+		write_secret_key_body(key, passphrase, pplen, info);
 }
 
 /**
@@ -894,7 +903,6 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 
 	(void) memcpy(EM + i, M, mLen);
 
-
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i2 = 0;
 		fprintf(stderr, "Encoded Message: \n");
@@ -998,12 +1006,12 @@ __ops_write_pk_session_key(__ops_create_info_t * info,
 	assert(pksk);
 	assert(pksk->algorithm == OPS_PKA_RSA);
 
-	return __ops_write_ptag(OPS_PTAG_CT_PK_SESSION_KEY, info)
-		&& __ops_write_length((unsigned)(1 + 8 + 1 + BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2), info)
-		&& __ops_write_scalar((unsigned)pksk->version, 1, info)
-		&& __ops_write(pksk->key_id, 8, info)
-		&& __ops_write_scalar((unsigned)pksk->algorithm, 1, info)
-		&& __ops_write_mpi(pksk->parameters.rsa.encrypted_m, info)
+	return __ops_write_ptag(OPS_PTAG_CT_PK_SESSION_KEY, info) &&
+		__ops_write_length((unsigned)(1 + 8 + 1 + BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2), info) &&
+		__ops_write_scalar((unsigned)pksk->version, 1, info) &&
+		__ops_write(pksk->key_id, 8, info) &&
+		__ops_write_scalar((unsigned)pksk->algorithm, 1, info) &&
+		__ops_write_mpi(pksk->parameters.rsa.encrypted_m, info)
 	/* ??	&& __ops_write_scalar(0, 2, info); */
 		;
 }
@@ -1021,9 +1029,9 @@ __ops_write_mdc(const unsigned char *hashed,
 	      __ops_create_info_t * info)
 {
 	/* write it out */
-	return __ops_write_ptag(OPS_PTAG_CT_MDC, info)
-	&& __ops_write_length(OPS_SHA1_HASH_SIZE, info)
-	&& __ops_write(hashed, OPS_SHA1_HASH_SIZE, info);
+	return __ops_write_ptag(OPS_PTAG_CT_MDC, info) &&
+		__ops_write_length(OPS_SHA1_HASH_SIZE, info) &&
+		__ops_write(hashed, OPS_SHA1_HASH_SIZE, info);
 }
 
 /**
@@ -1047,12 +1055,12 @@ __ops_write_literal_data_from_buf(const unsigned char *data,
          * We will not implement them.
          */
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
-	return __ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info)
-	&& __ops_write_length((unsigned)(1 + 1 + 4 + maxlen), info)
-	&& __ops_write_scalar((unsigned)type, 1, info)
-	&& __ops_write_scalar(0, 1, info)
-	&& __ops_write_scalar(0, 4, info)
-	&& __ops_write(data, (unsigned)maxlen, info);
+	return __ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info) &&
+		__ops_write_length((unsigned)(1 + 1 + 4 + maxlen), info) &&
+		__ops_write_scalar((unsigned)type, 1, info) &&
+		__ops_write_scalar(0, 1, info) &&
+		__ops_write_scalar(0, 4, info) &&
+		__ops_write(data, (unsigned)maxlen, info);
 }
 
 /**
@@ -1069,12 +1077,14 @@ __ops_write_literal_data_from_file(const char *filename,
 				 const __ops_literal_data_type_t type,
 				 __ops_create_info_t * info)
 {
-	size_t          initial_size = 1024;
-	int             fd = 0;
-	bool   rtn;
-	unsigned char   buf[1024];
-	__ops_memory_t   *mem = NULL;
-	size_t          len = 0;
+	unsigned char    buf[1024];
+	unsigned char	*mmapped;
+	__ops_memory_t	*mem = NULL;
+	struct stat	 st;
+	size_t           initial_size = 1024;
+	size_t           len = 0;
+	int              fd = 0;
+	bool   		 rtn;
 
 #ifdef O_BINARY
 	fd = open(filename, O_RDONLY | O_BINARY);
@@ -1085,26 +1095,44 @@ __ops_write_literal_data_from_file(const char *filename,
 		return false;
 
 	mem = __ops_memory_new();
-	__ops_memory_init(mem, initial_size);
-	for (;;) {
-		ssize_t         n = 0;
-		n = read(fd, buf, 1024);
-		if (!n)
-			break;
-		__ops_memory_add(mem, &buf[0], (unsigned)n);
+	mmapped = MAP_FAILED;
+#ifdef USE_MMAP_FOR_FILES
+	if (fstat(fd, &st) == 0) {
+		mem->length = st.st_size;
+		mmapped = mem->buf = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
 	}
-	close(fd);
+#endif
+	if (mmapped == MAP_FAILED) {
+		__ops_memory_init(mem, initial_size);
+		for (;;) {
+			ssize_t         n = 0;
+
+			n = read(fd, buf, sizeof(buf));
+			if (!n)
+				break;
+			__ops_memory_add(mem, buf, (unsigned)n);
+		}
+	}
+	(void) close(fd);
 
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
 	len = __ops_memory_get_length(mem);
-	rtn = __ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info)
-		&& __ops_write_length(1 + 1 + 4 + len, info)
-		&& __ops_write_scalar((unsigned)type, 1, info)
-		&& __ops_write_scalar(0, 1, info)	/* filename */
-		&&__ops_write_scalar(0, 4, info)	/* date */
-		&&__ops_write(__ops_memory_get_data(mem), len, info);
+	rtn = __ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info) &&
+		__ops_write_length(1 + 1 + 4 + len, info) &&
+		__ops_write_scalar((unsigned)type, 1, info) &&
+		__ops_write_scalar(0, 1, info)	/* filename */ &&
+		__ops_write_scalar(0, 4, info)	/* date */ &&
+		__ops_write(__ops_memory_get_data(mem), len, info);
 
-	__ops_memory_free(mem);
+#ifdef USE_MMAP_FOR_FILES
+	if (mmapped != NULL) {
+		munmap(mmapped, mem->length);
+		mmapped = buf;
+	}
+#endif
+	if (mmapped == NULL) {
+		__ops_memory_free(mem);
+	}
 	return rtn;
 }
 
@@ -1231,9 +1259,9 @@ __ops_write_symmetrically_encrypted_data(const unsigned char *data,
 	assert(done == len);
 	/* printf("len=%d, done: %d\n", len, done); */
 
-	return __ops_write_ptag(OPS_PTAG_CT_SE_DATA, info)
-		&& __ops_write_length(1 + encrypted_sz, info)
-		&& __ops_write(data, (unsigned)len, info);
+	return __ops_write_ptag(OPS_PTAG_CT_SE_DATA, info) &&
+		__ops_write_length(1 + encrypted_sz, info) &&
+		__ops_write(data, (unsigned)len, info);
 }
 
 /**
@@ -1252,17 +1280,18 @@ __ops_write_one_pass_sig(const __ops_secret_key_t * skey,
 		       __ops_create_info_t * info)
 {
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
+
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "calling __ops_keyid in write_one_pass_sig: this calls sha1_init\n");
 	}
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &skey->public_key);
 
-	return __ops_write_ptag(OPS_PTAG_CT_ONE_PASS_SIGNATURE, info)
-		&& __ops_write_length(1 + 1 + 1 + 1 + 8 + 1, info)
-		&& __ops_write_scalar(3, 1, info)	/* version */
-		&& __ops_write_scalar((unsigned)sig_type, 1, info)
-		&& __ops_write_scalar((unsigned)hash_alg, 1, info)
-		&& __ops_write_scalar((unsigned)skey->public_key.algorithm, 1, info)
-		&& __ops_write(keyid, 8, info)
-		&& __ops_write_scalar(1, 1, info);
+	return __ops_write_ptag(OPS_PTAG_CT_ONE_PASS_SIGNATURE, info) &&
+		__ops_write_length(1 + 1 + 1 + 1 + 8 + 1, info) &&
+		__ops_write_scalar(3, 1, info)	/* version */ &&
+		__ops_write_scalar((unsigned)sig_type, 1, info) &&
+		__ops_write_scalar((unsigned)hash_alg, 1, info) &&
+		__ops_write_scalar((unsigned)skey->public_key.algorithm, 1, info) &&
+		__ops_write(keyid, 8, info) &&
+		__ops_write_scalar(1, 1, info);
 }
