@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.44 2009/04/18 00:28:06 snj Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.45 2009/04/30 17:57:52 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -1278,4 +1278,10 @@ dist/ntp/ntpq/ntpq.c				1.12
 
 	Fix CVE-2009-0159.
 	[christos, ticket #2009]
+
+gnu/dist/toolchain/gcc/f/com.h			 patch
+
+	Fix mis-matched function prototype, causing vax build failure with
+	recent host gcc.
+	[mhitch, ticket #2011]
 
