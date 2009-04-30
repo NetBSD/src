@@ -1,18 +1,19 @@
-.\" $NetBSD: cpp.1,v 1.2 2009/04/30 00:45:47 joerg Exp $
+.\" $NetBSD: cpp-contrib.1,v 1.1 2009/04/30 00:45:47 joerg Exp $
 .Dd April 30, 2009
 .Dt CPP 1
 .Os
 .Sh NAME
-.Nm cpp
-.Nd The C Preprocessor
+cpp - The C Preprocessor
 .Sh SYNOPSIS
-.Nm
+cpp
 .Op Fl D Ns Ar macro Ns = Ns Ar defn...
 .Op Fl U Ns Ar macro
 .Op Fl I Ns Ar dir...
 .Op Fl iquote Ns Ar dir...
 .Op Fl W Ns Ar warn...
-.Op Fl M | Fl MM
+.Oo Fl M
+|
+.Fl MM Oc
 .Op Fl MG
 .Op Fl MF Ar filename
 .Op Fl MP
@@ -22,13 +23,13 @@
 .Op Fl fno-working-directory
 .Op Fl x Ar language
 .Op Fl std= Ns Ar standard
-.Ar infile
-.Ar outfile
+.Em infile
+.Em outfile
 .Pp
 Only the most useful options are listed here; see below for the remainder.
 .Sh DESCRIPTION
 The C preprocessor, often known as
-.Nm ,
+.Em cpp ,
 is a
 .Em macro processor
 that is used automatically by the C compiler to transform your program before compilation.
@@ -116,7 +117,7 @@ be grouped:
 is very different from
 .Fl d Fl M .
 .Pp
-.Bl -tag -width xx -compact
+.Bl -tag -width xx
 .It Fl D Ar name
 Predefine
 .Em name
@@ -136,10 +137,16 @@ If you are invoking the preprocessor from a shell or shell-like program you may 
 If you wish to define a function-like macro on the command line, write its argument list with surrounding parentheses before the equals sign (if any).
 Parentheses are meaningful to most shells, so you will need to quote the option.
 With
-.Nm sh
+.Sy sh
 and
-.Nm csh ,
-.Sy -D'name(args...)=definition'
+.Sy csh ,
+.Sy -D'
+.Em name
+.Sy (
+.Em args...
+.Sy )=
+.Em definition
+.Sy '
 works.
 .Pp
 .Fl D
@@ -186,7 +193,7 @@ This is the same as specifying
 .Em file
 as the second non-option argument to
 .Nm cpp .
-.Nm gcc
+.Sy gcc
 has a different interpretation of a second non-option argument, so you must use
 .Fl o
 to specify the output file.
@@ -264,7 +271,6 @@ Alternatively, you could provide a dummy use with something like:
 #if defined the_macro_causing_the_warning
 #endif
 .Ed
-.Pp
 .It Fl Wendif-labels
 Warn whenever an
 .Sy #else
@@ -907,7 +913,7 @@ and control dependency output with options like
 .Fl M .
 These take precedence over environment variables, which in turn take precedence over the configuration of GCC.
 .Pp
-.Bl -tag -width xx -compact
+.Bl -tag -width xx
 .It Sy CPATH Ns
 .It Sy C_INCLUDE_PATH Ns
 .It Sy CPLUS_INCLUDE_PATH Ns
