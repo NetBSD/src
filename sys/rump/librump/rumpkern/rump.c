@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.104 2009/04/29 17:51:47 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.105 2009/04/30 16:59:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.104 2009/04/29 17:51:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.105 2009/04/30 16:59:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -140,6 +140,28 @@ pvfsrele_nop(struct proc *p)
 rump_proc_vfs_init_fn rump_proc_vfs_init = pvfsinit_nop;
 rump_proc_vfs_release_fn rump_proc_vfs_release = pvfsrele_nop;
 
+/*
+ * Stir up the stack a bit.  These are exported functions to help
+ * convince the compiler that we don't want these routines completely
+ * optimized out or inlined.  Is there an easier way to do this?
+ */
+void nullfn(uint32_t *);
+void nullfn(uint32_t *arg){}
+void messthestack(void);
+void
+messthestack(void)
+{
+	uint32_t mess[64];
+	uint64_t d1, d2;
+	int i, error;
+
+	for (i = 0; i < 64; i++) {
+		rumpuser_gettime(&d1, &d2, &error);
+		mess[i] = d2;
+	}
+	nullfn(mess);
+}
+
 int
 rump__init(int rump_version)
 {
@@ -152,6 +174,14 @@ rump__init(int rump_version)
 	if (rump_inited)
 		return 0;
 	rump_inited = 1;
+
+	/*
+	 * Seed arc4random() with a "reasonable" amount of randomness.
+	 * Yes, this is a quick kludge which depends on the arc4random
+	 * implementation.
+	 */
+	messthestack();
+	arc4random();
 
 	if (rump_version != RUMP_VERSION) {
 		printf("rump version mismatch, %d vs. %d\n",
