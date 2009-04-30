@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy_socket.c,v 1.1 2009/04/29 17:51:47 pooka Exp $	*/
+/*	$NetBSD: sysproxy_socket.c,v 1.2 2009/04/30 15:30:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.1 2009/04/29 17:51:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.2 2009/04/30 15:30:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.1 2009/04/29 17:51:47 pooka Ex
 #include <sys/kthread.h>
 #include <sys/queue.h>
 #include <sys/syscall.h>
+#include <sys/atomic.h>
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
