@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.21 2009/04/27 18:36:43 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.22 2009/04/30 17:41:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.21 2009/04/27 18:36:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.22 2009/04/30 17:41:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -264,9 +264,8 @@ rumpblk_init(void)
 		} else {
 			randstate = arc4random(); /* XXX: not enough entropy */
 		}
-		printf("rumpblk: FAULT INJECTION ACTIVE!  every %d out of"
-		    " %d I/O will fail.  key %u\n", blkfail, BLKFAIL_MAX,
-		    randstate);
+		printf("rumpblk: FAULT INJECTION ACTIVE! fail %d/%d. "
+		    "seed %u\n", blkfail, BLKFAIL_MAX, randstate);
 	} else {
 		blkfail = 0;
 	}
