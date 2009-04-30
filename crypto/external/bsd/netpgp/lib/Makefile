@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/04/25 01:29:15 agc Exp $
+# $NetBSD: Makefile,v 1.3 2009/04/30 04:59:14 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,7 @@ SRCS+= packet-print.c packet-show.c reader.c signature.c
 SRCS+= symmetric.c validate.c writer.c
 CPPFLAGS+= -I${EXTDIST}/include
 MAN= libnetpgp.3
-WARNS=0
-#WARNS=4
+WARNS=3
 
 EXTDIST=${NETBSDSRCDIR}/crypto/external/bsd/netpgp/dist
 
