@@ -279,13 +279,13 @@ rsa_verify(__ops_hash_algorithm_t type,
 	   const __ops_rsa_signature_t * sig,
 	   const __ops_rsa_public_key_t * rsa)
 {
-	unsigned char   sigbuf[NETPGP_BUFSIZ];
-	unsigned char   hashbuf_from_sig[NETPGP_BUFSIZ];
-	unsigned        n;
-	unsigned        keysize;
-	const unsigned char *prefix;
-	unsigned	plen;
-	int             debug_len_decrypted;
+	const unsigned char	*prefix;
+	unsigned char   	 sigbuf[NETPGP_BUFSIZ];
+	unsigned char   	 hashbuf_from_sig[NETPGP_BUFSIZ];
+	unsigned        	 n;
+	unsigned        	 keysize;
+	unsigned		 plen;
+	unsigned		 debug_len_decrypted;
 
 	plen = 0;
 	prefix = (const unsigned char *) "";
@@ -336,8 +336,8 @@ rsa_verify(__ops_hash_algorithm_t type,
 		return false;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		int             zz;
-		unsigned        uu;
+		unsigned	zz;
+		unsigned	uu;
 
 		printf("\n");
 		printf("hashbuf_from_sig\n");
