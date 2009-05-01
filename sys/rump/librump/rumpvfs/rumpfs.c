@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.14 2009/04/29 16:05:41 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.15 2009/05/01 11:00:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.14 2009/04/29 16:05:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.15 2009/05/01 11:00:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -123,7 +123,7 @@ makeprivate(enum vtype vt)
 	struct vattr *va;
 	struct timespec ts;
 
-	rn = kmem_alloc(sizeof(*va), KM_SLEEP);
+	rn = kmem_alloc(sizeof(*rn), KM_SLEEP);
 	LIST_INIT(&rn->rn_dir);
 	nanotime(&ts);
 
