@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.17 2009/04/29 15:49:01 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.18 2009/05/01 11:01:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -158,8 +158,10 @@ rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	rv = VFS_START(mp, 0);
-	if (rv)
+	if (rv) {
 		VFS_UNMOUNT(mp, MNT_FORCE);
+		return rv;
+	}
 
 	/*
 	 * XXX: set a root for lwp0.  This is strictly not correct,
