@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1247 2009/05/01 18:02:24 perry Exp $
+#	$NetBSD: mi,v 1.1248 2009/05/01 21:49:59 perry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7491,7 +7491,7 @@
 ./usr/share/man/cat3/stdarg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdio.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stpcpy.0			comp-c-catman		.cat
-./usr/share/man/cat3/stpnpy.0			comp-c-catman		.cat
+./usr/share/man/cat3/stpncpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcasecmp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcasestr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcat.0			comp-c-catman		.cat
