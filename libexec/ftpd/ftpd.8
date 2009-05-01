@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.83 2009/03/15 08:07:22 joerg Exp $
+.\"	$NetBSD: ftpd.8,v 1.84 2009/05/01 09:47:26 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 21, 2008
+.Dd May 1, 2009
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -278,8 +278,7 @@ style
 .Pa xferlog
 file suitable for input into a third-party log analysis tool with a command
 similar to:
-.Dl "grep 'xferlog: ' /var/log/xferlog | \e"
-.Dl "\ \ \ sed -e 's/^.*xferlog: //' \*[Gt] wuxferlog"
+.Dl "sed -ne 's/^.*xferlog: //p' /var/log/xferlog \*[Gt] wuxferlog"
 .El
 .Pp
 The file
