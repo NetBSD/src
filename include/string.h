@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.36 2009/04/10 23:00:53 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.37 2009/05/01 17:16:49 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -77,6 +77,20 @@ size_t	 strxfrm(char * __restrict, const char * __restrict, size_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 void	*memccpy(void *, const void *, int, size_t);
 char	*strdup(const char *);
+#endif
+
+#if (_POSIX_C_SOURCE - 0 >= 200809L) || (_XOPEN_SOURCE - 0 >= 700) || \
+    defined(_NETBSD_SOURCE)
+char	*stpcpy(char * __restrict, const char * __restrict);
+char	*stpncpy(char * __restrict, const char * __restrict, size_t);
+size_t	strnlen(const char *, size_t);
+/*
+ * For POSIX compliance, we still need:
+ * strcoll_l
+ * strerror_l
+ * strsignal
+ * strxfrm_l
+ */
 #endif
 
 #if defined(_NETBSD_SOURCE)
