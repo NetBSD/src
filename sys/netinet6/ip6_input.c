@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.126 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.127 2009/05/01 03:23:39 martin Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.126 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.127 2009/05/01 03:23:39 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1273,7 +1273,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 
 			switch (nxt) {
 			case IPPROTO_DSTOPTS:
-				if (!in6p->in6p_flags & IN6P_DSTOPTS)
+				if (!(in6p->in6p_flags & IN6P_DSTOPTS))
 					break;
 
 				*mp = sbcreatecontrol((void *)ip6e, elen,
@@ -1284,7 +1284,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 				break;
 
 			case IPPROTO_ROUTING:
-				if (!in6p->in6p_flags & IN6P_RTHDR)
+				if (!(in6p->in6p_flags & IN6P_RTHDR))
 					break;
 
 				*mp = sbcreatecontrol((void *)ip6e, elen,
