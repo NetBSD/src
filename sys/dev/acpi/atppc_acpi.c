@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.14.10.1 2008/11/20 03:18:16 snj Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.14.10.2 2009/05/01 01:38:16 snj Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.14.10.1 2008/11/20 03:18:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.14.10.2 2009/05/01 01:38:16 snj Exp $");
 
 #include "opt_atppc.h"
 
@@ -113,9 +113,6 @@ atppc_acpi_attach(device_t parent, device_t self, void *aux)
 	int nirq;
 
 	sc->sc_dev_ok = ATPPC_NOATTACH;
-
-	aprint_naive(": AT Parallel Port\n");
-	aprint_normal(": AT Parallel Port\n");
 
 	sc->sc_dev = self;
 
