@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.48 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: inphy.c,v 1.48.10.1 2009/05/01 01:29:20 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.48 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.48.10.1 2009/05/01 01:29:20 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,10 +253,10 @@ inphy_status(struct mii_softc *sc)
 			return;
 		}
 		scr = PHY_READ(sc, MII_INPHY_SCR);
-		if ((bmsr & BMSR_100T4) && (scr & SCR_T4))
-			mii->mii_media_active |= IFM_100_T4;
-		else if (scr & SCR_S100)
+		if (scr & SCR_S100)
 			mii->mii_media_active |= IFM_100_TX;
+		else if ((bmsr & BMSR_100T4) && (scr & SCR_T4))
+			mii->mii_media_active |= IFM_100_T4;
 		else
 			mii->mii_media_active |= IFM_10_T;
 		if (scr & SCR_FDX)

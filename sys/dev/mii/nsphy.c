@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.54 2008/05/04 17:06:10 xtraeme Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.54.10.1 2009/05/01 01:29:20 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.54 2008/05/04 17:06:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.54.10.1 2009/05/01 01:29:20 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,10 +289,10 @@ nsphy_status(struct mii_softc *sc)
 		if (PHY_READ(sc, MII_ANER) & ANER_LPAN) {
 			anlpar = PHY_READ(sc, MII_ANAR) &
 			    PHY_READ(sc, MII_ANLPAR);
-			if (anlpar & ANLPAR_T4)
-				mii->mii_media_active |= IFM_100_T4;
-			else if (anlpar & ANLPAR_TX_FD)
+			if (anlpar & ANLPAR_TX_FD)
 				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			else if (anlpar & ANLPAR_T4)
+				mii->mii_media_active |= IFM_100_T4;
 			else if (anlpar & ANLPAR_TX)
 				mii->mii_media_active |= IFM_100_TX;
 			else if (anlpar & ANLPAR_10_FD)
