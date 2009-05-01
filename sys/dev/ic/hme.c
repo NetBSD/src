@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.66 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: hme.c,v 1.66.10.1 2009/05/01 01:52:56 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.66 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.66.10.1 2009/05/01 01:52:56 snj Exp $");
 
 /* #define HMEDEBUG */
 
@@ -836,7 +836,7 @@ hme_get(sc, ri, flags)
 		}
 
 		m0->m_pkthdr.csum_flags |= M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
-	}
+	} else
 swcsum:
 		m0->m_pkthdr.csum_flags = 0;
 #endif
