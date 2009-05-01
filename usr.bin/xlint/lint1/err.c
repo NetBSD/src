@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.40 2009/04/15 01:20:57 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.41 2009/05/01 22:03:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.40 2009/04/15 01:20:57 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.41 2009/05/01 22:03:36 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -384,6 +384,7 @@ const	char *msgs[] = {
 	"zero sized array is a C99 extension",			      /* 322 */
 	"continue in 'do ... while (0)' loop",			      /* 323 */
 	"suggest cast from '%s' to '%s' on op %s to avoid overflow",  /* 324 */
+	"variable declaration in for loop", 			      /* 325 */
 };
 
 /*
