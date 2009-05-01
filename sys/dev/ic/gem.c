@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.78 2008/09/15 19:50:28 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.78.4.1 2009/05/01 01:56:16 snj Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.78 2008/09/15 19:50:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.78.4.1 2009/05/01 01:56:16 snj Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1853,9 +1853,8 @@ gem_rint(sc)
 					optsum = (optsum >> 16) +
 						 (optsum & 0xffff);
 
-				/* Deduct ip opts sum from hwsum (rfc 1624). */
-				m->m_pkthdr.csum_data =
-					~((~m->m_pkthdr.csum_data) - ~optsum);
+				/* Deduct ip opts sum from hwsum. */
+				m->m_pkthdr.csum_data += (uint16_t)~optsum;
 
 				while (m->m_pkthdr.csum_data >> 16)
 					m->m_pkthdr.csum_data =
