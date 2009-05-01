@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.78 2009/04/25 05:54:50 agc Exp $
+# $NetBSD: shl.mi,v 1.79 2009/05/01 22:59:52 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -63,7 +63,7 @@
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
 ./usr/lib/libopcodes.so.3			comp-c-shlib		bfd
 ./usr/lib/libopcodes.so.3.0			comp-c-shlib		bfd
-./usr/lib/libopenpgpsdk_pic.a			comp-c-piclib		crypto
+./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib
 ./usr/lib/libpam_pic.a				comp-c-piclib		pam
