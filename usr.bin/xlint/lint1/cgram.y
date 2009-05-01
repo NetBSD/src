@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.42 2008/11/16 07:06:37 dholland Exp $ */
+/* $NetBSD: cgram.y,v 1.43 2009/05/01 22:03:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.42 2008/11/16 07:06:37 dholland Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.43 2009/05/01 22:03:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
-%expect 1
+%expect 3
 
 %union {
 	int	y_int;
@@ -1462,7 +1462,13 @@ do_while_expr:
 	;
 
 for_exprs:
-	  T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
+	    T_FOR T_LPARN declspecs deftyp notype_init_decls T_SEMI opt_expr
+	    T_SEMI opt_expr T_RPARN {
+		c99ism(325);
+		for1(NULL, $7, $9);
+		CLRWFLGS(__FILE__, __LINE__);
+	    }
+	  | T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
 		for1($3, $5, $7);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
