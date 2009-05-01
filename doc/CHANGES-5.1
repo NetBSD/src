@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.1 2009/04/30 00:54:46 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.2 2009/05/01 03:18:34 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 4.1
 release:
@@ -8,4 +8,99 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.0_STABLE.
 	[snj]
+
+sys/arch/i386/conf/ALL				1.187
+sys/arch/i386/conf/GENERIC			1.922
+sys/dev/pci/files.pci				1.309
+sys/dev/pci/gcscaudio.c				1.1
+sys/dev/pci/gcscaudioreg.h			1.1
+
+	Add AMD Geode CS5536 audio driver; written by SHIMIZU Ryo.
+	[jmcneill, ticket #260]
+
+distrib/sets/lists/man/mi			1.1117
+share/man/man4/Makefile				1.485
+share/man/man4/gcscaudio.4			1.1
+
+	Add man page for the gcscaudio driver.
+	[jmcneill, ticket #261]
+
+sys/dev/mii/inphy.c				1.51
+sys/dev/mii/iophy.c				1.35
+sys/dev/mii/nsphy.c				1.56
+sys/dev/mii/rlphy.c				1.25
+sys/dev/mii/ukphy_subr.c			1.11
+sys/dev/pci/if_txp.c				1.28
+
+	Our drivers give 100BASE-T4 a higher priority than 100BASE-TX
+	full duplex.  Fix this.
+	[cegger, ticket #474]
+
+sys/arch/i386/acpi/npx_acpi.c			1.18
+sys/arch/i386/acpi/spic_acpi.c			1.21
+sys/dev/acpi/acpi_ec.c				1.53
+sys/dev/acpi/acpi_resource.c			1.27
+sys/dev/acpi/atppc_acpi.c			1.16
+sys/dev/acpi/attimer_acpi.c			1.12
+sys/dev/acpi/com_acpi.c				1.28
+sys/dev/acpi/fdc_acpi.c				1.35
+sys/dev/acpi/hpet_acpi.c			1.4
+sys/dev/acpi/joy_acpi.c				1.9
+sys/dev/acpi/lpt_acpi.c				1.18
+sys/dev/acpi/mpu_acpi.c				1.9
+sys/dev/acpi/pckbc_acpi.c			1.31
+sys/dev/acpi/pcppi_acpi.c			1.11
+sys/dev/acpi/ug_acpi.c				1.5
+sys/dev/acpi/wss_acpi.c				1.20
+sys/dev/acpi/ym_acpi.c				1.6
+
+	Cut the amount of spam from acpi devices in roughly half by
+	printing resources on the same line as autoconf messages.
+	[jmcneill, ticket #498]
+
+sys/dev/acpi/acpi_ec.c				1.54
+
+	Change a confusing attach message.
+	[jmcneill, ticket #535]
+
+distrib/sets/lists/base/mi			1.797 via patch
+sys/dev/microcode/zyd/Makefile			1.2
+sys/dev/microcode/zyd/zd1211-licence		delete
+sys/dev/microcode/zyd/zd1211-license		1.1
+
+	- Rename filename of license.
+	- Correct filename in license (add missing prefix).
+	[hira, ticket #538]
+
+sys/dev/ic/hme.c				1.69, 1.70, 1.73
+sys/dev/ic/gem.c				1.83
+
+	hme.c rev 1.69: tcp4csum-rx and udp4csum is not enabled
+	properly due to lack of "else" statement.
+	hme.c rev 1.70: local ether_cmp() funcion has a wrong return
+	value, so multicast is not set properly.
+	hme.c rev 1.71, gem.c rev 1.83: These chips are configured to
+	calculate RX packet checksum from offset ETHER_HDR_LEN +
+	sizeof(struct ip), so if RX packets has IP options headers the
+	drivers have to deduct the sum of the IP options header part.
+	But there is a bug in the deduction calculation, so if
+	tcp4csum-rx or udp4csum-rx are enabled all RX TCP/UDP packets
+	with IP option headers will be discarded.
+	[tsutsui, ticket #595]
+
+sys/dev/ic/rtl8169.c				1.109-1.113
+sys/dev/ic/rtl81x9var.h				1.43-1.45
+sys/dev/ic/rtl81x9reg.h				1.34, 1.35
+
+	Add hardware checksum support for newer 8168/8111/8102 chips.
+	[tsutsui, ticket #597]
+
+sys/dev/raidframe/rf_dagfuncs.c			1.30
+sys/dev/raidframe/rf_diskqueue.c		1.52
+sys/dev/raidframe/rf_diskqueue.h		1.23
+
+	Rework/simplify the disk queuing code.  A bunch of this was
+	still holdovers from the simulator and would never be seen/used
+	in-kernel.
+	[oster, ticket #607]
 
