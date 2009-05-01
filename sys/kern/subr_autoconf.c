@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.174 2009/04/02 00:09:34 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.175 2009/05/01 08:27:41 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.174 2009/04/02 00:09:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.175 2009/05/01 08:27:41 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -513,13 +513,13 @@ config_cfdriver_attach(struct cfdriver *cd)
 	/* Make sure this driver isn't already in the system. */
 	LIST_FOREACH(lcd, &allcfdrivers, cd_list) {
 		if (STREQ(lcd->cd_name, cd->cd_name))
-			return (EEXIST);
+			return EEXIST;
 	}
 
 	LIST_INIT(&cd->cd_attach);
 	LIST_INSERT_HEAD(&allcfdrivers, cd, cd_list);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -533,18 +533,18 @@ config_cfdriver_detach(struct cfdriver *cd)
 	/* Make sure there are no active instances. */
 	for (i = 0; i < cd->cd_ndevs; i++) {
 		if (cd->cd_devs[i] != NULL)
-			return (EBUSY);
+			return EBUSY;
 	}
 
 	/* ...and no attachments loaded. */
 	if (LIST_EMPTY(&cd->cd_attach) == 0)
-		return (EBUSY);
+		return EBUSY;
 
 	LIST_REMOVE(cd, cd_list);
 
 	KASSERT(cd->cd_devs == NULL);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -557,10 +557,10 @@ config_cfdriver_lookup(const char *name)
 
 	LIST_FOREACH(cd, &allcfdrivers, cd_list) {
 		if (STREQ(cd->cd_name, name))
-			return (cd);
+			return cd;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -574,17 +574,17 @@ config_cfattach_attach(const char *driver, struct cfattach *ca)
 
 	cd = config_cfdriver_lookup(driver);
 	if (cd == NULL)
-		return (ESRCH);
+		return ESRCH;
 
 	/* Make sure this attachment isn't already on this driver. */
 	LIST_FOREACH(lca, &cd->cd_attach, ca_list) {
 		if (STREQ(lca->ca_name, ca->ca_name))
-			return (EEXIST);
+			return EEXIST;
 	}
 
 	LIST_INSERT_HEAD(&cd->cd_attach, ca, ca_list);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -599,19 +599,19 @@ config_cfattach_detach(const char *driver, struct cfattach *ca)
 
 	cd = config_cfdriver_lookup(driver);
 	if (cd == NULL)
-		return (ESRCH);
+		return ESRCH;
 
 	/* Make sure there are no active instances. */
 	for (i = 0; i < cd->cd_ndevs; i++) {
 		if ((dev = cd->cd_devs[i]) == NULL)
 			continue;
 		if (dev->dv_cfattach == ca)
-			return (EBUSY);
+			return EBUSY;
 	}
 
 	LIST_REMOVE(ca, ca_list);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -624,10 +624,10 @@ config_cfattach_lookup_cd(struct cfdriver *cd, const char *atname)
 
 	LIST_FOREACH(ca, &cd->cd_attach, ca_list) {
 		if (STREQ(ca->ca_name, atname))
-			return (ca);
+			return ca;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -640,9 +640,9 @@ config_cfattach_lookup(const char *name, const char *atname)
 
 	cd = config_cfdriver_lookup(name);
 	if (cd == NULL)
-		return (NULL);
+		return NULL;
 
-	return (config_cfattach_lookup_cd(cd, atname));
+	return config_cfattach_lookup_cd(cd, atname);
 }
 
 /*
@@ -682,10 +682,10 @@ config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 		if ((!(cl->cld_defaultstr)
 		     || (cf->cf_loc[i] != cl->cld_default))
 		    && cf->cf_loc[i] != locs[i])
-			return (0);
+			return 0;
 	}
 
-	return (config_match(parent, cf, aux));
+	return config_match(parent, cf, aux);
 }
 
 /*
@@ -698,15 +698,15 @@ cfdriver_get_iattr(const struct cfdriver *cd, const char *ia)
 	const struct cfiattrdata * const *cpp;
 
 	if (cd->cd_attrs == NULL)
-		return (0);
+		return 0;
 
 	for (cpp = cd->cd_attrs; *cpp; cpp++) {
 		if (STREQ((*cpp)->ci_name, ia)) {
 			/* Match. */
-			return (*cpp);
+			return *cpp;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -720,14 +720,14 @@ cfiattr_lookup(const char *name, const struct cfdriver *cd)
 	const struct cfiattrdata *ia;
 
 	if (cd)
-		return (cfdriver_get_iattr(cd, name));
+		return cfdriver_get_iattr(cd, name);
 
 	LIST_FOREACH(d, &allcfdrivers, cd_list) {
 		ia = cfdriver_get_iattr(d, name);
 		if (ia)
-			return (ia);
+			return ia;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -741,7 +741,7 @@ cfparent_match(const device_t parent, const struct cfparent *cfp)
 
 	/* We don't match root nodes here. */
 	if (cfp == NULL)
-		return (0);
+		return 0;
 
 	pcd = parent->dv_cfdriver;
 	KASSERT(pcd != NULL);
@@ -751,30 +751,30 @@ cfparent_match(const device_t parent, const struct cfparent *cfp)
 	 * attribute.
 	 */
 	if (!cfdriver_get_iattr(pcd, cfp->cfp_iattr))
-		return (0);
+		return 0;
 
 	/*
 	 * If no specific parent device instance was specified (i.e.
 	 * we're attaching to the attribute only), we're done!
 	 */
 	if (cfp->cfp_parent == NULL)
-		return (1);
+		return 1;
 
 	/*
 	 * Check the parent device's name.
 	 */
 	if (STREQ(pcd->cd_name, cfp->cfp_parent) == 0)
-		return (0);	/* not the same parent */
+		return 0;	/* not the same parent */
 
 	/*
 	 * Make sure the unit number matches.
 	 */
 	if (cfp->cfp_unit == DVUNIT_ANY ||	/* wildcard */
 	    cfp->cfp_unit == parent->dv_unit)
-		return (1);
+		return 1;
 
 	/* Unit numbers don't match. */
-	return (0);
+	return 0;
 }
 
 /*
@@ -826,7 +826,7 @@ config_cfdata_attach(cfdata_t cf, int scannow)
 	if (scannow)
 		rescan_with_cfdata(cf);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -840,9 +840,9 @@ dev_in_cfdata(const struct device *d, const struct cfdata *cf)
 
 	for (cf1 = cf; cf1->cf_name; cf1++)
 		if (d->dv_cfdata == cf1)
-			return (1);
+			return 1;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -874,12 +874,12 @@ config_cfdata_detach(cfdata_t cf)
 		if (ct->ct_cfdata == cf) {
 			TAILQ_REMOVE(&allcftables, ct, ct_list);
 			kmem_free(ct, sizeof(*ct));
-			return (0);
+			return 0;
 		}
 	}
 
 	/* not found -- shouldn't happen */
-	return (EINVAL);
+	return EINVAL;
 }
 
 /*
@@ -894,10 +894,10 @@ config_match(device_t parent, cfdata_t cf, void *aux)
 	ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 	if (ca == NULL) {
 		/* No attachment for this entry, oh well. */
-		return (0);
+		return 0;
 	}
 
-	return ((*ca->ca_match)(parent, cf, aux));
+	return (*ca->ca_match)(parent, cf, aux);
 }
 
 /*
@@ -959,7 +959,7 @@ config_search_loc(cfsubmatch_t fn, device_t parent,
 				mapply(&m, cf);
 		}
 	}
-	return (m.match);
+	return m.match;
 }
 
 cfdata_t
@@ -967,7 +967,7 @@ config_search_ia(cfsubmatch_t fn, device_t parent, const char *ifattr,
     void *aux)
 {
 
-	return (config_search_loc(fn, parent, ifattr, NULL, aux));
+	return config_search_loc(fn, parent, ifattr, NULL, aux);
 }
 
 /*
@@ -999,7 +999,7 @@ config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 		if (strcmp(cf->cf_name, rootname) == 0)
 			mapply(&m, cf);
 	}
-	return (m.match);
+	return m.match;
 }
 
 static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" };
@@ -1037,7 +1037,7 @@ config_found_sm_loc(device_t parent,
 		splash_progress_update(splash_progress_state);
 #endif
 
-	return (NULL);
+	return NULL;
 }
 
 device_t
@@ -1045,14 +1045,14 @@ config_found_ia(device_t parent, const char *ifattr, void *aux,
     cfprint_t print)
 {
 
-	return (config_found_sm_loc(parent, ifattr, NULL, aux, print, NULL));
+	return config_found_sm_loc(parent, ifattr, NULL, aux, print, NULL);
 }
 
 device_t
 config_found(device_t parent, void *aux, cfprint_t print)
 {
 
-	return (config_found_sm_loc(parent, NULL, NULL, aux, print, NULL));
+	return config_found_sm_loc(parent, NULL, NULL, aux, print, NULL);
 }
 
 /*
@@ -1064,9 +1064,9 @@ config_rootfound(const char *rootname, void *aux)
 	cfdata_t cf;
 
 	if ((cf = config_rootsearch((cfsubmatch_t)NULL, rootname, aux)) != NULL)
-		return (config_attach(ROOT, cf, aux, (cfprint_t)NULL));
+		return config_attach(ROOT, cf, aux, (cfprint_t)NULL);
 	aprint_error("root device %s not configured\n", rootname);
-	return (NULL);
+	return NULL;
 }
 
 /* just like sprintf(buf, "%d") except that it works from the end */
@@ -1080,7 +1080,7 @@ number(char *ep, int n)
 		n /= 10;
 	}
 	*--ep = n + '0';
-	return (ep);
+	return ep;
 }
 
 /*
@@ -1182,11 +1182,11 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
-		return (NULL);
+		return NULL;
 
 	ca = config_cfattach_lookup_cd(cd, cf->cf_atname);
 	if (ca == NULL)
-		return (NULL);
+		return NULL;
 
 	if ((ca->ca_flags & DVF_PRIV_ALLOC) == 0 &&
 	    ca->ca_devsize < sizeof(struct device))
@@ -1204,7 +1204,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	} else {
 		myunit = cf->cf_unit;
 		if (myunit < cd->cd_ndevs && cd->cd_devs[myunit] != NULL)
-			return (NULL);
+			return NULL;
 	}	
 #else
 	myunit = cf->cf_unit;
@@ -1275,7 +1275,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	prop_dictionary_set_uint16(dev->dv_properties,
 	    "device-unit", dev->dv_unit);
 
-	return (dev);
+	return dev;
 }
 
 static void
@@ -1398,14 +1398,14 @@ config_attach_loc(device_t parent, cfdata_t cf,
 		aprint_debug_dev(dev, "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
-	return (dev);
+	return dev;
 }
 
 device_t
 config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print)
 {
 
-	return (config_attach_loc(parent, cf, NULL, aux, print));
+	return config_attach_loc(parent, cf, NULL, aux, print);
 }
 
 /*
@@ -1424,7 +1424,7 @@ config_attach_pseudo(cfdata_t cf)
 
 	dev = config_devalloc(ROOT, cf, NULL);
 	if (!dev)
-		return (NULL);
+		return NULL;
 
 	/* XXX mark busy in cfdata */
 
@@ -1442,7 +1442,7 @@ config_attach_pseudo(cfdata_t cf)
 #endif
 	(*dev->dv_cfattach->ca_attach)(ROOT, dev, NULL);
 	config_process_deferred(&deferred_config_queue, dev);
-	return (dev);
+	return dev;
 }
 
 /*
@@ -1619,7 +1619,7 @@ config_activate(device_t dev)
 	int rv = 0, oflags = dev->dv_flags;
 
 	if (ca->ca_activate == NULL)
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 
 	if ((dev->dv_flags & DVF_ACTIVE) == 0) {
 		dev->dv_flags |= DVF_ACTIVE;
@@ -1627,7 +1627,7 @@ config_activate(device_t dev)
 		if (rv)
 			dev->dv_flags = oflags;
 	}
-	return (rv);
+	return rv;
 }
 
 int
@@ -1637,7 +1637,7 @@ config_deactivate(device_t dev)
 	int rv = 0, oflags = dev->dv_flags;
 
 	if (ca->ca_activate == NULL)
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 
 	if (dev->dv_flags & DVF_ACTIVE) {
 		dev->dv_flags &= ~DVF_ACTIVE;
@@ -1645,7 +1645,7 @@ config_deactivate(device_t dev)
 		if (rv)
 			dev->dv_flags = oflags;
 	}
-	return (rv);
+	return rv;
 }
 
 /*
@@ -1783,7 +1783,7 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	/* Ensure this isn't already on the list. */
 	TAILQ_FOREACH(f, &config_finalize_list, f_list) {
 		if (f->f_func == fn && f->f_dev == dev)
-			return (EEXIST);
+			return EEXIST;
 	}
 
 	f = kmem_alloc(sizeof(*f), KM_SLEEP);
@@ -1791,7 +1791,7 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	f->f_dev = dev;
 	TAILQ_INSERT_TAIL(&config_finalize_list, f, f_list);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -1859,9 +1859,9 @@ device_lookup(cfdriver_t cd, int unit)
 {
 
 	if (unit < 0 || unit >= cd->cd_ndevs)
-		return (NULL);
+		return NULL;
 	
-	return (cd->cd_devs[unit]);
+	return cd->cd_devs[unit];
 }
 
 /*
@@ -1890,49 +1890,49 @@ devclass_t
 device_class(device_t dev)
 {
 
-	return (dev->dv_class);
+	return dev->dv_class;
 }
 
 cfdata_t
 device_cfdata(device_t dev)
 {
 
-	return (dev->dv_cfdata);
+	return dev->dv_cfdata;
 }
 
 cfdriver_t
 device_cfdriver(device_t dev)
 {
 
-	return (dev->dv_cfdriver);
+	return dev->dv_cfdriver;
 }
 
 cfattach_t
 device_cfattach(device_t dev)
 {
 
-	return (dev->dv_cfattach);
+	return dev->dv_cfattach;
 }
 
 int
 device_unit(device_t dev)
 {
 
-	return (dev->dv_unit);
+	return dev->dv_unit;
 }
 
 const char *
 device_xname(device_t dev)
 {
 
-	return (dev->dv_xname);
+	return dev->dv_xname;
 }
 
 device_t
 device_parent(device_t dev)
 {
 
-	return (dev->dv_parent);
+	return dev->dv_parent;
 }
 
 bool
@@ -1945,7 +1945,7 @@ device_is_active(device_t dev)
 	active_flags |= DVF_DRIVER_SUSPENDED;
 	active_flags |= DVF_BUS_SUSPENDED;
 
-	return ((dev->dv_flags & active_flags) == DVF_ACTIVE);
+	return (dev->dv_flags & active_flags) == DVF_ACTIVE;
 }
 
 bool
@@ -1961,7 +1961,7 @@ device_has_power(device_t dev)
 
 	active_flags = DVF_ACTIVE | DVF_BUS_SUSPENDED;
 
-	return ((dev->dv_flags & active_flags) == DVF_ACTIVE);
+	return (dev->dv_flags & active_flags) == DVF_ACTIVE;
 }
 
 int
@@ -1969,7 +1969,7 @@ device_locator(device_t dev, u_int locnum)
 {
 
 	KASSERT(dev->dv_locators != NULL);
-	return (dev->dv_locators[locnum]);
+	return dev->dv_locators[locnum];
 }
 
 void *
@@ -1990,7 +1990,7 @@ prop_dictionary_t
 device_properties(device_t dev)
 {
 
-	return (dev->dv_properties);
+	return dev->dv_properties;
 }
 
 /*
@@ -2003,7 +2003,7 @@ bool
 device_is_a(device_t dev, const char *dname)
 {
 
-	return (strcmp(dev->dv_cfdriver->cd_name, dname) == 0);
+	return strcmp(dev->dv_cfdriver->cd_name, dname) == 0;
 }
 
 /*
