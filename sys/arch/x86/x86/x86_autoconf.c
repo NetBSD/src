@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.38 2009/02/17 11:16:10 jmcneill Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.39 2009/05/01 09:20:02 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.38 2009/02/17 11:16:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.39 2009/05/01 09:20:02 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 }
 
 static void
-handle_wedges(struct device *dv, int par)
+handle_wedges(device_t dv, int par)
 {
 	if (config_handle_wedges(dv, par) == 0)
 		return;
@@ -88,7 +88,7 @@ handle_wedges(struct device *dv, int par)
 }
 
 static int
-is_valid_disk(struct device *dv)
+is_valid_disk(device_t dv)
 {
 
 	if (device_class(dv) != DV_DISK)
@@ -110,7 +110,7 @@ matchbiosdisks(void)
 {
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
-	struct device *dv;
+	device_t dv;
 	int i, ck, error, m, n;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
@@ -217,7 +217,7 @@ matchbiosdisks(void)
  * Return non-zero if wedge device matches bootinfo.
  */
 static int
-match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
+match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 {
 	MD5_CTX ctx;
 	struct vnode *tmpvn;
@@ -266,7 +266,7 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
  * Return non-zero if disk device matches bootinfo.
  */
 static int
-match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
+match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 {
 	struct vnode *tmpvn;
 	int error;
@@ -500,7 +500,7 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	static bool found_console = false;
 
