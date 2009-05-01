@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.41 2009/04/22 22:31:26 ad Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.42 2009/05/01 09:38:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.41 2009/04/22 22:31:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.42 2009/05/01 09:38:24 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.41 2009/04/22 22:31:26 ad Exp $");
  * XXX locking
  */
 
-int     ioapic_match(struct device *, struct cfdata *, void *);
-void    ioapic_attach(struct device *, struct device *, void *);
+int     ioapic_match(device_t, cfdata_t, void *);
+void    ioapic_attach(device_t, device_t, void *);
 
 extern int x86_mem_add_mapping(bus_addr_t, bus_size_t,
     int, bus_space_handle_t *); /* XXX XXX */
@@ -248,7 +248,7 @@ CFATTACH_DECL_NEW(ioapic, sizeof(struct ioapic_softc),
     ioapic_match, ioapic_attach, NULL, NULL);
 
 int
-ioapic_match(struct device *parent, struct cfdata *match, void *aux)
+ioapic_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -258,7 +258,7 @@ ioapic_match(struct device *parent, struct cfdata *match, void *aux)
  * can't use bus_space_xxx as we don't have a bus handle ...
  */
 void 
-ioapic_attach(struct device *parent, struct device *self, void *aux)
+ioapic_attach(device_t parent, device_t self, void *aux)
 {
 	struct ioapic_softc *sc = device_private(self);  
 	struct apic_attach_args *aaa = (struct apic_attach_args *)aux;
