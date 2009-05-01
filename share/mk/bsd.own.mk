@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.561 2009/04/10 16:14:54 bouyer Exp $
+#	$NetBSD: bsd.own.mk,v 1.562 2009/05/01 20:47:53 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -749,7 +749,7 @@ METALOG?=	${DESTDIR}/METALOG
 METALOG.add?=	${TOOL_CAT} -l >> ${METALOG}
 .if (${_SRC_TOP_} != "")	# only set INSTPRIV if inside ${NETBSDSRCDIR}
 .if ${MKUNPRIVED} != "no"
-INSTPRIV.unpriv=-U -M ${METALOG} -D ${DESTDIR} -h sha1
+INSTPRIV.unpriv=-U -M ${METALOG} -D ${DESTDIR} -h sha256
 .else
 INSTPRIV.unpriv=
 .endif
