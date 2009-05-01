@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.260 2009/04/03 16:23:41 sborrill Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.261 2009/05/01 20:43:41 dyoung Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.260 2009/04/03 16:23:41 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.261 2009/05/01 20:43:41 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -218,9 +218,9 @@ static void InitBP(struct buf *, struct vnode *, unsigned,
 static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
-static int raid_match(struct device *, struct cfdata *, void *);
-static void raid_attach(struct device *, struct device *, void *);
-static int raid_detach(struct device *, int);
+static int raid_match(device_t, cfdata_t, void *);
+static void raid_attach(device_t, device_t, void *);
+static int raid_detach(device_t, int);
 
 dev_type_open(raidopen);
 dev_type_close(raidclose);
@@ -248,7 +248,7 @@ static struct dkdriver rf_dkdriver = { raidstrategy, minphys };
 */
 
 struct raid_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
 	uint64_t sc_size;	/* size of the raid device */
@@ -312,7 +312,7 @@ void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
 void rf_CopybackThread(RF_Raid_t *raidPtr);
 void rf_ReconstructInPlaceThread(struct rf_recon_req *);
-int rf_autoconfig(struct device *self);
+int rf_autoconfig(device_t);
 void rf_buildroothack(RF_ConfigSet_t *);
 
 RF_AutoConfig_t *rf_find_raid_components(void);
@@ -417,7 +417,7 @@ raidattach(int num)
 }
 
 int
-rf_autoconfig(struct device *self)
+rf_autoconfig(device_t self)
 {
 	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *config_sets;
@@ -2847,7 +2847,7 @@ rf_find_raid_components(void)
 {
 	struct vnode *vp;
 	struct disklabel label;
-	struct device *dv;
+	device_t dv;
 	dev_t dev;
 	int bmajor, bminor, wedge;
 	int error;
@@ -3598,24 +3598,22 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 }
 
 static int
-raid_match(struct device *self, struct cfdata *cfdata,
-    void *aux)
+raid_match(device_t self, cfdata_t cfdata, void *aux)
 {
 	return 1;
 }
 
 static void
-raid_attach(struct device *parent, struct device *self,
-    void *aux)
+raid_attach(device_t parent, device_t self, void *aux)
 {
 
 }
 
 
 static int
-raid_detach(struct device *self, int flags)
+raid_detach(device_t self, int flags)
 {
-	struct raid_softc *rs = (struct raid_softc *)self;
+	struct raid_softc *rs = device_private(self);
 
 	if (rs->sc_flags & RAIDF_INITED)
 		return EBUSY;
