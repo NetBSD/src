@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.465 2009/04/25 05:54:50 agc Exp $
+# $NetBSD: shl.mi,v 1.466 2009/05/01 15:30:46 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -19,6 +19,7 @@
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
 ./lib/libedit.so.3.0				base-sys-shlib		dynamicroot
 ./lib/libevent.so.3.0				base-sys-shlib		dynamicroot
+./lib/libgcc_s.so.1.0				base-sys-shlib		gcc
 ./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
 ./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
 ./lib/libm.so.0.6				base-sys-shlib		dynamicroot
