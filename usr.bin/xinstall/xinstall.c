@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.108 2009/04/17 06:09:08 apb Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.109 2009/05/01 20:16:23 apb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.108 2009/04/17 06:09:08 apb Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.109 2009/05/01 20:16:23 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.108 2009/04/17 06:09:08 apb Exp $");
 #include <md5.h>
 #include <rmd160.h>
 #include <sha1.h>
+#include <sha2.h>
 
 #include "pathnames.h"
 #include "mtree.h"
@@ -102,6 +103,9 @@ enum {
 	DIGEST_MD5,
 	DIGEST_RMD160,
 	DIGEST_SHA1,
+	DIGEST_SHA256,
+	DIGEST_SHA384,
+	DIGEST_SHA512,
 } digesttype = DIGEST_NONE;
 char	*digest;
 
@@ -294,6 +298,12 @@ main(int argc, char *argv[])
 			digesttype = DIGEST_RMD160;
 		} else if (strcmp(digest, "sha1") == 0) {
 			digesttype = DIGEST_SHA1;
+		} else if (strcmp(digest, "sha256") == 0) {
+			digesttype = DIGEST_SHA256;
+		} else if (strcmp(digest, "sha384") == 0) {
+			digesttype = DIGEST_SHA384;
+		} else if (strcmp(digest, "sha512") == 0) {
+			digesttype = DIGEST_SHA512;
 		} else {
 			warnx("unknown digest `%s'", digest);
 			usage();
@@ -508,6 +518,15 @@ makelink(char *from_name, char *to_name)
 					break;
 				case DIGEST_SHA1:
 					dres = SHA1File(from_name, NULL);
+					break;
+				case DIGEST_SHA256:
+					dres = SHA256_File(from_name, NULL);
+					break;
+				case DIGEST_SHA384:
+					dres = SHA384_File(from_name, NULL);
+					break;
+				case DIGEST_SHA512:
+					dres = SHA512_File(from_name, NULL);
 					break;
 				default:
 					dres = NULL;
@@ -793,6 +812,9 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 	MD5_CTX		ctxMD5;
 	RMD160_CTX	ctxRMD160;
 	SHA1_CTX	ctxSHA1;
+	SHA256_CTX	ctxSHA256;
+	SHA384_CTX	ctxSHA384;
+	SHA512_CTX	ctxSHA512;
 
 	switch (digesttype) {
 	case DIGEST_MD5:
@@ -803,6 +825,15 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 		break;
 	case DIGEST_SHA1:
 		SHA1Init(&ctxSHA1);
+		break;
+	case DIGEST_SHA256:
+		SHA256_Init(&ctxSHA256);
+		break;
+	case DIGEST_SHA384:
+		SHA384_Init(&ctxSHA384);
+		break;
+	case DIGEST_SHA512:
+		SHA512_Init(&ctxSHA512);
 		break;
 	case DIGEST_NONE:
 		if (to_fd < 0)
@@ -850,6 +881,15 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 			case DIGEST_SHA1:
 				SHA1Update(&ctxSHA1, p, size);
 				break;
+			case DIGEST_SHA256:
+				SHA256_Update(&ctxSHA256, p, size);
+				break;
+			case DIGEST_SHA384:
+				SHA384_Update(&ctxSHA384, p, size);
+				break;
+			case DIGEST_SHA512:
+				SHA512_Update(&ctxSHA512, p, size);
+				break;
 			default:
 				break;
 			}
@@ -874,6 +914,15 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 				case DIGEST_SHA1:
 					SHA1Update(&ctxSHA1, buf, nr);
 					break;
+				case DIGEST_SHA256:
+					SHA256_Update(&ctxSHA256, buf, nr);
+					break;
+				case DIGEST_SHA384:
+					SHA384_Update(&ctxSHA384, buf, nr);
+					break;
+				case DIGEST_SHA512:
+					SHA512_Update(&ctxSHA512, buf, nr);
+					break;
 				default:
 					break;
 				}
@@ -892,6 +941,12 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 		return RMD160End(&ctxRMD160, NULL);
 	case DIGEST_SHA1:
 		return SHA1End(&ctxSHA1, NULL);
+	case DIGEST_SHA256:
+		return SHA256_End(&ctxSHA256, NULL);
+	case DIGEST_SHA384:
+		return SHA384_End(&ctxSHA384, NULL);
+	case DIGEST_SHA512:
+		return SHA512_End(&ctxSHA512, NULL);
 	default:
 		return NULL;
 	}
