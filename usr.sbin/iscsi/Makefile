@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2006/02/08 18:57:49 agc Exp $
+# $NetBSD: Makefile,v 1.2 2009/05/01 23:40:32 agc Exp $
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
 
-SUBDIR= target # harness works, but does not need to be installed
+SUBDIR= target
 
 .include <bsd.subdir.mk>
