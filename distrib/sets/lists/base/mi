@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.806 2009/04/27 14:22:40 njoly Exp $
+# $NetBSD: mi,v 1.807 2009/05/01 22:59:51 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -834,6 +834,7 @@
 ./usr/bin/msgs					base-util-bin
 ./usr/bin/nbsvtool				base-crypto-bin		crypto
 ./usr/bin/netgroup				base-nis-bin
+./usr/bin/netpgp				base-crypto-bin		crypto
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
@@ -848,8 +849,7 @@
 ./usr/bin/nvi					base-obsolete		obsolete
 ./usr/bin/nview					base-obsolete		obsolete
 ./usr/bin/od					base-util-bin
-./usr/bin/openpgp				base-crypto-bin		crypto
-./usr/bin/netpgp				base-crypto-bin		crypto
+./usr/bin/openpgp				base-obsolete		obsolete
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
 ./usr/bin/pagesize				base-util-bin
@@ -1112,7 +1112,7 @@
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
 ./usr/include/objc				base-objc-usr
-./usr/include/openpgpsdk			base-c-usr
+./usr/include/openpgpsdk			base-obsolete		obsolete
 ./usr/include/openssl				base-c-usr
 ./usr/include/prop				base-c-usr
 ./usr/include/protocols				base-c-usr

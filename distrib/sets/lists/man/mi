@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1134 2009/04/25 05:54:51 agc Exp $
+# $NetBSD: mi,v 1.1135 2009/05/01 22:59:53 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -315,7 +315,7 @@
 ./usr/share/man/cat1/nview.0			man-obsolete		obsolete
 ./usr/share/man/cat1/od.0			man-util-catman		.cat
 ./usr/share/man/cat1/omshell.0			man-dhcpd-catman	.cat
-./usr/share/man/cat1/openpgp.0			man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openpgp.0			man-obsolete		obsolete
 ./usr/share/man/cat1/openssl.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman	crypto,.cat
@@ -2975,7 +2975,7 @@
 ./usr/share/man/html1/nview.html		man-obsolete		obsolete
 ./usr/share/man/html1/od.html			man-util-htmlman	html
 ./usr/share/man/html1/omshell.html		man-dhcpd-htmlman	html
-./usr/share/man/html1/openpgp.html		man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openpgp.html		man-obsolete		obsolete
 ./usr/share/man/html1/openssl.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_CA.pl.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_asn1parse.html	man-crypto-htmlman	crypto,html
@@ -5283,7 +5283,7 @@
 ./usr/share/man/man1/nview.1			man-obsolete		obsolete
 ./usr/share/man/man1/od.1			man-util-man		.man
 ./usr/share/man/man1/omshell.1			man-dhcpd-man		.man
-./usr/share/man/man1/openpgp.1			man-crypto-man		crypto,.man
+./usr/share/man/man1/openpgp.1			man-obsolete		obsolete
 ./usr/share/man/man1/openssl.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man		crypto,.man
