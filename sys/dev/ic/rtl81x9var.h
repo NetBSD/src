@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.41.12.1 2009/03/24 20:38:38 snj Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.41.12.2 2009/05/01 02:03:44 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -189,6 +189,7 @@ struct rtk_softc {
 #define RTKQ_8169NONS		0x00000004	/* old non-single 8169 */
 #define RTKQ_PCIE		0x00000008	/* PCIe variants */
 #define RTKQ_MACLDPS		0x00000010	/* has LDPS register */
+#define RTKQ_DESCV2		0x00000020	/* has V2 TX/RX descriptor */
 
 	bus_dma_tag_t 		sc_dmat;
 
