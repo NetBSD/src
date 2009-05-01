@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1246 2009/04/25 05:54:50 agc Exp $
+#	$NetBSD: mi,v 1.1247 2009/05/01 18:02:24 perry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1624,6 +1624,7 @@
 ./usr/include/netns/spp_debug.h			comp-obsolete		obsolete
 ./usr/include/netns/spp_timer.h			comp-obsolete		obsolete
 ./usr/include/netns/spp_var.h			comp-obsolete		obsolete
+./usr/include/netpgp.h				comp-c-include		crypto
 ./usr/include/nfs/krpc.h			comp-c-include
 ./usr/include/nfs/nfs.h				comp-c-include
 ./usr/include/nfs/nfs_var.h			comp-obsolete		obsolete
@@ -1663,7 +1664,6 @@
 ./usr/include/objc/sarray.h			comp-c-include
 ./usr/include/objc/thr.h			comp-c-include
 ./usr/include/objc/typedstream.h		comp-c-include
-./usr/include/netpgp.h				comp-c-include		crypto
 ./usr/include/openpgpsdk/accumulate.h		comp-c-include		crypto
 ./usr/include/openpgpsdk/armour.h		comp-c-include		crypto
 ./usr/include/openpgpsdk/callback.h		comp-c-include		crypto
@@ -7490,6 +7490,8 @@
 ./usr/share/man/cat3/stat_flags.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stdarg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdio.0			comp-c-catman		.cat
+./usr/share/man/cat3/stpcpy.0			comp-c-catman		.cat
+./usr/share/man/cat3/stpnpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcasecmp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcasestr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcat.0			comp-c-catman		.cat
@@ -7517,6 +7519,7 @@
 ./usr/share/man/cat3/strncmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strncpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strndup.0			comp-c-catman		.cat
+./usr/share/man/cat3/strnlen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strpbrk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strptime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strrchr.0			comp-c-catman		.cat
@@ -12798,6 +12801,8 @@
 ./usr/share/man/html3/stat_flags.html		comp-c-htmlman		html
 ./usr/share/man/html3/stdarg.html		comp-c-htmlman		html
 ./usr/share/man/html3/stdio.html		comp-c-htmlman		html
+./usr/share/man/html3/stpcpy.html		comp-c-htmlman		html
+./usr/share/man/html3/stpncpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcasecmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcasestr.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcat.html		comp-c-htmlman		html
@@ -12825,6 +12830,7 @@
 ./usr/share/man/html3/strncmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/strncpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/strndup.html		comp-c-htmlman		html
+./usr/share/man/html3/strnlen.html		comp-c-htmlman		html
 ./usr/share/man/html3/strpbrk.html		comp-c-htmlman		html
 ./usr/share/man/html3/strptime.html		comp-c-htmlman		html
 ./usr/share/man/html3/strrchr.html		comp-c-htmlman		html
@@ -18145,6 +18151,8 @@
 ./usr/share/man/man3/stat_flags.3		comp-c-man		.man
 ./usr/share/man/man3/stdarg.3			comp-c-man		.man
 ./usr/share/man/man3/stdio.3			comp-c-man		.man
+./usr/share/man/man3/stpcpy.3			comp-c-man		.man
+./usr/share/man/man3/stpncpy.3			comp-c-man		.man
 ./usr/share/man/man3/strcasecmp.3		comp-c-man		.man
 ./usr/share/man/man3/strcasestr.3		comp-c-man		.man
 ./usr/share/man/man3/strcat.3			comp-c-man		.man
@@ -18172,6 +18180,7 @@
 ./usr/share/man/man3/strncmp.3			comp-c-man		.man
 ./usr/share/man/man3/strncpy.3			comp-c-man		.man
 ./usr/share/man/man3/strndup.3			comp-c-man		.man
+./usr/share/man/man3/strnlen.3			comp-c-man		.man
 ./usr/share/man/man3/strpbrk.3			comp-c-man		.man
 ./usr/share/man/man3/strptime.3			comp-c-man		.man
 ./usr/share/man/man3/strrchr.3			comp-c-man		.man
