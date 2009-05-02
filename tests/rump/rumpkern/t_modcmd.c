@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modcmd.c,v 1.1 2009/05/02 16:02:19 pooka Exp $	*/
+/*	$NetBSD: t_modcmd.c,v 1.2 2009/05/02 16:18:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ ATF_TC_HEAD(cmsg_modcmd, tc)
 	    "a module (vfs/tmpfs) is possible");
 }
 
-#define TMPFSMODULE "/usr/lib/librumpfs_tmpfs.so"
+#define TMPFSMODULE "librumpfs_tmpfs.so"
 ATF_TC_BODY(cmsg_modcmd, tc)
 {
 	struct tmpfs_args args;
