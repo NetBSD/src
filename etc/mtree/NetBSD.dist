@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.398 2009/04/27 14:22:40 njoly Exp $
+#	$NetBSD: NetBSD.dist,v 1.399 2009/05/02 16:02:19 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -555,6 +555,8 @@
 ./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/sys
+./usr/libdata/debug/usr/tests/rump
+./usr/libdata/debug/usr/tests/rump/rumpkern
 ./usr/libdata/debug/usr/tests/syscall
 ./usr/libdata/debug/usr/tests/util
 ./usr/libdata/debug/usr/tests/util/df
@@ -1425,6 +1427,8 @@
 ./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/sys
+./usr/tests/rump
+./usr/tests/rump/rumpkern
 ./usr/tests/syscall
 ./usr/tests/util
 ./usr/tests/util/awk
