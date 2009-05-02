@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.18 2009/05/01 17:27:01 perry Exp $
+.\"	$NetBSD: strcpy.3,v 1.19 2009/05/02 09:31:08 wiz Exp $
 .\"
 .Dd May 1, 2009
 .Dt STRCPY 3
@@ -184,14 +184,6 @@ Note that because
 .Xr strlcpy 3
 is not defined in any standards, it should
 only be used when portability is not a concern.
-.Sh SECURITY CONSIDERATIONS
-The
-.Fn strcpy
-and
-.Fn stpcpy
-functions are easily misused in a manner which enables malicious users
-to arbitrarily change a running program's functionality through a
-buffer overflow attack.
 .Sh SEE ALSO
 .Xr bcopy 3 ,
 .Xr memccpy 3 ,
@@ -220,3 +212,11 @@ and
 .Fn stpncpy
 functions first appeared in
 .Nx 6.0 .
+.Sh SECURITY CONSIDERATIONS
+The
+.Fn strcpy
+and
+.Fn stpcpy
+functions are easily misused in a manner which enables malicious users
+to arbitrarily change a running program's functionality through a
+buffer overflow attack.
