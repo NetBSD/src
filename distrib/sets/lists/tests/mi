@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2009/05/02 19:36:27 pooka Exp $
+# $NetBSD: mi,v 1.43 2009/05/02 20:08:52 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -140,7 +140,7 @@
 ./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-net-debug		debug
 ./usr/libdata/debug/usr/tests/rump					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern				tests-syscall-debug
-./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
