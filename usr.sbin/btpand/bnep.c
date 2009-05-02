@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.4 2009/05/02 20:07:51 plunky Exp $	*/
+/*	$NetBSD: bnep.c,v 1.5 2009/05/02 20:13:44 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.4 2009/05/02 20:07:51 plunky Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.5 2009/05/02 20:13:44 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -167,6 +167,11 @@ bnep_recv(packet_t *pkt)
 	if (BNEP_TYPE(type) == BNEP_CONTROL
 	    || pkt->chan->state != CHANNEL_OPEN)
 		return false;	/* no forwarding */
+
+	if (pkt->len > ETHER_MAX_LEN)
+		log_debug("received long packet "
+			  "(type=0x%2.2x, proto=0x%4.4x, len=%d)",
+		    	  type, be16dec(pkt->type), pkt->len);
 
 	return true;
 }
