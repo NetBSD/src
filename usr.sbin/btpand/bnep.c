@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.3 2009/02/04 19:24:18 plunky Exp $	*/
+/*	$NetBSD: bnep.c,v 1.4 2009/05/02 20:07:51 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.3 2009/02/04 19:24:18 plunky Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.4 2009/05/02 20:07:51 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -575,7 +575,7 @@ bnep_send_control(channel_t *chan, uint8_t type, ...)
 	uint8_t *p;
 	va_list ap;
 
-	_DIAGASSERT(chan->state != CHANNEL_CLOSED);
+	assert(chan->state != CHANNEL_CLOSED);
 
 	pkt = packet_alloc(chan);
 	if (pkt == NULL)

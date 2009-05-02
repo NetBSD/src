@@ -1,4 +1,4 @@
-/*	$NetBSD: tap.c,v 1.2 2009/03/10 22:12:17 plunky Exp $	*/
+/*	$NetBSD: tap.c,v 1.3 2009/05/02 20:07:51 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tap.c,v 1.2 2009/03/10 22:12:17 plunky Exp $");
+__RCSID("$NetBSD: tap.c,v 1.3 2009/05/02 20:07:51 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -138,7 +138,7 @@ tap_send(channel_t *chan, packet_t *pkt)
 
 	/* tap device write never fails */
 	nw = writev(chan->fd, iov, __arraycount(iov));
-	_DIAGASSERT(nw > 0);
+	assert(nw > 0);
 
 	return true;
 }
