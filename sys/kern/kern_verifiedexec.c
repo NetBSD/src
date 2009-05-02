@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.113 2009/04/20 22:09:54 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.114 2009/05/02 21:47:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.113 2009/04/20 22:09:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.114 2009/05/02 21:47:12 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1535,12 +1535,19 @@ veriexec_file_dump(struct veriexec_file_entry *vfe, prop_array_t entries)
 int
 veriexec_dump(struct lwp *l, prop_array_t rarray)
 {
-	struct mount *mp;
+	struct mount *mp, *nmp;
 
 	mutex_enter(&mountlist_lock);
-	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	    mp = nmp) {
+		/* If it fails, the file-system is [being] unmounted. */
+		if (vfs_busy(mp, &nmp) != 0)
+			continue;
+
 		fileassoc_table_run(mp, veriexec_hook,
 		    (fileassoc_cb_t)veriexec_file_dump, rarray);
+
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 
@@ -1550,16 +1557,23 @@ veriexec_dump(struct lwp *l, prop_array_t rarray)
 int
 veriexec_flush(struct lwp *l)
 {
-	struct mount *mp;
+	struct mount *mp, *nmp;
 	int error = 0;
 
 	mutex_enter(&mountlist_lock);
-	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	    mp = nmp) {
 		int lerror;
+
+		/* If it fails, the file-system is [being] unmounted. */
+		if (vfs_busy(mp, &nmp) != 0)
+			continue;
 
 		lerror = veriexec_table_delete(l, mp);
 		if (lerror && lerror != ENOENT)
 			error = lerror;
+
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 
