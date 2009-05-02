@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.393 2009/04/29 01:03:43 dyoung Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.394 2009/05/02 14:13:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.393 2009/04/29 01:03:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.394 2009/05/02 14:13:28 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -116,8 +116,6 @@ static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
 
 void checkdirs(struct vnode *);
-
-int dovfsusermount = 0;
 
 /*
  * Virtual File System System Calls
