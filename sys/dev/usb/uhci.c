@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.226 2009/04/19 12:32:52 ad Exp $	*/
+/*	$NetBSD: uhci.c,v 1.227 2009/05/02 22:09:39 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.226 2009/04/19 12:32:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.227 2009/05/02 22:09:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1034,12 +1034,14 @@ uhci_poll_hub(void *addr)
 {
 	usbd_xfer_handle xfer = addr;
 	usbd_pipe_handle pipe = xfer->pipe;
-	uhci_softc_t *sc = pipe->device->bus->hci_private;
+	uhci_softc_t *sc;
 	int s;
 	u_char *p;
 
 	DPRINTFN(20, ("uhci_poll_hub\n"));
 
+	if (pipe->device == NULL) return;	/* device has detached */
+	sc = pipe->device->bus->hci_private;
 	usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
 
 	p = KERNADDR(&xfer->dmabuf, 0);
