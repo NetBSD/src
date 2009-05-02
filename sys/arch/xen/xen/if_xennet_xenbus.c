@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.35 2009/04/29 22:21:49 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.36 2009/05/02 18:18:44 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.35 2009/04/29 22:21:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.36 2009/05/02 18:18:44 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -499,6 +499,12 @@ again:
 	    "rx-ring-ref","%u", sc->sc_rx_ring_gntref);
 	if (error) {
 		errmsg = "writing rx ring-ref";
+		goto abort_transaction;
+	}
+	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
+	    "feature-rx-notify", "%u", 1);
+	if (error) {
+		errmsg = "writing feature-rx-notify";
 		goto abort_transaction;
 	}
 	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
