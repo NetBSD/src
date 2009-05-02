@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.107 2009/04/30 18:18:34 elad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.108 2009/05/02 18:58:03 elad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.107 2009/04/30 18:18:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.108 2009/05/02 18:58:03 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -344,6 +344,7 @@ int
 in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = v;
+	struct sockaddr_in6 lsin6;
 	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)NULL;
 	int error;
 
@@ -364,8 +365,9 @@ in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 			return (EINVAL);
 	} else {
 		/* We always bind to *something*, even if it's "anything". */
-		sin6 = (struct sockaddr_in6 *)
-		    __UNCONST(in6p->in6p_socket->so_proto->pr_domain->dom_sa_any);
+		lsin6 = *((const struct sockaddr_in6 *)
+		    in6p->in6p_socket->so_proto->pr_domain->dom_sa_any);
+		sin6 = &lsin6;
 	}
 
 	/* Bind address. */
