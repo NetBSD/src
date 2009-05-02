@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.94 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.95 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9150,7 +9150,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
 		ported from OpenBSD. [xtraeme 20071204]
 	symlink(7): Implement a new magic string for magic symlinks, @ruid,
-		which exapnds to the real user id of the process and
+		which expands to the real user id of the process and
 		use this magic string for per-user tmp. [mjf 20071204]
 	fxp(4): Fix some TX timeout and RX pool corruption problems.
 		Mostly from OpenBSD. [tsutsui 20071208]
