@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.105 2009/04/30 16:59:32 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.106 2009/05/02 15:20:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.105 2009/04/30 16:59:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.106 2009/05/02 15:20:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -482,13 +482,20 @@ rump_nextlid(void)
 }
 
 int
-rump_module_load(struct modinfo **mi)
+rump_module_init(struct modinfo *mi, prop_dictionary_t props)
 {
 
-	if (!module_compatible((*mi)->mi_version, __NetBSD_Version__))
+	if (!module_compatible(mi->mi_version, __NetBSD_Version__))
 		return EPROGMISMATCH;
 
-	return (*mi)->mi_modcmd(MODULE_CMD_INIT, NULL);
+	return mi->mi_modcmd(MODULE_CMD_INIT, props);
+}
+
+int
+rump_module_fini(struct modinfo *mi)
+{
+
+	return mi->mi_modcmd(MODULE_CMD_FINI, NULL);
 }
 
 int _syspuffs_stub(int, int *);
