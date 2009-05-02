@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.41 2009/05/01 22:03:36 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.42 2009/05/02 16:10:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.41 2009/05/01 22:03:36 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.42 2009/05/02 16:10:49 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -202,10 +202,10 @@ const	char *msgs[] = {
 	"modulus by 0",						      /* 140 */
 	"integer overflow detected, op %s",			      /* 141 */
 	"floating point overflow detected, op %s",		      /* 142 */
-	"cannot take size of incomplete type",			      /* 143 */
-	"cannot take size of function",				      /* 144 */
-	"cannot take size of bit-field",			      /* 145 */
-	"cannot take size of void",				      /* 146 */
+	"cannot take size/alignment of incomplete type",	      /* 143 */
+	"cannot take size/alignment of function",		      /* 144 */
+	"cannot take size/alignment of bit-field",		      /* 145 */
+	"cannot take size/alignment of void",			      /* 146 */
 	"invalid cast expression",				      /* 147 */
 	"improper cast of void expression",			      /* 148 */
 	"illegal function",					      /* 149 */
