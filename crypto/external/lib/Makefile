@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/01/20 07:12:16 agc Exp $
+#	$NetBSD: Makefile,v 1.2 2009/05/02 02:31:35 agc Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -8,6 +8,6 @@
 
 .include <bsd.own.mk>
 
-SUBDIR+= ../bsd/openpgpsdk/lib
+SUBDIR+= ../bsd/netpgp/lib
 
 .include <bsd.subdir.mk>
