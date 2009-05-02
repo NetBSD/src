@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1249 2009/05/01 22:59:52 agc Exp $
+#	$NetBSD: mi,v 1.1250 2009/05/02 01:15:54 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2549,9 +2549,9 @@
 ./usr/lib/librumpfs_udf.a			comp-c-lib
 ./usr/lib/librumpfs_udf_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_udf_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_ufs.a			comp-c-lib
-./usr/lib/librumpfs_ufs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_ufs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_ufs.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_ufs_g.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_ufs_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpnet.a				comp-c-lib
 ./usr/lib/librumpnet_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_local.a			comp-c-lib
