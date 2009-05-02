@@ -40,21 +40,19 @@
 #include <string.h>
 
 
+/* Does the signed hash match the given hash? */
 static          bool
 check_binary_signature(const unsigned len,
 		       const unsigned char *data,
 		       const __ops_signature_t * sig,
 		    const __ops_public_key_t * signer __attribute__((unused)))
 {
-	/* Does the signed hash match the given hash? */
-
-	__ops_hash_t      hash;
 	unsigned char   hashout[OPS_MAX_HASH_SIZE];
 	unsigned char   trailer[6];
 	unsigned int    hashedlen;
+	__ops_hash_t	hash;
 	unsigned	n = 0;
 
-	/* common_init_signature(&hash,sig); */
 	__ops_hash_any(&hash, sig->info.hash_algorithm);
 	hash.init(&hash);
 	hash.add(&hash, data, len);
@@ -69,8 +67,8 @@ check_binary_signature(const unsigned len,
 		break;
 
 	case OPS_V4:
-		hash.add(&hash, sig->info.v4_hashed_data, sig->info.v4_hashed_data_length);
-
+		hash.add(&hash, sig->info.v4_hashed_data,
+				sig->info.v4_hashed_data_length);
 		trailer[0] = 0x04;	/* version */
 		trailer[1] = 0xFF;
 		hashedlen = sig->info.v4_hashed_data_length;
@@ -79,20 +77,19 @@ check_binary_signature(const unsigned len,
 		trailer[4] = hashedlen >> 8;
 		trailer[5] = hashedlen;
 		hash.add(&hash, &trailer[0], 6);
-
 		break;
 
 	default:
-		fprintf(stderr, "Invalid signature version %d\n", sig->info.version);
+		fprintf(stderr, "Invalid signature version %d\n",
+				sig->info.version);
 		return false;
 	}
 
 	n = hash.finish(&hash, hashout);
-
 	if (__ops_get_debug_level(__FILE__)) {
-		printf("check_binary_signature: hash length %" PRIsize "u\n", hash.size);
+		printf("check_binary_signature: hash length %" PRIsize "u\n",
+			hash.size);
 	}
-	/* return false; */
 	return __ops_check_signature(hashout, n, sig, signer);
 }
 
@@ -116,9 +113,12 @@ keydata_reader(void *dest, size_t length, __ops_error_t ** errors,
 	 * we should never be asked to cross a packet boundary in a single
 	 * read
 	 */
-	assert(reader->key->packets[reader->packet].length >= reader->offset + length);
+	assert(reader->key->packets[reader->packet].length >=
+			reader->offset + length);
 
-	(void) memcpy(dest, &reader->key->packets[reader->packet].raw[reader->offset], length);
+	(void) memcpy(dest,
+		&reader->key->packets[reader->packet].raw[reader->offset],
+		length);
 	reader->offset += length;
 
 	return length;
@@ -132,21 +132,25 @@ free_signature_info(__ops_signature_info_t * sig)
 }
 
 static void 
-copy_signature_info(__ops_signature_info_t * dst, const __ops_signature_info_t * src)
+copy_signature_info(__ops_signature_info_t * dst,
+			const __ops_signature_info_t * src)
 {
 	(void) memcpy(dst, src, sizeof(*src));
 	dst->v4_hashed_data = calloc(1, src->v4_hashed_data_length);
-	(void) memcpy(dst->v4_hashed_data, src->v4_hashed_data, src->v4_hashed_data_length);
+	(void) memcpy(dst->v4_hashed_data, src->v4_hashed_data,
+		src->v4_hashed_data_length);
 }
 
 static void 
-add_sig_to_list(const __ops_signature_info_t *sig, __ops_signature_info_t **sigs,
-		unsigned *count)
+add_sig_to_list(const __ops_signature_info_t *sig,
+			__ops_signature_info_t **sigs,
+			unsigned *count)
 {
 	if (*count == 0) {
 		*sigs = calloc(*count + 1, sizeof(__ops_signature_info_t));
 	} else {
-		*sigs = realloc(*sigs, (*count + 1) * sizeof(__ops_signature_info_t));
+		*sigs = realloc(*sigs,
+				(*count + 1) * sizeof(__ops_signature_info_t));
 	}
 	copy_signature_info(&(*sigs)[*count], sig);
 	*count += 1;
@@ -154,16 +158,18 @@ add_sig_to_list(const __ops_signature_info_t *sig, __ops_signature_info_t **sigs
 
 
 __ops_parse_cb_return_t
-__ops_validate_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * cbinfo)
+__ops_validate_key_cb(const __ops_parser_content_t * contents,
+			__ops_parse_cb_info_t * cbinfo)
 {
 	const __ops_parser_content_union_t *content = &contents->u;
-	validate_key_cb_t *key = __ops_parse_cb_get_arg(cbinfo);
-	__ops_error_t   **errors = __ops_parse_cb_get_errors(cbinfo);
-	const __ops_keydata_t *signer;
-	bool   valid = false;
+	const __ops_keydata_t	*signer;
+	validate_key_cb_t	*key = __ops_parse_cb_get_arg(cbinfo);
+	__ops_error_t		**errors = __ops_parse_cb_get_errors(cbinfo);
+	bool			 valid = false;
 
-	if (__ops_get_debug_level(__FILE__))
+	if (__ops_get_debug_level(__FILE__)) {
 		printf("%s\n", __ops_show_packet_tag(contents->tag));
+	}
 
 	switch (contents->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
@@ -191,7 +197,8 @@ __ops_validate_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_in
 
 	case OPS_PTAG_CT_USER_ATTRIBUTE:
 		assert(content->user_attribute.data.len);
-		printf("user attribute, length=%d\n", (int) content->user_attribute.data.len);
+		printf("user attribute, length=%d\n",
+			(int) content->user_attribute.data.len);
 		if (key->user_attribute.data.len)
 			__ops_user_attribute_free(&key->user_attribute);
 		key->user_attribute = content->user_attribute;
@@ -259,7 +266,8 @@ __ops_validate_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_in
 
 		default:
 			OPS_ERROR_1(errors, OPS_E_UNIMPLEMENTED,
-				    "Unexpected signature type 0x%02x\n", content->signature.info.type);
+				    "Unexpected signature type 0x%02x\n",
+				    	content->signature.info.type);
 		}
 
 		if (valid) {
@@ -267,7 +275,7 @@ __ops_validate_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_in
 				&key->result->valid_sigs,
 				&key->result->validc);
 		} else {
-			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE, "Bad Signature");
+			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE, "Bad Sig");
 			add_sig_to_list(&content->signature.info,
 					&key->result->invalid_sigs,
 					&key->result->invalidc);
@@ -295,16 +303,18 @@ __ops_validate_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_in
 }
 
 __ops_parse_cb_return_t
-validate_data_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * cbinfo)
+validate_data_cb(const __ops_parser_content_t * contents,
+			__ops_parse_cb_info_t * cbinfo)
 {
 	const __ops_parser_content_union_t *content = &contents->u;
-	validate_data_cb_t *data = __ops_parse_cb_get_arg(cbinfo);
-	__ops_error_t   **errors = __ops_parse_cb_get_errors(cbinfo);
-	const __ops_keydata_t *signer;
-	bool   valid = false;
+	const __ops_keydata_t	*signer;
+	validate_data_cb_t	*data = __ops_parse_cb_get_arg(cbinfo);
+	__ops_error_t		**errors = __ops_parse_cb_get_errors(cbinfo);
+	bool			 valid = false;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		printf("validate_data_cb: %s\n", __ops_show_packet_tag(contents->tag));
+		printf("validate_data_cb: %s\n",
+			__ops_show_packet_tag(contents->tag));
 	}
 	switch (contents->tag) {
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
@@ -338,14 +348,19 @@ validate_data_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t 
 
 	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
-
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned int    zzz = 0;
+			unsigned i = 0;
+
 			printf("\n*** hashed data:\n");
-			for (zzz = 0; zzz < content->signature.info.v4_hashed_data_length; zzz++)
-				printf("0x%02x ", content->signature.info.v4_hashed_data[zzz]);
+			for (i = 0;
+			     i < content->signature.info.v4_hashed_data_length;
+			     i++) {
+				printf("0x%02x ",
+				content->signature.info.v4_hashed_data[i]);
+			}
 			printf("\n");
-			printf("  type=%02x signer_id=", content->signature.info.type);
+			printf("  type=%02x signer_id=",
+				content->signature.info.type);
 			hexdump(content->signature.info.signer_id,
 				sizeof(content->signature.info.signer_id), "");
 			printf("\n");
@@ -353,7 +368,8 @@ validate_data_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t 
 		signer = __ops_keyring_find_key_by_id(data->keyring,
 					 content->signature.info.signer_id);
 		if (!signer) {
-			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER, "Unknown Signer");
+			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,
+					"Unknown Signer");
 			add_sig_to_list(&content->signature.info,
 					&data->result->unknown_sigs,
 					&data->result->unknownc);
@@ -362,16 +378,17 @@ validate_data_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t 
 		switch (content->signature.info.type) {
 		case OPS_SIG_BINARY:
 		case OPS_SIG_TEXT:
-
-			valid = check_binary_signature(__ops_memory_get_length(data->mem),
-					      __ops_memory_get_data(data->mem),
-						       &content->signature,
-				      __ops_get_public_key_from_data(signer));
+			valid = check_binary_signature(
+					__ops_memory_get_length(data->mem),
+					__ops_memory_get_data(data->mem),
+					&content->signature,
+					__ops_get_public_key_from_data(signer));
 			break;
 
 		default:
 			OPS_ERROR_1(errors, OPS_E_UNIMPLEMENTED,
-				    "Verification of signature type 0x%02x not yet implemented\n", content->signature.info.type);
+				    "No Sig Verification type 0x%02x yet\n",
+				    content->signature.info.type);
 			break;
 
 		}
@@ -383,7 +400,8 @@ validate_data_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t 
 					&data->result->valid_sigs,
 					&data->result->validc);
 		} else {
-			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE, "Bad Signature");
+			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE,
+					"Bad Signature");
 			add_sig_to_list(&content->signature.info,
 					&data->result->invalid_sigs,
 					&data->result->invalidc);
@@ -413,7 +431,8 @@ keydata_destroyer(__ops_reader_info_t * rinfo)
 }
 
 void 
-__ops_keydata_reader_set(__ops_parse_info_t * pinfo, const __ops_keydata_t * key)
+__ops_keydata_reader_set(__ops_parse_info_t *pinfo,
+			const __ops_keydata_t *key)
 {
 	validate_reader_t *data = calloc(1, sizeof(*data));
 
@@ -428,7 +447,8 @@ __ops_keydata_reader_set(__ops_parse_info_t * pinfo, const __ops_keydata_t * key
  * \ingroup HighLevel_Verify
  * \brief Indicicates whether any errors were found
  * \param result Validation result to check
- * \return false if any invalid signatures or unknown signers or no valid signatures; else true
+ * \return false if any invalid signatures or unknown signers
+ 	or no valid signatures; else true
  */
 static bool 
 validate_result_status(__ops_validation_t *val)
@@ -446,27 +466,10 @@ validate_result_status(__ops_validation_t *val)
  * \return true if all signatures OK; else false
  * \note It is the caller's responsiblity to free result after use.
  * \sa __ops_validate_result_free()
-
- Example Code:
-\code
-void example(const __ops_keydata_t* key, const __ops_keyring_t *keyring)
-{
-  __ops_validation_t *result=NULL;
-  if (__ops_validate_key_signatures(result, key, keyring, callback_cmd_get_passphrase_from_cmdline)==true)
-    printf("OK");
-  else
-    printf("ERR");
-  printf("valid=%d, invalid=%d, unknown=%d\n",
-         result->validc,
-         result->invalidc,
-         result->unknownc);
-  __ops_validate_result_free(result);
-}
-
-\endcode
  */
 bool 
-__ops_validate_key_signatures(__ops_validation_t * result, const __ops_keydata_t * key,
+__ops_validate_key_signatures(__ops_validation_t * result,
+				const __ops_keydata_t * key,
 			    const __ops_keyring_t * keyring,
 			    __ops_parse_cb_return_t cb_get_passphrase(const __ops_parser_content_t *, __ops_parse_cb_info_t *)
 )
@@ -524,8 +527,10 @@ __ops_validate_all_signatures(__ops_validation_t * result,
 	int             n;
 
 	(void) memset(result, 0x0, sizeof(*result));
-	for (n = 0; n < ring->nkeys; ++n)
-		__ops_validate_key_signatures(result, &ring->keys[n], ring, cb_get_passphrase);
+	for (n = 0; n < ring->nkeys; ++n) {
+		__ops_validate_key_signatures(result, &ring->keys[n], ring,
+				cb_get_passphrase);
+	}
 	return validate_result_status(result);
 }
 
@@ -536,20 +541,21 @@ __ops_validate_all_signatures(__ops_validation_t * result,
    \note Must be called after validation functions
 */
 void 
-__ops_validate_result_free(__ops_validation_t * result)
+__ops_validate_result_free(__ops_validation_t *result)
 {
-	if (!result)
-		return;
-
-	if (result->valid_sigs)
-		free_signature_info(result->valid_sigs);
-	if (result->invalid_sigs)
-		free_signature_info(result->invalid_sigs);
-	if (result->unknown_sigs)
-		free_signature_info(result->unknown_sigs);
-
-	free(result);
-	result = NULL;
+	if (result != NULL) {
+		if (result->valid_sigs) {
+			free_signature_info(result->valid_sigs);
+		}
+		if (result->invalid_sigs) {
+			free_signature_info(result->invalid_sigs);
+		}
+		if (result->unknown_sigs) {
+			free_signature_info(result->unknown_sigs);
+		}
+		(void) free(result);
+		result = NULL;
+	}
 }
 
 /**
@@ -559,47 +565,30 @@ __ops_validate_result_free(__ops_validation_t * result)
    \param filename Name of file to be validated
    \param armoured Treat file as armoured, if set
    \param keyring Keyring to use
-   \return true if signatures validate successfully; false if signatures fail or there are no signatures
+   \return true if signatures validate successfully;
+   	false if signatures fail or there are no signatures
    \note After verification, result holds the details of all keys which
    have passed, failed and not been recognised.
-   \note It is the caller's responsiblity to call __ops_validate_result_free(result) after use.
-
-Example code:
-\code
-void example(const char* filename, const int armoured, const __ops_keyring_t* keyring)
-{
-  __ops_validation_t* result=calloc(1, sizeof(*result));
-
-  if (__ops_validate_file(result, filename, armoured, keyring)==true)
-  {
-    printf("OK");
-    // look at result for details of keys with good signatures
-  }
-  else
-  {
-    printf("ERR");
-    // look at result for details of failed signatures or unknown signers
-  }
-
-  __ops_validate_result_free(result);
-}
-\endcode
+   \note It is the caller's responsiblity to call
+   	__ops_validate_result_free(result) after use.
 */
 bool 
-__ops_validate_file(__ops_validation_t * result, const char *filename, const int armoured, const __ops_keyring_t * keyring)
+__ops_validate_file(__ops_validation_t *result,
+			const char *filename,
+			const int armoured,
+			const __ops_keyring_t *keyring)
 {
 	__ops_parse_info_t *pinfo = NULL;
 	validate_data_cb_t validation;
-
 	int             fd = 0;
 
-	/* */
-	fd = __ops_setup_file_read(&pinfo, filename, &validation, validate_data_cb, true);
-	if (fd < 0)
+	fd = __ops_setup_file_read(&pinfo, filename, &validation,
+				validate_data_cb, true);
+	if (fd < 0) {
 		return false;
+	}
 
 	/* Set verification reader and handling options */
-
 	(void) memset(&validation, 0x0, sizeof(validation));
 	validation.result = result;
 	validation.keyring = keyring;
@@ -609,22 +598,23 @@ __ops_validate_file(__ops_validation_t * result, const char *filename, const int
 	/* is never used. */
 	validation.rarg = pinfo->rinfo.arg;
 
-	if (armoured)
+	if (armoured) {
 		__ops_reader_push_dearmour(pinfo);
+	}
 
 	/* Do the verification */
-
 	__ops_parse(pinfo);
-
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("valid=%d, invalid=%d, unknown=%d\n",
 		       result->validc,
 		       result->invalidc,
 		       result->unknownc);
 	}
+
 	/* Tidy up */
-	if (armoured)
+	if (armoured) {
 		__ops_reader_pop_dearmour(pinfo);
+	}
 	__ops_teardown_file_read(pinfo, fd);
 
 	return validate_result_status(result);
@@ -640,20 +630,21 @@ __ops_validate_file(__ops_validation_t * result, const char *filename, const int
    \return true if signature validates successfully; false if not
    \note After verification, result holds the details of all keys which
    have passed, failed and not been recognised.
-   \note It is the caller's responsiblity to call __ops_validate_result_free(result) after use.
+   \note It is the caller's responsiblity to call
+   	__ops_validate_result_free(result) after use.
 */
 
 bool 
-__ops_validate_mem(__ops_validation_t *result, __ops_memory_t * mem, const int armoured, const __ops_keyring_t * keyring)
+__ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
+			const int armoured, const __ops_keyring_t *keyring)
 {
 	__ops_parse_info_t *pinfo = NULL;
 	validate_data_cb_t validation;
 
-	/* */
-	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb, true);
+	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb,
+			true);
 
 	/* Set verification reader and handling options */
-
 	(void) memset(&validation, 0x0, sizeof(validation));
 	validation.result = result;
 	validation.keyring = keyring;
@@ -663,22 +654,23 @@ __ops_validate_mem(__ops_validation_t *result, __ops_memory_t * mem, const int a
 	/* is never used. */
 	validation.rarg = pinfo->rinfo.arg;
 
-	if (armoured)
+	if (armoured) {
 		__ops_reader_push_dearmour(pinfo);
+	}
 
 	/* Do the verification */
-
 	__ops_parse(pinfo);
-
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("valid=%d, invalid=%d, unknown=%d\n",
 		       result->validc,
 		       result->invalidc,
 		       result->unknownc);
 	}
+
 	/* Tidy up */
-	if (armoured)
+	if (armoured) {
 		__ops_reader_pop_dearmour(pinfo);
+	}
 	__ops_teardown_memory_read(pinfo, mem);
 
 	return validate_result_status(result);
