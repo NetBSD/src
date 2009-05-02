@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.24 2009/04/26 22:23:01 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.25 2009/05/02 01:15:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -672,13 +672,11 @@ ukfs_lutimes(struct ukfs *ukfs, const char *filename,
  * can't protect against other threads calling dl*() outside of ukfs,
  * so just live with it being flimsy
  */
-#define UFSLIB "librumpfs_ufs.so"
 int
 ukfs_modload(const char *fname)
 {
 	void *handle, *thesym;
 	struct stat sb;
-	const char *p;
 	int error;
 
 	if (stat(fname, &sb) == -1)
@@ -693,20 +691,6 @@ ukfs_modload(const char *fname)
 		/* XXXerrno */
 		return -1;
 	}
-
-	/*
-	 * XXX: the ufs module is not loaded in the same fashion as the
-	 * others.  But we can't do dlclose() for it, since that would
-	 * lead to not being able to load ffs/ext2fs/lfs.  Hence hardcode
-	 * and kludge around the issue for now.  But this should really
-	 * be fixed by fixing sys/ufs/ufs to be a kernel module.
-	 */
-	if ((p = strrchr(fname, '/')) != NULL)
-		p++;
-	else
-		p = fname;
-	if (strcmp(p, UFSLIB) == 0)
-		return 1;
 
 	thesym = dlsym(handle, "__start_link_set_modules");
 	if (thesym) {
