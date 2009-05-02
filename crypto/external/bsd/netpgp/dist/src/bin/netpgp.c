@@ -67,6 +67,7 @@ enum optdefs {
 	ARMOUR,
 	HOMEDIR,
 	NUMBITS,
+	DETACHED,
 
 	/* debug */
 	OPS_DEBUG
@@ -101,6 +102,7 @@ static struct option long_options[] = {
 	{"armor", no_argument, NULL, ARMOUR},
 	{"armour", no_argument, NULL, ARMOUR},
 	{"numbits", required_argument, NULL, NUMBITS},
+	{"detached", no_argument, NULL, DETACHED},
 
 	/* debug */
 	{"debug", required_argument, NULL, OPS_DEBUG},
@@ -118,6 +120,7 @@ typedef struct prog_t {
 	int		overwrite;			/* overwrite files? */
 	int             numbits;			/* # of bits */
 	int             armour;				/* ASCII armor */
+	int		detached;			/* use separate file */
 	int             cmd;				/* netpgp command */
 	int             ex;				/* exit code */
 } prog_t;
@@ -160,10 +163,12 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 		netpgp_decrypt_file(netpgp, f, NULL, p->armour);
 		break;
 	case SIGN:
-		netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour, 0);
+		netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour, 0,
+				p->detached);
 		break;
 	case CLEARSIGN:
-		netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour, 1);
+		netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour, 1,
+				p->detached);
 		break;
 	case VERIFY:
 		netpgp_verify_file(netpgp, f, p->armour);
@@ -251,6 +256,10 @@ main(int argc, char **argv)
 
 		case ARMOUR:
 			p.armour = 1;
+			break;
+
+		case DETACHED:
+			p.detached = 1;
 			break;
 
 		case HOMEDIR:

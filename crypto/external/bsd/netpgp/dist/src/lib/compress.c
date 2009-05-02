@@ -38,7 +38,6 @@
 #include <string.h>
 
 #include "packet-parse.h"
-#include "crypto.h"
 #include "errors.h"
 #include "netpgpdefs.h"
 #include "parse_local.h"
@@ -80,8 +79,8 @@ typedef struct {
 static int 
 zlib_compressed_data_reader(void *dest, size_t length,
 			    __ops_error_t ** errors,
-			    __ops_reader_info_t * rinfo,
-			    __ops_parse_cb_info_t * cbinfo)
+			    __ops_reader_info_t *rinfo,
+			    __ops_parse_cb_info_t *cbinfo)
 {
 	z_decompress_t *z = __ops_reader_get_arg(rinfo);
 	size_t           len;

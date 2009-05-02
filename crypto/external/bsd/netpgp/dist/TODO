@@ -41,3 +41,4 @@ real naming scheme
 get rid of malloc() instances -> calloc()
 change include directory
 Install man pages
+WARNS=4 (again)
