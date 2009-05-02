@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.43 2009/05/01 22:03:36 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.44 2009/05/02 16:10:49 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.43 2009/05/01 22:03:36 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.44 2009/05/02 16:10:49 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -130,6 +130,7 @@ static inline void RESTORE(const char *file, size_t line)
 %token	<y_op>		T_UNOP
 %token	<y_op>		T_INCDEC
 %token			T_SIZEOF
+%token			T_ALIGNOF
 %token	<y_op>		T_MULT
 %token	<y_op>		T_DIVOP
 %token	<y_op>		T_ADDOP
@@ -195,7 +196,7 @@ static inline void RESTORE(const char *file, size_t line)
 %left	T_SHFTOP
 %left	T_ADDOP
 %left	T_MULT T_DIVOP
-%right	T_UNOP T_INCDEC T_SIZEOF T_REAL T_IMAG
+%right	T_UNOP T_INCDEC T_SIZEOF T_ALIGNOF T_REAL T_IMAG
 %left	T_LPARN T_LBRACK T_STROP
 
 %token	<y_sb>		T_NAME
@@ -1693,6 +1694,9 @@ term:
 	  }
 	| T_SIZEOF T_LPARN type_name T_RPARN		%prec T_SIZEOF {
 		$$ = bldszof($3);
+	  }
+	| T_ALIGNOF T_LPARN type_name T_RPARN		%prec T_ALIGNOF {
+		$$ = bldalof($3);
 	  }
 	| T_LPARN type_name T_RPARN term		%prec T_UNOP {
 		$$ = cast($4, $2);

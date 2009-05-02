@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.58 2009/04/27 15:08:10 ginsbach Exp $	*/
+/*	$NetBSD: tree.c,v 1.59 2009/05/02 16:10:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.58 2009/04/27 15:08:10 ginsbach Exp $");
+__RCSID("$NetBSD: tree.c,v 1.59 2009/05/02 16:10:49 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3095,6 +3095,55 @@ bldszof(type_t *tp)
 #endif
 
 	return (getinode(st, (int64_t)(elem * elsz / CHAR_BIT)));
+}
+
+/*
+ */
+tnode_t *
+bldalof(type_t *tp)
+{
+	tspec_t	st;
+
+	switch (tp->t_tspec) {
+	case ARRAY:
+		break;
+
+	case FUNC:
+		/* cannot take align of function */
+		error(144);
+		return 0;
+
+	case STRUCT:
+	case UNION:
+		if (incompl(tp)) {
+			/* cannot take align of incomplete type */
+			error(143);
+			return 0;
+		}
+		break;
+	case ENUM:
+		break;
+	default:
+		if (tp->t_isfield) {
+			/* cannot take align of bit-field */
+			error(145);
+			return 0;
+		}
+		if (tp->t_tspec == VOID) {
+			/* cannot take alignsize of void */
+			error(146);
+			return 0;
+		}
+		break;
+	}
+
+#if SIZEOF_IS_ULONG
+	st = ULONG;
+#else
+	st = UINT;
+#endif
+
+	return getinode(st, (int64_t)getbound(tp));
 }
 
 /*
