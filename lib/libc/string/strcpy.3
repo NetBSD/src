@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.19 2009/05/02 09:31:08 wiz Exp $
+.\"	$NetBSD: strcpy.3,v 1.20 2009/05/02 09:37:32 wiz Exp $
 .\"
 .Dd May 1, 2009
 .Dt STRCPY 3
@@ -140,15 +140,13 @@ char chararray[6];
 .Pp
 Note that it does
 .Em not
-.Tn NUL
-terminate
+.Dv NUL Ns No -terminate
 .Va chararray
 because the length of the source string is greater than or equal
 to the length parameter.
 .Fn strncpy
 .Em only
-.Tn NUL
-terminates
+.Dv NUL Ns No -terminates
 the destination string when the length of the source
 string is less than the length parameter.
 .Pp
@@ -157,15 +155,15 @@ The following copies as many characters from
 to
 .Va buf
 as will fit and
-.Tn NUL
-terminates the result.
+.Dv NUL Ns No -terminates
+the result.
 Because
 .Fn strncpy
 does
 .Em not
 guarantee to
-.Tn NUL
-terminate the string itself, this must be done explicitly.
+.Dv NUL Ns No -terminate
+the string itself, this must be done explicitly.
 .Bd -literal -offset indent
 char buf[1024];
 
