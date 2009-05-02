@@ -29,7 +29,9 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/mman.h>
 
 #ifdef HAVE_OPENSSL_CAST_H
 #include <openssl/cast.h>
@@ -158,13 +160,15 @@ psuccess(char *f, __ops_validation_t *results, __ops_keyring_t *pubring)
 
 /* sign a file, and put the signature in a separate file */
 static int
-sign_detached(__ops_secret_key_t *seckey, const char *hashstr, char *f,
-		char *sigfile)
+sign_detached(char *f, char *sigfile, __ops_secret_key_t *seckey,
+		const char *hashstr)
 {
 	__ops_create_signature_t	*sig;
 	__ops_hash_algorithm_t		 alg;
 	__ops_create_info_t		*info;
 	unsigned char	 		 keyid[OPS_KEY_ID_SIZE];
+	unsigned char			*mmapped;
+	struct stat			 st;
 	time_t				 t;
 	char				 fname[MAXPATHLEN];
 	int				 fd;
@@ -188,19 +192,32 @@ sign_detached(__ops_secret_key_t *seckey, const char *hashstr, char *f,
 			f);
 		return 0;
 	}
-	for (;;) {
-		unsigned char	buf[8192];
-		int 		n;
+	/* attempt to mmap(2) the file - if that fails, fall back to
+	 * standard read(2) */
+	mmapped = MAP_FAILED;
+	if (fstat(fd, &st) == 0) {
+		mmapped = mmap(NULL, (size_t)st.st_size, PROT_READ,
+					MAP_FILE | MAP_PRIVATE, fd, 0);
+	}
+	if (mmapped == MAP_FAILED) {
+		for (;;) {
+			unsigned char	buf[8192];
+			int 		n;
 
-		if ((n = read(fd, buf, sizeof(buf))) == 0) {
-			break;
+			if ((n = read(fd, buf, sizeof(buf))) == 0) {
+				break;
+			}
+			if (n < 0) {
+				(void) fprintf(stderr, "short read \"%s\"\n",
+						f);
+				(void) close(fd);
+				return 0;
+			}
+			__ops_signature_add_data(sig, buf, (unsigned)n);
 		}
-		if (n < 0) {
-			(void) fprintf(stderr, "short read \"%s\"\n", f);
-			(void) close(fd);
-			return 0;
-		}
-		__ops_signature_add_data(sig, buf, (unsigned)n);
+	} else {
+		__ops_signature_add_data(sig, mmapped, (unsigned)st.st_size);
+		(void) munmap(mmapped, (unsigned)st.st_size);
 	}
 	(void) close(fd);
 
@@ -463,7 +480,7 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 	if (cleartext) {
 		__ops_sign_file_as_cleartext(f, out, seckey, true);
 	} else if (detached) {
-		sign_detached(seckey, "SHA1", f, out);
+		sign_detached(f, out, seckey, "SHA1");
 	} else {
 		__ops_sign_file(f, out, seckey, armored, true);
 	}
