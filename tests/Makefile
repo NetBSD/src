@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.14 2009/02/20 21:39:57 jmmv Exp $
+# $NetBSD: Makefile,v 1.15 2009/05/02 16:02:18 pooka Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	crypto fs games ipf kernel net util syscall
+SUBDIR=	crypto fs games ipf kernel net rump syscall util
 
 .if ${MACHINE} != "evbppc"
 SUBDIR+= modules
