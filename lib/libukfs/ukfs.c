@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.25 2009/05/02 01:15:52 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.26 2009/05/02 15:20:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -675,7 +675,8 @@ ukfs_lutimes(struct ukfs *ukfs, const char *filename,
 int
 ukfs_modload(const char *fname)
 {
-	void *handle, *thesym;
+	void *handle;
+	struct modinfo **mi;
 	struct stat sb;
 	int error;
 
@@ -692,9 +693,9 @@ ukfs_modload(const char *fname)
 		return -1;
 	}
 
-	thesym = dlsym(handle, "__start_link_set_modules");
-	if (thesym) {
-		error = rump_module_load(thesym);
+	mi = dlsym(handle, "__start_link_set_modules");
+	if (mi) {
+		error = rump_module_init(*mi, NULL);
 		if (error)
 			goto errclose;
 		return 1;
