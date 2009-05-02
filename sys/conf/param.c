@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.60 2009/03/06 20:31:54 joerg Exp $	*/
+/*	$NetBSD: param.c,v 1.61 2009/05/02 14:13:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.60 2009/03/06 20:31:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.61 2009/05/02 14:13:28 pooka Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -130,6 +130,8 @@ size_t	coherency_unit = COHERENCY_UNIT;
 u_int	maxcpus = 1;
 size_t	coherency_unit = ALIGNBYTES + 1;
 #endif
+
+int	dovfsusermount = 0;
 
 /*
  * Various mbuf-related parameters.  These can also be changed at run-time
