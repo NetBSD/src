@@ -1,4 +1,4 @@
-/*	$NetBSD: channel.c,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: channel.c,v 1.2 2009/05/02 20:07:51 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: channel.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
+__RCSID("$NetBSD: channel.c,v 1.2 2009/05/02 20:07:51 plunky Exp $");
 
 #include <sys/ioctl.h>
 
@@ -76,8 +76,8 @@ channel_open(channel_t *chan, int fd)
 {
 	int n;
 
-	_DIAGASSERT(chan->refcnt == 0);
-	_DIAGASSERT(chan->state != CHANNEL_CLOSED);
+	assert(chan->refcnt == 0);
+	assert(chan->state != CHANNEL_CLOSED);
 
 	if (chan->mtu > 0) {
 		chan->sendbuf = malloc(chan->mtu);
@@ -114,7 +114,7 @@ channel_close(channel_t *chan)
 {
 	pkthdr_t *ph;
 
-	_DIAGASSERT(chan->state != CHANNEL_CLOSED);
+	assert(chan->state != CHANNEL_CLOSED);
 
 	log_debug("(fd#%d)", chan->fd);
 
@@ -139,10 +139,10 @@ void
 channel_free(channel_t *chan)
 {
 
-	_DIAGASSERT(chan->refcnt == 0);
-	_DIAGASSERT(chan->state == CHANNEL_CLOSED);
-	_DIAGASSERT(chan->qlen == 0);
-	_DIAGASSERT(STAILQ_EMPTY(&chan->pktlist));
+	assert(chan->refcnt == 0);
+	assert(chan->state == CHANNEL_CLOSED);
+	assert(chan->qlen == 0);
+	assert(STAILQ_EMPTY(&chan->pktlist));
 
 	LIST_REMOVE(chan, next);
 	free(chan->pfilter);
