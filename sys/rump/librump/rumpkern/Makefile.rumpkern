@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.44 2009/04/29 17:51:47 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.45 2009/05/02 14:16:52 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -9,7 +9,7 @@ LIB=		rump
 	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../conf					\
 	${RUMPTOP}/../dev					\
-	${RUMPTOP}/../secmodel/bsd44 ${RUMPTOP}/../secmodel/securelevel
+	${RUMPTOP}/../secmodel/bsd44
 
 #
 # Source modules, first the ones specifically implemented for librump.
@@ -40,8 +40,7 @@ SRCS+=	subr_devsw.c subr_callback.c subr_evcnt.c subr_hash.c		\
 	subr_specificdata.c subr_time.c subr_workqueue.c
 
 # 4.4BSD secmodel.  selection is hardcoded for now
-SRCS+=	secmodel_bsd44.c secmodel_bsd44_logic.c secmodel_bsd44_suser.c	\
-	secmodel_securelevel.c
+SRCS+=	secmodel_bsd44.c secmodel_bsd44_logic.c secmodel_bsd44_suser.c
 
 # the funny bit.  this doesn't really belong here, but helps with the
 # needs of kern_descrip.c.  And since it's a fully dynamic interface,
