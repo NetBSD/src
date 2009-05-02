@@ -1023,8 +1023,8 @@ __ops_sign_file_as_cleartext(const char *input_filename, const char *output_file
 	if (__ops_writer_push_clearsigned(cinfo, sig) != true) {
 		return false;
 	}
-	/* Do the signing */
 
+	/* Do the signing */
 	for (;;) {
 		int             n = 0;
 
