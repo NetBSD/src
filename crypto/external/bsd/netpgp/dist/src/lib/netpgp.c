@@ -54,10 +54,15 @@
 #include <assert.h>
 #endif
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 #include <regex.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -149,6 +154,83 @@ psuccess(char *f, __ops_validation_t *results, __ops_keyring_t *pubring)
 					  results->valid_sigs[i].signer_id);
 		__ops_print_public_keydata(pubkey);
 	}
+}
+
+/* sign a file, and put the signature in a separate file */
+static int
+sign_detached(__ops_secret_key_t *seckey, const char *hashstr, char *f,
+		char *sigfile)
+{
+	__ops_create_signature_t	*sig;
+	__ops_hash_algorithm_t		 alg;
+	__ops_create_info_t		*info;
+	unsigned char	 		 keyid[OPS_KEY_ID_SIZE];
+	time_t				 t;
+	char				 fname[MAXPATHLEN];
+	int				 fd;
+
+	/* find out which hash algorithm to use */
+	alg = __ops_hash_algorithm_from_text(hashstr);
+	if (alg == OPS_HASH_UNKNOWN) {
+		(void) fprintf(stderr,"Unknown hash algorithm: %s\n", hashstr);
+		return 0;
+	}
+
+	/* create a new signature */
+	sig = __ops_create_signature_new();
+	__ops_signature_start_cleartext_signature(sig, seckey, alg,
+			OPS_SIG_BINARY);
+
+	/* read the contents of 'f' */
+	fd = open(f, O_RDONLY);
+	if (fd < 0) {
+		(void) fprintf(stderr, "can't open file \"%s\" to sign\n",
+			f);
+		return 0;
+	}
+	for (;;) {
+		unsigned char	buf[8192];
+		int 		n;
+
+		if ((n = read(fd, buf, sizeof(buf))) == 0) {
+			break;
+		}
+		if (n < 0) {
+			(void) fprintf(stderr, "short read \"%s\"\n", f);
+			(void) close(fd);
+			return 0;
+		}
+		__ops_signature_add_data(sig, buf, (unsigned)n);
+	}
+	(void) close(fd);
+
+	/* calculate the signature */
+	t = time(NULL);
+	__ops_signature_add_creation_time(sig, t);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
+		&seckey->public_key);
+	__ops_signature_add_issuer_key_id(sig, keyid);
+	__ops_signature_hashed_subpackets_end(sig);
+
+	/* write the signature to the detached file */
+	if (sigfile == NULL) {
+		(void) snprintf(fname, sizeof(fname), "%s.sig", f);
+		sigfile = fname;
+	}
+	fd = open(sigfile, O_CREAT|O_TRUNC|O_WRONLY, 0666);
+	if (fd < 0) {
+		(void) fprintf(stderr, "can't write signature to \"%s\"\n",
+				sigfile);
+		return 0;
+	}
+
+	info = __ops_create_info_new();
+	__ops_writer_set_fd(info, fd);
+	__ops_write_signature(sig, &seckey->public_key, seckey, info);
+	__ops_secret_key_free(seckey);
+	(void) close(fd);
+
+	return 1;
 }
 
 /***************************************************************************/
@@ -348,7 +430,8 @@ netpgp_decrypt_file(netpgp_t *netpgp, char *f, char *out, int armored)
 
 /* sign a file */
 int
-netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armored, int cleartext)
+netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
+		int armored, int cleartext, int detached)
 {
 	const __ops_keydata_t	*keypair;
 	__ops_secret_key_t	*seckey;
@@ -358,8 +441,10 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armored
 		userid = netpgp->userid;
 	}
 	/* get key with which to sign */
-	if ((keypair = __ops_keyring_find_key_by_userid(netpgp->secring, userid)) == NULL) {
-		(void) fprintf(stderr, "Userid '%s' not found in keyring\n", userid);
+	keypair = __ops_keyring_find_key_by_userid(netpgp->secring, userid);
+	if (keypair == NULL) {
+		(void) fprintf(stderr, "Userid '%s' not found in keyring\n",
+				userid);
 		return 0;
 	}
 	do {
@@ -368,13 +453,17 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armored
 		/* get the passphrase */
 		get_pass_phrase(passphrase, sizeof(passphrase));
 		/* now decrypt key */
-		if ((seckey = __ops_decrypt_secret_key_from_data(keypair, passphrase)) == NULL) {
+		seckey = __ops_decrypt_secret_key_from_data(keypair,
+							passphrase);
+		if (seckey == NULL) {
 			(void) fprintf(stderr, "Bad passphrase\n");
 		}
 	} while (seckey == NULL);
 	/* sign file */
 	if (cleartext) {
 		__ops_sign_file_as_cleartext(f, out, seckey, true);
+	} else if (detached) {
+		sign_detached(seckey, "SHA1", f, out);
 	} else {
 		__ops_sign_file(f, out, seckey, armored, true);
 	}

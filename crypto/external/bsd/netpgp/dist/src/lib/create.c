@@ -1081,7 +1081,6 @@ __ops_write_literal_data_from_file(const char *filename,
 	unsigned char	*mmapped;
 	__ops_memory_t	*mem = NULL;
 	struct stat	 st;
-	size_t           initial_size = 1024;
 	size_t           len = 0;
 	int              fd = 0;
 	bool   		 rtn;
@@ -1099,17 +1098,18 @@ __ops_write_literal_data_from_file(const char *filename,
 #ifdef USE_MMAP_FOR_FILES
 	if (fstat(fd, &st) == 0) {
 		mem->length = st.st_size;
-		mmapped = mem->buf = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
+		mmapped = mem->buf = mmap(NULL, (size_t)st.st_size, PROT_READ,
+					MAP_FILE | MAP_PRIVATE, fd, 0);
 	}
 #endif
 	if (mmapped == MAP_FAILED) {
-		__ops_memory_init(mem, initial_size);
+		__ops_memory_init(mem, (size_t)st.st_size);
 		for (;;) {
 			ssize_t         n = 0;
 
-			n = read(fd, buf, sizeof(buf));
-			if (!n)
+			if ((n = read(fd, buf, sizeof(buf))) == 0) {
 				break;
+			}
 			__ops_memory_add(mem, buf, (unsigned)n);
 		}
 	}
@@ -1125,7 +1125,7 @@ __ops_write_literal_data_from_file(const char *filename,
 		__ops_write(__ops_memory_get_data(mem), len, info);
 
 #ifdef USE_MMAP_FOR_FILES
-	if (mmapped != NULL) {
+	if (mmapped != MAP_FAILED) {
 		munmap(mmapped, mem->length);
 		mmapped = buf;
 	}
@@ -1145,21 +1145,19 @@ __ops_write_literal_data_from_file(const char *filename,
    \param errnum Pointer to error
    \return new __ops_memory_t pointer containing the contents of the file
 
-   \note If there was an error opening the file or reading from it, errnum is set to the cause
-
+   \note If there was an error opening the file or reading from it,
+   	errnum is set to the cause
    \note It is the caller's responsibility to call __ops_memory_free(mem)
 */
-
 __ops_memory_t   *
 __ops_write_mem_from_file(const char *filename, int *errnum)
 {
-	size_t          initial_size = 1024;
-	int             fd = 0;
-	unsigned char   buf[1024];
 	__ops_memory_t   *mem = NULL;
+	unsigned char    buf[1024];
+	struct stat	 st;
+	int              fd = 0;
 
 	*errnum = 0;
-
 #ifdef O_BINARY
 	fd = open(filename, O_RDONLY | O_BINARY);
 #else
@@ -1170,19 +1168,22 @@ __ops_write_mem_from_file(const char *filename, int *errnum)
 		return false;
 	}
 	mem = __ops_memory_new();
-	__ops_memory_init(mem, initial_size);
+	(void) fstat(fd, &st);
+	__ops_memory_init(mem, (unsigned)st.st_size);
 	for (;;) {
 		ssize_t         n = 0;
-		n = read(fd, buf, 1024);
+
+		n = read(fd, buf, sizeof(buf));
 		if (n < 0) {
 			*errnum = errno;
 			break;
 		}
-		if (!n)
+		if (!n) {
 			break;
-		__ops_memory_add(mem, &buf[0], (unsigned)n);
+		}
+		__ops_memory_add(mem, buf, (unsigned)n);
 	}
-	close(fd);
+	(void) close(fd);
 	return mem;
 }
 
@@ -1199,17 +1200,19 @@ __ops_write_mem_from_file(const char *filename, int *errnum)
 */
 
 int 
-__ops_write_file_from_buf(const char *filename, const char *buf, const size_t len, const bool overwrite)
+__ops_write_file_from_buf(const char *filename, const char *buf,
+			const size_t len, const bool overwrite)
 {
-	int             fd = 0;
-	size_t          n = 0;
-	int             flags = 0;
+	size_t		n = 0;
+	int		flags = 0;
+	int		fd = 0;
 
 	flags = O_WRONLY | O_CREAT;
-	if (overwrite == true)
+	if (overwrite == true) {
 		flags |= O_TRUNC;
-	else
+	} else {
 		flags |= O_EXCL;
+	}
 #ifdef O_BINARY
 	flags |= O_BINARY;
 #endif

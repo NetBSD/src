@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.3 2009/04/28 09:19:15 wiz Exp $
+.\" $NetBSD: netpgp.1,v 1.4 2009/05/02 02:38:54 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 1, 2009
+.Dd May 1, 2009
 .Dt NETPGP 1
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Op Fl Fl armour
 .Op Fl Fl clearsign
 .Op Fl Fl decrypt
+.Op Fl Fl detached
 .Op Fl Fl encrypt
 .Op Fl Fl export-key
 .Op Fl Fl find-key
@@ -94,6 +95,9 @@ Decrypt the file using the user's private key.
 The pass phrase will be optained by prompting the user
 to type it in, using
 .Xr getpass 3 .
+.It Fl Fl detached
+when signing a file, place the resulting signature in a separate
+file from the one being signed.
 .It Fl Fl encrypt
 Use the user's public key to encrypt the files named on the command line.
 .It Fl Fl export-key
