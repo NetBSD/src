@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.37 2009/04/26 20:45:37 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.38 2009/05/03 16:53:54 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -17,6 +17,7 @@ CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
 CPPFLAGS+=	-DMAXUSERS=32
 CPPFLAGS+=	-DDIAGNOSTIC
 CPPFLAGS+=	-DCOMPAT_50
+CPPFLAGS+=	-DDEBUGPRINT
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include -I${RUMPTOP}/../arch
 CPPFLAGS+=	-I${RUMPTOP}/include
