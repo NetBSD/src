@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.62 2009/04/15 20:44:24 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.63 2009/05/03 17:21:13 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.62 2009/04/15 20:44:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.63 2009/05/03 17:21:13 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1010,6 +1010,11 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
         result = KAUTH_RESULT_DEFER;
 
 	switch (action) {
+	case KAUTH_DEVICE_BLUETOOTH_SETPRIV:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		break;
+
 	case KAUTH_DEVICE_RAWIO_SPEC:
 	case KAUTH_DEVICE_RAWIO_PASSTHRU:
 		/*
