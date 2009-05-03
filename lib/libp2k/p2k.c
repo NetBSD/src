@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.12 2009/05/03 17:10:20 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.13 2009/05/03 20:26:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -208,6 +208,15 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	}
 	if (getenv("P2K_NODETACH") != NULL) {
 		dodaemon = false;
+	}
+	if (getenv("P2K_NOCACHE_PAGE") != NULL) {
+		puffs_flags |= PUFFS_KFLAG_NOCACHE_PAGE;
+	}
+	if (getenv("P2K_NOCACHE_NAME") != NULL) {
+		puffs_flags |= PUFFS_KFLAG_NOCACHE_NAME;
+	}
+	if (getenv("P2K_NOCACHE") != NULL) {
+		puffs_flags |= PUFFS_KFLAG_NOCACHE;
 	}
 
 	strcpy(typebuf, "p2k|");
