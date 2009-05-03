@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.6 2009/05/03 18:08:17 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.7 2009/05/03 23:58:02 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -154,7 +154,7 @@ sys/dev/ic/ncr53c9x.c				1.138
 
 common/dist/zlib/zlib.h				1.3
 sys/lib/libkern/Makefile			patch
-sys/lib/libkern/crc32.c				1.1, 1.2, 1.3
+sys/lib/libkern/crc32.c				1.1-1.4
 sys/lib/libkern/crc32.h				1.1
 sys/lib/libkern/libkern.h			1.89, 1.90 via patch
 sys/lib/libkern/arch/i386/Makefile.inc		1.28
@@ -227,4 +227,64 @@ sys/net/if_vlan.c				1.63
 	capabilities so if, for example, TSO is on in both, then turned
 	off in the parent it will remain on in the vlan interface.
 	[darran, ticket #644]
+
+sbin/ping/ping.c				1.88
+
+	PR/41111: Ed Ravin: ping -R gives misleading error when remote
+	side doesn't support record route.
+	Deal with source route and record route specially giving a
+	meaningful error message.
+	[christos, ticket #636]
+
+sbin/drvctl/drvctl.8				1.6
+sbin/drvctl/drvctl.c				1.8 via patch
+sys/kern/kern_drvctl.c				1.24
+
+	Allow querying for root devices in the tree by specifying
+	an empty device name. Ensure that l_devname is NUL-terminated
+	and fail otherwise.  If drvctl -l is used without argument, print
+	the root device nodes.
+	[joerg, ticket #675]
+
+lib/libedit/common.c				1.23
+
+	Fix mis-evaluating whether a char is digit or not.
+	[msaitoh, ticket #703]
+
+sys/dev/mii/miidevs				1.81-1.83
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	Add ATHEROS F1 and F2 PHYs.  Add ATTANSIC and their L1/L2 PHYs.
+	Add a comment explaining how to regenerate miidevs.h and
+	miidevs_data.h.
+	[sborrill, ticket #721]
+
+sys/dev/pci/pcidevs				1.973
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add Attansic L1E Gigabit Ethernet Adapter.
+	[sborrill, ticket #722]
+
+sys/dev/pci/if_age.c				1.1-1.28
+sys/dev/pci/if_agereg.h				1.1-1.2
+sys/dev/pci/if_ale.c				1.1-1.3
+sys/dev/pci/if_alereg.h				1.1-1.2
+sys/dev/pci/files.pci				1.310-1.313
+sys/dev/mii/atphy.c				1.1-1.5
+sys/dev/mii/files.mii				1.42
+share/man/man4/age.4				1.1-1.3
+share/man/man4/ale.4				1.1-1.2
+share/man/man4/atphy.4				1.1-1.2
+share/man/man4/Makefile				1.486, 1.489
+strib/sets/lists/man/mi				1.1118, 1.1132
+sys/arch/i386/conf/GENERIC			1.928, 1.933
+sys/arch/i386/conf/XEN2_DOM0			1.57, 1.60
+sys/arch/amd64/conf/GENERIC			1.239, 1.241
+sys/arch/amd64/conf/XEN3_DOM0			1.38, 1.42
+
+	Add the age(4) and ale(4) drivers for Attansic L1 and Atheros
+	AR8121/AR8113/AR8114 devices respectively.
+	[cegger, ticket #735]
 
