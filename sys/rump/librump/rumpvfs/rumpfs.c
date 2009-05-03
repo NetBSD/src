@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.15 2009/05/01 11:00:49 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.16 2009/05/03 19:00:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.15 2009/05/01 11:00:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.16 2009/05/03 19:00:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -380,6 +380,7 @@ rumpfs_init(void)
 
 	/* XXX: init properly instead of this crap */
 	rump_mnt.mnt_refcnt = 1;
+	rump_mnt.mnt_flag = MNT_ROOTFS;
 	rw_init(&rump_mnt.mnt_unmounting);
 	TAILQ_INIT(&rump_mnt.mnt_vnodelist);
 
