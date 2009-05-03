@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.4 2009/05/03 13:23:26 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.5 2009/05/03 13:34:47 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -146,4 +146,9 @@ sys/netinet6/ip6_input.c			1.127
 
 	Add missing paranthesis - from Kurt Lidl in PR port-vax/41316
 	[martin, ticket #733]
+
+sys/dev/ic/ncr53c9x.c				1.138
+
+	Add missing braces - patch from Kurt Lidl in PR port-vax/41314.
+	[martin, ticket #734]
 
