@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.82 2008/09/08 23:36:55 gmcgarry Exp $	*/
+/*	$NetBSD: libkern.h,v 1.82.4.1 2009/05/03 17:24:45 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -337,6 +337,7 @@ size_t	 strlcpy __P((char *, const char *, size_t));
 size_t	 strlcat __P((char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_long	 strtoul __P((const char *, char **, int));
+uint32_t crc32(uint32_t, const unsigned char *, unsigned);
 long long strtoll __P((const char *, char **, int));
 unsigned long long strtoull __P((const char *, char **, int));
 uintmax_t strtoumax __P((const char *, char **, int));
