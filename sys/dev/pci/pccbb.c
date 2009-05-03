@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.185 2009/04/02 00:09:33 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.186 2009/05/03 00:31:12 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.185 2009/04/02 00:09:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.186 2009/05/03 00:31:12 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -643,7 +643,7 @@ pccbb_pci_callback(device_t self)
 		    (unsigned long)pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
 #endif
-		sc->sc_flags |= CBB_MEMHMAPPED;
+		sc->sc_flags |= CBB_MEMHMAPPED|CBB_SPECMAPPED;
 	}
 
 	/* clear data structure for child device interrupt handlers */
