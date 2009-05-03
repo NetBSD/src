@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.3 2009/03/20 13:01:35 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.4 2009/05/03 17:51:02 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.3 2009/03/20 13:01:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.4 2009/05/03 17:51:02 snj Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -581,11 +581,16 @@ static int32_t	wm_ich8_flash_cycle(struct wm_softc *, uint32_t);
 static int32_t	wm_read_ich8_data(struct wm_softc *, uint32_t,
 		     uint32_t, uint16_t *);
 static int32_t	wm_read_ich8_word(struct wm_softc *sc, uint32_t, uint16_t *);
+static void	wm_82547_txfifo_stall(void *);
+static int	wm_check_mng_mode(struct wm_softc *);
+static int	wm_check_mng_mode_ich8lan(struct wm_softc *);
+static int	wm_check_mng_mode_82574(struct wm_softc *);
+static int	wm_check_mng_mode_generic(struct wm_softc *);
+static void	wm_get_hw_control(struct wm_softc *);
 
 CFATTACH_DECL_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
 
-static void	wm_82547_txfifo_stall(void *);
 
 /*
  * Devices supported by this driver.
@@ -1266,6 +1271,17 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	wm_reset(sc);
 
+	switch (sc->sc_type) {
+	case WM_T_82573:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		if (wm_check_mng_mode(sc) != 0)
+			wm_get_hw_control(sc);
+		break;
+	default:
+		break;
+	}
+
 	/*
 	 * Get some information about the EEPROM.
 	 */
@@ -1328,13 +1344,18 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * that no EEPROM is attached.
 	 */
 
- 
 	/*
 	 * Validate the EEPROM checksum. If the checksum fails, flag this for
 	 * later, so we can fail future reads from the EEPROM.
 	 */
-	if (wm_validate_eeprom_checksum(sc))
-		sc->sc_flags |= WM_F_EEPROM_INVALID;
+	if (wm_validate_eeprom_checksum(sc)) {
+		/*
+		 * Read twice again because some PCI-e parts fail the first
+		 * check due to the link being in sleep state.
+		 */
+		if (wm_validate_eeprom_checksum(sc))
+			sc->sc_flags |= WM_F_EEPROM_INVALID;
+	}
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
@@ -3048,6 +3069,17 @@ wm_init(struct ifnet *ifp)
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
 
+	switch (sc->sc_type) {
+	case WM_T_82573:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		if (wm_check_mng_mode(sc) != 0)
+			wm_get_hw_control(sc);
+		break;
+	default:
+		break;
+	}
+
 	/* Initialize the transmit descriptor ring. */
 	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
 	WM_CDTXSYNC(sc, 0, WM_NTXDESC(sc),
@@ -3463,8 +3495,11 @@ wm_acquire_eeprom(struct wm_softc *sc)
 		ret = wm_get_swsm_semaphore(sc);
 	}
 
-	if (ret)
+	if (ret) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+			__func__);
 		return 1;
+	}
 
 	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE)  {
 		reg = CSR_READ(sc, WMREG_EECD);
@@ -4260,14 +4295,20 @@ wm_gmii_reset(struct wm_softc *sc)
 	int func = 0; /* XXX gcc */
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
-		if (wm_get_swfwhw_semaphore(sc))
+		if (wm_get_swfwhw_semaphore(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
 			return;
+		}
 	}
 	if (sc->sc_type == WM_T_80003) {
 		func = (CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1;
 		if (wm_get_swfw_semaphore(sc,
-		    func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+			func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
 			return;
+		}
 	}
 	if (sc->sc_type >= WM_T_82544) {
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
@@ -4622,8 +4663,11 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 	if (phy != 1) /* only one PHY on kumeran bus */
 		return 0;
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return 0;
+	}
 
 	if ((reg & GG82563_MAX_REG_ADDRESS) < GG82563_MIN_ALT_REG) {
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
@@ -4633,7 +4677,11 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 		    reg >> GG82563_PAGE_SHIFT);
 	}
 
+	/* Wait more 200us for a bug of the ready bit in the MDIC register */
+	delay(200);
+
 	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	delay(200);
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 	return (rv);
 }
@@ -4654,8 +4702,11 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 	if (phy != 1) /* only one PHY on kumeran bus */
 		return;
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return;
+	}
 
 	if ((reg & GG82563_MAX_REG_ADDRESS) < GG82563_MIN_ALT_REG) {
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
@@ -4665,7 +4716,11 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 		    reg >> GG82563_PAGE_SHIFT);
 	}
 
+	/* Wait more 200us for a bug of the ready bit in the MDIC register */
+	delay(200);
+
 	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
+	delay(200);
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 }
 
@@ -4744,8 +4799,11 @@ wm_kmrn_i80003_readreg(struct wm_softc *sc, int reg)
 	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 	int rv;
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return 0;
+	}
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
@@ -4767,8 +4825,11 @@ wm_kmrn_i80003_writereg(struct wm_softc *sc, int reg, int val)
 {
 	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return;
+	}
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
@@ -4845,8 +4906,12 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 
 	for(timeout = 0; timeout < 200; timeout++) {
 		if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE) {
-			if (wm_get_swsm_semaphore(sc))
+			if (wm_get_swsm_semaphore(sc)) {
+				aprint_error_dev(sc->sc_dev,
+				    "%s: failed to get semaphore\n",
+				    __func__);
 				return 1;
+			}
 		}
 		swfw_sync = CSR_READ(sc, WMREG_SW_FW_SYNC);
 		if ((swfw_sync & (swmask | fwmask)) == 0) {
@@ -4942,15 +5007,21 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
     bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
 
     error = wm_get_swfwhw_semaphore(sc);
-    if (error)
+    if (error) {
+	    aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		__func__);
         return error;
+    }
 
     for (i = 0; i < words; i++) {
             /* The NVM part needs a byte offset, hence * 2 */
             act_offset = bank_offset + ((offset + i) * 2);
             error = wm_read_ich8_word(sc, act_offset, &word);
-            if (error)
+            if (error) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to read NVM\n",
+		    __func__);
                 break;
+	    }
             data[i] = word;
     }
 
@@ -5165,4 +5236,89 @@ wm_read_ich8_word(struct wm_softc *sc, uint32_t index, uint16_t *data)
 
     status = wm_read_ich8_data(sc, index, 2, data);
     return status;
+}
+
+static int
+wm_check_mng_mode(struct wm_softc *sc)
+{
+	int rv;
+
+	switch (sc->sc_type) {
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		rv = wm_check_mng_mode_ich8lan(sc);
+		break;
+	case WM_T_82574:
+		rv = wm_check_mng_mode_82574(sc);
+		break;
+	default:
+		rv = wm_check_mng_mode_generic(sc);
+		break;
+	}
+
+	printf("XXXXXXXXXXXXX mng=%d ===============\n", rv);
+	return rv;
+}
+
+static int
+wm_check_mng_mode_ich8lan(struct wm_softc *sc)
+{
+	uint32_t fwsm;
+
+	fwsm = CSR_READ(sc, WMREG_FWSM);
+
+	if ((fwsm & FWSM_MODE_MASK) == (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT))
+		return 1;
+
+	return 0;
+}
+
+static int
+wm_check_mng_mode_82574(struct wm_softc *sc)
+{
+	uint16_t data;
+
+	wm_read_eeprom(sc, NVM_INIT_CONTROL2_REG, 1, &data);
+
+	if ((data & NVM_INIT_CTRL2_MNGM) != 0)
+		return 1;
+
+	return 0;
+}
+
+static int
+wm_check_mng_mode_generic(struct wm_softc *sc)
+{
+	uint32_t fwsm;
+
+	fwsm = CSR_READ(sc, WMREG_FWSM);
+
+	if ((fwsm & FWSM_MODE_MASK) == (MNG_IAMT_MODE << FWSM_MODE_SHIFT))
+		return 1;
+
+	return 0;
+}
+
+static void
+wm_get_hw_control(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	switch (sc->sc_type) {
+	case WM_T_82573:
+		reg = CSR_READ(sc, WMREG_SWSM);
+		CSR_WRITE(sc, WMREG_SWSM, reg | SWSM_DRV_LOAD);
+		break;
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		printf("YYYYYYYYYYYYYY load drv YYYYYYYYYYYYYYY\n");
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_DRV_LOAD);
+		break;
+	default:
+		break;
+	}
 }
