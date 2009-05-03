@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.5 2009/04/29 15:46:01 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.6 2009/05/03 12:10:00 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -39,9 +39,9 @@ w1(void *arg)
 	int fd;
 
 	while (!quit) {
-		fd = rump_sys_open("/rename.test1",
+		fd = rump_sys_open("/mp/rename.test1",
 		    O_WRONLY|O_CREAT|O_TRUNC, 0666);
-		rump_sys_unlink("/rename.test1");
+		rump_sys_unlink("/mp/rename.test1");
 		rump_sys_close(fd);
 	}
 	return NULL;
@@ -52,7 +52,7 @@ w2(void *arg)
 {
 
 	while (!quit)
-		rump_sys_rename("/rename.test1", "/rename.test2");
+		rump_sys_rename("/mp/rename.test1", "/mp/rename.test2");
 
 	return NULL;
 }
@@ -86,8 +86,10 @@ ATF_TC_BODY(renamerace, tc)
 	args.fspec = image;
 
 	rump_init();
+	if (rump_sys_mkdir("/mp", 0777) == -1)
+		atf_tc_fail_errno("cannot create mountpoint");
 	rump_fakeblk_register(image);
-	if (rump_sys_mount(MOUNT_FFS, "/", MNT_LOG, &args, sizeof(args)) == -1)
+	if (rump_sys_mount(MOUNT_FFS, "/mp", MNT_LOG, &args, sizeof(args))==-1)
 		atf_tc_fail_errno("rump_sys_mount failed");
 
 	pthread_create(&pt1, NULL, w1, NULL);
@@ -99,7 +101,8 @@ ATF_TC_BODY(renamerace, tc)
 	pthread_join(pt1, NULL);
 	pthread_join(pt2, NULL);
 
-	rump_sys_unmount("/", MNT_FORCE); /* XXX: MNT_FORCE */
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount failed");
 }
 
 ATF_TC_CLEANUP(renamerace, tc)
