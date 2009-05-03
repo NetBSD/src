@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.106 2009/05/02 15:20:08 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.107 2009/05/03 17:09:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.106 2009/05/02 15:20:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.107 2009/05/03 17:09:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -404,7 +404,7 @@ rump_clear_curlwp(void)
 	if (p->p_pid != 0) {
 		fd_free();
 		rump_proc_vfs_release(p);
-		rump_cred_destroy(l->l_cred);
+		rump_cred_put(l->l_cred);
 		kmem_free(p, sizeof(*p));
 	}
 	kmem_free(l, sizeof(*l));
@@ -445,7 +445,7 @@ rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 }
 
 void
-rump_cred_destroy(kauth_cred_t cred)
+rump_cred_put(kauth_cred_t cred)
 {
 
 	kauth_cred_free(cred);
