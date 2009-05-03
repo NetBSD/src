@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.4 2009/05/03 17:51:02 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.5 2009/05/03 17:54:07 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.4 2009/05/03 17:51:02 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.5 2009/05/03 17:54:07 snj Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1998,9 +1998,7 @@ wm_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
-#if 0 /* XXXJRT */
 	struct m_tag *mtag;
-#endif
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, ofree, seg, segs_needed, use_tso;
@@ -2241,7 +2239,6 @@ wm_start(struct ifnet *ifp)
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
 		    htole32(WTX_CMD_EOP | WTX_CMD_RS);
 
-#if 0 /* XXXJRT */
 		/*
 		 * If VLANs are enabled and the packet has a VLAN tag, set
 		 * up the descriptor to encapsulate the packet for us.
@@ -2254,7 +2251,6 @@ wm_start(struct ifnet *ifp)
 			sc->sc_txdescs[lasttx].wtx_fields.wtxu_vlan
 			    = htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
 		}
-#endif /* XXXJRT */
 
 		txs->txs_lastdesc = lasttx;
 
@@ -2558,6 +2554,7 @@ wm_rxintr(struct wm_softc *sc)
 	struct mbuf *m;
 	int i, len;
 	uint8_t status, errors;
+	uint16_t vlantag;
 
 	for (i = sc->sc_rxptr;; i = WM_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -2571,6 +2568,7 @@ wm_rxintr(struct wm_softc *sc)
 		status = sc->sc_rxdescs[i].wrx_status;
 		errors = sc->sc_rxdescs[i].wrx_errors;
 		len = le16toh(sc->sc_rxdescs[i].wrx_len);
+		vlantag = sc->sc_rxdescs[i].wrx_special;
 
 		if ((status & WRX_ST_DD) == 0) {
 			/*
@@ -2695,17 +2693,15 @@ wm_rxintr(struct wm_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 
-#if 0 /* XXXJRT */
 		/*
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
 		if ((status & WRX_ST_VP) != 0) {
 			VLAN_INPUT_TAG(ifp, m,
-			    le16toh(sc->sc_rxdescs[i].wrx_special,
+			    le16toh(vlantag),
 			    continue);
 		}
-#endif /* XXXJRT */
 
 		/*
 		 * Set up checksum info for this packet.
@@ -3194,12 +3190,10 @@ wm_init(struct ifnet *ifp)
 	}
 	CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
 
-#if 0 /* XXXJRT */
 	/* Deal with VLAN enables. */
 	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		sc->sc_ctrl |= CTRL_VME;
 	else
-#endif /* XXXJRT */
 		sc->sc_ctrl &= ~CTRL_VME;
 
 	/* Write the control registers. */
@@ -3282,10 +3276,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 
-#if 0 /* XXXJRT */
 	/* Set the VLAN ethernetype. */
 	CSR_WRITE(sc, WMREG_VET, ETHERTYPE_VLAN);
-#endif
 
 	/*
 	 * Set up the transmit control register; we start out with
