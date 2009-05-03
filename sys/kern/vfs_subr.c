@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.377 2009/04/29 15:44:55 dyoung Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.378 2009/05/03 16:52:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.377 2009/04/29 15:44:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.378 2009/05/03 16:52:54 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -3077,7 +3077,7 @@ VFS_SUSPENDCTL(struct mount *mp, int a)
 	return error;
 }
 
-#ifdef DDB
+#if defined(DDB) || defined(DEBUGPRINT)
 static const char buf_flagbits[] = BUF_FLAGBITS;
 
 void
@@ -3225,5 +3225,5 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		(*pr)("\n", vp);
 	}
 }
-#endif /* DDB */
+#endif /* DDB || DEBUGPRINT */
 
