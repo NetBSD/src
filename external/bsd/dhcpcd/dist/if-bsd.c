@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@
 	sin.s_addr = ((sa) != NULL && ((sa)->sa_family == AF_INET ||	      \
 		(sa)->sa_family == 255))				      \
 	    ?								      \
-	    (((struct sockaddr_in *)sa)->sin_addr).s_addr : 0
+	    (((struct sockaddr_in *)(void *)sa)->sin_addr).s_addr : 0
 
 static int a_fd = -1;
 static int r_fd = -1;
