@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.3 2009/05/02 01:58:58 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.4 2009/05/03 13:23:26 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -103,4 +103,47 @@ sys/dev/raidframe/rf_diskqueue.h		1.23
 	still holdovers from the simulator and would never be seen/used
 	in-kernel.
 	[oster, ticket #607]
+
+sys/kern/sys_module.c				1.9
+
+	copyin the modctl_load_t for the non-x86 world. Fixes PR/41294.
+	[skrll, ticket #729]
+
+lib/libc/net/getifaddrs.3			1.10
+lib/libc/net/getifaddrs.c			1.12
+sbin/ifconfig/af_link.c				1.4 - 1.6
+sbin/ifconfig/ifconfig.c			1.216 - 1.218
+sbin/ifconfig/util.c				1.10, 1.11
+sbin/ifconfig/util.h				1.7
+
+	address in the 'address: ' field
+	For non-AF_LINK ifaddrs, ifa_data is NULL.  AFAICT, this has always
+	been so.  Say so in the documentation.
+	Bring getifaddrs(3) behavior in line with the documentation: the
+	ifa_data member of every AF_LINK struct ifaddrs points at the
+	corresponding struct if_data.  In ifconfig(8), do not try to suppress
+	duplicate AF_LINK ifaddrs by checking for a NULL ifa_data.
+	Don't copy out two AF_LINK struct ifaddrs for each active link-layer
+	address. getifaddrs(3) used to copy out one ifaddrs for the kernel's
+	RTM_IFINFO message, and one more for the kernel's RTM_NEWADDR message.
+	I suppress the first duplicate with a highly conservative change that
+	wastes a little bit of ifaddrs storage.  The storage is not leaked.
+	[dyoung, ticket #730]
+
+sys/kern/uipc_socket.c				1.189
+
+	PR kern/41311: Mutex error: mutex_vector_enter: locking against myself
+	[ad, ticket #731]
+
+sys/kern/vfs_dirhash.c				1.10
+
+	port-vax/41315: fix off by one error
+	Previous code ususally works since compiler won't put gap between
+	those struct members but there is no reason to rely on that.
+	[martin, ticket #732]
+
+sys/netinet6/ip6_input.c			1.127
+
+	Add missing paranthesis - from Kurt Lidl in PR port-vax/41316
+	[martin, ticket #733]
 
