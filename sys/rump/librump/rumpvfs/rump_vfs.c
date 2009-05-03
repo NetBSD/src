@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.18 2009/05/01 11:01:34 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.19 2009/05/03 16:01:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -360,6 +360,23 @@ rump_vfs_getopsbyname(const char *name)
 {
 
 	return vfs_getopsbyname(name);
+}
+
+int
+rump_vfs_getmp(const char *path, struct mount **mpp)
+{
+	struct nameidata nd;
+	struct vnode *vp;
+	int rv;
+
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, path);
+	if ((rv = namei(&nd)) != 0)
+		return rv;
+	vp = nd.ni_vp;
+
+	*mpp = vp->v_mount;
+	vrele(vp);
+	return 0;
 }
 
 struct vattr*
