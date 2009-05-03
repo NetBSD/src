@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.2 2009/04/13 12:54:45 nonaka Exp $
+# $NetBSD: Makefile.bootprogs,v 1.3 2009/05/03 15:12:12 tsutsui Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -29,15 +29,16 @@ CPPFLAGS+=	-nostdinc -D_STANDALONE
 CPPFLAGS+=	-DSH4
 CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../boot -I${S}
 
-.include <bsd.klinks.mk>
-
-lib:
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	-rm -f machine && \
+	    ln -s ${S}/arch/${MACHINE}/include machine
+	-rm -f ${MACHINE_CPU} && \
+	    ln -s ${S}/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
 .ifdef LIBOBJ
-	-rm -f $@
-	ln -s ${LIBOBJ}/lib .
-	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
-.else
-	mkdir lib
+	-rm -f lib && ln -s ${LIBOBJ}/lib lib
+	mkdir -p ${LIBOBJ}/lib
+.endif
 .endif
 
 ### find out what to use for libsa
@@ -55,8 +56,6 @@ LIBKERN= ${KERNLIB}
 Z_AS= library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
-
-realdepend realall: lib
 
 cleandir distclean: cleanlibdir
 
