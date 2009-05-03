@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.15 2009/05/03 16:01:44 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.16 2009/05/03 17:09:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -120,9 +120,9 @@ void	rump_vp_interlock(struct vnode *);
 
 kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
 kauth_cred_t	rump_cred_suserget(void);
-void		rump_cred_destroy(kauth_cred_t);
+void		rump_cred_put(kauth_cred_t);
 
-#define rump_cred_suserput(c)	rump_cred_destroy(c)
+#define rump_cred_suserput(c)	rump_cred_put(c)
 /* COMPAT_NETHACK */
 #define WizardMode()		rump_cred_suserget()
 #define YASD(cred)		rump_cred_suserput(cred)
