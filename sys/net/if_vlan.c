@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.60 2008/10/11 17:19:41 bouyer Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.60.4.1 2009/05/03 18:01:01 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.60 2008/10/11 17:19:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.60.4.1 2009/05/03 18:01:01 snj Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -316,11 +316,13 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		/*
 		 * If the parent interface can do hardware-assisted
 		 * VLAN encapsulation, then propagate its hardware-
-		 * assisted checksumming flags.
+		 * assisted checksumming flags and tcp segmentation
+		 * offload.
 		 */
 		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING)
 			ifp->if_capabilities = p->if_capabilities &
-			    (IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
+			    (IFCAP_TSOv4 |
+			     IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
 			     IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx|
 			     IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx|
 			     IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_TCPv6_Rx|
