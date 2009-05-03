@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.1 2009/03/20 13:02:17 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.2 2009/05/03 23:16:22 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962 2008/10/15 18:30:29 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.2 2009/05/03 23:14:57 snj Exp
  */
 
 /*
@@ -3822,6 +3822,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
 	    "ISDN",
+	},
+	{
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_L1E,
+	    "L1E Gigabit Ethernet Adapter",
 	},
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA,
@@ -14512,4 +14516,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3027;
+const int pci_nproducts = 3028;
