@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.55 2009/04/28 14:00:42 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.56 2009/05/03 16:53:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.55 2009/04/28 14:00:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.56 2009/05/03 16:53:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.55 2009/04/28 14:00:42 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_ddb.h>
 #include <uvm/uvm_prot.h>
 
 #include "rump_private.h"
@@ -438,6 +439,14 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 {
 
 	panic("%s: unimplemented", __func__);
+}
+
+void
+uvm_object_printit(struct uvm_object *uobj, bool full,
+	void (*pr)(const char *, ...))
+{
+
+	/* nada for now */
 }
 
 /*
