@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.177.4.2 2009/04/04 23:36:27 snj Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.177.4.2.2.1 2009/05/03 13:26:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177.4.2 2009/04/04 23:36:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177.4.2.2.1 2009/05/03 13:26:34 bouyer Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -2043,7 +2043,7 @@ sohasoutofband(struct socket *so)
 {
 
 	fownsignal(so->so_pgid, SIGURG, POLL_PRI, POLLPRI|POLLRDBAND, so);
-	selnotify(&so->so_rcv.sb_sel, POLLPRI | POLLRDBAND, 0);
+	selnotify(&so->so_rcv.sb_sel, POLLPRI | POLLRDBAND, NOTE_SUBMIT);
 }
 
 static void
