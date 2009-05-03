@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,7 +28,7 @@
 #define CONFIG_H
 
 #define PACKAGE			"dhcpcd"
-#define VERSION			"5.0.0"
+#define VERSION			"5.0.1"
 
 /* Some systems do not have a working fork. */
 /* #define THERE_IS_NO_FORK */
