@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.2 2009/05/03 13:26:57 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.3 2009/05/03 13:36:42 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -13,4 +13,9 @@ sys/kern/uipc_socket.c				1.189
 
 	PR kern/41311: Mutex error: mutex_vector_enter: locking against myself
 	[ad, ticket #731]
+
+sys/dev/ic/ncr53c9x.c				1.138
+
+	Add missing braces - patch from Kurt Lidl in PR port-vax/41314.
+	[martin, ticket #734]
 
