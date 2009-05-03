@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.5 2009/05/03 13:34:47 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.6 2009/05/03 18:08:17 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -151,4 +151,80 @@ sys/dev/ic/ncr53c9x.c				1.138
 
 	Add missing braces - patch from Kurt Lidl in PR port-vax/41314.
 	[martin, ticket #734]
+
+common/dist/zlib/zlib.h				1.3
+sys/lib/libkern/Makefile			patch
+sys/lib/libkern/crc32.c				1.1, 1.2, 1.3
+sys/lib/libkern/crc32.h				1.1
+sys/lib/libkern/libkern.h			1.89, 1.90 via patch
+sys/lib/libkern/arch/i386/Makefile.inc		1.28
+sys/lib/libsa/cread.c				1.23
+sys/lib/libz/Makefile				1.16
+sys/net/zlib.h					1.14 via patch
+sys/opencrypto/crypto.c				1.33
+sys/opencrypto/cryptodev.c			1.46
+sys/opencrypto/cryptodev.h			1.16
+sys/opencrypto/cryptosoft.c			1.24
+sys/opencrypto/cryptosoft.h			1.6
+sys/opencrypto/deflate.h			1.6
+sys/opencrypto/cryptosoft_xform.c		1.12
+sys/opencrypto/deflate.c			1.13
+sys/opencrypto/files.opencrypto			1.20
+sys/opencrypto/ocryptodev.c			1.1
+sys/opencrypto/ocryptodev.h			1.1
+sys/opencrypto/xform.c				1.18
+sys/opencrypto/xform.h				1.10
+
+	Extend the Opencrypto API to allow the destination buffer
+	size to be specified when it is not the same size as the input
+	buffer (i.e., for operations like compress and decompress).
+	The crypto_op and crypt_n_op structures gain a u_int dst_len
+	field.  The session_op structure gains a comp_alg field to
+	specify a compression algorithm.
+	Moved four ioctls to new ids; CIOCGSESSION, CIOCNGSESSION,
+	CIOCCRYPT, and CIOCNCRYPTM.  Added four backward compatible
+	ioctls; OCIOCGSESSION, OCIOCNGSESSION, OCIOCCRYPT, and
+	OCIOCNCRYPTM.
+	Backward compatibility is maintained in ocryptodev.h and
+	ocryptodev.c which implement the original ioctls and set
+	dst_len and comp_alg to 0.
+	Add user-space access to compression features.
+	Add software gzip support (CRYPTO_GZIP_COMP).
+	Add the fast version of crc32 from zlib to libkern. This should
+	be generally useful and provide a place to start normalizing
+	the various crc32 routines in the kernel.  The crc32 routine is
+	used in this patch to support GZIP.
+	Fixes PR kern/41069 and PR kern/41070.
+	[tls, ticket #611]
+
+sys/dev/pci/if_wm.c:                            1.168, 1.169 via patch
+sys/dev/pci/if_wmreg.h:                         1.26 via patch
+
+        On i82563, the em driver says that the ready bit in the MDIC
+        register may be incorrectly set. Insert delay(200) like the
+        em driver.
+        Examine the management mode and mark DRV_LOAD (for
+        ICH{8,9,10},80003, 8257{1,2,3,4}).  Add some error printf()s.
+        Make the bank detect routine into the function.
+        [spz, ticket #621]
+
+sys/dev/pci/if_wm.c				1.171, 1.172
+
+	Enable hardware VLAN support.
+	[tls, ticket #627]
+
+sys/dev/pci/if_wm.c				1.170
+
+	Add workaround for 82543GC: We need to force speed and duplex
+	on the MAC equal to what the PHY speed and duplex configuration
+	is. Fixes PR#36430.
+	[msaitoh, ticket #630]
+
+sys/net/if_vlan.c				1.63
+
+	Also inherit the parent's TCP segmentation offload capability.
+	Note the vlan interface does not see updates to the parents
+	capabilities so if, for example, TSO is on in both, then turned
+	off in the parent it will remain on in the vlan interface.
+	[darran, ticket #644]
 
