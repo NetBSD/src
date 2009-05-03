@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.5 2009/05/02 20:13:44 plunky Exp $	*/
+/*	$NetBSD: bnep.c,v 1.6 2009/05/03 07:24:55 kefren Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.5 2009/05/02 20:13:44 plunky Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.6 2009/05/03 07:24:55 kefren Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -170,7 +170,7 @@ bnep_recv(packet_t *pkt)
 
 	if (pkt->len > ETHER_MAX_LEN)
 		log_debug("received long packet "
-			  "(type=0x%2.2x, proto=0x%4.4x, len=%d)",
+			  "(type=0x%2.2x, proto=0x%4.4x, len=%zu)",
 		    	  type, be16dec(pkt->type), pkt->len);
 
 	return true;
