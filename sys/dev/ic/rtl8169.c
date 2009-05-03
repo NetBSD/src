@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.117 2009/04/29 15:10:57 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.118 2009/05/03 13:49:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.117 2009/04/29 15:10:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.118 2009/05/03 13:49:07 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -567,47 +567,25 @@ re_attach(struct rtk_softc *sc)
 
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
 		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
-		/* These rev numbers are taken from Realtek's driver */
 		switch (hwrev) {
 		case RTK_HWREV_8169:
-			/* XXX not in the Realtek driver */
-			sc->sc_rev = 1;
 			sc->sc_quirk |= RTKQ_8169NONS;
 			break;
 		case RTK_HWREV_8169S:
 		case RTK_HWREV_8110S:
-			sc->sc_rev = 3;
-			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
 		case RTK_HWREV_8169_8110SB:
-			sc->sc_rev = 4;
-			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
 		case RTK_HWREV_8169_8110SC:
-			sc->sc_rev = 5;
 			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
-		case RTK_HWREV_8101E:
-			sc->sc_rev = 11;
-			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168_SPIN1:
-			sc->sc_rev = 21;
-			sc->sc_quirk |= RTKQ_MACSTAT;
-			break;
 		case RTK_HWREV_8168_SPIN2:
-			sc->sc_rev = 22;
-			sc->sc_quirk |= RTKQ_MACSTAT;
-			break;
 		case RTK_HWREV_8168_SPIN3:
-			sc->sc_rev = 23;
 			sc->sc_quirk |= RTKQ_MACSTAT;
 			break;
 		case RTK_HWREV_8168C:
 		case RTK_HWREV_8168C_SPIN2:
 		case RTK_HWREV_8168CP:
 		case RTK_HWREV_8168D:
-			sc->sc_rev = 24;
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP;
 			/*
@@ -625,23 +603,20 @@ re_attach(struct rtk_softc *sc)
 			 */
 			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
+		case RTK_HWREV_8100E:
+		case RTK_HWREV_8100E_SPIN2:
+		case RTK_HWREV_8101E:
+			sc->sc_quirk |= RTKQ_NOJUMBO;
+			break;
 		case RTK_HWREV_8102E:
 		case RTK_HWREV_8102EL:
 		case RTK_HWREV_8102EL_SPIN2:
-			sc->sc_rev = 25;
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
-			break;
-		case RTK_HWREV_8100E:
-		case RTK_HWREV_8100E_SPIN2:
-			/* XXX not in the Realtek driver */
-			sc->sc_rev = 0;
-			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
 			    "Unknown revision (0x%08x)\n", hwrev);
-			sc->sc_rev = 0;
 			/* assume the latest features */
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
 			sc->sc_quirk |= RTKQ_NOJUMBO;
