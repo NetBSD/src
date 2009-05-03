@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/04/12 22:30:48 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2009/05/03 17:13:07 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -17,5 +17,7 @@ SRCS=	__fpending.c asnprintf.c basename.c canon-host.c canonicalize.c \
 	quotearg.c regex.c rpmatch.c save-cwd.c sighandle.c strftime.c \
 	stripslash.c vasnprintf.c xalloc-die.c xgetcwd.c xgethostname.c \
 	xmalloc.c xreadlink.c yesno.c
+
+getdate.c: getdate.y
 
 .include <bsd.lib.mk>
