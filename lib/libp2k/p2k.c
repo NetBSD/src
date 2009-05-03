@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.11 2009/04/02 09:30:41 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.12 2009/05/03 17:10:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,7 @@ static __inline void
 cred_destroy(kauth_cred_t cred)
 {
 
-	rump_cred_destroy(cred);
+	rump_cred_put(cred);
 }
 
 static struct componentname *
