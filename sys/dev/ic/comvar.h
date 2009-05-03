@@ -70,7 +70,9 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_NO_TXPRELOAD	0x200
 
 /* Buffer size for character buffer */
+#ifndef COM_RING_SIZE
 #define	COM_RING_SIZE	2048
+#endif
 
 #ifdef	COM_REGMAP
 #define	COM_REG_RXDATA		0
