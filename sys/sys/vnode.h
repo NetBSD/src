@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.205 2009/04/22 22:57:08 elad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.206 2009/05/03 16:52:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -659,7 +659,7 @@ int	vlockstatus(struct vnlock *);
 void	vfs_getnewfsid(struct mount *);
 int	vfs_drainvnodes(long target, struct lwp *);
 void	vfs_timestamp(struct timespec *);
-#ifdef DDB
+#if defined(DDB) || defined(DEBUGPRINT)
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));
 #endif /* DDB */
