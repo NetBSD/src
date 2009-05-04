@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiromvar.h,v 1.5 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: scsiromvar.h,v 1.5.78.1 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
  */
 
 struct scsirom_softc {
-	struct device	sc_dev;
 	enum {
 		INTERNAL = 0,	/* onboard */
 		EXTERNAL = 1,	/* optional */

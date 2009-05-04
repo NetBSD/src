@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.17.78.1 2008/05/16 02:23:11 yamt Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.17.78.2 2009/05/04 08:11:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 /* variables per Sbus */
 struct sbus_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 	bus_space_handle_t sc_bh;	/* SBus control registers */

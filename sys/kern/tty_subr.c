@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.32 2007/12/22 02:21:29 ad Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.32.10.1 2009/05/04 08:13:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,16 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.32 2007/12/22 02:21:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.32.10.1 2009/05/04 08:13:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/malloc.h>
-
-MALLOC_DEFINE(M_TTYS, "ttys", "allocated tty structures");
+#include <sys/kmem.h>
 
 /*
  * At compile time, choose:
@@ -73,48 +71,35 @@ int
 clalloc(struct clist *clp, int size, int quot)
 {
 
-	clp->c_cs = malloc(size, M_TTYS, M_WAITOK);
+	clp->c_cs = kmem_zalloc(size, KM_SLEEP);
 	if (!clp->c_cs)
 		return (-1);
-	memset(clp->c_cs, 0, size);
 
-	if(quot) {
-		clp->c_cq = malloc(QMEM(size), M_TTYS, M_WAITOK);
+	if (quot) {
+		clp->c_cq = kmem_zalloc(QMEM(size), KM_SLEEP);
 		if (!clp->c_cq) {
-			free(clp->c_cs, M_TTYS);
+			kmem_free(clp->c_cs, size);
 			return (-1);
 		}
-		memset(clp->c_cq, 0, QMEM(size));
 	} else
-		clp->c_cq = (u_char *)0;
+		clp->c_cq = NULL;
 
-	clp->c_cf = clp->c_cl = (u_char *)0;
+	clp->c_cf = clp->c_cl = NULL;
 	clp->c_ce = clp->c_cs + size;
 	clp->c_cn = size;
 	clp->c_cc = 0;
 
-	cv_init(&clp->c_cv, "tty");
-	cv_init(&clp->c_cvf, "ttyf");
 	return (0);
 }
 
 void
 clfree(struct clist *clp)
 {
-	if(clp->c_cs)
-		free(clp->c_cs, M_TTYS);
-	if(clp->c_cq)
-		free(clp->c_cq, M_TTYS);
-	clp->c_cs = clp->c_cq = (u_char *)0;
-	cv_destroy(&clp->c_cv);
-	cv_destroy(&clp->c_cvf);
-}
-
-void
-clwakeup(struct clist *clp)
-{
-
-	cv_broadcast(&clp->c_cv);
+	if (clp->c_cs)
+		kmem_free(clp->c_cs, clp->c_cn);
+	if (clp->c_cq)
+		kmem_free(clp->c_cq, QMEM(clp->c_cn));
+	clp->c_cs = clp->c_cq = NULL;
 }
 
 /*
@@ -140,6 +125,7 @@ getc(struct clist *clp)
 			c |= TTY_QUOTE;
 #endif
 	}
+	*clp->c_cf = 0; /* wipe out to avoid information disclosure */
 	if (++clp->c_cf == clp->c_ce)
 		clp->c_cf = clp->c_cs;
 	if (--clp->c_cc == 0)
@@ -277,7 +263,7 @@ putc(int c, struct clist *clp)
 #if defined(DIAGNOSTIC) || 1
 			printf("putc: required clalloc\n");
 #endif
-			if(clalloc(clp, 1024, 1)) {
+			if (clalloc(clp, 1024, 1)) {
 out:
 				splx(s);
 				return -1;
@@ -321,7 +307,7 @@ clrbits(u_char *cp, int off, int len)
 	int i;
 	u_char mask;
 
-	if(len==1) {
+	if (len==1) {
 		clrbit(cp, off);
 		return;
 	}
@@ -334,10 +320,10 @@ clrbits(u_char *cp, int off, int len)
 		mask = ((1 << (ebi - sbi)) - 1) << sbi;
 		cp[sby] &= ~mask;
 	} else {
-		mask = (1<<sbi) - 1;
+		mask = (1 << sbi) - 1;
 		cp[sby++] &= mask;
 
-		mask = (1<<ebi) - 1;
+		mask = (1 << ebi) - 1;
 		cp[eby] &= ~mask;
 
 		for (i = sby; i < eby; i++)
@@ -369,7 +355,7 @@ b_to_q(const u_char *cp, int count, struct clist *clp)
 #if defined(DIAGNOSTIC) || 1
 			printf("b_to_q: required clalloc\n");
 #endif
-			if(clalloc(clp, 1024, 1))
+			if (clalloc(clp, 1024, 1))
 				goto out;
 		}
 		clp->c_cf = clp->c_cl = clp->c_cs;
@@ -461,7 +447,7 @@ firstc(struct clist *clp, int *c)
 		return NULL;
 	cp = clp->c_cf;
 	*c = *cp & 0xff;
-	if(clp->c_cq) {
+	if (clp->c_cq) {
 #ifdef QBITS
 		if (isset(clp->c_cq, cp - clp->c_cs))
 			*c |= TTY_QUOTE;

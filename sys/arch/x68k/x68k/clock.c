@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 2007/10/17 19:58:03 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.27.20.1 2009/05/04 08:12:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2007/10/17 19:58:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27.20.1 2009/05/04 08:12:09 yamt Exp $");
 
 #include "clock.h"
 
@@ -96,25 +96,19 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2007/10/17 19:58:03 garbled Exp $");
 #include <dev/clock_subr.h>
 
 #include <arch/x68k/dev/mfp.h>
-#include <arch/x68k/dev/rtclock_var.h>
 
+static int clock_match(device_t, cfdata_t, void *);
+static void clock_attach(device_t, device_t, void *);
 
-struct clock_softc {
-	struct device		sc_dev;
-};
-
-static int clock_match(struct device *, struct cfdata *, void *);
-static void clock_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(clock, sizeof(struct clock_softc),
+CFATTACH_DECL_NEW(clock, 0,
     clock_match, clock_attach, NULL, NULL);
 
 static int clock_attached;
 
-static unsigned mfp_get_timecount(struct timecounter *);
+static unsigned int mfp_get_timecount(struct timecounter *);
 
 static int
-clock_match(struct device *parent, struct cfdata *cf, void *aux)
+clock_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp (aux, "clock") != 0)
@@ -126,12 +120,12 @@ clock_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-clock_attach(struct device *parent, struct device *self, void *aux)
+clock_attach(device_t parent, device_t self, void *aux)
 {
 
 	clock_attached = 1;
 
-	printf(": MFP timer C\n");
+	aprint_normal(": MFP timer C\n");
 }
 
 
@@ -207,7 +201,7 @@ setstatclockrate(int newhz)
  * Returns number of usec since last recorded clock "tick"
  * (i.e. clock interrupt).
  */
-unsigned
+unsigned int
 mfp_get_timecount(struct timecounter *tc)
 {
 	uint8_t	val;
@@ -217,8 +211,7 @@ mfp_get_timecount(struct timecounter *tc)
 
 #if 0
 void
-DELAY(mic)
-	int mic;
+DELAY(int mic)
 {
 	u_long n;
 	short hpos;
@@ -237,9 +230,9 @@ DELAY(mic)
 	 */
 	n = mic/32 + 2;
 	do {
-		while ((mfp.gpip & MFP_GPIP_HSYNC) != 0)
+		while ((mfp_get_gpip() & MFP_GPIP_HSYNC) != 0)
 			__asm("nop");
-		while ((mfp.gpip & MFP_GPIP_HSYNC) == 0)
+		while ((mfp_get_gpip() & MFP_GPIP_HSYNC) == 0)
 			__asm("nop");
 	} while (n--);
 }

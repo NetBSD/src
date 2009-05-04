@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.51 2008/02/29 06:35:40 dyoung Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.51.4.1 2009/05/04 08:12:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.51 2008/02/29 06:35:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.51.4.1 2009/05/04 08:12:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ acpiecdt_attach(device_t parent, device_t self, void *aux)
 	if (!acpiecdt_find(parent, &ec_handle, &cmd_reg, &data_reg, &gpebit))
 		panic("ECDT disappeared");
 
-	aprint_naive(": ACPI Embedded Controller via ECDT\n");
+	aprint_naive("\n");
 	aprint_normal(": ACPI Embedded Controller via ECDT\n");
 
 	acpiec_common_attach(parent, self, ec_handle, cmd_reg, data_reg,
@@ -257,15 +257,12 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 
 	if (ec_singleton != NULL) {
-		aprint_naive(": ACPI Embedded Controller (disabled)\n");
-		aprint_normal(": ACPI Embedded Controller (disabled)\n");
+		aprint_naive(": using %s\n", device_xname(ec_singleton));
+		aprint_normal(": using %s\n", device_xname(ec_singleton));
 		if (!pmf_device_register(self, NULL, NULL))
 			aprint_error_dev(self, "couldn't establish power handler\n");
 		return;
 	}
-
-	aprint_naive(": ACPI Embedded Controller\n");
-	aprint_normal(": ACPI Embedded Controller\n");
 
 	if (!acpiec_parse_gpe_package(self, aa->aa_node->ad_handle,
 				      &gpe_handle, &gpebit))
@@ -582,7 +579,7 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 			    sc->sc_state);
 			return AE_ERROR;
 		}
-	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
+	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
 		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
 		acpiec_unlock(dv);
@@ -631,7 +628,7 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 			    sc->sc_state);
 			return AE_ERROR;
 		}
-	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
+	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
 		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
 		acpiec_unlock(dv);

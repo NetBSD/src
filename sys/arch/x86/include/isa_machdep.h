@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4.86.1 2008/05/16 02:23:28 yamt Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.4.86.2 2009/05/04 08:12:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #define _X86_ISA_MACHDEP_H_			/* XXX */
 
 #include <machine/bus.h>
+#include <sys/device.h>
 #include <dev/isa/isadmavar.h>
 
 /*
@@ -92,13 +93,12 @@ struct x86_isa_chipset {
 
 typedef struct x86_isa_chipset *isa_chipset_tag_t;
 
-struct device;			/* XXX */
 struct isabus_attach_args;	/* XXX */
 
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook(struct device *, struct device *,
+void	isa_attach_hook(device_t, device_t,
 	    struct isabus_attach_args *);
 int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
 const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);
@@ -203,19 +203,19 @@ extern struct x86_bus_dma_tag isa_bus_dma_tag;
  * function definitions, invoked through the softc.
  */
 
-extern u_long atdevbase;           /* kernel virtual address of "hole" */
+extern vaddr_t atdevbase;         /* kernel virtual address of "hole" */
 
 /*
  * Given a kernel virtual address for some location
  * in the "hole" I/O space, return a physical address.
  */
-#define ISA_PHYSADDR(v) ((void *) ((u_long)(v) - atdevbase + IOM_BEGIN))
+#define ISA_PHYSADDR(v) ((bus_addr_t)(v) - atdevbase + IOM_BEGIN)
 
 /*
  * Given a physical address in the "hole",
  * return a kernel virtual address.
  */
-#define ISA_HOLE_VADDR(p)  ((void *) ((u_long)(p) - IOM_BEGIN + atdevbase))
+#define ISA_HOLE_VADDR(p)  ((void *) ((vaddr_t)(p) - IOM_BEGIN + atdevbase))
 
 
 /*

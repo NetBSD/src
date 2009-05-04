@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15.78.1 2008/05/16 02:22:59 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.15.78.2 2009/05/04 08:11:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@ char *kernelnames[] = {
 };
 
 
-static char *devname __P((char *));
-int main __P((int, char **));
+static char *devname(char *);
+int main(int, char **);
 
 /*
  * This gets arguments from the first stage boot lader, calls PROM routines
@@ -108,9 +108,7 @@ int main __P((int, char **));
  * The argument "-a" means netbsd should do an automatic reboot.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *name, **namep, *dev, *kernel;
 	char bootname[PATH_MAX], bootpath[PATH_MAX];
@@ -198,8 +196,7 @@ fail:
  *        without a trailing slash.
  */
 static char *
-devname(fname)
-	char *fname;
+devname(char *fname)
 {
 	char c;
 

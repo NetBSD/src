@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.17.44.1 2008/05/16 02:22:58 yamt Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.17.44.2 2009/05/04 08:11:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.17.44.1 2008/05/16 02:22:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.17.44.2 2009/05/04 08:11:40 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -336,7 +336,7 @@ gsfbcninit(struct consdev *cndev)
 }
 
 void
-gsfb_hwinit()
+gsfb_hwinit(void)
 {
 	/*
 	  gs_init(VESA_1A) hang up on SCPH-50000.
@@ -355,7 +355,7 @@ gsfb_hwinit()
 }
 
 int
-gsfb_swinit()
+gsfb_swinit(void)
 {
 	int font;
 

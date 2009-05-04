@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_turnstile.c,v 1.18.2.1 2008/05/16 02:25:26 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.18.2.2 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.18.2.1 2008/05/16 02:25:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.18.2.2 2009/05/04 08:13:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -96,7 +96,7 @@ turnstile_init(void)
 	for (i = 0; i < TS_HASH_SIZE; i++) {
 		tc = &turnstile_tab[i];
 		LIST_INIT(&tc->tc_chain);
-		mutex_init(&tc->tc_mutex, MUTEX_DEFAULT, IPL_SCHED);
+		tc->tc_mutex = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 	}
 
 	turnstile_cache = pool_cache_init(sizeof(turnstile_t), 0, 0, 0,
@@ -117,8 +117,8 @@ turnstile_ctor(void *arg, void *obj, int flags)
 	turnstile_t *ts = obj;
 
 	memset(ts, 0, sizeof(*ts));
-	sleepq_init(&ts->ts_sleepq[TS_READER_Q], NULL);
-	sleepq_init(&ts->ts_sleepq[TS_WRITER_Q], NULL);
+	sleepq_init(&ts->ts_sleepq[TS_READER_Q]);
+	sleepq_init(&ts->ts_sleepq[TS_WRITER_Q]);
 	return (0);
 }
 
@@ -128,7 +128,7 @@ turnstile_ctor(void *arg, void *obj, int flags)
  *	Remove an LWP from a turnstile sleep queue and wake it.
  */
 static inline void
-turnstile_remove(turnstile_t *ts, lwp_t *l, sleepq_t *sq)
+turnstile_remove(turnstile_t *ts, lwp_t *l, int q)
 {
 	turnstile_t *nts;
 
@@ -152,7 +152,8 @@ turnstile_remove(turnstile_t *ts, lwp_t *l, sleepq_t *sq)
 		LIST_REMOVE(ts, ts_chain);
 	}
 
-	(void)sleepq_remove(sq, l);
+	ts->ts_waiters[q]--;
+	(void)sleepq_remove(&ts->ts_sleepq[q], l);
 }
 
 /*
@@ -168,7 +169,7 @@ turnstile_lookup(wchan_t obj)
 	tschain_t *tc;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
-	mutex_spin_enter(&tc->tc_mutex);
+	mutex_spin_enter(tc->tc_mutex);
 
 	LIST_FOREACH(ts, &tc->tc_chain, ts_chain)
 		if (ts->ts_obj == obj)
@@ -192,7 +193,7 @@ turnstile_exit(wchan_t obj)
 	tschain_t *tc;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
-	mutex_spin_exit(&tc->tc_mutex);
+	mutex_spin_exit(tc->tc_mutex);
 }
 
 /*
@@ -216,7 +217,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	l = cur = curlwp;
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
-	KASSERT(mutex_owned(&tc->tc_mutex));
+	KASSERT(mutex_owned(tc->tc_mutex));
 	KASSERT(l != NULL && l->l_ts != NULL);
 
 	if (ts == NULL) {
@@ -226,12 +227,10 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 		 */
 		ts = l->l_ts;
 		KASSERT(TS_ALL_WAITERS(ts) == 0);
-		KASSERT(TAILQ_EMPTY(&ts->ts_sleepq[TS_READER_Q].sq_queue) &&
-			TAILQ_EMPTY(&ts->ts_sleepq[TS_WRITER_Q].sq_queue));
+		KASSERT(TAILQ_EMPTY(&ts->ts_sleepq[TS_READER_Q]) &&
+			TAILQ_EMPTY(&ts->ts_sleepq[TS_WRITER_Q]));
 		ts->ts_obj = obj;
 		ts->ts_inheritor = NULL;
-		ts->ts_sleepq[TS_READER_Q].sq_mutex = &tc->tc_mutex;
-		ts->ts_sleepq[TS_WRITER_Q].sq_mutex = &tc->tc_mutex;
 		LIST_INSERT_HEAD(&tc->tc_chain, ts, ts_chain);
 	} else {
 		/*
@@ -240,19 +239,21 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 		 * turnstile instead.
 		 */
 		ots = l->l_ts;
+		KASSERT(ots->ts_free == NULL);
 		ots->ts_free = ts->ts_free;
 		ts->ts_free = ots;
 		l->l_ts = ts;
 
 		KASSERT(ts->ts_obj == obj);
 		KASSERT(TS_ALL_WAITERS(ts) != 0);
-		KASSERT(!TAILQ_EMPTY(&ts->ts_sleepq[TS_READER_Q].sq_queue) ||
-			!TAILQ_EMPTY(&ts->ts_sleepq[TS_WRITER_Q].sq_queue));
+		KASSERT(!TAILQ_EMPTY(&ts->ts_sleepq[TS_READER_Q]) ||
+			!TAILQ_EMPTY(&ts->ts_sleepq[TS_WRITER_Q]));
 	}
 
 	sq = &ts->ts_sleepq[q];
-	sleepq_enter(sq, l);
-	LOCKDEBUG_BARRIER(&tc->tc_mutex, 1);
+	ts->ts_waiters[q]++;
+	sleepq_enter(sq, l, tc->tc_mutex);
+	LOCKDEBUG_BARRIER(tc->tc_mutex, 1);
 	l->l_kpriority = true;
 	obase = l->l_kpribase;
 	if (obase < PRI_KTHREAD)
@@ -267,7 +268,11 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	KPREEMPT_DISABLE(l);
 
 	/*
-	 * lend our priority to lwps on the blocking chain.
+	 * Lend our priority to lwps on the blocking chain.
+	 *
+	 * NOTE: if you get a panic in this code block, it is likely that
+	 * a lock has been destroyed or corrupted while still in use.  Try
+	 * compiling a kernel with LOCKDEBUG to pinpoint the problem.
 	 */
 	prio = lwp_eprio(l);
 	for (;;) {
@@ -347,7 +352,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
 	KASSERT(count > 0 && count <= TS_WAITERS(ts, q));
-	KASSERT(mutex_owned(&tc->tc_mutex) && sq->sq_mutex == &tc->tc_mutex);
+	KASSERT(mutex_owned(tc->tc_mutex));
 	KASSERT(ts->ts_inheritor == curlwp || ts->ts_inheritor == NULL);
 
 	/*
@@ -405,22 +410,22 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 
 	if (nl != NULL) {
 #if defined(DEBUG) || defined(LOCKDEBUG)
-		TAILQ_FOREACH(l, &sq->sq_queue, l_sleepchain) {
+		TAILQ_FOREACH(l, sq, l_sleepchain) {
 			if (l == nl)
 				break;
 		}
 		if (l == NULL)
 			panic("turnstile_wakeup: nl not on sleepq");
 #endif
-		turnstile_remove(ts, nl, sq);
+		turnstile_remove(ts, nl, q);
 	} else {
 		while (count-- > 0) {
-			l = TAILQ_FIRST(&sq->sq_queue);
+			l = TAILQ_FIRST(sq);
 			KASSERT(l != NULL);
-			turnstile_remove(ts, l, sq);
+			turnstile_remove(ts, l, q);
 		}
 	}
-	mutex_spin_exit(&tc->tc_mutex);
+	mutex_spin_exit(tc->tc_mutex);
 }
 
 /*
@@ -484,14 +489,14 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 
 	(*pr)("=> Turnstile at %p (wrq=%p, rdq=%p).\n", ts, rsq, wsq);
 
-	(*pr)("=> %d waiting readers:", rsq->sq_waiters);
-	TAILQ_FOREACH(l, &rsq->sq_queue, l_sleepchain) {
+	(*pr)("=> %d waiting readers:", TS_WAITERS(ts, TS_READER_Q));
+	TAILQ_FOREACH(l, rsq, l_sleepchain) {
 		(*pr)(" %p", l);
 	}
 	(*pr)("\n");
 
-	(*pr)("=> %d waiting writers:", wsq->sq_waiters);
-	TAILQ_FOREACH(l, &wsq->sq_queue, l_sleepchain) {
+	(*pr)("=> %d waiting writers:", TS_WAITERS(ts, TS_WRITER_Q));
+	TAILQ_FOREACH(l, wsq, l_sleepchain) {
 		(*pr)(" %p", l);
 	}
 	(*pr)("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.76.4.1 2008/05/16 02:24:03 yamt Exp $ */
+/*	$NetBSD: gem.c,v 1.76.4.2 2009/05/04 08:12:41 yamt Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.76.4.1 2008/05/16 02:24:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.76.4.2 2009/05/04 08:12:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -119,6 +119,8 @@ static int	gem_mii_readreg(struct device *, int, int);
 static void	gem_mii_writereg(struct device *, int, int, int);
 static void	gem_mii_statchg(struct device *);
 
+static int	gem_ifflags_cb(struct ethercom *);
+
 void		gem_statuschange(struct gem_softc *);
 
 int		gem_ser_mediachange(struct ifnet *);
@@ -150,9 +152,7 @@ static void gem_txsoft_print(const struct gem_softc *, int, int);
  *	Attach a Gem interface to the system.
  */
 void
-gem_attach(sc, enaddr)
-	struct gem_softc *sc;
-	const uint8_t *enaddr;
+gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
@@ -451,6 +451,7 @@ gem_attach(sc, enaddr)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, gem_ifflags_cb);
 
 	sc->sc_sh = shutdownhook_establish(gem_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -540,8 +541,7 @@ gem_attach(sc, enaddr)
 
 
 void
-gem_tick(arg)
-	void *arg;
+gem_tick(void *arg)
 {
 	struct gem_softc *sc = arg;
 	int s;
@@ -562,12 +562,7 @@ gem_tick(arg)
 }
 
 static int
-gem_bitwait(sc, h, r, clr, set)
-	struct gem_softc *sc;
-	bus_space_handle_t h;
-	int r;
-	u_int32_t clr;
-	u_int32_t set;
+gem_bitwait(struct gem_softc *sc, bus_space_handle_t h, int r, u_int32_t clr, u_int32_t set)
 {
 	int i;
 	u_int32_t reg;
@@ -581,8 +576,7 @@ gem_bitwait(sc, h, r, clr, set)
 }
 
 void
-gem_reset(sc)
-	struct gem_softc *sc;
+gem_reset(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h2;
@@ -1234,7 +1228,8 @@ gem_init_regs(struct gem_softc *sc)
 	 */
 	bus_space_write_4(t, h, GEM_CONFIG,
 	    GEM_CONFIG_TXDMA_LIMIT | GEM_CONFIG_RXDMA_LIMIT |
-	    GEM_CONFIG_BURST_INF | (GEM_IS_APPLE(sc) ?
+	    ((sc->sc_flags & GEM_PCI) ?
+	    GEM_CONFIG_BURST_INF : GEM_CONFIG_BURST_64) | (GEM_IS_APPLE(sc) ?
 	    GEM_CONFIG_RONPAULBIT | GEM_CONFIG_BUG2FIX : 0));
 
 	/*
@@ -1280,8 +1275,7 @@ gem_txsoft_print(const struct gem_softc *sc, int firstdesc, int lastdesc)
 #endif
 
 static void
-gem_start(ifp)
-	struct ifnet *ifp;
+gem_start(struct ifnet *ifp)
 {
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -1550,8 +1544,7 @@ gem_start(ifp)
  * Transmit interrupt.
  */
 int
-gem_tint(sc)
-	struct gem_softc *sc;
+gem_tint(struct gem_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1674,8 +1667,7 @@ gem_tint(sc)
  * Receive interrupt.
  */
 int
-gem_rint(sc)
-	struct gem_softc *sc;
+gem_rint(struct gem_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1852,9 +1844,8 @@ gem_rint(sc)
 					optsum = (optsum >> 16) +
 						 (optsum & 0xffff);
 
-				/* Deduct ip opts sum from hwsum (rfc 1624). */
-				m->m_pkthdr.csum_data =
-					~((~m->m_pkthdr.csum_data) - ~optsum);
+				/* Deduct ip opts sum from hwsum. */
+				m->m_pkthdr.csum_data += (uint16_t)~optsum;
 
 				while (m->m_pkthdr.csum_data >> 16)
 					m->m_pkthdr.csum_data =
@@ -1978,7 +1969,7 @@ int
 gem_eint(struct gem_softc *sc, u_int status)
 {
 	char bits[128];
-	u_int32_t v;
+	u_int32_t r, v;
 
 	if ((status & GEM_INTR_MIF) != 0) {
 		printf("%s: XXXlink status changed\n", device_xname(&sc->sc_dev));
@@ -1991,16 +1982,19 @@ gem_eint(struct gem_softc *sc, u_int status)
 	}
 
 	if (status & GEM_INTR_BERR) {
-		bus_space_read_4(sc->sc_bustag, sc->sc_h2, GEM_ERROR_STATUS);
-		v = bus_space_read_4(sc->sc_bustag, sc->sc_h2,
-		    GEM_ERROR_STATUS);
+		if (sc->sc_flags & GEM_PCI)
+			r = GEM_ERROR_STATUS;
+		else
+			r = GEM_SBUS_ERROR_STATUS;
+		bus_space_read_4(sc->sc_bustag, sc->sc_h2, r);
+		v = bus_space_read_4(sc->sc_bustag, sc->sc_h2, r);
 		aprint_error_dev(&sc->sc_dev, "bus error interrupt: 0x%02x\n",
 		    v);
 		return (1);
 	}
-
-	printf("%s: status=%s\n", device_xname(&sc->sc_dev),
-		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), GEM_INTR_BITS, status);
+	printf("%s: status=%s\n", device_xname(&sc->sc_dev), bits);
+		
 	return (1);
 }
 
@@ -2090,8 +2084,7 @@ gem_pint(struct gem_softc *sc)
 
 
 int
-gem_intr(v)
-	void *v;
+gem_intr(void *v)
 {
 	struct gem_softc *sc = (struct gem_softc *)v;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2108,9 +2101,12 @@ gem_intr(v)
 	sc->sc_ev_intr.ev_count++;
 
 	status = bus_space_read_4(t, h, GEM_STATUS);
+#ifdef GEM_DEBUG
+	snprintb(bits, sizeof(bits), GEM_INTR_BITS, status);
+#endif
 	DPRINTF(sc, ("%s: gem_intr: cplt 0x%x status %s\n",
-		device_xname(&sc->sc_dev), (status >> 19),
-		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits))));
+		device_xname(&sc->sc_dev), (status >> 19), bits));
+		
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
@@ -2176,8 +2172,7 @@ gem_intr(v)
 
 
 void
-gem_watchdog(ifp)
-	struct ifnet *ifp;
+gem_watchdog(struct ifnet *ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
 
@@ -2198,8 +2193,7 @@ gem_watchdog(ifp)
  * Initialize the MII Management Interface
  */
 void
-gem_mifinit(sc)
-	struct gem_softc *sc;
+gem_mifinit(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_h1;
@@ -2225,9 +2219,7 @@ gem_mifinit(sc)
  *
  */
 static int
-gem_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+gem_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -2257,9 +2249,7 @@ gem_mii_readreg(self, phy, reg)
 }
 
 static void
-gem_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+gem_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -2291,8 +2281,7 @@ gem_mii_writereg(self, phy, reg, val)
 }
 
 static void
-gem_mii_statchg(dev)
-	struct device *dev;
+gem_mii_statchg(struct device *dev)
 {
 	struct gem_softc *sc = (void *)dev;
 #ifdef GEM_DEBUG
@@ -2468,38 +2457,33 @@ gem_ser_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 }
 
+static int
+gem_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct gem_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & IFF_PROMISC) != 0)
+		gem_setladrf(sc);
+	return 0;
+}
+
 /*
  * Process an ioctl request.
  */
 int
-gem_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+gem_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct gem_softc *sc = ifp->if_softc;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFFLAGS:
-#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
-		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
-		    == (IFF_UP|IFF_RUNNING))
-		    && ((ifp->if_flags & (~RESETIGN))
-		    == (sc->sc_if_flags & (~RESETIGN)))) {
-			gem_setladrf(sc);
-			break;
-		}
-#undef RESETIGN
-		/*FALLTHROUGH*/
-	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
-			break;
-
+	if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 		error = 0;
-
 		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
@@ -2509,7 +2493,6 @@ gem_ioctl(ifp, cmd, data)
 			 */
 			gem_setladrf(sc);
 		}
-		break;
 	}
 
 	/* Try to get things going again */
@@ -2521,8 +2504,7 @@ gem_ioctl(ifp, cmd, data)
 
 
 void
-gem_shutdown(arg)
-	void *arg;
+gem_shutdown(void *arg)
 {
 	struct gem_softc *sc = (struct gem_softc *)arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2534,8 +2516,7 @@ gem_shutdown(arg)
  * Set up the logical address filter.
  */
 void
-gem_setladrf(sc)
-	struct gem_softc *sc;
+gem_setladrf(struct gem_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &ec->ec_if;
@@ -2629,9 +2610,7 @@ chipit:
  *	Power management (suspend/resume) hook.
  */
 void
-gem_power(why, arg)
-	int why;
-	void *arg;
+gem_power(int why, void *arg)
 {
 	struct gem_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

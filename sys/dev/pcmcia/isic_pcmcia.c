@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.34.4.1 2008/05/16 02:24:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.34.4.2 2009/05/04 08:13:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -139,8 +139,7 @@ static const struct isic_pcmcia_card_entry card_list[] = {
 #define	NUM_MATCH_ENTRIES	(sizeof(card_list)/sizeof(card_list[0]))
 
 static const struct isic_pcmcia_card_entry *
-find_matching_card(pa)
-	struct pcmcia_attach_args *pa;
+find_matching_card(struct pcmcia_attach_args *pa)
 {
 	int i, j;
 
@@ -203,7 +202,7 @@ isic_pcmcia_attach(struct device *parent,
 	/* Which card is it? */
 	cde = find_matching_card(pa);
 	if (cde == NULL) {
-		aprint_errir_dev(&psc->sc_isic.sc_dev, "attach failed, couldn't find matching card\n");
+		aprint_error_dev(&psc->sc_isic.sc_dev, "attach failed, couldn't find matching card\n");
 		return;
 	}
 	printf("%s: %s\n", cde->name, device_xname(self));

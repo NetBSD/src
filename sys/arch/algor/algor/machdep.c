@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36.20.1 2008/05/16 02:21:43 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36.20.2 2009/05/04 08:10:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.1 2008/05/16 02:21:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.2 2009/05/04 08:10:27 yamt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.1 2008/05/16 02:21:43 yamt Exp $
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -189,7 +190,6 @@ struct	user *proc0paddr;
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -574,14 +574,6 @@ mach_init(int argc, char *argv[], char *envp[])
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/*
-	 * XXX Loader doesn't give us symbols the way we like.  Need
-	 * XXX dbsym(1) support for ELF.
-	 */
-	ksyms_init(0, 0, 0);
-#endif
-
 	if (boothowto & RB_KDB) {
 #if defined(DDB)
 		Debugger();
@@ -647,13 +639,6 @@ cpu_startup(void)
 	minaddr = 0;
 
 	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
-	/*
 	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -715,6 +700,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (boothowto & RB_HALT) {
 		printf("\n");

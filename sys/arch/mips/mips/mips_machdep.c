@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.200.2.1 2008/05/16 02:22:51 yamt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.200.2.2 2009/05/04 08:11:31 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.200.2.1 2008/05/16 02:22:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.200.2.2 2009/05/04 08:11:31 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -132,6 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.200.2.1 2008/05/16 02:22:51 yamt 
 #include <sys/kcore.h>
 #include <sys/pool.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
 
@@ -296,11 +298,14 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R8000, -1, -1,		CPU_ARCH_MIPS4, 384,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R8000 Blackbird/TFP CPU" },
 	{ 0, MIPS_R10000, -1, -1,		CPU_ARCH_MIPS4, 64,
-	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R10000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R10000 CPU"	},
 	{ 0, MIPS_R12000, -1, -1,		CPU_ARCH_MIPS4, 64,
-	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R12000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R12000 CPU"	},
 	{ 0, MIPS_R14000, -1, -1,		CPU_ARCH_MIPS4, 64,
-	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R14000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R14000 CPU"	},
 
 	/* XXX
 	 * If the Processor Revision ID of the 4650 isn't 0, the following
@@ -968,8 +973,7 @@ mips_vector_init(void)
 }
 
 void
-mips_set_wbflush(flush_fn)
-	void (*flush_fn)(void);
+mips_set_wbflush(void (*flush_fn)(void))
 {
 #undef wbflush
 	mips_locore_jumpvec.wbflush = flush_fn;
@@ -1115,10 +1119,7 @@ cpu_identify(void)
  * code by the MIPS elf abi).
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
@@ -1418,7 +1419,8 @@ dumpsys(void)
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 			/* Print out how many MBs we have left to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%ld ", totalbytesleft / (1024 * 1024));
+				printf_nolog("%ld ",
+				    totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;
@@ -1500,8 +1502,7 @@ mips_init_msgbuf(void)
 }
 
 void
-savefpregs(l)
-	struct lwp *l;
+savefpregs(struct lwp *l)
 {
 #ifndef NOFPU
 	u_int32_t status, fpcsr, *fp;
@@ -1579,8 +1580,7 @@ savefpregs(l)
 }
 
 void
-loadfpregs(l)
-	struct lwp *l;
+loadfpregs(struct lwp *l)
 {
 #ifndef NOFPU
 	u_int32_t status, *fp;
@@ -1660,8 +1660,7 @@ loadfpregs(l)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
@@ -1678,11 +1677,55 @@ startlwp(arg)
 	userret(l);
 }
 
+/*
+ * XXX This is a terrible name.
+ */
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+upcallret(struct lwp *l)
+{
+	userret(l);
+}
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct saframe *sf, frame;
+	struct frame *f;
+
+	f = (struct frame *)l->l_md.md_regs;
+
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+#endif
+	frame.sa_arg = ap;
+	frame.sa_upcall = upcall;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		mutex_enter(l->l_proc->p_lock);
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	f->f_regs[_R_PC] = (uintptr_t)upcall;
+	f->f_regs[_R_SP] = (uintptr_t)sf;
+	f->f_regs[_R_A0] = type;
+	f->f_regs[_R_A1] = (uintptr_t)sas;
+	f->f_regs[_R_A2] = nevents;
+	f->f_regs[_R_A3] = ninterrupted;
+	f->f_regs[_R_S8] = 0;
+	f->f_regs[_R_RA] = 0;
+	f->f_regs[_R_T9] = (uintptr_t)upcall;  /* t9=Upcall function*/
+}
+
+
+void
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct frame *f = (struct frame *)l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -1725,10 +1768,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;

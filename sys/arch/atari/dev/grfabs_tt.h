@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.h,v 1.1 1996/09/16 06:50:34 leo Exp $	*/
+/*	$NetBSD: grfabs_tt.h,v 1.1.168.1 2009/05/04 08:10:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -44,5 +44,5 @@
      (((0x000000f0 & (v)) * 0xff / 0xf) << 4) |\
        (0x0000000f & (v)) * 0xff / 0xf)
 
-void tt_probe_video __P((MODES *));
+void tt_probe_video(MODES *);
 #endif /*  _GRFABS_TT_H */

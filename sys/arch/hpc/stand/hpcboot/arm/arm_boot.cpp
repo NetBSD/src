@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_boot.cpp,v 1.8.4.1 2008/05/16 02:22:24 yamt Exp $	*/
+/*	$NetBSD: arm_boot.cpp,v 1.8.4.2 2009/05/04 08:11:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@ ARMBoot::setup()
 		args.architecture = ARCHITECTURE_ARM_SA1100;
 	else if (platid_match(&platid, &platid_mask_CPU_ARM_XSCALE_PXA250))
 		args.architecture = ARCHITECTURE_ARM_PXA250;
+	else if (platid_match(&platid, &platid_mask_CPU_ARM_XSCALE_PXA270))
+		args.architecture = ARCHITECTURE_ARM_PXA270;
 	else
 		return FALSE;
 
@@ -92,6 +94,7 @@ ARMBoot::create()
 		_arch = new SA1100Architecture(_cons, _mem);
 		break;
 	case ARCHITECTURE_ARM_PXA250:
+	case ARCHITECTURE_ARM_PXA270:
 		_arch = new PXA2X0Architecture(_cons, _mem);
 		break;
 	}

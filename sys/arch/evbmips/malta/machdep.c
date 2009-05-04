@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2007/10/17 19:54:15 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.20.1 2009/05/04 08:11:02 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,10 +112,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2007/10/17 19:54:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.20.1 2009/05/04 08:11:02 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2007/10/17 19:54:15 garbled Exp $")
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -135,7 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2007/10/17 19:54:15 garbled Exp $")
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -168,7 +170,6 @@ extern char cpu_model[];
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -329,10 +330,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, 0, 0);
-#endif
-
 #if defined(DDB)
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -353,7 +350,7 @@ consinit(void)
  * Allocate memory for variable-sized tables,
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -373,12 +370,6 @@ cpu_startup()
 
 	minaddr = 0;
 	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-	/*
 	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -397,9 +388,7 @@ cpu_startup()
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
@@ -434,6 +423,8 @@ cpu_reboot(howto, bootstr)
 
 haltsys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.27 2008/04/06 07:54:17 cegger Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.27.4.1 2009/05/04 08:12:35 yamt Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.27 2008/04/06 07:54:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.27.4.1 2009/05/04 08:12:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -79,7 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.27 2008/04/06 07:54:17 cegger E
 
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ath/ah.h>
+
+#include <external/isc/atheros_hal/dist/ah.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -104,16 +105,16 @@ struct ath_cardbus_softc {
 
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
-	int	sc_intrline;		/* interrupt line */
+	cardbus_intr_line_t sc_intrline; /* interrupt line */
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
 
-int	ath_cardbus_match(device_t, struct cfdata *, void *);
+int	ath_cardbus_match(device_t, cfdata_t, void *);
 void	ath_cardbus_attach(device_t, device_t, void *);
 int	ath_cardbus_detach(device_t, int);
 
-CFATTACH_DECL(ath_cardbus, sizeof(struct ath_cardbus_softc),
+CFATTACH_DECL_NEW(ath_cardbus, sizeof(struct ath_cardbus_softc),
     ath_cardbus_match, ath_cardbus_attach, ath_cardbus_detach, NULL);
 
 void	ath_cardbus_setup(struct ath_cardbus_softc *);
@@ -137,22 +138,13 @@ ath_cardbus_resume(device_t self PMF_FN_ARGS)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 
-#if 1
-	ath_cardbus_setup(csc);
-#else
-	int rc;
-	rc = cardbus_set_powerstate(csc->sc_ct, csc->sc_tag, PCI_PWR_D0);
-	if (rc != 0)
-		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, rc);
-#endif
-
 	csc->sc_ih = cardbus_intr_establish(csc->sc_ct->ct_cc,
 	    csc->sc_ct->ct_cf, csc->sc_intrline, IPL_NET, ath_intr,
 	    &csc->sc_ath);
 
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(self,
-		    "unable to establish interrupt at %d\n", csc->sc_intrline);
+		    "unable to establish interrupt\n");
 		return false;
 	}
 
@@ -182,6 +174,7 @@ ath_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t adr;
 
+	sc->sc_dev = self;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
@@ -240,7 +233,7 @@ ath_cardbus_detach(device_t self, int flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
+		panic("%s: data structure lacks", device_xname(sc->sc_dev));
 #endif
 
 	rv = ath_detach(sc);

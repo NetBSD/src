@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.6.4.1 2008/05/16 02:24:37 yamt Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.6.4.2 2009/05/04 08:12:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.6.4.1 2008/05/16 02:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.6.4.2 2009/05/04 08:12:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,9 +213,6 @@ mvphyattach(device_t parent, device_t self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.20 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.20.4.1 2009/05/04 08:12:49 yamt Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.20 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.20.4.1 2009/05/04 08:12:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ void	tcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
 CFATTACH_DECL(tcic_isa, sizeof(struct tcic_softc),
     tcic_isa_probe, tcic_isa_attach, NULL, NULL);
 
-static struct pcmcia_chip_functions tcic_isa_functions = {
+static const struct pcmcia_chip_functions tcic_isa_functions = {
 	tcic_chip_mem_alloc,
 	tcic_chip_mem_free,
 	tcic_chip_mem_map,
@@ -336,12 +336,8 @@ tcic_isa_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void *
-tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
+tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
+	int ipl, int (*fct)(void *), void *arg)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int irq, ist;
@@ -374,9 +370,7 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 }
 
 void
-tcic_isa_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+tcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int val, reg;

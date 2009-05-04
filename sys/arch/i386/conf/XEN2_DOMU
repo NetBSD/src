@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.16 2008/03/27 16:48:35 tnn Exp $
+# $NetBSD: XEN2_DOMU,v 1.16.4.1 2009/05/04 08:11:15 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -38,10 +38,8 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -110,7 +108,7 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
+options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -127,7 +125,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -152,7 +150,8 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
 #options 	NFS_BOOTSTATIC_GWIP="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
@@ -185,7 +184,7 @@ pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
@@ -219,6 +218,10 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+# accept filters
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,5 +1,5 @@
 /*
- * $NetBSD: omap2_mputmrvar.h,v 1.1.22.1 2008/05/16 02:22:01 yamt Exp $
+ * $NetBSD: omap2_mputmrvar.h,v 1.1.22.2 2009/05/04 08:10:44 yamt Exp $
  *
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -42,7 +42,7 @@ typedef struct timer_factors {
 } timer_factors;
 
 struct mputmr_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_intr;

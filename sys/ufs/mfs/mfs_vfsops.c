@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.92.2.1 2008/05/16 02:26:00 yamt Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.92.2.2 2009/05/04 08:14:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.92.2.1 2008/05/16 02:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.92.2.2 2009/05/04 08:14:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.92.2.1 2008/05/16 02:26:00 yamt Exp
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
 
-MODULE(MODULE_CLASS_VFS, mfs, NULL);
+MODULE(MODULE_CLASS_VFS, mfs, "ffs");
 
 void *	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
 u_long	mfs_rootsize;	/* size of mini-root in bytes */
@@ -76,6 +76,8 @@ static int mfs_minor;	/* used for building internal dev_t */
 static int mfs_initcnt;
 
 extern int (**mfs_vnodeop_p)(void *);
+
+static struct sysctllog *mfs_sysctl_log;
 
 /*
  * mfs vfs operations.
@@ -119,37 +121,43 @@ struct vfsops mfs_vfsops = {
 static int
 mfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&mfs_vfsops);
+		error = vfs_attach(&mfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&mfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&mfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+			       CTLTYPE_NODE, "mfs",
+			       SYSCTL_DESCR("Memory based file system"),
+			       NULL, 1, NULL, 0,
+			       CTL_VFS, 3, CTL_EOL);
+		/*
+		 * XXX the "1" and the "3" above could be dynamic, thereby
+		 * eliminating one more instance of the "number to vfs"
+		 * mapping problem, but they are in order as taken from
+		 * sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&mfs_vfsops);
+		error = vfs_detach(&mfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&mfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
-}
 
-SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "mfs",
-		       SYSCTL_DESCR("Memory based file system"),
-		       NULL, 1, NULL, 0,
-		       CTL_VFS, 3, CTL_EOL);
-	/*
-	 * XXX the "1" and the "3" above could be dynamic, thereby
-	 * eliminating one more instance of the "number to vfs"
-	 * mapping problem, but they are in order as taken from
-	 * sys/mount.h
-	 */
+	return (error);
 }
 
 /*
@@ -245,7 +253,7 @@ mfs_initminiroot(void *base)
 	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
 	    fs->fs_bsize < sizeof(struct fs))
 		return (0);
-	mountroot = mfs_mountroot;
+	rootfstype = MOUNT_MFS;
 	mfs_rootbase = base;
 	mfs_rootsize = fs->fs_fsize * fs->fs_size;
 	rootdev = makedev(255, mfs_minor);
@@ -400,7 +408,7 @@ mfs_start(struct mount *mp, int flags)
 	base = mfsp->mfs_baseoff;
 	mutex_enter(&mfs_lock);
 	while (mfsp->mfs_shutdown != 1) {
-		while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
+		while ((bp = bufq_get(mfsp->mfs_buflist)) != NULL) {
 			mutex_exit(&mfs_lock);
 			mfs_doio(bp, base);
 			mutex_enter(&mfs_lock);
@@ -429,7 +437,7 @@ mfs_start(struct mount *mp, int flags)
 
 		sleepreturn = cv_wait_sig(&mfsp->mfs_cv, &mfs_lock);
 	}
-	KASSERT(BUFQ_PEEK(mfsp->mfs_buflist) == NULL);
+	KASSERT(bufq_peek(mfsp->mfs_buflist) == NULL);
 	refcnt = --mfsp->mfs_refcnt;
 	mutex_exit(&mfs_lock);
 	if (refcnt == 0) {

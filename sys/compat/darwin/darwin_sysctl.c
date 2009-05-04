@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.58.2.1 2008/05/16 02:23:35 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.58.2.2 2009/05/04 08:12:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.58.2.1 2008/05/16 02:23:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.58.2.2 2009/05/04 08:12:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.58.2.1 2008/05/16 02:23:35 yamt 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
-#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_types.h>
+#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_proc.h>
@@ -728,7 +728,8 @@ darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 	struct darwin_eproc *de;
 
 	printf("fillkproc: pid %d\n", p->p_pid);
-	l = proc_representative_lwp(p, NULL, 1);
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
 	(void)memset(dkp, 0, sizeof(*dkp));
 
 	dep = (struct darwin_extern_proc *)&dkp->kp_proc;
@@ -812,7 +813,7 @@ darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 		/* (ptr) */ de->e_tsess = (struct darwin_session *)
 		    p->p_session->s_ttyp->t_session;
 	} else {
-		de->e_tdev = NODEV;
+		de->e_tdev = (darwin_dev_t)NODEV;
 		/* de->e_tpgid */
 		/* (ptr) de->e_tsess */
 	}
@@ -840,8 +841,12 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 	int bf = p->p_flag;
 	int bsf = p->p_sflag;
 	int bslf = p->p_slflag;
-	struct lwp *l = proc_representative_lwp(p, NULL, 1);
-	int lf = l->l_flag;
+	struct lwp *l;
+	int lf;
+
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
+	lf = l->l_flag;
 
 	if (bf & PK_ADVLOCK)
 		df |= DARWIN_P_ADVLOCK;
@@ -849,7 +854,7 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 		df |= DARWIN_P_CONTROLT;
 	if (bsf & PS_NOCLDSTOP)
 		df |= DARWIN_P_NOCLDSTOP;
-	if (bsf & PS_PPWAIT)
+	if (p->p_lflag & PL_PPWAIT)
 		df |= DARWIN_P_PPWAIT;
 	if (bsf & PST_PROFIL)
 		df |= DARWIN_P_PROFIL;

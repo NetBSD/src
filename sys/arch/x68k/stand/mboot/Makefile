@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2006/06/29 03:46:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.14.62.1 2009/05/04 08:12:08 yamt Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -29,7 +29,7 @@ LINKFLAGS=	-N -static -Ttext ${TEXT}
 
 .include "../Makefile.booters"
 
-realall: machine-links ${PROG}
+realall: ${PROG}
 ${BOOT}:	${OBJS}
 	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${BOOT}.x ${OBJS} ${LDLIBS}

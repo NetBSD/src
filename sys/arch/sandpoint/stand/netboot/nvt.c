@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.11.4.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: nvt.c,v 1.11.4.2 2009/05/04 08:11:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,10 +57,24 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-int nvt_match(unsigned, void *);
-void *nvt_init(unsigned, void *);
-int nvt_send(void *, char *, unsigned);
-int nvt_recv(void *, char *, unsigned, unsigned);
+struct desc {
+	uint32_t xd0, xd1, xd2, xd3;
+};
+#define T0_OWN		(1U << 31)	/* 1: loaded for HW to send */
+#define T0_TERR		(1U << 15)	/* Tx error; ABT|CBH */
+#define T0_UDF		(1U << 11)	/* FIFO underflow */
+#define T0_CRS		(1U << 10)	/* found carrier sense lost */
+#define T0_OWC		(1U << 9)	/* found out of window collision */
+#define T0_ABT		(1U << 8)	/* excess collision Tx abort */
+#define T0_CBH		(1U << 7)	/* heartbeat check failure */
+#define T0_COLS		(1U << 4)	/* collision detected */
+#define T0_NCRMASK	0x3		/* number of collision retries */
+#define T1_IC		(1U << 23)	/* post Tx done interrupt */
+#define T1_STP		(1U << 22)	/* first frame segment */
+#define T1_EDP		(1U << 21)	/* last frame segment */
+#define T1_CRC		(1U << 16)	/* _disable_ CRC generation */
+#define T1_CHN		(1U << 15)	/* "more bit," not the last seg. */
+#define T_FLMASK	0x00007fff	/* Tx frame/segment length */
 
 #define R0_OWN		(1U << 31)	/* 1: empty for HW to load anew */
 #define R0_FLMASK	0x7fff0000	/* frame length */
@@ -79,26 +93,6 @@ int nvt_recv(void *, char *, unsigned, unsigned);
 #define R0_CRCE		(1U << 1)	/* CRC error */
 #define R0_RERR		(1U << 0)	/* Rx error summary */
 #define R1_FLMASK	0x00007ffc	/* Rx segment buffer length */
-
-#define T0_OWN		(1U << 31)	/* 1: loaded for HW to send */
-#define T0_TERR		(1U << 15)	/* Tx error; ABT|CBH */
-#define T0_UDF		(1U << 11)	/* FIFO underflow */
-#define T0_CRS		(1U << 10)	/* found carrier sense lost */
-#define T0_OWC		(1U << 9)	/* found out of window collision */
-#define T0_ABT		(1U << 8)	/* excess collision Tx abort */
-#define T0_CBH		(1U << 7)	/* heartbeat check failure */
-#define T0_COLS		(1U << 4)	/* collision detected */
-#define T0_NCRMASK	0x3		/* number of collision retries */
-#define T1_IC		(1U << 23)	/* post Tx done interrupt */
-#define T1_STP		(1U << 22)	/* first frame segment */
-#define T1_EDP		(1U << 21)	/* last frame segment */
-#define T1_CRC		(1U << 16)	/* _disable_ CRC generation */
-#define T1_CHN		(1U << 15)	/* "more bit," not the last seg. */
-#define T_FLMASK	0x00007fff	/* Tx frame/segment length */
-
-struct desc {
-	uint32_t xd0, xd1, xd2, xd3;
-};
 
 #define VR_PAR0		0x00		/* SA [0] */
 #define VR_PAR1		0x01		/* SA [1] */
@@ -181,21 +175,16 @@ nvt_init(unsigned tag, void *data)
 	struct desc *txd, *rxd;
 	uint8_t *en;
 
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_DEVICE(0x1106, 0x3053) != val
-	    && PCI_DEVICE(0x1106, 0x3065) != val)
-		return NULL;
-
 	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
-	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
+	l->csr = ~01 & DEVTOV(pcicfgread(tag, 0x10)); /* use IO space */
 
 	val = CTL1_RESET;
 	CSR_WRITE_1(l, VR_CTL1, val);
 	do {
 		val = CSR_READ_1(l, VR_CTL1);
 	} while (val & CTL1_RESET);
-
+	/* PHY number is loaded from EEPROM */
 	l->phy = CSR_READ_1(l, VR_MIICFG) & 0x1f;
 
 	en = data;

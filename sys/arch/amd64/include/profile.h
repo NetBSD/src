@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.13 2008/04/21 15:15:33 cegger Exp $	*/
+/*	$NetBSD: profile.h,v 1.13.2.1 2009/05/04 08:10:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -30,6 +30,8 @@
  *
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifdef __x86_64__
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -137,14 +139,14 @@ mcount_read_psl(void)
 {
 	u_long	ef;
 
-	__asm volatile("pushfl; popl %0" : "=r" (ef));
+	__asm volatile("pushfq; popq %0" : "=r" (ef));
 	return (ef);
 }
 
 static inline void
 mcount_write_psl(u_long ef)
 {
-	__asm volatile("pushl %0; popfl" : : "r" (ef));
+	__asm volatile("pushq %0; popfq" : : "r" (ef));
 }
 
 #endif /* XEN */
@@ -158,3 +160,9 @@ mcount_write_psl(u_long ef)
 	mcount_write_psl(s);
 
 #endif /* _KERNEL */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/profile.h>
+
+#endif	/*	__x86_64__	*/

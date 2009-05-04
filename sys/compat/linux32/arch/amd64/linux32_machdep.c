@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.17 2008/04/24 18:39:23 ad Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.17.2.1 2009/05/04 08:12:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.2.1 2009/05/04 08:12:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_rip = ((long)p->p_sigctx.ps_sigcode) & 0xffffffff;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC) & 0xffffffff;
+	tf->tf_rflags &= ~PSL_CLEARSIG & 0xffffffff;
 	tf->tf_rsp = (long)fp & 0xffffffff;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 
@@ -210,8 +210,8 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	lsi = &frame.sf_si;
 	(void)memset(lsi, 0, sizeof(frame.sf_si));
 	lsi->lsi_errno = native_to_linux32_errno[ksi->ksi_errno];
-	lsi->lsi_code = ksi->ksi_code;
-	lsi->lsi_signo = native_to_linux32_signo[frame.sf_sig];
+	lsi->lsi_code = native_to_linux_si_code(ksi->ksi_code);
+	lsi->lsi_signo = frame.sf_sig;
 	switch (lsi->lsi_signo) {
 	case LINUX32_SIGILL:
 	case LINUX32_SIGFPE:
@@ -271,7 +271,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_rip = (((long)p->p_sigctx.ps_sigcode) +
 	    (linux32_rt_sigcode - linux32_sigcode)) & 0xffffffff;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC) & 0xffffffff;
+	tf->tf_rflags &= ~PSL_CLEARSIG & 0xffffffff;
 	tf->tf_rsp = (long)fp & 0xffffffff;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 
@@ -355,11 +355,8 @@ linux32_save_ucontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask,
 }
 
 static void
-linux32_save_sigcontext(l, tf, mask, sc)
-	struct lwp *l; 
-	struct trapframe *tf; 
-	const sigset_t *mask;
-	struct linux32_sigcontext *sc; 
+linux32_save_sigcontext(struct lwp *l, struct trapframe *tf,
+			const sigset_t *mask, struct linux32_sigcontext *sc)
 {
 	/* Save register context. */
 	sc->sc_gs = tf->tf_gs;
@@ -422,10 +419,8 @@ linux32_sys_rt_sigreturn(struct lwp *l, const struct linux32_sys_rt_sigreturn_ar
 }
 
 static int
-linux32_restore_sigcontext(l, scp, retval)
-	struct lwp *l;
-	struct linux32_sigcontext *scp;
-	register_t *retval;
+linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
+			register_t *retval)
 {	
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;

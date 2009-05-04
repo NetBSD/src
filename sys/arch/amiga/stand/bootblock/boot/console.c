@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.7.78.1 2008/05/16 02:21:52 yamt Exp $ */
+/* $NetBSD: console.c,v 1.7.78.2 2009/05/04 08:10:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ err:
 
 #ifdef _PRIMARY_BOOT
 int
-consclose()
+consclose(void)
 {
 	struct Console *mc = ConsoleBase;
 
@@ -175,8 +175,7 @@ consclose()
 #endif
 
 void
-putchar(c)
-	char c;
+putchar(int c)
 {
 	struct Console *mc = ConsoleBase;
 
@@ -187,8 +186,7 @@ putchar(c)
 }
 
 void
-puts(s)
-	char *s;
+puts(char *s)
 {
 	struct Console *mc = ConsoleBase;
 
@@ -199,7 +197,7 @@ puts(s)
 }
 
 int
-getchar()
+getchar(void)
 {
 	struct AmigaIO *ior;
 	char c = -1;

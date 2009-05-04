@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.79 2008/04/24 18:39:21 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.79.2.1 2009/05/04 08:11:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,28 +27,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79.2.1 2009/05/04 08:11:58 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
+#include "opt_modular.h"
 #include "firm_events.h"
 #endif
 
 #include <sys/param.h>
 #include <sys/exec.h>
-#include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/select.h>
+#include <sys/socketvar.h>
 #include <sys/ucontext.h>
 #include <sys/ioctl.h>
 #include <sys/kmem.h>
@@ -138,7 +139,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
 		fpusave_lwp(l, false);
-		free((void *)fs, M_SUBPROC);
+		pool_cache_put(fpstate_cache, fs);
 		l->l_md.md_fpstate = NULL;
 	}
 	memset(tf, 0, sizeof *tf);
@@ -215,7 +216,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = (u_int)ksi->ksi_trap;
-#if defined(COMPAT_SUNOS) || defined(LKM)
+#if defined(COMPAT_SUNOS) || defined(MODULAR)
 	sf.sf_scp = (u_long)&fp->sf_sc;
 #endif
 	sf.sf_addr = 0;			/* XXX */
@@ -413,6 +414,46 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		netbsd32_sendsig_siginfo(ksi, mask);
+}
+
+/*
+ * Set the lwp to begin execution in the upcall handler.  The upcall
+ * handler will then simply call the upcall routine and then exit.
+ *
+ * Because we have a bunch of different signal trampolines, the first
+ * two instructions in the signal trampoline call the upcall handler.
+ * Signal dispatch should skip the first two instructions in the signal
+ * trampolines.
+ */
+void 
+netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+       	struct trapframe *tf;
+	vaddr_t addr;
+
+	tf = l->l_md.md_tf;
+	addr = (vaddr_t) upcall;
+
+	/* Arguments to the upcall... */
+	tf->tf_out[0] = type;
+	tf->tf_out[1] = (vaddr_t) sas;
+	tf->tf_out[2] = nevents;
+	tf->tf_out[3] = ninterrupted;
+	tf->tf_out[4] = (vaddr_t) ap;
+
+	/*
+	 * Ensure the stack is double-word aligned, and provide a
+	 * C call frame.
+	 */
+	sp = (void *)(((vaddr_t)sp & ~0x7) - CCFSZ);
+
+	/* Arrange to begin execution at the upcall handler. */
+
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+	tf->tf_out[6] = (vaddr_t) sp;
+	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
 #undef DEBUG
@@ -621,21 +662,21 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 
 #if 0
 int
-netbsd32_process_write_regs(struct proc *p, const struct reg *regs)
+netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 {
-	const struct reg32* regp = (const struct reg32*)regs;
 	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
-	tf->tf_pc = regp->r_pc;
-	tf->tf_npc = regp->r_npc;
-	tf->tf_y = regp->r_pc;
+	tf->tf_pc = regs->r_pc;
+	tf->tf_npc = regs->r_npc;
+	tf->tf_y = regs->r_pc;
 	for (i = 0; i < 8; i++) {
-		tf->tf_global[i] = regp->r_global[i];
-		tf->tf_out[i] = regp->r_out[i];
+		tf->tf_global[i] = regs->r_global[i];
+		tf->tf_out[i] = regs->r_out[i];
 	}
 	/* We should also read in the ins and locals.  See signal stuff */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(regp->r_psr);
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) |
+		PSRCC_TO_TSTATE(regs->r_psr);
 	return (0);
 }
 #endif
@@ -643,8 +684,8 @@ netbsd32_process_write_regs(struct proc *p, const struct reg *regs)
 int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 {
-	extern struct fpstate64	initfpstate;
-	struct fpstate64	*statep = &initfpstate;
+	extern const struct fpstate64 initfpstate;
+	const struct fpstate64	*statep = &initfpstate;
 	int i;
 
 	if (l->l_md.md_fpstate)
@@ -658,22 +699,18 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 
 #if 0
 int
-netbsd32_process_write_fpregs(struct proc *p, const struct fpreg *regs)
+netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs)
 {
-	extern struct fpstate	initfpstate;
-	struct fpstate64	*statep = &initfpstate;
-	const struct fpreg32	*regp = (const struct fpreg32 *)regs;
+	struct fpstate64	*statep;
 	int i;
 
-	/* NOTE: struct fpreg == struct fpstate */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
-	for (i=0; i<32; i++)
-		statep->fs_regs[i] = regp->fr_regs[i];
-	statep->fs_fsr = regp->fr_fsr;
-	statep->fs_qsize = regp->fr_qsize;
-	for (i=0; i<regp->fr_qsize; i++)
-		statep->fs_queue[i] = regp->fr_queue[i];
+	statep = l->l_md.md_fpstate;
+	if (statep == NULL)
+		return EINVAL;
+	for (i = 0; i < 32; i++)
+		statep->fs_regs[i] = regs->fr_regs[i];
+	statep->fs_fsr = regs->fr_fsr;
+	statep->fs_qsize = 0;
 
 	return 0;
 }
@@ -889,7 +926,7 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
 		 * XXX immediately or just fault it in later?
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
+			fsp = pool_cache_get(fpstate_cache, PR_WAITOK);
 			l->l_md.md_fpstate = fsp;
 		} else {
 			/* Drop the live context on the floor. */
@@ -1205,7 +1242,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
+			fsp = pool_cache_get(fpstate_cache, PR_WAITOK);
 			l->l_md.md_fpstate = fsp;
 		} else {
 			/* Drop the live context on the floor. */
@@ -1320,7 +1357,6 @@ startlwp32(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }
 

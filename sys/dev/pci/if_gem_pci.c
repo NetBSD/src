@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.29 2008/04/10 19:13:37 cegger Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.29.4.1 2009/05/04 08:12:56 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.29 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.29.4.1 2009/05/04 08:12:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,10 +104,7 @@ CFATTACH_DECL(gem_pci, sizeof(struct gem_pci_softc),
  */
 
 int
-gem_match_pci(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+gem_match_pci(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -122,6 +119,7 @@ gem_match_pci(parent, cf, aux)
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3 ||
  	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_K2_GMAC ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_INTREPID2_GMAC))
 		return (1);
 
@@ -159,9 +157,7 @@ isserdes(u_int8_t* buf)
 }
 
 void
-gem_attach_pci(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gem_attach_pci(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = (void *)self;

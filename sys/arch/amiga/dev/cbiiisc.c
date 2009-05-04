@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.15 2006/03/08 23:46:22 lukem Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.15.68.1 2009/05/04 08:10:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.15 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.15.68.1 2009/05/04 08:10:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,6 @@ cbiiiscattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_ctest7 = 0x00;
 	sc->sc_dcntl = 0x20;		/* XXX ?? */
 
-	alloc_sicallback();
-
         /*
          * Fill in the scsipi_adapter.
          */
@@ -200,10 +198,13 @@ void
 cbiiisc_dump(void)
 {
 	extern struct cfdriver cbiiisc_cd;
+	struct siop_softc *sc;
 	int i;
 
-	for (i = 0; i < cbiiisc_cd.cd_ndevs; ++i)
-		if (cbiiisc_cd.cd_devs[i])
-			siopng_dump(cbiiisc_cd.cd_devs[i]);
+	for (i = 0; i < cbiiisc_cd.cd_ndevs; ++i) {
+		sc = device_lookup_private(&cbiiisc_cd, i);
+		if (sc != NULL)
+			siopng_dump(sc);
+	}
 }
 #endif

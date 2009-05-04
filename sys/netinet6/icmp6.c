@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.146.2.1 2008/05/16 02:25:45 yamt Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.146.2.2 2009/05/04 08:14:18 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.146.2.1 2008/05/16 02:25:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.146.2.2 2009/05/04 08:14:18 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -556,6 +556,9 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	case ICMP6_PACKET_TOO_BIG:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
 
+		/*
+		 * MTU is checked in icmp6_mtudisc.
+		 */
 		code = PRC_MSGSIZE;
 
 		/*
@@ -730,7 +733,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 			nicmp6 = (struct icmp6_hdr *)(nip6 + 1);
 			bcopy(icmp6, nicmp6, sizeof(struct icmp6_hdr));
 			p = (u_char *)(nicmp6 + 1);
-			bzero(p, 4);
+			memset(p, 0, 4);
 			bcopy(hostname, p + 4, maxhlen); /* meaningless TTL */
 			noff = sizeof(struct ip6_hdr);
 			M_COPY_PKTHDR(n, m); /* just for rcvif */
@@ -1081,6 +1084,20 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	struct sockaddr_in6 sin6;
 
 	/*
+	 * The MTU should not be less than the minimal IPv6 MTU except for the
+	 * hack in ip6_output/ip6_setpmtu where we always include a frag header.
+	 * In that one case, the MTU might be less than 1280.  
+	 */
+	if (__predict_false(mtu < IPV6_MMTU - sizeof(struct ip6_frag))) {
+		/* is the mtu even sane? */
+		if (mtu < sizeof(struct ip6_hdr) + sizeof(struct ip6_frag) + 8)
+			return;
+		if (!validated)
+			return;
+		mtu = IPV6_MMTU - sizeof(struct ip6_frag);
+	}
+
+	/*
 	 * allow non-validated cases if memory is plenty, to make traffic
 	 * from non-connected pcb happy.
 	 */
@@ -1099,7 +1116,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 			return;
 	}
 
-	bzero(&sin6, sizeof(sin6));
+	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = PF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *dst;
@@ -1555,7 +1572,7 @@ ni6_dnsmatch(const char *a, int alen, const char *b, int blen)
 	int l;
 
 	/* simplest case - need validation? */
-	if (alen == blen && bcmp(a, b, alen) == 0)
+	if (alen == blen && memcmp(a, b, alen) == 0)
 		return 1;
 
 	a0 = a;
@@ -1592,7 +1609,7 @@ ni6_dnsmatch(const char *a, int alen, const char *b, int blen)
 		l = a[0];
 		if (a - a0 + 1 + l > alen || b - b0 + 1 + l > blen)
 			return 0;
-		if (bcmp(a + 1, b + 1, l) != 0)
+		if (memcmp(a + 1, b + 1, l) != 0)
 			return 0;
 
 		a += 1 + l;
@@ -2180,7 +2197,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		}
 
 		gw6 = &(((struct sockaddr_in6 *)rt->rt_gateway)->sin6_addr);
-		if (bcmp(&src6, gw6, sizeof(struct in6_addr)) != 0) {
+		if (memcmp(&src6, gw6, sizeof(struct in6_addr)) != 0) {
 			nd6log((LOG_ERR,
 				"ICMP6 redirect rejected; "
 				"not equal to gw-for-src=%s (must be same): "
@@ -2211,7 +2228,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	is_router = is_onlink = 0;
 	if (IN6_IS_ADDR_LINKLOCAL(&redtgt6))
 		is_router = 1;	/* router case */
-	if (bcmp(&redtgt6, &reddst6, sizeof(redtgt6)) == 0)
+	if (memcmp(&redtgt6, &reddst6, sizeof(redtgt6)) == 0)
 		is_onlink = 1;	/* on-link destination case */
 	if (!is_router && !is_onlink) {
 		nd6log((LOG_ERR,
@@ -2274,9 +2291,9 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			 */
 		}
 
-		bzero(&sdst, sizeof(sdst));
-		bzero(&sgw, sizeof(sgw));
-		bzero(&ssrc, sizeof(ssrc));
+		memset(&sdst, 0, sizeof(sdst));
+		memset(&sgw, 0, sizeof(sgw));
+		memset(&ssrc, 0, sizeof(ssrc));
 		sdst.sin6_family = sgw.sin6_family = ssrc.sin6_family = AF_INET6;
 		sdst.sin6_len = sgw.sin6_len = ssrc.sin6_len =
 			sizeof(struct sockaddr_in6);
@@ -2519,7 +2536,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		}
 
 		nd_opt_rh = (struct nd_opt_rd_hdr *)p;
-		bzero(nd_opt_rh, sizeof(*nd_opt_rh));
+		memset(nd_opt_rh, 0, sizeof(*nd_opt_rh));
 		nd_opt_rh->nd_opt_rh_type = ND_OPT_REDIRECTED_HEADER;
 		nd_opt_rh->nd_opt_rh_len = len >> 3;
 		p += sizeof(*nd_opt_rh);
@@ -2570,37 +2587,26 @@ fail:
  * ICMPv6 socket option processing.
  */
 int
-icmp6_ctloutput(int op, struct socket *so, int level, 
-	int optname, struct mbuf **mp)
+icmp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error = 0;
-	int optlen;
 	struct in6pcb *in6p = sotoin6pcb(so);
-	struct mbuf *m = *mp;
 
-	optlen = m ? m->m_len : 0;
-
-	if (level != IPPROTO_ICMPV6)
-		return rip6_ctloutput(op, so, level, optname, mp);
+	if (sopt->sopt_level != IPPROTO_ICMPV6)
+		return rip6_ctloutput(op, so, sopt);
 
 	switch (op) {
 	case PRCO_SETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case ICMP6_FILTER:
 		    {
-			struct icmp6_filter *p;
+			struct icmp6_filter fil;
 
-			if (optlen != sizeof(*p)) {
-				error = EMSGSIZE;
+			error = sockopt_get(sopt, &fil, sizeof(fil));
+			if (error)
 				break;
-			}
-			p = mtod(m, struct icmp6_filter *);
-			if (!p || !in6p->in6p_icmp6filt) {
-				error = EINVAL;
-				break;
-			}
-			bcopy(p, in6p->in6p_icmp6filt,
-				sizeof(struct icmp6_filter));
+			memcpy(in6p->in6p_icmp6filt, &fil,
+			    sizeof(struct icmp6_filter));
 			error = 0;
 			break;
 		    }
@@ -2609,26 +2615,18 @@ icmp6_ctloutput(int op, struct socket *so, int level,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			(void)m_freem(m);
 		break;
 
 	case PRCO_GETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case ICMP6_FILTER:
 		    {
-			struct icmp6_filter *p;
-
-			if (!in6p->in6p_icmp6filt) {
+			if (in6p->in6p_icmp6filt == NULL) {
 				error = EINVAL;
 				break;
 			}
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
-			m->m_len = sizeof(struct icmp6_filter);
-			p = mtod(m, struct icmp6_filter *);
-			bcopy(in6p->in6p_icmp6filt, p,
-				sizeof(struct icmp6_filter));
-			error = 0;
+			error = sockopt_set(sopt, in6p->in6p_icmp6filt,
+			    sizeof(struct icmp6_filter));
 			break;
 		    }
 

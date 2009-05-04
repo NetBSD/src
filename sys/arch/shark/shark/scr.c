@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.22 2007/03/04 06:00:43 christos Exp $	*/
+/*	$NetBSD: scr.c,v 1.22.46.1 2009/05/04 08:11:53 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.22 2007/03/04 06:00:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.22.46.1 2009/05/04 08:11:53 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -482,7 +482,7 @@ struct scr_softc
     int     dataMax;                /* max number of data bytes to send/recv */
 
     /* extra stuff kept for t0RecvByteS, t0SendByteS machines */
-    void    (*t0ByteParent) __P((struct scr_softc *,int));  /* state machine that is controlling this SM */
+    void    (*t0ByteParent)(struct scr_softc *,int);  /* state machine that is controlling this SM */
     int     shiftBits;              /* number of bits shifted	*/
     BYTE    shiftByte;              /* intermediate value of bit being shifted */
     BYTE    dataByte;               /* actual value of byte */
@@ -532,7 +532,7 @@ typedef struct callout_t
     struct callout_t *c_next;                       /* next callout in queue */
     struct scr_softc *c_sc;                         /* soft c */
     int     c_arg;                                  /* function argument */
-    void    (*c_func) __P((struct scr_softc*,int)); /* function to call */
+    void    (*c_func)(struct scr_softc*,int); /* function to call */
     int     c_time;                                 /* ticks to the event */
 }Callout;
 
@@ -578,10 +578,10 @@ static unsigned char hatStack[HATSTACKSIZE];   /* actual stack used during a FIQ
 */
 
 /* configure routines */
-int     scrprobe    __P((struct device *, struct cfdata *, void *));
-void    scrattach   __P((struct device *, struct device *, void *));
+int     scrprobe(struct device *, struct cfdata *, void *);
+void    scrattach(struct device *, struct device *, void *);
 
-static void   initStates           __P((struct scr_softc * sc)); 
+static void   initStates(struct scr_softc * sc); 
 
 
 
@@ -593,40 +593,40 @@ static void   initStates           __P((struct scr_softc * sc));
 */
 
 /* top level state machine */
-static void   masterSM             __P((struct scr_softc * sc,int cmd));
+static void   masterSM(struct scr_softc * sc,int cmd);
 
 /* mid level state machines, ie protocols  */
-static void   t0SendSM             __P((struct scr_softc * sc,int cnd));
-static void   t0RecvSM             __P((struct scr_softc * sc,int cnd));
-static void   ATRSM                __P((struct scr_softc * sc,int cnd));
+static void   t0SendSM(struct scr_softc * sc,int cnd);
+static void   t0RecvSM(struct scr_softc * sc,int cnd);
+static void   ATRSM(struct scr_softc * sc,int cnd);
 
 /* low level state machines, ie bash hardware bits */
-static void   coldResetSM          __P((struct scr_softc * sc,int cnd));
+static void   coldResetSM(struct scr_softc * sc,int cnd);
 
-static void   t0SendByteSM         __P((struct scr_softc * sc,int cnd));
-static void   t0RecvByteSM         __P((struct scr_softc * sc,int cnd));
+static void   t0SendByteSM(struct scr_softc * sc,int cnd);
+static void   t0RecvByteSM(struct scr_softc * sc,int cnd);
 
-static void   cardOff              __P((struct scr_softc * sc));              
+static void   cardOff(struct scr_softc * sc);              
 
 /* 
 ** functions used for our own timeout routines.
 ** we cannot use system ones as we are running at a spl level
 ** that can interrupt the system timeout routines
 */
-static void scrClkInit     __P((void));
-static void scrClkStart    __P((struct scr_softc* sc,int countPerTick));
-static void scrClkAdj      __P((int count));
-static void scrClkStop     __P((void));
-static void hatClkIrq      __P((int count));               
+static void scrClkInit(void);
+static void scrClkStart(struct scr_softc* sc,int countPerTick);
+static void scrClkAdj(int count);
+static void scrClkStop(void);
+static void hatClkIrq(int count);               
 
-static void scrTimeout     __P((void (*func)(struct scr_softc*,int), struct scr_softc*, int arg, int count));  
-static void scrUntimeout   __P((void (*func)(struct scr_softc*,int), struct scr_softc*, int arg));
+static void scrTimeout(void (*func)(struct scr_softc*,int), struct scr_softc*, int arg, int count);  
+static void scrUntimeout(void (*func)(struct scr_softc*,int), struct scr_softc*, int arg);
 
 
 /* debug functions */
 #ifdef SCR_DEBUG
-    static void invalidStateCmd __P((struct scr_softc* sc,int state,int cmd, int line));
-    static char * getText       __P((int x));
+    static void invalidStateCmd(struct scr_softc* sc,int state,int cmd, int line);
+    static char * getText(int x);
 #endif
 
 
@@ -852,28 +852,15 @@ static void initStates(struct scr_softc * sc)
 **     none.
 **--
 */
-int scropen(dev, flag, mode, l)
-    dev_t       dev;
-    int         flag;
-    int         mode;
-struct lwp *l;
+int scropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-    int                  unit = SCRUNIT(dev);
     struct scr_softc     *sc;
 
     KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,
                 ("scropen: called with minor device %d and flag 0x%x\n",
-                 unit, flag));
+                 SCRUNIT(dev), flag));
 
-    /* Sanity check the minor device number we have been instructed
-    ** to open and set up our softc structure pointer. 
-    */
-    if (unit >= scr_cd.cd_ndevs)
-    {
-        KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,("\t scropen, return ENXIO\n"));
-        return (ENXIO);
-    }
-    sc = scr_cd.cd_devs[unit];
+    sc = device_lookup_private(&scr_cd, SCRUNIT(dev));
     if (!sc)
     {
         KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,("\t scropen, return ENXIO\n"));
@@ -935,15 +922,10 @@ struct lwp *l;
 **     none.
 **--
 */
-int scrclose(dev, flag, mode, l)
-    dev_t       dev;
-    int         flag;
-    int         mode;
-    struct lwp *l;
+int scrclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 #if 0
-    int                unit = SCRUNIT(dev);
-    struct scr_softc   *sc  = scr_cd.cd_devs[unit];
+    struct scr_softc   *sc  = device_lookup_private(&scr_cd, SCRUNIT(dev));
 #endif
 
     KERN_DEBUG (scrdebug, SCRCLOSE_DEBUG_INFO,
@@ -1034,15 +1016,9 @@ int scrclose(dev, flag, mode, l)
 **--
 */
 int
-scrioctl(dev, cmd, data, flag, l)
-    dev_t        dev;
-    u_long       cmd;
-    void *     data;
-    int          flag;
-struct lwp  *l;
+scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-    int                 unit = SCRUNIT(dev);
-    struct scr_softc*   sc  = scr_cd.cd_devs[unit];
+    struct scr_softc*   sc = device_lookup_private(&scr_cd, SCRUNIT(dev));
     
     int                 error = 0;          /* error value returned */
     int                 masterDoneRetries= 0;         /* nuber of times we looked at masterDone */
@@ -1059,7 +1035,7 @@ struct lwp  *l;
     KERN_DEBUG (scrdebug, SCRIOCTL_DEBUG_INFO,
                 ("scrioctl: called for device 0x%x, command 0x%lx, "
                  "flag 0x%x\n",
-                 unit, cmd, flag));
+                 SCRUNIT(dev), cmd, flag));
 
 
 
@@ -3611,7 +3587,7 @@ static void hatClkIrq(int  x)
     register int needsoft =0;
     register Callout *c;
     register int arg;
-    register void (*func) __P((struct scr_softc*,int));
+    register void (*func)(struct scr_softc*,int);
     struct scr_softc * sc;
 
     ASSERT(scrClkEnable);
@@ -3721,7 +3697,7 @@ static void myHatWedge(int nFIQs)
 */
 
 static void scrTimeout(ftn, sc, arg, count)
-    void (*ftn) __P((struct scr_softc*,int));
+    void (*ftn)(struct scr_softc*,int);
     struct scr_softc* sc;
     int arg;
     register int count;
@@ -3809,7 +3785,7 @@ static void scrTimeout(ftn, sc, arg, count)
 **--
 */
 static void scrUntimeout(ftn, sc, arg)
-void (*ftn) __P((struct scr_softc*,int));
+void (*ftn)(struct scr_softc*,int);
 struct scr_softc* sc;
 int arg;
 {

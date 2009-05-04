@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27.10.1 2008/05/16 02:22:22 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.27.10.2 2009/05/04 08:11:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _HP300_INTR_H_
 #define	_HP300_INTR_H_
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <machine/psl.h>
 
@@ -63,7 +63,15 @@
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
 extern int idepth;
-extern u_short hp300_ipl2psl[];
+
+static inline bool
+cpu_intr_p(void) 
+{
+ 
+	return idepth != 0;
+}
+
+extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
@@ -74,7 +82,7 @@ static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._psl = hp300_ipl2psl[ipl]};
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }
 
 static inline int
@@ -84,22 +92,27 @@ splraiseipl(ipl_cookie_t icookie)
 	return _splraise(icookie._psl);
 }
 
+static inline void
+splx(int sr)
+{
+
+	__asm volatile("movew %0,%%sr" : : "di" (sr));
+}
+
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splhil()	splraise1()
 #define	splkbd()	splhil()
 
 /* These spl calls are used by machine-independent code. */
-/* spl0 requires checking for software interrupts */
+#define	spl0()		_spl0()
+
 #define	splsoftbio()	splraise1()
 #define	splsoftclock()	splraise1()
 #define	splsoftnet()	splraise1()
 #define	splsoftserial()	splraise1()
-#define	splvm()		_splraise(hp300_ipl2psl[IPL_VM])
+#define	splvm()		splraise5()
 #define	splsched()	spl6()
 #define	splhigh()	spl7()
-
-/* watch out for side effects */
-#define	splx(s)		((s) & PSL_IPL ? _spl((s)) : spl0())
 
 struct hp300_intrhand {
 	LIST_ENTRY(hp300_intrhand) ih_q;
@@ -114,14 +127,10 @@ struct hp300_intr {
 	struct evcnt hi_evcnt;
 };
 
-/* locore.s */
-int	spl0(void);
-
 /* intr.c */
 void	intr_init(void);
 void	*intr_establish(int (*)(void *), void *, int, int);
 void	intr_disestablish(void *);
 void	intr_dispatch(int);
-void	intr_printlevels(void);
 
 #endif /* _HP300_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.272.4.1 2008/05/16 02:25:06 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.272.4.2 2009/05/04 08:13:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.272.4.1 2008/05/16 02:25:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.272.4.2 2009/05/04 08:13:18 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -101,7 +101,7 @@ static void	sdstart(struct scsipi_periph *);
 static void	sdrestart(void *);
 static void	sddone(struct scsipi_xfer *, int);
 static bool	sd_suspend(device_t PMF_FN_PROTO);
-static void	sd_shutdown(void *);
+static bool	sd_shutdown(device_t, int);
 static int	sd_interpret_sense(struct scsipi_xfer *);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
@@ -129,8 +129,8 @@ static int	sdactivate(struct device *, enum devact);
 static int	sddetach(struct device *, int);
 static void	sd_set_properties(struct sd_softc *);
 
-CFATTACH_DECL(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
-    sdactivate);
+CFATTACH_DECL3_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
+    sdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver sd_cd;
 
@@ -223,6 +223,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
+	sd->sc_dev = self;
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	strncpy(sd->name, sa->sa_inqbuf.product, sizeof(sd->name));
 	if (sd->type == T_SIMPLE_DIRECT)
@@ -241,7 +242,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	sd->sc_periph = periph;
 
-	periph->periph_dev = &sd->sc_dev;
+	periph->periph_dev = sd->sc_dev;
 	periph->periph_switch = &sd_switch;
 
         /*
@@ -256,7 +257,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&sd->sc_dk, device_xname(&sd->sc_dev), &sddkdriver);
+	disk_init(&sd->sc_dk, device_xname(sd->sc_dev), &sddkdriver);
 	disk_attach(&sd->sc_dk);
 
 	/*
@@ -273,7 +274,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		result = SDGP_RESULT_OFFLINE;
 	else
 		result = sd_get_parms(sd, &sd->params, XS_CTL_DISCOVERY);
-	aprint_normal_dev(&sd->sc_dev, "");
+	aprint_normal_dev(sd->sc_dev, "");
 	switch (result) {
 	case SDGP_RESULT_OK:
 		format_bytes(pbuf, sizeof(pbuf),
@@ -304,22 +305,18 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 * Establish a shutdown hook so that we can ensure that
 	 * our data has actually made it onto the platter at
 	 * shutdown time.  Note that this relies on the fact
-	 * that the shutdown hook code puts us at the head of
-	 * the list (thus guaranteeing that our hook runs before
+	 * that the shutdown hooks at the "leaves" of the device tree
+	 * are run, first (thus guaranteeing that our hook runs before
 	 * our ancestors').
 	 */
-	if ((sd->sc_sdhook =
-	    shutdownhook_establish(sd_shutdown, sd)) == NULL)
-		aprint_error_dev(&sd->sc_dev, "WARNING: unable to establish shutdown hook\n");
-
-	if (!pmf_device_register(self, sd_suspend, NULL))
+	if (!pmf_device_register1(self, sd_suspend, NULL, sd_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if NRND > 0
 	/*
 	 * attach the device into the random source list
 	 */
-	rnd_attach_source(&sd->rnd_source, device_xname(&sd->sc_dev),
+	rnd_attach_source(&sd->rnd_source, device_xname(sd->sc_dev),
 			  RND_TYPE_DISK, 0);
 #endif
 
@@ -387,8 +384,9 @@ sddetach(struct device *self, int flags)
 	disk_detach(&sd->sc_dk);
 	disk_destroy(&sd->sc_dk);
 
+	callout_destroy(&sd->sc_callout);
+
 	pmf_device_deregister(self);
-	shutdownhook_disestablish(sd->sc_sdhook);
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -411,13 +409,11 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int error;
 
 	unit = SDUNIT(dev);
-	if (unit >= sd_cd.cd_ndevs)
-		return (ENXIO);
-	sd = sd_cd.cd_devs[unit];
+	sd = device_lookup_private(&sd_cd, unit);
 	if (sd == NULL)
 		return (ENXIO);
 
-	if (!device_is_active(&sd->sc_dev))
+	if (!device_is_active(sd->sc_dev))
 		return (ENODEV);
 
 	part = SDPART(dev);
@@ -437,7 +433,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
+	    ("sdopen: dev=0x%"PRIx64" (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
 
 	/*
@@ -592,7 +588,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = SDPART(dev);
@@ -616,7 +612,8 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 		if ((sd->flags & SDF_DIRTY) != 0) {
 			if (sd_flush(sd, 0)) {
-				aprint_error_dev(&sd->sc_dev, "cache synchronization failed\n");
+				aprint_error_dev(sd->sc_dev,
+					"cache synchronization failed\n");
 				sd->flags &= ~SDF_FLUSHING;
 			} else
 				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
@@ -648,7 +645,7 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static void
 sdstrategy(struct buf *bp)
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(bp->b_dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct disklabel *lp;
 	daddr_t blkno;
@@ -662,7 +659,7 @@ sdstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 */
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0 ||
-	    !device_is_active(&sd->sc_dev)) {
+	    !device_is_active(sd->sc_dev)) {
 		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
 		else
@@ -729,7 +726,7 @@ sdstrategy(struct buf *bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	BUFQ_PUT(sd->buf_queue, bp);
+	bufq_put(sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -767,7 +764,7 @@ done:
 static void
 sdstart(struct scsipi_periph *periph)
 {
-	struct sd_softc *sd = (void *)periph->periph_dev;
+	struct sd_softc *sd = device_private(periph->periph_dev);
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
 	struct scsipi_rw_16 cmd16;
@@ -800,7 +797,7 @@ sdstart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(sd->buf_queue)) != NULL) {
+			if ((bp = bufq_get(sd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
@@ -813,7 +810,7 @@ sdstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(sd->buf_queue)) == NULL)
+		if ((bp = bufq_peek(sd->buf_queue)) == NULL)
 			return;
 
 		/*
@@ -901,10 +898,10 @@ sdstart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(sd->buf_queue) != bp)
+		if (bufq_get(sd->buf_queue) != bp)
 			panic("sdstart(): dequeued wrong buf");
 #else
-		BUFQ_GET(sd->buf_queue);
+		bufq_get(sd->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -923,7 +920,7 @@ sdrestart(void *v)
 static void
 sddone(struct scsipi_xfer *xs, int error)
 {
-	struct sd_softc *sd = (void *)xs->xs_periph->periph_dev;
+	struct sd_softc *sd = device_private(xs->xs_periph->periph_dev);
 	struct buf *bp = xs->bp;
 
 	if (sd->flags & SDF_FLUSHING) {
@@ -952,7 +949,7 @@ sddone(struct scsipi_xfer *xs, int error)
 static void
 sdminphys(struct buf *bp)
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(bp->b_dev));
 	long xmax;
 
 	/*
@@ -999,7 +996,7 @@ sdwrite(dev_t dev, struct uio *uio, int ioflag)
 static int
 sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	int part = SDPART(dev);
 	int error = 0;
@@ -1211,7 +1208,8 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(&sd->sc_dev), sizeof(dkw->dkw_parent));
+		strlcpy(dkw->dkw_parent, device_xname(sd->sc_dev),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
 
@@ -1223,7 +1221,8 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(&sd->sc_dev), sizeof(dkw->dkw_parent));
+		strlcpy(dkw->dkw_parent, device_xname(sd->sc_dev),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }
 
@@ -1310,19 +1309,19 @@ sdgetdisklabel(struct sd_softc *sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKESDDEV(0, device_unit(&sd->sc_dev),
+	errstring = readdisklabel(MAKESDDEV(0, device_unit(sd->sc_dev),
 	    RAW_PART), sdstrategy, lp, sd->sc_dk.dk_cpulabel);
 	if (errstring) {
-		aprint_error_dev(&sd->sc_dev, "%s\n", errstring);
+		aprint_error_dev(sd->sc_dev, "%s\n", errstring);
 		return EIO;
 	}
 	return 0;
 }
 
-static void
-sd_shutdown(void *arg)
+static bool
+sd_shutdown(device_t self, int how)
 {
-	struct sd_softc *sd = arg;
+	struct sd_softc *sd = device_private(self);
 
 	/*
 	 * If the disk cache needs to be flushed, and the disk supports
@@ -1331,20 +1330,19 @@ sd_shutdown(void *arg)
 	 */
 	if ((sd->flags & SDF_DIRTY) != 0) {
 		if (sd_flush(sd, XS_CTL_NOSLEEP|XS_CTL_POLL)) {
-			aprint_error_dev(&sd->sc_dev, "cache synchronization failed\n");
+			aprint_error_dev(sd->sc_dev,
+				"cache synchronization failed\n");
 			sd->flags &= ~SDF_FLUSHING;
 		} else
 			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 	}
+	return true;
 }
 
 static bool
 sd_suspend(device_t dv PMF_FN_ARGS)
 {
-	struct sd_softc *sd = device_private(dv);
-
-	sd_shutdown(sd); /* XXX no need to poll */
-	return true;
+	return sd_shutdown(dv, boothowto); /* XXX no need to poll */
 }
 
 /*
@@ -1355,7 +1353,7 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsi_sense_data *sense = &xs->sense.scsi_sense;
-	struct sd_softc *sd = (void *)periph->periph_dev;
+	struct sd_softc *sd = device_private(periph->periph_dev);
 	int s, error, retval = EJUSTRETURN;
 
 	/*
@@ -1405,7 +1403,7 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 			 * Unit In The Process Of Becoming Ready.
 			 */
 			printf("%s: waiting for pack to spin up...\n",
-			    device_xname(&sd->sc_dev));
+			    device_xname(sd->sc_dev));
 			if (!callout_pending(&periph->periph_callout))
 				scsipi_periph_freeze(periph, 1);
 			callout_reset(&periph->periph_callout,
@@ -1413,7 +1411,7 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 			retval = ERESTART;
 		} else if (sense->ascq == 0x02) {
 			printf("%s: pack is stopped, restarting...\n",
-			    device_xname(&sd->sc_dev));
+			    device_xname(sd->sc_dev));
 			s = splbio();
 			periph->periph_flags |= PERIPH_RECOVERING;
 			splx(s);
@@ -1421,7 +1419,8 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 			    XS_CTL_URGENT|XS_CTL_HEAD_TAG|
 			    XS_CTL_THAW_PERIPH|XS_CTL_FREEZE_PERIPH);
 			if (error) {
-				aprint_error_dev(&sd->sc_dev, "unable to restart pack\n");
+				aprint_error_dev(sd->sc_dev,
+					"unable to restart pack\n");
 				retval = error;
 			} else
 				retval = ERESTART;
@@ -1448,13 +1447,11 @@ sdsize(dev_t dev)
 	int size;
 
 	unit = SDUNIT(dev);
-	if (unit >= sd_cd.cd_ndevs)
-		return (-1);
-	sd = sd_cd.cd_devs[unit];
+	sd = device_lookup_private(&sd_cd, unit);
 	if (sd == NULL)
 		return (-1);
 
-	if (!device_is_active(&sd->sc_dev))
+	if (!device_is_active(sd->sc_dev))
 		return (-1);
 
 	part = SDPART(dev);
@@ -1509,10 +1506,11 @@ sddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	part = SDPART(dev);
 
 	/* Check for acceptable drive number. */
-	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
+	sd = device_lookup_private(&sd_cd, unit);
+	if (sd == NULL)
 		return (ENXIO);
 
-	if (!device_is_active(&sd->sc_dev))
+	if (!device_is_active(sd->sc_dev))
 		return (ENODEV);
 
 	periph = sd->sc_periph;
@@ -2094,7 +2092,7 @@ sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	}
 
 page0:
-	printf("%s: fabricating a geometry\n", device_xname(&sd->sc_dev));
+	printf("%s: fabricating a geometry\n", device_xname(sd->sc_dev));
 	/* Try calling driver's method for figuring out geometry. */
 	if (!sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom ||
 	    !(*sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom)
@@ -2271,7 +2269,7 @@ sd_set_properties(struct sd_softc *sd)
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
-	prop_dictionary_set(device_properties(&sd->sc_dev),
+	prop_dictionary_set(device_properties(sd->sc_dev),
 	    "disk-info", disk_info);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: icpvar.h,v 1.9.38.1 2008/05/16 02:24:04 yamt Exp $	*/
+/*	$NetBSD: icpvar.h,v 1.9.38.2 2009/05/04 08:12:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define	ICP_UCMD_SCRATCH_SIZE	4096
 #define ICP_SCRATCH_SIZE	(8192 + ICP_UCMD_SCRATCH_SIZE)
 #define	ICP_SCRATCH_SENSE \
-    (ICP_SCRATCH_SIZE - sizeof(struct scsi_sense_data) * ICP_NCCBS)
+    (ICP_SCRATCH_SIZE - sizeof(struct scsi_sense_data) * (ICP_NCCBS + ICP_NCCB_RESERVE))
 #define	ICP_SCRATCH_UCMD	(ICP_SCRATCH_SENSE - ICP_UCMD_SCRATCH_SIZE)
 
 #define	ICP_NCCBS		ICP_MAX_CMDS

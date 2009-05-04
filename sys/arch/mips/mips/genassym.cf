@@ -1,9 +1,41 @@
-#	$NetBSD: genassym.cf,v 1.42 2007/10/17 19:55:38 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.42.20.1 2009/05/04 08:11:31 yamt Exp $
+#
+# Copyright (c) 1992, 1993
+#	The Regents of the University of California.  All rights reserved.
+#
+# This code is derived from software contributed to Berkeley by
+# Ralph Campbell.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	from @(#)genassym.c	8.2 (Berkeley) 9/23/93
+#
+
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
-# Copyright (c) 1992, 1993
-#	The Regents of the University of California.  All rights reserved.
 #
 # This code is derived from software contributed to Berkeley by
 # Ralph Campbell.
@@ -84,7 +116,6 @@ define	U_PCB_PPL		offsetof(struct user, u_pcb.pcb_ppl)
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 define	UVMEXP_SWTCH		offsetof(struct uvmexp, swtch)
 
 define	SIGFPE		 	SIGFPE
@@ -245,9 +276,6 @@ define	TF_REG_MULLO	offsetof(struct trapframe, tf_regs[TF_MULLO])
 define	TF_REG_MULHI	offsetof(struct trapframe, tf_regs[TF_MULHI])
 define	TF_REG_EPC	offsetof(struct trapframe, tf_regs[TF_EPC])
 define	TF_PPL		offsetof(struct trapframe, tf_ppl)
-
-# XXX Atheros HAL
-define	TF_PAD		offsetof(struct trapframe, tf_pad)
 
 define	CTXSWFRAME_SIZ	sizeof(label_t)
 define	SF_REG_SR	offsetof(label_t, val[11])

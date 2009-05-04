@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.40.10.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.40.10.2 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40.10.1 2008/05/16 02:25:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40.10.2 2009/05/04 08:13:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,11 +405,7 @@ ntfs_access(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
-	kauth_cred_t cred = ap->a_cred;
-	mode_t mask, mode = ap->a_mode;
-	gid_t grp;
-	int i;
-	uint16_t ngroups;
+	mode_t file_mode, mode = ap->a_mode;
 
 	dprintf(("ntfs_access: %llu\n", (unsigned long long)ip->i_number));
 
@@ -429,46 +425,10 @@ ntfs_access(void *v)
 		}
 	}
 
-	/* Otherwise, user id 0 always gets access. */
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
-		return (0);
+	file_mode = ip->i_mp->ntm_mode | (S_IXUSR|S_IXGRP|S_IXOTH);
 
-	mask = 0;
-
-	/* Otherwise, check the owner. */
-	if (kauth_cred_geteuid(cred) == ip->i_mp->ntm_uid) {
-		if (mode & VEXEC)
-			mask |= S_IXUSR;
-		if (mode & VREAD)
-			mask |= S_IRUSR;
-		if (mode & VWRITE)
-			mask |= S_IWUSR;
-		return ((ip->i_mp->ntm_mode & mask) == mask ? 0 : EACCES);
-	}
-
-	/* Otherwise, check the groups. */
-	ngroups = kauth_cred_ngroups(cred);
-	for (i = 0; i < ngroups; i++) {
-		grp = kauth_cred_group(cred, i);
-		if (ip->i_mp->ntm_gid == grp) {
-			if (mode & VEXEC)
-				mask |= S_IXGRP;
-			if (mode & VREAD)
-				mask |= S_IRGRP;
-			if (mode & VWRITE)
-				mask |= S_IWGRP;
-			return ((ip->i_mp->ntm_mode&mask) == mask ? 0 : EACCES);
-		}
-	}
-
-	/* Otherwise, check everyone else. */
-	if (mode & VEXEC)
-		mask |= S_IXOTH;
-	if (mode & VREAD)
-		mask |= S_IROTH;
-	if (mode & VWRITE)
-		mask |= S_IWOTH;
-	return ((ip->i_mp->ntm_mode & mask) == mask ? 0 : EACCES);
+	return (vaccess(vp->v_type, file_mode, ip->i_mp->ntm_uid,
+	    ip->i_mp->ntm_gid, mode, ap->a_cred));
 }
 
 /*
@@ -550,7 +510,7 @@ ntfs_readdir(void *v)
 
 	off = uio->uio_offset;
 
-	MALLOC(cde, struct dirent *, sizeof(struct dirent), M_TEMP, M_WAITOK);
+	cde = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
 
 	/* Simulate . in every dir except ROOT */
 	if (ip->i_number != NTFS_ROOTINO
@@ -661,7 +621,7 @@ ntfs_readdir(void *v)
 	    *ap->a_eofflag = VTONT(ap->a_vp)->i_size <= uio->uio_offset;
 */
     out:
-	FREE(cde, M_TEMP);
+	free(cde, M_TEMP);
 	return (error);
 }
 

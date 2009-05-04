@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.h,v 1.3.10.1 2008/05/16 02:23:44 yamt Exp $ */
+/*	$NetBSD: linux32_ioctl.h,v 1.3.10.2 2009/05/04 08:12:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995-2006 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 __BEGIN_DECLS
 struct linux32_sys_ioctl_args;
 int linux32_ioctl_termios(struct lwp *, const struct linux32_sys_ioctl_args *,
+    register_t *);
+int linux32_ioctl_socket(struct lwp *, const struct linux32_sys_ioctl_args *,
     register_t *);
 __END_DECLS
 #endif 

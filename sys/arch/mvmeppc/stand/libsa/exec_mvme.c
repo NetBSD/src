@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.3.78.1 2008/05/16 02:22:56 yamt Exp $	*/
+/*	$NetBSD: exec_mvme.c,v 1.3.78.2 2009/05/04 08:11:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,10 +77,7 @@ typedef void (*kentry_t)(u_int, u_int, struct mvmeppc_bootinfo *);
 
 /*ARGSUSED*/
 void
-exec_mvme(file, flag, part)
-	const char *file;
-	int	flag;
-	int	part;
+exec_mvme(const char *file, int flag, int part)
 {
 	kentry_t	entry;
 	u_long		marks[MARK_MAX];

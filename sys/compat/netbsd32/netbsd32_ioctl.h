@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.21 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.21.4.1 2009/05/04 08:12:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -149,7 +147,7 @@ sys/scsiio.h:43:#define SCIOCCOMMAND	_IOWR('Q', 1, scsireq_t)
 
 /* from <net/if.h> */
 
-typedef int32_t netbsd32_ifreq_tp_t;
+typedef netbsd32_pointer_t netbsd32_ifreq_tp_t;
 /*
  * note that ifr_data is the only one that needs to be changed
  */
@@ -222,8 +220,9 @@ struct	netbsd32_ifconf {
 };
 #if 1
 /* from <sys/sockio.h> */
-#define	OSIOCGIFCONF32	_IOWR('i', 20, struct netbsd32_ifconf)	/* get ifnet list */
-#define	SIOCGIFCONF32	_IOWR('i', 36, struct netbsd32_ifconf)	/* get ifnet list */
+#define	OOSIOCGIFCONF32	_IOWR('i', 20, struct netbsd32_ifconf)	/* get ifnet list */
+#define	OSIOCGIFCONF32	_IOWR('i', 36, struct netbsd32_ifconf)	/* get ifnet list */
+#define	SIOCGIFCONF32	_IOWR('i', 38, struct netbsd32_ifconf)	/* get ifnet list */
 #endif
 
 /* from <net/if.h> */

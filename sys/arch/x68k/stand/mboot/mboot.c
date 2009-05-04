@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.5.78.1 2008/05/16 02:23:27 yamt Exp $	*/
+/*	$NetBSD: mboot.c,v 1.5.78.2 2009/05/04 08:12:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #include <sys/types.h>
 #include <machine/disklabel.h>
+
+int bootmain(int);
 
 struct iocs_readcap {
 	unsigned long	block;
@@ -130,8 +132,7 @@ IOCS_S_READEXT (int pos, int blk, int id, int size, void *buf)
 
 
 int
-bootmain(scsiid)
-	int scsiid;
+bootmain(int scsiid)
 {
 	struct iocs_readcap cap;
 	int size;

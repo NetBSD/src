@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.23.4.1 2008/05/16 02:24:58 yamt Exp $	*/
+/*	$NetBSD: xirc.c,v 1.23.4.2 2009/05/04 08:13:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.23.4.1 2008/05/16 02:24:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.23.4.2 2009/05/04 08:13:15 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -168,9 +168,7 @@ xirc_match(struct device *parent, struct cfdata *match,
 }
 
 void
-xirc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xirc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xirc_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -282,9 +280,7 @@ fail:
 }
 
 int
-xirc_manfid_ciscallback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+xirc_manfid_ciscallback(struct pcmcia_tuple *tuple, void *arg)
 {
 	u_int16_t *id = arg;
 
@@ -300,8 +296,7 @@ xirc_manfid_ciscallback(tuple, arg)
 }
 
 struct pcmcia_config_entry *
-xirc_mako_alloc(sc)
-	struct xirc_softc *sc;
+xirc_mako_alloc(struct xirc_softc *sc)
 {
 	struct pcmcia_config_entry *cfe;
 
@@ -336,8 +331,7 @@ xirc_mako_alloc(sc)
 }
 
 struct pcmcia_config_entry *
-xirc_dingo_alloc_modem(sc)
-	struct xirc_softc *sc;
+xirc_dingo_alloc_modem(struct xirc_softc *sc)
 {
 	struct pcmcia_config_entry *cfe;
 
@@ -359,8 +353,7 @@ xirc_dingo_alloc_modem(sc)
 }
 
 struct pcmcia_config_entry *
-xirc_dingo_alloc_ethernet(sc)
-	struct xirc_softc *sc;
+xirc_dingo_alloc_ethernet(struct xirc_softc *sc)
 {
 	struct pcmcia_config_entry *cfe;
 	bus_addr_t port;
@@ -380,9 +373,7 @@ xirc_dingo_alloc_ethernet(sc)
 }
 
 int
-xirc_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+xirc_print(void *aux, const char *pnp)
 {
 	const char *name = aux;
 
@@ -393,9 +384,7 @@ xirc_print(aux, pnp)
 }
 
 int
-xirc_detach(self, flags)
-	struct device *self;
-	int flags;
+xirc_detach(struct device *self, int flags)
 {
 	struct xirc_softc *sc = (void *)self;
 	int rv;
@@ -431,9 +420,7 @@ xirc_detach(self, flags)
 }
 
 int
-xirc_activate(self, act)
-	struct device *self;
-	enum devact act;
+xirc_activate(struct device *self, enum devact act)
 {
 	struct xirc_softc *sc = (void *)self;
 	int s, rv = 0;
@@ -464,8 +451,7 @@ xirc_activate(self, act)
 }
 
 int
-xirc_intr(arg)
-	void *arg;
+xirc_intr(void *arg)
 {
 	struct xirc_softc *sc = arg;
 	int rval = 0;
@@ -473,22 +459,20 @@ xirc_intr(arg)
 #if NCOM_XIRC > 0
 	if (sc->sc_modem != NULL &&
 	    (sc->sc_flags & XIRC_MODEM_ENABLED) != 0)
-		rval |= comintr(sc->sc_modem);
+		rval |= comintr(device_private(sc->sc_modem));
 #endif
 
 #if NXI_XIRC > 0
 	if (sc->sc_ethernet != NULL &&
 	    (sc->sc_flags & XIRC_ETHERNET_ENABLED) != 0)
-		rval |= xi_intr(sc->sc_ethernet);
+		rval |= xi_intr(device_private(sc->sc_ethernet));
 #endif
 
 	return (rval);
 }
 
 int
-xirc_enable(sc, flag, media)
-	struct xirc_softc *sc;
-	int flag, media;
+xirc_enable(struct xirc_softc *sc, int flag, int media)
 {
 	int error;
 
@@ -536,9 +520,7 @@ xirc_enable(sc, flag, media)
 }
 
 void
-xirc_disable(sc, flag, media)
-	struct xirc_softc *sc;
-	int flag, media;
+xirc_disable(struct xirc_softc *sc, int flag, int media)
 {
 
 	if ((sc->sc_flags & flag) == 0) {
@@ -692,8 +674,7 @@ xi_xirc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-xi_xirc_enable(sc)
-	struct xi_softc *sc;
+xi_xirc_enable(struct xi_softc *sc)
 {
 	struct xirc_softc *msc =
 	    (struct xirc_softc *)device_parent(&sc->sc_dev);
@@ -702,8 +683,7 @@ xi_xirc_enable(sc)
 }
 
 void
-xi_xirc_disable(sc)
-	struct xi_softc *sc;
+xi_xirc_disable(struct xi_softc *sc)
 {
 	struct xirc_softc *msc =
 	    (struct xirc_softc *)device_parent(&sc->sc_dev);
@@ -712,9 +692,7 @@ xi_xirc_disable(sc)
 }
 
 int
-xi_xirc_lan_nid_ciscallback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+xi_xirc_lan_nid_ciscallback(struct pcmcia_tuple *tuple, void *arg)
 {
 	u_int8_t *myla = arg;
 	int i;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_limit.h,v 1.2.16.1 2008/05/16 02:23:42 yamt Exp $ */
+/* 	$NetBSD: linux_limit.h,v 1.2.16.2 2009/05/04 08:12:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -57,8 +57,7 @@ static int linux_to_bsd_limit(int);
     linux_to_bsd_rlimit1(b, l, rlim_max)
 
 static int
-linux_to_bsd_limit(lim)
-	int lim;
+linux_to_bsd_limit(int lim)
 {      
 	switch (lim) {
 	case LINUX_RLIMIT_CPU:
@@ -80,6 +79,7 @@ linux_to_bsd_limit(lim)
 	case LINUX_RLIMIT_MEMLOCK:
 		return RLIMIT_MEMLOCK;
 	case LINUX_RLIMIT_AS:
+		return RLIMIT_AS;
 	case LINUX_RLIMIT_LOCKS:
 		return -EOPNOTSUPP;
 	default:

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.50 2008/02/13 14:05:06 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.50.10.1 2009/05/04 08:11:45 yamt Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -14,6 +14,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_ROOT_SIZE=4096	# 2mb
 options 	MEMORY_DISK_SERVER=0	# don't need for install
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	8
 
@@ -44,6 +45,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
+options 	WAPBL		# File system journaling support - Experimental
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

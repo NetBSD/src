@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.50.18.1 2008/05/16 02:23:24 yamt Exp $	*/
+/*	$NetBSD: com.c,v 1.50.18.2 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.50.18.1 2008/05/16 02:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.50.18.2 2009/05/04 08:12:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -88,6 +88,11 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.50.18.1 2008/05/16 02:23:24 yamt Exp $");
 #include <sys/device.h>
 #include <sys/kauth.h>
 
+#ifdef KGDB
+#include <machine/remote-sl.h>
+#include <sys/kgdb.h>
+#endif
+
 #include <machine/cpu.h>
 #if 0
 #include <machine/pio.h>
@@ -108,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.50.18.1 2008/05/16 02:23:24 yamt Exp $");
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
 
 struct com_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 	struct tty *sc_tty;
 
@@ -143,8 +148,8 @@ struct com_softc {
 
 struct callout com_poll_ch;
 
-int comprobe(struct device *, struct cfdata *, void *);
-void comattach(struct device *, struct device *, void *);
+int comprobe(device_t, cfdata_t, void *);
+void comattach(device_t, device_t, void *);
 
 static int comprobe1(int);
 static void comdiag(void *);
@@ -157,7 +162,7 @@ static int comspeed(long);
 
 static u_char tiocm_xxx2mcr(int);
 
-CFATTACH_DECL(xcom, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(xcom, sizeof(struct com_softc),
     comprobe, comattach, NULL, NULL);
 
 extern struct cfdriver xcom_cd;
@@ -192,13 +197,6 @@ int	comconsole = -1;
 int	comconsinit;
 int	comsopen = 0;
 int	comevents = 0;
-
-#ifdef KGDB
-#include <machine/remote-sl.h>
-extern int kgdb_dev;
-extern int kgdb_rate;
-extern int kgdb_debug_init;
-#endif
 
 #define	COMUNIT(x)	(minor(x) & 0x7F)
 #define	COMDIALOUT(x)	(minor(x) & 0x80)
@@ -305,7 +303,7 @@ comprobeHAYESP(int iobase, struct com_softc *sc)
 #endif
 
 int
-comprobe(struct device *parent, struct cfdata *cfp, void *aux)
+comprobe(device_t parent, cfdata_t cfp, void *aux)
 {
 	int iobase = (int)&IODEVbase->psx16550;
 
@@ -319,15 +317,16 @@ comprobe(struct device *parent, struct cfdata *cfp, void *aux)
 }
 
 void
-comattach(struct device *parent, struct device *dev, void *aux)
+comattach(device_t parent, device_t dev, void *aux)
 {
-	struct com_softc *sc = (struct com_softc *)dev;
+	struct com_softc *sc = device_private(dev);
 	int iobase = (int)&IODEVbase->psx16550;
 #ifdef COM_HAYESP
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
 #endif
 
+	sc->sc_dev = dev;
 	com_attached = 1;
 
 	callout_init(&sc->sc_diag_ch, 0);
@@ -336,7 +335,7 @@ comattach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_iobase = iobase;
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	printf(": iobase %x", sc->sc_iobase);
+	aprint_normal(": iobase %x", sc->sc_iobase);
 
 #ifdef COM_HAYESP
 	/* Look for a Hayes ESP board. */
@@ -356,11 +355,11 @@ comattach(struct device *parent, struct device *dev, void *aux)
 	if (ISSET(inb(pio(iobase , com_iir)), IIR_FIFO_MASK) == IIR_FIFO_MASK)
 		if (ISSET(inb(pio(iobase , com_fifo)), FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
-			printf(": ns16550a, working fifo\n");
+			aprint_normal(": ns16550a, working fifo\n");
 		} else
-			printf(": ns16550, broken fifo\n");
+			aprint_normal(": ns16550, broken fifo\n");
 	else
-		printf(": ns8250 or ns16450, no fifo\n");
+		aprint_normal(": ns8250 or ns16450, no fifo\n");
 	outb(pio(iobase , com_fifo), 0);
 #ifdef COM_HAYESP
 	}
@@ -384,16 +383,13 @@ comattach(struct device *parent, struct device *dev, void *aux)
 int
 comopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = COMUNIT(dev);
 	struct com_softc *sc;
 	int iobase;
 	struct tty *tp;
 	int s;
 	int error = 0;
 
-	if (unit >= xcom_cd.cd_ndevs)
-		return ENXIO;
-	sc =  xcom_cd.cd_devs[unit];
+	sc =  device_lookup_private(&xcom_cd, COMUNIT(dev));
 	if (!sc)
 		return ENXIO;
 
@@ -507,8 +503,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 comclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = COMUNIT(dev);
-	struct com_softc *sc = xcom_cd.cd_devs[unit];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int s;
@@ -544,7 +539,7 @@ comclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 comread(dev_t dev, struct uio *uio, int flag)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -553,7 +548,7 @@ comread(dev_t dev, struct uio *uio, int flag)
 int
 comwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
@@ -562,7 +557,7 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 int
 compoll(dev_t dev, int events, struct lwp *l)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -571,7 +566,7 @@ compoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 comtty(dev_t dev)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -592,8 +587,7 @@ tiocm_xxx2mcr(int data)
 int
 comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int unit = COMUNIT(dev);
-	struct com_softc *sc = xcom_cd.cd_devs[unit];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int error;
@@ -704,7 +698,7 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static int
 comparam(struct tty *tp, struct termios *t)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(tp->t_dev));
 	int iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char lcr;
@@ -815,7 +809,7 @@ int comdebug = 0;
 static void
 comstart(struct tty *tp)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(tp->t_dev));
 	int iobase = sc->sc_iobase;
 	int s;
 
@@ -899,7 +893,7 @@ comdiag(void *arg)
 	splx(s);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf overflow%s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
@@ -930,8 +924,8 @@ compollin(void *arg)
 	splx(s);
 
 	for (unit = 0; unit < xcom_cd.cd_ndevs; unit++) {
-		sc = xcom_cd.cd_devs[unit];
-		if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
+		sc = device_lookup_private(&xcom_cd, unit);
+		if (sc == NULL || sc->sc_ibufp == sc->sc_ibuf)
 			continue;
 
 		tp = sc->sc_tty;
@@ -986,7 +980,7 @@ out:
 int
 comintr(void *arg)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[(int)arg];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, *((int *)arg));
 	int iobase = sc->sc_iobase;
 	struct tty *tp;
 	u_char lsr, data, msr, delta;
@@ -1066,7 +1060,7 @@ comintr(void *arg)
 		if (ISSET(lsr, LSR_TXRDY) && ISSET(tp->t_state, TS_BUSY)) {
 			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 			if (sc->sc_halt > 0)
-				clwakeup(&tp->t_outq);
+				cv_broadcast(&tp->t_outcv);
 			(*tp->t_linesw->l_start)(tp);
 		}
 

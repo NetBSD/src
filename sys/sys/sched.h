@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.52.2.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.52.2.2 2009/05/04 08:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -90,37 +90,58 @@ struct sched_param {
 #define	SCHED_RR	2
 
 #if defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
 
-/* XXX: Size of the CPU set bitmap */
-#define	CPUSET_SHIFT	5
-#define	CPUSET_MASK	31
-#if MAXCPUS > 32
-#define	CPUSET_SIZE	(MAXCPUS >> CPUSET_SHIFT)
+/*
+ * Interface of CPU-sets.
+ */
+typedef struct _cpuset cpuset_t;
+typedef struct _kcpuset kcpuset_t;	/* XXX: lwp.h included from userland */
+
+#ifdef _KERNEL
+
+kcpuset_t *kcpuset_create(void);
+void	kcpuset_destroy(kcpuset_t *);
+void	kcpuset_copy(kcpuset_t *, const kcpuset_t *);
+void	kcpuset_use(kcpuset_t *);
+void	kcpuset_unuse(kcpuset_t *, kcpuset_t **);
+int	kcpuset_copyin(const cpuset_t *, kcpuset_t *, size_t);
+int	kcpuset_copyout(const kcpuset_t *, cpuset_t *, size_t);
+void	kcpuset_zero(kcpuset_t *);
+void	kcpuset_fill(kcpuset_t *);
+void	kcpuset_set(cpuid_t, kcpuset_t *);
+int	kcpuset_isset(cpuid_t, const kcpuset_t *);
+bool	kcpuset_iszero(const kcpuset_t *);
+bool	kcpuset_match(const kcpuset_t *, const kcpuset_t *);
+
 #else
-#define	CPUSET_SIZE	1
+
+#define	cpuset_create()		_cpuset_create()
+#define	cpuset_destroy(c)	_cpuset_destroy(c)
+#define	cpuset_size(c)		_cpuset_size(c)
+#define	cpuset_zero(c)		_cpuset_zero(c)
+#define	cpuset_isset(i, c)	_cpuset_isset(i, c)
+#define	cpuset_set(i, c)	_cpuset_set(i, c)
+#define	cpuset_clr(i, c)	_cpuset_clr(i, c)
+
+cpuset_t *_cpuset_create(void);
+void	_cpuset_destroy(cpuset_t *);
+void	_cpuset_zero(cpuset_t *);
+int	_cpuset_set(cpuid_t, cpuset_t *);
+int	_cpuset_clr(cpuid_t, cpuset_t *);
+int	_cpuset_isset(cpuid_t, const cpuset_t *);
+size_t	_cpuset_size(const cpuset_t *);
+
 #endif
 
-/* Bitmap of the CPUs */
-typedef struct {
-	uint32_t	bits[CPUSET_SIZE];
-} cpuset_t;
-
-#define	CPU_ZERO(c)	\
-	(memset(c, 0, sizeof(cpuset_t)))
-
-#define	CPU_ISSET(i, c)	\
-	((1 << (i & CPUSET_MASK)) & (c)->bits[i >> CPUSET_SHIFT])
-
-#define	CPU_SET(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] |= 1 << (i & CPUSET_MASK))
-
-#define	CPU_CLR(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] &= ~(1 << (i & CPUSET_MASK)))
-
-int	_sched_getaffinity(pid_t, lwpid_t, size_t, void *);
-int	_sched_setaffinity(pid_t, lwpid_t, size_t, void *);
+/*
+ * Internal affinity and scheduling calls.
+ */
+int	_sched_getaffinity(pid_t, lwpid_t, size_t, cpuset_t *);
+int	_sched_setaffinity(pid_t, lwpid_t, size_t, const cpuset_t *);
 int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
 int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
+__END_DECLS
 
 /*
  * CPU states.
@@ -134,7 +155,7 @@ int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 #define	CP_IDLE		4
 #define	CPUSTATES	5
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/mutex.h>
 #include <sys/time.h>
@@ -151,9 +172,10 @@ struct schedstate_percpu {
 	/* First set of data is likely to be accessed by other CPUs. */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
+	struct lwp	*spc_migrating;	/* (: migrating LWP */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
-	psetid_t	spc_psid;	/* (: processor-set ID */
+	psetid_t	spc_psid;	/* c: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
 
 	/* For the most part, this set of data is CPU-private. */
@@ -171,10 +193,11 @@ struct schedstate_percpu {
 #define	SPCF_SHOULDYIELD	0x0002	/* process should yield the CPU */
 #define	SPCF_OFFLINE		0x0004	/* CPU marked offline */
 #define	SPCF_RUNNING		0x0008	/* CPU is running */
+#define	SPCF_NOINTR		0x0010	/* shielded from interrupts */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) || defined(_KMEMUSER) */
 
 /*
  * Flags passed to the Linux-compatible __clone(2) system call.
@@ -214,7 +237,8 @@ void		sched_tick(struct cpu_info *);
 void		schedclock(struct lwp *);
 void		sched_schedclock(struct lwp *);
 void		sched_pstats(void *);
-void		sched_pstats_hook(struct lwp *);
+void		sched_lwp_stats(struct lwp *);
+void		sched_pstats_hook(struct lwp *, int);
 
 /* Runqueue-related functions */
 bool		sched_curcpu_runnable_p(void);
@@ -231,7 +255,6 @@ void		sched_nice(struct proc *, int);
 void		sched_proc_fork(struct proc *, struct proc *);
 void		sched_proc_exit(struct proc *, struct proc *);
 void		sched_lwp_fork(struct lwp *, struct lwp *);
-void		sched_lwp_exit(struct lwp *);
 void		sched_lwp_collect(struct lwp *);
 
 void		sched_slept(struct lwp *);
@@ -246,9 +269,11 @@ void		sched_print_runqueue(void (*pr)(const char *, ...));
 /* Dispatching */
 bool		kpreempt(uintptr_t);
 void		preempt(void);
+void		yield(void);
 int		mi_switch(struct lwp *);
-void		resched_cpu(struct lwp *);
 void		updatertime(lwp_t *, const struct bintime *);
+void		sched_idle(void);
+void		suspendsched(void);
 
 int		do_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 int		do_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);

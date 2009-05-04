@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.197.2.1 2008/05/16 02:23:42 yamt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.197.2.2 2009/05/04 08:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,11 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.197.2.1 2008/05/16 02:23:42 yamt Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ptrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.197.2.2 2009/05/04 08:12:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.197.2.1 2008/05/16 02:23:42 yamt Ex
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/resource.h>
 
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_types.h>
@@ -166,7 +164,7 @@ const struct linux_mnttypes linux_fstypes[] = {
 	{ MOUNT_NTFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_SMBFS,		LINUX_SMB_SUPER_MAGIC		},
 	{ MOUNT_PTYFS,		LINUX_DEVPTS_SUPER_MAGIC	},
-	{ MOUNT_TMPFS,		LINUX_DEFAULT_SUPER_MAGIC	}
+	{ MOUNT_TMPFS,		LINUX_TMPFS_SUPER_MAGIC		}
 };
 const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 
@@ -219,10 +217,11 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
-		syscallarg(struct rusage *) rusage;
+		syscallarg(struct rusage50 *) rusage;
 	} */
 	int error, status, options, linux_options, was_zombie;
 	struct rusage ru;
+	struct rusage50 ru50;
 	int pid = SCARG(uap, pid);
 	proc_t *p;
 
@@ -259,8 +258,10 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 	sigdelset(&p->p_sigpend.sp_set, SIGCHLD); /* XXXAD ksiginfo leak */
         mutex_exit(p->p_lock);
 
-	if (SCARG(uap, rusage) != NULL)
+	if (SCARG(uap, rusage) != NULL) {
+		rusage_to_rusage50(&ru, &ru50);
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+	}
 
 	if (error == 0 && SCARG(uap, status) != NULL) {
 		status = bsd_to_linux_wstat(status);
@@ -690,8 +691,8 @@ linux_sys_getdents(struct lwp *l, const struct linux_sys_getdents_args *uap, reg
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -836,11 +837,12 @@ linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, registe
 		syscallarg(fd_set *) readfds;
 		syscallarg(fd_set *) writefds;
 		syscallarg(fd_set *) exceptfds;
-		syscallarg(struct timeval *) timeout;
+		syscallarg(struct timeval50 *) timeout;
 	} */
 
 	return linux_select1(l, retval, SCARG(uap, nfds), SCARG(uap, readfds),
-	    SCARG(uap, writefds), SCARG(uap, exceptfds), SCARG(uap, timeout));
+	    SCARG(uap, writefds), SCARG(uap, exceptfds),
+	    (struct linux_timeval *)SCARG(uap, timeout));
 }
 
 /*
@@ -850,14 +852,10 @@ linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, registe
  * 2) select never returns ERESTART on Linux, always return EINTR
  */
 int
-linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
-	struct lwp *l;
-	register_t *retval;
-	int nfds;
-	fd_set *readfds, *writefds, *exceptfds;
-	struct timeval *timeout;
+linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct linux_timeval *timeout)
 {
-	struct timeval tv0, tv1, utv, *tv = NULL;
+	struct timespec ts0, ts1, uts, *ts = NULL;
+	struct linux_timeval ltv;
 	int error;
 
 	/*
@@ -865,28 +863,30 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 	 * time left.
 	 */
 	if (timeout) {
-		if ((error = copyin(timeout, &utv, sizeof(utv))))
+		if ((error = copyin(timeout, &ltv, sizeof(ltv))))
 			return error;
-		if (itimerfix(&utv)) {
+		uts.tv_sec = ltv.tv_sec;
+		uts.tv_nsec = ltv.tv_usec * 1000;
+		if (itimespecfix(&uts)) {
 			/*
 			 * The timeval was invalid.  Convert it to something
 			 * valid that will act as it does under Linux.
 			 */
-			utv.tv_sec += utv.tv_usec / 1000000;
-			utv.tv_usec %= 1000000;
-			if (utv.tv_usec < 0) {
-				utv.tv_sec -= 1;
-				utv.tv_usec += 1000000;
+			uts.tv_sec += uts.tv_nsec / 1000000000;
+			uts.tv_nsec %= 1000000000;
+			if (uts.tv_nsec < 0) {
+				uts.tv_sec -= 1;
+				uts.tv_nsec += 1000000000;
 			}
-			if (utv.tv_sec < 0)
-				timerclear(&utv);
+			if (uts.tv_sec < 0)
+				timespecclear(&uts);
 		}
-		tv = &utv;
-		microtime(&tv0);
+		ts = &uts;
+		nanotime(&ts0);
 	}
 
 	error = selcommon(l, retval, nfds, readfds, writefds, exceptfds,
-	    tv, NULL);
+	    ts, NULL);
 
 	if (error) {
 		/*
@@ -906,14 +906,16 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			 * before we started the call, and subtracting
 			 * that result from the user-supplied value.
 			 */
-			microtime(&tv1);
-			timersub(&tv1, &tv0, &tv1);
-			timersub(&utv, &tv1, &utv);
-			if (utv.tv_sec < 0)
-				timerclear(&utv);
+			nanotime(&ts1);
+			timespecsub(&ts1, &ts0, &ts1);
+			timespecsub(&uts, &ts1, &uts);
+			if (uts.tv_sec < 0)
+				timespecclear(&uts);
 		} else
-			timerclear(&utv);
-		if ((error = copyout(&utv, timeout, sizeof(utv))))
+			timespecclear(&uts);
+		ltv.tv_sec = uts.tv_sec;
+		ltv.tv_usec = uts.tv_nsec / 1000;
+		if ((error = copyout(&ltv, timeout, sizeof(ltv))))
 			return error;
 	}
 
@@ -933,9 +935,15 @@ linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *ua
 		syscallarg(int) per;
 	} */
 
-	if (SCARG(uap, per) != 0)
+	switch (SCARG(uap, per)) {
+	case LINUX_PER_LINUX:
+	case LINUX_PER_QUERY:
+		break;
+	default:
 		return EINVAL;
-	retval[0] = 0;
+	}
+
+	retval[0] = LINUX_PER_LINUX;
 	return 0;
 }
 
@@ -1040,13 +1048,9 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 		syscallarg(T) addr;
 		syscallarg(T) data;
 	} */
-#if defined(PTRACE) || defined(_LKM)
 	const int *ptr;
 	int request;
 	int error;
-#ifdef _LKM
-#define sys_ptrace (*sysent[SYS_ptrace].sy_call)
-#endif
 
 	ptr = linux_ptrace_request_map;
 	request = SCARG(uap, request);
@@ -1062,13 +1066,13 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			/*
 			 * Linux ptrace(PTRACE_CONT, pid, 0, 0) means actually
 			 * to continue where the process left off previously.
-			 * The same thing is achieved by addr == (void *) 1
+ 			 * The same thing is achieved by addr == (void *) 1
 			 * on NetBSD, so rewrite 'addr' appropriately.
 			 */
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (void *) 1;
 
-			error = sys_ptrace(l, &pta, retval);
+			error = sysent[SYS_ptrace].sy_call(l, &pta, retval);
 			if (error)
 				return error;
 			switch (request) {
@@ -1088,9 +1092,6 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			ptr++;
 
 	return LINUX_SYS_PTRACE_ARCH(l, uap, retval);
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
 }
 
 int
@@ -1119,7 +1120,7 @@ linux_sys_reboot(struct lwp *l, const struct linux_sys_reboot_args *uap, registe
 	    SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2B)
 		return(EINVAL);
 
-	switch (SCARG(uap, cmd)) {
+	switch ((unsigned long)SCARG(uap, cmd)) {
 	case LINUX_REBOOT_CMD_RESTART:
 		SCARG(&sra, opt) = RB_AUTOBOOT;
 		break;

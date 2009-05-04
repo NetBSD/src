@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.101.2.1 2008/05/16 02:23:42 yamt Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.101.2.2 2009/05/04 08:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.101.2.1 2008/05/16 02:23:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.101.2.2 2009/05/04 08:12:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,8 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 		syscallarg(unsigned int) secs;
 	} */
 	struct proc *p = l->l_proc;
-	struct timeval now;
-	struct itimerval *itp, it;
+	struct timespec now;
+	struct itimerspec *itp, it;
 	struct ptimer *ptp, *spare;
 	extern kmutex_t timer_lock;
 	struct ptimers *pts;
@@ -118,16 +118,16 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 	 */
 	if (itp) {
 		callout_stop(&pts->pts_timers[ITIMER_REAL]->pt_ch);
-		timerclear(&itp->it_interval);
-		getmicrotime(&now);
-		if (timerisset(&itp->it_value) &&
-		    timercmp(&itp->it_value, &now, >))
-			timersub(&itp->it_value, &now, &itp->it_value);
+		timespecclear(&itp->it_interval);
+		getnanotime(&now);
+		if (timespecisset(&itp->it_value) &&
+		    timespeccmp(&itp->it_value, &now, >))
+			timespecsub(&itp->it_value, &now, &itp->it_value);
 		/*
 		 * Return how many seconds were left (rounded up)
 		 */
 		retval[0] = itp->it_value.tv_sec;
-		if (itp->it_value.tv_usec)
+		if (itp->it_value.tv_nsec)
 			retval[0]++;
 	} else {
 		retval[0] = 0;
@@ -138,7 +138,7 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 	 */
 	if (SCARG(uap, secs) == 0) {
 		if (itp)
-			timerclear(&itp->it_value);
+			timespecclear(&itp->it_value);
 		mutex_spin_exit(&timer_lock);
 		return 0;
 	}
@@ -146,10 +146,10 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 	/*
 	 * Check the new alarm time for sanity, and set it.
 	 */
-	timerclear(&it.it_interval);
+	timespecclear(&it.it_interval);
 	it.it_value.tv_sec = SCARG(uap, secs);
-	it.it_value.tv_usec = 0;
-	if (itimerfix(&it.it_value) || itimerfix(&it.it_interval)) {
+	it.it_value.tv_nsec = 0;
+	if (itimespecfix(&it.it_value) || itimespecfix(&it.it_interval)) {
 		mutex_spin_exit(&timer_lock);
 		return (EINVAL);
 	}
@@ -175,14 +175,14 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 		pts->pts_timers[ITIMER_REAL] = ptp;
 	}
 
-	if (timerisset(&it.it_value)) {
+	if (timespecisset(&it.it_value)) {
 		/*
-		 * Don't need to check hzto() return value, here.
+		 * Don't need to check tvhzto() return value, here.
 		 * callout_reset() does it for us.
 		 */
-		getmicrotime(&now);
-		timeradd(&it.it_value, &now, &it.it_value);
-		callout_reset(&ptp->pt_ch, hzto(&it.it_value),
+		getnanotime(&now);
+		timespecadd(&it.it_value, &now, &it.it_value);
+		callout_reset(&ptp->pt_ch, tshzto(&it.it_value),
 		    realtimerexpire, ptp);
 	}
 	ptp->pt_time = it;
@@ -199,11 +199,13 @@ linux_sys_nice(struct lwp *l, const struct linux_sys_nice_args *uap, register_t 
 	/* {
 		syscallarg(int) incr;
 	} */
+	struct proc *p = l->l_proc;
         struct sys_setpriority_args bsa;
 
         SCARG(&bsa, which) = PRIO_PROCESS;
         SCARG(&bsa, who) = 0;
-	SCARG(&bsa, prio) = SCARG(uap, incr);
+	SCARG(&bsa, prio) = p->p_nice - NZERO + SCARG(uap, incr);
+
         return sys_setpriority(l, &bsa, retval);
 }
 #endif /* !__amd64__ */
@@ -386,7 +388,7 @@ linux_sys_stime(struct lwp *l, const struct linux_sys_stime_args *uap, register_
 	linux_time_t tt;
 	int error;
 
-	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)
+	if ((error = copyin(SCARG(uap, t), &tt, sizeof tt)) != 0)
 		return error;
 
 	ats.tv_sec = tt;

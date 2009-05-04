@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.110.32.1 2008/05/16 02:25:06 yamt Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.110.32.2 2009/05/04 08:13:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -526,7 +526,7 @@ struct scsipi_xfer {
 	u_int8_t xs_tag_id;		/* tag ID */
 
 	struct	scsipi_generic cmdstore
-	    __attribute__ ((aligned (4)));/* stash the command in here */
+	    __aligned(4);		/* stash the command in here */
 };
 
 /*

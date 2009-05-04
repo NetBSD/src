@@ -1,7 +1,7 @@
-/*	$NetBSD: sleepq.h,v 1.10.4.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.10.4.2 2009/05/04 08:14:36 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,13 +32,10 @@
 #ifndef	_SYS_SLEEPQ_H_
 #define	_SYS_SLEEPQ_H_
 
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
-#endif
-
-#include <sys/queue.h>
+#include <sys/lwp.h>
 #include <sys/mutex.h>
+#include <sys/pool.h>
+#include <sys/queue.h>
 #include <sys/sched.h>
 #include <sys/syncobj.h>
 
@@ -51,34 +48,23 @@
 #define	SLEEPTAB_HASH_MASK	(SLEEPTAB_HASH_SIZE - 1)
 #define	SLEEPTAB_HASH(wchan)	(((uintptr_t)(wchan) >> 8) & SLEEPTAB_HASH_MASK)
 
-typedef struct sleepq {
-	TAILQ_HEAD(, lwp)	sq_queue;	/* queue of waiters */
-	kmutex_t		*sq_mutex;	/* mutex on struct & queue */
-	u_int			sq_waiters;	/* count of waiters */
-} sleepq_t;
+TAILQ_HEAD(sleepq, lwp);
 
-#ifdef _LP64
+typedef struct sleepq sleepq_t;
+
 typedef struct sleeptab {
 	struct {
-		kmutex_t	st_mutex;
-		sleepq_t	st_queue __aligned(32);
-	} st_queues[SLEEPTAB_HASH_SIZE];
-} __aligned(64) sleeptab_t;
-#else	/* _LP64 */
-typedef struct sleeptab {
-	struct {
-		kmutex_t	st_mutex;
+		kmutex_t	*st_mutex;
 		sleepq_t	st_queue;
 	} st_queues[SLEEPTAB_HASH_SIZE];
-} __aligned(32) sleeptab_t;
-#endif	/* _LP64 */
+} sleeptab_t;
 
-void	sleepq_init(sleepq_t *, kmutex_t *);
+void	sleepq_init(sleepq_t *);
 int	sleepq_remove(sleepq_t *, lwp_t *);
 void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, syncobj_t *);
 u_int	sleepq_unsleep(lwp_t *, bool);
 void	sleepq_timeout(void *);
-lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int);
+lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
@@ -107,13 +93,24 @@ sleepq_dontsleep(lwp_t *l)
  * acquires and holds the per-queue interlock.
  */
 static inline sleepq_t *
-sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
+sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 {
 	sleepq_t *sq;
 
 	sq = &st->st_queues[SLEEPTAB_HASH(wchan)].st_queue;
-	mutex_spin_enter(sq->sq_mutex);
+	*mp = st->st_queues[SLEEPTAB_HASH(wchan)].st_mutex;
+	mutex_spin_enter(*mp);
 	return sq;
+}
+
+static inline kmutex_t *
+sleepq_hashlock(wchan_t wchan)
+{
+	kmutex_t *mp;
+
+	mp = sleeptab.st_queues[SLEEPTAB_HASH(wchan)].st_mutex;
+	mutex_spin_enter(mp);
+	return mp;
 }
 
 /*
@@ -121,28 +118,23 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
  * safely released.
  */
 static inline void
-sleepq_enter(sleepq_t *sq, lwp_t *l)
+sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 {
+	kmutex_t *omp;
+
 	/*
 	 * Acquire the per-LWP mutex and lend it ours (the sleep queue
 	 * lock).  Once that's done we're interlocked, and so can release
 	 * the kernel lock.
 	 */
-	lwp_lock(l);
-	lwp_unlock_to(l, sq->sq_mutex);
-	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-}
-
-static inline void
-sleepq_lock(sleepq_t *sq)
-{
-	mutex_spin_enter(sq->sq_mutex);
-}
-
-static inline void
-sleepq_unlock(sleepq_t *sq)
-{
-	mutex_spin_exit(sq->sq_mutex);
+	omp = l->l_mutex;
+	mutex_spin_enter(omp);
+	if (__predict_false(l->l_mutex != omp)) {
+		omp = lwp_lock_retry(l, omp);
+	}
+	l->l_mutex = mp;
+	mutex_spin_exit(omp);
+	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
 }
 
 /*
@@ -154,6 +146,7 @@ typedef struct turnstile {
 	struct turnstile	*ts_free;	/* turnstile free list */
 	wchan_t			ts_obj;		/* lock object */
 	sleepq_t		ts_sleepq[2];	/* sleep queues */
+	u_int			ts_waiters[2];	/* count of waiters */
 
 	/* priority inheritance */
 	pri_t			ts_eprio;
@@ -162,21 +155,21 @@ typedef struct turnstile {
 } turnstile_t;
 
 typedef struct tschain {
-	kmutex_t		tc_mutex;	/* mutex on structs & queues */
+	kmutex_t		*tc_mutex;	/* mutex on structs & queues */
 	LIST_HEAD(, turnstile)	tc_chain;	/* turnstile chain */
-} __aligned(32) tschain_t;
+} tschain_t;
 
 #define	TS_READER_Q	0		/* reader sleep queue */
 #define	TS_WRITER_Q	1		/* writer sleep queue */
 
 #define	TS_WAITERS(ts, q)						\
-	(ts)->ts_sleepq[(q)].sq_waiters
+	(ts)->ts_waiters[(q)]
 
 #define	TS_ALL_WAITERS(ts)						\
-	((ts)->ts_sleepq[TS_READER_Q].sq_waiters +			\
-	 (ts)->ts_sleepq[TS_WRITER_Q].sq_waiters)
+	((ts)->ts_waiters[TS_READER_Q] +				\
+	 (ts)->ts_waiters[TS_WRITER_Q])
 
-#define	TS_FIRST(ts, q)	(TAILQ_FIRST(&(ts)->ts_sleepq[(q)].sq_queue))
+#define	TS_FIRST(ts, q)	(TAILQ_FIRST(&(ts)->ts_sleepq[(q)]))
 
 #ifdef	_KERNEL
 

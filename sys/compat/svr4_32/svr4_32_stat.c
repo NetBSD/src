@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.34.4.1 2008/05/16 02:23:48 yamt Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.34.4.2 2009/05/04 08:12:28 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.34.4.1 2008/05/16 02:23:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.34.4.2 2009/05/04 08:12:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,11 +613,11 @@ svr4_32_sys_utime(struct lwp *l, const struct svr4_32_sys_utime_args *uap, regis
 int
 svr4_32_sys_utimes(struct lwp *l, const struct svr4_32_sys_utimes_args *uap, register_t *retval)
 {
-	struct sys_utimes_args ua;
+	struct compat_50_sys_utimes_args ua;
 	SCARG(&ua, path) = SCARG_P32(uap, path);
 	SCARG(&ua, tptr) = SCARG_P32(uap, tptr);
 
-	return sys_utimes(l, &ua, retval);
+	return compat_50_sys_utimes(l, &ua, retval);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.8.10.1 2008/05/16 02:22:10 yamt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.8.10.2 2009/05/04 08:10:58 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -141,6 +141,7 @@
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
+#include "opt_modular.h"
 #include "opt_com.h"
 #include "md.h"
 
@@ -304,6 +305,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -331,6 +333,8 @@ cpu_reboot(int howto, char *bootstr)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -857,7 +861,7 @@ initarm(void *arg)
 	}
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* Firmware doesn't load symbols. */
 	ddb_init(0, NULL, NULL);
 #endif
@@ -873,7 +877,7 @@ initarm(void *arg)
 }
 
 static void
-read_system_serial()
+read_system_serial(void)
 {
 #define GUMSTIX_SYSTEM_SERIAL_ADDR	0
 #define GUMSTIX_SYSTEM_SERIAL_SIZE	8

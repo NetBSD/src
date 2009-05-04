@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.37.4.1 2008/05/16 02:23:57 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.37.4.2 2009/05/04 08:12:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37.4.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37.4.2 2009/05/04 08:12:36 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -851,20 +851,24 @@ int
 dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
     void *tbuf, size_t len)
 {
-	struct buf b;
+	struct buf *bp;
+	int result;
 
-	buf_init(&b);
+	bp = getiobuf(vp, true);
 
-	b.b_vp = vp;
-	b.b_dev = vp->v_rdev;
-	b.b_blkno = blkno;
-	b.b_bcount = b.b_resid = len;
-	b.b_flags = B_READ;
-	b.b_proc = curproc;
-	b.b_data = tbuf;
+	bp->b_dev = vp->v_rdev;
+	bp->b_blkno = blkno;
+	bp->b_bcount = len;
+	bp->b_resid = len;
+	bp->b_flags = B_READ;
+	bp->b_data = tbuf;
+	SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
-	VOP_STRATEGY(vp, &b);
-	return (biowait(&b));
+	VOP_STRATEGY(vp, bp);
+	result = biowait(bp);
+	putiobuf(bp);
+
+	return result;
 }
 
 /*
@@ -1017,7 +1021,7 @@ dkstrategy(struct buf *bp)
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
 	sc->sc_iopend++;
-	BUFQ_PUT(sc->sc_bufq, bp);
+	bufq_put(sc->sc_bufq, bp);
 	dkstart(sc);
 	splx(s);
 	return;
@@ -1040,9 +1044,9 @@ dkstart(struct dkwedge_softc *sc)
 	struct buf *bp, *nbp;
 
 	/* Do as much work as has been enqueued. */
-	while ((bp = BUFQ_PEEK(sc->sc_bufq)) != NULL) {
+	while ((bp = bufq_peek(sc->sc_bufq)) != NULL) {
 		if (sc->sc_state != DKW_STATE_RUNNING) {
-			(void) BUFQ_GET(sc->sc_bufq);
+			(void) bufq_get(sc->sc_bufq);
 			if (sc->sc_iopend-- == 1 &&
 			    (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
 				sc->sc_flags &= ~DK_F_WAIT_DRAIN;
@@ -1068,7 +1072,7 @@ dkstart(struct dkwedge_softc *sc)
 			return;
 		}
 
-		(void) BUFQ_GET(sc->sc_bufq);
+		(void) bufq_get(sc->sc_bufq);
 
 		nbp->b_data = bp->b_data;
 		nbp->b_flags = bp->b_flags;

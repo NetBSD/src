@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.10.1 2009/05/04 08:11:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@ cpu_rootconf(void)
 {
 	findroot();
 
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
@@ -101,7 +101,7 @@ findroot(void)
 	const char *name;
 
 #if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
+	aprint_normal("howto %x bootdev %x ", boothowto, bootdev);
 #endif
 
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
@@ -123,22 +123,56 @@ findroot(void)
 #define	BUILTIN_ETHERNET_P(pa)						\
 	((pa)->pa_bus == 0 && (pa)->pa_device == 2 && (pa)->pa_function == 0)
 
+#define	BUILTIN_VIDEO_P(pa)						\
+	((pa)->pa_bus == 0 && (pa)->pa_device == 4 && (pa)->pa_function == 0)
+
 void
 device_register(device_t dev, void *aux)
 {
 	device_t pdev;
+	prop_dictionary_t dict;
 
 	if ((pdev = device_parent(dev)) != NULL && device_is_a(pdev, "pci")) {
 		struct pci_attach_args *pa = aux;
 
+		dict = device_properties(dev);
 		if (BUILTIN_ETHERNET_P(pa)) {
-			if (! prop_dictionary_set_bool(device_properties(dev),
+			if (! prop_dictionary_set_bool(dict,
 						       "am79c970-no-eeprom",
 						       true)) {
-				printf("WARNING: unable to set "
+				aprint_normal("WARNING: unable to set "
 				       "am79c970-no-eeprom property for %s\n",
-				       dev->dv_xname);
+				       device_xname(dev));
 			}
+		}
+
+		if (BUILTIN_VIDEO_P(pa)) {
+			if (! prop_dictionary_set_uint32(dict,  "width", 1024)) {
+				aprint_normal("WARNING: unable to set "
+					      "width property for %s\n",
+					      device_xname(dev));
+			}
+			if (! prop_dictionary_set_uint32(dict,  "height", 768)) {
+				aprint_normal("WARNING: unable to set "
+					      "height property for %s\n",
+					      device_xname(dev));
+			}
+			if (! prop_dictionary_set_uint32(dict,  "depth", 8)) {
+				aprint_normal("WARNING: unable to set "
+					      "depth property for %s\n",
+					      device_xname(dev));
+			}
+			if (! prop_dictionary_set_uint32(dict,  "address", 0)) {
+				aprint_normal("WARNING: unable to set "
+					      "address property for %s\n",
+					      device_xname(dev));
+			}
+			if (! prop_dictionary_set_bool(dict,  "is_console", true)) {
+				aprint_normal("WARNING: unable to set "
+					      "address property for %s\n",
+					      device_xname(dev));
+			}
+
 		}
 	}
 }

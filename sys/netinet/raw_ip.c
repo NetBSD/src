@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.107 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.107.2.1 2009/05/04 08:14:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,9 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.107 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.107.2.1 2009/05/04 08:14:17 yamt Exp $");
 
 #include "opt_inet.h"
+#include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
@@ -106,6 +107,10 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.107 2008/04/24 11:38:38 ad Exp $");
 #include <netipsec/ipsec_private.h>
 #endif	/* FAST_IPSEC */
 
+#ifdef COMPAT_50
+#include <compat/sys/socket.h>
+#endif
+
 struct inpcbtable rawcbtable;
 
 int	 rip_pcbnotify(struct inpcbtable *, struct in_addr,
@@ -140,8 +145,11 @@ rip_sbappendaddr(struct inpcb *last, struct ip *ip, const struct sockaddr *sa,
 {
 	if (last->inp_flags & INP_NOHEADER)
 		m_adj(n, hlen);
-	if (last->inp_flags & INP_CONTROLOPTS ||
-	    last->inp_socket->so_options & SO_TIMESTAMP)
+	if (last->inp_flags & INP_CONTROLOPTS 
+#ifdef SO_OTIMESTAMP
+	    || last->inp_socket->so_options & SO_OTIMESTAMP
+#endif
+	    || last->inp_socket->so_options & SO_TIMESTAMP)
 		ip_savecontrol(last, &opts, ip, n);
 	if (sbappendaddr(&last->inp_socket->so_rcv, sa, n, opts) == 0) {
 		/* should notify about lost packet */
@@ -380,40 +388,43 @@ rip_output(struct mbuf *m, ...)
  * Raw IP socket option processing.
  */
 int
-rip_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **m)
+rip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
+	int optval;
 
-	if (level == SOL_SOCKET && optname == SO_NOHEADER) {
+	if (sopt->sopt_level == SOL_SOCKET && sopt->sopt_name == SO_NOHEADER) {
 		if (op == PRCO_GETOPT) {
-			*m = m_intopt(so,
-			    (inp->inp_flags & INP_NOHEADER) ? 1 : 0);
-			return 0;
-		} else if (*m == NULL || (*m)->m_len != sizeof(int))
-			error = EINVAL;
-		else if (*mtod(*m, int *)) {
-			inp->inp_flags &= ~INP_HDRINCL;
-			inp->inp_flags |= INP_NOHEADER;
-		} else
-			inp->inp_flags &= ~INP_NOHEADER;
-		goto free_m;
-	} else if (level != IPPROTO_IP)
-		return ip_ctloutput(op, so, level, optname, m);
+			optval = (inp->inp_flags & INP_NOHEADER) ? 1 : 0;
+			error = sockopt_set(sopt, &optval, sizeof(optval));
+		} else if (op == PRCO_SETOPT) {
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				goto out;
+			if (optval) {
+				inp->inp_flags &= ~INP_HDRINCL;
+				inp->inp_flags |= INP_NOHEADER;
+			} else
+				inp->inp_flags &= ~INP_NOHEADER;
+		}
+		goto out;
+	} else if (sopt->sopt_level != IPPROTO_IP)
+		return ip_ctloutput(op, so, sopt);
 
 	switch (op) {
 
 	case PRCO_SETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case IP_HDRINCL:
-			if (*m == NULL || (*m)->m_len != sizeof(int))
-				error = EINVAL;
-			else if (*mtod(*m, int *))
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+			if (optval)
 				inp->inp_flags |= INP_HDRINCL;
 			else
 				inp->inp_flags &= ~INP_HDRINCL;
-			goto free_m;
+			break;
 
 #ifdef MROUTING
 		case MRT_INIT:
@@ -426,20 +437,21 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 		case MRT_API_CONFIG:
 		case MRT_ADD_BW_UPCALL:
 		case MRT_DEL_BW_UPCALL:
-			error = ip_mrouter_set(so, optname, m);
+			error = ip_mrouter_set(so, sopt);
 			break;
 #endif
 
 		default:
-			error = ip_ctloutput(op, so, level, optname, m);
+			error = ip_ctloutput(op, so, sopt);
 			break;
 		}
 		break;
 
 	case PRCO_GETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case IP_HDRINCL:
-			*m = m_intopt(so, inp->inp_flags & INP_HDRINCL ? 1 : 0);
+			optval = inp->inp_flags & INP_HDRINCL;
+			error = sockopt_set(sopt, &optval, sizeof(optval));
 			break;
 
 #ifdef MROUTING
@@ -447,20 +459,17 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 		case MRT_ASSERT:
 		case MRT_API_SUPPORT:
 		case MRT_API_CONFIG:
-			error = ip_mrouter_get(so, optname, m);
+			error = ip_mrouter_get(so, sopt);
 			break;
 #endif
 
 		default:
-			error = ip_ctloutput(op, so, level, optname, m);
+			error = ip_ctloutput(op, so, sopt);
 			break;
 		}
 		break;
 	}
-	return error;
-free_m:
-	if (op == PRCO_SETOPT && *m != NULL)
-		(void)m_free(*m);
+ out:
 	return error;
 }
 

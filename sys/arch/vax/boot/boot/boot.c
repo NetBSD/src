@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.26 2005/12/24 22:45:40 perry Exp $ */
+/*	$NetBSD: boot.c,v 1.26.78.1 2009/05/04 08:12:03 yamt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
@@ -57,7 +58,6 @@ extern	unsigned opendev;
 void	usage(char *), boot(char *), halt(char *);
 void	Xmain(void);
 void	autoconf(void);
-int	getsecs(void);
 int	setjmp(int *);
 int	testkey(void);
 void	loadpcs(void);
@@ -265,7 +265,7 @@ load:
 
 
 void
-loadpcs()
+loadpcs(void)
 {
 	static int pcsdone = 0;
 	int mid = mfpr(PR_SID);
@@ -280,7 +280,7 @@ loadpcs()
 		if (*cp == ')' || *cp == ':')
 			break;
 	if (*cp) {
-		bcopy(line, pcs, 99);
+		memcpy( pcs, line, 99);
 		pcs[99] = 0;
 		i = cp - line + 1;
 	} else

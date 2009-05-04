@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29.2.1 2008/05/16 02:23:38 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29.2.2 2009/05/04 08:12:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.2.1 2008/05/16 02:23:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.2.2 2009/05/04 08:12:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -174,7 +174,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    ((((long)sp - sizeof(struct linux_rt_sigframe)) & ~0xfUL) - 8);
 	sfp = (struct linux_rt_sigframe *)sp;
 
-	bzero(&sigframe, sizeof(sigframe));
+	memset(&sigframe, 0, sizeof(sigframe));
 	if (ps->sa_sigdesc[sig].sd_vers != 0)
 		sigframe.pretcode = 
 		    (char *)(u_long)ps->sa_sigdesc[sig].sd_tramp;
@@ -230,7 +230,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	sigframe.info.lsi_signo = native_to_linux_signo[sig];
 	sigframe.info.lsi_errno = native_to_linux_errno[ksi->ksi_errno];
-	sigframe.info.lsi_code = ksi->ksi_code;
+	sigframe.info.lsi_code = native_to_linux_si_code(ksi->ksi_code);
 
 	/* XXX This is a rought conversion, taken from i386 code */
 	switch (sigframe.info.lsi_signo) {
@@ -284,7 +284,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (fpsp != NULL) {
 		(void)process_read_fpregs(l, &fpregs);
-		bzero(&fpstate, sizeof(fpstate));
+		memset(&fpstate, 0, sizeof(fpstate));
 		fpstate.cwd = fpregs.fp_fcw;
 		fpstate.swd = fpregs.fp_fsw;
 		fpstate.twd = fpregs.fp_ftw;
@@ -396,7 +396,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	luctx = &frame.uc;
 	lsigctx = &luctx->luc_mcontext;
 
-	bzero(&uctx, sizeof(uctx));
+	memset(&uctx, 0, sizeof(uctx));
 	mctx = (mcontext_t *)&uctx.uc_mcontext;
 	fxarea = (struct fxsave64 *)&mctx->__fpregs;
 
@@ -473,11 +473,11 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	 * And the stack
 	 */
 	uctx.uc_stack.ss_flags = 0;
-	if (luctx->luc_stack.ss_flags & LINUX_SS_ONSTACK);
-		uctx.uc_stack.ss_flags = SS_ONSTACK;
+	if (luctx->luc_stack.ss_flags & LINUX_SS_ONSTACK)
+		uctx.uc_stack.ss_flags |= SS_ONSTACK;
 
-	if (luctx->luc_stack.ss_flags & LINUX_SS_DISABLE);
-		uctx.uc_stack.ss_flags = SS_DISABLE;
+	if (luctx->luc_stack.ss_flags & LINUX_SS_DISABLE)
+		uctx.uc_stack.ss_flags |= SS_DISABLE;
 
 	uctx.uc_stack.ss_sp = luctx->luc_stack.ss_sp;
 	uctx.uc_stack.ss_size = luctx->luc_stack.ss_size;
@@ -567,8 +567,8 @@ linux_sys_arch_prctl(struct lwp *l, const struct linux_sys_arch_prctl_args *uap,
 const int linux_vsyscall_to_syscall[] = {
 	LINUX_SYS_gettimeofday,
 	LINUX_SYS_time,
-	LINUX_SYS_nosys,
-	LINUX_SYS_nosys,
+	LINUX_SYS_nosys,	/* nosys */
+	LINUX_SYS_nosys,	/* nosys */
 };
 
 int
@@ -629,7 +629,7 @@ linux_buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (u_int64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.20.4.1 2008/05/16 02:24:26 yamt Exp $	*/
+/*	$NetBSD: firewire.c,v 1.20.4.2 2009/05/04 08:12:47 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.20.4.1 2008/05/16 02:24:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.20.4.2 2009/05/04 08:12:47 yamt Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -122,7 +122,7 @@ MALLOC_DEFINE(M_FWXFER, "fw_xfer", "XFER/FireWire");
 /*
  * Setup sysctl(3) MIB, hw.ieee1394if.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_ieee1394if, "sysctl ieee1394if(4) subtree setup")
 {
@@ -782,7 +782,7 @@ fw_init_crom(struct firewire_comm *fc)
 		return;
 
 	src = &fc->crom_src_buf->src;
-	bzero(src, sizeof(struct crom_src));
+	memset(src, 0, sizeof(struct crom_src));
 
 	/* BUS info sample */
 	src->hdr.info_len = 4;
@@ -825,7 +825,7 @@ fw_reset_crom(struct firewire_comm *fc)
 
 	STAILQ_INIT(&src->chunk_list);
 
-	bzero(root, sizeof(struct crom_chunk));
+	memset(root, 0, sizeof(struct crom_chunk));
 	crom_add_chunk(src, NULL, root, 0);
 	crom_add_entry(root, CSRKEY_NCAP, 0x0083c0); /* XXX */
 	/* private company_id */
@@ -861,7 +861,7 @@ fw_busreset(struct firewire_comm *fc, uint32_t new_status)
 	newrom = malloc(CROMSIZE, M_FW, M_NOWAIT | M_ZERO);
 	src = &fc->crom_src_buf->src;
 	crom_load(src, (uint32_t *)newrom, CROMSIZE);
-	if (bcmp(newrom, fc->config_rom, CROMSIZE) != 0) {
+	if (memcmp(newrom, fc->config_rom, CROMSIZE) != 0) {
 		/* bump generation and reload */
 		src->businfo.generation ++;
 		/* generation must be between 0x2 and 0xF */
@@ -1681,13 +1681,13 @@ fw_explore_node(struct fw_device *dfwdev)
 	fwdev->speed = spd;
 
 	/* unchanged ? */
-	if (bcmp(&csr[0], &fwdev->csrrom[0], sizeof(uint32_t) * 5) == 0) {
+	if (memcmp(&csr[0], &fwdev->csrrom[0], sizeof(uint32_t) * 5) == 0) {
 		if (firewire_debug)
 			printf("node%d: crom unchanged\n", node);
 		return (0);
 	}
 
-	bzero(&fwdev->csrrom[0], CROMSIZE);
+	memset(&fwdev->csrrom[0], 0, CROMSIZE);
 
 	/* copy first quad and bus info block */
 	bcopy(&csr[0], &fwdev->csrrom[0], sizeof(uint32_t) * 5);
@@ -2349,7 +2349,7 @@ fw_bmr(struct firewire_comm *fc)
 	if (cmstr == fc->nodeid || cmstr == -1)
 		return 0;
 	/* Bus probe has not finished, make dummy fwdev for cmstr */
-	bzero(&fwdev, sizeof(fwdev));
+	memset(&fwdev, 0, sizeof(fwdev));
 	fwdev.fc = fc;
 	fwdev.dst = cmstr;
 	fwdev.speed = 0;

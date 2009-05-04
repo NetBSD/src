@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.57 2008/03/09 15:39:14 rmind Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.57.4.1 2009/05/04 08:14:34 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.57 2008/03/09 15:39:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.57.4.1 2009/05/04 08:14:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.57 2008/03/09 15:39:14 rm
 #include <sys/ptrace.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/uidinfo.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -296,14 +297,8 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 		case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
-			/*
-			 * Decisions here are root-agnostic.
-			 *
-			 * KAUTH_REQ_SYSTEM_TIME_RTCOFFSET - Should be used
-			 *  only after the caller was determined as someone
-			 *  who can modify sysctl. For us, this means root.
-			 */
-			result = KAUTH_RESULT_ALLOW;
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
 			break;
 
 		default:
@@ -317,6 +312,7 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_SYSTEM_SYSCTL_ADD:
 		case KAUTH_REQ_SYSTEM_SYSCTL_DELETE:
 		case KAUTH_REQ_SYSTEM_SYSCTL_DESC:
+		case KAUTH_REQ_SYSTEM_SYSCTL_MODIFY:
 		case KAUTH_REQ_SYSTEM_SYSCTL_PRVT:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
@@ -350,26 +346,26 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_CHSYSFLAGS:
-	case KAUTH_SYSTEM_LKM:
-	case KAUTH_SYSTEM_SETIDCORE:
 		/*
-		 * Decisions here are root-agnostic.
-		 *
-		 * CHSYSFLAGS - Should be used only after the caller was
-		 *              determined as root. Needs to be re-factored
-		 *              anyway. Infects ufs, ext2fs, tmpfs, and rump.
-		 *
-		 * LKM - Subject to permissions on /dev/lkm for now.
-		 *
-		 * SETIDCORE - Should be used only after the caller was
-		 *             determined as someone who can modify sysctl
-		 *             data. For us, this means root.
+		 * Needs to be checked in conjunction with the immutable and
+		 * append-only flags (usually). Should be handled differently.
+		 * Infects ufs, ext2fs, tmpfs, and rump.
 		 */
-		result = KAUTH_RESULT_ALLOW;
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_SYSTEM_SETIDCORE:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+
 		break;
 
 	case KAUTH_SYSTEM_MODULE:
 		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		if ((uintptr_t)arg2 != 0)	/* autoload */
 			result = KAUTH_RESULT_ALLOW;
 		break;
 
@@ -795,12 +791,16 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_NETWORK_BIND:
 		switch (req) {
+		case KAUTH_REQ_NETWORK_BIND_PORT:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
 		case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
 			break;
+
 		default:
-			result = KAUTH_RESULT_ALLOW;
 			break;
 		}
 		break;
@@ -825,13 +825,9 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_NETWORK_FORWSRCRT:
-		/*
-		 * Decision is root-agnostic.
-		 *
-		 * Can only be issued from sysctl context, in our case, only
-		 * root can get here.
-		 */
-		result = KAUTH_RESULT_ALLOW;
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+
 		break;
 
 	case KAUTH_NETWORK_INTERFACE:
@@ -883,6 +879,25 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_NETWORK_SOCKET:
 		switch (req) {
+		case KAUTH_REQ_NETWORK_SOCKET_DROP:
+			/*
+			 * The superuser can drop any connection.  Normal users
+			 * can only drop their own connections.
+			 */
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			else {
+				struct socket *so = (struct socket *)arg1;
+				uid_t sockuid = so->so_uidinfo->ui_uid;
+
+				if (sockuid == kauth_cred_getuid(cred) ||
+				    sockuid == kauth_cred_geteuid(cred))
+					result = KAUTH_RESULT_ALLOW;
+			}
+
+			
+			break;
+
 		case KAUTH_REQ_NETWORK_SOCKET_OPEN:
 			if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_BLUETOOTH)
 				result = KAUTH_RESULT_ALLOW;
@@ -911,12 +926,17 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 				result = KAUTH_RESULT_ALLOW;
 			break;
 
+		case KAUTH_REQ_NETWORK_SOCKET_SETPRIV:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
 		default:
-			result = KAUTH_RESULT_ALLOW;
 			break;
 		}
 
 		break;
+
 
 	default:
 		result = KAUTH_RESULT_DEFER;
@@ -952,9 +972,11 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
+	case KAUTH_MACHDEP_CACHEFLUSH:
 	case KAUTH_MACHDEP_IOPERM_SET:
 	case KAUTH_MACHDEP_IOPL:
 	case KAUTH_MACHDEP_MTRR_SET:
+	case KAUTH_MACHDEP_NVRAM:
 	case KAUTH_MACHDEP_UNMANAGEDMEM:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
@@ -988,6 +1010,11 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
         result = KAUTH_RESULT_DEFER;
 
 	switch (action) {
+	case KAUTH_DEVICE_BLUETOOTH_SETPRIV:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		break;
+
 	case KAUTH_DEVICE_RAWIO_SPEC:
 	case KAUTH_DEVICE_RAWIO_PASSTHRU:
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.24.22.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: sem.h,v 1.24.22.2 2009/05/04 08:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -196,6 +196,14 @@ extern struct semid_ds *sema;		/* semaphore id pool */
  */
 #define	SEM_CONFIG_FREEZE	0	/* Freeze the semaphore facility. */
 #define	SEM_CONFIG_THAW		1	/* Thaw the semaphore facility. */
+
+#define SYSCTL_FILL_SEM(src, dst) do { \
+	SYSCTL_FILL_PERM((src).sem_perm, (dst).sem_perm); \
+	(dst).sem_nsems = (src).sem_nsems; \
+	(dst).sem_otime = (src).sem_otime; \
+	(dst).sem_ctime = (src).sem_ctime; \
+} while (/*CONSTCOND*/ 0)
+
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
@@ -203,7 +211,7 @@ extern struct semid_ds *sema;		/* semaphore id pool */
 
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
-int	semctl(int, int, int, ...) __RENAME(__semctl13);
+int	semctl(int, int, int, ...) __RENAME(__semctl50);
 #endif
 int	semget(key_t, int, int);
 int	semop(int, struct sembuf *, size_t);

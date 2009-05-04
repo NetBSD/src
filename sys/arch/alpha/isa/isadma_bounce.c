@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.7.44.1 2008/05/16 02:21:45 yamt Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.7.44.2 2009/05/04 08:10:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.7.44.1 2008/05/16 02:21:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.7.44.2 2009/05/04 08:10:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,9 @@ struct isadma_bounce_cookie {
 #define	ID_BUFTYPE_UIO		3
 #define	ID_BUFTYPE_RAW		4
 
-int	isadma_bounce_alloc_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_size_t, int));
-void	isadma_bounce_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
+int	isadma_bounce_alloc_bouncebuf(bus_dma_tag_t, bus_dmamap_t,
+	    bus_size_t, int);
+void	isadma_bounce_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Create an ISA DMA map.

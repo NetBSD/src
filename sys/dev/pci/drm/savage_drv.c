@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_drv.c,v 1.3 2007/12/11 11:48:46 lukem Exp $	*/
+/*	$NetBSD: savage_drv.c,v 1.3.12.1 2009/05/04 08:13:07 yamt Exp $	*/
 
 /* savage_drv.c -- Savage DRI driver
  */
@@ -29,16 +29,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.3 2007/12/11 11:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.3.12.1 2009/05/04 08:13:07 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_drv.c,v 1.3 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/savage_drm.h>
-#include <dev/pci/drm/savage_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "savage_drm.h"
+#include "savage_drv.h"
+#include "drm_pciids.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t savage_pciidlist[] = {
@@ -83,7 +83,7 @@ savage_attach(device_t nbdev)
 {
 	drm_device_t *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	memset(dev, 0, sizeof(drm_device_t));
 	savage_configure(dev);
 	return drm_attach(nbdev, savage_pciidlist);
 }
@@ -124,13 +124,13 @@ static void
 savagedrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	savage_configure(dev);
 	return drm_attach(self, pa, savage_pciidlist);
 }
 
-CFATTACH_DECL(savagedrm, sizeof(drm_device_t), savagedrm_probe, savagedrm_attach,
+CFATTACH_DECL_NEW(savagedrm, sizeof(drm_device_t), savagedrm_probe, savagedrm_attach,
 	drm_detach, drm_activate);
 
 #endif

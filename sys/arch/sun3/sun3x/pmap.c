@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98.20.1 2008/05/16 02:23:22 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98.20.2 2009/05/04 08:12:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98.20.1 2008/05/16 02:23:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98.20.2 2009/05/04 08:12:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -243,7 +243,8 @@ static b_tmgr_t		*Btmgrbase;
 static c_tmgr_t		*Ctmgrbase;
 static pv_t 		*pvbase;
 static pv_elem_t	*pvebase;
-struct pmap 		kernel_pmap;
+static struct pmap	kernel_pmap;
+struct pmap		*const kernel_pmap_ptr = &kernel_pmap;
 
 /*
  * This holds the CRP currently loaded into the MMU.
@@ -1661,7 +1662,7 @@ pmap_stroll(pmap_t pmap, vaddr_t va, a_tmgr_t **a_tbl, b_tmgr_t **b_tbl,
  * This function ought to be easier to read.
  */
 int 
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	bool insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */
@@ -2474,7 +2475,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_kenter_pa(srcva, srcpa, VM_PROT_READ);
 	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE);
 
-	/* Hand-optimized version of bcopy(src, dst, PAGE_SIZE) */
+	/* Hand-optimized version of memcpy(dst, src, PAGE_SIZE) */
 	copypage((char *)srcva, (char *)dstva);
 
 	pmap_kremove(srcva, PAGE_SIZE);
@@ -2509,7 +2510,7 @@ pmap_zero_page(paddr_t dstpa)
 	/* The comments in pmap_copy_page() above apply here also. */
 	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE);
 
-	/* Hand-optimized version of bzero(ptr, PAGE_SIZE) */
+	/* Hand-optimized version of memset(ptr, 0, PAGE_SIZE) */
 	zeropage((char *)dstva);
 
 	pmap_kremove(dstva, PAGE_SIZE);

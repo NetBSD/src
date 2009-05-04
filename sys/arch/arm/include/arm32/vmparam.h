@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21.10.1 2008/05/16 02:22:01 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21.10.2 2009/05/04 08:10:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -70,13 +70,6 @@
 #endif
 
 /*
- * Size of SysV shared memory map
- */
-#ifndef SHMMAXPGS
-#define	SHMMAXPGS	1024
-#endif
-
-/*
  * While the ARM architecture defines Section mappings, large pages,
  * and small pages, the standard page size is (and will always be) 4K.
  */
@@ -109,7 +102,7 @@ extern vaddr_t virtual_end;
  */
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
-	struct pv_entry *pvh_list;		/* pv_entry list */
+	SLIST_HEAD(,pv_entry) pvh_list;		/* pv_entry list */
 	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
 	u_int uro_mappings;
@@ -137,7 +130,7 @@ struct vm_page_md {
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
+	SLIST_INIT(&(pg)->mdpage.pvh_list);				\
 	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
 	VM_MDPAGE_PVH_ATTRS_INIT(pg);					\
 	(pg)->mdpage.uro_mappings = 0;					\

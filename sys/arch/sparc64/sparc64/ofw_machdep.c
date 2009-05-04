@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.31 2006/10/03 21:06:58 mrg Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.31.56.1 2009/05/04 08:11:58 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.31 2006/10/03 21:06:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.31.56.1 2009/05/04 08:11:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -68,7 +68,7 @@ static u_int get_mmu_handle(void);
 static u_int get_memory_handle(void);
 
 static u_int 
-get_mmu_handle()
+get_mmu_handle(void)
 {
 	u_int chosen;
 
@@ -84,7 +84,7 @@ get_mmu_handle()
 }
 
 static u_int 
-get_memory_handle()
+get_memory_handle(void)
 {
 	u_int chosen;
 
@@ -104,8 +104,7 @@ get_memory_handle()
  * Point prom to our trap table.  This stops the prom from mapping us.
  */
 int
-prom_set_trap_table(tba)
-	vaddr_t tba;
+prom_set_trap_table(vaddr_t tba)
 {
 	struct {
 		cell_t name;
@@ -127,8 +126,7 @@ prom_set_trap_table(tba)
  * Only works while the prom is actively mapping us.
  */
 paddr_t
-prom_vtop(vaddr)
-	vaddr_t vaddr;
+prom_vtop(vaddr_t vaddr)
 {
 	struct {
 		cell_t name;
@@ -171,9 +169,7 @@ prom_vtop(vaddr)
  * Only works while the prom is actively mapping us.
  */
 vaddr_t
-prom_claim_virt(vaddr, len)
-	vaddr_t vaddr;
-	int len;
+prom_claim_virt(vaddr_t vaddr, int len)
 {
 	struct {
 		cell_t name;
@@ -211,9 +207,7 @@ prom_claim_virt(vaddr, len)
  * Only works while the prom is actively mapping us.
  */
 vaddr_t
-prom_alloc_virt(len, align)
-	int len;
-	int align;
+prom_alloc_virt(int len, int align)
 {
 	static int retaddr;
 	struct {
@@ -251,9 +245,7 @@ prom_alloc_virt(len, align)
  * Only works while the prom is actively mapping us.
  */
 int
-prom_free_virt(vaddr, len)
-	vaddr_t vaddr;
-	int len;
+prom_free_virt(vaddr_t vaddr, int len)
 {
 	struct {
 		cell_t name;
@@ -286,9 +278,7 @@ prom_free_virt(vaddr, len)
  * Only works while the prom is actively mapping us.
  */
 int
-prom_unmap_virt(vaddr, len)
-	vaddr_t vaddr;
-	int len;
+prom_unmap_virt(vaddr_t vaddr, int len)
 {
 	struct {
 		cell_t name;
@@ -320,11 +310,7 @@ prom_unmap_virt(vaddr, len)
  * Only works while the prom is actively mapping us.
  */
 int
-prom_map_phys(paddr, size, vaddr, mode)
-	paddr_t paddr;
-	off_t size;
-	vaddr_t vaddr;
-	int mode;
+prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 {
 	struct {
 		cell_t name;
@@ -370,9 +356,7 @@ prom_map_phys(paddr, size, vaddr, mode)
  * Only works while the prom is actively mapping us.
  */
 paddr_t
-prom_alloc_phys(len, align)
-	int len;
-	int align;
+prom_alloc_phys(int len, int align)
 {
 	struct {
 		cell_t name;
@@ -409,9 +393,7 @@ prom_alloc_phys(len, align)
  * Only works while the prom is actively mapping us.
  */
 paddr_t
-prom_claim_phys(phys, len)
-	paddr_t phys;
-	int len;
+prom_claim_phys(paddr_t phys, int len)
 {
 	struct {
 		cell_t name;
@@ -452,9 +434,7 @@ prom_claim_phys(phys, len)
  * Only works while the prom is actively mapping us.
  */
 int
-prom_free_phys(phys, len)
-	paddr_t phys;
-	int len;
+prom_free_phys(paddr_t phys, int len)
 {
 	struct {
 		cell_t name;
@@ -488,9 +468,7 @@ prom_free_phys(phys, len)
  * Only works while the prom is actively mapping us.
  */
 paddr_t
-prom_get_msgbuf(len, align)
-	int len;
-	int align;
+prom_get_msgbuf(int len, int align)
 {
 	struct {
 		cell_t name;
@@ -684,8 +662,11 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 {
 	int i, len;
 	int address_cells, size_cells, interrupt_cells, interrupt_map_len;
-	int interrupt_map[100];
+	int static_interrupt_map[100];
 	int interrupt_map_mask[10];
+	int *interrupt_map = &static_interrupt_map[0];
+	int maplen = sizeof static_interrupt_map;
+	int *free_map = NULL;
 	int reg[10];
 	char dev_type[32];
 	int phc_node;
@@ -727,9 +708,9 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		}
 #endif
 
+ retry_map:
 		if ((interrupt_map_len = OF_getprop(node,
-			"interrupt-map", &interrupt_map,
-			sizeof(interrupt_map))) <= 0) {
+			"interrupt-map", interrupt_map, maplen)) <= 0) {
 
 			/* Swizzle interrupt if this is a PCI bridge. */
 			if (((len = OF_getprop(node, "device_type", &dev_type,
@@ -747,10 +728,24 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 			OF_getprop(node, "reg", &reg, sizeof(reg));
 			continue;
 		}
+		if (interrupt_map_len > maplen) {
+			DPRINTF(("interrupt_map_len %d > maplen %d, "
+				 "allocating\n", interrupt_map_len, maplen));
+			KASSERT(!free_map);
+			free_map = malloc(interrupt_map_len, M_DEVBUF,
+					  M_NOWAIT);
+			if (!free_map) {
+				interrupt_map_len = sizeof static_interrupt_map;
+			} else {
+				interrupt_map = free_map;
+				maplen = interrupt_map_len;
+				goto retry_map;
+			}
+		}
 		/* Convert from bytes to cells. */
 		interrupt_map_len = interrupt_map_len/sizeof(int);
-		if ((len = (OF_searchprop(node, "#address-cells", &address_cells,
-			sizeof(address_cells)))) <= 0) {
+		if ((len = (OF_searchprop(node, "#address-cells",
+			&address_cells, sizeof(address_cells)))) <= 0) {
 			/* How should I know. */
 			address_cells = 2;
 		}
@@ -822,6 +817,8 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 				/* Bingo! */
 				if (buflen < pintr_cells) {
 					/* Error -- ran out of storage. */
+					if (free_map)
+						free(free_map, M_DEVBUF);
 					return (-1);
 				}
 				parent++;
@@ -854,6 +851,10 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		}
 		DPRINTF(("reg len %d\n", len));
 
+		if (free_map) {
+			free(free_map, M_DEVBUF);
+			free_map = NULL;
+		}
 	} 
 	return (rc);
 }

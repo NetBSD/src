@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.1 2008/05/16 02:23:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.2 2009/05/04 08:12:14 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -131,11 +131,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.1 2008/05/16 02:23:30 yamt Exp $");
 #include "ioapic.h"
 #include "opt_mpbios.h"
 /* for x86/i8259.c */
-struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0}};
+struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0,0}};
 #if NIOAPIC > 0
 /* for x86/ioapic.c */
-struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0}};
-struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0}};
+struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
+struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
 
 #include <machine/i82093var.h>
 int irq2vect[256] = {0};
@@ -209,7 +209,8 @@ cpu_intr_init(struct cpu_info *ci)
 #if NPCI > 0 || NISA > 0
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *) , void *arg)
+    int type, int level, int (*handler)(void *) , void *arg,
+    bool known_mpsafe)
 {
 	struct pintrhand *ih;
 	int evtchn;
@@ -259,7 +260,7 @@ xen_intr_map(int *pirq, int type)
 	 */
 	static int xen_next_irq = 200;
 	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(*pirq));
-	struct pic *pic = (struct pic *)ioapic;
+	struct pic *pic = &ioapic->sc_pic;
 	int pin = APIC_IRQ_PIN(*pirq);
 	physdev_op_t op;
 
@@ -267,12 +268,14 @@ xen_intr_map(int *pirq, int type)
 		irq = vect2irq[ioapic->sc_pins[pin].ip_vector];
 		if (ioapic->sc_pins[pin].ip_vector == 0 || irq == 0) {
 			/* allocate IRQ */
-			irq = xen_next_irq--;
+			irq = APIC_IRQ_LEGACY_IRQ(*pirq);
+			if (irq <= 0 || irq > 15)
+				irq = xen_next_irq--;
 			/* allocate vector and route interrupt */
 			op.cmd = PHYSDEVOP_ASSIGN_VECTOR;
 			op.u.irq_op.irq = irq;
 			if (HYPERVISOR_physdev_op(&op) < 0)
-				panic("PHYSDEVOP_ASSIGN_VECTOR");
+				panic("PHYSDEVOP_ASSIGN_VECTOR irq %d", irq);
 			irq2vect[irq] = op.u.irq_op.vector;
 			vect2irq[op.u.irq_op.vector] = irq;
 			pic->pic_addroute(pic, &phycpu_info_primary, pin,
@@ -297,11 +300,11 @@ struct pic *
 intr_findpic(int num)
 {
 #if NIOAPIC > 0
-	struct pic *pic;
+	struct ioapic_softc *pic;
 
-	pic = (struct pic *)ioapic_find_bybase(num);
+	pic = ioapic_find_bybase(num);
 	if (pic != NULL)
-		return pic;
+		return &pic->sc_pic;
 #endif
 	if (num < NUM_LEGACY_IRQS)
 		return &i8259_pic;
@@ -453,3 +456,19 @@ intr_printconfig(void)
 	}
 }
 #endif
+
+void
+cpu_intr_redistribute(void)
+{
+
+	/* XXX nothing */
+}
+
+u_int
+cpu_intr_count(struct cpu_info *ci)
+{
+
+	KASSERT(ci->ci_nintrhand >= 0);
+
+	return ci->ci_nintrhand;
+}

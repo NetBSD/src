@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.6 2006/11/29 19:56:47 freza Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.6.56.1 2009/05/04 08:11:03 yamt Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,11 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6 2006/11/29 19:56:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6.56.1 2009/05/04 08:11:03 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6 2006/11/29 19:56:47 freza Exp
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -107,7 +109,7 @@ char bootpath[256];
 
 extern paddr_t msgbuf_paddr;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
 
@@ -154,8 +156,8 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	openbios_board_print();
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -237,6 +239,8 @@ cpu_reboot(int howto, char *what)
 		ibm4xx_dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 	  /* Power off here if we know how...*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.360.4.1 2008/05/16 02:23:53 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.360.4.2 2009/05/04 08:12:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.360.4.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.360.4.2 2009/05/04 08:12:35 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -136,8 +136,8 @@ void	wdperror(const struct wd_softc *);
 static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
-CFATTACH_DECL_NEW(wd, sizeof(struct wd_softc),
-    wdprobe, wdattach, wddetach, wdactivate);
+CFATTACH_DECL3_NEW(wd, sizeof(struct wd_softc),
+    wdprobe, wdattach, wddetach, wdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver wd_cd;
 
@@ -345,8 +345,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 
 	if (wd->sc_quirks != 0) {
 		char sbuf[sizeof(WD_QUIRK_FMT) + 64];
-		bitmask_snprintf(wd->sc_quirks, WD_QUIRK_FMT,
-		    sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), WD_QUIRK_FMT, wd->sc_quirks);
 		aprint_normal_dev(self, "quirks %s\n", sbuf);
 	}
 
@@ -504,6 +503,8 @@ wddetach(struct device *self, int flags)
 	rnd_detach_source(&sc->rnd_source);
 #endif
 
+	callout_destroy(&sc->sc_restart_ch);
+
 	sc->drvp->drive_flags = 0; /* no drive any more here */
 
 	return (0);
@@ -517,7 +518,7 @@ void
 wdstrategy(struct buf *bp)
 {
 	struct wd_softc *wd =
-	    device_private(device_lookup(&wd_cd, WDUNIT(bp->b_dev)));
+	    device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	daddr_t blkno;
 	int s;
@@ -595,7 +596,7 @@ wdstrategy(struct buf *bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	BUFQ_PUT(wd->sc_q, bp);
+	bufq_put(wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);
 	return;
@@ -619,7 +620,7 @@ wdstart(void *arg)
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		if ((bp = BUFQ_GET(wd->sc_q)) == NULL)
+		if ((bp = bufq_get(wd->sc_q)) == NULL)
 			return;
 
 		/*
@@ -637,7 +638,7 @@ wd_split_mod15_write(struct buf *bp)
 {
 	struct buf *obp = bp->b_private;
 	struct wd_softc *sc =
-	    device_private(wd_cd.cd_devs[DISKUNIT(obp->b_dev)]);
+	    device_lookup_private(&wd_cd, DISKUNIT(obp->b_dev));
 
 	if (__predict_false(bp->b_error != 0)) {
 		/*
@@ -920,7 +921,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int part, error;
 
 	ATADEBUG_PRINT(("wdopen\n"), DEBUG_FUNCS);
-	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	wd = device_lookup_private(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (ENXIO);
 
@@ -1004,7 +1005,7 @@ int
 wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct wd_softc *wd =
-	    device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	    device_lookup_private(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
 
 	ATADEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
@@ -1176,7 +1177,7 @@ int
 wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
 	struct wd_softc *wd =
-	    device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	    device_lookup_private(&wd_cd, WDUNIT(dev));
 	int error = 0, s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
@@ -1563,7 +1564,7 @@ wdsize(dev_t dev)
 
 	ATADEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
 
-	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	wd = device_lookup_private(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (-1);
 
@@ -1602,7 +1603,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		return EFAULT;
 	wddoingadump = 1;
 
-	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	wd = device_lookup_private(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (ENXIO);
 
@@ -1642,7 +1643,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	wd->sc_wdc_bio.bcount = nblks * lp->d_secsize;
 	wd->sc_wdc_bio.databuf = va;
 #ifndef WD_DUMP_NOT_TRUSTED
-	switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
+	switch (err = wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
 	case ATACMD_TRY_AGAIN:
 		panic("wddump: try again");
 		break;
@@ -1651,8 +1652,10 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		break;
 	case ATACMD_COMPLETE:
 		break;
+	default:
+		panic("wddump: unknown atacmd code %d", err);
 	}
-	switch(wd->sc_wdc_bio.error) {
+	switch(err = wd->sc_wdc_bio.error) {
 	case TIMEOUT:
 		printf("wddump: device timed out");
 		err = EIO;
@@ -1674,7 +1677,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		err = 0;
 		break;
 	default:
-		panic("wddump: unknown error type");
+		panic("wddump: unknown error type %d", err); 
 	}
 	if (err != 0) {
 		printf("\n");
@@ -1861,7 +1864,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
-		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), at_errbits, ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_setcache: status=%s\n", sbuf);
 		return EIO;
 	}
@@ -1890,7 +1893,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
-		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), at_errbits, ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_standby: status=%s\n", sbuf);
 		return EIO;
 	}
@@ -1931,7 +1934,7 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
-		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), at_errbits, ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_flushcache: status=%s\n",
 		    sbuf);
 		return EIO;
@@ -1942,8 +1945,12 @@ wd_flushcache(struct wd_softc *wd, int flags)
 bool
 wd_shutdown(device_t dev, int how)
 {
-
 	struct wd_softc *wd = device_private(dev);
+
+	/* the adapter needs to be enabled */
+	if (wd->atabus->ata_addref(wd->drvp))
+		return true; /* no need to complain */
+
 	wd_flushcache(wd, AT_POLL);
 	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
 		wd_standby(wd, AT_POLL);

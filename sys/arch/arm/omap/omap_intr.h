@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.2.10.1 2008/05/16 02:22:01 yamt Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.2.10.2 2009/05/04 08:10:44 yamt Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,6 @@
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/atomic.h>
 
 #define OMAP_IRQ_MIN			0
 #define OMAP_NIRQ			(OMAP_INT_L1_NIRQ + OMAP_INT_L2_NIRQ)
@@ -185,8 +184,13 @@ void	_setsoftintr(int);
 void omap_irq_handler(void *);
 void *omap_intr_establish(int, int, const char *, int (*)(void *), void *);
 void omap_intr_disestablish(void *);
-int omapintc_match(struct device *, struct cfdata *, void *);
-void omapintc_attach(struct device *, struct device *, void *);
+/* XXX MARTY -- This is a hack to work around the circular dependency
+ * between sys/device.h and omap_intr.h  It should be removed when
+ * the circular dependency is fixed and the declaration repaired.
+ */
+struct cfdata;
+int omapintc_match(device_t, struct cfdata *, void *);
+void omapintc_attach(device_t, device_t, void *);
 
 #endif /* ! _LOCORE */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: drm_irq.c,v 1.8 2008/04/08 07:39:11 cegger Exp $ */
+/* $NetBSD: drm_irq.c,v 1.8.4.1 2009/05/04 08:12:37 yamt Exp $ */
 
 /* drm_irq.c -- IRQ IOCTL and function support
  * Created: Fri Oct 18 2003 by anholt@FreeBSD.org
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.8 2008/04/08 07:39:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.8.4.1 2009/05/04 08:12:37 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_irq.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -83,7 +83,7 @@ int drm_irq_install(drm_device_t *dev)
 	if (dev->irq == 0 || dev->dev_private == NULL)
 		return DRM_ERR(EINVAL);
 
-	DRM_DEBUG( "%s: irq=%d\n", __func__, dev->irq );
+	DRM_DEBUG( "%s: irq=%d\n", __FUNCTION__, dev->irq );
 
 	DRM_LOCK();
 	if (dev->irq_enabled) {
@@ -93,8 +93,6 @@ int drm_irq_install(drm_device_t *dev)
 	dev->irq_enabled = 1;
 
 	dev->context_flag = 0;
-
-	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
 
 				/* Before installing handler */
 
@@ -113,7 +111,7 @@ int drm_irq_install(drm_device_t *dev)
 		retcode = ENOENT;
 		goto err;
 	}
-	aprint_normal_dev(&dev->device, "interrupting at %s\n", istr);
+	aprint_normal_dev(dev->device, "interrupting at %s\n", istr);
 
 				/* After installing handler */
 	DRM_LOCK();
@@ -136,12 +134,11 @@ int drm_irq_uninstall(drm_device_t *dev)
 
 	dev->irq_enabled = 0;
 
-	DRM_DEBUG( "%s: irq=%d\n", __func__, dev->irq );
+	DRM_DEBUG( "%s: irq=%d\n", __FUNCTION__, dev->irq );
 
 	dev->driver.irq_uninstall(dev);
 
 	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
-	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;
 }

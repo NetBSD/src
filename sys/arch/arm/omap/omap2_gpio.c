@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.1.10.1 2008/05/16 02:22:01 yamt Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.1.10.2 2009/05/04 08:10:44 yamt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.10.1 2008/05/16 02:22:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.10.2 2009/05/04 08:10:44 yamt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.10.1 2008/05/16 02:22:01 yamt Exp
  
 #include <sys/param.h>
 #include <sys/evcnt.h>
+#include <sys/atomic.h>
  
 #include <uvm/uvm_extern.h>
   
@@ -47,11 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.10.1 2008/05/16 02:22:01 yamt Exp
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
-#include <machine/atomic.h>
 #include <machine/bus.h>
 
-#include <arm/omap/omap2430reg.h>
-#include <arm/omap/omap2430obiovar.h>
+#include <arm/omap/omap2_reg.h>
+#include <arm/omap/omap2_obiovar.h>
 #include <arm/pic/picvar.h>
 
 #if NGPIO > 0
@@ -72,7 +72,7 @@ const struct pic_ops gpio_pic_ops = {
 };
 
 struct gpio_softc {
-	struct device gpio_dev;
+	device_t gpio_dev;
 	struct pic_softc gpio_pic;
 	struct intrsource *gpio_is;
 	bus_space_tag_t gpio_memt;
@@ -106,7 +106,6 @@ gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
 
-	aprint_debug_dev(&gpio->gpio_dev, "unblock: mask=%x\n", irq_mask);
 	gpio->gpio_enable_mask |= irq_mask;
 	/*
 	 * If this a level source, ack it now.  If it's still asserted
@@ -124,7 +123,6 @@ gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
 
-	aprint_debug_dev(&gpio->gpio_dev, "block: mask=%x\n", irq_mask);
 	gpio->gpio_enable_mask &= ~irq_mask;
 	GPIO_WRITE(gpio, GPIO_CLEARIRQENABLE1, irq_mask);
 	/*
@@ -148,7 +146,6 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	if (pending == 0)
 		return 0;
 
-	aprint_debug_dev(&gpio->gpio_dev, "pending=%x\n", pending);
 	/*
 	 * Now find all the pending bits and mark them as pending.
 	 */
@@ -229,7 +226,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 static int gpio_match(device_t, cfdata_t, void *);
 static void gpio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(omap2gpio,
+CFATTACH_DECL_NEW(omap2gpio,
 	sizeof(struct gpio_softc),
 	gpio_match, gpio_attach,
 	NULL, NULL);
@@ -326,23 +323,33 @@ gpio_match(device_t parent, cfdata_t cfdata, void *aux)
 	struct obio_attach_args *oa = aux;
 
 #ifdef OMAP_2420
-	if (oa->obio_addr != GPIO1_BASE_2420
-	    && oa->obio_addr != GPIO2_BASE_2420
-	    && oa->obio_addr != GPIO3_BASE_2420
-	    && oa->obio_addr != GPIO4_BASE_2420)
-		return 0;
+	if (oa->obio_addr == GPIO1_BASE_2420
+	    || oa->obio_addr == GPIO2_BASE_2420
+	    || oa->obio_addr == GPIO3_BASE_2420
+	    || oa->obio_addr == GPIO4_BASE_2420)
+		return 1;
 #endif
 
 #ifdef OMAP_2430
-	if (oa->obio_addr != GPIO1_BASE_2430
-	    && oa->obio_addr != GPIO2_BASE_2430
-	    && oa->obio_addr != GPIO3_BASE_2430
-	    && oa->obio_addr != GPIO4_BASE_2430
-	    && oa->obio_addr != GPIO5_BASE_2430)
-		return 0;
+	if (oa->obio_addr == GPIO1_BASE_2430
+	    || oa->obio_addr == GPIO2_BASE_2430
+	    || oa->obio_addr == GPIO3_BASE_2430
+	    || oa->obio_addr == GPIO4_BASE_2430
+	    || oa->obio_addr == GPIO5_BASE_2430)
+		return 1;
 #endif
 
-	return 1;
+#ifdef OMAP_3530
+	if (oa->obio_addr == GPIO1_BASE_3530
+	    || oa->obio_addr == GPIO2_BASE_3530
+	    || oa->obio_addr == GPIO3_BASE_3530
+	    || oa->obio_addr == GPIO4_BASE_3530
+	    || oa->obio_addr == GPIO5_BASE_3530
+	    || oa->obio_addr == GPIO6_BASE_3530)
+		return 1;
+#endif
+
+	return 0;
 }
 
 void
@@ -351,6 +358,8 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	struct obio_attach_args * const oa = aux;
 	struct gpio_softc * const gpio = device_private(self);
 	int error;
+
+	gpio->gpio_dev = self;
 
 	if (oa->obio_intr == OBIOCF_INTR_DEFAULT)
 		panic("\n%s: no intr assigned", device_xname(self));

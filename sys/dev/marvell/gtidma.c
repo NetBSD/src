@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.13 2008/04/08 20:40:42 cegger Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.13.4.1 2009/05/04 08:12:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.13 2008/04/08 20:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.13.4.1 2009/05/04 08:12:51 yamt Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -94,7 +94,7 @@ int idmadebug = 0;
 #ifdef DIAGNOSTIC
 
 unsigned char idmalock[CACHELINESIZE]
-	__attribute__ ((aligned(CACHELINESIZE))) = { 0 };
+	__aligned(CACHELINESIZE) = { 0 };
 
 #endif
 
@@ -126,7 +126,7 @@ unsigned char idmalock[CACHELINESIZE]
 			|IDMA_CTLLO_DESCMODE)
 
 static inline u_int64_t
-_mftb()
+_mftb(void)
 {
         u_long scratch;
         u_int64_t tb;
@@ -446,7 +446,7 @@ idma_chan_alloc(
 	int err;
 	int i;
 	unsigned int s;
-	STATIC void idma_time(void *);;
+	STATIC void idma_time(void *);
 
 	DPRINTF(("idma_chan_alloc %d %p %p\n", ndesc, callback, arg));
 	KASSERT(ndesc >= 0);

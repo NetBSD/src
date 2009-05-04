@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127 2008/01/12 09:54:29 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127.10.1 2009/05/04 08:11:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,10 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 2008/01/12 09:54:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127.10.1 2009/05/04 08:11:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
+#include "opt_modular.h"
 #include "opt_panicbutton.h"
 
 #include <sys/param.h>
@@ -105,10 +106,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 2008/01/12 09:54:29 tsutsui Exp $"
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <sys/exec_elf.h>
 #endif
 
@@ -147,7 +149,6 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -438,12 +439,12 @@ consinit(void)
 	 */
 	cninit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern char end[];
 		extern int *esym;
 
-		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
 	}
 #endif
@@ -502,12 +503,6 @@ cpu_startup(void)
 	printf("\n");
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -756,6 +751,8 @@ cpu_reboot(int howto, char *bootstr)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
 		printf("hit any key to reboot...\n");
@@ -980,12 +977,12 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %u,%u not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
@@ -1012,7 +1009,8 @@ dumpsys(void)
 
 			/* Print out how many MBs we have left to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%ld ", totalbytesleft / (1024 * 1024));
+				printf_nolog("%ld ",
+				    totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;
@@ -1177,19 +1175,13 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
     return ENOEXEC;
 }
 
-const static int ipl2psl_table[] = {
-	[IPL_NONE] = PSL_IPL0,
-	[IPL_SOFTBIO] = PSL_IPL1,
-	[IPL_SOFTCLOCK] = PSL_IPL1,
-	[IPL_SOFTNET] = PSL_IPL1,
-	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_VM] = PSL_IPL3,
-	[IPL_SCHED] = PSL_IPL7,
+const uint16_t ipl2psl_table[NIPL] = {
+	[IPL_NONE]       = PSL_S | PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_S | PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_S | PSL_IPL1,
+	[IPL_VM]         = PSL_S | PSL_IPL3,
+	[IPL_SCHED]      = PSL_S | PSL_IPL7,
+	[IPL_HIGH]       = PSL_S | PSL_IPL7,
 };
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
-}

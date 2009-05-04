@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.27.2.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.27.2.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.27.2.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.27.2.2 2009/05/04 08:11:16 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -307,7 +307,7 @@ IDTVEC_END(doreti)
  * void evtchn_do_event(int evtch, struct intrframe *regs)
  */
 
-NENTRY(call_evtchn_do_event)
+ENTRY(call_evtchn_do_event)
 	IDEPTH_INCR
 	/*
 	 * IDEPTH_INCR leaves old %esp in %eax.
@@ -319,6 +319,23 @@ NENTRY(call_evtchn_do_event)
 	IDEPTH_DECR
 	ret
 END(call_evtchn_do_event)
+#ifdef DOM0OPS
+/*
+ * void xenevt_event(int port)
+ */
+
+ENTRY(call_xenevt_event)
+	IDEPTH_INCR
+	/*
+	 * IDEPTH_INCR leaves old %esp in %eax.
+	 */
+	pushl	4(%eax)	/* evtch */
+	call	_C_LABEL(xenevt_event)
+	addl	$4, %esp
+	IDEPTH_DECR
+	ret
+END(call_xenevt_event)
+#endif /* DOM0OPS */
 #endif /* XEN */
 
 #ifndef XEN
@@ -370,7 +387,7 @@ IDTVEC_END(softintr)
  *
  *	%eax		prevlwp from cpu_switchto()
  */
-NENTRY(softintr_ret)
+ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
 	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
 	cli
@@ -382,7 +399,7 @@ END(softintr_ret)
  *
  * Software interrupt registration.
  */
-NENTRY(softint_trigger)
+ENTRY(softint_trigger)
 	movl	4(%esp),%eax
 	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret

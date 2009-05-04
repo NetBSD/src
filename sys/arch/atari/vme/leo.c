@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.11.44.1 2008/05/16 02:22:06 yamt Exp $	*/
+/*	$NetBSD: leo.c,v 1.11.44.2 2009/05/04 08:10:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.11.44.1 2008/05/16 02:22:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.11.44.2 2009/05/04 08:10:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,13 +88,13 @@ struct leo_softc {
 
 #define LEO_SC_FLAGS_INUSE 1
 
-static int leo_match __P((struct device *, struct cfdata *, void *));
-static void leo_attach __P((struct device *, struct device *, void *));
-static int leo_probe __P((bus_space_tag_t *, bus_space_tag_t *,
+static int leo_match(struct device *, struct cfdata *, void *);
+static void leo_attach(struct device *, struct device *, void *);
+static int leo_probe(bus_space_tag_t *, bus_space_tag_t *,
 			  bus_space_handle_t *, bus_space_handle_t *,
-			  u_int, u_int));
-static int leo_init __P((struct leo_softc *, int));
-static int leo_scroll __P((struct leo_softc *, int));
+			  u_int, u_int);
+static int leo_init(struct leo_softc *, int);
+static int leo_scroll(struct leo_softc *, int);
 
 CFATTACH_DECL(leo, sizeof(struct leo_softc),
     leo_match, leo_attach, NULL, NULL);
@@ -113,10 +113,7 @@ const struct cdevsw leo_cdevsw = {
 };
 
 static int
-leo_match(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+leo_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	struct vme_attach_args *va = aux;
 	int i;
@@ -178,10 +175,7 @@ leo_match(parent, cfp, aux)
 }
 
 static int
-leo_probe(iot, memt, ioh, memh, iosize, msize)
-	bus_space_tag_t *iot, *memt;
-	bus_space_handle_t *ioh, *memh;
-	u_int iosize, msize;
+leo_probe(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, bus_space_handle_t *memh, u_int iosize, u_int msize)
 {
 
 	/* Test that our highest register is within the io range. */
@@ -211,9 +205,7 @@ leo_probe(iot, memt, ioh, memh, iosize, msize)
 }
 
 static void
-leo_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct leo_softc *sc = (struct leo_softc *)self;
 	struct vme_attach_args *va = aux;
@@ -247,18 +239,12 @@ leo_attach(parent, self, aux)
 }
 
 int
-leoopen(dev, flags, devtype, p)
-	dev_t dev;
-	int flags, devtype;
-	struct proc *p;
+leoopen(dev_t dev, int flags, int devtype, struct proc *p)
 {
-	int unit = minor(dev);
 	struct leo_softc *sc;
 	int r;
 
-	if (unit >= leo_cd.cd_ndevs)
-		return ENXIO;
-	sc = leo_cd.cd_devs[unit];
+	sc = device_lookup_private(&leo_cd, minor(dev));
 	if (!sc)
 		return ENXIO;
 	if (sc->sc_flags & LEO_SC_FLAGS_INUSE)
@@ -274,9 +260,7 @@ leoopen(dev, flags, devtype, p)
 }
 
 static int
-leo_init(sc, ysize)
-	struct leo_softc *sc;
-	int ysize;
+leo_init(struct leo_softc *sc, int ysize)
 {
 
 	if ((ysize != 256) && (ysize != 384) && (ysize != 512))
@@ -331,9 +315,7 @@ leo_init(sc, ysize)
 }
 
 static int
-leo_scroll(sc, scroll)
-	struct leo_softc *sc;
-	int scroll;
+leo_scroll(struct leo_softc *sc, int scroll)
 {
 
 	if ((scroll < 0) || (scroll > 255))
@@ -346,14 +328,11 @@ leo_scroll(sc, scroll)
 }
 
 int
-leoclose(dev, flags, devtype, p)
-	dev_t dev;
-	int flags, devtype;
-	struct proc *p;
+leoclose(dev_t dev, int flags, int devtype, struct proc *p)
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&leo_cd, minor(dev));
 	sc->sc_flags &= ~LEO_SC_FLAGS_INUSE;
 	return 0;
 }
@@ -361,17 +340,14 @@ leoclose(dev, flags, devtype, p)
 #define SMALLBSIZE      32
 
 int
-leomove(dev, uio, flags)
-        dev_t dev;
-        struct uio *uio;
-        int flags;
+leomove(dev_t dev, struct uio *uio, int flags)
 {
         struct leo_softc *sc;
         int length, size, error;
         u_int8_t smallbuf[SMALLBSIZE];
 	off_t offset;
 
-        sc = leo_cd.cd_devs[minor(dev)];
+        sc = device_lookup_private(&leo_cd,minor(dev));
         if (uio->uio_offset > sc->sc_msize)
                 return 0;
         length = sc->sc_msize - uio->uio_offset;
@@ -396,16 +372,11 @@ leomove(dev, uio, flags)
 }
 
 int
-leoioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct proc *p;
+leoioctl(dev_t dev, u_long cmd, void *data, int flags, struct proc *p)
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&leo_cd,minor(dev));
         switch (cmd) {
         case LIOCYRES:
 		return leo_init(sc, *(int *)data);
@@ -420,14 +391,11 @@ leoioctl(dev, cmd, data, flags, p)
 }
 
 paddr_t
-leommap(dev, offset, prot)
-	dev_t dev;
-	off_t offset;
-	int prot;
+leommap(dev_t dev, off_t offset, int prot)
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&leo_cd, minor(dev));
 	if (offset >= 0 && offset < sc->sc_msize)
 		return m68k_btop(sc->sc_maddr + offset);
 	return -1;

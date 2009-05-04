@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.7 2008/04/24 21:42:05 jmcneill Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.7.2.1 2009/05/04 08:12:34 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.7 2008/04/24 21:42:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.7.2.1 2009/05/04 08:12:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.7 2008/04/24 21:42:05 jmcneill Exp
 #include <dev/acpi/acpi_osd.h>
 
 #include <dev/sysmon/sysmon_taskq.h>
+
+extern int acpi_suspended;
 
 #define	_COMPONENT	ACPI_OS_SERVICES
 ACPI_MODULE_NAME("SCHEDULE")
@@ -163,10 +165,14 @@ AcpiOsSleep(ACPI_INTEGER Milliseconds)
 {
 	ACPI_FUNCTION_TRACE(__func__);
 
-	mutex_enter(&acpi_osd_sleep_mtx);
-	cv_timedwait_sig(&acpi_osd_sleep_cv, &acpi_osd_sleep_mtx,
-	    MAX(mstohz(Milliseconds), 1));
-	mutex_exit(&acpi_osd_sleep_mtx);
+	if (cold || doing_shutdown || acpi_suspended)
+		DELAY(Milliseconds * 1000);
+	else {
+		mutex_enter(&acpi_osd_sleep_mtx);
+		cv_timedwait_sig(&acpi_osd_sleep_cv, &acpi_osd_sleep_mtx,
+		    MAX(mstohz(Milliseconds), 1));
+		mutex_exit(&acpi_osd_sleep_mtx);
+	}
 }
 
 /*

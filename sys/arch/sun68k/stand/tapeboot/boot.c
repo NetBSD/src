@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2005/12/11 12:19:29 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.5.78.1 2009/05/04 08:12:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -120,6 +120,8 @@ main(void)
 		printf("relocating program...");
 		entry = sun2_map_mem_run(entry);
 	}
-	printf("Starting program at 0x%x\n", entry);
+	printf("Starting program at 0x%x\n", (u_int)entry);
 	chain_to(entry);
+
+	return 0;
 }

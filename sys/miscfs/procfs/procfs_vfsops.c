@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.77.10.1 2008/05/16 02:25:39 yamt Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.77.10.2 2009/05/04 08:14:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.77.10.1 2008/05/16 02:25:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.77.10.2 2009/05/04 08:14:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.77.10.1 2008/05/16 02:25:39 yamt
 MODULE(MODULE_CLASS_VFS, procfs, NULL);
 
 VFS_PROTOS(procfs);
+
+static struct sysctllog *procfs_sysctl_log;
 
 /*
  * VFS Operations.
@@ -194,9 +196,7 @@ procfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-procfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+procfs_root(struct mount *mp, struct vnode **vpp)
 {
 
 	return (procfs_allocvp(mp, vpp, 0, PFSroot, -1, NULL));
@@ -252,42 +252,21 @@ procfs_vget(struct mount *mp, ino_t ino,
 }
 
 void
-procfs_init()
+procfs_init(void)
 {
 	procfs_hashinit();
 }
 
 void
-procfs_reinit()
+procfs_reinit(void)
 {
 	procfs_hashreinit();
 }
 
 void
-procfs_done()
+procfs_done(void)
 {
 	procfs_hashdone();
-}
-
-SYSCTL_SETUP(sysctl_vfs_procfs_setup, "sysctl vfs.procfs subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "procfs",
-		       SYSCTL_DESCR("Process file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 12, CTL_EOL);
-	/*
-	 * XXX the "12" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "12" is the order as taken from sys/mount.h
-	 */
 }
 
 extern const struct vnodeopv_desc procfs_vnodeop_opv_desc;
@@ -328,13 +307,40 @@ struct vfsops procfs_vfsops = {
 static int
 procfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&procfs_vfsops);
+		error = vfs_attach(&procfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&procfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&procfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "procfs",
+			       SYSCTL_DESCR("Process file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 12, CTL_EOL);
+		/*
+		 * XXX the "12" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "12" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&procfs_vfsops);
+		error = vfs_detach(&procfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&procfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }

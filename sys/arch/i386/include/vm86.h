@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.15.36.1 2008/05/16 02:22:37 yamt Exp $	*/
+/*	$NetBSD: vm86.h,v 1.15.36.2 2009/05/04 08:11:17 yamt Exp $	*/
 
 #undef	VM86_USE_VIF
 
@@ -70,9 +70,7 @@ struct vm86_struct {
 
 #ifdef _KERNEL
 int x86_vm86(struct lwp *, char *, register_t *);
-#ifdef COMPAT_16
 int compat_16_x86_vm86(struct lwp *, char *, register_t *);
-#endif
 void vm86_gpfault(struct lwp *, int);
 void vm86_return(struct lwp *, int);
 static __inline void clr_vif(struct lwp *);
@@ -83,8 +81,7 @@ static __inline void set_vflags_short(struct lwp *, int);
 static __inline int get_vflags_short(struct lwp *);
 
 static __inline void
-clr_vif(l)
-	struct lwp *l;
+clr_vif(struct lwp *l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 
@@ -96,8 +93,7 @@ clr_vif(l)
 }
 
 static __inline void
-set_vif(l)
-	struct lwp *l;
+set_vif(struct lwp *l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 
@@ -112,9 +108,7 @@ set_vif(l)
 }
 
 static __inline void
-set_vflags(l, flags)
-	struct lwp *l;
-	int flags;
+set_vflags(struct lwp *l, int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -131,8 +125,7 @@ set_vflags(l, flags)
 }
 
 static __inline int
-get_vflags(l)
-	struct lwp *l;
+get_vflags(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -144,9 +137,7 @@ get_vflags(l)
 }
 
 static __inline void
-set_vflags_short(l, flags)
-	struct lwp *l;
-	int flags;
+set_vflags_short(struct lwp *l, int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -161,8 +152,7 @@ set_vflags_short(l, flags)
 }
 
 static __inline int
-get_vflags_short(l)
-	struct lwp *l;
+get_vflags_short(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.47.2.1 2008/05/16 02:25:49 yamt Exp $	*/
+/*	$NetBSD: keysock.c,v 1.47.2.2 2009/05/04 08:14:21 yamt Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.47.2.1 2008/05/16 02:25:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.47.2.2 2009/05/04 08:14:21 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -65,10 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.47.2.1 2008/05/16 02:25:49 yamt Exp $"
 struct sockaddr key_dst = { .sa_len = 2, .sa_family = PF_KEY, };
 struct sockaddr key_src = { .sa_len = 2, .sa_family = PF_KEY, };
 
-static int key_receive __P((struct socket *, struct mbuf **, struct uio *,
-	struct mbuf **, struct mbuf **, int *));
+static int key_receive(struct socket *, struct mbuf **, struct uio *,
+	struct mbuf **, struct mbuf **, int *);
 
-static int key_sendup0 __P((struct rawcb *, struct mbuf *, int, int));
+static int key_sendup0(struct rawcb *, struct mbuf *, int, int);
 
 static int
 key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,
@@ -107,11 +107,7 @@ key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,
  * derived from net/rtsock.c:route_usrreq()
  */
 int
-key_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+key_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
@@ -240,11 +236,7 @@ end:
  * send message to the socket.
  */
 static int
-key_sendup0(rp, m, promisc, canwait)
-	struct rawcb *rp;
-	struct mbuf *m;
-	int promisc;
-	int canwait;
+key_sendup0(struct rawcb *rp, struct mbuf *m, int promisc, int canwait)
 {
 	struct keycb *kp = (struct keycb *)rp;
 	struct mbuf *n;
@@ -263,7 +255,7 @@ key_sendup0(rp, m, promisc, canwait)
 		m->m_pkthdr.len += sizeof(*pmsg);
 
 		pmsg = mtod(m, struct sadb_msg *);
-		bzero(pmsg, sizeof(*pmsg));
+		memset(pmsg, 0, sizeof(*pmsg));
 		pmsg->sadb_msg_version = PF_KEY_V2;
 		pmsg->sadb_msg_type = SADB_X_PROMISC;
 		pmsg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
@@ -338,10 +330,7 @@ recovery:
 
 /* so can be NULL if target != KEY_SENDUP_ONE */
 int
-key_sendup_mbuf(so, m, target)
-	struct socket *so;
-	struct mbuf *m;
-	int target;
+key_sendup_mbuf(struct socket *so, struct mbuf *m, int target)
 {
 	struct mbuf *n;
 	struct keycb *kp;

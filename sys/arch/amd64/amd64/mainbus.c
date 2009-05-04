@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21.4.1 2008/05/16 02:21:49 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21.4.2 2009/05/04 08:10:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.4.1 2008/05/16 02:21:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.4.2 2009/05/04 08:10:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.4.1 2008/05/16 02:21:49 yamt Exp $"
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
+#include "opt_pcifixup.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -64,6 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.4.1 2008/05/16 02:21:49 yamt Exp $"
 
 #if NIPMI > 0
 #include <x86/ipmivar.h>
+#endif
+
+#if NPCI > 0
+#if defined(PCI_BUS_FIXUP)
+#include <arch/x86/pci/pci_bus_fixup.h>
+#if defined(PCI_ADDR_FIXUP)
+#include <arch/x86/pci/pci_addr_fixup.h>
+#endif
+#endif
 #endif
 
 /*
@@ -151,8 +161,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 	int mpacpi_active = 0;
 	int numcpus = 0;
-#if NACPI > 0 || defined(MPBIOS)
-	int numioapics = 0;
+#if defined(PCI_BUS_FIXUP)
+	int pci_maxbus = 0;
 #endif
 
 	aprint_naive("\n");
@@ -163,7 +173,22 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NPCI > 0
+	/*
+	 * ACPI needs to be able to access PCI configuration space.
+	 */
 	pci_mode = pci_mode_detect();
+#if defined(PCI_BUS_FIXUP)
+	if (pci_mode != 0) {
+		pci_maxbus = pci_bus_fixup(NULL, 0);
+		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
+		    pci_maxbus);
+#if defined(PCI_ADDR_FIXUP)
+		pciaddr.extent_port = NULL;
+		pciaddr.extent_mem = NULL;
+		pci_addr_fixup(NULL, pci_maxbus);
+#endif
+	}
+#endif
 #endif
 
 #if NACPI > 0
@@ -175,13 +200,13 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * be done later (via a callback).
 	 */
 	if (acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self, &numcpus, &numioapics);
+		mpacpi_active = mpacpi_scan_apics(self, &numcpus);
 #endif
 
 	if (!mpacpi_active) {
 #ifdef MPBIOS
 		if (mpbios_present)
-			mpbios_scan(self, &numcpus, &numioapics);
+			mpbios_scan(self, &numcpus);
 		else
 #endif
 		if (numcpus == 0) {
@@ -203,7 +228,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	isa_dmainit(&x86_isa_chipset, X86_BUS_SPACE_IO, &isa_bus_dma_tag,
 	    self);
 #endif
-
 
 #if NACPI > 0
 	if (acpi_present) {
@@ -239,12 +263,12 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_pba.pba_bridgetag = NULL;
 #if NACPI > 0 && defined(ACPI_SCANPCI)
 		if (mpacpi_active)
-			mpacpi_scan_pci(self, &mba.mba_pba, pcibusprint);
+			mp_pci_scan(self, &mba.mba_pba, pcibusprint);
 		else
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
 		if (mpbios_scanned != 0)
-			mpbios_scan_pci(self, &mba.mba_pba, pcibusprint);
+			mp_pci_scan(self, &mba.mba_pba, pcibusprint);
 		else
 #endif
 		config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);

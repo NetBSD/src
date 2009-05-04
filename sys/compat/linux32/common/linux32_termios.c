@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.11.4.1 2008/05/16 02:23:44 yamt Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.11.4.2 2009/05/04 08:12:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995-2006, 2008  The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.11.4.1 2008/05/16 02:23:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.11.4.2 2009/05/04 08:12:23 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_linux32.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.11.4.1 2008/05/16 02:23:44 yam
 #include <sys/filedesc.h>
 #include <sys/fcntl.h>
 #include <sys/termios.h>
+#include <sys/kernel.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -59,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.11.4.1 2008/05/16 02:23:44 yam
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_termios.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 int
@@ -295,7 +300,20 @@ linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, r
 		SCARG(&ia, com) = TIOCNOTTY;
 		break;
 	case LINUX32_TCSBRK:
-		SCARG(&ia, com) = SCARG_P32(uap, data) ? TIOCDRAIN : TIOCSBRK;
+		idat = (u_long)SCARG_P32(uap, data);
+		if (idat != 0)
+			SCARG(&ia, com) = TIOCDRAIN;
+		else {
+			if ((error = (*bsdioctl)(fp, TIOCSBRK, NULL)) != 0)
+				goto out;
+			error = tsleep(&idat, PZERO | PCATCH, "linux_tcsbrk", hz / 4);
+			if (error == EINTR || error == ERESTART) {
+				(void)(*bsdioctl)(fp, TIOCCBRK, NULL);
+				error = EINTR;
+			} else
+				error = (*bsdioctl)(fp, TIOCCBRK, NULL);
+			goto out;
+		}
 		break;
 	case LINUX32_TIOCMGET:
 		SCARG(&ia, com) = TIOCMGET;

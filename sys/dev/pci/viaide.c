@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.53.4.1 2008/05/16 02:24:46 yamt Exp $	*/
+/*	$NetBSD: viaide.c,v 1.53.4.2 2009/05/04 08:13:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.53.4.1 2008/05/16 02:24:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.53.4.2 2009/05/04 08:13:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,8 @@ static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	via_mapchan(struct pci_attach_args *, struct pciide_channel *,
 		    pcireg_t, bus_size_t *, bus_size_t *, int (*)(void *));
-static void	vt8231_mapregs_native(struct pci_attach_args *,
-		    struct pciide_channel *, bus_size_t *, bus_size_t *,
-		    int (*)(void *));
+static void	via_mapregs_compat_native(struct pci_attach_args *,
+		    struct pciide_channel *, bus_size_t *, bus_size_t *);
 static int	via_sata_chip_map_common(struct pciide_softc *,
 		    struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
@@ -310,6 +309,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  NULL,
 	  via_chip_map,
 	},
+	{ PCI_PRODUCT_VIATECH_CX700M2_IDE,
+	  0,
+	  NULL,
+	  via_chip_map,
+	},
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
 	  0,
 	  "VIA Technologies VT6421 Serial RAID Controller",
@@ -329,6 +333,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  0,
 	  "VIA Technologies VT8237R SATA Controller",
 	  via_sata_chip_map_0,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237S_SATA,
+	  0,
+	  "VIA Technologies VT8237S SATA Controller",
+	  via_sata_chip_map_7,
 	},
 	{ 0,
 	  0,
@@ -510,6 +519,10 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			aprint_normal("CX700 ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
+		case PCI_PRODUCT_VIATECH_CX700M2_IDE:
+			aprint_normal("CX700M2/VX700 ATA133 controller\n");
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			break;
 		default:
 unknown:
 			aprint_normal("unknown VIA ATA controller\n");
@@ -627,8 +640,7 @@ via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
 		/* native mode with irq 14/15 requested? */
 		if (compat_nat_enable != NULL &&
 		    prop_bool_true(compat_nat_enable))
-			vt8231_mapregs_native(pa, cp, cmdsizep, ctlsizep,
-			    pci_intr);
+			via_mapregs_compat_native(pa, cp, cmdsizep, ctlsizep);
 		else
 			pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep,
 			    pci_intr);
@@ -648,8 +660,8 @@ via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
  * handler for each channel, as in compatibility mode.
  */
 static void
-vt8231_mapregs_native(struct pci_attach_args *pa, struct pciide_channel *cp,
-    bus_size_t *cmdsizep, bus_size_t *ctlsizep, int (*pci_intr)(void *))
+via_mapregs_compat_native(struct pci_attach_args *pa,
+    struct pciide_channel *cp, bus_size_t *cmdsizep, bus_size_t *ctlsizep)
 {
 	struct ata_channel *wdc_cp;
 	struct pciide_softc *sc;
@@ -663,11 +675,12 @@ vt8231_mapregs_native(struct pci_attach_args *pa, struct pciide_channel *cp,
 	pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, NULL);
 
 	/* interrupts are fixed to 14/15, as in compatibility mode */
+	cp->compat = 1;
 	if ((wdc_cp->ch_flags & ATACH_DISABLED) == 0) {
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 		cp->ih = pciide_machdep_compat_intr_establish(
 		    sc->sc_wdcdev.sc_atac.atac_dev, pa, wdc_cp->ch_channel,
-		    pci_intr, sc);
+		    pciide_compat_intr, cp);
 		if (cp->ih == NULL) {
 #endif
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,

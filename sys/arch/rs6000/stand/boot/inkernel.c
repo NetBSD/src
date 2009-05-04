@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.1.18.1 2008/05/16 02:23:04 yamt Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.1.18.2 2009/05/04 08:11:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -50,11 +50,11 @@ init_in(u_long ladr)
 	printf("p=%p start %p edata %p end %p ladr %lx\n", p, _start, _edata, _end, ladr);
 
 	for (i = 0; i < 4096; i++, p++) {
-		if (memcmp(p, magic, MAGICSIZE) == 0) {
-			kern_len = *(int *)(p + MAGICSIZE);
+		if (memcmp(p, rs6000_magic, RS6000_MAGICSIZE) == 0) {
+			kern_len = *(int *)(p + RS6000_MAGICSIZE);
 			printf("Found magic at 0x%x, kernel is size 0x%x\n", i, kern_len);
 			memmove((char *)KERNENTRY,
-				p + MAGICSIZE + KERNLENSIZE, kern_len);
+				p + RS6000_MAGICSIZE + KERNLENSIZE, kern_len);
 			return;
 		}
 	}

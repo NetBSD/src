@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.67 2007/10/18 15:28:37 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.67.20.1 2009/05/04 08:11:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,15 +97,12 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#ifdef _KERNEL_OPT
-#include "opt_noredzone.h"
-#endif
 #ifndef UPAGES
-#ifdef NOREDZONE
-#define	UPAGES		2		/* pages of u-area */
-#else
-#define UPAGES		3
-#endif /*NOREDZONE */
+# ifdef DIAGNOSTIC
+#  define	UPAGES		3	/* 2 + 1 page for redzone */
+# else
+#  define	UPAGES		2	/* normal pages of u-area */
+# endif /* DIAGNOSTIC */
 #endif /* !defined(UPAGES) */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 #define	INTRSTACKSIZE	8192
@@ -164,9 +161,9 @@
 #define	x86_trunc_pdr(x)	((unsigned long)(x) & ~(NBPD_L2 - 1))
 #define	x86_btod(x)		((unsigned long)(x) >> L2_SHIFT)
 #define	x86_dtob(x)		((unsigned long)(x) << L2_SHIFT)
-#define	x86_round_page(x)	((((unsigned long)(x)) + PGOFSET) & ~PGOFSET)
-#define	x86_trunc_page(x)	((unsigned long)(x) & ~PGOFSET)
-#define	x86_btop(x)		((unsigned long)(x) >> PGSHIFT)
-#define	x86_ptob(x)		((unsigned long)(x) << PGSHIFT)
+#define	x86_round_page(x)	((((paddr_t)(x)) + PGOFSET) & ~PGOFSET)
+#define	x86_trunc_page(x)	((paddr_t)(x) & ~PGOFSET)
+#define	x86_btop(x)		((paddr_t)(x) >> PGSHIFT)
+#define	x86_ptob(x)		((paddr_t)(x) << PGSHIFT)
 
 #endif /* _I386_PARAM_H_ */

@@ -158,8 +158,5 @@ MALLOC_DECLARE(M_UNIONFSPATH);
 #define UNIONFSDEBUG(format, args...)
 #endif				/* UNIONFS_DEBUG */
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_union_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
 #endif /* _MISCFS_UNION_H_ */

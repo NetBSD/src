@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.46 2008/02/21 01:49:07 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.46.10.1 2009/05/04 08:11:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46 2008/02/21 01:49:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.10.1 2009/05/04 08:11:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -141,8 +141,19 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	int expevt = tf->tf_expevt;
 	bool usermode = !KERNELMODE(tf->tf_ssr);
 	ksiginfo_t ksi;
+	uint32_t trapcode;
+#ifdef DDB
+	uint32_t code;
+#endif
 
 	uvmexp.traps++;
+
+	/*
+	 * Read trap code from TRA before enabling interrupts,
+	 * otherwise it can be clobbered by a ddb breakpoint in an
+	 * interrupt handler.
+	 */
+	trapcode = _reg_read_4(SH_(TRA)) >> 2;
 
 	splx(tf->tf_ssr & PSL_IMASK);
 
@@ -158,7 +169,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	switch (expevt) {
 	case EXPEVT_TRAPA | EXP_USER:
 		/* Check for debugger break */
-		if (_reg_read_4(SH_(TRA)) == (_SH_TRA_BREAK << 2)) {
+		if (trapcode == _SH_TRA_BREAK) {
 			tf->tf_spc -= 2; /* back to the breakpoint address */
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
@@ -171,6 +182,13 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			return;
 		}
 		break;
+
+	case EXPEVT_BREAK | EXP_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_TRACE;
+		ksi.ksi_addr = (void *)tf->tf_spc;
+		goto trapsignal;
 
 	case EXPEVT_ADDR_ERR_LD: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST:
@@ -201,13 +219,6 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		ksi.ksi_addr = (void *)tf->tf_spc;
 		goto trapsignal;
 
-	case EXPEVT_BREAK | EXP_USER:
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_TRACE;
-		ksi.ksi_addr = (void *)tf->tf_spc;
-		goto trapsignal;
-
 	default:
 		goto do_panic;
 	}
@@ -218,15 +229,21 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
  trapsignal:
 	ksi.ksi_trap = tf->tf_expevt;
-	KERNEL_LOCK(l, 1);
 	trapsignal(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 	return;
 
  do_panic:
 #ifdef DDB
-	if (kdb_trap(expevt, 0, tf))
+	switch (expevt & ~EXP_USER) {
+	case EXPEVT_TRAPA:
+		code = trapcode;
+		break;
+	default:
+		code = 0;
+		break;
+	}
+	if (kdb_trap(expevt, code, tf))
 		return;
 #endif
 #ifdef KGDB
@@ -403,10 +420,8 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	return;
 
  user_fault:
-	ksi.ksi_trap = tf->tf_expevt
-	KERNEL_LOCK(l, 1);
+	ksi.ksi_trap = tf->tf_expevt;
 	trapsignal(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 	ast(l, tf);
 	return;
@@ -444,7 +459,7 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(p);
+			ADDUPROF(l);
 		}
 
 		if (l->l_cpu->ci_want_resched) {
@@ -454,4 +469,17 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		userret(l);
 	}
+}
+
+/*
+ * void upcallret(struct lwp *l):
+ *
+ *     Perform userret() for an LWP.
+ *     XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	userret(l);
 }

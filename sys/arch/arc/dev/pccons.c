@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.53 2007/11/19 18:51:37 ad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.53.18.1 2009/05/04 08:10:37 yamt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.53 2007/11/19 18:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.53.18.1 2009/05/04 08:10:37 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -268,7 +268,7 @@ pc_context_init(bus_space_tag_t crt_iot, bus_space_tag_t crt_memt,
 
 /*
  * bcopy variant that only moves word-aligned 16-bit entities,
- * for stupid VGA cards.  cnt is required to be an even vale.
+ * for stupid VGA cards.  cnt is required to be an even value.
  */
 static inline void
 wcopy(void *src, void *tgt, u_int cnt)
@@ -349,8 +349,7 @@ kbc_get8042cmd(void)
  * Pass command byte to keyboard controller (8042).
  */
 int
-kbc_put8042cmd(val)
-	uint8_t val;
+kbc_put8042cmd(uint8_t val)
 {
 
 	if (!kbd_wait_output())
@@ -594,13 +593,10 @@ int
 pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pc_softc *sc;
-	int unit = PCUNIT(dev);
 	struct tty *tp;
 
-	if (unit >= pc_cd.cd_ndevs)
-		return ENXIO;
-	sc = pc_cd.cd_devs[unit];
-	if (sc == 0)
+	sc = device_lookup_private(&pc_cd, PCUNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	if (!sc->sc_tty) {
@@ -636,7 +632,7 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 pcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -650,7 +646,7 @@ pcclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 pcread(dev_t dev, struct uio *uio, int flag)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
@@ -659,7 +655,7 @@ pcread(dev_t dev, struct uio *uio, int flag)
 int
 pcwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
@@ -668,7 +664,7 @@ pcwrite(dev_t dev, struct uio *uio, int flag)
 int
 pcpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -677,7 +673,7 @@ pcpoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 pctty(dev_t dev)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return tp;
@@ -714,7 +710,7 @@ pcintr(void *arg)
 int
 pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -774,13 +770,13 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    map[i].shift_altgr[KB_CODE_SIZE-1])
 				return EINVAL;
 
-		bcopy(data, scan_codes, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
+		memcpy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
 		return 0;
 	}
 	case CONSOLE_GET_KEYMAP:
 		if (!data)
 			return EINVAL;
-		bcopy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
+		memcpy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
 		return 0;
 
 	default:
@@ -795,6 +791,7 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 void
 pcstart(struct tty *tp)
 {
+	struct clist *cl;
 	int s, len;
 	u_char buf[PCBURST];
 
@@ -807,6 +804,7 @@ pcstart(struct tty *tp)
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
+	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, PCBURST);
 	sput(buf, len);
 	s = spltty();
@@ -897,8 +895,8 @@ pccnpollc(dev_t dev, int on)
 		 */
 		unit = PCUNIT(dev);
 		if (pc_cd.cd_ndevs > unit) {
-			sc = pc_cd.cd_devs[unit];
-			if (sc != 0) {
+			sc = device_lookup_private(&pc_cd, unit);
+			if (sc != NULL) {
 				s = spltty();
 				pcintr(sc);
 				splx(s);
@@ -1281,9 +1279,10 @@ sput(const u_char *cp, int n)
 						    crtAt, vs.ncol * (nrow -
 						    cx) * CHR);
 #else
-						bcopy(crtAt + vs.ncol * cx,
-						    crtAt, vs.ncol * (nrow -
-						    cx) * CHR);
+						memmove(crtAt,
+						    crtAt + vs.ncol * cx,
+						    vs.ncol * (nrow - cx) *
+						    CHR);
 #endif
 					fillw((vs.at << 8) | ' ',
 					    crtAt + vs.ncol * (nrow - cx),
@@ -1303,9 +1302,10 @@ sput(const u_char *cp, int n)
 						    Crtat, vs.ncol * (vs.nrow -
 						    cx) * CHR);
 #else
-						bcopy(Crtat + vs.ncol * cx,
-						    Crtat, vs.ncol * (vs.nrow -
-						    cx) * CHR);
+						memmove(Crtat,
+						    Crtat + vs.ncol * cx,
+						    vs.ncol * (vs.nrow - cx) *
+						    CHR);
 #endif
 					fillw((vs.at << 8) | ' ',
 					    Crtat + vs.ncol * (vs.nrow - cx),
@@ -1330,8 +1330,8 @@ sput(const u_char *cp, int n)
 						    vs.ncol * (nrow - cx) *
 						    CHR);
 #else
-						bcopy(crtAt,
-						    crtAt + vs.ncol * cx,
+						memmove(crtAt + vs.ncol * cx,
+						    crtAt,
 						    vs.ncol * (nrow - cx) *
 						    CHR);
 #endif
@@ -1353,8 +1353,8 @@ sput(const u_char *cp, int n)
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
 #else
-						bcopy(Crtat,
-						    Crtat + vs.ncol * cx,
+						memmove(Crtat + vs.ncol * cx,
+						    Crtat,
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
 #endif
@@ -1441,7 +1441,7 @@ sput(const u_char *cp, int n)
 				wcopy(Crtat + vs.ncol, Crtat,
 				    (vs.nchr - vs.ncol) * CHR);
 #else
-				bcopy(Crtat + vs.ncol, Crtat,
+				memmove(Crtat, Crtat + vs.ncol,
 				    (vs.nchr - vs.ncol) * CHR);
 #endif
 				fillw((vs.at << 8) | ' ',

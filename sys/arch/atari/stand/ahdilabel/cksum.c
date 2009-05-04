@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.1.1.1.134.1 2008/05/16 02:22:05 yamt Exp $	*/
+/*	$NetBSD: cksum.c,v 1.1.1.1.134.2 2009/05/04 08:10:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,8 +36,7 @@
  */
 
 int
-dkcksum (dl)
-	struct disklabel	*dl;
+dkcksum (struct disklabel *dl)
 {
 	u_short	*start, *end, sum = 0;
 
@@ -53,8 +52,7 @@ dkcksum (dl)
  */
 
 u_int16_t
-ahdi_cksum (buf)
-	void	*buf;
+ahdi_cksum (void *buf)
 {
 	u_int16_t	*p = (u_int16_t *)buf;
 	u_int16_t	 csum = 0;

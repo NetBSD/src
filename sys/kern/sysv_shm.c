@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.106.4.1 2008/05/16 02:25:27 yamt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.106.4.2 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.106.4.1 2008/05/16 02:25:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.106.4.2 2009/05/04 08:13:48 yamt Exp $");
 
 #define SYSVSHM
 
@@ -268,15 +268,13 @@ shm_memlock(struct lwp *l, struct shmid_ds *shmseg, int shmid, int cmd)
 		if (cmd == SHM_LOCK &&
 		    (shmseg->shm_perm.mode & SHMSEG_WIRED) == 0) {
 			/* Wire the object and map, then tag it */
-			error = uobj_wirepages(shmseg->_shm_internal, 0,
-			    round_page(shmseg->shm_segsz));
+			error = uobj_wirepages(shmseg->_shm_internal, 0, size);
 			if (error)
 				return EIO;
 			error = uvm_map_pageable(&p->p_vmspace->vm_map,
 			    shmmap_se->va, shmmap_se->va + size, false, 0);
 			if (error) {
-				uobj_unwirepages(shmseg->_shm_internal, 0,
-				    round_page(shmseg->shm_segsz));
+				uobj_unwirepages(shmseg->_shm_internal, 0, size);
 				if (error == EFAULT)
 					error = ENOMEM;
 				return error;
@@ -286,8 +284,7 @@ shm_memlock(struct lwp *l, struct shmid_ds *shmseg, int shmid, int cmd)
 		} else if (cmd == SHM_UNLOCK &&
 		    (shmseg->shm_perm.mode & SHMSEG_WIRED) != 0) {
 			/* Unwire the object and map, then untag it */
-			uobj_unwirepages(shmseg->_shm_internal, 0,
-			    round_page(shmseg->shm_segsz));
+			uobj_unwirepages(shmseg->_shm_internal, 0, size);
 			error = uvm_map_pageable(&p->p_vmspace->vm_map,
 			    shmmap_se->va, shmmap_se->va + size, true, 0);
 			if (error)
@@ -389,6 +386,7 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 
 	/* Allocate a new map entry and set it */
 	shmmap_se = pool_get(&shmmap_entry_pool, PR_WAITOK);
+	shmmap_se->shmid = SCARG(uap, shmid);
 
 	mutex_enter(&shm_lock);
 	/* In case of reallocation, we will wait for completion */
@@ -469,7 +467,6 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	/* Set the new address, and update the time */
 	mutex_enter(&shm_lock);
 	shmmap_se->va = attach_va;
-	shmmap_se->shmid = SCARG(uap, shmid);
 	shmseg->shm_atime = time_second;
 	shm_realloc_disable--;
 	retval[0] = attach_va;
@@ -499,7 +496,8 @@ err_detach:
  * Shared memory control operations.
  */
 int
-sys___shmctl13(struct lwp *l, const struct sys___shmctl13_args *uap, register_t *retval)
+sys___shmctl50(struct lwp *l, const struct sys___shmctl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) shmid;
@@ -626,15 +624,20 @@ again:
 		goto again;
 	}
 
-	/* Check the permission, segment size and appropriate flag */
+	/*
+	 * First check the flags, to generate a useful error when a
+	 * segment already exists.
+	 */
+	if ((SCARG(uap, shmflg) & (IPC_CREAT | IPC_EXCL)) ==
+	    (IPC_CREAT | IPC_EXCL))
+		return EEXIST;
+
+	/* Check the permission and segment size. */
 	error = ipcperm(cred, &shmseg->shm_perm, mode);
 	if (error)
 		return error;
 	if (SCARG(uap, size) && SCARG(uap, size) > shmseg->shm_segsz)
 		return EINVAL;
-	if ((SCARG(uap, shmflg) & (IPC_CREAT | IPC_EXCL)) ==
-	    (IPC_CREAT | IPC_EXCL))
-		return EEXIST;
 
 	*retval = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);
 	return 0;
@@ -727,8 +730,7 @@ sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 	shmseg->_shm_internal = uao_create(size, 0);
 	if (lockmem) {
 		/* Wire the pages and tag it */
-		error = uobj_wirepages(shmseg->_shm_internal, 0,
-		    round_page(shmseg->shm_segsz));
+		error = uobj_wirepages(shmseg->_shm_internal, 0, size);
 		if (error) {
 			uao_detach(shmseg->_shm_internal);
 			mutex_enter(&shm_lock);
@@ -874,9 +876,9 @@ shmrealloc(int newshmni)
 {
 	vaddr_t v;
 	struct shmid_ds *oldshmsegs, *newshmsegs;
-	kcondvar_t *newshm_cv;
+	kcondvar_t *newshm_cv, *oldshm_cv;
 	size_t sz;
-	int i, lsegid;
+	int i, lsegid, oldshmni;
 
 	if (newshmni < 1)
 		return EINVAL;
@@ -909,8 +911,8 @@ shmrealloc(int newshmni)
 	shm_realloc_state = true;
 
 	newshmsegs = (void *)v;
-	newshm_cv = (void *)(ALIGN(newshmsegs) +
-	    newshmni * sizeof(struct shmid_ds));
+	newshm_cv = (void *)((uintptr_t)newshmsegs +
+	    ALIGN(newshmni * sizeof(struct shmid_ds)));
 
 	/* Copy all memory to the new area */
 	for (i = 0; i < shm_nused; i++)
@@ -925,9 +927,7 @@ shmrealloc(int newshmni)
 	}
 
 	oldshmsegs = shmsegs;
-	sz = ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)) +
-	    ALIGN(shminfo.shmmni * sizeof(kcondvar_t));
-
+	oldshmni = shminfo.shmmni;
 	shminfo.shmmni = newshmni;
 	shmsegs = newshmsegs;
 	shm_cv = newshm_cv;
@@ -937,7 +937,16 @@ shmrealloc(int newshmni)
 	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
 
+	/* Release now unused resources. */
+	oldshm_cv = (void *)((uintptr_t)oldshmsegs +
+	    ALIGN(oldshmni * sizeof(struct shmid_ds)));
+	for (i = 0; i < oldshmni; i++)
+		cv_destroy(&oldshm_cv[i]);
+
+	sz = ALIGN(oldshmni * sizeof(struct shmid_ds)) +
+	    ALIGN(oldshmni * sizeof(kcondvar_t));
 	uvm_km_free(kernel_map, (vaddr_t)oldshmsegs, sz, UVM_KMF_WIRED);
+
 	return 0;
 }
 
@@ -961,10 +970,14 @@ shminit(void)
 	if (v == 0)
 		panic("sysv_shm: cannot allocate memory");
 	shmsegs = (void *)v;
-	shm_cv = (void *)(ALIGN(shmsegs) +
-	    shminfo.shmmni * sizeof(struct shmid_ds));
+	shm_cv = (void *)((uintptr_t)shmsegs +
+	    ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)));
 
-	shminfo.shmmax *= PAGE_SIZE;
+	if (shminfo.shmmax == 0)
+		shminfo.shmmax = max(physmem / 4, 1024) * PAGE_SIZE;
+	else
+		shminfo.shmmax *= PAGE_SIZE;
+	shminfo.shmall = shminfo.shmmax / PAGE_SIZE;
 
 	for (i = 0; i < shminfo.shmmni; i++) {
 		cv_init(&shm_cv[i], "shmwait");
@@ -1000,7 +1013,8 @@ sysctl_ipc_shmmni(SYSCTLFN_ARGS)
 static int
 sysctl_ipc_shmmaxpgs(SYSCTLFN_ARGS)
 {
-	int newsize, error;
+	uint32_t newsize;
+	int error;
 	struct sysctlnode node;
 	node = *rnode;
 	node.sysctl_data = &newsize;
@@ -1014,7 +1028,30 @@ sysctl_ipc_shmmaxpgs(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	shminfo.shmall = newsize;
-	shminfo.shmmax = shminfo.shmall * PAGE_SIZE;
+	shminfo.shmmax = (uint64_t)shminfo.shmall * PAGE_SIZE;
+
+	return 0;
+}
+
+static int
+sysctl_ipc_shmmax(SYSCTLFN_ARGS)
+{
+	uint64_t newsize;
+	int error;
+	struct sysctlnode node;
+	node = *rnode;
+	node.sysctl_data = &newsize;
+
+	newsize = shminfo.shmmax;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (newsize < PAGE_SIZE)
+		return EINVAL;
+
+	shminfo.shmmax = round_page(newsize);
+	shminfo.shmall = shminfo.shmmax >> PAGE_SHIFT;
 
 	return 0;
 }
@@ -1034,10 +1071,10 @@ SYSCTL_SETUP(sysctl_ipc_shm_setup, "sysctl kern.ipc subtree setup")
 		NULL, 0, NULL, 0,
 		CTL_KERN, KERN_SYSVIPC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READONLY,
-		CTLTYPE_INT, "shmmax",
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_QUAD, "shmmax",
 		SYSCTL_DESCR("Max shared memory segment size in bytes"),
-		NULL, 0, &shminfo.shmmax, 0,
+		sysctl_ipc_shmmax, 0, &shminfo.shmmax, 0,
 		CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHMMAX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,

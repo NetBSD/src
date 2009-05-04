@@ -1,4 +1,33 @@
-/*	$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.156.2.1 2009/05/04 08:13:49 yamt Exp $	*/
+
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +66,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156.2.1 2009/05/04 08:13:49 yamt Exp $");
 
-#include "fs_union.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -49,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $");
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -61,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $");
 #include <sys/fstrans.h>
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
+#include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -71,9 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $");
 #include <fs/union/union.h>
 #endif
 
-#if defined(LKM) || defined(UNION)
 int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
-#endif
 
 #include <sys/verified_exec.h>
 
@@ -88,8 +114,15 @@ static int vn_statfile(file_t *fp, struct stat *sb);
 static int vn_ioctl(file_t *fp, u_long com, void *data);
 
 const struct fileops vnops = {
-	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
-	vn_statfile, vn_closefile, vn_kqfilter
+	.fo_read = vn_read,
+	.fo_write = vn_write,
+	.fo_ioctl = vn_ioctl,
+	.fo_fcntl = vn_fcntl,
+	.fo_poll = vn_poll,
+	.fo_stat = vn_statfile,
+	.fo_close = vn_closefile,
+	.fo_kqfilter = vn_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*
@@ -106,7 +139,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	int error;
 	char *path;
 
-	ndp->ni_cnd.cn_flags &= TRYEMULROOT;
+	ndp->ni_cnd.cn_flags &= TRYEMULROOT | NOCHROOT;
 
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
@@ -254,13 +287,18 @@ void
 vn_markexec(struct vnode *vp)
 {
 
-	KASSERT(mutex_owned(&vp->v_interlock));
+	if ((vp->v_iflag & VI_EXECMAP) != 0) {
+		/* Safe unlocked, as long as caller holds a reference. */
+		return;
+	}
 
+	mutex_enter(&vp->v_interlock);
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
 		atomic_add_int(&uvmexp.filepages, -vp->v_uobj.uo_npages);
 		atomic_add_int(&uvmexp.execpages, vp->v_uobj.uo_npages);
+		vp->v_iflag |= VI_EXECMAP;
 	}
-	vp->v_iflag |= VI_EXECMAP;
+	mutex_exit(&vp->v_interlock);
 }
 
 /*
@@ -271,14 +309,22 @@ int
 vn_marktext(struct vnode *vp)
 {
 
+	if ((vp->v_iflag & (VI_TEXT|VI_EXECMAP)) == (VI_TEXT|VI_EXECMAP)) {
+		/* Safe unlocked, as long as caller holds a reference. */
+		return (0);
+	}
+
 	mutex_enter(&vp->v_interlock);
 	if (vp->v_writecount != 0) {
 		KASSERT((vp->v_iflag & VI_TEXT) == 0);
 		mutex_exit(&vp->v_interlock);
 		return (ETXTBSY);
 	}
-	vp->v_iflag |= VI_TEXT;
-	vn_markexec(vp);
+	if ((vp->v_iflag & VI_EXECMAP) == 0) {
+		atomic_add_int(&uvmexp.filepages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.execpages, vp->v_uobj.uo_npages);
+	}
+	vp->v_iflag |= (VI_TEXT | VI_EXECMAP);
 	mutex_exit(&vp->v_interlock);
 	return (0);
 }
@@ -293,10 +339,12 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred)
 {
 	int error;
 
-	mutex_enter(&vp->v_interlock);
-	if (flags & FWRITE)
+	if (flags & FWRITE) {
+		mutex_enter(&vp->v_interlock);
 		vp->v_writecount--;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
+		mutex_exit(&vp->v_interlock);
+	}
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(vp, flags, cred);
 	vput(vp);
 	return (error);
@@ -387,7 +435,6 @@ unionread:
 	if (error)
 		return (error);
 
-#if defined(UNION) || defined(LKM)
 	if (count == auio.uio_resid && vn_union_readdir_hook) {
 		struct vnode *ovp = vp;
 
@@ -397,7 +444,6 @@ unionread:
 		if (vp != ovp)
 			goto unionread;
 	}
-#endif /* UNION || LKM */
 
 	if (count == auio.uio_resid && (vp->v_vflag & VV_ROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
@@ -475,9 +521,17 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET) {
-		if (ioflag & IO_APPEND)
-			*offset = uio->uio_offset;
-		else
+		if (ioflag & IO_APPEND) {
+			/*
+			 * SUSv3 describes behaviour for count = 0 as following:
+			 * "Before any action ... is taken, and if nbyte is zero
+			 * and the file is a regular file, the write() function
+			 * ... in the absence of errors ... shall return zero
+			 * and have no other results."
+			 */ 
+			if (count)
+				*offset = uio->uio_offset;
+		} else
 			*offset += count - uio->uio_resid;
 	}
 	VOP_UNLOCK(vp, 0);
@@ -490,9 +544,13 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 static int
 vn_statfile(file_t *fp, struct stat *sb)
 {
-	struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = fp->f_data;
+	int error;
 
-	return vn_stat(vp, sb);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_stat(vp, sb);
+	VOP_UNLOCK(vp, 0);
+	return error;
 }
 
 int
@@ -677,10 +735,21 @@ vn_lock(struct vnode *vp, int flags)
 	    LK_CANRECURSE))
 	    == 0);
 
+#ifdef DIAGNOSTIC
+	if (wapbl_vphaswapbl(vp))
+		WAPBL_JUNLOCK_ASSERT(wapbl_vptomp(vp));
+#endif
+
 	do {
-		if ((flags & LK_INTERLOCK) == 0)
-			mutex_enter(&vp->v_interlock);
+		/*
+		 * XXX PR 37706 forced unmount of file systems is unsafe.
+		 * Race between vclean() and this the remaining problem.
+		 */
 		if (vp->v_iflag & VI_XLOCK) {
+			if ((flags & LK_INTERLOCK) == 0) {
+				mutex_enter(&vp->v_interlock);
+			}
+			flags &= ~LK_INTERLOCK;
 			if (flags & LK_NOWAIT) {
 				mutex_exit(&vp->v_interlock);
 				return EBUSY;
@@ -689,12 +758,14 @@ vn_lock(struct vnode *vp, int flags)
 			mutex_exit(&vp->v_interlock);
 			error = ENOENT;
 		} else {
-			error = VOP_LOCK(vp,
-			    (flags & ~LK_RETRY) | LK_INTERLOCK);
+			if ((flags & LK_INTERLOCK) != 0) {
+				mutex_exit(&vp->v_interlock);
+			}
+			flags &= ~LK_INTERLOCK;
+			error = VOP_LOCK(vp, (flags & ~LK_RETRY));
 			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
 		}
-		flags &= ~LK_INTERLOCK;
 	} while (flags & LK_RETRY);
 	return (error);
 }

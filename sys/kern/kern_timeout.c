@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_timeout.c,v 1.38.2.1 2008/05/16 02:25:26 yamt Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.38.2.2 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.38.2.1 2008/05/16 02:25:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.38.2.2 2009/05/04 08:13:47 yamt Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -167,7 +167,7 @@ do {									\
 static void	callout_softclock(void *);
 
 struct callout_cpu {
-	kmutex_t	cc_lock;
+	kmutex_t	*cc_lock;
 	sleepq_t	cc_sleepq;
 	u_int		cc_nwait;
 	u_int		cc_ticks;
@@ -188,12 +188,14 @@ static void *callout_sih;
 static inline kmutex_t *
 callout_lock(callout_impl_t *c)
 {
+	struct callout_cpu *cc;
 	kmutex_t *lock;
 
 	for (;;) {
-		lock = &c->c_cpu->cc_lock;
+		cc = c->c_cpu;
+		lock = cc->cc_lock;
 		mutex_spin_enter(lock);
-		if (__predict_true(lock == &c->c_cpu->cc_lock))
+		if (__predict_true(cc == c->c_cpu))
 			return lock;
 		mutex_spin_exit(lock);
 	}
@@ -214,7 +216,7 @@ callout_startup(void)
 	KASSERT(curcpu()->ci_data.cpu_callout == NULL);
 
 	cc = &callout_cpu0;
-	mutex_init(&cc->cc_lock, MUTEX_DEFAULT, IPL_SCHED);
+	cc->cc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 	CIRCQ_INIT(&cc->cc_todo);
 	for (b = 0; b < BUCKETS; b++)
 		CIRCQ_INIT(&cc->cc_wheel[b]);
@@ -232,13 +234,13 @@ callout_init_cpu(struct cpu_info *ci)
 	struct callout_cpu *cc;
 	int b;
 
-	KASSERT(sizeof(callout_impl_t) <= sizeof(callout_t));
+	CTASSERT(sizeof(callout_impl_t) <= sizeof(callout_t));
 
 	if ((cc = ci->ci_data.cpu_callout) == NULL) {
 		cc = kmem_zalloc(sizeof(*cc), KM_SLEEP);
 		if (cc == NULL)
 			panic("callout_init_cpu (1)");
-		mutex_init(&cc->cc_lock, MUTEX_DEFAULT, IPL_SCHED);
+		cc->cc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 		CIRCQ_INIT(&cc->cc_todo);
 		for (b = 0; b < BUCKETS; b++)
 			CIRCQ_INIT(&cc->cc_wheel[b]);
@@ -250,7 +252,7 @@ callout_init_cpu(struct cpu_info *ci)
 			panic("callout_init_cpu (2)");
 	}
 
-	sleepq_init(&cc->cc_sleepq, &cc->cc_lock);
+	sleepq_init(&cc->cc_sleepq);
 
 	snprintf(cc->cc_name1, sizeof(cc->cc_name1), "late/%u",
 	    cpu_index(ci));
@@ -330,7 +332,7 @@ callout_schedule_locked(callout_impl_t *c, kmutex_t *lock, int to_ticks)
 
 	/* Initialize the time here, it won't change. */
 	occ = c->c_cpu;
-	c->c_flags &= ~CALLOUT_FIRED;
+	c->c_flags &= ~(CALLOUT_FIRED | CALLOUT_INVOKING);
 
 	/*
 	 * If this timeout is already scheduled and now is moved
@@ -351,7 +353,7 @@ callout_schedule_locked(callout_impl_t *c, kmutex_t *lock, int to_ticks)
 
 	cc = curcpu()->ci_data.cpu_callout;
 	if ((c->c_flags & CALLOUT_BOUND) != 0 || cc == occ ||
-	    !mutex_tryenter(&cc->cc_lock)) {
+	    !mutex_tryenter(cc->cc_lock)) {
 		/* Leave on existing CPU. */
 		c->c_time = to_ticks + occ->cc_ticks;
 		c->c_flags |= CALLOUT_PENDING;
@@ -362,7 +364,7 @@ callout_schedule_locked(callout_impl_t *c, kmutex_t *lock, int to_ticks)
 		c->c_time = to_ticks + cc->cc_ticks;
 		c->c_flags |= CALLOUT_PENDING;
 		CIRCQ_INSERT(&c->c_list, &cc->cc_todo);
-		mutex_spin_exit(&cc->cc_lock);
+		mutex_spin_exit(cc->cc_lock);
 	}
 	mutex_spin_exit(lock);
 }
@@ -380,6 +382,7 @@ callout_reset(callout_t *cs, int to_ticks, void (*func)(void *), void *arg)
 	kmutex_t *lock;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERT(func != NULL);
 
 	lock = callout_lock(c);
 	c->c_func = func;
@@ -495,10 +498,9 @@ callout_halt(callout_t *cs, void *interlock)
 			cc->cc_nwait++;
 			cc->cc_ev_block.ev_count++;
 			l->l_kpriority = true;
-			sleepq_enter(&cc->cc_sleepq, l);
+			sleepq_enter(&cc->cc_sleepq, l, cc->cc_lock);
 			sleepq_enqueue(&cc->cc_sleepq, cc, "callout",
 			    &sleep_syncobj);
-			KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 			sleepq_block(0, false);
 		}
 		lock = callout_lock(c);
@@ -557,6 +559,7 @@ callout_setfunc(callout_t *cs, void (*func)(void *), void *arg)
 	kmutex_t *lock;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERT(func != NULL);
 
 	lock = callout_lock(c);
 	c->c_func = func;
@@ -654,7 +657,7 @@ callout_hardclock(void)
 	int needsoftclock, ticks;
 
 	cc = curcpu()->ci_data.cpu_callout;
-	mutex_spin_enter(&cc->cc_lock);
+	mutex_spin_enter(cc->cc_lock);
 
 	ticks = ++cc->cc_ticks;
 
@@ -669,7 +672,7 @@ callout_hardclock(void)
 	}
 
 	needsoftclock = !CIRCQ_EMPTY(&cc->cc_todo);
-	mutex_spin_exit(&cc->cc_lock);
+	mutex_spin_exit(cc->cc_lock);
 
 	if (needsoftclock)
 		softint_schedule(callout_sih);
@@ -695,7 +698,7 @@ callout_softclock(void *v)
 	KASSERT(l->l_cpu == curcpu());
 	cc = l->l_cpu->ci_data.cpu_callout;
 
-	mutex_spin_enter(&cc->cc_lock);
+	mutex_spin_enter(cc->cc_lock);
 	cc->cc_lwp = l;
 	while (!CIRCQ_EMPTY(&cc->cc_todo)) {
 		c = CIRCQ_FIRST(&cc->cc_todo);
@@ -716,20 +719,22 @@ callout_softclock(void *v)
 		if (delta < 0)
 			cc->cc_ev_late.ev_count++;
 
-		c->c_flags ^= (CALLOUT_PENDING | CALLOUT_FIRED);
+		c->c_flags = (c->c_flags & ~CALLOUT_PENDING) |
+		    (CALLOUT_FIRED | CALLOUT_INVOKING);
 		mpsafe = (c->c_flags & CALLOUT_MPSAFE);
 		func = c->c_func;
 		arg = c->c_arg;
 		cc->cc_active = c;
 
-		mutex_spin_exit(&cc->cc_lock);
-		if (!mpsafe) {
+		mutex_spin_exit(cc->cc_lock);
+		KASSERT(func != NULL);
+		if (__predict_false(!mpsafe)) {
 			KERNEL_LOCK(1, NULL);
 			(*func)(arg);
 			KERNEL_UNLOCK_ONE(NULL);
 		} else
 			(*func)(arg);
-		mutex_spin_enter(&cc->cc_lock);
+		mutex_spin_enter(cc->cc_lock);
 
 		/*
 		 * We can't touch 'c' here because it might be
@@ -740,12 +745,12 @@ callout_softclock(void *v)
 		if ((count = cc->cc_nwait) != 0) {
 			cc->cc_nwait = 0;
 			/* sleepq_wake() drops the lock. */
-			sleepq_wake(&cc->cc_sleepq, cc, count);
-			mutex_spin_enter(&cc->cc_lock);
+			sleepq_wake(&cc->cc_sleepq, cc, count, cc->cc_lock);
+			mutex_spin_enter(cc->cc_lock);
 		}
 	}
 	cc->cc_lwp = NULL;
-	mutex_spin_exit(&cc->cc_lock);
+	mutex_spin_exit(cc->cc_lock);
 }
 
 #ifdef DDB

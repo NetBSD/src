@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.17.2.1 2008/05/16 02:23:57 yamt Exp $ */
+/* $NetBSD: drmP.h,v 1.17.2.2 2009/05/04 08:12:37 yamt Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -47,7 +47,9 @@ typedef struct drm_device drm_device_t;
 typedef struct drm_file drm_file_t;
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(_KERNEL_OPT)
 #include <opt_drm.h>
+#endif
 #ifdef DRM_DEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG_DEFAULT_ON 1
@@ -136,7 +138,9 @@ typedef struct drm_file drm_file_t;
 #include "drm_atomic.h"
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(_KERNEL_OPT)
 #include <opt_drm.h>
+#endif
 #ifdef DRM_DEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG_DEFAULT_ON 1
@@ -190,7 +194,11 @@ typedef struct drm_file drm_file_t;
 
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
+#if !defined(_MODULE)
 MALLOC_DECLARE(M_DRM);
+#else
+#define M_DRM M_TEMP
+#endif
 
 #define __OS_HAS_AGP	1
 
@@ -305,12 +313,20 @@ extern drm_device_t *drm_units[];
 #define DRM_DEVICE							\
 	drm_device_t *dev = (minor(kdev) < DRM_MAXUNITS) ?		\
 		drm_units[minor(kdev)] : NULL
-#ifdef __x86_64__
-#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr   & 0x7fffffffffffffff)
-#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle | 0x8000000000000000)
+/*
+ * This hack strips the top bit from amd64 addresses, which avoid
+ * udv_attach() returning NULL for "negative" offset.
+ * A better hack would be to encode the offset of some kernel data
+ * structure..
+ */
+#if defined(__x86_64__) && 1
+#define DRM_NETBSD_ADDR2HANDLE(addr)	((addr)   & 0x7fffffffffffffff)
+#define DRM_NETBSD_HANDLE2ADDR(handle)	((handle) | 0x8000000000000000)
+#define DRM_HANDLE_NEEDS_MASK(type)	((type) == _DRM_SHM || (type) == _DRM_SCATTER_GATHER)
 #else
 #define DRM_NETBSD_ADDR2HANDLE(addr)	(addr)
 #define DRM_NETBSD_HANDLE2ADDR(handle)	(handle)
+#define DRM_HANDLE_NEEDS_MASK(type)	0
 #endif
 #elif defined(__OpenBSD__)
 #define DRM_DEVICE							\
@@ -474,7 +490,7 @@ do {									\
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||		\
 	     dev->lock.filp != filp) {					\
 		DRM_ERROR("%s called without lock held\n",		\
-			   __func__);				\
+			   __FUNCTION__);				\
 		return EINVAL;						\
 	}								\
 } while (0)
@@ -676,7 +692,7 @@ typedef struct drm_agp_mem {
 } drm_agp_mem_t;
 
 typedef struct drm_agp_head {
-	device_t	   agpdev;
+	void               *agpdev;
 	struct agp_info    info;
 	const char         *chipset;
 	drm_agp_mem_t      *memory;
@@ -690,11 +706,13 @@ typedef struct drm_agp_head {
 } drm_agp_head_t;
 
 typedef struct drm_sg_mem {
-	unsigned long   handle;
-	void            *virtual;
-	int             pages;
-	dma_addr_t	*busaddr;
-	drm_dma_handle_t *dmah;	/* Handle to PCI memory for ATI PCIGART table */
+	unsigned long		  handle;
+	void			 *virtual;
+	int			  pages;
+	dma_addr_t		 *busaddr;
+	struct drm_dma_handle	 *sg_dmah;	/* Handle for sg_pages   */
+	struct drm_dma_handle	 *dmah;		/* Handle to PCI memory  */
+						/* for ATI PCIGART table */
 } drm_sg_mem_t;
 
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
@@ -833,7 +851,7 @@ typedef struct {
  */
 struct drm_device {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	struct device		device;
+	struct device		*device;
 #endif
 
 	struct drm_driver_info driver;
@@ -1049,6 +1067,7 @@ int	drm_agp_unbind(drm_device_t *dev, drm_agp_binding_t *request);
 
 /* Scatter Gather Support (drm_scatter.c) */
 void	drm_sg_cleanup(drm_sg_mem_t *entry);
+int	drm_sg_alloc(struct drm_device *dev, struct drm_scatter_gather * request);
 
 #if defined(__FreeBSD__) || defined (__NetBSD__)
 /* sysctl support (drm_sysctl.h) */
@@ -1123,8 +1142,8 @@ int	drm_agp_unbind_ioctl(DRM_IOCTL_ARGS);
 int	drm_agp_bind_ioctl(DRM_IOCTL_ARGS);
 
 /* Scatter Gather Support (drm_scatter.c) */
-int	drm_sg_alloc(DRM_IOCTL_ARGS);
-int	drm_sg_free(DRM_IOCTL_ARGS);
+int	drm_sg_alloc_ioctl(DRM_IOCTL_ARGS);
+int	drm_sg_free_ioctl(DRM_IOCTL_ARGS);
 
 /* consistent PCI memory functions (drm_pci.c) */
 drm_dma_handle_t *drm_pci_alloc(drm_device_t *dev, size_t size, size_t align,

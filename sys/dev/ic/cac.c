@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.45.4.1 2008/05/16 02:24:02 yamt Exp $	*/
+/*	$NetBSD: cac.c,v 1.45.4.2 2009/05/04 08:12:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.45.4.1 2008/05/16 02:24:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.45.4.2 2009/05/04 08:12:41 yamt Exp $");
 
 #include "bio.h"
 
@@ -231,7 +231,7 @@ cac_shutdown(void *cookie)
 	int i;
 
 	for (i = 0; i < cac_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&cac_cd, i)) == NULL)
+		if ((sc = device_lookup_private(&cac_cd, i)) == NULL)
 			continue;
 		memset(tbuf, 0, sizeof(tbuf));
 		tbuf[0] = 1;
@@ -721,7 +721,7 @@ cac_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (edata->sensor >= sc->sc_nunits)
 		return;
 
-	bzero(&bv, sizeof(bv));
+	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
 	s = splbio();
 	if (cac_ioctl_vol(sc, &bv)) {

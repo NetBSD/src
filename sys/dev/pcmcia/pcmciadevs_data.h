@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.226.24.1 2008/05/16 02:24:57 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.226.24.2 2009/05/04 08:13:15 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.223 2007/09/22 19:59:55 kiyohara Exp
+ *	NetBSD: pcmciadevs,v 1.227 2008/09/06 22:07:11 rmind Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -897,11 +897,46 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Nokia C020 WLAN Card",	}
 	,
 	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC2220,
+	    PCMCIA_CIS_OLICOM_OC2220,
+	    0,
+	    "Olicom",
+	    "GoCard Ethernet",	}
+	,
+	{
 	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_TR,
 	    PCMCIA_CIS_OLICOM_TR,
 	    0,
 	    "Olicom",
 	    "GoCard Token Ring 16/4",	}
+	,
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC2231,
+	    PCMCIA_CIS_OLICOM_OC2231,
+	    0,
+	    "Olicom",
+	    "GoCard Combo Eth/Modem 288",	}
+	,
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC3231,
+	    PCMCIA_CIS_OLICOM_OC3231,
+	    0,
+	    "Olicom",
+	    "GoCard Token Ring 16/4/Modem 288",	}
+	,
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC2232,
+	    PCMCIA_CIS_OLICOM_OC2232,
+	    0,
+	    "Olicom",
+	    "GoCard Combo Eth/Modem 336",	}
+	,
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC3232,
+	    PCMCIA_CIS_OLICOM_OC3232,
+	    0,
+	    "Olicom",
+	    "GoCard Token Ring 16/4/Modem 336",	}
 	,
 	{
 	    PCMCIA_VENDOR_OSITECH, PCMCIA_PRODUCT_OSITECH_TRUMPCARD_SOD,
@@ -1014,6 +1049,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Sharp Corporation",
 	    "PALDIO 611S PC CARD",	}
+	,
+	{
+	    PCMCIA_VENDOR_SIERRA, PCMCIA_PRODUCT_SIERRA_AC850,
+	    PCMCIA_CIS_SIERRA_AC850,
+	    0,
+	    "Sierra Wireless",
+	    "AC850",	}
 	,
 	{
 	    PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288,
@@ -1371,6 +1413,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Corega K.K.",
 	    "Corega FEtherII PCC-TXD",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_LAPCCTXD,
+	    PCMCIA_CIS_COREGA_LAPCCTXD,
+	    0,
+	    "Corega K.K.",
+	    "Corega LAPCCTXD",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
@@ -2059,6 +2108,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Kingston",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SIERRA,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Sierra Wireless",
 	    NULL,
 	},
 	{

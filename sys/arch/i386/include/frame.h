@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.29.20.1 2008/05/16 02:22:37 yamt Exp $	*/
+/*	$NetBSD: frame.h,v 1.29.20.2 2009/05/04 08:11:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #define _I386_FRAME_H_
 
 #include <sys/signal.h>
+#include <sys/sa.h>
 
 /*
  * System stack frames.
@@ -140,12 +141,9 @@ struct switchframe {
 	int	sf_eip;
 };
 
-#if (defined(COMPAT_16) || defined(COMPAT_IBCS2)) && defined(_KERNEL)
+#ifdef _KERNEL
 /*
- * XXX: Really COMPAT_IBCS2 should not be using our old signal frame.
- */
-/*
- * Signal frame
+ * Old-style signal frame
  */
 struct sigframe_sigcontext {
 	int	sf_ra;			/* return address for handler */
@@ -156,6 +154,9 @@ struct sigframe_sigcontext {
 };
 #endif
 
+/*
+ * New-style signal frame
+ */
 struct sigframe_siginfo {
 	int		sf_ra;		/* return address for handler */
 	int		sf_signum;	/* "signum" argument for handler */
@@ -165,12 +166,22 @@ struct sigframe_siginfo {
 	ucontext_t	sf_uc;		/* actual saved ucontext */
 };
 
+/*
+ * Scheduler activations upcall frame
+ */
+struct saframe {
+	int		sa_ra;
+	int		sa_type;
+	struct sa_t**	sa_sas;
+	int		sa_events;
+	int		sa_interrupted;
+	void*		sa_arg;
+};
+
 #ifdef _KERNEL
 void *getframe(struct lwp *, int, int *);
 void buildcontext(struct lwp *, int, void *, void *);
-#ifdef COMPAT_16
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
-#endif
 #endif
 
 #endif  /* _I386_FRAME_H_ */

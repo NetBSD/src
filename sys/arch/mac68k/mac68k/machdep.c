@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.320 2007/10/17 19:55:15 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.320.20.1 2009/05/04 08:11:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,12 +107,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.320 2007/10/17 19:55:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.320.20.1 2009/05/04 08:11:27 yamt Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #include "akbd.h"
 #include "macfb.h"
@@ -146,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.320 2007/10/17 19:55:15 garbled Exp $"
 #endif
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
+#include <sys/device.h>
 
 #include <m68k/cacheops.h>
 
@@ -216,7 +218,6 @@ struct mac68k_video mac68k_video;
 int	(*mac68k_bell_callback)(void *, int, int, int);
 void *	mac68k_bell_cookie;
 
-struct vm_map *exec_map = NULL;  
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -377,12 +378,12 @@ consinit(void)
 #if NZSC > 0 && defined(KGDB)
 		zs_kgdb_init();
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 		/*
 		 * Initialize kernel debugger, if compiled in.
 		 */
 
-		ksyms_init(symsize, ssym, esym);
+		ksyms_addsyms_elf(symsize, ssym, esym);
 #endif
 
 		if (boothowto & RB_KDB) {
@@ -442,13 +443,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -524,9 +518,6 @@ cpu_reboot(int howto, char *bootstr)
 {
 	extern u_long maxaddr;
 
-#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
-	(void)&howto;
-#endif
 	/* take a snap shot before clobbering any registers */
 	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
@@ -557,6 +548,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		/* First try to power down under VIA control. */
@@ -604,7 +597,7 @@ cpu_init_kcore_hdr(void)
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	int i;
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.
@@ -691,7 +684,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
-	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
+	memcpy( chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);
@@ -785,15 +778,15 @@ dumpsys(void)
 			return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %u,%u not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
 	dump = bdev->d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 	printf("dump ");
 

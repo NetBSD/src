@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.14 2008/03/29 16:22:53 kiyohara Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.14.4.1 2009/05/04 08:12:47 yamt Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14 2008/03/29 16:22:53 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14.4.1 2009/05/04 08:12:47 yamt Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -109,11 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14 2008/03/29 16:22:53 kiyohara Exp $"
 #if defined(__FreeBSD__)
 #define FWIPDEBUG	if (fwipdebug) if_printf
 #elif defined(__NetBSD__)
-#define FWIPDEBUG(ifp, fmt, ...)		\
-	if (fwipdebug) {			\
-		printf("%s: ", (ifp)->if_xname);\
-		printf((fmt) , ##__VA_ARGS__);	\
-	}
+#define FWIPDEBUG	if (fwipdebug) aprint_debug_ifnet
 #endif
 #define TX_MAX_QUEUE	(FWMAXQUEUE - 1)
 
@@ -162,7 +158,7 @@ MALLOC_DEFINE(M_FWIP, "if_fwip", "IP over IEEE1394 interface");
 /*
  * Setup sysctl(3) MIB, hw.fwip.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_fwip, "sysctl fwip(4) subtree setup")
 {
@@ -544,19 +540,13 @@ fwip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 		s = splfwnet();
-		if (ifp->if_flags & IFF_UP) {
-#if defined(__FreeBSD__)
-			if (!(ifp->if_drv_flags & IFF_DRV_RUNNING))
-#elif defined(__NetBSD__)
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			;
+		else if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
-#endif
 				FWIP_INIT(fwip);
 		} else {
-#if defined(__FreeBSD__)
-			if (ifp->if_drv_flags & IFF_DRV_RUNNING)
-#elif defined(__NetBSD__)
 			if (ifp->if_flags & IFF_RUNNING)
-#endif
 				FWIP_STOP(fwip);
 		}
 		splx(s);
@@ -596,22 +586,11 @@ fwip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif /* DEVICE_POLLING */
 		break;
 
-#if (defined(__FreeBSD__) && __FreeBSD_version >= 500000) || defined(__NetBSD__)
 	default:
-#else
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFMTU:
-#endif
 		s = splfwnet();
 		error = FIREWIRE_IOCTL(ifp, cmd, data);
 		splx(s);
 		return (error);
-#if defined(__DragonFly__) || \
-    (defined(__FreeBSD__) && __FreeBSD_version < 500000)
-	default:
-		return (EINVAL);
-#endif
 	}
 
 	return error;
@@ -628,7 +607,7 @@ fwip_post_busreset(void *arg)
 	root = fwip->fd.fc->crom_root;
 
 	/* RFC2734 IPv4 over IEEE1394 */
-	bzero(&fwip->unit4, sizeof(struct crom_chunk));
+	memset(&fwip->unit4, 0, sizeof(struct crom_chunk));
 	crom_add_chunk(src, root, &fwip->unit4, CROM_UDIR);
 	crom_add_entry(&fwip->unit4, CSRKEY_SPEC, CSRVAL_IETF);
 	crom_add_simple_text(src, &fwip->unit4, &fwip->spec4, "IANA");
@@ -636,7 +615,7 @@ fwip_post_busreset(void *arg)
 	crom_add_simple_text(src, &fwip->unit4, &fwip->ver4, "IPv4");
 
 	/* RFC3146 IPv6 over IEEE1394 */
-	bzero(&fwip->unit6, sizeof(struct crom_chunk));
+	memset(&fwip->unit6, 0, sizeof(struct crom_chunk));
 	crom_add_chunk(src, root, &fwip->unit6, CROM_UDIR);
 	crom_add_entry(&fwip->unit6, CSRKEY_SPEC, CSRVAL_IETF);
 	crom_add_simple_text(src, &fwip->unit6, &fwip->spec6, "IANA");

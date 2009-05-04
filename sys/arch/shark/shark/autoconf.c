@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.10.1 2009/05/04 08:11:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.10.1 2009/05/04 08:11:53 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2008/02/12 17:30:58 joerg Exp $");
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <arm/arm32/machdep.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
 #include <machine/irqhandler.h>
@@ -63,9 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2008/02/12 17:30:58 joerg Exp $");
 
 #ifdef SHARK
 #include <shark/shark/sequoia.h>
-extern void	ofrootfound __P((void));
-extern void	ofw_device_register __P((struct device *, void *aux));
-extern void	startrtclock __P((void));
+extern void	ofrootfound(void);
+extern void	ofw_device_register(struct device *, void *aux);
+extern void	startrtclock(void);
 #endif
 
 #if defined(OFWGENCFG) || defined(SHARK)
@@ -76,20 +77,19 @@ extern void ofw_device_register(struct device *dev, void *aux);
 
 extern dev_t dumpdev;
 
-void dumpconf __P((void));
-void isa_intr_init __P((void));
+void dumpconf(void);
+void isa_intr_init(void);
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device __P((char *name));
-static void set_root_device __P((void));
+static void get_device(char *name);
+static void set_root_device(void);
 #endif
 
 #ifndef MEMORY_DISK_IS_ROOT
 /* Decode a device name to a major and minor number */
 
 static void
-get_device(name)
-	char *name;
+get_device(char *name)
 {
 	int unit, part;
 	char devname[16], *cp;
@@ -124,7 +124,7 @@ get_device(name)
 /* Set the rootdev variable from the root specifier in the boot args */
 
 static void
-set_root_device()
+set_root_device(void)
 {
 	char *ptr;
             
@@ -140,7 +140,7 @@ set_root_device()
  * Set up the root device from the boot args
  */
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 #ifndef MEMORY_DISK_IS_ROOT
 	set_root_device();
@@ -160,7 +160,7 @@ cpu_rootconf()
  */
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 	/*
 	 * Configure all the roots.
@@ -190,15 +190,9 @@ cpu_configure()
 	ofrootfound();
 #endif
 
-#if defined(DEBUG)
-	/* Debugging information */
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
-	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_VM]);
-	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
-	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_HIGH],
-	    irqmasks[IPL_SERIAL]);
-#endif /* defined(DEBUG) */
+#if defined(DIAGNOSTIC)
+	dump_spl_masks();
+#endif /* defined(DIAGNOSTIC) */
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	(void)spl0();

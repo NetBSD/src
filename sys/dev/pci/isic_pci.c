@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.30.4.1 2008/05/16 02:24:44 yamt Exp $ */
+/* $NetBSD: isic_pci.c,v 1.30.4.2 2009/05/04 08:12:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.30.4.1 2008/05/16 02:24:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.30.4.2 2009/05/04 08:12:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -156,10 +156,7 @@ isic_pci_attach(struct device *parent, struct device *self, void *aux)
  *	isic - pci device driver attach routine
  *---------------------------------------------------------------------------*/
 static void
-isic_pci_isdn_attach(psc, pa, cardname)
-	struct pci_isic_softc *psc;
-	struct pci_attach_args *pa;
-	const char *cardname;
+isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname)
 {
 	struct isic_softc *sc = &psc->sc_isic;
 	pci_chipset_tag_t pc = pa->pa_pc;

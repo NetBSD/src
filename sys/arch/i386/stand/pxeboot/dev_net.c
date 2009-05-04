@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.5.108.1 2008/05/16 02:22:41 yamt Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.5.108.2 2009/05/04 08:11:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 static int netdev_sock = -1;
 static int netdev_opens;
 
-static int net_getparams __P((int sock));
+static int net_getparams(int sock);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -105,8 +105,7 @@ net_open(struct open_file *f, ...)
 }
 
 int
-net_close(f)
-	struct open_file *f;
+net_close(struct open_file *f)
 {
 
 #ifdef	NETIF_DEBUG
@@ -135,22 +134,13 @@ net_close(f)
 }
 
 int
-net_ioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+net_ioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return EIO;
 }
 
 int
-net_strategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+net_strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf, size_t *rsize)
 {
 	return EIO;
 }
@@ -161,12 +151,11 @@ net_strategy(devdata, rw, blk, size, buf, rsize)
  * server IP address, and our root path on the server.
  */
 #ifdef	SUPPORT_BOOTP
-int bootp __P((int sock));
+int bootp(int sock);
 #endif
 
 static int
-net_getparams(sock)
-	int sock;
+net_getparams(int sock)
 {
 
 #ifdef	SUPPORT_BOOTP

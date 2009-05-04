@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_network_subr.c,v 1.4.74.1 2008/05/16 02:24:42 yamt Exp $	*/
+/*	$NetBSD: ofw_network_subr.c,v 1.4.74.2 2009/05/04 08:12:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.4.74.1 2008/05/16 02:24:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.4.74.2 2009/05/04 08:12:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,7 @@ int	of_network_parse_network_type(const char *);
  *	None.
  */
 int *
-of_network_decode_media(phandle, nmediap, defmediap)
-	int phandle, *nmediap, *defmediap;
+of_network_decode_media(int phandle, int *nmediap, int *defmediap)
 {
 	int i, len, count, med, *rv = NULL;
 	char *buf = NULL, *cp, *ncp;
@@ -179,8 +178,7 @@ of_network_decode_media(phandle, nmediap, defmediap)
 }
 
 int
-of_network_parse_network_type(cp)
-	const char *cp;
+of_network_parse_network_type(const char *cp)
 {
 	/*
 	 * We could tokenize this, but that would be a pain in

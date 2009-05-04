@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.16 2008/04/05 18:35:32 cegger Exp $	*/
+/*	$NetBSD: sio16.c,v 1.16.4.1 2009/05/04 08:13:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -38,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.16 2008/04/05 18:35:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.16.4.1 2009/05/04 08:13:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -110,10 +108,7 @@ struct sio16_attach_args {
  */
 #define	SIO16_ROM_NAME	"sio16"
 int
-sio16_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+sio16_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -128,9 +123,7 @@ sio16_match(parent, cf, aux)
  * device attach routine:  go attach all sub devices.
  */
 void
-sio16_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sio16_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct sio16_softc *sc = (struct sio16_softc *)self;
@@ -248,9 +241,7 @@ sio16_attach(parent, self, aux)
  * in clcd_attach() below, or the various service match routines.
  */
 u_char
-sio16_ackfunc(v, who)
-	void *v;
-	int who;
+sio16_ackfunc(void *v, int who)
 {
 	struct sio16_softc *sc = v;
 	bus_size_t addr;
@@ -284,10 +275,7 @@ CFATTACH_DECL(clcd, sizeof(struct cd18xx_softc),
     clcd_match, clcd_attach, NULL, NULL);
 
 static int
-clcd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clcd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* XXX */
@@ -295,9 +283,7 @@ clcd_match(parent, cf, aux)
 }
 
 static void
-clcd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cd18xx_softc *sc = (struct cd18xx_softc *)self;
 	struct sio16_attach_args *args = aux;

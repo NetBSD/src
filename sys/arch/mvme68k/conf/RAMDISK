@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.25.72.1 2008/05/16 02:22:52 yamt Exp $
+#	$NetBSD: RAMDISK,v 1.25.72.2 2009/05/04 08:11:34 yamt Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -45,6 +45,7 @@ options 	INET6		# IPV6
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT
 options 	MEMORY_DISK_ROOT_SIZE=2100
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

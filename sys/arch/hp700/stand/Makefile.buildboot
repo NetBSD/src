@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.10.62.1 2008/05/16 02:22:23 yamt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.10.62.2 2009/05/04 08:11:08 yamt Exp $
 
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
@@ -42,7 +42,7 @@ CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT}
 CPPFLAGS+=		-DNO_NET
 
 COMMONSOURCE=		cons.c dev_hppa.c dk.c itecons.c \
-			machdep.c pdc.c time.c
+			machdep.c milli_tiny.S pdc.c time.c
 DRIVERSOURCE=		
 
 ### find out what to use for libkern
@@ -70,13 +70,4 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	@echo ${PROG} total size should not exceed XXXX bytes
 
 .include <bsd.prog.mk>
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] || ln -s $S/arch/hp700/include machine)
-	@([ -h hppa ] || ln -s $S/arch/hppa/include hppa)
-
-.NOPATH: machine hppa
-.endif
-
-CLEANFILES+=machine hppa
+.include <bsd.klinks.mk>

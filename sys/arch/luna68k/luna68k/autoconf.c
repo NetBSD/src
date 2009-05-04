@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.10.10.1 2008/05/16 02:22:43 yamt Exp $ */
+/* $NetBSD: autoconf.c,v 1.10.10.2 2009/05/04 08:11:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.10.1 2008/05/16 02:22:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.10.2 2009/05/04 08:11:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.10.1 2008/05/16 02:22:43 yamt Exp 
  * Determine mass storage and memory configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	booted_device = NULL;	/* set by device drivers (if found) */
 
@@ -62,7 +62,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 #if 1 /* XXX to be reworked with helps of 2nd stage loaders XXX */
 	int i;

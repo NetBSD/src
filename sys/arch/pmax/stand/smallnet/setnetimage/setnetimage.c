@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetimage.c,v 1.5.44.1 2008/05/16 02:22:59 yamt Exp $	*/
+/*	$NetBSD: setnetimage.c,v 1.5.44.2 2009/05/04 08:11:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,12 +71,10 @@ struct seglist {
 #define NLADDR(x)	(mappedbfile + offsets[(x)])
 #define NLVAR(x)	(*(u_long *)(NLADDR(x)))
 
-int main __P((int, char **));
+int main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ifd, ofd, i, nsegs;
 	size_t offsets[X_NSYMS];

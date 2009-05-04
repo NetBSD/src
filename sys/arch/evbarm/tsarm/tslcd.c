@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.9.44.1 2008/05/16 02:22:15 yamt Exp $ */
+/* $NetBSD: tslcd.c,v 1.9.44.2 2009/05/04 08:11:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.9.44.1 2008/05/16 02:22:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.9.44.2 2009/05/04 08:11:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,7 @@ static const struct wsscreen_list tslcd_screenlist = {
 };
 
 static int
-tslcd_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tslcd_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
@@ -127,10 +124,7 @@ tslcd_match(parent, match, aux)
 	(EP93XX_GPIO_ ## x), GPIO_GET(x) & (~(y)))
 
 static void
-tslcd_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tslcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tslcd_softc *sc = (void *)self;
 	struct tspld_attach_args *taa = aux;
@@ -166,10 +160,7 @@ tslcd_attach(parent, self, aux)
 }
 
 static void
-tslcd_writereg(hd, en, rs, cmd)
-	struct hd44780_chip *hd;
-	u_int32_t en, rs;
-	u_int8_t cmd;
+tslcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_t cmd)
 {
 	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
 	u_int8_t ctrl;
@@ -215,9 +206,7 @@ tslcd_writereg(hd, en, rs, cmd)
 }
 
 static u_int8_t
-tslcd_readreg(hd, en, rs)
-	struct hd44780_chip *hd;
-	u_int32_t en, rs;
+tslcd_readreg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs)
 {
 	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
 	u_int8_t ret, ctrl;
@@ -257,12 +246,9 @@ tslcd_readreg(hd, en, rs)
 }
 
 int
-tslcdopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+tslcdopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
+	struct tslcd_softc *sc = device_lookup_private(&tslcd_cd, minor(dev));
 
 	if (sc->sc_hlcd.sc_dev_ok == 0)
 		return hd44780_init(&sc->sc_hlcd);
@@ -271,32 +257,23 @@ tslcdopen(dev, flag, mode, l)
 }
 
 int
-tslcdclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+tslcdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return 0;
 }
 
 int
-tslcdread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+tslcdread(dev_t dev, struct uio *uio, int flag)
 {
 	return EIO;
 }
 
 int
-tslcdwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+tslcdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	int error;
 	struct hd44780_io io;
-	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
+	struct tslcd_softc *sc = device_lookup_private(&tslcd_cd, minor(dev));
 
 	if (sc->sc_hlcd.sc_dev_ok == 0)
 		return EIO;
@@ -314,22 +291,14 @@ tslcdwrite(dev, uio, flag)
 }
 
 int
-tslcdioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+tslcdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
+	struct tslcd_softc *sc = device_lookup_private(&tslcd_cd, minor(dev));
 	return hd44780_ioctl_subr(&sc->sc_hlcd, cmd, data);
 }
 
 int
-tslcdpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+tslcdpoll(dev_t dev, int events, struct lwp *l)
 {
 	return 0;
 }

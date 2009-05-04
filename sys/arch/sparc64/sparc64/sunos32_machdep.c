@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.26 2008/04/24 18:39:21 ad Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.26.2.1 2009/05/04 08:11:58 yamt Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.26 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.26.2.1 2009/05/04 08:11:58 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -49,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.26 2008/04/24 18:39:21 ad Exp 
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 #include <sys/select.h>
 
 #include <sys/syscallargs.h>
@@ -105,10 +102,8 @@ static int ev_out32(struct firm_event *, int, struct uio *);
  */
 /* ARGSUSED */
 void
-sunos32_setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack; /* XXX */
+sunos32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+	/* stack:  XXX */
 {
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct fpstate64 *fs;
@@ -148,7 +143,7 @@ sunos32_setregs(l, pack, stack)
 			savefpstate(fs);
 			fplwp = NULL;
 		}
-		free((void *)fs, M_SUBPROC);
+		pool_cache_put(fpstate_cache, fs);
 		l->l_md.md_fpstate = NULL;
 	}
 	memset(tf, 0, sizeof *tf);

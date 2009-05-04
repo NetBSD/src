@@ -1,15 +1,21 @@
-#	$NetBSD: Makefile,v 1.6 2008/03/11 10:50:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2009/05/04 08:14:31 yamt Exp $
 #
 
-.include <bsd.own.mk>
-
 LIB=		rumpuser
+WARNS=		4
 
-SRCS=		rumpuser.c rumpuser_pth.c
+SRCS=		rumpuser.c rumpuser_net.c
+SRCS+=		rumpuser_pth.c
 
-CPPFLAGS+=	-DRUMP_WITHOUT_THREADS
+CPPFLAGS+=	-D_REENTRANT
 
-RUMPKERNEL=	no
+# Using this instead of the above makes it possible to link rump
+# without involving pthreads.  Multithreaded operation will not
+# of course work correctly in case.
+#SRCS+=		rumpuser_pth_dummy.c
 
-.include "${NETBSDSRCDIR}/sys/rump/Makefile.rump"
+# no shlib_version because this is automatically in sync with lib/librumpuser
+SHLIB_MAJOR=	0
+SHLIB_MINOR=	0
+
 .include <bsd.lib.mk>

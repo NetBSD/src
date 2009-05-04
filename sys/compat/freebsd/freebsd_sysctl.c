@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.13.2.1 2008/05/16 02:23:35 yamt Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.13.2.2 2009/05/04 08:12:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.13.2.1 2008/05/16 02:23:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.13.2.2 2009/05/04 08:12:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,23 +52,34 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.13.2.1 2008/05/16 02:23:35 yamt
 #include <compat/freebsd/freebsd_timex.h>
 #include <compat/freebsd/freebsd_signal.h>
 #include <compat/freebsd/freebsd_mman.h>
+#include <compat/freebsd/freebsd_sysctl.h>
 
 static int freebsd_sysctl_name2oid(char *, int *, int *);
 
-SYSCTL_SETUP_PROTO(freebsd_sysctl_setup);
-SYSCTL_SETUP(freebsd_sysctl_setup, "freebsd emulated sysctl setup")
+static struct sysctllog *freebsd_clog;
+
+void
+freebsd_sysctl_init(void)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
+
+	sysctl_createv(&freebsd_clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_NODE, "kern", NULL,
 			NULL, 0, NULL, 0,
 			CTL_KERN, CTL_EOL);
-        sysctl_createv(clog, 0, NULL, NULL,
+        sysctl_createv(&freebsd_clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 			CTLTYPE_INT, "osreldate",
 			SYSCTL_DESCR("Operating system revision"),
 			NULL, __NetBSD_Version__, NULL, 0,
 			CTL_KERN, CTL_CREATE, CTL_EOL);
+}
+
+void
+freebsd_sysctl_fini(void)
+{
+
+	sysctl_teardown(&freebsd_clog);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.124 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.124.4.1 2009/05/04 08:14:39 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.124 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.124.4.1 2009/05/04 08:14:39 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -146,9 +146,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.124 2008/03/27 19:06:52 ad Exp $");
  *    by multiple map entries, and figuring out what should wait could be
  *    complex as well...).
  *
- * given that we are not currently multiprocessor or multithreaded we might
- * as well choose alternative 2 now.   maybe alternative 3 would be useful
- * in the future.    XXX keep in mind for future consideration//rechecking.
+ * we use alternative 2.  given that we are multi-threaded now we may want
+ * to reconsider the choice.
  */
 
 /*
@@ -992,8 +991,8 @@ ReFault:
 			    PMAP_CANFAIL |
 			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
 		}
-		mutex_exit(&anon->an_lock);
 		pmap_update(ufi.orig_map->pmap);
+		mutex_exit(&anon->an_lock);
 	}
 
 	/* locked: maps(read), amap(if there) */

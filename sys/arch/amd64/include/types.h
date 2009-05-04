@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.26 2008/02/21 16:31:13 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.26.6.1 2009/05/04 08:10:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,8 +31,10 @@
  *	@(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_X86_64_MACHTYPES_H_
+#define	_X86_64_MACHTYPES_H_
+
+#ifdef __x86_64__
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -73,10 +75,18 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_ATOMIC64_OPS
 #define	__HAVE_ATOMIC_AS_MEMBAR
+#define	__HAVE_CPU_LWP_SETPRIVATE
+#define	__HAVE_INTR_CONTROL
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
-#define __HAVE_RAS
+#define	__HAVE_RAS
 #endif
 
-#endif	/* _MACHTYPES_H_ */
+#else	/*	!__x86_64__	*/
+
+#include <i386/types.h>
+
+#endif	/*	__x86_64__	*/
+
+#endif	/* _X86_64_MACHTYPES_H_ */

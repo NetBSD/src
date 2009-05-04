@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.7.10.1 2008/05/16 02:22:10 yamt Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.7.10.2 2009/05/04 08:10:58 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -115,7 +115,7 @@ __inline void gxpcic_cpld_clk(void);
 __inline u_char gxpcic_cpld_read_bits(int bits);
 static	int	gxpcic_count_slot(struct pxapcic_softc *);
 
-CFATTACH_DECL(pxapcic_gxpcic, sizeof(struct pxapcic_softc),
+CFATTACH_DECL_NEW(pxapcic_gxpcic, sizeof(struct pxapcic_softc),
     gxpcic_match, gxpcic_attach, NULL, NULL);
 
 static struct pxapcic_tag gxpcic_pcic_functions = {
@@ -166,6 +166,7 @@ gxpcic_attach(device_t parent, device_t self, void *aux)
 	struct pxaip_attach_args *pxa = (struct pxaip_attach_args *)aux;
 	int nslot, i;
 
+	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;
 
 	nslot = gxpcic_count_slot(sc);
@@ -276,7 +277,7 @@ gxpcic_intr_disestablish(struct pxapcic_socket *so, void *ih)
  * XXXXX: slot count functions from Linux
  */
 __inline void
-gxpcic_cpld_clk()
+gxpcic_cpld_clk(void)
 {
 
 	pxa2x0_gpio_set_function(48, GPIO_OUT | GPIO_CLR);

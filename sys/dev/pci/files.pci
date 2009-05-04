@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.303 2008/03/29 00:16:26 cube Exp $
+#	$NetBSD: files.pci,v 1.303.4.1 2009/05/04 08:12:55 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -363,6 +363,11 @@ file	dev/pci/if_hme_pci.c		hme_pci
 attach	gem at pci with gem_pci
 file	dev/pci/if_gem_pci.c		gem_pci
 
+# JMicron JMC2[56]0 ethernet controllers
+device	jme: ether, ifnet, arp, mii
+attach	jme at pci
+file	dev/pci/if_jme.c		jme
+
 # NE2000-compatible PCI Ethernet cards
 defparam opt_ipkdb.h	IPKDB_NE_PCISLOT
 defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE
@@ -391,7 +396,7 @@ attach	esh at pci with esh_pci
 file	dev/pci/if_esh_pci.c		esh_pci
 
 # generic PCI VGA
-defflag	opt_vga.h	VGA_POST
+defflag	opt_vga.h	VGA_POST:	X86EMU
 attach	vga at pci with vga_pci
 file	dev/pci/vga_pci.c		vga_pci			needs-flag
 
@@ -475,6 +480,11 @@ device	azalia: audiobus, auconv, mulaw, ac97, aurateconv
 attach	azalia at pci
 file	dev/pci/azalia.c		azalia
 file	dev/pci/azalia_codec.c		azalia
+
+# AMD Geode CS5536 Companion Audio
+device	gcscaudio: audiobus, auconv, mulaw, ac97, aurateconv
+attach	gcscaudio at pci
+file	dev/pci/gcscaudio.c		gcscaudio
 
 # NeoMagic 256 AC'97 Audio
 device	neo: audiobus, auconv, mulaw, ac97
@@ -899,6 +909,10 @@ device	msk: ether, ifnet, arp, mii
 attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
 
+# SD Host Controller
+attach sdhc at pci with sdhc_pci
+file	dev/pci/sdhc_pci.c		sdhc_pci
+
 #
 # Direct Rendering Manager
 #
@@ -927,7 +941,40 @@ file	dev/pci/r128fb.c		r128fb
 defflag	opt_r128fb.h	R128FB_DEBUG
 defflag	opt_r128fb.h	R128FB_WAIT
 
+# Attansic/Atheros L1 Gigabit-Ethernet
+device	age: ether, ifnet, arp, mii, mii_phy
+attach	age at pci
+file	dev/pci/if_age.c		age
+
+# Attanisc/Atheros L1E Gigabit Ethernet
+device	ale: ether, ifnet, arp, mii, mii_phy
+attach	ale at pci
+file	dev/pci/if_ale.c		ale
+
 # Atheros/Attansic L2 Fast-Ethernet
 device	lii: ether, ifnet, arp, mii
 attach	lii at pci
 file	dev/pci/if_lii.c		lii
+
+# Silicon Image SteelVine SATA-II controllers
+define siisata
+file dev/ic/siisata.c atapibus & atabus & siisata
+device siisata: ata, ata_dma, ata_udma, sata, siisata
+attach siisata at pci with siisata_pci
+file dev/pci/siisata_pci.c siisata_pci
+
+# Acer Labs M7101 power management controller
+device	alipm: i2cbus
+attach	alipm at pci
+file	dev/pci/alipm.c				alipm
+
+#
+# NetOctave NSP2000
+#
+include "dev/pci/n8/files.n8"
+
+#
+# Broadcom AirForce / Apple Airport Extreme
+#
+attach	bwi at pci with bwi_pci
+file	dev/pci/if_bwi_pci.c		bwi_pci

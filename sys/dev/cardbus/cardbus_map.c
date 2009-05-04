@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.26 2008/04/06 07:54:17 cegger Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.26.4.1 2009/05/04 08:12:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.26 2008/04/06 07:54:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.26.4.1 2009/05/04 08:12:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,15 +145,7 @@ cardbus_io_find(
  * This code is stolen from sys/dev/pci_map.c.
  */
 static int
-cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
-	cardbus_chipset_tag_t cc;
-	cardbus_function_tag_t cf;
-	cardbustag_t tag;
-	int reg;
-	cardbusreg_t type;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
-	int *flagsp;
+cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf, cardbustag_t tag, int reg, cardbusreg_t type, bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 	cardbusreg_t address, mask;
 	int s;
@@ -240,14 +232,7 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
  *   written on the BAR.
  */
 int
-cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
-	struct cardbus_softc *sc;
-	int func, reg, busflags;
-	cardbusreg_t type;
-	bus_space_tag_t *tagp;
-	bus_space_handle_t *handlep;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
+cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, cardbusreg_t type, int busflags, bus_space_tag_t *tagp, bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
 {
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
@@ -267,7 +252,7 @@ cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
 
 	tag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
-	DPRINTF(("cardbus_mapreg_map called: %s %x\n", device_xname(&sc->sc_dev),
+	DPRINTF(("cardbus_mapreg_map called: %s %x\n", device_xname(sc->sc_dev),
 	   type));
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
@@ -348,12 +333,7 @@ cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
  *   int reg; the offset of BAR register.
  */
 int
-cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
-	struct cardbus_softc *sc;
-	int func, reg;
-	bus_space_tag_t tag;
-	bus_space_handle_t handle;
-	bus_size_t size;
+cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
 {
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
@@ -364,11 +344,11 @@ cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
 
 	if (sc->sc_iot == tag) {
 		/* bus space is io space */
-		DPRINTF(("%s: unmap i/o space\n", device_xname(&sc->sc_dev)));
+		DPRINTF(("%s: unmap i/o space\n", device_xname(sc->sc_dev)));
 		rbustag = sc->sc_rbus_iot;
 	} else if (sc->sc_memt == tag) {
 		/* bus space is memory space */
-		DPRINTF(("%s: unmap mem space\n", device_xname(&sc->sc_dev)));
+		DPRINTF(("%s: unmap mem space\n", device_xname(sc->sc_dev)));
 		rbustag = sc->sc_rbus_memt;
 	} else {
 		return 1;
@@ -398,8 +378,7 @@ cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
  *   This function saves the Base Address Registers at the CardBus
  *   function denoted by the argument.
  */
-int cardbus_save_bar(ct)
-	cardbus_devfunc_t ct;
+int cardbus_save_bar(cardbus_devfunc_t ct)
 {
 	cardbustag_t tag = Cardbus_make_tag(ct);
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -427,8 +406,7 @@ int cardbus_save_bar(ct)
  *   This function saves the Base Address Registers at the CardBus
  *   function denoted by the argument.
  */
-int cardbus_restore_bar(ct)
-	cardbus_devfunc_t ct;
+int cardbus_restore_bar(cardbus_devfunc_t ct)
 {
 	cardbustag_t tag = Cardbus_make_tag(ct);
 	cardbus_chipset_tag_t cc = ct->ct_cc;

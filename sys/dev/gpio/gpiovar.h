@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.4.70.1 2008/05/16 02:23:57 yamt Exp $ */
+/* $NetBSD: gpiovar.h,v 1.4.70.2 2009/05/04 08:12:38 yamt Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,6 +19,8 @@
 
 #ifndef _DEV_GPIO_GPIOVAR_H_
 #define _DEV_GPIO_GPIOVAR_H_
+
+#include <sys/device.h>
 
 /* GPIO controller description */
 typedef struct gpio_chipset_tag {
@@ -53,7 +55,7 @@ int gpiobus_print(void *, const char *);
 #define gpiobus_open(gc, dev) \
     ((gc)->gp_gc_open ? ((gc)->gp_gc_open((gc)->gp_cookie, dev)) : 0)
 #define gpiobus_close(gc, dev) \
-    ((gc)->gp_gc_close ? ((gc)->gp_gc_close((gc)->gp_cookie, dev)) : 0)
+    ((gc)->gp_gc_close ? ((gc)->gp_gc_close((gc)->gp_cookie, dev)), 1 : 0)
 #define gpiobus_pin_read(gc, pin) \
     ((gc)->gp_pin_read((gc)->gp_cookie, (pin)))
 #define gpiobus_pin_write(gc, pin, value) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.28 2008/04/08 20:40:42 cegger Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.28.4.1 2009/05/04 08:12:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.28 2008/04/08 20:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.28.4.1 2009/05/04 08:12:51 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -220,9 +220,9 @@ STATIC void     gtmpsc_kgdb_putc(void *, int);
 STATIC unsigned int gtmpsccninit_done = 0;
 STATIC gtmpsc_softc_t gtmpsc_fake_softc;
 STATIC unsigned char gtmpsc_earlybuf[PAGE_SIZE]
-    __attribute__ ((aligned(PAGE_SIZE)));
+    __aligned(PAGE_SIZE);
 STATIC unsigned char gtmpsc_fake_dmapage[PAGE_SIZE]
-    __attribute__ ((aligned(PAGE_SIZE)));
+    __aligned(PAGE_SIZE);
 
 
 #define GTMPSC_PRINT_BUF_SIZE	4096
@@ -595,9 +595,7 @@ gtmpscopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s2;
 	int error;
 
-	if (unit >= gtmpsc_cd.cd_ndevs)
-		return ENXIO;
-	sc = gtmpsc_cd.cd_devs[unit];
+	sc = device_lookup_private(&gtmpsc_cd, unit);
 	if (!sc)
 		return ENXIO;
 #ifdef KGDB
@@ -670,7 +668,7 @@ int
 gtmpscclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = GTMPSCUNIT(dev);
-	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[unit];
+	struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, unit);
 	struct tty *tp = sc->gtmpsc_tty;
 	int s;
 
@@ -698,7 +696,7 @@ gtmpscclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 gtmpscread(dev_t dev, struct uio *uio, int flag)
 {
-	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
+	struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, GTMPSCUNIT(dev));
 	struct tty *tp = sc->gtmpsc_tty;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
@@ -707,7 +705,7 @@ gtmpscread(dev_t dev, struct uio *uio, int flag)
 int
 gtmpscwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
+	struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, GTMPSCUNIT(dev));
 	struct tty *tp = sc->gtmpsc_tty;
 
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
@@ -716,7 +714,7 @@ gtmpscwrite(dev_t dev, struct uio *uio, int flag)
 int
 gtmpscpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
+	struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, GTMPSCUNIT(dev));
 	struct tty *tp = sc->gtmpsc_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -725,7 +723,7 @@ gtmpscpoll(dev_t dev, int events, struct lwp *l)
 int
 gtmpscioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
+	struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, GTMPSCUNIT(dev));
 	struct tty *tp = sc->gtmpsc_tty;
 	int error;
 
@@ -739,7 +737,7 @@ gtmpscioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 struct tty *
 gtmpsctty(dev_t dev)
 {
-	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
+	struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, GTMPSCUNIT(dev));
 
 	return sc->gtmpsc_tty;
 }
@@ -758,7 +756,7 @@ gtmpscstart(struct tty *tp)
 	int s, s2, tbc;
 
 	unit = GTMPSCUNIT(tp->t_dev);
-	sc = gtmpsc_cd.cd_devs[unit];
+	sc = device_lookup_private(&gtmpsc_cd, unit);
 	if (sc == NULL)
 		return;
 
@@ -792,7 +790,7 @@ out:
 STATIC int
 gtmpscparam(struct tty *tp, struct termios *t)
 {
-	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(tp->t_dev)];
+	struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, GTMPSCUNIT(tp->t_dev));
 	int ospeed = compute_cdv(t->c_ospeed);
 	int s;
 
@@ -864,7 +862,7 @@ gtmpsc_get_causes(void)
 	desc_addr[1] = 0;
 	desc_addr[2] = 0;
 	desc_addr[3] = 0;
-	sc = gtmpsc_cd.cd_devs[0];
+	sc = device_lookup_private(&gtmpsc_cd, 0);
 	if (sc != 0) {
 	    if (sdma_imask & SDMA_INTR_RXBUF(0)) {
 		desc_addr[0] =
@@ -879,7 +877,7 @@ gtmpsc_get_causes(void)
 		    __asm volatile ("dcbt 0,%0" :: "r"(desc_addr[1]));
 	    }
 	}
-	sc = gtmpsc_cd.cd_devs[1];
+	sc = device_lookup_private(&gtmpsc_cd, 1);
 	if (sc != 0) {
 	    if (sdma_imask & SDMA_INTR_RXBUF(1)) {
 		desc_addr[2] =
@@ -921,7 +919,7 @@ gtmpsc_intr(void *arg)
 #ifdef KGDB
 	if (kgdb_break_immediate) {
 		unit = comkgdbport;
-		sc = gtmpsc_cd.cd_devs[unit];
+		sc = device_lookup_private(&gtmpsc_cd, unit);
 		if (sc == 0 || (sc->gtmpsc_flags & GTMPSCF_KGDB) == 0)
 			goto skip_kgdb;
 		if (gt_reva_gtmpsc_bug)
@@ -940,8 +938,8 @@ gtmpsc_intr(void *arg)
 skip_kgdb:
 #endif
 	for (unit = 0; unit < GTMPSC_NCHAN; ++unit) {
-		sc = gtmpsc_cd.cd_devs[unit];
-		if (sc == 0)
+		sc = device_lookup_private(&gtmpsc_cd, unit);
+		if (sc == NULL)
 			continue;
 		if (gt_reva_gtmpsc_bug)
 			r = cause & sdma_imask;
@@ -1059,7 +1057,7 @@ gtmpsc_hackinit(struct gtmpsc_softc *sc, bus_space_tag_t memt,
 
 	DPRINTF(("hackinit\n"));
 
-	bzero(sc, sizeof(struct gtmpsc_softc));
+	memset(sc, 0, sizeof(struct gtmpsc_softc));
 	sc->gtmpsc_memt = memt;
 	sc->gtmpsc_memh = memh;
 	sc->gtmpsc_unit = unit;
@@ -1339,7 +1337,7 @@ gtmpsccngetc(dev_t dev)
 
 	unit = GTMPSCUNIT(dev);
 	if (major(dev) != 0) {
-		struct gtmpsc_softc *sc = device_lookup(&gtmpsc_cd, unit);
+		struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, unit);
 		if (sc == NULL)
 			return 0;
 		unit = sc->gtmpsc_unit;
@@ -1366,7 +1364,7 @@ gtmpsccnputc(dev_t dev, int c)
 
 	unit = GTMPSCUNIT(dev);
 	if (major(dev) != 0) {
-		struct gtmpsc_softc *sc = device_lookup(&gtmpsc_cd, unit);
+		struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, unit);
 		if (sc == NULL)
 			return;
 		unit = sc->gtmpsc_unit;
@@ -1468,7 +1466,7 @@ gtmpsc_common_pollc(unsigned int unit, char *cp, int *statp)
 			GTMPSC_CACHE_FLUSH(csrp);
 			return 0;
 		}
-		bcopy(vrxp->rxbuf, sc->gtmpsc_rxbuf, nc);
+		memcpy(sc->gtmpsc_rxbuf, vrxp->rxbuf, nc);
 		desc_write(csrp, csr);
 		GTMPSC_CACHE_FLUSH(csrp);
 	}
@@ -1542,7 +1540,7 @@ gtmpsc_common_getc(unsigned int unit)
 		nc = desc_read(&vrxp->rxdesc.sdma_cnt);
 		nc &= SDMA_RX_CNT_BCNT_MASK;
 		if (nc) {
-			bcopy(vrxp->rxbuf, sc->gtmpsc_rxbuf, nc);
+			memcpy(sc->gtmpsc_rxbuf, vrxp->rxbuf, nc);
 		} else {
 			if ((++ix) >= GTMPSC_NRXDESC)
 				ix = 0;
@@ -1600,7 +1598,7 @@ gtmpsc_common_putn(struct gtmpsc_softc *sc)
 		n = sc->sc_tbc;
 		if (n > GTMPSC_TXBUFSZ)
 			n = GTMPSC_TXBUFSZ;
-		bcopy(sc->sc_tba, vtxp->txbuf, n);
+		memcpy(vtxp->txbuf, sc->sc_tba, n);
 		csr = SDMA_CSR_TX_L | SDMA_CSR_TX_F
 					| SDMA_CSR_TX_EI | SDMA_CSR_TX_OWN;
 		desc_write(&vtxp->txdesc.sdma_cnt,
@@ -1741,8 +1739,7 @@ gtmpsc_poll(void *arg)
 #ifdef KGDB
 /* ARGSUSED */
 STATIC int
-gtmpsc_kgdb_getc(arg)
-	void *arg;
+gtmpsc_kgdb_getc(void *arg)
 {
 
 	return (gtmpsc_common_getc(comkgdbport));
@@ -1750,9 +1747,7 @@ gtmpsc_kgdb_getc(arg)
 
 /* ARGSUSED */
 STATIC void
-gtmpsc_kgdb_putc(arg, c)
-	void *arg;
-	int c;
+gtmpsc_kgdb_putc(void *arg, int c)
 {
 
 	return (gtmpsc_common_putc(comkgdbport, c));
@@ -1814,7 +1809,7 @@ gtmpsc_mem_printf(const char *fmt, ...)
 	static unsigned char *p = gtmpsc_print_buf;
 
 	if (p >= &gtmpsc_print_buf[GTMPSC_PRINT_BUF_SIZE - 128]) {
-		bzero(gtmpsc_print_buf, GTMPSC_PRINT_BUF_SIZE);
+		memset(gtmpsc_print_buf, 0, GTMPSC_PRINT_BUF_SIZE);
 		p = gtmpsc_print_buf;
 	}
 	va_start(ap, fmt);

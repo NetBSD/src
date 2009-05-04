@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.9.78.1 2008/05/16 02:22:52 yamt Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.9.78.2 2009/05/04 08:11:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.9.78.1 2008/05/16 02:22:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.9.78.2 2009/05/04 08:11:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,11 +78,10 @@ pizazz_init(void)
 	} while (0)
 
 void
-pizazz_intr(status, cause, pc, ipending)
-	u_int status;	/* status register at time of the exception */
-	u_int cause;	/* cause register at time of exception */
-	u_int pc;	/* program counter where to continue */
-	u_int ipending;
+pizazz_intr(u_int status, u_int cause, u_int pc, u_int ipending)
+	/* status:	 status register at time of the exception */
+	/* cause:	 cause register at time of exception */
+	/* pc:	 program counter where to continue */
 {
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_2) {	        /* Timer Interrupt */
@@ -131,8 +130,7 @@ pizazz_intr(status, cause, pc, ipending)
  * A secondary interrupt status register shows the real interrupt source
  */
 int
-pizazz_level0_intr(arg)
-	void *arg;
+pizazz_level0_intr(void *arg)
 {
 	register int stat;
 
@@ -155,10 +153,7 @@ pizazz_level0_intr(arg)
  * Motherboard Parity Error
  */
 void
-pizazz_level5_intr(pc, cause, status)
-	int pc;
-	int cause;
-	int status;
+pizazz_level5_intr(int pc, int cause, int status)
 {
 	u_int32_t ereg;
 

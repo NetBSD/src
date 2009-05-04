@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155.20.1 2008/05/16 02:23:21 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155.20.2 2009/05/04 08:12:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.20.1 2008/05/16 02:23:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.20.2 2009/05/04 08:12:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -226,8 +226,9 @@ vaddr_t tmp_vpages[2] = {
 int tmp_vpages_inuse;
 
 static int pmap_version = 1;
-struct pmap kernel_pmap_store;
-#define kernel_pmap (&kernel_pmap_store)
+static struct pmap kernel_pmap_store;
+struct pmap *const kernel_pmap_ptr  = &kernel_pmap_store;
+#define kernel_pmap (kernel_pmap_ptr)
 static u_char kernel_segmap[NSEGMAP];
 
 /* memory pool for pmap structures */
@@ -1967,7 +1968,7 @@ pmap_reference(pmap_t pmap)
  *	insert this page into the given map NOW.
  */
 int 
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int new_pte, s;
 	bool wired = (flags & PMAP_WIRED) != 0;

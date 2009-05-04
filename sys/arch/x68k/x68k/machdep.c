@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146 2007/12/03 15:34:26 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.146.18.1 2009/05/04 08:12:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2007/12/03 15:34:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146.18.1 2009/05/04 08:12:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2007/12/03 15:34:26 ad Exp $");
 #include "opt_m680x0.h"
 #include "opt_fpu_emulate.h"
 #include "opt_m060sp.h"
+#include "opt_modular.h"
 #include "opt_panicbutton.h"
 #include "opt_extmem.h"
 
@@ -112,10 +113,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2007/12/03 15:34:26 ad Exp $");
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
+#include <sys/device.h>
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <sys/exec_elf.h>
 #endif
 
@@ -134,11 +137,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2007/12/03 15:34:26 ad Exp $");
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>
-
-#include <sys/device.h>
-
 #include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <arch/x68k/dev/intiovar.h>
 
 void initcpu(void);
@@ -151,15 +151,12 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
-extern vaddr_t virtual_avail;
 extern u_int lowram;
 extern int end, *esym;
-extern psize_t mem_size;
 
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -228,8 +225,8 @@ consinit(void)
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		 (void *)&end, esym);
 #endif
 #ifdef DDB
@@ -264,9 +261,6 @@ cpu_startup(void)
 
 	pmapdebug = 0;
 #endif
-#if 0
-	rtclockinit(); /* XXX */
-#endif
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
@@ -296,12 +290,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
@@ -501,6 +489,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
@@ -728,15 +718,15 @@ dumpsys(void)
 			return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %u,%u not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
 	dump = bdev->d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 	printf("dump ");
 
@@ -749,7 +739,7 @@ dumpsys(void)
 #define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
+			printf_nolog("%d ", pg / NPGMB);
 #undef NPGMB
 		if (maddr == 0) {
 			/* Skip first page */
@@ -909,22 +899,16 @@ intrhand(int sr)
 	printf("intrhand: unexpected sr 0x%x\n", sr);
 }
 
-static const int ipl2psl_table[] = {
-	[IPL_NONE]       = PSL_IPL0,
-	[IPL_SOFTBIO]    = PSL_IPL1,
-	[IPL_SOFTCLOCK]  = PSL_IPL1,
-	[IPL_SOFTNET]    = PSL_IPL1,
-	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_VM]         = PSL_IPL4,
-	[IPL_SCHED]      = PSL_IPL6,
+const uint16_t ipl2psl_table[NIPL] = {
+	[IPL_NONE]       = PSL_S | PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_S | PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_S | PSL_IPL1,
+	[IPL_VM]         = PSL_S | PSL_IPL5,
+	[IPL_SCHED]      = PSL_S | PSL_IPL7,
+	[IPL_HIGH]       = PSL_S | PSL_IPL7,
 };
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
-}
 
 #if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
 #define PANICBUTTON

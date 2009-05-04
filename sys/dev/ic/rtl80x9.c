@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.13.4.1 2008/05/16 02:24:06 yamt Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.13.4.2 2009/05/04 08:12:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.13.4.1 2008/05/16 02:24:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.13.4.2 2009/05/04 08:12:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.13.4.1 2008/05/16 02:24:06 yamt Exp $"
 #include <dev/ic/rtl80x9var.h>
 
 int
-rtl80x9_mediachange(dsc)
-	struct dp8390_softc *dsc;
+rtl80x9_mediachange(struct dp8390_softc *dsc)
 {
 
 	/*
@@ -71,9 +70,7 @@ rtl80x9_mediachange(dsc)
 }
 
 void
-rtl80x9_mediastatus(sc, ifmr)
-	struct dp8390_softc *sc;
-	struct ifmediareq *ifmr;
+rtl80x9_mediastatus(struct dp8390_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_int8_t cr_proto = sc->cr_proto |
@@ -102,8 +99,7 @@ rtl80x9_mediastatus(sc, ifmr)
 }
 
 void
-rtl80x9_init_card(sc)
-	struct dp8390_softc *sc;
+rtl80x9_init_card(struct dp8390_softc *sc)
 {
 	struct ifmedia *ifm = &sc->sc_media;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -156,8 +152,7 @@ rtl80x9_init_card(sc)
 }
 
 void
-rtl80x9_media_init(sc)
-	struct dp8390_softc *sc;
+rtl80x9_media_init(struct dp8390_softc *sc)
 {
 	static int rtl80x9_media[] = {
 		IFM_ETHER|IFM_AUTO,

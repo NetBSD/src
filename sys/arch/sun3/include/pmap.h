@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.78.1 2008/05/16 02:23:21 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.78.2 2009/05/04 08:12:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,15 +28,6 @@
 
 #ifndef	_MACHINE_PMAP_H
 #define	_MACHINE_PMAP_H
-
-/*
- * NB:  The details of struct pmap are exposed ONLY when
- * building a kernel.  LKMs and user-level programs see
- * only this anonymous declaration.  Note that the actual
- * declaration may vary on different m68k kernels.
- */
-struct pmap;
-typedef struct pmap *pmap_t;
 
 #ifdef	_SUN3_
 #include <machine/pmap3.h>

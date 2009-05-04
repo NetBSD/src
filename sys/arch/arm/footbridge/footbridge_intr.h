@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.12.10.1 2008/05/16 02:21:56 yamt Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.12.10.2 2009/05/04 08:10:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef _FOOTBRIDGE_INTR_H_
 #define _FOOTBRIDGE_INTR_H_
 
+#include <arm/cpu.h>
 #include <arm/armreg.h>
 
 #define IPL_NONE	0	/* nothing */

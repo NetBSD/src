@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.8.4.1 2008/05/16 02:25:50 yamt Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.8.4.2 2009/05/04 08:14:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,13 +27,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.8.4.2 2009/05/04 08:14:29 yamt Exp $");
+
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/event.h>
+#include <sys/kauth.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
-#include <sys/cpu.h>
-#include <sys/evcnt.h>
+#include <sys/syscallvar.h>
+#include <sys/xcall.h>
+
+#include <secmodel/securelevel/securelevel.h>
 
 #ifdef __sparc__
  /* 
@@ -44,80 +52,85 @@ int nbpg = 4096;
 #endif
 
 void
-preempt()
+yield(void)
 {
 
+	/*
+	 * Do nothing - doesn't really make sense as we're being
+	 * scheduled anyway.
+	 */
 	return;
 }
 
 void
-knote(struct klist *list, long hint)
+preempt(void)
 {
 
+	/* see yield */
 	return;
-}
-
-/* not tonight, honey */
-int
-sysctl_createv(struct sysctllog **log, int cflags,
-	const struct sysctlnode **rnode, const struct sysctlnode **cnode,
-	int flags, int type, const char *namep, const char *desc,
-	sysctlfn func, u_quad_t qv, void *newp, size_t newlen, ...)
-{
-
-	return 0;
-}
-
-int
-sysctl_notavail(SYSCTLFN_ARGS)
-{
-
-	return EOPNOTSUPP;
-}
-
-int
-sysctl_lookup(SYSCTLFN_ARGS)
-{
-
-	return ENOSYS;
-}
-
-int
-sysctl_query(SYSCTLFN_ARGS)
-{
-
-	return ENOSYS;
-}
-
-void
-sysctl_lock(bool write)
-{
-
-}
-
-void
-sysctl_relock(void)
-{
-
-}
-
-void
-sysctl_unlock(void)
-{
-
 }
 
 struct cpu_info *
-cpu_lookup_byindex(u_int index)
+cpu_lookup(u_int index)
 {
 	extern struct cpu_info rump_cpu;
 
 	return &rump_cpu;
 }
 
+int
+syscall_establish(const struct emul *em, const struct syscall_package *sp)
+{
+	extern struct sysent rump_sysent[];
+	int i;
+
+	KASSERT(em == NULL || em == &emul_netbsd);
+
+	for (i = 0; sp[i].sp_call; i++)
+		rump_sysent[sp[i].sp_code].sy_call = sp[i].sp_call;
+
+	return 0;
+}
+
+int
+syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
+}
+
+/* crosscalls not done, no other hardware CPUs */
+uint64_t
+xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
+{
+
+	return -1;
+}
+
 void
-evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
-    const char *group, const char *name)
+xc_wait(uint64_t where)
+{
+
+}
+
+/*
+ * XXX: bsd44 secmodel depends on securelevel
+ */
+int
+secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
+{
+
+	return 0;
+}
+
+void
+secmodel_securelevel_init()
+{
+
+}
+
+void
+secmodel_securelevel_start()
 {
 
 }

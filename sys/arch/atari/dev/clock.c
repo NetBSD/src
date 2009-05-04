@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40 2008/01/08 18:04:16 joerg Exp $	*/
+/*	$NetBSD: clock.c,v 1.40.10.1 2009/05/04 08:10:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2008/01/08 18:04:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40.10.1 2009/05/04 08:10:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -149,8 +149,8 @@ dev_type_close(rtcclose);
 dev_type_read(rtcread);
 dev_type_write(rtcwrite);
 
-static void	clockattach __P((struct device *, struct device *, void *));
-static int	clockmatch __P((struct device *, struct cfdata *, void *));
+static void	clockattach(struct device *, struct device *, void *);
+static int	clockmatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
@@ -162,9 +162,9 @@ const struct cdevsw rtc_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-void statintr __P((struct clockframe));
+void statintr(struct clockframe);
 
-static int	twodigits __P((char *, int));
+static int	twodigits(char *, int);
 
 static int	divisor;	/* Systemclock divisor	*/
 
@@ -184,10 +184,7 @@ static int	clk2min;	/* current, from above choices		*/
 #endif
 
 int
-clockmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if (!atari_realconfig) {
 	    /*
@@ -239,7 +236,6 @@ void		*auxp;
 	MFP->mf_tadr  = divisor;	/* Set divisor			*/
 
 	clk_timecounter.tc_frequency = CLOCK_HZ;
-	tc_init(&clk_timecounter);
 
 	if (hz != 48 && hz != 64 && hz != 96) { /* XXX */
 		printf (": illegal value %d for systemclock, reset to %d\n\t",
@@ -247,6 +243,7 @@ void		*auxp;
 		hz = 64;
 	}
 	printf(": system hz %d timer-A divisor 200/%d\n", hz, divisor);
+	tc_init(&clk_timecounter);
 
 #ifdef STATCLOCK
 	if ((stathz == 0) || (stathz > hz) || (CLOCK_HZ % stathz))
@@ -265,7 +262,7 @@ void		*auxp;
 
 }
 
-void cpu_initclocks()
+void cpu_initclocks(void)
 {
 	MFP->mf_tacr  = T_Q200;		/* Start timer			*/
 	MFP->mf_ipra  = (u_int8_t)~IA_TIMA;/* Clear pending interrupts	*/
@@ -281,8 +278,7 @@ void cpu_initclocks()
 }
 
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 #ifdef STATCLOCK
 	if (newhz == stathz)
@@ -293,8 +289,7 @@ setstatclockrate(newhz)
 
 #ifdef STATCLOCK
 void
-statintr(frame)
-	struct clockframe frame;
+statintr(struct clockframe frame)
 {
 	register int	var, r;
 
@@ -383,9 +378,7 @@ delay(unsigned int n)
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
  */
-profclock(pc, ps)
-	void *pc;
-	int ps;
+profclock(void *pc, int ps)
 {
 	/*
 	 * Came from user mode.
@@ -504,18 +497,13 @@ atari_rtc_set(todr_chip_handle_t todr, struct clock_ymdhms *dtp)
  *                   RTC-device support				       *
  ***********************************************************************/
 int
-rtcopen(dev, flag, mode, l)
-	dev_t		dev;
-	int		flag, mode;
-	struct lwp	*l;
+rtcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int			unit = minor(dev);
 	struct clock_softc	*sc;
 
-	if (unit >= clock_cd.cd_ndevs)
-		return ENXIO;
-	sc = clock_cd.cd_devs[unit];
-	if (!sc)
+	sc = device_lookup_private(&clock_cd, unit);
+	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_flags & RTC_OPEN)
 		return EBUSY;
@@ -525,31 +513,24 @@ rtcopen(dev, flag, mode, l)
 }
 
 int
-rtcclose(dev, flag, mode, l)
-	dev_t		dev;
-	int		flag;
-	int		mode;
-	struct lwp	*l;
+rtcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int			unit = minor(dev);
-	struct clock_softc	*sc = clock_cd.cd_devs[unit];
+	struct clock_softc	*sc = device_lookup_private(&clock_cd, unit);
 
 	sc->sc_flags = 0;
 	return 0;
 }
 
 int
-rtcread(dev, uio, flags)
-	dev_t		dev;
-	struct uio	*uio;
-	int		flags;
+rtcread(dev_t dev, struct uio *uio, int flags)
 {
 	struct clock_softc	*sc;
 	mc_todregs		clkregs;
 	int			s, length;
 	char			buffer[16];
 
-	sc = clock_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&clock_cd, minor(dev));
 
 	s = splhigh();
 	MC146818_GETTOD(RTC, &clkregs);
@@ -571,9 +552,7 @@ rtcread(dev, uio, flags)
 }
 
 static int
-twodigits(buffer, pos)
-	char *buffer;
-	int pos;
+twodigits(char *buffer, int pos)
 {
 	int result = 0;
 
@@ -585,10 +564,7 @@ twodigits(buffer, pos)
 }
 
 int
-rtcwrite(dev, uio, flags)
-	dev_t		dev;
-	struct uio	*uio;
-	int		flags;
+rtcwrite(dev_t dev, struct uio *uio, int flags)
 {
 	mc_todregs		clkregs;
 	int			s, length, error;

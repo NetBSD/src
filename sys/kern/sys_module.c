@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.4.6.1 2008/05/16 02:25:27 yamt Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.4.6.2 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,27 +31,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.4.6.1 2008/05/16 02:25:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.4.6.2 2009/05/04 08:13:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
-#include <sys/kauth.h>
-#include <sys/kobj.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
+#include <sys/kobj.h>
 #include <sys/module.h>
-#include <sys/kauth.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
-static
-int
-handle_modctl_load(void *arg)
+static int
+handle_modctl_load(modctl_load_t *ml)
 {
-	modctl_load_t *ml = (modctl_load_t *)arg;
-
 	char *path;
 	char *props;
 	int error;
@@ -70,7 +64,7 @@ handle_modctl_load(void *arg)
 		goto out2;
 
 	propslen = ml->ml_propslen + 1;
-	props = (char *)malloc(propslen, M_TEMP, M_WAITOK|M_CANFAIL);
+	props = (char *)kmem_alloc(propslen, KM_SLEEP);
 	if (props == NULL) {
 		error = ENOMEM;
 		goto out2;
@@ -86,12 +80,12 @@ handle_modctl_load(void *arg)
 		goto out3;
 	}
 
-	error = module_load(path, ml->ml_flags, dict);
+	error = module_load(path, ml->ml_flags, dict, MODULE_CLASS_ANY);
 
 	prop_object_release(dict);
 
 out3:
-	free(props, M_TEMP);
+	kmem_free(props, propslen);
 out2:
 	PNBUF_PUT(path);
 out1:
@@ -115,6 +109,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	vaddr_t addr;
 	size_t size;
 	struct iovec iov;
+	modctl_load_t ml;
 	int error;
 	void *arg;
 
@@ -122,21 +117,10 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 
 	switch (SCARG(uap, cmd)) {
 	case MODCTL_LOAD:
-	case MODCTL_UNLOAD:
-		/* Authorize. */
-		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MODULE,
-		    0, (void *)(uintptr_t)SCARG(uap, cmd), NULL, NULL);
-		if (error != 0) {
-			return error;
-		}
-		break;
-	default:
-		break;
-	}
-
-	switch (SCARG(uap, cmd)) {
-	case MODCTL_LOAD:
-		error = handle_modctl_load(arg);
+		error = copyin(arg, &ml, sizeof(ml));
+		if (error != 0)
+			break;
+		error = handle_modctl_load(&ml);
 		break;
 
 	case MODCTL_UNLOAD:

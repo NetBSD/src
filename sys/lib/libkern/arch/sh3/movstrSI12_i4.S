@@ -1,6 +1,11 @@
-/*	$NetBSD: movstrSI12_i4.S,v 1.1 2007/03/14 22:22:53 uwe Exp $	*/
+/*	$NetBSD: movstrSI12_i4.S,v 1.1.46.1 2009/05/04 08:13:51 yamt Exp $	*/
 
 #include <machine/asm.h>
+
+
+#ifdef __ELF__
+	.hidden __movstrSI12_i4, __movmemSI12_i4
+#endif
 
 
 NENTRY(__movstrSI12_i4)

@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2008/05/16 02:22:23 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2009/05/04 08:11:08 yamt Exp $
 
 PROG=		cdboot
 PROGSOURCE=	srt0.S cdboot.c conf.c
 NEWVERSWHAT=	"CD Boot"
-
-.PATH:	${.CURDIR}/../boot
 
 CLEANFILES+=	boot.gdb boot.map
 

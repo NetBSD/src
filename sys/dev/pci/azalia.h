@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.17.32.1 2008/05/16 02:24:42 yamt Exp $	*/
+/*	$NetBSD: azalia.h,v 1.17.32.2 2009/05/04 08:12:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -531,6 +531,15 @@ typedef struct {
 					 (nid >= (codec)->wstart &&   \
 					  nid < (codec)->wend))
 
+#define PIN_STATUS(wid, conn)						\
+	do {								\
+		if ((wid)->type != COP_AWTYPE_PIN_COMPLEX)		\
+			(conn) = 0;					\
+		else							\
+			(conn) =					\
+			    ((wid)->d.pin.config & CORB_CD_PORT_MASK) >> 30; \
+	} while (0)
+
 typedef struct {
 	int nconv;
 	nid_t conv[HDA_MAX_CHANNELS]; /* front, surround, clfe, side, ... */
@@ -551,7 +560,7 @@ typedef struct codec_t {
 	int (*get_port)(struct codec_t *, mixer_ctrl_t *);
 	int (*unsol_event)(struct codec_t *, int);
 
-	struct azalia_t *az;
+	device_t dev; 		/* parent azalia(4) instance */
 	uint32_t vid;		/* codec vendor/device ID */
 	uint32_t subid;		/* PCI subvendor/device ID */
 	const char *name;

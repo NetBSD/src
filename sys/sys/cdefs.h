@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.66 2007/11/26 14:52:34 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.66.18.1 2009/05/04 08:14:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -191,6 +191,12 @@
 #define	__pure
 #endif
 
+#if __GNUC_PREREQ__(3, 0)
+#define	__noinline	__attribute__((__noinline__))
+#else
+#define	__noinline	/* nothing */
+#endif
+
 #if __GNUC_PREREQ__(2, 7)
 #define	__unused	__attribute__((__unused__))
 #else
@@ -208,9 +214,9 @@
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
 #elif defined(__PCC__)
-#define	__packed	/* XXX ignore for now */
-#define	__aligned(x)   	/* XXX ignore for now */
-#define	__section(x)   	/* XXX ignore for now */
+#define	__packed	_Pragma("packed")
+#define	__aligned(x)   	_Pragma("aligned " __STRING(x))
+#define	__section(x)   	_Pragma("section " ## x)
 #elif defined(__lint__)
 #define	__packed	/* delete */
 #define	__aligned(x)	/* delete */
@@ -225,12 +231,12 @@
  * C99 defines the restrict type qualifier keyword, which was made available
  * in GCC 2.92.
  */
-#if __STDC_VERSION__ >= 199901L
-#define	__restrict	restrict
-#else
-#if !__GNUC_PREREQ__(2, 92)
+#if defined(__lint__)
 #define	__restrict	/* delete __restrict when not supported */
-#endif
+#elif __STDC_VERSION__ >= 199901L
+#define	__restrict	restrict
+#elif !__GNUC_PREREQ__(2, 92)
+#define	__restrict	/* delete __restrict when not supported */
 #endif
 
 /*
@@ -316,6 +322,24 @@
 #endif
 
 /*
+ * Compiler-dependent macros to declare that functions take printf-like
+ * or scanf-like arguments.  They are null except for versions of gcc
+ * that are known to support the features properly (old versions of gcc-2
+ * didn't permit keeping the keywords out of the application namespace).
+ */
+#if __GNUC_PREREQ__(2, 7)
+#define __printflike(fmtarg, firstvararg)	\
+	    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
+#define __scanflike(fmtarg, firstvararg)	\
+	    __attribute__((__format__ (__scanf__, fmtarg, firstvararg)))
+#define __format_arg(fmtarg)    __attribute__((__format_arg__ (fmtarg)))
+#else
+#define __printflike(fmtarg, firstvararg)	/* nothing */
+#define __scanflike(fmtarg, firstvararg)	/* nothing */
+#define __format_arg(fmtarg)			/* nothing */
+#endif
+
+/*
  * Macros for manipulating "link sets".  Link sets are arrays of pointers
  * to objects, which are gathered up by the linker.
  *
@@ -372,7 +396,7 @@
 
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
-	(((__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (__n)))
+    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)(__n)))
 
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\

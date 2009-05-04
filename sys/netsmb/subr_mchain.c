@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.14 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.14.40.1 2009/05/04 08:14:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.14 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.14.40.1 2009/05/04 08:14:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,11 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.14 2007/03/04 06:03:36 christos Ex
 
 #include <netsmb/mchain.h>
 
-#define MBERROR(format, args...) printf("%s(%d): "format, __func__ , \
-				    __LINE__ ,## args)
-
-#define MBPANIC(format, args...) printf("%s(%d): "format, __func__ , \
-				    __LINE__ ,## args)
+#define MBERROR(x)	aprint_error x
+#define MBPANIC(x)	aprint_error x
 
 #ifdef __NetBSD__
 static struct mbuf *
@@ -141,7 +138,7 @@ mb_init(struct mbchain *mbp)
 void
 mb_initm(struct mbchain *mbp, struct mbuf *m)
 {
-	bzero(mbp, sizeof(*mbp));
+	memset(mbp, 0, sizeof(*mbp));
 	mbp->mb_top = mbp->mb_cur = m;
 	mbp->mb_mleft = M_TRAILINGSPACE(m);
 }
@@ -285,7 +282,7 @@ mb_put_mem(struct mbchain *mbp, const char *source, int size, int type)
 				*dst++ = *src++;
 			break;
 		    case MB_MSYSTEM:
-			bcopy(source, dst, cplen);
+			memcpy(dst, source, cplen);
 			break;
 		    case MB_MUSER:
 			error = copyin(source, dst, cplen);
@@ -293,7 +290,7 @@ mb_put_mem(struct mbchain *mbp, const char *source, int size, int type)
 				return error;
 			break;
 		    case MB_MZERO:
-			bzero(dst, cplen);
+			memset(dst, 0, cplen);
 			break;
 		}
 		size -= cplen;
@@ -376,7 +373,7 @@ md_init(struct mdchain *mdp)
 void
 md_initm(struct mdchain *mdp, struct mbuf *m)
 {
-	bzero(mdp, sizeof(*mdp));
+	memset(mdp, 0, sizeof(*mdp));
 	mdp->md_top = mdp->md_cur = m;
 	mdp->md_pos = mtod(m, u_char*);
 }
@@ -528,7 +525,7 @@ md_get_mem(struct mdchain *mdp, void *targetv, int size, int type)
 	while (size > 0) {
 		if (m == NULL) {
 #ifdef MCHAIN_DEBUG
-			MBERROR("incomplete copy\n");
+			MBERROR(("incomplete copy\n"));
 #endif
 			return EBADRPC;
 		}
@@ -553,7 +550,7 @@ md_get_mem(struct mdchain *mdp, void *targetv, int size, int type)
 				return error;
 			break;
 		    case MB_MSYSTEM:
-			bcopy(s, target, count);
+			memcpy(target, s, count);
 			break;
 		    case MB_MINLINE:
 			while (count--)

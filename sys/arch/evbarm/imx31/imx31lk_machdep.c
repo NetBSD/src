@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.1.24.1 2008/05/16 02:22:13 yamt Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.1.24.2 2009/05/04 08:10:58 yamt Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.1.24.1 2008/05/16 02:22:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.1.24.2 2009/05/04 08:10:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -280,6 +280,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -310,6 +311,8 @@ cpu_reboot(int howto, char *bootstr)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -584,9 +587,9 @@ initarm(void *arg)
 
 
 printf("%s: etext %lx, _end %lx\n",
-	__FUNCTION__, (uintptr_t)etext, (uintptr_t)_end);
+	__func__, (uintptr_t)etext, (uintptr_t)_end);
 printf("%s: textsize %#lx, totalsize %#lx\n",
-	__FUNCTION__, textsize, totalsize);
+	__func__, textsize, totalsize);
 		
 		logical = 0x00100000;	/* offset of kernel in RAM */
 
@@ -845,7 +848,7 @@ consinit_test(void)
 	imxuart_softc_t *sc, softc;
 	extern int imxuart_puts(imxuart_softc_t *sc, const char *s);
 
-	printf("\n%s start\n", __FUNCTION__);
+	printf("\n%s start\n", __func__);
 	sc = &softc;
 	sc->sc_init_cnt = 0;
 	imxuart_init(sc, IMX_UART1_BASE);
@@ -853,7 +856,7 @@ consinit_test(void)
 	imxuart_init(sc,
 	    IMX31LITEKIT_UART1_VBASE|(IMX_UART1_BASE & ~_A(IMX_UART1_BASE)));
 	imxuart_puts(sc, "test2\r\n");
-	printf("%s done\n", __FUNCTION__);
+	printf("%s done\n", __func__);
 }
 
 #ifdef KGDB

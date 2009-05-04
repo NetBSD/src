@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.11 2008/03/21 21:54:58 ad Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.11.4.1 2009/05/04 08:12:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11.4.1 2009/05/04 08:12:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11 2008/03/21 21:54:58 ad Exp $")
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -78,7 +80,7 @@ static inline void linux32_from_stat(struct stat *, struct linux32_stat64 *);
 static inline void
 linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
 {
-	bzero(st32, sizeof(*st32));
+	memset(st32, 0, sizeof(*st32));
 	st32->lst_dev = linux_fakedev(st->st_dev, 0);
 	st32->__lst_ino = st->st_ino;
 	st32->lst_mode = st->st_mode;

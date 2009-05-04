@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.13.4.1 2008/05/16 02:21:43 yamt Exp $ */
+/* $NetBSD: if_eh.c,v 1.13.4.2 2009/05/04 08:10:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.13.4.1 2008/05/16 02:21:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.13.4.2 2009/05/04 08:10:24 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -309,7 +309,7 @@ eh_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    device_xname(self), "intr");
 	sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_NET, dp8390_intr,
-	    self, &sc->sc_intrcnt);
+	    &sc->sc_dp, &sc->sc_intrcnt);
 	if (bootverbose)
 		aprint_verbose_dev(self, "interrupting at %s\n",
 		    irq_string(sc->sc_ih));

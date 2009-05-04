@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.22.6.1 2008/05/16 02:22:38 yamt Exp $	*/
+/*	$NetBSD: boot2.c,v 1.22.6.2 2009/05/04 08:11:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -76,20 +76,18 @@
 #include <lib/libkern/libkern.h>
 
 #include <libi386.h>
+#include <bootmod.h>
+#include <bootmenu.h>
+#include <vbe.h>
 #include "devopen.h"
-#include "bootmod.h"
 
-#ifdef SUPPORT_USTARFS
-#include "ustarfs.h"
-#endif
 #ifdef SUPPORT_PS2
 #include <biosmca.h>
 #endif
 
 extern struct x86_boot_params boot_params;
 
-extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
-	bootprog_maker[];
+extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 int errno;
 
@@ -107,13 +105,6 @@ static const char * const names[][2] = {
 
 #define MAXDEVNAME 16
 
-#ifndef SMALL
-#define BOOTCONF "boot.cfg"
-#define MAXMENU 10
-#define MAXBANNER 12
-#define COMMAND_SEPARATOR ';'
-#endif /* !SMALL */
-
 static char *default_devname;
 static int default_unit, default_partition;
 static const char *default_filename;
@@ -123,12 +114,6 @@ void bootit(const char *, int, int);
 void print_banner(void);
 void boot2(int, u_int);
 
-#ifndef SMALL
-void parsebootconf(const char *);
-void doboottypemenu(void);
-int atoi(const char *);
-#endif /* !SMALL */
-
 void	command_help(char *);
 void	command_ls(char *);
 void	command_quit(char *);
@@ -136,7 +121,7 @@ void	command_boot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
 void	command_modules(char *);
-void	command_load(char *);
+void	command_multiboot(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -147,21 +132,11 @@ const struct bootblk_command commands[] = {
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
 	{ "modules",	command_modules },
-	{ "load",	command_load },
+	{ "load",	module_add },
+	{ "multiboot",	command_multiboot },
+	{ "vesa",	command_vesa },
 	{ NULL,		NULL },
 };
-
-#ifndef SMALL
-struct bootconf_def {
-	char *banner[MAXBANNER];	/* Banner text */
-	char *command[MAXMENU];		/* Menu commands per entry*/
-	char *consdev;			/* Console device */
-	int def;			/* Default menu option */
-	char *desc[MAXMENU];		/* Menu text per entry */
-	int nummenu;			/* Number of menu items */
-	int timeout;		 	/* Timeout in seconds */
-} bootconf;
-#endif /* !SMALL */
 
 int
 parsebootfile(const char *fname, char **fsname, char **devname,
@@ -245,6 +220,14 @@ sprint_bootsel(const char *filename)
 	return "(invalid)";
 }
 
+static void
+clearit(void)
+{
+
+	if (bootconf.clear)
+		clear_pc_screen();
+}
+
 void
 bootit(const char *filename, int howto, int tell)
 {
@@ -256,7 +239,7 @@ bootit(const char *filename, int howto, int tell)
 		printf("\n");
 	}
 
-	if (exec_netbsd(filename, 0, howto) < 0)
+	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
@@ -266,6 +249,8 @@ bootit(const char *filename, int howto, int tell)
 void
 print_banner(void)
 {
+
+	clearit();
 #ifndef SMALL
 	int n;
 	if (bootconf.banner[0]) {
@@ -273,268 +258,16 @@ print_banner(void)
 			printf("%s\n", bootconf.banner[n]);
 	} else {
 #endif /* !SMALL */
-		printf("\n");
-		printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-		printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-		printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
+		printf("\n"
+		       ">> %s, Revision %s (from NetBSD %s)\n"
+		       ">> Memory: %d/%d k\n",
+		       bootprog_name, bootprog_rev, bootprog_kernrev,
+		       getbasemem(), getextmem());
 
 #ifndef SMALL
 	}
 #endif /* !SMALL */
 }
-
-#ifndef SMALL
-int
-atoi(const char *in)
-{
-	char *c;
-	int ret;
-
-	ret = 0;
-	c = (char *)in;
-	if (*c == '-')
-		c++;
-	for (; isnum(*c); c++)
-		ret = (ret * 10) + (*c - '0');
-
-	return (*in == '-') ? -ret : ret;
-}
-
-/*
- * This function parses a boot.cfg file in the root of the filesystem
- * (if present) and populates the global boot configuration.
- * 
- * The file consists of a number of lines each terminated by \n
- * The lines are in the format keyword=value. There should be spaces
- * around the = sign.
- *
- * The recognised keywords are:
- * banner: text displayed instead of the normal welcome text
- * menu: Descriptive text:command to use
- * timeout: Timeout in seconds (overrides that set by installboot)
- * default: the default menu option to use if Return is pressed
- * consdev: the console device to use
- *
- * Example boot.cfg file:
- * banner=Welcome to NetBSD
- * banner=Please choose the boot type from the following menu
- * menu=Boot NetBSD:boot netbsd
- * menu=Boot into single user mode:boot netbsd -s
- * menu=:boot hd1a:netbsd -cs
- * menu=Goto boot comand line:prompt
- * timeout=10
- * consdev=com0
- * default=1
-*/
-void
-parsebootconf(const char *conf)
-{
-	char *bc, *c;
-	int cmenu, cbanner, len;
-	int fd, err, off;
-	struct stat st;
-	char *key, *value, *v2;
-	extern char twiddle_toggle;
-#ifdef SUPPORT_USTARFS
-	void *op_open;
-#endif
-
-	/* Clear bootconf structure */
-	bzero((void *)&bootconf, sizeof(bootconf));
-	
-	/* Set timeout to configured */
-	bootconf.timeout = boot_params.bp_timeout;
-
-	/* don't try to open BOOTCONF if the target fs is ustarfs */
-#ifdef SUPPORT_USTARFS
-#if !defined(LIBSA_SINGLE_FILESYSTEM)
-	fd = open("boot", 0);	/* assume we are loaded as "boot" from here */
-	if (fd < 0)
-		op_open = NULL;	/* XXX */
-	else {
-		op_open = files[fd].f_ops->open;
-		close(fd);
-	}
-#else
-	op_open = file_system[0].open;
-#endif	/* !LIBSA_SINGLE_FILESYSTEM */
-	if (op_open == ustarfs_open)
-		return;
-#endif	/* SUPPORT_USTARFS */
-
-	fd = open(BOOTCONF, 0);
-	if (fd < 0)
-		return;
-	
-	err = fstat(fd, &st);
-	if (err == -1) {
-		close(fd);
-		return;
-	}
-
-	bc = alloc(st.st_size + 1);
-	if (bc == NULL) {
-		printf("Could not allocate memory for boot configuration\n");
-		return;
-	}
-	
-	twiddle_toggle = 1;
-	off = 0;
-	do {
-		len = read(fd, bc + off, 1024);
-		if (len <= 0)
-			break;
-		off += len;
-	} while (len > 0);
-	bc[off] = '\0';
-	twiddle_toggle = 0;
-	
-	close(fd);
-	/* bc now contains the whole boot.cfg file */
-	
-	cmenu = 0;
-	cbanner = 0;
-	for(c = bc; *c; c++) {
-		key = c;
-		/* Look for = separator between key and value */
-		for (; *c && *c != '='; c++)
-			continue;
-		if (*c == '\0')
-			break; /* break if at end of data */
-		
-		/* zero terminate key which points to keyword */
-		*c++ = 0;
-		value = c;
-		/* Look for end of line (or file) and zero terminate value */
-		for (; *c && *c != '\n'; c++)
-			continue;
-		*c = 0;
-		
-		if (!strncmp(key, "menu", 4)) {
-			/*
-			 * Parse "menu=<description>:<command>".  If the
-			 * description is empty ("menu=:<command>)",
-			 * then re-use the command as the description.
-			 * Note that the command may contain embedded
-			 * colons.
-			 */
-			if (cmenu >= MAXMENU)
-				continue;
-			bootconf.desc[cmenu] = value;
-			for (v2=value; *v2 && *v2 != ':'; v2++)
-				continue;
-			if (*v2) {
-				*v2++ = 0;
-				bootconf.command[cmenu] = v2;
-				if (! *value)
-					bootconf.desc[cmenu] = v2;
-				cmenu++;
-			} else {
-				/* No delimiter means invalid line */
-				bootconf.desc[cmenu] = NULL;
-			}
-		} else if (!strncmp(key, "banner", 6)) {
-			if (cbanner < MAXBANNER)
-				bootconf.banner[cbanner++] = value;
-		} else if (!strncmp(key, "timeout", 7)) {
-			if (!isnum(*value))
-				bootconf.timeout = -1;
-			else
-				bootconf.timeout = atoi(value);
-		} else if (!strncmp(key, "default", 7)) {
-			bootconf.def = atoi(value) - 1;
-		} else if (!strncmp(key, "consdev", 7)) {
-			bootconf.consdev = value;
-		} else if (!strncmp(key, "load", 6)) {
-			command_load(value);
-		}
-	}
-	bootconf.nummenu = cmenu;
-	if (bootconf.def < 0)
-		bootconf.def = 0;
-	if (bootconf.def >= cmenu)
-		bootconf.def = cmenu - 1;
-}
-
-/*
- * doboottypemenu will render the menu and parse any user input
- */
-
-void
-doboottypemenu(void)
-{
-	int choice;
-	char input[80], c, *ic, *oc;
-		
-	printf("\n");
-	/* Display menu */
-	for (choice = 0; bootconf.desc[choice]; choice++)
-		printf("    %d. %s\n", choice+1, bootconf.desc[choice]);
-
-	choice = -1;
-	for(;;) {
-		input[0] = '\0';
-		
-		if (bootconf.timeout < 0) {
-			printf("\nOption: [%d]:", bootconf.def + 1);
-			gets(input);
-			if (input[0] == '\0') choice = bootconf.def;
-			if (input[0] >= '1' && 
-				input[0] <= bootconf.nummenu + '0')
-				    choice = input[0] - '1';
-		} else if (bootconf.timeout == 0)
-			choice = bootconf.def;
-		else  {
-			printf("\nChoose an option; RETURN for default; "
-			       "SPACE to stop countdown.\n");
-			printf("Option %d will be chosen in ",
-			      bootconf.def + 1);
-			c = awaitkey(bootconf.timeout, 1);
-			if (c >= '1' && c <= bootconf.nummenu + '0')
-				choice = c - '1';
-			else if (c ==  '\r' || c == '\n' || c == '\0')
-				/* default if timed out or Return pressed */
-				choice = bootconf.def;
-			else {
-				/* If any other key pressed, drop to menu */
-				bootconf.timeout = -1;
-				choice = -1;
-			}
-		}
-		if (choice < 0)
-			continue;
-		if (!strcmp(bootconf.command[choice], "prompt") && 
-		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0 ||
-		    check_password(boot_params.bp_password))) {
-			printf("type \"?\" or \"help\" for help.\n");
-			bootmenu(); /* does not return */
-		} else {
-			ic = bootconf.command[choice];
-			/* Split command string at ; into separate commands */
-			do {
-				oc = input;
-				/* Look for ; separator */
-				for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
-					*oc++ = *ic;
-				if (*input == '\0')
-					continue;
-				/* Strip out any trailing spaces */
-				oc--;
-				for (; *oc ==' ' && oc > input; oc--);
-				*++oc = '\0';
-				if (*ic == COMMAND_SEPARATOR)
-					ic++;
-				/* Stop silly command strings like ;;; */
-				if (*input != '\0')
-					docommand(input);
-				/* Skip leading spaces */
-				for (; *ic == ' '; ic++);
-			} while (*ic);
-		}
-			
-	}
-}
-#endif /* !SMALL */
 
 /*
  * Called from the initial entry point boot_start in biosboot.S
@@ -545,8 +278,11 @@ doboottypemenu(void)
 void
 boot2(int biosdev, u_int biossector)
 {
+	extern char twiddle_toggle;
 	int currname;
 	char c;
+
+	twiddle_toggle = 1;	/* no twiddling until we're ready */
 
 	initio(boot_params.bp_consdev);
 
@@ -557,6 +293,8 @@ boot2(int biosdev, u_int biossector)
 
 	if (boot_params.bp_flags & X86_BP_FLAGS_RESET_VIDEO)
 		biosvideomode();
+
+	vbe_init();
 
 	/* need to remember these */
 	boot_biosdev = biosdev;
@@ -582,12 +320,15 @@ boot2(int biosdev, u_int biossector)
 		print_banner();
 
 	/* Display the menu, if applicable */
+	twiddle_toggle = 0;
 	if (bootconf.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	}
+
 #else
-		print_banner();
+	twiddle_toggle = 0;
+	print_banner();
 #endif
 
 	printf("Press return to boot now, any other key for boot menu\n");
@@ -630,8 +371,10 @@ command_help(char *arg)
 	       "ls [path]\n"
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "vesa {enabled|disabled|list|modenum}\n"
 	       "modules {enabled|disabled}\n"
 	       "load {path_to_module}\n"
+	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "help|?\n"
 	       "quit\n");
 }
@@ -666,7 +409,7 @@ command_boot(char *arg)
 	int howto;
 
 	if (parseboot(arg, &filename, &howto))
-		bootit(filename, howto, 1);
+		bootit(filename, howto, (howto & AB_VERBOSE) != 0);
 }
 
 void
@@ -741,28 +484,15 @@ command_modules(char *arg)
 }
 
 void
-command_load(char *arg)
+command_multiboot(char *arg)
 {
-	boot_module_t *bm, *bmp;
-	size_t len;
-	char *str;
+	char *filename;
 
-	bm = alloc(sizeof(boot_module_t));
-	len = strlen(arg) + 1;
-	str = alloc(len);
-	if (bm == NULL || str == NULL) {
-		printf("couldn't allocate module\n");
-		return;
-	}
-	memcpy(str, arg, len);
-	bm->bm_path = str;
-	bm->bm_next = NULL;
-	if (boot_modules == NULL)
-		boot_modules = bm;
-	else {
-		for (bmp = boot_modules; bmp->bm_next;
-		    bmp = bmp->bm_next)
-			;
-		bmp->bm_next = bm;
-	}
+	filename = arg;
+	if (exec_multiboot(filename, gettrailer(arg)) < 0)
+		printf("multiboot: %s: %s\n", sprint_bootsel(filename),
+		       strerror(errno));
+	else
+		printf("boot returned\n");
 }
+

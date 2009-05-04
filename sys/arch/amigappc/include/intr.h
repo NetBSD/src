@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19.48.1 2008/05/16 02:21:53 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.48.2 2009/05/04 08:10:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  * the list.  The handler is called with its (single) argument.
  */
 struct intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	u_long	ih_count;
 	struct	intrhand *ih_next;
@@ -92,12 +92,12 @@ struct intrhand {
 	int	ih_irq;
 };
 
-void do_pending_int __P((void));
+void do_pending_int(void);
 
-static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
-static __inline void softintr __P((int));
+static __inline int splraise(int);
+static __inline int spllower(int);
+static __inline void splx(int);
+static __inline void softintr(int);
 
 extern volatile int cpl, ipending, astpending, tickspending;
 extern int imask[];

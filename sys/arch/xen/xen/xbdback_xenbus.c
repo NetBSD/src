@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.16 2008/03/22 14:21:56 ad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.16.4.1 2009/05/04 08:12:14 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16 2008/03/22 14:21:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16.4.1 2009/05/04 08:12:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16 2008/03/22 14:21:56 ad Exp $
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/workqueue.h>
+#include <sys/buf.h>
 
 #include <xen/xen.h>
 #include <xen/xen_shm.h>
@@ -177,6 +179,7 @@ struct xbdback_request {
  * can be coalesced.
  */
 struct xbdback_io {
+	struct work xio_work;
 	struct buf xio_buf; /* our I/O */
 	/* The instance pointer is duplicated for convenience. */
 	struct xbdback_instance *xio_xbdi; /* our xbd instance */
@@ -246,7 +249,7 @@ static void *xbdback_co_flush_done(struct xbdback_instance *, void *);
 
 static int  xbdback_shm_callback(void *);
 static void xbdback_io_error(struct xbdback_io *, int);
-static void xbdback_do_io(struct xbdback_io *);
+static void xbdback_do_io(struct work *, void *);
 static void xbdback_iodone(struct buf *);
 static void xbdback_send_reply(struct xbdback_instance *, uint64_t , int , int);
 
@@ -262,6 +265,8 @@ static struct xenbus_backend_driver xbd_backend_driver = {
 	.xbakd_create = xbdback_xenbus_create,
 	.xbakd_type = "vbd"
 };
+
+struct workqueue *xbdback_workqueue;
 
 void
 xbdbackattach(int n)
@@ -293,6 +298,9 @@ xbdbackattach(int n)
             BLKIF_MAX_SEGMENTS_PER_REQUEST * BLKIF_RING_SIZE) != 0)
 		printf("xbdback: failed to prime fragment pool\n");
 
+	if (workqueue_create(&xbdback_workqueue, "xbdbackd",
+	    xbdback_do_io, NULL, PRI_BIO, IPL_BIO, 0))
+		printf("xbdback: failed to init workqueue\n");
 	xenbus_backend_register(&xbd_backend_driver);
 }
 
@@ -306,7 +314,7 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 
 	if ((error = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "frontend-id", &domid, 10)) != 0) {
-		aprint_error("xbdback: can' read %s/frontend-id: %d\n",
+		aprint_error("xbdback: can't read %s/frontend-id: %d\n",
 		    xbusd->xbusd_path, error);
 		return error;
 	}
@@ -415,9 +423,10 @@ xbdback_xenbus_destroy(void *arg)
 	}
 	/* close device */
 	if (xbdi->xbdi_size) {
-		printf("xbd backend: detach device %s%d%c for domain %d\n",
+		printf("xbd backend: detach device %s%"PRId32"%c for domain %d\n",
 		    devsw_blk2name(major(xbdi->xbdi_dev)),
-		    DISKUNIT(xbdi->xbdi_dev), DISKPART(xbdi->xbdi_dev) + 'a',
+		    DISKUNIT(xbdi->xbdi_dev),
+		    (char)DISKPART(xbdi->xbdi_dev) + 'a',
 		    xbdi->xbdi_domid);
 		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 	}
@@ -478,7 +487,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 				proto = XEN_IO_PROTO_ABI_X86_32;
 			} else if(strcmp(xsproto, XEN_IO_PROTO_ABI_X86_64) == 0) {
 				xbdi->xbdi_proto = XBDIP_64;
-				proto = XEN_IO_PROTO_ABI_X86_32;
+				proto = XEN_IO_PROTO_ABI_X86_64;
 			} else {
 				printf("xbd domain %d: unknown proto %s\n",
 				    xbdi->xbdi_domid, xsproto);
@@ -539,10 +548,11 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 		evop.u.bind_interdomain.remote_port = revtchn;
 		err = HYPERVISOR_event_channel_op(&evop);
 		if (err) {
-			printf("blkback %s: can't get event channel: %d\n",
+			aprint_error("blkback %s: "
+			    "can't get event channel: %d\n",
 			    xbusd->xbusd_otherend, err);
 			xenbus_dev_fatal(xbusd, err,
-			    "can't bind event chanel", xbusd->xbusd_otherend);
+			    "can't bind event channel", xbusd->xbusd_otherend);
 			goto err2;
 		}
 		xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
@@ -550,7 +560,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 		    xbdi->xbdi_domid, xbdi->xbdi_handle);
 		event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
 		    xbdi, IPL_BIO, evname);
-		printf("xbd backend 0x%x for domain %d "
+		aprint_verbose("xbd backend 0x%x for domain %d "
 		    "using event channel %d, protocol %s\n", xbdi->xbdi_handle,
 		    xbdi->xbdi_domid, xbdi->xbdi_evtchn, proto);
 		hypervisor_enable_event(xbdi->xbdi_evtchn);
@@ -617,9 +627,9 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	if (err)
 		return;
 	if (xbdi->xbdi_status == CONNECTED && xbdi->xbdi_dev != dev) {
-		printf("xbdback %s: changing physical device from 0x%x to "
-		    "0x%lx not supported\n", xbusd->xbusd_path, xbdi->xbdi_dev,
-		    dev);
+		printf("xbdback %s: changing physical device from 0x%"PRIx64
+		    " to 0x%lx not supported\n",
+		    xbusd->xbusd_path, xbdi->xbdi_dev, dev);
 		return;
 	}
 	xbdi->xbdi_dev = dev;
@@ -636,32 +646,32 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	major = major(xbdi->xbdi_dev);
 	devname = devsw_blk2name(major);
 	if (devname == NULL) {
-		printf("xbdback %s: unknwon device 0x%x\n", xbusd->xbusd_path,
-		    xbdi->xbdi_dev);
+		printf("xbdback %s: unknown device 0x%"PRIx64"\n",
+		    xbusd->xbusd_path, xbdi->xbdi_dev);
 		return;
 	}
 	xbdi->xbdi_bdevsw = bdevsw_lookup(xbdi->xbdi_dev);
 	if (xbdi->xbdi_bdevsw == NULL) {
-		printf("xbdback %s: no bdevsw for device 0x%x\n",
+		printf("xbdback %s: no bdevsw for device 0x%"PRIx64"\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev);
 		return;
 	}
 	err = bdevvp(xbdi->xbdi_dev, &xbdi->xbdi_vp);
 	if (err) {
-		printf("xbdback %s: can't open device 0x%x: %d\n",
+		printf("xbdback %s: can't open device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 		return;
 	}
 	err = vn_lock(xbdi->xbdi_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (err) {
-		printf("xbdback %s: can't vn_lock device 0x%x: %d\n",
+		printf("xbdback %s: can't vn_lock device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 		vrele(xbdi->xbdi_vp);
 		return;
 	}
 	err  = VOP_OPEN(xbdi->xbdi_vp, FREAD, NOCRED);
 	if (err) {
-		printf("xbdback %s: can't VOP_OPEN device 0x%x: %d\n",
+		printf("xbdback %s: can't VOP_OPEN device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 		vput(xbdi->xbdi_vp);
 		return;
@@ -674,7 +684,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		    FREAD, NOCRED);
 		if (err) {
 			printf("xbdback %s: can't DIOCGWEDGEINFO device "
-			    "0x%x: %d\n", xbusd->xbusd_path,
+			    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
 			    xbdi->xbdi_dev, err);
 			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
 			vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
@@ -690,7 +700,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		struct partinfo dpart;
 		err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart, FREAD, 0);
 		if (err) {
-			printf("xbdback %s: can't DIOCGPART device 0x%x: %d\n",
+			printf("xbdback %s: can't DIOCGPART device 0x%"PRIx64": %d\n",
 			    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
 			vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
@@ -698,9 +708,10 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 			return;
 		}
 		xbdi->xbdi_size = dpart.part->p_size;
-		printf("xbd backend: attach device %s%d%c (size %" PRIu64 ") "
-		    "for domain %d\n", devname, DISKUNIT(xbdi->xbdi_dev),
-		    DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
+		printf("xbd backend: attach device %s%"PRId32
+		    "%c (size %" PRIu64 ") for domain %d\n",
+		    devname, DISKUNIT(xbdi->xbdi_dev),
+		    (char)DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
 		    xbdi->xbdi_domid);
 	}
 again:
@@ -790,7 +801,7 @@ xbdback_co_main(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
 	xbdi->xbdi_req_prod = xbdi->xbdi_ring.ring_n.sring->req_prod;
-	x86_lfence(); /* ensure we see all requests up to req_prod */
+	xen_rmb(); /* ensure we see all requests up to req_prod */
 	/*
 	 * note that we'll eventually get a full ring of request.
 	 * in this case, MASK_BLKIF_IDX(req_cons) == MASK_BLKIF_IDX(req_prod)
@@ -1178,7 +1189,7 @@ static void *
 xbdback_co_flush_done(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
-	xbdback_do_io(xbdi->xbdi_io);
+	workqueue_enqueue(xbdback_workqueue, &xbdi->xbdi_io->xio_work, NULL);
 	xbdi->xbdi_io = NULL;
 	xbdi->xbdi_cont = xbdi->xbdi_cont_aux;
 	return xbdi;
@@ -1192,8 +1203,11 @@ xbdback_io_error(struct xbdback_io *xbd_io, int error)
 }
 
 static void
-xbdback_do_io(struct xbdback_io *xbd_io)
+xbdback_do_io(struct work *wk, void *dummy)
 {
+	struct xbdback_io *xbd_io = (void *)wk;
+	KASSERT(&xbd_io->xio_work == wk);
+
 	xbd_io->xio_buf.b_data =
 	    (void *)((vaddr_t)xbd_io->xio_buf.b_data + xbd_io->xio_vaddr);
 #ifdef DIAGNOSTIC
@@ -1215,8 +1229,11 @@ xbdback_do_io(struct xbdback_io *xbd_io)
 	}
 	}
 #endif
-	if ((xbd_io->xio_buf.b_flags & B_READ) == 0)
+	if ((xbd_io->xio_buf.b_flags & B_READ) == 0) {
+		mutex_enter(&xbd_io->xio_buf.b_vp->v_interlock);
 		xbd_io->xio_buf.b_vp->v_numoutput++;
+		mutex_exit(&xbd_io->xio_buf.b_vp->v_interlock);
+	}
 	bdev_strategy(&xbd_io->xio_buf);
 }
 

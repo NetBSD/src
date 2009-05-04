@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.145 2008/02/29 20:35:23 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.145.4.1 2009/05/04 08:14:39 yamt Exp $	*/
 
 /*
  *
@@ -143,7 +143,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
 #define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
-#define UVM_FLAG_QUANTUM 0x800000 /* entry never be splitted later */
+#define UVM_FLAG_QUANTUM 0x800000 /* entry can never be split later */
 #define UVM_FLAG_WAITVA  0x1000000 /* wait for va */
 #define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
 
@@ -176,7 +176,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 /*
  * the following defines the strategies for uvm_pagealloc_strat()
  */
-#define	UVM_PGA_STRAT_NORMAL	0	/* high -> low free list walk */
+#define	UVM_PGA_STRAT_NORMAL	0	/* priority (low id to high) walk */
 #define	UVM_PGA_STRAT_ONLY	1	/* only specified free list */
 #define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
 
@@ -221,6 +221,11 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define	UVM_LK_EXIT	0x00000002	/* leave map locked on exit */
 
 /*
+ * Default number of pages to allocate on the stack
+ */
+#define	UBC_MAX_PAGES	8
+
+/*
  * structures
  */
 
@@ -236,7 +241,6 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
-struct pool;
 struct simplelock;
 struct vm_map_entry;
 struct vm_map;
@@ -326,6 +330,8 @@ struct uvmexp {
 				   aborted */
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
+	int cpuhit;		/* pagealloc where we allocated locally */
+	int cpumiss;		/* pagealloc where we didn't */
 
 	/* fault subcounters.  XXX: should be 64-bit counters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -393,8 +399,8 @@ struct uvmexp_sysctl {
 	int64_t	swpgonly;
 	int64_t	nswget;
 	int64_t	unused1; /* used to be nanon */
-	int64_t	unused2; /* used to be nanonneeded */
-	int64_t	unused3; /* used to be nfreeanon */
+	int64_t cpuhit;
+	int64_t cpumiss;
 	int64_t	faults;
 	int64_t	traps;
 	int64_t	intrs;
@@ -476,6 +482,7 @@ extern struct uvmexp uvmexp;
 #else
 #define UBC_WANT_UNMAP(vp) false
 #endif
+#define UBC_UNMAP_FLAG(vp) (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0)
 
 /*
  * Shareable process virtual address space.
@@ -494,6 +501,7 @@ struct vmspace {
 	segsz_t vm_tsize;	/* text size (pages) XXX */
 	segsz_t vm_dsize;	/* data size (pages) XXX */
 	segsz_t vm_ssize;	/* stack size (pages) */
+	segsz_t vm_issize;	/* initial unmapped stack size (pages) */
 	void *	vm_taddr;	/* user virtual address of text XXX */
 	void *	vm_daddr;	/* user virtual address of data XXX */
 	void *vm_maxsaddr;	/* user VA at max stack growth */
@@ -503,8 +511,6 @@ struct vmspace {
 #define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
 #ifdef _KERNEL
-
-extern struct pool *uvm_aiobuf_pool;
 
 /*
  * used to keep state while iterating over the map for a core dump.
@@ -523,7 +529,6 @@ struct uvm_coredump_state {
 /*
  * the various kernel maps, owned by MD code
  */
-extern struct vm_map *exec_map;
 extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
 extern struct vm_map *mb_map;
@@ -552,16 +557,13 @@ void		cpu_swapout(struct lwp *);
 /* uvm_aobj.c */
 struct uvm_object	*uao_create(vsize_t, int);
 void			uao_detach(struct uvm_object *);
-void			uao_detach_locked(struct uvm_object *);
 void			uao_reference(struct uvm_object *);
-void			uao_reference_locked(struct uvm_object *);
 
 /* uvm_bio.c */
 void			ubc_init(void);
 void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 			    int);
 void			ubc_release(void *, int);
-void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
 			    int, int);
 

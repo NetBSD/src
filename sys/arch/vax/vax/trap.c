@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 2008/03/11 05:34:03 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.113.4.1 2009/05/04 08:12:05 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.1 2009/05/04 08:12:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2008/03/11 05:34:03 matt Exp $");
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
 
@@ -62,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2008/03/11 05:34:03 matt Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
+#include <vax/vax/db_disasm.h>
 #include <kern/syscalls.c>
 #include <sys/ktrace.h>
 
@@ -217,15 +220,14 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-		if (usermode)
-			KERNEL_LOCK(1, l);
-		else
-			KERNEL_LOCK(1, NULL);
+		if ((usermode) && (l->l_flag & LW_SA)) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->code;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 
 		rv = uvm_fault(map, addr, ftype);
 		if (rv != 0) {
 			if (!usermode) {
-				KERNEL_UNLOCK_ONE(NULL);
 				FAULTCHK;
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
@@ -249,10 +251,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			    && (void *)addr >= vm->vm_maxsaddr)
 				uvm_grow(p, addr);
 		}
-		if (usermode)
-			KERNEL_UNLOCK_LAST(l);
-		else
-			KERNEL_UNLOCK_ONE(NULL);
+		if (usermode) {
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
+		}
 		break;
 
 	case T_BPTFLT|T_USER:
@@ -284,11 +285,26 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 
 	case T_ARITHFLT|T_USER:
 		sig = SIGFPE;
+		switch (frame->code) {
+		case ATRP_INTOVF: code = FPE_INTOVF; break;
+		case ATRP_INTDIV: code = FPE_INTDIV; break;
+		case ATRP_FLTOVF: code = FPE_FLTOVF; break;
+		case ATRP_FLTDIV: code = FPE_FLTDIV; break;
+		case ATRP_FLTUND: code = FPE_FLTUND; break;
+		case ATRP_DECOVF: code = FPE_INTOVF; break;
+		case ATRP_FLTSUB: code = FPE_FLTSUB; break;
+		case AFLT_FLTDIV: code = FPE_FLTDIV; break;
+		case AFLT_FLTUND: code = FPE_FLTUND; break;
+		case AFLT_FLTOVF: code = FPE_FLTOVF; break;
+		default:	  code = FPE_FLTINV; break;
+		}
 		break;
 
 	case T_ASTFLT|T_USER:
 		mtpr(AST_NO,PR_ASTLVL);
 		trapsig = false;
+		if (curcpu()->ci_want_resched)
+			preempt();
 		break;
 
 #ifdef DDB
@@ -306,14 +322,27 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			printf("pid %d.%d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, l->l_lid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
-		KERNEL_LOCK(1, l);
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = sig;
 		ksi.ksi_trap = frame->trap;
 		ksi.ksi_addr = (void *)frame->code;
 		ksi.ksi_code = code;
+
+		/*
+		 * Arithmetic exceptions can be of two kinds:
+		 * - traps (codes 1..7), where pc points to the
+		 *   next instruction to execute.
+		 * - faults (codes 8..10), where pc points to the
+		 *   faulting instruction.
+		 * In the latter case, we need to advance pc by ourselves
+		 * to prevent a signal loop.
+		 *
+		 * XXX this is gross -- miod
+		 */
+		if (type == (T_ARITHFLT | T_USER) && (frame->code & 8))
+			frame->pc = skip_opcode(frame->pc);
+
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 	}
 
 	if (!usermode)
@@ -358,3 +387,12 @@ startlwp(void *arg)
 	/* XXX - profiling spoiled here */
 	userret(l, l->l_addr->u_pcb.framep, l->l_proc->p_sticks);
 }
+
+void
+upcallret(struct lwp *l)
+{
+
+	/* XXX - profiling */
+	userret(l, l->l_addr->u_pcb.framep, l->l_proc->p_sticks);
+}
+

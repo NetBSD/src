@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.56 2008/03/27 18:44:21 ad Exp $	*/
+/*	$NetBSD: param.c,v 1.56.4.1 2009/05/04 08:12:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56 2008/03/27 18:44:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56.4.1 2009/05/04 08:12:29 yamt Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56 2008/03/27 18:44:21 ad Exp $");
 #include <ufs/ufs/quota.h>
 #include <sys/kernel.h>
 #include <sys/utsname.h>
+#include <sys/ksem.h>
 #ifdef SYSVSHM
 #include <machine/vmparam.h>
 #include <sys/shm.h>
@@ -69,8 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56 2008/03/27 18:44:21 ad Exp $");
 #include <sys/msg.h>
 #endif
 
+/*
+ * PCC cannot handle the 80KB string literal.
+ */
+#if !defined(__PCC__)
 #define CONFIG_FILE
 #include "config_file.h"
+#endif
 
 /*
  * System parameter formulae.
@@ -102,6 +108,10 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56 2008/03/27 18:44:21 ad Exp $");
 #define	MAXFILES	(3 * (NPROC + MAXUSERS) + 80)
 #endif
 
+#ifndef MAXEXEC
+#define	MAXEXEC		16
+#endif
+
 int	hz = HZ;
 int	tick = 1000000 / HZ;
 /* can adjust 240ms in 60s */
@@ -111,6 +121,7 @@ int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
 u_int	maxfiles = MAXFILES;
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
+int	maxexec = MAXEXEC;	/* max number of concurrent exec() calls */
 
 #ifdef MULTIPROCESSOR
 u_int	maxcpus = MAXCPUS;
@@ -140,8 +151,10 @@ int	mcllowat = MCLLOWAT;
  * Values in support of System V compatible shared memory.	XXX
  */
 #ifdef SYSVSHM
-#ifndef	SHMMAX
+#if !defined(SHMMAX) && defined(SHMMAXPGS)
 #define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= PAGE_SIZE' */
+#elif !defined(SHMMAX)
+#define SHMMAX 0
 #endif
 #ifndef	SHMMIN
 #define	SHMMIN	1
@@ -152,14 +165,13 @@ int	mcllowat = MCLLOWAT;
 #ifndef	SHMSEG
 #define	SHMSEG	128
 #endif
-#define	SHMALL	SHMMAXPGS
 
 struct	shminfo shminfo = {
 	SHMMAX,
 	SHMMIN,
 	SHMMNI,
 	SHMSEG,
-	SHMALL
+	0
 };
 #endif
 
@@ -201,3 +213,8 @@ struct	msginfo msginfo = {
  */
 const	int msize = MSIZE;
 const	int mclbytes = MCLBYTES;
+
+/*
+ * Values in support of POSIX semaphores.
+ */
+int	ksem_max = KSEM_MAX;

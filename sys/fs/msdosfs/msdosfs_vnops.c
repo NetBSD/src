@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.50.2.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.50.2.2 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.50.2.1 2008/05/16 02:25:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.50.2.2 2009/05/04 08:13:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.50.2.1 2008/05/16 02:25:18 yamt 
  * only if the SAVESTART bit in cn_flags is clear on success.
  */
 int
-msdosfs_create(v)
-	void *v;
+msdosfs_create(void *v)
 {
 	struct vop_create_args /* {
 		struct vnode *a_dvp;
@@ -172,8 +171,7 @@ bad:
 }
 
 int
-msdosfs_mknod(v)
-	void *v;
+msdosfs_mknod(void *v)
 {
 	struct vop_mknod_args /* {
 		struct vnode *a_dvp;
@@ -202,8 +200,7 @@ msdosfs_open(void *v)
 }
 
 int
-msdosfs_close(v)
-	void *v;
+msdosfs_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -221,8 +218,7 @@ msdosfs_close(v)
 }
 
 int
-msdosfs_access(v)
-	void *v;
+msdosfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -261,8 +257,7 @@ msdosfs_access(v)
 }
 
 int
-msdosfs_getattr(v)
-	void *v;
+msdosfs_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -328,8 +323,7 @@ msdosfs_getattr(v)
 }
 
 int
-msdosfs_setattr(v)
-	void *v;
+msdosfs_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
@@ -358,10 +352,10 @@ msdosfs_setattr(v)
 	    (vap->va_gid != VNOVAL && vap->va_gid != pmp->pm_gid)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
-		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %llx\n",
+		printf("    va_type %d, va_nlink %x, va_fsid %"PRIx64", va_fileid %llx\n",
 		    vap->va_type, vap->va_nlink, vap->va_fsid,
 		    (unsigned long long)vap->va_fileid);
-		printf("    va_blocksize %lx, va_rdev %x, va_bytes %qx, va_gen %lx\n",
+		printf("    va_blocksize %lx, va_rdev %"PRIx64", va_bytes %"PRIx64", va_gen %lx\n",
 		    vap->va_blocksize, vap->va_rdev, (long long)vap->va_bytes, vap->va_gen);
 #endif
 		return (EINVAL);
@@ -444,8 +438,7 @@ msdosfs_setattr(v)
 }
 
 int
-msdosfs_read(v)
-	void *v;
+msdosfs_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -453,13 +446,12 @@ msdosfs_read(v)
 		int a_ioflag;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	int error = 0, flags;
+	int error = 0;
 	int64_t diff;
 	int blsize;
 	long n;
 	long on;
 	daddr_t lbn;
-	void *win;
 	vsize_t bytelen;
 	struct buf *bp;
 	struct vnode *vp = ap->a_vp;
@@ -487,11 +479,8 @@ msdosfs_read(v)
 
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, advice, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-			ubc_release(win, flags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
+			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 			if (error)
 				break;
 		}
@@ -522,7 +511,7 @@ msdosfs_read(v)
 		 * vnode for the directory.
 		 */
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, lbn), blsize,
-		    NOCRED, &bp);
+		    NOCRED, 0, &bp);
 		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			brelse(bp, 0);
@@ -542,8 +531,7 @@ out:
  * Write data to a file or directory.
  */
 int
-msdosfs_write(v)
-	void *v;
+msdosfs_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -551,12 +539,11 @@ msdosfs_write(v)
 		int a_ioflag;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	int resid, flags, extended = 0;
+	int resid, extended = 0;
 	int error = 0;
 	int ioflag = ap->a_ioflag;
 	u_long osize;
 	u_long count;
-	void *win;
 	vsize_t bytelen;
 	off_t oldoff;
 	struct uio *uio = ap->a_uio;
@@ -631,8 +618,7 @@ msdosfs_write(v)
 	if (uio->uio_offset + resid > osize) {
 		count = de_clcount(pmp, uio->uio_offset + resid) -
 			de_clcount(pmp, osize);
-		if ((error = extendfile(dep, count, NULL, NULL, 0)) &&
-		    (error != ENOSPC || (ioflag & IO_UNIT)))
+		if ((error = extendfile(dep, count, NULL, NULL, 0)))
 			goto errexit;
 
 		dep->de_FileSize = uio->uio_offset + resid;
@@ -645,11 +631,8 @@ msdosfs_write(v)
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
 
-		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UVM_ADV_NORMAL,
-		    UBC_WRITE);
-		error = uiomove(win, bytelen, uio);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, flags);
+		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
+		    IO_ADV_DECODE(ioflag), UBC_WRITE | UBC_UNMAP_FLAG(vp));
 		if (error)
 			break;
 
@@ -730,8 +713,7 @@ msdosfs_update(struct vnode *vp, const struct timespec *acc,
  * could just do a sync if they try an fsync on a directory file.
  */
 int
-msdosfs_remove(v)
-	void *v;
+msdosfs_remove(void *v)
 {
 	struct vop_remove_args /* {
 		struct vnode *a_dvp;
@@ -767,8 +749,7 @@ msdosfs_remove(v)
  * have to free it before we return the error.
  */
 int
-msdosfs_link(v)
-	void *v;
+msdosfs_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -838,8 +819,7 @@ msdosfs_link(v)
  * This routine needs help.  badly.
  */
 int
-msdosfs_rename(v)
-	void *v;
+msdosfs_rename(void *v)
 {
 	struct vop_rename_args /* {
 		struct vnode *a_fdvp;
@@ -1141,7 +1121,7 @@ abortit:
 		} else
 			bn = cntobn(pmp, cn);
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
-		    pmp->pm_bpcluster, NOCRED, &bp);
+		    pmp->pm_bpcluster, NOCRED, B_MODIFY, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			brelse(bp, 0);
@@ -1209,8 +1189,7 @@ static const struct {
 };
 
 int
-msdosfs_mkdir(v)
-	void *v;
+msdosfs_mkdir(void *v)
 {
 	struct vop_mkdir_args /* {
 		struct vnode *a_dvp;
@@ -1225,6 +1204,7 @@ msdosfs_mkdir(v)
 	int error;
 	int bn;
 	u_long newcluster, pcl;
+	daddr_t lbn;
 	struct direntry *denp;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	struct buf *bp;
@@ -1259,8 +1239,9 @@ msdosfs_mkdir(v)
 	 * directory to be pointing at if there were a crash.
 	 */
 	bn = cntobn(pmp, newcluster);
+	lbn = de_bn2kb(pmp, bn);
 	/* always succeeds */
-	bp = getblk(pmp->pm_devvp, de_bn2kb(pmp, bn), pmp->pm_bpcluster, 0, 0);
+	bp = getblk(pmp->pm_devvp, lbn, pmp->pm_bpcluster, 0, 0);
 	memset(bp->b_data, 0, pmp->pm_bpcluster);
 	memcpy(bp->b_data, &dosdirtemplate, sizeof dosdirtemplate);
 	denp = (struct direntry *)bp->b_data;
@@ -1329,8 +1310,7 @@ bad2:
 }
 
 int
-msdosfs_rmdir(v)
-	void *v;
+msdosfs_rmdir(void *v)
 {
 	struct vop_rmdir_args /* {
 		struct vnode *a_dvp;
@@ -1401,8 +1381,7 @@ out:
  * DOS filesystems don't know what symlinks are.
  */
 int
-msdosfs_symlink(v)
-	void *v;
+msdosfs_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -1418,8 +1397,7 @@ msdosfs_symlink(v)
 }
 
 int
-msdosfs_readdir(v)
-	void *v;
+msdosfs_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -1556,7 +1534,7 @@ msdosfs_readdir(v)
 		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
-		    NOCRED, &bp);
+		    NOCRED, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			free(dirbuf, M_MSDOSFSTMP);
@@ -1710,8 +1688,7 @@ msdosfs_readlink(void *v)
  * bnp - address of where to return the filesystem relative block number
  */
 int
-msdosfs_bmap(v)
-	void *v;
+msdosfs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -1760,8 +1737,7 @@ msdosfs_bmap(v)
 }
 
 int
-msdosfs_strategy(v)
-	void *v;
+msdosfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -1805,8 +1781,7 @@ msdosfs_strategy(v)
 }
 
 int
-msdosfs_print(v)
-	void *v;
+msdosfs_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *vp;
@@ -1816,14 +1791,14 @@ msdosfs_print(v)
 	printf(
 	    "tag VT_MSDOSFS, startcluster %ld, dircluster %ld, diroffset %ld ",
 	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
-	printf(" dev %d, %d ", major(dep->de_dev), minor(dep->de_dev));
+	printf(" dev %llu, %llu ", (unsigned long long)major(dep->de_dev),
+	    (unsigned long long)minor(dep->de_dev));
 	printf("\n");
 	return (0);
 }
 
 int
-msdosfs_advlock(v)
-	void *v;
+msdosfs_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
@@ -1838,8 +1813,7 @@ msdosfs_advlock(v)
 }
 
 int
-msdosfs_pathconf(v)
-	void *v;
+msdosfs_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -1876,8 +1850,7 @@ msdosfs_pathconf(v)
 }
 
 int
-msdosfs_fsync(v)
-	void *v;
+msdosfs_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;

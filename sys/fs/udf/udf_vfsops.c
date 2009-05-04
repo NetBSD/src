@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.35.10.1 2008/05/16 02:25:21 yamt Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.35.10.2 2009/05/04 08:13:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,14 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35.10.1 2008/05/16 02:25:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35.10.2 2009/05/04 08:13:45 yamt Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
-#include "opt_udf.h"
 #endif
 
 #include <sys/param.h>
@@ -62,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35.10.1 2008/05/16 02:25:21 yamt Ex
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
+#include <sys/dirhash.h>
 
 #include "udf.h"
 #include "udf_subr.h"
@@ -83,6 +82,7 @@ struct pool udf_node_pool;
 /* supported functions predefined */
 VFS_PROTOS(udf);
 
+static struct sysctllog *udf_sysctl_log;
 
 /* internal functions */
 static int udf_mountfs(struct vnode *, struct mount *, struct lwp *, struct udf_args *);
@@ -136,29 +136,29 @@ udf_init(void)
 {
 	size_t size;
 
+	/* setup memory types */
 	malloc_type_attach(M_UDFMNT);
 	malloc_type_attach(M_UDFVOLD);
 	malloc_type_attach(M_UDFTEMP);
 
-	/* init hashtables and pools */
+	/* init node pools */
 	size = sizeof(struct udf_node);
-	pool_init(&udf_node_pool, size, 0, 0, 0, "udf_node_pool", NULL,
-	    IPL_NONE);
+	pool_init(&udf_node_pool, size, 0, 0, 0,
+		"udf_node_pool", NULL, IPL_NONE);
 }
 
 
 void
 udf_reinit(void)
 {
-	/* recreate hashtables */
-	/* reinit pool? */
+	/* nothing to do */
 }
 
 
 void
 udf_done(void)
 {
-	/* remove hashtables and pools */
+	/* remove pools */
 	pool_destroy(&udf_node_pool);
 
 	malloc_type_detach(M_UDFMNT);
@@ -166,19 +166,60 @@ udf_done(void)
 	malloc_type_detach(M_UDFTEMP);
 }
 
+/*
+ * If running a DEBUG kernel, provide an easy way to set the debug flags when
+ * running into a problem.
+ */
+#define UDF_VERBOSE_SYSCTLOPT        1
 
 static int
 udf_modcmd(modcmd_t cmd, void *arg)
 {
+	const struct sysctlnode *node;
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&udf_vfsops);
+		error = vfs_attach(&udf_vfsops);
+		if (error != 0)
+			break;
+		/*
+		 * XXX the "24" below could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "24" is the order as taken from sys/mount.h
+		 */
+		sysctl_createv(&udf_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "udf",
+			       SYSCTL_DESCR("OSTA Universal File System"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 24, CTL_EOL);
+#ifdef DEBUG
+		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "verbose",
+			       SYSCTL_DESCR("Bitmask for filesystem debugging"),
+			       NULL, 0, &udf_verbose, 0,
+			       CTL_VFS, 24, UDF_VERBOSE_SYSCTLOPT, CTL_EOL);
+#endif
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&udf_vfsops);
+		error = vfs_detach(&udf_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&udf_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }
 
 /* --------------------------------------------------------------------- */
@@ -213,22 +254,25 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->implementation,   M_UDFVOLD);
 		MPFREE(ump->logvol_integrity, M_UDFVOLD);
 		for (i = 0; i < UDF_PARTITIONS; i++) {
-			MPFREE(ump->partitions[i], M_UDFVOLD);
+			MPFREE(ump->partitions[i],        M_UDFVOLD);
 			MPFREE(ump->part_unalloc_dscr[i], M_UDFVOLD);
-			MPFREE(ump->part_freed_dscr[i], M_UDFVOLD);
+			MPFREE(ump->part_freed_dscr[i],   M_UDFVOLD);
 		}
-		MPFREE(ump->fileset_desc,     M_UDFVOLD);
-		MPFREE(ump->sparing_table,    M_UDFVOLD);
-		MPFREE(ump->metadata_bitmap.bits, M_UDFVOLD);
+		MPFREE(ump->metadata_unalloc_dscr, M_UDFVOLD);
+
+		MPFREE(ump->fileset_desc,   M_UDFVOLD);
+		MPFREE(ump->sparing_table,  M_UDFVOLD);
 
 		MPFREE(ump->la_node_ad_cpy, M_UDFMNT);
-		MPFREE(ump->la_pmapping, M_TEMP);
-		MPFREE(ump->la_lmapping, M_TEMP);
+		MPFREE(ump->la_pmapping,    M_TEMP);
+		MPFREE(ump->la_lmapping,    M_TEMP);
 
 		mutex_destroy(&ump->ihash_lock);
 		mutex_destroy(&ump->get_node_lock);
-
+		mutex_destroy(&ump->logvol_mutex);
 		mutex_destroy(&ump->allocate_mutex);
+		cv_destroy(&ump->dirtynodes_cv);
+
 		MPFREE(ump->vat_table, M_UDFVOLD);
 
 		free(ump, M_UDFMNT);
@@ -330,30 +374,19 @@ udf_mount(struct mount *mp, const char *path,
 		return ENXIO; 
 	}
 
-#ifndef UDF_READWRITE
-	/* force read-only for now */
-	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-		printf("Enable kernel option UDF_READWRITE for writing\n");
-		vrele(devvp);
-		return EROFS;
-	}
-#endif
-
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			vrele(devvp);
-			return error;
-		}
+	accessmode = VREAD;
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
+	if (error) {
+		vrele(devvp);
+		return error;
 	}
 
 	/*
@@ -399,7 +432,7 @@ udf_mount(struct mount *mp, const char *path,
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 		if ((error = udf_open_logvol(VFSTOUDF(mp))) != 0) {
 			printf( "mount_udf: can't open logical volume for "
-				"writing,downgrading access to read-only\n");
+				"writing, downgrading access to read-only\n");
 			mp->mnt_flag |= MNT_RDONLY;
 			/* FIXME we can't return error now on open failure */
 			return 0;
@@ -586,6 +619,13 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		return EIO;
 	}
 
+	/* temporary check to overcome sectorsize >= 8192 bytes panic */
+	if (sector_size >= 8192) {
+		printf("UDF mount: "
+			"hit implementation limit, sectorsize to big\n");
+		return EIO;
+	}
+
 	/*
 	 * Inspect if we're asked to mount read-write on a non recordable or
 	 * closed sequential disc.
@@ -595,10 +635,23 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 			printf("UDF mount: disc is not recordable\n");
 			return EROFS;
 		}
-		/*
-		 * TODO if on sequential media and last session is closed,
-		 * check for enough space to open/close new session
-		 */
+		if (ump->discinfo.mmc_cur & MMC_CAP_SEQUENTIAL) {
+			if (ump->discinfo.disc_state == MMC_STATE_FULL) {
+				printf("UDF mount: disc is not appendable\n");
+				return EROFS;
+			}
+
+			/*
+			 * TODO if the last session is closed check if there
+			 * is enough space to open/close new session
+			 */
+		}
+		/* double check if we're not mounting a pervious session RW */
+		if (args->sessionnr != 0) {
+			printf("UDF mount: updating a previous session "
+				"not yet allowed\n");
+			return EROFS;
+		}
 	}
 
 	/* initialise bootstrap disc strategy */
@@ -619,7 +672,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		return error;
 	}
 
-	/* close down (direct) disc strategy */
+	/* close down bootstrap disc strategy */
 	udf_discstrat_finish(ump);
 
 	/* check consistency and completeness */
@@ -714,7 +767,7 @@ udf_root(struct mount *mp, struct vnode **vpp)
 		return error;
 
 	vp = root_dir->vnode;
-	root_dir->vnode->v_vflag |= VV_ROOT;
+	KASSERT(vp->v_vflag & VV_ROOT);
 
 	*vpp = vp;
 	return 0;
@@ -796,11 +849,42 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
  * i.e. explicit syncing by the user?
  */
 
+static int
+udf_sync_writeout_system_files(struct udf_mount *ump, int clearflags)
+{
+	int error;
+
+	/* XXX lock for VAT en bitmaps? */
+	/* metadata nodes are written synchronous */
+	DPRINTF(CALL, ("udf_sync: syncing metadata\n"));
+	if (ump->lvclose & UDF_WRITE_VAT)
+		udf_writeout_vat(ump);
+
+	error = 0;
+	if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
+		/* writeout metadata spacetable if existing */
+		error = udf_write_metadata_partition_spacetable(ump, MNT_WAIT);
+		if (error)
+			printf( "udf_writeout_system_files : "
+				" writeout of metadata space bitmap failed\n");
+
+		/* writeout partition spacetables */
+		error = udf_write_physical_partition_spacetables(ump, MNT_WAIT);
+		if (error)
+			printf( "udf_writeout_system_files : "
+				"writeout of space tables failed\n");
+		if (!error && clearflags)
+			ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
+	}
+
+	return error;
+}
+
+
 int
 udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct udf_mount *ump = VFSTOUDF(mp);
-	int error;
 
 	DPRINTF(CALL, ("udf_sync called\n"));
 	/* if called when mounted readonly, just ignore */
@@ -815,24 +899,12 @@ udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	/* get sync lock */
 	ump->syncing = 1;
 
+	/* pre-sync */
 	udf_do_sync(ump, cred, waitfor);
 
-	if (waitfor == MNT_WAIT) {
-		/* XXX lock for VAT en bitmaps? */
-		/* metadata nodes are written synchronous */
-		DPRINTF(CALL, ("udf_sync: syncing metadata\n"));
-		if (ump->lvclose & UDF_WRITE_VAT)
-			udf_writeout_vat(ump);
-		if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
-			error = udf_write_partition_spacetables(ump, waitfor);
-			if (error) {
-				printf( "udf_close_logvol: writeout of space "
-					"tables failed\n");
-			}
-			ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
-		}
+	if (waitfor == MNT_WAIT)
+		udf_sync_writeout_system_files(ump, true);
 
-	}
 	DPRINTF(CALL, ("end of udf_sync()\n"));
 	ump->syncing = 0;
 
@@ -899,42 +971,3 @@ udf_snapshot(struct mount *mp, struct vnode *vp,
 }
 
 /* --------------------------------------------------------------------- */
-
-/*
- * If running a DEBUG kernel, provide an easy way to set the debug flags when
- * running into a problem.
- */
-
-#ifdef DEBUG
-#define UDF_VERBOSE_SYSCTLOPT 1
-
-SYSCTL_SETUP(sysctl_vfs_udf_setup, "sysctl vfs.udf subtree setup")
-{
-	/*
-	 * XXX the "24" below could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "24" is the order as taken from sys/mount.h
-	 */
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "udf",
-		       SYSCTL_DESCR("OSTA Universal File System"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 24, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "verbose",
-		       SYSCTL_DESCR("Bitmask for filesystem debugging"),
-		       NULL, 0, &udf_verbose, 0,
-		       CTL_VFS, 24, UDF_VERBOSE_SYSCTLOPT, CTL_EOL);
-}
-
-#endif /* DEBUG */
-

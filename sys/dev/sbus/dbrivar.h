@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.8.18.1 2008/05/16 02:25:02 yamt Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.8.18.2 2009/05/04 08:13:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -114,7 +114,7 @@ struct dbri_dma {
 };
 
 struct dbri_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 
 	struct sbusdev	sc_sd;		/* sbus device */
 	bus_space_handle_t sc_ioh;

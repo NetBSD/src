@@ -1,3 +1,3 @@
-/*	$NetBSD: isadmavar.h,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.1.1.1.164.1 2009/05/04 08:11:19 yamt Exp $	*/
 
-void isa_dmacascade __P((int));
+void isa_dmacascade(int);

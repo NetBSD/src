@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.125.4.1 2008/05/16 02:24:42 yamt Exp $	*/
+/*	$NetBSD: auich.c,v 1.125.4.2 2009/05/04 08:12:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.125.4.1 2008/05/16 02:24:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.125.4.2 2009/05/04 08:12:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,11 +241,13 @@ int auich_debug = 0xfffe;
 static int	auich_match(device_t, cfdata_t, void *);
 static void	auich_attach(device_t, device_t, void *);
 static int	auich_detach(device_t, int);
+static void	auich_childdet(device_t, device_t);
 static int	auich_activate(device_t, enum devact);
 static int	auich_intr(void *);
 
-CFATTACH_DECL_NEW(auich, sizeof(struct auich_softc),
-    auich_match, auich_attach, auich_detach, auich_activate);
+CFATTACH_DECL2_NEW(auich, sizeof(struct auich_softc),
+    auich_match, auich_attach, auich_detach, auich_activate, NULL,
+    auich_childdet);
 
 static int	auich_open(void *, int);
 static void	auich_close(void *);
@@ -674,12 +676,11 @@ auich_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-auich_activate(struct device *self, enum devact act)
+auich_activate(device_t self, enum devact act)
 {
-	struct auich_softc *sc;
+	struct auich_softc *sc = device_private(self);
 	int ret;
 
-	sc = (struct auich_softc *)self;
 	ret = 0;
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -691,13 +692,20 @@ auich_activate(struct device *self, enum devact act)
 	}
 	return EOPNOTSUPP;
 }
+ 
+static void
+auich_childdet(device_t self, device_t child)
+{
+	struct auich_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_audiodev == child);
+	sc->sc_audiodev = NULL;
+}
 
 static int
-auich_detach(struct device *self, int flags)
+auich_detach(device_t self, int flags)
 {
-	struct auich_softc *sc;
-
-	sc = (struct auich_softc *)self;
+	struct auich_softc *sc = device_private(self);
 
 	/* audio */
 	if (sc->sc_audiodev != NULL)

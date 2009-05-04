@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 2008/04/24 18:39:20 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.133.2.1 2009/05/04 08:11:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.2.1 2009/05/04 08:11:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2008/04/24 18:39:20 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -399,17 +401,11 @@ copyfault:
 	 */
 	case T_FPERR|T_USER:
 		/*
-		 * We pass along the 68881 status register which locore
-		 * stashed in code for us.  Note that there is a
-		 * possibility that the bit pattern of this register
-		 * will conflict with one of the FPE_* codes defined
-		 * in signal.h.  Fortunately for us, the only such
-		 * codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so
-		 * there is no clash.
+		 * We decode the 68881 status register which locore
+		 * stashed in code for us.
 		 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 
 	/*
@@ -582,8 +578,14 @@ copyfault:
 		if (type == T_MMUFLT &&
 		    (!l->l_addr->u_pcb.pcb_onfault || KDFAULT(code)))
 			map = kernel_map;
-		else
+		else {
 			map = vm ? &vm->vm_map : kernel_map;
+			if ((l->l_flag & LW_SA)
+			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+				l->l_savp->savp_faultaddr = (vaddr_t)v;
+				l->l_pflag |= LP_SA_PAGEFAULT;
+			}
+		}
 		if (WRFAULT(code))
 			ftype = VM_PROT_WRITE;
 		else
@@ -619,6 +621,7 @@ copyfault:
 #endif
 				return;
 			}
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		if (rv == EACCES) {
@@ -635,6 +638,7 @@ copyfault:
 				type, code);
 			goto dopanic;
 		}
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
@@ -725,7 +729,7 @@ writeback(struct frame *fp, int docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
-			bcopy((void *)&f->f_pd0, (void *)fa, 16);
+			memcpy( (void *)fa, (void *)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -750,7 +754,7 @@ writeback(struct frame *fp, int docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			bcopy((void *)&f->f_pd0, (void *)(f->f_fa & ~0xF), 16);
+			memcpy( (void *)(f->f_fa & ~0xF), (void *)&f->f_pd0, 16);
 		else
 			err = suline((void *)(f->f_fa & ~0xF), (void *)&f->f_pd0);
 		if (err) {

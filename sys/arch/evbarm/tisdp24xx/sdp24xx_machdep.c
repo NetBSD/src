@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.1.22.1 2008/05/16 02:22:14 yamt Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.1.22.2 2009/05/04 08:11:00 yamt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.1.22.1 2008/05/16 02:22:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.1.22.2 2009/05/04 08:11:00 yamt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -187,6 +187,7 @@ u_int cpu_reset_address = 0;
 
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
+#define FIQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
 #ifdef IPKDB
 #define UND_STACK_SIZE	2
@@ -210,6 +211,7 @@ static paddr_t physical_freestart, physical_freeend;
 static u_int free_pages;
 
 /* Physical and virtual addresses for some global pages */
+pv_addr_t fiqstack;
 pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
@@ -293,6 +295,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -326,6 +329,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -469,7 +474,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (SDP2430) booting ...\n");
+	printf("\nNetBSD/evbarm (SDP24xx) booting ...\n");
 #endif
 
 #ifdef BOOT_ARGS
@@ -540,6 +545,7 @@ initarm(void *arg)
 	printf("init subsystems: stacks ");
 #endif
 
+	set_stackptr(PSR_FIQ32_MODE, fiqstack.pv_va + FIQ_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_IRQ32_MODE, irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_ABT32_MODE, abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_UND32_MODE, undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
@@ -621,7 +627,7 @@ static void
 init_clocks(void)
 {
 #ifdef NOTYET
-	static volatile uint32_t * const clksel_reg = (volatile uint32_t *) (OMAP2430_L4_WAKEUP_VBASE + OMAP2430_CM_BASE + OMAP2430_CM_CLKSEL_MPU - OMAP2430_L4_WAKEUP_BASE);
+	static volatile uint32_t * const clksel_reg = (volatile uint32_t *) (OMAP2430_L4_WAKEUP_VBASE + OMAP2_CM_BASE + OMAP2_CM_CLKSEL_MPU - OMAP2430_L4_WAKEUP_BASE);
 	uint32_t v;
 	sdp_putchar('E');
 	v = *clksel_reg;
@@ -755,7 +761,7 @@ setup_real_page_tables(void)
 	pt_index = 0;
 	kernel_l1pt.pv_pa = 0;
 	kernel_l1pt.pv_va = 0;
-printf("%s: physical_freestart %#lx\n", __FUNCTION__, physical_freestart);
+printf("%s: physical_freestart %#lx\n", __func__, physical_freestart);
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
@@ -768,8 +774,8 @@ printf("%s: physical_freestart %#lx\n", __FUNCTION__, physical_freestart);
 		}
 	}
 pt_index=0;
-printf("%s: kernel_l1pt: %#lx:%#lx\n", __FUNCTION__, kernel_l1pt.pv_va, kernel_l1pt.pv_pa);
-printf("%s: kernel_pt_table:\n", __FUNCTION__);
+printf("%s: kernel_l1pt: %#lx:%#lx\n", __func__, kernel_l1pt.pv_va, kernel_l1pt.pv_pa);
+printf("%s: kernel_pt_table:\n", __func__);
 for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
 printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_index].pv_pa);
 ++pt_index;
@@ -788,6 +794,7 @@ printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_inde
 	systempage.pv_va = ARM_VECTORS_HIGH;
 
 	/* Allocate stacks for all modes */
+	valloc_pages(fiqstack, FIQ_STACK_SIZE);
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
 	valloc_pages(abtstack, ABT_STACK_SIZE);
 	valloc_pages(undstack, UND_STACK_SIZE);
@@ -855,6 +862,8 @@ printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_inde
 #endif
 
 	/* Map the stack pages */
+	pmap_map_chunk(l1_va, fiqstack.pv_va, fiqstack.pv_pa,
+	    FIQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1_va, irqstack.pv_va, irqstack.pv_pa,
 	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1_va, abtstack.pv_va, abtstack.pv_pa,
@@ -919,6 +928,10 @@ printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_inde
 	    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
 	    (vaddr_t)ARM_VECTORS_HIGH, (vaddr_t)ARM_VECTORS_HIGH + PAGE_SIZE - 1,
 	    1);
+	printf(mem_fmt, "FIQ stack",
+	    fiqstack.pv_pa, fiqstack.pv_pa + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
+	    fiqstack.pv_va, fiqstack.pv_va + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
+	    FIQ_STACK_SIZE);
 	printf(mem_fmt, "IRQ stack",
 	    irqstack.pv_pa, irqstack.pv_pa + (IRQ_STACK_SIZE * PAGE_SIZE) - 1,
 	    irqstack.pv_va, irqstack.pv_va + (IRQ_STACK_SIZE * PAGE_SIZE) - 1,

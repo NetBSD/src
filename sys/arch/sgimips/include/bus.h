@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.26.10.1 2008/05/16 02:23:05 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.26.10.2 2009/05/04 08:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -59,11 +59,12 @@ typedef u_long	bus_space_handle_t;
  * Values for sgimips bus space tag, not to be used directly by MI code.
  */
 #define	SGIMIPS_BUS_SPACE_NORMAL	0
-#define	SGIMIPS_BUS_SPACE_HPC		1
-#define	SGIMIPS_BUS_SPACE_MEM		2
-#define	SGIMIPS_BUS_SPACE_MACE		3
-#define	SGIMIPS_BUS_SPACE_IO		4
-#define SGIMIPS_BUS_SPACE_CRIME		5
+#define	SGIMIPS_BUS_SPACE_IP6_DPCLOCK	1
+#define	SGIMIPS_BUS_SPACE_HPC		2
+#define	SGIMIPS_BUS_SPACE_MEM		3
+#define	SGIMIPS_BUS_SPACE_MACE		4
+#define	SGIMIPS_BUS_SPACE_IO		5
+#define	SGIMIPS_BUS_SPACE_CRIME		6
 
 /* Initialization for bus_dmamap_sync, which differs from MIPS1 to MIPS3 */
 

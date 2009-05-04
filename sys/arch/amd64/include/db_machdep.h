@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.6 2007/02/21 22:59:37 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6.46.1 2009/05/04 08:10:33 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,14 +26,16 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef	_I386_DB_MACHDEP_H_
-#define	_I386_DB_MACHDEP_H_
+#ifndef	_X86_64_DB_MACHDEP_H_
+#define	_X86_64_DB_MACHDEP_H_
 
 /*
  * Machine-dependent defines for new kernel debugger.
  */
 
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
+#endif /* defined(_KERNEL_OPT) */
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
 #include <machine/trap.h>
@@ -95,8 +97,8 @@ extern db_regs_t *ddb_regp;
 	 ((user) && (addr) < VM_MAX_ADDRESS))
 
 #if 0
-bool	 	db_check_access __P((vaddr_t, int, task_t));
-bool		db_phys_eq __P((task_t, vaddr_t, task_t, vaddr_t));
+bool	 	db_check_access(vaddr_t, int, task_t);
+bool		db_phys_eq(task_t, vaddr_t, task_t, vaddr_t);
 #endif
 
 /* macros for printing OS server dependent task name */
@@ -121,7 +123,7 @@ void		db_task_name(/* task_t */);
 
 #define db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
-int kdb_trap __P((int, int, db_regs_t *));
+int kdb_trap(int, int, db_regs_t *);
 
 /*
  * We define some of our own commands
@@ -131,8 +133,8 @@ int kdb_trap __P((int, int, db_regs_t *));
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	64
 
-extern void db_machine_init __P((void));
+extern void db_machine_init(void);
 
-extern void cpu_debug_dump __P((void));
+extern void cpu_debug_dump(void);
 
-#endif	/* _I386_DB_MACHDEP_H_ */
+#endif	/* _X86_64_DB_MACHDEP_H_ */

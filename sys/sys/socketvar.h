@@ -1,8 +1,11 @@
-/*	$NetBSD: socketvar.h,v 1.105.2.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.105.2.2 2009/05/04 08:14:36 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,10 +69,12 @@
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 
-#if !defined(_KERNEL) || defined(LKM)
+#if !defined(_KERNEL)
 struct uio;
 struct lwp;
 struct uidinfo;
+#else
+#include <sys/uidinfo.h>
 #endif
 
 TAILQ_HEAD(soqhead, socket);
@@ -165,6 +170,13 @@ struct socket {
 					struct mbuf **, int *);
 	struct mowner	*so_mowner;	/* who owns mbufs for this socket */
 	struct uidinfo	*so_uidinfo;	/* who opened the socket */
+	gid_t		so_egid;	/* creator effective gid */
+	pid_t		so_cpid;	/* creator pid */
+	struct so_accf {
+		struct accept_filter	*so_accept_filter;
+		void	*so_accept_filter_arg;	/* saved filter args */
+		char	*so_accept_filter_str;	/* saved user args */
+	} *so_accf;
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
@@ -186,6 +198,7 @@ do {									\
 #define	SS_CANTSENDMORE		0x010	/* can't send more data to peer */
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
+#define	SS_ISDRAINING		0x080	/* draining fd references */
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_ASYNC		0x100	/* async i/o notify */
@@ -197,6 +210,26 @@ do {									\
 #define	SS_ISAPIPE 		0x1000	/* socket is implementing a pipe */
 
 #ifdef _KERNEL
+
+struct accept_filter {
+	char	accf_name[16];
+	void	(*accf_callback)
+		(struct socket *so, void *arg, int waitflag);
+	void *	(*accf_create)
+		(struct socket *so, char *arg);
+	void	(*accf_destroy)
+		(struct socket *so);
+	LIST_ENTRY(accept_filter) accf_next;
+	u_int	accf_refcnt;
+};
+
+struct sockopt {
+	int		sopt_level;		/* option level */
+	int		sopt_name;		/* option name */
+	size_t		sopt_size;		/* data length */
+	void *		sopt_data;		/* data pointer */
+	uint8_t		sopt_buf[sizeof(int)];	/* internal storage */
+};
 
 extern u_long		sb_max;
 extern int		somaxkva;
@@ -210,7 +243,6 @@ struct msghdr;
 struct stat;
 struct knote;
 
-struct	mbuf *m_intopt(struct socket *, int);
 struct	mbuf *getsombuf(struct socket *, int);
 
 /*
@@ -224,6 +256,7 @@ int	soo_poll(file_t *, int);
 int	soo_kqfilter(file_t *, struct knote *);
 int 	soo_close(file_t *);
 int	soo_stat(file_t *, struct stat *);
+void	soo_drain(file_t *);
 void	sbappend(struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct sockbuf *, struct mbuf *);
 int	sbappendaddr(struct sockbuf *, const struct sockaddr *, struct mbuf *,
@@ -245,6 +278,7 @@ int	sbreserve(struct sockbuf *, u_long, struct socket *);
 int	sbwait(struct sockbuf *);
 int	sb_max_set(u_long);
 void	soinit(void);
+void	soinit2(void);
 int	soabort(struct socket *);
 int	soaccept(struct socket *, struct mbuf *);
 int	sobind(struct socket *, struct mbuf *, struct lwp *);
@@ -258,7 +292,7 @@ int	socreate(int, struct socket **, int, int, struct lwp *,
 int	fsocreate(int, struct socket **, int, int, struct lwp *, int *);
 int	sodisconnect(struct socket *);
 void	sofree(struct socket *);
-int	sogetopt(struct socket *, int, int, struct mbuf **);
+int	sogetopt(struct socket *, struct sockopt *);
 void	sohasoutofband(struct socket *);
 void	soisconnected(struct socket *);
 void	soisconnecting(struct socket *);
@@ -275,8 +309,10 @@ int	soreserve(struct socket *, u_long, u_long);
 void	sorflush(struct socket *);
 int	sosend(struct socket *, struct mbuf *, struct uio *,
 	    struct mbuf *, struct mbuf *, int, struct lwp *);
-int	sosetopt(struct socket *, int, int, struct mbuf *);
+int	sosetopt(struct socket *, struct sockopt *);
+int	so_setsockopt(struct lwp *, struct socket *, int, int, const void *, size_t);
 int	soshutdown(struct socket *, int);
+int	sodrain(struct socket *);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 int	sopoll(struct socket *, int);
@@ -286,9 +322,19 @@ bool	solocked(struct socket *);
 bool	solocked2(struct socket *, struct socket *);
 int	sblock(struct sockbuf *, int);
 void	sbunlock(struct sockbuf *);
-int	sowait(struct socket *, int);
+int	sowait(struct socket *, bool, int);
 void	solockretry(struct socket *, kmutex_t *);
 void	sosetlock(struct socket *);
+void	solockreset(struct socket *, kmutex_t *);
+
+void	sockopt_init(struct sockopt *, int, int, size_t);
+void	sockopt_destroy(struct sockopt *);
+int	sockopt_set(struct sockopt *, const void *, size_t);
+int	sockopt_setint(struct sockopt *, int);
+int	sockopt_get(const struct sockopt *, void *, size_t);
+int	sockopt_getint(const struct sockopt *, int *);
+int	sockopt_setmbuf(struct sockopt *, struct mbuf *);
+struct mbuf *sockopt_getmbuf(const struct sockopt *);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
@@ -485,6 +531,22 @@ void	soloanfree(struct mbuf *, void *, size_t, void *);
 #define SB_PRIO_ONESHOT_OVERFLOW 1
 #define SB_PRIO_OVERDRAFT	2
 #define SB_PRIO_BESTEFFORT	3
+
+/*
+ * Accept filter functions (duh).
+ */
+int	accept_filt_getopt(struct socket *, struct sockopt *);
+int	accept_filt_setopt(struct socket *, const struct sockopt *);
+int	accept_filt_clear(struct socket *);
+int	accept_filt_add(struct accept_filter *);
+int	accept_filt_del(struct accept_filter *);
+struct	accept_filter *accept_filt_get(char *);
+#ifdef ACCEPT_FILTER_MOD
+#ifdef SYSCTL_DECL
+SYSCTL_DECL(_net_inet_accf);
+#endif
+void	accept_filter_init(void);
+#endif
 
 #endif /* _KERNEL */
 

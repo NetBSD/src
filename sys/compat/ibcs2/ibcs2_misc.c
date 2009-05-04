@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.103 2008/04/24 18:39:22 ad Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.103.2.1 2009/05/04 08:12:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103 2008/04/24 18:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103.2.1 2009/05/04 08:12:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,8 +387,8 @@ ibcs2_sys_getdents(struct lwp *l, const struct ibcs2_sys_getdents_args *uap, reg
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
@@ -517,8 +517,8 @@ ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t 
 	off_t off;			/* true file offset */
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0) {
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0) {
 		if (error == EINVAL)
 			return sys_read(l, (const void *)uap, retval);
 		else
@@ -633,11 +633,8 @@ ibcs2_sys_mknod(struct lwp *l, const struct ibcs2_sys_mknod_args *uap, register_
 		SCARG(&ap, mode) = SCARG(uap, mode);
 		return sys_mkfifo(l, &ap, retval);
 	} else {
-		struct sys_mknod_args ap;
-		SCARG(&ap, path) = SCARG(uap, path);
-		SCARG(&ap, mode) = SCARG(uap, mode);
-		SCARG(&ap, dev) = SCARG(uap, dev);
-		return sys_mknod(l, &ap, retval);
+		return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
+		    SCARG(uap, dev), retval);
 	}
 }
 
@@ -1078,6 +1075,8 @@ ibcs2_sys_pgrpsys(struct lwp *l, const struct ibcs2_sys_pgrpsys_args *uap, regis
 }
 
 /*
+ * See http://docsrv.sco.com:507/en/man/html.S/plock.S.html
+ *
  * XXX - need to check for nested calls
  */
 
@@ -1092,9 +1091,12 @@ ibcs2_sys_plock(struct lwp *l, const struct ibcs2_sys_plock_args *uap, register_
 #define IBCS2_TEXTLOCK	2
 #define IBCS2_DATALOCK	4
 
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0)
-		return EPERM;
+	/*
+	 * NOTE: This is a privileged operation. Normally it would require root
+	 * access. When implementing, please make sure to use an appropriate
+	 * kauth(9) request. See the man-page for more information.
+	 */
+
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
 	case IBCS2_PROCLOCK:
@@ -1105,6 +1107,9 @@ ibcs2_sys_plock(struct lwp *l, const struct ibcs2_sys_plock_args *uap, register_
 	return EINVAL;
 }
 
+/*
+ * See http://docsrv.sco.com:507/en/man/html.S/uadmin.S.html
+ */
 int
 ibcs2_sys_uadmin(struct lwp *l, const struct ibcs2_sys_uadmin_args *uap, register_t *retval)
 {
@@ -1156,11 +1161,12 @@ ibcs2_sys_uadmin(struct lwp *l, const struct ibcs2_sys_uadmin_args *uap, registe
 	case SCO_A_CLOCK:
 	case SCO_A_SETCONFIG:
 	case SCO_A_GETDEV:
-		/* XXX Use proper kauth(9) requests when updating this. */
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
-		if (error)
-			return (error);
+		/*
+		 * NOTE: These are all privileged operations, that otherwise
+		 * would require root access or similar. When implementing,
+		 * please use appropriate kauth(9) requests. See the man-page
+		 * for more information.
+		 */
 
 		if (SCARG(uap, cmd) != SCO_A_GETDEV)
 			return 0;
@@ -1351,11 +1357,11 @@ ibcs2_sys_settimeofday(struct lwp *l, const struct ibcs2_sys_settimeofday_args *
 	/* {
 		syscallarg(struct timeval *) tp;
 	} */
-	struct sys_settimeofday_args ap;
+	struct compat_50_sys_settimeofday_args ap;
 
 	SCARG(&ap, tv) = SCARG(uap, tp);
 	SCARG(&ap, tzp) = NULL;
-	return sys_settimeofday(l, &ap, retval);
+	return compat_50_sys_settimeofday(l, &ap, retval);
 }
 
 int

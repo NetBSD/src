@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.83.4.1 2008/05/16 02:21:55 yamt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.83.4.2 2009/05/04 08:10:38 yamt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -6,6 +6,7 @@
  * arm8 support code Copyright (c) 1997 Causality Limited
  * arm9 support code Copyright (C) 2001 ARM Ltd
  * arm11 support code Copyright (c) 2007 Microsoft
+ * cortexa8 support code Copyright (c) 2008 3am Software Foundry
  * Copyright (c) 1997 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited
  * All rights reserved.
@@ -47,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.83.4.1 2008/05/16 02:21:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.83.4.2 2009/05/04 08:10:38 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -906,6 +907,63 @@ struct cpu_functions sa11x0_cpufuncs = {
 };          
 #endif	/* CPU_SA1100 || CPU_SA1110 */
 
+#if defined(CPU_FA526)
+struct cpu_functions fa526_cpufuncs = {
+	/* CPU functions */
+	
+	.cf_id			= cpufunc_id,
+	.cf_cpwait		= cpufunc_nullop,
+
+	/* MMU functions */
+
+	.cf_control		= cpufunc_control,
+	.cf_domains		= cpufunc_domains,
+	.cf_setttb		= fa526_setttb,
+	.cf_faultstatus		= cpufunc_faultstatus,
+	.cf_faultaddress	= cpufunc_faultaddress,
+
+	/* TLB functions */
+
+	.cf_tlb_flushID		= armv4_tlb_flushID,
+	.cf_tlb_flushID_SE	= fa526_tlb_flushID_SE,
+	.cf_tlb_flushI		= armv4_tlb_flushI,
+	.cf_tlb_flushI_SE	= fa526_tlb_flushI_SE,
+	.cf_tlb_flushD		= armv4_tlb_flushD,
+	.cf_tlb_flushD_SE	= armv4_tlb_flushD_SE,
+
+	/* Cache operations */
+
+	.cf_icache_sync_all	= fa526_icache_sync_all,
+	.cf_icache_sync_range	= fa526_icache_sync_range,
+
+	.cf_dcache_wbinv_all	= fa526_dcache_wbinv_all,
+	.cf_dcache_wbinv_range	= fa526_dcache_wbinv_range,
+	.cf_dcache_inv_range	= fa526_dcache_inv_range,
+	.cf_dcache_wb_range	= fa526_dcache_wb_range,
+
+	.cf_idcache_wbinv_all	= fa526_idcache_wbinv_all,
+	.cf_idcache_wbinv_range	= fa526_idcache_wbinv_range,
+
+	/* Other functions */
+
+	.cf_flush_prefetchbuf	= fa526_flush_prefetchbuf,
+	.cf_drain_writebuf	= armv4_drain_writebuf,
+	.cf_flush_brnchtgt_C	= cpufunc_nullop,
+	.cf_flush_brnchtgt_E	= fa526_flush_brnchtgt_E,
+
+	.cf_sleep		= fa526_cpu_sleep,
+
+	/* Soft functions */
+
+	.cf_dataabt_fixup	= cpufunc_null_fixup,
+	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
+
+	.cf_context_switch	= fa526_context_switch,
+
+	.cf_setup		= fa526_setup
+};          
+#endif	/* CPU_FA526 */
+
 #ifdef CPU_IXP12X0
 struct cpu_functions ixp12x0_cpufuncs = {
 	/* CPU functions */
@@ -1031,10 +1089,11 @@ u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined (CPU_ARM9E) || defined (CPU_ARM10) || defined (CPU_ARM11) || \
+    defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_ARM11) || \
+    defined(CPU_FA526) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
-static void get_cachetype_cp15 __P((void));
+static void get_cachetype_cp15(void);
 
 /* Additional cache information local to this file.  Log2 of some of the
    above numbers.  */
@@ -1060,6 +1119,34 @@ get_cachetype_cp15()
 	 */
 	if (ctype == cpu_id())
 		goto out;
+
+#if (ARM_MMU_V6) > 0
+	if (CPU_CT_FORMAT(ctype) == 4) { 
+		u_int csid1, csid2;
+		isize = 1U << (CPU_CT4_ILINE(ctype) + 2);
+		dsize = 1U << (CPU_CT4_DLINE(ctype) + 2);
+
+		__asm volatile("mcr p15, 1, %0, c0, c0, 2"
+		    :: "r" (CPU_CSSR_L1));	/* select L1 cache values */
+		__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (csid1));
+		arm_pdcache_ways = CPU_CSID_ASSOC(csid1) + 1;
+		arm_pdcache_line_size = dsize << CPU_CSID_LEN(csid1);
+		arm_pdcache_size = arm_pdcache_line_size * arm_pdcache_ways;
+		arm_pdcache_size *= CPU_CSID_NUMSETS(csid1);
+		arm_cache_prefer_mask = PAGE_SIZE;
+
+		arm_dcache_align = arm_pdcache_line_size;
+
+		__asm volatile("mcr p15, 1, %0, c0, c0, 2"
+		    :: "r" (CPU_CSSR_L2));	/* select L2 cache values */
+		__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (csid2));
+		arm_dcache_l2_assoc = CPU_CSID_ASSOC(csid2) + 1;
+		arm_dcache_l2_linesize = dsize << CPU_CSID_LEN(csid2);
+		arm_dcache_l2_nsets = CPU_CSID_NUMSETS(csid2) + 1;
+		arm_pcache_type = CPU_CT_CTYPE_WB14;
+		goto out;
+	}
+#endif /* ARM_MMU_V6 > 0 */
 
 	if ((ctype & CPU_CT_S) == 0)
 		arm_pcache_unified = 1;
@@ -1159,10 +1246,10 @@ struct cachetab cachetab[] = {
     { 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-static void get_cachetype_table __P((void));
+static void get_cachetype_table(void);
 
 static void
-get_cachetype_table()
+get_cachetype_table(void)
 {
 	int i;
 	u_int32_t cpuid = cpu_id();
@@ -1193,7 +1280,7 @@ get_cachetype_table()
  */
 
 int
-set_cpufuncs()
+set_cpufuncs(void)
 {
 	if (cputype == 0) {
 		cputype = cpufunc_id();
@@ -1325,7 +1412,9 @@ set_cpufuncs()
 #if defined(CPU_ARM11)
 	if (cputype == CPU_ID_ARM1136JS ||
 	    cputype == CPU_ID_ARM1136JSR1 ||
-	    cputype == CPU_ID_ARM1176JS) {
+	    cputype == CPU_ID_ARM1176JS ||
+	    cputype == CPU_ID_CORTEXA8R1 ||
+	    cputype == CPU_ID_CORTEXA8R2) {
 		cpufuncs = arm11_cpufuncs;
 #if defined(CPU_ARM1136)
 		if (cputype != CPU_ID_ARM1176JS) {
@@ -1379,6 +1468,19 @@ set_cpufuncs()
 		return 0;
 	}
 #endif	/* CPU_SA1110 */
+#ifdef CPU_FA526
+	if (cputype == CPU_ID_FA526) {
+		cpufuncs = fa526_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
+		get_cachetype_cp15();
+		pmap_pte_init_generic();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
+		return 0;
+	}
+#endif	/* CPU_FA526 */
 #ifdef CPU_IXP12X0
         if (cputype == CPU_ID_IXP1200) {
                 cpufuncs = ixp12x0_cpufuncs;
@@ -1552,8 +1654,7 @@ u_int arm250_id(void)
  * For use when no fixup is required.
  */
 int
-cpufunc_null_fixup(arg)
-	void *arg;
+cpufunc_null_fixup(void *arg)
 {
 	return(ABORT_FIXUP_OK);
 }
@@ -1579,8 +1680,7 @@ cpufunc_null_fixup(arg)
  * In early aborts, we may have to fix up LDM, STM, LDC and STC.
  */
 int
-early_abort_fixup(arg)
-	void *arg;
+early_abort_fixup(void *arg)
 {
 	trapframe_t *frame = arg;
 	u_int fault_pc;
@@ -1721,8 +1821,7 @@ early_abort_fixup(arg)
  * LDM, STM, LDC and STC fixup to the early-abort handler.
  */
 int
-late_abort_fixup(arg)
-	void *arg;
+late_abort_fixup(void *arg)
 {
 	trapframe_t *frame = arg;
 	u_int fault_pc;
@@ -1900,7 +1999,8 @@ late_abort_fixup(arg)
 	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-	defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARM1136)
+	defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARM1136) || \
+	defined(CPU_FA526)
 
 #define IGN	0
 #define OR	1
@@ -1913,13 +2013,10 @@ struct cpu_option {
 	int	co_value;
 };
 
-static u_int parse_cpu_options __P((char *, struct cpu_option *, u_int));
+static u_int parse_cpu_options(char *, struct cpu_option *, u_int);
 
 static u_int
-parse_cpu_options(args, optlist, cpuctrl)
-	char *args;
-	struct cpu_option *optlist;    
-	u_int cpuctrl; 
+parse_cpu_options(char *args, struct cpu_option *optlist, u_int cpuctrl)
 {
 	int integer;
 
@@ -1973,8 +2070,7 @@ struct cpu_option arm6_options[] = {
 };
 
 void
-arm6_setup(args)
-	char *args;
+arm6_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2026,8 +2122,7 @@ struct cpu_option arm7_options[] = {
 };
 
 void
-arm7_setup(args)
-	char *args;
+arm7_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2075,8 +2170,7 @@ struct cpu_option arm7tdmi_options[] = {
 };
 
 void
-arm7tdmi_setup(args)
-	char *args;
+arm7tdmi_setup(char *args)
 {
 	int cpuctrl;
 
@@ -2115,8 +2209,7 @@ struct cpu_option arm8_options[] = {
 };
 
 void
-arm8_setup(args)
-	char *args;
+arm8_setup(char *args)
 {
 	int integer;
 	int cpuctrl, cpuctrlmask;
@@ -2201,8 +2294,7 @@ struct cpu_option arm9_options[] = {
 };
 
 void
-arm9_setup(args)
-	char *args;
+arm9_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2255,8 +2347,7 @@ struct cpu_option arm10_options[] = {
 };
 
 void
-arm10_setup(args)
-	char *args;
+arm10_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2283,17 +2374,11 @@ arm10_setup(args)
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 
-	if (vector_page == ARM_VECTORS_HIGH)
-		cpuctrl |= CPU_CONTROL_VECRELOC;
-
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
 	/* Now really make sure they are clean.  */
 	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
-
-	/* Allow detection code to find the VFP if it's fitted.  */
-	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
@@ -2315,8 +2400,7 @@ struct cpu_option arm11_options[] = {
 };
 
 void
-arm11_setup(args)
-	char *args;
+arm11_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2350,14 +2434,14 @@ arm11_setup(args)
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 
-	if (vector_page == ARM_VECTORS_HIGH)
-		cpuctrl |= CPU_CONTROL_VECRELOC;
-
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
 	/* Now really make sure they are clean.  */
 	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+
+	/* Allow detection code to find the VFP if it's fitted.  */
+	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
@@ -2373,7 +2457,10 @@ void
 arm1136_setup(char *args)
 {
 	int cpuctrl, cpuctrl_wax;
+	uint32_t auxctrl, auxctrl_wax;
+	uint32_t tmp, tmp2;
 	uint32_t sbz=0;
+	uint32_t cpuid;
 
 #if defined(PROCESS_ID_IS_CURCPU)
 	/* set curcpu() */
@@ -2382,6 +2469,8 @@ arm1136_setup(char *args)
 	/* set curlwp() */
         __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0)); 
 #endif
+
+	cpuid = cpu_id();
 
 	cpuctrl =
 		CPU_CONTROL_MMU_ENABLE  |
@@ -2418,15 +2507,42 @@ arm1136_setup(char *args)
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 
+	auxctrl = 0;
+	auxctrl_wax = ~0;
+	/* This options enables the workaround for the 364296 ARM1136
+	 * r0pX errata (possible cache data corruption with
+	 * hit-under-miss enabled). It sets the undocumented bit 31 in
+	 * the auxiliary control register and the FI bit in the control
+	 * register, thus disabling hit-under-miss without putting the
+	 * processor into full low interrupt latency mode. ARM11MPCore
+	 * is not affected.
+	 */
+	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1136JS) { /* ARM1136JSr0pX */
+		cpuctrl |= CPU_CONTROL_FI_ENABLE;
+		auxctrl = ARM11R0_AUXCTL_PFI;
+		auxctrl_wax = ~ARM11R0_AUXCTL_PFI;
+	}
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
 	/* Now really make sure they are clean.  */
 	__asm volatile ("mcr\tp15, 0, %0, c7, c7, 0" : : "r"(sbz));
 
+	/* Allow detection code to find the VFP if it's fitted.  */
+	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
+
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(~cpuctrl_wax, cpuctrl);
+
+	__asm volatile ("mrc	p15, 0, %0, c1, c0, 1\n\t"
+			"bic	%1, %0, %2\n\t"
+			"eor	%1, %0, %3\n\t"
+			"teq	%0, %1\n\t"
+			"mcrne	p15, 0, %1, c1, c0, 1\n\t"
+			: "=r"(tmp), "=r"(tmp2) :
+			  "r"(~auxctrl_wax), "r"(auxctrl));
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
@@ -2451,8 +2567,7 @@ struct cpu_option sa110_options[] = {
 };
 
 void
-sa110_setup(args)
-	char *args;
+sa110_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2477,9 +2592,6 @@ sa110_setup(args)
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
-
-	if (vector_page == ARM_VECTORS_HIGH)
-		cpuctrl |= CPU_CONTROL_VECRELOC;
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
@@ -2518,8 +2630,7 @@ struct cpu_option sa11x0_options[] = {
 };
 
 void
-sa11x0_setup(args)
-	char *args;
+sa11x0_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2557,6 +2668,58 @@ sa11x0_setup(args)
 }
 #endif	/* CPU_SA1100 || CPU_SA1110 */
 
+#if defined(CPU_FA526)
+struct cpu_option fa526_options[] = {
+#ifdef COMPAT_12
+	{ "nocache",		IGN, BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "nowritebuf",		IGN, BIC, CPU_CONTROL_WBUF_ENABLE },
+#endif	/* COMPAT_12 */
+	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "cpu.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "cpu.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+fa526_setup(char *args)
+{
+	int cpuctrl, cpuctrlmask;
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
+		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
+		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
+		 | CPU_CONTROL_CPCLK | CPU_CONTROL_VECRELOC;
+
+#ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
+	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
+#endif
+
+	cpuctrl = parse_cpu_options(args, fa526_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
+	/* Clear out the cache */
+	cpu_idcache_wbinv_all();
+
+	/* Set the control register */    
+	curcpu()->ci_ctrl = cpuctrl;
+	cpu_control(0xffffffff, cpuctrl);
+}
+#endif	/* CPU_FA526 */
+
 #if defined(CPU_IXP12X0)
 struct cpu_option ixp12x0_options[] = {
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -2571,8 +2734,7 @@ struct cpu_option ixp12x0_options[] = {
 };
 
 void
-ixp12x0_setup(args)
-	char *args;
+ixp12x0_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2628,8 +2790,7 @@ struct cpu_option xscale_options[] = {
 };
 
 void
-xscale_setup(args)
-	char *args;
+xscale_setup(char *args)
 {
 	uint32_t auxctl;
 	int cpuctrl, cpuctrlmask;

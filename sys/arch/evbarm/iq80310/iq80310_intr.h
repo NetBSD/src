@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.h,v 1.6.10.1 2008/05/16 02:22:14 yamt Exp $	*/
+/*	$NetBSD: iq80310_intr.h,v 1.6.10.2 2009/05/04 08:10:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,6 +40,7 @@
 
 #include "opt_iop310.h"
 
+#include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 

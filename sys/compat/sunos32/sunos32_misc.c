@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.59 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.59.4.1 2009/05/04 08:12:27 yamt Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -79,15 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.59 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.59.4.1 2009/05/04 08:12:27 yamt Exp $");
 
 #define COMPAT_SUNOS 1
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_compat_43.h"
 #include "opt_compat_netbsd.h"
-#include "opt_ptrace.h"
 #include "fs_nfs.h"
 #endif
 
@@ -200,14 +196,14 @@ sunos32_sys_wait4(struct lwp *l, const struct sunos32_sys_wait4_args *uap, regis
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */
 
-	struct netbsd32_wait4_args bsd_ua;
+	struct compat_50_netbsd32_wait4_args bsd_ua;
 
 	SCARG(&bsd_ua, pid) = SCARG(uap, pid) == 0 ? WAIT_ANY : SCARG(uap, pid);
 	SCARG(&bsd_ua, status) = SCARG(uap, status);
 	SCARG(&bsd_ua, options) = SCARG(uap, options);
 	SCARG(&bsd_ua, rusage) = SCARG(uap, rusage);
 
-	return netbsd32_wait4(l, &bsd_ua, retval);
+	return compat_50_netbsd32_wait4(l, &bsd_ua, retval);
 }
 
 int
@@ -623,7 +619,7 @@ sunos32_sys_getdents(struct lwp *l, const struct sunos32_sys_getdents_args *uap,
 	off_t *cookiebuf, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
@@ -808,20 +804,21 @@ sunos32_sys_setsockopt(struct lwp *l, const struct sunos32_sys_setsockopt_args *
 		syscallarg(netbsd32_caddr_t) val;
 		syscallarg(int) valsize;
 	} */
+	struct sockopt sopt;
 	struct socket *so;
-	struct mbuf *m = NULL;
 	int name = SCARG(uap, name);
 	int error;
 
-	/* getsock() will use the descriptor for us */
+	/* fd_getsock() will use the descriptor for us */
 	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (name == SO_DONTLINGER) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		mtod(m, struct linger *)->l_onoff = 0;
-		m->m_len = sizeof(struct linger);
-		error = sosetopt(so, SCARG(uap, level), SO_LINGER, m);
+		struct linger lg;
+
+		lg.l_onoff = 0;
+		error = so_setsockopt(l, so, SCARG(uap, level), SO_LINGER,
+		    &lg, sizeof(lg));
 		goto out;
 	}
 	if (SCARG(uap, level) == IPPROTO_IP) {
@@ -846,17 +843,14 @@ sunos32_sys_setsockopt(struct lwp *l, const struct sunos32_sys_setsockopt_args *
 		error = EINVAL;
 		goto out;
 	}
+	sockopt_init(&sopt, SCARG(uap, level), name, SCARG(uap, valsize));
 	if (SCARG_P32(uap, val)) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		error = copyin(SCARG_P32(uap, val), mtod(m, void *),
+		error = copyin(SCARG_P32(uap, val), sopt.sopt_data,
 		    (u_int)SCARG(uap, valsize));
-		if (error) {
-			(void) m_free(m);
-			goto out;
-		}
-		m->m_len = SCARG(uap, valsize);
 	}
-	error = sosetopt(so, SCARG(uap, level), name, m);
+	if (error == 0)
+		error = sosetopt(so, &sopt);
+	sockopt_destroy(&sopt);
  out:
  	fd_putfile(SCARG(uap, s));
 	return (error);
@@ -870,7 +864,7 @@ sunos32_sys_socket_common(struct lwp *l, register_t *retval, int type)
 	struct socket *so;
 	int error, fd;
 
-	/* getsock() will use the descriptor for us */
+	/* fd_getsock() will use the descriptor for us */
 	fd = (int)*retval;
 	if ((error = fd_getsock(fd, &so)) == 0) {
 		if (type == SOCK_DGRAM)
@@ -890,7 +884,7 @@ sunos32_sys_socket(struct lwp *l, const struct sunos32_sys_socket_args *uap, reg
 	} */
 	int error;
 
-	error = netbsd32_sys___socket30(l, (const void *)uap, retval);
+	error = netbsd32___socket30(l, (const void *)uap, retval);
 	if (error)
 		return (error);
 	return sunos32_sys_socket_common(l, retval, SCARG(uap, type));
@@ -1013,7 +1007,6 @@ sunos32_sys_open(struct lwp *l, const struct sunos32_sys_open_args *uap, registe
 	return ret;
 }
 
-#if defined (NFSSERVER)
 int
 sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, register_t *retval)
 {
@@ -1042,7 +1035,6 @@ sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, reg
 	return (ENOSYS);
 #endif
 }
-#endif /* NFSSERVER */
 
 int
 sunos32_sys_ustat(struct lwp *l, const struct sunos32_sys_ustat_args *uap, register_t *retval)
@@ -1152,7 +1144,7 @@ sunos32_sys_fstatfs(struct lwp *l, const struct sunos32_sys_fstatfs_args *uap, r
 	struct statvfs *sp;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
@@ -1188,7 +1180,7 @@ sunos32_sys_mknod(struct lwp *l, const struct sunos32_sys_mknod_args *uap, regis
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return netbsd32_mkfifo(l, (const struct netbsd32_mkfifo_args *)uap, retval);
 
-	return netbsd32_mknod(l, (const struct netbsd32_mknod_args *)uap, retval);
+	return compat_50_netbsd32_mknod(l, (const struct compat_50_netbsd32_mknod_args *)uap, retval);
 }
 
 #define SUNOS_SC_ARG_MAX	1
@@ -1282,7 +1274,6 @@ sunos32_sys_setrlimit(struct lwp *l, const struct sunos32_sys_setrlimit_args *ua
 	return compat_43_netbsd32_osetrlimit(l, &ua_43, retval);
 }
 
-#if defined(PTRACE) || defined(_LKM)
 /* for the m68k machines */
 #ifndef PT_GETFPREGS
 #define PT_GETFPREGS -1
@@ -1298,12 +1289,10 @@ static const int sreq2breq[] = {
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
 static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
-#endif
 
 int
 sunos32_sys_ptrace(struct lwp *l, const struct sunos32_sys_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
 	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -1314,11 +1303,9 @@ sunos32_sys_ptrace(struct lwp *l, const struct sunos32_sys_ptrace_args *uap, reg
 	struct netbsd32_ptrace_args pa;
 	int req;
 
-#ifdef _LKM
 #define sys_ptrace sysent[SYS_ptrace].sy_call
 	if (sys_ptrace == sys_nosys)
 		return ENOSYS;
-#endif
 
 	req = SCARG(uap, req);
 	if ((unsigned int)req >= nreqs)
@@ -1334,9 +1321,6 @@ sunos32_sys_ptrace(struct lwp *l, const struct sunos32_sys_ptrace_args *uap, reg
 	SCARG(&pa, data) = SCARG(uap, data);
 
 	return netbsd32_ptrace(l, &pa, retval);
-#else
-	return (ENOSYS);
-#endif /* PTRACE || _LKM */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.58.4.1 2008/05/16 02:24:05 yamt Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.58.4.2 2009/05/04 08:12:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.58.4.1 2008/05/16 02:24:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.58.4.2 2009/05/04 08:12:43 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -103,9 +103,7 @@ void	ne2000_readmem(bus_space_tag_t, bus_space_handle_t,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
 int
-ne2000_attach(nsc, myea)
-	struct ne2000_softc *nsc;
-	u_int8_t *myea;
+ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 {
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	bus_space_tag_t nict = dsc->sc_regt;
@@ -305,11 +303,7 @@ ne2000_attach(nsc, myea)
  * Detect an NE-2000 or compatible.  Returns a model code.
  */
 int
-ne2000_detect(nict, nich, asict, asich)
-	bus_space_tag_t nict;
-	bus_space_handle_t nich;
-	bus_space_tag_t asict;
-	bus_space_handle_t asich;
+ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asict, bus_space_handle_t asich)
 {
 	static u_int8_t test_pattern[32] = "THIS is A memory TEST pattern";
 	u_int8_t test_buffer[32], tmp;
@@ -468,10 +462,7 @@ ne2000_detect(nict, nich, asict, asich)
  * I/O.
  */
 int
-ne2000_write_mbuf(sc, m, buf)
-	struct dp8390_softc *sc;
-	struct mbuf *m;
-	int buf;
+ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 {
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;
 	bus_space_tag_t nict = sc->sc_regt;
@@ -647,11 +638,7 @@ ne2000_write_mbuf(sc, m, buf)
  * ring-wrap.
  */
 int
-ne2000_ring_copy(sc, src, dstv, amount)
-	struct dp8390_softc *sc;
-	int src;
-	void *dstv;
-	u_short amount;
+ne2000_ring_copy(struct dp8390_softc *sc, int src, void *dstv, u_short amount)
 {
 	char *dst = dstv;
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;
@@ -682,10 +669,7 @@ ne2000_ring_copy(sc, src, dstv, amount)
 }
 
 void
-ne2000_read_hdr(sc, buf, hdr)
-	struct dp8390_softc *sc;
-	int buf;
-	struct dp8390_ring *hdr;
+ne2000_read_hdr(struct dp8390_softc *sc, int buf, struct dp8390_ring *hdr)
 {
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;
 
@@ -711,15 +695,7 @@ ne2000_test_mem(struct dp8390_softc *sc)
  * rounded up to a word - ok as long as mbufs are word sized.
  */
 void
-ne2000_readmem(nict, nich, asict, asich, src, dst, amount, useword)
-	bus_space_tag_t nict;
-	bus_space_handle_t nich;
-	bus_space_tag_t asict;
-	bus_space_handle_t asich;
-	int src;
-	u_int8_t *dst;
-	size_t amount;
-	int useword;
+ne2000_readmem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asict, bus_space_handle_t asich, int src, u_int8_t *dst, size_t amount, int useword)
 {
 
 	/* Select page 0 registers. */
@@ -758,16 +734,7 @@ ne2000_readmem(nict, nich, asict, asich, src, dst, amount, useword)
  * used in the probe routine to test the memory.  'len' must be even.
  */
 void
-ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
-	bus_space_tag_t nict;
-	bus_space_handle_t nich;
-	bus_space_tag_t asict;
-	bus_space_handle_t asich;
-	u_int8_t *src;
-	int dst;
-	size_t len;
-	int useword;
-	int quiet;
+ne2000_writemem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *src, int dst, size_t len, int useword, int quiet)
 {
 	int maxwait = 100;	/* about 120us */
 
@@ -820,9 +787,7 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
 }
 
 int
-ne2000_detach(sc, flags)
-	struct ne2000_softc *sc;
-	int flags;
+ne2000_detach(struct ne2000_softc *sc, int flags)
 {
 
 	return (dp8390_detach(&sc->sc_dp8390, flags));
@@ -833,8 +798,7 @@ ne2000_detach(sc, flags)
  * This code is essentially the same as ne2000_attach above.
  */
 int
-ne2000_ipkdb_attach(kip)
-	struct ipkdb_if *kip;
+ne2000_ipkdb_attach(struct ipkdb_if *kip)
 {
 	struct ne2000_softc *np = kip->port;
 	struct dp8390_softc *dp = &np->sc_dp8390;
@@ -958,4 +922,39 @@ ne2000_power(int why, void *arg)
 		break;
 	}
 	splx(s);
+}
+
+bool
+ne2000_suspend(device_t self PMF_FN_ARGS)
+{
+	struct ne2000_softc *sc = device_private(self);
+	struct dp8390_softc *dsc = &sc->sc_dp8390;
+	int s;
+
+	s = splnet();
+
+	dp8390_stop(dsc);
+	dp8390_disable(dsc);
+
+	splx(s);
+	return true;
+}
+
+bool
+ne2000_resume(device_t self PMF_FN_ARGS)
+{
+	struct ne2000_softc *sc = device_private(self);
+	struct dp8390_softc *dsc = &sc->sc_dp8390;
+	struct ifnet *ifp = &dsc->sc_ec.ec_if;
+	int s;
+
+	s = splnet();
+
+	if (ifp->if_flags & IFF_UP) {
+		if (dp8390_enable(dsc) == 0)
+			dp8390_init(dsc);
+	}
+
+	splx(s);
+	return true;
 }

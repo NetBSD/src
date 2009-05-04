@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.23 2003/04/01 21:25:35 mycroft Exp $
+#	$NetBSD: Makefile,v 1.23.108.1 2009/05/04 08:11:18 yamt Exp $
 
-S=	${.CURDIR}/../../../../
+S=	${.CURDIR}/../../../..
 
 BASE= dosboot
 PROG= ${BASE}.com
@@ -31,6 +31,10 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
 
 VERSIONFILE= ${.CURDIR}/version
+
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
 
 .include <bsd.own.mk>
 

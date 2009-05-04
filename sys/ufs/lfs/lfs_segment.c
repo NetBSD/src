@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.210.4.1 2008/05/16 02:26:00 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.210.4.2 2009/05/04 08:14:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.210.4.1 2008/05/16 02:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.210.4.2 2009/05/04 08:14:38 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -376,10 +376,6 @@ lfs_vflush(struct vnode *vp)
 		DLOG((DLOG_VNODE, "lfs_vflush: flushing VU_DIROP\n"));
 		/* panic("lfs_vflush: VU_DIROP being flushed...this can\'t happen"); */
 	}
-	if (vp->v_usecount < 0) {
-		printf("usecount=%ld\n", (long)vp->v_usecount);
-		panic("lfs_vflush: usecount<0");
-	}
 #endif
 
 	do {
@@ -682,8 +678,8 @@ lfs_segwrite(struct mount *mp, int flags)
 		curseg = 0;
 		for (n = 0; n < fs->lfs_segtabsz; n++) {
 			dirty = 0;
-			if (bread(fs->lfs_ivnode,
-			    fs->lfs_cleansz + n, fs->lfs_bsize, NOCRED, &bp))
+			if (bread(fs->lfs_ivnode, fs->lfs_cleansz + n,
+			    fs->lfs_bsize, NOCRED, B_MODIFY, &bp))
 				panic("lfs_segwrite: ifile read");
 			segusep = (SEGUSE *)bp->b_data;
 			maxseg = min(segleft, fs->lfs_sepb);
@@ -1475,7 +1471,8 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 		    break;
 	    default:
 		    ap = &a[num - 1];
-		    if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED, &bp))
+		    if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED,
+			B_MODIFY, &bp))
 			    panic("lfs_updatemeta: bread bno %" PRId64,
 				  ap->in_lbn);
 

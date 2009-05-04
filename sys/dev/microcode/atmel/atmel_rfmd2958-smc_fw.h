@@ -4,7 +4,7 @@
  * Firmware to be used with rfmd2958 radio's on SMC's 2662W v.4 board
  * Version: 1.102.0 build #113
  *
- * Copyright 2004 Atmel Corporation. All Rights Reserved. Redistribution and use
+ * Copyright 2004 Atmel Corporation. All Rights Reserved. Redistribution and use
  * of the microcode software ("Firmware") is permitted provided that the following
  * conditions are met:
  *     1. Firmware is redistributed in object code only.

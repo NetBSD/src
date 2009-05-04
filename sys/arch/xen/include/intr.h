@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26.2.1 2008/05/16 02:23:29 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.26.2.2 2009/05/04 08:12:12 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <xen/evtchn.h>
 #include <machine/cpu.h>
 #include <machine/pic.h>
+#include <sys/evcnt.h>
 
 #include "opt_xen.h"
 
@@ -118,7 +119,6 @@ extern void Xspllower(int);
 
 int splraise(int);
 void spllower(int);
-void softintr(int);
 
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
 
@@ -150,15 +150,8 @@ splraiseipl(ipl_cookie_t icookie)
 #include <sys/spl.h>
 
 /*
- * XXX
- */
-#define	setsoftnet()	softintr(SIR_NET)
-
-/*
  * Stub declarations.
  */
-
-extern void Xsoftintr(void);
 
 struct cpu_info;
 
@@ -172,7 +165,7 @@ void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct evtsource *);
 
-void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
+void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);

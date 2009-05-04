@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32.c,v 1.10 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.10.4.1 2009/05/04 08:12:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.10 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.10.4.1 2009/05/04 08:12:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -657,8 +657,7 @@ njata32_piobm_done(void *v, int channel, int drive)
 }
 
 int
-njata32_intr(arg)
-	void *arg;
+njata32_intr(void *arg)
 {
 	struct njata32_softc *sc = arg;
 	struct ata_channel *chp;

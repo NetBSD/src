@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.40.10.1 2008/05/16 02:23:35 yamt Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.40.10.2 2009/05/04 08:12:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.40.10.1 2008/05/16 02:23:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.40.10.2 2009/05/04 08:12:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -801,9 +801,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(struct mach_trap_args *args)
 
 /* Find a wsdisplay from unit and screen */
 static int
-darwin_findscreen(dev, unit, screen)
-	dev_t *dev;
-	int unit, screen;
+darwin_findscreen(dev_t *dev, int unit, int screen)
 {
 	struct device *dv;
 	struct wsdisplay_softc *sc;

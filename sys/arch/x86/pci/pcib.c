@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3.4.1 2008/05/16 02:23:28 yamt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.3.4.2 2009/05/04 08:12:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3.4.1 2008/05/16 02:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3.4.2 2009/05/04 08:12:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,24 +47,21 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3.4.1 2008/05/16 02:23:28 yamt Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include "isa.h"
+#include "pcibvar.h"
 
-struct pcib_softc {
-	pci_chipset_tag_t	sc_pc;
-	pcitag_t		sc_tag;
-};
-
-int	pcibmatch(device_t, struct cfdata *, void *);
+int	pcibmatch(device_t, cfdata_t, void *);
 void	pcibattach(device_t, device_t, void *);
 int	pcibdetach(device_t, int);
 void	pcibchilddet(device_t, device_t);
 
-CFATTACH_DECL2_NEW(pcib, sizeof(struct pcib_softc),
-    pcibmatch, pcibattach, pcibdetach, NULL, NULL, pcibchilddet);
+CFATTACH_DECL3_NEW(pcib, sizeof(struct pcib_softc),
+    pcibmatch, pcibattach, pcibdetach, NULL, NULL, pcibchilddet,
+    DVF_DETACH_SHUTDOWN);
 
 void	pcib_callback(device_t);
 
 int
-pcibmatch(device_t parent, struct cfdata *match, void *aux)
+pcibmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -166,11 +163,13 @@ pcibmatch(device_t parent, struct cfdata *match, void *aux)
 	case PCI_VENDOR_CYRIX:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_CYRIX_CX5530_PCIB:
+#if !defined(XEN)
 			{
 				extern int clock_broken_latch;
 
 				clock_broken_latch = 0;
 			}
+#endif
 			return(1);
 		}
 		break;

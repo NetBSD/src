@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.20 2006/03/04 13:48:52 peter Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.20.72.1 2009/05/04 08:11:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -160,6 +160,10 @@ extern platid_t platid_mask_CPU_ARM_XSCALE;
 extern platid_t platid_mask_CPU_ARM_XSCALE_PXA250;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define GENERIC_ARM_XSCALE_PXA250 ((int)&platid_mask_CPU_ARM_XSCALE_PXA250)
+#endif
+extern platid_t platid_mask_CPU_ARM_XSCALE_PXA270;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM_XSCALE_PXA270 ((int)&platid_mask_CPU_ARM_XSCALE_PXA270)
 #endif
 #endif /* hpcarm */
 #ifdef hpcmips

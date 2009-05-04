@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.2.78.1 2008/05/16 02:22:23 yamt Exp $
+# $NetBSD: RAMDISK,v 1.2.78.2 2009/05/04 08:11:06 yamt Exp $
 #
 # RAMDISK machine description file
 # 
@@ -9,4 +9,6 @@ include 	"arch/hp700/conf/GENERIC"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4352	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=5000	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+

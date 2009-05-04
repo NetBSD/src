@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_disk.c,v 1.92.4.1 2008/05/16 02:25:26 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.92.4.2 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,11 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.92.4.1 2008/05/16 02:25:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.92.4.2 2009/05/04 08:13:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
@@ -202,18 +202,13 @@ disk_attach(struct disk *diskp)
 {
 
 	/*
-	 * Allocate and initialize the disklabel structures.  Note that
-	 * it's not safe to sleep here, since we're probably going to be
-	 * called during autoconfiguration.
+	 * Allocate and initialize the disklabel structures.
 	 */
-	diskp->dk_label = malloc(sizeof(struct disklabel), M_DEVBUF, M_NOWAIT);
-	diskp->dk_cpulabel = malloc(sizeof(struct cpu_disklabel), M_DEVBUF,
-	    M_NOWAIT);
+	diskp->dk_label = kmem_zalloc(sizeof(struct disklabel), KM_SLEEP);
+	diskp->dk_cpulabel = kmem_zalloc(sizeof(struct cpu_disklabel),
+	    KM_SLEEP);
 	if ((diskp->dk_label == NULL) || (diskp->dk_cpulabel == NULL))
 		panic("disk_attach: can't allocate storage for disklabel");
-
-	memset(diskp->dk_label, 0, sizeof(struct disklabel));
-	memset(diskp->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	/*
 	 * Set up the stats collection.
@@ -244,8 +239,8 @@ disk_detach(struct disk *diskp)
 	/*
 	 * Free the space used by the disklabel structures.
 	 */
-	free(diskp->dk_label, M_DEVBUF);
-	free(diskp->dk_cpulabel, M_DEVBUF);
+	kmem_free(diskp->dk_label, sizeof(*diskp->dk_label));
+	kmem_free(diskp->dk_cpulabel, sizeof(*diskp->dk_cpulabel));
 }
 
 void
@@ -274,6 +269,16 @@ disk_unbusy(struct disk *diskp, long bcount, int read)
 {
 
 	iostat_unbusy(diskp->dk_stats, bcount, read);
+}
+
+/*
+ * Return true if disk has an I/O operation in flight.
+ */
+bool
+disk_isbusy(struct disk *diskp)
+{
+
+	return iostat_isbusy(diskp->dk_stats);
 }
 
 /*

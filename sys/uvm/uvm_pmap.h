@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.21 2007/07/16 23:48:03 macallan Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.21.32.1 2009/05/04 08:14:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -70,6 +70,12 @@
 
 struct lwp;		/* for pmap_activate()/pmap_deactivate() proto */
 
+struct pmap;
+typedef struct pmap *pmap_t;
+
+extern struct pmap	*const kernel_pmap_ptr;
+#define pmap_kernel()	kernel_pmap_ptr
+
 /*
  * Each machine dependent implementation is expected to
  * keep certain statistics.  They may do this anyway they
@@ -94,13 +100,19 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #define	PMAP_WIRED	0x00000010	/* wired mapping */
 #define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
 
+#define	PMAP_MD_MASK	0xff000000	/* Machine-dependent bits */
+
+/*
+ * Flags passed to pmap_kenter_pa().  Note the bottom 3 bits are VM_PROT_*
+ * bits, used to indicate the access type.
+ */
+#ifndef PMAP_KMPAGE
+#define	PMAP_KMPAGE	0x00000000	/* this is from the kmem allocator */
+#endif
+
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
-#if !defined(pmap_kernel)
-struct pmap	*pmap_kernel(void);
-#endif
-
 void		pmap_activate(struct lwp *);
 void		pmap_deactivate(struct lwp *);
 void		pmap_unwire(pmap_t, vaddr_t);
@@ -123,7 +135,7 @@ void		pmap_copy_page(paddr_t, paddr_t);
 #endif
 struct pmap	*pmap_create(void);
 void		pmap_destroy(pmap_t);
-int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #if defined(PMAP_GROWKERNEL)
 vaddr_t		pmap_growkernel(vaddr_t);

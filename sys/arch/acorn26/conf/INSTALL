@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.21 2006/10/02 03:28:29 chs Exp $
+# $NetBSD: INSTALL,v 1.21.56.1 2009/05/04 08:10:23 yamt Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -50,7 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 options 	NFS_V2_ONLY	# Make a smaller NFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -88,12 +88,10 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	BUFPAGES=2
@@ -114,6 +112,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096 # size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # WS console uses DUMB, SUN or VT100 terminal emulation
 options 	WSEMUL_NODUMB
@@ -138,10 +137,8 @@ iic0		at iociic0
 pcfrtc0		at iic0 addr 0x50	# Real-time clock
 
 arckbd0 	at ioc0 bank 0 offset 0x04 # System keyboard
-arcwskbd0	at arckbd0		# Logical devices...
-wskbd0		at arcwskbd0
-#arcwsmouse0	at arckbd0
-#wsmouse0	at arcwsmouse0
+wskbd0		at arckbd0
+#wsmouse0	at arckbd0
 
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
 latches0	at ioc0 bank 5		# Printer/FDC control latches (Arc)
@@ -195,8 +192,8 @@ wsdisplay0	at arcvideo0
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
-#pseudo-device	ipfilter	1
-pseudo-device	loop		1
+#pseudo-device	ipfilter
+pseudo-device	loop
 pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_ROOT_SIZE=

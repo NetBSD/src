@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.6.4.1 2008/05/16 02:23:28 yamt Exp $ */
+/* $NetBSD: i82093var.h,v 1.6.4.2 2009/05/04 08:12:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #ifndef _X86_I82093VAR_H_
 #define _X86_I82093VAR_H_
 
+#include <sys/device.h>
 #include <machine/apicvar.h>
 
 struct ioapic_pin 
@@ -46,6 +47,7 @@ struct ioapic_pin
 };
 
 struct ioapic_softc {
+	device_t		sc_dev;
 	struct pic		sc_pic;
 	struct ioapic_softc	*sc_next;
 	int			sc_apicid;

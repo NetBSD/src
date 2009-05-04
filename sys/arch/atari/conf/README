@@ -4,4 +4,8 @@ preprocessor defines.
 If something needs to be changed in 'GENERIC.in' or some of the other '.in'
 files, please regenerate the config files and commit them too...
 
+Please commit changes to 'GENERIC.in' and other source files *first*, then
+run 'makeconf' and commit the generated files to ensure the 'Created from:'
+tags are correct.
+
 Leo.

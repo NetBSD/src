@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.13.4.1 2008/05/16 02:23:57 yamt Exp $ */
+/*	$NetBSD: mt.c,v 1.13.4.2 2009/05/04 08:12:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.13.4.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.13.4.2 2009/05/04 08:12:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,10 +224,7 @@ int	nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
 
 int
-mtlookup(id, slave, punit)
-	int id;
-	int slave;
-	int punit;
+mtlookup(int id, int slave, int punit)
 {
 	int i;
 
@@ -240,10 +237,7 @@ mtlookup(id, slave, punit)
 }
 
 int
-mtmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mtmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 
@@ -252,9 +246,7 @@ mtmatch(parent, match, aux)
 }
 
 void
-mtattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mtattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mt_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;
@@ -289,9 +281,7 @@ mtattach(parent, self, aux)
  * and -2 on "temporary" failure.
  */
 int
-mtreaddsj(sc, ecmd)
-	struct mt_softc *sc;
-	int ecmd;
+mtreaddsj(struct mt_softc *sc, int ecmd)
 {
 	int retval;
 
@@ -367,16 +357,13 @@ getstats:
 }
 
 int
-mtopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mt_softc *sc;
 	int req_den;
 	int error;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & MTF_EXISTS) == 0)
 		return (ENXIO);
 
@@ -473,14 +460,11 @@ errout:
 }
 
 int
-mtclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mt_softc *sc;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -496,16 +480,13 @@ mtclose(dev, flag, fmt, l)
 }
 
 int
-mtcommand(dev, cmd, cnt)
-	dev_t dev;
-	int cmd;
-	int cnt;
+mtcommand(dev_t dev, int cmd, int cnt)
 {
 	struct mt_softc *sc;
 	struct buf *bp;
 	int error = 0;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 	bp = &sc->sc_bufstore;
 
 	if (bp->b_cflags & BC_BUSY)
@@ -537,13 +518,12 @@ mtcommand(dev, cmd, cnt)
  * Only thing to check here is for legal record lengths (writes only).
  */
 void
-mtstrategy(bp)
-	struct buf *bp;
+mtstrategy(struct buf *bp)
 {
 	struct mt_softc *sc;
 	int s;
 
-	sc = device_lookup(&mt_cd, MTUNIT(bp->b_dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(bp->b_dev));
 
 	DPRINTF(MDB_ANY, ("%s strategy", device_xname(&sc->sc_dev)));
 
@@ -583,7 +563,7 @@ mtstrategy(bp)
 		}
 	}
 	s = splbio();
-	BUFQ_PUT(sc->sc_tab, bp);
+	bufq_put(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		mtustart(sc);
@@ -592,8 +572,7 @@ mtstrategy(bp)
 }
 
 void
-mtustart(sc)
-	struct mt_softc *sc;
+mtustart(struct mt_softc *sc)
 {
 
 	DPRINTF(MDB_ANY, ("%s ustart", device_xname(&sc->sc_dev)));
@@ -602,9 +581,7 @@ mtustart(sc)
 }
 
 void
-mtcallback(v, action)
-	void *v;
-	int action;
+mtcallback(void *v, int action)
 {
 	struct mt_softc *sc = v;
 
@@ -626,8 +603,7 @@ mtcallback(v, action)
 }
 
 void
-mtintr_callout(arg)
-	void *arg;
+mtintr_callout(void *arg)
 {
 	struct mt_softc *sc = arg;
 	int s = splbio();
@@ -638,8 +614,7 @@ mtintr_callout(arg)
 }
 
 void
-mtstart_callout(arg)
-	void *arg;
+mtstart_callout(void *arg)
 {
 	int s = splbio();
 
@@ -648,8 +623,7 @@ mtstart_callout(arg)
 }
 
 void
-mtstart(sc)
-	struct mt_softc *sc;
+mtstart(struct mt_softc *sc)
 {
 	struct buf *bp;
 	short	cmdcount = 1;
@@ -657,7 +631,7 @@ mtstart(sc)
 
 	DPRINTF(MDB_ANY, ("%s start", device_xname(&sc->sc_dev)));
 	sc->sc_flags &= ~MTF_WRT;
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
@@ -836,18 +810,17 @@ fatalerror:
 	bp->b_error = EIO;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if ((bp = BUFQ_PEEK(sc->sc_tab)) == NULL)
+	if ((bp = bufq_peek(sc->sc_tab)) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);
 }
 
 void
-mtintr(sc)
-	struct mt_softc *sc;
+mtintr(struct mt_softc *sc)
 {
 	struct buf *bp;
 	int slave, dir, i;
@@ -855,7 +828,7 @@ mtintr(sc)
 
 	slave = sc->sc_slave;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	if (bp == NULL) {
 		printf("%s intr: bp == NULL", device_xname(&sc->sc_dev));
 		return;
@@ -1000,50 +973,39 @@ error:
 	cmdbuf[0] = MTE_COMPLETE | MTE_IDLE;
 	(void) gpibsend(sc->sc_ic, slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if (BUFQ_PEEK(sc->sc_tab) == NULL)
+	if (bufq_peek(sc->sc_tab) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);
 }
 
 int
-mtread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mtread(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 
 	return (physio(mtstrategy, &sc->sc_bufstore,
 	    dev, B_READ, minphys, uio));
 }
 
 int
-mtwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mtwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 
 	return (physio(mtstrategy, &sc->sc_bufstore,
 	    dev, B_WRITE, minphys, uio));
 }
 
 int
-mtioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+mtioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;

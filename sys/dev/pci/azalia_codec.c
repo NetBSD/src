@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.63.4.1 2008/05/16 02:24:42 yamt Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.63.4.2 2009/05/04 08:12:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.63.4.1 2008/05/16 02:24:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.63.4.2 2009/05/04 08:12:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.63.4.1 2008/05/16 02:24:42 yamt E
 #include <sys/systm.h>
 #include <dev/pci/azalia.h>
 
-#define XNAME(co)	device_xname(((device_t)co->az))
 #ifdef MAX_VOLUME_255
 # define MIXER_DELTA(n)	(AUDIO_MAX_GAIN / (n))
 #else
@@ -49,7 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.63.4.1 2008/05/16 02:24:42 yamt E
 #define AZ_CLASS_OUTPUT		1
 #define AZ_CLASS_RECORD		2
 #define AZ_CLASS_PLAYBACK	3
+#define AZ_CLASS_MIXER		4
 #define AzaliaCplayback	"playback"
+#define AzaliaCmixer	"mix"
 #define AzaliaNfront	"front"
 #define AzaliaNclfe	"clfe"
 #define AzaliaNside	"side"
@@ -65,7 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.63.4.1 2008/05/16 02:24:42 yamt E
 	{{AZ_CLASS_RECORD, {AudioCrecord, 0}, AUDIO_MIXER_CLASS, \
 	AZ_CLASS_RECORD, 0, 0, ENUM_V }, 0, 0, }, \
 	{{AZ_CLASS_PLAYBACK, {AzaliaCplayback, 0}, AUDIO_MIXER_CLASS, \
-	AZ_CLASS_PLAYBACK, 0, 0, ENUM_V }, 0, 0, }
+	AZ_CLASS_PLAYBACK, 0, 0, ENUM_V }, 0, 0, }, \
+	{{AZ_CLASS_MIXER, {AzaliaCmixer, 0}, AUDIO_MIXER_CLASS, \
+	AZ_CLASS_MIXER, 0, 0, ENUM_V }, 0, 0, }
 #define AZ_MIXER_SPDIF(cl, nid)	\
 	{{0, {AzaliaNdigital, 0}, AUDIO_MIXER_SET, cl, 0, 0,		\
 	.un.s={6, {{{"v", 0}, CORB_DCC_V},	{{"vcfg", 0}, CORB_DCC_VCFG},	\
@@ -82,8 +85,14 @@ static int	generic_codec_find_pin(const codec_t *, int, int, uint32_t);
 static int	generic_codec_find_dac(const codec_t *, int, int);
 
 static int	generic_mixer_init(codec_t *);
+static int	generic_mixer_autoinit(codec_t *);
+static int	generic_mixer_init_widget(const codec_t *, widget_t *, nid_t);
+
 static int	generic_mixer_fix_indexes(codec_t *);
 static int	generic_mixer_default(codec_t *);
+static int	generic_mixer_pin_sense(codec_t *);
+static int	generic_mixer_widget_name(const codec_t *, widget_t *);
+static int	generic_mixer_create_virtual(codec_t *);
 static int	generic_mixer_delete(codec_t *);
 static void	generic_mixer_cat_names
 	(char *, size_t, const char *, const char *, const char *);
@@ -107,8 +116,8 @@ static int	alc260_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_get_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_unsol_event(codec_t *, int);
 static int	alc262_init_widget(const codec_t *, widget_t *, nid_t);
+static int	alc268_init_dacgroup(codec_t *);
 static int	alc662_init_dacgroup(codec_t *);
-static int	alc662_mixer_init(codec_t *);
 static int	alc861_init_dacgroup(codec_t *);
 static int	alc861vdgr_init_dacgroup(codec_t *);
 static int	alc880_init_dacgroup(codec_t *);
@@ -189,11 +198,26 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0268:
 		this->name = "Realtek ALC268";
+		this->init_dacgroup = alc268_init_dacgroup;
+		this->mixer_init = generic_mixer_autoinit;
+		this->init_widget = generic_mixer_init_widget;
+		break;
+	case 0x10ec0269:
+		this->name = "Realtek ALC269";
+		this->mixer_init = generic_mixer_autoinit;
+		this->init_widget = generic_mixer_init_widget;
 		break;
 	case 0x10ec0662:
 		this->name = "Realtek ALC662-GR";
-		this->mixer_init = alc662_mixer_init;
 		this->init_dacgroup = alc662_init_dacgroup;
+		this->mixer_init = generic_mixer_autoinit;
+		this->init_widget = generic_mixer_init_widget;
+		break;
+	case 0x10ec0663:
+		this->name = "Realtek ALC663";
+		this->init_dacgroup = alc662_init_dacgroup;
+		this->mixer_init = generic_mixer_autoinit;
+		this->init_widget = generic_mixer_init_widget;
 		break;
 	case 0x10ec0861:
 		this->name = "Realtek ALC861";
@@ -226,6 +250,8 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0885:
 		this->name = "Realtek ALC885";
 		this->init_dacgroup = alc885_init_dacgroup;
+		this->mixer_init = generic_mixer_autoinit;
+		this->init_widget = generic_mixer_init_widget;
 		break;
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
@@ -248,6 +274,14 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x11d41984:
 		/* http://www.analog.com/en/prod/0,2877,AD1984,00.html */
 		this->name = "Analog Devices AD1984";
+		this->init_dacgroup = ad1984_init_dacgroup;
+		this->init_widget = ad1984_init_widget;
+		this->mixer_init = ad1984_mixer_init;
+		this->unsol_event = ad1984_unsol_event;
+		break;
+	case 0x11d4194a:
+		/* http://www.analog.com/static/imported-files/data_sheets/AD1984A.pdf */
+		this->name = "Analog Devices AD1984A";
 		this->init_dacgroup = ad1984_init_dacgroup;
 		this->init_widget = ad1984_init_widget;
 		this->mixer_init = ad1984_mixer_init;
@@ -332,7 +366,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->extra = malloc(sizeof(uint32_t) * extra_size,
 		    M_DEVBUF, M_ZERO | M_NOWAIT);
 		if (this->extra == NULL) {
-			aprint_error("%s: Not enough memory\n", XNAME(this));
+			aprint_error_dev(this->dev, "Not enough memory\n");
 			return ENOMEM;
 		}
 	}
@@ -533,7 +567,7 @@ generic_mixer_init(codec_t *this)
 	this->mixers = malloc(sizeof(mixer_item_t) * this->maxmixers,
 	    M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 
@@ -579,7 +613,17 @@ generic_mixer_init(codec_t *this)
 	m->devinfo.prev = AUDIO_MIXER_LAST;
 	m->nid = 0;
 
-	this->nmixers = AZ_CLASS_PLAYBACK + 1;
+	m = &this->mixers[AZ_CLASS_MIXER];
+	m->devinfo.index = AZ_CLASS_MIXER;
+	strlcpy(m->devinfo.label.name, AzaliaCmixer,
+	    sizeof(m->devinfo.label.name));
+	m->devinfo.type = AUDIO_MIXER_CLASS;
+	m->devinfo.mixer_class = AZ_CLASS_MIXER;
+	m->devinfo.next = AUDIO_MIXER_LAST;
+	m->devinfo.prev = AUDIO_MIXER_LAST;
+	m->nid = 0;
+
+	this->nmixers = AZ_CLASS_MIXER + 1;
 
 #define MIXER_REG_PROLOG	\
 	mixer_devinfo_t *d; \
@@ -594,6 +638,14 @@ generic_mixer_init(codec_t *this)
 		const widget_t *w;
 
 		w = &this->w[i];
+
+		/* skip unconnected pins */
+		if (w->type == COP_AWTYPE_PIN_COMPLEX) {
+			uint8_t conn =
+			    (w->d.pin.config & CORB_CD_PORT_MASK) >> 30;
+			if (conn == 1)	/* no physical connection */
+				continue;
+		}
 
 		/* selector */
 		if (w->type != COP_AWTYPE_AUDIO_MIXER &&
@@ -611,7 +663,14 @@ generic_mixer_init(codec_t *this)
 				d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_CONNLIST;
 			for (j = 0, k = 0; j < w->nconnections && k < 32; j++) {
+				uint8_t conn;
+
 				if (!VALID_WIDGET_NID(w->connections[j], this))
+					continue;
+				/* skip unconnected pins */
+				PIN_STATUS(&this->w[w->connections[j]],
+				    conn);
+				if (conn == 1)
 					continue;
 				GMIDPRINTF(("%s: selector %d=%s\n", __func__, j,
 				    this->w[w->connections[j]].name));
@@ -634,7 +693,7 @@ generic_mixer_init(codec_t *this)
 			    "%s.mute", w->name);
 			d->type = AUDIO_MIXER_ENUM;
 			if (w->type == COP_AWTYPE_AUDIO_MIXER)
-				d->mixer_class = AZ_CLASS_OUTPUT;
+				d->mixer_class = AZ_CLASS_MIXER;
 			else if (w->type == COP_AWTYPE_AUDIO_SELECTOR)
 				d->mixer_class = AZ_CLASS_OUTPUT;
 			else if (w->type == COP_AWTYPE_PIN_COMPLEX)
@@ -661,7 +720,7 @@ generic_mixer_init(codec_t *this)
 			    "%s", w->name);
 			d->type = AUDIO_MIXER_VALUE;
 			if (w->type == COP_AWTYPE_AUDIO_MIXER)
-				d->mixer_class = AZ_CLASS_OUTPUT;
+				d->mixer_class = AZ_CLASS_MIXER;
 			else if (w->type == COP_AWTYPE_AUDIO_SELECTOR)
 				d->mixer_class = AZ_CLASS_OUTPUT;
 			else if (w->type == COP_AWTYPE_PIN_COMPLEX)
@@ -707,10 +766,19 @@ generic_mixer_init(codec_t *this)
 				    AudioNon, MAX_AUDIO_DEV_LEN);
 				this->nmixers++;
 			} else {
+				uint8_t conn;
+
 				for (j = 0; j < w->nconnections; j++) {
 					MIXER_REG_PROLOG;
 					if (!VALID_WIDGET_NID(w->connections[j], this))
 						continue;
+
+					/* skip unconnected pins */
+					PIN_STATUS(&this->w[w->connections[j]],
+					    conn);
+					if (conn == 1)
+						continue;
+
 					GMIDPRINTF(("%s: input mute %s.%s\n", __func__,
 					    w->name, this->w[w->connections[j]].name));
 					generic_mixer_cat_names(
@@ -723,6 +791,8 @@ generic_mixer_init(codec_t *this)
 						d->mixer_class = AZ_CLASS_OUTPUT;
 					else if (w->type == COP_AWTYPE_AUDIO_INPUT)
 						d->mixer_class = AZ_CLASS_RECORD;
+					else if (w->type == COP_AWTYPE_AUDIO_MIXER)
+						d->mixer_class = AZ_CLASS_MIXER;
 					else
 						d->mixer_class = AZ_CLASS_INPUT;
 					m->target = j;
@@ -767,9 +837,16 @@ generic_mixer_init(codec_t *this)
 				    MIXER_DELTA(COP_AMPCAP_NUMSTEPS(w->inamp_cap));
 				this->nmixers++;
 			} else {
+				uint8_t conn;
+
 				for (j = 0; j < w->nconnections; j++) {
 					MIXER_REG_PROLOG;
 					if (!VALID_WIDGET_NID(w->connections[j], this))
+						continue;
+					/* skip unconnected pins */
+					PIN_STATUS(&this->w[w->connections[j]],
+					    conn);
+					if (conn == 1)
 						continue;
 					GMIDPRINTF(("%s: input gain %s.%s\n", __func__,
 					    w->name, this->w[w->connections[j]].name));
@@ -781,6 +858,8 @@ generic_mixer_init(codec_t *this)
 						d->mixer_class = AZ_CLASS_OUTPUT;
 					else if (w->type == COP_AWTYPE_AUDIO_INPUT)
 						d->mixer_class = AZ_CLASS_RECORD;
+					else if (w->type == COP_AWTYPE_AUDIO_MIXER)
+						d->mixer_class = AZ_CLASS_MIXER;
 					else
 						d->mixer_class = AZ_CLASS_INPUT;
 					m->target = j;
@@ -1009,7 +1088,7 @@ generic_mixer_ensure_capacity(codec_t *this, size_t newsize)
 	newbuf = realloc(this->mixers, sizeof(mixer_item_t) * newmax, M_DEVBUF,
 	    M_ZERO | M_NOWAIT);
 	if (newbuf == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	this->mixers = newbuf;
@@ -1105,6 +1184,271 @@ generic_mixer_default(codec_t *this)
 	}
 
 	return 0;
+}
+
+static int
+generic_mixer_pin_sense(codec_t *this)
+{
+	typedef enum {
+		PIN_DIR_IN,
+		PIN_DIR_OUT,
+		PIN_DIR_MIC
+	} pintype_t;
+	const widget_t *w;
+	int i;
+
+	FOR_EACH_WIDGET(this, i) {
+		pintype_t pintype = PIN_DIR_IN;
+
+		w = &this->w[i];
+		if (w->type != COP_AWTYPE_PIN_COMPLEX)
+			continue;
+		if (!(w->d.pin.cap & COP_PINCAP_INPUT))
+			pintype = PIN_DIR_OUT;
+		if (!(w->d.pin.cap & COP_PINCAP_OUTPUT))
+			pintype = PIN_DIR_IN;
+
+		switch (w->d.pin.device) {
+		case CORB_CD_LINEOUT:
+		case CORB_CD_SPEAKER:
+		case CORB_CD_HEADPHONE:
+		case CORB_CD_SPDIFOUT:
+		case CORB_CD_DIGITALOUT:
+			pintype = PIN_DIR_OUT;
+			break;
+		case CORB_CD_CD:
+		case CORB_CD_LINEIN:
+			pintype = PIN_DIR_IN;
+			break;
+		case CORB_CD_MICIN:
+			pintype = PIN_DIR_MIC;
+			break;
+		}
+
+		switch (pintype) {
+		case PIN_DIR_IN:
+			this->comresp(this, w->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL,
+			    CORB_PWC_INPUT, NULL);
+			break;
+		case PIN_DIR_OUT:
+			this->comresp(this, w->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL,
+			    CORB_PWC_OUTPUT, NULL);
+			break;
+		case PIN_DIR_MIC:
+			this->comresp(this, w->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL,
+			    CORB_PWC_INPUT|CORB_PWC_VREF_80, NULL);
+			break;
+		}
+
+		if (w->d.pin.cap & COP_PINCAP_EAPD) {
+			uint32_t result;
+			int err;
+
+			err = this->comresp(this, w->nid,
+			    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+			if (err)
+				continue;
+			result &= 0xff;
+			result |= CORB_EAPD_EAPD;
+			err = this->comresp(this, w->nid,
+			    CORB_SET_EAPD_BTL_ENABLE, result, &result);
+			if (err)
+				continue;
+		}
+	}
+
+	return 0;
+}
+
+static int
+generic_mixer_widget_name(const codec_t *this, widget_t *w)
+{
+	const char *name = NULL, *grossloc = "", *geoloc = "";
+	uint8_t grosslocval, geolocval;
+
+	if (w->type != COP_AWTYPE_PIN_COMPLEX)
+		return 0;
+
+	switch (w->d.pin.device) {
+	case CORB_CD_LINEOUT:	name = "lineout";	break;
+	case CORB_CD_SPEAKER:	name = "spkr";		break;
+	case CORB_CD_HEADPHONE:	name = "hp";		break;
+	case CORB_CD_CD:	name = AudioNcd;	break;
+	case CORB_CD_SPDIFOUT:	name = "spdifout";	break;
+	case CORB_CD_DIGITALOUT: name = "digout";	break;
+	case CORB_CD_MODEMLINE:	name = "modemline";	break;
+	case CORB_CD_MODEMHANDSET: name = "modemhset";	break;
+	case CORB_CD_LINEIN:	name = "linein";	break;
+	case CORB_CD_AUX:	name = AudioNaux;	break;
+	case CORB_CD_MICIN:	name = AudioNmicrophone; break;
+	case CORB_CD_TELEPHONY:	name = "telephony";	break;
+	case CORB_CD_SPDIFIN:	name = "spdifin";	break;
+	case CORB_CD_DIGITALIN:	name = "digin";		break;
+	case CORB_CD_DEVICE_OTHER: name = "reserved";	break;
+	default:		name = "unused";	break;
+	}
+
+	grosslocval = ((w->d.pin.config & CORB_CD_LOCATION_MASK) >> 24) & 0xf;
+	geolocval = (w->d.pin.config & CORB_CD_LOCATION_MASK) >> 28;
+
+	switch (geolocval) {
+	case 0x00:	/* external on primary chassis */
+	case 0x10:	/* external on separate chassis */
+		geoloc = (geolocval == 0x00 ? "" : "d");
+		switch (grosslocval) {
+		case 0x00:	grossloc = "";		break;	/* N/A */
+		case 0x01:	grossloc = "";		break;	/* rear */
+		case 0x02:	grossloc = ".front";	break;	/* front */
+		case 0x03:	grossloc = ".left";	break;	/* left */
+		case 0x04:	grossloc = ".right";	break;	/* right */
+		case 0x05:	grossloc = ".top";	break;	/* top */
+		case 0x06:	grossloc = ".bottom";	break;	/* bottom */
+		case 0x07:	grossloc = ".rearpnl";	break;	/* rear panel */
+		case 0x08:	grossloc = ".drivebay";	break;	/* drive bay */
+		default:	grossloc = "";		break;
+		}
+		break;
+	case 0x01:
+		geoloc = "i";
+		switch (grosslocval) {
+		case 0x00:	grossloc = "";		break;	/* N/A */
+		case 0x07:	grossloc = ".riser";	break;	/* riser */
+		case 0x08:	grossloc = ".hdmi";	break;	/* hdmi */
+		default:	grossloc = "";		break;
+		}
+		break;
+	default:
+		geoloc = "o";
+		switch (grosslocval) {
+		case 0x00:	grossloc = "";		break;	/* N/A */
+		case 0x06:	grossloc = ".bottom";	break;	/* bottom */
+		case 0x07:	grossloc = ".lidin";	break;	/* lid inside */
+		case 0x08:	grossloc = ".lidout";	break;	/* lid outside */
+		default:	grossloc = "";		break;
+		}
+		break;
+	}
+
+	snprintf(w->name, sizeof(w->name), "%s%s%s", geoloc, name, grossloc);
+	return 0;
+}
+
+static int
+generic_mixer_create_virtual(codec_t *this)
+{
+	mixer_item_t *m;
+	mixer_devinfo_t *d;
+	convgroup_t *cgdac = &this->dacs.groups[0];
+	convgroup_t *cgadc = &this->adcs.groups[0];
+	int i, err, mdac, madc, mmaster;
+
+	/* Clear mixer indexes, to make generic_mixer_fix_index happy */
+	for (i = 0; i < this->nmixers; i++) {
+		d = &this->mixers[i].devinfo;
+		d->index = d->prev = d->next = 0;
+	}
+
+	mdac = madc = mmaster = -1;
+	for (i = 0; i < this->nmixers; i++) {
+		if (this->mixers[i].devinfo.type != AUDIO_MIXER_VALUE)
+			continue;
+		if (mdac < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
+			if (this->mixers[i].nid == cgdac->conv[0])
+				mdac = mmaster = i;
+		}
+		if (madc < 0 && this->adcs.ngroups > 0 && cgadc->nconv > 0) {
+			if (this->mixers[i].nid == cgadc->conv[0])
+				madc = i;
+		}
+	}
+
+	if (mdac == -1) {
+		/*
+		 * no volume mixer found on the DAC; enumerate peer widgets
+		 * and try to find a volume mixer on them
+		 */
+		widget_t *w;
+		int j;
+		FOR_EACH_WIDGET(this, i) {
+			w = &this->w[i];
+			for (j = 0; j < w->nconnections; j++)
+				if (w->connections[j] == cgdac->conv[0])
+					break;
+
+			if (j == w->nconnections)
+				continue;
+
+			for (j = 0; j < this->nmixers; j++) {
+				if (this->mixers[j].devinfo.type !=
+				    AUDIO_MIXER_VALUE)
+					continue;
+				if (this->mixers[j].nid == w->nid) {
+					mdac = mmaster = j;
+					break;
+				}
+			}
+
+			if (mdac == -1)
+				break;
+		}
+	}
+
+	if (mdac >= 0) {
+		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		if (err)
+			return err;
+		m = &this->mixers[this->nmixers];
+		d = &m->devinfo;
+		memcpy(m, &this->mixers[mmaster], sizeof(*m));
+		d->mixer_class = AZ_CLASS_OUTPUT;
+		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
+		this->nmixers++;
+
+		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		if (err)
+			return err;
+		m = &this->mixers[this->nmixers];
+		d = &m->devinfo;
+		memcpy(m, &this->mixers[mdac], sizeof(*m));
+		d->mixer_class = AZ_CLASS_INPUT;
+		snprintf(d->label.name, sizeof(d->label.name), AudioNdac);
+		this->nmixers++;
+	}
+
+	if (madc >= 0) {
+		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		if (err)
+			return err;
+		m = &this->mixers[this->nmixers];
+		d = &m->devinfo;
+		memcpy(m, &this->mixers[madc], sizeof(*m));
+		d->mixer_class = AZ_CLASS_RECORD;
+		snprintf(d->label.name, sizeof(d->label.name), AudioNvolume);
+		this->nmixers++;
+	}
+
+	generic_mixer_fix_indexes(this);
+
+	return 0;
+}
+
+static int
+generic_mixer_autoinit(codec_t *this)
+{
+	generic_mixer_init(this);
+	generic_mixer_create_virtual(this);
+	generic_mixer_pin_sense(this);
+
+	return 0;
+}
+
+static int
+generic_mixer_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+{
+	return generic_mixer_widget_name(this, w);
 }
 
 static int
@@ -1298,8 +1642,8 @@ generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 	}
 
 	else {
-		aprint_error("%s: internal error in %s: target=%x\n",
-		    XNAME(this), __func__, target);
+		aprint_error_dev(this->dev, "internal error in %s: target=%x\n",
+		    __func__, target);
 		return -1;
 	}
 	return 0;
@@ -1625,8 +1969,8 @@ generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 	}
 
 	else {
-		aprint_error("%s: internal error in %s: target=%x\n",
-		    XNAME(this), __func__, target);
+		aprint_error_dev(this->dev, "internal error in %s: target=%x\n",
+		    __func__, target);
 		return -1;
 	}
 	return 0;
@@ -1914,7 +2258,7 @@ alc260_mixer_init(codec_t *this)
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
 	    M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, mi, sizeof(mixer_item_t) * this->nmixers);
@@ -2085,7 +2429,7 @@ alc260_unsol_event(codec_t *this, int tag)
 }
 
 /* ----------------------------------------------------------------
- * Realtek ALC861
+ * Realtek ALC262
  * ---------------------------------------------------------------- */
 
 static int
@@ -2101,54 +2445,27 @@ alc262_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 }
 
 /* ----------------------------------------------------------------
- * Realtek ALC662-GR
+ * Realtek ALC268
  * ---------------------------------------------------------------- */
 
-static const mixer_item_t alc662_mixer_items[] = {
-	AZ_MIXER_CLASSES,
+static int
+alc268_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 1,
+		{{2, {0x02, 0x03}}}}; /* analog 4ch */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{2, {0x08, 0x07}}}};	/* analog 4ch */
 
-	{{0, {AudioNmaster, 0}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
-	{{0, {AudioNmaster".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
-	{{0, {AudioNspeaker".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
-	{{0, {AudioNspeaker".boost", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_PINBOOST},
-	{{0, {AudioNheadphone".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 0, ENUM_OFFON}, 0x1b, MI_TARGET_OUTAMP},
-	{{0, {AudioNheadphone".boost", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 0, ENUM_OFFON}, 0x1b, MI_TARGET_PINBOOST},
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
 
-	{{0, {AudioNdac, 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
-	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
-	{{0, {AudioNdac".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
-	{{0, {AudioNdac".front", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
-	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
-	{{0, {AudioNdac".surround", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
-	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x03, MI_TARGET_OUTAMP},
-	{{0, {AudioNdac".clfe", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
-	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x04, MI_TARGET_OUTAMP},
-
-	{{0, {AudioNmicrophone, 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
-	  0, 0, .un.v={{"", 0}, 2, MIXER_DELTA(65)}}, 0x08, MI_TARGET_INAMP(0)},
-	{{0, {AudioNmicrophone".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x08, MI_TARGET_INAMP(0)},
-	{{0, {AudioNmicrophone"2", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
-	  0, 0, .un.v={{"", 0}, 2, MIXER_DELTA(65)}}, 0x09, MI_TARGET_INAMP(0)},
-	{{0, {AudioNmicrophone"2.mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_OFFON}, 0x09, MI_TARGET_INAMP(0)},
-
-	{{0, {AudioNmicrophone".dir", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_IO}, 0x18, MI_TARGET_PINDIR},
-	{{0, {AudioNmicrophone"2.dir", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_IO}, 0x19, MI_TARGET_PINDIR},
-	{{0, {AudioNline".dir", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_IO}, 0x1a, MI_TARGET_PINDIR},
-	{{0, {AudioNline"2.dir", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, ENUM_IO}, 0x1b, MI_TARGET_PINDIR},
-};
+/* ----------------------------------------------------------------
+ * Realtek ALC662-GR
+ * ---------------------------------------------------------------- */
 
 static int
 alc662_init_dacgroup(codec_t *this)
@@ -2158,38 +2475,10 @@ alc662_init_dacgroup(codec_t *this)
 		{{3, {0x02, 0x03, 0x04}}}}; /* analog 6ch */
 	static const convgroupset_t adcs = {
 		-1, 1,
-		{{2, {0x08, 0x09}}}};	/* analog 4ch */
+		{{2, {0x09, 0x08}}}};	/* analog 4ch */
 
 	this->dacs = dacs;
 	this->adcs = adcs;
-	return 0;
-}
-
-static int
-alc662_mixer_init(codec_t *this)
-{
-	mixer_ctrl_t mc;
-
-	this->nmixers = __arraycount(alc662_mixer_items);
-	this->mixers = malloc(sizeof(alc662_mixer_items), M_DEVBUF, M_NOWAIT);
-	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
-		return ENOMEM;
-	}
-	memcpy(this->mixers, alc662_mixer_items, sizeof(alc662_mixer_items));
-	generic_mixer_fix_indexes(this);
-	generic_mixer_default(this);
-
-	mc.dev = -1;
-	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 0;		/* pindir: input */
-	generic_mixer_set(this, 0x18, MI_TARGET_PINDIR, &mc);	/* mic1 */
-	generic_mixer_set(this, 0x19, MI_TARGET_PINDIR, &mc);	/* mic2 */
-	generic_mixer_set(this, 0x1a, MI_TARGET_PINDIR, &mc);	/* line1 */
-	mc.un.ord = 1;		/* pindir: output */
-	generic_mixer_set(this, 0x1b, MI_TARGET_PINDIR, &mc);	/* line2 */
-
-
 	return 0;
 }
 
@@ -2359,7 +2648,7 @@ alc880_mixer_init(codec_t *this)
 	this->nmixers = __arraycount(alc880_mixer_items);
 	this->mixers = malloc(sizeof(alc880_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, alc880_mixer_items, sizeof(alc880_mixer_items));
@@ -2524,7 +2813,7 @@ alc882_mixer_init(codec_t *this)
 	this->nmixers = __arraycount(alc882_mixer_items);
 	this->mixers = malloc(sizeof(alc882_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, alc882_mixer_items, sizeof(alc882_mixer_items));
@@ -2792,7 +3081,7 @@ alc883_mixer_init(codec_t *this)
 	this->nmixers = __arraycount(alc883_mixer_items);
 	this->mixers = malloc(sizeof(alc883_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		printf("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, alc883_mixer_items, sizeof(alc883_mixer_items));
@@ -3116,7 +3405,7 @@ ad1981hd_mixer_init(codec_t *this)
 	this->nmixers = __arraycount(ad1981hd_mixer_items);
 	this->mixers = malloc(sizeof(ad1981hd_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, ad1981hd_mixer_items, sizeof(ad1981hd_mixer_items));
@@ -3128,6 +3417,12 @@ ad1981hd_mixer_init(codec_t *this)
 		mc.type = AUDIO_MIXER_ENUM;
 		mc.un.ord = 1;
 		generic_mixer_set(this, 0x09, MI_TARGET_PINDIR, &mc);
+		generic_mixer_set(this, 0x05, MI_TARGET_EAPD, &mc);
+		mc.type = AUDIO_MIXER_VALUE;
+		mc.un.value.num_channels = 2;
+		mc.un.value.level[0] = AUDIO_MAX_GAIN;
+		mc.un.value.level[1] = AUDIO_MAX_GAIN;
+		generic_mixer_set(this, 0x1a, MI_TARGET_VOLUME, &mc);
 	}
 	return 0;
 }
@@ -3223,7 +3518,7 @@ ad1983_mixer_init(codec_t *this)
 	this->nmixers = __arraycount(ad1983_mixer_items);
 	this->mixers = malloc(sizeof(ad1983_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, ad1983_mixer_items, sizeof(ad1983_mixer_items));
@@ -3315,6 +3610,7 @@ ad1983_unsol_event(codec_t *this, int tag)
 
 #define AD1984_THINKPAD			0x20ac17aa
 #define AD1984_DELL_OPTIPLEX_755	0x02111028
+#define AD1984A_DELL_OPTIPLEX_760	0x027f1028
 
 static int
 ad1984_init_dacgroup(codec_t *this)
@@ -3336,59 +3632,14 @@ ad1984_init_dacgroup(codec_t *this)
 static int
 ad1984_mixer_init(codec_t *this)
 {
-	mixer_ctrl_t mc;
-	mixer_item_t *m, *mdac = NULL;
-	mixer_devinfo_t *d;
-	int err, i;
+	int err;
 
-	err = generic_mixer_init(this);
+	err = generic_mixer_autoinit(this);
 	if (err)
 		return err;
 
-	/* Clear mixer indexes, to make generic_mixer_fix_indexes happy */
-	for (i = 0; i < this->nmixers; i++) {
-		d = &this->mixers[i].devinfo;
-		d->index = d->prev = d->next = 0;
-	}
-
-	/* We're looking for inputs.dac, which we know is nid 0x04 */
-	for (i = 0; i < this->nmixers; i++)
-		if (this->mixers[i].nid == 0x04) {
-			mdac = &this->mixers[i];
-			break;
-		}
-	if (mdac) {
-		/*
-		 * AD1984 doesn't have a master mixer, so create a fake
-		 * outputs.master that mirrors inputs.dac
-		 */
-		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
-		if (err)
-			return err;
-
-		m = &this->mixers[this->nmixers];
-		d = &m->devinfo;
-		memcpy(m, mdac, sizeof(*m));
-		d->mixer_class = AZ_CLASS_OUTPUT;
-		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
-		this->nmixers++;
-	}
-
-	/* Recreate mixer indexes and defaults after making a mess of things */
-	generic_mixer_fix_indexes(this);
-	generic_mixer_default(this);
-
-	mc.dev = -1;
-	mc.type = AUDIO_MIXER_ENUM;
-	if (this->subid == AD1984_THINKPAD) {
-		mc.un.ord = 1;
-		generic_mixer_set(this, 0x12, MI_TARGET_EAPD, &mc);
-	}
-	mc.un.ord = 1; /* dac */
-	generic_mixer_set(this, 0x22, MI_TARGET_CONNLIST, &mc); /* hpsel */
-	generic_mixer_set(this, 0x0e, MI_TARGET_CONNLIST, &mc); /* monosel */
-
-	if (this->subid == AD1984_DELL_OPTIPLEX_755) {
+	if (this->subid == AD1984_DELL_OPTIPLEX_755 ||
+	    this->subid == AD1984A_DELL_OPTIPLEX_760) {
 		/* setup a unsolicited event for the headphones and speaker */
 		this->comresp(this, 0x12, CORB_SET_UNSOLICITED_RESPONSE,
 			      CORB_UNSOL_ENABLE | AD198X_EVENT_SPEAKER, NULL);
@@ -3405,9 +3656,6 @@ static int
 ad1984_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
 	switch (nid) {
-	case 0x04:
-		strlcpy(w->name, AudioNdac, sizeof(w->name));
-		break;
 	case 0x07:
 		strlcpy(w->name, "hp", sizeof(w->name));
 		break;
@@ -3432,30 +3680,6 @@ ad1984_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	case 0x10:
 		strlcpy(w->name, "beep", sizeof(w->name));
 		break;
-	case 0x11:
-		strlcpy(w->name, AudioNheadphone, sizeof(w->name));
-		break;
-	case 0x12:
-		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
-		break;
-	case 0x13:
-		strlcpy(w->name, AudioNmono, sizeof(w->name));
-		break;
-	case 0x14:
-		strlcpy(w->name, AudioNmicrophone, sizeof(w->name));
-		break;
-	case 0x15:
-		strlcpy(w->name, AudioNline, sizeof(w->name));
-		break;
-	case 0x16:
-		strlcpy(w->name, AudioNaux, sizeof(w->name));
-		break;
-	case 0x1a:
-		strlcpy(w->name, "beep", sizeof(w->name));
-		break;
-	case 0x1c:
-		strlcpy(w->name, "dock", sizeof(w->name));
-		break;
 	case 0x1e:
 		strlcpy(w->name, AudioNmono, sizeof(w->name));
 		break;
@@ -3471,7 +3695,10 @@ ad1984_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	case 0x25:
 		strlcpy(w->name, "dock.pre", sizeof(w->name));
 		break;
+	default:
+		return generic_mixer_init_widget(this, w, nid);
 	}
+
 	return 0;
 }
 
@@ -3707,7 +3934,7 @@ ad1986a_mixer_init(codec_t *this)
 	this->nmixers = __arraycount(ad1986a_mixer_items);
 	this->mixers = malloc(sizeof(ad1986a_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, ad1986a_mixer_items, sizeof(ad1986a_mixer_items));
@@ -3825,7 +4052,7 @@ cmi9880_mixer_init(codec_t *this)
 	this->nmixers = __arraycount(cmi9880_mixer_items);
 	this->mixers = malloc(sizeof(cmi9880_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, cmi9880_mixer_items, sizeof(cmi9880_mixer_items));
@@ -3985,7 +4212,7 @@ stac9200_mixer_init(codec_t *this)
 	this->nmixers = __arraycount(stac9200_mixer_items);
 	this->mixers = malloc(sizeof(stac9200_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
-		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		aprint_error_dev(this->dev, "out of memory in %s\n", __func__);
 		return ENOMEM;
 	}
 	memcpy(this->mixers, stac9200_mixer_items, sizeof(stac9200_mixer_items));
@@ -4079,7 +4306,9 @@ atihdmi_init_dacgroup(codec_t *this)
 	static const convgroupset_t dacs = {
 		-1, 1,
 		{{1, {0x02}}}};	/* digital */
-	static const convgroupset_t adcs = {-1, 0, {}}; /* no recording */
+	static const convgroupset_t adcs = {
+		-1, 0,
+		{{0, {0x00}}}}; /* no recording */
 
 	this->dacs = dacs;
 	this->adcs = adcs;

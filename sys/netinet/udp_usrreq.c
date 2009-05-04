@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.171.2.1 2008/05/16 02:25:42 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.171.2.2 2009/05/04 08:14:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,9 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.171.2.1 2008/05/16 02:25:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.171.2.2 2009/05/04 08:14:18 yamt Exp $");
 
 #include "opt_inet.h"
+#include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_ipkdb.h"
@@ -135,6 +136,10 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.171.2.1 2008/05/16 02:25:42 yamt Ex
 #include <netinet6/esp.h>
 #include <netkey/key.h>
 #endif /* IPSEC */
+
+#ifdef COMPAT_50
+#include <compat/sys/socket.h>
+#endif
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -408,18 +413,18 @@ udp_input(struct mbuf *m, ...)
 	if (IN_MULTICAST(ip->ip_dst.s_addr) || n == 0) {
 		struct sockaddr_in6 src6, dst6;
 
-		bzero(&src6, sizeof(src6));
+		memset(&src6, 0, sizeof(src6));
 		src6.sin6_family = AF_INET6;
 		src6.sin6_len = sizeof(struct sockaddr_in6);
 		src6.sin6_addr.s6_addr[10] = src6.sin6_addr.s6_addr[11] = 0xff;
-		bcopy(&ip->ip_src, &src6.sin6_addr.s6_addr[12],
+		memcpy(&src6.sin6_addr.s6_addr[12], &ip->ip_src,
 			sizeof(ip->ip_src));
 		src6.sin6_port = uh->uh_sport;
-		bzero(&dst6, sizeof(dst6));
+		memset(&dst6, 0, sizeof(dst6));
 		dst6.sin6_family = AF_INET6;
 		dst6.sin6_len = sizeof(struct sockaddr_in6);
 		dst6.sin6_addr.s6_addr[10] = dst6.sin6_addr.s6_addr[11] = 0xff;
-		bcopy(&ip->ip_dst, &dst6.sin6_addr.s6_addr[12],
+		memcpy(&dst6.sin6_addr.s6_addr[12], &ip->ip_dst,
 			sizeof(ip->ip_dst));
 		dst6.sin6_port = uh->uh_dport;
 
@@ -575,12 +580,12 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	/*
 	 * Construct source and dst sockaddrs.
 	 */
-	bzero(&src, sizeof(src));
+	memset(&src, 0, sizeof(src));
 	src.sin6_family = AF_INET6;
 	src.sin6_len = sizeof(struct sockaddr_in6);
 	src.sin6_addr = ip6->ip6_src;
 	src.sin6_port = uh->uh_sport;
-	bzero(&dst, sizeof(dst));
+	memset(&dst, 0, sizeof(dst));
 	dst.sin6_family = AF_INET6;
 	dst.sin6_len = sizeof(struct sockaddr_in6);
 	dst.sin6_addr = ip6->ip6_dst;
@@ -639,6 +644,9 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (inp && (inp->inp_flags & INP_CONTROLOPTS
+#ifdef SO_OTIMESTAMP
+			 || so->so_options & SO_OTIMESTAMP
+#endif
 			 || so->so_options & SO_TIMESTAMP)) {
 			struct ip *ip = mtod(n, struct ip *);
 			ip_savecontrol(inp, &opts, ip, n);
@@ -686,7 +694,10 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS
-			  || in6p->in6p_socket->so_options & SO_TIMESTAMP)) {
+#ifdef SO_OTIMESTAMP
+		    || in6p->in6p_socket->so_options & SO_OTIMESTAMP
+#endif
+		    || in6p->in6p_socket->so_options & SO_TIMESTAMP)) {
 			struct ip6_hdr *ip6 = mtod(n, struct ip6_hdr *);
 			ip6_savecontrol(in6p, &opts, ip6, n);
 		}
@@ -1000,14 +1011,13 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 }
 
 int
-udp_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **mp)
+udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int s;
 	int error = 0;
-	struct mbuf *m;
 	struct inpcb *inp;
 	int family;
+	int optval;
 
 	family = so->so_proto->pr_domain->dom_family;
 
@@ -1015,16 +1025,16 @@ udp_ctloutput(int op, struct socket *so, int level, int optname,
 	switch (family) {
 #ifdef INET
 	case PF_INET:
-		if (level != IPPROTO_UDP) {
-			error = ip_ctloutput(op, so, level, optname, mp);
+		if (sopt->sopt_level != IPPROTO_UDP) {
+			error = ip_ctloutput(op, so, sopt);
 			goto end;
 		}
 		break;
 #endif
 #ifdef INET6
 	case PF_INET6:
-		if (level != IPPROTO_UDP) {
-			error = ip6_ctloutput(op, so, level, optname, mp);
+		if (sopt->sopt_level != IPPROTO_UDP) {
+			error = ip6_ctloutput(op, so, sopt);
 			goto end;
 		}
 		break;
@@ -1037,17 +1047,15 @@ udp_ctloutput(int op, struct socket *so, int level, int optname,
 
 	switch (op) {
 	case PRCO_SETOPT:
-		m = *mp;
 		inp = sotoinpcb(so);
 
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case UDP_ENCAP:
-			if (m == NULL || m->m_len != sizeof(int)) {
-				error = EINVAL;
+			error = sockopt_getint(sopt, &optval);
+			if (error)
 				break;
-			}
 
-			switch(*mtod(m, int *)) {
+			switch(optval) {
 #ifdef IPSEC_NAT_T
 			case 0:
 				inp->inp_flags &= ~INP_ESPINUDP_ALL;
@@ -1072,9 +1080,6 @@ udp_ctloutput(int op, struct socket *so, int level, int optname,
 		default:
 			error = ENOPROTOOPT;
 			break;
-		}
-		if (m != NULL) {
-			m_free(m);
 		}
 		break;
 

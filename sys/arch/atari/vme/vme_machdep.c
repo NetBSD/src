@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.14.78.1 2008/05/16 02:22:06 yamt Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.14.78.2 2009/05/04 08:10:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.14.78.1 2008/05/16 02:22:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.14.78.2 2009/05/04 08:10:51 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.14.78.1 2008/05/16 02:22:06 yamt E
 #include <atari/atari/device.h>
 #include <atari/vme/vmevar.h>
 
-static int	vmebusprint __P((void *auxp, const char *));
-static int	vmebusmatch __P((struct device *, struct cfdata *, void *));
-static void	vmebusattach __P((struct device *, struct device *, void *));
+static int	vmebusprint(void *auxp, const char *);
+static int	vmebusmatch(struct device *, struct cfdata *, void *);
+static void	vmebusattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(avmebus, sizeof(struct device),
     vmebusmatch, vmebusattach, NULL, NULL);
@@ -56,10 +56,7 @@ CFATTACH_DECL(avmebus, sizeof(struct device),
 int vmebus_attached;
 
 int
-vmebusmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+vmebusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if(atari_realconfig == 0)
 		return (0);
@@ -69,9 +66,7 @@ void		*auxp;
 }
 
 void
-vmebusattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+vmebusattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct vmebus_attach_args	vba;
 
@@ -96,9 +91,7 @@ void		*auxp;
 }
 
 int
-vmebusprint(auxp, name)
-void		*auxp;
-const char	*name;
+vmebusprint(void *auxp, const char *name)
 {
 	if(name == NULL)
 		return(UNCONF);

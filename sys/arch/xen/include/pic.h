@@ -1,12 +1,8 @@
-/*	$NetBSD: pic.h,v 1.2 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: pic.h,v 1.2.78.1 2009/05/04 08:12:12 yamt Exp $	*/
 
 #ifndef _XEN_PIC_H_
 #define	_XEN_PIC_H_
 
 #include <x86/pic.h>
-
-#define	PIC_XEN		4
-
-extern struct pic xen_pic;
 
 #endif /* _XEN_PIC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx.h,v 1.1.22.1 2008/05/16 02:22:14 yamt Exp $	*/
+/*	$NetBSD: sdp24xx.h,v 1.1.22.2 2009/05/04 08:11:00 yamt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -31,7 +31,7 @@
 #ifndef _EVBARM_TISDP24XX_SDP24XX_H
 #define _EVBARM_TISDP24XX_SDP24XX_H
 
-#include <arm/omap/omap2430reg.h>
+#include <arm/omap/omap2_reg.h>
 
 /*
  * Kernel VM space: 192MB at KERNEL_VM_BASE

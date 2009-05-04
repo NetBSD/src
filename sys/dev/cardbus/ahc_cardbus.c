@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.23.10.1 2008/05/16 02:23:53 yamt Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.23.10.2 2009/05/04 08:12:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.23.10.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.23.10.2 2009/05/04 08:12:35 yamt Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -77,7 +77,7 @@ struct ahc_cardbus_softc {
 
 	/* CardBus-specific goo. */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	int	sc_intrline;		/* our interrupt line */
+	cardbus_intr_line_t sc_intrline; /* our interrupt line */
 	cardbustag_t sc_tag;
 
 	int	sc_cbenable;		/* what CardBus access type to enable */
@@ -204,11 +204,10 @@ ahc_cardbus_attach(struct device *parent, struct device *self,
 	ahc->ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
 	    ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-		    ahc_name(ahc), ca->ca_intrline);
+		printf("%s: unable to establish interrupt\n",
+		    ahc_name(ahc));
 		return;
 	}
-	printf("%s: interrupting at %d\n", ahc_name(ahc), ca->ca_intrline);
 
 	ahc->seep_config = malloc(sizeof(*ahc->seep_config),
 				  M_DEVBUF, M_NOWAIT);
@@ -258,9 +257,7 @@ ahc_cardbus_attach(struct device *parent, struct device *self,
 }
 
 int
-ahc_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+ahc_cardbus_detach(struct device *self, int flags)
 {
 	struct ahc_cardbus_softc *csc = device_private(self);
 	struct ahc_softc *ahc = &csc->sc_ahc;

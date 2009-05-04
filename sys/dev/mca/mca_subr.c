@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_subr.c,v 1.8.74.1 2008/05/16 02:24:33 yamt Exp $	*/
+/*	$NetBSD: mca_subr.c,v 1.8.74.2 2009/05/04 08:12:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.8.74.1 2008/05/16 02:24:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.8.74.2 2009/05/04 08:12:51 yamt Exp $");
 
 #include "opt_mcaverbose.h"
 
@@ -60,10 +60,7 @@ struct mca_knowndev {
 #endif /* MCAVERBOSE */
 
 void
-mca_devinfo(id, cp, l)
-	int id;
-	char *cp;
-	size_t l;
+mca_devinfo(int id, char *cp, size_t l)
 {
 #ifdef MCAVERBOSE
 	const struct mca_knowndev *kdp;
@@ -84,8 +81,7 @@ mca_devinfo(id, cp, l)
  * designed this way.
  */
 int
-mca_match_disabled(id)
-	int id;
+mca_match_disabled(int id)
 {
 	switch (id) {
 	case MCA_PRODUCT_SKNETG:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.16.78.1 2008/05/16 02:22:28 yamt Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.16.78.2 2009/05/04 08:11:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.16.78.1 2008/05/16 02:22:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.16.78.2 2009/05/04 08:11:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,7 @@ ucb1200_state_install(struct device *dev, int (*sfun)(void *), void *sarg,
 }
 
 int
-ucb1200_state_idle(dev)
-	struct device *dev;
+ucb1200_state_idle(struct device *dev)
 {
 	struct ucb1200_softc *sc = (void*)dev;
 	struct ucbchild_state *cs;

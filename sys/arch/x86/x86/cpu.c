@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.33.2.1 2008/05/16 02:23:28 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.33.2.2 2009/05/04 08:12:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.1 2008/05/16 02:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.2 2009/05/04 08:12:10 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -71,12 +71,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.1 2008/05/16 02:23:28 yamt Exp $");
 #include "lapic.h"
 #include "ioapic.h"
 
+#ifdef i386
+#include "npx.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/reboot.h>
@@ -109,6 +113,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.1 2008/05/16 02:23:28 yamt Exp $");
 #include <dev/isa/isareg.h>
 
 #include "tsc.h"
+
+#if MAXCPUS > 32
+#error cpu_info contains 32bit bitmasks
+#endif
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
@@ -250,7 +258,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	if (ncolors <= uvmexp.ncolors)
 		return;
-	aprint_verbose_dev(ci->ci_dev, "%d page colors\n", ncolors);
+	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
 }
 
@@ -268,7 +276,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	if (cpus_attached == ~0) {
-		aprint_error(": increase MAXCPUS, X86_MAXPROCS\n");
+		aprint_error(": increase MAXCPUS\n");
 		return;
 	}
 
@@ -279,18 +287,20 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		if ((boothowto & RB_MD1) != 0) {
 			aprint_error(": multiprocessor boot disabled\n");
+			if (!pmf_device_register(self, NULL, NULL))
+				aprint_error_dev(self,
+				    "couldn't establish power handler\n");
 			return;
 		}
 		aprint_naive(": Application Processor\n");
-		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
-		    M_DEVBUF, M_WAITOK);
+		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		    KM_SLEEP);
 		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
 		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
 		ci->ci_curldt = -1;
 #ifdef TRAPLOG
-		ci->ci_tlog_base = malloc(sizeof(struct tlog),
-		    M_DEVBUF, M_WAITOK);
+		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
 #endif
 	} else {
 		aprint_naive(": %s Processor\n",
@@ -317,6 +327,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_dev = self;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
+
+	/* Must be before mi_cpu_attach(). */
+	cpu_vm_init(ci);
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		int error;
@@ -350,7 +363,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
-		x86_errata();
 		if (caa->cpu_role != CPU_ROLE_SP) {
 			/* Enable lapic. */
 			lapic_enable();
@@ -368,12 +380,14 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	case CPU_ROLE_SP:
 		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		cpu_identify(ci);
+		x86_errata();
 		x86_cpu_idle_init();
 		break;
 
 	case CPU_ROLE_BP:
 		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
+		x86_errata();
 		x86_cpu_idle_init();
 		break;
 
@@ -388,9 +402,14 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
+			struct cpu_info *tmp;
+
 			cpu_identify(ci);
-			ci->ci_next = cpu_info_list->ci_next;
-			cpu_info_list->ci_next = ci;
+			tmp = cpu_info_list;
+			while (tmp->ci_next)
+				tmp = tmp->ci_next;
+
+			tmp->ci_next = ci;
 		}
 		break;
 
@@ -399,7 +418,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 
-	cpu_vm_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
@@ -485,7 +503,6 @@ cpu_init(struct cpu_info *ci)
 		wbinvd();
 		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 		tsc_sync_ap(ci);
-		tsc_sync_ap(ci);
 	} else {
 		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 	}
@@ -498,10 +515,10 @@ cpu_boot_secondary_processors(void)
 	u_long i;
 
 	/* Now that we know the number of CPUs, patch the text segment. */
-	x86_patch();
+	x86_patch(false);
 
-	for (i=0; i < X86_MAXPROCS; i++) {
-		ci = cpu_lookup_byindex(i);
+	for (i=0; i < maxcpus; i++) {
+		ci = cpu_lookup(i);
 		if (ci == NULL)
 			continue;
 		if (ci->ci_data.cpu_idlelwp == NULL)
@@ -517,6 +534,9 @@ cpu_boot_secondary_processors(void)
 
 	/* Now that we know about the TSC, attach the timecounter. */
 	tsc_tc_init();
+
+	/* Enable zeroing of pages in the idle loop if we have SSE2. */
+	vm_page_zero_enable = ((cpu_feature & CPUID_SSE2) != 0);
 }
 
 static void
@@ -534,8 +554,8 @@ cpu_init_idle_lwps(void)
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i = 0; i < X86_MAXPROCS; i++) {
-		ci = cpu_lookup_byindex(i);
+	for (i = 0; i < maxcpus; i++) {
+		ci = cpu_lookup(i);
 		if (ci == NULL)
 			continue;
 		if (ci->ci_data.cpu_idlelwp == NULL)
@@ -595,7 +615,6 @@ cpu_start_secondary(struct cpu_info *ci)
 		x86_disable_intr();
 		wbinvd();
 		tsc_sync_bp(ci);
-		tsc_sync_bp(ci);
 		x86_write_psl(psl);
 	}
 
@@ -626,7 +645,6 @@ cpu_boot_secondary(struct cpu_info *ci)
 		psl = x86_read_psl();
 		x86_disable_intr();
 		wbinvd();
-		tsc_sync_bp(ci);
 		tsc_sync_bp(ci);
 		x86_write_psl(psl);
 		drift -= ci->ci_data.cpu_cc_skew;
@@ -666,7 +684,6 @@ cpu_hatch(void *v)
 	wbinvd();
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
 	tsc_sync_ap(ci);
-	tsc_sync_ap(ci);
 
 	/*
 	 * Wait to be brought online.  Use 'monitor/mwait' if available,
@@ -704,7 +721,9 @@ cpu_hatch(void *v)
 	lapic_initclocks();
 
 #ifdef i386
+#if NNPX > 0
 	npxinit(ci);
+#endif
 #else
 	fpuinit(ci);
 #endif
@@ -962,8 +981,10 @@ cpu_offline_md(void)
 	int s;
 
 	s = splhigh();
-#ifdef __i386__
+#ifdef i386
+#if NNPX > 0
 	npxsave_cpu(true);
+#endif
 #else
 	fpusave_cpu(true);
 #endif
@@ -989,7 +1010,7 @@ cpu_suspend(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, false);
+		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
 	
 		if (err)
@@ -1015,7 +1036,7 @@ cpu_resume(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, true);
+		err = cpu_setstate(ci, true);
 		mutex_exit(&cpu_lock);
 	}
 

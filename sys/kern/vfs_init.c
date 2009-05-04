@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.37.10.1 2008/05/16 02:25:28 yamt Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.37.10.2 2009/05/04 08:13:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37.10.1 2008/05/16 02:25:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37.10.2 2009/05/04 08:13:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -78,9 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37.10.1 2008/05/16 02:25:28 yamt Exp 
 #include <sys/ucred.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/module.h>
+#include <sys/dirhash.h>
+#include <sys/sysctl.h>
 
 /*
  * Sigh, such primitive tools are these...
@@ -136,6 +138,42 @@ vn_default_error(void *v)
 
 	return (EOPNOTSUPP);
 }
+
+static struct sysctllog *vfs_sysctllog;
+
+/*
+ * Top level filesystem related information gathering.
+ */
+static void
+sysctl_vfs_setup(void)
+{
+	extern int vfs_magiclinks;
+
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "generic",
+		       SYSCTL_DESCR("Non-specific vfs related information"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, CTL_EOL);
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "fstypes",
+		       SYSCTL_DESCR("List of file systems present"),
+		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "magiclinks",
+		       SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
+		       NULL, 0, &vfs_magiclinks, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
+}
+
 
 /*
  * vfs_init.c
@@ -231,9 +269,8 @@ vfs_opv_init(const struct vnodeopv_desc * const *vopvdpp)
 	 * Allocate the vectors.
 	 */
 	for (i = 0; vopvdpp[i] != NULL; i++) {
-		/* XXX - shouldn't be M_VNODE */
 		opv_desc_vector =
-		    malloc(VNODE_OPS_COUNT * sizeof(PFI), M_VNODE, M_WAITOK);
+		    kmem_alloc(VNODE_OPS_COUNT * sizeof(PFI), KM_SLEEP);
 		memset(opv_desc_vector, 0, VNODE_OPS_COUNT * sizeof(PFI));
 		*(vopvdpp[i]->opv_desc_vector_p) = opv_desc_vector;
 		DODEBUG(printf("vector at %p allocated\n",
@@ -263,8 +300,8 @@ vfs_opv_free(const struct vnodeopv_desc * const *vopvdpp)
 	 * Free the vectors allocated in vfs_opv_init().
 	 */
 	for (i = 0; vopvdpp[i] != NULL; i++) {
-		/* XXX - shouldn't be M_VNODE */
-		free(*(vopvdpp[i]->opv_desc_vector_p), M_VNODE);
+		kmem_free(*(vopvdpp[i]->opv_desc_vector_p),
+		    VNODE_OPS_COUNT * sizeof(PFI));
 		*(vopvdpp[i]->opv_desc_vector_p) = NULL;
 	}
 }
@@ -302,6 +339,11 @@ vfsinit(void)
 {
 
 	/*
+	 * Attach sysctl nodes
+	 */
+	sysctl_vfs_setup();
+
+	/*
 	 * Initialize the namei pathname buffer pool and cache.
 	 */
 	pnbuf_cache = pool_cache_init(MAXPATHLEN, 0, 0, 0, "pnbufpl",
@@ -329,6 +371,11 @@ vfsinit(void)
 	 * Initialize the special vnode operations.
 	 */
 	vfs_opv_init(vfs_special_vnodeopv_descs);
+
+	/*
+	 * Initialise generic dirhash.
+	 */
+	dirhash_init();
 
 	/*
 	 * Initialise VFS hooks.

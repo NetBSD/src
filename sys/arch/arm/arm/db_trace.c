@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2007/02/22 05:14:04 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.16.48.1 2009/05/04 08:10:38 yamt Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2007/02/22 05:14:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16.48.1 2009/05/04 08:10:38 yamt Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -80,12 +80,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2007/02/22 05:14:04 thorpej Exp $"
 #define FR_RFP	(-3)
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t       addr;
-	bool             have_addr;
-	db_expr_t       count;
-	const char      *modif;
-	void		(*pr) __P((const char *, ...));
+db_stack_trace_print(db_expr_t addr, bool have_addr,
+		db_expr_t count, const char *modif,
+		void (*pr)(const char *, ...))
 {
 	u_int32_t	*frame, *lastframe;
 	const char	*cp = modif;
@@ -124,7 +121,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 					(*pr)("not found\n");
 					return;
 				}
-				l = proc_representative_lwp(p, NULL, 0);
+				l = LIST_FIRST(&p->p_lwps);
+				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
 			if (!(l->l_flag & LW_INMEM)) {

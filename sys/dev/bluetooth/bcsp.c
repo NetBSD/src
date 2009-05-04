@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.12 2008/03/22 17:20:31 plunky Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.12.4.1 2009/05/04 08:12:35 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.12 2008/03/22 17:20:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.12.4.1 2009/05/04 08:12:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -378,8 +378,8 @@ bcspopen(dev_t device __unused, struct tty *tp)
 	int error, unit, s;
 	static char name[] = "bcsp";
 
-	if ((error = kauth_authorize_device_tty(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, tp)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return error;
 
 	s = spltty();
@@ -396,15 +396,16 @@ bcspopen(dev_t device __unused, struct tty *tp)
 
 	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < bcsp_cd.cd_ndevs; unit++)
-		if (bcsp_cd.cd_devs[unit] == NULL)
+		if (device_lookup(&bcsp_cd, unit) == NULL)
 			break;
 	cfdata->cf_name = name;
 	cfdata->cf_atname = name;
 	cfdata->cf_unit = unit;
 	cfdata->cf_fstate = FSTATE_STAR;
 
-	aprint_normal("%s%d at tty major %d minor %d",
-	    name, unit, major(tp->t_dev), minor(tp->t_dev));
+	aprint_normal("%s%d at tty major %llu minor %llu",
+	    name, unit, (unsigned long long)major(tp->t_dev),
+	    (unsigned long long)minor(tp->t_dev));
 	dev = config_attach_pseudo(cfdata);
 	if (dev == NULL) {
 		splx(s);
@@ -997,7 +998,7 @@ bcsp_send_ack_command(struct bcsp_softc *sc)
 }
 
 static __inline struct mbuf *
-bcsp_create_ackpkt()
+bcsp_create_ackpkt(void)
 {
 	struct mbuf *m;
 	bcsp_hdr_t *hdrp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isv.c,v 1.1.6.1 2008/05/16 02:24:27 yamt Exp $ */
+/*	$NetBSD: isv.c,v 1.1.6.2 2009/05/04 08:12:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.1.6.1 2008/05/16 02:24:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.1.6.2 2009/05/04 08:12:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ isv_capture(struct isv_softc *sc)
 
 	timersub(&stop, &start, &diff);
 
-	aprint_debug_dev(sc->sc_dev, "%ssync in %ld.%06ld seconds\n",
+	aprint_debug_dev(sc->sc_dev, "%ssync in %" PRId64 ".%06d seconds\n",
 	    (speed < 1) ? "" : ((speed < 2) ? "faster " : "fastest "),
 	    diff.tv_sec, diff.tv_usec);
 
@@ -374,7 +374,7 @@ isv_capture(struct isv_softc *sc)
 
 	timersub(&stop, &start, &diff);
 
-	aprint_debug_dev(sc->sc_dev, "read in %ld.%06ld seconds\n",
+	aprint_debug_dev(sc->sc_dev, "read in %" PRId64 ".%06d seconds\n",
 		diff.tv_sec, diff.tv_usec);
 
 	state = 0;

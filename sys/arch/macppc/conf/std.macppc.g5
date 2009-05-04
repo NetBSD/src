@@ -16,4 +16,5 @@ options 	EXEC_SCRIPT	# shell script support
 
 options 	INTSTK=0x2000
 
-options 	OPENPIC		# OpenPIC (really only on CHRP-ish systems)
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.9 2007/10/17 19:57:12 garbled Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.9.20.1 2009/05/04 08:11:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -70,7 +70,7 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
  * per-cg14 variables/state
  */
 struct cgfourteen_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 #ifdef RASTERCONSOLE
 	struct fbdevice	sc_rcfb;	/* sc_fb variant for rcons */
@@ -91,6 +91,7 @@ struct cgfourteen_softc {
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
+	void *sc_shadowfb;
 	int sc_mode;	/* wsdisplay mode - EMUL, DUMB etc. */
 	int sc_depth;	/* current colour depth */
 #endif
@@ -107,4 +108,5 @@ struct cgfourteen_softc {
 	struct	cg14clut *sc_clut2;
 	struct	cg14clut *sc_clut3;
 	uint	*sc_clutincr;
+	int	sc_opens;
 };

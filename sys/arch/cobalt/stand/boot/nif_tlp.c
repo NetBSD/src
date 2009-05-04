@@ -1,4 +1,4 @@
-/*	$NetBSD: nif_tlp.c,v 1.1.34.1 2008/05/16 02:22:09 yamt Exp $	*/
+/*	$NetBSD: nif_tlp.c,v 1.1.34.2 2009/05/04 08:10:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 static int tlp_match(struct netif *, void *);
 static int tlp_probe(struct netif *, void *);
 static void tlp_attach(struct iodesc *, void *);
-static int tlp_get(struct iodesc *, void *, size_t, time_t);
+static int tlp_get(struct iodesc *, void *, size_t, saseconds_t);
 static int tlp_put(struct iodesc *, void *, size_t);
 static void tlp_end(struct netif *);
 
@@ -103,7 +103,7 @@ tlp_attach(struct iodesc *desc, void *hint)
 }
 
 int
-tlp_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timeout)
+tlp_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timeout)
 {
 	int len;
 	struct netif *nif = desc->io_netif;

@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.167.2.1 2008/05/16 02:22:32 yamt Exp $
+# $NetBSD: ALL,v 1.167.2.2 2009/05/04 08:11:15 yamt Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.167.2.1 $"
+#ident 		"ALL-$Revision: 1.167.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -74,8 +74,6 @@ options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
-options 	NO_TSC_TIME	# Don't use TSC microtime, even if available.
-				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
@@ -86,10 +84,8 @@ options 	SEMMNS=60	# number of semaphores in system
 options 	SEMUME=10	# max number of undo entries per process
 options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 options 	MODULAR		# new modules framework
 
 options 	USERCONF	# userconf(4) support
@@ -186,7 +182,7 @@ file-system 	ADOSFS		# AmigaDOS file system
 # File system options
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -246,6 +242,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
+options		I2C_SCAN	# Scan i2c bus for responses
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -518,25 +515,18 @@ pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
+genfb*		at pci? dev ? function ? # generic linear framebuffer driver
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
 wsdisplay* 	at machfb? console ?
+wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-
-# VESA framebuffer console
-options 	KVM86			# required for vesabios
-vesabios*	at vesabiosbus?
-vesafb* 	at vesabios?
-options 	VESAFB_WIDTH=640
-options 	VESAFB_HEIGHT=480
-options 	VESAFB_DEPTH=8
-options 	VESAFB_PM		# power management support
-wsdisplay*	at vesafb? console ?
 
 # VIA Unichrome framebuffer console
 unichromefb*	at pci? dev ? function ?
@@ -640,9 +630,13 @@ iic*	at nfsmb?
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
-adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-adt7463c* at iic? addr 0x2D		# Tyan S2881
-adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+# dbCool thermal monitor and fan controller
+dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+dbcool* at iic? addr 0x2D		# Tyan S2881
+dbcool* at iic? addr 0x2E		# Tyan S2882-D
+
+# LM7[89] and compatible hardware monitors
+lm0	at iic?	addr 0x2e
 
 pic16lc*	at iic? addr 0x10	# XBOX PIC16LC
 xbseeprom*	at iic? addr 0x54	# XBOX serial EEPROM
@@ -755,6 +749,7 @@ njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
+esp*	at mca? slot ?			# NCR 53C90 SCSI Adapter
 
 # SCSI bus support
 scsibus* at scsi?
@@ -819,6 +814,7 @@ pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
@@ -899,12 +895,15 @@ ed*	at edc?
 # Network Interfaces
 
 # PCI network interfaces
+age*	at pci? dev ? function ?	# Attansic/Atheros L1 gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
+bwi*	at pci? dev ? function ?	# Broadcom BCM43xx wireless
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -917,6 +916,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
@@ -1033,6 +1033,7 @@ tra*	at mca? slot ?			# Tiara LANCard/E and clones
 le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MII/PHY support
+atphy*  at mii? phy ?			# Attansic F1 10/100/1000 PHYs
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
@@ -1187,6 +1188,9 @@ ucom*	at uslsa? portno ?
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
+# RIM BlackBerry
+uberry*	at uhub? port ?
+
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
 
@@ -1242,6 +1246,15 @@ fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*  at pci?				# SD Host Controller
+sdmmc* at sdhc?				# SD/MMC bus
+
+ld*	at sdmmc?
+
+
 # Audio Devices
 
 # PCI audio devices
@@ -1260,6 +1273,7 @@ esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
+gcscaudio* at pci? dev ? function ?	# AMD Geode CS5536 Companion Audio
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
@@ -1279,16 +1293,11 @@ gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
-
-# PCMCIA audio devices
-esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
-
 cms0	at isa? port 0x220			# Creative Music System
 
 # OPL[23] FM synthesizers
 opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at cmpci? flags 1
-opl*	at esl?
 opl*	at eso?
 opl*	at ess?
 opl*	at fms?
@@ -1342,12 +1351,20 @@ radio*	at rtii?
 radio*	at sf2r?
 
 
+# Video capture devices
+
+pseye* at uhub?			# Sony PLAYSTATION(R) Eye webcam
+uvideo* at uhub?		# USB Video Class capture devices
+video* at videobus?
+
+
 # TV cards
 
 # Brooktree 848/849/878/879 based TV cards
 bktr* at pci? dev ? function ?
 radio* at bktr?
 
+isv* at isa? port 0x3e0			# IDEC Supervision/16 image capture
 
 # Bluetooth Controller and Device support
 
@@ -1454,6 +1471,8 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
+
+pseudo-device 	dm			# device-mapper disk driver
 
 # network pseudo-devices
 pseudo-device	agr			# Link aggregation agr(4)
@@ -2104,6 +2123,7 @@ options USEFULL_DEBUG
 options USSCANNER_DEBUG
 options USTIR_DEBUG
 options UTOPPY_DEBUG
+options UVIDEO_DEBUG
 options UVISOR_DEBUG
 options UVSCOM_DEBUG
 options VALD_ACPI_DEBUG

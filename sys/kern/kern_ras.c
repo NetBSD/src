@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_ras.c,v 1.28.2.1 2008/05/16 02:25:25 yamt Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.28.2.2 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,21 +30,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.28.2.1 2008/05/16 02:25:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.28.2.2 2009/05/04 08:13:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/xcall.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-    &pool_allocator_nointr, IPL_NONE);
 
 #define MAX_RAS_PER_PROC	16
 
@@ -137,7 +136,7 @@ ras_fork(struct proc *p1, struct proc *p2)
 	struct ras *rp, *nrp;
 
 	for (rp = p1->p_raslist; rp != NULL; rp = rp->ras_next) {
-		nrp = pool_get(&ras_pool, PR_WAITOK);
+		nrp = kmem_alloc(sizeof(*nrp), KM_SLEEP);
 		nrp->ras_startaddr = rp->ras_startaddr;
 		nrp->ras_endaddr = rp->ras_endaddr;
 		nrp->ras_next = p2->p_raslist;
@@ -160,13 +159,16 @@ ras_purgeall(void)
 
 	p = curproc;
 
+	if (p->p_raslist == NULL)
+		return 0;
+
 	mutex_enter(&p->p_auxlock);
 	if ((rp = p->p_raslist) != NULL) {
 		p->p_raslist = NULL;
 		ras_sync();
 		for(; rp != NULL; rp = nrp) {
 			nrp = rp->ras_next;
-			pool_put(&ras_pool, rp);
+			kmem_free(rp, sizeof(*rp));
 		}
 	}
 	mutex_exit(&p->p_auxlock);
@@ -198,7 +200,7 @@ ras_install(void *addr, size_t len)
 	if (len <= 0)
 		return (EINVAL);
 
-	newrp = pool_get(&ras_pool, PR_WAITOK);
+	newrp = kmem_alloc(sizeof(*newrp), KM_SLEEP);
 	newrp->ras_startaddr = addr;
 	newrp->ras_endaddr = endaddr;
 	error = 0;
@@ -223,7 +225,7 @@ ras_install(void *addr, size_t len)
 	 	mutex_exit(&p->p_auxlock);
 	} else {
 	 	mutex_exit(&p->p_auxlock);
- 		pool_put(&ras_pool, newrp);
+ 		kmem_free(newrp, sizeof(*newrp));
 	}
 
 	return error;
@@ -253,7 +255,7 @@ ras_purge(void *addr, size_t len)
 		*link = rp->ras_next;
 		ras_sync();
 		mutex_exit(&p->p_auxlock);
-		pool_put(&ras_pool, rp);
+		kmem_free(rp, sizeof(*rp));
 		return 0;
 	} else {
 		mutex_exit(&p->p_auxlock);

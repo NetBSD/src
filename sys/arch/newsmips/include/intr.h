@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22.18.1 2008/05/16 02:22:57 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.18.2 2009/05/04 08:11:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <mips/locore.h>
 
 extern const uint32_t ipl_sr_bits[_IPL_N];

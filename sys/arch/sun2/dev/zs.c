@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17.4.1 2008/05/16 02:23:16 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.17.4.2 2009/05/04 08:11:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.17.4.1 2008/05/16 02:23:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.17.4.2 2009/05/04 08:11:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -358,7 +358,7 @@ zscheckintr(void *arg)
 	rval = 0;
 	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
 
-		zsc = device_private(zs_cd.cd_devs[unit]);
+		zsc = device_lookup_private(&zs_cd, unit);
 		if (zsc == NULL)
 			continue;
 		rval = (zshard((void *)zsc) || rval);

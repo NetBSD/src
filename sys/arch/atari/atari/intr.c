@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13.18.1 2008/05/16 02:22:05 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.13.18.2 2009/05/04 08:10:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.18.1 2008/05/16 02:22:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.18.2 2009/05/04 08:10:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.18.1 2008/05/16 02:22:05 yamt Exp $");
 typedef LIST_HEAD(, intrhand) ih_list_t;
 ih_list_t autovec_list[AVEC_MAX - AVEC_MIN + 1];
 ih_list_t uservec_list[UVEC_MAX - UVEC_MIN + 1];
-static int idepth;
+int idepth;
 volatile int ssir;
 
 void
-intr_init()
+intr_init(void)
 {
 	int i;
 
@@ -107,12 +107,7 @@ intr_init()
  */
 
 struct intrhand *
-intr_establish(vector, type, pri, ih_fun, ih_arg)
-	void		*ih_arg;
-        int		vector;
-        int		type;
-        int		pri;
-        hw_ifun_t	ih_fun;
+intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 {
 	struct intrhand	*ih, *cur_vec;
 	ih_list_t	*vec_list;
@@ -223,8 +218,7 @@ intr_establish(vector, type, pri, ih_fun, ih_arg)
 }
 
 int
-intr_disestablish(ih)
-struct intrhand	*ih;
+intr_disestablish(struct intrhand *ih)
 {
 	ih_list_t	*vec_list;
 	u_long		*hard_vec;
@@ -278,8 +272,7 @@ struct intrhand	*ih;
  * assembly language interrupt-glue routine.
  */
 void
-intr_dispatch(frame)
-struct clockframe	frame;
+intr_dispatch(struct clockframe frame)
 {
 	static int	unexpected, straycount;
 	int		vector;
@@ -287,7 +280,6 @@ struct clockframe	frame;
 	ih_list_t	*vec_list;
 	struct intrhand	*ih;
 
-	idepth++;
 	uvmexp.intrs++;
 	vector = (frame.cf_vo & 0xfff) >> 2;
 	if (vector < (AVEC_LOC+AVEC_MAX) && vector >= AVEC_LOC)
@@ -300,7 +292,6 @@ struct clockframe	frame;
 		printf("intr_dispatch: vector %d unexpected\n", vector);
 		if (++unexpected > 10)
 		  panic("intr_dispatch: too many unexpected interrupts");
-		idepth--;
 		return;
 	}
 	ih->ih_intrcnt[0]++;
@@ -316,7 +307,6 @@ struct clockframe	frame;
 	    panic("intr_dispatch: too many stray interrupts");
 	else
 	    printf("intr_dispatch: stray level %d interrupt\n", vector);
-	idepth--;
 }
 
 bool
@@ -326,20 +316,13 @@ cpu_intr_p(void)
 	return idepth != 0;
 }
 
-static const int ipl2psl_table[] = {
-	[IPL_NONE]       = PSL_IPL0,
-	[IPL_SOFTCLOCK]  = PSL_IPL1,
-	[IPL_SOFTBIO]    = PSL_IPL1,
-	[IPL_SOFTNET]    = PSL_IPL1,
-	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_VM]         = PSL_IPL4,
-	[IPL_SCHED]      = PSL_IPL6,
-	[IPL_HIGH]       = PSL_IPL7,
+const uint16_t ipl2psl_table[NIPL] = {
+	[IPL_NONE]       = PSL_S | PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_S | PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_S | PSL_IPL1,
+	[IPL_VM]         = PSL_S | PSL_IPL4,
+	[IPL_SCHED]      = PSL_S | PSL_IPL6,
+	[IPL_HIGH]       = PSL_S | PSL_IPL7,
 };
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
-}

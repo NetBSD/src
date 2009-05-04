@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2.58.1 2008/05/16 02:22:41 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.58.2 2009/05/04 08:11:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,13 +38,12 @@
 #include <sys/kernel.h>
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 }
 
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 }
 
