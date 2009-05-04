@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1251 2009/05/03 14:58:52 agc Exp $
+#	$NetBSD: mi,v 1.1252 2009/05/04 21:33:00 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8210,6 +8210,7 @@
 ./usr/share/man/cat9/callout_deactivate.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/callout_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_expired.0		comp-sys-catman		.cat
+./usr/share/man/cat9/callout_halt.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_invoking.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_pending.0		comp-sys-catman		.cat
@@ -13482,6 +13483,7 @@
 ./usr/share/man/html9/callout_ack.html		comp-sys-htmlman	html
 ./usr/share/man/html9/callout_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/callout_expired.html	comp-sys-htmlman	html
+./usr/share/man/html9/callout_halt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/callout_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/callout_invoking.html	comp-sys-htmlman	html
 ./usr/share/man/html9/callout_pending.html	comp-sys-htmlman	html
@@ -18870,6 +18872,7 @@
 ./usr/share/man/man9/callout_deactivate.9	comp-obsolete		obsolete
 ./usr/share/man/man9/callout_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_expired.9		comp-sys-man		.man
+./usr/share/man/man9/callout_halt.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_init.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_invoking.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_pending.9		comp-sys-man		.man
