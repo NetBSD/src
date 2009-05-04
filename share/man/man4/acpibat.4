@@ -1,4 +1,4 @@
-.\" $NetBSD: acpibat.4,v 1.6 2008/04/30 13:10:53 martin Exp $
+.\" $NetBSD: acpibat.4,v 1.7 2009/05/04 19:17:49 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,12 +47,13 @@ The
 .Nm
 driver is able to send events to
 .Xr powerd 8
-when capacity state has been changed. The new state will be reported
-as the
+when capacity state has been changed.
+The new state will be reported as the
 .Em fourth
 argument to the
-.Fa /etc/powerd/scripts/sensor_battery
-script. If a custom capacity limit was set via
+.Pa /etc/powerd/scripts/sensor_battery
+script.
+If a custom capacity limit was set via
 .Xr envstat 8 ,
 the
 .Nm
