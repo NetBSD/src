@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.76 2009/03/15 13:45:04 joerg Exp $
+.\"     $NetBSD: vnodeops.9,v 1.77 2009/05/04 20:08:07 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1404,30 +1404,30 @@ specifies the user credentials to use when authorizing the request.
 .El
 .Sh ERRORS
 .Bl -tag -width Er
-.It Bq Er ENOATTR
-The requested attribute is not defined for this vnode.
-.It Bq Er ENOTDIR
-The vnode does not represent a directory.
-.It Bq Er ENOENT
-The component was not found in the directory.
-.It Bq Er ENOSPC
-The file system is full.
-.It Bq Er EDQUOT
-Quota exceeded.
 .It Bq Er EACCES
 Access for the specified operation is denied.
-.It Bq Er EJUSTRETURN
-A CREATE or RENAME operation would be successful.
-.It Bq Er EPERM
-an attempt was made to change an immutable file
-.It Bq Er ENOTEMPTY
-attempt to remove a directory which is not empty
+.It Bq Er EDQUOT
+Quota exceeded.
 .It Bq Er EINVAL
 attempt to read from an illegal offset in the directory; unrecognized
 input
 .It Bq Er EIO
 a read error occurred while reading the directory or reading the
 contents of a symbolic link
+.It Bq Er EJUSTRETURN
+A CREATE or RENAME operation would be successful.
+.It Bq Er ENOATTR
+The requested attribute is not defined for this vnode.
+.It Bq Er ENOENT
+The component was not found in the directory.
+.It Bq Er ENOSPC
+The file system is full.
+.It Bq Er ENOTDIR
+The vnode does not represent a directory.
+.It Bq Er ENOTEMPTY
+attempt to remove a directory which is not empty
+.It Bq Er EPERM
+an attempt was made to change an immutable file
 .It Bq Er EROFS
 the file system is read-only
 .El
