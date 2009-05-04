@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.13.4.2 2009/05/04 08:12:11 yamt Exp $	*/
+/*	$NetBSD: tsc.c,v 1.13.4.3 2009/05/04 10:32:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,12 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-<<<<<<< tsc.c
-/* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.13.4.2 2009/05/04 08:12:11 yamt Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.13.4.2 2009/05/04 08:12:11 yamt Exp $");
->>>>>>> 1.19
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.13.4.3 2009/05/04 10:32:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
