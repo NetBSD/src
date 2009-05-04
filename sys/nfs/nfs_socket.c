@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.170.2.3 2009/05/04 10:28:53 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.170.2.4 2009/05/04 10:48:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.2.3 2009/05/04 10:28:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.2.4 2009/05/04 10:48:39 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -1778,9 +1778,8 @@ nfs_timer(void *arg)
 		 *	Resend it
 		 * Set r_rtt to -1 in case we fail to send it now.
 		 */
-		/* solock(so);		XXX PR 40491 */
+		solock(so);
 		rep->r_rtt = -1;
-		/* XXX kernel_lock for sbspace? */
 		if (sbspace(&so->so_snd) >= rep->r_mreq->m_pkthdr.len &&
 		   ((nmp->nm_flag & NFSMNT_DUMBTIMR) ||
 		    (rep->r_rflags & RR_SENT) ||
