@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.113 2009/02/11 00:19:11 enami Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.114 2009/05/04 06:05:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.113 2009/02/11 00:19:11 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.114 2009/05/04 06:05:19 yamt Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -356,10 +356,14 @@ namei(struct nameidata *ndp)
 					vput(ndp->ni_dvp);
 				}
 			}
-			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
+			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
 				PNBUF_PUT(cnp->cn_pnbuf);
-			else
+#if defined(DIAGNOSTIC)
+				cnp->cn_pnbuf = NULL;
+#endif /* defined(DIAGNOSTIC) */
+			} else {
 				cnp->cn_flags |= HASBUF;
+			}
 			return (0);
 		}
 

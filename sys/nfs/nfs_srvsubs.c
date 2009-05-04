@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.2 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.3 2009/05/04 06:05:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.2 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.3 2009/05/04 06:05:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -284,10 +284,14 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 				vput(ndp->ni_dvp);
 			}
 		}
-		if (cnp->cn_flags & (SAVENAME | SAVESTART))
+		if (cnp->cn_flags & (SAVENAME | SAVESTART)) {
 			cnp->cn_flags |= HASBUF;
-		else
+		} else {
 			PNBUF_PUT(cnp->cn_pnbuf);
+#if defined(DIAGNOSTIC)
+			cnp->cn_pnbuf = NULL;
+#endif /* defined(DIAGNOSTIC) */
+		}
 		return (0);
 	} else {
 		if (!pubflag) {
