@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.20 2009/05/03 17:09:49 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.21 2009/05/04 14:31:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -218,13 +218,11 @@ rump_freecn(struct componentname *cnp, int flags)
 	if (flags & RUMPCN_FREECRED)
 		rump_cred_put(cnp->cn_cred);
 
-	if ((flags & RUMPCN_HASNTBUF) == 0) {
-		if (cnp->cn_flags & SAVENAME) {
-			if (flags & RUMPCN_ISLOOKUP ||cnp->cn_flags & SAVESTART)
-				PNBUF_PUT(cnp->cn_pnbuf);
-		} else {
+	if (cnp->cn_flags & SAVENAME) {
+		if (flags & RUMPCN_ISLOOKUP || cnp->cn_flags & SAVESTART)
 			PNBUF_PUT(cnp->cn_pnbuf);
-		}
+	} else {
+		PNBUF_PUT(cnp->cn_pnbuf);
 	}
 	kmem_free(cnp, sizeof(*cnp));
 }
