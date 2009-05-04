@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.86 2009/03/21 22:55:08 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.87 2009/05/04 11:47:29 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.86 2009/03/21 22:55:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.87 2009/05/04 11:47:29 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1080,7 +1080,10 @@ END(savectx)
  * Old call gate entry for syscall
  */
 IDTVEC(osyscall)
+#ifndef XEN
+	/* XXX we are in trouble! interrupts be off here. */
 	cli			# must be first instruction
+#endif
 	pushfl			# set eflags in trap frame
 	popl	8(%esp)
 	orl	$PSL_I,(%esp)	# re-enable ints on return to user
