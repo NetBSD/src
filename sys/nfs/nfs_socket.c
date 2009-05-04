@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.170.2.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.170.2.3 2009/05/04 10:28:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.2.2 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.2.3 2009/05/04 10:28:53 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -488,7 +488,7 @@ nfs_safedisconnect(struct nfsmount *nmp)
  * - return EPIPE if a connection is lost for connection based sockets (TCP...)
  * - do any cleanup required by recoverable socket errors (? ? ?)
  */
-static int
+int
 nfs_send(struct socket *so, struct mbuf *nam, struct mbuf *top,
     struct nfsreq *rep)
 {
@@ -2299,7 +2299,6 @@ nfsdreq_free(struct nfsrv_descript *nd)
 	}
 	pool_put(&nfs_srvdesc_pool, nd);
 }
-#endif /* defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY)) */
 
 #if defined(NFS)
 void nfs_reqq_dump(void);
