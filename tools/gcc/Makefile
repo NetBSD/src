@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2009/03/27 19:19:49 drochner Exp $
+#	$NetBSD: Makefile,v 1.32 2009/05/04 21:32:31 ad Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,9 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-__cxa_atexit
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
+.endif
+.if defined(GCC_CONFIG_TUNE.${MACHINE_ARCH})
+COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS} \
