@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.124 2009/04/09 00:57:15 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.125 2009/05/04 06:02:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.124 2009/04/09 00:57:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.125 2009/05/04 06:02:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,8 @@ unp_setpeerlocks(struct socket *so, struct socket *so2)
 	 * with the head when the pair of sockets stand completely
 	 * on their own.
 	 */
-	if (so->so_head != NULL || so2->so_head != NULL)
+	KASSERT(so->so_head == NULL);
+	if (so2->so_head != NULL)
 		return;
 
 	/*
@@ -1038,9 +1039,10 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 	 * queue head (so->so_head, only if PR_CONNREQUIRED)
 	 */
 	KASSERT(solocked2(so, so2));
-	if (so->so_head != NULL) {
-		KASSERT(so->so_lock == uipc_lock);
-		KASSERT(solocked2(so, so->so_head));
+	KASSERT(so->so_head == NULL);
+	if (so2->so_head != NULL) {
+		KASSERT(so2->so_lock == uipc_lock);
+		KASSERT(solocked2(so2, so2->so_head));
 	}
 
 	unp2 = sotounpcb(so2);
@@ -1068,8 +1070,10 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 		 * require that the locks already match (the sockets
 		 * are created that way).
 		 */
-		if (req == PRU_CONNECT)
+		if (req == PRU_CONNECT) {
+			KASSERT(so2->so_head != NULL);
 			unp_setpeerlocks(so, so2);
+		}
 		break;
 
 	default:
