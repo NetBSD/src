@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.562 2009/05/01 20:47:53 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.563 2009/05/04 21:32:31 ad Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -538,6 +538,8 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 GNU_ARCH.coldfire=m68k
 GNU_ARCH.i386=i486
 GCC_CONFIG_ARCH.i386=i486
+GCC_CONFIG_TUNE.i386=nocona
+GCC_CONFIG_TUNE.x86_64=nocona
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
