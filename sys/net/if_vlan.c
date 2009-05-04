@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.57.10.1 2008/05/16 02:25:41 yamt Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.57.10.2 2009/05/04 08:14:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.57.10.1 2008/05/16 02:25:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.57.10.2 2009/05/04 08:14:15 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -218,8 +218,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	int s;
 
-	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAITOK);
-	memset(ifv, 0, sizeof(struct ifvlan));
+	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAITOK|M_ZERO);
 	ifp = &ifv->ifv_if;
 	LIST_INIT(&ifv->ifv_mc_listhead);
 
@@ -227,8 +226,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	LIST_INSERT_HEAD(&ifv_list, ifv, ifv_list);
 	splx(s);
 
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
-	    unit);
+	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = ifv;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = vlan_start;
@@ -318,11 +316,13 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		/*
 		 * If the parent interface can do hardware-assisted
 		 * VLAN encapsulation, then propagate its hardware-
-		 * assisted checksumming flags.
+		 * assisted checksumming flags and tcp segmentation
+		 * offload.
 		 */
 		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING)
 			ifp->if_capabilities = p->if_capabilities &
-			    (IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
+			    (IFCAP_TSOv4 |
+			     IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
 			     IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx|
 			     IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx|
 			     IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_TCPv6_Rx|
@@ -464,14 +464,14 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifnet *pr;
+	struct ifcapreq *ifcr;
 	struct vlanreq vlr;
-	struct sockaddr *sa;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (ifv->ifv_p != NULL) {
 			ifp->if_flags |= IFF_UP;
 
@@ -487,11 +487,6 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		} else {
 			error = EINVAL;
 		}
-		break;
-
-	case SIOCGIFADDR:
-		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
 
 	case SIOCSIFMTU:
@@ -545,6 +540,8 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		/*
 		 * For promiscuous mode, we enable promiscuous mode on
 		 * the parent if we need promiscuous on the VLAN interface.
@@ -563,8 +560,19 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		    (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr) : EINVAL;
 		break;
 
+	case SIOCSIFCAP:
+		ifcr = data;
+		/* make sure caps are enabled on parent */
+		if ((ifv->ifv_p->if_capenable & ifcr->ifcr_capenable) !=
+		    ifcr->ifcr_capenable) {
+			error = EINVAL;
+			break;
+		}
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
+		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 
 	splx(s);
@@ -592,8 +600,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 * about it.  Also, remember this multicast address so that
 	 * we can delete them on unconfigure.
 	 */
-	MALLOC(mc, struct vlan_mc_entry *, sizeof(struct vlan_mc_entry),
-	    M_DEVBUF, M_NOWAIT);
+	mc = malloc(sizeof(struct vlan_mc_entry), M_DEVBUF, M_NOWAIT);
 	if (mc == NULL) {
 		error = ENOMEM;
 		goto alloc_failed;
@@ -616,7 +623,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 
  ioctl_failed:
 	LIST_REMOVE(mc, mc_entries);
-	FREE(mc, M_DEVBUF);
+	free(mc, M_DEVBUF);
  alloc_failed:
 	(void)ether_delmulti(sa, &ifv->ifv_ec);
 	return (error);
@@ -652,7 +659,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 		    mc = LIST_NEXT(mc, mc_entries)) {
 			if (mc->mc_enm == enm) {
 				LIST_REMOVE(mc, mc_entries);
-				FREE(mc, M_DEVBUF);
+				free(mc, M_DEVBUF);
 				break;
 			}
 		}
@@ -686,7 +693,7 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 		    (const struct sockaddr *)&mc->mc_addr);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
 		LIST_REMOVE(mc, mc_entries);
-		FREE(mc, M_DEVBUF);
+		free(mc, M_DEVBUF);
 	}
 }
 

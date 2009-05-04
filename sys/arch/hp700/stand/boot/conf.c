@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3.78.1 2008/05/16 02:22:23 yamt Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.78.2 2009/05/04 08:11:08 yamt Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.12 2000/05/30 22:02:28 mickey Exp $	*/
 
@@ -43,7 +43,8 @@ int	debug = 0;
 
 struct fs_ops file_system[] = {
 	FS_OPS(lif),
-	FS_OPS(ufs),
+	FS_OPS(ffsv1),
+	FS_OPS(ffsv2),
 	FS_OPS(cd9660),
 };
 int nfsys = NENTS(file_system);

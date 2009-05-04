@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.221.2.1 2008/05/16 02:25:52 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.221.2.2 2009/05/04 08:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -98,8 +98,8 @@ extern int ncpuonline;		/* number of CPUs online */
 extern bool mp_online;		/* secondary processors are started */
 #endif /* defined(_KERNEL) */
 
-extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
-extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
+extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf2.c */
+extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf2.c */
 
 /*
  * These represent the swap pseudo-device (`sw').  This device
@@ -157,6 +157,7 @@ void	*hashinit(u_int, enum hashtype, bool, u_long *);
 void	hashdone(void *, enum hashtype, u_long);
 int	seltrue(dev_t, int, struct lwp *);
 int	sys_nosys(struct lwp *, const void *, register_t *);
+int	sys_nomodule(struct lwp *, const void *, register_t *);
 
 void	aprint_normal(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
@@ -197,6 +198,9 @@ void	aprint_debug_ifnet(struct ifnet *, const char *, ...)
 
 int	aprint_get_error_count(void);
 
+void	printf_tolog(const char *, ...)
+    __attribute__((__format__(__printf__,1,2)));
+
 void	printf_nolog(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 
@@ -212,18 +216,17 @@ int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
 int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
 void	twiddle(void);
+void	banner(void);
 #endif /* _KERNEL */
 
 void	panic(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));
+    __dead __attribute__((__format__(__printf__,1,2)));
 void	uprintf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	uprintf_locked(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	ttyprintf(struct tty *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-
-char	*bitmask_snprintf(u_quad_t, const char *, char *, size_t);
 
 int	format_bytes(char *, size_t, uint64_t);
 
@@ -256,6 +259,9 @@ int	copyout_vmspace(struct vmspace *, const void *, void *, size_t);
 int	ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len);
 int	ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len);
 
+int	ucas_ptr(volatile void *, void *, void *, void *);
+int	ucas_int(volatile int *, int, int, int *);
+
 int	subyte(void *, int);
 int	suibyte(void *, int);
 int	susword(void *, short);
@@ -284,6 +290,8 @@ void	hardpps(struct timespec *, long);
 #else
 void	ntp_init(void);	/* also provides adjtime() functionality */
 #endif /* NTP */
+
+void	ssp_init(void);
 
 void	initclocks(void);
 void	inittodr(time_t);
@@ -329,7 +337,10 @@ void	dopowerhooks(int);
  * these to be executed just before (*mountroot)() if the passed device is
  * selected as the root device.
  */
-extern int (*mountroot)(void);
+
+#define	ROOT_FSTYPE_ANY	"?"
+
+extern const char *rootfstype;
 void	*mountroothook_establish(void (*)(struct device *), struct device *);
 void	mountroothook_disestablish(void *);
 void	mountroothook_destroy(void);
@@ -463,7 +474,7 @@ void	kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(int, int *);
 
-#if defined(MULTIPROCESSOR) || defined(_LKM)
+#if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define	KERNEL_LOCK(count, lwp)			\
 do {						\
 	if ((count) != 0)			\
@@ -471,8 +482,8 @@ do {						\
 } while (/* CONSTCOND */ 0)
 #define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (p))
 #else
-#define	KERNEL_LOCK(count, lwp)		/* nothing */
-#define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
+#define	KERNEL_LOCK(count, lwp)		do {(void)(count); (void)(lwp);} while (/* CONSTCOND */ 0) /*NOP*/
+#define	KERNEL_UNLOCK(all, lwp, ptr)	do {(void)(all); (void)(lwp); (void)(ptr);} while (/* CONSTCOND */ 0) /*NOP*/
 #endif
 
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)

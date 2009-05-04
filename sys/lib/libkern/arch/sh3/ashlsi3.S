@@ -1,4 +1,4 @@
-/*	$NetBSD: ashlsi3.S,v 1.5 2006/05/22 20:56:44 uwe Exp $	*/
+/*	$NetBSD: ashlsi3.S,v 1.5.62.1 2009/05/04 08:13:51 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,11 @@
  */
 
 #include <machine/asm.h>
+
+
+#ifdef __ELF__
+	.hidden __ashlsi3
+#endif
 
 
 NENTRY(__ashlsi3)

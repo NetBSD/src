@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18 2008/04/24 11:51:18 ad Exp $ */
+/*	$NetBSD: syscall.c,v 1.18.2.1 2009/05/04 08:11:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,16 +49,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2008/04/24 11:51:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.2.1 2009/05/04 08:11:55 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
@@ -231,7 +235,13 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	rval.o[0] = 0;
 	rval.o[1] = tf->tf_out[1];
 
-	error = (*callp->sy_call)(l, &args, rval.o);
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
+	error = sy_call(callp, l, &args, rval.o);
 
 	switch (error) {
 	case 0:
@@ -309,7 +319,13 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 	rval.o[0] = 0;
 	rval.o[1] = tf->tf_out[1];
 
-	error = (*callp->sy_call)(l, &args, rval.o);
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
+	error = sy_call(callp, l, &args, rval.o);
 
 out:
 	switch (error) {
@@ -368,6 +384,6 @@ child_return(void *arg)
 	 * Return values in the frame set by cpu_fork().
 	 */
 	userret(l, l->l_md.md_tf->tf_pc, 0);
-	ktrsysret((l->l_proc->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork,
+	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork,
 	    0, 0);
 }

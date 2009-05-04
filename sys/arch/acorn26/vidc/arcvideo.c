@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.12 2007/03/05 15:40:28 he Exp $ */
+/* $NetBSD: arcvideo.c,v 1.12.44.1 2009/05/04 08:10:24 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.12 2007/03/05 15:40:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.12.44.1 2009/05/04 08:10:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,12 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.12 2007/03/05 15:40:28 he Exp $");
 #include <arch/acorn26/vidc/vidcreg.h>
 #include <arch/acorn26/vidc/arcvideovar.h>
 
-static int arcvideo_match(struct device *parent, struct cfdata *cf, void *aux);
-static void arcvideo_attach(struct device *parent, struct device *self,
-				 void *aux);
+static int arcvideo_match(device_t parent, cfdata_t cf, void *aux);
+static void arcvideo_attach(device_t parent, device_t self, void *aux);
 #if 0
-static int arcvideo_setmode(struct device *self, struct arcvideo_mode *mode);
-static void arcvideo_await_vsync(struct device *self);
+static int arcvideo_setmode(device_t self, struct arcvideo_mode *mode);
+static void arcvideo_await_vsync(device_t self);
 #endif
 static int arcvideo_intr(void *cookie);
 static int arcvideo_ioctl(void *cookie, void *vs, u_long cmd, void *data,
@@ -87,7 +86,7 @@ static int arcvideo_load_font(void *cookie, void *scookie,
 static void arccons_8bpp_hack(struct rasops_info *ri);
 
 struct arcvideo_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	paddr_t			sc_screenmem_base;
 	struct arcvideo_mode	sc_current_mode;
 	u_int32_t		sc_vidc_ctl;
@@ -97,10 +96,10 @@ struct arcvideo_softc {
 #define AV_VIDEO_ON	0x01
 };
 
-CFATTACH_DECL(arcvideo, sizeof(struct arcvideo_softc),
+CFATTACH_DECL_NEW(arcvideo, sizeof(struct arcvideo_softc),
     arcvideo_match, arcvideo_attach, NULL, NULL);
 
-struct device *the_arcvideo;
+device_t the_arcvideo;
 
 static struct rasops_info arccons_ri;
 
@@ -114,7 +113,7 @@ static struct wsdisplay_accessops arcvideo_accessops = {
 static int arcvideo_isconsole = 0;
 
 static int
-arcvideo_match(struct device *parent, struct cfdata *cf, void *aux)
+arcvideo_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* A system can't sensibly have more than one VIDC. */
@@ -124,16 +123,16 @@ arcvideo_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-arcvideo_attach(struct device *parent, struct device *self, void *aux)
+arcvideo_attach(device_t parent, device_t self, void *aux)
 {
 	struct wsemuldisplaydev_attach_args da;
 	struct wsscreen_list scrdata;
 	const struct wsscreen_descr *screenp;
-	struct arcvideo_softc *sc = (void *)self;
+	struct arcvideo_softc *sc = device_private(self);
 
-	the_arcvideo = self;
+	sc->sc_dev = the_arcvideo = self;
 	if (!arcvideo_isconsole) {
-		printf(": Not console -- I can't cope with this!\n");
+		aprint_error(": Not console -- I can't cope with this!\n");
 		return;
 	}
 
@@ -143,14 +142,13 @@ arcvideo_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Find IRQ */
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "vsync intr");
+	    device_xname(sc->sc_dev), "vsync intr");
 	sc->sc_irq = irq_establish(IOC_IRQ_IR, IPL_TTY, arcvideo_intr, self,
 	    &sc->sc_intrcnt);
-	if (bootverbose)
-		printf(": VSYNC interrupts at %s", irq_string(sc->sc_irq));
+	aprint_verbose(": VSYNC interrupts at %s", irq_string(sc->sc_irq));
 	irq_disable(sc->sc_irq);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	scrdata.nscreens = 1;
 	scrdata.screens = &screenp;
@@ -166,9 +164,9 @@ arcvideo_attach(struct device *parent, struct device *self, void *aux)
 
 #if 0
 static int
-arcvideo_setmode(struct device *self, struct arcvideo_mode *mode)
+arcvideo_setmode(device_t self, struct arcvideo_mode *mode)
 {
-	struct arcvideo_softc *sc = (void *)self;
+	struct arcvideo_softc *sc = device_private(self);
 	u_int32_t newctl, ctlmask;
 	u_int32_t newhswr, newhbsr, newhdsr, newhder, newhber, newhcr, newhir;
 	u_int32_t newvswr, newvbsr, newvdsr, newvder, newvber, newvcr;
@@ -269,7 +267,7 @@ arcvideo_setmode(struct device *self, struct arcvideo_mode *mode)
 }
 
 static void
-arcvideo_await_vsync(struct device *self)
+arcvideo_await_vsync(device_t self)
 {
 
 	panic("arcvideo_await_vsync not implemented");

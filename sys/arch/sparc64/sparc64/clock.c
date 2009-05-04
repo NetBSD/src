@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.95.4.1 2008/05/16 02:23:16 yamt Exp $ */
+/*	$NetBSD: clock.c,v 1.95.4.2 2009/05/04 08:11:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.4.1 2008/05/16 02:23:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.4.2 2009/05/04 08:11:58 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -240,7 +240,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
 	level10.ih_clr = &timerreg_4u.t_clrintr[0];
-	intr_establish(PIL_CLOCK, &level10);
+	intr_establish(PIL_CLOCK, true, &level10);
 	printf(" irq vectors %lx", (u_long)level10.ih_number);
 #ifndef MULTIPROCESSOR
 	/*
@@ -248,7 +248,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	 */
 	level14.ih_number = ma->ma_interrupts[1];
 	level14.ih_clr = &timerreg_4u.t_clrintr[1];
-	intr_establish(PIL_STATCLOCK, &level14);
+	intr_establish(PIL_STATCLOCK, true, &level14);
 	printf(" and %lx", (u_long)level14.ih_number);
 #endif
 
@@ -322,7 +322,7 @@ tickintr_establish(int pil, int (*fun)(void *))
 	ih = sparc_softintr_establish(pil, fun, NULL);
 	ih->ih_number = 1;
 	if (CPU_IS_PRIMARY(ci))
-		intr_establish(pil, ih);
+		intr_establish(pil, true, ih);
 	ci->ci_tick_ih = ih;
 
 	/* set the next interrupt time */
@@ -343,7 +343,7 @@ tickintr_establish(int pil, int (*fun)(void *))
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 #ifndef MULTIPROCESSOR
 	int statint, minint;
@@ -474,8 +474,7 @@ cpu_initclocks()
  */
 /* ARGSUSED */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing */
 }
@@ -548,8 +547,7 @@ tickintr(void *cap)
  * Level 14 (stat clock) interrupt handler.
  */
 int
-statintr(cap)
-	void *cap;
+statintr(void *cap)
 {
 	register u_long newint, r, var;
 	struct cpu_info *ci = curcpu();

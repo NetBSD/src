@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79.4.1 2008/05/16 02:23:15 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.79.4.2 2009/05/04 08:11:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,9 +153,9 @@ struct cpu_info {
  *
  */
 	int			ci_pmap_next_ctx;
+	int			ci_numctx;
 	paddr_t 		*ci_ctxbusy;
 	LIST_HEAD(, pmap) 	ci_pmap_ctxlist;
-	int			ci_numctx;
 
 	/*
 	 * The TSBs are per cpu too (since MMU context differs between
@@ -193,6 +193,7 @@ extern struct cpu_bootargs *cpu_args;
 
 extern int sparc_ncpus;
 extern struct cpu_info *cpus;
+extern struct pool_cache *fpstate_cache;
 
 #define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
 #define	cpu_number()	(curcpu()->ci_index)
@@ -273,12 +274,6 @@ struct clockframe {
 			((vaddr_t)(framep)->t.tf_out[6] >		\
 				(vaddr_t)INTSTACK))))
 
-
-extern struct intrhand soft01intr, soft01net, soft01clock;
-
-void setsoftint(void);
-void setsoftnet(void);
-
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the sparc, request an ast to send us
@@ -315,7 +310,7 @@ struct intrhand {
 extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
-void	intr_establish(int level, struct intrhand *);
+void	intr_establish(int level, bool mpsafe, struct intrhand *);
 void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);

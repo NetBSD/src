@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.139.2.1 2008/05/16 02:25:25 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.139.2.2 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139.2.1 2008/05/16 02:25:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139.2.2 2009/05/04 08:13:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,29 +66,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139.2.1 2008/05/16 02:25:25 yamt
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
 
-static SLIST_HEAD(uihashhead, uidinfo) *uihashtbl;
-static u_long 		uihash;
-
-#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
-
 static pool_cache_t	plimit_cache;
 static pool_cache_t	pstats_cache;
 
 void
 resource_init(void)
 {
-	/*
-	 * In case of MP system, SLIST_FOREACH would force a cache line
-	 * write-back for every modified 'uidinfo', thus we try to keep the
-	 * lists short.
-	 */
-	const u_int uihash_sz = (maxproc > 1 ? 1024 : 64);
 
 	plimit_cache = pool_cache_init(sizeof(struct plimit), 0, 0, 0,
 	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
 	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
-	uihashtbl = hashinit(uihash_sz, HASH_SLIST, true, &uihash);
 }
 
 /*
@@ -183,8 +171,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 			mutex_enter(p->p_lock);
 			error = donice(l, p, SCARG(uap, prio));
 			mutex_exit(p->p_lock);
+			found++;
 		}
-		found++;
 		break;
 
 	case PRIO_PGRP: {
@@ -220,8 +208,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		break;
 
 	default:
-		error = EINVAL;
-		break;
+		mutex_exit(proc_lock);
+		return EINVAL;
 	}
 	mutex_exit(proc_lock);
 	if (found == 0)
@@ -279,9 +267,6 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	int error;
 
 	if ((u_int)which >= RLIM_NLIMITS)
-		return (EINVAL);
-
-	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
 		return (EINVAL);
 
 	if (limp->rlim_cur > limp->rlim_max) {
@@ -436,7 +421,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
 		bintime_add(&tm, &l->l_rtime);
-		if ((l->l_flag & LW_RUNNING) != 0) {
+		if ((l->l_pflag & LP_RUNNING) != 0) {
 			struct bintime diff;
 			/*
 			 * Adjust for the current time slice.  This is
@@ -484,7 +469,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap,
+sys___getrusage50(struct lwp *l, const struct sys___getrusage50_args *uap,
     register_t *retval)
 {
 	/* {
@@ -877,15 +862,16 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	mutex_enter(ptmp->p_lock);
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_STOPFLAG,
 	    ptmp, KAUTH_ARG(f), NULL, NULL);
-	if (error)
-		return (error);
-	if (i)
-		ptmp->p_sflag |= f;
-	else
-		ptmp->p_sflag &= ~f;
+	if (!error) {
+		if (i) {
+			ptmp->p_sflag |= f;
+		} else {
+			ptmp->p_sflag &= ~f;
+		}
+	}
 	mutex_exit(ptmp->p_lock);
 
-	return (0);
+	return error;
 }
 
 /*
@@ -1013,6 +999,7 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 	create_proc_plimit("maxproc",		PROC_PID_LIMIT_NPROC);
 	create_proc_plimit("descriptors",	PROC_PID_LIMIT_NOFILE);
 	create_proc_plimit("sbsize",		PROC_PID_LIMIT_SBSIZE);
+	create_proc_plimit("vmemoryuse",	PROC_PID_LIMIT_AS);
 
 #undef create_proc_plimit
 
@@ -1034,87 +1021,4 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       SYSCTL_DESCR("Stop process before completing exit"),
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
-}
-
-void
-uid_init(void)
-{
-
-	/*
-	 * Ensure that uid 0 is always in the user hash table, as
-	 * sbreserve() expects it available from interrupt context.
-	 */
-	(void)uid_find(0);
-}
-
-struct uidinfo *
-uid_find(uid_t uid)
-{
-	struct uidinfo *uip, *uip_first, *newuip;
-	struct uihashhead *uipp;
-
-	uipp = UIHASH(uid);
-	newuip = NULL;
-
-	/*
-	 * To make insertion atomic, abstraction of SLIST will be violated.
-	 */
-	uip_first = uipp->slh_first;
- again:
-	SLIST_FOREACH(uip, uipp, ui_hash) {
-		if (uip->ui_uid != uid)
-			continue;
-		if (newuip != NULL)
-			kmem_free(newuip, sizeof(*newuip));
-		return uip;
-	}
-	if (newuip == NULL)
-		newuip = kmem_zalloc(sizeof(*newuip), KM_SLEEP);
-	newuip->ui_uid = uid;
-
-	/*
-	 * If atomic insert is unsuccessful, another thread might be
-	 * allocated this 'uid', thus full re-check is needed.
-	 */
-	newuip->ui_hash.sle_next = uip_first;
-	membar_producer();
-	uip = atomic_cas_ptr(&uipp->slh_first, uip_first, newuip);
-	if (uip != uip_first) {
-		uip_first = uip;
-		goto again;
-	}
-
-	return newuip;
-}
-
-/*
- * Change the count associated with number of processes
- * a given user is using.
- */
-int
-chgproccnt(uid_t uid, int diff)
-{
-	struct uidinfo *uip;
-	long proccnt;
-
-	uip = uid_find(uid);
-	proccnt = atomic_add_long_nv(&uip->ui_proccnt, diff);
-	KASSERT(proccnt >= 0);
-	return proccnt;
-}
-
-int
-chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t xmax)
-{
-	rlim_t nsb;
-	const long diff = to - *hiwat;
-
-	nsb = atomic_add_long_nv((long *)&uip->ui_sbsize, diff);
-	if (diff > 0 && nsb > xmax) {
-		atomic_add_long((long *)&uip->ui_sbsize, -diff);
-		return 0;
-	}
-	*hiwat = to;
-	KASSERT(nsb >= 0);
-	return 1;
 }

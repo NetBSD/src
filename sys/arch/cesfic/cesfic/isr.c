@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.8.18.1 2008/05/16 02:22:08 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.8.18.2 2009/05/04 08:10:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.8.18.1 2008/05/16 02:22:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.8.18.2 2009/05/04 08:10:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,8 @@ isr_list_t isr_list[NISR];
 
 extern	int intrcnt[];		/* from locore.s */
 
-void	isrcomputeipl __P((void));
-
 void
-isrinit()
+isrinit(void)
 {
 	int i;
 
@@ -66,87 +64,11 @@ isrinit()
 }
 
 /*
- * Scan all of the ISRs, recomputing the interrupt levels for the spl*()
- * calls.  This doesn't have to be fast.
- */
-void
-isrcomputeipl()
-{
-	struct isr *isr;
-	int ipl;
-	int biospl, netspl, ttyspl, vmspl;
-
-	/* Start with low values. */
-	biospl = netspl = ttyspl = vmspl = (PSL_S|PSL_IPL3);
-
-	for (ipl = 0; ipl < NISR; ipl++) {
-		for (isr = isr_list[ipl].lh_first; isr != NULL;
-		    isr = isr->isr_link.le_next) {
-			/*
-			 * Bump up the level for a given priority,
-			 * if necessary.
-			 */
-			switch (isr->isr_priority) {
-			case ISRPRI_BIO:
-				if (ipl > PSLTOIPL(biospl))
-					biospl = IPLTOPSL(ipl);
-				break;
-
-			case ISRPRI_NET:
-				if (ipl > PSLTOIPL(netspl))
-					netspl = IPLTOPSL(ipl);
-				break;
-
-			case ISRPRI_TTY:
-			case ISRPRI_TTYNOBUF:
-				if (ipl > PSLTOIPL(ttyspl))
-					ttyspl = IPLTOPSL(ipl);
-				break;
-
-			default:
-				printf("priority = %d\n", isr->isr_priority);
-				panic("isrcomputeipl: bad priority");
-			}
-		}
-	}
-
-	/*
-	 * Enforce `bio <= net <= tty <= vm'
-	 */
-
-	if (netspl < biospl)
-		netspl = biospl;
-
-	if (ttyspl < netspl)
-		ttyspl = netspl;
-
-	if (vmspl < ttyspl)
-		vmspl = ttyspl;
-
-	ipl2spl_table[IPL_VM] = vmspl;
-}
-
-void
-isrprintlevels()
-{
-
-#ifdef DEBUG
-	printf("psl: vm = 0x%x\n", ipl2spl_table[IPL_VM]);
-#endif
-
-	printf("interrupt levels: vm = %d\n", PSLTOIPL(ipl2spl_table[IPL_VM]));
-}
-
-/*
  * Establish an interrupt handler.
  * Called by driver attach functions.
  */
 void *
-isrlink(func, arg, ipl, priority)
-	int (*func) __P((void *));
-	void *arg;
-	int ipl;
-	int priority;
+isrlink(int (*func)(void *), void *arg, int ipl, int priority)
 {
 	struct isr *newisr, *curisr;
 	isr_list_t *list;
@@ -190,7 +112,7 @@ isrlink(func, arg, ipl, priority)
 	list = &isr_list[ipl];
 	if (list->lh_first == NULL) {
 		LIST_INSERT_HEAD(list, newisr, isr_link);
-		goto compute;
+		goto done;
 	}
 
 	/*
@@ -202,7 +124,7 @@ isrlink(func, arg, ipl, priority)
 	    curisr = curisr->isr_link.le_next) {
 		if (newisr->isr_priority > curisr->isr_priority) {
 			LIST_INSERT_BEFORE(curisr, newisr, isr_link);
-			goto compute;
+			goto done;
 		}
 	}
 
@@ -212,9 +134,7 @@ isrlink(func, arg, ipl, priority)
 	 */
 	LIST_INSERT_AFTER(curisr, newisr, isr_link);
 
- compute:
-	/* Compute new interrupt levels. */
-	isrcomputeipl();
+ done:
 	return (newisr);
 }
 
@@ -223,14 +143,12 @@ isrlink(func, arg, ipl, priority)
  * Disestablish an interrupt handler.
  */
 void
-isrunlink(arg)
-	void *arg;
+isrunlink(void *arg)
 {
 	struct isr *isr = arg;
 
 	LIST_REMOVE(isr, isr_link);
 	free(isr, M_DEVBUF);
-	isrcomputeipl();
 }
 #endif
 
@@ -241,8 +159,8 @@ isrunlink(arg)
 static unsigned int idepth;
  
 void
-isrdispatch(evec)
-	int evec;		/* format | vector offset */
+isrdispatch(int evec)
+	/* evec:		 format | vector offset */
 {
 	struct isr *isr;
 	isr_list_t *list;
@@ -292,13 +210,13 @@ cpu_intr_p(void)
 	return idepth != 0;
 }
 
-int ipl2spl_table[NIPL] = {
-	[IPL_NONE] = PSL_S|PSL_IPL0,
-	[IPL_SOFTCLOCK] = PSL_S|PSL_IPL1,
-	[IPL_SOFTBIO] = PSL_S|PSL_IPL1,
-	[IPL_SOFTNET] = PSL_S|PSL_IPL1,
+const uint16_t ipl2psl_table[NIPL] = {
+	[IPL_NONE]       = PSL_S|PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_S|PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_S|PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1,
-	[IPL_VM] = PSL_S|PSL_IPL3,
-	[IPL_SCHED] = PSL_S|PSL_IPL6,
-	[IPL_HIGH] = PSL_S|PSL_IPL6,
+	[IPL_VM]         = PSL_S|PSL_IPL4,
+	[IPL_SCHED]      = PSL_S|PSL_IPL6,
+	[IPL_HIGH]       = PSL_S|PSL_IPL7,
 };

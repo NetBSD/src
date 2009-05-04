@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.h,v 1.8 2007/12/04 18:40:22 dsl Exp $	*/
+/*	$NetBSD: sunos32_exec.h,v 1.8.16.1 2009/05/04 08:12:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +31,7 @@
 
 #define SUNOS32_AOUT_HDR_SIZE (sizeof(struct netbsd32_exec))
 
-extern const struct emul emul_sunos;
+extern struct emul emul_sunos;
 
 int exec_sunos32_aout_makecmds(struct lwp *, struct exec_package *);
 void sunos32_setregs(struct lwp *l, struct exec_package *pack,

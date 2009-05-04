@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.156.2.1 2008/05/16 02:25:42 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.156.2.2 2009/05/04 08:14:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -822,7 +822,7 @@ int	 tcp_isdead(struct tcpcb *);
 void	 *tcp6_ctlinput(int, const struct sockaddr *, void *);
 #endif
 void	 *tcp_ctlinput(int, const struct sockaddr *, void *);
-int	 tcp_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 tcp_ctloutput(int, struct socket *, struct sockopt *);
 struct tcpcb *
 	 tcp_disconnect(struct tcpcb *);
 struct tcpcb *
@@ -860,6 +860,7 @@ void	 tcp6_quench(struct in6pcb *, int);
 #endif
 void	 tcp_mtudisc(struct inpcb *, int);
 
+void	tcpipqent_init(void);
 struct ipqent *tcpipqent_alloc(void);
 void	 tcpipqent_free(struct ipqent *);
 

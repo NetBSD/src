@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.10 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.10.2.1 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -29,11 +29,12 @@
 /*
  * Implementation of POSIX message queues.
  * Defined in the Base Definitions volume of IEEE Std 1003.1-2001.
- * 
+ *
  * Locking
- *  Global list of message queues and proc::p_mqueue_cnt counter are protected
- *  by mqlist_mtx lock.  Concrete message queue and its members are protected
- *  by mqueue::mq_mtx.
+ * 
+ * Global list of message queues (mqueue_head) and proc_t::p_mqueue_cnt
+ * counter are protected by mqlist_mtx lock.  The very message queue and
+ * its members are protected by mqueue::mq_mtx.
  * 
  * Lock order:
  * 	mqlist_mtx
@@ -41,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10.2.1 2009/05/04 08:13:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10 2008/04/24 15:35:30 ad Exp $");
 #include <sys/select.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
@@ -82,11 +84,21 @@ static LIST_HEAD(, mqueue)	mqueue_head =
 	LIST_HEAD_INITIALIZER(mqueue_head);
 
 static int	mq_poll_fop(file_t *, int);
+static int	mq_stat_fop(file_t *, struct stat *);
 static int	mq_close_fop(file_t *);
 
+#define	FNOVAL	-1
+
 static const struct fileops mqops = {
-	fbadop_read, fbadop_write, fbadop_ioctl, fnullop_fcntl, mq_poll_fop,
-	fbadop_stat, mq_close_fop, fnullop_kqfilter
+	.fo_read = fbadop_read,
+	.fo_write = fbadop_write,
+	.fo_ioctl = fbadop_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = mq_poll_fop,
+	.fo_stat = mq_stat_fop,
+	.fo_close = mq_close_fop,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*
@@ -97,7 +109,7 @@ mqueue_sysinit(void)
 {
 
 	mqmsg_cache = pool_cache_init(MQ_DEF_MSGSIZE, coherency_unit,
-	    0, 0, "mqmsg_cache", NULL, IPL_NONE, NULL, NULL, NULL);
+	    0, 0, "mqmsgpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	mutex_init(&mqlist_mtx, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -158,21 +170,30 @@ mqueue_lookup(char *name)
  * Check access against message queue.
  */
 static inline int
-mqueue_access(struct lwp *l, struct mqueue *mq, mode_t acc_mode)
+mqueue_access(struct lwp *l, struct mqueue *mq, int access)
 {
+	mode_t acc_mode = 0;
 
 	KASSERT(mutex_owned(&mq->mq_mtx));
+	KASSERT(access != FNOVAL);
+
+	/* Note the difference between VREAD/VWRITE and FREAD/FWRITE */
+	if (access & FREAD)
+		acc_mode |= VREAD;
+	if (access & FWRITE)
+		acc_mode |= VWRITE;
+
 	return vaccess(VNON, mq->mq_mode, mq->mq_euid, mq->mq_egid,
 	    acc_mode, l->l_cred);
 }
 
 /*
  * Get the mqueue from the descriptor.
- *  => locks the message queue
+ *  => locks the message queue, if found
  *  => increments the reference on file entry
  */
 static int
-mqueue_get(struct lwp *l, mqd_t mqd, mode_t acc_mode, file_t **fpr)
+mqueue_get(struct lwp *l, mqd_t mqd, int access, file_t **fpr)
 {
 	file_t *fp;
 	struct mqueue *mq;
@@ -186,16 +207,17 @@ mqueue_get(struct lwp *l, mqd_t mqd, mode_t acc_mode, file_t **fpr)
 	mq = fp->f_data;
 	*fpr = fp;
 	mutex_enter(&mq->mq_mtx);
-
-	/* Check the access mode and permission if needed */
-	if (acc_mode == VNOVAL)
+	if (access == FNOVAL) {
+		KASSERT(mutex_owned(&mq->mq_mtx));
 		return 0;
-	if ((acc_mode & fp->f_flag) == 0 || mqueue_access(l, mq, acc_mode)) {
+	}
+
+	/* Check the access mode and permission */
+	if ((fp->f_flag & access) != access || mqueue_access(l, mq, access)) {
 		mutex_exit(&mq->mq_mtx);
 		fd_putfile((int)mqd);
 		return EPERM;
 	}
-
 	return 0;
 }
 
@@ -203,22 +225,38 @@ mqueue_get(struct lwp *l, mqd_t mqd, mode_t acc_mode, file_t **fpr)
  * Converter from struct timespec to the ticks.
  * Used by mq_timedreceive(), mq_timedsend().
  */
-static int
-abstimeout2timo(const void *uaddr, int *timo)
+int
+abstimeout2timo(struct timespec *ts, int *timo)
 {
-	struct timespec ts;
 	int error;
-
-	error = copyin(uaddr, &ts, sizeof(struct timespec));
-	if (error)
-		return error;
 
 	/*
 	 * According to POSIX, validation check is needed only in case of
 	 * blocking.  Thus, set the invalid value right now, and fail latter.
 	 */
-	error = itimespecfix(&ts);
-	*timo = (error == 0) ? tstohz(&ts) : -1;
+	error = itimespecfix(ts);
+	*timo = (error == 0) ? tstohz(ts) : -1;
+
+	return 0;
+}
+
+static int
+mq_stat_fop(file_t *fp, struct stat *st)
+{
+	struct mqueue *mq = fp->f_data;
+
+	(void)memset(st, 0, sizeof(*st));
+
+	mutex_enter(&mq->mq_mtx);
+	st->st_mode = mq->mq_mode;
+	st->st_uid = mq->mq_euid;
+	st->st_gid = mq->mq_egid;
+	st->st_atimespec = mq->mq_atime;
+	st->st_mtimespec = mq->mq_mtime;
+	st->st_ctimespec = st->st_birthtimespec = mq->mq_btime;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	mutex_exit(&mq->mq_mtx);
 
 	return 0;
 }
@@ -308,7 +346,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 
 	/* Check access mode flags */
 	oflag = SCARG(uap, oflag);
-	if ((oflag & (O_RDWR | O_RDONLY | O_WRONLY)) == 0)
+	if ((oflag & O_ACCMODE) == 0)
 		return EINVAL;
 
 	/* Get the name from the user-space */
@@ -320,6 +358,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 	}
 
 	if (oflag & O_CREAT) {
+		struct cwdinfo *cwdi = p->p_cwdi;
 		struct mq_attr attr;
 
 		/* Check the limit */
@@ -367,7 +406,8 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 		mq_new->mq_attrib.mq_flags = oflag;
 
 		/* Store mode and effective UID with GID */
-		mq_new->mq_mode = SCARG(uap, mode);
+		mq_new->mq_mode = ((SCARG(uap, mode) &
+		    ~cwdi->cwdi_cmask) & ALLPERMS) & ~S_ISTXT;
 		mq_new->mq_euid = kauth_cred_geteuid(l->l_cred);
 		mq_new->mq_egid = kauth_cred_getegid(l->l_cred);
 	}
@@ -381,8 +421,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 		return error;
 	}
 	fp->f_type = DTYPE_MQUEUE;
-	fp->f_flag = (oflag & O_RDWR) ? (VREAD | VWRITE) :
-	    ((oflag & O_RDONLY) ? VREAD : VWRITE);
+	fp->f_flag = FFLAGS(oflag) & (FREAD | FWRITE);
 	fp->f_ops = &mqops;
 
 	/* Look up for mqueue with such name */
@@ -390,6 +429,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 	mq = mqueue_lookup(name);
 	if (mq) {
 		KASSERT(mutex_owned(&mq->mq_mtx));
+
 		/* Check if mqueue is not marked as unlinking */
 		if (mq->mq_attrib.mq_flags & MQ_UNLINK) {
 			error = EACCES;
@@ -426,6 +466,8 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 		mutex_enter(&mq->mq_mtx);
 		LIST_INSERT_HEAD(&mqueue_head, mq, mq_list);
 		mq_new = NULL;
+		getnanotime(&mq->mq_btime);
+		mq->mq_atime = mq->mq_mtime = mq->mq_btime;
 	}
 
 	/* Increase the counters, and make descriptor ready */
@@ -460,7 +502,7 @@ sys_mq_close(struct lwp *l, const struct sys_mq_close_args *uap,
 /*
  * Primary mq_receive1() function.
  */
-static int
+int
 mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
     unsigned *msg_prio, int t, ssize_t *mlen)
 {
@@ -470,11 +512,12 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 	int error;
 
 	/* Get the message queue */
-	error = mqueue_get(l, mqdes, VREAD, &fp);
+	error = mqueue_get(l, mqdes, FREAD, &fp);
 	if (error)
 		return error;
 	mq = fp->f_data;
 
+	getnanotime(&mq->mq_atime);
 	/* Check the message size limits */
 	if (msg_len < mq->mq_attrib.mq_msgsize) {
 		error = EMSGSIZE;
@@ -557,8 +600,8 @@ sys_mq_receive(struct lwp *l, const struct sys_mq_receive_args *uap,
 }
 
 int
-sys_mq_timedreceive(struct lwp *l, const struct sys_mq_timedreceive_args *uap,
-    register_t *retval)
+sys___mq_timedreceive50(struct lwp *l,
+    const struct sys___mq_timedreceive50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(mqd_t) mqdes;
@@ -569,10 +612,15 @@ sys_mq_timedreceive(struct lwp *l, const struct sys_mq_timedreceive_args *uap,
 	} */
 	int error, t;
 	ssize_t mlen;
+	struct timespec ts;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
-		error = abstimeout2timo(SCARG(uap, abs_timeout), &t);
+		error = copyin(SCARG(uap, abs_timeout), &ts, sizeof(ts));
+		if (error)
+			return error;
+
+		error = abstimeout2timo(&ts, &t);
 		if (error)
 			return error;
 	} else
@@ -589,7 +637,7 @@ sys_mq_timedreceive(struct lwp *l, const struct sys_mq_timedreceive_args *uap,
 /*
  * Primary mq_send1() function.
  */
-static int
+int
 mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
     unsigned msg_prio, int t)
 {
@@ -625,12 +673,14 @@ mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 	msg->msg_prio = msg_prio;
 
 	/* Get the mqueue */
-	error = mqueue_get(l, mqdes, VWRITE, &fp);
+	error = mqueue_get(l, mqdes, FWRITE, &fp);
 	if (error) {
 		mqueue_freemsg(msg, size);
 		return error;
 	}
 	mq = fp->f_data;
+
+	getnanotime(&mq->mq_mtime);
 
 	/* Check the message size limit */
 	if (msg_len <= 0 || msg_len > mq->mq_attrib.mq_msgsize) {
@@ -717,7 +767,7 @@ sys_mq_send(struct lwp *l, const struct sys_mq_send_args *uap,
 }
 
 int
-sys_mq_timedsend(struct lwp *l, const struct sys_mq_timedsend_args *uap,
+sys___mq_timedsend50(struct lwp *l, const struct sys___mq_timedsend50_args *uap,
     register_t *retval)
 {
 	/* {
@@ -728,10 +778,15 @@ sys_mq_timedsend(struct lwp *l, const struct sys_mq_timedsend_args *uap,
 		syscallarg(const struct timespec *) abs_timeout;
 	} */
 	int t;
+	struct timespec ts;
+	int error;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
-		int error = abstimeout2timo(SCARG(uap, abs_timeout), &t);
+		error = copyin(SCARG(uap, abs_timeout), &ts, sizeof(ts));
+		if (error)
+			return error;
+		error = abstimeout2timo(&ts, &t);
 		if (error)
 			return error;
 	} else
@@ -762,7 +817,7 @@ sys_mq_notify(struct lwp *l, const struct sys_mq_notify_args *uap,
 			return error;
 	}
 
-	error = mqueue_get(l, SCARG(uap, mqdes), VNOVAL, &fp);
+	error = mqueue_get(l, SCARG(uap, mqdes), FNOVAL, &fp);
 	if (error)
 		return error;
 	mq = fp->f_data;
@@ -801,7 +856,7 @@ sys_mq_getattr(struct lwp *l, const struct sys_mq_getattr_args *uap,
 	int error;
 
 	/* Get the message queue */
-	error = mqueue_get(l, SCARG(uap, mqdes), VNOVAL, &fp);
+	error = mqueue_get(l, SCARG(uap, mqdes), FNOVAL, &fp);
 	if (error)
 		return error;
 	mq = fp->f_data;
@@ -832,7 +887,7 @@ sys_mq_setattr(struct lwp *l, const struct sys_mq_setattr_args *uap,
 	nonblock = (attr.mq_flags & O_NONBLOCK);
 
 	/* Get the message queue */
-	error = mqueue_get(l, SCARG(uap, mqdes), VNOVAL, &fp);
+	error = mqueue_get(l, SCARG(uap, mqdes), FNOVAL, &fp);
 	if (error)
 		return error;
 	mq = fp->f_data;
@@ -890,7 +945,7 @@ sys_mq_unlink(struct lwp *l, const struct sys_mq_unlink_args *uap,
 	}
 
 	/* Check the permissions */
-	if (mqueue_access(l, mq, VWRITE)) {
+	if (mqueue_access(l, mq, FWRITE)) {
 		mutex_exit(&mq->mq_mtx);
 		error = EACCES;
 		goto error;

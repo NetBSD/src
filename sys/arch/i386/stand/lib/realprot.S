@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.6.78.1 2008/05/16 02:22:39 yamt Exp $	*/
+/*	$NetBSD: realprot.S,v 1.6.78.2 2009/05/04 08:11:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ bootcodeseg = . - gdt
 	/* boot data segment, base will be patched */
 bootdataseg = . - gdt
 	.word	0xffff, 0
-	.byte	0, 0x92, 0x4f, 0
+	.byte	0, 0x92, 0xcf, 0
 
 	/* 16 bit real mode, base will be patched */
 bootrealseg = . - gdt

@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.19.32.1 2008/05/16 02:25:41 yamt Exp $	*/
+/*	$NetBSD: radix.h,v 1.19.32.2 2009/05/04 08:14:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -124,7 +124,6 @@ struct radix_node_head {
 	struct	radix_node rnh_nodes[3];	/* empty tree for common case */
 };
 
-
 #ifdef _KERNEL
 extern struct radix_mask *rn_mkfreelist;
 
@@ -132,12 +131,13 @@ extern struct radix_mask *rn_mkfreelist;
 #define Free(p) free(p, M_RTABLE);
 #endif /*_KERNEL*/
 
-void	 rn_init(void);
-int	 rn_inithead(void **, int);
-int	 rn_inithead0(struct radix_node_head *, int);
-int	 rn_refines(const void *, const void *);
-int	 rn_walktree(struct radix_node_head *,
-			  int (*)(struct radix_node *, void *), void *);
+void	rn_init(void);
+int	rn_inithead(void **, int);
+int	rn_inithead0(struct radix_node_head *, int);
+int	rn_refines(const void *, const void *);
+int	rn_walktree(struct radix_node_head *,
+	            int (*)(struct radix_node *, void *),
+		    void *);
 struct radix_node
 	 *rn_addmask(const void *, int, int),
 	 *rn_addroute(const void *, const void *, struct radix_node_head *,

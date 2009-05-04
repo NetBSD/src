@@ -1,8 +1,8 @@
-/*	$NetBSD: subr_iostat.c,v 1.13.44.1 2008/05/16 02:25:26 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.13.44.2 2009/05/04 08:13:48 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,13 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.13.44.1 2008/05/16 02:25:26 yamt Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.13.44.2 2009/05/04 08:13:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/iostat.h>
 #include <sys/sysctl.h>
 #include <sys/rwlock.h>
@@ -138,7 +136,7 @@ iostat_alloc(int32_t type, void *parent, const char *name)
 {
 	struct io_stats *stats;
 
-	stats = malloc(sizeof(struct io_stats), M_DEVBUF, M_WAITOK|M_ZERO);
+	stats = kmem_zalloc(sizeof(*stats), KM_SLEEP);
 	if (stats == NULL)
 		panic("iostat_alloc: cannot allocate memory for stats buffer");
 
@@ -178,7 +176,7 @@ iostat_free(struct io_stats *stats)
 	TAILQ_REMOVE(&iostatlist, stats, io_link);
 	iostat_count--;
 	rw_exit(&iostatlist_lock);
-	free(stats, M_DEVBUF);
+	kmem_free(stats, sizeof(*stats));
 }
 
 /*
@@ -222,6 +220,16 @@ iostat_unbusy(struct io_stats *stats, long bcount, int read)
 			stats->io_wxfer++;
 		}
 	}
+}
+
+/*
+ * Return non-zero if a device has an I/O request in flight.
+ */
+bool
+iostat_isbusy(struct io_stats *stats)
+{
+
+	return stats->io_busy != 0;
 }
 
 /*
@@ -320,16 +328,10 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 	/*
 	 * The original hw.diskstats call was broken and did not require
 	 * the userland to pass in it's size of struct disk_sysctl.  This
-	 * was fixed after NetBSD 1.6 was released, and any applications
-	 * that do not pass in the size are given an error only, unless
-	 * we care about 1.6 compatibility.
+	 * was fixed after NetBSD 1.6 was released.
 	 */
 	if (namelen == 0)
-#ifdef COMPAT_16
 		tocopy = offsetof(struct io_sysctl, busy);
-#else
-		return (EINVAL);
-#endif
 	else
 		tocopy = name[0];
 

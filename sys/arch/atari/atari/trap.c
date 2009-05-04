@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.2.1 2008/05/16 02:22:05 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.2.2 2009/05/04 08:10:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.1 2008/05/16 02:22:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.2 2009/05/04 08:10:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.1 2008/05/16 02:22:05 yamt Exp $");
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
 #include <sys/syscall.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
@@ -125,13 +127,13 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.1 2008/05/16 02:22:05 yamt Exp $");
 extern struct emul emul_sunos;
 #endif
 
-void trap __P((struct frame *, int, u_int, u_int));
+void trap(struct frame *, int, u_int, u_int);
 
-static void panictrap __P((int, u_int, u_int, struct frame *));
-static void trapcpfault __P((struct lwp *, struct frame *));
-static void userret __P((struct lwp *, struct frame *fp, u_quad_t, u_int,int));
+static void panictrap(int, u_int, u_int, struct frame *);
+static void trapcpfault(struct lwp *, struct frame *);
+static void userret(struct lwp *, struct frame *fp, u_quad_t, u_int, int);
 #ifdef M68040
-static int  writeback __P((struct frame *, int));
+static int  writeback(struct frame *, int);
 #endif /* M68040 */
 
 const char *trap_type[] = {
@@ -218,12 +220,7 @@ extern struct pcb *curpcb;
  * to user mode.
  */
 static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr, int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -284,20 +281,14 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
 }
 
 static void
-panictrap(type, code, v, fp)
-	int type;
-	u_int code, v;
-	struct frame *fp;
+panictrap(int type, u_int code, u_int v, struct frame *fp)
 {
 	int	s;
 
@@ -346,9 +337,7 @@ kgdb_cont:
  * return to fault handler
  */
 static void
-trapcpfault(l, fp)
-	struct lwp *l;
-	struct frame *fp;
+trapcpfault(struct lwp *l, struct frame *fp)
 {
 	/*
 	 * We have arranged to catch this fault in one of the
@@ -368,10 +357,7 @@ trapcpfault(l, fp)
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame	*fp;
-	int		type;
-	u_int		code, v;
+trap(struct frame *fp, int type, u_int code, u_int v)
 {
 	struct lwp	*l;
 	struct proc	*p;
@@ -470,16 +456,10 @@ trap(fp, type, code, v)
 	case T_FPERR|T_USER:
 		/*
 		 * We pass along the 68881 status register which locore
-		 * stashed in code for us.  Note that there is a
-		 * possibility that the bit pattern of this register
-		 * will conflict with one of the FPE_* codes defined
-		 * in signal.h.  Fortunately for us, the only such
-		 * codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so
-		 * there is no clash.
+		 * stashed in code for us.
 		 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 
 	/*
@@ -650,8 +630,14 @@ trap(fp, type, code, v)
 		if (type == T_MMUFLT &&
 		    ((l->l_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
-		else
+		else {
 			map = vm ? &vm->vm_map : kernel_map;
+			if ((l->l_flag & LW_SA)
+			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+				l->l_savp->savp_faultaddr = (vaddr_t)v;
+				l->l_pflag |= LP_SA_PAGEFAULT;
+			}
+		}
 
 		if (WRFAULT(code))
 			ftype = VM_PROT_WRITE;
@@ -688,6 +674,7 @@ trap(fp, type, code, v)
 #endif
 				return;
 			}
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		if (rv == EACCES) {
@@ -706,6 +693,7 @@ trap(fp, type, code, v)
 			       type, code);
 			panictrap(type, code, v, fp);
 		}
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
@@ -745,14 +733,12 @@ const char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
 const char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 
-static void dumpwb __P((int, u_short, u_int, u_int));
-static void dumpssw __P((u_short));
+static void dumpwb(int, u_short, u_int, u_int);
+static void dumpssw(u_short);
 #endif /* DEBUG */
 
 static int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -802,7 +788,7 @@ writeback(fp, docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
-			bcopy((void *)&f->f_pd0, (void *)fa, 16);
+			memcpy( (void *)fa, (void *)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -827,7 +813,7 @@ writeback(fp, docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			bcopy((void *)&f->f_pd0, (void *)(f->f_fa & ~0xF), 16);
+			memcpy( (void *)(f->f_fa & ~0xF), (void *)&f->f_pd0, 16);
 		else
 			err = suline((void *)(f->f_fa & ~0xF), (void *)&f->f_pd0);
 		if (err) {
@@ -988,8 +974,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 static void
-dumpssw(ssw)
-	register u_short ssw;
+dumpssw(register u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -1015,10 +1000,7 @@ dumpssw(ssw)
 }
 
 static void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	register struct proc *p = curproc;
 	paddr_t pa;

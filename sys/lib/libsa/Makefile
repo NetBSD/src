@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65.4.1 2008/05/16 02:25:36 yamt Exp $
+#	$NetBSD: Makefile,v 1.65.4.2 2009/05/04 08:13:51 yamt Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -13,6 +13,10 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 		-DCOMPAT_UFS ${DEBUGCPPFLAGS}
 
 #COPTS+= -ansi -pedantic -Wall
+
+.if defined(SA_EXTRADIR)
+.-include "${SA_EXTRADIR}/Makefile.inc"
+.endif
 
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/string
 
@@ -70,6 +74,6 @@ lib${LIB}.o:: ${OBJS}
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 CPPFLAGS+=	-Wno-pointer-sign
 .endif

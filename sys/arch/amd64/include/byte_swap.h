@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.4.76.1 2008/05/16 02:21:52 yamt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.4.76.2 2009/05/04 08:10:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #ifndef _AMD64_BYTE_SWAP_H_
 #define	_AMD64_BYTE_SWAP_H_
 
+#ifdef __x86_64__
+
 #ifdef  __GNUC__
 #include <sys/types.h>
 __BEGIN_DECLS
@@ -60,5 +62,11 @@ __byte_swap_u16_variable(uint16_t x)
 
 __END_DECLS
 #endif
+
+#else	/*	__x86_64__	*/
+
+#include <i386/byte_swap.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_BYTE_SWAP_H_ */

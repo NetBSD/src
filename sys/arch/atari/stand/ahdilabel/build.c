@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.1.1.1.134.1 2008/05/16 02:22:05 yamt Exp $	*/
+/*	$NetBSD: build.c,v 1.1.1.1.134.2 2009/05/04 08:10:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@
  * Always make first 3 partitions real.
  */
 int
-ahdi_buildlabel (ptable)
-	struct ahdi_ptable	*ptable;
+ahdi_buildlabel (struct ahdi_ptable *ptable)
 {
 	int			i, j;
 	struct ahdi_ptable	old_table;

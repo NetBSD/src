@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6.78.1 2008/05/16 02:23:17 yamt Exp $	*/
+/*	$NetBSD: pte.h,v 1.6.78.2 2009/05/04 08:11:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,9 +174,9 @@
 
 #define VA_PTE_NUM_SHIFT  PGSHIFT
 #define VA_PTE_NUM_MASK   (((1 << SEGSHIFT) - 1) ^ ((1 << PGSHIFT) - 1))
-#define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
+#define VA_PTE_NUM(va) (((va) & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
 
-#define PA_PGNUM(pa) ((unsigned)pa >> PGSHIFT)
+#define PA_PGNUM(pa) ((unsigned)(pa) >> PGSHIFT)
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define kernel_context() get_context(); set_context(0)

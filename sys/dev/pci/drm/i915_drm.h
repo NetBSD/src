@@ -36,7 +36,7 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/i915_drm.h,v 1.4 2006/09/07 23:04:47 anholt 
  * subject to backwards-compatibility constraints.
  */
 
-#include <dev/drm/drm.h>
+#include "drm.h"
 
 /* Each region is a minimum of 16k, and there are at most 255 of them.
  */

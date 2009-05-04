@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.8 2008/01/24 17:32:53 ad Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.8.10.1 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.8 2008/01/24 17:32:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.8.10.1 2009/05/04 08:13:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.8 2008/01/24 17:32:53 ad Exp $");
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/buf.h>
 
 #include <fs/hfs/hfs.h>
 
@@ -87,7 +88,7 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 			break;
 	}
 
-	if (hp->h_rec.cnid == HFS_CNID_ROOT_FOLDER)
+	if (hp->h_rec.u.cnid == HFS_CNID_ROOT_FOLDER)
 		vp->v_vflag |= VV_ROOT;
 
 	*vpp = vp;
@@ -155,7 +156,7 @@ hfs_libcb_opendev(
 	hfs_libcb_data* cbdata = NULL;
 	hfs_libcb_argsopen* args;
 	struct partinfo dpart;
-	int result;
+	int result, mode;
 
 	result = 0;
 	args = (hfs_libcb_argsopen*)(cbargs->openvol);
@@ -175,7 +176,8 @@ hfs_libcb_opendev(
 	cbdata->devvp = NULL;
 	
 	/* Open the device node. */
-	if ((result = VOP_OPEN(args->devvp, vol->readonly? FREAD : FREAD|FWRITE,
+	mode = vol->readonly ? FREAD : FREAD|FWRITE;
+	if ((result = VOP_OPEN(args->devvp, mode,
 		FSCRED)) != 0)
 		goto error;
 
@@ -183,8 +185,10 @@ hfs_libcb_opendev(
 	vn_lock(args->devvp, LK_EXCLUSIVE | LK_RETRY);
 	result = vinvalbuf(args->devvp, V_SAVE, args->cred, args->l, 0, 0);
 	VOP_UNLOCK(args->devvp, 0);
-	if (result != 0)
+	if (result != 0) {
+		VOP_CLOSE(args->devvp, mode, FSCRED);
 		goto error;
+	}
 
 	cbdata->devvp = args->devvp;
 
@@ -312,7 +316,8 @@ hfs_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 		 * XXX  start != off? Need to test this. */
 
 		error = bread(vp, (start + curoff) / DEV_BSIZE,/* no rounding involved*/
-		   RBSZ(min(len - curoff + (off - start), MAXBSIZE), secsz), cred, &bp);
+		   RBSZ(min(len - curoff + (off - start), MAXBSIZE), secsz),
+		   cred, 0, &bp);
 
 		if (error == 0)
 			memcpy((uint8_t*)buf + curoff, (uint8_t*)bp->b_data +

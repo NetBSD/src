@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-onoe.c,v 1.12 2008/01/04 21:17:57 ad Exp $ */
+/*	$NetBSD: athrate-onoe.c,v 1.12.10.1 2009/05/04 08:12:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.12 2008/01/04 21:17:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.12.10.1 2009/05/04 08:12:40 yamt Exp $");
 #endif
 
 /*
@@ -71,12 +71,17 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.12 2008/01/04 21:17:57 ad Exp $")
 #include <netinet/in.h> 
 #endif
 
+#include "ah_desc.h"
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
 #include <dev/ic/athrate-onoe.h>
-#include <contrib/dev/ath/ah_desc.h>
 
+#include <external/isc/atheros_hal/dist/ah.h>
+
+#ifndef ONOE_DEBUG
 #define	ONOE_DEBUG
+#endif
+
 #ifdef ONOE_DEBUG
 enum {
 	ATH_DEBUG_RATE		= 0x00000010,	/* rate control */

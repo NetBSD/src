@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.21.10.1 2008/05/16 02:23:36 yamt Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.21.10.2 2009/05/04 08:12:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.21.10.1 2008/05/16 02:23:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.21.10.2 2009/05/04 08:12:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -85,7 +85,7 @@ irix_sys_getmountid(struct lwp *l, const struct irix_sys_getmountid_args *uap, r
 	 * as the unique ID for the filesystem
 	 */
 	addr = (void *)&vp->v_mount;
-	bzero((void *)&mountid, sizeof(mountid));
+	memset((void *)&mountid, 0, sizeof(mountid));
 	(void)memcpy((void *)&mountid, &addr, sizeof(addr));
 	error = copyout(&mountid, SCARG(uap, buf), sizeof(mountid));
 

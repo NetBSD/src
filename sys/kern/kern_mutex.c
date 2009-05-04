@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.35.2.1 2008/05/16 02:25:25 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.35.2.2 2009/05/04 08:13:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,9 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.35.2.1 2008/05/16 02:25:25 yamt Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.35.2.2 2009/05/04 08:13:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -61,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.35.2.1 2008/05/16 02:25:25 yamt Exp
 
 #include <machine/lock.h>
 
+#include "opt_sa.h"
+
 /*
  * When not running a debug kernel, spin mutexes are not much
  * more than an splraiseipl() and splx() pair.
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.35.2.1 2008/05/16 02:25:25 yamt Exp
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), false, false)
 #define	MUTEX_LOCKED(mtx)					\
-    LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx),			\
+    LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx), NULL,		\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_UNLOCKED(mtx)					\
     LOCKDEBUG_UNLOCKED(MUTEX_DEBUG_P(mtx), (mtx),		\
@@ -256,13 +256,13 @@ int	mutex_onproc(uintptr_t, struct cpu_info **);
 
 lockops_t mutex_spin_lockops = {
 	"Mutex",
-	0,
+	LOCKOPS_SPIN,
 	mutex_dump
 };
 
 lockops_t mutex_adaptive_lockops = {
 	"Mutex",
-	1,
+	LOCKOPS_SLEEP,
 	mutex_dump
 };
 
@@ -308,17 +308,12 @@ mutex_dump(volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline)) __attribute ((noreturn))
-#endif
-void
+void __noinline
 mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
 {
 
 	LOCKDEBUG_ABORT(mtx, (MUTEX_SPIN_P(mtx) ?
 	    &mutex_spin_lockops : &mutex_adaptive_lockops), func, msg);
-	/* NOTREACHED */
 }
 
 /*
@@ -441,7 +436,7 @@ mutex_onproc(uintptr_t owner, struct cpu_info **cip)
 /*
  * mutex_vector_enter:
  *
- *	Support routine for mutex_enter() that must handles all cases.  In
+ *	Support routine for mutex_enter() that must handle all cases.  In
  *	the LOCKDEBUG case, mutex_enter() is always aliased here, even if
  *	fast-path stubs are available.  If an mutex_spin_enter() stub is
  *	not available, then it is also aliased directly here.
@@ -454,6 +449,9 @@ mutex_vector_enter(kmutex_t *mtx)
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = NULL;
 	u_int count;
+#endif
+#ifdef KERN_SA
+	int f;
 #endif
 	LOCKSTAT_COUNTER(spincnt);
 	LOCKSTAT_COUNTER(slpcnt);
@@ -545,9 +543,9 @@ mutex_vector_enter(kmutex_t *mtx)
 			continue;
 		}
 
-		if (panicstr != NULL)
+		if (__predict_false(panicstr != NULL))
 			return;
-		if (MUTEX_OWNER(owner) == curthread)
+		if (__predict_false(MUTEX_OWNER(owner) == curthread))
 			MUTEX_ABORT(mtx, "locking against myself");
 
 #ifdef MULTIPROCESSOR
@@ -687,12 +685,26 @@ mutex_vector_enter(kmutex_t *mtx)
 		}
 #endif	/* MULTIPROCESSOR */
 
+#ifdef KERN_SA
+		/*
+		 * Sleeping for a mutex should not generate an upcall.
+		 * So set LP_SA_NOBLOCK to indicate this.
+		 * f indicates if we should clear LP_SA_NOBLOCK when done.
+		 */
+		f = ~curlwp->l_pflag & LP_SA_NOBLOCK;
+		curlwp->l_pflag |= LP_SA_NOBLOCK;
+#endif /* KERN_SA */
+
 		LOCKSTAT_START_TIMER(lsflag, slptime);
 
 		turnstile_block(ts, TS_WRITER_Q, mtx, &mutex_syncobj);
 
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
+
+#ifdef KERN_SA
+		curlwp->l_pflag ^= f;
+#endif /* KERN_SA */
 
 		owner = mtx->mtx_owner;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.13.18.1 2008/05/16 02:23:35 yamt Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.13.18.2 2009/05/04 08:12:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.13.18.1 2008/05/16 02:23:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.13.18.2 2009/05/04 08:12:18 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.13.18.1 2008/05/16 02:23:35 yamt 
 
 #include <net/if.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_socket.h>
 #include <compat/darwin/darwin_route.h>
 
@@ -111,7 +112,7 @@ darwin_ifaddrs(int af, char *dst, size_t *sizep)
 		dim.dim_data.did_lastchange.tv_sec =
 		    ifp->if_data.ifi_lastchange.tv_sec;
 		dim.dim_data.did_lastchange.tv_usec =
-		    ifp->if_data.ifi_lastchange.tv_usec;
+		    ifp->if_data.ifi_lastchange.tv_nsec * 1000;
 		dim.dim_data.did_default_proto = 0; /* XXX */
 		dim.dim_data.did_hwassist = 0; /* XXX */
 
@@ -154,7 +155,7 @@ darwin_ifaddrs(int af, char *dst, size_t *sizep)
 					continue;
 			}
 
-			bzero(&diam, sizeof(diam));
+			memset(&diam, 0, sizeof(diam));
 
 			diam.diam_len = sizeof(diam);
 			diam.diam_vers = DARWIN_RTM_VERSION;

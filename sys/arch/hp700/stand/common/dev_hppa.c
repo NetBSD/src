@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.7.76.1 2008/05/16 02:22:23 yamt Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.7.76.2 2009/05/04 08:11:08 yamt Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -116,7 +116,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		printf ("devopen: no mem\n");
 #endif
 	} else {
-		bzero(hpd, sizeof *hpd);
+		memset(hpd, 0, sizeof *hpd);
 		hpd->bootdev = bootdev;
 		hpd->buf = (char *)(((u_int)hpd->ua_buf + IODC_MINIOSIZ-1) &
 			~(IODC_MINIOSIZ-1));
@@ -139,7 +139,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 }
 
 void
-devboot(dev_t dev, char *p)
+devboot(btdev_t dev, char *p)
 {
 	const char *q;
 	if (!dev) {

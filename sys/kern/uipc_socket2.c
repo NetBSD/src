@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.91.2.1 2008/05/16 02:25:28 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.91.2.2 2009/05/04 08:13:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.91.2.1 2008/05/16 02:25:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.91.2.2 2009/05/04 08:13:49 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.91.2.1 2008/05/16 02:25:28 yamt E
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/pool.h>
+#include <sys/uidinfo.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers.
@@ -120,8 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.91.2.1 2008/05/16 02:25:28 yamt E
  *   domains.
  */
 
-static POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL,
-    IPL_SOFTNET);
+static pool_cache_t socket_cache;
 
 u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 static u_long sb_max_adj;	/* adjusted sb_max */
@@ -178,10 +178,20 @@ soisconnected(struct socket *so)
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
 	so->so_state |= SS_ISCONNECTED;
-	if (head && soqremque(so, 0)) {
-		soqinsque(head, so, 1);
-		sorwakeup(head);
-		cv_broadcast(&head->so_cv);
+	if (head && so->so_onq == &head->so_q0) {
+		if ((so->so_options & SO_ACCEPTFILTER) == 0) {
+			soqremque(so, 0);
+			soqinsque(head, so, 1);
+			sorwakeup(head);
+			cv_broadcast(&head->so_cv);
+		} else {
+			so->so_upcall =
+			    head->so_accf->so_accept_filter->accf_callback;
+			so->so_upcallarg = head->so_accf->so_accept_filter_arg;
+			so->so_rcv.sb_flags |= SB_UPCALL;
+			so->so_options &= ~SO_ACCEPTFILTER;
+			(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
+		}
 	} else {
 		cv_broadcast(&so->so_cv);
 		sorwakeup(so);
@@ -215,6 +225,14 @@ soisdisconnected(struct socket *so)
 	sorwakeup(so);
 }
 
+void
+soinit2(void)
+{
+
+	socket_cache = pool_cache_init(sizeof(struct socket), 0, 0, 0,
+	    "socket", NULL, IPL_SOFTNET, NULL, NULL, NULL);
+}
+
 /*
  * When an attempt at a new connection is noted on a socket
  * which accepts connections, sonewconn is called.  If the
@@ -229,14 +247,18 @@ sonewconn(struct socket *head, int connstatus)
 	struct socket	*so;
 	int		soqueue, error;
 
+	KASSERT(connstatus == 0 || connstatus == SS_ISCONFIRMING ||
+	    connstatus == SS_ISCONNECTED);
 	KASSERT(solocked(head));
 
+	if ((head->so_options & SO_ACCEPTFILTER) != 0)
+		connstatus = 0;
 	soqueue = connstatus ? 1 : 0;
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
-		return ((struct socket *)0);
+		return NULL;
 	so = soget(false);
 	if (so == NULL)
-		return (NULL);
+		return NULL;
 	mutex_obj_hold(head->so_lock);
 	so->so_lock = head->so_lock;
 	so->so_type = head->so_type;
@@ -250,6 +272,8 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
 	so->so_uidinfo = head->so_uidinfo;
+	so->so_egid = head->so_egid;
+	so->so_cpid = head->so_cpid;
 #ifdef MBUFTRACE
 	so->so_mowner = head->so_mowner;
 	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
@@ -268,15 +292,21 @@ sonewconn(struct socket *head, int connstatus)
 	KASSERT(solocked(so));
 	if (error != 0) {
 		(void) soqremque(so, soqueue);
+		/*
+		 * Remove acccept filter if one is present.
+		 * XXX Is this really needed?
+		 */
+		if (so->so_accf != NULL)
+			(void)accept_filt_clear(so);
 		soput(so);
-		return (NULL);
+		return NULL;
 	}
 	if (connstatus) {
 		sorwakeup(head);
 		cv_broadcast(&head->so_cv);
 		so->so_state |= connstatus;
 	}
-	return (so);
+	return so;
 }
 
 struct socket *
@@ -284,7 +314,7 @@ soget(bool waitok)
 {
 	struct socket *so;
 
-	so = pool_get(&socket_pool, (waitok ? PR_WAITOK : PR_NOWAIT));
+	so = pool_cache_get(socket_cache, (waitok ? PR_WAITOK : PR_NOWAIT));
 	if (__predict_false(so == NULL))
 		return (NULL);
 	memset(so, 0, sizeof(*so));
@@ -313,7 +343,7 @@ soput(struct socket *so)
 	cv_destroy(&so->so_cv);
 	cv_destroy(&so->so_rcv.sb_cv);
 	cv_destroy(&so->so_snd.sb_cv);
-	pool_put(&socket_pool, so);
+	pool_cache_put(socket_cache, so);
 }
 
 void
@@ -444,6 +474,23 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 }
 
 /*
+ * Reset a socket's lock pointer.  Wake all threads waiting on the
+ * socket's condition variables so that they can restart their waits
+ * using the new lock.  The existing lock must be held.
+ */
+void
+solockreset(struct socket *so, kmutex_t *lock)
+{
+
+	KASSERT(solocked(so));
+
+	so->so_lock = lock;
+	cv_broadcast(&so->so_snd.sb_cv);
+	cv_broadcast(&so->so_rcv.sb_cv);
+	cv_broadcast(&so->so_cv);
+}
+
+/*
  * Socket buffer (struct sockbuf) utility routines.
  *
  * Each socket contains two socket buffers: one for sending data and
@@ -546,16 +593,13 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
-	if (so) {
-		if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
-			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
-		else
-			maxcc = RLIM_INFINITY;
-		uidinfo = so->so_uidinfo;
-	} else {
-		uidinfo = uid_find(0);	/* XXX: nothing better */
+
+	if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+		maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
+	else
 		maxcc = RLIM_INFINITY;
-	}
+
+	uidinfo = so->so_uidinfo;
 	if (!chgsbsize(uidinfo, &sb->sb_hiwat, cc, maxcc))
 		return 0;
 	sb->sb_mbmax = min(cc * 2, sb_max);
@@ -1387,15 +1431,19 @@ sbunlock(struct sockbuf *sb)
 }
 
 int
-sowait(struct socket *so, int timo)
+sowait(struct socket *so, bool catch, int timo)
 {
 	kmutex_t *lock;
 	int error;
 
 	KASSERT(solocked(so));
+	KASSERT(catch || timo != 0);
 
 	lock = so->so_lock;
-	error = cv_timedwait_sig(&so->so_cv, lock, timo);
+	if (catch)
+		error = cv_timedwait_sig(&so->so_cv, lock, timo);
+	else
+		error = cv_timedwait(&so->so_cv, lock, timo);
 	if (__predict_false(lock != so->so_lock))
 		solockretry(so, lock);
 	return error;

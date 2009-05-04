@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.12.4.1 2008/05/16 02:24:37 yamt Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.12.4.2 2009/05/04 08:12:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.12.4.1 2008/05/16 02:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.12.4.2 2009/05/04 08:12:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ osiop_pcctwo_attach(device_t parent, device_t self, void *aux)
 #error Set up siop clock speed for mvme187
 #endif
 
+	sc->sc_osiop.sc_dev = self;
 	sc->sc_osiop.sc_bst = pa->pa_bust;
 	sc->sc_osiop.sc_dmat = pa->pa_dmat;
 	(void) bus_space_map(sc->sc_osiop.sc_bst, pa->pa_offset, OSIOP_NREGS,

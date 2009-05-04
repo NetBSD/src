@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.70.10.1 2008/05/16 02:21:43 yamt Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.70.10.2 2009/05/04 08:10:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -48,13 +48,14 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 #include "vidcvideo.h"
 #include "podulebus.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.70.10.1 2008/05/16 02:21:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.70.10.2 2009/05/04 08:10:25 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -251,6 +252,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("Halted while still in the ICE age.\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -320,6 +322,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -1040,8 +1044,8 @@ initarm(void *cookie)
 		rpc_sa110_cc_setup();	
 #endif	/* CPU_SA110 */
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(bootconfig.ksym_end - bootconfig.ksym_start,
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf(bootconfig.ksym_end - bootconfig.ksym_start,
 		(void *) bootconfig.ksym_start, (void *) bootconfig.ksym_end);
 #endif
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_machdep.c,v 1.135.2.1 2008/05/16 02:23:39 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.135.2.2 2009/05/04 08:12:20 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Frank van der Linden.
+ * by Frank van der Linden, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.135.2.1 2008/05/16 02:23:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.135.2.2 2009/05/04 08:12:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.135.2.1 2008/05/16 02:23:39 yamt
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -283,7 +284,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	(void)memset(lsi = &frame.sf_si, 0, sizeof(frame.sf_si));
 	lsi->lsi_errno = native_to_linux_errno[ksi->ksi_errno];
-	lsi->lsi_code = ksi->ksi_code;
+	lsi->lsi_code = native_to_linux_si_code(ksi->ksi_code);
 	switch (lsi->lsi_signo = frame.sf_sig) {
 	case LINUX_SIGILL:
 	case LINUX_SIGFPE:
@@ -297,9 +298,6 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		lsi->lsi_utime = ksi->ksi_utime;
 		lsi->lsi_stime = ksi->ksi_stime;
-
-		/* We use the same codes */
-		lsi->lsi_code = ksi->ksi_code;
 		/* XXX is that right? */
 		lsi->lsi_status = WEXITSTATUS(ksi->ksi_status);
 		break;
@@ -343,7 +341,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_eip = ((int)p->p_sigctx.ps_sigcode) +
 	    (linux_rt_sigcode - linux_sigcode);
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
@@ -410,7 +408,7 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
 	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
@@ -556,8 +554,8 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 {
 	struct x86_get_ldt_args gl;
 	int error;
-	int num_ldt;
 	union descriptor *ldt_buf;
+	size_t sz;
 
 	/*
 	 * I've checked the linux code - this function is asymetric with
@@ -567,19 +565,11 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 
 	DPRINTF(("linux_read_ldt!"));
 
-	num_ldt = x86_get_ldt_len(l);
-	if (num_ldt <= 0)
-		return EINVAL;
-
+	sz = 8192 * sizeof(*ldt_buf);
+	ldt_buf = kmem_zalloc(sz, KM_SLEEP);
 	gl.start = 0;
 	gl.desc = NULL;
 	gl.num = SCARG(uap, bytecount) / sizeof(union descriptor);
-
-	if (gl.num > num_ldt)
-		gl.num = num_ldt;
-
-	ldt_buf = malloc(gl.num * sizeof *ldt, M_TEMP, M_WAITOK);
-
 	error = x86_get_ldt1(l, &gl, ldt_buf);
 	/* NB gl.num might have changed */
 	if (error == 0) {
@@ -587,7 +577,7 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 		error = copyout(ldt_buf, SCARG(uap, ptr),
 		    gl.num * sizeof *ldt_buf);
 	}
-	free(ldt, M_TEMP);
+	kmem_free(ldt_buf, sz);
 
 	return error;
 }
@@ -818,8 +808,8 @@ fd2biosinfo(struct proc *p, struct file *fp)
 		return NULL;
 
 	blkname = devsw_blk2name(major(vp->v_rdev));
-	snprintf(diskname, sizeof diskname, "%s%u", blkname,
-	    DISKUNIT(vp->v_rdev));
+	snprintf(diskname, sizeof diskname, "%s%llu", blkname,
+	    (unsigned long long)DISKUNIT(vp->v_rdev));
 
 	for (i = 0; i < dl->dl_nnativedisks; i++) {
 		nip = &dl->dl_nativedisks[i];
@@ -1120,7 +1110,9 @@ linux_get_uname_arch(void)
 void *
 linux_get_newtls(struct lwp *l)
 {
+#if 0
 	struct trapframe *tf = l->l_md.md_regs;
+#endif
 
 	/* XXX: Implement me */
 	return NULL;

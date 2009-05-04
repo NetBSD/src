@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.10.1 2008/05/16 02:22:41 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.12.10.2 2009/05/04 08:11:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -45,24 +45,23 @@
 #include <lib/libsa/stand.h>
 
 #include <libi386.h>
+#include <bootmenu.h>
+#include <bootmod.h>
 #include "pxeboot.h"
-#include "bootmod.h"
 
 extern struct x86_boot_params boot_params;
 
 int errno;
 int debug;
 
-extern char	bootprog_name[], bootprog_rev[], bootprog_date[],
-		bootprog_maker[];
+extern char	bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 int	main(void);
 
-void	command_help __P((char *));
-void	command_quit __P((char *));
-void	command_boot __P((char *));
+void	command_help(char *);
+void	command_quit(char *);
+void	command_boot(char *);
 void	command_consdev(char *);
-void	command_load(char *);
 void	command_modules(char *);
 
 const struct bootblk_command commands[] = {
@@ -72,14 +71,22 @@ const struct bootblk_command commands[] = {
 	{ "boot",	command_boot },
 	{ "consdev",	command_consdev },
 	{ "modules",    command_modules },
-	{ "load",	command_load },
+	{ "load",	module_add },
 	{ NULL,		NULL },
 };
+
+static void
+clearit(void)
+{
+
+	if (bootconf.clear)
+		clear_pc_screen();
+}
 
 static int 
 bootit(const char *filename, int howto)
 {
-	if (exec_netbsd(filename, 0, howto) < 0)
+	if (exec_netbsd(filename, 0, howto, 0, clearit) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
@@ -92,19 +99,21 @@ print_banner(void)
 	int base = getbasemem();
 	int ext = getextmem();
 
+	clearit();
 	printf("\n"
-	       ">> %s, Revision %s\n"
-	       ">> (%s, %s)\n"
+	       ">> NetBSD/x86 PXE boot, Revision %s (from NetBSD %s)\n"
 	       ">> Memory: %d/%d k\n",
-	       bootprog_name, bootprog_rev,
-	       bootprog_maker, bootprog_date,
+	       bootprog_rev, bootprog_kernrev,
 	       base, ext);
 }
 
 int
 main(void)
 {
+	extern char twiddle_toggle;
         char c;
+
+	twiddle_toggle = 1;	/* no twiddling until we're ready */
 
 #ifdef SUPPORT_SERIAL
 	initio(SUPPORT_SERIAL);
@@ -113,15 +122,42 @@ main(void)
 #endif
 	gateA20();
 
+#ifndef SMALL
+	parsebootconf(BOOTCONF);
+
+	/*
+	 * If console set in boot.cfg, switch to it.
+	 * This will print the banner, so we don't need to explicitly do it
+	 */
+	if (bootconf.consdev)
+		command_consdev(bootconf.consdev);
+	else 
+		print_banner();
+
+	/* Display the menu, if applicable */
+	twiddle_toggle = 0;
+	if (bootconf.nummenu > 0) {
+		/* Does not return */
+		doboottypemenu();
+	}
+#else
+	twiddle_toggle = 0;
 	print_banner();
+#endif
 
 	printf("Press return to boot now, any other key for boot menu\n");
-	printf("Starting in ");
+	printf("booting netbsd - starting in ");
 
+#ifdef SMALL
 	c = awaitkey(boot_params.bp_timeout, 1);
-	if ((c != '\r') && (c != '\n') && (c != '\0')) {
+#else
+	c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
+#endif
+	if ((c != '\r') && (c != '\n') && (c != '\0') &&
+	    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
+	     || check_password((char *)boot_params.bp_password))) {
 		printf("type \"?\" or \"help\" for help.\n");
-		bootmenu();	/* does not return */
+		bootmenu(); /* does not return */
 	}
 
 	/*
@@ -214,31 +250,4 @@ command_modules(char *arg)
 		boot_modules_enabled = false;
 	else
 		printf("invalid flag, must be 'enabled' or 'disabled'.\n");
-}
-
-void
-command_load(char *arg)
-{
-	boot_module_t *bm, *bmp;
-	size_t len;
-	char *str;
-	
-	bm = alloc(sizeof(boot_module_t));
-	len = strlen(arg) + 1;
-	str = alloc(len);
-	if (bm == NULL || str == NULL) {
-		printf("couldn't allocate module\n");
-		return;
-	}
-	memcpy(str, arg, len);
-	bm->bm_path = str;
-	bm->bm_next = NULL;
-	if (boot_modules == NULL)
-		boot_modules = bm;
-	else {
-		for (bmp = boot_modules; bmp->bm_next;
-				bmp = bmp->bm_next)
-			;
-		bmp->bm_next = bm;
-	}
 }

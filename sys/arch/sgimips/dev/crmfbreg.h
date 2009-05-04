@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.7.10.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.7.10.2 2009/05/04 08:11:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -173,7 +173,8 @@
 #define CRIME_DE_STIPPLE_PAT	0x20c4
 #define CRIME_DE_FG		0x20d0
 #define CRIME_DE_BG		0x20d8
-
+#define CRIME_DE_ALPHA_COLOR	0x21a0	/* constant colour for alpha */
+#define CRIME_DE_ALPHA_FUNC	0x21a8	/* blend function */
 #define CRIME_DE_ROP		0x21b0
 #define CRIME_DE_PLANEMASK	0x21b8
 
@@ -205,6 +206,18 @@
 
 /* clip mode */
 #define DE_CLIPMODE_ENABLE	0x00000800
+/* enable testing against mask register n */
+#define DE_CLIPMODE_MASK0_EN	0x00000200
+#define DE_CLIPMODE_MASK1_EN	0x00000100
+#define DE_CLIPMODE_MASK2_EN	0x00000080
+#define DE_CLIPMODE_MASK3_EN	0x00000040
+#define DE_CLIPMODE_MASK4_EN	0x00000020
+/* let pixels pass if inside mask n, otherwise outside */
+#define DE_CLIPMODE_MASK0_IN	0x00000010
+#define DE_CLIPMODE_MASK1_IN	0x00000008
+#define DE_CLIPMODE_MASK2_IN	0x00000004
+#define DE_CLIPMODE_MASK3_IN	0x00000002
+#define DE_CLIPMODE_MASK4_IN	0x00000001
 
 /* draw mode */
 #define DE_DRAWMODE_NO_CONF	0x00800000	/* disable coherency testing */
@@ -242,8 +255,44 @@
 #define DE_PRIM_TB		0x00020000	/* top to bottom */
 #define DE_PRIM_LINE_WIDTH_MASK	0x0000ffff	/* in half pixels */
 
+/* alpha function register */
+#define DE_ALPHA_ADD		0x00000000
+#define DE_ALPHA_MIN		0x00000100
+#define DE_ALPHA_MAX		0x00000200
+#define DE_ALPHA_SUB		0x00000300
+#define DE_ALPHA_REV_SUB	0x00000400
+
+#define DE_ALPHA_OP_ZERO		0
+#define DE_ALPHA_OP_ONE			1
+#define DE_ALPHA_OP_DST_COLOR		2
+#define DE_ALPHA_OP_1_MINUS_DST_COLOR	3
+#define DE_ALPHA_OP_SRC_ALPHA		4
+#define DE_ALPHA_OP_1_MINUS_SRC_ALPHA	5
+#define DE_ALPHA_OP_DST_ALPHA		6
+#define DE_ALPHA_OP_1_MINUS_DST_APLHA	7
+#define DE_ALPHA_OP_CONSTANT_COLOR	8
+#define DE_ALPHA_OP_1_MINUS_CONST_COLOR	9
+#define DE_ALPHA_OP_CONSTANT_ALPHA	10
+#define DE_ALPHA_OP_1_MINUS_CONST_ALPHA	11
+#define DE_ALPHA_OP_SRC_ALPHA_SATURATE	12
+
+#define DE_ALPHA_OP_SRC_SHIFT 4
+#define DE_ALPHA_OP_DST_SHIFT 0
+
 /* status register */
 #define CRIME_DE_STATUS		0x4000
 #define CRIME_DE_IDLE		0x10000000
+#define CRIME_DE_SETUP_IDLE	0x08000000
+#define CRIME_DE_PIXPIPE_IDLE	0x04000000
+#define CRIME_DE_MTE_IDLE	0x02000000
+#define CRIME_DE_LEVEL_MASK	0x01fc0000
+#define CRIME_DE_RD_PTR_MASK	0x0003f000
+#define CRIME_DE_WR_PTR_MASK	0x00000fc0
+#define CRIME_DE_BUF_START	0x0000003f
+
+#define CRIME_DE_LEVEL_SHIFT	18
+#define CRIME_DE_LEVEL_MAX	0x7f
+#define CRIME_PIPE_LEVEL(x)	((x & CRIME_DE_LEVEL_MASK) >>  \
+				  CRIME_DE_LEVEL_SHIFT)
 
 #endif /* CRMFBREG_H */

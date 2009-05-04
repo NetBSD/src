@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.1.128.1 2008/05/16 02:22:59 yamt Exp $ */
+/*      $NetBSD: clock.c,v 1.1.128.2 2009/05/04 08:11:42 yamt Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,9 +32,10 @@
 
 #include <machine/dec_prom.h>
 #include <stand/common/common.h>
+#include <lib/libsa/net.h>
 
-long
-getsecs()
+satime_t
+getsecs(void)
 {
 	long ticks;
 	ticks = (*callv->_time)((long *)0);

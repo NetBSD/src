@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_subr.c,v 1.8.72.1 2008/05/16 02:22:23 yamt Exp $	*/
+/*	$NetBSD: debug_subr.c,v 1.8.72.2 2009/05/04 08:11:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.8.72.1 2008/05/16 02:22:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.8.72.2 2009/05/04 08:11:09 yamt Exp $");
 
 #include "debug_hpc.h"
 
@@ -106,7 +106,7 @@ dbg_banner_title(const char *name, size_t len)
 }
 
 void
-dbg_banner_line()
+dbg_banner_line(void)
 {
 
 	dbg_draw_line(BANNER_LENGTH);
@@ -308,7 +308,7 @@ static void __dbg_lcd_test8(vaddr_t, int, int);
 static void __dbg_lcd_test16(vaddr_t, int, int);
 
 void
-dbg_lcd_test()
+dbg_lcd_test(void)
 {
 	vaddr_t fbaddr;
 	int w, h;
@@ -476,7 +476,7 @@ __dbg_lcd_test16(vaddr_t fbaddr, int w, int h)
 }
 
 int
-bootinfo_fb_depth()
+bootinfo_fb_depth(void)
 {
 
 	switch (bootinfo->fb_type) {

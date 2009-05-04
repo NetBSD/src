@@ -1,4 +1,4 @@
-/*	$NetBSD: umidireg.h,v 1.6.40.1 2008/05/16 02:25:11 yamt Exp $	*/
+/*	$NetBSD: umidireg.h,v 1.6.40.2 2009/05/04 08:13:21 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@ typedef struct {
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
-	uByte		bDescriptorSubType;
+	uByte		bDescriptorSubtype;
 	uByte		bNumEmbMIDIJack;
 } UPACKED umidi_cs_endpoint_descriptor_t;
 #define UMIDI_CS_ENDPOINT_DESCRIPTOR_SIZE 4

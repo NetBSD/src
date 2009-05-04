@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.14.20.1 2008/05/16 02:22:09 yamt Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.14.20.2 2009/05/04 08:10:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.14.20.1 2008/05/16 02:22:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.14.20.2 2009/05/04 08:10:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -316,7 +316,7 @@ mmemdetach(struct device *self, int flags)
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
-	while ((bp = BUFQ_GET(sc->sc_q)) != NULL) {
+	while ((bp = bufq_get(sc->sc_q)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -622,7 +622,7 @@ mmemopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
 	labelpart = DISKPART(dev);
-	if ((sc = device_lookup(&mmem_cd, unit)) == NULL
+	if ((sc = device_lookup_private(&mmem_cd, unit)) == NULL
 	    || sc->sc_stat == MMEM_INIT
 	    || sc->sc_stat == MMEM_INIT2
 	    || part >= sc->sc_npt || (pt = &sc->sc_pt[part])->pt_flags == 0)
@@ -650,7 +650,7 @@ mmemclose(dev_t dev, int flags, int devtype, struct lwp *l)
 	diskunit = DISKUNIT(dev);
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
-	sc = mmem_cd.cd_devs[unit];
+	sc = device_lookup_private(&mmem_cd, unit);
 	pt = &sc->sc_pt[part];
 	labelpart = DISKPART(dev);
 
@@ -677,7 +677,7 @@ mmemstrategy(struct buf *bp)
 	diskunit = DISKUNIT(bp->b_dev);
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
-	if ((sc = device_lookup(&mmem_cd, unit)) == NULL
+	if ((sc = device_lookup_private(&mmem_cd, unit)) == NULL
 	    || sc->sc_stat == MMEM_INIT
 	    || sc->sc_stat == MMEM_INIT2
 	    || part >= sc->sc_npt || (pt = &sc->sc_pt[part])->pt_flags == 0)
@@ -730,7 +730,7 @@ mmemstrategy(struct buf *bp)
 	bp->b_rawblkno = off;
 
 	/* queue this transfer */
-	BUFQ_PUT(sc->sc_q, bp);
+	bufq_put(sc->sc_q, bp);
 
 	if (sc->sc_stat == MMEM_IDLE)
 		mmemstart(sc);
@@ -752,7 +752,7 @@ mmemstart(struct mmem_softc *sc)
 	struct mmem_pt *pt;
 	int s;
 
-	if ((bp = BUFQ_GET(sc->sc_q)) == NULL) {
+	if ((bp = bufq_get(sc->sc_q)) == NULL) {
 		sc->sc_stat = MMEM_IDLE;
 		maple_enable_unit_ping(sc->sc_parent, sc->sc_unit,
 		    MAPLE_FN_MEMCARD, 1);
@@ -916,7 +916,7 @@ mmemioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	diskunit = DISKUNIT(dev);
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
-	sc = mmem_cd.cd_devs[unit];
+	sc = device_lookup_private(&mmem_cd, unit);
 	pt = &sc->sc_pt[part];
 
 	switch (cmd) {

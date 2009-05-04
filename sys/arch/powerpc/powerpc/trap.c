@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2008/02/05 18:52:56 garbled Exp $	*/
+/*	$NetBSD: trap.c,v 1.125.10.1 2009/05/04 08:11:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2008/02/05 18:52:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.10.1 2009/05/04 08:11:45 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2008/02/05 18:52:56 garbled Exp $");
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/kauth.h>
@@ -128,7 +130,6 @@ trap(struct trapframe *frame)
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= pcb->pcb_umapsr << ADDR_SR_SHFT;
 				map = &p->p_vmspace->vm_map;
-				/* KERNEL_LOCK(1, l); */
 #ifdef PPC_OEA64
 				if ((frame->dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_ste_evictions > 0 &&
@@ -143,6 +144,11 @@ trap(struct trapframe *frame)
 				    pmap_pte_spill(vm_map_pmap(map),
 					    trunc_page(va), false)) {
 					return;
+				}
+				if ((l->l_flag & LW_SA)
+				    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+					l->l_savp->savp_faultaddr = va;
+					l->l_pflag |= LP_SA_PAGEFAULT;
 				}
 #if defined(DIAGNOSTIC) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
@@ -173,6 +179,7 @@ trap(struct trapframe *frame)
 				 */
 				if (rv == 0)
 					uvm_grow(p, trunc_page(va));
+				l->l_pflag &= ~LP_SA_PAGEFAULT;
 			}
 			if (rv == 0)
 				return;
@@ -229,12 +236,17 @@ trap(struct trapframe *frame)
 			break;
 		}
 
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 		rv = uvm_fault(map, trunc_page(frame->dar), ftype);
 		if (rv == 0) {
 			/*
 			 * Record any stack growth...
 			 */
 			uvm_grow(p, trunc_page(frame->dar));
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
@@ -260,6 +272,7 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGKILL;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_ISI:
@@ -292,9 +305,14 @@ trap(struct trapframe *frame)
 			break;
 		}
 
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->srr0;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 		ftype = VM_PROT_EXECUTE;
 		rv = uvm_fault(map, trunc_page(frame->srr0), ftype);
 		if (rv == 0) {
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		ci->ci_ev_isi_fatal.ev_count++;
@@ -309,6 +327,7 @@ trap(struct trapframe *frame)
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_FPU|EXC_USER:
@@ -324,7 +343,7 @@ trap(struct trapframe *frame)
 		uvmexp.softs++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_flag &= ~LP_OWEUPC;
-			ADDUPROF(p);
+			ADDUPROF(l);
 		}
 		/* Check whether we are being preempted. */
 		if (ci->ci_want_resched)
@@ -887,5 +906,14 @@ startlwp(void *arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
+	userret(l, frame);
+}
+
+void
+upcallret(struct lwp *l)
+{
+        struct trapframe *frame = trapframe(l);
+
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, frame);
 }

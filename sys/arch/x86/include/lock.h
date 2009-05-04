@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.23.10.1 2008/05/16 02:23:28 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.23.10.2 2009/05/04 08:12:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #ifndef _X86_LOCK_H_
 #define	_X86_LOCK_H_
 
+#include <sys/param.h>
+
 static __inline int
 __SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
 {
@@ -62,7 +64,7 @@ __cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
 	*__ptr = __SIMPLELOCK_UNLOCKED;
 }
 
-#ifdef _KERNEL
+#ifdef _HARDKERNEL
 
 #include <machine/cpufunc.h>
 
@@ -179,6 +181,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
-#endif	/* _KERNEL */
+#endif	/* _HARDKERNEL */
 
 #endif /* _X86_LOCK_H_ */

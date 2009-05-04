@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.25 2008/04/14 13:38:03 cegger Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.25.4.1 2009/05/04 08:12:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -87,7 +87,10 @@ struct xen_npx_attach_args {
 #ifdef XEN3
 #include <xen/xen3-public/xen.h>
 #include <xen/xen3-public/sched.h>
+#include <xen/xen3-public/platform.h>
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 #include <xen/xen3-public/dom0_ops.h>
+#endif
 #include <xen/xen3-public/event_channel.h>
 #include <xen/xen3-public/physdev.h>
 #include <xen/xen3-public/memory.h>
@@ -128,7 +131,15 @@ extern union start_info_union start_info_union;
 #define xen_start_info (start_info_union.start_info)
 
 /* For use in guest OSes. */
-volatile extern shared_info_t *HYPERVISOR_shared_info;
+extern volatile shared_info_t *HYPERVISOR_shared_info;
+
+
+/* Structural guest handles introduced in 0x00030201. */
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+#define xenguest_handle(hnd)	(hnd).p
+#else
+#define xenguest_handle(hnd)	hnd
+#endif
 
 /* hypervisor.c */
 struct intrframe;
@@ -141,7 +152,7 @@ void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
 void hypervisor_enable_ipl(unsigned int);
 void hypervisor_set_ipending(uint32_t, int, int);
-
+void hypervisor_machdep_attach(void);
 
 /* 
  * Force a proper event-channel callback from Xen after clearing the

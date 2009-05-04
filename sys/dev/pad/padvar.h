@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.1.28.1 2008/05/16 02:24:42 yamt Exp $ */
+/* $NetBSD: padvar.h,v 1.1.28.2 2009/05/04 08:12:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #define _SYS_DEV_PAD_PADVAR_H
 
 typedef struct pad_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	int		sc_open;
 	struct audio_encoding_set *sc_encodings;

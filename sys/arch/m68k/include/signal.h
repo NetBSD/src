@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.23 2006/04/01 18:03:55 oster Exp $	*/
+/*	$NetBSD: signal.h,v 1.23.66.1 2009/05/04 08:11:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -39,14 +39,6 @@
 typedef int sig_atomic_t;
 
 #if defined(_NETBSD_SOURCE)
-
-#ifdef _KERNEL
-#ifdef COMPAT_16
-#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
-#else
-#define SIGTRAMP_VALID(vers)	((vers) == 2)
-#endif
-#endif
 
 /*
  * Get the "code" values
@@ -100,6 +92,9 @@ struct sigstate {
 #define	SS_RTEFRAME	0x01
 #define	SS_FPSTATE	0x02
 #define	SS_USERREGS	0x04
+
+u_int fpsr2siginfocode(u_int fpsr);
+
 #endif
 
 #if defined(__M68K_SIGNAL_PRIVATE)

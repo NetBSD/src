@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_300.h,v 1.2.164.1 2008/05/16 02:21:48 yamt Exp $ */
+/* $NetBSD: tc_dma_3000_300.h,v 1.2.164.2 2009/05/04 08:10:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,4 +30,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-bus_dma_tag_t	tc_dma_get_tag_3000_300 __P((int));
+bus_dma_tag_t	tc_dma_get_tag_3000_300(int);

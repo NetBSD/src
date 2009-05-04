@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.82.1 2008/05/16 02:23:02 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.82.2 2009/05/04 08:11:45 yamt Exp $
 
-.if ${MACHINE} == "prep"
+.if (${MACHINE} == "bebox" || ${MACHINE} == "prep" || ${MACHINE} == "rs6000")
 SUBDIR=	mkbootimage
 .endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.11 2008/04/08 20:09:27 cegger Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.11.4.1 2009/05/04 08:12:51 yamt Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.11 2008/04/08 20:09:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.11.4.1 2009/05/04 08:12:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,7 @@ CFATTACH_DECL(cs_isapnp, sizeof(struct cs_softc),
     cs_isapnp_match, cs_isapnp_attach, NULL, NULL);
 
 int
-cs_isapnp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cs_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	int pri, variant;
 
@@ -78,9 +75,7 @@ cs_isapnp_match(parent, match, aux)
 }
 
 void
-cs_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cs_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;

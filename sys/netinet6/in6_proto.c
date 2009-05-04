@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.82 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.82.2.1 2009/05/04 08:14:18 yamt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82.2.1 2009/05/04 08:14:18 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -229,6 +229,7 @@ const struct ip6protosw inet6sw[] = {
 {	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_IPV6,
 	.pr_slowtimo = ip6flow_slowtimo,
+	.pr_init = ip6flow_poolinit,
 },
 #endif /* GATEWAY */
 {	.pr_type = SOCK_RAW,
@@ -408,7 +409,7 @@ struct domain inet6domain = {
 	.dom_protoswNPROTOSW = (const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
 	.dom_rtattach = rn_inithead,
 	.dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr) << 3,
-	.dom_maxrtkey = sizeof(struct sockaddr_in6),
+	.dom_maxrtkey = sizeof(struct ip_pack6),
 	.dom_ifattach = in6_domifattach, .dom_ifdetach = in6_domifdetach,
 	.dom_ifqueues = { &ip6intrq, NULL },
 	.dom_link = { NULL },

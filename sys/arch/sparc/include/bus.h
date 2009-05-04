@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.53.44.1 2008/05/16 02:23:11 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.53.44.2 2009/05/04 08:11:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -243,6 +243,10 @@ static void	*bus_intr_establish2(
 				int (*)(void *),	/*handler*/
 				void *,			/*handler arg*/
 				void (*)(void));	/*optional fast vector*/
+
+
+int sparc_bus_map_large(bus_space_tag_t, int, bus_size_t, bus_size_t, int, 
+		        bus_space_handle_t *);
 
 
 static __inline int

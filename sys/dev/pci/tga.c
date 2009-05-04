@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.68 2008/04/10 19:13:38 cegger Exp $ */
+/* $NetBSD: tga.c,v 1.68.4.1 2009/05/04 08:13:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.68 2008/04/10 19:13:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.68.4.1 2009/05/04 08:13:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.68 2008/04/10 19:13:38 cegger Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciio.h>
 #include <dev/pci/tgareg.h>
 #include <dev/pci/tgavar.h>
 #include <dev/ic/bt485reg.h>
@@ -157,19 +158,13 @@ static void	tga_blank(struct tga_devconfig *);
 static void	tga_unblank(struct tga_devconfig *);
 
 int
-tga_cnmatch(iot, memt, pc, tag)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+tga_cnmatch(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	return tga_matchcommon(memt, pc, tag);
 }
 
 int
-tgamatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tgamatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -197,10 +192,7 @@ tgamatch(parent, match, aux)
 }
 
 static int
-tga_matchcommon(memt, pc, tag)
-	bus_space_tag_t memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+tga_matchcommon(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	struct tga_devconfig tmp_dc;
 	struct tga_devconfig *dc = &tmp_dc;
@@ -217,12 +209,7 @@ tga_matchcommon(memt, pc, tag)
 }
 
 static void
-tga_mapaddrs(memt, pc, tag, pcisize, dc)
-	bus_space_tag_t memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	bus_size_t *pcisize;
-	struct tga_devconfig *dc;
+tga_mapaddrs(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag, bus_size_t *pcisize, struct tga_devconfig *dc)
 {
 	int flags;
 
@@ -248,11 +235,7 @@ tga_mapaddrs(memt, pc, tag, pcisize, dc)
 }
 
 static void
-tga_init(memt, pc, tag, dc)
-	bus_space_tag_t memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	struct tga_devconfig *dc;
+tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag, struct tga_devconfig *dc)
 {
 	const struct tga_conf *tgac;
 	struct rasops_info *rip;
@@ -260,6 +243,7 @@ tga_init(memt, pc, tag, dc)
 	bus_size_t pcisize;
 	int i;
 
+	dc->dc_pc = pc;
 	dc->dc_pcitag = tag;
 	tga_mapaddrs(memt, pc, tag, &pcisize, dc);
 	dc->dc_tga_type = tga_identify(dc);
@@ -396,9 +380,7 @@ tga_init(memt, pc, tag, dc)
 }
 
 void
-tgaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tgaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct tga_softc *sc = (struct tga_softc *)self;
@@ -525,21 +507,14 @@ tgaattach(parent, self, aux)
 }
 
 static void
-tga_config_interrupts (d)
-	struct device *d;
+tga_config_interrupts (struct device *d)
 {
 	struct tga_softc *sc = (struct tga_softc *)d;
 	sc->sc_dc->dc_intrenabled = 1;
 }
 
 int
-tga_ioctl(v, vs, cmd, data, flag, l)
-	void *v;
-	void *vs;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+tga_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct tga_softc *sc = v;
 	struct tga_devconfig *dc = sc->sc_dc;
@@ -603,14 +578,22 @@ tga_ioctl(v, vs, cmd, data, flag, l)
 	case WSDISPLAYIO_SCURSOR:
 		return (*dcrf->ramdac_set_cursor)(dcrc,
 		    (struct wsdisplay_cursor *)data);
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = dc->dc_rowbytes;
+		return (0);
+		
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(dc->dc_pc, dc->dc_pcitag,
+			cmd, data, flag, l));
 	}
 	return (EPASSTHROUGH);
 }
 
 static int
-tga_sched_update(v, f)
-	void	*v;
-	void	(*f)(void *);
+tga_sched_update(void *v, void (*f)(void *))
 {
 	struct tga_devconfig *dc = v;
 
@@ -633,8 +616,7 @@ tga_sched_update(v, f)
 }
 
 static int
-tga_intr(v)
-	void *v;
+tga_intr(void *v)
 {
 	struct tga_devconfig *dc = v;
 	struct ramdac_cookie *dcrc= dc->dc_ramdac_cookie;
@@ -668,11 +650,7 @@ tga_intr(v)
 }
 
 paddr_t
-tga_mmap(v, vs, offset, prot)
-	void *v;
-	void *vs;
-	off_t offset;
-	int prot;
+tga_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct tga_softc *sc = v;
 
@@ -684,12 +662,7 @@ tga_mmap(v, vs, offset, prot)
 }
 
 static int
-tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+tga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct tga_softc *sc = v;
 	long defattr;
@@ -708,9 +681,7 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-tga_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+tga_free_screen(void *v, void *cookie)
 {
 	struct tga_softc *sc = v;
 
@@ -721,22 +692,14 @@ tga_free_screen(v, cookie)
 }
 
 static int
-tga_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+tga_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);
 }
 
 int
-tga_cnattach(iot, memt, pc, bus, device, function)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+tga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	struct tga_devconfig *dcp = &tga_console_dc;
 	long defattr;
@@ -782,8 +745,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
  * Functions to blank and unblank the display.
  */
 static void
-tga_blank(dc)
-	struct tga_devconfig *dc;
+tga_blank(struct tga_devconfig *dc)
 {
 
 	if (!dc->dc_blanked) {
@@ -794,8 +756,7 @@ tga_blank(dc)
 }
 
 static void
-tga_unblank(dc)
-	struct tga_devconfig *dc;
+tga_unblank(struct tga_devconfig *dc)
 {
 
 	if (dc->dc_blanked) {
@@ -809,9 +770,7 @@ tga_unblank(dc)
  * Functions to manipulate the built-in cursor handing hardware.
  */
 int
-tga_builtin_set_cursor(dc, cursorp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_cursor *cursorp;
+tga_builtin_set_cursor(struct tga_devconfig *dc, struct wsdisplay_cursor *cursorp)
 {
 	struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
 	struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
@@ -869,9 +828,7 @@ tga_builtin_set_cursor(dc, cursorp)
 }
 
 int
-tga_builtin_get_cursor(dc, cursorp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_cursor *cursorp;
+tga_builtin_get_cursor(struct tga_devconfig *dc, struct wsdisplay_cursor *cursorp)
 {
 	struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
 	struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
@@ -899,9 +856,7 @@ tga_builtin_get_cursor(dc, cursorp)
 }
 
 int
-tga_builtin_set_curpos(dc, curposp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_curpos *curposp;
+tga_builtin_set_curpos(struct tga_devconfig *dc, struct wsdisplay_curpos *curposp)
 {
 
 	TGAWREG(dc, TGA_REG_CXYR,
@@ -910,9 +865,7 @@ tga_builtin_set_curpos(dc, curposp)
 }
 
 int
-tga_builtin_get_curpos(dc, curposp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_curpos *curposp;
+tga_builtin_get_curpos(struct tga_devconfig *dc, struct wsdisplay_curpos *curposp)
 {
 
 	curposp->x = TGARREG(dc, TGA_REG_CXYR) & 0xfff;
@@ -921,9 +874,7 @@ tga_builtin_get_curpos(dc, curposp)
 }
 
 int
-tga_builtin_get_curmax(dc, curposp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_curpos *curposp;
+tga_builtin_get_curmax(struct tga_devconfig *dc, struct wsdisplay_curpos *curposp)
 {
 
 	curposp->x = curposp->y = 64;
@@ -934,9 +885,7 @@ tga_builtin_get_curmax(dc, curposp)
  * Copy columns (characters) in a row (line).
  */
 static void
-tga_copycols(id, row, srccol, dstcol, ncols)
-	void *id;
-	int row, srccol, dstcol, ncols;
+tga_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 {
 	struct rasops_info *ri = id;
 	int y, srcx, dstx, nx;
@@ -955,9 +904,7 @@ tga_copycols(id, row, srccol, dstcol, ncols)
  * Copy rows (lines).
  */
 static void
-tga_copyrows(id, srcrow, dstrow, nrows)
-	void *id;
-	int srcrow, dstrow, nrows;
+tga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = id;
 	int srcy, dsty, ny;
@@ -985,11 +932,7 @@ static int map_rop[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6,
  *   clips the sizes and all of that.
  */
 static int
-tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
-	struct rasops_info *dst;
-	int dx, dy, w, h, rop;
-	struct rasops_info *src;
-	int sx, sy;
+tga_rop(struct rasops_info *dst, int dx, int dy, int w, int h, int rop, struct rasops_info *src, int sx, int sy)
 {
 	if (!dst)
 		return -1;
@@ -1047,11 +990,7 @@ tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
  * that are on the card.
  */
 static int
-tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
-	struct rasops_info *dst;
-	int dx, dy, w, h, rop;
-	struct rasops_info *src;
-	int sx, sy;
+tga_rop_vtov(struct rasops_info *dst, int dx, int dy, int w, int h, int rop, struct rasops_info *src, int sx, int sy)
 {
 	struct tga_devconfig *dc = (struct tga_devconfig *)dst->ri_hw;
 	int srcb, dstb, tga_srcb, tga_dstb;
@@ -1276,10 +1215,7 @@ void tga_putchar (c, row, col, uc, attr)
 }
 
 static void
-tga_eraserows(c, row, num, attr)
-	void *c;
-	int row, num;
-	long attr;
+tga_eraserows(void *c, int row, int num, long attr)
 {
 	struct rasops_info *ri = c;
 	struct tga_devconfig *dc = ri->ri_hw;
@@ -1330,10 +1266,7 @@ tga_eraserows(c, row, num, attr)
 }
 
 static void
-tga_erasecols (c, row, col, num, attr)
-void *c;
-int row, col, num;
-long attr;
+tga_erasecols (void *c, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = c;
 	struct tga_devconfig *dc = ri->ri_hw;
@@ -1384,10 +1317,7 @@ long attr;
 
 
 static void
-tga_ramdac_wr(v, btreg, val)
-	void *v;
-	u_int btreg;
-	u_int8_t val;
+tga_ramdac_wr(void *v, u_int btreg, u_int8_t val)
 {
 	struct tga_devconfig *dc = v;
 
@@ -1399,10 +1329,7 @@ tga_ramdac_wr(v, btreg, val)
 }
 
 static void
-tga2_ramdac_wr(v, btreg, val)
-	void *v;
-	u_int btreg;
-	u_int8_t val;
+tga2_ramdac_wr(void *v, u_int btreg, u_int8_t val)
 {
 	struct tga_devconfig *dc = v;
 	bus_space_handle_t ramdac;
@@ -1417,9 +1344,7 @@ tga2_ramdac_wr(v, btreg, val)
 }
 
 static u_int8_t
-tga_bt463_rd(v, btreg)
-	void *v;
-	u_int btreg;
+tga_bt463_rd(void *v, u_int btreg)
 {
 	struct tga_devconfig *dc = v;
 	tga_reg_t rdval;
@@ -1444,10 +1369,7 @@ tga_bt463_rd(v, btreg)
 }
 
 static void
-tga_bt463_wr(v, btreg, val)
-	void *v;
-	u_int btreg;
-	u_int8_t val;
+tga_bt463_wr(void *v, u_int btreg, u_int8_t val)
 {
 	struct tga_devconfig *dc = v;
 
@@ -1471,9 +1393,7 @@ tga_bt463_wr(v, btreg, val)
 }
 
 static u_int8_t
-tga_ramdac_rd(v, btreg)
-	void *v;
-	u_int btreg;
+tga_ramdac_rd(void *v, u_int btreg)
 {
 	struct tga_devconfig *dc = v;
 	tga_reg_t rdval;
@@ -1489,9 +1409,7 @@ tga_ramdac_rd(v, btreg)
 }
 
 static u_int8_t
-tga2_ramdac_rd(v, btreg)
-	void *v;
-	u_int btreg;
+tga2_ramdac_rd(void *v, u_int btreg)
 {
 	struct tga_devconfig *dc = v;
 	bus_space_handle_t ramdac;
@@ -1513,8 +1431,7 @@ void tga2_ics9110_wr(struct tga_devconfig *dc, int dotclock);
 struct monitor *tga_getmonitor(struct tga_devconfig *dc);
 
 void
-tga2_init(dc)
-	struct tga_devconfig *dc;
+tga2_init(struct tga_devconfig *dc)
 {
 	struct	monitor *m = tga_getmonitor(dc);
 
@@ -1559,9 +1476,7 @@ tga2_init(dc)
 }
 
 void
-tga2_ics9110_wr(dc, dotclock)
-	struct tga_devconfig *dc;
-	int dotclock;
+tga2_ics9110_wr(struct tga_devconfig *dc, int dotclock)
 {
 	bus_space_handle_t clock;
 	u_int32_t valU;
@@ -1633,15 +1548,13 @@ tga2_ics9110_wr(dc, dotclock)
 }
 
 struct monitor *
-tga_getmonitor(dc)
-	struct tga_devconfig *dc;
+tga_getmonitor(struct tga_devconfig *dc)
 {
 	return &decmonitors[(~TGARREG(dc, TGA_REG_GREV) >> 16) & 0x0f];
 }
 
 unsigned
-tga_getdotclock(dc)
-	struct tga_devconfig *dc;
+tga_getdotclock(struct tga_devconfig *dc)
 {
 	return tga_getmonitor(dc)->dotclock;
 }

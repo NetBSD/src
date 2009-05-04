@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.35.4.1 2008/05/16 02:24:57 yamt Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.35.4.2 2009/05/04 08:13:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.35.4.1 2008/05/16 02:24:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.35.4.2 2009/05/04 08:13:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,8 +416,7 @@ esp_pcmcia_dma_stop(struct ncr53c9x_softc *sc)
 }
 
 int
-esp_pcmcia_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+esp_pcmcia_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
 

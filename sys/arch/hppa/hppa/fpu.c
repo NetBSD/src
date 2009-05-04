@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.14.44.1 2008/05/16 02:22:32 yamt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.14.44.2 2009/05/04 08:11:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,18 +34,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14.44.1 2008/05/16 02:22:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14.44.2 2009/05/04 08:11:13 yamt Exp $");
 
-#include <sys/param.h>       
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
 
-#include <machine/cpu.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpufunc.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
+#include <machine/pmap.h>
 
 #include <hppa/hppa/machdep.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.91.2.1 2008/05/16 02:23:43 yamt Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.91.2.2 2009/05/04 08:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.91.2.1 2008/05/16 02:23:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.91.2.2 2009/05/04 08:12:22 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -73,10 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.91.2.1 2008/05/16 02:23:43 yamt E
 
 #include <lib/libkern/libkern.h>
 
-#ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#endif
 
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
@@ -116,6 +114,7 @@ int linux_to_bsd_so_sockopt(int);
 int linux_to_bsd_ip_sockopt(int);
 int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
+int linux_getifconf(struct lwp *, register_t *, void *);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
 		const struct osockaddr *, unsigned int);
@@ -314,14 +313,11 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 		struct socket *so;
 
 		if (fd_getsock(*retval, &so) == 0) {
-			struct mbuf *m;
-
-			m = m_get(M_WAIT, MT_SOOPTS);
-			m->m_len = sizeof(int);
-			*mtod(m, int *) = 0;
+			int val = 0;
 
 			/* ignore error */
-			(void) sosetopt(so, IPPROTO_IPV6, IPV6_V6ONLY, m);
+			(void)so_setsockopt(l, so, IPPROTO_IPV6, IPV6_V6ONLY,
+			    &val, sizeof(val));
 
 			fd_putfile(*retval);
 		}
@@ -375,18 +371,23 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 		/* Some supported flag */
 		return EINVAL;
 
-	/* Read in and convert the sockaddr */
-	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
-	    SCARG(uap, tolen));
-	if (error)
-		return (error);
-	msg.msg_flags = MSG_NAMEMBUF;
+	msg.msg_flags = 0;
+	msg.msg_name = NULL;
+	msg.msg_control = NULL;
 
-	msg.msg_name = nam;
-	msg.msg_namelen = SCARG(uap, tolen);
+	if (SCARG(uap, tolen)) {
+		/* Read in and convert the sockaddr */
+		error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
+		    SCARG(uap, tolen));
+		if (error)
+			return (error);
+		msg.msg_flags |= MSG_NAMEMBUF;
+		msg.msg_name = nam;
+		msg.msg_namelen = SCARG(uap, tolen);
+	}
+
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = 0;
 	aiov.iov_base = __UNCONST(SCARG(uap, msg));
 	aiov.iov_len = SCARG(uap, len);
 
@@ -882,7 +883,7 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 		struct socket *so;
 		int error, family;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 	    	if ((error = fd_getsock(SCARG(&bsa, s), &so)) != 0)
 		    	return error;
 		family = so->so_proto->pr_domain->dom_family;
@@ -961,17 +962,63 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 	return sys_getsockopt(l, &bga, retval);
 }
 
-#define IF_NAME_LEN 16
+int
+linux_getifconf(struct lwp *l, register_t *retval, void *data)
+{
+	struct linux_ifreq ifr, *ifrp;
+	struct ifconf *ifc = data;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+	struct sockaddr *sa;
+	struct osockaddr *osa;
+	int space, error = 0;
+	const int sz = (int)sizeof(ifr);
+
+	ifrp = (struct linux_ifreq *)ifc->ifc_req;
+	if (ifrp == NULL)
+		space = 0;
+	else
+		space = ifc->ifc_len;
+
+	IFNET_FOREACH(ifp) {
+		(void)strncpy(ifr.ifr_name, ifp->if_xname,
+		    sizeof(ifr.ifr_name));
+		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
+			return ENAMETOOLONG;
+		if (IFADDR_EMPTY(ifp))
+			continue;
+		IFADDR_FOREACH(ifa, ifp) {
+			sa = ifa->ifa_addr;
+			if (sa->sa_family != AF_INET ||
+			    sa->sa_len > sizeof(*osa))
+				continue;
+			memcpy(&ifr.ifr_addr, sa, sa->sa_len);
+			osa = (struct osockaddr *)&ifr.ifr_addr;
+			osa->sa_family = sa->sa_family;
+			if (space >= sz) {
+				error = copyout(&ifr, ifrp, sz);
+				if (error != 0)
+					return error;
+				ifrp++;
+			}
+			space -= sz;
+		}
+	}
+
+	if (ifrp != NULL)
+		ifc->ifc_len -= space;
+	else
+		ifc->ifc_len = -space;
+
+	return 0;
+}
 
 int
 linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
     void *data)
 {
 	/* Not the full structure, just enough to map what we do here */
-	struct linux_ifreq {
-		char if_name[IF_NAME_LEN];
-		struct osockaddr hwaddr;
-	} lreq;
+	struct linux_ifreq lreq;
 	file_t *fp;
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
@@ -1003,7 +1050,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	error = copyin(data, &lreq, sizeof(lreq));
 	if (error)
 		goto out;
-	lreq.if_name[IF_NAME_LEN-1] = '\0';		/* just in case */
+	lreq.ifr_name[LINUX_IFNAMSIZ-1] = '\0';		/* just in case */
 
 	/*
 	 * Try real interface name first, then fake "ethX"
@@ -1012,7 +1059,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	IFNET_FOREACH(ifp) {
 		if (found)
 			break;
-		if (strcmp(lreq.if_name, ifp->if_xname))
+		if (strcmp(lreq.ifr_name, ifp->if_xname))
 			/* not this interface */
 			continue;
 		found=1;
@@ -1027,22 +1074,22 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 			if (sadl->sdl_family != AF_LINK ||
 			    sadl->sdl_type != IFT_ETHER)
 				continue;
-			memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
+			memcpy(&lreq.ifr_hwaddr.sa_data, CLLADDR(sadl),
 			       MIN(sadl->sdl_alen,
-				   sizeof(lreq.hwaddr.sa_data)));
-			lreq.hwaddr.sa_family =
+				   sizeof(lreq.ifr_hwaddr.sa_data)));
+			lreq.ifr_hwaddr.sa_family =
 				sadl->sdl_family;
 			error = copyout(&lreq, data, sizeof(lreq));
 			goto out;
 		}
 	}
 
-	if (strncmp(lreq.if_name, "eth", 3) == 0) {
+	if (strncmp(lreq.ifr_name, "eth", 3) == 0) {
 		for (ifnum = 0, index = 3;
-		     lreq.if_name[index] != '\0' && index < IF_NAME_LEN;
+		     lreq.ifr_name[index] != '\0' && index < LINUX_IFNAMSIZ;
 		     index++) {
 			ifnum *= 10;
-			ifnum += lreq.if_name[index] - '0';
+			ifnum += lreq.ifr_name[index] - '0';
 		}
 
 		error = EINVAL;			/* in case we don't find one */
@@ -1050,8 +1097,8 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		IFNET_FOREACH(ifp) {
 			if (found)
 				break;
-			memcpy(lreq.if_name, ifp->if_xname,
-			       MIN(IF_NAME_LEN, IFNAMSIZ));
+			memcpy(lreq.ifr_name, ifp->if_xname,
+			       MIN(LINUX_IFNAMSIZ, IFNAMSIZ));
 			IFADDR_FOREACH(ifa, ifp) {
 				sadl = satosdl(ifa->ifa_addr);
 				/* only return ethernet addresses */
@@ -1062,11 +1109,11 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				if (ifnum--)
 					/* not the reqested iface */
 					continue;
-				memcpy(&lreq.hwaddr.sa_data,
+				memcpy(&lreq.ifr_hwaddr.sa_data,
 				       CLLADDR(sadl),
 				       MIN(sadl->sdl_alen,
-					   sizeof(lreq.hwaddr.sa_data)));
-				lreq.hwaddr.sa_family =
+					   sizeof(lreq.ifr_hwaddr.sa_data)));
+				lreq.ifr_hwaddr.sa_family =
 					sadl->sdl_family;
 				error = copyout(&lreq, data, sizeof(lreq));
 				found = 1;
@@ -1083,7 +1130,6 @@ out:
 	fd_putfile(fd);
 	return error;
 }
-#undef IF_NAME_LEN
 
 int
 linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
@@ -1138,7 +1184,8 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 
 	switch (com) {
 	case LINUX_SIOCGIFCONF:
-		SCARG(&ia, com) = OOSIOCGIFCONF;
+		error = linux_getifconf(l, retval, SCARG(uap, data));
+		dosys = 0;
 		break;
 	case LINUX_SIOCGIFFLAGS:
 		SCARG(&ia, com) = OSIOCGIFFLAGS;
@@ -1207,7 +1254,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 		struct socket *so;
 		int state, prflags, nbio;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 	    	if (fd_getsock(SCARG(uap, s), &so) != 0)
 		    	return EISCONN;
 
@@ -1312,8 +1359,10 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 
 	m->m_len = salen;
 
-	if (salen == 0)
+	if (salen == 0) {
+		*mp = m;
 		return 0;
+	}
 
 	kosa = mtod(m, void *);
 	if ((error = copyin(osa, kosa, salen))) {
@@ -1338,7 +1387,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 	if (bdom == AF_UNSPEC) {
 		struct socket *so;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 		if ((error = fd_getsock(s, &so)) != 0)
 			goto bad;
 
@@ -1348,7 +1397,6 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}
 
-#ifdef INET6
 	/*
 	 * Older Linux IPv6 code uses obsolete RFC2133 struct sockaddr_in6,
 	 * which lacks the scope id compared with RFC2553 one. If we detect
@@ -1377,7 +1425,6 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 		salen = sizeof (struct sockaddr_in6);
 		sin6->sin6_scope_id = 0;
 	}
-#endif
 
 	if (bdom == AF_INET)
 		salen = sizeof(struct sockaddr_in);

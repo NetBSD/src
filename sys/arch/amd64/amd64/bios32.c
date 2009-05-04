@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.12.4.1 2008/05/16 02:21:48 yamt Exp $	*/
+/*	$NetBSD: bios32.c,v 1.12.4.2 2009/05/04 08:10:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,12 +60,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.12.4.1 2008/05/16 02:21:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.12.4.2 2009/05/04 08:10:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h> 
-#include <sys/malloc.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -90,7 +89,7 @@ struct smbios_entry smbios_entry;
  * Initialize the BIOS32 interface.
  */
 void
-bios32_init()
+bios32_init(void)
 {
 #if 0	/* XXXfvdl need to set up compatibility segment for this */
 	paddr_t entry = 0;
@@ -180,7 +179,7 @@ bios32_init()
 #endif
 		pmap_update(pmap_kernel());
 
-		aprint_normal("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		aprint_debug("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
 			    sh->majrev, sh->minrev, (u_long)sh->addr,
 			    sh->count);
 
@@ -307,7 +306,7 @@ smbios_get_string(struct smbtable *st, uint8_t indx, char *dest, size_t len)
 	if (i == indx) {
 		if (va + len < end) {
 			ret = dest;
-			bcopy(va, ret, len);
+			memcpy( ret, va, len);
 			ret[len - 1] = '\0';
 		}
 	}

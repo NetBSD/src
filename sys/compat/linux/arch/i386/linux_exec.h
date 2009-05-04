@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.8.74.1 2008/05/16 02:23:39 yamt Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.8.74.2 2009/05/04 08:12:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,13 +36,10 @@
 #define LINUX_MID_MACHINE	LINUX_M_I386
 #define LINUX_USRSTACK		0xC0000000
 
-#define LINUX_GCC_SIGNATURE	1
-
 #define LINUX_ELF_AUX_ARGSIZ 	\
 	(howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
 
 #ifdef _KERNEL
 int linux_exec_setup_stack(struct lwp *, struct exec_package *);
 #endif
-
 #endif /* !_I386_LINUX_EXEC_H */

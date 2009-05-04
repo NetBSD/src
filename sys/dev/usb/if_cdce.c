@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.15 2008/02/07 01:21:59 dyoung Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.15.10.1 2009/05/04 08:13:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,8 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15 2008/02/07 01:21:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15.10.1 2009/05/04 08:13:20 yamt Exp $");
 #include "bpfilter.h"
+#ifdef	__NetBSD__
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +162,8 @@ USB_ATTACH(cdce)
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfop);
+	sc->cdce_dev = self;
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->cdce_udev = uaa->device;
@@ -175,8 +179,7 @@ USB_ATTACH(cdce)
 		ud = (const usb_cdc_union_descriptor_t *)usb_find_desc(sc->cdce_udev,
 		    UDESC_CS_INTERFACE, UDESCSUB_CDC_UNION);
 		if (ud == NULL) {
-			printf("%s: no union descriptor\n",
-			    USBDEVNAME(sc->cdce_dev));
+			aprint_error_dev(self, "no union descriptor\n");
 			USB_ATTACH_ERROR_RETURN;
 		}
 		data_ifcno = ud->bSlaveInterface[0];
@@ -195,7 +198,7 @@ USB_ATTACH(cdce)
 	}
 
 	if (sc->cdce_data_iface == NULL) {
-		printf("%s: no data interface\n", USBDEVNAME(sc->cdce_dev));
+		aprint_error_dev(self, "no data interface\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -205,8 +208,8 @@ USB_ATTACH(cdce)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->cdce_data_iface, i);
 		if (!ed) {
-			printf("%s: could not read endpoint descriptor\n",
-			    USBDEVNAME(sc->cdce_dev));
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor\n");
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -220,51 +223,33 @@ USB_ATTACH(cdce)
 			/* XXX: CDC spec defines an interrupt pipe, but it is not
 			 * needed for simple host-to-host applications. */
 		} else {
-			printf("%s: unexpected endpoint\n",
-			    USBDEVNAME(sc->cdce_dev));
+			aprint_error_dev(self, "unexpected endpoint\n");
 		}
 	}
 
 	if (sc->cdce_bulkin_no == -1) {
-		printf("%s: could not find data bulk in\n",
-		    USBDEVNAME(sc->cdce_dev));
+		aprint_error_dev(self, "could not find data bulk in\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 	if (sc->cdce_bulkout_no == -1 ) {
-		printf("%s: could not find data bulk out\n",
-		    USBDEVNAME(sc->cdce_dev));
+		aprint_error_dev(self, "could not find data bulk out\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	ue = (const usb_cdc_ethernet_descriptor_t *)usb_find_desc(dev,
             UDESC_INTERFACE, UDESCSUB_CDC_ENF);
 	if (!ue || usbd_get_string(dev, ue->iMacAddress, eaddr_str)) {
-		printf("%s: faking address\n", USBDEVNAME(sc->cdce_dev));
+		aprint_normal_dev(self, "faking address\n");
 		eaddr[0]= 0x2a;
 		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
-		eaddr[5] = (u_int8_t)(device_unit(&sc->cdce_dev));
+		eaddr[5] = (u_int8_t)(device_unit(sc->cdce_dev));
 	} else {
-		int j;
-
-		memset(eaddr, 0, ETHER_ADDR_LEN);
-		for (j = 0; j < ETHER_ADDR_LEN * 2; j++) {
-			int c = eaddr_str[j];
-
-			if ('0' <= c && c <= '9')
-				c -= '0';
-			else
-				c -= 'A' - 10;
-			c &= 0xf;
-			if (c%2 == 0)
-				c <<= 4;
-			eaddr[j / 2] |= c;
-		}
+		(void)ether_nonstatic_aton(eaddr, eaddr_str);
 	}
 
 	s = splnet();
 
-	printf("%s: address %s\n", USBDEVNAME(sc->cdce_dev),
-	    ether_sprintf(eaddr));
+	aprint_normal_dev(self, "address %s\n", ether_sprintf(eaddr));
 
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
@@ -359,7 +344,7 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 		u_int32_t crc;
 
 		crc = cdce_crc32(c->cdce_buf, m->m_pkthdr.len);
-		bcopy(&crc, c->cdce_buf + m->m_pkthdr.len, 4);
+		memcpy(c->cdce_buf + m->m_pkthdr.len, &crc, 4);
 		extra = 4;
 	}
 	c->cdce_mbuf = m;
@@ -449,7 +434,7 @@ cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch(command) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		cdce_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
@@ -473,18 +458,23 @@ cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				cdce_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				cdce_stop(sc);
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP:
+			cdce_init(sc);
+			break;
+		case IFF_RUNNING:
+			cdce_stop(sc);
+			break;
+		default:
+			break;
 		}
-		error = 0;
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, command, data);
 		break;
 	}
 
@@ -771,7 +761,7 @@ cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 int
 cdce_activate(device_ptr_t self, enum devact act)
 {
-	struct cdce_softc *sc = (struct cdce_softc *)self;
+	struct cdce_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

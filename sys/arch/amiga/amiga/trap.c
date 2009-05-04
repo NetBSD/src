@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119 2008/04/24 18:39:20 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.119.2.1 2009/05/04 08:10:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.2.1 2009/05/04 08:10:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2008/04/24 18:39:20 ad Exp $");
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
 #include <sys/syscall.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
@@ -235,10 +237,7 @@ void _wb_fault(void);
 
 
 static void
-userret(l, pc, oticks)
-	struct lwp *l;
-	int pc;
-	u_quad_t oticks;
+userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
@@ -262,20 +261,14 @@ userret(l, pc, oticks)
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f->f_pc, t);
 }
 
 void
-panictrap(type, code, v, fp)
-	int type;
-	u_int code, v;
-	struct frame *fp;
+panictrap(int type, u_int code, u_int v, struct frame *fp)
 {
 	static int panicking = 0;
 	if (panicking++ == 0) {
@@ -296,9 +289,7 @@ panictrap(type, code, v, fp)
  * return to fault handler
  */
 void
-trapcpfault(l, fp)
-	struct lwp *l;
-	struct frame *fp;
+trapcpfault(struct lwp *l, struct frame *fp)
 {
 	/*
 	 * We have arranged to catch this fault in one of the
@@ -314,12 +305,7 @@ trapcpfault(l, fp)
 int donomore = 0;
 
 void
-trapmmufault(type, code, v, fp, l, sticks)
-	int type;
-	u_int code, v;
-	struct frame *fp;
-	struct lwp *l;
-	u_quad_t sticks;
+trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_quad_t sticks)
 {
 #if defined(DEBUG) && defined(M68060)
 	static u_int oldcode=0, oldv=0;
@@ -358,10 +344,9 @@ trapmmufault(type, code, v, fp, l, sticks)
 		if (machineid & AMIGA_68060) {
 			if (--donomore == 0 || mmudebug & 1) {
 				char bits[64];
+				snprintb(bits, sizeof(bits), FSLW_STRING, code);
 				printf ("68060 access error: pc %x, code %s,"
-				     " ea %x\n", fp->f_pc,
-				     bitmask_snprintf(code, FSLW_STRING,
-				     bits, sizeof(bits)), v);
+				     " ea %x\n", fp->f_pc, bits, v);
 			}
 			if (p == oldp && v == oldv && code == oldcode)
 				panic("Identical fault backtoback!");
@@ -399,8 +384,13 @@ trapmmufault(type, code, v, fp, l, sticks)
 	     mmutype == MMU_68040 ? (code & SSW_TMMASK) == FC_SUPERD :
 	     (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))))
 		map = kernel_map;
-	else
+	else {
 		map = &vm->vm_map;
+		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	if (
 #ifdef M68060
@@ -501,6 +491,7 @@ trapmmufault(type, code, v, fp, l, sticks)
 
 		if (type == T_MMUFLT)
 			return;
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, fp->f_pc, sticks);
 		return;
 	}
@@ -533,6 +524,7 @@ nogo:
 	trapsignal(l, &ksi);
 	if ((type & T_USER) == 0)
 		return;
+	l->l_pflag &= ~LP_SA_PAGEFAULT;
 	userret(l, fp->f_pc, sticks);
 }
 /*
@@ -542,10 +534,7 @@ nogo:
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame *fp;
-	int type;
-	u_int code, v;
+trap(struct frame *fp, int type, u_int code, u_int v)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -650,16 +639,10 @@ trap(fp, type, code, v)
 	case T_FPERR|T_USER:
 		/*
 		 * We pass along the 68881 status register which locore
-		 * stashed in code for us.  Note that there is a
-		 * possibility that the bit pattern of this register
-		 * will conflict with one of the FPE_* codes defined
-		 * in signal.h.  Fortunately for us, the only such
-		 * codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so
-		 * there is no clash.
+		 * stashed in code for us.
 		 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 	/*
 	 * Kernel coprocessor violation
@@ -777,12 +760,11 @@ trap(fp, type, code, v)
  * Process a pending write back
  */
 int
-_write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
-	u_int wb;	/* writeback type: 1, 2, or 3 */
-	u_int wb_sts;	/* writeback status information */
-	u_int wb_data;	/* data to writeback */
-	u_int wb_addr;	/* address to writeback to */
-	struct vm_map *wb_map;
+_write_back (u_int wb, u_int wb_sts, u_int wb_data, u_int wb_addr, struct vm_map *wb_map)
+	/* wb:	 writeback type: 1, 2, or 3 */
+	/* wb_sts:	 writeback status information */
+	/* wb_data:	 data to writeback */
+	/* wb_addr:	 address to writeback to */
 {
 	u_int wb_extra_page = 0;
 	u_int wb_rc, mmusr;
@@ -905,7 +887,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
  * fault handler for write back
  */
 void
-_wb_fault()
+_wb_fault(void)
 {
 #ifdef DEBUG
 	printf ("trap: writeback fault\n");

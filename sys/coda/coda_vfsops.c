@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.64.10.1 2008/05/16 02:23:34 yamt Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.64.10.2 2009/05/04 08:12:17 yamt Exp $	*/
 
 /*
  *
@@ -45,9 +45,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.64.10.1 2008/05/16 02:23:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.64.10.2 2009/05/04 08:12:17 yamt Exp $");
 
-#ifdef	_LKM
+#ifndef _KERNEL_OPT
 #define	NVCODA 4
 #else
 #include <vcoda.h>
@@ -239,7 +239,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
 	return(ENXIO);
     }
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0) {
+    if (minor(dev) >= NVCODA) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);
     }

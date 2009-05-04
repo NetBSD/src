@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.26 2007/11/01 20:33:58 dyoung Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.26.20.1 2009/05/04 08:14:19 yamt Exp $	*/
 /*	$KAME: ipcomp_core.c,v 1.25 2001/07/26 06:53:17 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.26 2007/11/01 20:33:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.26.20.1 2009/05/04 08:14:19 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -165,7 +165,7 @@ do { \
 	if (!mprev)
 		panic("md is not in m in deflate_common");
 
-	bzero(&zs, sizeof(zs));
+	memset(&zs, 0, sizeof(zs));
 	zs.zalloc = deflate_alloc;
 	zs.zfree = deflate_free;
 

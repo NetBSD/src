@@ -1,7 +1,7 @@
-/*	$Id: omap2_l3i.c,v 1.1.22.1 2008/05/16 02:22:01 yamt Exp $	*/
+/*	$Id: omap2_l3i.c,v 1.1.22.2 2009/05/04 08:10:44 yamt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_l3i.c,v 1.1.22.1 2008/05/16 02:22:01 yamt Exp $ */
+/*	$NetBSD: omap2_l3i.c,v 1.1.22.2 2009/05/04 08:10:44 yamt Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.22.1 2008/05/16 02:22:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.22.2 2009/05/04 08:10:44 yamt Exp $");
 
 #include "locators.h"
 
@@ -120,10 +120,10 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.22.1 2008/05/16 02:22:01 yamt Exp 
 #include <arm/mainbus/mainbus.h>
 #include <arm/omap/omap_var.h>
 
-#if defined(OMAP2)
-#include <arm/omap/omap2430reg.h>
+#if defined(OMAP2) || defined(OMAP3)
+#include <arm/omap/omap2_reg.h>
 #ifdef NOTYET
-#include <arm/omap/omap2430var.h>
+#include <arm/omap/omap2_var.h>
 #endif
 #else
 /*
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.22.1 2008/05/16 02:22:01 yamt Exp 
 #endif
 
 struct L3i_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_dma_tag_t		sc_dmac;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -144,8 +144,8 @@ struct L3i_softc {
 
 
 /* prototypes */
-static int	L3i_match(struct device *, struct cfdata *, void *);
-static void	L3i_attach(struct device *, struct device *, void *);
+static int	L3i_match(device_t, cfdata_t, void *);
+static void	L3i_attach(device_t, device_t, void *);
 void		L3i_target_agent_check(struct L3i_softc *, bus_addr_t, char *);
 static void	L3i_decode_ta_COMPONENT(uint32_t);
 static void	L3i_decode_ta_CORE(uint32_t);
@@ -154,13 +154,13 @@ static void	L3i_decode_ta_AGENT_STATUS(uint32_t);
 static void	L3i_decode_ta_ERROR_LOG(uint32_t);
 static void	L3i_decode_ta_ERROR_LOG_ADDR(uint32_t);
 #ifdef NOTYET
-static int 	L3i_search(struct device *, struct cfdata *,
+static int 	L3i_search(device_t, cfdata_t,
 			     const int *, void *);
 static int	L3i_print(void *, const char *);
 #endif
 
 #define TARGET_AGENT_REGS_ENTRY(reg) \
-	{ .offset = OMAP2430_TA_ ## reg, \
+	{ .offset = OMAP2_TA_ ## reg, \
 	  .decode = L3i_decode_ta_ ## reg, \
 	  .name = #reg }
 struct {
@@ -180,13 +180,13 @@ struct {
 
 
 /* attach structures */
-CFATTACH_DECL(L3i, sizeof(struct L3i_softc),
+CFATTACH_DECL_NEW(L3i, sizeof(struct L3i_softc),
 	L3i_match, L3i_attach, NULL, NULL);
 
 static int L3i_attached;	/* XXX assumes only 1 instance */
 
 static int
-L3i_match(struct device *parent, struct cfdata *match, void *aux)
+L3i_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (L3i_attached != 0)
 		return 0;
@@ -195,10 +195,11 @@ L3i_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-L3i_attach(struct device *parent, struct device *self, void *aux)
+L3i_attach(device_t parent, device_t self, void *aux)
 {
-	struct L3i_softc *sc = (struct L3i_softc *)self;
+	struct L3i_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_iot = &omap_bs_tag;
 
 	aprint_normal(": L3i Interconnect\n");
@@ -211,8 +212,8 @@ L3i_attach(struct device *parent, struct device *self, void *aux)
 	L3i_attached = 1;
 
 #ifdef L3I_DEBUG
-	L3i_target_agent_check(sc, (bus_addr_t)OMAP2430_TA_L4_CORE, "L4 core");
-	L3i_target_agent_check(sc, (bus_addr_t)OMAP2430_TA_GPMC, "GPMC");
+	L3i_target_agent_check(sc, (bus_addr_t)OMAP2_TA_L4_CORE, "L4 core");
+	L3i_target_agent_check(sc, (bus_addr_t)OMAP2_TA_GPMC, "GPMC");
 #endif
 
 #ifdef NOTYET
@@ -314,14 +315,15 @@ L3i_target_agent_check(struct L3i_softc *sc, bus_addr_t ba, char *agent)
 	err = bus_space_map(sc->sc_iot, ba, 1024, 0, &ioh);
 	if (err != 0) {
 		aprint_error("%s: cannot map L3 Target Agent %s at %#lx\n",
-			sc->sc_dev.dv_xname, agent, ba);
+		    device_xname(sc->sc_dev), agent, ba);
 		return;
 	} 
 
 	for (i=0; i < TARGET_AGENT_REGS_NENTRIES; i++) {
 		r = bus_space_read_4(iot, ioh, target_agent_regs[i].offset);
-		aprint_normal("%s: Agent %s Reg %s: %#x\n", sc->sc_dev.dv_xname,
-			agent, target_agent_regs[i].name, r);
+		aprint_normal("%s: Agent %s Reg %s: %#x\n",
+		    device_xname(sc->sc_dev),
+		    agent, target_agent_regs[i].name, r);
 		target_agent_regs[i].decode(r);
 			
 	}
@@ -333,10 +335,10 @@ L3i_target_agent_check(struct L3i_softc *sc, bus_addr_t ba, char *agent)
 #ifdef NOTYET
 
 static int
-L3i_search(struct device *parent, struct cfdata *cf,
+L3i_search(device_t parent, cfdata_t cf,
 	     const int *ldesc, void *aux)
 {
-	struct L3i_softc *sc = (struct L3i_softc *)parent;
+	struct L3i_softc *sc = device_private(parent);
 	struct L3i_attach_args aa;
 
 	/* Set up the attach args. */
@@ -369,15 +371,15 @@ L3i_search(struct device *parent, struct cfdata *cf,
 	aa.L3i_intr = cf->cf_loc[L3iCF_INTR];
 
 #if defined(OMAP2)
-	if ((aa.L3i_addr >= OMAP2430_L3i_BASE)
-	&&  (aa.L3i_addr < (OMAP2430_L4_CORE_BASE + OMAP2430_L3i_SIZE))) {
+	if ((aa.L3i_addr >= OMAP2_L3i_BASE)
+	&&  (aa.L3i_addr < (OMAP2_L4_CORE_BASE + OMAP2_L3i_SIZE))) {
 		/* XXX
 		 * if size was specified, then check it too
 		 * otherwise just assume it is OK
 		 */
 		if ((aa.L3i_size != L3iCF_SIZE_DEFAULT)
 		&&  ((aa.L3i_addr + aa.L3i_size)
-			>= (OMAP2430_L4_CORE_BASE + OMAP2430_L3i_SIZE)))
+			>= (OMAP2_L4_CORE_BASE + OMAP2_L3i_SIZE)))
 				return 1;		/* NG */
 		if (config_match(parent, cf, &aa)) {
 			config_attach(parent, cf, &aa, L3i_print);

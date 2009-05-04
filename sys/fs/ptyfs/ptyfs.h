@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.6 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.6.74.1 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -108,6 +108,7 @@ struct ptyfsnode {
 struct ptyfsmount {
 	gid_t pmnt_gid;
 	mode_t pmnt_mode;
+	int pmnt_flags;
 };
 
 #define VFSTOPTY(mp)	((struct ptyfsmount *)(mp)->mnt_data)
@@ -118,9 +119,15 @@ struct ptyfs_args {
 	int version;
 	gid_t gid;
 	mode_t mode;
+	int flags;
 };
 
-#define PTYFS_ARGSVERSION	1
+#define PTYFS_ARGSVERSION	2
+
+#define PTYFSMNT_CHROOT		0x01
+
+#define PTYFSMNT_BITS "\177\20" \
+    "b\00chroot\0"
 
 /*
  * Kernel stuff follows
@@ -159,8 +166,5 @@ extern struct vfsops ptyfs_vfsops;
 
 int	ptyfs_root(struct mount *, struct vnode **);
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_ptyfs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
 #endif /* _FS_PTYFS_PTYFS_H_ */

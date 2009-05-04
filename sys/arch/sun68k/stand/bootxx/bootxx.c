@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.10.78.1 2008/05/16 02:23:22 yamt Exp $ */
+/*	$NetBSD: bootxx.c,v 1.10.78.2 2009/05/04 08:12:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <stand.h>
 #include "libsa.h"
 
+int copyboot(struct open_file *, char *);
+
 /*
  * This is the address where we load the second-stage boot loader.
  */
@@ -70,7 +72,7 @@ main(void)
 	struct open_file	f;
 	void	*entry;
 	char	*addr;
-	int n, error;
+	int error;
 
 #ifdef DEBUG
 	printf("bootxx: open...\n");
@@ -78,7 +80,7 @@ main(void)
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &addr)) {
 		putstr("bootxx: devopen failed\n");
-		return;
+		return 1;
 	}
 
 	addr = (char*)LOADADDR;
@@ -92,13 +94,14 @@ main(void)
 		chain_to(entry);
 	}
 	/* copyboot had a problem... */
-	return;
+	return 0;
 }
 
 int 
 copyboot(struct open_file *fp, char *addr)
 {
-	int	n, i, blknum;
+	size_t n;
+	int i, blknum;
 	char *buf;
 
 	/* Need to use a buffer that can be mapped into DVMA space. */

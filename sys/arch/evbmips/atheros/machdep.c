@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.11 2008/03/08 05:05:25 imp Exp $ */
+/* $NetBSD: machdep.c,v 1.11.4.1 2009/05/04 08:11:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,10 +147,11 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2008/03/08 05:05:25 imp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.4.1 2009/05/04 08:11:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +164,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2008/03/08 05:05:25 imp Exp $");
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -170,7 +172,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2008/03/08 05:05:25 imp Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -188,7 +190,6 @@ struct	user *proc0paddr;
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -213,9 +214,8 @@ cal_timer(void)
 
 	curcpu()->ci_cycles_per_hz = (cntfreq + hz / 2) / hz;
 
-	/* XXX: i don't understand this logic, it was borrowed from Malta */
+	/* Compute number of cycles per 1us (1/MHz). 0.5MHz is for roundup. */
 	curcpu()->ci_divisor_delay = ((cntfreq + 500000) / 1000000);
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 }
 
 void
@@ -340,10 +340,6 @@ mach_init(void)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, 0, 0);
-#endif
-
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -382,13 +378,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -453,6 +442,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #if 0
 	if ((boothowto & RB_POWERDOWN) == RB_POWERDOWN)

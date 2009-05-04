@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.7.10.1 2008/05/16 02:23:28 yamt Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.7.10.2 2009/05/04 08:12:10 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.1 2008/05/16 02:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.2 2009/05/04 08:12:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.1 2008/05/16 02:23:28 ya
 #include <machine/mpacpi.h>
 #endif
 
+#define	MPSAFE_MASK	0x80000000
+
 int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
@@ -127,7 +129,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	*ihp = 0;
 
 	if (pin > PCI_INTERRUPT_PIN_MAX) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		aprint_normal("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -161,16 +163,16 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * the BIOS has not configured the device.
 	 */
 	if (line == 0 || line == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
-		printf("pci_intr_map: no mapping for pin %c (line=%02x)\n",
+		aprint_normal("pci_intr_map: no mapping for pin %c (line=%02x)\n",
 		       '@' + pin, line);
 		goto bad;
 	} else {
 		if (line >= NUM_LEGACY_IRQS) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
+			aprint_normal("pci_intr_map: bad interrupt line %d\n", line);
 			goto bad;
 		}
 		if (line == 2) {
-			printf("pci_intr_map: changed line 2 to line 9\n");
+			aprint_normal("pci_intr_map: changed line 2 to line 9\n");
 			line = 9;
 		}
 	}
@@ -188,9 +190,9 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			return 0;
 		}
 #endif
-		printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
+		aprint_normal("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
 		    bus, dev, func, pin, line);
-		printf("pci_intr_map: no MP mapping found\n");
+		aprint_normal("pci_intr_map: no MP mapping found\n");
 	}
 #endif
 
@@ -205,7 +207,7 @@ bad:
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
-	return intr_string(ih);
+	return intr_string(ih & ~MPSAFE_MASK);
 }
 
 
@@ -217,24 +219,49 @@ pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	return NULL;
 }
 
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		if (data) {
+			 *ih |= MPSAFE_MASK;
+		} else {
+			 *ih &= ~MPSAFE_MASK;
+		}
+		/* XXX Set live if already mapped. */
+		return 0;
+	default:
+		return ENODEV;
+	}
+}
+
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg)
 {
 	int pin, irq;
 	struct pic *pic;
+#if NIOAPIC > 0
+	struct ioapic_softc *ioapic;
+#endif
+	bool mpsafe;
 
 	pic = &i8259_pic;
-	pin = irq = ih;
+	pin = irq = (ih & ~MPSAFE_MASK);
+	mpsafe = ((ih & MPSAFE_MASK) != 0);
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC) {
-		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
-		if (pic == NULL) {
-			printf("pci_intr_establish: bad ioapic %d\n",
+		ioapic = ioapic_find(APIC_IRQ_APIC(ih));
+		if (ioapic == NULL) {
+			aprint_normal("pci_intr_establish: bad ioapic %d\n",
 			    APIC_IRQ_APIC(ih));
 			return NULL;
 		}
+		pic = &ioapic->sc_pic;
 		pin = APIC_IRQ_PIN(ih);
 		irq = APIC_IRQ_LEGACY_IRQ(ih);
 		if (irq < 0 || irq >= NUM_LEGACY_IRQS)
@@ -242,7 +269,8 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg);
+	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg,
+	    mpsafe);
 }
 
 void

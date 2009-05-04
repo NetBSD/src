@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.33.4.1 2008/05/16 02:23:25 yamt Exp $	*/
+/*	$NetBSD: spc.c,v 1.33.4.2 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.33.4.1 2008/05/16 02:23:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.33.4.2 2009/05/04 08:12:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -75,7 +75,7 @@ spc_intio_match(device_t parent, cfdata_t cf, void *aux)
 	if (bus_space_map(iot, ia->ia_addr, 0x20, BUS_SPACE_MAP_SHIFTED,
 			  &ioh) < 0)
 		return 0;
-	if (badaddr(INTIO_ADDR(ia->ia_addr + BDID)))
+	if (badaddr((void *)IIOV(ia->ia_addr + BDID)))
 		return 0;
 	bus_space_unmap(iot, ioh, 0x20);
 

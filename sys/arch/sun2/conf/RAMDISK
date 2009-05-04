@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.40 2008/04/27 05:59:47 tsutsui Exp $
+# $NetBSD: RAMDISK,v 1.40.2.1 2009/05/04 08:11:59 yamt Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -26,7 +26,6 @@ maxusers	2
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -72,7 +71,6 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -97,7 +95,8 @@ options 	INET		# IP protocol stack support
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=1000	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=1200	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 config		netbsd root on ? type ffs
 

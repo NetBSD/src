@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2005/12/11 12:18:06 christos Exp $
+#	$NetBSD: Makefile,v 1.45.78.1 2009/05/04 08:11:30 yamt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,11 +7,11 @@ FILES=		${PROG}.elf ${PROG}.xcf
 SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c alloc.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
-CFLAGS+=	-Wno-main -msoft-float -mmultiple -ffreestanding
+CFLAGS+=	-msoft-float -mmultiple -ffreestanding
+CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
-CPPFLAGS+=	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 DBG=		-Os
 
 LIBCRT0=	# nothing
@@ -34,7 +34,7 @@ BINMODE=	444
 
 .if !defined(TOOL_MACPPCFIXCOFF)
 TOOL_MACPPCFIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff && ${PRINTOBJDIR}
-TOOL_MACPPCFIXCOFF=	${FIXCOFFDIR}/fixcoff
+TOOL_MACPPCFIXCOFF=	${TOOL_MACPPCFIXCOFFDIR}/fixcoff
 .endif
 .endif
 
@@ -47,21 +47,12 @@ RELOC=		E00000
 ENTRY=		_start
 
 CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
-CLEANFILES+=	machine powerpc
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 
 CLEANFILES+= ${XCOFFXTRAOBJ}
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
-.NOPATH: machine powerpc
-.endif
-CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -96,6 +87,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O binary ${PROG}.el1 ${PROG}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 ${PROG}.elf: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}

@@ -1,4 +1,4 @@
-/*	$NetBSD: openraw.c,v 1.1.1.1.134.1 2008/05/16 02:22:05 yamt Exp $	*/
+/*	$NetBSD: openraw.c,v 1.1.1.1.134.2 2009/05/04 08:10:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,9 +39,7 @@
  * Open raw disk partition.
  */
 int
-openraw (name, flags)
-	const char	*name;
-	int		 flags;
+openraw (const char *name, int flags)
 {
 	char	buf[MAXPATHLEN];
 	int	f;

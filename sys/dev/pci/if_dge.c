@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.21 2008/04/10 19:13:36 cegger Exp $ */
+/*	$NetBSD: if_dge.c,v 1.21.4.1 2009/05/04 08:12:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21.4.1 2009/05/04 08:12:56 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1306,8 +1306,8 @@ dge_start(struct ifnet *ifp)
 			DPRINTF(DGE_DEBUG_TX,
 			    ("%s: TX: desc %d: low 0x%08lx, len 0x%04lx\n",
 			    device_xname(&sc->sc_dev), nexttx,
-			    le32toh(dmamap->dm_segs[seg].ds_addr),
-			    le32toh(dmamap->dm_segs[seg].ds_len)));
+			    (unsigned long)le32toh(dmamap->dm_segs[seg].ds_addr),
+			    (unsigned long)le32toh(dmamap->dm_segs[seg].ds_len)));
 		}
 
 		KASSERT(lasttx != -1);
@@ -1428,6 +1428,8 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
         case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		/* extract link flags */
 		if ((ifp->if_flags & IFF_LINK0) == 0 &&
 		    (ifp->if_flags & IFF_LINK1) == 0)

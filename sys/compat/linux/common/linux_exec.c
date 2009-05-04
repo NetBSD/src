@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.104.2.1 2008/05/16 02:23:42 yamt Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.104.2.2 2009/05/04 08:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.104.2.1 2008/05/16 02:23:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.104.2.2 2009/05/04 08:12:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ void linux_userret(void);
 
 struct uvm_object *emul_linux_object;
 
-const struct emul emul_linux = {
+struct emul emul_linux = {
 	"linux",
 	"/emul/linux",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -123,14 +123,13 @@ const struct emul emul_linux = {
 	uvm_default_mapaddr,
 
 	linux_usertrap,
+	NULL,		/* e_sa */
 	0,
 	NULL,		/* e_startlwp */
 };
 
 static void
-linux_e_proc_init(p, parent, forkflags)
-	struct proc *p, *parent;
-	int forkflags;
+linux_e_proc_init(struct proc *p, struct proc *parent, int forkflags)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 	struct linux_emuldata_shared *s;
@@ -138,19 +137,20 @@ linux_e_proc_init(p, parent, forkflags)
 
 	if (!e) {
 		/* allocate new Linux emuldata */
-		MALLOC(e, void *, sizeof(struct linux_emuldata),
+		e = malloc(sizeof(struct linux_emuldata),
 			M_EMULDATA, M_WAITOK);
 	} else  {
 		mutex_enter(proc_lock);
 		e->s->refs--;
 		if (e->s->refs == 0)
-			FREE(e->s, M_EMULDATA);
+			free(e->s, M_EMULDATA);
 		mutex_exit(proc_lock);
 	}
 
 	memset(e, '\0', sizeof(struct linux_emuldata));
 
 	e->proc = p;
+	e->robust_futexes = NULL;
 
 	if (parent)
 		ep = parent->p_emuldata;
@@ -161,7 +161,7 @@ linux_e_proc_init(p, parent, forkflags)
 		if (ep == NULL) {
 			killproc(p, "FORK_SHAREVM while emuldata is NULL\n");
 			mutex_exit(proc_lock);
-			FREE(e, M_EMULDATA);
+			free(e, M_EMULDATA);
 			return;
 		}
 #endif
@@ -170,7 +170,7 @@ linux_e_proc_init(p, parent, forkflags)
 	} else {
 		struct vmspace *vm;
 
-		MALLOC(s, void *, sizeof(struct linux_emuldata_shared),
+		s = malloc(sizeof(struct linux_emuldata_shared),
 			M_EMULDATA, M_WAITOK);
 		s->refs = 1;
 
@@ -244,6 +244,7 @@ linux_e_proc_exit(struct proc *p)
 
 #ifdef LINUX_NPTL
 	linux_nptl_proc_exit(p);
+	release_futexes(p);
 #endif
 
 	/* Remove the thread for the group thread list */
@@ -253,19 +254,17 @@ linux_e_proc_exit(struct proc *p)
 	/* free Linux emuldata and set the pointer to null */
 	e->s->refs--;
 	if (e->s->refs == 0)
-		FREE(e->s, M_EMULDATA);
+		free(e->s, M_EMULDATA);
 	p->p_emuldata = NULL;
 	mutex_exit(proc_lock);
-	FREE(e, M_EMULDATA);
+	free(e, M_EMULDATA);
 }
 
 /*
  * Emulation fork hook.
  */
 static void
-linux_e_proc_fork(p, parent, forkflags)
-	struct proc *p, *parent;
-	int forkflags;
+linux_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 {
 
 	/*
@@ -372,10 +371,7 @@ linux_nptl_proc_exit(struct proc *p)
 }
 
 void
-linux_nptl_proc_fork(p, parent, luserret)
-	struct proc *p;
-	struct proc *parent;
-	void (*luserret)(void);
+linux_nptl_proc_fork(struct proc *p, struct proc *parent, void (*luserret)(void))
 {
 	struct linux_emuldata *e = p->p_emuldata;
 

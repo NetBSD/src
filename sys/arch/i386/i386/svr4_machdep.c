@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.90.2.1 2008/05/16 02:22:34 yamt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.90.2.2 2009/05/04 08:11:16 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.90.2.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.90.2.2 2009/05/04 08:11:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.90.2.1 2008/05/16 02:22:34 yamt E
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, void *);
+extern void (*svr4_fasttrap_vec)(void);
 void svr4_fasttrap(struct trapframe);
 
 #ifdef DEBUG_SVR4
@@ -230,7 +231,8 @@ svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long flags)
 		if (tf->tf_eflags & PSL_VM)
 			(*p->p_emul->e_syscall_intern)(p);
 #endif
-		tf->tf_eflags = r[SVR4_X86_EFL];
+		tf->tf_eflags &= ~PSL_USER;
+		tf->tf_eflags |= r[SVR4_X86_EFL] & PSL_USER;
 	}
 	tf->tf_edi = r[SVR4_X86_EDI];
 	tf->tf_esi = r[SVR4_X86_ESI];
@@ -484,6 +486,8 @@ svr4_sys_sysarch(struct lwp *l, const struct svr4_sys_sysarch_args *uap, registe
 
 /*
  * Fast syscall gate trap...
+ *
+ * NOTE: svr4_fasttrap_lock is held.
  */
 void
 svr4_fasttrap(struct trapframe frame)
@@ -498,11 +502,7 @@ svr4_fasttrap(struct trapframe frame)
 	l->l_md.md_regs = &frame;
 
 	if (p->p_emul != &emul_svr4) {
-		ksiginfo_t ksi;
-		memset(&ksi, 0, sizeof(ksi));
-		ksi.ksi_signo = SIGILL;
-		ksi.ksi_code = ILL_ILLTRP;
-		trapsignal(l, &ksi);
+		/* can't exit, because we need svr4_fasttrap_lock held. */
 		return;
 	}
 
@@ -560,4 +560,21 @@ svr4_fasttrap(struct trapframe frame)
 		    frame.tf_eax);
 		break;
 	}
+}
+
+void
+svr4_md_init(void)
+{
+
+	svr4_fasttrap_vec = (void (*)(void))svr4_fasttrap;
+}
+
+void
+svr4_md_fini(void)
+{
+	extern krwlock_t svr4_fasttrap_lock;
+
+	rw_enter(&svr4_fasttrap_lock, RW_WRITER);
+	svr4_fasttrap_vec = (void (*)(void))nullop;
+	rw_exit(&svr4_fasttrap_lock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.64 2008/04/17 09:52:47 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.64.4.1 2009/05/04 08:14:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -66,6 +66,8 @@ struct cg;
 
 #include <sys/pool.h>
 
+#define FFS_NOBLK		((daddr_t)-1)
+
 #define	FFS_ITIMES(ip, acc, mod, cre) \
 	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
 		ffs_itimes(ip, acc, mod, cre)
@@ -82,22 +84,25 @@ __BEGIN_DECLS
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/wapbl.h>
 
 /* ffs_alloc.c */
-int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, kauth_cred_t,
+int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, int, kauth_cred_t,
 		  daddr_t *);
 int	ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
 		      kauth_cred_t, struct buf **, daddr_t *);
-#if 0
-int	ffs_reallocblks(void *);
-#endif
 int	ffs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
-daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int32_t *);
-daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int64_t *);
+daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int, int32_t *);
+daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int, int64_t *);
+int	ffs_blkalloc(struct inode *, daddr_t, long);
+int	ffs_blkalloc_ump(struct ufsmount *, daddr_t, long);
 void	ffs_blkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
+void	ffs_blkfree_snap(struct fs *, struct vnode *, daddr_t, long, ino_t);
 int	ffs_vfree(struct vnode *, ino_t, int);
 void	ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 int	ffs_checkfreefile(struct fs *, struct vnode *, ino_t);
+int	ffs_freefile(struct mount *, ino_t, int);
+int	ffs_freefile_snap(struct fs *, struct vnode *, ino_t, int);
 
 /* ffs_balloc.c */
 int	ffs_balloc(struct vnode *, off_t, int, kauth_cred_t, int,
@@ -135,10 +140,6 @@ int	ffs_unlock(void *);
 int	ffs_islocked(void *);
 int	ffs_full_fsync(struct vnode *, int);
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
-
 /*
  * Snapshot function prototypes.
  */
@@ -150,32 +151,18 @@ int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);
 void	ffs_snapshot_mount(struct mount *);
 void	ffs_snapshot_unmount(struct mount *);
 void	ffs_snapgone(struct inode *);
+int	ffs_snapshot_read(struct vnode *, struct uio *, int);
 
-/*
- * Soft dependency function prototypes.
- */
-void	softdep_initialize(void);
-void	softdep_reinitialize(void);
-int	softdep_mount(struct vnode *, struct mount *, struct fs *,
-		      kauth_cred_t);
-void	softdep_unmount(struct mount *);
-int	softdep_flushworklist(struct mount *, int *, struct lwp *);
-int	softdep_flushfiles(struct mount *, int, struct lwp *);
-void	softdep_update_inodeblock(struct inode *, struct buf *, int);
-void	softdep_load_inodeblock(struct inode *);
-void	softdep_freefile(struct vnode *, ino_t, int);
-void	softdep_setup_freeblocks(struct inode *, off_t, int);
-void	softdep_setup_inomapdep(struct buf *, struct inode *, ino_t);
-void	softdep_setup_blkmapdep(struct buf *, struct fs *, daddr_t);
-void	softdep_setup_allocdirect(struct inode *, daddr_t, daddr_t,
-				  daddr_t, long, long, struct buf *);
-void	softdep_setup_allocindir_meta(struct buf *, struct inode *,
-				      struct buf *, int, daddr_t);
-void	softdep_setup_allocindir_page(struct inode *, daddr_t,
-				      struct buf *, int, daddr_t, daddr_t,
-				      struct buf *);
-void	softdep_fsync_mountdev(struct vnode *);
-int	softdep_sync_metadata(struct vnode *);
+/* Write Ahead Physical Block Logging */
+void	ffs_wapbl_verify_inodes(struct mount *, const char *);
+void	ffs_wapbl_replay_finish(struct mount *);
+int	ffs_wapbl_start(struct mount *);
+int	ffs_wapbl_stop(struct mount *, int);
+int	ffs_wapbl_replay_start(struct mount *, struct fs *, struct vnode *);
+void	ffs_wapbl_blkalloc(struct fs *, struct vnode *, daddr_t, int);
+
+void	ffs_wapbl_sync_metadata(struct mount *, daddr_t *, int *, int);
+void	ffs_wapbl_abort_sync_metadata(struct mount *, daddr_t *, int *, int);
 
 extern int (**ffs_vnodeop_p)(void *);
 extern int (**ffs_specop_p)(void *);
@@ -202,8 +189,10 @@ void	ffs_csumtotal_swap(struct csum_total *, struct csum_total *);
 void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 /* ffs_subr.c */
+#if defined(_KERNEL)
 void	ffs_load_inode(struct buf *, struct inode *, struct fs *, ino_t);
-int	ffs_freefile(struct fs *, struct vnode *, ino_t, int);
+int	ffs_getblk(struct vnode *, daddr_t, daddr_t, int, bool, buf_t **);
+#endif /* defined(_KERNEL) */
 void	ffs_fragacct(struct fs *, int, int32_t[], int, int);
 int	ffs_isblock(struct fs *, u_char *, int32_t);
 int	ffs_isfreeblock(struct fs *, u_char *, int32_t);

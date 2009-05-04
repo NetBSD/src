@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.12.36.1 2008/05/16 02:25:12 yamt Exp $	*/
+/*	$NetBSD: uyap.c,v 1.12.36.2 2009/05/04 08:13:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.12.36.1 2008/05/16 02:25:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.12.36.2 2009/05/04 08:13:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/tty.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -75,22 +74,24 @@ USB_ATTACH(uyap)
 	usbd_status err;
 	char *devinfop;
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	printf("%s: downloading firmware\n", USBDEVNAME(sc->sc_dev));
+	aprint_verbose_dev(self, "downloading firmware\n");
 
 	err = ezload_downloads_and_reset(dev, uyap_firmwares);
 	if (err) {
-		printf("%s: download ezdata error: %s\n",
-		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		aprint_error_dev(self, "download ezdata error: %s\n",
+		    usbd_errstr(err));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	printf("%s: firmware download complete, disconnecting.\n",
-	       USBDEVNAME(sc->sc_dev));
+	aprint_verbose_dev(self,
+	    "firmware download complete, disconnecting.\n");
 	USB_ATTACH_SUCCESS_RETURN;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.8.52.1 2008/05/16 02:25:06 yamt Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.8.52.2 2009/05/04 08:13:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,6 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "wsdisplay.h"
+#include <dev/wscons/wsdisplay_vconsvar.h>
+
 /*
  * color display (cgsix) driver; common definitions.
  */
@@ -49,7 +52,7 @@ struct cg6_cursor {		/* cg6 hardware cursor status */
 
 /* per-display variables */
 struct cgsix_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
@@ -72,7 +75,8 @@ struct cgsix_softc {
 	int sc_mode;
 	uint32_t sc_bg;
 	struct vcons_data vd;
-#endif	
+	uint8_t sc_default_cmap[768];
+#endif
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 

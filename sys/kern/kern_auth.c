@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.59.2.1 2008/05/16 02:25:24 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.59.2.2 2009/05/04 08:13:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.59.2.1 2008/05/16 02:25:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.59.2.2 2009/05/04 08:13:46 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -388,7 +388,7 @@ kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 int
 kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 {
-	int i;
+	uint32_t i;
 
 	KASSERT(cred != NULL);
 	KASSERT(resultp != NULL);
@@ -434,7 +434,7 @@ kauth_cred_setgroups(kauth_cred_t cred, const gid_t *grbuf, size_t len,
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt == 1);
 
-	if (len > sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]))
+	if (len > __arraycount(cred->cr_groups))
 		return EINVAL;
 
 	if (len) {
@@ -632,7 +632,7 @@ kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
 
 	if (cred->cr_euid == uuc->cr_uid &&
 	    cred->cr_egid == uuc->cr_gid &&
-	    cred->cr_ngroups == uuc->cr_ngroups) {
+	    cred->cr_ngroups == (uint32_t)uuc->cr_ngroups) {
 		int i;
 
 		/* Check if all groups from uuc appear in cred. */
@@ -663,8 +663,7 @@ kauth_cred_toucred(kauth_cred_t cred, struct ki_ucred *uc)
 	uc->cr_ref = cred->cr_refcnt;
 	uc->cr_uid = cred->cr_euid;
 	uc->cr_gid = cred->cr_egid;
-	uc->cr_ngroups = min(cred->cr_ngroups,
-			     sizeof(uc->cr_groups) / sizeof(uc->cr_groups[0]));
+	uc->cr_ngroups = min(cred->cr_ngroups, __arraycount(uc->cr_groups));
 	memcpy(uc->cr_groups, cred->cr_groups,
 	       uc->cr_ngroups * sizeof(uc->cr_groups[0]));
 }

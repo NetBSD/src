@@ -1,17 +1,19 @@
-#	$NetBSD: Makefile,v 1.3 2007/09/24 01:31:07 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.24.1 2009/05/04 08:14:26 yamt Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../ufs/ffs ${.CURDIR}/../../../../ufs/ufs
 
-LIB=	ffs
+LIB=	rumpfs_ffs
 
-.PATH:  ${NETBSDSRCDIR}/sys/ufs/ffs
+SRCS=	ffs_alloc.c ffs_appleufs.c ffs_balloc.c ffs_bswap.c ffs_inode.c	\
+	ffs_snapshot.c ffs_subr.c ffs_tables.c ffs_vfsops.c ffs_vnops.c	\
+	ffs_wapbl.c
 
-SRCS=	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_inode.c		\
-	ffs_softdep.stub.c ffs_subr.c ffs_tables.c ffs_vfsops.c		\
-	ffs_vnops.c ffs_snapshot.c
+SRCS+=	ufs_bmap.c ufs_dirhash.c ufs_ihash.c ufs_inode.c ufs_lookup.c	\
+	ufs_vfsops.c ufs_vnops.c ufs_wapbl.c
 
-CPPFLAGS+=	-DFFS_NO_SNAPSHOT -DFFS_EI
+CPPFLAGS+=	-DFFS_EI -DWAPBL -DAPPLE_UFS
+CPPFLAGS+=	-DUFS_DIRHASH -DWAPBL -DAPPLE_UFS
 CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.36 2008/04/16 18:41:48 cegger Exp $ */
+/* $NetBSD: hypervisor.c,v 1.36.4.1 2009/05/04 08:12:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36.4.1 2009/05/04 08:12:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,9 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36 2008/04/16 18:41:48 cegger Exp $
 #ifndef XEN3
 #include <xen/ctrl_if.h>
 #endif
+#ifdef XEN3
+#include <xen/xen3-public/version.h>
+#endif
 
 #if defined(DOM0OPS) || defined(XEN3)
 #include <sys/dirent.h>
@@ -121,12 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36 2008/04/16 18:41:48 cegger Exp $
 #endif
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>       
-#endif
-#ifdef PCI_BUS_FIXUP
-#include <arch/i386/pci/pci_bus_fixup.h>
-#ifdef PCI_ADDR_FIXUP
-#include <arch/i386/pci/pci_addr_fixup.h>
-#endif  
 #endif
 #endif /* NPCI */
 
@@ -231,21 +228,28 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 void
 hypervisor_attach(device_t parent, device_t self, void *aux)
 {
+#ifdef XEN3
+	int xen_version;
+#endif
 #if NPCI >0
 #ifndef XEN3
 	physdev_op_t physdev_op;
 	int i, j, busnum;
 #endif
 
-#ifdef PCI_BUS_FIXUP
-	int pci_maxbus = 0;
-#endif
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
-	printf("\n");
-
+#ifdef DOM0OPS
+	if (xendomain_is_privileged()) {
+		xenkernfs_init();
+	}
+#endif
 #ifdef XEN3
+	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
+	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
+	       xen_version & 0x0000ffff);
+
 	xengnt_init();
 
 	memset(&hac.hac_vcaa, 0, sizeof(hac.hac_vcaa));
@@ -254,8 +258,11 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_SP;
 	hac.hac_vcaa.vcaa_caa.cpu_func = 0;
 	config_found_ia(self, "xendevbus", &hac.hac_vcaa, hypervisor_print);
+#else
+	aprint_normal("\n");
 #endif
-	init_events();
+
+	events_init();
 
 #if NXENBUS > 0
 	hac.hac_xenbus.xa_device = "xenbus";
@@ -279,6 +286,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif
 #if NPCI > 0
 #ifdef XEN3
+#ifdef DOM0OPS
 #if NACPI > 0
 	if (acpi_present) {
 		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
@@ -295,18 +303,22 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
 	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
 	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
-	hac.hac_pba.pba_dmat64 = 0;
+#ifdef _LP64
+	hac.hac_pba.pba_dmat64 = &pci_bus_dma64_tag;
+#else
+	hac.hac_pba.pba_dmat64 = NULL;
+#endif /* _LP64 */
 	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
 #if NACPI > 0 && defined(ACPI_SCANPCI)
 	if (mpacpi_active)
-		mpacpi_scan_pci(self, &hac.hac_pba, pcibusprint);
+		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
 	if (mpbios_scanned != 0)
-		mpbios_scan_pci(self, &hac.hac_pba, pcibusprint);
+		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
 #endif
 	config_found_ia(self, "pcibus", &hac.hac_pba, pcibusprint);
@@ -314,6 +326,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	if (mp_verbose)
 		acpi_pci_link_state();
 #endif
+#endif /* DOM0OPS */
 #else /* !XEN3 */
 	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
 	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
@@ -364,8 +377,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 
 #ifdef DOM0OPS
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
-		xenkernfs_init();
+	if (xendomain_is_privileged()) {
 		xenprivcmd_init();
 		xen_shm_init();
 #ifndef XEN3
@@ -382,6 +394,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		ctrl_if_register_receiver(CMSG_SHUTDOWN,
 		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
 #endif
+
+	hypervisor_machdep_attach();
 }
 
 static int

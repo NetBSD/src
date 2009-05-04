@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.21.4.1 2008/05/16 02:25:50 yamt Exp $ */
+/* $NetBSD: envsys.h,v 1.21.4.2 2009/05/04 08:14:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ enum envsys_battery_capacity_states {
 #define ENVSYS_FMONWARNOVER	0x00000200	/* monitor a warnover state */
 #define ENVSYS_FMONSTCHANGED	0x00000400	/* monitor a battery/drive state */
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
+#define ENVSYS_FNEED_REFRESH	0x00001000	/* sensor needs refreshing */
 
 #define ENVSYS_GETDICTIONARY	_IOWR('E', 0, struct plistref)
 #define ENVSYS_SETDICTIONARY	_IOWR('E', 1, struct plistref)

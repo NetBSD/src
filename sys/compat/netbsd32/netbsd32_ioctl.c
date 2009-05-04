@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.38 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.38.4.1 2009/05/04 08:12:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.38 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.38.4.1 2009/05/04 08:12:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,13 +351,13 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	ff = fdp->fd_ofiles[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
-	case FIONCLEX:
-		ff->ff_exclose = 0;
+	case FIOCLEX:
+		ff->ff_exclose = true;
+		fdp->fd_exclose = true;
 		goto out;
 
-	case FIOCLEX:
-		ff->ff_exclose = 1;
-		fdp->fd_exclose = 1;
+	case FIONCLEX:
+		ff->ff_exclose = false;
 		goto out;
 	}
 
@@ -492,6 +490,8 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		IOCTL_STRUCT_CONV_TO(SIOCPHASE2, ifreq);
 #endif
 
+	case OOSIOCGIFCONF32:
+		IOCTL_STRUCT_CONV_TO(OOSIOCGIFCONF, ifconf);
 	case OSIOCGIFCONF32:
 		IOCTL_STRUCT_CONV_TO(OSIOCGIFCONF, ifconf);
 	case SIOCGIFCONF32:

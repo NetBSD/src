@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.10.4.1 2008/05/16 02:24:37 yamt Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.10.4.2 2009/05/04 08:12:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.10.4.1 2008/05/16 02:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.10.4.2 2009/05/04 08:12:53 yamt Exp $");
 
 #include "vmetwo.h"
 
@@ -136,8 +136,7 @@ vmetwo_probe(bus_space_tag_t bt, bus_addr_t offset)
 		struct vmetwo_softc *sc;
 
 		/* XXX Should check sc != NULL here... */
-		MALLOC(sc, struct vmetwo_softc *, sizeof(*sc), M_DEVBUF,
-		    M_NOWAIT);
+		sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
 
 		sc->sc_mvmebus.sc_bust = bt;
 		sc->sc_lcrh = bh;
@@ -218,8 +217,7 @@ vmetwo_intr_init(struct vmetwo_softc *sc)
 }
 
 static int
-vmetwo_local_isr_trampoline(arg)
-	void *arg;
+vmetwo_local_isr_trampoline(void *arg)
 {
 	struct vme_two_handler *isr;
 	int vec;
@@ -240,11 +238,7 @@ vmetwo_local_isr_trampoline(arg)
 }
 
 void
-vmetwo_local_intr_establish(pri, vec, hand, arg, evcnt)
-	int pri, vec;
-	int (*hand)(void *);
-	void *arg;
-	struct evcnt *evcnt;
+vmetwo_local_intr_establish(int pri, int vec, int (*hand)(void *), void *arg, struct evcnt *evcnt)
 {
 
 	vmetwo_intr_establish(vmetwo_sc, pri, pri, vec, 1, hand, arg, evcnt);
@@ -252,12 +246,7 @@ vmetwo_local_intr_establish(pri, vec, hand, arg, evcnt)
 
 /* ARGSUSED */
 void
-vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg, evcnt)
-	void *csc;
-	int prior, lvl, vec, first;
-	int (*hand)(void *);
-	void *arg;
-	struct evcnt *evcnt;
+vmetwo_intr_establish(void *csc, int prior, int lvl, int vec, int first, int (*hand)(void *), void *arg, struct evcnt *evcnt)
 {
 	struct vmetwo_softc *sc = csc;
 	u_int32_t reg;
@@ -353,10 +342,7 @@ vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg, evcnt)
 }
 
 void
-vmetwo_intr_disestablish(csc, lvl, vec, last, evcnt)
-	void *csc;
-	int lvl, vec, last;
-	struct evcnt *evcnt;
+vmetwo_intr_disestablish(void *csc, int lvl, int vec, int last, struct evcnt *evcnt)
 {
 	struct vmetwo_softc *sc = csc;
 	u_int32_t reg;

@@ -1,7 +1,7 @@
-/*	$NetBSD: lock_stubs.S,v 1.13.10.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13.10.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,30 +30,23 @@
  */
 
 /*
- * The sizes listed against each function are for a kernel compiled
- * with options MULTIPROCESSOR && DIAGNOSTIC.  Where possible we make
- * each routine fit into an assumed 64-byte cache line.  Please check
- * alignment with 'objdump -d' after making changes.
+ * Where possible we make * each routine fit into an assumed 64-byte cache
+ * line.  Please check * alignment with 'objdump -d' after making changes. 
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13.10.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13.10.2 2009/05/04 08:11:16 yamt Exp $");
 
-#include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#include "opt_ddb.h"
 
 #include <machine/cputypes.h>
 
 #include "assym.h"
 
-#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define	FULL
-#endif
-
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
 #define	LOCK(num)	.Lpatch/**/num:	lock
+#define	RET(num)	.Lret/**/num: ret; nop; nop; ret
 #define	ENDLABEL(name,a) .align	a; LABEL(name)
 
 #if !defined(LOCKDEBUG)
@@ -67,12 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13.10.1 2008/05/16 02:22:34 yamt Ex
 
 ENTRY(mutex_enter)
 	movl	4(%esp), %edx
-	movl	CPUVAR(CURLWP), %ecx
 	xorl	%eax, %eax
+	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
 	LOCK(1)
-	cmpxchgl %ecx, MTX_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	jnz	1f
-	ret
+	RET(1)
 1:
 	jmp	_C_LABEL(mutex_vector_enter)
 END(mutex_enter)
@@ -88,9 +81,9 @@ END(mutex_enter)
  */
 ENTRY(mutex_exit)
 	movl	4(%esp), %edx
-	movl	CPUVAR(CURLWP), %eax
 	xorl	%ecx, %ecx
-	cmpxchgl %ecx, MTX_OWNER(%edx)
+	movl	%fs:CPU_INFO_CURLWP(%ecx), %eax
+	cmpxchgl %ecx, (%edx)
 	jnz	1f
 	ret
 1:
@@ -110,25 +103,28 @@ ENTRY(rw_enter)
 	/*
 	 * Reader
 	 */
-1:	movl	RW_OWNER(%edx), %eax
+	movl	(%edx), %eax
+0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	leal	RW_READ_INCR(%eax), %ecx
 	jnz	3f
+	leal	RW_READ_INCR(%eax), %ecx
 	LOCK(2)
-	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz,pn	1b
-	ret
+	cmpxchgl %ecx, (%edx)
+	jnz	1f
+	RET(2)
+1:
+	jmp	0b
 
 	/*
 	 * Writer
 	 */
-2:	movl	CPUVAR(CURLWP), %ecx
-	xorl	%eax, %eax
+2:	xorl	%eax, %eax
+	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
 	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(3)
-	cmpxchgl %ecx, RW_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	jnz	3f
-	ret
+	RET(3)
 3:
 	jmp	_C_LABEL(rw_vector_enter)
 END(rw_enter)
@@ -140,22 +136,24 @@ END(rw_enter)
  */
 ENTRY(rw_exit)
 	movl	4(%esp), %edx
-	movl	RW_OWNER(%edx), %eax
+	movl	(%edx), %eax
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
 
 	/*
 	 * Reader
 	 */
-1:	testb	$RW_HAS_WAITERS, %al
+0:	testb	$RW_HAS_WAITERS, %al
 	jnz	3f
 	cmpl	$RW_READ_INCR, %eax
-	leal	-RW_READ_INCR(%eax), %ecx
 	jb	3f
+	leal	-RW_READ_INCR(%eax), %ecx
 	LOCK(4)
-	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz,pn	1b
+	cmpxchgl %ecx, (%edx)
+	jnz	1f
 	ret
+1:
+	jmp	0b
 
 	/*
 	 * Writer
@@ -164,7 +162,7 @@ ENTRY(rw_exit)
 	subl	CPUVAR(CURLWP), %ecx
 	jnz	3f
 	LOCK(5)
-	cmpxchgl %ecx, RW_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	jnz	3f
 	ret
 
@@ -187,32 +185,35 @@ ENTRY(rw_tryenter)
 	/*
 	 * Reader
 	 */
-	movl	RW_OWNER(%edx), %eax
-1:
-	leal	RW_READ_INCR(%eax), %ecx
+	movl	(%edx), %eax
+0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	jnz	3f
+	jnz	4f
+	leal	RW_READ_INCR(%eax), %ecx
 	LOCK(12)
-	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz	1b
+	cmpxchgl %ecx, (%edx)
+	jnz	1f
 	movl	%edx, %eax			/* nonzero */
-	ret
+	RET(4)
+1:
+	jmp	0b
 
 	/*
 	 * Writer
 	 */
 2:
-	movl	CPUVAR(CURLWP), %ecx
-	orl	$RW_WRITE_LOCKED, %ecx
 	xorl	%eax, %eax
+	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
+	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(13)
-	cmpxchgl %ecx, RW_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	movl	$0, %eax
 	setz	%al
-	ret
 3:
+	RET(5)
+4:
 	xorl	%eax, %eax
-	ret
+	jmp	3b
 END(rw_tryenter)
 
 #ifndef __XEN__
@@ -226,21 +227,19 @@ ENTRY(mutex_spin_enter)
 	movl	4(%esp), %edx
 	movb	CPUVAR(ILEVEL), %cl
 	movb	MTX_IPL(%edx), %ch
+	movl	$0x01, %eax
 	cmpb	%ch, %cl
 	jg	1f
 	movb	%ch, CPUVAR(ILEVEL)		/* splraiseipl() */
 1:
-	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
+	subl	%eax, CPUVAR(MTX_COUNT)		/* decl does not set CF */
 	jnc	2f
 	movb	%cl, CPUVAR(MTX_OLDSPL)
 2:
-#ifdef FULL
-	mov	$0x0100, %eax			/* new + expected value */
-	LOCK(11)
-	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
+	xchgb	%al, MTX_LOCK(%edx)		/* lock it */
+	testb	%al, %al
 	jnz	3f
-#endif
-	ret
+	RET(6)
 3:
 	jmp	_C_LABEL(mutex_spin_retry)
 
@@ -271,7 +270,7 @@ LABEL(mutex_spin_exit_end)
 END(mutex_spin_exit)
 
 /*
- * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
+ * Patch for i686 CPUs where cli/sti is prohibitively expensive.
  * Must be the same size as mutex_spin_exit().
  */
 ENTRY(i686_mutex_spin_exit)
@@ -284,12 +283,8 @@ ENTRY(i686_mutex_spin_exit)
 0:
 	movl	CPUVAR(IPENDING), %eax
 	testl	%eax, %fs:CPU_INFO_IUNMASK(,%ecx,4)
-	movl	%eax, %ebx
-	/*
-	 * On a P4 this jump is cheaper than patching in junk using
-	 * cmovnz.  Is cmpxchg expensive if it fails?
-	 */
 	jnz	2f
+	movl	%eax, %ebx
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
 	jnz	0b
 	popl	%ebx
@@ -320,7 +315,7 @@ ENTRY(mutex_spin_exit)
 /*
  * Spinlocks.
  */
-NENTRY(__cpu_simple_lock_init)
+ENTRY(__cpu_simple_lock_init)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
@@ -333,7 +328,7 @@ NENTRY(__cpu_simple_lock)
 	LOCK(6)
 	cmpxchgb %ah, (%edx)
 	jnz	2f
-	ret
+	RET(7)
 2:
 	movl	$0x0100, %eax
 	pause
@@ -344,20 +339,20 @@ NENTRY(__cpu_simple_lock)
 	jmp	2b
 END(__cpu_simple_lock)
 
-NENTRY(__cpu_simple_unlock)
+ENTRY(__cpu_simple_unlock)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
 END(__cpu_simple_unlock)
 
-NENTRY(__cpu_simple_lock_try)
+ENTRY(__cpu_simple_lock_try)
 	movl	4(%esp), %edx
 	movl	$0x0100, %eax
 	LOCK(7)
 	cmpxchgb %ah, (%edx)
 	movl	$0, %eax
 	setz	%al	
-	ret
+	RET(8)
 END(__cpu_simple_lock_try)
 
 /*
@@ -370,8 +365,15 @@ LABEL(x86_lockpatch)
 	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4
 	.long	.Lpatch5, .Lpatch6, .Lpatch7, .Lpatch12
 	.long	.Lpatch13
-#if defined(FULL) && !defined(__XEN__)
-	.long	.Lpatch11
-#endif
 	.long	0
 #endif
+
+LABEL(x86_retpatch)
+#ifndef LOCKDEBUG
+	.long	.Lret1, .Lret2, .Lret3, .Lret4, .Lret5
+#ifndef __XEN__
+	.long	.Lret6
+#endif
+#endif
+	.long	.Lret7, .Lret8
+	.long	0

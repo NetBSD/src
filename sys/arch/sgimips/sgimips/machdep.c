@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2008/03/28 16:40:25 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119.4.1 2009/05/04 08:11:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2008/03/28 16:40:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.4.1 2009/05/04 08:11:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_execfmt.h"
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2008/03/28 16:40:25 tsutsui Exp $"
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM) || defined(KGDB)
+#if NKSYMS || defined(DDB) || defined(MODULAR) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -116,13 +117,12 @@ struct sgimips_intrhand intrtab[NINTR];
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-int mach_type;		/* IPxx type */
-int mach_subtype;	/* subtype: eg., Guinness/Fullhouse for IP22 */
-int mach_boardrev;	/* machine board revision, in case it matters */
+int mach_type = 0;	/* IPxx type */
+int mach_subtype = 0;	/* subtype: eg., Guinness/Fullhouse for IP22 */
+int mach_boardrev = 0;	/* machine board revision, in case it matters */
 
 int physmem;		/* Total physical memory */
 int arcsmem;		/* Memory used by the ARCS firmware */
@@ -133,32 +133,72 @@ int ncpus;
 const int *ipl2spl_table;
 
 #define	IPL2SPL_TABLE_COMMON \
-	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_1, \
-	[IPL_HIGH] = MIPS_INT_MASK,
+	[IPL_SOFTCLOCK]	= MIPS_SOFT_INT_MASK_1, \
+	[IPL_HIGH]	= MIPS_INT_MASK,
 
 #if defined(MIPS1)
+static const int sgi_ip6_ipl2spl_table[] = {
+	IPL2SPL_TABLE_COMMON
+
+	[IPL_VM]	= MIPS_INT_MASK_1 |
+			  MIPS_INT_MASK_0 |
+			  MIPS_SOFT_INT_MASK_1,
+			  MIPS_SOFT_INT_MASK_0,
+
+	[IPL_SCHED]	= MIPS_INT_MASK_4 |
+			  MIPS_INT_MASK_2 |
+			  MIPS_INT_MASK_1 |
+			  MIPS_INT_MASK_0 |
+			  MIPS_SOFT_INT_MASK_1,
+			  MIPS_SOFT_INT_MASK_0,
+};
 static const int sgi_ip12_ipl2spl_table[] = {
 	IPL2SPL_TABLE_COMMON
-	[IPL_VM] = MIPS_INT_MASK_2|MIPS_INT_MASK_1|MIPS_INT_MASK_0|
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SCHED] = MIPS_INT_MASK_4|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0,
+
+	[IPL_VM]	= MIPS_INT_MASK_2 |
+			  MIPS_INT_MASK_1 |
+			  MIPS_INT_MASK_0 |
+			  MIPS_SOFT_INT_MASK_1,
+	    		  MIPS_SOFT_INT_MASK_0,
+
+	[IPL_SCHED]	= MIPS_INT_MASK_4 |
+			  MIPS_INT_MASK_3 |
+			  MIPS_INT_MASK_2 |
+	    		  MIPS_INT_MASK_1 |
+			  MIPS_INT_MASK_0 |
+			  MIPS_SOFT_INT_MASK_1,
+			  MIPS_SOFT_INT_MASK_0,
 };
 #endif /* defined(MIPS1) */
+
 #if defined(MIPS3)
 static const int sgi_ip2x_ipl2spl_table[] = {
 	IPL2SPL_TABLE_COMMON
-	[IPL_VM] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|
-	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
-	[IPL_SCHED] = MIPS_INT_MASK_5|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|
-	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+
+	[IPL_VM]	= MIPS_INT_MASK_1 |
+			  MIPS_INT_MASK_0 |
+			  MIPS_SOFT_INT_MASK_1 |
+			  MIPS_SOFT_INT_MASK_0,
+
+	[IPL_SCHED]	= MIPS_INT_MASK_5 |
+			  MIPS_INT_MASK_3 |
+			  MIPS_INT_MASK_2 |
+			  MIPS_INT_MASK_1 |
+			  MIPS_INT_MASK_0 |
+			  MIPS_SOFT_INT_MASK_1 |
+			  MIPS_SOFT_INT_MASK_0,
 };
 static const int sgi_ip3x_ipl2spl_table[] = {
 	IPL2SPL_TABLE_COMMON
-	[IPL_VM] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
-	[IPL_SCHED] = MIPS_INT_MASK_5|MIPS_INT_MASK_0|
-	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+
+	[IPL_VM]	= MIPS_INT_MASK_0 | 
+			  MIPS_SOFT_INT_MASK_1 |
+			  MIPS_SOFT_INT_MASK_0,
+
+	[IPL_SCHED]	= MIPS_INT_MASK_5 |
+			  MIPS_INT_MASK_0 |
+	    		  MIPS_SOFT_INT_MASK_1 |
+			  MIPS_SOFT_INT_MASK_0,
 };
 #endif /* defined(MIPS3) */
 
@@ -256,7 +296,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
 	int i, rv;
-#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	int nsym = 0;
 	char *ssym = NULL;
 	char *esym = NULL;
@@ -303,7 +343,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	} else
 		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
-#if NKSYM > 0 || defined(DDB) || defined(LKM)
+#if NKSYM > 0 || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* check whether there is valid bootinfo symtab info */
@@ -343,7 +383,8 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	 * in arcemu_ip12_init().
 	 */
 	for (i = 0; arcbios_system_identifier[i] != '\0'; i++) {
-		if (arcbios_system_identifier[i] >= '0' &&
+		if (mach_type == 0 &&
+		    arcbios_system_identifier[i] >= '0' &&
 		    arcbios_system_identifier[i] <= '9') {
 			mach_type = strtoul(&arcbios_system_identifier[i],
 			    NULL, 10);
@@ -362,11 +403,25 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 		makebootdev(bootpath);
 	else {
 		/*
-		 * If we are loaded directly by ARCBIOS,
-		 * argv[0] is the path of the loaded kernel.
+		 * The old bootloader prior to 5.0 doesn't pass bootinfo.
+		 * If argv[0] is the bootloader, then argv[1] might be
+		 * the kernel that was loaded.
+		 * If argv[1] isn't an environment string, try to use it
+		 * to set the boot device.
 		 */
-		if (argc > 0 && argv[0] != NULL)
+		if (argc > 1 && strchr(argv[1], '=') != 0)
+			makebootdev(argv[1]);
+
+		/*
+		 * If we are loaded directly by ARCBIOS,
+		 * argv[0] is the path of the loaded kernel,
+		 * but booted_partition could be SGIVOLHDR in such case,
+		 * so assume root is partition a.
+		 */
+		if (argc > 0 && argv[0] != NULL) {
 			makebootdev(argv[0]);
+			booted_partition = 0;
+		}
 	}
 
 	/*
@@ -469,15 +524,11 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	for (i = 0; i < argc; i++)
 		aprint_debug("argv[%d] = %s\n", i, argv[i]);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(nsym, ssym, esym);
-#ifdef SYMTAB_SPACE
-	else
-		ksyms_init(0, NULL, NULL);
-#endif /* SYMTAB_SPACE */
-#endif /* NKSYMS || defined(DDB) || defined(LKM) */
+		ksyms_addsyms_elf(nsym, ssym, esym);
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 
 #if defined(KGDB) || defined(DDB)
 	/* Set up DDB hook to turn off watchdog on entry */
@@ -498,6 +549,11 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 
 	switch (mach_type) {
 #if defined(MIPS1)
+	case MACH_SGI_IP6 | MACH_SGI_IP10:
+		ipl2spl_table = sgi_ip6_ipl2spl_table;
+		platform.intr3 = mips1_fpu_intr;
+		break;
+
 	case MACH_SGI_IP12:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
         	mach_boardrev = (i & 0x7000) >> 12; 
@@ -707,7 +763,7 @@ sgimips_count_cpus(struct arcbios_component *node,
  * Allocate memory for variable-sized tables.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -725,12 +781,6 @@ cpu_startup()
 	printf("(%s reserved for ARCS)\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
@@ -787,6 +837,8 @@ cpu_reboot(int howto, char *bootstr)
 haltsys:
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/*
 	 * Calling ARCBIOS->PowerDown() results in a "CP1 unusable trap"
@@ -862,14 +914,14 @@ badaddr_workaround(void *addr, size_t size)
  *  Ensure all platform vectors are always initialized.
  */
 static void
-unimpl_bus_reset()
+unimpl_bus_reset(void)
 {
 
 	panic("target init didn't set bus_reset");
 }
 
 static void
-unimpl_cons_init()
+unimpl_cons_init(void)
 {
 
 	panic("target init didn't set cons_init");
@@ -889,14 +941,14 @@ unimpl_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 }
 
 static unsigned long
-nulllong()
+nulllong(void)
 {
 	printf("nulllong\n");
 	return (0);
 }
 
 static void
-nullvoid()
+nullvoid(void)
 {
 	printf("nullvoid\n");
 	return;

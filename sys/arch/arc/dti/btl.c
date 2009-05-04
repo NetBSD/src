@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.19 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: btl.c,v 1.19.78.1 2009/05/04 08:10:37 yamt Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.19 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.19.78.1 2009/05/04 08:10:37 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +111,7 @@ struct bt_mbx {
 #define PHYSTOKV(x)	(*btl_conf->bc_phystokv)((int)(x))
 
 struct bt_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	int sc_iobase;
@@ -166,11 +166,10 @@ struct scsipi_device bt_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int	btprobe(struct device *, struct cfdata *, void *);
-void	btattach(struct device *, struct device *, void *);
-int	btprint(void *, const char *);
+static int	btprobe(device_t, cfdata_t, void *);
+static void	btattach(device_t, device_t, void *);
 
-CFATTACH_DECL(btl, sizeof(struct bt_softc),
+CFATTACH_DECL_NEW(btl, sizeof(struct bt_softc),
     btprobe, btattach, NULL, NULL);
 
 #define BT_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
@@ -203,7 +202,7 @@ bt_cmd(int iobase, struct bt_softc *sc, int icnt, int ocnt, u_char *ibuf,
 	u_char opcode = ibuf[0];
 
 	if (sc != NULL)
-		name = sc->sc_dev.dv_xname;
+		name = device_xname(sc->sc_dev);
 	else
 		name = "(bt probe)";
 
@@ -314,8 +313,8 @@ bt_cmd(int iobase, struct bt_softc *sc, int icnt, int ocnt, u_char *ibuf,
  * as an argument, takes the isa_device structure from
  * autoconf.c
  */
-int
-btprobe(struct device *parent, struct cfdata *match, void *aux)
+static int
+btprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -340,16 +339,18 @@ btprobe(struct device *parent, struct cfdata *match, void *aux)
 /*
  * Attach all the sub-devices we can find
  */
-void
-btattach(struct device *parent, struct device *self, void *aux)
+static void
+btattach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct bt_softc *sc = (void *)self;
+	struct bt_softc *sc = device_private(self);
 	struct bt_ccb *ccb;
 	struct bt_buf *buf;
 	u_int bouncearea;
 	u_int bouncebase;
 	u_int bouncesize;
+
+	sc->sc_dev = self;
 
 	if (bt_find(ia, sc) != 0)
 		panic("btattach: bt_find of %s failed", self->dv_xname);
@@ -427,14 +428,14 @@ bt_finish_ccbs(struct bt_softc *sc)
 		for (i = 0; i < BT_MBX_SIZE; i++) {
 			if (wmbi->stat != BT_MBI_FREE) {
 				printf("%s: mbi not in round-robin order\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				goto AGAIN;
 			}
 			bt_nextmbx(wmbi, wmbx, mbi);
 		}
 #ifdef BTDIAGnot
 		printf("%s: mbi interrupt with no full mailboxes\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 #endif
 		return;
 	}
@@ -444,7 +445,7 @@ AGAIN:
 		ccb = bt_ccb_phys_kv(sc, phystol(wmbi->ccb_addr));
 		if (!ccb) {
 			printf("%s: bad mbi ccb pointer; skipping\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			goto next;
 		}
 
@@ -485,7 +486,7 @@ AGAIN:
 
 		default:
 			printf("%s: bad mbi status %02x; skipping\n",
-			    sc->sc_dev.dv_xname, wmbi->stat);
+			    device_xname(sc->sc_dev), wmbi->stat);
 			goto next;
 		}
 
@@ -511,7 +512,7 @@ btintr(void *arg)
 	u_char sts;
 
 #ifdef BTDEBUG
-	printf("%s: btintr ", sc->sc_dev.dv_xname);
+	printf("%s: btintr ", device_xname(sc->sc_dev));
 #endif /* BTDEBUG */
 
 	/*
@@ -812,13 +813,15 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 	 */
 #ifdef BTDIAG
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: exiting ccb still in transit!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb still in transit!\n",
+		    device_xname(sc->sc_dev));
 		Debugger();
 		return;
 	}
 #endif
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb not allocated!\n",
+		    device_xname(sc->sc_dev));
 		Debugger();
 		return;
 	}
@@ -830,7 +833,7 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 				break;
 			default:	/* Other scsi protocol messes */
 				printf("%s: host_stat %x\n",
-				    sc->sc_dev.dv_xname, ccb->host_stat);
+				    device_xname(sc->sc_dev), ccb->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
@@ -847,7 +850,7 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 				break;
 			default:
 				printf("%s: target_stat %x\n",
-				    sc->sc_dev.dv_xname, ccb->target_stat);
+				    device_xname(sc->sc_dev), ccb->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
@@ -864,7 +867,7 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 			thisbounce = PHYSTOKV(phystol(sg->seg_addr));
 			bytes_this_page = phystol(sg->seg_len);
 			if(xs->xs_control & XS_CTL_DATA_IN) {
-				bcopy((void *)thisbounce, (void *)thiskv, bytes_this_page);
+				memcpy( (void *)thiskv, (void *)thisbounce, bytes_this_page);
 			}
 			bt_free_buf(sc, (struct bt_buf *)thisbounce);
 			thiskv += bytes_this_page;
@@ -1091,7 +1094,7 @@ bt_init(struct bt_softc *sc)
 	    sizeof(setup.reply), (u_char *)&setup.reply);
 
 	printf("%s: %s, %s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    setup.reply.sync_neg ? "sync" : "async",
 	    setup.reply.parity ? "parity" : "no parity");
 
@@ -1110,7 +1113,7 @@ bt_init(struct bt_softc *sc)
 		    (!setup.reply.sync[i].offset && !setup.reply.sync[i].period))
 			continue;
 		printf("%s targ %d: sync, offset %d, period %dnsec\n",
-		    sc->sc_dev.dv_xname, i,
+		    device_xname(sc->sc_dev), i,
 		    setup.reply.sync[i].offset, period.reply.period[i] * 10);
 	}
 
@@ -1242,14 +1245,14 @@ bt_scsi_cmd(struct scsipi_xfer *xs)
 		/* can't use S/G if zero length */
 		if (xs->cmdlen > sizeof(ccb->scsi_cmd)) {
 			printf("%s: cmdlen %d too large for CCB\n",
-			    sc->sc_dev.dv_xname, xs->cmdlen);
+			    device_xname(sc->sc_dev), xs->cmdlen);
 			xs->error = XS_DRIVER_STUFFUP;
 			bt_free_ccb(sc, ccb);
 			return COMPLETE;
 		}
 		ccb->opcode = (xs->datalen ? BT_INIT_SCAT_GATH_CCB
 					   : BT_INITIATOR_CCB);
-		bcopy(xs->cmd, &ccb->scsi_cmd,
+		memcpy( &ccb->scsi_cmd, xs->cmd,
 		    ccb->scsi_cmd_length = xs->cmdlen);
 	}
 
@@ -1275,7 +1278,7 @@ bt_scsi_cmd(struct scsipi_xfer *xs)
 			ltophys(KVTOPHYS(thisbounce), sg->seg_addr);
 			bytes_this_page = min(sizeof(struct bt_buf), datalen);
 			if (control & XS_CTL_DATA_OUT) {
-				bcopy((void *)thiskv, (void *)thisbounce, bytes_this_page);
+				memcpy( (void *)thisbounce, (void *)thiskv, bytes_this_page);
 			}
 			thiskv += bytes_this_page;
 			datalen -= bytes_this_page;
@@ -1287,7 +1290,7 @@ bt_scsi_cmd(struct scsipi_xfer *xs)
 		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
 		if (datalen) {
 			printf("%s: bt_scsi_cmd, out of bufs %d of %d left.\n",
-					sc->sc_dev.dv_xname, datalen, xs->datalen);
+			    device_xname(sc->sc_dev), datalen, xs->datalen);
 			goto badbuf;
 		}
 		ltophys(KVTOPHYS(ccb->scat_gath), ccb->data_addr);
@@ -1386,7 +1389,7 @@ bt_timeout(void *arg)
 	 */
 	bt_collect_mbo(sc);
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
+		printf("%s: not taking commands!\n", device_xname(sc->sc_dev));
 		Debugger();
 	}
 #endif

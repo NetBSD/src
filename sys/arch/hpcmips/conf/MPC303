@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.48 2008/01/30 13:31:03 tsutsui Exp $
+# 	$NetBSD: MPC303,v 1.48.10.1 2009/05/04 08:11:11 yamt Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.48.10.1 $"
 
 maxusers	16
 
@@ -73,7 +73,7 @@ file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	QUOTA		# UFS quotas
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -96,6 +96,7 @@ options 	COMPAT_43
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	NFS_BOOT_DHCP
@@ -489,6 +490,8 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_DYNAMIC	# fs image don't exist in data section.
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+
 pseudo-device	md		1	# memory disk device (ramdisk)
 
 #pseudo-device	raid		4	# RAIDframe disk driver

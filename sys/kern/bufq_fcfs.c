@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.6.74.1 2008/05/16 02:25:24 yamt Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.6.74.2 2009/05/04 08:13:45 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,14 +68,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.6.74.1 2008/05/16 02:25:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.6.74.2 2009/05/04 08:13:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 /*
  * First-come first-served sort for disks.
@@ -121,15 +121,21 @@ bufq_fcfs_cancel(struct bufq_state *bufq, struct buf *buf)
 	struct bufq_fcfs *fcfs = bufq->bq_private;
 	struct buf *bp;
 
-	bp = TAILQ_FIRST(&fcfs->bq_head);
-	while (bp) {
+	TAILQ_FOREACH(bp, &fcfs->bq_head, b_actq) {
 		if (bp == buf) {
 			TAILQ_REMOVE(&fcfs->bq_head, bp, b_actq);
 			return buf;
 		}
-		bp = TAILQ_NEXT(bp, b_actq);
 	}
 	return NULL;
+}
+
+static void
+bufq_fcfs_fini(struct bufq_state *bufq)
+{
+
+	KASSERT(bufq->bq_private != NULL);
+	kmem_free(bufq->bq_private, sizeof(struct bufq_fcfs));
 }
 
 static void
@@ -140,7 +146,8 @@ bufq_fcfs_init(struct bufq_state *bufq)
 	bufq->bq_get = bufq_fcfs_get;
 	bufq->bq_put = bufq_fcfs_put;
 	bufq->bq_cancel = bufq_fcfs_cancel;
-	bufq->bq_private = malloc(sizeof(struct bufq_fcfs), M_DEVBUF, M_ZERO);
+	bufq->bq_fini = bufq_fcfs_fini;
+	bufq->bq_private = kmem_zalloc(sizeof(struct bufq_fcfs), KM_SLEEP);
 	fcfs = (struct bufq_fcfs *)bufq->bq_private;
 	TAILQ_INIT(&fcfs->bq_head);
 }

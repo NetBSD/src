@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.123 2008/01/20 10:15:50 dsl Exp $	*/
+/*	$NetBSD: exec.h,v 1.123.10.1 2009/05/04 08:14:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -143,7 +143,7 @@ struct execsw {
 		int (*ecoff_probe_func)(struct lwp *, struct exec_package *);
 		int (*mach_probe_func)(const char **);
 	} u;
-	const struct  emul *es_emul;	/* os emulation */
+	struct  emul *es_emul;		/* os emulation */
 	int	es_prio;		/* entry priority */
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
@@ -258,15 +258,8 @@ struct core32;
 int	cpu_coredump(struct lwp *, void *, struct core *);
 int	cpu_coredump32(struct lwp *, void *, struct core32 *);
 
-
-#ifdef LKM
-int	emul_register		(const struct emul *, int);
-int	emul_unregister		(const char *);
-const struct emul *emul_search(const char *);
-
-int	exec_add		(struct execsw *, const char *);
-int	exec_remove		(const struct execsw *);
-#endif /* LKM */
+int	exec_add(struct execsw *, int);
+int	exec_remove(struct execsw *, int);
 
 void	new_vmcmd(struct exec_vmcmd_set *,
 		    int (*)(struct lwp *, struct exec_vmcmd *),
@@ -279,6 +272,8 @@ void	new_vmcmd(struct exec_vmcmd_set *,
 typedef	int (*execve_fetch_element_t)(char * const *, size_t, char **);
 int	execve1(struct lwp *, const char *, char * const *, char * const *,
     execve_fetch_element_t);
+
+extern int	maxexec;
 
 #endif /* _KERNEL */
 

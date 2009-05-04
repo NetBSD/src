@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.114.2.1 2008/05/16 02:23:53 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.114.2.2 2009/05/04 08:12:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.2 2009/05/04 08:12:33 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -120,6 +120,11 @@ static ACPI_TABLE_DESC	acpi_initial_tables[128];
 static int	acpi_match(device_t, struct cfdata *, void *);
 static void	acpi_attach(device_t, device_t, void *);
 static void	acpi_childdet(device_t, device_t);
+static int	acpi_detach(device_t, int);
+
+static int	acpi_rescan(device_t, const char *, const int *);
+static void	acpi_rescan1(struct acpi_softc *, const char *, const int *);
+static void	acpi_rescan_nodes(struct acpi_softc *);
 
 static int	acpi_print(void *aux, const char *);
 
@@ -128,7 +133,7 @@ static int	sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS);
 extern struct cfdriver acpi_cd;
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
-    acpi_match, acpi_attach, NULL, NULL, NULL, acpi_childdet);
+    acpi_match, acpi_attach, acpi_detach, NULL, acpi_rescan, acpi_childdet);
 
 /*
  * This is a flag we set when the ACPI subsystem is active.  Machine
@@ -137,6 +142,7 @@ CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
  */
 int	acpi_active;
 int	acpi_force_load;
+int	acpi_suspended = 0;
 
 /*
  * Pointer to the ACPI subsystem's state.  There can be only
@@ -152,12 +158,31 @@ static int acpi_locked;
 extern kmutex_t acpi_interrupt_list_mtx;
 
 /*
+ * Ignored HIDs
+ */
+static const char * const acpi_ignored_ids[] = {
+#if defined(i386) || defined(x86_64)
+	"PNP0000",	/* AT interrupt controller is handled internally */
+	"PNP0200",	/* AT DMA controller is handled internally */
+	"PNP0A??",	/* Busses aren't enumerated with ACPI yet */
+	"PNP0B00",	/* AT RTC is handled internally */
+	"PNP0C01",	/* No "System Board" driver */
+	"PNP0C02",	/* No "PnP motherboard register resources" driver */
+	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
+#endif
+#if defined(x86_64)
+	"PNP0C04",	/* FPU is handled internally */
+#endif
+	NULL
+};
+
+/*
  * sysctl-related information
  */
 
 static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
 static int acpi_sleepstate = ACPI_STATE_S0;
-static char acpi_supported_states[3 * 6 + 1] = "";;
+static char acpi_supported_states[3 * 6 + 1] = "";
 
 /*
  * Prototypes.
@@ -170,6 +195,9 @@ static void		acpi_enable_fixed_events(struct acpi_softc *);
 static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
 static void		acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 static int		is_available_state(struct acpi_softc *, int);
+
+static bool		acpi_suspend(device_t PMF_FN_PROTO);
+static bool		acpi_resume(device_t PMF_FN_PROTO);
 
 /*
  * acpi_probe:
@@ -363,6 +391,9 @@ acpi_childdet(device_t self, device_t child)
 	struct acpi_scope *as;
 	struct acpi_devnode *ad;
 
+	if (sc->sc_apmbus == child)
+		sc->sc_apmbus = NULL;
+
 	TAILQ_FOREACH(as, &sc->sc_scopes, as_list) {
 		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
 			if (ad->ad_device == child)
@@ -387,16 +418,13 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 	ACPI_TABLE_HEADER *rsdt;
 
-	aprint_naive(": Advanced Configuration and Power Interface\n");
-	aprint_normal(": Advanced Configuration and Power Interface\n");
+	aprint_naive("\n");
+	aprint_normal(": Intel ACPICA %08x\n", ACPI_CA_VERSION);
 
 	if (acpi_softc != NULL)
 		panic("acpi_attach: ACPI has already been attached");
 
 	sysmon_power_settype("acpi");
-
-	aprint_verbose_dev(self,
-	    "using Intel ACPI CA subsystem version %08x\n", ACPI_CA_VERSION);
 
 	rsdt = acpi_map_rsdt();
 	if (rsdt) {
@@ -424,7 +452,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Register null power management handler
 	 */
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, acpi_suspend, acpi_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
@@ -491,7 +519,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 #endif
 	acpi_build_tree(sc);
 
-	sprintf(acpi_supported_states, "%s%s%s%s%s%s",
+	snprintf(acpi_supported_states, sizeof(acpi_supported_states),
+	    "%s%s%s%s%s%s",
 	    is_available_state(sc, ACPI_STATE_S0) ? "S0 " : "",
 	    is_available_state(sc, ACPI_STATE_S1) ? "S1 " : "",
 	    is_available_state(sc, ACPI_STATE_S2) ? "S2 " : "",
@@ -503,6 +532,95 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_dbgr & ACPI_DBGR_RUNNING)
 		acpi_osd_debugger();
 #endif
+}
+
+static int
+acpi_detach(device_t self, int flags)
+{
+	int rc;
+
+#ifdef ACPI_DEBUGGER
+	if (acpi_dbgr & ACPI_DBGR_RUNNING)
+		acpi_osd_debugger();
+#endif
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+#ifdef ACPI_DEBUGGER
+	if (acpi_dbgr & ACPI_DBGR_PROBE)
+		acpi_osd_debugger();
+#endif
+
+	if ((rc = acpitimer_detach()) != 0)
+		return rc;
+
+#if 0
+	/*
+	 * Bring ACPI on-line.
+	 */
+#ifdef ACPI_DEBUGGER
+	if (acpi_dbgr & ACPI_DBGR_ENABLE)
+		acpi_osd_debugger();
+#endif
+
+#define ACPI_ENABLE_PHASE1 \
+    (ACPI_NO_HANDLER_INIT | ACPI_NO_EVENT_INIT)
+#define ACPI_ENABLE_PHASE2 \
+    (ACPI_NO_HARDWARE_INIT | ACPI_NO_ACPI_ENABLE | \
+     ACPI_NO_ADDRESS_SPACE_INIT)
+
+	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE1);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "unable to enable ACPI: %s\n",
+		    AcpiFormatException(rv));
+		return;
+	}
+
+	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE2);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "unable to enable ACPI: %s\n",
+		    AcpiFormatException(rv));
+		return;
+	}
+
+	/* early EC handler initialization if ECDT table is available */
+	config_found_ia(self, "acpiecdtbus", NULL, NULL);
+
+	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self,
+		    "unable to initialize ACPI objects: %s\n",
+		    AcpiFormatException(rv));
+		return;
+	}
+	acpi_active = 1;
+
+	acpi_enable_fixed_events(sc);
+#endif
+
+	pmf_device_deregister(self);
+
+#if 0
+	sysmon_power_settype("acpi");
+#endif
+	acpi_softc = NULL;
+
+	return 0;
+}
+
+static bool
+acpi_suspend(device_t dv PMF_FN_ARGS)
+{
+	acpi_suspended = 1;
+	return true;
+}
+
+static bool
+acpi_resume(device_t dv PMF_FN_ARGS)
+{
+	acpi_suspended = 0;
+	return true;
 }
 
 #if 0
@@ -546,10 +664,8 @@ acpi_build_tree(struct acpi_softc *sc)
 		"\\_TZ_",	/* ACPI 1.0 thermal zone namespace */
 		NULL,
 	};
-	struct acpi_attach_args aa;
 	struct acpi_make_devnode_state state;
 	struct acpi_scope *as;
-	struct acpi_devnode *ad;
 	ACPI_HANDLE parent;
 	ACPI_STATUS rv;
 	int i;
@@ -576,9 +692,54 @@ acpi_build_tree(struct acpi_softc *sc)
 			AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
 			    acpi_make_devnode, &state, NULL);
 		}
+	}
 
-		/* Now, for this namespace, try and attach the devices. */
+	acpi_rescan1(sc, NULL, NULL);
+}
+
+static int
+acpi_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct acpi_softc *sc = device_private(self);
+
+	acpi_rescan1(sc, ifattr, locators);
+	return 0;
+}
+
+/* XXX share this with sys/arch/i386/pci/elan520.c */
+static bool
+ifattr_match(const char *snull, const char *t)
+{
+	return (snull == NULL) || strcmp(snull, t) == 0;
+}
+
+static void
+acpi_rescan1(struct acpi_softc *sc, const char *ifattr, const int *locators)
+{
+	if (ifattr_match(ifattr, "acpinodebus"))
+		acpi_rescan_nodes(sc);
+
+	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL) {
+		sc->sc_apmbus = config_found_ia(sc->sc_dev, "acpiapmbus", NULL,
+		    NULL);
+	}
+}
+
+static void
+acpi_rescan_nodes(struct acpi_softc *sc)
+{
+	struct acpi_scope *as;
+
+	TAILQ_FOREACH(as, &sc->sc_scopes, as_list) {
+		struct acpi_devnode *ad;
+
+		/* Now, for this namespace, try to attach the devices. */
 		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
+			struct acpi_attach_args aa;
+
+			if (ad->ad_device != NULL)
+				continue;
+
 			aa.aa_node = ad;
 			aa.aa_iot = sc->sc_iot;
 			aa.aa_memt = sc->sc_memt;
@@ -618,11 +779,23 @@ acpi_build_tree(struct acpi_softc *sc)
 			    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
 				continue;
 
+			/*
+			 * Handled internally
+			 */
+			if (ad->ad_devinfo->Type == ACPI_TYPE_PROCESSOR ||
+			    ad->ad_devinfo->Type == ACPI_TYPE_POWER)
+				continue;
+
+			/*
+			 * Skip ignored HIDs
+			 */
+			if (acpi_match_hid(ad->ad_devinfo, acpi_ignored_ids))
+				continue;
+
 			ad->ad_device = config_found_ia(sc->sc_dev,
 			    "acpinodebus", &aa, acpi_print);
 		}
 	}
-	config_found_ia(sc->sc_dev, "acpiapmbus", NULL, NULL);
 }
 
 #ifdef ACPI_ACTIVATE_DEV
@@ -752,7 +925,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 				aprint_normal("       UID %s\n",
 				    ad->ad_devinfo->UniqueId.Value);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
-				aprint_normal("       ADR 0x%016qx\n",
+				aprint_normal("       ADR 0x%016" PRIx64 "\n",
 				    ad->ad_devinfo->Address);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_STA)
 				aprint_normal("       STA 0x%08x\n",
@@ -779,15 +952,29 @@ acpi_print(void *aux, const char *pnp)
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
 			char *pnpstr =
 			    aa->aa_node->ad_devinfo->HardwareId.Value;
-			char *str;
+			ACPI_BUFFER buf;
 
 			aprint_normal("%s (%s) ", aa->aa_node->ad_name,
 			    pnpstr);
-			rv = acpi_eval_string(aa->aa_node->ad_handle,
-			    "_STR", &str);
+
+			buf.Pointer = NULL;
+			buf.Length = ACPI_ALLOCATE_BUFFER;
+			rv = AcpiEvaluateObject(aa->aa_node->ad_handle,
+			    "_STR", NULL, &buf);
 			if (ACPI_SUCCESS(rv)) {
-				aprint_normal("[%s] ", str);
-				AcpiOsFree(str);
+				ACPI_OBJECT *obj = buf.Pointer;
+				switch (obj->Type) {
+				case ACPI_TYPE_STRING:
+					aprint_normal("[%s] ", obj->String.Pointer);
+					break;
+				case ACPI_TYPE_BUFFER:
+					aprint_normal("buffer %p ", obj->Buffer.Pointer);
+					break;
+				default:
+					aprint_normal("type %d ",obj->Type);
+					break;
+				}
+				AcpiOsFree(buf.Pointer);
 			}
 #ifdef ACPIVERBOSE
 			else {
@@ -1119,12 +1306,12 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 }
 
 /*
- * acpi_set_wake_gpe
+ * acpi_wake_gpe_helper
  *
- *	Set GPE as both Runtime and Wake
+ *	Set/unset GPE as both Runtime and Wake
  */
-void
-acpi_set_wake_gpe(ACPI_HANDLE handle)
+static void
+acpi_wake_gpe_helper(ACPI_HANDLE handle, bool enable)
 {
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
@@ -1141,11 +1328,37 @@ acpi_set_wake_gpe(ACPI_HANDLE handle)
 	elt = p->Package.Elements;
 
 	/* TBD: package support */
-	AcpiSetGpeType(NULL, elt[0].Integer.Value, ACPI_GPE_TYPE_WAKE_RUN);
-	AcpiEnableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
+	if (enable) {
+		AcpiSetGpeType(NULL, elt[0].Integer.Value,
+		    ACPI_GPE_TYPE_WAKE_RUN);
+		AcpiEnableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
+	} else
+		AcpiDisableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
 
  out:
 	AcpiOsFree(buf.Pointer);
+}
+
+/*
+ * acpi_clear_wake_gpe
+ *
+ *	Clear GPE as both Runtime and Wake
+ */
+void
+acpi_clear_wake_gpe(ACPI_HANDLE handle)
+{
+	acpi_wake_gpe_helper(handle, false);
+}
+
+/*
+ * acpi_set_wake_gpe
+ *
+ *	Set GPE as both Runtime and Wake
+ */
+void
+acpi_set_wake_gpe(ACPI_HANDLE handle)
+{
+	acpi_wake_gpe_helper(handle, true);
 }
 
 

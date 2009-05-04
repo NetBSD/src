@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.21.24.1 2008/05/16 02:23:48 yamt Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.21.24.2 2009/05/04 08:12:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ void		db_stack_trace_print(db_expr_t, bool, db_expr_t, const char *,
 
 /* ddb/db_xxx.c */
 void		db_kgdb_cmd(db_expr_t, bool, db_expr_t, const char *);
+void		db_show_files_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_proc.c */
 void		db_kill_proc(db_expr_t, bool, db_expr_t, const char *);
@@ -63,6 +64,12 @@ void		db_show_aio_jobs(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/sys_mqueue.c */
 void		db_show_mqueue_cmd(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/kern_module.c */
+void		db_show_module_cmd(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/subr_vmem.c */
+void		db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
 
 /*
  * This is used in several places to determine which printf format

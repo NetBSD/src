@@ -1,8 +1,11 @@
-/*	$NetBSD: promcons.c,v 1.3 2005/12/11 12:19:29 christos Exp $	*/
+/*	$NetBSD: promcons.c,v 1.3.78.1 2009/05/04 08:12:02 yamt Exp $	*/
 
 
 #include <sys/types.h>
 #include <machine/mon.h>
+#include <lib/libsa/stand.h>
+
+#include "libsa.h"
 
 int 
 getchar(void)

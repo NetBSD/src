@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.4.10.1 2009/05/04 08:12:14 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.4.10.1 2009/05/04 08:12:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,8 +109,12 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
-			if ((ihp->pirq & 0xff) == 0)
+			if (ihp->pirq & APIC_INT_VIA_APIC) {
+				/* make sure a new IRQ will be allocated */
+				ihp->pirq &= ~0xff;
+			} else {
 				ihp->pirq |= line;
+			}
 			goto end;
 		}
 		/*
@@ -126,10 +130,12 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 	}
 #ifdef XEN3
+#ifdef DOM0OPS
 	if (line >= NUM_LEGACY_IRQS) {
 		printf("pci_intr_map: bad interrupt line %d\n", line);
 		goto bad;
 	}
+#endif
 	if (line == 2) {
 		printf("pci_intr_map: changed line 2 to line 9\n");
 		line = 9;
@@ -170,16 +176,17 @@ const char
 {
 	static char buf[64];
 #if NIOAPIC > 0
-	struct pic *pic;
+	struct ioapic_softc *pic;
 	if (ih.pirq & APIC_INT_VIA_APIC) {
-		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih.pirq));
+		pic = ioapic_find(APIC_IRQ_APIC(ih.pirq));
 		if (pic == NULL) {
 			printf("pci_intr_string: bad ioapic %d\n",
 			    APIC_IRQ_APIC(ih.pirq));
 			return NULL;
 		}
 		snprintf(buf, 64, "%s pin %d, event channel %d",
-		    pic->pic_name, APIC_IRQ_PIN(ih.pirq), ih.evtch);
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih.pirq),
+		    ih.evtch);
 		return buf;
 	}
 #endif
@@ -194,22 +201,35 @@ pci_intr_evcnt(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh)
 	return NULL;
 }
 
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
+}
+
 void *
 pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
     int level, int (*func)(void *), void *arg)
 {
 	char evname[16];
 #if NIOAPIC > 0
-	struct pic *pic;
+	struct ioapic_softc *pic;
 	if (intrh.pirq & APIC_INT_VIA_APIC) {
-		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(intrh.pirq));
+		pic = ioapic_find(APIC_IRQ_APIC(intrh.pirq));
 		if (pic == NULL) {
 			printf("pci_intr_establish: bad ioapic %d\n",
 			    APIC_IRQ_APIC(intrh.pirq));
 			return NULL;
 		}
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    pic->pic_name, APIC_IRQ_PIN(intrh.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(intrh.pirq));
 	} else
 #endif
 		snprintf(evname, sizeof(evname), "irq%d", intrh.pirq);

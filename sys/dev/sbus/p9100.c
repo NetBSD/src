@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.37.4.1 2008/05/16 02:25:02 yamt Exp $ */
+/*	$NetBSD: p9100.c,v 1.37.4.2 2009/05/04 08:13:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.37.4.1 2008/05/16 02:25:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.37.4.2 2009/05/04 08:13:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,9 @@ static uint8_t	p9100_ramdac_read(struct p9100_softc *, bus_size_t);
 static void	p9100_ramdac_write(struct p9100_softc *, bus_size_t, uint8_t);
 
 static uint8_t	p9100_ramdac_read_ctl(struct p9100_softc *, int);
+#if NTCTRL > 0
 static void	p9100_ramdac_write_ctl(struct p9100_softc *, int, uint8_t);
+#endif
 
 static void 	p9100_init_engine(struct p9100_softc *);
 
@@ -232,7 +234,9 @@ static int	p9100_intr(void *);
 /* power management stuff */
 static void p9100_power_hook(int, void *);
 
+#if NTCTRL > 0
 static void p9100_set_extvga(void *, int);
+#endif
 
 #if NWSDISPLAY > 0
 struct wsdisplay_accessops p9100_accessops = {
@@ -270,7 +274,7 @@ p9100_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 {
-	struct p9100_softc *sc = (struct p9100_softc *)self;
+	struct p9100_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
 	struct fbdevice *fb = &sc->sc_fb;
 	int isconsole;
@@ -475,8 +479,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 }
 
 static void
-p9100_shutdown(arg)
-	void *arg;
+p9100_shutdown(void *arg)
 {
 	struct p9100_softc *sc = arg;
 
@@ -501,7 +504,7 @@ p9100open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
-	if (unit >= pnozz_cd.cd_ndevs || pnozz_cd.cd_devs[unit] == NULL)
+	if (device_lookup(&pnozz_cd, unit) == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -509,7 +512,7 @@ p9100open(dev_t dev, int flags, int mode, struct lwp *l)
 int
 p9100ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
+	struct p9100_softc *sc = device_lookup_private(&pnozz_cd, minor(dev));
 	struct fbgattr *fba;
 	int error, v;
 
@@ -876,6 +879,7 @@ p9100_ramdac_read_ctl(struct p9100_softc *sc, int off)
 	return p9100_ramdac_read(sc, DAC_INDX_DATA);
 }
 
+#if NTCTRL > 0
 static void
 p9100_ramdac_write_ctl(struct p9100_softc *sc, int off, uint8_t val)
 {
@@ -883,6 +887,7 @@ p9100_ramdac_write_ctl(struct p9100_softc *sc, int off, uint8_t val)
 	p9100_ramdac_write(sc, DAC_INDX_HI, (off & 0xff00) >> 8);
 	p9100_ramdac_write(sc, DAC_INDX_DATA, val);
 }
+#endif /* NTCTRL > 0 */
 
 /*
  * Undo the effect of an FBIOSVIDEO that turns the video off.
@@ -890,7 +895,7 @@ p9100_ramdac_write_ctl(struct p9100_softc *sc, int off, uint8_t val)
 static void
 p9100unblank(struct device *dev)
 {
-	struct p9100_softc *sc = (struct p9100_softc *)dev;
+	struct p9100_softc *sc = device_private(dev);
 
 	p9100_set_video((struct p9100_softc *)dev, 1);
 
@@ -984,7 +989,7 @@ p9100loadcmap(struct p9100_softc *sc, int start, int ncolors)
 static paddr_t
 p9100mmap(dev_t dev, off_t off, int prot)
 {
-	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
+	struct p9100_softc *sc = device_lookup_private(&pnozz_cd, minor(dev));
 
 	if (off & PGOFSET)
 		panic("p9100mmap");
@@ -1543,6 +1548,7 @@ p9100_loadcursor(struct p9100_softc *sc)
 #endif
 }
 
+#if NTCTRL > 0
 static void
 p9100_set_extvga(void *cookie, int status)
 {
@@ -1571,3 +1577,4 @@ p9100_set_extvga(void *cookie, int status)
 	splx(s);
 #endif
 }
+#endif /* NTCTRL > 0 */

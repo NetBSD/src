@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.58 2008/01/25 14:32:17 ad Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.58.10.1 2009/05/04 08:14:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -130,7 +130,7 @@ int	ufs_dirremove(struct vnode *, struct inode *, int, int);
 int	ufs_dirrewrite(struct inode *, struct inode *, ino_t, int, int, int);
 int	ufs_dirempty(struct inode *, ino_t, kauth_cred_t);
 int	ufs_checkpath(struct inode *, struct inode *, kauth_cred_t);
-int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **);
+int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
 
 /* ufs_quota.c */
 /*
@@ -171,19 +171,6 @@ void	ufs_gop_markupdate(struct vnode *, int);
  */
 
 void	ffs_snapgone(struct inode *);
-
-/*
- * Soft dependency function prototypes.
- */
-int   softdep_setup_directory_add(struct buf *, struct inode *, off_t,
-				  ino_t, struct buf *, int);
-void  softdep_change_directoryentry_offset(struct inode *, void *,
-					   void *, void *, int);
-void  softdep_setup_remove(struct buf *, struct inode *, struct inode *, int);
-void  softdep_setup_directory_change(struct buf *, struct inode *,
-				     struct inode *, ino_t, int);
-void  softdep_change_linkcnt(struct inode *);
-void  softdep_releasefile(struct inode *);
 
 __END_DECLS
 

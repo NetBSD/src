@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.16 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.16.4.1 2009/05/04 08:12:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.16 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.16.4.1 2009/05/04 08:12:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,7 @@ moxa_isaattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-moxa_isaintr(arg)
-	void *arg;
+moxa_isaintr(void *arg)
 {
 	struct moxa_isa_softc *sc = arg;
 	int bits;

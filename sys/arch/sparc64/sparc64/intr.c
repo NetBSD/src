@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.57.4.1 2008/05/16 02:23:16 yamt Exp $ */
+/*	$NetBSD: intr.c,v 1.57.4.2 2009/05/04 08:11:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.57.4.1 2008/05/16 02:23:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.57.4.2 2009/05/04 08:11:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -95,11 +95,11 @@ strayintr(const struct trapframe64 *fp, int vectored)
 	/* If we're in polled mode ignore spurious interrupts */
 	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
+	snprintb(buf, sizeof(buf), PSTATE_BITS,
+	    (fp->tf_tstate>>TSTATE_PSTATE_SHIFT));
 	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%s vecttored=%d\n",
 	    fp->tf_pil, (unsigned long long)fp->tf_pc,
-	    (unsigned long long)fp->tf_npc, 
-	    bitmask_snprintf((fp->tf_tstate>>TSTATE_PSTATE_SHIFT),
-	      PSTATE_BITS, buf, sizeof(buf)), vectored);
+	    (unsigned long long)fp->tf_npc,  buf, vectored);
 
 	timesince = time_second - straytime;
 	if (timesince <= 10) {
@@ -163,12 +163,9 @@ intr_biglock_wrapper(void *vp)
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(int level, struct intrhand *ih)
+intr_establish(int level, bool mpsafe, struct intrhand *ih)
 {
 	struct intrhand *q = NULL;
-#ifdef MULTIPROCESSOR
-	bool mpsafe = (level != IPL_VM);
-#endif
 	int s;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_add.c,v 1.6 2005/12/11 12:17:52 christos Exp $ */
+/*	$NetBSD: fpu_add.c,v 1.6.78.1 2009/05/04 08:11:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.6 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.6.78.1 2009/05/04 08:11:25 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -58,8 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.6 2005/12/11 12:17:52 christos Exp $")
 #include "fpu_emulate.h"
 
 struct fpn *
-fpu_add(fe)
-	register struct fpemu *fe;
+fpu_add(register struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
 	register u_int r0, r1, r2;

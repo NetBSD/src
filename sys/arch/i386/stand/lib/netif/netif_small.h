@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_small.h,v 1.3 2003/03/13 16:02:39 drochner Exp $	*/
+/*	$NetBSD: netif_small.h,v 1.3.108.1 2009/05/04 08:11:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -36,5 +36,5 @@
 /* minimal netif - for boot ROMs we don't have to select between
  several interfaces, and we have to save space */
 
-int netif_open __P((void));
-void netif_close __P((int));
+int netif_open(void);
+void netif_close(int);

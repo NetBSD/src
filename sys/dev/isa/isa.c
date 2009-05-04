@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.133.4.1 2008/05/16 02:24:27 yamt Exp $	*/
+/*	$NetBSD: isa.c,v 1.133.4.2 2009/05/04 08:12:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.133.4.1 2008/05/16 02:24:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.133.4.2 2009/05/04 08:12:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ isaattach(device_t parent, device_t self, void *aux)
 	if (sc->sc_dynamicdevs == 0)
 		isa_free_knowndevs(sc);
 
-	/* Attach all indrect-config children. */
+	/* Attach all indirect-config children. */
 	isarescan(self, "isa", wildcard);
 
 	if (!pmf_device_register(self, NULL, NULL))

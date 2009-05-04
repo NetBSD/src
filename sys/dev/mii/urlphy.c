@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.22.4.1 2008/05/16 02:24:37 yamt Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.22.4.2 2009/05/04 08:12:52 yamt Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.22.4.1 2008/05/16 02:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.22.4.2 2009/05/04 08:12:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ urlphy_match(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	/*
-	 * RTL8150 reports OUT == 0, MODEL == 0
+	 * RTL8150 reports OUI == 0, MODEL == 0
 	 */
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 &&
 	    MII_MODEL(ma->mii_id2) != 0)
@@ -131,9 +131,6 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

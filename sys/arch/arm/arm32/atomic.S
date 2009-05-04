@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.2.10.1 2008/05/16 02:21:55 yamt Exp $ */
+/*	$NetBSD: atomic.S,v 1.2.10.2 2009/05/04 08:10:38 yamt Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -44,7 +44,7 @@
 #undef atomic_set_bit
 ENTRY(atomic_set_bit)
 	mrs	r2, cpsr
-	orr	r3, r2, #(I32_bit)
+	orr	r3, r2, #(IF32_bits)
 	msr	cpsr_c, r3
 
 	ldr	r3, [r0]
@@ -58,7 +58,7 @@ ENTRY(atomic_set_bit)
 #undef atomic_clear_bit
 ENTRY(atomic_clear_bit)
 	mrs	r2, cpsr
-	orr	r3, r2, #(I32_bit)
+	orr	r3, r2, #(IF32_bits)
 	msr	cpsr_c, r3
 
 	ldr	r3, [r0]

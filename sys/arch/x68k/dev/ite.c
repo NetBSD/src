@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.54 2008/02/24 05:32:09 isaki Exp $	*/
+/*	$NetBSD: ite.c,v 1.54.4.1 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.54 2008/02/24 05:32:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.54.4.1 2009/05/04 08:12:06 yamt Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.54 2008/02/24 05:32:09 isaki Exp $");
 #include <machine/cpu.h>
 #include <machine/kbio.h>
 #include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <machine/grfioctl.h>
 #include <machine/iteioctl.h>
 
@@ -185,10 +186,10 @@ void	itestart(struct tty *);
 void iteputchar(int, struct ite_softc *);
 void ite_putstr(const u_char *, int, dev_t);
 
-void iteattach(struct device *, struct device *, void *);
-int itematch(struct device *, struct cfdata *, void *);
+int itematch(device_t, cfdata_t, void *);
+void iteattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ite, sizeof(struct ite_softc),
+CFATTACH_DECL_NEW(ite, sizeof(struct ite_softc),
     itematch, iteattach, NULL, NULL);
 
 extern struct cfdriver ite_cd;
@@ -207,7 +208,7 @@ const struct cdevsw ite_cdevsw = {
 };
 
 int
-itematch(struct device *pdp, struct cfdata *cdp, void *auxp)
+itematch(device_t pdp, cfdata_t cdp, void *auxp)
 {
 	struct grf_softc *gp;
 	
@@ -223,46 +224,38 @@ itematch(struct device *pdp, struct cfdata *cdp, void *auxp)
  * an ite device, it is also called from ite_cninit().
  */
 void
-iteattach(struct device *pdp, struct device *dp, void *auxp)
+iteattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct ite_softc *ip;
 	struct grf_softc *gp;
 
 	gp = (struct grf_softc *)auxp;
-	if (dp) {
-		ip = (struct ite_softc *)dp;
-		if(con_itesoftc.grf != NULL
-			/*&& con_itesoftc.grf->g_unit == gp->g_unit*/) {
-			/*
-			 * console reinit copy params over.
-			 * and console always gets keyboard
-			 */
-			memcpy(&ip->grf, &con_itesoftc.grf,
-			    (char *)&ip[1] - (char *)&ip->grf);
-			con_itesoftc.grf = NULL;
-			kbd_ite = ip;
-		}
-		ip->grf = gp;
-		iteinit(device_unit(&ip->device)); /* XXX */
-		printf(": rows %d cols %d", ip->rows, ip->cols);
-		if (kbd_ite == NULL)
-			kbd_ite = ip;
-		printf("\n");
-	} else {
-		if (con_itesoftc.grf != NULL)
-			return;
-		con_itesoftc.grf = gp;
-		con_itesoftc.tabs = cons_tabs;
+	ip = device_private(dp);
+	if(con_itesoftc.grf != NULL
+		/*&& con_itesoftc.grf->g_unit == gp->g_unit*/) {
+		/*
+		 * console reinit copy params over.
+		 * and console always gets keyboard
+		 */
+		memcpy(&ip->grf, &con_itesoftc.grf,
+		    (char *)&ip[1] - (char *)&ip->grf);
+		con_itesoftc.grf = NULL;
+		kbd_ite = ip;
 	}
+	ip->grf = gp;
+	iteinit(device_unit(&ip->device)); /* XXX */
+	aprint_normal(": rows %d cols %d", ip->rows, ip->cols);
+	if (kbd_ite == NULL)
+		kbd_ite = ip;
+	aprint_normal("\n");
 }
 
 struct ite_softc *
 getitesp(dev_t dev)
 {
-	extern int x68k_realconfig;
 
 	if (x68k_realconfig && con_itesoftc.grf == NULL)
-		return(ite_cd.cd_devs[UNIT(dev)]);
+		return device_lookup_private(&ite_cd, UNIT(dev));
 
 	if (con_itesoftc.grf == NULL)
 		panic("no ite_softc for console");
@@ -292,6 +285,17 @@ iteinit(dev_t dev)
 		ip->tabs = malloc(MAX_TABS*sizeof(u_char), M_DEVBUF, M_WAITOK);
 	ite_reset(ip);
 	ip->flags |= ITE_INITED;
+}
+
+void
+ite_config_console(void)
+{
+	struct grf_softc *gp = &congrf;
+
+	if (con_itesoftc.grf != NULL)
+		return;
+	con_itesoftc.grf = gp;
+	con_itesoftc.tabs = cons_tabs;
 }
 
 /*

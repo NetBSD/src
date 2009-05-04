@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.52 2007/10/17 19:53:47 garbled Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.52.20.1 2009/05/04 08:10:46 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.21 2006/09/03 13:51:24 bjh21 Exp $
-#		NetBSD: GENERIC.in,v 1.67 2007/07/16 06:26:54 he Exp $
+#		NetBSD: MILAN.in,v 1.22 2009/01/24 00:19:47 abs Exp $
+#		NetBSD: GENERIC.in,v 1.80 2009/03/06 23:38:07 abs Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -18,8 +18,6 @@ options FPSP # 68040 Floatingpoint support
 options M060SP # MC68060 software support (Required for 060)
 options INET # IP + ICMP + TCP + UDP
 options INET6 # IPV6
-options ISO,TPIP # OSI
-options NETATALK # AppleTalk networking protocols
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
@@ -28,9 +26,9 @@ options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
-file-system KERNFS # Kernel parameter filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
+file-system KERNFS # Kernel parameter filesystem
 file-system NFS # Network File System client side code
 file-system PROCFS # Process filesystem
 file-system FDESC # /dev/fd
@@ -40,15 +38,13 @@ file-system UNION # union file system
 file-system UMAPFS # null file system (with uid & gid remapping)
 file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
-file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
-options QUOTA # Disk quotas for local disks
-options SOFTDEP # FFS soft updates support.
+options WAPBL # File system journaling support - Experimental
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
 options DDB_HISTORY_SIZE=100 # Enable history editing in DDB
-options COMPAT_43 # 4.3 BSD compatible system calls (required)
+options COMPAT_43 # 4.3 BSD compatible system calls
 options COMPAT_10 # Compatibility with NetBSD 1.0
 options COMPAT_11 # Compatibility with NetBSD 1.1
 options COMPAT_12 # Compatibility with NetBSD 1.2
@@ -59,6 +55,7 @@ options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
 options COMPAT_30 # NetBSD 3.0 compatibility.
 options COMPAT_40 # NetBSD 4.0 compatibility.
+options COMPAT_50 # NetBSD 5.0 compatibility.
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
@@ -71,12 +68,11 @@ options USERCONF # userconf(4) support
 options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
 options SCSIVERBOSE # human readable SCSI error messages
 options MIIVERBOSE # verbose PHY autoconfig messages
-options PCIVERBOSE # verbose PCI device autoconfig messages
-options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-options SERCONSOLE # modem1 console support
+options SERCONSOLE # modem1 console support, breaks Falcon
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
 options TRY_SCSI_LINKED_COMMANDS=0x7f
@@ -86,19 +82,14 @@ pseudo-device ppp # ppp
 pseudo-device pppoe # PPP over Ethernet (RFC 2516)
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device md 3 # Boot memory disk
+pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device bpfilter # berkeley packet filters
 pseudo-device tun # network tunnel
 pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
-pseudo-device vlan # IEEE 802.1q encapsulation
-pseudo-device bridge # simple inter-network bridging
-pseudo-device agr # IEEE 802.3ad link aggregation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device raid 8 # RAIDframe disk driver
-options RAID_AUTOCONFIG # auto-configuration of RAID components
 pseudo-device fss 4 # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator

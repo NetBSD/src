@@ -1,7 +1,7 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1.32.1 2008/05/16 02:23:28 yamt Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.1.32.2 2009/05/04 08:12:09 yamt Exp $	 */
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,24 +45,32 @@
 #define	WARN(a)			(void)(printf a, \
 				    printf((errno ? ": %s\n" : "\n"), \
 				    strerror(errno)))
-#define PROGRESS(a)		(void) printf a
+#define PROGRESS(a)		x86_progress a
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		((a) == ZMAGIC)
 
+void x86_progress(const char *, ...);
 void vpbcopy(const void *, void *, size_t);
 void pbzero(void *, size_t);
 ssize_t pread(int, void *, size_t);
 
 #else
-
+#ifdef TEST
+#define LOADADDR(a)		offset
+#define READ(f, b, c)		c
+#define BCOPY(s, d, c)	
+#define BZERO(d, c)	
+#define PROGRESS(a)		(void) printf a
+#else
 #define LOADADDR(a)		(((u_long)(a)) + offset)
-#define ALIGNENTRY(a)		((u_long)(a))
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
 #define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
-#define WARN(a)			warn a
 #define PROGRESS(a)		/* nothing */
+#endif
+#define WARN(a)			warn a
+#define ALIGNENTRY(a)		((u_long)(a))
 #define ALLOC(a)		malloc(a)
 #define DEALLOC(a, b)		free(a)
 #define OKMAGIC(a)		((a) == OMAGIC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.8.2.1 2008/05/16 02:25:27 yamt Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.8.2.2 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.8.2.1 2008/05/16 02:25:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.8.2.2 2009/05/04 08:13:48 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -173,7 +173,7 @@ xc_lowpri(u_int flags, xcfunc_t func, void *arg1, void *arg2,
 	  struct cpu_info *ci)
 {
 	CPU_INFO_ITERATOR cii;
-	u_int where;
+	uint64_t where;
 
 	mutex_enter(&xc_lock);
 	while (xc_headp != xc_tailp)

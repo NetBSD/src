@@ -1,7 +1,7 @@
-/*	$NetBSD: kthread.h,v 1.6.10.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: kthread.h,v 1.6.10.2 2009/05/04 08:14:35 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,6 +43,7 @@
 #define	KTHREAD_IDLE	0x01	/* do not set runnable */
 #define	KTHREAD_MPSAFE	0x02	/* does not need kernel_lock */
 #define	KTHREAD_INTR	0x04	/* interrupt handler */
+#define	KTHREAD_TS	0x08	/* timeshared */
 
 int	kthread_create(pri_t, int, struct cpu_info *,
 		       void (*)(void *), void *,

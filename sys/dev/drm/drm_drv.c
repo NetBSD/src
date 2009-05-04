@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.10.4.1 2008/05/16 02:23:57 yamt Exp $ */
+/* $NetBSD: drm_drv.c,v 1.10.4.2 2009/05/04 08:12:37 yamt Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10.4.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10.4.2 2009/05/04 08:12:37 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
+
+#include <sys/module.h>
 
 #include "drmP.h"
 #include "drm.h"
@@ -112,8 +114,8 @@ static drm_ioctl_desc_t		  drm_ioctls[256] = {
 	[DRM_IOCTL_NR(DRM_IOCTL_AGP_BIND)]      = { drm_agp_bind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
 	[DRM_IOCTL_NR(DRM_IOCTL_AGP_UNBIND)]    = { drm_agp_unbind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
 
-	[DRM_IOCTL_NR(DRM_IOCTL_SG_ALLOC)]      = { drm_sg_alloc,    DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
-	[DRM_IOCTL_NR(DRM_IOCTL_SG_FREE)]       = { drm_sg_free,     DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
+	[DRM_IOCTL_NR(DRM_IOCTL_SG_ALLOC)]      = { drm_sg_alloc_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
+	[DRM_IOCTL_NR(DRM_IOCTL_SG_FREE)]       = { drm_sg_free_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY },
 
 	[DRM_IOCTL_NR(DRM_IOCTL_WAIT_VBLANK)]   = { drm_wait_vblank, 0 },
 };
@@ -180,7 +182,8 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	/* This should not happen, since drm_probe made sure there was room */
 	if(unit == DRM_MAXUNITS) return;
 
-	dev = drm_units[unit] = (drm_device_t*)kdev;
+	dev = drm_units[unit] = device_private(kdev);
+	dev->device = kdev;
 	dev->unit = unit;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
@@ -255,7 +258,11 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 
 int drm_detach(struct device *self, int flags)
 {
-	drm_device_t *dev = (drm_device_t*)self;
+	drm_device_t *dev = device_private(self);
+
+	/* XXX locking */
+	if (dev->open_count)
+		return EBUSY;
 	drm_unload(dev);
 	drm_units[dev->unit] = NULL;
 	return 0;
@@ -295,6 +302,7 @@ static int drm_firstopen(drm_device_t *dev)
 	int i;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
+	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
 
 	/* prebuild the SAREA */
 	i = drm_addmap(dev, 0, SAREA_MAX, _DRM_SHM,
@@ -406,7 +414,7 @@ static int drm_lastclose(drm_device_t *dev)
 
 	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
 		if (dev->pci_map_data[i].mapped > 1) {
-			bus_space_unmap(dev->pci_map_data[i].maptype,
+			bus_space_unmap(dev->pa.pa_memt,
 					dev->pci_map_data[i].bsh,
 					dev->pci_map_data[i].size);
 			dev->pci_map_data[i].mapped = 0;
@@ -428,6 +436,8 @@ static int drm_lastclose(drm_device_t *dev)
 		TAILQ_REMOVE(&dev->files, filep, link);
 		free(filep, M_DRM);
 	}
+
+	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;
 }
@@ -485,7 +495,7 @@ static int drm_load(drm_device_t *dev)
 		goto error;
 	}
 	
-	aprint_normal_dev(&dev->device, "Initialized %s %d.%d.%d %s\n",
+	aprint_normal_dev(dev->device, "Initialized %s %d.%d.%d %s\n",
 	  	dev->driver.name,
 	  	dev->driver.major,
 	  	dev->driver.minor,
@@ -620,7 +630,7 @@ int drm_close_pid(drm_device_t *dev, drm_file_t *priv, pid_t pid)
 	 */
 
 	DRM_DEBUG( "pid = %d, device = 0x%lx, open_count = %d\n",
-		   DRM_CURRENTPID, (long)&dev->device, dev->open_count);
+		   DRM_CURRENTPID, (long)dev->device, dev->open_count);
 
 	if (dev->lock.hw_lock && _DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)
 	    && dev->lock.filp == filp) {
@@ -745,7 +755,7 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, void *data, int flags,
 	++priv->ioctl_count;
 
 	DRM_DEBUG( "pid=%d, cmd=0x%02lx, nr=0x%02x, dev 0x%lx, auth=%d\n",
-		 DRM_CURRENTPID, cmd, nr, (long)&dev->device, priv->authenticated );
+		 DRM_CURRENTPID, cmd, nr, (long)dev->device, priv->authenticated );
 
 	switch (cmd) {
 	case FIONBIO:
@@ -805,4 +815,28 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, void *data, int flags,
 		DRM_DEBUG("    returning %d\n", retcode);
 
 	return DRM_ERR(retcode);
+}
+
+MODULE(MODULE_CLASS_MISC, drm, NULL);
+
+static int
+drm_modcmd(modcmd_t cmd, void *arg)
+{
+#ifdef _MODULE
+	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return devsw_attach("drm", NULL, &bmajor, &drm_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &drm_cdevsw);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+#else
+	if (cmd == MODULE_CMD_INIT)
+		return 0;
+	return ENOTTY;
+#endif
 }

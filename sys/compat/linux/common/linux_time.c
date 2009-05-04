@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.23.4.1 2008/05/16 02:23:43 yamt Exp $ */
+/*	$NetBSD: linux_time.c,v 1.23.4.2 2009/05/04 08:12:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.23.4.1 2008/05/16 02:23:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.23.4.2 2009/05/04 08:12:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.23.4.1 2008/05/16 02:23:43 yamt Exp
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/systm.h>
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
@@ -56,10 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.23.4.1 2008/05/16 02:23:43 yamt Exp
 
 #include <compat/common/compat_util.h>
 
-static void native_to_linux_timespec(struct linux_timespec *,
-				     struct timespec *);
-static void linux_to_native_timespec(struct timespec *,
-				     struct linux_timespec *);
+void native_to_linux_timespec(struct linux_timespec *, struct timespec *);
+void linux_to_native_timespec(struct timespec *, struct linux_timespec *);
 /*
  * This is not implemented for alpha yet
  */
@@ -78,13 +77,13 @@ int
 linux_sys_gettimeofday(struct lwp *l, const struct linux_sys_gettimeofday_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(struct timeval *) tz;
+		syscallarg(struct timeval50 *) tz;
 		syscallarg(struct timezone *) tzp;
 	} */
 	int error = 0;
 
 	if (SCARG(uap, tp)) {
-		error = sys_gettimeofday(l, (const void *)uap, retval);
+		error = compat_50_sys_gettimeofday(l, (const void *)uap, retval);
 		if (error)
 			return (error);
 	}
@@ -102,13 +101,13 @@ int
 linux_sys_settimeofday(struct lwp *l, const struct linux_sys_settimeofday_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(struct timeval *) tp;
+		syscallarg(struct timeval50 *) tp;
 		syscallarg(struct timezone *) tzp;
 	} */
 	int error = 0;
 
 	if (SCARG(uap, tp)) {
-		error = sys_settimeofday(l, (const void *)uap, retval);
+		error = compat_50_sys_settimeofday(l, (const void *)uap, retval);
 		if (error)
 			return (error);
 	}
@@ -128,18 +127,44 @@ linux_sys_settimeofday(struct lwp *l, const struct linux_sys_settimeofday_args *
 
 #endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ || __arm__ */
 
-static void
+void
 native_to_linux_timespec(struct linux_timespec *ltp, struct timespec *ntp)
 {
 	ltp->tv_sec = ntp->tv_sec;
 	ltp->tv_nsec = ntp->tv_nsec;
 }
 
-static void
+void
 linux_to_native_timespec(struct timespec *ntp, struct linux_timespec *ltp)
 {
 	ntp->tv_sec = ltp->tv_sec;
 	ntp->tv_nsec = ltp->tv_nsec;
+}
+
+int
+linux_sys_nanosleep(struct lwp *l, const struct linux_sys_nanosleep_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(struct linux_timespec *) rqtp;
+		syscallarg(struct linux_timespec *) rmtp;
+	} */
+	struct timespec rqts, rmts;
+	struct linux_timespec lrqts, lrmts;
+	int error, error1;
+
+	error = copyin(SCARG(uap, rqtp), &lrqts, sizeof(lrqts));
+	if (error != 0)
+		return error;
+	linux_to_native_timespec(&rqts, &lrqts);
+
+	error = nanosleep1(l, &rqts, SCARG(uap, rmtp) ? &rmts : NULL);
+	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
+
+	native_to_linux_timespec(&lrmts, &rmts);
+	error1 = copyout(&lrmts, SCARG(uap, rmtp), sizeof(lrmts));
+	return error1 ? error1 : error;
 }
 
 int

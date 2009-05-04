@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.215.10.1 2008/05/16 02:26:00 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.215.10.2 2009/05/04 08:14:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.10.1 2008/05/16 02:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.10.2 2009/05/04 08:14:38 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -343,8 +343,6 @@ lfs_inactive(void *v)
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-
-	KASSERT(VTOI(ap->a_vp)->i_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
 
 	lfs_unmark_vnode(ap->a_vp);
 
@@ -1077,8 +1075,6 @@ lfs_reclaim(void *v)
 	struct lfs *fs = ip->i_lfs;
 	int error;
 
-	KASSERT(ip->i_nlink == ip->i_ffs_effnlink);
-
 	mutex_enter(&lfs_lock);
 	LFS_CLR_UINO(ip, IN_ALLMOD);
 	mutex_exit(&lfs_lock);
@@ -1425,7 +1421,7 @@ lfs_fcntl(void *v)
 {
 	struct vop_fcntl_args /* {
 		struct vnode *a_vp;
-		u_long a_command;
+		u_int a_command;
 		void * a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
@@ -1466,7 +1462,7 @@ lfs_fcntl(void *v)
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
 	error = 0;
-	switch (ap->a_command) {
+	switch ((int)ap->a_command) {
 	    case LFCNSEGWAITALL:
 	    case LFCNSEGWAITALL_COMPAT:
 		fsidp = NULL;
@@ -1819,7 +1815,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
   top:
 	by_list = (vp->v_uobj.uo_npages <=
 		   ((endoffset - startoffset) >> PAGE_SHIFT) *
-		   UVM_PAGE_HASH_PENALTY);
+		   UVM_PAGE_TREE_PENALTY);
 	any_dirty = 0;
 
 	if (by_list) {
@@ -1839,7 +1835,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				       ((curpg->offset & fs->lfs_bmask) ||
 					curpg->offset >= vp->v_size ||
 					curpg->offset >= endoffset))
-					curpg = TAILQ_NEXT(curpg, listq);
+					curpg = TAILQ_NEXT(curpg, listq.queue);
 			}
 			if (curpg == NULL)
 				break;
@@ -1896,7 +1892,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		}
 		if (pages_per_block > 0 && nonexistent >= pages_per_block) {
 			if (by_list) {
-				curpg = TAILQ_NEXT(curpg, listq);
+				curpg = TAILQ_NEXT(curpg, listq.queue);
 			} else {
 				soff += fs->lfs_bsize;
 			}
@@ -1940,7 +1936,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			break;
 
 		if (by_list) {
-			curpg = TAILQ_NEXT(curpg, listq);
+			curpg = TAILQ_NEXT(curpg, listq.queue);
 		} else {
 			soff += MAX(PAGE_SIZE, fs->lfs_bsize);
 		}

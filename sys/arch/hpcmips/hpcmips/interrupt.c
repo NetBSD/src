@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.12.4.1 2008/05/16 02:22:29 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12.4.2 2009/05/04 08:11:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.4.1 2008/05/16 02:22:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.4.2 2009/05/04 08:11:11 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -48,7 +48,7 @@ extern const u_int32_t __ipl_sr_bits_tx[];
 const u_int32_t *ipl_sr_bits;
 
 void
-intr_init()
+intr_init(void)
 {
 
 	ipl_sr_bits = CPUISMIPS3 ? __ipl_sr_bits_vr : __ipl_sr_bits_tx;

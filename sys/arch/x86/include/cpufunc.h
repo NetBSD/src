@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.6.2.1 2008/05/16 02:23:27 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6.2.2 2009/05/04 08:12:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,9 @@ void	x86_lfence(void);
 void	x86_sfence(void);
 void	x86_mfence(void);
 void	x86_flush(void);
-void	x86_patch(void);
+#ifndef XEN
+void	x86_patch(bool);
+#endif
 void	invlpg(vaddr_t);
 void	lidt(struct region_descriptor *);
 void	lldt(u_short);
@@ -103,6 +105,8 @@ void	x86_write_psl(u_long);
 /* Use read_flags, write_flags to adjust other members of %eflags. */
 u_long	x86_read_flags(void);
 void	x86_write_flags(u_long);
+
+void	x86_reset(void);
 
 /* 
  * Some of the undocumented AMD64 MSRs need a 'passcode' to access.

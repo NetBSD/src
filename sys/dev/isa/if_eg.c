@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.76 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.76.4.1 2009/05/04 08:12:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.76 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.76.4.1 2009/05/04 08:12:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -151,8 +151,7 @@ static int egreadPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
  */
 
 static inline void
-egprintpcb(pcb)
-	u_int8_t *pcb;
+egprintpcb(u_int8_t *pcb)
 {
 	int i;
 
@@ -175,10 +174,7 @@ egprintstat(u_char b)
 }
 
 static int
-egoutPCB(iot, ioh, b)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t b;
+egoutPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t b)
 {
 	int i;
 
@@ -194,10 +190,7 @@ egoutPCB(iot, ioh, b)
 }
 
 static int
-egreadPCBstat(iot, ioh, statb)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t statb;
+egreadPCBstat(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t statb)
 {
 	int i;
 
@@ -213,9 +206,7 @@ egreadPCBstat(iot, ioh, statb)
 }
 
 static int
-egreadPCBready(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+egreadPCBready(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i;
 
@@ -229,10 +220,7 @@ egreadPCBready(iot, ioh)
 }
 
 static int
-egwritePCB(iot, ioh, pcb)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t *pcb;
+egwritePCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
 {
 	int i;
 	u_int8_t len;
@@ -261,10 +249,7 @@ egwritePCB(iot, ioh, pcb)
 }
 
 static int
-egreadPCB(iot, ioh, pcb)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t *pcb;
+egreadPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
 {
 	int i;
 
@@ -508,8 +493,7 @@ egattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-eginit(sc)
-	struct eg_softc *sc;
+eginit(struct eg_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -567,8 +551,7 @@ eginit(sc)
 }
 
 void
-egrecv(sc)
-	struct eg_softc *sc;
+egrecv(struct eg_softc *sc)
 {
 
 	while (sc->eg_incount < EG_INLEN) {
@@ -589,8 +572,7 @@ egrecv(sc)
 }
 
 void
-egstart(ifp)
-	struct ifnet *ifp;
+egstart(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -662,8 +644,7 @@ loop:
 }
 
 int
-egintr(arg)
-	void *arg;
+egintr(void *arg)
 {
 	struct eg_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -751,10 +732,7 @@ egintr(arg)
  * Pass a packet up to the higher levels.
  */
 void
-egread(sc, buf, len)
-	struct eg_softc *sc;
-	void *buf;
-	int len;
+egread(struct eg_softc *sc, void *buf, int len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -791,10 +769,7 @@ egread(sc, buf, len)
  * convert buf into mbufs
  */
 struct mbuf *
-egget(sc, buf, totlen)
-	struct eg_softc *sc;
-	void *buf;
-	int totlen;
+egget(struct eg_softc *sc, void *buf, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m, *m0, *newm;
@@ -838,10 +813,7 @@ bad:
 }
 
 int
-egioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+egioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct eg_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -851,39 +823,42 @@ egioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
+		eginit(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			eginit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			eginit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			egstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			eginit(sc);
-		} else {
+			break;
+		default:
 			sc->eg_pcb[0] = EG_CMD_GETSTATS;
 			sc->eg_pcb[1] = 0;
 			if (egwritePCB(sc->sc_iot, sc->sc_ioh, sc->eg_pcb) != 0) {
@@ -894,11 +869,12 @@ egioctl(ifp, cmd, data)
 			 * IFF_MULTICAST, IFF_PROMISC,
 			 * IFF_LINK0, IFF_LINK1,
 			 */
+			break;
 		}
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
@@ -907,8 +883,7 @@ egioctl(ifp, cmd, data)
 }
 
 void
-egreset(sc)
-	struct eg_softc *sc;
+egreset(struct eg_softc *sc)
 {
 	int s;
 
@@ -920,8 +895,7 @@ egreset(sc)
 }
 
 void
-egwatchdog(ifp)
-	struct ifnet *ifp;
+egwatchdog(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
 
@@ -932,8 +906,7 @@ egwatchdog(ifp)
 }
 
 void
-egstop(sc)
-	struct eg_softc *sc;
+egstop(struct eg_softc *sc)
 {
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EG_CONTROL, 0);

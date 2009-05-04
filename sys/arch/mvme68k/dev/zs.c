@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.39.4.1 2008/05/16 02:22:53 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.39.4.2 2009/05/04 08:11:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39.4.1 2008/05/16 02:22:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39.4.2 2009/05/04 08:11:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,6 @@ zs_config(struct zsc_softc *zsc, struct zsdevice *zs, int vector, int pclk)
 		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
-		zs_lock_init(cs);
 
 		/*
 		 * If we're the console, copy the channel state, and
@@ -161,6 +160,7 @@ zs_config(struct zsc_softc *zsc, struct zsdevice *zs, int vector, int pclk)
 			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		}
 
+		zs_lock_init(cs);
 		cs->cs_brg_clk = pclk / 16;
 		cs->cs_creg[2] = cs->cs_preg[2] = vector;
 		zs_set_speed(cs, cs->cs_defspeed);
@@ -264,7 +264,7 @@ zshard_shared(void *arg)
 
 	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = device_private(zsc_cd.cd_devs[unit]);
+		zsc = device_lookup_private(&zsc_cd, unit);
 		if (zsc != NULL && zsc_intr_hard(zsc)) {
 			if ((zsc->zsc_cs[0]->cs_softreq) ||
 			    (zsc->zsc_cs[1]->cs_softreq))

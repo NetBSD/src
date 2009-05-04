@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.18 2008/04/24 18:39:23 ad Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.18.2.1 2009/05/04 08:12:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.18 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.18.2.1 2009/05/04 08:12:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.18 2008/04/24 18:39:23 ad Exp $"
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32_wait4(struct lwp *l, const struct netbsd32_wait4_args *uap, register_t *retval)
+netbsd32___wait450(struct lwp *l, const struct netbsd32___wait450_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) pid;
@@ -82,7 +81,8 @@ netbsd32_wait4(struct lwp *l, const struct netbsd32_wait4_args *uap, register_t 
 
 
 int
-netbsd32_getrusage(struct lwp *l, const struct netbsd32_getrusage_args *uap, register_t *retval)
+netbsd32___getrusage50(struct lwp *l,
+    const struct netbsd32___getrusage50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) who;

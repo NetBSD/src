@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.16.54.1 2008/05/16 02:25:11 yamt Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.16.54.2 2009/05/04 08:13:21 yamt Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.16.54.1 2008/05/16 02:25:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.16.54.2 2009/05/04 08:13:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	adev.adev_drv_data = &scbus->sc_drv_data;
 	scbus->sc_drv_data.drive_flags = DRIVE_ATA;
 	scbus->sc_drv_data.chnl_softc = sc;
-	scbus->base.sc_child = config_found(&sc->sc_dev, &adev, uwdprint);
+	scbus->base.sc_child = config_found(sc->sc_dev, &adev, uwdprint);
 
 	return (0);
 }

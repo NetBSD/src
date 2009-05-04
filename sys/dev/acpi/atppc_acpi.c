@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.13.4.1 2008/05/16 02:23:53 yamt Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.13.4.2 2009/05/04 08:12:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.13.4.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.13.4.2 2009/05/04 08:12:34 yamt Exp $");
 
 #include "opt_atppc.h"
 
@@ -114,8 +114,7 @@ atppc_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev_ok = ATPPC_NOATTACH;
 
-	aprint_naive(": AT Parallel Port\n");
-	aprint_normal(": AT Parallel Port\n");
+	sc->sc_dev = self;
 
 	/* parse resources */
 	rv = acpi_resource_parse(sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
@@ -147,7 +146,6 @@ atppc_acpi_attach(device_t parent, device_t self, void *aux)
 	asc->sc_drq = drq->ar_drq;
 
 	/* Attach */
-	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_has = 0;
 	asc->sc_ic = aa->aa_ic;
@@ -163,7 +161,7 @@ atppc_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ieh = isa_intr_establish(aa->aa_ic, nirq,
 	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
-	    IPL_TTY, atppcintr, sc);
+	    IPL_TTY, atppcintr, sc->sc_dev);
 
 	/* setup DMA hooks */
 	if (atppc_isadma_setup(sc, asc->sc_ic, asc->sc_drq) == 0) {

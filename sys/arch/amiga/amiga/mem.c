@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.42 2007/03/05 20:30:09 he Exp $	*/
+/*	$NetBSD: mem.c,v 1.42.44.1 2009/05/04 08:10:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.42 2007/03/05 20:30:09 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.42.44.1 2009/05/04 08:10:33 yamt Exp $");
 
 /*
  * Memory special file
@@ -114,10 +114,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vm_offset_t o, v;
 	register int c;
@@ -185,10 +182,9 @@ mmrw(dev, uio, flags)
 				 */
 				if (uio->uio_rw == UIO_READ) {
 					if (devzeropage == NULL) {
-						devzeropage = (void *)
+						devzeropage =
 						    malloc(PAGE_SIZE, M_TEMP,
-						    M_WAITOK);
-						bzero(devzeropage, PAGE_SIZE);
+						    M_WAITOK|M_ZERO);
 					}
 					c = min(c, PAGE_SIZE - (int)v);
 					v = (vm_offset_t) devzeropage;
@@ -215,9 +211,8 @@ mmrw(dev, uio, flags)
 				break;
 			}
 			if (devzeropage == NULL) {
-				devzeropage = (void *)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(devzeropage, PAGE_SIZE);
+				devzeropage =
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK|M_ZERO);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);

@@ -2,7 +2,7 @@
 #define _NBCOMPAT_H_
 
 #include <sys/systm.h>
-#include <sys/lkm.h>
+#include <sys/module.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
@@ -59,9 +59,7 @@ TAILQ_HEAD(sysctl_ctx_list, sysctl_ctx_entry);
 #endif
 #define I386_BUS_SPACE_IO	0
 
-#define device_get_nameunit(dev)	(dev)->dv_xname
-
-int tvtohz(struct timeval *tv);
+#define device_get_nameunit(dev)	device_xname(dev)
 
 /* FreeBSD Loadable Kernel Module commands that have NetBSD counterparts */
 #define MOD_LOAD 	LKM_E_LOAD
@@ -85,7 +83,6 @@ int tvtohz(struct timeval *tv);
 typedef vaddr_t			vm_offset_t;
 typedef vsize_t			vm_size_t;
 typedef uint16_t		linker_file_t;
-typedef struct lkm_table *	module_t;
 
 /* Write our own versions of some FreeBSD functions */
 struct ndis_resource;

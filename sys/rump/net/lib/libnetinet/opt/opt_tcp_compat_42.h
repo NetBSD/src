@@ -1,0 +1,3 @@
+/*	$NetBSD: opt_tcp_compat_42.h,v 1.1.18.2 2009/05/04 08:14:33 yamt Exp $	*/
+
+/* dummy */

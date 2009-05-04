@@ -1,9 +1,9 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 2008/01/29 18:46:18 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31.10.1 2009/05/04 08:11:14 yamt Exp $	*/
 
-/*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
 /*
- * Copyright (c) 1999-2000 Michael Shalayeff
+ * Copyright (c) 1999-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 2008/01/29 18:46:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31.10.1 2009/05/04 08:11:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,63 +51,27 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 2008/01/29 18:46:18 skrll Exp $"
 
 #include <hppa/hppa/machdep.h>
 
-/*
- * Dump the machine specific header information at the start of a core dump.
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *core)
-{
-	struct md_coredump md_core;
-	struct coreseg cseg;
-	int error;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*core, COREMAGIC, MID_MACHINE, 0);
-		core->c_hdrsize = ALIGN(sizeof(*core));
-		core->c_seghdrsize = ALIGN(sizeof(cseg));
-		core->c_cpusize = sizeof(md_core);
-		core->c_nseg++;
-		return 0;
-	}
-
-	error = process_read_regs(l, &md_core.md_reg);
-	if (error)
-		return error;
-
-	/* Save floating point registers. */
-	error = process_read_fpregs(l, &md_core.md_fpreg);
-	if (error)
-		return error;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = core->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    core->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
-}
-
 void
 cpu_swapin(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
+	vaddr_t pcb = (vaddr_t)l->l_addr;
+#ifdef DIAGNOSTIC
+	vaddr_t maxsp = pcb + USPACE;
+#endif
 
+	KASSERT(tf == (void *)(pcb + PAGE_SIZE));
 	/*
 	 * Stash the physical for the pcb of U for later perusal
 	 */
-	l->l_addr->u_pcb.pcb_uva = (vaddr_t)l->l_addr;
-	tf->tf_cr30 = kvtop((void *)l->l_addr);
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sizeof(l->l_addr->u_pcb));
+	l->l_addr->u_pcb.pcb_uva = pcb;
+	tf->tf_cr30 = kvtop((void *)pcb);
+	fdcache(HPPA_SID_KERNEL, pcb, sizeof(l->l_addr->u_pcb));
 
-#ifdef HPPA_REDZONE
+#ifdef DIAGNOSTIC
 	/* Create the kernel stack red zone. */
-	pmap_redzone((vaddr_t)l->l_addr + HPPA_REDZONE,
-		(vaddr_t)l->l_addr + USPACE, 1);
+	pmap_remove(pmap_kernel(), maxsp - PAGE_SIZE, maxsp);
+	pmap_update(pmap_kernel());
 #endif
 }
 
@@ -130,7 +89,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct proc *p = l2->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	pa_space_t space = pmap->pmap_space;
+	pa_space_t space = pmap->pm_space;
 	struct pcb *pcbp;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -175,7 +134,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->tf_iisq_head = tf->tf_iisq_tail = space;
 
 	/* Load the protection registers */
-	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
 
 	/*
 	 * theoretically these could be inherited from the father,
@@ -183,7 +142,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	mfctl(CR_EIEM, tf->tf_eiem);
-	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */;
+	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
+	    (kpsw & PSW_O);
 	pcbp->pcb_fpregs[HPPA_NFPREGS] = 0;
 
 	/*
@@ -220,6 +180,42 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sp += HPPA_FRAME_SIZE + 16*4;
 	pcbp->pcb_ksp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcbp = &l->l_addr->u_pcb;
+	struct trapframe *tf;
+	register_t sp, osp;
+
+	sp = (register_t)pcbp + PAGE_SIZE;
+	l->l_md.md_regs = tf = (struct trapframe *)sp;
+	sp += sizeof(struct trapframe);
+
+	cpu_swapin(l);
+
+	/*
+	 * Build stack frames for the cpu_switchto & co.
+	 */
+	osp = sp;
+
+	/* lwp_trampoline's frame */
+	sp += HPPA_FRAME_SIZE;
+
+	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
+	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
+
+	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
+	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;
+
+	/*
+	 * cpu_switchto's frame
+	 * 	stack usage is std frame + callee-save registers
+	 */
+	sp += HPPA_FRAME_SIZE + 16*4;
+	pcbp->pcb_ksp = sp;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
 }
 
 void

@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.8 2003/03/30 08:52:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8.108.1 2009/05/04 08:11:38 yamt Exp $
 
 WARNS?= 1
-S= ${.CURDIR}/../../../..
+S!= cd ${.CURDIR}/../../../..; pwd
 
 OBJS= romcalls.o
 
 CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -DHAVE_CHANGEDISK_HOOK
-CPPFLAGS+= -DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY
 CPPFLAGS+= -I. -I${S}
 CPPFLAGS+= -D__daddr_t=int32_t
 
@@ -25,17 +25,10 @@ AFLAGS= -D_LOCORE -mno-abicalls
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h mips ] || ln -s ${S}/arch/mips/include mips
-.NOPATH: machine mips
-.endif
-CLEANFILES+= machine mips
-
 realall: ${OBJS} ${KERNLIB} ${ZLIB} ${SALIB}
 #	ln -s ${KERNLIB}
 #	ln -s ${ZLIB}
 #	ln -s ${SALIB}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.13 2007/11/01 20:33:57 dyoung Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.13.20.1 2009/05/04 08:14:19 yamt Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -93,8 +93,8 @@ typedef	struct if_set {
 #define	IF_SET(n, p)	((p)->ifs_bits[(n)/NIFBITS] |= (1 << ((n) % NIFBITS)))
 #define	IF_CLR(n, p)	((p)->ifs_bits[(n)/NIFBITS] &= ~(1 << ((n) % NIFBITS)))
 #define	IF_ISSET(n, p)	((p)->ifs_bits[(n)/NIFBITS] & (1 << ((n) % NIFBITS)))
-#define	IF_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
-#define	IF_ZERO(p)	bzero(p, sizeof(*(p)))
+#define	IF_COPY(f, t)	memcpy( t, f, sizeof(*(f)))
+#define	IF_ZERO(p)	memset(p, 0, sizeof(*(p)))
 
 /*
  * Argument structure for MRT6_ADD_IF.
@@ -267,11 +267,11 @@ struct rtdetq {		/* XXX: rtdetq is also defined in ip_mroute.h */
 
 #define MAX_UPQ6	4		/* max. no of pkts in upcall Q */
 
-int	ip6_mrouter_set(int, struct socket *, struct mbuf *);
-int	ip6_mrouter_get(int, struct socket *, struct mbuf **);
+int	ip6_mrouter_set(struct socket *, struct sockopt *);
+int	ip6_mrouter_get(struct socket *, struct sockopt *);
 int	ip6_mrouter_done(void);
 void	ip6_mrouter_detach(struct ifnet *);
-int	mrt6_ioctl(int, void *);
+int	mrt6_ioctl(u_long, void *);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_MROUTE_H_ */

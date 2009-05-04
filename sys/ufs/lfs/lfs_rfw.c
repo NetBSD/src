@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.9.10.1 2008/05/16 02:26:00 yamt Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.9.10.2 2009/05/04 08:14:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.9.10.1 2008/05/16 02:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.9.10.2 2009/05/04 08:14:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -182,7 +182,6 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		ip = VTOI(vp);
 		ip->i_mode = ip->i_ffs1_mode = IFREG;
 		ip->i_nlink = ip->i_ffs1_nlink = 1;
-		ip->i_ffs_effnlink = 1;
 		ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 		ip = VTOI(vp);
 
@@ -315,7 +314,8 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 	 * Get the inode, update times and perms.
 	 * DO NOT update disk blocks, we do that separately.
 	 */
-	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_ibsize, cred, &dbp);
+	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_ibsize,
+	    cred, 0, &dbp);
 	if (error) {
 		DLOG((DLOG_RF, "update_inoblk: bread returned %d\n", error));
 		return error;
@@ -344,7 +344,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 			ip->i_gid = ip->i_ffs1_gid = dip->di_gid;
 
 			ip->i_mode = ip->i_ffs1_mode;
-			ip->i_nlink = ip->i_ffs_effnlink = ip->i_ffs1_nlink;
+			ip->i_nlink = ip->i_ffs1_nlink;
 			ip->i_size = ip->i_ffs1_size;
 
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
@@ -414,7 +414,8 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	}
 
 	/* Read in the segment summary */
-	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_sumsize, cred, &bp);
+	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_sumsize,
+	    cred, 0, &bp);
 	if (error)
 		return -1;
 
@@ -487,7 +488,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			if (flags & CHECK_CKSUM) {
 				/* Read in the head and add to the buffer */
 				error = bread(devvp, fsbtodb(fs, offset), fs->lfs_bsize,
-					      cred, &dbp);
+					      cred, 0, &dbp);
 				if (error) {
 					offset = -1;
 					goto err2;
@@ -513,7 +514,8 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			if (j == fip->fi_nblocks - 1)
 				size = fip->fi_lastlength;
 			if (flags & CHECK_CKSUM) {
-				error = bread(devvp, fsbtodb(fs, offset), size, cred, &dbp);
+				error = bread(devvp, fsbtodb(fs, offset), size,
+				    cred, 0, &dbp);
 				if (error) {
 					offset = -1;
 					goto err2;

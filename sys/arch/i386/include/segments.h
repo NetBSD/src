@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.49 2008/04/19 12:10:08 cegger Exp $	*/
+/*	$NetBSD: segments.h,v 1.49.2.1 2009/05/04 08:11:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -246,17 +246,18 @@ void idt_vec_free(int);
 #define	SDT_MEMERC	30	/* memory execute read conforming */
 #define	SDT_MEMERAC	31	/* memory execute read accessed conforming */
 
+#define SDTYPE(p)	(((const struct segment_descriptor *)(p))->sd_type)
 /* is memory segment descriptor pointer ? */
-#define ISMEMSDP(s)	((s->d_type) >= SDT_MEMRO && \
-			 (s->d_type) <= SDT_MEMERAC)
+#define ISMEMSDP(s)	(SDTYPE(s) >= SDT_MEMRO && \
+			 SDTYPE(s) <= SDT_MEMERAC)
 
 /* is 286 gate descriptor pointer ? */
-#define IS286GDP(s)	((s->d_type) >= SDT_SYS286CGT && \
-			 (s->d_type) < SDT_SYS286TGT)
+#define IS286GDP(s)	(SDTYPE(s) >= SDT_SYS286CGT && \
+			 SDTYPE(s) < SDT_SYS286TGT)
 
 /* is 386 gate descriptor pointer ? */
-#define IS386GDP(s)	((s->d_type) >= SDT_SYS386CGT && \
-			 (s->d_type) < SDT_SYS386TGT)
+#define IS386GDP(s)	(SDTYPE(s) >= SDT_SYS386CGT && \
+			 SDTYPE(s) < SDT_SYS386TGT)
 
 /* is gate descriptor pointer ? */
 #define ISGDP(s)	(IS286GDP(s) || IS386GDP(s))
@@ -319,12 +320,13 @@ void idt_vec_free(int);
 #define GTRAPTSS_SEL	18
 #define GIPITSS_SEL	19
 #define GUCODEBIG_SEL	20	/* User code with executable stack */
-#define	GUFS_SEL	21
-#define	GUGS_SEL	22
+#define	GUFS_SEL	21	/* Per-thread %fs */
+#define	GUGS_SEL	22	/* Per-thread %gs */
 #define	NGDT		23
 
 /*
- * Entries in the Local Descriptor Table (LDT)
+ * Entries in the Local Descriptor Table (LDT).
+ * DO NOT ADD KERNEL DATA/CODE SEGMENTS TO THIS TABLE.
  */
 #define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
 #define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */

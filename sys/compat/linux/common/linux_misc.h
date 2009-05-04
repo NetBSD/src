@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.15.18.1 2008/05/16 02:23:42 yamt Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.15.18.2 2009/05/04 08:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ struct linux_sysinfo {
 #define	LINUX_SYSV2_SUPER_MAGIC		(LINUX_SYSV_MAGIC_BASE + 3)
 #define	LINUX_SYSV4_SUPER_MAGIC		(LINUX_SYSV_MAGIC_BASE + 2)
 #define	LINUX_SYSV_MAGIC_BASE		0x012FF7B3
+#define	LINUX_TMPFS_SUPER_MAGIC		0x01021994
 #define	LINUX_USBDEVICE_SUPER_MAGIC	0x00009fa2
 #define	LINUX_DEVPTS_SUPER_MAGIC	0x00001cd1
 #define	LINUX_XENIX_SUPER_MAGIC		(LINUX_SYSV_MAGIC_BASE + 1)
@@ -121,11 +122,16 @@ struct linux_mnttypes {
 extern const struct linux_mnttypes linux_fstypes[];
 extern const int linux_fstypes_cnt;
 
+/* Personality types. */
+#define LINUX_PER_LINUX		0x00000000
+#define LINUX_PER_LINUX32	0x00000008
+#define LINUX_PER_QUERY		0xffffffff
+
 #ifdef _KERNEL
 __BEGIN_DECLS
 int bsd_to_linux_wstat(int);
 int linux_select1(struct lwp *, register_t *, int, fd_set *, fd_set *,
-		       fd_set *, struct timeval *);
+		       fd_set *, struct linux_timeval *);
 __END_DECLS
 #endif /* !_KERNEL */
 

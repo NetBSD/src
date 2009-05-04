@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54.10.1 2008/05/16 02:22:32 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.54.10.2 2009/05/04 08:11:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.10.1 2008/05/16 02:22:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.10.2 2009/05/04 08:11:14 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -70,11 +70,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.10.1 2008/05/16 02:22:32 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ptrace.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/mutex.h>
 #include <sys/ktrace.h>
 #include <sys/proc.h>
@@ -414,8 +418,6 @@ frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 	extern int kernel_text;
 	extern int etext;
 	extern register_t kpsw;
-	extern vaddr_t hpt_base;
-	extern vsize_t hpt_mask;
 #define SANITY(e)					\
 do {							\
 	if (sanity_frame == NULL && !(e)) {		\
@@ -426,7 +428,6 @@ do {							\
 } while (/* CONSTCOND */ 0)
 
 	SANITY((tf->tf_ipsw & kpsw) == kpsw);
-	SANITY(tf->tf_hptm == hpt_mask && tf->tf_vtop == hpt_base);
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
 		vaddr_t minsp, maxsp;
@@ -455,11 +456,7 @@ do {							\
 		SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_tail < (u_int) &etext);
 
-#ifdef HPPA_REDZONE
-		maxsp = (u_int)(l->l_addr) + HPPA_REDZONE;
-#else
-		maxsp = (u_int)(l->l_addr) + USPACE;
-#endif
+		maxsp = (u_int)(l->l_addr) + USPACE + PAGE_SIZE;
 		minsp = (u_int)(l->l_addr) + PAGE_SIZE;
 
 		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
@@ -840,15 +837,21 @@ do_onfault:
 		 */
 		if (!(type & T_USER) && space == HPPA_SID_KERNEL)
 			map = kernel_map;
-		else
+		else {
 			map = &vm->vm_map;
+			if ((l->l_flag & LW_SA)
+			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+				l->l_savp->savp_faultaddr = va;
+				l->l_pflag |= LP_SA_PAGEFAULT;
+			}
+		}
 
 		va = trunc_page(va);
 
-		if (map->pmap->pmap_space != space) {
+		if (map->pmap->pm_space != space) {
 #ifdef TRAPDEBUG
 			printf("trap: space mismatch %d != %d\n",
-			    space, map->pmap->pmap_space);
+			    space, map->pmap->pm_space);
 #endif
 			/* actually dump the user, crap the kernel */
 			goto dead_end;
@@ -866,6 +869,9 @@ do_onfault:
 		printf("uvm_fault(%p, %x, %d)=%d\n",
 		    map, (u_int)va, vftype, ret);
 #endif
+
+		if (map != kernel_map)
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -1096,6 +1102,12 @@ syscall(struct trapframe *frame, int *args)
 	code = frame->tf_t1;
 	LWP_CACHE_CREDS(l, p);
 
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	/*
 	 * Restarting a system call is touchy on the HPPA, 
 	 * because syscall arguments are passed in registers 
@@ -1161,11 +1173,6 @@ syscall(struct trapframe *frame, int *args)
 	 * will probably screw up any and all emulation.
 	 */
 	switch (code) {
-	/*
-	 * BEGIN automatically generated
-	 * by /home/fredette/project/hppa/makescargfix.pl
-	 * do not edit!
-	 */
 	case SYS_pread:
 		/*
 		 * 	syscallarg(int) fd;
@@ -1258,13 +1265,31 @@ syscall(struct trapframe *frame, int *args)
 		args[4] = args[4 + 1];
 		args[4 + 1] = tmp;
 		break;
+	case SYS___posix_fadvise50:
+		/*
+		 *	syscallarg(int) fd;
+		 *	syscallarg(int) pad;
+		 *	syscallarg(off_t) offset;
+		 *	syscallarg(off_t) len;
+		 *	syscallarg(int) advice;
+		 */
+		tmp = args[2];
+		args[2] = args[2 + 1];
+		args[2 + 1] = tmp;
+		tmp = args[4];
+		args[4] = args[4 + 1];
+		args[4 + 1] = tmp;
+	case SYS___mknod50:
+		/*
+		 *	syscallarg(const char *) path;
+		 *	syscallarg(mode_t) mode;
+		 *	syscallarg(dev_t) dev;
+		 */
+		tmp = args[2];
+		args[2] = args[2 + 1];
+		args[2 + 1] = tmp;
 	default:
 		break;
-	/*
-	 * END automatically generated
-	 * by /home/fredette/project/hppa/makescargfix.pl
-	 * do not edit!
-	 */
 	}
 
 #ifdef USERTRACE
@@ -1287,7 +1312,7 @@ syscall(struct trapframe *frame, int *args)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:
@@ -1355,5 +1380,14 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.21.46.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: msg.h,v 1.21.46.2 2009/05/04 08:14:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -181,13 +181,25 @@ extern kmutex_t	msgmutex;
 
 #define MSG_LOCKED	01000	/* Is this msqid_ds locked? */
 
+#define SYSCTL_FILL_MSG(src, dst) do { \
+	SYSCTL_FILL_PERM((src).msg_perm, (dst).msg_perm); \
+	(dst).msg_qnum = (src).msg_qnum; \
+	(dst).msg_qbytes = (src).msg_qbytes; \
+	(dst)._msg_cbytes = (src)._msg_cbytes; \
+	(dst).msg_lspid = (src).msg_lspid; \
+	(dst).msg_lrpid = (src).msg_lrpid; \
+	(dst).msg_stime = (src).msg_stime; \
+	(dst).msg_rtime = (src).msg_rtime; \
+	(dst).msg_ctime = (src).msg_ctime; \
+} while (/*CONSTCOND*/ 0)
+
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	msgctl(int, int, struct msqid_ds *) __RENAME(__msgctl13);
+int	msgctl(int, int, struct msqid_ds *) __RENAME(__msgctl50);
 int	msgget(key_t, int);
 int	msgsnd(int, const void *, size_t, int);
 ssize_t	msgrcv(int, void *, size_t, long, int);

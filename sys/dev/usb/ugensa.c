@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.18.4.1 2008/05/16 02:25:10 yamt Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.18.4.2 2009/05/04 08:13:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.18.4.1 2008/05/16 02:25:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.18.4.2 2009/05/04 08:13:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +95,6 @@ static const struct ugensa_type ugensa_devs[] = {
 	{{ USB_VENDOR_AIRPRIME, USB_PRODUCT_AIRPRIME_PC5220 }, 0 },
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS }, 0 },
 	{{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K }, 0 },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD580 }, 0 },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD595 }, 0 },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MINI5725}, 0 },
 	{{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }, 0 },
 
 	/*
@@ -106,34 +103,21 @@ static const struct ugensa_type ugensa_devs[] = {
 	 */
 
         {{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_500A }, UNTESTED },
-        {{ USB_VENDOR_DELL, USB_PRODUCT_DELL_W5500 }, UNTESTED },
         {{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_EXPRESSCARD }, UNTESTED },
-	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MERLINV620 }, UNTESTED },
-	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_S720 }, UNTESTED },
-	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U720 }, UNTESTED },
-	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_XU870 }, UNTESTED },
-	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_ES620 }, UNTESTED },
 	{{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_MSM_HSDPA }, UNTESTED },
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM5625 }, UNTESTED },
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD875 }, UNTESTED },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC5720 }, UNTESTED },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC5725 }, UNTESTED },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8755 }, UNTESTED },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8755_2 }, UNTESTED },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8755_3 }, UNTESTED },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8765 }, UNTESTED },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8775 }, UNTESTED }
 };
 #define ugensa_lookup(v, p) \
 	((const struct ugensa_type *)usb_lookup(ugensa_devs, v, p))
 
-int ugensa_match(device_t, struct cfdata *, void *);
+int ugensa_match(device_t, cfdata_t, void *);
 void ugensa_attach(device_t, device_t, void *);
 void ugensa_childdet(device_t, device_t);
 int ugensa_detach(device_t, int);
 int ugensa_activate(device_t, enum devact);
 extern struct cfdriver ugensa_cd;
-CFATTACH_DECL2(ugensa, sizeof(struct ugensa_softc), ugensa_match,
+CFATTACH_DECL2_NEW(ugensa, sizeof(struct ugensa_softc), ugensa_match,
     ugensa_attach, ugensa_detach, ugensa_activate, NULL, ugensa_childdet);
 
 USB_MATCH(ugensa)
@@ -155,36 +139,38 @@ USB_ATTACH(ugensa)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	const char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = device_xname(self);
 	usbd_status err;
 	struct ucom_attach_args uca;
 	int i;
 
 	DPRINTFN(10,("\nugensa_attach: sc=%p\n", sc));
 
+	sc->sc_dev = self;
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UGENSA_CONFIG_INDEX, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
+		aprint_error("\n%s: failed to set configuration, err=%s\n",
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	err = usbd_device2interface_handle(dev, UGENSA_IFACE_INDEX, &iface);
 	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
+		aprint_error("\n%s: failed to get interface, err=%s\n",
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (ugensa_lookup(uaa->vendor, uaa->product)->ugensa_flags & UNTESTED)
-		printf("%s: WARNING: This device is marked as untested. "
-		    "Please submit a report via send-pr(1).\n", devname);
+		aprint_normal_dev(self, "WARNING: This device is marked as "
+		    "untested. Please submit a report via send-pr(1).\n");
 
 	id = usbd_get_interface_descriptor(iface);
 
@@ -211,8 +197,9 @@ USB_ATTACH(ugensa)
 
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor"
-			       ": %s\n", devname, usbd_errstr(err));
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor: %s\n",
+			    usbd_errstr(err));
 			goto bad;
 		}
 
@@ -231,16 +218,14 @@ USB_ATTACH(ugensa)
 				continue;
 			}
 		}
-		printf("%s: unexpected endpoint\n", devname);
+		aprint_error_dev(self, "unexpected endpoint\n");
 	}
 	if (uca.bulkin == -1) {
-		printf("%s: Could not find data bulk in\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk in\n");
 		goto bad;
 	}
 	if (uca.bulkout == -1) {
-		printf("%s: Could not find data bulk out\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk out\n");
 		goto bad;
 	}
 

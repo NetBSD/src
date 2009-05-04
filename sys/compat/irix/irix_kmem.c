@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.c,v 1.7.16.1 2008/05/16 02:23:36 yamt Exp $ */
+/*	$NetBSD: irix_kmem.c,v 1.7.16.2 2009/05/04 08:12:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.7.16.1 2008/05/16 02:23:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.7.16.2 2009/05/04 08:12:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,7 @@ irix_kmemattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-irix_kmemopen(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct lwp *l;
+irix_kmemopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	return 0;
 }
@@ -128,10 +125,7 @@ irix_kmemwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-irix_kmemclose(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct lwp *l;
+irix_kmemclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	return 0;
 }

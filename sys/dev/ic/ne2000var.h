@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.18.58.1 2008/05/16 02:24:05 yamt Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.18.58.2 2009/05/04 08:12:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,11 @@ int	ne2000_detach(struct ne2000_softc *, int);
 int	ne2000_ipkdb_attach(struct ipkdb_if *);
 #endif
 
+/* dopowerhooks(9) - deprecated */
 void	ne2000_power(int, void *);
+
+/* pmf(9) */
+bool ne2000_suspend(device_t PMF_FN_PROTO);
+bool ne2000_resume(device_t PMF_FN_PROTO);
 
 #endif /* _DEV_IC_NE2000VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.4.10.1 2008/05/16 02:22:58 yamt Exp $	*/
+/*	$NetBSD: intc.c,v 1.4.10.2 2009/05/04 08:11:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc.c,v 1.4.10.1 2008/05/16 02:22:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc.c,v 1.4.10.2 2009/05/04 08:11:40 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -63,7 +63,7 @@ STATIC SLIST_HEAD(, _ipl_dispatcher) __intc_dispatcher_head =
  SLIST_HEAD_INITIALIZER(__intc_dispatcher_head);
 
 void
-intc_init()
+intc_init(void)
 {
 	int i;
 

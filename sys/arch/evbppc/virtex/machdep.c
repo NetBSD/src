@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2007/10/17 19:54:20 garbled Exp $ */
+/*	$NetBSD: machdep.c,v 1.5.20.1 2009/05/04 08:11:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,11 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2007/10/17 19:54:20 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.20.1 2009/05/04 08:11:03 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_modular.h"
 #include "opt_virtex.h"
 #include "opt_kgdb.h"
 
@@ -58,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2007/10/17 19:54:20 garbled Exp $");
 #include <sys/user.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -88,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2007/10/17 19:54:20 garbled Exp $");
 /*
  * Global variables used here and there
  */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -105,7 +106,7 @@ char bootpath[256];
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
 
@@ -246,8 +247,8 @@ initppc(u_int startkernel, u_int endkernel)
 	uvm_setpagesize();
 	pmap_bootstrap(startkernel, endkernel);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -334,13 +335,6 @@ cpu_startup(void)
 
 	minaddr = 0;
 	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
-	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -418,6 +412,8 @@ cpu_reboot(int howto, char *what)
 		dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		/* Power off here if we know how...*/

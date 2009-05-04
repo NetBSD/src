@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20.10.1 2008/05/16 02:22:57 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.20.10.2 2009/05/04 08:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _NEWS68K_INTR_H_
 #define	_NEWS68K_INTR_H_
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <machine/psl.h>
 #include <m68k/asm_single.h>
@@ -44,17 +44,31 @@
 #define	IPL_SOFTSERIAL	4
 #define	IPL_VM		5
 #define	IPL_SCHED	6
-#define	IPL_HIGH	6
-#define	NIPL		7
+#define	IPL_HIGH	7
+#define	NIPL		8
 
 extern int idepth;
+
+static inline bool    
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
+}       
+        
+extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
-ipl_cookie_t makeiplcookie(ipl_t);
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
+}
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
@@ -63,7 +77,7 @@ splraiseipl(ipl_cookie_t icookie)
 	return _splraise(icookie._psl);
 }
 
-static __inline void
+static inline void
 splx(int sr)
 {
 

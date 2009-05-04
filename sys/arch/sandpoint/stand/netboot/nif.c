@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.4.20.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: nif.c,v 1.4.20.2 2009/05/04 08:11:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 
+#include "globals.h"
+
 struct nifdv {
 	char *name;
 	int (*match)(unsigned, void *);
@@ -47,26 +49,7 @@ struct nifdv {
 	void *priv;
 };
 
-int netif_init(unsigned);
-int netif_open(void *);
-int netif_close(int);
-
 static struct iodesc netdesc;
-
-#define NIF_DECL(xxx) \
-    int xxx ## _match(unsigned, void *); \
-    void * xxx ## _init(unsigned, void *); \
-    int xxx ## _send(void *, char *, unsigned); \
-    int xxx ## _recv(void *, char *, unsigned, unsigned)
-
-NIF_DECL(fxp);
-NIF_DECL(tlp);
-NIF_DECL(nvt);
-NIF_DECL(sip);
-NIF_DECL(pcn);
-NIF_DECL(vge);
-NIF_DECL(rge);
-NIF_DECL(wm);
 
 static struct nifdv vnifdv[] = {
 	{ "fxp", fxp_match, fxp_init, fxp_send, fxp_recv },
@@ -74,6 +57,8 @@ static struct nifdv vnifdv[] = {
 	{ "nvt", nvt_match, nvt_init, nvt_send, nvt_recv },
 	{ "sip", sip_match, sip_init, sip_send, sip_recv },
 	{ "pcn", pcn_match, pcn_init, pcn_send, pcn_recv },
+	{ "kse", kse_match, kse_init, kse_send, kse_recv },
+	{ "sme", sme_match, sme_init, sme_send, sme_recv },
 	{ "vge", vge_match, vge_init, vge_send, vge_recv },
 	{ "rge", rge_match, rge_init, rge_send, rge_recv },
 	{ "wm",  wm_match, wm_init,  wm_send,  wm_recv  }
@@ -81,8 +66,7 @@ static struct nifdv vnifdv[] = {
 static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
 
 int
-netif_init(tag)
-	unsigned tag;
+netif_init(unsigned tag)
 {
 	struct iodesc *s;
 	struct nifdv *dv;
@@ -108,16 +92,14 @@ netif_init(tag)
 }
 
 int
-netif_open(cookie)
-	void *cookie;
+netif_open(void *cookie)
 {
 	/* single action */
 	return 0;
 }
 
 int
-netif_close(sock)
-	int sock;
+netif_close(int sock)
 {
 	/* nothing to do for the HW */
 	return 0;
@@ -128,10 +110,7 @@ netif_close(sock)
  * Return the length sent (or -1 on error).
  */
 ssize_t
-netif_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct nifdv *dv = desc->io_netif;
 
@@ -143,11 +122,7 @@ netif_put(desc, pkt, len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(desc, pkt, maxlen, timo)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	time_t timo;
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	struct nifdv *dv = desc->io_netif;
 	int len;
@@ -159,8 +134,7 @@ netif_get(desc, pkt, maxlen, timo)
 }
 
 struct iodesc *
-socktodesc(num)
-	int num;
+socktodesc(int num)
 {
 
 	return (num == 0) ? &netdesc : NULL;

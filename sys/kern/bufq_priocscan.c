@@ -1,7 +1,7 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.10.42.1 2008/05/16 02:25:24 yamt Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.10.42.2 2009/05/04 08:13:45 yamt Exp $	*/
 
 /*-
- * Copyright (c)2004 YAMAMOTO Takashi,
+ * Copyright (c)2004,2005,2006,2008,2009 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.10.42.1 2008/05/16 02:25:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.10.42.2 2009/05/04 08:13:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 /*
  * Cyclical scan (CSCAN)
@@ -284,25 +284,34 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 }
 
 static struct buf *
-bufq_priocscan_cancel(struct bufq_state *bufq, struct buf *buf)
+bufq_priocscan_cancel(struct bufq_state *bufq, struct buf *bp)
 {
-	struct cscan_queue *q = bufq->bq_private;
-	struct bqhead *bqh;
-	struct buf *bq;
-	int idx;
+	struct bufq_priocscan * const q = bufq->bq_private;
+	int i, j;
 
-	for (idx = 0; idx < 2; idx++) {
-		bqh = &q->cq_head[idx];
-		bq = TAILQ_FIRST(bqh);
-		while (bq) {
-			if (bq == buf) {
-				TAILQ_REMOVE(bqh, bq, b_actq);
-				return buf;
+	for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
+		struct cscan_queue * const cq = &q->bq_queue[i].q_queue;
+		for (j = 0; j < 2; j++) {
+			struct bqhead * const bqh = &cq->cq_head[j];
+			struct buf *bq;
+
+			TAILQ_FOREACH(bq, bqh, b_actq) {
+				if (bq == bp) {
+					TAILQ_REMOVE(bqh, bp, b_actq);
+					return bp;
+				}
 			}
-			bq = TAILQ_NEXT(bq, b_actq);
 		}
 	}
 	return NULL;
+}
+
+static void
+bufq_priocscan_fini(struct bufq_state *bufq)
+{
+
+	KASSERT(bufq->bq_private != NULL);
+	kmem_free(bufq->bq_private, sizeof(struct bufq_priocscan));
 }
 
 static void
@@ -314,8 +323,8 @@ bufq_priocscan_init(struct bufq_state *bufq)
 	bufq->bq_get = bufq_priocscan_get;
 	bufq->bq_put = bufq_priocscan_put;
 	bufq->bq_cancel = bufq_priocscan_cancel;
-	bufq->bq_private = malloc(sizeof(struct bufq_priocscan),
-	    M_DEVBUF, M_ZERO);
+	bufq->bq_fini = bufq_priocscan_fini;
+	bufq->bq_private = kmem_zalloc(sizeof(struct bufq_priocscan), KM_SLEEP);
 
 	q = bufq->bq_private;
 	for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {

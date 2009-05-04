@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.14 2007/02/27 18:17:28 he Exp $
+#	$NetBSD: Makefile,v 1.14.44.1 2009/05/04 08:11:20 yamt Exp $
 
-S=	${.CURDIR}/../../../../
+S=	${.CURDIR}/../../../..
 
 BASE?= pxeboot_ia32
 PROG= ${BASE}.bin
@@ -19,9 +19,13 @@ SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
 .PATH: ${.CURDIR}/../libsa
 SRCS+= nfs.c
 
+PIE_CFLAGS=
+PIE_AFLAGS=
+PIE_LDFLAGS=
+
 .include <bsd.own.mk>
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
 AFLAGS+=	-m32
 LIBKERN_ARCH=	i386

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.6.78.1 2008/05/16 02:22:06 yamt Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.6.78.2 2009/05/04 08:10:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 
 #include <lib/libsa/stand.h>
 #include <atari_stand.h>
-#include <string.h>
 #include <libkern.h>
 #include <machine/cpu.h>
 #endif /* TOSTOOLS */
@@ -48,8 +47,7 @@
  * Extract memory and CPU/FPU info from system.
  */
 void
-sys_info(od)
-osdsc_t	*od;
+sys_info(osdsc_t *od)
 {
 	long	*jar;
 	OSH	*oshdr;

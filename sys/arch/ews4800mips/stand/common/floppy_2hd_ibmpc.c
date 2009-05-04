@@ -1,4 +1,4 @@
-/*	$NetBSD: floppy_2hd_ibmpc.c,v 1.3.46.1 2008/05/16 02:22:20 yamt Exp $	*/
+/*	$NetBSD: floppy_2hd_ibmpc.c,v 1.3.46.2 2009/05/04 08:11:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -50,12 +50,12 @@ blk_to_2hd_position(uint32_t logical_block_number, uint32_t *position,
 
 	cylinder = logical_block_number / (18 * 2);
 	side = logical_block_number - (cylinder * 18 * 2) > 17;
-	sector = logical_block_number - (side + cylinder * 2) * 18 + 1;
+	sector = logical_block_number - (side + cylinder * 2) * 18;
 
 	if (position)
-		*position = (cylinder << 16) | (side << 8) | sector;
+		*position = (cylinder << 16) | (side << 8) | (sector + 1);
 	if (count)
-		*count = 1;
+		*count = 18 - sector;
 
 	return true;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.101 2007/06/29 23:30:32 rumble Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.101.32.1 2009/05/04 08:14:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -305,7 +305,8 @@ x(JFS2,		16,	"jfs")		/* IBM JFS2 */ \
 x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
 x(VINUM,	18,	"vinum")	/* vinum volume */ \
 x(FLASH,	19,	"flash")	/* flash memory devices */ \
-
+x(DM,           20,     "dm")           /* device-mapper pseudo-disk devices */\
+    
 #ifndef _LOCORE
 #define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
 enum { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };
@@ -387,6 +388,7 @@ static const char *const mountnames[] = { FSTYPE_DEFN(FS_MOUNTNAMES) NULL };
 #define		D_BADSECT	0x04		/* supports bad sector forw. */
 #define		D_RAMDISK	0x08		/* disk emulator */
 #define		D_CHAIN		0x10		/* can do back-back transfers */
+#define		D_SCSI_MMC	0x20		/* SCSI MMC sessioned media */
 
 /*
  * Drive data for SMD.

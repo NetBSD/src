@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.5.10.1 2008/05/16 02:23:49 yamt Exp $	*/
+/*	$NetBSD: kloader.h,v 1.5.10.2 2009/05/04 08:12:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct kloader_page_tag {
 	uint32_t src;
 	uint32_t dst;
 	uint32_t sz;
-} __attribute__((__packed__, __aligned__(4)));
+} __packed __aligned(4);
 
 #define KLOADER_KERNELARGS_MAX		256
 
@@ -87,7 +87,7 @@ struct kloader_bootinfo {
 
 	/* argv buffer */
 	char _argbuf[KLOADER_KERNELARGS_MAX];
-} __attribute__((__packed__, __aligned__(4)));
+} __packed __aligned(4);
 
 /*
  * kloader_reboot_setup sets machine dependent kloader_ops to

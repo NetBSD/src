@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4.2.2 2008/05/16 02:23:27 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4.2.3 2009/05/04 08:12:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #ifndef _X86_CPU_H_
 #define _X86_CPU_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
 #ifdef i386
@@ -58,8 +58,7 @@
 #include <x86/via_padlock.h>
 
 #include <sys/cpu_data.h>
-
-#include <lib/libkern/libkern.h>	/* offsetof */
+#include <sys/evcnt.h>
 
 struct intrsource;
 struct pmap;
@@ -112,6 +111,7 @@ struct cpu_info {
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
 	int ci_curldt;		/* current LDT descriptor */
+	int ci_nintrhand;	/* number of H/W interrupt handlers */
 	uint64_t ci_scratch;
 
 #ifdef XEN
@@ -142,7 +142,8 @@ struct cpu_info {
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
 	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
-	uint32_t	ci_feature3_flags;/* X86 extended feature bits */
+	uint32_t	ci_feature3_flags;/* X86 extended %edx feature bits */
+	uint32_t	ci_feature4_flags;/* X86 extended %ecx feature bits */
 	uint32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
@@ -199,6 +200,23 @@ struct cpu_info {
 };
 
 /*
+ * Macros to handle (some) trapframe registers for common x86 code.
+ */
+#ifdef __x86_64__
+#define	X86_TF_RAX(tf)		tf->tf_rax
+#define	X86_TF_RDX(tf)		tf->tf_rdx
+#define	X86_TF_RSP(tf)		tf->tf_rsp
+#define	X86_TF_RIP(tf)		tf->tf_rip
+#define	X86_TF_RFLAGS(tf)	tf->tf_rflags
+#else
+#define	X86_TF_RAX(tf)		tf->tf_eax
+#define	X86_TF_RDX(tf)		tf->tf_edx
+#define	X86_TF_RSP(tf)		tf->tf_esp
+#define	X86_TF_RIP(tf)		tf->tf_eip
+#define	X86_TF_RFLAGS(tf)	tf->tf_eflags
+#endif
+
+/*
  * Processor flag notes: The "primary" CPU has certain MI-defined
  * roles (mostly relating to hardclock handling); we distinguish
  * betwen the processor which booted us, and the processor currently
@@ -229,17 +247,19 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
-#define X86_MAXPROCS		32	/* because we use a bitmask */
-
 #define CPU_STARTUP(_ci, _target)	((_ci)->ci_func->start(_ci, _target))
 #define CPU_STOP(_ci)	        	((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)		((_ci)->ci_func->cleanup(_ci))
 
-#if !defined(__GNUC__) || defined(_LKM)
+#if !defined(__GNUC__) || defined(_MODULE)
 /* For non-GCC and modules */
 struct cpu_info	*x86_curcpu(void);
-lwp_t	*x86_curlwp(void);
 void	cpu_set_curpri(int);
+# ifdef __GNUC__
+lwp_t	*x86_curlwp(void) __attribute__ ((const));
+# else
+lwp_t   *x86_curlwp(void);
+# endif
 #endif
 
 #define cpu_number() 		(cpu_index(curcpu()))
@@ -333,6 +353,9 @@ void 	tmx86_init_longrun(void);
 void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
 
+/* cpu_topology.c */
+void	x86_cpu_toplogy(struct cpu_info *);
+
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
 
@@ -343,7 +366,6 @@ void	lgdt(struct region_descriptor *);
 void	lgdt_finish(void);
 void	i386_switch_context(lwp_t *);
 #endif
-void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);
@@ -371,7 +393,7 @@ void	npxsave_lwp(struct lwp *, bool);
 void	npxsave_cpu(bool);
 
 /* vm_machdep.c */
-int kvtop(void *);
+paddr_t	kvtop(void *);
 
 #ifdef USER_LDT
 /* sys_machdep.h */
@@ -397,7 +419,13 @@ void x86_bus_space_mallocok(void);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
-#endif /* _KERNEL */
+#endif /* _KERNEL || __KMEMUSER */
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#else
+#include <stdbool.h>
+#endif /* _KERNEL || _STANDALONE */
 
 /*
  * CTL_MACHDEP definitions.

@@ -850,7 +850,7 @@ struct io_stack_location {
 
 	/*
 	 * There's a big-ass union here in the actual Windows
-	 * definition of the stucture, but it contains stuff
+	 * definition of the structure, but it contains stuff
 	 * that doesn't really apply to BSD, and defining it
 	 * all properly would require duplicating over a dozen
 	 * other structures that we'll never use. Since the
@@ -1004,7 +1004,7 @@ typedef struct irp irp;
 		io_stack_location *src, *dst;				\
 		src = IoGetCurrentIrpStackLocation(irp);		\
 		dst = IoGetNextIrpStackLocation(irp);			\
-		bcopy((char *)src, (char *)dst,				\
+		memcpy( (char *)dst, (char *)src,				\
 		    offsetof(io_stack_location, isl_completionfunc));	\
 	} while(0)
 

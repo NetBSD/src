@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.128 2008/01/30 09:50:21 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.128.10.1 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.128 2008/01/30 09:50:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.128.10.1 2009/05/04 08:13:43 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/buf.h>
 #include <sys/fstrans.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
@@ -1228,7 +1229,7 @@ puffs_vnop_poll(void *v)
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int a_events;
-	} */ *ap = v;
+	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, poll);
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
@@ -1554,7 +1555,7 @@ puffs_vnop_link(void *v)
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
-	} */ *ap = v;
+	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, link);
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
@@ -1604,7 +1605,7 @@ puffs_vnop_symlink(void *v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 		char *a_target;
-	} */ *ap = v;
+	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, symlink);
 	struct vnode *dvp = ap->a_dvp;
 	struct puffs_node *dpn = VPTOPP(dvp);
@@ -1700,7 +1701,7 @@ puffs_vnop_rename(void *v)
 		struct vnode *a_tdvp;
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
-	} */ *ap = v;
+	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, rename);
 	struct vnode *fdvp = ap->a_fdvp;
 	struct puffs_node *fpn = ap->a_fvp->v_data;
@@ -1769,10 +1770,9 @@ puffs_vnop_read(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct uio *uio = ap->a_uio;
-	void *win;
 	size_t tomove, argsize;
 	vsize_t bytelen;
-	int error, ubcflags;
+	int error;
 
 	read_msg = NULL;
 	error = 0;
@@ -1786,20 +1786,14 @@ puffs_vnop_read(void *v)
 	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
-		ubcflags = 0;
-		if (UBC_WANT_UNMAP(vp))
-			ubcflags = UBC_UNMAP;
-
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(uio->uio_resid,
 			    vp->v_size - uio->uio_offset);
 			if (bytelen == 0)
 				break;
 
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, advice, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			ubc_release(win, ubcflags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
+			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 			if (error)
 				break;
 		}
@@ -1889,9 +1883,7 @@ puffs_vnop_write(void *v)
 	write_msg = NULL;
 
 	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
-		ubcflags = UBC_WRITE | UBC_PARTIALOK;
-		if (UBC_WANT_UNMAP(vp))
-			ubcflags |= UBC_UNMAP;
+		ubcflags = UBC_WRITE | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp);
 
 		/*
 		 * userspace *should* be allowed to control this,
@@ -2521,7 +2513,7 @@ puffs_vnop_lock(void *v)
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
-	} */ *ap = v;
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
 	int flags = ap->a_flags;
@@ -2614,7 +2606,7 @@ puffs_vnop_spec_write(void *v)
 		struct uio *a_uio;
 		int a_ioflag;
 		kauth_cred_t a_cred;
-	} */ *ap = v;
+	} */ *ap = v;
 
 	puffs_updatenode(VPTOPP(ap->a_vp), PUFFS_UPDATEMTIME, 0);
 	return VOCALL(spec_vnodeop_p, VOFFSET(vop_write), v);
@@ -2644,7 +2636,7 @@ puffs_vnop_fifo_write(void *v)
 		struct uio *a_uio;
 		int a_ioflag;
 		kauth_cred_t a_cred;
-	} */ *ap = v;
+	} */ *ap = v;
 
 	puffs_updatenode(VPTOPP(ap->a_vp), PUFFS_UPDATEMTIME, 0);
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), v);

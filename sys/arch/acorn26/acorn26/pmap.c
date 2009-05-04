@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.19 2007/10/17 19:52:52 garbled Exp $ */
+/* $NetBSD: pmap.c,v 1.19.20.1 2009/05/04 08:10:23 yamt Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2007/10/17 19:52:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19.20.1 2009/05/04 08:10:23 yamt Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -179,7 +179,8 @@ struct pv_entry *pv_table;
 
 /* Kernel pmap -- statically allocated to make life slightly less odd. */
 
-struct pmap kernel_pmap_store;
+static struct pmap kernel_pmap_store;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 struct pv_entry *kernel_pmap_entries[PM_NENTRIES];
 
 static bool pmap_initialised = false;
@@ -255,7 +256,7 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	pv_table_size = round_page(physmem * sizeof(struct pv_entry));
 	pv_table =
 	    (struct pv_entry *)uvm_pageboot_alloc(pv_table_size);
-	bzero(pv_table, pv_table_size);
+	memset(pv_table, 0, pv_table_size);
 #ifdef PMAP_DEBUG_MODIFIED
 	for (i = 0; i < physmem; i++)
 		pv_table[i].pv_pflags |= PV_MODIFIED;
@@ -263,11 +264,11 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 
 	/* Set up the kernel's pmap */
 	pmap = pmap_kernel();
-	bzero(pmap, sizeof(*pmap));
+	memset(pmap, 0, sizeof(*pmap));
 	pmap->pm_count = 1;
 	pmap->pm_flags = PM_ACTIVE; /* Kernel pmap always is */
 	pmap->pm_entries = kernel_pmap_entries;
-	bzero(pmap->pm_entries, sizeof(struct pv_entry *) * PM_NENTRIES);
+	memset(pmap->pm_entries, 0, sizeof(struct pv_entry *) * PM_NENTRIES);
 	/* pmap_pinit(pmap); */
 	/* Clear the MEMC's page table */
 	/* XXX Maybe we should leave zero page alone? */
@@ -318,7 +319,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
  * use the pool allocator.  malloc is still taboo.
  */
 void
-pmap_init()
+pmap_init(void)
 {
 	UVMHIST_FUNC("pmap_init");
 
@@ -367,7 +368,7 @@ pmap_init2()
 }
 
 struct pmap *
-pmap_create()
+pmap_create(void)
 {
 	struct pmap *pmap;
 	UVMHIST_FUNC("pmap_create");
@@ -376,10 +377,10 @@ pmap_create()
 	if (!pmap_initialised) 
 		pmap_init2();
 	pmap = pool_get(&pmap_pool, PR_WAITOK);
-	bzero(pmap, sizeof(*pmap));
-	MALLOC(pmap->pm_entries, struct pv_entry **,
-	    sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP, M_WAITOK);
-	bzero(pmap->pm_entries, sizeof(struct pv_entry *) * PM_NENTRIES);
+	memset(pmap, 0, sizeof(*pmap));
+	pmap->pm_entries = (struct pv_entry **)malloc(
+		sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP,
+		M_WAITOK | M_ZERO);
 	pmap->pm_count = 1;
 	return pmap;
 }
@@ -403,7 +404,7 @@ pmap_destroy(pmap_t pmap)
 		if (pmap->pm_entries[i] != NULL)
 			panic("pmap_destroy: pmap isn't empty");
 #endif
-	FREE(pmap->pm_entries, M_VMPMAP);
+	free((void *)pmap->pm_entries, M_VMPMAP);
 	pool_put(&pmap_pool, pmap);
 }
 
@@ -482,8 +483,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 }
 
 void
-pmap_collect(pmap)
-	pmap_t pmap;
+pmap_collect(pmap_t pmap)
 {
 	UVMHIST_FUNC("pmap_collect");
 
@@ -492,10 +492,7 @@ pmap_collect(pmap)
 }
 
 void
-pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	pmap_t dst_pmap, src_pmap;
-	vaddr_t dst_addr, src_addr;
-	vsize_t len;
+pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len, vaddr_t src_addr)
 {
 	UVMHIST_FUNC("pmap_copy");
 
@@ -539,21 +536,16 @@ pv_update(struct pv_entry *pv)
 
 
 static struct pv_entry *
-pv_alloc()
+pv_alloc(void)
 {
-	struct pv_entry *pv;
-
-	MALLOC(pv, struct pv_entry *, sizeof(*pv), M_VMPMAP, M_NOWAIT);
-	if (pv != NULL)
-		bzero(pv, sizeof(*pv));
-	return pv;
+	return malloc(sizeof(struct pv_entry), M_VMPMAP, M_NOWAIT | M_ZERO);
 }
 
 static void
 pv_free(struct pv_entry *pv)
 {
 
-	FREE(pv, M_VMPMAP);
+	free(pv, M_VMPMAP);
 }
 
 static struct pv_entry *
@@ -646,7 +638,7 @@ pv_release(pmap_t pmap, int ppn, int lpn)
  */
 
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	UVMHIST_FUNC("pmap_enter");
 
@@ -655,7 +647,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 }
 
 static int
-pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
+pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags,
     int unmanaged)
 {
 	int ppn, lpn, s;
@@ -773,8 +765,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 }
 
 inline bool
-pmap_is_modified(page)
-	struct vm_page *page;
+pmap_is_modified(struct vm_page *page)
 {
 	int ppn;
 	bool rv;
@@ -807,8 +798,7 @@ pmap_is_modified(page)
 }
 
 inline bool
-pmap_is_referenced(page)
-	struct vm_page *page;
+pmap_is_referenced(struct vm_page *page)
 {
 	int ppn;
 	UVMHIST_FUNC("pmap_is_referenced");
@@ -981,8 +971,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 }
 
 paddr_t
-pmap_phys_address(ppn)
-	paddr_t ppn;
+pmap_phys_address(paddr_t ppn)
 {
 	panic("pmap_phys_address not implemented");
 }
@@ -1072,7 +1061,7 @@ pmap_zero_page(paddr_t pa)
 	UVMHIST_FUNC("pmap_zero_page");
 
 	UVMHIST_CALLED(pmaphist);
-	bzero(pmap_find(pa), PAGE_SIZE);
+	memset(pmap_find(pa), 0, PAGE_SIZE);
 }
 
 void

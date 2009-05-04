@@ -1,7 +1,3 @@
-/*	$NetBSD: ieeefp.h,v 1.2 2001/01/28 03:31:31 uch Exp $	*/
-#ifndef _HPCSH_IEEEFP_H_
-#define _HPCSH_IEEEFP_H_
+/*	$NetBSD: ieeefp.h,v 1.2.132.1 2009/05/04 08:11:13 yamt Exp $	*/
 
 #include <sh3/ieeefp.h>
-
-#endif /* _HPCSH_IEEEFP_H_ */

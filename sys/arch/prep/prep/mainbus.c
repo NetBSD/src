@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.27.20.1 2008/05/16 02:23:03 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.27.20.2 2009/05/04 08:11:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27.20.1 2008/05/16 02:23:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27.20.2 2009/05/04 08:11:46 yamt Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -167,7 +167,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif /* NPNPBUS */
 
 #if NPCI > 0
-	bzero(&mba, sizeof(mba));
+	memset(&mba, 0, sizeof(mba));
 	mba.mba_pba._pba_busname = NULL;
 	mba.mba_pba.pba_iot = &prep_io_space_tag;
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;

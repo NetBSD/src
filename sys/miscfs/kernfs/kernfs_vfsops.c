@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.83.10.1 2008/05/16 02:25:39 yamt Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.83.10.2 2009/05/04 08:14:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.83.10.1 2008/05/16 02:25:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.83.10.2 2009/05/04 08:14:04 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -73,8 +73,10 @@ VFS_PROTOS(kernfs);
 
 void	kernfs_get_rrootdev(void);
 
+static struct sysctllog *kernfs_sysctl_log;
+
 void
-kernfs_init()
+kernfs_init(void)
 {
 
 	malloc_type_attach(M_KERNFSMNT);
@@ -82,13 +84,13 @@ kernfs_init()
 }
 
 void
-kernfs_reinit()
+kernfs_reinit(void)
 {
 	kernfs_hashreinit();
 }
 
 void
-kernfs_done()
+kernfs_done(void)
 {
 
 	kernfs_hashdone();
@@ -96,7 +98,7 @@ kernfs_done()
 }
 
 void
-kernfs_get_rrootdev()
+kernfs_get_rrootdev(void)
 {
 	static int tried = 0;
 
@@ -140,9 +142,7 @@ kernfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	MALLOC(fmp, struct kernfs_mount *, sizeof(struct kernfs_mount),
-	    M_KERNFSMNT, M_WAITOK);
-	memset(fmp, 0, sizeof(*fmp));
+	fmp = malloc(sizeof(struct kernfs_mount), M_KERNFSMNT, M_WAITOK|M_ZERO);
 	TAILQ_INIT(&fmp->nodelist);
 
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
@@ -188,9 +188,7 @@ kernfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-kernfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+kernfs_root(struct mount *mp, struct vnode **vpp)
 {
 
 	/* setup "." */
@@ -237,27 +235,6 @@ kernfs_vget(struct mount *mp, ino_t ino,
 	return (EOPNOTSUPP);
 }
 
-SYSCTL_SETUP(sysctl_vfs_kernfs_setup, "sysctl vfs.kern subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kernfs",
-		       SYSCTL_DESCR("/kern file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 11, CTL_EOL);
-	/*
-	 * XXX the "11" above could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "11" is the order as taken from sys/mount.h
-	 */
-}
-
 extern const struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
@@ -296,13 +273,40 @@ struct vfsops kernfs_vfsops = {
 static int
 kernfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&kernfs_vfsops);
+		error = vfs_attach(&kernfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "kernfs",
+			       SYSCTL_DESCR("/kern file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 11, CTL_EOL);
+		/*
+		 * XXX the "11" above could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "11" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&kernfs_vfsops);
+		error = vfs_detach(&kernfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&kernfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.45.2.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.45.2.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.45.2.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.45.2.2 2009/05/04 08:11:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.45.2.1 2008/05/16 02:22:34 yamt 
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -102,12 +103,12 @@ linux_syscall(struct trapframe *frame)
 	if (__predict_false(l->l_proc->p_trace_enabled)) {
 		error = trace_enter(code, args, callp->sy_narg);
 		if (__predict_true(error == 0)) {
-			error = (*callp->sy_call)(l, args, rval);
+			error = sy_call(callp, l, args, rval);
 			code = frame->tf_eax & (LINUX_SYS_NSYSENT - 1);
 			trace_exit(code, rval, error);
 		}
 	} else
-		error = (*callp->sy_call)(l, args, rval);
+		error = sy_call(callp, l, args, rval);
 
 	if (__predict_true(error == 0)) {
 		frame->tf_eax = rval[0];

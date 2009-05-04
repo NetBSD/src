@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.49.2.1 2008/05/16 02:25:46 yamt Exp $	*/
+/*	$NetBSD: iso.c,v 1.49.2.2 2009/05/04 08:14:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.49.2.1 2008/05/16 02:25:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.49.2.2 2009/05/04 08:14:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ iso_addrmatch1(const struct iso_addr *isoaa, const struct iso_addr *isoab)
 		return (1);
 	}
 #endif
-	return (!bcmp(isoaa->isoa_genaddr, isoab->isoa_genaddr, compare_len));
+	return (!memcmp(isoaa->isoa_genaddr, isoab->isoa_genaddr, compare_len));
 }
 
 /*
@@ -238,7 +238,7 @@ iso_netmatch(const struct sockaddr_iso *sisoa,
 	}
 #endif
 
-	return ((lena == lenb) && (!bcmp(bufa, bufb, lena)));
+	return ((lena == lenb) && (!memcmp(bufa, bufb, lena)));
 }
 #endif /* notdef */
 
@@ -316,7 +316,7 @@ iso_hash(
 	int    bufsize;
 
 
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 
 	bufsize = iso_netof(&siso->siso_addr, buf);
 	hp->afh_nethash = iso_hashchar((void *) buf, bufsize);
@@ -450,7 +450,7 @@ iso_netof(
 		len = 0;
 	}
 
-	bcopy((void *) isoa, buf, len);
+	memcpy(buf, (void *) isoa, len);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
 		printf("iso_netof: isoa ");
@@ -511,7 +511,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		if (ifp == 0)
 			panic("iso_control");
 		if (ia == 0) {
-			MALLOC(ia, struct iso_ifaddr *, sizeof(*ia),
+			ia = malloc(sizeof(*ia),
 			       M_IFADDR, M_WAITOK|M_ZERO);
 			if (ia == 0)
 				return (ENOBUFS);
@@ -587,9 +587,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	default:
 		if (cmdbyte(cmd) == 'a')
 			return (snpac_ioctl(so, cmd, data, l));
-		if (ifp == 0 || ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		return ENOTTY;
 	}
 	return (0);
 }
@@ -651,8 +649,7 @@ iso_ifinit(struct ifnet *ifp, struct iso_ifaddr *ia, struct sockaddr_iso *siso,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl) (ifp, SIOCSIFADDR, (void *) ia))) {
+	if ((error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ia)) != 0) {
 		splx(s);
 		ia->ia_addr = oldaddr;
 		return (error);
@@ -665,6 +662,10 @@ iso_ifinit(struct ifnet *ifp, struct iso_ifaddr *ia, struct sockaddr_iso *siso,
 	/*
 	 * XXX -- The following is here temporarily out of laziness in not
 	 * changing every ethernet driver's if_ioctl routine
+	 *
+	 * XXX extract llc_ifinit() and call from ether_ioctl(),
+	 * XXX fddi_ioctl().  --dyoung
+	 *
 	 */
 	if (ifp->if_type == IFT_ETHER || ifp->if_type == IFT_FDDI) {
 		ia->ia_ifa.ifa_rtrequest = llc_rtrequest;
@@ -801,7 +802,7 @@ iso_eqtype(
 		if (isoaa->isoa_afi == AFI_37)
 			return (1);
 		else
-			return (!bcmp(&isoaa->isoa_u, &isoab->isoa_u, 2));
+			return (!memcmp(&isoaa->isoa_u, &isoab->isoa_u, 2));
 	}
 	return (0);
 }

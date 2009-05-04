@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.126 2008/04/27 11:39:46 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.126.2.1 2009/05/04 08:14:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,9 +67,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.126 2008/04/27 11:39:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.126.2.1 2009/05/04 08:14:39 yamt Exp $");
 
-#include "opt_coredump.h"
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
 #include "opt_uvmhist.h"
@@ -96,11 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.126 2008/04/27 11:39:46 ad Exp $");
 
 static void uvm_swapout(struct lwp *);
 static int uarea_swapin(vaddr_t);
-
-#define UVM_NUAREA_HIWAT	20
-#define	UVM_NUAREA_LOWAT	16
-
-#define	UAREA_NEXTFREE(uarea)	(*(vaddr_t *)(UAREA_TO_USER(uarea)))
 
 /*
  * XXXCDC: do these really belong here?
@@ -259,12 +253,8 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2->l_flag |= LW_INMEM;
 	}
 
-#ifdef KSTACK_CHECK_MAGIC
-	/*
-	 * fill stack with magic number
-	 */
+	/* Fill stack with magic number. */
 	kstack_setup_magic(l2);
-#endif
 
 	/*
 	 * cpu_lwp_fork() copy and update the pcb, and make the child ready
@@ -274,16 +264,6 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * the specified entry point will be executed.
 	 */
 	cpu_lwp_fork(l1, l2, stack, stacksize, func, arg);
-}
-
-/*
- * uvm_cpu_attach: initialize per-CPU data structures.
- */
-
-void
-uvm_cpu_attach(struct cpu_info *ci)
-{
-
 }
 
 static int
@@ -401,11 +381,11 @@ uvm_proc_exit(struct proc *p)
 	/*
 	 * borrow proc0's address space.
 	 */
-	kpreempt_disable();
+	KPREEMPT_DISABLE(l);
 	pmap_deactivate(l);
 	p->p_vmspace = proc0.p_vmspace;
 	pmap_activate(l);
-	kpreempt_enable();
+	KPREEMPT_ENABLE(l);
 
 	uvmspace_free(ovm);
 }
@@ -441,6 +421,8 @@ uvm_init_limits(struct proc *p)
 	p->p_rlimit[RLIMIT_STACK].rlim_max = maxsmap;
 	p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
 	p->p_rlimit[RLIMIT_DATA].rlim_max = maxdmap;
+	p->p_rlimit[RLIMIT_AS].rlim_cur = RLIM_INFINITY;
+	p->p_rlimit[RLIMIT_AS].rlim_max = RLIM_INFINITY;
 	p->p_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
 }
 
@@ -464,7 +446,7 @@ uvm_swapin(struct lwp *l)
 {
 	int error;
 
-	/* XXXSMP notyet KASSERT(mutex_owned(&l->l_swaplock)); */
+	KASSERT(mutex_owned(&l->l_swaplock));
 	KASSERT(l != curlwp);
 
 	error = uarea_swapin(USER_TO_UAREA(l->l_addr));
@@ -617,11 +599,17 @@ static bool
 swappable(struct lwp *l)
 {
 
-	if ((l->l_flag & (LW_INMEM|LW_RUNNING|LW_SYSTEM|LW_WEXIT)) != LW_INMEM)
+	if ((l->l_flag & (LW_INMEM|LW_SYSTEM|LW_WEXIT)) != LW_INMEM)
+		return false;
+	if ((l->l_pflag & LP_RUNNING) != 0)
 		return false;
 	if (l->l_holdcnt != 0)
 		return false;
+	if (l->l_class != SCHED_OTHER)
+		return false;
 	if (l->l_syncobj == &rw_syncobj || l->l_syncobj == &mutex_syncobj)
+		return false;
+	if (l->l_proc->p_stat != SACTIVE && l->l_proc->p_stat != SSTOP)
 		return false;
 	return true;
 }
@@ -744,6 +732,8 @@ uvm_swapout_threads(void)
 static void
 uvm_swapout(struct lwp *l)
 {
+	struct vm_map *map;
+
 	KASSERT(mutex_owned(&l->l_swaplock));
 
 #ifdef DEBUG
@@ -780,7 +770,11 @@ uvm_swapout(struct lwp *l)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	uarea_swapout(USER_TO_UAREA(l->l_addr));
-	pmap_collect(vm_map_pmap(&l->l_proc->p_vmspace->vm_map));
+	map = &l->l_proc->p_vmspace->vm_map;
+	if (vm_map_lock_try(map)) {
+		pmap_collect(vm_map_pmap(map));
+		vm_map_unlock(map);
+	}
 }
 
 /*
@@ -816,126 +810,3 @@ uvm_lwp_rele(struct lwp *l)
 
 	atomic_dec_uint(&l->l_holdcnt);
 }
-
-#ifdef COREDUMP
-/*
- * uvm_coredump_walkmap: walk a process's map for the purpose of dumping
- * a core file.
- */
-
-int
-uvm_coredump_walkmap(struct proc *p, void *iocookie,
-    int (*func)(struct proc *, void *, struct uvm_coredump_state *),
-    void *cookie)
-{
-	struct uvm_coredump_state state;
-	struct vmspace *vm = p->p_vmspace;
-	struct vm_map *map = &vm->vm_map;
-	struct vm_map_entry *entry;
-	int error;
-
-	entry = NULL;
-	vm_map_lock_read(map);
-	state.end = 0;
-	for (;;) {
-		if (entry == NULL)
-			entry = map->header.next;
-		else if (!uvm_map_lookup_entry(map, state.end, &entry))
-			entry = entry->next;
-		if (entry == &map->header)
-			break;
-
-		state.cookie = cookie;
-		if (state.end > entry->start) {
-			state.start = state.end;
-		} else {
-			state.start = entry->start;
-		}
-		state.realend = entry->end;
-		state.end = entry->end;
-		state.prot = entry->protection;
-		state.flags = 0;
-
-		/*
-		 * Dump the region unless one of the following is true:
-		 *
-		 * (1) the region has neither object nor amap behind it
-		 *     (ie. it has never been accessed).
-		 *
-		 * (2) the region has no amap and is read-only
-		 *     (eg. an executable text section).
-		 *
-		 * (3) the region's object is a device.
-		 *
-		 * (4) the region is unreadable by the process.
-		 */
-
-		KASSERT(!UVM_ET_ISSUBMAP(entry));
-		KASSERT(state.start < VM_MAXUSER_ADDRESS);
-		KASSERT(state.end <= VM_MAXUSER_ADDRESS);
-		if (entry->object.uvm_obj == NULL &&
-		    entry->aref.ar_amap == NULL) {
-			state.realend = state.start;
-		} else if ((entry->protection & VM_PROT_WRITE) == 0 &&
-		    entry->aref.ar_amap == NULL) {
-			state.realend = state.start;
-		} else if (entry->object.uvm_obj != NULL &&
-		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
-			state.realend = state.start;
-		} else if ((entry->protection & VM_PROT_READ) == 0) {
-			state.realend = state.start;
-		} else {
-			if (state.start >= (vaddr_t)vm->vm_maxsaddr)
-				state.flags |= UVM_COREDUMP_STACK;
-
-			/*
-			 * If this an anonymous entry, only dump instantiated
-			 * pages.
-			 */
-			if (entry->object.uvm_obj == NULL) {
-				vaddr_t end;
-
-				amap_lock(entry->aref.ar_amap);
-				for (end = state.start;
-				     end < state.end; end += PAGE_SIZE) {
-					struct vm_anon *anon;
-					anon = amap_lookup(&entry->aref,
-					    end - entry->start);
-					/*
-					 * If we have already encountered an
-					 * uninstantiated page, stop at the
-					 * first instantied page.
-					 */
-					if (anon != NULL &&
-					    state.realend != state.end) {
-						state.end = end;
-						break;
-					}
-
-					/*
-					 * If this page is the first
-					 * uninstantiated page, mark this as
-					 * the real ending point.  Continue to
-					 * counting uninstantiated pages.
-					 */
-					if (anon == NULL &&
-					    state.realend == state.end) {
-						state.realend = end;
-					}
-				}
-				amap_unlock(entry->aref.ar_amap);
-			}
-		}
-		
-
-		vm_map_unlock_read(map);
-		error = (*func)(p, iocookie, &state);
-		if (error)
-			return (error);
-		vm_map_lock_read(map);
-	}
-	vm_map_unlock_read(map);
-
-	return (0);
-}
-#endif /* COREDUMP */

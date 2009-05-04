@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.3.78.1 2008/05/16 02:23:05 yamt Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.3.78.2 2009/05/04 08:11:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.3.78.1 2008/05/16 02:23:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.3.78.2 2009/05/04 08:11:49 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,15 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.3.78.1 2008/05/16 02:23:05 yamt E
 #include <dev/eisa/eisavar.h>
 
 void
-eisa_attach_hook(parent, self, eba)
-	struct device *parent, *self;
-	struct eisabus_attach_args *eba;
+eisa_attach_hook(struct device *parent, struct device *self, struct eisabus_attach_args *eba)
 {
 }
 
 int
-eisa_maxslots(ec)
-	eisa_chipset_tag_t ec;
+eisa_maxslots(eisa_chipset_tag_t ec)
 {
 
 	/*

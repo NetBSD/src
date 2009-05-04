@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2008/01/23 19:46:45 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12.10.1 2009/05/04 08:12:09 yamt Exp $	*/
 
 /*
  *
@@ -119,9 +119,6 @@
  * pmap data structures: see pmap.c for details of locking.
  */
 
-struct pmap;
-typedef struct pmap *pmap_t;
-
 /*
  * we maintain a list of all non-kernel pmaps
  */
@@ -162,15 +159,12 @@ struct pmap {
 	int pm_flags;			/* see below */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
-	int pm_ldt_len;			/* number of LDT entries */
+	size_t pm_ldt_len;		/* size of LDT in bytes */
 	int pm_ldt_sel;			/* LDT selector */
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
 };
-
-/* pm_flags */
-#define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
 
 /* macro to access pm_pdirpa */
 #ifdef PAE
@@ -182,13 +176,17 @@ struct pmap {
 #endif
 
 /*
+ * MD flags that we use for pmap_enter:
+ */
+#define PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
+
+/*
  * global kernel variables
  */
 
 /* PDPpaddr: is the physical address of the kernel's PDP */
 extern u_long PDPpaddr;
 
-extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int pmap_pg_g;			/* do we support PG_G? */
 extern long nkptp[PTP_LEVELS];
 
@@ -196,7 +194,6 @@ extern long nkptp[PTP_LEVELS];
  * macros
  */
 
-#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
@@ -224,6 +221,8 @@ bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
+void		pmap_remove_all(struct pmap *);
+void		pmap_ldt_sync(struct pmap *);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -231,6 +230,7 @@ void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
 void	pmap_tlb_shootwait(void);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+#define PMAP_FORK		/* turn on pmap_fork interface */
 
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
@@ -241,13 +241,6 @@ bool	pmap_pageidlezero(paddr_t);
 /*
  * inline functions
  */
-
-/*ARGSUSED*/
-static __inline void
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing
@@ -350,8 +343,7 @@ paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 void	pmap_cpu_init_early(struct cpu_info *);
 void	pmap_cpu_init_late(struct cpu_info *);
-void	sse2_zero_page(void *);
-void	sse2_copy_page(void *, void *);
+bool	sse2_idlezero_page(void *);
 
 
 #ifdef XEN
@@ -406,9 +398,11 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 /* pmap functions with machine addresses */
 void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
-	    vm_prot_t, int, int);
+	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
+
 paddr_t	vtomach(vaddr_t);
+#define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
 
 #endif	/* XEN */
 

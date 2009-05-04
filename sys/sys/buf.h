@@ -1,7 +1,7 @@
-/*     $NetBSD: buf.h,v 1.106.10.1 2008/05/16 02:25:50 yamt Exp $ */
+/*     $NetBSD: buf.h,v 1.106.10.2 2009/05/04 08:14:34 yamt Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -85,11 +85,6 @@ struct kauth_cred;
 #define NOLIST ((struct buf *)0x87654321)
 
 /*
- * To avoid including <ufs/ffs/softdep.h>
- */
-LIST_HEAD(workhead, worklist);
-
-/*
  * These are currently used only by the soft dependency code, hence
  * are stored once in a global variable. If other subsystems wanted
  * to use these hooks, a pointer to a set of bio_ops could be added
@@ -114,7 +109,8 @@ extern kmutex_t buffer_lock;
  *
  * Field markings and the corresponding locks:
  *
- * b	owner (thread that holds BB_BUSY) and/or thread calling biodone()
+ * b	thread of execution that holds BC_BUSY, does not correspond
+ *	  directly to any particular LWP
  * c	bufcache_lock
  * l	b_objlock
  *
@@ -157,10 +153,11 @@ struct buf {
 
 	kcondvar_t		b_busy;		/* c: threads waiting on buf */
 	u_int			b_refcnt;	/* c: refcount for b_busy */
-	struct workhead		b_dep;		/* c: softdep */
+	void			*b_unused;	/*  : unused */
 	LIST_ENTRY(buf)		b_hash;		/* c: hash chain */
 	LIST_ENTRY(buf)		b_vnbufs;	/* c: associated vnode */
 	TAILQ_ENTRY(buf)	b_freelist;	/* c: position if not active */
+	LIST_ENTRY(buf)		b_wapbllist;	/* c: transaction buffer list */
 	daddr_t			b_lblkno;	/* c: logical block number */
 	int			b_freelistindex;/* c: free list index (BQ_) */
 	u_int			b_cflags;	/* c: BC_* flags */
@@ -243,6 +240,10 @@ do {									\
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 #define B_METAONLY	0x04	/* Return indirect block buffer. */
+#define B_CONTIG	0x08	/* Allocate file contiguously. */
+
+/* Flags to bread(), breadn() and breada(). */
+#define B_MODIFY	0x01	/* Hint: caller might modify buffer */
 
 #ifdef _KERNEL
 
@@ -256,7 +257,6 @@ do {									\
 #define	BPRIO_TIMENONCRITICAL	0
 #define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
-extern	const struct bio_ops *bioopsp;
 extern	u_int nbuf;		/* The number of buffer headers */
 
 /*
@@ -285,11 +285,11 @@ void	bdirty(buf_t *);
 void	bdwrite(buf_t *);
 void	biodone(buf_t *);
 int	biowait(buf_t *);
-int	bread(struct vnode *, daddr_t, int, struct kauth_cred *, buf_t **);
+int	bread(struct vnode *, daddr_t, int, struct kauth_cred *, int, buf_t **);
 int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct kauth_cred *,
-	       buf_t **);
+	       int, buf_t **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
-	       struct kauth_cred *, buf_t **);
+	       struct kauth_cred *, int, buf_t **);
 void	brelsel(buf_t *, int);
 void	brelse(buf_t *, int);
 void	bremfree(buf_t *);
@@ -311,7 +311,7 @@ int	buf_syncwait(void);
 u_long	buf_memcalc(void);
 int	buf_drain(int);
 int	buf_setvalimit(vsize_t);
-#ifdef DDB
+#if defined(DDB) || defined(DEBUGPRINT)
 void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...));
 #endif
 buf_t	*getiobuf(struct vnode *, bool);

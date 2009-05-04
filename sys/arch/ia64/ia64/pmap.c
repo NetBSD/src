@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.12.4.1 2008/05/16 02:22:41 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.12.4.2 2009/05/04 08:11:21 yamt Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.4.1 2008/05/16 02:22:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.4.2 2009/05/04 08:11:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,8 @@ kmutex_t pmap_rid_lock;			/* RID allocator lock */
 bool		pmap_initialized;	/* Has pmap_init completed? */
 u_long		pmap_pages_stolen;	/* instrumentation */
 
-struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+struct pmap *const kernel_pmap_ptr = &kernel_map_store;
 
 static vaddr_t	kernel_vm_end;	/* VA of last avail page ( end of kernel Address Space ) */
 
@@ -526,7 +527,7 @@ pmap_steal_vhpt_memory(vsize_t size)
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_bootstrap()
+pmap_bootstrap(void)
 {
 	struct ia64_pal_result res;
 	vaddr_t base, limit;
@@ -816,8 +817,7 @@ pmap_init(void)
  */
 
 paddr_t
-vtophys(va)
-	vaddr_t va;
+vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
@@ -929,7 +929,7 @@ void
 pmap_zero_page(paddr_t phys)
 {
 	vaddr_t va = IA64_PHYS_TO_RR7(phys);
-	bzero((void *) va, PAGE_SIZE);
+	memset((void *) va, 0, PAGE_SIZE);
 }
 
 /*
@@ -946,7 +946,7 @@ pmap_copy_page(paddr_t psrc, paddr_t pdst)
 {
 	vaddr_t vsrc = IA64_PHYS_TO_RR7(psrc);
 	vaddr_t vdst = IA64_PHYS_TO_RR7(pdst);
-	bcopy((void *) vsrc, (void *) vdst, PAGE_SIZE);
+	memcpy( (void *) vdst, (void *) vsrc, PAGE_SIZE);
 }
 
 
@@ -1391,7 +1391,7 @@ pmap_phys_address(paddr_t ppn)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
         pmap_t oldpmap;
         vaddr_t opa;

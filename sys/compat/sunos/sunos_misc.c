@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.159 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.159.4.1 2009/05/04 08:12:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,13 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.159 2008/03/21 21:54:59 ad Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
-#include "opt_ptrace.h"
-#include "fs_nfs.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.159.4.1 2009/05/04 08:12:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,14 +123,14 @@ sunos_sys_stime(struct lwp *l, const struct sunos_sys_stime_args *uap, register_
 int
 sunos_sys_wait4(struct lwp *l, const struct sunos_sys_wait4_args *uap, register_t *retval)
 {
-	struct sys_wait4_args bsd_ua;
+	struct compat_50_sys_wait4_args bsd_ua;
 
 	SCARG(&bsd_ua, pid) = SCARG(uap, pid) == 0 ? WAIT_ANY : SCARG(uap, pid);
 	SCARG(&bsd_ua, status) = SCARG(uap, status);
 	SCARG(&bsd_ua, options) = SCARG(uap, options);
 	SCARG(&bsd_ua, rusage) = SCARG(uap, rusage);
 
-	return (sys_wait4(l, &bsd_ua, retval));
+	return (compat_50_sys_wait4(l, &bsd_ua, retval));
 }
 
 int
@@ -298,18 +292,12 @@ sunos_sys_mount(struct lwp *l, const struct sunos_sys_mount_args *uap, register_
 	    UIO_USERSPACE, 0, &dummy);
 }
 
-#if defined(NFS)
 int
 async_daemon(struct lwp *l, const void *v, register_t *retval)
 {
-	struct sys_nfssvc_args ouap;
 
-	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	SCARG(&ouap, argp) = NULL;
-
-	return (sys_nfssvc(l, &ouap, retval));
+	return kpause("fakeniod", false, 0, NULL);
 }
-#endif /* NFS */
 
 void	native_to_sunos_sigset(const sigset_t *, int *);
 void	sunos_to_native_sigset(const int, sigset_t *);
@@ -536,20 +524,21 @@ sunos_sys_mctl(struct lwp *l, const struct sunos_sys_mctl_args *uap, register_t 
 int
 sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap, register_t *retval)
 {
+	struct sockopt sopt;
 	struct socket *so;
-	struct mbuf *m = NULL;
 	int name = SCARG(uap, name);
 	int error;
 
-	/* getsock() will use the descriptor for us */
+	/* fd_getsock() will use the descriptor for us */
 	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (name == SO_DONTLINGER) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		mtod(m, struct linger *)->l_onoff = 0;
-		m->m_len = sizeof(struct linger);
-		error = sosetopt(so, SCARG(uap, level), SO_LINGER, m);
+		struct linger lg;
+
+		lg.l_onoff = 0;
+		error = so_setsockopt(l, so, SCARG(uap, level), SO_LINGER,
+		    &lg, sizeof(lg));
 		goto out;
 	}
 	if (SCARG(uap, level) == IPPROTO_IP) {
@@ -574,17 +563,14 @@ sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap,
 		error = EINVAL;
 		goto out;
 	}
+	sockopt_init(&sopt, SCARG(uap, level), name, SCARG(uap, valsize));
 	if (SCARG(uap, val)) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		error = copyin(SCARG(uap, val), mtod(m, void *),
+		error = copyin(SCARG(uap, val), sopt.sopt_data,
 		    (u_int)SCARG(uap, valsize));
-		if (error) {
-			(void) m_free(m);
-			goto out;
-		}
-		m->m_len = SCARG(uap, valsize);
 	}
-	error = sosetopt(so, SCARG(uap, level), name, m);
+	if (error == 0)
+		error = sosetopt(so, &sopt);
+	sockopt_destroy(&sopt);
  out:
  	fd_putfile(SCARG(uap, s));
 	return (error);
@@ -598,7 +584,7 @@ sunos_sys_socket_common(struct lwp *l, register_t *retval, int type)
 	struct socket *so;
 	int error, fd;
 
-	/* getsock() will use the descriptor for us */
+	/* fd_getsock() will use the descriptor for us */
 	fd = (int)*retval;
 	if ((error = fd_getsock(fd, &so)) == 0) {
 		if (type == SOCK_DGRAM)
@@ -728,7 +714,6 @@ sunos_sys_open(struct lwp *l, const struct sunos_sys_open_args *uap, register_t 
 	return ret;
 }
 
-#if defined (NFSSERVER)
 int
 sunos_sys_nfssvc(struct lwp *l, const struct sunos_sys_nfssvc_args *uap, register_t *retval)
 {
@@ -758,7 +743,6 @@ sunos_sys_nfssvc(struct lwp *l, const struct sunos_sys_nfssvc_args *uap, registe
 	return (ENOSYS);
 #endif
 }
-#endif /* NFSSERVER */
 
 int
 sunos_sys_ustat(struct lwp *l, const struct sunos_sys_ustat_args *uap, register_t *retval)
@@ -853,7 +837,7 @@ sunos_sys_fstatfs(struct lwp *l, const struct sunos_sys_fstatfs_args *uap, regis
 	struct statvfs *sp;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
@@ -888,7 +872,8 @@ sunos_sys_mknod(struct lwp *l, const struct sunos_sys_mknod_args *uap, register_
 		return sys_mkfifo(l, &fifo_ua, retval);
 	}
 
-	return sys_mknod(l, (const struct sys_mknod_args *)uap, retval);
+	return compat_50_sys_mknod(l,
+	    (const struct compat_50_sys_mknod_args *)uap, retval);
 }
 
 #define SUNOS_SC_ARG_MAX	1
@@ -976,7 +961,6 @@ sunos_sys_setrlimit(struct lwp *l, const struct sunos_sys_setrlimit_args *uap, r
 	return compat_43_sys_setrlimit(l, &ua_43, retval);
 }
 
-#if defined(PTRACE) || defined(_LKM)
 /* for the m68k machines */
 #ifndef PT_GETFPREGS
 #define PT_GETFPREGS -1
@@ -992,20 +976,16 @@ static const int sreq2breq[] = {
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
 static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
-#endif /* PTRACE || _LKM */
 
 int
 sunos_sys_ptrace(struct lwp *l, const struct sunos_sys_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
 	struct sys_ptrace_args pa;
 	int req;
 
-#ifdef _LKM
 #define	sys_ptrace sysent[SYS_ptrace].sy_call 
 	if (sys_ptrace == sys_nosys)
 		return ENOSYS;
-#endif
 
 	req = SCARG(uap, req);
 
@@ -1022,9 +1002,6 @@ sunos_sys_ptrace(struct lwp *l, const struct sunos_sys_ptrace_args *uap, registe
 	SCARG(&pa, data) = SCARG(uap, data);
 
 	return sys_ptrace(l, &pa, retval);
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
 }
 
 /*

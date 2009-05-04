@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.33.4.1 2008/05/16 02:24:26 yamt Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.33.4.2 2009/05/04 08:12:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.33.4.1 2008/05/16 02:24:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.33.4.2 2009/05/04 08:12:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,9 @@ int com_isa_isHAYESP(bus_space_handle_t, struct com_softc *);
 #endif
 
 
-CFATTACH_DECL_NEW(com_isa, sizeof(struct com_isa_softc),
-    com_isa_probe, com_isa_attach, com_isa_detach, com_activate);
+CFATTACH_DECL3_NEW(com_isa, sizeof(struct com_isa_softc),
+    com_isa_probe, com_isa_attach, com_isa_detach, com_activate,
+    NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 int
 com_isa_probe(device_t parent, cfdata_t match, void *aux)

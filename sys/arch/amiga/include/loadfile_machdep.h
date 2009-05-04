@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3.76.1 2008/05/16 02:21:52 yamt Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.3.76.2 2009/05/04 08:10:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -71,9 +71,9 @@
 #define DEALLOC(a, b)		free(a)
 #define OKMAGIC(a)		((a) == OMAGIC)
 
-ssize_t vread __P((int, u_long, u_long *, size_t));
-void vcopy __P((u_long, u_long, u_long *, size_t));
-void vzero __P((u_long, u_long *, size_t));
+ssize_t vread(int, u_long, u_long *, size_t);
+void vcopy(u_long, u_long, u_long *, size_t);
+void vzero(u_long, u_long *, size_t);
 
 #endif
 #endif /* ! _AMIGA_LOADFILE_MACHDEP_H_ */

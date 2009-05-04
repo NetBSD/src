@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.3.78.1 2008/05/16 02:23:23 yamt Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.3.78.2 2009/05/04 08:12:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@ int
 devopen(struct open_file *f, const char *fname,	char **file)
 {
 	struct devsw *dp;
-	int error;
 
 	*file = (char *)fname;
 	dp = &devsw[0];

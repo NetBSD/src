@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.35 2008/03/15 00:57:15 matt Exp $	*/
+/*	$NetBSD: dz.c,v 1.35.4.1 2009/05/04 08:12:36 yamt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.35 2008/03/15 00:57:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.35.4.1 2009/05/04 08:12:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.35 2008/03/15 00:57:15 matt Exp $");
 
 #ifdef __mips__
 #define	DZ_DELAY(x)	DELAY(x)
-#define control		__attribute ((noinline))
+#define control		__noinline
 #else	/* presumably vax */
 #define	DZ_DELAY(x)	/* nothing */
 #define	control		inline
@@ -271,7 +271,7 @@ dzrint(void *arg)
 		cn_check_magic(tp->t_dev, mcc, dz_cnm_state);
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			clwakeup(&tp->t_rawq);
+			cv_broadcast(&tp->t_rawcv);
 			continue;
 		}
 
@@ -401,7 +401,7 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_rawcv, true, 0);
 		tp->t_wopen--;
 		if (error)
 			break;

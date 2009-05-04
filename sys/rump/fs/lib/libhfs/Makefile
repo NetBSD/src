@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2007/08/08 09:28:53 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.34.1 2009/05/04 08:14:26 yamt Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../fs/hfs
 
-LIB=	hfs
-
-.PATH:  ${NETBSDSRCDIR}/sys/fs/hfs
+LIB=	rumpfs_hfs
 
 SRCS=	hfs_nhash.c hfs_subr.c hfs_vfsops.c hfs_vnops.c libhfs.c unicode.c
 

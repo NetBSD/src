@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.27 2007/04/22 08:29:58 dsl Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.1 2009/05/04 08:12:25 yamt Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -59,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.27 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.1 2009/05/04 08:12:25 yamt Exp $");
 
 #define	ELFSIZE		32
 
@@ -74,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.27 2007/04/22 08:29:58 dsl
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+#include <sys/namei.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
@@ -107,8 +106,39 @@ ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 	int error;
 
 	if (itp) {
+		/*
+		 * If the path is exactly "/usr/libexec/ld.elf_so", first
+		 * try to see if "/usr/libexec/ld.elf_so-<arch>" exists
+		 * and if so, use that instead.
+		 * XXX maybe move this into compat/common
+		 */
+		error = 0;
+		if (strcmp(itp, "/usr/libexec/ld.elf_so") == 0 ||
+		    strcmp(itp, "/libexec/ld.elf_so") == 0) {
+			extern const char machine32[];
+			struct nameidata nd;
+			char *path;
+
+			if (epp->ep_interp != NULL)
+				vrele(epp->ep_interp);
+			
+			path = PNBUF_GET();
+			snprintf(path, MAXPATHLEN, "%s-%s", itp, machine32);
+			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
+			error = namei(&nd);
+			/*
+			 * If that worked, save interpreter in case we
+			 * actually need to load it
+			 */
+			if (error != 0)
+				epp->ep_interp = NULL;
+			else
+				epp->ep_interp = nd.ni_vp;
+			PNBUF_PUT(path);
+		}
+
 		/* Translate interpreter name if needed */
-		if ((error = emul_find_interp(l, epp, itp)) != 0)
+		if (error && (error = emul_find_interp(l, epp, itp)) != 0)
 			return error;
 	}
 	epp->ep_flags |= EXEC_32;

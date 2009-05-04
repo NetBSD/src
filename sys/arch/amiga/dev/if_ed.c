@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.55 2007/10/17 19:53:16 garbled Exp $ */
+/*	$NetBSD: if_ed.c,v 1.55.20.1 2009/05/04 08:10:34 yamt Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55 2007/10/17 19:53:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55.20.1 2009/05/04 08:10:34 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -263,7 +263,7 @@ ed_zbus_attach(struct device *parent, struct device *self, void *aux)
 	ed_stop(sc);
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;
@@ -865,7 +865,7 @@ ed_ioctl(register struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -899,6 +899,11 @@ ed_ioctl(register struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX if ed_init() would ed_stop(, 0), first, perhaps we
+		 * can re-use the code in ether_ioctl().
+		 */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -941,7 +946,8 @@ ed_ioctl(register struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
+		break;
 	}
 
 	splx(s);
@@ -1121,7 +1127,7 @@ ed_getmcaf(struct ethercom *ac, u_long *af)
 	af[0] = af[1] = 0;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * We must listen to a range of multicast addresses.

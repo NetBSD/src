@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.191.4.1 2008/05/16 02:25:52 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.191.4.2 2009/05/04 08:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,8 @@ enum vtagtype	{
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
-	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS
+	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS,
+	VT_RUMP
 };
 
 #define	VNODE_TAGS \
@@ -112,7 +113,8 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", "VT_ZFS"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS","VT_EFS","VT_ZFS",\
+    "VT_RUMP"
 
 struct vnode;
 struct buf;
@@ -228,23 +230,22 @@ typedef struct vnode vnode_t;
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
-#define	VI_MAPPED	0x00040000	/* duplicate of VV_MAPPED */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
 #define	VI_FREEING	0x00400000	/* vnode is being freed */
+#define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
 
 /*
  * The third set are locked by the underlying file system.
  */
 #define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
-#define	VU_SOFTDEP	0x02000000	/* FFS: involved in softdep processing */
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
-    "\31DIROP\32SOFTDEP" 
+    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
+    "\30INACTNOW\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -258,7 +259,7 @@ struct vattr {
 	nlink_t		va_nlink;	/* number of references to file */
 	uid_t		va_uid;		/* owner user id */
 	gid_t		va_gid;		/* owner group id */
-	long		va_fsid;	/* file system id (dev for now) */
+	dev_t		va_fsid;	/* file system id (dev for now) */
 	ino_t		va_fileid;	/* file id */
 	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
@@ -296,6 +297,7 @@ struct vattr {
 #define	IO_NORMAL	0x00800		/* operate on regular data */
 #define	IO_EXT		0x01000		/* operate on extended attributes */
 #define	IO_DIRECT	0x02000		/* direct I/O hint */
+#define	IO_JOURNALLOCKED 0x04000	/* journal is already locked */
 #define	IO_ADV_MASK	0x00003		/* access pattern hint */
 
 #define	IO_ADV_SHIFT	0
@@ -342,6 +344,7 @@ extern const int	vttoif_tab[];
 #define	FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
 #define	FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
 #define	FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
+#define	FSYNC_NOLOG	0x0010		/* fsync: do not flush the log */
 #define	FSYNC_CACHE	0x0100		/* fsync: flush disk caches too */
 #define	FSYNC_VFS	0x0200		/* fsync: via FSYNC_VFS() */
 
@@ -482,9 +485,6 @@ struct vnodeop_desc {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_CACHE);
-MALLOC_DECLARE(M_VNODE);
 
 /*
  * A list of all the operation descs.
@@ -595,6 +595,7 @@ int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
 void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
+bool	vtryget(struct vnode *);
 void 	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct lwp *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);
@@ -654,17 +655,15 @@ int	dorevoke(struct vnode *, kauth_cred_t);
 int	vlockmgr(struct vnlock *, int);
 int	vlockstatus(struct vnlock *);
 
-/* from vfs_syscalls.c - abused by compat code */
-int	getvnode(int, struct file **);
-
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
 int	vfs_drainvnodes(long target, struct lwp *);
 void	vfs_timestamp(struct timespec *);
-#ifdef DDB
+#if defined(DDB) || defined(DEBUGPRINT)
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));
 #endif /* DDB */
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_VNODE_H_ */

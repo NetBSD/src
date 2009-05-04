@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.7 2008/01/11 05:11:18 mrg Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.7.10.1 2009/05/04 08:11:44 yamt Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.7 2008/01/11 05:11:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.7.10.1 2009/05/04 08:11:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -193,9 +193,7 @@ canonicalize_bootpath(void)
  * known OF boot device.
  */
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	static struct device *parent;
 	static char *bp = bootpath + 1, *cp = cbootpath;
@@ -245,7 +243,8 @@ device_register(dev, aux)
 			pci_class = (pci_class >> 16) & 0xff;
 
 			if (strcmp(name, "display") == 0 ||
-					pci_class == PCI_CLASS_DISPLAY) {
+			    strcmp(name, "ATY,DDParent") == 0 ||
+			    pci_class == PCI_CLASS_DISPLAY) {
 				/* setup display properties for fb driver */
 				prop_dictionary_set_bool(dict, "is_console", 0);
 				copy_disp_props(dev, node, dict);
@@ -359,7 +358,7 @@ device_register(dev, aux)
  * Configure swap area.
  */
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");

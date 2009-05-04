@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.7 2007/03/04 05:59:45 christos Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.7.44.1 2009/05/04 08:10:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.7 2007/03/04 05:59:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.7.44.1 2009/05/04 08:10:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.7 2007/03/04 05:59:45 christos Exp
 
 #include "wsdisplay.h"
 
-int	lcd_match( struct device *, struct cfdata *, void *);
-void	lcd_attach( struct device *, struct device *, void *);
+int	lcd_match(device_t, cfdata_t, void *);
+void	lcd_attach(device_t, device_t, void *);
 int	lcdintr(void *);
 
 #if NWSDISPLAY > 0
@@ -142,11 +142,11 @@ const struct cdevsw lcd_cdevsw = {
 
 #endif
 
-CFATTACH_DECL(lcd_obio, sizeof (struct pxa2x0_lcd_softc),  lcd_match,
+CFATTACH_DECL_NEW(lcd_obio, sizeof (struct pxa2x0_lcd_softc),  lcd_match,
     lcd_attach, NULL, NULL);
 
 int
-lcd_match( struct device *parent, struct cfdata *cf, void *aux )
+lcd_match( device_t parent, cfdata_t cf, void *aux )
 {
 	return 1;
 }
@@ -171,9 +171,11 @@ static const struct lcd_panel_geometry sharp_LM8V31 =
 
 };
 
-void lcd_attach( struct device *parent, struct device *self, void *aux )
+void lcd_attach( device_t parent, device_t self, void *aux )
 {
-	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
+	struct pxa2x0_lcd_softc *sc = device_private(self);
+
+	sc->dev = self;
 
 	pxa2x0_lcd_attach_sub(sc, aux, &sharp_LM8V31);
 
@@ -275,7 +277,8 @@ lcdclose( dev_t dev, int fflag, int devtype, struct lwp *l )
 paddr_t
 lcdmmap( dev_t dev, off_t offset, int size )
 {
-	struct pxa2x0_lcd_softc *sc = device_lookup(&lcd_cd, minor(dev));
+	struct pxa2x0_lcd_softc *sc =
+		device_lookup_private(&lcd_cd, minor(dev));
 	struct pxa2x0_lcd_screen *scr = sc->active;
 
 	return bus_dmamem_mmap( &pxa2x0_bus_dma_tag, scr->segs, scr->nsegs,

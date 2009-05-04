@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.67.4.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.67.4.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -71,11 +71,11 @@
 
 
 /*-
- * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2006, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -134,10 +134,12 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.2 2009/05/04 08:11:16 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
+#include "opt_modular.h"
+#include "opt_multiboot.h"
 #include "opt_realmem.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
@@ -192,7 +194,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.1 2008/05/16 02:22:34 yamt Exp $")
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
 #endif /* XEN3 */
 	.ascii	",LOADER=generic"
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
@@ -516,7 +518,7 @@ try586:	/* Use the `cpuid' instruction. */
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
 
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
@@ -648,7 +650,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%cr0,%eax		# get control word
 					# enable paging & NPX emulation
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP),%eax
-	movl	%eax,%cr0		# and let's page NOW!
+	movl	%eax,%cr0		# and page NOW!
 
 	pushl	$begin			# jump to high mem
 	ret
@@ -909,7 +911,7 @@ ENTRY(dumpsys)
 END(dumpsys)
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct *newlwp,
  *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
@@ -927,10 +929,11 @@ ENTRY(cpu_switchto)
 #if defined(DIAGNOSTIC) && !defined(XEN)
 	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
 	jbe	0f
+	pushl	CPUVAR(ILEVEL)
 	pushl	$.Lstr
 	call	_C_LABEL(panic)
-	addl	$4,%esp
-.Lstr:	.string	"cpu_switcho: switching above IPL_SCHED\0"
+	addl	$8,%esp
+.Lstr:	.string	"cpu_switchto: switching above IPL_SCHED (%d)\0"
 0:
 #endif
 
@@ -1006,15 +1009,14 @@ ENTRY(cpu_switchto)
 2:
 #ifndef XEN
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%ebx),%ecx
+	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
 
 	/*
 	 * If our floating point registers are on a different CPU,
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
-	movl	PCB_FPCPU(%ebx),%eax
-	cmpl	CPUVAR(SELF),%eax
+	cmpl	CPUVAR(FPCURLWP),%edi
 	je	3f
 	orl	$CR0_TS,%ecx
 
@@ -1045,6 +1047,7 @@ ENTRY(cpu_switchto)
 
 .Lcopy_iobitmap:
 	/* Copy I/O bitmap. */
+	incl	_C_LABEL(pmap_iobmp_evcnt)+EV_COUNT
 	movl	$(IOMAPSIZE/4),%ecx
 	pushl	%esi
 	pushl	%edi
@@ -1077,8 +1080,10 @@ END(savectx)
  * Old call gate entry for syscall
  */
 IDTVEC(osyscall)
+	cli			# must be first instruction
 	pushfl			# set eflags in trap frame
 	popl	8(%esp)
+	orl	$PSL_I,(%esp)	# re-enable ints on return to user
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 IDTVEC_END(osyscall)
@@ -1093,12 +1098,13 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	STI(%eax)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
 	jz	1f
 	pushl	$5f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 #ifdef DDB
 	int	$3
@@ -1149,14 +1155,14 @@ syscall1:
 	INTRFASTEXIT
 3:	STI(%eax)
 	pushl	$4f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 	pushl	$IPL_NONE
 	call	_C_LABEL(spllower)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
+4:	.asciz	"SPL NOT LOWERED ON SYSCALL EXIT\n"
+5:	.asciz	"SPL NOT ZERO ON SYSCALL ENTRY\n"
 #endif /* DIAGNOSTIC */
 9:
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
@@ -1174,6 +1180,39 @@ syscall1:
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 IDTVEC_END(syscall)
+
+IDTVEC(svr4_fasttrap)
+	pushl	$2		# size of instruction for restart
+	pushl	$T_ASTFLT	# trap # for doing ASTs
+	INTRENTRY
+	STI(%eax)
+	pushl	$RW_READER
+	pushl	$_C_LABEL(svr4_fasttrap_lock)
+	call	_C_LABEL(rw_enter)
+	addl	$8,%esp
+	call	*_C_LABEL(svr4_fasttrap_vec)
+	pushl	$_C_LABEL(svr4_fasttrap_lock)
+	call	_C_LABEL(rw_exit)
+	addl	$4,%esp
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	CHECK_ASTPENDING(%eax)		
+	je	1f
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%eax)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
+	call	_C_LABEL(trap)
+	addl	$4,%esp
+	jmp	2b
+1:	CHECK_DEFERRED_SWITCH
+	jnz	9f
+	INTRFASTEXIT
+9:	sti
+	call	_C_LABEL(pmap_load)
+	cli
+	jmp	2b
 
 #if NNPX > 0
 /*
@@ -1226,18 +1265,21 @@ END(npx586bug1)
 #endif /* NNPX > 0 */
 
 /*
- * void sse2_zero_page(void *pg)
+ * void sse2_idlezero_page(void *pg)
  *
- * Zero a page without polluting the cache.
+ * Zero a page without polluting the cache.  Preemption must be
+ * disabled by the caller. Abort if a preemption is pending.
  */
-ENTRY(sse2_zero_page)
+ENTRY(sse2_idlezero_page)
 	pushl	%ebp
 	movl	%esp,%ebp
 	movl	8(%esp), %edx
-	movl	$PAGE_SIZE, %ecx
+	movl	$(PAGE_SIZE/32), %ecx
 	xorl	%eax, %eax
 	.align	16
 1:
+	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
+	jnz	2f
 	movnti	%eax, 0(%edx)
 	movnti	%eax, 4(%edx)
 	movnti	%eax, 8(%edx)
@@ -1246,45 +1288,15 @@ ENTRY(sse2_zero_page)
 	movnti	%eax, 20(%edx)
 	movnti	%eax, 24(%edx)
 	movnti	%eax, 28(%edx)
-	subl	$32, %ecx
-	leal	32(%edx), %edx
+	addl	$32, %edx
+	decl	%ecx
 	jnz	1b
 	sfence
+	incl	%eax
 	pop	%ebp
 	ret
-END(sse2_zero_page)
-
-/*
- * void sse2_copy_page(void *src, void *dst)
- *
- * Copy a page without polluting the cache.
- */
-ENTRY(sse2_copy_page)
-	pushl	%ebp
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
-	movl	20(%esp), %esi
-	movl	24(%esp), %edi
-	movl	$PAGE_SIZE, %ebp
-	.align	16
-1:
-	movl	0(%esi), %eax
-	movl	4(%esi), %ebx
-	movl	8(%esi), %ecx
-	movl	12(%esi), %edx
-	movnti	%eax, 0(%edi)
-	movnti	%ebx, 4(%edi)
-	movnti	%ecx, 8(%edi)
-	movnti	%edx, 12(%edi)
-	subl	$16, %ebp
-	leal	16(%esi), %esi
-	leal	16(%edi), %edi
-	jnz	1b
+2:
 	sfence
-	popl	%edi
-	popl	%esi
-	popl	%ebx
 	popl	%ebp
 	ret
-END(sse2_copy_page)
+END(sse2_idlezero_page)

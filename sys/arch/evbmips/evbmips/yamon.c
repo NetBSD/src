@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.c,v 1.10 2008/01/09 20:38:35 wiz Exp $	*/
+/*	$NetBSD: yamon.c,v 1.10.10.1 2009/05/04 08:11:02 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 /* XXX move to arch/mips/yamon/yamon.c or similar? */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.10 2008/01/09 20:38:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.10.10.1 2009/05/04 08:11:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,8 +71,7 @@ struct consdev yamon_promcd = {
  * Get character from PROM console.
  */
 static int
-yamongetc(dev)
-	dev_t dev;
+yamongetc(dev_t dev)
 {
 	char chr;
 
@@ -153,7 +152,6 @@ yamon_setcpufreq(int force)
 		curcpu()->ci_cycles_per_hz /= 2;
 		curcpu()->ci_divisor_delay /= 2;
 	}
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	return ret;
 }

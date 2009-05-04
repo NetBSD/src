@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.64.78.1 2008/05/16 02:21:47 yamt Exp $ */
+/* $NetBSD: cia.c,v 1.64.78.2 2009/05/04 08:10:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.64.78.1 2008/05/16 02:21:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.64.78.2 2009/05/04 08:10:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,16 +104,16 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.64.78.1 2008/05/16 02:21:47 yamt Exp $");
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	ciamatch __P((struct device *, struct cfdata *, void *));
-void	ciaattach __P((struct device *, struct device *, void *));
+int	ciamatch(struct device *, struct cfdata *, void *);
+void	ciaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cia, sizeof(struct cia_softc),
     ciamatch, ciaattach, NULL, NULL);
 
 extern struct cfdriver cia_cd;
 
-int	cia_bus_get_window __P((int, int,
-	    struct alpha_bus_space_translation *));
+int	cia_bus_get_window(int, int,
+	    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
 int ciafound;
@@ -151,10 +151,7 @@ int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
 int	cia_pyxis_force_bwx = CIA_PYXIS_FORCE_BWX;
 
 int
-ciamatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ciamatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -172,9 +169,7 @@ ciamatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-cia_init(ccp, mallocsafe)
-	struct cia_config *ccp;
-	int mallocsafe;
+cia_init(struct cia_config *ccp, int mallocsafe)
 {
 	int pci_use_bwx = cia_pci_use_bwx;
 	int bus_use_bwx = cia_bus_use_bwx;
@@ -269,9 +264,7 @@ cia_init(ccp, mallocsafe)
 }
 
 void
-ciaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ciaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cia_softc *sc = (struct cia_softc *)self;
 	struct cia_config *ccp;
@@ -301,10 +294,10 @@ ciaattach(parent, self, aux)
 
 	printf(": DECchip 2117x Core Logic Chipset (%s), pass %d\n",
 	    name, pass);
-	if (ccp->cc_cnfg)
-		printf("%s: extended capabilities: %s\n", self->dv_xname,
-		    bitmask_snprintf(ccp->cc_cnfg, CIA_CSR_CNFG_BITS,
-		    bits, sizeof(bits)));
+	if (ccp->cc_cnfg) {
+		snprintb(bits, sizeof(bits), CIA_CSR_CNFG_BITS, ccp->cc_cnfg);
+		printf("%s: extended capabilities: %s\n", self->dv_xname, bits);
+	}
 
 	switch (ccp->cc_flags & (CCF_PCI_USE_BWX|CCF_BUS_USE_BWX)) {
 	case CCF_PCI_USE_BWX|CCF_BUS_USE_BWX:
@@ -417,9 +410,7 @@ ciaattach(parent, self, aux)
 }
 
 int
-cia_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+cia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct cia_config *ccp = &cia_configuration;
 	bus_space_tag_t st;
@@ -441,8 +432,7 @@ cia_bus_get_window(type, window, abst)
 }
 
 void
-cia_pyxis_intr_enable(irq, onoff)
-	int irq, onoff;
+cia_pyxis_intr_enable(int irq, int onoff)
 {
 	u_int64_t imask;
 	int s;

@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.9.10.1 2008/05/16 02:23:28 yamt Exp $ */
+/* $NetBSD: coretemp.c,v 1.9.10.2 2009/05/04 08:12:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.9.10.1 2008/05/16 02:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.9.10.2 2009/05/04 08:12:10 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
 #include <sys/cpu.h>
@@ -117,6 +118,15 @@ coretemp_register(struct cpu_info *ci)
 		if (msr & (1 << 30))
 			sc->sc_tjmax = 85;
 	}
+
+	/* 
+	 * Check if the MSR contains thermal reading valid bit, this
+	 * avoid false positives on systems that fake up a compatible
+	 * CPU that doesn't have access to these MSRs; such as VMWare.
+	 */
+	msr = rdmsr(MSR_THERM_STATUS);
+	if ((msr & __BIT(31)) == 0)
+		goto bad;
 
 	sc->sc_ci = ci;
 

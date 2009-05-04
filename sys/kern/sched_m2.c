@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.24 2008/04/12 17:02:08 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.24.4.1 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.24 2008/04/12 17:02:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.24.4.1 2009/05/04 08:13:47 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -73,25 +73,7 @@ static u_int	rt_ts;			/* Real-time time-slice */
 static u_int	ts_map[PRI_COUNT];	/* Map of time-slices */
 static pri_t	high_pri[PRI_COUNT];	/* Map for priority increase */
 
-typedef struct {
-	u_int		sl_flags;
-	u_int		sl_timeslice;	/* Time-slice of thread */
-	u_int		sl_slept;	/* Saved sleep time for sleep sum */
-	u_int		sl_slpsum;	/* Sum of sleep time */
-	u_int		sl_lrtime;	/* Last run time */
-} sched_info_lwp_t;
-
-/* Flags */
-#define	SL_BATCH	0x01
-
-/* Pool of the scheduler-specific structures for threads */
-static pool_cache_t	sil_pool;
-
-/*
- * Prototypes.
- */
-
-static void		sched_precalcts(void);
+static void	sched_precalcts(void);
 
 /*
  * Initialization and setup.
@@ -107,14 +89,10 @@ sched_rqinit(void)
 	}
 
 	/* Default timing ranges */
-	min_ts = mstohz(50);			/* ~50ms  */
-	max_ts = mstohz(150);			/* ~150ms */
-	rt_ts = mstohz(100);			/* ~100ms */
+	min_ts = mstohz(20);			/*  ~20 ms */
+	max_ts = mstohz(150);			/* ~150 ms */
+	rt_ts = mstohz(100);			/* ~100 ms */
 	sched_precalcts();
-
-	/* Pool of the scheduler-specific structures */
-	sil_pool = pool_cache_init(sizeof(sched_info_lwp_t), coherency_unit,
-	    0, 0, "lwpsd", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	/* Attach the primary CPU here */
 	sched_cpuattach(ci);
@@ -164,25 +142,12 @@ void
 sched_proc_exit(struct proc *child, struct proc *parent)
 {
 
-	/* Dummy */
 }
 
 void
 sched_lwp_fork(struct lwp *l1, struct lwp *l2)
 {
 
-	KASSERT(l2->l_sched_info == NULL);
-	l2->l_sched_info = pool_cache_get(sil_pool, PR_WAITOK);
-	memset(l2->l_sched_info, 0, sizeof(sched_info_lwp_t));
-}
-
-void
-sched_lwp_exit(struct lwp *l)
-{
-
-	KASSERT(l->l_sched_info != NULL);
-	pool_cache_put(sil_pool, l->l_sched_info);
-	l->l_sched_info = NULL;
 }
 
 void
@@ -195,14 +160,12 @@ void
 sched_setrunnable(struct lwp *l)
 {
 
-	/* Dummy */
 }
 
 void
 sched_schedclock(struct lwp *l)
 {
 
-	/* Dummy */
 }
 
 /*
@@ -212,103 +175,75 @@ sched_schedclock(struct lwp *l)
 void
 sched_nice(struct proc *p, int prio)
 {
+	struct lwp *l;
+	int n;
 
-	/* TODO: implement as SCHED_IA */
+	KASSERT(mutex_owned(p->p_lock));
+
+	p->p_nice = prio;
+	n = (prio - NZERO) >> 2;
+	if (n == 0)
+		return;
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		if (l->l_class == SCHED_OTHER) {
+			pri_t pri = l->l_priority - n;
+			pri = (n < 0) ? min(pri, PRI_HIGHEST_TS) : imax(pri, 0);
+			lwp_changepri(l, pri);
+		}
+		lwp_unlock(l);
+	}
 }
 
 /* Recalculate the time-slice */
 void
 sched_newts(struct lwp *l)
 {
-	sched_info_lwp_t *sil = l->l_sched_info;
 
-	sil->sl_timeslice = ts_map[lwp_eprio(l)];
+	l->l_sched.timeslice = ts_map[lwp_eprio(l)];
 }
 
 void
 sched_slept(struct lwp *l)
 {
-	sched_info_lwp_t *sil = l->l_sched_info;
-
-	/* Save the time when thread has slept */
-	sil->sl_slept = hardclock_ticks;
 
 	/*
 	 * If thread is in time-sharing queue and batch flag is not marked,
 	 * increase the the priority, and run with the lower time-quantum.
 	 */
-	if (l->l_priority < PRI_HIGHEST_TS &&
-	    (sil->sl_flags & SL_BATCH) == 0) {
+	if (l->l_priority < PRI_HIGHEST_TS && (l->l_flag & LW_BATCH) == 0) {
+		struct proc *p = l->l_proc;
+
 		KASSERT(l->l_class == SCHED_OTHER);
-		l->l_priority++;
+		if (__predict_false(p->p_nice < NZERO)) {
+			const int n = max((NZERO - p->p_nice) >> 2, 1);
+			l->l_priority = min(l->l_priority + n, PRI_HIGHEST_TS);
+		} else {
+			l->l_priority++;
+		}
 	}
 }
 
 void
 sched_wakeup(struct lwp *l)
 {
-	sched_info_lwp_t *sil = l->l_sched_info;
-	const u_int slptime = hardclock_ticks - sil->sl_slept;
-
-	/* Update sleep time delta */
-	sil->sl_slpsum += (l->l_slptime == 0) ? slptime : hz;
 
 	/* If thread was sleeping a second or more - set a high priority */
-	if (l->l_slptime > 1 || slptime >= hz)
+	if (l->l_slptime >= 1)
 		l->l_priority = high_pri[l->l_priority];
-
-	/* Also, consider looking for a better CPU to wake up */
-	l->l_cpu = sched_takecpu(l);
 }
 
 void
-sched_pstats_hook(struct lwp *l)
+sched_pstats_hook(struct lwp *l, int batch)
 {
-	sched_info_lwp_t *sil = l->l_sched_info;
 	pri_t prio;
-	bool batch;
-
-	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
-	    l->l_stat == LSSUSPENDED)
-		l->l_slptime++;
-
-	/*
-	 * Set that thread is more CPU-bound, if sum of run time exceeds the
-	 * sum of sleep time.  Check if thread is CPU-bound a first time.
-	 */
-	batch = (l->l_rticksum > sil->sl_slpsum);
-	if (batch) {
-		if ((sil->sl_flags & SL_BATCH) == 0)
-			batch = false;
-		sil->sl_flags |= SL_BATCH;
-	} else
-		sil->sl_flags &= ~SL_BATCH;
-
-	/*
-	 * If thread is CPU-bound and never sleeps, it would occupy the CPU.
-	 * In such case reset the value of last sleep, and check it later, if
-	 * it is still zero - perform the migration, unmark the batch flag.
-	 */
-	if (batch && (l->l_slptime + sil->sl_slpsum) == 0) {
-		if (l->l_stat != LSONPROC && sil->sl_slept == 0) {
-			struct cpu_info *ci = sched_takecpu(l);
-
-			if (l->l_cpu != ci)
-				l->l_target_cpu = ci;
-			sil->sl_flags &= ~SL_BATCH;
-		} else {
-			sil->sl_slept = 0;
-		}
-	}
-
-	/* Reset the time sums */
-	sil->sl_slpsum = 0;
-	l->l_rticksum = 0;
 
 	/*
 	 * Estimate threads on time-sharing queue only, however,
 	 * exclude the highest priority for performance purposes.
 	 */
+	KASSERT(lwp_locked(l, NULL));
 	if (l->l_priority >= PRI_HIGHEST_TS)
 		return;
 	KASSERT(l->l_class == SCHED_OTHER);
@@ -320,7 +255,7 @@ sched_pstats_hook(struct lwp *l)
 
 	/* If thread was not ran a second or more - set a high priority */
 	if (l->l_stat == LSRUN) {
-		if (sil->sl_lrtime && (hardclock_ticks - sil->sl_lrtime >= hz))
+		if (l->l_rticks && (hardclock_ticks - l->l_rticks >= hz))
 			prio = high_pri[prio];
 		/* Re-enqueue the thread if priority has changed */
 		if (prio != l->l_priority)
@@ -334,13 +269,12 @@ sched_pstats_hook(struct lwp *l)
 void
 sched_oncpu(lwp_t *l)
 {
-	sched_info_lwp_t *sil = l->l_sched_info;
+	struct schedstate_percpu *spc = &l->l_cpu->ci_schedstate;
 
 	/* Update the counters */
-	sil = l->l_sched_info;
-	KASSERT(sil->sl_timeslice >= min_ts);
-	KASSERT(sil->sl_timeslice <= max_ts);
-	l->l_cpu->ci_schedstate.spc_ticks = sil->sl_timeslice;
+	KASSERT(l->l_sched.timeslice >= min_ts);
+	KASSERT(l->l_sched.timeslice <= max_ts);
+	spc->spc_ticks = l->l_sched.timeslice;
 }
 
 /*
@@ -356,9 +290,9 @@ sched_tick(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct lwp *l = curlwp;
-	const sched_info_lwp_t *sil = l->l_sched_info;
+	struct proc *p;
 
-	if (CURCPU_IDLE_P())
+	if (__predict_false(CURCPU_IDLE_P()))
 		return;
 
 	switch (l->l_class) {
@@ -368,7 +302,7 @@ sched_tick(struct cpu_info *ci)
 		 * if thread runs on FIFO real-time policy.
 		 */
 		KASSERT(l->l_priority > PRI_HIGHEST_TS);
-		spc->spc_ticks = sil->sl_timeslice;
+		spc->spc_ticks = l->l_sched.timeslice;
 		return;
 	case SCHED_OTHER:
 		/*
@@ -376,7 +310,14 @@ sched_tick(struct cpu_info *ci)
 		 * and run with a higher time-quantum.
 		 */
 		KASSERT(l->l_priority <= PRI_HIGHEST_TS);
-		if (l->l_priority != 0)
+		if (l->l_priority == 0)
+			break;
+
+		p = l->l_proc;
+		if (__predict_false(p->p_nice > NZERO)) {
+			const int n = max((p->p_nice - NZERO) >> 2, 1);
+			l->l_priority = imax(l->l_priority - n, 0);
+		} else
 			l->l_priority--;
 		break;
 	}
@@ -389,7 +330,7 @@ sched_tick(struct cpu_info *ci)
 		spc->spc_flags |= SPCF_SHOULDYIELD;
 		cpu_need_resched(ci, 0);
 	} else
-		spc->spc_ticks = sil->sl_timeslice;
+		spc->spc_ticks = l->l_sched.timeslice;
 }
 
 /*

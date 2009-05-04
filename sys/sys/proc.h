@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.274.2.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.274.2.2 2009/05/04 08:14:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct emul {
 	int		e_nosys;	/* Offset of the nosys() syscall */
 	int		e_nsysent;	/* Number of system call entries */
 #endif
-	const struct sysent *e_sysent;	/* System call array */
+	struct sysent	*e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
 	void		(*e_sendsig)(const struct ksiginfo *,
@@ -171,6 +171,9 @@ struct emul {
 
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
+
+	/* SA-related information */
+	const struct sa_emul *e_sa;
 
 	size_t		e_ucsize;	/* size of ucontext_t */
 	void		(*e_startlwp)(void *);
@@ -257,6 +260,8 @@ struct proc {
 	u_int		p_waited;	/* l: parent has waited on child */
 	struct lwp	*p_zomblwp;	/* p: detached LWP to be reaped */
 
+	struct sadata	*p_sa;		/* p: Scheduler activation info */
+
 	/* scheduling */
 	void		*p_sched_info;	/* p: Scheduler-specific structure */
 	fixpt_t		p_estcpu;	/* p: Time avg. value of p_cpticks */
@@ -272,18 +277,21 @@ struct proc {
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
 
 	int		p_traceflag;	/* k: Kernel trace points */
+	int		p_timerpend;	/* p: Pending itimer to run */
 	void		*p_tracep;	/* k: Trace private data */
 	struct vnode 	*p_textvp;	/* :: Vnode of executable */
 
 	void	     (*p_userret)(void);/* p: return-to-user hook */
-	const struct emul *p_emul;	/* :: emulation information */
+	struct emul	*p_emul;	/* :: emulation information */
 	void		*p_emuldata;	/* :: per-proc emul data, or NULL */
 	const struct execsw *p_execsw;	/* :: exec package information */
 	struct klist	p_klist;	/* p: knotes attached to proc */
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
+	sigstore_t	p_sigstore;	/* p: process-wide signal state */
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
+	pid_t		p_ppid;		/* :: cached parent pid */
 
 /*
  * End area that is zeroed on creation
@@ -307,6 +315,7 @@ struct proc {
 	size_t 		p_psnargv;	/* :: offset of ps_nargvstr in above */
 	size_t 		p_psenv;	/* :: offset of ps_envstr in above */
 	size_t 		p_psnenv;	/* :: offset of ps_nenvstr in above */
+	u_int		p_pax;		/* :: PAX flags */
 
 /*
  * End area that is copied on creation
@@ -355,13 +364,14 @@ struct proc {
  * process context only.
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
-#define	PS_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
+#define	PS_SA		0x00000400 /* Process using scheduler activations */
 #define	PS_WCORE	0x00001000 /* Process needs to dump core */
 #define	PS_WEXIT	0x00002000 /* Working on exiting */
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
+#define	PS_NOSA 	0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
 
 /*
@@ -383,6 +393,8 @@ struct proc {
  * from process context only.
  */
 #define	PL_CONTROLT	0x00000002 /* Has a controlling terminal */
+#define	PL_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
+#define	PL_SIGCOMPAT	0x00000200 /* Has used compat signal trampoline */
 #define	PL_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 
 /*
@@ -406,8 +418,6 @@ struct proclist_desc {
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_EMULDATA);
-MALLOC_DECLARE(M_PROC);
-MALLOC_DECLARE(M_SESSION);
 MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 
 /*
@@ -418,13 +428,6 @@ MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 #define	NO_PGID		((pid_t)-1)
 
 #define	SESS_LEADER(p)	((p)->p_session->s_leader == (p))
-#define	SESSHOLD(s)	((s)->s_count++)
-#define	SESSRELE(s)							\
-do {									\
-	if (--(s)->s_count == 0)					\
-		sessdelete(s);						\
-} while (/* CONSTCOND */ 0)
-
 
 /*
  * Flags passed to fork1().
@@ -448,9 +451,6 @@ extern kmutex_t		*proc_lock;
 extern struct proclist	allproc;	/* List of all processes */
 extern struct proclist	zombproc;	/* List of zombie processes */
 
-extern SLIST_HEAD(deadprocs, proc) deadprocs;	/* List of dead processes */
-extern struct simplelock deadproc_slock;
-
 extern struct proc	*initproc;	/* Process slots for init, pager */
 
 extern const struct proclist_desc proclists[];
@@ -470,15 +470,14 @@ struct pgrp *pg_find(pid_t, uint);	/* Find process group by id */
 #define pgfind(pgid) pg_find((pgid), PFIND_UNLOCK)
 
 struct simplelock;
-int	enterpgrp(struct proc *, pid_t, pid_t, int);
-void	leavepgrp(struct proc *);
-void	fixjobc(struct proc *, struct pgrp *, int);
-int	inferior(struct proc *, struct proc *);
-void	sessdelete(struct session *);
-void	yield(void);
-void	pgdelete(struct pgrp *);
+
 void	procinit(void);
-void	suspendsched(void);
+int	proc_enterpgrp(struct proc *, pid_t, pid_t, bool);
+void	proc_leavepgrp(struct proc *);
+void	proc_sesshold(struct session *);
+void	proc_sessrele(struct session *);
+void	fixjobc(struct proc *, struct pgrp *, int);
+
 int	ltsleep(wchan_t, pri_t, const char *, int, volatile struct simplelock *);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
@@ -512,27 +511,21 @@ void	child_return(void *);
 int	proc_isunder(struct proc *, struct lwp *);
 void	proc_stop(struct proc *, int, int);
 
-void	p_sugid(struct proc *);
-
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
 void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);
 void	proc_crmod_enter(void);
-int	proc_addref(struct proc *);
-void	proc_delref(struct proc *);
-void	proc_drainrefs(struct proc *);
 
 int	proc_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	proc_specific_key_delete(specificdata_key_t);
-void 	proc_initspecific(struct proc *);
-void 	proc_finispecific(struct proc *);
+void	proc_initspecific(struct proc *);
+void	proc_finispecific(struct proc *);
 void *	proc_getspecific(struct proc *, specificdata_key_t);
 void	proc_setspecific(struct proc *, specificdata_key_t, void *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
-static __inline struct proc *_proclist_skipmarker(struct proc *);
 
-static __inline struct proc *
+static inline struct proc *
 _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;
@@ -552,8 +545,11 @@ _proclist_skipmarker(struct proc *p0)
 	ltsleep(chan, pri, wmesg, timo, NULL)
 
 #ifdef KSTACK_CHECK_MAGIC
-void kstack_setup_magic(const struct lwp *);
-void kstack_check_magic(const struct lwp *);
+void	kstack_setup_magic(const struct lwp *);
+void	kstack_check_magic(const struct lwp *);
+#else
+#define	kstack_setup_magic(x)
+#define	kstack_check_magic(x)
 #endif
 
 /*
@@ -568,6 +564,8 @@ void kstack_check_magic(const struct lwp *);
 #ifndef KSTACK_SIZE
 #define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif
+
+extern struct emul emul_netbsd;
 
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

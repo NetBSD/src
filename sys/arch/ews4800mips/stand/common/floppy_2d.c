@@ -1,4 +1,4 @@
-/*	$NetBSD: floppy_2d.c,v 1.3.46.1 2008/05/16 02:22:20 yamt Exp $	*/
+/*	$NetBSD: floppy_2d.c,v 1.3.46.2 2009/05/04 08:11:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -54,11 +54,11 @@ blk_to_2d_position(uint32_t logical_block_number, uint32_t *position,
 	i = logical_block_number * 2 + 26;
 	cylinder = i / (26 * 2);
 	side = i - (cylinder * 26 * 2) > 25;
-	sector = i - (side + cylinder * 2) * 26 + 1;
+	sector = i - (side + cylinder * 2) * 26;
 	if (position)
-		*position = (cylinder << 16) | (side << 8) | sector;
+		*position = (cylinder << 16) | (side << 8) | (sector + 1);
 	if (count)
-		*count = 2;
+		*count = (26 - sector) / 2;
 
 	return true;
 }

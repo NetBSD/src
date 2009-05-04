@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.4 2006/08/04 01:48:02 mhitch Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.4.62.1 2009/05/04 08:10:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,9 +46,7 @@ char foo = 23;
 
 
 int
-main(argc, argv)
-     int argc;
-     char *argv[];
+main(int argc, char *argv[])
 {
   struct exec e;
   int c;

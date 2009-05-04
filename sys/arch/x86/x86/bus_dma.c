@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.41.2.1 2008/05/16 02:23:28 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.41.2.2 2009/05/04 08:12:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41.2.1 2008/05/16 02:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41.2.2 2009/05/04 08:12:10 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41.2.1 2008/05/16 02:23:28 yamt Exp $"
 extern	paddr_t avail_end;
 
 #define	IDTVEC(name)	__CONCAT(X,name)
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector *IDTVEC(intr)[];
 
 #define	BUSDMA_BOUNCESTATS
@@ -171,13 +171,13 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	m = mlist.tqh_first;
+	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
 	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	m = m->pageq.queue.tqe_next;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
@@ -722,7 +722,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 */
 	if (len == 0 || cookie == NULL ||
 	    (cookie->id_flags & X86_DMA_IS_BOUNCING) == 0)
-		return;
+		goto end;
 
 	switch (cookie->id_buftype) {
 	case X86_DMA_BUFTYPE_LINEAR:
@@ -843,6 +843,21 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	default:
 		printf("unknown buffer type %d\n", cookie->id_buftype);
 		panic("_bus_dmamap_sync");
+	}
+end:
+	if (ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE)) {
+		/*
+		 * from the memory POV a load can be reordered before a store
+		 * (a load can fetch data from the write buffers, before
+		 * data hits the cache or memory), a mfence avoids it.
+		 */
+		x86_mfence();
+	} else if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTREAD)) {
+		/*
+		 * all past reads should have completed at before this point,
+		 * and future reads should not have started yet.
+		 */
+		x86_lfence();
 	}
 }
 
@@ -986,7 +1001,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
 			m = _BUS_BUS_TO_VM_PAGE(addr);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 		}
 	}
 
@@ -1002,26 +1017,23 @@ int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     size_t size, void **kvap, int flags)
 {
-	vaddr_t sva, va, eva;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
-	int nocache;
-	pt_entry_t *pte, opte, xpte;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
+	u_int pmapflags = PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE;
 
 	size = round_page(size);
-	nocache = (flags & BUS_DMA_NOCACHE) != 0;
+	if (flags & BUS_DMA_NOCACHE)
+		pmapflags |= PMAP_NOCACHE;
 
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
-		return (ENOMEM);
+		return ENOMEM;
 
 	*kvap = (void *)va;
-	sva = va;
-	eva = sva + size;
-	xpte = 0;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -1031,30 +1043,12 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				panic("_bus_dmamem_map: size botch");
 			_BUS_PMAP_ENTER(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
-			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-			/*
-			 * mark page as non-cacheable
-			 */
-			if (nocache) {
-				pte = kvtopte(va);
-				opte = *pte;
-				if ((opte & PG_N) == 0) {
-					pmap_pte_setbits(pte, PG_N);
-					xpte |= opte;
-				}
-			}
+			    pmapflags);
 		}
 	}
-#ifndef XEN	/* XXX */
-	if ((xpte & (PG_V | PG_U)) == (PG_V | PG_U)) {
-		kpreempt_disable();
-		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
-		kpreempt_enable();
-	}
 	pmap_update(pmap_kernel());
-#endif
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1092,7 +1086,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t

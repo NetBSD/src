@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.78.10.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.78.10.2 2009/05/04 08:13:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,11 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.10.1 2008/05/16 02:25:18 yamt Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_quota.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.10.2 2009/05/04 08:13:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,41 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.10.1 2008/05/16 02:25:18 yamt 
 
 MODULE(MODULE_CLASS_VFS, smbfs, NULL);
 
-#ifndef __NetBSD__
-SYSCTL_NODE(_vfs, OID_AUTO, smbfs, CTLFLAG_RW, 0, "SMB/CIFS file system");
-SYSCTL_INT(_vfs_smbfs, OID_AUTO, version, CTLFLAG_RD, &smbfs_version, 0, "");
-#else
-SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
-{
-	const struct sysctlnode *smb = NULL;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, &smb,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "samba",
-		       SYSCTL_DESCR("SMB/CIFS remote file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_CREATE, CTL_EOL);
-
-	if (smb != NULL)
-		sysctl_createv(clog, 0, &smb, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-			       CTLTYPE_INT, "version",
-			       SYSCTL_DESCR("smbfs version"),
-			       NULL, SMBFS_VERSION, NULL, 0,
-			       CTL_CREATE, CTL_EOL);
-}
-#endif
-
 VFS_PROTOS(smbfs);
+
+static struct sysctllog *smbfs_sysctl_log;
 
 static int smbfs_setroot(struct mount *);
 
-struct pool smbfs_node_pool;
 extern struct vnodeopv_desc smbfs_vnodeop_opv_desc;
 
 static const struct vnodeopv_desc *smbfs_vnodeopv_descs[] = {
@@ -141,15 +108,47 @@ struct vfsops smbfs_vfsops = {
 static int
 smbfs_modcmd(modcmd_t cmd, void *arg)
 {
+	const struct sysctlnode *smb = NULL;
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&smbfs_vfsops);
+		error = vfs_attach(&smbfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&smbfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&smbfs_sysctl_log, 0, NULL, &smb,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "samba",
+			       SYSCTL_DESCR("SMB/CIFS remote file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_CREATE, CTL_EOL);
+
+		if (smb != NULL) {
+			sysctl_createv(&smbfs_sysctl_log, 0, &smb, NULL,
+				       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+				       CTLTYPE_INT, "version",
+				       SYSCTL_DESCR("smbfs version"),
+				       NULL, SMBFS_VERSION, NULL, 0,
+				       CTL_CREATE, CTL_EOL);
+		}
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&smbfs_vfsops);
+		error = vfs_detach(&smbfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&smbfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }
 
 int
@@ -201,8 +200,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_stat.f_namemax =
 	    (vcp->vc_hflags2 & SMB_FLAGS2_KNOWS_LONG_NAMES) ? 255 : 12;
 
-	MALLOC(smp, struct smbmount *, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
-	memset(smp, 0, sizeof(*smp));
+	smp = malloc(sizeof(*smp), M_SMBFSDATA, M_WAITOK|M_ZERO);
 	mp->mnt_data = smp;
 
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, true,
@@ -239,8 +237,6 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#ifdef QUOTA
-#endif
 	/* Drop the extra reference to root vnode. */
 	if (smp->sm_root) {
 		vrele(SMBTOV(smp->sm_root));
@@ -266,7 +262,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 
 	hashdone(smp->sm_hash, HASH_LIST, smp->sm_hashlen);
 	mutex_destroy(&smp->sm_hashlock);
-	FREE(smp, M_SMBFSDATA);
+	free(smp, M_SMBFSDATA);
 	return error;
 }
 
@@ -352,14 +348,14 @@ smbfs_init(void)
 	pool_init(&smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0,
 	    "smbfsnopl", &pool_allocator_nointr, IPL_NONE);
 
-	SMBVDEBUG("init.\n");
+	SMBVDEBUG0("init.\n");
 }
 
 void
 smbfs_reinit(void)
 {
 
-	SMBVDEBUG("reinit.\n");
+	SMBVDEBUG0("reinit.\n");
 }
 
 void
@@ -367,12 +363,10 @@ smbfs_done(void)
 {
 
 	pool_destroy(&smbfs_node_pool);
-
-	pool_destroy(&smbfs_node_pool);
 	malloc_type_detach(M_SMBNODENAME);
 	malloc_type_detach(M_SMBFSDATA);
 
-	SMBVDEBUG("done.\n");
+	SMBVDEBUG0("done.\n");
 }
 
 /*

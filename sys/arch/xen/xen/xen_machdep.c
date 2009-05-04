@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.2.26.1 2008/05/16 02:23:31 yamt Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.2.26.2 2009/05/04 08:12:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.2.26.1 2008/05/16 02:23:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.2.26.2 2009/05/04 08:12:14 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -195,6 +195,11 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 					opt++;
 				}
 			}
+			break;
+		case XEN_PARSE_PCIBACK:
+			if (strncasecmp(opt, "pciback.hide=", 13) == 0)
+				strncpy(xcp->xcp_pcidevs, opt + 13,
+				    sizeof(xcp->xcp_pcidevs));
 			break;
 		}
 

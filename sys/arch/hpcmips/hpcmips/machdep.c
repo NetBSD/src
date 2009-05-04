@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2007/10/17 19:54:29 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.20.1 2009/05/04 08:11:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,11 +108,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2007/10/17 19:54:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.20.1 2009/05/04 08:11:11 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 #include "opt_boot_standalone.h"
+#include "opt_modular.h"
 #include "opt_spec_platform.h"
 #include "biconsdev.h"
 #include "fs_mfs.h"
@@ -136,6 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2007/10/17 19:54:29 garbled Exp $")
 #include <sys/mount.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -155,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2007/10/17 19:54:29 garbled Exp $")
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -218,7 +220,6 @@ static char kernel_path[] = KLOADER_KERNEL_PATH;
 #endif /* KLOADER */
 
 /* maps for VM objects */
-struct vm_map *exec_map;
 struct vm_map *mb_map;
 struct vm_map *phys_map;
 
@@ -261,7 +262,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif
 	extern struct user *proc0paddr;
 	extern char edata[], end[];
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern void *esym;
 #endif
 	void *kernend;
@@ -269,7 +270,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	int i;
 
 	/* clear the BSS segment */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	size_t symbolsz = 0;
 	Elf_Ehdr *eh = (void *)end;
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) == 0 &&
@@ -291,9 +292,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		}
 		esym = (char*)esym + symbolsz;
 		kernend = (void *)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
-#endif /* NKSYMS || defined(DDB) || defined(LKM) */
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	{
 		kernend = (void *)mips_round_page(end);
 		memset(edata, 0, (char *)kernend - edata);
@@ -418,7 +419,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 				/* boot device: -b=sd0 etc. */
 #ifdef NFS
 				if (strcmp(cp+2, "nfs") == 0)
-					mountroot = nfs_mountroot;
+					rootfstype = MOUNT_NFS;
 				else
 					makebootdev(cp+2);
 #else /* NFS */
@@ -447,10 +448,10 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	}
 #endif /* MFS */
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(symbolsz, &end, esym);
+		ksyms_addsyms_elf(symbolsz, &end, esym);
 #endif /* DDB */
 	/*
 	 * Alloc u pages for lwp0 stealing KSEG0 memory.
@@ -541,7 +542,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
  * allocate memory for variable-sized tables, initialize CPU.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -573,12 +574,6 @@ cpu_startup()
 	}
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
@@ -658,6 +653,8 @@ cpu_reboot(int howto, char *bootstr)
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
 		printf("halted.\n");
@@ -675,7 +672,7 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 void
-consinit()
+consinit(void)
 {
 	/* platform.cons_init() do it */
 }

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.203 2007/12/31 15:32:05 ad Exp $
+# $NetBSD: GENERIC,v 1.203.10.1 2009/05/04 08:11:54 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.203 $"
+#ident 		"GENERIC-$Revision: 1.203.10.1 $"
 
 maxusers	32
 
@@ -45,13 +45,29 @@ options 	SUN4_MMU3L	# sun4/400 3-level MMU
 
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
-options 	RASTERCONSOLE		# fast rasterop console
-options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
-## default console colors: black-on-white; this can be changed
-## using the following two options.
+## These is obsolete for wscons kernels
+#options 	RASTERCONSOLE		# fast rasterop console
 #options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
+
+# wscons stuff
+options 	WSEMUL_SUN
+#options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_CUSTOM_OUTPUT
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+
+options 	WSDISPLAY_SCROLLSUPPORT
+
+# generic options vlid for both wscons and RASTERCONSOLE
+options 	FONT_GALLANT12x22	# the console font
+#options 	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
@@ -77,7 +93,6 @@ options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 ## Loadable kernel module support; still under development.
-options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -164,9 +179,10 @@ options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility
+options 	COMPAT_50	# NetBSD 5.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -192,8 +208,8 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options 	WAPBL		# File system journaling support - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 ## Network protocol support.  In most environments, INET is required.
@@ -323,8 +339,17 @@ zs1	at obio0					# sun4m
 zs1	at obio0 addr 0xf0000000 level 12		# sun4/200 and sun4/300
 zs1	at obio0 addr 0x00000000 level 12		# sun4/100
 zs1	at bootbus0					# sun4d
-kbd0	at zs1 channel 0				# keyboard
-ms0	at zs1 channel 1				# mouse
+
+# old kbd and mouse attachments
+#kbd0	at zs1 channel 0				# keyboard
+#ms0	at zs1 channel 1				# mouse
+zstty*	at zs?
+
+# these are for wscons
+kbd0	at zstty?
+ms0	at zstty?
+wskbd*	at wskbddev?
+wsmouse* 	at wsmousedev?
 
 zs2	at obio0 addr 0xe0000000 level 12		# sun4/300
 zstty2	at zs2 channel 0				# ttyc
@@ -461,6 +486,11 @@ fd*	at fdc0					# the drive itself
 
 ## PCMCIA wavelan card
 #wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -613,8 +643,8 @@ audioamd0	at sbus0 slot ? offset ?		# sun4m
 
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 
-#options	DBRI_DEBUG	# noisy debug output from the dbri driver
-#options	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
+#options 	DBRI_DEBUG	# noisy debug output from the dbri driver
+#options 	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri*		at sbus? slot ? offset ?		# SUNW,DBRI[s3|e]
 
 audio*		at audiobus?
@@ -631,7 +661,8 @@ bwtwo0		at obio0 addr 0xfb300000 level 4	# sun4/300 in P4 slot
 bwtwo0		at obio0 addr 0x0b300000 level 4	# sun4/100 in P4 slot
 
 ## Sun "cgtwo" VME color framebuffer
-cgtwo0		at vme0 addr 0x400000 irq ? vect 0xa8
+# XXX no wsdisplay support
+#cgtwo0		at vme0 addr 0x400000 irq ? vect 0xa8
 
 ## Sun "cgthree" Sbus color framebuffer
 cgthree0	at sbus? slot ? offset ?
@@ -640,8 +671,9 @@ cgthree*	at sbus? slot ? offset ?
 
 ## Sun "cgfour" color framebuffer with overlay plane.  See above comment
 ## regarding overlay plane.
-cgfour0		at obio0 addr 0xfb300000 level 4	# sun4/300 P4
-cgfour0		at obio0 addr 0x0b300000 level 4	# sun4/100 P4
+# XXX no wsdisplay support
+#cgfour0		at obio0 addr 0xfb300000 level 4	# sun4/300 P4
+#cgfour0		at obio0 addr 0x0b300000 level 4	# sun4/100 P4
 
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix0		at sbus? slot ? offset ?
@@ -650,21 +682,31 @@ cgsix0		at obio0 addr 0xfb000000 level 4	# sun4/300 P4
 cgsix0		at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 
 ## Sun "cgeight" 24-bit framebuffer
-cgeight0 	at obio0 addr 0xfb300000 level 4	# sun4/300 P4
-cgeight0	at obio0 addr 0x0b300000 level 4	# sun4/100 P4
+# XXX no wsdisplay support
+#cgeight0 	at obio0 addr 0xfb300000 level 4	# sun4/300 P4
+#cgeight0	at obio0 addr 0x0b300000 level 4	# sun4/100 P4
 
 ## Sun "tcx" accelerated color framebuffer.
-tcx0		at sbus? slot ? offset ?
-tcx*		at sbus? slot ? offset ?
+# XXX no wsdisplay support
+#tcx0		at sbus? slot ? offset ?
+#tcx*		at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
-cgfourteen0	at obio0			# sun4m
+cgfourteen*	at obio0			# sun4m
 
 # P9100-based display on Tadpole SPARCbook 3.
 pnozz0		at sbus? slot ? offset ?
 
 # Sun ZX/Leo 24-bit framebuffer
-zx*		at sbus? slot ? offset ?
+# XXX no wsdisplay support
+#zx*		at sbus? slot ? offset ?
+
+# Fujitsu AG-10e accelerated graphics 8/24-bit board
+agten*	at sbus? slot ? offset ?
+
+# make sure wsdisplay0 is the console
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
 
 #### Other device configuration
 
@@ -688,8 +730,10 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
+pseudo-device	wsmux			# mouse and keyboard multiplexor
+pseudo-device	wsfont
 
-#options	FILEASSOC		# fileassoc(9)
+#options 	FILEASSOC		# fileassoc(9)
 
 # Veriexec
 #

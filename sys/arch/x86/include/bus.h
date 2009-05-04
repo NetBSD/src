@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15.20.1 2008/05/16 02:23:27 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.15.20.2 2009/05/04 08:12:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -77,11 +77,11 @@
 /*
  * Bus address and size types
  */
-typedef u_long bus_addr_t;
-typedef u_long bus_size_t;
+typedef paddr_t bus_addr_t;
+typedef size_t bus_size_t;
 
 typedef	int bus_space_tag_t;
-typedef	u_long bus_space_handle_t;
+typedef	vaddr_t bus_space_handle_t;
 
 int	_x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
 	    bus_size_t size, int flags, bus_space_handle_t *bshp);
@@ -91,7 +91,7 @@ void	_x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 typedef struct x86_bus_dma_tag		*bus_dma_tag_t;
 typedef struct x86_bus_dmamap		*bus_dmamap_t;
 
-#define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
+#define BUS_DMA_TAG_VALID(__t)    ((__t) != NULL)
 
 /*
  *	bus_dma_segment_t

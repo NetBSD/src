@@ -1,8 +1,8 @@
-/* $NetBSD: udf_osta.c,v 1.5.12.1 2008/05/16 02:25:21 yamt Exp $ */
+/* $NetBSD: udf_osta.c,v 1.5.12.2 2009/05/04 08:13:44 yamt Exp $ */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.5.12.1 2008/05/16 02:25:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.5.12.2 2009/05/04 08:13:44 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -175,9 +175,7 @@ static unsigned short crc_table[256] = {
 };
 
 unsigned short
-udf_cksum(s, n)
-	unsigned char *s;
-	int n;
+udf_cksum(unsigned char *s, int n)
 {
 	unsigned short crc=0;
 
@@ -188,9 +186,7 @@ udf_cksum(s, n)
 
 /* UNICODE Checksum */
 unsigned short
-udf_unicode_cksum(s, n)
-	unsigned short *s;
-	int n;
+udf_unicode_cksum(unsigned short *s, int n)
 {
 	unsigned short crc=0;
 
@@ -228,7 +224,7 @@ uint16_t udf_ea_cksum(uint8_t *data) {
 #ifdef MAIN
 unsigned char bytes[] = { 0x70, 0x6A, 0x77 };
 
-main()
+main(void)
 {
 	unsigned short x;
 	x = cksum(bytes, sizeof bytes);
@@ -288,7 +284,7 @@ int IsIllegal(unicode_t ch);
 
 /* #include <stdio.h> */
 static int UnicodeIsPrint(unicode_t ch) {
-	return (ch >=' ') && (ch < 127);
+	return (ch >=' ') && (ch != 127);
 }
 
 

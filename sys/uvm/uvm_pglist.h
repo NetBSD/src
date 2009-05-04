@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_pglist.h,v 1.5.122.1 2008/05/16 02:26:01 yamt Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.5.122.2 2009/05/04 08:14:40 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,6 +37,7 @@
  * list, etc.
  */
 TAILQ_HEAD(pglist, vm_page);
+LIST_HEAD(pgflist, vm_page);
 
 /*
  * A page free list consists of free pages of unknown contents and free
@@ -47,7 +48,7 @@ TAILQ_HEAD(pglist, vm_page);
 #define	PGFL_NQUEUES	2
 
 struct pgflbucket {
-	struct pglist pgfl_queues[PGFL_NQUEUES];
+	struct pgflist pgfl_queues[PGFL_NQUEUES];
 };
 
 struct pgfreelist {

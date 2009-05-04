@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.26 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.26.2.1 2009/05/04 08:14:19 yamt Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.26 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.26.2.1 2009/05/04 08:14:19 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -278,7 +278,7 @@ ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		ipcomp = mtod(md, struct ipcomp *);
 	}
 
-	bzero(ipcomp, sizeof(*ipcomp));
+	memset(ipcomp, 0, sizeof(*ipcomp));
 	ipcomp->comp_nxt = *nexthdrp;
 	*nexthdrp = IPPROTO_IPCOMP;
 	ipcomp->comp_cpi = htons(cpi);

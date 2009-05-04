@@ -29,7 +29,7 @@
 #define DRIVER_NAME		"via"
 #define DRIVER_DESC		"VIA Unichrome / Pro"
 
-#include <dev/pci/drm/via_verifier.h>
+#include "via_verifier.h"
 
 /*
  * Registers go here.

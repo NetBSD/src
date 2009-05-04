@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37 2007/10/17 19:57:02 garbled Exp $ */
+/* $NetBSD: machdep.c,v 1.37.20.1 2009/05/04 08:11:48 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,10 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2007/10/17 19:57:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.20.1 2009/05/04 08:11:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2007/10/17 19:57:02 garbled Exp $")
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -116,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2007/10/17 19:57:02 garbled Exp $")
 
 #include <dev/cons.h>
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 #endif
@@ -125,7 +126,6 @@ void	*ksym_start, *ksym_end;
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -184,7 +184,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		    sizeof bootinfo);
 	else if (reserved == CFE_EPTSEAL) {
 		magic = BOOTINFO_MAGIC;
-		bzero(&bootinfo, sizeof bootinfo);
+		memset(&bootinfo, 0, sizeof bootinfo);
 		bootinfo.version = BOOTINFO_VERSION;
 		bootinfo.fwhandle = fwhandle;
 		bootinfo.fwentry = bootdata;
@@ -193,7 +193,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	}
 
 	kernend = (void *)mips_round_page(end);
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (magic == BOOTINFO_MAGIC) {
 		ksym_start = (void *)bootinfo.ssym;
 		ksym_end   = (void *)bootinfo.esym;
@@ -331,8 +331,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif
 
@@ -360,12 +360,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
-	    VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
@@ -421,6 +415,8 @@ cpu_reboot(int howto, char *bootstr)
 
 haltsys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2007/10/17 19:55:01 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.20.1 2009/05/04 08:11:22 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2007/10/17 19:55:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.20.1 2009/05/04 08:11:22 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -69,6 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2007/10/17 19:55:01 garbled Exp $");
 
 #include <powerpc/oea/bat.h>
 #include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/include/pio.h>
+#include <dev/pci/pcivar.h>
+#include <dev/ic/ibm82660reg.h>
 
 #include <dev/cons.h>
 
@@ -87,29 +90,49 @@ void
 initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 {
 
+	uint32_t sa, ea, banks;
+	u_long memsize = 0;
+	pcitag_t tag;
+
 	/*
-	 * Set memory region
+	 * Set memory region by reading the memory size from the PCI
+	 * host bridge.
 	 */
-	{
-		u_long memsize;
 
-#if 0
-		/* Get the memory size from the PCI host bridge */
+	tag = genppc_pci_indirect_make_tag(NULL, 0, 0, 0);
 
-		pci_read_config_32(0, 0x90, &ea);
-		if(ea & 0xff00)
-		    memsize = (((ea >> 8) & 0xff) + 1) << 20;
-		else
-		    memsize = ((ea & 0xff) + 1) << 20;
-#else
-		memsize = 64 * 1024 * 1024;         /* 64MB hardcoded for now */
-#endif
+	out32rb(PCI_MODE1_ADDRESS_REG, tag | IBM_82660_MEM_BANK0_START);
+	sa = in32rb(PCI_MODE1_DATA_REG);
 
-		physmemr[0].start = 0;
-		physmemr[0].size = memsize & ~PGOFSET;
-		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
-		availmemr[0].size = memsize - availmemr[0].start;
-	}
+	out32rb(PCI_MODE1_ADDRESS_REG, tag | IBM_82660_MEM_BANK0_END);
+	ea = in32rb(PCI_MODE1_DATA_REG);
+
+	/* Which memory banks are enabled? */
+	out32rb(PCI_MODE1_ADDRESS_REG, tag | IBM_82660_MEM_BANK_ENABLE);
+	banks = in32rb(PCI_MODE1_DATA_REG) & 0xFF;
+
+	/* Reset the register for the next call. */
+	out32rb(PCI_MODE1_ADDRESS_REG, 0);
+
+	if (banks & IBM_82660_MEM_BANK0_ENABLED)
+		memsize += IBM_82660_BANK0_ADDR(ea) - IBM_82660_BANK0_ADDR(sa) + 1;
+
+	if (banks & IBM_82660_MEM_BANK1_ENABLED)
+		memsize += IBM_82660_BANK1_ADDR(ea) - IBM_82660_BANK1_ADDR(sa) + 1;
+
+	if (banks & IBM_82660_MEM_BANK2_ENABLED)
+		memsize += IBM_82660_BANK2_ADDR(ea) - IBM_82660_BANK2_ADDR(sa) + 1;
+
+	if (banks & IBM_82660_MEM_BANK3_ENABLED)
+		memsize += IBM_82660_BANK3_ADDR(ea) - IBM_82660_BANK3_ADDR(sa) + 1;
+
+	memsize <<= 20;
+
+	physmemr[0].start = 0;
+	physmemr[0].size = memsize & ~PGOFSET;
+	availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
+	availmemr[0].size = memsize - availmemr[0].start;
+
 	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
 
 	/*
@@ -149,6 +172,7 @@ cpu_startup(void)
 	 */
 	oea_startup("IBM NetworkStation 1000 (8362-XXX)");
 
+	pic_init();
 	isa_pic = setup_prepivr(PIC_IVR_IBM);
 
         oea_install_extint(pic_ext_intr);
@@ -200,16 +224,18 @@ cpu_reboot(int howto, char *what)
 halt_sys:
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	if (howto & RB_HALT) {
-                printf("\n");
-                printf("The operating system has halted.\n");
-                printf("Please press any key to reboot.\n\n");
+                aprint_normal("\n");
+                aprint_normal("The operating system has halted.\n");
+                aprint_normal("Please press any key to reboot.\n\n");
                 cnpollc(1);	/* for proper keyboard command handling */
                 cngetc();
                 cnpollc(0);
 	}
 
-	printf("rebooting...\n\n");
+	aprint_normal("rebooting...\n\n");
 
 
         {

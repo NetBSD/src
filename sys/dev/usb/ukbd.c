@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.98.4.1 2008/05/16 02:25:10 yamt Exp $        */
+/*      $NetBSD: ukbd.c,v 1.98.4.2 2009/05/04 08:13:21 yamt Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.98.4.1 2008/05/16 02:25:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.98.4.2 2009/05/04 08:13:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.98.4.1 2008/05/16 02:25:10 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>
@@ -207,9 +206,9 @@ ukbdtracedump(void)
 	for (i = 0; i < UKBDTRACESIZE; i++) {
 		struct ukbdtraceinfo *p =
 		    &ukbdtracedata[(i+ukbdtraceindex)%UKBDTRACESIZE];
-		printf("%lu.%06lu: mod=0x%02x key0=0x%02x key1=0x%02x "
+		printf("%"PRIu64".%06"PRIu64": mod=0x%02x key0=0x%02x key1=0x%02x "
 		       "key2=0x%02x key3=0x%02x\n",
-		       p->tv.tv_sec, p->tv.tv_usec,
+		       p->tv.tv_sec, (uint64_t)p->tv.tv_usec,
 		       p->ud.modifiers, p->ud.keycode[0], p->ud.keycode[1],
 		       p->ud.keycode[2], p->ud.keycode[3]);
 	}
@@ -268,7 +267,7 @@ const struct wskbd_mapdata ukbd_keymapdata = {
 };
 #endif
 
-static int ukbd_match(device_t, struct cfdata *, void *);
+static int ukbd_match(device_t, cfdata_t, void *);
 static void ukbd_attach(device_t, device_t, void *);
 static int ukbd_detach(device_t, int);
 static int ukbd_activate(device_t, enum devact);
@@ -276,11 +275,11 @@ static void ukbd_childdet(device_t, device_t);
 
 extern struct cfdriver ukbd_cd;
 
-CFATTACH_DECL2(ukbd, sizeof(struct ukbd_softc), ukbd_match, ukbd_attach,
+CFATTACH_DECL2_NEW(ukbd, sizeof(struct ukbd_softc), ukbd_match, ukbd_attach,
     ukbd_detach, ukbd_activate, NULL, ukbd_childdet);
 
 int
-ukbd_match(device_t parent, struct cfdata *match, void *aux)
+ukbd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 	int size;
@@ -307,24 +306,28 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	int i;
 #endif
 
+	sc->sc_hdev.sc_dev = self;
 	sc->sc_hdev.sc_intr = ukbd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
+	if (!pmf_device_register(self, NULL, NULL)) {
+		aprint_normal("\n");
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	}
+
 	parseerr = ukbd_parse_desc(sc);
 	if (parseerr != NULL) {
 		aprint_normal("\n");
-		aprint_error_dev(&sc->sc_hdev.sc_dev, "attach failed, %s\n",
-		       parseerr);
+		aprint_error_dev(self, "attach failed, %s\n", parseerr);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 #ifdef DIAGNOSTIC
-	printf(": %d modifier keys, %d key codes", sc->sc_nmod,
+	aprint_normal(": %d modifier keys, %d key codes", sc->sc_nmod,
 	       sc->sc_nkeycode);
 #endif
-	printf("\n");
-
+	aprint_normal("\n");
 
 	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
 	sc->sc_debounce = (qflags & UQ_SPUR_BUT_UP) != 0;
@@ -432,6 +435,8 @@ ukbd_detach(device_t self, int flags)
 	int rv = 0;
 
 	DPRINTF(("ukbd_detach: sc=%p flags=%d\n", sc, flags));
+
+	pmf_device_deregister(self);
 
 	if (sc->sc_console_keyboard) {
 #if 0
@@ -542,7 +547,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	 */
 	if (ukbdtrace) {
 		struct ukbdtraceinfo *p = &ukbdtracedata[ukbdtraceindex];
-		p->unit = device_unit(&sc->sc_hdev.sc_dev);
+		p->unit = device_unit(sc->sc_hdev.sc_dev);
 		microtime(&p->tv);
 		p->ud = *ud;
 		if (++ukbdtraceindex >= UKBDTRACESIZE)
@@ -551,9 +556,9 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	if (ukbddebug > 5) {
 		struct timeval tv;
 		microtime(&tv);
-		DPRINTF((" at %lu.%06lu  mod=0x%02x key0=0x%02x key1=0x%02x "
+		DPRINTF((" at %"PRIu64".%06"PRIu64"  mod=0x%02x key0=0x%02x key1=0x%02x "
 			 "key2=0x%02x key3=0x%02x\n",
-			 tv.tv_sec, tv.tv_usec,
+			 tv.tv_sec, (uint64_t)tv.tv_usec,
 			 ud->modifiers, ud->keycode[0], ud->keycode[1],
 			 ud->keycode[2], ud->keycode[3]));
 	}

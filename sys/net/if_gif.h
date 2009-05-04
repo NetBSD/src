@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.18 2007/07/14 21:02:40 ad Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.18.32.1 2009/05/04 08:14:14 yamt Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 
 #include <sys/queue.h>
 
-#if defined(_KERNEL) && !defined(_LKM)
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 

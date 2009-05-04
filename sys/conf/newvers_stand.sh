@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $NetBSD: newvers_stand.sh,v 1.4.128.1 2008/05/16 02:23:48 yamt Exp $
+# $NetBSD: newvers_stand.sh,v 1.4.128.2 2009/05/04 08:12:29 yamt Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,17 +35,21 @@
 # Called as:
 #	sh ${S}/conf/newvers_stand.sh [-NDM] VERSION_FILE ARCH [EXTRA_MSG]
 
+cwd=$(dirname $0)
+
 add_name=yes
 add_date=yes
 add_maker=yes
+add_kernrev=yes
 
 # parse command args
-while getopts "NDM?" OPT; do
+while getopts "NDMK?" OPT; do
 	case $OPT in
 	N)	add_name=no;;
 	D)	add_date=no;;
 	M)	add_maker=no;;
-	?)	echo "Syntax: newvers_stand.sh [-NDM] VERSION_TEMPLATE ARCH EXTRA_COMMENT" >&2
+	K)	add_kernrev=no;;
+	?)	echo "Syntax: newvers_stand.sh [-NDMK] VERSION_TEMPLATE ARCH EXTRA_COMMENT" >&2
 		exit 1;;
 	esac
 done
@@ -65,11 +69,16 @@ if [ $add_name = yes ]; then
 fi
 
 if [ $add_date = yes ]; then
-	t=`date`
+	t=`LC_ALL=C date`
 	echo "const char bootprog_date[] = \"${t}\";" >> vers.c
 fi
 
 if [ $add_maker = yes ]; then
 	u=${USER-root} h=`hostname`
 	echo "const char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
+fi
+
+if [ $add_kernrev = yes ]; then
+	osr=$(sh ${cwd}/osrelease.sh)
+	echo "const char bootprog_kernrev[] = \"${osr}\";" >> vers.c
 fi

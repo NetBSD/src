@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222 2008/01/03 23:02:25 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.222.10.1 2009/05/04 08:11:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,10 +77,11 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2008/01/03 23:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222.10.1 2009/05/04 08:11:42 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2008/01/03 23:02:25 joerg Exp $");
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -112,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2008/01/03 23:02:25 joerg Exp $");
 #define _PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
@@ -129,7 +131,6 @@ unsigned ssir;				/* simulated interrupt register */
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -159,16 +160,16 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
-void	mach_init __P((int, char *[], int, int, u_int, char *)); /* XXX */
+void	mach_init(int, char *[], int, int, u_int, char *); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
-static void	unimpl_bus_reset __P((void));
-static void	unimpl_cons_init __P((void));
-static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
-static void	unimpl_intr_establish __P((struct device *, void *, int,
-		    int (*)(void *), void *));
-static int	unimpl_memsize __P((void *));
-static unsigned	nullwork __P((void));
+static void	unimpl_bus_reset(void);
+static void	unimpl_cons_init(void);
+static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
+static void	unimpl_intr_establish(struct device *, void *, int,
+		    int (*)(void *), void *);
+static int	unimpl_memsize(void *);
+static unsigned	nullwork(void);
 
 struct platform platform = {
 	"iobus not set",
@@ -190,19 +191,14 @@ extern struct consdev promcd;		/* XXX */
  * are built on temporary stack by our boot loader.
  */
 void
-mach_init(argc, argv, code, cv, bim, bip)
-	int argc;
-	char *argv[];
-	int code, cv;
-	u_int bim;
-	char *bip;
+mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 {
 	char *cp;
 	const char *bootinfo_msg;
 	u_long first, last;
 	int i;
 	char *kernend;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	void *ssym = 0;
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
@@ -225,7 +221,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 		bootinfo_msg = "invalid bootinfo pointer (old bootblocks?)\n";
 
 	/* clear the BSS segment */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 	aout = (struct exec *)edata;
 
@@ -330,10 +326,10 @@ mach_init(argc, argv, code, cv, bim, bip)
 		kernend += round_page(mfs_initminiroot(kernend));
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init((char *)esym - (char *)ssym, ssym, esym);
+		ksyms_addsyms_elf((char *)esym - (char *)ssym, ssym, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -419,7 +415,7 @@ mips_machdep_cache_config(void)
 }
 
 void
-consinit()
+consinit(void)
 {
 
 	(*platform.cons_init)();
@@ -430,7 +426,7 @@ consinit()
  * tables.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -450,12 +446,6 @@ cpu_startup()
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
@@ -480,8 +470,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -502,9 +491,8 @@ lookup_bootinfo(type)
 }
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto;	/* XXX volatile to keep gcc happy */
-	char *bootstr;
+cpu_reboot(volatile int howto, char *bootstr)
+	/* howto:	 XXX volatile to keep gcc happy */
 {
 
 	/* take a snap shot before clobbering any registers */
@@ -556,6 +544,8 @@ haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", ((howto & RB_HALT) != 0) ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
@@ -567,8 +557,7 @@ haltsys:
  * Be careful to save and restore the original contents for msgbuf.
  */
 int
-memsize_scan(first)
-	void *first;
+memsize_scan(void *first)
 {
 	int i, mem;
 	char *cp;
@@ -613,8 +602,7 @@ memsize_scan(first)
  * Find out how much memory is available by using the PROM bitmap.
  */
 int
-memsize_bitmap(first)
-	void *first;
+memsize_bitmap(void *first)
 {
 	memmap *prom_memmap = (memmap *)first;
 	int i, mapbytes;
@@ -654,51 +642,41 @@ memsize_bitmap(first)
  *  Ensure all platform vectors are always initialized.
  */
 static void
-unimpl_bus_reset()
+unimpl_bus_reset(void)
 {
 
 	panic("sysconf.init didn't set bus_reset");
 }
 
 static void
-unimpl_cons_init()
+unimpl_cons_init(void)
 {
 
 	panic("sysconf.init didn't set cons_init");
 }
 
 static void
-unimpl_iointr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
+unimpl_iointr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
 {
 
 	panic("sysconf.init didn't set intr");
 }
 
 static void
-unimpl_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
+unimpl_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 	panic("sysconf.init didn't set intr_establish");
 }
 
 static int
-unimpl_memsize(first)
-void *first;
+unimpl_memsize(void *first)
 {
 
 	panic("sysconf.init didn't set memsize");
 }
 
 static unsigned
-nullwork()
+nullwork(void)
 {
 
 	return (0);
@@ -708,8 +686,7 @@ nullwork()
  * Wait "n" microseconds. (scsi code needs this).
  */
 void
-delay(n)
-        int n;
+delay(int n)
 {
 
         DELAY(n);

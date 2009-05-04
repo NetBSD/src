@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.35.40.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.35.40.2 2009/05/04 08:13:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.35.40.1 2008/05/16 02:25:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.35.40.2 2009/05/04 08:13:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ smbfs_smb_setftime(struct smbnode *np, struct timespec *mtime,
 	smb_rq_bstart(rqp);
 	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
-	SMBSDEBUG("%d\n", error);
+	SMBSDEBUG(("%d\n", error));
 	smb_rq_done(rqp);
 	return error;
 }
@@ -1200,7 +1200,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 			ctx->f_rname = malloc(nmlen + 1, M_SMBFSDATA, M_WAITOK);
 			ctx->f_rnamelen = nmlen;
 		}
-		bcopy(ctx->f_name, ctx->f_rname, nmlen);
+		memcpy(ctx->f_rname, ctx->f_name, nmlen);
 		ctx->f_rname[nmlen] = 0;
 		ctx->f_flags |= SMBFS_RDD_GOTRNAME;
 	}
@@ -1301,7 +1301,7 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 	int error;
 
 	if (dnp == NULL || (dnp->n_ino == 2 && name == NULL)) {
-		bzero(fap, sizeof(*fap));
+		memset(fap, 0, sizeof(*fap));
 		fap->fa_attr = SMB_FA_DIR;
 		fap->fa_ino = 2;
 		return 0;

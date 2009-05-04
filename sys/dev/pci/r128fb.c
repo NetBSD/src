@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.3.4.1 2008/05/16 02:24:45 yamt Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.3.4.2 2009/05/04 08:13:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.3.4.1 2008/05/16 02:24:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.3.4.2 2009/05/04 08:13:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,14 +165,15 @@ r128fb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
 		return 0;
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_ATI)
 		return 0;
 
-	/* only card tested on so far - likely need a list */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE1AGP4XT)
+	/* only cards tested on so far - likely need a list */
+	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE1AGP4XT) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE3AGP4XT) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP))
 		return 100;
 	return (0);
 }
@@ -698,7 +699,7 @@ r128fb_cursor(void *cookie, int on, int row, int col)
 			x = ri->ri_ccol * wi + ri->ri_xorigin;
 			y = ri->ri_crow * he + ri->ri_yorigin;
 			r128fb_bitblt(sc, x, y, x, y, wi, he, R128_ROP3_Dn);
-			ri->ri_flg |= RI_CURSOR;;
+			ri->ri_flg |= RI_CURSOR;
 		}
 	} else {
 		scr->scr_ri.ri_crow = row;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.24 2008/03/27 18:30:15 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.24.4.1 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.24 2008/03/27 18:30:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.24.4.1 2009/05/04 08:13:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.24 2008/03/27 18:30:15 ad Exp $
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
+
+#include <uvm/uvm_extern.h>
 
 typedef struct work_impl {
 	SIMPLEQ_ENTRY(work_impl) wk_entry;
@@ -86,7 +88,7 @@ workqueue_queue_lookup(struct workqueue *wq, struct cpu_info *ci)
 		idx = ci ? cpu_index(ci) : cpu_index(curcpu());
 	}
 
-	return (void *)((intptr_t)(wq) + WQ_SIZE + (idx * WQ_QUEUE_SIZE));
+	return (void *)((uintptr_t)(wq) + WQ_SIZE + (idx * WQ_QUEUE_SIZE));
 }
 
 static void
@@ -203,12 +205,15 @@ static void
 workqueue_finiqueue(struct workqueue *wq, struct workqueue_queue *q)
 {
 	struct workqueue_exitargs wqe;
+	lwp_t *l;
 
 	KASSERT(wq->wq_func == workqueue_exit);
 
 	wqe.wqe_q = q;
 	KASSERT(SIMPLEQ_EMPTY(&q->q_queue));
 	KASSERT(q->q_worker != NULL);
+	l = curlwp;
+	uvm_lwp_hold(l);	
 	mutex_enter(&q->q_mutex);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, &wqe.wqe_wk, wk_entry);
 	cv_signal(&q->q_cv);
@@ -216,6 +221,7 @@ workqueue_finiqueue(struct workqueue *wq, struct workqueue_queue *q)
 		cv_wait(&q->q_cv, &q->q_mutex);
 	}
 	mutex_exit(&q->q_mutex);
+	uvm_lwp_rele(l);	
 	mutex_destroy(&q->q_mutex);
 	cv_destroy(&q->q_cv);
 }
@@ -232,10 +238,10 @@ workqueue_create(struct workqueue **wqp, const char *name,
 	void *ptr;
 	int error = 0;
 
-	KASSERT(sizeof(work_impl_t) <= sizeof(struct work));
+	CTASSERT(sizeof(work_impl_t) <= sizeof(struct work));
 
 	ptr = kmem_zalloc(workqueue_size(flags), KM_SLEEP);
-	wq = (void *)roundup2((intptr_t)ptr, coherency_unit);
+	wq = (void *)roundup2((uintptr_t)ptr, coherency_unit);
 	wq->wq_ptr = ptr;
 	wq->wq_flags = flags;
 

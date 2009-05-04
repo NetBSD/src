@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.74 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.74.10.1 2009/05/04 08:14:14 yamt Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.74 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.74.10.1 2009/05/04 08:14:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -134,11 +134,9 @@ gif_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gif_softc *sc;
 
-	sc = malloc(sizeof(struct gif_softc), M_DEVBUF, M_WAITOK);
-	memset(sc, 0, sizeof(struct gif_softc));
+	sc = malloc(sizeof(struct gif_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
-	snprintf(sc->gif_if.if_xname, sizeof(sc->gif_if.if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	if_initname(&sc->gif_if, ifc->ifc_name, unit);
 
 	gifattach0(sc);
 
@@ -159,6 +157,7 @@ gifattach0(struct gif_softc *sc)
 	sc->gif_if.if_output = gif_output;
 	sc->gif_if.if_type   = IFT_GIF;
 	sc->gif_if.if_dlt    = DLT_NULL;
+	sc->gif_if.if_softc  = sc;
 	IFQ_SET_READY(&sc->gif_if.if_snd);
 	if_attach(&sc->gif_if);
 	if_alloc_sadl(&sc->gif_if);
@@ -199,7 +198,7 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	struct ip ip;
 	struct gif_softc *sc;
 
-	sc = (struct gif_softc *)arg;
+	sc = arg;
 	if (sc == NULL)
 		return 0;
 
@@ -232,7 +231,7 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	if (m->m_pkthdr.len < sizeof(ip))
 		return 0;
 
-	m_copydata(m, 0, sizeof(ip), (void *)&ip);
+	m_copydata(m, 0, sizeof(ip), &ip);
 
 	switch (ip.ip_v) {
 #ifdef INET
@@ -261,7 +260,7 @@ int
 gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
-	struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = ifp->if_softc;
 	int error = 0;
 	static int called = 0;	/* XXX: MUTEX */
 	ALTQ_DECL(struct altq_pktattr pktattr;)
@@ -347,7 +346,7 @@ gifintr(void *arg)
 	int s;
 	int error;
 
-	sc = (struct gif_softc *)arg;
+	sc = arg;
 	ifp = &sc->gif_if;
 
 	/* output processing */
@@ -479,7 +478,7 @@ int
 gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lwp *l = curlwp;	/* XXX */
-	struct gif_softc *sc  = (struct gif_softc*)ifp;
+	struct gif_softc *sc  = ifp->if_softc;
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;
 	struct sockaddr *dst, *src;
@@ -501,7 +500,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		break;
 
@@ -722,13 +721,8 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		memcpy(dst, src, src->sa_len);
 		break;
 
-	case SIOCSIFFLAGS:
-		/* if_ioctl() takes care of it */
-		break;
-
 	default:
-		error = EINVAL;
-		break;
+		return ifioctl_common(ifp, cmd, data);
 	}
  bad:
 	return error;
@@ -737,7 +731,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 int
 gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 {
-	struct gif_softc *sc = (struct gif_softc *)ifp;
+	struct gif_softc *sc = ifp->if_softc;
 	struct gif_softc *sc2;
 	struct sockaddr *osrc, *odst;
 	int s;
@@ -846,7 +840,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 void
 gif_delete_tunnel(struct ifnet *ifp)
 {
-	struct gif_softc *sc = (struct gif_softc *)ifp;
+	struct gif_softc *sc = ifp->if_softc;
 	int s;
 
 	s = splsoftnet();

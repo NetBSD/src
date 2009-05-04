@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_crypt.c,v 1.8 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_crypt.c,v 1.8.74.1 2009/05/04 08:14:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.8 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.8.74.1 2009/05/04 08:14:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -94,8 +94,7 @@ smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN)
 #ifdef NETSMBCRYPTO
 	u_char *p, *P14, *S21;
 
-	p = malloc(14 + 21, M_SMBTEMP, M_WAITOK);
-	bzero(p, 14 + 21);
+	p = malloc(14 + 21, M_SMBTEMP, M_WAITOK|M_ZERO);
 	P14 = p;
 	S21 = p + 14;
 	bcopy(apwd, P14, min(14, strlen(apwd)));
@@ -111,8 +110,8 @@ smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN)
 	free(p, M_SMBTEMP);
 	return 0;
 #else
-	SMBERROR("password encryption is not available\n");
-	bzero(RN, 24);
+	SMBERROR(("password encryption is not available\n"));
+	memset(RN, 0, 24);
 	return EAUTH;
 #endif
 }
@@ -136,7 +135,7 @@ smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN)
 	MD4Init(ctxp);
 	MD4Update(ctxp, (u_char*)unipwd, len * sizeof(u_int16_t));
 	free(unipwd, M_SMBTEMP);
-	bzero(S21, 21);
+	memset(S21, 0, 21);
 	MD4Final(S21, ctxp);
 	free(ctxp, M_SMBTEMP);
 
@@ -145,8 +144,8 @@ smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN)
 	smb_E(S21 + 14, C8, RN + 16);
 	return 0;
 #else
-	SMBERROR("password encryption is not available\n");
-	bzero(RN, 24);
+	SMBERROR(("password encryption is not available\n"));
+	memset(RN, 0, 24);
 	return EAUTH;
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.78.10.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.78.10.2 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78.10.1 2008/05/16 02:25:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78.10.2 2009/05/04 08:13:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78.10.1 2008/05/16 02:25:18 yamt 
 
 #include <nfs/nfsproto.h> /* for fh sizes */
 
-MODULE(MODULE_CLASS_VFS, puffs, NULL);
+MODULE(MODULE_CLASS_VFS, puffs, "putter");
 
 VFS_PROTOS(puffs_vfsop);
 
@@ -706,7 +706,7 @@ puffs_vfsop_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 }
 
 void
-puffs_vfsop_init()
+puffs_vfsop_init(void)
 {
 
 	/* some checks depend on this */
@@ -718,7 +718,7 @@ puffs_vfsop_init()
 }
 
 void
-puffs_vfsop_done()
+puffs_vfsop_done(void)
 {
 
 	puffs_msgif_destroy();

@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.18 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: btuart.c,v 1.18.4.1 2009/05/04 08:12:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.18 2008/04/15 11:17:48 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.18.4.1 2009/05/04 08:12:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -226,8 +226,8 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 	struct lwp *l = curlwp;		/* XXX */
 	int error, unit, s;
 
-	if ((error = kauth_authorize_device_tty(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, tp)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return error;
 
 	s = spltty();
@@ -244,7 +244,7 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 
 	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < btuart_cd.cd_ndevs; unit++)
-		if (btuart_cd.cd_devs[unit] == NULL)
+		if (device_lookup(&btuart_cd, unit) == NULL)
 			break;
 
 	cfdata->cf_name = btuart_cd.cd_name;
@@ -260,8 +260,9 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 	}
 	sc = device_private(dev);
 
-	aprint_normal_dev(dev, "major %d minor %d\n",
-	    major(tp->t_dev), minor(tp->t_dev));
+	aprint_normal_dev(dev, "major %llu minor %llu\n",
+	    (unsigned long long)major(tp->t_dev),
+	    (unsigned long long)minor(tp->t_dev));
 
 	sc->sc_tp = tp;
 	tp->t_sc = sc;

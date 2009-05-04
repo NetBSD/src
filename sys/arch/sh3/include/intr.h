@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24.10.1 2008/05/16 02:23:08 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.24.10.2 2009/05/04 08:11:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #define	IST_LEVEL		3	/* level-triggered */
 
 /* Interrupt priority levels */
-#define	_IPL_N		8
+#define	_IPL_N		16
 #define	_IPL_NSOFT	4
 
 #define	IPL_NONE	0	/* nothing */

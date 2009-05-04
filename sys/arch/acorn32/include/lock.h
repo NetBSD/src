@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.6.80.1 2008/05/16 02:21:43 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.6.80.2 2009/05/04 08:10:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,19 +32,21 @@
 #ifndef _ACORN32_LOCK_H_
 #define _ACORN32_LOCK_H_
 
+#include <sys/param.h>
+
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
 
-#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+#if defined(_HARDKERNEL) && defined(MULTIPROCESSOR)
 
 #include <arm/cpufunc.h>
 
 static __inline int
-__swp(int __val, volatile int *__ptr)
+__swp(int __val, volatile unsigned char *__ptr)
 {
 
-	__asm volatile("swp %0, %1, [%2]"
+	__asm volatile("swpb %0, %1, [%2]"
 	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
 	return __val;
 }
@@ -83,7 +85,7 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-#else /* !(_KERNEL && MULTIPROCESSOR) */
+#else /* !(_HARDKERNEL && MULTIPROCESSOR) */
 #include <arm/lock.h>
-#endif /* !(_KERNEL && MULTIPROCESSOR) */
+#endif /* !(_HARDKERNEL && MULTIPROCESSOR) */
 #endif

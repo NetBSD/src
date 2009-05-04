@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.68.10.1 2008/05/16 02:23:42 yamt Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.68.10.2 2009/05/04 08:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.68.10.1 2008/05/16 02:23:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.68.10.2 2009/05/04 08:12:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_param.h>
@@ -51,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.68.10.1 2008/05/16 02:23:42 yamt
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_oldmmap.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

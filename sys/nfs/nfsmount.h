@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.46.28.1 2008/04/27 12:52:50 yamt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.46.28.2 2009/05/04 08:14:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,6 +42,7 @@
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/disk.h>
+#include <sys/rb.h>
 #endif
 
 /*
@@ -129,6 +130,7 @@ struct	nfsmount {
 	kmutex_t nm_lock;		/* Lock for this structure */
 	lwp_t	*nm_rcvlwp;
 	lwp_t	*nm_sndlwp;
+	krwlock_t nm_rbtlock;		/* Lock for the rbtree */
 	kcondvar_t nm_rcvcv;
 	kcondvar_t nm_sndcv;
 	int	nm_flag;		/* Flags for soft/hard... */
@@ -137,6 +139,7 @@ struct	nfsmount {
 	struct vnode *nm_vnode;
 	krwlock_t nm_solock;
 	struct	socket *nm_so;		/* S: Rpc socket */
+	struct	rb_tree nm_rbtree;	/* red/black tree by fh for nfsnode */
 	int	nm_sotype;		/* S: Type of socket */
 	int	nm_soproto;		/* S: and protocol */
 	int	nm_soflags;		/* S: pr_flags for socket protocol */
@@ -187,17 +190,16 @@ struct	nfsmount {
  */
 VFS_PROTOS(nfs);
 
-int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
+int	mountnfs(struct nfs_args *argp, struct mount *mp,
 		struct mbuf *nam, const char *pth, const char *hst,
-		struct vnode **vpp, struct lwp *p));
-void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *,
-		struct lwp *l));
-int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, kauth_cred_t,
-			struct lwp *));
+		struct vnode **vpp, struct lwp *p);
+void	nfs_decode_args(struct nfsmount *, struct nfs_args *,
+		struct lwp *l);
+int	nfs_fsinfo(struct nfsmount *, struct vnode *, kauth_cred_t,
+			struct lwp *);
 
-void	nfs_vfs_init __P((void));
-void	nfs_vfs_reinit __P((void));
-void	nfs_vfs_done __P((void));
+void	nfs_vfs_init(void);
+void	nfs_vfs_done(void);
 
 #endif /* _KERNEL */
 

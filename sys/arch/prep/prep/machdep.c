@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2007/10/17 19:56:53 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67.20.1 2009/05/04 08:11:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2007/10/17 19:56:53 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67.20.1 2009/05/04 08:11:46 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -275,6 +275,8 @@ cpu_reboot(int howto, char *what)
 halt_sys:
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	if (howto & RB_HALT) {
                 printf("\n");
                 printf("The operating system has halted.\n");
@@ -424,7 +426,7 @@ setup_ivr(PPC_DEVICE *dev)
  */
 
 static void
-prep_init()
+prep_init(void)
 {
 	PPC_DEVICE *ppc_dev;
 	int i, foundmpic;

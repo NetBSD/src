@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.34.4.1 2008/05/16 02:24:57 yamt Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.34.4.2 2009/05/04 08:13:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.34.4.1 2008/05/16 02:24:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.34.4.2 2009/05/04 08:13:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ struct an_pcmcia_softc {
 #define	AN_PCMCIA_ATTACHED	3
 };
 
-CFATTACH_DECL(an_pcmcia, sizeof(struct an_pcmcia_softc),
+CFATTACH_DECL_NEW(an_pcmcia, sizeof(struct an_pcmcia_softc),
     an_pcmcia_match, an_pcmcia_attach, an_pcmcia_detach, an_activate);
 
 static const struct pcmcia_product an_pcmcia_products[] = {
@@ -109,8 +109,7 @@ an_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 static int
-an_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+an_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace < 1)
@@ -122,12 +121,13 @@ static void
 an_pcmcia_attach(struct device  *parent, struct device *self,
     void *aux)
 {
-	struct an_pcmcia_softc *psc = (void *)self;
+	struct an_pcmcia_softc *psc = device_private(self);
 	struct an_softc *sc = &psc->sc_an;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	int error;
 
+	sc->sc_dev = self;
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, an_pcmcia_validate_config);
@@ -176,7 +176,7 @@ fail:
 static int
 an_pcmcia_detach(struct device *self, int flags)
 {
-	struct an_pcmcia_softc *psc = (void *)self;
+	struct an_pcmcia_softc *psc = device_private(self);
 	int error;
 
 	if (psc->sc_state != AN_PCMCIA_ATTACHED)
@@ -194,8 +194,7 @@ an_pcmcia_detach(struct device *self, int flags)
 }
 
 static int
-an_pcmcia_enable(sc)
-	struct an_softc *sc;
+an_pcmcia_enable(struct an_softc *sc)
 {
 	struct an_pcmcia_softc *psc = (void *)sc;
 	int error;
@@ -215,8 +214,7 @@ an_pcmcia_enable(sc)
 }
 
 static void
-an_pcmcia_disable(sc)
-	struct an_softc *sc;
+an_pcmcia_disable(struct an_softc *sc)
 {
 	struct an_pcmcia_softc *psc = (void *)sc;
 

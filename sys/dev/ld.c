@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.57.4.1 2008/05/16 02:23:49 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.57.4.2 2009/05/04 08:12:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.57.4.1 2008/05/16 02:23:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.57.4.2 2009/05/04 08:12:33 yamt Exp $");
 
 #include "rnd.h"
 
@@ -102,12 +102,12 @@ ldattach(struct ld_softc *sc)
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
-		aprint_normal_dev(&sc->sc_dv, "disabled\n");
+		aprint_normal_dev(sc->sc_dv, "disabled\n");
 		return;
 	}
 
 	/* Initialise and attach the disk structure. */
-	disk_init(&sc->sc_dk, device_xname(&sc->sc_dv), &lddkdriver);
+	disk_init(&sc->sc_dk, device_xname(sc->sc_dv), &lddkdriver);
 	disk_attach(&sc->sc_dk);
 
 	if (sc->sc_maxxfer > MAXPHYS)
@@ -139,7 +139,8 @@ ldattach(struct ld_softc *sc)
 
 	format_bytes(tbuf, sizeof(tbuf), sc->sc_secperunit *
 	    sc->sc_secsize);
-	aprint_normal_dev(&sc->sc_dv, "%s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
+	aprint_normal_dev(sc->sc_dv, "%s, %d cyl, %d head, %d sec, "
+	    "%d bytes/sect x %"PRIu64" sectors\n",
 	    tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 
@@ -147,19 +148,19 @@ ldattach(struct ld_softc *sc)
 
 #if NRND > 0
 	/* Attach the device into the rnd source list. */
-	rnd_attach_source(&sc->sc_rnd_source, device_xname(&sc->sc_dv),
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
 	    RND_TYPE_DISK, 0);
 #endif
 
 	/* Register with PMF */
-	if (!pmf_device_register1(&sc->sc_dv, NULL, NULL, ld_shutdown))
-		aprint_error_dev(&sc->sc_dv,
+	if (!pmf_device_register1(sc->sc_dv, NULL, NULL, ld_shutdown))
+		aprint_error_dev(sc->sc_dv,
 		    "couldn't establish power handler\n");
 
 	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	/* Discover wedges on this disk. */
-	config_interrupts(&sc->sc_dv, ld_config_interrupts);
+	config_interrupts(sc->sc_dv, ld_config_interrupts);
 }
 
 int
@@ -210,7 +211,7 @@ ldenddetach(struct ld_softc *sc)
 	/* Wait for commands queued with the hardware to complete. */
 	if (sc->sc_queuecnt != 0)
 		if (tsleep(&sc->sc_queuecnt, PRIBIO, "lddtch", 30 * hz))
-			printf("%s: not drained\n", device_xname(&sc->sc_dv));
+			printf("%s: not drained\n", device_xname(sc->sc_dv));
 
 	/* Locate the major numbers. */
 	bmaj = bdevsw_lookup_major(&ld_bdevsw);
@@ -225,7 +226,7 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(device_unit(&sc->sc_dv), i);
+		mn = DISKMINOR(device_unit(sc->sc_dv), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -243,7 +244,7 @@ ldenddetach(struct ld_softc *sc)
 #endif
 
 	/* Deregister with PMF */
-	pmf_device_deregister(&sc->sc_dv);
+	pmf_device_deregister(sc->sc_dv);
 
 	/*
 	 * XXX We can't really flush the cache here, beceause the
@@ -253,9 +254,10 @@ ldenddetach(struct ld_softc *sc)
 #if 0
 	/* Flush the device's cache. */
 	if (sc->sc_flush != NULL)
-		if ((*sc->sc_flush)(sc) != 0)
+		if ((*sc->sc_flush)(sc, 0) != 0)
 			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
 #endif
+	mutex_destroy(&sc->sc_mutex);
 }
 
 /* ARGSUSED */
@@ -264,7 +266,7 @@ ld_shutdown(device_t dev, int flags)
 {
 	struct ld_softc *sc = device_private(dev);
 
-	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0) {
+	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, LDFL_POLL) != 0) {
 		printf("%s: unable to flush cache\n", device_xname(dev));
 		return false;
 	}
@@ -280,7 +282,7 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	int error, unit, part;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
+	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
@@ -328,7 +330,7 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
-	sc = device_lookup(&ld_cd, unit);
+	sc = device_lookup_private(&ld_cd, unit);
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
 
@@ -344,8 +346,8 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	if (sc->sc_dk.dk_openmask == 0) {
-		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0)
-			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
+		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, 0) != 0)
+			aprint_error_dev(sc->sc_dv, "unable to flush cache\n");
 		if ((sc->sc_flags & LDF_KLABEL) == 0)
 			sc->sc_flags &= ~LDF_VLABEL;
 	}
@@ -383,7 +385,7 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
-	sc = device_lookup(&ld_cd, unit);
+	sc = device_lookup_private(&ld_cd, unit);
 
 	error = disk_ioctl(&sc->sc_dk, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
@@ -486,7 +488,7 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else if (sc->sc_flush)
-			error = (*sc->sc_flush)(sc);
+			error = (*sc->sc_flush)(sc, 0);
 		else
 			error = 0;	/* XXX Error out instead? */
 		break;
@@ -499,7 +501,7 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(&sc->sc_dv),
+		strlcpy(dkw->dkw_parent, device_xname(sc->sc_dv),
 			sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
@@ -512,7 +514,7 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(&sc->sc_dv),
+		strlcpy(dkw->dkw_parent, device_xname(sc->sc_dv),
 			sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }
@@ -577,7 +579,7 @@ ldstrategy(struct buf *bp)
 	daddr_t blkno;
 	int s, part;
 
-	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
+	sc = device_lookup_private(&ld_cd, DISKUNIT(bp->b_dev));
 	part = DISKPART(bp->b_dev);
 
 	if ((sc->sc_flags & LDF_DETACH) != 0) {
@@ -644,11 +646,11 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	mutex_enter(&sc->sc_mutex);
 
 	if (bp != NULL)
-		BUFQ_PUT(sc->sc_bufq, bp);
+		bufq_put(sc->sc_bufq, bp);
 
 	while (sc->sc_queuecnt < sc->sc_maxqueuecnt) {
 		/* See if there is work to do. */
-		if ((bp = BUFQ_PEEK(sc->sc_bufq)) == NULL)
+		if ((bp = bufq_peek(sc->sc_bufq)) == NULL)
 			break;
 
 		disk_busy(&sc->sc_dk);
@@ -659,7 +661,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 			 * The back-end is running the job; remove it from
 			 * the queue.
 			 */
-			(void) BUFQ_GET(sc->sc_bufq);
+			(void) bufq_get(sc->sc_bufq);
 		} else  {
 			disk_unbusy(&sc->sc_dk, 0, (bp->b_flags & B_READ));
 			sc->sc_queuecnt--;
@@ -674,7 +676,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 				 */
 				break;
 			} else {
-				(void) BUFQ_GET(sc->sc_bufq);
+				(void) bufq_get(sc->sc_bufq);
 				bp->b_error = error;
 				bp->b_resid = bp->b_bcount;
 				mutex_exit(&sc->sc_mutex);
@@ -722,7 +724,7 @@ ldsize(dev_t dev)
 	int part, unit, omask, size;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
+	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
 		return (ENODEV);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
@@ -754,10 +756,10 @@ ldgetdisklabel(struct ld_softc *sc)
 	ldgetdefaultlabel(sc, sc->sc_dk.dk_label);
 
 	/* Call the generic disklabel extraction routine. */
-	errstring = readdisklabel(MAKEDISKDEV(0, device_unit(&sc->sc_dv),
+	errstring = readdisklabel(MAKEDISKDEV(0, device_unit(sc->sc_dv),
 	    RAW_PART), ldstrategy, sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
 	if (errstring != NULL)
-		printf("%s: %s\n", device_xname(&sc->sc_dv), errstring);
+		printf("%s: %s\n", device_xname(sc->sc_dv), errstring);
 
 	/* In-core label now valid. */
 	sc->sc_flags |= LDF_VLABEL;
@@ -809,7 +811,7 @@ lddump(dev_t dev, daddr_t blkno, void *vav, size_t size)
 	static int dumping;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
+	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
@@ -864,7 +866,7 @@ ldminphys(struct buf *bp)
 {
 	struct ld_softc *sc;
 
-	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
+	sc = device_lookup_private(&ld_cd, DISKUNIT(bp->b_dev));
 
 	if (bp->b_bcount > sc->sc_maxxfer)
 		bp->b_bcount = sc->sc_maxxfer;
@@ -898,7 +900,7 @@ ld_set_properties(struct ld_softc *ld)
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
-	prop_dictionary_set(device_properties(&ld->sc_dv),
+	prop_dictionary_set(device_properties(ld->sc_dv),
 	    "disk-info", disk_info);
 
 	/*
@@ -915,6 +917,6 @@ ld_set_properties(struct ld_softc *ld)
 static void
 ld_config_interrupts (struct device *d)
 {
-	struct ld_softc *sc = (struct ld_softc *)d;
+	struct ld_softc *sc = device_private(d);
 	dkwedge_discover(&sc->sc_dk);
 }

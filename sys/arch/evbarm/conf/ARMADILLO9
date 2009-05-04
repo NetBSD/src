@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.18 2008/01/19 13:11:12 chris Exp $
+#	$NetBSD: ARMADILLO9,v 1.18.10.1 2009/05/04 08:10:56 yamt Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -41,7 +41,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -78,6 +78,7 @@ options 	NFS_BOOT_DHCP
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
@@ -92,7 +93,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options		P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
@@ -108,7 +108,6 @@ options 	CONUNIT=0		# Console port number
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions
@@ -157,7 +156,7 @@ ohci0		at epsoc? addr 0x80020000 size 0x1000 intr 56
 # On-chip Raster (not yet)
 #vga0		at epsoc? addr 0x80030000 size 0x10000 intr ??
 # On-chip PCMCIA controller
-eppcic0		at epsoc? addr 0x80080020 size 0x24 intr 49
+eppcic0		at epsoc? addr 0x80080000 size 0x44
 # On-chip IDE (not yet)
 #wdc0		at epsoc? addr 0x800a0000 size 0x38 intr ??
 

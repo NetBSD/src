@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.123.2.1 2008/05/16 02:25:41 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.123.2.2 2009/05/04 08:14:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.123.2.1 2008/05/16 02:25:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.123.2.2 2009/05/04 08:14:17 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -106,9 +106,12 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.123.2.1 2008/05/16 02:25:41 yamt Exp $"
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/once.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/uidinfo.h>
+#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -151,12 +154,21 @@ int	anonportmax = IPPORT_ANONMAX;
 int	lowportmin  = IPPORT_RESERVEDMIN;
 int	lowportmax  = IPPORT_RESERVEDMAX;
 
-POOL_INIT(inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL,
-    IPL_NET);
+static struct pool inpcb_pool;
+
+static int
+inpcb_poolinit(void)
+{
+
+	pool_init(&inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL,
+	    IPL_NET);
+	return 0;
+}
 
 void
 in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
+	static ONCE_DECL(control);
 
 	CIRCLEQ_INIT(&table->inpt_queue);
 	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, true,
@@ -167,6 +179,8 @@ in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 	    &table->inpt_connecthash);
 	table->inpt_lastlow = IPPORT_RESERVEDMAX;
 	table->inpt_lastport = (u_int16_t)anonportmax;
+
+	RUN_ONCE(&control, inpcb_poolinit);
 }
 
 int
@@ -184,7 +198,7 @@ in_pcballoc(struct socket *so, void *v)
 	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
-	bzero((void *)inp, sizeof(*inp));
+	memset((void *)inp, 0, sizeof(*inp));
 	inp->inp_af = AF_INET;
 	inp->inp_table = table;
 	inp->inp_socket = so;
@@ -209,35 +223,110 @@ in_pcballoc(struct socket *so, void *v)
 	return (0);
 }
 
-int
-in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
+static int
+in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 {
-	struct in_ifaddr *ia = NULL;
-	struct inpcb *inp = v;
-	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
-	struct sockaddr_in *sin = NULL; /* XXXGCC */
+	struct socket *so = inp->inp_socket;
+	int	   cnt;
+	u_int16_t  mymin, mymax;
+	u_int16_t *lastport;
 	u_int16_t lport = 0;
-	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
-	kauth_cred_t cred = l->l_cred;
+	enum kauth_network_req req;
+	int error;
 
-	if (inp->inp_af != AF_INET)
-		return (EINVAL);
+	if (inp->inp_flags & INP_LOWPORT) {
+#ifndef IPNOPRIVPORTS
+		req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
+#else
+		req = KAUTH_REQ_NETWORK_BIND_PORT;
+#endif
 
-	if (TAILQ_FIRST(&in_ifaddrhead) == 0)
-		return (EADDRNOTAVAIL);
-	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
-		return (EINVAL);
-	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0)
-		wild = 1;
-	if (nam == 0)
-		goto noname;
-	sin = mtod(nam, struct sockaddr_in *);
-	if (nam->m_len != sizeof (*sin))
-		return (EINVAL);
+		mymin = lowportmin;
+		mymax = lowportmax;
+		lastport = &table->inpt_lastlow;
+	} else {
+		req = KAUTH_REQ_NETWORK_BIND_PORT;
+
+		mymin = anonportmin;
+		mymax = anonportmax;
+		lastport = &table->inpt_lastport;
+	}
+
+	/* XXX-kauth: KAUTH_REQ_NETWORK_BIND_AUTOASSIGN_{,PRIV}PORT */
+	error = kauth_authorize_network(cred, KAUTH_NETWORK_BIND, req, so, sin,
+	    NULL);
+	if (error)
+		return (error);
+
+	if (mymin > mymax) {	/* sanity check */
+		u_int16_t swp;
+
+		swp = mymin;
+		mymin = mymax;
+		mymax = swp;
+	}
+
+	lport = *lastport - 1;
+	for (cnt = mymax - mymin + 1; cnt; cnt--, lport--) {
+		if (lport < mymin || lport > mymax)
+			lport = mymax;
+		if (!in_pcblookup_port(table, sin->sin_addr, htons(lport), 1)) {
+			/* We have a free port, check with the secmodel(s). */
+			sin->sin_port = lport;
+			error = kauth_authorize_network(cred,
+			    KAUTH_NETWORK_BIND, req, so, sin, NULL);
+			if (error) {
+				/* Secmodel says no. Keep looking. */
+				continue;
+			}
+
+			goto found;
+		}
+	}
+
+	return (EAGAIN);
+
+ found:
+	inp->inp_flags |= INP_ANONPORT;
+	*lastport = lport;
+	lport = htons(lport);
+	inp->inp_lport = lport;
+	in_pcbstate(inp, INP_BOUND);
+
+	return (0);
+}
+
+static int
+in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
+{
 	if (sin->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
-	lport = sin->sin_port;
+
+	if (!in_nullhost(sin->sin_addr)) {
+		struct in_ifaddr *ia = NULL;
+
+		INADDR_TO_IA(sin->sin_addr, ia);
+		/* check for broadcast addresses */
+		if (ia == NULL)
+			ia = ifatoia(ifa_ifwithaddr(sintosa(sin)));
+		if (ia == NULL)
+			return (EADDRNOTAVAIL);
+	}
+
+	inp->inp_laddr = sin->sin_addr;
+
+	return (0);
+}
+
+static int
+in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
+{
+	struct inpcbtable *table = inp->inp_table;
+	struct socket *so = inp->inp_socket;
+	int reuseport = (so->so_options & SO_REUSEPORT);
+	int wild = 0, error;
+
 	if (IN_MULTICAST(sin->sin_addr.s_addr)) {
 		/*
 		 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
@@ -248,46 +337,53 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		 */
 		if (so->so_options & SO_REUSEADDR)
 			reuseport = SO_REUSEADDR|SO_REUSEPORT;
-	} else if (!in_nullhost(sin->sin_addr)) {
-		sin->sin_port = 0;		/* yech... */
-		INADDR_TO_IA(sin->sin_addr, ia);
-		/* check for broadcast addresses */
-		if (ia == NULL)
-			ia = ifatoia(ifa_ifwithaddr(sintosa(sin)));
-		if (ia == NULL)
-			return (EADDRNOTAVAIL);
-	}
-	if (lport) {
+	} 
+
+	if (sin->sin_port == 0) {
+		error = in_pcbsetport(sin, inp, cred);
+		if (error)
+			return (error);
+	} else {
 		struct inpcb *t;
 #ifdef INET6
 		struct in6pcb *t6;
 		struct in6_addr mapped;
 #endif
+		enum kauth_network_req req;
+
+		if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0)
+			wild = 1;
+
 #ifndef IPNOPRIVPORTS
-		/* GROSS */
-		if (ntohs(lport) < IPPORT_RESERVED &&
-		    kauth_authorize_network(cred,
-		    KAUTH_NETWORK_BIND,
-		    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so, sin,
-		    NULL))
-			return (EACCES);
-#endif
+		if (ntohs(sin->sin_port) < IPPORT_RESERVED)
+			req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
+		else
+#endif /* !IPNOPRIVPORTS */
+			req = KAUTH_REQ_NETWORK_BIND_PORT;
+
+		error = kauth_authorize_network(cred, KAUTH_NETWORK_BIND, req,
+		    so, sin, NULL);
+		if (error)
+			return (error);
+
 #ifdef INET6
 		memset(&mapped, 0, sizeof(mapped));
 		mapped.s6_addr16[5] = 0xffff;
 		memcpy(&mapped.s6_addr32[3], &sin->sin_addr,
 		    sizeof(mapped.s6_addr32[3]));
-		t6 = in6_pcblookup_port(table, &mapped, lport, wild);
+		t6 = in6_pcblookup_port(table, &mapped, sin->sin_port, wild);
 		if (t6 && (reuseport & t6->in6p_socket->so_options) == 0)
 			return (EADDRINUSE);
 #endif
+
+		/* XXX-kauth */
 		if (so->so_uidinfo->ui_uid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
-			t = in_pcblookup_port(table, sin->sin_addr, lport, 1);
-		/*
-		 * XXX:	investigate ramifications of loosening this
-		 *	restriction so that as long as both ports have
-		 *	SO_REUSEPORT allow the bind
-		 */
+			t = in_pcblookup_port(table, sin->sin_addr, sin->sin_port, 1);
+			/*
+			 * XXX:	investigate ramifications of loosening this
+			 *	restriction so that as long as both ports have
+			 *	SO_REUSEPORT allow the bind
+			 */
 			if (t &&
 			    (!in_nullhost(sin->sin_addr) ||
 			     !in_nullhost(t->inp_laddr) ||
@@ -296,63 +392,60 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 				return (EADDRINUSE);
 			}
 		}
-		t = in_pcblookup_port(table, sin->sin_addr, lport, wild);
+		t = in_pcblookup_port(table, sin->sin_addr, sin->sin_port, wild);
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			return (EADDRINUSE);
+
+		inp->inp_lport = sin->sin_port;
+		in_pcbstate(inp, INP_BOUND);
 	}
-	inp->inp_laddr = sin->sin_addr;
 
-noname:
-	if (lport == 0) {
-		int	   cnt;
-		u_int16_t  mymin, mymax;
-		u_int16_t *lastport;
-
-		if (inp->inp_flags & INP_LOWPORT) {
-#ifndef IPNOPRIVPORTS
-			if (kauth_authorize_network(cred,
-			    KAUTH_NETWORK_BIND,
-			    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so,
-			    sin, NULL))
-				return (EACCES);
-#endif
-			mymin = lowportmin;
-			mymax = lowportmax;
-			lastport = &table->inpt_lastlow;
-		} else {
-			mymin = anonportmin;
-			mymax = anonportmax;
-			lastport = &table->inpt_lastport;
-		}
-		if (mymin > mymax) {	/* sanity check */
-			u_int16_t swp;
-
-			swp = mymin;
-			mymin = mymax;
-			mymax = swp;
-		}
-
-		lport = *lastport - 1;
-		for (cnt = mymax - mymin + 1; cnt; cnt--, lport--) {
-			if (lport < mymin || lport > mymax)
-				lport = mymax;
-			if (!in_pcblookup_port(table, inp->inp_laddr,
-			    htons(lport), 1))
-				goto found;
-		}
-		if (!in_nullhost(inp->inp_laddr))
-			inp->inp_laddr.s_addr = INADDR_ANY;
-		return (EAGAIN);
-	found:
-		inp->inp_flags |= INP_ANONPORT;
-		*lastport = lport;
-		lport = htons(lport);
-	}
-	inp->inp_lport = lport;
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
 	LIST_INSERT_HEAD(INPCBHASH_PORT(table, inp->inp_lport), &inp->inp_head,
 	    inph_lhash);
-	in_pcbstate(inp, INP_BOUND);
+
+	return (0);
+}
+
+int
+in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
+{
+	struct inpcb *inp = v;
+	struct sockaddr_in *sin = NULL; /* XXXGCC */
+	struct sockaddr_in lsin;
+	int error;
+
+	if (inp->inp_af != AF_INET)
+		return (EINVAL);
+
+	if (TAILQ_FIRST(&in_ifaddrhead) == 0)
+		return (EADDRNOTAVAIL);
+	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
+		return (EINVAL);
+
+	if (nam != NULL) {
+		sin = mtod(nam, struct sockaddr_in *);
+		if (nam->m_len != sizeof (*sin))
+			return (EINVAL);
+	} else {
+		lsin = *((const struct sockaddr_in *)
+		    inp->inp_socket->so_proto->pr_domain->dom_sa_any);
+		sin = &lsin;
+	}
+
+	/* Bind address. */
+	error = in_pcbbind_addr(inp, sin, l->l_cred);
+	if (error)
+		return (error);
+
+	/* Bind port. */
+	error = in_pcbbind_port(inp, sin, l->l_cred);
+	if (error) {
+		inp->inp_laddr.s_addr = INADDR_ANY;
+
+		return (error);
+	}
+
 	return (0);
 }
 
@@ -487,9 +580,6 @@ in_pcbdetach(void *v)
 	ipsec4_delete_pcbpolicy(inp);
 #endif /*IPSEC*/
 	so->so_pcb = 0;
-	/* sofree drop's the socket's lock */
-	sofree(so);
-	mutex_enter(softnet_lock);
 	if (inp->inp_options)
 		(void)m_free(inp->inp_options);
 	rtcache_free(&inp->inp_route);
@@ -501,6 +591,8 @@ in_pcbdetach(void *v)
 	    inph_queue);
 	pool_put(&inpcb_pool, inp);
 	splx(s);
+	sofree(so);			/* drops the socket's lock */
+	mutex_enter(softnet_lock);	/* reacquire the softnet_lock */
 }
 
 void

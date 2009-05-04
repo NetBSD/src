@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.21 2006/03/04 13:46:49 peter Exp $	*/
+/*	$NetBSD: platid.def,v 1.21.72.1 2009/05/04 08:11:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -83,6 +83,7 @@ ARM {
 	}
 	XSCALE {
 		PXA250
+		PXA270
 	}
 }
 #endif /* hpcarm */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.14 2007/10/17 19:55:04 garbled Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.14.20.1 2009/05/04 08:11:25 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.14 2007/10/17 19:55:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.14.20.1 2009/05/04 08:11:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -48,21 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.14 2007/10/17 19:55:04 garbled 
 
 #include <uvm/uvm_extern.h>
 
-#define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
+#define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
+#define RELOCPTR(v, t)	((t)((uintptr_t)RELOC((v), t) + firstpa))
 
 extern char *etext;
-extern int Sysptsize;
 extern char *proc0paddr;
-extern st_entry_t *Sysseg;
-extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
-extern vaddr_t virtual_avail, virtual_end;
-extern vsize_t mem_size;
-extern int protection_codes[];
 
-void	pmap_bootstrap __P((paddr_t, paddr_t));
+void	pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -88,9 +83,7 @@ void *msgbufaddr;
  * XXX a PIC compiler would make this much easier.
  */
 void
-pmap_bootstrap(nextpa, firstpa)
-	paddr_t nextpa;
-	paddr_t firstpa;
+pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t kstpa, kptpa, kptmpa, p0upa;
 	u_int nptpages, kstsize;
@@ -375,9 +368,9 @@ pmap_bootstrap(nextpa, firstpa)
 	 * absolute "jmp" table.
 	 */
 	{
-		int *kp;
+		u_int *kp;
 
-		kp = &RELOC(protection_codes, int);
+		kp = &RELOC(protection_codes, u_int);
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
@@ -393,7 +386,9 @@ pmap_bootstrap(nextpa, firstpa)
 	 * just initialize pointers.
 	 */
 	{
-		struct pmap *kpm = &RELOC(kernel_pmap_store, struct pmap);
+		struct pmap *kpm;
+
+		kpm = RELOCPTR(kernel_pmap_ptr, struct pmap *);
 
 		kpm->pm_stab = RELOC(Sysseg, st_entry_t *);
 		kpm->pm_ptab = RELOC(Sysmap, pt_entry_t *);

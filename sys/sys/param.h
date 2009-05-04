@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.316.2.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.316.2.2 2009/05/04 08:14:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499006200	/* NetBSD 4.99.62 */
+#define	__NetBSD_Version__	599001100	/* NetBSD 5.99.11 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -82,18 +82,30 @@
 
 #define	NetBSD	199905		/* NetBSD version (year & month). */
 
+/*
+ * There macros determine if we are running in protected mode or not.
+ *   _HARDKERNEL: code uses kernel namespace and runs in hw priviledged mode
+ *   _SOFTKERNEL: code uses kernel namespace but runs without hw priviledges
+ */
+#if defined(_KERNEL) && !defined(_RUMPKERNEL)
+#define _HARDKERNEL
+#endif
+#if defined(_KERNEL) && defined(_RUMPKERNEL)
+#define _SOFTKERNEL
+#endif
+
 #include <sys/null.h>
 
-#ifndef _LOCORE
+#ifndef __ASSEMBLER__
 #include <sys/inttypes.h>
 #include <sys/types.h>
-#endif
 
 /*
  * Machine-independent constants (some used in following include files).
  * Redefined constants are from POSIX 1003.1 limits file.
  *
  * MAXCOMLEN should be >= sizeof(ac_comm) (see <acct.h>)
+ * MAXHOSTNAMELEN should be >= (_POSIX_HOST_NAME_MAX + 1) (see <limits.h>)
  * MAXLOGNAME should be >= UT_NAMESIZE (see <utmp.h>)
  */
 #include <sys/syslimits.h>
@@ -142,6 +154,7 @@
 #ifndef BUFCACHE_VA_MAXPCT
 #define	BUFCACHE_VA_MAXPCT	20
 #endif
+#define	VNODE_COST	2048			/* assumed space in bytes */
 #endif /* _KERNEL */
 
 /* Signals. */
@@ -309,6 +322,8 @@
  * maximum number of symbolic links that may be expanded in a path name.
  * It should be set high enough to allow all legitimate uses, but halt
  * infinite loops reasonably quickly.
+ *
+ * MAXSYMLINKS should be >= _POSIX_SYMLOOP_MAX (see <limits.h>)
  */
 #define	MAXPATHLEN	PATH_MAX
 #define	MAXSYMLINKS	32
@@ -424,5 +439,6 @@ extern size_t coherency_unit;
 #ifndef MIN_LWP_ALIGNMENT
 #define	MIN_LWP_ALIGNMENT	32
 #endif
+#endif /* !__ASSEMBLER__ */
 
 #endif /* !_SYS_PARAM_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.34.4.1 2008/05/16 02:22:01 yamt Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.34.4.2 2009/05/04 08:10:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.34.4.1 2008/05/16 02:22:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.34.4.2 2009/05/04 08:10:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,10 +200,7 @@ static void vv_putchar(void *c, int row, int col, u_int uc, long attr);
 
 
 static int
-vidcvideo_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vidcvideo_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	/* Can't probe AFAIK ; how ? */
@@ -260,7 +257,7 @@ vidcvideo_getdevconfig(vaddr_t dense_addr, u_int mem_size,
 	vidcvideo_colourmap_and_cursor_init(dc);
 
 	/* blank the memory */
-	bzero((void*)dc->dc_vaddr, dc->dc_size);
+	memset((void*)dc->dc_vaddr, 0, dc->dc_size);
 
 	/* intitialise miscelanious */
 	dc->dc_writeback_delay = 0;

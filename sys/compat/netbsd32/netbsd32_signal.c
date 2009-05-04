@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.29 2008/04/24 18:39:23 ad Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.29.2.1 2009/05/04 08:12:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.29 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.29.2.1 2009/05/04 08:12:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.29 2008/04/24 18:39:23 ad Exp 
 #include <sys/time.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/wait.h>
 #include <sys/dirent.h>
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.29 2008/04/24 18:39:23 ad Exp 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/netbsd32/netbsd32_sa.h>
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
@@ -285,7 +286,10 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 	ucp->uc_flags = 0;
 	ucp->uc_link = (uint32_t)(intptr_t)l->l_ctxlink;
 
-	ucp->uc_sigmask = l->l_sigmask;
+	if (p->p_sa != NULL)
+		ucp->uc_sigmask = p->p_sa->sa_sigmask;
+	else
+		ucp->uc_sigmask = l->l_sigmask;
 	ucp->uc_flags |= _UC_SIGMASK;
 
 	/*
@@ -308,6 +312,44 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 	mutex_exit(p->p_lock);
 	cpu_getmcontext32(l, &ucp->uc_mcontext, &ucp->uc_flags);
 	mutex_enter(p->p_lock);
+}
+
+/*
+ * getucontext32_sa:
+ *	Get a ucontext32_t for use in SA upcall generation.
+ * Tweaked version of getucontext32. We 1) do not take p_lock, 2)
+ * fudge things with uc_link (which is usually NULL for libpthread
+ * code), and 3) we report an empty signal mask.
+ */
+void
+getucontext32_sa(struct lwp *l, ucontext32_t *ucp)
+{
+	struct proc *p = l->l_proc;
+
+	ucp->uc_flags = 0;
+	ucp->uc_link = (uint32_t)(intptr_t)l->l_ctxlink;
+
+	sigemptyset(&ucp->uc_sigmask);
+	ucp->uc_flags |= _UC_SIGMASK;
+
+	/*
+	 * The (unsupplied) definition of the `current execution stack'
+	 * in the System V Interface Definition appears to allow returning
+	 * the main context stack.
+	 */
+	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
+		ucp->uc_stack.ss_sp = USRSTACK32;
+		ucp->uc_stack.ss_size = ctob(p->p_vmspace->vm_ssize);
+		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
+	} else {
+		/* Simply copy alternate signal execution stack. */
+		ucp->uc_stack.ss_sp =
+		    (uint32_t)(intptr_t)l->l_sigstk.ss_sp;
+		ucp->uc_stack.ss_size = l->l_sigstk.ss_size;
+		ucp->uc_stack.ss_flags = l->l_sigstk.ss_flags;
+	}
+	ucp->uc_flags |= _UC_STACK;
+	cpu_getmcontext32(l, &ucp->uc_mcontext, &ucp->uc_flags);
 }
 
 /* ARGSUSED */
@@ -426,20 +468,21 @@ netbsd32_sigtimedwait_put_timeout(const void *src, void *dst, size_t size)
 }
 
 int
-netbsd32___sigtimedwait(struct lwp *l, const struct netbsd32___sigtimedwait_args *uap, register_t *retval)
+netbsd32_____sigtimedwait50(struct lwp *l, const struct netbsd32_____sigtimedwait50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_sigsetp_t) set;
 		syscallarg(netbsd32_siginfop_t) info;
-		syscallarg(netbsd32_timespecp_t) timeout;
+		syscallarg(netbsd32_timespec50p_t) timeout;
 	} */
-	struct sys___sigtimedwait_args ua;
+	struct sys_____sigtimedwait50_args ua;
 
 	NETBSD32TOP_UAP(set, const sigset_t);
 	NETBSD32TOP_UAP(info, siginfo_t);
 	NETBSD32TOP_UAP(timeout, struct timespec);
 
-	return __sigtimedwait1(l, &ua, retval, netbsd32_sigtimedwait_put_info,
+	return __sigtimedwait1(l, &ua, retval,
+	    netbsd32_sigtimedwait_put_info,
 	    netbsd32_sigtimedwait_fetch_timeout,
 	    netbsd32_sigtimedwait_put_timeout);
 }

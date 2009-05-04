@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.26.4.1 2008/05/16 02:23:53 yamt Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.26.4.2 2009/05/04 08:12:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.26.4.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.26.4.2 2009/05/04 08:12:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ static const char * const pckbc_acpi_ids_ms[] = {
 	"PNP0F19",
 	"PNP0F1B",
 	"PNP0F1C",
+	"SYN0302",
 	NULL
 };
 
@@ -154,8 +155,7 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 		panic("pckbc_acpi_attach: impossible");
 	}
 
-	aprint_naive("\n");
-	aprint_normal(": %s port\n", pckbc_slot_names[psc->sc_slot]);
+	aprint_normal(" (%s port)", pckbc_slot_names[psc->sc_slot]);
 
 	/* parse resources */
 	rv = acpi_resource_parse(sc->sc_dv, aa->aa_node->ad_handle, "_CRS",
@@ -247,7 +247,7 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	 * Note we're always called with sc == first.
 	 */
 	for (i = 0; i < pckbc_cd.cd_ndevs; i++) {
-		psc = device_private(pckbc_cd.cd_devs[i]);
+		psc = device_lookup_private(&pckbc_cd, i);
 		if (psc && psc->sc_slot == slot) {
 			irq = psc->sc_irq;
 			ist = psc->sc_ist;

@@ -1,4 +1,4 @@
-/* $NetBSD: xs_wire.h,v 1.7.10.1 2008/05/16 02:23:30 yamt Exp $ */
+/* $NetBSD: xs_wire.h,v 1.7.10.2 2009/05/04 08:12:13 yamt Exp $ */
 /*
  * Details of the "wire" protocol between Xen Store Daemon and client
  * library or guest kernel.
@@ -47,7 +47,8 @@ enum xsd_sockmsg_type
     XS_WATCH_EVENT,
     XS_ERROR,
     XS_IS_DOMAIN_INTRODUCED,
-    XS_RESUME
+    XS_RESUME,
+    XS_SET_TARGET
 };
 
 #define XS_WRITE_NONE "NONE"
@@ -61,6 +62,7 @@ struct xsd_errors
     const char *errstring;
 };
 #define XSD_ERROR(x) { x, #x }
+/* LINTED: static unused */
 static struct xsd_errors xsd_errors[]
 #if defined(__GNUC__)
 __attribute__((unused))

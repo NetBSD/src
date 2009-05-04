@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2007/10/17 19:56:39 garbled Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.20.1 2009/05/04 08:11:43 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2007/10/17 19:56:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.20.1 2009/05/04 08:11:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -128,6 +128,7 @@ struct evcnt tlbenter_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbenter");
 
 struct pmap kernel_pmap_;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
 
 int physmem;
 static int npgs;
@@ -517,8 +518,8 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
  * This is not the most efficient technique but i don't
  * expect it to be called that often.
  */
-extern struct vm_page *vm_page_alloc1 __P((void));
-extern void vm_page_free1 __P((struct vm_page *));
+extern struct vm_page *vm_page_alloc1(void);
+extern void vm_page_free1(struct vm_page *);
 
 vaddr_t kbreak = VM_MIN_KERNEL_ADDRESS;
 
@@ -1635,9 +1636,9 @@ ctx_free(struct pmap *pm)
 /*
  * Test ref/modify handling.
  */
-void pmap_testout __P((void));
+void pmap_testout(void);
 void
-pmap_testout()
+pmap_testout(void)
 {
 	vaddr_t va;
 	volatile int *loc;

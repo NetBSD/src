@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.4.62.1 2008/05/16 02:23:15 yamt Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.4.62.2 2009/05/04 08:11:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -88,7 +88,7 @@ netif_open(void *machdep_hint)
 		errno = ENFILE;
 		return -1;
 	}
-	bzero(io, sizeof *io);
+	memset(io, 0, sizeof *io);
 
 	netif_of.nif_devdata = op;
 	io->io_netif = &netif_of;
@@ -183,7 +183,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	struct of_dev *op;
 	int tick0, tmo_ms;
@@ -227,7 +227,7 @@ netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
 /*
  * Shouldn't really be here, but is used solely for networking, so...
  */
-time_t
+satime_t
 getsecs(void)
 {
 

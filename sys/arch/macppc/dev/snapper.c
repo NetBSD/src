@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.25 2007/11/07 19:47:01 garbled Exp $	*/
+/*	$NetBSD: snapper.c,v 1.25.18.1 2009/05/04 08:11:29 yamt Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25 2007/11/07 19:47:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25.18.1 2009/05/04 08:11:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25 2007/11/07 19:47:01 garbled Exp $")
 #include <machine/pio.h>
 
 #include <macppc/dev/deqvar.h>
+#include <macppc/dev/obiovar.h>
 
 #ifdef SNAPPER_DEBUG
 # define DPRINTF printf
@@ -66,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25 2007/11/07 19:47:01 garbled Exp $")
 #define SNAPPER_MAXPAGES	16
 
 struct snapper_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int sc_mode;		  // 0 for TAS3004
 #define SNAPPER_IS_TAS3001	1 // codec is TAS3001
 #define SNAPPER_SWVOL		2 // software codec
@@ -112,41 +113,43 @@ struct snapper_softc {
 	struct dbdma_command *sc_idmacmd;
 };
 
-int snapper_match(struct device *, struct cfdata *, void *);
-void snapper_attach(struct device *, struct device *, void *);
-void snapper_defer(struct device *);
-int snapper_intr(void *);
-int snapper_query_encoding(void *, struct audio_encoding *);
-int snapper_set_params(void *, int, int, audio_params_t *,
+static int snapper_match(device_t, struct cfdata *, void *);
+static void snapper_attach(device_t, device_t, void *);
+static void snapper_defer(device_t);
+static int snapper_intr(void *);
+static int snapper_query_encoding(void *, struct audio_encoding *);
+static int snapper_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-int snapper_round_blocksize(void *, int, int, const audio_params_t *);
-int snapper_halt_output(void *);
-int snapper_halt_input(void *);
-int snapper_getdev(void *, struct audio_device *);
-int snapper_set_port(void *, mixer_ctrl_t *);
-int snapper_get_port(void *, mixer_ctrl_t *);
-int snapper_query_devinfo(void *, mixer_devinfo_t *);
-size_t snapper_round_buffersize(void *, int, size_t);
-paddr_t snapper_mappage(void *, void *, off_t, int);
-int snapper_get_props(void *);
-int snapper_trigger_output(void *, void *, void *, int, void (*)(void *),
+static int snapper_round_blocksize(void *, int, int, const audio_params_t *);
+static int snapper_halt_output(void *);
+static int snapper_halt_input(void *);
+static int snapper_getdev(void *, struct audio_device *);
+static int snapper_set_port(void *, mixer_ctrl_t *);
+static int snapper_get_port(void *, mixer_ctrl_t *);
+static int snapper_query_devinfo(void *, mixer_devinfo_t *);
+static size_t snapper_round_buffersize(void *, int, size_t);
+static paddr_t snapper_mappage(void *, void *, off_t, int);
+static int snapper_get_props(void *);
+static int snapper_trigger_output(void *, void *, void *, int, void (*)(void *),
     void *, const audio_params_t *);
-int snapper_trigger_input(void *, void *, void *, int, void (*)(void *),
+static int snapper_trigger_input(void *, void *, void *, int, void (*)(void *),
     void *, const audio_params_t *);
-void snapper_set_volume(struct snapper_softc *, u_int, u_int);
-int snapper_set_rate(struct snapper_softc *);
-void snapper_set_treble(struct snapper_softc *, u_int);
-void snapper_set_bass(struct snapper_softc *, u_int);
-void snapper_write_mixers(struct snapper_softc *);
+static void snapper_set_volume(struct snapper_softc *, u_int, u_int);
+static int snapper_set_rate(struct snapper_softc *);
+static void snapper_set_treble(struct snapper_softc *, u_int);
+static void snapper_set_bass(struct snapper_softc *, u_int);
+static void snapper_write_mixers(struct snapper_softc *);
 
-int tas3004_write(struct snapper_softc *, u_int, const void *);
+static int tas3004_write(struct snapper_softc *, u_int, const void *);
 static int gpio_read(char *);
 static void gpio_write(char *, int);
-void snapper_mute_speaker(struct snapper_softc *, int);
-void snapper_mute_headphone(struct snapper_softc *, int);
-int snapper_cint(void *);
-int tas3004_init(struct snapper_softc *);
-void snapper_init(struct snapper_softc *, int);
+static void snapper_mute_speaker(struct snapper_softc *, int);
+static void snapper_mute_headphone(struct snapper_softc *, int);
+static int snapper_cint(void *);
+static int tas3004_init(struct snapper_softc *);
+static void snapper_init(struct snapper_softc *, int);
+static void snapper_volume_up(device_t);
+static void snapper_volume_down(device_t);
 
 struct snapper_codecvar {
 	stream_filter_t	base;
@@ -267,7 +270,7 @@ snapper_filter_dtor(stream_filter_t *this)
 		free(this, M_DEVBUF);
 }
 
-CFATTACH_DECL(snapper, sizeof(struct snapper_softc), snapper_match,
+CFATTACH_DECL_NEW(snapper, sizeof(struct snapper_softc), snapper_match,
 	snapper_attach, NULL, NULL);
 
 const struct audio_hw_if snapper_hw_if = {
@@ -678,8 +681,8 @@ struct tas3004_reg {
 
 #define	GPIO_DATA	0x01	/* Data */
 
-int
-snapper_match(struct device *parent, struct cfdata *match, void *aux)
+static int
+snapper_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca;
 	int soundbus, soundchip, soundcodec;
@@ -693,7 +696,7 @@ snapper_match(struct device *parent, struct cfdata *match, void *aux)
 	    (soundchip = OF_child(soundbus)) == 0)
 		return 0;
 
-	bzero(compat, sizeof compat);
+	memset(compat, 0, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
 	if (strcmp(compat, "snapper") == 0)
@@ -715,8 +718,8 @@ snapper_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
-snapper_attach(struct device *parent, struct device *self, void *aux)
+static void
+snapper_attach(device_t parent, device_t self, void *aux)
 {
 	struct snapper_softc *sc;
 	struct confargs *ca;
@@ -725,10 +728,12 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 	char compat[32];
 
 	sc = device_private(self);
+	sc->sc_dev = self;
+
 	ca = aux;
 
 	soundbus = OF_child(ca->ca_node);
-	bzero(compat, sizeof compat);
+	memset(compat, 0, sizeof compat);
 	OF_getprop(OF_child(soundbus), "compatible", compat, sizeof compat);
 
 	if (strcmp(compat, "tumbler") == 0)
@@ -782,14 +787,19 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
+	/* PMF event handler */
+	pmf_event_register(self, PMFE_AUDIO_VOLUME_DOWN,
+	    snapper_volume_down, TRUE);
+	pmf_event_register(self, PMFE_AUDIO_VOLUME_UP,
+	    snapper_volume_up, TRUE);
 	config_defer(self, snapper_defer);
 }
 
-void
-snapper_defer(struct device *dev)
+static void
+snapper_defer(device_t dev)
 {
 	struct snapper_softc *sc;
-	struct device *dv;
+	device_t dv;
 	struct deq_softc *deq;
 	
 	sc = device_private(dev);
@@ -819,13 +829,13 @@ snapper_defer(struct device *dev)
 		break;
 	}
 
-	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&snapper_hw_if, sc, sc->sc_dev);
 
 	/* ki2c_setmode(sc->sc_i2c, I2C_STDSUBMODE); */
 	snapper_init(sc, sc->sc_node);
 }
 
-int
+static int
 snapper_intr(void *v)
 {
 	struct snapper_softc *sc;
@@ -866,7 +876,7 @@ snapper_intr(void *v)
 }
 
 
-int
+static int
 snapper_query_encoding(void *h, struct audio_encoding *ae)
 {
 
@@ -875,7 +885,7 @@ snapper_query_encoding(void *h, struct audio_encoding *ae)
 	return auconv_query_encoding(sc->sc_encodings, ae);
 }
 
-int
+static int
 snapper_set_params(void *h, int setmode, int usemode,
 		   audio_params_t *play, audio_params_t *rec,
 		   stream_filter_list_t *pfil, stream_filter_list_t *rfil)
@@ -950,7 +960,7 @@ snapper_set_params(void *h, int setmode, int usemode,
 	return 0;
 }
 
-int
+static int
 snapper_round_blocksize(void *h, int size, int mode,
 			const audio_params_t *param)
 {
@@ -960,7 +970,7 @@ snapper_round_blocksize(void *h, int size, int mode,
 	return size & ~PGOFSET;
 }
 
-int
+static int
 snapper_halt_output(void *h)
 {
 	struct snapper_softc *sc;
@@ -972,7 +982,7 @@ snapper_halt_output(void *h)
 	return 0;
 }
 
-int
+static int
 snapper_halt_input(void *h)
 {
 	struct snapper_softc *sc;
@@ -984,7 +994,7 @@ snapper_halt_input(void *h)
 	return 0;
 }
 
-int
+static int
 snapper_getdev(void *h, struct audio_device *retp)
 {
 
@@ -1009,7 +1019,7 @@ enum {
 	SNAPPER_ENUM_LAST
 };
 
-int
+static int
 snapper_set_port(void *h, mixer_ctrl_t *mc)
 {
 	struct snapper_softc *sc;
@@ -1111,7 +1121,7 @@ snapper_set_port(void *h, mixer_ctrl_t *mc)
 	return ENXIO;
 }
 
-int
+static int
 snapper_get_port(void *h, mixer_ctrl_t *mc)
 {
 	struct snapper_softc *sc;
@@ -1180,7 +1190,7 @@ snapper_get_port(void *h, mixer_ctrl_t *mc)
 	return 0;
 }
 
-int
+static int
 snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 {
 	struct snapper_softc *sc = h;
@@ -1312,7 +1322,7 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 	return ENXIO;
 }
 
-size_t
+static size_t
 snapper_round_buffersize(void *h, int dir, size_t size)
 {
 
@@ -1321,7 +1331,7 @@ snapper_round_buffersize(void *h, int dir, size_t size)
 	return size;
 }
 
-paddr_t
+static paddr_t
 snapper_mappage(void *h, void *mem, off_t off, int prot)
 {
 
@@ -1330,13 +1340,13 @@ snapper_mappage(void *h, void *mem, off_t off, int prot)
 	return -1;	/* XXX */
 }
 
-int
+static int
 snapper_get_props(void *h)
 {
 	return AUDIO_PROP_FULLDUPLEX /* | AUDIO_PROP_MMAP */;
 }
 
-int
+static int
 snapper_trigger_output(void *h, void *start, void *end, int bsize,
 		       void (*intr)(void *), void *arg,
 		       const audio_params_t *param)
@@ -1391,7 +1401,7 @@ snapper_trigger_output(void *h, void *start, void *end, int bsize,
 	return 0;
 }
 
-int
+static int
 snapper_trigger_input(void *h, void *start, void *end, int bsize,
 		      void (*intr)(void *), void *arg,
 		      const audio_params_t *param)
@@ -1446,14 +1456,14 @@ snapper_trigger_input(void *h, void *start, void *end, int bsize,
 	return 0;
 }
 
-void
+static void
 snapper_set_volume(struct snapper_softc *sc, u_int left, u_int right)
 {
 	u_char regs[6];
 	int l, r;
 
-	left &= 0xFF;
-	right &= 0xFF;
+	left = min(255, left);
+	right = min(255, right);
 
 	if (sc->sc_mode == SNAPPER_SWVOL) {
 		snapper_vol_l = left;
@@ -1516,7 +1526,7 @@ snapper_set_basstreble(struct snapper_softc *sc, u_int val, u_int mode)
 	tas3004_write(sc, mode, &reg);
 }
 
-void
+static void
 snapper_set_treble(struct snapper_softc *sc, u_int val)
 {
 	if (sc->sc_treble != (u_char)val) {
@@ -1525,7 +1535,7 @@ snapper_set_treble(struct snapper_softc *sc, u_int val)
 	}
 }
 
-void
+static void
 snapper_set_bass(struct snapper_softc *sc, u_int val)
 {
 	if (sc->sc_bass != (u_char)val) {
@@ -1551,7 +1561,7 @@ snapper_set_bass(struct snapper_softc *sc, u_int val)
 					(v) = SNAPPER_MIXER_GAIN_SIZE - 1; \
 				\
 			} while (0)
-void
+static void
 snapper_write_mixers(struct snapper_softc *sc)
 {
 	uint8_t regs[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -1708,7 +1718,7 @@ snapper_set_rate(struct snapper_softc *sc)
 			break;
 		default:
 			printf("%s: unsupported sample size %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_bitspersample);
+			    device_xname(sc->sc_dev), sc->sc_bitspersample);
 			return EINVAL;
 	}
 
@@ -1736,9 +1746,9 @@ snapper_set_rate(struct snapper_softc *sc)
 	/* Clear CLKSTOPPEND. */
 	bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_INT, I2S_INT_CLKSTOPPEND);
 
-	x = in32rb(sc->sc_baseaddr + KEYLARGO_FCR1);                /* FCR */
+	x = obio_read_4(KEYLARGO_FCR1);                /* FCR */
 	x &= ~I2S0CLKEN;                /* XXX I2S0 */
-	out32rb(sc->sc_baseaddr + KEYLARGO_FCR1, x);
+	obio_write_4(KEYLARGO_FCR1, x);
 
 	/* Wait until clock is stopped. */
 	for (timo = 1000; timo > 0; timo--) {
@@ -1751,9 +1761,9 @@ snapper_set_rate(struct snapper_softc *sc)
 done:
 	bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_FORMAT, reg);
 
-	x = in32rb(sc->sc_baseaddr + KEYLARGO_FCR1);
+	x = obio_read_4(KEYLARGO_FCR1);
 	x |= I2S0CLKEN;
-	out32rb(sc->sc_baseaddr + KEYLARGO_FCR1, x);
+	obio_write_4(KEYLARGO_FCR1, x);
 
 	return 0;
 }
@@ -1829,7 +1839,7 @@ const char tas3004_regsize[] = {
 	sizeof tas3004_initdata.MCR2		/* 0x43 */
 };
 
-int
+static int
 tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 {
 	int size;
@@ -1863,7 +1873,7 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 	return 0;
 }
 
-int
+static int
 gpio_read(char *addr)
 {
 
@@ -1872,7 +1882,7 @@ gpio_read(char *addr)
 	return 0;
 }
 
-void
+static void
 gpio_write(char *addr, int val)
 {
 	u_int data;
@@ -1887,7 +1897,7 @@ gpio_write(char *addr, int val)
 #define headphone_active 0	/* XXX OF */
 #define amp_active 0		/* XXX OF */
 
-void
+static void
 snapper_mute_speaker(struct snapper_softc *sc, int mute)
 {
 	u_int x;
@@ -1904,7 +1914,7 @@ snapper_mute_speaker(struct snapper_softc *sc, int mute)
 	DPRINTF("%d\n", gpio_read(amp_mute));
 }
 
-void
+static void
 snapper_mute_headphone(struct snapper_softc *sc, int mute)
 {
 	u_int x;
@@ -1921,7 +1931,7 @@ snapper_mute_headphone(struct snapper_softc *sc, int mute)
 	DPRINTF("%d\n", gpio_read(headphone_mute));
 }
 
-int
+static int
 snapper_cint(void *v)
 {
 	struct snapper_softc *sc;
@@ -1951,7 +1961,7 @@ snapper_cint(void *v)
 #define DEQ_WRITE(sc, reg, addr) \
 	if (tas3004_write(sc, reg, addr)) goto err
 
-int
+static int
 tas3004_init(struct snapper_softc *sc)
 {
 
@@ -2004,7 +2014,7 @@ err:
 	return -1;
 }
 
-void
+static void
 snapper_init(struct snapper_softc *sc, int node)
 {
 	int gpio;
@@ -2012,7 +2022,7 @@ snapper_init(struct snapper_softc *sc, int node)
 #ifdef SNAPPER_DEBUG
 	char fcr[32];
 
-	bitmask_snprintf(in32rb(sc->sc_baseaddr + KEYLARGO_FCR1), FCR3C_BITMASK, 	    fcr, sizeof fcr);
+	snprintb(fcr, sizeof(fcr),  FCR3C_BITMASK, obio_read_4(KEYLARGO_FCR1));
 	printf("FCR(0x3c) 0x%s\n", fcr);
 #endif
 	headphone_detect_intr = -1;
@@ -2025,8 +2035,8 @@ snapper_init(struct snapper_softc *sc, int node)
 		int intr[2];
 		char *addr;
 
-		bzero(name, sizeof name);
-		bzero(audio_gpio, sizeof audio_gpio);
+		memset(name, 0, sizeof name);
+		memset(audio_gpio, 0, sizeof audio_gpio);
 		addr = 0;
 		OF_getprop(gpio, "name", name, sizeof name);
 		OF_getprop(gpio, "audio-gpio", audio_gpio, sizeof audio_gpio);
@@ -2098,3 +2108,20 @@ snapper_init(struct snapper_softc *sc, int node)
 	snapper_write_mixers(sc);
 }
 
+static void
+snapper_volume_up(device_t dev)
+{
+	struct snapper_softc *sc = device_private(dev);
+
+	snapper_set_volume(sc, min(0xff, sc->sc_vol_l + 8),
+	     min(0xff, sc->sc_vol_r + 8));
+}
+
+static void
+snapper_volume_down(device_t dev)
+{
+	struct snapper_softc *sc = device_private(dev);
+
+	snapper_set_volume(sc, max(0, sc->sc_vol_l - 8),
+	     max(0, sc->sc_vol_r - 8));
+}

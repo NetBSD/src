@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.9.10.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.9.10.2 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.10.1 2008/05/16 02:25:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.10.2 2009/05/04 08:13:43 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -391,7 +391,7 @@ hfs_vop_lookup(void *v)
 		if (error != 0)
 			goto error;
 		*vpp = tdp;
-/*	} else if (dp->h_rec.cnid == rec.file.cnid) {*/
+/*	} else if (dp->h_rec.u.cnid == rec.file.u.cnid) {*/
 	} else if (cnp->cn_namelen == 1 && pname[0] == '.') {
 /*printf("DOT ");*/
 		VREF(vdp);	/* we want ourself, ie "." */
@@ -408,7 +408,7 @@ hfs_vop_lookup(void *v)
 		len = utf8_to_utf16(unicn, cnp->cn_namelen,
 				    cnp->cn_nameptr, cnp->cn_namelen, 0, NULL);
 		/* XXX: check conversion errors? */
-		if (hfslib_make_catalog_key(VTOH(vdp)->h_rec.cnid, len, unicn,
+		if (hfslib_make_catalog_key(VTOH(vdp)->h_rec.u.cnid, len, unicn,
 			&key) == 0) {
 /*printf("ERROR in hfslib_make_catalog_key\n");*/
 			error = EINVAL;
@@ -584,7 +584,7 @@ hfs_vop_getattr(void *v)
 	 * XXX record those values are not set on files created under Mac OS 9.
 	 */
 	vap->va_type = ap->a_vp->v_type;
-	if (hp->h_rec.rec_type == HFS_REC_FILE) {
+	if (hp->h_rec.u.rec_type == HFS_REC_FILE) {
 		if (hp->h_fork == HFS_RSRCFORK)
 			fork = &hp->h_rec.file.rsrc_fork;
 		else
@@ -598,7 +598,7 @@ hfs_vop_getattr(void *v)
 		hfs_time_to_timespec(hp->h_rec.file.date_accessed, &vap->va_atime);
 		vap->va_nlink = 1;
 	}
-	else if (hp->h_rec.rec_type == HFS_REC_FLDR) {
+	else if (hp->h_rec.u.rec_type == HFS_REC_FLDR) {
 		vap->va_fileid = hp->h_rec.folder.cnid;
 		bsd = &hp->h_rec.folder.bsd;
 		vap->va_size = 512; /* XXX Temporary */
@@ -610,13 +610,13 @@ hfs_vop_getattr(void *v)
 	}
 	else {
 		printf("hfslus: hfs_vop_getattr(): invalid record type %i",
-			hp->h_rec.rec_type);
+			hp->h_rec.u.rec_type);
 		return EINVAL;
 	}
 
 	if ((bsd->file_mode & S_IFMT) == 0) {
 		/* no bsd permissions recorded, use default values */
-		if (hp->h_rec.rec_type == HFS_REC_FILE)
+		if (hp->h_rec.u.rec_type == HFS_REC_FILE)
 			vap->va_mode = (S_IFREG | HFS_DEFAULT_FILE_MODE);
 		else
 			vap->va_mode = (S_IFDIR | HFS_DEFAULT_DIR_MODE);
@@ -740,7 +740,7 @@ hfs_vop_bmap(void *v)
 	cbargs.read = &argsread;
 
 	numextents = hfslib_get_file_extents(&hp->h_hmp->hm_vol,
-	    hp->h_rec.cnid, hp->h_fork, &extents, &cbargs);
+	    hp->h_rec.u.cnid, hp->h_fork, &extents, &cbargs);
 
 	/* XXX: is this correct for 0-length files? */
 	if (numextents == 0)
@@ -817,19 +817,14 @@ hfs_vop_read(void *v)
 
 	error = 0;
 	while (uio->uio_resid > 0 && error == 0) {
-		int flags;
 		vsize_t len;
-		void *win;
 
 		len = MIN(uio->uio_resid, fsize - uio->uio_offset);
 		if (len == 0)
 			break;
 		
-		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &len,
-				advice, UBC_READ);
-		error = uiomove(win, len, uio);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, flags);
+		error = ubc_uiomove(&vp->v_uobj, uio, len, advice,
+		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 	}
 
         return error;
@@ -888,7 +883,7 @@ struct vop_readdir_args /* {
 	cbargs.read = &argsread;
 	
 	/* XXX Should we cache this? */
-	if (hfslib_get_directory_contents(&hp->h_hmp->hm_vol, hp->h_rec.cnid,
+	if (hfslib_get_directory_contents(&hp->h_hmp->hm_vol, hp->h_rec.u.cnid,
 		&children, &childnames, &numchildren, &cbargs) != 0) {
 /*printf("NOENT\n");*/
 		error = ENOENT;
@@ -1018,7 +1013,7 @@ hfs_vop_reclaim(void *v)
 	}
 	
 	genfs_node_destroy(vp);
-	FREE(vp->v_data, M_TEMP);
+	free(vp->v_data, M_TEMP);
 	vp->v_data = 0;
 
 	return 0;

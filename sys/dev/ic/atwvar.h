@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.28.4.1 2008/05/16 02:24:02 yamt Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.28.4.2 2009/05/04 08:12:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -178,7 +178,7 @@ enum atw_revision {
 };
 
 struct atw_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_enable)(struct atw_softc *);

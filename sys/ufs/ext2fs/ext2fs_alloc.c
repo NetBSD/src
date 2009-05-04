@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.35 2007/10/08 18:01:27 ad Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.35.24.1 2009/05/04 08:14:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.35 2007/10/08 18:01:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.35.24.1 2009/05/04 08:14:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
-		(int)fs->e2fs_bsize, NOCRED, &bp);
+		(int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (0);
@@ -449,7 +449,7 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
-		(int)fs->e2fs_bsize, NOCRED, &bp);
+		(int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (0);
@@ -516,12 +516,12 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 	if ((u_int)bno >= fs->e2fs.e2fs_bcount) {
 		printf("bad block %lld, ino %llu\n", (long long)bno,
 		    (unsigned long long)ip->i_number);
-		ext2fs_fserr(fs, ip->i_e2fs_uid, "bad block");
+		ext2fs_fserr(fs, ip->i_uid, "bad block");
 		return;
 	}
 	error = bread(ip->i_devvp,
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
-		(int)fs->e2fs_bsize, NOCRED, &bp);
+		(int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return;
@@ -529,8 +529,9 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 	bbp = (char *)bp->b_data;
 	bno = dtogd(fs, bno);
 	if (isclr(bbp, bno)) {
-		printf("dev = 0x%x, block = %lld, fs = %s\n",
-			ip->i_dev, (long long)bno, fs->e2fs_fsmnt);
+		printf("dev = 0x%llx, block = %lld, fs = %s\n",
+		    (unsigned long long)ip->i_dev, (long long)bno,
+		    fs->e2fs_fsmnt);
 		panic("blkfree: freeing free block");
 	}
 	clrbit(bbp, bno);
@@ -558,12 +559,13 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
 	if ((u_int)ino > fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
-		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
-			pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
+		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
+		    (unsigned long long)pip->i_dev, (unsigned long long)ino,
+		    fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp,
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
-		(int)fs->e2fs_bsize, NOCRED, &bp);
+		(int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (0);
@@ -571,8 +573,9 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 	ibp = (char *)bp->b_data;
 	ino = (ino - 1) % fs->e2fs.e2fs_ipg;
 	if (isclr(ibp, ino)) {
-		printf("dev = 0x%x, ino = %llu, fs = %s\n",
-		    pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
+		printf("dev = 0x%llx, ino = %llu, fs = %s\n",
+		    (unsigned long long)pip->i_dev,
+		    (unsigned long long)ino, fs->e2fs_fsmnt);
 		if (fs->e2fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}

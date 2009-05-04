@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.26 2007/12/04 18:40:19 dsl Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.26.16.1 2009/05/04 08:12:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -50,7 +48,7 @@ struct netbsd32_exec {
 	netbsd32_u_long	a_drsize;	/* data relocation size */
 };
 
-extern const struct emul emul_netbsd32;
+extern struct emul emul_netbsd32;
 
 #ifdef EXEC_AOUT
 int netbsd32_exec_aout_prep_zmagic(struct lwp *, struct exec_package *);
@@ -80,12 +78,8 @@ extern char netbsd32_esigcode[], netbsd32_sigcode[];
  * We need to copy out all pointers as 32-bit values.
  */
 static __inline int
-netbsd32_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+netbsd32_copyargs(struct lwp *l, struct exec_package *pack,
+		struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	u_int32_t *cpp = (u_int32_t *)*stackp;
 	netbsd32_pointer_t dp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19.10.1 2008/05/16 02:21:48 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.10.2 2009/05/04 08:10:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.10.1 2008/05/16 02:21:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.10.2 2009/05/04 08:10:32 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -82,7 +82,7 @@ extern void platform_init(void);
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	startrtclock();

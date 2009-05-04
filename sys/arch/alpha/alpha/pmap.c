@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.235.4.1 2008/05/16 02:21:44 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.235.4.2 2009/05/04 08:10:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235.4.1 2008/05/16 02:21:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235.4.2 2009/05/04 08:10:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,10 @@ pt_entry_t	*kernel_lev1map;
  */
 static pt_entry_t *VPT;
 
-struct pmap	kernel_pmap_store
+static struct pmap	kernel_pmap_store
 	[(PMAP_SIZEOF(ALPHA_MAXPROCS) + sizeof(struct pmap) - 1)
 		/ sizeof(struct pmap)];
+struct pmap *const kernel_pmap_ptr = kernel_pmap_store;
 
 paddr_t    	avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
@@ -1600,7 +1601,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct vm_page *pg;			/* if != NULL, managed page */
 	pt_entry_t *pte, npte, opte;

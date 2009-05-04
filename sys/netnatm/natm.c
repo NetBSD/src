@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.15 2008/04/24 11:38:39 ad Exp $	*/
+/*	$NetBSD: natm.c,v 1.15.2.1 2009/05/04 08:14:21 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.15 2008/04/24 11:38:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.15.2.1 2009/05/04 08:14:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,8 +200,7 @@ struct proc *p;
       ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
       api.rxhand = npcb;
       s2 = splnet();
-      if (ifp->if_ioctl == NULL ||
-	  ifp->if_ioctl(ifp, SIOCATMENA, (void *) &api) != 0) {
+      if (ifp->if_ioctl(ifp, SIOCATMENA, &api) != 0) {
 	splx(s2);
 	npcb_free(npcb, NPCB_REMOVE);
         error = EIO;
@@ -231,8 +230,7 @@ struct proc *p;
       ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
       api.rxhand = npcb;
       s2 = splnet();
-      if (ifp->if_ioctl != NULL)
-	  ifp->if_ioctl(ifp, SIOCATMDIS, (void *) &api);
+      ifp->if_ioctl(ifp, SIOCATMDIS, &api);
       splx(s);
 
       npcb_free(npcb, NPCB_REMOVE);
@@ -276,11 +274,11 @@ struct proc *p;
 
     case PRU_PEERADDR:			/* fetch peer's address */
       snatm = mtod(nam, struct sockaddr_natm *);
-      bzero(snatm, sizeof(*snatm));
+      memset(snatm, 0, sizeof(*snatm));
       nam->m_len = snatm->snatm_len = sizeof(*snatm);
       snatm->snatm_family = AF_NATM;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-      bcopy(npcb->npcb_ifp->if_xname, snatm->snatm_if, sizeof(snatm->snatm_if));
+      memcpy(snatm->snatm_if, npcb->npcb_ifp->if_xname, sizeof(snatm->snatm_if));
 #elif defined(__FreeBSD__)
       snprintf(snatm->snatm_if, sizeof(snatm->snatm_if), "%s%d",
           npcb->npcb_ifp->if_name, npcb->npcb_ifp->if_unit);
@@ -301,8 +299,7 @@ struct proc *p;
         }
         ario.npcb = npcb;
         ario.rawvalue = *((int *)nam);
-        error = npcb->npcb_ifp->if_ioctl(npcb->npcb_ifp,
-				SIOCXRAWATM, (void *) &ario);
+        error = npcb->npcb_ifp->if_ioctl(npcb->npcb_ifp, SIOCXRAWATM, &ario);
 	if (!error) {
           if (ario.rawvalue)
 	    npcb->npcb_flags |= NPCB_RAW;
@@ -353,7 +350,7 @@ done:
  */
 
 void
-natmintr()
+natmintr(void)
 
 {
   int s;
@@ -386,7 +383,7 @@ next:
   if (npcb->npcb_flags & NPCB_DRAIN) {
     m_freem(m);
     if (npcb->npcb_inq == 0)
-      FREE(npcb, M_PCB);			/* done! */
+      free(npcb, M_PCB);			/* done! */
     goto next;
   }
 

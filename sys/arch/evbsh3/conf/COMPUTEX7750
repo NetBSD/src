@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.25 2006/09/20 00:41:12 uwe Exp $
+#	$NetBSD: COMPUTEX7750,v 1.25.56.1 2009/05/04 08:11:03 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -15,6 +15,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=2880	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	16		# estimated number of users
 
@@ -57,6 +58,7 @@ options 	EXEC_COFF	# COFF executables
 # File systems
 file-system 	FFS		# UFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

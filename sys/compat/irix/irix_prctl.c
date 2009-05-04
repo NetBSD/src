@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.46.2.1 2008/05/16 02:23:36 yamt Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.46.2.2 2009/05/04 08:12:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.46.2.1 2008/05/16 02:23:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.46.2.2 2009/05/04 08:12:19 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -315,7 +315,7 @@ irix_sproc(void *entry, unsigned int inh, void *arg, void *sp, size_t len, pid_t
 		}
 
 		/* Now map the new stack */
-		bzero(&vmc, sizeof(vmc));
+		memset(&vmc, 0, sizeof(vmc));
 		vmc.ev_addr = trunc_page((u_long)sp);
 		vmc.ev_len = round_page(len);
 		vmc.ev_prot = UVM_PROT_RWX;
@@ -584,9 +584,12 @@ irix_sys_procblk(struct lwp *l, const struct irix_sys_procblk_args *uap, registe
 
 		rw_enter(&isg->isg_lock, RW_READER);
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
+			struct proc *p;
 			/* Recall procblk for this process */
-			SCARG(&cup, pid) = iedp->ied_p->p_pid;
-			ied_lwp = proc_representative_lwp(iedp->ied_p, NULL, 0);
+			p = iedp->ied_p;
+			SCARG(&cup, pid) = p->p_pid;
+			ied_lwp = LIST_FIRST(&p->p_lwps);
+			KASSERT(ied_lwp != NULL);
 			error = irix_sys_procblk(ied_lwp, &cup, retval);
 			if (error != 0)
 				last_error = error;
@@ -624,18 +627,21 @@ irix_prda_init(struct proc *p)
 	struct irix_prda_sys ips;
 	struct lwp *l;
 
-	bzero(&evc, sizeof(evc));
+	memset(&evc, 0, sizeof(evc));
 	evc.ev_addr = (u_long)IRIX_PRDA;
 	evc.ev_len = sizeof(struct irix_prda);
 	evc.ev_prot = UVM_PROT_RW;
 	evc.ev_proc = *vmcmd_map_zero;
-	l = proc_representative_lwp(p, NULL, 0);
+
+	/* XXXSMP */
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
 
 	if ((error = (*evc.ev_proc)(l, &evc)) != 0)
 		return error;
 
 	ip = (struct irix_prda *)IRIX_PRDA;
-	bzero(&ips, sizeof(ips));
+	memset(&ips, 0, sizeof(ips));
 
 	ips.t_pid = p->p_pid;
 	/*

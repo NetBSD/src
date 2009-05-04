@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.11 2008/02/07 01:21:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.11.10.1 2009/05/04 08:12:55 yamt Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_main.c,v 1.36 2007/09/11 23:49:27 kmacy Exp $");
@@ -1659,7 +1659,7 @@ t3_os_set_hw_addr(adapter_t *adapter, int port_idx, u8 hw_addr[])
 	printf("set_hw_addr on idx %d addr %02x:%02x:%02x:%02x:%02x:%02x\n", 
 		port_idx, hw_addr[0], hw_addr[1], hw_addr[2], hw_addr[3], hw_addr[4], hw_addr[5]);
 #endif
-    bcopy(hw_addr, adapter->port[port_idx].hw_addr, ETHER_ADDR_LEN);
+    memcpy(adapter->port[port_idx].hw_addr, hw_addr, ETHER_ADDR_LEN);
 }
 
 /**
@@ -2356,10 +2356,8 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, void *data)
         error = cxgb_set_mtu(p, ifr->ifr_mtu);
 	printf("SIOCSIFMTU: error=%d\n", error);
         break;
-    case SIOCSIFADDR:
-	printf("SIOCSIFADDR:\n");
-    case SIOCGIFADDR:
-	printf("SIOCGIFADDR:\n");
+    case SIOCINITIFADDR:
+	printf("SIOCINITIFADDR:\n");
         PORT_LOCK(p);
         if (ifa->ifa_addr->sa_family == AF_INET) {
             ifp->if_flags |= IFF_UP;
@@ -2372,6 +2370,8 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, void *data)
         break;
     case SIOCSIFFLAGS:
 	printf("SIOCSIFFLAGS:\n");
+	if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+		break;
         callout_drain(&p->adapter->cxgb_tick_ch);
         PORT_LOCK(p);
         if (ifp->if_flags & IFF_UP) {

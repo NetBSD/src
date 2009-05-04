@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.53 2008/01/02 11:49:16 ad Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.53.10.1 2009/05/04 08:14:39 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53 2008/01/02 11:49:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53.10.1 2009/05/04 08:14:39 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -221,8 +221,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 		mutex_exit(&udv_lock);
 		/* NOTE: we could sleep in the following malloc() */
-		MALLOC(udv, struct uvm_device *, sizeof(*udv), M_TEMP,
-		       M_WAITOK);
+		udv = malloc(sizeof(*udv), M_TEMP, M_WAITOK);
 		mutex_enter(&udv_lock);
 
 		/*
@@ -242,7 +241,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 		if (lcv) {
 			mutex_exit(&udv_lock);
-			FREE(udv, M_TEMP);
+			free(udv, M_TEMP);
 			continue;
 		}
 
@@ -332,7 +331,7 @@ again:
 	mutex_exit(&udv_lock);
 	mutex_exit(&uobj->vmobjlock);
 	UVM_OBJ_DESTROY(uobj);
-	FREE(udv, M_TEMP);
+	free(udv, M_TEMP);
 	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
 }
 
@@ -439,15 +438,15 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			 * XXX Needs some rethinking for the PGO_ALLPAGES
 			 * XXX case.
 			 */
+			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
-			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
 			uvm_wait("udv_fault");
 			return (ERESTART);
 		}
 	}
 
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 	pmap_update(ufi->orig_map->pmap);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 	return (retval);
 }

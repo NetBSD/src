@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.43 2008/03/15 10:19:40 rearnsha Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.43.4.1 2009/05/04 08:10:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2008/03/15 10:19:40 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43.4.1 2009/05/04 08:10:39 yamt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2008/03/15 10:19:40 rearnsha Exp
 
 extern pv_addr_t systempage;
 
-int process_read_regs	__P((struct proc *p, struct reg *regs));
-int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
+int process_read_regs(struct proc *p, struct reg *regs);
+int process_read_fpregs(struct proc *p, struct fpreg *regs);
 
 void lwp_trampoline(void);
 
@@ -89,8 +89,7 @@ void lwp_trampoline(void);
  */
 
 void
-cpu_proc_fork(p1, p2)
-	struct proc *p1, *p2;
+cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 
 #if defined(PERFCTRS)
@@ -103,19 +102,27 @@ cpu_proc_fork(p1, p2)
 #endif
 }
 
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = pcb->pcb_tf;
+	struct switchframe *sf = (struct switchframe *)tf - 1;
+
+	sf->sf_r4 = (u_int)func;
+	sf->sf_r5 = (u_int)arg;
+	sf->sf_sp = (u_int)tf;
+	sf->sf_pc = (u_int)lwp_trampoline;
+	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
+}
+
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the pcb and trap frame, making the child ready to run.
+ * Finish a fork operation, with LWP l2 nearly set up.
+ *
+ * Copy and update the pcb and trapframe, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
- *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
+ * lwp_trampoline() which will call the specified func with the argument arg.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
@@ -125,9 +132,8 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = (struct pcb *)&l2->l_addr->u_pcb;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
-	struct switchframe *sf;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -194,12 +200,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (stack != NULL)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
-	sf = (struct switchframe *)tf - 1;
-	sf->sf_r4 = (u_int)func;
-	sf->sf_r5 = (u_int)arg;
-	sf->sf_sp = (u_int)tf;
-	sf->sf_pc = (u_int)lwp_trampoline;
-	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
+	cpu_setfunc(l2, func, arg);
 }
 
 /*
@@ -244,8 +245,7 @@ cpu_lwp_free2(struct lwp *l)
 }
 
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 #if 0
 	struct proc *p = l->l_proc;
@@ -268,8 +268,7 @@ cpu_swapin(l)
 
 
 void
-cpu_swapout(l)
-	struct lwp *l;
+cpu_swapout(struct lwp *l)
 {
 #ifdef FPU_VFP
 	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
@@ -304,9 +303,7 @@ cpu_swapout(l)
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -348,9 +345,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

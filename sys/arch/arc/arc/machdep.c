@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2008/01/09 20:38:34 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110.10.1 2009/05/04 08:10:36 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,12 +78,13 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2008/01/09 20:38:34 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110.10.1 2009/05/04 08:10:36 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_md.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +168,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2008/01/09 20:38:34 wiz Exp $");
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -234,7 +234,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	char *kernend;
 	vaddr_t v;
-#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	char *ssym = NULL;
 	char *esym = NULL;
 	struct btinfo_symtab *bi_syms;
@@ -256,7 +256,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
 	/* clear the BSS segment in kernel code */
-#if NKSYM > 0 || defined(DDB) || defined(LKM)
+#if NKSYM > 0 || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* check whether there is valid bootinfo symtab info */
@@ -402,7 +402,6 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		curcpu()->ci_cycles_per_hz /= 2;
 		curcpu()->ci_divisor_delay /= 2;
 	}
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 	sprintf(cpu_model, "%s %s%s",
 	    platform->vendor, platform->model, platform->variant);
 
@@ -415,14 +414,10 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		kernend += round_page(mfs_initminiroot(kernend));
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(esym - ssym, ssym, esym);
-#ifdef SYMTAB_SPACE
-	else
-		ksyms_init(0, NULL, NULL);
-#endif
+		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
 
 	maxmem = physmem;
@@ -580,13 +575,6 @@ cpu_startup(void)
 	minaddr = 0;
 
 	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
-	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -668,6 +656,8 @@ cpu_reboot(int howto, char *bootstr)
 		dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("\n");

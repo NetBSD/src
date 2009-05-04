@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.203.4.1 2008/05/16 02:25:06 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.203.4.2 2009/05/04 08:13:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.203.4.1 2008/05/16 02:25:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.203.4.2 2009/05/04 08:13:18 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -538,9 +538,7 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct scsipi_adapter *adapt;
 
 	unit = STUNIT(dev);
-	if (unit >= st_cd.cd_ndevs)
-		return (ENXIO);
-	st = st_cd.cd_devs[unit];
+	st = device_lookup_private(&st_cd, unit);
 	if (st == NULL)
 		return (ENXIO);
 
@@ -550,7 +548,7 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 	periph = st->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
+	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%"PRIx64" (unit %d (of %d))\n", dev,
 	    unit, st_cd.cd_ndevs));
 
 
@@ -719,7 +717,7 @@ static int
 stclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int stxx, error = 0;
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(dev));
 	struct scsipi_periph *periph = st->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -821,7 +819,7 @@ st_mount_tape(dev_t dev, int flags)
 
 	unit = STUNIT(dev);
 	dsty = STDSTY(dev);
-	st = st_cd.cd_devs[unit];
+	st = device_lookup_private(&st_cd, unit);
 	periph = st->sc_periph;
 
 	if (st->flags & ST_MOUNTED)
@@ -1067,21 +1065,21 @@ done:
 static void
 ststrategy(struct buf *bp)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(bp->b_dev)];
+	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(bp->b_dev));
 	int s;
 
 	SC_DEBUG(st->sc_periph, SCSIPI_DB1,
 	    ("ststrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
 	/*
-	 * If it's a null transfer, return immediatly
+	 * If it's a null transfer, return immediately
 	 */
 	if (bp->b_bcount == 0)
-		goto done;
+		goto abort;
 
 	/* If offset is negative, error */
 	if (bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto done;
+		goto abort;
 	}
 
 	/*
@@ -1092,7 +1090,7 @@ ststrategy(struct buf *bp)
 			aprint_error_dev(&st->sc_dev, "bad request, must be multiple of %d\n",
 			    st->blksize);
 			bp->b_error = EIO;
-			goto done;
+			goto abort;
 		}
 	}
 	/*
@@ -1103,7 +1101,7 @@ ststrategy(struct buf *bp)
 		aprint_error_dev(&st->sc_dev, "bad request, must be between %d and %d\n",
 		    st->blkmin, st->blkmax);
 		bp->b_error = EIO;
-		goto done;
+		goto abort;
 	}
 	s = splbio();
 
@@ -1112,7 +1110,7 @@ ststrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(st->buf_queue, bp);
+	bufq_put(st->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -1123,9 +1121,10 @@ ststrategy(struct buf *bp)
 
 	splx(s);
 	return;
-done:
+abort:
 	/*
-	 * Correctly set the buf to indicate a completed xfer
+	 * Reset the residue because we didn't do anything,
+	 * and send the buffer back as done.
 	 */
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -1174,7 +1173,7 @@ ststart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(st->buf_queue)) != NULL) {
+			if ((bp = bufq_get(st->buf_queue)) != NULL) {
 				/* make sure that one implies the other.. */
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 				bp->b_error = EIO;
@@ -1186,7 +1185,7 @@ ststart(struct scsipi_periph *periph)
 			}
 		}
 
-		if ((bp = BUFQ_PEEK(st->buf_queue)) == NULL)
+		if ((bp = bufq_peek(st->buf_queue)) == NULL)
 			return;
 
 		iostat_busy(st->stats);
@@ -1208,14 +1207,14 @@ ststart(struct scsipi_periph *periph)
 					 * Back up over filemark
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
-						BUFQ_GET(st->buf_queue);
+						bufq_get(st->buf_queue);
 						bp->b_error = EIO;
 						bp->b_resid = bp->b_bcount;
 						biodone(bp);
 						continue;
 					}
 				} else {
-					BUFQ_GET(st->buf_queue);
+					bufq_get(st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
 					st->flags &= ~ST_AT_FILEMARK;
@@ -1229,7 +1228,7 @@ ststart(struct scsipi_periph *periph)
 		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
-			BUFQ_GET(st->buf_queue);
+			bufq_get(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
 			if (st->flags & ST_EIO_PENDING)
 				bp->b_error = EIO;
@@ -1289,10 +1288,10 @@ ststart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(st->buf_queue) != bp)
+		if (bufq_get(st->buf_queue) != bp)
 			panic("ststart(): dequeued wrong buf");
 #else
-		BUFQ_GET(st->buf_queue);
+		bufq_get(st->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -1357,7 +1356,7 @@ stdone(struct scsipi_xfer *xs, int error)
 static int
 stread(dev_t dev, struct uio *uio, int iomode)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(dev));
 
 	return (physio(ststrategy, NULL, dev, B_READ,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
@@ -1366,7 +1365,7 @@ stread(dev_t dev, struct uio *uio, int iomode)
 static int
 stwrite(dev_t dev, struct uio *uio, int iomode)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(dev));
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
@@ -1394,7 +1393,7 @@ stioctl(dev_t dev, u_long cmd, void *arg, int flag, struct lwp *l)
 	flags = 0;		/* give error messages, act on errors etc. */
 	unit = STUNIT(dev);
 	dsty = STDSTY(dev);
-	st = st_cd.cd_devs[unit];
+	st = device_lookup_private(&st_cd, unit);
 	hold_blksize = st->blksize;
 	hold_density = st->density;
 
@@ -2200,6 +2199,12 @@ st_interpret_sense(struct scsipi_xfer *xs)
 				retval = 0;
 			} else {
 				retval = EIO;
+				/*
+				 * If we return an error we can't claim to
+				 * have transfered all data.
+				 */
+				if (xs->resid == 0)
+					xs->resid = xs->datalen;
 			}
 
 			/*
@@ -2238,7 +2243,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 			}
 		}
 		if (bp)
-			bp->b_resid = info;
+			bp->b_resid = xs->resid;
 	}
 
 #ifndef SCSIPI_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.5 2007/10/17 19:58:35 garbled Exp $	*/
+/*	$NetBSD: ztp.c,v 1.5.20.1 2009/05/04 08:12:15 yamt Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.5 2007/10/17 19:58:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.5.20.1 2009/05/04 08:12:15 yamt Exp $");
 
 #include "lcd.h"
 
@@ -96,10 +96,9 @@ struct ztp_pos {
 };
 
 struct ztp_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct callout sc_tp_poll;
 	void *sc_gh;
-	void *sc_powerhook;
 	int sc_enabled;
 	int sc_buttons; /* button emulation ? */
 	struct device *sc_wsmousedev;
@@ -109,15 +108,16 @@ struct ztp_softc {
 	struct tpcalib_softc sc_tpcalib;
 };
 
-static int	ztp_match(struct device *, struct cfdata *, void *);
-static void	ztp_attach(struct device *, struct device *, void *);
+static int	ztp_match(device_t, cfdata_t, void *);
+static void	ztp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ztp, sizeof(struct ztp_softc),
+CFATTACH_DECL_NEW(ztp, sizeof(struct ztp_softc),
 	ztp_match, ztp_attach, NULL, NULL);
 
 static int	ztp_enable(void *);
 static void	ztp_disable(void *);
-static void	ztp_power(int, void *);
+static bool	ztp_suspend(device_t dv PMF_FN_ARGS);
+static bool	ztp_resume(device_t dv PMF_FN_ARGS);
 static void	ztp_poll(void *);
 static int	ztp_irq(void *);
 static int	ztp_ioctl(void *, u_long, void *, int, struct lwp *);
@@ -129,19 +129,22 @@ static const struct wsmouse_accessops ztp_accessops = {
 };
 
 static int
-ztp_match(struct device *parent, struct cfdata *cf, void *aux)
+ztp_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-ztp_attach(struct device *parent, struct device *self, void *aux)
+ztp_attach(device_t parent, device_t self, void *aux)
 {
-	struct ztp_softc *sc = (struct ztp_softc *)self;
+	struct ztp_softc *sc = device_private(self);
 	struct wsmousedev_attach_args a;  
 
-	printf("\n");
+	sc->sc_dev = self;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	callout_init(&sc->sc_tp_poll, 0);
 	callout_setfunc(&sc->sc_tp_poll, ztp_poll, sc);
@@ -184,21 +187,18 @@ ztp_enable(void *v)
 {
 	struct ztp_softc *sc = (struct ztp_softc *)v;
 
-	DPRINTF(("%s: ztp_enable()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: ztp_enable()\n", device_xname(sc->sc_dev)));
 
 	if (sc->sc_enabled) {
-		DPRINTF(("%s: already enabled\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: already enabled\n", device_xname(sc->sc_dev)));
 		return EBUSY;
 	}
 
 	callout_stop(&sc->sc_tp_poll);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname, ztp_power,
-	    sc);
-	if (sc->sc_powerhook == NULL) {
-		printf("%s: enable failed\n", sc->sc_dev.dv_xname);
-		return ENOMEM;
-	}
+	if (!pmf_device_register(sc->sc_dev, ztp_suspend, ztp_resume))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_IN);
 
@@ -222,70 +222,59 @@ ztp_disable(void *v)
 {
 	struct ztp_softc *sc = (struct ztp_softc *)v;
 
-	DPRINTF(("%s: ztp_disable()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: ztp_disable()\n", device_xname(sc->sc_dev)));
 
 	callout_stop(&sc->sc_tp_poll);
 
-	if (sc->sc_powerhook != NULL) {
-		powerhook_disestablish(sc->sc_powerhook);
-		sc->sc_powerhook = NULL;
-	}
+	pmf_device_deregister(sc->sc_dev);
 
 	if (sc->sc_gh) {
-#if 0
-		pxa2x0_gpio_intr_disestablish(sc->sc_gh);
-		sc->sc_gh = NULL;
-#else
 		pxa2x0_gpio_intr_mask(sc->sc_gh);
-#endif
 	}
 
 	/* disable interrupts */
 	sc->sc_enabled = 0;
 }
 
-static void
-ztp_power(int why, void *v)
+static bool
+ztp_suspend(device_t dv PMF_FN_ARGS)
 {
-	struct ztp_softc *sc = (struct ztp_softc *)v;
+	struct ztp_softc *sc = device_private(dv);
 
-	DPRINTF(("%s: ztp_power()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: ztp_suspend()\n", device_xname(sc->sc_dev)));
 
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-		sc->sc_enabled = 0;
-#if 0
-		pxa2x0_gpio_intr_disestablish(sc->sc_gh);
-#endif
-		callout_stop(&sc->sc_tp_poll);
+	sc->sc_enabled = 0;
+	pxa2x0_gpio_intr_mask(sc->sc_gh);
 
-		pxa2x0_gpio_intr_mask(sc->sc_gh);
+	callout_stop(&sc->sc_tp_poll);
 
-		/* Turn off reference voltage but leave ADC on. */
-		(void)zssp_ic_send(ZSSP_IC_ADS7846, (1 << ADSCTRL_PD1_SH) |
-		    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
+	/* Turn off reference voltage but leave ADC on. */
+	(void)zssp_ic_send(ZSSP_IC_ADS7846, (1 << ADSCTRL_PD1_SH) |
+	    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
 
-		pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_OUT | GPIO_SET);
-		break;
+	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_OUT | GPIO_SET);
 
-	case PWR_RESUME:
-		pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_IN);
-		pxa2x0_gpio_intr_mask(sc->sc_gh);
+	return true;
+}
 
-		/* Enable automatic low power mode. */
-		(void)zssp_ic_send(ZSSP_IC_ADS7846,
-		    (4 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
+static bool
+ztp_resume(device_t dv PMF_FN_ARGS)
+{
+	struct ztp_softc *sc = device_private(dv);
 
-#if 0
-		sc->sc_gh = pxa2x0_gpio_intr_establish(GPIO_TP_INT_C3K,
-		    IST_EDGE_FALLING, IPL_TTY, ztp_irq, sc);
-#else
-		pxa2x0_gpio_intr_unmask(sc->sc_gh);
-#endif
-		sc->sc_enabled = 1;
-		break;
-	}
+	DPRINTF(("%s: ztp_resume()\n", device_xname(sc->sc_dev)));
+
+	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_IN);
+	pxa2x0_gpio_intr_mask(sc->sc_gh);
+
+	/* Enable automatic low power mode. */
+	(void)zssp_ic_send(ZSSP_IC_ADS7846,
+	    (4 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
+
+	pxa2x0_gpio_intr_unmask(sc->sc_gh);
+	sc->sc_enabled = 1;
+	
+	return true;
 }
 
 #define HSYNC()								\
@@ -469,15 +458,15 @@ ztp_irq(void *v)
 	s = splhigh();
 
 	pindown = pxa2x0_gpio_get_bit(GPIO_TP_INT_C3K) ? 0 : 1;
-	DPRINTF(("%s: pindown = %d\n", sc->sc_dev.dv_xname, pindown));
+	DPRINTF(("%s: pindown = %d\n", device_xname(sc->sc_dev), pindown));
 	if (pindown) {
 		pxa2x0_gpio_intr_mask(sc->sc_gh);
 		callout_schedule(&sc->sc_tp_poll, POLL_TIMEOUT_RATE1);
 	}
 
 	down = ztp_readpos(&tp);
-	DPRINTF(("%s: x = %d, y = %d, z = %d, down = %d\n", sc->sc_dev.dv_xname,
-	    tp.x, tp.y, tp.z, down));
+	DPRINTF(("%s: x = %d, y = %d, z = %d, down = %d\n",
+	    device_xname(sc->sc_dev), tp.x, tp.y, tp.z, down));
 
 	if (!pindown) {
 		pxa2x0_gpio_intr_unmask(sc->sc_gh);
@@ -490,8 +479,8 @@ ztp_irq(void *v)
 	if (down) {
 		if (!ztp_rawmode) {
 			tpcalib_trans(&sc->sc_tpcalib, tp.x, tp.y, &x, &y);
-			DPRINTF(("%s: x = %d, y = %d\n", sc->sc_dev.dv_xname,
-			    x, y));
+			DPRINTF(("%s: x = %d, y = %d\n",
+			    device_xname(sc->sc_dev), x, y));
 			tp.x = x;
 			tp.y = y;
 		}

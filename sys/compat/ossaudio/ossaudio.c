@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.62.4.1 2008/05/16 02:23:44 yamt Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.62.4.2 2009/05/04 08:12:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.62.4.1 2008/05/16 02:23:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.62.4.2 2009/05/04 08:12:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -42,9 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.62.4.1 2008/05/16 02:23:44 yamt Exp $
 #include <sys/midiio.h>
 #include <sys/kauth.h>
 #include <sys/syscallargs.h>
+#include <sys/module.h>
 
 #include <compat/ossaudio/ossaudio.h>
 #include <compat/ossaudio/ossaudiovar.h>
+
+MODULE(MODULE_CLASS_MISC, compat_ossaudio, NULL);
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x) if (ossdebug) printf x
@@ -63,6 +66,18 @@ static int enum_to_mask(struct audiodevinfo *di, int enm);
 
 static void setblocksize(file_t *, struct audio_info *);
 
+static int
+compat_ossaudio_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
 
 int
 oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t *retval)

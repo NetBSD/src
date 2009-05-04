@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.46 2007/03/14 12:27:22 drochner Exp $
+#	$NetBSD: MALTA,v 1.46.40.1 2009/05/04 08:11:01 yamt Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.46 $"
+#ident 		"MALTA-$Revision: 1.46.40.1 $"
 
 maxusers	32
 
@@ -25,8 +25,6 @@ options 	KTRACE		# system call tracing support
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
-#options 	LKM		# loadable kernel modules
 options 	NTP		# network time protocol
 
 # Debugging options
@@ -52,6 +50,7 @@ options 	SYMTAB_SPACE=175000	# size for embedded symbol table
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -79,7 +78,7 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

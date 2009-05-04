@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.h,v 1.2.154.1 2008/05/16 02:21:48 yamt Exp $ */
+/* $NetBSD: pci_1000a.h,v 1.2.154.2 2009/05/04 08:10:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,5 +29,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	pci_1000a_pickintr __P((void *, bus_space_tag_t, bus_space_tag_t,
-				pci_chipset_tag_t));
+void	pci_1000a_pickintr(void *, bus_space_tag_t, bus_space_tag_t,
+				pci_chipset_tag_t);

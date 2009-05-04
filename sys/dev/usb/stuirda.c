@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.6.4.1 2008/05/16 02:25:10 yamt Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.6.4.2 2009/05/04 08:13:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.6.4.1 2008/05/16 02:25:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.6.4.2 2009/05/04 08:13:20 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -111,7 +111,7 @@ USB_MATCH(stuirda)
 	return (UMATCH_NONE);
 }
 
-void uirda_attach(struct device *,struct device *,void *);
+void uirda_attach(device_t, device_t, void *);
 
 USB_ATTACH(stuirda)
 {
@@ -166,7 +166,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 	printf("%s: Attempting to load firmware %s\n",
 		USBDEVNAME(sc->sc_dev), fwname);
 	
-	rc = firmware_open("uirda", fwname, &fh);
+	rc = firmware_open("stuirda", fwname, &fh);
 
 	if (rc) {
 		printf("%s: Cannot load firmware\n",

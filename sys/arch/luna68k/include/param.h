@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.7 2005/12/11 12:17:52 christos Exp $ */
+/* $NetBSD: param.h,v 1.7.78.1 2009/05/04 08:11:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -119,7 +119,7 @@
 #define delay(us)	_delay((us)<<8)
 #define DELAY(n)	delay(n)
 
-void _delay __P((unsigned));
+void _delay(unsigned);
 #endif	/* _KERNEL && !_LOCORE */
 
 #endif	/* !_MACHINE_PARAM_H_ */

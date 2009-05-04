@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.130 2008/03/21 19:32:07 plunky Exp $	*/
+/*	$NetBSD: conf.h,v 1.130.4.1 2009/05/04 08:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -94,13 +94,16 @@ struct cdevsw {
 
 #ifdef _KERNEL
 
-int devsw_attach(const char *, const struct bdevsw *, int *,
-		 const struct cdevsw *, int *);
-void devsw_detach(const struct bdevsw *, const struct cdevsw *);
+#include <sys/mutex.h>
+extern kmutex_t device_lock;
+
+int devsw_attach(const char *, const struct bdevsw *, devmajor_t *,
+		 const struct cdevsw *, devmajor_t *);
+int devsw_detach(const struct bdevsw *, const struct cdevsw *);
 const struct bdevsw *bdevsw_lookup(dev_t);
 const struct cdevsw *cdevsw_lookup(dev_t);
-int bdevsw_lookup_major(const struct bdevsw *);
-int cdevsw_lookup_major(const struct cdevsw *);
+devmajor_t bdevsw_lookup_major(const struct bdevsw *);
+devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 
 #define	dev_type_open(n)	int n (dev_t, int, int, struct lwp *)
 #define	dev_type_close(n)	int n (dev_t, int, int, struct lwp *)
@@ -228,15 +231,17 @@ int	seltrue_kqfilter(dev_t, struct knote *);
 
 struct devsw_conv {
 	const char *d_name;
-	int d_bmajor;
-	int d_cmajor;
+	devmajor_t d_bmajor;
+	devmajor_t d_cmajor;
 };
 
 #ifdef _KERNEL
 void devsw_init(void);
-const char *devsw_blk2name(int);
-int devsw_name2blk(const char *, char *, size_t);
-int devsw_name2chr(const char *, char *, size_t);
+const char *devsw_blk2name(devmajor_t);
+const char *cdevsw_getname(devmajor_t);
+const char *bdevsw_getname(devmajor_t);
+devmajor_t devsw_name2blk(const char *, char *, size_t);
+devmajor_t devsw_name2chr(const char *, char *, size_t);
 dev_t devsw_chr2blk(dev_t);
 dev_t devsw_blk2chr(dev_t);
 #endif /* _KERNEL */

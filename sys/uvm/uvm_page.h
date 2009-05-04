@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.52 2008/02/27 19:38:57 matt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.52.4.1 2009/05/04 08:14:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -84,8 +84,9 @@
  *	page, indexed by page number.  Each structure
  *	is an element of several lists:
  *
- *		A hash table bucket used to quickly
- *		perform object/offset lookups
+ *		A red-black tree rooted with the containing
+ *		object is used to quickly perform object+
+ *		offset lookups
  *
  *		A list of all pages for a given object,
  *		so they can be quickly deactivated at
@@ -117,11 +118,20 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
 
+#include <sys/rb.h>
+
 struct vm_page {
-	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
+	struct rb_node		rb_node;	/* tree of pages in obj (O) */
+
+	union {
+		TAILQ_ENTRY(vm_page) queue;
+		LIST_ENTRY(vm_page) list;
+	} pageq;				/* queue info for FIFO
 						 * queue or free list (P) */
-	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
-	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
+	union {
+		TAILQ_ENTRY(vm_page) queue;
+		LIST_ENTRY(vm_page) list;
+	} listq;				/* pages in same object (O)*/
 
 	struct vm_anon		*uanon;		/* anon (O,P) */
 	struct uvm_object	*uobject;	/* object (O,P) */
@@ -258,7 +268,6 @@ void uvm_page_own(struct vm_page *, const char *);
 #if !defined(PMAP_STEAL_MEMORY)
 bool uvm_page_physget(paddr_t *);
 #endif
-void uvm_page_rehash(void);
 void uvm_page_recolor(int);
 void uvm_pageidlezero(void);
 
@@ -286,12 +295,7 @@ static int vm_physseg_find(paddr_t, int *);
  * macros
  */
 
-#define UVM_PAGE_HASH_PENALTY	4	/* XXX: a guess */
-
-#define uvm_pagehash(obj,off) \
-	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
-
-#define	UVM_PAGEZERO_TARGET	(uvmexp.free)
+#define UVM_PAGE_TREE_PENALTY	4	/* XXX: a guess */
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 
@@ -402,6 +406,7 @@ PHYS_TO_VM_PAGE(paddr_t pa)
 }
 
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
+#define	VM_FREE_PAGE_TO_CPU(pg)	((struct uvm_cpu *)((uintptr_t)pg->offset))
 
 #ifdef DEBUG
 void uvm_pagezerocheck(struct vm_page *);

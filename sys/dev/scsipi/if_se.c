@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.71 2008/04/05 15:47:00 cegger Exp $	*/
+/*	$NetBSD: if_se.c,v 1.71.4.1 2009/05/04 08:13:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.71 2008/04/05 15:47:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.71.4.1 2009/05/04 08:13:18 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -264,8 +264,7 @@ const struct scsipi_inquiry_pattern se_patterns[] = {
  * Note: use this like memcmp()
  */
 static inline u_int16_t
-ether_cmp(one, two)
-	void *one, *two;
+ether_cmp(void *one, void *two)
 {
 	u_int16_t *a = (u_int16_t *) one;
 	u_int16_t *b = (u_int16_t *) two;
@@ -279,10 +278,7 @@ ether_cmp(one, two)
 #define ETHER_CMP	ether_cmp
 
 static int
-sematch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sematch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -298,9 +294,7 @@ sematch(parent, match, aux)
  * a device suitable for this driver.
  */
 static void
-seattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+seattach(struct device *parent, struct device *self, void *aux)
 {
 	struct se_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -383,8 +377,7 @@ se_scsipi_cmd(periph, cmd, cmdlen, data_addr, datalen,
 
 /* Start routine for calling from scsi sub system */
 static void
-sestart(periph)
-	struct scsipi_periph *periph;
+sestart(struct scsipi_periph *periph)
 {
 	struct se_softc *sc = (void *)periph->periph_dev;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -395,8 +388,7 @@ sestart(periph)
 }
 
 static void
-se_delayed_ifstart(v)
-	void *v;
+se_delayed_ifstart(void *v)
 {
 	struct ifnet *ifp = v;
 	struct se_softc *sc = ifp->if_softc;
@@ -415,8 +407,7 @@ se_delayed_ifstart(v)
  * Always called at splnet().
  */
 static void
-se_ifstart(ifp)
-	struct ifnet *ifp;
+se_ifstart(struct ifnet *ifp)
 {
 	struct se_softc *sc = ifp->if_softc;
 	struct scsi_ctron_ether_generic send_cmd;
@@ -491,9 +482,7 @@ se_ifstart(ifp)
  * Called from the scsibus layer via our scsi device switch.
  */
 static void
-sedone(xs, error)
-	struct scsipi_xfer *xs;
-	int error;
+sedone(struct scsipi_xfer *xs, int error)
 {
 	struct se_softc *sc = (void *)xs->xs_periph->periph_dev;
 	struct scsipi_generic *cmd = xs->cmd;
@@ -553,8 +542,7 @@ sedone(xs, error)
 }
 
 static void
-se_recv(v)
-	void *v;
+se_recv(void *v)
 {
 	/* do a recv command */
 	struct se_softc *sc = (struct se_softc *) v;
@@ -579,10 +567,7 @@ se_recv(v)
  * we copy into clusters.
  */
 static struct mbuf *
-se_get(sc, data, totlen)
-	struct se_softc *sc;
-	char *data;
-	int totlen;
+se_get(struct se_softc *sc, char *data, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m, *m0, *newm;
@@ -637,10 +622,7 @@ bad:
  * Pass packets to higher levels.
  */
 static int
-se_read(sc, data, datalen)
-	struct se_softc *sc;
-	char *data;
-	int datalen;
+se_read(struct se_softc *sc, char *data, int datalen)
 {
 	struct mbuf *m;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -707,8 +689,7 @@ se_read(sc, data, datalen)
 
 
 static void
-sewatchdog(ifp)
-	struct ifnet *ifp;
+sewatchdog(struct ifnet *ifp)
 {
 	struct se_softc *sc = ifp->if_softc;
 
@@ -719,8 +700,7 @@ sewatchdog(ifp)
 }
 
 static int
-se_reset(sc)
-	struct se_softc *sc;
+se_reset(struct se_softc *sc)
 {
 	int error;
 	int s = splnet();
@@ -739,9 +719,7 @@ se_reset(sc)
 }
 
 static int
-se_add_proto(sc, proto)
-	struct se_softc *sc;
-	int proto;
+se_add_proto(struct se_softc *sc, int proto)
 {
 	int error;
 	struct scsi_ctron_ether_generic add_proto_cmd;
@@ -762,9 +740,7 @@ se_add_proto(sc, proto)
 }
 
 static int
-se_get_addr(sc, myaddr)
-	struct se_softc *sc;
-	u_int8_t *myaddr;
+se_get_addr(struct se_softc *sc, u_int8_t *myaddr)
 {
 	int error;
 	struct scsi_ctron_ether_generic get_addr_cmd;
@@ -782,9 +758,7 @@ se_get_addr(sc, myaddr)
 
 
 static int
-se_set_media(sc, type)
-	struct se_softc *sc;
-	int type;
+se_set_media(struct se_softc *sc, int type)
 {
 	int error;
 	struct scsi_ctron_ether_generic set_media_cmd;
@@ -798,10 +772,7 @@ se_set_media(sc, type)
 }
 
 static int
-se_set_mode(sc, len, mode)
-	struct se_softc *sc;
-	int len;
-	int mode;
+se_set_mode(struct se_softc *sc, int len, int mode)
 {
 	int error;
 	struct scsi_ctron_ether_set_mode set_mode_cmd;
@@ -817,8 +788,7 @@ se_set_mode(sc, len, mode)
 
 
 static int
-se_init(sc)
-	struct se_softc *sc;
+se_init(struct se_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct scsi_ctron_ether_generic set_addr_cmd;
@@ -874,9 +844,7 @@ se_init(sc)
 }
 
 static int
-se_set_multi(sc, addr)
-	struct se_softc *sc;
-	u_int8_t *addr;
+se_set_multi(struct se_softc *sc, u_int8_t *addr)
 {
 	struct scsi_ctron_ether_generic set_multi_cmd;
 	int error;
@@ -897,9 +865,7 @@ se_set_multi(sc, addr)
 }
 
 static int
-se_remove_multi(sc, addr)
-	struct se_softc *sc;
-	u_int8_t *addr;
+se_remove_multi(struct se_softc *sc, u_int8_t *addr)
 {
 	struct scsi_ctron_ether_generic remove_multi_cmd;
 	int error;
@@ -921,9 +887,7 @@ se_remove_multi(sc, addr)
 
 #if 0	/* not used  --thorpej */
 static int
-sc_set_all_multi(sc, set)
-	struct se_softc *sc;
-	int set;
+sc_set_all_multi(struct se_softc *sc, int set)
 {
 	int error = 0;
 	u_int8_t *addr;
@@ -962,8 +926,7 @@ sc_set_all_multi(sc, set)
 #endif /* not used */
 
 static void
-se_stop(sc)
-	struct se_softc *sc;
+se_stop(struct se_softc *sc)
 {
 
 	/* Don't schedule any reads */
@@ -977,10 +940,7 @@ se_stop(sc)
  * Process an ioctl request.
  */
 static int
-se_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct se_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -992,7 +952,7 @@ se_ioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if ((error = se_enable(sc)) != 0)
 			break;
 		ifp->if_flags |= IFF_UP;
@@ -1024,8 +984,11 @@ se_ioctl(ifp, cmd, data)
 
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
@@ -1033,8 +996,8 @@ se_ioctl(ifp, cmd, data)
 			se_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 			se_disable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -1042,12 +1005,15 @@ se_ioctl(ifp, cmd, data)
 			if ((error = se_enable(sc)) != 0)
 				break;
 			error = se_init(sc);
-		} else if (sc->sc_enabled) {
+			break;
+		default:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			error = se_init(sc);
+			if (sc->sc_enabled)
+				error = se_init(sc);
+			break;
 		}
 #ifdef SEDEBUG
 		if (ifp->if_flags & IFF_DEBUG)
@@ -1077,7 +1043,7 @@ se_ioctl(ifp, cmd, data)
 
 	default:
 
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
@@ -1089,8 +1055,7 @@ se_ioctl(ifp, cmd, data)
  * Enable the network interface.
  */
 int
-se_enable(sc)
-	struct se_softc *sc;
+se_enable(struct se_softc *sc)
 {
 	struct scsipi_periph *periph = sc->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
@@ -1109,8 +1074,7 @@ se_enable(sc)
  * Disable the network interface.
  */
 void
-se_disable(sc)
-	struct se_softc *sc;
+se_disable(struct se_softc *sc)
 {
 	struct scsipi_periph *periph = sc->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
@@ -1126,10 +1090,7 @@ se_disable(sc)
  * open the device.
  */
 int
-seopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+seopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit, error;
 	struct se_softc *sc;
@@ -1137,9 +1098,7 @@ seopen(dev, flag, fmt, l)
 	struct scsipi_adapter *adapt;
 
 	unit = SEUNIT(dev);
-	if (unit >= se_cd.cd_ndevs)
-		return (ENXIO);
-	sc = se_cd.cd_devs[unit];
+	sc = device_lookup_private(&se_cd, unit);
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -1150,7 +1109,7 @@ seopen(dev, flag, fmt, l)
 		return (error);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("scopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
+	    ("scopen: dev=0x%"PRIx64" (unit %d (of %d))\n", dev, unit,
 	    se_cd.cd_ndevs));
 
 	periph->periph_flags |= PERIPH_OPEN;
@@ -1164,12 +1123,9 @@ seopen(dev, flag, fmt, l)
  * occurence of an open device
  */
 int
-seclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+seclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
+	struct se_softc *sc = device_lookup_private(&se_cd, SEUNIT(dev));
 	struct scsipi_periph *periph = sc->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -1188,14 +1144,9 @@ seclose(dev, flag, fmt, l)
  * Only does generic scsi ioctls.
  */
 int
-seioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *addr;
-	int flag;
-	struct lwp *l;
+seioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
+	struct se_softc *sc = device_lookup_private(&se_cd, SEUNIT(dev));
 
 	return (scsipi_do_ioctl(sc->sc_periph, dev, cmd, addr, flag, l));
 }

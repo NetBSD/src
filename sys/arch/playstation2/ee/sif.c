@@ -1,4 +1,4 @@
-/*	$NetBSD: sif.c,v 1.6.10.1 2008/05/16 02:22:59 yamt Exp $	*/
+/*	$NetBSD: sif.c,v 1.6.10.2 2009/05/04 08:11:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.6.10.1 2008/05/16 02:22:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.6.10.2 2009/05/04 08:11:40 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -66,7 +66,7 @@ n		printf("%s: " fmt, __func__ , ##args)
 #define MINOR(x)	BCD_TO_DECIMAL((x) & 0xff)
 
 void
-sif_init()
+sif_init(void)
 {
 	u_int32_t vers;
 
@@ -87,7 +87,7 @@ sif_init()
 }
 
 void
-sif_exit()
+sif_exit(void)
 {
 
 	sifrpc_exit();

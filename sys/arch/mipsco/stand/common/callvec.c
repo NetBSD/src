@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.3.78.1 2008/05/16 02:22:52 yamt Exp $	*/
+/*	$NetBSD: callvec.c,v 1.3.78.2 2009/05/04 08:11:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,10 +38,10 @@ static struct mips_prom callvec;
 
 struct mips_prom *callv;
 
-typedef void (*funcp_t) __P((void));
+typedef void (*funcp_t)(void);
 
 void
-prom_init()
+prom_init(void)
 {
 	int i;
 	funcp_t *fp;

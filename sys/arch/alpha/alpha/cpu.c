@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.81.4.1 2008/05/16 02:21:44 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.81.4.2 2009/05/04 08:10:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81.4.1 2008/05/16 02:21:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81.4.2 2009/05/04 08:10:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -98,7 +98,7 @@ volatile u_long cpus_booted;
 volatile u_long cpus_running;
 volatile u_long cpus_paused;
 
-void	cpu_boot_secondary __P((struct cpu_info *));
+void	cpu_boot_secondary(struct cpu_info *);
 #endif /* MULTIPROCESSOR */
 
 /*
@@ -177,10 +177,7 @@ struct cputable_struct {
  */
 
 static int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -195,10 +192,7 @@ cpumatch(parent, cfdata, aux)
 }
 
 static void
-cpuattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpuattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_softc *sc = (void *) self;
 	struct mainbus_attach_args *ma = aux;
@@ -378,10 +372,12 @@ cpu_announce_extensions(struct cpu_info *ci)
 		cpu_amask &= amask;
 	}
 
-	if (amask)
+	if (amask) {
+		snprintb(bits, sizeof(bits),
+		    ALPHA_AMASK_BITS, cpu_amask);
 		printf("%s: Architecture extensions: %s\n",
-		    ci->ci_softc->sc_dev.dv_xname, bitmask_snprintf(cpu_amask,
-		    ALPHA_AMASK_BITS, bits, sizeof(bits)));
+		    ci->ci_softc->sc_dev.dv_xname, bits);
+	}
 }
 
 #if defined(MULTIPROCESSOR)

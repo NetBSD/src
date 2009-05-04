@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7.10.1 2008/05/16 02:22:59 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7.10.2 2009/05/04 08:11:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.10.1 2008/05/16 02:22:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.10.2 2009/05/04 08:11:40 yamt Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -83,7 +83,7 @@ void _debug_print_intr(const char *);
 #endif /* INTR_DEBUG */
 
 void
-interrupt_init_bootstrap()
+interrupt_init_bootstrap(void)
 {
 	int i;
 
@@ -223,7 +223,7 @@ spl0()
  * SIF BIOS call of interrupt utility.
  */
 void
-_sif_call_start()
+_sif_call_start(void)
 {
 	int s;
 
@@ -242,7 +242,7 @@ _sif_call_start()
 }
 
 void
-_sif_call_end()
+_sif_call_end(void)
 {
 	int s;
 
@@ -257,7 +257,7 @@ _sif_call_end()
 
 #ifdef INTR_DEBUG
 void
-_debug_print_ipl()
+_debug_print_ipl(void)
 {
 	int i;
 

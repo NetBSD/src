@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.52 2007/10/17 19:57:11 garbled Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.52.20.1 2009/05/04 08:11:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -81,9 +81,11 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <dev/pci/pciio.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -107,11 +109,11 @@
 #include "opt_wsemul.h"
 
 /* autoconfiguration driver */
-static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
-static void	cgfourteenattach(struct device *, struct device *, void *);
-static void	cgfourteenunblank(struct device *);
+static int	cgfourteenmatch(device_t, struct cfdata *, void *);
+static void	cgfourteenattach(device_t, device_t, void *);
+static void	cgfourteenunblank(device_t);
 
-CFATTACH_DECL(cgfourteen, sizeof(struct cgfourteen_softc),
+CFATTACH_DECL_NEW(cgfourteen, sizeof(struct cgfourteen_softc),
     cgfourteenmatch, cgfourteenattach, NULL, NULL);
         
 extern struct cfdriver cgfourteen_cd;
@@ -162,7 +164,7 @@ static int  cg14_do_cursor(struct cgfourteen_softc *,
  * Match a cgfourteen.
  */
 int
-cgfourteenmatch(struct device *parent, struct cfdata *cf, void *aux)
+cgfourteenmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -223,26 +225,30 @@ struct wsdisplay_accessops cg14_accessops = {
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-cgfourteenattach(struct device *parent, struct device *self, void *aux)
+cgfourteenattach(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
-	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
+	struct cgfourteen_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int node, ramsize;
 	volatile uint32_t *lut;
-	int i, isconsole;
+	int i, isconsole, items;
+	uint32_t fbva[2] = {0, 0};
+	uint32_t *ptr = fbva;
 
+	sc->sc_dev = self;
+	sc->sc_opens = 0;
 	node = sa->sa_node;
 
 	/* Remember cookies for cgfourteenmmap() */
 	sc->sc_bustag = sa->sa_bustag;
 
 	fb->fb_driver = &cgfourteenfbdriver;
-	fb->fb_device = &sc->sc_dev;
+	fb->fb_device = sc->sc_dev;
 	/* Mask out invalid flags from the user. */
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
 
 	/*
 	 * We're emulating a cg3/8, so represent ourselves as one
@@ -250,14 +256,13 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 #ifdef CG14_CG8
 	fb->fb_type.fb_type = FBTYPE_MEMCOLOR;
 	fb->fb_type.fb_depth = 32;
-	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
-	ramsize = roundup(fb->fb_type.fb_height * 1152 * 4, NBPG);
 #else
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 	fb->fb_type.fb_depth = 8;
+#endif
 	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
 	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, NBPG);
-#endif
+
 	fb->fb_type.fb_cmsize = CG14_CLUT_SIZE;
 	fb->fb_type.fb_size = ramsize + COLOUR_OFFSET;
 
@@ -266,7 +271,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 			self->dv_xname, sa->sa_nreg);
 		return;
 	}
-	bcopy(sa->sa_reg, sc->sc_physadr,
+	memcpy( sc->sc_physadr, sa->sa_reg,
 	      sa->sa_nreg * sizeof(struct sbus_reg));
 
 	sc->sc_vramsize = sc->sc_physadr[CG14_PXL_IDX].sbr_size;
@@ -284,7 +289,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset,
 			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR,
+			 0 /*BUS_SPACE_MAP_LINEAR*/,
 			 &bh) != 0) {
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
@@ -335,7 +340,8 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 				    0x03800000,
 				  1152 * 900, BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
-			printf("%s: cannot map pixels\n",&sc->sc_dev.dv_xname[0]);
+			printf("%s: cannot map pixels\n",
+			    device_xname(sc->sc_dev));
 			return;
 		}
 		sc->sc_rcfb = sc->sc_fb;
@@ -348,7 +354,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 		printf("vram at %p\n",(void *)bh);
 		/* XXX should use actual screen size */
 
-		for (i = 0; i < 1152 * 900; i++)
+		for (i = 0; i < ramsize; i++)
 		    ((unsigned char *)bh)[i] = 0;
 		fbrcons_init(&sc->sc_rcfb);
 		cg14_set_rcons_luts(sc);
@@ -359,15 +365,23 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if NWSDISPLAY > 0
-	if (sbus_bus_map( sc->sc_bustag,
-	    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
-	    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
-	    ramsize, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map pixels\n",&sc->sc_dev.dv_xname[0]);
-		return;
+	prom_getprop(sa->sa_node, "address", 4, &items, &ptr);
+	if (fbva[1] == 0) {
+		if (sparc_bus_map_large( sc->sc_bustag,
+		    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
+		    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
+		    ramsize, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+			printf("%s: cannot map pixels\n", 
+				device_xname(sc->sc_dev));
+			return;
+		}
+		sc->sc_fb.fb_pixels = bus_space_vaddr(sc->sc_bustag, bh);
+	} else {
+		sc->sc_fb.fb_pixels = (void *)fbva[1];
 	}
 
-	sc->sc_fb.fb_pixels = bus_space_vaddr(sc->sc_bustag, bh);
+	sc->sc_shadowfb = kmem_alloc(ramsize, KM_NOSLEEP);
+
 	if (isconsole)
 		printf(" (console)\n");
 	else
@@ -387,24 +401,17 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
  * the last close. This kind of nonsense is needed to give screenblank
  * a fighting chance of working.
  */
-static int cg14_opens = 0;
 
 int
 cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgfourteen_softc *sc;
-	int unit;
-	int s, oldopens;
+	int oldopens;
 
-	unit = minor(dev);
-	if (unit >= cgfourteen_cd.cd_ndevs)
-		return(ENXIO);
-	sc = cgfourteen_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&cgfourteen_cd, minor(dev));
 	if (sc == NULL)
 		return(ENXIO);
-	s = splhigh();
-	oldopens = cg14_opens++;
-	splx(s);
+	oldopens = sc->sc_opens++;
 
 	/* Setup the cg14 as we want it, and save the original PROM state */
 	if (oldopens == 0)	/* first open only, to make screenblank work */
@@ -416,14 +423,13 @@ cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
-	int s, opens;
+	struct cgfourteen_softc *sc = 
+	    device_lookup_private(&cgfourteen_cd, minor(dev));
+	int opens;
 
-	s = splhigh();
-	opens = --cg14_opens;
-	if (cg14_opens < 0)
-		opens = cg14_opens = 0;
-	splx(s);
+	opens = --sc->sc_opens;
+	if (sc->sc_opens < 0)
+		opens = sc->sc_opens = 0;
 
 	/*
 	 * Restore video state to make the PROM happy, on last close.
@@ -437,7 +443,8 @@ cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 int
 cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc =
+	    device_lookup_private(&cgfourteen_cd, minor(dev));
 	struct fbgattr *fba;
 	int error;
 
@@ -496,9 +503,9 @@ cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgfourteenunblank(struct device *dev)
+cgfourteenunblank(device_t dev)
 {
-	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)dev;
+	struct cgfourteen_softc *sc = device_private(dev);
 
 	cg14_set_video(sc, 1);
 #if NWSDISPLAY > 0
@@ -540,7 +547,8 @@ cgfourteenunblank(struct device *dev)
 paddr_t
 cgfourteenmmap(dev_t dev, off_t off, int prot)
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc =
+	    device_lookup_private(&cgfourteen_cd, minor(dev));
 
 	if (off & PGOFSET)
 		panic("cgfourteenmmap");
@@ -808,6 +816,15 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	if (is_cons) {
 		vcons_init_screen(&sc->sc_vd, &sc->sc_console_screen, 1,
 		    &defattr);
+
+		/* clear the screen with the default background colour */
+		memset(sc->sc_fb.fb_pixels,
+		       (defattr >> 16) & 0xff,
+		       ri->ri_stride * ri->ri_height);
+		if (sc->sc_shadowfb != NULL)
+			memset(sc->sc_shadowfb,
+			       (defattr >> 16) & 0xff,
+			       ri->ri_stride * ri->ri_height);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
@@ -830,7 +847,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	aa.accessops = &cg14_accessops;
 	aa.accesscookie = &sc->sc_vd;
 
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
 static void
@@ -943,7 +960,7 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			    (struct wsdisplay_cmap *)data);
 
 		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = ms->scr_ri.ri_width << 2;
+			*(u_int *)data = ms->scr_ri.ri_stride << 2;
 			return 0;
 
 		case WSDISPLAYIO_SMODE:
@@ -958,8 +975,9 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						cg14_set_depth(sc, 8);
 						cg14_init_cmap(sc);
 						vcons_redraw_screen(ms);
-					} else
+					} else {
 						cg14_set_depth(sc, 32);
+					}
 				}
 			}
 			return 0;
@@ -998,6 +1016,10 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 				return cg14_do_cursor(sc, cursor);
 			}
+		case PCI_IOC_CFGREAD:
+		case PCI_IOC_CFGWRITE:
+			return EINVAL;
+
 	}
 	return EPASSTHROUGH;
 }
@@ -1031,7 +1053,11 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = ri->ri_width;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
-	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
+	if (sc->sc_shadowfb != NULL) {
+		ri->ri_bits = sc->sc_shadowfb;
+		ri->ri_hwbits = (char *)sc->sc_fb.fb_pixels;
+	} else 
+		ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
@@ -1075,7 +1101,7 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 			break;
 		default:
 			printf("%s: can't change to depth %d\n",
-			    sc->sc_dev.dv_xname, depth);
+			    device_xname(sc->sc_dev), depth);
 	}
 }
 
@@ -1113,7 +1139,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 		int i;
 		uint32_t val;
 	
-		for (i = 0; i < cur->cmap.count; i++) {
+		for (i = 0; i < min(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] ) |
 			      (cur->cmap.green[i] << 8) |
 			      (cur->cmap.blue[i] << 16);
@@ -1126,7 +1152,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 		uint32_t buffer[32], latch, tmp;
 		int i;
 
-		memcpy(buffer, cur->mask, 128);
+		copyin(cur->mask, buffer, 128);
 		for (i = 0; i < 32; i++) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1148,7 +1174,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 			bus_space_write_4(sc->sc_bustag, sc->sc_regh,
 			    CG14_CURSOR_PLANE0 + (i << 2), latch);
 		}
-		memcpy(buffer, cur->image, 128);
+		copyin(cur->image, buffer, 128);
 		for (i = 0; i < 32; i++) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;

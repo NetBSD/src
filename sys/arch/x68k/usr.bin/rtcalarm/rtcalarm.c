@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.5 2006/08/04 02:32:30 mhitch Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.5.62.1 2009/05/04 08:12:08 yamt Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -46,22 +46,20 @@
 
 char           *prog;
 
-static void usage __P((void)) __attribute__((__noreturn__));
-static void myperror __P((const char *, int)) __attribute__((__noreturn__));
+static void usage(void) __attribute__((__noreturn__));
+static void myperror(const char *, int) __attribute__((__noreturn__));
 
-static void showinfo __P((void));
-static char    *numstr __P((unsigned int));
-static void showontime __P((unsigned int));
+static void showinfo(void);
+static char    *numstr(unsigned int);
+static void showontime(unsigned int);
 
-static void disablealarm __P((void));
+static void disablealarm(void);
 
-static void setinfo __P((int, char **));
-static int strnum __P((const char *, int));
+static void setinfo(int, char **);
+static int strnum(const char *, int);
 
 int
-main(argc, argv)
-	int             argc;
-	char           *argv[];
+main(int argc, char *argv[])
 {
 	prog = argv[0];
 
@@ -85,9 +83,7 @@ usage(void)
 }
 
 static void
-myperror(str, fd)
-	const char     *str;
-	int             fd;
+myperror(const char *str, int fd)
 {
 	fprintf(stderr, "%s: %s: %s\n", prog, str, strerror(errno));
 
@@ -105,9 +101,9 @@ showinfo(void)
 	struct x68k_alarminfo alarminfo;
 	int             fd;
 
-	fd = open("/dev/pow1", O_RDONLY);
+	fd = open("/dev/pow0", O_RDONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow1", -1);
+		myperror("Opening /dev/pow0", -1);
 
 	if (ioctl(fd, POWIOCGALARMINFO, &alarminfo) < 0)
 		myperror("powiocgalarminfo", fd);
@@ -135,8 +131,7 @@ showinfo(void)
 }
 
 static char    *
-numstr(num)
-	unsigned int    num;
+numstr(unsigned int num)
 {
 	static char     buffer[4];
 
@@ -167,8 +162,7 @@ const char     *weekname[] =
 };
 
 static void
-showontime(ontime)
-	unsigned int    ontime;
+showontime(unsigned int ontime)
 {
 	printf("At %s:", numstr((ontime & 0x0000ff00) >> 8));
 	printf("%s ", numstr(ontime & 0x000000ff));
@@ -199,9 +193,9 @@ disablealarm(void)
 
 	alarminfo.al_enable = 0;
 
-	fd = open("/dev/pow1", O_WRONLY);
+	fd = open("/dev/pow0", O_WRONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow1", -1);
+		myperror("Opening /dev/pow0", -1);
 	if (ioctl(fd, POWIOCSALARMINFO, &alarminfo) < 0)
 		myperror("powiocsalarminfo", fd);
 	close(fd);
@@ -210,9 +204,7 @@ disablealarm(void)
 
 
 static void
-setinfo(argc, argv)
-	int             argc;
-	char          **argv;
+setinfo(int argc, char **argv)
 {
 	int             ch;
 	int             week = 0x0f;
@@ -264,18 +256,16 @@ setinfo(argc, argv)
 	alarminfo.al_dowhat = dowhat;
 	alarminfo.al_offtime = offtime * 60;
 
-	fd = open("/dev/pow1", O_WRONLY);
+	fd = open("/dev/pow0", O_WRONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow1", -1);
+		myperror("Opening /dev/pow0", -1);
 	if (ioctl(fd, POWIOCSALARMINFO, &alarminfo) < 0)
 		myperror("powiocsalarminfo", fd);
 	close(fd);
 }
 
 static int
-strnum(str, wid)
-	const char     *str;
-	int             wid;
+strnum(const char *str, int wid)
 {
 	int             r;
 

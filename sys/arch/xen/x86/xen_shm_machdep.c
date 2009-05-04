@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.3 2008/02/17 14:03:16 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.3.10.1 2009/05/04 08:12:14 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.3 2008/02/17 14:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.3.10.1 2009/05/04 08:12:14 yamt Exp $");
 
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/vmem.h>
 #include <sys/kernel.h>
@@ -99,7 +98,7 @@ static struct timeval xen_shm_errintvl = { 60, 0 };  /* a minute, each */
 #endif
 
 void
-xen_shm_init()
+xen_shm_init(void)
 {
 	SIMPLEQ_INIT(&xen_shm_callbacks);
 	pool_init(&xen_shm_callback_pool, sizeof(struct xen_shm_callback_entry),

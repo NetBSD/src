@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.13.4.1 2008/05/16 02:23:02 yamt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.13.4.2 2009/05/04 08:11:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.13.4.1 2008/05/16 02:23:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.13.4.2 2009/05/04 08:11:44 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h" 
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -110,7 +111,7 @@ struct pmap ofw_pmap;
 struct ofw_translations ofmap[32];
 char bootpath[256];
 char model_name[64];
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
 #ifdef TIMEBASE_FREQ
@@ -147,7 +148,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	if ((oeacpufeat & OEACPU_NOBAT) == 0)
 		ofwoea_batinit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* get info of kernel symbol table from bootloader */
 	memcpy(&startsym, args + strlen(args) + 1, sizeof(startsym));
 	memcpy(&endsym, args + strlen(args) + 1 + sizeof(startsym),
@@ -238,8 +239,8 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 	restore_ofmap(ofmap, ofmaplen);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 
 	/* CPU clock stuff */

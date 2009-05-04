@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19.10.1 2008/05/16 02:23:17 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19.10.2 2009/05/04 08:11:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,15 +32,6 @@
 #include <sys/simplelock.h>
 
 /*
- * NB:  The details of struct pmap are exposed ONLY when
- * building a kernel.  LKMs and user-level programs see
- * only this anonymous declaration.  Note that the actual
- * declaration may vary on different m68k kernels.
- */
-struct pmap;
-typedef struct pmap *pmap_t;
-
-/*
  * Physical map structures exported to the VM code.
  * XXX - Does user-level code really see this struct?
  */
@@ -54,9 +45,6 @@ struct pmap {
 };
 
 #ifdef _KERNEL
-extern	struct pmap	kernel_pmap_store;
-#define	pmap_kernel()	(&kernel_pmap_store)
-
 /*
  * We give the pmap code a chance to resolve faults by
  * reloading translations that it was forced to unload.

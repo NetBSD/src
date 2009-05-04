@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.19.18.1 2008/05/16 02:22:51 yamt Exp $ */
+/* $NetBSD: sbjcn.c,v 1.19.18.2 2009/05/04 08:11:32 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.19.18.1 2008/05/16 02:22:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.19.18.2 2009/05/04 08:11:32 yamt Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -485,7 +485,6 @@ sbjcn_shutdown(struct sbjcn_channel *ch)
 int
 sbjcnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = SBJCN_UNIT(dev);
 	int chan = SBJCN_CHAN(dev);
 	struct sbjcn_softc *sc;
 	struct sbjcn_channel *ch;
@@ -493,11 +492,10 @@ sbjcnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, s2;
 	int error;
 
-	if (unit >= sbjcn_cd.cd_ndevs)
+	sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(dev));
+	if (sc == NULL)
 		return (ENXIO);
-	sc = sbjcn_cd.cd_devs[unit];
-	if (sc == 0)
-		return (ENXIO);
+
 	ch = &sc->sc_channels[chan];
 	if (!ISSET(ch->ch_hwflags, SBJCN_HW_DEV_OK) || ch->ch_rbuf == NULL)
 		return (ENXIO);
@@ -615,7 +613,7 @@ bad:
 int
 sbjcnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 
@@ -641,7 +639,7 @@ sbjcnclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 sbjcnread(dev_t dev, struct uio *uio, int flag)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 
@@ -651,7 +649,7 @@ sbjcnread(dev_t dev, struct uio *uio, int flag)
 int
 sbjcnwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 
@@ -661,7 +659,7 @@ sbjcnwrite(dev_t dev, struct uio *uio, int flag)
 struct tty *
 sbjcntty(dev_t dev)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 
@@ -671,7 +669,7 @@ sbjcntty(dev_t dev)
 int
 sbjcnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 	int error;
@@ -844,10 +842,7 @@ sbjcn_to_tiocm(struct sbjcn_channel *ch)
 }
 
 static int
-cflag2modes(cflag, mode1p, mode2p)
-	tcflag_t cflag;
-	u_char *mode1p;
-	u_char *mode2p;
+cflag2modes(tcflag_t cflag, u_char *mode1p, u_char *mode2p)
 {
 	u_char mode1;
 	u_char mode2;
@@ -890,7 +885,7 @@ cflag2modes(cflag, mode1p, mode2p)
 int
 sbjcn_param(struct tty *tp, struct termios *t)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(tp->t_dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(tp->t_dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(tp->t_dev)];
 	long brc;
 	u_char mode1, mode2;
@@ -1061,7 +1056,7 @@ sbjcn_loadchannelregs(struct sbjcn_channel *ch)
 int
 sbjcn_hwiflow(struct tty *tp, int block)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(tp->t_dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(tp->t_dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(tp->t_dev)];
 	int s;
 
@@ -1110,7 +1105,7 @@ sbjcn_dohwiflow(struct sbjcn_channel *ch)
 void
 sbjcn_start(struct tty *tp)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(tp->t_dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(tp->t_dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(tp->t_dev)];
 	int s;
 
@@ -1170,7 +1165,7 @@ out:
 void
 sbjcnstop(struct tty *tp, int flag)
 {
-	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(tp->t_dev)];
+	struct sbjcn_softc *sc = device_lookup_private(&sbjcn_cd, SBJCN_UNIT(tp->t_dev));
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(tp->t_dev)];
 	int s;
 
@@ -1186,8 +1181,7 @@ sbjcnstop(struct tty *tp, int flag)
 }
 
 void
-sbjcn_diag(arg)
-	void *arg;
+sbjcn_diag(void *arg)
 {
 	struct sbjcn_channel *ch = arg;
 	struct sbjcn_softc *sc = ch->ch_sc;
@@ -1587,8 +1581,7 @@ sbjcn_kgdb_attach(u_long addr, int chan, int rate, tcflag_t cflag)
 
 /* ARGSUSED */
 int
-sbjcn_kgdb_getc(arg)
-	void *arg;
+sbjcn_kgdb_getc(void *arg)
 {
 
 	return (sbjcn_common_getc(sbjcn_kgdb_addr, sbjcn_kgdb_chan));
@@ -1596,9 +1589,7 @@ sbjcn_kgdb_getc(arg)
 
 /* ARGSUSED */
 void
-sbjcn_kgdb_putc(arg, c)
-	void *arg;
-	int c;
+sbjcn_kgdb_putc(void *arg, int c)
 {
 
 	sbjcn_common_putc(sbjcn_kgdb_addr, sbjcn_kgdb_chan, c);

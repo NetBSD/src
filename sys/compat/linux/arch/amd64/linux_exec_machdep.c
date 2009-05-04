@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.10.20.1 2009/05/04 08:12:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10.20.1 2009/05/04 08:12:20 yamt Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -54,17 +54,22 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad E
 
 #include <sys/cpu.h>
 #include <machine/vmparam.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
-#include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_errno.h>
+#include <compat/linux/common/linux_prctl.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
+#include <compat/linux/linux_syscallargs.h>
 
 int
 linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
@@ -108,23 +113,20 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
+		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
 	KASSERT(access_size > 0);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE,
+	    VMCMD_STACK);
 
 	return 0;
 }
 
 int
-ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
+	struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	struct linux_extra_stack_data64 *esdp, esd;
 	struct elf_args *ap;
@@ -249,3 +251,17 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 
 	return 0;
 }
+
+#ifdef LINUX_NPTL
+int
+linux_init_thread_area(struct lwp *l, struct lwp *l2)
+{
+	register_t retval;
+	struct linux_sys_arch_prctl_args uap;
+	struct trapframe *tf = l2->l_md.md_regs;
+
+	SCARG(&uap, code) = LINUX_ARCH_SET_FS;
+	SCARG(&uap, addr) = tf->tf_r8;
+	return linux_sys_arch_prctl(l2, &uap, &retval);
+}
+#endif

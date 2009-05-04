@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.117.2.1 2008/05/16 02:25:17 yamt Exp $ */
+/* $NetBSD: wskbd.c,v 1.117.2.2 2009/05/04 08:13:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.117.2.1 2008/05/16 02:25:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.117.2.2 2009/05/04 08:13:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1225,6 +1225,9 @@ getkeyrepeat:
 		sc->sc_layout = enc;
 		wskbd_update_layout(sc->id, enc);
 		return (0);
+
+	case WSKBDIO_SETVERSION:
+		return wsevent_setversion(sc->sc_base.me_evp, *(int *)data);
 	}
 
 	/*
@@ -1284,7 +1287,8 @@ wskbd_pickfree(void)
 	struct wskbd_softc *sc;
 
 	for (i = 0; i < wskbd_cd.cd_ndevs; i++) {
-		if ((sc = device_private(wskbd_cd.cd_devs[i])) == NULL)
+		sc = device_lookup_private(&wskbd_cd, i);
+		if (sc == NULL)
 			continue;
 		if (sc->sc_base.me_dispdv == NULL)
 			return (i);

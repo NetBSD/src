@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.65.10.1 2008/05/16 02:22:56 yamt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.65.10.2 2009/05/04 08:11:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.65.10.1 2008/05/16 02:22:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.65.10.2 2009/05/04 08:11:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -264,6 +264,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -294,6 +295,8 @@ cpu_reboot(int howto, char *bootstr)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -852,11 +855,6 @@ initarm(void *arg)
 	if (nwbootinfo.bi_pagesize == 0xdeadbeef)
 		printf("WARNING: NeTTrom boot info corrupt\n");
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
-#endif
-
 #ifdef DDB
 	db_machine_init();
 	if (boothowto & RB_KDB)
@@ -973,12 +971,7 @@ consinit(void)
 
 #if NIGSFB > 0
 static int
-nw_footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+nw_footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
 {
 	bus_addr_t startpa, endpa;
 
@@ -1009,10 +1002,7 @@ nw_footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 
 
 static void
-nw_footbridge_mem_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+nw_footbridge_mem_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/*

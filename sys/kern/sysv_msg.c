@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.55.12.1 2008/05/16 02:25:27 yamt Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.55.12.2 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.55.12.1 2008/05/16 02:25:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.55.12.2 2009/05/04 08:13:48 yamt Exp $");
 
 #define SYSVMSG
 
@@ -121,11 +121,11 @@ msginit(void)
 	if (v == 0)
 		panic("sysv_msg: cannot allocate memory");
 	msgpool = (void *)v;
-	msgmaps = (void *)(ALIGN(msgpool) + msginfo.msgmax);
-	msghdrs = (void *)(ALIGN(msgmaps) +
-	    msginfo.msgseg * sizeof(struct msgmap));
-	msqs = (void *)(ALIGN(msghdrs) +
-	    msginfo.msgtql * sizeof(struct __msg));
+	msgmaps = (void *)((uintptr_t)msgpool + ALIGN(msginfo.msgmax));
+	msghdrs = (void *)((uintptr_t)msgmaps +
+	    ALIGN(msginfo.msgseg * sizeof(struct msgmap)));
+	msqs = (void *)((uintptr_t)msghdrs +
+	    ALIGN(msginfo.msgtql * sizeof(struct __msg)));
 
 	for (i = 0; i < (msginfo.msgseg - 1); i++)
 		msgmaps[i].next = i + 1;
@@ -218,11 +218,11 @@ msgrealloc(int newmsgmni, int newmsgseg)
 	}
 
 	new_msgpool = (void *)v;
-	new_msgmaps = (void *)(ALIGN(new_msgpool) + newmsgmax);
-	new_msghdrs = (void *)(ALIGN(new_msgmaps) +
-	    newmsgseg * sizeof(struct msgmap));
-	new_msqs = (void *)(ALIGN(new_msghdrs) +
-	    msginfo.msgtql * sizeof(struct __msg));
+	new_msgmaps = (void *)((uintptr_t)new_msgpool + ALIGN(newmsgmax));
+	new_msghdrs = (void *)((uintptr_t)new_msgmaps +
+	    ALIGN(newmsgseg * sizeof(struct msgmap)));
+	new_msqs = (void *)((uintptr_t)new_msghdrs +
+	    ALIGN(msginfo.msgtql * sizeof(struct __msg)));
 
 	/* Initialize the structures */
 	for (i = 0; i < (newmsgseg - 1); i++)
@@ -392,7 +392,8 @@ msg_freehdr(struct __msg *msghdr)
 }
 
 int
-sys___msgctl13(struct lwp *l, const struct sys___msgctl13_args *uap, register_t *retval)
+sys___msgctl50(struct lwp *l, const struct sys___msgctl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) msqid;
@@ -652,6 +653,10 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
 	    (long long)msgsz, msgflg));
+
+	if ((ssize_t)msgsz < 0)
+		return EINVAL;
+
 restart:
 	msqid = IPCID_TO_IX(msqidr);
 
@@ -851,6 +856,7 @@ restart:
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
 		cv_broadcast(&msq->msq_cv);
 		MSG_PRINTF(("mtype (%ld) < 1\n", msghdr->msg_type));
+		error = EINVAL;
 		goto unlock;
 	}
 
@@ -957,6 +963,10 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
 	    user_msgp, (long long)msgsz, msgtyp, msgflg));
+
+	if ((ssize_t)msgsz < 0)
+		return EINVAL;
+
 restart:
 	msqid = IPCID_TO_IX(msqidr);
 
@@ -1165,7 +1175,7 @@ restart:
 		else
 			tlen = msgsz - len;
 		mutex_exit(&msgmutex);
-		error = (*put_type)(&msgpool[next * msginfo.msgssz],
+		error = copyout(&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
 		mutex_enter(&msgmutex);
 		if (error != 0) {

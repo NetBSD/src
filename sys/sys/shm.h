@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.44.4.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: shm.h,v 1.44.4.2 2009/05/04 08:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 #endif
 
 /* Segment low boundry address multiple */
-#if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
+#if defined(_KERNEL) || defined(_STANDALONE) || defined(_MODULE)
 #define	SHMLBA		PAGE_SIZE
 #else
 /*
@@ -176,11 +176,23 @@ void	shminit(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
 int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
+
+#define SYSCTL_FILL_SHM(src, dst) do { \
+	SYSCTL_FILL_PERM((src).shm_perm, (dst).shm_perm); \
+	(dst).shm_segsz = (src).shm_segsz; \
+	(dst).shm_lpid = (src).shm_lpid; \
+	(dst).shm_cpid = (src).shm_cpid; \
+	(dst).shm_atime = (src).shm_atime; \
+	(dst).shm_dtime = (src).shm_dtime; \
+	(dst).shm_ctime = (src).shm_ctime; \
+	(dst).shm_nattch = (src).shm_nattch; \
+} while (/*CONSTCOND*/ 0)
+
 #else /* !_KERNEL */
 
 __BEGIN_DECLS
 void	*shmat(int, const void *, int);
-int	shmctl(int, int, struct shmid_ds *) __RENAME(__shmctl13);
+int	shmctl(int, int, struct shmid_ds *) __RENAME(__shmctl50);
 int	shmdt(const void *);
 int	shmget(key_t, size_t, int);
 __END_DECLS

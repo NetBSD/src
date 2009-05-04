@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.36 2007/10/17 19:54:14 garbled Exp $ */
+/* $NetBSD: machdep.c,v 1.36.20.1 2009/05/04 08:11:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,12 +107,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2007/10/17 19:54:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.1 2009/05/04 08:11:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include "opt_memsize.h"
+#include "opt_modular.h"
 #include "opt_ethaddr.h"
 
 #include <sys/param.h>
@@ -126,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2007/10/17 19:54:14 garbled Exp $")
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -136,7 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2007/10/17 19:54:14 garbled Exp $")
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -167,7 +169,6 @@ struct	user *proc0paddr;
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -373,9 +374,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, 0, 0);
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -413,12 +411,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
@@ -488,6 +480,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((boothowto & RB_POWERDOWN) == RB_POWERDOWN)
 		if (board && board->ab_poweroff)

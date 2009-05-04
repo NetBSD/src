@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.44 2008/03/15 00:25:05 matt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.44.4.1 2009/05/04 08:12:05 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.44 2008/03/15 00:25:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.44.4.1 2009/05/04 08:12:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ rdstrategy(struct buf *bp)
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
 	s = splbio();
-	BUFQ_PUT(sc->sc_q, bp);
+	bufq_put(sc->sc_q, bp);
 	if (inq == 0) {
 		inq = 1;
 		vsbus_dma_start(&sc->sc_vd);
@@ -493,7 +493,7 @@ hdc_qstart(void *arg)
 	inq = 0;
 
 	hdcstart(sc, 0);
-	if (BUFQ_PEEK(sc->sc_q)) {
+	if (bufq_peek(sc->sc_q)) {
 		vsbus_dma_start(&sc->sc_vd); /* More to go */
 		inq = 1;
 	}
@@ -513,7 +513,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 		return; /* Already doing something */
 
 	if (ob == 0) {
-		bp = BUFQ_GET(sc->sc_q);
+		bp = bufq_get(sc->sc_q);
 		if (bp == NULL)
 			return; /* Nothing to do */
 		sc->sc_bufaddr = bp->b_data;
@@ -540,7 +540,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 
 	cn++; /* first cylinder is reserved */
 
-	bzero(p, sizeof(struct hdc9224_UDCreg));
+	memset(p, 0, sizeof(struct hdc9224_UDCreg));
 
 	/*
 	 * Tricky thing: the controller do itself only increase the sector
@@ -595,7 +595,7 @@ rd_readgeom(struct hdcsoftc *sc, struct rdsoftc *rd)
 	HDC_WCMD(DKC_CMD_READ_HDD|2);
 	while ((sc->sc_status & DKC_ST_INTPEND) == 0)
 		;
-	bcopy(sc->sc_dmabase, &rd->sc_xbn, sizeof(struct rdgeom));
+	memcpy( &rd->sc_xbn, sc->sc_dmabase, sizeof(struct rdgeom));
 }
 
 #ifdef RDDEBUG
@@ -603,8 +603,7 @@ rd_readgeom(struct hdcsoftc *sc, struct rdsoftc *rd)
  * display the contents of the on-disk geometry structure
  */
 void
-hdc_printgeom(p)
-	struct rdgeom *p;
+hdc_printgeom(struct rdgeom *p)
 {
 	printf ("**DiskData**	 XBNs: %ld, DBNs: %ld, LBNs: %ld, RBNs: %ld\n",
 		p->xbn_count, p->dbn_count, p->lbn_count, p->rbn_count);

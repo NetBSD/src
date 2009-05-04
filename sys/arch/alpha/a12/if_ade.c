@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.33 2008/03/24 12:24:37 yamt Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.33.4.1 2009/05/04 08:10:27 yamt Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.33 2008/03/24 12:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.33.4.1 2009/05/04 08:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -3943,7 +3943,7 @@ tulip_ifioctl(
     s = TULIP_RAISESPL();
 #endif
     switch (cmd) {
-	case SIOCSIFADDR: {
+	case SIOCINITIFADDR: {
 	    ifp->if_flags |= IFF_UP;
 	    switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -3982,13 +3982,9 @@ tulip_ifioctl(
 	    }
 	    break;
 	}
-	case SIOCGIFADDR: {
-	    memcpy((void *) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		(void *) sc->tulip_enaddr, 6);
-	    break;
-	}
-
 	case SIOCSIFFLAGS: {
+	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+		break;
 	    tulip_init(sc);
 	    break;
 	}
@@ -4056,7 +4052,7 @@ tulip_ifioctl(
 	}
 #endif
 	default: {
-	    error = EINVAL;
+	    error = ether_ioctl(ifp, cmd, data);
 	    break;
 	}
     }
@@ -5105,7 +5101,7 @@ tulip_pci_attach(
     sc = (tulip_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
     if (sc == NULL)
 	return;
-    bzero(sc, sizeof(*sc));				/* Zero out the softc*/
+    memset(sc, 0, sizeof(*sc));				/* Zero out the softc*/
 #endif
 
     PCI_GETBUSDEVINFO(sc);
@@ -5343,11 +5339,7 @@ tulip_pci_attach(
 }
 
 static void
-a12_m_copydata(m, off, len, cp)
-	register struct mbuf *m;
-	register int off;
-	register int len;
-	void *cp;
+a12_m_copydata(register struct mbuf *m, register int off, register int len, void *cp)
 {
 static	long packet[200];	/* may seem unwise, but typ a12 ram is 512 MB */
 

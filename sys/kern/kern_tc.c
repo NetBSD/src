@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.33.2.1 2008/05/16 02:25:26 yamt Exp $ */
+/* $NetBSD: kern_tc.c,v 1.33.2.2 2009/05/04 08:13:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.33.2.1 2008/05/16 02:25:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.33.2.2 2009/05/04 08:13:47 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -579,7 +579,7 @@ tc_getfrequency(void)
  * when we booted.
  */
 void
-tc_setclock(struct timespec *ts)
+tc_setclock(const struct timespec *ts)
 {
 	struct timespec ts2;
 	struct bintime bt, bt2;
@@ -596,9 +596,9 @@ tc_setclock(struct timespec *ts)
 
 	if (timestepwarnings) {
 		bintime2timespec(&bt2, &ts2);
-		log(LOG_INFO, "Time stepped from %jd.%09ld to %jd.%09ld\n",
-		    (intmax_t)ts2.tv_sec, ts2.tv_nsec,
-		    (intmax_t)ts->tv_sec, ts->tv_nsec);
+		log(LOG_INFO, "Time stepped from %lld.%09ld to %lld.%09ld\n",
+		    (long long)ts2.tv_sec, ts2.tv_nsec,
+		    (long long)ts->tv_sec, ts->tv_nsec);
 	}
 }
 
@@ -687,7 +687,6 @@ tc_windup(void)
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
 	bintime2timeval(&bt, &th->th_microtime);
 	bintime2timespec(&bt, &th->th_nanotime);
-
 	/* Now is a good time to change timecounters. */
 	if (th->th_counter != timecounter) {
 		th->th_counter = timecounter;
@@ -964,7 +963,7 @@ inittimecounter(void)
 {
 	u_int p;
 
-	mutex_init(&timecounter_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&timecounter_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Set the initial timeout to

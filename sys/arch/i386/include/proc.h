@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.35 2008/01/04 15:55:33 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.35.10.1 2009/05/04 08:11:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -34,20 +34,21 @@
 #ifndef _I386_PROC_H_
 #define _I386_PROC_H_
 
-#ifdef _KERNEL_OPT
-#include "opt_noredzone.h"
-#endif
-
 #include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
 
 /*
  * Machine-dependent part of the lwp structure for i386.
  */
+struct pmap;
+struct vm_page;
+
 struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	volatile int md_astpending;	/* AST pending for this process */
+	struct pmap *md_gc_pmap;	/* pmap being garbage collected */
+	struct vm_page *md_gc_ptp;	/* pages from pmap g/c */
 };
 
 /* md_flags */

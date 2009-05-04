@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.7 2008/04/17 17:47:23 njoly Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.7.4.1 2009/05/04 08:12:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -56,6 +56,8 @@ typedef netbsd32_pointer_t linux32_tmsp_t;
 typedef netbsd32_pointer_t linux32_sched_paramp_t;
 typedef netbsd32_pointer_t linux32_utimbufp_t;
 typedef netbsd32_pointer_t linux32_oldold_utsnamep_t;
+typedef netbsd32_pointer_t linux32_uidp_t;
+typedef netbsd32_pointer_t linux32_gidp_t;
 typedef netbsd32_pointer_t linux32_uid16p_t;
 typedef netbsd32_pointer_t linux32_gid16p_t;
 typedef netbsd32_pointer_t linux32_oldselectp_t;
@@ -70,7 +72,7 @@ struct linux32_sysctl {
 	netbsd32_size_tp oldlenp;
 	netbsd32_voidp newval;
 	netbsd32_size_t newlen;
-	unsigned int0[4];
+	unsigned int __unused0[4];
 };
 
 struct linux32_tms {
@@ -85,7 +87,7 @@ struct linux32_oldselect {
         netbsd32_fd_setp_t readfds;
         netbsd32_fd_setp_t writefds;
         netbsd32_fd_setp_t exceptfds;
-        netbsd32_timevalp_t timeout;
+        netbsd32_timeval50p_t timeout;
 };
 
 struct linux32_sysinfo {
@@ -107,6 +109,14 @@ struct linux32_sysinfo {
 struct linux32_timespec {
 	linux32_time_t	tv_sec;
 	netbsd32_long	tv_nsec;
+};
+
+#define LINUX32_MAXNAMLEN	255
+struct linux32_dirent {
+	linux32_ino_t	d_ino;
+	linux32_off_t	d_off;
+	u_short		d_reclen;
+	char		d_name[LINUX32_MAXNAMLEN + 1];
 };
 
 #endif /* !_LINUX32_TYPES_H */

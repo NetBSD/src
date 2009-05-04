@@ -1,0 +1,22 @@
+# Makefile additions for MPCSA platform
+
+SYSTEM_FIRST_OBJ=	mpcsa_start.o
+SYSTEM_FIRST_SFILE=	${THISARM}/mpcsa/mpcsa_start.S
+
+# Used to generate S-record for loading into flash
+KERNEL_LOAD_PHYS=0x20200000
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
+	${OBJCOPY} -S -O binary $@ $@.bin; \
+	echo gzip \< $@.bin \> $@.bin.gz; \
+	gzip < $@.bin > $@.bin.gz; \
+	echo ${OBJCOPY} --input-target=binary --output-target=srec --change-addresses=$(KERNEL_LOAD_PHYS) -v $@.bin $@.bin.srec; \
+	${OBJCOPY} --input-target=binary --output-target=srec --change-addresses=$(KERNEL_LOAD_PHYS) -v $@.bin $@.bin.srec; \
+#	echo "(perl /emb/bin/gen_tagff.perl --arch=arm --ver=4.0_BETA2 --infoprog=/emb/bin/modinfo "--hwid=MPCSA v1.x" --crc32 $@.bin.srec > $@.tff)"; \
+#	(perl /emb/bin/gen_tagff.perl --arch=arm --ver=4.0_BETA2 --infoprog=/emb/bin/modinfo "--hwid=MPCSA v1.x" --crc32 $@.bin.srec > $@.tff)
+
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.tff@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}

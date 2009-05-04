@@ -1,11 +1,7 @@
-/*	$NetBSD: intr.c,v 1.2.18.1 2008/05/16 02:25:50 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.2.18.2 2009/05/04 08:14:29 yamt Exp $	*/
 
-/*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+/*
+ * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,60 +12,262 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2.18.2 2009/05/04 08:14:29 yamt Exp $");
+
 #include <sys/param.h>
-#include <sys/errno.h>
-#include <sys/intr.h>
-#include <sys/kmem.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/intr.h>
 
-#include "rump.h"
-#include "rumpuser.h"
+#include <rump/rumpuser.h>
 
-struct v_dodgy {
-	void	(*func)(void *);
-	void	*arg;
+#include "rump_private.h"
+
+/*
+ * Interrupt simulator.  It executes hardclock() and softintrs.
+ */
+
+time_t time_uptime = 0;
+
+struct softint {
+	void (*si_func)(void *);
+	void *si_arg;
+	bool si_onlist;
+	bool si_mpsafe;
+
+	LIST_ENTRY(softint) si_entries;
 };
+static LIST_HEAD(, softint) si_pending = LIST_HEAD_INITIALIZER(si_pending);
+static kmutex_t si_mtx;
+static kcondvar_t si_cv;
 
-void *
-softint_establish(u_int flags, void (*func)(void *), void *arg)
+#define INTRTHREAD_DEFAULT	2
+#define INTRTHREAD_MAX		20
+static int wrkidle, wrktotal;
+
+static void sithread(void *);
+
+static void
+makeworker(bool bootstrap)
 {
-	struct v_dodgy *vd;
+	int rv;
 
-	vd = kmem_alloc(sizeof(*vd), KM_SLEEP);
-	if (vd != NULL) {
-		vd->func = func;
-		vd->arg = arg;
+	if (wrktotal > INTRTHREAD_MAX) {
+		/* XXX: ratecheck */
+		printf("maximum interrupt threads (%d) reached\n",
+		    INTRTHREAD_MAX);
+		return;
 	}
-	return vd;
+	rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_INTR, NULL,
+	    sithread, NULL, NULL, "rumpsi");
+	if (rv) {
+		if (bootstrap)
+			panic("intr thread creation failed %d", rv);
+		else
+			printf("intr thread creation failed %d\n", rv);
+	} else {
+		wrkidle++;
+		wrktotal++;
+	}
+}
+
+/* rumpuser structures since we call rumpuser interfaces directly */
+static struct rumpuser_cv *clockcv;
+static struct rumpuser_mtx *clockmtx;
+static struct timespec clockbase, clockup;
+static unsigned clkgen;
+
+void
+rump_getuptime(struct timespec *ts)
+{
+	int startgen, i = 0;
+
+	do {
+		startgen = clkgen;
+		if (__predict_false(i++ > 10)) {
+			yield();
+			i = 0;
+		}
+		*ts = clockup;
+	} while (startgen != clkgen || clkgen % 2 != 0);
 }
 
 void
-softint_disestablish(void *arg)
+rump_gettime(struct timespec *ts)
 {
+	struct timespec ts_up;
 
-	kmem_free(arg, sizeof(struct v_dodgy));
+	rump_getuptime(&ts_up);
+	timespecadd(&clockbase, &ts_up, ts);
+}
+
+/*
+ * clock "interrupt"
+ */
+static void
+doclock(void *noarg)
+{
+	struct timespec tick, curtime;
+	uint64_t sec, nsec;
+	int ticks = 0, error;
+	extern int hz;
+
+	rumpuser_gettime(&sec, &nsec, &error);
+	clockbase.tv_sec = sec;
+	clockbase.tv_nsec = nsec;
+	curtime = clockbase;
+	tick.tv_sec = 0;
+	tick.tv_nsec = 1000000000/hz;
+
+	rumpuser_mutex_enter(clockmtx);
+	rumpuser_cv_signal(clockcv);
+
+	for (;;) {
+		callout_hardclock();
+
+		if (++ticks == hz) {
+			time_uptime++;
+			ticks = 0;
+		}
+
+		/* wait until the next tick. XXX: what if the clock changes? */
+		while (rumpuser_cv_timedwait(clockcv, clockmtx,
+		    &curtime) != EWOULDBLOCK)
+			continue;
+
+		clkgen++;
+		timespecadd(&clockup, &tick, &clockup);
+		clkgen++;
+		timespecadd(&clockup, &clockbase, &curtime);
+	}
+}
+
+/*
+ * run a scheduled soft interrupt
+ */
+static void
+sithread(void *arg)
+{
+	struct softint *si;
+	void (*func)(void *) = NULL;
+	void *funarg;
+	bool mpsafe;
+
+	mutex_enter(&si_mtx);
+	for (;;) {
+		if (!LIST_EMPTY(&si_pending)) {
+			si = LIST_FIRST(&si_pending);
+			func = si->si_func;
+			funarg = si->si_arg;
+			mpsafe = si->si_mpsafe;
+
+			si->si_onlist = false;
+			LIST_REMOVE(si, si_entries);
+		} else {
+			cv_wait(&si_cv, &si_mtx);
+			continue;
+		}
+		wrkidle--;
+		if (__predict_false(wrkidle == 0))
+			makeworker(false);
+		mutex_exit(&si_mtx);
+
+		if (!mpsafe)
+			KERNEL_LOCK(1, curlwp);
+		func(funarg);
+		if (!mpsafe)
+			KERNEL_UNLOCK_ONE(curlwp);
+
+		mutex_enter(&si_mtx);
+		wrkidle++;
+	}
+}
+
+void
+softint_init(struct cpu_info *ci)
+{
+	int rv;
+
+	mutex_init(&si_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&si_cv, "intrw8"); /* cv of temporary w8ness */
+
+	rumpuser_cv_init(&clockcv);
+	rumpuser_mutex_init(&clockmtx);
+
+	/* XXX: should have separate "wanttimer" control */
+	if (rump_threads) {
+		rumpuser_mutex_enter(clockmtx);
+		rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, doclock,
+		    NULL, NULL, "rumpclk");
+		if (rv)
+			panic("clock thread creation failed: %d", rv);
+		mutex_enter(&si_mtx);
+		while (wrktotal < INTRTHREAD_DEFAULT) {
+			makeworker(true);
+		}
+		mutex_exit(&si_mtx);
+
+		/* make sure we have a clocktime before returning */
+		rumpuser_cv_wait(clockcv, clockmtx);
+		rumpuser_mutex_exit(clockmtx);
+	}
+}
+
+/*
+ * Soft interrupts bring two choices.  If we are running with thread
+ * support enabled, defer execution, otherwise execute in place.
+ * See softint_schedule().
+ * 
+ * As there is currently no clear concept of when a thread finishes
+ * work (although rump_clear_curlwp() is close), simply execute all
+ * softints in the timer thread.  This is probably not the most
+ * efficient method, but good enough for now.
+ */
+void *
+softint_establish(u_int flags, void (*func)(void *), void *arg)
+{
+	struct softint *si;
+
+	si = kmem_alloc(sizeof(*si), KM_SLEEP);
+	si->si_func = func;
+	si->si_arg = arg;
+	si->si_onlist = false;
+	si->si_mpsafe = flags & SOFTINT_MPSAFE;
+
+	return si;
 }
 
 void
 softint_schedule(void *arg)
 {
-	struct v_dodgy *vd;
+	struct softint *si = arg;
 
-	vd = arg;
-	(*(vd->func))(arg);
+	if (!rump_threads) {
+		si->si_func(si->si_arg);
+	} else {
+		mutex_enter(&si_mtx);
+		if (!si->si_onlist) {
+			LIST_INSERT_HEAD(&si_pending, si, si_entries);
+			si->si_onlist = true;
+		}
+		cv_signal(&si_cv);
+		mutex_exit(&si_mtx);
+	}
 }
 
 bool

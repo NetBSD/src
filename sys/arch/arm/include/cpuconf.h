@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.13.50.1 2008/05/16 02:21:56 yamt Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.13.50.2 2009/05/04 08:10:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -73,6 +73,7 @@
 			 defined(CPU_ARM1176) +				\
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
+			 defined(CPU_FA526) +				\
 			 defined(CPU_IXP12X0) +				\
 			 defined(CPU_XSCALE_80200) +			\
 			 defined(CPU_XSCALE_80321) +			\
@@ -102,8 +103,8 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
-     defined(CPU_SA110) || defined(CPU_SA1100) || \
-     defined(CPU_SA1110) || defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
+     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_FA526) || \
+     defined(CPU_SA1110) || defined(CPU_IXP12X0))
 #define	ARM_ARCH_4	1
 #else
 #define	ARM_ARCH_4	0
@@ -112,7 +113,7 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM9E) || defined(CPU_ARM10) ||			\
      defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(__CPU_XSCALE_PXA2XX))
+     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425))
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
@@ -167,7 +168,7 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
      defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM9E) ||	\
-     defined(CPU_ARM10))
+     defined(CPU_ARM10) || defined(CPU_FA526))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0

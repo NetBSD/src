@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.82 2008/01/21 11:36:46 ichiro Exp $
+#	$NetBSD: files.usb,v 1.82.10.1 2009/05/04 08:13:20 yamt Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -6,12 +6,15 @@
 
 defflag	USBVERBOSE
 
+defflag	opt_uvideo.h	UVIDEO_DEBUG
+
+define	usbroothubif { }
 define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
 		   [vendor = -1], [product = -1], [release = -1] }
 define	usbifif { [port = -1], [configuration = -1], [interface = -1],
 		  [vendor = -1], [product = -1], [release = -1] }
 
-device	usb: usbdevif
+device	usb: usbroothubif
 attach	usb at usbus
 file	dev/usb/usb.c			usb			needs-flag
 file	dev/usb/usbdi.c			usb
@@ -22,6 +25,7 @@ file	dev/usb/usb_quirks.c		usb
 
 # Hub driver
 device	uhub: usbdevif, usbifif
+attach	uhub at usbroothubif with uroothub
 attach	uhub at usbdevif
 file	dev/usb/uhub.c			usb
 
@@ -128,12 +132,33 @@ device	ubt: btbus, bluetooth
 attach	ubt at usbdevif
 file	dev/usb/ubt.c			ubt
 
+#
+# Capture devices
+#
 
+# Sony PLAYSTATION(R) Eye
+device	pseye: videobus
+attach	pseye at usbifif
+file	dev/usb/pseye.c			pseye
+
+# USB Video Class capture devices
+device	uvideo: videobus
+attach	uvideo at usbifif
+file	dev/usb/uvideo.c		uvideo
+
+#
 # Misc
+#
+
 # Diamond Multimedia Rio 500
 device	urio
 attach	urio at usbdevif
 file	dev/usb/urio.c			urio			needs-flag
+
+# BlackBerries
+device	uberry
+attach	uberry at usbdevif
+file	dev/usb/uberry.c			uberry
 
 # Handspring Visor
 device	uvisor: ucombus
@@ -144,6 +169,11 @@ file	dev/usb/uvisor.c		uvisor
 device	ugensa: ucombus
 attach	ugensa at usbdevif
 file	dev/usb/ugensa.c		ugensa
+
+# Generic Serial Adapter
+device	u3g: ucombus
+attach	u3g at usbdevif
+file	dev/usb/u3g.c			u3g
 
 # YAP phone firmware loader
 device	uyap: ezload
@@ -230,8 +260,7 @@ file	dev/usb/uvscom.c		uvscom
 define	ubsa_common
 file	dev/usb/ubsa_common.c		ubsa_common
 device	ubsa: ucombus, ubsa_common
-#attach	ubsa at usbdevif
-attach	ubsa at usbifif
+attach	ubsa at usbdevif
 file	dev/usb/ubsa.c			ubsa
 
 # Huawei E220 3G/HSDPA modem (ubsa)

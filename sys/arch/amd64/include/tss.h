@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.h,v 1.4 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: tss.h,v 1.4.4.1 2009/05/04 08:10:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 #ifndef _AMD64_TSS_H_
 #define _AMD64_TSS_H_
 
+#ifdef __x86_64__
+
 /*
  * TSS structure. Since TSS hw switching is not supported in long
  * mode, this is mainly there for the I/O permission map in
@@ -62,5 +64,11 @@ struct x86_64_tss {
  * (i.e. any I/O attempt generates an exception.)
  */
 #define	IOMAP_INVALOFF	0xffff
+
+#else	/*	__x86_64__	*/
+
+#include <i386/tss.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* _AMD64_TSS_H_ */

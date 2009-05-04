@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 2007/12/31 15:32:09 ad Exp $
+#	$NetBSD: GENERIC,v 1.11.10.1 2009/05/04 08:12:15 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -35,6 +35,11 @@ makeoptions	CPUFLAGS="-mcpu=xscale"
 options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 options 	PXAGPIO_HAS_GPION_INTRS
 
+# in-kernel bootloader, see kloader(4)
+options 	KLOADER
+#options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+#options 	KLOADER_DEBUG
+
 # Standard system options
 options 	INSECURE	# disable kernel security levels
 
@@ -68,7 +73,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-#options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -90,7 +95,8 @@ options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0,
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -108,7 +114,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Miscellaneous kernel options
 #options 	KTRACE          # system call tracing via ktrace(1)
-#options 	LKM             # loadable kernel modules
 #options 	KMEMSTATS       # kernel memory statistics
 #options 	SCSIVERBOSE     # Verbose SCSI errors
 #options 	MIIVERBOSE      # Verbose MII autoconfuration messages
@@ -131,7 +136,7 @@ options 	WSEMUL_VT100
 #options 	WS_DEFAULT_BG=WSCOL_BLACK
 #options 	WS_DEFAULT_COLATTR="(0)"
 #options 	WS_DEFAULT_MONOATTR="(0)"
-#options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""
 #options 	WS_KERNEL_MONOATTR=""
@@ -150,7 +155,7 @@ options 	DDB             # in-kernel debugger
 options 	DDB_HISTORY_SIZE=100    # Enable history editing in DDB
 #options 	KGDB
 #makeoptions 	DEBUG="-g"  # compile full symbol table
-#options 	SYMTAB_SPACE=512000
+options 	SYMTAB_SPACE=512000
 
 
 # Kernel root file system and dump configuration.
@@ -168,8 +173,12 @@ pxaip0 at mainbus?
 
 pxaintc0 at pxaip?	# interrupt controller
 pxagpio0 at pxaip?	# GPIO
-pxadmac0 at pxaip?	# DMA controller
 pxartc0 at pxaip?	# RTC
+
+# DMAC support
+pxadmac0 at pxaip? addr 0x40000000 intr 25
+options		PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
+#options	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
 
 # Power management
 zapm0 at pxaip?		# power management
@@ -199,11 +208,11 @@ lcd0 at pxaip?
 wsdisplay* at lcd? console ?
 
 # Audio
-#zaudio0 at pxaip?
-#audio* at zaudio?
+zaudio0 at pxaip?
+audio* at zaudio?
 
 # Audio support
-#audio* at audiobus?
+audio* at audiobus?
 
 # integrated 16550 UARTs
 options 	COM_PXA2X0
@@ -230,63 +239,99 @@ wd* at atabus? drive ? flags 0x0000
 
 
 # USB Controller and Devices
-pxaudc0 at pxaip?	# USB Device Controller
-#ohci0 at pxaip?	# USB Host Controller
+zusb* at pxaip?
+#pxaudc0 at pxaip?	# USB Device Controller
+ohci0 at pxaip?	# USB Host Controller
 
 # PCMCIA USB controllers
 #slhci* at pcmcia? function ?	# ScanLogic SL811HS
 
 # USB bus support
-#usb* at ohci?
+usb* at ohci?
 #usb* at slhci?
 
 # USB Hubs
-#uhub* at usb?
-#uhub* at uhub? port ?
+uhub* at usb?
+uhub* at uhub? port ?
 
 # USB HID device
-#uhidev* at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
-#ums* at uhidev? reportid ?
-#wsmouse* at ums? mux 0
+ums* at uhidev? reportid ?
+wsmouse* at ums? mux 0
 
 # USB Keyboards
-#ukbd* at uhidev? reportid ?
-#wskbd* at ukbd? console ? mux 1
+ukbd* at uhidev? reportid ?
+wskbd* at ukbd? console ? mux 1
 
 # USB Generic HID devices
-#uhid* at uhidev? reportid ?
+uhid* at uhidev? reportid ?
 
 # USB Mass Storage
-#umass* at uhub? port ? configuration ? interface ?
-#wd* at umass?
+umass* at uhub? port ? configuration ? interface ?
+wd* at umass?
+
+# SCSI bus support
+scsibus* at scsi?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # USB audio
 #uaudio* at uhub? port ? configuration ?
+
+# USB Ethernet adapters
+aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
+axe*    at uhub? port ?         # ASIX AX88172 based adapters
+cdce*   at uhub? port ?         # CDC, Ethernet Networking Control Model
+cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
+kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
+udav*   at uhub? port ?         # Davicom DM9601 based adapters
+url*    at uhub? port ?         # Realtek RTL8150L based adapters
 
 # Kyocera AIR-EDGE PHONE
 #ukyopon* at uhub? port ?
 #ucom* at ukyopon? portno ?
 
 # USB Generic driver
-#ugen*   at uhub? port ?
+ugen*   at uhub? port ?
+
+# MII/PHY support
+acphy*  at mii? phy ?                   # DAltima AC101 and AMD Am79c874 PHYs
+amhphy* at mii? phy ?                   # AMD 79c901 Ethernet PHYs
+bmtphy* at mii? phy ?                   # Broadcom BCM5201 and BCM5202 PHYs
+brgphy* at mii? phy ?                   # Broadcom BCM5400-family PHYs
+dmphy*  at mii? phy ?                   # Davicom DM9101 PHYs
+exphy*  at mii? phy ?                   # 3Com internal PHYs
+glxtphy* at mii? phy ?                  # Level One LXT-1000 PHYs
+gphyter* at mii? phy ?                  # NS83861 Gig-E PHY
+icsphy* at mii? phy ?                   # Integrated Circuit Systems ICS189x
+inphy*  at mii? phy ?                   # Intel 82555 PHYs
+iophy*  at mii? phy ?                   # Intel 82553 PHYs
+lxtphy* at mii? phy ?                   # Level One LXT-970 PHYs
+makphy* at mii? phy ?                   # Marvell Semiconductor 88E1000 PHYs
+nsphy*  at mii? phy ?                   # NS83840 PHYs
+nsphyter* at mii? phy ?                 # NS83843 PHYs
+pnaphy* at mii? phy ?                   # generic HomePNA PHYs
+qsphy*  at mii? phy ?                   # Quality Semiconductor QS6612 PHYs
+sqphy*  at mii? phy ?                   # Seeq 80220/80221/80223 PHYs
+tlphy*  at mii? phy ?                   # ThunderLAN PHYs
+tqphy*  at mii? phy ?                   # TDK Semiconductor PHYs
+ukphy*  at mii? phy ?                   # generic unknown PHYs
+urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
 
 
 # integrated MMC/SD contoller
-#pxamci0 at pxaip? addr 0x41100000 size 0x48
-#sdmmc* at pxamci?
+pxamci0 at pxaip? addr 0x41100000 size 0x48
+sdmmc* at pxamci?
 #options 	PXAMCI_DEBUG
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 
-# SCSI bus support
-#scsibus* at scsi?
-
-# SCSI devices
-#sd* at scsibus? target ? lun ?	# SCSI disk drives
-#cd* at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#uk* at scsibus? target ? lun ?	# SCSI unknown
+ld* at sdmmc?				# MMC/SD/SDHC card
 
 
 # Pseudo-Devices
@@ -298,6 +343,11 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
+
+#
+# accept filters
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.24.16.1 2008/05/16 02:23:36 yamt Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.24.16.2 2009/05/04 08:12:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -99,6 +99,6 @@ int irix_elf64_probe(struct lwp *, struct exec_package *, void *,
 
 void irix_n32_setregs(struct lwp *, struct exec_package *, u_long);
 
-extern const struct emul emul_irix;
+extern struct emul emul_irix;
 
 #endif /* !_IRIX_EXEC_H_ */

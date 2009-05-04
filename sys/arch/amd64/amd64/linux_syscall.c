@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.25.2.1 2008/05/16 02:21:49 yamt Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.25.2.2 2009/05/04 08:10:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.25.2.1 2008/05/16 02:21:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.25.2.2 2009/05/04 08:10:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.25.2.1 2008/05/16 02:21:49 yamt 
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -105,7 +106,7 @@ linux_syscall(struct trapframe *frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:

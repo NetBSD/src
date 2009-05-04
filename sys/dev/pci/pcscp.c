@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.42.4.1 2008/05/16 02:24:45 yamt Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.42.4.2 2009/05/04 08:13:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -33,10 +33,13 @@
 /*
  * pcscp.c: device dependent code for AMD Am53c974 (PCscsi-PCI)
  * written by Izumi Tsutsui <tsutsui@NetBSD.org>
+ *
+ * Technical manual available at
+ * http://www.amd.com/files/connectivitysolutions/networking/archivednetworking/19113.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.42.4.1 2008/05/16 02:24:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.42.4.2 2009/05/04 08:13:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

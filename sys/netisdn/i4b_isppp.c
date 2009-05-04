@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.22 2007/03/04 06:03:30 christos Exp $
+ *	$Id: i4b_isppp.c,v 1.22.40.1 2009/05/04 08:14:20 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.22 2007/03/04 06:03:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.22.40.1 2009/05/04 08:14:20 yamt Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -252,7 +252,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 ipppattach(void *dummy)
 #else
-ipppattach()
+ipppattach(void)
 #endif
 {
 	struct i4bisppp_softc *sc = i4bisppp_softc;
@@ -358,31 +358,15 @@ ipppattach()
  *	process ioctl
  *---------------------------------------------------------------------------*/
 static int
-i4bisppp_ioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, void *data)
+i4bisppp_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct i4bisppp_softc *sc = ifp->if_softc;
-	int error;
 
 #ifndef USE_ISPPP
-	error = sppp_ioctl(&sc->sc_sp.pp_if, cmd, data);
+	return sppp_ioctl(&sc->sc_sp.pp_if, cmd, data);
 #else
-	error = isppp_ioctl(&sc->sc_sp.pp_if, cmd, data);
+	return isppp_ioctl(&sc->sc_sp.pp_if, cmd, data);
 #endif
-	if (error)
-		return error;
-
-	switch(cmd) {
-	case SIOCSIFFLAGS:
-#if 0 /* never used ??? */
-		x = splnet();
-		if ((ifp->if_flags & IFF_UP) == 0)
-			UNTIMEOUT(i4bisppp_timeout, (void *)sp, sc->sc_ch);
-		splx(x);
-#endif
-		break;
-	}
-
-	return 0;
 }
 
 /*---------------------------------------------------------------------------*

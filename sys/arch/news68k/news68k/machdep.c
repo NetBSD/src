@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2008/01/28 17:07:20 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.10.1 2009/05/04 08:11:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,10 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2008/01/28 17:07:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.10.1 2009/05/04 08:11:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +142,6 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -269,12 +269,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
@@ -375,10 +369,6 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 
-#if __GNUC__    /* XXX work around lame compiler problem (gcc 2.7.2) */
-	(void)&howto;
-#endif
-
 	/* take a snap shot before clobbering any registers */
 	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
@@ -410,6 +400,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
@@ -619,15 +611,15 @@ dumpsys(void)
 			return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %u,%u not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
 	dump = bdev->d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 	printf("dump ");
 
@@ -640,7 +632,7 @@ dumpsys(void)
 #define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
+			printf_nolog("%d ", pg / NPGMB);
 #undef NPGMB
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
@@ -656,7 +648,7 @@ dumpsys(void)
 
 		case ENXIO:
 			printf("device bad\n");
-			return;
+				return;
 
 		case EFAULT:
 			printf("device not ready\n");
@@ -1007,16 +999,12 @@ intrhand_lev3(void)
 {
 	int stat;
 
-	idepth++;
-
 	stat = *int_status;
 	intrcnt[3]++;
 	uvmexp.intrs++;
 #if 1
 	printf("level 3 interrupt: INT_STATUS = 0x%02x\n", stat);
 #endif
-
-	idepth--;
 }
 
 extern int leintr(int);
@@ -1026,8 +1014,6 @@ void
 intrhand_lev4(void)
 {
 	int stat;
-
-	idepth++;
 
 #define INTST_LANCE	0x04
 #define INTST_SCSI	0x80
@@ -1049,8 +1035,6 @@ intrhand_lev4(void)
 #if 0
 	printf("level 4 interrupt\n");
 #endif
-
-	idepth--;
 }
 
 /*
@@ -1093,8 +1077,8 @@ consinit(void)
 		(*cn_tab->cn_init)(cn_tab);
 		break;
 	}
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
 #endif
 #ifdef DDB

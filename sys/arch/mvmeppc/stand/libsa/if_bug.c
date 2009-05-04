@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bug.c,v 1.1.126.1 2008/05/16 02:22:56 yamt Exp $	*/
+/*	$NetBSD: if_bug.c,v 1.1.126.2 2009/05/04 08:11:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 static int	bug_match(struct netif *, void *);
 static int	bug_probe(struct netif *, void *);
 static void	bug_init(struct iodesc *, void *);
-static int	bug_get(struct iodesc *, void *, size_t, time_t);
+static int	bug_get(struct iodesc *, void *, size_t, saseconds_t);
 static int	bug_put(struct iodesc *, void *, size_t);
 static void	bug_end(struct netif *);
 
@@ -82,9 +82,7 @@ struct bug_softc {
 static struct bug_softc bug_softc;
 
 int
-bug_match(nif, machdep_hint)
-	struct netif *nif;
-	void   *machdep_hint;
+bug_match(struct netif *nif, void *machdep_hint)
 {
 
 	if (machdep_hint &&
@@ -96,18 +94,14 @@ bug_match(nif, machdep_hint)
 }
 
 int
-bug_probe(nif, machdep_hint)
-	struct netif *nif;
-	void   *machdep_hint;
+bug_probe(struct netif *nif, void *machdep_hint)
 {
 
 	return (0);
 }
 
 void
-bug_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void   *machdep_hint;
+bug_init(struct iodesc *desc, void *machdep_hint)
 {
 	struct netif *nif = desc->io_netif;
 	struct bug_netio nio;
@@ -143,11 +137,7 @@ bug_init(desc, machdep_hint)
 }
 
 int
-bug_get(desc, pkt, len, timeout)
-	struct	iodesc *desc;
-	void	*pkt;
-	size_t	len;
-	time_t	timeout;
+bug_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
 	struct netif *nif = desc->io_netif;
 	struct bug_softc *sc = nif->nif_devdata;
@@ -176,10 +166,7 @@ bug_get(desc, pkt, len, timeout)
 }
 
 int
-bug_put(desc, pkt, len)
-	struct	iodesc *desc;
-	void	*pkt;
-	size_t	len;
+bug_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct netif *nif = desc->io_netif;
 	struct bug_softc *sc = nif->nif_devdata;
@@ -205,8 +192,7 @@ bug_put(desc, pkt, len)
 }
 
 void
-bug_end(nif)
-	struct netif *nif;
+bug_end(struct netif *nif)
 {
 	struct bug_netio nio;
 

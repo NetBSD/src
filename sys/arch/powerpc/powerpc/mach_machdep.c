@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.24.2.1 2008/05/16 02:23:02 yamt Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.24.2.2 2009/05/04 08:11:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.24.2.1 2008/05/16 02:23:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.24.2.2 2009/05/04 08:11:45 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -115,7 +115,7 @@ mach_create_thread_child(void *arg)
 	 * Call upcallret before setting the register context as it
 	 * affects R3, R4 and CR.
 	 */
-	/* XXX upcallret(l); */
+	upcallret(l);
 
 	/* Set requested register context */
 	tf->srr0 = regs->srr0;
@@ -141,11 +141,7 @@ mach_create_thread_child(void *arg)
 }
 
 int
-mach_thread_get_state_machdep(l, flavor, state, size)
-	struct lwp *l;
-	int flavor;
-	void *state;
-	int *size;
+mach_thread_get_state_machdep(struct lwp *l, int flavor, void *state, int *size)
 {
 	struct trapframe *tf;
 
@@ -187,10 +183,7 @@ mach_thread_get_state_machdep(l, flavor, state, size)
 }
 
 int
-mach_thread_set_state_machdep(l, flavor, state)
-	struct lwp *l;
-	int flavor;
-	void *state;
+mach_thread_set_state_machdep(struct lwp *l, int flavor, void *state)
 {
 	struct trapframe *tf;
 
@@ -228,11 +221,7 @@ mach_thread_set_state_machdep(l, flavor, state)
 }
 
 int 
-mach_vm_machine_attribute_machdep(l, addr, size, valp)
-	struct lwp *l;
-	vaddr_t addr;
-	size_t size;
-	int *valp;
+mach_vm_machine_attribute_machdep(struct lwp *l, vaddr_t addr, size_t size, int *valp)
 {
 	int error = 0;
 

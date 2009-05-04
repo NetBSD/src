@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.200 2008/01/30 13:49:09 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.200.10.1 2009/05/04 08:11:10 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.200 $"
+#ident 		"GENERIC-$Revision: 1.200.10.1 $"
 
 maxusers	16
 
@@ -92,7 +92,7 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -129,9 +129,10 @@ options 	COMPAT_43
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
-options 	LKM		# loadable kernel modules
 
 #options 	NFS_BOOT_DHCP
 options 	NFS_BOOT_BOOTP
@@ -645,6 +646,11 @@ ugen*	at uhub? port ?
 audio*	at uaudio?
 
 # Pseudo-Devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp			# serial-line IP ports

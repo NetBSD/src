@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.4.78.1 2008/05/16 02:23:23 yamt Exp $	*/
+/*	$NetBSD: idprom.c,v 1.4.78.2 2009/05/04 08:12:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <machine/idprom.h>
 #include <machine/mon.h>
+#include <lib/libsa/stand.h>
 
 #include "libsa.h"
 

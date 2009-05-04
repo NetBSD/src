@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.58 2007/10/17 19:53:17 garbled Exp $ */
+/*	$NetBSD: siop.c,v 1.58.20.1 2009/05/04 08:10:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,10 +70,12 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.58 2007/10/17 19:53:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.58.20.1 2009/05/04 08:10:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/buf.h>
@@ -109,6 +111,7 @@ int  siop_checkintr(struct siop_softc *, u_char, u_char, u_char, int *);
 void siopreset(struct siop_softc *);
 void siopsetdelay(int);
 void siop_scsidone(struct siop_acb *, int);
+void siop_timeout(void *);
 void siop_sched(struct siop_softc *);
 void siop_poll(struct siop_softc *, struct siop_acb *);
 void siopintr(struct siop_softc *);
@@ -263,7 +266,7 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		acb->flags = ACB_ACTIVE;
 		acb->xs = xs;
-		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+		memcpy( &acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->daddr = xs->data;
 		acb->dleft = xs->datalen;
@@ -419,6 +422,9 @@ siop_scsidone(struct siop_acb *acb, int stat)
 #endif
 		return;
 	}
+
+	callout_stop(&xs->xs_callout);
+
 	periph = xs->xs_periph;
 	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
@@ -556,8 +562,8 @@ siopinitialize(struct siop_softc *sc)
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
 	 */
 
-	MALLOC(sc->sc_acb, struct siop_acb *,
-		sizeof(struct siop_acb) * SIOP_NACB, M_DEVBUF, M_NOWAIT);
+	sc->sc_acb = malloc(sizeof(struct siop_acb) * SIOP_NACB,
+		M_DEVBUF, M_NOWAIT);
 	if (sc->sc_acb == NULL)
 		panic("siopinitialize: ACB malloc failed!");
 
@@ -595,6 +601,28 @@ siopinitialize(struct siop_softc *sc)
 	}
 
 	siopreset (sc);
+}
+
+void
+siop_timeout(void *arg)
+{
+	struct siop_acb *acb;
+	struct scsipi_periph *periph;
+	struct siop_softc *sc;
+	int s;
+
+	acb = arg;
+	periph = acb->xs->xs_periph;
+	sc = device_private(periph->periph_channel->chan_adapter->adapt_dev);
+	scsipi_printaddr(periph);
+	printf("timed out\n");
+
+	s = splbio();
+
+	acb->xs->error = XS_TIMEOUT;
+	siopreset(sc);
+
+	splx(s);
 }
 
 void
@@ -644,7 +672,7 @@ siopreset(struct siop_softc *sc)
 	rp->siop_ctest7 |= sc->sc_ctest7;
 
 	/* will need to re-negotiate sync xfers */
-	bzero(&sc->sc_sync, sizeof (sc->sc_sync));
+	memset(&sc->sc_sync, 0, sizeof (sc->sc_sync));
 
 	i = rp->siop_istat;
 	if (i & SIOP_ISTAT_SIP)
@@ -664,12 +692,12 @@ siopreset(struct siop_softc *sc)
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(struct siop_acb) * SIOP_NACB);
+		memset(acb, 0, sizeof(struct siop_acb) * SIOP_NACB);
 		for (i = 0; i < SIOP_NACB; i++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
-		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 	} else {
 		if (sc->sc_nexus != NULL) {
 			sc->sc_nexus->xs->error = XS_RESET;
@@ -744,7 +772,7 @@ siop_start(struct siop_softc *sc, int target, int lun, u_char *cbuf, int clen,
 	acb->ds.msginbuf = (char *) kvtop(&acb->msg[1]);
 	acb->ds.extmsgbuf = (char *) kvtop(&acb->msg[2]);
 	acb->ds.synmsgbuf = (char *) kvtop(&acb->msg[3]);
-	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
+	memset(&acb->ds.chain, 0, sizeof (acb->ds.chain));
 
 	/*
 	 * Negotiate wide is the initial negotiation state;  since the 53c710
@@ -842,6 +870,8 @@ siop_start(struct siop_softc *sc, int target, int lun, u_char *cbuf, int clen,
 	}
 #endif
 	if (sc->nexus_list.tqh_first == NULL) {
+		callout_reset(&acb->xs->xs_callout,
+		    mstohz(acb->xs->timeout) + 1, siop_timeout, acb);
 		if (rp->siop_istat & SIOP_ISTAT_CON)
 			printf("%s: siop_select while connected?\n",
 			    sc->sc_dev.dv_xname);
@@ -1352,7 +1382,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 			sc->sc_dev.dv_xname, rp->siop_sfbr, acb->msg[1], rp->siop_sbcl);
 		/* what should be done here? */
 		DCIAS(kvtop(&acb->msg[1]));
-		rp->siop_dsp = sc->sc_scriptspa + Ent_switch;
+		rp->siop_dsp = sc->sc_scriptspa + Ent_clear_ack;
 		return (0);
 	}
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff0a) {

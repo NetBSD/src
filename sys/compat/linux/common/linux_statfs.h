@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_statfs.h,v 1.2.16.1 2008/05/16 02:23:43 yamt Exp $	*/
+/*	$NetBSD: linux_statfs.h,v 1.2.16.2 2009/05/04 08:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@ static void bsd_to_linux_statfs(const struct statvfs *,
  * to glibc statvfs() bug (see below).
  */
 static void
-bsd_to_linux_statfs(bsp, lsp)
-	const struct statvfs *bsp;
-	struct linux_statfs *lsp;
+bsd_to_linux_statfs(const struct statvfs *bsp, struct linux_statfs *lsp)
 {
 	int i;
 

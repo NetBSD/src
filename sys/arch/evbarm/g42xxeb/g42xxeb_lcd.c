@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.8 2007/03/04 05:59:44 christos Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.8.44.1 2009/05/04 08:10:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -56,8 +56,8 @@
 #include "wsdisplay.h"
 #include "ioconf.h"
 
-int	lcd_match( struct device *, struct cfdata *, void *);
-void	lcd_attach( struct device *, struct device *, void *);
+int	lcd_match(device_t, cfdata_t, void *);
+void	lcd_attach(device_t, device_t, void *);
 int	lcdintr(void *);
 
 #if NWSDISPLAY > 0
@@ -132,11 +132,11 @@ const struct cdevsw lcd_cdevsw = {
 
 #endif
 
-CFATTACH_DECL(lcd_obio, sizeof (struct pxa2x0_lcd_softc), lcd_match, lcd_attach,
-    NULL, NULL);
+CFATTACH_DECL_NEW(lcd_obio, sizeof (struct pxa2x0_lcd_softc),
+    lcd_match, lcd_attach, NULL, NULL);
 
 int
-lcd_match( struct device *parent, struct cfdata *cf, void *aux )
+lcd_match( device_t parent, cfdata_t cf, void *aux )
 {
 	return 1;
 }
@@ -188,9 +188,11 @@ const struct lcd_panel_geometry toshiba_LTM035 =
 };
 #endif /* G4250_LCD_TOSHIBA_LTM035 */
 
-void lcd_attach( struct device *parent, struct device *self, void *aux )
+void lcd_attach( device_t parent, device_t self, void *aux )
 {
-	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
+	struct pxa2x0_lcd_softc *sc = device_private(self);
+
+	sc->dev = self;
 
 #ifdef G4250_LCD_TOSHIBA_LTM035
 # define PANEL	toshiba_LTM035
@@ -305,7 +307,8 @@ lcdclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 paddr_t
 lcdmmap(dev_t dev, off_t offset, int size)
 {
-	struct pxa2x0_lcd_softc *sc = device_lookup(&lcd_cd, minor(dev));
+	struct pxa2x0_lcd_softc *sc =
+		device_lookup_private(&lcd_cd, minor(dev));
 	struct pxa2x0_lcd_screen *scr = sc->active;
 
 	return bus_dmamem_mmap( &pxa2x0_bus_dma_tag, scr->segs, scr->nsegs,

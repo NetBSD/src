@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.14 2006/08/30 15:40:41 christos Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.14.56.1 2009/05/04 08:14:16 yamt Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.14 2006/08/30 15:40:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.14.56.1 2009/05/04 08:14:16 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -75,12 +75,12 @@ int ieee80211_rssadapt_debug = 0;
 #endif
 
 static struct ieee80211_rssadapt_expavgctl master_expavgctl = {
-	rc_decay_denom : 16,
-	rc_decay_old : 15,
-	rc_thresh_denom : 8,
-	rc_thresh_old : 4,
-	rc_avgrssi_denom : 8,
-	rc_avgrssi_old : 4
+	.rc_decay_denom = 16,
+	.rc_decay_old = 15,
+	.rc_thresh_denom = 8,
+	.rc_thresh_old = 4,
+	.rc_avgrssi_denom = 8,
+	.rc_avgrssi_old = 4
 };
 
 #ifdef __NetBSD__
@@ -142,7 +142,7 @@ sysctl_ieee80211_rssadapt_expavgctl(SYSCTLFN_ARGS)
 /*
  * Setup sysctl(3) MIB, net.ieee80211.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
     "sysctl ieee80211 rssadapt subtree setup")

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.19.4.1 2008/05/16 02:23:57 yamt Exp $ */
+/*	$NetBSD: rd.c,v 1.19.4.2 2009/05/04 08:12:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.19.4.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.19.4.2 2009/05/04 08:12:38 yamt Exp $");
 
 #include "rnd.h"
 
@@ -311,10 +311,7 @@ const struct cdevsw rd_cdevsw = {
 extern struct cfdriver rd_cd;
 
 int
-rdlookup(id, slave, punit)
-	int id;
-	int slave;
-	int punit;
+rdlookup(int id, int slave, int punit)
 {
 	int i;
 
@@ -328,10 +325,7 @@ rdlookup(id, slave, punit)
 }
 
 int
-rdmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+rdmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 
@@ -341,9 +335,7 @@ rdmatch(parent, match, aux)
 }
 
 void
-rdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct rd_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;
@@ -472,8 +464,7 @@ rdattach(parent, self, aux)
  * Read or construct a disklabel
  */
 int
-rdgetinfo(sc)
-	struct rd_softc *sc;
+rdgetinfo(struct rd_softc *sc)
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
 	struct partition *pi;
@@ -502,15 +493,12 @@ rdgetinfo(sc)
 }
 
 int
-rdopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+rdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct rd_softc *sc;
 	int error, mask, part;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & RDF_ALIVE) ==0)
 		return (ENXIO);
 
@@ -558,16 +546,13 @@ rdopen(dev, flags, mode, l)
 }
 
 int
-rdclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+rdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct rd_softc *sc;
 	struct disk *dk;
 	int mask, s;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -601,8 +586,7 @@ rdclose(dev, flag, mode, l)
 }
 
 void
-rdstrategy(bp)
-	struct buf *bp;
+rdstrategy(struct buf *bp)
 {
 	struct rd_softc *sc;
 	struct partition *pinfo;
@@ -610,7 +594,7 @@ rdstrategy(bp)
 	int sz, s;
 	int offset;
 
-	sc = device_lookup(&rd_cd, RDUNIT(bp->b_dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(bp->b_dev));
 
 	DPRINTF(RDB_FOLLOW,
 	    ("rdstrategy(%p): dev %x, bn %" PRId64 ", bcount %ld, %c\n",
@@ -656,7 +640,7 @@ rdstrategy(bp)
 	}
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
-	BUFQ_PUT(sc->sc_tab, bp);
+	bufq_put(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		rdustart(sc);
@@ -672,8 +656,7 @@ done:
  * callout from timeouts
  */
 void
-rdrestart(arg)
-	void *arg;
+rdrestart(void *arg)
 {
 	int s = splbio();
 	rdustart((struct rd_softc *)arg);
@@ -685,12 +668,11 @@ rdrestart(arg)
 /* called by rdrestart() when handingly timeouts */
 /* called by rdintr() */
 void
-rdustart(sc)
-	struct rd_softc *sc;
+rdustart(struct rd_softc *sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (gpibrequest(sc->sc_ic, sc->sc_hdl))
@@ -698,17 +680,15 @@ rdustart(sc)
 }
 
 struct buf *
-rdfinish(sc, bp)
-	struct rd_softc *sc;
-	struct buf *bp;
+rdfinish(struct rd_softc *sc, struct buf *bp)
 {
 
 	sc->sc_errcnt = 0;
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	bp->b_resid = 0;
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if ((bp = BUFQ_PEEK(sc->sc_tab)) != NULL)
+	if ((bp = bufq_peek(sc->sc_tab)) != NULL)
 		return (bp);
 	sc->sc_active = 0;
 	if (sc->sc_flags & RDF_WANTED) {
@@ -719,9 +699,7 @@ rdfinish(sc, bp)
 }
 
 void
-rdcallback(v, action)
-	void *v;
-	int action;
+rdcallback(void *v, int action)
 {
 	struct rd_softc *sc = v;
 
@@ -747,10 +725,9 @@ rdcallback(v, action)
 /* called from rdustart() to start a transfer */
 /* called from gpib interface as the initiator */
 void
-rdstart(sc)
-	struct rd_softc *sc;
+rdstart(struct rd_softc *sc)
 {
-	struct buf *bp = BUFQ_PEEK(sc->sc_tab);
+	struct buf *bp = bufq_peek(sc->sc_tab);
 	int part, slave, punit;
 
 	slave = sc->sc_slave;
@@ -811,15 +788,14 @@ again:
 }
 
 void
-rdintr(sc)
-	struct rd_softc *sc;
+rdintr(struct rd_softc *sc)
 {
 	struct buf *bp;
 	u_int8_t stat = 13;	/* in case gpibrecv fails */
 	int rv, dir, restart, slave;
 
 	slave = sc->sc_slave;
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 
 	DPRINTF(RDB_FOLLOW, ("rdintr(%s): bp %p, %c, flags %x\n",
 	    device_xname(&sc->sc_dev), bp, (bp->b_flags & B_READ) ? 'R' : 'W',
@@ -872,8 +848,7 @@ rdintr(sc)
  * 0 if we should just quietly give up.
  */
 int
-rderror(sc)
-	struct rd_softc *sc;
+rderror(struct rd_softc *sc)
 {
 	struct cs80_stat css;
 	struct buf *bp;
@@ -936,7 +911,7 @@ rderror(sc)
 	/*
 	 * First conjure up the block number at which the error occurred.
  	 */
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	pbn = sc->sc_dk.dk_label->d_partitions[RDPART(bp->b_dev)].p_offset;
 	if ((css.c_fef & FEF_CU) || (css.c_fef & FEF_DR) ||
 	    (css.c_ief & IEF_RRMASK)) {
@@ -1002,38 +977,27 @@ rderror(sc)
 }
 
 int
-rdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+rdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-rdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+rdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
-rdioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct rd_softc *sc;
 	struct disklabel *lp;
 	int error, flags;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	lp = sc->sc_dk.dk_label;
@@ -1090,9 +1054,7 @@ rdioctl(dev, cmd, data, flag, l)
 }
 
 void
-rdgetdefaultlabel(sc, lp)
-	struct rd_softc *sc;
-	struct disklabel *lp;
+rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 {
 	int type = sc->sc_type;
 
@@ -1124,13 +1086,12 @@ rdgetdefaultlabel(sc, lp)
 }
 
 int
-rdsize(dev)
-	dev_t dev;
+rdsize(dev_t dev)
 {
 	struct rd_softc *sc;
 	int psize, didopen = 0;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & RDF_ALIVE) == 0)
 		return (-1);
 
@@ -1158,11 +1119,7 @@ static int rddoingadump;	/* simple mutex */
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-rddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	void *va;
-	size_t size;
+rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct rd_softc *sc;
 	int sectorsize;		/* size of a disk sector */
@@ -1179,7 +1136,7 @@ rddump(dev, blkno, va, size)
 		return (EFAULT);
 	rddoingadump = 1;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & RDF_ALIVE) == 0)
 		return (ENXIO);
 

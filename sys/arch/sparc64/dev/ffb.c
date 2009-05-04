@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.33 2008/04/05 13:40:05 cegger Exp $	*/
+/*	$NetBSD: ffb.c,v 1.33.4.1 2009/05/04 08:11:57 yamt Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.33 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.33.4.1 2009/05/04 08:11:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -613,7 +613,7 @@ ffb_ras_setfg(struct ffb_softc *sc, int32_t fg)
 static void
 ffbfb_unblank(struct device *dev)
 {
-	struct ffb_softc *sc = (struct ffb_softc *)dev;
+	struct ffb_softc *sc = device_private(dev);
 	struct vcons_screen *ms = sc->vd.active;
 	u_int on = 1;
 	int redraw = 0;
@@ -624,7 +624,8 @@ ffbfb_unblank(struct device *dev)
 		redraw = 1;
 	}
 	
-	ffb_blank((struct ffb_softc*)dev, WSDISPLAYIO_SVIDEO, &on);
+	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &on);
+#if 0
 	if ((sc->vd.active != &ffb_console_screen) &&
 	    (ffb_console_screen.scr_flags & VCONS_SCREEN_IS_STATIC)) {
 		/* 
@@ -639,7 +640,7 @@ ffbfb_unblank(struct device *dev)
 		ms = sc->vd.active;
 		redraw = 1;
 	}
-	
+#endif	
 	if (redraw) {
 		vcons_redraw_screen(ms);
 	}
@@ -649,10 +650,9 @@ int
 ffbfb_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ffb_softc *sc;
-	int unit = minor(dev);
 
-	sc = ffb_cd.cd_devs[unit];
-	if (unit >= ffb_cd.cd_ndevs || ffb_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&ffb_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 		
 	sc->sc_locked = 1;
@@ -662,7 +662,7 @@ ffbfb_open(dev_t dev, int flags, int mode, struct lwp *l)
 int
 ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
+	struct ffb_softc *sc = device_lookup_private(&ffb_cd, minor(dev));
 	struct vcons_screen *ms = sc->vd.active;
 	
 	sc->sc_locked = 0;
@@ -679,7 +679,7 @@ ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 int
 ffbfb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
+	struct ffb_softc *sc = device_lookup_private(&ffb_cd, minor(dev));
 
 	return ffb_ioctl(&sc->vd, NULL, cmd, data, flags, l);
 }
@@ -687,7 +687,7 @@ ffbfb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 paddr_t
 ffbfb_mmap(dev_t dev, off_t off, int prot)
 {
-	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
+	struct ffb_softc *sc = device_lookup_private(&ffb_cd, minor(dev));
 	uint64_t size;
 	int i, reg;
 	off_t o;
@@ -790,6 +790,9 @@ ffb_cursor(void *cookie, int on, int row, int col)
 				/* remove cursor */
 				coffset = ri->ri_ccol + (ri->ri_crow *
 				    ri->ri_cols);
+#ifdef WSDISPLAY_SCROLLSUPPORT
+				coffset += scr->scr_offset_to_zero;
+#endif
 				ffb_ras_wait(sc);
 				sc->putchar(cookie, ri->ri_crow, 
 				    ri->ri_ccol, scr->scr_chars[coffset], 
@@ -804,6 +807,9 @@ ffb_cursor(void *cookie, int on, int row, int col)
 				x = ri->ri_ccol * wi + ri->ri_xorigin;
 				y = ri->ri_crow * he + ri->ri_yorigin;
 				coffset = col + (row * ri->ri_cols);
+#ifdef WSDISPLAY_SCROLLSUPPORT
+				coffset += scr->scr_offset_to_zero;
+#endif
 				attr = scr->scr_attrs[coffset];
 #ifdef FFB_CURSOR_SWAP_COLOURS
 				revattr=((attr >> 8 ) & 0x000f0000) | ((attr & 

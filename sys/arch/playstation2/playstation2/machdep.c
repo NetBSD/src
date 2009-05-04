@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21.20.1 2008/05/16 02:22:59 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.20.2 2009/05/04 08:11:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.20.1 2008/05/16 02:22:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.20.2 2009/05/04 08:11:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.20.1 2008/05/16 02:22:59 yamt Exp $
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -72,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.20.1 2008/05/16 02:22:59 yamt Exp $
 
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map;
 struct vm_map *mb_map;
 struct vm_map *phys_map;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
@@ -88,7 +88,7 @@ void mach_init(void);
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init()
+mach_init(void)
 {
 	extern char kernel_text[], edata[], end[];
 	extern struct user *proc0paddr;
@@ -168,7 +168,7 @@ mach_init()
  * Allocate memory for variable-sized tables,
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -182,12 +182,6 @@ cpu_startup()
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
@@ -256,6 +250,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
 		sifbios_halt(0); /* power down */
 	else if (howto & RB_HALT)
@@ -275,7 +271,7 @@ cpu_reboot(int howto, char *bootstr)
 
 #ifdef DEBUG
 void
-bootinfo_dump()
+bootinfo_dump(void)
 {
 	printf("devconf=%#x, option=%#x, rtc=%#x, pcmcia_type=%#x,"
 	    "sysconf=%#x\n",

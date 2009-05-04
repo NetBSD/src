@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.h,v 1.2.164.1 2008/05/16 02:21:48 yamt Exp $ */
+/* $NetBSD: tc_dma_3000_500.h,v 1.2.164.2 2009/05/04 08:10:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,18 +30,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	tc_dma_init_3000_500 __P((int));
-bus_dma_tag_t tc_dma_get_tag_3000_500 __P((int));
+void	tc_dma_init_3000_500(int);
+bus_dma_tag_t tc_dma_get_tag_3000_500(int);
 
-int	tc_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-void	tc_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
-int	tc_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	tc_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	tc_bus_dmamap_load_uio_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	tc_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-void	tc_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+int	tc_bus_dmamap_create_sgmap(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void	tc_bus_dmamap_destroy_sgmap(bus_dma_tag_t, bus_dmamap_t);
+int	tc_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	tc_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	tc_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	tc_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	tc_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);

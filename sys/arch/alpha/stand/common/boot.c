@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.28 2005/12/11 12:16:20 christos Exp $ */
+/* $NetBSD: boot.c,v 1.28.78.1 2009/05/04 08:10:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ main(long fd)
 	char *name, **namep;
 	u_long marks[MARK_MAX];
 	u_int64_t entry;
-	int win;
+	int win, loadflag;
 
 	/* Init prom callback vector. */
 	init_prom_calls();
@@ -122,13 +122,24 @@ main(long fd)
 		gets(boot_file);
 	}
 
+#ifdef NO_LOAD_NOTE
+	loadflag = LOAD_KERNEL & ~LOAD_NOTE;
+#else
+	loadflag = LOAD_KERNEL;
+#endif
+
 	memset(marks, 0, sizeof marks);
-	if (boot_file[0] != '\0')
-		win = loadfile(name = boot_file, marks, LOAD_KERNEL) == 0;
-	else
+	if (boot_file[0] != '\0') {
+		name = boot_file;
+		win = loadfile(name, marks, loadflag) == 0;
+	} else {
+		name = NULL;	/* XXX gcc -Wuninitialized */
 		for (namep = kernelnames, win = 0; *namep != NULL && !win;
-		    namep++)
-			win = loadfile(name = *namep, marks, LOAD_KERNEL) == 0;
+		    namep++) {
+			name = *namep;
+			win = loadfile(name, marks, loadflag) == 0;
+		}
+	}
 
 	entry = marks[MARK_ENTRY];
 	booted_dev_close();

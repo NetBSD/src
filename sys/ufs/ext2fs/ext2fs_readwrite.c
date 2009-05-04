@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.51 2008/04/24 15:35:31 ad Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.51.2.1 2009/05/04 08:14:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.51 2008/04/24 15:35:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.51.2.1 2009/05/04 08:14:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,12 +110,11 @@ ext2fs_read(void *v)
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	struct ufsmount *ump;
-	void *win;
 	vsize_t bytelen;
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
-	int error, flags;
+	int error;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -151,11 +150,8 @@ ext2fs_read(void *v)
 			if (bytelen == 0)
 				break;
 
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, advice, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-			ubc_release(win, flags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
+			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 			if (error)
 				break;
 		}
@@ -177,11 +173,11 @@ ext2fs_read(void *v)
 			xfersize = bytesinfile;
 
 		if (lblktosize(fs, nextlbn) >= ext2fs_size(ip))
-			error = bread(vp, lbn, size, NOCRED, &bp);
+			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		else {
 			int nextsize = fs->e2fs_bsize;
 			error = breadn(vp, lbn,
-				size, &nextlbn, &nextsize, 1, NOCRED, &bp);
+				size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
 		}
 		if (error)
 			break;
@@ -239,12 +235,13 @@ ext2fs_write(void *v)
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, xfersize;
 	vsize_t bytelen;
-	void *win;
 	off_t oldoff = 0;					/* XXX */
 	bool async;
 	int extended = 0;
+	int advice;
 
 	ioflag = ap->a_ioflag;
+	advice = IO_ADV_DECODE(ioflag);
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -312,11 +309,8 @@ ext2fs_write(void *v)
 			    bytelen, ap->a_cred, 0);
 			if (error)
 				break;
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, UVM_ADV_NORMAL, UBC_WRITE);
-			error = uiomove(win, bytelen, uio);
-			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-			ubc_release(win, flags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
+			    UBC_WRITE | UBC_UNMAP_FLAG(vp));
 			if (error)
 				break;
 

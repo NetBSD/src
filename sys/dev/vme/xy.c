@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.80 2008/04/05 18:16:56 cegger Exp $	*/
+/*	$NetBSD: xy.c,v 1.80.4.1 2009/05/04 08:13:25 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.80 2008/04/05 18:16:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.80.4.1 2009/05/04 08:13:25 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -241,20 +241,17 @@ struct dkdriver xydkdriver = { xystrategy };
 static void *xy_labeldata;
 
 static void
-xydummystrat(bp)
-	struct buf *bp;
+xydummystrat(struct buf *bp)
 {
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
-	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
+	memcpy(bp->b_data, xy_labeldata, XYFM_BPS);
 	bp->b_oflags |= BO_DONE;
 	bp->b_cflags &= ~BC_BUSY;
 }
 
 int
-xygetdisklabel(xy, b)
-	struct xy_softc *xy;
-	void *b;
+xygetdisklabel(struct xy_softc *xy, void *b)
 {
 	const char *err;
 #if defined(__sparc__) || defined(sun3)
@@ -309,14 +306,7 @@ xygetdisklabel(xy, b)
  * Shorthand for allocating, mapping and loading a DMA buffer
  */
 int
-xy_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
-	bus_dma_tag_t		tag;
-	bus_dmamap_t		map;
-	bus_dma_segment_t	*seg;
-	int			*nsegp;
-	bus_size_t		len;
-	void *			*kvap;
-	bus_addr_t		*dmap;
+xy_dmamem_alloc(bus_dma_tag_t tag, bus_dmamap_t map, bus_dma_segment_t *seg, int *nsegp, bus_size_t len, void * *kvap, bus_addr_t *dmap)
 {
 	int nseg;
 	int error;
@@ -346,13 +336,7 @@ xy_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
 }
 
 void
-xy_dmamem_free(tag, map, seg, nseg, len, kva)
-	bus_dma_tag_t		tag;
-	bus_dmamap_t		map;
-	bus_dma_segment_t	*seg;
-	int			nseg;
-	bus_size_t		len;
-	void *			kva;
+xy_dmamem_free(bus_dma_tag_t tag, bus_dmamap_t map, bus_dma_segment_t *seg, int nseg, bus_size_t len, void * kva)
 {
 
 	bus_dmamap_unload(tag, map);
@@ -370,10 +354,7 @@ xy_dmamem_free(tag, map, seg, nseg, len, kva)
  * soft reset to detect the xyc.
  */
 int
-xyc_probe(arg, tag, handle)
-	void *arg;
-	bus_space_tag_t tag;
-	bus_space_handle_t handle;
+xyc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 {
 	struct xyc *xyc = (void *)handle; /* XXX */
 
@@ -410,7 +391,7 @@ xycattach(parent, self, aux)
 	void   *aux;
 
 {
-	struct xyc_softc	*xyc = (void *) self;
+	struct xyc_softc	*xyc = device_private(self);
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
 	bus_space_tag_t		bt;
@@ -497,7 +478,7 @@ xycattach(parent, self, aux)
 	}
 	xyc->dvmaiopb = (struct xy_iopb *)(u_long)BUS_ADDR_PADDR(busaddr);
 
-	bzero(xyc->iopbase, XYC_MAXIOPB * sizeof(struct xy_iopb));
+	memset(xyc->iopbase, 0, XYC_MAXIOPB * sizeof(struct xy_iopb));
 
 	xyc->reqs = (struct xy_iorq *)
 	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq),
@@ -598,10 +579,7 @@ xycattach(parent, self, aux)
  * call xyattach!).
  */
 int
-xymatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+xymatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct xyc_attach_args *xa = aux;
 
@@ -625,8 +603,8 @@ xyattach(parent, self, aux)
 	void   *aux;
 
 {
-	struct xy_softc *xy = (void *) self, *oxy;
-	struct xyc_softc *xyc = (void *) parent;
+	struct xy_softc *xy = device_private(self), *oxy;
+	struct xyc_softc *xyc = device_private(parent);
 	struct xyc_attach_args *xa = aux;
 	int     spt, mb, blk, lcv, fmode, s = 0, newstate;
 	struct dkbad *dkb;
@@ -640,7 +618,7 @@ xyattach(parent, self, aux)
 	 * Always re-initialize the disk structure.  We want statistics
 	 * to start with a clean slate.
 	 */
-	bzero(&xy->sc_dk, sizeof(xy->sc_dk));
+	memset(&xy->sc_dk, 0, sizeof(xy->sc_dk));
 
 	/* if booting, init the xy_softc */
 
@@ -824,7 +802,7 @@ xyattach(parent, self, aux)
 	if (lcv != 126) {
 		aprint_error_dev(&xy->sc_dev, "warning: invalid bad144 sector!\n");
 	} else {
-		bcopy(buf, &xy->dkb, XYFM_BPS);
+		memcpy(&xy->dkb, buf, XYFM_BPS);
 	}
 
 done:
@@ -858,7 +836,7 @@ xyclose(dev, flag, fmt, l)
 	struct lwp *l;
 
 {
-	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
+	struct xy_softc *xy = device_lookup_private(&xy_cd, DISKUNIT(dev));
 	int     part = DISKPART(dev);
 
 	/* clear mask bits */
@@ -880,21 +858,17 @@ xyclose(dev, flag, fmt, l)
  * xydump: crash dump system
  */
 int
-xydump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	void *va;
-	size_t size;
+xydump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	int     unit, part;
 	struct xy_softc *xy;
 
 	unit = DISKUNIT(dev);
-	if (unit >= xy_cd.cd_ndevs)
-		return ENXIO;
 	part = DISKPART(dev);
 
-	xy = xy_cd.cd_devs[unit];
+	xy = device_lookup_private(&xy_cd, unit);
+	if (!xy)
+		return ENXIO;
 
 	printf("%s%c: crash dump not supported (yet)\n", device_xname(&xy->sc_dev),
 	    'a' + part);
@@ -979,7 +953,7 @@ xyioctl(dev, command, addr, flag, l)
 
 	unit = DISKUNIT(dev);
 
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
+	if ((xy = device_lookup_private(&xy_cd, unit)) == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -989,12 +963,12 @@ xyioctl(dev, command, addr, flag, l)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		s = splbio();
-		bcopy(addr, &xy->dkb, sizeof(xy->dkb));
+		memcpy(&xy->dkb, addr, sizeof(xy->dkb));
 		splx(s);
 		return 0;
 
 	case DIOCGDINFO:	/* get disk label */
-		bcopy(xy->sc_dk.dk_label, addr, sizeof(struct disklabel));
+		memcpy(addr, xy->sc_dk.dk_label, sizeof(struct disklabel));
 		return 0;
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
@@ -1093,10 +1067,7 @@ xyioctl(dev, command, addr, flag, l)
  */
 
 int
-xyopen(dev, flag, fmt, l)
-	dev_t   dev;
-	int     flag, fmt;
-	struct lwp *l;
+xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int     unit, part;
 	struct xy_softc *xy;
@@ -1105,7 +1076,7 @@ xyopen(dev, flag, fmt, l)
 	/* first, could it be a valid target? */
 
 	unit = DISKUNIT(dev);
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
+	if ((xy = device_lookup_private(&xy_cd, unit)) == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
 
@@ -1144,20 +1115,14 @@ xyopen(dev, flag, fmt, l)
 }
 
 int
-xyread(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+xyread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xystrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-xywrite(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+xywrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xystrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -1178,7 +1143,7 @@ xysize(dev)
 
 	/* valid unit? */
 	unit = DISKUNIT(dev);
-	if (unit >= xy_cd.cd_ndevs || (xysc = xy_cd.cd_devs[unit]) == NULL)
+	if ((xysc = device_lookup_private(&xy_cd, unit)) == NULL)
 		return (-1);
 
 	part = DISKPART(dev);
@@ -1217,7 +1182,7 @@ xystrategy(bp)
 
 	/* check for live device */
 
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == 0 ||
+	if (!(xy = device_lookup_private(&xy_cd, unit)) ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xy->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
@@ -1272,7 +1237,7 @@ xystrategy(bp)
 	 */
 	s = splbio();		/* protect the queues */
 
-	BUFQ_PUT(xy->xyq, bp);
+	bufq_put(xy->xyq, bp);
 
 	/* start 'em up */
 
@@ -1331,15 +1296,7 @@ xycintr(v)
  */
 
 inline void
-xyc_rqinit(rq, xyc, xy, md, blk, cnt, db, bp)
-	struct xy_iorq *rq;
-	struct xyc_softc *xyc;
-	struct xy_softc *xy;
-	int     md;
-	u_long  blk;
-	int     cnt;
-	void *db;
-	struct buf *bp;
+xyc_rqinit(struct xy_iorq *rq, struct xyc_softc *xyc, struct xy_softc *xy, int md, u_long blk, int cnt, void *db, struct buf *bp)
 {
 	rq->xyc = xyc;
 	rq->xy = xy;
@@ -1658,7 +1615,7 @@ xyc_chain(xycsc, iorq)
 {
 	int togo, chain, hand;
 
-	bzero(xycsc->xy_chain, sizeof(xycsc->xy_chain));
+	memset(xycsc->xy_chain, 0, sizeof(xycsc->xy_chain));
 
 	/*
 	 * promote control IOPB to the top
@@ -1799,7 +1756,7 @@ xyc_xyreset(xycsc, xysc)
 	iopb = xycsc->ciopb;
 
 	/* Save contents */
-	bcopy(iopb, &tmpiopb, sizeof(struct xy_iopb));
+	memcpy(&tmpiopb, iopb, sizeof(struct xy_iopb));
 
 	iopb->chen = iopb->done = iopb->errs = 0;
 	iopb->ien = 0;
@@ -1827,7 +1784,7 @@ xyc_xyreset(xycsc, xysc)
 	}
 
 	/* Restore contents */
-	bcopy(&tmpiopb, iopb, sizeof(struct xy_iopb));
+	memcpy(iopb, &tmpiopb, sizeof(struct xy_iopb));
 }
 
 
@@ -1887,7 +1844,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 
 			    bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
-			    (void)BUFQ_GET(iorq->xy->xyq);
+			    (void)bufq_get(iorq->xy->xyq);
 			    disk_unbusy(&xycsc->reqs[lcv].xy->sc_dk,
 				(xycsc->reqs[lcv].buf->b_bcount -
 				xycsc->reqs[lcv].buf->b_resid),
@@ -1934,9 +1891,9 @@ xyc_start(xycsc, iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (BUFQ_PEEK(xy->xyq) == NULL) continue;
+			if (bufq_peek(xy->xyq) == NULL) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, BUFQ_PEEK(xy->xyq));
+			xyc_startbuf(xycsc, xy, bufq_peek(xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -2069,7 +2026,7 @@ xyc_remove_iorq(xycsc)
 
 			bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
-			(void)BUFQ_GET(iorq->xy->xyq);
+			(void)bufq_get(iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid),
 			    (bp->b_flags & B_READ));
@@ -2111,7 +2068,7 @@ xyc_perror(iorq, iopb, still_trying)
 	printf("%s", (iorq->xy) ? device_xname(&iorq->xy->sc_dev)
 	    : device_xname(&iorq->xyc->sc_dev));
 	if (iorq->buf)
-		printf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
+		printf("%c: ", 'a' + (char)DISKPART(iorq->buf->b_dev));
 	if (iopb->com == XYCMD_RD || iopb->com == XYCMD_WR)
 		printf("%s %d/%d/%d: ",
 			(iopb->com == XYCMD_RD) ? "read" : "write",
@@ -2332,8 +2289,7 @@ done:
  * xyc_e2str: convert error code number into an error string
  */
 const char *
-xyc_e2str(no)
-	int     no;
+xyc_e2str(int no)
 {
 	switch (no) {
 	case XY_ERR_FAIL:

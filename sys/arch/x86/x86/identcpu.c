@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.7.2.2 2008/05/16 02:23:29 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.7.2.3 2009/05/04 08:12:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -29,34 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
- * Copyright (c)2008 YAMAMOTO Takashi,
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7.2.2 2008/05/16 02:23:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7.2.3 2009/05/04 08:12:10 yamt Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -69,8 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7.2.2 2008/05/16 02:23:29 yamt Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/bitops.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -84,95 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7.2.2 2008/05/16 02:23:29 yamt Exp $"
 #include <x86/cpu_msr.h>
 #include <x86/powernow.h>
 
-static const struct x86_cache_info intel_cpuid_cache_info[] = {
-	{ CAI_ITLB, 	0x01,	 4, 32,        4 * 1024 },
-	{ CAI_ITLB,     0xb0,    4,128,        4 * 1024 },
-	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024 },
-	{ CAI_DTLB, 	0x03,    4, 64,        4 * 1024 },
-	{ CAI_DTLB,     0xb3,    4,128,        4 * 1024 },
-	{ CAI_DTLB,     0xb4,    4,256,        4 * 1024 },
-	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024 },
-	{ CAI_DTLB2,    0x05,    4, 32, 4 * 1024 * 1024 },
-	{ CAI_ITLB,     0x50, 0xff, 64,        4 * 1024 },
-	{ CAI_ITLB,     0x51, 0xff, 64,        4 * 1024 },
-	{ CAI_ITLB,     0x52, 0xff, 64,        4 * 1024 },
-	{ CAI_DTLB,     0x5b, 0xff, 64,        4 * 1024 },
-	{ CAI_DTLB,     0x5c, 0xff,128,        4 * 1024 },
-	{ CAI_DTLB,     0x5d, 0xff,256,        4 * 1024 },
-	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32 },
-	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32 },
-	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64 },
-	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32 },
-	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32 },
-	{ CAI_L2CACHE,  0x39,  4,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3a,  6,      192 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3b,  2,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3c,  4,      256 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3d,  6,      384 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3e,  4,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x40,  0,               0,  0 },
-	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32 },
-	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32 },
-	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32 },
-	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x49, 16, 4 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x4e, 24, 6 * 1024 * 1024, 64 },
-	{ CAI_DCACHE,   0x60,  8,       16 * 1024, 64 },
-	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
-	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
-	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64 },
-	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
-	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64 },
-	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64 },
-	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64 },
-	{ CAI_ICACHE,   0x73,  8,       64 * 1024, 64 },
-	{ CAI_L2CACHE,  0x78,  4, 1 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7f,  2,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
-	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32 },
-	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x86,  4,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x87,  8, 1 * 1024 * 1024, 64 },
-	{ 0,               0,  0,	        0,  0 },
-};
+static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
-static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = {
-	{ 0, 0x01,    1, 0, 0 },
-	{ 0, 0x02,    2, 0, 0 },
-	{ 0, 0x04,    4, 0, 0 },
-	{ 0, 0x06,    8, 0, 0 },
-	{ 0, 0x08,   16, 0, 0 },
-	{ 0, 0x0a,   32, 0, 0 },
-	{ 0, 0x0b,   48, 0, 0 },
-	{ 0, 0x0c,   64, 0, 0 },
-	{ 0, 0x0d,   96, 0, 0 },
-	{ 0, 0x0e,  128, 0, 0 },
-	{ 0, 0x0f, 0xff, 0, 0 },
-	{ 0, 0x00,    0, 0, 0 },
-};
+static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
+	AMD_L2CACHE_INFO;
 
-static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = {
-	{ 0, 0x00,    0, 0, 0 },
-	{ 0, 0x01,    1, 0, 0 },
-	{ 0, 0x02,    2, 0, 0 },
-	{ 0, 0x04,    4, 0, 0 },
-	{ 0, 0x06,    8, 0, 0 },
-	{ 0, 0x08,   16, 0, 0 },
-	{ 0, 0x0a,   32, 0, 0 },
-	{ 0, 0x0b,   48, 0, 0 },
-	{ 0, 0x0c,   64, 0, 0 },
-	{ 0, 0x0d,   96, 0, 0 },
-	{ 0, 0x0e,  128, 0, 0 },
-	{ 0, 0x0f, 0xff, 0, 0 },
-	{ 0, 0x00,    0, 0, 0 },
-};
+static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = 
+	AMD_L3CACHE_INFO;
 
 int cpu_vendor;
 char cpu_brand_string[49];
@@ -213,55 +104,6 @@ cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
 	return (NULL);
 }
 
-static void
-cpu_probe_p6(struct cpu_info *ci)
-{
-	u_int lp_max = 1;	/* logical processors per package */
-	u_int smt_max;		/* smt per core */
-	u_int core_max = 1;	/* core per package */
-	int smt_bits, core_bits;
-	uint32_t descs[4];
-
-	if (cpu_vendor != CPUVENDOR_INTEL ||
-	    CPUID2FAMILY(ci->ci_signature) < 6)
-		return;
-
-	/* Determine extended feature flags. */
-	x86_cpuid(0x80000000, descs);
-	if (descs[0] >= 0x80000001) {
-		x86_cpuid(0x80000001, descs);
-		ci->ci_feature3_flags |= descs[3];
-	}
-
-	/* Determine topology. 253668.pdf 7.10.2. */
-	ci->ci_packageid = ci->ci_initapicid;
-	ci->ci_coreid = 0;
-	ci->ci_smtid = 0;
-	if ((ci->ci_feature_flags & CPUID_HTT) != 0) {
-		x86_cpuid(1, descs);
-		lp_max = (descs[1] >> 16) & 0xff;
-	}
-	x86_cpuid(0, descs);
-	if (descs[0] >= 4) {
-		x86_cpuid2(4, 0, descs);
-		core_max = (descs[0] >> 26) + 1;
-	}
-	KASSERT(lp_max >= core_max);
-	smt_max = lp_max / core_max;
-	smt_bits = ilog2(smt_max - 1) + 1;
-	core_bits = ilog2(core_max - 1) + 1;
-	if (smt_bits + core_bits) {
-		ci->ci_packageid = ci->ci_initapicid >> (smt_bits + core_bits);
-	}
-	if (core_bits) {
-		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
-		ci->ci_coreid = __SHIFTOUT(ci->ci_initapicid, core_mask);
-	}
-	if (smt_bits) {
-		u_int smt_mask = __BITS(0, smt_bits - 1);
-		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid, smt_mask);
-	}
-}
 
 static void
 cpu_probe_amd_cache(struct cpu_info *ci)
@@ -445,7 +287,8 @@ cpu_probe_k678(struct cpu_info *ci)
 	x86_cpuid(0x80000000, descs);
 	if (descs[0] >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature_flags |= descs[3];
+		ci->ci_feature3_flags |= descs[3]; /* %edx */
+		ci->ci_feature4_flags = descs[2];  /* %ecx */
 	}
 
 	cpu_probe_amd_cache(ci);
@@ -526,12 +369,6 @@ cpu_probe_cyrix_cmn(struct cpu_info *ci)
 	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, c3);
-
-	/*
-	 * XXX disable page zero in the idle loop, it seems to
-	 * cause panics on these CPUs.
-	 */
-	vm_page_zero_enable = FALSE;
 }
 
 static void
@@ -567,7 +404,7 @@ cpu_probe_c3(struct cpu_info *ci)
 	struct x86_cache_info *cai;
 
 	if (cpu_vendor != CPUVENDOR_IDT ||
-	    CPUID2FAMILY(ci->ci_signature) != 5)
+	    CPUID2FAMILY(ci->ci_signature) < 6)
 	    	return;
 
 	family = CPUID2FAMILY(ci->ci_signature);
@@ -584,25 +421,61 @@ cpu_probe_c3(struct cpu_info *ci)
 		ci->ci_feature_flags |= descs[3];
 	}
 
-	if (model >= 0x9) {
+	if (family > 6 || model > 0x9 || (model == 0x9 && stepping >= 3)) {
 		/* Nehemiah or Esther */
 		x86_cpuid(0xc0000000, descs);
 		lfunc = descs[0];
 		if (lfunc >= 0xc0000001) {	/* has ACE, RNG */
-			x86_cpuid(0xc0000001, descs);
-			lfunc = descs[3];
-			if (model > 0x9 || stepping >= 8) {	/* ACE */
-				if (lfunc & CPUID_VIA_HAS_ACE) {
-					ci->ci_padlock_flags = lfunc;
-					if ((lfunc & CPUID_VIA_DO_ACE) == 0) {
-						msr = rdmsr(MSR_VIA_ACE);
-						wrmsr(MSR_VIA_ACE, msr |
-						    MSR_VIA_ACE_ENABLE);
-						ci->ci_padlock_flags |=
-						    CPUID_VIA_DO_ACE;
-					}
-				}
+		    int rng_enable = 0, ace_enable = 0;
+		    x86_cpuid(0xc0000001, descs);
+		    lfunc = descs[3];
+		    ci->ci_padlock_flags = lfunc;
+		    /* Check for and enable RNG */
+		    if (lfunc & CPUID_VIA_HAS_RNG) {
+		    	if (!(lfunc & CPUID_VIA_DO_RNG)) {
+			    rng_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_HAS_RNG;
 			}
+		    }
+		    /* Check for and enable ACE (AES-CBC) */
+		    if (lfunc & CPUID_VIA_HAS_ACE) {
+			if (!(lfunc & CPUID_VIA_DO_ACE)) {
+			    ace_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_DO_ACE;
+			}
+		    }
+		    /* Check for and enable SHA */
+		    if (lfunc & CPUID_VIA_HAS_PHE) {
+			if (!(lfunc & CPUID_VIA_DO_PHE)) {
+			    ace_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_DO_PHE;
+			}
+		    }
+		    /* Check for and enable ACE2 (AES-CTR) */
+		    if (lfunc & CPUID_VIA_HAS_ACE2) {
+			if (!(lfunc & CPUID_VIA_DO_ACE2)) {
+			    ace_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_DO_ACE2;
+			}
+		    }
+		    /* Check for and enable PMM (modmult engine) */
+		    if (lfunc & CPUID_VIA_HAS_PMM) {
+			if (!(lfunc & CPUID_VIA_DO_PMM)) {
+			    ace_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_DO_PMM;
+			}
+		    }
+
+		    /* Actually do the enables. */
+		    if (rng_enable) {
+			msr = rdmsr(MSR_VIA_RNG);
+			wrmsr(MSR_VIA_RNG, msr | MSR_VIA_RNG_ENABLE);
+		    }
+		    if (ace_enable) {
+			msr = rdmsr(MSR_VIA_ACE);
+			wrmsr(MSR_VIA_ACE, msr | MSR_VIA_ACE_ENABLE);
+		    }
+			
 		}
 	}
 
@@ -630,7 +503,7 @@ cpu_probe_c3(struct cpu_info *ci)
 	cai->cai_totalsize = VIA_L1_ECX_DC_SIZE(descs[2]);
 	cai->cai_associativity = VIA_L1_ECX_DC_ASSOC(descs[2]);
 	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[2]);
-	if (model == 9 && stepping == 8) {
+	if (family == 6 && model == 9 && stepping == 8) {
 		/* Erratum: stepping 8 reports 4 when it should be 2 */
 		cai->cai_associativity = 2;
 	}
@@ -639,11 +512,11 @@ cpu_probe_c3(struct cpu_info *ci)
 	cai->cai_totalsize = VIA_L1_EDX_IC_SIZE(descs[3]);
 	cai->cai_associativity = VIA_L1_EDX_IC_ASSOC(descs[3]);
 	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[3]);
-	if (model == 9 && stepping == 8) {
+	if (family == 6 && model == 9 && stepping == 8) {
 		/* Erratum: stepping 8 reports 4 when it should be 2 */
 		cai->cai_associativity = 2;
 	}
-
+	
 	/*
 	 * Determine L2 cache/TLB info.
 	 */
@@ -655,7 +528,7 @@ cpu_probe_c3(struct cpu_info *ci)
 	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	if (model >= 9) {
+	if (family > 6 || model >= 9) {
 		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
 		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
 		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
@@ -771,13 +644,14 @@ cpu_probe(struct cpu_info *ci)
 		}
 	}
 
-	cpu_probe_p6(ci);
 	cpu_probe_k5(ci);
 	cpu_probe_k678(ci);
 	cpu_probe_cyrix(ci);
 	cpu_probe_winchip(ci);
 	cpu_probe_c3(ci);
 	cpu_probe_geode(ci);
+
+	x86_cpu_toplogy(ci);
 
 	if (cpu_vendor != CPUVENDOR_AMD && (ci->ci_feature_flags & CPUID_TM) &&
 	    (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) == 0) {
@@ -789,6 +663,10 @@ cpu_probe(struct cpu_info *ci)
 		/* If first. */
 		cpu_feature = ci->ci_feature_flags;
 		cpu_feature2 = ci->ci_feature2_flags;
+		/* Early patch of text segment. */
+#ifndef XEN
+		x86_patch(true);
+#endif
 	} else {
 		/* If not first. */
 		cpu_feature &= ci->ci_feature_flags;
@@ -817,6 +695,25 @@ cpu_identify(struct cpu_info *ci)
 	}
 	if (cpu == CPU_486DLC) {
 		aprint_error("WARNING: BUGGY CYRIX CACHE\n");
+	}
+
+	if ((cpu_vendor == CPUVENDOR_AMD) /* check enablement of an */
+	  && (device_unit(ci->ci_dev) == 0) /* AMD feature only once */
+	  && ((ci->ci_feature4_flags & CPUID_SVM) == CPUID_SVM)
+#if defined(XEN) && !defined(DOM0OPS)
+	  && (false)  /* on Xen rdmsr is for Dom0 only */
+#endif
+	  )
+	{
+		uint64_t val;
+
+		val = rdmsr(MSR_VMCR);
+		if (((val & VMCR_SVMED) == VMCR_SVMED)
+		  && ((val & VMCR_LOCK) == VMCR_LOCK))
+		{
+			aprint_normal_dev(ci->ci_dev,
+				"SVM disabled by the BIOS\n");
+		}
 	}
 
 #ifdef i386 /* XXX for now */

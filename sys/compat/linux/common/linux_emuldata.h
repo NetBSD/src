@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.14.40.1 2008/05/16 02:23:42 yamt Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.14.40.2 2009/05/04 08:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
+#include <compat/linux/common/linux_futex.h>
 
 #ifndef _COMMON_LINUX_EMULDATA_H
 #define _COMMON_LINUX_EMULDATA_H
@@ -73,6 +74,9 @@ struct linux_emuldata {
 	int flags;		/* See above */
 #endif
 #endif
+
+	struct linux_robust_list_head *robust_futexes;
+
 	/* List of Linux threads (NetBSD processes) in the Linux process */
 	LIST_ENTRY(linux_emuldata) threads;
 	struct proc *proc;	/* backpointer to struct proc */

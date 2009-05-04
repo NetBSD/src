@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.19.4.1 2008/05/16 02:24:26 yamt Exp $	*/
+/*	$NetBSD: cir.c,v 1.19.4.2 2009/05/04 08:12:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.19.4.1 2008/05/16 02:24:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.19.4.2 2009/05/04 08:12:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,10 @@ dev_type_read(cirread);
 dev_type_write(cirwrite);
 dev_type_ioctl(cirioctl);
 dev_type_poll(cirpoll);
-dev_type_kqfilter(cirkqfilter);
 
 const struct cdevsw cir_cdevsw = {
 	ciropen, circlose, cirread, cirwrite, cirioctl,
-	nostop, notty, cirpoll, nommap, cirkqfilter,
+	nostop, notty, cirpoll, nommap, nokqfilter,
 	D_OTHER
 };
 
@@ -139,13 +138,15 @@ ciropen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct cir_softc *sc;
 	int error;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 	if (sc->sc_open)
 		return (EBUSY);
+
+	sc->sc_rdframes = 0;
 	if (sc->sc_methods->im_open != NULL) {
 		error = sc->sc_methods->im_open(sc->sc_handle, flag, mode,
 		    l->l_proc);
@@ -162,7 +163,7 @@ circlose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct cir_softc *sc;
 	int error;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (sc->sc_methods->im_close != NULL)
@@ -179,7 +180,7 @@ cirread(dev_t dev, struct uio *uio, int flag)
 {
 	struct cir_softc *sc;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(&sc->sc_dev))
@@ -192,7 +193,7 @@ cirwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct cir_softc *sc;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(&sc->sc_dev))
@@ -206,7 +207,7 @@ cirioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct cir_softc *sc;
 	int error;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(&sc->sc_dev))
@@ -241,7 +242,7 @@ cirpoll(dev_t dev, int events, struct lwp *l)
 	int revents;
 	int s;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (POLLERR);
 	if (!device_is_active(&sc->sc_dev))
@@ -249,11 +250,9 @@ cirpoll(dev_t dev, int events, struct lwp *l)
 
 	revents = 0;
 	s = splir();
-#if 0
 	if (events & (POLLIN | POLLRDNORM))
 		if (sc->sc_rdframes > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
-#endif
 
 #if 0
 	/* How about write? */

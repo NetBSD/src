@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.15.4.1 2008/05/16 02:23:57 yamt Exp $ */
+/* $NetBSD: gpio.c,v 1.15.4.2 2009/05/04 08:12:38 yamt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.15.4.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.15.4.2 2009/05/04 08:12:38 yamt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -55,8 +55,9 @@ int	gpio_activate(device_t, enum devact);
 int	gpio_search(device_t, cfdata_t, const int *, void *);
 int	gpio_print(void *, const char *);
 
-CFATTACH_DECL_NEW(gpio, sizeof(struct gpio_softc),
-    gpio_match, gpio_attach, gpio_detach, gpio_activate);
+CFATTACH_DECL3_NEW(gpio, sizeof(struct gpio_softc),
+    gpio_match, gpio_attach, gpio_detach, gpio_activate, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 dev_type_open(gpioopen);
 dev_type_close(gpioclose);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gxiic.c,v 1.2.16.1 2008/05/16 02:22:10 yamt Exp $ */
+/*	$NetBSD: gxiic.c,v 1.2.16.2 2009/05/04 08:10:58 yamt Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.2.16.1 2008/05/16 02:22:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.2.16.2 2009/05/04 08:10:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,6 +172,11 @@ gxiic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 			rv = pxa2x0_i2c_write_2(&sc->sc_pxa_i2c,
 			    addr, *(u_short *)vbuf);
 	}
+
+	/* Handle quick_read/quick_write ops - XXX Untested XXX */
+	if ((cmdlen == 0) && (buflen == 0))
+		rv = pxa2x0_i2c_quick(&sc->sc_pxa_i2c, addr,
+			I2C_OP_READ_P(op)?1:0);
 
 	return rv;
 }

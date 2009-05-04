@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.10.46.1 2008/05/16 02:22:04 yamt Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.10.46.2 2009/05/04 08:10:45 yamt Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -47,7 +47,6 @@
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/atomic.h>
 #include <machine/intr.h>
 
 #include <arm/xscale/pxa2x0reg.h>

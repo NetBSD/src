@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.7 2008/02/07 01:22:02 dyoung Exp $ */
+/* $NetBSD: if_srt.c,v 1.7.10.1 2009/05/04 08:14:15 yamt Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.7 2008/02/07 01:22:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.7.10.1 2009/05/04 08:14:15 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -114,7 +114,7 @@ static RT *find_rt(SOFTC *sc, int af, ...)
 	  if ((ia.s_addr & ipv4_masks[r->srcmask]) == r->srcmatch.v4.s_addr) return(r);
 	  break;
        case AF_INET6:
-	  if ((r->srcmask >= 8) && bcmp(&ia6,&r->srcmatch.v6,r->srcmask/8)) continue;
+	  if ((r->srcmask >= 8) && memcmp(&ia6,&r->srcmatch.v6,r->srcmask/8)) continue;
 	  if ( (r->srcmask % 8) &&
 	       ( ( ia6.s6_addr[r->srcmask/8] ^
 		   r->srcmatch.v6.s6_addr[r->srcmask/8] ) &
@@ -140,7 +140,7 @@ static int srt_if_ioctl(struct ifnet *intf, u_long cmd, void *data)
  err = 0;
  s = splnet();
  switch (cmd)
-  { case SIOCSIFADDR:
+  { case SIOCINITIFADDR:
     case SIOCSIFDSTADDR:
        ifa = (void *) data;
        switch (ifa->ifa_addr->sa_family)
@@ -158,13 +158,9 @@ static int srt_if_ioctl(struct ifnet *intf, u_long cmd, void *data)
 	}
        /* XXX do we need to do more here for either of these? */
        break;
-    case SIOCSIFMTU:
-    case SIOCGIFMTU:
+    default:
        if ((err = ifioctl_common(intf, cmd, data)) == ENETRESET)
              err = 0;
-       break;
-    default:
-       err = EINVAL;
        break;
   }
  splx(s);
@@ -238,13 +234,13 @@ static int srt_clone_create(struct if_clone *cl, int unit)
  if ((unit < 0) || (unit > SRT_MAXUNIT)) return(ENXIO);
  if (softcv[unit]) return(EBUSY);
  sc = malloc(sizeof(SOFTC),M_DEVBUF,M_WAIT);
- bzero(&sc->intf,sizeof(sc->intf)); /* XXX */
+ memset(&sc->intf, 0,sizeof(sc->intf)); /* XXX */
  sc->unit = unit;
  sc->nrt = 0;
  sc->rts = 0;
  sc->flags = 0;
  sc->kflags = 0;
- snprintf(&sc->intf.if_xname[0],sizeof(sc->intf.if_xname),"%s%d",cl->ifc_name,unit);
+ if_initname(&sc->intf,cl->ifc_name,unit);
  sc->intf.if_softc = sc;
  sc->intf.if_mtu = 65535;
  sc->intf.if_flags = IFF_POINTOPOINT;

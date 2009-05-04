@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.9.46.1 2008/05/16 02:23:30 yamt Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.9.46.2 2009/05/04 08:12:14 yamt Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.9.46.1 2008/05/16 02:23:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.9.46.2 2009/05/04 08:12:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
@@ -90,18 +89,18 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	if (error)
 		return (error);
 
-	for (pg = mlistp->tqh_first; pg != NULL; pg = pg->pageq.tqe_next) {
+	for (pg = mlistp->tqh_first; pg != NULL; pg = pg->pageq.queue.tqe_next) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = INVALID_P2M_ENTRY;
 #ifdef XEN3
-		res.extent_start = &mfn;
+		xenguest_handle(res.extent_start) = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.domid = DOMID_SELF;
 		if (HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res)
-		    < 0) {
+		    != 1) {
 #ifdef DEBUG
 			printf("xen_alloc_contig: XENMEM_decrease_reservation "
 			    "failed!\n");
@@ -128,15 +127,17 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	}
 	/* Get the new contiguous memory extent */
 #ifdef XEN3
-	res.extent_start = &mfn;
+	xenguest_handle(res.extent_start) = &mfn;
 	res.nr_extents = 1;
 	res.extent_order = order;
 	res.address_bits = get_order(high) + PAGE_SHIFT;
 	res.domid = DOMID_SELF;
-	if (HYPERVISOR_memory_op(XENMEM_increase_reservation, &res) < 0) {
+	error = HYPERVISOR_memory_op(XENMEM_increase_reservation, &res);
+	if (error != 1) {
 #ifdef DEBUG
 		printf("xen_alloc_contig: XENMEM_increase_reservation "
-		    "failed!\n");
+		    "failed: %d (order %d address_bits %d)\n",
+		    error, order, res.address_bits);
 #endif
 		error = ENOMEM;
 		pg = NULL;
@@ -157,17 +158,16 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	s = splvm();
 	/* Map the new extent in place of the old pages */
 	for (pg = mlistp->tqh_first, i = 0; pg != NULL; pg = pgnext, i++) {
-		pgnext = pg->pageq.tqe_next;
+		pgnext = pg->pageq.queue.tqe_next;
 		pa = VM_PAGE_TO_PHYS(pg);
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn+i;
 		xpq_queue_machphys_update((mfn+i) << PAGE_SHIFT, pa);
 		/* while here, give extra pages back to UVM */
 		if (i >= npagesreq) {
-			TAILQ_REMOVE(mlistp, pg, pageq);
+			TAILQ_REMOVE(mlistp, pg, pageq.queue);
 			uvm_pagefree(pg);
 		}
-
 	}
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
@@ -186,16 +186,16 @@ failed:
 	 */
 	/* give back remaining pages to UVM */
 	for (; pg != NULL; pg = pgnext) {
-		pgnext = pg->pageq.tqe_next;
-		TAILQ_REMOVE(mlistp, pg, pageq);
+		pgnext = pg->pageq.queue.tqe_next;
+		TAILQ_REMOVE(mlistp, pg, pageq.queue);
 		uvm_pagefree(pg);
 	}
 	/* remplace the pages that we already gave to Xen */
 	s = splvm();
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pgnext) {
-		pgnext = pg->pageq.tqe_next;
+		pgnext = pg->pageq.queue.tqe_next;
 #ifdef XEN3
-		res.extent_start = &mfn;
+		xenguest_handle(res.extent_start) = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.address_bits = 32;
@@ -218,7 +218,7 @@ failed:
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
 		xpq_queue_machphys_update((mfn) << PAGE_SHIFT, pa);
-		TAILQ_REMOVE(mlistp, pg, pageq);
+		TAILQ_REMOVE(mlistp, pg, pageq.queue);
 		uvm_pagefree(pg);
 	}
 	/* Flush updates through and flush the TLB */
@@ -274,11 +274,11 @@ again:
 	if (curaddr < low || curaddr >= high)
 		goto badaddr;
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	m = m->pageq.queue.tqe_next;
 	if ((segs[curseg].ds_addr & (alignment - 1)) != 0)
 		goto dorealloc;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		curaddr = _BUS_VM_PAGE_TO_BUS(m);
 		if (curaddr < low || curaddr >= high)
 			goto badaddr;
@@ -306,7 +306,8 @@ badaddr:
 	if (curaddr < low) {
 		/* no way to enforce this */
 		printf("_xen_bus_dmamem_alloc_range: no way to "
-		    "enforce address range\n");
+		    "enforce address range (0x%" PRIx64 " - 0x%" PRIx64 ")\n",
+		    (uint64_t)low, (uint64_t)high);
 		uvm_pglistfree(&mlist);
 		return EINVAL;
 	}

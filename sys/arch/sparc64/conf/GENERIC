@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2008/03/24 13:48:18 ad Exp $
+# $NetBSD: GENERIC,v 1.99.4.1 2009/05/04 08:11:57 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.99.4.1 $"
 
 maxusers	64
 
@@ -60,12 +60,10 @@ options 	KTRACE
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support 
 
 
 ## Loadable kernel module support; still under development.
-options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -152,6 +150,8 @@ options 	COMPAT_15	# NetBSD 1.5 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
@@ -186,7 +186,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 ## Network protocol support.  In most environments, INET is required.
@@ -294,10 +294,10 @@ ms0	at com?					# mouse
 #mtty*	at magma?
 #mbpp*	at magma?
 
-## SUNW,spif Serial/Parallel driver (not tested)
-#spif*  at sbus? slot ? offset ?
-#stty*  at spif?
-#sbpp*  at spif?
+## SUNW,spif Serial/Parallel driver
+spif*  at sbus? slot ? offset ?
+stty*  at spif?
+sbpp*  at spif?
 
 ## PCI serial interfaces
 com*	at puc? port ?			# 16x50s on "universal" comm boards
@@ -413,6 +413,11 @@ ld*	at mlx? unit ?
 fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
 #fdc0	at ebus?				# fdthree, EXPERIMENTAL
 fd*	at fdc0 	 			# the drive itself
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -540,9 +545,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
-
-# PCMCIA USB controllers
-#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
 usb*	at ehci?
@@ -742,12 +744,15 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x UT
 #ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g UT
+#re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S UT
 #rtk*	at cardbus? function ?	# Realtek 8129/8139 UT
+#rtw*	at cardbus? function ?	# Realtek 8180L (802.11) UT
 #tlp*	at cardbus? function ?	# DECchip 21143
 
 # CardBus USB controllers
 #ehci*	at cardbus? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? function ?	# Open Host Controller
+#uhci*	at cardbus? function ?	# Universal Host Controller (Intel) UT
 
 ## PCMCIA cards; UT marks untested.
 
@@ -785,8 +790,8 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #com*	at mhzc?
 #sm*	at mhzc?
 
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive UT
+# PCMCIA USB controllers
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS UT
 
 #### Bluetooth Controller and Device support
 
@@ -880,6 +885,15 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 psm*		at ebus?		# Ultrabook IIi microcontroller
 envctrl*	at ebus?		# Ultra E450 environmental monitoring
 
+# Netra X1 / T1 style environmental monitoring
+alipm*		at pci?
+iic*		at alipm?
+spdmem*		at iic? addr 0x54
+spdmem*		at iic? addr 0x55
+spdmem*		at iic? addr 0x56
+spdmem*		at iic? addr 0x57
+admtemp*	at iic? addr 0x18
+
 ### Other pseudo-devices
 
 pseudo-device 	crypto			# /dev/crypto device
@@ -925,6 +939,9 @@ options VERIFIED_EXEC_FP_MD5
 
 # a pseudo device needed for SMBFS
 pseudo-device   nsmb		# experimental - SMB requester
+
+# drvctl - needed to show device dictionary via drvctl(8)
+pseudo-device	drvctl
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 					# (for static binaries only for now)

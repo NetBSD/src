@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.3.52.1 2008/05/16 02:23:57 yamt Exp $ */
+/* $NetBSD: gpioow.c,v 1.3.52.2 2009/05/04 08:12:38 yamt Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.3.52.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.3.52.2 2009/05/04 08:12:38 yamt Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -135,7 +135,7 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ow_bus.bus_reset = gpioow_ow_reset;
 	sc->sc_ow_bus.bus_bit = gpioow_ow_bit;
 
-	bzero(&oba, sizeof(oba));
+	memset(&oba, 0, sizeof(oba));
 	oba.oba_bus = &sc->sc_ow_bus;
 	sc->sc_ow_dev = config_found(self, &oba, onewirebus_print);
 

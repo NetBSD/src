@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.35.2.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.35.2.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.35.2.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.35.2.2 2009/05/04 08:11:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -63,10 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.35.2.1 2008/05/16 02:22:34 yamt 
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 
 void
-ibcs2_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+ibcs2_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;

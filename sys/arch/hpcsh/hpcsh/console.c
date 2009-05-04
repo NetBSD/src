@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.13.76.1 2008/05/16 02:22:32 yamt Exp $	*/
+/*	$NetBSD: console.c,v 1.13.76.2 2009/05/04 08:11:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.13.76.1 2008/05/16 02:22:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.13.76.2 2009/05/04 08:11:13 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "biconsdev.h"
@@ -128,7 +128,7 @@ static void enable_bicons(void);
 #endif
 
 void
-consinit()
+consinit(void)
 {
 	if (initialized)
 		return;
@@ -214,7 +214,7 @@ set_console(void (*init_func)(struct consdev *),
 }
 
 static void
-disable_console()
+disable_console(void)
 {
 	struct consdev *cp;	
 
@@ -231,7 +231,7 @@ cn_nonprobe(struct consdev *cp)
 
 #if NBICONSDEV > 0
 static void
-enable_bicons()
+enable_bicons(void)
 {
 
 	bootinfo->bi_cnuse = BI_CNUSE_BUILTIN;

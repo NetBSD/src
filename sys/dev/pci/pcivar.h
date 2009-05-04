@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.80.4.1 2008/05/16 02:24:45 yamt Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.80.4.2 2009/05/04 08:13:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -198,6 +198,9 @@ int	pci_mapreg_info(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 int	pci_mapreg_map(struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *);
+int	pci_mapreg_submap(struct pci_attach_args *, int, pcireg_t, int,
+	    bus_size_t, bus_size_t, bus_space_tag_t *, bus_space_handle_t *, 
+	    bus_addr_t *, bus_size_t *);
 
 int pci_find_rom(struct pci_attach_args *, bus_space_tag_t, bus_space_handle_t,
 	    int, bus_space_handle_t *, bus_size_t *);
@@ -255,12 +258,21 @@ int	pci_activate(pci_chipset_tag_t, pcitag_t, device_t,
 int	pci_activate_null(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t);
 void	pci_disable_retry(pci_chipset_tag_t, pcitag_t);
 
-/* Device abstraction for inheritance by elanpci(4), for example. */
+/*
+ * Device abstraction for inheritance by elanpci(4), for example.
+ */
 int pcimatch(device_t, cfdata_t, void *);
 void pciattach(device_t, device_t, void *);
 int pcidetach(device_t, int);
 void pcidevdetached(device_t, device_t);
 int pcirescan(device_t, const char *, const int *);
+
+/*
+ * Interrupts.
+ */
+#define	PCI_INTR_MPSAFE		1
+
+int	pci_intr_setattr(pci_chipset_tag_t, pci_intr_handle_t *, int, uint64_t);
 
 #endif /* _KERNEL */
 

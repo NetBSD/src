@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.6.20.1 2008/05/16 02:23:24 yamt Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.6.20.2 2009/05/04 08:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,23 +114,14 @@
  */
 
 /* limits of ptrdiff_t */
-#ifdef __ELF__
 #define	PTRDIFF_MIN	(-0x7fffffffL-1)		/* ptrdiff_t	  */
 #define	PTRDIFF_MAX	0x7fffffffL			/* ptrdiff_t	  */
-#else
-#define	PTRDIFF_MIN	(-0x7fffffff-1)			/* ptrdiff_t	  */
-#define	PTRDIFF_MAX	0x7fffffff			/* ptrdiff_t	  */
-#endif
 
 /* limits of sig_atomic_t */
 #define	SIG_ATOMIC_MIN	(-0x7fffffff-1)			/* sig_atomic_t	  */
 #define	SIG_ATOMIC_MAX	0x7fffffff			/* sig_atomic_t	  */
 
 /* limit of size_t */
-#ifdef __ELF__
 #define	SIZE_MAX	0xffffffffUL			/* size_t	  */
-#else
-#define	SIZE_MAX	0xffffffffU			/* size_t	  */
-#endif
 
 #endif /* !_VAX_INT_LIMITS_H_ */

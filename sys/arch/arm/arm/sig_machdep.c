@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.35 2008/04/24 18:39:20 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.35.2.1 2009/05/04 08:10:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,12 +40,11 @@
  * Created      : 17/09/94
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_armfpe.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.35 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.35.2.1 2009/05/04 08:10:38 yamt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -89,7 +88,7 @@ getframe(struct lwp *l, int sig, int *onstack)
  * resets the signal mask, the stack, and the
  * frame pointer, it returns to the user specified pc.
  */
-static void
+void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -111,18 +110,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	
 	/* make the stack aligned */
 	fp = (struct sigframe_siginfo *)STACKALIGN(fp);
-
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
-	default:	/* unknown version */
-		printf("nsendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-	case 2:
-		break;
-	}
 
 	/* populate the siginfo frame */
 	frame.sf_si._info = ksi->ksi_info;
@@ -177,21 +164,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		sendsig_siginfo(ksi, mask);
-}
-
-void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct trapframe *tf = process_frame(l);
 	__greg_t *gr = mcp->__gregs;
@@ -230,10 +203,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = process_frame(l);
 	const __greg_t *gr = mcp->__gregs;

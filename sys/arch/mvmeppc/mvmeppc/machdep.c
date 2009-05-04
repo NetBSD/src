@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2007/10/17 19:55:51 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.20.1 2009/05/04 08:11:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2007/10/17 19:55:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.20.1 2009/05/04 08:11:35 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -162,7 +162,7 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	char modelbuf[256];
 
@@ -198,7 +198,7 @@ cpu_startup()
  * Initialize system console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted = 0;
 
@@ -287,6 +287,8 @@ cpu_reboot(int howto, char *what)
 
 halt_sys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
                 printf("\n");

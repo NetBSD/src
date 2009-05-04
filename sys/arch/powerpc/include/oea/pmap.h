@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 2008/02/07 00:36:57 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13.10.1 2009/05/04 08:11:44 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,9 @@
 #ifndef	_POWERPC_OEA_PMAP_H_
 #define	_POWERPC_OEA_PMAP_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#endif
 #include <powerpc/oea/pte.h>
 
 #ifndef _LOCORE
@@ -61,8 +63,6 @@ struct pmap {
 #endif
 };
 
-typedef	struct pmap *pmap_t;
-
 struct pmap_ops {
 	int (*pmapop_pte_spill)(struct pmap *, vaddr_t, bool);
 	void (*pmapop_real_memory)(paddr_t *, psize_t *);
@@ -74,7 +74,7 @@ struct pmap_ops {
 	void (*pmapop_copy)(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 	void (*pmapop_update)(pmap_t);
 	void (*pmapop_collect)(pmap_t);
-	int (*pmapop_enter)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+	int (*pmapop_enter)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 	void (*pmapop_remove)(pmap_t, vaddr_t, vaddr_t);
 	void (*pmapop_kenter_pa)(vaddr_t, paddr_t, vm_prot_t);
 	void (*pmapop_kremove)(vaddr_t, vsize_t);
@@ -112,8 +112,6 @@ __BEGIN_DECLS
 extern register_t iosrtable[];
 #endif
 extern int pmap_use_altivec;
-extern struct pmap kernel_pmap_;
-#define	pmap_kernel()	(&kernel_pmap_)
 
 #define pmap_clear_modify(pg)		(pmap_clear_bit((pg), PTE_CHG))
 #define	pmap_clear_reference(pg)	(pmap_clear_bit((pg), PTE_REF))

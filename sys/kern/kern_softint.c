@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.16.2.1 2008/05/16 02:25:26 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.16.2.2 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16.2.1 2008/05/16 02:25:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16.2.2 2009/05/04 08:13:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -186,6 +186,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16.2.1 2008/05/16 02:25:26 yamt E
 #include <sys/kthread.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
+#include <sys/xcall.h>
 
 #include <net/netisr.h>
 
@@ -209,7 +210,6 @@ typedef struct softhand {
 	void			(*sh_func)(void *);
 	void			*sh_arg;
 	softint_t		*sh_isr;
-	u_int			sh_pending;
 	u_int			sh_flags;
 } softhand_t;
 
@@ -225,7 +225,7 @@ u_int		softint_bytes = 8192;
 u_int		softint_timing;
 static u_int	softint_max;
 static kmutex_t	softint_lock;
-static void	*softint_netisrs[32];
+static void	*softint_netisrs[NETISR_MAX];
 
 /*
  * softint_init_isr:
@@ -339,6 +339,7 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 
 	level = (flags & SOFTINT_LVLMASK);
 	KASSERT(level < SOFTINT_COUNT);
+	KASSERT((flags & SOFTINT_IMPMASK) == 0);
 
 	mutex_enter(&softint_lock);
 
@@ -363,7 +364,6 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 		sh->sh_func = func;
 		sh->sh_arg = arg;
 		sh->sh_flags = flags;
-		sh->sh_pending = 0;
 	} else for (CPU_INFO_FOREACH(cii, ci)) {
 		sc = ci->ci_data.cpu_softcpu;
 		sh = &sc->sc_hand[index];
@@ -371,7 +371,6 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 		sh->sh_func = func;
 		sh->sh_arg = arg;
 		sh->sh_flags = flags;
-		sh->sh_pending = 0;
 	}
 
 	mutex_exit(&softint_lock);
@@ -382,7 +381,12 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 /*
  * softint_disestablish:
  *
- *	Unregister a software interrupt handler.
+ *	Unregister a software interrupt handler.  The soft interrupt could
+ *	still be active at this point, but the caller commits not to try
+ *	and trigger it again once this call is made.  The caller must not
+ *	hold any locks that could be taken from soft interrupt context,
+ *	because we will wait for the softint to complete if it's still
+ *	running.
  */
 void
 softint_disestablish(void *arg)
@@ -392,21 +396,47 @@ softint_disestablish(void *arg)
 	softcpu_t *sc;
 	softhand_t *sh;
 	uintptr_t offset;
+	uint64_t where;
+	u_int flags;
 
 	offset = (uintptr_t)arg;
 	KASSERT(offset != 0 && offset < softint_bytes);
 
-	mutex_enter(&softint_lock);
+	/*
+	 * Run a cross call so we see up to date values of sh_flags from
+	 * all CPUs.  Once softint_disestablish() is called, the caller
+	 * commits to not trigger the interrupt and set SOFTINT_ACTIVE on
+	 * it again.  So, we are only looking for handler records with
+	 * SOFTINT_ACTIVE already set.
+	 */
+	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+	xc_wait(where);
+
+	for (;;) {
+		/* Collect flag values from each CPU. */
+		flags = 0;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			sc = ci->ci_data.cpu_softcpu;
+			sh = (softhand_t *)((uint8_t *)sc + offset);
+			KASSERT(sh->sh_func != NULL);
+			flags |= sh->sh_flags;
+		}
+		/* Inactive on all CPUs? */
+		if ((flags & SOFTINT_ACTIVE) == 0) {
+			break;
+		}
+		/* Oops, still active.  Wait for it to clear. */
+		(void)kpause("softdis", false, 1, NULL);
+	}
 
 	/* Clear the handler on each CPU. */
+	mutex_enter(&softint_lock);
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		sc = ci->ci_data.cpu_softcpu;
 		sh = (softhand_t *)((uint8_t *)sc + offset);
 		KASSERT(sh->sh_func != NULL);
-		KASSERT(sh->sh_pending == 0);
 		sh->sh_func = NULL;
 	}
-
 	mutex_exit(&softint_lock);
 }
 
@@ -433,7 +463,7 @@ softint_schedule(void *arg)
 	sh = (softhand_t *)((uint8_t *)curcpu()->ci_data.cpu_softcpu + offset);
 
 	/* If it's already pending there's nothing to do. */
-	if (sh->sh_pending)
+	if ((sh->sh_flags & SOFTINT_PENDING) != 0)
 		return;
 
 	/*
@@ -441,9 +471,9 @@ softint_schedule(void *arg)
 	 * If the LWP is completely idle, then make it run.
 	 */
 	s = splhigh();
-	if (!sh->sh_pending) {
+	if ((sh->sh_flags & SOFTINT_PENDING) == 0) {
 		si = sh->sh_isr;
-		sh->sh_pending = 1;
+		sh->sh_flags |= SOFTINT_PENDING;
 		SIMPLEQ_INSERT_TAIL(&si->si_q, sh, sh_q);
 		if (si->si_active == 0) {
 			si->si_active = 1;
@@ -491,7 +521,9 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		 */
 		sh = SIMPLEQ_FIRST(&si->si_q);
 		SIMPLEQ_REMOVE_HEAD(&si->si_q, sh_q);
-		sh->sh_pending = 0;
+		KASSERT((sh->sh_flags & SOFTINT_PENDING) != 0);
+		KASSERT((sh->sh_flags & SOFTINT_ACTIVE) == 0);
+		sh->sh_flags ^= (SOFTINT_PENDING | SOFTINT_ACTIVE);
 		splx(s);
 
 		/* Run the handler. */
@@ -502,6 +534,8 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		(*sh->sh_func)(sh->sh_arg);
 	
 		(void)splhigh();
+		KASSERT((sh->sh_flags & SOFTINT_ACTIVE) != 0);
+		sh->sh_flags ^= SOFTINT_ACTIVE;
 	}
 
 	if (havelock) {
@@ -758,10 +792,10 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * the LWP locked, at this point no external agents will want to
 	 * modify the interrupt LWP's state.
 	 */
-	timing = (softint_timing ? LW_TIMEINTR : 0);
+	timing = (softint_timing ? LP_TIMEINTR : 0);
 	l->l_switchto = pinned;
 	l->l_stat = LSONPROC;
-	l->l_flag |= (LW_RUNNING | timing);
+	l->l_pflag |= (LP_RUNNING | timing);
 
 	/*
 	 * Dispatch the interrupt.  If softints are being timed, charge
@@ -773,7 +807,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	if (timing) {
 		binuptime(&now);
 		updatertime(l, &now);
-		l->l_flag &= ~LW_TIMEINTR;
+		l->l_pflag &= ~LP_TIMEINTR;
 	}
 
 	/*
@@ -787,7 +821,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * That's not be a problem: we are lowering to level 's' which will
 	 * prevent softint_dispatch() from being reentered at level 's',
 	 * until the priority is finally dropped to IPL_NONE on entry to
-	 * the idle loop.
+	 * the LWP chosen by lwp_exit_switchaway().
 	 */
 	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {
@@ -797,7 +831,7 @@ softint_dispatch(lwp_t *pinned, int s)
 		/* NOTREACHED */
 	}
 	l->l_switchto = NULL;
-	l->l_flag &= ~LW_RUNNING;
+	l->l_pflag &= ~LP_RUNNING;
 }
 
 #endif	/* !__HAVE_FAST_SOFTINTS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.24 2008/02/23 05:48:14 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.24.4.1 2009/05/04 08:12:05 yamt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -440,7 +440,7 @@ JSBENTRY(Swtchto)
 #
 
 ENTRY(copyout, 0)
-	movl	8(%ap),%r2
+	movl	8(%ap),%r3
 	blss	3f		# kernel space
 	movl	4(%ap),%r1
 	brb	2f
@@ -448,13 +448,18 @@ ENTRY(copyout, 0)
 ENTRY(copyin, 0)
 	movl	4(%ap),%r1
 	blss	3f		# kernel space
-	movl	8(%ap),%r2
-2:	mfpr	$PR_ESP,%r3
-	movab	1f,(%r3)
-	movc3	12(%ap),(%r1),(%r2)
-1:	mfpr	$PR_ESP,%r3
-	clrl	(%r3)
+	movl	8(%ap),%r3
+2:	mfpr	$PR_ESP,%r2
+	movab	1f,(%r2)
+4:	tstw	14(%ap)		# check if >= 64K
+	bneq	5f
+	movc3	12(%ap),(%r1),(%r3)
+1:	mfpr	$PR_ESP,%r2
+	clrl	(%r2)
 	ret
+5:	movc3	$0xfffc,(%r1),(%r3)
+	subl2	$0xfffc,12(%ap)
+	brb	4b
 
 3:	mnegl	$1,%r0
 	ret
@@ -592,8 +597,3 @@ JSBENTRY(Sunlock)
 	.globl _C_LABEL(memtest)
 _C_LABEL(memtest):		# memory test in progress
 	.long 0
-
-#ifdef __ELF__
-	.section	.rodata
-#endif
-noque:	.asciz	"swtch"

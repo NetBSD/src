@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.7.4.1 2008/05/16 02:24:02 yamt Exp $	*/
+/*	$NetBSD: attimer.c,v 1.7.4.2 2009/05/04 08:12:40 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.7.4.1 2008/05/16 02:24:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.7.4.2 2009/05/04 08:12:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,9 @@ int
 attimer_detach(device_t self, int flags)
 {
 	struct attimer_softc *sc = device_private(self);
+	
+	if ((sc->sc_flags & ATT_ATTACHED) != 0)
+		return EBUSY;
 
 	pmf_device_deregister(self);
 	sc->sc_flags &= ~ATT_CONFIGURED;
@@ -85,9 +88,9 @@ attimer_attach_speaker(void)
 	struct attimer_softc *sc;
 
 	for (i = 0; i < attimer_cd.cd_ndevs; i++) {
-		if (attimer_cd.cd_devs[i] == NULL)
+		sc = device_lookup_private(&attimer_cd, i);
+		if (sc == NULL)
 			continue;
-		sc = device_private(attimer_cd.cd_devs[i]);
 		if ((sc->sc_flags & ATT_CONFIGURED) &&
 		    !(sc->sc_flags & ATT_ATTACHED)) {
 			sc->sc_flags |= ATT_ATTACHED;
@@ -95,6 +98,14 @@ attimer_attach_speaker(void)
 		}
 	}
 	return NULL;
+}
+
+void
+attimer_detach_speaker(device_t dev)
+{
+	struct attimer_softc *sc = device_private(dev);
+
+	sc->sc_flags &= ~ATT_ATTACHED;
 }
 
 void

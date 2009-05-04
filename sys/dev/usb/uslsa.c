@@ -1,15 +1,13 @@
-/* $NetBSD: uslsa.c,v 1.6.4.1 2008/05/16 02:25:12 yamt Exp $ */
+/* $NetBSD: uslsa.c,v 1.6.4.2 2009/05/04 08:13:22 yamt Exp $ */
+
+/* from ugensa.c */
 
 /*
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jonathan A. Kollasch <jakllsch@kollasch.net>.  Craig Shelley's Linux
- * driver provided invaluable documentation.
- *
- * This code is derived from ugensa.c, software contributed to
- * The NetBSD Foundation by Roland C. Dowdeswell <elric@netbsd.org>.
+ * by Roland C. Dowdeswell <elric@netbsd.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +31,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 2007, 2009 Jonathan A. Kollasch.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/*
+ * Craig Shelley's Linux driver was used for documentation.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.6.4.1 2008/05/16 02:25:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.6.4.2 2009/05/04 08:13:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +91,6 @@ int uslsadebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define USLSA_REQUEST_SET	0x41
-#define USLSA_REQUEST_GET	0xc1
 
 #define USLSA_REQ_SET_STATE	0x00
 
@@ -182,13 +207,13 @@ static const struct usb_devno uslsa_devs[] = {
 };
 #define uslsa_lookup(v, p) usb_lookup(uslsa_devs, v, p)
 
-int uslsa_match(device_t, struct cfdata *, void *);
+int uslsa_match(device_t, cfdata_t, void *);
 void uslsa_attach(device_t, device_t, void *);
 void uslsa_childdet(device_t, device_t);
 int uslsa_detach(device_t, int);
 int uslsa_activate(device_t, enum devact);
 extern struct cfdriver uslsa_cd;
-CFATTACH_DECL2(uslsa, sizeof(struct uslsa_softc), uslsa_match,
+CFATTACH_DECL2_NEW(uslsa, sizeof(struct uslsa_softc), uslsa_match,
     uslsa_attach, uslsa_detach, uslsa_activate, NULL, uslsa_childdet);
 
 USB_MATCH(uslsa)
@@ -212,6 +237,7 @@ USB_ATTACH(uslsa)
 	struct ucom_attach_args uca;
 	int i;
 
+	sc->sc_dev = self;
 	devname = USBDEVNAME(sc->sc_dev);
 
 	DPRINTFN(10, ("\nuslsa_attach: sc=%p\n", sc));
@@ -219,21 +245,21 @@ USB_ATTACH(uslsa)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, USLSA_CONFIG_INDEX, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
+		aprint_error("\n%s: failed to set configuration, err=%s\n",
 	 	       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	err = usbd_device2interface_handle(dev, USLSA_IFACE_INDEX, &iface);
 	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
+		aprint_error("\n%s: failed to get interface, err=%s\n",
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
@@ -261,8 +287,9 @@ USB_ATTACH(uslsa)
 
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor"
-			       ": %s\n", devname, usbd_errstr(err));
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor: %s\n",
+			    usbd_errstr(err));
 			goto bad;
 		}
 		addr = ed->bEndpointAddress;
@@ -273,16 +300,14 @@ USB_ATTACH(uslsa)
 		else if (dir == UE_DIR_OUT && attr == UE_BULK)
 			uca.bulkout = addr;
 		else
-			printf("%s: unexpected endpoint\n", devname);
+			aprint_error_dev(self, "unexpected endpoint\n");
 	}
 	if (uca.bulkin == -1) {
-		printf("%s: Could not find data bulk in\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk in\n");
 		goto bad;
 	}
 	if (uca.bulkout == -1) {
-		printf("%s: Could not find data bulk out\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk out\n");
 		goto bad;
 	}
 
@@ -358,7 +383,7 @@ uslsa_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF(("uslsa_get_status:\n"));
 
-	req.bmRequestType = USLSA_REQUEST_GET;
+	req.bmRequestType = UT_READ_VENDOR_INTERFACE;
 	req.bRequest = USLSA_REQ_GET_FLOW;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
@@ -539,7 +564,7 @@ uslsa_request_set(struct uslsa_softc * sc, uint8_t request, uint16_t value)
 	usb_device_request_t req;
 	usbd_status err;
 
-	req.bmRequestType = USLSA_REQUEST_SET;
+	req.bmRequestType = UT_WRITE_VENDOR_INTERFACE;
 	req.bRequest = request;
 	USETW(req.wValue, value);
 	USETW(req.wIndex, 0);
@@ -565,7 +590,7 @@ uslsa_set_flow(struct uslsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 	DPRINTF(("uslsa_set_flow: cflag = 0x%x, iflag = 0x%x\n",
 	         cflag, iflag));
 
-	req.bmRequestType = USLSA_REQUEST_GET;
+	req.bmRequestType = UT_READ_VENDOR_INTERFACE;
 	req.bRequest = USLSA_REQ_GET_MODEM;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
@@ -586,7 +611,7 @@ uslsa_set_flow(struct uslsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 		mysterydata[4] = 0x40;
 	}
 
-	req.bmRequestType = USLSA_REQUEST_SET;
+	req.bmRequestType = UT_WRITE_VENDOR_INTERFACE;
 	req.bRequest = USLSA_REQ_SET_MODEM;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);

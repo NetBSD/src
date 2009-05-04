@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.1.126.1 2008/05/16 02:22:56 yamt Exp $	*/
+/*	$NetBSD: libsa.h,v 1.1.126.2 2009/05/04 08:11:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,9 +32,6 @@
 /*
  * libsa prototypes 
  */
-
-/* clock.c */
-time_t getsecs(void);
 
 /* exec_mvme.c */
 void exec_mvme(const char *, int, int);

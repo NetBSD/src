@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.121.2.1 2008/05/16 02:25:24 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.121.2.2 2009/05/04 08:13:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,10 +69,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.121.2.1 2008/05/16 02:25:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.121.2.2 2009/05/04 08:13:46 yamt Exp $");
 
 #include "opt_ntp.h"
-#include "opt_multiprocessor.h"
 #include "opt_perfctrs.h"
 
 #include <sys/param.h>
@@ -219,18 +218,13 @@ hardclock(struct clockframe *frame)
 	if ((--ci->ci_schedstate.spc_ticks) <= 0)
 		sched_tick(ci);
 
-#if defined(MULTIPROCESSOR)
-	if (CPU_IS_PRIMARY(ci))
-#endif
-	{
+	if (CPU_IS_PRIMARY(ci)) {
 		hardclock_ticks++;
 		tc_ticktock();
 	}
 
 	/*
-	 * Update real-time timeout queue.  Callouts are processed at a
-	 * very low CPU priority, so we don't keep the relatively high
-	 * clock interrupt priority any longer than necessary.
+	 * Update real-time timeout queue.
 	 */
 	callout_hardclock();
 }
@@ -332,6 +326,8 @@ schedclock(struct lwp *l)
 	ci->ci_data.cpu_nswtch = 0;
 	atomic_add_int((unsigned *)&uvmexp.syscalls, ci->ci_data.cpu_nsyscall);
 	ci->ci_data.cpu_nsyscall = 0;
+	atomic_add_int((unsigned *)&uvmexp.traps, ci->ci_data.cpu_ntrap);
+	ci->ci_data.cpu_ntrap = 0;
 
 	if ((l->l_flag & LW_IDLE) != 0)
 		return;
@@ -448,7 +444,7 @@ statclock(struct clockframe *frame)
 	spc->spc_pscnt = psdiv;
 
 	if (p != NULL) {
-		++l->l_cpticks;
+		atomic_inc_uint(&l->l_cpticks);
 		mutex_spin_exit(&p->p_stmutex);
 	}
 }

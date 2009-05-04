@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.32 2008/03/27 02:51:26 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.32.4.1 2009/05/04 08:12:33 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -136,6 +136,7 @@ struct acpi_softc {
 	 * Scopes we manage.
 	 */
 	TAILQ_HEAD(, acpi_scope) sc_scopes;
+	device_t	sc_apmbus;
 };
 
 /*
@@ -263,6 +264,7 @@ int		acpi_probe(void);
 ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 void		acpi_set_wake_gpe(ACPI_HANDLE);
+void		acpi_clear_wake_gpe(ACPI_HANDLE);
 
 ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, const char *, char **);
@@ -288,6 +290,7 @@ int		acpi_pci_link_route_interrupt(void *, int, int *, int *, int *);
 char *		acpi_pci_link_name(void *);
 ACPI_HANDLE	acpi_pci_link_handle(void *);
 void		acpi_pci_link_state(void);
+void		acpi_pci_link_resume(void);
 
 struct acpi_io		*acpi_res_io(struct acpi_resources *, int);
 struct acpi_iorange	*acpi_res_iorange(struct acpi_resources *, int);

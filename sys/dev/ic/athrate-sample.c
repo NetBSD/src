@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.15 2008/04/08 12:07:25 cegger Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.15.4.1 2009/05/04 08:12:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.15 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.15.4.1 2009/05/04 08:12:40 yamt Exp $");
 #endif
 
 
@@ -74,9 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.15 2008/04/08 12:07:25 cegger E
 #include <netinet/in.h> 
 #endif
 
+#include "ah_desc.h"
 #include <dev/ic/athvar.h>
 #include <dev/ic/athrate-sample.h>
-#include <contrib/dev/ath/ah_desc.h>
 
 #define	SAMPLE_DEBUG
 #ifdef SAMPLE_DEBUG
@@ -773,7 +773,7 @@ ath_rate_sysctlattach(struct ath_softc *sc, struct sample_softc *osc)
 	struct sysctllog **log = &sc->sc_sysctllog;
 	const struct sysctlnode *cnode, *rnode;
 
-	if ((rnode = ath_sysctl_instance(device_xname(&sc->sc_dev), log)) == NULL)
+	if ((rnode = ath_sysctl_instance(device_xname(sc->sc_dev), log)) == NULL)
 		return;
 
 	/* XXX bounds check [0..100] */

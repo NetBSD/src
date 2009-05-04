@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2008/03/10 20:19:28 skrll Exp $
+#	$NetBSD: Makefile,v 1.9.4.1 2009/05/04 08:11:08 yamt Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
 SRCS=	start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S
+
+.PATH:	${.CURDIR}/../common
 
 CPPFLAGS+=	-mpa-risc-1-0 -I${.CURDIR}/../../../.. -I. -D_STANDALONE
 # configuration for readufs module
@@ -16,7 +18,7 @@ COPTS+=		-funsigned-char	-mdisable-fpregs
 
 .include <bsd.own.mk>
 
-.if ${HAVE_GCC} != 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} != 4
 COPTS+=	-fwritable-strings
 .endif
 
@@ -31,6 +33,8 @@ LIBCRTBEGIN=
 LIBCRT0=
 LIBCRTEND=
 LIBC=
+
+S=		${.CURDIR}/../../../..
 
 ${PROG}: iplsum ${OBJS}
 	${_MKTARGET_LINK}
@@ -53,13 +57,14 @@ CLEANFILES+=	${PROG}1 ${PROG}2 ${PROG}1.bin ${PROG}2.bin ${PROG}.bin iplsum
 CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>
 
 # override default rules
 
 # Place code to data section.
 .S.o:
 	${_MKTARGET_COMPILE}
-	sed -e 's/\.code/.data/' \
+	${TOOL_SED} -e 's/\.code/.data/' \
 	-e 's/\.bss/.section .bss,"aw",@nobits/' \
 	-e 's/\.allow$$/.level	1.0/' -e 's/\.allow/.level/' \
 	 ${.IMPSRC} | ${AS} -o ${.TARGET}
@@ -73,4 +78,4 @@ CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 		if [ $$? = 0 ]; then \
 			echo 'found non-relocatable code' >&2 && exit 1; \
 		fi
-	sed -e 's/\.text/.data/' $@.S | ${AS} -o ${.TARGET}
+	${TOOL_SED} -e 's/\.text/.data/' $@.S | ${AS} -o ${.TARGET}

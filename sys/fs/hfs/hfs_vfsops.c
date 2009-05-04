@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.16.10.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.16.10.2 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16.10.1 2008/05/16 02:25:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16.10.2 2009/05/04 08:13:43 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -275,18 +275,19 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
+	 *
+	 * Permission to update a mount is checked higher, so here we presume
+	 * updating the mount is okay (for example, as far as securelevel goes)
+	 * which leaves us with the normal check.
 	 */
-	if (error == 0 && kauth_authorize_generic(l->l_cred,
-            KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		accessmode = VREAD;
-		if (update ?
-			(mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
-			(mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-	}
+	accessmode = VREAD;
+	if (update ?
+		(mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+		(mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
 
 	if (error != 0)
 		goto error;
@@ -546,8 +547,8 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	/* Allocate a new vnode/inode. */
 	if ((error = getnewvnode(VT_HFS, mp, hfs_vnodeop_p, &vp)) != 0)
 		goto error;
-	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
-		M_WAITOK + M_ZERO);
+	hnode = malloc(sizeof(struct hfsnode), M_TEMP,
+		M_WAITOK | M_ZERO);
 
 	/*
 	 * If someone beat us to it while sleeping in getnewvnode(),
@@ -557,7 +558,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	if (hfs_nhashget(dev, cnid, fork, 0) != NULL) {
 		mutex_exit(&hfs_hashlock);
 		ungetnewvnode(vp);
-		FREE(hnode, M_TEMP);
+		free(hnode, M_TEMP);
 		goto retry;
 	}
 
@@ -579,7 +580,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	 * to read the disk.
 	 */
 	hnode->h_dev = dev;
-	hnode->h_rec.cnid = cnid;
+	hnode->h_rec.u.cnid = cnid;
 	hnode->h_fork = fork;
 
 	hfs_nhashinsert(hnode);
@@ -619,7 +620,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	VREF(hnode->h_devvp);  /* Increment the ref count to the volume's device. */
 
 	/* Make sure UVM has allocated enough memory. (?) */
-	if (hnode->h_rec.rec_type == HFS_REC_FILE) {
+	if (hnode->h_rec.u.rec_type == HFS_REC_FILE) {
 		if (hnode->h_fork == HFS_DATAFORK)
 			uvm_vnp_setsize(vp,
 			    hnode->h_rec.file.data_fork.logical_size);

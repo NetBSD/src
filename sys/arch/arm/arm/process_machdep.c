@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18 2007/03/04 05:59:36 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18.46.1 2009/05/04 08:10:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2007/03/04 05:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.46.1 2009/05/04 08:10:38 yamt Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -156,7 +156,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
-	bcopy((void *)&tf->tf_r0, (void *)regs->r, sizeof(regs->r));
+	memcpy( (void *)regs->r, (void *)&tf->tf_r0, sizeof(regs->r));
 	regs->r_sp = tf->tf_usr_sp;
 	regs->r_lr = tf->tf_usr_lr;
 	regs->r_pc = tf->tf_pc;
@@ -168,8 +168,8 @@ process_read_regs(struct lwp *l, struct reg *regs)
 #endif
 #ifdef DIAGNOSTIC
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
-	    && tf->tf_spsr & I32_bit)
-		panic("process_read_regs: Interrupts blocked in user process");
+	     && (tf->tf_spsr & IF32_bits))
+		panic("process_read_regs: IRQs/FIQs blocked in user process");
 #endif
 
 	return(0);
@@ -194,7 +194,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
-	bcopy(regs->r, &tf->tf_r0, sizeof(regs->r));
+	memcpy( &tf->tf_r0, regs->r, sizeof(regs->r));
 	tf->tf_usr_sp = regs->r_sp;
 	tf->tf_usr_lr = regs->r_lr;
 #ifdef __PROG32
@@ -207,8 +207,8 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 #endif
 #ifdef DIAGNOSTIC
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
-	    && tf->tf_spsr & I32_bit)
-		panic("process_write_regs: Interrupts blocked in user process");
+	     && (tf->tf_spsr & IF32_bits))
+		panic("process_read_regs: IRQs/FIQs blocked in user process");
 #endif
 #else /* __PROG26 */
 	if ((regs->r_pc & (R15_MODE | R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)

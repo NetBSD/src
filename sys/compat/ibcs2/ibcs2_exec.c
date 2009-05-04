@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.70 2007/12/08 18:36:00 dsl Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.70.16.1 2009/05/04 08:12:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.70 2007/12/08 18:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.70.16.1 2009/05/04 08:12:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -76,7 +76,7 @@ int ibcs2_debug = 1;
 
 struct uvm_object *emul_ibcs2_object;
 
-const struct emul emul_ibcs2 = {
+struct emul emul_ibcs2 = {
 	"ibcs2",
 	"/emul/ibcs2",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -113,6 +113,7 @@ const struct emul emul_ibcs2 = {
 
 	uvm_default_mapaddr,
 	NULL,	/* e_usertrap */
+	NULL,	/* e_sa */
 	0,	/* e_ucsize */
 	NULL,	/* e_startlwp */
 };
@@ -180,14 +181,14 @@ ibcs2_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
+		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
 	KASSERT(access_size > 0);
 	/* XXX: some ibcs2 binaries need an executable stack. */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
 	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE |
-	    VM_PROT_EXECUTE);
+	    VM_PROT_EXECUTE, VMCMD_STACK);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.c,v 1.14.10.1 2008/05/16 02:23:48 yamt Exp $	 */
+/*	$NetBSD: svr4_32_resource.c,v 1.14.10.2 2009/05/04 08:12:28 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.14.10.1 2008/05/16 02:23:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.14.10.2 2009/05/04 08:12:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ svr4_to_native_rl(int rl)
 	case SVR4_RLIMIT_NOFILE:
 		return RLIMIT_NOFILE;
 	case SVR4_RLIMIT_VMEM:
-		return RLIMIT_RSS;
+		return RLIMIT_AS;
 	default:
 		return -1;
 	}
@@ -83,7 +83,7 @@ svr4_to_native_rl(int rl)
 	((svr4_rlim_t)(l)) != SVR4_RLIM_SAVED_CUR && \
 	((svr4_rlim_t)(l)) != SVR4_RLIM_SAVED_MAX)
 
-#define OKLIMIT64(l) (((rlim_t)(l)) >= 0 && ((rlim_t)(l)) < RLIM_INFINITY && \
+#define OKLIMIT64(l) (((rlim_t)(l)) < RLIM_INFINITY && \
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_INFINITY && \
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_CUR && \
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_MAX)

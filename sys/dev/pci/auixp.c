@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.28 2008/04/10 19:13:36 cegger Exp $ */
+/* $NetBSD: auixp.c,v 1.28.4.1 2009/05/04 08:12:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28.4.1 2009/05/04 08:12:54 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -611,7 +611,7 @@ auixp_link_daisychain(struct auixp_softc *sc,
 	/* program the requested number of blocks */
 	for (i = 0; i < blocks; i++) {
 		/* clear the block just in case */
-		bzero(caddr_v, sizeof(atiixp_dma_desc_t));
+		memset(caddr_v, 0, sizeof(atiixp_dma_desc_t));
 
 		/* round robin the chain dma addresses for its successor */
 		next_caddr_v = caddr_v + 1;
@@ -948,7 +948,7 @@ auixp_intr(void *softc)
 		detected_codecs = status & CODEC_CHECK_BITS;
 		sc->sc_codec_not_ready_bits |= detected_codecs;
 
-		/* disable detected interupt sources */
+		/* disable detected interrupt sources */
 		enable  = bus_space_read_4(iot, ioh, ATI_REG_IER);
 		enable &= ~detected_codecs;
 		bus_space_write_4(iot, ioh, ATI_REG_IER, enable);
@@ -1553,7 +1553,7 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	/* Attach AC97 host interfaces */
 	for (codec_nr = 0; codec_nr < ATI_IXP_CODECS; codec_nr++) {
 		codec = &sc->sc_codec[codec_nr];
-		bzero(codec, sizeof(struct auixp_codec));
+		memset(codec, 0, sizeof(struct auixp_codec));
 
 		codec->sc       = sc;
 		codec->codec_nr = codec_nr;

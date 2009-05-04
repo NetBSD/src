@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.20.2.1 2008/05/16 02:25:26 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.20.2.2 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.20.2.1 2008/05/16 02:25:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.20.2.2 2009/05/04 08:13:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -111,6 +111,7 @@ void
 sched_tick(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	lwp_t *l;
 
 	spc->spc_ticks = rrticks;
 
@@ -118,19 +119,39 @@ sched_tick(struct cpu_info *ci)
 		cpu_need_resched(ci, 0);
 		return;
 	}
-	if (curlwp->l_class == SCHED_FIFO) {
+	l = ci->ci_data.cpu_onproc;
+	if (l == NULL) {
 		return;
 	}
-	if (spc->spc_flags & SPCF_SEENRR) {
-		/*
-		 * The process has already been through a roundrobin
-		 * without switching and may be hogging the CPU.
-		 * Indicate that the process should yield.
-		 */
-		spc->spc_flags |= SPCF_SHOULDYIELD;
-		cpu_need_resched(ci, 0);
-	} else
-		spc->spc_flags |= SPCF_SEENRR;
+	switch (l->l_class) {
+	case SCHED_FIFO:
+		/* No timeslicing for FIFO jobs. */
+		break;
+	case SCHED_RR:
+		/* Force it into mi_switch() to look for other jobs to run. */
+		cpu_need_resched(ci, RESCHED_KPREEMPT);
+		break;
+	default:
+		if (spc->spc_flags & SPCF_SHOULDYIELD) {
+			/*
+			 * Process is stuck in kernel somewhere, probably
+			 * due to buggy or inefficient code.  Force a 
+			 * kernel preemption.
+			 */
+			cpu_need_resched(ci, RESCHED_KPREEMPT);
+		} else if (spc->spc_flags & SPCF_SEENRR) {
+			/*
+			 * The process has already been through a roundrobin
+			 * without switching and may be hogging the CPU.
+			 * Indicate that the process should yield.
+			 */
+			spc->spc_flags |= SPCF_SHOULDYIELD;
+			cpu_need_resched(ci, 0);
+		} else {
+			spc->spc_flags |= SPCF_SEENRR;
+		}
+		break;
+	}
 }
 
 /*
@@ -265,25 +286,16 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
  * Periodically called from sched_pstats(); used to recalculate priorities.
  */
 void
-sched_pstats_hook(struct lwp *l)
+sched_pstats_hook(struct lwp *l, int batch)
 {
-	fixpt_t loadfac;
-	int sleeptm;
 
 	/*
 	 * If the LWP has slept an entire second, stop recalculating
 	 * its priority until it wakes up.
 	 */
-	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
-	    l->l_stat == LSSUSPENDED) {
-		l->l_slptime++;
-		sleeptm = 1;
-	} else {
-		sleeptm = 0x7fffffff;
-	}
-
-	if (l->l_slptime <= sleeptm) {
-		loadfac = 2 * (averunnable.ldavg[0]);
+	KASSERT(lwp_locked(l, NULL));
+	if (l->l_slptime > 0) {
+		fixpt_t loadfac = 2 * (averunnable.ldavg[0]);
 		l->l_estcpu = decay_cpu(loadfac, l->l_estcpu);
 		resetpriority(l);
 	}
@@ -435,7 +447,6 @@ void
 sched_wakeup(struct lwp *l)
 {
 
-	l->l_cpu = sched_takecpu(l);
 }
 
 void
@@ -449,12 +460,6 @@ sched_lwp_fork(struct lwp *l1, struct lwp *l2)
 {
 
 	l2->l_estcpu = l1->l_estcpu;
-}
-
-void
-sched_lwp_exit(struct lwp *l)
-{
-
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.50 2008/03/15 11:45:18 rtr Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.50.4.1 2009/05/04 08:14:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,6 +56,7 @@
  * Some Ethernet extensions.
  */
 #define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
+#define	ETHER_PPPOE_ENCAP_LEN 8	/* length of PPPoE encapsulation */
 
 /*
  * Ethernet address - 6 octets
@@ -77,6 +78,7 @@ struct ether_header {
 #include <net/ethertypes.h>
 
 #define	ETHER_IS_MULTICAST(addr) (*(addr) & 0x01) /* is address mcast/bcast? */
+#define	ETHER_IS_LOCAL(addr) (*(addr) & 0x02) /* is address local? */
 
 #define	ETHERMTU_JUMBO	(ETHER_MAX_LEN_JUMBO - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
@@ -89,7 +91,8 @@ struct ether_header {
 #define	ETHER_MAX_FRAME(ifp, etype, hasfcs)				\
 	((ifp)->if_mtu + ETHER_HDR_LEN +				\
 	 ((hasfcs) ? ETHER_CRC_LEN : 0) +				\
-	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0))
+	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0) +	\
+	 (((etype) == ETHERTYPE_PPPOE) ? ETHER_PPPOE_ENCAP_LEN : 0))
 
 /*
  * Ethernet CRC32 polynomials (big- and little-endian verions).
@@ -142,6 +145,10 @@ do {									\
 
 struct mii_data;
 
+struct ethercom;
+
+typedef int (*ether_cb_t)(struct ethercom *);
+
 /*
  * Structure shared between the ethernet driver modules and
  * the multicast list code.  For example, each ec_softc or il_softc
@@ -161,6 +168,11 @@ struct ethercom {
 	int	ec_nvlans;			/* # VLANs on this interface */
 	/* The device handle for the MII bus child device. */
 	struct mii_data				*ec_mii;
+	/* Called after a change to ec_if.if_flags.  Returns
+	 * ENETRESET if the device should be reinitialized with
+	 * ec_if.if_init, 0 on success, not 0 on failure.
+	 */
+	ether_cb_t				ec_ifflags_cb;
 #ifdef MBUFTRACE
 	struct	mowner ec_rx_mowner;		/* mbufs received */
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
@@ -177,6 +189,7 @@ extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
+void	ether_set_ifflags_cb(struct ethercom *, ether_cb_t);
 int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
@@ -217,8 +230,8 @@ struct ether_multistep {
 {									\
 	for ((enm) = LIST_FIRST(&(ec)->ec_multiaddrs);			\
 	    (enm) != NULL &&						\
-	    (bcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
-	     bcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
+	    (memcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
+	     memcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
 		(enm) = LIST_NEXT((enm), enm_list));			\
 }
 
@@ -253,24 +266,31 @@ struct ether_multistep {
  */
 
 /* add VLAN tag to input/received packet */
-#define	VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)	\
-	do {								\
-                struct m_tag *mtag =					\
-                    m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);\
-                if (mtag == NULL) {					\
-			ifp->if_ierrors++;				\
-                        printf("%s: unable to allocate VLAN tag\n",	\
-                            ifp->if_xname);				\
-                        m_freem(m);					\
-                        _errcase;					\
-                }							\
-                *(u_int *)(mtag + 1) = vlanid;				\
-                m_tag_prepend(m, mtag);					\
-	} while(0)
+static inline int vlan_input_tag(struct ifnet *, struct mbuf *, u_int);
+static inline int
+vlan_input_tag(struct ifnet *ifp, struct mbuf *m, u_int vlanid)
+{
+	struct m_tag *mtag;
+	mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
+	if (mtag == NULL) {
+		ifp->if_ierrors++;
+		printf("%s: unable to allocate VLAN tag\n", ifp->if_xname);
+		m_freem(m);
+		return 1;
+	}
+	*(u_int *)(mtag + 1) = vlanid;
+	m_tag_prepend(m, mtag);
+	return 0;
+}
+
+#define VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)		\
+    if (vlan_input_tag(ifp, m, vlanid) != 0) {	 		\
+	_errcase;						\
+    }
 
 /* extract VLAN tag from output/trasmit packet */
 #define VLAN_OUTPUT_TAG(ec, m0)			\
-	VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL
+	(VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL)
 
 /* extract VLAN ID value from a VLAN tag */
 #define VLAN_TAG_VALUE(mtag)	\
@@ -297,12 +317,12 @@ int	ether_nonstatic_aton(u_char *, char *);
  */
 #include <sys/cdefs.h>
 __BEGIN_DECLS
-char *	ether_ntoa __P((const struct ether_addr *));
+char *	ether_ntoa(const struct ether_addr *);
 struct ether_addr *
-	ether_aton __P((const char *));
-int	ether_ntohost __P((char *, const struct ether_addr *));
-int	ether_hostton __P((const char *, struct ether_addr *));
-int	ether_line __P((const char *, struct ether_addr *, char *));
+	ether_aton(const char *);
+int	ether_ntohost(char *, const struct ether_addr *);
+int	ether_hostton(const char *, struct ether_addr *);
+int	ether_line(const char *, struct ether_addr *, char *);
 __END_DECLS
 #endif
 

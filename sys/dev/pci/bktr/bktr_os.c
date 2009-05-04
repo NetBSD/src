@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.51 2008/04/10 19:13:38 cegger Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.51.4.1 2009/05/04 08:13:07 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.51 2008/04/10 19:13:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.51.4.1 2009/05/04 08:13:07 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -165,7 +165,7 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #define BKTR_DEBUG
 #ifdef BKTR_DEBUG
 int bktr_debug = 0;
-#define DPR(x)	(bktr_debug ? printf x : 0)
+#define DPR(x)	if (bktr_debug) printf x
 #else
 #define DPR(x)
 #endif
@@ -1550,10 +1550,7 @@ vaddr_t
 #else
 vm_offset_t
 #endif
-get_bktr_mem(bktr, dmapp, size)
-        bktr_ptr_t bktr;
-        bus_dmamap_t *dmapp;
-        unsigned int size;
+get_bktr_mem(bktr_ptr_t bktr, bus_dmamap_t *dmapp, unsigned int size)
 {
         bus_dma_tag_t dmat = bktr->dmat;
         bus_dma_segment_t seg;
@@ -1611,14 +1608,7 @@ get_bktr_mem(bktr, dmapp, size)
 }
 
 void
-free_bktr_mem(bktr, dmap, kva)
-        bktr_ptr_t bktr;
-        bus_dmamap_t dmap;
-#if defined(__NetBSD__)
-        vaddr_t kva;
-#else
-        vm_offset_t kva;
-#endif
+free_bktr_mem(bktr_ptr_t bktr, bus_dmamap_t dmap, vaddr_t kva)
 {
         bus_dma_tag_t dmat = bktr->dmat;
 
@@ -1660,10 +1650,9 @@ bktr_open(dev_t dev, int flags, int fmt,
 	unit = UNIT(dev);
 
 	/* unit out of range */
-	if ((unit >= bktr_cd.cd_ndevs) || (bktr_cd.cd_devs[unit] == NULL))
+	bktr = device_lookup_private(&bktr_cd, unit);
+	if (bktr == NULL)
 		return(ENXIO);
-
-	bktr = bktr_cd.cd_devs[unit];
 
 	if (!(bktr->flags & METEOR_INITIALIZED)) /* device not found */
 		return(ENXIO);
@@ -1693,7 +1682,7 @@ bktr_close(dev_t dev, int flags, int fmt,
 
 	unit = UNIT(dev);
 
-	bktr = bktr_cd.cd_devs[unit];
+	bktr = device_lookup_private(&bktr_cd, unit);
 
 	switch (FUNCTION(dev)) {
 	case VIDEO_DEV:
@@ -1718,7 +1707,7 @@ bktr_read(dev_t dev, struct uio *uio, int ioflag)
 
 	unit = UNIT(dev);
 
-	bktr = bktr_cd.cd_devs[unit];
+	bktr = device_lookup_private(&bktr_cd, unit);
 
 	switch (FUNCTION(dev)) {
 	case VIDEO_DEV:
@@ -1753,7 +1742,7 @@ bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, void *arg, int flag,
 
 	unit = UNIT(dev);
 
-	bktr = bktr_cd.cd_devs[unit];
+	bktr = device_lookup_private(&bktr_cd, unit);
 
 	if (bktr->bigbuf == 0)	/* no frame buffer allocated (ioctl failed) */
 		return(ENOMEM);
@@ -1782,7 +1771,7 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 	if (FUNCTION(dev) > 0)	/* only allow mmap on /dev/bktr[n] */
 		return(-1);
 
-	bktr = bktr_cd.cd_devs[unit];
+	bktr = device_lookup_private(&bktr_cd, unit);
 
 	if ((vaddr_t)offset >= bktr->alloc_pages * PAGE_SIZE)
 		return(-1);

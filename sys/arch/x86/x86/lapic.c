@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.34.4.1 2008/05/16 02:23:29 yamt Exp $	*/
+/*	$NetBSD: lapic.c,v 1.34.4.2 2009/05/04 08:12:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.34.4.1 2008/05/16 02:23:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.34.4.2 2009/05/04 08:12:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -79,9 +79,7 @@ static void lapic_hwunmask(struct pic *, int);
 static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
 
 struct pic local_pic = {
-	.pic_dev = {
-		.dv_xname = "lapic",
-	},
+	.pic_name = "lapic",
 	.pic_type = PIC_LAPIC,
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 	.pic_hwmask = lapic_hwmask,
@@ -344,7 +342,7 @@ lapic_initclocks(void)
 }
 
 extern unsigned int gettick(void);	/* XXX put in header file */
-extern int rtclock_tval; /* XXX put in header file */
+extern u_long rtclock_tval; /* XXX put in header file */
 extern void (*initclock_func)(void); /* XXX put in header file */
 
 /*
@@ -527,9 +525,9 @@ x86_ipi_init(int target)
 	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
 		return EBUSY;
 	}
-	esr = i82489_readreg(LAPIC_ESR) & ~0x40;
+	esr = i82489_readreg(LAPIC_ESR);
 	if (esr != 0) {
-		printf("x86_ipi_init: ESR %08x\n", esr);
+		aprint_debug("x86_ipi_init: ESR %08x\n", esr);
 	}
 
 	return 0;
@@ -552,9 +550,9 @@ x86_ipi_startup(int target, int vec)
 	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
 		return EBUSY;
 	}
-	esr = i82489_readreg(LAPIC_ESR) & ~0x40;
+	esr = i82489_readreg(LAPIC_ESR);
 	if (esr != 0) {
-		printf("x86_ipi_startup: ESR %08x\n", esr);
+		aprint_debug("x86_ipi_startup: ESR %08x\n", esr);
 	}
 
 	return 0;

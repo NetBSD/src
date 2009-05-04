@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.47.24.1 2008/05/16 02:25:46 yamt Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.47.24.2 2009/05/04 08:14:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.47.24.1 2008/05/16 02:25:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.47.24.2 2009/05/04 08:14:20 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -178,7 +178,7 @@ union sockunion {
  * NOTES:		This does a lot of obscure magic;
  */
 void
-llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+llc_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	union sockunion *gate = (union sockunion *) rt->rt_gateway;
 	struct llinfo_llc *lc = (struct llinfo_llc *) rt->rt_llinfo;
@@ -281,12 +281,12 @@ iso_setmcasts(struct ifnet *ifp, int req)
 	(void)memset(&ifr, 0, sizeof(ifr));
 	for (cpp = addrlist; *cpp; cpp++) {
 		(void)memcpy(ifr.ifr_addr.sa_data, *cpp, 6);
-		if (req == RTM_ADD && (ifp->if_ioctl == 0 ||
-		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)&ifr) != 0))
+		if (req == RTM_ADD && 
+		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr) != 0)
 			printf("iso_setmcasts: %s unable to add mcast\n",
 			    ifp->if_xname);
-		else if (req == RTM_DELETE && (ifp->if_ioctl == 0 ||
-		    (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)&ifr) != 0))
+		else if (req == RTM_DELETE && 
+		    (*ifp->if_ioctl)(ifp, SIOCDELMULTI, &ifr) != 0)
 			printf("iso_setmcasts: %s unable to delete mcast\n",
 			    ifp->if_xname);
 	}
@@ -469,8 +469,7 @@ add:
 		if (nsellength && (rt->rt_flags & RTF_HOST)) {
 			if (rt->rt_refcnt == 0) {
 				rtrequest(RTM_DELETE, sisotosa(&dst),
-				(struct sockaddr *) 0, (struct sockaddr *) 0,
-					  0, (struct rtentry **) 0);
+				    NULL, NULL, 0, NULL);
 				rt = 0;
 				goto add;
 			} else {
@@ -550,9 +549,18 @@ snpac_ioctl(
 #endif
 
 	if (cmd == SIOCSSTYPE) {
-		if (l == NULL || kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL))
-			return (EPERM);
+		int error;
+
+		if (l == NULL)
+			error = EACCES;
+		else
+			error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_SOCKET,
+			    KAUTH_REQ_NETWORK_SOCKET_SETPRIV, so,
+			    KAUTH_ARG(cmd), NULL);
+
+		if (error)
+			return (error);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);
 		if (rq->sr_type & SNPA_ES) {
@@ -606,7 +614,7 @@ snpac_logdefis(struct rtentry *sc)
 	rt = rtalloc1((struct sockaddr *) & zsi, 0);
 	if (rt == 0) {
 		rtrequest(RTM_ADD, sisotosa(&zsi), rt_getkey(sc),
-		    sisotosa(&zmk), RTF_DYNAMIC | RTF_GATEWAY, 0);
+		    sisotosa(&zmk), RTF_DYNAMIC | RTF_GATEWAY, NULL);
 	} else {
 		if ((rt->rt_flags & RTF_DYNAMIC) &&
 		    (rt->rt_flags & RTF_GATEWAY) && rt_mask(rt)->sa_len == 0)

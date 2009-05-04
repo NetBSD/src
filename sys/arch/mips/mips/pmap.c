@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.178.10.1 2008/05/16 02:22:51 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.178.10.2 2009/05/04 08:11:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178.10.1 2008/05/16 02:22:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178.10.2 2009/05/04 08:11:31 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -178,7 +178,8 @@ int pmapdebug = 0;
 
 #endif
 
-struct pmap	kernel_pmap_store;
+static struct pmap	kernel_pmap_store;
+struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
 
 paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */
@@ -1101,7 +1102,7 @@ pmap_page_cache(struct vm_page *pg, int mode)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte;
 	u_int npte;

@@ -1,7 +1,7 @@
-/*	$NetBSD: if_tap.c,v 1.42.2.1 2008/05/16 02:25:41 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.42.2.2 2009/05/04 08:14:15 yamt Exp $	*/
 
 /*
- *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
+ *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.1 2008/05/16 02:25:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.2 2009/05/04 08:14:15 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
+#include "opt_modular.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -49,13 +51,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.1 2008/05/16 02:25:41 yamt Exp $")
 #include <sys/filedesc.h>
 #include <sys/ksyms.h>
 #include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/sockio.h>
+#if defined(COMPAT_40) || defined(MODULAR)
 #include <sys/sysctl.h>
+#endif
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/simplelock.h>
 #include <sys/intr.h>
+#include <sys/stat.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -68,11 +74,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.1 2008/05/16 02:25:41 yamt Exp $")
 
 #include <compat/sys/sockio.h>
 
+#if defined(COMPAT_40) || defined(MODULAR)
 /*
  * sysctl node management
  *
  * It's not really possible to use a SYSCTL_SETUP block with
- * current LKM implementation, so it is easier to just define
+ * current module implementation, so it is easier to just define
  * our own function.
  *
  * The handler function is a "helper" in Andrew Brown's sysctl
@@ -85,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.1 2008/05/16 02:25:41 yamt Exp $")
 static int tap_node;
 static int	tap_sysctl_handler(SYSCTLFN_PROTO);
 SYSCTL_SETUP_PROTO(sysctl_tap_setup);
+#endif
 
 /*
  * Since we're an Ethernet device, we need the 3 following
@@ -108,6 +116,9 @@ struct tap_softc {
 	kmutex_t	sc_rdlock;
 	struct simplelock	sc_kqlock;
 	void		*sc_sih;
+	struct timespec sc_atime;
+	struct timespec sc_mtime;
+	struct timespec sc_btime;
 };
 
 /* autoconf(9) glue */
@@ -138,17 +149,19 @@ static int	tap_fops_write(file_t *, off_t *, struct uio *,
     kauth_cred_t, int);
 static int	tap_fops_ioctl(file_t *, u_long, void *);
 static int	tap_fops_poll(file_t *, int);
+static int	tap_fops_stat(file_t *, struct stat *);
 static int	tap_fops_kqfilter(file_t *, struct knote *);
 
 static const struct fileops tap_fileops = {
-	tap_fops_read,
-	tap_fops_write,
-	tap_fops_ioctl,
-	fnullop_fcntl,
-	tap_fops_poll,
-	fbadop_stat,
-	tap_fops_close,
-	tap_fops_kqfilter,
+	.fo_read = tap_fops_read,
+	.fo_write = tap_fops_write,
+	.fo_ioctl = tap_fops_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = tap_fops_poll,
+	.fo_stat = tap_fops_stat,
+	.fo_close = tap_fops_close,
+	.fo_kqfilter = tap_fops_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /* Helper for cloning open() */
@@ -197,7 +210,9 @@ static int	tap_init(struct ifnet *);
 static int	tap_ioctl(struct ifnet *, u_long, void *);
 
 /* Internal functions */
+#if defined(COMPAT_40) || defined(MODULAR)
 static int	tap_lifaddr(struct ifnet *, u_long, struct ifaliasreq *);
+#endif
 static void	tap_softintr(void *);
 
 /*
@@ -246,16 +261,23 @@ tap_attach(device_t parent, device_t self, void *aux)
 {
 	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp;
+#if defined(COMPAT_40) || defined(MODULAR)
 	const struct sysctlnode *node;
+	int error;
+#endif
 	uint8_t enaddr[ETHER_ADDR_LEN] =
 	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[3 * ETHER_ADDR_LEN];
 	struct timeval tv;
 	uint32_t ui;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
+	getnanotime(&sc->sc_btime);
+	sc->sc_atime = sc->sc_mtime = sc->sc_btime;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
@@ -309,6 +331,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_flags = 0;
 
+#if defined(COMPAT_40) || defined(MODULAR)
 	/*
 	 * Add a sysctl node for that interface.
 	 *
@@ -331,6 +354,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	    CTL_EOL)) != 0)
 		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
 		    error);
+#endif
 
 	/*
 	 * Initialize the two locks for the device.
@@ -349,6 +373,8 @@ tap_attach(device_t parent, device_t self, void *aux)
 	 */
 	mutex_init(&sc->sc_rdlock, MUTEX_DEFAULT, IPL_NONE);
 	simple_lock_init(&sc->sc_kqlock);
+
+	selinit(&sc->sc_rsel);
 }
 
 /*
@@ -360,7 +386,10 @@ tap_detach(device_t self, int flags)
 {
 	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	int error, s;
+#if defined(COMPAT_40) || defined(MODULAR)
+	int error;
+#endif
+	int s;
 
 	sc->sc_flags |= TAP_GOING;
 	s = splnet();
@@ -370,6 +399,7 @@ tap_detach(device_t self, int flags)
 
 	softint_disestablish(sc->sc_sih);
 
+#if defined(COMPAT_40) || defined(MODULAR)
 	/*
 	 * Destroying a single leaf is a very straightforward operation using
 	 * sysctl_destroyv.  One should be sure to always end the path with
@@ -379,10 +409,14 @@ tap_detach(device_t self, int flags)
 	    device_unit(sc->sc_dev), CTL_EOL)) != 0)
 		aprint_error_dev(self,
 		    "sysctl_destroyv returned %d, ignoring\n", error);
+#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_rdlock);
+
+	pmf_device_deregister(self);
 
 	return (0);
 }
@@ -513,9 +547,11 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
 		break;
+#if defined(COMPAT_40) || defined(MODULAR)
 	case SIOCSIFPHYADDR:
 		error = tap_lifaddr(ifp, cmd, (struct ifaliasreq *)data);
 		break;
+#endif
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET)
@@ -528,22 +564,24 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return (error);
 }
 
+#if defined(COMPAT_40) || defined(MODULAR)
 /*
- * Helper function to set Ethernet address.  This shouldn't be done there,
- * and should actually be available to all Ethernet drivers, real or not.
+ * Helper function to set Ethernet address.  This has been replaced by
+ * the generic SIOCALIFADDR ioctl on a PF_LINK socket.
  */
 static int
 tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 {
-	const struct sockaddr_dl *sdl = satosdl(&ifra->ifra_addr);
+	const struct sockaddr *sa = &ifra->ifra_addr;
 
-	if (sdl->sdl_family != AF_LINK)
+	if (sa->sa_family != AF_LINK)
 		return (EINVAL);
 
-	if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN);
+	if_set_sadl(ifp, sa->sa_data, ETHER_ADDR_LEN, false);
 
 	return (0);
 }
+#endif
 
 /*
  * _init() would typically be called when an interface goes up,
@@ -620,7 +658,7 @@ tap_clone_creator(int unit)
 		cf->cf_fstate = FSTATE_STAR;
 	} else {
 		cf->cf_unit = unit;
-		cf->cf_fstate = FSTATE_NOTFOUND;
+		cf->cf_fstate = FSTATE_FOUND;
 	}
 
 	return device_private(config_attach_pseudo(cf));
@@ -634,7 +672,9 @@ tap_clone_creator(int unit)
 static int
 tap_clone_destroy(struct ifnet *ifp)
 {
-	return tap_clone_destroyer(device_private(ifp->if_softc));
+	struct tap_softc *sc = ifp->if_softc;
+
+	return tap_clone_destroyer(sc->sc_dev);
 }
 
 int
@@ -680,7 +720,7 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (minor(dev) == TAP_CLONER)
 		return tap_dev_cloner(l);
 
-	sc = device_private(device_lookup(&tap_cd, minor(dev)));
+	sc = device_lookup_private(&tap_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -749,7 +789,7 @@ tap_cdev_close(dev_t dev, int flags, int fmt,
     struct lwp *l)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, minor(dev)));
+	    device_lookup_private(&tap_cd, minor(dev));
 
 	if (sc == NULL)
 		return (ENXIO);
@@ -770,21 +810,28 @@ tap_fops_close(file_t *fp)
 	struct tap_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&tap_cd, unit));
+	sc = device_lookup_private(&tap_cd, unit);
 	if (sc == NULL)
 		return (ENXIO);
 
 	/* tap_dev_close currently always succeeds, but it might not
 	 * always be the case. */
-	if ((error = tap_dev_close(sc)) != 0)
+	KERNEL_LOCK(1, NULL);
+	if ((error = tap_dev_close(sc)) != 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (error);
+	}
 
 	/* Destroy the device now that it is no longer useful,
 	 * unless it's already being destroyed. */
-	if ((sc->sc_flags & TAP_GOING) != 0)
+	if ((sc->sc_flags & TAP_GOING) != 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (0);
+	}
 
-	return tap_clone_destroyer(sc->sc_dev);
+	error = tap_clone_destroyer(sc->sc_dev);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
@@ -831,20 +878,27 @@ static int
 tap_fops_read(file_t *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
-	return tap_dev_read((intptr_t)fp->f_data, uio, flags);
+	int error;
+
+	KERNEL_LOCK(1, NULL);
+	error = tap_dev_read((intptr_t)fp->f_data, uio, flags);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
 tap_dev_read(int unit, struct uio *uio, int flags)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 	struct ifnet *ifp;
 	struct mbuf *m, *n;
 	int error = 0, s;
 
 	if (sc == NULL)
 		return (ENXIO);
+
+	getnanotime(&sc->sc_atime);
 
 	ifp = &sc->sc_ec.ec_if;
 	if ((ifp->if_flags & IFF_UP) == 0)
@@ -863,7 +917,6 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	s = splnet();
 	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
 		ifp->if_flags &= ~IFF_OACTIVE;
-		splx(s);
 		/*
 		 * We must release the lock before sleeping, and re-acquire it
 		 * after.
@@ -873,6 +926,8 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 			error = EWOULDBLOCK;
 		else
 			error = tsleep(sc, PSOCK|PCATCH, "tap", 0);
+		splx(s);
+
 		if (error != 0)
 			return (error);
 		/* The device might have been downed */
@@ -920,6 +975,33 @@ out:
 }
 
 static int
+tap_fops_stat(file_t *fp, struct stat *st)
+{
+	int error;
+	struct tap_softc *sc;
+	int unit = (uintptr_t)fp->f_data;
+
+	(void)memset(st, 0, sizeof(*st));
+
+	KERNEL_LOCK(1, NULL);
+	sc = device_lookup_private(&tap_cd, unit);
+	if (sc == NULL) {
+		error = ENXIO;
+		goto out;
+	}
+
+	st->st_dev = makedev(cdevsw_lookup_major(&tap_cdevsw), unit);
+	st->st_atimespec = sc->sc_atime;
+	st->st_mtimespec = sc->sc_mtime;
+	st->st_ctimespec = st->st_birthtimespec = sc->sc_btime;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+out:
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
+}
+
+static int
 tap_cdev_write(dev_t dev, struct uio *uio, int flags)
 {
 	return tap_dev_write(minor(dev), uio, flags);
@@ -929,14 +1011,19 @@ static int
 tap_fops_write(file_t *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
-	return tap_dev_write((intptr_t)fp->f_data, uio, flags);
+	int error;
+
+	KERNEL_LOCK(1, NULL);
+	error = tap_dev_write((intptr_t)fp->f_data, uio, flags);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
 tap_dev_write(int unit, struct uio *uio, int flags)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 	struct ifnet *ifp;
 	struct mbuf *m, **mp;
 	int error = 0;
@@ -945,6 +1032,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	if (sc == NULL)
 		return (ENXIO);
 
+	getnanotime(&sc->sc_mtime);
 	ifp = &sc->sc_ec.ec_if;
 
 	/* One write, one packet, that's the rule */
@@ -1005,7 +1093,7 @@ static int
 tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 	int error = 0;
 
 	if (sc == NULL)
@@ -1081,7 +1169,7 @@ static int
 tap_dev_poll(int unit, int events, struct lwp *l)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 	int revents = 0;
 
 	if (sc == NULL)
@@ -1130,11 +1218,12 @@ static int
 tap_dev_kqfilter(int unit, struct knote *kn)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 
 	if (sc == NULL)
 		return (ENXIO);
 
+	KERNEL_LOCK(1, NULL);
 	switch(kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &tap_read_filterops;
@@ -1143,6 +1232,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 		kn->kn_fop = &tap_seltrue_filterops;
 		break;
 	default:
+		KERNEL_UNLOCK_ONE(NULL);
 		return (EINVAL);
 	}
 
@@ -1150,6 +1240,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	simple_lock(&sc->sc_kqlock);
 	SLIST_INSERT_HEAD(&sc->sc_rsel.sel_klist, kn, kn_selnext);
 	simple_unlock(&sc->sc_kqlock);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 
@@ -1158,9 +1249,11 @@ tap_kqdetach(struct knote *kn)
 {
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 
+	KERNEL_LOCK(1, NULL);
 	simple_lock(&sc->sc_kqlock);
 	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	simple_unlock(&sc->sc_kqlock);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static int
@@ -1169,8 +1262,9 @@ tap_kqread(struct knote *kn, long hint)
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
-	int s;
+	int s, rv;
 
+	KERNEL_LOCK(1, NULL);
 	s = splnet();
 	IFQ_POLL(&ifp->if_snd, m);
 
@@ -1179,9 +1273,12 @@ tap_kqread(struct knote *kn, long hint)
 	else
 		kn->kn_data = m->m_pkthdr.len;
 	splx(s);
-	return (kn->kn_data != 0 ? 1 : 0);
+	rv = (kn->kn_data != 0 ? 1 : 0);
+	KERNEL_UNLOCK_ONE(NULL);
+	return rv;
 }
 
+#if defined(COMPAT_40) || defined(MODULAR)
 /*
  * sysctl management routines
  * You can set the address of an interface through:
@@ -1195,7 +1292,7 @@ tap_kqread(struct knote *kn, long hint)
  * (called a link set) which is used at init_sysctl() time to cycle
  * through all those functions to create the kernel's sysctl tree.
  *
- * It is not (currently) possible to use link sets in a LKM, so the
+ * It is not possible to use link sets in a module, so the
  * easiest is to simply call our own setup routine at load time.
  *
  * In the SYSCTL_SETUP blocks you find in the kernel, nodes have the
@@ -1309,6 +1406,7 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	/* Commit change */
 	if (ether_nonstatic_aton(enaddr, addr) != 0)
 		return (EINVAL);
-	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN);
+	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return (error);
 }
+#endif

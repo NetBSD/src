@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17 2008/01/23 19:46:44 bouyer Exp $	*/
+/*	$NetBSD: pte.h,v 1.17.10.1 2009/05/04 08:11:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -152,8 +152,6 @@
  *   0		P	present (valid)
  *
  * notes: 
- *  - on the i386 the R/W bit is ignored if processor is in supervisor
- *    state (bug!)
  *  - PS is only supported on newer processors
  *  - PTEs with the G bit are global in the sense that they are not 
  *    flushed from the TLB when %cr3 is written (to flush, use the 
@@ -262,7 +260,12 @@ typedef uint32_t pt_entry_t;		/* PTE */
 
 #define	PG_KR		0x00000000	/* kernel read-only */
 #define	PG_KW		0x00000002	/* kernel read-write */
+
+#ifdef PAE
+#define	PG_NX		0x8000000000000000 /* No-execute */
+#else
 #define	PG_NX		0		/* dummy */
+#endif
 
 /*
  * page protection exception bits

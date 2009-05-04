@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.34 2008/01/30 14:10:25 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.34.10.1 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.34 2008/01/30 14:10:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.34.10.1 2009/05/04 08:12:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,12 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.34 2008/01/30 14:10:25 tsutsui Exp $");
 #include <sys/mman.h>
 #include <sys/conf.h>
 
+#include <machine/cpu.h>
 #include <machine/grfioctl.h>
 
 #include <x68k/dev/grfvar.h>
 #include <x68k/dev/itevar.h>
-
-#include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -146,13 +145,14 @@ const struct cdevsw grf_cdevsw = {
 int
 grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	int unit = GRFUNIT(dev);
 	struct grf_softc *gp;
 	int error = 0;
 
-	if (unit >= grf_cd.cd_ndevs ||
-	    (gp = grf_cd.cd_devs[unit]) == NULL ||
-	    (gp->g_flags & GF_ALIVE) == 0)
+	gp = device_lookup_private(&grf_cd, GRFUNIT(dev));
+	if (gp == NULL)
+		return ENXIO;
+
+	if ((gp->g_flags & GF_ALIVE) == 0)
 		return ENXIO;
 
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
@@ -174,7 +174,7 @@ grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grf_softc *gp = device_lookup_private(&grf_cd, GRFUNIT(dev));
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
 		return ENXIO;
@@ -190,7 +190,7 @@ int
 grfioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = grf_cd.cd_devs[unit];
+	struct grf_softc *gp = device_lookup_private(&grf_cd, GRFUNIT(dev));
 	int error;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
@@ -238,13 +238,13 @@ paddr_t
 grfmmap(dev_t dev, off_t off, int prot)
 {
 
-	return grfaddr(grf_cd.cd_devs[GRFUNIT(dev)], off);
+	return grfaddr(device_lookup_private(&grf_cd, GRFUNIT(dev)), off);
 }
 
 int
 grfon(struct grf_softc *gp)
 {
-	int unit = device_unit(&gp->g_device);
+	int unit = device_unit(gp->g_device);
 
 	/*
 	 * XXX: iteoff call relies on devices being in same order
@@ -259,7 +259,7 @@ grfon(struct grf_softc *gp)
 int
 grfoff(struct grf_softc *gp)
 {
-	int unit = device_unit(&gp->g_device);
+	int unit = device_unit(gp->g_device);
 	int error;
 
 #if 0				/* always fails in EINVAL... */
@@ -293,7 +293,7 @@ grfaddr(struct grf_softc *gp, off_t off)
 int
 grfmap(dev_t dev, void **addrp, struct proc *p)
 {
-	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grf_softc *gp = device_lookup_private(&grf_cd, GRFUNIT(dev));
 	int len, error;
 	struct vnode vn;
 	int flags;
@@ -325,7 +325,7 @@ grfmap(dev_t dev, void **addrp, struct proc *p)
 int
 grfunmap(dev_t dev, void *addr, struct proc *p)
 {
-	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grf_softc *gp = device_lookup_private(&grf_cd, GRFUNIT(dev));
 	vsize_t size;
 
 #ifdef DEBUG

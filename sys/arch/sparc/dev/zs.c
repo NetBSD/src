@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.109.4.1 2008/05/16 02:23:11 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.109.4.2 2009/05/04 08:11:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.109.4.1 2008/05/16 02:23:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.109.4.2 2009/05/04 08:11:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -397,7 +397,9 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	struct zs_chanstate *cs;
 	int s, channel;
 	static int didintr, prevpri;
+#if (NKBD > 0) || (NMS > 0)
 	int ch0_is_cons = 0;
+#endif
 
 	if (zsd == NULL) {
 		aprint_error(": configuration incomplete\n");
@@ -454,7 +456,9 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		if (zsc->zsc_promunit == 1) {
 			if ((hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0 &&
 			    !channel) {
+#if (NKBD > 0) || (NMS > 0)
 				ch0_is_cons = 1;
+#endif
 			}
 		} else {
 			zsc_args.hwflags = hwflags;
@@ -471,8 +475,8 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy( cs->cs_creg, zs_init_reg, 16);
+		memcpy( cs->cs_preg, zs_init_reg, 16);
 
 		/* XXX: Consult PROM properties for this?! */
 		cs->cs_defspeed = zs_get_speed(cs);
@@ -617,7 +621,7 @@ zshard(void *arg)
 	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
 		struct zs_chanstate *cs;
 
-		zsc = device_private(zs_cd.cd_devs[unit]);
+		zsc = device_lookup_private(&zs_cd, unit);
 		if (zsc == NULL)
 			continue;
 		rr3 = zsc_intr_hard(zsc);
@@ -665,7 +669,7 @@ zssoft(void *arg)
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
 	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
-		zsc = device_private(zs_cd.cd_devs[unit]);
+		zsc = device_lookup_private(&zs_cd, unit);
 		if (zsc == NULL)
 			continue;
 		(void)zsc_intr_soft(zsc);

@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.19.4.1 2008/05/16 02:24:05 yamt Exp $ */
+/* $NetBSD: mtd803.c,v 1.19.4.2 2009/05/04 08:12:43 yamt Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.19.4.1 2008/05/16 02:24:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.19.4.2 2009/05/04 08:12:43 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -894,8 +894,7 @@ mtd_reset(struct mtd_softc *sc)
 
 
 void
-mtd_shutdown (arg)
-	void *arg;
+mtd_shutdown (void *arg)
 {
 	struct mtd_softc *sc = arg;
 	struct ifnet *ifp = &sc->ethercom.ec_if;

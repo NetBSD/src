@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.39.4.1 2009/05/04 08:11:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcparam.h"
 #include "assym.h"
@@ -105,7 +106,7 @@ __start:
 	/* compute end of kernel memory */
         lis	4,_C_LABEL(end)@ha
         addi	4,4,_C_LABEL(end)@l
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* skip symbol table */
 	cmpwi	6,0
 	beq	1f

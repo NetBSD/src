@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.8.4.1 2008/05/16 02:24:37 yamt Exp $	*/
+/*	$NetBSD: memc.c,v 1.8.4.2 2009/05/04 08:12:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.8.4.1 2008/05/16 02:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.8.4.2 2009/05/04 08:12:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -346,8 +346,7 @@ static u_int8_t memc_syn_decode[256] = {
 
 /* ARGSUSED */
 void
-memc_init(sc)
-	struct memc_softc *sc;
+memc_init(struct memc_softc *sc)
 {
 	u_int8_t chipid;
 	u_int8_t memcfg;

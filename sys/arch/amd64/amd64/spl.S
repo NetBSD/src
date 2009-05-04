@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.17.10.1 2008/05/16 02:21:49 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.17.10.2 2009/05/04 08:10:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -209,6 +209,10 @@ ENTRY(spllower)
 	nop
 	nop
 	.align	16
+#ifdef GPROF
+	nop
+	.align	16
+#endif
 LABEL(spllower_end)
 
 #endif /* !XEN */
@@ -347,4 +351,11 @@ NENTRY(call_evtchn_do_event)
 	call    _C_LABEL(evtchn_do_event)
 	decl	CPUVAR(IDEPTH)
 	ret
-#endif
+#ifdef DOM0OPS
+NENTRY(call_xenevt_event)
+	incl	CPUVAR(IDEPTH)
+	call    _C_LABEL(xenevt_event)
+	decl	CPUVAR(IDEPTH)
+	ret
+#endif /* DOM0OPS */
+#endif /* XEN */

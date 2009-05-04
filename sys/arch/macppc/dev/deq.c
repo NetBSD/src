@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.3 2007/01/17 23:05:49 macallan Exp $	*/
+/*	$NetBSD: deq.c,v 1.3.48.1 2009/05/04 08:11:28 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.3 2007/01/17 23:05:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.3.48.1 2009/05/04 08:11:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,17 +49,14 @@ __KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.3 2007/01/17 23:05:49 macallan Exp $");
 #include <macppc/dev/ki2cvar.h>
 #include <macppc/dev/deqvar.h>
 
-static void deq_attach(struct device *, struct device *, void *);
-static int deq_match(struct device *, struct cfdata *, void *);
+static void deq_attach(device_t, device_t, void *);
+static int deq_match(device_t, struct cfdata *, void *);
 
-CFATTACH_DECL(deq, sizeof(struct deq_softc),
+CFATTACH_DECL_NEW(deq, sizeof(struct deq_softc),
     deq_match, deq_attach, NULL, NULL);
 
 int
-deq_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+deq_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct ki2c_confargs *ka = aux;
 	char compat[32];
@@ -74,14 +71,13 @@ deq_match(parent, cf, aux)
 }
 
 void
-deq_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+deq_attach(device_t parent, device_t self, void *aux)
 {
-	struct deq_softc *sc = (struct deq_softc *)self;
+	struct deq_softc *sc = device_private(self);
 	struct ki2c_confargs *ka = aux;
 	int node;
 
+	sc->sc_dev = self;
 	node = ka->ka_node;
 	sc->sc_node = node;
 	sc->sc_parent = parent;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.65 2007/12/31 15:31:48 ad Exp $
+# $NetBSD: GENERIC.in,v 1.65.10.1 2009/05/04 08:10:34 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.65 $"
+#ident 		"GENERIC-$Revision: 1.65.10.1 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -168,10 +168,10 @@ file-system	PTYFS		# /dev/pts/N support
 # Filesystem options
 
 #options 	FFS_EI		# FFS Endian Independant support
+options 	WAPBL		# File system journaling support - Experimental
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 options 	QUOTA		# User and group quotas in FFS
-options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -197,6 +197,7 @@ options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_20	# compatibility with NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
@@ -223,7 +224,6 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 options 	KTRACE		# system call tracing support
-options 	LKM		# Loadable kernel modules
 ')m4_dnl
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
@@ -565,6 +565,13 @@ ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
 ')m4_dnl
 
+m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
+#
+# accept filters
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
+')m4_dnl
+
 pseudo-device	loop			# loopback network interface
 pseudo-device	sl			# SLIP network interfaces
 pseudo-device	ppp			# PPP network interfaces
@@ -584,10 +591,10 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-m4_ifdef(`GENERIC_CONFIGURATION', `m4_dnl
-pseudo-device	fss		4	# file system snapshot device
-', `m4_dnl
+m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 #pseudo-device	fss		4	# file system snapshot device
+', `m4_dnl
+pseudo-device	fss		4	# file system snapshot device
 ')m4_dnl
 
 pseudo-device	view		4	# views (needed for grfcc)

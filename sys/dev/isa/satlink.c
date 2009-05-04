@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.37.4.1 2008/05/16 02:24:27 yamt Exp $	*/
+/*	$NetBSD: satlink.c,v 1.37.4.2 2009/05/04 08:12:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.37.4.1 2008/05/16 02:24:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.37.4.2 2009/05/04 08:12:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,8 @@ satlinkopen(dev_t dev, int flags, int fmt,
 	struct satlink_softc *sc;
 	int error;
 
-	sc = device_lookup(&satlink_cd, minor(dev));
+	sc = device_lookup_private(&satlink_cd, minor(dev));
+
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -281,8 +282,10 @@ int
 satlinkclose(dev_t dev, int flags, int fmt,
     struct lwp *l)
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc;
 	int s;
+
+	sc = device_lookup_private(&satlink_cd, minor(dev));
 
 	s = splsoftclock();
 	sc->sc_flags &= ~SATF_ISOPEN;
@@ -295,14 +298,13 @@ satlinkclose(dev_t dev, int flags, int fmt,
 }
 
 int
-satlinkread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+satlinkread(dev_t dev, struct uio *uio, int flags)
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc;
 	int error, s, count, sptr;
 	int wrapcnt, oresid;
+
+	sc = device_lookup_private(&satlink_cd, minor(dev));
 
 	s = splsoftclock();
 
@@ -371,7 +373,9 @@ int
 satlinkioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc;
+
+	sc = device_lookup_private(&satlink_cd, minor(dev));
 
 	switch (cmd) {
 	case SATIORESET:
@@ -393,13 +397,12 @@ satlinkioctl(dev_t dev, u_long cmd, void *data, int flags,
 }
 
 int
-satlinkpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+satlinkpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc;
 	int s, revents;
+
+	sc = device_lookup_private(&satlink_cd, minor(dev));
 
 	revents = events & (POLLOUT | POLLWRNORM);
 
@@ -454,9 +457,11 @@ static const struct filterops satlink_seltrue_filtops =
 int
 satlinkkqfilter(dev_t dev, struct knote *kn)
 {
-	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
+	struct satlink_softc *sc;
 	struct klist *klist;
 	int s;
+
+	sc = device_lookup_private(&satlink_cd, minor(dev));
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -483,8 +488,7 @@ satlinkkqfilter(dev_t dev, struct knote *kn)
 }
 
 void
-satlinktimeout(arg)
-	void *arg;
+satlinktimeout(void *arg)
 {
 	struct satlink_softc *sc = arg;
 	bus_size_t resid;

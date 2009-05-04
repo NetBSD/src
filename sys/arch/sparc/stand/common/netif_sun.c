@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.9 2006/07/13 20:03:34 uwe Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.9.62.1 2009/05/04 08:11:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -87,7 +87,7 @@ netif_open(void *machdep_hint)
 		errno = ENFILE;
 		return (-1);
 	}
-	bzero(io, sizeof(*io));
+	memset(io, 0, sizeof(*io));
 
 	netif_prom.nif_devdata = pd;
 	io->io_netif = &netif_prom;
@@ -176,10 +176,10 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	struct promdata *pd;
-	int tick0;
+	satime_t tick0;
 	ssize_t len;
 
 	pd = (struct promdata *)((struct netif *)desc->io_netif)->nif_devdata;

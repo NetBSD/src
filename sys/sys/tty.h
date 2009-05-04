@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.80.2.1 2008/05/16 02:25:52 yamt Exp $	*/
+/*	$NetBSD: tty.h,v 1.80.2.2 2009/05/04 08:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -87,8 +87,6 @@ struct clist {
 	u_char	*c_cs;		/* start of ring buffer */
 	u_char	*c_ce;		/* c_ce + c_len */
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
-	kcondvar_t c_cv;	/* notifier, locked by tty lock */
-	kcondvar_t c_cvf;	/* notifier, locked by tty lock */
 	int	c_cc;		/* count of characters in queue */
 	int	c_cn;		/* total ring buffer length */
 };
@@ -112,11 +110,17 @@ struct tty {
 	TAILQ_ENTRY(tty) tty_link;	/* Link in global tty list. */
 	struct	clist t_rawq;		/* Device raw input queue. */
 	long	t_rawcc;		/* Raw input queue statistics. */
+	kcondvar_t t_rawcv;		/* notifier */
+	kcondvar_t t_rawcvf;		/* notifier */
 	struct	clist t_canq;		/* Device canonical queue. */
 	long	t_cancc;		/* Canonical queue statistics. */
+	kcondvar_t t_cancv;		/* notifier */
+	kcondvar_t t_cancvf;		/* notifier */
 	struct	clist t_outq;		/* Device output queue. */
-	callout_t t_rstrt_ch;		/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
+	kcondvar_t t_outcv;		/* notifier */
+	kcondvar_t t_outcvf;		/* notifier */
+	callout_t t_rstrt_ch;		/* for delayed output start */
 	struct	linesw *t_linesw;	/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */
 	int	t_state;		/* Device and driver (TS*) state. */
@@ -229,11 +233,8 @@ struct speedtab {
 TAILQ_HEAD(ttylist_head, tty);		/* the ttylist is a TAILQ */
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
 
 extern kmutex_t	tty_lock;
-
-MALLOC_DECLARE(M_TTYS);
 
 extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
@@ -270,6 +271,7 @@ void	 ttyflush(struct tty *, int);
 void	 ttygetinfo(struct tty *, int, char *, size_t);
 void	 ttyputinfo(struct tty *, char *);
 int	 ttyinput(int, struct tty *);
+int	 ttyinput_wlock(int, struct tty *); /* XXX see wsdisplay.c */
 int	 ttylclose(struct tty *, int);
 int	 ttylopen(dev_t, struct tty *);
 int	 ttykqfilter(dev_t, struct knote *);
@@ -294,21 +296,8 @@ bool	 ttypull(struct tty *);
 
 int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
-void	clwakeup(struct clist *);
 
-#if defined(_KERNEL_OPT)
-#include "opt_compat_freebsd.h"
-#include "opt_compat_sunos.h"
-#include "opt_compat_svr4.h"
-#include "opt_compat_43.h"
-#include "opt_compat_osf1.h"
-#endif
-
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || defined(LKM)
-# define COMPAT_OLDTTY
-int 	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
-#endif
+extern int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
 
 #endif /* _KERNEL */
 

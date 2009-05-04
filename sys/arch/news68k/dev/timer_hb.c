@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.14.4.1 2008/05/16 02:22:57 yamt Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.14.4.2 2009/05/04 08:11:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.14.4.1 2008/05/16 02:22:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.14.4.2 2009/05/04 08:11:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,8 +150,6 @@ clock_intr(struct clockframe *cf)
 	extern char _Idle[];	/* locore.s */
 #endif
 
-	idepth++;
-
 	/* Pulse the clock intr. enable low. */
 	*ctrl_timer = 0;
 	*ctrl_timer = 1;
@@ -166,8 +164,6 @@ clock_intr(struct clockframe *cf)
 	/* Call common clock interrupt handler. */
 	hardclock(cf);
 	uvmexp.intrs++;
-
-	idepth--;
 }
 
 /* heartbeat LED */

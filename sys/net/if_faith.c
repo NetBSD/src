@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.41 2008/02/07 01:22:00 dyoung Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.41.10.1 2009/05/04 08:14:14 yamt Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.41 2008/02/07 01:22:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.41.10.1 2009/05/04 08:14:14 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -86,7 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.41 2008/02/07 01:22:00 dyoung Exp $")
 static int	faithioctl(struct ifnet *, u_long, void *);
 static int	faithoutput(struct ifnet *, struct mbuf *,
 		            const struct sockaddr *, struct rtentry *);
-static void	faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
+static void	faithrtrequest(int, struct rtentry *,
+		               const struct rt_addrinfo *);
 
 void	faithattach(int);
 
@@ -111,10 +112,9 @@ faith_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet *ifp;
 
-	ifp = malloc(sizeof(*ifp), M_DEVBUF, M_WAITOK | M_ZERO);
+	ifp = if_alloc(IFT_FAITH);
 
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	if_initname(ifp, ifc->ifc_name, unit);
 
 	ifp->if_mtu = FAITHMTU;
 	/* Change to BROADCAST experimentaly to announce its prefix. */
@@ -214,7 +214,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 /* ARGSUSED */
 static void
 faithrtrequest(int cmd, struct rtentry *rt,
-    struct rt_addrinfo *info)
+    const struct rt_addrinfo *info)
 {
 	if (rt)
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */
@@ -233,7 +233,7 @@ faithioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP | IFF_RUNNING;
 		ifa = (struct ifaddr *)data;
 		ifa->ifa_rtrequest = faithrtrequest;
@@ -264,18 +264,10 @@ faithioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-#ifdef SIOCSIFMTU
-	case SIOCSIFMTU:
+	default:
 		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
-#endif
-
-	case SIOCSIFFLAGS:
-		break;
-
-	default:
-		error = EINVAL;
 	}
 	return (error);
 }

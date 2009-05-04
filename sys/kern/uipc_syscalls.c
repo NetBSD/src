@@ -1,8 +1,11 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.130.2.1 2008/05/16 02:25:28 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.130.2.2 2009/05/04 08:13:49 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.130.2.1 2008/05/16 02:25:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.130.2.2 2009/05/04 08:13:49 yamt Exp $");
 
 #include "opt_pipe.h"
 
@@ -170,10 +173,14 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 
 	if ((fp = fd_getfile(sock)) == NULL)
 		return (EBADF);
-	if (fp->f_type != DTYPE_SOCKET)
+	if (fp->f_type != DTYPE_SOCKET) {
+		fd_putfile(sock);
 		return (ENOTSOCK);
-	if ((error = fd_allocfile(&fp2, &fd)) != 0)
+	}
+	if ((error = fd_allocfile(&fp2, &fd)) != 0) {
+		fd_putfile(sock);
 		return (error);
+	}
 	nam = m_get(M_WAIT, MT_SONAME);
 	*new_sock = fd;
 	so = fp->f_data;
@@ -195,7 +202,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 			so->so_error = ECONNABORTED;
 			break;
 		}
-		error = sowait(so, 0);
+		error = sowait(so, true, 0);
 		if (error) {
 			goto bad;
 		}
@@ -296,7 +303,7 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	}
 	solock(so);
 	MCLAIM(nam, so->so_mowner);
-	if (so->so_state & SS_ISCONNECTING) {
+	if ((so->so_state & SS_ISCONNECTING) != 0) {
 		error = EALREADY;
 		goto out;
 	}
@@ -304,12 +311,17 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	error = soconnect(so, nam, l);
 	if (error)
 		goto bad;
-	if (so->so_nbio && (so->so_state & SS_ISCONNECTING)) {
+	if (so->so_nbio && (so->so_state & SS_ISCONNECTING) != 0) {
 		error = EINPROGRESS;
 		goto out;
 	}
-	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		error = sowait(so, 0);
+	while ((so->so_state & SS_ISCONNECTING) != 0 && so->so_error == 0) {
+		error = sowait(so, true, 0);
+		if (__predict_false((so->so_state & SS_ISDRAINING) != 0)) {
+			error = EPIPE;
+			interrupted = 1;
+			break;
+		}
 		if (error) {
 			if (error == EINTR || error == ERESTART)
 				interrupted = 1;
@@ -883,34 +895,33 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 		syscallarg(const void *)	val;
 		syscallarg(unsigned int)	valsize;
 	} */
-	struct proc	*p;
-	struct mbuf	*m;
+	struct sockopt	sopt;
 	struct socket	*so;
 	int		error;
 	unsigned int	len;
 
-	p = l->l_proc;
-	m = NULL;
+	len = SCARG(uap, valsize);
+	if (len > 0 && SCARG(uap, val) == NULL)
+		return (EINVAL);
+
+	if (len > MCLBYTES)
+		return (EINVAL);
+
 	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
-	len = SCARG(uap, valsize);
-	if (len > MCLBYTES) {
-		error = EINVAL;
-		goto out;
-	}
-	if (SCARG(uap, val)) {
-		m = getsombuf(so, MT_SOOPTS);
-		if (len > MLEN)
-			m_clget(m, M_WAIT);
-		error = copyin(SCARG(uap, val), mtod(m, void *), len);
-		if (error) {
-			(void) m_free(m);
+
+	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), len);
+
+	if (len > 0) {
+		error = copyin(SCARG(uap, val), sopt.sopt_data, len);
+		if (error)
 			goto out;
-		}
-		m->m_len = SCARG(uap, valsize);
 	}
-	error = sosetopt(so, SCARG(uap, level), SCARG(uap, name), m);
+
+	error = sosetopt(so, &sopt);
+
  out:
+	sockopt_destroy(&sopt);
  	fd_putfile(SCARG(uap, s));
 	return (error);
 }
@@ -926,40 +937,40 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 		syscallarg(void *)		val;
 		syscallarg(unsigned int *)	avalsize;
 	} */
+	struct sockopt	sopt;
 	struct socket	*so;
-	struct mbuf	*m;
-	unsigned int	op, i, valsize;
+	unsigned int	valsize, len;
 	int		error;
-	char *val = SCARG(uap, val);
 
-	m = NULL;
-	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
-		return (error);
-	if (val != NULL) {
-		error = copyin(SCARG(uap, avalsize),
-			       &valsize, sizeof(valsize));
+	if (SCARG(uap, val) != NULL) {
+		error = copyin(SCARG(uap, avalsize), &valsize, sizeof(valsize));
 		if (error)
-			goto out;
+			return (error);
 	} else
 		valsize = 0;
-	error = sogetopt(so, SCARG(uap, level), SCARG(uap, name), &m);
-	if (error == 0 && val != NULL && valsize && m != NULL) {
-		op = 0;
-		while (m && !error && op < valsize) {
-			i = min(m->m_len, (valsize - op));
-			error = copyout(mtod(m, void *), val, i);
-			op += i;
-			val += i;
-			m = m_free(m);
-		}
-		valsize = op;
-		if (error == 0)
-			error = copyout(&valsize,
-					SCARG(uap, avalsize), sizeof(valsize));
+
+	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
+		return (error);
+
+	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), 0);
+
+	error = sogetopt(so, &sopt);
+	if (error)
+		goto out;
+
+	if (valsize > 0) {
+		len = min(valsize, sopt.sopt_size);
+		error = copyout(sopt.sopt_data, SCARG(uap, val), len);
+		if (error)
+			goto out;
+
+		error = copyout(&len, SCARG(uap, avalsize), sizeof(len));
+		if (error)
+			goto out;
 	}
-	if (m != NULL)
-		(void) m_freem(m);
+
  out:
+	sockopt_destroy(&sopt);
  	fd_putfile(SCARG(uap, s));
 	return (error);
 }
@@ -1191,21 +1202,5 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 #endif
 		sa->sa_len = buflen;
 	}
-	return (0);
-}
-
-int
-getsock(int fdes, struct file **fpp)
-{
-	file_t		*fp;
-
-	if ((fp = fd_getfile(fdes)) == NULL)
-		return (EBADF);
-
-	if (fp->f_type != DTYPE_SOCKET) {
-		fd_putfile(fdes);
-		return (ENOTSOCK);
-	}
-	*fpp = fp;
 	return (0);
 }

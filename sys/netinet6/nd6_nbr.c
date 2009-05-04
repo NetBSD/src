@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.86 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.86.2.1 2009/05/04 08:14:19 yamt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.86 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.86.2.1 2009/05/04 08:14:19 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,7 +146,17 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			    "(wrong ip6 dst)\n"));
 			goto bad;
 		}
+	} else {
+		/*
+		 * Make sure the source address is from a neighbor's address.
+		 */
+		if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
+			nd6log((LOG_INFO, "nd6_ns_input: "
+			    "NS packet from non-neighbor\n"));
+			goto bad;
+		}
 	}
+
 
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
 		nd6log((LOG_INFO, "nd6_ns_input: bad NS target (multicast)\n"));
@@ -470,7 +480,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		 * above), but we do so here explicitly to make the intention
 		 * clearer.
 		 */
-		bzero(&src_in, sizeof(src_in));
+		memset(&src_in, 0, sizeof(src_in));
 		src = &src_in;
 	}
 	ip6->ip6_src = *src;
@@ -502,10 +512,10 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
-		bzero((void *)nd_opt, optlen);
+		memset((void *)nd_opt, 0, optlen);
 		nd_opt->nd_opt_type = ND_OPT_SOURCE_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
-		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
+		memcpy((void *)(nd_opt + 1), mac, ifp->if_addrlen);
 	}
 
 	ip6->ip6_plen = htons((u_int16_t)icmp6len);
@@ -543,9 +553,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_neighbor_advert *nd_na;
-#if 0
 	struct in6_addr saddr6 = ip6->ip6_src;
-#endif
 	struct in6_addr daddr6 = ip6->ip6_dst;
 	struct in6_addr taddr6;
 	int flags;
@@ -633,6 +641,14 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		    ip6_sprintf(&taddr6));
 		goto freeit;
 	}
+	/*
+	 * Make sure the source address is from a neighbor's address.
+	 */
+	if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
+		nd6log((LOG_INFO, "nd6_ns_input: "
+		    "ND packet from non-neighbor\n"));
+		goto bad;
+	}
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
 		nd6log((LOG_INFO, "nd6_na_input: lladdrlen mismatch for %s "
@@ -693,7 +709,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			llchange = 0;
 		else {
 			if (sdl->sdl_alen) {
-				if (bcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
+				if (memcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
 					llchange = 1;
 				else
 					llchange = 0;
@@ -910,8 +926,7 @@ nd6_na_output(
 	/*
 	 * Select a source whose scope is the same as that of the dest.
 	 */
-	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL,
-	    &error);
+	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL, &error);
 	if (src == NULL) {
 		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "
 		    "determined: dst=%s, error=%d\n",
@@ -956,10 +971,10 @@ nd6_na_output(
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
-		bzero((void *)nd_opt, optlen);
+		memset((void *)nd_opt, 0, optlen);
 		nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
-		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
+		memcpy((void *)(nd_opt + 1), mac, ifp->if_addrlen);
 	} else
 		flags &= ~ND_NA_FLAG_OVERRIDE;
 
@@ -969,7 +984,7 @@ nd6_na_output(
 	nd_na->nd_na_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
 
-	ip6_output(m, NULL, NULL, 0, &im6o, (struct socket *)NULL, NULL);
+	ip6_output(m, NULL, NULL, 0, &im6o, NULL, NULL);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);
@@ -1099,7 +1114,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
-	bzero(dp, sizeof(*dp));
+	memset(dp, 0, sizeof(*dp));
 	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 

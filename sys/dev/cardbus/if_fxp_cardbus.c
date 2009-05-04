@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.30.4.1 2008/05/16 02:23:53 yamt Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.30.4.2 2009/05/04 08:12:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30.4.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30.4.2 2009/05/04 08:12:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -86,12 +86,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30.4.1 2008/05/16 02:23:53 yamt
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 
-static int fxp_cardbus_match(struct device *, struct cfdata *, void *);
-static void fxp_cardbus_attach(struct device *, struct device *, void *);
-static int fxp_cardbus_detach(struct device * self, int flags);
-static void fxp_cardbus_setup(struct fxp_softc * sc);
-static int fxp_cardbus_enable(struct fxp_softc * sc);
-static void fxp_cardbus_disable(struct fxp_softc * sc);
+static int fxp_cardbus_match(device_t, cfdata_t, void *);
+static void fxp_cardbus_attach(device_t, device_t, void *);
+static int fxp_cardbus_detach(device_t, int);
+static void fxp_cardbus_setup(struct fxp_softc *);
+static int fxp_cardbus_enable(struct fxp_softc *);
+static void fxp_cardbus_disable(struct fxp_softc *);
 
 struct fxp_cardbus_softc {
 	struct fxp_softc sc;
@@ -101,7 +101,7 @@ struct fxp_cardbus_softc {
 	bus_size_t size;
 };
 
-CFATTACH_DECL(fxp_cardbus, sizeof(struct fxp_cardbus_softc),
+CFATTACH_DECL_NEW(fxp_cardbus, sizeof(struct fxp_cardbus_softc),
     fxp_cardbus_match, fxp_cardbus_attach, fxp_cardbus_detach, fxp_activate);
 
 #ifdef CBB_DEBUG
@@ -127,10 +127,8 @@ static void
 fxp_cardbus_attach(struct device *parent, struct device *self,
     void *aux)
 {
-	static const char thisfunc[] = "fxp_cardbus_attach";
-
-	struct fxp_softc *sc = device_private(self);
 	struct fxp_cardbus_softc *csc = device_private(self);
+	struct fxp_softc *sc = &csc->sc;
 	struct cardbus_attach_args *ca = aux;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -138,6 +136,7 @@ fxp_cardbus_attach(struct device *parent, struct device *self,
 	bus_addr_t adr;
 	bus_size_t size;
 
+	sc->sc_dev = self;
 	csc->ct = ca->ca_ct;
 
 	/*
@@ -157,14 +156,23 @@ fxp_cardbus_attach(struct device *parent, struct device *self,
 		sc->sc_sh = memh;
 		csc->size = size;
 	} else
-		panic("%s: failed to allocate mem and io space", thisfunc);
-
+		panic("%s: failed to allocate mem and io space", __func__);
 
 	if (ca->ca_cis.cis1_info[0] && ca->ca_cis.cis1_info[1])
 		printf(": %s %s\n", ca->ca_cis.cis1_info[0],
 		    ca->ca_cis.cis1_info[1]);
 	else
 		printf("\n");
+
+	sc->sc_rev = CARDBUS_REVISION(ca->ca_class);
+	if (sc->sc_rev >= FXP_REV_82558_A4)
+		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
+	if (sc->sc_rev >= FXP_REV_82559_A0)
+		sc->sc_flags |= FXPF_82559_RXCSUM;
+	if (sc->sc_rev >= FXP_REV_82550) {
+		sc->sc_flags &= ~FXPF_82559_RXCSUM;
+		sc->sc_flags |= FXPF_EXT_RFA;
+	}
 
 	sc->sc_dmat = ca->ca_dmat;
 	sc->sc_enable = fxp_cardbus_enable;
@@ -184,9 +192,8 @@ fxp_cardbus_attach(struct device *parent, struct device *self,
 static void
 fxp_cardbus_setup(struct fxp_softc * sc)
 {
-	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) sc;
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
+	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 	pcireg_t command;
@@ -218,9 +225,8 @@ fxp_cardbus_setup(struct fxp_softc * sc)
 static int
 fxp_cardbus_enable(struct fxp_softc * sc)
 {
-	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) sc;
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
+	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -233,12 +239,9 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline, IPL_NET,
 	    fxp_intr, sc);
 	if (NULL == sc->sc_ih) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return 1;
 	}
-
-	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
-	    psc->sc_intrline);
 
 	return 0;
 }
@@ -246,28 +249,28 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 static void
 fxp_cardbus_disable(struct fxp_softc * sc)
 {
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
+	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
 	/* Remove interrupt handler. */
 	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
 
-	Cardbus_function_disable(((struct fxp_cardbus_softc *) sc)->ct);
+	Cardbus_function_disable(csc->ct);
 }
 
 static int
-fxp_cardbus_detach(struct device *self, int flags)
+fxp_cardbus_detach(device_t self, int flags)
 {
-	struct fxp_softc *sc = device_private(self);
 	struct fxp_cardbus_softc *csc = device_private(self);
+	struct fxp_softc *sc = &csc->sc;
 	struct cardbus_devfunc *ct = csc->ct;
 	int rv, reg;
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
+		panic("%s: data structure lacks", device_xname(self));
 #endif
 
 	rv = fxp_detach(sc);

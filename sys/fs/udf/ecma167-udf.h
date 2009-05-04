@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.7.10.1 2008/05/16 02:25:21 yamt Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.7.10.2 2009/05/04 08:13:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006, 2008 Reinoud Zandijk
@@ -247,6 +247,7 @@ struct timestamp {
 	uint8_t		hund_usec;
 	uint8_t		usec;
 } __packed;
+#define UDF_TIMESTAMP_SIZE 12
 
 
 /* Entity Identifier [1/7.4] */
@@ -302,6 +303,7 @@ struct icb_tag {
 #define UDF_ICB_FILETYPE_REALTIME	249
 #define UDF_ICB_FILETYPE_META_MAIN	250
 #define UDF_ICB_FILETYPE_META_MIRROR	251
+#define UDF_ICB_FILETYPE_META_BITMAP	252
 
 
 /* Anchor Volume Descriptor Pointer [3/10.2] */
@@ -700,6 +702,11 @@ struct filetimes_extattr_entry {
 	struct timestamp	times[1];	/* in order of assending bits */
 } __packed;
 #define UDF_FILETIMES_ATTR_NO	5
+#define UDF_FILETIMES_FILE_CREATION	1
+#define UDF_FILETIMES_FILE_DELETION	4
+#define UDF_FILETIMES_FILE_EFFECTIVE	8
+#define UDF_FILETIMES_FILE_BACKUPED	16
+#define UDF_FILETIMES_ATTR_SIZE(no)	(20 + (no)*sizeof(struct timestamp))
 
 
 /* Device Specification Extended Attribute [4/4.10.7] */

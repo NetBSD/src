@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.98.2.1 2008/05/16 02:25:45 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.98.2.2 2009/05/04 08:14:19 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.98.2.1 2008/05/16 02:25:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.98.2.2 2009/05/04 08:14:19 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -130,7 +130,7 @@ static percpu_t *rip6stat_percpu;
  * Initialize raw connection block queue.
  */
 void
-rip6_init()
+rip6_init(void)
 {
 
 	in6_pcbinit(&raw6cbtable, 1, 1);
@@ -305,10 +305,10 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return NULL;;
+		return NULL;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return NULL;;
+		return NULL;
 	if (PRC_IS_REDIRECT(cmd))
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
@@ -316,7 +316,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	else if (cmd == PRC_MSGSIZE)
 		; /* special code is present, see below */
 	else if (inet6ctlerrmap[cmd] == 0)
-		return NULL;;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -562,25 +562,30 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
  * Raw IPv6 socket option processing.
  */
 int
-rip6_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **mp)
+rip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error = 0;
 
-	if (level == SOL_SOCKET && optname == SO_NOHEADER) {
+	if (sopt->sopt_level == SOL_SOCKET && sopt->sopt_name == SO_NOHEADER) {
+		int optval;
+
 		/* need to fiddle w/ opt(IPPROTO_IPV6, IPV6_CHECKSUM)? */
 		if (op == PRCO_GETOPT) {
-			*mp = m_intopt(so, 1);
-			return 0;
-		} else if (*mp == NULL || (*mp)->m_len != sizeof(int))
-			error = EINVAL;
-		else if (*mtod(*mp, int *) == 0)
-			error = EINVAL;
-		goto free_m;
-	} else if (level != IPPROTO_IPV6)
-		return ip6_ctloutput(op, so, level, optname, mp);
+			optval = 1;
+			error = sockopt_set(sopt, &optval, sizeof(optval));
+		} else if (op == PRCO_SETOPT) {
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				goto out;
+			if (optval == 0)
+				error = EINVAL;
+		}
 
-	switch (optname) {
+		goto out;
+	} else if (sopt->sopt_level != IPPROTO_IPV6)
+		return ip6_ctloutput(op, so, sopt);
+
+	switch (sopt->sopt_name) {
 	case MRT6_INIT:
 	case MRT6_DONE:
 	case MRT6_ADD_MIF:
@@ -589,20 +594,18 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 	case MRT6_DEL_MFC:
 	case MRT6_PIM:
 		if (op == PRCO_SETOPT)
-			error = ip6_mrouter_set(optname, so, *mp);
+			error = ip6_mrouter_set(so, sopt);
 		else if (op == PRCO_GETOPT)
-			error = ip6_mrouter_get(optname, so, mp);
+			error = ip6_mrouter_get(so, sopt);
 		else
 			error = EINVAL;
 		break;
 	case IPV6_CHECKSUM:
-		return ip6_raw_ctloutput(op, so, level, optname, mp);
+		return ip6_raw_ctloutput(op, so, sopt);
 	default:
-		return ip6_ctloutput(op, so, level, optname, mp);
+		return ip6_ctloutput(op, so, sopt);
 	}
-free_m:
-	if (op == PRCO_SETOPT && *mp != NULL)
-		m_free(*mp);
+ out:
 	return error;
 }
 
@@ -660,8 +663,8 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
 
-		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
-		    sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
+		in6p->in6p_icmp6filt = malloc(sizeof(struct icmp6_filter),
+			M_PCB, M_NOWAIT);
 		if (in6p->in6p_icmp6filt == NULL) {
 			in6_pcbdetach(in6p);
 			error = ENOMEM;
@@ -689,7 +692,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 			ip6_mrouter_done();
 		/* xxx: RSVP */
 		if (in6p->in6p_icmp6filt != NULL) {
-			FREE(in6p->in6p_icmp6filt, M_PCB);
+			free(in6p->in6p_icmp6filt, M_PCB);
 			in6p->in6p_icmp6filt = NULL;
 		}
 		in6_pcbdetach(in6p);

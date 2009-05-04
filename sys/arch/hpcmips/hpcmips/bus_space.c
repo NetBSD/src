@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.25.78.1 2008/05/16 02:22:29 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.25.78.2 2009/05/04 08:11:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25.78.1 2008/05/16 02:22:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25.78.2 2009/05/04 08:11:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,21 +152,21 @@ static struct bus_space_tag_hpcmips __sys_bus_space = {
 static bus_space_tag_t __sys_bus_space_tag = &__sys_bus_space.bst;
 
 bus_space_tag_t
-hpcmips_system_bus_space()
+hpcmips_system_bus_space(void)
 {
 
 	return (__sys_bus_space_tag);
 }
 
 struct bus_space_tag_hpcmips *
-hpcmips_system_bus_space_hpcmips()
+hpcmips_system_bus_space_hpcmips(void)
 {
 
 	return (&__sys_bus_space);
 }
 
 struct bus_space_tag_hpcmips *
-hpcmips_alloc_bus_space_tag()
+hpcmips_alloc_bus_space_tag(void)
 {
 
 	if (__bus_space_index >= MAX_BUSSPACE_TAG) {

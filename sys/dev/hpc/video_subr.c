@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.10.52.1 2008/05/16 02:23:57 yamt Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.10.52.2 2009/05/04 08:12:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.10.52.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.10.52.2 2009/05/04 08:12:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ video_dot(struct video_chip *vc, int x, int y)
 }
 
 int
-video_reverse_color()
+video_reverse_color(void)
 {
 	struct {
 		int reverse, normal;

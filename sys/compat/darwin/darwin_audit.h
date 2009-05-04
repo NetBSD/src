@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_audit.h,v 1.3.76.1 2008/05/16 02:23:35 yamt Exp $ */
+/*	$NetBSD: darwin_audit.h,v 1.3.76.2 2009/05/04 08:12:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,12 +41,12 @@ struct darwin_au_mask {
 };
 
 struct darwin_au_tid {
-	dev_t port;
+	darwin_dev_t port;
 	unsigned int machine;
 };
 
 struct darwin_au_tid_addr {
-	dev_t at_port;
+	darwin_dev_t at_port;
 	unsigned int at_type;
 	unsigned int at_addr[4];
 };

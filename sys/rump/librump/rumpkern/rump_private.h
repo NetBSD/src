@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.8 2008/01/24 22:41:08 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.8.10.1 2009/05/04 08:14:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,58 +31,56 @@
 #define _SYS_RUMP_PRIVATE_H_
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 #include <sys/types.h>
-
-#include <sys/disklabel.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_page.h>
 
-#include "rump.h"
+#include <rump/rump.h>
+#include <rump/rumpuser.h>
 
-#if 0
-#define DPRINTF(x) printf x
-#else
-#define DPRINTF(x)
-#endif
-
-struct lwp;
 extern kauth_cred_t rump_cred;
 extern struct vmspace rump_vmspace;
 
-extern kmutex_t rump_giantlock;
+extern struct rumpuser_mtx *rump_giantlock;
 
 #define UIO_VMSPACE_SYS (&rump_vmspace)
 
-struct rump_specpriv {
-	char	rsp_path[MAXPATHLEN+1];
-	int	rsp_fd;
+#define RUMP_LMUTEX_MAGIC ((kmutex_t *)0x101)
 
-	struct partition *rsp_curpi;
-	struct partition rsp_pi;
-	struct disklabel rsp_dl;
-};
+extern int rump_threads;
 
-#define RUMP_UBC_MAGIC_WINDOW (void *)0x37
-
-void abort(void) __dead;
-
-void	rump_putnode(struct vnode *);
-int	rump_recyclenode(struct vnode *);
-
-struct ubc_window;
-int	rump_ubc_magic_uiomove(void *, size_t, struct uio *, int *,
-			       struct ubc_window *);
+extern struct sysent rump_sysent[];
 
 void		rumpvm_init(void);
-void		rumpvfs_init(void);
 void		rump_sleepers_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 
 void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
-void		rumpvm_flushva(void);
+void		rumpvm_flushva(struct uvm_object *);
+
+void		rump_gettime(struct timespec *);
+void		rump_getuptime(struct timespec *);
+
+lwpid_t		rump_nextlid(void);
+void		rump_set_vmspace(struct vmspace *);
+
+typedef void	(*rump_proc_vfs_init_fn)(struct proc *);
+typedef void	(*rump_proc_vfs_release_fn)(struct proc *);
+rump_proc_vfs_init_fn rump_proc_vfs_init;
+rump_proc_vfs_release_fn rump_proc_vfs_release;
+
+extern struct cpu_info rump_cpu;
+
+extern rump_sysproxy_t rump_sysproxy;
+extern void *rump_sysproxy_arg;
+
+int		rump_sysproxy_copyout(const void *, void *, size_t);
+int		rump_sysproxy_copyin(const void *, void *, size_t);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

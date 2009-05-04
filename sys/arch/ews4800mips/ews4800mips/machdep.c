@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.10.1 2008/05/16 02:22:19 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.10.2 2009/05/04 08:11:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.10.1 2008/05/16 02:22:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.10.2 2009/05/04 08:11:04 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.10.1 2008/05/16 02:22:19 yamt Exp $
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -73,7 +74,6 @@ vsize_t kseg2iobufsize;		/* to reserve PTEs for KSEG2 I/O space */
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
-struct vm_map *exec_map;
 struct vm_map *mb_map;
 struct vm_map *phys_map;
 
@@ -153,7 +153,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		curcpu()->ci_cycles_per_hz /= 2;
 		curcpu()->ci_divisor_delay /= 2;
 	}
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	/* Load memory to UVM */
 	for (i = 1; i < mem_cluster_cnt; i++) {
@@ -198,7 +197,7 @@ option(int argc, char *argv[], struct bootinfo *bi)
 #ifdef DDB
 	/* Load symbol table */
 	if (bi->bi_nsym)
-		ksyms_init(bi->bi_esym - bi->bi_ssym,
+		ksyms_addsyms_elf(bi->bi_esym - bi->bi_ssym,
 		    (void *)bi->bi_ssym, (void *)bi->bi_esym);
 #endif
 	/* Parse option */
@@ -244,12 +243,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
@@ -302,6 +295,8 @@ cpu_reboot(int howto, char *bootstr)
 
  haltsys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		if (platform.poweroff) {

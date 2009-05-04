@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.9 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.9.74.1 2009/05/04 08:14:21 yamt Exp $	*/
 
 /*
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.9 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.9.74.1 2009/05/04 08:14:21 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -70,14 +70,14 @@ int wait;
 {
   struct natmpcb *npcb;
 
-  MALLOC(npcb, struct natmpcb *, sizeof(*npcb), M_PCB, wait);
+  npcb = malloc(sizeof(*npcb), M_PCB, wait);
 
 #ifdef DIAGNOSTIC
   if (wait == M_WAITOK && npcb == NULL) panic("npcb_alloc: malloc didn't wait");
 #endif
 
   if (npcb) {
-    bzero(npcb, sizeof(*npcb));
+    memset(npcb, 0, sizeof(*npcb));
     npcb->npcb_flags = NPCB_FREE;
   }
   return(npcb);
@@ -104,7 +104,7 @@ int op;
     if (npcb->npcb_inq) {
       npcb->npcb_flags = NPCB_DRAIN;	/* flag for distruction */
     } else {
-      FREE(npcb, M_PCB);		/* kill it! */
+      free(npcb, M_PCB);		/* kill it! */
     }
   }
 
@@ -177,9 +177,9 @@ done:
 
 #ifdef DDB
 
-int npcb_dump __P((void));
+int npcb_dump(void);
 
-int npcb_dump()
+int npcb_dump(void)
 
 {
   struct natmpcb *cpcb;

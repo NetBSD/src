@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.39 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.39.4.1 2009/05/04 08:12:56 yamt Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.39 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.39.4.1 2009/05/04 08:12:56 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -87,6 +87,9 @@ int ipw_debug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
 #endif
+
+/* Permit loading the Intel firmware */
+static int ipw_accept_eula;
 
 static int	ipw_dma_alloc(struct ipw_softc *);
 static void	ipw_release(struct ipw_softc *);
@@ -210,7 +213,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = memt;
 	sc->sc_sh = memh;
 	sc->sc_dmat = pa->pa_dmat;
-	strlcpy(sc->sc_fwname, "ipw2100-1.2.fw", sizeof(sc->sc_fwname));
+	sc->sc_fwname = "ipw2100-1.2.fw";
 
 	/* disable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
@@ -788,6 +791,21 @@ ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	struct ieee80211_node *ni;
 	uint8_t macaddr[IEEE80211_ADDR_LEN];
 	uint32_t len;
+	struct ipw_rx_radiotap_header *wr = &sc->sc_rxtap;
+	struct ipw_tx_radiotap_header *wt = &sc->sc_txtap;
+
+	switch (nstate) {
+	case IEEE80211_S_INIT:
+		break;
+	default:
+		KASSERT(ic->ic_curchan != IEEE80211_CHAN_ANYC);
+		KASSERT(ic->ic_curchan != NULL);
+		wt->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		wt->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
+		wr->wr_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		wr->wr_chan_flags = htole16(ic->ic_curchan->ic_flags);
+		break;
+	}
 
 	switch (nstate) {
 	case IEEE80211_S_RUN:
@@ -1050,10 +1068,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	if (sc->sc_drvbpf != NULL) {
 		struct ipw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
-		tap->wr_flags = 0;
 		tap->wr_antsignal = status->rssi;
-		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
@@ -1324,10 +1339,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct ipw_tx_radiotap_header *tap = &sc->sc_txtap;
-
-		tap->wt_flags = 0;
-		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
@@ -1605,6 +1616,8 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				ipw_init(ifp);
@@ -1633,14 +1646,11 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFMEDIA:
 		if (ifr->ifr_media & IFM_IEEE80211_ADHOC)
-			strlcpy(sc->sc_fwname, "ipw2100-1.2-i.fw",
-			    sizeof(sc->sc_fwname));
+			sc->sc_fwname = "ipw2100-1.2-i.fw";
 		else if (ifr->ifr_media & IFM_IEEE80211_MONITOR)
-			strlcpy(sc->sc_fwname, "ipw2100-1.2-p.fw",
-			    sizeof(sc->sc_fwname));
+			sc->sc_fwname = "ipw2100-1.2-p.fw";
 		else
-			strlcpy(sc->sc_fwname, "ipw2100-1.2.fw",
-			    sizeof(sc->sc_fwname));
+			sc->sc_fwname = "ipw2100-1.2.fw";
 
 		ipw_free_firmware(sc);
 		/* FALLTRHOUGH */
@@ -1867,6 +1877,12 @@ ipw_cache_firmware(struct ipw_softc *sc)
 
 	ipw_free_firmware(sc);
 
+	if (ipw_accept_eula == 0) {
+		aprint_error_dev(&sc->sc_dev,
+		    "EULA not accepted; please see the ipw(4) man page.\n");
+		return EPERM;
+	}
+
 	if ((error = firmware_open("if_ipw", sc->sc_fwname, &fwh)) != 0)
 		goto fail0;
 
@@ -1977,7 +1993,6 @@ ipw_config(struct ipw_softc *sc)
 	}
 
 	DPRINTF(("Setting MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
-	if_set_sadl(ifp, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN);
 	if (error != 0)
@@ -2256,4 +2271,34 @@ ipw_write_mem_1(struct ipw_softc *sc, bus_size_t offset, uint8_t *datap,
 		CSR_WRITE_4(sc, IPW_CSR_INDIRECT_ADDR, offset & ~3);
 		CSR_WRITE_1(sc, IPW_CSR_INDIRECT_DATA + (offset & 3), *datap);
 	}
+}
+
+SYSCTL_SETUP(sysctl_hw_ipw_accept_eula_setup, "sysctl hw.ipw.accept_eula")
+{
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	sysctl_createv(NULL, 0, NULL, &rnode,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "hw",
+		NULL,
+		NULL, 0,
+		NULL, 0,
+		CTL_HW, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &rnode, &rnode,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "ipw",
+		NULL,
+		NULL, 0,
+		NULL, 0,
+		CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &rnode, &cnode,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "accept_eula",
+		SYSCTL_DESCR("Accept Intel EULA and permit use of ipw(4) firmware"),
+		NULL, 0,
+		&ipw_accept_eula, sizeof(ipw_accept_eula),
+		CTL_CREATE, CTL_EOL);
 }

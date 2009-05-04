@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.118.2.1 2008/05/16 02:25:45 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.118.2.2 2009/05/04 08:14:18 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,12 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.118.2.1 2008/05/16 02:25:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.118.2.2 2009/05/04 08:14:18 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +120,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.118.2.1 2008/05/16 02:25:45 yamt Exp
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #endif /* FAST_IPSEC */
+
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#include <compat/sys/socket.h>
+#endif
 
 #include <netinet6/ip6protosw.h>
 
@@ -954,7 +960,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 				return (-1);
 			}
 			optlen = IP6OPT_RTALERT_LEN;
-			bcopy((void *)(opt + 2), (void *)&rtalert_val, 2);
+			memcpy((void *)&rtalert_val, (void *)(opt + 2), 2);
 			*rtalertp = ntohs(rtalert_val);
 			break;
 		case IP6OPT_JUMBO:
@@ -989,7 +995,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 			 * We may see jumbolen in unaligned location, so
 			 * we'd need to perform bcopy().
 			 */
-			bcopy(opt + 2, &jumboplen, sizeof(jumboplen));
+			memcpy(&jumboplen, opt + 2, sizeof(jumboplen));
 			jumboplen = (u_int32_t)htonl(jumboplen);
 
 #if 1
@@ -1102,17 +1108,27 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 #define IS2292(x, y)	(y)
 #endif
 
-#ifdef SO_TIMESTAMP
-	if (in6p->in6p_socket->so_options & SO_TIMESTAMP) {
+	if (in6p->in6p_socket->so_options & SO_TIMESTAMP
+#ifdef SO_OTIMESTAMP
+	    || in6p->in6p_socket->so_options & SO_OTIMESTAMP
+#endif
+	) {
 		struct timeval tv;
 
 		microtime(&tv);
+#ifdef SO_OTIMESTAMP
+		if (in6p->in6p_socket->so_options & SO_OTIMESTAMP) {
+			struct timeval50 tv50;
+			timeval_to_timeval50(&tv, &tv50);
+			*mp = sbcreatecontrol((void *) &tv50, sizeof(tv50),
+			    SCM_OTIMESTAMP, SOL_SOCKET);
+		} else
+#endif
 		*mp = sbcreatecontrol((void *) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-#endif
 
 	/* some OSes call this logic with IPv4 packet, for SO_TIMESTAMP */
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)
@@ -1122,7 +1138,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;
 
-		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
+		memcpy(&pi6.ipi6_addr, &ip6->ip6_dst, sizeof(struct in6_addr));
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
 		pi6.ipi6_ifindex = m->m_pkthdr.rcvif ?
 		    m->m_pkthdr.rcvif->if_index : 0;
@@ -1257,7 +1273,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 
 			switch (nxt) {
 			case IPPROTO_DSTOPTS:
-				if (!in6p->in6p_flags & IN6P_DSTOPTS)
+				if (!(in6p->in6p_flags & IN6P_DSTOPTS))
 					break;
 
 				*mp = sbcreatecontrol((void *)ip6e, elen,
@@ -1268,7 +1284,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 				break;
 
 			case IPPROTO_ROUTING:
-				if (!in6p->in6p_flags & IN6P_RTHDR)
+				if (!(in6p->in6p_flags & IN6P_RTHDR))
 					break;
 
 				*mp = sbcreatecontrol((void *)ip6e, elen,
@@ -1562,7 +1578,7 @@ ip6_addaux(struct mbuf *m)
 		    M_NOWAIT);
 		if (mtag) {
 			m_tag_prepend(m, mtag);
-			bzero(mtag + 1, sizeof(struct ip6aux));
+			memset(mtag + 1, 0, sizeof(struct ip6aux));
 		}
 	}
 	return mtag;
@@ -1595,17 +1611,21 @@ ip6_delaux(struct mbuf *m)
 static int
 sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 {  
-        int s;
+	int error;
   
-        s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-        if (s || newp == NULL)
-                return (s);
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
  
-        s = splsoftnet();
-        ip6flow_reap(0);
-        splx(s);
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
+	ip6flow_reap(0);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
  
-        return (0);
+	return (0);
 }
 
 static int
@@ -1625,16 +1645,21 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
 		/*
 		 * Can only fail due to malloc()
 		 */
-		if (ip6flow_invalidate_all(tmp))
-			return ENOMEM;
+		mutex_enter(softnet_lock);
+		KERNEL_LOCK(1, NULL);
+
+		error = ip6flow_invalidate_all(tmp);
+
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
 	} else {
 		/*
 		 * EINVAL if not a power of 2
-	         */
-		return EINVAL;
+		 */
+		error = EINVAL;
 	}	
 
-	return (0);
+	return error;
 }
 #endif /* GATEWAY */
 
@@ -1642,7 +1667,7 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
  * System control for IP6
  */
 
-u_char	inet6ctlerrmap[PRC_NCMDS] = {
+const u_char inet6ctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,

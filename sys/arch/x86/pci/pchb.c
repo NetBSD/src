@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.10.4.1 2008/05/16 02:23:28 yamt Exp $ */
+/*	$NetBSD: pchb.c,v 1.10.4.2 2009/05/04 08:12:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10.4.1 2008/05/16 02:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10.4.2 2009/05/04 08:12:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,8 +78,8 @@ int	pchbdetach(device_t, int);
 static bool	pchb_resume(device_t PMF_FN_ARGS);
 static bool	pchb_suspend(device_t PMF_FN_ARGS);
 
-CFATTACH_DECL_NEW(pchb, sizeof(struct pchb_softc),
-    pchbmatch, pchbattach, pchbdetach, NULL);
+CFATTACH_DECL3_NEW(pchb, sizeof(struct pchb_softc),
+    pchbmatch, pchbattach, pchbdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 int
 pchbmatch(device_t parent, cfdata_t match, void *aux)
@@ -91,6 +91,61 @@ pchbmatch(device_t parent, cfdata_t match, void *aux)
 		return 1;
 
 	return 0;
+}
+
+int
+pchb_get_bus_number(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t dev_id;
+	int bus, dev, func;
+	int bcreg, pbnum;
+
+	pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+	dev_id = pci_conf_read(pc, tag, PCI_ID_REG);
+	switch (PCI_VENDOR(dev_id)) {
+	case PCI_VENDOR_SERVERWORKS:
+		return pci_conf_read(pc, tag, 0x44) & 0xff;
+	case PCI_VENDOR_INTEL:
+		switch (PCI_PRODUCT(dev_id)) {
+		case PCI_PRODUCT_INTEL_82452_PB:
+			bcreg = pci_conf_read(pc, tag, 0x40);
+			pbnum = PCISET_BRIDGE_NUMBER(bcreg);
+			if (pbnum != 0xff)
+				return pbnum + 1;
+
+			break;
+		case PCI_PRODUCT_INTEL_PCI450_PB:
+			bcreg = pci_conf_read(pc, tag, PCISET_BUSCONFIG_REG);
+			return PCISET_PCI_BUS_NUMBER(bcreg);
+		case PCI_PRODUCT_INTEL_82451NX_PXB:
+			pbnum = 0;
+			switch (dev) {
+			case 18: /* PXB 0 bus A - primary bus */
+				break;
+			case 19: /* PXB 0 bus B */
+				/* read SUBA0 from MIOC */
+				tag = pci_make_tag(pc, 0, 16, 0);
+				bcreg = pci_conf_read(pc, tag, 0xd0);
+				pbnum = ((bcreg & 0x0000ff00) >> 8) + 1;
+				break;
+			case 20: /* PXB 1 bus A */
+				/* read BUSNO1 from MIOC */
+				tag = pci_make_tag(pc, 0, 16, 0);
+				bcreg = pci_conf_read(pc, tag, 0xd0);
+				pbnum = (bcreg & 0xff000000) >> 24;
+				break;
+			case 21: /* PXB 1 bus B */
+				/* read SUBA1 from MIOC */
+				tag = pci_make_tag(pc, 0, 16, 0);
+				bcreg = pci_conf_read(pc, tag, 0xd4);
+				pbnum = (bcreg & 0x000000ff) + 1;
+				break;
+			}
+			return pbnum;
+		}
+	}
+	return -1;
 }
 
 void
@@ -319,12 +374,19 @@ pchbattach(device_t parent, device_t self, void *aux)
 		case PCI_PRODUCT_INTEL_82915GM_HB:
 		case PCI_PRODUCT_INTEL_82945P_MCH:
 		case PCI_PRODUCT_INTEL_82945GM_HB:
+		case PCI_PRODUCT_INTEL_82945GME_HB:
+		case PCI_PRODUCT_INTEL_82946GZ_HB:
 		case PCI_PRODUCT_INTEL_82965Q_HB:
 		case PCI_PRODUCT_INTEL_82965G_HB:
 		case PCI_PRODUCT_INTEL_82965PM_HB:
 		case PCI_PRODUCT_INTEL_82Q35_HB:
 		case PCI_PRODUCT_INTEL_82G33_HB:
 		case PCI_PRODUCT_INTEL_82Q33_HB:
+		case PCI_PRODUCT_INTEL_82G35_HB:
+		case PCI_PRODUCT_INTEL_82GM45_HB:
+		case PCI_PRODUCT_INTEL_82IGD_E_HB:
+		case PCI_PRODUCT_INTEL_82Q45_HB:
+		case PCI_PRODUCT_INTEL_82G45_HB:
 			/*
 			 * The host bridge is either in GFX mode (internal
 			 * graphics) or in AGP mode. In GFX mode, we pretend

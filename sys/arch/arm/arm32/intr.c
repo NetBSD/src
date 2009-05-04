@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27.4.1 2008/05/16 02:21:56 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.27.4.2 2009/05/04 08:10:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.4.1 2008/05/16 02:21:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.4.2 2009/05/04 08:10:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.4.1 2008/05/16 02:21:56 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 
@@ -69,7 +68,7 @@ set_spl_masks(void)
 	spl_masks[IPL_VM]	= irqmasks[IPL_VM];
 	spl_masks[IPL_SCHED]	= irqmasks[IPL_SCHED];
 	spl_masks[IPL_HIGH]	= irqmasks[IPL_HIGH];
-	spl_masks[IPL_NONE]	= 0;
+	spl_masks[IPL_NONE]	= irqmasks[IPL_NONE];
 
 }
 
