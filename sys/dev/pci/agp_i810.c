@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.63 2009/02/19 05:58:37 markd Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.64 2009/05/04 11:05:45 markd Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.63 2009/02/19 05:58:37 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.64 2009/05/04 11:05:45 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -706,6 +706,7 @@ agp_i810_get_aperture(struct agp_softc *sc)
 		break;
 	case CHIP_I915:
 	case CHIP_G33:
+	case CHIP_G4X:
 		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I915_MSAC);
 		msac = (u_int16_t)(reg >> 16);
 		if (msac & AGP_I915_MSAC_APER_128M)
@@ -715,16 +716,6 @@ agp_i810_get_aperture(struct agp_softc *sc)
 		break;
 	case CHIP_I965:
 		size = 512 * 1024 * 1024;
-		break;
-	case CHIP_G4X:
-		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_G4X_MSAC);
-		msac = (u_int16_t)(reg >> 16);
-		switch (msac & AGP_G4X_MSAC_MASK) {
-		case AGP_G4X_MSAC_APER_256M:
-			size = 256 * 1024 * 1024;		
-		case AGP_G4X_MSAC_APER_512M:
-			size = 512 * 1024 * 1024;
-		}
 		break;
 	default:
 		aprint_error(": Unknown chipset\n");
