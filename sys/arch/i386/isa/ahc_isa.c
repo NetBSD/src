@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.35 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.36 2009/05/04 12:14:31 cegger Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.35 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.36 2009/05/04 12:14:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.35 2008/04/28 20:23:24 martin Exp $");
 int	ahc_isa_idstring(bus_space_tag_t, bus_space_handle_t, char *);
 int	ahc_isa_match(struct isa_attach_args *, bus_addr_t);
 
-int	ahc_isa_probe(struct device *, struct cfdata *, void *);
-void	ahc_isa_attach(struct device *, struct device *, void *);
+int	ahc_isa_probe(device_t, cfdata_t, void *);
+void	ahc_isa_attach(device_t, device_t, void *);
 void	aha2840_load_seeprom(struct ahc_softc *ahc);
 static int verify_seeprom_cksum(struct seeprom_config *sc);
 
@@ -303,7 +303,7 @@ ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
  * the actual probe routine to check it out.
  */
 int
-ahc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+ahc_isa_probe(device_t parent, cfdata_t match, void *aux)
 {       
 	struct isa_attach_args *ia = aux;
 	struct ahc_isa_slot *as;
@@ -360,9 +360,9 @@ ahc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ahc_isa_attach(struct device *parent, struct device *self, void *aux)
+ahc_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct ahc_softc *ahc = (void *)self;
+	struct ahc_softc *ahc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
