@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.16 2009/05/03 17:09:49 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.17 2009/05/04 14:31:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,6 @@ struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
 void			rump_freecn(struct componentname *, int);
 #define RUMPCN_ISLOOKUP 0x01
 #define RUMPCN_FREECRED 0x02
-#define RUMPCN_HASNTBUF 0x04
 int			rump_namei(uint32_t, uint32_t, const char *,
 				   struct vnode **, struct vnode **,
 				   struct componentname **);
