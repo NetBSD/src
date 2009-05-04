@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.22 2009/05/04 11:28:20 ad Exp $
+.\"	$NetBSD: callout.9,v 1.23 2009/05/04 11:44:28 ad Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,7 +92,7 @@ functions
 .Fn timeout
 and
 .Fn untimeout .
-.Pp
+.Sh FUNCTIONS
 The
 .Fn callout_init
 function initializes the callout handle
@@ -282,6 +282,20 @@ state in the callout handle
 This is used in situations where it is necessary to protect against
 the race condition described under
 .Fn callout_invoking .
+.Sh CONCURRENCY
+The callout facility performs locking internally in order to guarantee the
+atomicity of individual operations performed on callouts.
+It does not provide life cycle management of user-provided callout data
+structures, nor does it ensure that groups of operations (multiple function
+calls) are performed atomically.
+These aspects of callout management are the responsibility of the user of
+the callout facility.
+.Pp
+Scheduled callouts may be active concurrently in a context different to the
+user of the callout facility: on another CPU, or at a different interrupt
+priority level or thread on the current CPU.
+The callout facility provides only one guarantee in this regard: any given
+callout will never have multiple concurrent invocations.
 .Sh SEE ALSO
 .Xr hz 9
 .Sh HISTORY
