@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsocket.c,v 1.3.2.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_srvsocket.c,v 1.3.2.3 2009/05/04 10:28:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.3.2.2 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.3.2.3 2009/05/04 10:28:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ nfsdsock_sendreply(struct nfssvc_sock *slp, struct nfsrv_descript *nd)
 	mutex_exit(&slp->ns_lock);
 
 again:
-	error = nfs_send(slp->ns_so, nd->nd_nam2, nd->nd_mreq, NULL, curlwp);
+	error = nfs_send(slp->ns_so, nd->nd_nam2, nd->nd_mreq, NULL);
 	if (nd->nd_nam2) {
 		m_free(nd->nd_nam2);
 	}
