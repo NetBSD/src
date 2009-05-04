@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.278 2009/03/31 16:12:00 tsutsui Exp $
+#       $NetBSD: Makefile,v 1.279 2009/05/04 21:33:00 ad Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -166,7 +166,8 @@ MLINKS+=callout.9 callout_init.9 callout.9 callout_destroy.9 \
 	callout.9 callout_setfunc.9 callout.9 callout_stop.9 \
 	callout.9 callout_pending.9 callout.9 callout_expired.9 \
 	callout.9 callout_invoking.9 callout.9 callout_ack.9 \
-	callout.9 timeout.9 callout.9 untimeout.9
+	callout.9 timeout.9 callout.9 untimeout.9 \
+	callout.9 callout_halt.9
 MLINKS+=cardbus.9 cardbus_attach_card.9 \
 	cardbus.9 cardbus_detach_card.9 \
 	cardbus.9 cardbus_function_enable.9 \
