@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.22 2009/04/02 19:02:42 mjf Exp $
+.\"	$NetBSD: scsipi.9,v 1.23 2009/05/04 20:10:19 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -194,7 +194,7 @@ adapter's ID on this channel
 .It Va int chan_defquirks
 default device quirks.
 Quirks are defined in
-.Pa \*[Lt]dev/scsipi/scsipiconf.h\*[Gt]
+.Aq Pa dev/scsipi/scsipiconf.h
 and are usually set in the middle layer based on the device's inquiry
 data.
 For some kinds of adapters it may be convenient to have a set of
