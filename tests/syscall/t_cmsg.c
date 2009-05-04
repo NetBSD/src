@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.2 2009/05/03 23:19:59 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.3 2009/05/04 00:14:59 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -29,16 +29,14 @@ ATF_TC_BODY(cmsg_sendfd_bounds, tc)
 	struct cmsghdr *cmp;
 	struct msghdr msg;
 	struct iovec iov;
-	ssize_t n;
 	int s[2];
-	int rv, error = 0;
+	int error = 0;
 
 	rump_init();
 
 	if (rump_sys_socketpair(AF_LOCAL, SOCK_STREAM, 0, s) == -1)
 		atf_tc_fail("rump_sys_socket");
 
-	rv = 0;
 	cmp = malloc(CMSG_LEN(sizeof(int)));
 
 	iov.iov_base = &error;
@@ -81,9 +79,8 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	struct cmsghdr *cmp;
 	struct msghdr msg;
 	struct iovec iov;
-	ssize_t n;
 	int s[2], sgot;
-	int rv, error = 0;
+	int error = 0;
 	int v1, v2;
 
 	rump_init();
@@ -91,7 +88,6 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	if (rump_sys_socketpair(AF_LOCAL, SOCK_STREAM, 0, s) == -1)
 		atf_tc_fail("rump_sys_socketpair");
 
-	rv = 0;
 	cmp = malloc(CMSG_LEN(sizeof(int)));
 
 	iov.iov_base = &error;
