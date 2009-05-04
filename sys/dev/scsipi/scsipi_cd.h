@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.18.10.1 2008/05/16 02:25:06 yamt Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.18.10.2 2009/05/04 08:13:18 yamt Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -115,7 +115,7 @@ struct scsipi_toc_header {
 /* read TOC form 0 result entries */
 struct scsipi_toc_formatted {
 	uint8_t  unused1;
-	uint8_t  adrcontol;
+	uint8_t  adrcontrol;
 	uint8_t  tracknr;
 	uint8_t  unused2;
 	uint8_t	 msf_lba[4];		/* union msf_lba from cdio.h */
@@ -250,7 +250,7 @@ struct scsipi_close_tracksession {
 	uint8_t  tracksessionnr[2];
 	uint8_t  unused2[3];
 	uint8_t  control;
-} __attribute__((packed));
+} __packed;
 
 
 #define RESERVE_TRACK 0x53
@@ -259,7 +259,7 @@ struct scsipi_reserve_track {
 	uint8_t  reserved[4];
 	uint8_t  reservation_size[4];
 	uint8_t  control;
-} __attribute__((packed));
+} __packed;
 
 
 #define REPAIR_TRACK 0x58
@@ -270,7 +270,7 @@ struct scsipi_repair_track {
 	uint8_t  tracknr[2];		/* logical track nr */
 	uint8_t  reserved3[3];
 	uint8_t  control;
-} __attribute__((packed));
+} __packed;
 
 
 #define READ_CD_CAPACITY	0x25	/* slightly different from disk */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.268.2.1 2008/05/16 02:25:41 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.268.2.2 2009/05/04 08:14:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,9 +91,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.268.2.1 2008/05/16 02:25:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.268.2.2 2009/05/04 08:14:17 yamt Exp $");
 
 #include "opt_inet.h"
+#include "opt_compat_netbsd.h"
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -171,6 +172,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.268.2.1 2008/05/16 02:25:41 yamt Exp 
 #endif
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
+#endif
+
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#include <compat/sys/socket.h>
 #endif
 
 /*
@@ -330,10 +336,8 @@ do {									\
 
 #define	IPQ_UNLOCK()		ipq_unlock()
 
-POOL_INIT(inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl", NULL,
-    IPL_SOFTNET);
-POOL_INIT(ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl", NULL,
-    IPL_VM);
+struct pool inmulti_pool;
+struct pool ipqent_pool;
 
 #ifdef INET_CSUM_COUNTERS
 #include <sys/device.h>
@@ -398,6 +402,11 @@ ip_init(void)
 {
 	const struct protosw *pr;
 	int i;
+
+	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
+	    NULL, IPL_SOFTNET);
+	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
+	    NULL, IPL_VM);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -928,6 +937,7 @@ ours:
 				 */
 				if (ip->ip_tos != fp->ipq_tos) {
 					IP_STATINC(IP_STAT_BADFRAGS);
+					IPQ_UNLOCK();
 					goto bad;
 				}
 				goto found;
@@ -1118,8 +1128,7 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp, struct ipqhead *ipqhead)
 		else if (ip_nfragpackets >= ip_maxfragpackets)
 			goto dropfrag;
 		ip_nfragpackets++;
-		MALLOC(fp, struct ipq *, sizeof (struct ipq),
-		    M_FTABLE, M_NOWAIT);
+		fp = malloc(sizeof (struct ipq), M_FTABLE, M_NOWAIT);
 		if (fp == NULL)
 			goto dropfrag;
 		LIST_INSERT_HEAD(ipqhead, fp, ipq_q);
@@ -1250,7 +1259,7 @@ insert:
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
 	LIST_REMOVE(fp, ipq_q);
-	FREE(fp, M_FTABLE);
+	free(fp, M_FTABLE);
 	ip_nfragpackets--;
 	m->m_len += (ip->ip_hl << 2);
 	m->m_data -= (ip->ip_hl << 2);
@@ -1303,7 +1312,7 @@ ip_freef(struct ipq *fp)
 	    printf("ip_freef: nfrags %d != %d\n", fp->ipq_nfrags, nfrags);
 	ip_nfrags -= nfrags;
 	LIST_REMOVE(fp, ipq_q);
-	FREE(fp, M_FTABLE);
+	free(fp, M_FTABLE);
 	ip_nfragpackets--;
 }
 
@@ -1553,7 +1562,7 @@ ip_dooptions(struct mbuf *m)
 			/*
 			 * locate outgoing interface
 			 */
-			bcopy((void *)(cp + off), (void *)&ipaddr.sin_addr,
+			memcpy((void *)&ipaddr.sin_addr, (void *)(cp + off),
 			    sizeof(ipaddr.sin_addr));
 			if (opt == IPOPT_SSRR)
 				ia = ifatoia(ifa_ifwithladdr(sintosa(&ipaddr)));
@@ -1589,7 +1598,7 @@ ip_dooptions(struct mbuf *m)
 			off--;			/* 0 origin */
 			if ((off + sizeof(struct in_addr)) > optlen)
 				break;
-			bcopy((void *)(&ip->ip_dst), (void *)&ipaddr.sin_addr,
+			memcpy((void *)&ipaddr.sin_addr, (void *)(&ip->ip_dst),
 			    sizeof(ipaddr.sin_addr));
 			/*
 			 * locate outgoing interface; if we're the destination,
@@ -1656,7 +1665,7 @@ ip_dooptions(struct mbuf *m)
 					    (u_char *)ip;
 					goto bad;
 				}
-				bcopy(cp0, &ipaddr.sin_addr,
+				memcpy(&ipaddr.sin_addr, cp0,
 				    sizeof(struct in_addr));
 				if (ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)))
 				    == NULL)
@@ -1730,7 +1739,7 @@ save_rte(u_char *option, struct in_addr dst)
 #endif /* 0 */
 	if (olen > sizeof(ip_srcrt) - (1 + sizeof(dst)))
 		return;
-	bcopy((void *)option, (void *)ip_srcrt.srcopt, olen);
+	memcpy((void *)ip_srcrt.srcopt, (void *)option, olen);
 	ip_nhops = (olen - IPOPT_OFFSET - 1) / sizeof(struct in_addr);
 	ip_srcrt.dst = dst;
 }
@@ -1967,9 +1976,11 @@ ip_forward(struct mbuf *m, int srcrt)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 
-		if ((rt = rtcache_validate(&ipforward_rt)) != NULL) {
+		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
+			destmtu = rt->rt_ifp->if_mtu;
 
 #if defined(IPSEC) || defined(FAST_IPSEC)
+		{
 			/*
 			 * If the packet is routed over IPsec tunnel, tell the
 			 * originator the tunnel MTU.
@@ -1985,10 +1996,7 @@ ip_forward(struct mbuf *m, int srcrt)
 			sp = ipsec4_getpolicybyaddr(mcopy,
 			    IPSEC_DIR_OUTBOUND, IP_FORWARDING,
 			    &ipsecerror);
-#endif
 
-			destmtu = rt->rt_ifp->if_mtu;
-#if defined(IPSEC) || defined(FAST_IPSEC)
 			if (sp != NULL) {
 				/* count IPsec header size */
 				ipsechdr = ipsec4_hdrsiz(mcopy,
@@ -2003,6 +2011,7 @@ ip_forward(struct mbuf *m, int srcrt)
 				 && sp->req->sav != NULL
 				 && sp->req->sav->sah != NULL) {
 					ro = &sp->req->sav->sah->sa_route;
+					rt = rtcache_validate(ro);
 					if (rt && rt->rt_ifp) {
 						destmtu =
 						    rt->rt_rmx.rmx_mtu ?
@@ -2018,8 +2027,8 @@ ip_forward(struct mbuf *m, int srcrt)
 				KEY_FREESP(&sp);
 #endif
 			}
-#endif /*defined(IPSEC) || defined(FAST_IPSEC)*/
 		}
+#endif /*defined(IPSEC) || defined(FAST_IPSEC)*/
 		IP_STATINC(IP_STAT_CANTFRAG);
 		break;
 
@@ -2048,10 +2057,22 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
     struct mbuf *m)
 {
 
-	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
+	if (inp->inp_socket->so_options & SO_TIMESTAMP 
+#ifdef SO_OTIMESTAMP
+	    || inp->inp_socket->so_options & SO_OTIMESTAMP 
+#endif
+	    ) {
 		struct timeval tv;
 
 		microtime(&tv);
+#ifdef SO_OTIMESTAMP
+		if (inp->inp_socket->so_options & SO_OTIMESTAMP) {
+			struct timeval50 tv50;
+			timeval_to_timeval50(&tv, &tv50);
+			*mp = sbcreatecontrol((void *) &tv50, sizeof(tv50),
+			    SCM_OTIMESTAMP, SOL_SOCKET);
+		} else
+#endif
 		*mp = sbcreatecontrol((void *) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)
@@ -2115,9 +2136,10 @@ sysctl_net_inet_ip_forwsrcrt(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FORWSRCRT,
-	    0, NULL, NULL, NULL))
-		return (EPERM);
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FORWSRCRT,
+	    0, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	ip_forwsrcrt = tmp;
 
@@ -2143,8 +2165,12 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 	if (tmp < 0)
 		return (EINVAL);
 
+	mutex_enter(softnet_lock);
+
 	ip_mtudisc_timeout = tmp;
 	rt_timer_queue_change(ip_mtudisc_timeout_q, ip_mtudisc_timeout);
+
+	mutex_exit(softnet_lock);
 
 	return (0);
 }
@@ -2156,15 +2182,19 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 {
-	int s;
+	int error;
 
-	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (s || newp == NULL)
-		return (s);
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	ipflow_prune();
-	splx(s);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 
 	return (0);
 }
@@ -2186,16 +2216,22 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 		/*
 		 * Can only fail due to malloc()
 		 */
-		if (ipflow_invalidate_all(tmp))
-			return ENOMEM;
+		mutex_enter(softnet_lock);
+		KERNEL_LOCK(1, NULL);
+
+		error = ipflow_invalidate_all(tmp);
+
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
+
 	} else {
 		/*
 		 * EINVAL if not a power of 2
 	         */
-		return EINVAL;
+		error = EINVAL;
 	}	
 
-	return (0);
+	return error;
 }
 #endif /* GATEWAY */
 

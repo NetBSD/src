@@ -1,0 +1,10 @@
+- Build and install the test apps by default
+- Additional API for unified memory manager
+  see http://dri.freedesktop.org/wiki/DriMemoryManagerDesign for proposal
+- Any changes needed to enable the XvMC drivers to link against libdrm
+- Header cleanup
+- Unify libdrm code paths between client and server
+  - drmMsg, xf86DrvMsgVerb versus vfprintf
+  - drmOpenDevice tries chmod/chown if in server
+  - drmOpen{,ByName} tries to load kernel module if in server
+  All but the last two should probably be factored out into libdri.

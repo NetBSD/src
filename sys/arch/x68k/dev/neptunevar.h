@@ -1,4 +1,4 @@
-/*	$NetBSD: neptunevar.h,v 1.3.148.1 2008/05/16 02:23:25 yamt Exp $	*/
+/*	$NetBSD: neptunevar.h,v 1.3.148.2 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*
  *
@@ -54,7 +54,6 @@ struct neptune_attach_args {
 };
 
 struct neptune_softc {
-	struct device	sc_dev;
 	bus_space_tag_t	sc_bst;
 	vaddr_t		sc_addr;
 };

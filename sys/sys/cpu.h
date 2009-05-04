@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19.4.1 2008/05/16 02:25:50 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19.4.2 2009/05/04 08:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -29,6 +29,8 @@
 #ifndef _SYS_CPU_H_
 #define _SYS_CPU_H_
 
+#ifndef _LOCORE
+
 #include <machine/cpu.h>
 
 #include <sys/lwp.h>
@@ -52,14 +54,14 @@ void cpu_need_resched(struct cpu_info *, int);
 #define	cpu_did_resched(l)	/* nothing */
 #endif
 
-/* flags for cpu_need_resched */
-#define	RESCHED_IMMED		1
-#define	RESCHED_KPREEMPT	2
-
 #ifndef CPU_INFO_ITERATOR
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	\
     (void)cii, ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
+#ifndef CPU_IS_PRIMARY
+#define	CPU_IS_PRIMARY(ci)	((void)ci, 1)
 #endif
 
 #ifdef __HAVE_MD_CPU_OFFLINE
@@ -67,13 +69,17 @@ void	cpu_offline_md(void);
 #endif
 
 lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
-struct	cpu_info *cpu_lookup(cpuid_t);
-struct	cpu_info *cpu_lookup_byindex(u_int);
-int	cpu_setonline(struct cpu_info *, bool);
+struct	cpu_info *cpu_lookup(u_int);
+int	cpu_setstate(struct cpu_info *, bool);
+int	cpu_setintr(struct cpu_info *, bool);
 bool	cpu_intr_p(void);
+bool	cpu_softintr_p(void);
 bool	cpu_kpreempt_enter(uintptr_t, int);
 void	cpu_kpreempt_exit(uintptr_t);
 bool	cpu_kpreempt_disabled(void);
+int	cpu_lwp_setprivate(lwp_t *, void *);
+void	cpu_intr_redistribute(void);
+u_int	cpu_intr_count(struct cpu_info *);
 
 CIRCLEQ_HEAD(cpuqueue, cpu_info);
 
@@ -86,5 +92,12 @@ cpu_index(struct cpu_info *ci)
 {
 	return ci->ci_index;
 }
+
+#endif	/* !_LOCORE */
+
+/* flags for cpu_need_resched */
+#define	RESCHED_LAZY		0x01	/* request a ctx switch */
+#define	RESCHED_IMMED		0x02	/* request an immediate ctx switch */
+#define	RESCHED_KPREEMPT	0x04	/* request in-kernel preemption */
 
 #endif	/* !_SYS_CPU_H_ */

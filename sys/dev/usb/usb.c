@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.112.2.1 2008/05/16 02:25:11 yamt Exp $	*/
+/*	$NetBSD: usb.c,v 1.112.2.2 2009/05/04 08:13:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.112.2.1 2008/05/16 02:25:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.112.2.2 2009/05/04 08:13:22 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -162,8 +162,9 @@ static void usb_doattach(device_t);
 
 extern struct cfdriver usb_cd;
 
-CFATTACH_DECL2_NEW(usb, sizeof(struct usb_softc),
-    usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet);
+CFATTACH_DECL3_NEW(usb, sizeof(struct usb_softc),
+    usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet,
+    DVF_DETACH_SHUTDOWN);
 
 USB_MATCH(usb)
 {
@@ -283,7 +284,6 @@ usb_doattach(device_t self)
 
 static const char *taskq_names[] = USB_TASKQ_NAMES;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 void
 usb_create_event_thread(device_t self)
 {
@@ -435,7 +435,6 @@ usbctlprint(void *aux, const char *pnp)
 
 	return (UNCONF);
 }
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
 usbopen(dev_t dev, int flag, int mode, struct lwp *l)
@@ -945,9 +944,12 @@ usb_activate(device_t self, enum devact act)
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (dev != NULL && dev->cdesc != NULL && dev->subdevs != NULL) {
-			for (i = 0; dev->subdevs[i]; i++)
+		if (dev != NULL && dev->cdesc != NULL && dev->subdevlen > 0) {
+			for (i = 0; i < dev->subdevlen; i++) {
+				if (!dev->subdevs[i])
+					continue;
 				rv |= config_deactivate(dev->subdevs[i]);
+			}
 		}
 		break;
 	}
@@ -957,22 +959,16 @@ usb_activate(device_t self, enum devact act)
 void
 usb_childdet(device_t self, device_t child)
 {
-	int i, last = -1;
+	int i;
 	struct usb_softc *sc = device_private(self);
 	struct usbd_device *dev;
 
-	if ((dev = sc->sc_port.device) == NULL || dev->subdevs == NULL)
+	if ((dev = sc->sc_port.device) == NULL || dev->subdevlen == 0)
 		return;
 
-	for (i = 0; dev->subdevs[i] != NULL; i++)
-		last = i;
-
-	for (i = 0; dev->subdevs[i] != NULL; i++) {
-		if (dev->subdevs[i] == child) {
-			dev->subdevs[i] = dev->subdevs[last];
-			dev->subdevs[last] = NULL;
-		}
-	}
+	for (i = 0; i < dev->subdevlen; i++)
+		if (dev->subdevs[i] == child)
+			dev->subdevs[i] = NULL;
 }
 
 int

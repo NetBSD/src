@@ -1,4 +1,4 @@
-/* $NetBSD: isacsx.h,v 1.3 2005/12/11 12:21:27 christos Exp $	*/
+/* $NetBSD: isacsx.h,v 1.3.74.1 2009/05/04 08:12:42 yamt Exp $	*/
 /*
  *   Copyright (c) 2001 Gary Jennejohn. All rights reserved.
  *
@@ -239,7 +239,7 @@ typedef struct isacsx_reg {
 			unsigned char dummy_6f;
 		} isacsx_w;
 	} isacsx_rw;
-}  __attribute__ ((packed)) isacsx_reg_t;
+}  __packed isacsx_reg_t;
 
 #define REG_OFFSET(type, field) (int)(&(((type *)0)->field))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.34 2007/10/17 19:55:13 garbled Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.34.20.1 2009/05/04 08:11:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.34 2007/10/17 19:55:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.34.20.1 2009/05/04 08:11:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -94,7 +94,7 @@ static inline u_int16_t ether_cmp(void *, void *);
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and
- * unrolled for speed.  Use this like bcmp().
+ * unrolled for speed.  Use this like memcmp().
  *
  * XXX: Add <machine/inlines.h> for stuff like this?
  * XXX: or maybe add it to libkern.h instead?
@@ -178,23 +178,25 @@ mcioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
+		mcinit(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			mcinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			mcinit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((err = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX see the comment in ed_ioctl() about code re-use */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -233,7 +235,7 @@ mcioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	default:
-		err = EINVAL;
+		err = ether_ioctl(ifp, cmd, data);
 	}
 	splx(s);
 	return (err);

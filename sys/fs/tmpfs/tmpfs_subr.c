@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.46.10.1 2008/05/16 02:25:21 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.46.10.2 2009/05/04 08:13:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.10.1 2008/05/16 02:25:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.10.2 2009/05/04 08:13:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -585,9 +585,9 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
-	bool found;
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
 	KASSERT(IMPLIES(cnp->cn_namelen == 2, !(cnp->cn_nameptr[0] == '.' &&
 	    cnp->cn_nameptr[1] == '.')));
@@ -595,17 +595,15 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	found = 0;
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
 		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
-			found = 1;
 			break;
 		}
 	}
 
-	return found ? de : NULL;
+	return de;
 }
 
 /* --------------------------------------------------------------------- */
@@ -708,6 +706,8 @@ tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 {
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
+
 	if (cookie == node->tn_spec.tn_dir.tn_readdir_lastn &&
 	    node->tn_spec.tn_dir.tn_readdir_lastp != NULL) {
 		return node->tn_spec.tn_dir.tn_readdir_lastp;
@@ -739,6 +739,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 	struct dirent *dentp;
 	struct tmpfs_dirent *de;
 
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	TMPFS_VALIDATE_DIR(node);
 
 	/* Locate the first directory entry we have to return.  We have cached
@@ -1017,7 +1018,7 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 int
 tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 {
-	int error, ismember = 0;
+	int error;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1032,21 +1033,10 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	/* XXX: The following comes from UFS code, and can be found in
-	 * several other file systems.  Shouldn't this be centralized
-	 * somewhere? */
-	if (kauth_cred_geteuid(cred) != node->tn_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)))
-		return error;
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		if (vp->v_type != VDIR && (mode & S_ISTXT))
-			return EFTYPE;
-
-		if ((kauth_cred_ismember_gid(cred, node->tn_gid,
-		    &ismember) != 0 || !ismember) && (mode & S_ISGID))
-			return EPERM;
-	}
+	error = genfs_can_chmod(vp, cred, node->tn_uid, node->tn_gid,
+	    mode);
+	if (error)
+		return (error);
 
 	node->tn_mode = (mode & ALLPERMS);
 
@@ -1071,7 +1061,7 @@ int
 tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     struct lwp *l)
 {
-	int error, ismember = 0;
+	int error;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1094,15 +1084,10 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	/* XXX: The following comes from UFS code, and can be found in
-	 * several other file systems.  Shouldn't this be centralized
-	 * somewhere? */
-	if ((kauth_cred_geteuid(cred) != node->tn_uid || uid != node->tn_uid ||
-	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == node->tn_gid ||
-	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
-	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0))
-		return error;
+	error = genfs_can_chown(vp, cred, node->tn_uid, node->tn_gid, uid,
+	    gid);
+	if (error)
+		return (error);
 
 	node->tn_uid = uid;
 	node->tn_gid = gid;
@@ -1180,7 +1165,8 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred,
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
+tmpfs_chtimes(struct vnode *vp, const struct timespec *atime,
+    const struct timespec *mtime, const struct timespec *btime,
     int vaflags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
@@ -1213,7 +1199,10 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	if (mtime->tv_sec != VNOVAL && mtime->tv_nsec != VNOVAL)
 		node->tn_status |= TMPFS_NODE_MODIFIED;
 
-	tmpfs_update(vp, atime, mtime, 0);
+	if (btime->tv_sec == VNOVAL && btime->tv_nsec == VNOVAL)
+		btime = NULL;
+
+	tmpfs_update(vp, atime, mtime, btime, 0);
 	VN_KNOTE(vp, NOTE_ATTRIB);
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1226,9 +1215,9 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 /* Sync timestamps */
 void
 tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
-    const struct timespec *mod)
+    const struct timespec *mod, const struct timespec *birth)
 {
-	struct timespec now;
+	struct timespec now, *nowp = NULL;
 	struct tmpfs_node *node;
 
 	node = VP_TO_TMPFS_NODE(vp);
@@ -1237,19 +1226,30 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	    TMPFS_NODE_CHANGED)) == 0)
 		return;
 
-	getnanotime(&now);
+	if (birth != NULL)
+		node->tn_birthtime = *birth;
+
 	if (node->tn_status & TMPFS_NODE_ACCESSED) {
-		if (acc == NULL)
-			acc = &now;
+		if (acc == NULL) {
+			if (nowp == NULL)
+				getnanotime(nowp = &now);
+			acc = nowp;
+		}
 		node->tn_atime = *acc;
 	}
 	if (node->tn_status & TMPFS_NODE_MODIFIED) {
-		if (mod == NULL)
-			mod = &now;
+		if (mod == NULL) {
+			if (nowp == NULL)
+				getnanotime(nowp = &now);
+			mod = nowp;
+		}
 		node->tn_mtime = *mod;
 	}
-	if (node->tn_status & TMPFS_NODE_CHANGED)
-		node->tn_ctime = now;
+	if (node->tn_status & TMPFS_NODE_CHANGED) {
+		if (nowp == NULL)
+			getnanotime(nowp = &now);
+		node->tn_ctime = *nowp;
+	}
 
 	node->tn_status &=
 	    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
@@ -1259,7 +1259,7 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 
 void
 tmpfs_update(struct vnode *vp, const struct timespec *acc,
-    const struct timespec *mod, int flags)
+    const struct timespec *mod, const struct timespec *birth, int flags)
 {
 
 	struct tmpfs_node *node;
@@ -1273,7 +1273,7 @@ tmpfs_update(struct vnode *vp, const struct timespec *acc,
 		; /* XXX Need to do anything special? */
 #endif
 
-	tmpfs_itimes(vp, acc, mod);
+	tmpfs_itimes(vp, acc, mod, birth);
 
 	KASSERT(VOP_ISLOCKED(vp));
 }
@@ -1305,7 +1305,7 @@ tmpfs_truncate(struct vnode *vp, off_t length)
 		node->tn_status |= TMPFS_NODE_CHANGED | TMPFS_NODE_MODIFIED;
 
 out:
-	tmpfs_update(vp, NULL, NULL, 0);
+	tmpfs_update(vp, NULL, NULL, NULL, 0);
 
 	return error;
 }

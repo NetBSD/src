@@ -1,4 +1,4 @@
-/*	$NetBSD: sun2.c,v 1.8.44.1 2008/05/16 02:23:23 yamt Exp $	*/
+/*	$NetBSD: sun2.c,v 1.8.44.2 2009/05/04 08:12:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 
 u_int	get_pte(vaddr_t);
 void	set_pte(vaddr_t, u_int);
+void	dvma2_init(void);
 char *	dvma2_alloc(int);
 void	dvma2_free(char *, int);
 char *	dvma2_mapin(char *, int);
@@ -437,7 +438,7 @@ sun2_map_mem_run(void *entry)
 	}
 		
 	/* Tell our caller where in virtual space to enter. */
-	return ((void *)entry) - MEM_CHUNK0_LOAD_VIRT;
+	return ((char *)entry) - MEM_CHUNK0_LOAD_VIRT;
 }
 
 void 

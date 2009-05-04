@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.26.4.1 2008/05/16 02:24:33 yamt Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.26.4.2 2009/05/04 08:12:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -148,19 +148,14 @@ static __inline void isapnp_write_reg(struct isapnp_softc *, int, u_char);
 static __inline u_char isapnp_read_reg(struct isapnp_softc *, int);
 
 static __inline void
-isapnp_write_reg(sc, r, v)
-	struct isapnp_softc *sc;
-	int r;
-	u_char v;
+isapnp_write_reg(struct isapnp_softc *sc, int r, u_char v)
 {
 	ISAPNP_WRITE_ADDR(sc, r);
 	ISAPNP_WRITE_DATA(sc, v);
 }
 
 static __inline u_char
-isapnp_read_reg(sc, r)
-	struct isapnp_softc *sc;
-	int r;
+isapnp_read_reg(struct isapnp_softc *sc, int r)
 {
 	ISAPNP_WRITE_ADDR(sc, r);
 	return ISAPNP_READ_DATA(sc);

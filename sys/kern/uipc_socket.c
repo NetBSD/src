@@ -1,11 +1,11 @@
-/*	$NetBSD: uipc_socket.c,v 1.160.2.1 2008/05/16 02:25:28 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.160.2.2 2009/05/04 08:13:49 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of Wasabi Systems, Inc.
+ * by Jason R. Thorpe of Wasabi Systems, Inc, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,19 +63,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160.2.1 2008/05/16 02:25:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160.2.2 2009/05/04 08:13:49 yamt Exp $");
 
+#include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
 #include "opt_mbuftrace.h"
 #include "opt_somaxkva.h"
+#include "opt_multiprocessor.h"	/* XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
@@ -84,11 +86,17 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160.2.1 2008/05/16 02:25:28 yamt E
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/uidinfo.h>
 #include <sys/event.h>
 #include <sys/poll.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#include <compat/sys/socket.h>
+#endif
 
 #include <uvm/uvm.h>
 
@@ -127,7 +135,7 @@ EVCNT_ATTACH_STATIC(sosend_kvalimit);
 
 static struct callback_entry sokva_reclaimerentry;
 
-#ifdef SOSEND_NO_LOAN
+#if defined(SOSEND_NO_LOAN) || defined(MULTIPROCESSOR)
 int sock_loan_thresh = -1;
 #else
 int sock_loan_thresh = 4096;
@@ -147,6 +155,9 @@ static kcondvar_t socurkva_cv;
 
 static size_t sodopendfree(void);
 static size_t sodopendfreel(void);
+
+static void sysctl_kern_somaxkva_setup(void);
+static struct sysctllog *socket_sysctllog;
 
 static vsize_t
 sokvareserve(struct socket *so, vsize_t len)
@@ -417,24 +428,16 @@ getsombuf(struct socket *so, int type)
 	return m;
 }
 
-struct mbuf *
-m_intopt(struct socket *so, int val)
-{
-	struct mbuf *m;
-
-	m = getsombuf(so, MT_SOOPTS);
-	m->m_len = sizeof(int);
-	*mtod(m, int *) = val;
-	return m;
-}
-
 void
 soinit(void)
 {
 
+	sysctl_kern_somaxkva_setup();
+
 	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	softnet_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&socurkva_cv, "sokva");
+	soinit2();
 
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))
@@ -498,6 +501,8 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 #endif
 	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
+	so->so_egid = kauth_cred_getegid(l->l_cred);
+	so->so_cpid = l->l_proc->p_pid;
 	if (lockso != NULL) {
 		/* Caller wants us to share a lock. */
 		lock = lockso->so_lock;
@@ -620,6 +625,9 @@ sofree(struct socket *so)
 	KASSERT(!cv_has_waiters(&so->so_snd.sb_cv));
 	sorflush(so);
 	refs = so->so_aborting;	/* XXX */
+	/* Remove acccept filter if one is present. */
+	if (so->so_accf != NULL)
+		(void)accept_filt_clear(so);
 	sounlock(so);
 	if (refs == 0)		/* XXX */
 		soput(so);
@@ -640,7 +648,7 @@ soclose(struct socket *so)
 	error = 0;
 	solock(so);
 	if (so->so_options & SO_ACCEPTCONN) {
-		do {
+		for (;;) {
 			if ((so2 = TAILQ_FIRST(&so->so_q0)) != 0) {
 				KASSERT(solocked2(so, so2));
 				(void) soqremque(so2, 0);
@@ -657,7 +665,8 @@ soclose(struct socket *so)
 				solock(so);
 				continue;
 			}
-		} while (0);
+			break;
+		}
 	}
 	if (so->so_pcb == 0)
 		goto discard;
@@ -671,7 +680,7 @@ soclose(struct socket *so)
 			if ((so->so_state & SS_ISDISCONNECTING) && so->so_nbio)
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
-				error = sowait(so, so->so_linger * hz);
+				error = sowait(so, true, so->so_linger * hz);
 				if (error)
 					break;
 			}
@@ -850,8 +859,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	if (l)
-		l->l_ru.ru_msgsnd++;
+	l->l_ru.ru_msgsnd++;
 	if (control)
 		clen = control->m_len;
  restart:
@@ -1539,6 +1547,20 @@ soshutdown(struct socket *so, int how)
 	return error;
 }
 
+int
+sodrain(struct socket *so)
+{
+	int error;
+
+	solock(so);
+	so->so_state |= SS_ISDRAINING;
+	cv_broadcast(&so->so_cv);
+	error = soshutdown(so, SHUT_RDWR);
+	sounlock(so);
+
+	return error;
+}
+
 void
 sorflush(struct socket *so)
 {
@@ -1568,29 +1590,39 @@ sorflush(struct socket *so)
 	sbrelease(&asb, so);
 }
 
+/*
+ * internal set SOL_SOCKET options
+ */
 static int
-sosetopt1(struct socket *so, int level, int optname, struct mbuf *m)
+sosetopt1(struct socket *so, const struct sockopt *sopt)
 {
-	int optval, val;
-	struct linger	*l;
-	struct sockbuf	*sb;
-	struct timeval *tv;
+	int error = EINVAL, optval, opt;
+	struct linger l;
+	struct timeval tv;
 
-	switch (optname) {
+	switch ((opt = sopt->sopt_name)) {
 
-	case SO_LINGER:
-		if (m == NULL || m->m_len != sizeof(struct linger))
-			return EINVAL;
-		l = mtod(m, struct linger *);
-		if (l->l_linger < 0 || l->l_linger > USHRT_MAX ||
-		    l->l_linger > (INT_MAX / hz))
-			return EDOM;
-		so->so_linger = l->l_linger;
-		if (l->l_onoff)
-			so->so_options |= SO_LINGER;
-		else
-			so->so_options &= ~SO_LINGER;
+	case SO_ACCEPTFILTER:
+		error = accept_filt_setopt(so, sopt);
+		KASSERT(solocked(so));
 		break;
+
+  	case SO_LINGER:
+ 		error = sockopt_get(sopt, &l, sizeof(l));
+		solock(so);
+ 		if (error)
+ 			break;
+ 		if (l.l_linger < 0 || l.l_linger > USHRT_MAX ||
+ 		    l.l_linger > (INT_MAX / hz)) {
+			error = EDOM;
+			break;
+		}
+ 		so->so_linger = l.l_linger;
+ 		if (l.l_onoff)
+ 			so->so_options |= SO_LINGER;
+ 		else
+ 			so->so_options &= ~SO_LINGER;
+   		break;
 
 	case SO_DEBUG:
 	case SO_KEEPALIVE:
@@ -1601,38 +1633,52 @@ sosetopt1(struct socket *so, int level, int optname, struct mbuf *m)
 	case SO_REUSEPORT:
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
-		if (m == NULL || m->m_len < sizeof(int))
-			return EINVAL;
-		if (*mtod(m, int *))
-			so->so_options |= optname;
+#ifdef SO_OTIMESTAMP
+	case SO_OTIMESTAMP:
+#endif
+		error = sockopt_getint(sopt, &optval);
+		solock(so);
+		if (error)
+			break;
+		if (optval)
+			so->so_options |= opt;
 		else
-			so->so_options &= ~optname;
+			so->so_options &= ~opt;
 		break;
 
 	case SO_SNDBUF:
 	case SO_RCVBUF:
 	case SO_SNDLOWAT:
 	case SO_RCVLOWAT:
-		if (m == NULL || m->m_len < sizeof(int))
-			return EINVAL;
+		error = sockopt_getint(sopt, &optval);
+		solock(so);
+		if (error)
+			break;
 
 		/*
 		 * Values < 1 make no sense for any of these
 		 * options, so disallow them.
 		 */
-		optval = *mtod(m, int *);
-		if (optval < 1)
-			return EINVAL;
+		if (optval < 1) {
+			error = EINVAL;
+			break;
+		}
 
-		switch (optname) {
-
+		switch (opt) {
 		case SO_SNDBUF:
+			if (sbreserve(&so->so_snd, (u_long)optval, so) == 0) {
+				error = ENOBUFS;
+				break;
+			}
+			so->so_snd.sb_flags &= ~SB_AUTOSIZE;
+			break;
+
 		case SO_RCVBUF:
-			sb = (optname == SO_SNDBUF) ?
-			    &so->so_snd : &so->so_rcv;
-			if (sbreserve(sb, (u_long)optval, so) == 0)
-				return ENOBUFS;
-			sb->sb_flags &= ~SB_AUTOSIZE;
+			if (sbreserve(&so->so_rcv, (u_long)optval, so) == 0) {
+				error = ENOBUFS;
+				break;
+			}
+			so->so_rcv.sb_flags &= ~SB_AUTOSIZE;
 			break;
 
 		/*
@@ -1640,163 +1686,405 @@ sosetopt1(struct socket *so, int level, int optname, struct mbuf *m)
 		 * the high-water.
 		 */
 		case SO_SNDLOWAT:
-			so->so_snd.sb_lowat =
-			    (optval > so->so_snd.sb_hiwat) ?
-			    so->so_snd.sb_hiwat : optval;
+			if (optval > so->so_snd.sb_hiwat)
+				optval = so->so_snd.sb_hiwat;
+
+			so->so_snd.sb_lowat = optval;
 			break;
+
 		case SO_RCVLOWAT:
-			so->so_rcv.sb_lowat =
-			    (optval > so->so_rcv.sb_hiwat) ?
-			    so->so_rcv.sb_hiwat : optval;
+			if (optval > so->so_rcv.sb_hiwat)
+				optval = so->so_rcv.sb_hiwat;
+
+			so->so_rcv.sb_lowat = optval;
 			break;
 		}
 		break;
 
+#ifdef COMPAT_50
+	case SO_OSNDTIMEO:
+	case SO_ORCVTIMEO: {
+		struct timeval50 otv;
+		error = sockopt_get(sopt, &otv, sizeof(otv));
+		if (error) {
+			solock(so);
+			break;
+		}
+		timeval50_to_timeval(&otv, &tv);
+		opt = opt == SO_OSNDTIMEO ? SO_SNDTIMEO : SO_RCVTIMEO;
+		error = 0;
+		/*FALLTHROUGH*/
+	}
+#endif /* COMPAT_50 */
+
 	case SO_SNDTIMEO:
 	case SO_RCVTIMEO:
-		if (m == NULL || m->m_len < sizeof(*tv))
-			return EINVAL;
-		tv = mtod(m, struct timeval *);
-		if (tv->tv_sec > (INT_MAX - tv->tv_usec / tick) / hz)
-			return EDOM;
-		val = tv->tv_sec * hz + tv->tv_usec / tick;
-		if (val == 0 && tv->tv_usec != 0)
-			val = 1;
+		if (error)
+			error = sockopt_get(sopt, &tv, sizeof(tv));
+		solock(so);
+		if (error)
+			break;
 
-		switch (optname) {
+		if (tv.tv_sec > (INT_MAX - tv.tv_usec / tick) / hz) {
+			error = EDOM;
+			break;
+		}
 
+		optval = tv.tv_sec * hz + tv.tv_usec / tick;
+		if (optval == 0 && tv.tv_usec != 0)
+			optval = 1;
+
+		switch (opt) {
 		case SO_SNDTIMEO:
-			so->so_snd.sb_timeo = val;
+			so->so_snd.sb_timeo = optval;
 			break;
 		case SO_RCVTIMEO:
-			so->so_rcv.sb_timeo = val;
+			so->so_rcv.sb_timeo = optval;
 			break;
 		}
 		break;
 
 	default:
-		return ENOPROTOOPT;
-	}
-	return 0;
-}
-
-int
-sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
-{
-	int error, prerr;
-
-	solock(so);
-	if (level == SOL_SOCKET)
-		error = sosetopt1(so, level, optname, m);
-	else
+		solock(so);
 		error = ENOPROTOOPT;
-
-	if ((error == 0 || error == ENOPROTOOPT) &&
-	    so->so_proto != NULL && so->so_proto->pr_ctloutput != NULL) {
-		/* give the protocol stack a shot */
-		prerr = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so, level,
-		    optname, &m);
-		if (prerr == 0)
-			error = 0;
-		else if (prerr != ENOPROTOOPT)
-			error = prerr;
-	} else if (m != NULL)
-		(void)m_free(m);
-	sounlock(so);
+		break;
+	}
+	KASSERT(solocked(so));
 	return error;
 }
 
 int
-sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
+sosetopt(struct socket *so, struct sockopt *sopt)
 {
-	struct mbuf	*m;
+	int error, prerr;
+
+	if (sopt->sopt_level == SOL_SOCKET) {
+		error = sosetopt1(so, sopt);
+		KASSERT(solocked(so));
+	} else {
+		error = ENOPROTOOPT;
+		solock(so);
+	}
+
+	if ((error == 0 || error == ENOPROTOOPT) &&
+	    so->so_proto != NULL && so->so_proto->pr_ctloutput != NULL) {
+		/* give the protocol stack a shot */
+		prerr = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so, sopt);
+		if (prerr == 0)
+			error = 0;
+		else if (prerr != ENOPROTOOPT)
+			error = prerr;
+	}
+	sounlock(so);
+	return error;
+}
+
+/*
+ * so_setsockopt() is a wrapper providing a sockopt structure for sosetopt()
+ */
+int
+so_setsockopt(struct lwp *l, struct socket *so, int level, int name,
+    const void *val, size_t valsize)
+{
+	struct sockopt sopt;
+	int error;
+
+	KASSERT(valsize == 0 || val != NULL);
+
+	sockopt_init(&sopt, level, name, valsize);
+	sockopt_set(&sopt, val, valsize);
+
+	error = sosetopt(so, &sopt);
+
+	sockopt_destroy(&sopt);
+
+	return error;
+}
+ 
+/*
+ * internal get SOL_SOCKET options
+ */
+static int
+sogetopt1(struct socket *so, struct sockopt *sopt)
+{
+	int error, optval, opt;
+	struct linger l;
+	struct timeval tv;
+
+	switch ((opt = sopt->sopt_name)) {
+
+	case SO_ACCEPTFILTER:
+		error = accept_filt_getopt(so, sopt);
+		break;
+
+	case SO_LINGER:
+		l.l_onoff = (so->so_options & SO_LINGER) ? 1 : 0;
+		l.l_linger = so->so_linger;
+
+		error = sockopt_set(sopt, &l, sizeof(l));
+		break;
+
+	case SO_USELOOPBACK:
+	case SO_DONTROUTE:
+	case SO_DEBUG:
+	case SO_KEEPALIVE:
+	case SO_REUSEADDR:
+	case SO_REUSEPORT:
+	case SO_BROADCAST:
+	case SO_OOBINLINE:
+	case SO_TIMESTAMP:
+#ifdef SO_OTIMESTAMP
+	case SO_OTIMESTAMP:
+#endif
+		error = sockopt_setint(sopt, (so->so_options & opt) ? 1 : 0);
+		break;
+
+	case SO_TYPE:
+		error = sockopt_setint(sopt, so->so_type);
+		break;
+
+	case SO_ERROR:
+		error = sockopt_setint(sopt, so->so_error);
+		so->so_error = 0;
+		break;
+
+	case SO_SNDBUF:
+		error = sockopt_setint(sopt, so->so_snd.sb_hiwat);
+		break;
+
+	case SO_RCVBUF:
+		error = sockopt_setint(sopt, so->so_rcv.sb_hiwat);
+		break;
+
+	case SO_SNDLOWAT:
+		error = sockopt_setint(sopt, so->so_snd.sb_lowat);
+		break;
+
+	case SO_RCVLOWAT:
+		error = sockopt_setint(sopt, so->so_rcv.sb_lowat);
+		break;
+
+#ifdef COMPAT_50
+	case SO_OSNDTIMEO:
+	case SO_ORCVTIMEO: {
+		struct timeval50 otv;
+
+		optval = (opt == SO_OSNDTIMEO ?
+		     so->so_snd.sb_timeo : so->so_rcv.sb_timeo);
+
+		otv.tv_sec = optval / hz;
+		otv.tv_usec = (optval % hz) * tick;
+
+		error = sockopt_set(sopt, &otv, sizeof(otv));
+		break;
+	}
+#endif /* COMPAT_50 */
+
+	case SO_SNDTIMEO:
+	case SO_RCVTIMEO:
+		optval = (opt == SO_SNDTIMEO ?
+		     so->so_snd.sb_timeo : so->so_rcv.sb_timeo);
+
+		tv.tv_sec = optval / hz;
+		tv.tv_usec = (optval % hz) * tick;
+
+		error = sockopt_set(sopt, &tv, sizeof(tv));
+		break;
+
+	case SO_OVERFLOWED:
+		error = sockopt_setint(sopt, so->so_rcv.sb_overflowed);
+		break;
+
+	default:
+		error = ENOPROTOOPT;
+		break;
+	}
+
+	return (error);
+}
+
+int
+sogetopt(struct socket *so, struct sockopt *sopt)
+{
 	int		error;
 
 	solock(so);
-	if (level != SOL_SOCKET) {
+	if (sopt->sopt_level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
 			error = ((*so->so_proto->pr_ctloutput)
-				  (PRCO_GETOPT, so, level, optname, mp));
+			    (PRCO_GETOPT, so, sopt));
 		} else
 			error = (ENOPROTOOPT);
 	} else {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		m->m_len = sizeof(int);
-
-		switch (optname) {
-
-		case SO_LINGER:
-			m->m_len = sizeof(struct linger);
-			mtod(m, struct linger *)->l_onoff =
-			    (so->so_options & SO_LINGER) ? 1 : 0;
-			mtod(m, struct linger *)->l_linger = so->so_linger;
-			break;
-
-		case SO_USELOOPBACK:
-		case SO_DONTROUTE:
-		case SO_DEBUG:
-		case SO_KEEPALIVE:
-		case SO_REUSEADDR:
-		case SO_REUSEPORT:
-		case SO_BROADCAST:
-		case SO_OOBINLINE:
-		case SO_TIMESTAMP:
-			*mtod(m, int *) = (so->so_options & optname) ? 1 : 0;
-			break;
-
-		case SO_TYPE:
-			*mtod(m, int *) = so->so_type;
-			break;
-
-		case SO_ERROR:
-			*mtod(m, int *) = so->so_error;
-			so->so_error = 0;
-			break;
-
-		case SO_SNDBUF:
-			*mtod(m, int *) = so->so_snd.sb_hiwat;
-			break;
-
-		case SO_RCVBUF:
-			*mtod(m, int *) = so->so_rcv.sb_hiwat;
-			break;
-
-		case SO_SNDLOWAT:
-			*mtod(m, int *) = so->so_snd.sb_lowat;
-			break;
-
-		case SO_RCVLOWAT:
-			*mtod(m, int *) = so->so_rcv.sb_lowat;
-			break;
-
-		case SO_SNDTIMEO:
-		case SO_RCVTIMEO:
-		    {
-			int val = (optname == SO_SNDTIMEO ?
-			     so->so_snd.sb_timeo : so->so_rcv.sb_timeo);
-
-			m->m_len = sizeof(struct timeval);
-			mtod(m, struct timeval *)->tv_sec = val / hz;
-			mtod(m, struct timeval *)->tv_usec =
-			    (val % hz) * tick;
-			break;
-		    }
-
-		case SO_OVERFLOWED:
-			*mtod(m, int *) = so->so_rcv.sb_overflowed;
-			break;
-
-		default:
-			sounlock(so);
-			(void)m_free(m);
-			return (ENOPROTOOPT);
-		}
-		*mp = m;
-		error = 0;
+		error = sogetopt1(so, sopt);
 	}
-
 	sounlock(so);
 	return (error);
+}
+
+/*
+ * alloc sockopt data buffer buffer
+ *	- will be released at destroy
+ */
+static int
+sockopt_alloc(struct sockopt *sopt, size_t len, km_flag_t kmflag)
+{
+
+	KASSERT(sopt->sopt_size == 0);
+
+	if (len > sizeof(sopt->sopt_buf)) {
+		sopt->sopt_data = kmem_zalloc(len, kmflag);
+		if (sopt->sopt_data == NULL)
+			return ENOMEM;
+	} else
+		sopt->sopt_data = sopt->sopt_buf;
+
+	sopt->sopt_size = len;
+	return 0;
+}
+
+/*
+ * initialise sockopt storage
+ *	- MAY sleep during allocation
+ */
+void
+sockopt_init(struct sockopt *sopt, int level, int name, size_t size)
+{
+
+	memset(sopt, 0, sizeof(*sopt));
+
+	sopt->sopt_level = level;
+	sopt->sopt_name = name;
+	(void)sockopt_alloc(sopt, size, KM_SLEEP);
+}
+
+/*
+ * destroy sockopt storage
+ *	- will release any held memory references
+ */
+void
+sockopt_destroy(struct sockopt *sopt)
+{
+
+	if (sopt->sopt_data != sopt->sopt_buf)
+		kmem_free(sopt->sopt_data, sopt->sopt_size);
+
+	memset(sopt, 0, sizeof(*sopt));
+}
+
+/*
+ * set sockopt value
+ *	- value is copied into sockopt
+ * 	- memory is allocated when necessary, will not sleep
+ */
+int
+sockopt_set(struct sockopt *sopt, const void *buf, size_t len)
+{
+	int error;
+
+	if (sopt->sopt_size == 0) {
+		error = sockopt_alloc(sopt, len, KM_NOSLEEP);
+		if (error)
+			return error;
+	}
+
+	KASSERT(sopt->sopt_size == len);
+	memcpy(sopt->sopt_data, buf, len);
+	return 0;
+}
+
+/*
+ * common case of set sockopt integer value
+ */
+int
+sockopt_setint(struct sockopt *sopt, int val)
+{
+
+	return sockopt_set(sopt, &val, sizeof(int));
+}
+
+/*
+ * get sockopt value
+ *	- correct size must be given
+ */
+int
+sockopt_get(const struct sockopt *sopt, void *buf, size_t len)
+{
+
+	if (sopt->sopt_size != len)
+		return EINVAL;
+
+	memcpy(buf, sopt->sopt_data, len);
+	return 0;
+}
+
+/*
+ * common case of get sockopt integer value
+ */
+int
+sockopt_getint(const struct sockopt *sopt, int *valp)
+{
+
+	return sockopt_get(sopt, valp, sizeof(int));
+}
+
+/*
+ * set sockopt value from mbuf
+ *	- ONLY for legacy code
+ *	- mbuf is released by sockopt
+ *	- will not sleep
+ */
+int
+sockopt_setmbuf(struct sockopt *sopt, struct mbuf *m)
+{
+	size_t len;
+	int error;
+
+	len = m_length(m);
+
+	if (sopt->sopt_size == 0) {
+		error = sockopt_alloc(sopt, len, KM_NOSLEEP);
+		if (error)
+			return error;
+	}
+
+	KASSERT(sopt->sopt_size == len);
+	m_copydata(m, 0, len, sopt->sopt_data);
+	m_freem(m);
+
+	return 0;
+}
+
+/*
+ * get sockopt value into mbuf
+ *	- ONLY for legacy code
+ *	- mbuf to be released by the caller
+ *	- will not sleep
+ */
+struct mbuf *
+sockopt_getmbuf(const struct sockopt *sopt)
+{
+	struct mbuf *m;
+
+	if (sopt->sopt_size > MCLBYTES)
+		return NULL;
+
+	m = m_get(M_DONTWAIT, MT_SOOPTS);
+	if (m == NULL)
+		return NULL;
+
+	if (sopt->sopt_size > MLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return NULL;
+		}
+	}
+
+	memcpy(mtod(m, void *), sopt->sopt_data, sopt->sopt_size);
+	m->m_len = sopt->sopt_size;
+
+	return m;
 }
 
 void
@@ -1804,7 +2092,7 @@ sohasoutofband(struct socket *so)
 {
 
 	fownsignal(so->so_pgid, SIGURG, POLL_PRI, POLLPRI|POLLRDBAND, so);
-	selnotify(&so->so_rcv.sb_sel, POLLPRI | POLLRDBAND, 0);
+	selnotify(&so->so_rcv.sb_sel, POLLPRI | POLLRDBAND, NOTE_SUBMIT);
 }
 
 static void
@@ -2035,16 +2323,18 @@ sysctl_kern_somaxkva(SYSCTLFN_ARGS)
 	return (error);
 }
 
-SYSCTL_SETUP(sysctl_kern_somaxkva_setup, "sysctl kern.somaxkva setup")
+static void
+sysctl_kern_somaxkva_setup(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	KASSERT(socket_sysctllog == NULL);
+	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "somaxkva",
 		       SYSCTL_DESCR("Maximum amount of kernel memory to be "

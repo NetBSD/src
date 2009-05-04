@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.38.10.1 2008/05/16 02:24:04 yamt Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.38.10.2 2009/05/04 08:12:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -132,6 +132,11 @@ struct fxp_control_data {
 	 * The NIC statistics.
 	 */
 	struct fxp_stats fcd_stats;
+
+	/*
+	 * TX pad buffer for ip4csum-tx bug workaround.
+	 */
+	uint8_t fcd_txpad[FXP_IP4CSUMTX_PADLEN];
 };
 
 #define	txd_tbd	txd_u.txdu_tbd
@@ -144,6 +149,7 @@ struct fxp_control_data {
 #define	FXP_CDMCSOFF	FXP_CDOFF(fcd_mcscb)
 #define	FXP_CDUCODEOFF	FXP_CDOFF(fcd_ucode)
 #define	FXP_CDSTATSOFF	FXP_CDOFF(fcd_stats)
+#define	FXP_CDTXPADOFF	FXP_CDOFF(fcd_txpad)
 
 /*
  * Software state for transmit descriptors.
@@ -157,7 +163,7 @@ struct fxp_txsoft {
  * Software state per device.
  */
 struct fxp_softc {
-	struct device sc_dev;		/* generic device structures */
+	device_t sc_dev;
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus dma tag */
@@ -185,7 +191,7 @@ struct fxp_softc {
 	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS]; /* free receive buffer DMA maps */
 	int	sc_rxfree;		/* free map index */
 	int	sc_rxidle;		/* # of seconds RX has been idle */
-	u_int16_t sc_txcmd;		/* transmit command (LITTLE ENDIAN) */
+	uint16_t sc_txcmd;		/* transmit command (LITTLE ENDIAN) */
 
 	/*
 	 * Control data structures.
@@ -213,11 +219,12 @@ struct fxp_softc {
 #define	FXPF_MWI		0x0010	/* enable PCI MWI */
 #define	FXPF_READ_ALIGN		0x0020	/* align read access w/ cacheline */
 #define	FXPF_WRITE_ALIGN	0x0040	/* end write on cacheline */
-#define	FXPF_EXT_TXCB		0x0080	/* enable extended TxCB */
+#define	FXPF_EXT_TXCB		0x0080	/* has extended TxCB */
 #define	FXPF_UCODE_LOADED	0x0100	/* microcode is loaded */
-#define	FXPF_EXT_RFA		0x0200	/* enable extended RFD */
-#define	FXPF_IPCB		0x0400	/* use IPCB */
+#define	FXPF_EXT_RFA		0x0200	/* has extended RFD and IPCB (82550) */
 #define	FXPF_RECV_WORKAROUND	0x0800	/* receiver lock-up workaround */
+#define	FXPF_FC			0x1000	/* has flow control */
+#define	FXPF_82559_RXCSUM	0x2000	/* has 82559 compat RX checksum */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */
@@ -250,6 +257,7 @@ struct fxp_softc {
 
 #define	FXP_CDTXADDR(sc, x)	((sc)->sc_cddma + FXP_CDTXOFF((x)))
 #define	FXP_CDTBDADDR(sc, x)	((sc)->sc_cddma + FXP_CDTBDOFF((x)))
+#define	FXP_CDTXPADADDR(sc)	((sc)->sc_cddma + FXP_CDTXPADOFF)
 
 #define	FXP_CDTX(sc, x)		(&(sc)->sc_control_data->fcd_txdescs[(x)])
 
@@ -300,7 +308,7 @@ do {									\
 	bus_dmamap_t __rxmap = M_GETCTX((m), bus_dmamap_t);		\
 	struct mbuf *__p_m;						\
 	struct fxp_rfa *__rfa, *__p_rfa;				\
-	u_int32_t __v;							\
+	uint32_t __v;							\
 									\
 	(m)->m_data = (m)->m_ext.ext_buf + (sc)->sc_rfa_size +		\
 	    RFA_ALIGNMENT_FUDGE;					\

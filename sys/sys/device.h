@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.109 2008/03/12 18:02:22 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.109.4.1 2009/05/04 08:14:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -82,6 +82,8 @@
 
 typedef struct device *device_t;
 #ifdef _KERNEL
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/pmf.h>
 #endif
 
@@ -120,6 +122,17 @@ typedef struct cfdata *cfdata_t;
 typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
 
+#ifdef _KERNEL
+struct device_lock {
+	int		dvl_nwait;
+	int		dvl_nlock;
+	lwp_t		*dvl_holder;
+	kmutex_t	dvl_mtx;
+	kcondvar_t	dvl_cv;
+};
+
+typedef struct device_lock *device_lock_t;
+
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
@@ -156,7 +169,7 @@ struct device {
 	bool		(*dv_class_resume)(device_t PMF_FN_PROTO);
 	void		(*dv_class_deregister)(device_t);
 
-	void		*dv_pmf_private;
+	struct device_lock	dv_lock;
 };
 
 /* dv_flags */
@@ -167,6 +180,7 @@ struct device {
 #define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
 #define	DVF_SELF_SUSPENDED	0x0040	/* device suspended itself */
+#define	DVF_DETACH_SHUTDOWN	0x0080	/* device detaches safely at shutdown */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -187,6 +201,7 @@ struct deviter {
 };
 
 typedef struct deviter deviter_t;
+#endif
 
 /*
  * Description of a locator, as part of interface attribute definitions.
@@ -221,7 +236,7 @@ struct cfparent {
 	const char *cfp_iattr;		/* interface attribute */
 	const char *cfp_parent;		/* optional specific parent */
 	int cfp_unit;			/* optional specific unit
-					   (-1 to wildcard) */
+					   (DVUNIT_ANY to wildcard) */
 };
 
 /*
@@ -285,11 +300,12 @@ struct cfattach {
 };
 LIST_HEAD(cfattachlist, cfattach);
 
-#define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
-	rescanfn, chdetfn) \
+#define	CFATTACH_DECL3(name, ddsize, matfn, attfn, detfn, actfn, \
+	rescanfn, chdetfn, __flags) \
 struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_name		= ___STRING(name),			\
 	.ca_devsize		= ddsize,				\
+	.ca_flags		= (__flags),				\
 	.ca_match 		= matfn,				\
 	.ca_attach		= attfn,				\
 	.ca_detach		= detfn,				\
@@ -297,16 +313,21 @@ struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_rescan		= rescanfn,				\
 	.ca_childdetached	= chdetfn,				\
 }
+
+#define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn,	\
+	rescanfn, chdetfn)						\
+	CFATTACH_DECL3(name, ddsize, matfn, attfn, detfn, actfn,	\
+	    rescanfn, chdetfn, 0)
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
 
-#define	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
-	rescanfn, chdetfn) \
+#define	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
+	rescanfn, chdetfn, __flags) \
 struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_name		= ___STRING(name),			\
 	.ca_devsize		= ddsize,				\
-	.ca_flags		= DVF_PRIV_ALLOC,			\
+	.ca_flags		= (__flags) | DVF_PRIV_ALLOC,		\
 	.ca_match 		= matfn,				\
 	.ca_attach		= attfn,				\
 	.ca_detach		= detfn,				\
@@ -315,17 +336,23 @@ struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_childdetached	= chdetfn,				\
 }
 
-#define	CFATTACH_DECL_NEW(name, ddsize, matfn, attfn, detfn, actfn)		\
+#define	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn,	\
+	rescanfn, chdetfn)						\
+	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn,	\
+	    rescanfn, chdetfn, 0)
+
+#define	CFATTACH_DECL_NEW(name, ddsize, matfn, attfn, detfn, actfn)	\
 	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
 
 /* Flags given to config_detach(), and the ca_detach function. */
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
 #define	DETACH_QUIET	0x02		/* don't print a notice */
+#define	DETACH_SHUTDOWN	0x04		/* detach because of system shutdown */
 
 struct cfdriver {
 	LIST_ENTRY(cfdriver) cd_list;	/* link on allcfdrivers */
 	struct cfattachlist cd_attach;	/* list of all attachments */
-	void	**cd_devs;		/* devices found */
+	device_t *cd_devs;		/* devices found */
 	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
@@ -350,7 +377,7 @@ struct cfattachinit {
 };
 /*
  * the same, but with a non-constant list so it can be modified
- * for LKM bookkeeping
+ * for module bookkeeping
  */
 struct cfattachlkminit {
 	const char *cfai_name;		/* driver name */
@@ -388,13 +415,13 @@ extern device_t booted_device;		/* the device we booted from */
 extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
 
-extern volatile int config_pending; 	/* semaphore for mountroot */
-
 struct vnode *opendisk(struct device *);
 int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
+void	drvctl_init(void);
 void	configure(void);
+void	configure2(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
 int	config_cfdriver_detach(struct cfdriver *);
@@ -439,7 +466,7 @@ void	config_pending_decr(void);
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
 
-void		*device_lookup(cfdriver_t, int);
+device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);
 #ifdef __HAVE_DEVICE_REGISTER
 void		device_register(device_t, void *);
@@ -496,7 +523,7 @@ bool		device_pmf_bus_suspend(device_t PMF_FN_PROTO);
 bool		device_pmf_bus_resume(device_t PMF_FN_PROTO);
 bool		device_pmf_bus_shutdown(device_t, int);
 
-void		*device_pmf_private(device_t);
+device_lock_t	device_getlock(device_t);
 void		device_pmf_unlock(device_t PMF_FN_PROTO);
 bool		device_pmf_lock(device_t PMF_FN_PROTO);
 

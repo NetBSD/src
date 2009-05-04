@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.13.2.1 2008/05/16 02:21:44 yamt Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.13.2.2 2009/05/04 08:10:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
  * rights to redistribute these changes.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -65,6 +66,7 @@
 #include "opt_compat_osf1.h"
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
+#endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 #include <sys/types.h>
@@ -85,7 +87,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13.2.1 2008/05/16 02:21:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13.2.2 2009/05/04 08:10:27 yamt Exp $");
 
 
 #ifdef DEBUG
@@ -94,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13.2.1 2008/05/16 02:21:44 y
 
 #include <machine/alpha.h>
 
-#include "ksyms.h"
+#include <sys/ksyms.h>
 
 /*
  * Send an interrupt to process, old style

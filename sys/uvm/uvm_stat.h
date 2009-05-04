@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.42 2008/02/27 14:23:33 ad Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.42.4.1 2009/05/04 08:14:40 yamt Exp $	*/
 
 /*
  *
@@ -42,6 +42,10 @@
 #endif
 
 #include <sys/queue.h>
+#ifdef UVMHIST
+#include <sys/cpu.h>
+#include <sys/malloc.h>
+#endif
 
 /*
  * uvm_stat: monitor what is going on with uvm (or whatever)
@@ -142,7 +146,7 @@ extern int uvmhist_print_enabled;
 #define UVMHIST_PRINTNOW(E) \
 do { \
 		if (uvmhist_print_enabled) { \
-			uvmhist_print(E); \
+			uvmhist_entry_print(E); \
 			DELAY(100000); \
 		} \
 } while (/*CONSTCOND*/ 0)
@@ -187,13 +191,13 @@ do { \
 	static const char *const _uvmhist_name = FNAME; \
 	int _uvmhist_call;
 
-static __inline void uvmhist_print(struct uvm_history_ent *);
+static __inline void uvmhist_entry_print(struct uvm_history_ent *);
 
 static __inline void
-uvmhist_print(e)
+uvmhist_entry_print(e)
 	struct uvm_history_ent *e;
 {
-	printf("%06ld.%06ld ", e->tv.tv_sec, e->tv.tv_usec);
+	printf("%06" PRIu64 ".%06d ", e->tv.tv_sec, e->tv.tv_usec);
 	printf("%s#%ld@%d: ", e->fn, e->call, e->cpunum);
 	printf(e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 	printf("\n");

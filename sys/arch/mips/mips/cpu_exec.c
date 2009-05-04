@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50 2007/03/04 06:00:12 christos Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.44.1 2009/05/04 08:11:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50 2007/03/04 06:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.44.1 2009/05/04 08:11:31 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -55,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50 2007/03/04 06:00:12 christos Exp $
 #include <sys/exec_ecoff.h>
 #endif
 #include <sys/exec_elf.h>			/* mandatory */
-#ifdef COMPAT_09
-#include <machine/bsd-aout.h>
-#endif
+#include <mips/bsd-aout.h>
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
@@ -73,27 +71,22 @@ int	mips_elf_makecmds(struct lwp *, struct exec_package *);
  *
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 
 	/* If COMPAT_09 is defined, allow loading of old-style 4.4bsd a.out
 	   executables. */
-#ifdef COMPAT_09
 	struct bsd_aouthdr *hdr = (struct bsd_aouthdr *)epp->ep_hdr;
 
 	/* Only handle paged files (laziness). */
 	if (hdr->a_magic != BSD_ZMAGIC)
-#endif
 	{
 		/* If that failed, try old NetBSD-1.1 elf format */
 		error = mips_elf_makecmds (l, epp);
 		return error;
 	}
 
-#ifdef COMPAT_09
 	error = vn_marktext(epp->ep_vp);
 	if (error)
 		return (error);
@@ -118,16 +111,12 @@ cpu_exec_aout_makecmds(l, epp)
 	    epp->ep_daddr + hdr->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->ep_setup_stack)(p, epp);
-#endif
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 #ifdef EXEC_ECOFF
 void
-cpu_exec_ecoff_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct frame *f = (struct frame *)l->l_md.md_regs;
@@ -142,9 +131,7 @@ cpu_exec_ecoff_setregs(l, epp, stack)
  * Do any machine-dependent diddling of the exec package when doing ECOFF.
  */
 int
-cpu_exec_ecoff_probe(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 {
 
 	/* NetBSD/mips does not have native ECOFF binaries. */
@@ -160,9 +147,7 @@ cpu_exec_ecoff_probe(l, epp)
  */
 
 int
-mips_elf_makecmds (l, epp)
-        struct lwp *l;
-        struct exec_package *epp;
+mips_elf_makecmds (struct lwp *l, struct exec_package *epp)
 {
 	Elf32_Ehdr *ex = (Elf32_Ehdr *)epp->ep_hdr;
 	Elf32_Phdr ph;
@@ -299,12 +284,12 @@ mips_elf_makecmds (l, epp)
 	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
 	 * <stack> ep_minsaddr
 	 */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE, VMCMD_STACK);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE, VMCMD_STACK);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.13 2007/03/05 10:47:05 tsutsui Exp $	*/
+/*	$NetBSD: abtn.c,v 1.13.44.1 2009/05/04 08:11:28 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.13 2007/03/05 10:47:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.13.44.1 2009/05/04 08:11:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,18 +61,15 @@ struct abtn_softc {
 	int volume;		/* speaker volume (not yet) */
 };
 
-static int abtn_match __P((struct device *, struct cfdata *, void *));
-static void abtn_attach __P((struct device *, struct device *, void *));
-static void abtn_adbcomplete __P((uint8_t *, uint8_t *, int));
+static int abtn_match(struct device *, struct cfdata *, void *);
+static void abtn_attach(struct device *, struct device *, void *);
+static void abtn_adbcomplete(uint8_t *, uint8_t *, int);
 
 CFATTACH_DECL(abtn, sizeof(struct abtn_softc),
     abtn_match, abtn_attach, NULL, NULL);
 
 int
-abtn_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+abtn_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct adb_attach_args *aa = aux;
 
@@ -84,9 +81,7 @@ abtn_match(parent, cf, aux)
 }
 
 void
-abtn_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+abtn_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct abtn_softc *sc = (struct abtn_softc *)self;
 	struct adb_attach_args *aa = aux;
@@ -113,9 +108,7 @@ abtn_attach(parent, self, aux)
 extern struct cfdriver akbd_cd;
 
 void
-abtn_adbcomplete(buffer, data, adb_command)
-	uint8_t *buffer, *data;
-	int adb_command;
+abtn_adbcomplete(uint8_t *buffer, uint8_t *data, int adb_command)
 {
 	struct abtn_softc *sc = (struct abtn_softc *)data;
 	u_int cmd;
@@ -151,7 +144,7 @@ abtn_adbcomplete(buffer, data, adb_command)
 	}
 	if (key != 0) {
 		key |= cmd & 0x80;
-		kbd_passup(akbd_cd.cd_devs[0],key);
+		kbd_passup(device_lookup_private(&akbd_cd, 0),key);
 		return;
 	}
 #endif

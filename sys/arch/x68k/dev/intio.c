@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.33.20.1 2008/05/16 02:23:24 yamt Exp $	*/
+/*	$NetBSD: intio.c,v 1.33.20.2 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.33.20.1 2008/05/16 02:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.33.20.2 2009/05/04 08:12:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.33.20.1 2008/05/16 02:23:24 yamt Exp $")
 #include <machine/frame.h>
 
 #include <arch/x68k/dev/intiovar.h>
-#include <arch/x68k/dev/mfp.h>
 
 
 /*
@@ -115,14 +114,13 @@ struct x68k_bus_dma intio_bus_dma = {
 /*
  * autoconf stuff
  */
-static int intio_match(struct device *, struct cfdata *, void *);
-static void intio_attach(struct device *, struct device *, void *);
-static int intio_search(struct device *, struct cfdata *cf,
-			const int *, void *);
+static int intio_match(device_t, cfdata_t, void *);
+static void intio_attach(device_t, device_t, void *);
+static int intio_search(device_t, cfdata_t, const int *, void *);
 static int intio_print(void *, const char *);
 static void intio_alloc_system_ports(struct intio_softc*);
 
-CFATTACH_DECL(intio, sizeof(struct intio_softc),
+CFATTACH_DECL_NEW(intio, sizeof(struct intio_softc),
     intio_match, intio_attach, NULL, NULL);
 
 extern struct cfdriver intio_cd;
@@ -132,67 +130,38 @@ static int intio_attached;
 static struct intio_interrupt_vector {
 	intio_intr_handler_t	iiv_handler;
 	void			*iiv_arg;
-	int			iiv_intrcntoff;
+	struct evcnt		*iiv_evcnt;
 } iiv[256] = {{0,},};
 
-/* used in console initialization */
-extern int x68k_realconfig;
-int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
-static struct cfdata *cfdata_intiobus = NULL;
-
-/* other static functions */
-static int scan_intrnames(const char *);
 #ifdef DEBUG
 int intio_debug = 0;
 #endif
 
 static int
-intio_match(struct device *parent, struct cfdata *cf, void *aux)
+intio_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(aux, intio_cd.cd_name) != 0)
 		return (0);
 	if (intio_attached)
 		return (0);
-	if (x68k_realconfig == 0)
-		cfdata_intiobus = cf; /* XXX */
 
 	return (1);
 }
 
-
-/* used in console initialization: configure only MFP */
-static struct intio_attach_args initial_ia = {
-	&intio_bus,
-	0/*XXX*/,
-
-	"mfp",			/* ia_name */
-	MFP_ADDR,		/* ia_addr */
-	0x30,			/* ia_size */
-	MFP_INTR,		/* ia_intr */
-	-1			/* ia_dma */
-	-1,			/* ia_dmaintr */
-};
-
 static void
-intio_attach(struct device *parent, struct device *self, void *aux)
+intio_attach(device_t parent, device_t self, void *aux)
 {
-	struct intio_softc *sc = (struct intio_softc *)self;
+	struct intio_softc *sc = device_private(self);
 	struct intio_attach_args ia;
-
-	if (self == NULL) {
-		/* console only init */
-		x68k_config_found(cfdata_intiobus, NULL, &initial_ia, NULL);
-		return;
-	}
 
 	intio_attached = 1;
 
-	printf(" mapped at %8p\n", intiobase);
+	aprint_normal(" mapped at %8p\n", intiobase);
 
 	sc->sc_map = extent_create("intiomap",
-				  PHYS_INTIODEV,
-				  PHYS_INTIODEV + 0x400000,
+				  INTIOBASE,
+				  INTIOBASE + 0x400000,
 				  M_DEVBUF, NULL, 0, EX_NOWAIT);
 	intio_alloc_system_ports(sc);
 
@@ -210,11 +179,10 @@ intio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-intio_search(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+intio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
+	struct intio_softc *sc = device_private(parent);
 	struct intio_attach_args *ia = aux;
-	struct intio_softc *sc = (struct intio_softc *)parent;
 
 	ia->ia_bst = sc->sc_bst;
 	ia->ia_dmat = sc->sc_dmat;
@@ -254,10 +222,10 @@ intio_print(void *aux, const char *name)
  */
 
 int
-intio_map_allocate_region(struct device *parent, struct intio_attach_args *ia,
+intio_map_allocate_region(device_t parent, struct intio_attach_args *ia,
     enum intio_map_flag flag)
 {
-	struct intio_softc *sc = (struct intio_softc *)parent;
+	struct intio_softc *sc = device_private(parent);
 	struct extent *map = sc->sc_map;
 	int r;
 
@@ -276,9 +244,9 @@ intio_map_allocate_region(struct device *parent, struct intio_attach_args *ia,
 }
 
 int
-intio_map_free_region(struct device *parent, struct intio_attach_args *ia)
+intio_map_free_region(device_t parent, struct intio_attach_args *ia)
 {
-	struct intio_softc *sc = (struct intio_softc*) parent;
+	struct intio_softc *sc = device_private(parent);
 	struct extent *map = sc->sc_map;
 
 	extent_free(map, ia->ia_addr, ia->ia_size, 0);
@@ -307,8 +275,8 @@ intio_bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	/*
 	 * Intio bus is mapped permanently.
 	 */
-	*bshp = (bus_space_handle_t)
-	  ((u_int) bpa - PHYS_INTIODEV + intiobase);
+	*bshp = (bus_space_handle_t)IIOV(bpa);
+
 	/*
 	 * Some devices are mapped on odd or even addresses only.
 	 */
@@ -344,39 +312,31 @@ int
 intio_intr_establish(int vector, const char *name, intio_intr_handler_t handler,
     void *arg)
 {
+
+	return intio_intr_establish_ext(vector, name, "intr", handler, arg);
+}
+
+int
+intio_intr_establish_ext(int vector, const char *name1, const char *name2,
+	intio_intr_handler_t handler, void *arg)
+{
+	struct evcnt *evcnt;
+
 	if (vector < 16)
 		panic("Invalid interrupt vector");
 	if (iiv[vector].iiv_handler)
 		return EBUSY;
+
+	evcnt = malloc(sizeof(*evcnt), M_DEVBUF, M_NOWAIT);
+	if (evcnt == NULL)
+		return ENOMEM;
+	evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR, NULL, name1, name2);
+
 	iiv[vector].iiv_handler = handler;
 	iiv[vector].iiv_arg = arg;
-	iiv[vector].iiv_intrcntoff = scan_intrnames(name);
+	iiv[vector].iiv_evcnt = evcnt;
 
 	return 0;
-}
-
-static int
-scan_intrnames(const char *name)
-{
-	extern char intrnames[];
-	extern char eintrnames[];
-	int r = 0;
-	char *p = &intrnames[0];
-
-	for (;;) {
-		if (*p == 0) {	/* new intr */
-			if (p + strlen(name) >= eintrnames)
-				panic("Interrupt statics buffer overrun.");
-			strcpy(p, name);
-			break;
-		}
-		if (strcmp(p, name) == 0)
-			break;
-		r++;
-		while (*p++ != 0);
-	}
-
-	return r;
 }
 
 int
@@ -386,6 +346,8 @@ intio_intr_disestablish(int vector, void *arg)
 		return EINVAL;
 	iiv[vector].iiv_handler = 0;
 	iiv[vector].iiv_arg = 0;
+	evcnt_detach(iiv[vector].iiv_evcnt);
+	free(iiv[vector].iiv_evcnt, M_DEVBUF);
 
 	return 0;
 }
@@ -394,19 +356,14 @@ int
 intio_intr(struct frame *frame)
 {
 	int vector = frame->f_vector / 4;
-	extern int intrcnt[];
 
-#if 0				/* this is not correct now */
-	/* CAUTION: HERE WE ARE IN SPLHIGH() */
-	/* LOWER TO APPROPRIATE IPL AT VERY FIRST IN THE HANDLER!! */
-#endif
 	if (iiv[vector].iiv_handler == 0) {
 		printf("Stray interrupt: %d type %x, pc %x\n",
 			vector, frame->f_format, frame->f_pc);
 		return 0;
 	}
 
-	intrcnt[iiv[vector].iiv_intrcntoff]++;
+	iiv[vector].iiv_evcnt->ev_count++;
 
 	return (*(iiv[vector].iiv_handler))(iiv[vector].iiv_arg);
 }
@@ -443,7 +400,6 @@ _intio_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	struct intio_dma_cookie *cookie;
 	bus_dmamap_t map;
 	int error, cookieflags;
-	void *cookiestore;
 	size_t cookiesize;
 	extern paddr_t avail_end;
 
@@ -490,13 +446,12 @@ _intio_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	/*
 	 * Allocate our cookie.
 	 */
-	if ((cookiestore = malloc(cookiesize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
+	cookie = malloc(cookiesize, M_DMAMAP, 
+	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK) | M_ZERO);
+	if (cookie == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
-	memset(cookiestore, 0, cookiesize);
-	cookie = (struct intio_dma_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
 	map->x68k_dm_cookie = cookie;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.33.4.1 2008/05/16 02:23:28 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.33.4.2 2009/05/04 08:12:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33.4.1 2008/05/16 02:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33.4.2 2009/05/04 08:12:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -560,7 +560,7 @@ not2:
  * which cannot safely use memory-mapped device access.
  */
 int
-pci_bus_flags()
+pci_bus_flags(void)
 {
 	int rval = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;

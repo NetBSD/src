@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_pipe.c,v 1.100.4.1 2008/05/16 02:25:27 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.100.4.2 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -46,21 +46,13 @@
  *    John S. Dyson.
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
- *
- * $FreeBSD: src/sys/kern/sys_pipe.c,v 1.95 2002/03/09 22:06:31 alfred Exp $
  */
 
 /*
  * This file contains a high-performance replacement for the socket-based
- * pipes scheme originally used in FreeBSD/4.4Lite.  It does not support
- * all features of sockets, but does do everything that pipes normally
- * do.
+ * pipes scheme originally used.  It does not support all features of
+ * sockets, but does do everything that pipes normally do.
  *
- * Adaption for NetBSD UVM, including uvm_loan() based direct write, was
- * written by Jaromir Dolecek.
- */
-
-/*
  * This code has two modes of operation, a small write mode and a large
  * write mode.  The small write mode acts like conventional pipes with
  * a kernel buffer.  If the buffer is less than PIPE_MINDIRECT, then the
@@ -76,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.100.4.1 2008/05/16 02:25:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.100.4.2 2009/05/04 08:13:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.100.4.1 2008/05/16 02:25:27 yamt Exp 
 #include <sys/kernel.h>
 #include <sys/ttycom.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
@@ -103,11 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.100.4.1 2008/05/16 02:25:27 yamt Exp 
 
 #include <uvm/uvm.h>
 
-/*
- * Use this define if you want to disable *fancy* VM things.  Expect an
- * approx 30% decrease in transfer rate.
- */
-/* #define PIPE_NODIRECT */
+/* Use this define if you want to disable *fancy* VM things. */
+/* XXX Disabled for now; rare hangs switching between direct/buffered */
+#define PIPE_NODIRECT
 
 /*
  * interfaces to the outside world
@@ -123,17 +112,15 @@ static int pipe_stat(struct file *fp, struct stat *sb);
 static int pipe_ioctl(struct file *fp, u_long cmd, void *data);
 
 static const struct fileops pipeops = {
-	pipe_read, pipe_write, pipe_ioctl, fnullop_fcntl, pipe_poll,
-	pipe_stat, pipe_close, pipe_kqfilter
-};
-
-/*
- * Single mutex shared between both ends of the pipe.
- */
-
-struct pipe_mutex {
-	kmutex_t	pm_mutex;
-	u_int		pm_refcnt;
+	.fo_read = pipe_read,
+	.fo_write = pipe_write,
+	.fo_ioctl = pipe_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = pipe_poll,
+	.fo_stat = pipe_stat,
+	.fo_close = pipe_close,
+	.fo_kqfilter = pipe_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*
@@ -171,11 +158,9 @@ static u_int nbigpipe = 0;
  */
 static u_int amountpipekva = 0;
 
-MALLOC_DEFINE(M_PIPE, "pipe", "Pipe structures");
-
 static void pipeclose(struct file *fp, struct pipe *pipe);
 static void pipe_free_kmem(struct pipe *pipe);
-static int pipe_create(struct pipe **pipep, int allockva, struct pipe_mutex *);
+static int pipe_create(struct pipe **pipep, pool_cache_t, kmutex_t *);
 static int pipelock(struct pipe *pipe, int catch);
 static inline void pipeunlock(struct pipe *pipe);
 static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, int code);
@@ -184,51 +169,76 @@ static int pipe_direct_write(struct file *fp, struct pipe *wpipe,
     struct uio *uio);
 #endif
 static int pipespace(struct pipe *pipe, int size);
+static int pipe_ctor(void *, void *, int);
+static void pipe_dtor(void *, void *);
 
 #ifndef PIPE_NODIRECT
 static int pipe_loan_alloc(struct pipe *, int);
 static void pipe_loan_free(struct pipe *);
 #endif /* PIPE_NODIRECT */
 
-static int pipe_mutex_ctor(void *, void *, int);
-static void pipe_mutex_dtor(void *, void *);
-
-static pool_cache_t pipe_cache;
-static pool_cache_t pipe_mutex_cache;
+static pool_cache_t pipe_wr_cache;
+static pool_cache_t pipe_rd_cache;
 
 void
 pipe_init(void)
 {
 
-	pipe_cache = pool_cache_init(sizeof(struct pipe), 0, 0, 0, "pipepl",
-	    NULL, IPL_NONE, NULL, NULL, NULL);
-	KASSERT(pipe_cache != NULL);
+	/* Writer side is not automatically allocated KVA. */
+	pipe_wr_cache = pool_cache_init(sizeof(struct pipe), 0, 0, 0, "pipewr",
+	    NULL, IPL_NONE, pipe_ctor, pipe_dtor, NULL);
+	KASSERT(pipe_wr_cache != NULL);
 
-	pipe_mutex_cache = pool_cache_init(sizeof(struct pipe_mutex),
-	    coherency_unit, 0, 0, "pipemtxpl", NULL, IPL_NONE, pipe_mutex_ctor,
-	    pipe_mutex_dtor, NULL);
-	KASSERT(pipe_cache != NULL);
+	/* Reader side gets preallocated KVA. */
+	pipe_rd_cache = pool_cache_init(sizeof(struct pipe), 0, 0, 0, "piperd",
+	    NULL, IPL_NONE, pipe_ctor, pipe_dtor, (void *)1);
+	KASSERT(pipe_rd_cache != NULL);
 }
 
 static int
-pipe_mutex_ctor(void *arg, void *obj, int flag)
+pipe_ctor(void *arg, void *obj, int flags)
 {
-	struct pipe_mutex *pm = obj;
+	struct pipe *pipe;
+	vaddr_t va;
 
-	mutex_init(&pm->pm_mutex, MUTEX_DEFAULT, IPL_NONE);
-	pm->pm_refcnt = 0;
+	pipe = obj;
+
+	memset(pipe, 0, sizeof(struct pipe));
+	if (arg != NULL) {
+		/* Preallocate space. */
+		va = uvm_km_alloc(kernel_map, PIPE_SIZE, 0,
+		    UVM_KMF_PAGEABLE | UVM_KMF_WAITVA);
+		KASSERT(va != 0);
+		pipe->pipe_kmem = va;
+		atomic_add_int(&amountpipekva, PIPE_SIZE);
+	}
+	cv_init(&pipe->pipe_rcv, "piperd");
+	cv_init(&pipe->pipe_wcv, "pipewr");
+	cv_init(&pipe->pipe_draincv, "pipedrain");
+	cv_init(&pipe->pipe_lkcv, "pipelk");
+	selinit(&pipe->pipe_sel);
+	pipe->pipe_state = PIPE_SIGNALR;
 
 	return 0;
 }
 
 static void
-pipe_mutex_dtor(void *arg, void *obj)
+pipe_dtor(void *arg, void *obj)
 {
-	struct pipe_mutex *pm = obj;
+	struct pipe *pipe;
 
-	KASSERT(pm->pm_refcnt == 0);
+	pipe = obj;
 
-	mutex_destroy(&pm->pm_mutex);
+	cv_destroy(&pipe->pipe_rcv);
+	cv_destroy(&pipe->pipe_wcv);
+	cv_destroy(&pipe->pipe_draincv);
+	cv_destroy(&pipe->pipe_lkcv);
+	seldestroy(&pipe->pipe_sel);
+	if (pipe->pipe_kmem != 0) {
+		uvm_km_free(kernel_map, pipe->pipe_kmem, PIPE_SIZE,
+		    UVM_KMF_PAGEABLE);
+		atomic_add_int(&amountpipekva, -PIPE_SIZE);
+	}
 }
 
 /*
@@ -241,16 +251,18 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
-	struct pipe_mutex *mutex;
+	kmutex_t *mutex;
 	int fd, error;
 	proc_t *p;
 
 	p = curproc;
 	rpipe = wpipe = NULL;
-	mutex = pool_cache_get(pipe_mutex_cache, PR_WAITOK);
+	mutex = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	if (mutex == NULL)
 		return (ENOMEM);
-	if (pipe_create(&rpipe, 1, mutex) || pipe_create(&wpipe, 0, mutex)) {
+	mutex_obj_hold(mutex);
+	if (pipe_create(&rpipe, pipe_rd_cache, mutex) ||
+	    pipe_create(&wpipe, pipe_wr_cache, mutex)) {
 		pipeclose(NULL, rpipe);
 		pipeclose(NULL, wpipe);
 		return (ENFILE);
@@ -299,14 +311,20 @@ static int
 pipespace(struct pipe *pipe, int size)
 {
 	void *buffer;
+
 	/*
-	 * Allocate pageable virtual address space. Physical memory is
+	 * Allocate pageable virtual address space.  Physical memory is
 	 * allocated on demand.
 	 */
-	buffer = (void *) uvm_km_alloc(kernel_map, round_page(size), 0,
-	    UVM_KMF_PAGEABLE);
-	if (buffer == NULL)
-		return (ENOMEM);
+	if (size == PIPE_SIZE && pipe->pipe_kmem != 0) {
+		buffer = (void *)pipe->pipe_kmem;
+	} else {
+		buffer = (void *)uvm_km_alloc(kernel_map, round_page(size),
+		    0, UVM_KMF_PAGEABLE);
+		if (buffer == NULL)
+			return (ENOMEM);
+		atomic_add_int(&amountpipekva, size);
+	}
 
 	/* free old resources if we're resizing */
 	pipe_free_kmem(pipe);
@@ -315,7 +333,6 @@ pipespace(struct pipe *pipe, int size)
 	pipe->pipe_buffer.in = 0;
 	pipe->pipe_buffer.out = 0;
 	pipe->pipe_buffer.cnt = 0;
-	atomic_add_int(&amountpipekva, pipe->pipe_buffer.size);
 	return (0);
 }
 
@@ -323,34 +340,29 @@ pipespace(struct pipe *pipe, int size)
  * Initialize and allocate VM and memory for pipe.
  */
 static int
-pipe_create(struct pipe **pipep, int allockva, struct pipe_mutex *mutex)
+pipe_create(struct pipe **pipep, pool_cache_t cache, kmutex_t *mutex)
 {
 	struct pipe *pipe;
 	int error;
 
-	pipe = *pipep = pool_cache_get(pipe_cache, PR_WAITOK);
-	mutex->pm_refcnt++;
-
-	/* Initialize */
-	memset(pipe, 0, sizeof(struct pipe));
-	pipe->pipe_state = PIPE_SIGNALR;
-
-	getmicrotime(&pipe->pipe_ctime);
-	pipe->pipe_atime = pipe->pipe_ctime;
-	pipe->pipe_mtime = pipe->pipe_ctime;
-	pipe->pipe_lock = &mutex->pm_mutex;
-	cv_init(&pipe->pipe_rcv, "piperd");
-	cv_init(&pipe->pipe_wcv, "pipewr");
-	cv_init(&pipe->pipe_draincv, "pipedrain");
-	cv_init(&pipe->pipe_lkcv, "pipelk");
-	selinit(&pipe->pipe_sel);
-
-	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
-		return (error);
-
-	return (0);
+	pipe = pool_cache_get(cache, PR_WAITOK);
+	KASSERT(pipe != NULL);
+	*pipep = pipe;
+	error = 0;
+	getnanotime(&pipe->pipe_btime);
+	pipe->pipe_atime = pipe->pipe_mtime = pipe->pipe_btime;
+	pipe->pipe_lock = mutex;
+	if (cache == pipe_rd_cache) {
+		error = pipespace(pipe, PIPE_SIZE);
+	} else {
+		pipe->pipe_buffer.buffer = NULL;
+		pipe->pipe_buffer.size = 0;
+		pipe->pipe_buffer.in = 0;
+		pipe->pipe_buffer.out = 0;
+		pipe->pipe_buffer.cnt = 0;
+	}
+	return error;
 }
-
 
 /*
  * Lock a pipe for I/O, blocking other access
@@ -414,11 +426,9 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 	case POLL_HUP:
 		band = POLLHUP;
 		break;
-#if POLL_HUP != POLL_ERR
 	case POLL_ERR:
 		band = POLLERR;
 		break;
-#endif
 	default:
 		band = 0;
 #ifdef DIAGNOSTIC
@@ -559,7 +569,7 @@ again:
 		/*
 		 * We want to read more, wake up select/poll.
 		 */
-		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_IN);
+		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_OUT);
 
 		/*
 		 * If the "write-side" is blocked, wake it up now.
@@ -574,7 +584,7 @@ again:
 	}
 
 	if (error == 0)
-		getmicrotime(&rpipe->pipe_atime);
+		getnanotime(&rpipe->pipe_atime);
 	pipeunlock(rpipe);
 
 unlocked_error:
@@ -620,8 +630,8 @@ pipe_loan_alloc(struct pipe *wpipe, int npages)
 	}
 
 	wpipe->pipe_map.npages = npages;
-	wpipe->pipe_map.pgs = malloc(npages * sizeof(struct vm_page *), M_PIPE,
-	    M_WAITOK);
+	wpipe->pipe_map.pgs = kmem_alloc(npages * sizeof(struct vm_page *),
+	    KM_SLEEP);
 	return (0);
 }
 
@@ -637,7 +647,8 @@ pipe_loan_free(struct pipe *wpipe)
 	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len, UVM_KMF_VAONLY);
 	wpipe->pipe_map.kva = 0;
 	atomic_add_int(&amountpipekva, -len);
-	free(wpipe->pipe_map.pgs, M_PIPE);
+	kmem_free(wpipe->pipe_map.pgs,
+	    wpipe->pipe_map.npages * sizeof(struct vm_page *));
 	wpipe->pipe_map.pgs = NULL;
 }
 
@@ -987,7 +998,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			 * wake up select/poll.
 			 */
 			if (bp->cnt)
-				pipeselwakeup(wpipe, wpipe, POLL_OUT);
+				pipeselwakeup(wpipe, wpipe, POLL_IN);
 
 			pipeunlock(wpipe);
 			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
@@ -1020,7 +1031,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		error = 0;
 
 	if (error == 0)
-		getmicrotime(&wpipe->pipe_mtime);
+		getnanotime(&wpipe->pipe_mtime);
 
 	/*
 	 * We have something to offer, wake up select/poll.
@@ -1028,7 +1039,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	 * is only done synchronously), so check only wpipe->pipe_buffer.cnt
 	 */
 	if (bp->cnt)
-		pipeselwakeup(wpipe, wpipe, POLL_OUT);
+		pipeselwakeup(wpipe, wpipe, POLL_IN);
 
 	/*
 	 * Arrange for next read(2) to do a signal.
@@ -1174,16 +1185,17 @@ pipe_stat(struct file *fp, struct stat *ub)
 {
 	struct pipe *pipe = fp->f_data;
 
-	memset((void *)ub, 0, sizeof(*ub));
+	mutex_enter(pipe->pipe_lock);
+	memset(ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	if (ub->st_blksize == 0 && pipe->pipe_peer)
 		ub->st_blksize = pipe->pipe_peer->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
+	ub->st_atimespec = pipe->pipe_atime;
+	ub->st_mtimespec = pipe->pipe_mtime;
+	ub->st_ctimespec = ub->st_birthtimespec = pipe->pipe_btime;
 	ub->st_uid = kauth_cred_geteuid(fp->f_cred);
 	ub->st_gid = kauth_cred_getegid(fp->f_cred);
 
@@ -1191,7 +1203,8 @@ pipe_stat(struct file *fp, struct stat *ub)
 	 * Left as 0: st_dev, st_ino, st_nlink, st_rdev, st_flags, st_gen.
 	 * XXX (st_dev, st_ino) should be unique.
 	 */
-	return (0);
+	mutex_exit(pipe->pipe_lock);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -1210,12 +1223,16 @@ pipe_free_kmem(struct pipe *pipe)
 {
 
 	if (pipe->pipe_buffer.buffer != NULL) {
-		if (pipe->pipe_buffer.size > PIPE_SIZE)
+		if (pipe->pipe_buffer.size > PIPE_SIZE) {
 			atomic_dec_uint(&nbigpipe);
-		uvm_km_free(kernel_map,
-			(vaddr_t)pipe->pipe_buffer.buffer,
-			pipe->pipe_buffer.size, UVM_KMF_PAGEABLE);
-		atomic_add_int(&amountpipekva, -pipe->pipe_buffer.size);
+		}
+		if (pipe->pipe_buffer.buffer != (void *)pipe->pipe_kmem) {
+			uvm_km_free(kernel_map,
+			    (vaddr_t)pipe->pipe_buffer.buffer,
+			    pipe->pipe_buffer.size, UVM_KMF_PAGEABLE);
+			atomic_add_int(&amountpipekva,
+			    -pipe->pipe_buffer.size);
+		}
 		pipe->pipe_buffer.buffer = NULL;
 	}
 #ifndef PIPE_NODIRECT
@@ -1235,10 +1252,8 @@ pipe_free_kmem(struct pipe *pipe)
 static void
 pipeclose(struct file *fp, struct pipe *pipe)
 {
-	struct pipe_mutex *mutex;
 	kmutex_t *lock;
 	struct pipe *ppipe;
-	u_int refcnt;
 
 	if (pipe == NULL)
 		return;
@@ -1274,25 +1289,28 @@ pipeclose(struct file *fp, struct pipe *pipe)
 		ppipe->pipe_peer = NULL;
 	}
 
-	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
+	/*
+	 * Any knote objects still left in the list are
+	 * the one attached by peer.  Since no one will
+	 * traverse this list, we just clear it.
+	 */
+	SLIST_INIT(&pipe->pipe_sel.sel_klist);
 
-	mutex = (struct pipe_mutex *)lock;
-	refcnt = --(mutex->pm_refcnt);
-	KASSERT(refcnt == 0 || refcnt == 1);
+	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
 	mutex_exit(lock);
 
 	/*
 	 * free resources
 	 */
+	pipe->pipe_pgid = 0;
+	pipe->pipe_state = PIPE_SIGNALR;
 	pipe_free_kmem(pipe);
-	cv_destroy(&pipe->pipe_rcv);
-	cv_destroy(&pipe->pipe_wcv);
-	cv_destroy(&pipe->pipe_draincv);
-	cv_destroy(&pipe->pipe_lkcv);
-	seldestroy(&pipe->pipe_sel);
-	pool_cache_put(pipe_cache, pipe);
-	if (refcnt == 0)
-		pool_cache_put(pipe_mutex_cache, mutex);
+	if (pipe->pipe_kmem != 0) {
+		pool_cache_put(pipe_rd_cache, pipe);
+	} else {
+		pool_cache_put(pipe_wr_cache, pipe);
+	}
+	mutex_obj_free(lock);
 }
 
 static void

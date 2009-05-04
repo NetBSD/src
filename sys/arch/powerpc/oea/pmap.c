@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58.4.1 2008/05/16 02:23:02 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58.4.2 2009/05/04 08:11:44 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.4.1 2008/05/16 02:23:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.4.2 2009/05/04 08:11:44 yamt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -219,7 +219,7 @@ STATIC void pmap_destroy(pmap_t);
 STATIC void pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 STATIC void pmap_update(pmap_t);
 STATIC void pmap_collect(pmap_t);
-STATIC int pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+STATIC int pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 STATIC void pmap_remove(pmap_t, vaddr_t, vaddr_t);
 STATIC void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
 STATIC void pmap_kremove(vaddr_t, vsize_t);
@@ -1907,7 +1907,7 @@ pvo_clear_exec(struct pvo_entry *pvo)
  * Insert physical page at pa into the given pmap at virtual address va.
  */
 int
-pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct mem_region *mp;
 	struct pvo_head *pvo_head;
@@ -3280,7 +3280,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	}
 
 	/*
-	 * (Bubble)sort them into asecnding order.
+	 * (Bubble)sort them into ascending order.
 	 */
 	for (i = 0; i < avail_cnt; i++) {
 		for (j = i + 1; j < avail_cnt; j++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.4.20.1 2008/05/16 02:23:15 yamt Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.4.20.2 2009/05/04 08:11:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -433,10 +433,21 @@ sparc64_finalize_tlb(u_long data_va)
 {
 	int i;
 	int64_t data;
+	bool writable_text = false;
 
 	for (i = 0; i < dtlb_slot; i++) {
-		if (dtlb_store[i].te_va >= data_va)
-			continue;
+		if (dtlb_store[i].te_va >= data_va) {
+			/*
+			 * If (for whatever reason) the start of the
+			 * writable section is right at the start of
+			 * the kernel, we need to map it into the ITLB
+			 * nevertheless (and don't make it readonly).
+			 */
+			if (i == 0 && dtlb_store[i].te_va == data_va)
+				writable_text = true;
+			else
+				continue;
+		}
 
 		data = TSB_DATA(0,		/* global */
 				PGSZ_4M,	/* 4mb page */
@@ -449,11 +460,14 @@ sparc64_finalize_tlb(u_long data_va)
 				0		/* endianness */
 				);
 		data |= TLB_L | TLB_CV; /* locked, virt.cache */
-		dtlb_replace(dtlb_store[i].te_va, hi(data), lo(data));
+		if (!writable_text)
+			dtlb_replace(dtlb_store[i].te_va, hi(data), lo(data));
 		itlb_store[itlb_slot] = dtlb_store[i];
 		itlb_slot++;
 		itlb_enter(dtlb_store[i].te_va, hi(data), lo(data));
 	}
+	if (writable_text)
+		printf("WARNING: kernel text mapped writable!\n");
 }
 
 /*

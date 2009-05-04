@@ -1,7 +1,7 @@
-/*	$NetBSD: loadfile.h,v 1.6.32.1 2008/05/16 02:25:36 yamt Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.6.32.2 2009/05/04 08:13:52 yamt Exp $	 */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -49,7 +49,8 @@
 #define	LOAD_BSS	0x0008
 #define	LOAD_SYM	0x0010
 #define	LOAD_HDR	0x0020
-#define LOAD_ALL	0x003f
+#define LOAD_NOTE	0x0040
+#define LOAD_ALL	0x007f
 
 #define	COUNT_TEXT	0x0100
 #define	COUNT_TEXTA	0x0200
@@ -86,3 +87,6 @@ int	loadfile_elf64(int, Elf64_Ehdr *, u_long *, int);
 #include <sys/exec_aout.h>
 int	loadfile_aout(int, struct exec *, u_long *, int);
 #endif
+
+extern uint32_t	netbsd_version;
+extern u_int netbsd_elf_class;

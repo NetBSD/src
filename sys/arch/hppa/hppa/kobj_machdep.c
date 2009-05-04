@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3.12.1 2008/05/16 02:22:32 yamt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.3.12.2 2009/05/04 08:11:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.12.1 2008/05/16 02:22:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.12.2 2009/05/04 08:11:13 yamt Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -62,7 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.12.1 2008/05/16 02:22:32 yamt E
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpufunc.h>
+#include <machine/pmap.h>
 
 static inline unsigned int
 RND(unsigned int x)

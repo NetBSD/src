@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.133.2.1 2008/05/16 02:25:24 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.133.2.2 2009/05/04 08:13:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.133.2.1 2008/05/16 02:25:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.133.2.2 2009/05/04 08:13:46 yamt Exp $");
 
 #include "opt_sysv.h"
-#include "opt_posix.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_compat_netbsd.h"
+#include "opt_modular.h"
+#include "opt_sa.h"
+#include "opt_posix.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -57,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.133.2.1 2008/05/16 02:25:24 yamt E
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/tty.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/exec.h>
@@ -66,14 +69,27 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.133.2.1 2008/05/16 02:25:24 yamt E
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
+#include <sys/ksem.h>
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
 #endif
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#endif
+
+#ifdef KERN_SA
+#include <sys/sa.h>
+#endif
 
 #include <sys/cpu.h>
 
-/* XXX this should not be here */
+#if defined(MODULAR) || defined(P1003_1B_SEMAPHORE)
+int posix_semaphores = 200112;
+#else
+int posix_semaphores;
+#endif
+
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
@@ -92,7 +108,6 @@ static const u_int sysctl_flagmap[] = {
 
 static const u_int sysctl_sflagmap[] = {
 	PS_NOCLDSTOP, P_NOCLDSTOP,
-	PS_PPWAIT, P_PPWAIT,
 	PS_WEXIT, P_WEXIT,
 	PS_STOPFORK, P_STOPFORK,
 	PS_STOPEXEC, P_STOPEXEC,
@@ -110,6 +125,7 @@ static const u_int sysctl_slflagmap[] = {
 
 static const u_int sysctl_lflagmap[] = {
 	PL_CONTROLT, P_CONTROLT,
+	PL_PPWAIT, P_PPWAIT,
 	0
 };
 
@@ -123,6 +139,7 @@ static const u_int sysctl_lwpflagmap[] = {
 	LW_INMEM, P_INMEM,
 	LW_SINTR, P_SINTR,
 	LW_SYSTEM, P_SYSTEM,
+	LW_SA, P_SA,	/* WRS ??? */
 	0
 };
 
@@ -434,6 +451,17 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System boot time"),
 		       NULL, 0, &boottime, sizeof(boottime),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
+#ifdef COMPAT_50
+	{
+		extern struct timeval50 boottime50;
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_STRUCT, "oboottime",
+			       SYSCTL_DESCR("System boot time"),
+			       NULL, 0, &boottime50, sizeof(boottime50),
+			       CTL_KERN, KERN_OBOOTTIME, CTL_EOL);
+	}
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "domainname",
@@ -693,17 +721,13 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, _POSIX_THREADS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_THREADS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "posix_semaphores",
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Semaphores option to which the system "
 				    "attempts to conform"), NULL,
-#ifdef P1003_1B_SEMAPHORE
-		       200112,
-#else /* P1003_1B_SEMAPHORE */
-		       0,
-#endif /* P1003_1B_SEMAPHORE */
-		       NULL, 0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
+		       0, &posix_semaphores,
+		       0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_barriers",
@@ -827,12 +851,35 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_security_setidcore, 0, &security_setidcore_mode,
 		       0,
 		       CTL_CREATE, CTL_EOL);
+#ifdef KERN_SA
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "no_sa_support",
+		       SYSCTL_DESCR("0 if the kernel supports SA, otherwise it doesn't"),
+		       NULL, 0, &sa_system_disabled, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+#else
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "no_sa_support",
 		       SYSCTL_DESCR("0 if the kernel supports SA, otherwise it doesn't"),
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
+#endif
+
+	/* kern.posix. */
+	sysctl_createv(clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "posix",
+			SYSCTL_DESCR("POSIX options"),
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+			CTLTYPE_INT, "semmax",
+			SYSCTL_DESCR("Maximal number of semaphores"),
+			NULL, 0, &ksem_max, 0,
+			CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -1090,7 +1137,7 @@ sysctl_kern_trigger_panic(SYSCTLFN_ARGS)
 static int
 sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 {
-	int error, new_vnodes, old_vnodes;
+	int error, new_vnodes, old_vnodes, new_max;
 	struct sysctlnode node;
 
 	new_vnodes = desiredvnodes;
@@ -1099,6 +1146,11 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
+
+	/* Limits: 75% of KVA and physical memory. */
+	new_max = calc_cache_size(kernel_map, 75, 75) / VNODE_COST;
+	if (new_vnodes > new_max)
+		new_vnodes = new_max;
 
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
@@ -1860,7 +1912,6 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	int i;
 	extern struct devsw_conv *devsw_conv;
 	extern int max_devsw_convs;
-	extern kmutex_t devsw_lock;
 
 	if (newp != NULL || namelen != 0)
 		return (EINVAL);
@@ -1877,7 +1928,7 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	 */
 	error = 0;
 	sysctl_unlock();
-	mutex_enter(&devsw_lock);
+	mutex_enter(&device_lock);
 	for (i = 0; i < max_devsw_convs; i++) {
 		dname = devsw_conv[i].d_name;
 		if (dname == NULL)
@@ -1890,15 +1941,15 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 		kd.d_bmajor = devsw_conv[i].d_bmajor;
 		kd.d_cmajor = devsw_conv[i].d_cmajor;
 		strlcpy(kd.d_name, dname, sizeof kd.d_name);
-		mutex_exit(&devsw_lock);
+		mutex_exit(&device_lock);
 		error = dcopyout(l, &kd, where, sizeof kd);
-		mutex_enter(&devsw_lock);
+		mutex_enter(&device_lock);
 		if (error != 0)
 			break;
 		buflen -= sizeof kd;
 		where += sizeof kd;
 	}
-	mutex_exit(&devsw_lock);
+	mutex_exit(&device_lock);
 	sysctl_relock();
 	*oldlenp = where - start;
 	return error;
@@ -1988,11 +2039,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			} else {
 				mutex_exit(&fp->f_lock);
 			}
-			if (elem_count > 0) {
-				needed += elem_size;
-				if (elem_count != INT_MAX)
-					elem_count--;
-			}
+			needed += elem_size;
+			if (elem_count > 0 && elem_count != INT_MAX)
+				elem_count--;
 		}
 		mutex_exit(&filelist_lock);
 		fputdummy(tp);
@@ -2021,6 +2070,11 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			    NULL, NULL);
 			mutex_exit(p->p_lock);
 			if (error != 0) {
+				/*
+				 * Don't leak kauth retval if we're silently
+				 * skipping this entry.
+				 */
+				error = 0;
 				continue;
 			}
 
@@ -2059,11 +2113,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				} else {
 					mutex_exit(&ff->ff_lock);
 				}
-				if (elem_count > 0) {
-					needed += elem_size;
-					if (elem_count != INT_MAX)
-						elem_count--;
-				}
+				needed += elem_size;
+				if (elem_count > 0 && elem_count != INT_MAX)
+					elem_count--;
 			}
 			mutex_exit(&fd->fd_lock);
 
@@ -2096,7 +2148,7 @@ fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 
 	kp->ki_fileaddr =	PTRTOUINT64(fp);
 	kp->ki_flag =		fp->f_flag;
-	kp->ki_iflags =		fp->f_iflags;
+	kp->ki_iflags =		0;
 	kp->ki_ftype =		fp->f_type;
 	kp->ki_count =		fp->f_count;
 	kp->ki_msgcount =	fp->f_msgcount;
@@ -2772,7 +2824,7 @@ sysctl_hw_usermem(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	switch (rnode->sysctl_num) {
-	    case HW_USERMEM:
+	case HW_USERMEM:
 		if ((ui = physmem - uvmexp.wired) > (UINT_MAX / PAGE_SIZE))
 			ui = UINT_MAX;
 		else
@@ -2860,6 +2912,39 @@ sysctl_consdev(SYSCTLFN_ARGS)
  * section 4: support for some helpers
  * ********************************************************************
  */
+/*
+ * Find the most ``active'' lwp of a process and return it for ps display
+ * purposes
+ */
+static struct lwp *
+proc_active_lwp(struct proc *p)
+{
+	static const int ostat[] = {
+		0,	
+		2,	/* LSIDL */
+		6,	/* LSRUN */
+		5,	/* LSSLEEP */
+		4,	/* LSSTOP */
+		0,	/* LSZOMB */
+		1,	/* LSDEAD */
+		7,	/* LSONPROC */
+		3	/* LSSUSPENDED */
+	};
+
+	struct lwp *l, *lp = NULL;
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		KASSERT(l->l_stat >= 0 && l->l_stat < __arraycount(ostat));
+		if (lp == NULL ||
+		    ostat[l->l_stat] > ostat[lp->l_stat] ||
+		    (ostat[l->l_stat] == ostat[lp->l_stat] &&
+		    l->l_cpticks > lp->l_cpticks)) {
+			lp = l;
+			continue;
+		}
+	}
+	return lp;
+}
+
 
 /*
  * Fill in a kinfo_proc2 structure for the specified process.
@@ -2873,7 +2958,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	sigset_t ss1, ss2;
 	struct rusage ru;
 	struct vmspace *vm;
-	int tmp;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
@@ -2936,6 +3020,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 
 	strncpy(ki->p_comm, p->p_comm,
 	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
+	strncpy(ki->p_ename, p->p_emul->e_name, sizeof(ki->p_ename));
 
 	ki->p_nlwps = p->p_nlwps;
 	ki->p_realflag = ki->p_flag;
@@ -2946,11 +3031,20 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
+		ki->p_vm_vsize = vm->vm_map.size;
+		/*
+		 * Since the stack is initially mapped mostly with
+		 * PROT_NONE and grown as needed, adjust the "mapped size"
+		 * to skip the unused stack portion.
+		 */
+		ki->p_vm_msize =
+		    atop(vm->vm_map.size) - vm->vm_issize + vm->vm_ssize;
 
-		/* Pick a "representative" LWP */
-		l = proc_representative_lwp(p, &tmp, 1);
+		/* Pick the primary (first) LWP */
+		l = proc_active_lwp(p);
+		KASSERT(l != NULL);
 		lwp_lock(l);
-		ki->p_nrlwps = tmp;
+		ki->p_nrlwps = p->p_nrlwps;
 		ki->p_forw = 0;
 		ki->p_back = 0;
 		ki->p_addr = PTRTOUINT64(l->l_addr);
@@ -2998,7 +3092,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 			ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ki->p_tsess = PTRTOUINT64(tp->t_session);
 		} else {
-			ki->p_tdev = NODEV;
+			ki->p_tdev = (int32_t)NODEV;
 		}
 	}
 
@@ -3061,6 +3155,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
 	kl->l_flag = sysctl_map_flags(sysctl_lwpprflagmap, l->l_prflag);
+	kl->l_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
 
 	kl->l_swtime = l->l_swtime;
 	kl->l_slptime = l->l_slptime;
@@ -3114,9 +3209,11 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
+		ep->e_vm.vm_map.size = vm->vm_map.size;
 
-		/* Pick a "representative" LWP */
-		l = proc_representative_lwp(p, NULL, 1);
+		/* Pick the primary (first) LWP */
+		l = proc_active_lwp(p);
+		KASSERT(l != NULL);
 		lwp_lock(l);
 		if (l->l_wchan)
 			strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
@@ -3134,7 +3231,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ep->e_tsess = tp->t_session;
 		} else
-			ep->e_tdev = NODEV;
+			ep->e_tdev = (uint32_t)NODEV;
 		ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
 		if (SESS_LEADER(p))
 			ep->e_flag |= EPROC_SLEADER;

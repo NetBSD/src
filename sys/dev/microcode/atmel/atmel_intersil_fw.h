@@ -5,7 +5,7 @@
  *   Target:  AT76C503 with Intersil 3861 radio
  *   Version: 0.90.0 #44
  *
- * Copyright 2004 Atmel Corporation. All Rights Reserved. Redistribution and use
+ * Copyright 2004 Atmel Corporation. All Rights Reserved. Redistribution and use
  * of the microcode software ("Firmware") is permitted provided that the following
  * conditions are met:
  *     1. Firmware is redistributed in object code only.

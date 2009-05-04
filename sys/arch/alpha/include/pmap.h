@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.70.4.1 2008/05/16 02:21:45 yamt Exp $ */
+/* $NetBSD: pmap.h,v 1.70.4.2 2009/05/04 08:10:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -144,7 +144,6 @@ struct pmap {
 	struct pmap_asn_info	pm_asni[1];	/* ASN information */
 			/*	variable length		*/
 };
-typedef struct pmap	*pmap_t;
 
 /*
  * Compute the sizeof of a pmap structure.  Subtract one because one
@@ -155,8 +154,6 @@ typedef struct pmap	*pmap_t;
 	       (sizeof(struct pmap_asn_info) * ((x) - 1))))
 
 #define	PMAP_ASN_RESERVED	0	/* reserved for Lev1map users */
-
-extern struct pmap	kernel_pmap_store[];
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual
@@ -184,13 +181,16 @@ typedef struct pv_entry {
 
 #include <sys/atomic.h>
 
-#ifndef _LKM
+#ifdef _KERNEL_OPT
 #include "opt_dec_kn8ae.h"			/* XXX */
-
 #if defined(DEC_KN8AE)
 #define	_PMAP_MAY_USE_PROM_CONSOLE
 #endif
+#else
+#define	_PMAP_MAY_USE_PROM_CONSOLE
+#endif
 
+#ifndef _LKM
 #if defined(MULTIPROCESSOR)
 struct cpu_info;
 struct trapframe;
@@ -212,8 +212,6 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #endif /* MULTIPROCESSOR */
 #endif /* _LKM */
 
-#define pmap_kernel()			(kernel_pmap_store)
- 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
@@ -290,10 +288,7 @@ static __inline pt_entry_t *pmap_l3pte(pmap_t, vaddr_t, pt_entry_t *);
 	(&(pmap)->pm_lev1map[l1pte_index((vaddr_t)(v))])
 
 static __inline pt_entry_t *
-pmap_l2pte(pmap, v, l1pte)
-	pmap_t pmap;
-	vaddr_t v;
-	pt_entry_t *l1pte;
+pmap_l2pte(pmap_t pmap, vaddr_t v, pt_entry_t *l1pte)
 {
 	pt_entry_t *lev2map;
 
@@ -308,10 +303,7 @@ pmap_l2pte(pmap, v, l1pte)
 }
 
 static __inline pt_entry_t *
-pmap_l3pte(pmap, v, l2pte)
-	pmap_t pmap;
-	vaddr_t v;
-	pt_entry_t *l2pte;
+pmap_l3pte(pmap_t pmap, vaddr_t v, pt_entry_t *l2pte)
 {
 	pt_entry_t *l1pte, *lev2map, *lev3map;
 

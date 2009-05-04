@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.126.4.1 2008/05/16 02:25:27 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.126.4.2 2009/05/04 08:13:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.126.4.1 2008/05/16 02:25:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.126.4.2 2009/05/04 08:13:49 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -101,6 +101,10 @@ static int mb_ctor(void *, void *, int);
 
 static void	*mclpool_alloc(struct pool *, int);
 static void	mclpool_release(struct pool *, void *);
+
+static void	sysctl_kern_mbuf_setup(void);
+
+static struct sysctllog *mbuf_sysctllog;
 
 static struct pool_allocator mclpool_allocator = {
 	.pa_alloc = mclpool_alloc,
@@ -160,8 +164,10 @@ void
 mbinit(void)
 {
 
-	KASSERT(sizeof(struct _m_ext) <= MHLEN);
-	KASSERT(sizeof(struct mbuf) == MSIZE);
+	CTASSERT(sizeof(struct _m_ext) <= MHLEN);
+	CTASSERT(sizeof(struct mbuf) == MSIZE);
+
+	sysctl_kern_mbuf_setup();
 
 	mclpool_allocator.pa_backingmap = mb_map;
 
@@ -281,8 +287,8 @@ mowner_convert_to_user(struct mowner *mo, struct mowner_user *mo_user)
 {
 
 	memset(mo_user, 0, sizeof(*mo_user));
-	KASSERT(sizeof(mo_user->mo_name) == sizeof(mo->mo_name));
-	KASSERT(sizeof(mo_user->mo_descr) == sizeof(mo->mo_descr));
+	CTASSERT(sizeof(mo_user->mo_name) == sizeof(mo->mo_name));
+	CTASSERT(sizeof(mo_user->mo_descr) == sizeof(mo->mo_descr));
 	memcpy(mo_user->mo_name, mo->mo_name, sizeof(mo->mo_name));
 	memcpy(mo_user->mo_descr, mo->mo_descr, sizeof(mo->mo_descr));
 	percpu_foreach(mo->mo_counters, mowner_conver_to_user_cb, mo_user);
@@ -359,59 +365,61 @@ sysctl_kern_mbuf_stats(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
+static void
+sysctl_kern_mbuf_setup(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	KASSERT(mbuf_sysctllog == NULL);
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "mbuf",
 		       SYSCTL_DESCR("mbuf control variables"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "msize",
 		       SYSCTL_DESCR("mbuf base size"),
 		       NULL, msize, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MSIZE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "mclbytes",
 		       SYSCTL_DESCR("mbuf cluster size"),
 		       NULL, mclbytes, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MCLBYTES, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "nmbclusters",
 		       SYSCTL_DESCR("Limit on the number of mbuf clusters"),
 		       sysctl_kern_mbuf, 0, &nmbclusters, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_NMBCLUSTERS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mblowat",
 		       SYSCTL_DESCR("mbuf low water mark"),
 		       sysctl_kern_mbuf, 0, &mblowat, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MBLOWAT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mcllowat",
 		       SYSCTL_DESCR("mbuf cluster low water mark"),
 		       sysctl_kern_mbuf, 0, &mcllowat, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MCLLOWAT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("mbuf allocation statistics"),
 		       sysctl_kern_mbuf_stats, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_STATS, CTL_EOL);
 #ifdef MBUFTRACE
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "mowners",
 		       SYSCTL_DESCR("Information about mbuf owners"),
@@ -1048,6 +1056,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		if (remain > MHLEN) {
 			/* m can't be the lead packet */
 			MH_ALIGN(n, 0);
+			n->m_len = 0;
 			n->m_next = m_split(m, len, wait);
 			if (n->m_next == 0) {
 				(void) m_free(n);
@@ -1598,7 +1607,7 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 
 nextchain:
 	(*pr)("MBUF %p\n", m);
-	bitmask_snprintf((u_int)m->m_flags, M_FLAGS_BITS, buf, sizeof(buf));
+	snprintb(buf, sizeof(buf), M_FLAGS_BITS, (u_int)m->m_flags);
 	(*pr)("  data=%p, len=%d, type=%d, flags=0x%s\n",
 	    m->m_data, m->m_len, m->m_type, buf);
 	(*pr)("  owner=%p, next=%p, nextpkt=%p\n", m->m_owner, m->m_next,
@@ -1607,8 +1616,7 @@ nextchain:
 	    (int)M_LEADINGSPACE(m), (int)M_TRAILINGSPACE(m),
 	    (int)M_READONLY(m));
 	if ((m->m_flags & M_PKTHDR) != 0) {
-		bitmask_snprintf(m->m_pkthdr.csum_flags, M_CSUM_BITS, buf,
-		    sizeof(buf));
+		snprintb(buf, sizeof(buf), M_CSUM_BITS, m->m_pkthdr.csum_flags);
 		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=0x%s, csum_data=0x%"
 		    PRIx32 ", segsz=%u\n",
 		    m->m_pkthdr.len, m->m_pkthdr.rcvif,

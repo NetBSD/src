@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.29.4.1 2008/05/16 02:22:34 yamt Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.29.4.2 2009/05/04 08:11:16 yamt Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.29.4.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.29.4.2 2009/05/04 08:11:16 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.29.4.1 2008/05/16 02:22:34 yamt Ex
 #include <x86/include/isa_machdep.h>
 #include <x86/include/powernow.h>
 
-#ifdef _LKM
+#ifdef _MODULE
 static struct sysctllog	*sysctllog;
 #define SYSCTLLOG	&sysctllog
 #else
@@ -481,7 +481,7 @@ k7_powernow_init(void)
 void
 k7_powernow_destroy(void)
 {
-#ifdef _LKM
+#ifdef _MODULE
 	sysctl_teardown(SYSCTLLOG);
 
 	if (freq_names)

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47 2008/01/19 13:11:18 chris Exp $
+#	$NetBSD: GENERIC,v 1.47.10.1 2009/05/04 08:11:23 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47 $"
+#ident 		"GENERIC-$Revision: 1.47.10.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -42,8 +42,6 @@ options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
-#options 	NO_TSC_TIME	# Don't use TSC microtime, even if available.
-				# Improves time behavior under VMware.
 
 #options 	KTRACE		# system call tracing via ktrace(1)
 
@@ -61,7 +59,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
@@ -110,6 +107,8 @@ options 	PERFCTRS	# performance counters
 #options 	COMPAT_16	# NetBSD 1.6
 #options 	COMPAT_20	# NetBSD 2.0
 #options 	COMPAT_30	# NetBSD 3.0
+#options 	COMPAT_40	# NetBSD 4.0
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -142,7 +141,7 @@ file-system     FILECORE        # Acorn filecore file system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -807,6 +806,11 @@ pseudo-device	loop			# network loopback
 #pseudo-device	pflog			# PF log if
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

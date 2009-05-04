@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.65 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.65.10.1 2009/05/04 08:14:15 yamt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65.10.1 2009/05/04 08:14:15 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -173,7 +173,7 @@ static int stf_checkaddr4(struct stf_softc *, const struct in_addr *,
 	struct ifnet *);
 static int stf_checkaddr6(struct stf_softc *, const struct in6_addr *,
 	struct ifnet *);
-static void stf_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+static void stf_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 static int stf_ioctl(struct ifnet *, u_long, void *);
 
 /* ARGSUSED */
@@ -195,11 +195,9 @@ stf_clone_create(struct if_clone *ifc, int unit)
 		return (EEXIST);
 	}
 
-	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT);
-	memset(sc, 0, sizeof(struct stf_softc));
+	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT|M_ZERO);
 
-	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 
 	sc->encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV6,
 	    stf_encapcheck, &in_stf_protosw, sc);
@@ -277,7 +275,7 @@ stf_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	 * local 6to4 address.
 	 * success on: dst = 10.1.1.1, ia6->ia_addr = 2002:0a01:0101:...
 	 */
-	if (bcmp(GET_V4(&ia6->ia_addr.sin6_addr), &ip.ip_dst,
+	if (memcmp(GET_V4(&ia6->ia_addr.sin6_addr), &ip.ip_dst,
 	    sizeof(ip.ip_dst)) != 0)
 		return 0;
 
@@ -317,7 +315,7 @@ stf_getsrcifa6(struct ifnet *ifp)
 		if (!IN6_IS_ADDR_6TO4(&sin6->sin6_addr))
 			continue;
 
-		bcopy(GET_V4(&sin6->sin6_addr), &in, sizeof(in));
+		memcpy(&in, GET_V4(&sin6->sin6_addr), sizeof(in));
 		INADDR_TO_IA(in, ia4);
 		if (ia4 == NULL)
 			continue;
@@ -408,7 +406,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	bcopy(GET_V4(&((struct sockaddr_in6 *)&ia6->ia_addr)->sin6_addr),
 	    &ip->ip_src, sizeof(ip->ip_src));
-	bcopy(in4, &ip->ip_dst, sizeof(ip->ip_dst));
+	memcpy(&ip->ip_dst, in4, sizeof(ip->ip_dst));
 	ip->ip_p = IPPROTO_IPV6;
 	ip->ip_ttl = ip_gif_ttl;	/*XXX*/
 	ip->ip_len = htons(m->m_pkthdr.len);
@@ -664,7 +662,7 @@ in_stf_input(struct mbuf *m, ...)
 /* ARGSUSED */
 static void
 stf_rtrequest(int cmd, struct rtentry *rt,
-    struct rt_addrinfo *info)
+    const struct rt_addrinfo *info)
 {
 	if (rt != NULL) {
 		struct stf_softc *sc;
@@ -685,7 +683,7 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	error = 0;
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifa = (struct ifaddr *)data;
 		if (ifa == NULL || ifa->ifa_addr->sa_family != AF_INET6) {
 			error = EAFNOSUPPORT;
@@ -710,8 +708,11 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL);
+		if (error)
 			break;
 		if (ifr->ifr_mtu < STF_MTU_MIN || ifr->ifr_mtu > STF_MTU_MAX)
 			return EINVAL;
@@ -720,7 +721,7 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 

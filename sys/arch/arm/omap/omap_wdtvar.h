@@ -38,7 +38,7 @@
 #define	OMAPWDT32K_DEFAULT_PERIOD	4		/* in seconds */
 
 struct omapwdt32k_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	struct sysmon_wdog sc_smw;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.55.10.1 2008/05/16 02:22:05 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.55.10.2 2009/05/04 08:10:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.55.10.1 2008/05/16 02:22:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.55.10.2 2009/05/04 08:10:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ struct zs_softc {
     struct	zs_chanstate	zi_cs[2];  /* chan A and B software state */
 };
 
-static u_char	cb_scheduled = 0;	/* Already asked for callback? */
+static void	*zs_softint_cookie;	/* for callback */
 /*
  * Define the registers for a closed port
  */
@@ -217,8 +217,8 @@ static u_long zs_freqs_generic[] = {
 static u_long *zs_frequencies;
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch __P((struct device *, struct cfdata *, void *));
-static void	zsattach __P((struct device *, struct device *, void *));
+static int	zsmatch(struct device *, struct cfdata *, void *);
+static void	zsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(zs, sizeof(struct zs_softc),
     zsmatch, zsattach, NULL, NULL);
@@ -241,32 +241,27 @@ const struct cdevsw zs_cdevsw = {
 };
 
 /* Interrupt handlers. */
-int		zshard __P((long));
-static int	zssoft __P((long));
-static int	zsrint __P((struct zs_chanstate *, volatile struct zschan *));
-static int	zsxint __P((struct zs_chanstate *, volatile struct zschan *));
-static int	zssint __P((struct zs_chanstate *, volatile struct zschan *));
+int		zshard(long);
+static int	zssoft(long);
+static int	zsrint(struct zs_chanstate *, volatile struct zschan *);
+static int	zsxint(struct zs_chanstate *, volatile struct zschan *);
+static int	zssint(struct zs_chanstate *, volatile struct zschan *);
 
 static struct zs_chanstate *zslist;
 
 /* Routines called from other code. */
-static void	zsstart __P((struct tty *));
+static void	zsstart(struct tty *);
 
 /* Routines purely local to this driver. */
-static void	zsoverrun __P((int, long *, const char *));
-static int	zsparam __P((struct tty *, struct termios *));
-static int	zsbaudrate __P((int, int, int *, int *, int *, int *));
-static int	zs_modem __P((struct zs_chanstate *, int, int));
-static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
-static void	zs_shutdown __P((struct zs_chanstate *));
-
-static int zsshortcuts;	/* number of "shortcut" software interrupts */
+static void	zsoverrun(int, long *, const char *);
+static int	zsparam(struct tty *, struct termios *);
+static int	zsbaudrate(int, int, int *, int *, int *, int *);
+static int	zs_modem(struct zs_chanstate *, int, int);
+static void	zs_loadchannelregs(volatile struct zschan *, u_char *);
+static void	zs_shutdown(struct zs_chanstate *);
 
 static int
-zsmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+zsmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int	zs_matched = 0;
 
@@ -280,10 +275,7 @@ void		*auxp;
  * Attach a found zs.
  */
 static void
-zsattach(parent, dev, aux)
-struct device	*parent;
-struct device	*dev;
-void		*aux;
+zsattach(struct device *parent, struct device *dev, void *aux)
 {
 	register struct zs_softc		*zi;
 	register struct zs_chanstate		*cs;
@@ -353,6 +345,9 @@ void		*aux;
 	cs->cs_unit  = 1;
 	cs->cs_zc    = &addr->zs_chan[ZS_CHAN_B];
 
+	zs_softint_cookie = softint_establish(SOFTINT_SERIAL,
+	    (void (*)(void *))zssoft, 0);
+
 	printf(": serial2 on channel a and modem2 on channel b\n");
 }
 
@@ -360,11 +355,7 @@ void		*aux;
  * Open a zs serial port.
  */
 int
-zsopen(dev, flags, mode, l)
-dev_t		dev;
-int		flags;
-int		mode;
-struct lwp	*l;
+zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	register struct tty		*tp;
 	register struct zs_chanstate	*cs;
@@ -373,7 +364,8 @@ struct lwp	*l;
 		 int			zs = unit >> 1;
 		 int			error, s;
 
-	if(zs >= zs_cd.cd_ndevs || (zi = zs_cd.cd_devs[zs]) == NULL)
+	zi = device_lookup_private(&zs_cd, zs);
+	if (zi == NULL)
 		return (ENXIO);
 	cs = &zi->zi_cs[unit & 1];
 
@@ -460,18 +452,14 @@ bad:
  * Close a zs serial port.
  */
 int
-zsclose(dev, flags, mode, l)
-dev_t		dev;
-int		flags;
-int		mode;
-struct lwp	*l;
+zsclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	register struct zs_chanstate	*cs;
 	register struct tty		*tp;
 		 struct zs_softc	*zi;
 		 int			unit = ZS_UNIT(dev);
 
-	zi = zs_cd.cd_devs[unit >> 1];
+	zi = device_lookup_private(&zs_cd, unit >> 1);
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 
@@ -493,10 +481,7 @@ struct lwp	*l;
  * Read/write zs serial port.
  */
 int
-zsread(dev, uio, flags)
-dev_t		dev;
-struct uio	*uio;
-int		flags;
+zsread(dev_t dev, struct uio *uio, int flags)
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
@@ -504,7 +489,7 @@ int		flags;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zs_cd.cd_devs[unit >> 1];
+	zi   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
@@ -512,10 +497,7 @@ int		flags;
 }
 
 int
-zswrite(dev, uio, flags)
-dev_t		dev;
-struct uio	*uio;
-int		flags;
+zswrite(dev_t dev, struct uio *uio, int flags)
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
@@ -523,7 +505,7 @@ int		flags;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zs_cd.cd_devs[unit >> 1];
+	zi   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
@@ -531,10 +513,7 @@ int		flags;
 }
 
 int
-zspoll(dev, events, l)
-dev_t		dev;
-int		events;
-struct lwp	*l;
+zspoll(dev_t dev, int events, struct lwp *l)
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
@@ -542,7 +521,7 @@ struct lwp	*l;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zs_cd.cd_devs[unit >> 1];
+	zi   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
  
@@ -550,15 +529,14 @@ struct lwp	*l;
 }
 
 struct tty *
-zstty(dev)
-dev_t	dev;
+zstty(dev_t dev)
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zs_cd.cd_devs[unit >> 1];
+	zi   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = &zi->zi_cs[unit & 1];
 	return(cs->cs_ttyp);
 }
@@ -576,8 +554,7 @@ dev_t	dev;
  */
 
 int
-zshard(sr)
-long sr;
+zshard(long sr)
 {
 	register struct zs_chanstate	*a;
 #define	b (a + 1)
@@ -628,24 +605,14 @@ long sr;
 	} while(intflags & 4);
 #undef b
 
-	if(intflags & 1) {
-		if(BASEPRI(sr)) {
-			spl1();
-			zsshortcuts++;
-			return(zssoft(sr));
-		}
-		else if(!cb_scheduled) {
-			cb_scheduled++;
-			add_sicallback((si_farg)zssoft, 0, 0);
-		}
-	}
+	if(intflags & 1)
+		softint_schedule(zs_softint_cookie);
+
 	return(intflags & 2);
 }
 
 static int
-zsrint(cs, zc)
-register struct zs_chanstate	*cs;
-register volatile struct zschan	*zc;
+zsrint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 {
 	register int c;
 
@@ -664,9 +631,7 @@ register volatile struct zschan	*zc;
 }
 
 static int
-zsxint(cs, zc)
-register struct zs_chanstate	*cs;
-register volatile struct zschan	*zc;
+zsxint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 {
 	register int i = cs->cs_tbc;
 
@@ -682,9 +647,7 @@ register volatile struct zschan	*zc;
 }
 
 static int
-zssint(cs, zc)
-register struct zs_chanstate	*cs;
-register volatile struct zschan	*zc;
+zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 {
 	register int rr0;
 
@@ -718,10 +681,7 @@ register volatile struct zschan	*zc;
  * Print out a ring or fifo overrun error message.
  */
 static void
-zsoverrun(unit, ptime, what)
-int	unit;
-long	*ptime;
-const char *what;
+zsoverrun(int unit, long *ptime, const char *what)
 {
 	time_t cur_sec = time_second;
 
@@ -736,8 +696,7 @@ const char *what;
  * ZS software interrupt.  Scan all channels for deferred interrupts.
  */
 int
-zssoft(sr)
-long sr;
+zssoft(long sr)
 {
     register struct zs_chanstate	*cs;
     register volatile struct zschan	*zc;
@@ -746,7 +705,6 @@ long sr;
     register int			get, n, c, cc, unit, s;
  	     int			retval = 0;
 
-    cb_scheduled = 0;
     s = spltty();
     for(cs = zslist; cs != NULL; cs = cs->cs_next) {
 	get = cs->cs_rbget;
@@ -853,15 +811,10 @@ again:
 }
 
 int
-zsioctl(dev, cmd, data, flag, l)
-dev_t		dev;
-u_long		cmd;
-void *		data;
-int		flag;
-struct lwp	*l;
+zsioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 		 int			unit = ZS_UNIT(dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = device_lookup_private(&zs_cd, unit >> 1);
 	register struct tty		*tp = zi->zi_cs[unit & 1].cs_ttyp;
 	register int			error, s;
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
@@ -978,13 +931,12 @@ struct lwp	*l;
  * Start or restart transmission.
  */
 static void
-zsstart(tp)
-register struct tty *tp;
+zsstart(register struct tty *tp)
 {
 	register struct zs_chanstate	*cs;
 	register int			s, nch;
 		 int			unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = device_lookup_private(&zs_cd, unit >> 1);
 
 	cs = &zi->zi_cs[unit & 1];
 	s  = spltty();
@@ -1032,13 +984,11 @@ out:
  * Stop output, e.g., for ^S or output flush.
  */
 void
-zsstop(tp, flag)
-register struct tty	*tp;
-	 int		flag;
+zsstop(register struct tty *tp, int flag)
 {
 	register struct zs_chanstate	*cs;
 	register int			s, unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = device_lookup_private(&zs_cd, unit >> 1);
 
 	cs = &zi->zi_cs[unit & 1];
 	s  = splzs();
@@ -1054,8 +1004,7 @@ register struct tty	*tp;
 }
 
 static void
-zs_shutdown(cs)
-	struct zs_chanstate	*cs;
+zs_shutdown(struct zs_chanstate *cs)
 {
 	struct tty	*tp = cs->cs_ttyp;
 	int		s;
@@ -1092,12 +1041,10 @@ zs_shutdown(cs)
  * 1, 3, 4, 5, 9, 10, 11, 12, 13, 14, and 15 are written.
  */
 static int
-zsparam(tp, t)
-register struct tty	*tp;
-register struct termios	*t;
+zsparam(register struct tty *tp, register struct termios *t)
 {
 		 int			unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = device_lookup_private(&zs_cd, unit >> 1);
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
 		 int			cdiv = 0,	/* XXX gcc4 -Wuninitialized */
 					clkm = 0,	/* XXX gcc4 -Wuninitialized */
@@ -1186,7 +1133,7 @@ register struct termios	*t;
 			cs->cs_tbc = 0;
 			cs->cs_heldchange = 1;
 		} else {
-			bcopy((void *)cs->cs_preg, (void *)cs->cs_creg, 16);
+			memcpy( (void *)cs->cs_creg, (void *)cs->cs_preg, 16);
 			zs_loadchannelregs(cs->cs_zc, cs->cs_creg);
 		}
 	}
@@ -1198,8 +1145,7 @@ register struct termios	*t;
  * search for the best matching baudrate
  */
 static int
-zsbaudrate(unit, wanted, divisor, clockmode, brgenmode, timeconst)
-int	unit, wanted, *divisor, *clockmode, *brgenmode, *timeconst;
+zsbaudrate(int unit, int wanted, int *divisor, int *clockmode, int *brgenmode, int *timeconst)
 {
 	int	bestdiff, bestbps, source;
 
@@ -1277,9 +1223,7 @@ int	unit, wanted, *divisor, *clockmode, *brgenmode, *timeconst;
  * in transmission, the change is deferred.
  */
 static int
-zs_modem(cs, bits, how)
-struct zs_chanstate	*cs;
-int			bits, how;
+zs_modem(struct zs_chanstate *cs, int bits, int how)
 {
 	int s, mbits;
 
@@ -1324,9 +1268,7 @@ int			bits, how;
  * be disabled for the time it takes to write all the registers.
  */
 static void
-zs_loadchannelregs(zc, reg)
-volatile struct zschan	*zc;
-u_char			*reg;
+zs_loadchannelregs(volatile struct zschan *zc, u_char *reg)
 {
 	int i;
 

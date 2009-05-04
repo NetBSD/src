@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.35.2.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.35.2.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.35.2.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.35.2.2 2009/05/04 08:11:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -110,17 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.35.2.1 2008/05/16 02:22:34 yamt Exp $")
  */
 
 #define MY_COUNT _C_LABEL(uvmexp)
-
-/* XXX See comment in locore.s */
-#ifdef __ELF__
-#define	XINTR(name,num)		Xintr_/**/name/**/num
-#define	XSTRAY(name,num)	Xstray_/**/name/**/num
-#define XINTR_TSS(irq_num)	Xintr_tss_ ## irq_num
-#else
-#define	XINTR(name,num)		_Xintr_/**/name/**/num
-#define	XSTRAY(name,num)	_Xstray_/**/name/**/num
-#define XINTR_TSS(irq_num)	Xintr_tss_/**/irq_num
-#endif
 
 /*
  * Store address of TSS in %eax, given a selector in %eax.
@@ -745,9 +734,11 @@ IDTVEC(resume_/**/name/**/num)						\
 	popl	%ebx							;\
 	jmp	*%esi			/* lower spl and do ASTs */	;\
 
-# Just unmasking the event isn't enouth, we also need to
-# reassert the event pending bit if needed. For now just call
-# the C function doing it, maybe rewrite in inline assembly ?
+/*
+ * Just unmasking the event isn't enough, we also need to
+ * reassert the event pending bit if needed. For now just call
+ * the C function doing it, maybe rewrite in inline assembly ?
+ */
 #define hypervisor_asm_unmask(num)			\
 	pushl $num					;\
 	call _C_LABEL(hypervisor_enable_ipl)		;\
@@ -872,7 +863,7 @@ IDTVEC(trap07)
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap
-	jmp	.Lalltraps_checkusr
+	jmp	_C_LABEL(trapreturn)
 #else
 #ifndef XEN
 	sti
@@ -895,6 +886,7 @@ IDTVEC(trap0d)
 IDTVEC(trap0e)
 	pushl	$T_PAGEFLT
 	INTRENTRY
+	STI(%eax)
 	testb	$PGEX_U,TF_ERR(%esp)
 	jnz	calltrap
 	movl	%cr2,%eax
@@ -919,6 +911,7 @@ IDTVEC(trap0e)
 	pushl	%eax
 	movl	%esp,%eax
 	addl	$4,%eax
+	incl	CPUVAR(NTRAP)
 	pushl	%eax
 	call	_C_LABEL(trap)
 	addl	$8,%esp
@@ -940,6 +933,7 @@ trap0e_checkast:
 5:	CLEAR_ASTPENDING(%eax)
 	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
+	incl	CPUVAR(NTRAP)
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
@@ -974,7 +968,7 @@ trap0e_checkast:
 	jne	3f
 	INTRFASTEXIT
 3:	pushl	$4f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 #ifdef DDB
 	movl	CPUVAR(ILEVEL), %eax
@@ -982,7 +976,7 @@ trap0e_checkast:
 #endif /* DDB */
 	movl	%ebx,CPUVAR(ILEVEL)
 	jmp	trap0e_checkast		/* re-check ASTs */
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
+4:	.asciz	";SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 9:	STI(%eax)
 	call	_C_LABEL(pmap_load)
@@ -1003,10 +997,11 @@ IDTVEC(trap0f)
 	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
 	INTRENTRY
+	STI(%eax)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
-	jmp	.Lalltraps_checkusr
+	jmp	_C_LABEL(trapreturn)
 
 IDTVEC(trap10)
 #if NNPX > 0
@@ -1025,7 +1020,7 @@ IDTVEC(trap10)
 	incl	_C_LABEL(uvmexp)+V_TRAP
 	call	_C_LABEL(npxintr)
 	addl	$12,%esp
-	jmp	.Lalltraps_checkusr
+	jmp	_C_LABEL(trapreturn)
 #else
 	sti
 	ZTRAP(T_ARITHTRAP)
@@ -1091,14 +1086,16 @@ IDTVEC(tss_trap08)
 /* LINTSTUB: Ignore */
 NENTRY(alltraps)
 	INTRENTRY
+	STI(%eax)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
+	incl	CPUVAR(NTRAP)
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-.Lalltraps_checkusr:
+_C_LABEL(trapreturn):	.globl	trapreturn
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	.Lalltraps_checkast
 #ifdef VM86
@@ -1115,6 +1112,7 @@ calltrap:
 5:	CLEAR_ASTPENDING(%eax)
 	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
+	incl	CPUVAR(NTRAP)
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
@@ -1141,7 +1139,7 @@ calltrap:
 	movl    CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp     *IS_RESUME(%eax)
 7:      movl    %ebx, CPUVAR(ILEVEL) #restore cpl
-	jmp     .Lalltraps_checkusr
+	jmp     _C_LABEL(trapreturn)
 #endif /* XEN */
 #ifndef DIAGNOSTIC
 6:	INTRFASTEXIT
@@ -1151,13 +1149,13 @@ calltrap:
 	INTRFASTEXIT
 3:	STI(%eax)
 	pushl	$4f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 	pushl	%ebx
 	call	_C_LABEL(spllower)
 	addl	$4,%esp
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
+4:	.asciz	"SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 9:	STI(%eax)
 	call	_C_LABEL(pmap_load)
@@ -1215,36 +1213,6 @@ ipkdbrestore:
 	ret
 #endif /* IPKDB */
 
-
-/*
- * If an error is detected during trap, syscall, or interrupt exit, trap() will
- * change %eip to point to one of these labels.  We clean up the stack, if
- * necessary, and resume as if we were handling a general protection fault.
- * This will cause the process to get a SIGBUS.
- */
-/* LINTSTUB: Var: char resume_iret[1]; */
-NENTRY(resume_iret)
-	ZTRAP(T_PROTFLT)
-/* LINTSTUB: Var: char resume_pop_ds[1]; */
-NENTRY(resume_pop_ds)
-	movl	%es,TF_ES(%esp)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%es
-/* LINTSTUB: Var: char resume_pop_es[1]; */
-NENTRY(resume_pop_es)
-	movl	%fs,TF_FS(%esp)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%fs
-/* LINTSTUB: Var: char resume_pop_fs[1]; */
-NENTRY(resume_pop_fs)
-	movl	%gs,TF_GS(%esp)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%gs
-/* LINTSTUB: Var: char resume_pop_gs[1]; */
-NENTRY(resume_pop_gs)
-	movl	$T_PROTFLT,TF_TRAPNO(%esp)
-	jmp	calltrap
-
 #ifdef IPKDB
 /* LINTSTUB: Func: int ipkdbfbyte(u_char *c) */
 NENTRY(ipkdbfbyte)
@@ -1279,17 +1247,20 @@ fault:
 #endif	/* IPKDB */
 
 #ifdef XEN
-# A note on the "critical region" in our callback handler.
-# We want to avoid stacking callback handlers due to events occurring
-# during handling of the last event. To do this, we keep events disabled
-# until weve done all processing. HOWEVER, we must enable events before
-# popping the stack frame (cant be done atomically) and so it would still
-# be possible to get enough handler activations to overflow the stack.
-# Although unlikely, bugs of that kind are hard to track down, so wed
-# like to avoid the possibility.
-# So, on entry to the handler we detect whether we interrupted an
-# existing activation in its critical region -- if so, we pop the current
-# activation and restart the handler using the previous one.
+
+/*
+ * A note on the "critical region" in our callback handler.
+ * We want to avoid stacking callback handlers due to events occurring
+ * during handling of the last event. To do this, we keep events disabled
+ * until weve done all processing. HOWEVER, we must enable events before
+ * popping the stack frame (cant be done atomically) and so it would still
+ * be possible to get enough handler activations to overflow the stack.
+ * Although unlikely, bugs of that kind are hard to track down, so wed
+ * like to avoid the possibility.
+ * So, on entry to the handler we detect whether we interrupted an
+ * existing activation in its critical region -- if so, we pop the current
+ * activation and restart the handler using the previous one.
+ */
 NENTRY(hypervisor_callback)
 	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
@@ -1320,13 +1291,15 @@ critiret:
 14:     XEN_BLOCK_EVENTS(%esi)
         jmp  11b
 ecrit:  /**** END OF CRITICAL REGION ****/
-# [How we do the fixup]. We want to merge the current stack frame with the
-# just-interrupted frame. How we do this depends on where in the critical
-# region the interrupted handler was executing, and so how many saved
-# registers are in each frame. We do this quickly using the lookup table
-# 'critical_fixup_table'. For each byte offset in the critical region, it
-# provides the number of bytes which have already been popped from the
-# interrupted stack frame.
+/*
+ * [How we do the fixup]. We want to merge the current stack frame with the
+ * just-interrupted frame. How we do this depends on where in the critical
+ * region the interrupted handler was executing, and so how many saved
+ * registers are in each frame. We do this quickly using the lookup table
+ * 'critical_fixup_table'. For each byte offset in the critical region, it
+ * provides the number of bytes which have already been popped from the
+ * interrupted stack frame.
+ */
 critical_region_fixup:
         cmpl	$(critiret-1),%eax	    # eip points to iret?
 	jne	1f
@@ -1334,7 +1307,7 @@ critical_region_fixup:
 	jmp	2f
 1:	xorl	%eax,%eax
 2:
-				# %eax contains num bytes popped
+	/* %eax contains num bytes popped */
         mov  %esp,%esi
         add  %eax,%esi        # %esi points at end of src region
         mov  %esp,%edi
@@ -1351,7 +1324,9 @@ critical_region_fixup:
         jmp  11b
 
 
-# Hypervisor uses this for application faults while it executes.
+/*
+ * Hypervisor uses this for application faults while it executes.
+ */
 NENTRY(failsafe_callback)
 	pop	%ds
 	pop	%es

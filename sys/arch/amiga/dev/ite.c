@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.82 2007/12/02 04:21:22 mhitch Exp $ */
+/*	$NetBSD: ite.c,v 1.82.18.1 2009/05/04 08:10:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2007/12/02 04:21:22 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.18.1 2009/05/04 08:10:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,9 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2007/12/02 04:21:22 mhitch Exp $");
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/custom.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
-#if defined(__m68k__)
 #include <amiga/amiga/isr.h>
-#endif
 #include <amiga/dev/iteioctl.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/kbdmap.h>
@@ -242,7 +240,7 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 			 * console reinit copy params over.
 			 * and console always gets keyboard
 			 */
-			bcopy(&con_itesoftc.grf, &ip->grf,
+			memcpy( &ip->grf, &con_itesoftc.grf,
 			    (char *)&ip[1] - (char *)&ip->grf);
 			con_itesoftc.grf = NULL;
 			kbd_ite = ip;
@@ -275,7 +273,7 @@ struct ite_softc *
 getitesp(dev_t dev)
 {
 	if (amiga_realconfig && con_itesoftc.grf == NULL)
-		return(ite_cd.cd_devs[ITEUNIT(dev)]);
+		return(device_lookup_private(&ite_cd, ITEUNIT(dev)));
 
 	if (con_itesoftc.grf == NULL)
 		panic("no ite_softc for console");
@@ -320,7 +318,7 @@ init_bell(void)
 	if (bsamplep == NULL)
 		panic("no chipmem for ite_bell");
 
-	bcopy(sample, bsamplep, 20);
+	memcpy( bsamplep, sample, 20);
 }
 
 void
@@ -429,7 +427,7 @@ iteinit(dev_t dev)
 	if (ip->flags & ITE_INITED)
 		return;
 	if (kbdmap_loaded == 0) {
-		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+		memcpy( &kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 		kbdmap_loaded = 1;
 	}
 
@@ -601,12 +599,12 @@ iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case ITEIOCSKMAP:
 		if (addr == 0)
 			return(EFAULT);
-		bcopy(addr, &kbdmap, sizeof(struct kbdmap));
+		memcpy( &kbdmap, addr, sizeof(struct kbdmap));
 		return(0);
 	case ITEIOCGKMAP:
 		if (addr == NULL)
 			return(EFAULT);
-		bcopy(&kbdmap, addr, sizeof(struct kbdmap));
+		memcpy( addr, &kbdmap, sizeof(struct kbdmap));
 		return(0);
 	case ITEIOCGREPT:
 		irp = (struct iterepeat *)addr;
@@ -757,7 +755,7 @@ ite_reset(struct ite_softc *ip)
 	ip->keypad_appmode = 0;
 	ip->imode = 0;
 	ip->key_repeat = 1;
-	bzero(ip->tabs, ip->cols);
+	memset(ip->tabs, 0, ip->cols);
 	for (i = 0; i < ip->cols; i++)
 		ip->tabs[i] = ((i & 7) == 0);
 }
@@ -919,7 +917,7 @@ ite_filter(u_char c, enum caller caller)
 	}
 	/* Safety button, switch back to ascii keymap. */
 	if (key_mod == (KBD_MOD_LALT | KBD_MOD_LMETA) && c == 0x50) {
-		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+		memcpy( &kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 
 		splx(s);
 		return;
@@ -1028,7 +1026,7 @@ ite_filter(u_char c, enum caller caller)
 		 * to the above table. This is *nasty* !
 		 */
 		if (c >= 0x4c && c <= 0x4f && kbd_ite->cursor_appmode
-		    && !bcmp(str, "\x03\x1b[", 3) &&
+		    && !memcmp(str, "\x03\x1b[", 3) &&
 		    strchr("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 

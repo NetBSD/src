@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.46 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.46.4.1 2009/05/04 08:11:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.46 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.46.4.1 2009/05/04 08:11:44 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -77,6 +77,12 @@ struct fmttab {
 	register_t fmt_value;
 	const char *fmt_string;
 };
+
+/*
+ * This should be one per CPU but since we only support it on 750 variants it
+ * doesn't realy matter since none of them supports SMP
+ */
+envsys_data_t sensor;
 
 static const struct fmttab cpu_7450_l2cr_formats[] = {
 	{ L2CR_L2E, 0, " disabled" },
@@ -213,6 +219,7 @@ static const struct cputab models[] = {
 	{ "8245",	MPC8245,	REVFMT_MAJMIN },
 	{ "970",	IBM970,		REVFMT_MAJMIN },
 	{ "970FX",	IBM970FX,	REVFMT_MAJMIN },
+	{ "970MP",	IBM970MP,	REVFMT_MAJMIN },
 	{ "POWER3II",   IBMPOWER3II,    REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
 };
@@ -304,6 +311,7 @@ cpu_probe_cache(void)
 	case IBM750FX:
 	case MPC601:
 	case MPC750:
+	case MPC7400:
 	case MPC7447A:
 	case MPC7448:
 	case MPC7450:
@@ -343,6 +351,7 @@ cpu_probe_cache(void)
 		break;
 	case IBM970:
 	case IBM970FX:
+	case IBM970MP:
 		curcpu()->ci_ci.dcache_size = 32 K;
 		curcpu()->ci_ci.icache_size = 64 K;
 		curcpu()->ci_ci.dcache_line_size = 128;
@@ -427,9 +436,7 @@ cpu_attach_common(struct device *self, int id)
 }
 
 void
-cpu_setup(self, ci)
-	struct device *self;
-	struct cpu_info *ci;
+cpu_setup(struct device *self, struct cpu_info *ci)
 {
 	u_int hid0, hid0_save, pvr, vers;
 	const char *bitmask;
@@ -503,6 +510,7 @@ cpu_setup(self, ci)
 
 	case IBM970:
 	case IBM970FX:
+	case IBM970MP:
 	case IBMPOWER3II:
 	default:
 		/* No power-saving mode is available. */ ;
@@ -552,13 +560,14 @@ cpu_setup(self, ci)
 		break;
 	case IBM970:
 	case IBM970FX:
+	case IBM970MP:
 		bitmask = 0;
 		break;
 	default:
 		bitmask = HID0_BITMASK;
 		break;
 	}
-	bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
+	snprintb(hidbuf, sizeof hidbuf, bitmask, hid0);
 	aprint_normal("%s: HID0 %s, powersave: %d\n", self->dv_xname, hidbuf,
 	    powersave);
 
@@ -983,12 +992,22 @@ void
 cpu_tau_setup(struct cpu_info *ci)
 {
 	struct sysmon_envsys *sme;
-	envsys_data_t sensor;
-	int error;
+	int error, therm_delay;
+
+	mtspr(SPR_THRM1, SPR_THRM_VALID);
+	mtspr(SPR_THRM2, 0);
+
+	/*
+	 * we need to figure out how much 20+us in units of CPU clock cycles
+	 * are
+	 */
+
+	therm_delay = ci->ci_khz / 40;		/* 25us just to be safe */
+	
+        mtspr(SPR_THRM3, SPR_THRM_TIMER(therm_delay) | SPR_THRM_ENABLE); 
 
 	sme = sysmon_envsys_create();
 
-	sensor.state = ENVSYS_SVALID;
 	sensor.units = ENVSYS_STEMP;
 	(void)strlcpy(sensor.desc, "CPU Temp", sizeof(sensor.desc));
 	if (sysmon_envsys_sensor_attach(sme, &sensor)) {
@@ -1015,26 +1034,16 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	int i, threshold, count;
 
 	threshold = 64; /* Half of the 7-bit sensor range */
-	mtspr(SPR_THRM1, 0);
-	mtspr(SPR_THRM2, 0);
-	/* XXX This counter is supposed to be "at least 20 microseonds, in
-	 * XXX units of clock cycles". Since we don't have convenient
-	 * XXX access to the CPU speed, set it to a conservative value,
-	 * XXX that is, assuming a fast (1GHz) G3 CPU (As of February 2002,
-	 * XXX the fastest G3 processor is 700MHz) . The cost is that
-	 * XXX measuring the temperature takes a bit longer.
-	 */
-        mtspr(SPR_THRM3, SPR_THRM_TIMER(20000) | SPR_THRM_ENABLE); 
 
 	/* Successive-approximation code adapted from Motorola
 	 * application note AN1800/D, "Programming the Thermal Assist
 	 * Unit in the MPC750 Microprocessor".
 	 */
-	for (i = 4; i >= 0 ; i--) {
+	for (i = 5; i >= 0 ; i--) {
 		mtspr(SPR_THRM1, 
 		    SPR_THRM_THRESHOLD(threshold) | SPR_THRM_VALID);
 		count = 0;
-		while ((count < 100) && 
+		while ((count < 100000) && 
 		    ((mfspr(SPR_THRM1) & SPR_THRM_TIV) == 0)) {
 			count++;
 			delay(1);
@@ -1043,16 +1052,18 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			/* The interrupt bit was set, meaning the 
 			 * temperature was above the threshold 
 			 */
-			threshold += 2 << i;
+			threshold += 1 << i;
 		} else {
 			/* Temperature was below the threshold */
-			threshold -= 2 << i;
+			threshold -= 1 << i;
 		}
+		
 	}
 	threshold += 2;
 
 	/* Convert the temperature in degrees C to microkelvin */
 	edata->value_cur = (threshold * 1000000) + 273150000;
+	edata->state = ENVSYS_SVALID;
 }
 #endif /* NSYSMON_ENVSYS > 0 */
 
@@ -1179,13 +1190,12 @@ cpu_hatch(void)
 
 	/*
 	 * Set PIR (Processor Identification Register).  i.e. whoami
-	 * Note that PIR is read-only on some CPU's.  Try to work around
-	 * that as best as possible.  Assume that if it is 0, it is meant
-	 * to be setup by us.
+	 * Note that PIR is read-only on some CPU versions, so we write to it
+	 * only if it has a different value than we need.
 	 */
 
 	msr = mfspr(SPR_PIR);
-	if (msr == 0)
+	if (msr != h->pir)
 		mtspr(SPR_PIR, h->pir);
 	
 	__asm volatile ("mtsprg 0,%0" :: "r"(ci));
@@ -1256,7 +1266,7 @@ cpu_hatch(void)
 }
 
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	start_secondary_cpu = 1;
 	__asm volatile ("sync");

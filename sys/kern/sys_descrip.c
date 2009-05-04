@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.2.2.1 2008/05/16 02:25:27 yamt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.2.2.2 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.2.2.1 2008/05/16 02:25:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.2.2.2 2009/05/04 08:13:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.2.2.1 2008/05/16 02:25:27 yamt Exp
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
@@ -111,7 +111,7 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 	if ((fp = fd_getfile(old)) == NULL) {
 		return EBADF;
 	}
-	error = fd_dup(fp, 0, &new, 0);
+	error = fd_dup(fp, 0, &new, false);
 	fd_putfile(old);
 	*retval = new;
 	return error;
@@ -136,6 +136,11 @@ sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 	if ((fp = fd_getfile(old)) == NULL) {
 		return EBADF;
 	}
+	mutex_enter(&fp->f_lock);
+	fp->f_count++;
+	mutex_exit(&fp->f_lock);
+	fd_putfile(old);
+
 	if ((u_int)new >= curproc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 	    (u_int)new >= maxfiles) {
 		error = EBADF;
@@ -144,10 +149,10 @@ sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 	} else {
 		error = fd_dup2(fp, new);
 	}
-	fd_putfile(old);
+	closef(fp);
 	*retval = new;
 
-	return 0;
+	return error;
 }
 
 /*
@@ -309,13 +314,11 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	filedesc_t *fdp;
 	file_t *fp;
 	fdfile_t *ff;
-	proc_t *p;
 	struct flock fl;
 
-	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
-	fdp = p->p_fd;
+	fdp = l->l_fd;
 	error = 0;
 
 	switch (cmd) {
@@ -364,12 +367,13 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	switch (cmd) {
 	case F_DUPFD:
 		newmin = (long)SCARG(uap, arg);
-		if ((u_int)newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
+		if ((u_int)newmin >=
+		    l->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 		    (u_int)newmin >= maxfiles) {
 			fd_putfile(fd);
 			return EINVAL;
 		}
-		error = fd_dup(fp, newmin, &i, 0);
+		error = fd_dup(fp, newmin, &i, false);
 		*retval = i;
 		break;
 
@@ -378,11 +382,11 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_SETFD:
-		if ((long)SCARG(uap, arg) & 1) {
-			ff->ff_exclose = 1;
-			fdp->fd_exclose = 1;
+		if ((long)SCARG(uap, arg) & FD_CLOEXEC) {
+			ff->ff_exclose = true;
+			fdp->fd_exclose = true;
 		} else {
-			ff->ff_exclose = 0;
+			ff->ff_exclose = false;
 		}
 		break;
 
@@ -429,7 +433,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_SETOWN:
-		tmp = (int)(intptr_t) SCARG(uap, arg);
+		tmp = (int)(uintptr_t) SCARG(uap, arg);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOSETOWN, &tmp);
 		break;
 
@@ -480,7 +484,7 @@ do_sys_fstat(int fd, struct stat *sb)
  * Return status information about a file descriptor.
  */
 int
-sys___fstat30(struct lwp *l, const struct sys___fstat30_args *uap,
+sys___fstat50(struct lwp *l, const struct sys___fstat50_args *uap,
 	      register_t *retval)
 {
 	/* {
@@ -670,6 +674,8 @@ sys___posix_fadvise50(struct lwp *l,
 		syscallarg(int) advice;
 	} */
 
-	return do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
+	*retval = do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
 	    SCARG(uap, len), SCARG(uap, advice));
+
+	return 0;
 }

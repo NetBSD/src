@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.5.78.1 2008/05/16 02:22:06 yamt Exp $	*/
+/*	$NetBSD: prf.c,v 1.5.78.2 2009/05/04 08:10:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,14 +33,13 @@
 #include "boot.h"
 
 void
-putchar(c)
-	unsigned char c;
+putchar(int c)
 {
 	cnputc(c);
 }
 
 int
-getchar()
+getchar(void)
 {
 	return (cngetc());
 }

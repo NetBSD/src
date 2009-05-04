@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.68.10.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.68.10.2 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.68.10.1 2008/05/16 02:25:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.68.10.2 2009/05/04 08:13:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -111,7 +111,7 @@ nukepark(void *arg, void *obj)
 }
 
 void
-puffs_msgif_init()
+puffs_msgif_init(void)
 {
 
 	parkpc = pool_cache_init(sizeof(struct puffs_msgpark), 0, 0, 0,
@@ -119,7 +119,7 @@ puffs_msgif_init()
 }
 
 void
-puffs_msgif_destroy()
+puffs_msgif_destroy(void)
 {
 
 	pool_cache_destroy(parkpc);
@@ -1018,19 +1018,13 @@ puffs_msgif_close(void *this)
 	}
 
 	/* Won't access pmp from here anymore */
+	atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
 	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
-	/*
-	 * Detach from VFS.  First do necessary XXX-dance (from
-	 * sys_unmount() & other callers of dounmount()
-	 *
-	 * XXX2: take a reference to the mountpoint before starting to
-	 * wait for syncer_mutex.  Otherwise the mointpoint can be
-	 * wiped out while we wait. XXX Should be done earlier
-	 */
-	atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
+	/* Detach from VFS. */
 	(void)dounmount(mp, MNT_FORCE, curlwp);
+	vfs_destroy(mp);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.12.4.1 2008/05/16 02:22:44 yamt Exp $ */
+/*	$NetBSD: pmu.c,v 1.12.4.2 2009/05/04 08:11:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.12.4.1 2008/05/16 02:22:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.12.4.2 2009/05/04 08:11:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,7 +694,7 @@ pmu_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
 
 	memcpy(&sec, &resp[1], 4);
 	tvp->tv_sec = sec - DIFF19041970;
-	DPRINTF("tod: %ld\n", tvp->tv_sec);
+	DPRINTF("tod: %" PRIo64 "\n", tvp->tv_sec);
 	tvp->tv_usec = 0;
 	return 0;
 }
@@ -713,7 +713,7 @@ pmu_todr_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 void
-pmu_poweroff()
+pmu_poweroff(void)
 {
 	struct pmu_softc *sc;
 	uint8_t cmd[] = {'M', 'A', 'T', 'T'};
@@ -727,7 +727,7 @@ pmu_poweroff()
 }
 
 void
-pmu_restart()
+pmu_restart(void)
 {
 	struct pmu_softc *sc;
 	uint8_t resp[16];

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.10.32.1 2008/05/16 02:25:11 yamt Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.10.32.2 2009/05/04 08:13:21 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,7 +43,7 @@
 /* midi device */
 struct umidi_mididev {
 	struct umidi_softc	*sc;
-	struct device		*mdev;
+	device_t		mdev;
 	/* */
 	struct umidi_jack	*in_jack;
 	struct umidi_jack	*out_jack;
@@ -100,7 +100,7 @@ struct umidi_softc {
 	USBBASEDEVICE		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
-	struct umidi_quirk	*sc_quirk;
+	const struct umidi_quirk	*sc_quirk;
 
 	int			sc_dying;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.26 2005/12/11 12:17:19 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.26.78.1 2009/05/04 08:11:06 yamt Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -19,7 +19,6 @@ CLEANFILES+=	${PROGAOUT} vers.c vers.o
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
 CPPFLAGS+=	-Wno-main
-CPPFLAGS+=	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 CPPFLAGS+=	-D__daddr_t=int32_t
 CFLAGS=		-Os -msoft-float -ffreestanding
 
@@ -34,7 +33,8 @@ LIBCRTEND=
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp300 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh \
+		-DM ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 ${PROG}: ${PROGAOUT}
 	${OBJCOPY} --output-target=binary ${PROGAOUT} ${PROGAOUT}.bin
@@ -61,7 +61,7 @@ DRIVERSOURCE=		apci.c ct.c dca.c dcm.c dnkbd.c fhpib.c hil.c \
 			nhpib.c rd.c scsi.c sd.c
 
 .include <bsd.own.mk>
-
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 ### find out what to use for libkern

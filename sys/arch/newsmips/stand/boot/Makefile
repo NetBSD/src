@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.18 2006/06/29 01:45:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.18.62.1 2009/05/04 08:11:38 yamt Exp $
 
-S= ${.CURDIR}/../../../..
+S!= cd ${.CURDIR}/../../../..; pwd
 
 PROG= boot
 SRCS= locore.S boot.c bootinfo.c devopen.c net.c netif_news.c
@@ -18,11 +18,12 @@ CLEANFILES+= ${PROG}.elf ${PROG}.tmp
 LINKFLAGS= -x -N -Ttext a0700000 -e _start
 LINKFLAGS+= -T ${S}/arch/mips/conf/stand.ldscript
 CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+= -DSUN_BOOTPARAMS
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
-CPPFLAGS+= -I${.CURDIR} -I${COMMON} -I${S}
+CPPFLAGS+= -I${.CURDIR} -I. -I${S}
 CPPFLAGS+= -D__daddr_t=int32_t
 
 AFLAGS= -D_LOCORE -mno-abicalls
@@ -38,4 +39,5 @@ ${PROG}: ${OBJS}
 	-${SIZE} ${PROG}.elf
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

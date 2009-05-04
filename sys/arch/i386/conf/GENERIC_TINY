@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.112.4.1 2008/05/16 02:22:33 yamt Exp $
+#	$NetBSD: GENERIC_TINY,v 1.112.4.2 2009/05/04 08:11:15 yamt Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -28,9 +28,6 @@ maxusers	8		# estimated number of users
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
 
-# Save a physical page per process by not setting a kernel stack red zone.
-options 	NOREDZONE
-
 # Standard system options
 
 options 	INSECURE	# disable kernel security levels - X needs this
@@ -43,12 +40,10 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	NMBCLUSTERS=256
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -78,6 +73,7 @@ options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

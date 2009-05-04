@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.6.40.1 2008/05/16 02:25:36 yamt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.6.40.2 2009/05/04 08:13:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,11 +35,13 @@
 
 #undef _LOCORE
 #define _LOCORE	/* XXX fredette - unfortunate */
+
 #include <machine/asm.h>
 #include <machine/frame.h>
+#include <machine/reg.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.6.40.1 2008/05/16 02:25:36 yamt Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.6.40.2 2009/05/04 08:13:50 yamt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -497,9 +499,7 @@ LEAF_ENTRY(spcopy)
 	 * Setup the fault handler, and load %ret0
 	 * with EFAULT, assuming the copy will fail.
 	 */
-	.import	curlwp, data
-	ldil    L%curlwp, %r31
-	ldw     R%curlwp(%r31), %r31
+	mfctl	CR_CURLWP, %r31
 #ifdef	DIAGNOSTIC
 	comb,<>,n %r0, %r31, Lspcopy_curlwp_ok
 	ldil	L%panic, %r1

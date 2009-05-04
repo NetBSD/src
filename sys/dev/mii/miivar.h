@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.50.4.1 2008/05/16 02:24:37 yamt Exp $	*/
+/*	$NetBSD: miivar.h,v 1.50.4.2 2009/05/04 08:12:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -110,7 +110,8 @@ struct mii_softc {
 
 	LIST_ENTRY(mii_softc) mii_list;	/* entry on parent's PHY list */
 
-	u_int32_t mii_mpd_model;	/* the PHY's model (MII_MODEL())*/
+	uint32_t mii_mpd_model;		/* the PHY's model (MII_MODEL())*/
+	uint32_t mii_mpd_rev;		/* the PHY's revision (MII_REV())*/
 	int mii_phy;			/* our MII address */
 	int mii_offset;			/* first PHY, second PHY, etc. */
 	u_int mii_inst;			/* instance for ifmedia */
@@ -231,6 +232,7 @@ int	mii_mediachg(struct mii_data *);
 void	mii_tick(struct mii_data *);
 void	mii_pollstat(struct mii_data *);
 void	mii_down(struct mii_data *);
+int	mii_anar(int);
 
 int mii_ifmedia_change(struct mii_data *);
 

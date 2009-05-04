@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9 2008/04/16 18:41:48 cegger Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9.4.1 2009/05/04 08:12:12 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,6 +64,8 @@
 
 #include "opt_xen.h"
 
+struct pci_attach_args;
+
 extern struct x86_bus_dma_tag pci_bus_dma_tag;
 #ifdef _LP64
 extern struct x86_bus_dma_tag pci_bus_dma64_tag;
@@ -84,6 +86,12 @@ union x86_pci_tag_u {
 };
 
 typedef union x86_pci_tag_u pcitag_t;
+
+#ifndef DOM0OPS
+int		xpci_enumerate_bus(struct pci_softc *, const int *,
+		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
+#define PCI_MACHDEP_ENUMERATE_BUS xpci_enumerate_bus
+#endif
 
 #else /* XEN3 */
 
@@ -126,6 +134,9 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 int		xen_pci_enumerate_bus(struct pci_softc *, const int *,
 		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
+
+/* Extract Bus Number for a host bridge or -1 if unknown. */
+int             pchb_get_bus_number(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PCI Specification,

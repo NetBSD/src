@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.4.80.1 2008/05/16 02:21:55 yamt Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.4.80.2 2009/05/04 08:10:38 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,18 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.4.80.1 2008/05/16 02:21:55 yamt Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.4.80.2 2009/05/04 08:10:38 yamt Exp $")	
 
 	.text
 	.align	0
-
-#ifdef MULTIPROCESSOR
-.Lcpu_info:
-	.word	_C_LABEL(cpu_info)
-#else
-.Lcurpcb:
-	.word _C_LABEL(cpu_info_store) + CI_CURPCB
-#endif
 
 /*
  * r0 = user space address
@@ -62,18 +54,7 @@ ENTRY(copyin)
 
 	stmfd	sp!, {r10-r11, lr}
 
-#ifdef MULTIPROCESSOR
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r2}
-	bl	_C_LABEL(cpu_number)
-	ldr	r10, .Lcpu_info
-	ldmfd	sp!, {r0-r2}
-	ldr	r10, [r10, r0, lsl #2]
-	ldr	r10, [r10, #CI_CURPCB]
-#else
-	ldr	r10, .Lcurpcb
-	ldr	r10, [r10]
-#endif
+	GET_CURPCB(r10)
 
 	mov	r3, #0x00
 	adr	ip, .Lcopyin_fault
@@ -492,18 +473,7 @@ ENTRY(copyout)
 
 	stmfd	sp!, {r10-r11, lr}
 
-#ifdef MULTIPROCESSOR
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r2}
-	bl	_C_LABEL(cpu_number)
-	ldr	r10, .Lcpu_info
-	ldmfd	sp!, {r0-r2}
-	ldr	r10, [r10, r0, lsl #2]
-	ldr	r10, [r10, #CI_CURPCB]
-#else
-	ldr	r10, .Lcurpcb
-	ldr	r10, [r10]
-#endif
+	GET_CURPCB(r10)
 
 	mov	r3, #0x00
 	adr	ip, .Lcopyout_fault
@@ -942,18 +912,7 @@ ENTRY(kcopy)
 
 	stmfd	sp!, {r10-r11, lr}
 
-#ifdef MULTIPROCESSOR
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r2}
-	bl	_C_LABEL(cpu_number)
-	ldr	r10, .Lcpu_info
-	ldmfd	sp!, {r0-r2}
-	ldr	r10, [r10, r0, lsl #2]
-	ldr	r10, [r10, #CI_CURPCB]
-#else
-	ldr	r10, .Lcurpcb
-	ldr	r10, [r10]
-#endif
+	GET_CURPCB(r10)
 
 	mov	r3, #0x00
 	adr	ip, .Lkcopy_fault

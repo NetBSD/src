@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.6.4.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: devopen.c,v 1.6.4.2 2009/05/04 08:11:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
 #include <sys/disklabel.h>
 #include <netinet/in.h>
 
+#include <dev/ic/wdcreg.h>
+#include <dev/ata/atareg.h>
+
 #include <lib/libsa/stand.h>
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
@@ -41,14 +44,8 @@
 #include <lib/libsa/dosfs.h>
 #include <lib/libkern/libkern.h>
 
-int net_open(struct open_file *, ...);
-int net_close(struct open_file *);
-int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
-int wdopen(struct open_file *, ...);
-int wdclose(struct open_file *);
-int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+#include "globals.h"
 
-int parsefstype(void *);
 static void parseunit(const char *, int *, int *, char **);
 
 struct devsw devsw[] = {
@@ -67,10 +64,7 @@ struct fs_ops file_system[1];
 int nfsys = 1;
 
 int
-devopen(of, name, file)
-	struct open_file *of;
-	const char *name;
-	char **file;
+devopen(struct open_file *of, const char *name, char **file)
 {
 	int error, unit, part;
 	extern char bootfile[]; /* handed by DHCP */
@@ -107,10 +101,7 @@ devopen(of, name, file)
 
 /* ARGSUSED */
 int
-noioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+noioctl(struct open_file *f, u_long cmd, void *data)
 {
 
 	return EINVAL;

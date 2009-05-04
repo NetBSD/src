@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.14 2007/12/20 23:03:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.14.10.1 2009/05/04 08:12:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.14 2007/12/20 23:03:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.14.10.1 2009/05/04 08:12:25 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -54,13 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.14 2007/12/20 23:03:01 dsl Exp $"
 #if defined(SYSVSEM)
 
 int
-netbsd32___semctl14(struct lwp *l, const struct netbsd32___semctl14_args *uap, register_t *retval)
-{
-	return do_netbsd32___semctl14(l, uap, retval, NULL);
-}
-
-int
-do_netbsd32___semctl14(struct lwp *l, const struct netbsd32___semctl14_args *uap, register_t *retval, void *vkarg)
+netbsd32_____semctl50(struct lwp *l, const struct netbsd32_____semctl50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) semid;
@@ -94,14 +86,9 @@ do_netbsd32___semctl14(struct lwp *l, const struct netbsd32___semctl14_args *uap
 	}
 
 	if (pass_arg) {
-		if (vkarg != NULL)
-			karg32 = *(union netbsd32_semun *)vkarg;
-		else {
-			error = copyin(SCARG_P32(uap, arg), &karg32,
-					sizeof(karg32));
-			if (error)
-				return error;
-		}
+		error = copyin(SCARG_P32(uap, arg), &karg32, sizeof(karg32));
+		if (error)
+			return error;
 		if (pass_arg == &karg) {
 			switch (cmd) {
 			case GETALL:
@@ -182,7 +169,8 @@ netbsd32_semconfig(struct lwp *l, const struct netbsd32_semconfig_args *uap, reg
 #if defined(SYSVMSG)
 
 int
-netbsd32___msgctl13(struct lwp *l, const struct netbsd32___msgctl13_args *uap, register_t *retval)
+netbsd32___msgctl50(struct lwp *l, const struct netbsd32___msgctl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) msqid;
@@ -306,7 +294,8 @@ netbsd32_shmat(struct lwp *l, const struct netbsd32_shmat_args *uap, register_t 
 }
 
 int
-netbsd32___shmctl13(struct lwp *l, const struct netbsd32___shmctl13_args *uap, register_t *retval)
+netbsd32___shmctl50(struct lwp *l, const struct netbsd32___shmctl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) shmid;

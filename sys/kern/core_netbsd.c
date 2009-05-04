@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.14.52.1 2008/05/16 02:25:24 yamt Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.14.52.2 2009/05/04 08:13:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.14.52.1 2008/05/16 02:25:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.14.52.2 2009/05/04 08:13:45 yamt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_coredump.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.14.52.1 2008/05/16 02:25:24 yamt E
 #ifdef COREINC
 #include COREINC
 #endif
+
+#ifdef COREDUMP
 
 struct coredump_state {
 	struct CORENAME(core) core;
@@ -174,3 +180,14 @@ CORENAME(coredump_writesegs_netbsd)(struct proc *p, void *iocookie,
 	return coredump_write(iocookie, UIO_USERSPACE,
 	    (void *)(vaddr_t)us->start, cseg.c_size);
 }
+
+#else	/* COREDUMP */
+
+int
+CORENAME(coredump_netbsd)(struct lwp *l, void *cookie)
+{
+
+	return ENOSYS;
+}
+
+#endif	/* COREDUMP */

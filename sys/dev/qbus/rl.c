@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.38 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: rl.c,v 1.38.4.1 2009/05/04 08:13:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.38 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.38.4.1 2009/05/04 08:13:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -369,7 +369,7 @@ int
 rlclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit = DISKUNIT(dev);
-	struct rl_softc *rc = rl_cd.cd_devs[unit];
+	struct rl_softc *rc = device_lookup_private(&rl_cd, unit);
 	int mask = (1 << DISKPART(dev));
 
 	mutex_enter(&rc->rc_disk.dk_openlock);
@@ -413,7 +413,7 @@ rlstrategy(struct buf *bp)
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
 	s = splbio();
-	BUFQ_PUT(rc->rc_rlc->sc_q, bp);
+	bufq_put(rc->rc_rlc->sc_q, bp);
 	rlcstart(rc->rc_rlc, 0);
 	splx(s);
 	return;
@@ -424,7 +424,7 @@ done:	biodone(bp);
 int
 rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct rl_softc *rc = rl_cd.cd_devs[DISKUNIT(dev)];
+	struct rl_softc *rc = device_lookup_private(&rl_cd, DISKUNIT(dev));
 	struct disklabel *lp = rc->rc_disk.dk_label;
 	int err = 0;
 #ifdef __HAVE_OLD_DISKLABEL
@@ -433,7 +433,7 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bcopy(lp, addr, sizeof (struct disklabel));
+		memcpy(addr, lp, sizeof (struct disklabel));
 		break;
 
 #ifdef __HAVE_OLD_DISKLABEL
@@ -441,7 +441,7 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		newlabel = *lp;
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;
-		bcopy(&newlabel, addr, sizeof (struct olddisklabel));
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
 
@@ -623,7 +623,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		return;	/* Already doing something */
 
 	if (ob == 0) {
-		bp = BUFQ_GET(sc->sc_q);
+		bp = bufq_get(sc->sc_q);
 		if (bp == NULL)
 			return;	/* Nothing to do */
 		sc->sc_bufaddr = bp->b_data;
@@ -634,7 +634,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		bp = ob;
 	sc->sc_active = bp;
 
-	rc = rl_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	rc = device_lookup_private(&rl_cd, DISKUNIT(bp->b_dev));
 	bn = sc->sc_diskblk;
 	lp = rc->rc_disk.dk_label;
 	if (bn) {
@@ -717,7 +717,7 @@ rlcreset(device_t dev)
 	if (sc->sc_active == 0)
 		return;
 
-	BUFQ_PUT(sc->sc_q, sc->sc_active);
+	bufq_put(sc->sc_q, sc->sc_active);
 	sc->sc_active = 0;
 	rlcstart(sc, 0);
 }

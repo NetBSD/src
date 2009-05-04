@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.39.2.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.39.2.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.39.2.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.39.2.2 2009/05/04 08:11:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.39.2.1 2008/05/16 02:22:34 yamt E
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -73,8 +74,7 @@ svr4_syscall_intern(struct proc *p)
  * Like trap(), argument is call by reference.
  */
 void
-svr4_syscall_plain(frame)
-	struct trapframe *frame;
+svr4_syscall_plain(struct trapframe *frame)
 {
 	char *params;
 	const struct sysent *callp;
@@ -114,7 +114,7 @@ svr4_syscall_plain(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -150,8 +150,7 @@ svr4_syscall_plain(frame)
  * Like trap(), argument is call by reference.
  */
 void
-svr4_syscall_fancy(frame)
-	struct trapframe *frame;
+svr4_syscall_fancy(struct trapframe *frame)
 {
 	char *params;
 	const struct sysent *callp;
@@ -191,7 +190,7 @@ svr4_syscall_fancy(frame)
 	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
-		error = (*callp->sy_call)(l, args, rval);
+		error = sy_call(callp, l, args, rval);
 	}
 
 	switch (error) {

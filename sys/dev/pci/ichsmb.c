@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.13 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.13.4.1 2009/05/04 08:12:55 yamt Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.13 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.13.4.1 2009/05/04 08:12:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,6 +104,8 @@ ichsmb_match(device_t parent, struct cfdata *match, void *aux)
 		case PCI_PRODUCT_INTEL_82801G_SMB:
 		case PCI_PRODUCT_INTEL_82801H_SMB:
 		case PCI_PRODUCT_INTEL_82801I_SMB:
+		case PCI_PRODUCT_INTEL_ICH10_SMB1:
+		case PCI_PRODUCT_INTEL_ICH10_SMB2:
 			return 1;
 		}
 	}
@@ -131,7 +133,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
-	DPRINTF(("%s: conf 0x%08x", device_xname(&sc->sc_dev), conf));
+	DPRINTF(("%s: conf 0x%08x\n", device_xname(sc->sc_dev), conf));
 
 	if ((conf & LPCIB_SMB_HOSTC_HSTEN) == 0) {
 		aprint_error_dev(self, "SMBus disabled\n");
@@ -148,7 +150,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_poll = 1;
 	if (conf & LPCIB_SMB_HOSTC_SMIEN) {
 		/* No PCI IRQ */
-		aprint_normal_dev(self, "SMI\n");
+		aprint_normal_dev(self, "interrupting at SMI\n");
 	} else {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
@@ -172,7 +174,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = ichsmb_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = ichsmb_i2c_exec;
 
-	bzero(&iba, sizeof(iba));
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
@@ -214,8 +216,8 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	int retries;
 	char fbuf[64];
 
-	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %d, "
-	    "flags 0x%02x\n", device_xname(&sc->sc_dev), op, addr, cmdlen,
+	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
+	    "flags 0x%02x\n", device_xname(sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
 
 	/* Wait for bus to be idle */
@@ -226,8 +228,8 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		DELAY(ICHIIC_DELAY);
 	}
 #ifdef ICHIIC_DEBUG
-	bitmask_snprintf(st, LPCIB_SMB_HS_BITS, fbuf, sizeof(fbuf));
-	printf("%s: exec: st 0x%s\n", device_private(sc->sc_dev), fbuf);
+	snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
+	printf("%s: exec: st 0x%s\n", device_xname(sc->sc_dev), fbuf);
 #endif
 	if (st & LPCIB_SMB_HS_BUSY)
 		return (1);
@@ -267,9 +269,12 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	/* Set SMBus command */
-	if (len == 0)
-		ctl = LPCIB_SMB_HC_CMD_BYTE;
-	else if (len == 1)
+	if (len == 0) {
+		if (cmdlen == 0)
+			ctl = LPCIB_SMB_HC_CMD_QUICK;
+		else
+			ctl = LPCIB_SMB_HC_CMD_BYTE;
+	} else if (len == 1)
 		ctl = LPCIB_SMB_HC_CMD_BDATA;
 	else if (len == 2)
 		ctl = LPCIB_SMB_HC_CMD_WDATA;
@@ -309,7 +314,7 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
-	bitmask_snprintf(st, LPCIB_SMB_HS_BITS, fbuf, sizeof(fbuf));
+	snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
 	aprint_error_dev(sc->sc_dev,
 	    "exec: op %d, addr 0x%02x, cmdlen %zd, len %zd, "
 	    "flags 0x%02x: timeout, status 0x%s\n",
@@ -319,7 +324,7 @@ timeout:
 	DELAY(ICHIIC_DELAY);
 	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS);
 	if ((st & LPCIB_SMB_HS_FAILED) == 0) {
-		bitmask_snprintf(st, LPCIB_SMB_HS_BITS, fbuf, sizeof(fbuf));
+		snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
 		aprint_error_dev(sc->sc_dev, "abort failed, status 0x%s\n",
 		    fbuf);
 	}
@@ -347,7 +352,7 @@ ichsmb_intr(void *arg)
 		return (0);
 
 #ifdef ICHIIC_DEBUG
-	bitmask_snprintf(st, LPCIB_SMB_HS_BITS, fbuf, sizeof(fbuf));
+	snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
 	printf("%s: intr st 0x%s\n", device_xname(sc->sc_dev), fbuf);
 #endif
 

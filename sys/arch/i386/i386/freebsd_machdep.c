@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.50.2.1 2008/05/16 02:22:33 yamt Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.50.2.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.50.2.1 2008/05/16 02:22:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.50.2.2 2009/05/04 08:11:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -60,10 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.50.2.1 2008/05/16 02:22:33 yam
 #include <compat/freebsd/freebsd_ptrace.h>
 
 void
-freebsd_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+freebsd_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 
@@ -228,7 +225,8 @@ freebsd_sys_sigreturn(struct lwp *l, const struct freebsd_sys_sigreturn_args *ua
 		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags = context.sc_efl;
+		tf->tf_eflags &= ~PSL_USER;
+		tf->tf_eflags |= context.sc_efl & PSL_USER;
 	}
 	tf->tf_edi = context.sc_edi;
 	tf->tf_esi = context.sc_esi;
@@ -264,10 +262,7 @@ freebsd_sys_sigreturn(struct lwp *l, const struct freebsd_sys_sigreturn_args *ua
  */
 
 void
-netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
-	struct reg *nregs;
-	struct fpreg *nfpregs;
-	struct freebsd_ptrace_reg *fregs;
+netbsd_to_freebsd_ptrace_regs(struct reg *nregs, struct fpreg *nfpregs, struct freebsd_ptrace_reg *fregs)
 {
 	struct save87 *nframe = (struct save87 *)nfpregs;
 
@@ -321,10 +316,7 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 }
 
 void
-freebsd_to_netbsd_ptrace_regs(fregs, nregs, nfpregs)
-	struct freebsd_ptrace_reg *fregs;
-	struct reg *nregs;
-	struct fpreg *nfpregs;
+freebsd_to_netbsd_ptrace_regs(struct freebsd_ptrace_reg *fregs, struct reg *nregs, struct fpreg *nfpregs)
 {
 	struct save87 *nframe = (struct save87 *)nfpregs;
 
@@ -366,10 +358,7 @@ freebsd_to_netbsd_ptrace_regs(fregs, nregs, nfpregs)
 #define	FREEBSD_REGS_OFFSET 0x2000
 
 int
-freebsd_ptrace_getregs(fregs, addr, datap)
-	struct freebsd_ptrace_reg *fregs;
-	void *addr;
-	register_t *datap;
+freebsd_ptrace_getregs(struct freebsd_ptrace_reg *fregs, void *addr, register_t *datap)
 {
 	vaddr_t offset = (vaddr_t)addr;
 
@@ -396,10 +385,7 @@ freebsd_ptrace_getregs(fregs, addr, datap)
 }
 
 int
-freebsd_ptrace_setregs(fregs, addr, data)
-	struct freebsd_ptrace_reg *fregs;
-	void *addr;
-	int data;
+freebsd_ptrace_setregs(struct freebsd_ptrace_reg *fregs, void *addr, int data)
 {
 	vaddr_t offset = (vaddr_t)addr;
 

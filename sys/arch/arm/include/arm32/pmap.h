@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.84.10.1 2008/05/16 02:22:01 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.84.10.2 2009/05/04 08:10:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -122,6 +122,16 @@
 #define	L2_LOG2		((32 - L1_S_SHIFT) - L2_BUCKET_LOG2)
 #define	L2_SIZE		(1 << L2_LOG2)
 
+/*
+ * tell MI code that the cache is virtually-indexed.
+ * ARMv6 is physically-tagged but all others are virtually-tagged.
+ */
+#if ARM_MMU_V6 > 0
+#define PMAP_CACHE_VIPT
+#else
+#define PMAP_CACHE_VIVT
+#endif
+
 #ifndef _LOCORE
 
 struct l1_ttable;
@@ -186,8 +196,6 @@ struct pmap {
 	LIST_ENTRY(pmap)	pm_list;
 };
 
-typedef struct pmap *pmap_t;
-
 /*
  * Physical / virtual address structure. In a number of places (particularly
  * during bootstrapping) we need to keep track of the physical and virtual
@@ -232,22 +240,31 @@ extern pv_addr_t kernel_l1pt;
 #define	PVF_WIRED	0x04		/* mapping is wired */
 #define	PVF_WRITE	0x08		/* mapping is writable */
 #define	PVF_EXEC	0x10		/* mapping is executable */
+#ifdef PMAP_CACHE_VIVT
 #define	PVF_UNC		0x20		/* mapping is 'user' non-cacheable */
 #define	PVF_KNC		0x40		/* mapping is 'kernel' non-cacheable */
+#define	PVF_NC		(PVF_UNC|PVF_KNC)
+#endif
+#ifdef PMAP_CACHE_VIPT
+#define	PVF_NC		0x20		/* mapping is 'kernel' non-cacheable */
+#define	PVF_MULTCLR	0x40		/* mapping is multi-colored */
+#endif
 #define	PVF_COLORED	0x80		/* page has or had a color */
 #define	PVF_KENTRY	0x0100		/* page entered via pmap_kenter_pa */
-#define	PVF_NC		(PVF_UNC|PVF_KNC)
+#define	PVF_KMPAGE	0x0200		/* page is used for kmem */
+#define	PVF_DIRTY	0x0400		/* page may have dirty cache lines */
+#define	PVF_KMOD	0x0800		/* unmanaged page is modified  */
+#define	PVF_KWRITE	(PVF_KENTRY|PVF_WRITE)
+#define	PVF_DMOD	(PVF_MOD|PVF_KMOD|PVF_KMPAGE)
 
 /*
  * Commonly referenced structures
  */
-extern struct pmap	kernel_pmap_store;
 extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 /*
  * Macros that we need to export
  */
-#define pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
@@ -273,6 +290,9 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+#define	PMAP_KMPAGE	0x00000040	/* Make uvm tell us when it allocates
+					 a page to be used for kernel memory */
+
 
 #if ARM_MMU_V6 > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
@@ -491,16 +511,6 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #endif /* !_LOCORE */
 
 /*****************************************************************************/
-
-/*
- * tell MI code that the cache is virtually-indexed.
- * ARMv6 is physically-tagged but all others are virtually-tagged.
- */
-#if ARM_MMU_V6 > 0
-#define PMAP_CACHE_VIPT
-#else
-#define PMAP_CACHE_VIVT
-#endif
 
 /*
  * Definitions for MMU domains

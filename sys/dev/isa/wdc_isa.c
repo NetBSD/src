@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.54.4.1 2008/05/16 02:24:28 yamt Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.54.4.2 2009/05/04 08:12:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.54.4.1 2008/05/16 02:24:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.54.4.2 2009/05/04 08:12:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,9 @@ static int	wdc_isa_probe(device_t , cfdata_t, void *);
 static void	wdc_isa_attach(device_t, device_t, void *);
 static int	wdc_isa_detach(device_t, int);
 
-CFATTACH_DECL2_NEW(wdc_isa, sizeof(struct wdc_isa_softc),
+CFATTACH_DECL3_NEW(wdc_isa, sizeof(struct wdc_isa_softc),
     wdc_isa_probe, wdc_isa_attach, wdc_isa_detach, NULL, NULL,
-    wdc_childdetached);
+    wdc_childdetached, DVF_DETACH_SHUTDOWN);
 
 #if 0
 static void	wdc_isa_dma_setup(struct wdc_isa_softc *);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.12 2005/12/11 12:18:16 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.12.78.1 2009/05/04 08:11:33 yamt Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -10,6 +10,12 @@ MIPSCO=	${S}/arch/mipsco
 
 NOMAN=		# defined
 BINMODE?= 444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PHONY:		machine-links
 beforedepend: machine-links
@@ -34,6 +40,7 @@ CPPFLAGS+=	-I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 #CFLAGS=		-Os -mmemcpy -mno-abicalls -G 128
 CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
@@ -59,14 +66,14 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 		-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_WRITE \
 		-DLIBSA_NO_FS_CLOSE \
 		-DLIBSA_NO_DEV_CLOSE \
+		-DLIBSA_NO_DEV_IOCTL \
 		-DLIBSA_SINGLE_DEVICE=saio \
 		-D"saioioctl(x,y,z)=EINVAL" -D"saioclose(f)=0" \
 		-DLIBSA_NO_TWIDDLE \
 		-DLIBSA_NO_FD_CHECKING \
 		-DLIBSA_NO_DISKLABEL_MSGS \
 		-DLIBSA_NO_RAW_ACCESS \
-		-DALLOC_FIRST_FIT \
-		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+		-DALLOC_FIRST_FIT
 
 
 CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.33 2007/03/06 13:53:32 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.33.44.1 2009/05/04 08:10:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33 2007/03/06 13:53:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33.44.1 2009/05/04 08:10:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -110,10 +110,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vsize_t		o, v;
 	int		c;
@@ -200,9 +197,8 @@ mmrw(dev, uio, flags)
 				break;
 			}
 			if (devzeropage == NULL) {
-				devzeropage = (void *)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(devzeropage, PAGE_SIZE);
+				devzeropage =
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK|M_ZERO);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);

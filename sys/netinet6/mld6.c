@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.45 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: mld6.c,v 1.45.2.1 2009/05/04 08:14:19 yamt Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.45 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.45.2.1 2009/05/04 08:14:19 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -182,7 +182,7 @@ mld_init(void)
 	hbh_buf[3] = 0;
 	hbh_buf[4] = IP6OPT_RTALERT;
 	hbh_buf[5] = IP6OPT_RTALERT_LEN - 2;
-	bcopy((void *)&rtalert_code, &hbh_buf[6], sizeof(u_int16_t));
+	memcpy(&hbh_buf[6], (void *)&rtalert_code, sizeof(u_int16_t));
 
 	ip6_opts.ip6po_hbh = hbh;
 	/* We will specify the hoplimit by a multicast option. */
@@ -262,7 +262,7 @@ mld_timerresid(struct in6_multi *in6m)
 	}
 
 	/* return the remaining time in milliseconds */
-	return (((u_long)(diff.tv_sec * 1000000 + diff.tv_usec)) / 1000);
+	return diff.tv_sec * 1000 + diff.tv_usec / 1000;
 }
 
 static void
@@ -330,7 +330,7 @@ mld_input(struct mbuf *m, int off)
 	struct in6_multi *in6m = NULL;
 	struct in6_addr mld_addr, all_in6;
 	struct in6_ifaddr *ia;
-	int timer = 0;		/* timer value in the MLD query header */
+	u_long timer = 0;	/* timer value in the MLD query header */
 
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
@@ -441,9 +441,9 @@ mld_input(struct mbuf *m, int off)
 				mld_sendpkt(in6m, MLD_LISTENER_REPORT, NULL);
 				in6m->in6m_state = MLD_IREPORTEDLAST;
 			} else if (in6m->in6m_timer == IN6M_TIMER_UNDEF ||
-			    mld_timerresid(in6m) > (u_long)timer) {
-				in6m->in6m_timer = arc4random() %
-				    (int)(((long)timer * hz) / 1000);
+			    mld_timerresid(in6m) > timer) {
+				in6m->in6m_timer =
+				   1 + (arc4random() % timer) * hz / 1000;
 				mld_starttimer(in6m);
 			}
 		}
@@ -665,11 +665,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		 * filter appropriately for the new address.
 		 */
 		sockaddr_in6_init(&ifr.ifr_addr, maddr6, 0, 0, 0);
-		if (ifp->if_ioctl == NULL)
-			*errorp = ENXIO; /* XXX: appropriate? */
-		else
-			*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI,
-			    (void *)&ifr);
+		*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr);
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
@@ -744,8 +740,7 @@ in6_delmulti(struct in6_multi *in6m)
 		 * reception filter.
 		 */
 		sockaddr_in6_init(&ifr.ifr_addr, &in6m->in6m_addr, 0, 0, 0);
-		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp,
-		    SIOCDELMULTI, (void *)&ifr);
+		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp, SIOCDELMULTI, &ifr);
 		callout_destroy(&in6m->in6m_timer_ch);
 		free(in6m, M_IPMADDR);
 	}

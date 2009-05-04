@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 2007/12/20 23:46:12 ad Exp $	*/
+/*	$NetBSD: asm.h,v 1.11.10.1 2009/05/04 08:10:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
 
 #ifndef _AMD64_ASM_H_
 #define _AMD64_ASM_H_
+
+#ifdef __x86_64__
 
 #ifdef PIC
 #define PIC_PLT(x)	x@PLT
@@ -104,7 +106,7 @@
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.text; .asciz x
+#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
@@ -127,5 +129,11 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(sym),1,0,0,0
 #endif /* __STDC__ */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/asm.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_ASM_H_ */

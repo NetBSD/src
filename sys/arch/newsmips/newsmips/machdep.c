@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2007/12/03 15:34:05 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97.18.1 2009/05/04 08:11:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,13 +76,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2007/12/03 15:34:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.18.1 2009/05/04 08:11:38 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +145,6 @@ struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -223,7 +223,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 	int nsym = 0;
 	char *ssym, *esym;
@@ -241,7 +241,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 			x_bootdev = bi_arg->bootdev;
 			x_maxmem = bi_arg->maxmem;
 		}
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 		bi_sym = lookup_bootinfo(BTINFO_SYMTAB);
 		if (bi_sym) {
 			nsym = bi_sym->nsym;
@@ -305,7 +305,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTSW_ADDR)) = x_boothowto;
 
 	kernend = (char *)mips_round_page(end);
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (nsym)
 		kernend = (char *)mips_round_page(esym);
 #endif
@@ -340,9 +340,9 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	 */
 	newsmips_bus_dma_init();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (nsym)
-		ksyms_init(esym - ssym, ssym, esym);
+		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
 
 #ifdef KADB
@@ -467,12 +467,6 @@ cpu_startup(void)
 
 	minaddr = 0;
 	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
-	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -591,6 +585,8 @@ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
 		prom_halt(0x80);	/* rom monitor RB_PWOFF */

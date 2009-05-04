@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.118.4.1 2008/05/16 02:22:33 yamt Exp $
+#	$NetBSD: INSTALL_TINY,v 1.118.4.2 2009/05/04 08:11:15 yamt Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -19,6 +19,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=3100	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	2		# estimated number of users
 
@@ -29,9 +30,6 @@ maxusers	2		# estimated number of users
 # This option allows you to force a serial console at the specified
 # I/O address.
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=9600
-
-# Save a physical page per process by not setting a kernel stack red zone.
-options 	NOREDZONE
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
@@ -50,9 +48,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
-
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

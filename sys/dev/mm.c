@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.10.40.1 2008/05/16 02:23:49 yamt Exp $	*/
+/*	$NetBSD: mm.c,v 1.10.40.2 2009/05/04 08:12:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.10.40.1 2008/05/16 02:23:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.10.40.2 2009/05/04 08:12:33 yamt Exp $");
 
 /*
  * Memory special file
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.10.40.1 2008/05/16 02:23:49 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
+#include <sys/termios.h>
 
 dev_type_ioctl(mmioctl);
 
@@ -61,6 +62,7 @@ mmioctl(dev_t dev, u_long cmd, void *data, int flag,
 		case FIOGETOWN:
 		case TIOCGPGRP:
 		case TIOCSPGRP:
+		case TIOCGETA:
 			return ENOTTY;
 		case FIOASYNC:
 			if ((*(int *)data) == 0)

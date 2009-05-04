@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.16.4.1 2008/05/16 02:23:49 yamt Exp $	*/
+/*	$NetBSD: kloader.c,v 1.16.4.2 2009/05/04 08:12:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.16.4.1 2008/05/16 02:23:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.16.4.2 2009/05/04 08:12:33 yamt Exp $");
 
 #include "debug_kloader.h"
 
@@ -145,7 +145,7 @@ __kloader_reboot_setup(struct kloader_ops *ops, const char *filename)
 
 
 void
-kloader_reboot()
+kloader_reboot(void)
 {
 
 	if (kloader.setuped) {
@@ -165,7 +165,7 @@ kloader_reboot()
 
 
 int
-kloader_load()
+kloader_load(void)
 {
 	Elf_Ehdr eh;
 	Elf_Phdr *ph, *p;
@@ -470,7 +470,7 @@ kloader_get_tag(vaddr_t dst)
 
 	pg = kloader.cur_pg;
 	KDASSERT(pg != NULL);
-	kloader.cur_pg = TAILQ_NEXT(pg, pageq);
+	kloader.cur_pg = TAILQ_NEXT(pg, pageq.queue);
 
 	addr = PG_VADDR(pg);
 	tag = (void *)addr;
@@ -610,7 +610,7 @@ kloader_open(const char *filename)
 }
 
 void
-kloader_close()
+kloader_close(void)
 {
 	struct lwp *l = KLOADER_LWP;
 	struct vnode *vp = kloader.vp;
@@ -675,7 +675,7 @@ kloader_bootinfo_set(struct kloader_bootinfo *kbi, int argc, char *argv[],
 
 #ifdef KLOADER_DEBUG
 void
-kloader_pagetag_dump()
+kloader_pagetag_dump(void)
 {
 	struct kloader_page_tag *tag = kloader.tagstart;
 	struct kloader_page_tag *p, *op;

@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.30 2008/02/25 08:31:00 dholland Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.30.4.1 2009/05/04 08:11:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.30 2008/02/25 08:31:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.30.4.1 2009/05/04 08:11:52 yamt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_coredump.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,12 +49,52 @@ __KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.30 2008/02/25 08:31:00 dholland Exp 
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
 #include <sys/namei.h>
+#include <sys/exec_coff.h>
+#include <sys/module.h>
+
 #include <uvm/uvm_extern.h>
 
-#include <sys/exec_coff.h>
+#ifdef COREDUMP
+#define	DEP	"coredump"
+#else
+#define	DEP	NULL
+#endif
+
+MODULE(MODULE_CLASS_MISC, exec_coff, DEP);
 
 static int coff_find_section(struct lwp *, struct vnode *,
     struct coff_filehdr *, struct coff_scnhdr *, int);
+
+static struct execsw exec_coff_execsw[] = {
+	{ COFF_HDR_SIZE,
+	  exec_coff_makecmds,
+	  { NULL },
+	  &emul_netbsd,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  copyargs,
+	  NULL,
+	  coredump_netbsd,
+	  exec_setup_stack },
+};
+
+static int
+exec_coff_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return exec_add(exec_coff_execsw,
+		    __arraycount(exec_coff_execsw));
+
+	case MODULE_CMD_FINI:
+		return exec_remove(exec_coff_execsw,
+		    __arraycount(exec_coff_execsw));
+
+	default:
+		return ENOTTY;
+        }
+}
 
 /*
  * exec_coff_makecmds(): Check if it's an coff-format executable.
@@ -148,11 +192,7 @@ exec_coff_prep_omagic(struct lwp *l, struct exec_package *epp,
  */
 
 int
-exec_coff_prep_nmagic(l, epp, fp, ap)
-	struct lwp *l;
-	struct exec_package *epp;
-	struct coff_filehdr *fp;
-	struct coff_aouthdr *ap;
+exec_coff_prep_nmagic(struct lwp *l, struct exec_package *epp, struct coff_filehdr *fp, struct coff_aouthdr *ap)
 {
 	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
 	epp->ep_tsize = ap->a_tsize;

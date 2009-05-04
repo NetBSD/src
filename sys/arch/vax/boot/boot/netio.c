@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.9.78.1 2008/05/16 02:23:24 yamt Exp $	*/
+/*	$NetBSD: netio.c,v 1.9.78.2 2009/05/04 08:12:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -115,10 +115,10 @@ net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr) {
 	/* find a free socket */
 	s = &desc;
 
-	bzero(s, sizeof(*s));
+	memset(s, 0, sizeof(*s));
 	best_if.nif_driver = drv;
 	s->io_netif = &best_if;
-	bcopy(eaddr, s->myea, 6);
+	memcpy( s->myea, eaddr, 6);
 
 	/*
 	 * Get info for NFS boot: our IP address, our hostname,
@@ -182,7 +182,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
 }
 
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t len, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timo)
 {
 	return (*((struct netif*)desc->io_netif)->nif_driver->netif_get)
 		(desc, pkt, len, timo);

@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.24.1 2008/05/16 02:22:01 yamt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.1.24.2 2009/05/04 08:10:44 yamt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -82,9 +82,9 @@ struct intrsource {
 struct pic_softc {
 	const struct pic_ops *pic_ops;
 	struct intrsource **pic_sources;
-	uint32_t pic_pending_irqs[(PIC_MAXSOURCES + 31) / 32];
-	uint32_t pic_blocked_irqs[(PIC_MAXSOURCES + 31) / 32];
-	uint32_t pic_pending_ipls;
+	volatile uint32_t pic_pending_irqs[(PIC_MAXSOURCES + 31) / 32];
+	volatile uint32_t pic_blocked_irqs[(PIC_MAXSOURCES + 31) / 32];
+	volatile uint32_t pic_pending_ipls;
 	size_t pic_maxsources;
 	uint8_t pic_id;
 	int16_t pic_irqbase;

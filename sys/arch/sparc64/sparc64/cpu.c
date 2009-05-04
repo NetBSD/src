@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.75 2008/04/14 16:19:18 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.75.4.1 2009/05/04 08:11:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2008/04/14 16:19:18 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75.4.1 2009/05/04 08:11:58 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2008/04/14 16:19:18 nakayama Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -81,6 +82,7 @@ struct cpu_info *cpus = NULL;
 
 volatile sparc64_cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
+struct pool_cache *fpstate_cache;
 
 static struct cpu_info *alloc_cpuinfo(u_int);
 
@@ -116,7 +118,8 @@ alloc_cpuinfo(u_int cpu_node)
 	/*
 	 * Check for UPAID in the cpus list.
 	 */
-	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0)
+	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0 &&
+	    OF_getprop(cpu_node, "portid", &portid, sizeof(portid)) <= 0)
 		panic("alloc_cpuinfo: upa-portid");
 
 	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
@@ -183,7 +186,7 @@ cpu_reset_fpustate(void)
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
 
-	/* This needs to be 64-bit aligned */
+	/* This needs to be 64-byte aligned */
 	fpstate = ALIGNFPSTATE(&fps[1]);
 
 	/*
@@ -233,6 +236,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 */
 	if (!passed) {
 		passed = true;
+		fpstate_cache = pool_cache_init(sizeof(struct fpstate64),
+					BLOCK_SIZE, 0, 0, "fpstate", NULL,
+					IPL_NONE, NULL, NULL, NULL);
 		cpu_reset_fpustate();
 	}
 #ifdef MULTIPROCESSOR
@@ -241,10 +247,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
 	}
 	for (i = 0; i < IPI_EVCNT_NUM; ++i)
-		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_INTR,
+		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_MISC,
 				     NULL, device_xname(dev), ipi_evcnt_names[i]);
 #endif
-	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_MISC, NULL,
 			     device_xname(dev), "timer");
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
@@ -366,12 +372,18 @@ vaddr_t cpu_spinup_trampoline;
  * Start secondary processors in motion.
  */
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	int i, pstate;
 	struct cpu_info *ci;
 
 	sparc64_ipi_init();
+
+	if (boothowto & RB_MD1) {
+		cpus[0].ci_next = NULL;
+		sparc_ncpus = ncpu = ncpuonline = 1;
+		return;
+	}
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_cpuid == CPU_UPAID)
@@ -402,7 +414,7 @@ cpu_boot_secondary_processors()
 }
 
 void
-cpu_hatch()
+cpu_hatch(void)
 {
 	char *v = (char*)CPUINFO_VA;
 	int i;

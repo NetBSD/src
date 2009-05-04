@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.23.6.1 2008/05/16 02:23:35 yamt Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.23.6.2 2009/05/04 08:12:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.23.6.1 2008/05/16 02:23:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.23.6.2 2009/05/04 08:12:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.23.6.1 2008/05/16 02:23:35 yamt Ex
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_attr.h>
 #include <compat/darwin/darwin_syscallargs.h>
@@ -185,7 +186,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	}
 
 	if (kalist.commonattr & DARWIN_ATTR_CMN_DEVID) {
-		dev_t device;
+		darwin_dev_t device;
 
 		device = st.st_dev;
 		if (ATTR_APPEND(device, bp, len) != 0)
@@ -275,7 +276,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 
 		/* XXX no way I can do that one */
 
-		(void)bzero(&ts, sizeof(ts));
+		(void)memset(&ts, 0, sizeof(ts));
 		if (ATTR_APPEND(ts, bp, len) != 0)
 			goto out3;
 	}
@@ -283,7 +284,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	if (kalist.commonattr & DARWIN_ATTR_CMN_FNDRINFO) { /* XXX */
 		char data[32];
 
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}
@@ -500,7 +501,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 		/*
 		 * XXX bitmap of encoding used in this volume
 		 */
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}
@@ -508,7 +509,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	if (kalist.volattr & DARWIN_ATTR_VOL_CAPABILITIES) { /* XXX */
 		darwin_vol_capabilities_attr_t data;
 
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}
@@ -516,7 +517,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	if (kalist.volattr & DARWIN_ATTR_VOL_ATTRIBUTES) { /* XXX */
 		darwin_vol_attributes_attr_t data;
 
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}
@@ -532,7 +533,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	if (kalist.dirattr & DARWIN_ATTR_DIR_ENTRYCOUNT) { /* XXX */
 		unsigned long data;
 
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}
@@ -540,7 +541,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	if (kalist.dirattr & DARWIN_ATTR_DIR_MOUNTSTATUS) { /* XXX */
 		unsigned long data;
 
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}
@@ -597,7 +598,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 		unsigned long data;
 
 		/* Reserved, returns 0 */
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}
@@ -636,7 +637,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 		darwin_extentrecord data;
 
 		/* Obsolete in Darwin */
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}
@@ -661,7 +662,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 		darwin_extentrecord data;
 
 		/* Obsolete in Darwin */
-		(void)bzero(&data, sizeof(data));
+		(void)memset(&data, 0, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
 			goto out3;
 	}

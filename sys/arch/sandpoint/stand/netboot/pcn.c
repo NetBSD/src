@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.10.4.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: pcn.c,v 1.10.4.2 2009/05/04 08:11:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,10 +44,10 @@
  * - no vtophys() translation, vaddr_t == paddr_t. 
  * - PIPT writeback cache aware.
  */
-#define CSR_WRITE_2(l, r, v)	out16rb((l)->csr+(r), (v))
-#define CSR_READ_2(l, r)	in16rb((l)->csr+(r))
-#define CSR_WRITE_4(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
+#define CSR_WRITE_4(l, r, v) 	out32rb((l)->csr+(r), (v))
+#define CSR_READ_2(l, r)	in16rb((l)->csr+(r))
+#define CSR_WRITE_2(l, r, v)	out16rb((l)->csr+(r), (v))
 #define VTOPHYS(va) 		(uint32_t)(va)
 #define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
@@ -55,11 +55,10 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-int pcn_match(unsigned, void *);
-void *pcn_init(unsigned, void *);
-int pcn_send(void *, char *, unsigned);
-int pcn_recv(void *, char *, unsigned, unsigned);
-
+struct desc {
+	uint32_t xd0, xd1, xd2;
+	uint32_t hole;
+};
 #define T1_OWN		(1U << 31)	/* 1: empty for HW to load anew */
 #define T1_STP		(1U << 25)	/* first frame segment */
 #define T1_ENP		(1U << 24)	/* last frame segment */
@@ -69,11 +68,6 @@ int pcn_recv(void *, char *, unsigned, unsigned);
 #define R1_ERR		(1U << 30)	/* Rx error summary */
 #define R1_ONES		0xf000		/* filler */
 #define R1_FLMASK	0x0fff		/* Rx frame length */
-
-struct desc {
-	uint32_t xd0, xd1, xd2;
-	uint32_t hole;
-};
 
 #define PCN_RDP		0x10
 #define PCN_RAP		0x12

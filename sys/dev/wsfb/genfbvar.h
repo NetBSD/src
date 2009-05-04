@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.5.20.1 2008/05/16 02:25:17 yamt Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.5.20.2 2009/05/04 08:13:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.5.20.1 2008/05/16 02:25:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.5.20.2 2009/05/04 08:13:25 yamt Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.5.20.1 2008/05/16 02:25:17 yamt Exp $
 struct genfb_ops {
 	int (*genfb_ioctl)(void *, void *, u_long, void *, int, struct lwp *);
 	paddr_t	(*genfb_mmap)(void *, void *, off_t, int);
+	int (*genfb_borrow)(void *, bus_addr_t, bus_space_handle_t *);
 };
 
 struct genfb_colormap_callback {
@@ -73,9 +74,15 @@ struct genfb_softc {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
+	bool sc_want_clear;
 };
 
+void	genfb_cnattach(void);
+void	genfb_disable(void);
+int	genfb_is_console(void);
+int	genfb_is_enabled(void);
 void	genfb_init(struct genfb_softc *);
 int	genfb_attach(struct genfb_softc *, struct genfb_ops *);
+int	genfb_borrow(bus_addr_t, bus_space_handle_t *);
 
 #endif /* GENFBVAR_H */

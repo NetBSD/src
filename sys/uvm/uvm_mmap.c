@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.122 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.122.4.1 2009/05/04 08:14:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122 2008/03/21 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122.4.1 2009/05/04 08:14:39 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -500,24 +500,6 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		handle = NULL;
 		maxprot = VM_PROT_ALL;
 		pos = 0;
-	}
-
-	/*
-	 * XXX (in)sanity check.  We don't do proper datasize checking
-	 * XXX for anonymous (or private writable) mmap().  However,
-	 * XXX know that if we're trying to allocate more than the amount
-	 * XXX remaining under our current data size limit, _that_ should
-	 * XXX be disallowed.
-	 */
-	if ((flags & MAP_ANON) != 0 ||
-	    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
-		if (size >
-		    (p->p_rlimit[RLIMIT_DATA].rlim_cur -
-		     ctob(p->p_vmspace->vm_dsize))) {
-		     	if (fp != NULL)
-				fd_putfile(fd);
-			return (ENOMEM);
-		}
 	}
 
 #if NVERIEXEC > 0
@@ -1055,15 +1037,7 @@ sys_munlockall(struct lwp *l, const void *v, register_t *retval)
  */
 
 int
-uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
-	struct vm_map *map;
-	vaddr_t *addr;
-	vsize_t size;
-	vm_prot_t prot, maxprot;
-	int flags;
-	void *handle;
-	voff_t foff;
-	vsize_t locklimit;
+uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot, vm_prot_t maxprot, int flags, void *handle, voff_t foff, vsize_t locklimit)
 {
 	struct uvm_object *uobj;
 	struct vnode *vp;
@@ -1123,6 +1097,15 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	}
 
 	/*
+	 * check resource limits
+	 */
+
+	if (!VM_MAP_IS_KERNEL(map) &&
+	    (((rlim_t)curproc->p_vmspace->vm_map.size + (rlim_t)size) >
+	    curproc->p_rlimit[RLIMIT_AS].rlim_cur))
+		return ENOMEM;
+
+	/*
 	 * handle anon vs. non-anon mappings.   for non-anon mappings attach
 	 * to underlying vm object.
 	 */
@@ -1163,9 +1146,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 * then mark it as text.
 			 */
 			if (prot & PROT_EXEC) {
-				mutex_enter(&vp->v_interlock);
 				vn_markexec(vp);
-				mutex_exit(&vp->v_interlock);
 			}
 		} else {
 			int i = maxprot;
@@ -1193,24 +1174,23 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		 * Set vnode flags to indicate the new kinds of mapping.
 		 * We take the vnode lock in exclusive mode here to serialize
 		 * with direct I/O.
+		 *
+		 * Safe to check for these flag values without a lock, as
+		 * long as a reference to the vnode is held.
 		 */
-
-		mutex_enter(&vp->v_interlock);
 		needwritemap = (vp->v_iflag & VI_WRMAP) == 0 &&
 			(flags & MAP_SHARED) != 0 &&
 			(maxprot & VM_PROT_WRITE) != 0;
-		if ((vp->v_iflag & VI_MAPPED) == 0 || needwritemap) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
-			mutex_enter(&vp->v_interlock);
-			vp->v_iflag |= VI_MAPPED;
+		if ((vp->v_vflag & VV_MAPPED) == 0 || needwritemap) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			vp->v_vflag |= VV_MAPPED;
 			if (needwritemap) {
+				mutex_enter(&vp->v_interlock);
 				vp->v_iflag |= VI_WRMAP;
+				mutex_exit(&vp->v_interlock);
 			}
-			mutex_exit(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);
-		} else
-			mutex_exit(&vp->v_interlock);
+		}
 	}
 
 	uvmflag = UVM_MAPFLAG(prot, maxprot,
@@ -1238,8 +1218,8 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 
 		return (0);
 	}
-	vm_map_lock(map);
 	if ((flags & MAP_WIRED) != 0 || (map->flags & VM_MAP_WIREFUTURE) != 0) {
+		vm_map_lock(map);
 		if (atop(size) + uvmexp.wired > uvmexp.wiredmax ||
 		    (locklimit != 0 &&
 		     size + ptoa(pmap_wired_count(vm_map_pmap(map))) >
@@ -1261,7 +1241,6 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		}
 		return (0);
 	}
-	vm_map_unlock(map);
 	return 0;
 }
 

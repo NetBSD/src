@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.24.20.1 2008/05/16 02:23:57 yamt Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.24.20.2 2009/05/04 08:12:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.24.20.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.24.20.2 2009/05/04 08:12:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,9 @@ hpckbd_attach(struct device *parent, struct device *self, void *aux)
 	wa.accessops = &hpckbd_accessops;
 	wa.accesscookie = sc->sc_core;
 	sc->sc_core->hc_wskbddev = config_found(self, &wa, wskbddevprint);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 int

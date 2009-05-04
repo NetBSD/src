@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.19.18.1 2008/05/16 02:24:02 yamt Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.19.18.2 2009/05/04 08:12:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -330,6 +330,10 @@
 #define ATW_LPC_LPCO		__BIT(16)	/* lost packet counter overflow */
 #define ATW_LPC_LPC_MASK	__BITS(0, 15)	/* lost packet counter */
 
+#define	ATW_TEST1_RRA_MASK	__BITS(20,12)
+#define	ATW_TEST1_RWA_MASK	__BITS(10,2)
+#define	ATW_TEST1_RXPKT1IN	__BIT(1)
+
 #define	ATW_TEST1_CONTROL	__BIT(31)	/* "0: read from dxfer_control,
 						 * 1: read from dxfer_state"
 						 */
@@ -464,7 +468,16 @@
 #define ATW_BBPCTL_NEGEDGE_DO		__BIT(23)
 /* data-in on negative edge */
 #define ATW_BBPCTL_NEGEDGE_DI		__BIT(22)
-#define ATW_BBPCTL_CCA_ACTLO		__BIT(21)	/* CCA low when busy */
+#define ATW_BBPCTL_CCA_ACTLO		__BIT(21)	/* 1: CCA signal is low
+							 * when channel is busy,
+							 * CCA signal is high
+							 * when channel is
+							 * clear.
+							 * 0: vice-versa
+							 * 1 is suitable for
+							 * the embedded
+							 * RFMD RF3000.
+							 */
 #define ATW_BBPCTL_TYPE_MASK		__BITS(20, 18)	/* BBP type */
 /* start write; reset on completion */
 #define ATW_BBPCTL_WR			__BIT(17)
@@ -916,7 +929,7 @@ struct atw_txdesc {
 	volatile uint32_t	at_flags;
 	volatile uint32_t	at_buf1;
 	volatile uint32_t	at_buf2;
-} __attribute__((__packed__, __aligned__(4)));
+} __packed __aligned(4);
 
 #define ATW_TXCTL_OWN		__BIT(31)	/* 1: ready to transmit */
 #define ATW_TXCTL_DONE		__BIT(30)	/* 0: not processed */
@@ -955,7 +968,7 @@ struct atw_rxdesc {
 	volatile uint32_t	ar_ctlrssi;
 	volatile uint32_t	ar_buf1;
 	volatile uint32_t	ar_buf2;
-} __attribute__((__packed__, __aligned__(4)));
+} __packed __aligned(4);
 
 #define ATW_RXCTL_RER		__BIT(25)	/* end of ring */
 #define ATW_RXCTL_RCH		__BIT(24)	/* ar_buf2 is 2nd chain */

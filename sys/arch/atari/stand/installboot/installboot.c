@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.20 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: installboot.c,v 1.20.78.1 2009/05/04 08:10:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -53,18 +53,18 @@
 
 #include "installboot.h"
 
-static void	usage __P((void));
-static void	oscheck __P((void));
-static u_int	abcksum __P((void *));
-static void	setNVpref __P((void));
-static void	setIDEpar __P((u_int8_t *, size_t));
-static void	mkahdiboot __P((struct ahdi_root *, char *,
-						char *, daddr_t));
-static void	mkbootblock __P((struct bootblock *, char *,
-				char *, struct disklabel *, u_int));
-static void	install_fd __P((char *, struct disklabel *));
-static void	install_sd __P((char *, struct disklabel *));
-static void	install_wd __P((char *, struct disklabel *));
+static void	usage(void);
+static void	oscheck(void);
+static u_int	abcksum(void *);
+static void	setNVpref(void);
+static void	setIDEpar(u_int8_t *, size_t);
+static void	mkahdiboot(struct ahdi_root *, char *,
+						char *, u_int32_t);
+static void	mkbootblock(struct bootblock *, char *,
+				char *, struct disklabel *, u_int);
+static void	install_fd(char *, struct disklabel *);
+static void	install_sd(char *, struct disklabel *);
+static void	install_wd(char *, struct disklabel *);
 
 static struct bootblock	bootarea;
 static struct ahdi_root ahdiboot;
@@ -92,12 +92,11 @@ usage ()
 }
 
 int
-main (argc, argv)
-	int	argc;
-	char	*argv[];
+main (int argc, char *argv[])
 {
 	struct disklabel dl;
 	char		 *dn;
+	char		 *devchr;
 	int		 fd, c;
 
 	/* check OS bootversion */
@@ -150,23 +149,27 @@ main (argc, argv)
 	if (close(fd))
 		err(EXIT_FAILURE, "%s", dn);
 
-	switch (dl.d_type) {
-		case DTYPE_FLOPPY:
+	/* Eg: in /dev/fd0c, set devchr to point to the 'f' */
+	devchr = strrchr(dn, '/') + 1;
+	if (*devchr == 'r')
+		++devchr;
+
+	switch (*devchr) {
+		case 'f': /* fd */
 			install_fd(dn, &dl);
 			break;
-		case DTYPE_ST506:
-		case DTYPE_ESDI:
+		case 'w': /* wd */
 			install_wd(dn, &dl);
 			setNVpref();
 			break;
-		case DTYPE_SCSI:
+		case 's': /* sd */
 			install_sd(dn, &dl);
 			setNVpref();
 			break;
 		default:
 			errx(EXIT_FAILURE,
-			     "%s: %s: Device type not supported.",
-			     dn, dktypenames[dl.d_type]);
+			     "%s: '%c': Device type not supported.",
+			     dn, *devchr);
 	}
 
 	return(EXIT_SUCCESS);
@@ -204,9 +207,7 @@ oscheck ()
 }
 
 static void
-install_fd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_fd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxboot, *bootxx;
@@ -260,14 +261,12 @@ install_fd (devnm, label)
 }
 
 static void
-install_sd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_sd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
 	struct disklabel rawlabel;
-	daddr_t		 bbsec;
+	u_int32_t	 bbsec;
 	u_int		 magic;
 
 	if (label->d_partitions[0].p_size == 0)
@@ -307,7 +306,7 @@ install_sd (devnm, label)
 	mkbootblock(&bootarea, xxboot, bootxx, label, magic);
 
 	if (!nowrite) {
-		off_t	bbo = bbsec * AHDI_BSIZE;
+		off_t	bbo = (off_t)bbsec * AHDI_BSIZE;
 		int	fd;
 
 		if ((fd = open(devnm, O_WRONLY)) < 0)
@@ -334,14 +333,12 @@ install_sd (devnm, label)
 }
 
 static void
-install_wd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_wd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
 	struct disklabel rawlabel;
-	daddr_t		 bbsec;
+	u_int32_t	 bbsec;
 	u_int		 magic;
 
 	if (label->d_partitions[0].p_size == 0)
@@ -383,7 +380,7 @@ install_wd (devnm, label)
 		int	fd;
 		off_t	bbo;
 
-		bbo = bbsec * AHDI_BSIZE;
+		bbo = (off_t)bbsec * AHDI_BSIZE;
 		if ((fd = open(devnm, O_WRONLY)) < 0)
 			err(EXIT_FAILURE, "%s", devnm);
 		if (lseek(fd, bbo, SEEK_SET) != bbo)
@@ -413,7 +410,7 @@ mkahdiboot (newroot, xxb00t, devnm, bbsec)
 	struct ahdi_root *newroot;
 	char		 *xxb00t,
 			 *devnm;
-	daddr_t		 bbsec;
+	u_int32_t	 bbsec;
 {
 	struct ahdi_root tmproot;
 	struct ahdi_part *pd;
@@ -507,9 +504,7 @@ mkbootblock (bb, xxb, bxx, label, magic)
 }
 
 static void
-setIDEpar (start, size)
-	u_int8_t	*start;
-	size_t		size;
+setIDEpar (u_int8_t *start, size_t size)
 {
 	static const u_int8_t	mark[] = { 'N', 'e', 't', 'B', 'S', 'D' };
 
@@ -573,8 +568,7 @@ setNVpref ()
 }
 
 static u_int
-abcksum (bs)
-	void	*bs;
+abcksum (void *bs)
 {
 	u_int16_t sum  = 0,
 		  *st  = (u_int16_t *)bs,

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.9.4.1 2008/05/16 02:22:09 yamt Exp $	*/
+/*	$NetBSD: boot.h,v 1.9.4.2 2009/05/04 08:10:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -95,3 +95,11 @@ void pdcache_wbinv(uint32_t, u_int);
  * pci
  */
 uint32_t pcicfgread(uint32_t, uint32_t);
+
+/*
+ * lcd
+ */
+void lcd_init(void);
+void lcd_banner(void);
+void lcd_loadfile(const char *);
+void lcd_failed(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.24.10.1 2008/05/16 02:23:02 yamt Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.24.10.2 2009/05/04 08:11:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.24.10.1 2008/05/16 02:23:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.24.10.2 2009/05/04 08:11:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.24.10.1 2008/05/16 02:23:02 yam
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
@@ -61,9 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.24.10.1 2008/05/16 02:23:02 yam
  * Send a signal to a Darwin process.
  */
 void
-darwin_sendsig(ksi, mask)
-	const ksiginfo_t *ksi;
-	const sigset_t *mask;
+darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -100,7 +99,7 @@ darwin_sendsig(ksi, mask)
 	sfp = (struct darwin_sigframe *)((u_long)(sfp - 1) & ~0xfUL);
 
 	/* Prepare the signal frame */
-	bzero(&sf, sizeof(sf));
+	memset(&sf, 0, sizeof(sf));
 	sf.dmc.es.dar = tf->dar;
 	sf.dmc.es.dsisr = tf->dsisr;
 	sf.dmc.es.exception = tf->exc;

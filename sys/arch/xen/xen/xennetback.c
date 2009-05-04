@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.32 2008/04/14 13:38:03 cegger Exp $      */
+/*      $NetBSD: xennetback.c,v 1.32.4.1 2009/05/04 08:12:14 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.32 2008/04/14 13:38:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.32.4.1 2009/05/04 08:12:14 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -193,7 +193,7 @@ struct _pages_pool_free {
 } pages_pool_free[NB_XMIT_PAGES_BATCH];
 
 void
-xennetback_init()
+xennetback_init(void)
 {
 	ctrl_msg_t cmsg;
 	netif_be_driver_status_t st;
@@ -201,7 +201,7 @@ xennetback_init()
 	struct pglist mlist;
 	struct vm_page *pg;
 
-	if ( !(xen_start_info.flags & SIF_INITDOMAIN) &&
+	if ( !xendomain_is_dom0() &&
 	     !(xen_start_info.flags & SIF_NET_BE_DOMAIN))
 		return;
 
@@ -221,7 +221,7 @@ xennetback_init()
 	    0, 0, &mlist, NB_XMIT_PAGES_BATCH, 0) != 0)
 		panic("xennetback_init: uvm_pglistalloc");
 	for (i = 0, pg = mlist.tqh_first; pg != NULL;
-	    pg = pg->pageq.tqe_next, i++)
+	    pg = pg->pageq.queue.tqe_next, i++)
 		mcl_pages[i] = xpmap_ptom(VM_PAGE_TO_PHYS(pg)) >> PAGE_SHIFT;
 	if (i != NB_XMIT_PAGES_BATCH)
 		panic("xennetback_init: %d mcl pages", i);
@@ -531,9 +531,9 @@ xennetback_tx_response(struct xnetback_instance *xneti, int id, int status)
 
 	txresp->id = id;
 	txresp->status = status;
-	x86_lfence();
+	xen_rmb();
 	xneti->xni_txring->resp_prod++;
-	x86_lfence();
+	xen_rmb();
 	if (xneti->xni_txring->event == xneti->xni_txring->resp_prod) {
 		XENPRINTF(("%s send event\n", xneti->xni_if.if_xname));
 		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
@@ -559,7 +559,7 @@ xennetback_evthandler(void *arg)
 	XENPRINTF(("xennetback_evthandler "));
 again:
 	req_prod = xneti->xni_txring->req_prod;
-	x86_lfence(); /* ensure we see all requests up to req_prod */
+	xen_rmb(); /* ensure we see all requests up to req_prod */
 	req_cons = xneti->xni_txring->req_cons;
 	XENPRINTF(("%s event req_prod %d resp_prod %d req_cons %d event %d\n",
 	    xneti->xni_if.if_xname,
@@ -750,7 +750,7 @@ again:
 	 * make sure the guest will see our replies before testing for more
 	 * work.
 	 */
-	x86_lfence(); /* ensure we see all requests up to req_prod */
+	xen_rmb(); /* ensure we see all requests up to req_prod */
 	if (i > 0)
 		goto again; /* more work to do ? */
 
@@ -779,10 +779,10 @@ xennetback_tx_free(struct mbuf *m, void *va, size_t size, void *arg)
 	txresp = &xneti->xni_txring->ring[MASK_NETIF_TX_IDX(resp_prod)].resp;
 	txresp->id = pkt->pkt_id;
 	txresp->status = NETIF_RSP_OKAY;
-	x86_lfence();
+	xen_rmb();
 	resp_prod++;
 	xneti->xni_txring->resp_prod = resp_prod;
-	x86_lfence();
+	xen_rmb();
 	if (resp_prod == xneti->xni_txring->event) {
 		XENPRINTF(("%s send event\n",
 		    xneti->xni_if.if_xname));
@@ -864,7 +864,7 @@ xennetback_ifsoftstart(void *arg)
 		XENPRINTF(("pkt\n"));
 		req_prod = xneti->xni_rxring->req_prod;
 		resp_prod = xneti->xni_rxring->resp_prod;
-		x86_lfence();
+		xen_rmb();
 
 		mmup = xstart_mmu;
 		mclp = xstart_mcl;
@@ -975,10 +975,10 @@ xennetback_ifsoftstart(void *arg)
 					printf("%s: xstart_mcl[%d] failed\n",
 					    ifp->if_xname, j);
 			}
-			x86_lfence();
+			xen_rmb();
 			/* update pointer */
 			xneti->xni_rxring->resp_prod += i;
-			x86_lfence();
+			xen_rmb();
 			/* now we can free the mbufs */
 			for (j = 0; j < i; j++) {
 				m_freem(mbufs_sent[j]);
@@ -991,7 +991,7 @@ xennetback_ifsoftstart(void *arg)
 		}
 		/* send event */
 		if (do_event) {
-			x86_lfence();
+			xen_rmb();
 			XENPRINTF(("%s receive event\n",
 			    xneti->xni_if.if_xname));
 			hypervisor_notify_via_evtchn(xneti->xni_evtchn);

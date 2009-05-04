@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134 2008/04/24 18:39:22 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.1 2009/05/04 08:12:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2008/04/24 18:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.1 2009/05/04 08:12:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2008/04/24 18:39:22 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -375,15 +377,10 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 	case T_FPERR|T_USER:	/* 68881 exceptions */
 		/*
 		 * We pass along the 68881 status register which locore stashed
-		 * in code for us.  Note that there is a possibility that the
-		 * bit pattern of this register will conflict with one of the
-		 * FPE_* codes defined in signal.h.  Fortunately for us, the
-		 * only such codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so there is
-		 * no clash.
+		 * in code for us.
 		 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 
 	case T_FPEMULI:		/* FPU faults in supervisor mode */
@@ -529,6 +526,9 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 			/* supervisor mode fault */
 			if ((l->l_addr->u_pcb.pcb_onfault == NULL) || KDFAULT(code))
 				map = kernel_map;
+		} else if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
+			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 
 		if (WRFAULT(code))
@@ -572,6 +572,9 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		if (rv == 0) {
 			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
+
+			if ((type & T_USER) != 0)
+				l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto finish;
 		}
 		if (rv == EACCES) {
@@ -594,6 +597,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 			       map, va, ftype, rv);
 			goto dopanic;
 		}
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",

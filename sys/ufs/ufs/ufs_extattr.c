@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.21 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.21.4.1 2009/05/04 08:14:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,9 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.21 2008/03/21 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.21.4.1 2009/05/04 08:14:38 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ffs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +359,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
 
-	MALLOC(dirbuf, char *, DIRBLKSIZ, M_TEMP, M_WAITOK);
+	dirbuf = malloc(DIRBLKSIZ, M_TEMP, M_WAITOK);
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -427,7 +429,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 				break;
 		}
 	}
-	FREE(dirbuf, M_TEMP);
+	free(dirbuf, M_TEMP);
 	
 	return (0);
 }
@@ -602,7 +604,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	strncpy(attribute->uele_attrname, attrname,
 	    UFS_EXTATTR_MAXEXTATTRNAME);
 	attribute->uele_attrnamespace = attrnamespace;
-	bzero(&attribute->uele_fileheader,
+	memset(&attribute->uele_fileheader, 0,
 	    sizeof(struct ufs_extattr_fileheader));
 	
 	attribute->uele_backing_vnode = backing_vnode;
@@ -1292,14 +1294,14 @@ ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l)
 }
 
 void
-ufs_extattr_init()
+ufs_extattr_init(void)
 {
 
 	malloc_type_attach(M_UFS_EXTATTR);
 }
 
 void
-ufs_extattr_done()
+ufs_extattr_done(void)
 {
 
 	malloc_type_detach(M_UFS_EXTATTR);

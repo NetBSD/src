@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.18.40.1 2008/05/16 02:25:45 yamt Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.18.40.2 2009/05/04 08:14:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.18.40.1 2008/05/16 02:25:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.18.40.2 2009/05/04 08:14:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -113,11 +113,11 @@ idrp_input(struct mbuf *m, ...)
 bad:		m_freem(m);
 		return;
 	}
-	bzero(idrp_addrs[0].siso_data, sizeof(idrp_addrs[0].siso_data));
-	bcopy((void *) & (src->siso_addr), (void *) & idrp_addrs[0].siso_addr,
+	memset(idrp_addrs[0].siso_data, 0, sizeof(idrp_addrs[0].siso_data));
+	memcpy((void *) & idrp_addrs[0].siso_addr, (void *) & (src->siso_addr),
 	      1 + src->siso_nlen);
-	bzero(idrp_addrs[1].siso_data, sizeof(idrp_addrs[1].siso_data));
-	bcopy((void *) & (dst->siso_addr), (void *) & idrp_addrs[1].siso_addr,
+	memset(idrp_addrs[1].siso_data, 0, sizeof(idrp_addrs[1].siso_data));
+	memcpy((void *) & idrp_addrs[1].siso_addr, (void *) & (dst->siso_addr),
 	      1 + dst->siso_nlen);
 	if (sbappendaddr(&idrp_isop.isop_socket->so_rcv,
 			 sisotosa(idrp_addrs), m, (struct mbuf *) 0) == 0)
@@ -189,7 +189,7 @@ idrp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			if (error)
 				break;
 		}
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
+		rp = malloc(sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
 		if (rp == 0) {
 			error = ENOBUFS;
 			break;

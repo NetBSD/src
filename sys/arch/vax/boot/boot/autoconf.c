@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2008/03/31 06:19:59 he Exp $ */
+/*	$NetBSD: autoconf.c,v 1.26.4.1 2009/05/04 08:12:03 yamt Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,7 @@
 #include <sys/param.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 
 #include "../include/mtpr.h"
 #include "../include/sid.h"
@@ -49,7 +50,6 @@ void autoconf(void);
 void findcpu(void);
 void consinit(void);
 void scbinit(void);
-int getsecs(void);
 void scb_stray(void *);
 void longjmp(int *, int);
 void rtimer(void *);
@@ -62,7 +62,7 @@ long *bootregs;
  */
 
 void
-autoconf()
+autoconf(void)
 {
 	int copyrpb = 1;
 	int fromnet = (bootregs[12] != -1);
@@ -126,8 +126,8 @@ autoconf()
 
 volatile int tickcnt;
 
-int
-getsecs()
+satime_t
+getsecs(void)
 {
 	return tickcnt/100;
 }
@@ -152,7 +152,7 @@ mcheck(void *arg)
  * to detect unwanted interrupts.
  */
 void
-scbinit()
+scbinit(void)
 {
 	int i, addr;
 

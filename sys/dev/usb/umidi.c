@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.35.4.1 2008/05/16 02:25:11 yamt Exp $	*/
+/*	$NetBSD: umidi.c,v 1.35.4.2 2009/05/04 08:13:21 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.35.4.1 2008/05/16 02:25:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.35.4.2 2009/05/04 08:13:21 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,13 +147,13 @@ struct midi_hw_if_ext umidi_hw_if_mm = {
 	.compress = 1,
 };
 
-int umidi_match(device_t, struct cfdata *, void *);
+int umidi_match(device_t, cfdata_t, void *);
 void umidi_attach(device_t, device_t, void *);
 void umidi_childdet(device_t, device_t);
 int umidi_detach(device_t, int);
 int umidi_activate(device_t, enum devact);
 extern struct cfdriver umidi_cd;
-CFATTACH_DECL2(umidi, sizeof(struct umidi_softc), umidi_match,
+CFATTACH_DECL2_NEW(umidi, sizeof(struct umidi_softc), umidi_match,
     umidi_attach, umidi_detach, umidi_activate, NULL, umidi_childdet);
 
 USB_MATCH(umidi)
@@ -180,8 +180,10 @@ USB_ATTACH(umidi)
 
 	DPRINTFN(1,("umidi_attach\n"));
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal("%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_iface = uaa->iface;
@@ -189,25 +191,24 @@ USB_ATTACH(umidi)
 
 	sc->sc_quirk =
 	    umidi_search_quirk(uaa->vendor, uaa->product, uaa->ifaceno);
-	printf("%s: ", USBDEVNAME(sc->sc_dev));
+	aprint_normal_dev(self, "");
 	umidi_print_quirk(sc->sc_quirk);
 
 
 	err = alloc_all_endpoints(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
-		printf("%s: alloc_all_endpoints failed. (err=%d)\n",
-		       USBDEVNAME(sc->sc_dev), err);
+		aprint_error_dev(self,
+		    "alloc_all_endpoints failed. (err=%d)\n", err);
 		goto error;
 	}
 	err = alloc_all_jacks(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
 		free_all_endpoints(sc);
-		printf("%s: alloc_all_jacks failed. (err=%d)\n",
-		       USBDEVNAME(sc->sc_dev), err);
+		aprint_error_dev(self, "alloc_all_jacks failed. (err=%d)\n",
+		    err);
 		goto error;
 	}
-	printf("%s: out=%d, in=%d\n",
-	       USBDEVNAME(sc->sc_dev),
+	aprint_normal_dev(self, "out=%d, in=%d\n",
 	       sc->sc_out_num_jacks, sc->sc_in_num_jacks);
 
 	err = assign_all_jacks_automatically(sc);
@@ -215,16 +216,16 @@ USB_ATTACH(umidi)
 		unbind_all_jacks(sc);
 		free_all_jacks(sc);
 		free_all_endpoints(sc);
-		printf("%s: assign_all_jacks_automatically failed. (err=%d)\n",
-		       USBDEVNAME(sc->sc_dev), err);
+		aprint_error_dev(self,
+		    "assign_all_jacks_automatically failed. (err=%d)\n", err);
 		goto error;
 	}
 	err = attach_all_mididevs(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
 		free_all_jacks(sc);
 		free_all_endpoints(sc);
-		printf("%s: attach_all_mididevs failed. (err=%d)\n",
-		       USBDEVNAME(sc->sc_dev), err);
+		aprint_error_dev(self,
+		    "attach_all_mididevs failed. (err=%d)\n", err);
 	}
 
 #ifdef UMIDI_DEBUG
@@ -236,7 +237,7 @@ USB_ATTACH(umidi)
 
 	USB_ATTACH_SUCCESS_RETURN;
 error:
-	printf("%s: disabled.\n", USBDEVNAME(sc->sc_dev));
+	aprint_error_dev(self, "disabled.\n");
 	sc->sc_dying = 1;
 	USB_ATTACH_ERROR_RETURN;
 }
@@ -551,7 +552,7 @@ static usbd_status
 alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 {
 	usbd_status err;
-	struct umq_fixed_ep_desc *fp;
+	const struct umq_fixed_ep_desc *fp;
 	struct umidi_endpoint *ep;
 	usb_endpoint_descriptor_t *epd;
 	int i;
@@ -580,15 +581,16 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 			sc->sc_iface,
 			fp->out_ep[i].ep);
 		if (!epd) {
-			printf("%s: cannot get endpoint descriptor(out:%d)\n",
-			       USBDEVNAME(sc->sc_dev), fp->out_ep[i].ep);
+			aprint_error_dev(sc->sc_dev,
+			    "cannot get endpoint descriptor(out:%d)\n",
+			     fp->out_ep[i].ep);
 			err = USBD_INVAL;
 			goto error;
 		}
 		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
 		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_OUT) {
-			printf("%s: illegal endpoint(out:%d)\n",
-			       USBDEVNAME(sc->sc_dev), fp->out_ep[i].ep);
+			aprint_error_dev(sc->sc_dev, "illegal endpoint(out:%d)\n",
+			    fp->out_ep[i].ep);
 			err = USBD_INVAL;
 			goto error;
 		}
@@ -606,8 +608,9 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 			sc->sc_iface,
 			fp->in_ep[i].ep);
 		if (!epd) {
-			printf("%s: cannot get endpoint descriptor(in:%d)\n",
-			       USBDEVNAME(sc->sc_dev), fp->in_ep[i].ep);
+			aprint_error_dev(sc->sc_dev,
+			    "cannot get endpoint descriptor(in:%d)\n",
+			     fp->in_ep[i].ep);
 			err = USBD_INVAL;
 			goto error;
 		}
@@ -627,8 +630,8 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 				break;
 			/*FALLTHROUGH*/
 		default:
-			printf("%s: illegal endpoint(in:%d)\n",
-			       USBDEVNAME(sc->sc_dev), fp->in_ep[i].ep);
+			aprint_error_dev(sc->sc_dev,
+			    "illegal endpoint(in:%d)\n", fp->in_ep[i].ep);
 			err = USBD_INVAL;
 			goto error;
 		}
@@ -847,7 +850,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 	int i, j;
 	struct umidi_endpoint *ep;
 	struct umidi_jack *jack;
-	unsigned char *cn_spec;
+	const unsigned char *cn_spec;
 	
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_PER_EP))
 		sc->cblnums_global = 0;
@@ -1008,7 +1011,7 @@ assign_all_jacks_automatically(struct umidi_softc *sc)
 	usbd_status err;
 	int i;
 	struct umidi_jack *out, *in;
-	signed char *asg_spec;
+	const signed char *asg_spec;
 
 	err =
 	    alloc_all_mididevs(sc,
@@ -1157,7 +1160,7 @@ attach_mididev(struct umidi_softc *sc, struct umidi_mididev *mididev)
 	
 	mididev->label = describe_mididev(mididev);
 
-	mididev->mdev = midi_attach_mi(&umidi_hw_if, mididev, &sc->sc_dev);
+	mididev->mdev = midi_attach_mi(&umidi_hw_if, mididev, sc->sc_dev);
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -1483,8 +1486,8 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	if ( umididebug >= 100 )
 		microtime(&umidi_tv);
 #endif
-	DPRINTFN(100, ("umidi out: %lu.%06lus ep=%p cn=%d len=%d cin=%#x\n",
-	    umidi_tv.tv_sec%100, umidi_tv.tv_usec,
+	DPRINTFN(100, ("umidi out: %"PRIu64".%06"PRIu64"s ep=%p cn=%d len=%d cin=%#x\n",
+	    umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec,
 	    ep, out_jack->cable_number, len, cin));
 	
 	s = splusb();
@@ -1628,9 +1631,9 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 #endif
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
         if ( 0 == count % UMIDI_PACKET_SIZE ) {
-		DPRINTFN(200,("%s: %lu.%06lus out ep %p xfer length %u\n",
+		DPRINTFN(200,("%s: %"PRIu64".%06"PRIu64"s out ep %p xfer length %u\n",
 			     USBDEVNAME(ep->sc->sc_dev),
-			     umidi_tv.tv_sec%100, umidi_tv.tv_usec, ep, count));
+			     umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec, ep, count));
         } else {
                 DPRINTF(("%s: output endpoint %p odd transfer length %u\n",
                         USBDEVNAME(ep->sc->sc_dev), ep, count));

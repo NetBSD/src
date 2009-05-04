@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.16.10.1 2008/05/16 02:22:00 yamt Exp $	*/
+/*	$NetBSD: frame.h,v 1.16.10.2 2009/05/04 08:10:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -106,7 +106,7 @@ struct frame {
 };
 
 #ifdef _KERNEL
-void validate_trapframe __P((trapframe_t *, int));
+void validate_trapframe(trapframe_t *, int);
 #endif /* _KERNEL */
 
 #else /* _LOCORE */
@@ -120,6 +120,24 @@ void validate_trapframe __P((trapframe_t *, int));
 #include <machine/cpu.h>
 
 /*
+ * This macro is used by DO_AST_AND_RESTORE_ALIGNMENT_FAULTS to process
+ * any pending softints.
+ */
+#ifdef __HAVE_FAST_SOFTINTS
+#define	DO_PENDING_SOFTINTS						\
+	ldr	r0, [r4, #CI_INTR_DEPTH]/* Get current intr depth */	;\
+	teq	r0, #0			/* Test for 0. */		;\
+	bne	10f			/*   skip softints if != 0 */	;\
+	ldr	r0, [r4, #CI_CPL]	/* Get current priority level */;\
+	ldr	r1, [r4, #CI_SOFTINTS]	/* Get pending softint mask */	;\
+	movs	r0, r1, lsr r0		/* shift mask by cpl */		;\
+	blne	_C_LABEL(dosoftints)	/* dosoftints(void) */		;\
+10:
+#else
+#define	DO_PENDING_SOFTINTS		/* nothing */
+#endif
+
+/*
  * AST_ALIGNMENT_FAULT_LOCALS and ENABLE_ALIGNMENT_FAULTS
  * These are used in order to support dynamic enabling/disabling of
  * alignment faults when executing old a.out ARM binaries.
@@ -129,40 +147,9 @@ void validate_trapframe __P((trapframe_t *, int));
  * relies on r4 being preserved.
  */
 #ifdef EXEC_AOUT
-#if defined(PROCESS_ID_IS_CURLWP) || defined(PROCESS_ID_IS_CURCPU)
-
 #define	AST_ALIGNMENT_FAULT_LOCALS					\
 .Laflt_cpufuncs:							;\
 	.word	_C_LABEL(cpufuncs)
-
-#elif !defined(MULTIPROCESSOR)
-
-/*
- * Local variables needed by the AST/Alignment Fault macroes
- */
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpufuncs:							;\
-	.word	_C_LABEL(cpufuncs)					;\
-.Laflt_cpu_info_store:							;\
-	.word	_C_LABEL(cpu_info_store)
-
-#define	GET_CURCPU(rX)							\
-	ldr	rX, .Laflt_cpu_info_store
-
-#else /* !MULTIPROCESSOR */
-
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpufuncs:							;\
-	.word	_C_LABEL(cpufuncs)					;\
-.Laflt_cpu_info:							;\
-	.word	_C_LABEL(cpu_info)
-
-#define	GET_CURCPU(rX)							\
-	ldr	rX, .Laflt_cpu_info					;\
-	bl	_C_LABEL(cpu_number)					;\
-	ldr	r0, [rX, r0, lsl #2]
-
-#endif /* MULTIPROCESSOR */
 
 /*
  * This macro must be invoked following PUSHFRAMEINSVC or PUSHFRAME at
@@ -195,15 +182,16 @@ void validate_trapframe __P((trapframe_t *, int));
  * for use.
  */
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
+	DO_PENDING_SOFTINTS						;\
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
 	mrs	r5, cpsr		/* save CPSR */			;\
-	orr	r1, r5, #(I32_bit)					;\
+	orr	r1, r5, #(IF32_bits)					;\
 	msr	cpsr_c, r1		/* Disable interrupts */	;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
 	bne	3f			/* Nope, get out now */		;\
-1:	ldr	r0, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
-	teq	r0, #0x00000000						;\
+1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
+	teq	r1, #0x00000000						;\
 	bne	2f			/* Yup. Go deal with it */	;\
 	ldr	r1, [r4, #CI_CURPCB]	/* Get current PCB */		;\
 	ldr	r0, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
@@ -218,46 +206,26 @@ void validate_trapframe __P((trapframe_t *, int));
 	/* NOTREACHED */						\
 2:	mov	r1, #0x00000000						;\
 	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
-	bic	r5, r5, #(I32_bit)					;\
+	bic	r5, r5, #(IF32_bits)				;\
 	msr	cpsr_c, r5		/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
-	orr	r0, r5, #(I32_bit)	/* Disable IRQs */		;\
+	orr	r0, r5, #(IF32_bits)	/* Disable IRQs */		;\
 	msr	cpsr_c, r0						;\
 	b	1b			/* Back around again */		;\
 3:
 
 #else	/* !EXEC_AOUT */
 
-#if defined(PROCESS_ID_IS_CURLWP) || defined(PROCESS_ID_IS_CURCPU)
 #define	AST_ALIGNMENT_FAULT_LOCALS
-
-#elif !defined(MULTIPROCESSOR)
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpu_info_store:							;\
-	.word	_C_LABEL(cpu_info_store)
-
-#define	GET_CURCPU(rX)							\
-	ldr	rX, .Laflt_cpu_info_store
-
-#else
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpu_info:							;\
-	.word	_C_LABEL(cpu_info)
-
-#define	GET_CURCPU(rX)							\
-	bl	_C_LABEL(cpu_number)					;\
-	ldr	r1, .Laflt_cpu_info					;\
-	ldr	rX, [r1, r0, lsl #2]
-
-#endif
 
 #define	ENABLE_ALIGNMENT_FAULTS		GET_CURCPU(r4)
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
+	DO_PENDING_SOFTINTS						;\
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
 	mrs	r5, cpsr		/* save CPSR */			;\
-	orr	r1, r5, #(I32_bit)					;\
+	orr	r1, r5, #(IF32_bits)					;\
 	msr	cpsr_c, r1		/* Disable interrupts */	;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
@@ -267,11 +235,11 @@ void validate_trapframe __P((trapframe_t *, int));
 	beq	2f			/* Nope. Just bail */		;\
 	mov	r1, #0x00000000						;\
 	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
-	bic	r5, r5, #(I32_bit)					;\
+	bic	r5, r5, #(IF32_bits)					;\
 	msr	cpsr_c, r5		/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
-	orr	r0, r5, #(I32_bit)	/* Disable IRQs */		;\
+	orr	r0, r5, #(IF32_bits)	/* Disable IRQs */		;\
 	msr	cpsr_c, r0						;\
 	b	1b							;\
 2:

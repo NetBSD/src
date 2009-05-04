@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.11.4.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: sip.c,v 1.11.4.2 2009/05/04 08:11:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -53,18 +53,12 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-int sip_match(unsigned, void *);
-void *sip_init(unsigned, void *);
-int sip_send(void *, char *, unsigned);
-int sip_recv(void *, char *, unsigned, unsigned);
-
-#define XD1_OWN		(1U << 31)
-#define XD1_OK		(1U << 27)
-
 struct desc {
 	uint32_t xd0, xd1, xd2;
 	uint32_t hole;
 };
+#define XD1_OWN		(1U << 31)
+#define XD1_OK		(1U << 27)
 
 #define SIP_CR		0x00
 #define  CR_RST		(1U << 8)	/* software reset */

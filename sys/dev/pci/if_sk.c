@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.48.4.1 2008/05/16 02:24:43 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.48.4.2 2009/05/04 08:12:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.1 2008/05/16 02:24:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.2 2009/05/04 08:12:57 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.1 2008/05/16 02:24:43 yamt Exp $");
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -159,10 +160,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.1 2008/05/16 02:24:43 yamt Exp $");
 #include <dev/pci/if_skreg.h>
 #include <dev/pci/if_skvar.h>
 
-int skc_probe(struct device *, struct cfdata *, void *);
-void skc_attach(struct device *, struct device *self, void *aux);
-int sk_probe(struct device *, struct cfdata *, void *);
-void sk_attach(struct device *, struct device *self, void *aux);
+int skc_probe(device_t, cfdata_t, void *);
+void skc_attach(device_t, device_t, void *aux);
+int sk_probe(device_t, cfdata_t, void *);
+void sk_attach(device_t, device_t, void *aux);
 int skcprint(void *, const char *);
 int sk_intr(void *);
 void sk_intr_bcom(struct sk_if_softc *);
@@ -195,19 +196,23 @@ void sk_vpd_read(struct sk_softc *);
 
 void sk_update_int_mod(struct sk_softc *);
 
-int sk_xmac_miibus_readreg(struct device *, int, int);
-void sk_xmac_miibus_writereg(struct device *, int, int, int);
-void sk_xmac_miibus_statchg(struct device *);
+int sk_xmac_miibus_readreg(device_t, int, int);
+void sk_xmac_miibus_writereg(device_t, int, int, int);
+void sk_xmac_miibus_statchg(device_t);
 
-int sk_marv_miibus_readreg(struct device *, int, int);
-void sk_marv_miibus_writereg(struct device *, int, int, int);
-void sk_marv_miibus_statchg(struct device *);
+int sk_marv_miibus_readreg(device_t, int, int);
+void sk_marv_miibus_writereg(device_t, int, int, int);
+void sk_marv_miibus_statchg(device_t);
 
 u_int32_t sk_xmac_hash(void *);
 u_int32_t sk_yukon_hash(void *);
 void sk_setfilt(struct sk_if_softc *, void *, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
+
+static bool skc_suspend(device_t dv PMF_FN_ARGS);
+static bool skc_resume(device_t dv PMF_FN_ARGS);
+static bool sk_resume(device_t dv PMF_FN_ARGS);
 
 /* #define SK_DEBUG 2 */
 #ifdef SK_DEBUG
@@ -368,7 +373,8 @@ sk_vpd_read(struct sk_softc *sc)
 	sk_vpd_read_res(sc, &res, pos);
 
 	if (res.vr_id != VPD_RES_ID) {
-		aprint_error_dev(&sc->sk_dev, "bad VPD resource id: expected %x got %x\n",
+		aprint_error_dev(sc->sk_dev,
+		    "bad VPD resource id: expected %x got %x\n",
 		    VPD_RES_ID, res.vr_id);
 		return;
 	}
@@ -385,7 +391,8 @@ sk_vpd_read(struct sk_softc *sc)
 	sk_vpd_read_res(sc, &res, pos);
 
 	if (res.vr_id != VPD_RES_READ) {
-		aprint_error_dev(&sc->sk_dev, "bad VPD resource id: expected %x got %x\n",
+		aprint_error_dev(sc->sk_dev,
+		    "bad VPD resource id: expected %x got %x\n",
 		    VPD_RES_READ, res.vr_id);
 		return;
 	}
@@ -399,9 +406,9 @@ sk_vpd_read(struct sk_softc *sc)
 }
 
 int
-sk_xmac_miibus_readreg(struct device *dev, int phy, int reg)
+sk_xmac_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
 
 	DPRINTFN(9, ("sk_xmac_miibus_readreg\n"));
@@ -420,7 +427,8 @@ sk_xmac_miibus_readreg(struct device *dev, int phy, int reg)
 		}
 
 		if (i == SK_TIMEOUT) {
-			aprint_error_dev(&sc_if->sk_dev, "phy failed to come ready\n");
+			aprint_error_dev(sc_if->sk_dev,
+			    "phy failed to come ready\n");
 			return 0;
 		}
 	}
@@ -429,9 +437,9 @@ sk_xmac_miibus_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-sk_xmac_miibus_writereg(struct device *dev, int phy, int reg, int val)
+sk_xmac_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
 
 	DPRINTFN(9, ("sk_xmac_miibus_writereg\n"));
@@ -443,7 +451,7 @@ sk_xmac_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	}
 
 	if (i == SK_TIMEOUT) {
-		aprint_error_dev(&sc_if->sk_dev, "phy failed to come ready\n");
+		aprint_error_dev(sc_if->sk_dev, "phy failed to come ready\n");
 		return;
 	}
 
@@ -455,13 +463,13 @@ sk_xmac_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	}
 
 	if (i == SK_TIMEOUT)
-		aprint_error_dev(&sc_if->sk_dev, "phy write timed out\n");
+		aprint_error_dev(sc_if->sk_dev, "phy write timed out\n");
 }
 
 void
-sk_xmac_miibus_statchg(struct device *dev)
+sk_xmac_miibus_statchg(device_t dev)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	struct mii_data *mii = &sc_if->sk_mii;
 
 	DPRINTFN(9, ("sk_xmac_miibus_statchg\n"));
@@ -479,9 +487,9 @@ sk_xmac_miibus_statchg(struct device *dev)
 }
 
 int
-sk_marv_miibus_readreg(struct device *dev, int phy, int reg)
+sk_marv_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	u_int16_t val;
 	int i;
 
@@ -504,7 +512,7 @@ sk_marv_miibus_readreg(struct device *dev, int phy, int reg)
 	}
 
 	if (i == SK_TIMEOUT) {
-		aprint_error_dev(&sc_if->sk_dev, "phy failed to come ready\n");
+		aprint_error_dev(sc_if->sk_dev, "phy failed to come ready\n");
 		return 0;
 	}
 
@@ -520,9 +528,9 @@ sk_marv_miibus_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-sk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
+sk_marv_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
 
 	DPRINTFN(9, ("sk_marv_miibus_writereg phy=%d reg=%#x val=%#x\n",
@@ -539,14 +547,16 @@ sk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	}
 
 	if (i == SK_TIMEOUT)
-		printf("%s: phy write timed out\n", device_xname(&sc_if->sk_dev));
+		printf("%s: phy write timed out\n",
+		    device_xname(sc_if->sk_dev));
 }
 
 void
-sk_marv_miibus_statchg(struct device *dev)
+sk_marv_miibus_statchg(device_t dev)
 {
 	DPRINTFN(9, ("sk_marv_miibus_statchg: gpcr=%x\n",
-		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
+		     SK_YU_READ_2(((struct sk_if_softc *)device_private(dev)),
+		     YUKON_GPCR)));
 }
 
 #define SK_HASH_BITS		6
@@ -625,7 +635,7 @@ allmulti:
 		/* First find the tail of the list. */
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 				 ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto allmulti;
@@ -687,7 +697,7 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
 	int			i;
 
-	bzero((char *)rd->sk_rx_ring,
+	memset((char *)rd->sk_rx_ring, 0,
 	    sizeof(struct sk_rx_desc) * SK_RX_RING_CNT);
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
@@ -706,7 +716,8 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
 		if (sk_newbuf(sc_if, i, NULL, 
 		    sc_if->sk_cdata.sk_rx_jumbo_map) == ENOBUFS) {
-			aprint_error_dev(&sc_if->sk_dev, "failed alloc of %dth mbuf\n", i);
+			aprint_error_dev(sc_if->sk_dev,
+			    "failed alloc of %dth mbuf\n", i);
 			return ENOBUFS;
 		}
 	}
@@ -723,7 +734,7 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
 	int			i;
 
-	bzero((char *)sc_if->sk_rdata->sk_tx_ring,
+	memset(sc_if->sk_rdata->sk_tx_ring, 0,
 	    sizeof(struct sk_tx_desc) * SK_TX_RING_CNT);
 
 	for (i = 0; i < SK_TX_RING_CNT; i++) {
@@ -762,8 +773,8 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			aprint_error_dev(&sc_if->sk_dev, "no memory for rx list -- "
-			    "packet dropped!\n");
+			aprint_error_dev(sc_if->sk_dev,
+			    "no memory for rx list -- packet dropped!\n");
 			return ENOBUFS;
 		}
 
@@ -823,14 +834,15 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, SK_JMEM, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(&sc->sk_dev, "can't alloc rx buffers\n");
+		aprint_error_dev(sc->sk_dev, "can't alloc rx buffers\n");
 		return ENOBUFS;
 	}
 
 	state = 1;
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, SK_JMEM, (void **)&kva,
 			   BUS_DMA_NOWAIT)) {
-		aprint_error_dev(&sc->sk_dev, "can't map dma buffers (%d bytes)\n",
+		aprint_error_dev(sc->sk_dev,
+		    "can't map dma buffers (%d bytes)\n",
 		    SK_JMEM);
 		error = ENOBUFS;
 		goto out;
@@ -839,7 +851,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	state = 2;
 	if (bus_dmamap_create(sc->sc_dmatag, SK_JMEM, 1, SK_JMEM, 0,
 	    BUS_DMA_NOWAIT, &sc_if->sk_cdata.sk_rx_jumbo_map)) {
-		aprint_error_dev(&sc->sk_dev, "can't create dma map\n");
+		aprint_error_dev(sc->sk_dev, "can't create dma map\n");
 		error = ENOBUFS;
 		goto out;
 	}
@@ -847,7 +859,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	state = 3;
 	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_cdata.sk_rx_jumbo_map,
 			    kva, SK_JMEM, NULL, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(&sc->sk_dev, "can't load dma map\n");
+		aprint_error_dev(sc->sk_dev, "can't load dma map\n");
 		error = ENOBUFS;
 		goto out;
 	}
@@ -858,6 +870,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 
 	LIST_INIT(&sc_if->sk_jfree_listhead);
 	LIST_INIT(&sc_if->sk_jinuse_listhead);
+	mutex_init(&sc_if->sk_jpool_mtx, MUTEX_DEFAULT, IPL_NET);
 
 	/*
 	 * Now divide it up into 9K pieces and save the addresses
@@ -870,7 +883,8 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		entry = malloc(sizeof(struct sk_jpool_entry),
 		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
-			aprint_error_dev(&sc->sk_dev, "no memory for jumbo buffer queue!\n");
+			aprint_error_dev(sc->sk_dev,
+			    "no memory for jumbo buffer queue!\n");
 			error = ENOBUFS;
 			goto out;
 		}
@@ -912,13 +926,17 @@ sk_jalloc(struct sk_if_softc *sc_if)
 {
 	struct sk_jpool_entry   *entry;
 
+	mutex_enter(&sc_if->sk_jpool_mtx);
 	entry = LIST_FIRST(&sc_if->sk_jfree_listhead);
 
-	if (entry == NULL)
+	if (entry == NULL) {
+		mutex_exit(&sc_if->sk_jpool_mtx);
 		return NULL;
+	}
 
 	LIST_REMOVE(entry, jpool_entries);
 	LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead, entry, jpool_entries);
+	mutex_exit(&sc_if->sk_jpool_mtx);
 	return sc_if->sk_cdata.sk_jslots[entry->slot];
 }
 
@@ -930,7 +948,7 @@ sk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct sk_jpool_entry *entry;
 	struct sk_if_softc *sc;
-	int i, s;
+	int i;
 
 	/* Extract the softc struct pointer. */
 	sc = (struct sk_if_softc *)arg;
@@ -946,17 +964,17 @@ sk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	if ((i < 0) || (i >= SK_JSLOTS))
 		panic("sk_jfree: asked to free buffer that we don't manage!");
 
-	s = splvm();
+	mutex_enter(&sc->sk_jpool_mtx);
 	entry = LIST_FIRST(&sc->sk_jinuse_listhead);
 	if (entry == NULL)
 		panic("sk_jfree: buffer not in use!");
 	entry->slot = i;
 	LIST_REMOVE(entry, jpool_entries);
 	LIST_INSERT_HEAD(&sc->sk_jfree_listhead, entry, jpool_entries);
+	mutex_exit(&sc->sk_jpool_mtx);
 
 	if (__predict_true(m != NULL))
 		pool_cache_put(mb_cache, m);
-	splx(s);
 }
 
 /*
@@ -989,6 +1007,8 @@ sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	case SIOCSIFFLAGS:
 	        DPRINTFN(2, ("sk_ioctl IFFLAGS\n"));
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
@@ -1077,7 +1097,7 @@ sk_update_int_mod(struct sk_softc *sc)
 	default:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
 	}
-	aprint_verbose_dev(&sc->sk_dev, "interrupt moderation is %d us\n",
+	aprint_verbose_dev(sc->sk_dev, "interrupt moderation is %d us\n",
 	    sc->sk_int_mod);
         sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(sc->sk_int_mod));
         sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
@@ -1109,8 +1129,7 @@ sk_lookup(const struct pci_attach_args *pa)
  */
 
 int
-skc_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+skc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	const struct sk_product *psk;
@@ -1169,8 +1188,7 @@ void sk_reset(struct sk_softc *sc)
 }
 
 int
-sk_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+sk_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct skc_attach_args *sa = aux;
 
@@ -1185,10 +1203,10 @@ sk_probe(struct device *parent, struct cfdata *match,
  * Single port cards will have only one logical interface of course.
  */
 void
-sk_attach(struct device *parent, struct device *self, void *aux)
+sk_attach(device_t parent, device_t self, void *aux)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *) self;
-	struct sk_softc *sc = (struct sk_softc *)parent;
+	struct sk_if_softc *sc_if = device_private(self);
+	struct sk_softc *sc = device_private(parent);
 	struct skc_attach_args *sa = aux;
 	struct sk_txmap_entry	*entry;
 	struct ifnet *ifp;
@@ -1196,9 +1214,11 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamap_t dmamap;
 	void *kva;
 	int i, rseg;
+	int mii_flags = 0;
 
 	aprint_naive("\n");
 
+	sc_if->sk_dev = self;
 	sc_if->sk_port = sa->skc_port;
 	sc_if->sk_softc = sc;
 	sc->sk_if[sa->skc_port] = sc_if;
@@ -1278,7 +1298,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sc_if->sk_phyaddr = SK_PHYADDR_MARV;
 		break;
 	default:
-		aprint_error_dev(&sc->sk_dev, "unsupported PHY type: %d\n",
+		aprint_error_dev(sc->sk_dev, "unsupported PHY type: %d\n",
 		    sc_if->sk_phytype);
 		return;
 	}
@@ -1286,20 +1306,21 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct sk_ring_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(&sc->sk_dev, "can't alloc rx buffers\n");
+		aprint_error_dev(sc->sk_dev, "can't alloc rx buffers\n");
 		goto fail;
 	}
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    sizeof(struct sk_ring_data), &kva, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(&sc_if->sk_dev, "can't map dma buffers (%lu bytes)\n",
-		       (u_long) sizeof(struct sk_ring_data));
+		aprint_error_dev(sc_if->sk_dev,
+		    "can't map dma buffers (%lu bytes)\n",
+		    (u_long) sizeof(struct sk_ring_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 		goto fail;
 	}
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct sk_ring_data), 1,
 	    sizeof(struct sk_ring_data), 0, BUS_DMA_NOWAIT,
             &sc_if->sk_ring_map)) {
-		aprint_error_dev(&sc_if->sk_dev, "can't create dma map\n");
+		aprint_error_dev(sc_if->sk_dev, "can't create dma map\n");
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 		    sizeof(struct sk_ring_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
@@ -1307,7 +1328,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_ring_map, kva,
 	    sizeof(struct sk_ring_data), NULL, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(&sc_if->sk_dev, "can't load dma map\n");
+		aprint_error_dev(sc_if->sk_dev, "can't load dma map\n");
 		bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 		    sizeof(struct sk_ring_data));
@@ -1324,7 +1345,8 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 		if (bus_dmamap_create(sc->sc_dmatag, SK_JLEN, SK_NTXSEG,
 		    SK_JLEN, 0, BUS_DMA_NOWAIT, &dmamap)) {
-			aprint_error_dev(&sc_if->sk_dev, "Can't create TX dmamap\n");
+			aprint_error_dev(sc_if->sk_dev,
+			    "Can't create TX dmamap\n");
 			bus_dmamap_unload(sc->sc_dmatag, sc_if->sk_ring_map);
 			bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 			bus_dmamem_unmap(sc->sc_dmatag, kva,
@@ -1335,7 +1357,8 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
 		if (!entry) {
-			aprint_error_dev(&sc_if->sk_dev, "Can't alloc txmap entry\n");
+			aprint_error_dev(sc_if->sk_dev,
+			    "Can't alloc txmap entry\n");
 			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
 			bus_dmamap_unload(sc->sc_dmatag, sc_if->sk_ring_map);
 			bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
@@ -1349,7 +1372,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	}
 
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
-	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
+	memset(sc_if->sk_rdata, 0, sizeof(struct sk_ring_data));
 
 	ifp = &sc_if->sk_ethercom.ec_if;
 	/* Try to allocate memory for jumbo buffers. */
@@ -1370,7 +1393,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = 0;
 	IFQ_SET_MAXLEN(&ifp->if_snd, SK_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
-	strlcpy(ifp->if_xname, device_xname(&sc_if->sk_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc_if->sk_dev), IFNAMSIZ);
 
 	/*
 	 * Do miibus setup.
@@ -1385,7 +1408,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sk_init_yukon(sc_if);
 		break;
 	default:
-		aprint_error_dev(&sc->sk_dev, "unknown device type %d\n",
+		aprint_error_dev(sc->sk_dev, "unknown device type %d\n",
 			sc->sk_type);
 		goto fail;
 	}
@@ -1405,6 +1428,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sc_if->sk_mii.mii_readreg = sk_marv_miibus_readreg;
 		sc_if->sk_mii.mii_writereg = sk_marv_miibus_writereg;
 		sc_if->sk_mii.mii_statchg = sk_marv_miibus_statchg;
+		mii_flags = MIIF_DOPAUSE;
 		break;
 	}
 
@@ -1412,9 +1436,9 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    sk_ifmedia_upd, ether_mediastatus);
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, mii_flags);
 	if (LIST_EMPTY(&sc_if->sk_mii.mii_phys)) {
-		aprint_error_dev(&sc_if->sk_dev, "no PHY found!\n");
+		aprint_error_dev(sc_if->sk_dev, "no PHY found!\n");
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
 			    0, NULL);
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL);
@@ -1434,9 +1458,14 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
 #if NRND > 0
-        rnd_attach_source(&sc->rnd_source, device_xname(&sc->sk_dev),
+        rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
             RND_TYPE_NET, 0);
 #endif
+
+	if (!pmf_device_register(self, NULL, sk_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 	DPRINTFN(2, ("sk_attach: end\n"));
 
@@ -1465,9 +1494,9 @@ skcprint(void *aux, const char *pnp)
  * setup and ethernet/BPF attach.
  */
 void
-skc_attach(struct device *parent, struct device *self, void *aux)
+skc_attach(device_t parent, device_t self, void *aux)
 {
-	struct sk_softc *sc = (struct sk_softc *)self;
+	struct sk_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct skc_attach_args skca;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -1483,6 +1512,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	const char *revstr;
 	const struct sysctlnode *node;
 
+	sc->sk_dev = self;
 	aprint_naive("\n");
 
 	DPRINTFN(2, ("begin skc_attach\n"));
@@ -1503,8 +1533,8 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			irq = pci_conf_read(pc, pa->pa_tag, SK_PCI_INTLINE);
 
 			/* Reset the power state. */
-			aprint_normal_dev(&sc->sk_dev, "chip is in D%d power mode "
-			    "-- setting to D0\n",
+			aprint_normal_dev(sc->sk_dev,
+			    "chip is in D%d power mode -- setting to D0\n",
 			    command & SK_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			pci_conf_write(pc, pa->pa_tag,
@@ -1555,11 +1585,12 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 				   &iobase, &iosize) == 0)
                         break;
         default:
-                aprint_error_dev(&sc->sk_dev, "can't find mem space\n");
+                aprint_error_dev(sc->sk_dev, "can't find mem space\n");
                 return;
 	}
 
-	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase, iosize));
+	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase,
+	    (u_long)iosize));
 #endif
 	sc->sc_dmatag = pa->pa_dmat;
 
@@ -1568,11 +1599,12 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* bail out here if chip is not recognized */
 	if ( sc->sk_type != SK_GENESIS && ! SK_YUKON_FAMILY(sc->sk_type)) {
-		aprint_error_dev(&sc->sk_dev, "unknown chip type\n");
+		aprint_error_dev(sc->sk_dev, "unknown chip type\n");
 		goto fail;
 	}
 	if (SK_IS_YUKON2(sc)) {
-		aprint_error_dev(&sc->sk_dev, "Does not support Yukon2--try msk(4).\n");
+		aprint_error_dev(sc->sk_dev,
+		    "Does not support Yukon2--try msk(4).\n");
 		goto fail;
 	}
 	DPRINTFN(2, ("skc_attach: allocate interrupt\n"));
@@ -1620,7 +1652,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			sc->sk_rboff = SK_RBOFF_0;
 			break;
 		default:
-			aprint_error_dev(&sc->sk_dev, "unknown ram size: %d\n",
+			aprint_error_dev(sc->sk_dev, "unknown ram size: %d\n",
 			       val);
 			goto fail_1;
 			break;
@@ -1655,7 +1687,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sk_pmd = IFM_1000_T;
 		break;
 	default:
-		aprint_error_dev(&sc->sk_dev, "unknown media type: 0x%x\n",
+		aprint_error_dev(sc->sk_dev, "unknown media type: 0x%x\n",
 		    sk_win_read_1(sc, SK_PMDTYPE));
 		goto fail_1;
 	}
@@ -1750,15 +1782,15 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Announce the product name. */
-	aprint_normal_dev(&sc->sk_dev, "%s rev. %s(0x%x)\n",
+	aprint_normal_dev(sc->sk_dev, "%s rev. %s(0x%x)\n",
 			      sc->sk_name, revstr, sc->sk_rev);
 
 	skca.skc_port = SK_PORT_A;
-	(void)config_found(&sc->sk_dev, &skca, skcprint);
+	(void)config_found(sc->sk_dev, &skca, skcprint);
 
 	if (!(sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC)) {
 		skca.skc_port = SK_PORT_B;
-		(void)config_found(&sc->sk_dev, &skca, skcprint);
+		(void)config_found(sc->sk_dev, &skca, skcprint);
 	}
 
 	/* Turn on the 'driver is loaded' LED. */
@@ -1770,11 +1802,11 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sk_int_mod_pending = 0;
 
 	if ((rc = sysctl_createv(&sc->sk_clog, 0, NULL, &node,
-	    0, CTLTYPE_NODE, device_xname(&sc->sk_dev),
+	    0, CTLTYPE_NODE, device_xname(sc->sk_dev),
 	    SYSCTL_DESCR("skc per-controller controls"),
 	    NULL, 0, NULL, 0, CTL_HW, sk_root_num, CTL_CREATE,
 	    CTL_EOL)) != 0) {
-		aprint_normal_dev(&sc->sk_dev, "couldn't create sysctl node\n");
+		aprint_normal_dev(sc->sk_dev, "couldn't create sysctl node\n");
 		goto fail_1;
 	}
 
@@ -1788,9 +1820,12 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	    sk_sysctl_handler, 0, sc,
 	    0, CTL_HW, sk_root_num, sk_nodenum, CTL_CREATE,
 	    CTL_EOL)) != 0) {
-		aprint_normal_dev(&sc->sk_dev, "couldn't create int_mod sysctl node\n");
+		aprint_normal_dev(sc->sk_dev, "couldn't create int_mod sysctl node\n");
 		goto fail_1;
 	}
+
+	if (!pmf_device_register(self, skc_suspend, skc_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
@@ -1963,7 +1998,7 @@ sk_watchdog(struct ifnet *ifp)
 	 */
 	sk_txeof(sc_if);
 	if (sc_if->sk_cdata.sk_tx_cnt != 0) {
-		aprint_error_dev(&sc_if->sk_dev, "watchdog timeout\n");
+		aprint_error_dev(sc_if->sk_dev, "watchdog timeout\n");
 
 		ifp->if_oerrors++;
 
@@ -2056,8 +2091,8 @@ sk_rxeof(struct sk_if_softc *sc_if)
 			    total_len + ETHER_ALIGN, 0, ifp, NULL);
 			sk_newbuf(sc_if, cur, m, dmamap);
 			if (m0 == NULL) {
-				aprint_error_dev(&sc_if->sk_dev, "no receive buffers "
-				    "available -- packet dropped!\n");
+				aprint_error_dev(sc_if->sk_dev, "no receive "
+				    "buffers available -- packet dropped!\n");
 				ifp->if_ierrors++;
 				continue;
 			}
@@ -2198,7 +2233,7 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 	 * Read the PHY interrupt register to make sure
 	 * we clear any pending interrupts.
 	 */
-	status = sk_xmac_miibus_readreg((struct device *)sc_if,
+	status = sk_xmac_miibus_readreg(sc_if->sk_dev,
 	    SK_PHYADDR_BCOM, BRGPHY_MII_ISR);
 
 	if (!(ifp->if_flags & IFF_RUNNING)) {
@@ -2208,7 +2243,7 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 
 	if (status & (BRGPHY_ISR_LNK_CHG|BRGPHY_ISR_AN_PR)) {
 		int lstat;
-		lstat = sk_xmac_miibus_readreg((struct device *)sc_if,
+		lstat = sk_xmac_miibus_readreg(sc_if->sk_dev,
 		    SK_PHYADDR_BCOM, BRGPHY_MII_AUXSTS);
 
 		if (!(lstat & BRGPHY_AUXSTS_LINK) && sc_if->sk_link) {
@@ -2218,7 +2253,7 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 			    SK_LINKLED1_CTL, SK_LINKLED_OFF);
 			sc_if->sk_link = 0;
 		} else if (status & BRGPHY_ISR_LNK_CHG) {
-			sk_xmac_miibus_writereg((struct device *)sc_if,
+			sk_xmac_miibus_writereg(sc_if->sk_dev,
 			    SK_PHYADDR_BCOM, BRGPHY_MII_IMR, 0xFF00);
 			mii_tick(mii);
 			sc_if->sk_link = 1;
@@ -2409,10 +2444,10 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		/* Enable GMII mode on the XMAC. */
 		SK_XM_SETBIT_2(sc_if, XM_HWCFG, XM_HWCFG_GMIIMODE);
 
-		sk_xmac_miibus_writereg((struct device *)sc_if,
+		sk_xmac_miibus_writereg(sc_if->sk_dev,
 		    SK_PHYADDR_BCOM, MII_BMCR, BMCR_RESET);
 		DELAY(10000);
-		sk_xmac_miibus_writereg((struct device *)sc_if,
+		sk_xmac_miibus_writereg(sc_if->sk_dev,
 		    SK_PHYADDR_BCOM, BRGPHY_MII_IMR, 0xFFF0);
 
 		/*
@@ -2421,10 +2456,10 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		 * registers initialized to some magic values. I don't
 		 * know what the numbers do, I'm just the messenger.
 		 */
-		if (sk_xmac_miibus_readreg((struct device *)sc_if,
+		if (sk_xmac_miibus_readreg(sc_if->sk_dev,
 		    SK_PHYADDR_BCOM, 0x03) == 0x6041) {
 			while (bhack[i].reg) {
-				sk_xmac_miibus_writereg((struct device *)sc_if,
+				sk_xmac_miibus_writereg(sc_if->sk_dev,
 				    SK_PHYADDR_BCOM, bhack[i].reg,
 				    bhack[i].val);
 				i++;
@@ -2763,7 +2798,7 @@ sk_init(struct ifnet *ifp)
 
 	/* Init descriptors */
 	if (sk_init_rx_ring(sc_if) == ENOBUFS) {
-		aprint_error_dev(&sc_if->sk_dev, "initialization failed: no "
+		aprint_error_dev(sc_if->sk_dev, "initialization failed: no "
 		    "memory for rx buffers\n");
 		sk_stop(ifp,0);
 		splx(s);
@@ -2771,7 +2806,7 @@ sk_init(struct ifnet *ifp)
 	}
 
 	if (sk_init_tx_ring(sc_if) == ENOBUFS) {
-		aprint_error_dev(&sc_if->sk_dev, "initialization failed: no "
+		aprint_error_dev(sc_if->sk_dev, "initialization failed: no "
 		    "memory for tx buffers\n");
 		sk_stop(ifp,0);
 		splx(s);
@@ -2793,8 +2828,8 @@ sk_init(struct ifnet *ifp)
 	if (imr != SK_IM_USECS(sc->sk_int_mod)) {
 		sk_win_write_4(sc, SK_IMTIMERINIT,
 		    SK_IM_USECS(sc->sk_int_mod));
-		aprint_verbose_dev(&sc->sk_dev, "interrupt moderation is %d us\n",
-		    sc->sk_int_mod);
+		aprint_verbose_dev(sc->sk_dev,
+		    "interrupt moderation is %d us\n", sc->sk_int_mod);
 	}
 
 	/* Configure interrupt handling */
@@ -2916,9 +2951,48 @@ sk_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 }
 
-CFATTACH_DECL(skc,sizeof(struct sk_softc), skc_probe, skc_attach, NULL, NULL);
+/* Power Management Framework */
 
-CFATTACH_DECL(sk,sizeof(struct sk_if_softc), sk_probe, sk_attach, NULL, NULL);
+static bool
+skc_suspend(device_t dv PMF_FN_ARGS)
+{
+	struct sk_softc *sc = device_private(dv);
+
+	DPRINTFN(2, ("skc_suspend\n"));
+
+	/* Turn off the driver is loaded LED */
+	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_OFF);
+
+	return true;
+}
+
+static bool
+skc_resume(device_t dv PMF_FN_ARGS)
+{
+	struct sk_softc *sc = device_private(dv);
+
+	DPRINTFN(2, ("skc_resume\n"));
+
+	sk_reset(sc);
+	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_ON);
+
+	return true;
+}
+
+static bool
+sk_resume(device_t dv PMF_FN_ARGS)
+{
+	struct sk_if_softc *sc_if = device_private(dv);
+
+	sk_init_yukon(sc_if);
+	return true;
+}
+
+CFATTACH_DECL_NEW(skc, sizeof(struct sk_softc),
+    skc_probe, skc_attach, NULL, NULL);
+
+CFATTACH_DECL_NEW(sk, sizeof(struct sk_if_softc),
+    sk_probe, sk_attach, NULL, NULL);
 
 #ifdef SK_DEBUG
 void

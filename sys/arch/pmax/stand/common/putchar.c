@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.4.140.1 2008/05/16 02:22:59 yamt Exp $	 */
+/*	$NetBSD: putchar.c,v 1.4.140.2 2009/05/04 08:11:42 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,8 +35,7 @@
 /* Ug, no console putchar on pmax PROMs! */
 
 void
-putchar(c)
-        int c;
+putchar(int c)
 {
 	(*callv -> _printf)("%c", c);
 }

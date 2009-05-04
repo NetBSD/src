@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.7.78.1 2008/05/16 02:22:06 yamt Exp $	*/
+/*	$NetBSD: elf.c,v 1.7.78.2 2009/05/04 08:10:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 
 #include <lib/libsa/stand.h>
 #include <atari_stand.h>
-#include <string.h>
 #include <libkern.h>
 #include <sys/exec_elf.h>
 
@@ -66,11 +65,7 @@
 				(ELFMAG2 << 8) | ELFMAG3)
 
 int
-elf_load(fd, od, errp, loadsyms)
-int	fd;
-osdsc_t	*od;
-char	**errp;
-int	loadsyms;
+elf_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 {
 	int		i,j;
 	int		err;
@@ -162,7 +157,7 @@ int	loadsyms;
 		if (read(fd, p, php->p_filesz) != php->p_filesz)
 		    goto error;
 		if (php->p_memsz > php->p_filesz)
-		    bzero(p + php->p_filesz, php->p_memsz - php->p_filesz);
+		    memset(p + php->p_filesz, 0, php->p_memsz - php->p_filesz);
 	    }
 	}
 
@@ -217,7 +212,7 @@ int	loadsyms;
 		}
 	    }
 	    ehdr.e_shoff = sizeof(ehdr);
-	    bcopy(&ehdr, symtab, sizeof(ehdr));
+	    memcpy(symtab, &ehdr, sizeof(ehdr));
 	}
 	return 0;
 

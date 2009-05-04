@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.50.4.1 2008/05/16 02:23:57 yamt Exp $	*/
+/*	$NetBSD: ahb.c,v 1.50.4.2 2009/05/04 08:12:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.50.4.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.50.4.2 2009/05/04 08:12:37 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -471,7 +471,7 @@ ahb_create_ecbs(struct ahb_softc *sc, struct ahb_ecb *ecbstore, int count)
 	struct ahb_ecb *ecb;
 	int i, error;
 
-	bzero(ecbstore, sizeof(struct ahb_ecb) * count);
+	memset(ecbstore, 0, sizeof(struct ahb_ecb) * count);
 	for (i = 0; i < count; i++) {
 		ecb = &ecbstore[i];
 		if ((error = ahb_init_ecb(sc, ecb)) != 0) {
@@ -844,7 +844,7 @@ ahb_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		ecb->opcode = ECB_SCSI_OP;
 		ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
 		ecb->opt2 = periph->periph_lun | ECB_NRB;
-		bcopy(xs->cmd, &ecb->scsi_cmd,
+		memcpy(&ecb->scsi_cmd, xs->cmd,
 		    ecb->scsi_cmd_length = xs->cmdlen);
 		ecb->sense_ptr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
 		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_sense);

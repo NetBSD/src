@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.87 2008/04/08 12:07:25 cegger Exp $ */
+/*      $NetBSD: ac97.c,v 1.87.4.1 2009/05/04 08:12:39 yamt Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.87 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.87.4.1 2009/05/04 08:12:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,17 +116,104 @@ static int	ac97_sysctl_verify(SYSCTLFN_ARGS);
 static const struct audio_mixer_enum
 ac97_on_off = { 2, { { { AudioNoff, 0 } , 0 },
 		     { { AudioNon, 0 }  , 1 },
-        [2 ... 31] = { { "", 0 }, 0 } } };
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 }, } };
 
 static const struct audio_mixer_enum
 ac97_mic_select = { 2, { { { AudioNmicrophone "0", 0  }, 0 },
 			 { { AudioNmicrophone "1", 0  }, 1 },
-	    [2 ... 31] = { { "", 0 }, 0 } } };
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 },
+			 { { "", 0 }	, 0 }, } };
 
 static const struct audio_mixer_enum
 ac97_mono_select = { 2, { { { AudioNmixerout, 0  }, 0 },
 			  { { AudioNmicrophone, 0  }, 1 },
-	     [2 ... 31] = { { "", 0 }, 0 } } };
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 },
+			  { { "", 0 }	, 0 }, } };
 
 static const struct audio_mixer_enum
 ac97_source = { 8, { { { AudioNmicrophone, 0  } , 0 },
@@ -137,7 +224,30 @@ ac97_source = { 8, { { { AudioNmicrophone, 0  } , 0 },
 		     { { AudioNmixerout, 0 }, 5 },
 		     { { AudioNmixerout AudioNmono, 0 }, 6 },
 		     { { Ac97Nphone, 0 }, 7 },
-	[8 ... 31] = { { "", 0 }, 0 } } };
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 },
+		     { { "", 0 }	, 0 }, } };
 
 /*
  * Due to different values for each source that uses these structures,
@@ -1226,11 +1336,10 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 		ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
 		if (as->ext_id != 0) {
 			/* Print capabilities */
-			bitmask_snprintf(as->ext_id,
-				 "\20\20SECONDARY10\17SECONDARY01"
-				 "\14AC97_23\13AC97_22\12AMAP\11LDAC\10SDAC"
-				 "\7CDAC\4VRM\3SPDIF\2DRA\1VRA",
-				 flagbuf, FLAGBUFLEN);
+			snprintb(flagbuf, sizeof(flagbuf),
+			     "\20\20SECONDARY10\17SECONDARY01"
+			     "\14AC97_23\13AC97_22\12AMAP\11LDAC\10SDAC"
+			     "\7CDAC\4VRM\3SPDIF\2DRA\1VRA", as->ext_id);
 			aprint_normal_dev(sc_dev, "ac97: ext id %s\n",
 				      flagbuf);
 
@@ -1311,9 +1420,8 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 		as->type = AC97_CODEC_TYPE_MODEM;
 
 		/* Print capabilities */
-		bitmask_snprintf(as->ext_mid,
-				 "\20\5CID2\4CID1\3HANDSET\2LINE2\1LINE1",
-				 flagbuf, FLAGBUFLEN);
+		snprintb(flagbuf, sizeof(flagbuf),
+		    "\20\5CID2\4CID1\3HANDSET\2LINE2\1LINE1", as->ext_mid);
 		aprint_normal_dev(sc_dev, "ac97: ext mid %s",
 			      flagbuf);
 		aprint_normal(", %s codec\n",

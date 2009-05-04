@@ -1,6 +1,4 @@
-#undef DEBUG_DARWIN
-#undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.28.6.1 2008/05/16 02:23:35 yamt Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.28.6.2 2009/05/04 08:12:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.28.6.1 2008/05/16 02:23:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.28.6.2 2009/05/04 08:12:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.28.6.1 2008/05/16 02:23:35 yamt Ex
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
@@ -192,7 +191,7 @@ darwin_sys_load_shared_file(struct lwp *l, const struct darwin_sys_load_shared_f
 
 	/* Do the actual mapping */
 	for (i = 0; i < SCARG(uap, count); i++) {
-		bzero(&evc, sizeof(evc));
+		memset(&evc, 0, sizeof(evc));
 		evc.ev_addr = base + mapp[i].mapping_offset;
 		evc.ev_len = mapp[i].size;
 		evc.ev_prot = mapp[i].protection & VM_PROT_ALL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.129.2.1 2008/05/16 02:26:00 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.129.2.2 2009/05/04 08:14:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.129.2.1 2008/05/16 02:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.129.2.2 2009/05/04 08:14:38 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -980,7 +980,8 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segwait(struct lwp *l, const struct sys_lfs_segwait_args *uap, register_t *retval)
+sys___lfs_segwait50(struct lwp *l, const struct sys___lfs_segwait50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(fsid_t *) fsidp;
@@ -1151,7 +1152,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 		retries = 0;
 	    again:
 		error = bread(ump->um_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
-			      NOCRED, &bp);
+			      NOCRED, 0, &bp);
 		if (error) {
 			DLOG((DLOG_CLEAN, "lfs_fastvget: bread failed (%d)\n",
 			      error));

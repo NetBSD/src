@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.65 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.65.4.1 2009/05/04 08:14:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.65 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.65.4.1 2009/05/04 08:14:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,14 +214,14 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 
 	error = bread(ip->i_devvp,
 			  fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-			  (int)fs->e2fs_bsize, NOCRED, &bp);
+			  (int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	cp = (char *)bp->b_data +
-	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
+	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE(fs));
 	e2fs_isave(ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
 	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
 	    (flags & IN_MODIFIED) != 0 &&
@@ -553,7 +553,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 	if (copy != NULL) {
-		FREE(copy, M_TEMP);
+		free(copy, M_TEMP);
 	} else {
 		brelse(bp, BC_INVAL);
 	}

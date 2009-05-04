@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.28.12.1 2008/05/16 02:23:35 yamt Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.28.12.2 2009/05/04 08:12:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.28.12.1 2008/05/16 02:23:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.28.12.2 2009/05/04 08:12:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.28.12.1 2008/05/16 02:23:35 yamt
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_exception.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_signal.h>
@@ -124,7 +125,8 @@ darwin_tracesig(struct proc *p, int signo)
 
 	code[0] = MACH_SOFT_SIGNAL;
 	code[1] = signo;
-	l = proc_representative_lwp(p, NULL, 0);
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
 	error = mach_exception(l, MACH_EXC_SOFTWARE, code);
 
 	/* Inhibit normal signal delivery */

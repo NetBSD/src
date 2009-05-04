@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.71.10.1 2008/05/16 02:25:11 yamt Exp $	*/
+/*	$NetBSD: ums.c,v 1.71.10.2 2009/05/04 08:13:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.71.10.1 2008/05/16 02:25:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.71.10.2 2009/05/04 08:13:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.71.10.1 2008/05/16 02:25:11 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>
@@ -119,18 +118,17 @@ const struct wsmouse_accessops ums_accessops = {
 	ums_disable,
 };
 
-int ums_match(device_t, struct cfdata *, void *);
+int ums_match(device_t, cfdata_t, void *);
 void ums_attach(device_t, device_t, void *);
 void ums_childdet(device_t, device_t);
 int ums_detach(device_t, int);
 int ums_activate(device_t, enum devact);
 extern struct cfdriver ums_cd;
-CFATTACH_DECL2(ums, sizeof(struct ums_softc), ums_match, ums_attach,
+CFATTACH_DECL2_NEW(ums, sizeof(struct ums_softc), ums_match, ums_attach,
     ums_detach, ums_activate, NULL, ums_childdet);
 
 int
-ums_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ums_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 	int size;
@@ -145,9 +143,9 @@ ums_match(struct device *parent, struct cfdata *match,
 }
 
 void
-ums_attach(struct device *parent, struct device *self, void *aux)
+ums_attach(device_t parent, device_t self, void *aux)
 {
-	struct ums_softc *sc = (struct ums_softc *)self;
+	struct ums_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
 	struct wsmousedev_attach_args a;
 	int size;
@@ -158,6 +156,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive("\n");
 
+	sc->sc_hdev.sc_dev = self;
 	sc->sc_hdev.sc_intr = ums_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
@@ -281,7 +280,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 int
 ums_activate(device_ptr_t self, enum devact act)
 {
-	struct ums_softc *sc = (struct ums_softc *)self;
+	struct ums_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {

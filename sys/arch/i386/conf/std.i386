@@ -1,4 +1,4 @@
-# $NetBSD: std.i386,v 1.27.10.1 2008/05/16 02:22:33 yamt Exp $
+# $NetBSD: std.i386,v 1.27.10.2 2009/05/04 08:11:15 yamt Exp $
 #
 # standard, required NetBSD/i386 'options'
 
@@ -19,3 +19,6 @@ options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 mainbus0 at root
 cpu* at mainbus?
 ioapic* at mainbus?
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"

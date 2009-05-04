@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.20 2007/12/17 14:11:12 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.20.10.1 2009/05/04 08:12:10 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,12 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20 2007/12/17 14:11:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20.10.1 2009/05/04 08:12:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -108,6 +107,9 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 {
 	void *ih;
 	struct pic *pic;
+#if NIOAPIC > 0
+	struct ioapic_softc *sc;
+#endif
 	int irq, pin, trigger;
 
 #if NIOAPIC > 0
@@ -138,9 +140,9 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	 */
 
 #if NIOAPIC > 0
-	pic = (struct pic *)ioapic_find_bybase(InterruptNumber);
-	if (pic != NULL) {
-		struct ioapic_softc *sc = (struct ioapic_softc *)pic;
+	sc = ioapic_find_bybase(InterruptNumber);
+	if (sc != NULL) {
+		pic = &sc->sc_pic;
 		struct mp_intr_map *mip;
 
 		if (pic->pic_type == PIC_IOAPIC) {
@@ -173,7 +175,7 @@ sci_override:
 	 * XXX probably, IPL_BIO is enough.
 	 */
 	ih = intr_establish(irq, pic, pin, trigger, IPL_TTY,
-	    (int (*)(void *)) ServiceRoutine, Context);
+	    (int (*)(void *)) ServiceRoutine, Context, false);
 	if (ih == NULL)
 		return (AE_NO_MEMORY);
 	*cookiep = ih;
@@ -272,6 +274,12 @@ void
 acpi_md_OsDisableInterrupt(void)
 {
 	x86_disable_intr();
+}
+
+void
+acpi_md_OsEnableInterrupt(void)
+{
+	x86_enable_intr();
 }
 
 void

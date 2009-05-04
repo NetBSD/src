@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.50 2007/12/28 20:49:49 joerg Exp $ */
+/*	$NetBSD: kbd.c,v 1.50.10.1 2009/05/04 08:10:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.50 2007/12/28 20:49:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.50.10.1 2009/05/04 08:10:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,9 +527,7 @@ kbdpoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-kbdkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+kbdkqfilter(dev_t dev, struct knote *kn)
 {
 
 	return (ev_kqfilter(&kbd_softc.k_events, kn));
@@ -724,7 +722,7 @@ kbdstuffchar(u_char c)
 	}
 	fe->id = KEY_CODE(c);
 	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
-	getmicrotime(&fe->time);
+	firm_gettime(fe);
 	k->k_events.ev_put = put;
 	EV_WAKEUP(&k->k_events);
 }

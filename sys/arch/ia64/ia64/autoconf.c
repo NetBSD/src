@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.58.1 2008/05/16 02:22:41 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.58.2 2009/05/04 08:11:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <sys/conf.h>
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	if (booted_device == NULL) /* XXX: Platform support. Match to boot device. */
 		printf("WARNING: can't figure what device matches \"%s\"\n", "XXX");
@@ -50,6 +50,6 @@ cpu_rootconf()
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.5 2007/03/04 06:00:56 christos Exp $ */
+/*	$NetBSD: if_qe.c,v 1.5.44.1 2009/05/04 08:12:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Roar Thronæs.  All rights reserved.
@@ -48,7 +48,7 @@
 
 #include "vaxstand.h"
 
-static int qe_get(struct iodesc *desc, void *pkt, size_t, time_t timeout);
+static int qe_get(struct iodesc *desc, void *pkt, size_t, saseconds_t timeout);
 static int qe_put(struct iodesc *desc, void *pkt, size_t);
 static void qe_init(u_char *eaddr);
 
@@ -123,12 +123,12 @@ qe_init(u_char *eaddr)
 		eaddr[i] = QE_RCSR(i * 2);
 	}
 
-	bzero((void *)sc->rring, sizeof(struct qe_ring));
+	memset((void *)sc->rring, 0, sizeof(struct qe_ring));
 	sc->rring->qe_buf_len = -64;
 	sc->rring->qe_addr_lo = (short)((int)sc->setup_pkt);
 	sc->rring->qe_addr_hi = (short)((int)sc->setup_pkt >> 16);
 
-	bzero((void *)sc->tring, sizeof(struct qe_ring));
+	memset((void *)sc->tring, 0, sizeof(struct qe_ring));
 	sc->tring->qe_buf_len = -64;
 	sc->tring->qe_addr_lo = (short)((int)sc->setup_pkt);
 	sc->tring->qe_addr_hi = (short)((int)sc->setup_pkt >> 16);
@@ -180,7 +180,7 @@ qe_init(u_char *eaddr)
 }
 
 int
-qe_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timeout) {
+qe_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timeout) {
 	int len, j;
 
 retry:
@@ -201,7 +201,7 @@ retry:
 	if (len == 0)
 		goto retry;
 
-	bcopy((void*)sc->qein,pkt,len);
+	memcpy(pkt, (void*)sc->qein,len);
 
 
 end:
@@ -222,7 +222,7 @@ int
 qe_put(struct iodesc *desc, void *pkt, size_t len) {
 	int j;
 
-	bcopy(pkt, (char *)sc->qeout, len);
+	memcpy( (char *)sc->qeout, pkt, len);
 	sc->tring[0].qe_buf_len=-len/2;
 	sc->tring[0].qe_flag=sc->tring[0].qe_status1=QE_NOTYET;
 	sc->tring[1].qe_flag=sc->tring[1].qe_status1=QE_NOTYET;

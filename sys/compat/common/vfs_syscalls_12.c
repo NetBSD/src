@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.25 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.25.6.1 2009/05/04 08:12:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.25 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.25.6.1 2009/05/04 08:12:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,9 @@ compat_12_stat_conv(const struct stat *st, struct stat12 *ost)
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
 	ost->st_rdev = st->st_rdev;
-	ost->st_atimespec = st->st_atimespec;
-	ost->st_mtimespec = st->st_mtimespec;
-	ost->st_ctimespec = st->st_ctimespec;
+	timespec_to_timespec50(&st->st_atimespec, &ost->st_atimespec);
+	timespec_to_timespec50(&st->st_mtimespec, &ost->st_mtimespec);
+	timespec_to_timespec50(&st->st_ctimespec, &ost->st_ctimespec);
 	ost->st_size = st->st_size;
 	ost->st_blocks = st->st_blocks;
 	ost->st_blksize = st->st_blksize;
@@ -101,8 +101,8 @@ compat_12_sys_getdirentries(struct lwp *l, const struct compat_12_sys_getdirentr
 	int error, done;
 	long loff;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return error;
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
@@ -179,16 +179,11 @@ compat_12_sys_fstat(struct lwp *l, const struct compat_12_sys_fstat_args *uap, r
 		syscallarg(int) fd;
 		syscallarg(struct stat12 *) sb;
 	} */
-	int fd = SCARG(uap, fd);
-	struct file *fp;
 	struct stat ub;
 	struct stat12 oub;
 	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(fd);
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	if (error == 0) {
 		compat_12_stat_conv(&ub, &oub);
 		error = copyout(&oub, SCARG(uap, sb), sizeof (oub));

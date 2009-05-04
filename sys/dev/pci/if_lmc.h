@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.11 2008/04/10 19:13:37 cegger Exp $
+ * $NetBSD: if_lmc.h,v 1.11.4.1 2009/05/04 08:12:57 yamt Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -814,7 +814,7 @@ struct synth				/* programmable oscillator params  */
   unsigned x:2;				/* div by 1|2|4|8                  */
   unsigned r:2;				/* div by 1|2|4|8                  */
   unsigned prescale:13;			/* log(final divisor): 2, 4 or 9   */
-  } __attribute__ ((packed));
+  } __packed;
 
 #define SYNTH_FREF	        20e6	/* reference xtal =  20 MHz        */
 #define SYNTH_FMIN	        50e6	/* internal VCO min  50 MHz        */
@@ -1012,7 +1012,7 @@ static __inline int test_and_set(volatile int *ptr, int val)
 # if _BSDI_VERSION <= 199910
 extern struct cfdriver lmccd;
 #  undef  IFP2SC
-#  define UNIT2SC(unit)		((softc_t *)lmccd.cd_devs[unit])
+#  define UNIT2SC(unit)		((softc_t *)device_lookup_private(&lmccd, unit))
 #  define IFP2SC(ifp)		(UNIT2SC((ifp)->if_unit))
 # endif
 #endif /* __bsdi__ */
@@ -1055,10 +1055,9 @@ typedef int intr_return_t;
 # define WRITE_CSR(sc, csr, val) bus_space_write_4((sc)->csr_tag, (sc)->csr_handle, csr, val)
 # define NAME_UNIT		device_xname(&sc->dev)
 # define BOOT_VERBOSE		(boothowto & AB_VERBOSE)
-# define TOP_LOCK(sc)		({ while (__cpu_simple_lock_try(&(sc)->top_lock)==0) \
-				 tsleep((sc), PCATCH|PZERO, DEVICE_NAME, 1); 0; })
-# define TOP_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->top_lock)
-# define TOP_UNLOCK(sc)		__cpu_simple_unlock  (&(sc)->top_lock)
+# define TOP_LOCK(sc)		(mutex_spin_enter(&(sc)->top_lock), 0)
+# define TOP_TRYLOCK(sc)	mutex_tryenter(&(sc)->top_lock)
+# define TOP_UNLOCK(sc)		mutex_spin_exit(&(sc)->top_lock)
 # define BOTTOM_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->bottom_lock)
 # define BOTTOM_UNLOCK(sc)	__cpu_simple_unlock  (&(sc)->bottom_lock)
 # define CHECK_CAP		kauth_authorize_generic(curlwp->l_cred, KAUTH_GENERIC_ISSUSER, NULL)
@@ -1179,7 +1178,7 @@ struct dma_desc
 #else					/* BUS_DMA */
 # define TLP_BUS_DSL_VAL	0
 #endif
-  } __attribute__ ((packed));
+  } __packed;
 
 /* Tulip DMA descriptor status bits */
 #define TLP_DSTS_OWNER		0x80000000
@@ -1290,7 +1289,11 @@ struct softc
   void *irq_cookie;
   void *sdh_cookie;
   struct mbuf *tx_mbuf;			/* hang mbuf here while building dma descs */
+#if defined(__NetBSD__)
+  kmutex_t top_lock;			/* lock card->watchdog vs ioctls           */
+#else
   __cpu_simple_lock_t top_lock;		/* lock card->watchdog vs ioctls           */
+#endif
   __cpu_simple_lock_t bottom_lock;	/* lock buf queues & descriptor rings   */
 #endif					/* __NetBSD__ || __OpenBSD__ */
 
@@ -1677,18 +1680,13 @@ static void fbsd_dmamap_load(void *, bus_dma_segment_t *, int, int);
 static int nbsd_match(struct device *, struct cfdata *, void *);
 static void nbsd_attach(struct device *, struct device *, void *);
 static int nbsd_detach(struct device *, int);
-# if defined(LKM)
-int if_lmc_lkmentry(struct lkm_table *, int, int);
-# endif
 #endif /* __NetBSD__ */
 
 #if defined(__OpenBSD__)
 static int obsd_match(struct device *, void *, void *);
 static void obsd_attach(struct device *, struct device *, void *);
 static int obsd_detach(struct device *, int);
-# if defined(LKM)
 int if_lmc_lkmentry(struct lkm_table *, int, int);
-# endif
 #endif /* __OpenBSD__ */
 
 #if defined(__bsdi__)

@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.16.40.1 2008/05/16 02:25:07 yamt Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.16.40.2 2009/05/04 08:13:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ struct stic_info {
 #define	SI_DVOPEN		0x0010
 
 void	stic_init(struct stic_info *);
-void	stic_attach(struct device *, struct stic_info *, int);
+void	stic_attach(device_t, struct stic_info *, int);
 void	stic_cnattach(struct stic_info *);
 void	stic_reset(struct stic_info *);
 void	stic_flush(struct stic_info *);

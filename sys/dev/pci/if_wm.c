@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.158 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.158.4.1 2009/05/04 08:12:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -73,13 +73,10 @@
  * TODO (in order of importance):
  *
  *	- Rework how parameters are loaded from the EEPROM.
- *	- Figure out what to do with the i82545GM and i82546GB
- *	  SERDES controllers.
- *	- Fix hw VLAN assist.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.158 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.158.4.1 2009/05/04 08:12:58 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -250,16 +247,20 @@ typedef enum {
 	WM_T_82571,			/* i82571 */
 	WM_T_82572,			/* i82572 */
 	WM_T_82573,			/* i82573 */
+	WM_T_82574,			/* i82574 */
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
+	WM_T_ICH10,			/* ICH10 LAN */
 } wm_chip_type;
+
+#define WM_LINKUP_TIMEOUT	50
 
 /*
  * Software state per device.
  */
 struct wm_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_space_tag_t sc_iot;		/* I/O space tag */
@@ -375,7 +376,10 @@ struct wm_softc {
 	uint32_t sc_pba;		/* prototype PBA register */
 
 	int sc_tbi_linkup;		/* TBI link status */
-	int sc_tbi_anstate;		/* autonegotiation state */
+	int sc_tbi_anegticks;		/* autonegotiation ticks */
+	int sc_tbi_ticks;		/* tbi ticks */
+	int sc_tbi_nrxcfg;		/* count of ICR_RXCFG */
+	int sc_tbi_lastnrxcfg;		/* count of ICR_RXCFG (on last tick) */
 
 	int sc_mchash_type;		/* multicast filter offset */
 
@@ -553,6 +557,9 @@ static void	wm_gmii_i82544_writereg(device_t, int, int, int);
 static int	wm_gmii_i80003_readreg(device_t, int, int);
 static void	wm_gmii_i80003_writereg(device_t, int, int, int);
 
+static int	wm_gmii_bm_readreg(device_t, int, int);
+static void	wm_gmii_bm_writereg(device_t, int, int, int);
+
 static void	wm_gmii_statchg(device_t);
 
 static void	wm_gmii_mediainit(struct wm_softc *);
@@ -562,7 +569,7 @@ static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	wm_kmrn_i80003_readreg(struct wm_softc *, int);
 static void	wm_kmrn_i80003_writereg(struct wm_softc *, int, int);
 
-static int	wm_match(device_t, struct cfdata *, void *);
+static int	wm_match(device_t, cfdata_t, void *);
 static void	wm_attach(device_t, device_t, void *);
 static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
 static void	wm_get_auto_rd_done(struct wm_softc *);
@@ -579,12 +586,21 @@ static int32_t	wm_ich8_cycle_init(struct wm_softc *);
 static int32_t	wm_ich8_flash_cycle(struct wm_softc *, uint32_t);
 static int32_t	wm_read_ich8_data(struct wm_softc *, uint32_t,
 		     uint32_t, uint16_t *);
+static int32_t	wm_read_ich8_byte(struct wm_softc *sc, uint32_t, uint8_t *);
 static int32_t	wm_read_ich8_word(struct wm_softc *sc, uint32_t, uint16_t *);
+static void	wm_82547_txfifo_stall(void *);
+static int	wm_check_mng_mode(struct wm_softc *);
+static int	wm_check_mng_mode_ich8lan(struct wm_softc *);
+#if 0
+static int	wm_check_mng_mode_82574(struct wm_softc *);
+#endif
+static int	wm_check_mng_mode_generic(struct wm_softc *);
+static void	wm_get_hw_control(struct wm_softc *);
+static int	wm_check_for_link(struct wm_softc *);
 
-CFATTACH_DECL(wm, sizeof(struct wm_softc),
+CFATTACH_DECL_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
 
-static void	wm_82547_txfifo_stall(void *);
 
 /*
  * Devices supported by this driver.
@@ -791,6 +807,10 @@ static const struct wm_product {
 	  "Intel i82573L Gigabit Ethernet",
 	  WM_T_82573,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82574L,
+	  "Intel i82574L",
+	  WM_T_82574,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT,
 	  "i80003 dual 1000baseT Ethernet",
 	  WM_T_80003,		WMP_F_1000T },
@@ -848,6 +868,24 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_C,
 	  "82801I (C) LAN Controller",
 	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M,
+	  "82801I mobile LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IGP_M_V,
+	  "82801I mobile (V) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
+	  "82801I mobile (AMT) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82567LM_3,
+	  "82567LM-3 LAN Controller",
+	  WM_T_ICH10,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82567LF_3,
+	  "82567LF-3 LAN Controller",
+	  WM_T_ICH10,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_LF,
+	  "i82801J (LF) LAN Controller",
+	  WM_T_ICH10,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -899,7 +937,7 @@ wm_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-wm_match(device_t parent, struct cfdata *cf, void *aux)
+wm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -919,7 +957,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	size_t cdata_size;
 	const char *intrstr = NULL;
-	const char *eetype;
+	const char *eetype, *xname;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	bus_dma_segment_t seg;
@@ -933,6 +971,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t preg, memtype;
 	uint32_t reg;
 
+	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
 
 	wmp = wm_lookup(pa);
@@ -956,7 +995,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_type = wmp->wmp_type;
 	if (sc->sc_type < WM_T_82543) {
 		if (preg < 2) {
-			aprint_error_dev(&sc->sc_dev, "i82542 must be at least rev. 2\n");
+			aprint_error_dev(sc->sc_dev,
+			    "i82542 must be at least rev. 2\n");
 			return;
 		}
 		if (preg < 3)
@@ -982,7 +1022,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
 	} else {
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map device registers\n");
 		return;
 	}
 
@@ -1000,7 +1041,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 				break;
 		}
 		if (i == PCI_MAPREG_END)
-			aprint_error_dev(&sc->sc_dev, "WARNING: unable to find I/O BAR\n");
+			aprint_error_dev(sc->sc_dev,
+			    "WARNING: unable to find I/O BAR\n");
 		else {
 			/*
 			 * The i8254x doesn't apparently respond when the
@@ -1009,14 +1051,15 @@ wm_attach(device_t parent, device_t self, void *aux)
 			 */
 			preg = pci_conf_read(pc, pa->pa_tag, i);
 			if (PCI_MAPREG_MEM_ADDR(preg) == 0) {
-				aprint_error_dev(&sc->sc_dev, "WARNING: I/O BAR at zero.\n");
+				aprint_error_dev(sc->sc_dev,
+				    "WARNING: I/O BAR at zero.\n");
 			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
 					NULL, NULL) == 0) {
 				sc->sc_flags |= WM_F_IOH_VALID;
 			} else {
-				aprint_error_dev(&sc->sc_dev, "WARNING: unable to map "
-				    "I/O space\n");
+				aprint_error_dev(sc->sc_dev,
+				    "WARNING: unable to map I/O space\n");
 			}
 		}
 
@@ -1032,8 +1075,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -1041,19 +1083,19 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wm_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Determine a few things about the bus we're connected to.
@@ -1068,19 +1110,21 @@ wm_attach(device_t parent, device_t self, void *aux)
 		 */
 		sc->sc_flags |= WM_F_CSA;
 		sc->sc_bus_speed = 66;
-		aprint_verbose_dev(&sc->sc_dev, "Communication Streaming Architecture\n");
+		aprint_verbose_dev(sc->sc_dev,
+		    "Communication Streaming Architecture\n");
 		if (sc->sc_type == WM_T_82547) {
 			callout_init(&sc->sc_txfifo_ch, 0);
 			callout_setfunc(&sc->sc_txfifo_ch,
 					wm_82547_txfifo_stall, sc);
-			aprint_verbose_dev(&sc->sc_dev, "using 82547 Tx FIFO stall "
-				       "work-around\n");
+			aprint_verbose_dev(sc->sc_dev,
+			    "using 82547 Tx FIFO stall work-around\n");
 		}
 	} else if (sc->sc_type >= WM_T_82571) {
 		sc->sc_flags |= WM_F_PCIE;
-		if ((sc->sc_type != WM_T_ICH8) || (sc->sc_type != WM_T_ICH9))
+		if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
+			&& (sc->sc_type != WM_T_ICH10))
 			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
-		aprint_verbose_dev(&sc->sc_dev, "PCI-Express bus\n");
+		aprint_verbose_dev(sc->sc_dev, "PCI-Express bus\n");
 	} else {
 		reg = CSR_READ(sc, WMREG_STATUS);
 		if (reg & STATUS_BUS64)
@@ -1093,8 +1137,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 			if (pci_get_capability(pa->pa_pc, pa->pa_tag,
 					       PCI_CAP_PCIX,
 					       &sc->sc_pcix_offset, NULL) == 0)
-				aprint_error_dev(&sc->sc_dev, "unable to find PCIX "
-				    "capability\n");
+				aprint_error_dev(sc->sc_dev,
+				    "unable to find PCIX capability\n");
 			else if (sc->sc_type != WM_T_82545_3 &&
 				 sc->sc_type != WM_T_82546_3) {
 				/*
@@ -1114,8 +1158,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 				    (pcix_sts & PCI_PCIX_STATUS_MAXB_MASK) >>
 				    PCI_PCIX_STATUS_MAXB_SHIFT;
 				if (bytecnt > maxb) {
-					aprint_verbose_dev(&sc->sc_dev, "resetting PCI-X "
-					    "MMRBC: %d -> %d\n",
+					aprint_verbose_dev(sc->sc_dev,
+					    "resetting PCI-X MMRBC: %d -> %d\n",
 					    512 << bytecnt, 512 << maxb);
 					pcix_cmd = (pcix_cmd &
 					    ~PCI_PCIX_CMD_BYTECNT_MASK) |
@@ -1146,14 +1190,14 @@ wm_attach(device_t parent, device_t self, void *aux)
 				sc->sc_bus_speed = 133;
 				break;
 			default:
-				aprint_error_dev(&sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "unknown PCIXSPD %d; assuming 66MHz\n",
 				    reg & STATUS_PCIXSPD_MASK);
 				sc->sc_bus_speed = 66;
 			}
 		} else
 			sc->sc_bus_speed = (reg & STATUS_PCI66) ? 66 : 33;
-		aprint_verbose_dev(&sc->sc_dev, "%d-bit %dMHz %s bus\n",
+		aprint_verbose_dev(sc->sc_dev, "%d-bit %dMHz %s bus\n",
 		    (sc->sc_flags & WM_F_BUS64) ? 64 : 32, sc->sc_bus_speed,
 		    (sc->sc_flags & WM_F_PCIX) ? "PCIX" : "PCI");
 	}
@@ -1174,7 +1218,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, cdata_size, PAGE_SIZE,
 				      (bus_size_t) 0x100000000ULL,
 				      &seg, 1, &rseg, 0)) != 0) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate control data, error = %d\n",
 		    error);
 		goto fail_0;
@@ -1183,22 +1227,23 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, cdata_size,
 				    (void **)&sc->sc_control_data, 
 				    BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map control data, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, cdata_size, 1, cdata_size,
 				       0, 0, &sc->sc_cddmamap)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to create control data DMA map, "
-		    "error = %d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create control data DMA map, error = %d\n",
+		    error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 				     sc->sc_control_data, cdata_size, NULL,
 				     0)) != 0) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "unable to load control data DMA map, error = %d\n",
 		    error);
 		goto fail_3;
@@ -1215,8 +1260,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, WM_MAXTXDMA,
 					       WM_NTXSEGS, WTX_MAX_LEN, 0, 0,
 					  &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to create Tx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create Tx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail_4;
 		}
 	}
@@ -1228,8 +1274,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 					       MCLBYTES, 0, 0,
 					  &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to create Rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create Rx DMA map %d error = %d\n",
+			    i, error);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -1244,16 +1291,34 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	wm_reset(sc);
 
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		if (wm_check_mng_mode(sc) != 0)
+			wm_get_hw_control(sc);
+		break;
+	default:
+		break;
+	}
+
 	/*
 	 * Get some information about the EEPROM.
 	 */
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10)) {
 		uint32_t flash_size;
 		sc->sc_flags |= WM_F_SWFWHW_SYNC | WM_F_EEPROM_FLASH;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
 		if (pci_mapreg_map(pa, WM_ICH8_FLASH, memtype, 0,
 		    &sc->sc_flasht, &sc->sc_flashh, NULL, NULL)) {
-			aprint_error_dev(&sc->sc_dev, "can't map FLASH registers\n");
+			aprint_error_dev(sc->sc_dev,
+			    "can't map FLASH registers\n");
 			return;
 		}
 		flash_size = ICH8_FLASH_READ32(sc, ICH_FLASH_GFPREG);
@@ -1268,6 +1333,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else if (sc->sc_type == WM_T_80003)
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR |  WM_F_SWFW_SYNC;
 	else if (sc->sc_type == WM_T_82573)
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
+	else if (sc->sc_type == WM_T_82574)
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
 	else if (sc->sc_type > WM_T_82544)
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
@@ -1287,7 +1354,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
 		} else
 			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
-	} else if ((sc->sc_type == WM_T_82573) &&
+	} else if ((sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574) &&
 	    (wm_is_onboard_nvm_eeprom(sc) == 0)) {
 		sc->sc_flags |= WM_F_EEPROM_FLASH;
 	} else {
@@ -1303,24 +1370,30 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * that no EEPROM is attached.
 	 */
 
- 
 	/*
 	 * Validate the EEPROM checksum. If the checksum fails, flag this for
 	 * later, so we can fail future reads from the EEPROM.
 	 */
-	if (wm_validate_eeprom_checksum(sc))
-		sc->sc_flags |= WM_F_EEPROM_INVALID;
+	if (wm_validate_eeprom_checksum(sc)) {
+		/*
+		 * Read twice again because some PCI-e parts fail the first
+		 * check due to the link being in sleep state.
+		 */
+		if (wm_validate_eeprom_checksum(sc))
+			sc->sc_flags |= WM_F_EEPROM_INVALID;
+	}
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
-		aprint_verbose_dev(&sc->sc_dev, "No EEPROM\n");
+		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
 	else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
-		aprint_verbose_dev(&sc->sc_dev, "FLASH\n");
+		aprint_verbose_dev(sc->sc_dev, "FLASH\n");
 	} else {
 		if (sc->sc_flags & WM_F_EEPROM_SPI)
 			eetype = "SPI";
 		else
 			eetype = "MicroWire";
-		aprint_verbose_dev(&sc->sc_dev, "%u word (%d address bits) %s EEPROM\n",
+		aprint_verbose_dev(sc->sc_dev,
+		    "%u word (%d address bits) %s EEPROM\n",
 		    1U << sc->sc_ee_addrbits,
 		    sc->sc_ee_addrbits, eetype);
 	}
@@ -1329,7 +1402,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
 	 */
-	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-addr");
 	if (ea != NULL) {
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
@@ -1337,7 +1410,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (wm_read_eeprom(sc, EEPROM_OFF_MACADDR,
 		    sizeof(myea) / sizeof(myea[0]), myea)) {
-			aprint_error_dev(&sc->sc_dev, "unable to read Ethernet address\n");
+			aprint_error_dev(sc->sc_dev,
+			    "unable to read Ethernet address\n");
 			return;
 		}
 		enaddr[0] = myea[0] & 0xff;
@@ -1358,46 +1432,47 @@ wm_attach(device_t parent, device_t self, void *aux)
 			enaddr[5] ^= 1;
 	}
 
-	aprint_normal_dev(&sc->sc_dev, "Ethernet address %s\n",
+	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(enaddr));
 
 	/*
 	 * Read the config info from the EEPROM, and set up various
 	 * bits in the control registers based on their contents.
 	 */
-	pn = prop_dictionary_get(device_properties(&sc->sc_dev),
+	pn = prop_dictionary_get(device_properties(sc->sc_dev),
 				 "i82543-cfg1");
 	if (pn != NULL) {
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg1 = (uint16_t) prop_number_integer_value(pn);
 	} else {
 		if (wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
-			aprint_error_dev(&sc->sc_dev, "unable to read CFG1\n");
+			aprint_error_dev(sc->sc_dev, "unable to read CFG1\n");
 			return;
 		}
 	}
 
-	pn = prop_dictionary_get(device_properties(&sc->sc_dev),
+	pn = prop_dictionary_get(device_properties(sc->sc_dev),
 				 "i82543-cfg2");
 	if (pn != NULL) {
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg2 = (uint16_t) prop_number_integer_value(pn);
 	} else {
 		if (wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
-			aprint_error_dev(&sc->sc_dev, "unable to read CFG2\n");
+			aprint_error_dev(sc->sc_dev, "unable to read CFG2\n");
 			return;
 		}
 	}
 
 	if (sc->sc_type >= WM_T_82544) {
-		pn = prop_dictionary_get(device_properties(&sc->sc_dev),
+		pn = prop_dictionary_get(device_properties(sc->sc_dev),
 					 "i82543-swdpin");
 		if (pn != NULL) {
 			KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 			swdpin = (uint16_t) prop_number_integer_value(pn);
 		} else {
 			if (wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
-				aprint_error_dev(&sc->sc_dev, "unable to read SWDPIN\n");
+				aprint_error_dev(sc->sc_dev,
+				    "unable to read SWDPIN\n");
 				return;
 			}
 		}
@@ -1459,24 +1534,26 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * media structures accordingly.
 	 */
 	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_ICH9
-	    || sc->sc_type == WM_T_82573) {
+	    || sc->sc_type == WM_T_ICH10 || sc->sc_type == WM_T_82573
+	    || sc->sc_type == WM_T_82574) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
 		wm_gmii_mediainit(sc);
 	} else if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
 		if (wmp->wmp_flags & WMP_F_1000T)
-			aprint_error_dev(&sc->sc_dev, "WARNING: TBIMODE set on 1000BASE-T "
-			    "product!\n");
+			aprint_error_dev(sc->sc_dev,
+			    "WARNING: TBIMODE set on 1000BASE-T product!\n");
 		wm_tbi_mediainit(sc);
 	} else {
 		if (wmp->wmp_flags & WMP_F_1000X)
-			aprint_error_dev(&sc->sc_dev, "WARNING: TBIMODE clear on 1000BASE-X "
-			    "product!\n");
+			aprint_error_dev(sc->sc_dev,
+			    "WARNING: TBIMODE clear on 1000BASE-X product!\n");
 		wm_gmii_mediainit(sc);
 	}
 
 	ifp = &sc->sc_ethercom.ec_if;
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	xname = device_xname(sc->sc_dev);
+	strlcpy(ifp->if_xname, xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = wm_ioctl;
@@ -1487,7 +1564,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_ICH8)
+	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_82574 &&
+	    sc->sc_type != WM_T_ICH8)
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	/*
@@ -1495,7 +1573,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (sc->sc_type >= WM_T_82543)
 		sc->sc_ethercom.ec_capabilities |=
-		    ETHERCAP_VLAN_MTU /* XXXJRT | ETHERCAP_VLAN_HWTAGGING */;
+		    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
 	/*
 	 * We can perform TCPv4 and UDPv4 checkums in-bound.  Only
@@ -1539,67 +1617,66 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET, 0);
 #endif
 
 #ifdef WM_EVENT_COUNTERS
 	/* Attach event counters. */
 	evcnt_attach_dynamic(&sc->sc_ev_txsstall, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txsstall");
+	    NULL, xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txdstall");
+	    NULL, xname, "txdstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txfifo_stall, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txfifo_stall");
+	    NULL, xname, "txfifo_stall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdw, EVCNT_TYPE_INTR,
-	    NULL, device_xname(&sc->sc_dev), "txdw");
+	    NULL, xname, "txdw");
 	evcnt_attach_dynamic(&sc->sc_ev_txqe, EVCNT_TYPE_INTR,
-	    NULL, device_xname(&sc->sc_dev), "txqe");
+	    NULL, xname, "txqe");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
-	    NULL, device_xname(&sc->sc_dev), "rxintr");
+	    NULL, xname, "rxintr");
 	evcnt_attach_dynamic(&sc->sc_ev_linkintr, EVCNT_TYPE_INTR,
-	    NULL, device_xname(&sc->sc_dev), "linkintr");
+	    NULL, xname, "linkintr");
 
 	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "rxipsum");
+	    NULL, xname, "rxipsum");
 	evcnt_attach_dynamic(&sc->sc_ev_rxtusum, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "rxtusum");
+	    NULL, xname, "rxtusum");
 	evcnt_attach_dynamic(&sc->sc_ev_txipsum, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txipsum");
+	    NULL, xname, "txipsum");
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txtusum");
+	    NULL, xname, "txtusum");
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum6, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txtusum6");
+	    NULL, xname, "txtusum6");
 
 	evcnt_attach_dynamic(&sc->sc_ev_txtso, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txtso");
+	    NULL, xname, "txtso");
 	evcnt_attach_dynamic(&sc->sc_ev_txtso6, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txtso6");
+	    NULL, xname, "txtso6");
 	evcnt_attach_dynamic(&sc->sc_ev_txtsopain, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txtsopain");
+	    NULL, xname, "txtsopain");
 
 	for (i = 0; i < WM_NTXSEGS; i++) {
 		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
 		evcnt_attach_dynamic(&sc->sc_ev_txseg[i], EVCNT_TYPE_MISC,
-		    NULL, device_xname(&sc->sc_dev), wm_txseg_evcnt_names[i]);
+		    NULL, xname, wm_txseg_evcnt_names[i]);
 	}
 
 	evcnt_attach_dynamic(&sc->sc_ev_txdrop, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "txdrop");
+	    NULL, xname, "txdrop");
 
 	evcnt_attach_dynamic(&sc->sc_ev_tu, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "tu");
+	    NULL, xname, "tu");
 
 	evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "tx_xoff");
+	    NULL, xname, "tx_xoff");
 	evcnt_attach_dynamic(&sc->sc_ev_tx_xon, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "tx_xon");
+	    NULL, xname, "tx_xon");
 	evcnt_attach_dynamic(&sc->sc_ev_rx_xoff, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "rx_xoff");
+	    NULL, xname, "rx_xoff");
 	evcnt_attach_dynamic(&sc->sc_ev_rx_xon, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "rx_xon");
+	    NULL, xname, "rx_xon");
 	evcnt_attach_dynamic(&sc->sc_ev_rx_macctl, EVCNT_TYPE_MISC,
-	    NULL, device_xname(&sc->sc_dev), "rx_macctl");
+	    NULL, xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -1838,12 +1915,12 @@ wm_dump_mbuf_chain(struct wm_softc *sc, struct mbuf *m0)
 	struct mbuf *m;
 	int i;
 
-	log(LOG_DEBUG, "%s: mbuf chain:\n", device_xname(&sc->sc_dev));
+	log(LOG_DEBUG, "%s: mbuf chain:\n", device_xname(sc->sc_dev));
 	for (m = m0, i = 0; m != NULL; m = m->m_next, i++)
 		log(LOG_DEBUG, "%s:\tm_data = %p, m_len = %d, "
-		    "m_flags = 0x%08x\n", device_xname(&sc->sc_dev),
+		    "m_flags = 0x%08x\n", device_xname(sc->sc_dev),
 		    m->m_data, m->m_len, m->m_flags);
-	log(LOG_DEBUG, "%s:\t%d mbuf%s in chain\n", device_xname(&sc->sc_dev),
+	log(LOG_DEBUG, "%s:\t%d mbuf%s in chain\n", device_xname(sc->sc_dev),
 	    i, i == 1 ? "" : "s");
 }
 
@@ -1948,9 +2025,7 @@ wm_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
-#if 0 /* XXXJRT */
 	struct m_tag *mtag;
-#endif
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, ofree, seg, segs_needed, use_tso;
@@ -1980,7 +2055,7 @@ wm_start(struct ifnet *ifp)
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: have packet to transmit: %p\n",
-		    device_xname(&sc->sc_dev), m0));
+		    device_xname(sc->sc_dev), m0));
 
 		/* Get a work queue entry. */
 		if (sc->sc_txsfree < WM_TXQUEUE_GC(sc)) {
@@ -1988,7 +2063,7 @@ wm_start(struct ifnet *ifp)
 			if (sc->sc_txsfree == 0) {
 				DPRINTF(WM_DEBUG_TX,
 				    ("%s: TX: no free job descriptors\n",
-					device_xname(&sc->sc_dev)));
+					device_xname(sc->sc_dev)));
 				WM_EVCNT_INCR(&sc->sc_ev_txsstall);
 				break;
 			}
@@ -2029,7 +2104,7 @@ wm_start(struct ifnet *ifp)
 				WM_EVCNT_INCR(&sc->sc_ev_txdrop);
 				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
 				wm_dump_mbuf_chain(sc, m0);
 				m_freem(m0);
@@ -2040,7 +2115,7 @@ wm_start(struct ifnet *ifp)
 			 */
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: dmamap load failed: %d\n",
-			    device_xname(&sc->sc_dev), error));
+			    device_xname(sc->sc_dev), error));
 			break;
 		}
 
@@ -2067,8 +2142,8 @@ wm_start(struct ifnet *ifp)
 			 */
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
-			    device_xname(&sc->sc_dev), dmamap->dm_nsegs, segs_needed,
-			    sc->sc_txfree - 1));
+			    device_xname(sc->sc_dev), dmamap->dm_nsegs,
+			    segs_needed, sc->sc_txfree - 1));
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_EVCNT_INCR(&sc->sc_ev_txdstall);
@@ -2084,7 +2159,7 @@ wm_start(struct ifnet *ifp)
 		    wm_82547_txfifo_bugchk(sc, m0)) {
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: 82547 Tx FIFO bug detected\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_EVCNT_INCR(&sc->sc_ev_txfifo_stall);
@@ -2099,7 +2174,7 @@ wm_start(struct ifnet *ifp)
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: packet has %d (%d) DMA segments\n",
-		    device_xname(&sc->sc_dev), dmamap->dm_nsegs, segs_needed));
+		    device_xname(sc->sc_dev), dmamap->dm_nsegs, segs_needed));
 
 		WM_EVCNT_INCR(&sc->sc_ev_txseg[dmamap->dm_nsegs - 1]);
 
@@ -2176,7 +2251,7 @@ wm_start(struct ifnet *ifp)
 				DPRINTF(WM_DEBUG_TX,
 				    ("%s: TX: desc %d: low 0x%08lx, "
 				     "len 0x%04x\n",
-				    device_xname(&sc->sc_dev), nexttx,
+				    device_xname(sc->sc_dev), nexttx,
 				    curaddr & 0xffffffffUL, (unsigned)curlen));
 			}
 		}
@@ -2191,7 +2266,6 @@ wm_start(struct ifnet *ifp)
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
 		    htole32(WTX_CMD_EOP | WTX_CMD_RS);
 
-#if 0 /* XXXJRT */
 		/*
 		 * If VLANs are enabled and the packet has a VLAN tag, set
 		 * up the descriptor to encapsulate the packet for us.
@@ -2204,12 +2278,12 @@ wm_start(struct ifnet *ifp)
 			sc->sc_txdescs[lasttx].wtx_fields.wtxu_vlan
 			    = htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
 		}
-#endif /* XXXJRT */
 
 		txs->txs_lastdesc = lasttx;
 
 		DPRINTF(WM_DEBUG_TX,
-		    ("%s: TX: desc %d: cmdlen 0x%08x\n", device_xname(&sc->sc_dev),
+		    ("%s: TX: desc %d: cmdlen 0x%08x\n",
+		    device_xname(sc->sc_dev),
 		    lasttx, le32toh(sc->sc_txdescs[lasttx].wtx_cmdlen)));
 
 		/* Sync the descriptors we're using. */
@@ -2220,11 +2294,11 @@ wm_start(struct ifnet *ifp)
 		CSR_WRITE(sc, sc->sc_tdt_reg, nexttx);
 
 		DPRINTF(WM_DEBUG_TX,
-		    ("%s: TX: TDT -> %d\n", device_xname(&sc->sc_dev), nexttx));
+		    ("%s: TX: TDT -> %d\n", device_xname(sc->sc_dev), nexttx));
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: finished transmitting packet, job %d\n",
-		    device_xname(&sc->sc_dev), sc->sc_txsnext));
+		    device_xname(sc->sc_dev), sc->sc_txsnext));
 
 		/* Advance the tx pointer. */
 		sc->sc_txfree -= txs->txs_ndesc;
@@ -2270,7 +2344,7 @@ wm_watchdog(struct ifnet *ifp)
 	if (sc->sc_txfree != WM_NTXDESC(sc)) {
 		log(LOG_ERR,
 		    "%s: device timeout (txfree %d txsfree %d txnext %d)\n",
-		    device_xname(&sc->sc_dev), sc->sc_txfree, sc->sc_txsfree,
+		    device_xname(sc->sc_dev), sc->sc_txfree, sc->sc_txsfree,
 		    sc->sc_txnext);
 		ifp->if_oerrors++;
 
@@ -2368,7 +2442,7 @@ wm_intr(void *arg)
 		if (icr & (ICR_RXDMT0|ICR_RXT0)) {
 			DPRINTF(WM_DEBUG_RX,
 			    ("%s: RX: got Rx intr 0x%08x\n",
-			    device_xname(&sc->sc_dev),
+			    device_xname(sc->sc_dev),
 			    icr & (ICR_RXDMT0|ICR_RXT0)));
 			WM_EVCNT_INCR(&sc->sc_ev_rxintr);
 		}
@@ -2379,7 +2453,7 @@ wm_intr(void *arg)
 		if (icr & ICR_TXDW) {
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: got TXDW interrupt\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			WM_EVCNT_INCR(&sc->sc_ev_txdw);
 		}
 #endif
@@ -2394,7 +2468,7 @@ wm_intr(void *arg)
 			ifp->if_ierrors++;
 #if defined(WM_DEBUG)
 			log(LOG_WARNING, "%s: Receive overrun\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 #endif /* defined(WM_DEBUG) */
 		}
 	}
@@ -2431,7 +2505,7 @@ wm_txintr(struct wm_softc *sc)
 		txs = &sc->sc_txsoft[i];
 
 		DPRINTF(WM_DEBUG_TX,
-		    ("%s: TX: checking job %d\n", device_xname(&sc->sc_dev), i));
+		    ("%s: TX: checking job %d\n", device_xname(sc->sc_dev), i));
 
 		WM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndesc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -2446,7 +2520,7 @@ wm_txintr(struct wm_softc *sc)
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: job %d done: descs %d..%d\n",
-		    device_xname(&sc->sc_dev), i, txs->txs_firstdesc,
+		    device_xname(sc->sc_dev), i, txs->txs_firstdesc,
 		    txs->txs_lastdesc));
 
 		/*
@@ -2464,11 +2538,11 @@ wm_txintr(struct wm_softc *sc)
 			ifp->if_oerrors++;
 			if (status & WTX_ST_LC)
 				log(LOG_WARNING, "%s: late collision\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 			else if (status & WTX_ST_EC) {
 				ifp->if_collisions += 16;
 				log(LOG_WARNING, "%s: excessive collisions\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 			}
 		} else
 			ifp->if_opackets++;
@@ -2484,7 +2558,7 @@ wm_txintr(struct wm_softc *sc)
 	/* Update the dirty transmit buffer pointer. */
 	sc->sc_txsdirty = i;
 	DPRINTF(WM_DEBUG_TX,
-	    ("%s: TX: txsdirty -> %d\n", device_xname(&sc->sc_dev), i));
+	    ("%s: TX: txsdirty -> %d\n", device_xname(sc->sc_dev), i));
 
 	/*
 	 * If there are no more pending transmissions, cancel the watchdog
@@ -2507,19 +2581,21 @@ wm_rxintr(struct wm_softc *sc)
 	struct mbuf *m;
 	int i, len;
 	uint8_t status, errors;
+	uint16_t vlantag;
 
 	for (i = sc->sc_rxptr;; i = WM_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
 		DPRINTF(WM_DEBUG_RX,
 		    ("%s: RX: checking descriptor %d\n",
-		    device_xname(&sc->sc_dev), i));
+		    device_xname(sc->sc_dev), i));
 
 		WM_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		status = sc->sc_rxdescs[i].wrx_status;
 		errors = sc->sc_rxdescs[i].wrx_errors;
 		len = le16toh(sc->sc_rxdescs[i].wrx_len);
+		vlantag = sc->sc_rxdescs[i].wrx_special;
 
 		if ((status & WRX_ST_DD) == 0) {
 			/*
@@ -2532,13 +2608,13 @@ wm_rxintr(struct wm_softc *sc)
 		if (__predict_false(sc->sc_rxdiscard)) {
 			DPRINTF(WM_DEBUG_RX,
 			    ("%s: RX: discarding contents of descriptor %d\n",
-			    device_xname(&sc->sc_dev), i));
+			    device_xname(sc->sc_dev), i));
 			WM_INIT_RXDESC(sc, i);
 			if (status & WRX_ST_EOP) {
 				/* Reset our state. */
 				DPRINTF(WM_DEBUG_RX,
 				    ("%s: RX: resetting rxdiscard -> 0\n",
-				    device_xname(&sc->sc_dev)));
+				    device_xname(sc->sc_dev)));
 				sc->sc_rxdiscard = 0;
 			}
 			continue;
@@ -2570,28 +2646,26 @@ wm_rxintr(struct wm_softc *sc)
 			WM_RXCHAIN_RESET(sc);
 			DPRINTF(WM_DEBUG_RX,
 			    ("%s: RX: Rx buffer allocation failed, "
-			    "dropping packet%s\n", device_xname(&sc->sc_dev),
+			    "dropping packet%s\n", device_xname(sc->sc_dev),
 			    sc->sc_rxdiscard ? " (discard)" : ""));
 			continue;
 		}
 
-		WM_RXCHAIN_LINK(sc, m);
-
 		m->m_len = len;
-
+		sc->sc_rxlen += len;
 		DPRINTF(WM_DEBUG_RX,
 		    ("%s: RX: buffer at %p len %d\n",
-		    device_xname(&sc->sc_dev), m->m_data, len));
+		    device_xname(sc->sc_dev), m->m_data, len));
 
 		/*
 		 * If this is not the end of the packet, keep
 		 * looking.
 		 */
 		if ((status & WRX_ST_EOP) == 0) {
-			sc->sc_rxlen += len;
+			WM_RXCHAIN_LINK(sc, m);
 			DPRINTF(WM_DEBUG_RX,
 			    ("%s: RX: not yet EOP, rxlen -> %d\n",
-			    device_xname(&sc->sc_dev), sc->sc_rxlen));
+			    device_xname(sc->sc_dev), sc->sc_rxlen));
 			continue;
 		}
 
@@ -2599,18 +2673,27 @@ wm_rxintr(struct wm_softc *sc)
 		 * Okay, we have the entire packet now.  The chip is
 		 * configured to include the FCS (not all chips can
 		 * be configured to strip it), so we need to trim it.
+		 * May need to adjust length of previous mbuf in the
+		 * chain if the current mbuf is too short.
 		 */
-		m->m_len -= ETHER_CRC_LEN;
+		if (m->m_len < ETHER_CRC_LEN) {
+			sc->sc_rxtail->m_len -= (ETHER_CRC_LEN - m->m_len);
+			m->m_len = 0;
+		} else {
+			m->m_len -= ETHER_CRC_LEN;
+		}
+		len = sc->sc_rxlen - ETHER_CRC_LEN;
+
+		WM_RXCHAIN_LINK(sc, m);
 
 		*sc->sc_rxtailp = NULL;
-		len = m->m_len + sc->sc_rxlen;
 		m = sc->sc_rxhead;
 
 		WM_RXCHAIN_RESET(sc);
 
 		DPRINTF(WM_DEBUG_RX,
 		    ("%s: RX: have entire packet, len -> %d\n",
-		    device_xname(&sc->sc_dev), len));
+		    device_xname(sc->sc_dev), len));
 
 		/*
 		 * If an error occurred, update stats and drop the packet.
@@ -2620,13 +2703,13 @@ wm_rxintr(struct wm_softc *sc)
 			ifp->if_ierrors++;
 			if (errors & WRX_ER_SE)
 				log(LOG_WARNING, "%s: symbol error\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 			else if (errors & WRX_ER_SEQ)
 				log(LOG_WARNING, "%s: receive sequence error\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 			else if (errors & WRX_ER_CE)
 				log(LOG_WARNING, "%s: CRC error\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 			m_freem(m);
 			continue;
 		}
@@ -2637,17 +2720,15 @@ wm_rxintr(struct wm_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 
-#if 0 /* XXXJRT */
 		/*
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
 		if ((status & WRX_ST_VP) != 0) {
 			VLAN_INPUT_TAG(ifp, m,
-			    le16toh(sc->sc_rxdescs[i].wrx_special,
+			    le16toh(vlantag),
 			    continue);
 		}
-#endif /* XXXJRT */
 
 		/*
 		 * Set up checksum info for this packet.
@@ -2692,7 +2773,7 @@ wm_rxintr(struct wm_softc *sc)
 	sc->sc_rxptr = i;
 
 	DPRINTF(WM_DEBUG_RX,
-	    ("%s: RX: rxptr -> %d\n", device_xname(&sc->sc_dev), i));
+	    ("%s: RX: rxptr -> %d\n", device_xname(sc->sc_dev), i));
 }
 
 /*
@@ -2705,6 +2786,8 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 {
 	uint32_t status;
 
+	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
+		__func__));
 	/*
 	 * If we get a link status interrupt on a 1000BASE-T
 	 * device, just fall into the normal MII tick path.
@@ -2713,32 +2796,66 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 		if (icr & ICR_LSC) {
 			DPRINTF(WM_DEBUG_LINK,
 			    ("%s: LINK: LSC -> mii_tick\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			mii_tick(&sc->sc_mii);
+			if (sc->sc_type == WM_T_82543) {
+				int miistatus, active;
+
+				/*
+				 * With 82543, we need to force speed and
+				 * duplex on the MAC equal to what the PHY
+				 * speed and duplex configuration is.
+				 */
+				miistatus = sc->sc_mii.mii_media_status;
+
+				if (miistatus & IFM_ACTIVE) {
+					active = sc->sc_mii.mii_media_active;
+					sc->sc_ctrl &= ~(CTRL_SPEED_MASK
+					    | CTRL_FD);
+					switch (IFM_SUBTYPE(active)) {
+					case IFM_10_T:
+						sc->sc_ctrl |= CTRL_SPEED_10;
+						break;
+					case IFM_100_TX:
+						sc->sc_ctrl |= CTRL_SPEED_100;
+						break;
+					case IFM_1000_T:
+						sc->sc_ctrl |= CTRL_SPEED_1000;
+						break;
+					default:
+						/*
+						 * fiber?
+						 * Shoud not enter here.
+						 */
+						printf("unknown media (%x)\n",
+						    active);
+						break;
+					}
+					if (active & IFM_FDX)
+						sc->sc_ctrl |= CTRL_FD;
+					CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				}
+			}
 		} else if (icr & ICR_RXSEQ) {
 			DPRINTF(WM_DEBUG_LINK,
 			    ("%s: LINK Receive sequence error\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 		}
 		return;
 	}
 
-	/*
-	 * If we are now receiving /C/, check for link again in
-	 * a couple of link clock ticks.
-	 */
-	if (icr & ICR_RXCFG) {
-		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: receiving /C/\n",
-		    device_xname(&sc->sc_dev)));
-		sc->sc_tbi_anstate = 2;
-	}
-
+	status = CSR_READ(sc, WMREG_STATUS);
 	if (icr & ICR_LSC) {
-		status = CSR_READ(sc, WMREG_STATUS);
 		if (status & STATUS_LU) {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
-			    device_xname(&sc->sc_dev),
+			    device_xname(sc->sc_dev),
 			    (status & STATUS_FD) ? "FDX" : "HDX"));
+			/*
+			 * NOTE: CTRL will update TFCE and RFCE automatically,
+			 * so we should update sc->sc_ctrl
+			 */
+			
+			sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
 			sc->sc_fcrtl &= ~FCRTL_XONE;
 			if (status & STATUS_FD)
@@ -2747,7 +2864,7 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 			else
 				sc->sc_tctl |=
 				    TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
-			if (CSR_READ(sc, WMREG_CTRL) & CTRL_TFCE)
+			if (sc->sc_ctrl & CTRL_TFCE)
 				sc->sc_fcrtl |= FCRTL_XONE;
 			CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 			CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ?
@@ -2756,15 +2873,19 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 			sc->sc_tbi_linkup = 1;
 		} else {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			sc->sc_tbi_linkup = 0;
 		}
-		sc->sc_tbi_anstate = 2;
 		wm_tbi_set_linkled(sc);
+	} else if (icr & ICR_RXCFG) {
+		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: receiving /C/\n",
+		    device_xname(sc->sc_dev)));
+		sc->sc_tbi_nrxcfg++;
+		wm_check_for_link(sc);
 	} else if (icr & ICR_RXSEQ) {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: Receive sequence error\n",
-		    device_xname(&sc->sc_dev)));
+		    device_xname(sc->sc_dev)));
 	}
 }
 
@@ -2837,6 +2958,7 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_pba = PBA_32K;
 		break;
 	case WM_T_82573:
+	case WM_T_82574:
 		sc->sc_pba = PBA_12K;
 		break;
 	case WM_T_ICH8:
@@ -2844,6 +2966,7 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_PBS, PBA_16K);
 		break;
 	case WM_T_ICH9:
+	case WM_T_ICH10:
 		sc->sc_pba = PBA_10K;
 		break;
 	default:
@@ -2912,6 +3035,7 @@ wm_reset(struct wm_softc *sc)
 
 	case WM_T_ICH8:
 	case WM_T_ICH9:
+	case WM_T_ICH10:
 		wm_get_swfwhw_semaphore(sc);
 		CSR_WRITE(sc, WMREG_CTRL, CTRL_RST | CTRL_PHY_RESET);
 		delay(10000);
@@ -2941,6 +3065,7 @@ wm_reset(struct wm_softc *sc)
 		delay(20000);
 		break;
 	case WM_T_82573:
+	case WM_T_82574:
 		if (sc->sc_flags & WM_F_EEPROM_FLASH) {
 			delay(10);
 			reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
@@ -2952,6 +3077,9 @@ wm_reset(struct wm_softc *sc)
 		wm_get_auto_rd_done(sc);
 	}
 
+	/* reload sc_ctrl */
+	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
+
 #if 0
 	for (i = 0; i < 1000; i++) {
 		if ((CSR_READ(sc, WMREG_CTRL) & CTRL_RST) == 0) {
@@ -2962,7 +3090,7 @@ wm_reset(struct wm_softc *sc)
 
 	if (CSR_READ(sc, WMREG_CTRL) & CTRL_RST)
 		log(LOG_ERR, "%s: reset failed to complete\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 #endif
 }
 
@@ -3008,6 +3136,22 @@ wm_init(struct ifnet *ifp)
 
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
+
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		if (wm_check_mng_mode(sc) != 0)
+			wm_get_hw_control(sc);
+		break;
+	default:
+		break;
+	}
 
 	/* Initialize the transmit descriptor ring. */
 	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
@@ -3080,7 +3224,7 @@ wm_init(struct ifnet *ifp)
 			if ((error = wm_add_rxbuf(sc, i)) != 0) {
 				log(LOG_ERR, "%s: unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
-				    device_xname(&sc->sc_dev), i, error);
+				    device_xname(sc->sc_dev), i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -3123,12 +3267,10 @@ wm_init(struct ifnet *ifp)
 	}
 	CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
 
-#if 0 /* XXXJRT */
 	/* Deal with VLAN enables. */
 	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		sc->sc_ctrl |= CTRL_VME;
 	else
-#endif /* XXXJRT */
 		sc->sc_ctrl &= ~CTRL_VME;
 
 	/* Write the control registers. */
@@ -3174,6 +3316,9 @@ wm_init(struct ifnet *ifp)
 		reg |= RXCSUM_IPV6OFL | RXCSUM_TUOFL;
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
 
+	/* Reset TBI's RXCFG count */
+	sc->sc_tbi_nrxcfg = sc->sc_tbi_lastnrxcfg = 0;
+
 	/*
 	 * Set up the interrupt registers.
 	 */
@@ -3211,10 +3356,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 
-#if 0 /* XXXJRT */
 	/* Set the VLAN ethernetype. */
 	CSR_WRITE(sc, WMREG_VET, ETHERTYPE_VLAN);
-#endif
 
 	/*
 	 * Set up the transmit control register; we start out with
@@ -3246,7 +3389,8 @@ wm_init(struct ifnet *ifp)
 	    | RCTL_MO(sc->sc_mchash_type);
 
 	/* 82573 doesn't support jumbo frame */
-	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_ICH8)
+	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_82574 &&
+	    sc->sc_type != WM_T_ICH8)
 		sc->sc_rctl |= RCTL_LPE;
 
 	if (MCLBYTES == 2048) {
@@ -3284,7 +3428,7 @@ wm_init(struct ifnet *ifp)
  out:
 	if (error)
 		log(LOG_ERR, "%s: interface not running\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 	return (error);
 }
 
@@ -3331,6 +3475,11 @@ wm_stop(struct ifnet *ifp, int disable)
 	if (sc->sc_flags & WM_F_HAS_MII) {
 		/* Down the MII. */
 		mii_down(&sc->sc_mii);
+	} else {
+#if 0
+		/* Should we clear PHY's status properly? */
+		wm_reset(sc);
+#endif
 	}
 
 	/* Stop the transmit and receive processes. */
@@ -3374,9 +3523,11 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82571:
 	case WM_T_82572:
 	case WM_T_82573:
+	case WM_T_82574:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
+	case WM_T_ICH10:
 		for (i = 10; i > 0; i--) {
 			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
 				break;
@@ -3384,7 +3535,7 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 		}
 		if (i == 0) {
 			log(LOG_ERR, "%s: auto read from eeprom failed to "
-			    "complete\n", device_xname(&sc->sc_dev));
+			    "complete\n", device_xname(sc->sc_dev));
 		}
 		break;
 	default:
@@ -3393,7 +3544,7 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	}
 
 	/* Phy configuration starts after EECD_AUTO_RD is set */
-	if (sc->sc_type == WM_T_82573)
+	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574)
 		delay(25000);
 }
 
@@ -3422,8 +3573,11 @@ wm_acquire_eeprom(struct wm_softc *sc)
 		ret = wm_get_swsm_semaphore(sc);
 	}
 
-	if (ret)
+	if (ret) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+			__func__);
 		return 1;
+	}
 
 	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE)  {
 		reg = CSR_READ(sc, WMREG_EECD);
@@ -3440,7 +3594,8 @@ wm_acquire_eeprom(struct wm_softc *sc)
 			delay(5);
 		}
 		if ((reg & EECD_EE_GNT) == 0) {
-			aprint_error_dev(&sc->sc_dev, "could not acquire EEPROM GNT\n");
+			aprint_error_dev(sc->sc_dev,
+			    "could not acquire EEPROM GNT\n");
 			reg &= ~EECD_EE_REQ;
 			CSR_WRITE(sc, WMREG_EECD, reg);
 			if (sc->sc_flags & WM_F_SWFWHW_SYNC)
@@ -3594,7 +3749,7 @@ wm_spi_eeprom_ready(struct wm_softc *sc)
 			break;
 	}
 	if (usec >= SPI_MAX_RETRIES) {
-		aprint_error_dev(&sc->sc_dev, "EEPROM failed to become ready\n");
+		aprint_error_dev(sc->sc_dev, "EEPROM failed to become ready\n");
 		return (1);
 	}
 	return (0);
@@ -3691,7 +3846,8 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	if (wm_acquire_eeprom(sc))
 		return 1;
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10))
 		rv = wm_read_eeprom_ich8(sc, word, wordcnt, data);
 	else if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
 		rv = wm_read_eeprom_eerd(sc, word, wordcnt, data);
@@ -3777,7 +3933,8 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		/* XXX XXX XXX */
-		aprint_error_dev(&sc->sc_dev, "unable to load rx DMA map %d, error = %d\n",
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load rx DMA map %d, error = %d\n",
 		    idx, error);
 		panic("wm_add_rxbuf");
 	}
@@ -3836,7 +3993,8 @@ wm_mchash(struct wm_softc *sc, const uint8_t *enaddr)
 	static const int ich8_hi_shift[4] = { 2, 3, 4, 6 };
 	uint32_t hash;
 
-	if (sc->sc_type == WM_T_ICH8) {
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10)) {
 		hash = (enaddr[4] >> ich8_lo_shift[sc->sc_mchash_type]) |
 		    (((uint16_t) enaddr[5]) << ich8_hi_shift[sc->sc_mchash_type]);
 		return (hash & 0x3ff);
@@ -3881,7 +4039,8 @@ wm_set_filter(struct wm_softc *sc)
 	 * Set the station address in the first RAL slot, and
 	 * clear the remaining slots.
 	 */
-	if (sc->sc_type == WM_T_ICH8)
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+		 || (sc->sc_type == WM_T_ICH10))
 		size = WM_ICH8_RAL_TABSIZE;
 	else
 		size = WM_RAL_TABSIZE;
@@ -3889,7 +4048,8 @@ wm_set_filter(struct wm_softc *sc)
 	for (i = 1; i < size; i++)
 		wm_set_ral(sc, NULL, i);
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10))
 		size = WM_ICH8_MC_TABSIZE;
 	else
 		size = WM_MC_TABSIZE;
@@ -3914,7 +4074,8 @@ wm_set_filter(struct wm_softc *sc)
 		hash = wm_mchash(sc, enm->enm_addrlo);
 
 		reg = (hash >> 5);
-		if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+		if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+		    || (sc->sc_type == WM_T_ICH10))
 			reg &= 0x1f;
 		else
 			reg &= 0x7f;
@@ -3953,6 +4114,7 @@ wm_set_filter(struct wm_softc *sc)
 static void
 wm_tbi_mediainit(struct wm_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const char *sep = "";
 
 	if (sc->sc_type < WM_T_82543)
@@ -3960,6 +4122,12 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	else
 		sc->sc_tipg = TIPG_LG_DFLT;
 
+	sc->sc_tbi_anegticks = 5;
+
+	/* Initialize our media structures */
+	sc->sc_mii.mii_ifp = ifp;
+
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_tbi_mediachange,
 	    wm_tbi_mediastatus);
 
@@ -3981,7 +4149,7 @@ do {									\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	aprint_normal_dev(&sc->sc_dev, "");
+	aprint_normal_dev(sc->sc_dev, "");
 	ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
 	ADD("1000baseSX-FDX", IFM_1000_SX|IFM_FDX, ANAR_X_FD);
 	ADD("auto", IFM_AUTO, ANAR_X_FD|ANAR_X_HD);
@@ -4001,12 +4169,13 @@ static void
 wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
-	uint32_t ctrl;
+	uint32_t ctrl, status;
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (sc->sc_tbi_linkup == 0) {
+	status = CSR_READ(sc, WMREG_STATUS);
+	if ((status & STATUS_LU) == 0) {
 		ifmr->ifm_active |= IFM_NONE;
 		return;
 	}
@@ -4035,39 +4204,37 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	uint32_t status;
 	int i;
 
-	sc->sc_txcw = ife->ifm_data;
-	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x on entry\n",
-		    device_xname(&sc->sc_dev),sc->sc_txcw));
+	sc->sc_txcw = 0;
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
 	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
-		sc->sc_txcw |= ANAR_X_PAUSE_SYM | ANAR_X_PAUSE_ASYM;
+		sc->sc_txcw |= TXCW_SYM_PAUSE | TXCW_ASYM_PAUSE;
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) { 
-		sc->sc_txcw |= TXCW_ANE; 
+		sc->sc_txcw |= TXCW_ANE;
 	} else {
-		/*If autonegotiation is turned off, force link up and turn on full duplex*/
+		/*
+		 * If autonegotiation is turned off, force link up and turn on
+		 * full duplex
+		 */
 		sc->sc_txcw &= ~TXCW_ANE;
 		sc->sc_ctrl |= CTRL_SLU | CTRL_FD;
+		sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		delay(1000);
 	}
 
 	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x after autoneg check\n",
-		    device_xname(&sc->sc_dev),sc->sc_txcw));
+		    device_xname(sc->sc_dev),sc->sc_txcw));
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 	delay(10000);
 
-	/* NOTE: CTRL will update TFCE and RFCE automatically. */
-
-	sc->sc_tbi_anstate = 0;
-
 	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
-	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", device_xname(&sc->sc_dev),i));
+	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", device_xname(sc->sc_dev),i));
 
 	/* 
 	 * On 82544 chips and later, the CTRL_SWDPIN(1) bit will be set if the
 	 * optics detect a signal, 0 if they don't.
 	 */
-	if (((i != 0) && (sc->sc_type >= WM_T_82544)) || (i == 0)) {
+	if (((i != 0) && (sc->sc_type > WM_T_82544)) || (i == 0)) {
 		/* Have signal; wait for the link to come up. */
 
 		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
@@ -4082,25 +4249,31 @@ wm_tbi_mediachange(struct ifnet *ifp)
 			delay(1000);
 		}
 
-		for (i = 0; i < 50; i++) {
+		for (i = 0; i < WM_LINKUP_TIMEOUT; i++) {
 			delay(10000);
 			if (CSR_READ(sc, WMREG_STATUS) & STATUS_LU)
 				break;
 		}
 
 		DPRINTF(WM_DEBUG_LINK,("%s: i = %d after waiting for link\n",
-			    device_xname(&sc->sc_dev),i));
+			    device_xname(sc->sc_dev),i));
 
 		status = CSR_READ(sc, WMREG_STATUS);
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: status after final read = 0x%x, STATUS_LU = 0x%x\n",
-			device_xname(&sc->sc_dev),status, STATUS_LU));
+			device_xname(sc->sc_dev),status, STATUS_LU));
 		if (status & STATUS_LU) {
 			/* Link is up. */
 			DPRINTF(WM_DEBUG_LINK,
 			    ("%s: LINK: set media -> link up %s\n",
-			    device_xname(&sc->sc_dev),
+			    device_xname(sc->sc_dev),
 			    (status & STATUS_FD) ? "FDX" : "HDX"));
+
+			/*
+			 * NOTE: CTRL will update TFCE and RFCE automatically,
+			 * so we should update sc->sc_ctrl
+			 */
+			sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
 			sc->sc_fcrtl &= ~FCRTL_XONE;
 			if (status & STATUS_FD)
@@ -4117,15 +4290,17 @@ wm_tbi_mediachange(struct ifnet *ifp)
 				      sc->sc_fcrtl);
 			sc->sc_tbi_linkup = 1;
 		} else {
+			if (i == WM_LINKUP_TIMEOUT)
+				wm_check_for_link(sc);
 			/* Link is down. */
 			DPRINTF(WM_DEBUG_LINK,
 			    ("%s: LINK: set media -> link down\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			sc->sc_tbi_linkup = 0;
 		}
 	} else {
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: set media -> no signal\n",
-		    device_xname(&sc->sc_dev)));
+		    device_xname(sc->sc_dev)));
 		sc->sc_tbi_linkup = 0;
 	}
 
@@ -4148,6 +4323,9 @@ wm_tbi_set_linkled(struct wm_softc *sc)
 	else
 		sc->sc_ctrl &= ~CTRL_SWDPIN(0);
 
+	/* 82540 or newer devices are active low */
+	sc->sc_ctrl ^= (sc->sc_type >= WM_T_82540) ? CTRL_SWDPIN(0) : 0;
+
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 }
 
@@ -4159,47 +4337,56 @@ wm_tbi_set_linkled(struct wm_softc *sc)
 static void
 wm_tbi_check_link(struct wm_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	uint32_t rxcw, ctrl, status;
 
-	if (sc->sc_tbi_anstate == 0)
-		return;
-	else if (sc->sc_tbi_anstate > 1) {
-		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: anstate %d\n", device_xname(&sc->sc_dev),
-		    sc->sc_tbi_anstate));
-		sc->sc_tbi_anstate--;
-		return;
-	}
-
-	sc->sc_tbi_anstate = 0;
+	status = CSR_READ(sc, WMREG_STATUS);
 
 	rxcw = CSR_READ(sc, WMREG_RXCW);
 	ctrl = CSR_READ(sc, WMREG_CTRL);
-	status = CSR_READ(sc, WMREG_STATUS);
 
+	/* set link status */
 	if ((status & STATUS_LU) == 0) {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: checklink -> down\n", device_xname(&sc->sc_dev)));
+		    ("%s: LINK: checklink -> down\n", device_xname(sc->sc_dev)));
 		sc->sc_tbi_linkup = 0;
-	} else {
+	} else if (sc->sc_tbi_linkup == 0) {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: checklink -> up %s\n", device_xname(&sc->sc_dev),
+		    ("%s: LINK: checklink -> up %s\n", device_xname(sc->sc_dev),
 		    (status & STATUS_FD) ? "FDX" : "HDX"));
-		sc->sc_tctl &= ~TCTL_COLD(0x3ff);
-		sc->sc_fcrtl &= ~FCRTL_XONE;
-		if (status & STATUS_FD)
-			sc->sc_tctl |=
-			    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
-		else
-			sc->sc_tctl |=
-			    TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
-		if (ctrl & CTRL_TFCE)
-			sc->sc_fcrtl |= FCRTL_XONE;
-		CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
-		CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ?
-			      WMREG_OLD_FCRTL : WMREG_FCRTL,
-			      sc->sc_fcrtl);
 		sc->sc_tbi_linkup = 1;
+	}
+
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP)
+	    && ((status & STATUS_LU) == 0)) {
+		sc->sc_tbi_linkup = 0;
+		if (sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg > 100) {
+			/* RXCFG storm! */
+			DPRINTF(WM_DEBUG_LINK, ("RXCFG storm! (%d)\n",
+				sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg));
+			wm_init(ifp);
+			wm_start(ifp);
+		} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			/* If the timer expired, retry autonegotiation */
+			if (++sc->sc_tbi_ticks >= sc->sc_tbi_anegticks) {
+				DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
+				sc->sc_tbi_ticks = 0;
+				/*
+				 * Reset the link, and let autonegotiation do
+				 * its thing
+				 */
+				sc->sc_ctrl |= CTRL_LRST;
+				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				delay(1000);
+				sc->sc_ctrl &= ~CTRL_LRST;
+				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				delay(1000);
+				CSR_WRITE(sc, WMREG_TXCW,
+				    sc->sc_txcw & ~TXCW_ANE);
+				CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
+			}
+		}
 	}
 
 	wm_tbi_set_linkled(sc);
@@ -4216,15 +4403,22 @@ wm_gmii_reset(struct wm_softc *sc)
 	uint32_t reg;
 	int func = 0; /* XXX gcc */
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
-		if (wm_get_swfwhw_semaphore(sc))
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10)) {
+		if (wm_get_swfwhw_semaphore(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
 			return;
+		}
 	}
 	if (sc->sc_type == WM_T_80003) {
 		func = (CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1;
 		if (wm_get_swfw_semaphore(sc,
-		    func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+			func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
 			return;
+		}
 	}
 	if (sc->sc_type >= WM_T_82544) {
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
@@ -4260,7 +4454,8 @@ wm_gmii_reset(struct wm_softc *sc)
 		sc->sc_ctrl_ext = reg | CTRL_EXT_SWDPIN(4);
 #endif
 	}
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10))
 		wm_put_swfwhw_semaphore(sc);
 	if (sc->sc_type == WM_T_80003)
 		wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
@@ -4296,7 +4491,10 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	/* Initialize our media structures and probe the GMII. */
 	sc->sc_mii.mii_ifp = ifp;
 
-	if (sc->sc_type >= WM_T_80003) {
+	if (sc->sc_type == WM_T_ICH10) {
+		sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
+	} else if (sc->sc_type >= WM_T_80003) {
 		sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
 		sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
 	} else if (sc->sc_type >= WM_T_82544) {
@@ -4314,7 +4512,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
@@ -4470,7 +4668,7 @@ wm_gmii_i82543_readreg(device_t self, int phy, int reg)
 
 	DPRINTF(WM_DEBUG_GMII,
 	    ("%s: GMII: read phy %d reg %d -> 0x%04x\n",
-	    device_xname(&sc->sc_dev), phy, reg, rv));
+	    device_xname(sc->sc_dev), phy, reg, rv));
 
 	return (rv);
 }
@@ -4515,12 +4713,12 @@ wm_gmii_i82544_readreg(device_t self, int phy, int reg)
 
 	if ((mdic & MDIC_READY) == 0) {
 		log(LOG_WARNING, "%s: MDIC read timed out: phy %d reg %d\n",
-		    device_xname(&sc->sc_dev), phy, reg);
+		    device_xname(sc->sc_dev), phy, reg);
 		rv = 0;
 	} else if (mdic & MDIC_E) {
 #if 0 /* This is normal if no PHY is present. */
 		log(LOG_WARNING, "%s: MDIC read error: phy %d reg %d\n",
-		    device_xname(&sc->sc_dev), phy, reg);
+		    device_xname(sc->sc_dev), phy, reg);
 #endif
 		rv = 0;
 	} else {
@@ -4556,10 +4754,10 @@ wm_gmii_i82544_writereg(device_t self, int phy, int reg, int val)
 
 	if ((mdic & MDIC_READY) == 0)
 		log(LOG_WARNING, "%s: MDIC write timed out: phy %d reg %d\n",
-		    device_xname(&sc->sc_dev), phy, reg);
+		    device_xname(sc->sc_dev), phy, reg);
 	else if (mdic & MDIC_E)
 		log(LOG_WARNING, "%s: MDIC write error: phy %d reg %d\n",
-		    device_xname(&sc->sc_dev), phy, reg);
+		    device_xname(sc->sc_dev), phy, reg);
 }
 
 /*
@@ -4579,8 +4777,11 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 	if (phy != 1) /* only one PHY on kumeran bus */
 		return 0;
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return 0;
+	}
 
 	if ((reg & GG82563_MAX_REG_ADDRESS) < GG82563_MIN_ALT_REG) {
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
@@ -4589,8 +4790,11 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
 		    reg >> GG82563_PAGE_SHIFT);
 	}
-
+	/* Wait more 200us for a bug of the ready bit in the MDIC register */
+	delay(200);
 	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	delay(200);
+
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 	return (rv);
 }
@@ -4611,8 +4815,11 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 	if (phy != 1) /* only one PHY on kumeran bus */
 		return;
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return;
+	}
 
 	if ((reg & GG82563_MAX_REG_ADDRESS) < GG82563_MIN_ALT_REG) {
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
@@ -4620,6 +4827,77 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 	} else {
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
 		    reg >> GG82563_PAGE_SHIFT);
+	}
+	/* Wait more 200us for a bug of the ready bit in the MDIC register */
+	delay(200);
+	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
+	delay(200);
+
+	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+}
+
+/*
+ * wm_gmii_bm_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the kumeran
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static int
+wm_gmii_bm_readreg(device_t self, int phy, int reg)
+{
+	struct wm_softc *sc = device_private(self);
+	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
+	int rv;
+
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return 0;
+	}
+
+	if (reg > GG82563_MAX_REG_ADDRESS) {
+		if (phy == 1)
+			wm_gmii_i82544_writereg(self, phy, 0x1f,
+			    reg);
+		else
+			wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+			    reg >> GG82563_PAGE_SHIFT);
+
+	}
+
+	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+	return (rv);
+}
+
+/*
+ * wm_gmii_bm_writereg:	[mii interface function]
+ *
+ *	Write a PHY register on the kumeran.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static void
+wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
+{
+	struct wm_softc *sc = device_private(self);
+	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
+
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return;
+	}
+
+	if (reg > GG82563_MAX_REG_ADDRESS) {
+		if (phy == 1)
+			wm_gmii_i82544_writereg(self, phy, 0x1f,
+			    reg);
+		else
+			wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+			    reg >> GG82563_PAGE_SHIFT);
+
 	}
 
 	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
@@ -4661,11 +4939,11 @@ wm_gmii_statchg(device_t self)
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: statchg: FDX\n", device_xname(&sc->sc_dev)));
+		    ("%s: LINK: statchg: FDX\n", device_xname(sc->sc_dev)));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
 	} else  {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: statchg: HDX\n", device_xname(&sc->sc_dev)));
+		    ("%s: LINK: statchg: HDX\n", device_xname(sc->sc_dev)));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
 	}
 
@@ -4701,8 +4979,11 @@ wm_kmrn_i80003_readreg(struct wm_softc *sc, int reg)
 	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 	int rv;
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return 0;
+	}
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
@@ -4724,8 +5005,11 @@ wm_kmrn_i80003_writereg(struct wm_softc *sc, int reg, int val)
 {
 	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return;
+	}
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
@@ -4738,7 +5022,7 @@ wm_is_onboard_nvm_eeprom(struct wm_softc *sc)
 {
 	uint32_t eecd = 0;
 
-	if (sc->sc_type == WM_T_82573) {
+	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574) {
 		eecd = CSR_READ(sc, WMREG_EECD);
 
 		/* Isolate bits 15 & 16 */
@@ -4774,7 +5058,7 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	}
 
 	if (timeout == 0) {
-		aprint_error_dev(&sc->sc_dev, "could not acquire EEPROM GNT\n");
+		aprint_error_dev(sc->sc_dev, "could not acquire EEPROM GNT\n");
 		/* Release semaphores */
 		wm_put_swsm_semaphore(sc);
 		return 1;
@@ -4802,8 +5086,12 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 
 	for(timeout = 0; timeout < 200; timeout++) {
 		if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE) {
-			if (wm_get_swsm_semaphore(sc))
+			if (wm_get_swsm_semaphore(sc)) {
+				aprint_error_dev(sc->sc_dev,
+				    "%s: failed to get semaphore\n",
+				    __func__);
 				return 1;
+			}
 		}
 		swfw_sync = CSR_READ(sc, WMREG_SW_FW_SYNC);
 		if ((swfw_sync & (swmask | fwmask)) == 0) {
@@ -4818,7 +5106,7 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 		delay(5000);
 	}
 	printf("%s: failed to get swfw semaphore mask 0x%x swfw 0x%x\n",
-	    device_xname(&sc->sc_dev), mask, swfw_sync);
+	    device_xname(sc->sc_dev), mask, swfw_sync);
 	return 1;
 }
 
@@ -4855,7 +5143,7 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 		delay(5000);
 	}
 	printf("%s: failed to get swfwgw semaphore ext_ctrl 0x%x\n",
-	    device_xname(&sc->sc_dev), ext_ctrl);
+	    device_xname(sc->sc_dev), ext_ctrl);
 	return 1;
 }
 
@@ -4866,6 +5154,36 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 	ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
 	ext_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
 	CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
+}
+
+static int
+wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
+{
+	uint32_t act_offset = ICH_NVM_SIG_WORD * 2 + 1;
+	uint8_t bank_high_byte;
+	uint32_t bank1_offset = sc->sc_ich8_flash_bank_size * sizeof(uint16_t);
+
+	if (sc->sc_type != WM_T_ICH10) {
+		/* Value of bit 22 corresponds to the flash bank we're on. */
+		*bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
+	} else {
+		wm_read_ich8_byte(sc, act_offset, &bank_high_byte);
+		if ((bank_high_byte & 0xc0) == 0x80)
+			*bank = 0;
+		else {
+			wm_read_ich8_byte(sc, act_offset + bank1_offset,
+			    &bank_high_byte);
+			if ((bank_high_byte & 0xc0) == 0x80)
+				*bank = 1;
+			else {
+				aprint_error_dev(sc->sc_dev,
+				    "EEPROM not present\n");
+				return -1;
+			}
+		}
+	}
+
+	return 0;
 }
 
 /******************************************************************************
@@ -4892,22 +5210,32 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
      * managing flash_bank.  So it cannot be trusted and needs
      * to be updated with each read.
      */
-    /* Value of bit 22 corresponds to the flash bank we're on. */
-    flash_bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
+    error = wm_valid_nvm_bank_detect_ich8lan(sc, &flash_bank);
+    if (error) {
+	    aprint_error_dev(sc->sc_dev, "%s: failed to detect NVM bank\n",
+		    __func__);
+        return error;
+    }
 
     /* Adjust offset appropriately if we're on bank 1 - adjust for word size */
     bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
 
     error = wm_get_swfwhw_semaphore(sc);
-    if (error)
+    if (error) {
+	    aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		__func__);
         return error;
+    }
 
     for (i = 0; i < words; i++) {
             /* The NVM part needs a byte offset, hence * 2 */
             act_offset = bank_offset + ((offset + i) * 2);
             error = wm_read_ich8_word(sc, act_offset, &word);
-            if (error)
+            if (error) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to read NVM\n",
+		    __func__);
                 break;
+	    }
             data[i] = word;
     }
 
@@ -5085,7 +5413,6 @@ wm_read_ich8_data(struct wm_softc *sc, uint32_t index,
     return error;
 }
 
-#if 0
 /******************************************************************************
  * Reads a single byte from the NVM using the ICH8 flash access registers.
  *
@@ -5106,7 +5433,6 @@ wm_read_ich8_byte(struct wm_softc *sc, uint32_t index, uint8_t* data)
 
     return status;
 }
-#endif
 
 /******************************************************************************
  * Reads a word from the NVM using the ICH8 flash access registers.
@@ -5122,4 +5448,182 @@ wm_read_ich8_word(struct wm_softc *sc, uint32_t index, uint16_t *data)
 
     status = wm_read_ich8_data(sc, index, 2, data);
     return status;
+}
+
+static int
+wm_check_mng_mode(struct wm_softc *sc)
+{
+	int rv;
+
+	switch (sc->sc_type) {
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		rv = wm_check_mng_mode_ich8lan(sc);
+		break;
+#if 0
+	case WM_T_82574:
+		/*
+		 * The function is provided in em driver, but it's not
+		 * used. Why?
+		 */
+		rv = wm_check_mng_mode_82574(sc);
+		break;
+#endif
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_80003:
+		rv = wm_check_mng_mode_generic(sc);
+		break;
+	default:
+		/* noting to do */
+		rv = 0;
+		break;
+	}
+
+	return rv;
+}
+
+static int
+wm_check_mng_mode_ich8lan(struct wm_softc *sc)
+{
+	uint32_t fwsm;
+
+	fwsm = CSR_READ(sc, WMREG_FWSM);
+
+	if ((fwsm & FWSM_MODE_MASK) == (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT))
+		return 1;
+
+	return 0;
+}
+
+#if 0
+static int
+wm_check_mng_mode_82574(struct wm_softc *sc)
+{
+	uint16_t data;
+
+	wm_read_eeprom(sc, NVM_INIT_CONTROL2_REG, 1, &data);
+
+	if ((data & NVM_INIT_CTRL2_MNGM) != 0)
+		return 1;
+
+	return 0;
+}
+#endif
+
+static int
+wm_check_mng_mode_generic(struct wm_softc *sc)
+{
+	uint32_t fwsm;
+
+	fwsm = CSR_READ(sc, WMREG_FWSM);
+
+	if ((fwsm & FWSM_MODE_MASK) == (MNG_IAMT_MODE << FWSM_MODE_SHIFT))
+		return 1;
+
+	return 0;
+}
+
+static void
+wm_get_hw_control(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	switch (sc->sc_type) {
+	case WM_T_82573:
+#if 0
+	case WM_T_82574:
+		/*
+		 * FreeBSD's em driver has the function for 82574 to checks
+		 * the management mode, but it's not used. Why?
+		 */
+#endif
+		reg = CSR_READ(sc, WMREG_SWSM);
+		CSR_WRITE(sc, WMREG_SWSM, reg | SWSM_DRV_LOAD);
+		break;
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_DRV_LOAD);
+		break;
+	default:
+		break;
+	}
+}
+
+/* XXX Currently TBI only */
+static int
+wm_check_for_link(struct wm_softc *sc)
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	uint32_t rxcw;
+	uint32_t ctrl;
+	uint32_t status;
+	uint32_t sig;
+
+	rxcw = CSR_READ(sc, WMREG_RXCW);
+	ctrl = CSR_READ(sc, WMREG_CTRL);
+	status = CSR_READ(sc, WMREG_STATUS);
+
+	sig = (sc->sc_type > WM_T_82544) ? CTRL_SWDPIN(1) : 0;
+
+	DPRINTF(WM_DEBUG_LINK, ("%s: %s: sig = %d, status_lu = %d, rxcw_c = %d\n",
+		device_xname(sc->sc_dev), __func__,
+		((ctrl & CTRL_SWDPIN(1)) == sig),
+		((status & STATUS_LU) != 0),
+		((rxcw & RXCW_C) != 0)
+		    ));
+
+	/*
+	 * SWDPIN   LU RXCW
+	 *      0    0    0
+	 *      0    0    1	(should not happen)
+	 *      0    1    0	(should not happen)
+	 *      0    1    1	(should not happen)
+	 *      1    0    0	Disable autonego and force linkup
+	 *      1    0    1	got /C/ but not linkup yet
+	 *      1    1    0	(linkup)
+	 *      1    1    1	If IFM_AUTO, back to autonego
+	 *
+	 */
+	if (((ctrl & CTRL_SWDPIN(1)) == sig)
+	    && ((status & STATUS_LU) == 0)
+	    && ((rxcw & RXCW_C) == 0)) {
+		DPRINTF(WM_DEBUG_LINK, ("%s: force linkup and fullduplex\n",
+			__func__));
+		sc->sc_tbi_linkup = 0;
+		/* Disable auto-negotiation in the TXCW register */
+		CSR_WRITE(sc, WMREG_TXCW, (sc->sc_txcw & ~TXCW_ANE));
+
+		/*
+		 * Force link-up and also force full-duplex.
+		 *
+		 * NOTE: CTRL was updated TFCE and RFCE automatically,
+		 * so we should update sc->sc_ctrl
+		 */
+		sc->sc_ctrl = ctrl | CTRL_SLU | CTRL_FD;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	} else if(((status & STATUS_LU) != 0)
+	    && ((rxcw & RXCW_C) != 0)
+	    && (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)) {
+		sc->sc_tbi_linkup = 1;
+		DPRINTF(WM_DEBUG_LINK, ("%s: go back to autonego\n",
+			__func__));
+		CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
+		CSR_WRITE(sc, WMREG_CTRL, (ctrl & ~CTRL_SLU));
+	} else if (((ctrl & CTRL_SWDPIN(1)) == sig)
+	    && ((rxcw & RXCW_C) != 0)) {
+		DPRINTF(WM_DEBUG_LINK, ("/C/"));
+	} else {
+		DPRINTF(WM_DEBUG_LINK, ("%s: %x,%x,%x\n", __func__, rxcw, ctrl,
+			status));
+	}
+
+	return 0;
 }

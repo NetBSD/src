@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.16.2.1 2008/05/16 02:25:45 yamt Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.16.2.2 2009/05/04 08:14:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.16.2.1 2008/05/16 02:25:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.16.2.2 2009/05/04 08:14:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.16.2.1 2008/05/16 02:25:45 yamt Exp $
  * ether/fddi_input -> ip6flow_fastfoward -> if_output
  */
 
-POOL_INIT(ip6flow_pool, sizeof(struct ip6flow), 0, 0, 0, "ip6flowpl", NULL,
-    IPL_NET);
+static struct pool ip6flow_pool;
 
 LIST_HEAD(ip6flowhead, ip6flow);
 
@@ -162,6 +161,14 @@ ip6flow_lookup(const struct ip6_hdr *ip6)
 	}
 
 	return NULL;
+}
+
+void
+ip6flow_poolinit(void)
+{
+
+	pool_init(&ip6flow_pool, sizeof(struct ip6flow), 0, 0, 0, "ip6flowpl",
+			NULL, IPL_NET);
 }
 
 /*

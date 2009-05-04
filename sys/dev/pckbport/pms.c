@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.26 2008/03/15 18:59:07 cube Exp $ */
+/* $NetBSD: pms.c,v 1.26.4.1 2009/05/04 08:13:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.26 2008/03/15 18:59:07 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.26.4.1 2009/05/04 08:13:14 yamt Exp $");
 
 #include "opt_pms.h"
 
@@ -42,6 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.26 2008/03/15 18:59:07 cube Exp $");
 #include <dev/pckbport/pckbportvar.h>
 #ifdef PMS_SYNAPTICS_TOUCHPAD
 #include <dev/pckbport/synapticsvar.h>
+#endif
+#ifdef PMS_ELANTECH_TOUCHPAD
+#include <dev/pckbport/elantechvar.h>
 #endif
 
 #include <dev/pckbport/pmsreg.h>
@@ -67,7 +70,8 @@ const struct pms_protocol pms_protocols[] = {
 	{ { 0, 0, 0 }, 0, "no scroll wheel (3 buttons)" },
 	{ { 200, 100, 80 }, 3, "scroll wheel (3 buttons)" },
 	{ { 200, 200, 80 }, 4, "scroll wheel (5 buttons)" },
-	{ { 0, 0, 0 }, 0, "synaptics" }
+	{ { 0, 0, 0 }, 0, "synaptics" },
+	{ { 0, 0, 0 }, 0, "elantech" }
 };
 
 
@@ -145,9 +149,7 @@ pmsprobe(device_t parent, cfdata_t match, void *aux)
 	cmd[0] = PMS_RESET;
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 	if (res) {
-#ifdef DEBUG
-		printf("pmsprobe: reset error %d\n", res);
-#endif
+		aprint_debug("pmsprobe: reset error %d\n", res);
 		return 0;
 	}
 	if (resp[0] != PMS_RSTDONE) {
@@ -157,9 +159,7 @@ pmsprobe(device_t parent, cfdata_t match, void *aux)
 
 	/* get type number (0 = mouse) */
 	if (resp[1] != 0) {
-#ifdef DEBUG
-		printf("pmsprobe: type 0x%x\n", resp[1]);
-#endif
+		aprint_debug("pmsprobe: type 0x%x\n", resp[1]);
 		return 0;
 	}
 
@@ -188,12 +188,10 @@ pmsattach(device_t parent, device_t self, void *aux)
 	/* reset the device */
 	cmd[0] = PMS_RESET;
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
-#ifdef DEBUG
 	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
-		aprint_error("pmsattach: reset error\n");
+		aprint_debug("pmsattach: reset error\n");
 		return;
 	}
-#endif
 	sc->inputstate = 0;
 	sc->buttons = 0;
 	sc->protocol = PMS_UNKNOWN;
@@ -202,6 +200,11 @@ pmsattach(device_t parent, device_t self, void *aux)
 	/* Probe for synaptics touchpad. */
 	if (pms_synaptics_probe_init(sc) == 0) {
 		sc->protocol = PMS_SYNAPTICS;
+	} else
+#endif
+#ifdef PMS_ELANTECH_TOUCHPAD
+	if (pms_elantech_probe_init(sc) == 0) {
+		sc->protocol = PMS_ELANTECH;
 	} else
 #endif
 		/* Install generic handler. */
@@ -250,6 +253,10 @@ do_enable(struct pms_softc *sc)
 #ifdef PMS_SYNAPTICS_TOUCHPAD
 	if (sc->protocol == PMS_SYNAPTICS)
 		pms_synaptics_enable(sc);
+#endif
+#ifdef PMS_ELANTECH_TOUCHPAD
+	if (sc->protocol == PMS_ELANTECH)
+		pms_elantech_enable(sc);
 #endif
 
 	cmd[0] = PMS_DEV_ENABLE;
@@ -359,6 +366,14 @@ pms_resume(device_t dv PMF_FN_ARGS)
 		}
 	} else
 #endif
+#ifdef PMS_ELANTECH_TOUCHPAD
+	if (sc->protocol == PMS_ELANTECH) {
+		pms_elantech_resume(sc);
+		if (sc->sc_enabled) {
+			do_enable(sc);
+		}
+	} else
+#endif
 	if (sc->sc_enabled) {
 		/* recheck protocol & init mouse */
 		sc->protocol = PMS_UNKNOWN;
@@ -432,10 +447,8 @@ pms_reset_thread(void *arg)
 			    device_xname(sc->sc_dev), res));
 		}
 
-#ifdef PMS_SYNAPTICS_TOUCHPAD
-		/* For the synaptics case, leave the protocol alone. */
-		if (sc->protocol != PMS_SYNAPTICS)
-#endif
+		/* For the synaptics and elantech case, leave the protocol alone. */
+		if (sc->protocol != PMS_SYNAPTICS && sc->protocol != PMS_ELANTECH)
 			sc->protocol = PMS_UNKNOWN;
 
 		pms_enable(sc);

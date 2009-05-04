@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.20 2008/04/05 16:35:35 cegger Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.20.4.1 2009/05/04 08:13:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.20 2008/04/05 16:35:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.20.4.1 2009/05/04 08:13:20 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -102,6 +102,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GR },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU2 },
 	{ USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_CGWLUSB2GL },
+	{ USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_CGWLUSB2GPX },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_CWD854F },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_RT2573 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
@@ -125,6 +126,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUSMM },
 	{ USB_VENDOR_QCOM,		USB_PRODUCT_QCOM_RT2573 },
 	{ USB_VENDOR_QCOM,		USB_PRODUCT_QCOM_RT2573_2 },
+	{ USB_VENDOR_QCOM,		USB_PRODUCT_QCOM_RT2573_3 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2573 },
 	{ USB_VENDOR_RALINK_2,          USB_PRODUCT_RALINK_2_RT2573 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2671 },
@@ -268,7 +270,7 @@ rum_attachhook(void *xsc)
 		printf("%s: failed to allocate firmware memory\n",
 		    USBDEVNAME(sc->sc_dev));
 		firmware_close(fwh);
-		return ENOMEM;;
+		return ENOMEM;
 	}
 	error = firmware_read(fwh, 0, ucode, size);
 	firmware_close(fwh);
@@ -304,17 +306,17 @@ USB_ATTACH(rum)
 	int i, ntries;
 	uint32_t tmp;
 
+	sc->sc_dev = self;
 	sc->sc_udev = uaa->device;
 	sc->sc_flags = 0;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_no(sc->sc_udev, RT2573_CONFIG_NO, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not set configuration no\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -322,8 +324,7 @@ USB_ATTACH(rum)
 	error = usbd_device2interface_handle(sc->sc_udev, RT2573_IFACE_INDEX,
 	    &sc->sc_iface);
 	if (error != 0) {
-		printf("%s: could not get interface handle\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not get interface handle\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -336,8 +337,8 @@ USB_ATTACH(rum)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			printf("%s: no endpoint descriptor for iface %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self,
+			    "no endpoint descriptor for iface %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 
@@ -349,7 +350,7 @@ USB_ATTACH(rum)
 			sc->sc_tx_no = ed->bEndpointAddress;
 	}
 	if (sc->sc_rx_no == -1 || sc->sc_tx_no == -1) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "missing endpoint\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -367,16 +368,16 @@ USB_ATTACH(rum)
 		DELAY(1000);
 	}
 	if (ntries == 1000) {
-		printf("%s: timeout waiting for chip to settle\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "timeout waiting for chip to settle\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	/* retrieve MAC address and various other things from EEPROM */
 	rum_read_eeprom(sc);
 
-	printf("%s: MAC/BBP RT%04x (rev 0x%05x), RF %s, address %s\n",
-	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, tmp,
+	aprint_normal_dev(self,
+	    "MAC/BBP RT%04x (rev 0x%05x), RF %s, address %s\n",
+	    sc->macbbp_rev, tmp,
 	    rum_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
 	ic->ic_ifp = ifp;
@@ -551,7 +552,7 @@ rum_alloc_tx_list(struct rum_softc *sc)
 		}
 
 		/* clean Tx descriptor */
-		bzero(data->buf, RT2573_TX_DESC_SIZE);
+		memset(data->buf, 0, RT2573_TX_DESC_SIZE);
 	}
 
 	return 0;
@@ -1372,14 +1373,21 @@ rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
-				rum_update_promisc(sc);
-			else
-				rum_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				rum_stop(ifp, 1);
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP|IFF_RUNNING:
+			rum_update_promisc(sc);
+			break;
+		case IFF_UP:
+			rum_init(ifp);
+			break;
+		case IFF_RUNNING:
+			rum_stop(ifp, 1);
+			break;
+		case 0:
+			break;
 		}
 		break;
 
@@ -2171,7 +2179,8 @@ rum_prepare_beacon(struct rum_softc *sc)
 
 	m0 = ieee80211_beacon_alloc(ic, ic->ic_bss, &sc->sc_bo);
 	if (m0 == NULL) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate beacon frame\n");
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate beacon frame\n");
 		return ENOBUFS;
 	}
 

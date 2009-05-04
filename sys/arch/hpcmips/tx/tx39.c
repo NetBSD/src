@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.38.44.1 2008/05/16 02:22:29 yamt Exp $ */
+/*	$NetBSD: tx39.c,v 1.38.44.2 2009/05/04 08:11:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.38.44.1 2008/05/16 02:22:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.38.44.2 2009/05/04 08:11:12 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -96,7 +96,7 @@ void	tx_find_dram(paddr_t, paddr_t);
 void	tx_reboot(int, char *);
 
 void
-tx_init()
+tx_init(void)
 {
 	tx_chipset_tag_t tc;
 	int model, rev;
@@ -241,7 +241,7 @@ tx_reboot(int howto, char *bootstr)
 }
 
 void
-tx_cons_init()
+tx_cons_init(void)
 {
 	int slot;
 #define CONSPLATIDMATCH(p)						\

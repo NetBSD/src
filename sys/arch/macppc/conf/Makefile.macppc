@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.29 2008/03/01 13:59:26 joerg Exp $
+#	$NetBSD: Makefile.macppc,v 1.29.4.1 2009/05/04 08:11:28 yamt Exp $
 #
 # Makefile for NetBSD
 #
@@ -53,7 +53,8 @@ AFLAGS+=	${AOPTS}
 ##
 ## (3) libkern and compat
 ##
-.if !empty(IDENT:M-DLKM)
+OPT_MODULAR=	%MODULAR%
+.if !empty(OPT_MODULAR)
 KERN_AS=	obj
 .endif
 
@@ -117,9 +118,6 @@ lock_stubs.o setfault.o: assym.h
 %LOAD
 
 %RULES
-
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

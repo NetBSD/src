@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr.S,v 1.8 2006/05/22 21:34:08 uwe Exp $	*/
+/*	$NetBSD: movstr.S,v 1.8.62.1 2009/05/04 08:13:51 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,12 @@
  */
 
 #include <machine/asm.h>
+
+
+#ifdef __ELF__
+	.hidden __movstr, __movmem
+#endif
+
 
 NENTRY(__movstr)
 	mov	#16, r0

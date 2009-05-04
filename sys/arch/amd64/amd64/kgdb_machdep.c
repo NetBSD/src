@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2.20.1 2008/05/16 02:21:49 yamt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2.20.2 2009/05/04 08:10:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.2.20.1 2008/05/16 02:21:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.2.20.2 2009/05/04 08:10:32 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -84,9 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.2.20.1 2008/05/16 02:21:49 yamt E
  * Determine if the memory at va..(va+len) is valid.
  */
 int
-kgdb_acc(va, len)
-	vaddr_t va;
-	size_t len;
+kgdb_acc(vaddr_t va, size_t len)
 {
 	vaddr_t last_va;
 	pt_entry_t *pte;
@@ -113,8 +111,7 @@ kgdb_acc(va, len)
  * (gdb only understands unix signal numbers).
  */
 int 
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	switch (type) {
 	case T_NMI:
@@ -159,9 +156,7 @@ kgdb_signal(type)
  * understood by gdb.
  */
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 
 	memcpy(gdb_regs, regs, sizeof *regs);
@@ -171,9 +166,7 @@ kgdb_getregs(regs, gdb_regs)
  * Reverse the above.
  */
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 
 	memcpy(regs, gdb_regs, sizeof *regs);
@@ -184,11 +177,10 @@ kgdb_setregs(regs, gdb_regs)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
 
-	if (kgdb_dev < 0)
+	if (kgdb_dev == NODEV)
 		return;
 
 	if (verbose)
@@ -207,9 +199,9 @@ kgdb_connect(verbose)
  * (This is called by panic, like Debugger())
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 {
-	if (kgdb_dev >= 0 && kgdb_debug_panic) {
+	if (kgdb_dev != NODEV && kgdb_debug_panic) {
 		printf("entering kgdb\n");
 		kgdb_connect(kgdb_active == 0);
 	}

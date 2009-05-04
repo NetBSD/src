@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.24 2007/11/16 23:35:19 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.24.18.1 2009/05/04 08:12:43 yamt Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -841,7 +841,7 @@ struct rtw_txdesc {
 	volatile uint32_t	td_len;
 	volatile uint32_t	td_next;
 	volatile uint32_t	td_rsvd[3];
-} __attribute__((__packed__, __aligned__(4)));
+} __packed __aligned(4);
 
 #define td_stat td_ctl0
 
@@ -902,7 +902,7 @@ struct rtw_rxdesc {
 	volatile uint32_t	rd_rsvd0;
 	volatile uint32_t	rd_buf;
 	volatile uint32_t	rd_rsvd1;
-} __attribute__((__packed__, __aligned__(4)));
+} __packed __aligned(4);
 
 #define rd_stat rd_ctl
 #define rd_rssi rd_rsvd0
@@ -1045,7 +1045,7 @@ struct rtw_rxdesc {
 #define RTW_RBR(regs, reg0, reg1)				\
 	RTW_BARRIER(regs, reg0, reg1, BUS_SPACE_BARRIER_READ_BEFORE_READ)
 
-/* read-before-read */
+/* read-before-write */
 #define RTW_RBW(regs, reg0, reg1)				\
 	RTW_BARRIER(regs, reg0, reg1, BUS_SPACE_BARRIER_READ_BEFORE_WRITE)
 

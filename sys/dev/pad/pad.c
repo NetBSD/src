@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.6.4.1 2008/05/16 02:24:42 yamt Exp $ */
+/* $NetBSD: pad.c,v 1.6.4.2 2009/05/04 08:12:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.6.4.1 2008/05/16 02:24:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.6.4.2 2009/05/04 08:12:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,7 @@ enum {
 	PAD_ENUM_LAST,
 };
 
-static int	pad_match(device_t, struct cfdata *, void *);
+static int	pad_match(device_t, cfdata_t, void *);
 static void	pad_attach(device_t, device_t, void *);
 static int	pad_detach(device_t, int);
 static void	pad_childdet(device_t, device_t);
@@ -117,7 +117,6 @@ static const struct audio_format pad_formats[PAD_NFORMATS] = {
 
 extern void	padattach(int);
 
-static pad_softc_t *	pad_find_softc(dev_t);
 static int		pad_add_block(pad_softc_t *, uint8_t *, int);
 static int		pad_get_block(pad_softc_t *, pad_block_t *, int);
 
@@ -139,18 +138,16 @@ const struct cdevsw pad_cdevsw = {
 	.d_flag = D_OTHER,
 };
 
-CFATTACH_DECL2(pad, sizeof(pad_softc_t), pad_match, pad_attach, pad_detach,
+CFATTACH_DECL2_NEW(pad, sizeof(pad_softc_t), pad_match, pad_attach, pad_detach,
     NULL, NULL, pad_childdet);
 
 void
 padattach(int n)
 {
 	int i, err;
-	struct cfdata *cf;
+	cfdata_t cf;
 
-#ifdef DEBUG
-	printf("pad: requested %d units\n", n);
-#endif
+	aprint_debug("pad: requested %d units\n", n);
 
 	err = config_cfattach_attach(pad_cd.cd_name, &pad_ca);
 	if (err) {
@@ -176,18 +173,6 @@ padattach(int n)
 	}
 
 	return;
-}
-
-static pad_softc_t *
-pad_find_softc(dev_t dev)
-{
-	int unit;
-
-	unit = PADUNIT(dev);
-	if (unit >= pad_cd.cd_ndevs)
-		return NULL;
-
-	return pad_cd.cd_devs[unit];
 }
 
 static int
@@ -240,7 +225,7 @@ pad_get_block(pad_softc_t *sc, pad_block_t *pb, int blksize)
 }
 
 static int
-pad_match(device_t parent, struct cfdata *data, void *opaque)
+pad_match(device_t parent, cfdata_t data, void *opaque)
 {
 	return 1;
 }
@@ -250,7 +235,6 @@ pad_childdet(device_t self, device_t child)
 {
 	pad_softc_t *sc = device_private(self);
 
-	KASSERT(sc->sc_audiodev->dev == child);
 	sc->sc_audiodev = NULL;
 }
 
@@ -261,6 +245,7 @@ pad_attach(device_t parent, device_t self, void *opaque)
 
 	aprint_normal_dev(self, "outputs: 44100Hz, 16-bit, stereo\n");
 
+	sc->sc_dev = self;
 	sc->sc_open = 0;
 	if (auconv_create_encodings(pad_formats, PAD_NFORMATS,
 	    &sc->sc_encodings) != 0) {
@@ -274,7 +259,7 @@ pad_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_swvol = 255;
 	sc->sc_buflen = 0;
 	sc->sc_rpos = sc->sc_wpos = 0;
-	sc->sc_audiodev = (void *)audio_attach_mi(&pad_hw_if, sc, &sc->sc_dev);
+	sc->sc_audiodev = (void *)audio_attach_mi(&pad_hw_if, sc, sc->sc_dev);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -310,7 +295,7 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	pad_softc_t *sc;
 
-	sc = pad_find_softc(dev);
+	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
 		return ENODEV;
 
@@ -327,7 +312,7 @@ pad_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	pad_softc_t *sc;
 
-	sc = pad_find_softc(dev);
+	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
 		return ENODEV;
 
@@ -346,7 +331,7 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 	void *intrarg;
 	int err;
 
-	sc = pad_find_softc(dev);
+	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
 		return ENODEV;
 
@@ -373,7 +358,7 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 			    hz/100);
 			if (err != 0 && err != EWOULDBLOCK) {
 				mutex_exit(&sc->sc_mutex);
-				aprint_error_dev(&sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "cv_timedwait_sig returned %d\n", err);
 				return EINTR;
 			}

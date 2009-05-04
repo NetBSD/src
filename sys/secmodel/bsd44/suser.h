@@ -1,4 +1,4 @@
-/* $NetBSD: suser.h,v 1.4 2007/01/09 12:57:56 elad Exp $ */
+/* $NetBSD: suser.h,v 1.4.44.1 2009/05/04 08:14:34 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -30,6 +30,7 @@
 #define	_SECMODEL_BSD44_SUSER_H_
 
 extern int secmodel_bsd44_curtain;
+extern int dovfsusermount;
 
 void secmodel_bsd44_suser_start(void);
 

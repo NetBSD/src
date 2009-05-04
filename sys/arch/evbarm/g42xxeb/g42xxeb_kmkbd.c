@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.7 2007/10/17 19:54:12 garbled Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.7.20.1 2009/05/04 08:10:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.7 2007/10/17 19:54:12 garbled Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.7.20.1 2009/05/04 08:10:57 yamt Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,9 +316,7 @@ kmkbd_hookup_bell(void (* fn)(void *, u_int, u_int, u_int, int), void *arg)
 
 #if 0
 int
-kmkbd_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	int kbcslot;
+kmkbd_cnattach(pckbc_tag_t kbctag, int kbcslot)
 {
 	int res;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.106 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.106.2.1 2009/05/04 08:14:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.106 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.106.2.1 2009/05/04 08:14:15 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -167,8 +167,7 @@ tun_clone_create(struct if_clone *ifc, int unit)
 
 	if ((tp = tun_find_zunit(unit)) == NULL) {
 		/* Allocate a new instance */
-		tp = malloc(sizeof(struct tun_softc), M_DEVBUF, M_WAITOK);
-		(void)memset(tp, 0, sizeof(struct tun_softc));
+		tp = malloc(sizeof(*tp), M_DEVBUF, M_WAITOK|M_ZERO);
 
 		tp->tun_unit = unit;
 		simple_lock_init(&tp->tun_lock);
@@ -179,8 +178,7 @@ tun_clone_create(struct if_clone *ifc, int unit)
 		(void)memset(&tp->tun_if, 0, sizeof(struct ifnet));
 	}
 
-	(void)snprintf(tp->tun_if.if_xname, sizeof(tp->tun_if.if_xname),
-			"%s%d", ifc->ifc_name, unit);
+	if_initname(&tp->tun_if, ifc->ifc_name, unit);
 	tunattach0(tp);
 	tp->tun_flags |= TUN_INITED;
 	tp->tun_osih = softint_establish(SOFTINT_CLOCK, tun_o_softintr, tp);
@@ -380,7 +378,7 @@ out_nolock:
 }
 
 /*
- * Call at splnet() with tp locked.
+ * Call at splnet().
  */
 static void
 tuninit(struct tun_softc *tp)
@@ -390,6 +388,7 @@ tuninit(struct tun_softc *tp)
 
 	TUNDEBUG("%s: tuninit\n", ifp->if_xname);
 
+	simple_lock(&tp->tun_lock);
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
 	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR);
@@ -428,6 +427,7 @@ tuninit(struct tun_softc *tp)
 #endif /* INET6 */
 	}
 
+	simple_unlock(&tp->tun_lock);
 	return;
 }
 
@@ -442,10 +442,9 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = data;
 
 	s = splnet();
-	simple_lock(&tp->tun_lock);
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		tuninit(tp);
 		TUNDEBUG("%s: address set\n", ifp->if_xname);
 		break;
@@ -485,13 +484,10 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		break;
-	case SIOCSIFFLAGS:
-		break;
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 
-	simple_unlock(&tp->tun_lock);
 	splx(s);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.46 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.46.4.1 2009/05/04 08:12:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.46 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.46.4.1 2009/05/04 08:12:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
 #include "fs_union.h"
 #endif
 
@@ -69,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.46 2008/03/21 21:54:58 ad Exp 
 
 #include <compat/sys/stat.h>
 #include <compat/sys/mount.h>
+
+#include <compat/common/compat_util.h>
 
 static void cvtstat(struct stat *, struct stat43 *);
 
@@ -204,22 +207,16 @@ compat_43_sys_fstat(struct lwp *l, const struct compat_43_sys_fstat_args *uap, r
 		syscallarg(int) fd;
 		syscallarg(struct stat43 *) sb;
 	} */
-	int fd = SCARG(uap, fd);
-	struct file *fp;
 	struct stat ub;
 	struct stat43 oub;
 	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(fd);
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	if (error == 0) {
 		cvtstat(&ub, &oub);
 		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
 		    sizeof (oub));
 	}
-
 
 	return (error);
 }
@@ -353,8 +350,8 @@ compat_43_sys_getdirentries(struct lwp *l, const struct compat_43_sys_getdirentr
 	int error, eofflag, readcnt;
 	long loff;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
@@ -454,6 +451,8 @@ unionread:
  * sysctl helper routine for vfs.generic.conf lookups.
  */
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
+static struct sysctllog *compat_clog;
+
 static int
 sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 {
@@ -491,22 +490,30 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 /*
  * Top level filesystem related information gathering.
  */
-SYSCTL_SETUP(compat_sysctl_vfs_setup, "compat sysctl vfs subtree setup")
+void
+compat_sysctl_init(void)
 {
 	extern int nmountcompatnames;
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&compat_clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "maxtypenum",
 		       SYSCTL_DESCR("Highest valid filesystem type number"),
 		       NULL, nmountcompatnames, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&compat_clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "conf",
 		       SYSCTL_DESCR("Filesystem configuration information"),
 		       sysctl_vfs_generic_conf, 0, NULL,
 		       sizeof(struct vfsconf),
 		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
+}
+
+void
+compat_sysctl_fini(void)
+{
+
+	sysctl_teardown(&compat_clog);
 }
 #endif

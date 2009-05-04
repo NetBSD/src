@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.8.4.1 2008/05/16 02:24:42 yamt Exp $ */
+/* $NetBSD: onewire.c,v 1.8.4.2 2009/05/04 08:12:53 yamt Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.8.4.1 2008/05/16 02:24:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.8.4.2 2009/05/04 08:12:53 yamt Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -419,15 +419,15 @@ onewire_scan(struct onewire_softc *sc)
 			}
 		}
 		if (!present) {
-			bzero(&oa, sizeof(oa));
+			memset(&oa, 0, sizeof(oa));
 			oa.oa_onewire = sc;
 			oa.oa_rom = rom;
 			if ((dev = config_found(sc->sc_dev, &oa,
 			    onewire_print)) == NULL)
 				continue;
 
-			MALLOC(nd, struct onewire_device *,
-			    sizeof(struct onewire_device), M_DEVBUF, M_NOWAIT);
+			nd = malloc(sizeof(struct onewire_device),
+				M_DEVBUF, M_NOWAIT);
 			if (nd == NULL)
 				continue;
 			nd->d_dev = dev;
@@ -445,7 +445,7 @@ onewire_scan(struct onewire_softc *sc)
 		if (!d->d_present) {
 			config_detach(d->d_dev, DETACH_FORCE);
 			TAILQ_REMOVE(&sc->sc_devs, d, d_list);
-			FREE(d, M_DEVBUF);
+			free(d, M_DEVBUF);
 		}
 	}
 	onewire_unlock(sc);

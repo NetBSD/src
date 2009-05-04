@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.58.4.1 2008/05/16 02:24:43 yamt Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.58.4.2 2009/05/04 08:12:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.58.4.1 2008/05/16 02:24:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.58.4.2 2009/05/04 08:12:56 yamt Exp $");
 
 #include "rnd.h"
 
@@ -85,8 +85,8 @@ struct fxp_pci_softc {
 	struct pci_conf_state psc_pciconf; /* standard PCI configuration regs */
 };
 
-static int	fxp_pci_match(struct device *, struct cfdata *, void *);
-static void	fxp_pci_attach(struct device *, struct device *, void *);
+static int	fxp_pci_match(device_t, cfdata_t, void *);
+static void	fxp_pci_attach(device_t, device_t, void *);
 
 static int	fxp_pci_enable(struct fxp_softc *);
 static void	fxp_pci_disable(struct fxp_softc *);
@@ -94,11 +94,11 @@ static void	fxp_pci_disable(struct fxp_softc *);
 static void fxp_pci_confreg_restore(struct fxp_pci_softc *psc);
 static bool fxp_pci_resume(device_t dv PMF_FN_PROTO);
 
-CFATTACH_DECL(fxp_pci, sizeof(struct fxp_pci_softc),
+CFATTACH_DECL_NEW(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, NULL, NULL);
 
 static const struct fxp_pci_product {
-	u_int32_t	fpp_prodid;	/* PCI product ID */
+	uint32_t	fpp_prodid;	/* PCI product ID */
 	const char	*fpp_name;	/* device name */
 } fxp_pci_products[] = {
 	{ PCI_PRODUCT_INTEL_82557,
@@ -110,9 +110,9 @@ static const struct fxp_pci_product {
 	{ PCI_PRODUCT_INTEL_82801BA_LAN,
 	  "Intel i82562 Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801E_LAN_1,
-	  "Intel i82559 Ethernet" },
+	  "Intel i82801E Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801E_LAN_2,
-	  "Intel i82559 Ethernet" },
+	  "Intel i82801E Ethernet" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_0,
 	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_1,
@@ -175,7 +175,7 @@ fxp_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-fxp_pci_match(device_t parent, struct cfdata *match, void *aux)
+fxp_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -252,6 +252,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const struct fxp_pci_product *fpp;
+	const char *chipname = NULL;
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -260,6 +261,8 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	int flags;
 	int error;
+
+	sc->sc_dev = self;
 
 	aprint_naive(": Ethernet controller\n");
 
@@ -326,25 +329,30 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 
 	switch (fpp->fpp_prodid) {
 	case PCI_PRODUCT_INTEL_82557:
-	case PCI_PRODUCT_INTEL_82559ER:
 	case PCI_PRODUCT_INTEL_IN_BUSINESS:
-	    {
-		const char *chipname = NULL;
 
 		if (sc->sc_rev >= FXP_REV_82558_A4) {
 			chipname = "i82558 Ethernet";
+			sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 			/*
 			 * Enable the MWI command for memory writes.
 			 */
 			if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
 				sc->sc_flags |= FXPF_MWI;
 		}
-		if (sc->sc_rev >= FXP_REV_82559_A0)
+		if (sc->sc_rev >= FXP_REV_82559_A0) {
 			chipname = "i82559 Ethernet";
+			sc->sc_flags |= FXPF_82559_RXCSUM;
+		}
 		if (sc->sc_rev >= FXP_REV_82559S_A)
 			chipname = "i82559S Ethernet";
-		if (sc->sc_rev >= FXP_REV_82550)
+		if (sc->sc_rev >= FXP_REV_82550) {
 			chipname = "i82550 Ethernet";
+			sc->sc_flags &= ~FXPF_82559_RXCSUM;
+			sc->sc_flags |= FXPF_EXT_RFA;
+		}
+		if (sc->sc_rev >= FXP_REV_82551)
+			chipname = "i82551 Ethernet";
 
 		/*
 		 * Mark all i82559 and i82550 revisions as having
@@ -356,19 +364,30 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
 		    fpp->fpp_name, sc->sc_rev);
 		break;
-	    }
 
-	case PCI_PRODUCT_INTEL_82801BA_LAN:
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+	case PCI_PRODUCT_INTEL_82559ER:
+		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 
 		/*
-		 * The 82801BA Ethernet has a bug which requires us to send a
-		 * NOP before a CU_RESUME if we're in 10baseT mode.
+		 * i82559ER/82551ER don't support RX hardware checksumming
+		 * even though it has a newer revision number than 82559_A0.
 		 */
-		if (fpp->fpp_prodid == PCI_PRODUCT_INTEL_82801BA_LAN)
-			sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+
+		/* All i82559 have the "resume bug". */
+		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+
+		/* Enable the MWI command for memory writes. */
+		if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+			sc->sc_flags |= FXPF_MWI;
+
+		if (sc->sc_rev >= FXP_REV_82551)
+			chipname = "Intel i82551ER Ethernet";
+
+		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
+		    fpp->fpp_name, sc->sc_rev);
 		break;
 
+	case PCI_PRODUCT_INTEL_82801BA_LAN:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_0:
@@ -377,42 +396,19 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_1:
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
-
 		/*
-		 * ICH3 chips apparently have problems with the enhanced
-		 * features, so just treat them as an i82557.  It also
-		 * has the resume bug that the ICH2 has.
+		 * The ICH-2 and ICH-3 have the "resume bug".
 		 */
-		sc->sc_rev = 1;
 		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
-		break;
-	case PCI_PRODUCT_INTEL_82801E_LAN_1:
-	case PCI_PRODUCT_INTEL_82801E_LAN_2:
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+		/* FALLTHROUGH */
 
-		/*
-		 *  XXX We have to read the C-ICH's developer's manual
-		 *  in detail
-		 */
-		break;
-	case PCI_PRODUCT_INTEL_PRO_100_VE_2:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_3:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_4:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_5:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_3:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_4:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_5:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_6:
-	case PCI_PRODUCT_INTEL_82801EB_LAN:
-	case PCI_PRODUCT_INTEL_82801FB_LAN:
-	case PCI_PRODUCT_INTEL_82801G_LAN:
 	default:
 		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+		if (sc->sc_rev >= FXP_REV_82558_A4)
+			sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
+		if (sc->sc_rev >= FXP_REV_82559_A0)
+			sc->sc_flags |= FXPF_82559_RXCSUM;
 
-		/*
-		 * No particular quirks.
-		 */
 		break;
 	}
 
@@ -453,8 +449,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_disable = fxp_pci_disable;
 		break;
 	default:
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
-		    error);
+		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -467,19 +462,19 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/* Finish off the attach. */
 	fxp_attach(sc);
@@ -499,7 +494,7 @@ fxp_pci_enable(struct fxp_softc *sc)
 	struct fxp_pci_softc *psc = (void *) sc;
 
 #if 0
-	printf("%s: going to power state D0\n", device_xname(&sc->sc_dev));
+	printf("%s: going to power state D0\n", device_xname(self));
 #endif
 
 	/* Bring the device into D0 power state. */
@@ -525,7 +520,7 @@ fxp_pci_disable(struct fxp_softc *sc)
 		return;
 
 #if 0
-	printf("%s: going to power state D3\n", device_xname(&sc->sc_dev));
+	printf("%s: going to power state D3\n", device_xname(self));
 #endif
 
 	/* Put the device into D3 state. */

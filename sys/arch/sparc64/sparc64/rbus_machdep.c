@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.10 2008/04/05 13:40:05 cegger Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.10.4.1 2009/05/04 08:11:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -28,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10.4.1 2009/05/04 08:11:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,7 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10 2008/04/05 13:40:05 cegger Exp
 #include <sparc64/dev/psychovar.h>
 
 #include <dev/cardbus/rbus.h>
-#include <dev/ic/i82365var.h>
+#include <dev/pcmcia/pcmciachip.h>
+#include <dev/ic/i82365reg.h>
 #include <dev/pci/pccbbreg.h>
 #include <dev/pci/pccbbvar.h>
 
@@ -57,12 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10 2008/04/05 13:40:05 cegger Exp
 static int pccbb_cardbus_isvalid(void *);
 
 int
-md_space_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+md_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+	     bus_space_handle_t *bshp)
 {
 	DPRINTF("md_space_map: 0x%" PRIxPTR ", 0x%" PRIx64 ", 0x%" PRIx64 "\n",
 		(u_long)t->cookie, bpa, size);
@@ -71,11 +66,7 @@ md_space_map(t, bpa, size, flags, bshp)
 }
 
 void
-md_space_unmap(t, bsh, size, adrp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-	bus_addr_t *adrp;
+md_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size, bus_addr_t *adrp)
 {
 	DPRINTF("md_space_unmap: 0x%" PRIxPTR ", 0x%" PRIx64 ", 0x%" PRIx64
 		"\n", (u_long)t->cookie, bsh._ptr, size);
@@ -87,8 +78,7 @@ md_space_unmap(t, bsh, size, adrp)
 }
 
 rbus_tag_t
-rbus_pccbb_parent_mem(pa)
-	struct pci_attach_args *pa;
+rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct psycho_pbm *pp = pc->cookie;
@@ -106,8 +96,7 @@ rbus_pccbb_parent_mem(pa)
 }
 
 rbus_tag_t
-rbus_pccbb_parent_io(pa)
-	struct pci_attach_args *pa;
+rbus_pccbb_parent_io(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct psycho_pbm *pp = pc->cookie;
@@ -129,13 +118,9 @@ rbus_pccbb_parent_io(pa)
  * This function is called from pccbb_attach() in sys/dev/pci/pccbb.c.
  */
 void
-pccbb_attach_hook(parent, self, pa)
-	struct device *parent;
-	struct device *self;
-	struct pci_attach_args *pa;
+pccbb_attach_hook(device_t parent, device_t self, struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
-	struct psycho_pbm *pp = pc->cookie;
 	pcireg_t reg;
 	int node = PCITAG_NODE(pa->pa_tag);
 	int error;
@@ -157,17 +142,17 @@ pccbb_attach_hook(parent, self, pa)
 			printf("pccbb_attach_hook: broken bus %d\n", bus);
 		else {
 #ifdef DIAGNOSTIC
-			if ((*pp->pp_busnode)[bus].node != 0)
+			if ((*pc->spc_busnode)[bus].node != 0)
 				printf("pccbb_attach_hook: override bus %d"
 				       " node %08x -> %08x\n",
-				       bus, (*pp->pp_busnode)[bus].node, node);
+				       bus, (*pc->spc_busnode)[bus].node, node);
 #endif
-			(*pp->pp_busnode)[bus].arg = self;
-			(*pp->pp_busnode)[bus].valid = pccbb_cardbus_isvalid;
-			(*pp->pp_busnode)[bus].node = node;
+			(*pc->spc_busnode)[bus].arg = device_private(self);
+			(*pc->spc_busnode)[bus].valid = pccbb_cardbus_isvalid;
+			(*pc->spc_busnode)[bus].node = node;
 		}
 	} else {
-		bus = ++pp->pp_busmax;
+		bus = ++pc->spc_busmax;
 		DPRINTF("pccbb_attach_hook: bus %d\n", bus);
 		if (bus >= 256)
 			printf("pccbb_attach_hook: 256 >= busses exist\n");
@@ -177,14 +162,14 @@ pccbb_attach_hook(parent, self, pa)
 			reg |= pa->pa_bus | (bus << 8) | (bus << 16);
 			pci_conf_write(pc, pa->pa_tag, PPB_REG_BUSINFO, reg);
 #ifdef DIAGNOSTIC
-			if ((*pp->pp_busnode)[bus].node != 0)
+			if ((*pc->spc_busnode)[bus].node != 0)
 				printf("pccbb_attach_hook: override bus %d"
 				       " node %08x -> %08x\n",
-				       bus, (*pp->pp_busnode)[bus].node, node);
+				       bus, (*pc->spc_busnode)[bus].node, node);
 #endif
-			(*pp->pp_busnode)[bus].arg = self;
-			(*pp->pp_busnode)[bus].valid = pccbb_cardbus_isvalid;
-			(*pp->pp_busnode)[bus].node = node;
+			(*pc->spc_busnode)[bus].arg = device_private(self);
+			(*pc->spc_busnode)[bus].valid = pccbb_cardbus_isvalid;
+			(*pc->spc_busnode)[bus].node = node;
 		}
 	}
 
@@ -223,7 +208,7 @@ pccbb_cardbus_isvalid(void *arg)
 	/* check CardBus card is present */
 	sockstat = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 	DPRINTF("%s: pccbb_cardbus_isvalid: sockstat %08x\n",
-		device_xname(&sc->sc_dev), sockstat);
+		device_xname(sc->sc_dev), sockstat);
 	if ((sockstat & CB_SOCKET_STAT_CB) == 0 ||
 	    (sockstat & CB_SOCKET_STAT_CD) != 0)
 		return 0;
@@ -231,7 +216,7 @@ pccbb_cardbus_isvalid(void *arg)
 	/* check card is powered on */
 	sockctrl = bus_space_read_4(memt, memh, CB_SOCKET_CTRL);
 	DPRINTF("%s: pccbb_cardbus_isvalid: sockctrl %08x\n",
-		device_xname(&sc->sc_dev), sockctrl);
+		device_xname(sc->sc_dev), sockctrl);
 	if ((sockctrl & CB_SOCKET_CTRL_VCCMASK) == 0)
 		return 0;
 

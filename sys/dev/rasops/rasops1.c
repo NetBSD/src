@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.17.74.1 2008/05/16 02:25:01 yamt Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.17.74.2 2009/05/04 08:13:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.17.74.1 2008/05/16 02:25:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.17.74.2 2009/05/04 08:13:16 yamt Exp $");
 
 #include "opt_rasops.h"
 
@@ -57,8 +57,7 @@ static void	rasops1_putchar16(void *, int, int col, u_int, long);
  * Initialize rasops_info struct for this colordepth.
  */
 void
-rasops1_init(ri)
-	struct rasops_info *ri;
+rasops1_init(struct rasops_info *ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
@@ -86,11 +85,7 @@ rasops1_init(ri)
  * Paint a single character. This is the generic version, this is ugly.
  */
 static void
-rasops1_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	u_int fs, rs, fb, bg, fg, lmask, rmask;
 	u_int32_t height, width;
@@ -234,11 +229,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
  * Paint a single character. This is for 8-pixel wide fonts.
  */
 static void
-rasops1_putchar8(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops1_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int height, fs, rs, bg, fg;
 	struct rasops_info *ri;
@@ -299,11 +290,7 @@ rasops1_putchar8(cookie, row, col, uc, attr)
  * Paint a single character. This is for 16-pixel wide fonts.
  */
 static void
-rasops1_putchar16(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops1_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int height, fs, rs, bg, fg;
 	struct rasops_info *ri;

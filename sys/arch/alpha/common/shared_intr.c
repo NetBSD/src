@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.19 2008/03/10 14:01:35 ad Exp $ */
+/* $NetBSD: shared_intr.c,v 1.19.4.1 2009/05/04 08:10:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.19 2008/03/10 14:01:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.19.4.1 2009/05/04 08:10:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.19 2008/03/10 14:01:35 ad Exp $");
 #include <sys/atomic.h>
 #include <sys/intr.h>
 
-static const char *intr_typename __P((int));
+static const char *intr_typename(int);
 
 static const char *
 intr_typename(int type)

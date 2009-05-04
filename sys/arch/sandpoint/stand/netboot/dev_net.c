@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.5.22.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: dev_net.c,v 1.5.22.2 2009/05/04 08:11:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,15 +41,10 @@
 
 #include <lib/libkern/libkern.h>
 
+#include "globals.h"
+
 static int netdev_sock = -1;
 static int netdev_opens;
-
-int net_open(struct open_file *, ...);
-int net_close(struct open_file *);
-int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
-
-int netif_open(void *);
-int netif_close(int);
 
 int
 net_open(struct open_file *f, ...)

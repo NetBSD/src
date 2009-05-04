@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.74.4.1 2008/05/16 02:24:44 yamt Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.74.4.2 2009/05/04 08:12:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.1 2008/05/16 02:24:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.2 2009/05/04 08:12:59 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -299,29 +299,48 @@ static const struct pci_class pci_class[] = {
 /*
  * Descriptions of of known vendors and devices ("products").
  */
-struct pci_vendor {
-	pci_vendor_id_t		vendor;
-	const char		*vendorname;
-};
-struct pci_product {
-	pci_vendor_id_t		vendor;
-	pci_product_id_t	product;
-	const char		*productname;
-};
 
 #include <dev/pci/pcidevs_data.h>
+#endif /* PCIVERBOSE */
+
+#ifdef PCIVERBOSE
+#ifndef _KERNEL
+#include <string.h>
+#endif
+static const char *
+pci_untokenstring(const uint16_t *token, char *buf, size_t len)
+{
+	char *cp = buf;
+
+	buf[0] = '\0';
+	for (; *token != 0; token++) {
+		cp = buf + strlcat(buf, pci_words + *token, len - 2);
+		cp[0] = ' ';
+		cp[1] = '\0';
+	}
+	*cp = '\0';
+	return cp != buf ? buf : NULL;
+}
 #endif /* PCIVERBOSE */
 
 const char *
 pci_findvendor(pcireg_t id_reg)
 {
 #ifdef PCIVERBOSE
+	static char buf[256];
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
-	int n;
+	size_t n;
 
-	for (n = 0; n < pci_nvendors; n++)
-		if (pci_vendors[n].vendor == vendor)
-			return (pci_vendors[n].vendorname);
+	for (n = 0; n < __arraycount(pci_vendors); n++) {
+		if (pci_vendors[n] == vendor)
+			return pci_untokenstring(&pci_vendors[n+1], buf,
+			    sizeof(buf));
+
+		/* Skip Tokens */
+		n++;
+		while (pci_vendors[n] != 0 && n < __arraycount(pci_vendors))
+			n++;
+	}
 #endif
 	return (NULL);
 }
@@ -330,14 +349,21 @@ const char *
 pci_findproduct(pcireg_t id_reg)
 {
 #ifdef PCIVERBOSE
+	static char buf[256];
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
 	pci_product_id_t product = PCI_PRODUCT(id_reg);
-	int n;
+	size_t n;
 
-	for (n = 0; n < pci_nproducts; n++)
-		if (pci_products[n].vendor == vendor &&
-		    pci_products[n].product == product)
-			return (pci_products[n].productname);
+	for (n = 0; n < __arraycount(pci_products); n++) {
+		if (pci_products[n] == vendor && pci_products[n+1] == product)
+			return pci_untokenstring(&pci_products[n+2], buf,
+			    sizeof(buf));
+
+		/* Skip Tokens */
+		n += 2;
+		while (pci_products[n] != 0 && n < __arraycount(pci_products))
+			n++;
+	}
 #endif
 	return (NULL);
 }
@@ -871,6 +897,68 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	}
 }
 
+static const char *
+pci_conf_print_pcipm_cap_aux(uint16_t caps)
+{
+	switch ((caps >> 6) & 7) {
+	case 0:	return "self-powered";
+	case 1: return "55 mA";
+	case 2: return "100 mA";
+	case 3: return "160 mA";
+	case 4: return "220 mA";
+	case 5: return "270 mA";
+	case 6: return "320 mA";
+	case 7:
+	default: return "375 mA";
+	}
+}
+
+static const char *
+pci_conf_print_pcipm_cap_pmrev(uint8_t val)
+{
+	static const char unk[] = "unknown";
+	static const char *pmrev[8] = {
+		unk, "1.0", "1.1", "1.2", unk, unk, unk, unk
+	};
+	if (val > 7)
+		return unk;
+	return pmrev[val];
+}
+
+static void
+pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
+{
+	uint16_t caps, pmcsr;
+
+	caps = regs[o2i(capoff)] >> 16;
+	pmcsr = regs[o2i(capoff + 0x04)] & 0xffff;
+
+	printf("\n  PCI Power Management Capabilities Register\n");
+
+	printf("    Capabilities register: 0x%04x\n", caps);
+	printf("      Version: %s\n",
+	    pci_conf_print_pcipm_cap_pmrev(caps & 0x3));
+	printf("      PME# clock: %s\n", caps & 0x4 ? "on" : "off");
+	printf("      Device specific initialization: %s\n",
+	    caps & 0x20 ? "on" : "off");
+	printf("      3.3V auxiliary current: %s\n",
+	    pci_conf_print_pcipm_cap_aux(caps));
+	printf("      D1 power management state support: %s\n",
+	    (caps >> 9) & 1 ? "on" : "off");
+	printf("      D2 power management state support: %s\n",
+	    (caps >> 10) & 1 ? "on" : "off");
+	printf("      PME# support: 0x%02x\n", caps >> 11);
+
+	printf("    Control/status register: 0x%04x\n", pmcsr);
+	printf("      Power state: D%d\n", pmcsr & 3);
+	printf("      PCI Express reserved: %s\n",
+	    (pmcsr >> 2) & 1 ? "on" : "off");
+	printf("      No soft reset: %s\n", (pmcsr >> 3) & 1 ? "on" : "off");
+	printf("      PME# assertion %sabled\n",
+	    (pmcsr >> 8) & 1 ? "en" : "dis");
+	printf("      PME# status: %s\n", (pmcsr >> 15) ? "on" : "off");
+}
+
 static void
 pci_conf_print_caplist(
 #ifdef _KERNEL
@@ -878,13 +966,9 @@ pci_conf_print_caplist(
 #endif
     const pcireg_t *regs, int capoff)
 {
-	static const char unk[] = "unknown";
-	static const char *pmrev[8] = {
-		unk, "1.0", "1.1", "1.2", unk, unk, unk, unk
-	};
 	int off;
 	pcireg_t rval;
-	int pcie_off = -1;
+	int pcie_off = -1, pcipm_off = -1;
 
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
 	     off != 0;
@@ -899,7 +983,8 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_PWRMGMT:
 			printf("Power Management, rev. %s",
-			       pmrev[(rval >> 0) & 0x07]);
+			    pci_conf_print_pcipm_cap_pmrev((rval >> 0) & 0x07));
+			pcipm_off = off;
 			break;
 		case PCI_CAP_AGP:
 			printf("AGP, rev. %d.%d",
@@ -954,6 +1039,8 @@ pci_conf_print_caplist(
 		}
 		printf(")\n");
 	}
+	if (pcipm_off != -1)
+		pci_conf_print_pcipm_cap(regs, pcipm_off);
 	if (pcie_off != -1)
 		pci_conf_print_pcie_cap(regs, pcie_off);
 }

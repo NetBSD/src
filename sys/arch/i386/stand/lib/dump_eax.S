@@ -1,4 +1,4 @@
-/*	$NetBSD: dump_eax.S,v 1.1.108.1 2008/05/16 02:22:39 yamt Exp $	*/
+/*	$NetBSD: dump_eax.S,v 1.1.108.2 2009/05/04 08:11:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ ENTRY(dump_eax)
 #if 1 /* 5 bytes to generate real hex... */
 	daa					/* 30..39, 40..45 */
 	addb	$0xc0, %al			/* f0..f9, 00..05 */
-	adcb	$0x40, %al			/* 30..39, 41..45 */
+	adcb	$0x40, %al			/* 30..39, 41..46 */
 #endif
 	stosb
 	pop	%ax

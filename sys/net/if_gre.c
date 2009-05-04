@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.130.2.1 2008/05/16 02:25:40 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.130.2.2 2009/05/04 08:14:14 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.1 2008/05/16 02:25:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.2 2009/05/04 08:14:14 yamt Exp $");
 
+#include "opt_atalk.h"
 #include "opt_gre.h"
 #include "opt_inet.h"
 #include "bpfilter.h"
 
-#ifdef INET
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -66,11 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.1 2008/05/16 02:25:40 yamt Exp $"
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/intr.h>
-#if __NetBSD__
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
-#endif
 
 #include <sys/kernel.h>
 #include <sys/mutex.h>
@@ -85,16 +83,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.1 2008/05/16 02:25:40 yamt Exp $"
 #include <net/netisr.h>
 #include <net/route.h>
 
-#ifdef INET
-#include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <netinet/ip.h> /* we always need this for sizeof(struct ip) */
+
+#ifdef INET
 #include <netinet/in_var.h>
-#include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#else
-#error "Huh? if_gre without inet?"
 #endif
 
+#ifdef INET6
+#include <netinet6/in6_var.h>
+#endif
 
 #ifdef NETATALK
 #include <netatalk/at.h>
@@ -317,14 +317,18 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	int rc;
 	struct gre_softc *sc;
 	struct gre_soparm *sp;
+	const struct sockaddr *any;
+
+	if ((any = sockaddr_any_by_family(AF_INET)) == NULL &&
+	    (any = sockaddr_any_by_family(AF_INET6)) == NULL)
+		return -1;
 
 	sc = malloc(sizeof(struct gre_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_SOFTNET);
 	cv_init(&sc->sc_condvar, "gre wait");
 	cv_init(&sc->sc_fp_condvar, "gre fp");
 
-	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_type = IFT_TUNNEL;
 	sc->sc_if.if_addrlen = 0;
@@ -335,10 +339,8 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_output = gre_output;
 	sc->sc_if.if_ioctl = gre_ioctl;
 	sp = &sc->sc_soparm;
-	sockaddr_copy(sstosa(&sp->sp_dst), sizeof(sp->sp_dst),
-	    sintocsa(&in_any));
-	sockaddr_copy(sstosa(&sp->sp_src), sizeof(sp->sp_src),
-	    sintocsa(&in_any));
+	sockaddr_copy(sstosa(&sp->sp_dst), sizeof(sp->sp_dst), any);
+	sockaddr_copy(sstosa(&sp->sp_src), sizeof(sp->sp_src), any);
 	sp->sp_proto = IPPROTO_GRE;
 	sp->sp_type = SOCK_RAW;
 
@@ -408,6 +410,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	splx(s);
 
 	cv_destroy(&sc->sc_condvar);
+	cv_destroy(&sc->sc_fp_condvar);
 	mutex_destroy(&sc->sc_mtx);
 	gre_evcnt_detach(sc);
 	free(sc, M_DEVBUF);
@@ -482,6 +485,7 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	struct sockaddr *sa;
 	struct socket *so;
 	sa_family_t af;
+	int val;
 
 	GRE_DPRINTF(sc, "enter\n");
 
@@ -519,20 +523,23 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	}
 	sounlock(so);
 
-	/* XXX convert to a (new) SOL_SOCKET call */
-	*mtod(m, int *) = ip_gre_ttl;
-	m->m_len = sizeof(int);
-	pr = so->so_proto;
-	KASSERT(pr != NULL);
-	rc = sosetopt(so, IPPROTO_IP, IP_TTL, m);
 	m = NULL;
-	if (rc != 0) {
-		GRE_DPRINTF(sc, "sosetopt ttl failed\n");
-		rc = 0;
-	}
-	rc = sosetopt(so, SOL_SOCKET, SO_NOHEADER, m_intopt(so, 1));
-	if (rc != 0) {
-		GRE_DPRINTF(sc, "sosetopt SO_NOHEADER failed\n");
+
+	/* XXX convert to a (new) SOL_SOCKET call */
+  	pr = so->so_proto;
+  	KASSERT(pr != NULL);
+ 	rc = so_setsockopt(curlwp, so, IPPROTO_IP, IP_TTL,
+	    &ip_gre_ttl, sizeof(ip_gre_ttl));
+  	if (rc != 0) {
+ 		GRE_DPRINTF(sc, "so_setsockopt ttl failed\n");
+  		rc = 0;
+  	}
+
+ 	val = 1;
+ 	rc = so_setsockopt(curlwp, so, SOL_SOCKET, SO_NOHEADER,
+	    &val, sizeof(val));
+  	if (rc != 0) {
+ 		GRE_DPRINTF(sc, "so_setsockopt SO_NOHEADER failed\n");
 		rc = 0;
 	}
 out:
@@ -878,11 +885,13 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 		hlen += 4;
 
 	switch (ntohs(gh->ptype)) { /* ethertypes */
+#ifdef INET
 	case ETHERTYPE_IP:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
 		af = AF_INET;
 		break;
+#endif
 #ifdef NETATALK
 	case ETHERTYPE_ATALK:
 		ifq = &atintrq1;
@@ -943,8 +952,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	int error = 0;
 	struct gre_softc *sc = ifp->if_softc;
 	struct gre_h *gh;
-	struct ip *ip;
-	uint8_t ip_tos = 0;
 	uint16_t etype = 0;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
@@ -962,11 +969,14 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	GRE_DPRINTF(sc, "dst->sa_family=%d\n", dst->sa_family);
 	switch (dst->sa_family) {
+#ifdef INET
 	case AF_INET:
-		ip = mtod(m, struct ip *);
-		ip_tos = ip->ip_tos;
+		/* TBD Extract the IP ToS field and set the
+		 * encapsulating protocol's ToS to suit.
+		 */
 		etype = htons(ETHERTYPE_IP);
 		break;
+#endif
 #ifdef NETATALK
 	case AF_APPLETALK:
 		etype = htons(ETHERTYPE_ATALK);
@@ -1139,8 +1149,12 @@ gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 	struct socket *so;
 	struct sockaddr_storage dst, src;
 
-	if ((error = getsock(fd, &fp)) != 0)
-		return error;
+	if ((fp = fd_getfile(fd)) == NULL)
+		return EBADF;
+	if (fp->f_type != DTYPE_SOCKET) {
+		fd_putfile(fd);
+		return ENOTSOCK;
+	}
 
 	GRE_DPRINTF(sc, "\n");
 
@@ -1298,7 +1312,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	GRE_DPRINTF(sc, "\n");
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		GRE_DPRINTF(sc, "\n");
 		if ((ifp->if_flags & IFF_UP) != 0)
 			break;
@@ -1308,6 +1322,8 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	case SIOCSIFDSTADDR:
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		oproto = sp->sp_proto;
 		otype = sp->sp_type;
 		switch (ifr->ifr_flags & (IFF_LINK0|IFF_LINK2)) {
@@ -1518,7 +1534,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		GRE_DPRINTF(sc, "\n");
 		break;
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 out:
@@ -1528,15 +1544,11 @@ out:
 	return error;
 }
 
-#endif
-
 void	greattach(int);
 
 /* ARGSUSED */
 void
 greattach(int count)
 {
-#ifdef INET
 	if_clone_attach(&gre_cloner);
-#endif
 }

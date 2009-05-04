@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.23 2007/11/24 13:20:54 isaki Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.23.18.1 2009/05/04 08:13:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -277,6 +277,7 @@ cd9660_open(const char *path, struct open_file *f)
 	fp->bno = isonum_733(dp->extent);
 	fp->size = isonum_733(dp->size);
 	dealloc(buf, buf_size);
+	fsmod = "cd9660";
 
 	return 0;
 

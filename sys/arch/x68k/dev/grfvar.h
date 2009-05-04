@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.10 2007/03/04 06:01:06 christos Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.10.44.1 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -98,7 +98,7 @@ struct	grfsw {
 
 /* per display info */
 struct	grf_softc {
-	struct device g_device;		/* for config */
+	device_t g_device;		/* for config */
 	int	g_flags;		/* software flags */
 	int	g_cfaddr;		/* "addr" locator */
 	struct  grfsw *g_sw;		/* static configuration info */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20.20.1 2008/05/16 02:22:15 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20.20.2 2009/05/04 08:11:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.20.1 2008/05/16 02:22:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.20.2 2009/05/04 08:11:02 yamt Exp $");
 
 #include "opt_explora.h"
+#include "opt_modular.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/kernel.h>
@@ -44,12 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.20.1 2008/05/16 02:22:15 yamt Exp $
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
-
-#include <net/netisr.h>
 
 #include <machine/explora.h>
 #include <machine/bus.h>
@@ -60,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.20.1 2008/05/16 02:22:15 yamt Exp $
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -79,7 +80,6 @@ extern struct user *proc0paddr;
 prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
 struct vm_map *mb_map = NULL;
-struct vm_map *exec_map = NULL;
 char msgbuf[MSGBUFSIZE];
 paddr_t msgbuf_paddr;
 
@@ -264,11 +264,6 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, NULL, NULL);
-#endif
-
 	fake_mapiodev = 0;
 }
 
@@ -317,13 +312,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -385,6 +373,8 @@ cpu_reboot(int howto, char *what)
 		/*XXX dumpsys()*/;
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("halted\n\n");

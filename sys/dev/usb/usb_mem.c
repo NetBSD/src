@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.34.4.1 2008/05/16 02:25:11 yamt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.34.4.2 2009/05/04 08:13:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.34.4.1 2008/05/16 02:25:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.34.4.2 2009/05/04 08:13:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,6 +287,13 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
 }
 
+void
+usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
+{
+	bus_dmamap_sync(p->block->tag, p->block->map, p->offs + offset,
+	    len, ops);
+}
+
 
 #ifdef __NetBSD__
 usbd_status
@@ -296,7 +303,7 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	u_long start;
 	bus_addr_t baddr;
 
-	if (rs->vaddr == 0)
+	if (rs->vaddr == 0 || size > USB_MEM_RESERVE)
 		return USBD_NOMEM;
 
 	dma->block = malloc(sizeof *dma->block, M_USB, M_ZERO | M_NOWAIT);
@@ -307,7 +314,8 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	    EX_NOWAIT, &start);
 
 	if (error != 0) {
-		aprint_error_dev((struct device *)rs->softc, "usb_reserve_allocm of size %u failed (error %d)\n",
+		aprint_error_dev(rs->dv,
+		    "usb_reserve_allocm of size %u failed (error %d)\n",
 		    size, error);
 		return USBD_NOMEM;
 	}
@@ -338,16 +346,15 @@ usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
 }
 
 int
-usb_setup_reserve(void *softc, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
+usb_setup_reserve(device_t dv, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
 		  size_t size)
 {
 	int error, nseg;
 	bus_dma_segment_t seg;
-	struct device *dv = softc;
 
 	rs->dtag = dtag;
 	rs->size = size;
-	rs->softc = softc;
+	rs->dv = dv;
 
 	error = bus_dmamem_alloc(dtag, USB_MEM_RESERVE, PAGE_SIZE, 0,
 	    &seg, 1, &nseg, BUS_DMA_NOWAIT);
@@ -371,7 +378,7 @@ usb_setup_reserve(void *softc, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
 
 	rs->paddr = rs->map->dm_segs[0].ds_addr;
 	rs->extent = extent_create(device_xname(dv), (u_long)rs->paddr,
-	    (u_long)(rs->paddr + USB_MEM_RESERVE),
+	    (u_long)(rs->paddr + USB_MEM_RESERVE - 1),
 	    M_USB, 0, 0, 0);
 	if (rs->extent == NULL) {
 		rs->vaddr = 0;

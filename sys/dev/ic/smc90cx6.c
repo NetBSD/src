@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.55.4.1 2008/05/16 02:24:06 yamt Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.55.4.2 2009/05/04 08:12:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.55.4.1 2008/05/16 02:24:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.55.4.2 2009/05/04 08:12:44 yamt Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.55.4.1 2008/05/16 02:24:06 yamt Exp $
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_ether.h>
 #include <net/if_types.h>
 #include <net/if_arc.h>
 
@@ -144,8 +145,7 @@ void	bah_reconwatch(void *);
 #define PUTMEM(off, v)	bus_space_write_1(bst_m, mem, (off), (v))
 
 void
-bah_attach_subr(sc)
-	struct bah_softc *sc;
+bah_attach_subr(struct bah_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arccom.ac_if;
 	int s;
@@ -221,8 +221,7 @@ bah_attach_subr(sc)
  *
  */
 void
-bah_init(sc)
-	struct bah_softc *sc;
+bah_init(struct bah_softc *sc)
 {
 	struct ifnet *ifp;
 	int s;
@@ -245,8 +244,7 @@ bah_init(sc)
  *
  */
 void
-bah_reset(sc)
-	struct bah_softc *sc;
+bah_reset(struct bah_softc *sc)
 {
 	struct ifnet *ifp;
 	uint8_t linkaddress;
@@ -276,7 +274,7 @@ bah_reset(sc)
 #endif
 
 	/* tell the routing level about the (possibly changed) link address */
-	if_set_sadl(ifp, &linkaddress, sizeof(linkaddress));
+	if_set_sadl(ifp, &linkaddress, sizeof(linkaddress), false);
 
 	/* POR is NMI, but we need it below: */
 	sc->sc_intmask = BAH_RECON|BAH_POR;
@@ -324,8 +322,7 @@ bah_reset(sc)
  * Take interface offline
  */
 void
-bah_stop(sc)
-	struct bah_softc *sc;
+bah_stop(struct bah_softc *sc)
 {
 	bus_space_tag_t bst_r = sc->sc_bst_r;
 	bus_space_handle_t regs = sc->sc_regs;
@@ -350,8 +347,7 @@ bah_stop(sc)
  *
  */
 void
-bah_start(ifp)
-	struct ifnet *ifp;
+bah_start(struct ifnet *ifp)
 {
 	struct bah_softc *sc = ifp->if_softc;
 	struct mbuf *m,*mp;
@@ -505,8 +501,7 @@ bah_start(ifp)
  * get the stuff out of any filled buffer we find.
  */
 void
-bah_srint(vsc)
-	void *vsc;
+bah_srint(void *vsc)
 {
 	struct bah_softc *sc = (struct bah_softc *)vsc;
 	int buffer, len, len1, amount, offset, s, type;
@@ -650,9 +645,7 @@ cleanup:
 }
 
 inline static void
-bah_tint(sc, isr)
-	struct bah_softc *sc;
-	int isr;
+bah_tint(struct bah_softc *sc, int isr)
 {
 	struct ifnet *ifp;
 
@@ -741,8 +734,7 @@ bah_tint(sc, isr)
  * Our interrupt routine
  */
 int
-bahintr(arg)
-	void *arg;
+bahintr(void *arg)
 {
 	struct bah_softc *sc = arg;
 
@@ -881,8 +873,7 @@ bahintr(arg)
 }
 
 void
-bah_reconwatch(arg)
-	void *arg;
+bah_reconwatch(void *arg)
 {
 	struct bah_softc *sc = arg;
 
@@ -900,10 +891,7 @@ bah_reconwatch(arg)
  * This code needs some work - it looks pretty ugly.
  */
 int
-bah_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+bah_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct bah_softc *sc;
 	struct ifaddr *ifa;
@@ -922,36 +910,39 @@ bah_ioctl(ifp, cmd, data)
 #endif
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		bah_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			bah_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			bah_init(sc);
 			break;
 		}
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop it.
 			 */
 			bah_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			bah_init(sc);
+			break;
 		}
 		break;
 
@@ -969,7 +960,7 @@ bah_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 
 	splx(s);
@@ -991,8 +982,7 @@ bah_ioctl(ifp, cmd, data)
  */
 
 void
-bah_watchdog(ifp)
-	struct ifnet *ifp;
+bah_watchdog(struct ifnet *ifp)
 {
 	struct bah_softc *sc = ifp->if_softc;
 

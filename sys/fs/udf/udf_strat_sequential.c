@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.1.2.2 2008/05/16 02:25:21 yamt Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.1.2.3 2009/05/04 08:13:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.1.2.2 2008/05/16 02:25:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.1.2.3 2009/05/04 08:13:45 yamt Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -61,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.1.2.2 2008/05/16 02:25:21
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
-
-#if defined(_KERNEL_OPT)
-#include "opt_udf.h"
-#endif
 
 #include "udf.h"
 #include "udf_subr.h"
@@ -119,20 +114,22 @@ udf_wr_nodedscr_callback(struct buf *buf)
 		return;
 	}
 
-	/* XXX noone is waiting on this outstanding_nodedscr */
-	udf_node->outstanding_nodedscr--;
-	if (udf_node->outstanding_nodedscr == 0)
-		wakeup(&udf_node->outstanding_nodedscr);
-
 	/* XXX right flags to mark dirty again on error? */
 	if (buf->b_error) {
 		udf_node->i_flags |= IN_MODIFIED | IN_ACCESSED;
 		/* XXX TODO reshedule on error */
 	}
 
-	/* first unlock the node */
-	KASSERT(udf_node->i_flags & IN_CALLBACK_ULK);
-	UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
+	/* decrement outstanding_nodedscr */
+	KASSERT(udf_node->outstanding_nodedscr >= 1);
+	udf_node->outstanding_nodedscr--;
+	if (udf_node->outstanding_nodedscr == 0) {
+		/* first unlock the node */
+		KASSERT(udf_node->i_flags & IN_CALLBACK_ULK);
+		UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
+
+		wakeup(&udf_node->outstanding_nodedscr);
+	}
 
 	/* unreference the vnode so it can be recycled */
 	holdrele(udf_node->vnode);
@@ -221,28 +218,32 @@ udf_write_logvol_dscr_seq(struct udf_strat_args *args)
 	if (ump->vtop_tp[vpart] != UDF_VTOP_TYPE_VIRT) {
 		error = udf_translate_vtop(ump, icb, &sectornr, &dummy);
 		if (error)
-			return error;
+			goto out;
 	}
 
-	UDF_LOCK_NODE(udf_node, IN_CALLBACK_ULK);
+	/* add reference to the vnode to prevent recycling */
+	vhold(udf_node->vnode);
 
 	if (waitfor) {
 		DPRINTF(WRITE, ("udf_write_logvol_dscr: sync write\n"));
 
 		error = udf_write_phys_dscr_sync(ump, udf_node, UDF_C_NODE,
 			dscr, sectornr, logsectornr);
-		UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
 	} else {
 		DPRINTF(WRITE, ("udf_write_logvol_dscr: no wait, async write\n"));
-
-		/* add reference to the vnode to prevent recycling */
-		vhold(udf_node->vnode);
-
-		udf_node->outstanding_nodedscr++;
 
 		error = udf_write_phys_dscr_async(ump, udf_node, UDF_C_NODE,
 			dscr, sectornr, logsectornr, udf_wr_nodedscr_callback);
 		/* will be UNLOCKED in call back */
+		return error;
+	}
+
+	holdrele(udf_node->vnode);
+out:
+	udf_node->outstanding_nodedscr--;
+	if (udf_node->outstanding_nodedscr == 0) {
+		UDF_UNLOCK_NODE(udf_node, 0);
+		wakeup(&udf_node->outstanding_nodedscr);
 	}
 
 	return error;
@@ -280,22 +281,13 @@ udf_queuebuf_seq(struct udf_strat_args *args)
 	if ((nestbuf->b_flags & B_READ) == 0) {
 		/* writing */
 		queue = UDF_SHED_SEQWRITING;
-		if (what == UDF_C_DSCR)
+		if (what == UDF_C_ABSOLUTE)
 			queue = UDF_SHED_WRITING;
-		if (what == UDF_C_NODE) {
-			if (ump->meta_alloc != UDF_ALLOC_VAT)
-				queue = UDF_SHED_WRITING;
-		}
-#if 0
-		if (queue == UDF_SHED_SEQWRITING) {
-			/* TODO do add sector to uncommitted space */
-		}
-#endif
 	}
 
 	/* use our own sheduler lists for more complex sheduling */
 	mutex_enter(&priv->discstrat_mutex);
-		BUFQ_PUT(priv->queues[queue], nestbuf);
+		bufq_put(priv->queues[queue], nestbuf);
 		vfs_timestamp(&priv->last_queued[queue]);
 	mutex_exit(&priv->discstrat_mutex);
 
@@ -307,22 +299,20 @@ udf_queuebuf_seq(struct udf_strat_args *args)
 
 /* TODO convert to lb_size */
 static void
-udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf)
+udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf, uint32_t lb_map)
 {
 	union dscrptr    *fdscr = (union dscrptr *) buf->b_data;
 	struct vnode     *vp = buf->b_vp;
 	struct udf_node  *udf_node = VTOI(vp);
-	struct part_desc *pdesc;
 	uint32_t lb_size, blks;
-	uint32_t lb_num, lb_map;
+	uint32_t lb_num;
 	uint32_t udf_rw32_lbmap;
 	int c_type = buf->b_udf_c_type;
 	int error;
 
 	/* only interested when we're using a VAT */
-	if (ump->meta_alloc != UDF_ALLOC_VAT)
-		return;
 	KASSERT(ump->vat_node);
+	KASSERT(ump->vtop_alloc[ump->node_part] == UDF_ALLOC_VAT);
 
 	/* only nodes are recorded in the VAT */
 	/* NOTE: and the fileset descriptor (FIXME ?) */
@@ -332,11 +322,6 @@ udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf)
 	/* we now have an UDF FE/EFE node on media with VAT (or VAT itself) */
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	blks = lb_size / DEV_BSIZE;
-
-	/* calculate offset from base partition */
-	pdesc = ump->partitions[ump->vtop[ump->metadata_part]];
-	lb_map  = buf->b_blkno / blks;
-	lb_map -= udf_rw32(pdesc->start_loc);
 
 	udf_rw32_lbmap = udf_rw32(lb_map);
 
@@ -350,11 +335,10 @@ udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf)
 		return;
 	}
 
-	/* check for tag location is false for allocation extents */
-	KASSERT(fdscr->tag.tag_loc == udf_node->write_loc.loc.lb_num);
-
 	/* record new position in VAT file */
-	lb_num = udf_rw32(udf_node->write_loc.loc.lb_num);
+	lb_num = udf_rw32(fdscr->tag.tag_loc);
+
+	/* lb_num = udf_rw32(udf_node->write_loc.loc.lb_num); */
 
 	DPRINTF(TRANSLATE, ("VAT entry change (log %u -> phys %u)\n",
 			lb_num, lb_map));
@@ -377,9 +361,13 @@ udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf)
 static void
 udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 {
+	union dscrptr *dscr;
 	struct long_ad *node_ad_cpy;
-	uint64_t *lmapping, *pmapping, *lmappos, blknr;
+	struct part_desc *pdesc;
+	uint64_t *lmapping, *lmappos, blknr;
 	uint32_t our_sectornr, sectornr, bpos;
+	uint32_t ptov;
+	uint16_t vpart_num;
 	uint8_t *fidblk;
 	int sector_size = ump->discinfo.sector_size;
 	int blks = sector_size / DEV_BSIZE;
@@ -403,23 +391,9 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 			"type %d, b_resid %d, b_bcount %d, b_bufsize %d\n",
 			buf, (uint32_t) buf->b_blkno / blks, buf->b_udf_c_type,
 			buf->b_resid, buf->b_bcount, buf->b_bufsize));
-		/* if we have FIDs fixup using buffer's sector number(s) */
-		if (buf->b_udf_c_type == UDF_C_FIDS) {
-			panic("UDF_C_FIDS in SHED_WRITING!\n");
-			buf_len = buf->b_bcount;
-			sectornr = our_sectornr;
-			bpos = 0;
-			while (buf_len) {
-				len = MIN(buf_len, sector_size);
-				fidblk = (uint8_t *) buf->b_data + bpos;
-				udf_fixup_fid_block(fidblk, sector_size,
-					0, len, sectornr);
-				sectornr++;
-				bpos += len;
-				buf_len -= len;
-			}
-		}
-		udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
+		KASSERT(buf->b_udf_c_type == UDF_C_ABSOLUTE);
+
+		// udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
 		VOP_STRATEGY(ump->devvp, buf);
 		return;
 	}
@@ -435,15 +409,39 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 	 * this queue. Note that a buffer can get multiple extents allocated.
 	 *
 	 * lmapping contains lb_num relative to base partition.
-	 * pmapping contains lb_num as used for disc adressing.
 	 */
 	lmapping    = ump->la_lmapping;
-	pmapping    = ump->la_pmapping;
 	node_ad_cpy = ump->la_node_ad_cpy;
 
-	/* allocate buf and get its logical and physical mappings */
-	udf_late_allocate_buf(ump, buf, lmapping, pmapping, node_ad_cpy);
-	udf_VAT_mapping_update(ump, buf);	/* XXX could pass *lmapping */
+	/* logically allocate buf and map it in the file */
+	udf_late_allocate_buf(ump, buf, lmapping, node_ad_cpy, &vpart_num);
+
+	/*
+	 * NOTE We are using the knowledge here that sequential media will
+	 * always be mapped linearly. Thus no use to explicitly translate the
+	 * lmapping list.
+	 */
+
+	/* calculate offset from physical base partition */
+	pdesc = ump->partitions[ump->vtop[vpart_num]];
+	ptov  = udf_rw32(pdesc->start_loc);
+
+	/* set buffers blkno to the physical block number */
+	buf->b_blkno = (*lmapping + ptov) * blks;
+
+	/* fixate floating descriptors */
+	if (buf->b_udf_c_type == UDF_C_FLOAT_DSCR) {
+		/* set our tag location to the absolute position */
+		dscr = (union dscrptr *) buf->b_data;
+		dscr->tag.tag_loc = udf_rw32(*lmapping + ptov);
+		udf_validate_tag_and_crc_sums(dscr);
+	}
+
+	/* update mapping in the VAT */
+	if (buf->b_udf_c_type == UDF_C_NODE) {
+		udf_VAT_mapping_update(ump, buf, *lmapping);
+		udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
+	}
 
 	/* if we have FIDs, fixup using the new allocation table */
 	if (buf->b_udf_c_type == UDF_C_FIDS) {
@@ -460,7 +458,7 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 			buf_len -= len;
 		}
 	}
-	udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
+
 	VOP_STRATEGY(ump->devvp, buf);
 }
 
@@ -475,7 +473,7 @@ udf_doshedule(struct udf_mount *ump)
 	int new_queue;
 	int error;
 
-	buf = BUFQ_GET(priv->queues[priv->cur_queue]);
+	buf = bufq_get(priv->queues[priv->cur_queue]);
 	if (buf) {
 		/* transfer from the current queue to the device queue */
 		mutex_exit(&priv->discstrat_mutex);
@@ -518,12 +516,12 @@ udf_doshedule(struct udf_mount *ump)
 	/* check if we can/should switch */
 	new_queue = priv->cur_queue;
 
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_READING]))
+	if (bufq_peek(priv->queues[UDF_SHED_READING]))
 		new_queue = UDF_SHED_READING;
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]))
-		new_queue = UDF_SHED_SEQWRITING;
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]))		/* only for unmount */
+	if (bufq_peek(priv->queues[UDF_SHED_WRITING]))		/* only for unmount */
 		new_queue = UDF_SHED_WRITING;
+	if (bufq_peek(priv->queues[UDF_SHED_SEQWRITING]))
+		new_queue = UDF_SHED_SEQWRITING;
 	if (priv->cur_queue == UDF_SHED_READING) {
 		if (new_queue == UDF_SHED_SEQWRITING) {
 			/* TODO use flag to signal if this is needed */
@@ -561,9 +559,9 @@ udf_discstrat_thread(void *arg)
 	while (priv->run_thread || !empty) {
 		/* process the current selected queue */
 		udf_doshedule(ump);
-		empty  = (BUFQ_PEEK(priv->queues[UDF_SHED_READING]) == NULL);
-		empty &= (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]) == NULL);
-		empty &= (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]) == NULL);
+		empty  = (bufq_peek(priv->queues[UDF_SHED_READING]) == NULL);
+		empty &= (bufq_peek(priv->queues[UDF_SHED_WRITING]) == NULL);
+		empty &= (bufq_peek(priv->queues[UDF_SHED_SEQWRITING]) == NULL);
 
 		/* wait for more if needed */
 		if (empty)

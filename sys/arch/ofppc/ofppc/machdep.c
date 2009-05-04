@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105.10.1 2008/05/16 02:22:58 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105.10.2 2009/05/04 08:11:40 yamt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,13 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.10.1 2008/05/16 02:22:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.10.2 2009/05/04 08:11:40 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/boot_flag.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -222,6 +224,7 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		aprint_normal("halted\n\n");
 		if ((howto & 0x800) && machine_has_rtas &&
 		    rtas_has_func(RTAS_FUNC_POWER_OFF))
@@ -231,6 +234,8 @@ cpu_reboot(int howto, char *what)
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 	aprint_normal("rebooting\n\n");
 
 	if (machine_has_rtas && rtas_has_func(RTAS_FUNC_SYSTEM_REBOOT)) {

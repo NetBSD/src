@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.42.20.1 2008/05/16 02:23:08 yamt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.42.20.2 2009/05/04 08:11:53 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,10 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.42.20.1 2008/05/16 02:23:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.42.20.2 2009/05/04 08:11:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/mbuf.h>
@@ -110,9 +111,9 @@ extern int ofw_handleticks;
 /*
  *  Imported routines
  */
-extern void dump_spl_masks  __P((void));
-extern void dumpsys	    __P((void));
-extern void dotickgrovelling __P((vaddr_t));
+extern void dump_spl_masks(void);
+extern void dumpsys(void);
+extern void dotickgrovelling(vaddr_t);
 
 #define WriteWord(a, b) \
 *((volatile unsigned int *)(a)) = (b)
@@ -220,25 +221,25 @@ static struct dma_range *OFdmaranges;
 static ofw_handle_t ofw_client_services_handle;
 
 
-static void ofw_callbackhandler __P((void *));
-static void ofw_construct_proc0_addrspace __P((void));
-static void ofw_getphysmeminfo __P((void));
-static void ofw_getvirttranslations __P((void));
+static void ofw_callbackhandler(void *);
+static void ofw_construct_proc0_addrspace(void);
+static void ofw_getphysmeminfo(void);
+static void ofw_getvirttranslations(void);
 static void *ofw_malloc(vsize_t size);
-static void ofw_claimpages __P((vaddr_t *, pv_addr_t *, vsize_t));
-static void ofw_discardmappings __P ((vaddr_t, vaddr_t, vsize_t));
-static int ofw_mem_ihandle  __P((void));
-static int ofw_mmu_ihandle  __P((void));
-static paddr_t ofw_claimphys __P((paddr_t, psize_t, paddr_t));
+static void ofw_claimpages(vaddr_t *, pv_addr_t *, vsize_t);
+static void ofw_discardmappings(vaddr_t, vaddr_t, vsize_t);
+static int ofw_mem_ihandle(void);
+static int ofw_mmu_ihandle(void);
+static paddr_t ofw_claimphys(paddr_t, psize_t, paddr_t);
 #if 0
-static paddr_t ofw_releasephys __P((paddr_t, psize_t));
+static paddr_t ofw_releasephys(paddr_t, psize_t);
 #endif
-static vaddr_t ofw_claimvirt __P((vaddr_t, vsize_t, vaddr_t));
-static void ofw_settranslation __P ((vaddr_t, paddr_t, vsize_t, int));
-static void ofw_initallocator __P((void));
-static void ofw_configisaonly __P((paddr_t *, paddr_t *));
-static void ofw_configvl __P((int, paddr_t *, paddr_t *));
-static vaddr_t ofw_valloc __P((vsize_t, vaddr_t));
+static vaddr_t ofw_claimvirt(vaddr_t, vsize_t, vaddr_t);
+static void ofw_settranslation(vaddr_t, paddr_t, vsize_t, int);
+static void ofw_initallocator(void);
+static void ofw_configisaonly(paddr_t *, paddr_t *);
+static void ofw_configvl(int, paddr_t *, paddr_t *);
+static vaddr_t ofw_valloc(vsize_t, vaddr_t);
 
 
 /*
@@ -277,8 +278,7 @@ static vaddr_t ofw_valloc __P((vsize_t, vaddr_t));
 
 
 int
-openfirmware(args)
-	void *args;
+openfirmware(void *args)
 {
 	int ofw_result;
 	u_int saved_irq_state;
@@ -293,8 +293,7 @@ openfirmware(args)
 
 
 void
-ofw_init(ofw_handle)
-	ofw_handle_t ofw_handle;
+ofw_init(ofw_handle_t ofw_handle)
 {
 	ofw_client_services_handle = ofw_handle;
 
@@ -323,9 +322,7 @@ ofw_init(ofw_handle)
 
 
 void
-ofw_boot(howto, bootstr)
-	int howto;
-	char *bootstr;
+ofw_boot(int howto, char *bootstr)
 {
 
 #ifdef DIAGNOSTIC
@@ -347,6 +344,7 @@ ofw_boot(howto, bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("Halted while still in the ICE age.\n");
 		printf("The operating system has halted.\n");
 		goto ofw_exit;
@@ -371,6 +369,8 @@ ofw_boot(howto, bootstr)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -424,20 +424,19 @@ ofw_exit:
 
 #if	BOOT_FW_DHCP
 
-extern	char	*ip2dotted	__P((struct in_addr));
+extern	char	*ip2dotted(struct in_addr);
 
 /*
  * Get DHCP data from OFW
  */
 
 void
-get_fw_dhcp_data(bdp)
-	struct bootdata *bdp;
+get_fw_dhcp_data(struct bootdata *bdp)
 {
 	int chosen;
 	int dhcplen;
 
-	bzero((char *)bdp, sizeof(*bdp));
+	memset((char *)bdp, 0, sizeof(*bdp));
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		panic("no /chosen from OFW");
 	if ((dhcplen = OF_getproplen(chosen, "bootp-response")) > 0) {
@@ -459,7 +458,7 @@ get_fw_dhcp_data(bdp)
 		 */
 		bdp->ip_address = bdp->dhcp_packet.yiaddr;
 		ip = ip2dotted(bdp->ip_address);
-		if (bcmp(bdp->dhcp_packet.options, DHCP_OPTIONS_COOKIE, 4) == 0)
+		if (memcmp(bdp->dhcp_packet.options, DHCP_OPTIONS_COOKIE, 4) == 0)
 			parse_dhcp_options(&bdp->dhcp_packet,
 			    bdp->dhcp_packet.options + 4,
 			    &bdp->dhcp_packet.options[dhcplen
@@ -519,9 +518,7 @@ get_fw_dhcp_data(bdp)
 #endif	/* BOOT_FW_DHCP */
 
 void
-ofw_getbootinfo(bp_pp, ba_pp)
-	char **bp_pp;
-	char **ba_pp;
+ofw_getbootinfo(char **bp_pp, char **ba_pp)
 {
 	int chosen;
 	int bp_len;
@@ -584,9 +581,7 @@ ofw_getcleaninfo(void)
 }
 
 void
-ofw_configisa(pio, pmem)
-	paddr_t *pio;
-	paddr_t *pmem;
+ofw_configisa(paddr_t *pio, paddr_t *pmem)
 {
 	int vl;
 
@@ -597,9 +592,7 @@ ofw_configisa(pio, pmem)
 }
 
 static void
-ofw_configisaonly(pio, pmem)
-	paddr_t *pio;
-	paddr_t *pmem;
+ofw_configisaonly(paddr_t *pio, paddr_t *pmem)
 {
 	int isa;
 	int rangeidx;
@@ -636,10 +629,7 @@ ofw_configisaonly(pio, pmem)
 }
 
 static void
-ofw_configvl(vl, pio, pmem)
-	int vl;
-	paddr_t *pio;
-	paddr_t *pmem;
+ofw_configvl(int vl, paddr_t *pio, paddr_t *pmem)
 {
 	int isa;
 	int ir, vr;
@@ -695,8 +685,7 @@ int shark_isa_dma_nranges;
 #endif
 
 void
-ofw_configisadma(pdma)
-	paddr_t *pdma;
+ofw_configisadma(paddr_t *pdma)
 {
 	int root;
 	int rangeidx;
@@ -982,8 +971,7 @@ ofw_configmem(void)
 
 /* N.B.  Not supposed to call printf in callback-handler!  Could deadlock! */
 static void
-ofw_callbackhandler(v)
-	void *v;
+ofw_callbackhandler(void *v)
 {
 	struct ofw_cbargs *args = v;
 	char *name = args->name;
@@ -1325,7 +1313,7 @@ ofw_construct_proc0_addrspace(void)
 		    PAGE_SIZE, -1);	/* XXX - mode? -JJK */
 
 		/* Zero the memory. */
-		bzero((char *)systempage.pv_va, PAGE_SIZE);
+		memset((char *)systempage.pv_va, 0, PAGE_SIZE);
 	}
 
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
@@ -1477,7 +1465,7 @@ ofw_construct_proc0_addrspace(void)
 
 
 static void
-ofw_getphysmeminfo()
+ofw_getphysmeminfo(void)
 {
 	int phandle;
 	int mem_len;
@@ -1614,9 +1602,7 @@ static VFREE vfinitial = { NULL, IO_VIRT_BASE, IO_VIRT_SIZE };
 static PVFREE vflist = &vfinitial;
 
 static vaddr_t
-ofw_valloc(size, align)
-	vsize_t size;
-	vaddr_t align;
+ofw_valloc(vsize_t size, vaddr_t align)
 {
 	PVFREE        *ppvf;
 	PVFREE        pNew;
@@ -1665,10 +1651,7 @@ ofw_valloc(size, align)
 }
 
 vaddr_t
-ofw_map(pa, size, cb_bits)
-	paddr_t pa;
-	vsize_t size;
-	int cb_bits;
+ofw_map(paddr_t pa, vsize_t size, int cb_bits)
 {
 	vaddr_t va;
 
@@ -1722,10 +1705,7 @@ ofw_mmu_ihandle(void)
 
 /* Return -1 on failure. */
 static paddr_t
-ofw_claimphys(pa, size, align)
-	paddr_t pa;
-	psize_t size;
-	paddr_t align;
+ofw_claimphys(paddr_t pa, psize_t size, paddr_t align)
 {
 	int mem_ihandle = ofw_mem_ihandle();
 
@@ -1746,9 +1726,7 @@ ofw_claimphys(pa, size, align)
 #if 0
 /* Return -1 on failure. */
 static paddr_t
-ofw_releasephys(pa, size)
-	paddr_t pa;
-	psize_t size;
+ofw_releasephys(paddr_t pa, psize_t size)
 {
 	int mem_ihandle = ofw_mem_ihandle();
 
@@ -1760,10 +1738,7 @@ ofw_releasephys(pa, size)
 
 /* Return -1 on failure. */
 static vaddr_t
-ofw_claimvirt(va, size, align)
-	vaddr_t va;
-	vsize_t size;
-	vaddr_t align;
+ofw_claimvirt(vaddr_t va, vsize_t size, vaddr_t align)
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
 
@@ -1782,8 +1757,7 @@ ofw_claimvirt(va, size, align)
 
 /* Return -1 if no mapping. */
 paddr_t
-ofw_gettranslation(va)
-	vaddr_t va;
+ofw_gettranslation(vaddr_t va)
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
 	paddr_t pa;
@@ -1806,11 +1780,7 @@ ofw_gettranslation(va)
 
 
 static void
-ofw_settranslation(va, pa, size, mode)
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t size;
-	int mode;
+ofw_settranslation(vaddr_t va, paddr_t pa, vsize_t size, int mode)
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
 
@@ -1843,8 +1813,7 @@ typedef struct _leftover {
 static PLEFTOVER leftovers = NULL;
 
 static void *
-ofw_malloc(size)
-	vsize_t size;
+ofw_malloc(vsize_t size)
 {
 	PLEFTOVER   *ppLeftover;
 	PLEFTOVER   pLeft;
@@ -1897,9 +1866,7 @@ ofw_malloc(size)
  */
 #if 0
 static void
-ofw_free(addr, size)
-	vaddr_t addr;
-	vsize_t size;
+ofw_free(vaddr_t addr, vsize_t size)
 {
 	PLEFTOVER pLeftover = (PLEFTOVER)addr;
 
@@ -1922,10 +1889,7 @@ ofw_free(addr, size)
  *  memory.
  */
 static void
-ofw_claimpages(free_pp, pv_p, size)
-	vaddr_t *free_pp;
-	pv_addr_t *pv_p;
-	vsize_t size;
+ofw_claimpages(vaddr_t *free_pp, pv_addr_t *pv_p, vsize_t size)
 {
 	/* round-up to page boundary */
 	vsize_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
@@ -1953,7 +1917,7 @@ ofw_claimpages(free_pp, pv_p, size)
 	ofw_settranslation(va, pa, alloc_size, -1);
 
 	/* The memory's mapped-in now, so we can zero it. */
-	bzero((char *)va, alloc_size);
+	memset((char *)va, 0, alloc_size);
 
 	/* Set OUT parameters. */
 	*free_pp = va;
@@ -1963,10 +1927,7 @@ ofw_claimpages(free_pp, pv_p, size)
 
 
 static void
-ofw_discardmappings(L2pagetable, va, size)
-	vaddr_t L2pagetable;
-	vaddr_t va;
-	vsize_t size;
+ofw_discardmappings(vaddr_t L2pagetable, vaddr_t va, vsize_t size)
 {
 	/* round-up to page boundary */
 	vsize_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
@@ -1995,7 +1956,7 @@ ofw_initallocator(void)
 
 #if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 static void
-reset_screen()
+reset_screen(void)
 {
 
 	if ((console_ihandle == 0) || (console_ihandle == -1))

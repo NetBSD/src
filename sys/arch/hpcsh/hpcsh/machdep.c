@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.10.1 2008/05/16 02:22:32 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.10.2 2009/05/04 08:11:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.10.1 2008/05/16 02:22:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.10.2 2009/05/04 08:11:13 yamt Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
@@ -49,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.10.1 2008/05/16 02:22:32 yamt Exp $
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/user.h>
+#include <sys/device.h>
 
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -56,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.10.1 2008/05/16 02:22:32 yamt Exp $
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -73,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.10.1 2008/05/16 02:22:32 yamt Exp $
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(LKM) || defined(DDB) || defined(KGDB)
+#if NKSYMS || defined(MODULAR) || defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -241,7 +244,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 			p = cp + 2;
 #ifdef NFS
 			if (strcmp(p, "nfs") == 0)
-				mountroot = nfs_mountroot;
+				rootfstype = MOUNT_NFS;
 			else
 				makebootdev(p);
 #else /* NFS */
@@ -291,9 +294,9 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symbolsize) {
-		ksyms_init(symbolsize, &end, end + symbolsize);
+		ksyms_addsyms_elf(symbolsize, &end, end + symbolsize);
 		_DPRINTF("symbol size = %d byte\n", symbolsize);
 	}
 #endif
@@ -415,6 +418,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Finally, halt/reboot the system. */
 #ifdef KLOADER
@@ -618,14 +623,18 @@ intc_intr(int ssr, int spc, int ssp)
 		__dbg_heart_beat(HEART_BEAT_RED);
 	} else if (evtcode ==
 	    (CPU_IS_SH3 ? SH7709_INTEVT2_IRQ4 : SH_INTEVT_IRL11)) {
-		int cause = r & hd6446x_ienable;
-		struct hd6446x_intrhand *hh = &hd6446x_intrhand[ffs(cause) - 1];
+		struct hd6446x_intrhand *hh;
+		int cause;
+
+		cause = r & hd6446x_ienable;
 		if (cause == 0) {
-			printf("masked HD6446x interrupt.0x%04x\n", r);
+			printf("masked HD6446x interrupt 0x%04x\n",
+			       r & ~hd6446x_ienable);
 			_reg_write_2(HD6446X_NIRR, 0x0000);
 			return;
 		}
 		/* Enable higher level interrupt*/
+		hh = &hd6446x_intrhand[ffs(cause) - 1];
 		hd6446x_intr_resume(hh->hh_ipl);
 		KDASSERT(hh->hh_func != NULL);
 		(*hh->hh_func)(hh->hh_arg);
@@ -635,3 +644,14 @@ intc_intr(int ssr, int spc, int ssp)
 		__dbg_heart_beat(HEART_BEAT_BLUE);
 	}
 }
+
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */

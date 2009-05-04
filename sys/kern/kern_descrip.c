@@ -1,8 +1,11 @@
-/*	$NetBSD: kern_descrip.c,v 1.177.2.1 2008/05/16 02:25:24 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.177.2.2 2009/05/04 08:13:46 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,36 +70,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.177.2.1 2008/05/16 02:25:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.177.2.2 2009/05/04 08:13:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
-#include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/namei.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 #include <sys/event.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
+#include <sys/vnode.h>
 
-static int	cwdi_ctor(void *, void *, int);
-static void	cwdi_dtor(void *, void *);
 static int	file_ctor(void *, void *, int);
 static void	file_dtor(void *, void *);
 static int	fdfile_ctor(void *, void *, int);
@@ -109,12 +107,9 @@ kmutex_t	filelist_lock;	/* lock on filehead */
 struct filelist	filehead;	/* head of list of open files */
 u_int		nfiles;		/* actual number of open files */
 
-static pool_cache_t cwdi_cache;
 static pool_cache_t filedesc_cache;
 static pool_cache_t file_cache;
 static pool_cache_t fdfile_cache;
-
-MALLOC_DEFINE(M_FILEDESC, "file desc", "Open file descriptor table");
 
 const struct cdevsw filedesc_cdevsw = {
 	filedescopen, noclose, noread, nowrite, noioctl,
@@ -142,10 +137,6 @@ fd_sys_init(void)
 	    PR_LARGECACHE, "fdfile", NULL, IPL_NONE, fdfile_ctor, fdfile_dtor,
 	    NULL);
 	KASSERT(fdfile_cache != NULL);
-
-	cwdi_cache = pool_cache_init(sizeof(struct cwdinfo), coherency_unit,
-	    0, 0, "cwdi", NULL, IPL_NONE, cwdi_ctor, cwdi_dtor, NULL);
-	KASSERT(cwdi_cache != NULL);
 
 	filedesc_cache = pool_cache_init(sizeof(filedesc_t), coherency_unit,
 	    0, 0, "filedesc", NULL, IPL_NONE, filedesc_ctor, filedesc_dtor,
@@ -570,7 +561,7 @@ fd_close(unsigned fd)
 	 */
 	fp = ff->ff_file;
 	ff->ff_file = NULL;
-	ff->ff_exclose = 0;
+	ff->ff_exclose = false;
 
 	/*
 	 * We expect the caller to hold a descriptor reference - drop it.
@@ -590,15 +581,20 @@ fd_close(unsigned fd)
 		 *
 		 */
 		atomic_or_uint(&ff->ff_refcnt, FR_CLOSING);
+
 		/*
 		 * Remove any knotes attached to the file.  A knote
 		 * attached to the descriptor can hold references on it.
 		 */
+		mutex_exit(&ff->ff_lock);
 		if (!SLIST_EMPTY(&ff->ff_knlist)) {
-			mutex_exit(&ff->ff_lock);
 			knote_fdclose(fd);
-			mutex_enter(&ff->ff_lock);
 		}
+
+		/* Try to drain out descriptor references. */
+		(*fp->f_ops->fo_drain)(fp);
+		mutex_enter(&ff->ff_lock);
+
 		/*
 		 * We need to see the count drop to zero at least once,
 		 * in order to ensure that all pre-existing references
@@ -645,7 +641,7 @@ fd_close(unsigned fd)
  * Duplicate a file descriptor.
  */
 int
-fd_dup(file_t *fp, int minfd, int *newp, int exclose)
+fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
 {
 	proc_t *p;
 	int error;
@@ -830,6 +826,73 @@ fd_alloc(proc_t *p, int want, int *result)
 }
 
 /*
+ * Allocate memory for the open files array.
+ */
+static fdfile_t **
+fd_ofile_alloc(int n)
+{
+	uintptr_t *ptr, sz;
+
+	KASSERT(n > NDFILE);
+
+	sz = (n + 2) * sizeof(uintptr_t);
+	ptr = kmem_alloc((size_t)sz, KM_SLEEP);
+	ptr[1] = sz;
+
+	return (fdfile_t **)(ptr + 2);
+}
+
+/*
+ * Free an open files array.
+ */
+static void
+fd_ofile_free(int n, fdfile_t **of)
+{
+	uintptr_t *ptr, sz;
+
+	KASSERT(n > NDFILE);
+
+	sz = (n + 2) * sizeof(uintptr_t);
+	ptr = (uintptr_t *)of - 2;
+	KASSERT(ptr[1] == sz);
+	kmem_free(ptr, sz);
+}
+
+/*
+ * Allocate descriptor bitmap.
+ */
+static void
+fd_map_alloc(int n, uint32_t **lo, uint32_t **hi)
+{
+	uint8_t *ptr;
+	size_t szlo, szhi;
+
+	KASSERT(n > NDENTRIES);
+
+	szlo = NDLOSLOTS(n) * sizeof(uint32_t);
+	szhi = NDHISLOTS(n) * sizeof(uint32_t);
+	ptr = kmem_alloc(szlo + szhi, KM_SLEEP);
+	*lo = (uint32_t *)ptr;
+	*hi = (uint32_t *)(ptr + szlo);
+}
+
+/*
+ * Free descriptor bitmap.
+ */
+static void
+fd_map_free(int n, uint32_t *lo, uint32_t *hi)
+{
+	size_t szlo, szhi;
+
+	KASSERT(n > NDENTRIES);
+
+	szlo = NDLOSLOTS(n) * sizeof(uint32_t);
+	szhi = NDHISLOTS(n) * sizeof(uint32_t);
+	KASSERT(hi == (uint32_t *)((uint8_t *)lo + szlo));
+	kmem_free(lo, szlo + szhi);
+}
+
+/*
  * Expand a process' descriptor table.
  */
 void
@@ -852,12 +915,9 @@ fd_tryexpand(proc_t *p)
 	else
 		numfiles = 2 * oldnfiles;
 
-	newofile = malloc(numfiles * sizeof(fdfile_t *), M_FILEDESC, M_WAITOK);
+	newofile = fd_ofile_alloc(numfiles);
 	if (NDHISLOTS(numfiles) > NDHISLOTS(oldnfiles)) {
-		newhimap = malloc(NDHISLOTS(numfiles) *
-		    sizeof(uint32_t), M_FILEDESC, M_WAITOK);
-		newlomap = malloc(NDLOSLOTS(numfiles) *
-		    sizeof(uint32_t), M_FILEDESC, M_WAITOK);
+		fd_map_alloc(numfiles, &newlomap, &newhimap);
 	}
 
 	mutex_enter(&fdp->fd_lock);
@@ -865,11 +925,10 @@ fd_tryexpand(proc_t *p)
 	if (fdp->fd_nfiles != oldnfiles) {
 		/* fdp changed; caller must retry */
 		mutex_exit(&fdp->fd_lock);
-		free(newofile, M_FILEDESC);
-		if (newhimap != NULL)
-			free(newhimap, M_FILEDESC);
-		if (newlomap != NULL)
-			free(newlomap, M_FILEDESC);
+		fd_ofile_free(numfiles, newofile);
+		if (NDHISLOTS(numfiles) > NDHISLOTS(oldnfiles)) {
+			fd_map_free(numfiles, newlomap, newhimap);
+		}
 		return;
 	}
 
@@ -885,10 +944,10 @@ fd_tryexpand(proc_t *p)
 	 */
 	if (oldnfiles > NDFILE) {
 		if ((fdp->fd_refcnt | p->p_nlwps) > 1) {
-			*(void **)fdp->fd_ofiles = fdp->fd_discard;
-			fdp->fd_discard = fdp->fd_ofiles;
+			fdp->fd_ofiles[-2] = (void *)fdp->fd_discard;
+			fdp->fd_discard = fdp->fd_ofiles - 2;
 		} else {
-			free(fdp->fd_ofiles, M_FILEDESC);
+			fd_ofile_free(oldnfiles, fdp->fd_ofiles);
 		}
 	}
 
@@ -904,8 +963,7 @@ fd_tryexpand(proc_t *p)
 		    NDLOSLOTS(numfiles) * sizeof(uint32_t) - i);
 
 		if (NDHISLOTS(oldnfiles) > NDHISLOTS(NDFILE)) {
-			free(fdp->fd_himap, M_FILEDESC);
-			free(fdp->fd_lomap, M_FILEDESC);
+			fd_map_free(oldnfiles, fdp->fd_lomap, fdp->fd_himap);
 		}
 		fdp->fd_himap = newhimap;
 		fdp->fd_lomap = newlomap;
@@ -945,6 +1003,8 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 
 	fp = pool_cache_get(file_cache, PR_WAITOK);
 	KASSERT(fp->f_count == 0);
+	KASSERT(fp->f_msgcount == 0);
+	KASSERT(fp->f_unpcount == 0);
 	fp->f_cred = kauth_cred_get();
 	kauth_cred_hold(fp->f_cred);
 
@@ -954,10 +1014,18 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 		return ENFILE;
 	}
 
+	/*
+	 * Don't allow recycled files to be scanned.
+	 */
+	if ((fp->f_flag & FSCAN) != 0) {
+		mutex_enter(&fp->f_lock);
+		atomic_and_uint(&fp->f_flag, ~FSCAN);
+		mutex_exit(&fp->f_lock);
+	}
+
 	fp->f_advice = 0;
 	fp->f_msgcount = 0;
 	fp->f_offset = 0;
-	fp->f_iflags = 0;
 	*resultfp = fp;
 
 	return 0;
@@ -1042,54 +1110,6 @@ ffree(file_t *fp)
 	pool_cache_put(file_cache, fp);
 }
 
-/*
- * Create an initial cwdinfo structure, using the same current and root
- * directories as curproc.
- */
-struct cwdinfo *
-cwdinit(void)
-{
-	struct cwdinfo *cwdi;
-	struct cwdinfo *copy;
-
-	cwdi = pool_cache_get(cwdi_cache, PR_WAITOK);
-	copy = curproc->p_cwdi;
-
-	rw_enter(&copy->cwdi_lock, RW_READER);
-	cwdi->cwdi_cdir = copy->cwdi_cdir;
-	if (cwdi->cwdi_cdir)
-		VREF(cwdi->cwdi_cdir);
-	cwdi->cwdi_rdir = copy->cwdi_rdir;
-	if (cwdi->cwdi_rdir)
-		VREF(cwdi->cwdi_rdir);
-	cwdi->cwdi_edir = copy->cwdi_edir;
-	if (cwdi->cwdi_edir)
-		VREF(cwdi->cwdi_edir);
-	cwdi->cwdi_cmask =  copy->cwdi_cmask;
-	cwdi->cwdi_refcnt = 1;
-	rw_exit(&copy->cwdi_lock);
-
-	return (cwdi);
-}
-
-static int
-cwdi_ctor(void *arg, void *obj, int flags)
-{
-	struct cwdinfo *cwdi = obj;
-
-	rw_init(&cwdi->cwdi_lock);
-
-	return 0;
-}
-
-static void
-cwdi_dtor(void *arg, void *obj)
-{
-	struct cwdinfo *cwdi = obj;
-
-	rw_destroy(&cwdi->cwdi_lock);
-}
-
 static int
 file_ctor(void *arg, void *obj, int flags)
 {
@@ -1160,38 +1180,6 @@ fputdummy(file_t *fp)
 }
 
 /*
- * Make p2 share p1's cwdinfo.
- */
-void
-cwdshare(struct proc *p2)
-{
-	struct cwdinfo *cwdi;
-
-	cwdi = curproc->p_cwdi;
-
-	atomic_inc_uint(&cwdi->cwdi_refcnt);
-	p2->p_cwdi = cwdi;
-}
-
-/*
- * Release a cwdinfo structure.
- */
-void
-cwdfree(struct cwdinfo *cwdi)
-{
-
-	if (atomic_dec_uint_nv(&cwdi->cwdi_refcnt) > 0)
-		return;
-
-	vrele(cwdi->cwdi_cdir);
-	if (cwdi->cwdi_rdir)
-		vrele(cwdi->cwdi_rdir);
-	if (cwdi->cwdi_edir)
-		vrele(cwdi->cwdi_edir);
-	pool_cache_put(cwdi_cache, cwdi);
-}
-
-/*
  * Create an initial filedesc structure.
  */
 filedesc_t *
@@ -1237,7 +1225,7 @@ filedesc_ctor(void *arg, void *obj, int flag)
 	fdp->fd_lastfile = -1;
 	fdp->fd_lastkqfile = -1;
 
-	KASSERT(sizeof(fdp->fd_dfdfile[0]) >= sizeof(fdfile_t));
+	CTASSERT(sizeof(fdp->fd_dfdfile[0]) >= sizeof(fdfile_t));
 	for (i = 0; i < NDFDFILE; i++) {
 		fdfile_ctor(NULL, fdp->fd_dfdfile[i], PR_WAITOK);
 	}
@@ -1313,18 +1301,15 @@ fd_copy(void)
 			while (i >= 2 * NDEXTENT && i > lastfile * 2) {
 				i /= 2;
 			}
-			newfdp->fd_ofiles = malloc(i * sizeof(fdfile_t *),
-			    M_FILEDESC, M_WAITOK);
-			KASSERT(i >= NDFILE);
+			newfdp->fd_ofiles = fd_ofile_alloc(i);
+			KASSERT(i > NDFILE);
 		}
 		if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
 			newfdp->fd_himap = newfdp->fd_dhimap;
 			newfdp->fd_lomap = newfdp->fd_dlomap;
 		} else {
-			newfdp->fd_himap = malloc(NDHISLOTS(i) *
-			    sizeof(uint32_t), M_FILEDESC, M_WAITOK);
-			newfdp->fd_lomap = malloc(NDLOSLOTS(i) *
-			    sizeof(uint32_t), M_FILEDESC, M_WAITOK);
+			fd_map_alloc(i, &newfdp->fd_lomap,
+			    &newfdp->fd_himap);
 		}
 
 		/*
@@ -1346,12 +1331,11 @@ fd_copy(void)
 			break;
 		}
 		mutex_exit(&fdp->fd_lock);
-		if (i >= NDFILE) {
-			free(newfdp->fd_ofiles, M_FILEDESC);
+		if (i > NDFILE) {
+			fd_ofile_free(i, newfdp->fd_ofiles);
 		}
 		if (NDHISLOTS(i) > NDHISLOTS(NDFILE)) {
-			free(newfdp->fd_himap, M_FILEDESC);
-			free(newfdp->fd_lomap, M_FILEDESC);
+			fd_map_free(i, newfdp->fd_lomap, newfdp->fd_himap);
 		}
 		while (fflist != NULL) {
 			ff = fflist;
@@ -1422,7 +1406,7 @@ fd_copy(void)
 		}
 		ff2->ff_file = fp;
 		ff2->ff_exclose = ff->ff_exclose;
-		ff2->ff_allocated = 1;
+		ff2->ff_allocated = true;
 		mutex_exit(&ff->ff_lock);
 		if (i > newlast) {
 			newlast = i;
@@ -1457,7 +1441,7 @@ fd_free(void)
 	fdfile_t *ff;
 	file_t *fp;
 	int fd, lastfd;
-	void *discard;
+	void **discard;
 
 	fdp = curlwp->l_fd;
 
@@ -1497,19 +1481,17 @@ fd_free(void)
 	 * to the cache.
 	 */
 	while ((discard = fdp->fd_discard) != NULL) {
-		KASSERT(discard != fdp->fd_ofiles);
-		fdp->fd_discard = *(void **)discard;
-		free(discard, M_FILEDESC);
+		fdp->fd_discard = discard[0];
+		kmem_free(discard, (uintptr_t)discard[1]);
 	}
 	if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
 		KASSERT(fdp->fd_himap != fdp->fd_dhimap);
 		KASSERT(fdp->fd_lomap != fdp->fd_dlomap);
-		free(fdp->fd_himap, M_FILEDESC);
-		free(fdp->fd_lomap, M_FILEDESC);
+		fd_map_free(fdp->fd_nfiles, fdp->fd_lomap, fdp->fd_himap);
 	}
 	if (fdp->fd_nfiles > NDFILE) {
 		KASSERT(fdp->fd_ofiles != fdp->fd_dfiles);
-		free(fdp->fd_ofiles, M_FILEDESC);
+		fd_ofile_free(fdp->fd_nfiles, fdp->fd_ofiles);
 	}
 	if (fdp->fd_knhash != NULL) {
 		hashdone(fdp->fd_knhash, HASH_LIST, fdp->fd_knhashmask);
@@ -1606,133 +1588,12 @@ fd_dupopen(int old, int *new, int mode, int error)
 }
 
 /*
- * Close open files on exec.
- */
-void
-fd_closeexec(void)
-{
-	struct cwdinfo *cwdi;
-	proc_t *p;
-	filedesc_t *fdp;
-	fdfile_t *ff;
-	lwp_t *l;
-	int fd;
-
-	l = curlwp;
-	p = l->l_proc;
-	fdp = p->p_fd;
-	cwdi = p->p_cwdi;
-
-	if (cwdi->cwdi_refcnt > 1) {
-		cwdi = cwdinit();
-		cwdfree(p->p_cwdi);
-		p->p_cwdi = cwdi;
-	}
-	if (p->p_cwdi->cwdi_edir) {
-		vrele(p->p_cwdi->cwdi_edir);
-	}
-
-	if (fdp->fd_refcnt > 1) {
-		fdp = fd_copy();
-		fd_free();
-		p->p_fd = fdp;
-		l->l_fd = fdp;
-	}
-	if (!fdp->fd_exclose) {
-		return;
-	}
-	fdp->fd_exclose = 0;
-
-	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
-		if ((ff = fdp->fd_ofiles[fd]) == NULL) {
-			KASSERT(fd >= NDFDFILE);
-			continue;
-		}
-		KASSERT(fd >= NDFDFILE ||
-		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
-		if (ff->ff_file == NULL)
-			continue;
-		if (ff->ff_exclose) {
-			/*
-			 * We need a reference to close the file.
-			 * No other threads can see the fdfile_t at
-			 * this point, so don't bother locking.
-			 */
-			KASSERT((ff->ff_refcnt & FR_CLOSING) == 0);
-			ff->ff_refcnt++;
-			fd_close(fd);
-		}
-	}
-}
-
-/*
- * It is unsafe for set[ug]id processes to be started with file
- * descriptors 0..2 closed, as these descriptors are given implicit
- * significance in the Standard C library.  fdcheckstd() will create a
- * descriptor referencing /dev/null for each of stdin, stdout, and
- * stderr that is not already open.
- */
-#define CHECK_UPTO 3
-int
-fd_checkstd(void)
-{
-	struct proc *p;
-	struct nameidata nd;
-	filedesc_t *fdp;
-	file_t *fp;
-	struct proc *pp;
-	int fd, i, error, flags = FREAD|FWRITE;
-	char closed[CHECK_UPTO * 3 + 1], which[3 + 1];
-
-	p = curproc;
-	closed[0] = '\0';
-	if ((fdp = p->p_fd) == NULL)
-		return (0);
-	for (i = 0; i < CHECK_UPTO; i++) {
-		KASSERT(i >= NDFDFILE ||
-		    fdp->fd_ofiles[i] == (fdfile_t *)fdp->fd_dfdfile[i]);
-		if (fdp->fd_ofiles[i]->ff_file != NULL)
-			continue;
-		snprintf(which, sizeof(which), ",%d", i);
-		strlcat(closed, which, sizeof(closed));
-		if ((error = fd_allocfile(&fp, &fd)) != 0)
-			return (error);
-		KASSERT(fd < CHECK_UPTO);
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null");
-		if ((error = vn_open(&nd, flags, 0)) != 0) {
-			fd_abort(p, fp, fd);
-			return (error);
-		}
-		fp->f_data = nd.ni_vp;
-		fp->f_flag = flags;
-		fp->f_ops = &vnops;
-		fp->f_type = DTYPE_VNODE;
-		VOP_UNLOCK(nd.ni_vp, 0);
-		fd_affix(p, fp, fd);
-	}
-	if (closed[0] != '\0') {
-		mutex_enter(proc_lock);
-		pp = p->p_pptr;
-		mutex_enter(pp->p_lock);
-		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
-		    "was invoked by uid %d ppid %d (%s) "
-		    "with fd %s closed\n",
-		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
-		    pp->p_pid, pp->p_comm, &closed[1]);
-		mutex_exit(pp->p_lock);
-		mutex_exit(proc_lock);
-	}
-	return (0);
-}
-#undef CHECK_UPTO
-
-/*
  * Sets descriptor owner. If the owner is a process, 'pgid'
  * is set to positive value, process ID. If the owner is process group,
  * 'pgid' is set to -pg_id.
  */
 int
-fsetown(pid_t *pgid, int cmd, const void *data)
+fsetown(pid_t *pgid, u_long cmd, const void *data)
 {
 	int id = *(const int *)data;
 	int error;
@@ -1762,7 +1623,7 @@ fsetown(pid_t *pgid, int cmd, const void *data)
  * needs the sign removed before use.
  */
 int
-fgetown(pid_t pgid, int cmd, void *data)
+fgetown(pid_t pgid, u_long cmd, void *data)
 {
 
 	switch (cmd) {
@@ -1782,11 +1643,13 @@ fgetown(pid_t pgid, int cmd, void *data)
 void
 fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 {
-	struct proc *p1;
-	struct pgrp *pgrp;
 	ksiginfo_t ksi;
 
 	KASSERT(!cpu_intr_p());
+
+	if (pgid == 0) {
+		return;
+	}
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
@@ -1794,10 +1657,22 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	ksi.ksi_band = band;
 
 	mutex_enter(proc_lock);
-	if (pgid > 0 && (p1 = p_find(pgid, PFIND_LOCKED)))
-		kpsignal(p1, &ksi, fdescdata);
-	else if (pgid < 0 && (pgrp = pg_find(-pgid, PFIND_LOCKED)))
-		kpgsignal(pgrp, &ksi, fdescdata, 0);
+	if (pgid > 0) {
+		struct proc *p1;
+
+		p1 = p_find(pgid, PFIND_LOCKED);
+		if (p1 != NULL) {
+			kpsignal(p1, &ksi, fdescdata);
+		}
+	} else {
+		struct pgrp *pgrp;
+
+		KASSERT(pgid < 0);
+		pgrp = pg_find(-pgid, PFIND_LOCKED);
+		if (pgrp != NULL) {
+			kpgsignal(pgrp, &ksi, fdescdata, 0);
+		}
+	}
 	mutex_exit(proc_lock);
 }
 
@@ -1838,6 +1713,12 @@ fnullop_kqfilter(file_t *fp, struct knote *kn)
 {
 
 	return 0;
+}
+
+void
+fnullop_drain(file_t *fp)
+{
+
 }
 
 int

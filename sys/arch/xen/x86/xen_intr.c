@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.4.2.1 2008/05/16 02:23:30 yamt Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.4.2.2 2009/05/04 08:12:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.4.2.1 2008/05/16 02:23:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.4.2.2 2009/05/04 08:12:14 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -64,12 +64,16 @@ spllower(int nlevel)
 	uint32_t imask;
 	u_long psl;
 
+	if (ci->ci_ilevel <= nlevel)
+		return;
+
 	__insn_barrier();
 
 	imask = IUNMASK(ci, nlevel);
 	psl = x86_read_psl();
 	x86_disable_intr();
 	if (ci->ci_ipending & imask) {
+		KASSERT(psl == 0);
 		Xspllower(nlevel);
 		/* Xspllower does enable_intr() */
 	} else {
@@ -77,24 +81,6 @@ spllower(int nlevel)
 		x86_write_psl(psl);
 	}
 }
-
-#ifndef __x86_64__
-
-/*
- * Software interrupt registration
- *
- * We hand-code this to ensure that it's atomic.
- *
- * XXX always scheduled on the current CPU.
- */
-void
-softintr(int sir)
-{
-	struct cpu_info *ci = curcpu();
-
-	__asm volatile("orl %1, %0" : "=m"(ci->ci_ipending) : "ir" (1 << sir));
-}
-#endif
 
 void
 x86_disable_intr(void)
@@ -121,7 +107,7 @@ x86_write_psl(u_long psl)
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_vcpu->evtchn_upcall_mask = psl;
-	x86_lfence();
+	xen_rmb();
 	if (ci->ci_vcpu->evtchn_upcall_pending && psl == 0) {
 	    	hypervisor_force_callback();
 	}

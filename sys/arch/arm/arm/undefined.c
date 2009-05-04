@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.32.20.1 2008/05/16 02:21:55 yamt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.32.20.2 2009/05/04 08:10:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32.20.1 2008/05/16 02:21:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32.20.2 2009/05/04 08:10:38 yamt Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -101,7 +101,7 @@ install_coproc_handler(int coproc, undef_handler_t handler)
 	KASSERT(handler != NULL); /* Used to be legal. */
 
 	/* XXX: M_TEMP??? */
-	MALLOC(uh, struct undefined_handler *, sizeof(*uh), M_TEMP, M_WAITOK);
+	uh = malloc(sizeof(*uh), M_TEMP, M_WAITOK);
 	uh->uh_handler = handler;
 	install_coproc_handler_static(coproc, uh);
 	return uh;
@@ -120,7 +120,7 @@ remove_coproc_handler(void *cookie)
 	struct undefined_handler *uh = cookie;
 
 	LIST_REMOVE(uh, uh_link);
-	FREE(uh, M_TEMP);
+	free(uh, M_TEMP);
 }
 
 
@@ -150,9 +150,7 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 				ksi.ksi_code = TRAP_BRKPT;
 				ksi.ksi_addr = (u_int32_t *)addr;
 				ksi.ksi_trap = 0;
-				KERNEL_LOCK(1, l);
 				trapsignal(l, &ksi);
-				KERNEL_UNLOCK_LAST(l);
 				return 0;
 			}
 #ifdef KGDB
@@ -169,7 +167,7 @@ static struct undefined_handler gdb_uh_thumb;
 #endif
 
 void
-undefined_init()
+undefined_init(void)
 {
 	int loop;
 
@@ -205,8 +203,7 @@ undefinedinstruction(trapframe_t *frame)
 	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
-	if (!(frame->tf_spsr & I32_bit))
-		enable_interrupts(I32_bit);
+	restore_interrupts(frame->tf_spsr & IF32_bits);
 #endif
 
 #ifndef acorn26
@@ -258,9 +255,7 @@ undefinedinstruction(trapframe_t *frame)
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_code = ILL_ILLOPC;
 			ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
-			KERNEL_LOCK(1, l);
 			trapsignal(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 			userret(l);
 			return;
 		}
@@ -359,9 +354,7 @@ undefinedinstruction(trapframe_t *frame)
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)fault_pc;
 		ksi.ksi_trap = fault_instruction;
-		KERNEL_LOCK(1, l);
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 	}
 
 	if ((fault_code & FAULT_USER) == 0)

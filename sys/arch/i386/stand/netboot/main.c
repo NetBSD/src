@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2001/07/05 00:58:45 itojun Exp $	 */
+/*	$NetBSD: main.c,v 1.10.130.1 2009/05/04 08:11:20 yamt Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -45,14 +45,13 @@
 
 int errno;
 
-extern char	bootprog_name[], bootprog_rev[], bootprog_date[],
-		bootprog_maker[];
+extern char	bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 #define TIMEOUT 5
 
-void	command_help __P((char *));
-void	command_quit __P((char *));
-void	command_boot __P((char *));
+void	command_help(char *);
+void	command_quit(char *);
+void	command_boot(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -63,11 +62,9 @@ const struct bootblk_command commands[] = {
 };
 
 int 
-bootit(filename, howto)
-	const char     *filename;
-	int             howto;
+bootit(const char *filename, int howto)
 {
-	if (exec_netbsd(filename, 0, howto) < 0)
+	if (exec_netbsd(filename, 0, howto, 0, clear_pc_screen) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
@@ -77,20 +74,19 @@ bootit(filename, howto)
 static void
 print_banner(void)
 {
+	clear_pc_screen();
 
 	printf("\n"
-	       ">> %s, Revision %s\n"
-	       ">> (%s, %s)\n"
+	       ">> %s, Revision %s (from NetBSD %s)\n"
 	       ">> Memory: %d/%d k\n"
 	       "Press return to boot now, any other key for boot menu\n"
 	       "starting in ",
-	       bootprog_name, bootprog_rev,
-	       bootprog_maker, bootprog_date,
+	       bootprog_name, bootprog_rev, bootprog_kernrev,
 	       getbasemem(), getextmem());
 }
 
 int
-main()
+main(void)
 {
         char c;
 
@@ -113,8 +109,7 @@ main()
 
 /* ARGSUSED */
 void
-command_help(arg)
-	char *arg;
+command_help(char *arg)
 {
 	printf("commands are:\n"
 	       "boot [filename] [-acdqsv]\n"
@@ -125,16 +120,14 @@ command_help(arg)
 
 /* ARGSUSED */
 void
-command_quit(arg)
-	char *arg;
+command_quit(char *arg)
 {
 	printf("Exiting... goodbye...\n");
 	exit(0);
 }
 
 void
-command_boot(arg)
-	char *arg;
+command_boot(char *arg)
 {
 	char *filename;
 	int howto;

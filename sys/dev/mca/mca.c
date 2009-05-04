@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.25.4.1 2008/05/16 02:24:33 yamt Exp $	*/
+/*	$NetBSD: mca.c,v 1.25.4.2 2009/05/04 08:12:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.25.4.1 2008/05/16 02:24:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.25.4.2 2009/05/04 08:12:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,7 @@ mca_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 int
-mca_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mca_print(void *aux, const char *pnp)
 {
 	register struct mca_attach_args *ma = aux;
 	char devinfo[256];
@@ -107,9 +105,7 @@ mca_print(aux, pnp)
 }
 
 void
-mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mca_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mcabus_attach_args *mba = aux;
 	bus_space_tag_t iot, memt;

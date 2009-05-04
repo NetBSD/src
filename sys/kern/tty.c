@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.221.2.1 2008/05/16 02:25:27 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.221.2.2 2009/05/04 08:13:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221.2.1 2008/05/16 02:25:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221.2.2 2009/05/04 08:13:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221.2.1 2008/05/16 02:25:27 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
@@ -89,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221.2.1 2008/05/16 02:25:27 yamt Exp $");
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
+#include <sys/ioctl_compat.h>
+#include <sys/module.h>
 
 #include <machine/stdarg.h>
 
@@ -197,6 +198,8 @@ static void *tty_sigsih;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
+krwlock_t ttcompat_lock;
+int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
@@ -275,7 +278,7 @@ ttyopen(struct tty *tp, int dialout, int nonblock)
 			while (ISSET(tp->t_state, TS_DIALOUT) ||
 			       !CONNECTED(tp)) {
 				tp->t_wopen++;
-				error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+				error = ttysleep(tp, &tp->t_rawcv, true, 0);
 				tp->t_wopen--;
 				if (error)
 					goto out;
@@ -309,9 +312,7 @@ ttylopen(dev_t device, struct tty *tp)
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
 		memset(&tp->t_winsize, 0, sizeof(tp->t_winsize));
-#ifdef COMPAT_OLDTTY
 		tp->t_flags = 0;
-#endif
 	}
 	mutex_spin_exit(&tty_lock);
 	return (0);
@@ -343,11 +344,11 @@ ttyclose(struct tty *tp)
 
 	mutex_spin_exit(&tty_lock);
 
-	mutex_enter(proc_lock);
-	if (sess != NULL)
-		SESSRELE(sess);
-	mutex_exit(proc_lock);
-
+	if (sess != NULL) {
+		mutex_enter(proc_lock);
+		/* Releases proc_lock. */
+		proc_sessrele(sess);
+	}
 	return (0);
 }
 
@@ -373,7 +374,7 @@ ttyclose(struct tty *tp)
  * ttyinput() helper.
  * Call with the tty lock held.
  */
-static int
+/* XXX static */ int
 ttyinput_wlock(int c, struct tty *tp)
 {
 	int	iflag, lflag, i, error;
@@ -850,7 +851,6 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	case  TIOCSTAT:
 	case  TIOCSTI:
 	case  TIOCSWINSZ:
-#ifdef COMPAT_OLDTTY
 	case  TIOCLBIC:
 	case  TIOCLBIS:
 	case  TIOCLSET:
@@ -859,10 +859,9 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	case  TIOCSETN:
 	case  TIOCSETP:
 	case  TIOCSLTC:
-#endif
 		mutex_spin_enter(&tty_lock);
 		while (isbackground(curproc, tp) &&
-		    p->p_pgrp->pg_jobc && (p->p_sflag & PS_PPWAIT) == 0 &&
+		    p->p_pgrp->pg_jobc && (p->p_lflag & PL_PPWAIT) == 0 &&
 		    !sigismasked(l, SIGTTOU)) {
 			mutex_spin_exit(&tty_lock);
 
@@ -1165,9 +1164,9 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		 * it must equal `p_session', in which case the session
 		 * already has the correct reference count.
 		 */
-		if (tp->t_session == NULL)
-			SESSHOLD(p->p_session);
-
+		if (tp->t_session == NULL) {
+			proc_sesshold(p->p_session);
+		}
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;
@@ -1247,11 +1246,24 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_spin_exit(&tty_lock);
 		break;
 	default:
-#ifdef COMPAT_OLDTTY
-		return (ttcompat(tp, cmd, data, flag, l));
-#else
-		return (EPASSTHROUGH);
-#endif
+		/* We may have to load the compat module for this. */
+		for (;;) {
+			rw_enter(&ttcompat_lock, RW_READER);
+			if (ttcompatvec != NULL) {
+				break;
+			}
+			rw_exit(&ttcompat_lock);
+			mutex_enter(&module_lock);
+			(void)module_autoload("compat", MODULE_CLASS_ANY);
+			if (ttcompatvec == NULL) {
+				mutex_exit(&module_lock);
+				return EPASSTHROUGH;
+			}
+			mutex_exit(&module_lock);
+		}
+		error = (*ttcompatvec)(tp, cmd, data, flag, l);
+		rw_exit(&ttcompat_lock);
+		return error;
 	}
 	return (0);
 }
@@ -1412,7 +1424,7 @@ ttywait(struct tty *tp)
 	while ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
 	    CONNECTED(tp) && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
-		error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_outcv, true, 0);
 		if (error)
 			break;
 	}
@@ -1459,7 +1471,7 @@ ttyflush(struct tty *tp, int rw)
 		CLR(tp->t_state, TS_TTSTOP);
 		cdev_stop(tp, rw);
 		FLUSHQ(&tp->t_outq);
-		clwakeup(&tp->t_outq);
+		cv_broadcast(&tp->t_outcv);
 		selnotify(&tp->t_wsel, 0, NOTE_SUBMIT);
 	}
 }
@@ -1679,7 +1691,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	 */
 	if (isbackground(p, tp)) {
 		if (sigismasked(curlwp, SIGTTIN) ||
-		    p->p_sflag & PS_PPWAIT || p->p_pgrp->pg_jobc == 0) {
+		    p->p_lflag & PL_PPWAIT || p->p_pgrp->pg_jobc == 0) {
 			mutex_spin_exit(&tty_lock);
 			return (EIO);
 		}
@@ -1787,7 +1799,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			mutex_spin_exit(&tty_lock);
 			return (EWOULDBLOCK);
 		}
-		error = ttysleep(tp, &tp->t_rawq.c_cv, true, slp);
+		error = ttysleep(tp, &tp->t_rawcv, true, slp);
 		mutex_spin_exit(&tty_lock);
 		/* VMIN == 0: any quantity read satisfies */
 		if (cc[VMIN] == 0 && error == EWOULDBLOCK)
@@ -1885,7 +1897,7 @@ ttycheckoutq_wlock(struct tty *tp, int wait)
 			ttstart(tp);
 			if (wait == 0)
 				return (0);
-			error = ttysleep(tp, &tp->t_outq.c_cv, true, hz);
+			error = ttysleep(tp, &tp->t_outcv, true, hz);
 			if (error == EINTR)
 				wait = 0;
 		}
@@ -1914,12 +1926,10 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	u_char		*cp;
 	struct proc	*p;
 	int		cc, ce, i, hiwat, error;
-	size_t		cnt;
 	u_char		obuf[OBUFSIZ];
 
 	cp = NULL;
 	hiwat = tp->t_hiwat;
-	cnt = uio->uio_resid;
 	error = 0;
 	cc = 0;
  loop:
@@ -1934,7 +1944,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 			goto out;
 		} else {
 			/* Sleep awaiting carrier. */
-			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+			error = ttysleep(tp, &tp->t_rawcv, true, 0);
 			mutex_spin_exit(&tty_lock);
 			if (error)
 				goto out;
@@ -1947,7 +1957,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	 */
 	p = curproc;
 	if (isbackground(p, tp) &&
-	    ISSET(tp->t_lflag, TOSTOP) && (p->p_sflag & PS_PPWAIT) == 0 &&
+	    ISSET(tp->t_lflag, TOSTOP) && (p->p_lflag & PL_PPWAIT) == 0 &&
 	    !sigismasked(curlwp, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;
@@ -2092,7 +2102,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 		error = EWOULDBLOCK;
 		goto out;
 	}
-	error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
+	error = ttysleep(tp, &tp->t_outcv, true, 0);
 	mutex_spin_exit(&tty_lock);
 	if (error)
 		goto out;
@@ -2110,7 +2120,7 @@ ttypull(struct tty *tp)
 	/* XXXSMP not yet KASSERT(mutex_owned(&tty_lock)); */
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		clwakeup(&tp->t_outq);
+		cv_broadcast(&tp->t_outcv);
 		selnotify(&tp->t_wsel, 0, NOTE_SUBMIT);
 	}
 	return tp->t_outq.c_cc != 0;
@@ -2285,12 +2295,7 @@ ttwakeup(struct tty *tp)
 	selnotify(&tp->t_rsel, 0, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		ttysig(tp, TTYSIG_PG2, SIGIO);
-#if 0
-	/* XXX tp->t_rawq.c_cv.cv_waiters dropping to zero early!? */
-	clwakeup(&tp->t_rawq);
-#else
-	cv_wakeup(&tp->t_rawq.c_cv);
-#endif
+	cv_broadcast(&tp->t_rawcv);
 }
 
 /*
@@ -2637,9 +2642,15 @@ ttymalloc(void)
 	callout_setfunc(&tp->t_rstrt_ch, ttrstrt, tp);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
+	cv_init(&tp->t_rawcv, "ttyraw");
+	cv_init(&tp->t_rawcvf, "ttyrawf");
 	clalloc(&tp->t_canq, 1024, 1);
+	cv_init(&tp->t_cancv, "ttycan");
+	cv_init(&tp->t_cancvf, "ttycanf");
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
+	cv_init(&tp->t_outcv, "ttyout");
+	cv_init(&tp->t_outcvf, "ttyoutf");
 	/* Set default line discipline. */
 	tp->t_linesw = ttyldisc_default();
 	selinit(&tp->t_rsel);
@@ -2675,6 +2686,12 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
+	cv_destroy(&tp->t_rawcv);
+	cv_destroy(&tp->t_rawcvf);
+	cv_destroy(&tp->t_cancv);
+	cv_destroy(&tp->t_cancvf);
+	cv_destroy(&tp->t_outcv);
+	cv_destroy(&tp->t_outcvf);
 	seldestroy(&tp->t_rsel);
 	seldestroy(&tp->t_wsel);
 	kmem_free(tp, sizeof(*tp));
@@ -2706,6 +2723,7 @@ tty_init(void)
 {
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_VM);
+	rw_init(&ttcompat_lock);
 	tty_sigsih = softint_establish(SOFTINT_CLOCK, ttysigintr, NULL);
 	KASSERT(tty_sigsih != NULL);
 }

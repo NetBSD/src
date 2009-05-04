@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.52 2008/04/24 18:39:20 ad Exp $ */
+/* $NetBSD: trap.c,v 1.52.2.1 2009/05/04 08:11:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.2.1 2009/05/04 08:11:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2008/04/24 18:39:20 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -107,18 +109,18 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2008/04/24 18:39:20 ad Exp $");
 
 #include <dev/cons.h>
 
-int   writeback __P((struct frame *fp, int docachepush));
-void  trap __P((struct frame *fp, int type, u_int code, u_int v));
+int   writeback(struct frame *fp, int docachepush);
+void  trap(struct frame *fp, int type, u_int code, u_int v);
 
 #if defined(M68040)
 #ifdef DEBUG
-static void dumpssw __P((u_short));
-static void dumpwb __P((int, u_short, u_int, u_int));
+static void dumpssw(u_short);
+static void dumpwb(int, u_short, u_int, u_int);
 #endif
 #endif
 
-static inline void userret __P((struct lwp *l, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+static inline void userret(struct lwp *l, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap);
 
 int	astpending;
 
@@ -185,12 +187,7 @@ int mmupid = -1;
  * to user mode.
  */
 static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr, int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -251,10 +248,7 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
@@ -267,11 +261,7 @@ machine_userret(l, f, t)
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame *fp;
-	int type;
-	unsigned code;
-	unsigned v;
+trap(struct frame *fp, int type, unsigned code, unsigned v)
 {
 	extern char fubail[], subail[];
 	struct lwp *l;
@@ -396,15 +386,10 @@ trap(fp, type, code, v)
 	case T_FPERR|T_USER:	/* 68881 exceptions */
 	/*
 	 * We pass along the 68881 status register which locore stashed
-	 * in code for us.  Note that there is a possibility that the
-	 * bit pattern of this register will conflict with one of the
-	 * FPE_* codes defined in signal.h.  Fortunately for us, the
-	 * only such codes we use are all in the range 1-7 and the low
-	 * 3 bits of the status register are defined as 0 so there is
-	 * no clash.
+	 * in code for us.
 	 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 
 #ifdef M68040
@@ -509,7 +494,7 @@ trap(fp, type, code, v)
 		spl0();
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(p);
+			ADDUPROF(l);
 		}
 		if (curcpu()->ci_want_resched)
 			preempt();
@@ -550,8 +535,14 @@ trap(fp, type, code, v)
 		if ((type & T_USER) == 0 &&
 		    ((l->l_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
-		else
+		else {
 			map = vm ? &vm->vm_map : kernel_map;
+			if ((l->l_flag & LW_SA)
+			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+				l->l_savp->savp_faultaddr = (vaddr_t)v;
+				l->l_pflag |= LP_SA_PAGEFAULT;
+			}
+		}
 
 		if (WRFAULT(code))
 			ftype = VM_PROT_WRITE;
@@ -591,6 +582,7 @@ trap(fp, type, code, v)
 #endif
 				return;
 			}
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		if (rv == EACCES) {
@@ -607,6 +599,7 @@ trap(fp, type, code, v)
 			       type, code);
 			goto dopanic;
 		}
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
@@ -647,9 +640,7 @@ char wberrstr[] =
 #endif
 
 int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -699,7 +690,7 @@ writeback(fp, docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
-			bcopy((void *)&f->f_pd0, (void *)fa, 16);
+			memcpy( (void *)fa, (void *)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL_40(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -724,7 +715,7 @@ writeback(fp, docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			bcopy((void *)&f->f_pd0, (void *)(f->f_fa & ~0xF), 16);
+			memcpy( (void *)(f->f_fa & ~0xF), (void *)&f->f_pd0, 16);
 		else
 			err = suline((void *)(f->f_fa & ~0xF), (void *)&f->f_pd0);
 		if (err) {
@@ -885,8 +876,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 static void
-dumpssw(ssw)
-	u_short ssw;
+dumpssw(u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -912,10 +902,7 @@ dumpssw(ssw)
 }
 
 static void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	struct proc *p = curproc;
 	paddr_t pa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.31.10.1 2008/05/16 02:25:18 yamt Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.31.10.2 2009/05/04 08:13:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.31.10.1 2008/05/16 02:25:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.31.10.2 2009/05/04 08:13:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,8 @@ MALLOC_JUSTDEFINE(M_PTYFSTMP, "ptyfs temp", "ptyfs temporary structures");
 
 VFS_PROTOS(ptyfs);
 
+static struct sysctllog *ptyfs_sysctl_log;
+
 static int ptyfs__allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
 static int ptyfs__makename(struct ptm_pty *, struct lwp *, char *, size_t,
@@ -99,9 +101,11 @@ ptyfs__getpath(struct lwp *l, const struct mount *mp)
 	size_t len;
 	char *bp;
 	int error;
+	struct ptyfsmount *pmnt = mp->mnt_data;
 
 	rv = mp->mnt_stat.f_mntonname;
-	if (cwdi->cwdi_rdir == NULL)
+	if (cwdi->cwdi_rdir == NULL ||
+	    (pmnt->pmnt_flags & PTYFSMNT_CHROOT) == 0)
 		return rv;
 
 	buf = malloc(MAXBUF, M_TEMP, M_WAITOK);
@@ -133,8 +137,8 @@ ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
 		len = snprintf(tbuf, bufsiz, "/dev/null");
 		break;
 	case 't':
-		len = snprintf(tbuf, bufsiz, "%s/%d", ptyfs__getpath(l, mp),
-		    minor(dev));
+		len = snprintf(tbuf, bufsiz, "%s/%llu", ptyfs__getpath(l, mp),
+		    (unsigned long long)minor(dev));
 		break;
 	default:
 		return EINVAL;
@@ -204,6 +208,7 @@ ptyfs_done(void)
 	malloc_type_detach(M_PTYFSMNT);
 }
 
+#define OSIZE sizeof(struct { int f; gid_t g; mode_t m; })
 /*
  * Mount the Pseudo tty params filesystem
  */
@@ -215,7 +220,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args *args = data;
 
-	if (*data_len < sizeof *args)
+	if (*data_len != sizeof *args && *data_len != OSIZE)
 		return EINVAL;
 
 	if (UIO_MX & (UIO_MX - 1)) {
@@ -227,10 +232,14 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		pmnt = VFSTOPTY(mp);
 		if (pmnt == NULL)
 			return EIO;
-		args->version = PTYFS_ARGSVERSION;
 		args->mode = pmnt->pmnt_mode;
 		args->gid = pmnt->pmnt_gid;
-		*data_len = sizeof *args;
+		if (args->version >= PTYFS_ARGSVERSION) {
+			args->flags = pmnt->pmnt_flags;
+			*data_len = sizeof *args;
+		} else {
+			*data_len = OSIZE;
+		}
 		return 0;
 	}
 
@@ -241,7 +250,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
 
-	if (args->version != PTYFS_ARGSVERSION)
+	if (args->version > PTYFS_ARGSVERSION)
 		return EINVAL;
 
 	pmnt = malloc(sizeof(struct ptyfsmount), M_PTYFSMNT, M_WAITOK);
@@ -249,6 +258,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_data = pmnt;
 	pmnt->pmnt_gid = args->gid;
 	pmnt->pmnt_mode = args->mode;
+	if (args->version >= PTYFS_ARGSVERSION)
+		pmnt->pmnt_flags = args->flags;
+	else
+		pmnt->pmnt_flags = 0;
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
@@ -348,28 +361,6 @@ ptyfs_vget(struct mount *mp, ino_t ino,
 	return EOPNOTSUPP;
 }
 
-SYSCTL_SETUP(sysctl_vfs_ptyfs_setup, "sysctl vfs.ptyfs subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ptyfs",
-		       SYSCTL_DESCR("Pty file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 23, CTL_EOL);
-	/*
-	 * XXX the "23" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "23" is the order as taken from sys/mount.h
-	 */
-}
-
-
 extern const struct vnodeopv_desc ptyfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const ptyfs_vnodeopv_descs[] = {
@@ -408,13 +399,40 @@ struct vfsops ptyfs_vfsops = {
 static int
 ptyfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&ptyfs_vfsops);
+		error = vfs_attach(&ptyfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&ptyfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&ptyfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "ptyfs",
+			       SYSCTL_DESCR("Pty file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 23, CTL_EOL);
+		/*
+		 * XXX the "23" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "23" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&ptyfs_vfsops);
+		error = vfs_detach(&ptyfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&ptyfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }

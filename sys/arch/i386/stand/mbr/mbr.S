@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.18.10.1 2008/05/16 02:22:41 yamt Exp $	*/
+/*	$NetBSD: mbr.S,v 1.18.10.2 2009/05/04 08:11:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -215,7 +215,7 @@ next_ptn:
 #else
 	mov	%bp, ptn_list + ACTIVE
 #endif
-#undef ENTER
+#undef ACTIVE
 3:
 #ifdef BOOTSEL
 	cmpb	$0, (%bx)		/* check for prompt */

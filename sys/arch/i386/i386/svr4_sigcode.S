@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.11.10.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.11.10.2 2009/05/04 08:11:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,12 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sigcode.S,v 1.11.10.1 2008/05/16 02:22:34 yamt Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_vm86.h"
-#include "opt_multiprocessor.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: svr4_sigcode.S,v 1.11.10.2 2009/05/04 08:11:16 yamt Exp $");
 
 #include "assym.h"
 
@@ -95,28 +90,3 @@ NENTRY(svr4_sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(svr4_esigcode)
 _C_LABEL(svr4_esigcode):
-
-IDTVEC(svr4_fasttrap)
-	pushl	$2		# size of instruction for restart
-	pushl	$T_ASTFLT	# trap # for doing ASTs
-	INTRENTRY
-	call	_C_LABEL(svr4_fasttrap)
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING(%eax)		
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%eax)
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	pushl	%esp
-	call	_C_LABEL(trap)
-	addl	$4,%esp
-	jmp	2b
-1:	CHECK_DEFERRED_SWITCH
-	jnz	9f
-	INTRFASTEXIT
-9:	sti
-	call	_C_LABEL(pmap_load)
-	cli
-	jmp	2b

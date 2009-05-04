@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.14.4.1 2008/05/16 02:23:24 yamt Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.14.4.2 2009/05/04 08:12:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.14.4.1 2008/05/16 02:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.14.4.2 2009/05/04 08:12:06 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.14.4.1 2008/05/16 02:23:24 yamt 
 
 static int ne_neptune_match(device_t, cfdata_t, void *);
 static void ne_neptune_attach(device_t, device_t, void *);
-static int ne_neptune_intr(void *);
 
 #define ne_neptune_softc ne2000_softc
 
@@ -206,14 +205,7 @@ ne_neptune_attach(device_t parent, device_t self, void *aux)
 	ne2000_attach(nsc, NULL);
 
 	/* Establish the interrupt handler. */
-	if (neptune_intr_establish(na->na_intr, "ne", ne_neptune_intr, dsc))
+	if (neptune_intr_establish(na->na_intr, "ne", dp8390_intr, dsc))
 		aprint_error_dev(self,
 		    "couldn't establish interrupt handler\n");
-}
-
-static int
-ne_neptune_intr(void *arg)
-{
-	spl4();			/* XXX */
-	return dp8390_intr(arg);
 }

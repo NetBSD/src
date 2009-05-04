@@ -48,7 +48,7 @@
 #define	MB_MSYSTEM	0		/* use bcopy() */
 #define MB_MUSER	1		/* use copyin()/copyout() */
 #define MB_MINLINE	2		/* use an inline copy loop */
-#define	MB_MZERO	3		/* bzero(), mb_put_mem only */
+#define	MB_MZERO	3		/* memset(), 0, mb_put_mem only */
 #define	MB_MCUSTOM	4		/* use an user defined function */
 
 struct mbuf;

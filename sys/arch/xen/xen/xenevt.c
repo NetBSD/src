@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.27 2008/04/19 13:46:12 cegger Exp $      */
+/*      $NetBSD: xenevt.c,v 1.27.2.1 2009/05/04 08:12:14 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.27 2008/04/19 13:46:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.27.2.1 2009/05/04 08:12:14 yamt Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -80,14 +80,15 @@ static int	xenevt_fclose(struct file *);
 /* static int	xenevt_fkqfilter(struct file *, struct knote *); */
 
 static const struct fileops xenevt_fileops = {
-	xenevt_fread,
-	xenevt_fwrite,
-	xenevt_fioctl,
-	fnullop_fcntl,
-	xenevt_fpoll,
-	fbadop_stat,
-	xenevt_fclose,
-	/* xenevt_fkqfilter */ fnullop_kqfilter
+	.fo_read = xenevt_fread,
+	.fo_write = xenevt_fwrite,
+	.fo_ioctl = xenevt_fioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = xenevt_fpoll,
+	.fo_stat = fbadop_stat,
+	.fo_close = xenevt_fclose,
+	.fo_kqfilter = /* xenevt_fkqfilter */ fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 dev_type_open(xenevtopen);
@@ -95,7 +96,7 @@ dev_type_read(xenevtread);
 dev_type_mmap(xenevtmmap);
 const struct cdevsw xenevt_cdevsw = {
 	xenevtopen, nullclose, xenevtread, nowrite, noioctl,
-	nostop, notty, nopoll, xenevtmmap, nokqfilter,
+	nostop, notty, nopoll, xenevtmmap, nokqfilter, D_OTHER
 };
 
 /* minor numbers */
@@ -165,10 +166,11 @@ xenevtattach(int n)
 	memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
 
 	/* register a handler at splhigh, so that spllower() will call us */
-	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
+	ih = malloc(sizeof (struct intrhand), M_DEVBUF,
 	     M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		panic("can't allocate xenevt interrupt source");
+	ih->ih_level = level;
 	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
 	ih->ih_arg = ih->ih_realarg = NULL;
 	ih->ih_ipl_next = NULL;
@@ -371,7 +373,7 @@ xenevtmmap(dev_t dev, off_t off, int prot)
 		if (off != 0)
 			return -1;
 		return x86_btop(
-		    xpmap_mtop(xen_start_info.store_mfn << PAGE_SHIFT));
+		   xpmap_mtop((paddr_t)xen_start_info.store_mfn << PAGE_SHIFT));
 	}
 #endif
 	return -1;
@@ -386,7 +388,7 @@ xenevt_fclose(struct file *fp)
 	for (i = 0; i < NR_EVENT_CHANNELS; i++ ) {
 		if (devevent[i] == d) {
 #ifdef XEN3
-			evtchn_op_t op = { 0 };
+			evtchn_op_t op = { .cmd = 0 };
 			int error;
 #endif
 			hypervisor_mask_event(i);
@@ -518,7 +520,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 {
 	struct xenevt_d *d = fp->f_data;
 #ifdef XEN3
-	evtchn_op_t op = { 0 };
+	evtchn_op_t op = { .cmd = 0 };
 	int error;
 #else
 	u_int *arg = addr;

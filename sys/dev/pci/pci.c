@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.116.4.1 2008/05/16 02:24:44 yamt Exp $	*/
+/*	$NetBSD: pci.c,v 1.116.4.2 2009/05/04 08:12:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116.4.1 2008/05/16 02:24:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116.4.2 2009/05/04 08:12:58 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -255,12 +255,11 @@ pciprint(void *aux, const char *pnp)
 		if (qd == NULL) {
 			printf(" no quirks");
 		} else {
-			bitmask_snprintf(qd->quirks,
+			snprintb(devinfo, sizeof (devinfo),
 			    "\002\001multifn\002singlefn\003skipfunc0"
 			    "\004skipfunc1\005skipfunc2\006skipfunc3"
 			    "\007skipfunc4\010skipfunc5\011skipfunc6"
-			    "\012skipfunc7",
-			    devinfo, sizeof (devinfo));
+			    "\012skipfunc7", qd->quirks);
 			printf(" quirks %s", devinfo);
 		}
 		printf(")");
@@ -402,8 +401,9 @@ pcidevdetached(device_t self, device_t child)
 	c->c_dev = NULL;
 }
 
-CFATTACH_DECL2_NEW(pci, sizeof(struct pci_softc),
-    pcimatch, pciattach, pcidetach, NULL, pcirescan, pcidevdetached);
+CFATTACH_DECL3_NEW(pci, sizeof(struct pci_softc),
+    pcimatch, pciattach, pcidetach, NULL, pcirescan, pcidevdetached,
+    DVF_DETACH_SHUTDOWN);
 
 int
 pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
@@ -432,10 +432,15 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 
 	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, ofs));
 	while (ofs != 0) {
-#ifdef DIAGNOSTIC
-		if ((ofs & 3) || (ofs < 0x40))
-			panic("pci_get_capability");
-#endif
+		if ((ofs & 3) || (ofs < 0x40)) {
+			int bus, device, function;
+
+			pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+			printf("Skipping broken PCI header on %d:%d:%d\n",
+			    bus, device, function);
+			break;
+		}
 		reg = pci_conf_read(pc, tag, ofs);
 		if (PCI_CAPLIST_CAP(reg) == capid) {
 			if (offset)
@@ -463,7 +468,7 @@ pci_find_device(struct pci_attach_args *pa,
 	};
 
 	for (i = 0; i < pci_cd.cd_ndevs; i++) {
-		pcidev = pci_cd.cd_devs[i];
+		pcidev = device_lookup(&pci_cd, i);
 		if (pcidev != NULL &&
 		    pci_enumerate_bus(device_private(pcidev), wildcard,
 		    		      match, pa) != 0)
@@ -628,8 +633,7 @@ int
 pci_dma64_available(struct pci_attach_args *pa)
 {
 #ifdef _PCI_HAVE_DMA64
-	if (BUS_DMA_TAG_VALID(pa->pa_dmat64) &&
-		((uint64_t)physmem << PAGE_SHIFT) > 0xffffffffULL)
+	if (BUS_DMA_TAG_VALID(pa->pa_dmat64))
                         return 1;
 #endif
         return 0;

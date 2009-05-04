@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/01/06 17:40:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.108.1 2009/05/04 08:11:32 yamt Exp $
 
 # Makefile for mipsco tags file
 
@@ -18,7 +18,8 @@ DMIPSCO=	obio include
 tags:
 	-ctags -wdtf ${TMIPSCO} ${SMIPSCO} ${SMIPS} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AMIPSCO} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TMIPSCO}
 	sort -o ${TMIPSCO} ${TMIPSCO}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: condvar.h,v 1.8.4.1 2008/05/16 02:25:50 yamt Exp $	*/
+/*	$NetBSD: condvar.h,v 1.8.4.2 2009/05/04 08:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,16 +34,8 @@
 
 #include <sys/mutex.h>
 
-/*
- * The condition variable implementation is private to kern_condvar.c but
- * the size of a kcondvar_t must remain constant.  cv_waiters is protected
- * both by the interlock passed to cv_wait() (increment only), and the sleep
- * queue lock acquired with sleeptab_lookup() (increment and decrement). 
- * cv_wmesg is static and does not change throughout the life of the CV.
- */
 typedef struct kcondvar {
-	const char	*cv_wmesg;	/* description for /bin/ps */
-	int		cv_waiters;	/* number of waiters */
+	void		*cv_opaque[3];
 } kcondvar_t;
 
 #ifdef _KERNEL

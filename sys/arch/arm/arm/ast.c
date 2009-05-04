@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.13.20.1 2008/05/16 02:21:55 yamt Exp $	*/
+/*	$NetBSD: ast.c,v 1.13.20.2 2009/05/04 08:10:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.13.20.1 2008/05/16 02:21:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.13.20.2 2009/05/04 08:10:38 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,22 +74,11 @@ void ast(struct trapframe *);
 void
 userret(struct lwp *l)
 {
-#ifdef CPU_ARM11
-	struct cpu_info * const ci = curcpu();
-#endif
-
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-#ifdef CPU_ARM11
-	/*
-	 * This is a hack to work around an unknown cache bug on the ARM11
-	 * Before returning we clean the data cache.
-	 */
-	if (ci->ci_arm_cputype == CPU_ID_ARM1136JS
-	    || ci->ci_arm_cputype == CPU_ID_ARM1136JSR1) {
-                __asm("mcr\tp15, 0, %0, c7, c10, 0" :: "r"(0));
-	}
+#ifdef __PROG32
+	KASSERT((l->l_addr->u_pcb.pcb_tf->tf_spsr & IF32_bits) == 0);
 #endif
 }
 
@@ -114,13 +103,19 @@ ast(struct trapframe *tf)
 	/* Interrupts were restored by exception_exit. */
 #endif
 
+#ifdef __PROG32
+	KASSERT((tf->tf_spsr & IF32_bits) == 0);
+#endif
+
+
 	uvmexp.traps++;
 	uvmexp.softs++;
 
 #ifdef DEBUG
+	KDASSERT(curcpu()->ci_cpl == IPL_NONE);
 	if (l == NULL)
 		panic("ast: no curlwp!");
-	if (&l->l_addr->u_pcb == 0)
+	if (&l->l_addr->u_pcb == NULL)
 		panic("ast: no pcb!");
 #endif	
 
@@ -128,7 +123,7 @@ ast(struct trapframe *tf)
 
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;
-		ADDUPROF(p);
+		ADDUPROF(l);
 	}
 
 	/* Allow a forced task switch. */

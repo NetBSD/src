@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.54 2008/04/03 20:45:08 riz Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.54.4.1 2009/05/04 08:13:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.54 2008/04/03 20:45:08 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.54.4.1 2009/05/04 08:13:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1044,6 +1044,18 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* NetMos 4S0P PCI NM9845 : 4S, 0P */
+	{   "NetMos NM9845 Quad UART",
+	   {   0x9710, 0x9845, 0x1000, 0x0004  },
+	   {   0xffff, 0xffff, 0xffff, 0xffff  },
+	   {
+	       { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	       { PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	       { PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+	       { PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	   },
+       },
+
 	/* NetMos 4S1P PCI NM9845 : 4S, 1P */
 	{   "NetMos NM9845 Quad UART and 1284 Printer port",
 	   {   0x9710, 0x9845, 0x1000, 0x0014  },
@@ -1299,6 +1311,42 @@ const struct puc_device_description puc_devices[] = {
 	{ "Digi International Digi Neo 8 Serial",
 	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8,		0, 0  },
 	    {	0xffff, 0xffff,					0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0800, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0a00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0c00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0e00, COM_FREQ * 8 },
+	    },
+	},
+
+	/*
+	 * B&B Electronics MIPort Serial cards.
+	 */
+	{ "BBELEC ISOLATED_2_PORT",
+	    {	PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_2_PORT, 0, 0 },
+	    {	0xffff, 0xffff, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+	    },
+	},
+	{ "BBELEC ISOLATED_4_PORT",
+	    {	PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_4_PORT, 0, 0 },
+	    {	0xffff, 0xffff, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+	    },
+	},
+	{ "BBELEC ISOLATED_8_PORT",
+	    {	PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_8_PORT, 0, 0 },
+	    {	0xffff, 0xffff, 0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },

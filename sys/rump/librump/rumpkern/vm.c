@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.30 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.30.4.1 2009/05/04 08:14:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,9 +29,7 @@
 
 /*
  * Virtual memory emulation routines.  Contents:
- *  + UBC
  *  + anon objects & pager
- *  + vnode objects & pager
  *  + misc support routines
  *  + kmem
  */
@@ -43,37 +41,30 @@
  * due to not being a pointer type.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.30.4.1 2009/05/04 08:14:30 yamt Exp $");
+
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/kmem.h>
 
-#include <uvm/uvm.h>
-#include <uvm/uvm_prot.h>
-#include <uvm/uvm_readahead.h>
-
 #include <machine/pmap.h>
 
+#include <rump/rumpuser.h>
+
+#include <uvm/uvm.h>
+#include <uvm/uvm_ddb.h>
+#include <uvm/uvm_prot.h>
+
 #include "rump_private.h"
-#include "rumpuser.h"
 
-/* dumdidumdum */
-#define len2npages(off, len)						\
-  (((((len) + PAGE_MASK) & ~(PAGE_MASK)) >> PAGE_SHIFT)			\
-    + (((off & PAGE_MASK) + (len & PAGE_MASK)) > PAGE_SIZE))
-
-static int vn_get(struct uvm_object *, voff_t, struct vm_page **,
-	int *, int, vm_prot_t, int, int);
-static int vn_put(struct uvm_object *, voff_t, voff_t, int);
 static int ao_get(struct uvm_object *, voff_t, struct vm_page **,
 	int *, int, vm_prot_t, int, int);
 static int ao_put(struct uvm_object *, voff_t, voff_t, int);
 
-const struct uvm_pagerops uvm_vnodeops = {
-	.pgo_get = vn_get,
-	.pgo_put = vn_put,
-};
 const struct uvm_pagerops aobj_pager = {
 	.pgo_get = ao_get,
 	.pgo_put = ao_put,
@@ -86,6 +77,12 @@ struct uvm uvm;
 
 struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
+static struct vm_map_kernel kmem_map_store;
+struct vm_map *kmem_map = &kmem_map_store.vmk_map;
+const struct rb_tree_ops uvm_page_tree_ops;
+
+static struct vm_map_kernel kernel_map_store;
+struct vm_map *kernel_map = &kernel_map_store.vmk_map;
 
 /*
  * vm pages 
@@ -104,7 +101,7 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 	pg->uanon = (void *)kmem_zalloc(PAGE_SIZE, KM_SLEEP);
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
-	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
+	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 
 	return pg;
 }
@@ -122,7 +119,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
 
-	TAILQ_REMOVE(&uobj->memq, pg, listq);
+	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	kmem_free((void *)pg->uanon, PAGE_SIZE);
 	kmem_free(pg, sizeof(*pg));
 }
@@ -150,39 +147,20 @@ rumpvm_enterva(vaddr_t addr, struct vm_page *pg)
 }
 
 void
-rumpvm_flushva()
+rumpvm_flushva(struct uvm_object *uobj)
 {
-	struct rumpva *rva;
+	struct rumpva *rva, *rva_next;
 
 	mutex_enter(&rvamtx);
-	while ((rva = LIST_FIRST(&rvahead)) != NULL) {
-		LIST_REMOVE(rva, entries);
-		kmem_free(rva, sizeof(*rva));
+	for (rva = LIST_FIRST(&rvahead); rva; rva = rva_next) {
+		rva_next = LIST_NEXT(rva, entries);
+		if (rva->pg->uobject == uobj) {
+			LIST_REMOVE(rva, entries);
+			uvm_page_unbusy(&rva->pg, 1);
+			kmem_free(rva, sizeof(*rva));
+		}
 	}
 	mutex_exit(&rvamtx);
-}
-
-/*
- * vnode pager
- */
-
-static int
-vn_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
-	int *npages, int centeridx, vm_prot_t access_type,
-	int advice, int flags)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	return VOP_GETPAGES(vp, off, pgs, npages, centeridx, access_type,
-	    advice, flags);
-}
-
-static int
-vn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	return VOP_PUTPAGES(vp, offlo, offhi, flags);
 }
 
 /*
@@ -262,168 +240,32 @@ uao_detach(struct uvm_object *uobj)
 
 	mutex_enter(&uobj->vmobjlock);
 	ao_put(uobj, 0, 0, PGO_ALLPAGES | PGO_FREE);
+	mutex_destroy(&uobj->vmobjlock);
 	kmem_free(uobj, sizeof(*uobj));
 }
-
-/*
- * UBC
- */
-
-struct ubc_window {
-	struct uvm_object	*uwin_obj;
-	voff_t			uwin_off;
-	uint8_t			*uwin_mem;
-	size_t			uwin_mapsize;
-
-	LIST_ENTRY(ubc_window)	uwin_entries;
-};
-
-static LIST_HEAD(, ubc_window) uwinlst = LIST_HEAD_INITIALIZER(uwinlst);
-static kmutex_t uwinmtx;
-
-int
-rump_ubc_magic_uiomove(void *va, size_t n, struct uio *uio, int *rvp,
-	struct ubc_window *uwinp)
-{
-	struct vm_page **pgs;
-	int npages = len2npages(uio->uio_offset, n);
-	size_t allocsize;
-	int i, rv;
-
-	if (uwinp == NULL) {
-		mutex_enter(&uwinmtx);
-		LIST_FOREACH(uwinp, &uwinlst, uwin_entries)
-			if ((uint8_t *)va >= uwinp->uwin_mem
-			    && (uint8_t *)va
-			      < (uwinp->uwin_mem + uwinp->uwin_mapsize))
-				break;
-		mutex_exit(&uwinmtx);
-		if (uwinp == NULL) {
-			KASSERT(rvp != NULL);
-			return 0;
-		}
-	}
-
-	allocsize = npages * sizeof(pgs);
-	pgs = kmem_zalloc(allocsize, KM_SLEEP);
-	mutex_enter(&uwinp->uwin_obj->vmobjlock);
-	rv = uwinp->uwin_obj->pgops->pgo_get(uwinp->uwin_obj,
-	    uwinp->uwin_off + ((uint8_t *)va - uwinp->uwin_mem),
-	    pgs, &npages, 0, 0, 0, 0);
-	if (rv)
-		goto out;
-
-	for (i = 0; i < npages; i++) {
-		size_t xfersize;
-		off_t pageoff;
-
-		pageoff = uio->uio_offset & PAGE_MASK;
-		xfersize = MIN(MIN(n, PAGE_SIZE), PAGE_SIZE-pageoff);
-		uiomove((uint8_t *)pgs[i]->uanon + pageoff, xfersize, uio);
-		if (uio->uio_rw == UIO_WRITE)
-			pgs[i]->flags &= ~PG_CLEAN;
-		n -= xfersize;
-	}
-	uvm_page_unbusy(pgs, npages);
-
- out:
-	kmem_free(pgs, allocsize);
-	if (rvp)
-		*rvp = rv;
-	return 1;
-}
-
-static struct ubc_window *
-uwin_alloc(struct uvm_object *uobj, voff_t off, vsize_t len)
-{
-	struct ubc_window *uwinp; /* pronounced: you wimp! */
-
-	uwinp = kmem_alloc(sizeof(struct ubc_window), KM_SLEEP);
-	uwinp->uwin_obj = uobj;
-	uwinp->uwin_off = off;
-	uwinp->uwin_mapsize = len;
-	uwinp->uwin_mem = kmem_alloc(len, KM_SLEEP);
-
-	return uwinp;
-}
-
-static void
-uwin_free(struct ubc_window *uwinp)
-{
-
-	kmem_free(uwinp->uwin_mem, uwinp->uwin_mapsize);
-	kmem_free(uwinp, sizeof(struct ubc_window));
-}
-
-void *
-ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
-	int flags)
-{
-	struct ubc_window *uwinp;
-
-	uwinp = uwin_alloc(uobj, offset, *lenp);
-	mutex_enter(&uwinmtx);
-	LIST_INSERT_HEAD(&uwinlst, uwinp, uwin_entries);
-	mutex_exit(&uwinmtx);
-
-	DPRINTF(("UBC_ALLOC offset 0x%llx, uwin %p, mem %p\n",
-	    (unsigned long long)offset, uwinp, uwinp->uwin_mem));
-	
-	return uwinp->uwin_mem;
-}
-
-void
-ubc_release(void *va, int flags)
-{
-	struct ubc_window *uwinp;
-
-	mutex_enter(&uwinmtx);
-	LIST_FOREACH(uwinp, &uwinlst, uwin_entries)
-		if ((uint8_t *)va >= uwinp->uwin_mem
-		    && (uint8_t *)va < (uwinp->uwin_mem + uwinp->uwin_mapsize))
-			break;
-	mutex_exit(&uwinmtx);
-	if (uwinp == NULL)
-		panic("%s: releasing invalid window at %p", __func__, va);
-
-	LIST_REMOVE(uwinp, uwin_entries);
-	uwin_free(uwinp);
-}
-
-int
-ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
-	int advice, int flags)
-{
-	struct ubc_window *uwinp;
-	vsize_t len;
-
-	while (todo > 0) {
-		len = todo;
-
-		uwinp = uwin_alloc(uobj, uio->uio_offset, len);
-		rump_ubc_magic_uiomove(uwinp->uwin_mem, len, uio, NULL, uwinp);
-		uwin_free(uwinp);
-
-		todo -= len;
-	}
-	return 0;
-}
-
 
 /*
  * Misc routines
  */
 
+static kmutex_t cachepgmtx;
+
 void
-rumpvm_init()
+rumpvm_init(void)
 {
 
 	uvmexp.free = 1024*1024; /* XXX */
 	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
+	rump_vmspace.vm_map.pmap = pmap_kernel();
 
 	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
-	mutex_init(&uwinmtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
+	mutex_init(&cachepgmtx, MUTEX_DEFAULT, 0);
+
+	kernel_map->pmap = pmap_kernel();
+	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
+	kmem_map->pmap = pmap_kernel();
+	callback_head_init(&kmem_map_store.vmk_reclaim_callback, IPL_VM);
 }
 
 void
@@ -447,6 +289,14 @@ uvm_pageunwire(struct vm_page *pg)
 	/* nada */
 }
 
+int
+uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
+	vm_prot_t maxprot, int flags, void *handle, voff_t off, vsize_t locklim)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
 vaddr_t
 uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 {
@@ -460,7 +310,7 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
 
-	TAILQ_FOREACH(pg, &uobj->memq, listq) {
+	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
 		if (pg->offset == off) {
 			return pg;
 		}
@@ -500,7 +350,10 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		KASSERT(pg->flags & PG_BUSY);
 		if (pg->flags & PG_WANTED)
 			wakeup(pg);
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		if (pg->flags & PG_RELEASED)
+			uvm_pagefree(pg);
+		else
+			pg->flags &= ~(PG_WANTED|PG_BUSY);
 	}
 }
 
@@ -513,108 +366,100 @@ uvm_estimatepageable(int *active, int *inactive)
 	*inactive = 1024;
 }
 
+struct vm_map_kernel *
+vm_map_to_kernel(struct vm_map *map)
+{
+
+	return (struct vm_map_kernel *)map;
+}
+
+bool
+vm_map_starved_p(struct vm_map *map)
+{
+
+	return false;
+}
+
 void
-uvm_aio_biodone1(struct buf *bp)
+uvm_pageout_start(int npages)
+{
+
+	uvmexp.paging += npages;
+}
+
+void
+uvm_pageout_done(int npages)
+{
+
+	uvmexp.paging -= npages;
+
+	/*
+	 * wake up either of pagedaemon or LWPs waiting for it.
+	 */
+
+	if (uvmexp.free <= uvmexp.reserve_kernel) {
+		wakeup(&uvm.pagedaemon);
+	} else {
+		wakeup(&uvmexp.free);
+	}
+}
+
+/* XXX: following two are unfinished because lwp's are not refcounted yet */
+void
+uvm_lwp_hold(struct lwp *l)
+{
+
+	atomic_inc_uint(&l->l_holdcnt);
+}
+
+void
+uvm_lwp_rele(struct lwp *l)
+{
+
+	atomic_dec_uint(&l->l_holdcnt);
+}
+
+int
+uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len, void *v, int flags)
 {
 
 	panic("%s: unimplemented", __func__);
 }
 
 void
-uvm_aio_biodone(struct buf *bp)
+uvm_unloan(void *v, int npages, int flags)
 {
 
-	uvm_aio_aiodone(bp);
+	panic("%s: unimplemented", __func__);
+}
+
+int
+uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
+	struct vm_page **opp)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 void
-uvm_aio_aiodone(struct buf *bp)
+uvm_object_printit(struct uvm_object *uobj, bool full,
+	void (*pr)(const char *, ...))
 {
 
-	if (((bp->b_flags | bp->b_cflags) & (B_READ | BC_NOCACHE)) == 0 && bioopsp)
-		bioopsp->io_pageiodone(bp);
-}
-
-void
-uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
-{
-
-	mutex_enter(&vp->v_interlock);
-	vp->v_size = vp->v_writesize = newsize;
-	mutex_exit(&vp->v_interlock);
-}
-
-void
-uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
-{
-
-	mutex_enter(&vp->v_interlock);
-	vp->v_writesize = newsize;
-	mutex_exit(&vp->v_interlock);
-}
-
-void
-uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
-{
-	struct uvm_object *uobj = &vp->v_uobj;
-	struct vm_page **pgs;
-	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
-	int rv, npages, i;
-
-	pgs = kmem_zalloc(maxpages * sizeof(pgs), KM_SLEEP);
-	while (len) {
-		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
-		memset(pgs, 0, npages * sizeof(struct vm_page *));
-		mutex_enter(&uobj->vmobjlock);
-		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 0, 0, 0);
-		assert(npages > 0);
-
-		for (i = 0; i < npages; i++) {
-			uint8_t *start;
-			size_t chunkoff, chunklen;
-
-			chunkoff = off & PAGE_MASK;
-			chunklen = MIN(PAGE_SIZE - chunkoff, len);
-			start = (uint8_t *)pgs[i]->uanon + chunkoff;
-
-			memset(start, 0, chunklen);
-			pgs[i]->flags &= PG_CLEAN;
-
-			off += chunklen;
-			len -= chunklen;
-		}
-		uvm_page_unbusy(pgs, npages);
-	}
-	kmem_free(pgs, maxpages * sizeof(pgs));
-
-	return;
-}
-
-struct uvm_ractx *
-uvm_ra_allocctx()
-{
-
-	return NULL;
-}
-
-void
-uvm_ra_freectx(struct uvm_ractx *ra)
-{
-
-	return;
-}
-
-bool
-uvn_clean_p(struct uvm_object *uobj)
-{
-	struct vnode *vp = (void *)uobj;
-
-	return (vp->v_iflag & VI_ONWORKLST) == 0;
+	/* nada for now */
 }
 
 /*
  * Kmem
  */
+
+#ifndef RUMP_USE_REAL_ALLOCATORS
+void
+kmem_init()
+{
+
+	/* nothing to do */
+}
 
 void *
 kmem_alloc(size_t size, km_flag_t kmflag)
@@ -641,6 +486,7 @@ kmem_free(void *p, size_t size)
 
 	rumpuser_free(p);
 }
+#endif /* RUMP_USE_REAL_ALLOCATORS */
 
 /*
  * UVM km
@@ -650,9 +496,22 @@ vaddr_t
 uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 {
 	void *rv;
+	int alignbit, error;
 
-	rv = rumpuser_malloc(size, flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT));
-	if (rv && flags & UVM_KMF_ZERO)
+	alignbit = 0;
+	if (align) {
+		alignbit = ffs(align)-1;
+	}
+
+	rv = rumpuser_anonmmap(size, alignbit, flags & UVM_KMF_EXEC, &error);
+	if (rv == NULL) {
+		if (flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT))
+			return 0;
+		else
+			panic("uvm_km_alloc failed");
+	}
+
+	if (flags & UVM_KMF_ZERO)
 		memset(rv, 0, size);
 
 	return (vaddr_t)rv;
@@ -662,7 +521,7 @@ void
 uvm_km_free(struct vm_map *map, vaddr_t vaddr, vsize_t size, uvm_flag_t flags)
 {
 
-	rumpuser_free((void *)vaddr);
+	rumpuser_unmap((void *)vaddr, size);
 }
 
 struct vm_map *
@@ -673,26 +532,36 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *minaddr, vaddr_t *maxaddr,
 	return (struct vm_map *)417416;
 }
 
-void
-uvm_pageout_start(int npages)
+vaddr_t
+uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 {
 
-	uvmexp.paging += npages;
+	return (vaddr_t)rumpuser_malloc(PAGE_SIZE, !waitok);
 }
 
 void
-uvm_pageout_done(int npages)
+uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 
-	uvmexp.paging -= npages;
+	rumpuser_unmap((void *)addr, PAGE_SIZE);
+}
 
-	/*
-	 * wake up either of pagedaemon or LWPs waiting for it.
-	 */
+vaddr_t
+uvm_km_alloc_poolpage_cache(struct vm_map *map, bool waitok)
+{
+	void *rv;
+	int error;
 
-	if (uvmexp.free <= uvmexp.reserve_kernel) {
-		wakeup(&uvm.pagedaemon);
-	} else {
-		wakeup(&uvmexp.free);
-	}
+	rv = rumpuser_anonmmap(PAGE_SIZE, PAGE_SHIFT, 0, &error);
+	if (rv == NULL && waitok)
+		panic("fixme: poolpage alloc failed");
+
+	return (vaddr_t)rv;
+}
+
+void
+uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
+{
+
+	rumpuser_unmap((void *)vaddr, PAGE_SIZE);
 }

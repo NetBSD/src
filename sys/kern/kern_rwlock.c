@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_rwlock.c,v 1.21.2.1 2008/05/16 02:25:25 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.21.2.2 2009/05/04 08:13:47 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,9 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.21.2.1 2008/05/16 02:25:25 yamt Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.21.2.2 2009/05/04 08:13:47 yamt Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -67,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.21.2.1 2008/05/16 02:25:25 yamt Ex
 	LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw),			\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER, t);
 #define	RW_LOCKED(rw, op)						\
-	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw),				\
+	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw), NULL,			\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_UNLOCKED(rw, op)						\
 	LOCKDEBUG_UNLOCKED(RW_DEBUG_P(rw), (rw),			\
@@ -151,7 +149,7 @@ __strong_alias(rw_tryenter,rw_vector_tryenter);
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
-	1,
+	LOCKOPS_SLEEP,
 	rw_dump
 };
 
@@ -162,6 +160,18 @@ syncobj_t rw_syncobj = {
 	sleepq_lendpri,
 	rw_owner,
 };
+
+/* Mutex cache */
+#define	RW_OBJ_MAGIC	0x85d3c85d
+struct krwobj {
+	krwlock_t	ro_lock;
+	u_int		ro_magic;
+	u_int		ro_refcnt;
+};
+
+static int	rw_obj_ctor(void *, void *, int);
+
+static pool_cache_t	rw_obj_cache;
 
 /*
  * rw_dump:
@@ -184,10 +194,7 @@ rw_dump(volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif
-static void
+static void __noinline
 rw_abort(krwlock_t *rw, const char *func, const char *msg)
 {
 
@@ -334,9 +341,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			    ~RW_WRITE_WANTED);
 			if (__predict_true(next == owner)) {
 				/* Got it! */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 				membar_enter();
-#endif
 				break;
 			}
 
@@ -458,9 +463,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * proceed to do direct handoff if there are waiters, and if the
 	 * lock would become unowned.
 	 */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_exit();
-#endif
 	for (;;) {
 		new = (owner - decr);
 		if ((new & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
@@ -503,7 +506,7 @@ rw_vector_exit(krwlock_t *rw)
 			/* Give the lock to the longest waiting writer. */
 			l = TS_FIRST(ts, TS_WRITER_Q);
 			new = (uintptr_t)l | RW_WRITE_LOCKED | RW_HAS_WAITERS;
-			if (wcnt != 0)
+			if (wcnt > 1)
 				new |= RW_WRITE_WANTED;
 			rw_swap(rw, owner, new);
 			turnstile_wakeup(ts, TS_WRITER_Q, 1, l);
@@ -560,13 +563,11 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 		next = rw_cas(rw, owner, owner + incr);
 		if (__predict_true(next == owner)) {
 			/* Got it! */
+			membar_enter();
 			break;
 		}
 	}
 
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
-#endif
 	RW_WANTLOCK(rw, op, true);
 	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
@@ -593,10 +594,7 @@ rw_downgrade(krwlock_t *rw)
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 	RW_UNLOCKED(rw, RW_WRITER);
 
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_producer();
-#endif
-
 	owner = rw->rw_owner;
 	if ((owner & RW_HAS_WAITERS) == 0) {
 		/*
@@ -638,7 +636,7 @@ rw_downgrade(krwlock_t *rw)
 
 			new = RW_READ_INCR | RW_HAS_WAITERS | RW_WRITE_WANTED;
 			next = rw_cas(rw, owner, new);
-			turnstile_exit(ts);
+			turnstile_exit(rw);
 			if (__predict_true(next == owner))
 				break;
 		} else {
@@ -658,7 +656,7 @@ rw_downgrade(krwlock_t *rw)
 				turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
 				break;
 			}
-			turnstile_exit(ts);
+			turnstile_exit(rw);
 		}
 	}
 
@@ -690,18 +688,16 @@ rw_tryupgrade(krwlock_t *rw)
 		}
 		new = curthread | RW_WRITE_LOCKED | (owner & ~RW_THREAD);
 		next = rw_cas(rw, owner, new);
-		if (__predict_true(next == owner))
+		if (__predict_true(next == owner)) {
+			membar_producer();
 			break;
+		}
 	}
 
 	RW_UNLOCKED(rw, RW_READER);
 	RW_LOCKED(rw, RW_WRITER);
 	RW_DASSERT(rw, rw->rw_owner & RW_WRITE_LOCKED);
 	RW_DASSERT(rw, RW_OWNER(rw) == curthread);
-
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_producer();
-#endif
 
 	return 1;
 }
@@ -779,4 +775,89 @@ rw_owner(wchan_t obj)
 		return NULL;
 
 	return (void *)(owner & RW_THREAD);
+}
+
+/*
+ * rw_obj_init:
+ *
+ *	Initialize the rw object store.
+ */
+void
+rw_obj_init(void)
+{
+
+	rw_obj_cache = pool_cache_init(sizeof(struct krwobj),
+	    coherency_unit, 0, 0, "rwlock", NULL, IPL_NONE, rw_obj_ctor,
+	    NULL, NULL);
+}
+
+/*
+ * rw_obj_ctor:
+ *
+ *	Initialize a new lock for the cache.
+ */
+static int
+rw_obj_ctor(void *arg, void *obj, int flags)
+{
+	struct krwobj * ro = obj;
+
+	ro->ro_magic = RW_OBJ_MAGIC;
+
+	return 0;
+}
+
+/*
+ * rw_obj_alloc:
+ *
+ *	Allocate a single lock object.
+ */
+krwlock_t *
+rw_obj_alloc(void)
+{
+	struct krwobj *ro;
+
+	ro = pool_cache_get(rw_obj_cache, PR_WAITOK);
+	rw_init(&ro->ro_lock);
+	ro->ro_refcnt = 1;
+
+	return (krwlock_t *)ro;
+}
+
+/*
+ * rw_obj_hold:
+ *
+ *	Add a single reference to a lock object.  A reference to the object
+ *	must already be held, and must be held across this call.
+ */
+void
+rw_obj_hold(krwlock_t *lock)
+{
+	struct krwobj *ro = (struct krwobj *)lock;
+
+	KASSERT(ro->ro_magic == RW_OBJ_MAGIC);
+	KASSERT(ro->ro_refcnt > 0);
+
+	atomic_inc_uint(&ro->ro_refcnt);
+}
+
+/*
+ * rw_obj_free:
+ *
+ *	Drop a reference from a lock object.  If the last reference is being
+ *	dropped, free the object and return true.  Otherwise, return false.
+ */
+bool
+rw_obj_free(krwlock_t *lock)
+{
+	struct krwobj *ro = (struct krwobj *)lock;
+
+	KASSERT(ro->ro_magic == RW_OBJ_MAGIC);
+	KASSERT(ro->ro_refcnt > 0);
+
+	if (atomic_dec_uint_nv(&ro->ro_refcnt) > 0) {
+		return false;
+	}
+	rw_destroy(&ro->ro_lock);
+	pool_cache_put(rw_obj_cache, ro);
+	return true;
 }

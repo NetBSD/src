@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.9 2008/04/12 05:58:22 thorpej Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.9.4.1 2009/05/04 08:14:17 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,9 +58,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9.4.1 2009/05/04 08:14:17 yamt Exp $");
 
 #include "opt_inet.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9 2008/04/12 05:58:22 thorpej Exp $
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_etherip.h>
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <machine/stdarg.h>
 
@@ -183,7 +187,7 @@ ip_etherip_input(struct mbuf *m, ...)
 	const struct ip *ip;
 	struct sockaddr_in *src, *dst;
 	struct ifnet *ifp = NULL;
-	int off, proto;
+	int off, proto, s;
 	va_list ap;
 
 	va_start(ap, m);
@@ -259,7 +263,10 @@ ip_etherip_input(struct mbuf *m, ...)
 #endif
 
 	ifp->if_ipackets++;
+
+	s = splnet();
 	(ifp->if_input)(ifp, m);
+	splx(s);
 
 	return;
 }

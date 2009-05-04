@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17.2.1 2008/05/16 02:23:30 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17.2.2 2009/05/04 08:12:14 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.2.1 2008/05/16 02:23:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.2.2 2009/05/04 08:12:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.2.1 2008/05/16 02:23:30 yamt Exp $");
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 
@@ -112,6 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.2.1 2008/05/16 02:23:30 yamt Exp $");
 
 #include <dev/ic/mc146818reg.h>
 #include <dev/isa/isareg.h>
+
+#define	X86_MAXPROCS	32
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
@@ -231,7 +233,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
+		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
 		ci->ci_curldt = -1;
 		if (phycpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
@@ -330,7 +332,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	if (ncolors <= uvmexp.ncolors)
 		return;
-	printf("%s: %d page colors\n", device_xname(ci->ci_dev), ncolors);
+	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
 }
 
@@ -356,8 +358,8 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		}
 
 		aprint_naive(": Application Processor\n");
-		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
-		    M_DEVBUF, M_WAITOK);
+		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		    KM_SLEEP);
 		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
 		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
@@ -367,8 +369,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_info[cpunum] = ci;
 #endif
 #ifdef TRAPLOG
-		ci->ci_tlog_base = malloc(sizeof(struct tlog),
-		    M_DEVBUF, M_WAITOK);
+		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
 #endif
 	} else {
 		aprint_naive(": %s Processor\n",
@@ -419,7 +420,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		aprint_normal(": (uniprocessor)\n");
 		atomic_or_32(&ci->ci_flags,
 		     CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
@@ -428,13 +428,13 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_cpu_idle_init();
 #if 0
 		x86_errata();
 #endif
 		break;
 
 	case CPU_ROLE_BP:
-		aprint_normal("apid %d (boot processor)\n", caa->cpu_number);
 		atomic_or_32(&ci->ci_flags, 
 		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
@@ -443,6 +443,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_cpu_idle_init();
 #if NLAPIC > 0
 		/*
 		 * Enable local apic
@@ -460,7 +461,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		/*
 		 * report on an AP
 		 */
-		aprint_normal("apid %d (application processor)\n", caa->cpu_number);
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
@@ -470,9 +470,14 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
+			struct cpu_info *tmp;
+
 			identifycpu(ci);
-			ci->ci_next = cpu_info_list->ci_next;
-			cpu_info_list->ci_next = ci;
+			tmp = cpu_info_list;
+			while (tmp->ci_next)
+				tmp = tmp->ci_next;
+
+			tmp->ci_next = ci;
 		}
 #else
 		aprint_normal_dev(sc->sc_dev, "not started\n");
@@ -1011,7 +1016,7 @@ cpu_suspend(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, false);
+		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
 
 		if (err)
@@ -1037,7 +1042,7 @@ cpu_resume(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, true);
+		err = cpu_setstate(ci, true);
 		mutex_exit(&cpu_lock);
 	}
 

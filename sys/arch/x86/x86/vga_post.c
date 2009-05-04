@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.9 2008/03/29 17:49:01 jmcneill Exp $ */
+/* $NetBSD: vga_post.c,v 1.9.4.1 2009/05/04 08:12:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.9 2008/03/29 17:49:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.9.4.1 2009/05/04 08:12:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.9 2008/03/29 17:49:01 jmcneill Exp $"
 #include <x86emu/x86emu_regs.h>
 
 #include "opt_ddb.h"
+
+#define	BASE_MEMORY	65536	/* How much memory to allocate in Real Mode */
 
 struct vga_post {
 	struct X86EMU emu;
@@ -153,8 +155,8 @@ vga_post_init(int bus, int device, int function)
 	}
 	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
 
-	err = uvm_pglistalloc(65536, 0, (paddr_t)-1, 0, 0, &sc->ram_backing,
-				65536/PAGE_SIZE, 1);
+	err = uvm_pglistalloc(BASE_MEMORY, 0, (paddr_t)-1, 0, 0,
+	    &sc->ram_backing, BASE_MEMORY/PAGE_SIZE, 1);
 	if (err) {
 		uvm_km_free(kernel_map, sc->sys_image, 1024 * 1024,
 				UVM_KMF_VAONLY);
@@ -173,7 +175,7 @@ vga_post_init(int bus, int device, int function)
 	uvm_km_free(kernel_map, sys_bios_data, PAGE_SIZE, UVM_KMF_VAONLY);
 
 	iter = 0;
-	TAILQ_FOREACH(pg, &sc->ram_backing, pageq) {
+	TAILQ_FOREACH(pg, &sc->ram_backing, pageq.queue) {
 		pmap_kenter_pa(sc->sys_image + iter, VM_PAGE_TO_PHYS(pg),
 				VM_PROT_READ | VM_PROT_WRITE);
 		iter += PAGE_SIZE;
@@ -236,7 +238,7 @@ vga_post_free(struct vga_post *sc)
 
 #ifdef DDB
 void
-ddb_vgapost()
+ddb_vgapost(void)
 {
 
 	if (ddb_vgapostp)

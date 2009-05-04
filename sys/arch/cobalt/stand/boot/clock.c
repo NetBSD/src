@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2.20.1 2008/05/16 02:22:09 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.20.2 2009/05/04 08:10:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ delay(int ms)
 		__insn_barrier();
 }
 
-time_t
+satime_t
 getsecs(void)
 {
 	volatile uint8_t *mcclock_reg, *mcclock_data;
@@ -77,5 +77,5 @@ getsecs(void)
 	*mcclock_reg = MC_HOUR;
 	sec += bcdtobin(*mcclock_data) * 60 * 60;
 
-	return (time_t)sec;
+	return (satime_t)sec;
 }

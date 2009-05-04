@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.17.72.1 2008/05/16 02:22:24 yamt Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.17.72.2 2009/05/04 08:11:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -159,9 +159,9 @@ ElfLoader::load()
 		if (ph->p_type == PT_LOAD) {
 			size_t filesz = ph->p_filesz;
 			size_t memsz = ph->p_memsz;
-			kv = ph->p_vaddr;
+			kv = ph->p_paddr;
 			off_t fileofs = ph->p_offset;
-			DPRINTF((TEXT("seg[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
+			DPRINTF((TEXT("seg[%d] paddr 0x%08x file size 0x%x mem size 0x%x\n"),
 			    i, kv, filesz, memsz));
 			_load_segment(kv, memsz, fileofs, filesz);
 			kv += ROUND4(memsz);

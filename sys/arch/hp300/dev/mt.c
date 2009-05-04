@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.42.4.1 2008/05/16 02:22:22 yamt Exp $	*/
+/*	$NetBSD: mt.c,v 1.42.4.2 2009/05/04 08:11:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.42.4.1 2008/05/16 02:22:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.42.4.2 2009/05/04 08:11:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,14 +305,15 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 static int
 mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = UNIT(dev);
 	struct mt_softc *sc;
 	int req_den;
 	int error;
 
-	if (unit >= mt_cd.cd_ndevs ||
-	    (sc = device_private(mt_cd.cd_devs[unit])) == NULL ||
-	    (sc->sc_flags & MTF_EXISTS) == 0)
+	sc = device_lookup_private(&mt_cd, UNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
+
+	if ((sc->sc_flags & MTF_EXISTS) == 0)
 		return ENXIO;
 
 	dlog(LOG_DEBUG, "%s open: flags 0x%x", device_xname(sc->sc_dev),
@@ -408,7 +409,7 @@ errout:
 static int
 mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct mt_softc *sc = device_private(mt_cd.cd_devs[UNIT(dev)]);
+	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 
 	if (sc->sc_flags & MTF_WRT) {
 		(void) mtcommand(dev, MTWEOF, 2);
@@ -424,7 +425,7 @@ mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 mtcommand(dev_t dev, int cmd, int cnt)
 {
-	struct mt_softc *sc = device_private(mt_cd.cd_devs[UNIT(dev)]);
+	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 	struct buf *bp = &sc->sc_bufstore;
 	int error = 0;
 
@@ -459,11 +460,9 @@ static void
 mtstrategy(struct buf *bp)
 {
 	struct mt_softc *sc;
-	int unit;
 	int s;
 
-	unit = UNIT(bp->b_dev);
-	sc = device_private(mt_cd.cd_devs[unit]);
+	sc = device_lookup_private(&mt_cd,UNIT(bp->b_dev));
 	dlog(LOG_DEBUG, "%s strategy", device_xname(sc->sc_dev));
 	if ((bp->b_flags & (B_CMD | B_READ)) == 0) {
 #define WRITE_BITS_IGNORED	8
@@ -501,7 +500,7 @@ mtstrategy(struct buf *bp)
 		}
 	}
 	s = splbio();
-	BUFQ_PUT(sc->sc_tab, bp);
+	bufq_put(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		mtustart(sc);
@@ -548,7 +547,7 @@ mtstart(void *arg)
 
 	dlog(LOG_DEBUG, "%s start", device_xname(sc->sc_dev));
 	sc->sc_flags &= ~MTF_WRT;
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
@@ -727,10 +726,10 @@ fatalerror:
 	bp->b_error = EIO;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	biodone(bp);
 	hpibfree(device_parent(sc->sc_dev), &sc->sc_hq);
-	if ((bp = BUFQ_PEEK(sc->sc_tab)) == NULL)
+	if ((bp = bufq_peek(sc->sc_tab)) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);
@@ -749,7 +748,7 @@ mtgo(void *arg)
 	int rw;
 
 	dlog(LOG_DEBUG, "%s go", device_xname(sc->sc_dev));
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hpibno, sc->sc_slave, rw ? MTT_READ : MTL_WRITE,
 	    bp->b_data, bp->b_bcount, rw, rw != 0);
@@ -763,7 +762,7 @@ mtintr(void *arg)
 	int i;
 	u_char cmdbuf[4];
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	if (bp == NULL) {
 		log(LOG_ERR, "%s intr: bp == NULL", device_xname(sc->sc_dev));
 		return;
@@ -909,10 +908,10 @@ mtintr(void *arg)
 	cmdbuf[0] = MTE_COMPLETE | MTE_IDLE;
 	(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	biodone(bp);
 	hpibfree(device_parent(sc->sc_dev), &sc->sc_hq);
-	if (BUFQ_PEEK(sc->sc_tab) == NULL)
+	if (bufq_peek(sc->sc_tab) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);
@@ -921,7 +920,7 @@ mtintr(void *arg)
 static int
 mtread(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc = device_private(mt_cd.cd_devs[UNIT(dev)]);
+	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 
 	return physio(mtstrategy, &sc->sc_bufstore,
 	    dev, B_READ, minphys, uio);
@@ -930,7 +929,7 @@ mtread(dev_t dev, struct uio *uio, int flags)
 static int
 mtwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc = device_private(mt_cd.cd_devs[UNIT(dev)]);
+	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 
 	return physio(mtstrategy, &sc->sc_bufstore,
 	    dev, B_WRITE, minphys, uio);

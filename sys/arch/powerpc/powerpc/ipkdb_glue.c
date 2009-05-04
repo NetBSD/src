@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.9 2007/01/24 13:08:14 hubertf Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.9.48.1 2009/05/04 08:11:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.9 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.9.48.1 2009/05/04 08:11:44 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.9 2007/01/24 13:08:14 hubertf Exp $
 
 int ipkdbregs[NREG];
 
-int ipkdb_trap_glue __P((struct trapframe *));
+int ipkdb_trap_glue(struct trapframe *);
 
 #ifdef	IPKDBUSERHACK
 int ipkdbsr;			/* TEMPRORARY (Really needs some better mechanism)	XXX */

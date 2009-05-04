@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.89.4.1 2008/05/16 02:22:22 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.89.4.2 2009/05/04 08:11:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89.4.1 2008/05/16 02:22:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89.4.2 2009/05/04 08:11:05 yamt Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -339,8 +339,6 @@ cpu_configure(void)
 
 	/* Configuration is finished, turn on interrupts. */
 	(void)spl0();
-
-	intr_printlevels();
 }
 
 /**********************************************************************
@@ -382,8 +380,9 @@ cpu_rootconf(void)
 	 * pick the network interface device to use.
 	 */
 	if (rootspec == NULL) {
-		vops = vfs_getopsbyname("nfs");
-		if (vops != NULL && vops->vfs_mountroot == mountroot) {
+		vops = vfs_getopsbyname(MOUNT_NFS);
+		if (vops != NULL && vops->vfs_mountroot != NULL &&
+		    strcmp(rootfstype, MOUNT_NFS) == 0) {
 			for (dd = LIST_FIRST(&dev_data_list);
 			    dd != NULL; dd = LIST_NEXT(dd, dd_list)) {
 				if (device_class(dd->dd_dev) == DV_IFNET) {
@@ -397,6 +396,8 @@ cpu_rootconf(void)
 				dv = NULL;
 			}
 		}
+		if (vops != NULL)
+			vfs_delref(vops);
 	}
 
 	/*

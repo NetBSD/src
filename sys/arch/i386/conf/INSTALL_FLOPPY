@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.1.4.2 2008/05/16 02:22:33 yamt Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.1.4.3 2009/05/04 08:11:15 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -22,6 +22,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	2		# estimated number of users
 
@@ -56,9 +57,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
-
-#options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
@@ -119,7 +117,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system 	PTYFS		# /dev/pts/N support
-#file-system 	TMPFS		# Efficient memory file-system
+file-system 	TMPFS		# Efficient memory file-system
 
 # Filesystem options
 #options 	QUOTA		# UFS quotas

@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.10.10.1 2008/05/16 02:25:21 yamt Exp $	*/
+/*	$NetBSD: bfs.c,v 1.10.10.2 2009/05/04 08:13:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.10.10.1 2008/05/16 02:25:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.10.10.2 2009/05/04 08:13:44 yamt Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -256,10 +256,12 @@ bfs_file_read(const struct bfs *bfs, const char *fname, void *buf, size_t bufsz,
 
 	p = buf;
 	n = end - start;
-	bfs->io->read_n(bfs->io, p, start, n);
+	if (!bfs->io->read_n(bfs->io, p, start, n))
+		return EIO;
 	/* last sector */
 	n *= DEV_BSIZE;
-	bfs->io->read(bfs->io, tmpbuf, end);
+	if (!bfs->io->read(bfs->io, tmpbuf, end))
+		return EIO;
 	memcpy(p + n, tmpbuf, sz - n);
 
 	if (read_size)

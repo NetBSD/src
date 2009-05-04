@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.27.4.1 2008/05/16 02:23:53 yamt Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.27.4.2 2009/05/04 08:12:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.27.4.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.27.4.2 2009/05/04 08:12:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -115,9 +115,12 @@ ata_raid_type_name(u_int type)
 		"Promise",
 		"Adaptec",
 		"VIA V-RAID",
+		"nVidia",
+		"JMicron",
+		"Intel MatrixRAID"
 	};
 
-	if (type < sizeof(ata_raid_type_names) / sizeof(ata_raid_type_names[0]))
+	if (type < __arraycount(ata_raid_type_names))
 		return (ata_raid_type_names[type]);
 
 	return (NULL);
@@ -244,6 +247,12 @@ ata_raid_check_component(device_t self)
 		return;
 	if (ata_raid_read_config_via(sc) == 0)
 		return;
+	if (ata_raid_read_config_nvidia(sc) == 0)
+		return;
+	if (ata_raid_read_config_jmicron(sc) == 0)
+		return;
+	if (ata_raid_read_config_intel(sc) == 0)
+		return;
 }
 
 struct ataraid_array_info *
@@ -300,6 +309,7 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 	bp->b_flags = bflags;
 	bp->b_proc = curproc;
 	bp->b_data = tbuf;
+	SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
 	VOP_STRATEGY(vp, bp);
 	error = biowait(bp);

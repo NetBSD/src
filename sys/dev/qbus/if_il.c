@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.19 2008/04/05 19:16:49 cegger Exp $	*/
+/*	$NetBSD: if_il.c,v 1.19.4.1 2009/05/04 08:13:15 yamt Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.19 2008/04/05 19:16:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.19.4.1 2009/05/04 08:13:15 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -230,9 +230,8 @@ ilwait(struct il_softc *sc, char *op)
 	if (IL_RCSR(IL_CSR)&IL_STATUS) {
 		char bits[64];
 
-		aprint_error_dev(&sc->sc_dev, "%s failed, csr=%s\n", op,
-		    bitmask_snprintf(IL_RCSR(IL_CSR), IL_BITS, bits,
-		    sizeof(bits)));
+		snprintb(bits, sizeof(bits), IL_BITS, IL_RCSR(IL_CSR));
+		aprint_error_dev(&sc->sc_dev, "%s failed, csr=%s\n", op, bits);
 		return (-1);
 	}
 	return (0);
@@ -305,7 +304,7 @@ ilinit(struct ifnet *ifp)
 	 * wedge the board.
 	 */
 	if (sc->sc_flags & ILF_SETADDR) {
-		bcopy(CLLADDR(ifp->if_sadl), &sc->sc_isu, ETHER_ADDR_LEN);
+		memcpy(&sc->sc_isu, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, ETHER_ADDR_LEN);
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_LDPA);
@@ -444,9 +443,8 @@ ilcint(void *arg)
 	if ((sc->sc_if.if_flags & IFF_OACTIVE) == 0) {
 		char bits[64];
 
+		snprintb(bits, sizeof(bits), IL_BITS, IL_RCSR(IL_CSR));
 		aprint_error_dev(&sc->sc_dev, "stray xmit interrupt, csr=%s\n",
-		    bitmask_snprintf(IL_RCSR(IL_CSR), IL_BITS, bits,
-		    sizeof(bits)));
 		return;
 	}
 
@@ -608,7 +606,7 @@ il_setaddr(u_char *physaddr, struct il_softc *sc)
 	if (! (sc->sc_flags & ILF_RUNNING))
 		return;
 
-	bcopy((void *)physaddr, (void *)is->is_addr, sizeof is->is_addr);
+	memcpy((void *)is->is_addr, (void *)physaddr, sizeof is->is_addr);
 	sc->sc_flags &= ~ILF_RUNNING;
 	sc->sc_flags |= ILF_SETADDR;
 	ilinit(&sc->sc_if);

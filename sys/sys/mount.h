@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.173.10.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.173.10.2 2009/05/04 08:14:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -121,6 +121,11 @@ struct mount {
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 	kmutex_t	mnt_updating;		/* to serialize updates */
+	struct wapbl_ops
+			*mnt_wapbl_op;		/* logging ops */
+	struct wapbl	*mnt_wapbl;		/* log info */
+	struct wapbl_replay
+			*mnt_wapbl_replay;	/* replay support XXX: what? */
 };
 
 /*
@@ -180,7 +185,7 @@ struct mount {
 	{ "magiclinks", CTLTYPE_INT }, \
 }
 
-#if defined(_KERNEL) || defined(__VFSOPS_EXPOSE)
+#if defined(_KERNEL)
 #if __STDC__
 struct nameidata;
 #endif
@@ -245,7 +250,7 @@ int	VFS_SNAPSHOT(struct mount *, struct vnode *, struct timespec *);
 int	VFS_EXTATTRCTL(struct mount *, int, struct vnode *, int, const char *);
 int	VFS_SUSPENDCTL(struct mount *, int);
 
-#endif /* _KERNEL || __VFSOPS_EXPOSE */
+#endif /* _KERNEL */
 
 #ifdef _KERNEL
 #if __STDC__
@@ -278,15 +283,65 @@ int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
 		const char *);						\
 int	fsname##_suspendctl(struct mount *, int)
 
+/*
+ * This operations vector is so wapbl can be wrapped into a filesystem lkm.
+ * XXX Eventually, we want to move this functionality
+ * down into the filesystems themselves so that this isn't needed.
+ */
+struct wapbl_ops {
+	void (*wo_wapbl_discard)(struct wapbl *);
+	int (*wo_wapbl_replay_isopen)(struct wapbl_replay *);
+	int (*wo_wapbl_replay_can_read)(struct wapbl_replay *, daddr_t, long);
+	int (*wo_wapbl_replay_read)(struct wapbl_replay *, void *, daddr_t, long);
+	void (*wo_wapbl_add_buf)(struct wapbl *, struct buf *);
+	void (*wo_wapbl_remove_buf)(struct wapbl *, struct buf *);
+	void (*wo_wapbl_resize_buf)(struct wapbl *, struct buf *, long, long);
+	int (*wo_wapbl_begin)(struct wapbl *, const char *, int);
+	void (*wo_wapbl_end)(struct wapbl *);
+	void (*wo_wapbl_junlock_assert)(struct wapbl *);
+	void (*wo_wapbl_biodone)(struct buf *);
+};
+#define WAPBL_DISCARD(MP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_discard)((MP)->mnt_wapbl)
+#define WAPBL_REPLAY_ISOPEN(MP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_replay_isopen)((MP)->mnt_wapbl_replay)
+#define WAPBL_REPLAY_CAN_READ(MP, BLK, LEN)				\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_replay_can_read)((MP)->mnt_wapbl_replay, \
+    (BLK), (LEN))
+#define WAPBL_REPLAY_READ(MP, DATA, BLK, LEN)				\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_replay_read)((MP)->mnt_wapbl_replay,	\
+    (DATA), (BLK), (LEN))
+#define WAPBL_ADD_BUF(MP, BP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_add_buf)((MP)->mnt_wapbl, (BP))
+#define WAPBL_REMOVE_BUF(MP, BP)					\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_remove_buf)((MP)->mnt_wapbl, (BP))
+#define WAPBL_RESIZE_BUF(MP, BP, OLDSZ, OLDCNT)				\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_resize_buf)((MP)->mnt_wapbl, (BP),	\
+    (OLDSZ), (OLDCNT))
+#define WAPBL_BEGIN(MP)							\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_begin)((MP)->mnt_wapbl,		\
+    __FILE__, __LINE__)
+#define WAPBL_END(MP)							\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_end)((MP)->mnt_wapbl)
+#define WAPBL_JUNLOCK_ASSERT(MP)					\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_junlock_assert)((MP)->mnt_wapbl)
+
 struct vfs_hooks {
-	void	(*vh_unmount)(struct mount *);
 	LIST_ENTRY(vfs_hooks) vfs_hooks_list;
+	void	(*vh_unmount)(struct mount *);
+	int	(*vh_reexport)(struct mount *, const char *, void *);
+	void	(*vh_future_expansion_1)(void);
+	void	(*vh_future_expansion_2)(void);
+	void	(*vh_future_expansion_3)(void);
+	void	(*vh_future_expansion_4)(void);
+	void	(*vh_future_expansion_5)(void);
 };
 
 void	vfs_hooks_init(void);
 int	vfs_hooks_attach(struct vfs_hooks *);
 int	vfs_hooks_detach(struct vfs_hooks *);
 void	vfs_hooks_unmount(struct mount *);
+int	vfs_hooks_reexport(struct mount *, const char *, void *);
 
 #endif /* _KERNEL */
 
@@ -334,7 +389,8 @@ int	vfs_fhtovp(fhandle_t *, struct vnode **);
 int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
-void	vfs_unmountall(struct lwp *);	    /* unmount file systems */
+bool	vfs_unmountall(struct lwp *);	    /* unmount file systems */
+bool	vfs_unmountall1(struct lwp *, bool, bool);
 int 	vfs_busy(struct mount *, struct mount **);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
 void	vfs_unbusy(struct mount *, bool, struct mount **);
@@ -345,7 +401,7 @@ struct vfsops *vfs_getopsbyname(const char *);
 void	vfs_delref(struct vfsops *);
 void	vfs_destroy(struct mount *);
 void	vfs_scrubvnlist(struct mount *);
-
+struct mount *vfs_mountalloc(struct vfsops *, struct vnode *);
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *);
 
@@ -391,7 +447,7 @@ int	unmount(const char *, int);
 #ifndef __LIBC12_SOURCE__
 int mount(const char *, const char *, int, void *, size_t) __RENAME(__mount50);
 int	fhopen(const void *, size_t, int) __RENAME(__fhopen40);
-int	fhstat(const void *, size_t, struct stat *) __RENAME(__fhstat40);
+int	fhstat(const void *, size_t, struct stat *) __RENAME(__fhstat50);
 #endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS

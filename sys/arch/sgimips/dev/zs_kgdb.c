@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.13.10.1 2008/05/16 02:23:05 yamt Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.13.10.2 2009/05/04 08:11:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.13.10.1 2008/05/16 02:23:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.13.10.2 2009/05/04 08:11:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ zs_setparam(struct zs_chanstate *cs, int iena, int rate)
  * Called after cninit(), so printf() etc. works.
  */
 void
-zs_kgdb_init()
+zs_kgdb_init(void)
 {
 	volatile struct zschan *zc;
 	int channel, unit;

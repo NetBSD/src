@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.38.32.1 2008/05/16 02:25:41 yamt Exp $	*/
+/*	$NetBSD: radix.c,v 1.38.32.2 2009/05/04 08:14:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.38.32.1 2008/05/16 02:25:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.38.32.2 2009/05/04 08:14:15 yamt Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.38.32.1 2008/05/16 02:25:41 yamt Exp $")
 #include <sys/malloc.h>
 #define	M_DONTWAIT M_NOWAIT
 #include <sys/domain.h>
-#include <netinet/ip_encap.h>
 #else
 #include <stdlib.h>
 #endif
@@ -1004,9 +1003,7 @@ rn_walktree(
 }
 
 int
-rn_inithead(head, off)
-	void **head;
-	int off;
+rn_inithead(void **head, int off)
 {
 	struct radix_node_head *rnh;
 
@@ -1020,9 +1017,7 @@ rn_inithead(head, off)
 }
 
 int
-rn_inithead0(rnh, off)
-	struct radix_node_head *rnh;
-	int off;
+rn_inithead0(struct radix_node_head *rnh, int off)
 {
 	struct radix_node *t;
 	struct radix_node *tt;
@@ -1047,7 +1042,7 @@ rn_inithead0(rnh, off)
 }
 
 void
-rn_init()
+rn_init(void)
 {
 	char *cp, *cplim;
 #ifdef _KERNEL
@@ -1063,9 +1058,6 @@ rn_init()
 		if ((*dpp)->dom_maxrtkey > max_keylen)
 			max_keylen = (*dpp)->dom_maxrtkey;
 	}
-#ifdef INET
-	encap_setkeylen();
-#endif
 #endif
 	if (max_keylen == 0) {
 		log(LOG_ERR,

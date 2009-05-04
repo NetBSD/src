@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.44.10.1 2008/05/16 02:25:50 yamt Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.44.10.2 2009/05/04 08:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -787,7 +787,7 @@ struct alpha_boot_block {
 	do {								\
 		const struct alpha_boot_block *_bb = (bb);		\
 		uint64_t _cksum;					\
-		int _i;							\
+		size_t _i;						\
 									\
 		_cksum = 0;						\
 		for (_i = 0;						\

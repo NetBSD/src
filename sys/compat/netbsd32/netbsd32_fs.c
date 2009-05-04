@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.53 2008/04/24 15:35:27 ad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.53.2.1 2009/05/04 08:12:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.53 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.53.2.1 2009/05/04 08:12:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +337,7 @@ get_utimes32(const netbsd32_timevalp_t *tptr, struct timeval *tv,
 }
 
 int
-netbsd32_utimes(struct lwp *l, const struct netbsd32_utimes_args *uap, register_t *retval)
+netbsd32___utimes50(struct lwp *l, const struct netbsd32___utimes50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
@@ -446,7 +444,7 @@ netbsd32___fhstatvfs140(struct lwp *l, const struct netbsd32___fhstatvfs140_args
 }
 
 int
-netbsd32_futimes(struct lwp *l, const struct netbsd32_futimes_args *uap, register_t *retval)
+netbsd32___futimes50(struct lwp *l, const struct netbsd32___futimes50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -460,7 +458,7 @@ netbsd32_futimes(struct lwp *l, const struct netbsd32_futimes_args *uap, registe
 	if (error != 0)
 		return error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
@@ -471,7 +469,8 @@ netbsd32_futimes(struct lwp *l, const struct netbsd32_futimes_args *uap, registe
 }
 
 int
-netbsd32_sys___getdents30(struct lwp *l, const struct netbsd32_sys___getdents30_args *uap, register_t *retval)
+netbsd32___getdents30(struct lwp *l,
+    const struct netbsd32___getdents30_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -481,7 +480,7 @@ netbsd32_sys___getdents30(struct lwp *l, const struct netbsd32_sys___getdents30_
 	file_t *fp;
 	int error, done;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
@@ -497,7 +496,8 @@ netbsd32_sys___getdents30(struct lwp *l, const struct netbsd32_sys___getdents30_
 }
 
 int
-netbsd32_lutimes(struct lwp *l, const struct netbsd32_lutimes_args *uap, register_t *retval)
+netbsd32___lutimes50(struct lwp *l,
+    const struct netbsd32___lutimes50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
@@ -515,7 +515,7 @@ netbsd32_lutimes(struct lwp *l, const struct netbsd32_lutimes_args *uap, registe
 }
 
 int
-netbsd32_sys___stat30(struct lwp *l, const struct netbsd32_sys___stat30_args *uap, register_t *retval)
+netbsd32___stat50(struct lwp *l, const struct netbsd32___stat50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
@@ -531,37 +531,32 @@ netbsd32_sys___stat30(struct lwp *l, const struct netbsd32_sys___stat30_args *ua
 	error = do_sys_stat(path, FOLLOW, &sb);
 	if (error)
 		return (error);
-	netbsd32_from___stat30(&sb, &sb32);
+	netbsd32_from_stat(&sb, &sb32);
 	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	return (error);
 }
 
 int
-netbsd32_sys___fstat30(struct lwp *l, const struct netbsd32_sys___fstat30_args *uap, register_t *retval)
+netbsd32___fstat50(struct lwp *l, const struct netbsd32___fstat50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_statp_t) sb;
 	} */
-	int fd = SCARG(uap, fd);
-	file_t *fp;
 	struct netbsd32_stat sb32;
 	struct stat ub;
-	int error = 0;
+	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(fd);
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	if (error == 0) {
-		netbsd32_from___stat30(&ub, &sb32);
+		netbsd32_from_stat(&ub, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	}
 	return (error);
 }
 
 int
-netbsd32_sys___lstat30(struct lwp *l, const struct netbsd32_sys___lstat30_args *uap, register_t *retval)
+netbsd32___lstat50(struct lwp *l, const struct netbsd32___lstat50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
@@ -577,13 +572,13 @@ netbsd32_sys___lstat30(struct lwp *l, const struct netbsd32_sys___lstat30_args *
 	error = do_sys_stat(path, NOFOLLOW, &sb);
 	if (error)
 		return (error);
-	netbsd32_from___stat30(&sb, &sb32);
+	netbsd32_from_stat(&sb, &sb32);
 	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	return (error);
 }
 
 int
-netbsd32___fhstat40(struct lwp *l, const struct netbsd32___fhstat40_args *uap, register_t *retval)
+netbsd32___fhstat50(struct lwp *l, const struct netbsd32___fhstat50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_pointer_t) fhp;
@@ -596,7 +591,7 @@ netbsd32___fhstat40(struct lwp *l, const struct netbsd32___fhstat40_args *uap, r
 
 	error = do_fhstat(l, SCARG_P32(uap, fhp), SCARG(uap, fh_size), &sb);
 	if (error != 0) {
-		netbsd32_from___stat30(&sb, &sb32);
+		netbsd32_from_stat(&sb, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
 	}
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.7 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.7.78.1 2009/05/04 08:11:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.7 2005/12/11 12:17:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.7.78.1 2009/05/04 08:11:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +59,7 @@ struct hook_list hook_lists[CONFIG_HOOK_NTYPES];
 struct hook_list call_list;
 
 void
-config_hook_init()
+config_hook_init(void)
 {
 	int i;
 

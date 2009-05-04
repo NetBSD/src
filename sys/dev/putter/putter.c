@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.9 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: putter.c,v 1.9.4.1 2009/05/04 08:13:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,17 +35,37 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.9 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.9.4.1 2009/05/04 08:13:15 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
+#include <sys/stat.h>
 #include <sys/socketvar.h>
+#include <sys/module.h>
+#include <sys/kauth.h>
 
 #include <dev/putter/putter_sys.h>
+
+/*
+ * Device routines.  These are for when /dev/puffs is initially
+ * opened before it has been cloned.
+ */
+
+dev_type_open(puttercdopen);
+dev_type_close(puttercdclose);
+dev_type_ioctl(puttercdioctl);
+
+/* dev */
+const struct cdevsw putter_cdevsw = {
+	puttercdopen,	puttercdclose,	noread,		nowrite,
+	noioctl,	nostop,		notty,		nopoll,
+	nommap,		nokqfilter,	D_OTHER
+};
 
 /*
  * Configuration data.
@@ -109,6 +129,9 @@ struct putter_instance {
 	uint8_t			*pi_curput;
 	size_t			pi_curres;
 	void			*pi_curopaq;
+	struct timespec		pi_atime;
+	struct timespec		pi_mtime;
+	struct timespec		pi_btime;
 
 	TAILQ_ENTRY(putter_instance) pi_entries;
 };
@@ -145,7 +168,7 @@ static kmutex_t pi_mtx;
 void putterattach(void);
 
 void
-putterattach()
+putterattach(void)
 {
 
 	mutex_init(&pi_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -153,7 +176,7 @@ putterattach()
 
 #if 0
 void
-putter_destroy()
+putter_destroy(void)
 {
 
 	mutex_destroy(&pi_mtx);
@@ -169,19 +192,21 @@ static int putter_fop_write(file_t *, off_t *, struct uio *,
 			    kauth_cred_t, int);
 static int putter_fop_ioctl(file_t*, u_long, void *);
 static int putter_fop_poll(file_t *, int);
+static int putter_fop_stat(file_t *, struct stat *);
 static int putter_fop_close(file_t *);
 static int putter_fop_kqfilter(file_t *, struct knote *);
 
 
 static const struct fileops putter_fileops = {
-	putter_fop_read,
-	putter_fop_write,
-	putter_fop_ioctl,
-	fnullop_fcntl,
-	putter_fop_poll,
-	fbadop_stat,
-	putter_fop_close,
-	putter_fop_kqfilter
+	.fo_read = putter_fop_read,
+	.fo_write = putter_fop_write,
+	.fo_ioctl = putter_fop_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = putter_fop_poll,
+	.fo_stat = putter_fop_stat,
+	.fo_close = putter_fop_close,
+	.fo_kqfilter = putter_fop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 static int
@@ -192,8 +217,12 @@ putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 	size_t origres, moved;
 	int error;
 
+	KERNEL_LOCK(1, NULL);
+	getnanotime(&pi->pi_atime);
+
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
 		printf("putter_fop_read: private %d not inited\n", pi->pi_idx);
+		KERNEL_UNLOCK_ONE(NULL);
 		return ENOENT;
 	}
 
@@ -201,8 +230,10 @@ putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 		error = pi->pi_pop->pop_getout(pi->pi_private, uio->uio_resid,
 		    fp->f_flag & O_NONBLOCK, &pi->pi_curput,
 		    &pi->pi_curres, &pi->pi_curopaq);
-		if (error)
+		if (error) {
+			KERNEL_UNLOCK_ONE(NULL);
 			return error;
+		}
 	}
 
 	origres = uio->uio_resid;
@@ -221,6 +252,7 @@ putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 		pi->pi_curput = NULL;
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 
@@ -234,22 +266,30 @@ putter_fop_write(file_t *fp, off_t *off, struct uio *uio,
 	size_t frsize;
 	int error;
 
+	KERNEL_LOCK(1, NULL);
+	getnanotime(&pi->pi_mtime);
+
 	DPRINTF(("putter_fop_write (%p): writing response, resid %zu\n",
 	    pi->pi_private, uio->uio_resid));
 
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
 		printf("putter_fop_write: putter %d not inited\n", pi->pi_idx);
+		KERNEL_UNLOCK_ONE(NULL);
 		return ENOENT;
 	}
 
 	error = uiomove(&pth, sizeof(struct putter_hdr), uio);
-	if (error)
+	if (error) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return error;
+	}
 
 	/* Sorry mate, the kernel doesn't buffer. */
 	frsize = pth.pth_framelen - sizeof(struct putter_hdr);
-	if (uio->uio_resid < frsize)
+	if (uio->uio_resid < frsize) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return EINVAL;
+	}
 
 	buf = kmem_alloc(frsize + sizeof(struct putter_hdr), KM_SLEEP);
 	memcpy(buf, &pth, sizeof(pth));
@@ -260,6 +300,7 @@ putter_fop_write(file_t *fp, off_t *off, struct uio *uio,
 	}
 	kmem_free(buf, frsize + sizeof(struct putter_hdr));
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 
@@ -274,14 +315,19 @@ putter_fop_poll(file_t *fp, int events)
 	struct putter_instance *pi = fp->f_data;
 	int revents;
 
+	KERNEL_LOCK(1, NULL);
+
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
 		printf("putter_fop_ioctl: putter %d not inited\n", pi->pi_idx);
+		KERNEL_UNLOCK_ONE(NULL);
 		return ENOENT;
 	}
 
 	revents = events & (POLLOUT | POLLWRNORM | POLLWRBAND);
-	if ((events & PUTTERPOLL_EVSET) == 0)
+	if ((events & PUTTERPOLL_EVSET) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return revents;
+	}
 
 	/* check queue */
 	if (pi->pi_pop->pop_waitcount(pi->pi_private))
@@ -289,6 +335,7 @@ putter_fop_poll(file_t *fp, int events)
 	else
 		selrecord(curlwp, &pi->pi_sel);
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return revents;
 }
 
@@ -304,6 +351,8 @@ putter_fop_close(file_t *fp)
 	int rv;
 
 	DPRINTF(("putter_fop_close: device closed\n"));
+
+	KERNEL_LOCK(1, NULL);
 
  restart:
 	mutex_enter(&pi_mtx);
@@ -346,6 +395,7 @@ putter_fop_close(file_t *fp)
 		goto restart;
 
  out:
+	KERNEL_UNLOCK_ONE(NULL);
 	/*
 	 * Finally, release the instance information.  It was already
 	 * removed from the list by putter_rmprivate() and we know it's
@@ -353,6 +403,23 @@ putter_fop_close(file_t *fp)
 	 */
 	kmem_free(pi, sizeof(struct putter_instance));
 
+	return 0;
+}
+
+static int
+putter_fop_stat(file_t *fp, struct stat *st)
+{
+	struct putter_instance *pi = fp->f_data;
+
+	(void)memset(st, 0, sizeof(*st));
+	KERNEL_LOCK(1, NULL);
+	st->st_dev = makedev(cdevsw_lookup_major(&putter_cdevsw), pi->pi_idx);
+	st->st_atimespec = pi->pi_atime;
+	st->st_mtimespec = pi->pi_mtime;
+	st->st_ctimespec = st->st_birthtimespec = pi->pi_btime;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }
 
@@ -377,28 +444,34 @@ filt_putterdetach(struct knote *kn)
 {
 	struct putter_instance *pi = kn->kn_hook;
 
+	KERNEL_LOCK(1, NULL);
 	mutex_enter(&pi_mtx);
 	SLIST_REMOVE(&pi->pi_sel.sel_klist, kn, knote, kn_selnext);
 	mutex_exit(&pi_mtx);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static int
 filt_putter(struct knote *kn, long hint)
 {
 	struct putter_instance *pi = kn->kn_hook;
-	int error;
+	int error, rv;
 
+	KERNEL_LOCK(1, NULL);
 	error = 0;
 	mutex_enter(&pi_mtx);
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD)
 		error = 1;
 	mutex_exit(&pi_mtx);
-	if (error)
+	if (error) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return 0;
+	}
 
 	kn->kn_data = pi->pi_pop->pop_waitcount(pi->pi_private);
-
-	return kn->kn_data != 0;
+	rv = kn->kn_data != 0;
+	KERNEL_UNLOCK_ONE(NULL);
+	return rv;
 }
 
 static const struct filterops putter_filtops =
@@ -409,6 +482,8 @@ putter_fop_kqfilter(file_t *fp, struct knote *kn)
 {
 	struct putter_instance *pi = fp->f_data;
 	struct klist *klist;
+
+	KERNEL_LOCK(1, NULL);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -425,27 +500,14 @@ putter_fop_kqfilter(file_t *fp, struct knote *kn)
 		kn->kn_fop = &seltrue_filtops;
 		break;
 	default:
+		KERNEL_UNLOCK_ONE(NULL);
 		return EINVAL;
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }
 
-/*
- * Device routines.  These are for when /dev/puffs is initially
- * opened before it has been cloned.
- */
-
-dev_type_open(puttercdopen);
-dev_type_close(puttercdclose);
-dev_type_ioctl(puttercdioctl);
-
-/* dev */
-const struct cdevsw putter_cdevsw = {
-	puttercdopen,	puttercdclose,	noread,		nowrite,
-	noioctl,	nostop,		notty,		nopoll,
-	nommap,		nokqfilter,	D_OTHER
-};
 int
 puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
@@ -464,6 +526,8 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	pi->pi_curput = NULL;
 	pi->pi_curres = 0;
 	pi->pi_curopaq = NULL;
+	getnanotime(&pi->pi_btime);
+	pi->pi_atime = pi->pi_mtime = pi->pi_btime;
 	selinit(&pi->pi_sel);
 	mutex_exit(&pi_mtx);
 
@@ -477,7 +541,7 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	    pi->pi_pid));
 
 	error = fd_clone(fp, fd, FREAD|FWRITE, &putter_fileops, pi);
-	KASSERT(error = EMOVEFD);
+	KASSERT(error == EMOVEFD);
 	return error;
 
  bad2:
@@ -576,4 +640,28 @@ get_pi_idx(struct putter_instance *pi_i)
 		TAILQ_INSERT_BEFORE(pi, pi_i, pi_entries);
 
 	return i;
+}
+
+MODULE(MODULE_CLASS_MISC, putter, NULL);
+
+static int
+putter_modcmd(modcmd_t cmd, void *arg)
+{
+#ifdef _MODULE
+	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return devsw_attach("putter", NULL, &bmajor,
+		    &putter_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		return devsw_detach(NULL, &putter_cdevsw);
+	default:
+		return ENOTTY;
+	}
+#else
+	if (cmd == MODULE_CMD_INIT)
+		return 0;
+	return ENOTTY;
+#endif
 }

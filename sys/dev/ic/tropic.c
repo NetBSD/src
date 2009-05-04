@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.34 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: tropic.c,v 1.34.4.1 2009/05/04 08:12:44 yamt Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.34 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.34.4.1 2009/05/04 08:12:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -120,8 +120,7 @@ static	int media[] = {
 };
 
 int
-tropic_mediachange(sc)
-	struct tr_softc *sc;
+tropic_mediachange(struct tr_softc *sc)
 {
 	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_TOKEN)
 		return EINVAL;
@@ -159,9 +158,7 @@ tropic_mediachange(sc)
 }
 
 void
-tropic_mediastatus(sc, ifmr)
-	struct tr_softc *sc;
-	struct ifmediareq *ifmr;
+tropic_mediastatus(struct tr_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifmedia	*ifm = &sc->sc_media;
 
@@ -169,8 +166,7 @@ tropic_mediastatus(sc, ifmr)
 }
 
 int
-tr_config(sc)
-	struct tr_softc *sc;
+tr_config(struct tr_softc *sc)
 {
 	if (sc->sc_init_status & FAST_PATH_TRANSMIT) {
 		int i;
@@ -228,8 +224,7 @@ tr_config(sc)
 }
 
 int
-tr_attach(sc)
-	struct tr_softc *sc;
+tr_attach(struct tr_softc *sc)
 {
 	int	nmedia, *mediaptr, *defmediaptr;
 	int	i, temp;
@@ -442,9 +437,7 @@ tr_attach(sc)
 }
 
 int
-tr_setspeed(sc, speed)
-struct tr_softc *sc;
-u_int8_t speed;
+tr_setspeed(struct tr_softc *sc, u_int8_t speed)
 {
 	SRB_OUTB(sc, sc->sc_srb, SRB_CMD, DIR_SET_DEFAULT_RING_SPEED);
 	SRB_OUTB(sc, sc->sc_srb, CMD_RETCODE, 0xfe);
@@ -464,8 +457,7 @@ u_int8_t speed;
 }
 
 int
-tr_mediachange(ifp)
-	struct ifnet *ifp;
+tr_mediachange(struct ifnet *ifp)
 {
 	struct tr_softc *sc = ifp->if_softc;
 
@@ -475,9 +467,7 @@ tr_mediachange(ifp)
 }
 
 void
-tr_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+tr_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct tr_softc *sc = ifp->if_softc;
 
@@ -487,8 +477,7 @@ tr_mediastatus(ifp, ifmr)
 }
 
 int
-tr_reset(sc)
-struct tr_softc *sc;
+tr_reset(struct tr_softc *sc)
 {
 	int i;
 
@@ -553,8 +542,7 @@ struct tr_softc *sc;
  * tr_stop - stop interface (issue a DIR.CLOSE.ADAPTER command)
  */
 void
-tr_stop(sc)
-struct tr_softc *sc;
+tr_stop(struct tr_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -576,8 +564,7 @@ struct tr_softc *sc;
 }
 
 static void
-tr_shutdown(arg)
-	void *arg;
+tr_shutdown(void *arg)
 {
 	struct tr_softc *sc = arg;
 
@@ -585,8 +572,7 @@ tr_shutdown(arg)
 }
 
 void
-tr_reinit(arg)
-	void *arg;
+tr_reinit(void *arg)
 {
 	struct tr_softc *sc = arg;
 	int	s;
@@ -600,8 +586,7 @@ tr_reinit(arg)
 }
 
 static void
-tr_reopen(arg)
-	void *arg;
+tr_reopen(void *arg)
 {
 	int	s;
 
@@ -616,8 +601,7 @@ tr_reopen(arg)
  *          - must be called at splnet
  */
 void
-tr_init(arg)
-	void *arg;
+tr_init(void *arg)
 {
 	struct tr_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -697,8 +681,7 @@ tr_init(arg)
  *  tr_oldstart - Present transmit request to adapter
  */
 void
-tr_oldstart(ifp)
-struct ifnet *ifp;
+tr_oldstart(struct ifnet *ifp)
 {
 	struct tr_softc *sc = ifp->if_softc;
 	bus_size_t srb = sc->sc_srb;
@@ -715,8 +698,7 @@ struct ifnet *ifp;
 }
 
 void
-tr_start(ifp)
-struct ifnet *ifp;
+tr_start(struct ifnet *ifp)
 {
 	struct tr_softc *sc = ifp->if_softc;
 	bus_size_t first_txbuf, txbuf;
@@ -809,8 +791,7 @@ next:
  *  service it.
  */
 int
-tr_intr(arg)
-	void *arg;
+tr_intr(void *arg)
 {
 	struct tr_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1147,11 +1128,11 @@ tr_intr(arg)
 }
 
 #ifdef notyet
-int asb_reply_rcv()
+int asb_reply_rcv(void)
 {
 }
 
-int asb_reply_xmit()
+int asb_reply_xmit(void)
 {
 }
 
@@ -1182,8 +1163,7 @@ int asb_response(bus_size_t asb, size_t len)
  *
  */
 void
-tr_rint(sc)
-struct tr_softc *sc;
+tr_rint(struct tr_softc *sc)
 {
 	bus_size_t arb = sc->sc_arb;
 	bus_size_t asb = sc->sc_asb;
@@ -1288,8 +1268,7 @@ struct tr_softc *sc;
  *  Interrupt handler for old style "adapter requires data to transmit".
  */
 void
-tr_oldxint(sc)
-struct tr_softc *sc;
+tr_oldxint(struct tr_softc *sc)
 {
 	bus_size_t arb = sc->sc_arb;	/* pointer to ARB */
 	bus_size_t asb = sc->sc_asb;	/* pointer to ASB */
@@ -1388,8 +1367,7 @@ struct tr_softc *sc;
  *  Interrupt handler for fast path transmit complete
  */
 void
-tr_xint(sc)
-struct tr_softc *sc;
+tr_xint(struct tr_softc *sc)
 {
 	u_short	tail;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1430,10 +1408,7 @@ struct tr_softc *sc;
  * copy out the packet byte-by-byte in reasonably optimal fashion
  */
 int
-tr_mbcopy(sc, dhb, m0)
-struct tr_softc *sc;
-bus_size_t dhb;
-struct mbuf *m0;
+tr_mbcopy(struct tr_softc *sc, bus_size_t dhb, struct mbuf *m0)
 {
 	bus_size_t addr = dhb;
 	int len, size = 0;
@@ -1464,10 +1439,7 @@ struct mbuf *m0;
  * called from tr_rint - receive interrupt routine
  */
 struct mbuf *
-tr_get(sc, totlen, ifp)
-struct tr_softc *sc;
-int totlen;
-struct ifnet *ifp;
+tr_get(struct tr_softc *sc, int totlen, struct ifnet *ifp)
 {
 	int len;
 	struct mbuf *m, *m0, *newm;
@@ -1525,10 +1497,7 @@ struct ifnet *ifp;
  *  tr_ioctl - process an ioctl request
  */
 int
-tr_ioctl(ifp, cmd, data)
-struct ifnet *ifp;
-u_long cmd;
-void *data;
+tr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct tr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -1539,68 +1508,65 @@ void *data;
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if ((error = tr_enable(sc)) != 0)
 			break;
 
+		/* XXX if not running  */
+		if ((ifp->if_flags & IFF_RUNNING) == 0) {
+			tr_init(sc);   /* before arp_ifinit/arpwhohas */
+			tr_sleep(sc);
+		}
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-		/* XXX if not running  */
-			if ((ifp->if_flags & IFF_RUNNING) == 0) {
-				tr_init(sc);   /* before arp_ifinit */
-				tr_sleep(sc);
-			}
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /*INET*/
 		default:
-			/* XXX if not running */
-			if ((ifp->if_flags & IFF_RUNNING) == 0) {
-				tr_init(sc);   /* before arpwhohas */
-				tr_sleep(sc);
-			}
 			break;
 		}
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		/*
 		 * 1- If the adapter is DOWN , turn the device off
 		 *       ie. adapter down but still running
 		 * 2- If the adapter is UP, turn the device on
 		 *       ie. adapter up but not running yet
 		 */
-		if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_RUNNING) {
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			tr_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 			tr_disable(sc);
-		}
-		else if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_UP) {
+			break;
+		case IFF_UP:
 			if ((error = tr_enable(sc)) != 0)
 				break;
 			tr_init(sc);
 			tr_sleep(sc);
-		}
-		else {
-/*
- * XXX handle other flag changes
- */
+			break;
+		default:
+			/*
+			 * XXX handle other flag changes
+			 */
+			break;
 		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
-#ifdef SIOCSIFMTU
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > sc->sc_maxmtu)
 			error = EINVAL;
 		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
-#endif
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 	splx(s);
 	return (error);
@@ -1612,10 +1578,10 @@ void *data;
  *	      adapter receive buffers.
  */
 void
-tr_bcopy(sc, dest, len)
-struct tr_softc *sc;	/* pointer to softc struct for this adapter */
-u_char *dest;		/* destination address */
-int len;		/* number of bytes to copy */
+tr_bcopy(struct tr_softc *sc, u_char *dest, int len)
+	/* sc:	 pointer to softc struct for this adapter */
+	/* dest:		 destination address */
+	/* len:		 number of bytes to copy */
 {
 	struct rbcb *rbc = &sc->rbc;	/* pointer to rec buf ctl blk */
 
@@ -1662,9 +1628,7 @@ int len;		/* number of bytes to copy */
  *  tr_opensap - open the token ring SAP interface
  */
 void
-tr_opensap(sc, type)
-struct tr_softc *sc;
-u_char type;
+tr_opensap(struct tr_softc *sc, u_char type)
 {
 	bus_size_t srb = sc->sc_srb;
 
@@ -1711,8 +1675,7 @@ u_char type;
  *  tr_sleep - sleep to wait for adapter to open
  */
 void
-tr_sleep(sc)
-struct tr_softc *sc;
+tr_sleep(struct tr_softc *sc)
 {
 	int error;
 
@@ -1722,8 +1685,7 @@ struct tr_softc *sc;
 }
 
 void
-tr_watchdog(ifp)
-struct ifnet	*ifp;
+tr_watchdog(struct ifnet *ifp)
 {
 	struct tr_softc	*sc = ifp->if_softc;
 
@@ -1734,8 +1696,7 @@ struct ifnet	*ifp;
 }
 
 int
-tr_enable(sc)
-	struct tr_softc *sc;
+tr_enable(struct tr_softc *sc)
 {
 	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
@@ -1749,8 +1710,7 @@ tr_enable(sc)
 }
 
 void
-tr_disable(sc)
-	struct tr_softc *sc;
+tr_disable(struct tr_softc *sc)
 {
 	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
@@ -1759,9 +1719,7 @@ tr_disable(sc)
 }
 
 int
-tr_activate(self, act)
-	struct device *self;
-	enum devact act;
+tr_activate(struct device *self, enum devact act)
 {
 	struct tr_softc *sc = (struct tr_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

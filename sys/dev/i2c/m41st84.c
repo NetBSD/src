@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.11.4.1 2008/05/16 02:24:01 yamt Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.11.4.2 2009/05/04 08:12:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.11.4.1 2008/05/16 02:24:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.11.4.2 2009/05/04 08:12:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.11.4.1 2008/05/16 02:24:01 yamt Exp $"
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/m41st84reg.h>
+#include <dev/i2c/m41st84var.h>
 
 struct strtc_softc {
 	device_t sc_dev;
@@ -120,7 +121,7 @@ strtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct strtc_softc *sc;
 
-	if ((sc = device_lookup(&strtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	/* XXX: Locking */
@@ -138,7 +139,7 @@ strtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct strtc_softc *sc;
 
-	if ((sc = device_lookup(&strtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	sc->sc_open = 0;
@@ -153,7 +154,7 @@ strtc_read(dev_t dev, struct uio *uio, int flags)
 	u_int8_t ch, cmdbuf[1];
 	int a, error;
 
-	if ((sc = device_lookup(&strtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= M41ST84_USER_RAM_SIZE)
@@ -192,7 +193,7 @@ strtc_write(dev_t dev, struct uio *uio, int flags)
 	u_int8_t cmdbuf[2];
 	int a, error;
 
-	if ((sc = device_lookup(&strtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= M41ST84_USER_RAM_SIZE)
@@ -413,4 +414,29 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	return (1);
+}
+
+void
+strtc_wdog_config(void *arg, uint8_t wd)
+{
+	struct strtc_softc *sc = arg;
+	uint8_t	cmdbuf[2];
+
+	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+		aprint_error_dev(sc->sc_dev,
+		    "strtc_wdog_config: failed to acquire I2C bus\n");
+		return;
+	}
+
+	cmdbuf[0] = M41ST84_REG_WATCHDOG;
+	cmdbuf[1] = wd;
+
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
+		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
+		aprint_error_dev(sc->sc_dev,
+		    "strtc_wdog_config: failed to write watchdog\n");
+		return;
+	}
+
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 }

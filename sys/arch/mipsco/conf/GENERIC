@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.68 2007/12/31 15:31:59 ad Exp $
+# $NetBSD: GENERIC,v 1.68.10.1 2009/05/04 08:11:32 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -32,7 +32,6 @@ options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-#options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
 options 	HZ=25
 options 	USERCONF		# userconf(4) support
@@ -67,6 +66,8 @@ options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options 	COMPAT_30		# NetBSD 3.0 compatibility.
+options 	COMPAT_40		# NetBSD 4.0 compatibility.
+options 	COMPAT_50		# NetBSD 5.0 compatibility.
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -156,6 +157,11 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.2 2007/11/22 16:16:58 bouyer Exp $ */
+/* $NetBSD: hypercalls.h,v 1.2.26.1 2009/05/04 08:12:12 yamt Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -341,6 +341,13 @@ HYPERVISOR_shutdown(
 }
 
 static inline long
+HYPERVISOR_crash(
+	void)
+{
+	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_crash);
+}
+
+static inline long
 HYPERVISOR_reboot(
 	void)
 {
@@ -382,12 +389,21 @@ HYPERVISOR_kexec_op(
 	return _hypercall2(int, kexec_op, op, args);
 }
 
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 static inline int
 HYPERVISOR_dom0_op(
 	dom0_op_t *dom0_op)
 {
 	dom0_op->interface_version = DOM0_INTERFACE_VERSION;
 	return _hypercall1(int, dom0_op, dom0_op);
+}
+#endif	/* __XEN_INTERFACE_VERSION__ */
+
+static inline int
+HYPERVISOR_machine_check(struct xen_mc *mc)
+{
+	mc->interface_version = XEN_MCA_INTERFACE_VERSION;
+	return _hypercall1(int, mca, mc);
 }
 
 #endif /* __HYPERCALL_H__ */

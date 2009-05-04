@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.8.4.1 2008/05/16 02:23:28 yamt Exp $	*/
+/*	$NetBSD: est.c,v 1.8.4.2 2009/05/04 08:12:10 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,10 +81,11 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.8.4.1 2008/05/16 02:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.8.4.2 2009/05/04 08:12:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>
@@ -1246,10 +1247,8 @@ est_init_main(int vendor)
 		    i < est_fqlist->n - 1 ? " " : "");
 	}
 
-	aprint_normal("%s: %s (%d mV) ", cpuname, est_desc, mv);
-	aprint_normal("%d MHz\n", MSR2MHZ(msr, bus_clock));
-	aprint_normal("%s: %s frequencies available (MHz): %s\n",
-	    cpuname, est_desc, freq_names);
+	aprint_debug("%s: %s (%d mV) ", cpuname, est_desc, mv);
+	aprint_debug("%d (MHz): %s\n", MSR2MHZ(msr, bus_clock), freq_names);
 
 	/*
 	 * Setup the sysctl sub-tree machdep.est.*

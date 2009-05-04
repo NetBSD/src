@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.7 2007/03/04 05:59:31 christos Exp $
+ * $NetBSD: main.c,v 1.7.44.1 2009/05/04 08:10:35 yamt Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -45,6 +45,7 @@
 
 #include <saerrno.h>
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include "libstubs.h"
 #include "samachdep.h"

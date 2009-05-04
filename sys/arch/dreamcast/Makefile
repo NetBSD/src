@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.108.1 2009/05/04 08:10:55 yamt Exp $
 
 # Makefile for dreamcast tags file and boot blocks
 
@@ -16,7 +16,8 @@ DDREAMCAST=	dreamcast include
 tags:
 	-ctags -wdtf ${TDREAMCAST} ${SDREAMCAST} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ADREAMCAST} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TDREAMCAST}
 	sort -o ${TDREAMCAST} ${TDREAMCAST}
 

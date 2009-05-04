@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2007/11/26 19:58:30 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.18.1 2009/05/04 08:11:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2007/11/26 19:58:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.18.1 2009/05/04 08:11:29 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2007/11/26 19:58:30 garbled Exp $"
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -106,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2007/11/26 19:58:30 garbled Exp $"
 #include <arch/powerpc/pic/ipivar.h>
 #endif
 
-volatile uint32_t *heathrow_FCR = NULL;
 struct genfb_colormap_callback gfb_cb;
 
 static void of_set_palette(void *, int, int, int, int);
@@ -184,6 +184,8 @@ cpu_reboot(int howto, char *what)
 		dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		delay(1000000);

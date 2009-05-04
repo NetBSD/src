@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.29 2008/04/08 20:40:42 cegger Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.29.4.1 2009/05/04 08:12:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.29 2008/04/08 20:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.29.4.1 2009/05/04 08:12:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -436,23 +436,25 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		error = gfe_whack(sc, GE_WHACK_START);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			error = gfe_whack(sc, GE_WHACK_START);
 			if (error == 0)
 				arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			error = gfe_whack(sc, GE_WHACK_START);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
 		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
 		case IFF_UP|IFF_RUNNING:/* active->active, update */
 			error = gfe_whack(sc, GE_WHACK_CHANGE);
@@ -490,7 +492,7 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 	splx(s);
@@ -756,7 +758,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    rxq->rxq_fi * sizeof(*rxb), buflen, BUS_DMASYNC_POSTREAD);
 
 		KASSERT(m->m_len == 0 && m->m_pkthdr.len == 0);
-		memcpy(m->m_data + m->m_len, rxb->rb_data, buflen);
+		memcpy(m->m_data + m->m_len, rxb->rxb_data, buflen);
 		m->m_len = buflen;
 		m->m_pkthdr.len = buflen;
 

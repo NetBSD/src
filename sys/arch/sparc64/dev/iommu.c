@@ -1,8 +1,33 @@
-/*	$NetBSD: iommu.c,v 1.81 2007/03/04 06:00:49 christos Exp $	*/
+/*	$NetBSD: iommu.c,v 1.81.44.1 2009/05/04 08:11:57 yamt Exp $	*/
+
+/*
+ * Copyright (c) 1999, 2000 Matthew R. Green
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
- * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81 2007/03/04 06:00:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81.44.1 2009/05/04 08:11:57 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81 2007/03/04 06:00:49 christos Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <sparc64/sparc64/cache.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 
@@ -73,6 +97,8 @@ int iommudebug = 0x0;
 	} while (0)
 
 static	int iommu_strbuf_flush_done(struct strbuf_ctl *);
+static	void _iommu_dvmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+		bus_size_t, int);
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -134,7 +160,7 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	is->is_ptsb = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 
 	/* Map the pages */
-	TAILQ_FOREACH(pg, &pglist, pageq) {
+	TAILQ_FOREACH(pg, &pglist, pageq.queue) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		pmap_kenter_pa(va, pa | PMAP_NVC, VM_PROT_READ | VM_PROT_WRITE);
 		va += PAGE_SIZE;
@@ -371,7 +397,7 @@ iommu_strbuf_flush_done(struct strbuf_ctl *sb)
 	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
 
 	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flush = %lx "
-		"at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n",
+		"at va = %lx pa = %lx now=%"PRIx64":%"PRIx32" until = %"PRIx64":%"PRIx32"\n",
 		(long)*sb->sb_flush, (long)sb->sb_flush, (long)sb->sb_flushpa,
 		cur.tv_sec, cur.tv_usec,
 		flushtimeout.tv_sec, flushtimeout.tv_usec));
@@ -399,9 +425,10 @@ iommu_strbuf_flush_done(struct strbuf_ctl *sb)
  * IOMMU DVMA operations, common to SBUS and PCI.
  */
 int
-iommu_dvmamap_load(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
-	void *buf, bus_size_t buflen, struct proc *p, int flags)
+iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+	bus_size_t buflen, struct proc *p, int flags)
 {
+	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	struct iommu_state *is = sb->sb_is;
 	int s;
 	int err;
@@ -568,8 +595,9 @@ iommu_dvmamap_load(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 
 
 void
-iommu_dvmamap_unload(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map)
+iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
+	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	struct iommu_state *is = sb->sb_is;
 	int error, s;
 	bus_size_t sgsize = map->_dm_dvmasize;
@@ -606,9 +634,10 @@ iommu_dvmamap_unload(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map)
 
 
 int
-iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
-	bus_dma_segment_t *segs, int nsegs, int flags, bus_size_t size)
+iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+	bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
+	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	struct iommu_state *is = sb->sb_is;
 	struct vm_page *pg;
 	int i, j, s;
@@ -733,7 +762,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 					(long)map->dm_segs[j].ds_len));
 			} else {
 				if (j >= map->_dm_segcnt) {
-					iommu_dvmamap_unload(t, sb, map);
+					iommu_dvmamap_unload(t, map);
 					return (EFBIG);
 				}
 				map->dm_segs[j].ds_addr = sgstart;
@@ -756,7 +785,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 					(long)map->dm_segs[j].ds_addr,
 					(long)map->dm_segs[j].ds_len));
 				if (++j >= map->_dm_segcnt) {
-					iommu_dvmamap_unload(t, sb, map);
+					iommu_dvmamap_unload(t, map);
 					return (EFBIG);
 				}
 				sgstart = roundup(sgstart, boundary);
@@ -841,7 +870,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 			(long)map->dm_segs[i].ds_addr, (long)map->dm_segs[i].ds_len));
 	map->dm_segs[i].ds_len = sgend - sgstart + 1;
 
-	TAILQ_FOREACH(pg, pglist, pageq) {
+	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 		if (sgsize == 0)
 			panic("iommu_dmamap_load_raw: size botch");
 		pa = VM_PAGE_TO_PHYS(pg);
@@ -918,10 +947,11 @@ iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
 	return (1);
 }
 
-void
-iommu_dvmamap_sync(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
-	bus_addr_t offset, bus_size_t len, int ops)
+static void
+_iommu_dvmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+	bus_size_t len, int ops)
 {
+	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	bus_size_t count;
 	int i, needsflush = 0;
 
@@ -964,10 +994,27 @@ iommu_dvmamap_sync(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 	}
 }
 
+void
+iommu_dvmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+	bus_size_t len, int ops)
+{
+
+	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) {
+		/* Flush the CPU then the IOMMU */
+		bus_dmamap_sync(t->_parent, map, offset, len, ops);
+		_iommu_dvmamap_sync(t, map, offset, len, ops);
+	}
+	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) {
+		/* Flush the IOMMU then the CPU */
+		_iommu_dvmamap_sync(t, map, offset, len, ops);
+		bus_dmamap_sync(t->_parent, map, offset, len, ops);
+	}
+}
+
 int
-iommu_dvmamem_alloc(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_size_t size,
-	bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
-	int nsegs, int *rsegs, int flags)
+iommu_dvmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+	bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+	int flags)
 {
 
 	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_alloc: sz %llx align %llx bound %llx "
@@ -979,8 +1026,7 @@ iommu_dvmamem_alloc(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_size_t size,
 }
 
 void
-iommu_dvmamem_free(bus_dma_tag_t t, struct strbuf_ctl *sb,
-	bus_dma_segment_t *segs, int nsegs)
+iommu_dvmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 
 	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_free: segp %p nsegs %d\n",
@@ -993,9 +1039,8 @@ iommu_dvmamem_free(bus_dma_tag_t t, struct strbuf_ctl *sb,
  * Check the flags to see whether we're streaming or coherent.
  */
 int
-iommu_dvmamem_map(bus_dma_tag_t t, struct strbuf_ctl *sb,
-	bus_dma_segment_t *segs, int nsegs, size_t size, void **kvap,
-	int flags)
+iommu_dvmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+	size_t size, void **kvap, int flags)
 {
 	struct vm_page *pg;
 	vaddr_t va;
@@ -1032,7 +1077,7 @@ iommu_dvmamem_map(bus_dma_tag_t t, struct strbuf_ctl *sb,
 	 * Now take this and map it into the CPU.
 	 */
 	pglist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(pg, pglist, pageq) {
+	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 #ifdef DIAGNOSTIC
 		if (size == 0)
 			panic("iommu_dvmamem_map: size botch");
@@ -1052,8 +1097,7 @@ iommu_dvmamem_map(bus_dma_tag_t t, struct strbuf_ctl *sb,
  * Unmap DVMA mappings from kernel
  */
 void
-iommu_dvmamem_unmap(bus_dma_tag_t t, struct strbuf_ctl *sb, void *kva,
-	size_t size)
+iommu_dvmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_unmap: kvm %p size %lx\n",

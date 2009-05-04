@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.9 2008/01/08 13:15:02 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.9.10.1 2009/05/04 08:10:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -34,14 +34,21 @@
 #ifndef _AMD64_PROC_H
 #define _AMD64_PROC_H
 
+#ifdef __x86_64__
+
 #include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
 
 /*
  * Machine-dependent part of the lwp structure for amd64.
  */
+struct pmap;
+struct vm_page;
+
 struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
+	struct pmap *md_gc_pmap;	/* pmap being garbage collected */
+	struct vm_page *md_gc_ptp;	/* pages from pmap g/c */
 	int	md_flags;		/* machine-dependent flags */
 	volatile int md_astpending;
 };
@@ -49,7 +56,7 @@ struct mdlwp {
 struct mdproc {
 	int	md_flags;
 					/* Syscall handling function */
-	void	(*md_syscall) __P((struct trapframe *));
+	void	(*md_syscall)(struct trapframe *);
 };
 
 /* md_flags */
@@ -62,5 +69,11 @@ struct mdproc {
 #define	UAREA_USER_OFFSET	(USPACE - ALIGN(sizeof(struct user)))
 #define	KSTACK_LOWEST_ADDR(l)	((void *)USER_TO_UAREA((l)->l_addr))
 #define	KSTACK_SIZE		UAREA_USER_OFFSET
+
+#else	/*	__x86_64__	*/
+
+#include <i386/proc.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* _AMD64_PROC_H */
