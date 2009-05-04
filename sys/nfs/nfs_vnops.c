@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.274 2009/05/04 05:49:00 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.275 2009/05/04 05:50:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.274 2009/05/04 05:49:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.275 2009/05/04 05:50:17 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -817,6 +817,7 @@ nfs_lookup(void *v)
 	 */
 	error = cache_lookup_raw(dvp, vpp, cnp);
 	KASSERT(dvp != *vpp);
+	KASSERT((cnp->cn_flags & ISWHITEOUT) == 0);
 	if (error >= 0) {
 		struct vattr vattr;
 		int err2;
