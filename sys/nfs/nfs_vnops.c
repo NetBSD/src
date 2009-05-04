@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.273 2009/03/14 21:04:26 dsl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.274 2009/05/04 05:49:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.273 2009/03/14 21:04:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.274 2009/05/04 05:49:00 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -752,13 +752,7 @@ nfs_setattrrpc(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, struct lw
 /*
  * nfs lookup call, one step at a time...
  * First look in cache
- * If not found, unlock the directory nfsnode and do the rpc
- *
- * This code is full of lock/unlock statements and checks, because
- * we continue after cache_lookup has finished (we need to check
- * with the attr cache and do an rpc if it has timed out). This means
- * that the locking effects of cache_lookup have to be taken into
- * account.
+ * If not found, do the rpc.
  */
 int
 nfs_lookup(void *v)
@@ -856,6 +850,11 @@ nfs_lookup(void *v)
 			goto noentry;
 		}
 
+		/*
+		 * investigate the vnode returned by cache_lookup_raw.
+		 * if it isn't appropriate, do an rpc.
+		 */
+
 		newvp = *vpp;
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred)
 		    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
@@ -952,7 +951,8 @@ dorpc:
 
 	if (NFS_CMPFH(np, fhp, fhsize)) {
 		/*
-		 * "." lookup
+		 * as we handle "." lookup locally, this should be
+		 * a broken server.
 		 */
 		VREF(dvp);
 		newvp = dvp;
