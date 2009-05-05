@@ -75,14 +75,12 @@ extern const char * const sys_signame[];
 #include "utils.h"
 #include "version.h"
 
-extern int  errno;
-
 extern char *copyright;
 
 typedef struct command {
     int ch;
     int (*cmd_func)(globalstate *);
-    char *help;
+    const char *help;
 } command;
 
 /*
@@ -117,17 +115,17 @@ static int errcnt;
  *	for sorting errors.
  */
 
-int
+static int
 err_compar(const void *p1, const void *p2)
 
 {
     register int result;
 
-    if ((result = ((struct errs *)p1)->errnum -
-	 ((struct errs *)p2)->errnum) == 0)
+    if ((result = ((const struct errs *)p1)->errnum -
+	 ((const struct errs *)p2)->errnum) == 0)
     {
-	return(strcmp(((struct errs *)p1)->arg,
-		      ((struct errs *)p2)->arg));
+	return(strcmp(((const struct errs *)p1)->arg,
+		      ((const struct errs *)p2)->arg));
     }
     return(result);
 }
@@ -138,11 +136,11 @@ err_compar(const void *p1, const void *p2)
  *      number of characters remaining in str, or 0 if overflowed.
  */
 
-int
+static int
 str_adderr(char *str, int len, int err)
 
 {
-    register char *msg;
+    register const char *msg;
     register int  msglen;
 
     msg = err == 0 ? "Not a number" : errmsg(err);
@@ -164,7 +162,7 @@ str_adderr(char *str, int len, int err)
  *      remaining in str, or 0 if overflowed.
  */
 
-int
+static int
 str_addarg(char *str, int len, char *arg, int first)
 
 {
@@ -198,8 +196,8 @@ str_addarg(char *str, int len, char *arg, int first)
 
 #define STRMAX 80
 
-void
-err_string()
+static void
+err_string(void)
 
 {
     register struct errs *errp;
@@ -266,7 +264,7 @@ err_string()
  *  Utility routines that help with some of the commands.
  */
 
-char *
+static char *
 next_field(char *str)
 
 
@@ -283,7 +281,7 @@ next_field(char *str)
     return(*str == '\0' ? NULL : str);
 }
 
-int
+static int
 scanint(char *str, int *intp)
 
 {
@@ -316,12 +314,13 @@ scanint(char *str, int *intp)
     return(0);
 }
 
+#ifdef notdef
 /*
  *  error_count() - return the number of errors currently logged.
  */
 
-int
-error_count()
+static int
+error_count(void)
 
 {
     return(errcnt);
@@ -331,8 +330,8 @@ error_count()
  *  show_errors() - display on stdout the current log of errors.
  */
 
-void
-show_errors()
+static void
+show_errors(void)
 
 {
     register int cnt = 0;
@@ -346,13 +345,14 @@ show_errors()
 	errp++;
     }
 }
+#endif
 
 /*
  *  kill_procs(str) - send signals to processes, much like the "kill"
  *		command does; invoked in response to 'k'.
  */
 
-void
+static void
 kill_procs(char *str)
 
 {
@@ -468,7 +468,7 @@ kill_procs(char *str)
  *		"renice" command does; invoked in response to 'r'.
  */
 
-void
+static void
 renice_procs(char *str)
 
 {
@@ -547,7 +547,7 @@ renice_procs(char *str)
  * returns will be returned by command_process.
  */
 
-void
+static void
 cmd_quit(globalstate *gstate)
 
 {
@@ -555,7 +555,7 @@ cmd_quit(globalstate *gstate)
     /*NOTREACHED*/
 }
 
-int
+static int
 cmd_update(globalstate *gstate)
 
 {
@@ -566,7 +566,7 @@ cmd_update(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_redraw(globalstate *gstate)
 
 {
@@ -574,7 +574,7 @@ cmd_redraw(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_color(globalstate *gstate)
 
 {
@@ -583,7 +583,7 @@ cmd_color(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_number(globalstate *gstate)
 
 {
@@ -616,7 +616,7 @@ cmd_number(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_delay(globalstate *gstate)
 
 {
@@ -639,7 +639,7 @@ cmd_delay(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_idle(globalstate *gstate)
 
 {
@@ -649,7 +649,7 @@ cmd_idle(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_displays(globalstate *gstate)
 
 {
@@ -672,7 +672,7 @@ cmd_displays(globalstate *gstate)
     return CMD_OK;
 }
 
-int
+static int
 cmd_cmdline(globalstate *gstate)
 
 {
@@ -687,7 +687,7 @@ cmd_cmdline(globalstate *gstate)
     return CMD_OK;
 }
 
-int
+static int
 cmd_order(globalstate *gstate)
 
 {
@@ -713,13 +713,13 @@ cmd_order(globalstate *gstate)
     return CMD_OK;
 }
 
-int
-cmd_order_x(globalstate *gstate, char *name, ...)
+static int
+cmd_order_x(globalstate *gstate, const char *name, ...)
 
 {
     va_list ap;
     char *p;
-    char **names;
+    const char **names;
     int i;
 
     names = gstate->statics->order_names;
@@ -750,28 +750,28 @@ cmd_order_x(globalstate *gstate, char *name, ...)
     return CMD_OK;
 }
 
-int
+static int
 cmd_order_cpu(globalstate *gstate)
 
 {
     return cmd_order_x(gstate, "cpu", NULL);
 }
 
-int
+static int
 cmd_order_pid(globalstate *gstate)
 
 {
     return cmd_order_x(gstate, "pid", NULL);
 }
 
-int
+static int
 cmd_order_mem(globalstate *gstate)
 
 {
     return cmd_order_x(gstate, "mem", "size", NULL);
 }
 
-int
+static int
 cmd_order_time(globalstate *gstate)
 
 {
@@ -780,7 +780,7 @@ cmd_order_time(globalstate *gstate)
 
 #ifdef ENABLE_KILL
 
-int
+static int
 cmd_kill(globalstate *gstate)
 
 {
@@ -794,7 +794,7 @@ cmd_kill(globalstate *gstate)
     return CMD_OK;
 }
 	    
-int
+static int
 cmd_renice(globalstate *gstate)
 
 {
@@ -810,7 +810,7 @@ cmd_renice(globalstate *gstate)
 
 #endif
 
-int
+static int
 cmd_pid(globalstate *gstate)
 
 {
@@ -827,7 +827,7 @@ cmd_pid(globalstate *gstate)
     return CMD_OK;
 }
 
-int
+static int
 cmd_user(globalstate *gstate)
 
 {
@@ -857,7 +857,7 @@ cmd_user(globalstate *gstate)
     return ret;
 }
 
-int
+static int
 cmd_command(globalstate *gstate)
 
 {
@@ -880,7 +880,7 @@ cmd_command(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_useruid(globalstate *gstate)
 
 {
@@ -889,7 +889,7 @@ cmd_useruid(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_mode(globalstate *gstate)
 
 {
@@ -902,7 +902,7 @@ cmd_mode(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_system(globalstate *gstate)
 
 {
@@ -911,7 +911,7 @@ cmd_system(globalstate *gstate)
     return CMD_REFRESH;
 }
 
-int
+static int
 cmd_threads(globalstate *gstate)
 
 {
@@ -924,7 +924,7 @@ cmd_threads(globalstate *gstate)
     return CMD_NA;
 }
 
-int
+static int
 cmd_percpustates(globalstate *gstate)
 {
 	gstate->percpustates = !gstate->percpustates;
@@ -982,7 +982,7 @@ cmd_help(globalstate *gstate)
     command *c;
     char buf[12];
     char *p;
-    char *help;
+    const char *help;
 
     display_pagerstart();
 

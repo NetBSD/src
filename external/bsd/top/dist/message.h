@@ -38,7 +38,7 @@
 #ifndef _MESSAGE_H
 #define _MESSAGE_H
 
-void error_message(char *msgfmt, ...);
-void clear_message();
+void error_message(const char *msgfmt, ...);
+void clear_message(void);
 
 #endif /* _MESSAGE_H_ */
