@@ -1,4 +1,4 @@
-dnl $Id: configure.ac,v 1.2 2009/04/25 01:29:14 agc Exp $
+dnl $Id: configure.ac,v 1.3 2009/05/05 15:29:46 agc Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
 AC_INIT([netpgp],[20090423],[Alistair Crooks <agc@netbsd.org> c0596823])
@@ -25,7 +25,7 @@ AC_SUBST(AUTOHEADER)
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([CommonCrypto/CommonDigest.h])
-AC_CHECK_HEADERS([assert.h bzlib.h dmalloc.h direct.h errno.h fcntl.h])
+AC_CHECK_HEADERS([bzlib.h dmalloc.h direct.h errno.h fcntl.h])
 AC_CHECK_HEADERS([inttypes.h libgen.h limits.h malloc.h])
 AC_CHECK_HEADERS([stdbool.h zlib.h])
 AC_CHECK_HEADERS([openssl/aes.h openssl/bn.h openssl/cast.h openssl/des.h openssl/dsa.h])
