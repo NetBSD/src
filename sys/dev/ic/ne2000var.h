@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.20 2009/04/05 03:37:07 uwe Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.21 2009/05/05 12:37:24 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,11 @@ struct ne2000_softc {
 		NE2000_TYPE_AX88790
 	} sc_type;
 	int sc_useword;
+	enum {
+		NE2000_DMAWIDTH_UNKNOWN = 0,
+		NE2000_DMAWIDTH_16BIT,
+		NE2000_DMAWIDTH_8BIT,
+	} sc_dmawidth;
 };
 
 int	ne2000_attach(struct ne2000_softc *, u_int8_t *);
