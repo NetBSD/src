@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.36 2009/05/04 12:14:31 cegger Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.37 2009/05/05 09:51:23 cegger Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.36 2009/05/04 12:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.37 2009/05/05 09:51:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ void	ahc_isa_attach(device_t, device_t, void *);
 void	aha2840_load_seeprom(struct ahc_softc *ahc);
 static int verify_seeprom_cksum(struct seeprom_config *sc);
 
-CFATTACH_DECL(ahc_isa, sizeof(struct ahc_softc),
+CFATTACH_DECL_NEW(ahc_isa, sizeof(struct ahc_softc),
     ahc_isa_probe, ahc_isa_attach, NULL, NULL);
 
 /*
@@ -371,6 +371,7 @@ ahc_isa_attach(device_t parent, device_t self, void *aux)
 	char idstring[EISA_IDSTRINGLEN];
 	u_char intdef;
 
+	ahc->sc_dev = self;
 	aprint_naive(": SCSI controller\n");
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ia->ia_io[0].ir_size,
@@ -402,7 +403,7 @@ ahc_isa_attach(device_t parent, device_t self, void *aux)
 	 */
 	ahc->sc_dmaflags = ISABUS_DMA_32BIT;
 
-	ahc_set_name(ahc, device_xname(&ahc->sc_dev));
+	ahc_set_name(ahc, device_xname(ahc->sc_dev));
 	ahc->parent_dmat = ia->ia_dmat;
 	ahc->channel = 'A';
 	ahc->chip =  AHC_AIC7770|AHC_VL;
@@ -432,7 +433,7 @@ ahc_isa_attach(device_t parent, device_t self, void *aux)
 	ahc->ih = isa_intr_establish(ia->ia_ic, irq,
 	    intrtype, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		aprint_error_dev(&ahc->sc_dev, "couldn't establish %s interrupt\n",
+		aprint_error_dev(ahc->sc_dev, "couldn't establish %s interrupt\n",
 		       intrtypestr);
 		goto free_io;
 	}
@@ -442,7 +443,7 @@ ahc_isa_attach(device_t parent, device_t self, void *aux)
 	 * usefull for debugging irq problems
 	 */
 	if (bootverbose) {
-		aprint_verbose_dev(&ahc->sc_dev, "Using %s interrupts\n",
+		aprint_verbose_dev(ahc->sc_dev, "Using %s interrupts\n",
 		       intrtypestr);
 	}
 
