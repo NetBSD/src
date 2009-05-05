@@ -407,7 +407,7 @@ read_and_eat_whitespace(dearmour_t * dearmour,
 static void 
 flush(dearmour_t * dearmour, __ops_parse_cb_info_t * cbinfo)
 {
-	__ops_parser_content_t content;
+	__ops_packet_t content;
 
 	if (dearmour->num_unarmoured == 0)
 		return;
@@ -486,8 +486,8 @@ process_dash_escaped(dearmour_t * dearmour, __ops_error_t ** errors,
 		     __ops_reader_info_t * rinfo,
 		     __ops_parse_cb_info_t * cbinfo)
 {
-	__ops_parser_content_t content;
-	__ops_parser_content_t content2;
+	__ops_packet_t content;
+	__ops_packet_t content2;
 	__ops_signed_cleartext_body_t *body = &content.u.signed_cleartext_body;
 	__ops_signed_cleartext_trailer_t *trailer
 	= &content2.u.signed_cleartext_trailer;
@@ -878,7 +878,7 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 		     __ops_parse_cb_info_t * cbinfo)
 {
 	dearmour_t *dearmour = __ops_reader_get_arg(rinfo);
-	__ops_parser_content_t content;
+	__ops_packet_t content;
 	int             ret;
 	bool   first;
 	unsigned char  *dest = dest_;
@@ -1685,7 +1685,7 @@ __ops_teardown_memory_write(__ops_create_info_t * cinfo, __ops_memory_t * mem)
 void 
 __ops_setup_memory_read(__ops_parse_info_t ** pinfo, __ops_memory_t * mem,
 		      void *vp,
-		      __ops_parse_cb_return_t callback(const __ops_parser_content_t *, __ops_parse_cb_info_t *),
+		      __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_parse_cb_info_t *),
 		      bool accumulate)
 {
 	/*
@@ -1825,7 +1825,7 @@ __ops_teardown_file_append(__ops_create_info_t * cinfo, int fd)
 int 
 __ops_setup_file_read(__ops_parse_info_t ** pinfo, const char *filename,
 		    void *vp,
-		    __ops_parse_cb_return_t callback(const __ops_parser_content_t *, __ops_parse_cb_info_t *),
+		    __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_parse_cb_info_t *),
 		    bool accumulate)
 {
 	int             fd = 0;
@@ -1875,7 +1875,7 @@ __ops_teardown_file_read(__ops_parse_info_t * pinfo, int fd)
 }
 
 __ops_parse_cb_return_t
-literal_data_cb(const __ops_parser_content_t *contents, __ops_parse_cb_info_t *cbinfo)
+literal_data_cb(const __ops_packet_t *contents, __ops_parse_cb_info_t *cbinfo)
 {
 	const __ops_parser_content_union_t *content = &contents->u;
 
@@ -1912,7 +1912,7 @@ literal_data_cb(const __ops_parser_content_t *contents, __ops_parse_cb_info_t *c
 }
 
 __ops_parse_cb_return_t
-pk_session_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * cbinfo)
+pk_session_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 {
 	const __ops_parser_content_union_t *content = &contents->u;
 
@@ -1957,11 +1957,11 @@ pk_session_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t
 */
 
 __ops_parse_cb_return_t
-get_secret_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * cbinfo)
+get_secret_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 {
 	const __ops_parser_content_union_t *content = &contents->u;
 	const __ops_secret_key_t *secret;
-	__ops_parser_content_t seckey;
+	__ops_packet_t seckey;
 
 	OPS_USED(cbinfo);
 
@@ -1979,7 +1979,7 @@ get_secret_key_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t
 		while (!secret) {
 			if (!cbinfo->cryptinfo.passphrase) {
 				(void) memset(&seckey, 0x0, sizeof(seckey));
-				seckey.u.secret_key_passphrase.passphrase = &cbinfo->cryptinfo.passphrase;
+				seckey.u.skey_passphrase.passphrase = &cbinfo->cryptinfo.passphrase;
 				CALLBACK(cbinfo, OPS_PARSER_CMD_GET_SK_PASSPHRASE, &seckey);
 				if (!cbinfo->cryptinfo.passphrase) {
 					fprintf(stderr, "can't get passphrase\n");
@@ -2022,7 +2022,7 @@ __ops_malloc_passphrase(char *pp)
  \param cbinfo
 */
 __ops_parse_cb_return_t
-get_passphrase_cb(const __ops_parser_content_t *contents, __ops_parse_cb_info_t *cbinfo)
+get_passphrase_cb(const __ops_packet_t *contents, __ops_parse_cb_info_t *cbinfo)
 {
 	const __ops_parser_content_union_t *content = &contents->u;
 
@@ -2032,7 +2032,7 @@ get_passphrase_cb(const __ops_parser_content_t *contents, __ops_parse_cb_info_t 
 	}
 	switch (contents->tag) {
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-		*(content->secret_key_passphrase.passphrase) =
+		*(content->skey_passphrase.passphrase) =
 			__ops_malloc_passphrase(getpass("netpgp passphrase: "));
 		return OPS_KEEP_MEMORY;
 

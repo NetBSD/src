@@ -57,8 +57,8 @@ typedef struct _ops_hash_t __ops_hash_t;
 /** Revocation Reason type */
 typedef unsigned char __ops_ss_rr_code_t;
 
-/** __ops_parser_content_t */
-typedef struct __ops_parser_content_t __ops_parser_content_t;
+/** __ops_packet_t */
+typedef struct __ops_packet_t __ops_packet_t;
 
 /** Writer flags */
 typedef enum {

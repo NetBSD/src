@@ -31,10 +31,6 @@
 #include <bzlib.h>
 #endif
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
 #include <string.h>
 
 #include "packet-parse.h"
@@ -87,7 +83,12 @@ zlib_compressed_data_reader(void *dest, size_t length,
 	size_t		 cc;
 	char		*cdest = dest;
 
-	assert(z->type == OPS_C_ZIP || z->type == OPS_C_ZLIB);
+	if (z->type != OPS_C_ZIP && z->type != OPS_C_ZLIB) {
+		(void) fprintf(stderr,
+			"zlib_compressed_data_reader: weird type %d\n",
+			z->type);
+		return 0;
+	}
 
 	if (z->inflate_ret == Z_STREAM_END &&
 	    z->zstream.next_out == &z->out[z->offset]) {
@@ -146,7 +147,10 @@ zlib_compressed_data_reader(void *dest, size_t length,
 			}
 			z->inflate_ret = ret;
 		}
-		assert(z->zstream.next_out > &z->out[z->offset]);
+		if (z->zstream.next_out <= &z->out[z->offset]) {
+			(void) fprintf(stderr, "Out of memory in buffer\n");
+			return 0;
+		}
 		len = z->zstream.next_out - &z->out[z->offset];
 		if (len > length) {
 			len = length;
@@ -170,7 +174,10 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 	size_t		 cc;
 	char		*cdest = dest;
 
-	assert(bz->type == OPS_C_BZIP2);
+	if (bz->type != OPS_C_BZIP2) {
+		(void) fprintf(stderr, "Weird type %d\n", bz->type);
+		return 0;
+	}
 
 	if (bz->inflate_ret == BZ_STREAM_END &&
 	    bz->bzstream.next_out == &bz->out[bz->offset]) {
@@ -221,10 +228,14 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 			}
 			bz->inflate_ret = ret;
 		}
-		assert(bz->bzstream.next_out > &bz->out[bz->offset]);
+		if (bz->bzstream.next_out <= &bz->out[bz->offset]) {
+			(void) fprintf(stderr, "Out of bz memroy\n");
+			return 0;
+		}
 		len = bz->bzstream.next_out - &bz->out[bz->offset];
-		if (len > length)
+		if (len > length) {
 			len = length;
+		}
 		(void) memcpy(&cdest[cc], &bz->out[bz->offset], len);
 		bz->offset += len;
 	}
@@ -338,7 +349,7 @@ __ops_decompress(__ops_region_t *region, __ops_parse_info_t *parse_info,
 		return 0;
 	}
 
-	ret = __ops_parse(parse_info);
+	ret = __ops_parse(parse_info, 0);
 
 	__ops_reader_pop(parse_info);
 
@@ -374,13 +385,17 @@ __ops_write_compressed(const unsigned char *data,
 	/* all other fields set to zero by use of calloc */
 
 	if (deflateInit(&zip->stream, level) != Z_OK) {
-		/* can't initialise */
-		assert(/* CONSTCOND */0);
+		(void) fprintf(stderr,
+			"__ops_write_compressed: can't initialise\n");
+		return false;
 	}
 	/* do necessary transformation */
 	/* copy input to maintain const'ness of src */
-	assert(zip->src == NULL);
-	assert(zip->dst == NULL);
+	if (zip->src != NULL || zip->dst != NULL) {
+		(void) fprintf(stderr, 
+			"__ops_write_compressed: non-null streams\n");
+		return false;
+	}
 
 	sz_in = len * sizeof(unsigned char);
 	sz_out = (sz_in * 1.01) + 12;	/* from zlib webpage */
@@ -397,8 +412,9 @@ __ops_write_compressed(const unsigned char *data,
 	zip->stream.avail_out = sz_out;
 	zip->stream.total_out = 0;
 
-	r = deflate(&zip->stream, Z_FINISH);
-	assert(r == Z_STREAM_END);	/* need to loop if not */
+	do {
+		r = deflate(&zip->stream, Z_FINISH);
+	} while (r != Z_STREAM_END);
 
 	/* write it out */
 	return (__ops_write_ptag(OPS_PTAG_CT_COMPRESSED, cinfo) &&
