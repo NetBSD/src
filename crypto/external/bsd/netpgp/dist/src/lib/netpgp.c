@@ -52,10 +52,6 @@
 #include "netpgpdefs.h"
 #include "parse_local.h"
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
