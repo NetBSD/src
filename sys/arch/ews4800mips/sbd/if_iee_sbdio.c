@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.5 2008/04/04 17:03:42 tsutsui Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.6 2009/05/05 16:38:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.5 2008/04/04 17:03:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.6 2009/05/05 16:38:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,7 @@ static void iee_sbdio_set_scp(void *, uint32_t);
 
 struct iee_sbdio_softc {
 	struct iee_softc sc_iee;
-	/* CPU <-> i82589 interface */
-	volatile uint32_t *sc_port;
+	volatile uint32_t *sc_port;	/* CPU <-> i82596 interface */
 };
 
 CFATTACH_DECL_NEW(iee_sbdio, sizeof(struct iee_sbdio_softc),
@@ -94,37 +93,36 @@ iee_sbdio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_type = I82596_CA;
 	sc->sc_flags = IEE_NEED_SWAP;
 
-
 	/* bus_dma round the dma size to page size. */
 	sc->sc_cl_align = 1;
 
 	sc->sc_dmat = sa->sa_dmat;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, IEE_SHMEM_MAX, PAGE_SIZE, 0,
-		&sc->sc_dma_segs, 1, &rsegs, BUS_DMA_NOWAIT) != 0) {
-		aprint_error(": iee_sbdio_attach: can't allocate %d bytes of "
-		    "DMA memory\n", (int)IEE_SHMEM_MAX);
+	    &sc->sc_dma_segs, 1, &rsegs, BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": can't allocate %d bytes of DMA memory\n",
+		    (int)IEE_SHMEM_MAX);
 		return;
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX,
-		(void **)sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
-		aprint_error(": iee_sbdio_attach: can't map DMA memory\n");
+	    (void **)sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": can't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
 		return;
 	}
 
 	if (bus_dmamap_create(sc->sc_dmat, IEE_SHMEM_MAX, rsegs,
-		IEE_SHMEM_MAX, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
-		aprint_error(": iee_sbdio_attach: can't create DMA map\n");
+	    IEE_SHMEM_MAX, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
+		aprint_error(": can't create DMA map\n");
 		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
 		return;
 	}
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_shmem_map, sc->sc_shmem_addr,
-		IEE_SHMEM_MAX, NULL, BUS_DMA_NOWAIT) != 0) {
-		aprint_error(": iee_sbdio_attach: can't load DMA map\n");
+	    IEE_SHMEM_MAX, NULL, BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": can't load DMA map\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
 		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
