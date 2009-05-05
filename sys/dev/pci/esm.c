@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.47 2008/04/10 19:13:36 cegger Exp $      */
+/*      $NetBSD: esm.c,v 1.48 2009/05/05 21:47:49 cegger Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.48 2009/05/05 21:47:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ static void		esmch_combine_input(struct esm_softc *,
 static bool		esm_suspend(device_t PMF_FN_PROTO);
 static bool		esm_resume(device_t PMF_FN_PROTO);
 static void		esm_childdet(device_t, device_t);
-static int		esm_match(device_t, struct cfdata *, void *);
+static int		esm_match(device_t, cfdata_t, void *);
 static void		esm_attach(device_t, device_t, void *);
 static int		esm_detach(device_t, int);
 static int		esm_intr(void *);
@@ -1562,7 +1562,7 @@ esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
 }
 
 static int
-esm_match(device_t dev, struct cfdata *match, void *aux)
+esm_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 

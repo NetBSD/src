@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.67 2008/10/11 20:08:15 dholland Exp $	*/
+/*	$NetBSD: auvia.c,v 1.68 2009/05/05 21:50:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.67 2008/10/11 20:08:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.68 2009/05/05 21:50:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct auvia_dma_op {
 #define AUVIA_DMAOP_COUNT(x)	((x)&0x00FFFFFF)
 };
 
-static int	auvia_match(device_t, struct cfdata *, void *);
+static int	auvia_match(device_t, cfdata_t, void *);
 static void	auvia_attach(device_t, device_t, void *);
 static int	auvia_detach(device_t, int);
 static void	auvia_childdet(device_t, device_t);
@@ -267,7 +267,7 @@ static const struct audio_format auvia_spdif_formats[AUVIA_SPDIF_NFORMATS] = {
 
 
 static int
-auvia_match(device_t parent, struct cfdata *match, void *aux)
+auvia_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
