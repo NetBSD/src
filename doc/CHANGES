@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1221 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1222 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -189,7 +189,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	zaurus: Add kloader(4) support. [nonaka 20090311]
 	altmem(4): Add 'alternative memory' disk device driver.
 		[jmcneill 20090312]
-	zaudio(4): Add only playback support. [nonaka 20090313]
+	zaurus: Add only playback support to zaudio(4). [nonaka 20090313]
 	vnd(4): Implement DIOCCACHESYNC ioctl. [christos 20090314]
 	sgimips: Add TCPv4/UDPv4 RX hardware checksum support for mec(4)
 		Ethernet on O2. [tsutsui 20090316]
@@ -226,7 +226,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		functions.  [christos 20090412]
 	re(4): Add support for RTL8168CP and RTL8168D. [tsutsui 20090413]
 	dhcpcd(8): Import dhcpcd-4.0.13 [roy 20090417]
-	zaudio(4): Add recoding support. [nonaka 20090418]
+	zaurus: Add recoding support to zaudio(4). [nonaka 20090418]
 	httpd(8): Import bozohttpd-20090418. [mrg 20090418]
 	bge(4): Add misc quirk code for chip specific bugs.
 		From FreeBSD and OpenBSD.  [msaitoh 20090419]
