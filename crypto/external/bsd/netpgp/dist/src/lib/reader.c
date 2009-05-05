@@ -31,7 +31,9 @@
 #include <sys/param.h>
 #endif
 
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -39,10 +41,6 @@
 
 #ifdef HAVE_DIRECT_H
 #include <direct.h>
-#endif
-
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
 #endif
 
 #ifdef HAVE_INTTYPES_H
@@ -241,12 +239,15 @@ push_back(dearmour_t * dearmour, const unsigned char *buf,
 {
 	unsigned        n;
 
-	assert(!dearmour->pushed_back);
-	dearmour->pushed_back = calloc(1, length);
-	for (n = 0; n < length; ++n) {
-		dearmour->pushed_back[n] = buf[length - n - 1];
+	if (dearmour->pushed_back) {
+		(void) fprintf(stderr, "push_back: already pushed back\n");
+	} else {
+		dearmour->pushed_back = calloc(1, length);
+		for (n = 0; n < length; ++n) {
+			dearmour->pushed_back[n] = buf[length - n - 1];
+		}
+		dearmour->npushed_back = length;
 	}
-	dearmour->npushed_back = length;
 }
 
 static int 
@@ -550,31 +551,46 @@ process_dash_escaped(dearmour_t * dearmour, __ops_error_t ** errors,
 			}
 		}
 		if (c == '\n' && body->length) {
-			assert(memchr(body->data + 1, '\n', body->length - 1) == NULL);
+			if (memchr(body->data + 1, '\n', body->length - 1)
+						!= NULL) {
+				(void) fprintf(stderr,
+				"process_dash_escaped: newline found\n");
+				return -1;
+			}
 			if (body->data[0] == '\n') {
-				hash->add(hash, (const unsigned char *) "\r", 1);
+				hash->add(hash, (const unsigned char *)"\r", 1);
 			}
 			hash->add(hash, body->data, body->length);
 			if (__ops_get_debug_level(__FILE__)) {
 				fprintf(stderr, "Got body:\n%s\n", body->data);
 			}
-			CALLBACK(cbinfo, OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY, &content);
+			CALLBACK(cbinfo, OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY,
+						&content);
 			body->length = 0;
 		}
 		body->data[body->length++] = c;
 		++total;
 		if (body->length == sizeof(body->data)) {
 			if (__ops_get_debug_level(__FILE__)) {
-				fprintf(stderr, "Got body (2):\n%s\n", body->data);
+				(void) fprintf(stderr, "Got body (2):\n%s\n",
+						body->data);
 			}
 			CALLBACK(cbinfo, OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY, &content);
 			body->length = 0;
 		}
 	}
 
-	assert(body->data[0] == '\n');
-	assert(body->length == 1);
-	/* don't send that one character, because its part of the trailer. */
+	if (body->data[0] != '\n') {
+		(void) fprintf(stderr,
+			"process_dash_escaped: no newline in body data\n");
+		return -1;
+	}
+	if (body->length != 1) {
+		(void) fprintf(stderr,
+			"process_dash_escaped: bad body length\n");
+		return -1;
+	}
+	/* don't send that one character, because it's part of the trailer */
 
 	trailer->hash = hash;
 	CALLBACK(cbinfo, OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, &content2);
@@ -589,8 +605,10 @@ add_header(dearmour_t * dearmour, const char *key, const char
 	/*
          * Check that the header is valid
          */
-	if (strcmp(key, "Version") == 0 || strcmp(key, "Comment") == 0 ||
-	    strcmp(key, "MessageID") == 0 || strcmp(key, "Hash") == 0 ||
+	if (strcmp(key, "Version") == 0 ||
+	    strcmp(key, "Comment") == 0 ||
+	    strcmp(key, "MessageID") == 0 ||
+	    strcmp(key, "Hash") == 0 ||
 	    strcmp(key, "Charset") == 0) {
 		dearmour->headers.headers = realloc(dearmour->headers.headers,
 					       (dearmour->headers.nheaders + 1)
@@ -633,7 +651,11 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 				break;
 			}
 
-			assert(nbuf < size);
+			if (nbuf >= size) {
+				(void) fprintf(stderr,
+					"parse_headers: bad size\n");
+				return -1;
+			}
 			buf[nbuf] = '\0';
 
 			s = strchr(buf, ':');
@@ -759,7 +781,10 @@ decode64(dearmour_t * dearmour, __ops_error_t ** errors,
 	int             c;
 	int             ret;
 
-	assert(dearmour->buffered == 0);
+	if (dearmour->buffered != 0) {
+		(void) fprintf(stderr, "decode64: bad dearmour->buffered\n");
+		return 0;
+	}
 
 	ret = read4(dearmour, errors, rinfo, cbinfo, &c, &n, &l);
 	if (ret < 0) {
@@ -794,14 +819,24 @@ decode64(dearmour_t * dearmour, __ops_error_t ** errors,
 		}
 		dearmour->buffered = 0;
 	} else {
-		assert(n == 4);
+		if (n != 4) {
+			(void) fprintf(stderr,
+				"decode64: bad n (!= 4)\n");
+			return 0;
+		}
 		dearmour->buffered = 3;
-		assert(c != '-' && c != '=');
+		if (c == '-' || c == '=') {
+			(void) fprintf(stderr, "decode64: bad c\n");
+			return 0;
+		}
 	}
 
 	if (dearmour->buffered < 3 && dearmour->buffered > 0) {
 		/* then we saw padding */
-		assert(c == '=');
+		if (c != '=') {
+			(void) fprintf(stderr, "decode64: bad c (=)\n");
+			return 0;
+		}
 		c = read_and_eat_whitespace(dearmour, errors, rinfo, cbinfo, true);
 		if (c != '\n') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "No newline at base64 end");
@@ -840,8 +875,12 @@ decode64(dearmour_t * dearmour, __ops_error_t ** errors,
 				return 0;
 			}
 		dearmour->eof64 = true;
-	} else
-		assert(dearmour->buffered);
+	} else {
+		if (!dearmour->buffered) {
+			(void) fprintf(stderr, "decode64: not buffered\n");
+			return 0;
+		}
+	}
 
 	for (n = 0; n < dearmour->buffered; ++n) {
 		dearmour->buffer[n] = (unsigned char)l;
@@ -884,8 +923,14 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 	unsigned char  *dest = dest_;
 	int             saved = length;
 
-	if (dearmour->eof64 && !dearmour->buffered)
-		assert(dearmour->state == OUTSIDE_BLOCK || dearmour->state == AT_TRAILER_NAME);
+	if (dearmour->eof64 && !dearmour->buffered) {
+		if (dearmour->state != OUTSIDE_BLOCK &&
+		    dearmour->state != AT_TRAILER_NAME) {
+			(void) fprintf(stderr,
+				"armoured_data_reader: bad dearmour state\n");
+			return 0;
+		}
+	}
 
 	while (length > 0) {
 		unsigned        count;
@@ -1010,7 +1055,11 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 						}
 					}
 					if (!dearmour->buffered) {
-						assert(dearmour->eof64);
+						if (!dearmour->eof64) {
+							(void) fprintf(stderr,
+"armoured_data_reader: bad dearmour eof64\n");
+							return 0;
+						}
 						if (first) {
 							dearmour->state = AT_TRAILER_NAME;
 							goto reloop;
@@ -1018,7 +1067,11 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 						return -1;
 					}
 				}
-				assert(dearmour->buffered);
+				if (!dearmour->buffered) {
+					(void) fprintf(stderr,
+						"armoured_data_reader: bad dearmour buffered\n");
+					return 0;
+				}
 				*dest = dearmour->buffer[--dearmour->buffered];
 				++dest;
 				--length;
@@ -1187,7 +1240,11 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 	 * count
 	 */
 	if (encrypted->prev_read_was_plain && !rinfo->pinfo->reading_mpi_length) {
-		assert(rinfo->pinfo->reading_v3_secret);
+		if (!rinfo->pinfo->reading_v3_secret) {
+			(void) fprintf(stderr,
+				"encrypted_data_reader: bad v3 secret\n");
+			return -1;
+		}
 		encrypted->decrypt->decrypt_resync(encrypted->decrypt);
 		encrypted->prev_read_was_plain = false;
 	} else if (rinfo->pinfo->reading_v3_secret &&
@@ -1199,13 +1256,15 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 			unsigned        n;
 
 			/*
-			 * if we are reading v3 we should never read more
-			 * than
-			 */
-			/* we're asked for */
-			assert(length >= encrypted->decrypted_count
-			       || (!rinfo->pinfo->reading_v3_secret
-				   && !rinfo->pinfo->exact_read));
+			 * if we are reading v3 we should never read
+			 * more than we're asked for */
+			if (length < encrypted->decrypted_count &&
+			     (rinfo->pinfo->reading_v3_secret ||
+			      rinfo->pinfo->exact_read)) {
+				(void) fprintf(stderr,
+					"encrypted_data_reader: bad v3 read\n");
+				return 0;
+			}
 
 			n = MIN(length, encrypted->decrypted_count);
 
@@ -1270,7 +1329,11 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 				encrypted->decrypted_count = n;
 			}
 
-			assert(encrypted->decrypted_count > 0);
+			if (encrypted->decrypted_count <= 0) {
+				(void) fprintf(stderr,
+				"encrypted_data_reader: bad decrypted count\n");
+				return 0;
+			}
 
 			encrypted->decrypted_offset = 0;
 		}
@@ -1447,7 +1510,11 @@ se_ip_data_reader(void *dest_, size_t len, __ops_error_t ** errors,
 		}
 		/* all done with the checks */
 		/* now can start reading from the plaintext */
-		assert(!se_ip->plaintext);
+		if (se_ip->plaintext) {
+			(void) fprintf(stderr,
+				"se_ip_data_reader: bad plaintext\n");
+			return 0;
+		}
 		se_ip->plaintext = calloc(1, sz_plaintext);
 		memcpy(se_ip->plaintext, plaintext, sz_plaintext);
 		se_ip->plaintext_available = sz_plaintext;
@@ -1927,7 +1994,11 @@ pk_session_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinf
 		if (__ops_get_debug_level(__FILE__)) {
 			printf("OPS_PTAG_CT_PK_SESSION_KEY\n");
 		}
-		assert(cbinfo->cryptinfo.keyring);
+		if (!cbinfo->cryptinfo.keyring) {
+			(void) fprintf(stderr,
+				"pk_session_key_cb: bad keyring\n");
+			return 0;
+		}
 		cbinfo->cryptinfo.keydata = __ops_keyring_find_key_by_id(cbinfo->cryptinfo.keyring,
 					    content->pk_session_key.key_id);
 		if (!cbinfo->cryptinfo.keydata)
@@ -1983,7 +2054,7 @@ get_secret_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinf
 				CALLBACK(cbinfo, OPS_PARSER_CMD_GET_SK_PASSPHRASE, &seckey);
 				if (!cbinfo->cryptinfo.passphrase) {
 					fprintf(stderr, "can't get passphrase\n");
-					assert(/*CONSTCOND*/0);
+					return 0;
 				}
 			}
 			/* then it must be encrypted */

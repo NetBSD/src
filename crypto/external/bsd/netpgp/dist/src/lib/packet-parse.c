@@ -81,7 +81,10 @@ limited_read_data(__ops_data_t * data, unsigned int len,
 {
 	data->len = len;
 
-	assert(subregion->length - subregion->length_read >= len);
+	if (subregion->length - subregion->length_read < len) {
+		(void) fprintf(stderr, "limited_data_read: bad length\n");
+		return 0;
+	}
 
 	data->contents = calloc(1, data->len);
 	if (!data->contents)
@@ -205,7 +208,10 @@ sub_base_read(void *dest, size_t length, __ops_error_t ** errors,
 	for (n = 0; n < length;) {
 		int             r = rinfo->reader((char *) dest + n, length - n, errors, rinfo, cbinfo);
 
-		assert(r <= (int) (length - n));
+		if (r > (int) (length - n)) {
+			(void) fprintf(stderr, "sub_base_read: bad read\n");
+			return 0;
+		}
 
 		/*
 		 * XXX: should we save the error and return what was read so
@@ -224,12 +230,18 @@ sub_base_read(void *dest, size_t length, __ops_error_t ** errors,
 		return 0;
 
 	if (rinfo->accumulate) {
-		assert(rinfo->asize >= rinfo->alength);
+		if (rinfo->asize < rinfo->alength) {
+			(void) fprintf(stderr, "sub_base_read: bad size\n");
+			return 0;
+		}
 		if (rinfo->alength + n > rinfo->asize) {
 			rinfo->asize = rinfo->asize * 2 + n;
 			rinfo->accumulated = realloc(rinfo->accumulated, rinfo->asize);
 		}
-		assert(rinfo->asize >= rinfo->alength + n);
+		if (rinfo->asize < rinfo->alength + n) {
+			(void) fprintf(stderr, "sub_base_read: bad realloc\n");
+			return 0;
+		}
 		(void) memcpy(rinfo->accumulated + rinfo->alength, dest, n);
 	}
 	/* we track length anyway, because it is used for packet offsets */
@@ -305,7 +317,10 @@ _read_scalar(unsigned *result, unsigned length,
 {
 	unsigned        t = 0;
 
-	assert(length <= sizeof(*result));
+	if (length > sizeof(*result)) {
+		(void) fprintf(stderr, "_read_scalar: bad length\n");
+		return 0;
+	}
 
 	while (length--) {
 		unsigned char   c[1];
@@ -373,7 +388,11 @@ __ops_limited_read(unsigned char *dest, size_t length,
 	region->last_read = r;
 	do {
 		region->length_read += r;
-		assert(!region->parent || region->length <= region->parent->length);
+		if (region->parent && region->length > region->parent->length) {
+			(void) fprintf(stderr,
+				"ops_limited_read: bad length\n");
+			return false;
+		}
 	} while ((region = region->parent) != NULL);
 	return true;
 }
@@ -466,8 +485,15 @@ limited_read_scalar(unsigned *dest, unsigned length,
 	unsigned        t;
 	unsigned        n;
 
-	assert(length <= 4);
-	assert(/*CONSTCOND*/sizeof(*dest) >= 4);
+	if (length > 4) {
+		(void) fprintf(stderr, "limited_read_scalar: bad length\n");
+		return 0;
+	}
+	/*LINTED*/
+	if (/*CONSTCOND*/sizeof(*dest) < 4) {
+		(void) fprintf(stderr, "limited_read_scalar: bad dest\n");
+		return 0;
+	}
 	if (!limited_read(c, length, region, pinfo))
 		return 0;
 
@@ -613,7 +639,10 @@ limited_read_mpi(BIGNUM ** pbn, __ops_region_t * region,
 		}
 		return 0;
 	}
-	assert(length <= NETPGP_BUFSIZ);
+	if (length > NETPGP_BUFSIZ) {
+		(void) fprintf(stderr, "limited_read_mpi: bad length\n");
+		return 0;
+	}
 	if (!limited_read(buf, length, region, pinfo))
 		return 0;
 
@@ -880,7 +909,7 @@ signature_free(__ops_signature_t * sig)
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr, "signature_free: bad sig type\n");
 	}
 }
 
@@ -1167,7 +1196,6 @@ __ops_parser_content_free(__ops_packet_t * c)
 
 	default:
 		fprintf(stderr, "Can't free %d (0x%x)\n", c->tag, c->tag);
-		assert( /* CONSTCOND */ 0);
 	}
 }
 
@@ -1189,7 +1217,8 @@ __ops_pk_session_key_free(__ops_pk_session_key_t * sk)
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr, "__ops_pk_session_key_free: bad alg\n");
+		break;
 	}
 }
 
@@ -1228,7 +1257,7 @@ __ops_public_key_free(__ops_public_key_t * p)
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr, "__ops_public_key_free: bad alg\n");
 	}
 }
 
@@ -1241,8 +1270,11 @@ parse_public_key_data(__ops_public_key_t * key, __ops_region_t * region,
 {
 	unsigned char   c[1] = "";
 
-	assert(region->length_read == 0);	/* We should not have read
-						 * anything so far */
+	if (region->length_read != 0) {
+		/* We should not have read anything so far */
+		(void) fprintf(stderr, "parse_public_key_data: bad length\n");
+		return 0;
+	}
 
 	if (!limited_read(c, 1, region, pinfo)) {
 		return 0;
@@ -1374,8 +1406,11 @@ parse_user_attribute(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	 * attribute sub-packets later - rachel
 	 */
 
-	assert(region->length_read == 0);	/* We should not have read
-						 * anything so far */
+	if (region->length_read != 0) {
+		/* We should not have read anything so far */
+		(void) fprintf(stderr, "parse_user_attribute: bad length\n");
+		return 0;
+	}
 
 	if (!read_data(&pkt.u.user_attribute.data, region, pinfo))
 		return 0;
@@ -1421,8 +1456,11 @@ parse_user_id(__ops_region_t * region, __ops_parse_info_t * pinfo)
 {
 	__ops_packet_t pkt;
 
-	assert(region->length_read == 0);	/* We should not have read
-						 * anything so far */
+	 if (region->length_read != 0) {
+		/* We should not have read anything so far */
+		(void) fprintf(stderr, "parse_user_id: bad length\n");
+		return 0;
+	}
 
 	pkt.u.user_id.user_id = calloc(1, region->length + 1);	/* XXX should we not
 							 * like check malloc's
@@ -1952,7 +1990,7 @@ parse_v4_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	if (!pinfo->rinfo.accumulate) {
 		/* We must accumulate, else we can't check the signature */
 		fprintf(stderr, "*** ERROR: must set accumulate to true\n");
-		assert( /* CONSTCOND */ 0);
+		return 0;
 	}
 	(void) memcpy(pkt.u.signature.info.v4_hashed_data,
 	       pinfo->rinfo.accumulated + pkt.u.signature.v4_hashed_data_start,
@@ -2043,8 +2081,11 @@ parse_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	unsigned char   c[1] = "";
 	__ops_packet_t pkt;
 
-	assert(region->length_read == 0);	/* We should not have read
-						 * anything so far */
+	if (region->length_read != 0) {
+		/* We should not have read anything so far */
+		(void) fprintf(stderr, "parse_signature: bad length\n");
+		return 0;
+	}
 
 	(void) memset(&pkt, 0x0, sizeof(pkt));
 
@@ -2369,9 +2410,16 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		}
 		pkt.u.secret_key.s2k_specifier = c[0];
 
-		assert(pkt.u.secret_key.s2k_specifier == OPS_S2KS_SIMPLE ||
-		       pkt.u.secret_key.s2k_specifier == OPS_S2KS_SALTED ||
-		       pkt.u.secret_key.s2k_specifier == OPS_S2KS_ITERATED_AND_SALTED);
+		switch (pkt.u.secret_key.s2k_specifier) {
+		case OPS_S2KS_SIMPLE:
+		case OPS_S2KS_SALTED:
+		case OPS_S2KS_ITERATED_AND_SALTED:
+			break;
+		default:
+			(void) fprintf(stderr,
+				"parse_secret_key: bad seckey\n");
+			return 0;
+		}
 
 		if (!limited_read(c, 1, region, pinfo)) {
 			return 0;
@@ -2413,7 +2461,11 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		int             hashsize;
 
 		blocksize = __ops_block_size(pkt.u.secret_key.algorithm);
-		assert(blocksize > 0 && blocksize <= OPS_MAX_BLOCK_SIZE);
+		if (blocksize == 0 || blocksize > OPS_MAX_BLOCK_SIZE) {
+			(void) fprintf(stderr,
+				"parse_secret_key: bad blocksize\n");
+			return 0;
+		}
 
 		if (!limited_read(pkt.u.secret_key.iv, blocksize, region,
 				pinfo)) {
@@ -2442,10 +2494,18 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 			return 1;
 		}
 		keysize = __ops_key_size(pkt.u.secret_key.algorithm);
-		assert(keysize > 0 && keysize <= OPS_MAX_KEY_SIZE);
+		if (keysize == 0 || keysize > OPS_MAX_KEY_SIZE) {
+			(void) fprintf(stderr,
+				"parse_secret_key: bad keysize\n");
+			return 0;
+		}
 
 		hashsize = __ops_hash_size(pkt.u.secret_key.hash_algorithm);
-		assert(hashsize > 0 && hashsize <= OPS_MAX_HASH_SIZE);
+		if (hashsize == 0 || hashsize > OPS_MAX_HASH_SIZE) {
+			(void) fprintf(stderr,
+				"parse_secret_key: bad hashsize\n");
+			return 0;
+		}
 
 		for (n = 0; n * hashsize < keysize; ++n) {
 			int             i;
@@ -2501,7 +2561,11 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 			int	r;
 
 			r = hashes[n].finish(&hashes[n], key + n * hashsize);
-			assert(r == hashsize);
+			if (r != hashsize) {
+				(void) fprintf(stderr,
+					"parse_secret_key: bad r\n");
+				return 0;
+			}
 		}
 
 		(void) memset(passphrase, 0x0, passlen);
@@ -2579,7 +2643,6 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 			pkt.u.secret_key.pubkey.algorithm,
 			__ops_show_pka(pkt.u.secret_key.pubkey.algorithm));
 		ret = 0;
-		/* assert(0); */
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
@@ -2631,7 +2694,10 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	if (crypted && pkt.u.secret_key.pubkey.version == OPS_V4) {
 		__ops_reader_pop_decrypt(pinfo);
 	}
-	assert(!ret || region->length_read == region->length);
+	if (ret && region->length_read != region->length) {
+		(void) fprintf(stderr, "parse_secret_key: bad length\n");
+		return 0;
+	}
 
 	if (!ret)
 		return 0;
@@ -2755,7 +2821,10 @@ parse_pk_session_key(__ops_region_t * region,
 			    n, k + 3);
 		return 0;
 	}
-	assert(k <= sizeof(pkt.u.pk_session_key.key));
+	if (k > sizeof(pkt.u.pk_session_key.key)) {
+		(void) fprintf(stderr, "parse_pk_session_key: bad keylength\n");
+		return 0;
+	}
 
 	(void) memcpy(pkt.u.pk_session_key.key, unencoded_m_buf + 1, k);
 
@@ -2919,7 +2988,11 @@ parse_se_ip_data(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
 	pkt.u.se_ip_data_header.version = c[0];
-	assert(pkt.u.se_ip_data_header.version == OPS_SE_IP_V1);
+
+	if (pkt.u.se_ip_data_header.version != OPS_SE_IP_V1) {
+		(void) fprintf(stderr, "parse_se_ip_data: bad version\n");
+		return 0;
+	}
 
 	/*
 	 * The content of an encrypted data packet is more OpenPGP packets
@@ -3213,8 +3286,11 @@ __ops_parse_options(__ops_parse_info_t * pinfo,
 					  type);
 		return;
 	}
-	assert(tag >= OPS_PTAG_SIGNATURE_SUBPACKET_BASE
-	       && tag <= OPS_PTAG_SIGNATURE_SUBPACKET_BASE + NTAGS - 1);
+	if (tag < OPS_PTAG_SIGNATURE_SUBPACKET_BASE
+	       || tag > OPS_PTAG_SIGNATURE_SUBPACKET_BASE + NTAGS - 1) {
+		(void) fprintf(stderr, "__ops_parse_options: bad tag\n");
+		return;
+	}
 	t8 = (tag - OPS_PTAG_SIGNATURE_SUBPACKET_BASE) / 8;
 	t7 = 1 << ((tag - OPS_PTAG_SIGNATURE_SUBPACKET_BASE) & 7);
 	switch (type) {
