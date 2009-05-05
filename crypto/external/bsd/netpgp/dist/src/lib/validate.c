@@ -37,10 +37,6 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
 #include <string.h>
 #include <stdio.h>
 

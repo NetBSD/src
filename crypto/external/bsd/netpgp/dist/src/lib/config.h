@@ -1,9 +1,6 @@
 /* src/lib/config.h.  Generated from config.h.in by configure.  */
 /* src/lib/config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the <assert.h> header file. */
-#define HAVE_ASSERT_H 1
-
 /* Define to 1 if you have the <bzlib.h> header file. */
 #define HAVE_BZLIB_H 1
 
@@ -122,7 +119,7 @@
 #define HAVE_ZLIB_H 1
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "Alistair Crooks agc@netbsd.org c0596823"
+#define PACKAGE_BUGREPORT "Alistair Crooks <agc@netbsd.org> c0596823"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "netpgp"
