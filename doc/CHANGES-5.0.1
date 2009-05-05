@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.4 2009/05/03 13:39:51 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.5 2009/05/05 18:24:40 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -23,4 +23,11 @@ sys/netinet6/ip6_input.c			1.127
 
 	Add missing paranthesis - from Kurt Lidl in PR port-vax/41316
 	[martin, ticket #733]
+
+gnu/dist/binutils/bfd/elf32-vax.c		1.9
+
+	Allocate relocation section using bfd_zalloc() to ensure no garbage
+	relocations when not all the entries are used.
+	Fixes PR port-vax/39182.
+	[mhitch, ticket #738]
 
