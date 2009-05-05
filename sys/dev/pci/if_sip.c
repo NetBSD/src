@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.139 2009/05/05 21:33:21 cegger Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.140 2009/05/05 21:34:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.139 2009/05/05 21:33:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.140 2009/05/05 21:34:13 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -603,7 +603,7 @@ static void	sipcom_dp83815_mii_statchg(device_t);
 
 static void	sipcom_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int	sipcom_match(device_t, struct cfdata *, void *);
+static int	sipcom_match(device_t, cfdata_t, void *);
 static void	sipcom_attach(device_t, device_t, void *);
 static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
@@ -766,7 +766,7 @@ sipcom_check_64bit(const struct pci_attach_args *pa)
 }
 
 static int
-sipcom_match(device_t parent, struct cfdata *cf, void *aux)
+sipcom_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
