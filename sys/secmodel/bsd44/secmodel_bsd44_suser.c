@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.63 2009/05/03 17:21:13 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.64 2009/05/05 21:03:28 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.63 2009/05/03 17:21:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.64 2009/05/05 21:03:28 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1049,6 +1049,13 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 
+		break;
+
+	case KAUTH_DEVICE_RND_ADDDATA:
+	case KAUTH_DEVICE_RND_GETPRIV:
+	case KAUTH_DEVICE_RND_SETPRIV:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
 		break;
 
 	default:

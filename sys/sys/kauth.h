@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.55 2009/05/03 17:21:12 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.56 2009/05/05 21:03:28 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -239,6 +239,9 @@ enum {
 	KAUTH_DEVICE_RAWIO_SPEC,
 	KAUTH_DEVICE_RAWIO_PASSTHRU,
 	KAUTH_DEVICE_BLUETOOTH_SETPRIV,
+	KAUTH_DEVICE_RND_ADDDATA,
+	KAUTH_DEVICE_RND_GETPRIV,
+	KAUTH_DEVICE_RND_SETPRIV,
 };
 
 /*

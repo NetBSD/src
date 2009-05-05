@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.78 2009/05/03 19:25:39 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.79 2009/05/05 21:03:28 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 3, 2009
+.Dd May 5, 2009
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -882,6 +882,20 @@ describing the request, and
 is a
 .Ft u_long
 describing the command.
+.El
+.Pp
+.Sy Kernel random device
+Authorization actions relevant to the kernel random device,
+.Xr rnd 4 ,
+is done using the standard authorization wrapper, with the following actions:
+.Pp
+.Bl -tag -width compact
+.It KAUTH_DEVICE_RND_ADDDATA
+Check if adding data to the entropy pool is allowed.
+.It KAUTH_DEVICE_RND_GETPRIV
+Check if privileged settings and information can be retrieved.
+.It KAUTH_DEVICE_RND_SETPRIV
+Check if privileged settings can be changed.
 .El
 .Ss Credentials Scope
 The credentials scope,
