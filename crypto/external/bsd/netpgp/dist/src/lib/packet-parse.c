@@ -39,10 +39,6 @@
 #include "netpgpdefs.h"
 #include "parse_local.h"
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
