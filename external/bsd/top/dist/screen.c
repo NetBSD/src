@@ -214,7 +214,6 @@ screen_readtermcap(int interactive)
     char *bufptr;
     char *PCptr;
     char *term_name;
-    char *getenv();
     int status;
 
     /* set defaults in case we aren't smart */
@@ -507,7 +506,7 @@ screen_move(int x, int y)
 }
 
 void
-screen_standout(char *msg)
+screen_standout(const char *msg)
 
 {
     if (smart_terminal)
@@ -523,7 +522,7 @@ screen_standout(char *msg)
 }
 
 void
-screen_clear()
+screen_clear(void)
 
 {
     if (smart_terminal)
@@ -533,7 +532,7 @@ screen_clear()
 }
 
 int
-screen_cte()
+screen_cte(void)
 
 {
     if (smart_terminal)
@@ -579,7 +578,7 @@ screen_cleareol(int len)
 }
 
 void
-screen_home()
+screen_home(void)
 
 {
     if (smart_terminal)

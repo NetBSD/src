@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.8 2009/04/24 19:07:45 njoly Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.9 2009/05/05 18:51:22 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.8 2009/04/24 19:07:45 njoly Exp $
+ * $Id: m_netbsd.c,v 1.9 2009/05/05 18:51:22 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.8 2009/04/24 19:07:45 njoly Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.9 2009/05/05 18:51:22 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -144,7 +144,7 @@ static u_int64_t *cp_diff;
 /* these are for detailing the process states */
 
 int process_states[8];
-char *procstatenames[] = {
+const char *procstatenames[] = {
 	"", " idle, ", " runnable, ", " sleeping, ", " stopped, ",
 	" zombie, ", " dead, ", " on CPU, ",
 	NULL
@@ -153,28 +153,28 @@ char *procstatenames[] = {
 /* these are for detailing the CPU states */
 
 int *cpu_states;
-char *cpustatenames[] = {
+const char *cpustatenames[] = {
 	"user", "nice", "system", "interrupt", "idle", NULL
 };
 
 /* these are for detailing the memory statistics */
 
 long memory_stats[7];
-char *memorynames[] = {
+const char *memorynames[] = {
 	"K Act, ", "K Inact, ", "K Wired, ", "K Exec, ", "K File, ",
 	"K Free, ",
 	NULL
 };
 
 long swap_stats[4];
-char *swapnames[] = {
+const char *swapnames[] = {
 	"K Total, ", "K Used, ", "K Free, ",
 	NULL
 };
 
 
 /* these are names given to allowed sorting orders -- first is default */
-char *ordernames[] = {
+const char *ordernames[] = {
 	"cpu",
 	"pri",
 	"res",
@@ -414,8 +414,7 @@ format_header(char *uname_field)
 }
 
 void
-get_system_info(si)
-	struct system_info *si;
+get_system_info(struct system_info *si)
 {
 	size_t ssize;
 	int mib[2];
@@ -435,11 +434,11 @@ get_system_info(si)
 	}
 
 	if (getloadavg(si->load_avg, NUM_AVERAGES) < 0) {
-		int i;
+		int j;
 
 		warn("can't getloadavg");
-		for (i = 0; i < NUM_AVERAGES; i++)
-			si->load_avg[i] = 0.0;
+		for (j = 0; j < NUM_AVERAGES; j++)
+			si->load_avg[j] = 0.0;
 	}
 
 	/* convert cp_time counts to percentages */
@@ -516,7 +515,7 @@ proc_from_thread(struct kinfo_lwp *pl)
 	int i;
 
 	for (i = 0; i < thread_nproc; i++, pp++)
-		if (pp->p_pid == pl->l_pid)
+		if ((pid_t)pp->p_pid == (pid_t)pl->l_pid)
 			return pp;
 	return NULL;
 }
@@ -563,7 +562,7 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 
 	procgen++;
 
-	if (sel->pid == -1) {
+	if (sel->pid == (pid_t)-1) {
 		op = KERN_PROC_ALL;
 		arg = 0;
 	} else {
@@ -573,7 +572,7 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 
 	pbase = kvm_getproc2(kd, op, arg, sizeof(struct kinfo_proc2), &nproc);
 	if (pbase == NULL) {
-		if (sel->pid != -1) {
+		if (sel->pid != (pid_t)-1) {
 			nproc = 0;
 		} else {
 			(void) fprintf(stderr, "top: Out of memory.\n");
@@ -680,7 +679,7 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	lbase = kvm_getlwps(kd, -1, 0, sizeof(struct kinfo_lwp), &nlwp);
 	if (lbase == NULL) {
 #ifdef notyet
-		if (sel->pid != -1) {
+		if (sel->pid != (pid_t)-1) {
 			nproc = 0;
 			nlwp = 0;
 		}
@@ -716,7 +715,7 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	memset((char *)process_states, 0, sizeof(process_states));
 	lrefp = lref;
 	for (lp = lbase, i = 0; i < nlwp; lp++, i++) {
-		if (sel->pid != -1 && sel->pid != lp->l_pid)
+		if (sel->pid != (pid_t)-1 && sel->pid != (pid_t)lp->l_pid)
 			continue;
 
 		/*
@@ -731,7 +730,7 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 			if (lp->l_stat != LSZOMB &&
 			    (show_idle || (lp->l_pctcpu != 0) || 
 			    (lp->l_stat == LSRUN || lp->l_stat == LSONPROC)) &&
-			    (!show_uid || uid_from_thread(lp) == (uid_t)sel->uid)) {
+			    (!show_uid || uid_from_thread(lp) == sel->uid)) {
 				*lrefp++ = lp;
 				active_lwps++;
 			}
@@ -779,7 +778,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 #endif
 	char wmesg[KI_WMESGLEN + 1];
 	static char fmt[MAX_COLS];		/* static area where result is built */
-	char *pretty = "";
+	const char *pretty = "";
 
 	/* find and remember the next proc structure */
 	hp = (struct handle *)handle;
@@ -869,12 +868,13 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 	double pct;
 	struct handle *hp;
 	const char *statep;
+	static char gone[] = "<gone>";
 #ifdef KI_NOCPU
 	char state[10];
 #endif
 	char wmesg[KI_WMESGLEN + 1];
 	static char fmt[MAX_COLS];		/* static area where result is built */
-	char *pretty = "";
+	const char *pretty = "";
 	char *comm;
 	int uid;
 
@@ -912,7 +912,7 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 		}
 		uid = pp->p_ruid;
 	} else {
-		comm = "<gone>";
+		comm = gone;
 		uid = 0;
 	}
 
@@ -1043,7 +1043,7 @@ compare_cpu(pp1, pp2)
 		ORDERKEY_CPTICKS(l_)
 		ORDERKEY_STATE(l_)
 		ORDERKEY_PRIO(l_)
-		;
+		return result;
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
@@ -1054,7 +1054,7 @@ compare_cpu(pp1, pp2)
 		ORDERKEY_PRIO(p_)
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
-		;
+		return result;
 	}
 
 	return (result);
@@ -1077,7 +1077,7 @@ compare_prio(pp1, pp2)
 		ORDERKEY_PCTCPU(l_)
 		ORDERKEY_CPTICKS(l_)
 		ORDERKEY_STATE(l_)
-		;
+		return result;
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
@@ -1088,7 +1088,7 @@ compare_prio(pp1, pp2)
 		ORDERKEY_STATE(p_)
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
-		;
+		return result;
 	}
 
 	return (result);
@@ -1111,7 +1111,7 @@ compare_res(pp1, pp2)
 		ORDERKEY_CPTICKS(l_)
 		ORDERKEY_STATE(l_)
 		ORDERKEY_PRIO(l_)
-		;
+		return result;
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
@@ -1122,7 +1122,7 @@ compare_res(pp1, pp2)
 		ORDERKEY_CPTICKS(p_)
 		ORDERKEY_STATE(p_)
 		ORDERKEY_PRIO(p_)
-		;
+		return result;
 	}
 
 	return (result);
@@ -1195,7 +1195,7 @@ compare_size(pp1, pp2)
 		ORDERKEY_CPTICKS(l_)
 		ORDERKEY_STATE(l_)
 		ORDERKEY_PRIO(l_)
-		;
+		return result;
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
@@ -1206,7 +1206,7 @@ compare_size(pp1, pp2)
 		ORDERKEY_CPTICKS(p_)
 		ORDERKEY_STATE(p_)
 		ORDERKEY_PRIO(p_)
-		;
+		return result;
 	}
 
 	return (result);
@@ -1229,7 +1229,7 @@ compare_state(pp1, pp2)
 		ORDERKEY_PCTCPU(l_)
 		ORDERKEY_CPTICKS(l_)
 		ORDERKEY_PRIO(l_)
-		;
+		return result;
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
@@ -1240,7 +1240,7 @@ compare_state(pp1, pp2)
 		ORDERKEY_PRIO(p_)
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
-		;
+		return result;
 	}
 
 	return (result);
@@ -1263,7 +1263,7 @@ compare_time(pp1, pp2)
 		ORDERKEY_PCTCPU(l_)
 		ORDERKEY_STATE(l_)
 		ORDERKEY_PRIO(l_)
-		;
+		return result;
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
@@ -1274,7 +1274,7 @@ compare_time(pp1, pp2)
 		ORDERKEY_PRIO(p_)
 		ORDERKEY_MEM
 		ORDERKEY_RSSIZE
-		;
+		return result;
 	}
 
 	return (result);

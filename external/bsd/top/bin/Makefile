@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/12/13 12:21:50 chris Exp $
+#	$NetBSD: Makefile,v 1.4 2009/05/05 18:49:49 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ BINDIR=	/usr/bin
 TOPDIR=${.CURDIR}/../dist
 .PATH:	${TOPDIR} ${TOPDIR}/machine
 
-WARNS=	0
+WARNS=	4
 
 CPPFLAGS+=-I${.CURDIR} -I${TOPDIR} -I.
 SRCS=	color.c commands.c display.c hash.c screen.c \

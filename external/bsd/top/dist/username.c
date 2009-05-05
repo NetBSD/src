@@ -52,6 +52,7 @@
 #include "top.h"
 #include "utils.h"
 #include "hash.h"
+#include "username.h"
 
 #define EXPIRETIME (60 * 5)
 
@@ -74,14 +75,14 @@ hash_table *userhash;
 
 
 void
-init_username()
+init_username(void)
 
 {
     userhash = hash_create(211);
 }
 
 char *
-username(int uid)
+username(int xuid)
 
 {
     struct hash_data *data;
@@ -92,7 +93,7 @@ username(int uid)
     now = time(NULL);
 
     /* get whatever is in the cache */
-    data = hash_lookup_uint(userhash, (unsigned int)uid);
+    data = hash_lookup_uint(userhash, (unsigned int)xuid);
 
     /* if we had a cache miss, then create space for a new entry */
     if (data == NULL)
@@ -101,18 +102,18 @@ username(int uid)
 	data = emalloc(sizeof(struct hash_data));
 
 	/* fill in some data, including an already expired time */
-	data->uid = uid;
+	data->uid = xuid;
 	data->expire = (time_t)0;
 
 	/* add it to the hash: the rest gets filled in later */
-	hash_add_uint(userhash, uid, data);
+	hash_add_uint(userhash, xuid, data);
     }
 
-    /* Now data points to the correct hash entry for "uid".  If this is
+    /* Now data points to the correct hash entry for "xuid".  If this is
        a new entry, then expire is 0 and the next test will be true. */
     if (data->expire <= now)
     {
-	if ((pw = getpwuid(uid)) != NULL)
+	if ((pw = getpwuid(xuid)) != NULL)
 	{
 	    strncpy(data->name, pw->pw_name, MAXLOGNAME-1);
 	    data->expire = now + EXPIRETIME;
@@ -122,7 +123,7 @@ username(int uid)
 	else
 	{
 	    /* username doesnt exist ... so invent one */
-	    snprintf(data->name, sizeof(data->name), "%d", uid);
+	    snprintf(data->name, sizeof(data->name), "%d", xuid);
 	    data->expire = now + EXPIRETIME;
 	    dprintf("username: updating %d with %s, expires %d\n",
 		    data->uid, data->name, data->expire);
@@ -134,12 +135,12 @@ username(int uid)
 }
 
 int
-userid(char *username)
+userid(char *xusername)
 
 {
     struct passwd *pwd;
 
-    if ((pwd = getpwnam(username)) == NULL)
+    if ((pwd = getpwnam(xusername)) == NULL)
     {
 	return(-1);
     }

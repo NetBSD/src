@@ -35,7 +35,7 @@
 #ifndef _USERNAME_H_
 #define _USERNAME_H_
 
-void init_username();
+void init_username(void);
 char *username(int uid);
 int userid(char *username);
 
