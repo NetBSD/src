@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.7 2009/05/03 23:58:02 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.8 2009/05/05 18:23:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -287,4 +287,22 @@ sys/arch/amd64/conf/XEN3_DOM0			1.38, 1.42
 	Add the age(4) and ale(4) drivers for Attansic L1 and Atheros
 	AR8121/AR8113/AR8114 devices respectively.
 	[cegger, ticket #735]
+
+sys/arch/x86/pci/pchb.c				1.15 - 1.17
+sys/dev/pci/agp.c				1.63 - 1.65
+sys/dev/pci/agp_i810.c				1.57 - 1.64
+sys/dev/pci/agpreg.h				1.20
+sys/dev/pci/pcidevs				1.965, 1.967 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add AGP support for Intel G35, G45, and Q45
+	[snj, ticket #737]
+
+gnu/dist/binutils/bfd/elf32-vax.c		1.9
+
+	Allocate relocation section using bfd_zalloc() to ensure no garbage
+	relocations when not all the entries are used.
+	Fixes PR port-vax/39182.
+	[mhitch, ticket #738]
 
