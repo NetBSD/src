@@ -23,22 +23,11 @@
  */
 #include "config.h"
 
-#include "signature.h"
-#include "crypto.h"
-#include "create.h"
-#include "netpgpsdk.h"
-
-#include "readerwriter.h"
-#include "loccreate.h"
-#include "validate.h"
-#include "netpgpdefs.h"
-
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 
 #include <string.h>
-#include <fcntl.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -47,6 +36,15 @@
 #ifdef HAVE_OPENSSL_DSA_H
 #include <openssl/dsa.h>
 #endif
+
+#include "signature.h"
+#include "crypto.h"
+#include "create.h"
+#include "netpgpsdk.h"
+#include "readerwriter.h"
+#include "loccreate.h"
+#include "validate.h"
+#include "netpgpdefs.h"
 
 #define MAXBUF 1024		/* <! Standard buffer size to use */
 
@@ -129,7 +127,10 @@ encode_hash_buf(const unsigned char *M, size_t mLen,
 	unsigned        encoded_msg_sz = 0;
 	unsigned char  *prefix = NULL;
 
-	assert(hash_alg == OPS_HASH_SHA1);
+	if (hash_alg != OPS_HASH_SHA1) {
+		(void) fprintf(stderr, "encode_hash_buf: bad hash alg\n");
+		return false;
+	}
 
 	/* 1. Apply hash function to M */
 
@@ -153,7 +154,8 @@ encode_hash_buf(const unsigned char *M, size_t mLen,
 		break;
 
 	default:
-		assert(0);
+		/* already tested for other algorithms at head of function */
+		break;
 	}
 
 	/* \todo 3. Test for len being too short */
@@ -211,8 +213,14 @@ rsa_sign(__ops_hash_t * hash, const __ops_rsa_public_key_t * rsa,
 	hashsize = 20 + sizeof(prefix_sha1);
 
 	keysize = (BN_num_bits(rsa->n) + 7) / 8;
-	assert(keysize <= sizeof(hashbuf));
-	assert(10 + hashsize <= keysize);
+	if (keysize > sizeof(hashbuf)) {
+		(void) fprintf(stderr, "rsa_sign: keysize too big\n");
+		return;
+	}
+	if (10 + hashsize > keysize) {
+		(void) fprintf(stderr, "rsa_sign: hashsize too big\n");
+		return;
+	}
 
 	hashbuf[0] = 0;
 	hashbuf[1] = 1;
@@ -228,12 +236,18 @@ rsa_sign(__ops_hash_t * hash, const __ops_rsa_public_key_t * rsa,
 	n += sizeof(prefix_sha1);
 
 	t = hash->finish(hash, &hashbuf[n]);
-	assert(t == 20);
+	if (t != 20) {
+		(void) fprintf(stderr, "rsa_sign: hashfinish not 20\n");
+		return;
+	}
 
 	__ops_write(&hashbuf[n], 2, opt);
 
 	n += t;
-	assert(n == keysize);
+	if (n != keysize) {
+		(void) fprintf(stderr, "rsa_sign: n != keysize\n");
+		return;
+	}
 
 	t = __ops_rsa_private_encrypt(sigbuf, hashbuf, keysize, srsa, rsa);
 	bn = BN_bin2bn(sigbuf, (int)t, NULL);
@@ -260,7 +274,10 @@ dsa_sign(__ops_hash_t * hash,
 
 	/* finalise hash */
 	t = hash->finish(hash, &hashbuf[0]);
-	assert(t == 20);
+	if (t != 20) {
+		(void) fprintf(stderr, "dsa_sign: hashfinish not 20\n");
+		return;
+	}
 
 	__ops_write(&hashbuf[0], 2, cinfo);
 
@@ -292,8 +309,14 @@ rsa_verify(__ops_hash_algorithm_t type,
 	prefix = (const unsigned char *) "";
 	keysize = BN_num_bytes(rsa->n);
 	/* RSA key can't be bigger than 65535 bits, so... */
-	assert(keysize <= sizeof(hashbuf_from_sig));
-	assert((unsigned) BN_num_bits(sig->sig) <= 8 * sizeof(sigbuf));
+	if (keysize > sizeof(hashbuf_from_sig)) {
+		(void) fprintf(stderr, "rsa_verify: keysize too big\n");
+		return false;
+	}
+	if ((unsigned) BN_num_bits(sig->sig) > 8 * sizeof(sigbuf)) {
+		(void) fprintf(stderr, "rsa_verify: BN_numbits too big\n");
+		return false;
+	}
 	BN_bn2bin(sig->sig, sigbuf);
 
 	n = __ops_rsa_public_decrypt(hashbuf_from_sig, sigbuf,
@@ -460,7 +483,8 @@ __ops_check_signature(const unsigned char *hash, unsigned length,
 		break;
 
 	default:
-		assert(/*CONSTCOND*/0);
+		(void) fprintf(stderr, "__ops_check_signature: unusual alg\n");
+		ret = false;
 	}
 
 	return ret;
@@ -813,20 +837,32 @@ __ops_write_signature(__ops_create_signature_t * sig,
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		assert(skey->key.rsa.d);
+		if (skey->key.rsa.d == NULL) {
+			(void) fprintf(stderr,
+				"__ops_write_signature: null rsa.d\n");
+			return false;
+		}
 		break;
 
 	case OPS_PKA_DSA:
-		assert(skey->key.dsa.x);
+		if (skey->key.dsa.x == NULL) {
+			(void) fprintf(stderr,
+				"__ops_write_signature: null dsa.x\n");
+			return false;
+		}
 		break;
 
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
 				skey->pubkey.algorithm);
-		assert(/* CONSTCOND */0);
+		return false;
 	}
 
-	assert(sig->hashed_data_length != (unsigned) -1);
+	if (sig->hashed_data_length == (unsigned) -1) {
+		(void) fprintf(stderr,
+			"ops_write_signature: bad hashed data len\n");
+		return false;
+	}
 
 	__ops_memory_place_int(sig->mem, sig->unhashed_count_offset,
 			     l - sig->unhashed_count_offset - 2, 2);
@@ -865,7 +901,7 @@ __ops_write_signature(__ops_create_signature_t * sig,
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
 					skey->pubkey.algorithm);
-		assert(/*CONSTCOND*/0);
+		return false;
 	}
 
 	rtn = __ops_write_ptag(OPS_PTAG_CT_SIGNATURE, info);
@@ -1044,9 +1080,14 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 		int             n = 0;
 
 		n = read(fd_in, buf, sizeof(buf));
-		if (!n)
+		if (n == 0) {
 			break;
-		assert(n >= 0);
+		}
+		if (n < 0) {
+			(void) fprintf(stderr,
+				"__ops_sign_file_as_cleartext: bad read\n");
+			return false;
+		}
 		__ops_write(buf, (unsigned)n, cinfo);
 	}
 	close(fd_in);
@@ -1097,16 +1138,18 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 				const __ops_secret_key_t *skey)
 {
 	bool   rtn = false;
+	unsigned char   keyid[OPS_KEY_ID_SIZE];
+	__ops_create_signature_t *sig = NULL;
+	__ops_create_info_t *cinfo = NULL;
 
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
 
-	unsigned char   keyid[OPS_KEY_ID_SIZE];
-	__ops_create_signature_t *sig = NULL;
-
-	__ops_create_info_t *cinfo = NULL;
-
-	assert(*signed_cleartext == NULL);
+	if (*signed_cleartext != 0x0) {
+		(void) fprintf(stderr,
+			"__ops_sign_buf_as_cleartext: non-null cleartext\n");
+		return false;
+	}
 
 	/* set up signature */
 	sig = __ops_create_signature_new();

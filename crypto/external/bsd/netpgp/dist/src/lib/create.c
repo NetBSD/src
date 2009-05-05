@@ -27,10 +27,6 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -50,7 +46,6 @@
 #include "packet.h"
 #include "signature.h"
 #include "writer.h"
-
 #include "readerwriter.h"
 #include "keyring_local.h"
 #include "loccreate.h"
@@ -70,7 +65,8 @@ __ops_write_ss_header(unsigned length, __ops_content_tag_t type,
 		    __ops_create_info_t * info)
 {
 	return __ops_write_length(length, info) &&
-		__ops_write_scalar((unsigned)(type - OPS_PTAG_SIGNATURE_SUBPACKET_BASE), 1, info);
+		__ops_write_scalar((unsigned)(type -
+			OPS_PTAG_SIGNATURE_SUBPACKET_BASE), 1, info);
 }
 
 /*
@@ -144,29 +140,29 @@ public_key_length(const __ops_public_key_t * key)
 		return mpi_length(key->key.rsa.n) + mpi_length(key->key.rsa.e);
 
 	default:
-		assert(!"unknown key algorithm");
+		(void) fprintf(stderr,
+			"public_key_length: unknown key algorithm\n");
 	}
-	/* not reached */
 	return 0;
 }
 
 static unsigned 
 secret_key_length(const __ops_secret_key_t * key)
 {
-	int             l;
+	int             len;
 
-	l = 0;
+	len = 0;
 	switch (key->pubkey.algorithm) {
 	case OPS_PKA_RSA:
-		l = mpi_length(key->key.rsa.d) + mpi_length(key->key.rsa.p) +
+		len = mpi_length(key->key.rsa.d) + mpi_length(key->key.rsa.p) +
 			mpi_length(key->key.rsa.q) + mpi_length(key->key.rsa.u);
-		break;
 
+		return len + public_key_length(&key->pubkey);
 	default:
-		assert(!"unknown key algorithm");
+		(void) fprintf(stderr,
+			"public_key_length: unknown key algorithm\n");
 	}
-
-	return l + public_key_length(&key->pubkey);
+	return 0;
 }
 
 /**
@@ -228,11 +224,10 @@ write_public_key_body(const __ops_public_key_t * key,
 			__ops_write_mpi(key->key.elgamal.y, info);
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr,
+			"write_public_key_body: bad algorithm\n");
 		break;
 	}
-
-	/* not reached */
 	return false;
 }
 
@@ -258,25 +253,36 @@ write_secret_key_body(const __ops_secret_key_t * key,
 	if (!write_public_key_body(&key->pubkey, info)) {
 		return false;
 	}
-
-	assert(key->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED); /* = 254 */
+	if (key->s2k_usage != OPS_S2KU_ENCRYPTED_AND_HASHED) {
+		(void) fprintf(stderr, "write_secret_key_body: s2k usage\n");
+		return false;
+	}
 	if (!__ops_write_scalar((unsigned)key->s2k_usage, 1, info)) {
 		return false;
 	}
 
-	assert(key->algorithm == OPS_SA_CAST5);
+	if (key->algorithm != OPS_SA_CAST5) {
+		(void) fprintf(stderr, "write_secret_key_body: algorithm\n");
+		return false;
+	}
 	if (!__ops_write_scalar((unsigned)key->algorithm, 1, info)) {
 		return false;
 	}
 
-	assert(key->s2k_specifier == OPS_S2KS_SIMPLE ||
-		key->s2k_specifier == OPS_S2KS_SALTED);
+	if (key->s2k_specifier != OPS_S2KS_SIMPLE &&
+	    key->s2k_specifier != OPS_S2KS_SALTED) {
 		/* = 1 \todo could also be iterated-and-salted */
+		(void) fprintf(stderr, "write_secret_key_body: s2k spec\n");
+		return false;
+	}
 	if (!__ops_write_scalar((unsigned)key->s2k_specifier, 1, info)) {
 		return false;
 	}
 
-	assert(key->hash_algorithm == OPS_HASH_SHA1);
+	if (key->hash_algorithm != OPS_HASH_SHA1) {
+		(void) fprintf(stderr, "write_secret_key_body: hash alg\n");
+		return false;
+	}
 	if (!__ops_write_scalar((unsigned)key->hash_algorithm, 1, info)) {
 		return false;
 	}
@@ -303,7 +309,7 @@ write_secret_key_body(const __ops_secret_key_t * key,
 		(void) fprintf(stderr,
 			"invalid/unsupported s2k specifier %d\n",
 			key->s2k_specifier);
-		assert( /* CONSTCOND */ 0);
+		return false;
 	}
 
 	if (!__ops_write(&key->iv[0], __ops_block_size(key->algorithm), info)) {
@@ -355,7 +361,11 @@ write_secret_key_body(const __ops_secret_key_t * key,
 			(void) memcpy(session_key + (i * SHA_DIGEST_LENGTH),
 					hashed, (unsigned)use);
 			done += use;
-			assert(done <= CAST_KEY_LENGTH);
+			if (done > CAST_KEY_LENGTH) {
+				(void) fprintf(stderr,
+					"write_secret_key_body: short add\n");
+				return false;
+			}
 		}
 
 		break;
@@ -369,7 +379,7 @@ write_secret_key_body(const __ops_secret_key_t * key,
 		(void) fprintf(stderr,
 			"invalid/unsupported s2k specifier %d\n",
 			key->s2k_specifier);
-		assert( /* CONSTCOND */ 0);
+		return false;
 	}
 
 	/* use this session key to encrypt */
@@ -421,8 +431,7 @@ write_secret_key_body(const __ops_secret_key_t * key,
 		/* return __ops_write_mpi(key->key.elgamal.x,info); */
 
 	default:
-		assert( /* CONSTCOND */ 0);
-		break;
+		return false;
 	}
 
 	if (!__ops_write(key->checkhash, OPS_CHECKHASH_SIZE, info)) {
@@ -583,8 +592,11 @@ bool
 __ops_write_struct_public_key(const __ops_public_key_t * key,
 			    __ops_create_info_t * info)
 {
-	assert(key->version == 4);
-
+	if (key->version != 4) {
+		(void) fprintf(stderr,
+			"__ops_write_struct_public_key: wrong key version\n");
+		return false;
+	}
 	return __ops_write_ptag(OPS_PTAG_CT_PUBLIC_KEY, info) &&
 		__ops_write_length(1 + 4 + 1 + public_key_length(key), info) &&
 		write_public_key_body(key, info);
@@ -689,7 +701,11 @@ __ops_write_struct_secret_key(const __ops_secret_key_t * key,
 {
 	int             length = 0;
 
-	assert(key->pubkey.version == 4);
+	if (key->pubkey.version != 4) {
+		(void) fprintf(stderr,
+			"__ops_write_struct_secret_key: public key version\n");
+		return false;
+	}
 
 	/* Ref: RFC4880 Section 5.5.3 */
 
@@ -725,12 +741,16 @@ __ops_write_struct_secret_key(const __ops_secret_key_t * key,
 			break;
 
 		default:
-			assert( /* CONSTCOND */ 0);
+			(void) fprintf(stderr,
+				"__ops_write_struct_secret_key: s2k spec\n");
+			return false;
 		}
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr,
+			"__ops_write_struct_secret_key: s2k usage\n");
+		return false;
 	}
 
 	/* IV */
@@ -749,7 +769,9 @@ __ops_write_struct_secret_key(const __ops_secret_key_t * key,
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr,
+			"__ops_write_struct_secret_key: s2k cksum usage\n");
+		return false;
 	}
 
 	/* secret key and public key MPIs */
@@ -840,7 +862,10 @@ create_unencoded_m_buf(__ops_pk_session_key_t * session_key, unsigned char *m_bu
 
 	m_buf[0] = session_key->symmetric_algorithm;
 
-	assert(session_key->symmetric_algorithm == OPS_SA_CAST5);
+	if (session_key->symmetric_algorithm != OPS_SA_CAST5) {
+		(void) fprintf(stderr, "create_unencoded_m_buf: symm alg\n");
+		return false;
+	}
 	for (i = 0; i < CAST_KEY_LENGTH; i++) {
 		m_buf[1 + i] = session_key->key[i];
 	}
@@ -868,12 +893,14 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 
 	/* implementation of EME-PKCS1-v1_5-ENCODE, as defined in OpenPGP RFC */
 
-	assert(pkey->algorithm == OPS_PKA_RSA);
+	if (pkey->algorithm != OPS_PKA_RSA) {
+		(void) fprintf(stderr, "encode_m_buf: pkey algorithm\n");
+		return false;
+	}
 
 	k = BN_num_bytes(pkey->key.rsa.n);
-	assert(mLen <= k - 11);
 	if (mLen > k - 11) {
-		fprintf(stderr, "message too long\n");
+		(void) fprintf(stderr, "encode_m_buf: message too long\n");
 		return false;
 	}
 	/* these two bytes defined by RFC */
@@ -887,7 +914,10 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 		} while (EM[i] == 0);
 	}
 
-	assert(i >= 8 + 2);
+	if (i < 8 + 2) {
+		(void) fprintf(stderr, "encode_m_buf: bad i len\n");
+		return false;
+	}
 
 	EM[i++] = 0;
 
@@ -934,9 +964,14 @@ __ops_create_pk_session_key(const __ops_keydata_t * key)
 	unsigned char  *encoded_m_buf = calloc(1, sz_encoded_m_buf);
 
 	__ops_pk_session_key_t *session_key = calloc(1, sizeof(*session_key));
-	assert(key->type == OPS_PTAG_CT_PUBLIC_KEY);
+	if (key->type != OPS_PTAG_CT_PUBLIC_KEY) {
+		(void) fprintf(stderr,
+			"__ops_create_pk_session_key: bad type\n");
+		return NULL;
+	}
 	session_key->version = OPS_PKSK_V3;
-	(void) memcpy(session_key->key_id, key->key_id, sizeof(session_key->key_id));
+	(void) memcpy(session_key->key_id, key->key_id,
+			sizeof(session_key->key_id));
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i = 0;
@@ -947,7 +982,11 @@ __ops_create_pk_session_key(const __ops_keydata_t * key)
 		}
 		(void) fprintf(stderr, "\n");
 	}
-	assert(key->key.pkey.algorithm == OPS_PKA_RSA);
+	if (key->key.pkey.algorithm != OPS_PKA_RSA) {
+		(void) fprintf(stderr,
+			"__ops_create_pk_session_key: bad pkey algorithm\n");
+		return NULL;
+	}
 	session_key->algorithm = key->key.pkey.algorithm;
 
 	/* \todo allow user to specify other algorithm */
@@ -1002,8 +1041,16 @@ bool
 __ops_write_pk_session_key(__ops_create_info_t * info,
 			 __ops_pk_session_key_t * pksk)
 {
-	assert(pksk);
-	assert(pksk->algorithm == OPS_PKA_RSA);
+	if (pksk == NULL) {
+		(void) fprintf(stderr,
+			"__ops_write_pk_session_key: NULL pksk\n");
+		return false;
+	}
+	if (pksk->algorithm != OPS_PKA_RSA) {
+		(void) fprintf(stderr,
+			"__ops_write_pk_session_key: bad algorithm\n");
+		return false;
+	}
 
 	return __ops_write_ptag(OPS_PTAG_CT_PK_SESSION_KEY, info) &&
 		__ops_write_length((unsigned)(1 + 8 + 1 + BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2), info) &&
@@ -1259,8 +1306,11 @@ __ops_write_symmetrically_encrypted_data(const unsigned char *data,
 	encrypted = calloc(1, encrypted_sz);
 
 	done = __ops_encrypt_se(&crypt_info, encrypted, data, (unsigned)len);
-	assert(done == len);
-	/* printf("len=%d, done: %d\n", len, done); */
+	if (done != len) {
+		(void) fprintf(stderr,
+"__ops_write_symmetrically_encrypted_data: done != len\n");
+		return false;
+	}
 
 	return __ops_write_ptag(OPS_PTAG_CT_SE_DATA, info) &&
 		__ops_write_length(1 + encrypted_sz, info) &&
