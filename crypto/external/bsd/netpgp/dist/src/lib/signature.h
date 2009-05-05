@@ -34,13 +34,13 @@ __ops_create_signature_t *__ops_create_signature_new(void);
 void            __ops_create_signature_delete(__ops_create_signature_t *);
 
 bool
-__ops_check_user_id_certification_signature(const __ops_public_key_t *,
+__ops_check_useridcert_sig(const __ops_public_key_t *,
 					  const __ops_user_id_t *,
 					  const __ops_signature_t *,
 					  const __ops_public_key_t *,
 					  const unsigned char *);
 bool
-__ops_check_user_attribute_certification_signature(const __ops_public_key_t *,
+__ops_check_userattrcert_sig(const __ops_public_key_t *,
 				     const __ops_user_attribute_t *,
 						 const __ops_signature_t *,
 					    const __ops_public_key_t *,
