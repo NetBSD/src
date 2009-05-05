@@ -717,14 +717,17 @@ display_resize()
 	memzero(colorbuf, bufsize);
     }
 
+    /* for dumb terminals, pretend like we can show any amount */
+    if (!smart_terminal)
+	return Largest;
+
     /* adjust total lines on screen to lines available for procs */
     if (top_lines < y_procs)
 	return -1;
     top_lines -= y_procs;
 
     /* return number of lines available */
-    /* for dumb terminals, pretend like we can show any amount */
-    return(smart_terminal ? top_lines : Largest);
+    return top_lines;
 }
 
 int
