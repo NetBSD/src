@@ -1,4 +1,4 @@
-.\"	$NetBSD: iee.4,v 1.3 2009/04/10 15:24:48 joerg Exp $
+.\"	$NetBSD: iee.4,v 1.4 2009/05/05 16:25:36 tsutsui Exp $
 .\" Copyright (c) 2002 Jochen Kunz.
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
-.Dd February 20, 2004
+.Dd May 5, 2009
 .Dt IEE 4
 .Os
 .Sh NAME
@@ -37,6 +37,8 @@
 .Tn Ethernet
 interface
 .Sh SYNOPSIS
+.Ss ews4800mips
+.Cd iee* at sbdio?
 .Ss hp700
 .Cd iee* at gsc?
 .Sh DESCRIPTION
@@ -61,7 +63,13 @@ only in
 .Tn i82586
 compatibility mode.
 .Sh HARDWARE
-There is currently only an MD frontend for the hp700 GSC bus.
+.Ss ews4800mips
+The
+.Nm
+interface supports
+.Tn Intel
+.Tn i82596CA
+based on-board Ethernet on EWS4800/350.
 .Ss hp700
 The
 .Nm
