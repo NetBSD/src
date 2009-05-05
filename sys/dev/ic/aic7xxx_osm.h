@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.21 2009/03/15 15:52:12 cegger Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.22 2009/05/05 09:51:24 cegger Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -508,7 +508,7 @@ static __inline void	ahc_platform_dump_card_state(struct ahc_softc *);
 static __inline void
 ahc_print_path(struct ahc_softc *ahc, struct scb *scb)
 {
-	printf("%s:", device_xname(&ahc->sc_dev));
+	printf("%s:", device_xname(ahc->sc_dev));
 }
 
 static __inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.27 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.28 2009/05/05 09:51:24 cegger Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.27 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.28 2009/05/05 09:51:24 cegger Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -76,7 +76,7 @@ ahc_attach(struct ahc_softc *ahc)
 
 	ahc_lock(ahc, &s);
 
-	ahc->sc_adapter.adapt_dev = &ahc->sc_dev;
+	ahc->sc_adapter.adapt_dev = ahc->sc_dev;
 	ahc->sc_adapter.adapt_nchannels = (ahc->features & AHC_TWIN) ? 2 : 1;
 
 	ahc->sc_adapter.adapt_openings = ahc->scb_data->numscbs - 1;
@@ -101,19 +101,19 @@ ahc_attach(struct ahc_softc *ahc)
 	}
 
 	ahc_controller_info(ahc, ahc_info, sizeof(ahc_info));
-	printf("%s: %s\n", device_xname(&ahc->sc_dev), ahc_info);
+	printf("%s: %s\n", device_xname(ahc->sc_dev), ahc_info);
 
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
-		ahc->sc_child = config_found((void *)&ahc->sc_dev,
+		ahc->sc_child = config_found(ahc->sc_dev,
 		    &ahc->sc_channel, scsiprint);
 		if (ahc->features & AHC_TWIN)
-			ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
+			ahc->sc_child_b = config_found(ahc->sc_dev,
 			    &ahc->sc_channel_b, scsiprint);
 	} else {
 		if (ahc->features & AHC_TWIN)
-			ahc->sc_child = config_found((void *)&ahc->sc_dev,
+			ahc->sc_child = config_found(ahc->sc_dev,
 			    &ahc->sc_channel_b, scsiprint);
-		ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
+		ahc->sc_child_b = config_found(ahc->sc_dev,
 		    &ahc->sc_channel, scsiprint);
 	}
 
