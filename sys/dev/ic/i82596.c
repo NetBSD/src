@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.19 2008/04/04 17:03:42 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.20 2009/05/05 15:47:35 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.19 2008/04/04 17:03:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.20 2009/05/05 15:47:35 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -123,10 +123,28 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * MI backend doesn't distinguish different chip types when programming
  * the chip.
  * 
- * sc->sc_flags has to be set to 0 on little endian hardware and to
- * IEE_NEED_SWAP on big endian hardware, when endianess conversion is not
- * done by the bus attachment. Usually you need to set IEE_NEED_SWAP
- * when IEE_SYSBUS_BE is set in the sysbus byte.
+ * IEE_NEED_SWAP in sc->sc_flags has to be cleared on little endian hardware
+ * and set on big endian hardware, when endianess conversion is not done
+ * by the bus attachment but done by i82596 chip itself.
+ * Usually you need to set IEE_NEED_SWAP on big endian machines
+ * where the hardware (the LE/~BE pin) is configured as BE mode.
+ * 
+ * If the chip is configured as BE mode, all 8 bit (byte) and 16 bit (word)
+ * entities can be written in big endian. But Rev A chip doesn't support
+ * 32 bit (dword) entities with big endian byte ordering, so we have to
+ * treat all 32 bit (dword) entities as two 16 bit big endian entities.
+ * Rev B and C chips support big endian byte ordering for 32 bit entities,
+ * and this new feature is enabled by IEE_SYSBUS_BE in the sysbus byte.
+ *
+ * With the IEE_SYSBUS_BE feature, all 32 bit address ponters are
+ * treated as true 32 bit entities but the SCB absolute address and
+ * statistical counters are still treated as two 16 bit big endian entities,
+ * so we have to always swap high and low words for these entities.
+ * IEE_SWAP32() should be used for the SCB address and statistical counters,
+ * and IEE_SWAPA32() should be used for other 32 bit pointers in the shmem.
+ *
+ * IEE_REV_A flag must be set in sc->sc_flags if the IEE_SYSBUS_BE feature
+ * is disabled even on big endian machines for the old Rev A chip in backend.
  * 
  * sc->sc_cl_align must be set to 1 or to the cache line size. When set to
  * 1 no special alignment of DMA descriptors is done. If sc->sc_cl_align != 1
@@ -256,7 +274,7 @@ iee_intr(void *intarg)
 		sc->sc_rx_mbuf[sc->sc_rx_done] = new_mbuf;
 		rbd->rbd_count = 0;
 		rbd->rbd_size = IEE_RBD_EL | rx_map->dm_segs[0].ds_len;
-		rbd->rbd_rb_addr = rx_map->dm_segs[0].ds_addr;
+		rbd->rbd_rb_addr = IEE_SWAPA32(rx_map->dm_segs[0].ds_addr);
 		sc->sc_rx_done = (sc->sc_rx_done + 1) % IEE_NRFD;
 		rfd = SC_RFD(sc->sc_rx_done);
 	}
@@ -266,16 +284,19 @@ iee_intr(void *intarg)
 		/* Receive Overrun, reinit receive ring buffer. */
 		for (n = 0 ; n < IEE_NRFD ; n++) {
 			SC_RFD(n)->rfd_cmd = IEE_RFD_SF;
-			SC_RFD(n)->rfd_link_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF
-			    + IEE_RFD_SZ * ((n + 1) % IEE_NRFD));
-			SC_RBD(n)->rbd_next_rbd = IEE_PHYS_SHMEM(IEE_RBD_OFF
-			    + IEE_RBD_SZ * ((n + 1) % IEE_NRFD));
+			SC_RFD(n)->rfd_link_addr =
+			    IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RFD_OFF
+			    + IEE_RFD_SZ * ((n + 1) % IEE_NRFD)));
+			SC_RBD(n)->rbd_next_rbd =
+			    IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RBD_OFF
+			    + IEE_RBD_SZ * ((n + 1) % IEE_NRFD)));
 			SC_RBD(n)->rbd_size = IEE_RBD_EL |
 			    sc->sc_rx_map[n]->dm_segs[0].ds_len;
 			SC_RBD(n)->rbd_rb_addr =
-			    sc->sc_rx_map[n]->dm_segs[0].ds_addr;
+			    IEE_SWAPA32(sc->sc_rx_map[n]->dm_segs[0].ds_addr);
 		}
-		SC_RFD(0)->rfd_rbd_addr = IEE_PHYS_SHMEM(IEE_RBD_OFF);
+		SC_RFD(0)->rfd_rbd_addr =
+		    IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RBD_OFF));
 		sc->sc_rx_done = 0;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_RFD_OFF,
 		    IEE_RFD_LIST_SZ + IEE_RBD_LIST_SZ, BUS_DMASYNC_PREWRITE);
@@ -330,33 +351,33 @@ iee_intr(void *intarg)
 			/* Try to get deferred packets going. */
 			iee_start(ifp);
 	}
-	if (IEE_SWAP(SC_SCB->scb_crc_err) != sc->sc_crc_err) {
-		sc->sc_crc_err = IEE_SWAP(SC_SCB->scb_crc_err);
+	if (IEE_SWAP32(SC_SCB->scb_crc_err) != sc->sc_crc_err) {
+		sc->sc_crc_err = IEE_SWAP32(SC_SCB->scb_crc_err);
 		printf("%s: iee_intr: crc_err=%d\n", device_xname(sc->sc_dev),
 		    sc->sc_crc_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_align_err) != sc->sc_align_err) {
-		sc->sc_align_err = IEE_SWAP(SC_SCB->scb_align_err);
+	if (IEE_SWAP32(SC_SCB->scb_align_err) != sc->sc_align_err) {
+		sc->sc_align_err = IEE_SWAP32(SC_SCB->scb_align_err);
 		printf("%s: iee_intr: align_err=%d\n", device_xname(sc->sc_dev),
 		    sc->sc_align_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_resource_err) != sc->sc_resource_err) {
-		sc->sc_resource_err = IEE_SWAP(SC_SCB->scb_resource_err);
+	if (IEE_SWAP32(SC_SCB->scb_resource_err) != sc->sc_resource_err) {
+		sc->sc_resource_err = IEE_SWAP32(SC_SCB->scb_resource_err);
 		printf("%s: iee_intr: resource_err=%d\n",
 		    device_xname(sc->sc_dev), sc->sc_resource_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_overrun_err) != sc->sc_overrun_err) {
-		sc->sc_overrun_err = IEE_SWAP(SC_SCB->scb_overrun_err);
+	if (IEE_SWAP32(SC_SCB->scb_overrun_err) != sc->sc_overrun_err) {
+		sc->sc_overrun_err = IEE_SWAP32(SC_SCB->scb_overrun_err);
 		printf("%s: iee_intr: overrun_err=%d\n",
 		    device_xname(sc->sc_dev), sc->sc_overrun_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_rcvcdt_err) != sc->sc_rcvcdt_err) {
-		sc->sc_rcvcdt_err = IEE_SWAP(SC_SCB->scb_rcvcdt_err);
+	if (IEE_SWAP32(SC_SCB->scb_rcvcdt_err) != sc->sc_rcvcdt_err) {
+		sc->sc_rcvcdt_err = IEE_SWAP32(SC_SCB->scb_rcvcdt_err);
 		printf("%s: iee_intr: rcvcdt_err=%d\n",
 		    device_xname(sc->sc_dev), sc->sc_rcvcdt_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_short_fr_err) != sc->sc_short_fr_err) {
-		sc->sc_short_fr_err = IEE_SWAP(SC_SCB->scb_short_fr_err);
+	if (IEE_SWAP32(SC_SCB->scb_short_fr_err) != sc->sc_short_fr_err) {
+		sc->sc_short_fr_err = IEE_SWAP32(SC_SCB->scb_short_fr_err);
 		printf("%s: iee_intr: short_fr_err=%d\n",
 		    device_xname(sc->sc_dev), sc->sc_short_fr_err);
 	}
@@ -476,8 +497,9 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 		iee_cb_setup(sc, IEE_CB_CMD_CONF);
 		break;
 	case IEE_CB_CMD_TR:	/* Transmit */
-		cb->cb_transmit.tx_tbd_addr = IEE_PHYS_SHMEM(IEE_TBD_OFF
-		    + IEE_TBD_SZ * sc->sc_next_tbd);
+		cb->cb_transmit.tx_tbd_addr =
+		    IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_TBD_OFF
+		    + IEE_TBD_SZ * sc->sc_next_tbd));
 		cb->cb_cmd |= IEE_CB_SF; /* Always use Flexible Mode. */
 		break;
 	case IEE_CB_CMD_TDR:	/* Time Domain Reflectometry */
@@ -490,8 +512,8 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 		/* can't happen */
 		break;
 	}
-	cb->cb_link_addr = IEE_PHYS_SHMEM(IEE_CB_OFF + IEE_CB_SZ *
-	    (sc->sc_next_cb + 1));
+	cb->cb_link_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_CB_OFF + IEE_CB_SZ *
+	    (sc->sc_next_cb + 1)));
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_CB_OFF
 	    + IEE_CB_SZ * sc->sc_next_cb, IEE_CB_SZ, BUS_DMASYNC_PREWRITE);
 	sc->sc_next_cb++;
@@ -510,14 +532,14 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 
 	/* Set pointer to Intermediate System Configuration Pointer. */
 	/* Phys. addr. in big endian order. (Big endian as defined by Intel.) */
-	SC_SCP->scp_iscp_addr = IEE_SWAP(IEE_PHYS_SHMEM(IEE_ISCP_OFF));
+	SC_SCP->scp_iscp_addr = IEE_SWAP32(IEE_PHYS_SHMEM(IEE_ISCP_OFF));
 	/* Set pointer to System Control Block. */
 	/* Phys. addr. in big endian order. (Big endian as defined by Intel.) */
-	SC_ISCP->iscp_scb_addr = IEE_SWAP(IEE_PHYS_SHMEM(IEE_SCB_OFF));
+	SC_ISCP->iscp_scb_addr = IEE_SWAP32(IEE_PHYS_SHMEM(IEE_SCB_OFF));
 	/* Set pointer to Receive Frame Area. (physical address) */
-	SC_SCB->scb_rfa_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF);
+	SC_SCB->scb_rfa_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RFD_OFF));
 	/* Set pointer to Command Block. (physical address) */
-	SC_SCB->scb_cmd_blk_addr = IEE_PHYS_SHMEM(IEE_CB_OFF);
+	SC_SCB->scb_cmd_blk_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_CB_OFF));
 
 	ifmedia_init(&sc->sc_ifmedia, 0, iee_mediachange, iee_mediastatus);
 	if (media != NULL) {
@@ -656,12 +678,12 @@ iee_start(struct ifnet *ifp)
 		}
 		for (n = 0 ; n < sc->sc_tx_map[t]->dm_nsegs ; n++) {
 			SC_TBD(sc->sc_next_tbd + n)->tbd_tb_addr =
-			    sc->sc_tx_map[t]->dm_segs[n].ds_addr;
+			    IEE_SWAPA32(sc->sc_tx_map[t]->dm_segs[n].ds_addr);
 			SC_TBD(sc->sc_next_tbd + n)->tbd_size =
 			    sc->sc_tx_map[t]->dm_segs[n].ds_len;
 			SC_TBD(sc->sc_next_tbd + n)->tbd_link_addr =
-			    IEE_PHYS_SHMEM(IEE_TBD_OFF + IEE_TBD_SZ
-			    * (sc->sc_next_tbd + n + 1));
+			    IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_TBD_OFF + IEE_TBD_SZ
+			    * (sc->sc_next_tbd + n + 1)));
 		}
 		SC_TBD(sc->sc_next_tbd + n - 1)->tbd_size |= IEE_CB_EL;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_map[t], 0,
@@ -778,11 +800,13 @@ iee_init(struct ifnet *ifp)
 	memset(SC_RBD(0), 0, IEE_RBD_LIST_SZ);
 	for (r = 0 ; r < IEE_NRFD ; r++) {
 		SC_RFD(r)->rfd_cmd = IEE_RFD_SF;
-		SC_RFD(r)->rfd_link_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF
-		    + IEE_RFD_SZ * ((r + 1) % IEE_NRFD));
+		SC_RFD(r)->rfd_link_addr =
+		    IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RFD_OFF
+		    + IEE_RFD_SZ * ((r + 1) % IEE_NRFD)));
 
-		SC_RBD(r)->rbd_next_rbd = IEE_PHYS_SHMEM(IEE_RBD_OFF
-		    + IEE_RBD_SZ * ((r + 1) % IEE_NRFD));
+		SC_RBD(r)->rbd_next_rbd =
+		    IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RBD_OFF
+		    + IEE_RBD_SZ * ((r + 1) % IEE_NRFD)));
 		if (sc->sc_rx_mbuf[r] == NULL) {
 			MGETHDR(sc->sc_rx_mbuf[r], M_DONTWAIT, MT_DATA);
 			if (sc->sc_rx_mbuf[r] == NULL) {
@@ -824,9 +848,10 @@ iee_init(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_map[r], 0,
 		    sc->sc_rx_mbuf[r]->m_ext.ext_size, BUS_DMASYNC_PREREAD);
 		SC_RBD(r)->rbd_size = sc->sc_rx_map[r]->dm_segs[0].ds_len;
-		SC_RBD(r)->rbd_rb_addr= sc->sc_rx_map[r]->dm_segs[0].ds_addr;
+		SC_RBD(r)->rbd_rb_addr =
+		    IEE_SWAPA32(sc->sc_rx_map[r]->dm_segs[0].ds_addr);
 	}
-	SC_RFD(0)->rfd_rbd_addr = IEE_PHYS_SHMEM(IEE_RBD_OFF);
+	SC_RFD(0)->rfd_rbd_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RBD_OFF));
 	if (err != 0) {
 		for (n = 0 ; n < r; n++) {
 			m_freem(sc->sc_rx_mbuf[n]);
@@ -860,7 +885,7 @@ iee_init(struct ifnet *ifp)
 	sc->sc_cf[12] = IEE_CF_12_DEF;
 	sc->sc_cf[13] = IEE_CF_13_DEF;
 	iee_cb_setup(sc, IEE_CB_CMD_CONF | IEE_CB_S | IEE_CB_EL);
-	SC_SCB->scb_rfa_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF);
+	SC_SCB->scb_rfa_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RFD_OFF));
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
 	    BUS_DMASYNC_PREWRITE);
 	(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE | IEE_SCB_RUC_ST);
