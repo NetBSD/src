@@ -55,12 +55,12 @@ bool
 __ops_validate_key_signatures(__ops_validation_t *,
 			    const __ops_keydata_t *,
 			    const __ops_keyring_t *,
-			    __ops_parse_cb_return_t cb(const __ops_parser_content_t *, __ops_parse_cb_info_t *));
+			    __ops_parse_cb_return_t cb(const __ops_packet_t *, __ops_parse_cb_info_t *));
 
 bool
 __ops_validate_all_signatures(__ops_validation_t *,
 			    const __ops_keyring_t *,
-			    __ops_parse_cb_return_t cb(const __ops_parser_content_t *, __ops_parse_cb_info_t *));
+			    __ops_parse_cb_return_t cb(const __ops_packet_t *, __ops_parse_cb_info_t *));
 
 bool   __ops_check_signature(const unsigned char *, unsigned, const __ops_signature_t *, const __ops_public_key_t *);
 

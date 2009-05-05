@@ -225,7 +225,7 @@ sign_detached(char *f, char *sigfile, __ops_secret_key_t *seckey,
 	t = time(NULL);
 	__ops_signature_add_creation_time(sig, t);
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
-		&seckey->public_key);
+		&seckey->pubkey);
 	__ops_signature_add_issuer_key_id(sig, keyid);
 	__ops_signature_hashed_subpackets_end(sig);
 
@@ -243,7 +243,7 @@ sign_detached(char *f, char *sigfile, __ops_secret_key_t *seckey,
 
 	info = __ops_create_info_new();
 	__ops_writer_set_fd(info, fd);
-	__ops_write_signature(sig, &seckey->public_key, seckey, info);
+	__ops_write_signature(sig, &seckey->pubkey, seckey, info);
 	__ops_secret_key_free(seckey);
 	(void) close(fd);
 
@@ -529,4 +529,29 @@ const char *
 netpgp_get_info(const char *type)
 {
 	return __ops_get_info(type);
+}
+
+int
+netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
+{
+	__ops_keyring_t	*keyring;
+	char		 ringname[MAXPATHLEN];
+	char		*homedir;
+
+	homedir = getenv("HOME");
+	if (pubringname == NULL) {
+		(void) snprintf(ringname, sizeof(ringname),
+			"%s/.gnupg/pubring.gpg", homedir);
+		pubringname = ringname;
+	}
+	keyring = calloc(1, sizeof(*keyring));
+	if (!__ops_keyring_read_from_file(keyring, false, pubringname)) {
+		(void) fprintf(stderr, "Cannot read pub keyring %s\n",
+			pubringname);
+		return 0;
+	}
+	netpgp->pubring = keyring;
+	netpgp->pubringfile = strdup(pubringname);
+	__ops_list_packets(f, armour, keyring, get_passphrase_cb);
+	return 1;
 }

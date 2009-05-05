@@ -20,16 +20,8 @@
  */
 #include "config.h"
 
-#include "crypto.h"
-
-#include "readerwriter.h"
-#include "memory.h"
-#include "parse_local.h"
-#include "netpgpdefs.h"
-#include "signature.h"
-
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -37,7 +29,13 @@
 #endif
 
 #include <string.h>
-#include <fcntl.h>
+
+#include "crypto.h"
+#include "readerwriter.h"
+#include "memory.h"
+#include "parse_local.h"
+#include "netpgpdefs.h"
+#include "signature.h"
 
 /**
 \ingroup Core_MPI
@@ -50,8 +48,10 @@
 \note only RSA at present
 */
 int 
-__ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM * encmpi,
-			     const __ops_secret_key_t * skey)
+__ops_decrypt_and_unencode_mpi(unsigned char *buf,
+				unsigned buflen,
+				const BIGNUM * encmpi,
+				const __ops_secret_key_t *skey)
 {
 	unsigned char   encmpibuf[NETPGP_BUFSIZ];
 	unsigned char   mpibuf[NETPGP_BUFSIZ];
@@ -61,31 +61,43 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM
 
 	mpisize = BN_num_bytes(encmpi);
 	/* MPI can't be more than 65,536 */
-	assert(mpisize <= sizeof(encmpibuf));
+	if (mpisize > sizeof(encmpibuf)) {
+		(void) fprintf(stderr, "mpisize too big %u\n", mpisize);
+		return -1;
+	}
 	BN_bn2bin(encmpi, encmpibuf);
 
-	assert(skey->public_key.algorithm == OPS_PKA_RSA);
-
-	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "\nDECRYPTING\n");
-		fprintf(stderr, "encrypted data     : ");
-		for (i = 0; i < 16; i++) {
-			fprintf(stderr, "%2x ", encmpibuf[i]);
-		}
-		fprintf(stderr, "\n");
-	}
-	n = __ops_rsa_private_decrypt(mpibuf, encmpibuf, (unsigned)(BN_num_bits(encmpi) + 7) / 8,
-				 &skey->key.rsa, &skey->public_key.key.rsa);
-	assert(n != -1);
-
-	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "decrypted encoded m buf     : ");
-		for (i = 0; i < 16; i++)
-			fprintf(stderr, "%2x ", mpibuf[i]);
-		fprintf(stderr, "\n");
-	}
-	if (n <= 0)
+	if (skey->pubkey.algorithm != OPS_PKA_RSA) {
+		(void) fprintf(stderr, "pubkey algorithm wrong\n");
 		return -1;
+	}
+
+	if (__ops_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "\nDECRYPTING\n");
+		(void) fprintf(stderr, "encrypted data     : ");
+		for (i = 0; i < 16; i++) {
+			(void) fprintf(stderr, "%2x ", encmpibuf[i]);
+		}
+		(void) fprintf(stderr, "\n");
+	}
+	n = __ops_rsa_private_decrypt(mpibuf, encmpibuf,
+				(unsigned)(BN_num_bits(encmpi) + 7) / 8,
+				&skey->key.rsa, &skey->pubkey.key.rsa);
+	if (n == -1) {
+		(void) fprintf(stderr, "ops_rsa_private_decrypt failure\n");
+		return -1;
+	}
+
+	if (__ops_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "decrypted encoded m buf     : ");
+		for (i = 0; i < 16; i++) {
+			(void) fprintf(stderr, "%2x ", mpibuf[i]);
+		}
+		(void) fprintf(stderr, "\n");
+	}
+	if (n <= 0) {
+		return -1;
+	}
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf(" decrypted=%d ", n);
@@ -94,21 +106,25 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM
 	}
 	/* Decode EME-PKCS1_V1_5 (RFC 2437). */
 
-	if (mpibuf[0] != 0 || mpibuf[1] != 2)
-		return false;
+	if (mpibuf[0] != 0 || mpibuf[1] != 2) {
+		return -1;
+	}
 
 	/* Skip the random bytes. */
-	for (i = 2; i < n && mpibuf[i]; ++i);
+	for (i = 2; i < n && mpibuf[i]; ++i) {
+	}
 
-	if (i == n || i < 10)
-		return false;
+	if (i == n || i < 10) {
+		return -1;
+	}
 
 	/* Skip the zero */
 	++i;
 
 	/* this is the unencoded m buf */
-	if ((unsigned) (n - i) <= buflen)
+	if ((unsigned) (n - i) <= buflen) {
 		(void) memcpy(buf, mpibuf + i, (unsigned)(n - i));
+	}
 
 	if (__ops_get_debug_level(__FILE__)) {
 		int             j;
@@ -135,10 +151,17 @@ __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 	unsigned char   encmpibuf[NETPGP_BUFSIZ];
 	int             n = 0;
 
-	assert(sz_encoded_m_buf == (size_t) BN_num_bytes(pkey->key.rsa.n));
+	if (sz_encoded_m_buf != (size_t) BN_num_bytes(pkey->key.rsa.n)) {
+		(void) fprintf(stderr, "sz_encoded_m_buf wrong\n");
+		return false;
+	}
 
-	n = __ops_rsa_public_encrypt(encmpibuf, encoded_m_buf, sz_encoded_m_buf, &pkey->key.rsa);
-	assert(n != -1);
+	n = __ops_rsa_public_encrypt(encmpibuf, encoded_m_buf,
+				sz_encoded_m_buf, &pkey->key.rsa);
+	if (n == -1) {
+		(void) fprintf(stderr, "__ops_rsa_public_encrypt failure\n");
+		return false;
+	}
 
 	if (n <= 0)
 		return false;
@@ -157,7 +180,7 @@ __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 }
 
 static          __ops_parse_cb_return_t
-callback_write_parsed(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * cbinfo);
+callback_write_parsed(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo);
 
 /**
 \ingroup HighLevel_Crypto
@@ -170,16 +193,18 @@ Encrypt a file
 \return true if OK; else false
 */
 bool 
-__ops_encrypt_file(const char *input_filename, const char *output_filename, const __ops_keydata_t * pub_key, const bool use_armour, const bool allow_overwrite)
+__ops_encrypt_file(const char *input_filename,
+			const char *output_filename,
+			const __ops_keydata_t * pub_key,
+			const bool use_armour,
+			const bool allow_overwrite)
 {
-	int             fd_in = 0;
-	int             fd_out = 0;
-
 	__ops_create_info_t *create;
-
 	unsigned char  *buf;
 	size_t          bufsz;
 	size_t		done;
+	int             fd_in = 0;
+	int             fd_out = 0;
 
 #ifdef O_BINARY
 	fd_in = open(input_filename, O_RDONLY | O_BINARY);
@@ -190,13 +215,16 @@ __ops_encrypt_file(const char *input_filename, const char *output_filename, cons
 		perror(input_filename);
 		return false;
 	}
-	fd_out = __ops_setup_file_write(&create, output_filename, allow_overwrite);
-	if (fd_out < 0)
+	fd_out = __ops_setup_file_write(&create, output_filename,
+				allow_overwrite);
+	if (fd_out < 0) {
 		return false;
+	}
 
 	/* set armoured/not armoured here */
-	if (use_armour)
+	if (use_armour) {
 		__ops_writer_push_armoured_message(create);
+	}
 
 	/* Push the encrypted writer */
 	__ops_writer_push_encrypt_se_ip(create, pub_key);
@@ -211,10 +239,13 @@ __ops_encrypt_file(const char *input_filename, const char *output_filename, cons
 
 		buf = realloc(buf, done + bufsz);
 
-		n = read(fd_in, buf + done, bufsz);
-		if (!n)
+		if ((n = read(fd_in, buf + done, bufsz)) == 0) {
 			break;
-		assert(n >= 0);
+		}
+		if (n < 0) {
+			(void) fprintf(stderr, "Problem in read\n");
+			return false;
+		}
 		done += n;
 	}
 
@@ -308,7 +339,7 @@ __ops_decrypt_file(const char *input_filename, const char *output_filename, __op
 
 	/* Do it */
 
-	__ops_parse_and_print_errors(parse);
+	__ops_parse(parse, 1);
 
 	/* Unsetup */
 
@@ -323,7 +354,7 @@ __ops_decrypt_file(const char *input_filename, const char *output_filename, __op
 }
 
 static          __ops_parse_cb_return_t
-callback_write_parsed(const __ops_parser_content_t *contents, __ops_parse_cb_info_t * cbinfo)
+callback_write_parsed(const __ops_packet_t *contents, __ops_parse_cb_info_t * cbinfo)
 {
 	const __ops_parser_content_union_t *content = &contents->u;
 	static bool skipping;

@@ -67,8 +67,8 @@ bool   __ops_is_key_supported(const __ops_keydata_t *);
 const __ops_keydata_t *__ops_keyring_get_key_by_index(const __ops_keyring_t *, int);
 
 __ops_user_id_t  *__ops_add_userid_to_keydata(__ops_keydata_t *, const __ops_user_id_t *);
-__ops_packet_t   *__ops_add_packet_to_keydata(__ops_keydata_t *, const __ops_packet_t *);
-void            __ops_add_signed_userid_to_keydata(__ops_keydata_t *, const __ops_user_id_t *, const __ops_packet_t *);
+__ops_subpacket_t   *__ops_add_packet_to_keydata(__ops_keydata_t *, const __ops_subpacket_t *);
+void            __ops_add_signed_userid_to_keydata(__ops_keydata_t *, const __ops_user_id_t *, const __ops_subpacket_t *);
 
 bool   __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t *, __ops_user_id_t *);
 
@@ -76,7 +76,7 @@ __ops_keydata_t  *__ops_keydata_new(void);
 void            __ops_keydata_init(__ops_keydata_t *, const __ops_content_tag_t);
 
 void            __ops_copy_userid(__ops_user_id_t *, const __ops_user_id_t *);
-void            __ops_copy_packet(__ops_packet_t *, const __ops_packet_t *);
+void            __ops_copy_packet(__ops_subpacket_t *, const __ops_subpacket_t *);
 unsigned        __ops_get_keydata_content_type(const __ops_keydata_t *);
 
 int		__ops_parse_and_accumulate(__ops_keyring_t *, __ops_parse_info_t *);

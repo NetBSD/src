@@ -44,10 +44,6 @@
 #endif
 
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
 #include <stdlib.h>
 
 /* Apple */
@@ -60,7 +56,6 @@
 
 #include "crypto.h"
 #include "keyring.h"
-
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "keyring_local.h"
@@ -71,21 +66,26 @@ test_secret_key(const __ops_secret_key_t * skey)
 {
 	RSA            *test = RSA_new();
 
-	test->n = BN_dup(skey->public_key.key.rsa.n);
-	test->e = BN_dup(skey->public_key.key.rsa.e);
+	test->n = BN_dup(skey->pubkey.key.rsa.n);
+	test->e = BN_dup(skey->pubkey.key.rsa.e);
 
 	test->d = BN_dup(skey->key.rsa.d);
 	test->p = BN_dup(skey->key.rsa.p);
 	test->q = BN_dup(skey->key.rsa.q);
 
-	assert(RSA_check_key(test) == 1);
+	if (RSA_check_key(test) != 1) {
+		(void) fprintf(stderr,
+			"test_secret_key: RSA_check_key failed\n");
+	}
 	RSA_free(test);
 }
 
 static void 
 md5_init(__ops_hash_t * hash)
 {
-	assert(!hash->data);
+	if (hash->data) {
+		(void) fprintf(stderr, "md5_init: hash data non-null\n");
+	}
 	hash->data = calloc(1, sizeof(MD5_CTX));
 	MD5_Init(hash->data);
 }
@@ -125,7 +125,9 @@ sha1_init(__ops_hash_t * hash)
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "***\n***\nsha1_init\n***\n");
 	}
-	assert(!hash->data);
+	if (hash->data) {
+		(void) fprintf(stderr, "sha1_init: hash data non-null\n");
+	}
 	hash->data = calloc(1, sizeof(SHA_CTX));
 	SHA1_Init(hash->data);
 }
@@ -185,7 +187,9 @@ sha256_init(__ops_hash_t * hash)
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "***\n***\nsha256_init\n***\n");
 	}
-	assert(!hash->data);
+	if (hash->data) {
+		(void) fprintf(stderr, "sha256_init: hash data non-null\n");
+	}
 	hash->data = calloc(1, sizeof(SHA256_CTX));
 	SHA256_Init(hash->data);
 }
@@ -244,7 +248,9 @@ sha384_init(__ops_hash_t * hash)
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "***\n***\nsha384_init\n***\n");
 	}
-	assert(!hash->data);
+	if (hash->data) {
+		(void) fprintf(stderr, "sha384_init: hash data non-null\n");
+	}
 	hash->data = calloc(1, sizeof(SHA512_CTX));
 	SHA384_Init(hash->data);
 }
@@ -303,7 +309,9 @@ sha512_init(__ops_hash_t * hash)
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "***\n***\nsha512_init\n***\n");
 	}
-	assert(!hash->data);
+	if (hash->data) {
+		(void) fprintf(stderr, "sha512_init: hash data non-null\n");
+	}
 	hash->data = calloc(1, sizeof(SHA512_CTX));
 	SHA512_Init(hash->data);
 }
@@ -362,7 +370,9 @@ sha224_init(__ops_hash_t * hash)
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "***\n***\nsha1_init\n***\n");
 	}
-	assert(!hash->data);
+	if (hash->data) {
+		(void) fprintf(stderr, "sha224_init: hash data non-null\n");
+	}
 	hash->data = calloc(1, sizeof(SHA256_CTX));
 	SHA224_Init(hash->data);
 }
@@ -449,7 +459,11 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "ret=%d\n", ret);
 	}
-	assert(ret >= 0);
+	if (ret < 0) {
+		(void) fprintf(stderr,
+			"__ops_do_verify: DSA_do_verify failed\n");
+		return 0;
+	}
 
 	odsa->p = odsa->q = odsa->g = odsa->pub_key = NULL;
 	DSA_free(odsa);
@@ -517,8 +531,14 @@ __ops_rsa_private_encrypt(unsigned char *out, const unsigned char *in,
 	/* If this isn't set, it's very likely that the programmer hasn't */
 	/* decrypted the secret key. RSA_check_key segfaults in that case. */
 	/* Use __ops_decrypt_secret_key_from_data() to do that. */
-	assert(orsa->d);
-	assert(RSA_check_key(orsa) == 1);
+	if (orsa->d == NULL) {
+		(void) fprintf(stderr, "orsa is not set\n");
+		return 0;
+	}
+	if (RSA_check_key(orsa) != 1) {
+		(void) fprintf(stderr, "RSA_check_key is not set\n");
+		return 0;
+	}
 	/* end debug */
 
 	n = RSA_private_encrypt((int)length, in, out, orsa, RSA_NO_PADDING);
@@ -556,7 +576,10 @@ __ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
 
 	/* debug */
 	orsa->e = rsa->e;
-	assert(RSA_check_key(orsa) == 1);
+	if (RSA_check_key(orsa) != 1) {
+		(void) fprintf(stderr, "RSA_check_key is not set\n");
+		return 0;
+	}
 	/* end debug */
 
 	n = RSA_private_decrypt((int)length, in, out, orsa, RSA_NO_PADDING);
@@ -685,13 +708,13 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 
 	/* populate __ops key from ssl key */
 
-	skey->public_key.version = 4;
-	skey->public_key.creation_time = time(NULL);
-	skey->public_key.days_valid = 0;
-	skey->public_key.algorithm = OPS_PKA_RSA;
+	skey->pubkey.version = 4;
+	skey->pubkey.creation_time = time(NULL);
+	skey->pubkey.days_valid = 0;
+	skey->pubkey.algorithm = OPS_PKA_RSA;
 
-	skey->public_key.key.rsa.n = BN_dup(rsa->n);
-	skey->public_key.key.rsa.e = BN_dup(rsa->e);
+	skey->pubkey.key.rsa.n = BN_dup(rsa->n);
+	skey->pubkey.key.rsa.e = BN_dup(rsa->e);
 
 	skey->s2k_usage = OPS_S2KU_ENCRYPTED_AND_HASHED;
 	skey->s2k_specifier = OPS_S2KS_SALTED;
@@ -705,14 +728,17 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 	skey->key.rsa.p = BN_dup(rsa->p);
 	skey->key.rsa.q = BN_dup(rsa->q);
 	skey->key.rsa.u = BN_mod_inverse(NULL, rsa->p, rsa->q, ctx);
-	assert(skey->key.rsa.u);
+	if (skey->key.rsa.u == NULL) {
+		(void) fprintf(stderr, "skey->key.rsa.u is NULL\n");
+		return 0;
+	}
 	BN_CTX_free(ctx);
 
 	RSA_free(rsa);
 
 	__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
-			&keydata->key.skey.public_key);
-	__ops_fingerprint(&keydata->fingerprint, &keydata->key.skey.public_key);
+			&keydata->key.skey.pubkey);
+	__ops_fingerprint(&keydata->fingerprint, &keydata->key.skey.pubkey);
 
 	/* Generate checksum */
 
@@ -723,7 +749,7 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 
 	__ops_push_skey_checksum_writer(cinfo, skey);
 
-	switch (skey->public_key.algorithm) {
+	switch (skey->pubkey.algorithm) {
 		/* case OPS_PKA_DSA: */
 		/* return __ops_write_mpi(key->key.dsa.x,info); */
 
@@ -741,8 +767,8 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 		/* return __ops_write_mpi(key->key.elgamal.x,info); */
 
 	default:
-		assert( /* CONSTCOND */ 0);
-		break;
+		(void) fprintf(stderr, "Bad skey->pubkey.algorithm\n");
+		return false;
 	}
 
 	/* close rather than pop, since its the only one on the stack */
