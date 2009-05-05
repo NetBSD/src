@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.6 2009/05/02 09:40:33 wiz Exp $
+.\" $NetBSD: netpgp.1,v 1.7 2009/05/05 01:28:15 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 1, 2009
+.Dd May 4, 2009
 .Dt NETPGP 1
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Op Fl Fl import-key
 .Op Fl Fl keyring Ns = Ns Ar keyring
 .Op Fl Fl list-keys
+.Op Fl Fl list-packets
 .Op Fl Fl numbits Ns = Ns Ar numbits
 .Op Fl Fl sign
 .Op Fl Fl userid Ns = Ns Ar userid
@@ -118,6 +119,15 @@ retrieved from elsewhere.
 .It Fl Fl list-keys
 List all the public keys in the current keyring.
 If no keyring is provided, the user's public keyring is used.
+.It Fl Fl list-packets
+List all the
+.Dq packets
+in an encrypted or signed file.
+Internally,
+.Nm
+splits an encrypted or signed file into separate packets, and
+this option is used to give a verbose representation
+of these packets on standard output.
 .It Fl Fl sign
 The private key is used to digitally sign the files named on the
 command line.

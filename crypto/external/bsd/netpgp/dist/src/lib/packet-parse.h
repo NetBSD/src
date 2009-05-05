@@ -50,10 +50,10 @@ typedef enum {
 
 typedef struct __ops_parse_cb_info __ops_parse_cb_info_t;
 
-typedef         __ops_parse_cb_return_t __ops_parse_cb_t(const __ops_parser_content_t *, __ops_parse_cb_info_t *);
+typedef         __ops_parse_cb_return_t __ops_parse_cb_t(const __ops_packet_t *, __ops_parse_cb_info_t *);
 
 __ops_parse_cb_return_t
-get_passphrase_cb(const __ops_parser_content_t *, __ops_parse_cb_info_t *);
+get_passphrase_cb(const __ops_packet_t *, __ops_parse_cb_info_t *);
 
 typedef struct __ops_parse_info __ops_parse_info_t;
 typedef struct __ops_reader_info __ops_reader_info_t;
@@ -98,12 +98,11 @@ void            __ops_reader_pop(__ops_parse_info_t *);
 
 void           *__ops_reader_get_arg(__ops_reader_info_t *);
 
-__ops_parse_cb_return_t __ops_parse_cb(const __ops_parser_content_t *, __ops_parse_cb_info_t *);
-__ops_parse_cb_return_t __ops_parse_stacked_cb(const __ops_parser_content_t *, __ops_parse_cb_info_t *);
+__ops_parse_cb_return_t __ops_parse_cb(const __ops_packet_t *, __ops_parse_cb_info_t *);
+__ops_parse_cb_return_t __ops_parse_stacked_cb(const __ops_packet_t *, __ops_parse_cb_info_t *);
 __ops_reader_info_t *__ops_parse_get_rinfo(__ops_parse_info_t *);
 
-int             __ops_parse(__ops_parse_info_t *);
-int             __ops_parse_and_print_errors(__ops_parse_info_t *);
+int             __ops_parse(__ops_parse_info_t *, int);
 
 void            __ops_parse_and_validate(__ops_parse_info_t *);
 

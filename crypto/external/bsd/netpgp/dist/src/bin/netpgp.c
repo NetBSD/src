@@ -173,6 +173,9 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case VERIFY:
 		netpgp_verify_file(netpgp, f, p->armour);
 		break;
+	case LIST_PACKETS:
+		netpgp_list_packets(netpgp, f, p->armour, NULL);
+		break;
 	default:
 		print_usage(usage, pname);
 		exit(EXIT_ERROR);
@@ -229,7 +232,7 @@ main(int argc, char **argv)
 			break;
 
 		case VERSION_CMD:
-			printf("%s\nAll bug reports, praise and chocolate, please, to: %s\n",
+			printf("%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
 				netpgp_get_info("version"),
 				netpgp_get_info("maintainer"));
 			exit(EXIT_SUCCESS);

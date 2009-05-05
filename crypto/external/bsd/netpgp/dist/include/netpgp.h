@@ -46,6 +46,7 @@ int netpgp_end(netpgp_t *);
 int netpgp_set_debug(const char *);
 int netpgp_get_debug(const char *);
 const char *netpgp_get_info(const char *);
+int netpgp_list_packets(netpgp_t *, char *, int, char *);
 
 /* key management */
 int netpgp_list_keys(netpgp_t *);

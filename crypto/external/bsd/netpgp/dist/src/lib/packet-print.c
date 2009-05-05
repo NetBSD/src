@@ -24,17 +24,13 @@
  */
 #include "config.h"
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
 #include <string.h>
+#include <stdio.h>
 
 #include "crypto.h"
 #include "keyring.h"
 #include "packet-show.h"
 #include "signature.h"
-
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "keyring_local.h"
@@ -122,7 +118,8 @@ __ops_print_public_key(const __ops_public_key_t * pkey)
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr,
+			"__ops_print_public_key: Unusual algorithm\n");
 	}
 
 	printf("------- end of PUBLIC KEY ------\n");
@@ -157,7 +154,8 @@ __ops_print_secret_keydata(const __ops_keydata_t * key)
 		unsigned int    i;
 		printf("\n");
 		for (i = 0; i < key->nuids; i++) {
-			printf("uid                              %s\n", key->uids[i].user_id);
+			printf("uid                              %s\n",
+				key->uids[i].user_id);
 		}
 	}
 }
@@ -180,7 +178,8 @@ __ops_print_secret_key_verbose(const __ops_secret_key_t* skey)
 \param skey
 */
 static void
-__ops_print_secret_key_verbose(const __ops_content_tag_t type, const __ops_secret_key_t * skey)
+__ops_print_secret_key_verbose(const __ops_content_tag_t type,
+				const __ops_secret_key_t * skey)
 {
 	printf("------- SECRET KEY or ENCRYPTED SECRET KEY ------\n");
 	if (type == OPS_PTAG_CT_SECRET_KEY)
@@ -205,7 +204,7 @@ __ops_print_secret_key_verbose(const __ops_content_tag_t type, const __ops_secre
 	if (type == OPS_PTAG_CT_ENCRYPTED_SECRET_KEY)
 		return;
 
-	switch (skey->public_key.algorithm) {
+	switch (skey->pubkey.algorithm) {
 	case OPS_PKA_RSA:
 		print_bn("d", skey->key.rsa.d);
 		print_bn("p", skey->key.rsa.p);
@@ -218,7 +217,8 @@ __ops_print_secret_key_verbose(const __ops_content_tag_t type, const __ops_secre
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr,
+			"__ops_print_secret_key_verbose: unusual algorithm\n");
 	}
 
 	if (skey->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED)
@@ -363,7 +363,7 @@ showtime_short(time_t t)
 
 
 static void 
-print_packet_hex(const __ops_packet_t * packet)
+print_packet_hex(const __ops_subpacket_t * packet)
 {
 	unsigned char  *cur;
 	unsigned	rem;
@@ -543,7 +543,8 @@ __ops_print_pk_session_key(__ops_content_tag_t tag,
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr,
+			"__ops_print_pk_session_key: unusual algorithm\n");
 	}
 
 	if (tag != OPS_PTAG_CT_PK_SESSION_KEY)
@@ -576,7 +577,7 @@ end_subpacket(void)
 \param contents
 */
 int 
-__ops_print_packet(const __ops_parser_content_t * contents)
+__ops_print_packet(const __ops_packet_t * contents)
 {
 	const __ops_parser_content_union_t *content = &contents->u;
 	__ops_text_t     *text;
@@ -647,7 +648,7 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 			print_tagname("PUBLIC KEY");
 		else
 			print_tagname("PUBLIC SUBKEY");
-		__ops_print_public_key(&content->public_key);
+		__ops_print_public_key(&content->pubkey);
 		break;
 
 	case OPS_PTAG_CT_TRUST:
@@ -708,7 +709,9 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 			break;
 
 		default:
-			assert( /* CONSTCOND */ 0);
+			(void) fprintf(stderr,
+				"__ops_print_packet: Unusual algorithm\n");
+			return 0;
 		}
 
 		if (content->signature.hash)
@@ -752,7 +755,10 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 		break;
 
 	case OPS_PTAG_RAW_SS:
-		assert(!contents->critical);
+		if (contents->critical) {
+			(void) fprintf(stderr, "contents are critical\n");
+			return 0;
+		}
 		start_subpacket(contents->tag);
 		print_unsigned_int("Raw Signature Subpacket: tag",
 			(unsigned)(content->ss_raw.tag -
@@ -1073,7 +1079,9 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 			break;
 
 		default:
-			assert( /* CONSTCOND */ 0);
+			(void) fprintf(stderr,
+				"__ops_print_packet: Unusual key algorithm\n");
+			return 0;
 		}
 		break;
 
@@ -1150,7 +1158,7 @@ __ops_print_packet(const __ops_parser_content_t * contents)
 }
 
 static __ops_parse_cb_return_t 
-cb_list_packets(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * cbinfo)
+cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 {
 	OPS_USED(cbinfo);
 
@@ -1215,7 +1223,7 @@ cb_list_packets(const __ops_parser_content_t * contents, __ops_parse_cb_info_t *
 		else
 			print_tagname("PUBLIC SUBKEY");
 
-		__ops_print_public_key(&content->public_key);
+		__ops_print_public_key(&content->pubkey);
 		break;
 
 	case OPS_PTAG_CT_TRUST:
@@ -1275,12 +1283,14 @@ cb_list_packets(const __ops_parser_content_t * contents, __ops_parse_cb_info_t *
 			break;
 
 		default:
-			assert(0);
+			(void) fprintf(stderr,
+"__ops_print_packet: Unusual sig key algorithm\n");
+			return;
 		}
 
-		if (content->signature.hash)
+		if (content->signature.hash) {
 			printf("data hash is set\n");
-
+		}
 		break;
 
 	case OPS_PTAG_CT_COMPRESSED:
@@ -1317,7 +1327,11 @@ cb_list_packets(const __ops_parser_content_t * contents, __ops_parse_cb_info_t *
 		break;
 
 	case OPS_PTAG_RAW_SS:
-		assert(!contents->critical);
+		if (contents->critical) {
+			(void) fprintf(stderr,
+				"PTAG_RAW_SS contents are critical\n");
+			return;
+		}
 		start_subpacket(contents->tag);
 		print_unsigned_int("Raw Signature Subpacket: tag",
 		   content->ss_raw.tag - OPS_PTAG_SIGNATURE_SUBPACKET_BASE);
@@ -1631,7 +1645,9 @@ cb_list_packets(const __ops_parser_content_t * contents, __ops_parse_cb_info_t *
 			break;
 
 		default:
-			assert(0);
+			(void) fprintf(stderr,
+				"signature footer - bad algorithm\n");
+			return;
 		}
 		break;
 
@@ -1727,7 +1743,7 @@ __ops_list_packets(char *filename, bool armour, __ops_keyring_t * keyring, __ops
 	if (armour)
 		__ops_reader_push_dearmour(pinfo);
 
-	__ops_parse_and_print_errors(pinfo);
+	__ops_parse(pinfo, 1);
 
 	__ops_teardown_file_read(pinfo, fd);
 }

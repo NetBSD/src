@@ -25,10 +25,6 @@
 
 #include <string.h>
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
 #ifdef HAVE_OPENSSL_CAST_H
 #include <openssl/cast.h>
 #endif
@@ -150,17 +146,22 @@ static __ops_crypt_t cast5 =
 static void 
 idea_init(__ops_crypt_t * crypt)
 {
-	assert(crypt->keysize == IDEA_KEY_LENGTH);
+	if (crypt->keysize != IDEA_KEY_LENGTH) {
+		(void) fprintf(stderr, "idea_init: keysize wrong\n");
+		return;
+	}
 
-	if (crypt->encrypt_key)
-		free(crypt->encrypt_key);
+	if (crypt->encrypt_key) {
+		(void) free(crypt->encrypt_key);
+	}
 	crypt->encrypt_key = calloc(1, sizeof(IDEA_KEY_SCHEDULE));
 
 	/* note that we don't invert the key when decrypting for CFB mode */
 	idea_set_encrypt_key(crypt->key, crypt->encrypt_key);
 
-	if (crypt->decrypt_key)
-		free(crypt->decrypt_key);
+	if (crypt->decrypt_key) {
+		(void) free(crypt->decrypt_key);
+	}
 	crypt->decrypt_key = calloc(1, sizeof(IDEA_KEY_SCHEDULE));
 
 	idea_set_decrypt_key(crypt->encrypt_key, crypt->decrypt_key);
@@ -408,8 +409,8 @@ get_proto(__ops_symmetric_algorithm_t alg)
 		return &tripledes;
 
 	default:
-		fprintf(stderr, "Unknown algorithm: %d (%s)\n", alg, __ops_show_symmetric_algorithm(alg));
-		/* assert(0); */
+		(void) fprintf(stderr, "Unknown algorithm: %d (%s)\n",
+			alg, __ops_show_symmetric_algorithm(alg));
 	}
 
 	return NULL;
@@ -419,6 +420,7 @@ int
 __ops_crypt_any(__ops_crypt_t * crypt, __ops_symmetric_algorithm_t alg)
 {
 	const __ops_crypt_t *ptr = get_proto(alg);
+
 	if (ptr) {
 		*crypt = *ptr;
 		return 1;
@@ -433,10 +435,7 @@ __ops_block_size(__ops_symmetric_algorithm_t alg)
 {
 	const __ops_crypt_t *p = get_proto(alg);
 
-	if (!p)
-		return 0;
-
-	return p->blocksize;
+	return (p == NULL) ? 0 : p->blocksize;
 }
 
 unsigned 
@@ -444,10 +443,7 @@ __ops_key_size(__ops_symmetric_algorithm_t alg)
 {
 	const __ops_crypt_t *p = get_proto(alg);
 
-	if (!p)
-		return 0;
-
-	return p->keysize;
+	return (p == NULL) ? 0 : p->keysize;
 }
 
 void 
@@ -467,7 +463,8 @@ __ops_decrypt_init(__ops_crypt_t * decrypt)
 }
 
 size_t
-__ops_decrypt_se(__ops_crypt_t * decrypt, void *outvoid, const void *invoid, size_t count)
+__ops_decrypt_se(__ops_crypt_t * decrypt, void *outvoid, const void *invoid,
+		size_t count)
 {
 	unsigned char  *out = outvoid;
 	const unsigned char *in = invoid;
@@ -481,8 +478,10 @@ __ops_decrypt_se(__ops_crypt_t * decrypt, void *outvoid, const void *invoid, siz
 		unsigned char   t;
 
 		if ((size_t) decrypt->num == decrypt->blocksize) {
-			(void) memcpy(decrypt->siv, decrypt->civ, decrypt->blocksize);
-			decrypt->block_decrypt(decrypt, decrypt->civ, decrypt->civ);
+			(void) memcpy(decrypt->siv, decrypt->civ,
+					decrypt->blocksize);
+			decrypt->block_decrypt(decrypt, decrypt->civ,
+					decrypt->civ);
 			decrypt->num = 0;
 		}
 		t = decrypt->civ[decrypt->num];

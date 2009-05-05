@@ -494,7 +494,7 @@ bool   __ops_is_hash_alg_supported(const __ops_hash_algorithm_t *);
 /** __ops_secret_key_t
  */
 typedef struct {
-	__ops_public_key_t public_key;
+	__ops_public_key_t pubkey;
 	__ops_s2k_usage_t s2k_usage;
 	__ops_s2k_specifier_t s2k_specifier;
 	__ops_symmetric_algorithm_t algorithm;
@@ -721,10 +721,10 @@ typedef struct {
 
 /** __ops_packet_t */
 
-typedef struct {
+typedef struct __ops_subpacket_t {
 	size_t          length;
 	unsigned char  *raw;
-}               __ops_packet_t;
+}               __ops_subpacket_t;
 
 /** Types of Compression */
 typedef enum {
@@ -939,7 +939,7 @@ typedef union {
 	__ops_parser_error_t error;
 	__ops_parser_errcode_t errcode;
 	__ops_ptag_t      ptag;
-	__ops_public_key_t public_key;
+	__ops_public_key_t pubkey;
 	__ops_trust_t     trust;
 	__ops_user_id_t   user_id;
 	__ops_user_attribute_t user_attribute;
@@ -950,7 +950,7 @@ typedef union {
 	__ops_ss_time_t   ss_time;
 	__ops_ss_key_id_t ss_issuer_key_id;
 	__ops_ss_notation_data_t ss_notation_data;
-	__ops_packet_t    packet;
+	__ops_subpacket_t    packet;
 	__ops_compressed_t compressed;
 	__ops_one_pass_signature_t one_pass_signature;
 	__ops_ss_preferred_ska_t ss_preferred_ska;
@@ -981,15 +981,15 @@ typedef union {
 	__ops_signed_cleartext_trailer_t signed_cleartext_trailer;
 	__ops_unarmoured_text_t unarmoured_text;
 	__ops_pk_session_key_t pk_session_key;
-	__ops_secret_key_passphrase_t secret_key_passphrase;
+	__ops_secret_key_passphrase_t skey_passphrase;
 	__ops_se_ip_data_header_t se_ip_data_header;
 	__ops_se_ip_data_body_t se_ip_data_body;
 	__ops_se_data_body_t se_data_body;
 	__ops_get_secret_key_t get_secret_key;
 }               __ops_parser_content_union_t;
 
-/** __ops_parser_content_t */
-struct __ops_parser_content_t {
+/** __ops_packet_t */
+struct __ops_packet_t {
 	__ops_content_tag_t		tag;		/* type of contents */
 	unsigned char			critical;	/* for signature subpackets */
 	__ops_parser_content_union_t	u;		/* union for contents */
@@ -1027,11 +1027,11 @@ void            __ops_ss_revocation_reason_free(__ops_ss_revocation_reason_t *);
 void            __ops_ss_signature_target_free(__ops_ss_signature_target_t *);
 void            __ops_ss_embedded_signature_free(__ops_ss_embedded_signature_t *);
 
-void            __ops_packet_free(__ops_packet_t *);
-void            __ops_parser_content_free(__ops_parser_content_t *);
+void            __ops_subpacket_free(__ops_subpacket_t *);
+void            __ops_parser_content_free(__ops_packet_t *);
 void            __ops_secret_key_free(__ops_secret_key_t *);
 void            __ops_pk_session_key_free(__ops_pk_session_key_t *);
 
-int             __ops_print_packet(const __ops_parser_content_t *);
+int             __ops_print_packet(const __ops_packet_t *);
 
 #endif

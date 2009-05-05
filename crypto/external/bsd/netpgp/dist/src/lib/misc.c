@@ -23,6 +23,15 @@
  */
 #include "config.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <openssl/rand.h>
 
 #include "errors.h"
@@ -41,19 +50,6 @@
 #include "loccreate.h"
 #include "version.h"
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
-
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #ifdef WIN32
 #define vsnprintf _vsnprintf
 #endif
@@ -66,7 +62,7 @@ typedef struct {
  * \ingroup Core_Callbacks
  */
 static          __ops_parse_cb_return_t
-accumulate_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * cbinfo)
+accumulate_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 {
 	accumulate_t *accumulate = __ops_parse_cb_get_arg(cbinfo);
 	const __ops_parser_content_union_t *content = &contents->u;
@@ -88,9 +84,9 @@ accumulate_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * c
 		EXPAND_ARRAY(keyring, keys);
 
 		if (contents->tag == OPS_PTAG_CT_PUBLIC_KEY)
-			pkey = &content->public_key;
+			pkey = &content->pubkey;
 		else
-			pkey = &content->secret_key.public_key;
+			pkey = &content->secret_key.pubkey;
 
 		(void) memset(&keyring->keys[keyring->nkeys], 0x0,
 		       sizeof(keyring->keys[keyring->nkeys]));
@@ -115,7 +111,6 @@ accumulate_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * c
 			OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No user id found");
 			return OPS_KEEP_MEMORY;
 		}
-		/* assert(cur); */
 		__ops_add_userid_to_keydata(cur, &content->user_id);
 		return OPS_KEEP_MEMORY;
 
@@ -126,16 +121,14 @@ accumulate_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * c
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_ERROR:
-		fprintf(stderr, "Error: %s\n", content->error.error);
-		assert( /* CONSTCOND */ 0);
-		break;
+		(void) fprintf(stderr, "Error: %s\n", content->error.error);
+		return OPS_FINISHED;
 
 	case OPS_PARSER_ERRCODE:
 		switch (content->errcode.errcode) {
 		default:
 			fprintf(stderr, "parse error: %s\n",
 				__ops_errcode(content->errcode.errcode));
-			/* assert(0); */
 		}
 		break;
 
@@ -160,12 +153,16 @@ accumulate_cb(const __ops_parser_content_t * contents, __ops_parse_cb_info_t * c
 */
 
 int 
-__ops_parse_and_accumulate(__ops_keyring_t * keyring, __ops_parse_info_t *parse)
+__ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parse_info_t *parse)
 {
+	accumulate_t	accumulate;
 	int             rtn;
-	accumulate_t accumulate;
 
-	assert(!parse->rinfo.accumulate);
+	if (parse->rinfo.accumulate) {
+		(void) fprintf(stderr,
+			"__ops_parse_and_accumulate: already init\n");
+		return 0;
+	}
 
 	(void) memset(&accumulate, 0x0, sizeof(accumulate));
 
@@ -175,7 +172,7 @@ __ops_parse_and_accumulate(__ops_keyring_t * keyring, __ops_parse_info_t *parse)
 
 	__ops_parse_cb_push(parse, accumulate_cb, &accumulate);
 	parse->rinfo.accumulate = true;
-	rtn = __ops_parse(parse);
+	rtn = __ops_parse(parse, 0);
 
 	keyring->nkeys += 1;
 
@@ -307,8 +304,10 @@ __ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode, int sys_err
 	va_list		args;
 	char           *comment;
 
-	comment = calloc(1, maxbuf + 1);
-	assert(comment);
+	if ((comment = calloc(1, maxbuf + 1)) == NULL) {
+		(void) fprintf(stderr, "calloc comment failure\n");
+		return;
+	}
 
 	va_start(args, fmt);
 	vsnprintf(comment, maxbuf + 1, fmt, args);
@@ -316,8 +315,10 @@ __ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode, int sys_err
 
 	/* alloc a new error and add it to the top of the stack */
 
-	err = calloc(1, sizeof(__ops_error_t));
-	assert(err);
+	if ((err = calloc(1, sizeof(__ops_error_t))) == NULL) {
+		(void) fprintf(stderr, "calloc comment failure\n");
+		return;
+	}
 
 	err->next = *errstack;
 	*errstack = err;
@@ -414,9 +415,13 @@ __ops_fingerprint(__ops_fingerprint_t * fp, const __ops_public_key_t * key)
 		size_t		n;
 		__ops_hash_t	md5;
 
-		assert(key->algorithm == OPS_PKA_RSA
-		       || key->algorithm == OPS_PKA_RSA_ENCRYPT_ONLY
-		       || key->algorithm == OPS_PKA_RSA_SIGN_ONLY);
+		if (key->algorithm != OPS_PKA_RSA &&
+		    key->algorithm != OPS_PKA_RSA_ENCRYPT_ONLY &&
+		    key->algorithm != OPS_PKA_RSA_SIGN_ONLY) {
+			(void) fprintf(stderr,
+				"__ops_fingerprint: bad algorithm\n");
+			return;
+		}
 
 		__ops_hash_md5(&md5);
 		md5.init(&md5);
@@ -479,10 +484,16 @@ __ops_keyid(unsigned char *keyid, const size_t idlen, const int last,
 		unsigned char   bn[NETPGP_BUFSIZ];
 		unsigned        n = BN_num_bytes(key->key.rsa.n);
 
-		assert(n <= sizeof(bn));
-		assert(key->algorithm == OPS_PKA_RSA
-		       || key->algorithm == OPS_PKA_RSA_ENCRYPT_ONLY
-		       || key->algorithm == OPS_PKA_RSA_SIGN_ONLY);
+		if (n > sizeof(bn)) {
+			(void) fprintf(stderr, "__ops_keyid: bad num bytes\n");
+			return;
+		}
+		if (key->algorithm != OPS_PKA_RSA &&
+		    key->algorithm != OPS_PKA_RSA_ENCRYPT_ONLY &&
+		    key->algorithm != OPS_PKA_RSA_SIGN_ONLY) {
+			(void) fprintf(stderr, "__ops_keyid: bad algorithm\n");
+			return;
+		}
 		BN_bn2bin(key->key.rsa.n, bn);
 		(void) memcpy(keyid, (last == 0) ? bn : bn + n - idlen, idlen);
 	} else {
@@ -549,7 +560,7 @@ __ops_hash_any(__ops_hash_t * hash, __ops_hash_algorithm_t alg)
 		break;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr, "__ops_hash_any: bad algorithm\n");
 	}
 }
 
@@ -582,7 +593,7 @@ __ops_hash_size(__ops_hash_algorithm_t alg)
 		return 48;
 
 	default:
-		assert( /* CONSTCOND */ 0);
+		(void) fprintf(stderr, "__ops_hash_size: bad algorithm\n");
 	}
 
 	return 0;
@@ -748,12 +759,17 @@ __ops_memory_init(__ops_memory_t * mem, size_t needed)
 void 
 __ops_memory_pad(__ops_memory_t * mem, size_t length)
 {
-	assert(mem->allocated >= mem->length);
+	if (mem->allocated < mem->length) {
+		(void) fprintf(stderr, "__ops_memory_pad: bad alloc in\n");
+		return;
+	}
 	if (mem->allocated < mem->length + length) {
 		mem->allocated = mem->allocated * 2 + length;
 		mem->buf = realloc(mem->buf, mem->allocated);
 	}
-	assert(mem->allocated >= mem->length + length);
+	if (mem->allocated < mem->length + length) {
+		(void) fprintf(stderr, "__ops_memory_pad: bad alloc out\n");
+	}
 }
 
 /**
@@ -777,10 +793,14 @@ void
 __ops_memory_place_int(__ops_memory_t * mem, unsigned offset, unsigned n,
 		     size_t length)
 {
-	assert(mem->allocated >= offset + length);
-
-	while (length--)
-		mem->buf[offset++] = n >> (length * 8);
+	if (mem->allocated < offset + length) {
+		(void) fprintf(stderr,
+			"__ops_memory_place_int: bad alloc\n");
+	} else {
+		while (length--) {
+			mem->buf[offset++] = n >> (length * 8);
+		}
+	}
 }
 
 /**

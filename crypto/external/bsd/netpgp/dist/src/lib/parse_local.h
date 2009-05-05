@@ -26,11 +26,10 @@
 
 /** __ops_reader_info */
 struct __ops_reader_info {
-	__ops_reader_t   *reader;	/* !< the reader function to use to get the
+	__ops_reader_t   *reader;/* !< the reader function to use to get the
 				 * data to be parsed */
 	__ops_reader_destroyer_t *destroyer;
 	void           *arg;	/* !< the args to pass to the reader function */
-
 	unsigned   accumulate:1;	/* !< set to accumulate packet data */
 	unsigned char  *accumulated;	/* !< the accumulated data */
 	unsigned        asize;	/* !< size of the buffer */
@@ -107,15 +106,16 @@ struct __ops_parse_info {
 	unsigned char   ss_parsed[NTAGS / 8];	/* !< one bit per
 						 * signature-subpacket type;
 						 * set to get parsed data */
-
-	__ops_reader_info_t rinfo;
-	__ops_parse_cb_info_t cbinfo;
-	__ops_error_t    *errors;
-	__ops_crypt_t     decrypt;
-	__ops_crypt_info_t cryptinfo;
-	size_t          nhashes;
+	__ops_reader_info_t	 rinfo;
+	__ops_parse_cb_info_t	 cbinfo;
+	__ops_error_t		*errors;
+	__ops_crypt_t		 decrypt;
+	__ops_crypt_info_t	 cryptinfo;
+	size_t			 nhashes;
 	__ops_parse_hash_info_t *hashes;
-	unsigned   reading_v3_secret:1;
-	unsigned   reading_mpi_length:1;
-	unsigned   exact_read:1;
+	unsigned		 reading_v3_secret:1;
+	unsigned		 reading_mpi_length:1;
+	unsigned		 exact_read:1;
+	void			*synthsig;	/* synthetic sig */
+	void			*synthlit;	/* synthetic literal data */
 };
