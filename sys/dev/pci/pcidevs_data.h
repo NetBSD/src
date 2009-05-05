@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.2 2009/05/03 23:16:22 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.3 2009/05/05 18:21:41 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.2 2009/05/03 23:14:57 snj Exp
+ *	NetBSD: pcidevs,v 1.962.4.3 2009/05/05 18:17:57 bouyer Exp
  */
 
 /*
@@ -8832,8 +8832,16 @@ static const struct pci_product pci_products[] = {
 	    "82801IR LPC Interface Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IEM_LPC,
+	    "82801IEM LPC Interface Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IB_LPC,
 	    "82801IB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IM_LPC,
+	    "82801IM LPC Interface Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_1,
@@ -8854,6 +8862,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_3,
 	    "82801I SATA Controller with 2 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_4,
+	    "82801I Mobile AHCI SATA Controller with 2 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_5,
+	    "82801I Mobile AHCI SATA Controller with 4 ports",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SMB,
@@ -8934,6 +8950,18 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IGD,
 	    "82946GZ Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G35_HB,
+	    "82G35 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G35_IGD,
+	    "82G35 Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G35_IGD_1,
+	    "82G35 Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB,
@@ -9046,6 +9074,42 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_KT,
 	    "82965PM Serial Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_HB,
+	    "82GM45 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_IGD,
+	    "82GM45 Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_IGD_1,
+	    "82GM45 Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82IGD_E_HB,
+	    "82IGD_E Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82IGD_E_IGD,
+	    "82IGD_E Integrated Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_HB,
+	    "82Q45 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_IGD,
+	    "82Q45 Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G45_HB,
+	    "82G45 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G45_IGD,
+	    "82G45 Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
@@ -14516,4 +14580,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3028;
+const int pci_nproducts = 3044;
