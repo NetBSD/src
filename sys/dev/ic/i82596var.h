@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.10 2008/04/04 17:03:42 tsutsui Exp $ */
+/* $NetBSD: i82596var.h,v 1.11 2009/05/05 15:47:35 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -189,10 +189,23 @@ struct iee_softc {
 
 /* Flags */
 #define IEE_NEED_SWAP	0x01
-#define	IEE_WANT_MCAST	0x02
+#define IEE_WANT_MCAST	0x02
+#define IEE_REV_A	0x04
 
-#define IEE_SWAP(x)	((sc->sc_flags & IEE_NEED_SWAP) == 0 ? x : 	\
-			(((x) << 16) | ((x) >> 16)))
+/*
+ * Rev A1 chip doesn't have 32-bit BE mode and all 32 bit pointers are
+ * treated as two 16-bit big endian entities.
+ */
+#define IEE_SWAPA32(x)	((sc->sc_flags & (IEE_NEED_SWAP|IEE_REV_A)) ==	\
+			    (IEE_NEED_SWAP|IEE_REV_A) ?			\
+			    (((x) << 16) | ((x) >> 16)) : (x))
+/*
+ * The SCB absolute address and statistical counters are
+ * always treated as two 16-bit big endian entities
+ * even in 32-bit BE mode supported by Rev B and C chips.
+ */
+#define IEE_SWAP32(x)	((sc->sc_flags & IEE_NEED_SWAP) != 0 ? 		\
+			    (((x) << 16) | ((x) >> 16)) : (x))
 #define IEE_PHYS_SHMEM(x) ((uint32_t) (sc->sc_shmem_map->dm_segs[0].ds_addr \
 			+ (x)))
 
