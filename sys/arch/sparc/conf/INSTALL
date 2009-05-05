@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.67 2009/03/06 20:31:52 joerg Exp $
+#	$NetBSD: INSTALL,v 1.68 2009/05/05 23:58:50 macallan Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -565,8 +565,7 @@ cgfourteen*	at obio0			# sun4m
 pnozz0		at sbus? slot ? offset ?
 
 # Sun ZX/Leo 24-bit framebuffer
-# XXX no wsdisplay support
-#zx*		at sbus? slot ? offset ?
+zx*		at sbus? slot ? offset ?
 
 # Fujitsu AG-10e accelerated graphics 8/24-bit board
 agten*	at sbus? slot ? offset ?
