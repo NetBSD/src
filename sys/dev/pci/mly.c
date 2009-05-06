@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.40 2009/05/06 09:25:16 cegger Exp $	*/
+/*	$NetBSD: mly.c,v 1.41 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.40 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.41 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.40 2009/05/06 09:25:16 cegger Exp $");
 #include <dev/pci/mlyvar.h>
 #include <dev/pci/mly_tables.h>
 
-static void	mly_attach(struct device *, struct device *, void *);
-static int	mly_match(struct device *, cfdata_t, void *);
+static void	mly_attach(device_t, device_t, void *);
+static int	mly_match(device_t, cfdata_t, void *);
 static const	struct mly_ident *mly_find_ident(struct pci_attach_args *);
 static int	mly_fwhandshake(struct mly_softc *);
 static int	mly_flush(struct mly_softc *);
@@ -257,8 +257,7 @@ mly_find_ident(struct pci_attach_args *pa)
  * Match a supported board.
  */
 static int
-mly_match(struct device *parent, cfdata_t cfdata,
-    void *aux)
+mly_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 
 	return (mly_find_ident(aux) != NULL);
@@ -268,7 +267,7 @@ mly_match(struct device *parent, cfdata_t cfdata,
  * Attach a supported board.
  */
 static void
-mly_attach(struct device *parent, struct device *self, void *aux)
+mly_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct mly_softc *mly;

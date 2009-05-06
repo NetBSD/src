@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.9 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.10 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.9 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.10 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,8 +75,8 @@ struct iavc_pci_softc {
 
 static const struct iavc_pci_product *find_cardname(struct pci_attach_args *);
 
-static int iavc_pci_probe(struct device *, cfdata_t, void *);
-static void iavc_pci_attach(struct device *, struct device *, void *);
+static int iavc_pci_probe(device_t, cfdata_t, void *);
+static void iavc_pci_attach(device_t, device_t, void *);
 
 int iavc_pci_intr(void *);
 
@@ -108,8 +108,7 @@ find_cardname(struct pci_attach_args * pa)
 }
 
 static int
-iavc_pci_probe(struct device * parent,
-	cfdata_t  match, void *aux)
+iavc_pci_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -120,8 +119,7 @@ iavc_pci_probe(struct device * parent,
 }
 
 static void
-iavc_pci_attach(struct device * parent,
-	struct device * self, void *aux)
+iavc_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct iavc_pci_softc *psc = (void *) self;
 	struct iavc_softc *sc = (void *) self;
@@ -332,7 +330,7 @@ iavc_pci_intr(void *arg)
 
 #if 0
 static int
-iavc_pci_detach(struct device * self, int flags)
+iavc_pci_detach(device_t self, int flags)
 {
 	struct iavc_pci_softc *psc = (void *) self;
 
@@ -353,7 +351,7 @@ iavc_pci_detach(struct device * self, int flags)
 }
 
 static int
-iavc_pci_activate(struct device * self, enum devact act)
+iavc_pci_activate(device_t self, enum devact act)
 {
 	struct iavc_softc *psc = (struct iavc_softc *) self;
 	int error, s;

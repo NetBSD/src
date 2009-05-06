@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.33 2009/05/06 09:25:15 cegger Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.34 2009/05/06 10:34:32 cegger Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.33 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.34 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,8 @@ struct gem_pci_softc {
 	void			*gsc_ih;
 };
 
-int	gem_match_pci(struct device *, cfdata_t, void *);
-void	gem_attach_pci(struct device *, struct device *, void *);
+int	gem_match_pci(device_t, cfdata_t, void *);
+void	gem_attach_pci(device_t, device_t, void *);
 
 CFATTACH_DECL(gem_pci, sizeof(struct gem_pci_softc),
     gem_match_pci, gem_attach_pci, NULL, NULL);
@@ -104,7 +104,7 @@ CFATTACH_DECL(gem_pci, sizeof(struct gem_pci_softc),
  */
 
 int
-gem_match_pci(struct device *parent, cfdata_t cf, void *aux)
+gem_match_pci(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -157,7 +157,7 @@ isserdes(u_int8_t* buf)
 }
 
 void
-gem_attach_pci(struct device *parent, struct device *self, void *aux)
+gem_attach_pci(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = (void *)self;

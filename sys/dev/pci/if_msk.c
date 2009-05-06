@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.25 2009/05/06 09:25:15 cegger Exp $ */
+/* $NetBSD: if_msk.c,v 1.26 2009/05/06 10:34:32 cegger Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.25 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.26 2009/05/06 10:34:32 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -99,12 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.25 2009/05/06 09:25:15 cegger Exp $");
 #include <dev/pci/if_skreg.h>
 #include <dev/pci/if_mskvar.h>
 
-int mskc_probe(struct device *, cfdata_t, void *);
-void mskc_attach(struct device *, struct device *self, void *aux);
+int mskc_probe(device_t, cfdata_t, void *);
+void mskc_attach(device_t, device_t self, void *aux);
 static bool mskc_suspend(device_t PMF_FN_PROTO);
 static bool mskc_resume(device_t PMF_FN_PROTO);
-int msk_probe(struct device *, cfdata_t, void *);
-void msk_attach(struct device *, struct device *self, void *aux);
+int msk_probe(device_t, cfdata_t, void *);
+void msk_attach(device_t, device_t self, void *aux);
 int mskcprint(void *, const char *);
 int msk_intr(void *);
 void msk_intr_yukon(struct sk_if_softc *);
@@ -128,9 +128,9 @@ int msk_init_tx_ring(struct sk_if_softc *);
 
 void msk_update_int_mod(struct sk_softc *);
 
-int msk_miibus_readreg(struct device *, int, int);
-void msk_miibus_writereg(struct device *, int, int, int);
-void msk_miibus_statchg(struct device *);
+int msk_miibus_readreg(device_t, int, int);
+void msk_miibus_writereg(device_t, int, int, int);
+void msk_miibus_statchg(device_t);
 
 void msk_setfilt(struct sk_if_softc *, void *, int);
 void msk_setmulti(struct sk_if_softc *);
@@ -227,7 +227,7 @@ sk_win_write_1(struct sk_softc *sc, u_int32_t reg, u_int8_t x)
 }
 
 int
-msk_miibus_readreg(struct device *dev, int phy, int reg)
+msk_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	u_int16_t val;
@@ -260,7 +260,7 @@ msk_miibus_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-msk_miibus_writereg(struct device *dev, int phy, int reg, int val)
+msk_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	int i;
@@ -283,7 +283,7 @@ msk_miibus_writereg(struct device *dev, int phy, int reg, int val)
 }
 
 void
-msk_miibus_statchg(struct device *dev)
+msk_miibus_statchg(device_t dev)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	struct mii_data *mii = &sc_if->sk_mii;
@@ -776,8 +776,7 @@ msk_lookup(const struct pci_attach_args *pa)
  * IDs against our list and return a device name if we find a match.
  */
 int
-mskc_probe(struct device *parent, cfdata_t match,
-    void *aux)
+mskc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -945,8 +944,7 @@ void msk_reset(struct sk_softc *sc)
 }
 
 int
-msk_probe(struct device *parent, cfdata_t match,
-    void *aux)
+msk_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct skc_attach_args *sa = aux;
 
@@ -978,7 +976,7 @@ msk_resume(device_t dv PMF_FN_ARGS)
  * Single port cards will have only one logical interface of course.
  */
 void
-msk_attach(struct device *parent, struct device *self, void *aux)
+msk_attach(device_t parent, device_t self, void *aux)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *) self;
 	struct sk_softc *sc = (struct sk_softc *)parent;
@@ -1161,7 +1159,7 @@ mskcprint(void *aux, const char *pnp)
  * setup and ethernet/BPF attach.
  */
 void
-mskc_attach(struct device *parent, struct device *self, void *aux)
+mskc_attach(device_t parent, device_t self, void *aux)
 {
 	struct sk_softc *sc = (struct sk_softc *)self;
 	struct pci_attach_args *pa = aux;

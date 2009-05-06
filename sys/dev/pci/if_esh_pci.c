@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.25 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.26 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.25 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.26 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.25 2009/05/06 09:25:15 cegger Exp $
 
 #define MEM_MAP_REG	0x10
 
-static int	esh_pci_match(struct device *, cfdata_t, void *);
-static void	esh_pci_attach(struct device *, struct device *, void *);
+static int	esh_pci_match(device_t, cfdata_t, void *);
+static void	esh_pci_attach(device_t, device_t, void *);
 static u_int8_t	esh_pci_bist_read(struct esh_softc *);
 static void	esh_pci_bist_write(struct esh_softc *, u_int8_t);
 
@@ -83,8 +83,7 @@ CFATTACH_DECL(esh_pci, sizeof(struct esh_softc),
     esh_pci_match, esh_pci_attach, NULL, NULL);
 
 static int
-esh_pci_match(struct device *parent, cfdata_t match,
-    void *aux)
+esh_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -102,7 +101,7 @@ esh_pci_match(struct device *parent, cfdata_t match,
 }
 
 static void
-esh_pci_attach(struct device *parent, struct device *self, void *aux)
+esh_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct esh_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.34 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: fms.c,v 1.35 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.34 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.35 2009/05/06 10:34:32 cegger Exp $");
 
 #include "mpu.h"
 
@@ -73,8 +73,8 @@ struct fms_dma {
 
 
 
-static int	fms_match(struct device *, cfdata_t, void *);
-static void	fms_attach(struct device *, struct device *, void *);
+static int	fms_match(device_t, cfdata_t, void *);
+static void	fms_attach(device_t, device_t, void *);
 static int	fms_intr(void *);
 
 static int	fms_query_encoding(void *, struct audio_encoding *);
@@ -209,8 +209,7 @@ static int	fms_reset_codec(void *);
 
 
 static int
-fms_match(struct device *parent, cfdata_t match,
-    void *aux)
+fms_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -224,7 +223,7 @@ fms_match(struct device *parent, cfdata_t match,
 }
 
 static void
-fms_attach(struct device *parent, struct device *self, void *aux)
+fms_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct fms_softc *sc;

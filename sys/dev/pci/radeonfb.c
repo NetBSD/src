@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.30 2009/05/06 09:25:16 cegger Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.31 2009/05/06 10:34:33 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.30 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.31 2009/05/06 10:34:33 cegger Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.30 2009/05/06 09:25:16 cegger Exp $")
 #include <dev/pci/radeonfbvar.h>
 #include "opt_radeonfb.h"
 
-static int radeonfb_match(struct device *, cfdata_t, void *);
-static void radeonfb_attach(struct device *, struct device *, void *);
+static int radeonfb_match(device_t, cfdata_t, void *);
+static void radeonfb_attach(device_t, device_t, void *);
 static int radeonfb_ioctl(void *, void *, unsigned long, void *, int,
     struct lwp *);
 static paddr_t radeonfb_mmap(void *, void *, off_t, int);
@@ -407,7 +407,7 @@ CFATTACH_DECL(radeonfb, sizeof (struct radeonfb_softc),
     radeonfb_match, radeonfb_attach, NULL, NULL);
 
 static int
-radeonfb_match(struct device *parent, cfdata_t match, void *aux)
+radeonfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args	*pa = aux;
 	int			i;
@@ -424,7 +424,7 @@ radeonfb_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-radeonfb_attach(struct device *parent, struct device *dev, void *aux)
+radeonfb_attach(device_t parent, device_t dev, void *aux)
 {
 	struct radeonfb_softc	*sc = (struct radeonfb_softc *)dev;
 	struct pci_attach_args	*pa = aux;

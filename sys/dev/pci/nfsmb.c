@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.17 2009/05/06 09:25:16 cegger Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.18 2009/05/06 10:34:32 cegger Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.17 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.18 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,13 +61,13 @@ struct nfsmbc_softc {
 	struct pci_attach_args *sc_pa;
 
 	bus_space_tag_t sc_iot;
-	struct device *sc_nfsmb[2];
+	device_t sc_nfsmb[2];
 };
 
 struct nfsmb_softc {
 	device_t sc_dev;
 	int sc_num;
-	struct device *sc_nfsmbc;
+	device_t sc_nfsmbc;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;

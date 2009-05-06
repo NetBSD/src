@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.3 2009/03/18 16:00:19 cegger Exp $ */
+/*	$NetBSD: alipm.c,v 1.4 2009/05/06 10:34:32 cegger Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.3 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.4 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,8 +107,8 @@ struct alipm_softc {
 	krwlock_t sc_smb_lock;
 };
 
-static int	alipm_match(struct device *, cfdata_t, void *);
-static void	alipm_attach(struct device *, struct device *, void *);
+static int	alipm_match(device_t, cfdata_t, void *);
+static void	alipm_attach(device_t, device_t, void *);
 
 int	alipm_smb_acquire_bus(void *, int);
 void	alipm_smb_release_bus(void *, int);
@@ -119,7 +119,7 @@ CFATTACH_DECL(alipm, sizeof(struct alipm_softc),
 	alipm_match, alipm_attach, NULL, NULL);
 
 static int
-alipm_match(struct device *parent, cfdata_t match, void *aux)
+alipm_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -130,7 +130,7 @@ alipm_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-alipm_attach(struct device *parent, struct device *self, void *aux)
+alipm_attach(device_t parent, device_t self, void *aux)
 {
 	struct alipm_softc *sc = (struct alipm_softc *) self;
 	struct pci_attach_args *pa = aux;

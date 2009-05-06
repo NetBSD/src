@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.73 2009/05/06 09:25:16 cegger Exp $ */
+/* $NetBSD: tga.c,v 1.74 2009/05/06 10:34:33 cegger Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.73 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.74 2009/05/06 10:34:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.73 2009/05/06 09:25:16 cegger Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <uvm/uvm_extern.h>
 
-int	tgamatch(struct device *, cfdata_t, void *);
-void	tgaattach(struct device *, struct device *, void *);
+int	tgamatch(device_t, cfdata_t, void *);
+void	tgaattach(device_t, device_t, void *);
 int	tgaprint(void *, const char *);
 
 CFATTACH_DECL(tga, sizeof(struct tga_softc),
@@ -96,7 +96,7 @@ static void tga_eraserows(void *, int, int, long);
 static void	tga_erasecols(void *, int, int, int, long);
 void tga2_init(struct tga_devconfig *);
 
-static void tga_config_interrupts(struct device *);
+static void tga_config_interrupts(device_t);
 
 /* RAMDAC interface functions */
 static int		tga_sched_update(void *, void (*)(void *));
@@ -164,7 +164,7 @@ tga_cnmatch(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc, pci
 }
 
 int
-tgamatch(struct device *parent, cfdata_t match, void *aux)
+tgamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -380,7 +380,7 @@ tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag, struct tga_de
 }
 
 void
-tgaattach(struct device *parent, struct device *self, void *aux)
+tgaattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct tga_softc *sc = (struct tga_softc *)self;
@@ -507,7 +507,7 @@ tgaattach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-tga_config_interrupts (struct device *d)
+tga_config_interrupts (device_t d)
 {
 	struct tga_softc *sc = (struct tga_softc *)d;
 	sc->sc_dc->dc_intrenabled = 1;

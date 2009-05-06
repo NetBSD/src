@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.45 2009/05/06 09:25:16 cegger Exp $ */
+/* $NetBSD: if_vge.c,v 1.46 2009/05/06 10:34:32 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.45 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.46 2009/05/06 10:34:32 cegger Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -295,8 +295,8 @@ static inline void vge_set_rxaddr(struct vge_rxdesc *, bus_addr_t);
 
 static int vge_ifflags_cb(struct ethercom *);
 
-static int vge_match(struct device *, cfdata_t, void *);
-static void vge_attach(struct device *, struct device *, void *);
+static int vge_match(device_t, cfdata_t, void *);
+static void vge_attach(device_t, device_t, void *);
 
 static int vge_encap(struct vge_softc *, struct mbuf *, int);
 
@@ -315,8 +315,8 @@ static int vge_init(struct ifnet *);
 static void vge_stop(struct ifnet *, int);
 static void vge_watchdog(struct ifnet *);
 #if VGE_POWER_MANAGEMENT
-static int vge_suspend(struct device *);
-static int vge_resume(struct device *);
+static int vge_suspend(device_t);
+static int vge_resume(device_t);
 #endif
 static void vge_shutdown(void *);
 
@@ -324,9 +324,9 @@ static uint16_t vge_read_eeprom(struct vge_softc *, int);
 
 static void vge_miipoll_start(struct vge_softc *);
 static void vge_miipoll_stop(struct vge_softc *);
-static int vge_miibus_readreg(struct device *, int, int);
-static void vge_miibus_writereg(struct device *, int, int, int);
-static void vge_miibus_statchg(struct device *);
+static int vge_miibus_readreg(device_t, int, int);
+static void vge_miibus_writereg(device_t, int, int, int);
+static void vge_miibus_statchg(device_t);
 
 static void vge_cam_clear(struct vge_softc *);
 static int vge_cam_set(struct vge_softc *, uint8_t *);
@@ -517,7 +517,7 @@ vge_miipoll_start(struct vge_softc *sc)
 }
 
 static int
-vge_miibus_readreg(struct device *dev, int phy, int reg)
+vge_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct vge_softc *sc;
 	int i, s;
@@ -556,7 +556,7 @@ vge_miibus_readreg(struct device *dev, int phy, int reg)
 }
 
 static void
-vge_miibus_writereg(struct device *dev, int phy, int reg, int data)
+vge_miibus_writereg(device_t dev, int phy, int reg, int data)
 {
 	struct vge_softc *sc;
 	int i, s;
@@ -803,7 +803,7 @@ vge_reset(struct vge_softc *sc)
  * IDs against our list and return a device name if we find a match.
  */
 static int
-vge_match(struct device *parent, cfdata_t match, void *aux)
+vge_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -921,7 +921,7 @@ vge_allocmem(struct vge_softc *sc)
  * setup and ethernet/BPF attach.
  */
 static void
-vge_attach(struct device *parent, struct device *self, void *aux)
+vge_attach(device_t parent, device_t self, void *aux)
 {
 	uint8_t	*eaddr;
 	struct vge_softc *sc = (void *)self;
@@ -1953,7 +1953,7 @@ out:
 }
 
 static void
-vge_miibus_statchg(struct device *self)
+vge_miibus_statchg(device_t self)
 {
 	struct vge_softc *sc;
 	struct mii_data *mii;
@@ -2132,7 +2132,7 @@ vge_stop(struct ifnet *ifp, int disable)
  * resume.
  */
 static int
-vge_suspend(struct device *dev)
+vge_suspend(device_t dev)
 {
 	struct vge_softc *sc;
 	int i;
@@ -2160,7 +2160,7 @@ vge_suspend(struct device *dev)
  * appropriate.
  */
 static int
-vge_resume(struct device *dev)
+vge_resume(device_t dev)
 {
 	struct vge_softc *sc;
 	struct ifnet *ifp;

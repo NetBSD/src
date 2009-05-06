@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.40 2009/05/06 09:25:14 cegger Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.41 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.40 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.41 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.40 2009/05/06 09:25:14 cegger Exp $");
 #endif
 
 /* IF functions for audio driver */
-static int	cs4281_match(struct device *, cfdata_t, void *);
-static void	cs4281_attach(struct device *, struct device *, void *);
+static int	cs4281_match(device_t, cfdata_t, void *);
+static void	cs4281_attach(device_t, device_t, void *);
 static int	cs4281_intr(void *);
 static int	cs4281_query_encoding(void *, struct audio_encoding *);
 static int	cs4281_set_params(void *, int, int, audio_params_t *,
@@ -168,8 +168,7 @@ static struct audio_device cs4281_device = {
 
 
 static int
-cs4281_match(struct device *parent, cfdata_t match,
-    void *aux)
+cs4281_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -182,7 +181,7 @@ cs4281_match(struct device *parent, cfdata_t match,
 }
 
 static void
-cs4281_attach(struct device *parent, struct device *self, void *aux)
+cs4281_attach(device_t parent, device_t self, void *aux)
 {
 	struct cs428x_softc *sc;
 	struct pci_attach_args *pa;

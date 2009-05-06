@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.24 2009/05/06 09:25:16 cegger Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.25 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.24 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.25 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,15 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.24 2009/05/06 09:25:16 cegger Exp $");
 #define	PCI_INTERFACE_I2O_POLLED	0x00
 #define	PCI_INTERFACE_I2O_INTRDRIVEN	0x01
 
-static void	iop_pci_attach(struct device *, struct device *, void *);
-static int	iop_pci_match(struct device *, cfdata_t, void *);
+static void	iop_pci_attach(device_t, device_t, void *);
+static int	iop_pci_match(device_t, cfdata_t, void *);
 
 CFATTACH_DECL(iop_pci, sizeof(struct iop_softc),
     iop_pci_match, iop_pci_attach, NULL, NULL);
 
 static int
-iop_pci_match(struct device *parent, cfdata_t match,
-    void *aux)
+iop_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 	u_int product, vendor;
@@ -106,7 +105,7 @@ iop_pci_match(struct device *parent, cfdata_t match,
 }
 
 static void
-iop_pci_attach(struct device *parent, struct device *self, void *aux)
+iop_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct iop_softc *sc;

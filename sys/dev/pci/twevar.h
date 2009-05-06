@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.27 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: twevar.h,v 1.28 2009/05/06 10:34:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 /* Callbacks from controller to array. */
 struct twe_callbacks {
-	void	(*tcb_openings)(struct device *, int);
+	void	(*tcb_openings)(device_t, int);
 };
 
 /* Per-array drive information. */

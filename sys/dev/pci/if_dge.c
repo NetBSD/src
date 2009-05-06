@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.24 2009/05/06 09:25:15 cegger Exp $ */
+/*	$NetBSD: if_dge.c,v 1.25 2009/05/06 10:34:32 cegger Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.24 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.25 2009/05/06 10:34:32 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -631,8 +631,8 @@ static void	dge_txintr(struct dge_softc *);
 static void	dge_rxintr(struct dge_softc *);
 static void	dge_linkintr(struct dge_softc *, uint32_t);
 
-static int	dge_match(struct device *, cfdata_t, void *);
-static void	dge_attach(struct device *, struct device *, void *);
+static int	dge_match(device_t, cfdata_t, void *);
+static void	dge_attach(device_t, device_t, void *);
 
 static int	dge_read_eeprom(struct dge_softc *sc);
 static int	dge_eeprom_clockin(struct dge_softc *sc);
@@ -641,7 +641,7 @@ static uint16_t	dge_eeprom_word(struct dge_softc *sc, int addr);
 static int	dge_xgmii_mediachange(struct ifnet *);
 static void	dge_xgmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static void	dge_xgmii_reset(struct dge_softc *);
-static void	dge_xgmii_writereg(struct device *, int, int, int);
+static void	dge_xgmii_writereg(device_t, int, int, int);
 
 
 CFATTACH_DECL(dge, sizeof(struct dge_softc),
@@ -655,7 +655,7 @@ static char (*dge_txseg_evcnt_names)[DGE_NTXSEGS][8 /* "txseg00" + \0 */];
 #endif /* DGE_EVENT_COUNTERS */
 
 static int
-dge_match(struct device *parent, cfdata_t cf, void *aux)
+dge_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -667,7 +667,7 @@ dge_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 static void
-dge_attach(struct device *parent, struct device *self, void *aux)
+dge_attach(device_t parent, device_t self, void *aux)
 {
 	struct dge_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
@@ -2397,7 +2397,7 @@ phwait(struct dge_softc *sc, int p, int r, int d, int type)
 
 
 static void
-dge_xgmii_writereg(struct device *self, int phy, int reg, int val)
+dge_xgmii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct dge_softc *sc = (void *) self;
 	int mdic;

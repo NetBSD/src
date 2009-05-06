@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.29 2009/05/06 09:25:17 cegger Exp $ */
+/*	$NetBSD: twa.c,v 1.30 2009/05/06 10:34:33 cegger Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.29 2009/05/06 09:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.30 2009/05/06 10:34:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,13 +116,13 @@ static int	twa_find_aen(struct twa_softc *sc, uint16_t);
 static uint16_t	twa_enqueue_aen(struct twa_softc *sc,
 			struct twa_command_header *);
 
-static void	twa_attach(struct device *, struct device *, void *);
+static void	twa_attach(device_t, device_t, void *);
 static void	twa_shutdown(void *);
 static int	twa_init_connection(struct twa_softc *, uint16_t, uint32_t,
 				    uint16_t, uint16_t, uint16_t, uint16_t, uint16_t *,
 					uint16_t *, uint16_t *, uint16_t *, uint32_t *);
 static int	twa_intr(void *);
-static int 	twa_match(struct device *, cfdata_t, void *);
+static int 	twa_match(device_t, cfdata_t, void *);
 static int	twa_reset(struct twa_softc *);
 
 static int	twa_print(void *, const char *);
@@ -437,7 +437,7 @@ twa_request_wait_handler(struct twa_request *tr)
 }
 
 static int
-twa_match(struct device *parent, cfdata_t cfdata,
+twa_match(device_t parent, cfdata_t cfdata,
     void *aux)
 {
 	int i;
@@ -1485,7 +1485,7 @@ twa_setup(struct twa_softc *sc)
 void *twa_sdh;
 
 static void
-twa_attach(struct device *parent, struct device *self, void *aux)
+twa_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct twa_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.30 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.31 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.30 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.31 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,8 @@ static  void adp_get_macaddr(struct en_pci_softc *, struct pci_attach_args *);
  * prototypes
  */
 
-static	int en_pci_match(struct device *, cfdata_t, void *);
-static	void en_pci_attach(struct device *, struct device *, void *);
+static	int en_pci_match(device_t, cfdata_t, void *);
+static	void en_pci_attach(device_t, device_t, void *);
 
 /*
  * PCI autoconfig attachments
@@ -162,8 +162,7 @@ static void adp_busreset(void *v)
  */
 
 static int
-en_pci_match(struct device *parent, cfdata_t match,
-    void *aux)
+en_pci_match(device_t parent, cfdata_t match, void *aux)
 {
   struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -186,7 +185,7 @@ en_pci_match(struct device *parent, cfdata_t match,
 
 
 static void
-en_pci_attach(struct device *parent, struct device *self, void *aux)
+en_pci_attach(device_t parent, device_t self, void *aux)
 {
   struct en_softc *sc = (void *)self;
   struct en_pci_softc *scp = (void *)self;

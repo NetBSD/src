@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.33 2009/05/06 09:25:16 cegger Exp $ */
+/* $NetBSD: isic_pci.c,v 1.34 2009/05/06 10:34:32 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.33 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.34 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -68,13 +68,13 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.33 2009/05/06 09:25:16 cegger Exp $")
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_pci_match(struct device *, cfdata_t, void *);
-static void isic_pci_attach(struct device *, struct device *, void *);
+static int isic_pci_match(device_t, cfdata_t, void *);
+static void isic_pci_attach(device_t, device_t, void *);
 static const struct isic_pci_product * find_matching_card(struct pci_attach_args *pa);
 
 static void isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname);
-static int isic_pci_detach(struct device *self, int flags);
-static int isic_pci_activate(struct device *self, enum devact act);
+static int isic_pci_detach(device_t self, int flags);
+static int isic_pci_activate(device_t self, enum devact act);
 
 CFATTACH_DECL(isic_pci, sizeof(struct pci_isic_softc),
     isic_pci_match, isic_pci_attach, isic_pci_detach, isic_pci_activate);
@@ -113,8 +113,7 @@ static const struct isic_pci_product * find_matching_card(pa)
  * Match card
  */
 static int
-isic_pci_match(struct device *parent,
-	cfdata_t match, void *aux)
+isic_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -128,7 +127,7 @@ isic_pci_match(struct device *parent,
  * Attach the card
  */
 static void
-isic_pci_attach(struct device *parent, struct device *self, void *aux)
+isic_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_isic_softc *psc = (void*) self;
 	struct isic_softc *sc = &psc->sc_isic;
@@ -299,7 +298,7 @@ isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, con
 
 
 static int
-isic_pci_detach(struct device *self, int flags)
+isic_pci_detach(device_t self, int flags)
 {
 	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
 
@@ -311,7 +310,7 @@ isic_pci_detach(struct device *self, int flags)
 }
 
 static int
-isic_pci_activate(struct device *self, enum devact act)
+isic_pci_activate(device_t self, enum devact act)
 {
 	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
 	int error = 0, s;

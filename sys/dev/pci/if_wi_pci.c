@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.46 2009/05/06 09:25:16 cegger Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.47 2009/05/06 10:34:32 cegger Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.46 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.47 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ struct wi_pci_softc {
 	pcitag_t psc_pcitag;
 };
 
-static int	wi_pci_match(struct device *, cfdata_t, void *);
-static void	wi_pci_attach(struct device *, struct device *, void *);
+static int	wi_pci_match(device_t, cfdata_t, void *);
+static void	wi_pci_attach(device_t, device_t, void *);
 static int	wi_pci_enable(struct wi_softc *);
 static void	wi_pci_disable(struct wi_softc *);
 static void	wi_pci_reset(struct wi_softc *);
@@ -202,8 +202,7 @@ wi_pci_lookup(struct pci_attach_args *pa)
 }
 
 static int
-wi_pci_match(struct device *parent, cfdata_t match,
-    void *aux)
+wi_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -213,7 +212,7 @@ wi_pci_match(struct device *parent, cfdata_t match,
 }
 
 static void
-wi_pci_attach(struct device *parent, struct device *self, void *aux)
+wi_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)self;
 	struct wi_softc *sc = &psc->psc_wi;
