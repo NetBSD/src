@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2009/01/18 00:34:03 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2009/05/06 02:59:12 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -576,7 +576,7 @@ int role_index(int);
 void setrandom(void);
 struct tm *getlt(void);
 int getyear(void);
-char *getdate(void);
+char *getdatestr(void);
 int phase_of_the_moon(void);
 int night(void);
 int midnight(void);
