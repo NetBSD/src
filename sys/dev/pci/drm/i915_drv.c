@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.10 2009/05/06 09:25:17 cegger Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.11 2009/05/06 10:34:33 cegger Exp $	*/
 
 /* i915_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.10 2009/05/06 09:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.11 2009/05/06 10:34:33 cegger Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_drv.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */
@@ -129,14 +129,14 @@ MODULE_DEPEND(i915, drm, 1, 1, 1);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 static int
-i915drm_probe(struct device *parent, cfdata_t match, void *aux)
+i915drm_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	return drm_probe(pa, i915_pciidlist);
 }
 
 static void
-i915drm_attach(struct device *parent, struct device *self, void *aux)
+i915drm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	drm_device_t *dev = device_private(self);

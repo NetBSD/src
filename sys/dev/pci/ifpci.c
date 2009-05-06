@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci.c,v 1.26 2009/05/06 09:25:16 cegger Exp $	*/
+/* $NetBSD: ifpci.c,v 1.27 2009/05/06 10:34:32 cegger Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.26 2009/05/06 09:25:16 cegger Exp $
+ *	$Id: ifpci.c,v 1.27 2009/05/06 10:34:32 cegger Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.26 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.27 2009/05/06 10:34:32 cegger Exp $");
 
 
 #include <sys/param.h>
@@ -134,10 +134,10 @@ static void avma1pp_bchannel_stat(isdn_layer1token, int h_chan, bchan_statistics
 static void avma1pp_map_int(struct ifpci_softc *sc, struct pci_attach_args *pa);
 static void avma1pp_bchannel_setup(isdn_layer1token, int h_chan, int bprot, int activate);
 static void avma1pp_init_linktab(struct isic_softc *);
-static int ifpci_match(struct device *parent, cfdata_t match, void *aux);
-static void ifpci_attach(struct device *parent, struct device *self, void *aux);
-static int ifpci_detach(struct device *self, int flags);
-static int ifpci_activate(struct device *self, enum devact act);
+static int ifpci_match(device_t parent, cfdata_t match, void *aux);
+static void ifpci_attach(device_t parent, device_t self, void *aux);
+static int ifpci_detach(device_t self, int flags);
+static int ifpci_activate(device_t self, enum devact act);
 
 CFATTACH_DECL(ifpci, sizeof(struct ifpci_softc),
     ifpci_match, ifpci_attach, ifpci_detach, ifpci_activate);
@@ -262,8 +262,7 @@ CFATTACH_DECL(ifpci, sizeof(struct ifpci_softc),
 #define HSCX_AVMA1PP_ACTIVE	0x1000
 
 static int
-ifpci_match(struct device *parent,
-	cfdata_t match, void *aux)
+ifpci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -274,7 +273,7 @@ ifpci_match(struct device *parent,
 }
 
 static void
-ifpci_attach(struct device *parent, struct device *self, void *aux)
+ifpci_attach(device_t parent, device_t self, void *aux)
 {
 	struct ifpci_softc *psc = (void*)self;
 	struct pci_attach_args *pa = aux;
@@ -398,7 +397,7 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ifpci_detach(struct device *self, int flags)
+ifpci_detach(device_t self, int flags)
 {
 	struct ifpci_softc *psc = (struct ifpci_softc *)self;
 
@@ -410,7 +409,7 @@ ifpci_detach(struct device *self, int flags)
 }
 
 int
-ifpci_activate(struct device *self, enum devact act)
+ifpci_activate(device_t self, enum devact act)
 {
 	struct ifpci_softc *psc = (struct ifpci_softc *)self;
 	int error = 0, s;

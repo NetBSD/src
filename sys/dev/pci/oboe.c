@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.33 2009/05/06 09:25:16 cegger Exp $	*/
+/*	$NetBSD: oboe.c,v 1.34 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.33 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.34 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.33 2009/05/06 09:25:16 cegger Exp $");
 
 #include <dev/pci/oboereg.h>
 
-static int oboe_match(struct device *parent, cfdata_t match, void *aux);
-static void oboe_attach(struct device *parent, struct device *self, void *aux);
-static int oboe_activate(struct device *self, enum devact act);
-static int oboe_detach(struct device *self, int flags);
+static int oboe_match(device_t parent, cfdata_t match, void *aux);
+static void oboe_attach(device_t parent, device_t self, void *aux);
+static int oboe_activate(device_t self, enum devact act);
+static int oboe_detach(device_t self, int flags);
 
 static int oboe_open(void *h, int flag, int mode, struct lwp *l);
 static int oboe_close(void *h, int flag, int mode, struct lwp *l);
@@ -161,8 +161,7 @@ static struct irframe_methods oboe_methods = {
 };
 
 static int
-oboe_match(struct device *parent, cfdata_t match,
-    void *aux)
+oboe_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -174,7 +173,7 @@ oboe_match(struct device *parent, cfdata_t match,
 }
 
 static void
-oboe_attach(struct device *parent, struct device *self, void *aux)
+oboe_attach(device_t parent, device_t self, void *aux)
 {
 	struct oboe_softc *sc = (struct oboe_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -245,7 +244,7 @@ oboe_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-oboe_activate(struct device *self, enum devact act)
+oboe_activate(device_t self, enum devact act)
 {
 	struct oboe_softc *sc = (struct oboe_softc *)self;
 	int error = 0;
@@ -266,7 +265,7 @@ oboe_activate(struct device *self, enum devact act)
 }
 
 static int
-oboe_detach(struct device *self, int flags)
+oboe_detach(device_t self, int flags)
 {
 	struct oboe_softc *sc = (struct oboe_softc *)self;
 

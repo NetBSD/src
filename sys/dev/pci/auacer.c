@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.22 2009/05/06 09:25:14 cegger Exp $	*/
+/*	$NetBSD: auacer.c,v 1.23 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.22 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.23 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,7 @@ static int	auacer_write_codec(void *, uint8_t, uint16_t);
 static int	auacer_reset_codec(void *);
 
 static int
-auacer_match(struct device *parent, cfdata_t match,
-    void *aux)
+auacer_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -249,7 +248,7 @@ auacer_match(struct device *parent, cfdata_t match,
 }
 
 static void
-auacer_attach(struct device *parent, struct device *self, void *aux)
+auacer_attach(device_t parent, device_t self, void *aux)
 {
 	struct auacer_softc *sc;
 	struct pci_attach_args *pa;

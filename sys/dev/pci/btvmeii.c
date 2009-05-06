@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.18 2009/05/06 09:25:14 cegger Exp $ */
+/* $NetBSD: btvmeii.c,v 1.19 2009/05/06 10:34:32 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.18 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.19 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.18 2009/05/06 09:25:14 cegger Exp $");
 
 #include <dev/pci/universe_pci_var.h>
 
-static int b3_2706_match(struct device *, cfdata_t, void *);
-static void b3_2706_attach(struct device *, struct device *, void *);
+static int b3_2706_match(device_t, cfdata_t, void *);
+static void b3_2706_attach(device_t, device_t, void *);
 
 /* exported via tag structs */
 int b3_2706_map_vme(void *, vme_addr_t, vme_size_t,
@@ -134,7 +134,7 @@ CFATTACH_DECL(btvmeii, sizeof(struct b3_2706_softc),
  */
 
 static int
-b3_2706_match(struct device *parent, cfdata_t match, void *aux)
+b3_2706_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -179,7 +179,7 @@ b3_2706_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-b3_2706_attach(struct device *parent, struct device *self, void *aux)
+b3_2706_attach(device_t parent, device_t self, void *aux)
 {
 	struct b3_2706_softc *sc = (struct b3_2706_softc *)self;
 	struct pci_attach_args *pa = aux;

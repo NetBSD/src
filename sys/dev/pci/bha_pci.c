@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.34 2009/05/06 09:25:14 cegger Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.35 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.34 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.35 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.34 2009/05/06 09:25:14 cegger Exp $");
  * the actual probe routine to check it out.
  */
 static int
-bha_pci_match(struct device *parent, cfdata_t match,
-    void *aux)
+bha_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	bus_space_tag_t iot;
@@ -87,7 +86,7 @@ bha_pci_match(struct device *parent, cfdata_t match,
  * Attach all the sub-devices we can find
  */
 static void
-bha_pci_attach(struct device *parent, struct device *self, void *aux)
+bha_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct bha_softc *sc = (void *)self;

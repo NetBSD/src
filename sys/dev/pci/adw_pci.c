@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.23 2009/05/06 09:25:14 cegger Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.24 2009/05/06 10:34:32 cegger Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.23 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.24 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.23 2009/05/06 09:25:14 cegger Exp $");
  * the actual probe routine to check it out.
  */
 static int
-adw_pci_match(struct device *parent, cfdata_t match,
-    void *aux)
+adw_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -94,7 +93,7 @@ adw_pci_match(struct device *parent, cfdata_t match,
 
 
 static void
-adw_pci_attach(struct device *parent, struct device *self, void *aux)
+adw_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	ADW_SOFTC      *sc = (void *) self;
