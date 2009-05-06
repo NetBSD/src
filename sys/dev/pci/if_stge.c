@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.45 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.46 2009/05/06 09:25:16 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.45 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.46 2009/05/06 09:25:16 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -286,7 +286,7 @@ static int	stge_mii_readreg(device_t, int, int);
 static void	stge_mii_writereg(device_t, int, int, int);
 static void	stge_mii_statchg(device_t);
 
-static int	stge_match(device_t, struct cfdata *, void *);
+static int	stge_match(device_t, cfdata_t, void *);
 static void	stge_attach(device_t, device_t, void *);
 
 int	stge_copy_small = 0;
@@ -363,7 +363,7 @@ stge_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-stge_match(device_t parent, struct cfdata *cf, void *aux)
+stge_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

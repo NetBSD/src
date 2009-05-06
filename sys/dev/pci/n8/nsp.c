@@ -105,7 +105,7 @@
 
 #include "nspvar.h"
 
-static int nsp_probe(struct device *parent, struct cfdata *match, void *aux);
+static int nsp_probe(struct device *parent, cfdata_t match, void *aux);
 static void nsp_attach(struct device *parent, struct device *self, void *aux);
 static int nsp_detach(device_t dev, int flags);
 
@@ -265,7 +265,7 @@ nsp_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-nsp_probe(struct device *parent, struct cfdata *match, void *aux)
+nsp_probe(struct device *parent, cfdata_t match, void *aux)
 {
 	static int		once=0;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.33 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: fms.c,v 1.34 2009/05/06 09:25:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.33 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.34 2009/05/06 09:25:15 cegger Exp $");
 
 #include "mpu.h"
 
@@ -73,7 +73,7 @@ struct fms_dma {
 
 
 
-static int	fms_match(struct device *, struct cfdata *, void *);
+static int	fms_match(struct device *, cfdata_t, void *);
 static void	fms_attach(struct device *, struct device *, void *);
 static int	fms_intr(void *);
 
@@ -209,7 +209,7 @@ static int	fms_reset_codec(void *);
 
 
 static int
-fms_match(struct device *parent, struct cfdata *match,
+fms_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.72 2009/03/16 23:11:16 dsl Exp $ */
+/* $NetBSD: tga.c,v 1.73 2009/05/06 09:25:16 cegger Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.72 2009/03/16 23:11:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.73 2009/05/06 09:25:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.72 2009/03/16 23:11:16 dsl Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <uvm/uvm_extern.h>
 
-int	tgamatch(struct device *, struct cfdata *, void *);
+int	tgamatch(struct device *, cfdata_t, void *);
 void	tgaattach(struct device *, struct device *, void *);
 int	tgaprint(void *, const char *);
 
@@ -164,7 +164,7 @@ tga_cnmatch(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc, pci
 }
 
 int
-tgamatch(struct device *parent, struct cfdata *match, void *aux)
+tgamatch(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.32 2009/03/14 15:36:19 dsl Exp $ */
+/* $NetBSD: isic_pci.c,v 1.33 2009/05/06 09:25:16 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.32 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.33 2009/05/06 09:25:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.32 2009/03/14 15:36:19 dsl Exp $");
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_pci_match(struct device *, struct cfdata *, void *);
+static int isic_pci_match(struct device *, cfdata_t, void *);
 static void isic_pci_attach(struct device *, struct device *, void *);
 static const struct isic_pci_product * find_matching_card(struct pci_attach_args *pa);
 
@@ -114,7 +114,7 @@ static const struct isic_pci_product * find_matching_card(pa)
  */
 static int
 isic_pci_match(struct device *parent,
-	struct cfdata *match, void *aux)
+	cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

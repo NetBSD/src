@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.46 2009/02/02 15:57:51 tsutsui Exp $ */
+/* $NetBSD: if_lmc.c,v 1.47 2009/05/06 09:25:15 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.46 2009/02/02 15:57:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.47 2009/05/06 09:25:15 cegger Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -7064,7 +7064,7 @@ MODULE_DEPEND(if_lmc, sppp, 1, 1, 1);
 /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
 /* context: kernel (boot) or process (syscall) */
 static int
-nbsd_match(struct device *parent, struct cfdata *match,
+nbsd_match(struct device *parent, cfdata_t match,
     void *aux)
   {
   struct pci_attach_args *pa = aux;
@@ -7486,7 +7486,7 @@ bsdi_match(pci_devaddr_t *pa)
   }
 
 static int  /* context: kernel (boot) */
-bsdi_probe(struct device *parent, struct cfdata *cf, void *aux)
+bsdi_probe(struct device *parent, cfdata_t cf, void *aux)
   {
   struct isa_attach_args *ia = aux;
   pci_devaddr_t *pa = NULL;

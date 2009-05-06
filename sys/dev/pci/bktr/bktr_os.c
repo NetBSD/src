@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.55 2009/03/15 15:48:14 cegger Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.56 2009/05/06 09:25:17 cegger Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.55 2009/03/15 15:48:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.56 2009/05/06 09:25:17 cegger Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1329,7 +1329,7 @@ static	int		bktr_intr(void *arg) { return common_bktr_intr(arg); }
 
 static int      bktr_probe(struct device *, void *, void *);
 #else
-static int      bktr_probe(struct device *, struct cfdata *, void *);
+static int      bktr_probe(struct device *, cfdata_t, void *);
 #endif
 static void     bktr_attach(struct device *, struct device *, void *);
 
@@ -1360,7 +1360,7 @@ static struct radio_hw_if bktr_hw_if = {
 #endif
 
 int
-bktr_probe(struct device *parent, struct cfdata *match,
+bktr_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
         struct pci_attach_args *pa = aux;

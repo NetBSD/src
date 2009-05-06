@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.9 2008/04/29 22:21:45 scw Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.10 2009/05/06 09:25:16 cegger Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.9 2008/04/29 22:21:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.10 2009/05/06 09:25:16 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -90,7 +90,7 @@ struct ral_pci_softc {
 /* Base Address Register */
 #define RAL_PCI_BAR0	0x10
 
-int	ral_pci_match(struct device *, struct cfdata *, void *);
+int	ral_pci_match(struct device *, cfdata_t, void *);
 void	ral_pci_attach(struct device *, struct device *, void *);
 int	ral_pci_detach(struct device *, int);
 
@@ -98,7 +98,7 @@ CFATTACH_DECL(ral_pci, sizeof (struct ral_pci_softc),
 	ral_pci_match, ral_pci_attach, ral_pci_detach, NULL);
 
 int
-ral_pci_match(struct device *parent, struct cfdata *cfdata,
+ral_pci_match(struct device *parent, cfdata_t cfdata,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
