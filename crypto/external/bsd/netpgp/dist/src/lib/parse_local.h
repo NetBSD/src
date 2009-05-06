@@ -64,7 +64,7 @@ struct __ops_parse_cb_info {
 				 * function */
 	__ops_error_t   **errors;	/* !< the address of the error stack to use */
 
-	__ops_parse_cb_info_t *next;
+	__ops_callback_data_t *next;
 
 	__ops_create_info_t *cinfo;	/* !< used if writing out parsed info */
 	__ops_crypt_info_t cryptinfo;	/* !< used when decrypting */
@@ -107,7 +107,7 @@ struct __ops_parse_info {
 						 * signature-subpacket type;
 						 * set to get parsed data */
 	__ops_reader_info_t	 rinfo;
-	__ops_parse_cb_info_t	 cbinfo;
+	__ops_callback_data_t	 cbinfo;
 	__ops_error_t		*errors;
 	__ops_crypt_t		 decrypt;
 	__ops_crypt_info_t	 cryptinfo;

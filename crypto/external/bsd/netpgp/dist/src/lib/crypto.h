@@ -102,13 +102,13 @@ unsigned __ops_hash(unsigned char *, __ops_hash_algorithm_t, const void *, size_
 
 void            __ops_hash_add_int(__ops_hash_t *, unsigned, unsigned);
 
-bool __ops_dsa_verify(const unsigned char *, size_t, const __ops_dsa_signature_t *, const __ops_dsa_public_key_t *);
+bool __ops_dsa_verify(const unsigned char *, size_t, const __ops_dsa_sig_t *, const __ops_dsa_pubkey_t *);
 
-int __ops_rsa_public_decrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_public_key_t *);
-int __ops_rsa_public_encrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_public_key_t *);
+int __ops_rsa_public_decrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_pubkey_t *);
+int __ops_rsa_public_encrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_pubkey_t *);
 
-int __ops_rsa_private_encrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_secret_key_t *, const __ops_rsa_public_key_t *);
-int __ops_rsa_private_decrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_secret_key_t *, const __ops_rsa_public_key_t *);
+int __ops_rsa_private_encrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_seckey_t *, const __ops_rsa_pubkey_t *);
+int __ops_rsa_private_decrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_seckey_t *, const __ops_rsa_pubkey_t *);
 
 unsigned        __ops_block_size(__ops_symmetric_algorithm_t);
 unsigned        __ops_key_size(__ops_symmetric_algorithm_t);
@@ -131,8 +131,8 @@ void            __ops_reader_pop_decrypt(__ops_parse_info_t *);
 void            __ops_reader_push_hash(__ops_parse_info_t *, __ops_hash_t *);
 void            __ops_reader_pop_hash(__ops_parse_info_t *);
 
-int __ops_decrypt_and_unencode_mpi(unsigned char *, unsigned, const BIGNUM *, const __ops_secret_key_t *);
-bool __ops_rsa_encrypt_mpi(const unsigned char *, const size_t, const __ops_public_key_t *, __ops_pk_session_key_parameters_t *);
+int __ops_decrypt_and_unencode_mpi(unsigned char *, unsigned, const BIGNUM *, const __ops_seckey_t *);
+bool __ops_rsa_encrypt_mpi(const unsigned char *, const size_t, const __ops_pubkey_t *, __ops_pk_session_key_parameters_t *);
 
 
 /* Encrypt everything that's written */
@@ -146,7 +146,7 @@ bool   __ops_decrypt_file(const char *, const char *, __ops_keyring_t *, const b
 bool   __ops_rsa_generate_keypair(const int, const unsigned long, __ops_keydata_t *);
 __ops_keydata_t  *__ops_rsa_create_selfsigned_keypair(const int, const unsigned long, __ops_user_id_t *);
 
-int             __ops_dsa_size(const __ops_dsa_public_key_t *);
-DSA_SIG        *__ops_dsa_sign(unsigned char *, unsigned, const __ops_dsa_secret_key_t *, const __ops_dsa_public_key_t *);
+int             __ops_dsa_size(const __ops_dsa_pubkey_t *);
+DSA_SIG        *__ops_dsa_sign(unsigned char *, unsigned, const __ops_dsa_seckey_t *, const __ops_dsa_pubkey_t *);
 
 #endif

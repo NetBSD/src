@@ -1,7 +1,6 @@
 To Do
 =====
 detached verification
-get rid of assert()s
 need a netpgp_set_{pub,sec}key()? vs _init()?
 default compression when signing
 get rid of ops_memory after used literal_data_body
@@ -45,3 +44,4 @@ change include directory
 Install man pages
 WARNS=4 (again)
 detached sig
+get rid of assert()s

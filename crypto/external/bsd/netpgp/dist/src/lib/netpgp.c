@@ -144,22 +144,22 @@ psuccess(char *f, __ops_validation_t *results, __ops_keyring_t *pubring)
 	for (i = 0; i < results->validc; i++) {
 		printf("Good signature for %s made %susing %s key %s\n",
 		       f,
-		       ctime(&results->valid_sigs[i].creation_time),
+		       ctime(&results->valid_sigs[i].birthtime),
 		       __ops_show_pka(results->valid_sigs[i].key_algorithm),
 		       userid_to_id(results->valid_sigs[i].signer_id, id));
 		pubkey = __ops_keyring_find_key_by_id(pubring,
 						    (const unsigned char *)
 					  results->valid_sigs[i].signer_id);
-		__ops_print_public_keydata(pubkey);
+		__ops_print_pubkeydata(pubkey);
 	}
 }
 
 /* sign a file, and put the signature in a separate file */
 static int
-sign_detached(char *f, char *sigfile, __ops_secret_key_t *seckey,
+sign_detached(char *f, char *sigfile, __ops_seckey_t *seckey,
 		const char *hashstr)
 {
-	__ops_create_signature_t	*sig;
+	__ops_create_sig_t	*sig;
 	__ops_hash_algorithm_t		 alg;
 	__ops_create_info_t		*info;
 	unsigned char	 		 keyid[OPS_KEY_ID_SIZE];
@@ -177,9 +177,8 @@ sign_detached(char *f, char *sigfile, __ops_secret_key_t *seckey,
 	}
 
 	/* create a new signature */
-	sig = __ops_create_signature_new();
-	__ops_signature_start_cleartext_signature(sig, seckey, alg,
-			OPS_SIG_BINARY);
+	sig = __ops_create_sig_new();
+	__ops_start_cleartext_sig(sig, seckey, alg, OPS_SIG_BINARY);
 
 	/* read the contents of 'f' */
 	fd = open(f, O_RDONLY);
@@ -209,21 +208,21 @@ sign_detached(char *f, char *sigfile, __ops_secret_key_t *seckey,
 				(void) close(fd);
 				return 0;
 			}
-			__ops_signature_add_data(sig, buf, (unsigned)n);
+			__ops_sig_add_data(sig, buf, (unsigned)n);
 		}
 	} else {
-		__ops_signature_add_data(sig, mmapped, (unsigned)st.st_size);
+		__ops_sig_add_data(sig, mmapped, (unsigned)st.st_size);
 		(void) munmap(mmapped, (unsigned)st.st_size);
 	}
 	(void) close(fd);
 
 	/* calculate the signature */
 	t = time(NULL);
-	__ops_signature_add_creation_time(sig, t);
+	__ops_sig_add_birthtime(sig, t);
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
 		&seckey->pubkey);
-	__ops_signature_add_issuer_key_id(sig, keyid);
-	__ops_signature_hashed_subpackets_end(sig);
+	__ops_sig_add_issuer_key_id(sig, keyid);
+	__ops_sig_hashed_subpackets_end(sig);
 
 	/* write the signature to the detached file */
 	if (sigfile == NULL) {
@@ -239,8 +238,8 @@ sign_detached(char *f, char *sigfile, __ops_secret_key_t *seckey,
 
 	info = __ops_create_info_new();
 	__ops_writer_set_fd(info, fd);
-	__ops_write_signature(sig, &seckey->pubkey, seckey, info);
-	__ops_secret_key_free(seckey);
+	__ops_write_sig(sig, &seckey->pubkey, seckey, info);
+	__ops_seckey_free(seckey);
 	(void) close(fd);
 
 	return 1;
@@ -277,7 +276,7 @@ netpgp_init(netpgp_t *netpgp, char *userid, char *pubring, char *secring)
 		pubring = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
-	if (!__ops_keyring_read_from_file(keyring, false, pubring)) {
+	if (!__ops_keyring_fileread(keyring, false, pubring)) {
 		(void) fprintf(stderr, "Cannot read pub keyring %s\n", pubring);
 		return 0;
 	}
@@ -288,7 +287,7 @@ netpgp_init(netpgp_t *netpgp, char *userid, char *pubring, char *secring)
 		secring = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
-	if (!__ops_keyring_read_from_file(keyring, false, secring)) {
+	if (!__ops_keyring_fileread(keyring, false, secring)) {
 		(void) fprintf(stderr, "Cannot read sec keyring %s\n", secring);
 		return 0;
 	}
@@ -360,8 +359,8 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 {
 	int	done;
 
-	if ((done = __ops_keyring_read_from_file(netpgp->pubring, false, f)) == 0) {
-		done = __ops_keyring_read_from_file(netpgp->pubring, true, f);
+	if ((done = __ops_keyring_fileread(netpgp->pubring, false, f)) == 0) {
+		done = __ops_keyring_fileread(netpgp->pubring, true, f);
 	}
 	if (!done) {
 		(void) fprintf(stderr, "Cannot import key from file %s\n", f);
@@ -388,19 +387,19 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	}
 	/* write public key */
 	fd = __ops_setup_file_append(&create, netpgp->pubringfile);
-	__ops_write_transferable_public_key(keypair, false, create);
+	__ops_write_transferable_pubkey(keypair, false, create);
 	__ops_teardown_file_write(create, fd);
 	__ops_keyring_free(netpgp->pubring);
-	if (!__ops_keyring_read_from_file(netpgp->pubring, false, netpgp->pubringfile)) {
+	if (!__ops_keyring_fileread(netpgp->pubring, false, netpgp->pubringfile)) {
 		(void) fprintf(stderr, "Cannot re-read keyring %s\n", netpgp->pubringfile);
 		return 0;
 	}
 	/* write secret key */
 	fd = __ops_setup_file_append(&create, netpgp->secringfile);
-	__ops_write_transferable_secret_key(keypair, NULL, 0, false, create);
+	__ops_write_transferable_seckey(keypair, NULL, 0, false, create);
 	__ops_teardown_file_write(create, fd);
 	__ops_keyring_free(netpgp->secring);
-	if (!__ops_keyring_read_from_file(netpgp->secring, false, netpgp->secringfile)) {
+	if (!__ops_keyring_fileread(netpgp->secring, false, netpgp->secringfile)) {
 		fprintf(stderr, "Cannot re-read keyring %s\n", netpgp->secringfile);
 		return 0;
 	}
@@ -447,7 +446,7 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 		int armored, int cleartext, int detached)
 {
 	const __ops_keydata_t	*keypair;
-	__ops_secret_key_t	*seckey;
+	__ops_seckey_t	*seckey;
 	char			 passphrase[MAX_PASSPHRASE_LENGTH];
 
 	if (userid == NULL) {
@@ -462,11 +461,11 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 	}
 	do {
 		/* print out the user id */
-		__ops_print_public_keydata(keypair);
+		__ops_print_pubkeydata(keypair);
 		/* get the passphrase */
 		get_pass_phrase(passphrase, sizeof(passphrase));
 		/* now decrypt key */
-		seckey = __ops_decrypt_secret_key_from_data(keypair,
+		seckey = __ops_decrypt_seckey(keypair,
 							passphrase);
 		if (seckey == NULL) {
 			(void) fprintf(stderr, "Bad passphrase\n");
@@ -541,7 +540,7 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 		pubringname = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
-	if (!__ops_keyring_read_from_file(keyring, false, pubringname)) {
+	if (!__ops_keyring_fileread(keyring, false, pubringname)) {
 		(void) fprintf(stderr, "Cannot read pub keyring %s\n",
 			pubringname);
 		return 0;

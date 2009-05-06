@@ -62,31 +62,31 @@ typedef struct {
  * \ingroup Core_Callbacks
  */
 static          __ops_parse_cb_return_t
-accumulate_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
+accumulate_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 {
 	accumulate_t *accumulate = __ops_parse_cb_get_arg(cbinfo);
-	const __ops_parser_content_union_t *content = &contents->u;
+	const __ops_parser_content_union_t *content = &pkt->u;
 	__ops_keyring_t  *keyring = accumulate->keyring;
 	__ops_keydata_t  *cur = NULL;
-	const __ops_public_key_t *pkey;
+	const __ops_pubkey_t *pkey;
 
 	if (keyring->nkeys >= 0)
 		cur = &keyring->keys[keyring->nkeys];
 
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
 	case OPS_PTAG_CT_SECRET_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "New key - tag %d\n", contents->tag);
+			(void) fprintf(stderr, "New key - tag %d\n", pkt->tag);
 		}
 		++keyring->nkeys;
 		EXPAND_ARRAY(keyring, keys);
 
-		if (contents->tag == OPS_PTAG_CT_PUBLIC_KEY)
+		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
 			pkey = &content->pubkey;
 		else
-			pkey = &content->secret_key.pubkey;
+			pkey = &content->seckey.pubkey;
 
 		(void) memset(&keyring->keys[keyring->nkeys], 0x0,
 		       sizeof(keyring->keys[keyring->nkeys]));
@@ -95,12 +95,12 @@ accumulate_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 			OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, pkey);
 		__ops_fingerprint(&keyring->keys[keyring->nkeys].fingerprint, pkey);
 
-		keyring->keys[keyring->nkeys].type = contents->tag;
+		keyring->keys[keyring->nkeys].type = pkt->tag;
 
-		if (contents->tag == OPS_PTAG_CT_PUBLIC_KEY)
+		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
 			keyring->keys[keyring->nkeys].key.pkey = *pkey;
 		else
-			keyring->keys[keyring->nkeys].key.skey = content->secret_key;
+			keyring->keys[keyring->nkeys].key.skey = content->seckey;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ID:
@@ -138,7 +138,7 @@ accumulate_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 
 	/* XXX: we now exclude so many things, we should either drop this or */
 	/* do something to pass on copies of the stuff we keep */
-	return __ops_parse_stacked_cb(contents, cbinfo);
+	return __ops_parse_stacked_cb(pkt, cbinfo);
 }
 
 /**
@@ -408,7 +408,7 @@ __ops_free_errors(__ops_error_t * errstack)
  */
 
 void 
-__ops_fingerprint(__ops_fingerprint_t * fp, const __ops_public_key_t * key)
+__ops_fingerprint(__ops_fingerprint_t * fp, const __ops_pubkey_t * key)
 {
 	if (key->version == 2 || key->version == 3) {
 		unsigned char  *bn;
@@ -445,7 +445,7 @@ __ops_fingerprint(__ops_fingerprint_t * fp, const __ops_public_key_t * key)
 		__ops_hash_t      sha1;
 		size_t          l;
 
-		__ops_build_public_key(mem, key, false);
+		__ops_build_pubkey(mem, key, false);
 
 		if (__ops_get_debug_level(__FILE__)) {
 			fprintf(stderr, "--- creating key fingerprint\n");
@@ -478,7 +478,7 @@ __ops_fingerprint(__ops_fingerprint_t * fp, const __ops_public_key_t * key)
 
 void 
 __ops_keyid(unsigned char *keyid, const size_t idlen, const int last,
-	const __ops_public_key_t *key)
+	const __ops_pubkey_t *key)
 {
 	if (key->version == 2 || key->version == 3) {
 		unsigned char   bn[NETPGP_BUFSIZ];
@@ -1000,7 +1000,7 @@ __ops_finish(void)
 
 static int 
 sum16_reader(void *dest_, size_t length, __ops_error_t ** errors,
-	     __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
+	     __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
 {
 	const unsigned char *dest = dest_;
 	sum16_t    *arg = __ops_reader_get_arg(rinfo);

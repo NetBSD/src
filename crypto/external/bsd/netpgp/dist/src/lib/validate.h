@@ -29,9 +29,9 @@ typedef struct {
 
 /** Struct used with the validate_key_cb callback */
 typedef struct {
-	__ops_public_key_t pkey;
-	__ops_public_key_t subkey;
-	__ops_secret_key_t skey;
+	__ops_pubkey_t pkey;
+	__ops_pubkey_t subkey;
+	__ops_seckey_t skey;
 	enum {
 		ATTRIBUTE = 1,
 		ID
@@ -42,7 +42,7 @@ typedef struct {
 	const __ops_keyring_t *keyring;
 	validate_reader_t *rarg;
 	__ops_validation_t *result;
-	__ops_parse_cb_return_t(*cb_get_passphrase) (const __ops_packet_t *, __ops_parse_cb_info_t *);
+	__ops_parse_cb_return_t(*cb_get_passphrase) (const __ops_packet_t *, __ops_callback_data_t *);
 }               validate_key_cb_t;
 
 /** Struct use with the validate_data_cb callback */
@@ -53,7 +53,7 @@ typedef struct {
 	}               use;	/* <! this is set to indicate what
 				 * kind of data we have */
 	union {
-		__ops_literal_data_body_t literal_data_body;	/* <! Used to hold
+		__ops_litdata_body_t litdata_body;	/* <! Used to hold
 								 * Literal Data */
 		__ops_signed_cleartext_body_t signed_cleartext_body;	/* <! Used to hold
 									 * Signed Cleartext */
@@ -68,11 +68,11 @@ typedef struct {
 
 void            __ops_keydata_reader_set(__ops_parse_info_t *, const __ops_keydata_t *);
 
-__ops_parse_cb_return_t __ops_validate_key_cb(const __ops_packet_t *, __ops_parse_cb_info_t *);
+__ops_parse_cb_return_t __ops_validate_key_cb(const __ops_packet_t *, __ops_callback_data_t *);
 
 bool   __ops_validate_file(__ops_validation_t *, const char *, const int, const __ops_keyring_t *);
 bool   __ops_validate_mem(__ops_validation_t *, __ops_memory_t *, const int, const __ops_keyring_t *);
 
-__ops_parse_cb_return_t validate_data_cb(const __ops_packet_t *, __ops_parse_cb_info_t *);
+__ops_parse_cb_return_t validate_data_cb(const __ops_packet_t *, __ops_callback_data_t *);
 
 #endif /* !VALIDATE_H_ */
