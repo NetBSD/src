@@ -1,7 +1,7 @@
-/* $NetBSD: joy_eap.c,v 1.10 2008/04/10 19:13:37 cegger Exp $ */
+/* $NetBSD: joy_eap.c,v 1.11 2009/05/06 09:32:52 cegger Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.10 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.11 2009/05/06 09:32:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static int
 joy_eap_detach(device_t self, int flags)
 {
 
-	return joydetach((struct joy_softc *)self, flags);
+	return joydetach(device_private(self), flags);
 }
 
 CFATTACH_DECL_NEW(joy_eap, sizeof (struct joy_softc),
