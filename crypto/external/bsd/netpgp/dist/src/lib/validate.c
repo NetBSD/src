@@ -20,25 +20,24 @@
  */
 #include "config.h"
 
-#include "packet-parse.h"
-#include "packet-show.h"
-#include "keyring.h"
-#include "signature.h"
-#include "netpgpsdk.h"
-
-#include "readerwriter.h"
-#include "netpgpdefs.h"
-#include "memory.h"
-#include "keyring_local.h"
-#include "parse_local.h"
-#include "validate.h"
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 
 #include <string.h>
 #include <stdio.h>
+
+#include "packet-parse.h"
+#include "packet-show.h"
+#include "keyring.h"
+#include "signature.h"
+#include "netpgpsdk.h"
+#include "readerwriter.h"
+#include "netpgpdefs.h"
+#include "memory.h"
+#include "keyring_local.h"
+#include "parse_local.h"
+#include "validate.h"
 
 
 /* Does the signed hash match the given hash? */
@@ -137,8 +136,7 @@ free_sig_info(__ops_sig_info_t * sig)
 }
 
 static void 
-copy_sig_info(__ops_sig_info_t * dst,
-			const __ops_sig_info_t * src)
+copy_sig_info(__ops_sig_info_t * dst, const __ops_sig_info_t * src)
 {
 	(void) memcpy(dst, src, sizeof(*src));
 	dst->v4_hashed_data = calloc(1, src->v4_hashed_data_length);
@@ -147,8 +145,7 @@ copy_sig_info(__ops_sig_info_t * dst,
 }
 
 static void 
-add_sig_to_list(const __ops_sig_info_t *sig,
-			__ops_sig_info_t **sigs,
+add_sig_to_list(const __ops_sig_info_t *sig, __ops_sig_info_t **sigs,
 			unsigned *count)
 {
 	if (*count == 0) {
@@ -163,8 +160,7 @@ add_sig_to_list(const __ops_sig_info_t *sig,
 
 
 __ops_parse_cb_return_t
-__ops_validate_key_cb(const __ops_packet_t * pkt,
-			__ops_callback_data_t * cbinfo)
+__ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
 	const __ops_parser_content_union_t *content = &pkt->u;
 	const __ops_keydata_t	*signer;
@@ -178,12 +174,12 @@ __ops_validate_key_cb(const __ops_packet_t * pkt,
 
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
-		if (key->pkey.version != 0) {
+		if (key->pubkey.version != 0) {
 			(void) fprintf(stderr,
 				"__ops_validate_key_cb: version bad\n");
 			return OPS_FINISHED;
 		}
-		key->pkey = content->pubkey;
+		key->pubkey = content->pubkey;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_PUBLIC_SUBKEY:
@@ -193,8 +189,8 @@ __ops_validate_key_cb(const __ops_packet_t * pkt,
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_SECRET_KEY:
-		key->skey = content->seckey;
-		key->pkey = key->skey.pubkey;
+		key->seckey = content->seckey;
+		key->pubkey = key->seckey.pubkey;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ID:
@@ -207,7 +203,7 @@ __ops_validate_key_cb(const __ops_packet_t * pkt,
 	case OPS_PTAG_CT_USER_ATTRIBUTE:
 		if (content->user_attribute.data.len == 0) {
 			(void) fprintf(stderr,
-"__ops_validate_key_cb: user attribute length 0");
+			"__ops_validate_key_cb: user attribute length 0");
 			return OPS_FINISHED;
 		}
 		printf("user attribute, length=%d\n",
@@ -235,19 +231,17 @@ __ops_validate_key_cb(const __ops_packet_t * pkt,
 		case OPS_CERT_CASUAL:
 		case OPS_CERT_POSITIVE:
 		case OPS_SIG_REV_CERT:
-			if (key->last_seen == ID)
-				valid = __ops_check_useridcert_sig(&key->pkey,
-							      &key->user_id,
-							&content->sig,
+			valid = (key->last_seen == ID) ?
+			    __ops_check_useridcert_sig(&key->pubkey,
+					&key->user_id,
+					&content->sig,
+					__ops_get_pubkey(signer),
+				key->rarg->key->packets[key->rarg->packet].raw):
+			    __ops_check_userattrcert_sig(&key->pubkey,
+					&key->user_attribute,
+					&content->sig,
 				       __ops_get_pubkey(signer),
-					key->rarg->key->packets[key->rarg->packet].raw);
-			else
-				valid = __ops_check_userattrcert_sig(&key->pkey,
-						       &key->user_attribute,
-							&content->sig,
-				       __ops_get_pubkey(signer),
-					key->rarg->key->packets[key->rarg->packet].raw);
-
+				key->rarg->key->packets[key->rarg->packet].raw);
 			break;
 
 		case OPS_SIG_SUBKEY:
@@ -255,16 +249,17 @@ __ops_validate_key_cb(const __ops_packet_t * pkt,
 			 * XXX: we should also check that the signer is the
 			 * key we are validating, I think.
 			 */
-			valid = __ops_check_subkey_sig(&key->pkey, &key->subkey,
-							&content->sig,
-				       __ops_get_pubkey(signer),
-			    key->rarg->key->packets[key->rarg->packet].raw);
+			valid = __ops_check_subkey_sig(&key->pubkey, &key->subkey,
+				&content->sig,
+				__ops_get_pubkey(signer),
+				key->rarg->key->packets[key->rarg->packet].raw);
 			break;
 
 		case OPS_SIG_DIRECT:
-			valid = __ops_check_direct_sig(&key->pkey, &content->sig,
-				       __ops_get_pubkey(signer),
-			    key->rarg->key->packets[key->rarg->packet].raw);
+			valid = __ops_check_direct_sig(&key->pubkey,
+				&content->sig,
+				__ops_get_pubkey(signer),
+				key->rarg->key->packets[key->rarg->packet].raw);
 			break;
 
 		case OPS_SIG_STANDALONE:
@@ -349,7 +344,8 @@ validate_data_cb(const __ops_packet_t * pkt,
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
-		data->data.signed_cleartext_body = content->signed_cleartext_body;
+		data->data.signed_cleartext_body =
+				content->signed_cleartext_body;
 		data->use = SIGNED_CLEARTEXT;
 		__ops_memory_add(data->mem, data->data.litdata_body.data,
 			       data->data.litdata_body.length);
@@ -482,13 +478,13 @@ validate_result_status(__ops_validation_t *val)
  */
 bool 
 __ops_validate_key_sigs(__ops_validation_t * result,
-				const __ops_keydata_t * key,
-			    const __ops_keyring_t * keyring,
-			    __ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *, __ops_callback_data_t *)
-)
+	const __ops_keydata_t * key,
+	const __ops_keyring_t * keyring,
+	__ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *,
+						__ops_callback_data_t *))
 {
-	__ops_parse_info_t *pinfo;
-	validate_key_cb_t carg;
+	__ops_parse_info_t	*pinfo;
+	validate_key_cb_t	 carg;
 
 	(void) memset(&carg, 0x0, sizeof(carg));
 	carg.result = result;
@@ -509,18 +505,16 @@ __ops_validate_key_sigs(__ops_validation_t * result,
 
 	__ops_parse(pinfo, 0);
 
-	__ops_pubkey_free(&carg.pkey);
-	if (carg.subkey.version)
+	__ops_pubkey_free(&carg.pubkey);
+	if (carg.subkey.version) {
 		__ops_pubkey_free(&carg.subkey);
+	}
 	__ops_user_id_free(&carg.user_id);
 	__ops_user_attribute_free(&carg.user_attribute);
 
 	__ops_parse_info_delete(pinfo);
 
-	if (result->invalidc || result->unknownc || !result->validc)
-		return false;
-	else
-		return true;
+	return (!result->invalidc && !result->unknownc && result->validc);
 }
 
 /**
@@ -532,12 +526,12 @@ __ops_validate_key_sigs(__ops_validation_t * result,
    \sa __ops_validate_result_free()
 */
 bool 
-__ops_validate_all_sigs(__ops_validation_t * result,
-			    const __ops_keyring_t * ring,
-			    __ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *, __ops_callback_data_t *)
-)
+__ops_validate_all_sigs(__ops_validation_t *result,
+	    const __ops_keyring_t *ring,
+	    __ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *,
+	    					__ops_callback_data_t *))
 {
-	int             n;
+	int	n;
 
 	(void) memset(result, 0x0, sizeof(*result));
 	for (n = 0; n < ring->nkeys; ++n) {
@@ -599,7 +593,7 @@ __ops_validate_file(__ops_validation_t *result,
 	int			 fd;
 	int			 cc;
 
-#define SIG_OVERHEAD	284 /* depends on sig size */
+#define SIG_OVERHEAD	284 /* XXX - depends on sig size? */
 
 	if (stat(filename, &st) < 0) {
 		(void) fprintf(stderr, "can't validate \"%s\"\n", filename);
@@ -672,8 +666,8 @@ bool
 __ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
 			const int armoured, const __ops_keyring_t *keyring)
 {
-	__ops_parse_info_t *pinfo = NULL;
-	validate_data_cb_t validation;
+	__ops_parse_info_t	*pinfo = NULL;
+	validate_data_cb_t	 validation;
 
 	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb,
 			true);

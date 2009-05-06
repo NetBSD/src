@@ -43,7 +43,7 @@
 \param buf Buffer in which to write decrypted unencoded MPI
 \param buflen Length of buffer
 \param encmpi
-\param skey
+\param seckey
 \return length of MPI
 \note only RSA at present
 */
@@ -51,7 +51,7 @@ int
 __ops_decrypt_and_unencode_mpi(unsigned char *buf,
 				unsigned buflen,
 				const BIGNUM * encmpi,
-				const __ops_seckey_t *skey)
+				const __ops_seckey_t *seckey)
 {
 	unsigned char   encmpibuf[NETPGP_BUFSIZ];
 	unsigned char   mpibuf[NETPGP_BUFSIZ];
@@ -67,7 +67,7 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf,
 	}
 	BN_bn2bin(encmpi, encmpibuf);
 
-	if (skey->pubkey.algorithm != OPS_PKA_RSA) {
+	if (seckey->pubkey.algorithm != OPS_PKA_RSA) {
 		(void) fprintf(stderr, "pubkey algorithm wrong\n");
 		return -1;
 	}
@@ -82,7 +82,7 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf,
 	}
 	n = __ops_rsa_private_decrypt(mpibuf, encmpibuf,
 				(unsigned)(BN_num_bits(encmpi) + 7) / 8,
-				&skey->key.rsa, &skey->pubkey.key.rsa);
+				&seckey->key.rsa, &seckey->pubkey.key.rsa);
 	if (n == -1) {
 		(void) fprintf(stderr, "ops_rsa_private_decrypt failure\n");
 		return -1;
@@ -144,20 +144,20 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf,
 bool 
 __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 		    const size_t sz_encoded_m_buf,
-		    const __ops_pubkey_t * pkey,
+		    const __ops_pubkey_t * pubkey,
 		    __ops_pk_session_key_parameters_t * skp)
 {
 
 	unsigned char   encmpibuf[NETPGP_BUFSIZ];
 	int             n = 0;
 
-	if (sz_encoded_m_buf != (size_t) BN_num_bytes(pkey->key.rsa.n)) {
+	if (sz_encoded_m_buf != (size_t) BN_num_bytes(pubkey->key.rsa.n)) {
 		(void) fprintf(stderr, "sz_encoded_m_buf wrong\n");
 		return false;
 	}
 
 	n = __ops_rsa_public_encrypt(encmpibuf, encoded_m_buf,
-				sz_encoded_m_buf, &pkey->key.rsa);
+				sz_encoded_m_buf, &pubkey->key.rsa);
 	if (n == -1) {
 		(void) fprintf(stderr, "__ops_rsa_public_encrypt failure\n");
 		return false;

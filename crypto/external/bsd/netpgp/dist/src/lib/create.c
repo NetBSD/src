@@ -466,7 +466,7 @@ __ops_write_transferable_pubkey(const __ops_keydata_t * keydata, bool armoured, 
 		__ops_writer_push_armoured(info, OPS_PGP_PUBLIC_KEY_BLOCK);
 	}
 	/* public key */
-	rtn = __ops_write_struct_pubkey(&keydata->key.skey.pubkey, info);
+	rtn = __ops_write_struct_pubkey(&keydata->key.seckey.pubkey, info);
 	if (rtn != true) {
 		return rtn;
 	}
@@ -536,7 +536,7 @@ __ops_write_transferable_seckey(const __ops_keydata_t *keydata,
 		__ops_writer_push_armoured(info, OPS_PGP_PRIVATE_KEY_BLOCK);
 	}
 	/* public key */
-	rtn = __ops_write_struct_seckey(&keydata->key.skey, passphrase,
+	rtn = __ops_write_struct_seckey(&keydata->key.seckey, passphrase,
 			pplen, info);
 	if (rtn != true) {
 		return rtn;
@@ -880,13 +880,13 @@ create_unencoded_m_buf(__ops_pk_session_key_t * session_key, unsigned char *m_bu
 \brief implementation of EME-PKCS1-v1_5-ENCODE, as defined in OpenPGP RFC
 \param M
 \param mLen
-\param pkey
+\param pubkey
 \param EM
 \return true if OK; else false
 */
 bool 
 encode_m_buf(const unsigned char *M, size_t mLen,
-	     const __ops_pubkey_t * pkey,
+	     const __ops_pubkey_t * pubkey,
 	     unsigned char *EM)
 {
 	unsigned int    k;
@@ -894,12 +894,12 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 
 	/* implementation of EME-PKCS1-v1_5-ENCODE, as defined in OpenPGP RFC */
 
-	if (pkey->algorithm != OPS_PKA_RSA) {
-		(void) fprintf(stderr, "encode_m_buf: pkey algorithm\n");
+	if (pubkey->algorithm != OPS_PKA_RSA) {
+		(void) fprintf(stderr, "encode_m_buf: pubkey algorithm\n");
 		return false;
 	}
 
-	k = BN_num_bytes(pkey->key.rsa.n);
+	k = BN_num_bytes(pubkey->key.rsa.n);
 	if (mLen > k - 11) {
 		(void) fprintf(stderr, "encode_m_buf: message too long\n");
 		return false;
@@ -983,12 +983,12 @@ __ops_create_pk_session_key(const __ops_keydata_t * key)
 		}
 		(void) fprintf(stderr, "\n");
 	}
-	if (key->key.pkey.algorithm != OPS_PKA_RSA) {
+	if (key->key.pubkey.algorithm != OPS_PKA_RSA) {
 		(void) fprintf(stderr,
-			"__ops_create_pk_session_key: bad pkey algorithm\n");
+			"__ops_create_pk_session_key: bad pubkey algorithm\n");
 		return NULL;
 	}
-	session_key->algorithm = key->key.pkey.algorithm;
+	session_key->algorithm = key->key.pubkey.algorithm;
 
 	/* \todo allow user to specify other algorithm */
 	session_key->symmetric_algorithm = OPS_SA_CAST5;
@@ -1316,14 +1316,14 @@ __ops_write_symm_enc_data(const unsigned char *data,
 /**
 \ingroup Core_WritePackets
 \brief Write a One Pass Signature packet
-\param skey Secret Key to use
+\param seckey Secret Key to use
 \param hash_alg Hash Algorithm to use
 \param sig_type Signature type
 \param info Write settings
 \return true if OK; else false
 */
 bool 
-__ops_write_one_pass_sig(const __ops_seckey_t * skey,
+__ops_write_one_pass_sig(const __ops_seckey_t * seckey,
 		       const __ops_hash_algorithm_t hash_alg,
 		       const __ops_sig_type_t sig_type,
 		       __ops_create_info_t * info)
@@ -1333,14 +1333,14 @@ __ops_write_one_pass_sig(const __ops_seckey_t * skey,
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "calling __ops_keyid in write_one_pass_sig: this calls sha1_init\n");
 	}
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &skey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 
 	return __ops_write_ptag(OPS_PTAG_CT_ONE_PASS_SIGNATURE, info) &&
 		__ops_write_length(1 + 1 + 1 + 1 + 8 + 1, info) &&
 		__ops_write_scalar(3, 1, info)	/* version */ &&
 		__ops_write_scalar((unsigned)sig_type, 1, info) &&
 		__ops_write_scalar((unsigned)hash_alg, 1, info) &&
-		__ops_write_scalar((unsigned)skey->pubkey.algorithm, 1, info) &&
+		__ops_write_scalar((unsigned)seckey->pubkey.algorithm, 1, info) &&
 		__ops_write(keyid, 8, info) &&
 		__ops_write_scalar(1, 1, info);
 }

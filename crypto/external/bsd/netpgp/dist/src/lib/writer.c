@@ -303,7 +303,6 @@ __ops_writer_close(__ops_create_info_t * info)
 	bool   ret = writer_info_finalise(&info->errors, &info->winfo);
 
 	writer_info_delete(&info->winfo);
-
 	return ret;
 }
 
@@ -350,7 +349,7 @@ __ops_stacked_write(const void *src, unsigned length,
 void 
 __ops_writer_generic_destroyer(__ops_writer_info_t * winfo)
 {
-	free(__ops_writer_get_arg(winfo));
+	(void) free(__ops_writer_get_arg(winfo));
 }
 
 /**
@@ -454,7 +453,7 @@ dash_escaped_destroyer(__ops_writer_info_t * winfo)
 	dash_escaped_t *dash = __ops_writer_get_arg(winfo);
 
 	__ops_memory_free(dash->trailing);
-	free(dash);
+	(void) free(dash);
 }
 
 /**
@@ -467,10 +466,10 @@ bool
 __ops_writer_push_clearsigned(__ops_create_info_t * info,
 			    __ops_create_sig_t * sig)
 {
-	static char     header[] = "-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: ";
+	static const char     header[] =
+		"-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: ";
 	const char     *hash = __ops_text_from_hash(__ops_sig_get_hash(sig));
 	dash_escaped_t *dash = calloc(1, sizeof(*dash));
-
 	bool   rtn;
 
 	rtn = (__ops_write(header, sizeof(header) - 1, info) &&
@@ -478,14 +477,16 @@ __ops_writer_push_clearsigned(__ops_create_info_t * info,
 		__ops_write("\r\n\r\n", 4, info));
 
 	if (rtn == false) {
-		OPS_ERROR(&info->errors, OPS_E_W, "Error pushing clearsigned header");
+		OPS_ERROR(&info->errors, OPS_E_W,
+			"Error pushing clearsigned header");
 		free(dash);
 		return rtn;
 	}
 	dash->seen_nl = true;
 	dash->sig = sig;
 	dash->trailing = __ops_memory_new();
-	__ops_writer_push(info, dash_escaped_writer, NULL, dash_escaped_destroyer, dash);
+	__ops_writer_push(info, dash_escaped_writer, NULL,
+			dash_escaped_destroyer, dash);
 	return rtn;
 }
 
@@ -499,7 +500,7 @@ typedef struct {
 	unsigned        checksum;
 }               base64_t;
 
-static char     b64map[] =
+static const char     b64map[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static bool 
@@ -514,7 +515,8 @@ base64_writer(const unsigned char *src,
 		base64->checksum = __ops_crc24(base64->checksum, src[n]);
 		if (base64->pos == 0) {
 			/* XXXXXX00 00000000 00000000 */
-			if (!__ops_stacked_write(&b64map[(unsigned)src[n] >> 2], 1, errors, winfo)) {
+			if (!__ops_stacked_write(&b64map[(unsigned)src[n] >> 2],
+					1, errors, winfo)) {
 				return false;
 			}
 
@@ -524,7 +526,8 @@ base64_writer(const unsigned char *src,
 		} else if (base64->pos == 1) {
 			/* 000000xx XXXX0000 00000000 */
 			base64->t += (unsigned)src[n] >> 4;
-			if (!__ops_stacked_write(&b64map[base64->t], 1, errors, winfo)) {
+			if (!__ops_stacked_write(&b64map[base64->t], 1,
+					errors, winfo)) {
 				return false;
 			}
 
@@ -534,12 +537,14 @@ base64_writer(const unsigned char *src,
 		} else if (base64->pos == 2) {
 			/* 00000000 0000xxxx XX000000 */
 			base64->t += (unsigned)src[n] >> 6;
-			if (!__ops_stacked_write(&b64map[base64->t], 1, errors, winfo)) {
+			if (!__ops_stacked_write(&b64map[base64->t], 1,
+					errors, winfo)) {
 				return false;
 			}
 
 			/* 00000000 00000000 00XXXXXX */
-			if (!__ops_stacked_write(&b64map[src[n++] & 0x3f], 1, errors, winfo)) {
+			if (!__ops_stacked_write(&b64map[src[n++] & 0x3f], 1,
+					errors, winfo)) {
 				return false;
 			}
 
@@ -555,17 +560,20 @@ sig_finaliser(__ops_error_t ** errors,
 		    __ops_writer_info_t * winfo)
 {
 	base64_t   *base64 = __ops_writer_get_arg(winfo);
-	static char     trailer[] = "\r\n-----END PGP SIGNATURE-----\r\n";
+	static const char     trailer[] = "\r\n-----END PGP SIGNATURE-----\r\n";
 	unsigned char   c[3];
 
 	if (base64->pos) {
-		if (!__ops_stacked_write(&b64map[base64->t], 1, errors, winfo)) {
+		if (!__ops_stacked_write(&b64map[base64->t], 1, errors,
+				winfo)) {
 			return false;
 		}
-		if (base64->pos == 1 && !__ops_stacked_write("==", 2, errors, winfo)) {
+		if (base64->pos == 1 && !__ops_stacked_write("==", 2, errors,
+				winfo)) {
 			return false;
 		}
-		if (base64->pos == 2 && !__ops_stacked_write("=", 1, errors, winfo)) {
+		if (base64->pos == 2 && !__ops_stacked_write("=", 1, errors,
+				winfo)) {
 			return false;
 		}
 	}
@@ -633,17 +641,20 @@ bool
 __ops_writer_use_armored_sig(__ops_create_info_t * info)
 {
 	static const char     header[] =
-"\r\n-----BEGIN PGP SIGNATURE-----\r\nVersion: " NETPGP_VERSION_STRING "\r\n\r\n";
+			"\r\n-----BEGIN PGP SIGNATURE-----\r\nVersion: "
+			NETPGP_VERSION_STRING
+			"\r\n\r\n";
 	base64_t   *base64;
 
 	__ops_writer_pop(info);
 	if (__ops_write(header, sizeof(header) - 1, info) == false) {
-		OPS_ERROR(&info->errors, OPS_E_W, "Error switching to armoured signature");
+		OPS_ERROR(&info->errors, OPS_E_W,
+			"Error switching to armoured signature");
 		return false;
 	}
-	__ops_writer_push(info, linebreak_writer, NULL, __ops_writer_generic_destroyer,
+	__ops_writer_push(info, linebreak_writer, NULL,
+			__ops_writer_generic_destroyer,
 			calloc(1, sizeof(linebreak_t)));
-
 	base64 = calloc(1, sizeof(*base64));
 	if (!base64) {
 		OPS_MEMORY_ERROR(&info->errors);
@@ -661,17 +672,20 @@ armoured_message_finaliser(__ops_error_t ** errors,
 {
 	/* TODO: This is same as sig_finaliser apart from trailer. */
 	base64_t   *base64 = __ops_writer_get_arg(winfo);
-	static char     trailer[] = "\r\n-----END PGP MESSAGE-----\r\n";
+	static const char     trailer[] = "\r\n-----END PGP MESSAGE-----\r\n";
 	unsigned char   c[3];
 
 	if (base64->pos) {
-		if (!__ops_stacked_write(&b64map[base64->t], 1, errors, winfo)) {
+		if (!__ops_stacked_write(&b64map[base64->t], 1, errors,
+				winfo)) {
 			return false;
 		}
-		if (base64->pos == 1 && !__ops_stacked_write("==", 2, errors, winfo)) {
+		if (base64->pos == 1 && !__ops_stacked_write("==", 2, errors,
+				winfo)) {
 			return false;
 		}
-		if (base64->pos == 2 && !__ops_stacked_write("=", 1, errors, winfo)) {
+		if (base64->pos == 2 && !__ops_stacked_write("=", 1, errors,
+				winfo)) {
 			return false;
 		}
 	}
@@ -701,25 +715,26 @@ armoured_message_finaliser(__ops_error_t ** errors,
 void 
 __ops_writer_push_armoured_message(__ops_create_info_t * info)
 {
-	static char     header[] = "-----BEGIN PGP MESSAGE-----\r\n";
-
+	static const char     header[] = "-----BEGIN PGP MESSAGE-----\r\n";
 	base64_t   *base64;
 
 	__ops_write(header, sizeof(header) - 1, info);
 	__ops_write("\r\n", 2, info);
 	base64 = calloc(1, sizeof(*base64));
 	base64->checksum = CRC24_INIT;
-	__ops_writer_push(info, base64_writer, armoured_message_finaliser, __ops_writer_generic_destroyer, base64);
+	__ops_writer_push(info, base64_writer, armoured_message_finaliser,
+		__ops_writer_generic_destroyer, base64);
 }
 
 static bool 
 armoured_finaliser(__ops_armor_type_t type, __ops_error_t ** errors,
 		   __ops_writer_info_t * winfo)
 {
-	static char     tail_pubkey[] = "\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n";
-	static char     tail_private_key[] = "\r\n-----END PGP PRIVATE KEY BLOCK-----\r\n";
-
-	char           *tail = NULL;
+	static const char     tail_pubkey[] =
+			"\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n";
+	static const char     tail_private_key[] =
+			"\r\n-----END PGP PRIVATE KEY BLOCK-----\r\n";
+	const char           *tail = NULL;
 	unsigned int    sz_tail = 0;
 	base64_t   *base64;
 	unsigned char   c[3];
@@ -743,13 +758,16 @@ armoured_finaliser(__ops_armor_type_t type, __ops_error_t ** errors,
 	base64 = __ops_writer_get_arg(winfo);
 
 	if (base64->pos) {
-		if (!__ops_stacked_write(&b64map[base64->t], 1, errors, winfo)) {
+		if (!__ops_stacked_write(&b64map[base64->t], 1, errors,
+				winfo)) {
 			return false;
 		}
-		if (base64->pos == 1 && !__ops_stacked_write("==", 2, errors, winfo)) {
+		if (base64->pos == 1 && !__ops_stacked_write("==", 2, errors,
+				winfo)) {
 			return false;
 		}
-		if (base64->pos == 2 && !__ops_stacked_write("=", 1, errors, winfo)) {
+		if (base64->pos == 2 && !__ops_stacked_write("=", 1, errors,
+				winfo)) {
 			return false;
 		}
 	}
@@ -794,10 +812,13 @@ void
 __ops_writer_push_armoured(__ops_create_info_t * info, __ops_armor_type_t type)
 {
 	static char     hdr_pubkey[] =
-"-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: " NETPGP_VERSION_STRING "\r\n\r\n";
+			"-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: "
+			NETPGP_VERSION_STRING
+			"\r\n\r\n";
 	static char     hdr_private_key[] =
-"-----BEGIN PGP PRIVATE KEY BLOCK-----\r\nVersion: " NETPGP_VERSION_STRING "\r\n\r\n";
-
+			"-----BEGIN PGP PRIVATE KEY BLOCK-----\r\nVersion: "
+			NETPGP_VERSION_STRING
+			"\r\n\r\n";
 	char           *header = NULL;
 	unsigned int    sz_hdr = 0;
 	bool(*finaliser) (__ops_error_t ** errors, __ops_writer_info_t * winfo);
@@ -870,7 +891,8 @@ encrypt_writer(const unsigned char *src,
 		unsigned        len = remaining < BUFSZ ? remaining : BUFSZ;
 		/* memcpy(buf,src,len); // \todo copy needed here? */
 
-		pgp_encrypt->crypt->cfb_encrypt(pgp_encrypt->crypt, encbuf, src + done, len);
+		pgp_encrypt->crypt->cfb_encrypt(pgp_encrypt->crypt, encbuf,
+					src + done, len);
 
 		if (__ops_get_debug_level(__FILE__)) {
 			int             i = 0;
@@ -888,7 +910,8 @@ encrypt_writer(const unsigned char *src,
 		}
 		if (!__ops_stacked_write(encbuf, len, errors, winfo)) {
 			if (__ops_get_debug_level(__FILE__)) {
-				fprintf(stderr, "encrypted_writer got error from stacked write, returning\n");
+				fprintf(stderr,
+"encrypted_writer got error from stacked write, returning\n");
 			}
 			return false;
 		}
@@ -929,8 +952,8 @@ __ops_writer_push_encrypt_crypt(__ops_create_info_t * cinfo,
 	pgp_encrypt->free_crypt = 0;
 
 	/* And push writer on stack */
-	__ops_writer_push(cinfo, encrypt_writer, NULL, encrypt_destroyer, pgp_encrypt);
-
+	__ops_writer_push(cinfo, encrypt_writer, NULL, encrypt_destroyer,
+			pgp_encrypt);
 }
 
 /**************************************************************************/
@@ -969,7 +992,8 @@ __ops_writer_push_encrypt_se_ip(__ops_create_info_t * cinfo,
 
 	/* Setup the se_ip */
 	encrypted = calloc(1, sizeof(*encrypted));
-	__ops_crypt_any(encrypted, encrypted_pk_session_key->symmetric_algorithm);
+	__ops_crypt_any(encrypted,
+			encrypted_pk_session_key->symmetric_algorithm);
 	iv = calloc(1, encrypted->blocksize);
 	encrypted->set_iv(encrypted, iv);
 	encrypted->set_key(encrypted, &encrypted_pk_session_key->key[0]);
@@ -978,7 +1002,8 @@ __ops_writer_push_encrypt_se_ip(__ops_create_info_t * cinfo,
 	se_ip->crypt = encrypted;
 
 	/* And push writer on stack */
-	__ops_writer_push(cinfo, encrypt_se_ip_writer, NULL, encrypt_se_ip_destroyer, se_ip);
+	__ops_writer_push(cinfo, encrypt_se_ip_writer, NULL,
+			encrypt_se_ip_destroyer, se_ip);
 	/* tidy up */
 	free(encrypted_pk_session_key);
 	free(iv);
@@ -1122,15 +1147,17 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 
 	if (!__ops_write(preamble, sz_preamble, cinfo) ||
 	    !__ops_write(data, len, cinfo) ||
-	    !__ops_write(__ops_memory_get_data(mem_mdc), __ops_memory_get_length(mem_mdc), cinfo))
+	    !__ops_write(__ops_memory_get_data(mem_mdc),
+	    		__ops_memory_get_length(mem_mdc), cinfo)) {
 		/* \todo fix cleanup here and in old code functions */
 		return 0;
+	}
 
 	__ops_writer_pop(cinfo);
 
 	/* cleanup  */
 	__ops_teardown_memory_write(cinfo_mdc, mem_mdc);
-	free(preamble);
+	(void) free(preamble);
 
 	return 1;
 }
@@ -1265,24 +1292,25 @@ skey_checksum_destroyer(__ops_writer_info_t * winfo)
 /**
 \ingroup Core_WritersNext
 \param cinfo
-\param skey
+\param seckey
 */
 void 
-__ops_push_skey_checksum_writer(__ops_create_info_t * cinfo, __ops_seckey_t * skey)
+__ops_push_skey_checksum_writer(__ops_create_info_t *cinfo,
+		__ops_seckey_t *seckey)
 {
-	/* OPS_USED(info); */
 	/* XXX: push a SHA-1 checksum writer (and change s2k to 254). */
 	skey_checksum_t *sum = calloc(1, sizeof(*sum));
 
 	/* configure the arg */
-	sum->hash_algorithm = skey->hash_algorithm;
-	sum->hashed = &skey->checkhash[0];
+	sum->hash_algorithm = seckey->hash_algorithm;
+	sum->hashed = &seckey->checkhash[0];
 
 	/* init the hash */
 	__ops_hash_any(&sum->hash, sum->hash_algorithm);
 	sum->hash.init(&sum->hash);
 
-	__ops_writer_push(cinfo, skey_checksum_writer, skey_checksum_finaliser, skey_checksum_destroyer, sum);
+	__ops_writer_push(cinfo, skey_checksum_writer,
+		skey_checksum_finaliser, skey_checksum_destroyer, sum);
 }
 
 /**************************************************************************/
@@ -1337,7 +1365,8 @@ __ops_writer_push_stream_encrypt_se_ip(__ops_create_info_t * cinfo,
 
 	/* Setup the se_ip */
 	encrypted = calloc(1, sizeof(*encrypted));
-	__ops_crypt_any(encrypted, encrypted_pk_session_key->symmetric_algorithm);
+	__ops_crypt_any(encrypted,
+			encrypted_pk_session_key->symmetric_algorithm);
 	iv = calloc(1, encrypted->blocksize);
 	encrypted->set_iv(encrypted, iv);
 	encrypted->set_key(encrypted, &encrypted_pk_session_key->key[0]);
@@ -1351,7 +1380,8 @@ __ops_writer_push_stream_encrypt_se_ip(__ops_create_info_t * cinfo,
 	se_ip->mem_literal = NULL;
 	se_ip->cinfo_literal = NULL;
 
-	__ops_setup_memory_write(&se_ip->cinfo_se_ip, &se_ip->mem_se_ip, bufsz);
+	__ops_setup_memory_write(&se_ip->cinfo_se_ip, &se_ip->mem_se_ip,
+			bufsz);
 
 	/* And push writer on stack */
 	__ops_writer_push(cinfo,
@@ -1371,7 +1401,8 @@ __ops_calc_partial_data_length(unsigned int len)
 	unsigned int    mask = MAX_PARTIAL_DATA_LENGTH;
 
 	if (len == 0) {
-		(void) fprintf(stderr, "__ops_calc_partial_data_length: 0 len\n");
+		(void) fprintf(stderr,
+				"__ops_calc_partial_data_length: 0 len\n");
 		return 0;
 	}
 	if (len > MAX_PARTIAL_DATA_LENGTH) {
@@ -1512,8 +1543,10 @@ __ops_stream_write_se_ip_first(const unsigned char *data,
 	__ops_writer_push_encrypt_crypt(cinfo, se_ip->crypt);
 
 	__ops_random(preamble, se_ip->crypt->blocksize);
-	preamble[se_ip->crypt->blocksize] = preamble[se_ip->crypt->blocksize - 2];
-	preamble[se_ip->crypt->blocksize + 1] = preamble[se_ip->crypt->blocksize - 1];
+	preamble[se_ip->crypt->blocksize] =
+			preamble[se_ip->crypt->blocksize - 2];
+	preamble[se_ip->crypt->blocksize + 1] =
+			preamble[se_ip->crypt->blocksize - 1];
 
 	__ops_hash_any(&se_ip->hash, OPS_HASH_SHA1);
 	se_ip->hash.init(&se_ip->hash);
@@ -1572,7 +1605,8 @@ __ops_stream_write_se_ip_last(const unsigned char *data,
 	__ops_writer_push_encrypt_crypt(cinfo, se_ip->crypt);
 
 	__ops_write(data, len, cinfo);
-	__ops_write(__ops_memory_get_data(mem_mdc), __ops_memory_get_length(mem_mdc), cinfo);
+	__ops_write(__ops_memory_get_data(mem_mdc),
+			__ops_memory_get_length(mem_mdc), cinfo);
 
 	__ops_writer_pop(cinfo);
 
@@ -1603,20 +1637,24 @@ stream_encrypt_se_ip_writer(const unsigned char *src,
 			return true;	/* will wait for more data or
 						 * end of stream             */
 		}
-		__ops_setup_memory_write(&se_ip->cinfo_literal, &se_ip->mem_literal, datalength + 32);
-		__ops_stream_write_litdata_first(__ops_memory_get_data(se_ip->mem_data),
-						    datalength,
-						    OPS_LDT_BINARY,
-						    se_ip->cinfo_literal);
+		__ops_setup_memory_write(&se_ip->cinfo_literal,
+				&se_ip->mem_literal, datalength + 32);
+		__ops_stream_write_litdata_first(
+				__ops_memory_get_data(se_ip->mem_data),
+				datalength,
+				OPS_LDT_BINARY,
+				se_ip->cinfo_literal);
 
-		__ops_stream_write_se_ip_first(__ops_memory_get_data(se_ip->mem_literal),
-				    __ops_memory_get_length(se_ip->mem_literal),
-					     se_ip, se_ip->cinfo_se_ip);
+		__ops_stream_write_se_ip_first(
+				__ops_memory_get_data(se_ip->mem_literal),
+				__ops_memory_get_length(se_ip->mem_literal),
+				se_ip, se_ip->cinfo_se_ip);
 	} else {
 		__ops_stream_write_litdata(src, length, se_ip->cinfo_literal);
-		__ops_stream_write_se_ip(__ops_memory_get_data(se_ip->mem_literal),
-				    __ops_memory_get_length(se_ip->mem_literal),
-				       se_ip, se_ip->cinfo_se_ip);
+		__ops_stream_write_se_ip(
+				__ops_memory_get_data(se_ip->mem_literal),
+				__ops_memory_get_length(se_ip->mem_literal),
+				se_ip, se_ip->cinfo_se_ip);
 	}
 
 	/* now write memory to next writer */
@@ -1652,16 +1690,18 @@ stream_encrypt_se_ip_finaliser(__ops_error_t ** errors,
 			se_ip->cinfo_literal);
 
 		/* create SE IP packet set from this literal data */
-		__ops_write_se_ip_pktset(__ops_memory_get_data(se_ip->mem_literal),
-				    __ops_memory_get_length(se_ip->mem_literal),
-				       se_ip->crypt, se_ip->cinfo_se_ip);
+		__ops_write_se_ip_pktset(
+				__ops_memory_get_data(se_ip->mem_literal),
+				__ops_memory_get_length(se_ip->mem_literal),
+				se_ip->crypt, se_ip->cinfo_se_ip);
 
 	} else {
 		/* finish writing */
 		__ops_stream_write_litdata_last(NULL, 0, se_ip->cinfo_literal);
-		__ops_stream_write_se_ip_last(__ops_memory_get_data(se_ip->mem_literal),
-				    __ops_memory_get_length(se_ip->mem_literal),
-					    se_ip, se_ip->cinfo_se_ip);
+		__ops_stream_write_se_ip_last(
+				__ops_memory_get_data(se_ip->mem_literal),
+				__ops_memory_get_length(se_ip->mem_literal),
+				se_ip, se_ip->cinfo_se_ip);
 	}
 
 	/* now write memory to next writer */
@@ -1681,6 +1721,6 @@ stream_encrypt_se_ip_destroyer(__ops_writer_info_t * winfo)
 
 	se_ip->crypt->decrypt_finish(se_ip->crypt);
 
-	free(se_ip->crypt);
-	free(se_ip);
+	(void) free(se_ip->crypt);
+	(void) free(se_ip);
 }
