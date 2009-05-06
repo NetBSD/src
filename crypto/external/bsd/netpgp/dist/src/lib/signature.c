@@ -727,10 +727,8 @@ __ops_sig_start_sig(__ops_create_sig_t * sig,
 
 	/* XXX: refactor with check (in several ways - check should probably */
 	/*
-	 * use the buffered writer to construct packets (done), and also
-	 * should
-	 */
-	/* share code for hash calculation) */
+	 * use the buffered writer to construct packets (done), and
+	 * also should share code for hash calculation) */
 	sig->sig.info.version = OPS_V4;
 	sig->sig.info.key_algorithm = key->pubkey.algorithm;
 	sig->sig.info.hash_algorithm = hash;
@@ -818,7 +816,7 @@ __ops_sig_hashed_subpackets_end(__ops_create_sig_t * sig)
  *
  * \param sig
  * \param key
- * \param skey
+ * \param seckey
  * \param info
  *
  */
@@ -826,18 +824,18 @@ __ops_sig_hashed_subpackets_end(__ops_create_sig_t * sig)
 bool 
 __ops_write_sig(__ops_create_sig_t * sig,
 			const __ops_pubkey_t *key,
-			const __ops_seckey_t *skey,
+			const __ops_seckey_t *seckey,
 			__ops_create_info_t *info)
 {
 	size_t	l = __ops_memory_get_length(sig->mem);
 	bool	rtn = false;
 
 	/* check key not decrypted */
-	switch (skey->pubkey.algorithm) {
+	switch (seckey->pubkey.algorithm) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		if (skey->key.rsa.d == NULL) {
+		if (seckey->key.rsa.d == NULL) {
 			(void) fprintf(stderr,
 				"__ops_write_sig: null rsa.d\n");
 			return false;
@@ -845,7 +843,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 		break;
 
 	case OPS_PKA_DSA:
-		if (skey->key.dsa.x == NULL) {
+		if (seckey->key.dsa.x == NULL) {
 			(void) fprintf(stderr,
 				"__ops_write_sig: null dsa.x\n");
 			return false;
@@ -854,7 +852,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
-				skey->pubkey.algorithm);
+				seckey->pubkey.algorithm);
 		return false;
 	}
 
@@ -887,20 +885,20 @@ __ops_write_sig(__ops_create_sig_t * sig,
 	}
 	/* XXX: technically, we could figure out how big the signature is */
 	/* and write it directly to the output instead of via memory. */
-	switch (skey->pubkey.algorithm) {
+	switch (seckey->pubkey.algorithm) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		rsa_sign(&sig->hash, &key->key.rsa, &skey->key.rsa, sig->info);
+		rsa_sign(&sig->hash, &key->key.rsa, &seckey->key.rsa, sig->info);
 		break;
 
 	case OPS_PKA_DSA:
-		dsa_sign(&sig->hash, &key->key.dsa, &skey->key.dsa, sig->info);
+		dsa_sign(&sig->hash, &key->key.dsa, &seckey->key.dsa, sig->info);
 		break;
 
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
-					skey->pubkey.algorithm);
+					seckey->pubkey.algorithm);
 		return false;
 	}
 
@@ -1019,7 +1017,7 @@ open_output_file(__ops_create_info_t ** cinfo,
    \brief Sign a file with a Cleartext Signature
    \param input_filename Name of file to be signed
    \param output_filename Filename to be created. If NULL, filename will be constructed from the input_filename.
-   \param skey Secret Key to sign with
+   \param seckey Secret Key to sign with
    \param overwrite Allow output file to be overwritten, if set
    \return true if OK, else false
 
@@ -1027,7 +1025,7 @@ open_output_file(__ops_create_info_t ** cinfo,
 bool 
 __ops_sign_file_as_cleartext(const char *input_filename,
 			const char *output_filename,
-			const __ops_seckey_t *skey,
+			const __ops_seckey_t *seckey,
 			const bool overwrite)
 {
 	/* \todo allow choice of hash algorithams */
@@ -1069,7 +1067,7 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 		return false;
 	}
 	/* \todo could add more error detection here */
-	__ops_start_cleartext_sig(sig, skey, OPS_HASH_SHA1,
+	__ops_start_cleartext_sig(sig, seckey, OPS_HASH_SHA1,
 		OPS_SIG_BINARY);
 	if (__ops_writer_push_clearsigned(cinfo, sig) != true) {
 		return false;
@@ -1101,11 +1099,11 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 		__ops_teardown_file_write(cinfo, fd_out);
 		return false;
 	}
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &skey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 
 	rtn = __ops_sig_add_issuer_key_id(sig, keyid) &&
 		__ops_sig_hashed_subpackets_end(sig) &&
-		__ops_write_sig(sig, &skey->pubkey, skey, cinfo);
+		__ops_write_sig(sig, &seckey->pubkey, seckey, cinfo);
 
 	__ops_teardown_file_write(cinfo, fd_out);
 
@@ -1124,7 +1122,7 @@ __ops_sign_file_as_cleartext(const char *input_filename,
  * \param cleartext Text to be signed
  * \param len Length of text
  * \param signed_cleartext __ops_memory_t struct in which to write the signed cleartext
- * \param skey Secret key with which to sign the cleartext
+ * \param seckey Secret key with which to sign the cleartext
  * \return true if OK; else false
 
  * \note It is the calling function's responsibility to free signed_cleartext
@@ -1135,7 +1133,7 @@ bool
 __ops_sign_buf_as_cleartext(const char *cleartext,
 				const size_t len,
 				__ops_memory_t **signed_cleartext,
-				const __ops_seckey_t *skey)
+				const __ops_seckey_t *seckey)
 {
 	bool   rtn = false;
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
@@ -1157,7 +1155,7 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 		return false;
 	}
 	/* \todo could add more error detection here */
-	__ops_start_cleartext_sig(sig, skey, OPS_HASH_SHA1, OPS_SIG_BINARY);
+	__ops_start_cleartext_sig(sig, seckey, OPS_HASH_SHA1, OPS_SIG_BINARY);
 
 	/* set up output file */
 	__ops_setup_memory_write(&cinfo, signed_cleartext, len);
@@ -1174,11 +1172,11 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 	if (rtn == false) {
 		return false;
 	}
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &skey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 
 	rtn = __ops_sig_add_issuer_key_id(sig, keyid) &&
 		__ops_sig_hashed_subpackets_end(sig) &&
-		__ops_write_sig(sig, &skey->pubkey, skey, cinfo) &&
+		__ops_write_sig(sig, &seckey->pubkey, seckey, cinfo) &&
 		__ops_writer_close(cinfo);
 
 	/* Note: the calling function must free signed_cleartext */
@@ -1193,14 +1191,14 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 \brief Sign a file
 \param input_filename Input filename
 \param output_filename Output filename. If NULL, a name is constructed from the input filename.
-\param skey Secret Key to use for signing
+\param seckey Secret Key to use for signing
 \param use_armour Write armoured text, if set.
 \param overwrite May overwrite existing file, if set.
 \return true if OK; else false;
 
 */
 bool 
-__ops_sign_file(const char *input_filename, const char *output_filename, const __ops_seckey_t * skey, const bool use_armour, const bool overwrite)
+__ops_sign_file(const char *input_filename, const char *output_filename, const __ops_seckey_t * seckey, const bool use_armour, const bool overwrite)
 {
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
@@ -1231,7 +1229,7 @@ __ops_sign_file(const char *input_filename, const char *output_filename, const _
 
 	/* set up signature */
 	sig = __ops_create_sig_new();
-	__ops_start_msg_sig(sig, skey, hash_alg, sig_type);
+	__ops_start_msg_sig(sig, seckey, hash_alg, sig_type);
 
 	/* set armoured/not armoured here */
 	if (use_armour) {
@@ -1242,7 +1240,7 @@ __ops_sign_file(const char *input_filename, const char *output_filename, const _
 		fprintf(stderr, "** Writing out one pass sig\n");
 	}
 	/* write one_pass_sig */
-	__ops_write_one_pass_sig(skey, hash_alg, sig_type, cinfo);
+	__ops_write_one_pass_sig(seckey, hash_alg, sig_type, cinfo);
 
 	/* hash file contents */
 	hash = __ops_sig_get_hash(sig);
@@ -1267,13 +1265,13 @@ __ops_sign_file(const char *input_filename, const char *output_filename, const _
 
 	__ops_sig_add_birthtime(sig, time(NULL));
 
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &skey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 	__ops_sig_add_issuer_key_id(sig, keyid);
 
 	__ops_sig_hashed_subpackets_end(sig);
 
 	/* write out sig */
-	__ops_write_sig(sig, &skey->pubkey, skey, cinfo);
+	__ops_write_sig(sig, &seckey->pubkey, seckey, cinfo);
 
 	__ops_teardown_file_write(cinfo, fd_out);
 
@@ -1292,7 +1290,7 @@ __ops_sign_file(const char *input_filename, const char *output_filename, const _
 \param input Input text to be signed
 \param input_len Length of input text
 \param sig_type Signature type
-\param skey Secret Key
+\param seckey Secret Key
 \param use_armour Write armoured text, if set
 \return New __ops_memory_t struct containing signed text
 \note It is the caller's responsibility to call __ops_memory_free(me)
@@ -1302,7 +1300,7 @@ __ops_memory_t   *
 __ops_sign_buf(const void *input,
 		const size_t input_len,
 		const __ops_sig_type_t sig_type,
-		const __ops_seckey_t * skey,
+		const __ops_seckey_t * seckey,
 		const bool use_armour)
 {
 	/* \todo allow choice of hash algorithams */
@@ -1322,7 +1320,7 @@ __ops_sign_buf(const void *input,
 
 	/* set up signature */
 	sig = __ops_create_sig_new();
-	__ops_start_msg_sig(sig, skey, hash_alg, sig_type);
+	__ops_start_msg_sig(sig, seckey, hash_alg, sig_type);
 
 	/* setup writer */
 	__ops_setup_memory_write(&cinfo, &mem, input_len);
@@ -1336,7 +1334,7 @@ __ops_sign_buf(const void *input,
 		fprintf(stderr, "** Writing out one pass sig\n");
 	}
 	/* write one_pass_sig */
-	__ops_write_one_pass_sig(skey, hash_alg, sig_type, cinfo);
+	__ops_write_one_pass_sig(seckey, hash_alg, sig_type, cinfo);
 
 	/* hash file contents */
 	hash = __ops_sig_get_hash(sig);
@@ -1358,13 +1356,13 @@ __ops_sign_buf(const void *input,
 
 	__ops_sig_add_birthtime(sig, time(NULL));
 
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &skey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 	__ops_sig_add_issuer_key_id(sig, keyid);
 
 	__ops_sig_hashed_subpackets_end(sig);
 
 	/* write out sig */
-	__ops_write_sig(sig, &skey->pubkey, skey, cinfo);
+	__ops_write_sig(sig, &seckey->pubkey, seckey, cinfo);
 
 	/* tidy up */
 	__ops_writer_close(cinfo);

@@ -62,16 +62,16 @@
 
 
 static void 
-test_seckey(const __ops_seckey_t * skey)
+test_seckey(const __ops_seckey_t * seckey)
 {
 	RSA            *test = RSA_new();
 
-	test->n = BN_dup(skey->pubkey.key.rsa.n);
-	test->e = BN_dup(skey->pubkey.key.rsa.e);
+	test->n = BN_dup(seckey->pubkey.key.rsa.n);
+	test->e = BN_dup(seckey->pubkey.key.rsa.e);
 
-	test->d = BN_dup(skey->key.rsa.d);
-	test->p = BN_dup(skey->key.rsa.p);
-	test->q = BN_dup(skey->key.rsa.q);
+	test->d = BN_dup(seckey->key.rsa.d);
+	test->p = BN_dup(seckey->key.rsa.p);
+	test->q = BN_dup(seckey->key.rsa.q);
 
 	if (RSA_check_key(test) != 1) {
 		(void) fprintf(stderr,
@@ -693,14 +693,14 @@ __ops_text_from_hash(__ops_hash_t * hash)
 bool 
 __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keydata_t * keydata)
 {
-	__ops_seckey_t *skey = NULL;
+	__ops_seckey_t *seckey = NULL;
 	RSA            *rsa = NULL;
 	BN_CTX         *ctx = BN_CTX_new();
 	__ops_create_info_t *cinfo;
 	__ops_memory_t   *mem;
 
 	__ops_keydata_init(keydata, OPS_PTAG_CT_SECRET_KEY);
-	skey = __ops_get_writable_seckey(keydata);
+	seckey = __ops_get_writable_seckey(keydata);
 
 	/* generate the key pair */
 
@@ -708,28 +708,28 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 
 	/* populate __ops key from ssl key */
 
-	skey->pubkey.version = 4;
-	skey->pubkey.birthtime = time(NULL);
-	skey->pubkey.days_valid = 0;
-	skey->pubkey.algorithm = OPS_PKA_RSA;
+	seckey->pubkey.version = 4;
+	seckey->pubkey.birthtime = time(NULL);
+	seckey->pubkey.days_valid = 0;
+	seckey->pubkey.algorithm = OPS_PKA_RSA;
 
-	skey->pubkey.key.rsa.n = BN_dup(rsa->n);
-	skey->pubkey.key.rsa.e = BN_dup(rsa->e);
+	seckey->pubkey.key.rsa.n = BN_dup(rsa->n);
+	seckey->pubkey.key.rsa.e = BN_dup(rsa->e);
 
-	skey->s2k_usage = OPS_S2KU_ENCRYPTED_AND_HASHED;
-	skey->s2k_specifier = OPS_S2KS_SALTED;
-	/* skey->s2k_specifier=OPS_S2KS_SIMPLE; */
-	skey->algorithm = OPS_SA_CAST5;	/* \todo make param */
-	skey->hash_algorithm = OPS_HASH_SHA1;	/* \todo make param */
-	skey->octet_count = 0;
-	skey->checksum = 0;
+	seckey->s2k_usage = OPS_S2KU_ENCRYPTED_AND_HASHED;
+	seckey->s2k_specifier = OPS_S2KS_SALTED;
+	/* seckey->s2k_specifier=OPS_S2KS_SIMPLE; */
+	seckey->algorithm = OPS_SA_CAST5;	/* \todo make param */
+	seckey->hash_algorithm = OPS_HASH_SHA1;	/* \todo make param */
+	seckey->octet_count = 0;
+	seckey->checksum = 0;
 
-	skey->key.rsa.d = BN_dup(rsa->d);
-	skey->key.rsa.p = BN_dup(rsa->p);
-	skey->key.rsa.q = BN_dup(rsa->q);
-	skey->key.rsa.u = BN_mod_inverse(NULL, rsa->p, rsa->q, ctx);
-	if (skey->key.rsa.u == NULL) {
-		(void) fprintf(stderr, "skey->key.rsa.u is NULL\n");
+	seckey->key.rsa.d = BN_dup(rsa->d);
+	seckey->key.rsa.p = BN_dup(rsa->p);
+	seckey->key.rsa.q = BN_dup(rsa->q);
+	seckey->key.rsa.u = BN_mod_inverse(NULL, rsa->p, rsa->q, ctx);
+	if (seckey->key.rsa.u == NULL) {
+		(void) fprintf(stderr, "seckey->key.rsa.u is NULL\n");
 		return 0;
 	}
 	BN_CTX_free(ctx);
@@ -737,8 +737,8 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 	RSA_free(rsa);
 
 	__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
-			&keydata->key.skey.pubkey);
-	__ops_fingerprint(&keydata->fingerprint, &keydata->key.skey.pubkey);
+			&keydata->key.seckey.pubkey);
+	__ops_fingerprint(&keydata->fingerprint, &keydata->key.seckey.pubkey);
 
 	/* Generate checksum */
 
@@ -747,19 +747,19 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 
 	__ops_setup_memory_write(&cinfo, &mem, 128);
 
-	__ops_push_skey_checksum_writer(cinfo, skey);
+	__ops_push_skey_checksum_writer(cinfo, seckey);
 
-	switch (skey->pubkey.algorithm) {
+	switch (seckey->pubkey.algorithm) {
 		/* case OPS_PKA_DSA: */
 		/* return __ops_write_mpi(key->key.dsa.x,info); */
 
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		if (!__ops_write_mpi(skey->key.rsa.d, cinfo)
-		    || !__ops_write_mpi(skey->key.rsa.p, cinfo)
-		    || !__ops_write_mpi(skey->key.rsa.q, cinfo)
-		    || !__ops_write_mpi(skey->key.rsa.u, cinfo))
+		if (!__ops_write_mpi(seckey->key.rsa.d, cinfo)
+		    || !__ops_write_mpi(seckey->key.rsa.p, cinfo)
+		    || !__ops_write_mpi(seckey->key.rsa.q, cinfo)
+		    || !__ops_write_mpi(seckey->key.rsa.u, cinfo))
 			return false;
 		break;
 
@@ -767,7 +767,7 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 		/* return __ops_write_mpi(key->key.elgamal.x,info); */
 
 	default:
-		(void) fprintf(stderr, "Bad skey->pubkey.algorithm\n");
+		(void) fprintf(stderr, "Bad seckey->pubkey.algorithm\n");
 		return false;
 	}
 
@@ -775,11 +775,11 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 	__ops_writer_close(cinfo);
 	__ops_teardown_memory_write(cinfo, mem);
 
-	/* should now have checksum in skey struct */
+	/* should now have checksum in seckey struct */
 
 	/* test */
 	if (__ops_get_debug_level(__FILE__))
-		test_seckey(skey);
+		test_seckey(seckey);
 
 	return true;
 }

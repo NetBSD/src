@@ -65,10 +65,10 @@ __ops_print_pubkeydata(const __ops_keydata_t * key)
 {
 	unsigned int    i;
 
-	printf("pub %s ", __ops_show_pka(key->key.pkey.algorithm));
+	printf("pub %s ", __ops_show_pka(key->key.pubkey.algorithm));
 	hexdump(key->key_id, OPS_KEY_ID_SIZE, "");
 	printf(" ");
-	print_time_short(key->key.pkey.birthtime);
+	print_time_short(key->key.pubkey.birthtime);
 	printf("\nKey fingerprint: ");
 	hexdump(key->fingerprint.fingerprint, 20, " ");
 	printf("\n");
@@ -81,40 +81,40 @@ __ops_print_pubkeydata(const __ops_keydata_t * key)
 
 /**
 \ingroup Core_Print
-\param pkey
+\param pubkey
 */
 void
-__ops_print_pubkey(const __ops_pubkey_t * pkey)
+__ops_print_pubkey(const __ops_pubkey_t * pubkey)
 {
 	printf("------- PUBLIC KEY ------\n");
-	print_unsigned_int("Version", (unsigned)pkey->version);
-	print_time("Creation Time", pkey->birthtime);
-	if (pkey->version == OPS_V3)
-		print_unsigned_int("Days Valid", pkey->days_valid);
+	print_unsigned_int("Version", (unsigned)pubkey->version);
+	print_time("Creation Time", pubkey->birthtime);
+	if (pubkey->version == OPS_V3)
+		print_unsigned_int("Days Valid", pubkey->days_valid);
 
-	print_string_and_value("Algorithm", __ops_show_pka(pkey->algorithm),
-			       pkey->algorithm);
+	print_string_and_value("Algorithm", __ops_show_pka(pubkey->algorithm),
+			       pubkey->algorithm);
 
-	switch (pkey->algorithm) {
+	switch (pubkey->algorithm) {
 	case OPS_PKA_DSA:
-		print_bn("p", pkey->key.dsa.p);
-		print_bn("q", pkey->key.dsa.q);
-		print_bn("g", pkey->key.dsa.g);
-		print_bn("y", pkey->key.dsa.y);
+		print_bn("p", pubkey->key.dsa.p);
+		print_bn("q", pubkey->key.dsa.q);
+		print_bn("g", pubkey->key.dsa.g);
+		print_bn("y", pubkey->key.dsa.y);
 		break;
 
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		print_bn("n", pkey->key.rsa.n);
-		print_bn("e", pkey->key.rsa.e);
+		print_bn("n", pubkey->key.rsa.n);
+		print_bn("e", pubkey->key.rsa.e);
 		break;
 
 	case OPS_PKA_ELGAMAL:
 	case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-		print_bn("p", pkey->key.elgamal.p);
-		print_bn("g", pkey->key.elgamal.g);
-		print_bn("y", pkey->key.elgamal.y);
+		print_bn("p", pubkey->key.elgamal.p);
+		print_bn("g", pubkey->key.elgamal.g);
+		print_bn("y", pubkey->key.elgamal.y);
 		break;
 
 	default:
@@ -137,13 +137,13 @@ void
 __ops_print_seckeydata(const __ops_keydata_t * key)
 {
 	printf("sec ");
-	__ops_show_pka(key->key.pkey.algorithm);
+	__ops_show_pka(key->key.pubkey.algorithm);
 	printf(" ");
 
 	hexdump(key->key_id, OPS_KEY_ID_SIZE, "");
 	printf(" ");
 
-	print_time_short(key->key.pkey.birthtime);
+	print_time_short(key->key.pubkey.birthtime);
 	printf(" ");
 
 	if (key->nuids == 1) {
@@ -162,24 +162,24 @@ __ops_print_seckeydata(const __ops_keydata_t * key)
 
 /*
 void
-__ops_print_seckey_verbose(const __ops_seckey_t* skey)
+__ops_print_seckey_verbose(const __ops_seckey_t* seckey)
     {
     if(key->type == OPS_PTAG_CT_SECRET_KEY)
 	print_tagname("SECRET_KEY");
     else
 	print_tagname("ENCRYPTED_SECRET_KEY");
-    __ops_print_seckey(key->type,skey);
+    __ops_print_seckey(key->type,seckey);
 	}
 */
 
 /**
 \ingroup Core_Print
 \param type
-\param skey
+\param seckey
 */
 static void
 __ops_print_seckey_verbose(const __ops_content_tag_t type,
-				const __ops_seckey_t * skey)
+				const __ops_seckey_t * seckey)
 {
 	printf("------- SECRET KEY or ENCRYPTED SECRET KEY ------\n");
 	if (type == OPS_PTAG_CT_SECRET_KEY)
@@ -187,33 +187,33 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 	else
 		print_tagname("ENCRYPTED_SECRET_KEY");
 	/* __ops_print_pubkey(key); */
-	printf("S2K Usage: %d\n", skey->s2k_usage);
-	if (skey->s2k_usage != OPS_S2KU_NONE) {
-		printf("S2K Specifier: %d\n", skey->s2k_specifier);
-		printf("Symmetric algorithm: %d (%s)\n", skey->algorithm,
-		       __ops_show_symmetric_algorithm(skey->algorithm));
-		printf("Hash algorithm: %d (%s)\n", skey->hash_algorithm,
-		       __ops_show_hash_algorithm(skey->hash_algorithm));
-		if (skey->s2k_specifier != OPS_S2KS_SIMPLE)
-			print_hexdump("Salt", skey->salt, sizeof(skey->salt));
-		if (skey->s2k_specifier == OPS_S2KS_ITERATED_AND_SALTED)
-			printf("Octet count: %d\n", skey->octet_count);
-		print_hexdump("IV", skey->iv, __ops_block_size(skey->algorithm));
+	printf("S2K Usage: %d\n", seckey->s2k_usage);
+	if (seckey->s2k_usage != OPS_S2KU_NONE) {
+		printf("S2K Specifier: %d\n", seckey->s2k_specifier);
+		printf("Symmetric algorithm: %d (%s)\n", seckey->algorithm,
+		       __ops_show_symmetric_algorithm(seckey->algorithm));
+		printf("Hash algorithm: %d (%s)\n", seckey->hash_algorithm,
+		       __ops_show_hash_algorithm(seckey->hash_algorithm));
+		if (seckey->s2k_specifier != OPS_S2KS_SIMPLE)
+			print_hexdump("Salt", seckey->salt, sizeof(seckey->salt));
+		if (seckey->s2k_specifier == OPS_S2KS_ITERATED_AND_SALTED)
+			printf("Octet count: %d\n", seckey->octet_count);
+		print_hexdump("IV", seckey->iv, __ops_block_size(seckey->algorithm));
 	}
 	/* no more set if encrypted */
 	if (type == OPS_PTAG_CT_ENCRYPTED_SECRET_KEY)
 		return;
 
-	switch (skey->pubkey.algorithm) {
+	switch (seckey->pubkey.algorithm) {
 	case OPS_PKA_RSA:
-		print_bn("d", skey->key.rsa.d);
-		print_bn("p", skey->key.rsa.p);
-		print_bn("q", skey->key.rsa.q);
-		print_bn("u", skey->key.rsa.u);
+		print_bn("d", seckey->key.rsa.d);
+		print_bn("p", seckey->key.rsa.p);
+		print_bn("q", seckey->key.rsa.q);
+		print_bn("u", seckey->key.rsa.u);
 		break;
 
 	case OPS_PKA_DSA:
-		print_bn("x", skey->key.dsa.x);
+		print_bn("x", seckey->key.dsa.x);
 		break;
 
 	default:
@@ -221,10 +221,10 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 			"__ops_print_seckey_verbose: unusual algorithm\n");
 	}
 
-	if (skey->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED)
-		print_hexdump("Checkhash", skey->checkhash, OPS_CHECKHASH_SIZE);
+	if (seckey->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED)
+		print_hexdump("Checkhash", seckey->checkhash, OPS_CHECKHASH_SIZE);
 	else
-		printf("Checksum: %04x\n", skey->checksum);
+		printf("Checksum: %04x\n", seckey->checksum);
 
 	printf("------- end of SECRET KEY or ENCRYPTED SECRET KEY ------\n");
 }

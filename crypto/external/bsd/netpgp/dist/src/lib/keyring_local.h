@@ -38,8 +38,8 @@
 /** __ops_keydata_key_t
  */
 typedef union {
-	__ops_pubkey_t pkey;
-	__ops_seckey_t skey;
+	__ops_pubkey_t pubkey;
+	__ops_seckey_t seckey;
 }               __ops_keydata_key_t;
 
 
