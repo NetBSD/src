@@ -105,8 +105,8 @@
 
 #include "nspvar.h"
 
-static int nsp_probe(struct device *parent, cfdata_t match, void *aux);
-static void nsp_attach(struct device *parent, struct device *self, void *aux);
+static int nsp_probe(device_t parent, cfdata_t match, void *aux);
+static void nsp_attach(device_t parent, device_t self, void *aux);
 static int nsp_detach(device_t dev, int flags);
 
 
@@ -265,7 +265,7 @@ nsp_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-nsp_probe(struct device *parent, cfdata_t match, void *aux)
+nsp_probe(device_t parent, cfdata_t match, void *aux)
 {
 	static int		once=0;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -314,7 +314,7 @@ n8_sessionInit(struct nsp_softc *sc)
 }
 
 static void
-nsp_attach(struct device *parent, struct device *self, void *aux)
+nsp_attach(device_t parent, device_t self, void *aux)
 {
 	struct nsp_softc *sc;
 	struct pci_attach_args *pa = aux;

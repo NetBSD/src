@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.83 2009/05/06 09:25:16 cegger Exp $ */
+/* $NetBSD: if_ti.c,v 1.84 2009/05/06 10:34:32 cegger Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.83 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.84 2009/05/06 10:34:32 cegger Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -149,8 +149,8 @@ static const struct ti_type ti_devs[] = {
 };
 
 static const struct ti_type *ti_type_match(struct pci_attach_args *);
-static int ti_probe(struct device *, cfdata_t, void *);
-static void ti_attach(struct device *, struct device *, void *);
+static int ti_probe(device_t, cfdata_t, void *);
+static void ti_attach(device_t, device_t, void *);
 static void ti_shutdown(void *);
 static void ti_txeof_tigon1(struct ti_softc *);
 static void ti_txeof_tigon2(struct ti_softc *);
@@ -1603,7 +1603,7 @@ ti_type_match(struct pci_attach_args *pa)
  * against our list and return its name if we find a match.
  */
 static int
-ti_probe(struct device *parent, cfdata_t match, void *aux)
+ti_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct ti_type		*t;
@@ -1614,7 +1614,7 @@ ti_probe(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-ti_attach(struct device *parent, struct device *self, void *aux)
+ti_attach(device_t parent, device_t self, void *aux)
 {
 	u_int32_t		command;
 	struct ifnet		*ifp;

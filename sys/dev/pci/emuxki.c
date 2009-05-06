@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.55 2009/05/06 09:25:14 cegger Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.56 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.55 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.56 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,9 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.55 2009/05/06 09:25:14 cegger Exp $");
 #include <dev/pci/emuxkivar.h>
 
 /* autoconf goo */
-static int	emuxki_match(struct device *, cfdata_t, void *);
-static void	emuxki_attach(struct device *, struct device *, void *);
-static int	emuxki_detach(struct device *, int);
+static int	emuxki_match(device_t, cfdata_t, void *);
+static void	emuxki_attach(device_t, device_t, void *);
+static int	emuxki_detach(device_t, int);
 
 /* DMA mem mgmt */
 static struct dmamem *dmamem_alloc(bus_dma_tag_t, size_t, bus_size_t,
@@ -380,8 +380,7 @@ emuxki_ac97_init(struct emuxki_softc *sc)
 }
 
 static int
-emuxki_match(struct device *parent, cfdata_t match,
-    void *aux)
+emuxki_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -400,7 +399,7 @@ emuxki_match(struct device *parent, cfdata_t match,
 }
 
 static void
-emuxki_attach(struct device *parent, struct device *self, void *aux)
+emuxki_attach(device_t parent, device_t self, void *aux)
 {
 	struct emuxki_softc *sc;
 	struct pci_attach_args *pa;
@@ -481,7 +480,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-emuxki_detach(struct device *self, int flags)
+emuxki_detach(device_t self, int flags)
 {
 	struct emuxki_softc *sc;
 

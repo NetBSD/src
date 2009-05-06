@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.40 2009/05/06 09:25:16 cegger Exp $ */
+/*      $NetBSD: sv.c,v 1.41 2009/05/06 10:34:33 cegger Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.40 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.41 2009/05/06 10:34:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ int	svdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-static int	sv_match(struct device *, cfdata_t, void *);
-static void	sv_attach(struct device *, struct device *, void *);
+static int	sv_match(device_t, cfdata_t, void *);
+static void	sv_attach(device_t, device_t, void *);
 static int	sv_intr(void *);
 
 struct sv_dma {
@@ -261,8 +261,7 @@ sv_write_indirect(struct sv_softc *sc, uint8_t reg, uint8_t val)
 }
 
 static int
-sv_match(struct device *parent, cfdata_t match,
-    void *aux)
+sv_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -297,7 +296,7 @@ pci_alloc_io(pci_chipset_tag_t pc, pcitag_t pt, int pcioffs,
  * Allocate IO addresses when all other configuration is done.
  */
 static void
-sv_defer(struct device *self)
+sv_defer(device_t self)
 {
 	struct sv_softc *sc;
 	pci_chipset_tag_t pc;
@@ -342,7 +341,7 @@ sv_defer(struct device *self)
 }
 
 static void
-sv_attach(struct device *parent, struct device *self, void *aux)
+sv_attach(device_t parent, device_t self, void *aux)
 {
 	struct sv_softc *sc;
 	struct pci_attach_args *pa;

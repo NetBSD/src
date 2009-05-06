@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.16 2009/05/06 09:25:14 cegger Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.17 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.16 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.17 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,8 @@ static struct vcons_screen chipsfb_console_screen;
 
 extern const u_char rasops_cmap[768];
 
-static int	chipsfb_match(struct device *, cfdata_t, void *);
-static void	chipsfb_attach(struct device *, struct device *, void *);
+static int	chipsfb_match(device_t, cfdata_t, void *);
+static void	chipsfb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(chipsfb, sizeof(struct chipsfb_softc), chipsfb_match,
     chipsfb_attach, NULL, NULL);
@@ -249,7 +249,7 @@ chipsfb_wait_idle(struct chipsfb_softc *sc)
 }
 
 static int
-chipsfb_match(struct device *parent, cfdata_t match, void *aux)
+chipsfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -266,7 +266,7 @@ chipsfb_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-chipsfb_attach(struct device *parent, struct device *self, void *aux)
+chipsfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct chipsfb_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;

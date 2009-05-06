@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.28 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.29 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.28 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.29 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.28 2009/05/06 09:25:15 cegger Exp $
  */
 #define	PCI_CBIO		0x10	/* Configuration Base IO Address */
 
-int	pcic_pci_match(struct device *, cfdata_t, void *);
-void	pcic_pci_attach(struct device *, struct device *, void *);
+int	pcic_pci_match(device_t, cfdata_t, void *);
+void	pcic_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(pcic_pci, sizeof(struct pcic_pci_softc),
     pcic_pci_match, pcic_pci_attach, NULL, NULL);
@@ -85,11 +85,10 @@ static const struct pcmcia_chip_functions pcic_pci_functions = {
 	NULL,				/* card_detect */
 };
 
-static void pcic_pci_callback(struct device *);
+static void pcic_pci_callback(device_t);
 
 int
-pcic_pci_match(struct device *parent, struct cfdata  *match,
-    void *aux)
+pcic_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -108,10 +107,10 @@ pcic_pci_match(struct device *parent, struct cfdata  *match,
 	return (1);
 }
 
-void pcic_isa_config_interrupts(struct device *);
+void pcic_isa_config_interrupts(device_t);
 
 void
-pcic_pci_attach(struct device *parent, struct device *self, void *aux)
+pcic_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcic_softc *sc = (void *) self;
 	struct pcic_pci_softc *psc = (void *) self;
@@ -213,7 +212,7 @@ pcic_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-pcic_pci_callback(struct device *self)
+pcic_pci_callback(device_t self)
 {
 	struct pcic_softc *sc = (void *) self;
 

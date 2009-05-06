@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.16 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.17 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.16 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.17 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,8 +157,8 @@ __KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.16 2009/05/06 09:25:15 cegger Exp $");
 				/* SRAM structure */
 #define	ICP_MPR_SZ	0x4000
 
-int	icp_pci_match(struct device *, cfdata_t, void *);
-void	icp_pci_attach(struct device *, struct device *, void *);
+int	icp_pci_match(device_t, cfdata_t, void *);
+void	icp_pci_attach(device_t, device_t, void *);
 void	icp_pci_enable_intr(struct icp_softc *);
 int	icp_pci_find_class(struct pci_attach_args *);
 
@@ -222,8 +222,7 @@ icp_pci_find_class(struct pci_attach_args *pa)
 }
 
 int
-icp_pci_match(struct device *parent, cfdata_t match,
-    void *aux)
+icp_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -236,7 +235,7 @@ icp_pci_match(struct device *parent, cfdata_t match,
 }
 
 void
-icp_pci_attach(struct device *parent, struct device *self, void *aux)
+icp_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct icp_softc *icp;
