@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.21 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.22 2009/05/06 09:25:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.21 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.22 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,14 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.21 2008/04/10 19:13:36 cegger Exp $");
 #define	PCI_CBMA	0x14	/* Configuration base memory address */
 #define	PCI_CBIO	0x10	/* Configuration base I/O address */
 
-static int	dpt_pci_match(struct device *, struct cfdata *, void *);
+static int	dpt_pci_match(struct device *, cfdata_t, void *);
 static void	dpt_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(dpt_pci, sizeof(struct dpt_softc),
     dpt_pci_match, dpt_pci_attach, NULL, NULL);
 
 static int
-dpt_pci_match(struct device *parent, struct cfdata *match,
+dpt_pci_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

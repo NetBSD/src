@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.20 2008/07/09 20:07:19 joerg Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.21 2009/05/06 09:25:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.20 2008/07/09 20:07:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.21 2009/05/06 09:25:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ struct atw_pci_softc {
 	pcitag_t		psc_pcitag;	/* our PCI tag */
 };
 
-static int	atw_pci_match(device_t, struct cfdata *, void *);
+static int	atw_pci_match(device_t, cfdata_t, void *);
 static void	atw_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(atw_pci, sizeof(struct atw_pci_softc),

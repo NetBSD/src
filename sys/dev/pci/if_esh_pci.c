@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.24 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.25 2009/05/06 09:25:15 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.24 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.25 2009/05/06 09:25:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.24 2008/04/28 20:23:55 martin Exp $
 
 #define MEM_MAP_REG	0x10
 
-static int	esh_pci_match(struct device *, struct cfdata *, void *);
+static int	esh_pci_match(struct device *, cfdata_t, void *);
 static void	esh_pci_attach(struct device *, struct device *, void *);
 static u_int8_t	esh_pci_bist_read(struct esh_softc *);
 static void	esh_pci_bist_write(struct esh_softc *, u_int8_t);
@@ -83,7 +83,7 @@ CFATTACH_DECL(esh_pci, sizeof(struct esh_softc),
     esh_pci_match, esh_pci_attach, NULL, NULL);
 
 static int
-esh_pci_match(struct device *parent, struct cfdata *match,
+esh_pci_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;

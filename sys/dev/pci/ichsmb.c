@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.20 2009/03/18 16:00:19 cegger Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.21 2009/05/06 09:25:15 cegger Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.20 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.21 2009/05/06 09:25:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,7 +69,7 @@ struct ichsmb_softc {
 	}			sc_i2c_xfer;
 };
 
-static int	ichsmb_match(device_t, struct cfdata *, void *);
+static int	ichsmb_match(device_t, cfdata_t, void *);
 static void	ichsmb_attach(device_t, device_t, void *);
 
 static int	ichsmb_i2c_acquire_bus(void *, int);
@@ -85,7 +85,7 @@ CFATTACH_DECL_NEW(ichsmb, sizeof(struct ichsmb_softc),
 
 
 static int
-ichsmb_match(device_t parent, struct cfdata *match, void *aux)
+ichsmb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

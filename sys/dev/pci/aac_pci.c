@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.26 2009/01/02 22:03:07 briggs Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.27 2009/05/06 09:25:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.26 2009/01/02 22:03:07 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.27 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ aac_pci_intr_set(struct aac_softc *sc, int (*hand)(void*), void *arg)
 }
 
 static int
-aac_pci_match(struct device *parent, struct cfdata *match,
+aac_pci_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

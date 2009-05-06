@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.22 2008/04/28 20:23:54 martin Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.23 2009/05/06 09:25:14 cegger Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.22 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.23 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.22 2008/04/28 20:23:54 martin Exp $");
  * the actual probe routine to check it out.
  */
 static int
-adw_pci_match(struct device *parent, struct cfdata *match,
+adw_pci_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
