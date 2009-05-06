@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.945 2009/04/21 03:00:29 nonaka Exp $
+#	$NetBSD: files,v 1.946 2009/05/06 02:52:13 cube Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20090214
+version 	20090313
 
 #
 # device classes
