@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.63 2009/04/27 20:02:29 cegger Exp $	*/
+/*	$NetBSD: intr.c,v 1.64 2009/05/06 01:32:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.63 2009/04/27 20:02:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.64 2009/05/06 01:32:37 mrg Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -467,7 +467,7 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci, *lci;
 	struct intrsource *isp;
-	int slot, idtvec, error;
+	int slot = 0, idtvec, error;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
