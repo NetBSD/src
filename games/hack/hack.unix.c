@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.9 2003/04/02 18:36:41 jsm Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.10 2009/05/06 02:59:12 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.9 2003/04/02 18:36:41 jsm Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.10 2009/05/06 02:59:12 ginsbach Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -118,7 +118,7 @@ getyear()
 }
 
 char           *
-getdate()
+getdatestr()
 {
 	static char     datestr[7];
 	struct tm      *lt = getlt();
