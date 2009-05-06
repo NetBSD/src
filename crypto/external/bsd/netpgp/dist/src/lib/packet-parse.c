@@ -193,7 +193,7 @@ __ops_init_subregion(__ops_region_t * subregion, __ops_region_t * region)
 
 static int 
 sub_base_read(void *dest, size_t length, __ops_error_t ** errors,
-	      __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
+	      __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
 {
 	size_t          n;
 
@@ -250,7 +250,7 @@ sub_base_read(void *dest, size_t length, __ops_error_t ** errors,
 
 int 
 __ops_stacked_read(void *dest, size_t length, __ops_error_t ** errors,
-		 __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
+		 __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
 {
 	return sub_base_read(dest, length, errors, rinfo->next, cbinfo);
 }
@@ -272,7 +272,7 @@ base_read(unsigned char *dest, size_t length,
 static size_t 
 full_read(unsigned char *dest, size_t length, int *last_read,
 	  __ops_error_t ** errors, __ops_reader_info_t * rinfo,
-	  __ops_parse_cb_info_t * cbinfo)
+	  __ops_callback_data_t * cbinfo)
 {
 	size_t          t;
 	int             r = 0;	/* preset in case some loon calls with length
@@ -362,7 +362,7 @@ bool
 __ops_limited_read(unsigned char *dest, size_t length,
 		 __ops_region_t * region, __ops_error_t ** errors,
 		 __ops_reader_info_t * rinfo,
-		 __ops_parse_cb_info_t * cbinfo)
+		 __ops_callback_data_t * cbinfo)
 {
 	size_t          r;
 	int             lr;
@@ -402,7 +402,7 @@ __ops_stacked_limited_read(unsigned char *dest, unsigned length,
 			 __ops_region_t * region,
 			 __ops_error_t ** errors,
 			 __ops_reader_info_t * rinfo,
-			 __ops_parse_cb_info_t * cbinfo)
+			 __ops_callback_data_t * cbinfo)
 {
 	return __ops_limited_read(dest, length, region, errors, rinfo->next, cbinfo);
 }
@@ -806,7 +806,7 @@ signed_cleartext_trailer_free(__ops_signed_cleartext_trailer_t * trailer)
 \brief Free allocated memory
 */
 static void 
-__ops_cmd_get_passphrase_free(__ops_secret_key_passphrase_t * skp)
+__ops_cmd_get_passphrase_free(__ops_seckey_passphrase_t * skp)
 {
 	if (skp->passphrase && *skp->passphrase) {
 		free(*skp->passphrase);
@@ -850,7 +850,7 @@ trust_free(__ops_trust_t * trust)
  * \param unknown_sig
  */
 static void 
-free_unknown_sig_pka(__ops_unknown_signature_t * unknown_sig)
+free_unknown_sig_pka(__ops_unknown_sig_t * unknown_sig)
 {
 	data_free(&unknown_sig->data);
 }
@@ -872,22 +872,22 @@ free_BN(BIGNUM ** pp)
  * \param sig
  */
 static void 
-signature_free(__ops_signature_t * sig)
+sig_free(__ops_sig_t * sig)
 {
 	switch (sig->info.key_algorithm) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		free_BN(&sig->info.signature.rsa.sig);
+		free_BN(&sig->info.sig.rsa.sig);
 		break;
 
 	case OPS_PKA_DSA:
-		free_BN(&sig->info.signature.dsa.r);
-		free_BN(&sig->info.signature.dsa.s);
+		free_BN(&sig->info.sig.dsa.r);
+		free_BN(&sig->info.sig.dsa.s);
 		break;
 
 	case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-		free_BN(&sig->info.signature.elgamal.r);
-		free_BN(&sig->info.signature.elgamal.s);
+		free_BN(&sig->info.sig.elgamal.r);
+		free_BN(&sig->info.sig.elgamal.s);
 		break;
 
 	case OPS_PKA_PRIVATE00:
@@ -901,11 +901,11 @@ signature_free(__ops_signature_t * sig)
 	case OPS_PKA_PRIVATE08:
 	case OPS_PKA_PRIVATE09:
 	case OPS_PKA_PRIVATE10:
-		free_unknown_sig_pka(&sig->info.signature.unknown);
+		free_unknown_sig_pka(&sig->info.sig.unknown);
 		break;
 
 	default:
-		(void) fprintf(stderr, "signature_free: bad sig type\n");
+		(void) fprintf(stderr, "sig_free: bad sig type\n");
 	}
 }
 
@@ -1026,9 +1026,9 @@ ss_revocation_reason_free(__ops_ss_revocation_reason_t *ss_revocation_reason)
 }
 
 static void 
-ss_embedded_signature_free(__ops_ss_embedded_signature_t *ss_embedded_signature)
+ss_embedded_sig_free(__ops_ss_embedded_sig_t *ss_embedded_sig)
 {
-	data_free(&ss_embedded_signature->sig);
+	data_free(&ss_embedded_sig->sig);
 }
 
 /**
@@ -1082,12 +1082,12 @@ __ops_parser_content_free(__ops_packet_t * c)
 
 	case OPS_PTAG_CT_SIGNATURE:
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:
-		signature_free(&c->u.signature);
+		sig_free(&c->u.sig);
 		break;
 
 	case OPS_PTAG_CT_PUBLIC_KEY:
 	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		__ops_public_key_free(&c->u.pubkey);
+		__ops_pubkey_free(&c->u.pubkey);
 		break;
 
 	case OPS_PTAG_CT_USER_ID:
@@ -1165,7 +1165,7 @@ __ops_parser_content_free(__ops_packet_t * c)
 		break;
 
 	case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
-		ss_embedded_signature_free(&c->u.ss_embedded_signature);
+		ss_embedded_sig_free(&c->u.ss_embedded_sig);
 		break;
 
 	case OPS_PARSER_PACKET_END:
@@ -1178,7 +1178,7 @@ __ops_parser_content_free(__ops_packet_t * c)
 
 	case OPS_PTAG_CT_SECRET_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
-		__ops_secret_key_free(&c->u.secret_key);
+		__ops_seckey_free(&c->u.seckey);
 		break;
 
 	case OPS_PTAG_CT_PK_SESSION_KEY:
@@ -1224,7 +1224,7 @@ __ops_pk_session_key_free(__ops_pk_session_key_t * sk)
 */
 /* ! Free the memory used when parsing a public key */
 void 
-__ops_public_key_free(__ops_public_key_t * p)
+__ops_pubkey_free(__ops_pubkey_t * p)
 {
 	switch (p->algorithm) {
 	case OPS_PKA_RSA:
@@ -1253,7 +1253,7 @@ __ops_public_key_free(__ops_public_key_t * p)
 		break;
 
 	default:
-		(void) fprintf(stderr, "__ops_public_key_free: bad alg\n");
+		(void) fprintf(stderr, "__ops_pubkey_free: bad alg\n");
 	}
 }
 
@@ -1261,14 +1261,14 @@ __ops_public_key_free(__ops_public_key_t * p)
    \ingroup Core_ReadPackets
 */
 static int 
-parse_public_key_data(__ops_public_key_t * key, __ops_region_t * region,
+parse_pubkey_data(__ops_pubkey_t * key, __ops_region_t * region,
 		      __ops_parse_info_t * pinfo)
 {
 	unsigned char   c[1] = "";
 
 	if (region->length_read != 0) {
 		/* We should not have read anything so far */
-		(void) fprintf(stderr, "parse_public_key_data: bad length\n");
+		(void) fprintf(stderr, "parse_pubkey_data: bad length\n");
 		return 0;
 	}
 
@@ -1281,7 +1281,7 @@ parse_public_key_data(__ops_public_key_t * key, __ops_region_t * region,
 			    "Bad public key version (0x%02x)", key->version);
 		return 0;
 	}
-	if (!limited_read_time(&key->creation_time, region, pinfo)) {
+	if (!limited_read_time(&key->birthtime, region, pinfo)) {
 		return 0;
 	}
 
@@ -1352,12 +1352,12 @@ parse_public_key_data(__ops_public_key_t * key, __ops_region_t * region,
  * \see RFC4880 5.5.2
  */
 static int 
-parse_public_key(__ops_content_tag_t tag, __ops_region_t * region,
+parse_pubkey(__ops_content_tag_t tag, __ops_region_t * region,
 		 __ops_parse_info_t * pinfo)
 {
 	__ops_packet_t pkt;
 
-	if (!parse_public_key_data(&pkt.u.pubkey, region, pinfo))
+	if (!parse_pubkey_data(&pkt.u.pubkey, region, pinfo))
 		return 0;
 
 	/* XXX: this test should be done for all packets, surely? */
@@ -1503,16 +1503,16 @@ parse_hash_find(__ops_parse_info_t * pinfo,
  * \see RFC4880 5.2.2
  */
 static int 
-parse_v3_signature(__ops_region_t * region,
+parse_v3_sig(__ops_region_t * region,
 		   __ops_parse_info_t * pinfo)
 {
 	__ops_packet_t	pkt;
 	unsigned char		c[1] = "";
 
 	/* clear signature */
-	(void) memset(&pkt.u.signature, 0x0, sizeof(pkt.u.signature));
+	(void) memset(&pkt.u.sig, 0x0, sizeof(pkt.u.sig));
 
-	pkt.u.signature.info.version = OPS_V3;
+	pkt.u.sig.info.version = OPS_V3;
 
 	/* hash info length */
 	if (!limited_read(c, 1, region, pinfo)) {
@@ -1525,55 +1525,55 @@ parse_v3_signature(__ops_region_t * region,
 	if (!limited_read(c, 1, region, pinfo)) {
 		return 0;
 	}
-	pkt.u.signature.info.type = c[0];
+	pkt.u.sig.info.type = c[0];
 	/* XXX: check signature type */
 
-	if (!limited_read_time(&pkt.u.signature.info.creation_time,
+	if (!limited_read_time(&pkt.u.sig.info.birthtime,
 			region, pinfo)) {
 		return 0;
 	}
-	pkt.u.signature.info.creation_time_set = true;
+	pkt.u.sig.info.birthtime_set = true;
 
-	if (!limited_read(pkt.u.signature.info.signer_id, OPS_KEY_ID_SIZE,
+	if (!limited_read(pkt.u.sig.info.signer_id, OPS_KEY_ID_SIZE,
 			region, pinfo)) {
 		return 0;
 	}
-	pkt.u.signature.info.signer_id_set = true;
+	pkt.u.sig.info.signer_id_set = true;
 
 	if (!limited_read(c, 1, region, pinfo)) {
 		return 0;
 	}
-	pkt.u.signature.info.key_algorithm = c[0];
+	pkt.u.sig.info.key_algorithm = c[0];
 	/* XXX: check algorithm */
 
 	if (!limited_read(c, 1, region, pinfo)) {
 		return 0;
 	}
-	pkt.u.signature.info.hash_algorithm = c[0];
+	pkt.u.sig.info.hash_algorithm = c[0];
 	/* XXX: check algorithm */
 
-	if (!limited_read(pkt.u.signature.hash2, 2, region, pinfo)) {
+	if (!limited_read(pkt.u.sig.hash2, 2, region, pinfo)) {
 		return 0;
 	}
 
-	switch (pkt.u.signature.info.key_algorithm) {
+	switch (pkt.u.sig.info.key_algorithm) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		if (!limited_read_mpi(&pkt.u.signature.info.signature.rsa.sig, region, pinfo)) {
+		if (!limited_read_mpi(&pkt.u.sig.info.sig.rsa.sig, region, pinfo)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PKA_DSA:
-		if (!limited_read_mpi(&pkt.u.signature.info.signature.dsa.r, region, pinfo) ||
-		    !limited_read_mpi(&pkt.u.signature.info.signature.dsa.s, region, pinfo)) {
+		if (!limited_read_mpi(&pkt.u.sig.info.sig.dsa.r, region, pinfo) ||
+		    !limited_read_mpi(&pkt.u.sig.info.sig.dsa.s, region, pinfo)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-		if (!limited_read_mpi(&pkt.u.signature.info.signature.elgamal.r, region, pinfo) ||
-		    !limited_read_mpi(&pkt.u.signature.info.signature.elgamal.s, region, pinfo)) {
+		if (!limited_read_mpi(&pkt.u.sig.info.sig.elgamal.r, region, pinfo) ||
+		    !limited_read_mpi(&pkt.u.sig.info.sig.elgamal.s, region, pinfo)) {
 			return 0;
 		}
 		break;
@@ -1582,7 +1582,7 @@ parse_v3_signature(__ops_region_t * region,
 		OPS_ERROR_1(&pinfo->errors,
 			OPS_E_ALG_UNSUPPORTED_SIGNATURE_ALG,
 			"Unsupported signature key algorithm (%s)",
-			__ops_show_pka(pkt.u.signature.info.key_algorithm));
+			__ops_show_pka(pkt.u.sig.info.key_algorithm));
 		return 0;
 	}
 
@@ -1590,9 +1590,9 @@ parse_v3_signature(__ops_region_t * region,
 		OPS_ERROR_1(&pinfo->errors, OPS_E_R_UNCONSUMED_DATA, "Unconsumed data (%d)", region->length - region->length_read);
 		return 0;
 	}
-	if (pkt.u.signature.info.signer_id_set) {
-		pkt.u.signature.hash = parse_hash_find(pinfo,
-				pkt.u.signature.info.signer_id);
+	if (pkt.u.sig.info.signer_id_set) {
+		pkt.u.sig.hash = parse_hash_find(pinfo,
+				pkt.u.sig.info.signer_id);
 	}
 
 	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_SIGNATURE, &pkt);
@@ -1619,7 +1619,7 @@ parse_v3_signature(__ops_region_t * region,
  * \see RFC4880 5.2.3
  */
 static int 
-parse_one_signature_subpacket(__ops_signature_t * sig,
+parse_one_sig_subpacket(__ops_sig_t * sig,
 			      __ops_region_t * region,
 			      __ops_parse_info_t * pinfo)
 {
@@ -1663,8 +1663,8 @@ parse_one_signature_subpacket(__ops_signature_t * sig,
 		if (!limited_read_time(&pkt.u.ss_time.time, &subregion, pinfo))
 			return 0;
 		if (pkt.tag == OPS_PTAG_SS_CREATION_TIME) {
-			sig->info.creation_time = pkt.u.ss_time.time;
-			sig->info.creation_time_set = true;
+			sig->info.birthtime = pkt.u.ss_time.time;
+			sig->info.birthtime_set = true;
 		}
 		break;
 
@@ -1731,7 +1731,7 @@ parse_one_signature_subpacket(__ops_signature_t * sig,
 
 	case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
 		/* \todo should do something with this sig? */
-		if (!read_data(&pkt.u.ss_embedded_signature.sig, &subregion, pinfo))
+		if (!read_data(&pkt.u.ss_embedded_sig.sig, &subregion, pinfo))
 			return 0;
 		break;
 
@@ -1856,10 +1856,10 @@ parse_one_signature_subpacket(__ops_signature_t * sig,
  * \brief Parse several signature subpackets.
  *
  * Hashed and unhashed subpacket sets are preceded by an octet count that specifies the length of the complete set.
- * This function parses this length and then calls parse_one_signature_subpacket() for each subpacket until the
+ * This function parses this length and then calls parse_one_sig_subpacket() for each subpacket until the
  * entire set is consumed.
  *
- * This function does not call the callback directly, parse_one_signature_subpacket() does for each subpacket.
+ * This function does not call the callback directly, parse_one_sig_subpacket() does for each subpacket.
  *
  * \param *ptag		Pointer to the Packet Tag.
  * \param *reader	Our reader
@@ -1869,7 +1869,7 @@ parse_one_signature_subpacket(__ops_signature_t * sig,
  * \see RFC4880 5.2.3
  */
 static int 
-parse_signature_subpackets(__ops_signature_t * sig,
+parse_sig_subpackets(__ops_sig_t * sig,
 			   __ops_region_t * region,
 			   __ops_parse_info_t * pinfo)
 {
@@ -1886,7 +1886,7 @@ parse_signature_subpackets(__ops_signature_t * sig,
 	}
 
 	while (subregion.length_read < subregion.length) {
-		if (!parse_one_signature_subpacket(sig, &subregion, pinfo)) {
+		if (!parse_one_sig_subpacket(sig, &subregion, pinfo)) {
 			return 0;
 		}
 	}
@@ -1918,94 +1918,94 @@ parse_signature_subpackets(__ops_signature_t * sig,
  * \see RFC4880 5.2.3
  */
 static int 
-parse_v4_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
+parse_v4_sig(__ops_region_t * region, __ops_parse_info_t * pinfo)
 {
 	unsigned char   c[1] = "";
 	__ops_packet_t pkt;
 
 	/* debug=1; */
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "\nparse_v4_signature\n");
+		fprintf(stderr, "\nparse_v4_sig\n");
 	}
 	/* clear signature */
-	(void) memset(&pkt.u.signature, 0x0, sizeof(pkt.u.signature));
+	(void) memset(&pkt.u.sig, 0x0, sizeof(pkt.u.sig));
 
 	/*
 	 * We need to hash the packet data from version through the hashed
 	 * subpacket data
 	 */
 
-	pkt.u.signature.v4_hashed_data_start = pinfo->rinfo.alength - 1;
+	pkt.u.sig.v4_hashed_data_start = pinfo->rinfo.alength - 1;
 
 	/* Set version,type,algorithms */
 
-	pkt.u.signature.info.version = OPS_V4;
+	pkt.u.sig.info.version = OPS_V4;
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	pkt.u.signature.info.type = c[0];
+	pkt.u.sig.info.type = c[0];
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "signature type=%d (%s)\n",
-			pkt.u.signature.info.type,
-			__ops_show_sig_type(pkt.u.signature.info.type));
+			pkt.u.sig.info.type,
+			__ops_show_sig_type(pkt.u.sig.info.type));
 	}
 	/* XXX: check signature type */
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	pkt.u.signature.info.key_algorithm = c[0];
+	pkt.u.sig.info.key_algorithm = c[0];
 	/* XXX: check algorithm */
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "key_algorithm=%d (%s)\n",
-			pkt.u.signature.info.key_algorithm,
-			__ops_show_pka(pkt.u.signature.info.key_algorithm));
+			pkt.u.sig.info.key_algorithm,
+			__ops_show_pka(pkt.u.sig.info.key_algorithm));
 	}
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	pkt.u.signature.info.hash_algorithm = c[0];
+	pkt.u.sig.info.hash_algorithm = c[0];
 	/* XXX: check algorithm */
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "hash_algorithm=%d %s\n",
-			pkt.u.signature.info.hash_algorithm,
-		  __ops_show_hash_algorithm(pkt.u.signature.info.hash_algorithm));
+			pkt.u.sig.info.hash_algorithm,
+		  __ops_show_hash_algorithm(pkt.u.sig.info.hash_algorithm));
 	}
 	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_SIGNATURE_HEADER, &pkt);
 
 
-	if (!parse_signature_subpackets(&pkt.u.signature, region, pinfo))
+	if (!parse_sig_subpackets(&pkt.u.sig, region, pinfo))
 		return 0;
 
-	pkt.u.signature.info.v4_hashed_data_length = pinfo->rinfo.alength
-		- pkt.u.signature.v4_hashed_data_start;
+	pkt.u.sig.info.v4_hashed_data_length = pinfo->rinfo.alength
+		- pkt.u.sig.v4_hashed_data_start;
 
 	/* copy hashed subpackets */
-	if (pkt.u.signature.info.v4_hashed_data)
-		free(pkt.u.signature.info.v4_hashed_data);
-	pkt.u.signature.info.v4_hashed_data = calloc(1, pkt.u.signature.info.v4_hashed_data_length);
+	if (pkt.u.sig.info.v4_hashed_data)
+		free(pkt.u.sig.info.v4_hashed_data);
+	pkt.u.sig.info.v4_hashed_data = calloc(1, pkt.u.sig.info.v4_hashed_data_length);
 
 	if (!pinfo->rinfo.accumulate) {
 		/* We must accumulate, else we can't check the signature */
 		fprintf(stderr, "*** ERROR: must set accumulate to true\n");
 		return 0;
 	}
-	(void) memcpy(pkt.u.signature.info.v4_hashed_data,
-	       pinfo->rinfo.accumulated + pkt.u.signature.v4_hashed_data_start,
-	       pkt.u.signature.info.v4_hashed_data_length);
+	(void) memcpy(pkt.u.sig.info.v4_hashed_data,
+	       pinfo->rinfo.accumulated + pkt.u.sig.v4_hashed_data_start,
+	       pkt.u.sig.info.v4_hashed_data_length);
 
-	if (!parse_signature_subpackets(&pkt.u.signature, region, pinfo))
+	if (!parse_sig_subpackets(&pkt.u.sig, region, pinfo))
 		return 0;
 
-	if (!limited_read(pkt.u.signature.hash2, 2, region, pinfo))
+	if (!limited_read(pkt.u.sig.hash2, 2, region, pinfo))
 		return 0;
 
-	switch (pkt.u.signature.info.key_algorithm) {
+	switch (pkt.u.sig.info.key_algorithm) {
 	case OPS_PKA_RSA:
-		if (!limited_read_mpi(&pkt.u.signature.info.signature.rsa.sig, region, pinfo))
+		if (!limited_read_mpi(&pkt.u.sig.info.sig.rsa.sig, region, pinfo))
 			return 0;
 		break;
 
 	case OPS_PKA_DSA:
-		if (!limited_read_mpi(&pkt.u.signature.info.signature.dsa.r, region, pinfo)) {
+		if (!limited_read_mpi(&pkt.u.sig.info.sig.dsa.r, region, pinfo)) {
 			/*
 			 * usually if this fails, it just means we've reached
 			 * the end of the keyring
@@ -2015,13 +2015,13 @@ parse_v4_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
 			}
 			return 0;
 		}
-		if (!limited_read_mpi(&pkt.u.signature.info.signature.dsa.s, region, pinfo))
+		if (!limited_read_mpi(&pkt.u.sig.info.sig.dsa.s, region, pinfo))
 			ERRP(&pinfo->cbinfo, pkt, "Error reading DSA s field in signature");
 		break;
 
 	case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-		if (!limited_read_mpi(&pkt.u.signature.info.signature.elgamal.r, region, pinfo)
-		    || !limited_read_mpi(&pkt.u.signature.info.signature.elgamal.s, region, pinfo))
+		if (!limited_read_mpi(&pkt.u.sig.info.sig.elgamal.r, region, pinfo)
+		    || !limited_read_mpi(&pkt.u.sig.info.sig.elgamal.s, region, pinfo))
 			return 0;
 		break;
 
@@ -2036,14 +2036,14 @@ parse_v4_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	case OPS_PKA_PRIVATE08:
 	case OPS_PKA_PRIVATE09:
 	case OPS_PKA_PRIVATE10:
-		if (!read_data(&pkt.u.signature.info.signature.unknown.data, region, pinfo))
+		if (!read_data(&pkt.u.sig.info.sig.unknown.data, region, pinfo))
 			return 0;
 		break;
 
 	default:
 		OPS_ERROR_1(&pinfo->errors, OPS_E_ALG_UNSUPPORTED_SIGNATURE_ALG,
 			    "Bad v4 signature key algorithm (%s)",
-			    __ops_show_pka(pkt.u.signature.info.key_algorithm));
+			    __ops_show_pka(pkt.u.sig.info.key_algorithm));
 		return 0;
 	}
 
@@ -2072,14 +2072,14 @@ parse_v4_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
  * \return		1 on success, 0 on error
  */
 static int 
-parse_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
+parse_sig(__ops_region_t * region, __ops_parse_info_t * pinfo)
 {
 	unsigned char   c[1] = "";
 	__ops_packet_t pkt;
 
 	if (region->length_read != 0) {
 		/* We should not have read anything so far */
-		(void) fprintf(stderr, "parse_signature: bad length\n");
+		(void) fprintf(stderr, "parse_sig: bad length\n");
 		return 0;
 	}
 
@@ -2089,9 +2089,9 @@ parse_signature(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		return 0;
 
 	if (c[0] == 2 || c[0] == 3)
-		return parse_v3_signature(region, pinfo);
+		return parse_v3_sig(region, pinfo);
 	else if (c[0] == 4)
-		return parse_v4_signature(region, pinfo);
+		return parse_v4_sig(region, pinfo);
 
 	OPS_ERROR_1(&pinfo->errors, OPS_E_PROTO_BAD_SIGNATURE_VRSN,
 		    "Bad signature version (%d)", c[0]);
@@ -2151,39 +2151,39 @@ parse_one_pass(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	unsigned char   c[1] = "";
 	__ops_packet_t pkt;
 
-	if (!limited_read(&pkt.u.one_pass_signature.version, 1, region, pinfo))
+	if (!limited_read(&pkt.u.one_pass_sig.version, 1, region, pinfo))
 		return 0;
-	if (pkt.u.one_pass_signature.version != 3) {
+	if (pkt.u.one_pass_sig.version != 3) {
 		OPS_ERROR_1(&pinfo->errors, OPS_E_PROTO_BAD_ONE_PASS_SIG_VRSN,
 			    "Bad one-pass signature version (%d)",
-			    pkt.u.one_pass_signature.version);
+			    pkt.u.one_pass_sig.version);
 		return 0;
 	}
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	pkt.u.one_pass_signature.sig_type = c[0];
+	pkt.u.one_pass_sig.sig_type = c[0];
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	pkt.u.one_pass_signature.hash_algorithm = c[0];
+	pkt.u.one_pass_sig.hash_algorithm = c[0];
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	pkt.u.one_pass_signature.key_algorithm = c[0];
+	pkt.u.one_pass_sig.key_algorithm = c[0];
 
-	if (!limited_read(pkt.u.one_pass_signature.keyid,
-			  sizeof(pkt.u.one_pass_signature.keyid), region, pinfo))
+	if (!limited_read(pkt.u.one_pass_sig.keyid,
+			  sizeof(pkt.u.one_pass_sig.keyid), region, pinfo))
 		return 0;
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	pkt.u.one_pass_signature.nested = !!c[0];
+	pkt.u.one_pass_sig.nested = !!c[0];
 
 	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_ONE_PASS_SIGNATURE, &pkt);
 
 	/* XXX: we should, perhaps, let the app choose whether to hash or not */
-	parse_hash_init(pinfo, pkt.u.one_pass_signature.hash_algorithm,
-			    pkt.u.one_pass_signature.keyid);
+	parse_hash_init(pinfo, pkt.u.one_pass_sig.hash_algorithm,
+			    pkt.u.one_pass_sig.keyid);
 
 	return 1;
 }
@@ -2221,7 +2221,7 @@ parse_hash_data(__ops_parse_info_t * pinfo, const void *data,
    \brief Parse a Literal Data packet
 */
 static int 
-parse_literal_data(__ops_region_t * region, __ops_parse_info_t * pinfo)
+parse_litdata(__ops_region_t * region, __ops_parse_info_t * pinfo)
 {
 	__ops_packet_t	 pkt;
 	__ops_memory_t		*mem;
@@ -2230,28 +2230,28 @@ parse_literal_data(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	if (!limited_read(c, 1, region, pinfo)) {
 		return 0;
 	}
-	pkt.u.literal_data_header.format = c[0];
+	pkt.u.litdata_header.format = c[0];
 
 	if (!limited_read(c, 1, region, pinfo)) {
 		return 0;
 	}
-	if (!limited_read((unsigned char *)pkt.u.literal_data_header.filename,
+	if (!limited_read((unsigned char *)pkt.u.litdata_header.filename,
 			(unsigned)c[0], region, pinfo)) {
 		return 0;
 	}
-	pkt.u.literal_data_header.filename[c[0]] = '\0';
+	pkt.u.litdata_header.filename[c[0]] = '\0';
 
-	if (!limited_read_time(&pkt.u.literal_data_header.modification_time,
+	if (!limited_read_time(&pkt.u.litdata_header.modification_time,
 			region, pinfo)) {
 		return 0;
 	}
 
 	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_LITERAL_DATA_HEADER, &pkt);
 
-	mem = pkt.u.literal_data_body.mem = __ops_memory_new();
-	__ops_memory_init(pkt.u.literal_data_body.mem,
+	mem = pkt.u.litdata_body.mem = __ops_memory_new();
+	__ops_memory_init(pkt.u.litdata_body.mem,
 			(unsigned)(region->length * 1.01) + 12);
-	pkt.u.literal_data_body.data = mem->buf;
+	pkt.u.litdata_body.data = mem->buf;
 
 	while (region->length_read < region->length) {
 		unsigned        readc = region->length - region->length_read;
@@ -2259,8 +2259,8 @@ parse_literal_data(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		if (!limited_read(mem->buf, readc, region, pinfo)) {
 			return 0;
 		}
-		pkt.u.literal_data_body.length = readc;
-		parse_hash_data(pinfo, pkt.u.literal_data_body.data,
+		pkt.u.litdata_body.length = readc;
+		parse_hash_data(pinfo, pkt.u.litdata_body.data,
 			region->length);
 		CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_LITERAL_DATA_BODY,
 			&pkt);
@@ -2274,14 +2274,14 @@ parse_literal_data(__ops_region_t * region, __ops_parse_info_t * pinfo)
 /**
  * \ingroup Core_Create
  *
- * __ops_secret_key_free() frees the memory associated with "key". Note that
+ * __ops_seckey_free() frees the memory associated with "key". Note that
  * the key itself is not freed.
  *
  * \param key
  */
 
 void 
-__ops_secret_key_free(__ops_secret_key_t * key)
+__ops_seckey_free(__ops_seckey_t * key)
 {
 	switch (key->pubkey.algorithm) {
 	case OPS_PKA_RSA:
@@ -2299,12 +2299,12 @@ __ops_secret_key_free(__ops_secret_key_t * key)
 
 	default:
 		(void) fprintf(stderr,
-			"__ops_secret_key_free: Unknown algorithm: %d (%s)\n",
+			"__ops_seckey_free: Unknown algorithm: %d (%s)\n",
 			key->pubkey.algorithm,
 			__ops_show_pka(key->pubkey.algorithm));
 	}
 
-	__ops_public_key_free(&key->pubkey);
+	__ops_pubkey_free(&key->pubkey);
 }
 
 static int 
@@ -2357,7 +2357,7 @@ consume_packet(__ops_region_t * region, __ops_parse_info_t * pinfo,
  * \brief Parse a secret key
  */
 static int 
-parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
+parse_seckey(__ops_region_t * region, __ops_parse_info_t * pinfo)
 {
 	__ops_packet_t	pkt;
 	__ops_region_t		encregion;
@@ -2373,78 +2373,78 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	int			ret = 1;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "\n---------\nparse_secret_key:\n");
+		fprintf(stderr, "\n---------\nparse_seckey:\n");
 		fprintf(stderr, "region length=%d, length_read=%d, remainder=%d\n", region->length, region->length_read, region->length - region->length_read);
 	}
 	(void) memset(&pkt, 0x0, sizeof(pkt));
-	if (!parse_public_key_data(&pkt.u.secret_key.pubkey, region, pinfo))
+	if (!parse_pubkey_data(&pkt.u.seckey.pubkey, region, pinfo))
 		return 0;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "parse_secret_key: public key parsed\n");
-		__ops_print_public_key(&pkt.u.secret_key.pubkey);
+		fprintf(stderr, "parse_seckey: public key parsed\n");
+		__ops_print_pubkey(&pkt.u.seckey.pubkey);
 	}
-	pinfo->reading_v3_secret = pkt.u.secret_key.pubkey.version != OPS_V4;
+	pinfo->reading_v3_secret = pkt.u.seckey.pubkey.version != OPS_V4;
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
-	pkt.u.secret_key.s2k_usage = c[0];
+	pkt.u.seckey.s2k_usage = c[0];
 #if 0
-	if (pkt.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED)
+	if (pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED)
 		checksum_length = 20;
 #endif
 
-	if (pkt.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED ||
-	    pkt.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
+	if (pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED ||
+	    pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
 		if (!limited_read(c, 1, region, pinfo)) {
 			return 0;
 		}
-		pkt.u.secret_key.algorithm = c[0];
+		pkt.u.seckey.algorithm = c[0];
 
 		if (!limited_read(c, 1, region, pinfo)) {
 			return 0;
 		}
-		pkt.u.secret_key.s2k_specifier = c[0];
+		pkt.u.seckey.s2k_specifier = c[0];
 
-		switch (pkt.u.secret_key.s2k_specifier) {
+		switch (pkt.u.seckey.s2k_specifier) {
 		case OPS_S2KS_SIMPLE:
 		case OPS_S2KS_SALTED:
 		case OPS_S2KS_ITERATED_AND_SALTED:
 			break;
 		default:
 			(void) fprintf(stderr,
-				"parse_secret_key: bad seckey\n");
+				"parse_seckey: bad seckey\n");
 			return 0;
 		}
 
 		if (!limited_read(c, 1, region, pinfo)) {
 			return 0;
 		}
-		pkt.u.secret_key.hash_algorithm = c[0];
+		pkt.u.seckey.hash_algorithm = c[0];
 
-		if (pkt.u.secret_key.s2k_specifier != OPS_S2KS_SIMPLE &&
-		    !limited_read(pkt.u.secret_key.salt, 8, region,
+		if (pkt.u.seckey.s2k_specifier != OPS_S2KS_SIMPLE &&
+		    !limited_read(pkt.u.seckey.salt, 8, region,
 		    		pinfo)) {
 			return 0;
 		}
-		if (pkt.u.secret_key.s2k_specifier ==
+		if (pkt.u.seckey.s2k_specifier ==
 					OPS_S2KS_ITERATED_AND_SALTED) {
 			if (!limited_read(c, 1, region, pinfo)) {
 				return 0;
 			}
-			pkt.u.secret_key.octet_count =
+			pkt.u.seckey.octet_count =
 				(16 + ((unsigned)c[0] & 15)) <<
 						(((unsigned)c[0] >> 4) + 6);
 		}
-	} else if (pkt.u.secret_key.s2k_usage != OPS_S2KU_NONE) {
+	} else if (pkt.u.seckey.s2k_usage != OPS_S2KU_NONE) {
 		/* this is V3 style, looks just like a V4 simple hash */
-		pkt.u.secret_key.algorithm = c[0];
-		pkt.u.secret_key.s2k_usage = OPS_S2KU_ENCRYPTED;
-		pkt.u.secret_key.s2k_specifier = OPS_S2KS_SIMPLE;
-		pkt.u.secret_key.hash_algorithm = OPS_HASH_MD5;
+		pkt.u.seckey.algorithm = c[0];
+		pkt.u.seckey.s2k_usage = OPS_S2KU_ENCRYPTED;
+		pkt.u.seckey.s2k_specifier = OPS_S2KS_SIMPLE;
+		pkt.u.seckey.hash_algorithm = OPS_HASH_MD5;
 	}
-	crypted = pkt.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED ||
-		pkt.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED;
+	crypted = pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED ||
+		pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED;
 
 	if (crypted) {
 		int             n;
@@ -2456,29 +2456,29 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		int             keysize;
 		int             hashsize;
 
-		blocksize = __ops_block_size(pkt.u.secret_key.algorithm);
+		blocksize = __ops_block_size(pkt.u.seckey.algorithm);
 		if (blocksize == 0 || blocksize > OPS_MAX_BLOCK_SIZE) {
 			(void) fprintf(stderr,
-				"parse_secret_key: bad blocksize\n");
+				"parse_seckey: bad blocksize\n");
 			return 0;
 		}
 
-		if (!limited_read(pkt.u.secret_key.iv, blocksize, region,
+		if (!limited_read(pkt.u.seckey.iv, blocksize, region,
 				pinfo)) {
 			return 0;
 		}
 		(void) memset(&seckey, 0x0, sizeof(seckey));
 		passphrase = NULL;
 		seckey.u.skey_passphrase.passphrase = &passphrase;
-		seckey.u.skey_passphrase.secret_key =
-				&pkt.u.secret_key;
+		seckey.u.skey_passphrase.seckey =
+				&pkt.u.seckey;
 		CALLBACK(&pinfo->cbinfo, OPS_PARSER_CMD_GET_SK_PASSPHRASE,
 				&seckey);
 		if (!passphrase) {
 			if (__ops_get_debug_level(__FILE__)) {
 				/* \todo make into proper error */
 				(void) fprintf(stderr,
-				"parse_secret_key: can't get passphrase\n");
+				"parse_seckey: can't get passphrase\n");
 			}
 			if (!consume_packet(region, pinfo, false)) {
 				return 0;
@@ -2489,17 +2489,17 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 
 			return 1;
 		}
-		keysize = __ops_key_size(pkt.u.secret_key.algorithm);
+		keysize = __ops_key_size(pkt.u.seckey.algorithm);
 		if (keysize == 0 || keysize > OPS_MAX_KEY_SIZE) {
 			(void) fprintf(stderr,
-				"parse_secret_key: bad keysize\n");
+				"parse_seckey: bad keysize\n");
 			return 0;
 		}
 
-		hashsize = __ops_hash_size(pkt.u.secret_key.hash_algorithm);
+		hashsize = __ops_hash_size(pkt.u.seckey.hash_algorithm);
 		if (hashsize == 0 || hashsize > OPS_MAX_HASH_SIZE) {
 			(void) fprintf(stderr,
-				"parse_secret_key: bad hashsize\n");
+				"parse_seckey: bad hashsize\n");
 			return 0;
 		}
 
@@ -2507,7 +2507,7 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 			int             i;
 
 			__ops_hash_any(&hashes[n],
-				pkt.u.secret_key.hash_algorithm);
+				pkt.u.seckey.hash_algorithm);
 			hashes[n].init(&hashes[n]);
 			/* preload hashes with zeroes... */
 			for (i = 0; i < n; ++i) {
@@ -2521,10 +2521,10 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		for (n = 0; n * hashsize < keysize; ++n) {
 			unsigned        i;
 
-			switch (pkt.u.secret_key.s2k_specifier) {
+			switch (pkt.u.seckey.s2k_specifier) {
 			case OPS_S2KS_SALTED:
 				hashes[n].add(&hashes[n],
-					pkt.u.secret_key.salt,
+					pkt.u.seckey.salt,
 					OPS_SALT_SIZE);
 				/* FALLTHROUGH */
 			case OPS_S2KS_SIMPLE:
@@ -2533,14 +2533,14 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 				break;
 
 			case OPS_S2KS_ITERATED_AND_SALTED:
-				for (i = 0; i < pkt.u.secret_key.octet_count; i += passlen + OPS_SALT_SIZE) {
+				for (i = 0; i < pkt.u.seckey.octet_count; i += passlen + OPS_SALT_SIZE) {
 					unsigned	j = passlen + OPS_SALT_SIZE;
 
-					if (i + j > pkt.u.secret_key.octet_count && i != 0) {
-						j = pkt.u.secret_key.octet_count - i;
+					if (i + j > pkt.u.seckey.octet_count && i != 0) {
+						j = pkt.u.seckey.octet_count - i;
 					}
 					hashes[n].add(&hashes[n],
-						pkt.u.secret_key.salt,
+						pkt.u.seckey.salt,
 						(unsigned)(j > OPS_SALT_SIZE) ?
 							OPS_SALT_SIZE : j);
 					if (j > OPS_SALT_SIZE) {
@@ -2559,7 +2559,7 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 			r = hashes[n].finish(&hashes[n], key + n * hashsize);
 			if (r != hashsize) {
 				(void) fprintf(stderr,
-					"parse_secret_key: bad r\n");
+					"parse_seckey: bad r\n");
 				return 0;
 			}
 		}
@@ -2567,12 +2567,12 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		(void) memset(passphrase, 0x0, passlen);
 		(void) free(passphrase);
 
-		__ops_crypt_any(&decrypt, pkt.u.secret_key.algorithm);
+		__ops_crypt_any(&decrypt, pkt.u.seckey.algorithm);
 		if (__ops_get_debug_level(__FILE__)) {
 			unsigned int    i = 0;
 			fprintf(stderr, "\nREADING:\niv=");
-			for (i = 0; i < __ops_block_size(pkt.u.secret_key.algorithm); i++) {
-				fprintf(stderr, "%02x ", pkt.u.secret_key.iv[i]);
+			for (i = 0; i < __ops_block_size(pkt.u.seckey.algorithm); i++) {
+				fprintf(stderr, "%02x ", pkt.u.seckey.iv[i]);
 			}
 			fprintf(stderr, "\n");
 			fprintf(stderr, "key=");
@@ -2581,7 +2581,7 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 			}
 			fprintf(stderr, "\n");
 		}
-		decrypt.set_iv(&decrypt, pkt.u.secret_key.iv);
+		decrypt.set_iv(&decrypt, pkt.u.seckey.iv);
 		decrypt.set_key(&decrypt, key);
 
 		/* now read encrypted data */
@@ -2595,30 +2595,30 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		 */
 		__ops_init_subregion(&encregion, NULL);
 		encregion.length = region->length - region->length_read;
-		if (pkt.u.secret_key.pubkey.version != OPS_V4) {
+		if (pkt.u.seckey.pubkey.version != OPS_V4) {
 			encregion.length -= 2;
 		}
 		saved_region = region;
 		region = &encregion;
 	}
-	if (pkt.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
+	if (pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
 		__ops_hash_sha1(&checkhash);
 		__ops_reader_push_hash(pinfo, &checkhash);
 	} else {
 		__ops_reader_push_sum16(pinfo);
 	}
 
-	switch (pkt.u.secret_key.pubkey.algorithm) {
+	switch (pkt.u.seckey.pubkey.algorithm) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		if (!limited_read_mpi(&pkt.u.secret_key.key.rsa.d, region,
+		if (!limited_read_mpi(&pkt.u.seckey.key.rsa.d, region,
 					pinfo) ||
-		    !limited_read_mpi(&pkt.u.secret_key.key.rsa.p, region,
+		    !limited_read_mpi(&pkt.u.seckey.key.rsa.p, region,
 		    			pinfo) ||
-		    !limited_read_mpi(&pkt.u.secret_key.key.rsa.q, region,
+		    !limited_read_mpi(&pkt.u.seckey.key.rsa.q, region,
 		    			pinfo) ||
-		    !limited_read_mpi(&pkt.u.secret_key.key.rsa.u, region,
+		    !limited_read_mpi(&pkt.u.seckey.key.rsa.u, region,
 		    			pinfo)) {
 			ret = 0;
 		}
@@ -2626,7 +2626,7 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 
 	case OPS_PKA_DSA:
 
-		if (!limited_read_mpi(&pkt.u.secret_key.key.dsa.x, region,
+		if (!limited_read_mpi(&pkt.u.seckey.key.dsa.x, region,
 				pinfo)) {
 			ret = 0;
 		}
@@ -2636,8 +2636,8 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 		OPS_ERROR_2(&pinfo->errors,
 			OPS_E_ALG_UNSUPPORTED_PUBLIC_KEY_ALG,
 			"Unsupported Public Key algorithm %d (%s)",
-			pkt.u.secret_key.pubkey.algorithm,
-			__ops_show_pka(pkt.u.secret_key.pubkey.algorithm));
+			pkt.u.seckey.pubkey.algorithm,
+			__ops_show_pka(pkt.u.seckey.pubkey.algorithm));
 		ret = 0;
 	}
 
@@ -2646,24 +2646,24 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	}
 	pinfo->reading_v3_secret = false;
 
-	if (pkt.u.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
+	if (pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
 		unsigned char   hash[20];
 
 		__ops_reader_pop_hash(pinfo);
 		checkhash.finish(&checkhash, hash);
 
 		if (crypted &&
-		    pkt.u.secret_key.pubkey.version != OPS_V4) {
+		    pkt.u.seckey.pubkey.version != OPS_V4) {
 			__ops_reader_pop_decrypt(pinfo);
 			region = saved_region;
 		}
 		if (ret) {
-			if (!limited_read(pkt.u.secret_key.checkhash,
+			if (!limited_read(pkt.u.seckey.checkhash,
 				20, region, pinfo)) {
 				return 0;
 			}
 
-			if (memcmp(hash, pkt.u.secret_key.checkhash, 20)) {
+			if (memcmp(hash, pkt.u.seckey.checkhash, 20)) {
 				ERRP(&pinfo->cbinfo, pkt,
 					"Hash mismatch in secret key");
 			}
@@ -2673,25 +2673,25 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 
 		sum = __ops_reader_pop_sum16(pinfo);
 		if (crypted &&
-		    pkt.u.secret_key.pubkey.version != OPS_V4) {
+		    pkt.u.seckey.pubkey.version != OPS_V4) {
 			__ops_reader_pop_decrypt(pinfo);
 			region = saved_region;
 		}
 		if (ret) {
-			if (!limited_read_scalar(&pkt.u.secret_key.checksum, 2, region,
+			if (!limited_read_scalar(&pkt.u.seckey.checksum, 2, region,
 						 pinfo))
 				return 0;
 
-			if (sum != pkt.u.secret_key.checksum)
+			if (sum != pkt.u.seckey.checksum)
 				ERRP(&pinfo->cbinfo, pkt, "Checksum mismatch in secret key");
 		}
 	}
 
-	if (crypted && pkt.u.secret_key.pubkey.version == OPS_V4) {
+	if (crypted && pkt.u.seckey.pubkey.version == OPS_V4) {
 		__ops_reader_pop_decrypt(pinfo);
 	}
 	if (ret && region->length_read != region->length) {
-		(void) fprintf(stderr, "parse_secret_key: bad length\n");
+		(void) fprintf(stderr, "parse_seckey: bad length\n");
 		return 0;
 	}
 
@@ -2701,7 +2701,7 @@ parse_secret_key(__ops_region_t * region, __ops_parse_info_t * pinfo)
 	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_SECRET_KEY, &pkt);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "--- end of parse_secret_key\n\n");
+		fprintf(stderr, "--- end of parse_seckey\n\n");
 	}
 	return 1;
 }
@@ -2714,7 +2714,7 @@ static int
 parse_pk_session_key(__ops_region_t * region,
 		     __ops_parse_info_t * pinfo)
 {
-	const __ops_secret_key_t	*secret;
+	const __ops_seckey_t	*secret;
 	__ops_packet_t		 sesskey;
 	__ops_packet_t		 pkt;
 	unsigned char			*iv;
@@ -2781,8 +2781,8 @@ parse_pk_session_key(__ops_region_t * region,
 
 	(void) memset(&sesskey, 0x0, sizeof(sesskey));
 	secret = NULL;
-	sesskey.u.get_secret_key.secret_key = &secret;
-	sesskey.u.get_secret_key.pk_session_key = &pkt.u.pk_session_key;
+	sesskey.u.get_seckey.seckey = &secret;
+	sesskey.u.get_seckey.pk_session_key = &pkt.u.pk_session_key;
 
 	CALLBACK(&pinfo->cbinfo, OPS_PARSER_CMD_GET_SECRET_KEY, &sesskey);
 
@@ -3059,7 +3059,7 @@ __ops_parse_packet(__ops_parse_info_t * pinfo, unsigned long *pktlen)
 	}
 	pkt.u.ptag.new_format = !!(*ptag & OPS_PTAG_NEW_FORMAT);
 	if (pkt.u.ptag.new_format) {
-		pkt.u.ptag.content_tag =
+		pkt.u.ptag.type =
 			*ptag & OPS_PTAG_NF_CONTENT_TAG_MASK;
 		pkt.u.ptag.length_type = 0;
 		if (!read_new_length(&pkt.u.ptag.length, pinfo)) {
@@ -3069,7 +3069,7 @@ __ops_parse_packet(__ops_parse_info_t * pinfo, unsigned long *pktlen)
 		bool   rb;
 
 		rb = false;
-		pkt.u.ptag.content_tag = ((unsigned)*ptag &
+		pkt.u.ptag.type = ((unsigned)*ptag &
 				OPS_PTAG_OF_CONTENT_TAG_MASK)
 			>> OPS_PTAG_OF_CONTENT_TAG_SHIFT;
 		pkt.u.ptag.length_type =
@@ -3104,17 +3104,17 @@ __ops_parse_packet(__ops_parse_info_t * pinfo, unsigned long *pktlen)
 	region.length = pkt.u.ptag.length;
 	region.indeterminate = indeterminate;
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "__ops_parse_packet: content_tag %d\n",
-			       pkt.u.ptag.content_tag);
+		(void) fprintf(stderr, "__ops_parse_packet: type %d\n",
+			       pkt.u.ptag.type);
 	}
-	switch (pkt.u.ptag.content_tag) {
+	switch (pkt.u.ptag.type) {
 	case OPS_PTAG_CT_SIGNATURE:
-		ret = parse_signature(&region, pinfo);
+		ret = parse_sig(&region, pinfo);
 		break;
 
 	case OPS_PTAG_CT_PUBLIC_KEY:
 	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		ret = parse_public_key(pkt.u.ptag.content_tag, &region,
+		ret = parse_pubkey(pkt.u.ptag.type, &region,
 				pinfo);
 		break;
 
@@ -3135,7 +3135,7 @@ __ops_parse_packet(__ops_parse_info_t * pinfo, unsigned long *pktlen)
 		break;
 
 	case OPS_PTAG_CT_LITERAL_DATA:
-		ret = parse_literal_data(&region, pinfo);
+		ret = parse_litdata(&region, pinfo);
 		break;
 
 	case OPS_PTAG_CT_USER_ATTRIBUTE:
@@ -3143,11 +3143,11 @@ __ops_parse_packet(__ops_parse_info_t * pinfo, unsigned long *pktlen)
 		break;
 
 	case OPS_PTAG_CT_SECRET_KEY:
-		ret = parse_secret_key(&region, pinfo);
+		ret = parse_seckey(&region, pinfo);
 		break;
 
 	case OPS_PTAG_CT_SECRET_SUBKEY:
-		ret = parse_secret_key(&region, pinfo);
+		ret = parse_seckey(&region, pinfo);
 		break;
 
 	case OPS_PTAG_CT_PK_SESSION_KEY:
@@ -3169,7 +3169,7 @@ __ops_parse_packet(__ops_parse_info_t * pinfo, unsigned long *pktlen)
 	default:
 		OPS_ERROR_1(&pinfo->errors, OPS_E_P_UNKNOWN_TAG,
 			    "Unknown content tag 0x%x",
-			    pkt.u.ptag.content_tag);
+			    pkt.u.ptag.type);
 		ret = 0;
 	}
 
@@ -3326,7 +3326,7 @@ __ops_parse_info_new(void)
 void 
 __ops_parse_info_delete(__ops_parse_info_t * pinfo)
 {
-	__ops_parse_cb_info_t *cbinfo, *next;
+	__ops_callback_data_t *cbinfo, *next;
 
 	for (cbinfo = pinfo->cbinfo.next; cbinfo; cbinfo = next) {
 		next = cbinfo->next;
@@ -3374,7 +3374,7 @@ __ops_parse_cb_set(__ops_parse_info_t * pinfo, __ops_parse_cb_t * cb, void *arg)
 void 
 __ops_parse_cb_push(__ops_parse_info_t * pinfo, __ops_parse_cb_t * cb, void *arg)
 {
-	__ops_parse_cb_info_t *cbinfo = calloc(1, sizeof(*cbinfo));
+	__ops_callback_data_t *cbinfo = calloc(1, sizeof(*cbinfo));
 
 	*cbinfo = pinfo->cbinfo;
 	pinfo->cbinfo.next = cbinfo;
@@ -3386,7 +3386,7 @@ __ops_parse_cb_push(__ops_parse_info_t * pinfo, __ops_parse_cb_t * cb, void *arg
 \brief Returns callback's arg
 */
 void           *
-__ops_parse_cb_get_arg(__ops_parse_cb_info_t * cbinfo)
+__ops_parse_cb_get_arg(__ops_callback_data_t * cbinfo)
 {
 	return cbinfo->arg;
 }
@@ -3396,7 +3396,7 @@ __ops_parse_cb_get_arg(__ops_parse_cb_info_t * cbinfo)
 \brief Returns callback's errors
 */
 void           *
-__ops_parse_cb_get_errors(__ops_parse_cb_info_t * cbinfo)
+__ops_parse_cb_get_errors(__ops_callback_data_t * cbinfo)
 {
 	return cbinfo->errors;
 }
@@ -3408,7 +3408,7 @@ __ops_parse_cb_get_errors(__ops_parse_cb_info_t * cbinfo)
 */
 __ops_parse_cb_return_t 
 __ops_parse_cb(const __ops_packet_t * pkt,
-	     __ops_parse_cb_info_t * cbinfo)
+	     __ops_callback_data_t * cbinfo)
 {
 	if (cbinfo->cb)
 		return cbinfo->cb(pkt, cbinfo);
@@ -3423,7 +3423,7 @@ __ops_parse_cb(const __ops_packet_t * pkt,
 */
 __ops_parse_cb_return_t 
 __ops_parse_stacked_cb(const __ops_packet_t * pkt,
-		     __ops_parse_cb_info_t * cbinfo)
+		     __ops_callback_data_t * cbinfo)
 {
 	return __ops_parse_cb(pkt, cbinfo->next);
 }

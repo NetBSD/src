@@ -42,27 +42,27 @@
 
 typedef struct __ops_validation_t {
 	unsigned int		 validc;
-	__ops_signature_info_t	*valid_sigs;
+	__ops_sig_info_t	*valid_sigs;
 	unsigned int		 invalidc;
-	__ops_signature_info_t	*invalid_sigs;
+	__ops_sig_info_t	*invalid_sigs;
 	unsigned int		 unknownc;
-	__ops_signature_info_t	*unknown_sigs;
+	__ops_sig_info_t	*unknown_sigs;
 } __ops_validation_t;
 
 void            __ops_validate_result_free(__ops_validation_t *);
 
 bool 
-__ops_validate_key_signatures(__ops_validation_t *,
+__ops_validate_key_sigs(__ops_validation_t *,
 			    const __ops_keydata_t *,
 			    const __ops_keyring_t *,
-			    __ops_parse_cb_return_t cb(const __ops_packet_t *, __ops_parse_cb_info_t *));
+			    __ops_parse_cb_return_t cb(const __ops_packet_t *, __ops_callback_data_t *));
 
 bool
-__ops_validate_all_signatures(__ops_validation_t *,
+__ops_validate_all_sigs(__ops_validation_t *,
 			    const __ops_keyring_t *,
-			    __ops_parse_cb_return_t cb(const __ops_packet_t *, __ops_parse_cb_info_t *));
+			    __ops_parse_cb_return_t cb(const __ops_packet_t *, __ops_callback_data_t *));
 
-bool   __ops_check_signature(const unsigned char *, unsigned, const __ops_signature_t *, const __ops_public_key_t *);
+bool   __ops_check_sig(const unsigned char *, unsigned, const __ops_sig_t *, const __ops_pubkey_t *);
 
 const char     *__ops_get_info(const char *type);
 

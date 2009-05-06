@@ -280,7 +280,7 @@ typedef struct {
 typedef struct {
 	unsigned        new_format;	/* !< Whether this packet tag is new
 					 * (true) or old format (false) */
-	unsigned        content_tag;	/* !< content_tag value - See
+	unsigned        type;	/* !< content_tag value - See
 					 * #__ops_content_tag_t for meanings */
 	__ops_ptag_of_lt_t length_type;	/* !< Length type (#__ops_ptag_of_lt_t)
 					 * - only if this packet tag is old
@@ -327,7 +327,7 @@ typedef enum {
 	OPS_PKA_PRIVATE08 = 108,/* !< Private/Experimental Algorithm */
 	OPS_PKA_PRIVATE09 = 109,/* !< Private/Experimental Algorithm */
 	OPS_PKA_PRIVATE10 = 110	/* !< Private/Experimental Algorithm */
-} __ops_public_key_algorithm_t;
+} __ops_pubkey_algorithm_t;
 
 /** Structure to hold one DSA public key parameters.
  *
@@ -339,7 +339,7 @@ typedef struct {
 	BIGNUM         *g;	/* !< DSA group generator g */
 	BIGNUM         *y;	/* !< DSA public key value y (= g^x mod p
 				 * with x being the secret) */
-}               __ops_dsa_public_key_t;
+}               __ops_dsa_pubkey_t;
 
 /** Structure to hold an RSA public key.
  *
@@ -348,7 +348,7 @@ typedef struct {
 typedef struct {
 	BIGNUM         *n;	/* !< RSA public modulus n */
 	BIGNUM         *e;	/* !< RSA public encryption exponent e */
-}               __ops_rsa_public_key_t;
+}               __ops_rsa_pubkey_t;
 
 /** Structure to hold an ElGamal public key parameters.
  *
@@ -359,14 +359,14 @@ typedef struct {
 	BIGNUM         *g;	/* !< ElGamal group generator g */
 	BIGNUM         *y;	/* !< ElGamal public key value y (= g^x mod p
 				 * with x being the secret) */
-}               __ops_elgamal_public_key_t;
+}               __ops_elgamal_pubkey_t;
 
 /** Union to hold public key parameters of any algorithm */
 typedef union {
-	__ops_dsa_public_key_t dsa;	/* !< A DSA public key */
-	__ops_rsa_public_key_t rsa;	/* !< An RSA public key */
-	__ops_elgamal_public_key_t elgamal;	/* !< An ElGamal public key */
-}               __ops_public_key_union_t;
+	__ops_dsa_pubkey_t dsa;	/* !< A DSA public key */
+	__ops_rsa_pubkey_t rsa;	/* !< An RSA public key */
+	__ops_elgamal_pubkey_t elgamal;	/* !< An ElGamal public key */
+}               __ops_pubkey_union_t;
 
 /** Version.
  * OpenPGP has two different protocol versions: version 3 and version 4.
@@ -382,7 +382,7 @@ typedef enum {
 /** Structure to hold a pgp public key */
 typedef struct {
 	__ops_version_t   version;/* !< version of the key (v3, v4...) */
-	time_t          creation_time;	/* !< when the key was created.  Note
+	time_t          birthtime;	/* !< when the key was created.  Note
 					 * that interpretation varies with
 					 * key version. */
 	unsigned        days_valid;	/* !< validity period of the key in
@@ -390,10 +390,10 @@ typedef struct {
 					 * has a special meaning indicating
 					 * this key does not expire.  Only
 					 * used with v3 keys. */
-	__ops_public_key_algorithm_t algorithm;	/* !< Public Key Algorithm
+	__ops_pubkey_algorithm_t algorithm;	/* !< Public Key Algorithm
 						 * type */
-	__ops_public_key_union_t key;	/* !< Public Key Parameters */
-}               __ops_public_key_t;
+	__ops_pubkey_union_t key;	/* !< Public Key Parameters */
+}               __ops_pubkey_t;
 
 /** Structure to hold data for one RSA secret key
  */
@@ -402,18 +402,18 @@ typedef struct {
 	BIGNUM         *p;
 	BIGNUM         *q;
 	BIGNUM         *u;
-}               __ops_rsa_secret_key_t;
+}               __ops_rsa_seckey_t;
 
-/** __ops_dsa_secret_key_t */
+/** __ops_dsa_seckey_t */
 typedef struct {
 	BIGNUM         *x;
-}               __ops_dsa_secret_key_t;
+}               __ops_dsa_seckey_t;
 
-/** __ops_secret_key_union_t */
+/** __ops_seckey_union_t */
 typedef struct {
-	__ops_rsa_secret_key_t rsa;
-	__ops_dsa_secret_key_t dsa;
-}               __ops_secret_key_union_t;
+	__ops_rsa_seckey_t rsa;
+	__ops_dsa_seckey_t dsa;
+}               __ops_seckey_union_t;
 
 /** s2k_usage_t
  */
@@ -491,21 +491,21 @@ bool   __ops_is_hash_alg_supported(const __ops_hash_algorithm_t *);
 /* Max hash size */
 #define OPS_MAX_HASH_SIZE	64
 
-/** __ops_secret_key_t
+/** __ops_seckey_t
  */
 typedef struct {
-	__ops_public_key_t pubkey;
-	__ops_s2k_usage_t s2k_usage;
-	__ops_s2k_specifier_t s2k_specifier;
-	__ops_symmetric_algorithm_t algorithm;
-	__ops_hash_algorithm_t hash_algorithm;
-	unsigned char   salt[OPS_SALT_SIZE];
-	unsigned        octet_count;
-	unsigned char   iv[OPS_MAX_BLOCK_SIZE];
-	__ops_secret_key_union_t key;
-	unsigned        checksum;
-	unsigned char   checkhash[OPS_CHECKHASH_SIZE];
-}               __ops_secret_key_t;
+	__ops_pubkey_t			pubkey;
+	__ops_s2k_usage_t		s2k_usage;
+	__ops_s2k_specifier_t		s2k_specifier;
+	__ops_symmetric_algorithm_t	algorithm;
+	__ops_hash_algorithm_t		hash_algorithm;
+	unsigned char			salt[OPS_SALT_SIZE];
+	unsigned			octet_count;
+	unsigned char			iv[OPS_MAX_BLOCK_SIZE];
+	__ops_seckey_union_t		key;
+	unsigned			checksum;
+	unsigned char			checkhash[OPS_CHECKHASH_SIZE];
+}               __ops_seckey_t;
 
 /** Structure to hold one trust packet's data */
 
@@ -524,12 +524,15 @@ typedef struct {
 }               __ops_user_attribute_t;
 
 /** Signature Type.
- * OpenPGP defines different signature types that allow giving different meanings to signatures.  Signature types
- * include 0x10 for generitc User ID certifications (used when Ben signs Weasel's key), Subkey binding signatures,
- * document signatures, key revocations, etc.
+ * OpenPGP defines different signature types that allow giving
+ * different meanings to signatures.  Signature types include 0x10 for
+ * generitc User ID certifications (used when Ben signs Weasel's key),
+ * Subkey binding signatures, document signatures, key revocations,
+ * etc.
  *
- * Different types are used in different places, and most make only sense in their intended location (for instance a
- * subkey binding has no place on a UserID).
+ * Different types are used in different places, and most make only
+ * sense in their intended location (for instance a subkey binding has
+ * no place on a UserID).
  *
  * \see RFC4880 5.2.1
  */
@@ -563,32 +566,32 @@ typedef enum {
 /** Struct to hold parameters of an RSA signature */
 typedef struct {
 	BIGNUM         *sig;	/* !< the signature value (m^d % n) */
-}               __ops_rsa_signature_t;
+}               __ops_rsa_sig_t;
 
 /** Struct to hold parameters of a DSA signature */
 typedef struct {
 	BIGNUM         *r;	/* !< DSA value r */
 	BIGNUM         *s;	/* !< DSA value s */
-}               __ops_dsa_signature_t;
+}               __ops_dsa_sig_t;
 
 /** __ops_elgamal_signature_t */
 typedef struct {
 	BIGNUM         *r;
 	BIGNUM         *s;
-}               __ops_elgamal_signature_t;
+}               __ops_elgamal_sig_t;
 
 /** Struct to hold data for a private/experimental signature */
 typedef struct {
 	__ops_data_t      data;
-}               __ops_unknown_signature_t;
+}               __ops_unknown_sig_t;
 
 /** Union to hold signature parameters of any algorithm */
 typedef union {
-	__ops_rsa_signature_t rsa;/* !< An RSA Signature */
-	__ops_dsa_signature_t dsa;/* !< A DSA Signature */
-	__ops_elgamal_signature_t elgamal;	/* deprecated */
-	__ops_unknown_signature_t unknown;	/* private or experimental */
-}               __ops_signature_union_t;
+	__ops_rsa_sig_t rsa;/* !< An RSA Signature */
+	__ops_dsa_sig_t dsa;/* !< A DSA Signature */
+	__ops_elgamal_sig_t elgamal;	/* deprecated */
+	__ops_unknown_sig_t unknown;	/* private or experimental */
+}               __ops_sig_union_t;
 
 #define OPS_KEY_ID_SIZE		8
 
@@ -600,23 +603,23 @@ typedef union {
 typedef struct {
 	__ops_version_t   version;/* !< signature version number */
 	__ops_sig_type_t  type;	/* !< signature type value */
-	time_t          creation_time;	/* !< creation time of the signature */
+	time_t          birthtime;	/* !< creation time of the signature */
 	unsigned char   signer_id[OPS_KEY_ID_SIZE];	/* !< Eight-octet key ID
 							 * of signer */
-	__ops_public_key_algorithm_t key_algorithm;	/* !< public key
+	__ops_pubkey_algorithm_t key_algorithm;	/* !< public key
 							 * algorithm number */
 	__ops_hash_algorithm_t hash_algorithm;	/* !< hashing algorithm
 						 * number */
-	__ops_signature_union_t signature;	/* !< signature parameters */
+	__ops_sig_union_t sig;	/* !< signature parameters */
 	size_t          v4_hashed_data_length;
 	unsigned char  *v4_hashed_data;
-	unsigned   creation_time_set:1;
+	unsigned   birthtime_set:1;
 	unsigned   signer_id_set:1;
-}               __ops_signature_info_t;
+}               __ops_sig_info_t;
 
 /** Struct used when parsing a signature */
 typedef struct {
-	__ops_signature_info_t info;	/* !< The signature information */
+	__ops_sig_info_t info;	/* !< The signature information */
 	/* The following fields are only used while parsing the signature */
 	unsigned char   hash2[2];	/* !< high 2 bytes of hashed value -
 					 * for quick test */
@@ -624,7 +627,7 @@ typedef struct {
 						 * is set */
 	__ops_hash_t     *hash;	/* !< if set, the hash filled in for the data
 				 * so far */
-}               __ops_signature_t;
+}               __ops_sig_t;
 
 /** The raw bytes of a signature subpacket */
 
@@ -709,15 +712,15 @@ typedef struct {
 
 /** Signature Subpacket : Signature Target */
 typedef struct {
-	__ops_public_key_algorithm_t pka_alg;
+	__ops_pubkey_algorithm_t pka_alg;
 	__ops_hash_algorithm_t hash_alg;
 	__ops_data_t      hash;
-}               __ops_ss_signature_target_t;
+}               __ops_ss_sig_target_t;
 
 /** Signature Subpacket : Embedded Signature */
 typedef struct {
 	__ops_data_t      sig;
-}               __ops_ss_embedded_signature_t;
+}               __ops_ss_embedded_sig_t;
 
 /** __ops_packet_t */
 
@@ -743,15 +746,15 @@ typedef struct {
 	__ops_compression_type_t type;
 }               __ops_compressed_t;
 
-/** __ops_one_pass_signature_t */
+/** __ops_one_pass_sig_t */
 typedef struct {
 	unsigned char   version;
 	__ops_sig_type_t  sig_type;
 	__ops_hash_algorithm_t hash_algorithm;
-	__ops_public_key_algorithm_t key_algorithm;
+	__ops_pubkey_algorithm_t key_algorithm;
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
 	bool   nested;
-}               __ops_one_pass_signature_t;
+}               __ops_one_pass_sig_t;
 
 /** Signature Subpacket : Primary User ID */
 typedef struct {
@@ -786,28 +789,28 @@ typedef struct {
 	char           *text;
 }               __ops_ss_revocation_reason_t;
 
-/** literal_data_type_t */
+/** litdata_type_t */
 typedef enum {
 	OPS_LDT_BINARY = 'b',
 	OPS_LDT_TEXT = 't',
 	OPS_LDT_UTF8 = 'u',
 	OPS_LDT_LOCAL = 'l',
 	OPS_LDT_LOCAL2 = '1'
-} __ops_literal_data_type_t;
+} __ops_litdata_type_t;
 
-/** __ops_literal_data_header_t */
+/** __ops_litdata_header_t */
 typedef struct {
-	__ops_literal_data_type_t format;
+	__ops_litdata_type_t format;
 	char            filename[256];
 	time_t          modification_time;
-}               __ops_literal_data_header_t;
+}               __ops_litdata_header_t;
 
-/** __ops_literal_data_body_t */
+/** __ops_litdata_body_t */
 typedef struct {
 	unsigned        length;
 	unsigned char   *data;
 	void		*mem;		/* __ops_memory_t pointer */
-}               __ops_literal_data_body_t;
+}               __ops_litdata_body_t;
 
 /** __ops_mdc_t */
 typedef struct {
@@ -892,20 +895,20 @@ typedef union {
 typedef struct {
 	__ops_pk_session_key_version_t version;
 	unsigned char   key_id[OPS_KEY_ID_SIZE];
-	__ops_public_key_algorithm_t algorithm;
+	__ops_pubkey_algorithm_t algorithm;
 	__ops_pk_session_key_parameters_t parameters;
 	__ops_symmetric_algorithm_t symmetric_algorithm;
 	unsigned char   key[OPS_MAX_KEY_SIZE];
 	unsigned short  checksum;
 }               __ops_pk_session_key_t;
 
-/** __ops_secret_key_passphrase_t */
+/** __ops_seckey_passphrase_t */
 typedef struct {
-	const __ops_secret_key_t *secret_key;
+	const __ops_seckey_t *seckey;
 	char          **passphrase;	/* point somewhere that gets filled
 					 * in to work around constness of
 					 * content */
-}               __ops_secret_key_passphrase_t;
+}               __ops_seckey_passphrase_t;
 
 typedef enum {
 	OPS_SE_IP_V1 = 1
@@ -928,22 +931,22 @@ typedef struct {
 	unsigned char   data[8192];	/* \todo parameterise this! */
 }               __ops_se_data_body_t;
 
-/** __ops_get_secret_key_t */
+/** __ops_get_seckey_t */
 typedef struct {
-	const __ops_secret_key_t **secret_key;
+	const __ops_seckey_t **seckey;
 	const __ops_pk_session_key_t *pk_session_key;
-}               __ops_get_secret_key_t;
+}               __ops_get_seckey_t;
 
 /** __ops_parser_union_content_t */
 typedef union {
 	__ops_parser_error_t error;
 	__ops_parser_errcode_t errcode;
 	__ops_ptag_t      ptag;
-	__ops_public_key_t pubkey;
+	__ops_pubkey_t pubkey;
 	__ops_trust_t     trust;
 	__ops_user_id_t   user_id;
 	__ops_user_attribute_t user_attribute;
-	__ops_signature_t signature;
+	__ops_sig_t sig;
 	__ops_ss_raw_t    ss_raw;
 	__ops_ss_trust_t  ss_trust;
 	__ops_ss_revocable_t ss_revocable;
@@ -952,7 +955,7 @@ typedef union {
 	__ops_ss_notation_data_t ss_notation_data;
 	__ops_subpacket_t    packet;
 	__ops_compressed_t compressed;
-	__ops_one_pass_signature_t one_pass_signature;
+	__ops_one_pass_sig_t one_pass_sig;
 	__ops_ss_preferred_ska_t ss_preferred_ska;
 	__ops_ss_preferred_hash_t ss_preferred_hash;
 	__ops_ss_preferred_compression_t ss_preferred_compression;
@@ -965,14 +968,14 @@ typedef union {
 	__ops_ss_revocation_key_t ss_revocation_key;
 	__ops_ss_userdefined_t ss_userdefined;
 	__ops_ss_unknown_t ss_unknown;
-	__ops_literal_data_header_t literal_data_header;
-	__ops_literal_data_body_t literal_data_body;
+	__ops_litdata_header_t litdata_header;
+	__ops_litdata_body_t litdata_body;
 	__ops_mdc_t       mdc;
 	__ops_ss_features_t ss_features;
-	__ops_ss_signature_target_t ss_signature_target;
-	__ops_ss_embedded_signature_t ss_embedded_signature;
+	__ops_ss_sig_target_t ss_sig_target;
+	__ops_ss_embedded_sig_t ss_embedded_sig;
 	__ops_ss_revocation_reason_t ss_revocation_reason;
-	__ops_secret_key_t secret_key;
+	__ops_seckey_t seckey;
 	__ops_user_id_t   ss_signers_user_id;
 	__ops_armour_header_t armour_header;
 	__ops_armour_trailer_t armour_trailer;
@@ -981,17 +984,17 @@ typedef union {
 	__ops_signed_cleartext_trailer_t signed_cleartext_trailer;
 	__ops_unarmoured_text_t unarmoured_text;
 	__ops_pk_session_key_t pk_session_key;
-	__ops_secret_key_passphrase_t skey_passphrase;
+	__ops_seckey_passphrase_t skey_passphrase;
 	__ops_se_ip_data_header_t se_ip_data_header;
 	__ops_se_ip_data_body_t se_ip_data_body;
 	__ops_se_data_body_t se_data_body;
-	__ops_get_secret_key_t get_secret_key;
+	__ops_get_seckey_t get_seckey;
 }               __ops_parser_content_union_t;
 
 /** __ops_packet_t */
 struct __ops_packet_t {
 	__ops_content_tag_t		tag;		/* type of contents */
-	unsigned char			critical;	/* for signature subpackets */
+	unsigned char			critical;	/* for sig subpackets */
 	__ops_parser_content_union_t	u;		/* union for contents */
 };
 
@@ -1004,12 +1007,12 @@ typedef struct {
 void            __ops_init(void);
 void            __ops_finish(void);
 void		__ops_keyid(unsigned char *, const size_t, const int,
-				const __ops_public_key_t *);
-void            __ops_fingerprint(__ops_fingerprint_t *, const __ops_public_key_t *);
-void            __ops_public_key_free(__ops_public_key_t *);
+				const __ops_pubkey_t *);
+void            __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *);
+void            __ops_pubkey_free(__ops_pubkey_t *);
 void            __ops_user_id_free(__ops_user_id_t *);
 void            __ops_user_attribute_free(__ops_user_attribute_t *);
-void            __ops_signature_free(__ops_signature_t *);
+void            __ops_sig_free(__ops_sig_t *);
 void            __ops_trust_free(__ops_trust_t *);
 void            __ops_ss_preferred_ska_free(__ops_ss_preferred_ska_t *);
 void            __ops_ss_preferred_hash_free(__ops_ss_preferred_hash_t *);
@@ -1024,12 +1027,12 @@ void            __ops_ss_regexp_free(__ops_ss_regexp_t *);
 void            __ops_ss_userdefined_free(__ops_ss_userdefined_t *);
 void            __ops_ss_reserved_free(__ops_ss_unknown_t *);
 void            __ops_ss_revocation_reason_free(__ops_ss_revocation_reason_t *);
-void            __ops_ss_signature_target_free(__ops_ss_signature_target_t *);
-void            __ops_ss_embedded_signature_free(__ops_ss_embedded_signature_t *);
+void            __ops_ss_sig_target_free(__ops_ss_sig_target_t *);
+void            __ops_ss_embedded_sig_free(__ops_ss_embedded_sig_t *);
 
 void            __ops_subpacket_free(__ops_subpacket_t *);
 void            __ops_parser_content_free(__ops_packet_t *);
-void            __ops_secret_key_free(__ops_secret_key_t *);
+void            __ops_seckey_free(__ops_seckey_t *);
 void            __ops_pk_session_key_free(__ops_pk_session_key_t *);
 
 int             __ops_print_packet(const __ops_packet_t *);

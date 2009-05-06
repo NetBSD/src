@@ -61,14 +61,14 @@ static void     showtime_short(time_t);
 */
 
 void
-__ops_print_public_keydata(const __ops_keydata_t * key)
+__ops_print_pubkeydata(const __ops_keydata_t * key)
 {
 	unsigned int    i;
 
 	printf("pub %s ", __ops_show_pka(key->key.pkey.algorithm));
 	hexdump(key->key_id, OPS_KEY_ID_SIZE, "");
 	printf(" ");
-	print_time_short(key->key.pkey.creation_time);
+	print_time_short(key->key.pkey.birthtime);
 	printf("\nKey fingerprint: ");
 	hexdump(key->fingerprint.fingerprint, 20, " ");
 	printf("\n");
@@ -84,11 +84,11 @@ __ops_print_public_keydata(const __ops_keydata_t * key)
 \param pkey
 */
 void
-__ops_print_public_key(const __ops_public_key_t * pkey)
+__ops_print_pubkey(const __ops_pubkey_t * pkey)
 {
 	printf("------- PUBLIC KEY ------\n");
 	print_unsigned_int("Version", (unsigned)pkey->version);
-	print_time("Creation Time", pkey->creation_time);
+	print_time("Creation Time", pkey->birthtime);
 	if (pkey->version == OPS_V3)
 		print_unsigned_int("Days Valid", pkey->days_valid);
 
@@ -119,7 +119,7 @@ __ops_print_public_key(const __ops_public_key_t * pkey)
 
 	default:
 		(void) fprintf(stderr,
-			"__ops_print_public_key: Unusual algorithm\n");
+			"__ops_print_pubkey: Unusual algorithm\n");
 	}
 
 	printf("------- end of PUBLIC KEY ------\n");
@@ -134,7 +134,7 @@ __ops_print_public_key(const __ops_public_key_t * pkey)
 */
 
 void
-__ops_print_secret_keydata(const __ops_keydata_t * key)
+__ops_print_seckeydata(const __ops_keydata_t * key)
 {
 	printf("sec ");
 	__ops_show_pka(key->key.pkey.algorithm);
@@ -143,7 +143,7 @@ __ops_print_secret_keydata(const __ops_keydata_t * key)
 	hexdump(key->key_id, OPS_KEY_ID_SIZE, "");
 	printf(" ");
 
-	print_time_short(key->key.pkey.creation_time);
+	print_time_short(key->key.pkey.birthtime);
 	printf(" ");
 
 	if (key->nuids == 1) {
@@ -162,13 +162,13 @@ __ops_print_secret_keydata(const __ops_keydata_t * key)
 
 /*
 void
-__ops_print_secret_key_verbose(const __ops_secret_key_t* skey)
+__ops_print_seckey_verbose(const __ops_seckey_t* skey)
     {
     if(key->type == OPS_PTAG_CT_SECRET_KEY)
 	print_tagname("SECRET_KEY");
     else
 	print_tagname("ENCRYPTED_SECRET_KEY");
-    __ops_print_secret_key(key->type,skey);
+    __ops_print_seckey(key->type,skey);
 	}
 */
 
@@ -178,15 +178,15 @@ __ops_print_secret_key_verbose(const __ops_secret_key_t* skey)
 \param skey
 */
 static void
-__ops_print_secret_key_verbose(const __ops_content_tag_t type,
-				const __ops_secret_key_t * skey)
+__ops_print_seckey_verbose(const __ops_content_tag_t type,
+				const __ops_seckey_t * skey)
 {
 	printf("------- SECRET KEY or ENCRYPTED SECRET KEY ------\n");
 	if (type == OPS_PTAG_CT_SECRET_KEY)
 		print_tagname("SECRET_KEY");
 	else
 		print_tagname("ENCRYPTED_SECRET_KEY");
-	/* __ops_print_public_key(key); */
+	/* __ops_print_pubkey(key); */
 	printf("S2K Usage: %d\n", skey->s2k_usage);
 	if (skey->s2k_usage != OPS_S2KU_NONE) {
 		printf("S2K Specifier: %d\n", skey->s2k_specifier);
@@ -218,7 +218,7 @@ __ops_print_secret_key_verbose(const __ops_content_tag_t type,
 
 	default:
 		(void) fprintf(stderr,
-			"__ops_print_secret_key_verbose: unusual algorithm\n");
+			"__ops_print_seckey_verbose: unusual algorithm\n");
 	}
 
 	if (skey->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED)
@@ -577,24 +577,24 @@ end_subpacket(void)
 \param contents
 */
 int 
-__ops_print_packet(const __ops_packet_t * contents)
+__ops_print_packet(const __ops_packet_t * pkt)
 {
-	const __ops_parser_content_union_t *content = &contents->u;
+	const __ops_parser_content_union_t *content = &pkt->u;
 	__ops_text_t     *text;
 	const char     *str;
 	static bool unarmoured;
 
-	if (unarmoured && contents->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
+	if (unarmoured && pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
 		unarmoured = false;
 		puts("UNARMOURED TEXT ends");
 	}
-	if (contents->tag == OPS_PARSER_PTAG) {
-		printf("=> OPS_PARSER_PTAG: %s\n", __ops_show_packet_tag(content->ptag.content_tag));
+	if (pkt->tag == OPS_PARSER_PTAG) {
+		printf("=> OPS_PARSER_PTAG: %s\n", __ops_show_packet_tag(content->ptag.type));
 	} else {
-		printf("=> %s\n", __ops_show_packet_tag(contents->tag));
+		printf("=> %s\n", __ops_show_packet_tag(pkt->tag));
 	}
 
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PARSER_ERROR:
 		printf("parse error: %s\n", content->error.error);
 		break;
@@ -609,18 +609,18 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PARSER_PTAG:
-		if (content->ptag.content_tag == OPS_PTAG_CT_PUBLIC_KEY) {
+		if (content->ptag.type == OPS_PTAG_CT_PUBLIC_KEY) {
 			indent = 0;
 			printf("\n*** NEXT KEY ***\n");
 		}
 		printf("\n");
 		print_indent();
-		printf("==== ptag new_format=%d content_tag=%d length_type=%d"
+		printf("==== ptag new_format=%d type=%d length_type=%d"
 		       " length=0x%x (%d) position=0x%x (%d)\n", content->ptag.new_format,
-		       content->ptag.content_tag, content->ptag.length_type,
+		       content->ptag.type, content->ptag.length_type,
 		       content->ptag.length, content->ptag.length,
 		       content->ptag.position, content->ptag.position);
-		print_tagname(__ops_show_packet_tag(content->ptag.content_tag));
+		print_tagname(__ops_show_packet_tag(content->ptag.type));
 		break;
 
 	case OPS_PTAG_CT_SE_DATA_HEADER:
@@ -644,11 +644,11 @@ __ops_print_packet(const __ops_packet_t * contents)
 
 	case OPS_PTAG_CT_PUBLIC_KEY:
 	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		if (contents->tag == OPS_PTAG_CT_PUBLIC_KEY)
+		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
 			print_tagname("PUBLIC KEY");
 		else
 			print_tagname("PUBLIC SUBKEY");
-		__ops_print_public_key(&content->pubkey);
+		__ops_print_pubkey(&content->pubkey);
 		break;
 
 	case OPS_PTAG_CT_TRUST:
@@ -666,46 +666,46 @@ __ops_print_packet(const __ops_packet_t * contents)
 		print_tagname("SIGNATURE");
 		print_indent();
 		print_unsigned_int("Signature Version",
-				   (unsigned)content->signature.info.version);
-		if (content->signature.info.creation_time_set)
+				   (unsigned)content->sig.info.version);
+		if (content->sig.info.birthtime_set)
 			print_time("Signature Creation Time",
-				   content->signature.info.creation_time);
+				   content->sig.info.birthtime);
 
 		print_string_and_value("Signature Type",
-			    __ops_show_sig_type(content->signature.info.type),
-				       content->signature.info.type);
+			    __ops_show_sig_type(content->sig.info.type),
+				       content->sig.info.type);
 
-		if (content->signature.info.signer_id_set)
+		if (content->sig.info.signer_id_set)
 			print_hexdump_data("Signer ID",
-					   content->signature.info.signer_id,
-				  sizeof(content->signature.info.signer_id));
+					   content->sig.info.signer_id,
+				  sizeof(content->sig.info.signer_id));
 
 		print_string_and_value("Public Key Algorithm",
-			__ops_show_pka(content->signature.info.key_algorithm),
-				     content->signature.info.key_algorithm);
+			__ops_show_pka(content->sig.info.key_algorithm),
+				     content->sig.info.key_algorithm);
 		print_string_and_value("Hash Algorithm",
-				       __ops_show_hash_algorithm(content->signature.info.hash_algorithm),
-				    content->signature.info.hash_algorithm);
+				       __ops_show_hash_algorithm(content->sig.info.hash_algorithm),
+				    content->sig.info.hash_algorithm);
 
-		print_unsigned_int("Hashed data len", content->signature.info.v4_hashed_data_length);
+		print_unsigned_int("Hashed data len", content->sig.info.v4_hashed_data_length);
 
 		print_indent();
-		print_hexdump_data("hash2", &content->signature.hash2[0], 2);
+		print_hexdump_data("hash2", &content->sig.hash2[0], 2);
 
-		switch (content->signature.info.key_algorithm) {
+		switch (content->sig.info.key_algorithm) {
 		case OPS_PKA_RSA:
 		case OPS_PKA_RSA_SIGN_ONLY:
-			print_bn("sig", content->signature.info.signature.rsa.sig);
+			print_bn("sig", content->sig.info.sig.rsa.sig);
 			break;
 
 		case OPS_PKA_DSA:
-			print_bn("r", content->signature.info.signature.dsa.r);
-			print_bn("s", content->signature.info.signature.dsa.s);
+			print_bn("r", content->sig.info.sig.dsa.r);
+			print_bn("s", content->sig.info.sig.dsa.s);
 			break;
 
 		case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-			print_bn("r", content->signature.info.signature.elgamal.r);
-			print_bn("s", content->signature.info.signature.elgamal.s);
+			print_bn("r", content->sig.info.sig.elgamal.r);
+			print_bn("s", content->sig.info.sig.elgamal.s);
 			break;
 
 		default:
@@ -714,7 +714,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 			return 0;
 		}
 
-		if (content->signature.hash)
+		if (content->sig.hash)
 			printf("data hash is set\n");
 
 		break;
@@ -729,22 +729,22 @@ __ops_print_packet(const __ops_packet_t * contents)
 		print_tagname("ONE PASS SIGNATURE");
 
 		print_unsigned_int("Version",
-			(unsigned)content->one_pass_signature.version);
+			(unsigned)content->one_pass_sig.version);
 		print_string_and_value("Signature Type",
-		    __ops_show_sig_type(content->one_pass_signature.sig_type),
-				       content->one_pass_signature.sig_type);
+		    __ops_show_sig_type(content->one_pass_sig.sig_type),
+				       content->one_pass_sig.sig_type);
 		print_string_and_value("Hash Algorithm",
-				       __ops_show_hash_algorithm(content->one_pass_signature.hash_algorithm),
-				content->one_pass_signature.hash_algorithm);
+				       __ops_show_hash_algorithm(content->one_pass_sig.hash_algorithm),
+				content->one_pass_sig.hash_algorithm);
 		print_string_and_value("Public Key Algorithm",
-		    __ops_show_pka(content->one_pass_signature.key_algorithm),
-				 content->one_pass_signature.key_algorithm);
+		    __ops_show_pka(content->one_pass_sig.key_algorithm),
+				 content->one_pass_sig.key_algorithm);
 		print_hexdump_data("Signer ID",
-				   content->one_pass_signature.keyid,
-				   sizeof(content->one_pass_signature.keyid));
+				   content->one_pass_sig.keyid,
+				   sizeof(content->one_pass_sig.keyid));
 
 		print_unsigned_int("Nested",
-				   content->one_pass_signature.nested);
+				   content->one_pass_sig.nested);
 		break;
 
 	case OPS_PTAG_CT_USER_ATTRIBUTE:
@@ -755,11 +755,11 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_RAW_SS:
-		if (contents->critical) {
+		if (pkt->critical) {
 			(void) fprintf(stderr, "contents are critical\n");
 			return 0;
 		}
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_unsigned_int("Raw Signature Subpacket: tag",
 			(unsigned)(content->ss_raw.tag -
 		   	OPS_PTAG_SIGNATURE_SUBPACKET_BASE));
@@ -769,25 +769,25 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_CREATION_TIME:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_time("Signature Creation Time", content->ss_time.time);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_EXPIRATION_TIME:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_duration("Signature Expiration Time", content->ss_time.time);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_KEY_EXPIRATION_TIME:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_duration("Key Expiration Time", content->ss_time.time);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_TRUST:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_string("Trust Signature", "");
 		print_unsigned_int("Level",
 				   (unsigned)content->ss_trust.level);
@@ -797,13 +797,13 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_REVOCABLE:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_boolean("Revocable", content->ss_revocable.revocable);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_REVOCATION_KEY:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		/* not yet tested */
 		printf("  revocation key: class=0x%x",
 		       content->ss_revocation_key.class);
@@ -818,7 +818,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Issuer Key Id",
 			      &content->ss_issuer_key_id.key_id[0],
 			      sizeof(content->ss_issuer_key_id.key_id));
@@ -826,7 +826,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_SKA:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Preferred Symmetric Algorithms",
 			   &content->ss_preferred_ska.data);
 
@@ -838,14 +838,14 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_boolean("Primary User ID",
 			      content->ss_primary_user_id.primary_user_id);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_HASH:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Preferred Hash Algorithms",
 			   &content->ss_preferred_hash.data);
 
@@ -856,7 +856,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_COMPRESSION:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Preferred Compression Algorithms",
 			   &content->ss_preferred_compression.data);
 
@@ -867,7 +867,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_KEY_FLAGS:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Key Flags", &content->ss_key_flags.data);
 
 		text = __ops_showall_ss_key_flags(content->ss_key_flags);
@@ -878,7 +878,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_KEY_SERVER_PREFS:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Key Server Preferences",
 			   &content->ss_key_server_prefs.data);
 
@@ -890,7 +890,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_FEATURES:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Features",
 			   &content->ss_features.data);
 
@@ -902,7 +902,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_NOTATION_DATA:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_indent();
 		printf("Notation Data:\n");
 
@@ -926,7 +926,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_REGEXP:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Regular Expression",
 			      (unsigned char *) content->ss_regexp.text,
 			      strlen(content->ss_regexp.text));
@@ -936,27 +936,27 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_POLICY_URI:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_string("Policy URL",
 			     content->ss_policy_url.text);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_SIGNERS_USER_ID:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_utf8_string("Signer's User ID", content->ss_signers_user_id.user_id);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_KEY_SERVER:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_string("Preferred Key Server",
 			     content->ss_preferred_key_server.text);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		end_subpacket();/* \todo print out contents? */
 		break;
 
@@ -971,7 +971,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 	case OPS_PTAG_SS_USERDEFINED08:
 	case OPS_PTAG_SS_USERDEFINED09:
 	case OPS_PTAG_SS_USERDEFINED10:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Internal or user-defined",
 			      content->ss_userdefined.data.contents,
 			      content->ss_userdefined.data.len);
@@ -979,7 +979,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_RESERVED:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Reserved",
 			      content->ss_userdefined.data.contents,
 			      content->ss_userdefined.data.len);
@@ -987,7 +987,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		break;
 
 	case OPS_PTAG_SS_REVOCATION_REASON:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Revocation Reason",
 			      &content->ss_revocation_reason.code,
 			      1);
@@ -1000,20 +1000,20 @@ __ops_print_packet(const __ops_packet_t * contents)
 	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
 		print_tagname("LITERAL DATA HEADER");
 		printf("  literal data header format=%c filename='%s'\n",
-		       content->literal_data_header.format,
-		       content->literal_data_header.filename);
+		       content->litdata_header.format,
+		       content->litdata_header.filename);
 		showtime("    modification time",
-			 content->literal_data_header.modification_time);
+			 content->litdata_header.modification_time);
 		printf("\n");
 		break;
 
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
 		print_tagname("LITERAL DATA BODY");
 		printf("  literal data body length=%d\n",
-		       content->literal_data_body.length);
+		       content->litdata_body.length);
 		printf("    data=");
-		print_escaped(content->literal_data_body.data,
-			      content->literal_data_body.length);
+		print_escaped(content->litdata_body.data,
+			      content->litdata_body.length);
 		printf("\n");
 		break;
 
@@ -1021,46 +1021,46 @@ __ops_print_packet(const __ops_packet_t * contents)
 		print_tagname("SIGNATURE");
 		print_indent();
 		print_unsigned_int("Signature Version",
-				   (unsigned)content->signature.info.version);
-		if (content->signature.info.creation_time_set)
+				   (unsigned)content->sig.info.version);
+		if (content->sig.info.birthtime_set)
 			print_time("Signature Creation Time",
-				content->signature.info.creation_time);
+				content->sig.info.birthtime);
 
 		print_string_and_value("Signature Type",
-			    __ops_show_sig_type(content->signature.info.type),
-				       content->signature.info.type);
+			    __ops_show_sig_type(content->sig.info.type),
+				       content->sig.info.type);
 
-		if (content->signature.info.signer_id_set)
+		if (content->sig.info.signer_id_set)
 			print_hexdump_data("Signer ID",
-					   content->signature.info.signer_id,
-				  sizeof(content->signature.info.signer_id));
+					   content->sig.info.signer_id,
+				  sizeof(content->sig.info.signer_id));
 
 		print_string_and_value("Public Key Algorithm",
-			__ops_show_pka(content->signature.info.key_algorithm),
-				     content->signature.info.key_algorithm);
+			__ops_show_pka(content->sig.info.key_algorithm),
+				     content->sig.info.key_algorithm);
 		print_string_and_value("Hash Algorithm",
-				       __ops_show_hash_algorithm(content->signature.info.hash_algorithm),
-				    content->signature.info.hash_algorithm);
+				       __ops_show_hash_algorithm(content->sig.info.hash_algorithm),
+				    content->sig.info.hash_algorithm);
 
 		break;
 
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:
 		print_indent();
-		print_hexdump_data("hash2", &content->signature.hash2[0], 2);
+		print_hexdump_data("hash2", &content->sig.hash2[0], 2);
 
-		switch (content->signature.info.key_algorithm) {
+		switch (content->sig.info.key_algorithm) {
 		case OPS_PKA_RSA:
-			print_bn("sig", content->signature.info.signature.rsa.sig);
+			print_bn("sig", content->sig.info.sig.rsa.sig);
 			break;
 
 		case OPS_PKA_DSA:
-			print_bn("r", content->signature.info.signature.dsa.r);
-			print_bn("s", content->signature.info.signature.dsa.s);
+			print_bn("r", content->sig.info.sig.dsa.r);
+			print_bn("s", content->sig.info.sig.dsa.s);
 			break;
 
 		case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-			print_bn("r", content->signature.info.signature.elgamal.r);
-			print_bn("s", content->signature.info.signature.elgamal.s);
+			print_bn("r", content->sig.info.sig.elgamal.r);
+			print_bn("s", content->sig.info.sig.elgamal.s);
 			break;
 
 		case OPS_PKA_PRIVATE00:
@@ -1075,7 +1075,7 @@ __ops_print_packet(const __ops_packet_t * contents)
 		case OPS_PKA_PRIVATE09:
 		case OPS_PKA_PRIVATE10:
 			print_data("Private/Experimental",
-			   &content->signature.info.signature.unknown.data);
+			   &content->sig.info.sig.unknown.data);
 			break;
 
 		default:
@@ -1091,12 +1091,12 @@ __ops_print_packet(const __ops_packet_t * contents)
 
 	case OPS_PTAG_CT_SECRET_KEY:
 		print_tagname("OPS_PTAG_CT_SECRET_KEY");
-		__ops_print_secret_key_verbose(contents->tag, &content->secret_key);
+		__ops_print_seckey_verbose(pkt->tag, &content->seckey);
 		break;
 
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
 		print_tagname("OPS_PTAG_CT_ENCRYPTED_SECRET_KEY");
-		__ops_print_secret_key_verbose(contents->tag, &content->secret_key);
+		__ops_print_seckey_verbose(pkt->tag, &content->seckey);
 		break;
 
 	case OPS_PTAG_CT_ARMOUR_HEADER:
@@ -1140,35 +1140,35 @@ __ops_print_packet(const __ops_packet_t * contents)
 
 	case OPS_PTAG_CT_PK_SESSION_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY:
-		__ops_print_pk_session_key(contents->tag, &content->pk_session_key);
+		__ops_print_pk_session_key(pkt->tag, &content->pk_session_key);
 		break;
 
 	case OPS_PARSER_CMD_GET_SECRET_KEY:
 		__ops_print_pk_session_key(OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY,
-				    content->get_secret_key.pk_session_key);
+				    content->get_seckey.pk_session_key);
 		break;
 
 	default:
 		print_tagname("UNKNOWN PACKET TYPE");
-		fprintf(stderr, "__ops_print_packet: unknown tag=%d (0x%x)\n", contents->tag,
-			contents->tag);
+		fprintf(stderr, "__ops_print_packet: unknown tag=%d (0x%x)\n", pkt->tag,
+			pkt->tag);
 		exit(1);
 	}
 	return 1;
 }
 
 static __ops_parse_cb_return_t 
-cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
+cb_list_packets(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 {
 	OPS_USED(cbinfo);
 
-	__ops_print_packet(contents);
+	__ops_print_packet(pkt);
 #ifdef XXX
-	if (unarmoured && contents->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
+	if (unarmoured && pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
 		unarmoured = false;
 		puts("UNARMOURED TEXT ends");
 	}
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PARSER_ERROR:
 		printf("parse error: %s\n", content->error.error);
 		break;
@@ -1183,18 +1183,18 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PARSER_PTAG:
-		if (content->ptag.content_tag == OPS_PTAG_CT_PUBLIC_KEY) {
+		if (content->ptag.type == OPS_PTAG_CT_PUBLIC_KEY) {
 			indent = 0;
 			printf("\n*** NEXT KEY ***\n");
 		}
 		printf("\n");
 		print_indent();
-		printf("==== ptag new_format=%d content_tag=%d length_type=%d"
+		printf("==== ptag new_format=%d type=%d length_type=%d"
 		       " length=0x%x (%d) position=0x%x (%d)\n", content->ptag.new_format,
-		       content->ptag.content_tag, content->ptag.length_type,
+		       content->ptag.type, content->ptag.length_type,
 		       content->ptag.length, content->ptag.length,
 		       content->ptag.position, content->ptag.position);
-		print_tagname(__ops_show_packet_tag(content->ptag.content_tag));
+		print_tagname(__ops_show_packet_tag(content->ptag.type));
 		break;
 
 	case OPS_PTAG_CT_SE_DATA_HEADER:
@@ -1218,12 +1218,12 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 
 	case OPS_PTAG_CT_PUBLIC_KEY:
 	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		if (contents->tag == OPS_PTAG_CT_PUBLIC_KEY)
+		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
 			print_tagname("PUBLIC KEY");
 		else
 			print_tagname("PUBLIC SUBKEY");
 
-		__ops_print_public_key(&content->pubkey);
+		__ops_print_pubkey(&content->pubkey);
 		break;
 
 	case OPS_PTAG_CT_TRUST:
@@ -1241,45 +1241,45 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		print_tagname("SIGNATURE");
 		print_indent();
 		print_unsigned_int("Signature Version",
-				   content->signature.info.version);
-		if (content->signature.info.creation_time_set)
+				   content->sig.info.version);
+		if (content->sig.info.birthtime_set)
 			print_time("Signature Creation Time",
-				   content->signature.info.creation_time);
+				   content->sig.info.birthtime);
 
 		print_string_and_value("Signature Type",
-			    __ops_show_sig_type(content->signature.info.type),
-				       content->signature.info.type);
+			    __ops_show_sig_type(content->sig.info.type),
+				       content->sig.info.type);
 
-		if (content->signature.info.signer_id_set)
+		if (content->sig.info.signer_id_set)
 			print_hexdump_data("Signer ID",
-					   content->signature.info.signer_id,
-				  sizeof(content->signature.info.signer_id));
+					   content->sig.info.signer_id,
+				  sizeof(content->sig.info.signer_id));
 
 		print_string_and_value("Public Key Algorithm",
-			__ops_show_pka(content->signature.info.key_algorithm),
-				     content->signature.info.key_algorithm);
+			__ops_show_pka(content->sig.info.key_algorithm),
+				     content->sig.info.key_algorithm);
 		print_string_and_value("Hash Algorithm",
-				       __ops_show_hash_algorithm(content->signature.info.hash_algorithm),
-				    content->signature.info.hash_algorithm);
-		print_unsigned_int("Hashed data len", content->signature.info.v4_hashed_data_length);
+				       __ops_show_hash_algorithm(content->sig.info.hash_algorithm),
+				    content->sig.info.hash_algorithm);
+		print_unsigned_int("Hashed data len", content->sig.info.v4_hashed_data_length);
 
 		print_indent();
-		print_hexdump_data("hash2", &content->signature.hash2[0], 2);
+		print_hexdump_data("hash2", &content->sig.hash2[0], 2);
 
-		switch (content->signature.info.key_algorithm) {
+		switch (content->sig.info.key_algorithm) {
 		case OPS_PKA_RSA:
 		case OPS_PKA_RSA_SIGN_ONLY:
-			print_bn("sig", content->signature.info.signature.rsa.sig);
+			print_bn("sig", content->sig.info.sig.rsa.sig);
 			break;
 
 		case OPS_PKA_DSA:
-			print_bn("r", content->signature.info.signature.dsa.r);
-			print_bn("s", content->signature.info.signature.dsa.s);
+			print_bn("r", content->sig.info.sig.dsa.r);
+			print_bn("s", content->sig.info.sig.dsa.s);
 			break;
 
 		case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-			print_bn("r", content->signature.info.signature.elgamal.r);
-			print_bn("s", content->signature.info.signature.elgamal.s);
+			print_bn("r", content->sig.info.sig.elgamal.r);
+			print_bn("s", content->sig.info.sig.elgamal.s);
 			break;
 
 		default:
@@ -1288,7 +1288,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 			return;
 		}
 
-		if (content->signature.hash) {
+		if (content->sig.hash) {
 			printf("data hash is set\n");
 		}
 		break;
@@ -1301,22 +1301,22 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 	case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
 		print_tagname("ONE PASS SIGNATURE");
 
-		print_unsigned_int("Version", content->one_pass_signature.version);
+		print_unsigned_int("Version", content->one_pass_sig.version);
 		print_string_and_value("Signature Type",
-		    __ops_show_sig_type(content->one_pass_signature.sig_type),
-				       content->one_pass_signature.sig_type);
+		    __ops_show_sig_type(content->one_pass_sig.sig_type),
+				       content->one_pass_sig.sig_type);
 		print_string_and_value("Hash Algorithm",
-				       __ops_show_hash_algorithm(content->one_pass_signature.hash_algorithm),
-				content->one_pass_signature.hash_algorithm);
+				       __ops_show_hash_algorithm(content->one_pass_sig.hash_algorithm),
+				content->one_pass_sig.hash_algorithm);
 		print_string_and_value("Public Key Algorithm",
-		    __ops_show_pka(content->one_pass_signature.key_algorithm),
-				 content->one_pass_signature.key_algorithm);
+		    __ops_show_pka(content->one_pass_sig.key_algorithm),
+				 content->one_pass_sig.key_algorithm);
 		print_hexdump_data("Signer ID",
-				   content->one_pass_signature.keyid,
-				   sizeof(content->one_pass_signature.keyid));
+				   content->one_pass_sig.keyid,
+				   sizeof(content->one_pass_sig.keyid));
 
 		print_unsigned_int("Nested",
-				   content->one_pass_signature.nested);
+				   content->one_pass_sig.nested);
 		break;
 
 	case OPS_PTAG_CT_USER_ATTRIBUTE:
@@ -1327,12 +1327,12 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_RAW_SS:
-		if (contents->critical) {
+		if (pkt->critical) {
 			(void) fprintf(stderr,
 				"PTAG_RAW_SS contents are critical\n");
 			return;
 		}
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_unsigned_int("Raw Signature Subpacket: tag",
 		   content->ss_raw.tag - OPS_PTAG_SIGNATURE_SUBPACKET_BASE);
 		print_hexdump("Raw Data",
@@ -1341,25 +1341,25 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_CREATION_TIME:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_time("Signature Creation Time", content->ss_time.time);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_EXPIRATION_TIME:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_duration("Signature Expiration Time", content->ss_time.time);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_KEY_EXPIRATION_TIME:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_duration("Key Expiration Time", content->ss_time.time);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_TRUST:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_string("Trust Signature", "");
 		print_unsigned_int("Level",
 				   content->ss_trust.level);
@@ -1369,13 +1369,13 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_REVOCABLE:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_boolean("Revocable", content->ss_revocable.revocable);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_REVOCATION_KEY:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		/* not yet tested */
 		printf("  revocation key: class=0x%x",
 		       content->ss_revocation_key.class);
@@ -1390,7 +1390,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Issuer Key Id",
 			      &content->ss_issuer_key_id.key_id[0],
 			      sizeof(content->ss_issuer_key_id.key_id));
@@ -1398,7 +1398,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_SKA:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Preferred Symmetric Algorithms",
 			   &content->ss_preferred_ska.data);
 
@@ -1410,14 +1410,14 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_boolean("Primary User ID",
 			      content->ss_primary_user_id.primary_user_id);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_HASH:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Preferred Hash Algorithms",
 			   &content->ss_preferred_hash.data);
 
@@ -1428,7 +1428,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_COMPRESSION:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Preferred Compression Algorithms",
 			   &content->ss_preferred_compression.data);
 
@@ -1439,7 +1439,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_KEY_FLAGS:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Key Flags", &content->ss_key_flags.data);
 
 		text = __ops_showall_ss_key_flags(content->ss_key_flags);
@@ -1450,7 +1450,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_KEY_SERVER_PREFS:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Key Server Preferences",
 			   &content->ss_key_server_prefs.data);
 
@@ -1462,7 +1462,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_FEATURES:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_data("Features",
 			   &content->ss_features.data);
 
@@ -1474,7 +1474,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_NOTATION_DATA:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_indent();
 		printf("Notation Data:\n");
 
@@ -1498,7 +1498,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_REGEXP:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Regular Expression",
 			      (unsigned char *) content->ss_regexp.text,
 			      strlen(content->ss_regexp.text));
@@ -1508,20 +1508,20 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_POLICY_URL:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_string("Policy URL",
 			     content->ss_policy_url.text);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_SIGNERS_USER_ID:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_utf8_string("Signer's User ID", content->ss_signers_user_id.user_id);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_KEY_SERVER:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_string("Preferred Key Server",
 			     content->ss_preferred_key_server.text);
 		end_subpacket();
@@ -1538,7 +1538,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 	case OPS_PTAG_SS_USERDEFINED08:
 	case OPS_PTAG_SS_USERDEFINED09:
 	case OPS_PTAG_SS_USERDEFINED10:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Internal or user-defined",
 			      content->ss_userdefined.data.contents,
 			      content->ss_userdefined.data.len);
@@ -1546,7 +1546,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_RESERVED:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Reserved",
 			      content->ss_userdefined.data.contents,
 			      content->ss_userdefined.data.len);
@@ -1554,7 +1554,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		break;
 
 	case OPS_PTAG_SS_REVOCATION_REASON:
-		start_subpacket(contents->tag);
+		start_subpacket(pkt->tag);
 		print_hexdump("Revocation Reason",
 			      &content->ss_revocation_reason.code,
 			      1);
@@ -1567,20 +1567,20 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
 		print_tagname("LITERAL DATA HEADER");
 		printf("  literal data header format=%c filename='%s'\n",
-		       content->literal_data_header.format,
-		       content->literal_data_header.filename);
+		       content->litdata_header.format,
+		       content->litdata_header.filename);
 		print_time("    modification time",
-			   content->literal_data_header.modification_time);
+			   content->litdata_header.modification_time);
 		printf("\n");
 		break;
 
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
 		print_tagname("LITERAL DATA BODY");
 		printf("  literal data body length=%d\n",
-		       content->literal_data_body.length);
+		       content->litdata_body.length);
 		printf("    data=");
-		print_escaped(content->literal_data_body.data,
-			      content->literal_data_body.length);
+		print_escaped(content->litdata_body.data,
+			      content->litdata_body.length);
 		printf("\n");
 		break;
 
@@ -1588,45 +1588,45 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		print_tagname("SIGNATURE");
 		print_indent();
 		print_unsigned_int("Signature Version",
-				   content->signature.info.version);
-		if (content->signature.info.creation_time_set)
-			print_time("Signature Creation Time", content->signature.info.creation_time);
+				   content->sig.info.version);
+		if (content->sig.info.birthtime_set)
+			print_time("Signature Creation Time", content->sig.info.birthtime);
 
 		print_string_and_value("Signature Type",
-			    __ops_show_sig_type(content->signature.info.type),
-				       content->signature.info.type);
+			    __ops_show_sig_type(content->sig.info.type),
+				       content->sig.info.type);
 
-		if (content->signature.info.signer_id_set)
+		if (content->sig.info.signer_id_set)
 			print_hexdump_data("Signer ID",
-					   content->signature.info.signer_id,
-				  sizeof(content->signature.info.signer_id));
+					   content->sig.info.signer_id,
+				  sizeof(content->sig.info.signer_id));
 
 		print_string_and_value("Public Key Algorithm",
-			__ops_show_pka(content->signature.info.key_algorithm),
-				     content->signature.info.key_algorithm);
+			__ops_show_pka(content->sig.info.key_algorithm),
+				     content->sig.info.key_algorithm);
 		print_string_and_value("Hash Algorithm",
-				       __ops_show_hash_algorithm(content->signature.info.hash_algorithm),
-				    content->signature.info.hash_algorithm);
+				       __ops_show_hash_algorithm(content->sig.info.hash_algorithm),
+				    content->sig.info.hash_algorithm);
 
 		break;
 
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:
 		print_indent();
-		print_hexdump_data("hash2", &content->signature.hash2[0], 2);
+		print_hexdump_data("hash2", &content->sig.hash2[0], 2);
 
-		switch (content->signature.info.key_algorithm) {
+		switch (content->sig.info.key_algorithm) {
 		case OPS_PKA_RSA:
-			print_bn("sig", content->signature.info.signature.rsa.sig);
+			print_bn("sig", content->sig.info.sig.rsa.sig);
 			break;
 
 		case OPS_PKA_DSA:
-			print_bn("r", content->signature.info.signature.dsa.r);
-			print_bn("s", content->signature.info.signature.dsa.s);
+			print_bn("r", content->sig.info.sig.dsa.r);
+			print_bn("s", content->sig.info.sig.dsa.s);
 			break;
 
 		case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-			print_bn("r", content->signature.info.signature.elgamal.r);
-			print_bn("s", content->signature.info.signature.elgamal.s);
+			print_bn("r", content->sig.info.sig.elgamal.r);
+			print_bn("s", content->sig.info.sig.elgamal.s);
 			break;
 
 		case OPS_PKA_PRIVATE00:
@@ -1641,7 +1641,7 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 		case OPS_PKA_PRIVATE09:
 		case OPS_PKA_PRIVATE10:
 			print_data("Private/Experimental",
-			   &content->signature.info.signature.unknown.data);
+			   &content->sig.info.sig.unknown.data);
 			break;
 
 		default:
@@ -1653,13 +1653,13 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
 		if (cbinfo->cryptinfo.cb_get_passphrase) {
-			return cbinfo->cryptinfo.cb_get_passphrase(contents, cbinfo);
+			return cbinfo->cryptinfo.cb_get_passphrase(pkt, cbinfo);
 		}
 		break;
 
 	case OPS_PTAG_CT_SECRET_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
-		__ops_print_secret_key_verbose(contents->tag, &content->secret_key);
+		__ops_print_seckey_verbose(pkt->tag, &content->seckey);
 		break;
 
 	case OPS_PTAG_CT_ARMOUR_HEADER:
@@ -1703,18 +1703,18 @@ cb_list_packets(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
 
 	case OPS_PTAG_CT_PK_SESSION_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY:
-		__ops_print_pk_session_key(contents->tag, &content->pk_session_key);
+		__ops_print_pk_session_key(pkt->tag, &content->pk_session_key);
 		break;
 
 	case OPS_PARSER_CMD_GET_SECRET_KEY:
 		__ops_print_pk_session_key(OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY,
-				    content->get_secret_key.pk_session_key);
-		return get_secret_key_cb(contents, cbinfo);
+				    content->get_seckey.pk_session_key);
+		return get_seckey_cb(pkt, cbinfo);
 
 	default:
 		print_tagname("UNKNOWN PACKET TYPE");
-		fprintf(stderr, "packet-dump: unknown tag=%d (0x%x)\n", contents->tag,
-			contents->tag);
+		fprintf(stderr, "packet-dump: unknown tag=%d (0x%x)\n", pkt->tag,
+			pkt->tag);
 		exit(1);
 	}
 #endif				/* XXX */

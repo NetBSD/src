@@ -44,39 +44,39 @@ struct __ops_create_info {
 __ops_create_info_t *__ops_create_info_new(void);
 void            __ops_create_info_delete(__ops_create_info_t *);
 
-int             __ops_write_file_from_buf(const char *, const char *, const size_t, const bool);
+int             __ops_filewrite(const char *, const char *, const size_t, const bool);
 
 bool   __ops_calc_session_key_checksum(__ops_pk_session_key_t *, unsigned char *);
 bool __ops_write_struct_user_id(__ops_user_id_t *, __ops_create_info_t *);
-bool __ops_write_struct_public_key(const __ops_public_key_t *, __ops_create_info_t *);
+bool __ops_write_struct_pubkey(const __ops_pubkey_t *, __ops_create_info_t *);
 
 bool __ops_write_ss_header(unsigned, __ops_content_tag_t, __ops_create_info_t *);
-bool __ops_write_struct_secret_key(const __ops_secret_key_t *,
+bool __ops_write_struct_seckey(const __ops_seckey_t *,
 			    const unsigned char *,
 			    const size_t,
 			    __ops_create_info_t *);
 bool 
-__ops_write_one_pass_sig(const __ops_secret_key_t *,
+__ops_write_one_pass_sig(const __ops_seckey_t *,
 		       const __ops_hash_algorithm_t,
 		       const __ops_sig_type_t,
 		       __ops_create_info_t *);
 bool 
-__ops_write_literal_data_from_buf(const unsigned char *,
+__ops_write_litdata(const unsigned char *,
 				const int,
-				const __ops_literal_data_type_t,
+				const __ops_litdata_type_t,
 				__ops_create_info_t *);
 __ops_pk_session_key_t *__ops_create_pk_session_key(const __ops_keydata_t *);
 bool __ops_write_pk_session_key(__ops_create_info_t *, __ops_pk_session_key_t *);
-bool   __ops_write_transferable_public_key(const __ops_keydata_t *, bool, __ops_create_info_t *);
-bool   __ops_write_transferable_secret_key(const __ops_keydata_t *, const unsigned char *, const size_t, bool, __ops_create_info_t *);
+bool   __ops_write_transferable_pubkey(const __ops_keydata_t *, bool, __ops_create_info_t *);
+bool   __ops_write_transferable_seckey(const __ops_keydata_t *, const unsigned char *, const size_t, bool, __ops_create_info_t *);
 
 void            __ops_fast_create_user_id(__ops_user_id_t *, unsigned char *);
 bool   __ops_write_user_id(const unsigned char *, __ops_create_info_t *);
-void            __ops_fast_create_rsa_public_key(__ops_public_key_t *, time_t, BIGNUM *, BIGNUM *);
-bool   __ops_write_rsa_public_key(time_t, const BIGNUM *, const BIGNUM *, __ops_create_info_t *);
-void            __ops_fast_create_rsa_secret_key(__ops_secret_key_t *, time_t, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *);
-bool   encode_m_buf(const unsigned char *, size_t, const __ops_public_key_t *, unsigned char *);
-bool   __ops_write_literal_data_from_file(const char *, const __ops_literal_data_type_t, __ops_create_info_t *);
-bool   __ops_write_symmetrically_encrypted_data(const unsigned char *, const int, __ops_create_info_t *);
+void            __ops_fast_create_rsa_pubkey(__ops_pubkey_t *, time_t, BIGNUM *, BIGNUM *);
+bool   __ops_write_rsa_pubkey(time_t, const BIGNUM *, const BIGNUM *, __ops_create_info_t *);
+void            __ops_fast_create_rsa_seckey(__ops_seckey_t *, time_t, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *);
+bool   encode_m_buf(const unsigned char *, size_t, const __ops_pubkey_t *, unsigned char *);
+bool   __ops_fileread_litdata(const char *, const __ops_litdata_type_t, __ops_create_info_t *);
+bool   __ops_write_symm_enc_data(const unsigned char *, const int, __ops_create_info_t *);
 
 #endif				/* OPS_CREATE_H */

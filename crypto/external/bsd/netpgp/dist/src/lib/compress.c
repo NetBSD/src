@@ -74,9 +74,9 @@ typedef struct {
  */
 static int 
 zlib_compressed_data_reader(void *dest, size_t length,
-			    __ops_error_t ** errors,
+			    __ops_error_t **errors,
 			    __ops_reader_info_t *rinfo,
-			    __ops_parse_cb_info_t *cbinfo)
+			    __ops_callback_data_t *cbinfo)
 {
 	z_decompress_t *z = __ops_reader_get_arg(rinfo);
 	size_t           len;
@@ -165,9 +165,9 @@ zlib_compressed_data_reader(void *dest, size_t length,
 /* \todo remove code duplication between this and zlib_compressed_data_reader */
 static int 
 bzip2_compressed_data_reader(void *dest, size_t length,
-			     __ops_error_t ** errors,
-			     __ops_reader_info_t * rinfo,
-			     __ops_parse_cb_info_t * cbinfo)
+			     __ops_error_t **errors,
+			     __ops_reader_info_t *rinfo,
+			     __ops_callback_data_t *cbinfo)
 {
 	bz_decompress_t *bz = __ops_reader_get_arg(rinfo);
 	size_t		len;

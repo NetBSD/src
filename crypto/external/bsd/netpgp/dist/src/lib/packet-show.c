@@ -174,7 +174,7 @@ static __ops_map_t sig_type_map[] =
 };
 typedef __ops_map_t sig_type_map_t;
 
-static __ops_map_t public_key_algorithm_map[] =
+static __ops_map_t pubkey_algorithm_map[] =
 {
 	{OPS_PKA_RSA, "RSA (Encrypt or Sign)"},
 	{OPS_PKA_RSA_ENCRYPT_ONLY, "RSA Encrypt-Only"},
@@ -198,7 +198,7 @@ static __ops_map_t public_key_algorithm_map[] =
 	{OPS_PKA_PRIVATE10, "Private/Experimental"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
-typedef __ops_map_t public_key_algorithm_map_t;
+typedef __ops_map_t pubkey_algorithm_map_t;
 
 static __ops_map_t symmetric_algorithm_map[] =
 {
@@ -618,9 +618,9 @@ __ops_show_sig_type(__ops_sig_type_t sig_type)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_pka(__ops_public_key_algorithm_t pka)
+__ops_show_pka(__ops_pubkey_algorithm_t pka)
 {
-	return show_pka(pka, public_key_algorithm_map);
+	return show_pka(pka, pubkey_algorithm_map);
 }
 
 /**

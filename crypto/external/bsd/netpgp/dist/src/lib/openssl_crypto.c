@@ -62,7 +62,7 @@
 
 
 static void 
-test_secret_key(const __ops_secret_key_t * skey)
+test_seckey(const __ops_seckey_t * skey)
 {
 	RSA            *test = RSA_new();
 
@@ -75,7 +75,7 @@ test_secret_key(const __ops_secret_key_t * skey)
 
 	if (RSA_check_key(test) != 1) {
 		(void) fprintf(stderr,
-			"test_secret_key: RSA_check_key failed\n");
+			"test_seckey: RSA_check_key failed\n");
 	}
 	RSA_free(test);
 }
@@ -423,8 +423,8 @@ __ops_hash_sha224(__ops_hash_t * hash)
 
 bool 
 __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
-	       const __ops_dsa_signature_t * sig,
-	       const __ops_dsa_public_key_t * dsa)
+	       const __ops_dsa_sig_t * sig,
+	       const __ops_dsa_pubkey_t * dsa)
 {
 	DSA_SIG        *osig;
 	DSA            *odsa;
@@ -485,7 +485,7 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 */
 int 
 __ops_rsa_public_decrypt(unsigned char *out, const unsigned char *in,
-		       size_t length, const __ops_rsa_public_key_t * rsa)
+		       size_t length, const __ops_rsa_pubkey_t * rsa)
 {
 	RSA            *orsa;
 	int             n;
@@ -514,8 +514,8 @@ __ops_rsa_public_decrypt(unsigned char *out, const unsigned char *in,
 */
 int 
 __ops_rsa_private_encrypt(unsigned char *out, const unsigned char *in,
-			size_t length, const __ops_rsa_secret_key_t *srsa,
-			const __ops_rsa_public_key_t *rsa)
+			size_t length, const __ops_rsa_seckey_t *srsa,
+			const __ops_rsa_pubkey_t *rsa)
 {
 	RSA            *orsa;
 	int             n;
@@ -530,7 +530,7 @@ __ops_rsa_private_encrypt(unsigned char *out, const unsigned char *in,
 	orsa->e = rsa->e;
 	/* If this isn't set, it's very likely that the programmer hasn't */
 	/* decrypted the secret key. RSA_check_key segfaults in that case. */
-	/* Use __ops_decrypt_secret_key_from_data() to do that. */
+	/* Use __ops_decrypt_seckey() to do that. */
 	if (orsa->d == NULL) {
 		(void) fprintf(stderr, "orsa is not set\n");
 		return 0;
@@ -561,8 +561,8 @@ __ops_rsa_private_encrypt(unsigned char *out, const unsigned char *in,
 */
 int 
 __ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
-			size_t length, const __ops_rsa_secret_key_t * srsa,
-			const __ops_rsa_public_key_t * rsa)
+			size_t length, const __ops_rsa_seckey_t * srsa,
+			const __ops_rsa_pubkey_t * rsa)
 {
 	RSA            *orsa;
 	int             n;
@@ -610,7 +610,7 @@ __ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
 */
 int 
 __ops_rsa_public_encrypt(unsigned char *out, const unsigned char *in,
-		       size_t length, const __ops_rsa_public_key_t * rsa)
+		       size_t length, const __ops_rsa_pubkey_t * rsa)
 {
 	RSA            *orsa;
 	int             n;
@@ -693,14 +693,14 @@ __ops_text_from_hash(__ops_hash_t * hash)
 bool 
 __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keydata_t * keydata)
 {
-	__ops_secret_key_t *skey = NULL;
+	__ops_seckey_t *skey = NULL;
 	RSA            *rsa = NULL;
 	BN_CTX         *ctx = BN_CTX_new();
 	__ops_create_info_t *cinfo;
 	__ops_memory_t   *mem;
 
 	__ops_keydata_init(keydata, OPS_PTAG_CT_SECRET_KEY);
-	skey = __ops_get_writable_secret_key_from_data(keydata);
+	skey = __ops_get_writable_seckey(keydata);
 
 	/* generate the key pair */
 
@@ -709,7 +709,7 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 	/* populate __ops key from ssl key */
 
 	skey->pubkey.version = 4;
-	skey->pubkey.creation_time = time(NULL);
+	skey->pubkey.birthtime = time(NULL);
 	skey->pubkey.days_valid = 0;
 	skey->pubkey.algorithm = OPS_PKA_RSA;
 
@@ -779,7 +779,7 @@ __ops_rsa_generate_keypair(const int numbits, const unsigned long e, __ops_keyda
 
 	/* test */
 	if (__ops_get_debug_level(__FILE__))
-		test_secret_key(skey);
+		test_seckey(skey);
 
 	return true;
 }
@@ -812,7 +812,7 @@ __ops_rsa_create_selfsigned_keypair(const int numbits, const unsigned long e, __
 }
 
 /*
-int __ops_dsa_size(const __ops_dsa_public_key_t *dsa)
+int __ops_dsa_size(const __ops_dsa_pubkey_t *dsa)
     {
     int size;
     DSA *odsa;
@@ -833,7 +833,7 @@ int __ops_dsa_size(const __ops_dsa_public_key_t *dsa)
 */
 
 DSA_SIG        *
-__ops_dsa_sign(unsigned char *hashbuf, unsigned hashsize, const __ops_dsa_secret_key_t * sdsa, const __ops_dsa_public_key_t * dsa)
+__ops_dsa_sign(unsigned char *hashbuf, unsigned hashsize, const __ops_dsa_seckey_t * sdsa, const __ops_dsa_pubkey_t * dsa)
 {
 	DSA            *odsa;
 	DSA_SIG        *dsasig;

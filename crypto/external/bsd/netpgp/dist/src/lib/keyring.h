@@ -46,19 +46,19 @@ const __ops_keydata_t *__ops_keyring_find_key_by_userid(const __ops_keyring_t *,
 void            __ops_keydata_free(__ops_keydata_t *);
 void            __ops_keyring_free(__ops_keyring_t *);
 void            __ops_dump_keyring(const __ops_keyring_t *);
-const __ops_public_key_t *__ops_get_public_key_from_data(const __ops_keydata_t *);
+const __ops_pubkey_t *__ops_get_pubkey(const __ops_keydata_t *);
 bool   __ops_is_key_secret(const __ops_keydata_t *);
-const __ops_secret_key_t *__ops_get_secret_key_from_data(const __ops_keydata_t *);
-__ops_secret_key_t *__ops_get_writable_secret_key_from_data(__ops_keydata_t *);
-__ops_secret_key_t *__ops_decrypt_secret_key_from_data(const __ops_keydata_t *, const char *);
+const __ops_seckey_t *__ops_get_seckey(const __ops_keydata_t *);
+__ops_seckey_t *__ops_get_writable_seckey(__ops_keydata_t *);
+__ops_seckey_t *__ops_decrypt_seckey(const __ops_keydata_t *, const char *);
 
-bool   __ops_keyring_read_from_file(__ops_keyring_t *, const bool, const char *);
+bool   __ops_keyring_fileread(__ops_keyring_t *, const bool, const char *);
 
 char           *__ops_malloc_passphrase(char *);
 
 void            __ops_keyring_list(const __ops_keyring_t *);
 
-void            __ops_set_secret_key(__ops_parser_content_union_t *, const __ops_keydata_t *);
+void            __ops_set_seckey(__ops_parser_content_union_t *, const __ops_keydata_t *);
 
 const unsigned char *__ops_get_key_id(const __ops_keydata_t *);
 unsigned        __ops_get_user_id_count(const __ops_keydata_t *);
@@ -81,10 +81,10 @@ unsigned        __ops_get_keydata_content_type(const __ops_keydata_t *);
 
 int		__ops_parse_and_accumulate(__ops_keyring_t *, __ops_parse_info_t *);
 
-void            __ops_print_public_keydata(const __ops_keydata_t *);
-void            __ops_print_public_key(const __ops_public_key_t *);
+void            __ops_print_pubkeydata(const __ops_keydata_t *);
+void            __ops_print_pubkey(const __ops_pubkey_t *);
 
-void            __ops_print_secret_keydata(const __ops_keydata_t *);
+void            __ops_print_seckeydata(const __ops_keydata_t *);
 void            __ops_list_packets(char *, bool, __ops_keyring_t *, __ops_parse_cb_t *);
 
 int		__ops_export_key(const __ops_keydata_t *, unsigned char *);

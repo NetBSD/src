@@ -56,7 +56,7 @@ const char     *__ops_show_packet_tag(__ops_packet_tag_t packet_tag);
 const char     *__ops_show_ss_type(__ops_ss_type_t ss_type);
 
 const char     *__ops_show_sig_type(__ops_sig_type_t sig_type);
-const char     *__ops_show_pka(__ops_public_key_algorithm_t pka);
+const char     *__ops_show_pka(__ops_pubkey_algorithm_t pka);
 
 __ops_text_t     *__ops_showall_ss_preferred_compression(__ops_ss_preferred_compression_t ss_preferred_compression);
 const char     *__ops_show_ss_preferred_compression(unsigned char octet);

@@ -23,13 +23,13 @@ const char     *__ops_str_from_map(int sig_type, __ops_map_t * sig_type_map);
 typedef char   *show_sig_type_t(__ops_sig_type_t, sig_type_map_t *);
 
 /*
- * (line 6) char *show_pka(__ops_public_key_algorithm_t pka,
- * public_key_algorithm_map_t *pka_map) -> char *__ops_str_from_map(int pka,
+ * (line 6) char *show_pka(__ops_pubkey_algorithm_t pka,
+ * pubkey_algorithm_map_t *pka_map) -> char *__ops_str_from_map(int pka,
  * __ops_map_t *pka_map)
  */
 const char     *__ops_str_from_map(int pka, __ops_map_t * pka_map);
-#define show_pka(pka,pka_map) __ops_str_from_map(CHECKED_INSTANCE_OF(__ops_public_key_algorithm_t , pka),CHECKED_INSTANCE_OF( public_key_algorithm_map_t *, pka_map))
-typedef char   *show_pka_t(__ops_public_key_algorithm_t, public_key_algorithm_map_t *);
+#define show_pka(pka,pka_map) __ops_str_from_map(CHECKED_INSTANCE_OF(__ops_pubkey_algorithm_t , pka),CHECKED_INSTANCE_OF( pubkey_algorithm_map_t *, pka_map))
+typedef char   *show_pka_t(__ops_pubkey_algorithm_t, pubkey_algorithm_map_t *);
 
 /*
  * (line 7) char *show_ss_type(__ops_ss_type_t ss_type, ss_type_map_t
