@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.31 2009/05/04 20:54:25 rmind Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.32 2009/05/06 16:43:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.31 2009/05/04 20:54:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.32 2009/05/06 16:43:47 rmind Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -1083,11 +1083,10 @@ ufsdirhash_recycle(int wanted)
 			DIRHASH_BLKFREE(hash[i]);
 		kmem_free(hash, hashsz);
 		kmem_free(blkfree, blkfreesz);
-		pool_cache_put(ufsdirhash_cache, dh);
 
 		/* Account for the returned memory, and repeat if necessary. */
 		DIRHASHLIST_LOCK();
-		atomic_add_int(&ufs_dirhashmem, -mem);
+		ufs_dirhashmem -= mem;
 	}
 	/* Success. */
 	return (0);
