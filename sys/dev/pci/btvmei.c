@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.23 2009/05/06 09:25:14 cegger Exp $ */
+/* $NetBSD: btvmei.c,v 1.24 2009/05/06 10:34:32 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.23 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.24 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,12 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.23 2009/05/06 09:25:14 cegger Exp $");
 #include <dev/pci/btvmeireg.h>
 #include <dev/pci/btvmeivar.h>
 
-static int b3_617_match(struct device *, cfdata_t, void *);
-static void b3_617_attach(struct device *, struct device *, void *);
+static int b3_617_match(device_t, cfdata_t, void *);
+static void b3_617_attach(device_t, device_t, void *);
 #ifdef notyet
-static int b3_617_detach(struct device *);
+static int b3_617_detach(device_t);
 #endif
-void b3_617_slaveconfig(struct device *, struct vme_attach_args *);
+void b3_617_slaveconfig(device_t, struct vme_attach_args *);
 
 static void b3_617_vmeintr(struct b3_617_softc *, unsigned char);
 
@@ -73,7 +73,7 @@ CFATTACH_DECL(btvmei, sizeof(struct b3_617_softc),
     b3_617_match, b3_617_attach, NULL, NULL);
 
 static int
-b3_617_match(struct device *parent, cfdata_t match, void *aux)
+b3_617_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -84,7 +84,7 @@ b3_617_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-b3_617_attach(struct device *parent, struct device *self, void *aux)
+b3_617_attach(device_t parent, device_t self, void *aux)
 {
 	struct b3_617_softc *sc = (struct b3_617_softc*)self;
 	struct pci_attach_args *pa = aux;
@@ -184,7 +184,7 @@ b3_617_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef notyet
 static int
-b3_617_detach(struct device *dev)
+b3_617_detach(device_t dev)
 {
 	struct b3_617_softc *sc = (struct b3_617_softc *)dev;
 
@@ -201,7 +201,7 @@ b3_617_detach(struct device *dev)
 #endif
 
 void
-b3_617_slaveconfig(struct device *dev, struct vme_attach_args *va)
+b3_617_slaveconfig(device_t dev, struct vme_attach_args *va)
 {
 	struct b3_617_softc *sc = (struct b3_617_softc *)dev;
 	vme_chipset_tag_t vmect;

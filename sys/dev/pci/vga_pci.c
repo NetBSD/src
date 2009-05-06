@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.45 2009/05/06 09:25:17 cegger Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.46 2009/05/06 10:34:33 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.45 2009/05/06 09:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.46 2009/05/06 10:34:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,9 @@ struct vga_pci_softc {
 	struct pci_attach_args sc_paa;
 };
 
-static int	vga_pci_match(struct device *, cfdata_t, void *);
-static void	vga_pci_attach(struct device *, struct device *, void *);
-static int	vga_pci_rescan(struct device *, const char *, const int *);
+static int	vga_pci_match(device_t, cfdata_t, void *);
+static void	vga_pci_attach(device_t, device_t, void *);
+static int	vga_pci_rescan(device_t, const char *, const int *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
 static bool	vga_pci_resume(device_t dv PMF_FN_PROTO);
 
@@ -137,8 +137,7 @@ vga_pci_lookup_quirks(struct pci_attach_args *pa)
 }
 
 static int
-vga_pci_match(struct device *parent, cfdata_t match,
-    void *aux)
+vga_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int potential;
@@ -179,7 +178,7 @@ vga_pci_match(struct device *parent, cfdata_t match,
 }
 
 static void
-vga_pci_attach(struct device *parent, struct device *self, void *aux)
+vga_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct vga_pci_softc *psc = device_private(self);
 	struct vga_softc *sc = &psc->sc_vga;
@@ -254,7 +253,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-vga_pci_rescan(struct device *self, const char *ifattr, const int *locators)
+vga_pci_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct vga_pci_softc *psc = device_private(self);
 

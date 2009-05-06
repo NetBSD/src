@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.15 2009/05/06 09:25:15 cegger Exp $ */
+/* $NetBSD: gtp.c,v 1.16 2009/05/06 10:34:32 cegger Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 /* Gemtek PCI Radio Card Device Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.15 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.16 2009/05/06 10:34:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.15 2009/05/06 09:25:15 cegger Exp $");
 
 #define PCI_CBIO 0x10
 
-static int	gtp_match(struct device *, cfdata_t, void *);
-static void	gtp_attach(struct device *, struct device *, void *);
+static int	gtp_match(device_t, cfdata_t, void *);
+static void	gtp_attach(device_t, device_t, void *);
 
 static int     gtp_get_info(void *, struct radio_info *);
 static int     gtp_set_info(void *, struct radio_info *);
@@ -119,7 +119,7 @@ static uint32_t	gtp_hardware_read(bus_space_tag_t, bus_space_handle_t,
 				  bus_size_t);
 
 static int
-gtp_match(struct device *parent, cfdata_t cf, void *aux)
+gtp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	/* FIXME:
@@ -139,7 +139,7 @@ gtp_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 static void
-gtp_attach(struct device *parent, struct device *self, void *aux)
+gtp_attach(device_t parent, device_t self, void *aux)
 {
 	struct gtp_softc *sc = (struct gtp_softc *) self;
 	struct pci_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.41 2009/05/06 09:25:14 cegger Exp $	*/
+/*	$NetBSD: autri.c,v 1.42 2009/05/06 10:34:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.41 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.42 2009/05/06 10:34:32 cegger Exp $");
 
 #include "midi.h"
 
@@ -473,8 +473,7 @@ autri_flags_codec(void *sc)
  */
 
 static int
-autri_match(struct device *parent, cfdata_t match,
-    void *aux)
+autri_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -512,7 +511,7 @@ autri_match(struct device *parent, cfdata_t match,
 }
 
 static void
-autri_attach(struct device *parent, struct device *self, void *aux)
+autri_attach(device_t parent, device_t self, void *aux)
 {
 	struct autri_softc *sc;
 	struct pci_attach_args *pa;
