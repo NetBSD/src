@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.c,v 1.10 2006/03/20 17:01:26 elad Exp $	*/
+/*	$NetBSD: rpc_scan.c,v 1.11 2009/05/06 14:30:51 ginsbach Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_scan.c,v 1.10 2006/03/20 17:01:26 elad Exp $");
+__RCSID("$NetBSD: rpc_scan.c,v 1.11 2009/05/06 14:30:51 ginsbach Exp $");
 #endif
 #endif
 
@@ -414,8 +414,10 @@ static token symbols[] = {
 	{TOK_UNSIGNED, "unsigned"},
 	{TOK_SHORT, "short"},
 	{TOK_LONG, "long"},
+	{TOK_HYPER, "hyper"},
 	{TOK_FLOAT, "float"},
 	{TOK_DOUBLE, "double"},
+	{TOK_QUAD, "quadruple"},
 	{TOK_STRING, "string"},
 	{TOK_PROGRAM, "program"},
 	{TOK_VERSION, "version"},
