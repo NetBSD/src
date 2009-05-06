@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.15 2006/04/04 21:27:42 christos Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.16 2009/05/06 14:30:51 ginsbach Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.15 2006/04/04 21:27:42 christos Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.16 2009/05/06 14:30:51 ginsbach Exp $");
 #endif
 #endif
 
@@ -578,6 +578,10 @@ get_type(prefixp, typep, dkind)
 		*typep = "long";
 		(void) peekscan(TOK_INT, &tok);
 		break;
+	case TOK_HYPER:
+		*typep = "longlong_t";
+		(void) peekscan(TOK_INT, &tok);
+		break;
 	case TOK_VOID:
 		if (dkind != DEF_UNION && dkind != DEF_PROGRAM) {
 			error("voids allowed only inside union and program definitions with one argument");
@@ -591,6 +595,7 @@ get_type(prefixp, typep, dkind)
 	case TOK_FLOAT:
 	case TOK_DOUBLE:
 	case TOK_BOOL:
+	case TOK_QUAD:
 		*typep = tok.str;
 		break;
 	default:
@@ -618,6 +623,11 @@ unsigned_dec(typep)
 	case TOK_LONG:
 		get_token(&tok);
 		*typep = "u_long";
+		(void) peekscan(TOK_INT, &tok);
+		break;
+	case TOK_HYPER:
+		get_token(&tok);
+		*typep = "u_longlong_t";
 		(void) peekscan(TOK_INT, &tok);
 		break;
 	case TOK_INT:
