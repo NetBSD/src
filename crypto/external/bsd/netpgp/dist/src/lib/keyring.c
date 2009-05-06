@@ -96,9 +96,9 @@ __ops_keydata_free(__ops_keydata_t *keydata)
 	keydata->npackets = 0;
 
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		__ops_pubkey_free(&keydata->key.pkey);
+		__ops_pubkey_free(&keydata->key.pubkey);
 	} else {
-		__ops_seckey_free(&keydata->key.skey);
+		__ops_seckey_free(&keydata->key.seckey);
 	}
 
 	(void) free(keydata);
@@ -118,8 +118,8 @@ __ops_keydata_free(__ops_keydata_t *keydata)
 const __ops_pubkey_t *
 __ops_get_pubkey(const __ops_keydata_t * keydata)
 {
-	return (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) ? &keydata->key.pkey :
-		&keydata->key.skey.pubkey;
+	return (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) ? &keydata->key.pubkey :
+		&keydata->key.seckey.pubkey;
 }
 
 /**
@@ -147,7 +147,7 @@ __ops_is_key_secret(const __ops_keydata_t * data)
 const __ops_seckey_t *
 __ops_get_seckey(const __ops_keydata_t * data)
 {
-	return (data->type == OPS_PTAG_CT_SECRET_KEY) ? &data->key.skey : NULL;
+	return (data->type == OPS_PTAG_CT_SECRET_KEY) ? &data->key.seckey : NULL;
 }
 
 /**
@@ -163,13 +163,13 @@ __ops_get_seckey(const __ops_keydata_t * data)
 __ops_seckey_t *
 __ops_get_writable_seckey(__ops_keydata_t * data)
 {
-	return (data->type == OPS_PTAG_CT_SECRET_KEY) ? &data->key.skey : NULL;
+	return (data->type == OPS_PTAG_CT_SECRET_KEY) ? &data->key.seckey : NULL;
 }
 
 typedef struct {
 	const __ops_keydata_t *key;
 	char           *pphrase;
-	__ops_seckey_t *skey;
+	__ops_seckey_t *seckey;
 }               decrypt_t;
 
 static __ops_parse_cb_return_t 
@@ -215,8 +215,8 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		return OPS_FINISHED;
 
 	case OPS_PTAG_CT_SECRET_KEY:
-		decrypt->skey = calloc(1, sizeof(*decrypt->skey));
-		*decrypt->skey = content->seckey;
+		decrypt->seckey = calloc(1, sizeof(*decrypt->seckey));
+		*decrypt->seckey = content->seckey;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_PACKET_END:
@@ -258,7 +258,7 @@ __ops_decrypt_seckey(const __ops_keydata_t * key,
 
 	__ops_parse(pinfo, 0);
 
-	return decrypt.skey;
+	return decrypt.seckey;
 }
 
 /**
@@ -270,7 +270,7 @@ __ops_decrypt_seckey(const __ops_keydata_t * key,
 void 
 __ops_set_seckey(__ops_parser_content_union_t * content, const __ops_keydata_t * key)
 {
-	*content->get_seckey.seckey = &key->key.skey;
+	*content->get_seckey.seckey = &key->key.seckey;
 }
 
 /**
@@ -321,11 +321,11 @@ bool
 __ops_is_key_supported(const __ops_keydata_t *keydata)
 {
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (keydata->key.pkey.algorithm == OPS_PKA_RSA) {
+		if (keydata->key.pubkey.algorithm == OPS_PKA_RSA) {
 			return true;
 		}
 	} else if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (keydata->key.pkey.algorithm == OPS_PKA_DSA) {
+		if (keydata->key.pubkey.algorithm == OPS_PKA_DSA) {
 			return true;
 		}
 	}
@@ -515,14 +515,14 @@ __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_
 	/* create sig for this pkt */
 
 	sig = __ops_create_sig_new();
-	__ops_sig_start_key_sig(sig, &keydata->key.skey.pubkey, userid, OPS_CERT_POSITIVE);
+	__ops_sig_start_key_sig(sig, &keydata->key.seckey.pubkey, userid, OPS_CERT_POSITIVE);
 	__ops_sig_add_birthtime(sig, time(NULL));
 	__ops_sig_add_issuer_key_id(sig, keydata->key_id);
 	__ops_sig_add_primary_user_id(sig, true);
 	__ops_sig_hashed_subpackets_end(sig);
 
 	__ops_setup_memory_write(&cinfo_sig, &mem_sig, 128);
-	__ops_write_sig(sig, &keydata->key.skey.pubkey, &keydata->key.skey, cinfo_sig);
+	__ops_write_sig(sig, &keydata->key.seckey.pubkey, &keydata->key.seckey, cinfo_sig);
 
 	/* add this packet to keydata */
 

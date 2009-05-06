@@ -68,7 +68,7 @@ accumulate_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 	const __ops_parser_content_union_t *content = &pkt->u;
 	__ops_keyring_t  *keyring = accumulate->keyring;
 	__ops_keydata_t  *cur = NULL;
-	const __ops_pubkey_t *pkey;
+	const __ops_pubkey_t *pubkey;
 
 	if (keyring->nkeys >= 0)
 		cur = &keyring->keys[keyring->nkeys];
@@ -84,23 +84,23 @@ accumulate_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 		EXPAND_ARRAY(keyring, keys);
 
 		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
-			pkey = &content->pubkey;
+			pubkey = &content->pubkey;
 		else
-			pkey = &content->seckey.pubkey;
+			pubkey = &content->seckey.pubkey;
 
 		(void) memset(&keyring->keys[keyring->nkeys], 0x0,
 		       sizeof(keyring->keys[keyring->nkeys]));
 
 		__ops_keyid(keyring->keys[keyring->nkeys].key_id,
-			OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, pkey);
-		__ops_fingerprint(&keyring->keys[keyring->nkeys].fingerprint, pkey);
+			OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, pubkey);
+		__ops_fingerprint(&keyring->keys[keyring->nkeys].fingerprint, pubkey);
 
 		keyring->keys[keyring->nkeys].type = pkt->tag;
 
 		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
-			keyring->keys[keyring->nkeys].key.pkey = *pkey;
+			keyring->keys[keyring->nkeys].key.pubkey = *pubkey;
 		else
-			keyring->keys[keyring->nkeys].key.skey = content->seckey;
+			keyring->keys[keyring->nkeys].key.seckey = content->seckey;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ID:

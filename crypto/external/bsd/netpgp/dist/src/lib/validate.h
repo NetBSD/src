@@ -29,9 +29,9 @@ typedef struct {
 
 /** Struct used with the validate_key_cb callback */
 typedef struct {
-	__ops_pubkey_t pkey;
+	__ops_pubkey_t pubkey;
 	__ops_pubkey_t subkey;
-	__ops_seckey_t skey;
+	__ops_seckey_t seckey;
 	enum {
 		ATTRIBUTE = 1,
 		ID
