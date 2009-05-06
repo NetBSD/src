@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.201 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.202 2009/05/06 21:41:59 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.201 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.202 2009/05/06 21:41:59 elad Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1296,20 +1296,8 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
 		    {
-			int priv = 0;
-
-#ifdef __NetBSD__
-			if (l == 0 || kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL))
-				priv = 0;
-			else
-				priv = 1;
-#else
-			priv = (in6p->in6p_socket->so_state & SS_PRIV);
-#endif
-
 			error = ipsec4_set_policy(inp, sopt->sopt_name,
-			    sopt->sopt_data, sopt->sopt_size, priv);
+			    sopt->sopt_data, sopt->sopt_size, l->l_cred);
 			break;
 		    }
 #endif /*IPSEC*/
