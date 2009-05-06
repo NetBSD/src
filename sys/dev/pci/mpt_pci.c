@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.16 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.17 2009/05/06 09:25:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.16 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.17 2009/05/06 09:25:16 cegger Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -108,7 +108,7 @@ static const struct mpt_pci_product {
 };
 
 static int
-mpt_pci_match(struct device *parent, struct cfdata *cf, void *aux)
+mpt_pci_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct mpt_pci_product *mpp;

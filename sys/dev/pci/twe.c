@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.87 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: twe.c,v 1.88 2009/05/06 09:25:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.87 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.88 2009/05/06 09:25:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ static uint16_t	twe_aen_dequeue(struct twe_softc *);
 static void	twe_attach(struct device *, struct device *, void *);
 static int	twe_init_connection(struct twe_softc *);
 static int	twe_intr(void *);
-static int	twe_match(struct device *, struct cfdata *, void *);
+static int	twe_match(struct device *, cfdata_t, void *);
 static int	twe_param_set(struct twe_softc *, int, int, size_t, void *);
 static void	twe_poll(struct twe_softc *);
 static int	twe_print(void *, const char *);
@@ -289,7 +289,7 @@ twe_outl(struct twe_softc *sc, int off, u_int32_t val)
  * Match a supported board.
  */
 static int
-twe_match(struct device *parent, struct cfdata *cfdata,
+twe_match(struct device *parent, cfdata_t cfdata,
     void *aux)
 {
 	struct pci_attach_args *pa;

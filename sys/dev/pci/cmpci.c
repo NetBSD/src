@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.38 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.39 2009/05/06 09:25:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.38 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.39 2009/05/06 09:25:14 cegger Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -106,7 +106,7 @@ static int cmpci_set_in_ports(struct cmpci_softc *);
 /*
  * autoconf interface
  */
-static int cmpci_match(struct device *, struct cfdata *, void *);
+static int cmpci_match(struct device *, cfdata_t, void *);
 static void cmpci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cmpci, sizeof (struct cmpci_softc),
@@ -359,7 +359,7 @@ cmpci_index_to_divider(int index)
  * interface to configure the device.
  */
 static int
-cmpci_match(struct device *parent, struct cfdata *match,
+cmpci_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

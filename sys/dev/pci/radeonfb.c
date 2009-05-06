@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.29 2008/06/01 16:43:53 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.30 2009/05/06 09:25:16 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.29 2008/06/01 16:43:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.30 2009/05/06 09:25:16 cegger Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.29 2008/06/01 16:43:53 macallan Exp $
 #include <dev/pci/radeonfbvar.h>
 #include "opt_radeonfb.h"
 
-static int radeonfb_match(struct device *, struct cfdata *, void *);
+static int radeonfb_match(struct device *, cfdata_t, void *);
 static void radeonfb_attach(struct device *, struct device *, void *);
 static int radeonfb_ioctl(void *, void *, unsigned long, void *, int,
     struct lwp *);
@@ -407,7 +407,7 @@ CFATTACH_DECL(radeonfb, sizeof (struct radeonfb_softc),
     radeonfb_match, radeonfb_attach, NULL, NULL);
 
 static int
-radeonfb_match(struct device *parent, struct cfdata *match, void *aux)
+radeonfb_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args	*pa = aux;
 	int			i;

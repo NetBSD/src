@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.65 2009/05/05 09:51:24 cegger Exp $
+ * $Id: ahc_pci.c,v 1.66 2009/05/06 09:25:14 cegger Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.65 2009/05/05 09:51:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.66 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,7 +744,7 @@ ahc_find_pci_device(pcireg_t id, pcireg_t subid, u_int func)
 }
 
 static int
-ahc_pci_probe(device_t parent, struct cfdata *match, void *aux)
+ahc_pci_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;

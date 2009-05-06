@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.44 2009/02/09 12:11:16 nonaka Exp $ */
+/* $NetBSD: if_vge.c,v 1.45 2009/05/06 09:25:16 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.44 2009/02/09 12:11:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.45 2009/05/06 09:25:16 cegger Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -295,7 +295,7 @@ static inline void vge_set_rxaddr(struct vge_rxdesc *, bus_addr_t);
 
 static int vge_ifflags_cb(struct ethercom *);
 
-static int vge_match(struct device *, struct cfdata *, void *);
+static int vge_match(struct device *, cfdata_t, void *);
 static void vge_attach(struct device *, struct device *, void *);
 
 static int vge_encap(struct vge_softc *, struct mbuf *, int);
@@ -803,7 +803,7 @@ vge_reset(struct vge_softc *sc)
  * IDs against our list and return a device name if we find a match.
  */
 static int
-vge_match(struct device *parent, struct cfdata *match, void *aux)
+vge_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

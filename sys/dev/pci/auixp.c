@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.30 2009/03/18 16:00:19 cegger Exp $ */
+/* $NetBSD: auixp.c,v 1.31 2009/05/06 09:25:14 cegger Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.30 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.31 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -130,7 +130,7 @@ struct audio_device auixp_device = {
 
 
 /* autoconfig */
-static int	auixp_match(device_t, struct cfdata *, void *);
+static int	auixp_match(device_t, cfdata_t, void *);
 static void	auixp_attach(device_t, device_t, void *);
 static int	auixp_detach(device_t, int);
 
@@ -1065,7 +1065,7 @@ auixp_mappage(void *hdl, void *mem, off_t off, int prot)
 
 /* Is it my hardware? */
 static int
-auixp_match(device_t dev, struct cfdata *match, void *aux)
+auixp_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.22 2009/03/16 23:11:16 dsl Exp $ */
+/* $NetBSD: btvmei.c,v 1.23 2009/05/06 09:25:14 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.22 2009/03/16 23:11:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.23 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.22 2009/03/16 23:11:16 dsl Exp $");
 #include <dev/pci/btvmeireg.h>
 #include <dev/pci/btvmeivar.h>
 
-static int b3_617_match(struct device *, struct cfdata *, void *);
+static int b3_617_match(struct device *, cfdata_t, void *);
 static void b3_617_attach(struct device *, struct device *, void *);
 #ifdef notyet
 static int b3_617_detach(struct device *);
@@ -73,7 +73,7 @@ CFATTACH_DECL(btvmei, sizeof(struct b3_617_softc),
     b3_617_match, b3_617_attach, NULL, NULL);
 
 static int
-b3_617_match(struct device *parent, struct cfdata *match, void *aux)
+b3_617_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.28 2008/07/27 13:10:11 joerg Exp $ */
+/*	$NetBSD: twa.c,v 1.29 2009/05/06 09:25:17 cegger Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.28 2008/07/27 13:10:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.29 2009/05/06 09:25:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ static int	twa_init_connection(struct twa_softc *, uint16_t, uint32_t,
 				    uint16_t, uint16_t, uint16_t, uint16_t, uint16_t *,
 					uint16_t *, uint16_t *, uint16_t *, uint32_t *);
 static int	twa_intr(void *);
-static int 	twa_match(struct device *, struct cfdata *, void *);
+static int 	twa_match(struct device *, cfdata_t, void *);
 static int	twa_reset(struct twa_softc *);
 
 static int	twa_print(void *, const char *);
@@ -437,7 +437,7 @@ twa_request_wait_handler(struct twa_request *tr)
 }
 
 static int
-twa_match(struct device *parent, struct cfdata *cfdata,
+twa_match(struct device *parent, cfdata_t cfdata,
     void *aux)
 {
 	int i;

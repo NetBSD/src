@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.23 2009/02/13 01:38:32 abs Exp $ */
+/*	$NetBSD: if_dge.c,v 1.24 2009/05/06 09:25:15 cegger Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.23 2009/02/13 01:38:32 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.24 2009/05/06 09:25:15 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -631,7 +631,7 @@ static void	dge_txintr(struct dge_softc *);
 static void	dge_rxintr(struct dge_softc *);
 static void	dge_linkintr(struct dge_softc *, uint32_t);
 
-static int	dge_match(struct device *, struct cfdata *, void *);
+static int	dge_match(struct device *, cfdata_t, void *);
 static void	dge_attach(struct device *, struct device *, void *);
 
 static int	dge_read_eeprom(struct dge_softc *sc);
@@ -655,7 +655,7 @@ static char (*dge_txseg_evcnt_names)[DGE_NTXSEGS][8 /* "txseg00" + \0 */];
 #endif /* DGE_EVENT_COUNTERS */
 
 static int
-dge_match(struct device *parent, struct cfdata *cf, void *aux)
+dge_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.20 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.21 2009/05/06 09:25:17 cegger Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.20 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.21 2009/05/06 09:25:17 cegger Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.20 2009/04/18 14:58:03 tsutsui Exp $");
 /*
  * Prototypes and count for the pci_device structure
  */
-static	int ubsec_probe(struct device *, struct cfdata *, void *);
+static	int ubsec_probe(struct device *, cfdata_t, void *);
 static	void ubsec_attach(struct device *, struct device *, void *);
 static	void ubsec_reset_board(struct ubsec_softc *);
 static	void ubsec_init_board(struct ubsec_softc *);
@@ -287,7 +287,7 @@ ubsec_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ubsec_probe(struct device *parent, struct cfdata *match,
+ubsec_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;

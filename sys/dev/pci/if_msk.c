@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.24 2009/03/18 16:00:19 cegger Exp $ */
+/* $NetBSD: if_msk.c,v 1.25 2009/05/06 09:25:15 cegger Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.24 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.25 2009/05/06 09:25:15 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -99,11 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.24 2009/03/18 16:00:19 cegger Exp $");
 #include <dev/pci/if_skreg.h>
 #include <dev/pci/if_mskvar.h>
 
-int mskc_probe(struct device *, struct cfdata *, void *);
+int mskc_probe(struct device *, cfdata_t, void *);
 void mskc_attach(struct device *, struct device *self, void *aux);
 static bool mskc_suspend(device_t PMF_FN_PROTO);
 static bool mskc_resume(device_t PMF_FN_PROTO);
-int msk_probe(struct device *, struct cfdata *, void *);
+int msk_probe(struct device *, cfdata_t, void *);
 void msk_attach(struct device *, struct device *self, void *aux);
 int mskcprint(void *, const char *);
 int msk_intr(void *);
@@ -776,7 +776,7 @@ msk_lookup(const struct pci_attach_args *pa)
  * IDs against our list and return a device name if we find a match.
  */
 int
-mskc_probe(struct device *parent, struct cfdata *match,
+mskc_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -945,7 +945,7 @@ void msk_reset(struct sk_softc *sc)
 }
 
 int
-msk_probe(struct device *parent, struct cfdata *match,
+msk_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct skc_attach_args *sa = aux;

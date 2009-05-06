@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: cz.c,v 1.50 2009/05/06 09:25:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.50 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ do {									\
  */
 static int
 cz_match(struct device *parent,
-    struct cfdata *match,
+    cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;

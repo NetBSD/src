@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: amr.c,v 1.50 2009/05/06 09:25:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.50 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static void	*amr_enquire(struct amr_softc *, u_int8_t, u_int8_t, u_int8_t,
 static int	amr_init(struct amr_softc *, const char *,
 			 struct pci_attach_args *pa);
 static int	amr_intr(void *);
-static int	amr_match(struct device *, struct cfdata *, void *);
+static int	amr_match(struct device *, cfdata_t, void *);
 static int	amr_print(void *, const char *);
 static void	amr_shutdown(void *);
 static void	amr_teardown(struct amr_softc *);
@@ -221,7 +221,7 @@ amr_outl(struct amr_softc *amr, int off, u_int32_t val)
  * Match a supported device.
  */
 static int
-amr_match(struct device *parent, struct cfdata *match,
+amr_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

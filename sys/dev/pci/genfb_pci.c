@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.16 2009/02/23 23:45:56 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.17 2009/05/06 09:25:15 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.16 2009/02/23 23:45:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.17 2009/05/06 09:25:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ struct pci_genfb_softc {
 	int sc_want_wsfb;
 };
 
-static int	pci_genfb_match(struct device *, struct cfdata *, void *);
+static int	pci_genfb_match(struct device *, cfdata_t, void *);
 static void	pci_genfb_attach(struct device *, struct device *, void *);
 static int	pci_genfb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
@@ -88,7 +88,7 @@ CFATTACH_DECL(genfb_pci, sizeof(struct pci_genfb_softc),
     pci_genfb_match, pci_genfb_attach, NULL, NULL);
 
 static int
-pci_genfb_match(struct device *parent, struct cfdata *match, void *aux)
+pci_genfb_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int matchlvl = 1;

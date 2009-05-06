@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.53 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: eso.c,v 1.54 2009/05/06 09:25:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.53 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.54 2009/05/06 09:25:14 cegger Exp $");
 
 #include "mpu.h"
 
@@ -94,7 +94,7 @@ struct eso_dma {
 #define DMAADDR(dma)	((dma)->ed_map->dm_segs[0].ds_addr)
 
 /* Autoconfiguration interface */
-static int eso_match(struct device *, struct cfdata *, void *);
+static int eso_match(struct device *, cfdata_t, void *);
 static void eso_attach(struct device *, struct device *, void *);
 static void eso_defer(struct device *);
 static int eso_print(void *, const char *);
@@ -210,7 +210,7 @@ static struct eso_dma *	eso_kva2dma(const struct eso_softc *, const void *);
 
 
 static int
-eso_match(struct device *parent, struct cfdata *match,
+eso_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.13 2009/05/06 09:25:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.13 2009/05/06 09:25:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $")
 #define IWIC_PCI_IOBA (PCI_MAPREG_START+0x04)
 
 static int iwic_pci_intr(void *sc);
-static int iwic_pci_probe(struct device * dev, struct cfdata * match, void *aux);
+static int iwic_pci_probe(struct device * dev, cfdata_t  match, void *aux);
 static void iwic_pci_attach(struct device * parent, struct device * dev, void *aux);
 static int iwic_pci_activate(struct device * dev, enum devact);
 
@@ -212,7 +212,7 @@ iwic_find_card(const struct pci_attach_args * pa)
  *---------------------------------------------------------------------------*/
 static int
 iwic_pci_probe(struct device * dev,
-	struct cfdata * match, void *aux)
+	cfdata_t  match, void *aux)
 {
 	if (iwic_find_card(aux))
 		return 1;

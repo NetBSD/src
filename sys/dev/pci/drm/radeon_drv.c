@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.11 2009/03/18 16:00:19 cegger Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.12 2009/05/06 09:25:17 cegger Exp $	*/
 
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.11 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.12 2009/05/06 09:25:17 cegger Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -133,7 +133,7 @@ MODULE_DEPEND(radeon, drm, 1, 1, 1);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 static int
-radeondrm_probe(struct device *parent, struct cfdata *match, void *aux)
+radeondrm_probe(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	return drm_probe(pa, radeon_pciidlist);

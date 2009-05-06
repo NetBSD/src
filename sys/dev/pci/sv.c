@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.39 2008/04/28 20:23:55 martin Exp $ */
+/*      $NetBSD: sv.c,v 1.40 2009/05/06 09:25:16 cegger Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.39 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.40 2009/05/06 09:25:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ int	svdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-static int	sv_match(struct device *, struct cfdata *, void *);
+static int	sv_match(struct device *, cfdata_t, void *);
 static void	sv_attach(struct device *, struct device *, void *);
 static int	sv_intr(void *);
 
@@ -261,7 +261,7 @@ sv_write_indirect(struct sv_softc *sc, uint8_t reg, uint8_t val)
 }
 
 static int
-sv_match(struct device *parent, struct cfdata *match,
+sv_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.186 2009/05/03 00:31:12 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.187 2009/05/06 09:25:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.186 2009/05/03 00:31:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.187 2009/05/06 09:25:16 cegger Exp $");
 
 /*
 #define CBB_DEBUG
@@ -97,7 +97,7 @@ delay_ms(int millis, void *param)
 		tsleep(param, PWAIT, "pccbb", MAX(2, hz * millis / 1000));
 }
 
-int pcicbbmatch(device_t, struct cfdata *, void *);
+int pcicbbmatch(device_t, cfdata_t, void *);
 void pccbbattach(device_t, device_t, void *);
 int pccbbdetach(device_t, int);
 int pccbbintr(void *);
@@ -262,7 +262,7 @@ static const struct cardbus_functions pccbb_funcs = {
 #endif
 
 int
-pcicbbmatch(device_t parent, struct cfdata *match, void *aux)
+pcicbbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 

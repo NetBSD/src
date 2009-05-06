@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.22 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.23 2009/05/06 09:25:15 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.22 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.23 2009/05/06 09:25:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ struct ntwoc_pci_softc {
 	struct sca_softc sc_sca;	/* the SCA itself */
 };
 
-static  int ntwoc_pci_match(struct device *, struct cfdata *, void *);
+static  int ntwoc_pci_match(struct device *, cfdata_t, void *);
 static  void ntwoc_pci_attach(struct device *, struct device *, void *);
 
 static	int ntwoc_pci_alloc_dma(struct sca_softc *);
@@ -175,7 +175,7 @@ ntwoc_pci_sca_read_2(struct sca_softc *sc, u_int reg)
 
 
 static int
-ntwoc_pci_match(struct device *parent, struct cfdata *match,
+ntwoc_pci_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.131 2009/03/29 05:26:43 dholland Exp $	*/
+/*	$NetBSD: if_de.c,v 1.132 2009/05/06 09:25:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.131 2009/03/29 05:26:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.132 2009/05/06 09:25:15 cegger Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5450,7 +5450,7 @@ tulip_pci_match(
 static int
 tulip_probe(
     struct device *parent,
-    struct cfdata *cf,
+    cfdata_t cf,
     void *aux)
 {
     struct isa_attach_args * const ia = (struct isa_attach_args *) aux;
@@ -5572,7 +5572,7 @@ struct cfdriver decd = {
 static int
 tulip_pci_probe(
     struct device *parent,
-    struct cfdata *match,
+    cfdata_t match,
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;

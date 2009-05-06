@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.14 2008/05/05 11:42:45 jmcneill Exp $ */
+/* $NetBSD: unichromefb.c,v 1.15 2009/05/06 09:25:17 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.14 2008/05/05 11:42:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.15 2009/05/06 09:25:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ struct unichromefb_softc {
 	int			sc_accel;
 };
 
-static int unichromefb_match(struct device *, struct cfdata *, void *);
+static int unichromefb_match(struct device *, cfdata_t, void *);
 static void unichromefb_attach(struct device *, struct device *, void *);
 
 static int unichromefb_drm_print(void *, const char *);
@@ -228,7 +228,7 @@ CFATTACH_DECL_NEW(unichromefb, sizeof(struct unichromefb_softc),
     unichromefb_match, unichromefb_attach, NULL, NULL);
 
 static int
-unichromefb_match(struct device *parent, struct cfdata *match, void *opaque)
+unichromefb_match(struct device *parent, cfdata_t match, void *opaque)
 {
 	struct pci_attach_args *pa;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.37 2008/08/23 16:56:45 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.38 2009/05/06 09:25:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.37 2008/08/23 16:56:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.38 2009/05/06 09:25:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ static const struct rtk_type rtk_pci_devs[] = {
 	{ 0, 0, 0, NULL }
 };
 
-static int	rtk_pci_match(device_t, struct cfdata *, void *);
+static int	rtk_pci_match(device_t, cfdata_t, void *);
 static void	rtk_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(rtk_pci, sizeof(struct rtk_pci_softc),

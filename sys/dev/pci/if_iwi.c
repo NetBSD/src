@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.80 2009/03/13 21:57:07 jym Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.81 2009/05/06 09:25:15 cegger Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.80 2009/03/13 21:57:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.81 2009/05/06 09:25:15 cegger Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -93,7 +93,7 @@ int iwi_debug = 4;
 /* Permit loading the Intel firmware */
 static int iwi_accept_eula;
 
-static int	iwi_match(device_t, struct cfdata *, void *);
+static int	iwi_match(device_t, cfdata_t, void *);
 static void	iwi_attach(device_t, device_t, void *);
 static int	iwi_detach(device_t, int);
 
@@ -188,7 +188,7 @@ CFATTACH_DECL_NEW(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
     iwi_detach, NULL);
 
 static int
-iwi_match(device_t parent, struct cfdata *match, void *aux)
+iwi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

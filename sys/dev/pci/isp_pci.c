@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.105 2008/04/07 19:26:44 cegger Exp $ */
+/* $NetBSD: isp_pci.c,v 1.106 2009/05/06 09:25:16 cegger Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.105 2008/04/07 19:26:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.106 2009/05/06 09:25:16 cegger Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -389,7 +389,7 @@ static struct ispmdvec mdvec_2400 = {
 #define	PCI_DFLT_LTNCY	0x40
 #define	PCI_DFLT_LNSZ	0x10
 
-static int isp_pci_probe(struct device *, struct cfdata *, void *);
+static int isp_pci_probe(struct device *, cfdata_t, void *);
 static void isp_pci_attach(struct device *, struct device *, void *);
 
 struct isp_pcisoftc {
@@ -407,7 +407,7 @@ CFATTACH_DECL(isp_pci, sizeof (struct isp_pcisoftc),
     isp_pci_probe, isp_pci_attach, NULL, NULL);
 
 static int
-isp_pci_probe(struct device *parent, struct cfdata *match, void *aux)
+isp_pci_probe(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	switch (pa->pa_id) {
