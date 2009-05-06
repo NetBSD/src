@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.19 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.20 2009/05/06 22:38:31 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -467,7 +467,7 @@ ndis_create_kthreads(void)
 	mtx_init(&ndis_thr_mtx, "NDIS thread lock", NULL, MTX_SPIN);
 #else /* __NetBSD__ */
 	simple_lock_init(&ndis_thr_mtx);
-	//lockinit(&ndis_thr_mtx, PWAIT, "NDIS thread lock", 0, 0/*LK_CANRECURSE*//*LK_SPIN*/);
+	//lockinit(&ndis_thr_mtx, PWAIT, "NDIS thread lock", 0, 0);
 #endif	
 	mtx_init(&ndis_req_mtx, "NDIS request lock", MTX_NDIS_LOCK, MTX_DEF);
 
