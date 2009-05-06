@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.50 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.51 2009/05/06 21:41:59 elad Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ extern int ipsec_copy_pcbpolicy
 (struct inpcbpolicy *, struct inpcbpolicy *);
 extern u_int ipsec_get_reqlevel(struct ipsecrequest *, int);
 
-extern int ipsec4_set_policy(struct inpcb *, int, void *, size_t, int);
+extern int ipsec4_set_policy(struct inpcb *, int, void *, size_t, kauth_cred_t);
 extern int ipsec4_get_policy(struct inpcb *, void *, size_t,
 	    struct mbuf **);
 extern int ipsec4_delete_pcbpolicy(struct inpcb *);
@@ -387,7 +387,8 @@ extern int ipsec4_in_reject(struct mbuf *, struct inpcb *);
 #ifdef INET6
 extern int ipsec6_in_reject_so(struct mbuf *, struct socket *);
 extern int ipsec6_delete_pcbpolicy(struct in6pcb *);
-extern int ipsec6_set_policy(struct in6pcb *, int, void *, size_t, int);
+extern int ipsec6_set_policy(struct in6pcb *, int, void *, size_t,
+    kauth_cred_t);
 extern int ipsec6_get_policy(struct in6pcb *, void *, size_t,
 	    struct mbuf **);
 extern int ipsec6_in_reject(struct mbuf *, struct in6pcb *);
