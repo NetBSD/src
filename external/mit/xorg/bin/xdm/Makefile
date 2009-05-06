@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/01/02 23:25:57 spz Exp $
+#	$NetBSD: Makefile,v 1.5 2009/05/06 08:49:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -26,10 +26,12 @@ CPPFLAGS.resource.c=	\
 	-DDEF_AUTH_DIR=\"${XDMVARDIR}\" \
 	-DDEF_GREETER_LIB=\"${XDMGREETERLIB}\"
 
-LDADD+=		-lXau -lXdmcp -lXinerama -lXpm -lXmu
-LDADD+=		-lXt -lSM -lICE -lXext -lX11 -lcrypt
-DPADD+=		${LIBXAU} ${LIBXDMCP} ${LIBXINERAMA} ${LIBXPM} ${LIBXMU}
-DPADD+=		${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBCRYPT}
+LDADD+=		-lXau -lXdmcp -lXft -lXinerama -lXpm
+LDADD+=		-lXmu -lXt -lSM -lICE -lXext -lX11
+LDADD+=		-lcrypt -lfreetype
+DPADD+=		${LIBXAU} ${LIBXDMCP} ${LIBXFT} ${LIBXINERAMA} ${LIBXPM}
+DPADD+=		${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+DPADD+=		${LIBCRYPT} ${LIBFREETYPE}
 
 .if (${USE_PAM} != "no")
 LDADD+= -lpam ${PAM_STATIC_LDADD}
@@ -47,6 +49,7 @@ BUILDSYMLINKS+=	xdm.man.cpp xdm.man
 .include "Makefile.xdm"
 
 CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${XDMCHOOSERPATH}\"
+CPPFLAGS+=		-I${DESTDIR}${X11INCDIR}/freetype2
 
 X11MANCPP=	yes
 X11EXTRAMANDEFS+=	-DARC4_RANDOM \
