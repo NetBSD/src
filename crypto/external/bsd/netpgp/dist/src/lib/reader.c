@@ -132,7 +132,7 @@ __ops_reader_push(__ops_parse_info_t * pinfo, __ops_reader_t * reader, __ops_rea
 	*rinfo = pinfo->rinfo;
 	(void) memset(&pinfo->rinfo, 0x0, sizeof(pinfo->rinfo));
 	pinfo->rinfo.next = rinfo;
-	pinfo->rinfo.pinfo = pinfo;
+	pinfo->rinfo.parent = pinfo;
 
 	/* should copy accumulate flags from other reader? RW */
 	pinfo->rinfo.accumulate = rinfo->accumulate;
@@ -1239,16 +1239,16 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 	 * V3 MPIs have the count plain and the cipher is reset after each
 	 * count
 	 */
-	if (encrypted->prev_read_was_plain && !rinfo->pinfo->reading_mpi_length) {
-		if (!rinfo->pinfo->reading_v3_secret) {
+	if (encrypted->prev_read_was_plain && !rinfo->parent->reading_mpi_length) {
+		if (!rinfo->parent->reading_v3_secret) {
 			(void) fprintf(stderr,
 				"encrypted_data_reader: bad v3 secret\n");
 			return -1;
 		}
 		encrypted->decrypt->decrypt_resync(encrypted->decrypt);
 		encrypted->prev_read_was_plain = false;
-	} else if (rinfo->pinfo->reading_v3_secret &&
-		   rinfo->pinfo->reading_mpi_length) {
+	} else if (rinfo->parent->reading_v3_secret &&
+		   rinfo->parent->reading_mpi_length) {
 		encrypted->prev_read_was_plain = true;
 	}
 	while (length > 0) {
@@ -1259,8 +1259,8 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 			 * if we are reading v3 we should never read
 			 * more than we're asked for */
 			if (length < encrypted->decrypted_count &&
-			     (rinfo->pinfo->reading_v3_secret ||
-			      rinfo->pinfo->exact_read)) {
+			     (rinfo->parent->reading_v3_secret ||
+			      rinfo->parent->exact_read)) {
 				(void) fprintf(stderr,
 					"encrypted_data_reader: bad v3 read\n");
 				return 0;
@@ -1293,20 +1293,20 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 			}
 
 			/*
-			 * we can only read as much as we're asked for in v3
-			 * keys
-			 */
-			/* because they're partially unencrypted! */
-			if ((rinfo->pinfo->reading_v3_secret || rinfo->pinfo->exact_read)
-			    && n > length)
+			 * we can only read as much as we're asked for
+			 * in v3 keys because they're partially
+			 * unencrypted!  */
+			if ((rinfo->parent->reading_v3_secret ||
+			     rinfo->parent->exact_read) && n > length) {
 				n = length;
+			}
 
 			if (!__ops_stacked_limited_read(buffer, n, encrypted->region, errors, rinfo,
 						      cbinfo)) {
 				return -1;
 			}
-			if (!rinfo->pinfo->reading_v3_secret ||
-			    !rinfo->pinfo->reading_mpi_length) {
+			if (!rinfo->parent->reading_v3_secret ||
+			    !rinfo->parent->reading_mpi_length) {
 				encrypted->decrypted_count = __ops_decrypt_se_ip(encrypted->decrypt,
 							     encrypted->decrypted,
 								 buffer, n);

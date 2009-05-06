@@ -39,7 +39,7 @@ struct __ops_reader_info {
 					 * (with this reader) */
 
 	__ops_reader_info_t *next;
-	__ops_parse_info_t *pinfo;/* !< A pointer back to the parent parse_info
+	__ops_parse_info_t *parent;/* !< A pointer back to the parent parse_info
 				 * structure */
 };
 
