@@ -1,4 +1,4 @@
-/*	$NetBSD: sbt.c,v 1.1 2009/04/21 03:00:30 nonaka Exp $	*/
+/*	$NetBSD: sbt.c,v 1.2 2009/05/06 08:20:49 cegger Exp $	*/
 /*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Type-A/B SDIO Bluetooth cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.1 2009/04/21 03:00:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.2 2009/05/06 08:20:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,7 @@ struct sbt_softc {
 #define SBT_XMIT	(1 << 0)	/* transmit is active */
 #define SBT_ENABLED	(1 << 1)	/* device is enabled */
 
-static int	sbt_match(device_t, struct cfdata *, void *);
+static int	sbt_match(device_t, cfdata_t, void *);
 static void	sbt_attach(device_t, device_t, void *);
 static int	sbt_detach(device_t, int);
 
@@ -137,7 +137,7 @@ static const struct hci_if sbt_hci = {
 
 
 static int
-sbt_match(device_t parent, struct cfdata *match, void *aux)
+sbt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sdmmc_attach_args *sa = aux;
 	const struct sbt_product *sp;
