@@ -54,7 +54,7 @@ void __ops_writer_push_encrypt_crypt(__ops_create_info_t *, __ops_crypt_t *);
 void __ops_writer_push_encrypt_se_ip(__ops_create_info_t *, const __ops_keydata_t *);
 /* Secret Key checksum */
 
-void            __ops_push_skey_checksum_writer(__ops_create_info_t *, __ops_secret_key_t *);
+void            __ops_push_skey_checksum_writer(__ops_create_info_t *, __ops_seckey_t *);
 bool   __ops_pop_skey_checksum_writer(__ops_create_info_t *);
 
 
@@ -66,7 +66,7 @@ void            __ops_teardown_memory_write(__ops_create_info_t *, __ops_memory_
 void 
 __ops_setup_memory_read(__ops_parse_info_t **, __ops_memory_t *,
 		      void *,
-		      __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_parse_cb_info_t *), bool);
+		      __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_callback_data_t *), bool);
 void            __ops_teardown_memory_read(__ops_parse_info_t *, __ops_memory_t *);
 
 /* file writing */
@@ -79,18 +79,18 @@ void            __ops_teardown_file_append(__ops_create_info_t *, int);
 
 /* file reading */
 int             __ops_setup_file_read(__ops_parse_info_t **, const char *, void *,
-		    __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_parse_cb_info_t *), bool);
+		    __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_callback_data_t *), bool);
 void            __ops_teardown_file_read(__ops_parse_info_t *, int);
 
 bool   __ops_reader_set_accumulate(__ops_parse_info_t *, bool);
 
 /* useful callbacks */
 __ops_parse_cb_return_t
-literal_data_cb(const __ops_packet_t *, __ops_parse_cb_info_t *);
+litdata_cb(const __ops_packet_t *, __ops_callback_data_t *);
 __ops_parse_cb_return_t
-pk_session_key_cb(const __ops_packet_t *, __ops_parse_cb_info_t *);
+pk_session_key_cb(const __ops_packet_t *, __ops_callback_data_t *);
 __ops_parse_cb_return_t
-get_secret_key_cb(const __ops_packet_t *, __ops_parse_cb_info_t *);
+get_seckey_cb(const __ops_packet_t *, __ops_callback_data_t *);
 
 /* from reader_fd.c */
 void            __ops_reader_set_fd(__ops_parse_info_t *, int);

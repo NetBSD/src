@@ -346,7 +346,7 @@ set_lastseen_headerline(dearmour_t * dearmour, char *buf, __ops_error_t ** error
 static int 
 read_char(dearmour_t * dearmour, __ops_error_t ** errors,
 	  __ops_reader_info_t * rinfo,
-	  __ops_parse_cb_info_t * cbinfo,
+	  __ops_callback_data_t * cbinfo,
 	  bool skip)
 {
 	unsigned char   c[1];
@@ -378,7 +378,7 @@ static int
 eat_whitespace(int first,
 	       dearmour_t * dearmour, __ops_error_t ** errors,
 	       __ops_reader_info_t * rinfo,
-	       __ops_parse_cb_info_t * cbinfo,
+	       __ops_callback_data_t * cbinfo,
 	       bool skip)
 {
 	int             c = first;
@@ -393,7 +393,7 @@ static int
 read_and_eat_whitespace(dearmour_t * dearmour,
 			__ops_error_t ** errors,
 			__ops_reader_info_t * rinfo,
-			__ops_parse_cb_info_t * cbinfo,
+			__ops_callback_data_t * cbinfo,
 			bool skip)
 {
 	int             c;
@@ -406,7 +406,7 @@ read_and_eat_whitespace(dearmour_t * dearmour,
 }
 
 static void 
-flush(dearmour_t * dearmour, __ops_parse_cb_info_t * cbinfo)
+flush(dearmour_t * dearmour, __ops_callback_data_t * cbinfo)
 {
 	__ops_packet_t content;
 
@@ -422,7 +422,7 @@ flush(dearmour_t * dearmour, __ops_parse_cb_info_t * cbinfo)
 static int 
 unarmoured_read_char(dearmour_t * dearmour, __ops_error_t ** errors,
 		     __ops_reader_info_t * rinfo,
-		     __ops_parse_cb_info_t * cbinfo,
+		     __ops_callback_data_t * cbinfo,
 		     bool skip)
 {
 	int             c;
@@ -485,7 +485,7 @@ __ops_dup_headers(__ops_headers_t * dest, const __ops_headers_t * src)
 static int 
 process_dash_escaped(dearmour_t * dearmour, __ops_error_t ** errors,
 		     __ops_reader_info_t * rinfo,
-		     __ops_parse_cb_info_t * cbinfo)
+		     __ops_callback_data_t * cbinfo)
 {
 	__ops_packet_t content;
 	__ops_packet_t content2;
@@ -625,7 +625,7 @@ add_header(dearmour_t * dearmour, const char *key, const char
 /* \todo what does a return value of 0 indicate? 1 is good, -1 is bad */
 static int 
 parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
-	      __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
+	      __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
 {
 	unsigned        nbuf;
 	unsigned        size;
@@ -718,7 +718,7 @@ end:
 
 static int 
 read4(dearmour_t * dearmour, __ops_error_t ** errors,
-      __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo,
+      __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo,
       int *pc, unsigned *pn, unsigned long *pl)
 {
 	int             n, c;
@@ -773,7 +773,7 @@ __ops_crc24(unsigned checksum, unsigned char c)
 
 static int 
 decode64(dearmour_t * dearmour, __ops_error_t ** errors,
-	 __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
+	 __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
 {
 	unsigned        n;
 	int             n2;
@@ -914,7 +914,7 @@ base64(dearmour_t * dearmour)
 static int 
 armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 		     __ops_reader_info_t * rinfo,
-		     __ops_parse_cb_info_t * cbinfo)
+		     __ops_callback_data_t * cbinfo)
 {
 	dearmour_t *dearmour = __ops_reader_get_arg(rinfo);
 	__ops_packet_t content;
@@ -1229,7 +1229,7 @@ typedef struct {
 static int 
 encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 		      __ops_reader_info_t * rinfo,
-		      __ops_parse_cb_info_t * cbinfo)
+		      __ops_callback_data_t * cbinfo)
 {
 	encrypted_t *encrypted = __ops_reader_get_arg(rinfo);
 	int             saved = length;
@@ -1329,9 +1329,9 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 				encrypted->decrypted_count = n;
 			}
 
-			if (encrypted->decrypted_count <= 0) {
+			if (encrypted->decrypted_count == 0) {
 				(void) fprintf(stderr,
-				"encrypted_data_reader: bad decrypted count\n");
+				"encrypted_data_reader: 0 decrypted count\n");
 				return 0;
 			}
 
@@ -1399,7 +1399,7 @@ typedef struct {
 static int 
 se_ip_data_reader(void *dest_, size_t len, __ops_error_t ** errors,
 		  __ops_reader_info_t * rinfo,
-		  __ops_parse_cb_info_t * cbinfo)
+		  __ops_callback_data_t * cbinfo)
 {
 
 	/*
@@ -1604,7 +1604,7 @@ typedef struct mmap_reader_t {
  */
 static int 
 fd_reader(void *dest, size_t length, __ops_error_t ** errors,
-	  __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
+	  __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
 {
 	mmap_reader_t *reader = __ops_reader_get_arg(rinfo);
 	int             n = read(reader->fd, dest, length);
@@ -1652,7 +1652,7 @@ typedef struct {
 
 static int 
 mem_reader(void *dest, size_t length, __ops_error_t ** errors,
-	   __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
+	   __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
 {
 	reader_mem_t *reader = __ops_reader_get_arg(rinfo);
 	unsigned        n;
@@ -1752,7 +1752,7 @@ __ops_teardown_memory_write(__ops_create_info_t * cinfo, __ops_memory_t * mem)
 void 
 __ops_setup_memory_read(__ops_parse_info_t ** pinfo, __ops_memory_t * mem,
 		      void *vp,
-		      __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_parse_cb_info_t *),
+		      __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_callback_data_t *),
 		      bool accumulate)
 {
 	/*
@@ -1892,7 +1892,7 @@ __ops_teardown_file_append(__ops_create_info_t * cinfo, int fd)
 int 
 __ops_setup_file_read(__ops_parse_info_t ** pinfo, const char *filename,
 		    void *vp,
-		    __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_parse_cb_info_t *),
+		    __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_callback_data_t *),
 		    bool accumulate)
 {
 	int             fd = 0;
@@ -1942,27 +1942,27 @@ __ops_teardown_file_read(__ops_parse_info_t * pinfo, int fd)
 }
 
 __ops_parse_cb_return_t
-literal_data_cb(const __ops_packet_t *contents, __ops_parse_cb_info_t *cbinfo)
+litdata_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t *content = &contents->u;
+	const __ops_parser_content_union_t *content = &pkt->u;
 
 	OPS_USED(cbinfo);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		printf("literal_data_cb: ");
-		__ops_print_packet(contents);
+		printf("litdata_cb: ");
+		__ops_print_packet(pkt);
 	}
 	/* Read data from packet into static buffer */
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
 		/* if writer enabled, use it */
 		if (cbinfo->cinfo) {
 			if (__ops_get_debug_level(__FILE__)) {
-				printf("literal_data_cb: length is %d\n",
-				  content->literal_data_body.length);
+				printf("litdata_cb: length is %d\n",
+				  content->litdata_body.length);
 			}
-			__ops_write(content->literal_data_body.data,
-				  content->literal_data_body.length,
+			__ops_write(content->litdata_body.data,
+				  content->litdata_body.length,
 				  cbinfo->cinfo);
 		}
 		break;
@@ -1979,17 +1979,17 @@ literal_data_cb(const __ops_packet_t *contents, __ops_parse_cb_info_t *cbinfo)
 }
 
 __ops_parse_cb_return_t
-pk_session_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
+pk_session_key_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 {
-	const __ops_parser_content_union_t *content = &contents->u;
+	const __ops_parser_content_union_t *content = &pkt->u;
 
 	OPS_USED(cbinfo);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		__ops_print_packet(contents);
+		__ops_print_packet(pkt);
 	}
 	/* Read data from packet into static buffer */
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PTAG_CT_PK_SESSION_KEY:
 		if (__ops_get_debug_level(__FILE__)) {
 			printf("OPS_PTAG_CT_PK_SESSION_KEY\n");
@@ -2006,7 +2006,7 @@ pk_session_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinf
 		break;
 
 	default:
-		/* return callback_general(contents,cbinfo); */
+		/* return callback_general(pkt,cbinfo); */
 		break;
 	}
 
@@ -2023,30 +2023,30 @@ pk_session_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinf
  * finds the session key in the keyring
  * gets a passphrase if required
  * decrypts the secret key, if necessary
- * sets the secret_key in the content struct
+ * sets the seckey in the content struct
 @endverbatim
 */
 
 __ops_parse_cb_return_t
-get_secret_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinfo)
+get_seckey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 {
-	const __ops_parser_content_union_t *content = &contents->u;
-	const __ops_secret_key_t *secret;
+	const __ops_parser_content_union_t *content = &pkt->u;
+	const __ops_seckey_t *secret;
 	__ops_packet_t seckey;
 
 	OPS_USED(cbinfo);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		__ops_print_packet(contents);
+		__ops_print_packet(pkt);
 	}
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PARSER_CMD_GET_SECRET_KEY:
-		cbinfo->cryptinfo.keydata = __ops_keyring_find_key_by_id(cbinfo->cryptinfo.keyring, content->get_secret_key.pk_session_key->key_id);
+		cbinfo->cryptinfo.keydata = __ops_keyring_find_key_by_id(cbinfo->cryptinfo.keyring, content->get_seckey.pk_session_key->key_id);
 		if (!cbinfo->cryptinfo.keydata || !__ops_is_key_secret(cbinfo->cryptinfo.keydata))
 			return 0;
 
 		/* now get the key from the data */
-		secret = __ops_get_secret_key_from_data(cbinfo->cryptinfo.keydata);
+		secret = __ops_get_seckey(cbinfo->cryptinfo.keydata);
 		while (!secret) {
 			if (!cbinfo->cryptinfo.passphrase) {
 				(void) memset(&seckey, 0x0, sizeof(seckey));
@@ -2058,14 +2058,14 @@ get_secret_key_cb(const __ops_packet_t * contents, __ops_parse_cb_info_t * cbinf
 				}
 			}
 			/* then it must be encrypted */
-			secret = __ops_decrypt_secret_key_from_data(cbinfo->cryptinfo.keydata, cbinfo->cryptinfo.passphrase);
+			secret = __ops_decrypt_seckey(cbinfo->cryptinfo.keydata, cbinfo->cryptinfo.passphrase);
 		}
 
-		*content->get_secret_key.secret_key = secret;
+		*content->get_seckey.seckey = secret;
 		break;
 
 	default:
-		/* return callback_general(contents,cbinfo); */
+		/* return callback_general(pkt,cbinfo); */
 		break;
 	}
 
@@ -2093,22 +2093,22 @@ __ops_malloc_passphrase(char *pp)
  \param cbinfo
 */
 __ops_parse_cb_return_t
-get_passphrase_cb(const __ops_packet_t *contents, __ops_parse_cb_info_t *cbinfo)
+get_passphrase_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t *content = &contents->u;
+	const __ops_parser_content_union_t *content = &pkt->u;
 
 	OPS_USED(cbinfo);
 	if (__ops_get_debug_level(__FILE__)) {
-		__ops_print_packet(contents);
+		__ops_print_packet(pkt);
 	}
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
 		*(content->skey_passphrase.passphrase) =
 			__ops_malloc_passphrase(getpass("netpgp passphrase: "));
 		return OPS_KEEP_MEMORY;
 
 	default:
-		/* return callback_general(contents,cbinfo); */
+		/* return callback_general(pkt,cbinfo); */
 		break;
 	}
 
@@ -2126,7 +2126,7 @@ __ops_reader_set_accumulate(__ops_parse_info_t * pinfo, bool state)
 
 static int 
 hash_reader(void *dest, size_t length, __ops_error_t ** errors,
-	    __ops_reader_info_t * rinfo, __ops_parse_cb_info_t * cbinfo)
+	    __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
 {
 	__ops_hash_t	*hash = __ops_reader_get_arg(rinfo);
 	int		 r;
@@ -2163,7 +2163,7 @@ __ops_reader_pop_hash(__ops_parse_info_t * pinfo)
 /* read memory from the previously mmap-ed file */
 static int 
 mmap_reader(void *dest, size_t length, __ops_error_t **errors,
-	  __ops_reader_info_t *rinfo, __ops_parse_cb_info_t *cbinfo)
+	  __ops_reader_info_t *rinfo, __ops_callback_data_t *cbinfo)
 {
 	mmap_reader_t	*mem = __ops_reader_get_arg(rinfo);
 	unsigned	 n;

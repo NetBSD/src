@@ -96,9 +96,9 @@ __ops_keydata_free(__ops_keydata_t *keydata)
 	keydata->npackets = 0;
 
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		__ops_public_key_free(&keydata->key.pkey);
+		__ops_pubkey_free(&keydata->key.pkey);
 	} else {
-		__ops_secret_key_free(&keydata->key.skey);
+		__ops_seckey_free(&keydata->key.skey);
 	}
 
 	(void) free(keydata);
@@ -115,8 +115,8 @@ __ops_keydata_free(__ops_keydata_t *keydata)
   \note This is not a copy, do not free it after use.
 */
 
-const __ops_public_key_t *
-__ops_get_public_key_from_data(const __ops_keydata_t * keydata)
+const __ops_pubkey_t *
+__ops_get_pubkey(const __ops_keydata_t * keydata)
 {
 	return (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) ? &keydata->key.pkey :
 		&keydata->key.skey.pubkey;
@@ -141,11 +141,11 @@ __ops_is_key_secret(const __ops_keydata_t * data)
 
  \note This is not a copy, do not free it after use.
 
- \note This returns a const. If you need to be able to write to this pointer, use __ops_get_writable_secret_key_from_data
+ \note This returns a const. If you need to be able to write to this pointer, use __ops_get_writable_seckey
 */
 
-const __ops_secret_key_t *
-__ops_get_secret_key_from_data(const __ops_keydata_t * data)
+const __ops_seckey_t *
+__ops_get_seckey(const __ops_keydata_t * data)
 {
 	return (data->type == OPS_PTAG_CT_SECRET_KEY) ? &data->key.skey : NULL;
 }
@@ -157,11 +157,11 @@ __ops_get_secret_key_from_data(const __ops_keydata_t * data)
 
   \note This is not a copy, do not free it after use.
 
-  \note If you do not need to be able to modify this key, there is an equivalent read-only function __ops_get_secret_key_from_data.
+  \note If you do not need to be able to modify this key, there is an equivalent read-only function __ops_get_seckey.
 */
 
-__ops_secret_key_t *
-__ops_get_writable_secret_key_from_data(__ops_keydata_t * data)
+__ops_seckey_t *
+__ops_get_writable_seckey(__ops_keydata_t * data)
 {
 	return (data->type == OPS_PTAG_CT_SECRET_KEY) ? &data->key.skey : NULL;
 }
@@ -169,19 +169,18 @@ __ops_get_writable_secret_key_from_data(__ops_keydata_t * data)
 typedef struct {
 	const __ops_keydata_t *key;
 	char           *pphrase;
-	__ops_secret_key_t *skey;
+	__ops_seckey_t *skey;
 }               decrypt_t;
 
 static __ops_parse_cb_return_t 
-decrypt_cb(const __ops_packet_t * contents,
-	   __ops_parse_cb_info_t * cbinfo)
+decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t *content = &contents->u;
+	const __ops_parser_content_union_t *content = &pkt->u;
 	decrypt_t  *decrypt = __ops_parse_cb_get_arg(cbinfo);
 
 	OPS_USED(cbinfo);
 
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PARSER_PTAG:
 	case OPS_PTAG_CT_USER_ID:
 	case OPS_PTAG_CT_SIGNATURE:
@@ -204,14 +203,12 @@ decrypt_cb(const __ops_packet_t * contents,
 		case OPS_E_P_PACKET_CONSUMED:
 			/* And this is because of an error we've accepted */
 			return OPS_RELEASE_MEMORY;
-
 		default:
-			fprintf(stderr, "parse error: %s\n",
-				__ops_errcode(content->errcode.errcode));
-			return OPS_FINISHED;
+			break;
 		}
-
-		break;
+		(void) fprintf(stderr, "parse error: %s\n",
+				__ops_errcode(content->errcode.errcode));
+		return OPS_FINISHED;
 
 	case OPS_PARSER_ERROR:
 		fprintf(stderr, "parse error: %s\n", content->error.error);
@@ -219,7 +216,7 @@ decrypt_cb(const __ops_packet_t * contents,
 
 	case OPS_PTAG_CT_SECRET_KEY:
 		decrypt->skey = calloc(1, sizeof(*decrypt->skey));
-		*decrypt->skey = content->secret_key;
+		*decrypt->skey = content->seckey;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_PACKET_END:
@@ -227,8 +224,8 @@ decrypt_cb(const __ops_packet_t * contents,
 		break;
 
 	default:
-		fprintf(stderr, "Unexpected tag %d (0x%x)\n", contents->tag,
-			contents->tag);
+		fprintf(stderr, "Unexpected tag %d (0x%x)\n", pkt->tag,
+			pkt->tag);
 		return OPS_FINISHED;
 	}
 
@@ -242,8 +239,8 @@ decrypt_cb(const __ops_packet_t * contents,
 \param pphrase Passphrase to use to decrypt secret key
 \return secret key
 */
-__ops_secret_key_t *
-__ops_decrypt_secret_key_from_data(const __ops_keydata_t * key,
+__ops_seckey_t *
+__ops_decrypt_seckey(const __ops_keydata_t * key,
 				 const char *pphrase)
 {
 	__ops_parse_info_t *pinfo;
@@ -271,9 +268,9 @@ __ops_decrypt_secret_key_from_data(const __ops_keydata_t * key,
 \param key Keydata to get secret key from
 */
 void 
-__ops_set_secret_key(__ops_parser_content_union_t * content, const __ops_keydata_t * key)
+__ops_set_seckey(__ops_parser_content_union_t * content, const __ops_keydata_t * key)
 {
-	*content->get_secret_key.secret_key = &key->key.skey;
+	*content->get_seckey.seckey = &key->key.skey;
 }
 
 /**
@@ -505,7 +502,7 @@ __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_
 	__ops_memory_t   *mem_sig = NULL;
 	__ops_create_info_t *cinfo_sig = NULL;
 
-	__ops_create_signature_t *sig = NULL;
+	__ops_create_sig_t *sig = NULL;
 
 	/*
          * create signature packet for this userid
@@ -517,15 +514,15 @@ __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_
 
 	/* create sig for this pkt */
 
-	sig = __ops_create_signature_new();
-	__ops_signature_start_key_signature(sig, &keydata->key.skey.pubkey, userid, OPS_CERT_POSITIVE);
-	__ops_signature_add_creation_time(sig, time(NULL));
-	__ops_signature_add_issuer_key_id(sig, keydata->key_id);
-	__ops_signature_add_primary_user_id(sig, true);
-	__ops_signature_hashed_subpackets_end(sig);
+	sig = __ops_create_sig_new();
+	__ops_sig_start_key_sig(sig, &keydata->key.skey.pubkey, userid, OPS_CERT_POSITIVE);
+	__ops_sig_add_birthtime(sig, time(NULL));
+	__ops_sig_add_issuer_key_id(sig, keydata->key_id);
+	__ops_sig_add_primary_user_id(sig, true);
+	__ops_sig_hashed_subpackets_end(sig);
 
 	__ops_setup_memory_write(&cinfo_sig, &mem_sig, 128);
-	__ops_write_signature(sig, &keydata->key.skey.pubkey, &keydata->key.skey, cinfo_sig);
+	__ops_write_sig(sig, &keydata->key.skey.pubkey, &keydata->key.skey, cinfo_sig);
 
 	/* add this packet to keydata */
 
@@ -536,7 +533,7 @@ __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_
 	__ops_add_signed_userid_to_keydata(keydata, userid, &sigpacket);
 
 	/* cleanup */
-	__ops_create_signature_delete(sig);
+	__ops_create_sig_delete(sig);
 	__ops_create_info_delete(cinfo_userid);
 	__ops_create_info_delete(cinfo_sig);
 	__ops_memory_free(mem_userid);
@@ -574,24 +571,24 @@ __ops_keydata_init(__ops_keydata_t * keydata, const __ops_content_tag_t type)
     char* filename="~/.gnupg/pubring.gpg";
 
     // Read keyring from file
-    __ops_keyring_read_from_file(&keyring,filename);
+    __ops_keyring_fileread(&keyring,filename);
 
     // do actions using keyring
     ...
 
-    // Free memory alloc-ed in __ops_keyring_read_from_file()
+    // Free memory alloc-ed in __ops_keyring_fileread()
     __ops_keyring_free(keyring);
     \endcode
 */
 
 
 static          __ops_parse_cb_return_t
-cb_keyring_read(const __ops_packet_t * contents,
-		__ops_parse_cb_info_t * cbinfo)
+cb_keyring_read(const __ops_packet_t * pkt,
+		__ops_callback_data_t * cbinfo)
 {
 	OPS_USED(cbinfo);
 
-	switch (contents->tag) {
+	switch (pkt->tag) {
 	case OPS_PARSER_PTAG:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:	/* we get these because we
 						 * didn't prompt */
@@ -636,7 +633,7 @@ cb_keyring_read(const __ops_packet_t * contents,
    \code
    __ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
    bool armoured=false;
-   __ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
+   __ops_keyring_fileread(keyring, armoured, "~/.gnupg/pubring.gpg");
    ...
    __ops_keyring_free(keyring);
    free (keyring);
@@ -645,7 +642,7 @@ cb_keyring_read(const __ops_packet_t * contents,
 */
 
 bool 
-__ops_keyring_read_from_file(__ops_keyring_t * keyring, const bool armour, const char *filename)
+__ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char *filename)
 {
 	__ops_parse_info_t *pinfo;
 	int             fd;
@@ -721,7 +718,7 @@ __ops_keyring_read_from_file(__ops_keyring_t * keyring, const bool armour, const
    \note If you call this twice on the same keyring struct, without calling
    __ops_keyring_free() between these calls, you will introduce a memory leak.
 
-   \sa __ops_keyring_read_from_file
+   \sa __ops_keyring_fileread
    \sa __ops_keyring_free
 
    Example code:
@@ -987,7 +984,7 @@ __ops_keyring_find_key_by_userid(const __ops_keyring_t *keyring,
    {
    __ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
    bool armoured=false;
-   __ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
+   __ops_keyring_fileread(keyring, armoured, "~/.gnupg/pubring.gpg");
 
    __ops_keyring_list(keyring);
 
@@ -1006,9 +1003,9 @@ __ops_keyring_list(const __ops_keyring_t * keyring)
 	printf("%d keys\n", keyring->nkeys);
 	for (n = 0, key = &keyring->keys[n]; n < keyring->nkeys; ++n, ++key) {
 		if (__ops_is_key_secret(key))
-			__ops_print_secret_keydata(key);
+			__ops_print_seckeydata(key);
 		else
-			__ops_print_public_keydata(key);
+			__ops_print_pubkeydata(key);
 		(void) fputc('\n', stdout);
 	}
 }
@@ -1028,9 +1025,9 @@ __ops_export_key(const __ops_keydata_t *keydata, unsigned char *passphrase)
 
 	__ops_setup_memory_write(&cinfo, &mem, 128);
 	if (__ops_get_keydata_content_type(keydata) == OPS_PTAG_CT_PUBLIC_KEY) {
-		__ops_write_transferable_public_key(keydata, true, cinfo);
+		__ops_write_transferable_pubkey(keydata, true, cinfo);
 	} else {
-		__ops_write_transferable_secret_key(keydata,
+		__ops_write_transferable_seckey(keydata,
 				    passphrase,
 			    strlen((char *)passphrase), true, cinfo);
 	}
