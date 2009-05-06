@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.52 2009/03/23 18:43:20 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.53 2009/05/06 21:41:59 elad Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ int	ip6_ctloutput(int, struct socket *, struct sockopt *);
 int	ip6_raw_ctloutput(int, struct socket *, struct sockopt *);
 void	ip6_initpktopts(struct ip6_pktopts *);
 int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
-			    struct ip6_pktopts *, int, int);
+			    struct ip6_pktopts *, kauth_cred_t, int);
 void	ip6_clearpktopts(struct ip6_pktopts *, int);
 struct ip6_pktopts *ip6_copypktopts(struct ip6_pktopts *, int);
 int	ip6_optlen(struct in6pcb *);
