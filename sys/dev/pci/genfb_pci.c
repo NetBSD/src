@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.18 2009/05/06 10:34:32 cegger Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.19 2009/05/06 18:41:54 elad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.18 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.19 2009/05/06 18:41:54 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,6 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct pci_genfb_softc *sc = v;
 	struct range *r;
-	struct lwp *me;
 	int i;
 
 	if (offset == 0)
@@ -247,13 +246,10 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	me = curlwp;
-	if (me != NULL) {
-		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			aprint_normal_dev(&sc->sc_gen.sc_dev, "mmap() rejected.\n");
-			return -1;
-		}
+	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) != 0) {
+		aprint_normal_dev(&sc->sc_gen.sc_dev, "mmap() rejected.\n");
+		return -1;
 	}
 
 #ifdef WSFB_FAKE_VGA_FB

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.31 2009/05/06 10:34:33 cegger Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.32 2009/05/06 18:41:54 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.31 2009/05/06 10:34:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.32 2009/05/06 18:41:54 elad Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -1061,9 +1061,6 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data	*vd;
 	struct radeonfb_display	*dp;
 	struct radeonfb_softc	*sc;
-#ifdef RADEONFB_MMAP_BARS
-	struct lwp *me;
-#endif
 	paddr_t			pa;
 
 	vd = (struct vcons_data *)v;
@@ -1085,13 +1082,10 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	me = curlwp;
-	if (me != NULL) {
-		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
-			return -1;
-		}
+	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) != 0) {
+		aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
+		return -1;
 	}
 
 	if ((offset >= sc->sc_regaddr) && 
