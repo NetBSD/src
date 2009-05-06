@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.54 2008/09/06 03:00:32 gmcgarry Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.55 2009/05/06 09:25:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54 2008/09/06 03:00:32 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.55 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54 2008/09/06 03:00:32 gmcgarry Exp $")
 #include <dev/pci/emuxkivar.h>
 
 /* autoconf goo */
-static int	emuxki_match(struct device *, struct cfdata *, void *);
+static int	emuxki_match(struct device *, cfdata_t, void *);
 static void	emuxki_attach(struct device *, struct device *, void *);
 static int	emuxki_detach(struct device *, int);
 
@@ -380,7 +380,7 @@ emuxki_ac97_init(struct emuxki_softc *sc)
 }
 
 static int
-emuxki_match(struct device *parent, struct cfdata *match,
+emuxki_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

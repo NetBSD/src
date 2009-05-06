@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci.c,v 1.25 2008/04/10 19:13:37 cegger Exp $	*/
+/* $NetBSD: ifpci.c,v 1.26 2009/05/06 09:25:16 cegger Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.25 2008/04/10 19:13:37 cegger Exp $
+ *	$Id: ifpci.c,v 1.26 2009/05/06 09:25:16 cegger Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.25 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.26 2009/05/06 09:25:16 cegger Exp $");
 
 
 #include <sys/param.h>
@@ -134,7 +134,7 @@ static void avma1pp_bchannel_stat(isdn_layer1token, int h_chan, bchan_statistics
 static void avma1pp_map_int(struct ifpci_softc *sc, struct pci_attach_args *pa);
 static void avma1pp_bchannel_setup(isdn_layer1token, int h_chan, int bprot, int activate);
 static void avma1pp_init_linktab(struct isic_softc *);
-static int ifpci_match(struct device *parent, struct cfdata *match, void *aux);
+static int ifpci_match(struct device *parent, cfdata_t match, void *aux);
 static void ifpci_attach(struct device *parent, struct device *self, void *aux);
 static int ifpci_detach(struct device *self, int flags);
 static int ifpci_activate(struct device *self, enum devact act);
@@ -263,7 +263,7 @@ CFATTACH_DECL(ifpci, sizeof(struct ifpci_softc),
 
 static int
 ifpci_match(struct device *parent,
-	struct cfdata *match, void *aux)
+	cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

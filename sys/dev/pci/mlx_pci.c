@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.19 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.20 2009/05/06 09:25:16 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.19 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.20 2009/05/06 09:25:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.19 2008/04/28 20:23:55 martin Exp $");
 #include <dev/pci/pcidevs.h>
 
 static void	mlx_pci_attach(struct device *, struct device *, void *);
-static int	mlx_pci_match(struct device *, struct cfdata *, void *);
+static int	mlx_pci_match(struct device *, cfdata_t, void *);
 static const struct mlx_pci_ident *mlx_pci_findmpi(struct pci_attach_args *);
 
 static int	mlx_v3_submit(struct mlx_softc *, struct mlx_ccb *);
@@ -178,7 +178,7 @@ mlx_pci_findmpi(struct pci_attach_args *pa)
  * Match a supported board.
  */
 static int
-mlx_pci_match(struct device *parent, struct cfdata *cfdata,
+mlx_pci_match(struct device *parent, cfdata_t cfdata,
     void *aux)
 {
 

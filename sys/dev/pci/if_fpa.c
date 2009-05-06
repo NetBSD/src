@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.52 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.53 2009/05/06 09:25:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.52 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.53 2009/05/06 09:25:15 cegger Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -291,7 +291,7 @@ pdq_pci_match(
 int
 pdq_pci_probe(
     struct device *parent,
-    struct cfdata *cf,
+    cfdata_t cf,
     void *aux)
 {
     struct isa_attach_args *ia = (struct isa_attach_args *) aux;
@@ -393,7 +393,7 @@ struct cfdriver fpacd = {
 static int
 pdq_pci_match(
     struct device *parent,
-    struct cfdata *match,
+    cfdata_t match,
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;

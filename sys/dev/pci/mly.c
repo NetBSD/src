@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: mly.c,v 1.40 2009/05/06 09:25:16 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.40 2009/05/06 09:25:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $");
 #include <dev/pci/mly_tables.h>
 
 static void	mly_attach(struct device *, struct device *, void *);
-static int	mly_match(struct device *, struct cfdata *, void *);
+static int	mly_match(struct device *, cfdata_t, void *);
 static const	struct mly_ident *mly_find_ident(struct pci_attach_args *);
 static int	mly_fwhandshake(struct mly_softc *);
 static int	mly_flush(struct mly_softc *);
@@ -257,7 +257,7 @@ mly_find_ident(struct pci_attach_args *pa)
  * Match a supported board.
  */
 static int
-mly_match(struct device *parent, struct cfdata *cfdata,
+mly_match(struct device *parent, cfdata_t cfdata,
     void *aux)
 {
 

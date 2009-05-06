@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.39 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: neo.c,v 1.40 2009/05/06 09:25:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.40 2009/05/06 09:25:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ static int	nm_waitcd(struct neo_softc *);
 static int	nm_loadcoeff(struct neo_softc *, int, int);
 static int	nm_init(struct neo_softc *);
 
-static int	neo_match(struct device *, struct cfdata *, void *);
+static int	neo_match(struct device *, cfdata_t, void *);
 static void	neo_attach(struct device *, struct device *, void *);
 static int	neo_intr(void *);
 
@@ -498,7 +498,7 @@ nm_init(struct neo_softc *sc)
 }
 
 static int
-neo_match(struct device *parent, struct cfdata *match,
+neo_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

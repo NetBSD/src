@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.27 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.28 2009/05/06 09:25:15 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.27 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.28 2009/05/06 09:25:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.27 2009/03/14 15:36:19 dsl Exp $");
  */
 #define	PCI_CBIO		0x10	/* Configuration Base IO Address */
 
-int	pcic_pci_match(struct device *, struct cfdata *, void *);
+int	pcic_pci_match(struct device *, cfdata_t, void *);
 void	pcic_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcic_pci, sizeof(struct pcic_pci_softc),

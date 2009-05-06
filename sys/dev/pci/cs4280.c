@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.51 2008/03/21 08:20:04 dyoung Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.52 2009/05/06 09:25:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51 2008/03/21 08:20:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.52 2009/05/06 09:25:14 cegger Exp $");
 
 #include "midi.h"
 
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51 2008/03/21 08:20:04 dyoung Exp $");
 #define BA1WRITE4(sc, r, x) bus_space_write_4((sc)->ba1t, (sc)->ba1h, (r), (x))
 
 /* IF functions for audio driver */
-static int  cs4280_match(struct device *, struct cfdata *, void *);
+static int  cs4280_match(struct device *, cfdata_t, void *);
 static void cs4280_attach(struct device *, struct device *, void *);
 static int  cs4280_intr(void *);
 static int  cs4280_query_encoding(void *, struct audio_encoding *);
@@ -218,7 +218,7 @@ static struct audio_device cs4280_device = {
 
 
 static int
-cs4280_match(struct device *parent, struct cfdata *match,
+cs4280_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa;

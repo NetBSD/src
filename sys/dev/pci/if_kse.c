@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.16 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.17 2009/05/06 09:25:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.16 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.17 2009/05/06 09:25:15 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -298,7 +298,7 @@ u_int kse_burstsize = 8;	/* DMA burst length tuning knob */
 u_int kse_monitor_rxintr;	/* fragmented UDP csum HW bug hook */
 #endif
 
-static int kse_match(struct device *, struct cfdata *, void *);
+static int kse_match(struct device *, cfdata_t, void *);
 static void kse_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(kse, sizeof(struct kse_softc),
@@ -328,7 +328,7 @@ static void zerostats(struct kse_softc *);
 #endif
 
 static int
-kse_match(struct device *parent, struct cfdata *match, void *aux)
+kse_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.24 2009/01/18 10:00:51 mrg Exp $	 */
+/* $NetBSD: if_bce.c,v 1.25 2009/05/06 09:25:15 cegger Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.24 2009/01/18 10:00:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.25 2009/05/06 09:25:15 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -168,7 +168,7 @@ do {									\
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
 } while (/* CONSTCOND */ 0)
 
-static	int	bce_probe(device_t, struct cfdata *, void *);
+static	int	bce_probe(device_t, cfdata_t, void *);
 static	void	bce_attach(device_t, device_t, void *);
 static	int	bce_ioctl(struct ifnet *, u_long, void *);
 static	void	bce_start(struct ifnet *);
@@ -233,7 +233,7 @@ bce_lookup(const struct pci_attach_args * pa)
  * against drivers product list, and return its name if a match is found.
  */
 static int
-bce_probe(device_t parent, struct cfdata *match, void *aux)
+bce_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 

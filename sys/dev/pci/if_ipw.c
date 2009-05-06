@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.45 2009/01/09 21:14:36 jmcneill Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.46 2009/05/06 09:25:15 cegger Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.45 2009/01/09 21:14:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.46 2009/05/06 09:25:15 cegger Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -93,7 +93,7 @@ static int ipw_accept_eula;
 
 static int	ipw_dma_alloc(struct ipw_softc *);
 static void	ipw_release(struct ipw_softc *);
-static int	ipw_match(struct device *, struct cfdata *, void *);
+static int	ipw_match(struct device *, cfdata_t, void *);
 static void	ipw_attach(struct device *, struct device *, void *);
 static int	ipw_detach(struct device *, int);
 
@@ -158,7 +158,7 @@ CFATTACH_DECL(ipw, sizeof (struct ipw_softc), ipw_match, ipw_attach,
     ipw_detach, NULL);
 
 static int
-ipw_match(struct device *parent, struct cfdata *match,
+ipw_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.17 2009/03/16 23:11:16 dsl Exp $ */
+/* $NetBSD: btvmeii.c,v 1.18 2009/05/06 09:25:14 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.17 2009/03/16 23:11:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.18 2009/05/06 09:25:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.17 2009/03/16 23:11:16 dsl Exp $");
 
 #include <dev/pci/universe_pci_var.h>
 
-static int b3_2706_match(struct device *, struct cfdata *, void *);
+static int b3_2706_match(struct device *, cfdata_t, void *);
 static void b3_2706_attach(struct device *, struct device *, void *);
 
 /* exported via tag structs */
@@ -134,7 +134,7 @@ CFATTACH_DECL(btvmeii, sizeof(struct b3_2706_softc),
  */
 
 static int
-b3_2706_match(struct device *parent, struct cfdata *match, void *aux)
+b3_2706_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
