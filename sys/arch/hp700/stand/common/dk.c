@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.8 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.9 2009/05/07 15:21:39 skrll Exp $	*/
 
 /*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -46,7 +46,7 @@ dk_disklabel(struct hppa_dev *dp, struct disklabel *label)
 
 	if (iodcstrategy(dp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &ret) ||
 	    ret != DEV_BSIZE)
-		return "cannot read disklabel";
+		return "can't read disklabel";
 
 	return (getdisklabel(buf, label));
 }
