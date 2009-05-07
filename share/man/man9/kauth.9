@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.82 2009/05/07 18:01:56 elad Exp $
+.\" $NetBSD: kauth.9,v 1.83 2009/05/07 19:26:08 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -203,6 +203,37 @@ is allowed.
 .El
 .It Dv KAUTH_SYSTEM_FILEHANDLE
 Check if filehandle operations allowed.
+.It Dv KAUTH_SYSTEM_FS_QUOTA
+Check if file-system quota operations are allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct mount *
+describing the file-system mount in question.
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_GET
+Check if retrieving quota information is allowed.
+.Pp
+.Ar arg2
+is a
+.Ft uid_t
+with the user-id of the user whose quota information is to be retrieved.
+.It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF
+Check if turning quota on/off is allowed.
+.It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE
+Check if managing the quota by setting the quota/quota use is allowed.
+.Pp
+.Ar arg2
+is a
+.Ft uid_t
+with the user-id of the user whose quota/quota use is to be set.
+.It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT
+Check if bypassing the quota (not enforcing it) is allwoed.
+.El
+.It Dv KAUTH_SYSTEM_FS_RESERVEDSPACE
+Check if using the file-system reserved space is allowed.
 .It Dv KAUTH_SYSTEM_MODULE
 Check if a module request is allowed.
 .Pp
