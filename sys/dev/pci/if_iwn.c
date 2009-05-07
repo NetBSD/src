@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.29 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.30 2009/05/07 08:10:02 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.29 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.30 2009/05/07 08:10:02 cegger Exp $");
 
 
 /*
@@ -429,7 +429,7 @@ fail1:	iwn_free_fwmem(sc);
 }
 
 static int
-iwn_detach(struct device* self, int flags __unused)
+iwn_detach(device_t self, int flags __unused)
 {
 	struct iwn_softc *sc = (struct iwn_softc *)self;
 	struct ifnet *ifp = sc->sc_ic.ic_ifp;
