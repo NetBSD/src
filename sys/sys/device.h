@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.118 2009/05/05 21:40:25 cegger Exp $ */
+/* $NetBSD: device.h,v 1.119 2009/05/07 22:17:41 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -300,8 +300,7 @@ struct cfattach {
 };
 LIST_HEAD(cfattachlist, cfattach);
 
-#define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
-	rescanfn, chdetfn)						\
+#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn) \
 struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_name		= ___STRING(name),			\
 	.ca_devsize		= ddsize,				\
@@ -310,12 +309,9 @@ struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_attach		= attfn,				\
 	.ca_detach		= detfn,				\
 	.ca_activate		= actfn,				\
-	.ca_rescan		= rescanfn,				\
-	.ca_childdetached	= chdetfn,				\
+	.ca_rescan		= NULL,					\
+	.ca_childdetached	= NULL,					\
 }
-
-#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
-	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
 
 #define	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn, __flags) \
