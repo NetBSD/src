@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.8 2009/04/30 07:01:26 skrll Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.9 2009/05/07 14:13:01 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.8 2009/04/30 07:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.9 2009/05/07 14:13:01 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -194,7 +194,8 @@ iee_gsc_match(device_t parent, cfdata_t cf, void *aux)
 	struct gsc_attach_args *ga = aux;
 
 	if (ga->ga_type.iodc_type == HPPA_TYPE_FIO
-	    && ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
+	    && (ga->ga_type.iodc_sv_model == HPPA_FIO_LAN
+	    || ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN))
 		/* beat old ie(4) i82586 driver */
 		return 10;
 	return 0;
@@ -216,7 +217,6 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_type = I82596_DX;	/* ASP(2) based */
 	else
 		sc->sc_type = I82596_CA;	/* LASI based */
-	sc->sc_flags = IEE_NEED_SWAP;
 	/*
 	 * Pre PA7100LC CPUs don't support uncacheable mappings. So make 
 	 * descriptors align to cache lines. Needed to avoid race conditions 
@@ -266,8 +266,24 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 	memset(sc->sc_shmem_addr, 0, IEE_SHMEM_MAX);
 
 	/* Setup SYSBUS byte. */
-	SC_SCP->scp_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT | 
-	    IEE_SYSBUS_TRG | IEE_SYSBUS_LIEAR | IEE_SYSBUS_STD;
+	if (ga->ga_type.iodc_sv_model == HPPA_FIO_LAN) {
+		/*
+		 * Some earlier machines have 82596DX Rev A1 chip
+		 * which doesn't have IEE_SYSBUS_BE for 32-bit BE pointers.
+		 *
+		 * XXX: How can we detect chip revision at runtime?
+		 *	Should we check cpu_models instead?
+		 *	715/50, 735/99: Rev A1? (per PR port-hp700/35531)
+		 *	735/125: Rev C
+		 */
+		SC_SCP->scp_sysbus = IEE_SYSBUS_INT | 
+		    IEE_SYSBUS_TRG | IEE_SYSBUS_LIEAR | IEE_SYSBUS_STD;
+		sc->sc_flags = IEE_NEED_SWAP | IEE_REV_A;
+	} else {
+		SC_SCP->scp_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT | 
+		    IEE_SYSBUS_TRG | IEE_SYSBUS_LIEAR | IEE_SYSBUS_STD;
+		sc->sc_flags = IEE_NEED_SWAP;
+	}
 
 	sc_gsc->sc_ih = hp700_intr_establish(self, IPL_NET,
 	    iee_intr, sc, ga->ga_int_reg, ga->ga_irq);
