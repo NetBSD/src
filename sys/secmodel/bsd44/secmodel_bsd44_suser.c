@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.65 2009/05/07 18:01:56 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.66 2009/05/07 19:26:09 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.65 2009/05/07 18:01:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.66 2009/05/07 19:26:09 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,6 +170,27 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 		}
 
+		break;
+
+	case KAUTH_SYSTEM_FS_QUOTA:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_FS_QUOTA_GET:
+		case KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF:
+		case KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE:
+		case KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
+	case KAUTH_SYSTEM_FS_RESERVEDSPACE:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
 		break;
 
 	case KAUTH_SYSTEM_MOUNT:
