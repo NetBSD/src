@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.138 2009/05/06 21:41:59 elad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.139 2009/05/07 21:51:47 elad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.138 2009/05/06 21:41:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.139 2009/05/07 21:51:47 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2844,10 +2844,7 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
     kauth_cred_t cred, int sticky, int cmsg, int uproto)
 {
 	int minmtupolicy;
-	int priv = 0;
-
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
-		priv = 1;
+	int error;
 
 	if (!sticky && !cmsg) {
 #ifdef DIAGNOSTIC
@@ -3001,8 +2998,10 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 	case IPV6_2292NEXTHOP:
 #endif
 	case IPV6_NEXTHOP:
-		if (!priv)
-			return (EPERM);
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (error)
+			return (error);
 
 		if (len == 0) {	/* just remove the option */
 			ip6_clearpktopts(opt, IPV6_NEXTHOP);
@@ -3017,7 +3016,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		case AF_INET6:
 		{
 			struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)buf;
-			int error;
 
 			if (sa6->sin6_len != sizeof(struct sockaddr_in6))
 				return (EINVAL);
@@ -3058,8 +3056,10 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		 * options, since per-option restriction has too much
 		 * overhead.
 		 */
-		if (!priv)
-			return (EPERM);
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (error)
+			return (error);
 
 		if (len == 0) {
 			ip6_clearpktopts(opt, IPV6_HOPOPTS);
@@ -3093,8 +3093,11 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		struct ip6_dest *dest, **newdest = NULL;
 		int destlen;
 
-		if (!priv)	/* XXX: see the comment for IPV6_HOPOPTS */
-			return (EPERM);
+		/* XXX: see the comment for IPV6_HOPOPTS */
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (error)
+			return (error);
 
 		if (len == 0) {
 			ip6_clearpktopts(opt, optname);
