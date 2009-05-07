@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.6 2009/05/07 08:58:13 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.7 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -47,18 +47,17 @@
 #define	ELROY_MEM_CHUNK		0x800000
 #define	ELROY_MEM_WINDOW	(2 * ELROY_MEM_CHUNK)
 
-int	elroy_match(struct device *, struct cfdata *, void *);
-void	elroy_attach(struct device *, struct device *, void *);
+int	elroy_match(device_t, cfdata_t, void *);
+void	elroy_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(elroy, sizeof(struct elroy_softc), elroy_match, elroy_attach,
+CFATTACH_DECL_NEW(elroy, sizeof(struct elroy_softc), elroy_match, elroy_attach,
     NULL, NULL);
 
 extern struct cfdriver elroy_cd;
 
 void elroy_write32(volatile uint32_t *, uint32_t);
 uint32_t elroy_read32(volatile uint32_t *);
-void elroy_attach_hook(struct device *, struct device *,
-    struct pcibus_attach_args *);
+void elroy_attach_hook(device_t, device_t, struct pcibus_attach_args *);
 int elroy_maxdevs(void *, int);
 pcitag_t elroy_make_tag(void *, int, int, int);
 void elroy_decompose_tag(void *, pcitag_t, int *, int *, int *);
@@ -76,7 +75,7 @@ int elroy_memalloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t,
 void elroy_unmap(void *, bus_space_handle_t, bus_size_t);
 void elroy_free(void *, bus_space_handle_t, bus_size_t);
 void elroy_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
-void *elroy_alloc_parent(struct device *, struct pci_attach_args *, int);
+void *elroy_alloc_parent(device_t, struct pci_attach_args *, int);
 void *elroy_vaddr(void *, bus_space_handle_t);
 
 uint8_t elroy_r1(void *, bus_space_handle_t, bus_size_t);
@@ -192,10 +191,8 @@ void elroy_dmamem_unmap(void *, void *, size_t);
 paddr_t elroy_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t,
     int, int);
 
-void elroy_attach(struct device *, struct device *self, void *);
-
 int
-elroy_match(struct device *parent, struct cfdata *cf, void *aux)
+elroy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -221,7 +218,7 @@ elroy_read32(volatile uint32_t *p)
 }
 
 void
-elroy_attach_hook(struct device *parent, struct device *self,
+elroy_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 
@@ -428,7 +425,7 @@ elroy_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int op)
 
 #if NCARDBUS > 0
 void *
-elroy_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
+elroy_alloc_parent(device_t self, struct pci_attach_args *pa, int io)
 {
 #if 0	/* TODO */
 
@@ -1204,20 +1201,21 @@ const struct hppa_pci_chipset_tag elroy_pc = {
 };
 
 void
-elroy_attach(struct device *parent, struct device *self, void *aux)
+elroy_attach(device_t parent, device_t self, void *aux)
 {
-	struct elroy_softc *sc = (struct elroy_softc *)self;
+	struct elroy_softc *sc = device_private(self);
 	struct confargs *ca = (struct confargs *)aux;
 	struct pcibus_attach_args pba;
 	volatile struct elroy_regs *r;
 	const char *p = NULL, *q;
 	int i;
 
+	sc->sc_dv = self;
 	sc->sc_hpa = ca->ca_hpa;
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_dmat = ca->ca_dmatag;
 	if (bus_space_map(sc->sc_bt, ca->ca_hpa, ca->ca_hpasz, 0, &sc->sc_bh)) {
-		printf(": can't map space\n");
+		aprint_error(": can't map space\n");
 		return;
 	}
 
@@ -1234,7 +1232,7 @@ elroy_attach(struct device *parent, struct device *self, void *aux)
 
 		snprintb(buf, sizeof(buf), ELROY_STATUS_BITS,
 		    htole32(r->status));
-		printf(": reset failed; status %s\n", buf);
+		aprint_error(": reset failed; status %s\n", buf);
 		return;
 	}
 
@@ -1269,9 +1267,9 @@ elroy_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	printf(": %s TR%d.%d%s", p, sc->sc_ver >> 4, sc->sc_ver & 0xf, q);
+	aprint_normal(": %s TR%d.%d%s", p, sc->sc_ver >> 4, sc->sc_ver & 0xf, q);
 	apic_attach(sc);
-	printf("\n");
+	aprint_normal("\n");
 
 	elroy_write32(&r->imask, htole32(0xffffffff << 30));
 	elroy_write32(&r->ibase, htole32(ELROY_BASE_RE));

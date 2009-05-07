@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2009/04/30 07:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2009/05/07 15:34:49 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -309,14 +309,14 @@ bad:
 
 /****************************************************************/
 
-struct device *boot_device = NULL;
+device_t boot_device = NULL;
 
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	int pagezero_cookie;
-	struct device *pdev;
+	device_t pdev;
 
 	if ((pdev = device_parent(dev)) == NULL ||
 	    device_parent(pdev) == NULL)
@@ -459,8 +459,8 @@ static struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
 static struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
 
 void
-pdc_scanbus(struct device *self, struct confargs *ca,
-    void (*callback)(struct device *, struct confargs *))
+pdc_scanbus(device_t self, struct confargs *ca,
+    void (*callback)(device_t, struct confargs *))
 {
 	int i;
 

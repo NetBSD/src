@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.25 2008/06/14 21:27:37 mjf Exp $	*/
+/*	$NetBSD: pdc.c,v 1.26 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.25 2008/06/14 21:27:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.26 2009/05/07 15:34:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.25 2008/06/14 21:27:37 mjf Exp $");
 
 typedef
 struct pdc_softc {
-	struct device sc_dv;
+	device_t sc_dv;
 	struct tty *sc_tty;
 	struct callout sc_to;
 } pdcsoftc_t;
@@ -68,10 +68,10 @@ iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
 int CONADDR;
 
-int pdcmatch(struct device *, struct cfdata *, void *);
-void pdcattach(struct device *, struct device *, void *);
+int pdcmatch(device_t, cfdata_t, void *);
+void pdcattach(device_t, device_t, void *);
 
-CFATTACH_DECL(pdc, sizeof(pdcsoftc_t),
+CFATTACH_DECL_NEW(pdc, sizeof(pdcsoftc_t),
     pdcmatch, pdcattach, NULL, NULL);
 
 extern struct cfdriver pdc_cd;
@@ -150,7 +150,7 @@ pdc_init(void)
 }
 
 int
-pdcmatch(struct device *parent, struct cfdata *cf, void *aux)
+pdcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -162,16 +162,17 @@ pdcmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pdcattach(struct device *parent, struct device *self, void *aux)
+pdcattach(device_t parent, device_t self, void *aux)
 {
-	struct pdc_softc *sc = (struct pdc_softc *)self;
+	struct pdc_softc *sc = device_private(self);
 
+	sc->sc_dv = self;
 	pdc_attached = 1;
 
 	if (!pdc)
 		pdc_init();
 
-	printf("\n");
+	aprint_normal("\n");
 
 	callout_init(&sc->sc_to, 0);
 }

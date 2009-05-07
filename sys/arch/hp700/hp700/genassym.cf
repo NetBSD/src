@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 2009/04/30 07:01:26 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.18 2009/05/07 15:34:49 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -46,6 +46,7 @@ include <sys/syscall.h>
 include <sys/user.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
+include <sys/device.h>
 
 include <uvm/uvm.h>
 include <uvm/uvm_extern.h>

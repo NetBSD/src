@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.16 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16 2009/05/07 15:34:49 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -169,7 +169,7 @@ hp700_intr_bootstrap(void)
  * This establishes a new interrupt handler.
  */
 void *
-hp700_intr_establish(struct device *dv, int ipl, int (*handler)(void *),
+hp700_intr_establish(device_t dv, int ipl, int (*handler)(void *),
     void *arg, struct hp700_int_reg *int_reg, int bit_pos)
 {
 	struct hp700_int_bit *int_bit;
@@ -184,7 +184,7 @@ hp700_intr_establish(struct device *dv, int ipl, int (*handler)(void *),
 	 * but allow shared interrupts for PCI.
 	 */
 	if (int_reg->int_reg_bits_map[31 ^ bit_pos] != INT_REG_BIT_UNUSED
-	    && strncmp(dv->dv_xname, "dino", 4) != 0 && handler == NULL)
+	    && strncmp(device_xname(dv), "dino", 4) != 0 && handler == NULL)
 		panic("hp700_intr_establish: int already handled");
 
 	/*
@@ -219,7 +219,7 @@ hp700_intr_establish(struct device *dv, int ipl, int (*handler)(void *),
 	int_bit->int_bit_ipl = ipl;
 	int_bit->int_bit_spl = (1 << idx);
 	evcnt_attach_dynamic(&int_bit->int_bit_evcnt, EVCNT_TYPE_INTR, NULL,
-	    dv->dv_xname, "intr");
+	    device_xname(dv), "intr");
 	int_bit->int_bit_handler = handler;
 	int_bit->int_bit_arg = arg;
 

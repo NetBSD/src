@@ -1,4 +1,4 @@
-/*	$NetBSD: elroyvar.h,v 1.4 2009/05/07 09:10:18 skrll Exp $	*/
+/*	$NetBSD: elroyvar.h,v 1.5 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: elroyvar.h,v 1.3 2007/06/17 14:51:21 kettenis Exp $	*/
 
@@ -22,7 +22,7 @@
 #include <machine/pdc.h>
 
 struct elroy_softc {
-	struct  device sc_dv;
+	device_t sc_dv;
 
 	int sc_ver;
 	hppa_hpa_t sc_hpa;
