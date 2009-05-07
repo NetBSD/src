@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.79 2009/05/05 21:03:28 elad Exp $
+.\" $NetBSD: kauth.9,v 1.80 2009/05/07 11:23:01 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -861,7 +861,7 @@ passed as
 to the listener, is device-specific data that may be associated with the
 request.
 .Pp
-.Sy Bluetooth Devices
+.Ss Bluetooth Devices
 .Pp
 Authorizing actions relevant to bluetooth devices is done using the standard
 authorization wrapper, with the following actions:
@@ -884,7 +884,7 @@ is a
 describing the command.
 .El
 .Pp
-.Sy Kernel random device
+.Ss Kernel random device
 Authorization actions relevant to the kernel random device,
 .Xr rnd 4 ,
 is done using the standard authorization wrapper, with the following actions:
