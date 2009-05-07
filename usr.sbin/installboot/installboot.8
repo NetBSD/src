@@ -1,6 +1,6 @@
-.\"	$NetBSD: installboot.8,v 1.72 2008/10/12 16:02:45 apb Exp $
+.\"	$NetBSD: installboot.8,v 1.73 2009/05/07 07:09:49 lukem Exp $
 .\"
-.\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -442,11 +442,19 @@ file systems
 (the "traditional"
 .Nx
 file system).
+Use
+.Xr dumpfs 8
+to confirm the file system format is
+.Sy FFSv1 .
 .
 .It Pa /usr/mdec/bootxx_ffsv2
 Primary bootstrap for
 .Sy FFSv2
 file systems.
+Use
+.Xr dumpfs 8
+to confirm the file system format is
+.Sy FFSv2 .
 .
 .It Pa /usr/mdec/bootxx_lfsv1
 Primary bootstrap for
@@ -741,6 +749,7 @@ already present:
 .Xr uname 3 ,
 .Xr boot 8 ,
 .Xr disklabel 8 ,
+.Xr dumpfs 8 ,
 .Xr fdisk 8 ,
 .Xr pxeboot 8
 .
