@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.81 2009/05/07 11:54:41 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.82 2009/05/07 18:01:56 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 5, 2009
+.Dd May 7, 2009
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -601,6 +601,45 @@ for the interface was passed in
 there's no way to tell what structure
 .Ar arg3
 is.
+.It Dv KAUTH_NETWORK_INTERFACE_PPP
+Checks operations performed on the
+.Xr ppp 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_PPP_ADD
+Checks if adding and enabling a
+.Xr ppp 4
+interface to the system is allowed.
+.El
+.It Dv KAUTH_NETWORK_INTERFACE_SLIP
+Checks operations performed on the
+.Xr sl 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_SLIP_ADD
+Checks if adding and enabling a
+.Xr sl 4
+interface to the system is allowed.
+.El
+.It Dv KAUTH_NETWORK_INTERFACE_STRIP
+Checks operations performed on the
+.Xr strip 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_STRIP_ADD
+Check if adding and enabling a
+.Xr strip 4
+interface to the system is allowed.
+.El
 .It Dv KAUTH_NETWORK_FORWSRCRT
 Checks whether status of forwarding of source-routed packets can be modified
 or not.
@@ -865,6 +904,36 @@ Authorizing actions relevant to bluetooth devices is done using the standard
 authorization wrapper, with the following actions:
 .Pp
 .Bl -tag -width compact
+.It KAUTH_DEVICE_BLUETOOTH_BCSP
+Check if operations on a
+.Xr bcsp 4
+device are allowed.
+.Pp
+.Ar arg0
+is an
+.Ft enum kauth_device_req
+with one of the following values:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_DEVICE_BLUETOOTH_BCSP_ADD
+Check if adding and enabling a
+.Xr bcsp 4
+device is allowed.
+.El
+.It KAUTH_DEVICE_BLUETOOTH_BTUART
+Check if operations on a
+.Xr btuart 4
+device are allowed.
+.Pp
+.Ar arg0
+is an
+.Ft enum kauth_device_req
+with one of the following values:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_DEVICE_BLUETOOTH_BTUART_ADD
+Check if adding and enabling a
+.Xr btuart 4
+device is allowed.
+.El
 .It KAUTH_DEVICE_BLUETOOTH_SETPRIV
 Check if privileged settings can be changed.
 .Pp

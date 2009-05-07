@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.21 2009/04/26 07:53:43 elad Exp $	*/
+/*	$NetBSD: btuart.c,v 1.22 2009/05/07 18:01:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.21 2009/04/26 07:53:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.22 2009/05/07 18:01:57 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -226,9 +226,10 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 	struct lwp *l = curlwp;		/* XXX */
 	int error, unit, s;
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		return error;
+	error = kauth_authorize_device(l->l_cred, KAUTH_DEVICE_BLUETOOTH_BTUART,
+	    KAUTH_ARG(KAUTH_REQ_DEVICE_BLUETOOTH_BTUART_ADD), NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	s = spltty();
 
