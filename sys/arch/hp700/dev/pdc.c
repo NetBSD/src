@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.26 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.27 2009/05/07 17:30:59 tsutsui Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.26 2009/05/07 15:34:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.27 2009/05/07 17:30:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,8 @@ pdcsettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
 	tod.usec = tvp->tv_usec;
 
 	pagezero_cookie = hp700_pagezero_map();
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE, &tod);
+	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE,
+	    tod.sec, tod.usec);
 	hp700_pagezero_unmap(pagezero_cookie);
 	return 0;
 }
