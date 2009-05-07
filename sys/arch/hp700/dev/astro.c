@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.2 2009/04/30 07:03:12 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.3 2009/05/07 09:56:50 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -34,6 +34,7 @@
 #include <machine/endian.h>
 
 #include <hp700/dev/cpudevs.h>
+#include <hp700/hp700/machdep.h>
 
 struct astro_regs {
 	uint32_t	rid;
@@ -234,6 +235,7 @@ astro_attach(struct device *parent, struct device *self, void *aux)
 	struct vm_page *m;
 	struct pglist mlist;
 	int iova_bits;
+	int pagezero_cookie;
 
 	sc->sc_dmat = ca->ca_dmatag;
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, sizeof(struct astro_regs),
@@ -306,8 +308,10 @@ astro_attach(struct device *parent, struct device *self, void *aux)
 	 * will stop working if we do.  This is fine since the serial port
 	 * doesn't do DMA.
 	 */
+	pagezero_cookie = hp700_pagezero_map();
 	if (PAGE0->mem_cons.pz_class != PCL_DUPLEX)
 		pdc_call((iodcio_t)pdc, 0, PDC_IO, PDC_IO_RESET_DEVICES);
+	hp700_pagezero_unmap(pagezero_cookie);
 
 	/* Enable iova space. */
 	r->tlb_ibase = htole32(1);
