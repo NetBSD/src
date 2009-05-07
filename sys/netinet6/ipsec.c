@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.141 2009/05/06 21:41:59 elad Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.142 2009/05/07 21:51:47 elad Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.141 2009/05/06 21:41:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.142 2009/05/07 21:51:47 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1235,7 +1235,7 @@ ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **pcb_sp)
 	}
 	memset(new, 0, sizeof(*new));
 
-	if (so->so_uidinfo->ui_uid == 0)	/* XXX */
+	if (so->so_uidinfo->ui_uid == 0)	/* XXX-kauth */
 		new->priv = 1;
 	else
 		new->priv = 0;
@@ -1377,7 +1377,6 @@ ipsec_set_policy(struct secpolicy **spp, int optname, void *request,
 	struct sadb_x_policy *xpl;
 	struct secpolicy *newsp = NULL;
 	int error;
-	int priv = 0;
 
 	/* sanity check. */
 	if (spp == NULL || *spp == NULL || request == NULL)
@@ -1396,12 +1395,13 @@ ipsec_set_policy(struct secpolicy **spp, int optname, void *request,
 	    xpl->sadb_x_policy_type == IPSEC_POLICY_NONE)
 		return EINVAL;
 
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
-		priv = 1;
-
 	/* check privileged socket */
-	if (priv == 0 && xpl->sadb_x_policy_type == IPSEC_POLICY_BYPASS)
-		return EACCES;
+	if (xpl->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (error)
+			return (error);
+	}
 
 	/* allocation new SP entry */
 	if ((newsp = key_msg2sp(xpl, len, &error)) == NULL)
