@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.4 2009/05/07 08:54:59 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.5 2009/05/07 08:55:15 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -67,7 +67,7 @@ void elroy_conf_write(void *, pcitag_t, int, pcireg_t);
 
 int elroy_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 int elroy_memmap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-int elroy_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t ,
+int elroy_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t,
     bus_space_handle_t *);
 int elroy_ioalloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t,
     bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
@@ -76,8 +76,8 @@ int elroy_memalloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t,
 void elroy_unmap(void *, bus_space_handle_t, bus_size_t);
 void elroy_free(void *, bus_space_handle_t, bus_size_t);
 void elroy_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
-void * elroy_alloc_parent(struct device *, struct pci_attach_args *, int);
-void * elroy_vaddr(void *, bus_space_handle_t);
+void *elroy_alloc_parent(struct device *, struct pci_attach_args *, int);
+void *elroy_vaddr(void *, bus_space_handle_t);
 
 uint8_t elroy_r1(void *, bus_space_handle_t, bus_size_t);
 uint16_t elroy_r2(void *, bus_space_handle_t, bus_size_t);
@@ -1049,7 +1049,7 @@ const struct hppa_bus_space_tag elroy_iomemt = {
 	NULL, elroy_unmap, elroy_subregion, NULL, elroy_free,
 	elroy_barrier, elroy_vaddr,
 	elroy_r1,    elroy_r2,    elroy_r4,    elroy_r8,
-	elroy_w1,    elroy_w2,    elroy_w4,    elroy_w8,  
+	elroy_w1,    elroy_w2,    elroy_w4,    elroy_w8,
 	elroy_rm_1,  elroy_rm_2,  elroy_rm_4,  elroy_rm_8,
 	elroy_wm_1,  elroy_wm_2,  elroy_wm_4,  elroy_wm_8,
 	elroy_sm_1,  elroy_sm_2,  elroy_sm_4,  elroy_sm_8,
