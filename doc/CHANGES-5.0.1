@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.5 2009/05/05 18:24:40 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.6 2009/05/07 00:26:46 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -30,4 +30,10 @@ gnu/dist/binutils/bfd/elf32-vax.c		1.9
 	relocations when not all the entries are used.
 	Fixes PR port-vax/39182.
 	[mhitch, ticket #738]
+
+sys/ufs/ffs/ffs_alloc.c				1.123 via patch
+
+	Fix random 'filesystem full' messages by trapping a couple of
+	32-bit overflow areas missed in rev 1.110 and switching cgbase().
+	[sborrill, ticket #726]
 
