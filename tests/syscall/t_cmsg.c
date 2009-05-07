@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.3 2009/05/04 00:14:59 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.4 2009/05/07 14:45:19 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -30,7 +30,7 @@ ATF_TC_BODY(cmsg_sendfd_bounds, tc)
 	struct msghdr msg;
 	struct iovec iov;
 	int s[2];
-	int error = 0;
+	int fd;
 
 	rump_init();
 
@@ -39,7 +39,7 @@ ATF_TC_BODY(cmsg_sendfd_bounds, tc)
 
 	cmp = malloc(CMSG_LEN(sizeof(int)));
 
-	iov.iov_base = &error;
+	iov.iov_base = &fd;
 	iov.iov_len = sizeof(int);
 
 	cmp->cmsg_level = SOL_SOCKET;
@@ -80,7 +80,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	struct msghdr msg;
 	struct iovec iov;
 	int s[2], sgot;
-	int error = 0;
+	int fd;
 	int v1, v2;
 
 	rump_init();
@@ -90,7 +90,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 
 	cmp = malloc(CMSG_LEN(sizeof(int)));
 
-	iov.iov_base = &error;
+	iov.iov_base = &fd;
 	iov.iov_len = sizeof(int);
 
 	cmp->cmsg_level = SOL_SOCKET;
