@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.200 2009/05/06 22:38:42 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.201 2009/05/07 09:13:13 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.200 2009/05/06 22:38:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.201 2009/05/07 09:13:13 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -309,7 +309,7 @@ vnd_detach(device_t self, int flags)
 static struct vnd_softc *
 vnd_spawn(int unit)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
 	cf->cf_name = vnd_cd.cd_name;
