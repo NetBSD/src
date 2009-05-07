@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.105 2009/04/11 07:20:09 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.106 2009/05/07 06:56:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.105 2009/04/11 07:20:09 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.106 2009/05/07 06:56:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ mkfs(const char *fsys, int fi, int fo,
 	if (Oflag <= 1) {
 		if ((uint64_t)sblock.fs_size >= 1ull << 31) {
 			printf("Too many fragments (0x%" PRIx64
-			    ") for a UFS1 filesystem\n", sblock.fs_size);
+			    ") for a FFSv1 filesystem\n", sblock.fs_size);
 			exit(22);
 		}
 		sblock.fs_magic = FS_UFS1_MAGIC;
