@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.113.4.1 2009/02/24 04:13:35 snj Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.113.4.2 2009/05/07 00:25:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.113.4.1 2009/02/24 04:13:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.113.4.2 2009/05/07 00:25:37 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1369,7 +1369,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 	ufs_add32(cgp->cg_frsum[allocsiz], -1, needswap);
 	if (frags != allocsiz)
 		ufs_add32(cgp->cg_frsum[allocsiz - frags], 1, needswap);
-	blkno = cg * fs->fs_fpg + bno;
+	blkno = cgbase(fs, cg) + bno;
 	ACTIVECG_CLR(fs, cg);
 	mutex_exit(&ump->um_lock);
 	if (DOINGSOFTDEP(ITOV(ip)))
@@ -1573,7 +1573,7 @@ ffs_clusteralloc(struct inode *ip, int cg, daddr_t bpref, int len)
 		    got - run + i))
 			panic("ffs_clusteralloc: map mismatch");
 #endif
-	bno = cg * fs->fs_fpg + blkstofrags(fs, got - run + 1);
+	bno = cgbase(fs, cg) + blkstofrags(fs, got - run + 1);
 	if (dtog(fs, bno) != cg)
 		panic("ffs_clusteralloc: allocated out of group");
 	len = blkstofrags(fs, len);
