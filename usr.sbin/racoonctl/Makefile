@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2009/04/22 15:23:07 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2009/05/07 09:31:40 spz Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 
@@ -13,7 +13,7 @@ DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 CPPFLAGS+=	-I${DIST}/src/racoon -I${DIST}/src/libipsec	\
 		-I${NETBSDSRCDIR}/lib/libipsec 			\
 		-UIPSEC_DEBUG -DHAVE_CONFIG_H -DNOUSE_PRIVSEP	\
-		-DADMINPORTDIR=\"/var/racoon\"
+		-DADMINPORTDIR=\"/var/run\"
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 CLEANFILES+=	racoonctl.cat8
