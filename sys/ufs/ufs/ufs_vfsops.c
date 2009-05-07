@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.39 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.40 2009/05/07 19:26:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.39 2008/05/06 18:43:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.40 2009/05/07 19:26:09 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -117,25 +117,55 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
 		uid = kauth_cred_getuid(l->l_cred);
 	cmd = cmds >> SUBCMDSHIFT;
 
+	/* Mark the mount busy, as we're passing it to kauth(9). */
+	error = vfs_busy(mp, NULL);
+	if (error)
+		return (error);
+
 	switch (cmd) {
 	case Q_SYNC:
 		break;
+
 	case Q_GETQUOTA:
+		/* The user can always query about his own quota. */
 		if (uid == kauth_cred_getuid(l->l_cred))
 			break;
-		/* fall through */
+
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, KAUTH_ARG(uid), NULL);
+
+		break;
+
+	case Q_QUOTAON:
+	case Q_QUOTAOFF:
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
+
+		break;
+
+	case Q_SETQUOTA:
+	case Q_SETUSE:
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(uid), NULL);
+
+		break;
+
 	default:
-		if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL)) != 0)
-			return (error);
+		error = EINVAL;
+		break;
 	}
 
 	type = cmds & SUBCMDMASK;
-	if ((u_int)type >= MAXQUOTAS)
-		return (EINVAL);
-	error = vfs_busy(mp, NULL);
-	if (error != 0)
+	if (!error) {
+		/* Only check if there was no error above. */
+		if ((u_int)type >= MAXQUOTAS)
+			error = EINVAL;
+	}
+
+	if (error) {
+		vfs_unbusy(mp, false, NULL);
 		return (error);
+	}
 
 	mutex_enter(&mp->mnt_updating);
 	switch (cmd) {
