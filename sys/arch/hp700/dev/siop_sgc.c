@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_sgc.c,v 1.1 2008/03/30 12:32:13 skrll Exp $	*/
+/*	$NetBSD: siop_sgc.c,v 1.2 2009/05/07 15:17:22 skrll Exp $	*/
 
 /*	$OpenBSD: siop_sgc.c,v 1.1 2007/08/05 19:09:52 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.1 2008/03/30 12:32:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.2 2009/05/07 15:17:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,7 +93,7 @@ siop_sgc_attach(struct device *parent, struct device *self, void *aux)
 	sgc->sc_iot = ca->ca_iot;
 	if (bus_space_map(sgc->sc_iot, ca->ca_hpa,
 	    IOMOD_HPASIZE, 0, &sgc->sc_ioh)) {
-		printf(": cannot map io space\n");
+		printf(": can't map io space\n");
 		return;
 	}
 

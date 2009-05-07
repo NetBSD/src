@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.13 2008/03/29 15:59:26 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.14 2009/05/07 15:17:22 skrll Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.13 2008/03/29 15:59:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.14 2009/05/07 15:17:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ sti_sgc_probe(struct device *parent, struct cfdata *cf, void *aux)
 	/* if it does not map, probably part of the lasi space */
 	if ((rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &romh))) {
 #ifdef STIDEBUG
-		printf ("sti: cannot map rom space (%d)\n", rv);
+		printf ("sti: can't map rom space (%d)\n", rv);
 #endif
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN) {
 			romh = rom;
@@ -239,7 +239,7 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN)
 			sc->romh = rom;
 		else {
-			printf (": cannot map rom space (%d)\n", rv);
+			printf (": can't map rom space (%d)\n", rv);
 			return;
 		}
 	}
