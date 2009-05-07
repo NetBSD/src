@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.31 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.32 2009/05/07 06:41:19 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -211,7 +211,10 @@ ENTRY_NOPROFILE(start,0)
 	ldil	L%esym,%r1
 	stw	%arg3,R%esym(%r1)
 
-	/* Put page aligned %arg3 into %t3. It is the start of available memory. */
+	/*
+	 * Put page aligned %arg3 into %t3. It is the start of available
+	 * memory.
+	 */
 	ldo	NBPG-1(%arg3), %t3
 	dep	%r0, 31, PGSHIFT, %t3
 
@@ -253,8 +256,8 @@ $start_zero_tf:
 	/*
 	 * Setup various pointers.
 	 *
-	 * First free memory is %t3 plus normal U space. The last page of USPACE
-	 * is the redzone if DIAGNOSTIC (see param.h).
+	 * First free memory is %t3 plus normal U space. The last page of
+	 * USPACE is the redzone if DIAGNOSTIC (see param.h).
 	 */
 	ldil	L%USPACE, %r4
 	add	%t3, %r4, %r4
