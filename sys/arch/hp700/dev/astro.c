@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.3 2009/05/07 09:56:50 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.4 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -116,7 +116,7 @@ struct astro_regs {
 #define IOTTE_CI	0x00000000000000ffLL	/* Coherent index */
 
 struct astro_softc {
-	struct device sc_dv;
+	device_t sc_dv;
 
 	bus_dma_tag_t sc_dmat;
 	struct astro_regs volatile *sc_regs;
@@ -154,11 +154,11 @@ struct iommu_map_state {
 	struct iommu_page_map ims_map;	/* map must be last (array at end) */
 };
 
-int	astro_match(struct device *, struct cfdata *, void *);
-void	astro_attach(struct device *, struct device *, void *);
-static void astro_callback(struct device *self, struct confargs *ca);
+int	astro_match(device_t, cfdata_t, void *);
+void	astro_attach(device_t, device_t, void *);
+static void astro_callback(device_t self, struct confargs *ca);
 
-CFATTACH_DECL(astro, sizeof(struct astro_softc),
+CFATTACH_DECL_NEW(astro, sizeof(struct astro_softc),
     astro_match, astro_attach, NULL, NULL);
 
 extern struct cfdriver astro_cd;
@@ -205,7 +205,7 @@ const struct hppa_bus_dma_tag astro_dmat = {
 };
 
 int
-astro_match(struct device *parent, struct cfdata *cf, void *aux)
+astro_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -222,10 +222,10 @@ astro_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-astro_attach(struct device *parent, struct device *self, void *aux)
+astro_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux, nca;
-	struct astro_softc *sc = (struct astro_softc *)self;
+	struct astro_softc *sc = device_private(self);
 	volatile struct astro_regs *r;
 	bus_space_handle_t ioh;
 	uint32_t rid, ioc_ctrl;
@@ -237,16 +237,17 @@ astro_attach(struct device *parent, struct device *self, void *aux)
 	int iova_bits;
 	int pagezero_cookie;
 
+	sc->sc_dv = self;
 	sc->sc_dmat = ca->ca_dmatag;
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, sizeof(struct astro_regs),
 	    0, &ioh)) {
-		printf(": can't map IO space\n");
+		aprint_error(": can't map IO space\n");
 		return;
 	}
 	sc->sc_regs = r = (struct astro_regs *)ca->ca_hpa;
 
 	rid = le32toh(r->rid);
-	printf(": Astro rev %d.%d\n", (rid & 7) + 1, (rid >> 3) & 3);
+	aprint_normal(": Astro rev %d.%d\n", (rid & 7) + 1, (rid >> 3) & 3);
 
 	ioc_ctrl = le32toh(r->ioc_ctrl);
 	ioc_ctrl &= ~ASTRO_IOC_CTRL_CE;
@@ -320,7 +321,7 @@ astro_attach(struct device *parent, struct device *self, void *aux)
          * Now all the hardware's working we need to allocate a dvma map.
          */
 	snprintf(sc->sc_dvmamapname, sizeof(sc->sc_dvmamapname),
-	    "%s_dvma", sc->sc_dv.dv_xname);
+	    "%s_dvma", device_xname(sc->sc_dv));
         sc->sc_dvmamap = extent_create(sc->sc_dvmamapname, 0, (1 << iova_bits),
             M_DEVBUF, 0, 0, EX_NOWAIT);
 
@@ -336,7 +337,7 @@ astro_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-astro_callback(struct device *self, struct confargs *ca)
+astro_callback(device_t self, struct confargs *ca)
 {
 
 	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);

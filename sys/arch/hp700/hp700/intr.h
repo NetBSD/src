@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct hp700_int_reg {
 extern	struct hp700_int_reg int_reg_cpu;
 void	hp700_intr_bootstrap(void);
 void	hp700_intr_reg_establish(struct hp700_int_reg *);
-void *	hp700_intr_establish(struct device *, int, int (*)(void *), void *,
+void *	hp700_intr_establish(device_t, int, int (*)(void *), void *,
 	    struct hp700_int_reg *, int);
 int	hp700_intr_allocate_bit(struct hp700_int_reg *);
 int	_hp700_intr_ipl_next(void);
