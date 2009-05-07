@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.9 2009/05/07 14:13:01 tsutsui Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.10 2009/05/07 14:22:37 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.9 2009/05/07 14:13:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.10 2009/05/07 14:22:37 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -71,9 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.9 2009/05/07 14:13:01 tsutsui Exp $
 #include <sys/mbuf.h>
 
 #include "bpfilter.h"
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <dev/ic/i82596reg.h>
 #include <dev/ic/i82596var.h>
@@ -102,7 +102,7 @@ CFATTACH_DECL_NEW(
 	iee_gsc_match,
 	iee_gsc_attach,
 	iee_gsc_detach,
-    	NULL
+	NULL
 );
 
 int iee_gsc_cmd(struct iee_softc *, u_int32_t);
@@ -122,7 +122,7 @@ iee_gsc_cmd(struct iee_softc *sc, u_int32_t cmd)
 	/* Wait for the cmd to finish */
 	for (n = 0 ; n < 100000; n++) {
 		DELAY(1);
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF, 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF,
 		    IEE_SCB_SZ, BUS_DMASYNC_PREREAD);
 		if (SC_SCB->scb_cmd == 0)
 			break;
@@ -144,7 +144,7 @@ iee_gsc_reset(struct iee_softc *sc)
 
 	/* Make sure the bussy byte is set and the cache is flushed. */
 	SC_ISCP->iscp_bussy = IEE_ISCP_BUSSY;
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCP_OFF, IEE_SCP_SZ 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCP_OFF, IEE_SCP_SZ
 	    + IEE_ISCP_SZ + IEE_SCB_SZ, BUS_DMASYNC_PREWRITE);
 	/* Setup the PORT Command with pointer to SCP. */
 	cmd = IEE_PORT_SCP | IEE_PHYS_SHMEM(IEE_SCP_OFF);
@@ -170,13 +170,13 @@ iee_gsc_reset(struct iee_softc *sc)
 	bus_space_write_4(sc_gsc->sc_iot, sc_gsc->sc_ioh, IEE_GSC_CHANATT, 0);
 	/* Wait for the chip to initialize and read SCP and ISCP. */
 	for (n = 0 ; n < 1000; n++) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF, 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF,
 		    IEE_ISCP_SZ, BUS_DMASYNC_PREREAD);
 		if (SC_ISCP->iscp_bussy != IEE_ISCP_BUSSY)
 			break;
 		DELAY(100);
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF,
 	    IEE_ISCP_SZ, BUS_DMASYNC_PREREAD);
 	if (n < 1000) {
 		/* ACK interrupts we may have caused */
@@ -218,18 +218,18 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_type = I82596_CA;	/* LASI based */
 	/*
-	 * Pre PA7100LC CPUs don't support uncacheable mappings. So make 
-	 * descriptors align to cache lines. Needed to avoid race conditions 
-	 * caused by flushing cache lines that overlap multiple descriptors. 
+	 * Pre PA7100LC CPUs don't support uncacheable mappings. So make
+	 * descriptors align to cache lines. Needed to avoid race conditions
+	 * caused by flushing cache lines that overlap multiple descriptors.
 	 */
-        cpu_type = hppa_cpu_info->hci_type;
+	cpu_type = hppa_cpu_info->hci_type;
 	if (cpu_type == hpcx || cpu_type == hpcxs || cpu_type == hpcxt)
 		sc->sc_cl_align = 32;
 	else
 		sc->sc_cl_align = 1;
 
 	sc_gsc->sc_iot = ga->ga_iot;
-	if (bus_space_map(sc_gsc->sc_iot, ga->ga_hpa, IEE_GSC_IO_SZ, 0, 
+	if (bus_space_map(sc_gsc->sc_iot, ga->ga_hpa, IEE_GSC_IO_SZ, 0,
 	    &sc_gsc->sc_ioh)) {
 		aprint_error(": iee_gsc_attach: can't map I/O space\n");
 		return;
@@ -242,13 +242,13 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 		    "DMA memory\n", (int)IEE_SHMEM_MAX);
 		return;
 	}
-	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX, 
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX,
 	    (void **)&sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
 		aprint_error(": iee_gsc_attach: can't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
 		return;
 	}
-	if (bus_dmamap_create(sc->sc_dmat, IEE_SHMEM_MAX, rsegs, 
+	if (bus_dmamap_create(sc->sc_dmat, IEE_SHMEM_MAX, rsegs,
 	    IEE_SHMEM_MAX, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
 		aprint_error(": iee_gsc_attach: can't create DMA map\n");
 		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
@@ -276,11 +276,11 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 		 *	715/50, 735/99: Rev A1? (per PR port-hp700/35531)
 		 *	735/125: Rev C
 		 */
-		SC_SCP->scp_sysbus = IEE_SYSBUS_INT | 
+		SC_SCP->scp_sysbus = IEE_SYSBUS_INT |
 		    IEE_SYSBUS_TRG | IEE_SYSBUS_LIEAR | IEE_SYSBUS_STD;
 		sc->sc_flags = IEE_NEED_SWAP | IEE_REV_A;
 	} else {
-		SC_SCP->scp_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT | 
+		SC_SCP->scp_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT |
 		    IEE_SYSBUS_TRG | IEE_SYSBUS_LIEAR | IEE_SYSBUS_STD;
 		sc->sc_flags = IEE_NEED_SWAP;
 	}
