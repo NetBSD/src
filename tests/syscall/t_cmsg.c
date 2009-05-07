@@ -1,12 +1,17 @@
-/*	$NetBSD: t_cmsg.c,v 1.4 2009/05/07 14:45:19 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.5 2009/05/07 16:19:30 pooka Exp $	*/
 
 #include <sys/types.h>
+#include <sys/mount.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
+#include <fs/tmpfs/tmpfs_args.h>
+
 #include <atf-c.h>
+#include <fcntl.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -76,21 +81,70 @@ ATF_TC_HEAD(cmsg_sendfd, tc)
 
 ATF_TC_BODY(cmsg_sendfd, tc)
 {
+	char buf[128];
 	struct cmsghdr *cmp;
 	struct msghdr msg;
+	struct tmpfs_args args;
+	struct sockaddr_un sun;
+	struct lwp *l1, *l2;
 	struct iovec iov;
-	int s[2], sgot;
-	int fd;
-	int v1, v2;
+	socklen_t sl;
+	int s1, s2, sgot;
+	int rfd, fd, storage;
+
+	memset(&args, 0, sizeof(args));
+	args.ta_version = TMPFS_ARGS_VERSION;
+	args.ta_root_mode = 0777;
 
 	rump_init();
+	/*
+	 * mount tmpfs as root -- rump root file system does not support
+	 * unix domain sockets.
+	 */
+	if (rump_sys_mount(MOUNT_TMPFS, "/", 0, &args, sizeof(args)) == -1)
+		atf_tc_fail_errno("mount tmpfs");
 
-	if (rump_sys_socketpair(AF_LOCAL, SOCK_STREAM, 0, s) == -1)
-		atf_tc_fail("rump_sys_socketpair");
+	/* create unix socket and bind it to a path */
+	memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_LOCAL;
+#define SOCKPATH "/com"
+	strncpy(sun.sun_path, SOCKPATH, sizeof(SOCKPATH));
+	s1 = rump_sys_socket(AF_LOCAL, SOCK_STREAM, 0);
+	if (s1 == -1)
+		atf_tc_fail_errno("socket 1");
+	if (rump_sys_bind(s1, (struct sockaddr *)&sun, SUN_LEN(&sun)) == -1)
+		atf_tc_fail_errno("socket 1 bind");
+	if (rump_sys_listen(s1, 1) == -1)
+		atf_tc_fail_errno("socket 1 listen");
+
+	/* store our current lwp/proc */
+	l1 = rump_get_curlwp();
+
+	/* create new process */
+	l2 = rump_newproc_switch();
+
+	/* connect to unix domain socket */
+	memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_LOCAL;
+	strncpy(sun.sun_path, SOCKPATH, sizeof(SOCKPATH));
+	s2 = rump_sys_socket(AF_LOCAL, SOCK_STREAM, 0);
+	if (s2 == -1)
+		atf_tc_fail_errno("socket 2");
+	if (rump_sys_connect(s2, (struct sockaddr *)&sun, SUN_LEN(&sun)) == -1)
+		atf_tc_fail_errno("socket 2 connect");
+
+	/* open a file and write stuff to it */
+	fd = rump_sys_open("/foobie", O_RDWR | O_CREAT, 0777);
+	if (fd == -1)
+		atf_tc_fail_errno("can't open file");
+#define MAGICSTRING "duam xnaht"
+	if (rump_sys_write(fd, MAGICSTRING, sizeof(MAGICSTRING)) !=
+	    sizeof(MAGICSTRING))
+		atf_tc_fail_errno("file write"); /* XXX: errno */
 
 	cmp = malloc(CMSG_LEN(sizeof(int)));
 
-	iov.iov_base = &fd;
+	iov.iov_base = &storage;
 	iov.iov_len = sizeof(int);
 
 	cmp->cmsg_level = SOL_SOCKET;
@@ -103,21 +157,33 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	msg.msg_namelen = 0;
 	msg.msg_control = cmp;
 	msg.msg_controllen = CMSG_LEN(sizeof(int));
-	*(int *)CMSG_DATA(cmp) = s[1];
+	*(int *)CMSG_DATA(cmp) = fd;
 
-	if (rump_sys_sendmsg(s[0], &msg, 0) == -1)
+	/* pass the fd */
+	if (rump_sys_sendmsg(s2, &msg, 0) == -1)
 		atf_tc_fail_errno("sendmsg failed");
-	if (rump_sys_recvmsg(s[1], &msg, 0) == -1)
-		atf_tc_fail_errno("recvmsg failed");
-	sgot = *(int *)CMSG_DATA(cmp);
 
-	/* test that we really got the fd by writing something thought it */
-	v1 = 37;
-	v2 = -1;
-	rump_sys_write(s[0], &v1, sizeof(v1));
-	rump_sys_read(sgot, &v2, sizeof(v1));
-	if (v1 != v2)
-		atf_tc_fail("value mismatch: %d vs. %d", v1, v2);
+	/* switch back to original proc */
+	rump_set_curlwp(l1);
+
+	/* accept connection and read fd */
+	sl = sizeof(sun);
+	sgot = rump_sys_accept(s1, (struct sockaddr *)&sun, &sl);
+	if (sgot == -1)
+		atf_tc_fail_errno("accept");
+	if (rump_sys_recvmsg(sgot, &msg, 0) == -1)
+		atf_tc_fail_errno("recvmsg failed");
+	rfd = *(int *)CMSG_DATA(cmp);
+
+	/* set offset to 0 and read from the fd */
+	memset(buf, 0, sizeof(buf));
+	rump_sys_lseek(rfd, 0, 0, SEEK_SET);
+	if (rump_sys_read(rfd, buf, sizeof(buf)) == -1)
+		atf_tc_fail_errno("read rfd");
+
+	/* check that we got the right stuff */
+	if (strcmp(buf, MAGICSTRING) != 0)
+		atf_tc_fail("expected \"%s\", got \"%s\"", MAGICSTRING, buf);
 }
 
 ATF_TP_ADD_TCS(tp)
