@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.16 2009/05/07 15:17:22 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.17 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.16 2009/05/07 15:17:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.17 2009/05/07 15:34:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,8 @@ struct ie_gsc_softc {
 #define	IEGSC_GECKO	(1 << 0)
 }; 
 
-int	ie_gsc_probe(struct device *, struct cfdata *, void *);
-void	ie_gsc_attach(struct device *, struct device *, void *);
+int	ie_gsc_probe(device_t, cfdata_t, void *);
+void	ie_gsc_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ie_gsc, sizeof(struct ie_gsc_softc),
     ie_gsc_probe, ie_gsc_attach, NULL, NULL);
@@ -370,7 +370,7 @@ i82596_probe(struct ie_softc *sc)
 }
 
 int
-ie_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
+ie_gsc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -383,9 +383,9 @@ ie_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ie_gsc_attach(struct device *parent, struct device *self, void *aux)
+ie_gsc_attach(device_t parent, device_t self, void *aux)
 {
-	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)self;
+	struct ie_gsc_softc *gsc = device_private(self);
 	struct ie_softc *sc = &gsc->ie;
 	struct gsc_attach_args *ga = aux;
 	bus_dma_segment_t seg;

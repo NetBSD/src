@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.47 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.48 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.47 2009/04/30 07:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.48 2009/05/07 15:34:49 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -89,15 +89,15 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.47 2009/04/30 07:01:26 skrll Exp $");
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 
 struct mainbus_softc {
-	struct  device sc_dv;
+	device_t sc_dv;
 
 	hppa_hpa_t sc_hpa;
 };
 
-int	mbmatch(struct device *, struct cfdata *, void *);
-void	mbattach(struct device *, struct device *, void *);
+int	mbmatch(device_t, cfdata_t, void *);
+void	mbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
+CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
     mbmatch, mbattach, NULL, NULL);
 
 extern struct cfdriver mainbus_cd;
@@ -1461,7 +1461,7 @@ const struct hppa_bus_dma_tag hppa_dmatag = {
 };
 
 int
-mbmatch(struct device *parent, struct cfdata *cf, void *aux)
+mbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* there will be only one */
@@ -1472,7 +1472,7 @@ mbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mb_module_callback(struct device *self, struct confargs *ca)
+mb_module_callback(device_t self, struct confargs *ca)
 {
 	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
@@ -1481,7 +1481,7 @@ mb_module_callback(struct device *self, struct confargs *ca)
 }
 
 static void
-mb_cpu_mem_callback(struct device *self, struct confargs *ca)
+mb_cpu_mem_callback(device_t self, struct confargs *ca)
 {
 	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY))
@@ -1490,12 +1490,14 @@ mb_cpu_mem_callback(struct device *self, struct confargs *ca)
 }
 
 void
-mbattach(struct device *parent, struct device *self, void *aux)
+mbattach(device_t parent, device_t self, void *aux)
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	struct mainbus_softc *sc = device_private(self);
 	struct confargs nca;
 	bus_space_handle_t ioh;
 	hppa_hpa_t hpabase;
+
+	sc->sc_dv = self;
 
 	mb_attached = 1;
 
@@ -1514,7 +1516,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
  	 * be a great idea.  I'm not sure which yet.
 	 */
 	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa, 0 - pdc_hpa.hpa, 0, &ioh))
-		panic("mbattach: cannot map mainbus IO space");
+		panic("mbattach: can't map mainbus IO space");
 
 	/*
 	 * Local-Broadcast the HPA to all modules on the bus
@@ -1643,8 +1645,7 @@ mbprint(void *aux, const char *pnp)
 }
 
 int
-mbsubmatch(struct device *parent, struct cfdata *cf,
-	   const int *ldesc, void *aux)
+mbsubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 	int ret;

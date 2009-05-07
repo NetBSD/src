@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.11 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -75,15 +75,13 @@ extern void (*cold_hook)(int);
 #define	HPPA_COLD_HOT	1
 #define	HPPA_COLD_OFF	2
 
-struct device;
-
 const char *hppa_mod_info(int, int);
 
-void	pdc_scanbus(struct device *, struct confargs *,
-    void (*)(struct device *, struct confargs *));
+void	pdc_scanbus(device_t, struct confargs *,
+    void (*)(device_t, struct confargs *));
 
 int	mbprint(void *, const char *);
-int	mbsubmatch(struct device *, struct cfdata *,
+int	mbsubmatch(device_t, struct cfdata *,
 			const int *, void *);
 int	clock_intr(void *);
 

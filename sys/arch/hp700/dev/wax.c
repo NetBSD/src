@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.10 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.11 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.10 2009/04/30 07:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.11 2009/05/07 15:34:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,16 +59,16 @@ struct wax_regs {
 };
 
 struct wax_softc {
-	struct device sc_dv;
+	device_t sc_dv;
 	struct hp700_int_reg sc_int_reg;
 	struct wax_regs volatile *sc_regs;
 };
 
-int	waxmatch(struct device *, struct cfdata *, void *);
-void	waxattach(struct device *, struct device *, void *);
+int	waxmatch(device_t, cfdata_t, void *);
+void	waxattach(device_t, device_t, void *);
 
 
-CFATTACH_DECL(wax, sizeof(struct wax_softc),
+CFATTACH_DECL_NEW(wax, sizeof(struct wax_softc),
     waxmatch, waxattach, NULL, NULL);
 
 static int wax_attached;
@@ -95,7 +95,7 @@ wax_fix_args(void *_sc, struct gsc_attach_args *ga)
 }
 
 int
-waxmatch(struct device *parent, struct cfdata *cf, void *aux)
+waxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -108,24 +108,26 @@ waxmatch(struct device *parent, struct cfdata *cf, void *aux)
 	/* Make sure we have an IRQ. */
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
 		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
-		if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
-			aprint_normal("waxmatch: Can't allocate IRQ\n");
-			return 0;
-		}
 	}
 
 	return 1;
 }
 
 void
-waxattach(struct device *parent, struct device *self, void *aux)
+waxattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct wax_softc *sc = (struct wax_softc *)self;
+	struct wax_softc *sc = device_private(self);
 	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
 	int s, in;
 
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
+		aprint_error(": can't allocate IRQ\n");
+		return;
+	}
+
+	sc->sc_dv = self;
 	wax_attached = 1;
 
 	aprint_normal("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.9 2009/05/07 15:17:22 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.10 2009/05/07 15:34:49 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.9 2009/05/07 15:17:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.10 2009/05/07 15:34:49 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -107,7 +107,7 @@ struct dino_regs {
 };
 
 struct dino_softc {
-	struct  device sc_dv;
+	device_t sc_dv;
 
 	int sc_ver;
 	void *sc_ih;
@@ -127,15 +127,15 @@ struct dino_softc {
 	struct hppa_bus_dma_tag sc_dmatag;
 };
 
-int	dinomatch(struct device *, struct cfdata *, void *);
-void	dinoattach(struct device *, struct device *, void *);
-static void	dino_callback(struct device *, struct confargs *);
+int	dinomatch(device_t, struct cfdata *, void *);
+void	dinoattach(device_t, device_t, void *);
+static void	dino_callback(device_t, struct confargs *);
 
-CFATTACH_DECL(dino, sizeof(struct dino_softc), dinomatch, dinoattach, NULL, 
+CFATTACH_DECL_NEW(dino, sizeof(struct dino_softc), dinomatch, dinoattach, NULL, 
     NULL);
 
 
-void dino_attach_hook(struct device *, struct device *,
+void dino_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
 void dino_enable_bus(struct dino_softc *, int);
 int dino_maxdevs(void *, int);
@@ -148,7 +148,7 @@ const char *dino_intr_string(void *, pci_intr_handle_t);
 void *dino_intr_establish(void *, pci_intr_handle_t, int, 
     int (*handler)(void *), void *);
 void dino_intr_disestablish(void *, void *);
-void *dino_alloc_parent(struct device *, struct pci_attach_args *, int);
+void *dino_alloc_parent(device_t, struct pci_attach_args *, int);
 int dino_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 int dino_memmap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 int dino_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t, 
@@ -253,7 +253,7 @@ paddr_t dino_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
 
 
 void
-dino_attach_hook(struct device *parent, struct device *self,
+dino_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 	struct dino_softc *sc = pba->pba_pc->_cookie;
@@ -381,7 +381,7 @@ dino_intr_establish(void *v, pci_intr_handle_t ih,
 {
 	struct dino_softc *sc = v;
 
-	return hp700_intr_establish(&sc->sc_dv, pri, handler, arg, 
+	return hp700_intr_establish(sc->sc_dv, pri, handler, arg, 
 	    &sc->sc_int_reg, ih);
 }
 
@@ -394,7 +394,7 @@ dino_intr_disestablish(void *v, void *cookie)
 
 #if NCARDBUS > 0
 void *
-dino_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
+dino_alloc_parent(device_t self, struct pci_attach_args *pa, int io)
 {
 	struct dino_softc *sc = pa->pa_pc->_cookie;
 	struct extent *ex;
@@ -1557,7 +1557,7 @@ const struct hppa_pci_chipset_tag dino_pc = {
 };
 
 int
-dinomatch(struct device *parent, struct cfdata *cfdata, void *aux)
+dinomatch(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -1567,21 +1567,16 @@ dinomatch(struct device *parent, struct cfdata *cfdata, void *aux)
 		return 0;
 
 	/* Make sure we have an IRQ. */
-	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
 		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
-		if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
-			aprint_normal("dinomatch: Can't allocate IRQ\n");
-			return 0;
-		}
-	}
 
 	return 1;
 }
 
 void
-dinoattach(struct device *parent, struct device *self, void *aux)
+dinoattach(device_t parent, device_t self, void *aux)
 {
-	struct dino_softc *sc = (struct dino_softc *)self;
+	struct dino_softc *sc = device_private(self);
 	struct confargs *ca = (struct confargs *)aux, nca;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
@@ -1589,10 +1584,17 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 	u_int data;
 	int s, ver;
 
+	sc->sc_dv = self;
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_dmat = ca->ca_dmatag;
+
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
+		aprint_error_dev(self, ": can't allocate IRQ");
+		return;
+	}
+
 	if (bus_space_map(sc->sc_bt, ca->ca_hpa, PAGE_SIZE, 0, &sc->sc_bh)) {
-		printf(": can't map space\n");
+		aprint_error(": can't map space\n");
 		return;
 	}
 
@@ -1611,10 +1613,10 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	snprintf(sc->sc_ioexname, sizeof(sc->sc_ioexname),
-	    "%s_io", sc->sc_dv.dv_xname);
+	    "%s_io", device_xname(self));
 	if ((sc->sc_ioex = extent_create(sc->sc_ioexname, 0, 0xffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_MALLOCOK)) == NULL) {
-		printf(": can't allocate I/O extent map\n");
+		aprint_error(": can't allocate I/O extent map\n");
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, PAGE_SIZE);
 		return;
 	}
@@ -1633,8 +1635,8 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_int_reg.int_reg_req = &r->irr0;
 	sc->sc_int_reg.int_reg_level = &r->ilr;
 	/* Add the I/O interrupt register. */
-	sc->sc_int_reg.int_reg_dev = sc->sc_dv.dv_xname;
-	sc->sc_ih = hp700_intr_establish(&sc->sc_dv, IPL_NONE,
+	sc->sc_int_reg.int_reg_dev = device_xname(self);
+	sc->sc_ih = hp700_intr_establish(sc->sc_dv, IPL_NONE,
 	    NULL, &sc->sc_int_reg, &int_reg_cpu, ca->ca_irq);
 
 	/* TODO establish the bus error interrupt */
@@ -1668,7 +1670,7 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 	sc->sc_ver = ver;
-	printf(": %s V%d.%d\n", p, ver >> 4, ver & 0xf);
+	aprint_normal(": %s V%d.%d\n", p, ver >> 4, ver & 0xf);
 
 	sc->sc_iot = dino_iomemt;
 	sc->sc_iot.hbt_cookie = sc;
@@ -1701,7 +1703,7 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-dino_callback(struct device *self, struct confargs *ca)
+dino_callback(device_t self, struct confargs *ca)
 {
 
 	config_found_sm_loc(self, "dino", NULL, ca, mbprint, mbsubmatch);
