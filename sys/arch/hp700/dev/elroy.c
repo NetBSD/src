@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.5 2009/05/07 08:55:15 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.6 2009/05/07 08:58:13 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -1305,12 +1305,10 @@ le64toh(r->eio_base), le64toh(r->eio_mask));
 	sc->sc_dmatag._cookie = sc;
 
 	memset(&pba, 0, sizeof(pba));
-// 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iot;
 	pba.pba_memt = &sc->sc_memt;
 	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
-// 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0; /* (le32toh(elroy_read32(&r->busnum)) & 0xff) >> 4; */
  	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
