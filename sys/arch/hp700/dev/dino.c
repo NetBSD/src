@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.8 2009/04/30 07:01:26 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.9 2009/05/07 15:17:22 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.8 2009/04/30 07:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.9 2009/05/07 15:17:22 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1614,7 +1614,7 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 	    "%s_io", sc->sc_dv.dv_xname);
 	if ((sc->sc_ioex = extent_create(sc->sc_ioexname, 0, 0xffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_MALLOCOK)) == NULL) {
-		printf(": cannot allocate I/O extent map\n");
+		printf(": can't allocate I/O extent map\n");
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, PAGE_SIZE);
 		return;
 	}

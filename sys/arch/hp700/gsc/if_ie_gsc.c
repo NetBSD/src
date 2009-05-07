@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.15 2008/10/06 15:57:50 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.16 2009/05/07 15:17:22 skrll Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.15 2008/10/06 15:57:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.16 2009/05/07 15:17:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamem_alloc(gsc->iemt, sc->sc_msize, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) {
-		printf (": cannot allocate %d bytes of DMA memory\n",
+		printf (": can't allocate %d bytes of DMA memory\n",
 			sc->sc_msize);
 		return;
 	}
@@ -434,7 +434,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamem_map(gsc->iemt, &seg, rseg, sc->sc_msize,
 			   (void **)&sc->sc_maddr, BUS_DMA_NOWAIT)) {
-		printf (": cannot map DMA memory\n");
+		printf (": can't map DMA memory\n");
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
 		return;
 	}
@@ -444,7 +444,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamap_create(gsc->iemt, sc->sc_msize, rseg, sc->sc_msize,
 			      0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) {
-		printf(": cannot create DMA map\n");
+		printf(": can't create DMA map\n");
 		bus_dmamem_unmap(gsc->iemt,
 				 (void *)sc->sc_maddr, sc->sc_msize);
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
@@ -457,7 +457,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamap_load(gsc->iemt, sc->sc_dmamap, 
 			    sc->sc_maddr, sc->sc_msize, 
 			    NULL, BUS_DMA_NOWAIT)) {
-		printf(": cannot load DMA map\n");
+		printf(": can't load DMA map\n");
 		bus_dmamap_destroy(gsc->iemt, sc->sc_dmamap);
 		bus_dmamem_unmap(gsc->iemt,
 				 (void *)sc->sc_maddr, sc->sc_msize);
