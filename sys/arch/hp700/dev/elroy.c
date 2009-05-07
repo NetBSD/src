@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.3 2009/05/07 08:30:40 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.4 2009/05/07 08:54:59 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -149,11 +149,11 @@ void elroy_rrr_4(void *, bus_space_handle_t, bus_size_t, uint32_t *,
 void elroy_rrr_8(void *, bus_space_handle_t, bus_size_t, uint64_t *,
     bus_size_t);
 void elroy_wrr_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *,
-    bus_size_t c);
+    bus_size_t);
 void elroy_wrr_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *,
-    bus_size_t c);
+    bus_size_t);
 void elroy_wrr_8(void *, bus_space_handle_t, bus_size_t, const uint64_t *,
-    bus_size_t c);
+    bus_size_t);
 void elroy_sr_1(void *, bus_space_handle_t, bus_size_t, uint8_t,
     bus_size_t);
 void elroy_sr_2(void *, bus_space_handle_t, bus_size_t, uint16_t,
