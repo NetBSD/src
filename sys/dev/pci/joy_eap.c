@@ -1,7 +1,7 @@
-/* $NetBSD: joy_eap.c,v 1.11 2009/05/06 09:32:52 cegger Exp $ */
+/* $NetBSD: joy_eap.c,v 1.12 2009/05/07 07:56:03 cegger Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.11 2009/05/06 09:32:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.12 2009/05/07 07:56:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ int
 eap_joy_detach(device_t joydev, struct eap_gameport_args *gpa)
 {
 	int res;
-	struct joy_softc *sc = (struct joy_softc *)joydev;
+	struct joy_softc *sc = device_private(joydev);
 	u_int32_t icsc;
 
 	res = config_detach(joydev, 0);
