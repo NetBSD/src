@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.8 2009/05/05 18:23:43 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.9 2009/05/07 00:34:18 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -305,4 +305,16 @@ gnu/dist/binutils/bfd/elf32-vax.c		1.9
 	relocations when not all the entries are used.
 	Fixes PR port-vax/39182.
 	[mhitch, ticket #738]
+
+sys/ufs/ffs/ffs_alloc.c				1.123 via patch
+
+	Fix random 'filesystem full' messages by trapping a couple of
+	32-bit overflow areas missed in rev 1.110 and switching cgbase().
+	[sborrill, ticket #726]
+
+share/man/man4/age.4				1.4
+share/man/man4/ale.4				1.3
+
+	age(4) and ale(4) will first appear in 5.1, not 6.0.
+	[cegger, ticket #739]
 
