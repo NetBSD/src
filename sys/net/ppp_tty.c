@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.54 2009/04/15 20:44:25 elad Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.55 2009/05/07 18:01:57 elad Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.54 2009/04/15 20:44:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.55 2009/05/07 18:01:57 elad Exp $");
 
 #include "ppp.h"
 
@@ -208,8 +208,9 @@ pppopen(dev_t dev, struct tty *tp)
     struct ppp_softc *sc;
     int error, s;
 
-    if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	NULL)) != 0)
+    error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE_PPP,
+	KAUTH_REQ_NETWORK_INTERFACE_PPP_ADD, NULL, NULL, NULL);
+    if (error)
 	return (error);
 
     s = spltty();
