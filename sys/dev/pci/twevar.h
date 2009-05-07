@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.28 2009/05/06 10:34:33 cegger Exp $	*/
+/*	$NetBSD: twevar.h,v 1.29 2009/05/07 07:33:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct twe_drive {
 	uint8_t			td_type;
 	uint8_t			td_stripe;
 
-	struct device		*td_dev;
+	device_t td_dev;
 	const struct twe_callbacks *td_callbacks;
 };
 
@@ -83,7 +83,7 @@ struct twe_softc {
 struct twe_context {
 	void	(*tx_handler)(struct twe_ccb *, int);
 	void 	*tx_context;
-	struct	device	*tx_dv;
+	device_t tx_dv;
 };
 
 /* Command control block. */
