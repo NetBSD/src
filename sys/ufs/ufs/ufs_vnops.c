@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.175 2009/04/22 22:57:09 elad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.176 2009/05/07 19:30:30 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.175 2009/04/22 22:57:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.176 2009/05/07 19:30:30 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -585,12 +585,9 @@ ufs_setattr(void *v)
 			error = EPERM;
 			goto out;
 		}
-		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) &&
-		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred))))
-			goto out;
+		error = genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred);
+		if (error)
+			return (error);
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.25 2009/04/25 18:53:44 elad Exp $	*/
+/*	$NetBSD: genfs.h,v 1.26 2009/05/07 19:30:29 elad Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -39,5 +39,6 @@ void	genfs_renamelock_exit(struct mount *);
 int	genfs_can_chmod(vnode_t *, kauth_cred_t, uid_t, gid_t, mode_t);
 int	genfs_can_chown(vnode_t *, kauth_cred_t, uid_t, gid_t, uid_t, gid_t);
 int	genfs_can_mount(vnode_t *, mode_t, kauth_cred_t);
+int	genfs_can_chtimes(vnode_t *, u_int, uid_t, kauth_cred_t);
 
 #endif /* !_MISCFS_GENFS_GENFS_H_ */

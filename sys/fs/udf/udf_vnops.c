@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.40 2009/04/22 22:57:09 elad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.41 2009/05/07 19:30:30 elad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.40 2009/04/22 22:57:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.41 2009/05/07 19:30:30 elad Exp $");
 #endif /* not lint */
 
 
@@ -1087,9 +1087,8 @@ udf_chtimes(struct vnode *vp,
 	kauth_cred_t cred)
 {
 	struct udf_node  *udf_node = VTOI(vp);
-	uid_t euid, uid;
+	uid_t uid;
 	gid_t gid;
-	int issuperuser;
 	int error;
 
 #ifdef notyet
@@ -1106,19 +1105,9 @@ udf_chtimes(struct vnode *vp,
 	udf_getownership(udf_node, &uid, &gid);
 
 	/* check permissions */
-	euid  = kauth_cred_geteuid(cred);
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
-	issuperuser = (error == 0);
-
-	if (!issuperuser) {
-		if (euid != uid)
-			return EPERM;
-		if ((setattrflags & VA_UTIMES_NULL) == 0) {
-			error = VOP_ACCESS(vp, VWRITE, cred);
-			if (error)
-				return error;
-		}
-	}
+	error = genfs_can_chtimes(vp, setattrflags, uid, cred);
+	if (error)
+		return (error);
 
 	/* update node flags depending on what times are passed */
 	if (atime->tv_sec != VNOVAL)
