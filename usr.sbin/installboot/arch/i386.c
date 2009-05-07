@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.32 2009/04/05 11:55:39 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.33 2009/05/07 07:03:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.32 2009/04/05 11:55:39 lukem Exp $");
+__RCSID("$NetBSD: i386.c,v 1.33 2009/05/07 07:03:39 lukem Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -303,7 +303,7 @@ i386_setboot(ib_params *params)
 	assert(params->stage1 != NULL);
 
 	/*
-	 * There is only 8k of space in a UFSv1 partition (and ustarfs)
+	 * There is only 8k of space in a FFSv1 partition (and ustarfs)
 	 * so ensure we don't splat over anything important.
 	 */
 	if (params->s1stat.st_size > (off_t)(sizeof bootstrap)) {
