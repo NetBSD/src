@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_ffs.8,v 1.44 2008/10/09 16:56:23 christos Exp $
+.\"	$NetBSD: fsck_ffs.8,v 1.45 2009/05/07 06:54:23 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)fsck.8	8.3 (Berkeley) 11/29/94
 .\"
-.Dd October 9, 2008
+.Dd May 7, 2009
 .Dt FSCK_FFS 8
 .Os
 .Sh NAME
@@ -164,7 +164,7 @@ Use the block number
 as the super block for the file system.
 Block 32 is usually an alternative super block.
 .It Fl c Ar level
-Convert the file system to the level
+Convert the FFSv1 file system to the level
 .Ar level .
 Note that the level of a file system can only be raised.
 There are currently five levels defined:
@@ -182,7 +182,7 @@ If maxcontig is greater than one,
 build the free segment maps to aid in finding contiguous sets of blocks.
 If maxcontig is equal to one, delete any existing segment maps.
 .It 4
-Rearrange the super block to the same layout as UFS2;
+Rearrange the super block to the same layout as FFSv2;
 disable the rotational layout tables and per cylinder group
 block totals.
 .El
@@ -198,9 +198,15 @@ the conversion is listed and done if
 possible without user interaction.
 Conversion in preen mode is best used when all the file systems
 are being converted at once.
-The format of a file system can be determined from the
-third line of output from
-.Xr dumpfs 8 .
+.Pp
+The output of
+.Xr dumpfs 8
+can be examined to determine the format of the file system
+.Dq ( format
+in the second line)
+and the file system level
+.Dq ( fslevel
+in the sixth line).
 .It Fl d
 Print debugging output.
 .It Fl F
@@ -340,6 +346,7 @@ are fully enumerated and explained in Appendix A of
 .Xr fss 4 ,
 .Xr fs 5 ,
 .Xr fstab 5 ,
+.Xr dumpfs 8 ,
 .Xr fsck 8 ,
 .Xr fsdb 8 ,
 .Xr newfs 8 ,
