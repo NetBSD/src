@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.28 2009/05/05 09:51:24 cegger Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.29 2009/05/07 13:06:11 rjs Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.28 2009/05/05 09:51:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.29 2009/05/07 13:06:11 rjs Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -246,7 +246,7 @@ static int
 ahc_ioctl(struct scsipi_channel *channel, u_long cmd, void *addr,
     int flag, struct proc *p)
 {
-	struct ahc_softc *ahc = (void *)channel->chan_adapter->adapt_dev;
+	struct ahc_softc *ahc = device_private(channel->chan_adapter->adapt_dev);
 	int s, ret = ENOTTY;
 
 	switch (cmd) {
@@ -272,7 +272,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	struct ahc_initiator_tinfo *tinfo;
 	struct ahc_tmode_tstate *tstate;
 
-	ahc  = (void *)chan->chan_adapter->adapt_dev;
+	ahc  = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (req) {
 
@@ -475,7 +475,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	xs->error = 0;
 	xs->status = 0;
 	xs->xs_status = 0;
-	ahc = (void *)xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
+	ahc = device_private(xs->xs_periph->periph_channel->chan_adapter->adapt_dev);
 
 	if (nsegments != 0) {
 		struct ahc_dma_seg *sg;
