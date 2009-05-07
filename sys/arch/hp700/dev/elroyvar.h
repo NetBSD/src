@@ -1,4 +1,4 @@
-/*	$NetBSD: elroyvar.h,v 1.2 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: elroyvar.h,v 1.3 2009/05/07 09:08:02 skrll Exp $	*/
 
 /*	$OpenBSD: elroyvar.h,v 1.3 2007/06/17 14:51:21 kettenis Exp $	*/
 
@@ -26,7 +26,6 @@ struct elroy_softc {
 
 	int sc_ver;
 	hppa_hpa_t sc_hpa;
-// 	struct hp700_int_reg sc_int_reg;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 	bus_dma_tag_t sc_dmat;
