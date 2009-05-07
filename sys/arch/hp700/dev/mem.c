@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.19 2009/05/07 15:34:49 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18 2009/04/30 07:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19 2009/05/07 15:34:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,17 +140,17 @@ struct l2_mioc {
 };
 
 struct mem_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	volatile struct vi_trs *sc_vp;
 	volatile struct l2_mioc *sc_l2;
 };
 
-int	memmatch(struct device *, struct cfdata *, void *);
-void	memattach(struct device *, struct device *, void *);
+int	memmatch(device_t, cfdata_t, void *);
+void	memattach(device_t, device_t, void *);
 
-CFATTACH_DECL(mem, sizeof(struct mem_softc),
-    memmatch, memattach, NULL, NULL);
+CFATTACH_DECL_NEW(mem, sizeof(struct mem_softc), memmatch, memattach,
+    NULL, NULL);
 
 extern struct cfdriver mem_cd;
 
@@ -169,7 +169,7 @@ static void *zeropage;
 kmutex_t vmmap_lock;
 
 int
-memmatch(struct device *parent, struct cfdata *cf, void *aux)
+memmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -180,15 +180,17 @@ memmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-memattach(struct device *parent, struct device *self, void *aux)
+memattach(device_t parent, device_t self, void *aux)
 {
 	struct pdc_iodc_minit pdc_minit PDC_ALIGNMENT;
 	struct confargs *ca = aux;
-	struct mem_softc *sc = (struct mem_softc *)self;
+	struct mem_softc *sc = device_private(self);
 	int err, pagezero_cookie;
 	char bits[128];
 
-	printf (":");
+	sc->sc_dev = self;
+
+	aprint_normal(":");
 
 	pagezero_cookie = hp700_pagezero_map();
 
@@ -219,11 +221,11 @@ memattach(struct device *parent, struct device *self, void *aux)
 				settimeout = 0;
 				break;
 			}
-			if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+			if (device_cfdata(self)->cf_flags & 1)
 				settimeout = !settimeout;
 
 			snprintb(bits, sizeof(bits), VIPER_BITS, VI_CTRL);
-			printf (" viper rev %x, ctrl %s",
+			aprint_normal(" viper rev %x, ctrl %s",
 			    sc->sc_vp->vi_status.hw_rev, bits);
 
 			s = splhigh();
@@ -257,10 +259,10 @@ memattach(struct device *parent, struct device *self, void *aux)
 
 	hp700_pagezero_unmap(pagezero_cookie);
 
-	printf (" size %d", pdc_minit.max_spa / (1024*1024));
+	aprint_normal(" size %d", pdc_minit.max_spa / (1024*1024));
 	if (pdc_minit.max_spa % (1024*1024))
-		printf (".%d", pdc_minit.max_spa % (1024*1024));
-	printf ("MB");
+		aprint_normal(".%d", pdc_minit.max_spa % (1024*1024));
+	aprint_normal("MB");
 
 	/* L2 cache controller is a part of the memory controller on PCXL2 */
 	if (hppa_cpu_info->hci_type == hpcxl2) {
@@ -272,10 +274,10 @@ memattach(struct device *parent, struct device *self, void *aux)
 		/* sc->sc_l2->sltcv |= SLTCV_UP4COUT; */
 		if (sc->sc_l2->sltcv & SLTCV_ENABLE) {
 			uint32_t tagmask = sc->sc_l2->tagmask >> 20;
-			printf(", %dMB L2 cache", tagmask + 1);
+			aprint_normal(", %dMB L2 cache", tagmask + 1);
 		}
 	}
-	printf("\n");
+	aprint_normal("\n");
 }
 
 void

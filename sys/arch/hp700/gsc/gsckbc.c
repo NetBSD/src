@@ -1,4 +1,4 @@
-/* $NetBSD: gsckbc.c,v 1.3 2007/02/22 20:50:30 skrll Exp $ */
+/* $NetBSD: gsckbc.c,v 1.4 2009/05/07 15:34:49 skrll Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.3 2007/02/22 20:50:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.4 2009/05/07 15:34:49 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.3 2007/02/22 20:50:30 skrll Exp $");
 
 
 /* autoconfig stuff */
-static int gsckbc_match(struct device *, struct cfdata *, void *);
-static void gsckbc_attach(struct device *, struct device *, void *);
+static int gsckbc_match(device_t, cfdata_t, void *);
+static void gsckbc_attach(device_t, device_t, void *);
 
 static int gsckbc_xt_translation(void *, pckbport_slot_t, int);
 static int gsckbc_send_devcmd(void *, pckbport_slot_t, u_char);
@@ -107,20 +107,20 @@ static int gsckbc_intr(void *);
 
 
 struct gsckbc_softc {
-	struct device sc_dev;			/* general dev info */
+	device_t sc_dev;			/* general dev info */
 	bus_space_tag_t sc_iot;			/* bus_space(9) tag */
 	bus_space_handle_t sc_ioh;		/* bus_space(9) handle */
 	struct gsckbc_softc *sc_op;		/* other port */
 	void *sc_ih;				/* interrupt handle */
 	pckbport_slot_t	sc_slot;		/* kbd or mouse / aux slot */
 	pckbport_tag_t sc_pckbport;		/* port tag */
-	struct device *sc_child;		/* our child devices */
+	device_t sc_child;			/* our child devices */
 	int sc_poll;				/* if != 0 then pooling mode */
 	int sc_enable;				/* if != 0 then enable */
 };
 
 
-CFATTACH_DECL(gsckbc, sizeof(struct gsckbc_softc), gsckbc_match, gsckbc_attach,
+CFATTACH_DECL_NEW(gsckbc, sizeof(struct gsckbc_softc), gsckbc_match, gsckbc_attach,
 	NULL, NULL);
 
 
@@ -225,7 +225,7 @@ gsckbc_intr(void *arg)
 
 
 static int
-gsckbc_match(struct device *parent, struct cfdata *match, void *aux)
+gsckbc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -237,9 +237,9 @@ gsckbc_match(struct device *parent, struct cfdata *match, void *aux)
 
 
 static void
-gsckbc_attach(struct device *parent, struct device *self, void *aux)
+gsckbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct gsckbc_softc *sc = (struct gsckbc_softc *) self;
+	struct gsckbc_softc *sc = device_private(self);
 	struct gsc_attach_args *ga = aux;
 	static struct gsckbc_softc *master_sc;
 	int pagezero_cookie;
@@ -258,6 +258,7 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * Assumption: Master attaches first, gets the IRQ and has lower HPA.
 	 */
+	sc->sc_dev = self;
 	sc->sc_iot = ga->ga_iot;
 	if (ga->ga_irq >= 0) {
 		if (bus_space_map(sc->sc_iot, ga->ga_hpa, REG_SZ + REG_OFFSET,
@@ -266,7 +267,7 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		aprint_debug(" (master)");
-		sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_TTY, 
+		sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_TTY, 
 		    gsckbc_intr, sc, ga->ga_int_reg, ga->ga_irq);
 		master_sc = sc;
 	} else {
