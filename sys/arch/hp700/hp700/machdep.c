@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2009/04/30 07:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2009/05/08 09:33:58 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -227,7 +227,7 @@ struct bootinfo bootinfo;
 /*
  * XXX note that 0x12000 is the old kernel text start
  * address.  Memory below this is assumed to belong
- * to the firmware.  This value is converted into pages 
+ * to the firmware.  This value is converted into pages
  * by hppa_init and used as pages in pmap_bootstrap().
  */
 int	resvmem = 0x12000;
@@ -258,7 +258,7 @@ long dma24_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
 #ifdef MULTIPROCESSOR
-        .ci_curlwp = &lwp0
+	.ci_curlwp = &lwp0
 #endif
 };
 
@@ -539,7 +539,7 @@ do {									\
 	pmap_bootstrap(v);
 
 	/*
-	 * BELOW THIS LINE REFERENCING PAGE0 AND OTHER LOW MEMORY 
+	 * BELOW THIS LINE REFERENCING PAGE0 AND OTHER LOW MEMORY
 	 * LOCATIONS, AND WRITING THE KERNEL TEXT ARE PROHIBITED
 	 * WITHOUT TAKING SPECIAL MEASURES.
 	 */
@@ -564,8 +564,8 @@ do {									\
 	/*
 	 * XXX note that we're not virtual yet, yet these
 	 * KGDB attach functions will be using bus_space(9)
-	 * to map and manipulate their devices.  This only 
-	 * works because, currently, the mainbus.c bus_space 
+	 * to map and manipulate their devices.  This only
+	 * works because, currently, the mainbus.c bus_space
 	 * implementation directly-maps things in I/O space.
 	 */
 	hp700_kgdb_attached = false;
@@ -580,9 +580,9 @@ do {									\
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL)
-                ksyms_addsyms_elf(bi_sym->nsym, (int *)bi_sym->ssym,
-                    (int *)bi_sym->esym);
-        else {
+		ksyms_addsyms_elf(bi_sym->nsym, (int *)bi_sym->ssym,
+		    (int *)bi_sym->esym);
+	else {
 		extern int end;
 
 		ksyms_addsyms_elf(esym - (int)&end, &end, (int*)esym);
@@ -674,9 +674,9 @@ cpuid(void)
 		pdc_coproc.ccr_enable = 0;
 	} else {
 #ifdef DEBUG
-                printf("pdc_coproc: 0x%x, 0x%x; model %x rev %x\n",
-                    pdc_coproc.ccr_enable, pdc_coproc.ccr_present,
-                    pdc_coproc.fpu_model, pdc_coproc.fpu_revision);
+		printf("pdc_coproc: 0x%x, 0x%x; model %x rev %x\n",
+		    pdc_coproc.ccr_enable, pdc_coproc.ccr_present,
+		    pdc_coproc.fpu_model, pdc_coproc.fpu_revision);
 
 #endif
 		/* a kludge to detect PCXW */
@@ -1121,7 +1121,7 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
 	}
 	pa >>= PGSHIFT;
 	va >>= PGSHIFT;
-	need_variable_range = 
+	need_variable_range =
 		((pa & (frames - 1)) != 0 || (va & (frames - 1)) != 0);
 
 	/* I/O space must be mapped uncached. */
@@ -1145,7 +1145,7 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
 		     btlb_slot++) {
 			
 			/*
-			 * Skip this slot if it's in use, or if we need a 
+			 * Skip this slot if it's in use, or if we need a
 			 * variable-range slot and this isn't one.
 			 */
 			if (btlb_slot->btlb_slot_frames != 0 ||
@@ -1288,7 +1288,7 @@ hppa_btlb_purge(pa_space_t space, vaddr_t va, vsize_t *sizep)
 }
 
 /*
- * This maps page zero if it isn't already mapped, and 
+ * This maps page zero if it isn't already mapped, and
  * returns a cookie for hp700_pagezero_unmap.
  */
 int
@@ -1308,7 +1308,7 @@ hp700_pagezero_map(void)
 }
 
 /*
- * This unmaps mape zero, given a cookie previously returned 
+ * This unmaps mape zero, given a cookie previously returned
  * by hp700_pagezero_map.
  */
 void
@@ -1410,7 +1410,7 @@ cpu_dumpsize(void)
 }
 
 /*
- * This handles a machine check.  This can be either an HPMC, 
+ * This handles a machine check.  This can be either an HPMC,
  * an LPMC, or a TOC.  The check type is passed in as a trap
  * type, one of T_HPMC, T_LPMC, or T_INTERRUPT (for TOC).
  */
@@ -1468,7 +1468,7 @@ do {							\
 		/* NOTREACHED */
 	}
 	printf("\nmachine check: %s", name);
-	error = pdc_call((iodcio_t)pdc, 0, PDC_PIM, pdc_pim_type, 
+	error = pdc_call((iodcio_t)pdc, 0, PDC_PIM, pdc_pim_type,
 		&pdc_pim, pim_data_buffer, sizeof(pim_data_buffer));
 	if (error < 0)
 		printf(" - WARNING: could not transfer PIM info (%d)", error);
@@ -1497,7 +1497,7 @@ do {							\
 		}
 
 		/* Print out some interesting registers. */
-		printf("\n\n\tIIA 0x%x:0x%08x 0x%x:0x%08x", 
+		printf("\n\n\tIIA 0x%x:0x%08x 0x%x:0x%08x",
 			regs->pim_regs_cr17, regs->pim_regs_cr18,
 			regs->pim_regs_iisq_tail, regs->pim_regs_iioq_tail);
 		PIM_WORD("\n\tIPSW", regs->pim_regs_cr22, PSW_BITS);
@@ -1508,24 +1508,24 @@ do {							\
 
 	/* If we have check words, display them. */
 	if (checks != NULL) {
-		PIM_WORD("\n\n\tCheck Type", checks->pim_check_type, 
+		PIM_WORD("\n\n\tCheck Type", checks->pim_check_type,
 			PIM_CHECK_BITS);
-		PIM_WORD("\n\tCPU State", checks->pim_check_cpu_state, 
+		PIM_WORD("\n\tCPU State", checks->pim_check_cpu_state,
 			PIM_CPU_BITS PIM_CPU_HPMC_BITS);
-		PIM_WORD("\n\tCache Check", checks->pim_check_cache, 
+		PIM_WORD("\n\tCache Check", checks->pim_check_cache,
 			PIM_CACHE_BITS);
-		PIM_WORD("\n\tTLB Check", checks->pim_check_tlb, 
+		PIM_WORD("\n\tTLB Check", checks->pim_check_tlb,
 			PIM_TLB_BITS);
-		PIM_WORD("\n\tBus Check", checks->pim_check_bus, 
+		PIM_WORD("\n\tBus Check", checks->pim_check_bus,
 			PIM_BUS_BITS);
-		PIM_WORD("\n\tAssist Check", checks->pim_check_assist, 
+		PIM_WORD("\n\tAssist Check", checks->pim_check_assist,
 			PIM_ASSIST_BITS);
 		printf("\tAssist State %u", checks->pim_check_assist_state);
-		printf("\n\tSystem Responder 0x%08x", 
+		printf("\n\tSystem Responder 0x%08x",
 			checks->pim_check_responder);
-		printf("\n\tSystem Requestor 0x%08x", 
+		printf("\n\tSystem Requestor 0x%08x",
 			checks->pim_check_requestor);
-		printf("\n\tPath Info 0x%08x", 
+		printf("\n\tPath Info 0x%08x",
 			checks->pim_check_path_info);
 	}
 	printf("\n");
