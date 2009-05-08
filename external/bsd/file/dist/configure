@@ -2163,7 +2163,7 @@ fi
     # break other packages using the cache if that directory is
     # removed, or if the value is a relative name.
     test -d ./--version && rmdir ./--version
-    MKDIR_P="$ac_install_sh -d"
+    MKDIR_P="\$(SHELL) $ac_install_sh -d"
   fi
 fi
 { echo "$as_me:$LINENO: result: $MKDIR_P" >&5

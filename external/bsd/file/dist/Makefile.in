@@ -185,7 +185,7 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = MAINT
-SUBDIRS = src
+SUBDIRS = src magic
 #SUBDIRS = src magic tests doc python
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -235,6 +235,8 @@ stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
 $(srcdir)/config.h.in:  $(am__configure_deps) 
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_srcdir_config.h.in:
 	cd $(top_srcdir) && $(AUTOHEADER)
 	rm -f stamp-h1
 	touch $@
