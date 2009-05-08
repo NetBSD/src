@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.151 2009/03/18 15:19:23 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.2 2009/05/08 17:28:01 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -633,7 +633,9 @@ load_1(struct magic_set *ms, int action, const char *fn, int *errs,
 		(*errs)++;
 	} else {
 		/* read and parse this file */
-		for (ms->line = 1; fgets(line, sizeof(line), f) != NULL; ms->line++) {
+		for (ms->line = 1;
+		    fgets(line, CAST(int, sizeof(line)), f) != NULL;
+		    ms->line++) {
 			size_t len;
 			len = strlen(line);
 			if (len == 0) /* null line, garbage, etc */
@@ -1093,7 +1095,7 @@ parse(struct magic_set *ms, struct magic_entry **mentryp, uint32_t *nmentryp,
 				return -1;
 			}
 			me->mp = m = nm;
-			me->max_count = cnt;
+			me->max_count = CAST(uint32_t, cnt);
 		}
 		m = &me->mp[me->cont_count++];
 		(void)memset(m, 0, sizeof(*m));
@@ -1129,7 +1131,7 @@ parse(struct magic_set *ms, struct magic_entry **mentryp, uint32_t *nmentryp,
 		m->cont_level = 0;
 		me->cont_count = 1;
 	}
-	m->lineno = lineno;
+	m->lineno = CAST(uint32_t, lineno);
 
 	if (*l == '&') {  /* m->cont_level == 0 checked below. */
                 ++l;            /* step over */
@@ -1302,7 +1304,8 @@ parse(struct magic_set *ms, struct magic_entry **mentryp, uint32_t *nmentryp,
 						file_magwarn(ms,
 						    "multiple ranges");
 					have_range = 1;
-					m->str_range = strtoul(l, &t, 0);
+					m->str_range = CAST(uint32_t,
+					    strtoul(l, &t, 0));
 					if (m->str_range == 0)
 						file_magwarn(ms,
 						    "zero range");
@@ -1949,7 +1952,7 @@ getstr(struct magic_set *ms, struct magic *m, const char *s, int warn)
 	}
 out:
 	*p = '\0';
-	m->vallen = p - origp;
+	m->vallen = CAST(unsigned char, (p - origp));
 	if (m->type == FILE_PSTRING)
 		m->vallen++;
 	return s;

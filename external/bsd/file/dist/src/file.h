@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -300,7 +300,7 @@ struct mlist {
 #ifdef __cplusplus
 #define CAST(T, b)	static_cast<T>(b)
 #else
-#define CAST(T, b)	(b)
+#define CAST(T, b)	(T)(b)
 #endif
 
 struct level_info {
