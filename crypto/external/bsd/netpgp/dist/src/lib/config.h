@@ -103,6 +103,9 @@
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
 
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#define HAVE_SYS_RESOURCE_H 1
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
@@ -125,13 +128,13 @@
 #define PACKAGE_NAME "netpgp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netpgp 20090423"
+#define PACKAGE_STRING "netpgp 20090506"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netpgp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20090423"
+#define PACKAGE_VERSION "20090506"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

@@ -185,16 +185,16 @@ callback_write_parsed(const __ops_packet_t *, __ops_callback_data_t *);
 /**
 \ingroup HighLevel_Crypto
 Encrypt a file
-\param input_filename Name of file to be encrypted
-\param output_filename Name of file to write to. If NULL, name is constructed from input_filename
+\param infile Name of file to be encrypted
+\param outfile Name of file to write to. If NULL, name is constructed from infile
 \param pub_key Public Key to encrypt file for
 \param use_armour Write armoured text, if set
 \param allow_overwrite Allow output file to be overwrwritten if it exists
 \return true if OK; else false
 */
 bool 
-__ops_encrypt_file(const char *input_filename,
-			const char *output_filename,
+__ops_encrypt_file(const char *infile,
+			const char *outfile,
 			const __ops_keydata_t * pub_key,
 			const bool use_armour,
 			const bool allow_overwrite)
@@ -207,16 +207,15 @@ __ops_encrypt_file(const char *input_filename,
 	int             fd_out = 0;
 
 #ifdef O_BINARY
-	fd_in = open(input_filename, O_RDONLY | O_BINARY);
+	fd_in = open(infile, O_RDONLY | O_BINARY);
 #else
-	fd_in = open(input_filename, O_RDONLY);
+	fd_in = open(infile, O_RDONLY);
 #endif
 	if (fd_in < 0) {
-		perror(input_filename);
+		perror(infile);
 		return false;
 	}
-	fd_out = __ops_setup_file_write(&create, output_filename,
-				allow_overwrite);
+	fd_out = __ops_setup_file_write(&create, outfile, allow_overwrite);
 	if (fd_out < 0) {
 		return false;
 	}
@@ -263,8 +262,8 @@ __ops_encrypt_file(const char *input_filename,
 /**
    \ingroup HighLevel_Crypto
    \brief Decrypt a file.
-   \param input_filename Name of file to be decrypted
-   \param output_filename Name of file to write to. If NULL, the filename is constructed from the input filename, following GPG conventions.
+   \param infile Name of file to be decrypted
+   \param outfile Name of file to write to. If NULL, the filename is constructed from the input filename, following GPG conventions.
    \param keyring Keyring to use
    \param use_armour Expect armoured text, if set
    \param allow_overwrite Allow output file to overwritten, if set.
@@ -272,56 +271,61 @@ __ops_encrypt_file(const char *input_filename,
 */
 
 bool 
-__ops_decrypt_file(const char *input_filename, const char *output_filename, __ops_keyring_t * keyring, const bool use_armour, const bool allow_overwrite, __ops_parse_cb_t * cb_get_passphrase)
+__ops_decrypt_file(const char *infile,
+			const char *outfile,
+			__ops_keyring_t *keyring,
+			const bool use_armour,
+			const bool allow_overwrite,
+			__ops_parse_cb_t *cb_get_passphrase)
 {
-	int             fd_in = 0;
-	int             fd_out = 0;
-	char           *myfilename = NULL;
-	__ops_parse_info_t *parse = NULL;
+	__ops_parse_info_t	*parse = NULL;
+	char			*filename = NULL;
+	int			 fd_in = 0;
+	int			 fd_out = 0;
 
 	/* setup for reading from given input file */
-	fd_in = __ops_setup_file_read(&parse, input_filename,
+	fd_in = __ops_setup_file_read(&parse, infile,
 				    NULL,
 				    callback_write_parsed,
 				    false);
 	if (fd_in < 0) {
-		perror(input_filename);
+		perror(infile);
 		return false;
 	}
 	/* setup output filename */
 
-	if (output_filename) {
-		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo, output_filename, allow_overwrite);
-
+	if (outfile) {
+		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo, outfile,
+				allow_overwrite);
 		if (fd_out < 0) {
-			perror(output_filename);
+			perror(outfile);
 			__ops_teardown_file_read(parse, fd_in);
 			return false;
 		}
 	} else {
+		unsigned	filenamelen;
 		int             suffixlen = 4;
-		const char     *defaultsuffix = ".decrypted";
-		const char     *suffix = input_filename + strlen(input_filename) - suffixlen;
+		const char     *suffix = infile + strlen(infile) - suffixlen;
+
 		if (strcmp(suffix, ".gpg") == 0 ||
 		    strcmp(suffix, ".asc") == 0) {
-			myfilename = calloc(1, strlen(input_filename) - suffixlen + 1);
-			strncpy(myfilename, input_filename, strlen(input_filename) - suffixlen);
-		} else {
-			unsigned        filenamelen = strlen(input_filename) + strlen(defaultsuffix) + 1;
-
-			myfilename = calloc(1, filenamelen);
-			snprintf(myfilename, filenamelen, "%s%s", input_filename, defaultsuffix);
+			filenamelen = strlen(infile) - strlen(suffix);
+			filename = calloc(1, filenamelen + 1);
+			(void) strncpy(filename, infile, filenamelen);
+			filename[filenamelen] = 0x0;
 		}
 
-		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo, myfilename, allow_overwrite);
-
+		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo,
+					filename, allow_overwrite);
 		if (fd_out < 0) {
-			perror(myfilename);
-			free(myfilename);
+			perror(filename);
+			(void) free(filename);
 			__ops_teardown_file_read(parse, fd_in);
 			return false;
 		}
-		free(myfilename);
+		if (filename) {
+			(void) free(filename);
+		}
 	}
 
 	/* \todo check for suffix matching armour param */
@@ -333,20 +337,21 @@ __ops_decrypt_file(const char *input_filename, const char *output_filename, __op
 	parse->cbinfo.cryptinfo.cb_get_passphrase = cb_get_passphrase;
 
 	/* Set up armour/passphrase options */
-
-	if (use_armour)
+	if (use_armour) {
 		__ops_reader_push_dearmour(parse);
+	}
 
 	/* Do it */
-
 	__ops_parse(parse, 1);
 
 	/* Unsetup */
-
-	if (use_armour)
+	if (use_armour) {
 		__ops_reader_pop_dearmour(parse);
+	}
 
-	__ops_teardown_file_write(parse->cbinfo.cinfo, fd_out);
+	if (filename) {
+		__ops_teardown_file_write(parse->cbinfo.cinfo, fd_out);
+	}
 	__ops_teardown_file_read(parse, fd_in);
 	/* \todo cleardown crypt */
 
@@ -354,12 +359,10 @@ __ops_decrypt_file(const char *input_filename, const char *output_filename, __op
 }
 
 static          __ops_parse_cb_return_t
-callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t * cbinfo)
+callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t *content = &pkt->u;
-	static bool skipping;
-
-	OPS_USED(cbinfo);
+	const __ops_parser_content_union_t	*content = &pkt->u;
+	static bool				 skipping;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("callback_write_parsed: ");
@@ -387,10 +390,6 @@ callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t * cbinfo)
 		return get_seckey_cb(pkt, cbinfo);
 
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-		/*
-		 * return
-		 * get_seckey_cb(pkt,cbinfo);
-		 */
 		return cbinfo->cryptinfo.cb_get_passphrase(pkt, cbinfo);
 
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
@@ -405,14 +404,12 @@ callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t * cbinfo)
 	case OPS_PTAG_CT_SE_IP_DATA_HEADER:
 	case OPS_PTAG_CT_SE_DATA_BODY:
 	case OPS_PTAG_CT_SE_DATA_HEADER:
-
 		/* Ignore these packets  */
 		/* They're handled in __ops_parse_packet() */
 		/* and nothing else needs to be done */
 		break;
 
 	default:
-		/* return callback_general(pkt,cbinfo); */
 		if (__ops_get_debug_level(__FILE__)) {
 			fprintf(stderr, "Unexpected packet tag=%d (0x%x)\n",
 				pkt->tag,

@@ -1,5 +1,7 @@
 To Do
 =====
+64bit offsets
+sha256 sha512 digests
 detached verification
 need a netpgp_set_{pub,sec}key()? vs _init()?
 default compression when signing
@@ -45,3 +47,5 @@ Install man pages
 WARNS=4 (again)
 detached sig
 get rid of assert()s
+disable core dumps
+add a --help option

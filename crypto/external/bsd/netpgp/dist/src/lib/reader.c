@@ -1028,7 +1028,7 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 				return -1;
 			}
 
-			if (!strcmp(buf, "BEGIN PGP SIGNED MESSAGE")) {
+			if (strcmp(buf, "BEGIN PGP SIGNED MESSAGE") == 0) {
 				__ops_dup_headers(&content.u.signed_cleartext_header.headers, &dearmour->headers);
 				CALLBACK(cbinfo, OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER, &content);
 				ret = process_dash_escaped(dearmour, errors, rinfo, cbinfo);
@@ -1794,7 +1794,8 @@ __ops_teardown_memory_read(__ops_parse_info_t * pinfo, __ops_memory_t * mem)
  \sa __ops_teardown_file_write()
 */
 int 
-__ops_setup_file_write(__ops_create_info_t ** cinfo, const char *filename, bool allow_overwrite)
+__ops_setup_file_write(__ops_create_info_t **cinfo, const char *filename,
+			bool allow_overwrite)
 {
 	int             fd = 0;
 	int             flags = 0;
@@ -1802,26 +1803,26 @@ __ops_setup_file_write(__ops_create_info_t ** cinfo, const char *filename, bool 
 	/*
          * initialise needed structures for writing to file
          */
-
-	flags = O_WRONLY | O_CREAT;
-	if (allow_overwrite == true)
-		flags |= O_TRUNC;
-	else
-		flags |= O_EXCL;
-
+	if (filename == NULL) {
+		/* write to stdout */
+		fd = STDOUT_FILENO;
+	} else {
+		flags = O_WRONLY | O_CREAT;
+		if (allow_overwrite == true)
+			flags |= O_TRUNC;
+		else
+			flags |= O_EXCL;
 #ifdef O_BINARY
-	flags |= O_BINARY;
+		flags |= O_BINARY;
 #endif
-
-	fd = open(filename, flags, 0600);
-	if (fd < 0) {
-		perror(filename);
-		return fd;
+		fd = open(filename, flags, 0600);
+		if (fd < 0) {
+			perror(filename);
+			return fd;
+		}
 	}
 	*cinfo = __ops_create_info_new();
-
 	__ops_writer_set_fd(*cinfo, fd);
-
 	return fd;
 }
 

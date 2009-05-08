@@ -22,6 +22,8 @@
 /**
  \file Command line program to perform netpgp operations
 */
+#include <sys/types.h>
+#include <sys/param.h>
 
 #include <getopt.h>
 #include <libgen.h>
@@ -37,14 +39,25 @@
 
 #define MAXBUF 1024
 
-static const char *usage = "%s --list-keys | --list-packets | --encrypt | --decrypt | --sign | --clearsign | --verify [--keyring=<keyring>] [--userid=<userid>] [--armour] [--homedir=<homedir>] files...\n";
+static const char *usage =
+	" --help OR\n"
+	"\t--list-keys [options] OR\n"
+	"\t--list-packets [options] OR\n"
+	"\t--encrypt [options] files... OR\n"
+	"\t--decrypt [options] files... OR\n"
+	"\t--sign [--detach] [options] files... OR\n"
+	"\t--clearsign [options] files... OR\n"
+	"\t--verify [options] files...\n"
+	"where options are:\n"
+	"\t[--keyring=<keyring>] AND/OR\n"
+	"\t[--userid=<userid>] AND/OR\n"
+	"\t[--armour] AND/OR\n"
+	"\t[--homedir=<homedir>]\n";
 static const char *usage_find_key = "%s --find-key --userid=<userid> [--keyring=<keyring>] \n";
 static const char *usage_export_key = "%s --export-key --userid=<userid> [--keyring=<keyring>] \n";
 static const char *usage_encrypt = "%s --encrypt --userid=<userid> [--armour] [--homedir=<homedir>] files...\n";
 static const char *usage_sign = "%s --sign --userid=<userid> [--armour] [--homedir=<homedir>] files...\n";
 static const char *usage_clearsign = "%s --clearsign --userid=<userid> [--homedir=<homedir>] files...\n";
-
-static char    *pname;
 
 enum optdefs {
 	/* commands */
@@ -60,6 +73,7 @@ enum optdefs {
 	VERIFY,
 	LIST_PACKETS,
 	VERSION_CMD,
+	HELP_CMD,
 
 	/* options */
 	KEYRING,
@@ -77,52 +91,56 @@ enum optdefs {
 
 #define EXIT_ERROR	2
 
-static struct option long_options[] = {
+static struct option options[] = {
 	/* commands */
-	{"list-keys", no_argument, NULL, LIST_KEYS},
-	{"find-key", no_argument, NULL, FIND_KEY},
-	{"export-key", no_argument, NULL, EXPORT_KEY},
-	{"import-key", no_argument, NULL, IMPORT_KEY},
-	{"generate-key", no_argument, NULL, GENERATE_KEY},
+	{"list-keys",	no_argument,		NULL,	LIST_KEYS},
+	{"find-key",	no_argument,		NULL,	FIND_KEY},
+	{"export-key",	no_argument,		NULL,	EXPORT_KEY},
+	{"import-key",	no_argument,		NULL,	IMPORT_KEY},
+	{"generate-key", no_argument,		NULL,	GENERATE_KEY},
 
-	{"encrypt", no_argument, NULL, ENCRYPT},
-	{"decrypt", no_argument, NULL, DECRYPT},
-	{"sign", no_argument, NULL, SIGN},
-	{"clearsign", no_argument, NULL, CLEARSIGN},
-	{"verify", no_argument, NULL, VERIFY},
+	{"encrypt",	no_argument,		NULL,	ENCRYPT},
+	{"decrypt",	no_argument,		NULL,	DECRYPT},
+	{"sign",	no_argument,		NULL,	SIGN},
+	{"clearsign",	no_argument,		NULL,	CLEARSIGN},
+	{"verify",	no_argument,		NULL,	VERIFY},
 
-	{"list-packets", no_argument, NULL, LIST_PACKETS},
+	{"list-packets", no_argument,		NULL,	LIST_PACKETS},
 
-	{"version", no_argument, NULL, VERSION_CMD},
+	{"help",	no_argument,		NULL,	HELP_CMD},
+	{"version",	no_argument,		NULL,	VERSION_CMD},
 
 	/* options */
-	{"keyring", required_argument, NULL, KEYRING},
-	{"userid", required_argument, NULL, USERID},
-	{"homedir", required_argument, NULL, HOMEDIR},
-	{"armor", no_argument, NULL, ARMOUR},
-	{"armour", no_argument, NULL, ARMOUR},
-	{"numbits", required_argument, NULL, NUMBITS},
-	{"detached", no_argument, NULL, DETACHED},
+	{"keyring",	required_argument, 	NULL,	KEYRING},
+	{"userid",	required_argument, 	NULL,	USERID},
+	{"home",	required_argument, 	NULL,	HOMEDIR},
+	{"homedir",	required_argument, 	NULL,	HOMEDIR},
+	{"armor",	no_argument,		NULL,	ARMOUR},
+	{"armour",	no_argument,		NULL,	ARMOUR},
+	{"numbits",	required_argument, 	NULL,	NUMBITS},
+	{"detach",	no_argument,		NULL,	DETACHED},
+	{"detached",	no_argument,		NULL,	DETACHED},
 
 	/* debug */
-	{"debug", required_argument, NULL, OPS_DEBUG},
+	{"debug",	required_argument, 	NULL,	OPS_DEBUG},
 
-	{ NULL, 0, NULL, 0},
+	{ NULL,		0,			NULL,	0},
 };
 
 /* gather up program variables into one struct */
 typedef struct prog_t {
-	char            keyring[MAXBUF + 1];		/* name of keyring */
-	char            *userid;			/* user identifier */
-	char            myring_name[MAXBUF + 1];	/* myring filename */
-	char            pubring_name[MAXBUF + 1];	/* pubring filename */
-	char            secring_name[MAXBUF + 1];	/* secret ring file */
-	int		overwrite;			/* overwrite files? */
-	int             numbits;			/* # of bits */
-	int             armour;				/* ASCII armor */
-	int		detached;			/* use separate file */
-	int             cmd;				/* netpgp command */
-	int             ex;				/* exit code */
+	char	 keyring[MAXBUF + 1];		/* name of keyring */
+	char	*userid;			/* user identifier */
+	char	 myring_name[MAXBUF + 1];	/* myring filename */
+	char	 pubring_name[MAXBUF + 1];	/* pubring filename */
+	char	 secring_name[MAXBUF + 1];	/* secret ring file */
+	char	*progname;			/* program name */
+	int	 overwrite;			/* overwrite files? */
+	int	 numbits;			/* # of bits */
+	int	 armour;			/* ASCII armor */
+	int	 detached;			/* use separate file */
+	int	 cmd;				/* netpgp command */
+	int	 ex;				/* exit code */
 } prog_t;
 
 
@@ -132,8 +150,12 @@ typedef struct prog_t {
 static void
 print_usage(const char *usagemsg, char *progname)
 {
-	(void) fprintf(stderr, "\nUsage: ");
-	(void) fprintf(stderr, usagemsg, basename(progname));
+	(void) fprintf(stderr,
+	"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
+				netpgp_get_info("version"),
+				netpgp_get_info("maintainer"));
+	(void) fprintf(stderr, "Usage: %s COMMAND OPTIONS:\n%s %s",
+		progname, progname, usagemsg);
 }
 
 /* do a command once for a specified file 'f' */
@@ -176,9 +198,10 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case LIST_PACKETS:
 		netpgp_list_packets(netpgp, f, p->armour, NULL);
 		break;
+	case HELP_CMD:
 	default:
-		print_usage(usage, pname);
-		exit(EXIT_ERROR);
+		print_usage(usage, p->progname);
+		exit(EXIT_SUCCESS);
 	}
 }
 
@@ -187,35 +210,30 @@ main(int argc, char **argv)
 {
 	netpgp_t	netpgp;
 	prog_t          p;
-	char            homedir[MAXBUF + 1];
-	int		zeroargs;
-	int             optindex = 0;
-	int             ch = 0;
+	char            homedir[MAXPATHLEN];
+	int             optindex;
+	int             ch;
 	int             i;
 
-	pname = argv[0];
 	(void) memset(&p, 0x0, sizeof(p));
 	(void) memset(homedir, 0x0, sizeof(homedir));
 	(void) memset(&netpgp, 0x0, sizeof(netpgp));
-	zeroargs = 0;
+	p.progname = argv[0];
 	p.numbits = DEFAULT_NUMBITS;
 	p.overwrite = 1;
 	if (argc < 2) {
-		print_usage(usage, pname);
+		print_usage(usage, p.progname);
 		exit(EXIT_ERROR);
 	}
 
 	/* set default homedir */
 	(void) snprintf(homedir, sizeof(homedir), "%s/.gnupg", getenv("HOME"));
 
-	while ((ch = getopt_long(argc, argv, "", long_options, &optindex)) != -1) {
-
-		/* read options and commands */
-
-		switch (long_options[optindex].val) {
+	optindex = 0;
+	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
+		switch (options[optindex].val) {
 		case LIST_KEYS:
-			zeroargs = 1;
-			p.cmd = long_options[optindex].val;
+			p.cmd = options[optindex].val;
 			break;
 
 		case FIND_KEY:
@@ -228,11 +246,13 @@ main(int argc, char **argv)
 		case CLEARSIGN:
 		case VERIFY:
 		case LIST_PACKETS:
-			p.cmd = long_options[optindex].val;
+		case HELP_CMD:
+			p.cmd = options[optindex].val;
 			break;
 
 		case VERSION_CMD:
-			printf("%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
+			printf(
+"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
 				netpgp_get_info("version"),
 				netpgp_get_info("maintainer"));
 			exit(EXIT_SUCCESS);
@@ -240,7 +260,8 @@ main(int argc, char **argv)
 			/* options */
 		case KEYRING:
 			if (optarg == NULL) {
-				(void) fprintf(stderr, "No keyring argument provided\n");
+				(void) fprintf(stderr,
+					"No keyring argument provided\n");
 				exit(EXIT_ERROR);
 			}
 			snprintf(p.keyring, sizeof(p.keyring), "%s", optarg);
@@ -248,11 +269,13 @@ main(int argc, char **argv)
 
 		case USERID:
 			if (optarg == NULL) {
-				(void) fprintf(stderr, "No userid argument provided\n");
+				(void) fprintf(stderr,
+					"No userid argument provided\n");
 				exit(EXIT_ERROR);
 			}
 			if (netpgp_get_debug(__FILE__)) {
-				(void) fprintf(stderr, "userid is '%s'\n", optarg);
+				(void) fprintf(stderr,
+					"userid is '%s'\n", optarg);
 			}
 			p.userid = optarg;
 			break;
@@ -267,7 +290,8 @@ main(int argc, char **argv)
 
 		case HOMEDIR:
 			if (optarg == NULL) {
-				(void) fprintf(stderr, "No home directory argument provided\n");
+				(void) fprintf(stderr,
+				"No home directory argument provided\n");
 				exit(EXIT_ERROR);
 			}
 			(void) snprintf(homedir, sizeof(homedir), "%s", optarg);
@@ -275,7 +299,8 @@ main(int argc, char **argv)
 
 		case NUMBITS:
 			if (optarg == NULL) {
-				(void) fprintf(stderr, "No number of bits argument provided\n");
+				(void) fprintf(stderr,
+				"No number of bits argument provided\n");
 				exit(EXIT_ERROR);
 			}
 			p.numbits = atoi(optarg);
@@ -286,7 +311,7 @@ main(int argc, char **argv)
 			break;
 
 		default:
-			printf("shouldn't be here: option=%d\n", long_options[optindex].val);
+			p.cmd = HELP_CMD;
 			break;
 		}
 	}
@@ -301,15 +326,13 @@ main(int argc, char **argv)
 	 * now do the required action for each of the files on the command
 	 * line
 	 */
-	if (zeroargs) {
+	if (optind == argc) {
 		netpgp_cmd(&netpgp, &p, NULL);
 	} else {
 		for (p.ex = EXIT_SUCCESS, i = optind; i < argc; i++) {
 			netpgp_cmd(&netpgp, &p, argv[i]);
 		}
 	}
-
 	netpgp_end(&netpgp);
-
 	exit(p.ex);
 }

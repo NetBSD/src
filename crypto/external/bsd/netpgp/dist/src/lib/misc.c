@@ -608,21 +608,26 @@ __ops_hash_size(__ops_hash_algorithm_t alg)
 __ops_hash_algorithm_t 
 __ops_hash_algorithm_from_text(const char *hash)
 {
-	if (!strcmp(hash, "SHA1"))
+	if (strcmp(hash, "SHA1") == 0) {
 		return OPS_HASH_SHA1;
-	else if (!strcmp(hash, "MD5"))
+	}
+	if (strcmp(hash, "MD5") == 0) {
 		return OPS_HASH_MD5;
-	else if (!strcmp(hash, "SHA256"))
+	}
+	if (strcmp(hash, "SHA256") == 0) {
 		return OPS_HASH_SHA256;
+	}
 	/*
-        else if (!strcmp(hash,"SHA224"))
-            return OPS_HASH_SHA224;
+        if (strcmp(hash,"SHA224") == 0) {
+		return OPS_HASH_SHA224;
+	}
         */
-	else if (!strcmp(hash, "SHA512"))
+	if (strcmp(hash, "SHA512") == 0) {
 		return OPS_HASH_SHA512;
-	else if (!strcmp(hash, "SHA384"))
+	}
+	if (strcmp(hash, "SHA384") == 0) {
 		return OPS_HASH_SHA384;
-
+	}
 	return OPS_HASH_UNKNOWN;
 }
 
