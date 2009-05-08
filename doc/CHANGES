@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1223 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1224 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -266,3 +266,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.0.1 [roy 20090503]
 	hp700: Enable support for UFS2 boot. [tsutsui 20090503]
 	rpcgen: Add support for hyper and quad keywords. [ginsbach 20090506]
+	file(1): Import 5.03 [christos 20090508]
