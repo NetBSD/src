@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.5 2009/05/07 16:19:30 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.6 2009/05/08 13:03:46 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -141,6 +141,8 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	if (rump_sys_write(fd, MAGICSTRING, sizeof(MAGICSTRING)) !=
 	    sizeof(MAGICSTRING))
 		atf_tc_fail_errno("file write"); /* XXX: errno */
+	/* reset offset */
+	rump_sys_lseek(fd, 0, 0, SEEK_SET);
 
 	cmp = malloc(CMSG_LEN(sizeof(int)));
 
@@ -175,9 +177,8 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 		atf_tc_fail_errno("recvmsg failed");
 	rfd = *(int *)CMSG_DATA(cmp);
 
-	/* set offset to 0 and read from the fd */
+	/* read from the fd */
 	memset(buf, 0, sizeof(buf));
-	rump_sys_lseek(rfd, 0, 0, SEEK_SET);
 	if (rump_sys_read(rfd, buf, sizeof(buf)) == -1)
 		atf_tc_fail_errno("read rfd");
 
