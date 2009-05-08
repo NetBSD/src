@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -31,7 +31,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readcdf.c,v 1.18 2009/05/06 20:48:22 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.2 2009/05/08 17:28:01 christos Exp $");
 #endif
 #endif
 
@@ -166,20 +166,20 @@ cdf_file_summary_info(struct magic_set *ms, const cdf_stream_t *sst)
 		switch (si.si_os) {
 		case 2:
 			if (file_printf(ms, ", Os: Windows, Version %d.%d",
-			    si.si_os_version & 0xff, si.si_os_version >> 8)
-			    == -1)
+			    si.si_os_version & 0xff,
+			    (uint32_t)si.si_os_version >> 8) == -1)
 				return -1;
 			break;
 		case 1:
 			if (file_printf(ms, ", Os: MacOS, Version %d.%d",
-			    si.si_os_version >> 8, si.si_os_version & 0xff)
-			    == -1)
+			    (uint32_t)si.si_os_version >> 8,
+			    si.si_os_version & 0xff) == -1)
 				return -1;
 			break;
 		default:
 			if (file_printf(ms, ", Os %d, Version: %d.%d", si.si_os,
-			    si.si_os_version & 0xff, si.si_os_version >> 8)
-			    == -1)
+			    si.si_os_version & 0xff,
+			    (uint32_t)si.si_os_version >> 8) == -1)
 				return -1;
 			break;
 		}

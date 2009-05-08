@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,7 +32,7 @@
 #if 0
 FILE_RCSID("@(#)$File: funcs.c,v 1.53 2009/04/07 11:07:00 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.2 2009/05/08 17:28:01 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -101,7 +101,7 @@ file_printf(struct magic_set *ms, const char *fmt, ...)
 /*VARARGS*/
 private void
 file_error_core(struct magic_set *ms, int error, const char *f, va_list va,
-    uint32_t lineno)
+    size_t lineno)
 {
 	/* Only the first error is ok */
 	if (ms->event_flags & EVENT_HAD_ERR)
@@ -109,7 +109,7 @@ file_error_core(struct magic_set *ms, int error, const char *f, va_list va,
 	if (lineno != 0) {
 		free(ms->o.buf);
 		ms->o.buf = NULL;
-		file_printf(ms, "line %u: ", lineno);
+		file_printf(ms, "line %zu: ", lineno);
 	}
 	file_vprintf(ms, f, va);
 	if (error > 0)
