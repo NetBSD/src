@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.18 2009/05/08 10:12:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2009/05/08 10:12:55 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -378,6 +378,9 @@ hppa_intr(struct trapframe *frame)
 	struct hp700_int_reg *int_reg;
 	int hp700_intr_ipending_new(struct hp700_int_reg *, int);
 
+	extern char ucas_ras_start[];
+	extern char ucas_ras_end[];
+
 #ifndef LOCKDEBUG
 	extern char mutex_enter_crit_start[];
 	extern char mutex_enter_crit_end[];
@@ -404,6 +407,13 @@ hppa_intr(struct trapframe *frame)
 	    frame->tf_ret0 != 0)
 		((kmutex_t *)frame->tf_arg0)->mtx_owner = (uintptr_t)curlwp;
 #endif
+
+	if (frame->tf_iisq_head == HPPA_SID_KERNEL &&
+	    frame->tf_iioq_head >= (u_int)ucas_ras_start &&
+	    frame->tf_iioq_head <= (u_int)ucas_ras_end) {
+		frame->tf_iioq_head = (u_int)ucas_ras_start;
+		frame->tf_iioq_tail = (u_int)ucas_ras_start + 4;
+	}
 
 	/*
 	 * Read the CPU interrupt register and acknowledge
