@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2008/08/31 00:31:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2009/05/08 17:45:22 christos Exp $
 #
 
-GNUHOSTDIST=	${.CURDIR}/../../dist/file
+GNUHOSTDIST=	${.CURDIR}/../../external/bsd/file/dist
 
 CONFIGURE_ENV+=	CC=${HOST_CC:Q} \
 		CFLAGS=${HOST_CFLAGS:Q} \
