@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.83 2009/05/07 19:26:08 elad Exp $
+.\" $NetBSD: kauth.9,v 1.84 2009/05/08 11:09:43 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -633,7 +633,7 @@ there's no way to tell what structure
 .Ar arg3
 is.
 .It Dv KAUTH_NETWORK_INTERFACE_PPP
-Checks operations performed on the
+Checks if operations performed on the
 .Xr ppp 4
 network interface are allowed.
 .Pp
@@ -646,7 +646,7 @@ Checks if adding and enabling a
 interface to the system is allowed.
 .El
 .It Dv KAUTH_NETWORK_INTERFACE_SLIP
-Checks operations performed on the
+Checks if operations performed on the
 .Xr sl 4
 network interface are allowed.
 .Pp
@@ -659,7 +659,7 @@ Checks if adding and enabling a
 interface to the system is allowed.
 .El
 .It Dv KAUTH_NETWORK_INTERFACE_STRIP
-Checks operations performed on the
+Checks if operations performed on the
 .Xr strip 4
 network interface are allowed.
 .Pp
@@ -669,6 +669,19 @@ can be one of the following:
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_STRIP_ADD
 Check if adding and enabling a
 .Xr strip 4
+interface to the system is allowed.
+.El
+.It Dv KAUTH_NETWORK_INTERFACE_TUN
+Checks if operations performed on the
+.Xr tun 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_TUN_ADD
+Checks if adding and enabling a
+.Xr tun 4
 interface to the system is allowed.
 .El
 .It Dv KAUTH_NETWORK_FORWSRCRT
