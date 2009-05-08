@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.4 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.5 2009/05/08 09:33:57 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -281,7 +281,7 @@ astro_attach(device_t parent, device_t self, void *aux)
 	if (uvm_pglistalloc(size, 0, -1, PAGE_SIZE, 0, &mlist, 1, 0) != 0)
 		panic("astrottach: no memory");
 
-        va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 
 	if (va == 0)
 		panic("astroattach: no memory");
@@ -317,13 +317,13 @@ astro_attach(device_t parent, device_t self, void *aux)
 	/* Enable iova space. */
 	r->tlb_ibase = htole32(1);
 
-        /*
-         * Now all the hardware's working we need to allocate a dvma map.
-         */
+	/*
+	 * Now all the hardware's working we need to allocate a dvma map.
+	 */
 	snprintf(sc->sc_dvmamapname, sizeof(sc->sc_dvmamapname),
 	    "%s_dvma", device_xname(sc->sc_dv));
-        sc->sc_dvmamap = extent_create(sc->sc_dvmamapname, 0, (1 << iova_bits),
-            M_DEVBUF, 0, 0, EX_NOWAIT);
+	sc->sc_dvmamap = extent_create(sc->sc_dvmamapname, 0, (1 << iova_bits),
+	    M_DEVBUF, 0, 0, EX_NOWAIT);
 
 	sc->sc_dmatag = astro_dmat;
 	sc->sc_dmatag._cookie = sc;
@@ -382,8 +382,8 @@ iommu_dvmamap_destroy(void *v, bus_dmamap_t map)
 	if (map->dm_nsegs)
 		iommu_dvmamap_unload(sc, map);
 
-        if (map->_dm_cookie)
-                iommu_iomap_destroy(map->_dm_cookie);
+	if (map->_dm_cookie)
+		iommu_iomap_destroy(map->_dm_cookie);
 	map->_dm_cookie = NULL;
 
 	bus_dmamap_destroy(sc->sc_dmat, map);
@@ -418,8 +418,8 @@ iommu_iomap_load_map(struct astro_softc *sc, bus_dmamap_t map, int flags)
 		     pa < paend; pa += PAGE_SIZE, va += PAGE_SIZE) {
 			err = iommu_iomap_insert_page(ims, va, pa);
 			if (err) {
-                               printf("iomap insert error: %d for "
-                                    "va 0x%lx pa 0x%lx\n", err, va, pa);
+				printf("iomap insert error: %d for "
+				    "va 0x%lx pa 0x%lx\n", err, va, pa);
 				bus_dmamap_unload(sc->sc_dmat, map);
 				iommu_iomap_clear_pages(ims);
 			}
@@ -700,8 +700,8 @@ iommu_iomap_translate(struct iommu_map_state *ims, paddr_t pa)
 void
 iommu_iomap_clear_pages(struct iommu_map_state *ims)
 {
-        ims->ims_map.ipm_pagecnt = 0;
-        SPLAY_INIT(&ims->ims_map.ipm_tree);
+	ims->ims_map.ipm_pagecnt = 0;
+	SPLAY_INIT(&ims->ims_map.ipm_tree);
 }
 
 /*

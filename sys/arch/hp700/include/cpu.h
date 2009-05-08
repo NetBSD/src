@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2009/04/30 15:34:25 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -27,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* 
+/*
  * Copyright (c) 1988-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -96,7 +96,7 @@ struct hppa_cpu_info {
 #define	HPPA_FTRS_HVT		0x00000004
 #define	HPPA_FTRS_W32B		0x00000008
 
-	const char *hci_chip_spec; 
+	const char *hci_chip_spec;
 
 	int (*desidhash)(void);
 	const u_int *itlbh, *dtlbh, *itlbnah, *dtlbnah, *tlbdh;
