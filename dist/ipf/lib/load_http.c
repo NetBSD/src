@@ -1,4 +1,4 @@
-/*	$NetBSD: load_http.c,v 1.2 2009/05/07 21:07:34 christos Exp $	*/
+/*	$NetBSD: load_http.c,v 1.3 2009/05/08 12:06:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2006 by Darren Reed.
@@ -35,15 +35,15 @@ load_http(char *url)
 	rtop = NULL;
 	rbot = NULL;
 
+	myurl = strdup(url);
+	if (myurl == NULL)
+		goto done;
+
 	rem = sizeof(buffer);
 	left = snprintf(buffer, rem, "GET %s HTTP/1.0\r\n", url);
 	if (left < 0 || left > rem)
 		goto done;
 	rem -= left;
-
-	myurl = strdup(url);
-	if (myurl == NULL)
-		goto done;
 
 	s = myurl + 7;			/* http:// */
 	t = strchr(s, '/');
