@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.1 2009/05/08 17:28:01 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2009/05/08 17:43:54 christos Exp $
 
 DIST=${.CURDIR}/../dist
+WARNS=4
 
 USE_FORT?= yes	# data-driven bugs?
 
