@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1252 2009/05/04 21:33:00 ad Exp $
+#	$NetBSD: mi,v 1.1253 2009/05/08 22:39:18 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9093,6 +9093,7 @@
 ./usr/share/man/cat9/vfs_getvfs.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_hooks.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_hooks_unmount.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_mountalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_mountedon.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_mountroot.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_reinit.0		comp-sys-catman		.cat
@@ -14303,6 +14304,7 @@
 ./usr/share/man/html9/vfs_getvfs.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_hooks.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_hooks_unmount.html	comp-sys-htmlman	html
+./usr/share/man/html9/vfs_mountalloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_mountedon.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_mountroot.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_reinit.html		comp-sys-htmlman	html
@@ -19755,6 +19757,7 @@
 ./usr/share/man/man9/vfs_getvfs.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_hooks.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_hooks_unmount.9	comp-sys-man		.man
+./usr/share/man/man9/vfs_mountalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_mountedon.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_mountroot.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_reinit.9		comp-sys-man		.man

@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.279 2009/05/04 21:33:00 ad Exp $
+#       $NetBSD: Makefile,v 1.280 2009/05/08 22:39:18 dyoung Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -693,6 +693,7 @@ MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_unmountall.9 \
 	vfssubr.9 vfs_busy.9 \
 	vfssubr.9 vfs_unbusy.9 \
+	vfssubr.9 vfs_mountalloc.9 \
 	vfssubr.9 vfs_rootmountalloc.9 \
 	vfssubr.9 vfs_shutdown.9 \
 	vfssubr.9 vfs_attach.9 \
