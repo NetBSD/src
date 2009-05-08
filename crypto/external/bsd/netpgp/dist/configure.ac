@@ -1,7 +1,7 @@
-dnl $Id: configure.ac,v 1.3 2009/05/05 15:29:46 agc Exp $
+dnl $Id: configure.ac,v 1.4 2009/05/08 06:06:38 agc Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
-AC_INIT([netpgp],[20090423],[Alistair Crooks <agc@netbsd.org> c0596823])
+AC_INIT([netpgp],[20090506],[Alistair Crooks <agc@netbsd.org> c0596823])
 AC_CONFIG_SRCDIR([src/bin/netpgp.c])
 AC_CONFIG_HEADER(src/lib/config.h)
 AC_ARG_PROGRAM
@@ -28,9 +28,13 @@ AC_CHECK_HEADERS([CommonCrypto/CommonDigest.h])
 AC_CHECK_HEADERS([bzlib.h dmalloc.h direct.h errno.h fcntl.h])
 AC_CHECK_HEADERS([inttypes.h libgen.h limits.h malloc.h])
 AC_CHECK_HEADERS([stdbool.h zlib.h])
-AC_CHECK_HEADERS([openssl/aes.h openssl/bn.h openssl/cast.h openssl/des.h openssl/dsa.h])
-AC_CHECK_HEADERS([openssl/err.h openssl/idea.h openssl/md5.h openssl/rand.h openssl/rsa.h openssl/sha.h])
-AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/mman.h sys/param.h sys/uio.h])
+AC_CHECK_HEADERS([openssl/aes.h openssl/bn.h openssl/cast.h openssl/des.h ])
+AC_CHECK_HEADERS([openssl/dsa.h openssl/err.h openssl/idea.h openssl/md5.h ])
+AC_CHECK_HEADERS([openssl/rand.h openssl/rsa.h openssl/sha.h openssl/err.h ])
+AC_CHECK_HEADERS([openssl/idea.h openssl/md5.h openssl/rand.h openssl/rsa.h ])
+AC_CHECK_HEADERS([openssl/sha.h])
+AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/mman.h sys/param.h sys/resource.h])
+AC_CHECK_HEADERS([sys/uio.h])
 
 AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T

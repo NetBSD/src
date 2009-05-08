@@ -66,15 +66,10 @@ __ops_sig_start_key_sig(__ops_create_sig_t *,
 				  const __ops_user_id_t *,
 				  __ops_sig_type_t);
 void 
-__ops_start_cleartext_sig(__ops_create_sig_t *,
+__ops_start_sig(__ops_create_sig_t *,
 			const __ops_seckey_t *,
 			const __ops_hash_algorithm_t,
 			const __ops_sig_type_t);
-void 
-__ops_start_msg_sig(__ops_create_sig_t *,
-		      const __ops_seckey_t *,
-		      const __ops_hash_algorithm_t,
-		      const __ops_sig_type_t);
 
 void 
 __ops_sig_add_data(__ops_create_sig_t *, const void *, size_t);
