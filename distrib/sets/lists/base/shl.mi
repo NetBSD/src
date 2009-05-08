@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.469 2009/05/02 01:15:54 pooka Exp $
+# $NetBSD: shl.mi,v 1.470 2009/05/08 17:50:56 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -95,7 +95,7 @@
 ./usr/lib/libldap_r.so.3.0			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so.3.0			base-bind-shlib
 ./usr/lib/libm.so.0.6				base-sys-shlib
-./usr/lib/libmagic.so.2.0			base-sys-shlib
+./usr/lib/libmagic.so.3.0			base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
 ./usr/lib/libnetpgp.so.0.9			base-crypto-shlib	crypto
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3

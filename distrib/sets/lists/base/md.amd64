@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.45 2009/05/02 02:20:20 perry Exp $
+# $NetBSD: md.amd64,v 1.46 2009/05/08 17:50:56 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -128,8 +128,8 @@
 ./usr/lib/i386/liblwres.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0.6			base-compat-shlib	compat,pic
-./usr/lib/i386/libmagic.so.2			base-compat-shlib	compat,pic
-./usr/lib/i386/libmagic.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libmagic.so.3			base-compat-shlib	compat,pic
+./usr/lib/i386/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmenu.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic
