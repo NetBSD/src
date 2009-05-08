@@ -52,13 +52,13 @@
  * needed for signature creation
  */
 struct __ops_create_sig {
-	__ops_hash_t      hash;
-	__ops_sig_t sig;
-	__ops_memory_t   *mem;
-	__ops_create_info_t *info;/* !< how to do the writing */
-	unsigned        hashed_count_offset;
-	unsigned        hashed_data_length;
-	unsigned        unhashed_count_offset;
+	__ops_hash_t		 hash;
+	__ops_sig_t		 sig;
+	__ops_memory_t		*mem;
+	__ops_create_info_t	*info;/* !< how to do the writing */
+	unsigned		 hashed_count_offset;
+	unsigned		 hashed_data_length;
+	unsigned 		 unhashed_count_offset;
 };
 
 /**
@@ -69,7 +69,7 @@ struct __ops_create_sig {
    \sa __ops_create_sig_delete()
 */
 __ops_create_sig_t *
-__ops_create_sig_new()
+__ops_create_sig_new(void)
 {
 	return calloc(1, sizeof(__ops_create_sig_t));
 }
@@ -81,23 +81,27 @@ __ops_create_sig_new()
    \sa __ops_create_sig_new()
 */
 void 
-__ops_create_sig_delete(__ops_create_sig_t * sig)
+__ops_create_sig_delete(__ops_create_sig_t *sig)
 {
 	__ops_create_info_delete(sig->info);
 	sig->info = NULL;
 	free(sig);
 }
 
-static unsigned char prefix_md5[] = {0x30, 0x20, 0x30, 0x0C, 0x06,
-	0x08, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x02, 0x05, 0x05,
-	0x00, 0x04, 0x10};
+static unsigned char prefix_md5[] = {
+	0x30, 0x20, 0x30, 0x0C, 0x06, 0x08, 0x2A, 0x86, 0x48, 0x86,
+	0xF7, 0x0D, 0x02, 0x05, 0x05, 0x00, 0x04, 0x10
+};
 
-static unsigned char prefix_sha1[] = {0x30, 0x21, 0x30, 0x09, 0x06,
-	0x05, 0x2b, 0x0E, 0x03, 0x02, 0x1A, 0x05, 0x00, 0x04, 0x14};
+static unsigned char prefix_sha1[] = {
+	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0E, 0x03, 0x02,
+	0x1A, 0x05, 0x00, 0x04, 0x14
+};
 
-static unsigned char prefix_sha256[] = {0x30, 0x31, 0x30, 0x0d, 0x06,
-	0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01,
-	0x05, 0x00, 0x04, 0x20};
+static unsigned char prefix_sha256[] = {
+	0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01,
+	0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20
+};
 
 #if 0
 /**
@@ -110,22 +114,23 @@ static unsigned char prefix_sha256[] = {0x30, 0x31, 0x30, 0x0d, 0x06,
    \return true if OK; else false
 */
 static bool 
-encode_hash_buf(const unsigned char *M, size_t mLen,
+encode_hash_buf(const unsigned char *M,
+		size_t mLen,
 		const __ops_hash_algorithm_t hash_alg,
 		unsigned char *EM)
 {
 	/* implementation of EMSA-PKCS1-v1_5, as defined in OpenPGP RFC */
 
+	unsigned char  *prefix = NULL;
 	unsigned        i;
 
 	int             n = 0;
-	__ops_hash_t      hash;
+	__ops_hash_t	hash;
 	int             hash_sz = 0;
 	int             encoded_hash_sz = 0;
 	int             prefix_sz = 0;
 	unsigned        padding_sz = 0;
 	unsigned        encoded_msg_sz = 0;
-	unsigned char  *prefix = NULL;
 
 	if (hash_alg != OPS_HASH_SHA1) {
 		(void) fprintf(stderr, "encode_hash_buf: bad hash alg\n");
@@ -196,10 +201,11 @@ encode_hash_buf(const unsigned char *M, size_t mLen,
 
 /* XXX: both this and verify would be clearer if the signature were */
 /* treated as an MPI. */
-static void 
-rsa_sign(__ops_hash_t * hash, const __ops_rsa_pubkey_t * rsa,
-	 const __ops_rsa_seckey_t * srsa,
-	 __ops_create_info_t * opt)
+static int 
+rsa_sign(__ops_hash_t *hash,
+	const __ops_rsa_pubkey_t *pubrsa,
+	const __ops_rsa_seckey_t *secrsa,
+	__ops_create_info_t *opt)
 {
 	unsigned char   hashbuf[NETPGP_BUFSIZ];
 	unsigned char   sigbuf[NETPGP_BUFSIZ];
@@ -212,14 +218,14 @@ rsa_sign(__ops_hash_t * hash, const __ops_rsa_pubkey_t * rsa,
 	/* XXX: we assume hash is sha-1 for now */
 	hashsize = 20 + sizeof(prefix_sha1);
 
-	keysize = (BN_num_bits(rsa->n) + 7) / 8;
+	keysize = (BN_num_bits(pubrsa->n) + 7) / 8;
 	if (keysize > sizeof(hashbuf)) {
 		(void) fprintf(stderr, "rsa_sign: keysize too big\n");
-		return;
+		return 0;
 	}
 	if (10 + hashsize > keysize) {
 		(void) fprintf(stderr, "rsa_sign: hashsize too big\n");
-		return;
+		return 0;
 	}
 
 	hashbuf[0] = 0;
@@ -238,7 +244,7 @@ rsa_sign(__ops_hash_t * hash, const __ops_rsa_pubkey_t * rsa,
 	t = hash->finish(hash, &hashbuf[n]);
 	if (t != 20) {
 		(void) fprintf(stderr, "rsa_sign: hashfinish not 20\n");
-		return;
+		return 0;
 	}
 
 	__ops_write(&hashbuf[n], 2, opt);
@@ -246,16 +252,17 @@ rsa_sign(__ops_hash_t * hash, const __ops_rsa_pubkey_t * rsa,
 	n += t;
 	if (n != keysize) {
 		(void) fprintf(stderr, "rsa_sign: n != keysize\n");
-		return;
+		return 0;
 	}
 
-	t = __ops_rsa_private_encrypt(sigbuf, hashbuf, keysize, srsa, rsa);
+	t = __ops_rsa_private_encrypt(sigbuf, hashbuf, keysize, secrsa, pubrsa);
 	bn = BN_bin2bn(sigbuf, (int)t, NULL);
 	__ops_write_mpi(bn, opt);
 	BN_free(bn);
+	return 1;
 }
 
-static void 
+static int 
 dsa_sign(__ops_hash_t * hash,
 	 const __ops_dsa_pubkey_t * dsa,
 	 const __ops_dsa_seckey_t * sdsa,
@@ -276,7 +283,7 @@ dsa_sign(__ops_hash_t * hash,
 	t = hash->finish(hash, &hashbuf[0]);
 	if (t != 20) {
 		(void) fprintf(stderr, "dsa_sign: hashfinish not 20\n");
-		return;
+		return 0;
 	}
 
 	__ops_write(&hashbuf[0], 2, cinfo);
@@ -288,6 +295,7 @@ dsa_sign(__ops_hash_t * hash,
 	__ops_write_mpi(dsasig->r, cinfo);
 	__ops_write_mpi(dsasig->s, cinfo);
 	DSA_SIG_free(dsasig);
+	return 1;
 }
 
 static bool 
@@ -295,7 +303,7 @@ rsa_verify(__ops_hash_algorithm_t type,
 	   const unsigned char *hash,
 	   size_t hash_length,
 	   const __ops_rsa_sig_t * sig,
-	   const __ops_rsa_pubkey_t * rsa)
+	   const __ops_rsa_pubkey_t * pubrsa)
 {
 	const unsigned char	*prefix;
 	unsigned char   	 sigbuf[NETPGP_BUFSIZ];
@@ -307,7 +315,7 @@ rsa_verify(__ops_hash_algorithm_t type,
 
 	plen = 0;
 	prefix = (const unsigned char *) "";
-	keysize = BN_num_bytes(rsa->n);
+	keysize = BN_num_bytes(pubrsa->n);
 	/* RSA key can't be bigger than 65535 bits, so... */
 	if (keysize > sizeof(hashbuf_from_sig)) {
 		(void) fprintf(stderr, "rsa_verify: keysize too big\n");
@@ -320,7 +328,7 @@ rsa_verify(__ops_hash_algorithm_t type,
 	BN_bn2bin(sig->sig, sigbuf);
 
 	n = __ops_rsa_public_decrypt(hashbuf_from_sig, sigbuf,
-		(unsigned)(BN_num_bits(sig->sig) + 7) / 8, rsa);
+		(unsigned)(BN_num_bits(sig->sig) + 7) / 8, pubrsa);
 	debug_len_decrypted = n;
 
 	if (n != keysize)	/* obviously, this includes error returns */
@@ -526,10 +534,10 @@ finalise_sig(__ops_hash_t * hash,
  */
 bool
 __ops_check_useridcert_sig(const __ops_pubkey_t * key,
-					  const __ops_user_id_t * id,
-					  const __ops_sig_t * sig,
-					  const __ops_pubkey_t * signer,
-					  const unsigned char *raw_packet)
+			  const __ops_user_id_t * id,
+			  const __ops_sig_t * sig,
+			  const __ops_pubkey_t * signer,
+			  const unsigned char *raw_packet)
 {
 	__ops_hash_t	hash;
 	size_t          user_id_len = strlen((char *) id->user_id);
@@ -717,18 +725,17 @@ __ops_sig_start_key_sig(__ops_create_sig_t * sig,
  * \todo Expand description. Allow other hashes.
  */
 
-static void 
-__ops_sig_start_sig(__ops_create_sig_t * sig,
-			      const __ops_seckey_t * key,
-			      const __ops_hash_algorithm_t hash,
-			      const __ops_sig_type_t type)
+void 
+__ops_start_sig(__ops_create_sig_t *sig,
+	      const __ops_seckey_t *key,
+	      const __ops_hash_algorithm_t hash,
+	      const __ops_sig_type_t type)
 {
 	sig->info = __ops_create_info_new();
 
-	/* XXX: refactor with check (in several ways - check should probably */
-	/*
-	 * use the buffered writer to construct packets (done), and
-	 * also should share code for hash calculation) */
+	/* XXX:  refactor with check (in several ways - check should
+	 * probably use the buffered writer to construct packets
+	 * (done), and also should share code for hash calculation) */
 	sig->sig.info.version = OPS_V4;
 	sig->sig.info.key_algorithm = key->pubkey.algorithm;
 	sig->sig.info.hash_algorithm = hash;
@@ -741,32 +748,6 @@ __ops_sig_start_sig(__ops_create_sig_t * sig,
 	}
 	initialise_hash(&sig->hash, &sig->sig);
 	start_sig_in_mem(sig);
-}
-
-/**
- * \ingroup Core_Signature
- * \brief Setup to start a cleartext's signature
- */
-void 
-__ops_start_cleartext_sig(__ops_create_sig_t * sig,
-					const __ops_seckey_t * key,
-					const __ops_hash_algorithm_t hash,
-					const __ops_sig_type_t type)
-{
-	__ops_sig_start_sig(sig, key, hash, type);
-}
-
-/**
- * \ingroup Core_Signature
- * \brief Setup to start a message's signature
- */
-void 
-__ops_start_msg_sig(__ops_create_sig_t * sig,
-		      const __ops_seckey_t * key,
-		      const __ops_hash_algorithm_t hash,
-		      const __ops_sig_type_t type)
-{
-	__ops_sig_start_sig(sig, key, hash, type);
 }
 
 /**
@@ -881,7 +862,8 @@ __ops_write_sig(__ops_create_sig_t * sig,
 	__ops_hash_add_int(&sig->hash, sig->hashed_data_length + 6, 4);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "--- Finished adding packet to hash from version number to hashed subpkts\n");
+		(void) fprintf(stderr,
+"--- Finished adding packet to hash from version number to hashed subpkts\n");
 	}
 	/* XXX: technically, we could figure out how big the signature is */
 	/* and write it directly to the output instead of via memory. */
@@ -889,11 +871,21 @@ __ops_write_sig(__ops_create_sig_t * sig,
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		rsa_sign(&sig->hash, &key->key.rsa, &seckey->key.rsa, sig->info);
+		if (!rsa_sign(&sig->hash, &key->key.rsa, &seckey->key.rsa,
+				sig->info)) {
+			(void) fprintf(stderr,
+				"__ops_write_sig: rsa_sign failure\n");
+			return false;
+		}
 		break;
 
 	case OPS_PKA_DSA:
-		dsa_sign(&sig->hash, &key->key.dsa, &seckey->key.dsa, sig->info);
+		if (!dsa_sign(&sig->hash, &key->key.dsa, &seckey->key.dsa,
+				sig->info)) {
+			(void) fprintf(stderr,
+				"__ops_write_sig: dsa_sign failure\n");
+			return false;
+		}
 		break;
 
 	default:
@@ -927,8 +919,9 @@ __ops_write_sig(__ops_create_sig_t * sig,
 bool 
 __ops_sig_add_birthtime(__ops_create_sig_t * sig, time_t when)
 {
-	return __ops_write_ss_header(5, OPS_PTAG_SS_CREATION_TIME, sig->info)
-	&& __ops_write_scalar((unsigned)when, 4, sig->info);
+	return __ops_write_ss_header(5, OPS_PTAG_SS_CREATION_TIME,
+				sig->info) &&
+		__ops_write_scalar((unsigned)when, 4, sig->info);
 }
 
 /**
@@ -1067,8 +1060,7 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 		return false;
 	}
 	/* \todo could add more error detection here */
-	__ops_start_cleartext_sig(sig, seckey, OPS_HASH_SHA1,
-		OPS_SIG_BINARY);
+	__ops_start_sig(sig, seckey, OPS_HASH_SHA1, OPS_SIG_BINARY);
 	if (__ops_writer_push_clearsigned(cinfo, sig) != true) {
 		return false;
 	}
@@ -1155,7 +1147,7 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 		return false;
 	}
 	/* \todo could add more error detection here */
-	__ops_start_cleartext_sig(sig, seckey, OPS_HASH_SHA1, OPS_SIG_BINARY);
+	__ops_start_sig(sig, seckey, OPS_HASH_SHA1, OPS_SIG_BINARY);
 
 	/* set up output file */
 	__ops_setup_memory_write(&cinfo, signed_cleartext, len);
@@ -1229,7 +1221,7 @@ __ops_sign_file(const char *input_filename, const char *output_filename, const _
 
 	/* set up signature */
 	sig = __ops_create_sig_new();
-	__ops_start_msg_sig(sig, seckey, hash_alg, sig_type);
+	__ops_start_sig(sig, seckey, hash_alg, sig_type);
 
 	/* set armoured/not armoured here */
 	if (use_armour) {
@@ -1320,7 +1312,7 @@ __ops_sign_buf(const void *input,
 
 	/* set up signature */
 	sig = __ops_create_sig_new();
-	__ops_start_msg_sig(sig, seckey, hash_alg, sig_type);
+	__ops_start_sig(sig, seckey, hash_alg, sig_type);
 
 	/* setup writer */
 	__ops_setup_memory_write(&cinfo, &mem, input_len);
