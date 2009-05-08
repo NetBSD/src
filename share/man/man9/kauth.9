@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.84 2009/05/08 11:09:43 elad Exp $
+.\" $NetBSD: kauth.9,v 1.85 2009/05/08 21:52:20 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -230,7 +230,7 @@ is a
 .Ft uid_t
 with the user-id of the user whose quota/quota use is to be set.
 .It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT
-Check if bypassing the quota (not enforcing it) is allwoed.
+Check if bypassing the quota (not enforcing it) is allowed.
 .El
 .It Dv KAUTH_SYSTEM_FS_RESERVEDSPACE
 Check if using the file-system reserved space is allowed.
@@ -376,7 +376,7 @@ with the delta from the current time,
 .Ar arg3
 is a
 .Ft bool
-indicating whether the caller is a device context (eg.
+indicating whether the caller is a device context (e.g.
 .Pa /dev/clockctl )
 or not.
 .It Dv KAUTH_REQ_SYSTEM_TIME_RTCOFFSET
@@ -835,7 +835,7 @@ Affects
 The device scope,
 .Dq org.netbsd.kauth.device ,
 manages authorization requests related to devices on the system.
-Devices can be, for example, terminals, tape drives, bluetooth accessories, and
+Devices can be, for example, terminals, tape drives, Bluetooth accessories, and
 any other hardware.
 Network devices specifically are handled by the
 .Em network
@@ -944,7 +944,7 @@ passed as
 to the listener, is device-specific data that may be associated with the
 request.
 .Ss Bluetooth Devices
-Authorizing actions relevant to bluetooth devices is done using the standard
+Authorizing actions relevant to Bluetooth devices is done using the standard
 authorization wrapper, with the following actions:
 .Pp
 .Bl -tag -width compact
