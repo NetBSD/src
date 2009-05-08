@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32 2009/05/07 06:41:19 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.33 2009/05/08 09:33:58 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ hppa_vtop:			/* a vtop translation table addr (pa=va) */
  */
 ENTRY_NOPROFILE(start,0)
 /*
- *	bootapiver <= 2 
+ *	bootapiver <= 2
  *		start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
  *	bootapiver == 3
@@ -609,9 +609,9 @@ spllower_dispatch:
 spllower_out:
 	/*
 	 * Now return, storing %eiem in the delay slot.
-	 * (hp700_intr_dispatch leaves it zero).  I think 
-	 * doing this in the delay slot is important to 
-	 * prevent recursion, but I might be being too 
+	 * (hp700_intr_dispatch leaves it zero).  I think
+	 * doing this in the delay slot is important to
+	 * prevent recursion, but I might be being too
 	 * paranoid.
 	 */
 	bv	%r0(%rp)
@@ -661,11 +661,11 @@ ENTRY(hp700_intr_ipending_new,HPPA_FRAME_SIZE)
 	copy	%r0, %ret0
 
 	/*
-	 * The top of this loop finds the next set bit in 
-	 * the request register.  Note that if the bvb does 
-	 * not branch, the addib is nullified, and control 
-	 * falls out of the loop.  If the bvb does branch, 
-	 * the addib runs with the mtsar in its delay slot.  
+	 * The top of this loop finds the next set bit in
+	 * the request register.  Note that if the bvb does
+	 * not branch, the addib is nullified, and control
+	 * falls out of the loop.  If the bvb does branch,
+	 * the addib runs with the mtsar in its delay slot.
 	 * If the addib branches, the mtsar is nullified.
 	 */
 $hp700_inew_loop:
@@ -674,8 +674,8 @@ $hp700_inew_loop:
 	addib,<,n -1, %arg2, $hp700_inew_done
 
 	/*
-	 * If the map entry for this bit has INT_REG_BIT_REG 
-	 * set, branch to descend into the next interrupt 
+	 * If the map entry for this bit has INT_REG_BIT_REG
+	 * set, branch to descend into the next interrupt
 	 * register.  Otherwise, set the bits in our ipending_new
 	 * value and loop.
 	 */
@@ -720,7 +720,7 @@ $hp700_inew_descend:
 
 	/*
 	 * Read the interrupt request register and make
-	 * our recursive call.  The read also serves to 
+	 * our recursive call.  The read also serves to
 	 * acknowledge the interrupt to the I/O subsystem.
 	 */
 	ldw	INT_REG_REQ(%arg0), %arg1
@@ -774,7 +774,7 @@ EXIT(cpu_die)
 ENTRY(cpu_switchto,128)
 	/* start stack calling convention */
 	stw	%rp, HPPA_FRAME_CRP(%sp)
-	copy	%r3, %r1 
+	copy	%r3, %r1
 	copy	%sp, %r3
 	stwm	%r1, HPPA_FRAME_SIZE+16*4(%sp)
 					/* Frame marker and callee saves */
@@ -838,7 +838,7 @@ kstack_ok:
 	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc U_PCB+PCB_KSP(%t3) */
 
 	/*
-	 * Save the callee-save registers. We don't need to do 
+	 * Save the callee-save registers. We don't need to do
 	 * r3 here as it was done during stack calling convention.
 	 */
 	stw	%r4,   1*4(%r3)
@@ -939,11 +939,11 @@ ALTENTRY(hppa_fpu_nop1)
 	b,n	switch_return
 
 	/*
-	 * We do have a hardware FPU.  If the LWP 
+	 * We do have a hardware FPU.  If the LWP
 	 * that we just switched to has its state in the
-	 * FPU, enable the FPU, else disable it, so if 
-	 * the LWP does try to use the coprocessor 
-	 * we'll get an assist emulation trap to swap 
+	 * FPU, enable the FPU, else disable it, so if
+	 * the LWP does try to use the coprocessor
+	 * we'll get an assist emulation trap to swap
 	 * states.
 	 */
 	ldil	L%fpu_cur_uspace, %t1

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 2009/05/08 09:33:57 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2009/05/07 15:34:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2009/05/08 09:33:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	if (mhz % 100 > 9)
 		aprint_normal(".%02d", mhz % 100);
 
-	aprint_normal(" MHz clk\n%s: %s", self->dv_xname, 
+	aprint_normal(" MHz clk\n%s: %s", self->dv_xname,
 	    pdc_model.sh? "shadows, ": "");
 
 	if (pdc_cache.dc_conf.cc_sh)

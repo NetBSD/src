@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.20 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -46,34 +46,34 @@
  *
  * 	Utah $Hdr: mem.c 1.9 94/12/16$
  */
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19 2009/05/07 15:34:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20 2009/05/08 09:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,8 +373,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return (0);
-			} 
-			/* 
+			}
+			/*
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.12 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: asp.c,v 1.13 2009/05/08 09:33:57 skrll Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.12 2009/05/07 15:34:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.13 2009/05/08 09:33:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ asp_fix_args(void *_sc, struct gsc_attach_args *ga)
 	hppa_hpa_t module_offset;
 	struct asp_softc *sc = _sc;
 
-	/*  
+	/*
 	 * Determine this module's interrupt bit.
 	 */
 	module_offset = ga->ga_hpa - (hppa_hpa_t) sc->sc_trs;
@@ -165,7 +165,7 @@ asp_fix_args(void *_sc, struct gsc_attach_args *ga)
 	ASP_IRQ(0x30000, 3);	/* siop */
 	ASP_IRQ(0x800000, 13);	/* harmony */
 #undef ASP_IRQ
-}      
+}
 
 int
 aspmatch(device_t parent, cfdata_t cf, void *aux)

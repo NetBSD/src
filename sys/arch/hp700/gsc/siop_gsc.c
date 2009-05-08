@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_gsc.c,v 1.8 2009/05/07 15:17:22 skrll Exp $	*/
+/*	$NetBSD: siop_gsc.c,v 1.9 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: siop_gsc.c,v 1.4 2007/08/23 21:01:22 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.8 2009/05/07 15:17:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.9 2009/05/08 09:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,7 +81,7 @@ void
 siop_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct siop_gsc_softc *gsc = (struct siop_gsc_softc *)self;
-        struct siop_softc *sc = &gsc->sc_siop;
+	struct siop_softc *sc = &gsc->sc_siop;
 	struct gsc_attach_args *ga = aux;
 
 	gsc->sc_iot = ga->ga_iot;
