@@ -33,6 +33,10 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+
 #ifdef HAVE_OPENSSL_CAST_H
 #include <openssl/cast.h>
 #endif
@@ -135,21 +139,21 @@ userid_to_id(const unsigned char *userid, char *id)
 
 /* print out the successful signature information */
 static void
-psuccess(char *f, __ops_validation_t *results, __ops_keyring_t *pubring)
+psuccess(FILE *fp, char *f, __ops_validation_t *res, __ops_keyring_t *pubring)
 {
 	const __ops_keydata_t	*pubkey;
 	unsigned		 i;
 	char			 id[MAX_ID_LENGTH + 1];
 
-	for (i = 0; i < results->validc; i++) {
-		printf("Good signature for %s made %susing %s key %s\n",
-		       f,
-		       ctime(&results->valid_sigs[i].birthtime),
-		       __ops_show_pka(results->valid_sigs[i].key_algorithm),
-		       userid_to_id(results->valid_sigs[i].signer_id, id));
+	for (i = 0; i < res->validc; i++) {
+		(void) fprintf(fp,
+			"Good signature for %s made %susing %s key %s\n",
+			f,
+			ctime(&res->valid_sigs[i].birthtime),
+			__ops_show_pka(res->valid_sigs[i].key_algorithm),
+			userid_to_id(res->valid_sigs[i].signer_id, id));
 		pubkey = __ops_keyring_find_key_by_id(pubring,
-						    (const unsigned char *)
-					  results->valid_sigs[i].signer_id);
+			(const unsigned char *) res->valid_sigs[i].signer_id);
 		__ops_print_pubkeydata(pubkey);
 	}
 }
@@ -178,7 +182,7 @@ sign_detached(char *f, char *sigfile, __ops_seckey_t *seckey,
 
 	/* create a new signature */
 	sig = __ops_create_sig_new();
-	__ops_start_cleartext_sig(sig, seckey, alg, OPS_SIG_BINARY);
+	__ops_start_sig(sig, seckey, alg, OPS_SIG_BINARY);
 
 	/* read the contents of 'f' */
 	fd = open(f, O_RDONLY);
@@ -258,6 +262,18 @@ netpgp_init(netpgp_t *netpgp, char *userid, char *pubring, char *secring)
 	char		 ringname[MAXPATHLEN];
 	char		 id[MAX_ID_LENGTH];
 
+#ifdef HAVE_SYS_RESOURCE_H
+	struct rlimit	limit;
+
+	(void) memset(&limit, 0x0, sizeof(limit));
+	if (setrlimit(RLIMIT_CORE, &limit) != 0) {
+		(void) fprintf(stderr,
+			"netpgp_init: warning - can't turn off core dumps\n");
+	}
+#else
+	(void) fprintf(stderr,
+		"netpgp_init: warning - no way of switching off core dumps\n");
+#endif
 	(void) memset(netpgp, 0x0, sizeof(*netpgp));
 	homedir = getenv("HOME");
 	if (userid == NULL) {
@@ -272,7 +288,8 @@ netpgp_init(netpgp_t *netpgp, char *userid, char *pubring, char *secring)
 		return 0;
 	}
 	if (pubring == NULL) {
-		(void) snprintf(ringname, sizeof(ringname), "%s/.gnupg/pubring.gpg", homedir);
+		(void) snprintf(ringname, sizeof(ringname),
+			"%s/.gnupg/pubring.gpg", homedir);
 		pubring = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
@@ -283,7 +300,8 @@ netpgp_init(netpgp_t *netpgp, char *userid, char *pubring, char *secring)
 	netpgp->pubring = keyring;
 	netpgp->pubringfile = strdup(pubring);
 	if (secring == NULL) {
-		(void) snprintf(ringname, sizeof(ringname), "%s/.gnupg/secring.gpg", homedir);
+		(void) snprintf(ringname, sizeof(ringname),
+				"%s/.gnupg/secring.gpg", homedir);
 		secring = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
@@ -491,14 +509,16 @@ netpgp_verify_file(netpgp_t *netpgp, char *f, int armored)
 
 	(void) memset(&result, 0x0, sizeof(result));
 	if (__ops_validate_file(&result, f, armored, netpgp->pubring)) {
-		psuccess(f, &result, netpgp->pubring);
+		psuccess(stderr, f, &result, netpgp->pubring);
 		return 1;
 	}
 	if (result.validc + result.invalidc + result.unknownc == 0) {
-		(void) fprintf(stderr, "\"%s\": No signatures found - is this a signed file?\n", f);
+		(void) fprintf(stderr,
+		"\"%s\": No signatures found - is this a signed file?\n", f);
 		return 0;
 	}
-	(void) fprintf(stderr, "\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n",
+	(void) fprintf(stderr,
+"\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n",
 		f, result.invalidc, result.unknownc);
 	return 0;
 }
