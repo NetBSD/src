@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,7 +32,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readelf.c,v 1.81 2008/11/04 16:38:28 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.2 2009/05/08 17:28:01 christos Exp $");
 #endif
 #endif
 
@@ -1025,7 +1025,7 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 	const char *linking_style = "statically";
 	const char *shared_libraries = "";
 	unsigned char nbuf[BUFSIZ];
-	int bufsize;
+	ssize_t bufsize;
 	size_t offset, align;
 	off_t savedoffset = (off_t)-1;
 	struct stat st;
@@ -1080,7 +1080,7 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 			shared_libraries = " (uses shared libs)";
 			break;
 		case PT_NOTE:
-			if ((align = xph_align) & 0x80000000) {
+			if ((align = xph_align) & 0x80000000UL) {
 				if (file_printf(ms, 
 				    ", invalid note alignment 0x%lx",
 				    (unsigned long)align) == -1)
