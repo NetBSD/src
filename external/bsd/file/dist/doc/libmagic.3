@@ -1,4 +1,4 @@
-.\"	$NetBSD: libmagic.3,v 1.2 2009/05/08 20:19:39 wiz Exp $
+.\"	$NetBSD: libmagic.3,v 1.3 2009/05/08 20:26:48 wiz Exp $
 .\"
 .\" $File: libmagic.man,v 1.19 2008/10/06 20:16:04 christos Exp $
 .\"
@@ -40,7 +40,7 @@
 .Nm magic_check ,
 .Nm magic_compile ,
 .Nm magic_load
-.Nd Magic number recognition library.
+.Nd Magic number recognition library
 .Sh LIBRARY
 .Lb libmagic
 .Sh SYNOPSIS
@@ -54,17 +54,17 @@
 .Ft int
 .Fn magic_errno "magic_t cookie"
 .Ft const char *
-.Fn magic_file "magic_t cookie, const char *filename"
+.Fn magic_file "magic_t cookie" "const char *filename"
 .Ft const char *
-.Fn magic_buffer "magic_t cookie, const void *buffer, size_t length"
+.Fn magic_buffer "magic_t cookie" "const void *buffer" "size_t length"
 .Ft int
-.Fn magic_setflags "magic_t cookie, int flags"
+.Fn magic_setflags "magic_t cookie" "int flags"
 .Ft int
-.Fn magic_check "magic_t cookie, const char *filename"
+.Fn magic_check "magic_t cookie" "const char *filename"
 .Ft int
-.Fn magic_compile "magic_t cookie, const char *filename"
+.Fn magic_compile "magic_t cookie" "const char *filename"
 .Ft int
-.Fn magic_load "magic_t cookie, const char *filename"
+.Fn magic_load "magic_t cookie" "const char *filename"
 .Sh DESCRIPTION
 These functions
 operate on the magic database file
@@ -74,8 +74,11 @@ in
 .Pp
 The function
 .Fn magic_open
-creates a magic cookie pointer and returns it. It returns NULL if
-there was an error allocating the magic cookie. The
+creates a magic cookie pointer and returns it.
+It returns
+.Dv NULL
+if there was an error allocating the magic cookie.
+The
 .Ar flags
 argument specifies how the other magic functions should behave:
 .Bl -tag -width MAGIC_COMPRESS
@@ -100,7 +103,7 @@ Return all matches, not just the first.
 Check the magic database for consistency and print warnings to stderr.
 .It Dv MAGIC_PRESERVE_ATIME
 On systems that support
-.Xr utime 2
+.Xr utime 3
 or
 .Xr utimes 2 ,
 attempt to preserve the access time of files analyzed.
@@ -139,8 +142,9 @@ database and deallocates any resources used.
 .Pp
 The
 .Fn magic_error
-function returns a textual explanation of the last error, or NULL if there was
-no error.
+function returns a textual explanation of the last error, or
+.Dv NULL
+if there was no error.
 .Pp
 The
 .Fn magic_errno
@@ -152,10 +156,14 @@ The
 .Fn magic_file
 function returns a textual description of the contents of the
 .Ar filename
-argument, or NULL if an error occurred.
+argument, or
+.Dv NULL
+if an error occurred.
 If the
 .Ar filename
-is NULL, then stdin is used.
+is
+.Dv NULL ,
+then stdin is used.
 .Pp
 The
 .Fn magic_buffer
@@ -169,7 +177,8 @@ The
 .Fn magic_setflags
 function sets the
 .Ar flags
-described above. Note that using both MIME flags together can also
+described above.
+Note that using both MIME flags together can also
 return extra information on the charset.
 .Pp
 The
@@ -177,16 +186,21 @@ The
 function can be used to check the validity of entries in the colon
 separated database files passed in as
 .Ar filename ,
-or NULL for the default database. It returns 0 on success and -1 on
-failure.
+or
+.Dv NULL
+for the default database.
+It returns 0 on success and \-1 on failure.
 .Pp
 The
 .Fn magic_compile
 function can be used to compile the the colon
 separated list of database files passed in as
 .Ar filename ,
-or NULL for the default database. It returns 0 on success and -1 on
-failure. The compiled files created are named from the
+or
+.Dv NULL
+for the default database.
+It returns 0 on success and \-1 on failure.
+The compiled files created are named from the
 .Xr basename 1
 of each file argument with
 .Dq .mgc
@@ -197,11 +211,13 @@ The
 function must be used to load the the colon
 separated list of database files passed in as
 .Ar filename ,
-or NULL for the default database file
-before any magic queries can performed.
+or
+.Dv NULL
+for the default database file before any magic queries can performed.
 .Pp
-The default database file is named by the MAGIC environment variable.  If
-that variable is not set, the default database file name is /usr/share/misc/magic.
+The default database file is named by the MAGIC environment variable.
+If that variable is not set, the default database file name is
+.Pa /usr/share/misc/magic .
 .Fn magic_load
 adds
 .Dq .mgc
@@ -209,27 +225,35 @@ to the database filename as appropriate.
 .Sh RETURN VALUES
 The function
 .Fn magic_open
-returns a magic cookie on success and NULL on failure setting errno to
-an appropriate value. It will set errno to EINVAL if an unsupported
-value for flags was given.
+returns a magic cookie on success and
+.Dv NULL
+on failure setting errno to an appropriate value.
+It will set errno to
+.Er EINVAL
+if an unsupported value for flags was given.
 The
 .Fn magic_load ,
 .Fn magic_compile ,
 and
 .Fn magic_check
-functions return 0 on success and -1 on failure.
+functions return 0 on success and \-1 on failure.
 The
 .Fn magic_file ,
 and
 .Fn magic_buffer
-functions return a string on success and NULL on failure. The
+functions return a string on success and
+.Dv NULL
+on failure.
+The
 .Fn magic_error
 function returns a textual description of the errors of the above
-functions, or NULL if there was no error.
+functions, or
+.Dv NULL
+if there was no error.
 Finally,
 .Fn magic_setflags
-returns -1 on systems that don't support
-.Xr utime 2 ,
+returns \-1 on systems that don't support
+.Xr utime 3 ,
 or
 .Xr utimes 2
 when
@@ -246,6 +270,7 @@ The compiled default magic database.
 .Xr file 1 ,
 .Xr magic 5
 .Sh AUTHORS
-Måns Rullgård Initial libmagic implementation,
-and configuration.
-Christos Zoulas API cleanup, error code and allocation handling.
+.An Måns Rullgård
+Initial libmagic implementation, and configuration.
+.An Christos Zoulas
+API cleanup, error code and allocation handling.
