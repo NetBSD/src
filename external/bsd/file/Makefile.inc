@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 2009/05/08 17:43:54 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2009/05/08 23:36:42 christos Exp $
 
 DIST=${.CURDIR}/../dist
 WARNS=4
 
+BINDIR?= /usr/bin
 USE_FORT?= yes	# data-driven bugs?
 
 TOOL_MKMAGIC?=	${.OBJDIR}/file
