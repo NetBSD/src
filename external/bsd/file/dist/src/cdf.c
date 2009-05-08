@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.c,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.3 2009/05/08 17:43:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: cdf.c,v 1.30 2009/05/06 14:29:47 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.2 2009/05/08 17:28:01 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.3 2009/05/08 17:43:54 christos Exp $");
 #endif
 #endif
 
@@ -949,18 +949,18 @@ cdf_print_elapsed_time(char *buf, size_t bufsiz, cdf_timestamp_t ts)
 
 	if (days) {
 		len += snprintf(buf + len, bufsiz - len, "%dd+", days);
-		if (len >= bufsiz)
+		if ((size_t)len >= bufsiz)
 			return len;
 	}
 
 	if (days || hours) {
 		len += snprintf(buf + len, bufsiz - len, "%.2d:", hours);
-		if (len >= bufsiz)
+		if ((size_t)len >= bufsiz)
 			return len;
 	}
 
 	len += snprintf(buf + len, bufsiz - len, "%.2d:", mins);
-	if (len >= bufsiz)
+	if ((size_t)len >= bufsiz)
 		return len;
 
 	len += snprintf(buf + len, bufsiz - len, "%.2d", secs);
