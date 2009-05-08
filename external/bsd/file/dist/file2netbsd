@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.1.1.1 2009/05/08 16:35:04 christos Exp $
+#	$NetBSD: file2netbsd,v 1.2 2009/05/08 16:40:10 christos Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,8 +33,12 @@
 # based on texinfo2netbsd
 #
 
-# edit this
-file_vers='4.21'
+if [ -z "$1" ]
+then
+	echo "Usage $0: <file-version>" 1>&2
+	exit 1
+fi
+file_vers="$1"
 
 #
 # (usually) NO NEED TO EDIT BELOW THIS LINE
@@ -105,6 +109,6 @@ wq' | ed Makefile.in > /dev/null 2>&1
 echo done
 
 echo You can import now.  Use the following command:
-echo cvs import src/dist/file CHRISTOS FILE${file_vers%.*}_${file_vers#*.}
+echo cvs import src/external/bsd/file/dist CHRISTOS FILE${file_vers%.*}_${file_vers#*.}
 
 exit 0
