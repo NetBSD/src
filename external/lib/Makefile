@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/04/14 20:26:52 cube Exp $
+#	$NetBSD: Makefile,v 1.10 2009/05/08 17:47:44 christos Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -24,5 +24,6 @@ SUBDIR+= ../bsd/fetch/lib
 SUBDIR+= ../bsd/libarchive/lib
 SUBDIR+= ../bsd/am-utils/lib
 SUBDIR+= ../bsd/bind/lib
+SUBDIR+= ../bsd/file/lib
 
 .include <bsd.subdir.mk>
