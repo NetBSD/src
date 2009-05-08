@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.135 2009/04/14 17:49:45 christos Exp $
+#	$NetBSD: Makefile,v 1.136 2009/05/08 17:47:22 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -62,8 +62,6 @@ SUBDIR+=	i18n_module
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libedit		# depends on libterm
-
-SUBDIR+=	libmagic	# depends on libz
 
 SUBDIR+=	libradius	# depends on libcrypto - only if ${MKCRYPTO}
 
