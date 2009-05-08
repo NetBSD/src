@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.807 2009/05/01 22:59:51 agc Exp $
+# $NetBSD: mi,v 1.808 2009/05/08 23:28:46 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3802,7 +3802,7 @@
 ./usr/share/misc/ascii				base-reference-share	share
 ./usr/share/misc/bsd-family-tree		base-reference-share	share
 ./usr/share/misc/getopt				base-obsolete		obsolete
-./usr/share/misc/magic				base-magic-share	share
+./usr/share/misc/magic				base-obsolete		obsolete
 ./usr/share/misc/magic.mgc			base-magic-share	share
 ./usr/share/misc/magic.mime			base-obsolete		obsolete
 ./usr/share/misc/magic.mime.mgc			base-obsolete		obsolete
