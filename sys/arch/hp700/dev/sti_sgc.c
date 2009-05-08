@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.15 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.16 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.15 2009/05/07 15:34:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.16 2009/05/08 09:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,13 +179,13 @@ sti_sgc_probe(device_t parent, cfdata_t cf, void *aux)
 		    + 11) <<  8) |
 		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_GRID
 		    + 15));
-		romend = (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND 
+		romend = (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
 		    +  3) << 24) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND 
+		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
 		    +  7) << 16) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND 
+		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
 		    + 11) <<  8) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND 
+		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
 		    + 15));
 		break;
 	default:

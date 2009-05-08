@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.2 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: power.c,v 1.3 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -206,7 +206,7 @@ power_thread_dr(void *v)
 	/* Get Power Fail status from CPU Diagnose Register 25 */
 	mfcpu(25, r);
 
-	/* 
+	/*
 	 * On power failure, the hardware clears bit DR25_PCXL_POWFAIL
 	 * in CPU Diagnose Register 25.
 	 */
@@ -263,7 +263,7 @@ pwr_sw_init(struct power_softc *sc)
 	int error = EINVAL;
 
 	/*
-	 * Ensure that we are on a PCX-L / PA7100LC CPU if it is a 
+	 * Ensure that we are on a PCX-L / PA7100LC CPU if it is a
 	 * 712 style machine.
 	 */
 	if (pdc_power_info.addr == 0 && hppa_cpu_info->hci_type != hpcxl) {
@@ -272,23 +272,23 @@ pwr_sw_init(struct power_softc *sc)
 	}
 
 	errmsg = "Can't create sysctl machdep.power_switch (or children)\n";
-	error = sysctl_createv(&sysctl_log, 0, NULL, NULL, 0, 
-	    CTLTYPE_NODE, "machdep", NULL, NULL, 0, NULL, 0, 
+	error = sysctl_createv(&sysctl_log, 0, NULL, NULL, 0,
+	    CTLTYPE_NODE, "machdep", NULL, NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_EOL);
 
 	if (error)
 		goto err_sysctl;
 	
-	error = sysctl_createv(&sysctl_log, 0, NULL, &pwr_sw_node, 0, 
+	error = sysctl_createv(&sysctl_log, 0, NULL, &pwr_sw_node, 0,
 	    CTLTYPE_NODE, "power_switch", NULL, NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 	if (error)
 		goto err_sysctl;
 
-	error = sysctl_createv(&sysctl_log, 0, NULL, NULL, 
-	    CTLFLAG_READONLY, CTLTYPE_STRING, "state", NULL, 
-	    pwr_sw_sysctl_state, 0, NULL, 16, 
+	error = sysctl_createv(&sysctl_log, 0, NULL, NULL,
+	    CTLFLAG_READONLY, CTLTYPE_STRING, "state", NULL,
+	    pwr_sw_sysctl_state, 0, NULL, 16,
 	    CTL_MACHDEP, pwr_sw_node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	if (error)
@@ -338,7 +338,7 @@ err_sysctl:
 }
 
 static void
-pwr_sw_sysmon_cb(void *not_used) 
+pwr_sw_sysmon_cb(void *not_used)
 {
 	sysmon_pswitch_event(pwr_sw_sysmon, PSWITCH_EVENT_PRESSED);
 }

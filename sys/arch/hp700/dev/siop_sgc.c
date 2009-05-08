@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_sgc.c,v 1.2 2009/05/07 15:17:22 skrll Exp $	*/
+/*	$NetBSD: siop_sgc.c,v 1.3 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: siop_sgc.c,v 1.1 2007/08/05 19:09:52 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.2 2009/05/07 15:17:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.3 2009/05/08 09:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,7 +86,7 @@ void
 siop_sgc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct siop_sgc_softc *sgc = (struct siop_sgc_softc *)self;
-        struct siop_softc *sc = &sgc->sc_siop;
+	struct siop_softc *sc = &sgc->sc_siop;
 	struct confargs *ca = aux;
 	volatile struct iomod *regs;
 
@@ -128,13 +128,13 @@ siop_sgc_attach(struct device *parent, struct device *self, void *aux)
 	regs->io_eim = cpu_gethpa(0) | (31 - ca->ca_irq);
 	regs->io_ii_rw |= IO_II_INTEN;
 
-        printf(": NCR53C720 rev %d\n", bus_space_read_1(sc->sc_c.sc_rt,
-            sc->sc_c.sc_rh, SIOP_CTEST3) >> 4);
+	printf(": NCR53C720 rev %d\n", bus_space_read_1(sc->sc_c.sc_rt,
+	    sc->sc_c.sc_rh, SIOP_CTEST3) >> 4);
 
-        siop_attach(&sgc->sc_siop);
+	siop_attach(&sgc->sc_siop);
 
-        (void)hp700_intr_establish(&sc->sc_c.sc_dev, IPL_BIO,
-            siop_intr, sc, &int_reg_cpu, ca->ca_irq);
+	(void)hp700_intr_establish(&sc->sc_c.sc_dev, IPL_BIO,
+	    siop_intr, sc, &int_reg_cpu, ca->ca_irq);
 }
 
 void

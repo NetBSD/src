@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.27 2009/05/07 17:30:59 tsutsui Exp $	*/
+/*	$NetBSD: pdc.c,v 1.28 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.27 2009/05/07 17:30:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.28 2009/05/08 09:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,12 +276,12 @@ pdcwrite(dev_t dev, struct uio *uio, int flag)
 
 int
 pdcpoll(dev_t dev, int events, struct lwp *l)
-{  
+{
 	struct pdc_softc *sc = device_lookup_private(&pdc_cd,minor(dev));
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
-}  
+}
 
 int
 pdcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -439,7 +439,7 @@ pdccnputc(dev_t dev, int c)
 		delay(250000);
 #if 0
 		/*
-		 * It's not a good idea to use the output to print 
+		 * It's not a good idea to use the output to print
 		 * an output error.
 		 */
 		printf("pdccnputc: output error: %d\n", err);

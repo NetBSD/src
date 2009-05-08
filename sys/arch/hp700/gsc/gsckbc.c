@@ -1,4 +1,4 @@
-/* $NetBSD: gsckbc.c,v 1.4 2009/05/07 15:34:49 skrll Exp $ */
+/* $NetBSD: gsckbc.c,v 1.5 2009/05/08 09:33:58 skrll Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.4 2009/05/07 15:34:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.5 2009/05/08 09:33:58 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -164,9 +164,9 @@ gsckbc_poll_data1(void *cookie, pckbport_slot_t slot)
 	int i;
 
 	for (i = 0; i < 1000; i++) {
-		if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, REG_STATUS) & 
+		if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, REG_STATUS) &
 		    STAT_RBNE) != 0 || sc->sc_poll == 0) {
-			return bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
+			return bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 			    REG_RCVDATA);
 		}
 		DELAY(100);
@@ -206,15 +206,15 @@ gsckbc_intr(void *arg)
 	struct gsckbc_softc *sc = (struct gsckbc_softc *) arg;
 	int data;
 
-	while ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, REG_STATUS) 
+	while ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, REG_STATUS)
 	    & STAT_RBNE) != 0 && sc->sc_poll == 0) {
 		data = bus_space_read_1(sc->sc_iot, sc->sc_ioh, REG_RCVDATA);
 		if (sc->sc_enable != 0)
 			pckbportintr(sc->sc_pckbport, sc->sc_slot, data);
 	}
-	while ((bus_space_read_1(sc->sc_op->sc_iot, sc->sc_op->sc_ioh, 
+	while ((bus_space_read_1(sc->sc_op->sc_iot, sc->sc_op->sc_ioh,
 	    REG_STATUS) & STAT_RBNE) != 0 && sc->sc_op->sc_poll == 0) {
-		data = bus_space_read_1(sc->sc_op->sc_iot, sc->sc_op->sc_ioh, 
+		data = bus_space_read_1(sc->sc_op->sc_iot, sc->sc_op->sc_ioh,
 		    REG_RCVDATA);
 		if (sc->sc_op->sc_enable != 0)
 			pckbportintr(sc->sc_op->sc_pckbport, sc->sc_op->sc_slot,
@@ -245,13 +245,13 @@ gsckbc_attach(device_t parent, device_t self, void *aux)
 	int pagezero_cookie;
 	int i;
 
-	/* 
+	/*
 	 * On hp700 bus_space_map(9) mapes whole pages. (surprise, surprise)
 	 * The registers are within the same page so we can do only a single
 	 * mapping for both devices. Also both devices use the same IRQ.
 	 * Actually you can think of the two PS/2 ports to be a single
-	 * device. The firmware lists them as individual devices in the 
-	 * firmware device tree so we keep this illusion to map the firmware 
+	 * device. The firmware lists them as individual devices in the
+	 * firmware device tree so we keep this illusion to map the firmware
 	 * device tree as close as possible to the kernel device tree.
 	 * So we do one mapping and IRQ for both devices. The first device
 	 * is caled "master", gets the IRQ and the other is the "slave".
@@ -267,7 +267,7 @@ gsckbc_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		aprint_debug(" (master)");
-		sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_TTY, 
+		sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_TTY,
 		    gsckbc_intr, sc, ga->ga_int_reg, ga->ga_irq);
 		master_sc = sc;
 	} else {
@@ -294,7 +294,7 @@ gsckbc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_slot = PCKBPORT_KBD_SLOT;
 		pagezero_cookie = hp700_pagezero_map();
 		if ((hppa_hpa_t)PAGE0->mem_kbd.pz_hpa == ga->ga_hpa) {
-			if (pckbport_cnattach(sc, &gsckbc_accessops, 
+			if (pckbport_cnattach(sc, &gsckbc_accessops,
 			    sc->sc_slot) != 0)
 				aprint_normal("Failed to attach console "
 				    "keyboard!\n");
@@ -308,7 +308,7 @@ gsckbc_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_pckbport = pckbport_attach(sc, &gsckbc_accessops);
 	if (sc->sc_pckbport != NULL)
-		sc->sc_child = pckbport_attach_slot(self, sc->sc_pckbport, 
+		sc->sc_child = pckbport_attach_slot(self, sc->sc_pckbport,
 		    sc->sc_slot);
 	sc->sc_poll = 0;
 }

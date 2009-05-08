@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.12 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.13 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.12 2009/05/07 15:34:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.13 2009/05/08 09:33:58 skrll Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -580,7 +580,7 @@ mgmatch(device_t parent, cfdata_t cf, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_EISA)
 		return 0;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE, 
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
 			  sizeof(struct mongoose_regs), 0, &ioh))
 		return 0;
 

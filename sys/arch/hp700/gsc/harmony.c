@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.16 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.17 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -1387,7 +1387,7 @@ harmony_try_more(struct harmony_softc *sc, int curadd, int bufmask,
 	if (cur < d->d_map->dm_segs[0].ds_addr ||
 	    cur >= (d->d_map->dm_segs[0].ds_addr + c->c_segsz))
 		panic("%s: bad current %x < %lx || %x > %lx",
-		    device_xname(sc->sc_dv), cur, 
+		    device_xname(sc->sc_dv), cur,
 		    d->d_map->dm_segs[0].ds_addr, cur,
 		    d->d_map->dm_segs[0].ds_addr + c->c_segsz);
 #endif /* DIAGNOSTIC */

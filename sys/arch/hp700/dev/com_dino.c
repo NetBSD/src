@@ -67,7 +67,7 @@ struct com_dino_regs {
 int	com_dino_match(device_t, cfdata_t, void *);
 void	com_dino_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(com_dino, sizeof(struct com_dino_softc), com_dino_match, 
+CFATTACH_DECL_NEW(com_dino, sizeof(struct com_dino_softc), com_dino_match,
     com_dino_attach, NULL, NULL);
 
 int

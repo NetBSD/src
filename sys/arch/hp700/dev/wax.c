@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.11 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.12 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.11 2009/05/07 15:34:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.12 2009/05/08 09:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ waxattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Map the WAX interrupt registers.
 	 */
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, sizeof(struct wax_regs), 
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa, sizeof(struct wax_regs),
 	    0, &ioh))
 		panic("waxattach: can't map interrupt registers");
 	sc->sc_regs = (struct wax_regs *)ca->ca_hpa;

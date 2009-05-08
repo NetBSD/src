@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.11 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.12 2009/05/08 09:33:58 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -55,7 +55,7 @@ struct confargs {
 	int		ca_naddrs;	/* number of valid addr ents */
 	hppa_hpa_t	ca_hpabase;	/* HPA base to use or 0 for PDC */
 	int		ca_nmodules;	/* check for modules 0 to nmodules - 1 */
-}; 
+};
 
 #define	HP700CF_IRQ_UNDEF	(-1)
 #define	hp700cf_irq	cf_loc[GEDOENSCF_IRQ]
