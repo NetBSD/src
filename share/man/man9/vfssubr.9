@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.17 2009/04/22 20:53:44 elad Exp $
+.\"     $NetBSD: vfssubr.9,v 1.18 2009/05/08 22:37:32 dyoung Exp $
 .\"
 .\" Copyright (c) 2003, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Nm vfs_unmountall ,
 .Nm vfs_busy ,
 .Nm vfs_unbusy ,
+.Nm vfs_mountalloc ,
 .Nm vfs_rootmountalloc ,
 .Nm vfs_shutdown ,
 .Nm vfs_attach ,
@@ -76,6 +77,8 @@
 .Fn vfs_busy "struct mount *mp" "int flags" "struct simplelock *interlkp"
 .Ft void
 .Fn vfs_unbusy "struct mount *mp"
+.Ft struct mount *
+.Fn vfs_mountalloc "struct vfsops *vfs" "struct vnode *vp"
 .Ft int
 .Fn vfs_rootmountalloc "char *fstypename" "char *devname" \
 "struct mount **mpp"
@@ -138,6 +141,17 @@ is not released on failure.
 .It Fn vfs_unbusy "mp"
 Free the busy file system specified by the mount structure
 .Fa mp .
+.It Fn vfs_mountalloc "vfsops" "vp"
+Allocate and initialise a mount structure, setting 
+.Em mnt_vnodecovered
+to
+.Fa vp
+and
+.Em mnt_op
+to
+.Fa vfsops .
+On success, mark the mount structure as busy and return its address.
+Otherwise, return NULL.
 .It Fn vfs_rootmountalloc "fstypename" "devname" "mpp"
 Lookup a file system type specified by the name
 .Fa fstypename
