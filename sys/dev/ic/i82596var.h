@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.12 2009/05/09 03:22:20 tsutsui Exp $ */
+/* $NetBSD: i82596var.h,v 1.13 2009/05/09 03:50:16 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -213,37 +213,30 @@ struct iee_softc {
 
 
 /* Offsets in shared memory */
-#define IEE_SCP_SZ	(((sizeof(struct iee_scp) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
+#define IEE_SCP_SZ	roundup2(sizeof(struct iee_scp), (sc)->sc_cl_align)
 #define IEE_SCP_OFF	0
 
-#define IEE_ISCP_SZ	(((sizeof(struct iee_iscp) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
+#define IEE_ISCP_SZ	roundup2(sizeof(struct iee_iscp), (sc)->sc_cl_align)
 #define IEE_ISCP_OFF	IEE_SCP_SZ
 
-#define IEE_SCB_SZ	(((sizeof(struct iee_scb) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
+#define IEE_SCB_SZ	roundup2(sizeof(struct iee_scb), (sc)->sc_cl_align)
 #define IEE_SCB_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ)
 
-#define IEE_RFD_SZ	(((sizeof(struct iee_rfd) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
+#define IEE_RFD_SZ	roundup2(sizeof(struct iee_rfd), (sc)->sc_cl_align)
 #define IEE_RFD_LIST_SZ	(IEE_RFD_SZ * IEE_NRFD)
 #define IEE_RFD_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ)
 
-#define IEE_RBD_SZ	(((sizeof(struct iee_rbd) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
+#define IEE_RBD_SZ	roundup2(sizeof(struct iee_rbd), (sc)->sc_cl_align)
 #define IEE_RBD_LIST_SZ	(IEE_RBD_SZ * IEE_NRFD)
 #define IEE_RBD_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ		\
 			+ IEE_RFD_SZ * IEE_NRFD)
 
-#define IEE_CB_SZ	(((sizeof(struct iee_cb) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
+#define IEE_CB_SZ	roundup2(sizeof(struct iee_cb), (sc)->sc_cl_align)
 #define IEE_CB_LIST_SZ	(IEE_CB_SZ * IEE_NCB)
 #define IEE_CB_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ		\
 			+ IEE_RFD_SZ * IEE_NRFD + IEE_RBD_SZ * IEE_NRFD)
 
-#define IEE_TBD_SZ	(((sizeof(struct iee_tbd) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
+#define IEE_TBD_SZ	roundup2(sizeof(struct iee_tbd), (sc)->sc_cl_align)
 #define IEE_TBD_LIST_SZ	(IEE_TBD_SZ * IEE_NTBD * IEE_NCB)
 #define IEE_TBD_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ		\
 			+ IEE_RFD_SZ * IEE_NRFD + IEE_RBD_SZ * IEE_NRFD	\
