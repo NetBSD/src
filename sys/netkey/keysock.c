@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.52 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: keysock.c,v 1.53 2009/05/09 11:36:17 mlelstv Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.52 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.53 2009/05/09 11:36:17 mlelstv Exp $");
 
 #include "opt_inet.h"
 
@@ -77,7 +77,6 @@ key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct rawcb *rp = sotorawcb(so);
 	struct keycb *kp = (struct keycb *)rp;
 	int error;
-	int s;
 
 	error = (*kp->kp_receive)(so, paddr, uio, mp0, controlp, flagsp);
 
@@ -85,7 +84,8 @@ key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	 * now we might have enough receive buffer space.
 	 * pull packets from kp_queue as many as possible.
 	 */
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	while (/*CONSTCOND*/ 1) {
 		struct mbuf *m;
 
@@ -97,7 +97,8 @@ key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		if (key_sendup0(rp, m, 0, 1))
 			break;
 	}
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 
 	return error;
 }
