@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.18 2009/05/08 22:37:32 dyoung Exp $
+.\"     $NetBSD: vfssubr.9,v 1.19 2009/05/09 08:14:42 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 22, 2009
+.Dd May 9, 2009
 .Dt VFSSUBR 9
 .Os
 .Sh NAME
@@ -142,7 +142,7 @@ is not released on failure.
 Free the busy file system specified by the mount structure
 .Fa mp .
 .It Fn vfs_mountalloc "vfsops" "vp"
-Allocate and initialise a mount structure, setting 
+Allocate and initialise a mount structure, setting
 .Em mnt_vnodecovered
 to
 .Fa vp
@@ -151,7 +151,8 @@ and
 to
 .Fa vfsops .
 On success, mark the mount structure as busy and return its address.
-Otherwise, return NULL.
+Otherwise, return
+.Dv NULL .
 .It Fn vfs_rootmountalloc "fstypename" "devname" "mpp"
 Lookup a file system type specified by the name
 .Fa fstypename
