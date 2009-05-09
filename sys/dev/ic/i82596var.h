@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.11 2009/05/05 15:47:35 tsutsui Exp $ */
+/* $NetBSD: i82596var.h,v 1.12 2009/05/09 03:22:20 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -156,6 +156,7 @@ struct iee_softc {
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_shmem_map;
 	bus_dma_segment_t sc_dma_segs;
+	int sc_dma_rsegs;
 	bus_dmamap_t sc_rx_map[IEE_NRFD];
 	bus_dmamap_t sc_tx_map[IEE_NCB];
 	struct mbuf *sc_rx_mbuf[IEE_NRFD];
@@ -167,6 +168,7 @@ struct iee_softc {
 	uint8_t sc_cf[14];
 	int sc_flags;
 	int sc_cl_align;
+	uint32_t sc_sysbus;
 	uint32_t sc_crc_err;
 	uint32_t sc_align_err;
 	uint32_t sc_resource_err;
