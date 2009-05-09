@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.21 2009/05/09 03:22:20 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.22 2009/05/09 03:54:10 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.21 2009/05/09 03:22:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.22 2009/05/09 03:54:10 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -531,7 +531,7 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int n;
 
-	KASSERT(sc->sc_cl_align > 0);
+	KASSERT(sc->sc_cl_align > 0 && powerof2(sc->sc_cl_align));
 
 	/* allocate memory for shared DMA descriptors */
 	if (bus_dmamem_alloc(sc->sc_dmat, IEE_SHMEM_MAX, PAGE_SIZE, 0,
