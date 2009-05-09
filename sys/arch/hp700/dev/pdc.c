@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.28 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.29 2009/05/09 01:59:17 tsutsui Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.28 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.29 2009/05/09 01:59:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,14 +456,17 @@ static int
 pdcgettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	int pagezero_cookie;
+	int error;
 
 	pagezero_cookie = hp700_pagezero_map();
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_READ,
+	error = pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_READ,
 	    &tod, 0, 0, 0, 0, 0);
 	hp700_pagezero_unmap(pagezero_cookie);
 
-	tvp->tv_sec = tod.sec;
-	tvp->tv_usec = tod.usec;
+	if (error == 0) {
+		tvp->tv_sec = tod.sec;
+		tvp->tv_usec = tod.usec;
+	}
 	return 0;
 }
 
@@ -471,13 +474,14 @@ static int
 pdcsettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	int pagezero_cookie;
+	int error;
 
 	tod.sec = tvp->tv_sec;
 	tod.usec = tvp->tv_usec;
 
 	pagezero_cookie = hp700_pagezero_map();
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE,
+	error = pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE,
 	    tod.sec, tod.usec);
 	hp700_pagezero_unmap(pagezero_cookie);
-	return 0;
+	return error;
 }
