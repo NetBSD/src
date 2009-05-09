@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.12 2009/05/09 03:22:20 tsutsui Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.13 2009/05/09 11:39:30 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.12 2009/05/09 03:22:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.13 2009/05/09 11:39:30 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -226,7 +226,7 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 	 * descriptors align to cache lines. Needed to avoid race conditions
 	 * caused by flushing cache lines that overlap multiple descriptors.
 	 */
-	cpu_type = hppa_cpu_info->hci_type;
+	cpu_type = hppa_cpu_info->hci_cputype;
 	if (cpu_type == hpcx || cpu_type == hpcxs || cpu_type == hpcxt)
 		sc->sc_cl_align = 32;
 	else
