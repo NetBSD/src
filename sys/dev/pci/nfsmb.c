@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.19 2009/05/09 04:56:39 pgoyette Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.20 2009/05/09 07:13:57 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.19 2009/05/09 04:56:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.20 2009/05/09 07:13:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -422,7 +422,7 @@ nfsmb_write_2(struct nfsmb_softc *sc, uint8_t cmd, uint16_t val,
 	low = val;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_DATA, low);
 	high = val >> 8;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_DATA, high);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_DATA + 1, high);
 
 	/* write smbus slave address to register */
 	data = addr << 1;
@@ -510,6 +510,6 @@ nfsmb_read_2(struct nfsmb_softc *sc, uint8_t cmd, i2c_addr_t addr, i2c_op_t op,
 
 	/* read data */
 	low = bus_space_read_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_DATA);
-	high = bus_space_read_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_DATA);
+	high = bus_space_read_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_DATA + 1);
 	return low | high << 8;
 }
