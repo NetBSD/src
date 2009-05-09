@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.6 2009/05/05 16:38:41 tsutsui Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.7 2009/05/09 02:18:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.6 2009/05/05 16:38:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.7 2009/05/09 02:18:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,8 @@ iee_sbdio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX,
-	    (void **)sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
+	    (void **)sc->sc_shmem_addr,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
 		aprint_error(": can't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
 		return;
@@ -130,9 +131,8 @@ iee_sbdio_attach(device_t parent, device_t self, void *aux)
 	}
 	memset(sc->sc_shmem_addr, 0, IEE_SHMEM_MAX);
 
-	mips_dcache_wbinv_range((vaddr_t)sc->sc_shmem_addr, IEE_SHMEM_MAX);
-	sc->sc_shmem_addr = (void *)((vaddr_t)sc->sc_shmem_addr |
-	    MIPS_KSEG1_START);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Setup SYSBUS byte. TR2 specific? -uch */
 	SC_SCP->scp_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT |
@@ -156,24 +156,25 @@ iee_sbdio_cmd(struct iee_softc *sc, uint32_t cmd)
 {
 	int retry = 8;
 	int n;
+	uint32_t ack;
 
 	SC_SCB->scb_cmd = cmd;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF, IEE_SCB_SZ,
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	iee_sbdio_channel_attention(sc);
 
 	/* Wait for the cmd to finish */
 	for (n = 0 ; n < retry; n++) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF,
+		    IEE_SCB_SZ, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		ack = SC_SCB->scb_cmd;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF,
 		    IEE_SCB_SZ, BUS_DMASYNC_PREREAD);
-
-		if (SC_SCB->scb_cmd == 0)
+		if (ack == 0)
 			break;
 		delay(1);
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF, IEE_SCB_SZ,
-	    BUS_DMASYNC_PREREAD);
 	if (n < retry)
 		return 0;
 
@@ -188,12 +189,13 @@ iee_sbdio_reset(struct iee_softc *sc)
 {
 #define	IEE_ISCP_BUSSY 0x1
 	int n, retry = 8;
-	uint32_t cmd;
+	uint32_t cmd, ack;
 
 	/* Make sure the busy byte is set and the cache is flushed. */
 	SC_ISCP->iscp_bussy = IEE_ISCP_BUSSY;
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCP_OFF, IEE_SCP_SZ
-	    + IEE_ISCP_SZ + IEE_SCB_SZ, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map,
+	    IEE_SCP_OFF, IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Setup the PORT Command with pointer to SCP. */
 	cmd = IEE_PORT_SCP | IEE_PHYS_SHMEM(IEE_SCP_OFF);
@@ -208,14 +210,15 @@ iee_sbdio_reset(struct iee_softc *sc)
 	/* Wait for the chip to initialize and read SCP and ISCP. */
 	for (n = 0 ; n < retry; n++) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF,
+		    IEE_ISCP_SZ, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		ack = SC_ISCP->iscp_bussy;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF,
 		    IEE_ISCP_SZ, BUS_DMASYNC_PREREAD);
-		if (SC_ISCP->iscp_bussy != IEE_ISCP_BUSSY) {
+		if (ack != IEE_ISCP_BUSSY) {
 			break;
 		}
 		delay(100);
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF, IEE_SCB_SZ,
-	    BUS_DMASYNC_PREREAD);
 
 	if (n < retry) {
 		/* ACK interrupts we may have caused */
