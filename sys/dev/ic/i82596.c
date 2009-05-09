@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.23 2009/05/09 20:42:09 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.24 2009/05/09 20:44:56 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.23 2009/05/09 20:42:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.24 2009/05/09 20:44:56 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -551,7 +551,8 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	if (bus_dmamap_create(sc->sc_dmat, IEE_SHMEM_MAX, sc->sc_dma_rsegs,
 	    IEE_SHMEM_MAX, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
 		aprint_error(": can't create DMA map\n");
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
 		    sc->sc_dma_rsegs);
 		return;
 	}
@@ -559,7 +560,8 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	    IEE_SHMEM_MAX, NULL, BUS_DMA_NOWAIT) != 0) {
 		aprint_error(": can't load DMA map\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
 		    sc->sc_dma_rsegs);
 		return;
 	}
