@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.135 2009/04/30 20:26:09 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.136 2009/05/09 20:54:52 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.135 2009/04/30 20:26:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.136 2009/05/09 20:54:52 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -303,7 +303,9 @@ in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 	if (sin->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
 
-	if (!in_nullhost(sin->sin_addr)) {
+	if (IN_MULTICAST(sin->sin_addr.s_addr)) {
+		/* Always succeed; port reuse handled in in_pcbbind_port(). */
+	} else if (!in_nullhost(sin->sin_addr)) {
 		struct in_ifaddr *ia = NULL;
 
 		INADDR_TO_IA(sin->sin_addr, ia);
