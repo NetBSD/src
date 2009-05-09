@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.10 2009/05/08 10:12:55 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.11 2009/05/09 12:18:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,8 +157,8 @@ EXIT(_copy_on_fault)
  *     size_t size, size_t *rsize)
  *
  * Do a space to space size bounded string copy and return actual copy size in
- * rsize. If the copy ran out of space before '\0' is seen return ENAMETOOLONG 
- * 
+ * rsize. If the copy ran out of space before '\0' is seen return ENAMETOOLONG
+ *
  */
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
@@ -328,7 +328,7 @@ EXIT(hppa_ktext_stw)
 ENTRY(hppa_ktext_stb, HPPA_FRAME_SIZE)
 
 	/*
-	 * Make the deposit location for the byte in the 
+	 * Make the deposit location for the byte in the
 	 * aligned word.
 	 */
 	ldi     7, %t2
