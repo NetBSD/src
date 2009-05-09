@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.7 2009/05/09 02:18:48 tsutsui Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.8 2009/05/09 03:22:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.7 2009/05/09 02:18:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.8 2009/05/09 03:22:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ iee_sbdio_attach(device_t parent, device_t self, void *aux)
 	struct sbdio_attach_args *sa = aux;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	int media[2];
-	int rsegs;
 
 	sc->sc_dev = self;
 	sc_ssc->sc_port =
@@ -98,44 +97,8 @@ iee_sbdio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmat = sa->sa_dmat;
 
-	if (bus_dmamem_alloc(sc->sc_dmat, IEE_SHMEM_MAX, PAGE_SIZE, 0,
-	    &sc->sc_dma_segs, 1, &rsegs, BUS_DMA_NOWAIT) != 0) {
-		aprint_error(": can't allocate %d bytes of DMA memory\n",
-		    (int)IEE_SHMEM_MAX);
-		return;
-	}
-
-	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX,
-	    (void **)sc->sc_shmem_addr,
-	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
-		aprint_error(": can't map DMA memory\n");
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
-		return;
-	}
-
-	if (bus_dmamap_create(sc->sc_dmat, IEE_SHMEM_MAX, rsegs,
-	    IEE_SHMEM_MAX, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
-		aprint_error(": can't create DMA map\n");
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
-		return;
-	}
-
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_shmem_map, sc->sc_shmem_addr,
-	    IEE_SHMEM_MAX, NULL, BUS_DMA_NOWAIT) != 0) {
-		aprint_error(": can't load DMA map\n");
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
-		return;
-	}
-	memset(sc->sc_shmem_addr, 0, IEE_SHMEM_MAX);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
 	/* Setup SYSBUS byte. TR2 specific? -uch */
-	SC_SCP->scp_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT |
+	sc->sc_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT |
 	    IEE_SYSBUS_LIEAR | IEE_SYSBUS_STD;
 
 	sc->sc_iee_reset = iee_sbdio_reset;

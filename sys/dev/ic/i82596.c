@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.20 2009/05/05 15:47:35 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.21 2009/05/09 03:22:20 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.20 2009/05/05 15:47:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.21 2009/05/09 03:22:20 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -156,12 +156,13 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * sc->sc_cl_align MUST BE INITIALIZED BEFORE THE FOLLOWING MACROS ARE USED:
  * SC_* IEE_*_SZ IEE_*_OFF IEE_SHMEM_MAX (shell style glob(3) pattern)
  * 
- * The MD frontend has to allocate a piece of DMA memory at least of
- * IEE_SHMEM_MAX bytes size. All communication with the chip is done via
- * this shared memory. If possible map this memory non-cachable on
- * archs with non DMA I/O coherent caches. The base of the memory needs
- * to be aligned to an even address if sc->sc_cl_align == 1 and aligned
- * to a cache line if sc->sc_cl_align != 1.
+ * The MD frontend also has to set sc->sc_cl_align and sc->sc_sysbus
+ * to allocate and setup shared DMA memory in MI iee_attach().
+ * All communication with the chip is done via this shared memory.
+ * This memory is mapped with BUS_DMA_COHERENT so it will be uncached
+ * if possible for archs with non DMA I/O coherent caches.
+ * The base of the memory needs to be aligned to an even address
+ * if sc->sc_cl_align == 1 and aligned to a cache line if sc->sc_cl_align != 1.
  * 
  * An interrupt with iee_intr() as handler must be established.
  * 
@@ -530,9 +531,44 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int n;
 
+	KASSERT(sc->sc_cl_align > 0);
+
+	/* allocate memory for shared DMA descriptors */
+	if (bus_dmamem_alloc(sc->sc_dmat, IEE_SHMEM_MAX, PAGE_SIZE, 0,
+	    &sc->sc_dma_segs, 1, &sc->sc_dma_rsegs, BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": iee_gsc_attach: can't allocate %d bytes of "
+		    "DMA memory\n", (int)IEE_SHMEM_MAX);
+		return;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, sc->sc_dma_rsegs,
+	    IEE_SHMEM_MAX, (void **)&sc->sc_shmem_addr,
+	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": iee_gsc_attach: can't map DMA memory\n");
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
+		    sc->sc_dma_rsegs); 
+		return;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, IEE_SHMEM_MAX, sc->sc_dma_rsegs,
+	    IEE_SHMEM_MAX, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
+		aprint_error(": iee_gsc_attach: can't create DMA map\n");
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
+		    sc->sc_dma_rsegs);
+		return;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_shmem_map, sc->sc_shmem_addr,
+	    IEE_SHMEM_MAX, NULL, BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": iee_gsc_attach: can't load DMA map\n");
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
+		    sc->sc_dma_rsegs);
+		return;
+	}
+	memset(sc->sc_shmem_addr, 0, IEE_SHMEM_MAX);
+
 	/* Set pointer to Intermediate System Configuration Pointer. */
 	/* Phys. addr. in big endian order. (Big endian as defined by Intel.) */
 	SC_SCP->scp_iscp_addr = IEE_SWAP32(IEE_PHYS_SHMEM(IEE_ISCP_OFF));
+	SC_SCP->scp_sysbus = sc->sc_sysbus;
 	/* Set pointer to System Control Block. */
 	/* Phys. addr. in big endian order. (Big endian as defined by Intel.) */
 	SC_ISCP->iscp_scb_addr = IEE_SWAP32(IEE_PHYS_SHMEM(IEE_SCB_OFF));
@@ -540,6 +576,9 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	SC_SCB->scb_rfa_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_RFD_OFF));
 	/* Set pointer to Command Block. (physical address) */
 	SC_SCB->scb_cmd_blk_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(IEE_CB_OFF));
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	ifmedia_init(&sc->sc_ifmedia, 0, iee_mediachange, iee_mediastatus);
 	if (media != NULL) {
@@ -591,6 +630,10 @@ iee_detach(struct iee_softc *sc, int flags)
 		iee_stop(ifp, 1);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_shmem_map);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, sc->sc_dma_rsegs);
 }
 
 
