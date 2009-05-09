@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 2009/05/09 11:39:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2009/05/09 11:39:30 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -617,13 +617,13 @@ cpuid(void)
 	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
 	const struct hppa_cpu_info *p = NULL;
 	const char *model;
-	u_int cpu_features;
+	u_int cpu_version, cpu_features;
 	int error;
 	extern int kpsw;
 
 	/* may the scientific guessing begin */
 	cpu_features = 0;
-	cpu_type = 0;
+	cpu_version = 0;
 
 	/* identify system type */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
@@ -657,13 +657,13 @@ cpuid(void)
 		printf("%s: cpuid.revision = %x\n", __func__,
 		    pdc_cpuid.revision);
 #endif
-		cpu_type = pdc_cpuid.version;
+		cpu_version = pdc_cpuid.version;
 
 		/* XXXNH why? */
 		/* patch for old 8200 */
 		if (pdc_cpuid.version == HPPA_CPU_PCXU &&
 		    pdc_cpuid.revision > 0x0d)
-			cpu_type = HPPA_CPU_PCXUP;
+			cpu_version = HPPA_CPU_PCXUP;
 	}
 
 	/* locate coprocessors and SFUs */
@@ -681,7 +681,7 @@ cpuid(void)
 #endif
 		/* a kludge to detect PCXW */
 		if (pdc_coproc.fpu_model == HPPA_FPU_PCXW)
-			cpu_type = HPPA_CPU_PCXW;
+			cpu_version = HPPA_CPU_PCXW;
 	}
 	mtctl(pdc_coproc.ccr_enable & CCR_MASK, CR_CCR);
 #ifdef DEBUG
@@ -689,8 +689,8 @@ cpuid(void)
 #endif
 	
 	usebtlb = 0;
-	if (cpu_type == HPPA_CPU_PCXW || cpu_type > HPPA_CPU_PCXL2) {
-		printf("WARNING: BTLB no supported on cpu %d\n", cpu_type);
+	if (cpu_version == HPPA_CPU_PCXW || cpu_version > HPPA_CPU_PCXL2) {
+		printf("WARNING: BTLB no supported on cpu %d\n", cpu_version);
 	} else {
 
 		/* BTLB params */
@@ -750,9 +750,9 @@ cpuid(void)
 		pmap_hptsize = 0;
 	}
 
-	if (cpu_type)
+	if (cpu_version)
 		for (p = cpu_types; p->hci_chip_name; p++) {
-			if (p->hci_cpuid == cpu_type)
+			if (p->hci_cpuid == cpu_version)
 				break;
 		}
 	else
@@ -772,10 +772,10 @@ cpuid(void)
 	/*
 	 * TODO: HPT on 7200 is not currently supported
 	 */
-	if (pmap_hptsize && p->hci_type != hpcxl && p->hci_type != hpcxl2)
+	if (pmap_hptsize && p->hci_cputype != hpcxl && p->hci_cputype != hpcxl2)
 		pmap_hptsize = 0;
 
-	cpu_type = hppa_cpu_info->hci_type;
+	cpu_type = hppa_cpu_info->hci_cputype;
 	cpu_ibtlb_ins = hppa_cpu_info->ibtlbins;
 	cpu_dbtlb_ins = hppa_cpu_info->dbtlbins;
 	cpu_hpt_init = hppa_cpu_info->hptinit;

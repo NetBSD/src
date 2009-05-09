@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.3 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: power.c,v 1.4 2009/05/09 11:39:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -266,7 +266,7 @@ pwr_sw_init(struct power_softc *sc)
 	 * Ensure that we are on a PCX-L / PA7100LC CPU if it is a
 	 * 712 style machine.
 	 */
-	if (pdc_power_info.addr == 0 && hppa_cpu_info->hci_type != hpcxl) {
+	if (pdc_power_info.addr == 0 && hppa_cpu_info->hci_cputype != hpcxl) {
 		aprint_error_dev(sc->sc_dev, "No soft power available.\n");
 		return error;
 	}

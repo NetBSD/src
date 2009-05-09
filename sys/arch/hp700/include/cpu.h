@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2009/05/09 11:39:31 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -88,7 +88,7 @@ struct hppa_cpu_info {
 
 	/* The type and PA-RISC specification of the chip. */
 	const char hci_chip_type[8];
-	enum hppa_cpu_type hci_type;
+	enum hppa_cpu_type hci_cputype;
 	int  hci_cpuid;
 	int  hci_features;		/* CPU types and features */
 #define	HPPA_FTRS_TLBU		0x00000001
