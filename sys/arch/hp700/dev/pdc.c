@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.30 2009/05/09 12:04:11 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.31 2009/05/09 12:44:30 tsutsui Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.30 2009/05/09 12:04:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.31 2009/05/09 12:44:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ pdcgettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		tvp->tv_sec = tod.sec;
 		tvp->tv_usec = tod.usec;
 	}
-	return 0;
+	return error;
 }
 
 static int
