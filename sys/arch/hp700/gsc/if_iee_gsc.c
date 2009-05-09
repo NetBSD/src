@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.11 2009/05/09 02:29:29 tsutsui Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.12 2009/05/09 03:22:20 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.11 2009/05/09 02:29:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.12 2009/05/09 03:22:20 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -214,7 +214,6 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 	struct gsc_attach_args *ga = aux;
 	enum hppa_cpu_type cpu_type;
 	int media[2];
-	int rsegs;
 
 	sc->sc_dev = self;
 
@@ -241,34 +240,6 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_dmat = ga->ga_dmatag;
-	if (bus_dmamem_alloc(sc->sc_dmat, IEE_SHMEM_MAX, PAGE_SIZE, 0,
-	    &sc->sc_dma_segs, 1, &rsegs, BUS_DMA_NOWAIT) != 0) {
-		aprint_error(": iee_gsc_attach: can't allocate %d bytes of "
-		    "DMA memory\n", (int)IEE_SHMEM_MAX);
-		return;
-	}
-	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX,
-	    (void **)&sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
-		aprint_error(": iee_gsc_attach: can't map DMA memory\n");
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
-		return;
-	}
-	if (bus_dmamap_create(sc->sc_dmat, IEE_SHMEM_MAX, rsegs,
-	    IEE_SHMEM_MAX, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
-		aprint_error(": iee_gsc_attach: can't create DMA map\n");
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
-		return;
-	}
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_shmem_map, sc->sc_shmem_addr,
-	    IEE_SHMEM_MAX, NULL, BUS_DMA_NOWAIT) != 0) {
-		aprint_error(": iee_gsc_attach: can't load DMA map\n");
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
-		return;
-	}
-	memset(sc->sc_shmem_addr, 0, IEE_SHMEM_MAX);
 
 	/* Setup SYSBUS byte. */
 	if (ga->ga_type.iodc_sv_model == HPPA_FIO_LAN) {
@@ -281,11 +252,11 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 		 *	715/50, 735/99: Rev A1? (per PR port-hp700/35531)
 		 *	735/125: Rev C
 		 */
-		SC_SCP->scp_sysbus = IEE_SYSBUS_INT |
+		sc->sc_sysbus = IEE_SYSBUS_INT |
 		    IEE_SYSBUS_TRG | IEE_SYSBUS_LIEAR | IEE_SYSBUS_STD;
 		sc->sc_flags = IEE_NEED_SWAP | IEE_REV_A;
 	} else {
-		SC_SCP->scp_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT |
+		sc->sc_sysbus = IEE_SYSBUS_BE | IEE_SYSBUS_INT |
 		    IEE_SYSBUS_TRG | IEE_SYSBUS_LIEAR | IEE_SYSBUS_STD;
 		sc->sc_flags = IEE_NEED_SWAP;
 	}
@@ -311,10 +282,6 @@ iee_gsc_detach(device_t self, int flags)
 
 	iee_detach(sc, flags);
 	bus_space_unmap(sc_gsc->sc_iot, sc_gsc->sc_ioh, IEE_GSC_IO_SZ);
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_shmem_map);
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
-	bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, 1);
 	/* There is no hp700_intr_disestablish()! */
 	return 0;
 }
