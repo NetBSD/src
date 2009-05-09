@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.985 2009/04/30 15:14:49 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.986 2009/05/09 15:16:42 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.986 2009/04/30 15:13:58 skrll Exp
+ *	NetBSD: pcidevs,v 1.987 2009/05/09 15:15:50 sborrill Exp
  */
 
 /*
@@ -6551,6 +6551,8 @@ static const uint16_t pci_products[] = {
 	    23420, 6426, 6112, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700M2_IDE, 
 	    24032, 6175, 6009, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_SATA_2, 
+	    23530, 702, 8500, 6009, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_IOAPIC, 
 	    23420, 7719, 24046, 15096, 6009, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237S_SATA, 
@@ -6949,7 +6951,7 @@ static const char pci_words[] = { "."
 	    "Hitach\0" /* 1 refs @ 683 */
 	    "AMP\0" /* 1 refs @ 690 */
 	    "Silicon\0" /* 4 refs @ 694 */
-	    "Integrated\0" /* 52 refs @ 702 */
+	    "Integrated\0" /* 53 refs @ 702 */
 	    "Seiko\0" /* 1 refs @ 713 */
 	    "Tatung\0" /* 1 refs @ 719 */
 	    "Hewlett-Packard\0" /* 1 refs @ 726 */
@@ -7649,7 +7651,7 @@ static const char pci_words[] = { "."
 	    "Escalade\0" /* 2 refs @ 5991 */
 	    "ATA\0" /* 51 refs @ 6000 */
 	    "RAID\0" /* 26 refs @ 6004 */
-	    "Controller\0" /* 667 refs @ 6009 */
+	    "Controller\0" /* 668 refs @ 6009 */
 	    "7000/8000\0" /* 1 refs @ 6020 */
 	    "Series\0" /* 27 refs @ 6030 */
 	    "9000\0" /* 5 refs @ 6037 */
@@ -8006,7 +8008,7 @@ static const char pci_words[] = { "."
 	    "USB2\0" /* 8 refs @ 8483 */
 	    "SB300\0" /* 2 refs @ 8488 */
 	    "SB400\0" /* 10 refs @ 8494 */
-	    "SATA\0" /* 64 refs @ 8500 */
+	    "SATA\0" /* 65 refs @ 8500 */
 	    "SB600\0" /* 14 refs @ 8505 */
 	    "Azalia\0" /* 1 refs @ 8511 */
 	    "SB600/SB700/SB800\0" /* 1 refs @ 8518 */
@@ -10061,7 +10063,7 @@ static const char pci_words[] = { "."
 	    "VT82C580\0" /* 1 refs @ 23508 */
 	    "VP)\0" /* 1 refs @ 23517 */
 	    "VT82C586\0" /* 3 refs @ 23521 */
-	    "VT8237A\0" /* 3 refs @ 23530 */
+	    "VT8237A\0" /* 4 refs @ 23530 */
 	    "VT82C595\0" /* 2 refs @ 23538 */
 	    "VP2)\0" /* 2 refs @ 23547 */
 	    "VT82C596A\0" /* 1 refs @ 23552 */
