@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1225 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1226 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -205,7 +205,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	wm(4): Add workaround for 82543GC. [msaitoh 20090329]
 	wm(4): Enable hardware vlan(4) support. [darran 20090331]
 	amd64, i386: Default to UFS2 on sysinst(8). [ad 20090404]
-	sysinst(8): Default to WAPBL(4) log for ufs partitions. [ad 20090404]
+	sysinst(8): Default to wapbl(4) log for ufs partitions. [ad 20090404]
 	pckbd(4): Add a Czech keyboard layout. [mkirby 20090406]
 	sysinst(8): Make installer reject UFS2 for root partition on ports
 		whose bootloaders don't support UFS2 boot. [tsutsui 20090407]
@@ -265,7 +265,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		/etc/mtree/set.* files.  [apb 20090501]
 	dhcpcd(8): Import dhcpcd-5.0.1 [roy 20090503]
 	hp700: Enable support for UFS2 boot. [tsutsui 20090503]
-	rpcgen: Add support for hyper and quad keywords. [ginsbach 20090506]
+	rpcgen(1): Add support for hyper and quad keywords. [ginsbach 20090506]
 	apropos(1): Add -S and -s support, for searching by machine and
 		section [wiz 20090508]
 	file(1): Import 5.03 [christos 20090508]
