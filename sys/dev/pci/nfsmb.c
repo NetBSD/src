@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.18 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.19 2009/05/09 04:56:39 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.18 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.19 2009/05/09 04:56:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -499,7 +499,7 @@ nfsmb_read_2(struct nfsmb_softc *sc, uint8_t cmd, i2c_addr_t addr, i2c_op_t op,
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_ADDRESS, data);
 
 	/* write smbus protocol to register */
-	data = I2C_OP_READ_P(op) | NFORCE_SMB_PROTOCOL_BYTE_DATA;
+	data = I2C_OP_READ_P(op) | NFORCE_SMB_PROTOCOL_WORD_DATA;
 	if (flags & I2C_F_PEC)
 		data |= NFORCE_SMB_PROTOCOL_PEC;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_PROTOCOL, data);
