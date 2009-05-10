@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.6 2009/05/07 00:26:46 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.7 2009/05/10 20:51:55 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -36,4 +36,31 @@ sys/ufs/ffs/ffs_alloc.c				1.123 via patch
 	Fix random 'filesystem full' messages by trapping a couple of
 	32-bit overflow areas missed in rev 1.110 and switching cgbase().
 	[sborrill, ticket #726]
+
+usr.sbin/racoonctl/Makefile			1.5 via patch
+
+	Adjust the ADMINPORTDIR to match that of racoon (with which it'll
+	want to talk).  Fixes PR 41376.
+	[spz, ticket #740]
+
+sys/arch/hp700/include/intr.h			1.14
+
+	Add __insn_barrier after updating cpl in splraise. PR/41369.
+	[skrll, ticket #741]
+
+sys/arch/m68k/include/psl.h			1.14
+
+	Add memory clobber to the instructions that change the IPL in the
+	status register.  See also kern/38637.
+	[mhitch, ticket #743]
+
+sys/netinet/in_pcb.c				patch
+
+	Fix compilation with IPNOPRIVPORTS option.
+	[sborrill, ticket #745]
+
+share/man/man8/afterboot.8			1.39
+
+	Fix typo, from Shannon -jj Behrens in PR 41375.
+	[dholland, ticket #746]
 
