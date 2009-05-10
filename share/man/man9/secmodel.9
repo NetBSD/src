@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.14 2009/03/15 14:12:19 joerg Exp $
+.\" $NetBSD: secmodel.9,v 1.15 2009/05/10 14:18:33 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 31, 2007
+.Dd May 10, 2009
 .Dt SECMODEL 9
 .Os
 .Sh NAME
@@ -287,7 +287,7 @@ secmodel_jenna_start(void)
 	kauth_listen_scope(JENNA_ISCOPE_NETWORK,
 	    secmodel_bsd44_suser_network_cb, NULL);
 	kauth_listen_scope(JENNA_ISCOPE_NETWORK,
-	    secmodel_bsd44_securelevel_network_cb, NULL);
+	    secmodel_securelevel_network_cb, NULL);
 }
 
 /*
