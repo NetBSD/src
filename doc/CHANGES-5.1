@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.9 2009/05/07 00:34:18 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.10 2009/05/10 21:39:22 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -317,4 +317,96 @@ share/man/man4/ale.4				1.3
 
 	age(4) and ale(4) will first appear in 5.1, not 6.0.
 	[cegger, ticket #739]
+
+usr.sbin/racoonctl/Makefile			1.5 via patch
+
+	Adjust the ADMINPORTDIR to match that of racoon (with which it'll
+	want to talk).  Fixes PR 41376.
+	[spz, ticket #740]
+
+sys/arch/hp700/include/intr.h			1.14
+
+	Add __insn_barrier after updating cpl in splraise. PR/41369.
+	[skrll, ticket #741]
+
+sys/arch/m68k/include/psl.h			1.14
+
+	Add memory clobber to the instructions that change the IPL in the
+	status register.  See also kern/38637.
+	[mhitch, ticket #743]
+
+sys/arch/hp700/dev/pdc.c			1.27
+
+	Pass proper timeval args to pdc_call() to save TOD with
+	PDC_TOD_WRITE.
+	[skrll, ticket #744]
+
+sys/netinet/in_pcb.c				patch
+
+	Fix compilation with IPNOPRIVPORTS option.
+	[sborrill, ticket #745]
+
+share/man/man8/afterboot.8			1.39
+
+	Fix typo, from Shannon -jj Behrens in PR 41375.
+	[dholland, ticket #746]
+
+distrib/sets/lists/etc/mi			1.209
+doc/3RDPARTY					1.691
+doc/CHANGES					1.1220
+etc/defaults/rc.conf				1.103
+etc/rc.d/Makefile				1.78 via patch
+etc/rc.d/dhcpcd					1.1
+external/bsd/dhcpcd/dist/README			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/arp.c			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/arp.h			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/bind.c			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/bind.h			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/bpf-filter.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/bpf.c			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/client.c		removed
+external/bsd/dhcpcd/dist/client.h		removed
+external/bsd/dhcpcd/dist/common.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/common.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/config.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/configure.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/configure.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/control.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/control.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcp.c			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcp.h			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in	dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in	dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd.8.in		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd.conf		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd.conf.5.in	dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/duid.c			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/duid.h			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/eloop.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/eloop.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/if-bsd.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/if-options.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/if-options.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/if-pref.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/if-pref.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/ipv4ll.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/ipv4ll.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/logger.c		removed            
+external/bsd/dhcpcd/dist/logger.h		removed
+external/bsd/dhcpcd/dist/net.c			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/net.h			dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/signals.c		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/signals.h		dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd-hooks/01-test	dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd-hooks/10-mtu	dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd-hooks/20-resolv.conf dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd-hooks/29-lookup-hostname dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname dhcpcd-5-0-1
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ntp.conf dhcpcd-5-0-1
+external/bsd/dhcpcd/sbin/dhcpcd/Makefile	1.4
+
+	Update dhcpcd to 5.0.1.
+	[roy, ticket #534]
 
