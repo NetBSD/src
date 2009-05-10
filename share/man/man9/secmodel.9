@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.15 2009/05/10 14:18:33 elad Exp $
+.\" $NetBSD: secmodel.9,v 1.16 2009/05/10 21:23:48 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -174,8 +174,8 @@ the credentials scope,
 .Dv KAUTH_SCOPE_CRED ,
 is required.
 .It
-Optionally, internal data-structures used by the model. These must all
-be prefixed with "secmodel_\*[Lt]model\*[Gt]_".
+Optionally, internal data-structures used by the model.
+These must all be prefixed with "secmodel_\*[Lt]model\*[Gt]_".
 .It
 A set of listeners, attached to various scopes, used to enforce the policy
 the model intends to implement.
