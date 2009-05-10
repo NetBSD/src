@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.276 2009/05/04 05:59:35 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.277 2009/05/10 03:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.276 2009/05/04 05:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.277 2009/05/10 03:51:43 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -869,6 +869,8 @@ nfs_lookup(void *v)
 			}
 			if (error != 0) {
 				/* newvp has been revoked. */
+				vrele(newvp);
+				*vpp = NULLVP;
 				goto dorpc;
 			}
 			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
