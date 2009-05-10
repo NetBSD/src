@@ -1596,31 +1596,31 @@ main(int argc, char **argv)
 		    PACKAGE " will not work correctly unless run as root");
 
 	if (sig != 0) {
-		i = -1;
 		pid = read_pid();
 		if (pid != 0)
 			syslog(LOG_INFO, "sending signal %d to pid %d",
 			    sig, pid);
-
-		if (!pid || (i = kill(pid, sig))) {
+		if (pid == 0 || kill(pid, sig) != 0) {
 			if (sig != SIGALRM)
 				syslog(LOG_ERR, ""PACKAGE" not running");
 			unlink(pidfile);
+			if (sig != SIGALRM)
+				exit(EXIT_FAILURE);
+		} else {
+			if (sig == SIGALRM)
+				exit(EXIT_SUCCESS);
+			/* Spin until it exits */
+			syslog(LOG_INFO, "waiting for pid %d to exit", pid);
+			ts.tv_sec = 0;
+			ts.tv_nsec = 100000000; /* 10th of a second */
+			for(i = 0; i < 100; i++) {
+				nanosleep(&ts, NULL);
+				if (read_pid() == 0)
+					exit(EXIT_SUCCESS);
+			}
+			syslog(LOG_ERR, "pid %d failed to exit", pid);
 			exit(EXIT_FAILURE);
 		}
-		if (sig == SIGALRM)
-			exit(EXIT_SUCCESS);
-		/* Spin until it exits */
-		syslog(LOG_INFO, "waiting for pid %d to exit", pid);
-		ts.tv_sec = 0;
-		ts.tv_nsec = 100000000; /* 10th of a second */
-		for(i = 0; i < 100; i++) {
-			nanosleep(&ts, NULL);
-			if (read_pid() == 0)
-				exit(EXIT_SUCCESS);
-		}
-		syslog(LOG_ERR, "pid %d failed to exit", pid);
-		exit(EXIT_FAILURE);
 	}
 
 	if (!(options & DHCPCD_TEST)) {
