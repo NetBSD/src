@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.7 2008/03/29 14:12:59 jmcneill Exp $
+.\" $NetBSD: pmf.9,v 1.8 2009/05/10 10:56:17 tsutsui Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -30,12 +30,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 29, 2008
+.Dd May 10, 2009
 .Dt PMF 9
 .Os
 .Sh NAME
 .Nm PMF ,
 .Nm pmf_device_register ,
+.Nm pmf_device_register1 ,
 .Nm pmf_device_deregister ,
 .Nm pmf_device_suspend ,
 .Nm pmf_device_resume ,
@@ -58,6 +59,7 @@
 .In sys/device.h
 .Ft bool
 .Fn pmf_device_register "device_t dev" "bool (*suspend)(device_t dev)" "bool (*resume)(device_t dev)"
+.Ft bool
 .Fn pmf_device_register1 "device_t dev" "bool (*suspend)(device_t dev)" "bool (*resume)(device_t dev)" "bool (*shutdown)(device_t dev, int how)"
 .Ft void
 .Fn pmf_device_deregister "device_t dev"
