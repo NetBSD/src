@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.13 2009/05/09 11:39:30 skrll Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.14 2009/05/10 04:26:19 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.13 2009/05/09 11:39:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.14 2009/05/10 04:26:19 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -115,19 +115,16 @@ iee_gsc_cmd(struct iee_softc *sc, u_int32_t cmd)
 	int n;
 	uint16_t ack;
 
-	SC_SCB->scb_cmd = cmd;
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF, IEE_SCB_SZ,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	SC_SCB(sc)->scb_cmd = cmd;
+	IEE_SCBSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	/* Issue a Channel Attention to force the chip to read the cmd. */
 	bus_space_write_4(sc_gsc->sc_iot, sc_gsc->sc_ioh, IEE_GSC_CHANATT, 0);
 	/* Wait for the cmd to finish */
 	for (n = 0 ; n < 100000; n++) {
 		DELAY(1);
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF,
-		    IEE_SCB_SZ, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		ack = SC_SCB->scb_cmd;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF,
-		    IEE_SCB_SZ, BUS_DMASYNC_PREREAD);
+		IEE_SCBSYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		ack = SC_SCB(sc)->scb_cmd;
+		IEE_SCBSYNC(sc, BUS_DMASYNC_PREREAD);
 		if (ack == 0)
 			break;
 	}
@@ -146,12 +143,10 @@ iee_gsc_reset(struct iee_softc *sc)
 	uint16_t ack;
 
 	/* Make sure the bussy byte is set and the cache is flushed. */
-	SC_ISCP->iscp_bussy = IEE_ISCP_BUSSY;
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCP_OFF, IEE_SCP_SZ
-	    + IEE_ISCP_SZ + IEE_SCB_SZ,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	SC_ISCP(sc)->iscp_bussy = IEE_ISCP_BUSSY;
+	IEE_ISCPSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	/* Setup the PORT Command with pointer to SCP. */
-	cmd = IEE_PORT_SCP | IEE_PHYS_SHMEM(IEE_SCP_OFF);
+	cmd = IEE_PORT_SCP | IEE_PHYS_SHMEM(sc->sc_scp_off);
 	/* Write a word to IEE_GSC_RESET to initiate a Hardware reset. */
 	bus_space_write_4(sc_gsc->sc_iot, sc_gsc->sc_ioh, IEE_GSC_RESET, 0);
 	DELAY(1000);
@@ -174,11 +169,9 @@ iee_gsc_reset(struct iee_softc *sc)
 	bus_space_write_4(sc_gsc->sc_iot, sc_gsc->sc_ioh, IEE_GSC_CHANATT, 0);
 	/* Wait for the chip to initialize and read SCP and ISCP. */
 	for (n = 0 ; n < 1000; n++) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF,
-		    IEE_ISCP_SZ, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		ack = SC_ISCP->iscp_bussy;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF,
-		    IEE_ISCP_SZ, BUS_DMASYNC_PREREAD);
+		IEE_ISCPSYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		ack = SC_ISCP(sc)->iscp_bussy;
+		IEE_ISCPSYNC(sc, BUS_DMASYNC_PREREAD);
 		if (ack != IEE_ISCP_BUSSY)
 			break;
 		DELAY(100);
@@ -189,7 +182,7 @@ iee_gsc_reset(struct iee_softc *sc)
 		return 0;
 	}
 	printf("%s: iee_gsc_reset timeout bussy=0x%x\n",
-	    device_xname(sc->sc_dev), SC_ISCP->iscp_bussy);
+	    device_xname(sc->sc_dev), SC_ISCP(sc)->iscp_bussy);
 	return -1;
 }
 
