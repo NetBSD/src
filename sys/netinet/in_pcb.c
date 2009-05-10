@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.129 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.129.4.1 2009/05/10 20:45:45 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.129 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.129.4.1 2009/05/10 20:45:45 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -232,7 +232,9 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 	struct sockaddr_in *sin = NULL; /* XXXGCC */
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
+#ifndef IPNOPRIVPORTS
 	kauth_cred_t cred = l->l_cred;
+#endif
 
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
