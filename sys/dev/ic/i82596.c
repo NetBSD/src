@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.25 2009/05/10 04:26:19 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.26 2009/05/10 04:36:58 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.25 2009/05/10 04:26:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.26 2009/05/10 04:36:58 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -153,9 +153,6 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * I/O coherent caches and are unable to map the shared memory uncachable.
  * (At least pre PA7100LC CPUs are unable to map memory uncachable.)
  * 
- * sc->sc_cl_align MUST BE INITIALIZED BEFORE THE FOLLOWING MACROS ARE USED:
- * SC_* IEE_*_SZ IEE_*_OFF IEE_SHMEM_MAX (shell style glob(3) pattern)
- * 
  * The MD frontend also has to set sc->sc_cl_align and sc->sc_sysbus
  * to allocate and setup shared DMA memory in MI iee_attach().
  * All communication with the chip is done via this shared memory.
@@ -163,6 +160,7 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * if possible for archs with non DMA I/O coherent caches.
  * The base of the memory needs to be aligned to an even address
  * if sc->sc_cl_align == 1 and aligned to a cache line if sc->sc_cl_align != 1.
+ * Each descriptor offsets are calculated in iee_attach() to handle this.
  * 
  * An interrupt with iee_intr() as handler must be established.
  * 
@@ -191,8 +189,8 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * a frame the mbuf cluster is handled to upper protocol layers, a new mbuf
  * cluster is allocated and the RFD / RBD are reinitialized accordingly.
  * 
- * When a RFD list overrun occurred the whole RFD and RBD lists are reinitialized
- * and frame reception is started again.
+ * When a RFD list overrun occurred the whole RFD and RBD lists are
+ * reinitialized and frame reception is started again.
  */
 int
 iee_intr(void *intarg)
@@ -578,6 +576,10 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 
 	KASSERT(sc->sc_cl_align > 0 && powerof2(sc->sc_cl_align));
 
+	/*
+	 * Calculate DMA descriptor offsets and sizes in shmem
+	 * which should be cache line aligned.
+	 */
 	sc->sc_scp_off  = 0;
 	sc->sc_scp_sz   = roundup2(sizeof(struct iee_scp), sc->sc_cl_align);
 	sc->sc_iscp_off = sc->sc_scp_sz;
@@ -606,7 +608,7 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT) != 0) {
 		aprint_error(": can't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
-		    sc->sc_dma_rsegs); 
+		    sc->sc_dma_rsegs);
 		return;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sc->sc_shmem_sz, sc->sc_dma_rsegs,
