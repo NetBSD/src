@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.43 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.44 2009/05/10 02:13:07 elad Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.43 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.44 2009/05/10 02:13:07 elad Exp $");
 
 /*
  * IPsec controller part.
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.43 2009/04/18 14:58:06 tsutsui Exp $");
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -241,7 +242,8 @@ static int ipsec6_setspidx_ipaddr (struct mbuf *, struct secpolicyindex *);
 #endif
 static void ipsec_delpcbpolicy (struct inpcbpolicy *);
 static struct secpolicy *ipsec_deepcopy_policy (struct secpolicy *);
-static int ipsec_set_policy (struct secpolicy **,int , void *, size_t , int );
+static int ipsec_set_policy (struct secpolicy **,int , void *, size_t ,
+    kauth_cred_t );
 static int ipsec_get_policy (struct secpolicy *, struct mbuf **);
 static void vshiftl (unsigned char *, int, int);
 static size_t ipsec_hdrsiz (struct secpolicy *);
@@ -1284,7 +1286,7 @@ ipsec_set_policy(
 	int optname,
 	void *request,
 	size_t len,
-	int priv
+	kauth_cred_t cred
 )
 {
 	struct sadb_x_policy *xpl;
@@ -1309,8 +1311,12 @@ ipsec_set_policy(
 		return EINVAL;
 
 	/* check privileged socket */
-	if (priv == 0 && xpl->sadb_x_policy_type == IPSEC_POLICY_BYPASS)
-		return EACCES;
+	if (xpl->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (error)
+			return (error);
+	}
 
 	/* allocation new SP entry */
 	if ((newsp = key_msg2sp(xpl, len, &error)) == NULL)
@@ -1352,7 +1358,7 @@ ipsec_get_policy(struct secpolicy *pcb_sp, struct mbuf **mp)
 
 int
 ipsec4_set_policy(struct inpcb *inp, int optname ,void *request,
-		  size_t len, int priv)
+		  size_t len, kauth_cred_t cred)
 {
 	struct sadb_x_policy *xpl;
 	struct secpolicy **pcb_sp;
@@ -1381,7 +1387,7 @@ ipsec4_set_policy(struct inpcb *inp, int optname ,void *request,
 		return EINVAL;
 	}
 
-	return ipsec_set_policy(pcb_sp, optname, request, len, priv);
+	return ipsec_set_policy(pcb_sp, optname, request, len, cred);
 }
 
 int
@@ -1440,7 +1446,7 @@ ipsec4_delete_pcbpolicy(struct inpcb *inp)
 #ifdef INET6
 int
 ipsec6_set_policy(struct in6pcb *in6p, int optname, void *request,
-		  size_t len, int priv)
+		  size_t len, kauth_cred_t cred)
 {
 	struct sadb_x_policy *xpl;
 	struct secpolicy **pcb_sp;
@@ -1466,7 +1472,7 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, void *request,
 		return EINVAL;
 	}
 
-	return ipsec_set_policy(pcb_sp, optname, request, len, priv);
+	return ipsec_set_policy(pcb_sp, optname, request, len, cred);
 }
 
 int
