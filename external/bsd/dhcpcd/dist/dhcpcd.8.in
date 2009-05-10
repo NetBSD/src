@@ -1,4 +1,4 @@
-.\" Copyright 2006-2008 Roy Marples
+.\" Copyright (c) 2006-2009 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,14 +22,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 18, 2008
+.Dd April 24, 2009
 .Dt DHCPCD 8 SMM
+.Os
 .Sh NAME
 .Nm dhcpcd
 .Nd an RFC 2131 compliant DHCP client
 .Sh SYNOPSIS
 .Nm
-.Op Fl bdknpqABDEGKLTV
+.Op Fl bdeknpqABDEGKLTV
 .Op Fl c , -script Ar script
 .Op Fl f , -config Ar file
 .Op Fl h , -hostname Ar hostname
@@ -42,19 +43,24 @@
 .Op Fl t , -timeout Ar seconds
 .Op Fl u , -userclass Ar class
 .Op Fl v , -vendor Ar code , Ar value
+.Op Fl y , -reboot Ar seconds
+.Op Fl z , -allowinterfaces Ar pattern
 .Op Fl C , -nohook Ar hook
 .Op Fl F , -fqdn Ar FQDN
 .Op Fl I , -clientid Ar clientid
 .Op Fl O , -nooption Ar option
 .Op Fl Q , -require Ar option
-.Op Fl X , -blacklist Ar address
-.Ar interface
+.Op Fl S , -static Ar value
+.Op Fl X , -blacklist Ar address Ns Op Ar /cidr
+.Op Fl Z , -denyinterfaces Ar pattern
+.Op interface
+.Op ...
 .Nm
 .Fl k , -release
-.Ar interface
+.Op interface
 .Nm
 .Fl x , -exit
-.Ar interface
+.Op interface
 .Sh DESCRIPTION
 .Nm
 is an implementation of the DHCP client specified in
@@ -79,6 +85,10 @@ sets the hostname to the one supplied by the DHCP server.
 .Nm
 then daemonises and waits for the lease renewal time to lapse.
 Then it attempts to renew its lease and reconfigure if the new lease changes.
+.Pp
+.Nm
+is also an implementation of the BOOTP client specified in
+.Li RFC 951 .
 .Ss Local Link configuration
 If
 .Nm
@@ -97,6 +107,28 @@ installed which always defeats IPv4LL probing.
 To disable this behaviour, you can use the
 .Fl L , -noipv4ll
 option.
+.Ss Multiple interfaces
+.Nm
+can be run per interface or as a single instance to manage all interfaces.
+If a list of interfaces are given on the command line, then
+.Nm
+only works with those interfaces, otherwise
+.Nm
+discovers available interfaces.
+If link management is enabled and no interfaces are given on the command line,
+.Nm
+forks to the background right away.
+.Pp
+Interfaces are preferred by carrier, DHCP lease/IPv4LL and then lowest metric.
+For systems that support route metrics, each route will be tagged with the
+metric, otherwise 
+.Nm
+changes the routes to use the interface with the same route and the lowest
+metric.
+See options below for controlling what interfaces we allow and deny through
+the use of patterns. Also, see the BUGS section if
+.Nm
+runs on a BSD system.
 .Ss Hooking into DHCP events
 .Nm
 runs
@@ -140,6 +172,16 @@ Echo debug and informational messages to the console.
 Subsequent debug options stop
 .Nm
 from daemonising.
+.It Fl e , -reconfigure
+.Nm
+will re-apply IP address, routing and run
+.Xr dhcpcd-run-hooks 8
+for each interface.
+This is useful so that a 3rd party such as PPP or VPN can change the routing
+table and / or DNS, etc and then instruct dhcpcd to put things back afterwards.
+.Nm
+does not read a new configuration when this happens - you should rebind if you
+need that functionality.
 .It Fl f , -config Ar file
 Specify a config to load instead of
 .Pa @SYSCONFDIR@/dhcpcd.conf .
@@ -179,14 +221,11 @@ By default
 does not request any lease time and leaves the it in the hands of the
 DHCP server.
 .It Fl m , -metric Ar metric
-Added routes will use the
-.Ar metric
-on systems where this is supported
-.Po
-presently only Linux
-.Pc .
-Route metrics allow the addition of routes to the same destination across
-different interfaces, the lower the metric the more it is preferred.
+Metrics are used to prefer an interface over another one, lowest wins.
+.Nm
+will supply a default metic of 200 +
+.Xr if_nametoindex 3 .
+An extra 100 will be added for wireless interfaces.
 .It Fl o , -option Ar option
 Request the DHCP
 .Ar option
@@ -291,6 +330,14 @@ to deconfigure the
 and exit.
 .Nm
 then waits until this process has exited.
+.It Fl y , -reboot Ar seconds
+Allow
+.Ar reboot
+seconds before moving to the discover phase if we have an old lease to use.
+The default is 10 seconds.
+A setting if 0 seconds causes
+.Nm
+to skip the reboot phase and go straight into discover.
 .It Fl D , -duid 
 Generate an
 .Li RFC 4361
@@ -315,9 +362,6 @@ hostname.
 Valid values for
 .Ar fqdn
 are disable, none, ptr and both.
-The current hostname or the hostname specified using the
-.Fl h , -hostname
-option must be a FQDN.
 .Nm
 itself never does any DNS updates.
 .Nm
@@ -335,7 +379,7 @@ sends a default
 .Ar clientid
 of the hardware family and the hardware address.
 .El
-.Ss Restriciting behaviour
+.Ss Restricting behaviour
 .Nm
 will try to do as much as it can by default.
 However, there are sometimes situations where you don't want the things to be
@@ -347,6 +391,14 @@ Quiet
 .Nm
 on the command line, only warnings and errors will be displayed.
 The messages are still logged though.
+.It Fl z , -allowinterfaces Ar pattern
+When discovering interfaces, the interface name must match
+.Ar pattern
+which is a space or comma separated list of patterns passed to
+.Xr fnmatch 3 .
+If the same interface is matched in
+.Fl Z , -denyinterfaces
+then it is still denied.
 .It Fl A , -noarp
 Don't request or claim the address by ARP.
 This also disables IPv4LL.
@@ -359,7 +411,9 @@ Don't run this hook script.
 Matches full name, or prefixed with 2 numbers optionally ending with
 .Pa .sh .
 .Pp
-So to stop dhcpcd from touching your DNS or MTU settings you would do:-
+So to stop
+.Nm
+from touching your DNS or MTU settings you would do:-
 .D1 dhcpcd -C resolv.conf -C mtu eth0
 .It Fl G , -nogateway
 Don't set any default routes.
@@ -378,6 +432,26 @@ configure the interface and routing.
 Requires the
 .Ar option
 to be present in all DHCP messages, otherwise the message is ignored.
+To enforce that
+.Nm
+only responds to DHCP servers and not BOOTP servers, you can
+.Fl Q
+.Ar dhcp_message_type .
+.It Fl S, -static Ar value
+Configures a static
+.Ar value .
+If you set
+.Ic ip_address
+then
+.Nm
+will not attempt to obtain a lease and just use the value for the address with
+an infinite lease time.
+.Pp
+Here is an example which configures a static address, routes and dns.
+.D1 dhcpcd -S ip_address=192.168.0.10/24 \e
+.D1 -S routers=192.168.0.1 \e
+.D1 -S domain_name_servers=192.168.0.1 \e
+.D1 eth0
 .It Fl T, -test
 On receipt of OFFER messages just call
 .Pa @SCRIPT@
@@ -388,14 +462,31 @@ files.
 .It Fl V, -variables
 Display a list of option codes and the associated variable for use in
 .Xr dhcpcd-run-hooks 8 .
-.It Fl X, -blacklist Ar address
-Ignores all DHCP messages which have this
-.Ar address
-as the server ID.
-This may be expanded in future releases to ignore all packets
-matching either the IP or hardware
-.Ar address .
+Variables are prefixed with new_ and old_ unless the option number is -.
+Variables without an option are part of the DHCP message and cannot be
+directly requested.
+.It Fl X, -blacklist Ar address Ns Op Ar /cidr
+Ignore all packets from
+.Ar address Ns Op Ar /cidr .
+.It Fl Z , -denyinterfaces Ar pattern
+When discovering interfaces, the interface name must not match
+.Ar pattern
+which is a space or comma separated list of patterns passed to
+.Xr fnmatch 3 .
 .El
+.Sh 3RDPARTY LINK MANAGEMENT
+Some interfaces require configuration by 3rd parties, such as PPP or VPN.
+When an interface configuration in
+.Nm
+is marked as STATIC or INFORM without an address then
+.Nm
+will monitor the interface until an address is added or removed from it and
+act accordingly.
+For point to point interfaces (like PPP), a default route to it's
+destination is automatically added to the configuration.
+If the point to point interface if configured for INFORM, then
+.Nm
+unicasts INFORM to the destination, otherwise it defaults to STATIC.
 .Sh NOTES
 .Nm
 requires a Berkley Packet Filter, or BPF device on BSD based systems and a
@@ -428,10 +519,19 @@ running on the
 .Xr dhcpcd-run-hooks 8 ,
 .Xr resolv.conf 5 ,
 .Xr resolvconf 8 ,
+.Xr if_nametoindex 3 ,
+.Xr fnmatch 3
 .Sh STANDARDS
-RFC 2131, RFC 2132, RFC 2855, RFC 3004, RFC 3361, RFC 3396, RFC 3397,
-RFC 3442, RFC 3927, RFC 4361, RFC 4390, RFC 4702.
+RFC 951, RFC 1534, RFC 2131, RFC 2132, RFC 2855, RFC 3004, RFC 3361, RFC 3396,
+RFC 3397, RFC 3442, RFC 3927, RFC 4361, RFC 4390, RFC 4702.
 .Sh AUTHORS
-.An Roy Marples <roy@marples.name>
+.An Roy Marples Aq roy@marples.name
 .Sh BUGS
 Please report them to http://roy.marples.name/projects/dhcpcd
+.Pp
+.Nm
+does not wait for commands to complete when sending them to the master
+.Nm
+process, nor does it echo its progress to stderr.
+This is a behaviour change from dhcpcd-4 and may need to be addressed if
+there is sufficient need.
