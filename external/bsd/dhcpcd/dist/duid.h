@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,11 +25,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef DUID_H
+#define DUID_H
 
-#include "dhcpcd.h"
+#include "net.h"
 
-int dhcp_run(const struct options *, int *);
+size_t get_duid(unsigned char *duid, const struct interface *iface);
 
 #endif

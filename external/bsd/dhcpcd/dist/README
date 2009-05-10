@@ -1,12 +1,13 @@
-dhcpcd-4 - DHCP client daemon
-Copyright 2006-2008 Roy Marples <roy@marples.name>
+dhcpcd - DHCP client daemon
+Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
 
 
 Installation
 ------------
-Edit config.h to match your building requirements.
 Then just make; make install
 man dhcpcd for command line options
+man dhcpcd.conf for configuration options
+man dhcpcd-run-hooks to learn how to hook scripts into dhcpcd events
 
 
 Notes
@@ -32,6 +33,12 @@ linux-2.6.24 finally ships with a working 32-bit header.
 If your linux headers are older, or your distro hasn't patched them you can
 set CSTD=gnu99 to work around this.
 
+Some BSD systems do not allow the manipulation of automatically added subnet
+routes. You can find discussion here:
+    http://mail-index.netbsd.org/tech-net/2008/12/03/msg000896.html
+BSD systems where this has been fixed are:
+    NetBSD-5.99.6
+
 
 Hooks
 -----
@@ -43,28 +50,13 @@ make HOOKSCRIPTS=50-ntp install
 
 Compatibility
 -------------
-If you require compatibility with dhcpcd-3 and older style variables,
-you can install 50-dhcpcd-compat into the directory $LIBEXECDIR/dhcpcd-hooks
-We don't install this by default.
-You should also add -DCMDLINE_COMPAT to your CPPFLAGS if you need to be fully
-commandline compatible with prior versions.
+dhcpcd-5.0 is only fully command line compatible with dhcpcd-4.0
+For compatibility with older versions, use dhcpcd-4.0
 
-dhcpcd-3 enabled DUID support by default - this has changed in dhcpcd-4.
-You can enable it via the --duid, -D command line option or by using the
-duid directive in dhcpcd.conf.
-If CMDLINE_COMPAT is defined the we renable DUID support by default IF
-the dhcpcd.duid file exits. This keeps the clients working as they were,
-which is good.
-
-dhcpcd no longer sends a default ClientID for ethernet interfaces. 
-This is so we can re-use the address the kernel DHCP client found. 
-To retain the old behaviour of sending a default ClientID based on the 
+dhcpcd no longer sends a default ClientID for ethernet interfaces.
+This is so we can re-use the address the kernel DHCP client found.
+To retain the old behaviour of sending a default ClientID based on the
 hardware address for interface, simply add the keyword clientid to dhcpcd.conf.
-If CMDLINE_COMPAT is defined, we renable the sending of ClientID by default
-AND adding clientid to dhcpcd.conf causes it NOT to be sent.
-
-dhcpcd-4 is NOT fully commandline compatible with dhcpcd-2 and older and
-changes the meaning of some options.
 
 
 ChangeLog
