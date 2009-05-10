@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 int signal_init(void);
 int signal_setup(void);
 int signal_reset(void);
-int signal_fd(void);
 int signal_read(void);
 
 #endif

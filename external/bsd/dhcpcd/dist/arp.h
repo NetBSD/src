@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,14 +25,25 @@
  * SUCH DAMAGE.
  */
 
-#ifndef DHCPCONFIG_H
-#define DHCPCONFIG_H
+#ifndef ARP_H
+#define ARP_H
 
-#include "net.h"
+/* These are for IPV4LL, RFC 3927.
+ * We put them here as we use the timings for all ARP foo. */
+#define PROBE_WAIT		 1
+#define PROBE_NUM		 3
+#define PROBE_MIN		 1
+#define PROBE_MAX		 2
+#define ANNOUNCE_WAIT		 2
+#define ANNOUNCE_NUM		 2
+#define ANNOUNCE_INTERVAL	 2
+#define MAX_CONFLICTS		10
+#define RATE_LIMIT_INTERVAL	60
+#define DEFEND_INTERVAL		10
 
-int send_interface(int, const struct interface *);
-int run_script(const struct interface *);
-void build_routes(void);
-int configure(struct interface *);
-int route_deleted(const struct rt *);
+#include "dhcpcd.h"
+
+void send_arp_announce(void *);
+void send_arp_probe(void *);
+void start_arping(struct interface *);
 #endif

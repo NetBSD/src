@@ -1,4 +1,4 @@
-.\" Copyright 2006-2008 Roy Marples
+.\" Copyright (c) 2006-2009 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,8 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 14, 2008
+.Dd March 23, 2009
 .Dt DHCPCD.SH 8 SMM
+.Os
 .Sh NAME
 .Nm dhcpcd-run-hooks
 .Nd DHCP client configuration script 
@@ -68,9 +69,12 @@ argument.
 Here's a list of reasons why
 .Nm
 could be invoked:
-.Bl -tag -width indent
+.Bl -tag -width PREINIT
 .It Dv PREINIT
 dhcpcd is starting up and any pre-initialisation should be done.
+.It Dv CARRIER
+dhcpcd has detected the carrier is up.
+This is generally just a notification and no action need be taken.
 .It Dv INFORM
 dhcpcd informed a DHCP server about it's address and obtained other
 configuration details.
@@ -82,14 +86,30 @@ dhcpcd renewed it's lease.
 dhcpcd has rebound to a new DHCP server.
 .It Dv REBOOT
 dhcpcd successfully requested a lease from a DHCP server.
-.It Dv EXPIRE
-dhcpcd's lease expired and it failed to obtain a new one.
 .It Dv IPV4LL
 dhcpcd failed to contact any DHCP servers but did obtain an IPV4LL address.
-.It Dv FAIL
-dhcpcd failed to contact any DHCP servers or use an old lease.
+.It Dv STATIC
+dhcpcd has been configured with a static configuration which has not been
+obtained from a DHCP server.
+.It Dv 3RDPARTY
+dhcpcd is monitoring the interface for a 3rd party to give it an IP address.
 .It Dv TIMEOUT
 dhcpcd failed to contact any DHCP servers but was able to use an old lease.
+.It Dv EXPIRE
+dhcpcd's lease or state expired and it failed to obtain a new one.
+.It Dv NAK
+dhcpcd received a NAK from the DHCP server.
+This should be treated as EXPIRE.
+.It Dv NOCARRIER
+dhcpcd lost the carrier.
+The cable may have been unplugged or association to the wireless point lost.
+.It Dv FAIL
+dhcpcd failed to operate on the interface.
+This normally happens when dhcpcd does not support the raw interface, which
+means it cannot work as a DHCP or ZeroConf client.
+Static configuration and DHCP INFORM is still allowed.
+.It Dv STOP
+dhcpcd stopped running on the interface.
 .It Dv TEST
 dhcpcd received an OFFER from a DHCP server but will not configure the
 interface.
@@ -108,6 +128,6 @@ in a lexical order and then finally
 .Sh SEE ALSO
 .Xr dhcpcd 8
 .Sh AUTHORS
-.An Roy Marples <roy@marples.name>
+.An Roy Marples Aq roy@marples.name
 .Sh BUGS
 Please report them to http://roy.marples.name/projects/dhcpcd

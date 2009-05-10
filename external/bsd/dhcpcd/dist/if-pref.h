@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,14 +25,10 @@
  * SUCH DAMAGE.
  */
 
-#ifndef DHCPCONFIG_H
-#define DHCPCONFIG_H
+#ifndef IF_PREF_H
+#define IF_PREF_H
 
-#include "net.h"
+#include "dhcpcd.h"
 
-int send_interface(int, const struct interface *);
-int run_script(const struct interface *);
-void build_routes(void);
-int configure(struct interface *);
-int route_deleted(const struct rt *);
+void sort_interfaces(void);
 #endif
