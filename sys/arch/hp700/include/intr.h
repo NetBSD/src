@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2008/07/07 12:29:30 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.6.1 2009/05/10 20:32:36 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ splraise(register int ncpl)
 	register int ocpl = cpl;
 
 	cpl = ocpl | ncpl;      
+	__insn_barrier();
 
 	return (ocpl);  
 }
