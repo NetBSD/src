@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.8 2009/05/10 10:56:17 tsutsui Exp $
+.\" $NetBSD: pmf.9,v 1.9 2009/05/10 12:46:41 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -137,15 +137,17 @@ The following message types are defined:
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn pmf_device_register "dev" "suspend" "resume"
-Register a device with the power management framework. If either
+Register a device with the power management framework.
+If either
 .Fa suspend
 or
 .Fa resume
 is
 .Dv NULL
 then it is assumed that device state does not need to be captured and
-resumed on a power transition. Bus and class-level power management
-will still be performed. Returns
+resumed on a power transition.
+Bus and class-level power management will still be performed.
+Returns
 .Dv false
 if there was an error.
 .It Fn pmf_device_register1 "dev" "suspend" "resume" "shutdown"
@@ -186,20 +188,24 @@ device.
 Register a device with the power management framework as a display-class
 device.
 .It Fn pmf_system_suspend "void"
-Suspend all attached devices. Devices are suspended by traversing the
+Suspend all attached devices.
+Devices are suspended by traversing the
 autoconfiguration tree beginning with the leaf nodes.
 This function will fail if any attached drivers do not support the power
 management framework.
 .It Fn pmf_system_resume "void"
-Resume all attached devices. Devices are resumed by traversing the
+Resume all attached devices.
+Devices are resumed by traversing the
 autoconfiguration tree beginning with devices that do not have a parent.
 This function will fail if any attached drivers do not support the power
 management framework.
 .It Fn pmf_system_shutdown "int"
-Shutdown all attached devices. Devices are shut down by traversing the
+Shutdown all attached devices.
+Devices are shut down by traversing the
 autoconfiguration tree beginning with the leaf nodes.
 The integer argument is passed to the driver shutdown functions.
-It should contain the reboot(2)
+It should contain the
+.Xr reboot 2
 .Dq howto
 argument.
 This function ignores the presence of attached drivers that do not support the
@@ -209,7 +215,8 @@ Register the callback
 .Fa handler
 to be called whenever an
 .Fa ev
-event is triggered. If
+event is triggered.
+If
 .Fa global
 is
 .Dv true ,
@@ -220,7 +227,8 @@ accepts anonymous events from
 Deregister the callback previously registered with
 .Fn pmf_event_register .
 .It Fn pmf_event_inject "dev" "ev"
-Inject an inter-driver message into the message queue. If
+Inject an inter-driver message into the message queue.
+If
 .Fa dev
 is
 .Dv NULL ,
@@ -233,7 +241,8 @@ Insert a name-value pair into the platform information database.
 .It Fn pmf_get_platform "key"
 Retrieve the value for
 .Fa key
-from the platform information database. Returns
+from the platform information database.
+Returns
 .Dv NULL
 if the key is not present.
 .El
