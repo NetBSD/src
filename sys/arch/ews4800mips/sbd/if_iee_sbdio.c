@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.8 2009/05/09 03:22:20 tsutsui Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.9 2009/05/10 04:26:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.8 2009/05/09 03:22:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.9 2009/05/10 04:26:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,19 +121,16 @@ iee_sbdio_cmd(struct iee_softc *sc, uint32_t cmd)
 	int n;
 	uint32_t ack;
 
-	SC_SCB->scb_cmd = cmd;
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF, IEE_SCB_SZ,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	SC_SCB(sc)->scb_cmd = cmd;
+	IEE_SCBSYNC(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	iee_sbdio_channel_attention(sc);
 
 	/* Wait for the cmd to finish */
 	for (n = 0 ; n < retry; n++) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF,
-		    IEE_SCB_SZ, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		ack = SC_SCB->scb_cmd;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF,
-		    IEE_SCB_SZ, BUS_DMASYNC_PREREAD);
+		IEE_SCBSYNC(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		ack = SC_SCB(sc)->scb_cmd;
+		IEE_SCBSYNC(sc, BUS_DMASYNC_PREREAD);
 		if (ack == 0)
 			break;
 		delay(1);
@@ -155,13 +152,11 @@ iee_sbdio_reset(struct iee_softc *sc)
 	uint32_t cmd, ack;
 
 	/* Make sure the busy byte is set and the cache is flushed. */
-	SC_ISCP->iscp_bussy = IEE_ISCP_BUSSY;
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map,
-	    IEE_SCP_OFF, IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	SC_ISCP(sc)->iscp_bussy = IEE_ISCP_BUSSY;
+	IEE_ISCPSYNC(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Setup the PORT Command with pointer to SCP. */
-	cmd = IEE_PORT_SCP | IEE_PHYS_SHMEM(IEE_SCP_OFF);
+	cmd = IEE_PORT_SCP | IEE_PHYS_SHMEM(sc->sc_scp_off);
 
 	/* Initiate a Hardware reset. */
 	printf("%s: reseting chip... ", device_xname(sc->sc_dev));
@@ -172,11 +167,9 @@ iee_sbdio_reset(struct iee_softc *sc)
 
 	/* Wait for the chip to initialize and read SCP and ISCP. */
 	for (n = 0 ; n < retry; n++) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF,
-		    IEE_ISCP_SZ, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		ack = SC_ISCP->iscp_bussy;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_ISCP_OFF,
-		    IEE_ISCP_SZ, BUS_DMASYNC_PREREAD);
+		IEE_ISCPSYNC(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		ack = SC_ISCP(sc)->iscp_bussy;
+		IEE_ISCPSYNC(sc, BUS_DMASYNC_PREREAD);
 		if (ack != IEE_ISCP_BUSSY) {
 			break;
 		}
