@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.11 2008/04/27 12:58:48 degroote Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.12 2009/05/10 02:13:07 elad Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -62,7 +62,7 @@ struct in6pcb;
 #define	key_freesp(_x)		KEY_FREESP(&_x)
 
 int ipsec6_delete_pcbpolicy (struct in6pcb *);
-int ipsec6_set_policy (struct in6pcb *, int, void *, size_t, int);
+int ipsec6_set_policy (struct in6pcb *, int, void *, size_t, kauth_cred_t);
 int ipsec6_get_policy (struct in6pcb *, void *, size_t, struct mbuf **);
 struct secpolicy *ipsec6_checkpolicy (struct mbuf *, u_int, 
     u_int, int *, struct in6pcb *);
