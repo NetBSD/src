@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.27 2009/04/21 21:29:58 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.28 2009/05/10 21:47:57 he Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2009/04/21 21:29:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2009/05/10 21:47:57 he Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -202,7 +202,7 @@ static void pv_free(struct pv_entry *pv);
 static struct pv_entry *pv_get(pmap_t pmap, int ppn, int lpn);
 static void pv_release(pmap_t pmap, int ppn, int lpn);
 
-static int pmap_enter1(pmap_t, vaddr_t, paddr_t, vm_prot_t, int, int);
+static int pmap_enter1(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int, int);
 
 static void *pmap_find(paddr_t);
 
