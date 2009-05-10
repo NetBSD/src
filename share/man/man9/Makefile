@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.280 2009/05/08 22:39:18 dyoung Exp $
+#       $NetBSD: Makefile,v 1.281 2009/05/10 10:59:21 tsutsui Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -512,6 +512,19 @@ MLINKS+=pmc.9 pmc_get_num_counters.9 \
 	pmc.9 pmc_start_profiling.9 \
 	pmc.9 pmc_stop_profiling.9 \
 	pmc.9 PMC_ENABLED.9
+MLINKS+=pmf.9 pmf_device_register.9 pmf.9 pmf_device_register1.9 \
+	pmf.9 pmf_device_deregister.9 \
+	pmf.9 pmf_device_suspend.9 pmf.9 pmf_device_resume.9 \
+	pmf.9 pmf_device_recursive_suspend.9 \
+	pmf.9 pmf_device_recursive_resume.9 \
+	pmf.9 pmf_device_resume_subtree.9 \
+	pmf.9 pmf_class_network_register.9 pmf.9 pmf_class_input_register.9 \
+	pmf.9 pmf_class_display_register.9 \
+	pmf.9 pmf_system_suspend.9 pmf.9 pmf_system_resume.9 \
+	pmf.9 pmf_system_shutdown.9 \
+	pmf.9 pmf_event_register.9 pmf.9 pmf_event_deregister.9 \
+	pmf.9 pmf_event_inject.9 \
+	pmf.9 pmf_set_platform.9 pmf.9 pmf_get_platform.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
 	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
