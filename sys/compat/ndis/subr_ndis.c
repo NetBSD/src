@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.20 2009/05/11 21:31:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.21 2009/05/11 21:34:55 cegger Exp $");
 #endif
 
 /*
@@ -1211,7 +1211,7 @@ NdisWriteErrorLogEntry(ndis_handle adapter, ndis_error_code code,
 	va_start(ap, numerrors);
 	for (i = 0; i < numerrors; i++)
 		printf ("%s: argptr: %p\n",
-			dev->dv_xname,
+			device_xname(dev),
 			va_arg(ap, void *));
 
 	va_end(ap);
