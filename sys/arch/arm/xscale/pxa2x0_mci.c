@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.1 2009/04/21 03:00:29 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.2 2009/05/11 08:27:03 nonaka Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.1 2009/04/21 03:00:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.2 2009/05/11 08:27:03 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -797,11 +797,12 @@ pxamci_intr(void *arg)
 		    device_xname(sc->sc_dev)));
 		pxamci_disable_intr(sc, MMC_I_DAT_ERR);
 		CLR(status, MMC_I_DAT_ERR);
-		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)
-		 && (ISSET(sc->sc_cmd->c_flags, SCF_CMD_READ))) {
-			pxa2x0_dmac_abort_xfer(sc->sc_rxdx);
-		} else {
-			pxa2x0_dmac_abort_xfer(sc->sc_txdx);
+		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)) {
+			if (ISSET(sc->sc_cmd->c_flags, SCF_CMD_READ)) {
+				pxa2x0_dmac_abort_xfer(sc->sc_rxdx);
+			} else {
+				pxa2x0_dmac_abort_xfer(sc->sc_txdx);
+			}
 		}
 		sc->sc_cmd->c_error = EIO;
 		pxamci_intr_done(sc);
