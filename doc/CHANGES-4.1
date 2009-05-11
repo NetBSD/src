@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.146 2009/04/30 18:27:50 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.147 2009/05/11 19:32:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3037,4 +3037,29 @@ lib/libc/db/hash/hash_buf.c			1.17, 1.18
 
 	Fix build fallout from ticket 1310
 	[hauke, ticket #1311]
+
+usr.sbin/racoonctl/Makefile			1.5 via patch
+
+	adjust the ADMINPORTDIR to match that of racoon (with which
+	it'll want to talk) fixes PR 41376
+	[spz, ticket #1312]
+
+lib/libc/stdio/vfwprintf.c			1.15
+
+	printf("%zi\n", (ssize_t)-1); now correcly prints -1 on i386
+	[cube, ticket #1313]
+
+share/man/man8/afterboot.8			1.39
+
+	Fix typo, from Shannon -jj Behrens in PR 41375.
+	[dholland, ticket #1314]
+
+sys/arch/mac68k/conf/GENERIC			1.188
+sys/arch/mac68k/obio/esp.c			1.51 via patch
+
+	Add LOCKDEBUG option, commented out, so that people know it's there.
+	esp_quick_dma_go() gets called from the MI ncr53c9x_intr() handler,
+	which protects itself against multiple invocation with a
+	simple_lock.  Fixes PR mac68k/38758.
+	[hauke, ticket #1315]
 
