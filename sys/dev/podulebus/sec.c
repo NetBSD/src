@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.14 2009/02/12 06:24:45 rumble Exp $ */
+/* $NetBSD: sec.c,v 1.15 2009/05/11 20:13:49 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.14 2009/02/12 06:24:45 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.15 2009/05/11 20:13:49 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -95,7 +95,7 @@ static int sec_match(device_t, cfdata_t, void *);
 static void sec_attach(device_t, device_t, void *);
 
 /* shutdown hook */
-static void sec_shutdown(void *);
+static bool sec_shutdown(device_t, int);
 
 /* callbacks from MI WD33C93 driver */
 static int sec_dmasetup(struct wd33c93_softc *, void **, size_t *, int,
@@ -214,19 +214,20 @@ sec_attach(device_t parent, device_t self, void *aux)
 	sec_cli(sc);
 	sc->sc_mpr |= SEC_MPR_IE;
 	bus_space_write_1(sc->sc_pod_t, sc->sc_pod_h, SEC_MPR, sc->sc_mpr);
-	shutdownhook_establish(sec_shutdown, sc);
+	pmf_device_register1(sc->sc_sbic.sc_dev, NULL, NULL, sec_shutdown);
 }
 
 /*
  * Before reboot, reset the page register to 0 so that RISC OS can see
  * the podule ROM.
  */
-static void
-sec_shutdown(void *cookie)
+static bool
+sec_shutdown(device_t dev, int howto)
 {
-	struct sec_softc *sc = cookie;
+	struct sec_softc *sc = device_private(dev);
 
 	sec_setpage(sc, 0);
+	return true;
 }
 
 static void
