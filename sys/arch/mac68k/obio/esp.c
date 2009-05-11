@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.44 2006/03/08 23:46:23 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.44.14.1 2009/05/11 19:31:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.44 2006/03/08 23:46:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.44.14.1 2009/05/11 19:31:39 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -851,7 +851,14 @@ gotintr:
 		printf("g!\n");
 	}
 #endif
+	/*
+	 * We have been called from the MI ncr53c9x_intr() handler,
+	 * which protects itself against multiple invocation with a
+	 * simple_lock. Follow the example of ncr53c9x_poll().
+	 */
+	simple_unlock(&sc->sc_lock);
 	ncr53c9x_intr(sc);
+	simple_lock(&sc->sc_lock);
 	if (espspl != -1) splx(espspl); espspl = -1;
 }
 
