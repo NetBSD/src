@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177.2.2 2007/08/25 09:00:08 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.177.2.3 2009/05/11 19:31:40 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177.2.2 $"
+#ident 		"GENERIC-$Revision: 1.177.2.3 $"
 
 maxusers	16		# estimated number of users
 
@@ -69,6 +69,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
+#options 	LOCKDEBUG	# kernel lock debugging
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
