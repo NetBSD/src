@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.67.2.2 2008/11/15 22:10:33 snj Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.67.2.3 2009/05/11 19:40:22 bouyer Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd September 10, 2008
+.Dd May 1, 2009
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -512,6 +512,13 @@ unconditionally.
 Indicates whether program binaries and shared libraries should be built
 to include RCS IDs for use with
 .Xr ident 1 .
+.DFLTn
+.
+.It Sy MKSUBPIXEL
+.YorN
+For X builds, decides if subpixel rendering code in FreeType
+is turned on.
+Turned off by default because of patent issues.
 .DFLTn
 .
 .It Sy MKTTINTERP

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/25 13:14:49 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2009/05/11 19:40:22 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -82,6 +82,10 @@ CPPFLAGS+=	-DFT_CONFIG_OPTION_SYSTEM_ZLIB \
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${DESTDIR}${X11INCDIR}/freetype2/freetype/config \
 		-I${X11SRCDIR.${LIB}}/include
+
+.if defined(MKSUBPIXEL) && ${MKSUBPIXEL} != "no"
+CPPFLAGS+=	-DFT_CONFIG_OPTION_SUBPIXEL_RENDERING
+.endif
 
 .if defined(MKTTINTERP) && ${MKTTINTERP} != "no"
 CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
