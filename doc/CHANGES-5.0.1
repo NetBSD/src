@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.7 2009/05/10 20:51:55 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.8 2009/05/11 20:13:47 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -63,4 +63,17 @@ share/man/man8/afterboot.8			1.39
 
 	Fix typo, from Shannon -jj Behrens in PR 41375.
 	[dholland, ticket #746]
+
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.50
+
+	Don't call callout_stop() without callout_init()
+	Fixes PR/41364
+	[kefren, ticket #748]
+
+sys/arch/sparc/include/math.h			1.5
+sys/arch/sparc64/include/math.h			1.7
+
+	merge these two files, makes sparc64 sparc/libc work again.
+	only provide __HAVE_LONG_DOUBLE if _LP64.
+	[mrg, ticket #750]
 
