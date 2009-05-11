@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1254 2009/05/10 10:59:21 tsutsui Exp $
+#	$NetBSD: mi,v 1.1255 2009/05/11 14:45:04 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -14037,25 +14037,25 @@
 ./usr/share/man/html9/pmc_start_profiling.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmc_stop_profiling.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmf.html			comp-sys-htmlman	html
-./usr/share/man/html9/pmf_class_display_register.html comp-sys-catman	.cat
-./usr/share/man/html9/pmf_class_input_register.html comp-sys-catman	.cat
-./usr/share/man/html9/pmf_class_network_register.html comp-sys-catman	.cat
-./usr/share/man/html9/pmf_device_deregister.html comp-sys-catman	.cat
-./usr/share/man/html9/pmf_device_recursive_suspend.html comp-sys-catman	.cat
-./usr/share/man/html9/pmf_device_recursive_resume.html comp-sys-catman	.cat
-./usr/share/man/html9/pmf_device_register.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_device_register1.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_device_resume.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_device_resume_subtree.html comp-sys-catman	.cat
-./usr/share/man/html9/pmf_device_suspend.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_event_deregister.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_event_inject.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_event_register.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_get_platform.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_set_platform.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_system_resume.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_system_shutdown.html	comp-sys-catman		.cat
-./usr/share/man/html9/pmf_system_suspend.html	comp-sys-catman		.cat
+./usr/share/man/html9/pmf_class_display_register.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_class_input_register.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_class_network_register.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_deregister.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_recursive_suspend.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_recursive_resume.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_register.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_register1.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_resume.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_resume_subtree.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_suspend.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_event_deregister.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_event_inject.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_event_register.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_get_platform.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_set_platform.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_system_resume.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_system_shutdown.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_system_suspend.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_destroy.html	comp-sys-htmlman	html
