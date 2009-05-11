@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.40 2009/03/06 20:31:48 joerg Exp $
+#	$NetBSD: WALNUT,v 1.41 2009/05/11 16:16:42 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -39,7 +39,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=400000	# size for embedded symbol table
+options 	SYMTAB_SPACE=410000	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 
