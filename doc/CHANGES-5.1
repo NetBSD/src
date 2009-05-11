@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.10 2009/05/10 21:39:22 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.11 2009/05/11 20:13:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -409,4 +409,41 @@ external/bsd/dhcpcd/sbin/dhcpcd/Makefile	1.4
 
 	Update dhcpcd to 5.0.1.
 	[roy, ticket #534]
+
+BUILDING					1.83
+doc/BUILDING.mdoc				1.72
+external/mit/xorg/lib/freetype/Makefile		1.5
+
+	Introduce MKSUBPIXEL, which allows enabling subpixel rendering code
+	in FreeType.
+	[snj, ticket #742]
+
+gnu/usr.bin/groff/tmac/mdoc.local		1.51 via patch
+
+	Add an entry for 5.1.
+	[snj, ticket #747]
+
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.50
+
+	Don't call callout_stop() without callout_init()
+	Fixes PR/41364
+	[kefren, ticket #748]
+
+sys/dev/md.c					1.58
+
+	Check the RAMdisk size in mdattach() and not nothing if it's 0.
+	This allows mdattach() to be called twice, once from config_finalize()
+	and once from tftproot_getfile(). Fix options TFTPROOT.
+	[manu, ticket #749]
+
+sys/arch/sparc/include/math.h			1.5
+sys/arch/sparc64/include/math.h			1.7
+
+	merge these two files, makes sparc64 sparc/libc work again.
+	only provide __HAVE_LONG_DOUBLE if _LP64.
+	[mrg, ticket #750]
+
+sys/dev/pci/if_wm.c				patch
+	Remove extra printf().
+	[msaitoh, ticket #751]
 
