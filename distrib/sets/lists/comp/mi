@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1255 2009/05/11 14:45:04 roy Exp $
+#	$NetBSD: mi,v 1.1256 2009/05/11 15:47:36 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -19473,25 +19473,25 @@
 ./usr/share/man/man9/pmc_start_profiling.9	comp-sys-man		.man
 ./usr/share/man/man9/pmc_stop_profiling.9	comp-sys-man		.man
 ./usr/share/man/man9/pmf.9			comp-sys-man		.man
-./usr/share/man/man9/pmf_class_display_register.9 comp-sys-catman	.cat
-./usr/share/man/man9/pmf_class_input_register.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_class_network_register.9 comp-sys-catman	.cat
-./usr/share/man/man9/pmf_device_deregister.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_device_recursive_suspend.9 comp-sys-catman	.cat
-./usr/share/man/man9/pmf_device_recursive_resume.9 comp-sys-catman	.cat
-./usr/share/man/man9/pmf_device_register.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_device_register1.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_device_resume.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_device_resume_subtree.9 comp-sys-catman	.cat
-./usr/share/man/man9/pmf_device_suspend.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_event_deregister.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_event_inject.9		comp-sys-catman		.cat
-./usr/share/man/man9/pmf_event_register.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_get_platform.9		comp-sys-catman		.cat
-./usr/share/man/man9/pmf_set_platform.9		comp-sys-catman		.cat
-./usr/share/man/man9/pmf_system_resume.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_system_shutdown.9	comp-sys-catman		.cat
-./usr/share/man/man9/pmf_system_suspend.9	comp-sys-catman		.cat
+./usr/share/man/man9/pmf_class_display_register.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_class_input_register.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_class_network_register.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_device_deregister.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_device_recursive_suspend.9 comp-sys-man	.man
+./usr/share/man/man9/pmf_device_recursive_resume.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_device_register.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_device_register1.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_device_resume.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_device_resume_subtree.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_device_suspend.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_event_deregister.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_event_inject.9		comp-sys-man		.man
+./usr/share/man/man9/pmf_event_register.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_get_platform.9		comp-sys-man		.man
+./usr/share/man/man9/pmf_set_platform.9		comp-sys-man		.man
+./usr/share/man/man9/pmf_system_resume.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_system_shutdown.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_system_suspend.9	comp-sys-man		.man
 ./usr/share/man/man9/pool.9			comp-sys-man		.man
 ./usr/share/man/man9/pool_cache.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_destroy.9	comp-sys-man		.man
