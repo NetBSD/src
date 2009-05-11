@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.9.2.1.4.1 2008/04/08 21:10:55 jdc Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.9.2.1.4.2 2009/05/11 19:23:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.9.2.1.4.1 2008/04/08 21:10:55 jdc Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.9.2.1.4.2 2009/05/11 19:23:33 bouyer Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,6 +98,7 @@ union arg {
 	long long longlongarg;
 	unsigned long long ulonglongarg;
 	ptrdiff_t ptrdiffarg;
+	ssize_t ssizearg;
 	size_t	sizearg;
 	intmax_t intmaxarg;
 	uintmax_t uintmaxarg;
@@ -125,7 +126,7 @@ union arg {
 enum typeid {
 	T_UNUSED, TP_SHORT, T_INT, T_U_INT, TP_INT,
 	T_LONG, T_U_LONG, TP_LONG, T_LLONG, T_U_LLONG, TP_LLONG,
-	T_PTRDIFFT, TP_PTRDIFFT, T_SIZET, TP_SIZET,
+	T_PTRDIFFT, TP_PTRDIFFT, T_SSIZET, T_SIZET, TP_SIZET,
 	T_INTMAXT, T_UINTMAXT, TP_INTMAXT, TP_VOID, TP_CHAR, TP_SCHAR,
 	T_DOUBLE, T_LONG_DOUBLE, T_WINT, TP_WCHAR
 };
@@ -756,7 +757,7 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 #define	INTMAX_SIZE	(INTMAXT|SIZET|PTRDIFFT|LLONGINT)
 #define SJARG() \
 	(flags&INTMAXT ? GETARG(intmax_t) : \
-	    flags&SIZET ? (intmax_t)GETARG(size_t) : \
+	    flags&SIZET ? (intmax_t)GETARG(ssize_t) : \
 	    flags&PTRDIFFT ? (intmax_t)GETARG(ptrdiff_t) : \
 	    (intmax_t)GETARG(long long))
 #define	UJARG() \
@@ -1571,7 +1572,7 @@ __find_arguments(const CHAR_T *fmt0, va_list ap, union arg **argtable)
 		if (flags & INTMAXT)  \
 			ADDTYPE(T_INTMAXT); \
 		else if (flags & SIZET)  \
-			ADDTYPE(T_SIZET); \
+			ADDTYPE(T_SSIZET); \
 		else if (flags & PTRDIFFT) \
 			ADDTYPE(T_PTRDIFFT); \
 		else if (flags & LLONGINT) \
@@ -1837,6 +1838,9 @@ done:
 			break;
 		    case TP_PTRDIFFT:
 			(*argtable) [n].pptrdiffarg = va_arg (ap, ptrdiff_t *);
+			break;
+		    case T_SSIZET:
+			(*argtable) [n].ssizearg = va_arg (ap, ssize_t);
 			break;
 		    case T_SIZET:
 			(*argtable) [n].sizearg = va_arg (ap, size_t);
