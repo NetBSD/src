@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.39 2009/03/31 17:38:27 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.40 2009/05/11 18:33:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 /*
  * el_set/el_get parameters
  */
-#define	EL_PROMPT	0	/* , el_pfunc_t, char);		*/
+#define	EL_PROMPT	0	/* , el_pfunc_t);		*/
 #define	EL_TERMINAL	1	/* , const char *);		*/
 #define	EL_EDITOR	2	/* , const char *);		*/
 #define	EL_SIGNAL	3	/* , int);			*/
@@ -128,15 +128,17 @@ unsigned char	_el_fn_complete(EditLine *, int);
 				/* , el_func_t);		*/
 #define	EL_HIST		10	/* , hist_fun_t, const char *);	*/
 #define	EL_EDITMODE	11	/* , int);			*/
-#define	EL_RPROMPT	12	/* , el_pfunc_t, char);		*/
+#define	EL_RPROMPT	12	/* , el_pfunc_t);		*/
 #define	EL_GETCFN	13	/* , el_rfunc_t);		*/
 #define	EL_CLIENTDATA	14	/* , void *);			*/
 #define	EL_UNBUFFERED	15	/* , int);			*/
-#define	EL_PREP_TERM    16      /* , int);                      */
+#define	EL_PREP_TERM	16	/* , int);			*/
 #define	EL_GETTC	17	/* , const char *, ..., NULL);	*/
 #define	EL_GETFP	18	/* , int, FILE **);		*/
 #define	EL_SETFP	19	/* , int, FILE *);		*/
-#define EL_REFRESH	20	/* , void);			*/
+#define	EL_REFRESH	20	/* , void);			*/
+#define	EL_PROMPT_ESC	21	/* , el_pfunc_t, char);		*/
+#define	EL_RPROMPT_ESC	22	/* , el_pfunc_t, char);		*/
 
 #define	EL_BUILTIN_GETCFN	(NULL)
 
