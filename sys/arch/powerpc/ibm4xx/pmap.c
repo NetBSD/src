@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 2009/03/18 10:22:34 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 2009/05/11 16:09:24 he Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2009/03/18 10:22:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2009/05/11 16:09:24 he Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -809,7 +809,7 @@ pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
  * Insert physical page at pa into the given pmap at virtual address va.
  */
 int
-pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int s;
 	u_int tte;
