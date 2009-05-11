@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.46.8.1 2009/02/19 20:33:39 snj Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.46.8.1.2.1 2009/05/11 20:03:08 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.46.8.1 2009/02/19 20:33:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.46.8.1.2.1 2009/05/11 20:03:08 bouyer Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.59 2008/03/01 23:16:38 darrenr Exp";
@@ -471,7 +471,8 @@ int ipfdetach()
 	SPL_NET(s);
 
 #if (__NetBSD_Version__ >= 104010000)
-	callout_stop(&fr_slowtimer_ch);
+	if (fr_running > 0)
+		callout_stop(&fr_slowtimer_ch);
 #else
 	untimeout(fr_slowtimer, NULL);
 #endif /* NetBSD */
