@@ -348,13 +348,13 @@ nsp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s, rev. %d\n", nspp->nsp_name,
 	    PCI_REVISION(pa->pa_class));
 
-	printf("NetOctave Encryption Processor - %s\n", sc->device.dv_xname);
+	printf("NetOctave Encryption Processor - %s\n", device_xname(&sc->device));
 
 	n8_sessionInit(sc);
 
 	NSPcount_g = 1;
 	if (n8_driverInit(N8_EA_POOL_SIZE, N8_PK_POOL_SIZE)) {
-	    DBG(("%s: Failed driver init\n", sc->device.dv_xname));
+	    DBG(("%s: Failed driver init\n", device_xname(&sc->device)));
 	    NSPcount_g = 0;
 	    return;
 	}
@@ -385,8 +385,7 @@ nsp_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_mapreg_map(pa, NSP_BAR0, PCI_MAPREG_MEM_TYPE_64BIT, 0,
 		&sc->mem_tag, &sc->mem_handle, NULL, &sc->mem_size)) {
-		aprint_error("%s: can't map mem space %d\n",
-		    sc->device.dv_xname, 0);
+		aprint_error_dev(&sc->device, "can't map mem space %d\n", 0);
 		return;
 	}
 

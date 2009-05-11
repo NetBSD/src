@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.4 2009/05/06 10:34:32 cegger Exp $ */
+/*	$NetBSD: alipm.c,v 1.5 2009/05/11 21:13:09 cegger Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.4 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.5 2009/05/11 21:13:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -251,7 +251,7 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	int retries, error = 0;
 
 	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
-	    "flags 0x%x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
+	    "flags 0x%x\n", device_xname(&sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
