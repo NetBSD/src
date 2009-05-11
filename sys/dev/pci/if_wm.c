@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.7 2009/05/03 17:58:41 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.8 2009/05/11 20:11:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.7 2009/05/03 17:58:41 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.8 2009/05/11 20:11:34 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -5286,7 +5286,6 @@ wm_check_mng_mode(struct wm_softc *sc)
 		break;
 	}
 
-	printf("XXXXXXXXXXXXX mng=%d ===============\n", rv);
 	return rv;
 }
 
@@ -5344,7 +5343,6 @@ wm_get_hw_control(struct wm_softc *sc)
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
-		printf("YYYYYYYYYYYYYY load drv YYYYYYYYYYYYYYY\n");
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_DRV_LOAD);
 		break;
