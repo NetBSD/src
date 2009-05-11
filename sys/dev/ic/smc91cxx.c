@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.73 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.74 2009/05/11 21:22:47 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.73 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.74 2009/05/11 21:22:47 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1052,7 +1052,7 @@ smc91cxx_intr(void *arg)
 			static int txsuc_count;
 			if (ppsratecheck(&txsuc_last, &txsuc_count, 1))
 				printf("%s: successful packet caused TX"
-				    " interrupt?!\n", sc->sc_dev.dv_xname);
+				    " interrupt?!\n", device_xname(&sc->sc_dev));
 		} else
 			ifp->if_oerrors++;
 
