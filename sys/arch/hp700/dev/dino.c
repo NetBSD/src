@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.11 2009/05/08 09:33:58 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.12 2009/05/11 06:10:30 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.11 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.12 2009/05/11 06:10:30 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -146,7 +146,7 @@ void dino_conf_write(void *, pcitag_t, int, pcireg_t);
 int dino_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dino_intr_string(void *, pci_intr_handle_t);
 void *dino_intr_establish(void *, pci_intr_handle_t, int,
-    int (*handler)(void *), void *);
+    int (*)(void *), void *);
 void dino_intr_disestablish(void *, void *);
 void *dino_alloc_parent(device_t, struct pci_attach_args *, int);
 int dino_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
