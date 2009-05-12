@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.15 2009/05/06 10:34:32 cegger Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.16 2009/05/12 08:23:01 cegger Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.15 2009/05/06 10:34:32 cegger Exp $
+ *	$Id: ifpci2.c,v 1.16 2009/05/12 08:23:01 cegger Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.15 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.16 2009/05/12 08:23:01 cegger Exp $");
 
 
 #include <sys/param.h>
@@ -245,7 +245,7 @@ ifpci2_match(device_t parent, cfdata_t match, void *aux)
 static void
 ifpci2_attach(device_t parent, device_t self, void *aux)
 {
-	struct ifpci_softc *psc = (void*)self;
+	struct ifpci_softc *psc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct isic_softc *sc = &psc->sc_isic;
 	struct isdn_l3_driver *drv;
@@ -358,7 +358,7 @@ ifpci2_attach(device_t parent, device_t self, void *aux)
 static int
 ifpci2_detach(device_t self, int flags)
 {
-	struct ifpci_softc *psc = (struct ifpci_softc *)self;
+	struct ifpci_softc *psc = device_private(self);
 
 	bus_space_unmap(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
 	bus_space_free(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
@@ -370,7 +370,7 @@ ifpci2_detach(device_t self, int flags)
 int
 ifpci2_activate(device_t self, enum devact act)
 {
-	struct ifpci_softc *psc = (struct ifpci_softc *)self;
+	struct ifpci_softc *psc = device_private(self);
 	int error = 0, s;
 
 	s = splnet();

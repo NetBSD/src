@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.41 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: mly.c,v 1.42 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.41 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.42 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ mly_attach(device_t parent, device_t self, void *aux)
 	struct scsipi_adapter *adapt;
 	struct scsipi_channel *chan;
 
-	mly = (struct mly_softc *)self;
+	mly = device_private(self);
 	pa = aux;
 	pc = pa->pa_pc;
 	ident = mly_find_ident(pa);
@@ -1805,7 +1805,7 @@ mly_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct mly_btl *btl;
 	int s, tmp;
 
-	mly = (void *)chan->chan_adapter->adapt_dev;
+	mly = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -2061,7 +2061,7 @@ mly_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, void *data,
 	struct mly_softc *mly;
 	int rv;
 
-	mly = (struct mly_softc *)chan->chan_adapter->adapt_dev;
+	mly = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (cmd) {
 	case SCBUSIOLLSCAN:

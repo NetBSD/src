@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.7 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.8 2009/05/12 08:23:00 cegger Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.7 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.8 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ ciss_pci_match(device_t parent, cfdata_t match, void *aux)
 void
 ciss_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ciss_softc *sc = (struct ciss_softc *)self;
+	struct ciss_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	bus_size_t size, cfgsz;
 	pci_intr_handle_t ih;

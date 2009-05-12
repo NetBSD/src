@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.25 2009/05/06 10:34:32 cegger Exp $ */
+/*	$NetBSD: if_dge.c,v 1.26 2009/05/12 08:23:00 cegger Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.25 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.26 2009/05/12 08:23:00 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -669,7 +669,7 @@ dge_match(device_t parent, cfdata_t cf, void *aux)
 static void
 dge_attach(device_t parent, device_t self, void *aux)
 {
-	struct dge_softc *sc = (void *) self;
+	struct dge_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -2399,7 +2399,7 @@ phwait(struct dge_softc *sc, int p, int r, int d, int type)
 static void
 dge_xgmii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct dge_softc *sc = (void *) self;
+	struct dge_softc *sc = device_private(self);
 	int mdic;
 
 	CSR_WRITE(sc, DGE_MDIRW, val);

@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.23 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: auacer.c,v 1.24 2009/05/12 08:22:59 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.23 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.24 2009/05/12 08:22:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int i;
 
-	sc = (struct auacer_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 	aprint_normal(": Acer Labs M5455 Audio controller\n");
 

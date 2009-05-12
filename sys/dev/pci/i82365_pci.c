@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.29 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.30 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.29 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.30 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,8 @@ void pcic_isa_config_interrupts(device_t);
 void
 pcic_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct pcic_softc *sc = (void *) self;
-	struct pcic_pci_softc *psc = (void *) self;
+	struct pcic_pci_softc *psc = device_private(self);
+	struct pcic_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t memt = pa->pa_memt;
@@ -214,7 +214,7 @@ pcic_pci_attach(device_t parent, device_t self, void *aux)
 static void
 pcic_pci_callback(device_t self)
 {
-	struct pcic_softc *sc = (void *) self;
+	struct pcic_softc *sc = device_private(self);
 
 	pcic_attach_sockets(sc);
 }

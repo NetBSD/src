@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.31 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.32 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.31 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.32 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,8 +187,8 @@ en_pci_match(device_t parent, cfdata_t match, void *aux)
 static void
 en_pci_attach(device_t parent, device_t self, void *aux)
 {
-  struct en_softc *sc = (void *)self;
-  struct en_pci_softc *scp = (void *)self;
+  struct en_pci_softc *scp = device_private(self);
+  struct en_softc *sc = &scp->esc;
   struct pci_attach_args *pa = aux;
   pci_intr_handle_t ih;
   const char *intrstr;

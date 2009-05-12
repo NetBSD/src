@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.89 2009/05/06 10:34:33 cegger Exp $	*/
+/*	$NetBSD: twe.c,v 1.90 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.89 2009/05/06 10:34:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.90 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 
-	sc = (struct twe_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 	pc = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;
@@ -909,7 +909,7 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	uint16_t aen;
 	int rv;
 
-	sc = (struct twe_softc *)ccb->ccb_tx.tx_dv;
+	sc = device_private(ccb->ccb_tx.tx_dv);
 	tp = ccb->ccb_tx.tx_context;
 	twe_ccb_unmap(sc, ccb);
 
