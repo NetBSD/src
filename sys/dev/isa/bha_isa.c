@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.32 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.33 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.32 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.33 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.32 2008/04/28 20:23:52 martin Exp $");
 
 #define	BHA_ISA_IOSIZE	4
 
-int	bha_isa_probe(struct device *, struct cfdata *, void *);
+int	bha_isa_probe(struct device *, cfdata_t, void *);
 void	bha_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(bha_isa, sizeof(struct bha_softc),
@@ -62,7 +62,7 @@ CFATTACH_DECL(bha_isa, sizeof(struct bha_softc),
  * the actual probe routine to check it out.
  */
 int
-bha_isa_probe(struct device *parent, struct cfdata *match,
+bha_isa_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

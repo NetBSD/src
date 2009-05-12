@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.62 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: ast.c,v 1.63 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.62 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.63 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ struct ast_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int astprobe(struct device *, struct cfdata *, void *);
+int astprobe(struct device *, cfdata_t, void *);
 void astattach(struct device *, struct device *, void *);
 int astintr(void *);
 
@@ -72,7 +72,7 @@ CFATTACH_DECL(ast, sizeof(struct ast_softc),
     astprobe, astattach, NULL, NULL);
 
 int
-astprobe(struct device *parent, struct cfdata *self,
+astprobe(struct device *parent, cfdata_t self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

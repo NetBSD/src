@@ -1,4 +1,4 @@
-/* $NetBSD: toasterlcd.c,v 1.8 2009/03/14 21:04:20 dsl Exp $ */
+/* $NetBSD: toasterlcd.c,v 1.9 2009/05/12 08:44:20 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.8 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.9 2009/05/12 08:44:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ struct toasterlcd_softc {
 	bus_space_handle_t sc_gpioh;
 };
 
-static int	toasterlcd_match(struct device *, struct cfdata *, void *);
+static int	toasterlcd_match(struct device *, cfdata_t, void *);
 static void	toasterlcd_attach(struct device *, struct device *, void *);
 
 static void	toasterlcd_writereg(struct hd44780_chip *, u_int32_t, u_int32_t, u_int8_t);
@@ -92,7 +92,7 @@ static const struct wsscreen_list toasterlcd_screenlist = {
 };
 
 static int
-toasterlcd_match(struct device *parent, struct cfdata *match, void *aux)
+toasterlcd_match(struct device *parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
