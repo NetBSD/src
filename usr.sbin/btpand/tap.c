@@ -1,4 +1,4 @@
-/*	$NetBSD: tap.c,v 1.4 2009/05/12 21:08:30 plunky Exp $	*/
+/*	$NetBSD: tap.c,v 1.5 2009/05/12 21:21:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tap.c,v 1.4 2009/05/12 21:08:30 plunky Exp $");
+__RCSID("$NetBSD: tap.c,v 1.5 2009/05/12 21:21:23 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: tap.c,v 1.4 2009/05/12 21:08:30 plunky Exp $");
 
 #include "btpand.h"
 
+static void tap_exit(void);
 static bool tap_send(channel_t *, packet_t *);
 static bool tap_recv(packet_t *);
 static void tap_down(channel_t *);
@@ -64,6 +65,8 @@ tap_init(void)
 		log_err("Could not get interface name: %m");
 		exit(EXIT_FAILURE);
 	}
+	interface_name = strndup(ifr.ifr_name, IFNAMSIZ);
+	atexit(tap_exit);
 
 	s = socket(PF_LINK, SOCK_DGRAM, 0);
 	if (s == -1) {
@@ -121,6 +124,35 @@ tap_init(void)
 
 	if (pidfile(ifr.ifr_name) == -1)
 		log_err("pidfile not made");
+}
+
+static void
+tap_exit(void)
+{
+	struct ifreq ifr;
+	int s;
+
+	s = socket(PF_LINK, SOCK_DGRAM, 0);
+	if (s == -1) {
+		log_err("Could not open PF_LINK socket: %m");
+		return;
+	}
+
+	strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+	if (ioctl(s, SIOCGIFFLAGS, &ifr) == -1) {
+		log_err("Could not get interface flags: %m");
+		return;
+	}
+
+	if ((ifr.ifr_flags & IFF_UP)) {
+		ifr.ifr_flags &= ~IFF_UP;
+		if (ioctl(s, SIOCSIFFLAGS, &ifr) == -1) {
+			log_err("Could not clear IFF_UP: %m");
+			return;
+		}
+	}
+
+	close(s);
 }
 
 static bool
