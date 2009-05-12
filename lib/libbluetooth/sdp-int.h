@@ -1,9 +1,7 @@
-/*	$NetBSD: log.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: sdp-int.h,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
 
 /*
- * log.h
- *
- * Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
+ * Copyright (c) 2001-2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,23 +24,33 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: log.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $
- * $FreeBSD: src/usr.sbin/bluetooth/sdpd/log.h,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifndef _SDP_INT_H_
+#define _SDP_INT_H_
 
-void	log_open	(char const *prog, int32_t log2stderr);
-void	log_close	(void);
-void	log_emerg	(char const *message, ...);
-void	log_alert	(char const *message, ...);
-void	log_crit	(char const *message, ...);
-void	log_err		(char const *message, ...);
-void	log_warning	(char const *message, ...);
-void	log_notice	(char const *message, ...);
-void	log_info	(char const *message, ...);
-void	log_debug	(char const *message, ...);
+struct sdp_session {
+	uint16_t	 tid;   /* current session transaction ID */
+	uint16_t	 imtu;  /* incoming MTU */
+	uint8_t		*ibuf;	/* incoming buffer */
+	uint8_t		*rbuf;	/* response buffer */
+	uint8_t		 cs[17];/* continuation state */
+	int32_t		 s;     /* L2CAP socket */
+};
 
-#endif /* ndef _LOG_H_ */
+/* sdp_session.c */
+sdp_session_t	_sdp_open(const bdaddr_t *, const bdaddr_t *);
+sdp_session_t	_sdp_open_local(const char *);
+void		_sdp_close(sdp_session_t);
+bool		_sdp_send_pdu(struct sdp_session *, uint8_t, struct iovec *, int);
+ssize_t		_sdp_recv_pdu(struct sdp_session *, uint8_t);
+int		_sdp_errno(uint16_t);
+
+/* sdp_data.c */
+bool		_sdp_data_print(const uint8_t *, const uint8_t *, int);
+
+/* sdp_service.c */
+bool		sdp_service_search_attribute(sdp_session_t, const sdp_data_t *,
+		    const sdp_data_t *, sdp_data_t *);
+
+#endif /* _SDP_INT_H_ */
