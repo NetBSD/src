@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isapnp.c,v 1.16 2009/05/12 10:07:55 cegger Exp $	*/
+/*	$NetBSD: aha_isapnp.c,v 1.17 2009/05/12 10:16:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.16 2009/05/12 10:07:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.17 2009/05/12 10:16:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,15 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.16 2009/05/12 10:07:55 cegger Exp $
 #include <dev/ic/ahareg.h>
 #include <dev/ic/ahavar.h>
 
-int	aha_isapnp_probe(struct device *, cfdata_t, void *);
-void	aha_isapnp_attach(struct device *, struct device *, void *);
+int	aha_isapnp_probe(device_t, cfdata_t, void *);
+void	aha_isapnp_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(aha_isapnp, sizeof(struct aha_softc),
     aha_isapnp_probe, aha_isapnp_attach, NULL, NULL);
 
 int
-aha_isapnp_probe(struct device *parent, cfdata_t match,
-    void *aux)
+aha_isapnp_probe(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
@@ -72,8 +71,7 @@ aha_isapnp_probe(struct device *parent, cfdata_t match,
 }
 
 void
-aha_isapnp_attach(struct device *parent, struct device *self, 
-    void *aux)
+aha_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct aha_softc *sc = device_private(self);
 	struct aha_probe_data apd;
