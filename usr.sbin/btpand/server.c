@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.3 2009/05/12 21:08:30 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.4 2009/05/12 21:50:38 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -26,9 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.3 2009/05/12 21:08:30 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.4 2009/05/12 21:50:38 plunky Exp $");
 
 #include <sys/ioctl.h>
+
+#include <net/ethertypes.h>
 
 #include <bluetooth.h>
 #include <errno.h>
@@ -41,13 +43,20 @@ __RCSID("$NetBSD: server.c,v 1.3 2009/05/12 21:08:30 plunky Exp $");
 static struct event	server_ev;
 static int		server_count;
 
-static void *		server_ss;
+static sdp_session_t	server_ss;
 static uint32_t		server_handle;
+static sdp_data_t	server_record;
+
+static char *		server_ipv4_subnet;
+static char *		server_ipv6_subnet;
+static uint16_t		server_proto[] = { ETHERTYPE_IP, ETHERTYPE_ARP, ETHERTYPE_IPV6 };
+static size_t		server_nproto = __arraycount(server_proto);
 
 static void server_open(void);
 static void server_read(int, short, void *);
 static void server_down(channel_t *);
 static void server_update(void);
+static void server_mkrecord(void);
 
 void
 server_init(void)
@@ -247,35 +256,114 @@ server_down(channel_t *chan)
 static void
 server_update(void)
 {
-	sdp_nap_profile_t p;
-	int rv;
+	bool rv;
 
-	if (service_name == NULL)
+	if (service_type == NULL)
 		return;
 
 	if (server_ss == NULL) {
 		server_ss = sdp_open_local(control_path);
-		if (server_ss == NULL || sdp_error(server_ss) != 0) {
+		if (server_ss == NULL) {
 			log_err("failed to contact SDP server");
 			return;
 		}
 	}
 
-	memset(&p, 0, sizeof(p));
-	p.psm = l2cap_psm;
-	p.load_factor = (UINT8_MAX - server_count * UINT8_MAX / server_limit);
-	p.security_description = (l2cap_mode == 0 ? 0x0000 : 0x0001);
+	server_mkrecord();
 
-	if (server_handle)
-		rv = sdp_change_service(server_ss, server_handle,
-		    (uint8_t *)&p, sizeof(p));
+	if (server_handle == 0)
+		rv = sdp_record_insert(server_ss, &local_bdaddr,
+		    &server_handle, &server_record);
 	else
-		rv = sdp_register_service(server_ss, service_class,
-		    &local_bdaddr, (uint8_t *)&p, sizeof(p), &server_handle);
+		rv = sdp_record_update(server_ss, server_handle,
+		    &server_record);
 
-	if (rv != 0) {
-		errno = sdp_error(server_ss);
-		log_err("%s: %m", service_name);
+	if (!rv) {
+		log_err("%s: %m", service_type);
 		exit(EXIT_FAILURE);
 	}
+}
+
+static void
+server_mkrecord(void)
+{
+	static uint8_t data[256];	/* tis enough */
+	sdp_data_t buf;
+	size_t i;
+
+	buf.next = data;
+	buf.end = data + sizeof(data);
+
+	sdp_put_uint16(&buf, SDP_ATTR_SERVICE_RECORD_HANDLE);
+	sdp_put_uint32(&buf, 0x00000000);
+
+	sdp_put_uint16(&buf, SDP_ATTR_SERVICE_CLASS_ID_LIST);
+	sdp_put_seq(&buf, 3);
+	sdp_put_uuid16(&buf, service_class);
+
+	sdp_put_uint16(&buf, SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST);
+	sdp_put_seq(&buf, 8 + 10 + 3 * server_nproto);
+	sdp_put_seq(&buf, 6);
+	sdp_put_uuid16(&buf, SDP_UUID_PROTOCOL_L2CAP);
+	sdp_put_uint16(&buf, l2cap_psm);
+	sdp_put_seq(&buf, 8 + 3 * server_nproto);
+	sdp_put_uuid16(&buf, SDP_UUID_PROTOCOL_BNEP);
+	sdp_put_uint16(&buf, 0x0100);	/* v1.0 */
+	sdp_put_seq(&buf, 3 * server_nproto);
+	for (i = 0; i < server_nproto; i++)
+		sdp_put_uint16(&buf, server_proto[i]);
+
+	sdp_put_uint16(&buf, SDP_ATTR_BROWSE_GROUP_LIST);
+	sdp_put_seq(&buf, 3);
+	sdp_put_uuid16(&buf, SDP_SERVICE_CLASS_PUBLIC_BROWSE_GROUP);
+
+	sdp_put_uint16(&buf, SDP_ATTR_LANGUAGE_BASE_ATTRIBUTE_ID_LIST);
+	sdp_put_seq(&buf, 9);
+	sdp_put_uint16(&buf, 0x656e);	/* "en" */
+	sdp_put_uint16(&buf, 106);	/* UTF-8 */
+	sdp_put_uint16(&buf, SDP_ATTR_PRIMARY_LANGUAGE_BASE_ID);
+
+	sdp_put_uint16(&buf, SDP_ATTR_SERVICE_AVAILABILITY);
+	sdp_put_uint8(&buf, (UINT8_MAX - server_count * UINT8_MAX / server_limit));
+
+	sdp_put_uint16(&buf, SDP_ATTR_BLUETOOTH_PROFILE_DESCRIPTOR_LIST);
+	sdp_put_seq(&buf, 8);
+	sdp_put_seq(&buf, 6);
+	sdp_put_uuid16(&buf, service_class);
+	sdp_put_uint16(&buf, 0x0100);	/* v1.0 */
+
+	sdp_put_uint16(&buf, SDP_ATTR_PRIMARY_LANGUAGE_BASE_ID
+	    + SDP_ATTR_SERVICE_NAME_OFFSET);
+	sdp_put_str(&buf, service_name, -1);
+
+	sdp_put_uint16(&buf, SDP_ATTR_PRIMARY_LANGUAGE_BASE_ID
+	    + SDP_ATTR_SERVICE_DESCRIPTION_OFFSET);
+	sdp_put_str(&buf, service_desc, -1);
+
+	sdp_put_uint16(&buf, SDP_ATTR_SECURITY_DESCRIPTION);
+	sdp_put_uint16(&buf, (l2cap_mode == 0) ? 0x0000 : 0x0001);
+
+	if (service_class == SDP_SERVICE_CLASS_NAP) {
+		sdp_put_uint16(&buf, SDP_ATTR_NET_ACCESS_TYPE);
+		sdp_put_uint16(&buf, 0x0004);	/* 10Mb Ethernet */
+
+		sdp_put_uint16(&buf, SDP_ATTR_MAX_NET_ACCESS_RATE);
+		sdp_put_uint32(&buf, 10000);	/* 10Mb/s (?) */
+	}
+
+	if (service_class == SDP_SERVICE_CLASS_NAP
+	    || service_class == SDP_SERVICE_CLASS_GN) {
+		if (server_ipv4_subnet) {
+			sdp_put_uint16(&buf, SDP_ATTR_IPV4_SUBNET);
+			sdp_put_str(&buf, server_ipv4_subnet, -1);
+		}
+
+		if (server_ipv6_subnet) {
+			sdp_put_uint16(&buf, SDP_ATTR_IPV6_SUBNET);
+			sdp_put_str(&buf, server_ipv6_subnet, -1);
+		}
+	}
+
+	server_record.next = data;
+	server_record.end = buf.next;
 }
