@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.70 2009/05/12 09:29:46 cegger Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.71 2009/05/12 09:50:28 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.70 2009/05/12 09:29:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.71 2009/05/12 09:50:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ static const char * const bat_hid[] = {
 #define ABAT_ALV_STAT		3	/* battery status is available */
 
 static int	acpibat_match(device_t, cfdata_t, void *);
-static void	acpibat_attach(device_t, struct device *, void *);
+static void	acpibat_attach(device_t, device_t, void *);
 static bool	acpibat_resume(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL_NEW(acpibat, sizeof(struct acpibat_softc),
