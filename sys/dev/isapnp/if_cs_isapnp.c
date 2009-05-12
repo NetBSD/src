@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.13 2009/03/14 21:04:20 dsl Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.14 2009/05/12 10:07:55 cegger Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.13 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.14 2009/05/12 10:07:55 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.13 2009/03/14 21:04:20 dsl Exp $"
 
 #define DEVNAME(sc) device_xname(&((sc)->sc_dev))
 
-int cs_isapnp_match(struct device *, struct cfdata *, void *);
+int cs_isapnp_match(struct device *, cfdata_t, void *);
 void cs_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cs_isapnp, sizeof(struct cs_softc),
     cs_isapnp_match, cs_isapnp_attach, NULL, NULL);
 
 int
-cs_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
+cs_isapnp_match(struct device *parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
