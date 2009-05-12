@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.106 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: i82365.c,v 1.107 2009/05/12 14:25:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.106 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.107 2009/05/12 14:25:17 cegger Exp $");
 
 #define	PCICDEBUG
 
@@ -241,7 +241,7 @@ pcic_attach(struct pcic_softc *sc)
 		chip = i / 2;
 		socket = i % 2;
 
-		h->ph_parent = (struct device *)sc;
+		h->ph_parent = (device_t)sc;
 		h->chip = chip;
 		h->socket = socket;
 		h->sock = chip * PCIC_CHIP_OFFSET + socket * PCIC_SOCKET_OFFSET;

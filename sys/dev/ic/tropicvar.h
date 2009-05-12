@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.12 2007/03/04 06:02:02 christos Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.13 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
  * Mach Operating System
@@ -113,5 +113,5 @@ void tr_sleep(struct tr_softc *);
 int tr_setspeed(struct tr_softc *, u_int8_t);
 int tr_enable(struct tr_softc *);
 void tr_disable(struct tr_softc *);
-int tr_activate(struct device *, enum devact);
-int tr_detach(struct device *, int flags);
+int tr_activate(device_t, enum devact);
+int tr_detach(device_t, int flags);

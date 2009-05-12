@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.19 2009/05/12 12:13:21 cegger Exp $ */
+/*	$NetBSD: mt.c,v 1.20 2009/05/12 14:21:58 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.19 2009/05/12 12:13:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.20 2009/05/12 14:21:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,8 +174,8 @@ struct	mt_softc {
 #define B_CMD		B_DEVPRIVATE	/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
-int	mtmatch(struct device *, cfdata_t, void *);
-void	mtattach(struct device *, struct device *, void *);
+int	mtmatch(device_t, cfdata_t, void *);
+void	mtattach(device_t, device_t, void *);
 
 CFATTACH_DECL(mt, sizeof(struct mt_softc),
 	mtmatch, mtattach, NULL, NULL);
@@ -237,7 +237,7 @@ mtlookup(int id, int slave, int punit)
 }
 
 int
-mtmatch(struct device *parent, cfdata_t match, void *aux)
+mtmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 
@@ -246,7 +246,7 @@ mtmatch(struct device *parent, cfdata_t match, void *aux)
 }
 
 void
-mtattach(struct device *parent, struct device *self, void *aux)
+mtattach(device_t parent, device_t self, void *aux)
 {
 	struct mt_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.41 2009/05/12 12:14:18 cegger Exp $	*/
+/*	$NetBSD: dpti.c,v 1.42 2009/05/12 14:23:47 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.41 2009/05/12 12:14:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.42 2009/05/12 14:23:47 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,10 +128,10 @@ static struct dpt_sig dpti_sig = {
 	""		/* Will be filled later */
 };
 
-void	dpti_attach(struct device *, struct device *, void *);
+void	dpti_attach(device_t, device_t, void *);
 int	dpti_blinkled(struct dpti_softc *);
 int	dpti_ctlrinfo(struct dpti_softc *, int, void *);
-int	dpti_match(struct device *, cfdata_t, void *);
+int	dpti_match(device_t, cfdata_t, void *);
 int	dpti_passthrough(struct dpti_softc *, void *, struct proc *);
 int	dpti_sysinfo(struct dpti_softc *, int, void *);
 
@@ -149,7 +149,7 @@ CFATTACH_DECL(dpti, sizeof(struct dpti_softc),
     dpti_match, dpti_attach, NULL, NULL);
 
 int
-dpti_match(struct device *parent, cfdata_t match, void *aux)
+dpti_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct iop_attach_args *ia;
 	struct iop_softc *iop;
@@ -167,7 +167,7 @@ dpti_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 void
-dpti_attach(struct device *parent, struct device *self, void *aux)
+dpti_attach(device_t parent, device_t self, void *aux)
 {
 	struct iop_softc *iop;
 	struct dpti_softc *sc;

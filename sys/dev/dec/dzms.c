@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.20 2009/05/12 12:11:54 cegger Exp $	*/
+/*	$NetBSD: dzms.c,v 1.21 2009/05/12 14:18:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.20 2009/05/12 12:11:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.21 2009/05/12 14:18:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,11 +79,11 @@ struct dzms_softc {		/* driver status information */
 	u_int buttons;
 	int dx, dy;
 
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 };
 
-static int  dzms_match(struct device *, cfdata_t, void *);
-static void dzms_attach(struct device *, struct device *, void *);
+static int  dzms_match(device_t, cfdata_t, void *);
+static void dzms_attach(device_t, device_t, void *);
 static int dzms_input(void *, int);
 
 CFATTACH_DECL(dzms, sizeof(struct dzms_softc),
@@ -100,7 +100,7 @@ const struct wsmouse_accessops dzms_accessops = {
 };
 
 static int
-dzms_match(struct device *parent, cfdata_t cf, void *aux)
+dzms_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct dzkm_attach_args *daa = aux;
 
@@ -116,7 +116,7 @@ dzms_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 static void
-dzms_attach(struct device *parent, struct device *self, void *aux)
+dzms_attach(device_t parent, device_t self, void *aux)
 {
 	struct dz_softc *dz = device_private(parent);
 	struct dzms_softc *dzms = device_private(self);

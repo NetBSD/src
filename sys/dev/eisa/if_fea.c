@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.40 2009/05/12 12:12:52 cegger Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.41 2009/05/12 14:21:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.40 2009/05/12 12:12:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.41 2009/05/12 14:21:32 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -332,7 +332,7 @@ pdq_eisa_shutdown(
 #if defined(__bsdi__)
 static int
 pdq_eisa_probe(
-    struct device *parent,
+    device_t parent,
     cfdata_t cf,
     void *aux)
 {
@@ -389,8 +389,8 @@ pdq_eisa_probe(
 
 static void
 pdq_eisa_attach(
-    struct device *parent,
-    struct device *self,
+    device_t parent,
+    device_t self,
     void *aux)
 {
     pdq_softc_t *sc = (pdq_softc_t *) self;
@@ -444,7 +444,7 @@ struct cfdriver feacd = {
 #if defined(__NetBSD__)
 static int
 pdq_eisa_match(
-    struct device *parent,
+    device_t parent,
     cfdata_t match,
     void *aux)
 {
@@ -458,8 +458,8 @@ pdq_eisa_match(
 
 static void
 pdq_eisa_attach(
-    struct device *parent,
-    struct device *self,
+    device_t parent,
+    device_t self,
     void *aux)
 {
     pdq_softc_t * const sc = device_private(self);

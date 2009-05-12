@@ -1,7 +1,7 @@
-/* $NetBSD: acpipmtimer.c,v 1.6 2008/04/08 12:07:25 cegger Exp $ */
+/* $NetBSD: acpipmtimer.c,v 1.7 2009/05/12 14:25:17 cegger Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.6 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.7 2009/05/12 14:25:17 cegger Exp $");
 
 #include <sys/types.h>
 
@@ -27,7 +27,7 @@ static u_int acpihwtimer_read_safe(struct timecounter *);
 static u_int acpihwtimer_read_fast(struct timecounter *);
 
 int
-acpipmtimer_attach(struct device *dev,
+acpipmtimer_attach(device_t dev,
 		   bus_space_tag_t t, bus_space_handle_t h, bus_size_t off,
 		   int flags)
 {

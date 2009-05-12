@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.34 2009/05/12 12:14:18 cegger Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.35 2009/05/12 14:23:47 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.34 2009/05/12 12:14:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.35 2009/05/12 14:23:47 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,14 +62,14 @@ __KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.34 2009/05/12 12:14:18 cegger Exp $");
 #include <dev/i2o/iopvar.h>
 #include <dev/i2o/iopspvar.h>
 
-static void	iopsp_adjqparam(struct device *, int);
-static void	iopsp_attach(struct device *, struct device *, void *);
-static void	iopsp_intr(struct device *, struct iop_msg *, void *);
+static void	iopsp_adjqparam(device_t, int);
+static void	iopsp_attach(device_t, device_t, void *);
+static void	iopsp_intr(device_t, struct iop_msg *, void *);
 static int	iopsp_ioctl(struct scsipi_channel *, u_long,
 			    void *, int, struct proc *);
-static int	iopsp_match(struct device *, cfdata_t, void *);
+static int	iopsp_match(device_t, cfdata_t, void *);
 static int	iopsp_rescan(struct iopsp_softc *);
-static int	iopsp_reconfig(struct device *);
+static int	iopsp_reconfig(device_t);
 static void	iopsp_scsipi_request(struct scsipi_channel *,
 				     scsipi_adapter_req_t, void *);
 
@@ -80,7 +80,7 @@ CFATTACH_DECL(iopsp, sizeof(struct iopsp_softc),
  * Match a supported device.
  */
 static int
-iopsp_match(struct device *parent, cfdata_t match, void *aux)
+iopsp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct iop_attach_args *ia;
 	struct {
@@ -106,7 +106,7 @@ iopsp_match(struct device *parent, cfdata_t match, void *aux)
  * Attach a supported device.
  */
 static void
-iopsp_attach(struct device *parent, struct device *self, void *aux)
+iopsp_attach(device_t parent, device_t self, void *aux)
 {
 	struct iop_attach_args *ia;
 	struct iopsp_softc *sc;
@@ -209,7 +209,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
  * the maps.
  */
 static int
-iopsp_reconfig(struct device *dv)
+iopsp_reconfig(device_t dv)
 {
 	struct iopsp_softc *sc;
 	struct iop_softc *iop;
@@ -526,7 +526,7 @@ iopsp_scsi_abort(struct iopsp_softc *sc, int atid, struct iop_msg *aim)
  * deal with it.
  */
 static void
-iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
+iopsp_intr(device_t dv, struct iop_msg *im, void *reply)
 {
 	struct scsipi_xfer *xs;
 	struct iopsp_softc *sc;
@@ -634,7 +634,7 @@ iopsp_ioctl(struct scsipi_channel *chan, u_long cmd, void *data,
  * The number of openings available to us has changed, so inform scsipi.
  */
 static void
-iopsp_adjqparam(struct device *dv, int mpi)
+iopsp_adjqparam(device_t dv, int mpi)
 {
 	struct iopsp_softc *sc;
 	struct iop_softc *iop;

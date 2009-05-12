@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.9 2009/02/12 06:24:45 rumble Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.10 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -122,7 +122,7 @@ struct wd33c93_softc {
 
 	struct scsipi_channel sc_channel; /* proto for sub devices */
 	struct scsipi_adapter sc_adapter;
-	struct device *sc_child;	/* attached scsibus, if any */
+	device_t sc_child;	/* attached scsibus, if any */
 	struct callout sc_watchdog;
 	void	*sc_driver;		/* driver specific field */
 

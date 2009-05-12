@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.95 2008/06/11 16:09:16 drochner Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.96 2009/05/12 14:25:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.95 2008/06/11 16:09:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.96 2009/05/12 14:25:17 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -297,7 +297,7 @@ aicattach(struct aic_softc *sc)
 }
 
 int
-aic_activate(struct device *self, enum devact act)
+aic_activate(device_t self, enum devact act)
 {
 	struct aic_softc *sc = (struct aic_softc *) self;
 	int s, rv = 0;
@@ -319,7 +319,7 @@ aic_activate(struct device *self, enum devact act)
 }
 
 int
-aic_detach(struct device *self, int flags)
+aic_detach(device_t self, int flags)
 {
 	struct aic_softc *sc = (struct aic_softc *) self;
 	int rv = 0;

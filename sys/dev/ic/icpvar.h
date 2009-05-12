@@ -1,4 +1,4 @@
-/*	$NetBSD: icpvar.h,v 1.11 2009/01/29 12:13:30 bouyer Exp $	*/
+/*	$NetBSD: icpvar.h,v 1.12 2009/05/12 14:25:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct icp_cachedrv {
  * icpsp for raw service).
  */
 struct icp_servicecb {
-	void	(*iscb_openings)(struct device *, int);
+	void	(*iscb_openings)(device_t, int);
 };
 
 /*

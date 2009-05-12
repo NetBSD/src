@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.22 2009/05/12 12:11:54 cegger Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.23 2009/05/12 14:18:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.22 2009/05/12 12:11:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.23 2009/05/12 14:18:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,13 +86,13 @@ struct dzkbd_softc {
 	int sc_enabled;
 	int kbd_type;
 
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 };
 
 static int	dzkbd_input(void *, int);
 
-static int	dzkbd_match(struct device *, cfdata_t, void *);
-static void	dzkbd_attach(struct device *, struct device *, void *);
+static int	dzkbd_match(device_t, cfdata_t, void *);
+static void	dzkbd_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(dzkbd, sizeof(struct dzkbd_softc),
     dzkbd_match, dzkbd_attach, NULL, NULL);
@@ -130,7 +130,7 @@ const struct wskbd_mapdata dzkbd_keymapdata = {
  * kbd_match: how is this dz line configured?
  */
 static int
-dzkbd_match(struct device *parent, cfdata_t cf, void *aux)
+dzkbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct dzkm_attach_args *daa = aux;
 
@@ -146,7 +146,7 @@ dzkbd_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 static void
-dzkbd_attach(struct device *parent, struct device *self, void *aux)
+dzkbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct dz_softc *dz = device_private(parent);
 	struct dzkbd_softc *dzkbd = device_private(self);

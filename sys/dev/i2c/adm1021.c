@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.1 2008/10/29 17:26:56 jkunz Exp $ */
+/*	$NetBSD: adm1021.c,v 1.2 2009/05/12 14:23:33 cegger Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.1 2008/10/29 17:26:56 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.2 2009/05/12 14:23:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ struct admtemp_softc {
 	envsys_data_t sc_sensor[ADMTEMP_NUM_SENSORS];
 };
 
-int	admtemp_match(struct device *, cfdata_t, void *);
-void	admtemp_attach(struct device *, struct device *, void *);
+int	admtemp_match(device_t, cfdata_t, void *);
+void	admtemp_attach(device_t, device_t, void *);
 void	admtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL_NEW(admtemp, sizeof(struct admtemp_softc),
@@ -64,7 +64,7 @@ CFATTACH_DECL_NEW(admtemp, sizeof(struct admtemp_softc),
 
 
 int
-admtemp_match(struct device *parent, cfdata_t match, void *aux)
+admtemp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
@@ -78,7 +78,7 @@ admtemp_match(struct device *parent, cfdata_t match, void *aux)
 
 
 void
-admtemp_attach(struct device *parent, struct device *self, void *aux)
+admtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct admtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.14 2009/05/12 12:13:49 cegger Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.15 2009/05/12 14:22:39 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.14 2009/05/12 12:13:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.15 2009/05/12 14:22:39 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.14 2009/05/12 12:13:49 cegger Exp $");
 
 #include "locators.h"
 
-int	hpcout_match(struct device *, cfdata_t, void *);
-void	hpcout_attach(struct device *, struct device *, void *);
+int	hpcout_match(device_t, cfdata_t, void *);
+void	hpcout_attach(device_t, device_t, void *);
 int	hpcout_hook(void *, int, long, void *);
 
 struct hpcout_softc {
@@ -66,13 +66,13 @@ CFATTACH_DECL(hpcout, sizeof(struct hpcout_softc),
     hpcout_match, hpcout_attach, NULL, NULL);
 
 int
-hpcout_match(struct device *parent, cfdata_t cf, void *aux)
+hpcout_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 void
-hpcout_attach(struct device *parent, struct device *self, void *aux)
+hpcout_attach(device_t parent, device_t self, void *aux)
 {
 	struct hpcioman_attach_args *hma = aux;
 	struct hpcout_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.77 2009/05/06 20:40:19 jdc Exp $	*/
+/*	$NetBSD: hme.c,v 1.78 2009/05/12 14:25:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.77 2009/05/06 20:40:19 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.78 2009/05/12 14:25:17 cegger Exp $");
 
 /* #define HMEDEBUG */
 
@@ -99,9 +99,9 @@ void		hme_reset(struct hme_softc *);
 void		hme_setladrf(struct hme_softc *);
 
 /* MII methods & callbacks */
-static int	hme_mii_readreg(struct device *, int, int);
-static void	hme_mii_writereg(struct device *, int, int, int);
-static void	hme_mii_statchg(struct device *);
+static int	hme_mii_readreg(device_t, int, int);
+static void	hme_mii_writereg(device_t, int, int, int);
+static void	hme_mii_statchg(device_t);
 
 int		hme_mediachange(struct ifnet *);
 
@@ -1207,7 +1207,7 @@ hme_mifinit(struct hme_softc *sc)
  * MII interface
  */
 static int
-hme_mii_readreg(struct device *self, int phy, int reg)
+hme_mii_readreg(device_t self, int phy, int reg)
 {
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1278,7 +1278,7 @@ out:
 }
 
 static void
-hme_mii_writereg(struct device *self, int phy, int reg, int val)
+hme_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1345,7 +1345,7 @@ out:
 }
 
 static void
-hme_mii_statchg(struct device *dev)
+hme_mii_statchg(device_t dev)
 {
 	struct hme_softc *sc = (void *)dev;
 	bus_space_tag_t t = sc->sc_bustag;

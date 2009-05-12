@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.25 2009/05/12 12:13:21 cegger Exp $ */
+/*	$NetBSD: rd.c,v 1.26 2009/05/12 14:21:58 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.25 2009/05/12 12:13:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.26 2009/05/12 14:21:58 cegger Exp $");
 
 #include "rnd.h"
 
@@ -283,8 +283,8 @@ void	rdstart(struct rd_softc *);
 void	rdintr(struct rd_softc *);
 int	rderror(struct rd_softc *);
 
-int	rdmatch(struct device *, cfdata_t, void *);
-void	rdattach(struct device *, struct device *, void *);
+int	rdmatch(device_t, cfdata_t, void *);
+void	rdattach(device_t, device_t, void *);
 
 CFATTACH_DECL(rd, sizeof(struct rd_softc),
 	rdmatch, rdattach, NULL, NULL);
@@ -325,7 +325,7 @@ rdlookup(int id, int slave, int punit)
 }
 
 int
-rdmatch(struct device *parent, cfdata_t match, void *aux)
+rdmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 
@@ -335,7 +335,7 @@ rdmatch(struct device *parent, cfdata_t match, void *aux)
 }
 
 void
-rdattach(struct device *parent, struct device *self, void *aux)
+rdattach(device_t parent, device_t self, void *aux)
 {
 	struct rd_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;

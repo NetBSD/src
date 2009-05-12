@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.13 2009/05/12 12:13:21 cegger Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.14 2009/05/12 14:21:58 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.13 2009/05/12 12:13:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.14 2009/05/12 14:21:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +57,14 @@ int cs80busdebug = 0xff;
 #define	cs80buscf_slave		cf_loc[CS80BUSCF_SLAVE]
 #define	cs80buscf_punit		cf_loc[CS80BUSCF_PUNIT]
 
-int	cs80busmatch(struct device *, cfdata_t, void *);
-void	cs80busattach(struct device *, struct device *, void *);
+int	cs80busmatch(device_t, cfdata_t, void *);
+void	cs80busattach(device_t, device_t, void *);
 
 CFATTACH_DECL(cs80bus, sizeof(struct cs80bus_softc),
 	cs80busmatch, cs80busattach, NULL, NULL);
 
 static int	cs80bus_alloc(struct cs80bus_softc *, int, int);
-static int	cs80bussearch(struct device *, cfdata_t,
+static int	cs80bussearch(device_t, cfdata_t,
 			      const int *, void *);
 static int	cs80busprint(void *, const char *);
 
@@ -91,14 +91,14 @@ static int	cs80busprint(void *, const char *);
  */
 
 int
-cs80busmatch(struct device *parent, cfdata_t match, void *aux)
+cs80busmatch(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 void
-cs80busattach(struct device *parent, struct device *self, void *aux)
+cs80busattach(device_t parent, device_t self, void *aux)
 {
 	struct cs80bus_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;
@@ -135,7 +135,7 @@ cs80busattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-cs80bussearch(struct device *parent, cfdata_t cf, const int *ldesc, void *aux)
+cs80bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct cs80bus_softc *sc = (struct cs80bus_softc *)parent;
 	struct cs80bus_attach_args *ca = aux;

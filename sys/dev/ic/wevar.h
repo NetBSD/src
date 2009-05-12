@@ -1,4 +1,4 @@
-/*	$NetBSD: wevar.h,v 1.4 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: wevar.h,v 1.5 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -33,4 +33,4 @@ struct we_softc {
 	void *sc_ih;			/* interrupt handle */
 };
 
-int we_config(struct device *self, struct we_softc *, const char *);
+int we_config(device_t self, struct we_softc *, const char *);

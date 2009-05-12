@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.24 2009/04/21 01:15:37 rafal Exp $ */
+/* $NetBSD: drm_drv.c,v 1.25 2009/05/12 14:20:28 cegger Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.24 2009/04/21 01:15:37 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.25 2009/05/12 14:20:28 cegger Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -141,7 +141,7 @@ drm_device_t *drm_units[DRM_MAXUNITS];
 static int init_units = 1;
 
 int drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist);
-void drm_attach(struct device *kdev, struct pci_attach_args *pa,
+void drm_attach(device_t kdev, struct pci_attach_args *pa,
                 drm_pci_id_list_t *idlist);
 
 int drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
@@ -163,7 +163,7 @@ int drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 	return 0;
 }
 
-void drm_attach(struct device *kdev, struct pci_attach_args *pa,
+void drm_attach(device_t kdev, struct pci_attach_args *pa,
                 drm_pci_id_list_t *idlist)
 {
 	int unit;
@@ -256,7 +256,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	drm_load(dev);
 }
 
-int drm_detach(struct device *self, int flags)
+int drm_detach(device_t self, int flags)
 {
 	drm_device_t *dev = device_private(self);
 
@@ -268,7 +268,7 @@ int drm_detach(struct device *self, int flags)
 	return 0;
 }
 
-int drm_activate(struct device *self, enum devact act)
+int drm_activate(device_t self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:
