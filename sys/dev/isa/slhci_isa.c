@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_isa.c,v 1.10 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: slhci_isa.c,v 1.11 2009/05/12 09:10:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 Kiyoshi Ikehara. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.10 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.11 2009/05/12 09:10:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,15 +59,14 @@ struct slhci_isa_softc {
 	void	*sc_ih;
 };
 
-static int  slhci_isa_match(struct device *, cfdata_t, void *);
-static void slhci_isa_attach(struct device *, struct device *, void *);
+static int  slhci_isa_match(device_t, cfdata_t, void *);
+static void slhci_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(slhci_isa, sizeof(struct slhci_isa_softc),
     slhci_isa_match, slhci_isa_attach, NULL, slhci_activate);
 
 static int
-slhci_isa_match(struct device *parent, cfdata_t cf,
-    void *aux)
+slhci_isa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -90,7 +89,7 @@ slhci_isa_match(struct device *parent, cfdata_t cf,
 }
 
 static void
-slhci_isa_attach(struct device *parent, struct device *self, void *aux)
+slhci_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct slhci_isa_softc *isc = device_private(self);
 	struct slhci_softc *sc = &isc->sc;

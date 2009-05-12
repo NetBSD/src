@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.21 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.22 2009/05/12 09:10:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.21 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.22 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.21 2009/05/12 08:44:19 cegger Exp $"
 
 #include <dev/isa/isavar.h>
 
-int	sm_isa_match(struct device *, cfdata_t, void *);
-void	sm_isa_attach(struct device *, struct device *, void *);
+int	sm_isa_match(device_t, cfdata_t, void *);
+void	sm_isa_attach(device_t, device_t, void *);
 
 struct sm_isa_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
@@ -73,8 +73,7 @@ CFATTACH_DECL(sm_isa, sizeof(struct sm_isa_softc),
     sm_isa_match, sm_isa_attach, NULL, NULL);
 
 int
-sm_isa_match(struct device *parent, cfdata_t match,
-    void *aux)
+sm_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -152,7 +151,7 @@ sm_isa_match(struct device *parent, cfdata_t match,
 }
 
 void
-sm_isa_attach(struct device *parent, struct device *self, void *aux)
+sm_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct sm_isa_softc *isc = (struct sm_isa_softc *)self;
 	struct smc91cxx_softc *sc = &isc->sc_smc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.19 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.20 2009/05/12 09:10:15 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.19 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.20 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.19 2009/05/12 08:44:19 cegger Exp $");
 #define	DPT_ISA_IOSIZE		16
 #define DPT_ISA_MAXCCBS		16
 
-static void	dpt_isa_attach(struct device *, struct device *, void *);
-static int	dpt_isa_match(struct device *, cfdata_t, void *);
+static void	dpt_isa_attach(device_t, device_t, void *);
+static int	dpt_isa_match(device_t, cfdata_t, void *);
 static int	dpt_isa_probe(struct isa_attach_args *, int);
 static int	dpt_isa_wait(bus_space_handle_t, bus_space_tag_t, u_int8_t,
 			     u_int8_t);
@@ -93,8 +93,7 @@ dpt_isa_wait(bus_space_handle_t ioh, bus_space_tag_t iot, u_int8_t mask,
  * Match a supported board.
  */
 static int
-dpt_isa_match(struct device *parent, cfdata_t match,
-    void *aux)
+dpt_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int i;
@@ -253,7 +252,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
  * Attach a matched board.
  */
 static void
-dpt_isa_attach(struct device *parent, struct device *self, void *aux)
+dpt_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia;
 	isa_chipset_tag_t ic;

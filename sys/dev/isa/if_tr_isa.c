@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.22 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.23 2009/05/12 09:10:15 cegger Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.22 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.23 2009/05/12 09:10:15 cegger Exp $");
 
 #undef TRISADEBUG
 
@@ -55,10 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.22 2009/05/12 08:44:19 cegger Exp $"
 #include <dev/ic/tropicvar.h>
 
 
-int	tr_isa_probe(struct device *, cfdata_t, void *);
-int	trtcm_isa_probe(struct device *, cfdata_t, void *);
-int	tribm_isa_probe(struct device *, cfdata_t, void *);
-void	tr_isa_attach(struct device *, struct device *, void *);
+int	tr_isa_probe(device_t, cfdata_t, void *);
+int	trtcm_isa_probe(device_t, cfdata_t, void *);
+int	tribm_isa_probe(device_t, cfdata_t, void *);
+void	tr_isa_attach(device_t, device_t, void *);
 int	tr_isa_map_io(struct isa_attach_args *, bus_space_handle_t *,
 	    bus_space_handle_t *);
 void	tr_isa_unmap_io(struct isa_attach_args *, bus_space_handle_t,
@@ -72,7 +72,7 @@ void	tr_isa_dumpaip(bus_space_tag_t, bus_space_handle_t);
 /*
  * List of manufacturer specific probe routines.  Order is important.
  */
-int	(*tr_isa_probe_list[])(struct device *, cfdata_t, void *) = {
+int	(*tr_isa_probe_list[])(device_t, cfdata_t, void *) = {
 		trtcm_isa_probe,
 		tribm_isa_probe,
 		0
@@ -128,7 +128,7 @@ static u_char tr_isa_id[] = {
  */
 
 int
-tr_isa_probe(struct device *parent, cfdata_t match, void *aux)
+tr_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int	i;
@@ -192,7 +192,7 @@ tr_isa_probe(struct device *parent, cfdata_t match, void *aux)
 int trtcm_setspeed(struct tr_softc *, int);
 
 void
-tr_isa_attach(struct device *parent, struct device *self, void	*aux)
+tr_isa_attach(device_t parent, device_t self, void	*aux)
 {
 	struct tr_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.17 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.18 2009/05/12 09:10:15 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.17 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.18 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,8 @@ static int asc_ioport[ASC_IOADR_TABLE_MAX_IX] =
 
 /******************************************************************************/
 
-int	adv_isa_probe(struct device *, cfdata_t, void *);
-void	adv_isa_attach(struct device *, struct device *, void *);
+int	adv_isa_probe(device_t, cfdata_t, void *);
+void	adv_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(adv_isa, sizeof(ASC_SOFTC),
     adv_isa_probe, adv_isa_attach, NULL, NULL);
@@ -103,8 +103,7 @@ CFATTACH_DECL(adv_isa, sizeof(ASC_SOFTC),
 /******************************************************************************/
 
 int
-adv_isa_probe( struct device *parent, cfdata_t match,
-    void *aux)
+adv_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -200,7 +199,7 @@ adv_isa_probe( struct device *parent, cfdata_t match,
 
 
 void
-adv_isa_attach(struct device *parent, struct device *self, void *aux)
+adv_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	ASC_SOFTC *sc = (void *) self;

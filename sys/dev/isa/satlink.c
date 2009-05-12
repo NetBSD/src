@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.41 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: satlink.c,v 1.42 2009/05/12 09:10:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.41 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.42 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,8 @@ struct satlink_softc {
  */
 #define	SATLINK_TIMEOUT		(hz/10)
 
-int	satlinkprobe(struct device *, cfdata_t, void *);
-void	satlinkattach(struct device *, struct device *, void *);
+int	satlinkprobe(device_t, cfdata_t, void *);
+void	satlinkattach(device_t, device_t, void *);
 void	satlinktimeout(void *);
 
 CFATTACH_DECL(satlink, sizeof(struct satlink_softc),
@@ -115,8 +115,7 @@ const struct cdevsw satlink_cdevsw = {
 };
 
 int
-satlinkprobe(struct device *parent, cfdata_t match,
-    void *aux)
+satlinkprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -159,7 +158,7 @@ satlinkprobe(struct device *parent, cfdata_t match,
 }
 
 void
-satlinkattach(struct device *parent, struct device *self, void *aux)
+satlinkattach(device_t parent, device_t self, void *aux)
 {
 	struct satlink_softc *sc = (struct satlink_softc *)self;
 	struct isa_attach_args *ia = aux;

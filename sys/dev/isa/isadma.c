@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.60 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: isadma.c,v 1.61 2009/05/12 09:10:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.60 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.61 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ _isa_dmamask(struct isa_dma_state *ids, int chan)
  * _isa_dmainit(): Initialize the isa_dma_state for this chipset.
  */
 void
-_isa_dmainit(struct isa_dma_state *ids, bus_space_tag_t bst, bus_dma_tag_t dmat, struct device *dev)
+_isa_dmainit(struct isa_dma_state *ids, bus_space_tag_t bst, bus_dma_tag_t dmat, device_t dev)
 {
 	int chan;
 
