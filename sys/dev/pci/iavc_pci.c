@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.10 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.11 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.10 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.11 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,8 +121,8 @@ iavc_pci_probe(device_t parent, cfdata_t match, void *aux)
 static void
 iavc_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct iavc_pci_softc *psc = (void *) self;
-	struct iavc_softc *sc = (void *) self;
+	struct iavc_pci_softc *psc = device_private(self);
+	struct iavc_softc *sc = &psc->sc_iavc;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const struct iavc_pci_product *pp;
@@ -332,7 +332,7 @@ iavc_pci_intr(void *arg)
 static int
 iavc_pci_detach(device_t self, int flags)
 {
-	struct iavc_pci_softc *psc = (void *) self;
+	struct iavc_pci_softc *psc = device_private(self);
 
 	bus_space_unmap(psc->sc_iavc.sc_mem_bt, psc->sc_iavc.sc_mem_bh,
 	    psc->mem_size);
@@ -353,7 +353,7 @@ iavc_pci_detach(device_t self, int flags)
 static int
 iavc_pci_activate(device_t self, enum devact act)
 {
-	struct iavc_softc *psc = (struct iavc_softc *) self;
+	struct iavc_softc *psc = device_private(self);
 	int error, s;
 
 	error = 0;

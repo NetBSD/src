@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.5 2009/05/11 21:13:09 cegger Exp $ */
+/*	$NetBSD: alipm.c,v 1.6 2009/05/12 08:22:59 cegger Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.5 2009/05/11 21:13:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.6 2009/05/12 08:22:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,7 +132,7 @@ alipm_match(device_t parent, cfdata_t match, void *aux)
 static void
 alipm_attach(device_t parent, device_t self, void *aux)
 {
-	struct alipm_softc *sc = (struct alipm_softc *) self;
+	struct alipm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
 	pcireg_t iobase, reg;

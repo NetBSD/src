@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.14 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.15 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.14 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.15 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -225,7 +225,7 @@ iwic_pci_probe(device_t  dev,
 static void
 iwic_pci_attach(device_t  parent, device_t  dev, void *aux)
 {
-	struct iwic_softc *sc = (void *) dev;
+	struct iwic_softc *sc = device_private(dev);
 	struct iwic_bchan *bchan;
 	pci_intr_handle_t ih;
 	const char *intrstr;

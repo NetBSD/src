@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.18 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.19 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.18 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.19 2009/05/12 08:23:01 cegger Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -125,7 +125,7 @@ mpt_pci_match(device_t parent, cfdata_t cf, void *aux)
 static void
 mpt_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct mpt_pci_softc *psc = (void *) self;
+	struct mpt_pci_softc *psc = device_private(self);
 	mpt_softc_t *mpt = &psc->sc_mpt;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;

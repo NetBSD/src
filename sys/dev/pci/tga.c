@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.74 2009/05/06 10:34:33 cegger Exp $ */
+/* $NetBSD: tga.c,v 1.75 2009/05/12 08:23:01 cegger Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.74 2009/05/06 10:34:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.75 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ void
 tgaattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct tga_softc *sc = (struct tga_softc *)self;
+	struct tga_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args aa;
 	pci_intr_handle_t intrh;
 	const char *intrstr;

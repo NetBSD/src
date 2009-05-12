@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.56 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.57 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.56 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.57 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -407,7 +407,7 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 
-	sc = (struct emuxki_softc *) self;
+	sc = device_private(self);
 	pa = aux;
 	aprint_naive(": Audio controller\n");
 
@@ -484,7 +484,7 @@ emuxki_detach(device_t self, int flags)
 {
 	struct emuxki_softc *sc;
 
-	sc = (struct emuxki_softc *)self;
+	sc = device_private(self);
 	if (sc->sc_audev != NULL) /* Test in case audio didn't attach */
 		config_detach(sc->sc_audev, 0);
 
@@ -2331,7 +2331,7 @@ emuxki_round_blocksize(void *addr, int blksize,
 	if (sc == NULL)
 		return blksize;
 
-	au = (void *)sc->sc_audev;
+	au = device_private(sc->sc_audev);
 	if (au == NULL)
 		return blksize;
 

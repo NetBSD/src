@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.46 2009/05/06 10:34:32 cegger Exp $ */
+/* $NetBSD: if_vge.c,v 1.47 2009/05/12 08:23:01 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.46 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.47 2009/05/12 08:23:01 cegger Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -523,7 +523,7 @@ vge_miibus_readreg(device_t dev, int phy, int reg)
 	int i, s;
 	uint16_t rval;
 
-	sc = (void *)dev;
+	sc = device_private(dev);
 	rval = 0;
 	if (phy != (CSR_READ_1(sc, VGE_MIICFG) & 0x1F))
 		return 0;
@@ -561,7 +561,7 @@ vge_miibus_writereg(device_t dev, int phy, int reg, int data)
 	struct vge_softc *sc;
 	int i, s;
 
-	sc = (void *)dev;
+	sc = device_private(dev);
 	if (phy != (CSR_READ_1(sc, VGE_MIICFG) & 0x1F))
 		return;
 
@@ -924,7 +924,7 @@ static void
 vge_attach(device_t parent, device_t self, void *aux)
 {
 	uint8_t	*eaddr;
-	struct vge_softc *sc = (void *)self;
+	struct vge_softc *sc = device_private(self);
 	struct ifnet *ifp;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -2166,7 +2166,7 @@ vge_resume(device_t dev)
 	struct ifnet *ifp;
 	int i;
 
-	sc = (void *)dev;
+	sc = device_private(dev);
 	ifp = &sc->sc_ethercom.ec_if;
 
         /* better way to do this? */

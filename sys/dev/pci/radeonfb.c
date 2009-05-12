@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.32 2009/05/06 18:41:54 elad Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.33 2009/05/12 08:23:01 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.32 2009/05/06 18:41:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.33 2009/05/12 08:23:01 cegger Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -426,7 +426,7 @@ radeonfb_match(device_t parent, cfdata_t match, void *aux)
 static void
 radeonfb_attach(device_t parent, device_t dev, void *aux)
 {
-	struct radeonfb_softc	*sc = (struct radeonfb_softc *)dev;
+	struct radeonfb_softc	*sc = device_private(dev);
 	struct pci_attach_args	*pa = aux;
 	const char		*mptr;
 	bus_size_t		bsz;

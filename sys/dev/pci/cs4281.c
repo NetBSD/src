@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.41 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.42 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.41 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.42 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	int error;
 
-	sc = (struct cs428x_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	aprint_naive(": Audio controller\n");

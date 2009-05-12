@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.18 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.19 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.18 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.19 2009/05/12 08:23:00 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -344,7 +344,7 @@ kse_match(device_t parent, cfdata_t match, void *aux)
 static void
 kse_attach(device_t parent, device_t self, void *aux)
 {
-	struct kse_softc *sc = (struct kse_softc *)self;
+	struct kse_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;

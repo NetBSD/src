@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.47 2009/05/06 10:34:32 cegger Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.48 2009/05/12 08:23:01 cegger Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.47 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.48 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ wi_pci_match(device_t parent, cfdata_t match, void *aux)
 static void
 wi_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct wi_pci_softc *psc = (struct wi_pci_softc *)self;
+	struct wi_pci_softc *psc = device_private(self);
 	struct wi_softc *sc = &psc->psc_wi;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;

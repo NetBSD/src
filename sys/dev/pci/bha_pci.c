@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.35 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.36 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.35 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.36 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static void
 bha_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct bha_softc *sc = (void *)self;
+	struct bha_softc *sc = device_private(self);
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	pci_chipset_tag_t pc = pa->pa_pc;

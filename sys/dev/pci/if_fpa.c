@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.54 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.55 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.54 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.55 2009/05/12 08:23:00 cegger Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -341,7 +341,7 @@ pdq_pci_probe(device_t parent, cfdata_t cf, void *aux)
 void
 pdq_pci_attach(device_t parent, device_t self, void *aux)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) self;
+    pdq_softc_t *sc = device_private(self);
     struct isa_attach_args *ia = (struct isa_attach_args *) aux;
     struct ifnet *ifp = &sc->sc_if;
     int i;
@@ -400,7 +400,7 @@ pdq_pci_match(device_t parent, cfdata_t match, void *aux)
 static void
 pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
 {
-    pdq_softc_t * const sc = (pdq_softc_t *)self;
+    pdq_softc_t * const sc = device_private(self);
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     pdq_uint32_t data;
     pci_intr_handle_t intrhandle;

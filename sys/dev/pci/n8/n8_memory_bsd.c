@@ -61,7 +61,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.3 2009/05/11 20:53:47 cegger Exp $";
+static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.4 2009/05/12 08:23:01 cegger Exp $";
 /*****************************************************************************/
 /** @file n8_memory_bsd.c
  *  @brief NetOctaveMemory Services - FreeBSD-specific support routines.
@@ -271,7 +271,7 @@ n8_GetLargeAllocation(N8_MemoryType_t bankIndex,
 {
 
 	NspInstance_t	*nip  = &NSPDeviceTable_g[0];	/* can only attach once */
-	struct nsp_softc *sc = (struct nsp_softc *)nip->dev;
+	struct nsp_softc *sc = device_private(nip->dev);
 
 	bus_dma_segment_t seg;
 	int rseg;
@@ -356,7 +356,7 @@ n8_FreeLargeAllocation(N8_MemoryType_t bankIndex,
 		       unsigned char   debug) 
 {
 	NspInstance_t	*nip  = &NSPDeviceTable_g[0];	/* can only attach once */
-	struct nsp_softc *sc = (struct nsp_softc *)nip->dev;
+	struct nsp_softc *sc = device_private(nip->dev);
 
         printf("n8_FreeLargeAllocation: freeing %p for bankIndex %d\n",
 		  BasePointer_g[bankIndex], bankIndex);

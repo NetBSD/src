@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.132 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: if_de.c,v 1.133 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.132 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.133 2009/05/12 08:23:00 cegger Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5632,7 +5632,7 @@ tulip_pci_attach(
 					(sc)->tulip_pci_devno = pa->d_agent))
 #endif
 #if defined(__NetBSD__)
-    tulip_softc_t * const sc = (tulip_softc_t *) self;
+    tulip_softc_t * const sc = device_private(self);
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     const int unit = sc->tulip_dev.dv_unit;
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
