@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.4 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.5 2009/05/12 06:57:51 cegger Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.4 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.5 2009/05/12 06:57:51 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 	iobase = 0x03010600;
 	if (bus_space_map(sc->sc_iot, iobase, CS8900_IOSIZE * 4,
 	    0, &sc->sc_ioh)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		printf("%s: unable to map i/o space\n", device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -179,7 +179,7 @@ cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_memt, iobase + 0x3A00,
 				CS8900_MEMSIZE * 4, 0, &sc->sc_memh)) {
 		printf("%s: unable to map memory space\n",
-	    			sc->sc_dev.dv_xname);
+	    			device_xname(&sc->sc_dev));
 	} else {
 		sc->sc_cfgflags |= CFGFLG_MEM_MODE | CFGFLG_USE_SA;
 		sc->sc_pktpgaddr = 1<<23;
@@ -189,7 +189,7 @@ cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = intr_claim(IRQ_INT5, IPL_NET, "cs", cs_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return;
 	}
 

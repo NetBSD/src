@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.15 2009/03/14 21:04:01 dsl Exp $	*/
+/*	$NetBSD: cosc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.15 2009/03/14 21:04:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ coscattach(struct device *pdp, struct device *dp, void *auxp)
 #endif
 	{
 		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		    dp->dv_xname, "intr");
+		    device_xname(dp), "intr");
 		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 		    cosc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)

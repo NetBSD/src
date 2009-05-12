@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.27 2008/03/18 20:46:35 cube Exp $	*/
+/*	$NetBSD: icside.c,v 1.28 2009/05/12 06:54:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.27 2008/03/18 20:46:35 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.28 2009/05/12 06:54:10 cegger Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -301,7 +301,7 @@ icside_attach(device_t parent, device_t self, void *aux)
 		icp->ic_irqaddr = pa->pa_podule->irq_addr;
 		icp->ic_irqmask = pa->pa_podule->irq_mask;
 		evcnt_attach_dynamic(&icp->ic_intrcnt, EVCNT_TYPE_INTR, NULL,
-		    self->dv_xname, "intr");
+		    device_xname(self), "intr");
 		icp->ic_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 		    icside_intr, icp, &icp->ic_intrcnt);
 		if (icp->ic_ih == NULL) {
