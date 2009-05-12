@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.9 2009/03/18 10:22:21 cegger Exp $	*/
+/*	$NetBSD: fpu.c,v 1.10 2009/05/12 06:31:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9 2009/03/18 10:22:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2009/05/12 06:31:37 cegger Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -103,7 +103,7 @@ fpu_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	if (!supported)
 		printf("%s: WARNING: FPU type not supported by kernel\n",
-		       self->dv_xname);
+		       device_xname(self));
 }
 
 static label_t undef_jmp;
