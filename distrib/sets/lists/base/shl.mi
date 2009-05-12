@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.471 2009/05/12 10:05:07 plunky Exp $
+# $NetBSD: shl.mi,v 1.472 2009/05/12 18:07:54 plunky Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -141,7 +141,6 @@
 ./usr/lib/librumpnet_virtif.so.0.0		base-rump-shlib
 ./usr/lib/librumpuser.so.0.0			base-rump-shlib
 ./usr/lib/librumpvfs.so.0.0			base-rump-shlib
-./usr/lib/libsdp.so.3.0				base-sys-shlib
 ./usr/lib/libskey.so.2.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.4.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.6.0				base-krb5-shlib		kerberos

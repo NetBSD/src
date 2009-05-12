@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.47 2009/05/12 10:05:07 plunky Exp $
+# $NetBSD: md.amd64,v 1.48 2009/05/12 18:07:54 plunky Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -176,8 +176,6 @@
 ./usr/lib/i386/librumpuser.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpvfs.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpvfs.so.0.0		base-compat-shlib	compat,pic
-./usr/lib/i386/libsdp.so.3			base-compat-shlib	compat,pic
-./usr/lib/i386/libsdp.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libskey.so.2			base-compat-shlib	compat,pic,skey
 ./usr/lib/i386/libskey.so.2.0			base-compat-shlib	compat,pic,skey
 ./usr/lib/i386/libsl.so.4			base-compat-shlib	compat,pic,kerberos
