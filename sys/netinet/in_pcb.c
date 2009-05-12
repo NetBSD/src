@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.136 2009/05/09 20:54:52 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.137 2009/05/12 22:22:46 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.136 2009/05/09 20:54:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.137 2009/05/12 22:22:46 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -257,7 +257,7 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 	error = kauth_authorize_network(cred, KAUTH_NETWORK_BIND, req, so, sin,
 	    NULL);
 	if (error)
-		return (error);
+		return (EACCES);
 
 	if (mymin > mymax) {	/* sanity check */
 		u_int16_t swp;
@@ -366,7 +366,7 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		error = kauth_authorize_network(cred, KAUTH_NETWORK_BIND, req,
 		    so, sin, NULL);
 		if (error)
-			return (error);
+			return (EACCES);
 
 #ifdef INET6
 		memset(&mapped, 0, sizeof(mapped));
