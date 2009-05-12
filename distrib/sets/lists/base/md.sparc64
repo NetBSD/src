@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.41 2009/05/08 17:50:56 christos Exp $
+# $NetBSD: md.sparc64,v 1.42 2009/05/12 10:05:07 plunky Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -56,7 +56,7 @@
 ./usr/lib/sparc/libbind9.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbind9.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4		base-compat-shlib	compat,pic
-./usr/lib/sparc/libbluetooth.so.4.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libbluetooth.so.4.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbsdmalloc.so.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbsdmalloc.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbz2.so.1			base-compat-shlib	compat,pic
