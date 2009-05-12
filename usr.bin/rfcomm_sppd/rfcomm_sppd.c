@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.9 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.10 2009/05/12 18:43:35 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -29,8 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * rfcomm_sppd.c
- *
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * Copyright (c) 2007 Iain Hibbert
  * Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
  * All rights reserved.
@@ -58,11 +57,12 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert.\
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
+  Copyright (c) 2007 Iain Hibbert.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.9 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.10 2009/05/12 18:43:35 plunky Exp $");
 
 #include <bluetooth.h>
 #include <ctype.h>
@@ -84,14 +84,13 @@ __RCSID("$NetBSD: rfcomm_sppd.c,v 1.9 2008/07/21 14:19:25 lukem Exp $");
 
 #include <netbt/rfcomm.h>
 
-#include "rfcomm_sdp.h"
-
 #define max(a, b)	((a) > (b) ? (a) : (b))
 
 int open_tty(const char *);
 int open_client(bdaddr_t *, bdaddr_t *, int, const char *);
 int open_server(bdaddr_t *, uint8_t, int, const char *);
 void copy_data(int, int);
+int channel_lookup(const bdaddr_t *, const bdaddr_t *, uint16_t, uintmax_t *);
 void sighandler(int);
 void usage(void);
 void reset_tio(void);
@@ -100,27 +99,17 @@ int done;		/* got a signal */
 struct termios tio;	/* stored termios for reset on exit */
 
 struct service {
-	const char	*name;
-	const char	*description;
+	const char *	name;
+	const char *	description;
 	uint16_t	class;
-	int		pdulen;
 } services[] = {
 	{ "DUN",	"Dialup Networking",
-	  SDP_SERVICE_CLASS_DIALUP_NETWORKING,
-	  sizeof(struct sdp_dun_profile)
-	},
-	{ "LAN",	"Lan access using PPP",
-	  SDP_SERVICE_CLASS_LAN_ACCESS_USING_PPP,
-	  sizeof(struct sdp_lan_profile)
-	},
+	    SDP_SERVICE_CLASS_DIALUP_NETWORKING		},
+	{ "LAN",	"LAN access using PPP",
+	    SDP_SERVICE_CLASS_LAN_ACCESS_USING_PPP	},
 	{ "SP",		"Serial Port",
-	  SDP_SERVICE_CLASS_SERIAL_PORT,
-	  sizeof(struct sdp_sp_profile)
-	},
-	{ NULL,		NULL,
-	  0,
-	  0
-	}
+	    SDP_SERVICE_CLASS_SERIAL_PORT		},
+	{ NULL,		NULL,		0		}
 };
 
 int
@@ -335,25 +324,29 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, const char *service)
 	struct service *s;
 	struct linger l;
 	char *ep;
-	int fd;
-	uint8_t channel;
+	int fd, error;
+	uintmax_t channel;
 
 	for (s = services ; ; s++) {
 		if (s->name == NULL) {
 			channel = strtoul(service, &ep, 10);
-			if (*ep != '\0' || channel < 1 || channel > 30)
-				errx(EXIT_FAILURE, "Invalid service: %s", service);
+			if (*ep != '\0')
+				errx(EXIT_FAILURE, "Unknown service: %s", service);
 
 			break;
 		}
 
 		if (strcasecmp(s->name, service) == 0) {
-			if (rfcomm_channel_lookup(laddr, raddr, s->class, &channel, &errno) < 0)
-				err(EXIT_FAILURE, "%s", s->name);
+			error = channel_lookup(laddr, raddr, s->class, &channel);
+			if (error != 0)
+				errx(EXIT_FAILURE, "%s: %s", s->name, strerror(error));
 
 			break;
 		}
 	}
+
+	if (channel < RFCOMM_CHANNEL_MIN || channel > RFCOMM_CHANNEL_MAX)
+		errx(EXIT_FAILURE, "Invalid channel %"PRIuMAX, channel);
 
 	memset(&sa, 0, sizeof(sa));
 	sa.bt_len = sizeof(sa);
@@ -380,40 +373,42 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, const char *service)
 	bdaddr_copy(&sa.bt_bdaddr, raddr);
 
 	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
-		err(EXIT_FAILURE, "connect(%s, %d)", bt_ntoa(raddr, NULL),
+		err(EXIT_FAILURE, "connect(%s, %"PRIuMAX")", bt_ntoa(raddr, NULL),
 						     channel);
 
 	return fd;
 }
 
-/*
- * In all the profiles we currently support registering, the channel
- * is the first octet in the PDU, and it seems all the rest can be
- * zero, so we just use an array of uint8_t big enough to store the
- * largest, currently LAN. See <sdp.h> for definitions..
- */
-#define pdu_len		sizeof(struct sdp_lan_profile)
-
 int
 open_server(bdaddr_t *laddr, uint8_t channel, int lm, const char *service)
 {
+	uint8_t	buffer[256];
 	struct sockaddr_bt sa;
+	struct service *s;
 	struct linger l;
 	socklen_t len;
-	void *ss;
-	int sv, fd, n;
-	uint8_t pdu[pdu_len];
+	sdp_session_t ss;
+	sdp_data_t rec;
+	int sv, fd;
 
-	memset(&sa, 0, sizeof(sa));
-	sa.bt_len = sizeof(sa);
-	sa.bt_family = AF_BLUETOOTH;
-	bdaddr_copy(&sa.bt_bdaddr, laddr);
-	sa.bt_channel = channel;
+	for (s = services; ; s++) {
+		if (s->name == NULL)
+			usage();
 
+		if (strcasecmp(s->name, service) == 0)
+			break;
+	}
+
+	/* Open server socket */
 	sv = socket(PF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 	if (sv < 0)
 		err(EXIT_FAILURE, "socket()");
 
+	memset(&sa, 0, sizeof(sa));
+	sa.bt_len = sizeof(sa);
+	sa.bt_family = AF_BLUETOOTH;
+	sa.bt_channel = channel;
+	bdaddr_copy(&sa.bt_bdaddr, laddr);
 	if (bind(sv, (struct sockaddr *)&sa, sizeof(sa)) < 0)
 		err(EXIT_FAILURE, "bind(%s, %d)", bt_ntoa(laddr, NULL),
 						  channel);
@@ -424,28 +419,74 @@ open_server(bdaddr_t *laddr, uint8_t channel, int lm, const char *service)
 	if (listen(sv, 1) < 0)
 		err(EXIT_FAILURE, "listen()");
 
-	/* Register service with SDP server */
-	for (n = 0 ; ; n++) {
-		if (services[n].name == NULL)
-			usage();
+	/* Build SDP record */
+	rec.next = buffer;
+	rec.end = buffer + sizeof(buffer);
 
-		if (strcasecmp(services[n].name, service) == 0)
-			break;
+	sdp_put_uint16(&rec, SDP_ATTR_SERVICE_RECORD_HANDLE);
+	sdp_put_uint32(&rec, 0x00000000);
+
+	sdp_put_uint16(&rec, SDP_ATTR_SERVICE_CLASS_ID_LIST);
+	sdp_put_seq(&rec, 3);
+	sdp_put_uuid16(&rec, s->class);
+
+	sdp_put_uint16(&rec, SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST);
+	sdp_put_seq(&rec, 12);
+	sdp_put_seq(&rec, 3);
+	sdp_put_uuid16(&rec, SDP_UUID_PROTOCOL_L2CAP);
+	sdp_put_seq(&rec, 5);
+	sdp_put_uuid16(&rec, SDP_UUID_PROTOCOL_RFCOMM);
+	sdp_put_uint8(&rec, channel);
+
+	sdp_put_uint16(&rec, SDP_ATTR_BROWSE_GROUP_LIST);
+	sdp_put_seq(&rec, 3);
+	sdp_put_uuid16(&rec, SDP_SERVICE_CLASS_PUBLIC_BROWSE_GROUP);
+
+	sdp_put_uint16(&rec, SDP_ATTR_LANGUAGE_BASE_ATTRIBUTE_ID_LIST);
+	sdp_put_seq(&rec, 9);
+	sdp_put_uint16(&rec, 0x656e);	/* "en" */
+	sdp_put_uint16(&rec, 106);	/* UTF-8 */
+	sdp_put_uint16(&rec, SDP_ATTR_PRIMARY_LANGUAGE_BASE_ID);
+
+	if (s->class == SDP_SERVICE_CLASS_LAN_ACCESS_USING_PPP) {
+		sdp_put_uint16(&rec, SDP_ATTR_SERVICE_AVAILABILITY);
+		sdp_put_uint8(&rec, 0x00);
 	}
 
-	memset(pdu, 0, pdu_len);
-	pdu[0] = channel;
+	sdp_put_uint16(&rec, SDP_ATTR_BLUETOOTH_PROFILE_DESCRIPTOR_LIST);
+	sdp_put_seq(&rec, 8);
+	sdp_put_seq(&rec, 6);
+	sdp_put_uuid16(&rec, s->class);
+	sdp_put_uint16(&rec, 0x0100);	/* v1.0 */
 
+	sdp_put_uint16(&rec, SDP_ATTR_PRIMARY_LANGUAGE_BASE_ID
+	    + SDP_ATTR_SERVICE_NAME_OFFSET);
+	sdp_put_str(&rec, s->description, -1);
+
+	if (s->class == SDP_SERVICE_CLASS_DIALUP_NETWORKING) {
+		sdp_put_uint16(&rec, SDP_ATTR_AUDIO_FEEDBACK_SUPPORT);
+		sdp_put_bool(&rec, false);
+	}
+
+#if 0
+	if (s->class == SDP_SERVICE_CLASS_LAN_ACCESS_USING_PPP) {
+		sdp_put_uint16(&rec, SDP_ATTR_IP_SUBNET);	/* TODO */
+		sdp_put_str(&rec, "0.0.0.0/0", -1);
+	}
+#endif
+
+	rec.end = rec.next;
+	rec.next = buffer;
+
+	/* Register service with SDP server */
 	ss = sdp_open_local(NULL);
-	if (ss == NULL || (errno = sdp_error(ss)) != 0)
+	if (ss == NULL)
 		err(EXIT_FAILURE, "sdp_open_local");
 
-	if (sdp_register_service(ss, services[n].class, laddr,
-		    pdu, services[n].pdulen, NULL) != 0) {
-		errno = sdp_error(ss);
-		err(EXIT_FAILURE, "sdp_register_service");
-	}
+	if (!sdp_record_insert(ss, laddr, NULL, &rec))
+		err(EXIT_FAILURE, "sdp_record_insert");
 
+	/* Accept client connection */
 	len = sizeof(sa);
 	fd = accept(sv, (struct sockaddr *)&sa, &len);
 	if (fd < 0)
@@ -483,6 +524,109 @@ copy_data(int src, int dst)
 			exit(EXIT_FAILURE);
 		}
 	}
+}
+
+int
+channel_lookup(bdaddr_t const *laddr, bdaddr_t const *raddr,
+    uint16_t class, uintmax_t *channel)
+{
+	uint8_t		buffer[6];	/* SSP (3 bytes) + AIL (3 bytes) */
+	sdp_session_t	ss;
+	sdp_data_t	ail, ssp, rsp, rec, value, pdl, seq;
+	uint16_t	attr;
+	bool		rv;
+
+	seq.next = buffer;
+	seq.end = buffer + sizeof(buffer);
+
+	/*
+	 * build ServiceSearchPattern (3 bytes)
+	 */
+	ssp.next = seq.next;
+	sdp_put_uuid16(&seq, class);
+	ssp.end = seq.next;
+
+	/*
+	 * build AttributeIDList (3 bytes)
+	 */
+	ail.next = seq.next;
+	sdp_put_uint16(&seq, SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST);
+	ail.end = seq.next;
+
+	ss = sdp_open(laddr, raddr);
+	if (ss == NULL)
+		return errno;
+
+	rv = sdp_service_search_attribute(ss, &ssp, &ail, &rsp);
+	if (!rv) {
+		sdp_close(ss);
+		return errno;
+	}
+
+	/*
+	 * The response will be a list of records that matched our
+	 * ServiceSearchPattern, where each record is a sequence
+	 * containing a single ProtocolDescriptorList attribute and
+	 * value
+	 *
+	 *	seq
+	 *	  uint16	ProtocolDescriptorList
+	 *	  value
+	 *	seq
+	 *	  uint16	ProtocolDescriptorList
+	 *	  value
+	 *
+	 * If the ProtocolDescriptorList describes a single stack,
+	 * the attribute value takes the form of a single Data Element
+	 * Sequence where each member is a protocol descriptor.
+	 *
+	 *	seq
+	 *	  list
+	 *
+	 * If it is possible for more than one kind of protocol
+	 * stack to be used to gain access to the service, the
+	 * ProtocolDescriptorList takes the form of a Data Element
+	 * Alternative where each member is a Data Element Sequence
+	 * describing an alternative protocol stack.
+	 *
+	 *	alt
+	 *	  seq
+	 *	    list
+	 *	  seq
+	 *	    list
+	 *
+	 * Each protocol stack description contains a sequence for each
+	 * protocol, where each sequence contains the protocol UUID as
+	 * the first element, and any ProtocolSpecificParameters. We are
+	 * interested in the RFCOMM channel number, stored as parameter#1.
+	 *
+	 *	seq
+	 *	  uuid		L2CAP
+	 *	  uint16	psm
+	 *	seq
+	 *	  uuid		RFCOMM
+	 *	  uint8		channel
+	 */
+
+	rv = false;
+	while (!rv && sdp_get_seq(&rsp, &rec)) {
+		if (!sdp_get_attr(&rec, &attr, &value)
+		    || attr != SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST)
+			continue;
+
+		sdp_get_alt(&value, &value);	/* strip any alt container */
+		while (!rv && sdp_get_seq(&value, &pdl)) {
+			if (sdp_get_seq(&pdl, &seq)
+			    && sdp_match_uuid16(&seq, SDP_UUID_PROTOCOL_L2CAP)
+			    && sdp_get_seq(&pdl, &seq)
+			    && sdp_match_uuid16(&seq, SDP_UUID_PROTOCOL_RFCOMM)
+			    && sdp_get_uint(&seq, channel))
+				rv = true;
+		}
+	}
+
+	sdp_close(ss);
+	return (rv) ? 0 : ENOATTR;
 }
 
 void
