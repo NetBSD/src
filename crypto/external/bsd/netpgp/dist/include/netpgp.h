@@ -59,6 +59,6 @@ int netpgp_generate_key(netpgp_t *, char *, int);
 int netpgp_encrypt_file(netpgp_t *, char *, char *, char *, int);
 int netpgp_decrypt_file(netpgp_t *, char *, char *, int);
 int netpgp_sign_file(netpgp_t *, char *, char *, char *, int, int, int);
-int netpgp_verify_file(netpgp_t *, char *, int);
+int netpgp_verify_file(netpgp_t *, char *, const char *, int);
 
 #endif /* !NETPGP_H_ */

@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -56,17 +84,17 @@ const char     *__ops_show_packet_tag(__ops_packet_tag_t packet_tag);
 const char     *__ops_show_ss_type(__ops_ss_type_t ss_type);
 
 const char     *__ops_show_sig_type(__ops_sig_type_t sig_type);
-const char     *__ops_show_pka(__ops_pubkey_algorithm_t pka);
+const char     *__ops_show_pka(__ops_pubkey_alg_t pka);
 
-__ops_text_t     *__ops_showall_ss_preferred_compression(__ops_ss_preferred_compression_t ss_preferred_compression);
-const char     *__ops_show_ss_preferred_compression(unsigned char octet);
+__ops_text_t     *__ops_showall_ss_zpref(__ops_ss_zpref_t ss_zpref);
+const char     *__ops_show_ss_zpref(unsigned char octet);
 
-__ops_text_t     *__ops_showall_ss_preferred_hash(__ops_ss_preferred_hash_t ss_preferred_hash);
-const char     *__ops_show_hash_algorithm(unsigned char octet);
-const char     *__ops_show_symmetric_algorithm(unsigned char hash);
+__ops_text_t     *__ops_showall_ss_hashpref(__ops_ss_hashpref_t ss_hashpref);
+const char     *__ops_show_hash_alg(unsigned char octet);
+const char     *__ops_show_symm_alg(unsigned char hash);
 
-__ops_text_t     *__ops_showall_ss_preferred_ska(__ops_ss_preferred_ska_t ss_preferred_ska);
-const char     *__ops_show_ss_preferred_ska(unsigned char octet);
+__ops_text_t     *__ops_showall_ss_skapref(__ops_ss_skapref_t ss_skapref);
+const char     *__ops_show_ss_skapref(unsigned char octet);
 
 const char     *__ops_show_ss_rr_code(__ops_ss_rr_code_t ss_rr_code);
 

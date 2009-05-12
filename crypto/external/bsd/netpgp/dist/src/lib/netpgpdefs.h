@@ -38,7 +38,7 @@
 #endif
 
 /* for silencing unused parameter warnings */
-#define OPS_USED(x)	/*LINTED*/(void)&(x)
+#define __OPS_USED(x)	/*LINTED*/(void)&(x)
 
 #ifndef __UNCONST
 #define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))

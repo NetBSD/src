@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -55,9 +83,9 @@ typedef         __ops_parse_cb_return_t __ops_parse_cb_t(const __ops_packet_t *,
 __ops_parse_cb_return_t
 get_passphrase_cb(const __ops_packet_t *, __ops_callback_data_t *);
 
-typedef struct __ops_parse_info __ops_parse_info_t;
-typedef struct __ops_reader_info __ops_reader_info_t;
-typedef struct __ops_crypt_info __ops_crypt_info_t;
+typedef struct __ops_parseinfo __ops_parseinfo_t;
+typedef struct __ops_reader __ops_reader_t;
+typedef struct __ops_cryptinfo __ops_cryptinfo_t;
 
 /*
    A reader MUST read at least one byte if it can, and should read up
@@ -79,32 +107,32 @@ typedef struct __ops_crypt_info __ops_crypt_info_t;
 
  */
 
-typedef int __ops_reader_t(void *, size_t, __ops_error_t **, __ops_reader_info_t *, __ops_callback_data_t *);
+typedef int __ops_reader_func_t(void *, size_t, __ops_error_t **, __ops_reader_t *, __ops_callback_data_t *);
 
-typedef void    __ops_reader_destroyer_t(__ops_reader_info_t *);
+typedef void    __ops_reader_destroyer_t(__ops_reader_t *);
 
-__ops_parse_info_t *__ops_parse_info_new(void);
-void            __ops_parse_info_delete(__ops_parse_info_t *);
-__ops_error_t    *__ops_parse_info_get_errors(__ops_parse_info_t *);
-__ops_crypt_t    *__ops_parse_get_decrypt(__ops_parse_info_t *);
+__ops_parseinfo_t *__ops_parseinfo_new(void);
+void            __ops_parseinfo_delete(__ops_parseinfo_t *);
+__ops_error_t    *__ops_parseinfo_get_errors(__ops_parseinfo_t *);
+__ops_crypt_t    *__ops_parse_get_decrypt(__ops_parseinfo_t *);
 
-void            __ops_parse_cb_set(__ops_parse_info_t *, __ops_parse_cb_t *, void *);
-void            __ops_parse_cb_push(__ops_parse_info_t *, __ops_parse_cb_t *, void *);
+void            __ops_parse_cb_set(__ops_parseinfo_t *, __ops_parse_cb_t *, void *);
+void            __ops_parse_cb_push(__ops_parseinfo_t *, __ops_parse_cb_t *, void *);
 void           *__ops_parse_cb_get_arg(__ops_callback_data_t *);
 void           *__ops_parse_cb_get_errors(__ops_callback_data_t *);
-void            __ops_reader_set(__ops_parse_info_t *, __ops_reader_t *, __ops_reader_destroyer_t *, void *);
-void            __ops_reader_push(__ops_parse_info_t *, __ops_reader_t *, __ops_reader_destroyer_t *, void *);
-void            __ops_reader_pop(__ops_parse_info_t *);
+void            __ops_reader_set(__ops_parseinfo_t *, __ops_reader_func_t *, __ops_reader_destroyer_t *, void *);
+void            __ops_reader_push(__ops_parseinfo_t *, __ops_reader_func_t *, __ops_reader_destroyer_t *, void *);
+void            __ops_reader_pop(__ops_parseinfo_t *);
 
-void           *__ops_reader_get_arg(__ops_reader_info_t *);
+void           *__ops_reader_get_arg(__ops_reader_t *);
 
 __ops_parse_cb_return_t __ops_parse_cb(const __ops_packet_t *, __ops_callback_data_t *);
 __ops_parse_cb_return_t __ops_parse_stacked_cb(const __ops_packet_t *, __ops_callback_data_t *);
-__ops_reader_info_t *__ops_parse_get_rinfo(__ops_parse_info_t *);
+__ops_reader_t *__ops_parse_get_rinfo(__ops_parseinfo_t *);
 
-int             __ops_parse(__ops_parse_info_t *, int);
+int             __ops_parse(__ops_parseinfo_t *, int);
 
-void            __ops_parse_and_validate(__ops_parse_info_t *);
+void            __ops_parse_and_validate(__ops_parseinfo_t *);
 
 /** Used to specify whether subpackets should be returned raw, parsed or ignored.
  */
@@ -115,18 +143,18 @@ typedef enum {
 }               __ops_parse_type_t;
 
 void 
-__ops_parse_options(__ops_parse_info_t *, __ops_content_tag_t, __ops_parse_type_t);
+__ops_parse_options(__ops_parseinfo_t *, __ops_content_tag_t, __ops_parse_type_t);
 
-bool __ops_limited_read(unsigned char *, size_t, __ops_region_t *, __ops_error_t **, __ops_reader_info_t *, __ops_callback_data_t *);
-bool __ops_stacked_limited_read(unsigned char *, unsigned, __ops_region_t *, __ops_error_t **, __ops_reader_info_t *, __ops_callback_data_t *);
-void __ops_parse_hash_init(__ops_parse_info_t *, __ops_hash_algorithm_t, const unsigned char *);
-void __ops_parse_hash_data(__ops_parse_info_t *, const void *, size_t);
-void            __ops_parse_hash_finish(__ops_parse_info_t *);
-__ops_hash_t     *__ops_parse_hash_find(__ops_parse_info_t *, const unsigned char *);
+bool __ops_limited_read(unsigned char *, size_t, __ops_region_t *, __ops_error_t **, __ops_reader_t *, __ops_callback_data_t *);
+bool __ops_stacked_limited_read(unsigned char *, unsigned, __ops_region_t *, __ops_error_t **, __ops_reader_t *, __ops_callback_data_t *);
+void __ops_parse_hash_init(__ops_parseinfo_t *, __ops_hash_alg_t, const unsigned char *);
+void __ops_parse_hash_data(__ops_parseinfo_t *, const void *, size_t);
+void            __ops_parse_hash_finish(__ops_parseinfo_t *);
+__ops_hash_t     *__ops_parse_hash_find(__ops_parseinfo_t *, const unsigned char *);
 
-__ops_reader_t    __ops_stacked_read;
+__ops_reader_func_t    __ops_stacked_read;
 
-int __ops_decompress(__ops_region_t *, __ops_parse_info_t *, __ops_compression_type_t);
-bool __ops_write_compressed(const unsigned char *, const unsigned int, __ops_create_info_t *);
+int __ops_decompress(__ops_region_t *, __ops_parseinfo_t *, __ops_compression_type_t);
+bool __ops_write_compressed(const unsigned char *, const unsigned int, __ops_createinfo_t *);
 
 #endif
