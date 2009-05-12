@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.17 2009/05/12 12:18:45 cegger Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.18 2009/05/12 14:30:25 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.17 2009/05/12 12:18:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.18 2009/05/12 14:30:25 cegger Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -228,8 +228,8 @@ idma_list_sync_post(idma_chan_t * const idcp, idma_desch_t *iddhp)
 #endif	/* IDMA_COHERENT */
 
 
-STATIC void idma_attach		(struct device *, struct device *, void *);
-STATIC int  idma_match		(struct device *, cfdata_t, void *);
+STATIC void idma_attach		(device_t, device_t, void *);
+STATIC int  idma_match		(device_t, cfdata_t, void *);
 STATIC void idma_chan_init
 	(idma_softc_t *, idma_chan_t *, unsigned int);
 STATIC void idma_arb_init(idma_softc_t *);
@@ -265,7 +265,7 @@ idma_softc_t *idma_sc = 0;
 
 STATIC int
 idma_match(
-	struct device * const parent,
+	device_t  const parent,
 	cfdata_t  const self,
 	void *const aux)
 {
@@ -279,8 +279,8 @@ idma_match(
 
 STATIC void
 idma_attach(
-	struct device * const parent,
-	struct device * const self,
+	device_t  const parent,
+	device_t  const self,
 	void *const aux)
 {
 	struct gt_softc * const gtsc = device_private(parent);

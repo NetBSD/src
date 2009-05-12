@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.43 2009/05/12 13:15:24 cegger Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.44 2009/05/12 14:31:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.43 2009/05/12 13:15:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.44 2009/05/12 14:31:00 cegger Exp $");
 
 #include "rnd.h"
 
@@ -116,8 +116,8 @@ struct edc_mca_softc {
 	u_int16_t status_block[EDC_MAX_CMD_RES_LEN];
 };
 
-int	edc_mca_probe(struct device *, cfdata_t, void *);
-void	edc_mca_attach(struct device *, struct device *, void *);
+int	edc_mca_probe(device_t, cfdata_t, void *);
+void	edc_mca_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(edc_mca, sizeof(struct edc_mca_softc),
     edc_mca_probe, edc_mca_attach, NULL, NULL);
@@ -130,7 +130,7 @@ static void	edc_cmd_wait(struct edc_mca_softc *, int, int);
 static void	edcworker(void *);
 
 int
-edc_mca_probe(struct device *parent, cfdata_t match,
+edc_mca_probe(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct mca_attach_args *ma = aux;
@@ -145,7 +145,7 @@ edc_mca_probe(struct device *parent, cfdata_t match,
 }
 
 void
-edc_mca_attach(struct device *parent, struct device *self, void *aux)
+edc_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct edc_mca_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;
