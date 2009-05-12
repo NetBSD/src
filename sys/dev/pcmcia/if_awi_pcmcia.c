@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.41 2009/03/14 15:36:20 dsl Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.42 2009/05/12 13:18:04 cegger Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.41 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.42 2009/05/12 13:18:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.41 2009/03/14 15:36:20 dsl Exp $
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-static int awi_pcmcia_match(struct device *, struct cfdata *, void *);
+static int awi_pcmcia_match(struct device *, cfdata_t, void *);
 static int awi_pcmcia_validate_config(struct pcmcia_config_entry *);
 static void awi_pcmcia_attach(struct device *, struct device *, void *);
 static int awi_pcmcia_detach(struct device *, int);
@@ -150,7 +150,7 @@ awi_pcmcia_disable(struct awi_softc *sc)
 }
 
 static int
-awi_pcmcia_match(struct device *parent, struct cfdata *match,
+awi_pcmcia_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;

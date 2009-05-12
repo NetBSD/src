@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.22 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.23 2009/05/12 13:17:37 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.22 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.23 2009/05/12 13:17:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.22 2009/03/14 21:04:21 dsl Exp $");
 
 #include <dev/ofw/openfirm.h>
 
-int ofbus_match(struct device *, struct cfdata *, void *);
+int ofbus_match(struct device *, cfdata_t, void *);
 void ofbus_attach(struct device *, struct device *, void *);
 static int ofbus_print(void *, const char *);
 
@@ -60,7 +60,7 @@ ofbus_print(void *aux, const char *pnp)
 }
 
 int
-ofbus_match(struct device *parent, struct cfdata *cf, void *aux)
+ofbus_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 

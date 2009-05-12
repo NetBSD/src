@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.22 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: if_il.c,v 1.23 2009/05/12 13:19:12 cegger Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.22 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.23 2009/05/12 13:19:12 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -111,7 +111,7 @@ struct	il_softc {
 	int	sc_ubaddr;		/* mapping registers of is_stats */
 };
 
-static	int ilmatch(struct device *, struct cfdata *, void *);
+static	int ilmatch(struct device *, cfdata_t, void *);
 static	void ilattach(struct device *, struct device *, void *);
 static	void ilcint(void *);
 static	void ilrint(void *);
@@ -134,7 +134,7 @@ CFATTACH_DECL(il, sizeof(struct il_softc),
 #define HIWORD(x)	(((int)(x) >> 16) & 0x3)
 
 int
-ilmatch(struct device *parent, struct cfdata *cf, void *aux)
+ilmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 	volatile int i;

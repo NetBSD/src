@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.38 2009/05/12 13:18:04 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.38 2009/05/12 13:18:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $"
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-static int an_pcmcia_match(struct device *, struct cfdata *, void *);
+static int an_pcmcia_match(struct device *, cfdata_t, void *);
 static int an_pcmcia_validate_config(struct pcmcia_config_entry *);
 static void an_pcmcia_attach(struct device *, struct device *, void *);
 static int an_pcmcia_detach(struct device *, int);
@@ -97,7 +97,7 @@ static const size_t an_pcmcia_nproducts =
     sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
 
 static int
-an_pcmcia_match(struct device *parent, struct cfdata *match,
+an_pcmcia_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;

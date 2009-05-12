@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.27 2009/03/14 21:04:22 dsl Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.28 2009/05/12 13:20:05 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.27 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.28 2009/05/12 13:20:05 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.27 2009/03/14 21:04:22 dsl Exp $");
 #include <dev/sun/cgsixvar.h>
 
 /* autoconfiguration driver */
-static int	cgsixmatch(device_t, struct cfdata *, void *);
+static int	cgsixmatch(device_t, cfdata_t, void *);
 static void	cgsixattach(device_t, device_t, void *);
 
 /* Allocate an `sbusdev' in addition to the cgsix softc */
@@ -80,7 +80,7 @@ CFATTACH_DECL_NEW(cgsix_sbus, sizeof(struct cgsix_sbus_softc),
  * Match a cgsix.
  */
 int
-cgsixmatch(device_t parent, struct cfdata *cf, void *aux)
+cgsixmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

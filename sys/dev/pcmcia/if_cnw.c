@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.49 2009/04/15 20:44:25 elad Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.50 2009/05/12 13:18:04 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.49 2009/04/15 20:44:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.50 2009/05/12 13:18:04 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -178,7 +178,7 @@ int cnw_skey = CNW_SCRAMBLEKEY;		/* Scramble key */
  */
 #define MEMORY_MAPPED
 
-int	cnw_match(struct device *, struct cfdata *, void *);
+int	cnw_match(struct device *, cfdata_t, void *);
 void	cnw_attach(struct device *, struct device *, void *);
 int	cnw_detach(struct device *, int);
 
@@ -461,7 +461,7 @@ cnw_disable(struct cnw_softc *sc)
  * Match the hardware we handle.
  */
 int
-cnw_match(struct device *parent, struct cfdata *match,
+cnw_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;

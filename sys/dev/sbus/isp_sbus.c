@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.73 2008/04/07 19:21:55 cegger Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.74 2009/05/12 13:20:05 cegger Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73 2008/04/07 19:21:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.74 2009/05/12 13:20:05 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,13 @@ struct isp_sbussoftc {
 };
 
 
-static int isp_match(struct device *, struct cfdata *, void *);
+static int isp_match(struct device *, cfdata_t, void *);
 static void isp_sbus_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(isp_sbus, sizeof (struct isp_sbussoftc),
     isp_match, isp_sbus_attach, NULL, NULL);
 
 static int
-isp_match(struct device *parent, struct cfdata *cf, void *aux)
+isp_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	int rv;
 	struct sbus_attach_args *sa = aux;

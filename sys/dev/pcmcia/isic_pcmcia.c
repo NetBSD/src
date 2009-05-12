@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.38 2009/05/12 13:18:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $")
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_pcmcia_match(struct device *, struct cfdata *, void *);
+static int isic_pcmcia_match(struct device *, cfdata_t, void *);
 static void isic_pcmcia_attach(struct device *, struct device *, void *);
 static const struct isic_pcmcia_card_entry * find_matching_card(struct pcmcia_attach_args *pa);
 static int isic_pcmcia_isdn_attach(struct isic_softc *sc, const char*);
@@ -172,7 +172,7 @@ find_matching_card(struct pcmcia_attach_args *pa)
  */
 static int
 isic_pcmcia_match(struct device *parent,
-	struct cfdata *match, void *aux)
+	cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
