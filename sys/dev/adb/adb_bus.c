@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bus.c,v 1.8 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: adb_bus.c,v 1.9 2009/05/12 14:07:01 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.8 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.9 2009/05/12 14:07:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ struct nadb_softc {
 CFATTACH_DECL_NEW(nadb, sizeof(struct nadb_softc),
     nadb_match, nadb_attach, NULL, NULL);
 
-static void nadb_init(device_t );
+static void nadb_init(device_t);
 static void nadb_handler(void *, int, uint8_t *);
 static void nadb_send_sync(void *, int, int, uint8_t *);
 static int nadb_register(struct nadb_softc *, int, int, int);

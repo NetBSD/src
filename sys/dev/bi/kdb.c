@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.44 2008/07/09 18:02:46 joerg Exp $ */
+/*	$NetBSD: kdb.c,v 1.45 2009/05/12 14:08:34 cegger Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.44 2008/07/09 18:02:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.45 2009/05/12 14:08:34 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,7 +94,7 @@ int	kdbmatch(device_t, cfdata_t, void *);
 void	kdbattach(device_t, device_t, void *);
 void	kdbreset(int);
 void	kdbintr(void *);
-void	kdbctlrdone(device_t );
+void	kdbctlrdone(device_t);
 int	kdbprint(void *, const char *);
 void	kdbsaerror(device_t, int);
 void	kdbgo(device_t, struct mscp_xi *);
