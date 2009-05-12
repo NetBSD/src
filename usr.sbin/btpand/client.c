@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.2 2008/12/06 20:01:14 plunky Exp $	*/
+/*	$NetBSD: client.c,v 1.3 2009/05/12 21:08:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.2 2008/12/06 20:01:14 plunky Exp $");
+__RCSID("$NetBSD: client.c,v 1.3 2009/05/12 21:08:30 plunky Exp $");
 
 #include <bluetooth.h>
 #include <errno.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: client.c,v 1.2 2008/12/06 20:01:14 plunky Exp $");
 #include "bnep.h"
 #include "sdp.h"
 
+static void client_down(channel_t *);
 static void client_query(void);
 
 void
@@ -118,6 +119,7 @@ client_init(void)
 
 	chan->send = bnep_send;
 	chan->recv = bnep_recv;
+	chan->down = client_down;
 	chan->mru = mru;
 	chan->mtu = mtu;
 	b2eaddr(chan->raddr, &remote_bdaddr);
@@ -129,6 +131,14 @@ client_init(void)
 
 	bnep_send_control(chan, BNEP_SETUP_CONNECTION_REQUEST,
 	    2, service_class, SDP_SERVICE_CLASS_PANU);
+}
+
+static void
+client_down(channel_t *chan)
+{
+
+	log_err("Client connection shut down, exiting");
+	exit(EXIT_FAILURE);
 }
 
 static void

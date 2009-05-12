@@ -1,7 +1,7 @@
-/*	$NetBSD: server.c,v 1.2 2009/01/24 17:29:28 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.3 2009/05/12 21:08:30 plunky Exp $	*/
 
 /*-
- * Copyright (c) 2008 Iain Hibbert
+ * Copyright (c) 2008-2009 Iain Hibbert
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.2 2009/01/24 17:29:28 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.3 2009/05/12 21:08:30 plunky Exp $");
 
 #include <sys/ioctl.h>
 
@@ -39,59 +39,39 @@ __RCSID("$NetBSD: server.c,v 1.2 2009/01/24 17:29:28 plunky Exp $");
 #include "bnep.h"
 
 static struct event	server_ev;
-static int		server_fd;
-static int		server_avail;
+static int		server_count;
 
 static void *		server_ss;
 static uint32_t		server_handle;
 
 static void server_open(void);
-static void server_close(void);
 static void server_read(int, short, void *);
-static void server_register(void);
+static void server_down(channel_t *);
+static void server_update(void);
 
 void
 server_init(void)
 {
 
-	server_fd = -1;
-}
-
-/*
- * The server_update() function is called whenever the channel count is
- * changed. We maintain the SDP record and open or close the server socket
- * as required.
- */
-void
-server_update(int count)
-{
-
 	if (server_limit == 0)
 		return;
 
-	log_debug("count %d", count);
-
-	server_avail = UINT8_MAX - (count - 1) * UINT8_MAX / server_limit;
-	log_info("Service Availability: %d/%d", server_avail, UINT8_MAX);
-
-	if (server_avail == 0 && server_fd != -1)
-		server_close();
-
-	if (server_avail > 0 && server_fd == -1)
-		server_open();
-
-	if (service_name)
-		server_register();
+	server_open();
+	server_update();
 }
 
+/*
+ * Start listening on server socket
+ */
 static void
 server_open(void)
 {
 	struct sockaddr_bt sa;
 	uint16_t mru;
+	int fd;
 
-	server_fd = socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_L2CAP);
-	if (server_fd == -1) {
+	fd = socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_L2CAP);
+	if (fd == -1) {
 		log_err("Could not open L2CAP socket: %m");
 		exit(EXIT_FAILURE);
 	}
@@ -101,47 +81,36 @@ server_open(void)
 	sa.bt_len = sizeof(sa);
 	sa.bt_psm = l2cap_psm;
 	bdaddr_copy(&sa.bt_bdaddr, &local_bdaddr);
-	if (bind(server_fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
 		log_err("Could not bind server socket: %m");
 		exit(EXIT_FAILURE);
 	}
 
-	if (setsockopt(server_fd, BTPROTO_L2CAP,
+	if (setsockopt(fd, BTPROTO_L2CAP,
 	    SO_L2CAP_LM, &l2cap_mode, sizeof(l2cap_mode)) == -1) {
 		log_err("Could not set link mode (0x%4.4x): %m", l2cap_mode);
 		exit(EXIT_FAILURE);
 	}
 
 	mru = BNEP_MTU_MIN;
-	if (setsockopt(server_fd, BTPROTO_L2CAP,
+	if (setsockopt(fd, BTPROTO_L2CAP,
 	    SO_L2CAP_IMTU, &mru, sizeof(mru)) == -1) {
 		log_err("Could not set L2CAP IMTU (%d): %m", mru);
 		exit(EXIT_FAILURE);
 	}
 
-	if (listen(server_fd, 0) == -1) {
+	if (listen(fd, 0) == -1) {
 		log_err("Could not listen on server socket: %m");
 		exit(EXIT_FAILURE);
 	}
 
-	event_set(&server_ev, server_fd, EV_READ | EV_PERSIST, server_read, NULL);
+	event_set(&server_ev, fd, EV_READ | EV_PERSIST, server_read, NULL);
 	if (event_add(&server_ev, NULL) == -1) {
 		log_err("Could not add server event: %m");
 		exit(EXIT_FAILURE);
 	}
 
 	log_info("server socket open");
-}
-
-static void
-server_close(void)
-{
-
-	event_del(&server_ev);
-	close(server_fd);
-	server_fd = -1;
-
-	log_info("server socket closed");
 }
 
 /*
@@ -155,6 +124,8 @@ server_read(int s, short ev, void *arg)
 	socklen_t len;
 	int fd, n;
 	uint16_t mru, mtu;
+
+	assert(server_count < server_limit);
 
 	len = sizeof(ra);
 	fd = accept(s, (struct sockaddr *)&ra, &len);
@@ -232,6 +203,7 @@ server_read(int s, short ev, void *arg)
 
 	chan->send = bnep_send;
 	chan->recv = bnep_recv;
+	chan->down = server_down;
 	chan->mru = mru;
 	chan->mtu = mtu;
 	b2eaddr(chan->raddr, &ra.bt_bdaddr);
@@ -244,13 +216,42 @@ server_read(int s, short ev, void *arg)
 		close(fd);
 		return;
 	}
+
+	if (++server_count == server_limit) {
+		log_info("Server limit reached, closing server socket");
+		event_del(&server_ev);
+		close(s);
+	}
+
+	server_update();
+}
+
+/*
+ * Shut down a server channel, we need to update the service record and
+ * may want to restart accepting connections on the server socket
+ */
+static void
+server_down(channel_t *chan)
+{
+
+	assert(server_count > 0);
+
+	channel_close(chan);
+
+	if (server_count-- == server_limit)
+		server_open();
+
+	server_update();
 }
 
 static void
-server_register(void)
+server_update(void)
 {
 	sdp_nap_profile_t p;
 	int rv;
+
+	if (service_name == NULL)
+		return;
 
 	if (server_ss == NULL) {
 		server_ss = sdp_open_local(control_path);
@@ -262,7 +263,7 @@ server_register(void)
 
 	memset(&p, 0, sizeof(p));
 	p.psm = l2cap_psm;
-	p.load_factor = server_avail;
+	p.load_factor = (UINT8_MAX - server_count * UINT8_MAX / server_limit);
 	p.security_description = (l2cap_mode == 0 ? 0x0000 : 0x0001);
 
 	if (server_handle)
