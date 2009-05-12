@@ -1,4 +1,4 @@
-.\" $NetBSD: sdp.3,v 1.1 2009/05/12 10:05:06 plunky Exp $
+.\" $NetBSD: sdp.3,v 1.2 2009/05/12 10:32:45 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,7 +82,8 @@ constructed and parsed with the
 .Xr sdp_data 3
 library functions.
 .Pp
-The ServiceSearchPattern is a list of UUID data elements. The list must
+The ServiceSearchPattern is a list of UUID data elements.
+The list must
 contain at least one UUID and the maximum number of UUIDs is 12.
 A service record will be matched when all the UUIDs from the
 ServiceSearchPattern are contained in the record.
@@ -215,6 +216,8 @@ returned indicating success or failure.
 On failure,
 .Ar errno
 will be set to indicate the error.
+.Sh FILES
+.Pa /var/run/sdp
 .Sh ERRORS
 In addition to errors returned by the standard C library IO functions,
 the following errors may be detected by
@@ -229,8 +232,6 @@ The record
 .Ar handle
 did not exist on the server.
 .El
-.Sh FILES
-.Pa /var/run/sdp
 .Sh SEE ALSO
 .Xr sdpquery 1 ,
 .Xr bluetooth 3 ,
