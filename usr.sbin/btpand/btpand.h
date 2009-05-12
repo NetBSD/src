@@ -1,7 +1,7 @@
-/*	$NetBSD: btpand.h,v 1.2 2009/05/12 21:08:30 plunky Exp $	*/
+/*	$NetBSD: btpand.h,v 1.3 2009/05/12 21:50:38 plunky Exp $	*/
 
 /*-
- * Copyright (c) 2008 Iain Hibbert
+ * Copyright (c) 2008-2009 Iain Hibbert
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,7 +135,9 @@ struct pkthdr {
 
 /* global variables */
 extern const char *	control_path;
+extern const char *	service_type;
 extern const char *	service_name;
+extern const char *	service_desc;
 extern const char *	interface_name;
 extern bdaddr_t		local_bdaddr;
 extern bdaddr_t		remote_bdaddr;
