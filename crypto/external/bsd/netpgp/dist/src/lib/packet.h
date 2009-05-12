@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -192,12 +220,12 @@ typedef enum {
 							 * time */
 	OPS_PTAG_SS_RESERVED = 0x200 + 10,	/* !< reserved */
 	OPS_PTAG_SS_PREFERRED_SKA = 0x200 + 11,	/* !< preferred symmetric
-						 * algorithms */
+						 * algs */
 	OPS_PTAG_SS_REVOCATION_KEY = 0x200 + 12,	/* !< revocation key */
 	OPS_PTAG_SS_ISSUER_KEY_ID = 0x200 + 16,	/* !< issuer key ID */
 	OPS_PTAG_SS_NOTATION_DATA = 0x200 + 20,	/* !< notation data */
 	OPS_PTAG_SS_PREFERRED_HASH = 0x200 + 21,	/* !< preferred hash
-							 * algorithms */
+							 * algs */
 	OPS_PTAG_SS_PREFERRED_COMPRESSION = 0x200 + 22,	/* !< preferred
 							 * compression
 							 * algorithms */
@@ -292,6 +320,7 @@ typedef struct {
 	 * defined if #length_read is set. *//* XXX: Ben, is this correct? */
 	unsigned        position;	/* !< The position (within the
 					 * current reader) of the packet */
+	unsigned	size;	/* number of bits */
 }               __ops_ptag_t;
 
 /** Public Key Algorithm Numbers.
@@ -327,7 +356,7 @@ typedef enum {
 	OPS_PKA_PRIVATE08 = 108,/* !< Private/Experimental Algorithm */
 	OPS_PKA_PRIVATE09 = 109,/* !< Private/Experimental Algorithm */
 	OPS_PKA_PRIVATE10 = 110	/* !< Private/Experimental Algorithm */
-} __ops_pubkey_algorithm_t;
+} __ops_pubkey_alg_t;
 
 /** Structure to hold one DSA public key parameters.
  *
@@ -381,18 +410,17 @@ typedef enum {
 
 /** Structure to hold a pgp public key */
 typedef struct {
-	__ops_version_t   version;/* !< version of the key (v3, v4...) */
-	time_t          birthtime;	/* !< when the key was created.  Note
-					 * that interpretation varies with
-					 * key version. */
-	unsigned        days_valid;	/* !< validity period of the key in
-					 * days since creation.  A value of 0
-					 * has a special meaning indicating
-					 * this key does not expire.  Only
-					 * used with v3 keys. */
-	__ops_pubkey_algorithm_t algorithm;	/* !< Public Key Algorithm
-						 * type */
-	__ops_pubkey_union_t key;	/* !< Public Key Parameters */
+	__ops_version_t		version;/* !< version of the key (v3, v4...) */
+	time_t			birthtime;
+		/* !< when the key was created.  Note that
+		 * interpretation varies with key version.  */
+	unsigned		days_valid;
+		/* !< validity period of the key in days since
+		* creation.  A value of 0 has a special meaning
+		* indicating this key does not expire.  Only used with
+		* v3 keys.  */
+	__ops_pubkey_alg_t	alg;	/* !< Public Key Algorithm type */
+	__ops_pubkey_union_t	key;	/* !< Public Key Parameters */
 }               __ops_pubkey_t;
 
 /** Structure to hold data for one RSA secret key
@@ -448,7 +476,7 @@ typedef enum {
 	OPS_SA_AES_192 = 8,	/* !< AES with 192-bit key */
 	OPS_SA_AES_256 = 9,	/* !< AES with 256-bit key */
 	OPS_SA_TWOFISH = 10	/* !< Twofish with 256-bit key (TWOFISH) */
-} __ops_symmetric_algorithm_t;
+} __ops_symm_alg_t;
 
 /** Hashing Algorithm Numbers.
  * OpenPGP assigns a unique Algorithm Number to each algorithm that is part of OpenPGP.
@@ -467,10 +495,14 @@ typedef enum {
 	OPS_HASH_SHA384 = 9,	/* !< SHA384 */
 	OPS_HASH_SHA512 = 10,	/* !< SHA512 */
 	OPS_HASH_SHA224 = 11	/* !< SHA224 */
-} __ops_hash_algorithm_t;
+} __ops_hash_alg_t;
 
-void   __ops_calc_mdc_hash(const unsigned char *, const size_t, const unsigned char *, const unsigned int , unsigned char *);
-bool   __ops_is_hash_alg_supported(const __ops_hash_algorithm_t *);
+void   __ops_calc_mdc_hash(const unsigned char *,
+			const size_t,
+			const unsigned char *,
+			const unsigned int,
+			unsigned char *);
+bool   __ops_is_hash_alg_supported(const __ops_hash_alg_t *);
 
 /* Maximum block size for symmetric crypto */
 #define OPS_MAX_BLOCK_SIZE	16
@@ -481,12 +513,12 @@ bool   __ops_is_hash_alg_supported(const __ops_hash_algorithm_t *);
 /* Salt size for hashing */
 #define OPS_SALT_SIZE		8
 
-/* Hash size for secret key check */
-#define OPS_CHECKHASH_SIZE	20
-
 /* SHA1 Hash Size \todo is this the same as OPS_CHECKHASH_SIZE?? */
-#define OPS_SHA1_HASH_SIZE 		SHA_DIGEST_LENGTH
+#define OPS_SHA1_HASH_SIZE 	SHA_DIGEST_LENGTH
 #define OPS_SHA256_HASH_SIZE	SHA256_DIGEST_LENGTH
+
+/* Hash size for secret key check */
+#define OPS_CHECKHASH_SIZE	OPS_SHA1_HASH_SIZE
 
 /* Max hash size */
 #define OPS_MAX_HASH_SIZE	64
@@ -497,10 +529,10 @@ typedef struct {
 	__ops_pubkey_t			pubkey;
 	__ops_s2k_usage_t		s2k_usage;
 	__ops_s2k_specifier_t		s2k_specifier;
-	__ops_symmetric_algorithm_t	algorithm;
-	__ops_hash_algorithm_t		hash_algorithm;
+	__ops_symm_alg_t		alg;
+	__ops_hash_alg_t		hash_alg;
 	unsigned char			salt[OPS_SALT_SIZE];
-	unsigned			octet_count;
+	unsigned			octetc;
 	unsigned char			iv[OPS_MAX_BLOCK_SIZE];
 	__ops_seckey_union_t		key;
 	unsigned			checksum;
@@ -606,9 +638,9 @@ typedef struct {
 	time_t          birthtime;	/* !< creation time of the signature */
 	unsigned char   signer_id[OPS_KEY_ID_SIZE];	/* !< Eight-octet key ID
 							 * of signer */
-	__ops_pubkey_algorithm_t key_algorithm;	/* !< public key
+	__ops_pubkey_alg_t key_alg;	/* !< public key
 							 * algorithm number */
-	__ops_hash_algorithm_t hash_algorithm;	/* !< hashing algorithm
+	__ops_hash_alg_t hash_alg;	/* !< hashing algorithm
 						 * number */
 	__ops_sig_union_t sig;	/* !< signature parameters */
 	size_t          v4_hashed_data_length;
@@ -683,17 +715,17 @@ typedef struct {
 	 * Note that value 0 may represent the plaintext algorithm so we
 	 * cannot expect data->contents to be a null-terminated list
 	 */
-}               __ops_ss_preferred_ska_t;
+}               __ops_ss_skapref_t;
 
 /** Signature Subpacket : Preferrred Hash Algorithm */
 typedef struct {
 	__ops_data_t      data;
-}               __ops_ss_preferred_hash_t;
+}               __ops_ss_hashpref_t;
 
 /** Signature Subpacket : Preferred Compression */
 typedef struct {
 	__ops_data_t      data;
-}               __ops_ss_preferred_compression_t;
+}               __ops_ss_zpref_t;
 
 /** Signature Subpacket : Key Flags */
 typedef struct {
@@ -712,8 +744,8 @@ typedef struct {
 
 /** Signature Subpacket : Signature Target */
 typedef struct {
-	__ops_pubkey_algorithm_t pka_alg;
-	__ops_hash_algorithm_t hash_alg;
+	__ops_pubkey_alg_t pka_alg;
+	__ops_hash_alg_t hash_alg;
 	__ops_data_t      hash;
 }               __ops_ss_sig_target_t;
 
@@ -748,12 +780,12 @@ typedef struct {
 
 /** __ops_one_pass_sig_t */
 typedef struct {
-	unsigned char   version;
-	__ops_sig_type_t  sig_type;
-	__ops_hash_algorithm_t hash_algorithm;
-	__ops_pubkey_algorithm_t key_algorithm;
-	unsigned char   keyid[OPS_KEY_ID_SIZE];
-	bool   nested;
+	unsigned char		version;
+	__ops_sig_type_t	sig_type;
+	__ops_hash_alg_t	hash_alg;
+	__ops_pubkey_alg_t	key_alg;
+	unsigned char		keyid[OPS_KEY_ID_SIZE];
+	bool			nested;
 }               __ops_one_pass_sig_t;
 
 /** Signature Subpacket : Primary User ID */
@@ -763,18 +795,18 @@ typedef struct {
 
 /** Signature Subpacket : Regexp */
 typedef struct {
-	char           *text;
+	char           *regexp;
 }               __ops_ss_regexp_t;
 
 /** Signature Subpacket : Policy URL */
 typedef struct {
-	char           *text;
-}               __ops_ss_policy_url_t;
+	char           *url;
+}               __ops_ss_policy_t;
 
 /** Signature Subpacket : Preferred Key Server */
 typedef struct {
-	char           *text;
-}               __ops_ss_preferred_key_server_t;
+	char           *name;
+}               __ops_ss_pref_keyserv_t;
 
 /** Signature Subpacket : Revocation Key */
 typedef struct {
@@ -786,8 +818,8 @@ typedef struct {
 /** Signature Subpacket : Revocation Reason */
 typedef struct {
 	unsigned char   code;
-	char           *text;
-}               __ops_ss_revocation_reason_t;
+	char           *reason;
+}               __ops_ss_revocation_t;
 
 /** litdata_type_t */
 typedef enum {
@@ -800,14 +832,14 @@ typedef enum {
 
 /** __ops_litdata_header_t */
 typedef struct {
-	__ops_litdata_type_t format;
-	char            filename[256];
-	time_t          modification_time;
+	__ops_litdata_type_t	format;
+	char			filename[256];
+	time_t			mtime;
 }               __ops_litdata_header_t;
 
 /** __ops_litdata_body_t */
 typedef struct {
-	unsigned        length;
+	unsigned         length;
 	unsigned char   *data;
 	void		*mem;		/* __ops_memory_t pointer */
 }               __ops_litdata_body_t;
@@ -817,22 +849,22 @@ typedef struct {
 	unsigned char   data[20];	/* size of SHA1 hash */
 }               __ops_mdc_t;
 
-/** __ops_armoured_header_value_t */
+/** __ops_header_var_t */
 typedef struct {
 	char           *key;
 	char           *value;
-}               __ops_armoured_header_value_t;
+}               __ops_header_var_t;
 
 /** __ops_headers_t */
 typedef struct {
-	__ops_armoured_header_value_t *headers;
-	unsigned        nheaders;
+	__ops_header_var_t	*headers;
+	unsigned	         headerc;
 }               __ops_headers_t;
 
 /** __ops_armour_header_t */
 typedef struct {
-	const char     *type;
-	__ops_headers_t   headers;
+	const char	*type;
+	__ops_headers_t	 headers;
 }               __ops_armour_header_t;
 
 /** __ops_armour_trailer_t */
@@ -840,24 +872,24 @@ typedef struct {
 	const char     *type;
 }               __ops_armour_trailer_t;
 
-/** __ops_signed_cleartext_header_t */
+/** __ops_cleartext_head_t */
 typedef struct {
 	__ops_headers_t   headers;
-}               __ops_signed_cleartext_header_t;
+}               __ops_cleartext_head_t;
 
-/** __ops_signed_cleartext_body_t */
+/** __ops_cleartext_body_t */
 typedef struct {
 	unsigned        length;
 	unsigned char   data[8192];	/* \todo fix hard-coded value? */
-}               __ops_signed_cleartext_body_t;
+}               __ops_cleartext_body_t;
 
-/** __ops_signed_cleartext_trailer_t */
+/** __ops_cleartext_trailer_t */
 typedef struct {
 	struct _ops_hash_t *hash;	/* !< This will not have been
 					 * finalised, but will have seen all
 					 * the cleartext data in canonical
 					 * form */
-}               __ops_signed_cleartext_trailer_t;
+}               __ops_cleartext_trailer_t;
 
 /** __ops_unarmoured_text_t */
 typedef struct {
@@ -871,36 +903,36 @@ typedef enum {
 
 typedef enum {
 	OPS_PKSK_V3 = 3
-} __ops_pk_session_key_version_t;
+} __ops_pk_sesskey_version_t;
 
-/** __ops_pk_session_key_parameters_rsa_t */
+/** __ops_pk_sesskey_parameters_rsa_t */
 typedef struct {
 	BIGNUM         *encrypted_m;
 	BIGNUM         *m;
-}               __ops_pk_session_key_parameters_rsa_t;
+}               __ops_pk_sesskey_parameters_rsa_t;
 
-/** __ops_pk_session_key_parameters_elgamal_t */
+/** __ops_pk_sesskey_parameters_elgamal_t */
 typedef struct {
 	BIGNUM         *g_to_k;
 	BIGNUM         *encrypted_m;
-}               __ops_pk_session_key_parameters_elgamal_t;
+}               __ops_pk_sesskey_parameters_elgamal_t;
 
-/** __ops_pk_session_key_parameters_t */
+/** __ops_pk_sesskey_parameters_t */
 typedef union {
-	__ops_pk_session_key_parameters_rsa_t rsa;
-	__ops_pk_session_key_parameters_elgamal_t elgamal;
-}               __ops_pk_session_key_parameters_t;
+	__ops_pk_sesskey_parameters_rsa_t rsa;
+	__ops_pk_sesskey_parameters_elgamal_t elgamal;
+}               __ops_pk_sesskey_parameters_t;
 
-/** __ops_pk_session_key_t */
+/** __ops_pk_sesskey_t */
 typedef struct {
-	__ops_pk_session_key_version_t version;
+	__ops_pk_sesskey_version_t version;
 	unsigned char   key_id[OPS_KEY_ID_SIZE];
-	__ops_pubkey_algorithm_t algorithm;
-	__ops_pk_session_key_parameters_t parameters;
-	__ops_symmetric_algorithm_t symmetric_algorithm;
+	__ops_pubkey_alg_t alg;
+	__ops_pk_sesskey_parameters_t parameters;
+	__ops_symm_alg_t symm_alg;
 	unsigned char   key[OPS_MAX_KEY_SIZE];
 	unsigned short  checksum;
-}               __ops_pk_session_key_t;
+}               __ops_pk_sesskey_t;
 
 /** __ops_seckey_passphrase_t */
 typedef struct {
@@ -934,61 +966,61 @@ typedef struct {
 /** __ops_get_seckey_t */
 typedef struct {
 	const __ops_seckey_t **seckey;
-	const __ops_pk_session_key_t *pk_session_key;
+	const __ops_pk_sesskey_t *pk_sesskey;
 }               __ops_get_seckey_t;
 
 /** __ops_parser_union_content_t */
 typedef union {
-	__ops_parser_error_t error;
-	__ops_parser_errcode_t errcode;
-	__ops_ptag_t      ptag;
-	__ops_pubkey_t pubkey;
-	__ops_trust_t     trust;
-	__ops_user_id_t   user_id;
-	__ops_user_attribute_t user_attribute;
-	__ops_sig_t sig;
-	__ops_ss_raw_t    ss_raw;
-	__ops_ss_trust_t  ss_trust;
-	__ops_ss_revocable_t ss_revocable;
-	__ops_ss_time_t   ss_time;
-	__ops_ss_key_id_t ss_issuer_key_id;
-	__ops_ss_notation_data_t ss_notation_data;
-	__ops_subpacket_t    packet;
-	__ops_compressed_t compressed;
-	__ops_one_pass_sig_t one_pass_sig;
-	__ops_ss_preferred_ska_t ss_preferred_ska;
-	__ops_ss_preferred_hash_t ss_preferred_hash;
-	__ops_ss_preferred_compression_t ss_preferred_compression;
-	__ops_ss_key_flags_t ss_key_flags;
-	__ops_ss_key_server_prefs_t ss_key_server_prefs;
-	__ops_ss_primary_user_id_t ss_primary_user_id;
-	__ops_ss_regexp_t ss_regexp;
-	__ops_ss_policy_url_t ss_policy_url;
-	__ops_ss_preferred_key_server_t ss_preferred_key_server;
-	__ops_ss_revocation_key_t ss_revocation_key;
-	__ops_ss_userdefined_t ss_userdefined;
-	__ops_ss_unknown_t ss_unknown;
-	__ops_litdata_header_t litdata_header;
-	__ops_litdata_body_t litdata_body;
-	__ops_mdc_t       mdc;
-	__ops_ss_features_t ss_features;
-	__ops_ss_sig_target_t ss_sig_target;
-	__ops_ss_embedded_sig_t ss_embedded_sig;
-	__ops_ss_revocation_reason_t ss_revocation_reason;
-	__ops_seckey_t seckey;
-	__ops_user_id_t   ss_signers_user_id;
-	__ops_armour_header_t armour_header;
-	__ops_armour_trailer_t armour_trailer;
-	__ops_signed_cleartext_header_t signed_cleartext_header;
-	__ops_signed_cleartext_body_t signed_cleartext_body;
-	__ops_signed_cleartext_trailer_t signed_cleartext_trailer;
-	__ops_unarmoured_text_t unarmoured_text;
-	__ops_pk_session_key_t pk_session_key;
-	__ops_seckey_passphrase_t skey_passphrase;
-	__ops_se_ip_data_header_t se_ip_data_header;
-	__ops_se_ip_data_body_t se_ip_data_body;
-	__ops_se_data_body_t se_data_body;
-	__ops_get_seckey_t get_seckey;
+	__ops_parser_error_t		error;
+	__ops_parser_errcode_t		errcode;
+	__ops_ptag_t			ptag;
+	__ops_pubkey_t			pubkey;
+	__ops_trust_t			trust;
+	__ops_user_id_t			user_id;
+	__ops_user_attribute_t		user_attribute;
+	__ops_sig_t			sig;
+	__ops_ss_raw_t			ss_raw;
+	__ops_ss_trust_t		ss_trust;
+	__ops_ss_revocable_t		ss_revocable;
+	__ops_ss_time_t			ss_time;
+	__ops_ss_key_id_t		ss_issuer_key_id;
+	__ops_ss_notation_data_t	ss_notation_data;
+	__ops_subpacket_t		packet;
+	__ops_compressed_t		compressed;
+	__ops_one_pass_sig_t		one_pass_sig;
+	__ops_ss_skapref_t		ss_skapref;
+	__ops_ss_hashpref_t		ss_hashpref;
+	__ops_ss_zpref_t		ss_zpref;
+	__ops_ss_key_flags_t		ss_key_flags;
+	__ops_ss_key_server_prefs_t	ss_key_server_prefs;
+	__ops_ss_primary_user_id_t	ss_primary_user_id;
+	__ops_ss_regexp_t		ss_regexp;
+	__ops_ss_policy_t		ss_policy;
+	__ops_ss_pref_keyserv_t		ss_pref_keyserv;
+	__ops_ss_revocation_key_t	ss_revocation_key;
+	__ops_ss_userdefined_t		ss_userdefined;
+	__ops_ss_unknown_t		ss_unknown;
+	__ops_litdata_header_t		litdata_header;
+	__ops_litdata_body_t		litdata_body;
+	__ops_mdc_t			mdc;
+	__ops_ss_features_t		ss_features;
+	__ops_ss_sig_target_t		ss_sig_target;
+	__ops_ss_embedded_sig_t		ss_embedded_sig;
+	__ops_ss_revocation_t		ss_revocation;
+	__ops_seckey_t			seckey;
+	__ops_user_id_t			ss_signer;
+	__ops_armour_header_t		armour_header;
+	__ops_armour_trailer_t		armour_trailer;
+	__ops_cleartext_head_t		cleartext_head;
+	__ops_cleartext_body_t		cleartext_body;
+	__ops_cleartext_trailer_t	cleartext_trailer;
+	__ops_unarmoured_text_t		unarmoured_text;
+	__ops_pk_sesskey_t		pk_sesskey;
+	__ops_seckey_passphrase_t	skey_passphrase;
+	__ops_se_ip_data_header_t	se_ip_data_header;
+	__ops_se_ip_data_body_t		se_ip_data_body;
+	__ops_se_data_body_t		se_data_body;
+	__ops_get_seckey_t		get_seckey;
 }               __ops_parser_content_union_t;
 
 /** __ops_packet_t */
@@ -1014,26 +1046,26 @@ void            __ops_user_id_free(__ops_user_id_t *);
 void            __ops_user_attribute_free(__ops_user_attribute_t *);
 void            __ops_sig_free(__ops_sig_t *);
 void            __ops_trust_free(__ops_trust_t *);
-void            __ops_ss_preferred_ska_free(__ops_ss_preferred_ska_t *);
-void            __ops_ss_preferred_hash_free(__ops_ss_preferred_hash_t *);
-void            __ops_ss_preferred_compression_free(__ops_ss_preferred_compression_t *);
+void            __ops_ss_skapref_free(__ops_ss_skapref_t *);
+void            __ops_ss_hashpref_free(__ops_ss_hashpref_t *);
+void            __ops_ss_zpref_free(__ops_ss_zpref_t *);
 void            __ops_ss_key_flags_free(__ops_ss_key_flags_t *);
 void            __ops_ss_key_server_prefs_free(__ops_ss_key_server_prefs_t *);
 void            __ops_ss_features_free(__ops_ss_features_t *);
 void            __ops_ss_notation_data_free(__ops_ss_notation_data_t *);
-void            __ops_ss_policy_url_free(__ops_ss_policy_url_t *);
-void            __ops_ss_preferred_key_server_free(__ops_ss_preferred_key_server_t *);
+void            __ops_ss_policy_free(__ops_ss_policy_t *);
+void            __ops_ss_pref_keyserv_free(__ops_ss_pref_keyserv_t *);
 void            __ops_ss_regexp_free(__ops_ss_regexp_t *);
 void            __ops_ss_userdefined_free(__ops_ss_userdefined_t *);
 void            __ops_ss_reserved_free(__ops_ss_unknown_t *);
-void            __ops_ss_revocation_reason_free(__ops_ss_revocation_reason_t *);
+void            __ops_ss_revocation_free(__ops_ss_revocation_t *);
 void            __ops_ss_sig_target_free(__ops_ss_sig_target_t *);
 void            __ops_ss_embedded_sig_free(__ops_ss_embedded_sig_t *);
 
 void            __ops_subpacket_free(__ops_subpacket_t *);
 void            __ops_parser_content_free(__ops_packet_t *);
 void            __ops_seckey_free(__ops_seckey_t *);
-void            __ops_pk_session_key_free(__ops_pk_session_key_t *);
+void            __ops_pk_sesskey_free(__ops_pk_sesskey_t *);
 
 int             __ops_print_packet(const __ops_packet_t *);
 

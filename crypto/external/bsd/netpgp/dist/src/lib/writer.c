@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -63,7 +91,7 @@
  * return true if OK, otherwise false
  */
 static bool 
-base_write(const void *src, unsigned length, __ops_create_info_t * info)
+base_write(const void *src, unsigned length, __ops_createinfo_t * info)
 {
 	return info->winfo.writer(src, length, &info->errors, &info->winfo);
 }
@@ -78,7 +106,7 @@ base_write(const void *src, unsigned length, __ops_create_info_t * info)
  */
 
 bool 
-__ops_write(const void *src, unsigned length, __ops_create_info_t * info)
+__ops_write(const void *src, unsigned length, __ops_createinfo_t * info)
 {
 	return base_write(src, length, info);
 }
@@ -92,7 +120,7 @@ __ops_write(const void *src, unsigned length, __ops_create_info_t * info)
  */
 
 bool 
-__ops_write_scalar(unsigned n, unsigned length, __ops_create_info_t *info)
+__ops_write_scalar(unsigned n, unsigned length, __ops_createinfo_t *info)
 {
 	unsigned char   c[1];
 
@@ -113,7 +141,7 @@ __ops_write_scalar(unsigned n, unsigned length, __ops_create_info_t *info)
  */
 
 bool 
-__ops_write_mpi(const BIGNUM * bn, __ops_create_info_t * info)
+__ops_write_mpi(const BIGNUM * bn, __ops_createinfo_t * info)
 {
 	unsigned char   buf[NETPGP_BUFSIZ];
 	unsigned	bits = (unsigned)BN_num_bits(bn);
@@ -135,7 +163,7 @@ __ops_write_mpi(const BIGNUM * bn, __ops_create_info_t * info)
  */
 
 bool 
-__ops_write_ptag(__ops_content_tag_t tag, __ops_create_info_t * info)
+__ops_write_ptag(__ops_content_tag_t tag, __ops_createinfo_t * info)
 {
 	unsigned char   c[1];
 
@@ -151,7 +179,7 @@ __ops_write_ptag(__ops_content_tag_t tag, __ops_create_info_t * info)
  */
 
 bool 
-__ops_write_length(unsigned length, __ops_create_info_t * info)
+__ops_write_length(unsigned length, __ops_createinfo_t * info)
 {
 	unsigned char   c[2];
 
@@ -219,7 +247,7 @@ writer_info_delete(__ops_writer_info_t * winfo)
  * \param arg The argument for the writer and destroyer
  */
 void 
-__ops_writer_set(__ops_create_info_t * info,
+__ops_writer_set(__ops_createinfo_t * info,
 	       __ops_writer_t * writer,
 	       __ops_writer_finaliser_t * finaliser,
 	       __ops_writer_destroyer_t * destroyer,
@@ -247,7 +275,7 @@ __ops_writer_set(__ops_create_info_t * info,
  * \param arg The argument for the writer and destroyer
  */
 void 
-__ops_writer_push(__ops_create_info_t * info,
+__ops_writer_push(__ops_createinfo_t * info,
 		__ops_writer_t * writer,
 		__ops_writer_finaliser_t * finaliser,
 		__ops_writer_destroyer_t * destroyer,
@@ -269,7 +297,7 @@ __ops_writer_push(__ops_create_info_t * info,
 }
 
 void 
-__ops_writer_pop(__ops_create_info_t * info)
+__ops_writer_pop(__ops_createinfo_t * info)
 {
 	__ops_writer_info_t *next;
 
@@ -298,7 +326,7 @@ __ops_writer_pop(__ops_create_info_t * info)
  * \param info The info structure
  */
 bool 
-__ops_writer_close(__ops_create_info_t * info)
+__ops_writer_close(__ops_createinfo_t * info)
 {
 	bool   ret = writer_info_finalise(&info->errors, &info->winfo);
 
@@ -309,7 +337,7 @@ __ops_writer_close(__ops_create_info_t * info)
 /**
  * \ingroup Core_Writers
  *
- * Get the arg supplied to __ops_create_info_set_writer().
+ * Get the arg supplied to __ops_createinfo_set_writer().
  *
  * \param winfo The writer_info structure
  * \return The arg
@@ -463,7 +491,7 @@ dash_escaped_destroyer(__ops_writer_info_t * winfo)
  * \param sig
  */
 bool 
-__ops_writer_push_clearsigned(__ops_create_info_t * info,
+__ops_writer_push_clearsigned(__ops_createinfo_t * info,
 			    __ops_create_sig_t * sig)
 {
 	static const char     header[] =
@@ -638,7 +666,7 @@ linebreak_writer(const unsigned char *src,
  * \param info
  */
 bool 
-__ops_writer_use_armored_sig(__ops_create_info_t * info)
+__ops_writer_use_armored_sig(__ops_createinfo_t * info)
 {
 	static const char     header[] =
 			"\r\n-----BEGIN PGP SIGNATURE-----\r\nVersion: "
@@ -713,7 +741,7 @@ armoured_message_finaliser(__ops_error_t ** errors,
  \todo replace with generic function
 */
 void 
-__ops_writer_push_armoured_message(__ops_create_info_t * info)
+__ops_writer_push_armoured_message(__ops_createinfo_t * info)
 {
 	static const char     header[] = "-----BEGIN PGP MESSAGE-----\r\n";
 	base64_t   *base64;
@@ -809,7 +837,7 @@ armoured_private_key_finaliser(__ops_error_t ** errors,
  \brief Push Armoured Writer on stack (generic)
 */
 void 
-__ops_writer_push_armoured(__ops_create_info_t * info, __ops_armor_type_t type)
+__ops_writer_push_armoured(__ops_createinfo_t * info, __ops_armor_type_t type)
 {
 	static char     hdr_pubkey[] =
 			"-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: "
@@ -882,7 +910,7 @@ encrypt_writer(const unsigned char *src,
 
 	crypt_t    *pgp_encrypt = (crypt_t *) __ops_writer_get_arg(winfo);
 
-	if (!__ops_is_sa_supported(pgp_encrypt->crypt->algorithm)) {
+	if (!__ops_is_sa_supported(pgp_encrypt->crypt->alg)) {
 		(void) fprintf(stderr, "encrypt_writer: not supported\n");
 		return false;
 	}
@@ -938,7 +966,7 @@ encrypt_destroyer(__ops_writer_info_t * winfo)
 \brief Push Encrypted Writer onto stack (create SE packets)
 */
 void 
-__ops_writer_push_encrypt_crypt(__ops_create_info_t * cinfo,
+__ops_writer_push_encrypt_crypt(__ops_createinfo_t * cinfo,
 			      __ops_crypt_t * pgp_crypt)
 {
 	/* Create encrypt to be used with this writer */
@@ -975,7 +1003,7 @@ static void     encrypt_se_ip_destroyer(__ops_writer_info_t *);
 \brief Push Encrypted SE IP Writer onto stack
 */
 void 
-__ops_writer_push_encrypt_se_ip(__ops_create_info_t * cinfo,
+__ops_writer_push_encrypt_se_ip(__ops_createinfo_t * cinfo,
 			      const __ops_keydata_t * pub_key)
 {
 	__ops_crypt_t    *encrypted;
@@ -986,17 +1014,17 @@ __ops_writer_push_encrypt_se_ip(__ops_create_info_t * cinfo,
 	encrypt_se_ip_t *se_ip = calloc(1, sizeof(*se_ip));
 
 	/* Create and write encrypted PK session key */
-	__ops_pk_session_key_t *encrypted_pk_session_key;
-	encrypted_pk_session_key = __ops_create_pk_session_key(pub_key);
-	__ops_write_pk_session_key(cinfo, encrypted_pk_session_key);
+	__ops_pk_sesskey_t *encrypted_pk_sesskey;
+	encrypted_pk_sesskey = __ops_create_pk_sesskey(pub_key);
+	__ops_write_pk_sesskey(cinfo, encrypted_pk_sesskey);
 
 	/* Setup the se_ip */
 	encrypted = calloc(1, sizeof(*encrypted));
 	__ops_crypt_any(encrypted,
-			encrypted_pk_session_key->symmetric_algorithm);
+			encrypted_pk_sesskey->symm_alg);
 	iv = calloc(1, encrypted->blocksize);
 	encrypted->set_iv(encrypted, iv);
-	encrypted->set_key(encrypted, &encrypted_pk_session_key->key[0]);
+	encrypted->set_key(encrypted, &encrypted_pk_sesskey->key[0]);
 	__ops_encrypt_init(encrypted);
 
 	se_ip->crypt = encrypted;
@@ -1005,7 +1033,7 @@ __ops_writer_push_encrypt_se_ip(__ops_create_info_t * cinfo,
 	__ops_writer_push(cinfo, encrypt_se_ip_writer, NULL,
 			encrypt_se_ip_destroyer, se_ip);
 	/* tidy up */
-	free(encrypted_pk_session_key);
+	free(encrypted_pk_sesskey);
 	free(iv);
 }
 
@@ -1018,11 +1046,11 @@ encrypt_se_ip_writer(const unsigned char *src,
 	encrypt_se_ip_t *se_ip = __ops_writer_get_arg(winfo);
 	bool   rtn = true;
 	__ops_memory_t   *mem_literal;
-	__ops_create_info_t *cinfo_literal;
+	__ops_createinfo_t *cinfo_literal;
 	__ops_memory_t   *mem_compressed;
-	__ops_create_info_t *cinfo_compressed;
+	__ops_createinfo_t *cinfo_compressed;
 	__ops_memory_t   *my_mem;
-	__ops_create_info_t *my_cinfo;
+	__ops_createinfo_t *my_cinfo;
 	const unsigned int bufsz = 128;	/* initial value; gets expanded as
 					 * necessary */
 
@@ -1079,15 +1107,19 @@ bool
 __ops_write_se_ip_pktset(const unsigned char *data,
 		       const unsigned int len,
 		       __ops_crypt_t * crypted,
-		       __ops_create_info_t * cinfo)
+		       __ops_createinfo_t * cinfo)
 {
-	unsigned char   hashed[SHA_DIGEST_LENGTH];
-	const size_t    sz_mdc = 1 + 1 + SHA_DIGEST_LENGTH;
-	size_t          sz_preamble = crypted->blocksize + 2;
-	unsigned char  *preamble = calloc(1, sz_preamble);
-	size_t          sz_buf = sz_preamble + len + sz_mdc;
-	__ops_memory_t   *mem_mdc;
-	__ops_create_info_t *cinfo_mdc;
+	__ops_createinfo_t	*cinfo_mdc;
+	__ops_memory_t		*mem_mdc;
+	unsigned char		 hashed[OPS_SHA1_HASH_SIZE];
+	unsigned char		*preamble;
+	const size_t		 sz_mdc = 1 + 1 + OPS_SHA1_HASH_SIZE;
+	size_t			 sz_preamble;
+	size_t			 sz_buf;
+
+	sz_preamble = crypted->blocksize + 2;
+	preamble = calloc(1, sz_preamble);
+	sz_buf = sz_preamble + len + sz_mdc;
 
 	if (!__ops_write_ptag(OPS_PTAG_CT_SE_IP_DATA, cinfo) ||
 	    !__ops_write_length(1 + sz_buf, cinfo) ||
@@ -1122,28 +1154,28 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 		size_t          sz_mdc2 = 1 + 1 + OPS_SHA1_HASH_SIZE;
 		unsigned char  *mdc = NULL;
 
-		fprintf(stderr, "\nplaintext: ");
+		(void) fprintf(stderr, "\nplaintext: ");
 		for (i = 0; i < sz_plaintext; i++) {
-			fprintf(stderr, " 0x%02x", data[i]);
+			(void) fprintf(stderr, " 0x%02x", data[i]);
 		}
-		fprintf(stderr, "\n");
+		(void) fprintf(stderr, "\n");
 
-		fprintf(stderr, "\nmdc: ");
+		(void) fprintf(stderr, "\nmdc: ");
 		mdc = __ops_memory_get_data(mem_mdc);
 		for (i = 0; i < sz_mdc2; i++) {
-			fprintf(stderr, " 0x%02x", mdc[i]);
+			(void) fprintf(stderr, " 0x%02x", mdc[i]);
 		}
-		fprintf(stderr, "\n");
+		(void) fprintf(stderr, "\n");
 	}
 	/* and write it out */
 
 	__ops_writer_push_encrypt_crypt(cinfo, crypted);
 
-#ifdef DEBUG
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "writing %" PRIsize "u + %d + %" PRIsize "u\n", sz_preamble, len, __ops_memory_get_length(mem_mdc));
+		(void) fprintf(stderr,
+			"writing %" PRIsize "u + %d + %" PRIsize "u\n",
+			sz_preamble, len, __ops_memory_get_length(mem_mdc));
 	}
-#endif				/* DEBUG */
 
 	if (!__ops_write(preamble, sz_preamble, cinfo) ||
 	    !__ops_write(data, len, cinfo) ||
@@ -1207,7 +1239,7 @@ writer_fd_destroyer(__ops_writer_info_t * winfo)
  */
 
 void 
-__ops_writer_set_fd(__ops_create_info_t * info, int fd)
+__ops_writer_set_fd(__ops_createinfo_t * info, int fd)
 {
 	writer_fd_t *writer = calloc(1, sizeof(*writer));
 
@@ -1222,7 +1254,7 @@ memory_writer(const unsigned char *src, unsigned length,
 {
 	__ops_memory_t   *mem = __ops_writer_get_arg(winfo);
 
-	OPS_USED(errors);
+	__OPS_USED(errors);
 	__ops_memory_add(mem, src, length);
 	return true;
 }
@@ -1240,7 +1272,7 @@ memory_writer(const unsigned char *src, unsigned length,
  */
 
 void 
-__ops_writer_set_memory(__ops_create_info_t * info, __ops_memory_t * mem)
+__ops_writer_set_memory(__ops_createinfo_t * info, __ops_memory_t * mem)
 {
 	__ops_writer_set(info, memory_writer, NULL, NULL, mem);
 }
@@ -1248,7 +1280,7 @@ __ops_writer_set_memory(__ops_create_info_t * info, __ops_memory_t * mem)
 /**************************************************************************/
 
 typedef struct {
-	__ops_hash_algorithm_t hash_algorithm;
+	__ops_hash_alg_t hash_alg;
 	__ops_hash_t      hash;
 	unsigned char  *hashed;
 }               skey_checksum_t;
@@ -1295,18 +1327,18 @@ skey_checksum_destroyer(__ops_writer_info_t * winfo)
 \param seckey
 */
 void 
-__ops_push_skey_checksum_writer(__ops_create_info_t *cinfo,
+__ops_push_skey_checksum_writer(__ops_createinfo_t *cinfo,
 		__ops_seckey_t *seckey)
 {
 	/* XXX: push a SHA-1 checksum writer (and change s2k to 254). */
 	skey_checksum_t *sum = calloc(1, sizeof(*sum));
 
 	/* configure the arg */
-	sum->hash_algorithm = seckey->hash_algorithm;
+	sum->hash_alg = seckey->hash_alg;
 	sum->hashed = &seckey->checkhash[0];
 
 	/* init the hash */
-	__ops_hash_any(&sum->hash, sum->hash_algorithm);
+	__ops_hash_any(&sum->hash, sum->hash_alg);
 	sum->hash.init(&sum->hash);
 
 	__ops_writer_push(cinfo, skey_checksum_writer,
@@ -1321,24 +1353,24 @@ typedef struct {
 	__ops_crypt_t    *crypt;
 	__ops_memory_t   *mem_data;
 	__ops_memory_t   *mem_literal;
-	__ops_create_info_t *cinfo_literal;
+	__ops_createinfo_t *cinfo_literal;
 	__ops_memory_t   *mem_se_ip;
-	__ops_create_info_t *cinfo_se_ip;
+	__ops_createinfo_t *cinfo_se_ip;
 	__ops_hash_t      hash;
-}               stream_encrypt_se_ip_t;
+}               str_enc_se_ip_t;
 
 
 static bool 
-stream_encrypt_se_ip_writer(const unsigned char *src,
+str_enc_se_ip_writer(const unsigned char *src,
 			    unsigned length,
 			    __ops_error_t ** errors,
 			    __ops_writer_info_t * winfo);
 
 static bool 
-stream_encrypt_se_ip_finaliser(__ops_error_t ** errors,
+str_enc_se_ip_finaliser(__ops_error_t ** errors,
 			       __ops_writer_info_t * winfo);
 
-static void     stream_encrypt_se_ip_destroyer(__ops_writer_info_t * winfo);
+static void     str_enc_se_ip_destroyer(__ops_writer_info_t * winfo);
 
 /* */
 
@@ -1348,7 +1380,7 @@ static void     stream_encrypt_se_ip_destroyer(__ops_writer_info_t * winfo);
 \param pub_key
 */
 void 
-__ops_writer_push_stream_encrypt_se_ip(__ops_create_info_t * cinfo,
+__ops_push_stream_enc_se_ip(__ops_createinfo_t * cinfo,
 				     const __ops_keydata_t * pub_key)
 {
 	__ops_crypt_t    *encrypted;
@@ -1356,20 +1388,20 @@ __ops_writer_push_stream_encrypt_se_ip(__ops_create_info_t * cinfo,
 	const unsigned int bufsz = 1024;
 	/* Create arg to be used with this writer */
 	/* Remember to free this in the destroyer */
-	stream_encrypt_se_ip_t *se_ip = calloc(1, sizeof(*se_ip));
+	str_enc_se_ip_t *se_ip = calloc(1, sizeof(*se_ip));
 	/* Create and write encrypted PK session key */
-	__ops_pk_session_key_t *encrypted_pk_session_key;
+	__ops_pk_sesskey_t *encrypted_pk_sesskey;
 
-	encrypted_pk_session_key = __ops_create_pk_session_key(pub_key);
-	__ops_write_pk_session_key(cinfo, encrypted_pk_session_key);
+	encrypted_pk_sesskey = __ops_create_pk_sesskey(pub_key);
+	__ops_write_pk_sesskey(cinfo, encrypted_pk_sesskey);
 
 	/* Setup the se_ip */
 	encrypted = calloc(1, sizeof(*encrypted));
 	__ops_crypt_any(encrypted,
-			encrypted_pk_session_key->symmetric_algorithm);
+			encrypted_pk_sesskey->symm_alg);
 	iv = calloc(1, encrypted->blocksize);
 	encrypted->set_iv(encrypted, iv);
-	encrypted->set_key(encrypted, &encrypted_pk_session_key->key[0]);
+	encrypted->set_key(encrypted, &encrypted_pk_sesskey->key[0]);
 	__ops_encrypt_init(encrypted);
 
 	se_ip->crypt = encrypted;
@@ -1385,11 +1417,11 @@ __ops_writer_push_stream_encrypt_se_ip(__ops_create_info_t * cinfo,
 
 	/* And push writer on stack */
 	__ops_writer_push(cinfo,
-			stream_encrypt_se_ip_writer,
-			stream_encrypt_se_ip_finaliser,
-			stream_encrypt_se_ip_destroyer, se_ip);
+			str_enc_se_ip_writer,
+			str_enc_se_ip_finaliser,
+			str_enc_se_ip_destroyer, se_ip);
 	/* tidy up */
-	free(encrypted_pk_session_key);
+	free(encrypted_pk_sesskey);
 	free(iv);
 }
 
@@ -1420,7 +1452,7 @@ __ops_calc_partial_data_length(unsigned int len)
 
 static bool 
 __ops_write_partial_data_length(unsigned int len,
-			      __ops_create_info_t * info)
+			      __ops_createinfo_t * info)
 {
 	/* len must be a power of 2 from 0 to 30 */
 	int             i;
@@ -1439,7 +1471,7 @@ __ops_write_partial_data_length(unsigned int len,
 static bool 
 __ops_stream_write_litdata(const unsigned char *data,
 			      unsigned int len,
-			      __ops_create_info_t * info)
+			      __ops_createinfo_t * info)
 {
 	while (len > 0) {
 		size_t          pdlen = __ops_calc_partial_data_length(len);
@@ -1456,7 +1488,7 @@ static          bool
 __ops_stream_write_litdata_first(const unsigned char *data,
 				    unsigned int len,
 				    const __ops_litdata_type_t type,
-				    __ops_create_info_t * info)
+				    __ops_createinfo_t * info)
 {
 	/* \todo add filename  */
 	/* \todo add date */
@@ -1488,7 +1520,7 @@ __ops_stream_write_litdata_first(const unsigned char *data,
 static          bool
 __ops_stream_write_litdata_last(const unsigned char *data,
 				   unsigned int len,
-				   __ops_create_info_t * info)
+				   __ops_createinfo_t * info)
 {
 	__ops_write_length(len, info);
 	__ops_write(data, len, info);
@@ -1498,8 +1530,8 @@ __ops_stream_write_litdata_last(const unsigned char *data,
 static          bool
 __ops_stream_write_se_ip(const unsigned char *data,
 		       unsigned int len,
-		       stream_encrypt_se_ip_t * se_ip,
-		       __ops_create_info_t * cinfo)
+		       str_enc_se_ip_t * se_ip,
+		       __ops_createinfo_t * cinfo)
 {
 	size_t          pdlen;
 
@@ -1522,8 +1554,8 @@ __ops_stream_write_se_ip(const unsigned char *data,
 static          bool
 __ops_stream_write_se_ip_first(const unsigned char *data,
 			     unsigned int len,
-			     stream_encrypt_se_ip_t * se_ip,
-			     __ops_create_info_t * cinfo)
+			     str_enc_se_ip_t * se_ip,
+			     __ops_createinfo_t * cinfo)
 {
 	size_t          sz_preamble = se_ip->crypt->blocksize + 2;
 	size_t          sz_towrite = sz_preamble + 1 + len;
@@ -1572,15 +1604,15 @@ __ops_stream_write_se_ip_first(const unsigned char *data,
 static          bool
 __ops_stream_write_se_ip_last(const unsigned char *data,
 			    unsigned int len,
-			    stream_encrypt_se_ip_t * se_ip,
-			    __ops_create_info_t * cinfo)
+			    str_enc_se_ip_t * se_ip,
+			    __ops_createinfo_t * cinfo)
 {
-	unsigned char   c[1];
-	unsigned char   hashed[SHA_DIGEST_LENGTH];
-	const size_t    sz_mdc = 1 + 1 + SHA_DIGEST_LENGTH;
-	size_t          sz_buf = len + sz_mdc;
-	__ops_memory_t   *mem_mdc;
-	__ops_create_info_t *cinfo_mdc;
+	__ops_createinfo_t	*cinfo_mdc;
+	__ops_memory_t		*mem_mdc;
+	unsigned char		 c[1];
+	unsigned char		 hashed[OPS_SHA1_HASH_SIZE];
+	const size_t		 sz_mdc = 1 + 1 + OPS_SHA1_HASH_SIZE;
+	size_t			 sz_buf = len + sz_mdc;
 
 	se_ip->hash.add(&se_ip->hash, data, len);
 
@@ -1589,7 +1621,7 @@ __ops_stream_write_se_ip_last(const unsigned char *data,
 	se_ip->hash.add(&se_ip->hash, &c[0], 1);
 
 	/* MDC packet len */
-	c[0] = 0x14;
+	c[0] = OPS_SHA1_HASH_SIZE;
 	se_ip->hash.add(&se_ip->hash, &c[0], 1);
 
 	/* finish */
@@ -1616,12 +1648,12 @@ __ops_stream_write_se_ip_last(const unsigned char *data,
 }
 
 static bool 
-stream_encrypt_se_ip_writer(const unsigned char *src,
+str_enc_se_ip_writer(const unsigned char *src,
 			    unsigned length,
 			    __ops_error_t ** errors,
 			    __ops_writer_info_t * winfo)
 {
-	stream_encrypt_se_ip_t *se_ip = __ops_writer_get_arg(winfo);
+	str_enc_se_ip_t *se_ip = __ops_writer_get_arg(winfo);
 	bool   rtn = true;
 
 	if (se_ip->cinfo_literal == NULL) {	/* first literal data chunk
@@ -1669,10 +1701,10 @@ stream_encrypt_se_ip_writer(const unsigned char *src,
 }
 
 static bool 
-stream_encrypt_se_ip_finaliser(__ops_error_t ** errors,
+str_enc_se_ip_finaliser(__ops_error_t ** errors,
 			       __ops_writer_info_t * winfo)
 {
-	stream_encrypt_se_ip_t *se_ip = __ops_writer_get_arg(winfo);
+	str_enc_se_ip_t *se_ip = __ops_writer_get_arg(winfo);
 	/* write last chunk of data */
 
 	if (se_ip->cinfo_literal == NULL) {
@@ -1711,9 +1743,9 @@ stream_encrypt_se_ip_finaliser(__ops_error_t ** errors,
 }
 
 static void 
-stream_encrypt_se_ip_destroyer(__ops_writer_info_t * winfo)
+str_enc_se_ip_destroyer(__ops_writer_info_t * winfo)
 {
-	stream_encrypt_se_ip_t *se_ip = __ops_writer_get_arg(winfo);
+	str_enc_se_ip_t *se_ip = __ops_writer_get_arg(winfo);
 
 	__ops_memory_free(se_ip->mem_data);
 	__ops_teardown_memory_write(se_ip->cinfo_literal, se_ip->mem_literal);

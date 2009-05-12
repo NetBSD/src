@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -167,18 +195,18 @@ sha1_finish(__ops_hash_t * hash, unsigned char *out)
 		unsigned        i;
 
 		(void) fprintf(stderr, "***\n***\nsha1_finish\n***\n");
-		for (i = 0; i < SHA_DIGEST_LENGTH; i++)
+		for (i = 0; i < OPS_SHA1_HASH_SIZE; i++)
 			(void) fprintf(stderr, "0x%02x ", out[i]);
 		(void) fprintf(stderr, "\n");
 	}
 	(void) free(hash->data);
 	hash->data = NULL;
-	return SHA_DIGEST_LENGTH;
+	return OPS_SHA1_HASH_SIZE;
 }
 
 static __ops_hash_t sha1 = {
 	OPS_HASH_SHA1,
-	SHA_DIGEST_LENGTH,
+	OPS_SHA1_HASH_SIZE,
 	"SHA1",
 	sha1_init,
 	sha1_add,
@@ -749,7 +777,7 @@ __ops_rsa_generate_keypair(const int numbits,
 	__ops_seckey_t *seckey = NULL;
 	RSA            *rsa = NULL;
 	BN_CTX         *ctx = BN_CTX_new();
-	__ops_create_info_t *cinfo;
+	__ops_createinfo_t *cinfo;
 	__ops_memory_t   *mem;
 
 	__ops_keydata_init(keydata, OPS_PTAG_CT_SECRET_KEY);
@@ -764,7 +792,7 @@ __ops_rsa_generate_keypair(const int numbits,
 	seckey->pubkey.version = 4;
 	seckey->pubkey.birthtime = time(NULL);
 	seckey->pubkey.days_valid = 0;
-	seckey->pubkey.algorithm = OPS_PKA_RSA;
+	seckey->pubkey.alg = OPS_PKA_RSA;
 
 	seckey->pubkey.key.rsa.n = BN_dup(rsa->n);
 	seckey->pubkey.key.rsa.e = BN_dup(rsa->e);
@@ -772,9 +800,9 @@ __ops_rsa_generate_keypair(const int numbits,
 	seckey->s2k_usage = OPS_S2KU_ENCRYPTED_AND_HASHED;
 	seckey->s2k_specifier = OPS_S2KS_SALTED;
 	/* seckey->s2k_specifier=OPS_S2KS_SIMPLE; */
-	seckey->algorithm = OPS_SA_CAST5;	/* \todo make param */
-	seckey->hash_algorithm = OPS_HASH_SHA1;	/* \todo make param */
-	seckey->octet_count = 0;
+	seckey->alg = OPS_SA_CAST5;	/* \todo make param */
+	seckey->hash_alg = OPS_HASH_SHA1;	/* \todo make param */
+	seckey->octetc = 0;
 	seckey->checksum = 0;
 
 	seckey->key.rsa.d = BN_dup(rsa->d);
@@ -802,7 +830,7 @@ __ops_rsa_generate_keypair(const int numbits,
 
 	__ops_push_skey_checksum_writer(cinfo, seckey);
 
-	switch (seckey->pubkey.algorithm) {
+	switch (seckey->pubkey.alg) {
 		/* case OPS_PKA_DSA: */
 		/* return __ops_write_mpi(key->key.dsa.x,info); */
 
@@ -821,7 +849,7 @@ __ops_rsa_generate_keypair(const int numbits,
 		/* return __ops_write_mpi(key->key.elgamal.x,info); */
 
 	default:
-		(void) fprintf(stderr, "Bad seckey->pubkey.algorithm\n");
+		(void) fprintf(stderr, "Bad seckey->pubkey.alg\n");
 		return false;
 	}
 

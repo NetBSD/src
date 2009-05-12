@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -39,28 +67,28 @@ typedef unsigned __ops_hash_finish_t(__ops_hash_t *, unsigned char *);
 
 /** _ops_hash_t */
 struct _ops_hash_t {
-	__ops_hash_algorithm_t algorithm;
-	size_t          size;
-	const char     *name;
-	__ops_hash_init_t *init;
-	__ops_hash_add_t *add;
-	__ops_hash_finish_t *finish;
-	void           *data;
+	__ops_hash_alg_t	 alg;
+	size_t			 size;
+	const char		*name;
+	__ops_hash_init_t	*init;
+	__ops_hash_add_t	*add;
+	__ops_hash_finish_t	*finish;
+	void		 	*data;
 };
 
 typedef void __ops_crypt_set_iv_t(__ops_crypt_t *, const unsigned char *);
 typedef void __ops_crypt_set_key_t(__ops_crypt_t *, const unsigned char *);
 typedef void    __ops_crypt_init_t(__ops_crypt_t *);
 typedef void    __ops_crypt_resync_t(__ops_crypt_t *);
-typedef void __ops_crypt_block_encrypt_t(__ops_crypt_t *, void *, const void *);
-typedef void __ops_crypt_block_decrypt_t(__ops_crypt_t *, void *, const void *);
+typedef void __ops_blkenc_t(__ops_crypt_t *, void *, const void *);
+typedef void __ops_blkdec_t(__ops_crypt_t *, void *, const void *);
 typedef void __ops_crypt_cfb_encrypt_t(__ops_crypt_t *, void *, const void *, size_t);
 typedef void __ops_crypt_cfb_decrypt_t(__ops_crypt_t *, void *, const void *, size_t);
 typedef void    __ops_crypt_finish_t(__ops_crypt_t *);
 
 /** _ops_crypt_t */
 struct _ops_crypt_t {
-	__ops_symmetric_algorithm_t algorithm;
+	__ops_symm_alg_t alg;
 	size_t          blocksize;
 	size_t          keysize;
 	__ops_crypt_set_iv_t *set_iv;	/* Call this before decrypt init! */
@@ -68,8 +96,8 @@ struct _ops_crypt_t {
 	__ops_crypt_init_t *base_init;
 	__ops_crypt_resync_t *decrypt_resync;
 	/* encrypt/decrypt one block  */
-	__ops_crypt_block_encrypt_t *block_encrypt;
-	__ops_crypt_block_decrypt_t *block_decrypt;
+	__ops_blkenc_t *block_encrypt;
+	__ops_blkdec_t *block_decrypt;
 
 	/* Standard CFB encrypt/decrypt (as used by Sym Enc Int Prot packets) */
 	__ops_crypt_cfb_encrypt_t *cfb_encrypt;
@@ -94,11 +122,11 @@ void            __ops_hash_sha256(__ops_hash_t *);
 void            __ops_hash_sha512(__ops_hash_t *);
 void            __ops_hash_sha384(__ops_hash_t *);
 void            __ops_hash_sha224(__ops_hash_t *);
-void            __ops_hash_any(__ops_hash_t *, __ops_hash_algorithm_t);
-__ops_hash_algorithm_t __ops_hash_algorithm_from_text(const char *);
+void            __ops_hash_any(__ops_hash_t *, __ops_hash_alg_t);
+__ops_hash_alg_t __ops_str_to_hash_alg(const char *);
 const char     *__ops_text_from_hash(__ops_hash_t *);
-unsigned        __ops_hash_size(__ops_hash_algorithm_t);
-unsigned __ops_hash(unsigned char *, __ops_hash_algorithm_t, const void *, size_t);
+unsigned        __ops_hash_size(__ops_hash_alg_t);
+unsigned __ops_hash(unsigned char *, __ops_hash_alg_t, const void *, size_t);
 
 void            __ops_hash_add_int(__ops_hash_t *, unsigned, unsigned);
 
@@ -110,34 +138,33 @@ int __ops_rsa_public_encrypt(unsigned char *, const unsigned char *, size_t, con
 int __ops_rsa_private_encrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_seckey_t *, const __ops_rsa_pubkey_t *);
 int __ops_rsa_private_decrypt(unsigned char *, const unsigned char *, size_t, const __ops_rsa_seckey_t *, const __ops_rsa_pubkey_t *);
 
-unsigned        __ops_block_size(__ops_symmetric_algorithm_t);
-unsigned        __ops_key_size(__ops_symmetric_algorithm_t);
+unsigned        __ops_block_size(__ops_symm_alg_t);
+unsigned        __ops_key_size(__ops_symm_alg_t);
 
-int __ops_decrypt_data(__ops_content_tag_t, __ops_region_t *, __ops_parse_info_t *);
+int __ops_decrypt_data(__ops_content_tag_t, __ops_region_t *, __ops_parseinfo_t *);
 
-int             __ops_crypt_any(__ops_crypt_t *, __ops_symmetric_algorithm_t);
+int             __ops_crypt_any(__ops_crypt_t *, __ops_symm_alg_t);
 void            __ops_decrypt_init(__ops_crypt_t *);
 void            __ops_encrypt_init(__ops_crypt_t *);
 size_t __ops_decrypt_se(__ops_crypt_t *, void *, const void *, size_t);
 size_t __ops_encrypt_se(__ops_crypt_t *, void *, const void *, size_t);
 size_t __ops_decrypt_se_ip(__ops_crypt_t *, void *, const void *, size_t);
 size_t __ops_encrypt_se_ip(__ops_crypt_t *, void *, const void *, size_t);
-bool   __ops_is_sa_supported(__ops_symmetric_algorithm_t);
+bool   __ops_is_sa_supported(__ops_symm_alg_t);
 
-void __ops_reader_push_decrypt(__ops_parse_info_t *, __ops_crypt_t *, __ops_region_t *);
-void            __ops_reader_pop_decrypt(__ops_parse_info_t *);
+void __ops_reader_push_decrypt(__ops_parseinfo_t *, __ops_crypt_t *, __ops_region_t *);
+void            __ops_reader_pop_decrypt(__ops_parseinfo_t *);
 
 /* Hash everything that's read */
-void            __ops_reader_push_hash(__ops_parse_info_t *, __ops_hash_t *);
-void            __ops_reader_pop_hash(__ops_parse_info_t *);
+void            __ops_reader_push_hash(__ops_parseinfo_t *, __ops_hash_t *);
+void            __ops_reader_pop_hash(__ops_parseinfo_t *);
 
 int __ops_decrypt_and_unencode_mpi(unsigned char *, unsigned, const BIGNUM *, const __ops_seckey_t *);
-bool __ops_rsa_encrypt_mpi(const unsigned char *, const size_t, const __ops_pubkey_t *, __ops_pk_session_key_parameters_t *);
-
+bool __ops_rsa_encrypt_mpi(const unsigned char *, const size_t, const __ops_pubkey_t *, __ops_pk_sesskey_parameters_t *);
 
 /* Encrypt everything that's written */
 struct __ops_key_data;
-void __ops_writer_push_encrypt(__ops_create_info_t *, const struct __ops_key_data *);
+void __ops_writer_push_encrypt(__ops_createinfo_t *, const struct __ops_key_data *);
 
 bool   __ops_encrypt_file(const char *, const char *, const __ops_keydata_t *, const bool, const bool);
 bool   __ops_decrypt_file(const char *, const char *, __ops_keyring_t *, const bool, const bool, __ops_parse_cb_t *);
