@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.72 2009/05/12 08:44:20 cegger Exp $	*/
+/*	$NetBSD: wds.c,v 1.73 2009/05/12 09:10:16 cegger Exp $	*/
 
 /*
  * XXX
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.72 2009/05/12 08:44:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.73 2009/05/12 09:10:16 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -199,8 +199,8 @@ int	wds_ipoll(struct wds_softc *, struct wds_scb *, int);
 void	wds_timeout(void *);
 int	wds_create_scbs(struct wds_softc *, void *, size_t);
 
-int	wdsprobe(struct device *, cfdata_t, void *);
-void	wdsattach(struct device *, struct device *, void *);
+int	wdsprobe(device_t, cfdata_t, void *);
+void	wdsattach(device_t, device_t, void *);
 
 CFATTACH_DECL(wds, sizeof(struct wds_softc),
     wdsprobe, wdsattach, NULL, NULL);
@@ -244,8 +244,7 @@ wds_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, u_char *ibuf, int icnt)
  * Check for the presence of a WD7000 SCSI controller.
  */
 int
-wdsprobe(struct device *parent, cfdata_t match,
-    void *aux)
+wdsprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -309,7 +308,7 @@ wdsprobe(struct device *parent, cfdata_t match,
  * Attach all available units.
  */
 void
-wdsattach(struct device *parent, struct device *self, void *aux)
+wdsattach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct wds_softc *sc = (void *)self;
