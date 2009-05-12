@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.34 2009/05/12 10:07:55 cegger Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.35 2009/05/12 10:16:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.34 2009/05/12 10:07:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.35 2009/05/12 10:16:35 cegger Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.34 2009/05/12 10:07:55 cegger Exp $
 #include <dev/ic/interwavereg.h>
 
 
-int	gus_isapnp_match(struct device *, cfdata_t, void *);
-void	gus_isapnp_attach(struct device *, struct device *, void *);
+int	gus_isapnp_match(device_t, cfdata_t, void *);
+void	gus_isapnp_attach(device_t, device_t, void *);
 static int     gus_isapnp_open(void *, int);
 
 static const struct audio_hw_if guspnp_hw_if = {
@@ -119,8 +119,7 @@ extern struct cfdriver guspnp_cd;
 static int gus_0 = 1;		/* XXX what's this */
 
 int
-gus_isapnp_match(struct device *parent, cfdata_t match,
-    void *aux)
+gus_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
@@ -135,8 +134,7 @@ gus_isapnp_match(struct device *parent, cfdata_t match,
  * pseudo-device driver.
  */
 void
-gus_isapnp_attach(struct device *parent, struct device *self,
-    void *aux)
+gus_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct iw_softc *sc;
 	struct isapnp_attach_args *ipa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.24 2009/05/12 10:07:55 cegger Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.25 2009/05/12 10:16:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.24 2009/05/12 10:07:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.25 2009/05/12 10:16:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.24 2009/05/12 10:07:55 cegger Exp $
 #include <dev/isa/wssvar.h>
 #include <dev/isa/sbreg.h>
 
-int	wss_isapnp_match(struct device *, cfdata_t, void *);
-void	wss_isapnp_attach(struct device *, struct device *, void *);
+int	wss_isapnp_match(device_t, cfdata_t, void *);
+void	wss_isapnp_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(wss_isapnp, sizeof(struct wss_softc),
     wss_isapnp_match, wss_isapnp_attach, NULL, NULL);
@@ -69,8 +69,7 @@ CFATTACH_DECL(wss_isapnp, sizeof(struct wss_softc),
  * Probe for the WSS hardware.
  */
 int
-wss_isapnp_match(struct device *parent, cfdata_t match,
-    void *aux)
+wss_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
@@ -85,8 +84,7 @@ wss_isapnp_match(struct device *parent, cfdata_t match,
  * pseudo-device driver.
  */
 void
-wss_isapnp_attach(struct device *parent, struct device *self,
-    void *aux)
+wss_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct wss_softc *sc;
 	struct ad1848_softc *ac;

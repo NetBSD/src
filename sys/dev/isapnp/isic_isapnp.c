@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.30 2009/05/12 10:07:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.31 2009/05/12 10:16:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.30 2009/05/12 10:07:55 cegger Exp 
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_isapnp_probe(struct device *, cfdata_t, void *);
-static void isic_isapnp_attach(struct device *, struct device *, void *);
+static int isic_isapnp_probe(device_t, cfdata_t, void *);
+static void isic_isapnp_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(isic_isapnp, sizeof(struct isic_softc),
     isic_isapnp_probe, isic_isapnp_attach, NULL, NULL);
@@ -154,7 +154,7 @@ isic_isapnp_descriptions[] =
  * Probe card
  */
 static int
-isic_isapnp_probe(struct device *parent,
+isic_isapnp_probe(device_t parent,
 	cfdata_t cf, void *aux)
 {
 	struct isapnp_attach_args *ipa = aux;
@@ -185,8 +185,8 @@ isic_isapnp_probe(struct device *parent,
 #endif
 
 static void
-isic_isapnp_attach(struct device *parent,
-	struct device *self, void *aux)
+isic_isapnp_attach(device_t parent,
+	device_t self, void *aux)
 {
   	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
