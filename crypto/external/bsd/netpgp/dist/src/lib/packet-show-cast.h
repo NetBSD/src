@@ -23,13 +23,13 @@ const char     *__ops_str_from_map(int sig_type, __ops_map_t * sig_type_map);
 typedef char   *show_sig_type_t(__ops_sig_type_t, sig_type_map_t *);
 
 /*
- * (line 6) char *show_pka(__ops_pubkey_algorithm_t pka,
- * pubkey_algorithm_map_t *pka_map) -> char *__ops_str_from_map(int pka,
+ * (line 6) char *show_pka(__ops_pubkey_alg_t pka,
+ * pubkey_alg_map_t *pka_map) -> char *__ops_str_from_map(int pka,
  * __ops_map_t *pka_map)
  */
 const char     *__ops_str_from_map(int pka, __ops_map_t * pka_map);
-#define show_pka(pka,pka_map) __ops_str_from_map(CHECKED_INSTANCE_OF(__ops_pubkey_algorithm_t , pka),CHECKED_INSTANCE_OF( pubkey_algorithm_map_t *, pka_map))
-typedef char   *show_pka_t(__ops_pubkey_algorithm_t, pubkey_algorithm_map_t *);
+#define show_pka(pka,pka_map) __ops_str_from_map(CHECKED_INSTANCE_OF(__ops_pubkey_alg_t , pka),CHECKED_INSTANCE_OF( pubkey_alg_map_t *, pka_map))
+typedef char   *show_pka_t(__ops_pubkey_alg_t, pubkey_alg_map_t *);
 
 /*
  * (line 7) char *show_ss_type(__ops_ss_type_t ss_type, ss_type_map_t
@@ -50,19 +50,19 @@ const char     *__ops_str_from_map(int ss_rr_code, __ops_map_t * ss_rr_code_map)
 typedef char   *show_ss_rr_code_t(__ops_ss_rr_code_t, ss_rr_code_map_t *);
 
 /*
- * (line 9) char *show_hash_algorithm(unsigned char hash,+__ops_map_t
- * *hash_algorithm_map) -> char *__ops_str_from_map(int hash,__ops_map_t
- * *hash_algorithm_map)
+ * (line 9) char *show_hash_alg(unsigned char hash,+__ops_map_t
+ * *hash_alg_map) -> char *__ops_str_from_map(int hash,__ops_map_t
+ * *hash_alg_map)
  */
-const char     *__ops_str_from_map(int hash, __ops_map_t * hash_algorithm_map);
-#define show_hash_algorithm(hash) __ops_str_from_map(CHECKED_INSTANCE_OF(unsigned char , hash),CHECKED_INSTANCE_OF(__ops_map_t *, hash_algorithm_map))
-typedef char   *show_hash_algorithm_t(unsigned char);
+const char     *__ops_str_from_map(int hash, __ops_map_t * hash_alg_map);
+#define show_hash_alg(hash) __ops_str_from_map(CHECKED_INSTANCE_OF(unsigned char , hash),CHECKED_INSTANCE_OF(__ops_map_t *, hash_alg_map))
+typedef char   *show_hash_alg_t(unsigned char);
 
 /*
- * (line 10) char *show_symmetric_algorithm(unsigned char hash,+__ops_map_t
- * *symmetric_algorithm_map) -> char *__ops_str_from_map(int hash,__ops_map_t
- * *symmetric_algorithm_map)
+ * (line 10) char *show_symm_alg(unsigned char hash,+__ops_map_t
+ * *symm_alg_map) -> char *__ops_str_from_map(int hash,__ops_map_t
+ * *symm_alg_map)
  */
-const char     *__ops_str_from_map(int hash, __ops_map_t * symmetric_algorithm_map);
-#define show_symmetric_algorithm(hash) __ops_str_from_map(CHECKED_INSTANCE_OF(unsigned char , hash),CHECKED_INSTANCE_OF(__ops_map_t *, symmetric_algorithm_map))
-typedef char   *show_symmetric_algorithm_t(unsigned char);
+const char     *__ops_str_from_map(int hash, __ops_map_t * symm_alg_map);
+#define show_symm_alg(hash) __ops_str_from_map(CHECKED_INSTANCE_OF(unsigned char , hash),CHECKED_INSTANCE_OF(__ops_map_t *, symm_alg_map))
+typedef char   *show_symm_alg_t(unsigned char);

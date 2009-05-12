@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -24,6 +52,7 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 
@@ -62,7 +91,7 @@
 
 bool 
 __ops_write_ss_header(unsigned length, __ops_content_tag_t type,
-		    __ops_create_info_t *info)
+		    __ops_createinfo_t *info)
 {
 	return __ops_write_length(length, info) &&
 		__ops_write_scalar((unsigned)(type -
@@ -99,7 +128,7 @@ __ops_fast_create_user_id(__ops_user_id_t * id, unsigned char *user_id)
  */
 bool 
 __ops_write_struct_user_id(__ops_user_id_t *id,
-			 __ops_create_info_t *info)
+			 __ops_createinfo_t *info)
 {
 	return __ops_write_ptag(OPS_PTAG_CT_USER_ID, info) &&
 		__ops_write_length(strlen((char *) id->user_id), info) &&
@@ -115,7 +144,7 @@ __ops_write_struct_user_id(__ops_user_id_t *id,
  * \return return value from __ops_write_struct_user_id()
  */
 bool 
-__ops_write_user_id(const unsigned char *user_id, __ops_create_info_t *info)
+__ops_write_user_id(const unsigned char *user_id, __ops_createinfo_t *info)
 {
 	__ops_user_id_t   id;
 
@@ -135,7 +164,7 @@ mpi_length(const BIGNUM *bn)
 static unsigned 
 pubkey_length(const __ops_pubkey_t *key)
 {
-	switch (key->algorithm) {
+	switch (key->alg) {
 	case OPS_PKA_RSA:
 		return mpi_length(key->key.rsa.n) + mpi_length(key->key.rsa.e);
 
@@ -152,7 +181,7 @@ seckey_length(const __ops_seckey_t *key)
 	int             len;
 
 	len = 0;
-	switch (key->pubkey.algorithm) {
+	switch (key->pubkey.alg) {
 	case OPS_PKA_RSA:
 		len = mpi_length(key->key.rsa.d) + mpi_length(key->key.rsa.p) +
 			mpi_length(key->key.rsa.q) + mpi_length(key->key.rsa.u);
@@ -178,7 +207,7 @@ __ops_fast_create_rsa_pubkey(__ops_pubkey_t *key, time_t t,
 {
 	key->version = 4;
 	key->birthtime = t;
-	key->algorithm = OPS_PKA_RSA;
+	key->alg = OPS_PKA_RSA;
 	key->key.rsa.n = n;
 	key->key.rsa.e = e;
 }
@@ -189,7 +218,7 @@ __ops_fast_create_rsa_pubkey(__ops_pubkey_t *key, time_t t,
  */
 static bool 
 write_pubkey_body(const __ops_pubkey_t * key,
-		      __ops_create_info_t * info)
+		      __ops_createinfo_t * info)
 {
 	if (!(__ops_write_scalar((unsigned)key->version, 1, info) &&
 	      __ops_write_scalar((unsigned)key->birthtime, 4, info))) {
@@ -201,11 +230,11 @@ write_pubkey_body(const __ops_pubkey_t * key,
 		return false;
 	}
 
-	if (!__ops_write_scalar((unsigned)key->algorithm, 1, info)) {
+	if (!__ops_write_scalar((unsigned)key->alg, 1, info)) {
 		return false;
 	}
 
-	switch (key->algorithm) {
+	switch (key->alg) {
 	case OPS_PKA_DSA:
 		return __ops_write_mpi(key->key.dsa.p, info) &&
 			__ops_write_mpi(key->key.dsa.q, info) &&
@@ -239,14 +268,14 @@ static bool
 write_seckey_body(const __ops_seckey_t * key,
 		      const unsigned char *passphrase,
 		      const size_t pplen,
-		      __ops_create_info_t * info)
+		      __ops_createinfo_t * info)
 {
 	/* RFC4880 Section 5.5.3 Secret-Key Packet Formats */
 
 	__ops_crypt_t     crypted;
 	__ops_hash_t      hash;
 	unsigned char   hashed[OPS_SHA1_HASH_SIZE];
-	unsigned char   session_key[CAST_KEY_LENGTH];
+	unsigned char   sesskey[CAST_KEY_LENGTH];
 	unsigned int    done = 0;
 	unsigned int    i = 0;
 
@@ -261,11 +290,11 @@ write_seckey_body(const __ops_seckey_t * key,
 		return false;
 	}
 
-	if (key->algorithm != OPS_SA_CAST5) {
+	if (key->alg != OPS_SA_CAST5) {
 		(void) fprintf(stderr, "write_seckey_body: algorithm\n");
 		return false;
 	}
-	if (!__ops_write_scalar((unsigned)key->algorithm, 1, info)) {
+	if (!__ops_write_scalar((unsigned)key->alg, 1, info)) {
 		return false;
 	}
 
@@ -279,11 +308,11 @@ write_seckey_body(const __ops_seckey_t * key,
 		return false;
 	}
 
-	if (key->hash_algorithm != OPS_HASH_SHA1) {
+	if (key->hash_alg != OPS_HASH_SHA1) {
 		(void) fprintf(stderr, "write_seckey_body: hash alg\n");
 		return false;
 	}
-	if (!__ops_write_scalar((unsigned)key->hash_algorithm, 1, info)) {
+	if (!__ops_write_scalar((unsigned)key->hash_alg, 1, info)) {
 		return false;
 	}
 
@@ -312,7 +341,7 @@ write_seckey_body(const __ops_seckey_t * key,
 		return false;
 	}
 
-	if (!__ops_write(&key->iv[0], __ops_block_size(key->algorithm), info)) {
+	if (!__ops_write(&key->iv[0], __ops_block_size(key->alg), info)) {
 		return false;
 	}
 
@@ -330,10 +359,13 @@ write_seckey_body(const __ops_seckey_t * key,
 		for (i = 0; done < CAST_KEY_LENGTH; i++) {
 			unsigned int    j = 0;
 			unsigned char   zero = 0;
-			int             needed = CAST_KEY_LENGTH - done;
-			int             use = needed < SHA_DIGEST_LENGTH ? needed : SHA_DIGEST_LENGTH;
+			int             needed;
+			int             use;
 
-			__ops_hash_any(&hash, key->hash_algorithm);
+			needed = CAST_KEY_LENGTH - done;
+			use = MIN(needed, OPS_SHA1_HASH_SIZE);
+
+			__ops_hash_any(&hash, key->hash_alg);
 			hash.init(&hash);
 
 			/* preload if iterating  */
@@ -358,7 +390,7 @@ write_seckey_body(const __ops_seckey_t * key,
 			 * if more in hash than is needed by session key, use
 			 * the leftmost octets
 			 */
-			(void) memcpy(session_key + (i * SHA_DIGEST_LENGTH),
+			(void) memcpy(sesskey + (i * OPS_SHA1_HASH_SIZE),
 					hashed, (unsigned)use);
 			done += use;
 			if (done > CAST_KEY_LENGTH) {
@@ -384,23 +416,23 @@ write_seckey_body(const __ops_seckey_t * key,
 
 	/* use this session key to encrypt */
 
-	__ops_crypt_any(&crypted, key->algorithm);
+	__ops_crypt_any(&crypted, key->alg);
 	crypted.set_iv(&crypted, key->iv);
-	crypted.set_key(&crypted, session_key);
+	crypted.set_key(&crypted, sesskey);
 	__ops_encrypt_init(&crypted);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i2 = 0;
 
 		(void) fprintf(stderr, "\nWRITING:\niv=");
-		for (i2 = 0; i2 < __ops_block_size(key->algorithm); i2++) {
+		for (i2 = 0; i2 < __ops_block_size(key->alg); i2++) {
 			(void) fprintf(stderr, "%02x ", key->iv[i2]);
 		}
 		(void) fprintf(stderr, "\n");
 
 		(void) fprintf(stderr, "key=");
 		for (i2 = 0; i2 < CAST_KEY_LENGTH; i2++) {
-			(void) fprintf(stderr, "%02x ", session_key[i2]);
+			(void) fprintf(stderr, "%02x ", sesskey[i2]);
 		}
 		(void) fprintf(stderr, "\n");
 
@@ -408,7 +440,7 @@ write_seckey_body(const __ops_seckey_t * key,
 	}
 	__ops_writer_push_encrypt_crypt(info, &crypted);
 
-	switch (key->pubkey.algorithm) {
+	switch (key->pubkey.alg) {
 		/* case OPS_PKA_DSA: */
 		/* return __ops_write_mpi(key->key.dsa.x,info); */
 
@@ -457,7 +489,7 @@ write_seckey_body(const __ops_seckey_t * key,
 */
 
 bool 
-__ops_write_transferable_pubkey(const __ops_keydata_t * keydata, bool armoured, __ops_create_info_t * info)
+__ops_write_transferable_pubkey(const __ops_keydata_t * keydata, bool armoured, __ops_createinfo_t * info)
 {
 	bool   rtn;
 	unsigned int    i = 0, j = 0;
@@ -527,7 +559,7 @@ __ops_write_transferable_pubkey(const __ops_keydata_t * keydata, bool armoured, 
 bool 
 __ops_write_transferable_seckey(const __ops_keydata_t *keydata,
 	const unsigned char *passphrase, const size_t pplen,
-	bool armoured, __ops_create_info_t * info)
+	bool armoured, __ops_createinfo_t * info)
 {
 	unsigned	i = 0, j = 0;
 	bool		rtn;
@@ -591,7 +623,7 @@ __ops_write_transferable_seckey(const __ops_keydata_t *keydata,
  */
 bool 
 __ops_write_struct_pubkey(const __ops_pubkey_t * key,
-			    __ops_create_info_t * info)
+			    __ops_createinfo_t * info)
 {
 	if (key->version != 4) {
 		(void) fprintf(stderr,
@@ -617,7 +649,7 @@ __ops_write_struct_pubkey(const __ops_pubkey_t * key,
 bool 
 __ops_write_rsa_pubkey(time_t t, const BIGNUM * n,
 			 const BIGNUM * e,
-			 __ops_create_info_t * info)
+			 __ops_createinfo_t * info)
 {
 	__ops_pubkey_t key;
 
@@ -636,16 +668,16 @@ void
 __ops_build_pubkey(__ops_memory_t * out, const __ops_pubkey_t * key,
 		     bool make_packet)
 {
-	__ops_create_info_t *info;
+	__ops_createinfo_t *info;
 
-	info = __ops_create_info_new();
+	info = __ops_createinfo_new();
 	__ops_memory_init(out, 128);
 	__ops_writer_set_memory(info, out);
 	write_pubkey_body(key, info);
 	if (make_packet) {
 		__ops_memory_make_packet(out, OPS_PTAG_CT_PUBLIC_KEY);
 	}
-	__ops_create_info_delete(info);
+	__ops_createinfo_delete(info);
 }
 
 /**
@@ -698,7 +730,7 @@ bool
 __ops_write_struct_seckey(const __ops_seckey_t * key,
 			    const unsigned char *passphrase,
 			    const size_t pplen,
-			    __ops_create_info_t * info)
+			    __ops_createinfo_t * info)
 {
 	int             length = 0;
 
@@ -756,7 +788,7 @@ __ops_write_struct_seckey(const __ops_seckey_t * key,
 
 	/* IV */
 	if (key->s2k_usage != 0) {
-		length += __ops_block_size(key->algorithm);
+		length += __ops_block_size(key->alg);
 	}
 	/* checksum or hash */
 	switch (key->s2k_usage) {
@@ -787,29 +819,29 @@ __ops_write_struct_seckey(const __ops_seckey_t * key,
 /**
  * \ingroup Core_Create
  *
- * \brief Create a new __ops_create_info_t structure.
+ * \brief Create a new __ops_createinfo_t structure.
  *
  * \return the new structure.
- * \note It is the responsiblity of the caller to call __ops_create_info_delete().
- * \sa __ops_create_info_delete()
+ * \note It is the responsiblity of the caller to call __ops_createinfo_delete().
+ * \sa __ops_createinfo_delete()
  */
-__ops_create_info_t *
-__ops_create_info_new(void)
+__ops_createinfo_t *
+__ops_createinfo_new(void)
 {
-	return calloc(1, sizeof(__ops_create_info_t));
+	return calloc(1, sizeof(__ops_createinfo_t));
 }
 
 /**
  * \ingroup Core_Create
- * \brief Delete an __ops_create_info_t strucut and associated resources.
+ * \brief Delete an __ops_createinfo_t strucut and associated resources.
  *
- * Delete an __ops_create_info_t structure. If a writer is active, then
+ * Delete an __ops_createinfo_t structure. If a writer is active, then
  * that is also deleted.
  *
  * \param info the structure to be deleted.
  */
 void 
-__ops_create_info_delete(__ops_create_info_t * info)
+__ops_createinfo_delete(__ops_createinfo_t * info)
 {
 	writer_info_delete(&info->winfo);
 	(void) free(info);
@@ -818,22 +850,22 @@ __ops_create_info_delete(__ops_create_info_t * info)
 /**
  \ingroup Core_Create
  \brief Calculate the checksum for a session key
- \param session_key Session Key to use
+ \param sesskey Session Key to use
  \param cs Checksum to be written
  \return true if OK; else false
 */
 bool 
-__ops_calc_session_key_checksum(__ops_pk_session_key_t * session_key, unsigned char cs[2])
+__ops_calc_sesskey_checksum(__ops_pk_sesskey_t * sesskey, unsigned char cs[2])
 {
 	unsigned int    i = 0;
 	unsigned long   checksum = 0;
 
-	if (!__ops_is_sa_supported(session_key->symmetric_algorithm)) {
+	if (!__ops_is_sa_supported(sesskey->symm_alg)) {
 		return false;
 	}
 
-	for (i = 0; i < __ops_key_size(session_key->symmetric_algorithm); i++) {
-		checksum += session_key->key[i];
+	for (i = 0; i < __ops_key_size(sesskey->symm_alg); i++) {
+		checksum += sesskey->key[i];
 	}
 	checksum = checksum % 65536;
 
@@ -849,7 +881,7 @@ __ops_calc_session_key_checksum(__ops_pk_session_key_t * session_key, unsigned c
 }
 
 static bool 
-create_unencoded_m_buf(__ops_pk_session_key_t * session_key, unsigned char *m_buf)
+create_unencoded_m_buf(__ops_pk_sesskey_t * sesskey, unsigned char *m_buf)
 {
 	int             i = 0;
 
@@ -861,17 +893,17 @@ create_unencoded_m_buf(__ops_pk_session_key_t * session_key, unsigned char *m_bu
 	 * Packet"
 	 */
 
-	m_buf[0] = session_key->symmetric_algorithm;
+	m_buf[0] = sesskey->symm_alg;
 
-	if (session_key->symmetric_algorithm != OPS_SA_CAST5) {
+	if (sesskey->symm_alg != OPS_SA_CAST5) {
 		(void) fprintf(stderr, "create_unencoded_m_buf: symm alg\n");
 		return false;
 	}
 	for (i = 0; i < CAST_KEY_LENGTH; i++) {
-		m_buf[1 + i] = session_key->key[i];
+		m_buf[1 + i] = sesskey->key[i];
 	}
 
-	return (__ops_calc_session_key_checksum(session_key,
+	return (__ops_calc_sesskey_checksum(sesskey,
 				m_buf + 1 + CAST_KEY_LENGTH));
 }
 
@@ -894,7 +926,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 
 	/* implementation of EME-PKCS1-v1_5-ENCODE, as defined in OpenPGP RFC */
 
-	if (pubkey->algorithm != OPS_PKA_RSA) {
+	if (pubkey->alg != OPS_PKA_RSA) {
 		(void) fprintf(stderr, "encode_m_buf: pubkey algorithm\n");
 		return false;
 	}
@@ -938,15 +970,15 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 
 /**
  \ingroup Core_Create
-\brief Creates an __ops_pk_session_key_t struct from keydata
+\brief Creates an __ops_pk_sesskey_t struct from keydata
 \param key Keydata to use
-\return __ops_pk_session_key_t struct
+\return __ops_pk_sesskey_t struct
 \note It is the caller's responsiblity to free the returned pointer
 \note Currently hard-coded to use CAST5
 \note Currently hard-coded to use RSA
 */
-__ops_pk_session_key_t *
-__ops_create_pk_session_key(const __ops_keydata_t * key)
+__ops_pk_sesskey_t *
+__ops_create_pk_sesskey(const __ops_keydata_t * key)
 {
 	/*
          * Creates a random session key and encrypts it for the given key
@@ -964,35 +996,35 @@ __ops_create_pk_session_key(const __ops_keydata_t * key)
 	const size_t    sz_encoded_m_buf = BN_num_bytes(pub_key->key.rsa.n);
 	unsigned char  *encoded_m_buf = calloc(1, sz_encoded_m_buf);
 
-	__ops_pk_session_key_t *session_key = calloc(1, sizeof(*session_key));
+	__ops_pk_sesskey_t *sesskey = calloc(1, sizeof(*sesskey));
 	if (key->type != OPS_PTAG_CT_PUBLIC_KEY) {
 		(void) fprintf(stderr,
-			"__ops_create_pk_session_key: bad type\n");
+			"__ops_create_pk_sesskey: bad type\n");
 		return NULL;
 	}
-	session_key->version = OPS_PKSK_V3;
-	(void) memcpy(session_key->key_id, key->key_id,
-			sizeof(session_key->key_id));
+	sesskey->version = OPS_PKSK_V3;
+	(void) memcpy(sesskey->key_id, key->key_id,
+			sizeof(sesskey->key_id));
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i = 0;
 
 		(void) fprintf(stderr, "Encrypting for RSA key id : ");
-		for (i = 0; i < sizeof(session_key->key_id); i++) {
+		for (i = 0; i < sizeof(sesskey->key_id); i++) {
 			(void) fprintf(stderr, "%2x ", key->key_id[i]);
 		}
 		(void) fprintf(stderr, "\n");
 	}
-	if (key->key.pubkey.algorithm != OPS_PKA_RSA) {
+	if (key->key.pubkey.alg != OPS_PKA_RSA) {
 		(void) fprintf(stderr,
-			"__ops_create_pk_session_key: bad pubkey algorithm\n");
+			"__ops_create_pk_sesskey: bad pubkey algorithm\n");
 		return NULL;
 	}
-	session_key->algorithm = key->key.pubkey.algorithm;
+	sesskey->alg = key->key.pubkey.alg;
 
 	/* \todo allow user to specify other algorithm */
-	session_key->symmetric_algorithm = OPS_SA_CAST5;
-	__ops_random(session_key->key, CAST_KEY_LENGTH);
+	sesskey->symm_alg = OPS_SA_CAST5;
+	__ops_random(sesskey->key, CAST_KEY_LENGTH);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i = 0;
@@ -1001,11 +1033,11 @@ __ops_create_pk_session_key(const __ops_keydata_t * key)
 			"CAST5 session key created (len=%d):\n ",
 			CAST_KEY_LENGTH);
 		for (i = 0; i < CAST_KEY_LENGTH; i++) {
-			(void) fprintf(stderr, "%2x ", session_key->key[i]);
+			(void) fprintf(stderr, "%2x ", sesskey->key[i]);
 		}
 		(void) fprintf(stderr, "\n");
 	}
-	if (create_unencoded_m_buf(session_key, &unencoded_m_buf[0]) == false) {
+	if (create_unencoded_m_buf(sesskey, &unencoded_m_buf[0]) == false) {
 		(void) free(encoded_m_buf);
 		return NULL;
 	}
@@ -1023,12 +1055,12 @@ __ops_create_pk_session_key(const __ops_keydata_t * key)
 
 	/* and encrypt it */
 	if (!__ops_rsa_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pub_key,
-			&session_key->parameters)) {
+			&sesskey->parameters)) {
 		(void) free(encoded_m_buf);
 		return NULL;
 	}
 	(void) free(encoded_m_buf);
-	return session_key;
+	return sesskey;
 }
 
 /**
@@ -1039,17 +1071,17 @@ __ops_create_pk_session_key(const __ops_keydata_t * key)
 \return true if OK; else false
 */
 bool 
-__ops_write_pk_session_key(__ops_create_info_t * info,
-			 __ops_pk_session_key_t * pksk)
+__ops_write_pk_sesskey(__ops_createinfo_t * info,
+			 __ops_pk_sesskey_t * pksk)
 {
 	if (pksk == NULL) {
 		(void) fprintf(stderr,
-			"__ops_write_pk_session_key: NULL pksk\n");
+			"__ops_write_pk_sesskey: NULL pksk\n");
 		return false;
 	}
-	if (pksk->algorithm != OPS_PKA_RSA) {
+	if (pksk->alg != OPS_PKA_RSA) {
 		(void) fprintf(stderr,
-			"__ops_write_pk_session_key: bad algorithm\n");
+			"__ops_write_pk_sesskey: bad algorithm\n");
 		return false;
 	}
 
@@ -1057,7 +1089,7 @@ __ops_write_pk_session_key(__ops_create_info_t * info,
 		__ops_write_length((unsigned)(1 + 8 + 1 + BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2), info) &&
 		__ops_write_scalar((unsigned)pksk->version, 1, info) &&
 		__ops_write(pksk->key_id, 8, info) &&
-		__ops_write_scalar((unsigned)pksk->algorithm, 1, info) &&
+		__ops_write_scalar((unsigned)pksk->alg, 1, info) &&
 		__ops_write_mpi(pksk->parameters.rsa.encrypted_m, info)
 	/* ??	&& __ops_write_scalar(0, 2, info); */
 		;
@@ -1072,8 +1104,7 @@ __ops_write_pk_session_key(__ops_create_info_t * info,
 */
 
 bool 
-__ops_write_mdc(const unsigned char *hashed,
-	      __ops_create_info_t * info)
+__ops_write_mdc(const unsigned char *hashed, __ops_createinfo_t *info)
 {
 	/* write it out */
 	return __ops_write_ptag(OPS_PTAG_CT_MDC, info) &&
@@ -1094,7 +1125,7 @@ bool
 __ops_write_litdata(const unsigned char *data,
 				const int maxlen,
 				const __ops_litdata_type_t type,
-				__ops_create_info_t * info)
+				__ops_createinfo_t * info)
 {
 	/*
          * RFC4880 does not specify a meaning for filename or date.
@@ -1122,7 +1153,7 @@ __ops_write_litdata(const unsigned char *data,
 bool 
 __ops_fileread_litdata(const char *filename,
 				 const __ops_litdata_type_t type,
-				 __ops_create_info_t * info)
+				 __ops_createinfo_t * info)
 {
 	unsigned char    buf[1024];
 	unsigned char	*mmapped;
@@ -1286,7 +1317,7 @@ __ops_filewrite(const char *filename, const char *buf,
 bool 
 __ops_write_symm_enc_data(const unsigned char *data,
 				       const int len,
-				       __ops_create_info_t * info)
+				       __ops_createinfo_t * info)
 {
 			/* buffer to write encrypted data to */
 	unsigned char  *encrypted = (unsigned char *) NULL;
@@ -1324,9 +1355,9 @@ __ops_write_symm_enc_data(const unsigned char *data,
 */
 bool 
 __ops_write_one_pass_sig(const __ops_seckey_t * seckey,
-		       const __ops_hash_algorithm_t hash_alg,
+		       const __ops_hash_alg_t hash_alg,
 		       const __ops_sig_type_t sig_type,
-		       __ops_create_info_t * info)
+		       __ops_createinfo_t * info)
 {
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
 
@@ -1340,7 +1371,7 @@ __ops_write_one_pass_sig(const __ops_seckey_t * seckey,
 		__ops_write_scalar(3, 1, info)	/* version */ &&
 		__ops_write_scalar((unsigned)sig_type, 1, info) &&
 		__ops_write_scalar((unsigned)hash_alg, 1, info) &&
-		__ops_write_scalar((unsigned)seckey->pubkey.algorithm, 1, info) &&
+		__ops_write_scalar((unsigned)seckey->pubkey.alg, 1, info) &&
 		__ops_write(keyid, 8, info) &&
 		__ops_write_scalar(1, 1, info);
 }

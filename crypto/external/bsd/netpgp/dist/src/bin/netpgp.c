@@ -53,11 +53,16 @@ static const char *usage =
 	"\t[--userid=<userid>] AND/OR\n"
 	"\t[--armour] AND/OR\n"
 	"\t[--homedir=<homedir>]\n";
-static const char *usage_find_key = "%s --find-key --userid=<userid> [--keyring=<keyring>] \n";
-static const char *usage_export_key = "%s --export-key --userid=<userid> [--keyring=<keyring>] \n";
-static const char *usage_encrypt = "%s --encrypt --userid=<userid> [--armour] [--homedir=<homedir>] files...\n";
-static const char *usage_sign = "%s --sign --userid=<userid> [--armour] [--homedir=<homedir>] files...\n";
-static const char *usage_clearsign = "%s --clearsign --userid=<userid> [--homedir=<homedir>] files...\n";
+static const char *usage_find_key =
+	"%s --find-key --userid=<userid> [--keyring=<keyring>] \n";
+static const char *usage_export_key =
+	"%s --export-key --userid=<userid> [--keyring=<keyring>] \n";
+static const char *usage_encrypt =
+"%s --encrypt --userid=<userid> [--armour] [--homedir=<homedir>] files...\n";
+static const char *usage_sign =
+"%s --sign --userid=<userid> [--armour] [--homedir=<homedir>] files...\n";
+static const char *usage_clearsign =
+"%s --clearsign --userid=<userid> [--homedir=<homedir>] files...\n";
 
 enum optdefs {
 	/* commands */
@@ -71,6 +76,7 @@ enum optdefs {
 	SIGN,
 	CLEARSIGN,
 	VERIFY,
+	VERIFY_SHOW,
 	LIST_PACKETS,
 	VERSION_CMD,
 	HELP_CMD,
@@ -104,6 +110,8 @@ static struct option options[] = {
 	{"sign",	no_argument,		NULL,	SIGN},
 	{"clearsign",	no_argument,		NULL,	CLEARSIGN},
 	{"verify",	no_argument,		NULL,	VERIFY},
+	{"verify-show",	no_argument,		NULL,	VERIFY_SHOW},
+	{"verifyshow",	no_argument,		NULL,	VERIFY_SHOW},
 
 	{"list-packets", no_argument,		NULL,	LIST_PACKETS},
 
@@ -140,10 +148,7 @@ typedef struct prog_t {
 	int	 armour;			/* ASCII armor */
 	int	 detached;			/* use separate file */
 	int	 cmd;				/* netpgp command */
-	int	 ex;				/* exit code */
 } prog_t;
-
-
 
 
 /* print a usage message */
@@ -159,45 +164,37 @@ print_usage(const char *usagemsg, char *progname)
 }
 
 /* do a command once for a specified file 'f' */
-static void
+static int
 netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 {
 	switch (p->cmd) {
 	case LIST_KEYS:
-		netpgp_list_keys(netpgp);
-		break;
+		return netpgp_list_keys(netpgp);
 	case FIND_KEY:
-		netpgp_find_key(netpgp, p->userid);
-		break;
+		return netpgp_find_key(netpgp, p->userid);
 	case EXPORT_KEY:
-		netpgp_export_key(netpgp, p->userid);
-		break;
+		return netpgp_export_key(netpgp, p->userid);
 	case IMPORT_KEY:
-		netpgp_import_key(netpgp, f);
-		break;
+		return netpgp_import_key(netpgp, f);
 	case GENERATE_KEY:
-		netpgp_generate_key(netpgp, p->userid, p->numbits);
-		break;
+		return netpgp_generate_key(netpgp, p->userid, p->numbits);
 	case ENCRYPT:
-		netpgp_encrypt_file(netpgp, p->userid, f, NULL, p->armour);
-		break;
+		return netpgp_encrypt_file(netpgp, p->userid, f, NULL,
+					p->armour);
 	case DECRYPT:
-		netpgp_decrypt_file(netpgp, f, NULL, p->armour);
-		break;
+		return netpgp_decrypt_file(netpgp, f, NULL, p->armour);
 	case SIGN:
-		netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour, 0,
-				p->detached);
-		break;
+		return netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour,
+					0, p->detached);
 	case CLEARSIGN:
-		netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour, 1,
-				p->detached);
-		break;
+		return netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour,
+					1, p->detached);
 	case VERIFY:
-		netpgp_verify_file(netpgp, f, p->armour);
-		break;
+		return netpgp_verify_file(netpgp, f, NULL, p->armour);
+	case VERIFY_SHOW:
+		return netpgp_verify_file(netpgp, f, "-", p->armour);
 	case LIST_PACKETS:
-		netpgp_list_packets(netpgp, f, p->armour, NULL);
-		break;
+		return netpgp_list_packets(netpgp, f, p->armour, NULL);
 	case HELP_CMD:
 	default:
 		print_usage(usage, p->progname);
@@ -212,6 +209,7 @@ main(int argc, char **argv)
 	prog_t          p;
 	char            homedir[MAXPATHLEN];
 	int             optindex;
+	int             ret;
 	int             ch;
 	int             i;
 
@@ -245,6 +243,7 @@ main(int argc, char **argv)
 		case SIGN:
 		case CLEARSIGN:
 		case VERIFY:
+		case VERIFY_SHOW:
 		case LIST_PACKETS:
 		case HELP_CMD:
 			p.cmd = options[optindex].val;
@@ -327,12 +326,14 @@ main(int argc, char **argv)
 	 * line
 	 */
 	if (optind == argc) {
-		netpgp_cmd(&netpgp, &p, NULL);
+		ret = netpgp_cmd(&netpgp, &p, NULL);
 	} else {
-		for (p.ex = EXIT_SUCCESS, i = optind; i < argc; i++) {
-			netpgp_cmd(&netpgp, &p, argv[i]);
+		for (ret = EXIT_SUCCESS, i = optind; i < argc; i++) {
+			if (!netpgp_cmd(&netpgp, &p, argv[i])) {
+				ret = EXIT_FAILURE;
+			}
 		}
 	}
 	netpgp_end(&netpgp);
-	exit(p.ex);
+	exit(ret);
 }

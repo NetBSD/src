@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -388,7 +416,7 @@ static const __ops_crypt_t tripledes =
 };
 
 static const __ops_crypt_t *
-get_proto(__ops_symmetric_algorithm_t alg)
+get_proto(__ops_symm_alg_t alg)
 {
 	switch (alg) {
 	case OPS_SA_CAST5:
@@ -410,14 +438,14 @@ get_proto(__ops_symmetric_algorithm_t alg)
 
 	default:
 		(void) fprintf(stderr, "Unknown algorithm: %d (%s)\n",
-			alg, __ops_show_symmetric_algorithm(alg));
+			alg, __ops_show_symm_alg(alg));
 	}
 
 	return NULL;
 }
 
 int 
-__ops_crypt_any(__ops_crypt_t * crypt, __ops_symmetric_algorithm_t alg)
+__ops_crypt_any(__ops_crypt_t * crypt, __ops_symm_alg_t alg)
 {
 	const __ops_crypt_t *ptr = get_proto(alg);
 
@@ -431,7 +459,7 @@ __ops_crypt_any(__ops_crypt_t * crypt, __ops_symmetric_algorithm_t alg)
 }
 
 unsigned 
-__ops_block_size(__ops_symmetric_algorithm_t alg)
+__ops_block_size(__ops_symm_alg_t alg)
 {
 	const __ops_crypt_t *p = get_proto(alg);
 
@@ -439,7 +467,7 @@ __ops_block_size(__ops_symmetric_algorithm_t alg)
 }
 
 unsigned 
-__ops_key_size(__ops_symmetric_algorithm_t alg)
+__ops_key_size(__ops_symm_alg_t alg)
 {
 	const __ops_crypt_t *p = get_proto(alg);
 
@@ -523,7 +551,7 @@ __ops_encrypt_se(__ops_crypt_t * encrypt, void *outvoid, const void *invoid,
 \return true if supported; else false
 */
 bool 
-__ops_is_sa_supported(__ops_symmetric_algorithm_t alg)
+__ops_is_sa_supported(__ops_symm_alg_t alg)
 {
 	switch (alg) {
 	case OPS_SA_AES_128:
@@ -537,7 +565,7 @@ __ops_is_sa_supported(__ops_symmetric_algorithm_t alg)
 
 	default:
 		fprintf(stderr, "\nWarning: %s not supported\n",
-			__ops_show_symmetric_algorithm(alg));
+			__ops_show_symm_alg(alg));
 		return false;
 	}
 }
@@ -546,7 +574,7 @@ size_t
 __ops_encrypt_se_ip(__ops_crypt_t * crypt, void *out, const void *in,
 		  size_t count)
 {
-	if (!__ops_is_sa_supported(crypt->algorithm))
+	if (!__ops_is_sa_supported(crypt->alg))
 		/* XXX - agc changed from -1 to 0 */
 		return 0;
 
@@ -560,7 +588,7 @@ size_t
 __ops_decrypt_se_ip(__ops_crypt_t * crypt, void *out, const void *in,
 		  size_t count)
 {
-	if (!__ops_is_sa_supported(crypt->algorithm))
+	if (!__ops_is_sa_supported(crypt->alg))
 		/* XXX - agc changed from -1 to 0 */
 		return 0;
 

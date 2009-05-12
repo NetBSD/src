@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -50,14 +78,11 @@ typedef struct {
 	enum {
 		LITERAL_DATA,
 		SIGNED_CLEARTEXT
-	}               use;	/* <! this is set to indicate what
-				 * kind of data we have */
+	} use;
 	union {
-		__ops_litdata_body_t litdata_body;	/* <! Used to hold
-								 * Literal Data */
-		__ops_signed_cleartext_body_t signed_cleartext_body;	/* <! Used to hold
-									 * Signed Cleartext */
-	}               data;	/* <! the data itself */
+		__ops_litdata_body_t litdata_body;
+		__ops_cleartext_body_t cleartext_body;
+	} data;
 	unsigned char   hash[OPS_MAX_HASH_SIZE];	/* <! the hash */
 	__ops_memory_t   *mem;
 	const __ops_keyring_t *keyring;	/* <! keyring to use */
@@ -66,13 +91,17 @@ typedef struct {
 }               validate_data_cb_t;	/* <! used with
 					 * validate_data_cb callback */
 
-void            __ops_keydata_reader_set(__ops_parse_info_t *, const __ops_keydata_t *);
+void	__ops_keydata_reader_set(__ops_parseinfo_t *, const __ops_keydata_t *);
 
-__ops_parse_cb_return_t __ops_validate_key_cb(const __ops_packet_t *, __ops_callback_data_t *);
+__ops_parse_cb_return_t __ops_validate_key_cb(const __ops_packet_t *,
+					__ops_callback_data_t *);
 
-bool   __ops_validate_file(__ops_validation_t *, const char *, const int, const __ops_keyring_t *);
-bool   __ops_validate_mem(__ops_validation_t *, __ops_memory_t *, const int, const __ops_keyring_t *);
+bool   __ops_validate_file(__ops_validation_t *, const char *, const char *,
+			const int, const __ops_keyring_t *);
+bool   __ops_validate_mem(__ops_validation_t *, __ops_memory_t *, const int,
+			const __ops_keyring_t *);
 
-__ops_parse_cb_return_t validate_data_cb(const __ops_packet_t *, __ops_callback_data_t *);
+__ops_parse_cb_return_t validate_data_cb(const __ops_packet_t *,
+				__ops_callback_data_t *);
 
 #endif /* !VALIDATE_H_ */

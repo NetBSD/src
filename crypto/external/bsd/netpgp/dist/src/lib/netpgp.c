@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Alistair Crooks (agc@netbsd.org)
+ * by Alistair Crooks (agc@NetBSD.org)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,7 +86,7 @@ static int
 conffile(char *homedir, char *userid, size_t length, int verbose)
 {
 	regmatch_t	 matchv[10];
-	regex_t		 r;
+	regex_t		 keyre;
 	char		 buf[BUFSIZ];
 	FILE		*fp;
 
@@ -94,16 +94,18 @@ conffile(char *homedir, char *userid, size_t length, int verbose)
 	if ((fp = fopen(buf, "r")) == NULL) {
 		return 0;
 	}
-	(void) regcomp(&r, "^[ \t]*default-key[ \t]+([0-9a-zA-F]+)",
+	(void) memset(&keyre, 0x0, sizeof(keyre));
+	(void) regcomp(&keyre, "^[ \t]*default-key[ \t]+([0-9a-zA-F]+)",
 		REG_EXTENDED);
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		if (regexec(&r, buf, 10, matchv, 0) == 0) {
+		if (regexec(&keyre, buf, 10, matchv, 0) == 0) {
 			(void) memcpy(userid, &buf[(int)matchv[1].rm_so],
-				MIN((unsigned)(matchv[1].rm_eo - matchv[1].rm_so), length));
+				MIN((unsigned)(matchv[1].rm_eo -
+						matchv[1].rm_so), length));
 			if (verbose) {
 				printf("setting default key to \"%.*s\"\n",
-					(int)(matchv[1].rm_eo - matchv[1].rm_so),
-					&buf[(int)matchv[1].rm_so]);
+				(int)(matchv[1].rm_eo - matchv[1].rm_so),
+				&buf[(int)matchv[1].rm_so]);
 			}
 		}
 	}
@@ -150,7 +152,7 @@ psuccess(FILE *fp, char *f, __ops_validation_t *res, __ops_keyring_t *pubring)
 			"Good signature for %s made %susing %s key %s\n",
 			f,
 			ctime(&res->valid_sigs[i].birthtime),
-			__ops_show_pka(res->valid_sigs[i].key_algorithm),
+			__ops_show_pka(res->valid_sigs[i].key_alg),
 			userid_to_id(res->valid_sigs[i].signer_id, id));
 		pubkey = __ops_keyring_find_key_by_id(pubring,
 			(const unsigned char *) res->valid_sigs[i].signer_id);
@@ -164,17 +166,17 @@ sign_detached(char *f, char *sigfile, __ops_seckey_t *seckey,
 		const char *hashstr)
 {
 	__ops_create_sig_t	*sig;
-	__ops_hash_algorithm_t		 alg;
-	__ops_create_info_t		*info;
-	unsigned char	 		 keyid[OPS_KEY_ID_SIZE];
-	unsigned char			*mmapped;
-	struct stat			 st;
-	time_t				 t;
-	char				 fname[MAXPATHLEN];
-	int				 fd;
+	__ops_hash_alg_t	 alg;
+	__ops_createinfo_t	*info;
+	unsigned char	 	 keyid[OPS_KEY_ID_SIZE];
+	unsigned char		*mmapped;
+	struct stat		 st;
+	time_t			 t;
+	char			 fname[MAXPATHLEN];
+	int			 fd;
 
 	/* find out which hash algorithm to use */
-	alg = __ops_hash_algorithm_from_text(hashstr);
+	alg = __ops_str_to_hash_alg(hashstr);
 	if (alg == OPS_HASH_UNKNOWN) {
 		(void) fprintf(stderr,"Unknown hash algorithm: %s\n", hashstr);
 		return 0;
@@ -240,7 +242,7 @@ sign_detached(char *f, char *sigfile, __ops_seckey_t *seckey,
 		return 0;
 	}
 
-	info = __ops_create_info_new();
+	info = __ops_createinfo_new();
 	__ops_writer_set_fd(info, fd);
 	__ops_write_sig(sig, &seckey->pubkey, seckey, info);
 	__ops_seckey_free(seckey);
@@ -363,8 +365,10 @@ netpgp_export_key(netpgp_t *netpgp, char *userid)
 	if (userid == NULL) {
 		userid = netpgp->userid;
 	}
-	if ((keypair = __ops_keyring_find_key_by_userid(netpgp->pubring, userid)) == NULL) {
-		(void) fprintf(stderr, "Cannot find own key \"%s\" in keyring\n", userid);
+	keypair = __ops_keyring_find_key_by_userid(netpgp->pubring, userid);
+	if (keypair == NULL) {
+		(void) fprintf(stderr,
+			"Cannot find own key \"%s\" in keyring\n", userid);
 		return 0;
 	}
 	__ops_export_key(keypair, NULL);
@@ -392,14 +396,16 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 int
 netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 {
-	__ops_create_info_t	*create;
+	__ops_createinfo_t	*create;
 	__ops_keydata_t		*keypair;
 	__ops_user_id_t		 uid;
 	int             	 fd;
 
 	(void) memset(&uid, 0x0, sizeof(uid));
 	uid.user_id = (unsigned char *) id;
-	if ((keypair = __ops_rsa_create_selfsigned_keypair(numbits, (const unsigned long)65537, &uid)) == NULL) {
+	keypair = __ops_rsa_create_selfsigned_keypair(numbits,
+				(const unsigned long)65537, &uid);
+	if (keypair == NULL) {
 		(void) fprintf(stderr, "Cannot generate key\n");
 		return 0;
 	}
@@ -408,8 +414,10 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	__ops_write_transferable_pubkey(keypair, false, create);
 	__ops_teardown_file_write(create, fd);
 	__ops_keyring_free(netpgp->pubring);
-	if (!__ops_keyring_fileread(netpgp->pubring, false, netpgp->pubringfile)) {
-		(void) fprintf(stderr, "Cannot re-read keyring %s\n", netpgp->pubringfile);
+	if (!__ops_keyring_fileread(netpgp->pubring, false,
+				netpgp->pubringfile)) {
+		(void) fprintf(stderr, "Cannot re-read keyring %s\n",
+				netpgp->pubringfile);
 		return 0;
 	}
 	/* write secret key */
@@ -417,8 +425,10 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	__ops_write_transferable_seckey(keypair, NULL, 0, false, create);
 	__ops_teardown_file_write(create, fd);
 	__ops_keyring_free(netpgp->secring);
-	if (!__ops_keyring_fileread(netpgp->secring, false, netpgp->secringfile)) {
-		fprintf(stderr, "Cannot re-read keyring %s\n", netpgp->secringfile);
+	if (!__ops_keyring_fileread(netpgp->secring, false,
+				netpgp->secringfile)) {
+		fprintf(stderr, "Cannot re-read keyring %s\n",
+				netpgp->secringfile);
 		return 0;
 	}
 	__ops_keydata_free(keypair);
@@ -437,8 +447,10 @@ netpgp_encrypt_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armo
 		userid = netpgp->userid;
 	}
 	suffix = (armored) ? ".asc" : ".gpg";
-	if ((keypair = __ops_keyring_find_key_by_userid(netpgp->pubring, userid)) == NULL) {
-		(void) fprintf(stderr, "Userid '%s' not found in keyring\n", userid);
+	keypair = __ops_keyring_find_key_by_userid(netpgp->pubring, userid);
+	if (keypair == NULL) {
+		(void) fprintf(stderr, "Userid '%s' not found in keyring\n",
+					userid);
 		return 0;
 	}
 	if (out == NULL) {
@@ -453,9 +465,8 @@ netpgp_encrypt_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armo
 int
 netpgp_decrypt_file(netpgp_t *netpgp, char *f, char *out, int armored)
 {
-	__ops_decrypt_file(f, out, netpgp->secring, armored, true,
-		get_passphrase_cb);
-	return 1;
+	return __ops_decrypt_file(f, out, netpgp->secring, armored, true,
+		get_passphrase_cb) == true;
 }
 
 /* sign a file */
@@ -464,7 +475,7 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 		int armored, int cleartext, int detached)
 {
 	const __ops_keydata_t	*keypair;
-	__ops_seckey_t	*seckey;
+	__ops_seckey_t		*seckey;
 	char			 passphrase[MAX_PASSPHRASE_LENGTH];
 
 	if (userid == NULL) {
@@ -483,19 +494,18 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 		/* get the passphrase */
 		get_pass_phrase(passphrase, sizeof(passphrase));
 		/* now decrypt key */
-		seckey = __ops_decrypt_seckey(keypair,
-							passphrase);
+		seckey = __ops_decrypt_seckey(keypair, passphrase);
 		if (seckey == NULL) {
 			(void) fprintf(stderr, "Bad passphrase\n");
 		}
 	} while (seckey == NULL);
 	/* sign file */
 	if (cleartext) {
-		__ops_sign_file_as_cleartext(f, out, seckey, true);
+		__ops_sign_file_as_cleartext(f, out, seckey, "SHA256", true);
 	} else if (detached) {
-		sign_detached(f, out, seckey, "SHA1");
+		sign_detached(f, out, seckey, "SHA256");
 	} else {
-		__ops_sign_file(f, out, seckey, armored, true);
+		__ops_sign_file(f, out, seckey, "SHA256", armored, true);
 	}
 	(void) memset(passphrase, 0x0, sizeof(passphrase));
 	return 1;
@@ -503,23 +513,26 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 
 /* verify a file */
 int
-netpgp_verify_file(netpgp_t *netpgp, char *f, int armored)
+netpgp_verify_file(netpgp_t *netpgp, char *infile, const char *outfile,
+			int armored)
 {
 	__ops_validation_t	result;
 
 	(void) memset(&result, 0x0, sizeof(result));
-	if (__ops_validate_file(&result, f, armored, netpgp->pubring)) {
-		psuccess(stderr, f, &result, netpgp->pubring);
+	if (__ops_validate_file(&result, infile, outfile, armored,
+				netpgp->pubring)) {
+		psuccess(stderr, infile, &result, netpgp->pubring);
 		return 1;
 	}
 	if (result.validc + result.invalidc + result.unknownc == 0) {
 		(void) fprintf(stderr,
-		"\"%s\": No signatures found - is this a signed file?\n", f);
+		"\"%s\": No signatures found - is this a signed file?\n",
+			infile);
 		return 0;
 	}
 	(void) fprintf(stderr,
 "\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n",
-		f, result.invalidc, result.unknownc);
+		infile, result.invalidc, result.unknownc);
 	return 0;
 }
 

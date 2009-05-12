@@ -1,7 +1,7 @@
 To Do
 =====
-64bit offsets
-sha256 sha512 digests
+hash algorithm selection
+64-bit offsets
 detached verification
 need a netpgp_set_{pub,sec}key()? vs _init()?
 default compression when signing
@@ -9,7 +9,6 @@ get rid of ops_memory after used literal_data_body
 sort out callback - ops_export_key, packet-parse callback etc
 Simplify IO
 Make into SHA1Init, SHA1End, SHA1File style of calls
-Work out a way to get text out of a signed file
 Multiple recipients for encryption
 Look at inefficiencies - read() etc
 
@@ -49,3 +48,6 @@ detached sig
 get rid of assert()s
 disable core dumps
 add a --help option
+sha256 digests
+print out size of key in --list-keys
+decryption - print encrypted key info

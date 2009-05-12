@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -174,7 +202,7 @@ static __ops_map_t sig_type_map[] =
 };
 typedef __ops_map_t sig_type_map_t;
 
-static __ops_map_t pubkey_algorithm_map[] =
+static __ops_map_t pubkey_alg_map[] =
 {
 	{OPS_PKA_RSA, "RSA (Encrypt or Sign)"},
 	{OPS_PKA_RSA_ENCRYPT_ONLY, "RSA Encrypt-Only"},
@@ -198,9 +226,9 @@ static __ops_map_t pubkey_algorithm_map[] =
 	{OPS_PKA_PRIVATE10, "Private/Experimental"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
-typedef __ops_map_t pubkey_algorithm_map_t;
+typedef __ops_map_t pubkey_alg_map_t;
 
-static __ops_map_t symmetric_algorithm_map[] =
+static __ops_map_t symm_alg_map[] =
 {
 	{OPS_SA_PLAINTEXT, "Plaintext or unencrypted data"},
 	{OPS_SA_IDEA, "IDEA"},
@@ -214,7 +242,7 @@ static __ops_map_t symmetric_algorithm_map[] =
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_map_t hash_algorithm_map[] =
+static __ops_map_t hash_alg_map[] =
 {
 	{OPS_HASH_MD5, "MD5"},
 	{OPS_HASH_SHA1, "SHA1"},
@@ -226,7 +254,7 @@ static __ops_map_t hash_algorithm_map[] =
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_map_t compression_algorithm_map[] =
+static __ops_map_t compression_alg_map[] =
 {
 	{OPS_C_NONE, "Uncompressed"},
 	{OPS_C_ZIP, "ZIP(RFC1951)"},
@@ -618,9 +646,9 @@ __ops_show_sig_type(__ops_sig_type_t sig_type)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_pka(__ops_pubkey_algorithm_t pka)
+__ops_show_pka(__ops_pubkey_alg_t pka)
 {
-	return show_pka(pka, pubkey_algorithm_map);
+	return show_pka(pka, pubkey_alg_map);
 }
 
 /**
@@ -630,24 +658,24 @@ __ops_show_pka(__ops_pubkey_algorithm_t pka)
  * \return string or "Unknown"
 */
 const char     *
-__ops_show_ss_preferred_compression(unsigned char octet)
+__ops_show_ss_zpref(unsigned char octet)
 {
-	return __ops_str_from_map(octet, compression_algorithm_map);
+	return __ops_str_from_map(octet, compression_alg_map);
 }
 
 /**
  * \ingroup Core_Print
  *
  * returns set of descriptions of the given Preferred Compression Algorithms
- * \param ss_preferred_compression Array of Preferred Compression Algorithms
+ * \param ss_zpref Array of Preferred Compression Algorithms
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_preferred_compression(__ops_ss_preferred_compression_t ss_preferred_compression)
+__ops_showall_ss_zpref(__ops_ss_zpref_t ss_zpref)
 {
-	return text_from_bytemapped_octets(&ss_preferred_compression.data,
-					&__ops_show_ss_preferred_compression);
+	return text_from_bytemapped_octets(&ss_zpref.data,
+					&__ops_show_ss_zpref);
 }
 
 
@@ -659,30 +687,30 @@ __ops_showall_ss_preferred_compression(__ops_ss_preferred_compression_t ss_prefe
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_hash_algorithm(unsigned char hash)
+__ops_show_hash_alg(unsigned char hash)
 {
-	return show_hash_algorithm(hash);
+	return show_hash_alg(hash);
 }
 
 /**
  * \ingroup Core_Print
  *
  * returns set of descriptions of the given Preferred Hash Algorithms
- * \param ss_preferred_hash Array of Preferred Hash Algorithms
+ * \param ss_hashpref Array of Preferred Hash Algorithms
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_preferred_hash(__ops_ss_preferred_hash_t ss_preferred_hash)
+__ops_showall_ss_hashpref(__ops_ss_hashpref_t ss_hashpref)
 {
-	return text_from_bytemapped_octets(&ss_preferred_hash.data,
-					   &__ops_show_hash_algorithm);
+	return text_from_bytemapped_octets(&ss_hashpref.data,
+					   &__ops_show_hash_alg);
 }
 
 const char     *
-__ops_show_symmetric_algorithm(unsigned char hash)
+__ops_show_symm_alg(unsigned char hash)
 {
-	return show_symmetric_algorithm(hash);
+	return show_symm_alg(hash);
 }
 
 /**
@@ -692,24 +720,24 @@ __ops_show_symmetric_algorithm(unsigned char hash)
  * \return string or "Unknown"
 */
 const char     *
-__ops_show_ss_preferred_ska(unsigned char octet)
+__ops_show_ss_skapref(unsigned char octet)
 {
-	return __ops_str_from_map(octet, symmetric_algorithm_map);
+	return __ops_str_from_map(octet, symm_alg_map);
 }
 
 /**
  * \ingroup Core_Print
  *
  * returns set of descriptions of the given Preferred Symmetric Key Algorithms
- * \param ss_preferred_ska Array of Preferred Symmetric Key Algorithms
+ * \param ss_skapref Array of Preferred Symmetric Key Algorithms
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_preferred_ska(__ops_ss_preferred_ska_t ss_preferred_ska)
+__ops_showall_ss_skapref(__ops_ss_skapref_t ss_skapref)
 {
-	return text_from_bytemapped_octets(&ss_preferred_ska.data,
-					   &__ops_show_ss_preferred_ska);
+	return text_from_bytemapped_octets(&ss_skapref.data,
+					   &__ops_show_ss_skapref);
 }
 
 /**

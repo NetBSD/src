@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -75,10 +103,10 @@ typedef struct {
 static int 
 zlib_compressed_data_reader(void *dest, size_t length,
 			    __ops_error_t **errors,
-			    __ops_reader_info_t *rinfo,
+			    __ops_reader_t *readinfo,
 			    __ops_callback_data_t *cbinfo)
 {
-	z_decompress_t *z = __ops_reader_get_arg(rinfo);
+	z_decompress_t *z = __ops_reader_get_arg(readinfo);
 	size_t           len;
 	size_t		 cc;
 	char		*cdest = dest;
@@ -125,7 +153,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 				}
 
 				if (!__ops_stacked_limited_read(z->in, n, z->region,
-						     errors, rinfo, cbinfo)) {
+						     errors, readinfo, cbinfo)) {
 					return -1;
 				}
 
@@ -166,10 +194,10 @@ zlib_compressed_data_reader(void *dest, size_t length,
 static int 
 bzip2_compressed_data_reader(void *dest, size_t length,
 			     __ops_error_t **errors,
-			     __ops_reader_info_t *rinfo,
+			     __ops_reader_t *readinfo,
 			     __ops_callback_data_t *cbinfo)
 {
-	bz_decompress_t *bz = __ops_reader_get_arg(rinfo);
+	bz_decompress_t *bz = __ops_reader_get_arg(readinfo);
 	size_t		len;
 	size_t		 cc;
 	char		*cdest = dest;
@@ -207,7 +235,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 					n = sizeof(bz->in);
 
 				if (!__ops_stacked_limited_read((unsigned char *) bz->in, n, bz->region,
-						     errors, rinfo, cbinfo))
+						     errors, readinfo, cbinfo))
 					return -1;
 
 				bz->bzstream.next_in = bz->in;
@@ -252,7 +280,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 */
 
 int 
-__ops_decompress(__ops_region_t *region, __ops_parse_info_t *parse_info,
+__ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 	       __ops_compression_type_t type)
 {
 	z_decompress_t z;
@@ -368,7 +396,7 @@ __ops_decompress(__ops_region_t *region, __ops_parse_info_t *parse_info,
 bool 
 __ops_write_compressed(const unsigned char *data,
 		     const unsigned int len,
-		     __ops_create_info_t *cinfo)
+		     __ops_createinfo_t *cinfo)
 {
 	compress_t	*zip = calloc(1, sizeof(compress_t));
 	size_t		 sz_in = 0;

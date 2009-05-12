@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -24,9 +52,9 @@
 #include "types.h"
 #include "crypto.h"
 
-/** __ops_reader_info */
-struct __ops_reader_info {
-	__ops_reader_t   *reader;/* !< the reader function to use to get the
+/** __ops_reader */
+struct __ops_reader {
+	__ops_reader_func_t   *reader;/* !< the reader function to use to get the
 				 * data to be parsed */
 	__ops_reader_destroyer_t *destroyer;
 	void           *arg;	/* !< the args to pass to the reader function */
@@ -38,16 +66,16 @@ struct __ops_reader_info {
 	unsigned        position;	/* !< the offset from the beginning
 					 * (with this reader) */
 
-	__ops_reader_info_t *next;
-	__ops_parse_info_t *parent;/* !< A pointer back to the parent parse_info
+	__ops_reader_t *next;
+	__ops_parseinfo_t *parent;/* !< A pointer back to the parent parse_info
 				 * structure */
 };
 
 
-/** __ops_crypt_info
+/** __ops_cryptinfo
  Encrypt/decrypt settings
 */
-struct __ops_crypt_info {
+struct __ops_cryptinfo {
 	char           *passphrase;	/* <! passphrase to use, this is set
 					 * by cb_get_passphrase */
 	__ops_keyring_t  *keyring;/* <! keyring to use */
@@ -66,8 +94,8 @@ struct __ops_parse_cb_info {
 
 	__ops_callback_data_t *next;
 
-	__ops_create_info_t *cinfo;	/* !< used if writing out parsed info */
-	__ops_crypt_info_t cryptinfo;	/* !< used when decrypting */
+	__ops_createinfo_t *cinfo;	/* !< used if writing out parsed info */
+	__ops_cryptinfo_t cryptinfo;	/* !< used when decrypting */
 };
 
 /** __ops_parse_hash_info_t */
@@ -99,22 +127,22 @@ typedef struct {
  *  It has a linked list of errors.
  */
 
-struct __ops_parse_info {
+struct __ops_parseinfo {
 	unsigned char   ss_raw[NTAGS / 8];	/* !< one bit per
 						 * signature-subpacket type;
 						 * set to get raw data */
 	unsigned char   ss_parsed[NTAGS / 8];	/* !< one bit per
 						 * signature-subpacket type;
 						 * set to get parsed data */
-	__ops_reader_info_t	 rinfo;
+	__ops_reader_t	 readinfo;
 	__ops_callback_data_t	 cbinfo;
 	__ops_error_t		*errors;
 	__ops_crypt_t		 decrypt;
-	__ops_crypt_info_t	 cryptinfo;
+	__ops_cryptinfo_t	 cryptinfo;
 	size_t			 nhashes;
 	__ops_parse_hash_info_t *hashes;
 	unsigned		 reading_v3_secret:1;
-	unsigned		 reading_mpi_length:1;
+	unsigned		 reading_mpi_len:1;
 	unsigned		 exact_read:1;
 	void			*synthsig;	/* synthetic sig */
 	void			*synthlit;	/* synthetic literal data */

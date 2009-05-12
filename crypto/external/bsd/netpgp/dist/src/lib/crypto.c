@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -67,7 +95,7 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf,
 	}
 	BN_bn2bin(encmpi, encmpibuf);
 
-	if (seckey->pubkey.algorithm != OPS_PKA_RSA) {
+	if (seckey->pubkey.alg != OPS_PKA_RSA) {
 		(void) fprintf(stderr, "pubkey algorithm wrong\n");
 		return -1;
 	}
@@ -145,7 +173,7 @@ bool
 __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 		    const size_t sz_encoded_m_buf,
 		    const __ops_pubkey_t * pubkey,
-		    __ops_pk_session_key_parameters_t * skp)
+		    __ops_pk_sesskey_parameters_t * skp)
 {
 
 	unsigned char   encmpibuf[NETPGP_BUFSIZ];
@@ -199,7 +227,7 @@ __ops_encrypt_file(const char *infile,
 			const bool use_armour,
 			const bool allow_overwrite)
 {
-	__ops_create_info_t *create;
+	__ops_createinfo_t *create;
 	unsigned char  *buf;
 	size_t          bufsz;
 	size_t		done;
@@ -278,7 +306,7 @@ __ops_decrypt_file(const char *infile,
 			const bool allow_overwrite,
 			__ops_parse_cb_t *cb_get_passphrase)
 {
-	__ops_parse_info_t	*parse = NULL;
+	__ops_parseinfo_t	*parse = NULL;
 	char			*filename = NULL;
 	int			 fd_in = 0;
 	int			 fd_out = 0;
@@ -292,8 +320,8 @@ __ops_decrypt_file(const char *infile,
 		perror(infile);
 		return false;
 	}
-	/* setup output filename */
 
+	/* setup output filename */
 	if (outfile) {
 		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo, outfile,
 				allow_overwrite);
@@ -384,7 +412,7 @@ callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		break;
 
 	case OPS_PTAG_CT_PK_SESSION_KEY:
-		return pk_session_key_cb(pkt, cbinfo);
+		return pk_sesskey_cb(pkt, cbinfo);
 
 	case OPS_PARSER_CMD_GET_SECRET_KEY:
 		return get_seckey_cb(pkt, cbinfo);
