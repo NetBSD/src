@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.14 2008/06/12 21:47:11 cegger Exp $	*/
+/*	$NetBSD: bthub.c,v 1.15 2009/05/12 12:10:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.14 2008/06/12 21:47:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.15 2009/05/12 12:10:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.14 2008/06/12 21:47:11 cegger Exp $");
  */
 
 /* autoconf(9) glue */
-static int	bthub_match(device_t, struct cfdata *, void *);
+static int	bthub_match(device_t, cfdata_t, void *);
 static void	bthub_attach(device_t, device_t, void *);
 static int	bthub_detach(device_t, int);
 
@@ -86,7 +86,7 @@ static int	bthub_pioctl(dev_t, unsigned long, prop_dictionary_t, int, struct lwp
  */
 
 static int
-bthub_match(device_t self, struct cfdata *cfdata, void *arg)
+bthub_match(device_t self, cfdata_t cfdata, void *arg)
 {
 
 	return 1;

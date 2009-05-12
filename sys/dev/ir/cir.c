@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.23 2008/10/10 21:50:09 jmcneill Exp $	*/
+/*	$NetBSD: cir.c,v 1.24 2009/05/12 12:18:09 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.23 2008/10/10 21:50:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.24 2009/05/12 12:18:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ const struct cdevsw cir_cdevsw = {
 	D_OTHER
 };
 
-int cir_match(struct device *parent, struct cfdata *match, void *aux);
+int cir_match(struct device *parent, cfdata_t match, void *aux);
 void cir_attach(struct device *parent, struct device *self, void *aux);
 int cir_activate(struct device *self, enum devact act);
 int cir_detach(struct device *self, int flags);
@@ -72,7 +72,7 @@ extern struct cfdriver cir_cd;
 #define CIRUNIT(dev) (minor(dev))
 
 int
-cir_match(struct device *parent, struct cfdata *match, void *aux)
+cir_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct ir_attach_args *ia = aux;
 

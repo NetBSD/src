@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.18 2008/04/06 08:54:43 cegger Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.19 2009/05/12 12:12:52 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.18 2008/04/06 08:54:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.19 2009/05/12 12:12:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.18 2008/04/06 08:54:43 cegger Exp $")
 
 static void	dpt_eisa_attach(struct device *, struct device *, void *);
 static int	dpt_eisa_irq(bus_space_tag_t, bus_space_handle_t, int *);
-static int	dpt_eisa_match(struct device *, struct cfdata *, void *);
+static int	dpt_eisa_match(struct device *, cfdata_t, void *);
 
 CFATTACH_DECL(dpt_eisa, sizeof(struct dpt_softc),
     dpt_eisa_match, dpt_eisa_attach, NULL, NULL);
@@ -103,7 +103,7 @@ dpt_eisa_irq(bus_space_tag_t iot, bus_space_handle_t ioh, int *irq)
 }
 
 static int
-dpt_eisa_match(struct device *parent, struct cfdata *match,
+dpt_eisa_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea;

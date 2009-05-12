@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.371 2009/04/02 00:09:32 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.372 2009/05/12 12:10:29 cegger Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.371 2009/04/02 00:09:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.372 2009/05/12 12:10:29 cegger Exp $");
 
 #include "opt_ata.h"
 
@@ -126,7 +126,7 @@ int wdcdebug_wd_mask = 0x0;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-int	wdprobe(struct device *, struct cfdata *, void *);
+int	wdprobe(struct device *, cfdata_t, void *);
 void	wdattach(struct device *, struct device *, void *);
 int	wddetach(struct device *, int);
 int	wdactivate(struct device *, enum devact);
@@ -274,7 +274,7 @@ wd_lookup_quirks(const char *name)
 }
 
 int
-wdprobe(struct device *parent, struct cfdata *match, void *aux)
+wdprobe(struct device *parent, cfdata_t match, void *aux)
 {
 	struct ata_device *adev = aux;
 

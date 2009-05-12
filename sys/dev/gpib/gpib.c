@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.15 2009/03/14 21:04:19 dsl Exp $	*/
+/*	$NetBSD: gpib.c,v 1.16 2009/05/12 12:13:21 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.15 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.16 2009/05/12 12:13:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,15 +58,15 @@ int gpibdebug = 0xff;
 #define DPRINTF(mask, str)	/* nothing */
 #endif
 
-int	gpibmatch(struct device *, struct cfdata *, void *);
+int	gpibmatch(struct device *, cfdata_t, void *);
 void	gpibattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gpib, sizeof(struct gpib_softc),
 	gpibmatch, gpibattach, NULL, NULL);
 
-static int	gpibsubmatch1(struct device *, struct cfdata *,
+static int	gpibsubmatch1(struct device *, cfdata_t,
 			      const int *, void *);
-static int	gpibsubmatch2(struct device *, struct cfdata *,
+static int	gpibsubmatch2(struct device *, cfdata_t,
 			      const int *, void *);
 static int	gpibprint(void *, const char *);
 
@@ -89,7 +89,7 @@ extern struct cfdriver gpib_cd;
 int gpibtimeout = 100000;	/* # of status tests before we give up */
 
 int
-gpibmatch(struct device *parent, struct cfdata *match, void *aux)
+gpibmatch(struct device *parent, cfdata_t match, void *aux)
 {
 
 	return (1);
@@ -99,7 +99,7 @@ void
 gpibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gpib_softc *sc = device_private(self);
-	struct cfdata *cf = device_cfdata(&sc->sc_dev);
+	cfdata_t cf = device_cfdata(&sc->sc_dev);
 	struct gpibdev_attach_args *gda = aux;
 	struct gpib_attach_args ga;
 	int address;
@@ -138,7 +138,7 @@ gpibattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-gpibsubmatch1(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+gpibsubmatch1(struct device *parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct gpib_softc *sc = (struct gpib_softc *)parent;
 	struct gpib_attach_args *ga = aux;
@@ -159,7 +159,7 @@ gpibsubmatch1(struct device *parent, struct cfdata *cf, const int *ldesc, void *
 }
 
 int
-gpibsubmatch2(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+gpibsubmatch2(struct device *parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct gpib_attach_args *ga = aux;
 

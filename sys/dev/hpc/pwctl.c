@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.17 2007/10/19 11:59:43 ad Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.18 2009/05/12 12:13:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.17 2007/10/19 11:59:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.18 2009/05/12 12:13:49 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pwctl.h"
@@ -82,7 +82,7 @@ struct pwctl_softc {
 	int sc_initvalue;
 };
 
-static int	pwctl_match(struct device *, struct cfdata *, void *);
+static int	pwctl_match(struct device *, cfdata_t, void *);
 static void	pwctl_attach(struct device *, struct device *, void *);
 static int	pwctl_hook(void *, int, long, void *);
 static int	pwctl_ghook(void *, int, long, void *);
@@ -92,7 +92,7 @@ CFATTACH_DECL(pwctl, sizeof(struct pwctl_softc),
     pwctl_match, pwctl_attach, NULL, NULL);
 
 int
-pwctl_match(struct device *parent, struct cfdata *match, void *aux)
+pwctl_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;

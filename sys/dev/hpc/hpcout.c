@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.13 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.14 2009/05/12 12:13:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.13 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.14 2009/05/12 12:13:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.13 2008/04/28 20:23:48 martin Exp $");
 
 #include "locators.h"
 
-int	hpcout_match(struct device *, struct cfdata *, void *);
+int	hpcout_match(struct device *, cfdata_t, void *);
 void	hpcout_attach(struct device *, struct device *, void *);
 int	hpcout_hook(void *, int, long, void *);
 
@@ -66,7 +66,7 @@ CFATTACH_DECL(hpcout, sizeof(struct hpcout_softc),
     hpcout_match, hpcout_attach, NULL, NULL);
 
 int
-hpcout_match(struct device *parent, struct cfdata *cf, void *aux)
+hpcout_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }

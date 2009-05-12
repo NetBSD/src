@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: obio.c,v 1.11 2009/05/12 12:18:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11 2009/05/12 12:18:45 cegger Exp $");
 
 #include "opt_marvell.h"
 
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2007/10/19 12:00:34 ad Exp $");
 #include "locators.h"
 
 static int obio_cfprint(void *, const char *);
-static int obio_cfmatch(struct device *, struct cfdata *, void *);
-static int obio_cfsearch(struct device *, struct cfdata *,
+static int obio_cfmatch(struct device *, cfdata_t, void *);
+static int obio_cfsearch(struct device *, cfdata_t,
 			 const int *, void *);
 static void obio_cfattach(struct device *, struct device *, void *);
 
@@ -118,7 +118,7 @@ obio_cfprint(void *aux, const char *pnp)
 
 
 int
-obio_cfsearch(struct device *parent, struct cfdata *cf,
+obio_cfsearch(struct device *parent, cfdata_t cf,
 	      const int *ldesc, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *) parent;
@@ -137,7 +137,7 @@ obio_cfsearch(struct device *parent, struct cfdata *cf,
 }
 
 int
-obio_cfmatch(struct device *parent, struct cfdata *cf, void *aux)
+obio_cfmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct gt_softc * const gt = (struct gt_softc *)parent;
 	struct gt_attach_args * const ga = aux;

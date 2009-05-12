@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.32 2008/12/11 05:45:29 alc Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.33 2009/05/12 12:11:17 cegger Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.32 2008/12/11 05:45:29 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.33 2009/05/12 12:11:17 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,7 +152,7 @@ ath_cardbus_resume(device_t self PMF_FN_ARGS)
 }
 
 int
-ath_cardbus_match(device_t parent, struct cfdata *match, void *aux)
+ath_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	const char *devname;

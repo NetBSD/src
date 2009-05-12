@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2c.c,v 1.10 2008/04/08 20:40:42 cegger Exp $	*/
+/*	$NetBSD: gti2c.c,v 1.11 2009/05/12 12:18:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.10 2008/04/08 20:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.11 2009/05/12 12:18:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,7 +57,7 @@ struct gti2c_softc {
 	kmutex_t sc_lock;
 };
 
-static int gt_i2c_match(struct device *, struct cfdata *, void *);
+static int gt_i2c_match(struct device *, cfdata_t, void *);
 static void gt_i2c_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gtiic, sizeof(struct gti2c_softc),
@@ -231,7 +231,7 @@ gt_i2c_intr(void *aux)
 }
 
 int
-gt_i2c_match(struct device *parent, struct cfdata *cfdata, void *aux)
+gt_i2c_match(struct device *parent, cfdata_t cfdata, void *aux)
 {
 	struct gt_softc * const gt = device_private(parent);
 	struct gt_attach_args * const ga = aux;

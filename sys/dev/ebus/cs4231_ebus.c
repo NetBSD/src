@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.31 2009/01/31 10:35:38 martin Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.32 2009/05/12 12:12:38 cegger Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.31 2009/01/31 10:35:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.32 2009/05/12 12:12:38 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -74,7 +74,7 @@ struct cs4231_ebus_softc {
 
 
 void	cs4231_ebus_attach(struct device *, struct device *, void *);
-int	cs4231_ebus_match(struct device *, struct cfdata *, void *);
+int	cs4231_ebus_match(struct device *, cfdata_t, void *);
 
 static int	cs4231_ebus_pint(void *);
 static int	cs4231_ebus_rint(void *);
@@ -144,7 +144,7 @@ static int	cs4231_ebus_intr(void *);
 
 
 int
-cs4231_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
+cs4231_ebus_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea;
 	char *compat;

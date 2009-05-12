@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.37 2009/03/07 15:03:25 tsutsui Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.38 2009/05/12 12:11:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.37 2009/03/07 15:03:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.38 2009/05/12 12:11:17 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,7 +111,7 @@ CFATTACH_DECL_NEW(fxp_cardbus, sizeof(struct fxp_cardbus_softc),
 #endif
 
 static int
-fxp_cardbus_match(struct device *parent, struct cfdata *match,
+fxp_cardbus_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct cardbus_attach_args *ca = aux;

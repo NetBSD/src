@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.23 2008/04/06 20:28:36 cegger Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.24 2009/05/12 12:13:49 cegger Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.23 2008/04/06 20:28:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.24 2009/05/12 12:13:49 cegger Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -76,7 +76,7 @@ static int	hpf1275a_close(struct tty *, int);
 static int	hpf1275a_input(int, struct tty *);
 
 /* autoconf(9) methods */
-static int	hpf1275a_match(struct device *, struct cfdata *, void *);
+static int	hpf1275a_match(struct device *, cfdata_t, void *);
 static void	hpf1275a_attach(struct device *, struct device *, void *);
 static int	hpf1275a_detach(struct device *, int);
 
@@ -245,7 +245,7 @@ hpf1275aattach(int n)
  */
 static int
 hpf1275a_match(struct device *self,
-	       struct cfdata *cfdata, void *arg)
+	       cfdata_t cfdata, void *arg)
 {
 
 	/* pseudo-device; always present */

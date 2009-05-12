@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.13 2007/10/19 11:59:42 ad Exp $	*/
+/*	$NetBSD: button.c,v 1.14 2009/05/12 12:13:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.13 2007/10/19 11:59:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.14 2009/05/12 12:13:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ struct button_softc {
 	config_hook_tag sc_ghook_tag;
 };
 
-static int	button_match(struct device *, struct cfdata *, void *);
+static int	button_match(struct device *, cfdata_t, void *);
 static void	button_attach(struct device *, struct device *, void *);
 static int	button_intr(void *);
 static int	button_state(void *, int, long, void *);
@@ -71,7 +71,7 @@ CFATTACH_DECL(button, sizeof(struct button_softc),
     button_match, button_attach, NULL, NULL);
 
 int
-button_match(struct device *parent, struct cfdata *match, void *aux)
+button_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;

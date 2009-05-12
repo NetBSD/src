@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.21 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.22 2009/05/12 12:11:54 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.21 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.22 2009/05/12 12:11:54 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ struct dzkbd_softc {
 
 static int	dzkbd_input(void *, int);
 
-static int	dzkbd_match(struct device *, struct cfdata *, void *);
+static int	dzkbd_match(struct device *, cfdata_t, void *);
 static void	dzkbd_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(dzkbd, sizeof(struct dzkbd_softc),
@@ -130,7 +130,7 @@ const struct wskbd_mapdata dzkbd_keymapdata = {
  * kbd_match: how is this dz line configured?
  */
 static int
-dzkbd_match(struct device *parent, struct cfdata *cf, void *aux)
+dzkbd_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct dzkm_attach_args *daa = aux;
 

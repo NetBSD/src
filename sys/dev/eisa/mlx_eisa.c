@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.20 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.21 2009/05/12 12:12:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.20 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.21 2009/05/12 12:12:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.20 2008/04/28 20:23:48 martin Exp $")
 #define	MLX_EISA_CFG10			(0x0c95 - MLX_EISA_SLOT_OFFSET)
 
 static void	mlx_eisa_attach(struct device *, struct device *, void *);
-static int	mlx_eisa_match(struct device *, struct cfdata *, void *);
+static int	mlx_eisa_match(struct device *, cfdata_t, void *);
 
 static int	mlx_v1_submit(struct mlx_softc *, struct mlx_ccb *);
 static int	mlx_v1_findcomplete(struct mlx_softc *, u_int *, u_int *);
@@ -92,7 +92,7 @@ static struct mlx_eisa_prod {
 };
 
 static int
-mlx_eisa_match(struct device *parent, struct cfdata *match,
+mlx_eisa_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea;

@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.22 2009/05/07 18:01:57 elad Exp $	*/
+/*	$NetBSD: btuart.c,v 1.23 2009/05/12 12:10:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.22 2009/05/07 18:01:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.23 2009/05/12 12:10:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -82,7 +82,7 @@ struct btuart_softc {
 #define BTUART_RECV_EVENT_DATA	6	/* event packet data */
 
 void btuartattach(int);
-static int btuart_match(device_t, struct cfdata *, void *);
+static int btuart_match(device_t, cfdata_t, void *);
 static void btuart_attach(device_t, device_t, void *);
 static int btuart_detach(device_t, int);
 
@@ -164,7 +164,7 @@ btuartattach(int num __unused)
  * Autoconf match routine.
  */
 static int
-btuart_match(device_t self __unused, struct cfdata *cfdata __unused,
+btuart_match(device_t self __unused, cfdata_t cfdata __unused,
 	     void *arg __unused)
 {
 
@@ -222,7 +222,7 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 {
 	struct btuart_softc *sc;
 	device_t dev;
-	struct cfdata *cfdata;
+	cfdata_t cfdata;
 	struct lwp *l = curlwp;		/* XXX */
 	int error, unit, s;
 
@@ -281,7 +281,7 @@ static int
 btuartclose(struct tty *tp, int flag __unused)
 {
 	struct btuart_softc *sc = tp->t_sc;
-	struct cfdata *cfdata;
+	cfdata_t cfdata;
 	int s;
 
 	s = spltty();

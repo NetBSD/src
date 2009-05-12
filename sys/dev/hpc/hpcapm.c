@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.16 2009/04/05 02:04:40 uwe Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.17 2009/05/12 12:13:49 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.16 2009/04/05 02:04:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.17 2009/05/12 12:13:49 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -61,7 +61,7 @@ int	hpcapm_debug = HPCAPMDEBUG_CONF;
 #endif
 
 /* Definition of the driver for autoconfig. */
-static int	hpcapm_match(struct device *, struct cfdata *, void *);
+static int	hpcapm_match(struct device *, cfdata_t, void *);
 static void	hpcapm_attach(struct device *, struct device *, void *);
 static int	hpcapm_hook(void *, int, long, void *);
 
@@ -107,7 +107,7 @@ extern struct cfdriver hpcapm_cd;
 
 static int
 hpcapm_match(struct device *parent,
-	     struct cfdata *cf, void *aux)
+	     cfdata_t cf, void *aux)
 {
 
 	return 1;

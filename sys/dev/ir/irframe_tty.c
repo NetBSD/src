@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.56 2009/01/11 14:28:13 mlelstv Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.57 2009/05/12 12:18:09 cegger Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.56 2009/01/11 14:28:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.57 2009/05/12 12:18:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -269,7 +269,7 @@ irframetopen(dev_t dev, struct tty *tp)
 	struct lwp *l = curlwp;		/* XXX */
 	struct irframet_softc *sc;
 	int error, s;
-	struct cfdata *cfdata;
+	cfdata_t cfdata;
 	struct ir_attach_args ia;
 	device_t d;
 

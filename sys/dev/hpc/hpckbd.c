@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.26 2009/04/05 02:17:18 uwe Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.27 2009/05/12 12:13:49 cegger Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.26 2009/04/05 02:17:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.27 2009/05/12 12:13:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ struct hpckbd_softc {
 	struct hpckbd_core	sc_coredata;
 };
 
-int	hpckbd_match(struct device *, struct cfdata *, void *);
+int	hpckbd_match(struct device *, cfdata_t, void *);
 void	hpckbd_attach(struct device *, struct device *, void *);
 
 void	hpckbd_initcore(struct hpckbd_core *, struct hpckbd_ic_if *, int);
@@ -140,7 +140,7 @@ struct wskbd_mapdata hpckbd_keymapdata = {
 
 int
 hpckbd_match(struct device *parent,
-	     struct cfdata *cf, void *aux)
+	     cfdata_t cf, void *aux)
 {
 	return (1);
 }
