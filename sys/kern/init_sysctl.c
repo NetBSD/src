@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.161 2009/05/04 14:52:33 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.162 2009/05/12 11:42:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.161 2009/05/04 14:52:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.162 2009/05/12 11:42:12 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -1727,7 +1727,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	sysctl_unlock();
 	if (pid == -1) {
 		mutex_enter(proc_lock);
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			/* Grab a hold on the process. */
 			if (!rw_tryenter(&p->p_reflock, RW_READER)) {
 				continue;
@@ -2053,7 +2053,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			return (EINVAL);
 		sysctl_unlock();
 		mutex_enter(proc_lock);
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL) {
 				/* skip embryonic processes */
 				continue;
@@ -2244,6 +2244,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				break;
 		}
 		next = LIST_NEXT(p, p_list);
+		if ((p->p_flag & PK_MARKER) != 0)
+			continue;
 
 		/*
 		 * Skip embryonic processes.
