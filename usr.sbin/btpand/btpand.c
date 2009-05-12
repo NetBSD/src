@@ -1,4 +1,4 @@
-/*	$NetBSD: btpand.c,v 1.2 2009/04/15 00:38:07 lukem Exp $	*/
+/*	$NetBSD: btpand.c,v 1.3 2009/05/12 21:08:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert. All rights reserved.");
-__RCSID("$NetBSD: btpand.c,v 1.2 2009/04/15 00:38:07 lukem Exp $");
+__RCSID("$NetBSD: btpand.c,v 1.3 2009/05/12 21:08:30 plunky Exp $");
 
 #include <sys/wait.h>
 
@@ -204,8 +204,8 @@ main(int argc, char *argv[])
 		openlog(getprogname(), LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_DAEMON);
 
 		channel_init();
-		server_init();
 		event_init();
+		server_init();
 		client_init();
 		tap_init();
 

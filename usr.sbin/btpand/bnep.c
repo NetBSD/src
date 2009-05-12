@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.7 2009/05/12 19:57:59 plunky Exp $	*/
+/*	$NetBSD: bnep.c,v 1.8 2009/05/12 21:08:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.7 2009/05/12 19:57:59 plunky Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.8 2009/05/12 21:08:30 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -293,8 +293,8 @@ bnep_recv_control_command_not_understood(channel_t *chan, uint8_t *ptr, size_t s
 	type = *ptr++;
 	log_err("received Control Command Not Understood (0x%2.2x)", type);
 
-	/* we didn't send any reserved commands, just cut them off */
-	channel_close(chan);
+	/* we didn't send any reserved commands, just shut them down */
+	chan->down(chan);
 
 	return 1;
 }
@@ -395,7 +395,7 @@ bnep_recv_setup_connection_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 		chan->state = CHANNEL_OPEN;
 		channel_timeout(chan, 0);
 	} else {
-		channel_close(chan);
+		chan->down(chan);
 	}
 
 	return 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tap.c,v 1.3 2009/05/02 20:07:51 plunky Exp $	*/
+/*	$NetBSD: tap.c,v 1.4 2009/05/12 21:08:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tap.c,v 1.3 2009/05/02 20:07:51 plunky Exp $");
+__RCSID("$NetBSD: tap.c,v 1.4 2009/05/12 21:08:30 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: tap.c,v 1.3 2009/05/02 20:07:51 plunky Exp $");
 
 static bool tap_send(channel_t *, packet_t *);
 static bool tap_recv(packet_t *);
+static void tap_down(channel_t *);
 
 void
 tap_init(void)
@@ -110,6 +111,7 @@ tap_init(void)
 
 	chan->send = tap_send;
 	chan->recv = tap_recv;
+	chan->down = tap_down;
 	chan->mru = ETHER_HDR_LEN + ETHER_MAX_LEN;
 	memcpy(chan->raddr, LLADDR(sdl), ETHER_ADDR_LEN);
 	memcpy(chan->laddr, LLADDR(sdl), ETHER_ADDR_LEN);
@@ -158,4 +160,11 @@ tap_recv(packet_t *pkt)
 	packet_adj(pkt, ETHER_TYPE_LEN);
 
 	return true;
+}
+
+static void
+tap_down(channel_t *chan)
+{
+
+	/* we never close the tap channel */
 }
