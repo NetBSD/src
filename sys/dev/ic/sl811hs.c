@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.22 2009/03/18 10:22:40 cegger Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.23 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.22 2009/03/18 10:22:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.23 2009/05/12 14:25:18 cegger Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -1229,7 +1229,7 @@ slhci_detach(struct slhci_softc *sc, int flags)
 }
 
 int
-slhci_activate(struct device *self, enum devact act)
+slhci_activate(device_t self, enum devact act)
 {
 	struct slhci_softc *sc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.16 2009/05/12 12:13:21 cegger Exp $	*/
+/*	$NetBSD: ppi.c,v 1.17 2009/05/12 14:21:58 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.16 2009/05/12 12:13:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.17 2009/05/12 14:21:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,8 @@ struct	ppi_softc {
 #define PPIF_TIMO	0x08
 #define PPIF_DELAY	0x10
 
-int	ppimatch(struct device *, cfdata_t, void *);
-void	ppiattach(struct device *, struct device *, void *);
+int	ppimatch(device_t, cfdata_t, void *);
+void	ppiattach(device_t, device_t, void *);
 
 CFATTACH_DECL(ppi, sizeof(struct ppi_softc),
 	ppimatch, ppiattach, NULL, NULL);
@@ -143,14 +143,14 @@ int	ppidebug = 0x80;
 #endif
 
 int
-ppimatch(struct device *parent, cfdata_t match, void *aux)
+ppimatch(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 void
-ppiattach(struct device *parent, struct device *self, void *aux)
+ppiattach(device_t parent, device_t self, void *aux)
 {
 	struct ppi_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;

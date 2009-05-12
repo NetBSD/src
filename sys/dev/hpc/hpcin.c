@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.13 2009/05/12 12:13:49 cegger Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.14 2009/05/12 14:22:39 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.13 2009/05/12 12:13:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.14 2009/05/12 14:22:39 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.13 2009/05/12 12:13:49 cegger Exp $");
 
 #include "locators.h"
 
-int	hpcin_match(struct device *, cfdata_t, void *);
-void	hpcin_attach(struct device *, struct device *, void *);
+int	hpcin_match(device_t, cfdata_t, void *);
+void	hpcin_attach(device_t, device_t, void *);
 int	hpcin_intr(void *);
 
 struct hpcin_softc {
@@ -69,13 +69,13 @@ CFATTACH_DECL(hpcin, sizeof(struct hpcin_softc),
     hpcin_match, hpcin_attach, NULL, NULL);
 
 int
-hpcin_match(struct device *parent, cfdata_t cf, void *aux)
+hpcin_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 void
-hpcin_attach(struct device *parent, struct device *self, void *aux)
+hpcin_attach(device_t parent, device_t self, void *aux)
 {
 	struct hpcioman_attach_args *hma = aux;
 	struct hpcin_softc *sc = device_private(self);

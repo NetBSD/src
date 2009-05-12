@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.74 2009/05/11 21:22:47 cegger Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.75 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.74 2009/05/11 21:22:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.75 2009/05/12 14:25:18 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -163,8 +163,8 @@ const int smc91cxx_media[] = {
 /*
  * MII bit-bang glue.
  */
-u_int32_t smc91cxx_mii_bitbang_read(struct device *);
-void smc91cxx_mii_bitbang_write(struct device *, u_int32_t);
+u_int32_t smc91cxx_mii_bitbang_read(device_t);
+void smc91cxx_mii_bitbang_write(device_t, u_int32_t);
 
 const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 	smc91cxx_mii_bitbang_read,
@@ -179,9 +179,9 @@ const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 };
 
 /* MII callbacks */
-int	smc91cxx_mii_readreg(struct device *, int, int);
-void	smc91cxx_mii_writereg(struct device *, int, int, int);
-void	smc91cxx_statchg(struct device *);
+int	smc91cxx_mii_readreg(device_t, int, int);
+void	smc91cxx_mii_writereg(device_t, int, int, int);
+void	smc91cxx_statchg(device_t);
 void	smc91cxx_tick(void *);
 
 int	smc91cxx_mediachange(struct ifnet *);
@@ -1507,7 +1507,7 @@ smc91cxx_disable(struct smc91cxx_softc *sc)
 }
 
 int
-smc91cxx_activate(struct device *self, enum devact act)
+smc91cxx_activate(device_t self, enum devact act)
 {
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	int rv = 0, s;
@@ -1527,7 +1527,7 @@ smc91cxx_activate(struct device *self, enum devact act)
 }
 
 int
-smc91cxx_detach(struct device *self, int flags)
+smc91cxx_detach(device_t self, int flags)
 {
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -1555,7 +1555,7 @@ smc91cxx_detach(struct device *self, int flags)
 }
 
 u_int32_t
-smc91cxx_mii_bitbang_read(struct device *self)
+smc91cxx_mii_bitbang_read(device_t self)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 
@@ -1564,7 +1564,7 @@ smc91cxx_mii_bitbang_read(struct device *self)
 }
 
 void
-smc91cxx_mii_bitbang_write(struct device *self, u_int32_t val)
+smc91cxx_mii_bitbang_write(device_t self, u_int32_t val)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 
@@ -1573,7 +1573,7 @@ smc91cxx_mii_bitbang_write(struct device *self, u_int32_t val)
 }
 
 int
-smc91cxx_mii_readreg(struct device *self, int phy, int reg)
+smc91cxx_mii_readreg(device_t self, int phy, int reg)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 	int val;
@@ -1588,7 +1588,7 @@ smc91cxx_mii_readreg(struct device *self, int phy, int reg)
 }
 
 void
-smc91cxx_mii_writereg(struct device *self, int phy, int reg, int val)
+smc91cxx_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 
@@ -1600,7 +1600,7 @@ smc91cxx_mii_writereg(struct device *self, int phy, int reg, int val)
 }
 
 void
-smc91cxx_statchg(struct device *self)
+smc91cxx_statchg(device_t self)
 {
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	bus_space_tag_t bst = sc->sc_bst;

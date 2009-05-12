@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.47 2009/04/29 15:10:57 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.48 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -301,6 +301,6 @@ uint16_t rtk_read_eeprom(struct rtk_softc *, int, int);
 void	rtk_setmulti(struct rtk_softc *);
 void	rtk_attach(struct rtk_softc *);
 int	rtk_detach(struct rtk_softc *);
-int	rtk_activate(struct device *, enum devact);
+int	rtk_activate(device_t, enum devact);
 int	rtk_intr(void *);
 #endif /* _KERNEL */

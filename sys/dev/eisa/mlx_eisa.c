@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.21 2009/05/12 12:12:52 cegger Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.22 2009/05/12 14:21:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.21 2009/05/12 12:12:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.22 2009/05/12 14:21:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.21 2009/05/12 12:12:52 cegger Exp $")
 #define	MLX_EISA_CFG09			(0x0c94 - MLX_EISA_SLOT_OFFSET)
 #define	MLX_EISA_CFG10			(0x0c95 - MLX_EISA_SLOT_OFFSET)
 
-static void	mlx_eisa_attach(struct device *, struct device *, void *);
-static int	mlx_eisa_match(struct device *, cfdata_t, void *);
+static void	mlx_eisa_attach(device_t, device_t, void *);
+static int	mlx_eisa_match(device_t, cfdata_t, void *);
 
 static int	mlx_v1_submit(struct mlx_softc *, struct mlx_ccb *);
 static int	mlx_v1_findcomplete(struct mlx_softc *, u_int *, u_int *);
@@ -92,7 +92,7 @@ static struct mlx_eisa_prod {
 };
 
 static int
-mlx_eisa_match(struct device *parent, cfdata_t match,
+mlx_eisa_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea;
@@ -108,7 +108,7 @@ mlx_eisa_match(struct device *parent, cfdata_t match,
 }
 
 static void
-mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
+mlx_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct eisa_attach_args *ea;
 	bus_space_handle_t ioh;

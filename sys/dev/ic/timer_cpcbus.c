@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_cpcbus.c,v 1.10 2009/05/12 12:15:37 cegger Exp $	*/
+/*	$NetBSD: timer_cpcbus.c,v 1.11 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_cpcbus.c,v 1.10 2009/05/12 12:15:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_cpcbus.c,v 1.11 2009/05/12 14:25:18 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,14 +44,14 @@ struct cpctim_softc {
 	void *sc_ih;
 };
 
-static int	cpctim_match(struct device *, cfdata_t, void *);
-static void	cpctim_attach(struct device *, struct device *, void *);
+static int	cpctim_match(device_t, cfdata_t, void *);
+static void	cpctim_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(cpctim, sizeof(struct cpctim_softc),
     cpctim_match, cpctim_attach, NULL, NULL);
 
 int
-cpctim_match(struct device *parent, cfdata_t cf, void *aux)
+cpctim_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 
@@ -59,7 +59,7 @@ cpctim_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 void
-cpctim_attach(struct device *parent, struct device *self, void *aux)
+cpctim_attach(device_t parent, device_t self, void *aux)
 {
 #if 0
 	struct cpcbus_attach_args *caa = aux;

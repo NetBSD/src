@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.125 2009/05/12 12:15:37 cegger Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.126 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.125 2009/05/12 12:15:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.126 2009/05/12 14:25:18 cegger Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -278,16 +278,16 @@ static void zstty_softint1(struct zs_chanstate *);
 #define	ZSUNIT(x)	(minor(x) & 0x7ffff)
 #define	ZSDIALOUT(x)	(minor(x) & 0x80000)
 
-struct tty *zstty_get_tty_from_dev(struct device *);
+struct tty *zstty_get_tty_from_dev(device_t);
 
 /*
- * XXX get the (struct tty *) out of a (struct device *) we trust to be a 
+ * XXX get the (struct tty *) out of a (device_t) we trust to be a 
  * (struct zstty_softc *) - needed by sparc/dev/zs.c, sparc64/dev/zs.c,
  * sun3/dev/zs.c and sun2/dev/zs.c will probably need it at some point
  */
  
 struct tty *
-zstty_get_tty_from_dev(struct device *dev)
+zstty_get_tty_from_dev(device_t dev)
 {
 	struct zstty_softc *sc = device_private(dev);
 	

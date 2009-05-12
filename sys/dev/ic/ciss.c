@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.18 2009/04/18 14:58:02 tsutsui Exp $	*/
+/*	$NetBSD: ciss.c,v 1.19 2009/05/12 14:25:17 cegger Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.18 2009/04/18 14:58:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.19 2009/05/12 14:25:17 cegger Exp $");
 
 #include "bio.h"
 
@@ -97,7 +97,7 @@ static int	ciss_ldmap(struct ciss_softc *sc);
 int	ciss_pdid(struct ciss_softc *, u_int8_t, struct ciss_pdid *, int);
 
 #if NBIO > 0
-int		ciss_ioctl(struct device *, u_long, void *);
+int		ciss_ioctl(device_t, u_long, void *);
 int		ciss_ioctl_vol(struct ciss_softc *, struct bioc_vol *);
 int		ciss_blink(struct ciss_softc *, int, int, int, struct ciss_blink *);
 int		ciss_create_sensors(struct ciss_softc *);
@@ -372,7 +372,7 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_channel.chan_flags = 0;
 	sc->sc_channel.chan_id = sc->maxunits;
 
-	sc->sc_adapter.adapt_dev = (struct device *) sc;
+	sc->sc_adapter.adapt_dev = (device_t) sc;
 	sc->sc_adapter.adapt_openings = sc->sc_channel.chan_openings;
 	sc->sc_adapter.adapt_max_periph = sc->maxunits;
 	sc->sc_adapter.adapt_request = ciss_scsi_cmd;
@@ -1146,7 +1146,7 @@ const int ciss_stat[] = { BIOC_SVONLINE, BIOC_SVOFFLINE, BIOC_SVOFFLINE,
     BIOC_SVOFFLINE, BIOC_SVBUILDING };
 
 int
-ciss_ioctl(struct device *dev, u_long cmd, void *addr)
+ciss_ioctl(device_t dev, u_long cmd, void *addr)
 {
 	struct ciss_softc	*sc = (struct ciss_softc *)dev;
 	struct bioc_inq *bi;
