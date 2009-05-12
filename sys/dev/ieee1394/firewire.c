@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.24 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: firewire.c,v 1.25 2009/05/12 12:16:55 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.24 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.25 2009/05/12 12:16:55 cegger Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -196,7 +196,7 @@ static int firewire_shutdown    (device_t);
 #endif
 static device_t firewire_add_child   (device_t, int, const char *, int);
 #elif defined(__NetBSD__)
-int firewirematch (device_t, struct cfdata *, void *);
+int firewirematch (device_t, cfdata_t, void *);
 void firewireattach (device_t, device_t, void *);
 int firewiredetach (device_t, int);
 int firewire_print (void *, const char *);
@@ -452,7 +452,7 @@ firewire_probe(device_t dev)
 }
 #elif defined(__NetBSD__)
 int
-firewirematch(device_t parent, struct cfdata *cf, void *aux)
+firewirematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fwbus_attach_args *faa = (struct fwbus_attach_args *)aux;
 	 

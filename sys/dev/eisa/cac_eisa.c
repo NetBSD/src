@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.19 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.20 2009/05/12 12:12:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.19 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.20 2009/05/12 12:12:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.19 2008/04/28 20:23:48 martin Exp $")
 #define CAC_EISA_IOCONF			0x38
 
 static void	cac_eisa_attach(struct device *, struct device *, void *);
-static int	cac_eisa_match(struct device *, struct cfdata *, void *);
+static int	cac_eisa_match(struct device *, cfdata_t, void *);
 
 static struct	cac_ccb *cac_eisa_l0_completed(struct cac_softc *);
 static int	cac_eisa_l0_fifo_full(struct cac_softc *);
@@ -113,7 +113,7 @@ static struct cac_eisa_type {
 };
 
 static int
-cac_eisa_match(struct device *parent, struct cfdata *match,
+cac_eisa_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea;

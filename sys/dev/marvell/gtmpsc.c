@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.35 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.36 2009/05/12 12:18:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.35 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.36 2009/05/12 12:18:45 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -118,7 +118,7 @@ unsigned int gtmpsc_debug = 0;
 #define GTMPSCDIALOUT(x)   (minor(x) & GTMPSCDIALOUT_MASK)
 
 STATIC void gtmpscinit(struct gtmpsc_softc *);
-STATIC int  gtmpscmatch(struct device *, struct cfdata *, void *);
+STATIC int  gtmpscmatch(struct device *, cfdata_t, void *);
 STATIC void gtmpscattach(struct device *, struct device *, void *);
 STATIC int  compute_cdv(unsigned int);
 STATIC void gtmpsc_loadchannelregs(struct gtmpsc_softc *);
@@ -419,7 +419,7 @@ gtmpsc_loadchannelregs(struct gtmpsc_softc *sc)
 }
 
 STATIC int
-gtmpscmatch(struct device *parent, struct cfdata *self, void *aux)
+gtmpscmatch(struct device *parent, cfdata_t self, void *aux)
 {
 	struct gt_softc *gt = device_private(parent);
 	struct gt_attach_args *ga = aux;

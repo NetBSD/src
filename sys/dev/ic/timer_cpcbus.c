@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_cpcbus.c,v 1.9 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: timer_cpcbus.c,v 1.10 2009/05/12 12:15:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_cpcbus.c,v 1.9 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_cpcbus.c,v 1.10 2009/05/12 12:15:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,14 +44,14 @@ struct cpctim_softc {
 	void *sc_ih;
 };
 
-static int	cpctim_match(struct device *, struct cfdata *, void *);
+static int	cpctim_match(struct device *, cfdata_t, void *);
 static void	cpctim_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpctim, sizeof(struct cpctim_softc),
     cpctim_match, cpctim_attach, NULL, NULL);
 
 int
-cpctim_match(struct device *parent, struct cfdata *cf, void *aux)
+cpctim_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 

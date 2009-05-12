@@ -1,4 +1,4 @@
-/*	$NetBSD: iic_cpcbus.c,v 1.10 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: iic_cpcbus.c,v 1.11 2009/05/12 12:15:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_cpcbus.c,v 1.10 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_cpcbus.c,v 1.11 2009/05/12 12:15:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,14 +47,14 @@ struct iic_cpcbus_softc {
 	void *sc_ih;
 };
 
-static int	iic_cpcbus_match(struct device *, struct cfdata *, void *);
+static int	iic_cpcbus_match(struct device *, cfdata_t, void *);
 static void	iic_cpcbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(iic_cpcbus, sizeof(struct iic_cpcbus_softc),
     iic_cpcbus_match, iic_cpcbus_attach, NULL, NULL);
 
 int
-iic_cpcbus_match(struct device *parent, struct cfdata *cf, void *aux)
+iic_cpcbus_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 

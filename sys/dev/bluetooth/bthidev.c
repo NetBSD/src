@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.16 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.17 2009/05/12 12:10:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.16 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.17 2009/05/12 12:10:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -109,7 +109,7 @@ static int  bthidev_output(struct bthidev *, uint8_t *, int);
 static void bthidev_null(struct bthidev *, uint8_t *, int);
 
 /* autoconf(9) glue */
-static int  bthidev_match(device_t, struct cfdata *, void *);
+static int  bthidev_match(device_t, cfdata_t, void *);
 static void bthidev_attach(device_t, device_t, void *);
 static int  bthidev_detach(device_t, int);
 static int  bthidev_print(void *, const char *);
@@ -155,7 +155,7 @@ static const struct btproto bthidev_int_proto = {
  */
 
 static int
-bthidev_match(device_t self, struct cfdata *cfdata, void *aux)
+bthidev_match(device_t self, cfdata_t cfdata, void *aux)
 {
 	prop_dictionary_t dict = aux;
 	prop_object_t obj;

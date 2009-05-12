@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.19 2009/03/18 10:22:40 cegger Exp $	*/
+/*	$NetBSD: gt.c,v 1.20 2009/05/12 12:18:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.19 2009/03/18 10:22:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.20 2009/05/12 12:18:45 cegger Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -115,7 +115,7 @@ gt_cfprint (void *aux, const char *pnp)
 
 
 static int
-gt_cfsearch(struct device *parent, struct cfdata *cf,
+gt_cfsearch(struct device *parent, cfdata_t cf,
 	    const int *ldesc, void *aux)
 {
 	struct gt_softc *gt = (struct gt_softc *) parent;
