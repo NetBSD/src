@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.68 2009/04/04 15:53:49 bouyer Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.69 2009/05/12 23:03:24 elad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.68 2009/04/04 15:53:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.69 2009/05/12 23:03:24 elad Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -445,11 +445,10 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		struct ifbrparam ifbrparam;
 	} args;
 	struct ifdrv *ifd = (struct ifdrv *) data;
-	const struct bridge_control *bc;
+	const struct bridge_control *bc = NULL; /* XXXGCC */
 	int s, error = 0;
 
-	s = splnet();
-
+	/* Authorize command before calling splnet(). */
 	switch (cmd) {
 	case SIOCGDRVSPEC:
 	case SIOCSDRVSPEC:
@@ -457,8 +456,26 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
+
 		bc = &bridge_control_table[ifd->ifd_cmd];
 
+		/* We only care about BC_F_SUSER at this point. */
+		if ((bc->bc_flags & BC_F_SUSER) == 0)
+			break;
+
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL);
+		if (error)
+			return (error);
+
+		break;
+	}
+
+	s = splnet();
+
+	switch (cmd) {
+	case SIOCGDRVSPEC:
+	case SIOCSDRVSPEC:
 		if (cmd == SIOCGDRVSPEC &&
 		    (bc->bc_flags & BC_F_COPYOUT) == 0) {
 			error = EINVAL;
@@ -470,12 +487,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 
-		if (bc->bc_flags & BC_F_SUSER) {
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL);
-			if (error)
-				break;
-		}
+		/* BC_F_SUSER is checked above, before splnet(). */
 
 		if (ifd->ifd_len != bc->bc_argsize ||
 		    ifd->ifd_len > sizeof(args)) {
