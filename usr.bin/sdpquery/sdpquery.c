@@ -1,4 +1,4 @@
-/*	$NetBSD: sdpquery.c,v 1.4 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: sdpquery.c,v 1.5 2009/05/12 18:37:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: sdpquery.c,v 1.4 2008/07/21 14:19:26 lukem Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
+ Copyright (c) 2006 Itronix, Inc.\
+ All rights reserved.");
+__RCSID("$NetBSD: sdpquery.c,v 1.5 2009/05/12 18:37:50 plunky Exp $");
 
-#include <assert.h>
 #include <bluetooth.h>
 #include <err.h>
 #include <errno.h>
@@ -51,39 +52,47 @@ static void usage(void);
 
 const char *control_socket;
 
+bdaddr_t local_addr;
+bdaddr_t remote_addr;
+
+bool Nflag;	/* numerical output */
+bool Rflag;	/* uncooked output */
+bool Xflag;	/* hex output */
+
 static struct command {
 	const char	*command;
-	int		(*handler)(bdaddr_t *, bdaddr_t *, int, char const **);
+	int		(*handler)(int, char const **);
 	const char	*usage;
 } commands[] = {
-	{ "Browse",	do_sdp_browse,	"[UUID]"	},
-	{ "Search",	do_sdp_search,	"<service>"	},
-	{ NULL,		NULL,		NULL		}
+	{ "Browse",	do_sdp_browse,	"[group]"		},
+	{ "Record",	do_sdp_record,	"handle [handle...]"	},
+	{ "Search",	do_sdp_search,	"uuid [uuid...]"	},
+	{ NULL,		NULL,		NULL			}
 };
 
 int
 main(int argc, char *argv[])
 {
-	bdaddr_t	laddr, raddr;
 	struct command *cmd;
 	int		ch, local;
 
-	bdaddr_copy(&laddr, BDADDR_ANY);
-	bdaddr_copy(&raddr, BDADDR_ANY);
+	bdaddr_copy(&local_addr, BDADDR_ANY);
+	bdaddr_copy(&remote_addr, BDADDR_ANY);
 	control_socket = NULL;
+	Nflag = Rflag = Xflag = false;
 	local = 0;
 
-	while ((ch = getopt(argc, argv, "a:c:d:hl")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:d:hlNRX")) != -1) {
 		switch (ch) {
 		case 'a': /* remote address */
-			if (!bt_aton(optarg, &raddr)) {
+			if (!bt_aton(optarg, &remote_addr)) {
 				struct hostent  *he = NULL;
 
 				if ((he = bt_gethostbyname(optarg)) == NULL)
 					errx(EXIT_FAILURE, "%s: %s",
 						optarg, hstrerror(h_errno));
 
-				bdaddr_copy(&raddr, (bdaddr_t *)he->h_addr);
+				bdaddr_copy(&remote_addr, (bdaddr_t *)he->h_addr);
 			}
 			break;
 
@@ -92,13 +101,25 @@ main(int argc, char *argv[])
 			break;
 
 		case 'd': /* local device address */
-			if (!bt_devaddr(optarg, &laddr))
+			if (!bt_devaddr(optarg, &local_addr))
 				err(EXIT_FAILURE, "%s", optarg);
 
 			break;
 
 		case 'l': /* local sdpd */
 			local = 1;
+			break;
+
+		case 'N': /* Numerical output */
+			Nflag = true;
+			break;
+
+		case 'R': /* Raw output */
+			Rflag = true;
+			break;
+
+		case 'X': /* Hex output */
+			Xflag = true;
 			break;
 
 		case 'h':
@@ -115,27 +136,27 @@ main(int argc, char *argv[])
 	optreset = 1;
 
 	if (argc < 1
-	    || (bdaddr_any(&raddr) && !local)
-	    || (!bdaddr_any(&raddr) && local))
+	    || (bdaddr_any(&remote_addr) && !local)
+	    || (!bdaddr_any(&remote_addr) && local))
 		usage();
 
 	for (cmd = commands ; cmd->command != NULL; cmd++) {
 		if (strcasecmp(*argv, cmd->command) == 0)
-			return (*cmd->handler)(&laddr, &raddr, --argc, (char const **)++argv);
+			return (*cmd->handler)(--argc, (char const **)++argv);
 	}
 
-	errx(EXIT_FAILURE, "%s: Unknown Command", *argv);
+	usage();
+	return EXIT_FAILURE;
 }
 
-/* Usage */
 static void
 usage(void)
 {
 	struct command *cmd;
 
 	fprintf(stderr,
-		"Usage: %s [-d device] -a bdaddr <command> [parameters..]\n"
-		"       %s [-c path] -l <command> [parameters..]\n"
+		"Usage: %s [-NRX] [-d device] -a bdaddr <command> [parameters..]\n"
+		"       %s [-NRX] [-c path] -l <command> [parameters..]\n"
 		"\n", getprogname(), getprogname());
 
 	fprintf(stderr,
@@ -143,8 +164,10 @@ usage(void)
 		"\t-a bdaddr    remote address\n"
 		"\t-c path      path to control socket\n"
 		"\t-d device    local device address\n"
-		"\t-l           connect to the local SDP server via control socket\n"
-		"\t-h           display usage and quit\n"
+		"\t-l           query local SDP server daemon\n"
+		"\t-N           print numerical values\n"
+		"\t-R           print raw attribute values\n"
+		"\t-X           print attribute values in hex\n"
 		"\n"
 		"Commands:\n");
 
