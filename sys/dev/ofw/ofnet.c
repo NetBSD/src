@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.47 2009/05/12 13:17:37 cegger Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.48 2009/05/12 14:39:22 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.47 2009/05/12 13:17:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.48 2009/05/12 14:39:22 cegger Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -84,8 +84,8 @@ struct ofnet_softc {
 	struct callout sc_callout;
 };
 
-static int ofnet_match (struct device *, cfdata_t, void *);
-static void ofnet_attach (struct device *, struct device *, void *);
+static int ofnet_match (device_t, cfdata_t, void *);
+static void ofnet_attach (device_t, device_t, void *);
 
 CFATTACH_DECL(ofnet, sizeof(struct ofnet_softc),
     ofnet_match, ofnet_attach, NULL, NULL);
@@ -100,7 +100,7 @@ static int ofnet_ioctl (struct ifnet *, u_long, void *);
 static void ofnet_watchdog (struct ifnet *);
 
 static int
-ofnet_match(struct device *parent, cfdata_t match, void *aux)
+ofnet_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[32];
@@ -124,7 +124,7 @@ ofnet_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-ofnet_attach(struct device *parent, struct device *self, void *aux)
+ofnet_attach(device_t parent, device_t self, void *aux)
 {
 	struct ofnet_softc *of = device_private(self);
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;

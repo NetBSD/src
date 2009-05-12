@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.33 2008/07/03 19:07:43 drochner Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.34 2009/05/12 14:42:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -139,7 +139,7 @@ struct pcmcia_function {
 	SIMPLEQ_ENTRY(pcmcia_function) pf_list;
 	/* run-time state */
 	struct pcmcia_softc *sc;
-	struct device *child;
+	device_t child;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_mem_handle pf_pcmh;
 #define	pf_ccrt		pf_pcmh.memt
@@ -248,7 +248,7 @@ void	pcmcia_devinfo(struct pcmcia_card *, int, char *, size_t);
 void	pcmcia_read_cis(struct pcmcia_softc *);
 void	pcmcia_check_cis_quirks(struct pcmcia_softc *);
 void	pcmcia_print_cis(struct pcmcia_softc *);
-int	pcmcia_scan_cis(struct device *,
+int	pcmcia_scan_cis(device_t,
 	    int (*) (struct pcmcia_tuple *, void *), void *);
 
 #define	pcmcia_cis_read_1(tuple, idx0)					\
@@ -287,9 +287,9 @@ void	pcmcia_ccr_write(struct pcmcia_function *, int, int);
 #define	pcmcia_mfc(sc)	(! SIMPLEQ_EMPTY(&(sc)->card.pf_head) &&	\
 		 SIMPLEQ_NEXT(SIMPLEQ_FIRST(&(sc)->card.pf_head), pf_list))
 
-void	pcmcia_socket_enable(struct device *);
-void	pcmcia_socket_disable(struct device *);
-void	pcmcia_socket_settype(struct device *, int);
+void	pcmcia_socket_enable(device_t);
+void	pcmcia_socket_disable(device_t);
+void	pcmcia_socket_settype(device_t, int);
 
 int	pcmcia_config_alloc(struct pcmcia_function *,
 	    struct pcmcia_config_entry *);

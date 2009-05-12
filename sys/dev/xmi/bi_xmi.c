@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_xmi.c,v 1.8 2009/05/12 13:22:58 cegger Exp $	*/
+/*	$NetBSD: bi_xmi.c,v 1.9 2009/05/12 14:48:08 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.8 2009/05/12 13:22:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.9 2009/05/12 14:48:08 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.8 2009/05/12 13:22:58 cegger Exp $");
 #include "locators.h"
 
 static int
-bi_xmi_match(struct device *parent, cfdata_t cf, void *aux)
+bi_xmi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct xmi_attach_args *xa = aux;
 
@@ -67,7 +67,7 @@ bi_xmi_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 static void
-bi_xmi_attach(struct device *parent, struct device *self, void *aux)
+bi_xmi_attach(device_t parent, device_t self, void *aux)
 {
 	struct bi_softc *sc = device_private(self);
 	struct xmi_attach_args *xa = aux;
