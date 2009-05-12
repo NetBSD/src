@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.68 2009/05/11 18:33:30 christos Exp $
+.\"	$NetBSD: editline.3,v 1.69 2009/05/12 08:14:07 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,7 +224,7 @@ Define prompt printing function as
 which is to return a string that contains the prompt.
 .It Dv EL_PROMPT_ESC , Fa "char *(*f)(EditLine *)" , Fa "char c"
 Same as
-.Dv EL_PROMPT,
+.Dv EL_PROMPT ,
 but the
 .Fa c
 argument indicates the start/stop literal prompt character.
