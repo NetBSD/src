@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.15 2008/04/28 22:00:01 matt Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.16 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,5 +73,5 @@ void	smc91cxx_attach(struct smc91cxx_softc *, u_int8_t *);
 int	smc91cxx_intr(void *);
 int	smc91cxx_enable(struct smc91cxx_softc *);
 void	smc91cxx_disable(struct smc91cxx_softc *);
-int	smc91cxx_activate(struct device *, enum devact);
-int	smc91cxx_detach(struct device *, int);
+int	smc91cxx_activate(device_t, enum devact);
+int	smc91cxx_detach(device_t, int);

@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.28 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.29 2009/05/12 14:25:17 cegger Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -156,7 +156,7 @@ daic_probe(bus_space_tag_t bus, bus_space_handle_t io)
  * Attach and initialize the card at given io space.
  *---------------------------------------------------------------------------*/
 void
-daic_attach(struct device *self, struct daic_softc *sc)
+daic_attach(device_t self, struct daic_softc *sc)
 {
 	int i, num_ports, memsize = 0;
 

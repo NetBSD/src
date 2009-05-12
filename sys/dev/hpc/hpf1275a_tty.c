@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.24 2009/05/12 12:13:49 cegger Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.25 2009/05/12 14:22:39 cegger Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.24 2009/05/12 12:13:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.25 2009/05/12 14:22:39 cegger Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -59,7 +59,7 @@ struct hpf1275a_softc {
 	struct device sc_dev;
 
 	struct tty *sc_tp;		/* back reference to the tty */
-	struct device *sc_wskbd;	/* wskbd child */
+	device_t sc_wskbd;	/* wskbd child */
 	int sc_enabled;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
@@ -76,9 +76,9 @@ static int	hpf1275a_close(struct tty *, int);
 static int	hpf1275a_input(int, struct tty *);
 
 /* autoconf(9) methods */
-static int	hpf1275a_match(struct device *, cfdata_t, void *);
-static void	hpf1275a_attach(struct device *, struct device *, void *);
-static int	hpf1275a_detach(struct device *, int);
+static int	hpf1275a_match(device_t, cfdata_t, void *);
+static void	hpf1275a_attach(device_t, device_t, void *);
+static int	hpf1275a_detach(device_t, int);
 
 /* wskbd(4) accessops */
 static int	hpf1275a_wskbd_enable(void *, int);
@@ -244,7 +244,7 @@ hpf1275aattach(int n)
  * XXX: unused: config_attach_pseudo(9) does not call ca_match.
  */
 static int
-hpf1275a_match(struct device *self,
+hpf1275a_match(device_t self,
 	       cfdata_t cfdata, void *arg)
 {
 
@@ -258,8 +258,8 @@ hpf1275a_match(struct device *self,
  * open the line discipline.
  */
 static void
-hpf1275a_attach(struct device *parent,
-		struct device *self, void *aux)
+hpf1275a_attach(device_t parent,
+		device_t self, void *aux)
 {
 	struct hpf1275a_softc *sc = device_private(self);
 	struct wskbddev_attach_args wska;
@@ -281,7 +281,7 @@ hpf1275a_attach(struct device *parent,
  * Autoconf detach routine.  Called when we close the line discipline.
  */
 static int
-hpf1275a_detach(struct device *self, int flags)
+hpf1275a_detach(device_t self, int flags)
 {
 	struct hpf1275a_softc *sc = device_private(self);
 	int error;

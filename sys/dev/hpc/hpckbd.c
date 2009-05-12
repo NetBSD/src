@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.27 2009/05/12 12:13:49 cegger Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.28 2009/05/12 14:22:39 cegger Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.27 2009/05/12 12:13:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.28 2009/05/12 14:22:39 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,8 @@ struct hpckbd_softc {
 	struct hpckbd_core	sc_coredata;
 };
 
-int	hpckbd_match(struct device *, cfdata_t, void *);
-void	hpckbd_attach(struct device *, struct device *, void *);
+int	hpckbd_match(device_t, cfdata_t, void *);
+void	hpckbd_attach(device_t, device_t, void *);
 
 void	hpckbd_initcore(struct hpckbd_core *, struct hpckbd_ic_if *, int);
 void	hpckbd_initif(struct hpckbd_core *);
@@ -139,14 +139,14 @@ struct wskbd_mapdata hpckbd_keymapdata = {
 };
 
 int
-hpckbd_match(struct device *parent,
+hpckbd_match(device_t parent,
 	     cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 void
-hpckbd_attach(struct device *parent, struct device *self, void *aux)
+hpckbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct hpckbd_attach_args *haa = aux;
 	struct hpckbd_softc *sc = device_private(self);

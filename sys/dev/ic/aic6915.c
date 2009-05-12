@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.23 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.24 2009/05/12 14:25:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.23 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.24 2009/05/12 14:25:17 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -88,9 +88,9 @@ static int	sf_add_rxbuf(struct sf_softc *, int);
 static uint8_t	sf_read_eeprom(struct sf_softc *, int);
 static void	sf_set_filter(struct sf_softc *);
 
-static int	sf_mii_read(struct device *, int, int);
-static void	sf_mii_write(struct device *, int, int, int);
-static void	sf_mii_statchg(struct device *);
+static int	sf_mii_read(device_t, int, int);
+static void	sf_mii_write(device_t, int, int, int);
+static void	sf_mii_statchg(device_t);
 
 static void	sf_tick(void *);
 
@@ -1353,7 +1353,7 @@ sf_set_filter(struct sf_softc *sc)
  *	Read from the MII.
  */
 static int
-sf_mii_read(struct device *self, int phy, int reg)
+sf_mii_read(device_t self, int phy, int reg)
 {
 	struct sf_softc *sc = (void *) self;
 	uint32_t v;
@@ -1381,7 +1381,7 @@ sf_mii_read(struct device *self, int phy, int reg)
  *	Write to the MII.
  */
 static void
-sf_mii_write(struct device *self, int phy, int reg, int val)
+sf_mii_write(device_t self, int phy, int reg, int val)
 {
 	struct sf_softc *sc = (void *) self;
 	int i;
@@ -1404,7 +1404,7 @@ sf_mii_write(struct device *self, int phy, int reg, int val)
  *	Callback from the PHY when the media changes.
  */
 static void
-sf_mii_statchg(struct device *self)
+sf_mii_statchg(device_t self)
 {
 	struct sf_softc *sc = (void *) self;
 	uint32_t ipg;

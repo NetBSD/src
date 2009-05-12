@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.22 2009/03/18 16:00:18 cegger Exp $ */
+/* $NetBSD: mfi.c,v 1.23 2009/05/12 14:25:17 cegger Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.22 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.23 2009/05/12 14:25:17 cegger Exp $");
 
 #include "bio.h"
 
@@ -92,7 +92,7 @@ static int		mfi_mgmt(struct mfi_ccb *,struct scsipi_xfer *,
 static void		mfi_mgmt_done(struct mfi_ccb *);
 
 #if NBIO > 0
-static int		mfi_ioctl(struct device *, u_long, void *);
+static int		mfi_ioctl(device_t, u_long, void *);
 static int		mfi_ioctl_inq(struct mfi_softc *, struct bioc_inq *);
 static int		mfi_ioctl_vol(struct mfi_softc *, struct bioc_vol *);
 static int		mfi_ioctl_disk(struct mfi_softc *, struct bioc_disk *);
@@ -1316,7 +1316,7 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 
 #if NBIO > 0
 int
-mfi_ioctl(struct device *dev, u_long cmd, void *addr)
+mfi_ioctl(device_t dev, u_long cmd, void *addr)
 {
 	struct mfi_softc	*sc = (struct mfi_softc *)dev;
 	int error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.11 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.12 2009/05/12 14:25:17 cegger Exp $	*/
 
 /*
  * Copyright 1997
@@ -281,7 +281,7 @@ int	cs_detach(struct cs_softc *);
 int	cs_verify_eeprom(struct cs_softc *);
 int	cs_read_eeprom(struct cs_softc *, int, u_int16_t *);
 int	cs_intr(void *);
-int	cs_activate(struct device *, enum devact);
+int	cs_activate(device_t, enum devact);
 void	cs_ether_input(struct cs_softc *, struct mbuf *);
 void	cs_print_rx_errors(struct cs_softc *, u_int16_t);
 int	cs_init(struct ifnet *);
