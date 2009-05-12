@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.13 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.14 2009/05/12 19:35:59 skrll Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.13 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.14 2009/05/12 19:35:59 skrll Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -288,19 +288,15 @@ mg_intr_establish(void *v, int irq, int type, int pri,
 		return NULL;
 
 	if (type != IST_LEVEL && type != IST_EDGE) {
-#ifdef DEBUG
-		printf("%s: bad interrupt level (%d)\n", sc->sc_dev.dv_xname,
+		aprint_debug_dev(sc->sc_dev, "bad interrupt level (%d)\n",
 		    type);
-#endif
 		return NULL;
 	}
 
 	iv = &sc->sc_iv[irq];
 	if (iv->iv_handler) {
-#ifdef DEBUG
-		printf("%s: irq %d already established\n", sc->sc_dev.dv_xname,
+		aprint_debug_dev(sc->sc_dev, "irq %d already established\n",
 		    irq);
-#endif
 		return NULL;
 	}
 
