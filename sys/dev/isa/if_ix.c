@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.31 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.32 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.31 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.32 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ static void	ix_eeprom_outbits(bus_space_tag_t, bus_space_handle_t, int, int);
 static int	ix_eeprom_inbits (bus_space_tag_t, bus_space_handle_t);
 static void	ix_eeprom_clock  (bus_space_tag_t, bus_space_handle_t, int);
 
-int ix_match(struct device *, struct cfdata *, void *);
+int ix_match(struct device *, cfdata_t, void *);
 void ix_attach(struct device *, struct device *, void *);
 
 /*
@@ -468,7 +468,7 @@ ix_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 }
 
 int
-ix_match(struct device *parent, struct cfdata *cf, void *aux)
+ix_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	int i;
 	int rv = 0;

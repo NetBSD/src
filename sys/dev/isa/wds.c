@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.71 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: wds.c,v 1.72 2009/05/12 08:44:20 cegger Exp $	*/
 
 /*
  * XXX
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.71 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.72 2009/05/12 08:44:20 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -199,7 +199,7 @@ int	wds_ipoll(struct wds_softc *, struct wds_scb *, int);
 void	wds_timeout(void *);
 int	wds_create_scbs(struct wds_softc *, void *, size_t);
 
-int	wdsprobe(struct device *, struct cfdata *, void *);
+int	wdsprobe(struct device *, cfdata_t, void *);
 void	wdsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wds, sizeof(struct wds_softc),
@@ -244,7 +244,7 @@ wds_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, u_char *ibuf, int icnt)
  * Check for the presence of a WD7000 SCSI controller.
  */
 int
-wdsprobe(struct device *parent, struct cfdata *match,
+wdsprobe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

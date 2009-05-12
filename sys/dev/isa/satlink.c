@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.40 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: satlink.c,v 1.41 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.40 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.41 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ struct satlink_softc {
  */
 #define	SATLINK_TIMEOUT		(hz/10)
 
-int	satlinkprobe(struct device *, struct cfdata *, void *);
+int	satlinkprobe(struct device *, cfdata_t, void *);
 void	satlinkattach(struct device *, struct device *, void *);
 void	satlinktimeout(void *);
 
@@ -115,7 +115,7 @@ const struct cdevsw satlink_cdevsw = {
 };
 
 int
-satlinkprobe(struct device *parent, struct cfdata *match,
+satlinkprobe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

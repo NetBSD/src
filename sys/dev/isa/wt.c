@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.80 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: wt.c,v 1.81 2009/05/12 08:44:20 cegger Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.80 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.81 2009/05/12 08:44:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ static int	wtwritefm(struct wt_softc *sc);
 static u_char	wtsoft(struct wt_softc *sc, int mask, int bits);
 static int	wtintr(void *sc);
 
-int	wtprobe(struct device *, struct cfdata *, void *);
+int	wtprobe(struct device *, cfdata_t, void *);
 void	wtattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wt, sizeof(struct wt_softc),
@@ -193,7 +193,7 @@ extern struct cfdriver wt_cd;
  * Probe for the presence of the device.
  */
 int
-wtprobe(struct device *parent, struct cfdata *match,
+wtprobe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

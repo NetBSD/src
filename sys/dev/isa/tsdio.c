@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.8 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.9 2009/05/12 08:44:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.8 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.9 2009/05/12 08:44:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,16 +44,16 @@ __KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.8 2009/03/14 21:04:20 dsl Exp $");
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/tsdiovar.h>
 
-int	tsdio_probe(struct device *, struct cfdata *, void *);
+int	tsdio_probe(struct device *, cfdata_t, void *);
 void	tsdio_attach(struct device *, struct device *, void *);
-int	tsdio_search(struct device *, struct cfdata *, const int *, void *);
+int	tsdio_search(struct device *, cfdata_t, const int *, void *);
 int	tsdio_print(void *, const char *);
 
 CFATTACH_DECL(tsdio, sizeof(struct tsdio_softc),
     tsdio_probe, tsdio_attach, NULL, NULL);
 
 int
-tsdio_probe(struct device *parent, struct cfdata *cf, void *aux)
+tsdio_probe(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -126,7 +126,7 @@ tsdio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-tsdio_search(struct device *parent, struct cfdata *cf, const int *l, void *aux)
+tsdio_search(struct device *parent, cfdata_t cf, const int *l, void *aux)
 {
 	struct tsdio_softc *sc = (struct tsdio_softc *)parent;
 	struct tsdio_attach_args sa;

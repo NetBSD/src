@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.9 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: cec.c,v 1.10 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.9 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.10 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ struct cec_softc {
 	callout_t sc_timeout_ch;
 };
 
-int	cecprobe(struct device *, struct cfdata *, void *);
+int	cecprobe(struct device *, cfdata_t, void *);
 void	cecattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cec, sizeof(struct cec_softc),
@@ -138,7 +138,7 @@ int cecwtimeout = 0x10000;
 int cecdmathresh = 3;
 
 int
-cecprobe(struct device *parent, struct cfdata *match, void *aux)
+cecprobe(struct device *parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;

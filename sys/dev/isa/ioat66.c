@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.18 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.19 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.18 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.19 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ struct ioat66_softc {
 int ioatbases[NSLAVES]={0x220,0x228,0x240,0x248,0x260,0x268};
 #define IOAT66SHARED 0x208
 
-int ioat66probe(struct device *, struct cfdata *, void *);
+int ioat66probe(struct device *, cfdata_t, void *);
 void ioat66attach(struct device *, struct device *, void *);
 int ioat66intr(void *);
 
@@ -76,7 +76,7 @@ CFATTACH_DECL(ioat, sizeof(struct ioat66_softc),
     ioat66probe, ioat66attach, NULL, NULL);
 
 int
-ioat66probe(struct device *parent, struct cfdata *self,
+ioat66probe(struct device *parent, cfdata_t self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

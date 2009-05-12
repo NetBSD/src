@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.29 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: aria.c,v 1.30 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.29 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.30 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ struct aria_softc {
 	int	sc_sendcmd_err;
 };
 
-int	ariaprobe(struct device *, struct cfdata *, void *);
+int	ariaprobe(struct device *, cfdata_t, void *);
 void	ariaattach(struct device *, struct device *, void *);
 void	ariaclose(void *);
 int	ariaopen(void *, int);
@@ -238,7 +238,7 @@ const struct audio_hw_if aria_hw_if = {
  * Probe for the aria hardware.
  */
 int
-ariaprobe(struct device *parent, struct cfdata *cf, void *aux)
+ariaprobe(struct device *parent, cfdata_t cf, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia;

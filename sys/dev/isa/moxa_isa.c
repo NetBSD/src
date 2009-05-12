@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.17 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.18 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.17 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.18 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ struct moxa_isa_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int moxa_isaprobe(struct device *, struct cfdata *, void *);
+int moxa_isaprobe(struct device *, cfdata_t, void *);
 void moxa_isaattach(struct device *, struct device *, void *);
 int moxa_isaintr(void *);
 
@@ -72,7 +72,7 @@ CFATTACH_DECL(moxa_isa, sizeof(struct moxa_isa_softc),
     moxa_isaprobe, moxa_isaattach, NULL, NULL);
 
 int
-moxa_isaprobe(struct device *parent, struct cfdata *self,
+moxa_isaprobe(struct device *parent, cfdata_t self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

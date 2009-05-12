@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.27 2009/03/16 23:11:15 dsl Exp $ */
+/* $NetBSD: ega.c,v 1.28 2009/05/12 08:44:19 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.27 2009/03/16 23:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.28 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ static int egaconsole, ega_console_attached;
 static struct egascreen ega_console_screen;
 static struct ega_config ega_console_dc;
 
-int	ega_match(struct device *, struct cfdata *, void *);
+int	ega_match(struct device *, cfdata_t, void *);
 void	ega_attach(struct device *, struct device *, void *);
 
 static int ega_is_console(bus_space_tag_t);
@@ -429,7 +429,7 @@ ega_init(struct ega_config *vc, bus_space_tag_t iot, bus_space_tag_t memt, int m
 }
 
 int
-ega_match(struct device *parent, struct cfdata *match, void *aux)
+ega_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int mono;

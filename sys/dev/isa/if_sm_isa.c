@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.20 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.21 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.20 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.21 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.20 2008/04/28 20:23:52 martin Exp $"
 
 #include <dev/isa/isavar.h>
 
-int	sm_isa_match(struct device *, struct cfdata *, void *);
+int	sm_isa_match(struct device *, cfdata_t, void *);
 void	sm_isa_attach(struct device *, struct device *, void *);
 
 struct sm_isa_softc {
@@ -73,7 +73,7 @@ CFATTACH_DECL(sm_isa, sizeof(struct sm_isa_softc),
     sm_isa_match, sm_isa_attach, NULL, NULL);
 
 int
-sm_isa_match(struct device *parent, struct cfdata *match,
+sm_isa_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.107 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: mcd.c,v 1.108 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.107 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.108 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ int mcd_getqchan(struct mcd_softc *, union mcd_qchninfo *, int);
 int mcd_setlock(struct mcd_softc *, int);
 
 int mcd_find(bus_space_tag_t, bus_space_handle_t, struct mcd_softc *);
-int mcdprobe(struct device *, struct cfdata *, void *);
+int mcdprobe(struct device *, cfdata_t, void *);
 void mcdattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mcd, sizeof(struct mcd_softc),
@@ -909,7 +909,7 @@ mcd_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct mcd_softc *sc)
 }
 
 int
-mcdprobe(struct device *parent, struct cfdata *match,
+mcdprobe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

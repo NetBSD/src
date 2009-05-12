@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.36 2009/03/14 21:04:20 dsl Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.37 2009/05/12 08:44:19 cegger Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.36 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.37 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ struct pcdisplay_softc {
 static int pcdisplayconsole, pcdisplay_console_attached;
 static struct pcdisplay_config pcdisplay_console_dc;
 
-int	pcdisplay_match(struct device *, struct cfdata *, void *);
+int	pcdisplay_match(struct device *, cfdata_t, void *);
 void	pcdisplay_attach(struct device *, struct device *, void *);
 
 static int pcdisplay_is_console(bus_space_tag_t);
@@ -219,7 +219,7 @@ pcdisplay_init(struct pcdisplay_config *dc, bus_space_tag_t iot, bus_space_tag_t
 }
 
 int
-pcdisplay_match(struct device *parent, struct cfdata *match,
+pcdisplay_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.51 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: boca.c,v 1.52 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.51 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.52 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ struct boca_softc {
 	callout_t fixup;
 };
 
-int bocaprobe(struct device *, struct cfdata *, void *);
+int bocaprobe(struct device *, cfdata_t, void *);
 void bocaattach(struct device *, struct device *, void *);
 int bocaintr(void *);
 void boca_fixup(void *);
@@ -76,7 +76,7 @@ CFATTACH_DECL(boca, sizeof(struct boca_softc),
     bocaprobe, bocaattach, NULL, NULL);
 
 int
-bocaprobe(struct device *parent, struct cfdata *self,
+bocaprobe(struct device *parent, cfdata_t self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.78 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.79 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.78 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.79 2009/05/12 08:44:19 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -121,7 +121,7 @@ struct eg_softc {
 #endif
 };
 
-int egprobe(struct device *, struct cfdata *, void *);
+int egprobe(struct device *, cfdata_t, void *);
 void egattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(eg, sizeof(struct eg_softc),
@@ -298,7 +298,7 @@ egreadPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
  */
 
 int
-egprobe(struct device *parent, struct cfdata *match,
+egprobe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

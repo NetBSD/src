@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.30 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.31 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.30 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.31 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static int 	check_ie_present(struct ie_softc*, bus_space_tag_t,
 static int	ai_find_mem_size(struct ai_softc*, bus_space_tag_t,
 					bus_size_t);
 
-int ai_match(struct device *, struct cfdata *, void *);
+int ai_match(struct device *, cfdata_t, void *);
 void ai_attach(struct device *, struct device *, void *);
 
 /*
@@ -206,7 +206,7 @@ ai_write_24 (struct ie_softc *sc, int offset, int addr)
 }
 
 int
-ai_match(struct device *parent, struct cfdata *cf, void *aux)
+ai_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	int rv = 0;
 	u_int8_t val, type;

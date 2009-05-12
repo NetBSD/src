@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.17 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.18 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -60,7 +60,7 @@ struct daic_isa_softc {
 #ifdef __BROKEN_INDIRECT_CONFIG
 static int daic_isa_probe(struct device *, void *, void *);
 #else
-static int daic_isa_probe(struct device *, struct cfdata *, void *);
+static int daic_isa_probe(struct device *, cfdata_t, void *);
 #endif
 static void daic_isa_attach(struct device *, struct device *, void *);
 static int daic_isa_intr(void *);
@@ -78,7 +78,7 @@ daic_isa_probe(parent, cf, aux)
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
 #else
-	struct cfdata *cf;
+	cfdata_t cf;
 #endif
 	void *aux;
 {

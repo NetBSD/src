@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/16.3
  *	========================================================
  *
- *	$Id: isic_isa_tel_s0163.c,v 1.10 2007/10/19 12:00:19 ad Exp $
+ *	$Id: isic_isa_tel_s0163.c,v 1.11 2009/05/12 08:44:19 cegger Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -49,7 +49,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s0163.c,v 1.10 2007/10/19 12:00:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s0163.c,v 1.11 2009/05/12 08:44:19 cegger Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_16_3
@@ -416,7 +416,7 @@ set_softc(struct isic_softc *sc, struct isa_attach_args *ia, int unit)
 }
 
 int
-isic_probe_s0163(struct device *dev, struct cfdata *cf,
+isic_probe_s0163(struct device *dev, cfdata_t cf,
 		struct isa_attach_args *ia)
 {
 	u_char byte;

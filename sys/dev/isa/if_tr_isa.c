@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.21 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.22 2009/05/12 08:44:19 cegger Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.21 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.22 2009/05/12 08:44:19 cegger Exp $");
 
 #undef TRISADEBUG
 
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.21 2009/03/14 21:04:20 dsl Exp $");
 #include <dev/ic/tropicvar.h>
 
 
-int	tr_isa_probe(struct device *, struct cfdata *, void *);
-int	trtcm_isa_probe(struct device *, struct cfdata *, void *);
-int	tribm_isa_probe(struct device *, struct cfdata *, void *);
+int	tr_isa_probe(struct device *, cfdata_t, void *);
+int	trtcm_isa_probe(struct device *, cfdata_t, void *);
+int	tribm_isa_probe(struct device *, cfdata_t, void *);
 void	tr_isa_attach(struct device *, struct device *, void *);
 int	tr_isa_map_io(struct isa_attach_args *, bus_space_handle_t *,
 	    bus_space_handle_t *);
@@ -72,7 +72,7 @@ void	tr_isa_dumpaip(bus_space_tag_t, bus_space_handle_t);
 /*
  * List of manufacturer specific probe routines.  Order is important.
  */
-int	(*tr_isa_probe_list[])(struct device *, struct cfdata *, void *) = {
+int	(*tr_isa_probe_list[])(struct device *, cfdata_t, void *) = {
 		trtcm_isa_probe,
 		tribm_isa_probe,
 		0
@@ -128,7 +128,7 @@ static u_char tr_isa_id[] = {
  */
 
 int
-tr_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+tr_isa_probe(struct device *parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int	i;

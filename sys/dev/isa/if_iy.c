@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.84 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.85 2009/05/12 08:44:19 cegger Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.84 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.85 2009/05/12 08:44:19 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -170,7 +170,7 @@ int in_iftint = 0;
 int iy_mediachange(struct ifnet *);
 void iy_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int iyprobe(struct device *, struct cfdata *, void *);
+int iyprobe(struct device *, cfdata_t, void *);
 void iyattach(struct device *, struct device *, void *);
 
 static u_int16_t eepromread(bus_space_tag_t, bus_space_handle_t, int);
@@ -185,7 +185,7 @@ static u_int8_t eepro_irqmap[] = EEPP_INTMAP;
 static u_int8_t eepro_revirqmap[] = EEPP_RINTMAP;
 
 int
-iyprobe(struct device *parent,  struct cfdata *match,
+iyprobe(struct device *parent,  cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
