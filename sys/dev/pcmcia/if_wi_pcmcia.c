@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.82 2009/03/14 21:04:22 dsl Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.83 2009/05/12 13:18:04 cegger Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.82 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.83 2009/05/12 13:18:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.82 2009/03/14 21:04:22 dsl Exp $"
 #include <dev/microcode/wi/spectrum24t_cf.h>
 #endif
 
-static int	wi_pcmcia_match(struct device *, struct cfdata *, void *);
+static int	wi_pcmcia_match(struct device *, cfdata_t, void *);
 static int	wi_pcmcia_validate_config(struct pcmcia_config_entry *);
 static void	wi_pcmcia_attach(struct device *, struct device *, void *);
 static int	wi_pcmcia_detach(struct device *, int);
@@ -251,7 +251,7 @@ static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
 
 static int
-wi_pcmcia_match(struct device *parent, struct cfdata *match,
+wi_pcmcia_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;

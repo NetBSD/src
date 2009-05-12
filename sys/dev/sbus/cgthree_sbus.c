@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.23 2009/03/14 21:04:22 dsl Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.24 2009/05/12 13:20:05 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.23 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.24 2009/05/12 13:20:05 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ struct cgthree_sbus_softc {
 
 
 /* autoconfiguration driver */
-static int	cgthreematch_sbus(struct device *, struct cfdata *, void *);
+static int	cgthreematch_sbus(struct device *, cfdata_t, void *);
 static void	cgthreeattach_sbus(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cgthree_sbus, sizeof(struct cgthree_softc),
@@ -121,7 +121,7 @@ CFATTACH_DECL(cgthree_sbus, sizeof(struct cgthree_softc),
  * Match a cgthree.
  */
 int
-cgthreematch_sbus(struct device *parent, struct cfdata *cf, void *aux)
+cgthreematch_sbus(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

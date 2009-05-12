@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.18 2008/12/16 22:35:34 christos Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.19 2009/05/12 13:19:12 cegger Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.18 2008/12/16 22:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.19 2009/05/12 13:19:12 cegger Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -168,7 +168,7 @@ struct dmc_softc {
 	} dmc_base;
 };
 
-static  int dmcmatch(struct device *, struct cfdata *, void *);
+static  int dmcmatch(struct device *, cfdata_t, void *);
 static  void dmcattach(struct device *, struct device *, void *);
 static  int dmcinit(struct ifnet *);
 static  void dmcrint(void *);
@@ -214,7 +214,7 @@ CFATTACH_DECL(dmc, sizeof(struct dmc_softc),
 		(tail) = (head)
 
 int
-dmcmatch(struct device *parent, struct cfdata *cf, void *aux)
+dmcmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 	struct dmc_softc ssc;
@@ -305,7 +305,7 @@ dmcinit(struct ifnet *ifp)
 	struct dmcbufs *rp;
 	struct dmc_command *qp;
 	struct ifaddr *ifa;
-	struct cfdata *ui = device_cfdata(&sc->sc_dev);
+	cfdata_t ui = device_cfdata(&sc->sc_dev);
 	int base;
 	int s;
 

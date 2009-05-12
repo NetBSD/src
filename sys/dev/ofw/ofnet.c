@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.46 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.47 2009/05/12 13:17:37 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.46 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.47 2009/05/12 13:17:37 cegger Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -73,7 +73,7 @@ CFATTACH_DECL(ipkdb_ofn, 0,
 static struct ipkdb_if *kifp;
 static struct ofnet_softc *ipkdb_of;
 
-static int ipkdbprobe (struct cfdata *, void *);
+static int ipkdbprobe (cfdata_t, void *);
 #endif
 
 struct ofnet_softc {
@@ -84,7 +84,7 @@ struct ofnet_softc {
 	struct callout sc_callout;
 };
 
-static int ofnet_match (struct device *, struct cfdata *, void *);
+static int ofnet_match (struct device *, cfdata_t, void *);
 static void ofnet_attach (struct device *, struct device *, void *);
 
 CFATTACH_DECL(ofnet, sizeof(struct ofnet_softc),
@@ -100,7 +100,7 @@ static int ofnet_ioctl (struct ifnet *, u_long, void *);
 static void ofnet_watchdog (struct ifnet *);
 
 static int
-ofnet_match(struct device *parent, struct cfdata *match, void *aux)
+ofnet_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[32];
@@ -458,7 +458,7 @@ ipkdbofsend(struct ipkdb_if *kip, u_char *buf, int l)
 }
 
 static int
-ipkdbprobe(struct cfdata *match, void *aux)
+ipkdbprobe(cfdata_t match, void *aux)
 {
 	struct ipkdb_if *kip = aux;
 	static char name[256];

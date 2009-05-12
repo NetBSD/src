@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.12 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.13 2009/05/12 13:15:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.12 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.13 2009/05/12 13:15:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.12 2009/03/14 15:36:18 dsl Exp $");
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcadevs.h>
 
-int	tiara_mca_match(struct device *, struct cfdata *, void *);
+int	tiara_mca_match(struct device *, cfdata_t, void *);
 void	tiara_mca_attach(struct device *, struct device *, void *);
 
 #define TIARA_NPORTS 0x20 /* 32 */
@@ -97,7 +97,7 @@ tiara_mca_lookup(u_int32_t id)
 }
 
 int
-tiara_mca_match(struct device *parent, struct cfdata *match,
+tiara_mca_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct mca_attach_args *ma = (struct mca_attach_args *) aux;

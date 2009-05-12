@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.17 2009/04/16 17:00:39 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.18 2009/05/12 13:20:05 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.17 2009/04/16 17:00:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.18 2009/05/12 13:20:05 cegger Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.17 2009/04/16 17:00:39 macallan Exp $");
 
 #include "opt_agten.h"
 
-static int	agten_match(device_t, struct cfdata *, void *);
+static int	agten_match(device_t, cfdata_t, void *);
 static void	agten_attach(device_t, device_t, void *);
 
 static int	agten_ioctl(void *, void *, u_long, void *, int, struct lwp *);
@@ -200,7 +200,7 @@ agten_write_dac_10(struct agten_softc *sc, int reg, uint16_t val)
 }
 	
 static int
-agten_match(device_t dev, struct cfdata *cf, void *aux)
+agten_match(device_t dev, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

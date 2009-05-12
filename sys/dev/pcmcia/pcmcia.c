@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.91 2009/04/02 00:09:34 dyoung Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.92 2009/05/12 13:18:04 cegger Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.91 2009/04/02 00:09:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.92 2009/05/12 13:18:04 cegger Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -80,7 +80,7 @@ int	pcmcia_verbose = 1;
 int	pcmcia_verbose = 0;
 #endif
 
-int	pcmcia_match(struct device *, struct cfdata *, void *);
+int	pcmcia_match(struct device *, cfdata_t, void *);
 void	pcmcia_attach(struct device *, struct device *, void *);
 int	pcmcia_detach(device_t, int);
 int	pcmcia_rescan(struct device *, const char *, const int *);
@@ -110,7 +110,7 @@ pcmcia_ccr_write(struct pcmcia_function *pf, int ccr, int val)
 }
 
 int
-pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
+pcmcia_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 

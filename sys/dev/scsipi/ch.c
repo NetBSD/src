@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.82 2008/06/08 18:18:34 tsutsui Exp $	*/
+/*	$NetBSD: ch.c,v 1.83 2009/05/12 13:20:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.82 2008/06/08 18:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.83 2009/05/12 13:20:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ struct ch_softc {
 #define CHF_ROTATE		0x01	/* picker can rotate */
 
 /* Autoconfiguration glue */
-static int	chmatch(struct device *, struct cfdata *, void *);
+static int	chmatch(struct device *, cfdata_t, void *);
 static void	chattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ch, sizeof(struct ch_softc),
@@ -173,7 +173,7 @@ static const struct chquirk chquirks[] = {
 };
 
 static int
-chmatch(struct device *parent, struct cfdata *match,
+chmatch(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;

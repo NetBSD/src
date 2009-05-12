@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.59 2009/03/16 23:11:16 dsl Exp $ */
+/*	$NetBSD: stp4020.c,v 1.60 2009/05/12 13:20:06 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.59 2009/03/16 23:11:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.60 2009/05/12 13:20:06 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ struct stp4020_softc {
 
 
 static int	stp4020print(void *, const char *);
-static int	stp4020match(struct device *, struct cfdata *, void *);
+static int	stp4020match(struct device *, cfdata_t, void *);
 static void	stp4020attach(struct device *, struct device *, void *);
 static int	stp4020_intr(void *);
 static void	stp4020_map_window(struct stp4020_socket *h, int win, int speed);
@@ -312,7 +312,7 @@ stp4020print(void *aux, const char *busname)
 }
 
 int
-stp4020match(struct device *parent, struct cfdata *cf, void *aux)
+stp4020match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
