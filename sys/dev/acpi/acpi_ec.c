@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.54 2009/02/28 19:40:23 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.55 2009/05/12 09:29:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.54 2009/02/28 19:40:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.55 2009/05/12 09:29:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,10 +139,10 @@ struct acpiec_softc {
 	uint8_t sc_cur_addr, sc_cur_val;
 };
 
-static int acpiecdt_match(device_t, struct cfdata *, void *);
+static int acpiecdt_match(device_t, cfdata_t, void *);
 static void acpiecdt_attach(device_t, device_t, void *);
 
-static int acpiec_match(device_t, struct cfdata *, void *);
+static int acpiec_match(device_t, cfdata_t, void *);
 static void acpiec_attach(device_t, device_t, void *);
 
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
@@ -206,7 +206,7 @@ acpiecdt_find(device_t parent, ACPI_HANDLE *ec_handle,
 }
 
 static int
-acpiecdt_match(device_t parent, struct cfdata *match, void *aux)
+acpiecdt_match(device_t parent, cfdata_t match, void *aux)
 {
 	ACPI_HANDLE ec_handle;
 	bus_addr_t cmd_reg, data_reg;
@@ -236,7 +236,7 @@ acpiecdt_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-acpiec_match(device_t parent, struct cfdata *match, void *aux)
+acpiec_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
