@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.105 2009/04/07 18:01:20 dyoung Exp $	*/
+/*	$NetBSD: ata.c,v 1.106 2009/05/12 12:10:29 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.105 2009/04/07 18:01:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.106 2009/05/12 12:10:29 cegger Exp $");
 
 #include "opt_ata.h"
 
@@ -415,7 +415,7 @@ atabus_thread(void *arg)
  *	Autoconfiguration match routine.
  */
 static int
-atabus_match(device_t parent, struct cfdata *cf, void *aux)
+atabus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ata_channel *chp = aux;
 

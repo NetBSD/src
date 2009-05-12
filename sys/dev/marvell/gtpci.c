@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.19 2008/04/11 06:25:25 he Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.20 2009/05/12 12:18:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.19 2008/04/11 06:25:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.20 2009/05/12 12:18:45 cegger Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -87,7 +87,7 @@ struct gtpci_softc {
 };
 
 static int gtpci_cfprint(void *, const char *);
-static int gtpci_match(struct device *, struct cfdata *, void *);
+static int gtpci_match(struct device *, cfdata_t, void *);
 static void gtpci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gtpci, sizeof(struct gtpci_softc),
@@ -194,7 +194,7 @@ static const struct pci_init {
 };
 
 int
-gtpci_match(struct device *parent, struct cfdata *self, void *aux)
+gtpci_match(struct device *parent, cfdata_t self, void *aux)
 {
 	struct gt_softc * const gt = device_private(parent);
 	struct gt_attach_args * const ga = aux;

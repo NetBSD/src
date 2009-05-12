@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.124 2009/03/20 16:28:57 tsutsui Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.125 2009/05/12 12:15:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.124 2009/03/20 16:28:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.125 2009/05/12 12:15:37 cegger Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -318,7 +318,7 @@ zstty_attach(device_t parent, device_t self, void *aux)
 {
 	struct zstty_softc *zst = device_private(self);
 	struct zsc_softc *zsc = device_private(parent);
-	struct cfdata *cf = device_cfdata(self);
+	cfdata_t cf = device_cfdata(self);
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	struct tty *tp;

@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.13 2009/03/27 16:15:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.14 2009/05/12 12:17:51 cegger Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -86,7 +86,7 @@ static struct ndis_pci_type ndis_devs[] = {
 };
 
 /*static*/ int  ndis_probe_pci(struct device *parent, 
-				struct cfdata *match,
+				cfdata_t match,
 				void *aux);
 /*static*/ void ndis_attach_pci(struct device *parent,
 				struct device *self,
@@ -145,7 +145,7 @@ void load_ndisdrv(void *arg)
 }
 
 /*static*/ int
-ndis_probe_pci(struct device *parent, struct cfdata *match, void *aux)
+ndis_probe_pci(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int vendor  = PCI_VENDOR(pa->pa_id);

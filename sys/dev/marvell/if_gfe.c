@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.31 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.32 2009/05/12 12:18:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.31 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.32 2009/05/12 12:18:45 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -144,7 +144,7 @@ enum gfe_hash_op {
 
 #define	STATIC
 
-STATIC int gfe_match (struct device *, struct cfdata *, void *);
+STATIC int gfe_match (struct device *, cfdata_t, void *);
 STATIC void gfe_attach (struct device *, struct device *, void *);
 
 STATIC int gfe_dmamem_alloc(struct gfe_softc *, struct gfe_dmamem *, int,
@@ -196,7 +196,7 @@ CFATTACH_DECL(gfe, sizeof(struct gfe_softc),
 extern struct cfdriver gfe_cd;
 
 int
-gfe_match(struct device *parent, struct cfdata *cf, void *aux)
+gfe_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct gt_softc *gt = (struct gt_softc *) parent;
 	struct gt_attach_args *ga = aux;

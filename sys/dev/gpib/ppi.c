@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.15 2009/03/14 21:04:19 dsl Exp $	*/
+/*	$NetBSD: ppi.c,v 1.16 2009/05/12 12:13:21 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.15 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.16 2009/05/12 12:13:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ struct	ppi_softc {
 #define PPIF_TIMO	0x08
 #define PPIF_DELAY	0x10
 
-int	ppimatch(struct device *, struct cfdata *, void *);
+int	ppimatch(struct device *, cfdata_t, void *);
 void	ppiattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ppi, sizeof(struct ppi_softc),
@@ -143,7 +143,7 @@ int	ppidebug = 0x80;
 #endif
 
 int
-ppimatch(struct device *parent, struct cfdata *match, void *aux)
+ppimatch(struct device *parent, cfdata_t match, void *aux)
 {
 
 	return (1);

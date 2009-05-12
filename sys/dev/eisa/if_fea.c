@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.39 2009/04/18 14:58:02 tsutsui Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.40 2009/05/12 12:12:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.39 2009/04/18 14:58:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.40 2009/05/12 12:12:52 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -333,7 +333,7 @@ pdq_eisa_shutdown(
 static int
 pdq_eisa_probe(
     struct device *parent,
-    struct cfdata *cf,
+    cfdata_t cf,
     void *aux)
 {
     struct isa_attach_args *ia = (struct isa_attach_args *) aux;
@@ -445,7 +445,7 @@ struct cfdriver feacd = {
 static int
 pdq_eisa_match(
     struct device *parent,
-    struct cfdata *match,
+    cfdata_t match,
     void *aux)
 {
     const struct eisa_attach_args * const ea = (struct eisa_attach_args *) aux;

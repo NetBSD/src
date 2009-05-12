@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.23 2009/04/05 00:34:42 uwe Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.24 2009/05/12 12:13:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.23 2009/04/05 00:34:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.24 2009/05/12 12:13:49 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_btnmgr.h"
@@ -83,7 +83,7 @@ struct btnmgr_softc {
 #endif
 };
 
-int btnmgrmatch(struct device *, struct cfdata *, void *);
+int btnmgrmatch(struct device *, cfdata_t, void *);
 void btnmgrattach(struct device *, struct device *, void *);
 const char *btnmgr_name(long);
 static int btnmgr_hook(void *, int, long, void *);
@@ -173,7 +173,7 @@ struct wskbd_mapdata btnmgr_keymapdata = {
  *  function bodies
  */
 int
-btnmgrmatch(struct device *parent, struct cfdata *match, void *aux)
+btnmgrmatch(struct device *parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 

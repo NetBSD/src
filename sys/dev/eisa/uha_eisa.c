@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.29 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.30 2009/05/12 12:12:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.29 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.30 2009/05/12 12:12:52 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.29 2008/04/28 20:23:48 martin Exp $")
 #define	UHA_EISA_SLOT_OFFSET	0xc80
 #define	UHA_EISA_IOSIZE		0x020
 
-static int	uha_eisa_match(struct device *, struct cfdata *, void *);
+static int	uha_eisa_match(struct device *, cfdata_t, void *);
 static void	uha_eisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(uha_eisa, sizeof(struct uha_softc),
@@ -80,7 +80,7 @@ static void	u24_init(struct uha_softc *);
  * the actual probe routine to check it out.
  */
 static int
-uha_eisa_match(struct device *parent, struct cfdata *match,
+uha_eisa_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.19 2009/03/14 21:04:19 dsl Exp $	*/
+/*	$NetBSD: dzms.c,v 1.20 2009/05/12 12:11:54 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.19 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.20 2009/05/12 12:11:54 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ struct dzms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-static int  dzms_match(struct device *, struct cfdata *, void *);
+static int  dzms_match(struct device *, cfdata_t, void *);
 static void dzms_attach(struct device *, struct device *, void *);
 static int dzms_input(void *, int);
 
@@ -100,7 +100,7 @@ const struct wsmouse_accessops dzms_accessops = {
 };
 
 static int
-dzms_match(struct device *parent, struct cfdata *cf, void *aux)
+dzms_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct dzkm_attach_args *daa = aux;
 
