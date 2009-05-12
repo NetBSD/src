@@ -1,4 +1,4 @@
-.\"	$NetBSD: sdpquery.1,v 1.9 2009/03/10 20:30:08 joerg Exp $
+.\"	$NetBSD: sdpquery.1,v 1.10 2009/05/12 18:37:50 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -27,6 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
 .\" All rights reserved.
 .\"
@@ -51,24 +52,23 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: sdpquery.1,v 1.9 2009/03/10 20:30:08 joerg Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/sdpcontrol.8,v 1.6 2005/07/09 19:04:43 markus Exp $
 .\"
-.Dd February 17, 2007
+.Dd May 7, 2009
 .Dt SDPQUERY 1
 .Os
 .Sh NAME
 .Nm sdpquery
-.Nd SDP query utility
+.Nd Service Discovery Protocol query utility
 .Sh SYNOPSIS
 .Nm
-.Fl h
-.Nm
+.Op Fl NRX
 .Op Fl d Ar device
 .Fl a Ar address
 .Ar command
 .Op Ar parameters ...
 .Nm
+.Op Fl NRX
 .Op Fl c Ar path
 .Fl l
 .Ar command
@@ -82,8 +82,9 @@ Remote SDP servers are identified by their address.
 Connection to the local SDP server is made via the control socket.
 The
 .Nm
-utility uses Service Search Attribute Requests and prints results to
-standard output and error messages to standard error.
+utility retrieves complete Service Records as directed and prints
+each records attribute ID/value list to standard output and error
+messages to standard error.
 .Pp
 The options are as follows:
 .Bl -tag -width ".Fl a Ar address"
@@ -112,61 +113,84 @@ If no device is specified, the
 utility will use the best available.
 .It Fl l
 Query the local SDP server via the control socket.
-.It Fl h
-Display usage message and exit.
+.It Fl N
+Additionally display numerical values.
+.It Fl R
+Display service attributes in raw (uninterpreted) format.
+.It Fl X
+Display service attribute values in hex.
 .El
 .Pp
 The currently supported commands in
 .Nm
 are:
 .Pp
-.Bl -tag -width ".Cm search Ar service" -compact
+.Bl -tag -width Browse -compact
 .It Cm Browse Op Ar group
 Browse for services.
 The
 .Ar group
 parameter is a 16-bit UUID of the group to browse.
-If omitted, the Public Browse Group. is used.
+If omitted, the "Public Browse Group" is used.
 .Pp
-.It Cm Search Ar service
-Search for the
-.Ar service .
-The
-.Ar service
-parameter is a 16-bit UUID of the service to search for.
-For the following services it is possible to use service name
-instead of service UUID:
+.It Cm Record Ar handle Op Ar handle...
+Retrieve the Service Record with the given
+.Ar handle .
+Multiple handles can be given.
 .Pp
-.Bl -tag -compact -width OPUSH
+.It Cm Search Ar uuid Op Ar uuid...
+Search for records matching the list of
+.Pq 16-bit
+UUIDs which can be given in numerical form, or the
+following aliases are known:
+.Pp
+.Bl -tag -offset indent -compact -width RFCOMMxxx
+.It A2DP
+Advanced Audio Distribution Profile
+.It BNEP
+Bluetooth Network Encapsulation Protocol
 .It CIP
-Common ISDN Access
+Common ISDN Access Service
 .It CTP
-Cordless Telephony
+Cordless Telephony Service
 .It DUN
-DialUp Networking
+Dialup Networking Service
 .It FAX
-Fax
+Fax Service
 .It FTRN
-OBEX File Transfer
+File Transfer Service
 .It GN
-Group ad-hoc Network
+Group ad-hoc Network Service
 .It HID
-Human Interface Device
+Human Interface Device Service
 .It HF
-Handsfree
+Handsfree Service
 .It HSET
-Headset
+Headset Service
+.It L2CAP
+Logical Link Control and Adaptation Protocol
 .It LAN
-LAN Access Using PPP
+LAN Access Using PPP Service
 .It NAP
-Network Access Point
+Network Access Point Service
+.It OBEX
+Object Exchange Protocol
 .It OPUSH
-OBEX Object Push
+Object Push Service
 .It PANU
-Personal Area Networking User
+Personal Area Networking User Service
+.It RFCOMM
+RFCOMM Protocol
+.It SDP
+Service Discovery Protocol
 .It SP
-Serial Port
+Serial Port Service
+.It SYNC
+IrMC Sync Client Service
 .El
+.Pp
+Note that in order for a record to match, it must contain all the
+UUIDs in the ServiceSearchPattern and the maximum number is 12.
 .El
 .Sh EXIT STATUS
 .Ex -std
@@ -191,18 +215,8 @@ under the sponsorship of Itronix, Inc.
 .An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
 .An Iain Hibbert
 for Itronix, Inc.
-.Sh CAVEATS
-The
+.Sh BUGS
 .Nm
-utility only requests the following attributes from the SDP server:
-.Pp
-.Bl -enum -offset indent -compact
-.It
-Service Record Handle
-.It
-Service Class ID List
-.It
-Protocol Descriptor List
-.It
-Bluetooth Profile Descriptor List
-.El
+will only search for Bluetooth
+.Qq short alias
+16-bit UUIDs.
