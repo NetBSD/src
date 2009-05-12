@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.18 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.19 2009/05/12 09:10:15 cegger Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.18 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.19 2009/05/12 09:10:15 cegger Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -61,7 +61,7 @@ u_int16_t	tcmreadeeprom(bus_space_tag_t, bus_space_handle_t, int);
 void	tcmdumpeeprom(bus_space_tag_t, bus_space_handle_t);
 #endif
 
-int	trtcm_isa_probe(struct device *, cfdata_t, void *);
+int	trtcm_isa_probe(device_t, cfdata_t, void *);
 
 int	trtcm_isa_mediachange(struct tr_softc *);
 void	trtcm_isa_mediastatus(struct tr_softc *, struct ifmediareq *);
@@ -190,8 +190,7 @@ trtcm_isa_mediastatus(struct tr_softc *sc, struct ifmediareq *ifmr)
 /* XXX hard coded constants in readeeprom elink_idseq */
 
 int
-trtcm_isa_probe(struct device *parent, cfdata_t match,
-    void *aux)
+trtcm_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args	*ia = aux;
 	int	bus = device_unit(parent);

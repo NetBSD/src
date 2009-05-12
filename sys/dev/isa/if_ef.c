@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.29 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.30 2009/05/12 09:10:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.29 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.30 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,8 @@ static void	ef_mediastatus(struct ie_softc *, struct ifmediareq *);
 /* Local routines */
 static int 	ef_port_check(bus_space_tag_t, bus_space_handle_t);
 
-int ef_match(struct device *, cfdata_t, void *);
-void ef_attach(struct device *, struct device *, void *);
+int ef_match(device_t, cfdata_t, void *);
+void ef_attach(device_t, device_t, void *);
 
 /*
  * This keeps track of which ISAs have been through an ie probe sequence.
@@ -121,7 +121,7 @@ void ef_attach(struct device *, struct device *, void *);
 
 struct ef_isabus {
 	LIST_ENTRY(ef_isabus) isa_link;
-	struct device *isa_bus;
+	device_t isa_bus;
 
 	int bus_state;
 
@@ -320,7 +320,7 @@ ef_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 }
 
 int
-ef_match(struct device *parent, cfdata_t cf, void *aux)
+ef_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args * const ia = aux;
 
@@ -470,7 +470,7 @@ ef_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 void
-ef_attach(struct device *parent, struct device *self, void *aux)
+ef_attach(device_t parent, device_t self, void *aux)
 {
 	struct ef_softc *esc = (void *)self;
 	struct ie_softc *sc = &esc->sc_ie;
