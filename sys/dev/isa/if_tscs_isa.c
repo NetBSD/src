@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tscs_isa.c,v 1.9 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: if_tscs_isa.c,v 1.10 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.9 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.10 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.9 2009/03/14 21:04:20 dsl Exp $");
 #include <dev/ic/cs89x0var.h>
 #include <dev/isa/cs89x0isavar.h>
 
-int	tscs_isa_probe(struct device *, struct cfdata *, void *);
+int	tscs_isa_probe(struct device *, cfdata_t, void *);
 void	tscs_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tscs_isa, sizeof(struct cs_softc),
     tscs_isa_probe, tscs_isa_attach, NULL, NULL);
 
 int
-tscs_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
+tscs_isa_probe(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.19 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.20 2009/05/12 08:44:19 cegger Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.19 2009/03/14 15:36:18 dsl Exp $
+ * $Id: if_ntwoc_isa.c,v 1.20 2009/05/12 08:44:19 cegger Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.19 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.20 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct ntwoc_isa_softc {
 	struct sca_softc sc_sca;	/* the SCA itself */
 };
 
-static  int ntwoc_isa_probe(struct device *, struct cfdata *, void *);
+static  int ntwoc_isa_probe(struct device *, cfdata_t, void *);
 static  void ntwoc_isa_attach(struct device *, struct device *, void *);
 
 static	void ntwoc_isa_clock_callback(void *, int, int);
@@ -186,7 +186,7 @@ ntwoc_isa_set_off(struct sca_softc *sca)
 }
 
 static int
-ntwoc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+ntwoc_isa_probe(struct device *parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia;
 	bus_space_tag_t iot, memt;

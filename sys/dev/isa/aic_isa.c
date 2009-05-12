@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.21 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.22 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.21 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.22 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.21 2008/04/08 20:08:49 cegger Exp $");
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
 
-int	aic_isa_probe(struct device *, struct cfdata *, void *);
+int	aic_isa_probe(struct device *, cfdata_t, void *);
 
 struct aic_isa_softc {
 	struct	aic_softc sc_aic;	/* real "aic" softc */
@@ -98,7 +98,7 @@ CFATTACH_DECL(aic_isa, sizeof(struct aic_isa_softc),
  * returns non-zero value if a controller is found.
  */
 int
-aic_isa_probe(struct device *parent, struct cfdata *match,
+aic_isa_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

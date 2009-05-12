@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.14 2008/04/08 20:08:49 cegger Exp $ */
+/* $NetBSD: aztech.c,v 1.15 2009/05/12 08:44:19 cegger Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.14 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.15 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.14 2008/04/08 20:08:49 cegger Exp $");
 #define AZ_DATA_ON	(1 << 7)
 #define AZ_DATA_OFF	(0 << 7)
 
-int	az_probe(struct device *, struct cfdata *, void *);
+int	az_probe(struct device *, cfdata_t, void *);
 void	az_attach(struct device *, struct device * self, void *);
 
 int	az_get_info(void *, struct radio_info *);
@@ -118,7 +118,7 @@ u_int8_t	az_conv_vol(u_int8_t);
 u_int8_t	az_unconv_vol(u_int8_t);
 
 int
-az_probe(struct device *parent, struct cfdata *cf, void *aux)
+az_probe(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.82 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_el.c,v 1.83 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.82 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.83 2009/05/12 08:44:19 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -102,7 +102,7 @@ void elread(struct el_softc *, int);
 struct mbuf *elget(struct el_softc *sc, int);
 static inline void el_hardreset(struct el_softc *);
 
-int elprobe(struct device *, struct cfdata *, void *);
+int elprobe(struct device *, cfdata_t, void *);
 void elattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(el, sizeof(struct el_softc),
@@ -115,7 +115,7 @@ CFATTACH_DECL(el, sizeof(struct el_softc),
  * (XXX - cgd -- needs help)
  */
 int
-elprobe(struct device *parent, struct cfdata *match,
+elprobe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

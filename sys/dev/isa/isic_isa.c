@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.33 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.34 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.33 2009/03/14 21:04:20 dsl Exp $");
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 /* local functions */
-static int isic_isa_probe(struct device *, struct cfdata *, void *);
+static int isic_isa_probe(struct device *, cfdata_t, void *);
 
 static void isic_isa_attach(struct device *, struct device *, void *);
 static int setup_io_map(int flags, bus_space_tag_t iot,
@@ -94,7 +94,7 @@ CFATTACH_DECL(isic_isa, sizeof(struct isic_softc),
  * Probe card
  */
 static int
-isic_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
+isic_isa_probe(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt, iot = ia->ia_iot;
