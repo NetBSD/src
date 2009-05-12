@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.172 2009/05/08 17:50:56 christos Exp $
+# $NetBSD: shl.elf,v 1.173 2009/05/12 18:07:54 plunky Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -268,8 +268,6 @@
 ./usr/lib/librumpuser.so.0			base-rump-shlib
 ./usr/lib/librumpvfs.so				base-rump-shlib
 ./usr/lib/librumpvfs.so.0			base-rump-shlib
-./usr/lib/libsdp.so				base-sys-shlib
-./usr/lib/libsdp.so.3				base-sys-shlib
 ./usr/lib/libskey.so				base-sys-shlib		skey
 ./usr/lib/libskey.so.2				base-sys-shlib		skey
 ./usr/lib/libsl.so				base-krb5-shlib		kerberos

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1257 2009/05/12 10:05:07 plunky Exp $
+#	$NetBSD: mi,v 1.1258 2009/05/12 18:07:55 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2580,9 +2580,9 @@
 ./usr/lib/librumpvfs.a				comp-c-lib
 ./usr/lib/librumpvfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpvfs_p.a			comp-c-proflib		profile
-./usr/lib/libsdp.a				comp-c-lib
-./usr/lib/libsdp_g.a				-unknown-		debuglib
-./usr/lib/libsdp_p.a				comp-c-proflib		profile
+./usr/lib/libsdp.a				comp-obsolete		obsolete
+./usr/lib/libsdp_g.a				-unknown-		obsolete
+./usr/lib/libsdp_p.a				comp-obsolete		obsolete
 ./usr/lib/libskey.a				comp-c-lib		skey
 ./usr/lib/libskey_g.a				-unknown-		debuglib,skey
 ./usr/lib/libskey_p.a				comp-c-proflib		profile,skey
@@ -3580,7 +3580,7 @@
 ./usr/libdata/lint/llib-lrpcsvc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lsdp.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-lsdp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lssh.ln			comp-c-lintlib		lint,crypto
