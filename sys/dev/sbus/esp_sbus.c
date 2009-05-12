@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.46 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.47 2009/05/12 13:20:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.46 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.47 2009/05/12 13:20:05 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ static struct ncr53c9x_glue esp_sbus_glue1 = {
 };
 
 int
-espmatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
+espmatch_sbus(struct device *parent, cfdata_t cf, void *aux)
 {
 	int rv;
 	struct sbus_attach_args *sa = aux;

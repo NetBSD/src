@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.48 2008/06/11 16:46:11 tsutsui Exp $	*/
+/*	$NetBSD: tc.c,v 1.49 2009/05/12 13:21:22 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.48 2008/06/11 16:46:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.49 2009/05/12 13:21:22 cegger Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.48 2008/06/11 16:46:11 tsutsui Exp $");
 #include "locators.h"
 
 /* Definition of the driver for autoconfig. */
-static int	tcmatch(struct device *, struct cfdata *, void *);
+static int	tcmatch(struct device *, cfdata_t, void *);
 
 CFATTACH_DECL(tc, sizeof(struct tc_softc),
     tcmatch, tcattach, NULL, NULL);
@@ -56,7 +56,7 @@ static int	tcprint(void *, const char *);
 static void	tc_devinfo(const char *, char *, size_t);
 
 static int
-tcmatch(struct device *parent, struct cfdata *cf, void *aux)
+tcmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct tcbus_attach_args *tba = aux;
 

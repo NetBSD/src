@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.56 2009/01/11 10:58:26 cegger Exp $	*/
+/*	$NetBSD: uk.c,v 1.57 2009/05/12 13:20:34 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.56 2009/01/11 10:58:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.57 2009/05/12 13:20:34 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ struct uk_softc {
 	struct scsipi_periph *sc_periph; /* all the inter level info */
 };
 
-static int	ukmatch(struct device *, struct cfdata *, void *);
+static int	ukmatch(struct device *, cfdata_t, void *);
 static void	ukattach(struct device *, struct device *, void *);
 static int	ukactivate(struct device *, enum devact);
 static int	ukdetach(struct device *, int);
@@ -79,7 +79,7 @@ const struct cdevsw uk_cdevsw = {
 };
 
 static int
-ukmatch(struct device *parent, struct cfdata *match,
+ukmatch(struct device *parent, cfdata_t match,
     void *aux)
 {
 

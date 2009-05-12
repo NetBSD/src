@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.30 2008/07/09 13:19:33 joerg Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.31 2009/05/12 13:21:22 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.30 2008/07/09 13:19:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.31 2009/05/12 13:21:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.30 2008/07/09 13:19:33 joerg Exp $");
 
 static void	pxg_attach(struct device *, struct device *, void *);
 static int	pxg_intr(void *);
-static int	pxg_match(struct device *, struct cfdata *, void *);
+static int	pxg_match(struct device *, cfdata_t, void *);
 
 static void	pxg_init(struct stic_info *);
 static int	pxg_ioctl(struct stic_info *, u_long, void *, int, struct lwp *);

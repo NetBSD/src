@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.88 2009/04/18 14:58:04 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.89 2009/05/12 13:22:28 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.88 2009/04/18 14:58:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.89 2009/05/12 13:22:28 cegger Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -183,9 +183,9 @@ void	xy_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
 int	xycintr(void *);
 
 /* autoconf */
-int	xycmatch(struct device *, struct cfdata *, void *);
+int	xycmatch(struct device *, cfdata_t, void *);
 void	xycattach(struct device *, struct device *, void *);
-int	xymatch(struct device *, struct cfdata *, void *);
+int	xymatch(struct device *, cfdata_t, void *);
 void	xyattach(struct device *, struct device *, void *);
 static	int xyc_probe(void *, bus_space_tag_t, bus_space_handle_t);
 
@@ -363,7 +363,7 @@ xyc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 
 int xycmatch(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	cfdata_t cf;
 	void *aux;
 {
 	struct vme_attach_args	*va = aux;
@@ -579,7 +579,7 @@ xycattach(parent, self, aux)
  * call xyattach!).
  */
 int
-xymatch(struct device *parent, struct cfdata *cf, void *aux)
+xymatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct xyc_attach_args *xa = aux;
 

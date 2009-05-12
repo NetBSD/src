@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.13 2008/07/02 10:16:20 plunky Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.14 2009/05/12 13:20:06 cegger Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -203,18 +203,18 @@ __inline u_char cd1400_read_reg(struct cd1400 *, int);
 __inline void cd1400_write_reg(struct cd1400 *, int, u_char);
 void cd1400_enable_transmitter(struct cd1400 *, int);
 
-int magma_match(struct device *, struct cfdata *, void *);
+int magma_match(struct device *, cfdata_t, void *);
 void magma_attach(struct device *, struct device *, void *);
 int magma_hard(void *);
 void magma_soft(void *);
 
-int mtty_match(struct device *, struct cfdata *, void *);
+int mtty_match(struct device *, cfdata_t, void *);
 void mtty_attach(struct device *, struct device *, void *);
 int mtty_modem_control(struct mtty_port *, int, int);
 int mtty_param(struct tty *, struct termios *);
 void mtty_start(struct tty *);
 
-int mbpp_match(struct device *, struct cfdata *, void *);
+int mbpp_match(struct device *, cfdata_t, void *);
 void mbpp_attach(struct device *, struct device *, void *);
 void mbpp_timeout(void *);
 void mbpp_start(void *);

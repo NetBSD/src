@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.35 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.36 2009/05/12 13:18:04 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.35 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.36 2009/05/12 13:18:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ struct pcmcom_attach_args {
 	int pca_slave;				/* slave # */
 };
 
-int	pcmcom_match(struct device *, struct cfdata *, void *);
+int	pcmcom_match(struct device *, cfdata_t, void *);
 int	pcmcom_validate_config(struct pcmcia_config_entry *);
 void	pcmcom_attach(struct device *, struct device *, void *);
 int	pcmcom_detach(struct device *, int);
@@ -116,7 +116,7 @@ void	pcmcom_disable(struct pcmcom_softc *);
 int	pcmcom_intr(void *);
 
 int
-pcmcom_match(struct device *parent, struct cfdata *cf,
+pcmcom_match(struct device *parent, cfdata_t cf,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;

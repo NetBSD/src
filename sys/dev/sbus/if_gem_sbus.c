@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.8 2008/11/20 20:56:56 jdc Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.9 2009/05/12 13:20:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.8 2008/11/20 20:56:56 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.9 2009/05/12 13:20:05 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,14 +67,14 @@ struct gem_sbus_softc {
 	bus_space_handle_t	gsc_sbus_regs_h;
 };
 
-int	gemmatch_sbus(struct device *, struct cfdata *, void *);
+int	gemmatch_sbus(struct device *, cfdata_t, void *);
 void	gemattach_sbus(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gem_sbus, sizeof(struct gem_sbus_softc),
     gemmatch_sbus, gemattach_sbus, NULL, NULL);
 
 int
-gemmatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
+gemmatch_sbus(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

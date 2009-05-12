@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.39 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.40 2009/05/12 13:16:17 cegger Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.39 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.40 2009/05/12 13:16:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.39 2009/03/14 21:04:21 dsl Exp $");
 
 #define b_forw	b_hash.le_next
 
-int	mscp_match(struct device *, struct cfdata *, void *);
+int	mscp_match(struct device *, cfdata_t, void *);
 void	mscp_attach(struct device *, struct device *, void *);
 void	mscp_start(struct	mscp_softc *);
 int	mscp_init(struct  mscp_softc *);
@@ -155,7 +155,7 @@ mscp_waitstep(struct mscp_softc *mi, int mask, int result)
 }
 
 int
-mscp_match(struct device *parent, struct cfdata *match, void *aux)
+mscp_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct	mscp_attach_args *ma = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.279 2009/04/10 17:36:42 dyoung Exp $	*/
+/*	$NetBSD: sd.c,v 1.280 2009/05/12 13:20:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.279 2009/04/10 17:36:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.280 2009/05/12 13:20:33 cegger Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -123,7 +123,7 @@ static int	sd_flush(struct sd_softc *, int);
 static int	sd_getcache(struct sd_softc *, int *);
 static int	sd_setcache(struct sd_softc *, int);
 
-static int	sdmatch(struct device *, struct cfdata *, void *);
+static int	sdmatch(struct device *, cfdata_t, void *);
 static void	sdattach(struct device *, struct device *, void *);
 static int	sdactivate(struct device *, enum devact);
 static int	sddetach(struct device *, int);
@@ -195,7 +195,7 @@ struct sd_mode_sense_data {
  * A device suitable for this driver
  */
 static int
-sdmatch(struct device *parent, struct cfdata *match,
+sdmatch(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;

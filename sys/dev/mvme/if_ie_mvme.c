@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.14 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.15 2009/05/12 13:16:45 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.14 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.15 2009/05/12 13:16:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.14 2009/03/14 15:36:19 dsl Exp $");
 #include <dev/mvme/pcctworeg.h>
 
 
-int ie_pcctwo_match(struct device *, struct cfdata *, void *);
+int ie_pcctwo_match(struct device *, cfdata_t, void *);
 void ie_pcctwo_attach(struct device *, struct device *, void *);
 
 struct ie_pcctwo_softc {
@@ -220,7 +220,7 @@ ie_write_24(struct ie_softc *sc, int offset, int addr)
 
 /* ARGSUSED */
 int
-ie_pcctwo_match(struct device *parent, struct cfdata *cf, void *args)
+ie_pcctwo_match(struct device *parent, cfdata_t cf, void *args)
 {
 	struct pcctwo_attach_args *pa;
 

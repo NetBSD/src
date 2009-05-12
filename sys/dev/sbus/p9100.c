@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.41 2009/03/14 15:36:20 dsl Exp $ */
+/*	$NetBSD: p9100.c,v 1.42 2009/05/12 13:20:06 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.41 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.42 2009/05/12 13:20:06 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ struct wsscreen_list p9100_screenlist = {
 };
 
 /* autoconfiguration driver */
-static int	p9100_sbus_match(struct device *, struct cfdata *, void *);
+static int	p9100_sbus_match(struct device *, cfdata_t, void *);
 static void	p9100_sbus_attach(struct device *, struct device *, void *);
 
 static void	p9100unblank(struct device *);
@@ -260,7 +260,7 @@ struct wsdisplay_accessops p9100_accessops = {
  * Match a p9100.
  */
 static int
-p9100_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
+p9100_sbus_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.19 2009/03/14 21:04:23 dsl Exp $	*/
+/*	$NetBSD: sio16.c,v 1.20 2009/05/12 13:20:06 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.19 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.20 2009/05/12 13:20:06 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.19 2009/03/14 21:04:23 dsl Exp $");
  * device cfattach and cfdriver definitions, plus the routine we pass
  * to the cd18xx code or interrupt acknowledgement.
  */
-static int	sio16_match(struct device *, struct cfdata *, void *);
+static int	sio16_match(struct device *, cfdata_t, void *);
 static void	sio16_attach(struct device *, struct device *, void *);
 static u_char	sio16_ackfunc(void *, int who);
 
@@ -108,7 +108,7 @@ struct sio16_attach_args {
  */
 #define	SIO16_ROM_NAME	"sio16"
 int
-sio16_match(struct device *parent, struct cfdata *cf, void *aux)
+sio16_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -268,14 +268,14 @@ sio16_ackfunc(void *v, int who)
  * we attach two `clcd' instances per 1600se, that each call the
  * backend cd18xx driver for help.
  */
-static int	clcd_match(struct device *, struct cfdata *, void *);
+static int	clcd_match(struct device *, cfdata_t, void *);
 static void	clcd_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(clcd, sizeof(struct cd18xx_softc),
     clcd_match, clcd_attach, NULL, NULL);
 
 static int
-clcd_match(struct device *parent, struct cfdata *cf, void *aux)
+clcd_match(struct device *parent, cfdata_t cf, void *aux)
 {
 
 	/* XXX */

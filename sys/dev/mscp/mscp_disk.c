@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.68 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.69 2009/05/12 13:16:17 cegger Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.68 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.69 2009/05/12 13:16:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -132,7 +132,7 @@ void	rrmakelabel(struct disklabel *, long);
 
 #if NRA
 
-int	ramatch(struct device *, struct cfdata *, void *);
+int	ramatch(struct device *, cfdata_t, void *);
 void	raattach(struct device *, struct device *, void *);
 int	ra_putonline(struct ra_softc *);
 
@@ -166,7 +166,7 @@ static struct dkdriver radkdriver = {
  */
 
 int
-ramatch(struct device *parent, struct cfdata *cf, void *aux)
+ramatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
@@ -580,7 +580,7 @@ rasize(dev_t dev)
 
 #if NRX
 
-int	rxmatch(struct device *, struct cfdata *, void *);
+int	rxmatch(struct device *, cfdata_t, void *);
 
 CFATTACH_DECL(rx, sizeof(struct rx_softc),
     rxmatch, rxattach, NULL, NULL);
@@ -611,7 +611,7 @@ static struct dkdriver rxdkdriver = {
  */
 
 int
-rxmatch(struct device *parent, struct cfdata *cf, void *aux)
+rxmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;

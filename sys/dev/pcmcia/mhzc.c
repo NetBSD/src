@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.44 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.45 2009/05/12 13:18:04 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.44 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.45 2009/05/12 13:18:04 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -127,7 +127,7 @@ struct mhzc_softc {
 #define	MHZC_MODEM_ALLOCED	0x10
 #define	MHZC_ETHERNET_ALLOCED	0x20
 
-int	mhzc_match(struct device *, struct cfdata *, void *);
+int	mhzc_match(struct device *, cfdata_t, void *);
 void	mhzc_attach(struct device *, struct device *, void *);
 int	mhzc_detach(struct device *, int);
 int	mhzc_activate(struct device *, enum devact);
@@ -165,7 +165,7 @@ void	mhzc_disable(struct mhzc_softc *, int);
 int	mhzc_intr(void *);
 
 int
-mhzc_match(struct device *parent, struct cfdata *match,
+mhzc_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -689,7 +689,7 @@ com_mhzc_disable(struct com_softc *sc)
 /****** Here begins the sm attachment code. ******/
 
 #if NSM_MHZC > 0
-int	sm_mhzc_match(struct device *, struct cfdata *, void *);
+int	sm_mhzc_match(struct device *, cfdata_t, void *);
 void	sm_mhzc_attach(struct device *, struct device *, void *);
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
@@ -700,7 +700,7 @@ int	sm_mhzc_enable(struct smc91cxx_softc *);
 void	sm_mhzc_disable(struct smc91cxx_softc *);
 
 int
-sm_mhzc_match(struct device *parent, struct cfdata *match,
+sm_mhzc_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	extern struct cfdriver sm_cd;

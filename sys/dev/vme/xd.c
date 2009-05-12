@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.84 2009/04/18 14:58:04 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.85 2009/05/12 13:22:28 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.84 2009/04/18 14:58:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.85 2009/05/12 13:22:28 cegger Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -241,9 +241,9 @@ void	xd_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
 int	xdcintr(void *);
 
 /* autoconf */
-int	xdcmatch(struct device *, struct cfdata *, void *);
+int	xdcmatch(struct device *, cfdata_t, void *);
 void	xdcattach(struct device *, struct device *, void *);
-int	xdmatch(struct device *, struct cfdata *, void *);
+int	xdmatch(struct device *, cfdata_t, void *);
 void	xdattach(struct device *, struct device *, void *);
 static	int xdc_probe(void *, bus_space_tag_t, bus_space_handle_t);
 
@@ -452,7 +452,7 @@ xdc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 
 int xdcmatch(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	cfdata_t cf;
 	void *aux;
 {
 	struct vme_attach_args	*va = aux;
@@ -681,7 +681,7 @@ xdcattach(parent, self, aux)
  * call xdattach!).
  */
 int
-xdmatch(struct device *parent, struct cfdata *cf, void *aux)
+xdmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct xdc_attach_args *xa = aux;
 

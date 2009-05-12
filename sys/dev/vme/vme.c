@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.21 2009/03/14 21:04:23 dsl Exp $ */
+/* $NetBSD: vme.c,v 1.22 2009/05/12 13:22:28 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.21 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.22 2009/05/12 13:22:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ static int vmesubmatch1(struct device*, struct cfdata*,
 			     const int *, void*);
 static int vmesubmatch(struct device*, struct cfdata*,
 			    const int *, void*);
-int vmematch(struct device *, struct cfdata *, void *);
+int vmematch(struct device *, cfdata_t, void *);
 void vmeattach(struct device*, struct device*,void*);
 static struct extent *vme_select_map(struct vmebus_softc*, vme_am_t);
 
@@ -123,7 +123,7 @@ vmeprint(struct vme_attach_args *v, char *dummy)
  * devices are attached.
  */
 static int
-vmesubmatch1(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux)
+vmesubmatch1(struct device *bus, cfdata_t dev, const int *ldesc, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
@@ -140,7 +140,7 @@ vmesubmatch1(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux
 }
 
 static int
-vmesubmatch(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux)
+vmesubmatch(struct device *bus, cfdata_t dev, const int *ldesc, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
@@ -161,7 +161,7 @@ vmesubmatch(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux)
 }
 
 int
-vmematch(struct device *parent, struct cfdata *match, void *aux)
+vmematch(struct device *parent, cfdata_t match, void *aux)
 {
 	return (1);
 }
