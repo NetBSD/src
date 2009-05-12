@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.80 2009/05/02 01:15:54 pooka Exp $
+# $NetBSD: shl.mi,v 1.81 2009/05/12 18:07:55 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -104,7 +104,7 @@
 ./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib
 ./usr/lib/librumpuser_pic.a			comp-c-piclib
 ./usr/lib/librumpvfs_pic.a			comp-c-piclib
-./usr/lib/libsdp_pic.a				comp-c-piclib
+./usr/lib/libsdp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libskey_pic.a				comp-c-piclib		skey
 ./usr/lib/libsl_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libss_pic.a				comp-c-piclib		kerberos

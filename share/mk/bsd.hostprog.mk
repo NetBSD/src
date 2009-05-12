@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.55 2009/04/10 16:16:12 apb Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.56 2009/05/12 18:07:54 plunky Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -47,7 +47,6 @@ LIBRUMP?=	/usr/lib/librump.a
 LIBRUMPNET?=	/usr/lib/librumpnet.a
 LIBRUMPUSER?=	/usr/lib/librumpuser.a
 LIBRUMPVFS?=	/usr/lib/librumpvfs.a
-LIBSDP?=	/usr/lib/libsdp.a
 LIBSKEY?=	/usr/lib/libskey.a
 LIBSSP?=	/usr/lib/libssp.a
 LIBSTDCXX?=	/usr/lib/libstdc++.a
