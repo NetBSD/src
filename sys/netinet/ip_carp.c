@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.34 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.35 2009/05/12 21:48:42 elad Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.34 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.35 2009/05/12 21:48:42 elad Exp $");
 
 /*
  * TODO:
@@ -1998,10 +1998,10 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		carpr.carpr_advbase = sc->sc_advbase;
 		carpr.carpr_advskew = sc->sc_advskew;
 
-		if ((l == NULL) || (error = kauth_authorize_network(l->l_cred,
+		if ((l != NULL) || (error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
-		    NULL)) != 0)
+		    NULL)) == 0)
 			memcpy(carpr.carpr_key, sc->sc_key,
 			    sizeof(carpr.carpr_key));
 		error = copyout(&carpr, ifr->ifr_data, sizeof(carpr));
