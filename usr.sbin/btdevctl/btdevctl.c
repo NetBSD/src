@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.c,v 1.7 2008/07/21 13:36:57 lukem Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.8 2009/05/12 18:39:20 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,8 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btdevctl.c,v 1.7 2008/07/21 13:36:57 lukem Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2006 The NetBSD Foundation, Inc.\
+  @(#) Copyright (c) 2006 Itronix, Inc.\
+  All rights reserved.");
+__RCSID("$NetBSD: btdevctl.c,v 1.8 2009/05/12 18:39:20 plunky Exp $");
 
 #include <prop/proplib.h>
 #include <sys/ioctl.h>
