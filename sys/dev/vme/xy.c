@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.89 2009/05/12 13:22:28 cegger Exp $	*/
+/*	$NetBSD: xy.c,v 1.90 2009/05/12 14:47:27 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.89 2009/05/12 13:22:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.90 2009/05/12 14:47:27 cegger Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -183,10 +183,10 @@ void	xy_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
 int	xycintr(void *);
 
 /* autoconf */
-int	xycmatch(struct device *, cfdata_t, void *);
-void	xycattach(struct device *, struct device *, void *);
-int	xymatch(struct device *, cfdata_t, void *);
-void	xyattach(struct device *, struct device *, void *);
+int	xycmatch(device_t, cfdata_t, void *);
+void	xycattach(device_t, device_t, void *);
+int	xymatch(device_t, cfdata_t, void *);
+void	xyattach(device_t, device_t, void *);
 static	int xyc_probe(void *, bus_space_tag_t, bus_space_handle_t);
 
 static	void xydummystrat(struct buf *);
@@ -362,7 +362,7 @@ xyc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 }
 
 int xycmatch(parent, cf, aux)
-	struct device *parent;
+	device_t parent;
 	cfdata_t cf;
 	void *aux;
 {
@@ -386,10 +386,7 @@ int xycmatch(parent, cf, aux)
  * xycattach: attach controller
  */
 void
-xycattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+xycattach(device_t parent, device_t self, void *aux)
 {
 	struct xyc_softc	*xyc = device_private(self);
 	struct vme_attach_args	*va = aux;
@@ -579,7 +576,7 @@ xycattach(parent, self, aux)
  * call xyattach!).
  */
 int
-xymatch(struct device *parent, cfdata_t cf, void *aux)
+xymatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct xyc_attach_args *xa = aux;
 
@@ -598,10 +595,7 @@ xymatch(struct device *parent, cfdata_t cf, void *aux)
  * from xyopen/xystrategy.
  */
 void
-xyattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+xyattach(device_t parent, device_t self, void *aux)
 {
 	struct xy_softc *xy = device_private(self), *oxy;
 	struct xyc_softc *xyc = device_private(parent);
@@ -1086,8 +1080,8 @@ xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		xa.driveno = xy->xy_drive;
 		xa.fullmode = XY_SUB_WAIT;
 		xa.booting = 0;
-		xyattach((struct device *) xy->parent,
-						(struct device *) xy, &xa);
+		xyattach((device_t) xy->parent,
+						(device_t) xy, &xa);
 		if (xy->state == XY_DRIVE_UNKNOWN) {
 			return (EIO);
 		}
@@ -1194,7 +1188,7 @@ xystrategy(bp)
 		xa.driveno = xy->xy_drive;
 		xa.fullmode = XY_SUB_WAIT;
 		xa.booting = 0;
-		xyattach((struct device *)xy->parent, (struct device *)xy, &xa);
+		xyattach((device_t)xy->parent, (device_t)xy, &xa);
 		if (xy->state == XY_DRIVE_UNKNOWN) {
 			bp->b_error = EIO;
 			goto done;

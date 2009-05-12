@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.54 2009/03/15 20:30:57 cegger Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.55 2009/05/12 14:42:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.54 2009/03/15 20:30:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.55 2009/05/12 14:42:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ pcmcia_read_cis(struct pcmcia_softc *sc)
 }
 
 int
-pcmcia_scan_cis(struct device *dev,
+pcmcia_scan_cis(device_t dev,
 	int (*fct)(struct pcmcia_tuple *, void *),
 	void *arg)
 {

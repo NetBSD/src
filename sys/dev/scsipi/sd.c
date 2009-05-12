@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.280 2009/05/12 13:20:33 cegger Exp $	*/
+/*	$NetBSD: sd.c,v 1.281 2009/05/12 14:44:31 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.280 2009/05/12 13:20:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.281 2009/05/12 14:44:31 cegger Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -123,10 +123,10 @@ static int	sd_flush(struct sd_softc *, int);
 static int	sd_getcache(struct sd_softc *, int *);
 static int	sd_setcache(struct sd_softc *, int);
 
-static int	sdmatch(struct device *, cfdata_t, void *);
-static void	sdattach(struct device *, struct device *, void *);
-static int	sdactivate(struct device *, enum devact);
-static int	sddetach(struct device *, int);
+static int	sdmatch(device_t, cfdata_t, void *);
+static void	sdattach(device_t, device_t, void *);
+static int	sdactivate(device_t, enum devact);
+static int	sddetach(device_t, int);
 static void	sd_set_properties(struct sd_softc *);
 
 CFATTACH_DECL3_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
@@ -195,7 +195,7 @@ struct sd_mode_sense_data {
  * A device suitable for this driver
  */
 static int
-sdmatch(struct device *parent, cfdata_t match,
+sdmatch(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -212,7 +212,7 @@ sdmatch(struct device *parent, cfdata_t match,
  * Attach routine common to atapi & scsi.
  */
 static void
-sdattach(struct device *parent, struct device *self, void *aux)
+sdattach(device_t parent, device_t self, void *aux)
 {
 	struct sd_softc *sd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -327,7 +327,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-sdactivate(struct device *self, enum devact act)
+sdactivate(device_t self, enum devact act)
 {
 	int rv = 0;
 
@@ -346,7 +346,7 @@ sdactivate(struct device *self, enum devact act)
 }
 
 static int
-sddetach(struct device *self, int flags)
+sddetach(device_t self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn;

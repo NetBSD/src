@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.24 2009/05/12 13:20:05 cegger Exp $	*/
+/*	$NetBSD: if_en.c,v 1.25 2009/05/12 14:43:59 cegger Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.24 2009/05/12 13:20:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.25 2009/05/12 14:43:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ struct en_sbus_softc {
 /*
  * prototypes
  */
-static	int en_sbus_match(struct device *, cfdata_t, void *);
-static	void en_sbus_attach(struct device *, struct device *, void *);
+static	int en_sbus_match(device_t, cfdata_t, void *);
+static	void en_sbus_attach(device_t, device_t, void *);
 
 /*
  * SBus autoconfig attachments
@@ -96,11 +96,7 @@ CFATTACH_DECL(en_sbus, sizeof(struct en_sbus_softc),
  */
 
 static int
-en_sbus_match(parent, cf, aux)
-	struct device *parent;
-        cfdata_t cf;
-	void *aux;
-
+en_sbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -120,10 +116,7 @@ en_sbus_match(parent, cf, aux)
 
 
 static void
-en_sbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-
+en_sbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct en_softc *sc = (void *)self;
