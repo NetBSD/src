@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.29 2009/05/12 13:15:24 cegger Exp $	*/
+/*	$NetBSD: mca.c,v 1.30 2009/05/12 14:31:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.29 2009/05/12 13:15:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.30 2009/05/12 14:31:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.29 2009/05/12 13:15:24 cegger Exp $");
 
 #include "locators.h"
 
-int	mca_match(struct device *, cfdata_t, void *);
-void	mca_attach(struct device *, struct device *, void *);
+int	mca_match(device_t, cfdata_t, void *);
+void	mca_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(mca, sizeof(struct device),
     mca_match, mca_attach, NULL, NULL);
@@ -59,7 +59,7 @@ CFATTACH_DECL(mca, sizeof(struct device),
 int	mca_print(void *, const char *);
 
 int
-mca_match(struct device *parent, cfdata_t cf, void *aux)
+mca_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mcabus_attach_args *mba = aux;
 
@@ -105,7 +105,7 @@ mca_print(void *aux, const char *pnp)
 }
 
 void
-mca_attach(struct device *parent, struct device *self, void *aux)
+mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct mcabus_attach_args *mba = aux;
 	bus_space_tag_t iot, memt;
