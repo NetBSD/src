@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.16 2008/04/05 21:31:23 cegger Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.17 2009/05/12 13:18:04 cegger Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.16 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.17 2009/05/12 13:18:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.16 2008/04/05 21:31:23 cegger Exp
 
 struct cs_pcmcia_softc;
 
-static int cs_pcmcia_match(struct device *, struct cfdata *, void *);
+static int cs_pcmcia_match(struct device *, cfdata_t, void *);
 static int cs_pcmcia_validate_config(struct pcmcia_config_entry *);
 static void cs_pcmcia_attach(struct device *, struct device *, void *);
 static int cs_pcmcia_detach(struct device *, int);
@@ -76,7 +76,7 @@ CFATTACH_DECL(cs_pcmcia, sizeof(struct cs_pcmcia_softc),
     cs_pcmcia_match, cs_pcmcia_attach, cs_pcmcia_detach, cs_activate);
 
 static int
-cs_pcmcia_match(struct device *parent, struct cfdata *match,
+cs_pcmcia_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;

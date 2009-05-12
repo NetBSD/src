@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.43 2008/06/11 17:32:30 drochner Exp $	*/
+/*	$NetBSD: dl.c,v 1.44 2009/05/12 13:19:12 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.43 2008/06/11 17:32:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.44 2009/05/12 13:19:12 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ struct dl_softc {
 	struct tty	*sc_tty;
 };
 
-static	int	dl_match (struct device *, struct cfdata *, void *);
+static	int	dl_match (struct device *, cfdata_t, void *);
 static	void	dl_attach (struct device *, struct device *, void *);
 static	void	dlrint (void *);
 static	void	dlxint (void *);
@@ -173,7 +173,7 @@ const struct cdevsw dl_cdevsw = {
 /* then complete the housecleaning for full operation */
 
 static int
-dl_match (struct device *parent, struct cfdata *cf, void *aux)
+dl_match (struct device *parent, cfdata_t cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 

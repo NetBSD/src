@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.251 2009/04/07 18:35:17 dyoung Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.252 2009/05/12 13:20:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.251 2009/04/07 18:35:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.252 2009/05/12 13:20:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static struct simplelock scsibus_interlock = SIMPLELOCK_INITIALIZER;
 
 static int	scsi_probe_device(struct scsibus_softc *, int, int);
 
-static int	scsibusmatch(struct device *, struct cfdata *, void *);
+static int	scsibusmatch(struct device *, cfdata_t, void *);
 static void	scsibusattach(struct device *, struct device *, void *);
 static int	scsibusactivate(struct device *, enum devact);
 static int	scsibusdetach(struct device *, int flags);
@@ -138,7 +138,7 @@ scsiprint(void *aux, const char *pnp)
 }
 
 static int
-scsibusmatch(struct device *parent, struct cfdata *cf, void *aux)
+scsibusmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct scsipi_channel *chan = aux;
 
@@ -727,7 +727,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	const struct scsi_quirk_inquiry_pattern *finger;
 	int checkdtype, priority, docontinue, quirks;
 	struct scsipibus_attach_args sa;
-	struct cfdata *cf;
+	cfdata_t cf;
 	int locs[SCSIBUSCF_NLOCS];
 	struct device *chld;
 

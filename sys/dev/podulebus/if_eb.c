@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.12 2008/04/05 20:08:52 cegger Exp $ */
+/* $NetBSD: if_eb.c,v 1.13 2009/05/12 13:18:40 cegger Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.12 2008/04/05 20:08:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.13 2009/05/12 13:18:40 cegger Exp $");
 
 #include <sys/param.h>
 
@@ -71,7 +71,7 @@ struct eb_softc {
  * prototypes
  */
 
-int ebprobe(struct device *, struct cfdata *, void *);
+int ebprobe(struct device *, cfdata_t, void *);
 void ebattach(struct device *, struct device *, void *);
 
 /* driver structure for autoconf */
@@ -88,7 +88,7 @@ CFATTACH_DECL(eb, sizeof(struct eb_softc),
  */
 
 int
-ebprobe(struct device *parent, struct cfdata *cf, void *aux)
+ebprobe(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 

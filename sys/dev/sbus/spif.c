@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.21 2009/03/14 21:04:23 dsl Exp $	*/
+/*	$NetBSD: spif.c,v 1.22 2009/05/12 13:20:06 cegger Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.21 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.22 2009/05/12 13:20:06 cegger Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -143,7 +143,7 @@ const struct cdevsw sbpp_cdevsw = {
 
 
 int
-spif_match(struct device *parent, struct cfdata *vcf, void *aux)
+spif_match(struct device *parent, cfdata_t vcf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -269,7 +269,7 @@ fail_unmapregs:
 }
 
 int
-stty_match(struct device *parent, struct cfdata *vcf, void *aux)
+stty_match(struct device *parent, cfdata_t vcf, void *aux)
 {
 	struct spif_softc *sc = device_private(parent);
 
@@ -974,7 +974,7 @@ stty_compute_baud(speed_t speed, int clock, u_int8_t *bprlp, u_int8_t *bprhp)
 }
 
 int
-sbpp_match(struct device *parent, struct cfdata *vcf, void *aux)
+sbpp_match(struct device *parent, cfdata_t vcf, void *aux)
 {
 	struct spif_softc *sc = device_private(parent);
 

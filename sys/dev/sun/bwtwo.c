@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.24 2009/03/14 21:04:23 dsl Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.25 2009/05/12 13:21:06 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.24 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.25 2009/05/12 13:21:06 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ static struct vcons_screen bw2_console_screen;
 int
 bwtwo_pfour_probe(void *vaddr, void *arg)
 {
-	struct cfdata *cf = arg;
+	cfdata_t cf = arg;
 
 	switch (fb_pfour_id(vaddr)) {
 	case PFOUR_ID_BW:

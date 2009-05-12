@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.76 2009/01/13 13:35:54 yamt Exp $	*/
+/*	$NetBSD: ss.c,v 1.77 2009/05/12 13:20:33 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.76 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.77 2009/05/12 13:20:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.76 2009/01/13 13:35:54 yamt Exp $");
 #define MODE_NONREWIND	1
 #define MODE_CONTROL	3
 
-static int	ssmatch(struct device *, struct cfdata *, void *);
+static int	ssmatch(struct device *, cfdata_t, void *);
 static void	ssattach(struct device *, struct device *, void *);
 static int	ssdetach(struct device *self, int flags);
 static int	ssactivate(struct device *self, enum devact act);
@@ -123,7 +123,7 @@ static const struct scsipi_inquiry_pattern ss_patterns[] = {
 };
 
 static int
-ssmatch(struct device *parent, struct cfdata *match,
+ssmatch(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;

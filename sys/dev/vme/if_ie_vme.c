@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.25 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.26 2009/05/12 13:22:28 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.25 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.26 2009/05/12 13:22:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ static void ie_vmeattend(struct ie_softc *, int);
 static void ie_vmerun(struct ie_softc *);
 static int  ie_vmeintr(struct ie_softc *, int);
 
-int ie_vme_match(struct device *, struct cfdata *, void *);
+int ie_vme_match(struct device *, cfdata_t, void *);
 void ie_vme_attach(struct device *, struct device *, void *);
 
 struct ie_vme_softc {
@@ -414,7 +414,7 @@ ie_vme_write24(struct ie_softc *sc, int offset, int addr)
 }
 
 int
-ie_vme_match(struct device *parent, struct cfdata *cf, void *aux)
+ie_vme_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args *va = aux;
 	vme_chipset_tag_t ct = va->va_vct;

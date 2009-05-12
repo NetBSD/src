@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.23 2008/04/05 18:35:32 cegger Exp $	*/
+/*	$NetBSD: if_en.c,v 1.24 2009/05/12 13:20:05 cegger Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.23 2008/04/05 18:35:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.24 2009/05/12 13:20:05 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct en_sbus_softc {
 /*
  * prototypes
  */
-static	int en_sbus_match(struct device *, struct cfdata *, void *);
+static	int en_sbus_match(struct device *, cfdata_t, void *);
 static	void en_sbus_attach(struct device *, struct device *, void *);
 
 /*
@@ -98,7 +98,7 @@ CFATTACH_DECL(en_sbus, sizeof(struct en_sbus_softc),
 static int
 en_sbus_match(parent, cf, aux)
 	struct device *parent;
-        struct cfdata *cf;
+        cfdata_t cf;
 	void *aux;
 
 {

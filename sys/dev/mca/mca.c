@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.28 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: mca.c,v 1.29 2009/05/12 13:15:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.28 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.29 2009/05/12 13:15:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.28 2009/03/14 21:04:21 dsl Exp $");
 
 #include "locators.h"
 
-int	mca_match(struct device *, struct cfdata *, void *);
+int	mca_match(struct device *, cfdata_t, void *);
 void	mca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mca, sizeof(struct device),
@@ -59,7 +59,7 @@ CFATTACH_DECL(mca, sizeof(struct device),
 int	mca_print(void *, const char *);
 
 int
-mca_match(struct device *parent, struct cfdata *cf, void *aux)
+mca_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct mcabus_attach_args *mba = aux;
 

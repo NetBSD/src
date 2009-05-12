@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_xmi.c,v 1.7 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: bi_xmi.c,v 1.8 2009/05/12 13:22:58 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.7 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.8 2009/05/12 13:22:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.7 2008/03/11 05:34:02 matt Exp $");
 #include "locators.h"
 
 static int
-bi_xmi_match(struct device *parent, struct cfdata *cf, void *aux)
+bi_xmi_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct xmi_attach_args *xa = aux;
 

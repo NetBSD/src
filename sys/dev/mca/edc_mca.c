@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.42 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.43 2009/05/12 13:15:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.42 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.43 2009/05/12 13:15:24 cegger Exp $");
 
 #include "rnd.h"
 
@@ -116,7 +116,7 @@ struct edc_mca_softc {
 	u_int16_t status_block[EDC_MAX_CMD_RES_LEN];
 };
 
-int	edc_mca_probe(struct device *, struct cfdata *, void *);
+int	edc_mca_probe(struct device *, cfdata_t, void *);
 void	edc_mca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(edc_mca, sizeof(struct edc_mca_softc),
@@ -130,7 +130,7 @@ static void	edc_cmd_wait(struct edc_mca_softc *, int, int);
 static void	edcworker(void *);
 
 int
-edc_mca_probe(struct device *parent, struct cfdata *match,
+edc_mca_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct mca_attach_args *ma = aux;

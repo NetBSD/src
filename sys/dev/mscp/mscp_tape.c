@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.36 2009/03/14 21:04:21 dsl Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.37 2009/05/12 13:16:17 cegger Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.36 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.37 2009/05/12 13:16:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,7 +81,7 @@ struct mt_softc {
 #define MT_OFFLINE	0
 #define MT_ONLINE	1
 
-int	mtmatch(struct device *, struct cfdata *, void *);
+int	mtmatch(struct device *, cfdata_t, void *);
 void	mtattach(struct device *, struct device *, void *);
 void	mtdgram(struct device *, struct mscp *, struct mscp_softc *);
 void	mtiodone(struct device *, struct buf *);
@@ -137,7 +137,7 @@ const struct cdevsw mt_cdevsw = {
  */
 
 int
-mtmatch(struct device *parent, struct cfdata *cf, void *aux)
+mtmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;

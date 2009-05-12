@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.29 2009/04/18 14:58:03 tsutsui Exp $ */
+/*	$NetBSD: tcx.c,v 1.30 2009/05/12 13:20:06 cegger Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.29 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.30 2009/05/12 13:20:06 cegger Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -107,7 +107,7 @@ struct tcx_softc {
 
 /* autoconfiguration driver */
 static void	tcxattach(struct device *, struct device *, void *);
-static int	tcxmatch(struct device *, struct cfdata *, void *);
+static int	tcxmatch(struct device *, cfdata_t, void *);
 static void	tcx_unblank(struct device *);
 
 CFATTACH_DECL(tcx, sizeof(struct tcx_softc),
@@ -153,7 +153,7 @@ static void tcx_loadcmap(struct tcx_softc *, int, int);
  * Match a tcx.
  */
 int
-tcxmatch(struct device *parent, struct cfdata *cf, void *aux)
+tcxmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

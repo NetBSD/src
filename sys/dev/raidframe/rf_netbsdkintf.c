@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.261 2009/05/01 20:43:41 dyoung Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.262 2009/05/12 13:19:50 cegger Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.261 2009/05/01 20:43:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.262 2009/05/12 13:19:50 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -797,7 +797,7 @@ int
 raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int     unit = raidunit(dev);
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct raid_softc *rs;
 	int     error = 0;
 	int     part;
@@ -970,7 +970,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int     unit = raidunit(dev);
 	int     error = 0;
 	int     part, pmask;
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct raid_softc *rs;
 	RF_Config_t *k_cfg, *u_cfg;
 	RF_Raid_t *raidPtr;
@@ -1842,7 +1842,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static void
 raidinit(RF_Raid_t *raidPtr)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct raid_softc *rs;
 	int     unit;
 

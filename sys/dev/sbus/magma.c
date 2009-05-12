@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.50 2009/03/14 21:04:22 dsl Exp $	*/
+/*	$NetBSD: magma.c,v 1.51 2009/05/12 13:20:06 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.50 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.51 2009/05/12 13:20:06 cegger Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -302,7 +302,7 @@ cd1400_enable_transmitter(struct cd1400 *cd, int channel)
  */
 
 int
-magma_match(struct device *parent, struct cfdata *cf, void *aux)
+magma_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct magma_board_info *card;
@@ -819,7 +819,7 @@ chkbpp:
  */
 
 int
-mtty_match(struct device *parent, struct cfdata *cf, void *args)
+mtty_match(struct device *parent, cfdata_t cf, void *args)
 {
 	struct magma_softc *sc = device_private(parent);
 
@@ -1388,7 +1388,7 @@ mtty_param(struct tty *tp, struct termios *t)
  */
 
 int
-mbpp_match(struct device *parent, struct cfdata *cf, void *args)
+mbpp_match(struct device *parent, cfdata_t cf, void *args)
 {
 	struct magma_softc *sc = device_private(parent);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.27 2009/03/14 21:04:22 dsl Exp $	*/
+/*	$NetBSD: xirc.c,v 1.28 2009/05/12 13:18:04 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.27 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.28 2009/05/12 13:18:04 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -121,7 +121,7 @@ struct xirc_softc {
 #define	XIRC_ETHERNET_ALLOCED	0x20
 };
 
-int	xirc_match(struct device *, struct cfdata *, void *);
+int	xirc_match(struct device *, cfdata_t, void *);
 void	xirc_attach(struct device *, struct device *, void *);
 int	xirc_detach(struct device *, int);
 int	xirc_activate(struct device *, enum devact);
@@ -145,7 +145,7 @@ void	xirc_disable(struct xirc_softc *, int, int);
 int	xirc_intr(void *);
 
 int
-xirc_match(struct device *parent, struct cfdata *match,
+xirc_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -622,7 +622,7 @@ com_xirc_disable(struct com_softc *sc)
 /****** Here begins the xi attachment code. ******/
 
 #if NXI_XIRC > 0
-int	xi_xirc_match(struct device *, struct cfdata *, void *);
+int	xi_xirc_match(struct device *, cfdata_t, void *);
 void	xi_xirc_attach(struct device *, struct device *, void *);
 
 /* No xirc-specific goo in the softc; it's all in the parent. */
@@ -634,7 +634,7 @@ void	xi_xirc_disable(struct xi_softc *);
 int	xi_xirc_lan_nid_ciscallback(struct pcmcia_tuple *, void *);
 
 int
-xi_xirc_match(struct device *parent, struct cfdata *match,
+xi_xirc_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	extern struct cfdriver xi_cd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spifreg.h,v 1.2 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: spifreg.h,v 1.3 2009/05/12 13:20:06 cegger Exp $	*/
 /*	$OpenBSD: spifreg.h,v 1.5 2003/06/02 18:32:41 jason Exp $	*/
 
 /*
@@ -390,10 +390,10 @@
 /*
  * internal function prototypes
  */
-int	spif_match(struct device *, struct cfdata *, void *);
+int	spif_match(struct device *, cfdata_t, void *);
 void	spif_attach(struct device *, struct device *, void *);
 
-int	stty_match(struct device *, struct cfdata *, void *);
+int	stty_match(struct device *, cfdata_t, void *);
 void	stty_attach(struct device *, struct device *, void *);
 
 int	spif_stcintr(void *);
@@ -409,7 +409,7 @@ void	stty_write_ccr(struct spif_softc *, u_int8_t);
 int	stty_compute_baud(speed_t, int, u_int8_t *, u_int8_t *);
 void	stty_start(struct tty *);
 
-int	sbpp_match(struct device *, struct cfdata *, void *);
+int	sbpp_match(struct device *, cfdata_t, void *);
 void	sbpp_attach(struct device *, struct device *, void *);
 
 int	sbpp_rw(dev_t, struct uio *);

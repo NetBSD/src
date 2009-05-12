@@ -1,4 +1,4 @@
-/* $NetBSD: slhci_pcmcia.c,v 1.4 2008/03/28 17:14:46 drochner Exp $ */
+/* $NetBSD: slhci_pcmcia.c,v 1.5 2009/05/12 13:18:04 cegger Exp $ */
 /*
  * Not (c) 2007 Matthew Orgass
  * This file is public domain, meaning anyone can make any use of part or all 
@@ -11,7 +11,7 @@
 /* Glue for RATOC USB HOST CF+ Card (SL811HS chip) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_pcmcia.c,v 1.4 2008/03/28 17:14:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_pcmcia.c,v 1.5 2009/05/12 13:18:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,7 +42,7 @@ struct slhci_pcmcia_softc {
 };
 
 
-int slhci_pcmcia_probe(struct device *, struct cfdata *, void *);
+int slhci_pcmcia_probe(struct device *, cfdata_t, void *);
 void slhci_pcmcia_attach(struct device *, struct device *, void *);
 int slhci_pcmcia_detach(struct device *, int);
 int slhci_pcmcia_validate_config(struct pcmcia_config_entry *);
@@ -63,7 +63,7 @@ static const size_t slhci_pcmcia_nproducts =
 	sizeof(slhci_pcmcia_products) / sizeof(slhci_pcmcia_products[0]);
 
 int
-slhci_pcmcia_probe(struct device *parent, struct cfdata *match, void *aux)
+slhci_pcmcia_probe(struct device *parent, cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 

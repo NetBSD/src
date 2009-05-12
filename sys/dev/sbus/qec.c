@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.41 2009/03/14 21:04:23 dsl Exp $ */
+/*	$NetBSD: qec.c,v 1.42 2009/05/12 13:20:06 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.41 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.42 2009/05/12 13:20:06 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.41 2009/03/14 21:04:23 dsl Exp $");
 #include <dev/sbus/qecvar.h>
 
 static int	qecprint(void *, const char *);
-static int	qecmatch(struct device *, struct cfdata *, void *);
+static int	qecmatch(struct device *, cfdata_t, void *);
 static void	qecattach(struct device *, struct device *, void *);
 void		qec_init(struct qec_softc *);
 
@@ -84,7 +84,7 @@ qecprint(void *aux, const char *busname)
 }
 
 int
-qecmatch(struct device *parent, struct cfdata *cf, void *aux)
+qecmatch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

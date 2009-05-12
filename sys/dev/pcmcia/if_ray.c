@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.73 2009/03/14 21:04:22 dsl Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.74 2009/05/12 13:18:04 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.73 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.74 2009/05/12 13:18:04 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -303,7 +303,7 @@ static int ray_intr(void *);
 static void ray_intr_start(struct ray_softc *);
 static int ray_ioctl(struct ifnet *, u_long, void *);
 static int ray_issue_cmd(struct ray_softc *, bus_size_t, u_int);
-static int ray_match(struct device *, struct cfdata *, void *);
+static int ray_match(struct device *, cfdata_t, void *);
 static int ray_media_change(struct ifnet *);
 static void ray_media_status(struct ifnet *, struct ifmediareq *);
 static ray_cmd_func_t ray_rccs_intr(struct ray_softc *, bus_size_t);
@@ -469,7 +469,7 @@ CFATTACH_DECL(ray, sizeof(struct ray_softc),
  */
 
 static int
-ray_match(struct device *parent, struct cfdata *match,
+ray_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;

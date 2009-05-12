@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.63 2009/03/14 21:04:22 dsl Exp $	*/
+/*	$NetBSD: be.c,v 1.64 2009/05/12 13:20:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.63 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.64 2009/05/12 13:20:05 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -159,7 +159,7 @@ struct be_softc {
 #endif
 };
 
-int	bematch(struct device *, struct cfdata *, void *);
+int	bematch(struct device *, cfdata_t, void *);
 void	beattach(struct device *, struct device *, void *);
 
 void	beinit(struct be_softc *);
@@ -209,7 +209,7 @@ CFATTACH_DECL(be, sizeof(struct be_softc),
     bematch, beattach, NULL, NULL);
 
 int
-bematch(struct device *parent, struct cfdata *cf, void *aux)
+bematch(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.76 2009/03/14 21:04:23 dsl Exp $	*/
+/*	$NetBSD: if_se.c,v 1.77 2009/05/12 13:20:33 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.76 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.77 2009/05/12 13:20:33 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -194,7 +194,7 @@ struct se_softc {
 	int sc_enabled;
 };
 
-static int	sematch(struct device *, struct cfdata *, void *);
+static int	sematch(struct device *, cfdata_t, void *);
 static void	seattach(struct device *, struct device *, void *);
 
 static void	se_ifstart(struct ifnet *);
@@ -278,7 +278,7 @@ ether_cmp(void *one, void *two)
 #define ETHER_CMP	ether_cmp
 
 static int
-sematch(struct device *parent, struct cfdata *match, void *aux)
+sematch(struct device *parent, cfdata_t match, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;

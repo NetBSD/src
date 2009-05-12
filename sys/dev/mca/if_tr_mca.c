@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.19 2009/03/14 15:36:18 dsl Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.20 2009/05/12 13:15:24 cegger Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.19 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.20 2009/05/12 13:15:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.19 2009/03/14 15:36:18 dsl Exp $");
 #define TR_MBPS_4 0
 #define TR_MBPS_16 1
 
-int	tr_mca_probe(struct device *, struct cfdata *, void *);
+int	tr_mca_probe(struct device *, cfdata_t, void *);
 void	tr_mca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tr_mca, sizeof(struct tr_softc),
@@ -91,7 +91,7 @@ tr_mca_lookup(int id)
 }
 
 int
-tr_mca_probe(struct device *parent, struct cfdata *match,
+tr_mca_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct mca_attach_args *ma = aux;

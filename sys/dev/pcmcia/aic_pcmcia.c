@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.38 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.39 2009/05/12 13:18:04 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.38 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.39 2009/05/12 13:18:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ struct aic_pcmcia_softc {
 #define	AIC_PCMCIA_ATTACHED	3
 };
 
-int	aic_pcmcia_match(struct device *, struct cfdata *, void *);
+int	aic_pcmcia_match(struct device *, cfdata_t, void *);
 int	aic_pcmcia_validate_config(struct pcmcia_config_entry *);
 void	aic_pcmcia_attach(struct device *, struct device *, void *);
 int	aic_pcmcia_detach(struct device *, int);
@@ -85,7 +85,7 @@ const size_t aic_pcmcia_nproducts =
     sizeof(aic_pcmcia_products) / sizeof(aic_pcmcia_products[0]);
 
 int
-aic_pcmcia_match(struct device *parent, struct cfdata *match,
+aic_pcmcia_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;

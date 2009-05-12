@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.28 2009/05/05 23:55:04 macallan Exp $	*/
+/*	$NetBSD: zx.c,v 1.29 2009/05/12 13:20:06 cegger Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.28 2009/05/05 23:55:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.29 2009/05/12 13:20:06 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.28 2009/05/05 23:55:04 macallan Exp $");
     ZX_ATTR_OE_ENABLE | ZX_ATTR_FORCE_WID)
 
 static void	zx_attach(device_t, device_t, void *);
-static int	zx_match(device_t, struct cfdata *, void *);
+static int	zx_match(device_t, cfdata_t, void *);
 
 static void	zx_blank(device_t);
 static int	zx_cmap_put(struct zx_softc *);
@@ -196,7 +196,7 @@ static struct vcons_screen zx_console_screen;
 #endif /* NWSDISPLAY > 0 */
 
 static int
-zx_match(device_t parent, struct cfdata *cf, void *aux)
+zx_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa;
 

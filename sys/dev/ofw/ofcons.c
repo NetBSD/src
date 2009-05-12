@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.38 2009/03/18 10:22:41 cegger Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.39 2009/05/12 13:17:37 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.38 2009/03/18 10:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.39 2009/05/12 13:17:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -62,7 +62,7 @@ cons_decl(ofcons_);
 
 static int stdin, stdout;
 
-static int ofcons_match(struct device *, struct cfdata *, void *);
+static int ofcons_match(struct device *, cfdata_t, void *);
 static void ofcons_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ofcons, sizeof(struct ofcons_softc),
@@ -86,7 +86,7 @@ const struct cdevsw ofcons_cdevsw = {
 static int ofcons_probe(void);
 
 static int
-ofcons_match(struct device *parent, struct cfdata *match, void *aux)
+ofcons_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 
