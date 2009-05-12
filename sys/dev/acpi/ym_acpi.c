@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.7 2009/05/12 09:29:46 cegger Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.8 2009/05/12 09:50:28 cegger Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.7 2009/05/12 09:29:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.8 2009/05/12 09:50:28 cegger Exp $");
 
 #include "mpu_ym.h"
 
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.7 2009/05/12 09:29:46 cegger Exp $");
 #include <dev/isa/ymvar.h>
 
 
-static int	ym_acpi_match(struct device *, cfdata_t, void *);
-static void	ym_acpi_attach(struct device *, struct device *, void *);
+static int	ym_acpi_match(device_t, cfdata_t, void *);
+static void	ym_acpi_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ym_acpi, sizeof(struct ym_softc), ym_acpi_match,
     ym_acpi_attach, NULL, NULL);
@@ -58,8 +58,7 @@ CFATTACH_DECL(ym_acpi, sizeof(struct ym_softc), ym_acpi_match,
  * ym_acpi_match: autoconf(9) match routine
  */
 static int
-ym_acpi_match(struct device *parent, cfdata_t match,
-    void *aux)
+ym_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -76,7 +75,7 @@ ym_acpi_match(struct device *parent, cfdata_t match,
  * ym_acpi_attach: autoconf(9) attach routine
  */
 static void
-ym_acpi_attach(struct device *parent, struct device *self, void *aux)
+ym_acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct ym_softc *sc = (struct ym_softc *)self;
 	struct acpi_attach_args *aa = aux;
