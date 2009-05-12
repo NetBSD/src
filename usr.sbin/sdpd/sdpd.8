@@ -1,4 +1,4 @@
-.\" $NetBSD: sdpd.8,v 1.5 2009/05/12 10:05:07 plunky Exp $
+.\" $NetBSD: sdpd.8,v 1.6 2009/05/12 10:27:53 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
@@ -106,33 +106,6 @@ was started as root.
 The default user name is
 .Dq Li _sdpd .
 .El
-.Sh CAVEAT
-The
-.Nm
-daemon
-will listen for incoming L2CAP connections on a wildcard BD_ADDR.
-.Pp
-In case of multiple Bluetooth controllers connected to the same host
-it is possible to limit visibility of Service Records according to
-the controller the connection is made through.
-.Pp
-Requests to insert, remove or update service records can only be made
-via the control socket.
-The
-.Nm
-daemon will check the peer's credentials and will only accept the request
-when the peer is the superuser, of if the peer is a member of the group
-specified with the
-.Fl G
-option.
-.Pp
-The
-.Nm
-daemon does not check for duplicated Service Records and only
-performs minimal validation of the record data sent in the Insert/Update
-Record requests.
-It is assumed that application must obtain all required resources such
-as RFCOMM channels etc., before registering the service.
 .Sh FILES
 .Bl -tag -width ".Pa /var/run/sdp" -compact
 .It Pa /var/run/sdp
@@ -165,6 +138,33 @@ service records.
 .Sh AUTHORS
 .An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
 .An Iain Hibbert
+.Sh CAVEATS
+The
+.Nm
+daemon
+will listen for incoming L2CAP connections on a wildcard BD_ADDR.
+.Pp
+In case of multiple Bluetooth controllers connected to the same host
+it is possible to limit visibility of Service Records according to
+the controller the connection is made through.
+.Pp
+Requests to insert, remove or update service records can only be made
+via the control socket.
+The
+.Nm
+daemon will check the peer's credentials and will only accept the request
+when the peer is the superuser, of if the peer is a member of the group
+specified with the
+.Fl G
+option.
+.Pp
+The
+.Nm
+daemon does not check for duplicated Service Records and only
+performs minimal validation of the record data sent in the Insert/Update
+Record requests.
+It is assumed that application must obtain all required resources such
+as RFCOMM channels etc., before registering the service.
 .Sh BUGS
 .Nm
 only ever generates 16-bit sequence headers, so if a response was
