@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.18 2009/05/06 18:41:54 elad Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.19 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.18 2009/05/06 18:41:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.19 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ chipsfb_match(device_t parent, cfdata_t match, void *aux)
 static void
 chipsfb_attach(device_t parent, device_t self, void *aux)
 {
-	struct chipsfb_softc *sc = (void *)self;
+	struct chipsfb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;

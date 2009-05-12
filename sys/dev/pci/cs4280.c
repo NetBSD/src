@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.53 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.54 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.53 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.54 2009/05/12 08:23:00 cegger Exp $");
 
 #include "midi.h"
 
@@ -247,7 +247,7 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	uint32_t mem;
 	int error;
 
-	sc = (struct cs428x_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	aprint_naive(": Audio controller\n");

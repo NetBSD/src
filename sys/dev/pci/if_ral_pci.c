@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.11 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.12 2009/05/12 08:23:01 cegger Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.11 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.12 2009/05/12 08:23:01 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -121,7 +121,7 @@ ral_pci_match(device_t parent, cfdata_t cfdata,
 void
 ral_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
+	struct ral_pci_softc *psc = device_private(self);
 	struct rt2560_softc *sc = &psc->sc_sc;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
@@ -180,7 +180,7 @@ ral_pci_attach(device_t parent, device_t self, void *aux)
 int
 ral_pci_detach(device_t self, int flags)
 {
-	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
+	struct ral_pci_softc *psc = device_private(self);
 	struct rt2560_softc *sc = &psc->sc_sc;
 
 	(*psc->sc_opns->detach)(sc);

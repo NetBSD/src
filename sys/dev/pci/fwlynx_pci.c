@@ -1,4 +1,4 @@
-/*	$NetBSD: fwlynx_pci.c,v 1.16 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: fwlynx_pci.c,v 1.17 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.16 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.17 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static void
 fwlynx_pci_attach(device_t parent, device_t self, void *aux)
 {
         struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-	struct fwlynx_pci_softc *psc = (struct fwlynx_pci_softc *) self;
+	struct fwlynx_pci_softc *psc = device_private(self);
         char devinfo[256];
 	char const *intrstr;
 	pci_intr_handle_t ih;

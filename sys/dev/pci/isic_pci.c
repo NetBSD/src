@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.34 2009/05/06 10:34:32 cegger Exp $ */
+/* $NetBSD: isic_pci.c,v 1.35 2009/05/12 08:23:01 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.34 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.35 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -129,7 +129,7 @@ isic_pci_match(device_t parent, cfdata_t match, void *aux)
 static void
 isic_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct pci_isic_softc *psc = (void*) self;
+	struct pci_isic_softc *psc = device_private(self);
 	struct isic_softc *sc = &psc->sc_isic;
 	struct pci_attach_args *pa = aux;
 	const struct isic_pci_product * prod;
@@ -300,7 +300,7 @@ isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, con
 static int
 isic_pci_detach(device_t self, int flags)
 {
-	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
+	struct pci_isic_softc *psc = device_private(self);
 
 	bus_space_unmap(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
 	bus_space_free(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
@@ -312,7 +312,7 @@ isic_pci_detach(device_t self, int flags)
 static int
 isic_pci_activate(device_t self, enum devact act)
 {
-	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
+	struct pci_isic_softc *psc = device_private(self);
 	int error = 0, s;
 
 	s = splnet();

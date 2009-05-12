@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.107 2009/05/06 10:34:32 cegger Exp $ */
+/* $NetBSD: isp_pci.c,v 1.108 2009/05/12 08:23:01 cegger Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.107 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.108 2009/05/12 08:23:01 cegger Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -460,7 +460,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	static const char nomem[] = "\n%s: no mem for sdparam table\n";
 	uint32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
-	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
+	struct isp_pcisoftc *pcs = device_private(self);
 	struct ispsoftc *isp = &pcs->pci_isp;
 	bus_space_tag_t st, iot, memt;
 	bus_space_handle_t sh, ioh, memh;

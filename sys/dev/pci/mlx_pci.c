@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.21 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.22 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.21 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.22 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ mlx_pci_attach(device_t parent, device_t self, void *aux)
 	int ior, memr, i;
 	const struct mlx_pci_ident *mpi;
 
-	mlx = (struct mlx_softc *)self;
+	mlx = device_private(self);
 	pa = aux;
 	pc = pa->pa_pc;
 	mpi = mlx_pci_findmpi(aux);
