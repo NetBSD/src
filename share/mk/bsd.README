@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.249 2009/04/10 16:16:12 apb Exp $
+#	$NetBSD: bsd.README,v 1.250 2009/05/12 18:07:54 plunky Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1318,7 +1318,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
 		LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 		LIBRT?=		${DESTDIR}/usr/lib/librt.a
-		LIBSDP?=	${DESTDIR}/usr/lib/libsdp.a
 		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 		LIBSL?=		${DESTDIR}/usr/lib/libsl.a
 		LIBSS?=		${DESTDIR}/usr/lib/libss.a

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.47 2009/04/17 21:33:38 dyoung Exp $
+# $NetBSD: md.amd64,v 1.48 2009/05/12 18:07:55 plunky Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -617,10 +617,10 @@
 ./usr/lib/i386/librumpvfs.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpvfs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/librumpvfs_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libsdp.a				comp-c-lib		compat
-./usr/lib/i386/libsdp.so			comp-sys-shlib		compat,pic
-./usr/lib/i386/libsdp_p.a			comp-c-proflib		compat,profile
-./usr/lib/i386/libsdp_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libsdp.a				comp-obsolete		obsolete
+./usr/lib/i386/libsdp.so			comp-obsolete		obsolete
+./usr/lib/i386/libsdp_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libsdp_pic.a			comp-obsolete		obsolete
 ./usr/lib/i386/libskey.a			comp-c-lib		compat,skey
 ./usr/lib/i386/libskey.so			comp-sys-shlib		compat,pic,skey
 ./usr/lib/i386/libskey_p.a			comp-c-proflib		compat,profile,skey
