@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.31 2009/03/14 15:36:18 dsl Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.32 2009/05/12 08:44:19 cegger Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.31 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.32 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.31 2009/03/14 15:36:18 dsl Exp $");
 extern struct cfdriver lc_cd;
 
 static int lemac_isa_find(lemac_softc_t *, struct isa_attach_args *, int);
-static int lemac_isa_probe(struct device *, struct cfdata *, void *);
+static int lemac_isa_probe(struct device *, cfdata_t, void *);
 static void lemac_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lc_isa, sizeof(lemac_softc_t),
@@ -182,10 +182,10 @@ outio:
 }
 
 static int
-lemac_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+lemac_isa_probe(struct device *parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = match;
+	cfdata_t cf = match;
 	lemac_softc_t sc;
 	snprintf(sc.sc_dv.dv_xname, sizeof(sc.sc_dv.dv_xname), "%s%d",
 	    lc_cd.cd_name, cf->cf_unit);

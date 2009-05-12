@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.67 2009/03/16 09:34:17 cegger Exp $	*/
+/*	$NetBSD: seagate.c,v 1.68 2009/05/12 08:44:19 cegger Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.67 2009/03/16 09:34:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.68 2009/05/12 08:44:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ int sea_abort(struct sea_softc *, struct sea_scb *scb);
 
 void	sea_grow_scb(struct sea_softc *);
 
-int	seaprobe(struct device *, struct cfdata *, void *);
+int	seaprobe(struct device *, cfdata_t, void *);
 void	seaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sea, sizeof(struct sea_softc),
@@ -326,7 +326,7 @@ sea_queue_length(struct sea_softc *sea)
  * Returns 1 if card recognized, 0 if errors.
  */
 int
-seaprobe(struct device *parent, struct cfdata *match,
+seaprobe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.23 2009/03/16 09:34:17 cegger Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.24 2009/05/12 08:44:20 cegger Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.23 2009/03/16 09:34:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.24 2009/05/12 08:44:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ int	tcic_isa_debug = 1;
 #define	DPRINTF(arg)
 #endif
 
-int	tcic_isa_probe(struct device *, struct cfdata *, void *);
+int	tcic_isa_probe(struct device *, cfdata_t, void *);
 void	tcic_isa_attach(struct device *, struct device *, void *);
 
 void	*tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,
@@ -140,7 +140,7 @@ static const struct pcmcia_chip_functions tcic_isa_functions = {
 };
 
 int
-tcic_isa_probe(struct device *parent, struct cfdata *match,
+tcic_isa_probe(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
