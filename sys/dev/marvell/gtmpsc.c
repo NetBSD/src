@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.36 2009/05/12 12:18:45 cegger Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.37 2009/05/12 14:30:25 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.36 2009/05/12 12:18:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.37 2009/05/12 14:30:25 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -118,8 +118,8 @@ unsigned int gtmpsc_debug = 0;
 #define GTMPSCDIALOUT(x)   (minor(x) & GTMPSCDIALOUT_MASK)
 
 STATIC void gtmpscinit(struct gtmpsc_softc *);
-STATIC int  gtmpscmatch(struct device *, cfdata_t, void *);
-STATIC void gtmpscattach(struct device *, struct device *, void *);
+STATIC int  gtmpscmatch(device_t, cfdata_t, void *);
+STATIC void gtmpscattach(device_t, device_t, void *);
 STATIC int  compute_cdv(unsigned int);
 STATIC void gtmpsc_loadchannelregs(struct gtmpsc_softc *);
 STATIC void gtmpscshutdown(struct gtmpsc_softc *);
@@ -419,7 +419,7 @@ gtmpsc_loadchannelregs(struct gtmpsc_softc *sc)
 }
 
 STATIC int
-gtmpscmatch(struct device *parent, cfdata_t self, void *aux)
+gtmpscmatch(device_t parent, cfdata_t self, void *aux)
 {
 	struct gt_softc *gt = device_private(parent);
 	struct gt_attach_args *ga = aux;
@@ -428,7 +428,7 @@ gtmpscmatch(struct device *parent, cfdata_t self, void *aux)
 }
 
 STATIC void
-gtmpscattach(struct device *parent, struct device *self, void *aux)
+gtmpscattach(device_t parent, device_t self, void *aux)
 {
 	struct gt_attach_args *ga = aux;
 	struct gt_softc *gt = device_private(parent);

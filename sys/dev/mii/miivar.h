@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.54 2009/04/19 10:47:48 msaitoh Exp $	*/
+/*	$NetBSD: miivar.h,v 1.55 2009/05/12 14:31:27 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -45,9 +45,9 @@ struct mii_softc;
 /*
  * Callbacks from MII layer into network interface device driver.
  */
-typedef	int (*mii_readreg_t)(struct device *, int, int);
-typedef	void (*mii_writereg_t)(struct device *, int, int, int);
-typedef	void (*mii_statchg_t)(struct device *);
+typedef	int (*mii_readreg_t)(device_t, int, int);
+typedef	void (*mii_writereg_t)(device_t, int, int, int);
+typedef	void (*mii_statchg_t)(device_t);
 
 /*
  * A network interface driver has one of these structures in its softc.
