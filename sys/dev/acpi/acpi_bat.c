@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.69 2008/06/03 15:02:31 jmcneill Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.70 2009/05/12 09:29:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.69 2008/06/03 15:02:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.70 2009/05/12 09:29:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ static const char * const bat_hid[] = {
 #define ABAT_ALV_INFO		2	/* battery info is available */
 #define ABAT_ALV_STAT		3	/* battery status is available */
 
-static int	acpibat_match(device_t, struct cfdata *, void *);
+static int	acpibat_match(device_t, cfdata_t, void *);
 static void	acpibat_attach(device_t, struct device *, void *);
 static bool	acpibat_resume(device_t PMF_FN_PROTO);
 
@@ -194,7 +194,7 @@ static void acpibat_refresh(struct sysmon_envsys *, envsys_data_t *);
  *	Autoconfiguration `match' routine.
  */
 static int
-acpibat_match(device_t parent, struct cfdata *match, void *aux)
+acpibat_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
