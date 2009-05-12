@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -178,7 +206,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	const __ops_parser_content_union_t *content = &pkt->u;
 	decrypt_t  *decrypt = __ops_parse_cb_get_arg(cbinfo);
 
-	OPS_USED(cbinfo);
+	__OPS_USED(cbinfo);
 
 	switch (pkt->tag) {
 	case OPS_PARSER_PTAG:
@@ -243,18 +271,18 @@ __ops_seckey_t *
 __ops_decrypt_seckey(const __ops_keydata_t * key,
 				 const char *pphrase)
 {
-	__ops_parse_info_t *pinfo;
+	__ops_parseinfo_t *pinfo;
 	decrypt_t   decrypt;
 
 	(void) memset(&decrypt, 0x0, sizeof(decrypt));
 	decrypt.key = key;
 	decrypt.pphrase = strdup(pphrase);
 
-	pinfo = __ops_parse_info_new();
+	pinfo = __ops_parseinfo_new();
 
 	__ops_keydata_reader_set(pinfo, key);
 	__ops_parse_cb_set(pinfo, decrypt_cb, &decrypt);
-	pinfo->rinfo.accumulate = true;
+	pinfo->readinfo.accumulate = true;
 
 	__ops_parse(pinfo, 0);
 
@@ -321,11 +349,11 @@ bool
 __ops_is_key_supported(const __ops_keydata_t *keydata)
 {
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (keydata->key.pubkey.algorithm == OPS_PKA_RSA) {
+		if (keydata->key.pubkey.alg == OPS_PKA_RSA) {
 			return true;
 		}
 	} else if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (keydata->key.pubkey.algorithm == OPS_PKA_DSA) {
+		if (keydata->key.pubkey.alg == OPS_PKA_DSA) {
 			return true;
 		}
 	}
@@ -497,10 +525,10 @@ __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_
 	__ops_subpacket_t    sigpacket;
 
 	__ops_memory_t   *mem_userid = NULL;
-	__ops_create_info_t *cinfo_userid = NULL;
+	__ops_createinfo_t *cinfo_userid = NULL;
 
 	__ops_memory_t   *mem_sig = NULL;
-	__ops_create_info_t *cinfo_sig = NULL;
+	__ops_createinfo_t *cinfo_sig = NULL;
 
 	__ops_create_sig_t *sig = NULL;
 
@@ -534,8 +562,8 @@ __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_
 
 	/* cleanup */
 	__ops_create_sig_delete(sig);
-	__ops_create_info_delete(cinfo_userid);
-	__ops_create_info_delete(cinfo_sig);
+	__ops_createinfo_delete(cinfo_userid);
+	__ops_createinfo_delete(cinfo_sig);
 	__ops_memory_free(mem_userid);
 	__ops_memory_free(mem_sig);
 
@@ -586,7 +614,7 @@ static          __ops_parse_cb_return_t
 cb_keyring_read(const __ops_packet_t * pkt,
 		__ops_callback_data_t * cbinfo)
 {
-	OPS_USED(cbinfo);
+	__OPS_USED(cbinfo);
 
 	switch (pkt->tag) {
 	case OPS_PARSER_PTAG:
@@ -644,11 +672,11 @@ cb_keyring_read(const __ops_packet_t * pkt,
 bool 
 __ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char *filename)
 {
-	__ops_parse_info_t *pinfo;
+	__ops_parseinfo_t *pinfo;
 	int             fd;
 	bool   res = true;
 
-	pinfo = __ops_parse_info_new();
+	pinfo = __ops_parseinfo_new();
 
 	/* add this for the moment, */
 	/*
@@ -665,7 +693,7 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char 
 	fd = open(filename, O_RDONLY);
 #endif
 	if (fd < 0) {
-		__ops_parse_info_delete(pinfo);
+		__ops_parseinfo_delete(pinfo);
 		perror(filename);
 		return false;
 	}
@@ -685,14 +713,14 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char 
 	} else {
 		res = true;
 	}
-	__ops_print_errors(__ops_parse_info_get_errors(pinfo));
+	__ops_print_errors(__ops_parseinfo_get_errors(pinfo));
 
 	if (armour)
 		__ops_reader_pop_dearmour(pinfo);
 
 	close(fd);
 
-	__ops_parse_info_delete(pinfo);
+	__ops_parseinfo_delete(pinfo);
 
 	return res;
 }
@@ -735,10 +763,10 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char 
 static bool 
 __ops_keyring_read_from_mem(__ops_keyring_t * keyring, const bool armour, __ops_memory_t * mem)
 {
-	__ops_parse_info_t *pinfo = NULL;
+	__ops_parseinfo_t *pinfo = NULL;
 	bool   res = true;
 
-	pinfo = __ops_parse_info_new();
+	pinfo = __ops_parseinfo_new();
 	__ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 
 	__ops_setup_memory_read(&pinfo, mem, NULL, cb_keyring_read, false);
@@ -747,13 +775,13 @@ __ops_keyring_read_from_mem(__ops_keyring_t * keyring, const bool armour, __ops_
 		__ops_reader_push_dearmour(pinfo);
 	}
 	res = (__ops_parse_and_accumulate(keyring, pinfo) != 0);
-	__ops_print_errors(__ops_parse_info_get_errors(pinfo));
+	__ops_print_errors(__ops_parseinfo_get_errors(pinfo));
 
 	if (armour)
 		__ops_reader_pop_dearmour(pinfo);
 
 	/* don't call teardown_memory_read because memory was passed in */
-	__ops_parse_info_delete(pinfo);
+	__ops_parseinfo_delete(pinfo);
 
 	return res;
 }
@@ -1002,10 +1030,11 @@ __ops_keyring_list(const __ops_keyring_t * keyring)
 
 	printf("%d keys\n", keyring->nkeys);
 	for (n = 0, key = &keyring->keys[n]; n < keyring->nkeys; ++n, ++key) {
-		if (__ops_is_key_secret(key))
+		if (__ops_is_key_secret(key)) {
 			__ops_print_seckeydata(key);
-		else
+		} else {
 			__ops_print_pubkeydata(key);
+		}
 		(void) fputc('\n', stdout);
 	}
 }
@@ -1020,7 +1049,7 @@ __ops_get_keydata_content_type(const __ops_keydata_t * keydata)
 int
 __ops_export_key(const __ops_keydata_t *keydata, unsigned char *passphrase)
 {
-	__ops_create_info_t	*cinfo;
+	__ops_createinfo_t	*cinfo;
 	__ops_memory_t		*mem;
 
 	__ops_setup_memory_write(&cinfo, &mem, 128);

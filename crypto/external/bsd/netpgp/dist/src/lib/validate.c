@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -44,8 +72,8 @@
 static          bool
 check_binary_sig(const unsigned len,
 		       const unsigned char *data,
-		       const __ops_sig_t * sig,
-		    const __ops_pubkey_t * signer __attribute__((unused)))
+		       const __ops_sig_t *sig,
+		    const __ops_pubkey_t *signer)
 {
 	unsigned char   hashout[OPS_MAX_HASH_SIZE];
 	unsigned char   trailer[6];
@@ -53,7 +81,8 @@ check_binary_sig(const unsigned len,
 	__ops_hash_t	hash;
 	unsigned	n = 0;
 
-	__ops_hash_any(&hash, sig->info.hash_algorithm);
+	__OPS_USED(signer);
+	__ops_hash_any(&hash, sig->info.hash_alg);
 	hash.init(&hash);
 	hash.add(&hash, data, len);
 	switch (sig->info.version) {
@@ -95,13 +124,13 @@ check_binary_sig(const unsigned len,
 
 static int 
 keydata_reader(void *dest, size_t length, __ops_error_t ** errors,
-	       __ops_reader_info_t * rinfo,
+	       __ops_reader_t * readinfo,
 	       __ops_callback_data_t * cbinfo)
 {
-	validate_reader_t *reader = __ops_reader_get_arg(rinfo);
+	validate_reader_t *reader = __ops_reader_get_arg(readinfo);
 
-	OPS_USED(errors);
-	OPS_USED(cbinfo);
+	__OPS_USED(errors);
+	__OPS_USED(cbinfo);
 	if (reader->offset == reader->key->packets[reader->packet].length) {
 		reader->packet += 1;
 		reader->offset = 0;
@@ -344,8 +373,8 @@ validate_data_cb(const __ops_packet_t * pkt,
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
-		data->data.signed_cleartext_body =
-				content->signed_cleartext_body;
+		data->data.cleartext_body =
+				content->cleartext_body;
 		data->use = SIGNED_CLEARTEXT;
 		__ops_memory_add(data->mem, data->data.litdata_body.data,
 			       data->data.litdata_body.length);
@@ -434,13 +463,13 @@ validate_data_cb(const __ops_packet_t * pkt,
 }
 
 static void 
-keydata_destroyer(__ops_reader_info_t * rinfo)
+keydata_destroyer(__ops_reader_t * readinfo)
 {
-	free(__ops_reader_get_arg(rinfo));
+	free(__ops_reader_get_arg(readinfo));
 }
 
 void 
-__ops_keydata_reader_set(__ops_parse_info_t *pinfo,
+__ops_keydata_reader_set(__ops_parseinfo_t *pinfo,
 			const __ops_keydata_t *key)
 {
 	validate_reader_t *data = calloc(1, sizeof(*data));
@@ -483,25 +512,25 @@ __ops_validate_key_sigs(__ops_validation_t * result,
 	__ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *,
 						__ops_callback_data_t *))
 {
-	__ops_parse_info_t	*pinfo;
+	__ops_parseinfo_t	*pinfo;
 	validate_key_cb_t	 carg;
 
 	(void) memset(&carg, 0x0, sizeof(carg));
 	carg.result = result;
 	carg.cb_get_passphrase = cb_get_passphrase;
 
-	pinfo = __ops_parse_info_new();
+	pinfo = __ops_parseinfo_new();
 	/* __ops_parse_options(&opt,OPS_PTAG_CT_SIGNATURE,OPS_PARSE_PARSED); */
 
 	carg.keyring = keyring;
 
 	__ops_parse_cb_set(pinfo, __ops_validate_key_cb, &carg);
-	pinfo->rinfo.accumulate = true;
+	pinfo->readinfo.accumulate = true;
 	__ops_keydata_reader_set(pinfo, key);
 
 	/* Note: Coverity incorrectly reports an error that carg.rarg */
 	/* is never used. */
-	carg.rarg = pinfo->rinfo.arg;
+	carg.rarg = pinfo->readinfo.arg;
 
 	__ops_parse(pinfo, 0);
 
@@ -512,7 +541,7 @@ __ops_validate_key_sigs(__ops_validation_t * result,
 	__ops_user_id_free(&carg.user_id);
 	__ops_user_attribute_free(&carg.user_attribute);
 
-	__ops_parse_info_delete(pinfo);
+	__ops_parseinfo_delete(pinfo);
 
 	return (!result->invalidc && !result->unknownc && result->validc);
 }
@@ -581,38 +610,55 @@ __ops_validate_result_free(__ops_validation_t *result)
 */
 bool 
 __ops_validate_file(__ops_validation_t *result,
-			const char *filename,
+			const char *infile,
+			const char *outfile,
 			const int armoured,
 			const __ops_keyring_t *keyring)
 {
-	__ops_parse_info_t	*pinfo = NULL;
+	__ops_parseinfo_t	*parse = NULL;
 	validate_data_cb_t	 validation;
 	struct stat		 st;
 	int64_t		 	 origsize;
+	char			*filename;
 	char			 origfile[MAXPATHLEN];
-	int			 fd;
+	int			 fd_out = 0;
+	int			 fd_in;
 	int			 cc;
 
 #define SIG_OVERHEAD	284 /* XXX - depends on sig size? */
 
-	if (stat(filename, &st) < 0) {
-		(void) fprintf(stderr, "can't validate \"%s\"\n", filename);
+	if (stat(infile, &st) < 0) {
+		(void) fprintf(stderr, "can't validate \"%s\"\n", infile);
 		return false;
 	}
 	origsize = st.st_size;
-	cc = snprintf(origfile, sizeof(origfile), "%s", filename);
+	cc = snprintf(origfile, sizeof(origfile), "%s", infile);
 	if (strcmp(&origfile[cc - 4], ".sig") == 0) {
 		origfile[cc - 4] = 0x0;
 		if (stat(origfile, &st) == 0 &&
 		    st.st_size - SIG_OVERHEAD < origsize) {
-			pinfo->synthlit = strdup(origfile);
+			parse->synthlit = strdup(origfile);
 		}
 	}
 
-	fd = __ops_setup_file_read(&pinfo, filename, &validation,
+	fd_in = __ops_setup_file_read(&parse, infile, &validation,
 				validate_data_cb, true);
-	if (fd < 0) {
+	if (fd_in < 0) {
 		return false;
+	}
+
+	/* setup output filename */
+	filename = NULL;
+	if (outfile) {
+		if (strcmp(outfile, "-") == 0) {
+			outfile = NULL;
+		}
+		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo,
+						NULL, false);
+		if (fd_out < 0) {
+			__ops_teardown_file_read(parse, fd_in);
+			return false;
+		}
 	}
 
 	/* Set verification reader and handling options */
@@ -623,14 +669,14 @@ __ops_validate_file(__ops_validation_t *result,
 	__ops_memory_init(validation.mem, 128);
 	/* Note: Coverity incorrectly reports an error that carg.rarg */
 	/* is never used. */
-	validation.rarg = pinfo->rinfo.arg;
+	validation.rarg = parse->readinfo.arg;
 
 	if (armoured) {
-		__ops_reader_push_dearmour(pinfo);
+		__ops_reader_push_dearmour(parse);
 	}
 
 	/* Do the verification */
-	__ops_parse(pinfo, 0);
+	__ops_parse(parse, 0);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("valid=%d, invalid=%d, unknown=%d\n",
@@ -641,9 +687,9 @@ __ops_validate_file(__ops_validation_t *result,
 
 	/* Tidy up */
 	if (armoured) {
-		__ops_reader_pop_dearmour(pinfo);
+		__ops_reader_pop_dearmour(parse);
 	}
-	__ops_teardown_file_read(pinfo, fd);
+	__ops_teardown_file_read(parse, fd_in);
 
 	return validate_result_status(result);
 }
@@ -666,7 +712,7 @@ bool
 __ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
 			const int armoured, const __ops_keyring_t *keyring)
 {
-	__ops_parse_info_t	*pinfo = NULL;
+	__ops_parseinfo_t	*pinfo = NULL;
 	validate_data_cb_t	 validation;
 
 	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb,
@@ -680,7 +726,7 @@ __ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
 	__ops_memory_init(validation.mem, 128);
 	/* Note: Coverity incorrectly reports an error that carg.rarg */
 	/* is never used. */
-	validation.rarg = pinfo->rinfo.arg;
+	validation.rarg = pinfo->readinfo.arg;
 
 	if (armoured) {
 		__ops_reader_push_dearmour(pinfo);

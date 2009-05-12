@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -153,12 +181,12 @@ accumulate_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 */
 
 int 
-__ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parse_info_t *parse)
+__ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 {
 	accumulate_t	accumulate;
 	int             rtn;
 
-	if (parse->rinfo.accumulate) {
+	if (parse->readinfo.accumulate) {
 		(void) fprintf(stderr,
 			"__ops_parse_and_accumulate: already init\n");
 		return 0;
@@ -171,7 +199,7 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parse_info_t *parse)
 	keyring->nkeys -= 1;
 
 	__ops_parse_cb_push(parse, accumulate_cb, &accumulate);
-	parse->rinfo.accumulate = true;
+	parse->readinfo.accumulate = true;
 	rtn = __ops_parse(parse, 0);
 
 	keyring->nkeys += 1;
@@ -415,9 +443,9 @@ __ops_fingerprint(__ops_fingerprint_t * fp, const __ops_pubkey_t * key)
 		size_t		n;
 		__ops_hash_t	md5;
 
-		if (key->algorithm != OPS_PKA_RSA &&
-		    key->algorithm != OPS_PKA_RSA_ENCRYPT_ONLY &&
-		    key->algorithm != OPS_PKA_RSA_SIGN_ONLY) {
+		if (key->alg != OPS_PKA_RSA &&
+		    key->alg != OPS_PKA_RSA_ENCRYPT_ONLY &&
+		    key->alg != OPS_PKA_RSA_SIGN_ONLY) {
 			(void) fprintf(stderr,
 				"__ops_fingerprint: bad algorithm\n");
 			return;
@@ -488,9 +516,9 @@ __ops_keyid(unsigned char *keyid, const size_t idlen, const int last,
 			(void) fprintf(stderr, "__ops_keyid: bad num bytes\n");
 			return;
 		}
-		if (key->algorithm != OPS_PKA_RSA &&
-		    key->algorithm != OPS_PKA_RSA_ENCRYPT_ONLY &&
-		    key->algorithm != OPS_PKA_RSA_SIGN_ONLY) {
+		if (key->alg != OPS_PKA_RSA &&
+		    key->alg != OPS_PKA_RSA_ENCRYPT_ONLY &&
+		    key->alg != OPS_PKA_RSA_SIGN_ONLY) {
 			(void) fprintf(stderr, "__ops_keyid: bad algorithm\n");
 			return;
 		}
@@ -532,7 +560,7 @@ __ops_hash_add_int(__ops_hash_t * hash, unsigned n, unsigned length)
 \param alg Hash algorithm to use
 */
 void 
-__ops_hash_any(__ops_hash_t * hash, __ops_hash_algorithm_t alg)
+__ops_hash_any(__ops_hash_t * hash, __ops_hash_alg_t alg)
 {
 	switch (alg) {
 	case OPS_HASH_MD5:
@@ -571,7 +599,7 @@ __ops_hash_any(__ops_hash_t * hash, __ops_hash_algorithm_t alg)
 \return Size of hash algorithm in bytes
 */
 unsigned 
-__ops_hash_size(__ops_hash_algorithm_t alg)
+__ops_hash_size(__ops_hash_alg_t alg)
 {
 	switch (alg) {
 	case OPS_HASH_MD5:
@@ -605,8 +633,8 @@ __ops_hash_size(__ops_hash_algorithm_t alg)
 \param hash Text name of hash algorithm i.e. "SHA1"
 \returns Corresponding enum i.e. OPS_HASH_SHA1
 */
-__ops_hash_algorithm_t 
-__ops_hash_algorithm_from_text(const char *hash)
+__ops_hash_alg_t 
+__ops_str_to_hash_alg(const char *hash)
 {
 	if (strcmp(hash, "SHA1") == 0) {
 		return OPS_HASH_SHA1;
@@ -641,7 +669,7 @@ __ops_hash_algorithm_from_text(const char *hash)
 \return Size of hash created
 */
 unsigned 
-__ops_hash(unsigned char *out, __ops_hash_algorithm_t alg, const void *in,
+__ops_hash(unsigned char *out, __ops_hash_alg_t alg, const void *in,
 	 size_t length)
 {
 	__ops_hash_t      hash;
@@ -662,24 +690,27 @@ __ops_hash(unsigned char *out, __ops_hash_algorithm_t alg, const void *in,
 \param hashed Resulting hash
 */
 void 
-__ops_calc_mdc_hash(const unsigned char *preamble, const size_t sz_preamble, const unsigned char *plaintext, const unsigned int sz_plaintext, unsigned char *hashed)
+__ops_calc_mdc_hash(const unsigned char *preamble,
+			const size_t sz_preamble,
+			const unsigned char *plaintext,
+			const unsigned int sz_plaintext,
+			unsigned char *hashed)
 {
-	__ops_hash_t      hash;
-	unsigned char   c[1];
+	unsigned char	c[1];
+	__ops_hash_t	hash;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i = 0;
-		fprintf(stderr, "__ops_calc_mdc_hash():\n");
 
-		fprintf(stderr, "\npreamble: ");
+		(void) fprintf(stderr, "__ops_calc_mdc_hash():\n");
+		(void) fprintf(stderr, "\npreamble: ");
 		for (i = 0; i < sz_preamble; i++)
-			fprintf(stderr, " 0x%02x", preamble[i]);
-		fprintf(stderr, "\n");
-
-		fprintf(stderr, "\nplaintext (len=%d): ", sz_plaintext);
+			(void) fprintf(stderr, " 0x%02x", preamble[i]);
+		(void) fprintf(stderr, "\n");
+		(void) fprintf(stderr, "\nplaintext (len=%d): ", sz_plaintext);
 		for (i = 0; i < sz_plaintext; i++)
-			fprintf(stderr, " 0x%02x", plaintext[i]);
-		fprintf(stderr, "\n");
+			(void) fprintf(stderr, " 0x%02x", plaintext[i]);
+		(void) fprintf(stderr, "\n");
 	}
 	/* init */
 	__ops_hash_any(&hash, OPS_HASH_SHA1);
@@ -693,7 +724,7 @@ __ops_calc_mdc_hash(const unsigned char *preamble, const size_t sz_preamble, con
 	c[0] = 0xD3;
 	hash.add(&hash, &c[0], 1);
 	/* MDC packet len */
-	c[0] = 0x14;
+	c[0] = OPS_SHA1_HASH_SIZE;
 	hash.add(&hash, &c[0], 1);
 
 	/* finish */
@@ -701,10 +732,13 @@ __ops_calc_mdc_hash(const unsigned char *preamble, const size_t sz_preamble, con
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i = 0;
-		fprintf(stderr, "\nhashed (len=%d): ", OPS_SHA1_HASH_SIZE);
-		for (i = 0; i < OPS_SHA1_HASH_SIZE; i++)
-			fprintf(stderr, " 0x%02x", hashed[i]);
-		fprintf(stderr, "\n");
+
+		(void) fprintf(stderr, "\nhashed (len=%d): ",
+				OPS_SHA1_HASH_SIZE);
+		for (i = 0; i < OPS_SHA1_HASH_SIZE; i++) {
+			(void) fprintf(stderr, " 0x%02x", hashed[i]);
+		}
+		(void) fprintf(stderr, "\n");
 	}
 }
 
@@ -715,7 +749,7 @@ __ops_calc_mdc_hash(const unsigned char *preamble, const size_t sz_preamble, con
 \return true if supported; else false
 */
 bool 
-__ops_is_hash_alg_supported(const __ops_hash_algorithm_t * hash_alg)
+__ops_is_hash_alg_supported(const __ops_hash_alg_t *hash_alg)
 {
 	switch (*hash_alg) {
 	case OPS_HASH_MD5:
@@ -741,7 +775,7 @@ __ops_random(void *dest, size_t length)
 \param needed Size to initialise to
 */
 void 
-__ops_memory_init(__ops_memory_t * mem, size_t needed)
+__ops_memory_init(__ops_memory_t *mem, size_t needed)
 {
 	mem->length = 0;
 	if (mem->buf) {
@@ -762,7 +796,7 @@ __ops_memory_init(__ops_memory_t * mem, size_t needed)
 \param length New size
 */
 void 
-__ops_memory_pad(__ops_memory_t * mem, size_t length)
+__ops_memory_pad(__ops_memory_t *mem, size_t length)
 {
 	if (mem->allocated < mem->length) {
 		(void) fprintf(stderr, "__ops_memory_pad: bad alloc in\n");
@@ -785,7 +819,7 @@ __ops_memory_pad(__ops_memory_t * mem, size_t length)
 \param length Length of data to add
 */
 void 
-__ops_memory_add(__ops_memory_t * mem, const unsigned char *src, size_t length)
+__ops_memory_add(__ops_memory_t *mem, const unsigned char *src, size_t length)
 {
 	__ops_memory_pad(mem, length);
 	(void) memcpy(mem->buf + mem->length, src, length);
@@ -795,14 +829,14 @@ __ops_memory_add(__ops_memory_t * mem, const unsigned char *src, size_t length)
 /* XXX: this could be refactored via the writer, but an awful lot of */
 /* hoops to jump through for 2 lines of code! */
 void 
-__ops_memory_place_int(__ops_memory_t * mem, unsigned offset, unsigned n,
+__ops_memory_place_int(__ops_memory_t *mem, unsigned offset, unsigned n,
 		     size_t length)
 {
 	if (mem->allocated < offset + length) {
 		(void) fprintf(stderr,
 			"__ops_memory_place_int: bad alloc\n");
 	} else {
-		while (length--) {
+		while (length-- > 0) {
 			mem->buf[offset++] = n >> (length * 8);
 		}
 	}
@@ -816,7 +850,7 @@ __ops_memory_place_int(__ops_memory_t * mem, unsigned offset, unsigned n,
  * \sa __ops_memory_free()
  */
 void 
-__ops_memory_clear(__ops_memory_t * mem)
+__ops_memory_clear(__ops_memory_t *mem)
 {
 	mem->length = 0;
 }
@@ -830,33 +864,27 @@ __ops_memory_clear(__ops_memory_t * mem)
 \sa __ops_memory_free()
 */
 void 
-__ops_memory_release(__ops_memory_t * mem)
+__ops_memory_release(__ops_memory_t *mem)
 {
-	free(mem->buf);
+	(void) free(mem->buf);
 	mem->buf = NULL;
 	mem->length = 0;
 }
 
 void 
-__ops_memory_make_packet(__ops_memory_t * out, __ops_content_tag_t tag)
+__ops_memory_make_packet(__ops_memory_t *out, __ops_content_tag_t tag)
 {
 	size_t          extra;
 
-	if (out->length < 192)
-		extra = 1;
-	else if (out->length < 8384)
-		extra = 2;
-	else
-		extra = 5;
-
+	extra = (out->length < 192) ? 1 : (out->length < 8192 + 192) ? 2 : 5;
 	__ops_memory_pad(out, extra + 1);
 	memmove(out->buf + extra + 1, out->buf, out->length);
 
 	out->buf[0] = OPS_PTAG_ALWAYS_SET | OPS_PTAG_NEW_FORMAT | tag;
 
-	if (out->length < 192)
+	if (out->length < 192) {
 		out->buf[1] = out->length;
-	else if (out->length < 8192 + 192) {
+	} else if (out->length < 8192 + 192) {
 		out->buf[1] = ((out->length - 192) >> 8) + 192;
 		out->buf[2] = out->length - 192;
 	} else {
@@ -936,7 +964,7 @@ typedef struct {
  *
  */
 static const char *
-str_from_map_or_null(int type, __ops_map_t * map)
+str_from_map_or_null(int type, __ops_map_t *map)
 {
 	__ops_map_t      *row;
 
@@ -956,7 +984,7 @@ str_from_map_or_null(int type, __ops_map_t * map)
  */
 
 const char     *
-__ops_str_from_map(int type, __ops_map_t * map)
+__ops_str_from_map(int type, __ops_map_t *map)
 {
 	const char     *str;
 
@@ -1005,28 +1033,27 @@ __ops_finish(void)
 
 static int 
 sum16_reader(void *dest_, size_t length, __ops_error_t ** errors,
-	     __ops_reader_info_t * rinfo, __ops_callback_data_t * cbinfo)
+	     __ops_reader_t * readinfo, __ops_callback_data_t * cbinfo)
 {
-	const unsigned char *dest = dest_;
-	sum16_t    *arg = __ops_reader_get_arg(rinfo);
-	int             r = __ops_stacked_read(dest_, length, errors, rinfo, cbinfo);
-	int             n;
+	const unsigned char	*dest = dest_;
+	sum16_t			*arg = __ops_reader_get_arg(readinfo);
+	int			 r;
+	int			 n;
 
+	r = __ops_stacked_read(dest_, length, errors, readinfo, cbinfo);
 	if (r < 0) {
 		return r;
 	}
-
 	for (n = 0; n < r; ++n) {
 		arg->sum = (arg->sum + dest[n]) & 0xffff;
 	}
-
 	return r;
 }
 
 static void 
-sum16_destroyer(__ops_reader_info_t * rinfo)
+sum16_destroyer(__ops_reader_t *readinfo)
 {
-	free(__ops_reader_get_arg(rinfo));
+	(void) free(__ops_reader_get_arg(readinfo));
 }
 
 /**
@@ -1035,7 +1062,7 @@ sum16_destroyer(__ops_reader_info_t * rinfo)
 */
 
 void 
-__ops_reader_push_sum16(__ops_parse_info_t * pinfo)
+__ops_reader_push_sum16(__ops_parseinfo_t * pinfo)
 {
 	sum16_t    *arg = calloc(1, sizeof(*arg));
 
@@ -1048,7 +1075,7 @@ __ops_reader_push_sum16(__ops_parse_info_t * pinfo)
    \return sum
 */
 unsigned short 
-__ops_reader_pop_sum16(__ops_parse_info_t * pinfo)
+__ops_reader_pop_sum16(__ops_parseinfo_t * pinfo)
 {
 	sum16_t    *arg = __ops_reader_get_arg(__ops_parse_get_rinfo(pinfo));
 	unsigned short  sum = arg->sum;

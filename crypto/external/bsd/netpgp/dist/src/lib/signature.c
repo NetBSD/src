@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
  * All rights reserved.
@@ -55,7 +83,7 @@ struct __ops_create_sig {
 	__ops_hash_t		 hash;
 	__ops_sig_t		 sig;
 	__ops_memory_t		*mem;
-	__ops_create_info_t	*info;/* !< how to do the writing */
+	__ops_createinfo_t	*info;/* !< how to do the writing */
 	unsigned		 hashed_count_offset;
 	unsigned		 hashed_data_length;
 	unsigned 		 unhashed_count_offset;
@@ -83,7 +111,7 @@ __ops_create_sig_new(void)
 void 
 __ops_create_sig_delete(__ops_create_sig_t *sig)
 {
-	__ops_create_info_delete(sig->info);
+	__ops_createinfo_delete(sig->info);
 	sig->info = NULL;
 	free(sig);
 }
@@ -103,101 +131,6 @@ static unsigned char prefix_sha256[] = {
 	0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20
 };
 
-#if 0
-/**
-   \ingroup Core_Create
-   implementation of EMSA-PKCS1-v1_5, as defined in OpenPGP RFC
-   \param M
-   \param mLen
-   \param hash_alg Hash algorithm to use
-   \param EM
-   \return true if OK; else false
-*/
-static bool 
-encode_hash_buf(const unsigned char *M,
-		size_t mLen,
-		const __ops_hash_algorithm_t hash_alg,
-		unsigned char *EM)
-{
-	/* implementation of EMSA-PKCS1-v1_5, as defined in OpenPGP RFC */
-
-	unsigned char  *prefix = NULL;
-	unsigned        i;
-
-	int             n = 0;
-	__ops_hash_t	hash;
-	int             hash_sz = 0;
-	int             encoded_hash_sz = 0;
-	int             prefix_sz = 0;
-	unsigned        padding_sz = 0;
-	unsigned        encoded_msg_sz = 0;
-
-	if (hash_alg != OPS_HASH_SHA1) {
-		(void) fprintf(stderr, "encode_hash_buf: bad hash alg\n");
-		return false;
-	}
-
-	/* 1. Apply hash function to M */
-
-	__ops_hash_any(&hash, hash_alg);
-	hash.init(&hash);
-	hash.add(&hash, M, mLen);
-
-	/* \todo combine with rsa_sign */
-
-	/* 2. Get hash prefix */
-
-	switch (hash_alg) {
-	case OPS_HASH_SHA1:
-		prefix = prefix_sha1;
-		prefix_sz = sizeof(prefix_sha1);
-		hash_sz = OPS_SHA1_HASH_SIZE;
-		encoded_hash_sz = hash_sz + prefix_sz;
-		/* \todo why is Ben using a PS size of 90 in rsa_sign? */
-		/* (keysize-hashsize-1-2) */
-		padding_sz = 90;
-		break;
-
-	default:
-		/* already tested for other algorithms at head of function */
-		break;
-	}
-
-	/* \todo 3. Test for len being too short */
-
-	/* 4 and 5. Generate PS and EM */
-
-	EM[0] = 0x00;
-	EM[1] = 0x01;
-
-	for (i = 0; i < padding_sz; i++) {
-		EM[2 + i] = 0xFF;
-	}
-
-	i += 2;
-
-	EM[i++] = 0x00;
-
-	(void) memcpy(&EM[i], prefix, prefix_sz);
-	i += prefix_sz;
-
-	/* finally, write out hashed result */
-
-	n = hash.finish(&hash, &EM[i]);
-
-	encoded_msg_sz = i + hash_sz - 1;
-
-	/* \todo test n for OK response? */
-
-	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "Encoded Message: \n");
-		for (i = 0; i < encoded_msg_sz; i++)
-			(void) fprintf(stderr, "%2x ", EM[i]);
-		(void) fprintf(stderr, "\n");
-	}
-	return true;
-}
-#endif
 
 /* XXX: both this and verify would be clearer if the signature were */
 /* treated as an MPI. */
@@ -205,19 +138,21 @@ static int
 rsa_sign(__ops_hash_t *hash,
 	const __ops_rsa_pubkey_t *pubrsa,
 	const __ops_rsa_seckey_t *secrsa,
-	__ops_create_info_t *opt)
+	__ops_createinfo_t *opt)
 {
 	unsigned char   hashbuf[NETPGP_BUFSIZ];
 	unsigned char   sigbuf[NETPGP_BUFSIZ];
-	unsigned        keysize;
 	unsigned        hashsize;
+	unsigned        keysize;
 	unsigned        n;
 	unsigned        t;
 	BIGNUM         *bn;
 
-	/* XXX: we assume hash is sha-1 for now */
-	hashsize = 20 + sizeof(prefix_sha1);
-
+	if (strcmp(hash->name, "SHA1") == 0) {
+		hashsize = OPS_SHA1_HASH_SIZE + sizeof(prefix_sha1);
+	} else {
+		hashsize = OPS_SHA256_HASH_SIZE + sizeof(prefix_sha256);
+	}
 	keysize = (BN_num_bits(pubrsa->n) + 7) / 8;
 	if (keysize > sizeof(hashbuf)) {
 		(void) fprintf(stderr, "rsa_sign: keysize too big\n");
@@ -238,13 +173,23 @@ rsa_sign(__ops_hash_t *hash,
 	}
 	hashbuf[n++] = 0;
 
-	(void) memcpy(&hashbuf[n], prefix_sha1, sizeof(prefix_sha1));
-	n += sizeof(prefix_sha1);
-
-	t = hash->finish(hash, &hashbuf[n]);
-	if (t != 20) {
-		(void) fprintf(stderr, "rsa_sign: hashfinish not 20\n");
-		return 0;
+	if (strcmp(hash->name, "SHA1") == 0) {
+		(void) memcpy(&hashbuf[n], prefix_sha1, sizeof(prefix_sha1));
+		n += sizeof(prefix_sha1);
+		t = hash->finish(hash, &hashbuf[n]);
+		if (t != OPS_SHA1_HASH_SIZE) {
+			(void) fprintf(stderr, "rsa_sign: short SHA1 hash\n");
+			return 0;
+		}
+	} else {
+		(void) memcpy(&hashbuf[n], prefix_sha256,
+				sizeof(prefix_sha256));
+		n += sizeof(prefix_sha256);
+		t = hash->finish(hash, &hashbuf[n]);
+		if (t != OPS_SHA256_HASH_SIZE) {
+			(void) fprintf(stderr, "rsa_sign: short SHA256 hash\n");
+			return 0;
+		}
 	}
 
 	__ops_write(&hashbuf[n], 2, opt);
@@ -264,9 +209,9 @@ rsa_sign(__ops_hash_t *hash,
 
 static int 
 dsa_sign(__ops_hash_t * hash,
-	 const __ops_dsa_pubkey_t * dsa,
-	 const __ops_dsa_seckey_t * sdsa,
-	 __ops_create_info_t * cinfo)
+	 const __ops_dsa_pubkey_t *dsa,
+	 const __ops_dsa_seckey_t *sdsa,
+	 __ops_createinfo_t *cinfo)
 {
 	unsigned char   hashbuf[NETPGP_BUFSIZ];
 	unsigned        hashsize;
@@ -299,11 +244,11 @@ dsa_sign(__ops_hash_t * hash,
 }
 
 static bool 
-rsa_verify(__ops_hash_algorithm_t type,
+rsa_verify(__ops_hash_alg_t type,
 	   const unsigned char *hash,
 	   size_t hash_length,
-	   const __ops_rsa_sig_t * sig,
-	   const __ops_rsa_pubkey_t * pubrsa)
+	   const __ops_rsa_sig_t *sig,
+	   const __ops_rsa_pubkey_t *pubrsa)
 {
 	const unsigned char	*prefix;
 	unsigned char   	 sigbuf[NETPGP_BUFSIZ];
@@ -331,8 +276,10 @@ rsa_verify(__ops_hash_algorithm_t type,
 		(unsigned)(BN_num_bits(sig->sig) + 7) / 8, pubrsa);
 	debug_len_decrypted = n;
 
-	if (n != keysize)	/* obviously, this includes error returns */
+	if (n != keysize) {
+		/* obviously, this includes error returns */
 		return false;
+	}
 
 	/* XXX: why is there a leading 0? The first byte should be 1... */
 	/* XXX: because the decrypt should use keysize and not sigsize? */
@@ -408,31 +355,29 @@ rsa_verify(__ops_hash_algorithm_t type,
 }
 
 static void 
-hash_add_key(__ops_hash_t * hash, const __ops_pubkey_t * key)
+hash_add_key(__ops_hash_t *hash, const __ops_pubkey_t *key)
 {
 	__ops_memory_t	*mem = __ops_memory_new();
-	size_t		 l;
+	size_t		 len;
 
 	__ops_build_pubkey(mem, key, false);
-
-	l = __ops_memory_get_length(mem);
+	len = __ops_memory_get_length(mem);
 	__ops_hash_add_int(hash, 0x99, 1);
-	__ops_hash_add_int(hash, l, 2);
-	hash->add(hash, __ops_memory_get_data(mem), l);
-
+	__ops_hash_add_int(hash, len, 2);
+	hash->add(hash, __ops_memory_get_data(mem), len);
 	__ops_memory_free(mem);
 }
 
 static void 
 initialise_hash(__ops_hash_t * hash, const __ops_sig_t * sig)
 {
-	__ops_hash_any(hash, sig->info.hash_algorithm);
+	__ops_hash_any(hash, sig->info.hash_alg);
 	hash->init(hash);
 }
 
 static void 
 init_key_sig(__ops_hash_t * hash, const __ops_sig_t * sig,
-		   const __ops_pubkey_t * key)
+		   const __ops_pubkey_t *key)
 {
 	initialise_hash(hash, sig);
 	hash_add_key(hash, key);
@@ -478,14 +423,14 @@ __ops_check_sig(const unsigned char *hash, unsigned length,
 		hexdump(hash, length, "");
 	}
 	ret = 0;
-	switch (sig->info.key_algorithm) {
+	switch (sig->info.key_alg) {
 	case OPS_PKA_DSA:
 		ret = __ops_dsa_verify(hash, length, &sig->info.sig.dsa,
 				&signer->key.dsa);
 		break;
 
 	case OPS_PKA_RSA:
-		ret = rsa_verify(sig->info.hash_algorithm, hash, length,
+		ret = rsa_verify(sig->info.hash_alg, hash, length,
 				&sig->info.sig.rsa,
 				&signer->key.rsa);
 		break;
@@ -652,7 +597,7 @@ __ops_check_hash_sig(__ops_hash_t * hash,
 			 const __ops_sig_t * sig,
 			 const __ops_pubkey_t * signer)
 {
-	return (sig->info.hash_algorithm == hash->algorithm) ?
+	return (sig->info.hash_alg == hash->alg) ?
 		finalise_sig(hash, sig, signer, NULL) :
 		false;
 }
@@ -669,8 +614,8 @@ start_sig_in_mem(__ops_create_sig_t * sig)
 	/* write nearly up to the first subpacket */
 	__ops_write_scalar((unsigned)sig->sig.info.version, 1, sig->info);
 	__ops_write_scalar((unsigned)sig->sig.info.type, 1, sig->info);
-	__ops_write_scalar((unsigned)sig->sig.info.key_algorithm, 1, sig->info);
-	__ops_write_scalar((unsigned)sig->sig.info.hash_algorithm, 1, sig->info);
+	__ops_write_scalar((unsigned)sig->sig.info.key_alg, 1, sig->info);
+	__ops_write_scalar((unsigned)sig->sig.info.hash_alg, 1, sig->info);
 
 	/* dummy hashed subpacket count */
 	sig->hashed_count_offset = __ops_memory_get_length(sig->mem);
@@ -693,14 +638,14 @@ __ops_sig_start_key_sig(__ops_create_sig_t * sig,
 				  const __ops_user_id_t * id,
 				  __ops_sig_type_t type)
 {
-	sig->info = __ops_create_info_new();
+	sig->info = __ops_createinfo_new();
 
 	/* XXX:  refactor with check (in several ways - check should
 	 * probably use the buffered writer to construct packets
 	 * (done), and also should share code for hash calculation) */
 	sig->sig.info.version = OPS_V4;
-	sig->sig.info.hash_algorithm = OPS_HASH_SHA1;
-	sig->sig.info.key_algorithm = key->algorithm;
+	sig->sig.info.hash_alg = OPS_HASH_SHA1;
+	sig->sig.info.key_alg = key->alg;
 	sig->sig.info.type = type;
 
 	sig->hashed_data_length = (unsigned)-1;
@@ -728,17 +673,17 @@ __ops_sig_start_key_sig(__ops_create_sig_t * sig,
 void 
 __ops_start_sig(__ops_create_sig_t *sig,
 	      const __ops_seckey_t *key,
-	      const __ops_hash_algorithm_t hash,
+	      const __ops_hash_alg_t hash,
 	      const __ops_sig_type_t type)
 {
-	sig->info = __ops_create_info_new();
+	sig->info = __ops_createinfo_new();
 
 	/* XXX:  refactor with check (in several ways - check should
 	 * probably use the buffered writer to construct packets
 	 * (done), and also should share code for hash calculation) */
 	sig->sig.info.version = OPS_V4;
-	sig->sig.info.key_algorithm = key->pubkey.algorithm;
-	sig->sig.info.hash_algorithm = hash;
+	sig->sig.info.key_alg = key->pubkey.alg;
+	sig->sig.info.hash_alg = hash;
 	sig->sig.info.type = type;
 
 	sig->hashed_data_length = (unsigned)-1;
@@ -806,13 +751,13 @@ bool
 __ops_write_sig(__ops_create_sig_t * sig,
 			const __ops_pubkey_t *key,
 			const __ops_seckey_t *seckey,
-			__ops_create_info_t *info)
+			__ops_createinfo_t *info)
 {
 	size_t	l = __ops_memory_get_length(sig->mem);
 	bool	rtn = false;
 
 	/* check key not decrypted */
-	switch (seckey->pubkey.algorithm) {
+	switch (seckey->pubkey.alg) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
@@ -833,7 +778,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
-				seckey->pubkey.algorithm);
+				seckey->pubkey.alg);
 		return false;
 	}
 
@@ -867,7 +812,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 	}
 	/* XXX: technically, we could figure out how big the signature is */
 	/* and write it directly to the output instead of via memory. */
-	switch (seckey->pubkey.algorithm) {
+	switch (seckey->pubkey.alg) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
@@ -890,7 +835,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
-					seckey->pubkey.algorithm);
+					seckey->pubkey.alg);
 		return false;
 	}
 
@@ -973,7 +918,7 @@ __ops_sig_get_hash(__ops_create_sig_t * sig)
 }
 
 static int 
-open_output_file(__ops_create_info_t ** cinfo,
+open_output_file(__ops_createinfo_t ** cinfo,
 			const char *input_filename,
 			const char *output_filename,
 			const bool use_armour,
@@ -1019,21 +964,28 @@ bool
 __ops_sign_file_as_cleartext(const char *input_filename,
 			const char *output_filename,
 			const __ops_seckey_t *seckey,
+			const char *hashname,
 			const bool overwrite)
 {
-	/* \todo allow choice of hash algorithams */
-	/* enforce use of SHA1 for now */
+	__ops_createinfo_t	*cinfo = NULL;
+	__ops_create_sig_t	*sig = NULL;
+	__ops_sig_type_t	 sig_type = OPS_SIG_BINARY;
+	__ops_hash_alg_t	 hash_alg;
+	unsigned char		 keyid[OPS_KEY_ID_SIZE];
+	unsigned char		 buf[MAXBUF];
+	bool			 rtn = false;
+	bool			 use_armour = true;
+	int			 fd_out = 0;
+	int			 fd_in = 0;
 
-	unsigned char   keyid[OPS_KEY_ID_SIZE];
-	__ops_create_sig_t *sig = NULL;
-
-	int             fd_in = 0;
-	int             fd_out = 0;
-	__ops_create_info_t *cinfo = NULL;
-	unsigned char   buf[MAXBUF];
-	/* int flags=0; */
-	bool   rtn = false;
-	bool   use_armour = true;
+	/* check the hash algorithm */
+	hash_alg = __ops_str_to_hash_alg(hashname);
+	if (hash_alg == OPS_HASH_UNKNOWN) {
+		(void) fprintf(stderr,
+			"__ops_sign_file_as_cleartext: unknown hash algorithm"
+			": \"%s\"\n", hashname);
+		return false;
+	}
 
 	/* open file to sign */
 #ifdef O_BINARY
@@ -1044,14 +996,15 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 	if (fd_in < 0) {
 		return false;
 	}
+
 	/* set up output file */
-
-	fd_out = open_output_file(&cinfo, input_filename, output_filename, use_armour, overwrite);
-
+	fd_out = open_output_file(&cinfo, input_filename, output_filename,
+			use_armour, overwrite);
 	if (fd_out < 0) {
 		close(fd_in);
 		return false;
 	}
+
 	/* set up signature */
 	sig = __ops_create_sig_new();
 	if (!sig) {
@@ -1059,8 +1012,9 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 		__ops_teardown_file_write(cinfo, fd_out);
 		return false;
 	}
+
 	/* \todo could add more error detection here */
-	__ops_start_sig(sig, seckey, OPS_HASH_SHA1, OPS_SIG_BINARY);
+	__ops_start_sig(sig, seckey, hash_alg, sig_type);
 	if (__ops_writer_push_clearsigned(cinfo, sig) != true) {
 		return false;
 	}
@@ -1130,7 +1084,7 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 	bool   rtn = false;
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
 	__ops_create_sig_t *sig = NULL;
-	__ops_create_info_t *cinfo = NULL;
+	__ops_createinfo_t *cinfo = NULL;
 
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
@@ -1172,7 +1126,7 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 		__ops_writer_close(cinfo);
 
 	/* Note: the calling function must free signed_cleartext */
-	__ops_create_info_delete(cinfo);
+	__ops_createinfo_delete(cinfo);
 
 	return rtn;
 }
@@ -1190,20 +1144,33 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 
 */
 bool 
-__ops_sign_file(const char *input_filename, const char *output_filename, const __ops_seckey_t * seckey, const bool use_armour, const bool overwrite)
+__ops_sign_file(const char *input_filename,
+		const char *output_filename,
+		const __ops_seckey_t *seckey,
+		const char *hashname,
+		const bool use_armour,
+		const bool overwrite)
 {
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
 
-	unsigned char   keyid[OPS_KEY_ID_SIZE];
-	__ops_create_sig_t *sig = NULL;
-	int             fd_out = 0;
-	__ops_create_info_t *cinfo = NULL;
-	__ops_hash_algorithm_t hash_alg = OPS_HASH_SHA1;
-	__ops_sig_type_t  sig_type = OPS_SIG_BINARY;
-	__ops_memory_t   *mem_buf = NULL;
-	__ops_hash_t     *hash = NULL;
-	int             errnum;
+	__ops_create_sig_t	*sig = NULL;
+	__ops_createinfo_t	*cinfo = NULL;
+	__ops_hash_alg_t	 hash_alg;
+	__ops_sig_type_t	 sig_type = OPS_SIG_BINARY;
+	__ops_memory_t		*mem_buf = NULL;
+	unsigned char		 keyid[OPS_KEY_ID_SIZE];
+	__ops_hash_t		*hash = NULL;
+	int			 errnum;
+	int			 fd_out = 0;
+
+	hash_alg = __ops_str_to_hash_alg(hashname);
+	if (hash_alg == OPS_HASH_UNKNOWN) {
+		(void) fprintf(stderr,
+			"__ops_sign_file: unknown hash algorithm: \"%s\"\n",
+			hashname);
+		return false;
+	}
 
 	/* read input file into buf */
 	mem_buf = __ops_fileread(input_filename, &errnum);
@@ -1300,9 +1267,9 @@ __ops_sign_buf(const void *input,
 
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
 	__ops_create_sig_t *sig = NULL;
-	__ops_create_info_t *cinfo = NULL;
+	__ops_createinfo_t *cinfo = NULL;
 	__ops_memory_t   *mem = __ops_memory_new();
-	__ops_hash_algorithm_t hash_alg = OPS_HASH_SHA1;
+	__ops_hash_alg_t hash_alg = OPS_HASH_SHA1;
 	__ops_litdata_type_t ld_type;
 	__ops_hash_t     *hash = NULL;
 
