@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.32 2008/09/11 11:08:50 tron Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.33 2009/05/12 14:07:01 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.32 2008/09/11 11:08:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.33 2009/05/12 14:07:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -77,7 +77,7 @@ static int	ataraid_match(device_t, cfdata_t, void *);
 static void	ataraid_attach(device_t, device_t, void *);
 static int	ataraid_print(void *, const char *);
 
-static int	ata_raid_finalize(device_t );
+static int	ata_raid_finalize(device_t);
 
 ataraid_array_info_list_t ataraid_array_info_list =
     TAILQ_HEAD_INITIALIZER(ataraid_array_info_list);
