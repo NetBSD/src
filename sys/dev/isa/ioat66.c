@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.19 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.20 2009/05/12 09:10:15 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.19 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.20 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,16 +68,15 @@ struct ioat66_softc {
 int ioatbases[NSLAVES]={0x220,0x228,0x240,0x248,0x260,0x268};
 #define IOAT66SHARED 0x208
 
-int ioat66probe(struct device *, cfdata_t, void *);
-void ioat66attach(struct device *, struct device *, void *);
+int ioat66probe(device_t, cfdata_t, void *);
+void ioat66attach(device_t, device_t, void *);
 int ioat66intr(void *);
 
 CFATTACH_DECL(ioat, sizeof(struct ioat66_softc),
     ioat66probe, ioat66attach, NULL, NULL);
 
 int
-ioat66probe(struct device *parent, cfdata_t self,
-    void *aux)
+ioat66probe(device_t parent, cfdata_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -143,7 +142,7 @@ out:
 }
 
 void
-ioat66attach(struct device *parent, struct device *self, void *aux)
+ioat66attach(device_t parent, device_t self, void *aux)
 {
 	struct ioat66_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

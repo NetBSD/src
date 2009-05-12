@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.52 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: boca.c,v 1.53 2009/05/12 09:10:15 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.52 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.53 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ struct boca_softc {
 	callout_t fixup;
 };
 
-int bocaprobe(struct device *, cfdata_t, void *);
-void bocaattach(struct device *, struct device *, void *);
+int bocaprobe(device_t, cfdata_t, void *);
+void bocaattach(device_t, device_t, void *);
 int bocaintr(void *);
 void boca_fixup(void *);
 
@@ -76,8 +76,7 @@ CFATTACH_DECL(boca, sizeof(struct boca_softc),
     bocaprobe, bocaattach, NULL, NULL);
 
 int
-bocaprobe(struct device *parent, cfdata_t self,
-    void *aux)
+bocaprobe(device_t parent, cfdata_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -148,7 +147,7 @@ out:
 }
 
 void
-bocaattach(struct device *parent, struct device *self, void *aux)
+bocaattach(device_t parent, device_t self, void *aux)
 {
 	struct boca_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

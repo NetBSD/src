@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.28 2009/05/12 08:44:19 cegger Exp $ */
+/* $NetBSD: ega.c,v 1.29 2009/05/12 09:10:15 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.28 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.29 2009/05/12 09:10:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,8 @@ static int egaconsole, ega_console_attached;
 static struct egascreen ega_console_screen;
 static struct ega_config ega_console_dc;
 
-int	ega_match(struct device *, cfdata_t, void *);
-void	ega_attach(struct device *, struct device *, void *);
+int	ega_match(device_t, cfdata_t, void *);
+void	ega_attach(device_t, device_t, void *);
 
 static int ega_is_console(bus_space_tag_t);
 static int ega_probe_col(bus_space_tag_t, bus_space_tag_t);
@@ -429,7 +429,7 @@ ega_init(struct ega_config *vc, bus_space_tag_t iot, bus_space_tag_t memt, int m
 }
 
 int
-ega_match(struct device *parent, cfdata_t match, void *aux)
+ega_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int mono;
@@ -484,7 +484,7 @@ ega_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 void
-ega_attach(struct device *parent, struct device *self, void *aux)
+ega_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct ega_softc *sc = (struct ega_softc *)self;
