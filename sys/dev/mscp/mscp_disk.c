@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.69 2009/05/12 13:16:17 cegger Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.70 2009/05/12 14:37:59 cegger Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.69 2009/05/12 13:16:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.70 2009/05/12 14:37:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -126,14 +126,14 @@ struct ra_softc {
 
 #define rx_softc ra_softc
 
-void	rxattach(struct device *, struct device *, void *);
+void	rxattach(device_t, device_t, void *);
 int	rx_putonline(struct rx_softc *);
 void	rrmakelabel(struct disklabel *, long);
 
 #if NRA
 
-int	ramatch(struct device *, cfdata_t, void *);
-void	raattach(struct device *, struct device *, void *);
+int	ramatch(device_t, cfdata_t, void *);
+void	raattach(device_t, device_t, void *);
 int	ra_putonline(struct ra_softc *);
 
 CFATTACH_DECL(ra, sizeof(struct ra_softc),
@@ -166,7 +166,7 @@ static struct dkdriver radkdriver = {
  */
 
 int
-ramatch(struct device *parent, cfdata_t cf, void *aux)
+ramatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
@@ -580,7 +580,7 @@ rasize(dev_t dev)
 
 #if NRX
 
-int	rxmatch(struct device *, cfdata_t, void *);
+int	rxmatch(device_t, cfdata_t, void *);
 
 CFATTACH_DECL(rx, sizeof(struct rx_softc),
     rxmatch, rxattach, NULL, NULL);
@@ -611,7 +611,7 @@ static struct dkdriver rxdkdriver = {
  */
 
 int
-rxmatch(struct device *parent, cfdata_t cf, void *aux)
+rxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
@@ -638,7 +638,7 @@ rxmatch(struct device *parent, cfdata_t cf, void *aux)
  * the first time.
  */
 void
-rxattach(struct device *parent, struct device *self, void *aux)
+rxattach(device_t parent, device_t self, void *aux)
 {
 	struct	rx_softc *rx = device_private(self);
 	struct	drive_attach_args *da = aux;
@@ -866,14 +866,14 @@ rxsize(dev_t dev)
 
 #endif /* NRX */
 
-void	rrdgram(struct device *, struct mscp *, struct mscp_softc *);
-void	rriodone(struct device *, struct buf *);
-int	rronline(struct device *, struct mscp *);
-int	rrgotstatus(struct device *, struct mscp *);
-void	rrreplace(struct device *, struct mscp *);
-int	rrioerror(struct device *, struct mscp *, struct buf *);
+void	rrdgram(device_t, struct mscp *, struct mscp_softc *);
+void	rriodone(device_t, struct buf *);
+int	rronline(device_t, struct mscp *);
+int	rrgotstatus(device_t, struct mscp *);
+void	rrreplace(device_t, struct mscp *);
+int	rrioerror(device_t, struct mscp *, struct buf *);
 void	rrfillin(struct buf *, struct mscp *);
-void	rrbb(struct device *, struct mscp *, struct buf *);
+void	rrbb(device_t, struct mscp *, struct buf *);
 
 
 struct	mscp_device ra_device = {
@@ -892,7 +892,7 @@ struct	mscp_device ra_device = {
  * This can come from an unconfigured drive as well.
  */
 void
-rrdgram(struct device *usc, struct mscp *mp, struct mscp_softc *mi)
+rrdgram(device_t usc, struct mscp *mp, struct mscp_softc *mi)
 {
 	if (mscp_decodeerror(usc == NULL?"unconf disk" : device_xname(usc), mp, mi))
 		return;
@@ -908,7 +908,7 @@ rrdgram(struct device *usc, struct mscp *mp, struct mscp_softc *mi)
 }
 
 void
-rriodone(struct device *usc, struct buf *bp)
+rriodone(device_t usc, struct buf *bp)
 {
 	struct ra_softc *ra;
 	int unit;
@@ -939,7 +939,7 @@ rriodone(struct device *usc, struct buf *bp)
  * sleeping on the drive on-line-ness.
  */
 int
-rronline(struct device *usc, struct mscp *mp)
+rronline(device_t usc, struct mscp *mp)
 {
 	struct rx_softc *rx = (struct rx_softc *)usc;
 	struct disklabel *dl;
@@ -1006,7 +1006,7 @@ rrmakelabel(struct disklabel *dl, long type)
  * We got some (configured) unit's status.  Return DONE if it succeeded.
  */
 int
-rrgotstatus(struct device *usc, struct mscp *mp)
+rrgotstatus(device_t usc, struct mscp *mp)
 {
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		aprint_error_dev(usc, "attempt to get status failed: ");
@@ -1025,7 +1025,7 @@ rrgotstatus(struct device *usc, struct mscp *mp)
  */
 /*ARGSUSED*/
 void
-rrreplace(struct device *usc, struct mscp *mp)
+rrreplace(device_t usc, struct mscp *mp)
 {
 
 	panic("udareplace");
@@ -1037,7 +1037,7 @@ rrreplace(struct device *usc, struct mscp *mp)
  */
 /*ARGSUSED*/
 int
-rrioerror(struct device *usc, struct mscp *mp, struct buf *bp)
+rrioerror(device_t usc, struct mscp *mp, struct buf *bp)
 {
 	struct ra_softc *ra = (void *)usc;
 	int code = mp->mscp_event;
@@ -1095,7 +1095,7 @@ rrfillin(struct buf *bp, struct mscp *mp)
  */
 /*ARGSUSED*/
 void
-rrbb(struct device *usc, struct mscp *mp, struct buf *bp)
+rrbb(device_t usc, struct mscp *mp, struct buf *bp)
 {
 
 	panic("udabb");

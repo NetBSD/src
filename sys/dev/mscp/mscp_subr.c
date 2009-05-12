@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.40 2009/05/12 13:16:17 cegger Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.41 2009/05/12 14:37:59 cegger Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.40 2009/05/12 13:16:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41 2009/05/12 14:37:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,8 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.40 2009/05/12 13:16:17 cegger Exp $"
 
 #define b_forw	b_hash.le_next
 
-int	mscp_match(struct device *, cfdata_t, void *);
-void	mscp_attach(struct device *, struct device *, void *);
+int	mscp_match(device_t, cfdata_t, void *);
+void	mscp_attach(device_t, device_t, void *);
 void	mscp_start(struct	mscp_softc *);
 int	mscp_init(struct  mscp_softc *);
 void	mscp_initds(struct mscp_softc *);
@@ -155,7 +155,7 @@ mscp_waitstep(struct mscp_softc *mi, int mask, int result)
 }
 
 int
-mscp_match(struct device *parent, cfdata_t match, void *aux)
+mscp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct	mscp_attach_args *ma = aux;
 
@@ -171,7 +171,7 @@ mscp_match(struct device *parent, cfdata_t match, void *aux)
 };
 
 void
-mscp_attach(struct device *parent, struct device *self, void *aux)
+mscp_attach(device_t parent, device_t self, void *aux)
 {
 	struct	mscp_attach_args *ma = aux;
 	struct	mscp_softc *mi = device_private(self);
@@ -541,7 +541,7 @@ mscp_print(void *aux, const char *name)
  * common strategy routine for all types of MSCP devices.
  */
 void
-mscp_strategy(struct buf *bp, struct device *usc)
+mscp_strategy(struct buf *bp, device_t usc)
 {
 	struct	mscp_softc *mi = (void *)usc;
 	int s = spluba();

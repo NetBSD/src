@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.57 2009/05/12 12:18:09 cegger Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.58 2009/05/12 14:29:42 cegger Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.57 2009/05/12 12:18:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.58 2009/05/12 14:29:42 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -196,8 +196,8 @@ static struct linesw irframet_disc = {
 };
 
 /* glue to attach irframe device */
-static void irframet_attach(struct device *, struct device *, void *);
-static int irframet_detach(struct device *, int);
+static void irframet_attach(device_t, device_t, void *);
+static int irframet_detach(device_t, int);
 
 CFATTACH_DECL_NEW(irframet, sizeof(struct irframet_softc),
 	NULL, irframet_attach, irframet_detach, NULL);
@@ -240,7 +240,7 @@ irframet_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-irframet_detach(struct device *dev, int flags)
+irframet_detach(device_t dev, int flags)
 {
 	struct irframet_softc *sc = device_private(dev);
 	int rc;
