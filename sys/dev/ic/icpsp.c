@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.21 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.22 2009/05/12 12:15:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.21 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.22 2009/05/12 12:15:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ struct icpsp_softc {
 
 void	icpsp_attach(struct device *, struct device *, void *);
 void	icpsp_intr(struct icp_ccb *);
-int	icpsp_match(struct device *, struct cfdata *, void *);
+int	icpsp_match(struct device *, cfdata_t, void *);
 void	icpsp_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
 			     void *);
 
@@ -81,7 +81,7 @@ static const struct icp_servicecb icpsp_servicecb = {
 };
 
 int
-icpsp_match(struct device *parent, struct cfdata *match,
+icpsp_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	struct icp_attach_args *icpa;

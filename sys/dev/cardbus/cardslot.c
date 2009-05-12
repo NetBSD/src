@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.47 2009/04/02 00:09:33 dyoung Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.48 2009/05/12 12:11:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.47 2009/04/02 00:09:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.48 2009/05/12 12:11:17 cegger Exp $");
 
 #include "opt_cardslot.h"
 
@@ -67,12 +67,12 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.47 2009/04/02 00:09:33 dyoung Exp $")
 STATIC void cardslotattach(struct device *, struct device *, void *);
 STATIC int cardslotdetach(device_t, int);
 
-STATIC int cardslotmatch(struct device *, struct cfdata *, void *);
+STATIC int cardslotmatch(struct device *, cfdata_t, void *);
 static void cardslot_event_thread(void *arg);
 
 STATIC int cardslot_cb_print(void *aux, const char *pcic);
 static int cardslot_16_print(void *, const char *);
-static int cardslot_16_submatch(struct device *, struct cfdata *,
+static int cardslot_16_submatch(struct device *, cfdata_t,
 				     const int *, void *);
 
 CFATTACH_DECL3_NEW(cardslot, sizeof(struct cardslot_softc),
@@ -80,7 +80,7 @@ CFATTACH_DECL3_NEW(cardslot, sizeof(struct cardslot_softc),
     DVF_DETACH_SHUTDOWN);
 
 STATIC int
-cardslotmatch(struct device *parent, struct cfdata *cf,
+cardslotmatch(struct device *parent, cfdata_t cf,
     void *aux)
 {
 	struct cardslot_attach_args *caa = aux;
@@ -204,7 +204,7 @@ cardslot_cb_print(void *aux, const char *pnp)
 
 
 static int
-cardslot_16_submatch(struct device *parent, struct cfdata *cf,
+cardslot_16_submatch(struct device *parent, cfdata_t cf,
     const int *ldesc, void *aux)
 {
 

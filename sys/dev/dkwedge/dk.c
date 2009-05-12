@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.43 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.44 2009/05/12 12:12:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.43 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.44 2009/05/12 12:12:26 cegger Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -125,7 +125,7 @@ static krwlock_t dkwedge_discovery_methods_lock;
  *	Autoconfiguration match function for pseudo-device glue.
  */
 static int
-dkwedge_match(struct device *parent, struct cfdata *match,
+dkwedge_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 

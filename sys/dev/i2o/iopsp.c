@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.33 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.34 2009/05/12 12:14:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.33 2008/09/08 23:36:54 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.34 2009/05/12 12:14:18 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static void	iopsp_attach(struct device *, struct device *, void *);
 static void	iopsp_intr(struct device *, struct iop_msg *, void *);
 static int	iopsp_ioctl(struct scsipi_channel *, u_long,
 			    void *, int, struct proc *);
-static int	iopsp_match(struct device *, struct cfdata *, void *);
+static int	iopsp_match(struct device *, cfdata_t, void *);
 static int	iopsp_rescan(struct iopsp_softc *);
 static int	iopsp_reconfig(struct device *);
 static void	iopsp_scsipi_request(struct scsipi_channel *,
@@ -80,7 +80,7 @@ CFATTACH_DECL(iopsp, sizeof(struct iopsp_softc),
  * Match a supported device.
  */
 static int
-iopsp_match(struct device *parent, struct cfdata *match, void *aux)
+iopsp_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct iop_attach_args *ia;
 	struct {

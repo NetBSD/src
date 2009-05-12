@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.12 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.13 2009/05/12 12:13:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.12 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.13 2009/05/12 12:13:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.12 2008/04/28 20:23:48 martin Exp $");
 
 #include "locators.h"
 
-int	hpcin_match(struct device *, struct cfdata *, void *);
+int	hpcin_match(struct device *, cfdata_t, void *);
 void	hpcin_attach(struct device *, struct device *, void *);
 int	hpcin_intr(void *);
 
@@ -69,7 +69,7 @@ CFATTACH_DECL(hpcin, sizeof(struct hpcin_softc),
     hpcin_match, hpcin_attach, NULL, NULL);
 
 int
-hpcin_match(struct device *parent, struct cfdata *cf, void *aux)
+hpcin_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }

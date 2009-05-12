@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.16 2009/03/18 10:22:40 cegger Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.17 2009/05/12 12:18:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.16 2009/03/18 10:22:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.17 2009/05/12 12:18:45 cegger Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -229,7 +229,7 @@ idma_list_sync_post(idma_chan_t * const idcp, idma_desch_t *iddhp)
 
 
 STATIC void idma_attach		(struct device *, struct device *, void *);
-STATIC int  idma_match		(struct device *, struct cfdata *, void *);
+STATIC int  idma_match		(struct device *, cfdata_t, void *);
 STATIC void idma_chan_init
 	(idma_softc_t *, idma_chan_t *, unsigned int);
 STATIC void idma_arb_init(idma_softc_t *);
@@ -266,7 +266,7 @@ idma_softc_t *idma_sc = 0;
 STATIC int
 idma_match(
 	struct device * const parent,
-	struct cfdata * const self,
+	cfdata_t  const self,
 	void *const aux)
 {
 	struct gt_attach_args * const ga = (struct gt_attach_args *)aux;

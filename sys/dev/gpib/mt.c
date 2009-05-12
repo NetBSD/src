@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.18 2009/03/14 21:04:19 dsl Exp $ */
+/*	$NetBSD: mt.c,v 1.19 2009/05/12 12:13:21 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.18 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.19 2009/05/12 12:13:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ struct	mt_softc {
 #define B_CMD		B_DEVPRIVATE	/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
-int	mtmatch(struct device *, struct cfdata *, void *);
+int	mtmatch(struct device *, cfdata_t, void *);
 void	mtattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mt, sizeof(struct mt_softc),
@@ -237,7 +237,7 @@ mtlookup(int id, int slave, int punit)
 }
 
 int
-mtmatch(struct device *parent, struct cfdata *match, void *aux)
+mtmatch(struct device *parent, cfdata_t match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 

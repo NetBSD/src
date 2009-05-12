@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.29 2009/03/18 16:00:17 cegger Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.30 2009/05/12 12:11:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.29 2009/03/18 16:00:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.30 2009/05/12 12:11:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.29 2009/03/18 16:00:17 cegger Exp $")
 
 struct ppb_softc;
 
-static int  ppb_cardbus_match(struct device *, struct cfdata *, void *);
+static int  ppb_cardbus_match(struct device *, cfdata_t, void *);
 static void ppb_cardbus_attach(struct device *, struct device *, void *);
 static int  ppb_cardbus_detach(struct device * self, int flags);
 /*static*/ void ppb_cardbus_setup(struct ppb_softc * sc);
@@ -116,7 +116,7 @@ int rbus_ppb_debug = 0;   /* hack with kdb */
 #endif
 
 static int
-ppb_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+ppb_cardbus_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 

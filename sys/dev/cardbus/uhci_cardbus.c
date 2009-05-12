@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.12 2008/07/11 21:02:53 dyoung Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.13 2009/05/12 12:11:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.12 2008/07/11 21:02:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.13 2009/05/12 12:11:17 cegger Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -67,7 +67,7 @@ struct uhci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-static int	uhci_cardbus_match(device_t, struct cfdata *, void *);
+static int	uhci_cardbus_match(device_t, cfdata_t, void *);
 static void	uhci_cardbus_attach(device_t, device_t, void *);
 static int	uhci_cardbus_detach(device_t, int);
 
@@ -80,7 +80,7 @@ CFATTACH_DECL_NEW(uhci_cardbus, sizeof(struct uhci_cardbus_softc),
 #define cardbus_devinfo		pci_devinfo
 
 static int
-uhci_cardbus_match(device_t parent, struct cfdata *match, void *aux)
+uhci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 

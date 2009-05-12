@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.19 2009/03/14 21:04:19 dsl Exp $ */
+/*	$NetBSD: ct.c,v 1.20 2009/05/12 12:13:21 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.19 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.20 2009/05/12 12:13:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ struct	ct_softc {
 	int	sc_eofs[EOFS];
 };
 
-int	ctmatch(struct device *, struct cfdata *, void *);
+int	ctmatch(struct device *, cfdata_t, void *);
 void	ctattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ct, sizeof(struct ct_softc),
@@ -262,7 +262,7 @@ ctlookup(int id, int slave, int punit)
 }
 
 int
-ctmatch(struct device *parent, struct cfdata *match, void *aux)
+ctmatch(struct device *parent, cfdata_t match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 	int i;
