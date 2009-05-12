@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.84 2009/05/06 10:34:32 cegger Exp $ */
+/* $NetBSD: if_ti.c,v 1.85 2009/05/12 08:23:01 cegger Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.84 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.85 2009/05/12 08:23:01 cegger Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1636,7 +1636,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 
 	printf(": %s (rev. 0x%02x)\n", t->ti_name, PCI_REVISION(pa->pa_class));
 
-	sc = (struct ti_softc *)self;
+	sc = device_private(self);
 
 	/*
 	 * Map control/status registers.

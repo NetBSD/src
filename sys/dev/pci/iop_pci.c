@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.25 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.26 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.25 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.26 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ iop_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t reg;
 	int i;
 
-	sc = (struct iop_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	printf(": ");

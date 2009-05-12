@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.30 2009/05/06 10:34:33 cegger Exp $ */
+/*	$NetBSD: twa.c,v 1.31 2009/05/12 08:23:01 cegger Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.30 2009/05/06 10:34:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.31 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1498,7 +1498,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	int i;
 	bool use_64bit;
 
-	sc = (struct twa_softc *)self;
+	sc = device_private(self);
 
 	pa = aux;
 	pc = pa->pa_pc;

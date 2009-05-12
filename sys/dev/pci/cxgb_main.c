@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.15 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.16 2009/05/12 08:23:00 cegger Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_main.c,v 1.36 2007/09/11 23:49:27 kmacy Exp $");
@@ -585,7 +585,7 @@ cxgb_controller_attach(device_t parent, device_t dev, void *context)
     sc = device_get_softc(dev);
 #endif
 #ifdef __NetBSD__
-    sc = (struct adapter *)dev;  // device is first thing in adapter
+    sc = device_private(dev);
 #endif
     sc->dev = dev;
 #ifdef __NetBSD__
@@ -894,7 +894,7 @@ cxgb_controller_detach(device_t dev, int flags)
     sc = device_get_softc(dev);
 #endif
 #ifdef __NetBSD__
-    sc = (struct adapter *)dev;
+    sc = device_private(dev);
 #endif
 
     cxgb_free(sc);

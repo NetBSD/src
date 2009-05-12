@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.23 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.24 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.23 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.24 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ dpt_pci_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": Storage controller\n");
 
-	sc = (struct dpt_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	aprint_normal(": ");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.18 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.19 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.18 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.19 2009/05/12 08:23:01 cegger Exp $");
 
 #include "rnd.h"
 
@@ -161,7 +161,7 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 	} else {
 		ac->ac_handler = ld_amr_handler;
 		ac->ac_context = bp;
-		ac->ac_dv = (device_t)sc;
+		ac->ac_dv = sc->sc_ld.sc_dv;
 		amr_ccb_enqueue(amr, ac);
 		rv = 0;
 	}
@@ -185,7 +185,7 @@ ld_amr_handler(struct amr_ccb *ac)
 	struct amr_softc *amr;
 
 	bp = ac->ac_context;
-	sc = (struct ld_amr_softc *)ac->ac_dv;
+	sc = device_private(ac->ac_dv);
 	amr = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	if (ac->ac_status != AMR_STATUS_SUCCESS) {

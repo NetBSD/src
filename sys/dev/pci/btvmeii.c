@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.19 2009/05/06 10:34:32 cegger Exp $ */
+/* $NetBSD: btvmeii.c,v 1.20 2009/05/12 08:23:00 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.19 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.20 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ b3_2706_match(device_t parent, cfdata_t match, void *aux)
 static void
 b3_2706_attach(device_t parent, device_t self, void *aux)
 {
-	struct b3_2706_softc *sc = (struct b3_2706_softc *)self;
+	struct b3_2706_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pci_attach_args aa;

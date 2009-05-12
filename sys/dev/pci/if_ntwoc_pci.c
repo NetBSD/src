@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.24 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.25 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.24 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.25 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ ntwoc_pci_match(device_t parent, cfdata_t match, void *aux)
 static void
 ntwoc_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ntwoc_pci_softc *sc = (void *)self;
+	struct ntwoc_pci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct sca_softc *sca = &sc->sc_sca;
 	pci_intr_handle_t ih;

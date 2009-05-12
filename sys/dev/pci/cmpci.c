@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.40 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.41 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.40 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.41 2009/05/12 08:23:00 cegger Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -385,7 +385,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	int i, v;
 
-	sc = (struct cmpci_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	aprint_naive(": Audio controller\n");
 

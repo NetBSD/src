@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.24 2009/05/06 10:34:32 cegger Exp $ */
+/* $NetBSD: btvmei.c,v 1.25 2009/05/12 08:23:00 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.24 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.25 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ b3_617_match(device_t parent, cfdata_t match, void *aux)
 static void
 b3_617_attach(device_t parent, device_t self, void *aux)
 {
-	struct b3_617_softc *sc = (struct b3_617_softc*)self;
+	struct b3_617_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 
@@ -186,7 +186,7 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 static int
 b3_617_detach(device_t dev)
 {
-	struct b3_617_softc *sc = (struct b3_617_softc *)dev;
+	struct b3_617_softc *sc = device_private(dev);
 
 	b3_617_halt(sc);
 
@@ -203,7 +203,7 @@ b3_617_detach(device_t dev)
 void
 b3_617_slaveconfig(device_t dev, struct vme_attach_args *va)
 {
-	struct b3_617_softc *sc = (struct b3_617_softc *)dev;
+	struct b3_617_softc *sc = device_private(dev);
 	vme_chipset_tag_t vmect;
 	int i, res;
 	const char *name = 0; /* XXX gcc! */

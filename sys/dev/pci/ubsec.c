@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.22 2009/05/06 10:34:33 cegger Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.23 2009/05/12 08:23:01 cegger Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.22 2009/05/06 10:34:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.23 2009/05/12 08:23:01 cegger Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -300,7 +300,7 @@ ubsec_probe(device_t parent, cfdata_t match, void *aux)
 static void
 ubsec_attach(device_t parent, device_t self, void *aux)
 {
-	struct ubsec_softc *sc = (struct ubsec_softc *)self;
+	struct ubsec_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	const struct ubsec_product *up;
 	pci_chipset_tag_t pc = pa->pa_pc;

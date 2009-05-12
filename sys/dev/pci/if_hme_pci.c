@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.27 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.28 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.27 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.28 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ void
 hmeattach_pci(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct hme_pci_softc *hsc = (void *)self;
+	struct hme_pci_softc *hsc = device_private(self);
 	struct hme_softc *sc = &hsc->hsc_hme;
 	pci_intr_handle_t ih;
 	pcireg_t csr;

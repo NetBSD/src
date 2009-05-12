@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.34 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: oboe.c,v 1.35 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.34 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.35 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ oboe_match(device_t parent, cfdata_t match, void *aux)
 static void
 oboe_attach(device_t parent, device_t self, void *aux)
 {
-	struct oboe_softc *sc = (struct oboe_softc *)self;
+	struct oboe_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	struct ir_attach_args ia;
@@ -246,7 +246,7 @@ oboe_attach(device_t parent, device_t self, void *aux)
 static int
 oboe_activate(device_t self, enum devact act)
 {
-	struct oboe_softc *sc = (struct oboe_softc *)self;
+	struct oboe_softc *sc = device_private(self);
 	int error = 0;
 
 	DPRINTF(("%s: sc=%p\n", __func__, sc));
@@ -267,7 +267,7 @@ oboe_activate(device_t self, enum devact act)
 static int
 oboe_detach(device_t self, int flags)
 {
-	struct oboe_softc *sc = (struct oboe_softc *)self;
+	struct oboe_softc *sc = device_private(self);
 
 #ifdef OBOE_DEBUG
 	/* XXX needs reference counting for proper detach. */

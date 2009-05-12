@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.26 2009/05/06 10:34:32 cegger Exp $ */
+/* $NetBSD: if_msk.c,v 1.27 2009/05/12 08:23:00 cegger Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.26 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.27 2009/05/12 08:23:00 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -229,7 +229,7 @@ sk_win_write_1(struct sk_softc *sc, u_int32_t reg, u_int8_t x)
 int
 msk_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	u_int16_t val;
 	int i;
 
@@ -262,7 +262,7 @@ msk_miibus_readreg(device_t dev, int phy, int reg)
 void
 msk_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
 
 	DPRINTFN(9, ("msk_miibus_writereg phy=%d reg=%#x val=%#x\n",
@@ -285,7 +285,7 @@ msk_miibus_writereg(device_t dev, int phy, int reg, int val)
 void
 msk_miibus_statchg(device_t dev)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	struct mii_data *mii = &sc_if->sk_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int gpcr;
@@ -978,8 +978,8 @@ msk_resume(device_t dv PMF_FN_ARGS)
 void
 msk_attach(device_t parent, device_t self, void *aux)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *) self;
-	struct sk_softc *sc = (struct sk_softc *)parent;
+	struct sk_if_softc *sc_if = device_private(self);
+	struct sk_softc *sc = device_private(parent);
 	struct skc_attach_args *sa = aux;
 	struct ifnet *ifp;
 	void *kva;
@@ -1161,7 +1161,7 @@ mskcprint(void *aux, const char *pnp)
 void
 mskc_attach(device_t parent, device_t self, void *aux)
 {
-	struct sk_softc *sc = (struct sk_softc *)self;
+	struct sk_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct skc_attach_args skca;
 	pci_chipset_tag_t pc = pa->pa_pc;

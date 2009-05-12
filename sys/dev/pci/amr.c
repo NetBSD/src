@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.51 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: amr.c,v 1.52 2009/05/12 08:22:59 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.51 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.52 2009/05/12 08:22:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": RAID controller\n");
 
-	amr = (struct amr_softc *)self;
+	amr = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 

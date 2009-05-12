@@ -326,7 +326,7 @@ nsp_attach(device_t parent, device_t self, void *aux)
 	int res;
 	int ind;
 
-	sc = (struct nsp_softc *)self;
+	sc = device_private(self);
 
 	mutex_init(&sc->sc_intrlock, MUTEX_DEFAULT, IPL_NET);
 
@@ -512,7 +512,7 @@ nsp_detach(device_t dev, int flags)
 	int res;
 	int ind;
 
-	sc = (struct nsp_softc *)dev;
+	sc = device_private(dev);
 	mutex_enter(&sc->sc_intrlock);
 	DBG(("nsp.%d detach\n", sc->unit));
 

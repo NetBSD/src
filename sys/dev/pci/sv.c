@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.41 2009/05/06 10:34:33 cegger Exp $ */
+/*      $NetBSD: sv.c,v 1.42 2009/05/12 08:23:01 cegger Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.41 2009/05/06 10:34:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.42 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ sv_defer(device_t self)
 	pcitag_t pt;
 	pcireg_t dmaio;
 
-	sc = (struct sv_softc *)self;
+	sc = device_private(self);
 	pc = sc->sc_pa.pa_pc;
 	pt = sc->sc_pa.pa_tag;
 	DPRINTF(("sv_defer: %p\n", sc));
@@ -353,7 +353,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 	uint8_t reg;
 	struct audio_attach_args arg;
 
-	sc = (struct sv_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 	pc = pa->pa_pc;
 	pt = pa->pa_tag;

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.7 2009/05/06 10:34:32 cegger Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.8 2009/05/12 08:23:01 cegger Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.7 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.8 2009/05/12 08:23:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ mfi_pci_match(device_t parent, cfdata_t match, void *aux)
 void
 mfi_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct mfi_softc	*sc = (struct mfi_softc *)self;
+	struct mfi_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	const struct mfi_pci_device *mpd;
 	const struct mfi_pci_subtype *st;

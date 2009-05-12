@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.47 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.48 2009/05/12 08:23:00 cegger Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.47 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.48 2009/05/12 08:23:00 cegger Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -175,7 +175,7 @@ ipw_match(device_t parent, cfdata_t match, void *aux)
 static void
 ipw_attach(device_t parent, device_t self, void *aux)
 {
-	struct ipw_softc *sc = (struct ipw_softc *)self;
+	struct ipw_softc *sc = device_private(self);
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 	struct pci_attach_args *pa = aux;
@@ -342,7 +342,7 @@ fail:	ipw_detach(self, 0);
 static int
 ipw_detach(struct device* self, int flags)
 {
-	struct ipw_softc *sc = (struct ipw_softc *)self;
+	struct ipw_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 
 	if (ifp->if_softc) {

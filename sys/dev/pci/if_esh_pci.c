@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.26 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.27 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.26 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.27 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ esh_pci_match(device_t parent, cfdata_t match, void *aux)
 static void
 esh_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct esh_softc *sc = (void *)self;
+	struct esh_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;

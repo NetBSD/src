@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.34 2009/05/06 10:34:32 cegger Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.35 2009/05/12 08:23:00 cegger Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.34 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.35 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ void
 gem_attach_pci(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct gem_pci_softc *gsc = (void *)self;
+	struct gem_pci_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
 	pci_intr_handle_t ih;
 	const char *intrstr;

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.12 2009/05/06 10:34:32 cegger Exp $ */
+/*      $NetBSD: if_xge.c,v 1.13 2009/05/12 08:23:01 cegger Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.12 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.13 2009/05/12 08:23:01 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -294,7 +294,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	uint64_t val;
 	int i;
 
-	sc = (struct xge_softc *)self;
+	sc = device_private(self);
 
 	sc->sc_dmat = pa->pa_dmat;
 

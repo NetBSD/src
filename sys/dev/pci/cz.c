@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.51 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: cz.c,v 1.52 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.51 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.52 2009/05/12 08:23:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ static void
 cz_attach(device_t parent, device_t self, void *aux)
 {
 	extern const struct cdevsw cz_cdevsw;	/* XXX */
-	struct cz_softc *cz = (void *) self;
+	struct cz_softc *cz = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;

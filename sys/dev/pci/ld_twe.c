@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.33 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.34 2009/05/12 08:23:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.33 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.34 2009/05/12 08:23:01 cegger Exp $");
 
 #include "rnd.h"
 
@@ -221,7 +221,7 @@ ld_twe_dobio(struct ld_twe_softc *sc, void *data, int datasize, int blkno,
 	} else {
 		ccb->ccb_tx.tx_handler = ld_twe_handler;
 		ccb->ccb_tx.tx_context = bp;
-		ccb->ccb_tx.tx_dv = (device_t)sc;
+		ccb->ccb_tx.tx_dv = sc->sc_ld.sc_dv;
 		twe_ccb_enqueue(twe, ccb);
 		rv = 0;
 	}
@@ -247,7 +247,7 @@ ld_twe_handler(struct twe_ccb *ccb, int error)
 
 	tx = &ccb->ccb_tx;
 	bp = tx->tx_context;
-	sc = (struct ld_twe_softc *)tx->tx_dv;
+	sc = device_private(tx->tx_dv);
 	twe = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	twe_ccb_unmap(twe, ccb);

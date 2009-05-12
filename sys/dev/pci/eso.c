@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.55 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: eso.c,v 1.56 2009/05/12 08:23:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.55 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.56 2009/05/12 08:23:00 cegger Exp $");
 
 #include "mpu.h"
 
@@ -234,7 +234,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 	int idx;
 	uint8_t a2mode, mvctl;
 
-	sc = (struct eso_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 	aprint_naive(": Audio controller\n");
 
@@ -426,7 +426,7 @@ eso_defer(device_t self)
 	struct pci_attach_args *pa;
 	bus_addr_t addr, start;
 
-	sc = (struct eso_softc *)self;
+	sc = device_private(self);
 	pa = &sc->sc_pa;
 	aprint_normal_dev(&sc->sc_dev, "");
 

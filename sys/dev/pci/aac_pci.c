@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.28 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.29 2009/05/12 08:22:59 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.28 2009/05/06 10:34:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.29 2009/05/12 08:22:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 
 	pa = aux;
 	pc = pa->pa_pc;
-	pcisc = (struct aac_pci_softc *)self;
+	pcisc = device_private(self);
 	pcisc->sc_pc = pc;
 	sc = &pcisc->sc_aac;
 	state = 0;
