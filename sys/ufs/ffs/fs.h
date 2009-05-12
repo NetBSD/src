@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.52 2009/02/23 03:01:13 dholland Exp $	*/
+/*	$NetBSD: fs.h,v 1.53 2009/05/12 21:01:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -417,6 +417,7 @@ struct fs {
 #define	FS_INDEXDIRS	0x008	/* kernel supports indexed directories */
 #define	FS_ACLS		0x010	/* file system has ACLs enabled */
 #define	FS_MULTILABEL	0x020	/* file system is MAC multi-label */
+#define	FS_GJOURNAL	0x40	/* gjournaled file system */
 #define	FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
 #define	FS_DOWAPBL	0x100	/* Write ahead physical block logging */
 
