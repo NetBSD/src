@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.17 2009/05/12 12:13:49 cegger Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.18 2009/05/12 14:22:39 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.17 2009/05/12 12:13:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.18 2009/05/12 14:22:39 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -61,8 +61,8 @@ int	hpcapm_debug = HPCAPMDEBUG_CONF;
 #endif
 
 /* Definition of the driver for autoconfig. */
-static int	hpcapm_match(struct device *, cfdata_t, void *);
-static void	hpcapm_attach(struct device *, struct device *, void *);
+static int	hpcapm_match(device_t, cfdata_t, void *);
+static void	hpcapm_attach(device_t, device_t, void *);
 static int	hpcapm_hook(void *, int, long, void *);
 
 static void	hpcapm_disconnect(void *);
@@ -106,7 +106,7 @@ struct apm_accessops hpcapm_accessops = {
 extern struct cfdriver hpcapm_cd;
 
 static int
-hpcapm_match(struct device *parent,
+hpcapm_match(device_t parent,
 	     cfdata_t cf, void *aux)
 {
 
@@ -114,8 +114,8 @@ hpcapm_match(struct device *parent,
 }
 
 static void
-hpcapm_attach(struct device *parent,
-	      struct device *self, void *aux)
+hpcapm_attach(device_t parent,
+	      device_t self, void *aux)
 {
 	struct apmhpc_softc *sc;
 	struct apmdev_attach_args aaa;

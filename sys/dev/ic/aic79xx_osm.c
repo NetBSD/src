@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.20 2008/06/24 10:07:40 gmcgarry Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.21 2009/05/12 14:25:17 cegger Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.20 2008/06/24 10:07:40 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.21 2009/05/12 14:25:17 cegger Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -757,7 +757,7 @@ ahd_softc_comp(struct ahd_softc *lahd, struct ahd_softc *rahd)
 }
 
 int
-ahd_detach(struct device *self, int flags)
+ahd_detach(device_t self, int flags)
 {
 	int rv = 0;
 

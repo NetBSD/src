@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.18 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.19 2009/05/12 14:25:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct cac_softc;
 struct cac_ccb;
 
 struct cac_context {
-	void		(*cc_handler)(struct device *, void *, int);
+	void		(*cc_handler)(device_t, void *, int);
 	struct device	*cc_dv;
 	void 		*cc_context;
 };
@@ -120,7 +120,7 @@ struct cac_softc {
 	struct cac_linkage	sc_cl;
 
 	/* scsi ioctl from sd device */
-	int			(*sc_ioctl)(struct device *, u_long, void *);
+	int			(*sc_ioctl)(device_t, u_long, void *);
 
 	struct sysmon_envsys    *sc_sme;
 	envsys_data_t		*sc_sensor;

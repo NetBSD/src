@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.29 2009/05/12 12:13:49 cegger Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.30 2009/05/12 14:22:39 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.29 2009/05/12 12:13:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.30 2009/05/12 14:22:39 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -79,8 +79,8 @@ int bivideo_dont_attach = 0;
 /*
  *  function prototypes
  */
-int	bivideomatch(struct device *, cfdata_t, void *);
-void	bivideoattach(struct device *, struct device *, void *);
+int	bivideomatch(device_t, cfdata_t, void *);
+void	bivideoattach(device_t, device_t, void *);
 int	bivideo_ioctl(void *, u_long, void *, int, struct lwp *);
 paddr_t	bivideo_mmap(void *, off_t, int);
 
@@ -140,7 +140,7 @@ static int attach_flag = 0;
  *  function bodies
  */
 int
-bivideomatch(struct device *parent, cfdata_t match, void *aux)
+bivideomatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -152,7 +152,7 @@ bivideomatch(struct device *parent, cfdata_t match, void *aux)
 }
 
 void
-bivideoattach(struct device *parent, struct device *self, void *aux)
+bivideoattach(device_t parent, device_t self, void *aux)
 {
 	struct bivideo_softc *sc = device_private(self);
 	struct hpcfb_attach_args ha;
