@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.22 2008/04/08 20:09:27 cegger Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.23 2009/05/12 10:07:55 cegger Exp $ */
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.22 2008/04/08 20:09:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.23 2009/05/12 10:07:55 cegger Exp $");
 
 #include "mpu_ym.h"
 
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.22 2008/04/08 20:09:27 cegger Exp $"
 #include <dev/isa/wssreg.h>
 #include <dev/isa/ymvar.h>
 
-int	ym_isapnp_match(struct device *, struct cfdata *, void *);
+int	ym_isapnp_match(struct device *, cfdata_t, void *);
 void	ym_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ym_isapnp, sizeof(struct ym_softc),
@@ -85,7 +85,7 @@ CFATTACH_DECL(ym_isapnp, sizeof(struct ym_softc),
  * Probe for the Yamaha hardware.
  */
 int
-ym_isapnp_match(struct device *parent, struct cfdata *match,
+ym_isapnp_match(struct device *parent, cfdata_t match,
     void *aux)
 {
 	int pri, variant;

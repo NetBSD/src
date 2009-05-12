@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.29 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.30 2009/05/12 10:07:55 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.29 2008/04/28 20:23:53 martin Exp 
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_isapnp_probe(struct device *, struct cfdata *, void *);
+static int isic_isapnp_probe(struct device *, cfdata_t, void *);
 static void isic_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(isic_isapnp, sizeof(struct isic_softc),
@@ -155,7 +155,7 @@ isic_isapnp_descriptions[] =
  */
 static int
 isic_isapnp_probe(struct device *parent,
-	struct cfdata *cf, void *aux)
+	cfdata_t cf, void *aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
