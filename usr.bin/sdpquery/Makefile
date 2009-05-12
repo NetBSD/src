@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2009/05/07 18:12:08 plunky Exp $
+# $NetBSD: Makefile,v 1.5 2009/05/12 13:15:10 plunky Exp $
 
 USE_FORT?= yes	# network client
 
@@ -6,8 +6,8 @@ PROG=		sdpquery
 MAN=		sdpquery.1
 SRCS=		sdpquery.c search.c
 
-DPADD+=		${LIBBLUETOOTH} ${LIBSDP}
-LDADD+=		-lbluetooth -lsdp
+DPADD+=		${LIBBLUETOOTH}
+LDADD+=		-lbluetooth
 
 CPPFLAGS+=	-DSDP_COMPAT
 
