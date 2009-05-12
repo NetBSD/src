@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.21 2009/05/12 13:20:33 cegger Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.22 2009/05/12 14:44:31 cegger Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.21 2009/05/12 13:20:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.22 2009/05/12 14:44:31 cegger Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.21 2009/05/12 13:20:33 cegger Exp $")
 #include <dev/scsipi/stvar.h>
 #include <dev/scsipi/atapi_tape.h>
 
-static int	st_atapibus_match(struct device *, cfdata_t, void *);
-static void	st_atapibus_attach(struct device *, struct device *, void *);
+static int	st_atapibus_match(device_t, cfdata_t, void *);
+static void	st_atapibus_attach(device_t, device_t, void *);
 static int	st_atapibus_ops(struct st_softc *, int, int);
 static int	st_atapibus_mode_sense(struct st_softc *, int);
 static int	st_atapibus_mode_select(struct st_softc *, int);
@@ -62,7 +62,7 @@ static const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
 };
 
 static int
-st_atapibus_match(struct device *parent, cfdata_t match,
+st_atapibus_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -79,7 +79,7 @@ st_atapibus_match(struct device *parent, cfdata_t match,
 }
 
 static void
-st_atapibus_attach(struct device *parent, struct device *self, void *aux)
+st_atapibus_attach(device_t parent, device_t self, void *aux)
 {
 	struct st_softc *st = device_private(self);
 	struct scsipibus_attach_args *sa = aux;

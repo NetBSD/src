@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.30 2009/05/12 13:21:06 cegger Exp $	*/
+/*	$NetBSD: sunms.c,v 1.31 2009/05/12 14:46:39 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.30 2009/05/12 13:21:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.31 2009/05/12 14:46:39 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ int	sunms_bps = MS_DEFAULT_BPS;
 
 static int	sunms_match(device_t, cfdata_t, void *);
 static void	sunms_attach(device_t, device_t, void *);
-static int	sunmsiopen(struct device *, int mode);
+static int	sunmsiopen(device_t, int mode);
 int	sunmsinput(int, struct tty *);
 
 CFATTACH_DECL_NEW(ms_tty, sizeof(struct ms_softc),
