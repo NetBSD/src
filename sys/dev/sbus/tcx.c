@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.30 2009/05/12 13:20:06 cegger Exp $ */
+/*	$NetBSD: tcx.c,v 1.31 2009/05/12 14:43:59 cegger Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.30 2009/05/12 13:20:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.31 2009/05/12 14:43:59 cegger Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -106,9 +106,9 @@ struct tcx_softc {
 #define TCX_CTL_PIXELMASK	0x00FFFFFF	/* mask for index/level */
 
 /* autoconfiguration driver */
-static void	tcxattach(struct device *, struct device *, void *);
-static int	tcxmatch(struct device *, cfdata_t, void *);
-static void	tcx_unblank(struct device *);
+static void	tcxattach(device_t, device_t, void *);
+static int	tcxmatch(device_t, cfdata_t, void *);
+static void	tcx_unblank(device_t);
 
 CFATTACH_DECL(tcx, sizeof(struct tcx_softc),
     tcxmatch, tcxattach, NULL, NULL);
@@ -153,7 +153,7 @@ static void tcx_loadcmap(struct tcx_softc *, int, int);
  * Match a tcx.
  */
 int
-tcxmatch(struct device *parent, cfdata_t cf, void *aux)
+tcxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -164,7 +164,7 @@ tcxmatch(struct device *parent, cfdata_t cf, void *aux)
  * Attach a display.
  */
 void
-tcxattach(struct device *parent, struct device *self, void *args)
+tcxattach(device_t parent, device_t self, void *args)
 {
 	struct tcx_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
@@ -518,7 +518,7 @@ tcx_loadcmap(struct tcx_softc *sc, int start, int ncolors)
 }
 
 static void
-tcx_unblank(struct device *dev)
+tcx_unblank(device_t dev)
 {
 	struct tcx_softc *sc = device_private(dev);
 

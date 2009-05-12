@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.h,v 1.3 2006/12/25 18:39:48 wiz Exp $ */
+/* $NetBSD: spiflash.h,v 1.4 2009/05/12 14:45:08 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -139,7 +139,7 @@ struct spiflash_hw_if {
 #define	SPIFLASH_FLAG_FAST_READ		0x0004	/* use fast read sequence */
 
 spiflash_handle_t spiflash_attach_mi(const struct spiflash_hw_if *, void *,
-    struct device *);
+    device_t);
 void spiflash_set_private(spiflash_handle_t, void *);
 void *spiflash_get_private(spiflash_handle_t);
 int spiflash_read_status(spiflash_handle_t, uint8_t *);

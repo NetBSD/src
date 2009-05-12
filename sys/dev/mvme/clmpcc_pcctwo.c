@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.17 2009/05/12 13:16:45 cegger Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.18 2009/05/12 14:38:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.17 2009/05/12 13:16:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.18 2009/05/12 14:38:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.17 2009/05/12 13:16:45 cegger Ex
 
 
 /* Definition of the driver for autoconfig. */
-int clmpcc_pcctwo_match(struct device *, cfdata_t, void *);
-void clmpcc_pcctwo_attach(struct device *, struct device *, void *);
+int clmpcc_pcctwo_match(device_t, cfdata_t, void *);
+void clmpcc_pcctwo_attach(device_t, device_t, void *);
 void clmpcc_pcctwo_iackhook(struct clmpcc_softc *, int);
 void clmpcc_pcctwo_consiackhook(struct clmpcc_softc *, int);
 
@@ -90,7 +90,7 @@ cons_decl(clmpcc);
  * Is the CD2401 chip present?
  */
 int
-clmpcc_pcctwo_match(struct device *parent, cfdata_t cf, void *aux)
+clmpcc_pcctwo_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcctwo_attach_args *pa;
 
@@ -108,7 +108,7 @@ clmpcc_pcctwo_match(struct device *parent, cfdata_t cf, void *aux)
  * Attach a found CD2401.
  */
 void
-clmpcc_pcctwo_attach(struct device *parent, struct device *self, void *aux)
+clmpcc_pcctwo_attach(device_t parent, device_t self, void *aux)
 {
 	struct clmpcc_softc *sc;
 	struct pcctwo_attach_args *pa = aux;

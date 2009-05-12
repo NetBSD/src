@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.11 2009/03/18 16:00:19 cegger Exp $ */
+/* $NetBSD: onewire.c,v 1.12 2009/05/12 14:39:51 cegger Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.11 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.12 2009/05/12 14:39:51 cegger Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -323,7 +323,7 @@ onewire_scan(struct onewire_softc *sc)
 {
 	struct onewire_device *d, *next, *nd;
 	struct onewire_attach_args oa;
-	struct device *dev;
+	device_t dev;
 	int search = 1, count = 0, present;
 	int dir, rv;
 	uint64_t mask, rom = 0, lastrom;

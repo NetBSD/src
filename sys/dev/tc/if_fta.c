@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.26 2009/05/12 13:21:22 cegger Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.27 2009/05/12 14:47:04 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.26 2009/05/12 13:21:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.27 2009/05/12 14:47:04 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.26 2009/05/12 13:21:22 cegger Exp $");
 
 static int
 pdq_tc_match(
-    struct device *parent,
+    device_t parent,
     cfdata_t match,
     void *aux)
 {
@@ -79,8 +79,8 @@ pdq_tc_match(
 
 static void
 pdq_tc_attach(
-    struct device * const parent,
-    struct device * const self,
+    device_t  const parent,
+    device_t  const self,
     void *const aux)
 {
     pdq_softc_t * const sc = device_private(self);

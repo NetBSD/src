@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.19 2008/03/29 19:15:36 tsutsui Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.20 2009/05/12 14:46:39 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@ struct kbd_softc {
 	struct evvar k_events;	/* event queue state */
 
 #if NWSKBD > 0
-	struct device * k_wskbd;/* handle for wskbd, if it is attached */
+	device_t  k_wskbd;/* handle for wskbd, if it is attached */
 	int k_wsenabled;	/* set if we are using wskbd */
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int k_wsraw;		/* send raw events to wscons */

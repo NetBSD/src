@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.77 2009/05/12 13:20:33 cegger Exp $	*/
+/*	$NetBSD: if_se.c,v 1.78 2009/05/12 14:44:31 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.77 2009/05/12 13:20:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.78 2009/05/12 14:44:31 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -194,8 +194,8 @@ struct se_softc {
 	int sc_enabled;
 };
 
-static int	sematch(struct device *, cfdata_t, void *);
-static void	seattach(struct device *, struct device *, void *);
+static int	sematch(device_t, cfdata_t, void *);
+static void	seattach(device_t, device_t, void *);
 
 static void	se_ifstart(struct ifnet *);
 static void	sestart(struct scsipi_periph *);
@@ -278,7 +278,7 @@ ether_cmp(void *one, void *two)
 #define ETHER_CMP	ether_cmp
 
 static int
-sematch(struct device *parent, cfdata_t match, void *aux)
+sematch(device_t parent, cfdata_t match, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -294,7 +294,7 @@ sematch(struct device *parent, cfdata_t match, void *aux)
  * a device suitable for this driver.
  */
 static void
-seattach(struct device *parent, struct device *self, void *aux)
+seattach(device_t parent, device_t self, void *aux)
 {
 	struct se_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;

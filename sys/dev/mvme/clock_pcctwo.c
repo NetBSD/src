@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.15 2009/05/12 13:16:45 cegger Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.16 2009/05/12 14:38:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.15 2009/05/12 13:16:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.16 2009/05/12 14:38:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.15 2009/05/12 13:16:45 cegger Exp
 #include <dev/mvme/pcctworeg.h>
 
 
-int clock_pcctwo_match(struct device *, cfdata_t, void *);
-void clock_pcctwo_attach(struct device *, struct device *, void *);
+int clock_pcctwo_match(device_t, cfdata_t, void *);
+void clock_pcctwo_attach(device_t, device_t, void *);
 
 struct clock_pcctwo_softc {
 	struct device sc_dev;
@@ -78,7 +78,7 @@ static uint32_t clock_pcctwo_count;
 
 /* ARGSUSED */
 int
-clock_pcctwo_match(struct device *parent, cfdata_t cf, void *aux)
+clock_pcctwo_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcctwo_attach_args *pa = aux;
 
@@ -96,7 +96,7 @@ clock_pcctwo_match(struct device *parent, cfdata_t cf, void *aux)
 
 /* ARGSUSED */
 void
-clock_pcctwo_attach(struct device *parent, struct device *self, void *aux)
+clock_pcctwo_attach(device_t parent, device_t self, void *aux)
 {
 	struct clock_pcctwo_softc *sc;
 	struct pcctwo_attach_args *pa;

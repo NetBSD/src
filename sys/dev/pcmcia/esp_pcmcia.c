@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.38 2009/05/12 14:42:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.38 2009/05/12 14:42:18 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ esp_pcmcia_init(struct esp_pcmcia_softc *esc)
 }
 
 int
-esp_pcmcia_detach(struct device *self, int flags)
+esp_pcmcia_detach(device_t self, int flags)
 {
 	struct esp_pcmcia_softc *sc = device_private(self);
 	int error;
@@ -231,7 +231,7 @@ esp_pcmcia_detach(struct device *self, int flags)
 }
 
 int
-esp_pcmcia_enable(struct device *self, int onoff)
+esp_pcmcia_enable(device_t self, int onoff)
 {
 	struct esp_pcmcia_softc *sc = device_private(self);
 	int error;

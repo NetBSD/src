@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.50 2009/05/12 13:20:06 cegger Exp $	*/
+/*	$NetBSD: qe.c,v 1.51 2009/05/12 14:43:59 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.50 2009/05/12 13:20:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.51 2009/05/12 14:43:59 cegger Exp $");
 
 #define QEDEBUG
 
@@ -149,8 +149,8 @@ struct qe_softc {
 #endif
 };
 
-int	qematch(struct device *, cfdata_t, void *);
-void	qeattach(struct device *, struct device *, void *);
+int	qematch(device_t, cfdata_t, void *);
+void	qeattach(device_t, device_t, void *);
 
 void	qeinit(struct qe_softc *);
 void	qestart(struct ifnet *);
@@ -177,7 +177,7 @@ CFATTACH_DECL(qe, sizeof(struct qe_softc),
     qematch, qeattach, NULL, NULL);
 
 int
-qematch(struct device *parent, cfdata_t cf, void *aux)
+qematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -185,7 +185,7 @@ qematch(struct device *parent, cfdata_t cf, void *aux)
 }
 
 void
-qeattach(struct device *parent, struct device *self, void *aux)
+qeattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *qec = (struct qec_softc *)parent;

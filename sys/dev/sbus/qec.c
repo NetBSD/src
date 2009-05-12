@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.42 2009/05/12 13:20:06 cegger Exp $ */
+/*	$NetBSD: qec.c,v 1.43 2009/05/12 14:43:59 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.42 2009/05/12 13:20:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.43 2009/05/12 14:43:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.42 2009/05/12 13:20:06 cegger Exp $");
 #include <dev/sbus/qecvar.h>
 
 static int	qecprint(void *, const char *);
-static int	qecmatch(struct device *, cfdata_t, void *);
-static void	qecattach(struct device *, struct device *, void *);
+static int	qecmatch(device_t, cfdata_t, void *);
+static void	qecattach(device_t, device_t, void *);
 void		qec_init(struct qec_softc *);
 
 static int qec_bus_map(
@@ -84,7 +84,7 @@ qecprint(void *aux, const char *busname)
 }
 
 int
-qecmatch(struct device *parent, cfdata_t cf, void *aux)
+qecmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -95,7 +95,7 @@ qecmatch(struct device *parent, cfdata_t cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-qecattach(struct device *parent, struct device *self, void *aux)
+qecattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *sc = (void *)self;

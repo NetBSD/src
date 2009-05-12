@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.113 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.114 2009/05/12 14:44:31 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ struct scsipi_inquiry_pattern;
  *	structure contains the channel number.
  */
 struct scsipi_adapter {
-	struct device *adapt_dev;	/* pointer to adapter's device */
+	device_t adapt_dev;	/* pointer to adapter's device */
 	int	adapt_nchannels;	/* number of adapter channels */
 	int	adapt_refcnt;		/* adapter's reference count */
 	int	adapt_openings;		/* total # of command openings */
@@ -198,7 +198,7 @@ struct scsipi_adapter {
 	void	(*adapt_minphys)(struct buf *);
 	int	(*adapt_ioctl)(struct scsipi_channel *, u_long,
 		    void *, int, struct proc *);
-	int	(*adapt_enable)(struct device *, int);
+	int	(*adapt_enable)(device_t, int);
 	int	(*adapt_getgeom)(struct scsipi_periph *,
 			struct disk_parms *, u_long);
 	int	(*adapt_accesschk)(struct scsipi_periph *,
@@ -342,7 +342,7 @@ struct scsipi_channel {
  *	still be an improvement.
  */
 struct scsipi_periph {
-	struct device *periph_dev;	/* pointer to peripherial's device */
+	device_t periph_dev;	/* pointer to peripherial's device */
 	struct scsipi_channel *periph_channel; /* channel we're connected to */
 
 					/* link in channel's table of periphs */

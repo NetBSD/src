@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.19 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.20 2009/05/12 14:47:04 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -60,10 +60,10 @@ extern struct cfdriver ioasic_cd;
  */
 extern tc_addr_t ioasic_base;
 
-const struct evcnt *ioasic_intr_evcnt(struct device *, void *);
-void    ioasic_intr_establish(struct device *, void *,
+const struct evcnt *ioasic_intr_evcnt(device_t, void *);
+void    ioasic_intr_establish(device_t, void *,
 	    int, int (*)(void *), void *);
-void    ioasic_intr_disestablish(struct device *, void *);
+void    ioasic_intr_disestablish(device_t, void *);
 void	ioasic_attach_devs(struct ioasic_softc *,
 	    struct ioasic_dev *, int);
 

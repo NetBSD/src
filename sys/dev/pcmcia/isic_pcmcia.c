@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.38 2009/05/12 13:18:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.39 2009/05/12 14:42:18 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -76,12 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.38 2009/05/12 13:18:04 cegger Exp 
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_pcmcia_match(struct device *, cfdata_t, void *);
-static void isic_pcmcia_attach(struct device *, struct device *, void *);
+static int isic_pcmcia_match(device_t, cfdata_t, void *);
+static void isic_pcmcia_attach(device_t, device_t, void *);
 static const struct isic_pcmcia_card_entry * find_matching_card(struct pcmcia_attach_args *pa);
 static int isic_pcmcia_isdn_attach(struct isic_softc *sc, const char*);
-static int isic_pcmcia_detach(struct device *self, int flags);
-static int isic_pcmcia_activate(struct device *self, enum devact act);
+static int isic_pcmcia_detach(device_t self, int flags);
+static int isic_pcmcia_activate(device_t self, enum devact act);
 
 CFATTACH_DECL(isic_pcmcia, sizeof(struct pcmcia_isic_softc),
     isic_pcmcia_match, isic_pcmcia_attach,
@@ -171,7 +171,7 @@ find_matching_card(struct pcmcia_attach_args *pa)
  * Match card
  */
 static int
-isic_pcmcia_match(struct device *parent,
+isic_pcmcia_match(device_t parent,
 	cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -186,8 +186,8 @@ isic_pcmcia_match(struct device *parent,
  * Attach the card
  */
 static void
-isic_pcmcia_attach(struct device *parent,
-	struct device *self, void *aux)
+isic_pcmcia_attach(device_t parent,
+	device_t self, void *aux)
 {
 	struct pcmcia_isic_softc *psc = (void*) self;
 	struct isic_softc *sc = &psc->sc_isic;
@@ -232,7 +232,7 @@ fail:
 }
 
 static int
-isic_pcmcia_detach(struct device *self, int flags)
+isic_pcmcia_detach(device_t self, int flags)
 {
 	struct pcmcia_isic_softc *psc = (struct pcmcia_isic_softc *)self;
 
@@ -246,7 +246,7 @@ isic_pcmcia_detach(struct device *self, int flags)
 }
 
 int
-isic_pcmcia_activate(struct device *self, enum devact act)
+isic_pcmcia_activate(device_t self, enum devact act)
 {
 	struct pcmcia_isic_softc *psc = (struct pcmcia_isic_softc *)self;
 	int error = 0, s;

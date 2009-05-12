@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.39 2009/05/12 13:17:37 cegger Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.40 2009/05/12 14:39:22 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.39 2009/05/12 13:17:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.40 2009/05/12 14:39:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -62,8 +62,8 @@ cons_decl(ofcons_);
 
 static int stdin, stdout;
 
-static int ofcons_match(struct device *, cfdata_t, void *);
-static void ofcons_attach(struct device *, struct device *, void *);
+static int ofcons_match(device_t, cfdata_t, void *);
+static void ofcons_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ofcons, sizeof(struct ofcons_softc),
     ofcons_match, ofcons_attach, NULL, NULL);
@@ -86,7 +86,7 @@ const struct cdevsw ofcons_cdevsw = {
 static int ofcons_probe(void);
 
 static int
-ofcons_match(struct device *parent, cfdata_t match, void *aux)
+ofcons_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 
@@ -99,7 +99,7 @@ ofcons_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-ofcons_attach(struct device *parent, struct device *self, void *aux)
+ofcons_attach(device_t parent, device_t self, void *aux)
 {
 	struct ofcons_softc *sc = device_private(self);
 

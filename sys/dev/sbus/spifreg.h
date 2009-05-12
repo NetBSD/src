@@ -1,4 +1,4 @@
-/*	$NetBSD: spifreg.h,v 1.3 2009/05/12 13:20:06 cegger Exp $	*/
+/*	$NetBSD: spifreg.h,v 1.4 2009/05/12 14:43:59 cegger Exp $	*/
 /*	$OpenBSD: spifreg.h,v 1.5 2003/06/02 18:32:41 jason Exp $	*/
 
 /*
@@ -390,11 +390,11 @@
 /*
  * internal function prototypes
  */
-int	spif_match(struct device *, cfdata_t, void *);
-void	spif_attach(struct device *, struct device *, void *);
+int	spif_match(device_t, cfdata_t, void *);
+void	spif_attach(device_t, device_t, void *);
 
-int	stty_match(struct device *, cfdata_t, void *);
-void	stty_attach(struct device *, struct device *, void *);
+int	stty_match(device_t, cfdata_t, void *);
+void	stty_attach(device_t, device_t, void *);
 
 int	spif_stcintr(void *);
 int	spif_stcintr_mx(struct spif_softc *, int *);
@@ -409,8 +409,8 @@ void	stty_write_ccr(struct spif_softc *, u_int8_t);
 int	stty_compute_baud(speed_t, int, u_int8_t *, u_int8_t *);
 void	stty_start(struct tty *);
 
-int	sbpp_match(struct device *, cfdata_t, void *);
-void	sbpp_attach(struct device *, struct device *, void *);
+int	sbpp_match(device_t, cfdata_t, void *);
+void	sbpp_attach(device_t, device_t, void *);
 
 int	sbpp_rw(dev_t, struct uio *);
 int	spif_ppcintr(void *);

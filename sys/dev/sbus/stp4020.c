@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.60 2009/05/12 13:20:06 cegger Exp $ */
+/*	$NetBSD: stp4020.c,v 1.61 2009/05/12 14:43:59 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.60 2009/05/12 13:20:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.61 2009/05/12 14:43:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,8 @@ struct stp4020_softc {
 
 
 static int	stp4020print(void *, const char *);
-static int	stp4020match(struct device *, cfdata_t, void *);
-static void	stp4020attach(struct device *, struct device *, void *);
+static int	stp4020match(device_t, cfdata_t, void *);
+static void	stp4020attach(device_t, device_t, void *);
 static int	stp4020_intr(void *);
 static void	stp4020_map_window(struct stp4020_socket *h, int win, int speed);
 static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *cmd_delay);
@@ -312,7 +312,7 @@ stp4020print(void *aux, const char *busname)
 }
 
 int
-stp4020match(struct device *parent, cfdata_t cf, void *aux)
+stp4020match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -323,7 +323,7 @@ stp4020match(struct device *parent, cfdata_t cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-stp4020attach(struct device *parent, struct device *self, void *aux)
+stp4020attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct stp4020_softc *sc = (void *)self;

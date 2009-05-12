@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.45 2009/05/12 13:18:04 cegger Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.46 2009/05/12 14:42:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.45 2009/05/12 13:18:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.46 2009/05/12 14:42:19 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -105,14 +105,14 @@ struct mhzc_softc {
 	/*
 	 * Data for the Modem portion.
 	 */
-	struct device *sc_modem;
+	device_t sc_modem;
 	struct pcmcia_io_handle sc_modem_pcioh;
 	int sc_modem_io_window;
 
 	/*
 	 * Data for the Ethernet portion.
 	 */
-	struct device *sc_ethernet;
+	device_t sc_ethernet;
 	struct pcmcia_io_handle sc_ethernet_pcioh;
 	int sc_ethernet_io_window;
 
@@ -127,10 +127,10 @@ struct mhzc_softc {
 #define	MHZC_MODEM_ALLOCED	0x10
 #define	MHZC_ETHERNET_ALLOCED	0x20
 
-int	mhzc_match(struct device *, cfdata_t, void *);
-void	mhzc_attach(struct device *, struct device *, void *);
-int	mhzc_detach(struct device *, int);
-int	mhzc_activate(struct device *, enum devact);
+int	mhzc_match(device_t, cfdata_t, void *);
+void	mhzc_attach(device_t, device_t, void *);
+int	mhzc_detach(device_t, int);
+int	mhzc_activate(device_t, enum devact);
 
 CFATTACH_DECL(mhzc, sizeof(struct mhzc_softc),
     mhzc_match, mhzc_attach, mhzc_detach, mhzc_activate);
@@ -165,7 +165,7 @@ void	mhzc_disable(struct mhzc_softc *, int);
 int	mhzc_intr(void *);
 
 int
-mhzc_match(struct device *parent, cfdata_t match,
+mhzc_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -177,7 +177,7 @@ mhzc_match(struct device *parent, cfdata_t match,
 }
 
 void
-mhzc_attach(struct device *parent, struct device *self, void *aux)
+mhzc_attach(device_t parent, device_t self, void *aux)
 {
 	struct mhzc_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -324,7 +324,7 @@ mhzc_print(void *aux, const char *pnp)
 }
 
 int
-mhzc_detach(struct device *self, int flags)
+mhzc_detach(device_t self, int flags)
 {
 	struct mhzc_softc *sc = (void *)self;
 	int rv;
@@ -361,7 +361,7 @@ mhzc_detach(struct device *self, int flags)
 }
 
 int
-mhzc_activate(struct device *self, enum devact act)
+mhzc_activate(device_t self, enum devact act)
 {
 	struct mhzc_softc *sc = (void *)self;
 	int s, rv = 0;
@@ -689,8 +689,8 @@ com_mhzc_disable(struct com_softc *sc)
 /****** Here begins the sm attachment code. ******/
 
 #if NSM_MHZC > 0
-int	sm_mhzc_match(struct device *, cfdata_t, void *);
-void	sm_mhzc_attach(struct device *, struct device *, void *);
+int	sm_mhzc_match(device_t, cfdata_t, void *);
+void	sm_mhzc_attach(device_t, device_t, void *);
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL(sm_mhzc, sizeof(struct smc91cxx_softc),
@@ -700,7 +700,7 @@ int	sm_mhzc_enable(struct smc91cxx_softc *);
 void	sm_mhzc_disable(struct smc91cxx_softc *);
 
 int
-sm_mhzc_match(struct device *parent, cfdata_t match,
+sm_mhzc_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	extern struct cfdriver sm_cd;
@@ -714,7 +714,7 @@ sm_mhzc_match(struct device *parent, cfdata_t match,
 }
 
 void
-sm_mhzc_attach(struct device *parent, struct device *self, void *aux)
+sm_mhzc_attach(device_t parent, device_t self, void *aux)
 {
 	struct smc91cxx_softc *sc = (void *)self;
 	struct mhzc_softc *msc = (void *)parent;
