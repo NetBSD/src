@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.15 2009/03/14 15:35:59 dsl Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.15 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ ptscattach(struct device *pdp, struct device *dp, void *auxp)
 
 #if PTSC_POLL == 0
 	evcnt_attach_dynamic(&sc->sc_softc.sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    dp->dv_xname, "intr");
+	    device_xname(dp), "intr");
 	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 	    ptsc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
 	if (sc->sc_softc.sc_ih == NULL)
