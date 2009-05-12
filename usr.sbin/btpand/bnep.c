@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.6 2009/05/03 07:24:55 kefren Exp $	*/
+/*	$NetBSD: bnep.c,v 1.7 2009/05/12 19:57:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.6 2009/05/03 07:24:55 kefren Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.7 2009/05/12 19:57:59 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -476,9 +476,9 @@ bnep_recv_filter_net_type_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 	}
 
 	rsp = be16dec(ptr);
-
-	log_debug("addr %s response 0x%2.2x",
-	    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
+	if (rsp != BNEP_FILTER_SUCCESS)
+		log_err("filter_net_type: addr %s response 0x%2.2x",
+		    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
 
 	/* we did not send any filter_net_type_set message */
 	return 2;
@@ -566,8 +566,9 @@ bnep_recv_filter_multi_addr_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 	}
 
 	rsp = be16dec(ptr);
-	log_debug("addr %s response 0x%2.2x",
-	    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
+	if (rsp != BNEP_FILTER_SUCCESS)
+		log_err("filter_multi_addr: addr %s response 0x%2.2x",
+		    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
 
 	/* we did not send any filter_multi_addr_set message */
 	return 2;
