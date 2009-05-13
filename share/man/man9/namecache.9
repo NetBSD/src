@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.12 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: namecache.9,v 1.13 2009/05/13 22:46:04 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -151,7 +151,9 @@ and fill in
 .Fa dvpp .
 If
 .Fa bufp
-is non-NULL, also place the name in the buffer which starts at
+is
+.Pf non- Dv NULL ,
+also place the name in the buffer which starts at
 .Fa bufp ,
 immediately before
 .Fa bpp ,
@@ -167,7 +169,9 @@ pointing to the vnode of the directory to enter and
 pointing to the partially initialised component structure.
 If
 .Fa vp
-is NULL, a negative cache entry is created, specifying that the entry
+is
+.Dv NULL ,
+a negative cache entry is created, specifying that the entry
 does not exist in the file system.
 .Fa cnp-\*[Gt]cn_nameptr
 points to the name of the entry being entered,
