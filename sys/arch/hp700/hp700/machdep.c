@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2009/05/09 11:39:30 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2009/05/13 14:33:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2009/05/09 11:39:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2009/05/13 14:33:42 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -270,6 +270,7 @@ void delay_init(void);
 static inline void fall(int, int, int, int, int);
 void dumpsys(void);
 void cpuid(void);
+enum hppa_cpu_type cpu_model_cpuid(int);
 
 /*
  * wide used hardware params
@@ -622,6 +623,7 @@ cpuid(void)
 	extern int kpsw;
 
 	/* may the scientific guessing begin */
+	cpu_type = hpc_unknown;
 	cpu_features = 0;
 	cpu_version = 0;
 
@@ -648,8 +650,10 @@ cpuid(void)
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
 	   &pdc_cpuid, 0, 0, 0, 0)) < 0) {
 #ifdef DEBUG
-		printf("WARNING: PDC_MODEL_CPUID error %d\n", error);
+		printf("WARNING: PDC_MODEL_CPUID error %d. "
+		    "Using cpu_hvers based cpu_type.\n", error);
 #endif
+		cpu_type = cpu_model_cpuid(cpu_hvers);
 	} else {
 #ifdef DEBUG
 		printf("%s: cpuid.version  = %x\n", __func__,
@@ -752,7 +756,12 @@ cpuid(void)
 
 	if (cpu_version)
 		for (p = cpu_types; p->hci_chip_name; p++) {
-			if (p->hci_cpuid == cpu_version)
+			if (p->hci_cpuversion == cpu_version)
+				break;
+		}
+	else if (cpu_type != hpc_unknown)
+		for (p = cpu_types; p->hci_chip_name; p++) {
+			if (p->hci_cputype == cpu_type)
 				break;
 		}
 	else
@@ -800,6 +809,38 @@ cpuid(void)
 
 	/* Bootstrap any FPU. */
 	hppa_fpu_bootstrap(pdc_coproc.ccr_enable);
+}
+
+enum hppa_cpu_type
+cpu_model_cpuid(int hvers)
+{
+	switch (hvers) {
+	/* no supported HP8xx/9xx models with pcx */
+	case HPPA_BOARD_HP720:
+	case HPPA_BOARD_HP750_66:
+	case HPPA_BOARD_HP730_66:
+	case HPPA_BOARD_HP710:
+	case HPPA_BOARD_HP705:
+		return hpcxs;
+
+	case HPPA_BOARD_HP735_99:
+	case HPPA_BOARD_HP755_99:
+	case HPPA_BOARD_HP755_125:
+	case HPPA_BOARD_HP735_130:
+	case HPPA_BOARD_HP715_50:
+	case HPPA_BOARD_HP715_33:
+	case HPPA_BOARD_HP715S_50:
+	case HPPA_BOARD_HP715S_33:
+	case HPPA_BOARD_HP715T_50:
+	case HPPA_BOARD_HP715T_33:
+	case HPPA_BOARD_HP715_75:
+	case HPPA_BOARD_HP715_99:
+	case HPPA_BOARD_HP725_50:
+	case HPPA_BOARD_HP725_75:
+	case HPPA_BOARD_HP725_99:
+		return hpcxt;
+	}
+	return hpc_unknown;
 }
 
 void
