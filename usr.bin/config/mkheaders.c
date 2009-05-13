@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.15 2009/04/11 12:41:10 lukem Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.16 2009/05/13 18:54:34 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,14 @@ mkheaders(void)
 			return (1);
 	}
 
-	if (emitopts() || emitlocs() || emitioconfh() || emittime())
+	if (emitopts() || emitlocs() || emitioconfh())
+		return (1);
+
+	/*
+	 * If the minimum required version is ever bumped beyond 20090513,
+	 * emittime() can be removed.
+	 */
+	if (version <= 20090513 && emittime())
 		return (1);
 
 	return (0);
