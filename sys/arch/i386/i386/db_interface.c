@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.62 2008/10/15 08:13:17 ad Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.62.8.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62 2008/10/15 08:13:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62.8.1 2009/05/13 17:17:49 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -99,7 +99,7 @@ typedef void (vector)(void);
 extern vector Xintrddbipi;
 
 void
-db_machine_init()
+db_machine_init(void)
 {
 
 #ifdef MULTIPROCESSOR
@@ -157,8 +157,7 @@ db_resume_others(void)
  * Print trap reason.
  */
 void
-kdbprinttrap(type, code)
-	int type, code;
+kdbprinttrap(int type, int code)
 {
 	db_printf("kernel: %s trap ", (type & T_USER) ? "user" : "supervisor");
 	type &= ~T_USER;
@@ -173,9 +172,7 @@ kdbprinttrap(type, code)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, code, regs)
-	int type, code;
-	db_regs_t *regs;
+kdb_trap(int type, int code, db_regs_t *regs)
 {
 	int s, flags;
 	db_regs_t dbreg;
@@ -264,7 +261,7 @@ kdb_trap(type, code, regs)
 }
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 	breakpoint();
 }

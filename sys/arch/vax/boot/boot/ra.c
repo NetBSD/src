@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.17 2006/07/01 05:55:34 mrg Exp $ */
+/*	$NetBSD: ra.c,v 1.17.76.1 2009/05/13 17:18:40 jym Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -88,8 +88,8 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	    adapt, ctlr, unit, part);
 	printf("raopen: csrbase %x nexaddr %x\n", csrbase, nexaddr);
 #endif
-	bzero(&ralabel, sizeof(struct disklabel));
-	bzero((void *)&uda, sizeof(struct uda));
+	memset(&ralabel, 0, sizeof(struct disklabel));
+	memset((void *)&uda, 0, sizeof(struct uda));
 	if (bootrpb.devtyp == BDEV_TK)
 		is_tmscp = 1;
 	dunit = unit;

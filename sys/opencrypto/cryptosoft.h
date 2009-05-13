@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.h,v 1.5 2007/03/04 06:03:40 christos Exp $ */
+/*	$NetBSD: cryptosoft.h,v 1.5.56.1 2009/05/13 17:22:56 jym Exp $ */
 /*	$OpenBSD: cryptosoft.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ struct swcr_data {
 		} SWCR_ENC;
 		struct {
 			u_int32_t	 SW_size;
+			u_int32_t	 SW_crc;
 			const struct swcr_comp_algo *SW_cxf;
 		} SWCR_COMP;
 	} SWCR_UN;

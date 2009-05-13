@@ -1,12 +1,12 @@
-/*	$NetBSD: idt.c,v 1.2 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: idt.c,v 1.2.14.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
- * Simulation Facility, NASA Ames Research Center.
+ * by Charles M. Hannum, by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,46 +65,51 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.2 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.2.14.1 2009/05/13 17:18:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
+#include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <machine/segments.h>
 
 #if !defined(XEN)
 
-static kmutex_t idt_lock;
 struct gate_descriptor *idt;
 static char idt_allocmap[NIDT];
 
 /*
  * Allocate an IDT vector slot within the given range.
+ * cpu_lock will be held unless single threaded during early boot.
  */
-
 int
 idt_vec_alloc(int low, int high)
 {
 	int vec;
 
-	mutex_enter(&idt_lock);
+	KASSERT(mutex_owned(&cpu_lock) || !mp_online);
+
 	for (vec = low; vec <= high; vec++) {
 		if (idt_allocmap[vec] == 0) {
+			/* idt_vec_free() can be unlocked, so membar. */
+			membar_sync();
 			idt_allocmap[vec] = 1;
-			mutex_exit(&idt_lock);
 			return vec;
 		}
 	}
-	mutex_exit(&idt_lock);
 	return 0;
 }
 
 void
 idt_vec_reserve(int vec)
 {
-	int result = idt_vec_alloc(vec, vec);
+	int result;
 
+	KASSERT(mutex_owned(&cpu_lock) || !mp_online);
+
+	result = idt_vec_alloc(vec, vec);
 	if (result != vec) {
 		panic("%s: failed to reserve vec %d", __func__, vec);
 	}
@@ -113,30 +118,28 @@ idt_vec_reserve(int vec)
 void
 idt_vec_set(int vec, void (*function)(void))
 {
-	/*
-	 * Vector should be allocated, so no locking needed.
-	 */
 
+	KASSERT(mutex_owned(&cpu_lock) || !mp_online);
 	KASSERT(idt_allocmap[vec] == 1);
 	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 }
 
+/*
+ * Free IDT vector.  No locking required as release is atomic.
+ */
 void
 idt_vec_free(int vec)
 {
 
-	mutex_enter(&idt_lock);
 	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
-	mutex_exit(&idt_lock);
 }
 
 void
 idt_init(void)
 {
 
-	mutex_init(&idt_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 #endif /* !defined(XEN) */

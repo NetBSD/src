@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.130 2008/12/16 22:35:37 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.130.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.130 2008/12/16 22:35:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.130.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -366,7 +366,7 @@ sysctl_kern_mbuf_stats(SYSCTLFN_ARGS)
 }
 
 static void
-sysctl_kern_mbuf_setup()
+sysctl_kern_mbuf_setup(void)
 {
 
 	KASSERT(mbuf_sysctllog == NULL);
@@ -1056,6 +1056,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		if (remain > MHLEN) {
 			/* m can't be the lead packet */
 			MH_ALIGN(n, 0);
+			n->m_len = 0;
 			n->m_next = m_split(m, len, wait);
 			if (n->m_next == 0) {
 				(void) m_free(n);

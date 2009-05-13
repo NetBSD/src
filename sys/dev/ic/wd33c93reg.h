@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93reg.h,v 1.3 2007/05/08 00:29:30 rumble Exp $	*/
+/*	$NetBSD: wd33c93reg.h,v 1.3.48.1 2009/05/13 17:19:25 jym Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -156,7 +156,7 @@
  */
 
 #define SBIC_CTL_DMA		0x80	/* Single byte dma */
-#define SBIC_CTL_DBA_DMA	0x40	/* direct buffer acces (bus master)*/
+#define SBIC_CTL_DBA_DMA	0x40	/* direct buffer access (bus master) */
 #define SBIC_CTL_BURST_DMA	0x20	/* continuous mode (8237) */
 #define SBIC_CTL_NO_DMA		0x00	/* Programmed I/O */
 #define SBIC_CTL_HHP		0x10	/* Halt on host parity error */
@@ -367,27 +367,25 @@
 #define PAD(n)	char n;
 #define SBIC_MACHINE_DMA_MODE	SBIC_CTL_DMA
 
-typedef struct {
-	volatile unsigned char	wd33c93_asr;	/* r : Aux Status Register */
-#define wd33c93_address		wd33c93_asr	/* w : desired register no */
-	volatile unsigned char	wd33c93_value; /* rw: register value */
-} wd33c93_padded_ind_regmap_t;
-typedef volatile wd33c93_padded_ind_regmap_t *wd33c93_regmap_p;
-
-#define	SBIC_ASR		0	/* offset to ASC register */
-#define	SBIC_ADDR		0	/* offset to address reg */
-#define	SBIC_VAL		1	/* offset to data register */
+/*
+ * WD33C93 has two registers:
+ *    ASR  - r : Aux Status Register, w : desired register no
+ *    DATA - rw: register value
+ *
+ * We access them via separate handles because some people *cough*SGI*cough*
+ * like to keep them apart.
+ */
 
 #define wd33c93_read_reg(sc,regno,val)					\
     do {								\
-	bus_space_write_1((sc)->sc_regt,(sc)->sc_regh,SBIC_ADDR,(regno)); \
-	(val) = bus_space_read_1((sc)->sc_regt,(sc)->sc_regh,SBIC_VAL);	\
+	bus_space_write_1((sc)->sc_regt,(sc)->sc_asr_regh, 0, (regno)); \
+	(val) = bus_space_read_1((sc)->sc_regt,(sc)->sc_data_regh, 0);	\
     } while (0)
 
-#define wd33c93_write_reg(sc,regno,val)					\
-    do {								\
-	bus_space_write_1((sc)->sc_regt, (sc)->sc_regh, SBIC_ADDR, (regno)); \
-	bus_space_write_1((sc)->sc_regt, (sc)->sc_regh, SBIC_VAL,  (val)); \
+#define wd33c93_write_reg(sc,regno,val)					 \
+    do {								 \
+	bus_space_write_1((sc)->sc_regt, (sc)->sc_asr_regh, 0, (regno)); \
+	bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh, 0,  (val)); \
     } while (0)
 
 #define SET_SBIC_myid(sc,val)		wd33c93_write_reg(sc,SBIC_myid,val)
@@ -450,19 +448,19 @@ typedef volatile wd33c93_padded_ind_regmap_t *wd33c93_regmap_p;
 #define SBIC_TC_PUT(sc,val)						\
     do {								\
 	wd33c93_write_reg(sc,SBIC_count_hi,((val)>>16));		\
-	bus_space_write_1((sc)->sc_regt, (sc)->sc_regh,			\
-			  SBIC_VAL, (val)>>8); 				\
-	bus_space_write_1((sc)->sc_regt, (sc)->sc_regh,			\
-			  SBIC_VAL, (val)); 				\
+	bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh, 0,		\
+			  (val)>>8); 					\
+	bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh, 0,		\
+			  (val)); 					\
     } while (0)
 
 #define SBIC_TC_GET(sc,val)						\
     do {								\
 	wd33c93_read_reg(sc,SBIC_count_hi,(val));			\
 	(val) = ((val)<<8) | bus_space_read_1((sc)->sc_regt,		\
-				(sc)->sc_regh,SBIC_VAL);		\
+				(sc)->sc_data_regh, 0);			\
 	(val) = ((val)<<8) | bus_space_read_1((sc)->sc_regt,		\
-				(sc)->sc_regh,SBIC_VAL);		\
+				(sc)->sc_data_regh, 0);			\
     } while (0)
 
 #define SBIC_LOAD_COMMAND(sc,cmd,cmdsize)				\
@@ -471,20 +469,20 @@ typedef volatile wd33c93_padded_ind_regmap_t *wd33c93_regmap_p;
 	char *ptr = (char *)(cmd);					\
 	wd33c93_write_reg(regs, SBIC_cdb1, *ptr++);			\
 	while(n-- > 0)							\
-		bus_space_write_1((sc)->sc_regt, (sc)->sc_regh,		\
-			  SBIC_VAL, *ptr++); /* XXX write_multi */	\
+		bus_space_write_1((sc)->sc_regt, (sc)->sc_data_regh,	\
+			  0, *ptr++); /* XXX write_multi */		\
     } while (0)
 
 #define GET_SBIC_asr(sc,val)						\
     do {								\
-	(val) = bus_space_read_1((sc)->sc_regt,(sc)->sc_regh,SBIC_ASR);	\
+	(val) = bus_space_read_1((sc)->sc_regt,(sc)->sc_asr_regh, 0);	\
     } while (0)
 
 
 #define WAIT_CIP(sc)							\
     do {								\
-	while (bus_space_read_1((sc)->sc_regt,(sc)->sc_regh,		\
-			SBIC_ASR) & SBIC_ASR_CIP) 			\
+	while (bus_space_read_1((sc)->sc_regt,(sc)->sc_asr_regh,	\
+			0) & SBIC_ASR_CIP) 				\
 		/*nop*/;						\
     } while (0)
 

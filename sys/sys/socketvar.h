@@ -1,8 +1,11 @@
-/*	$NetBSD: socketvar.h,v 1.118 2009/01/21 06:59:29 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.118.2.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -195,6 +198,7 @@ do {									\
 #define	SS_CANTSENDMORE		0x010	/* can't send more data to peer */
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
+#define	SS_ISDRAINING		0x080	/* draining fd references */
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_ASYNC		0x100	/* async i/o notify */
@@ -252,6 +256,7 @@ int	soo_poll(file_t *, int);
 int	soo_kqfilter(file_t *, struct knote *);
 int 	soo_close(file_t *);
 int	soo_stat(file_t *, struct stat *);
+void	soo_drain(file_t *);
 void	sbappend(struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct sockbuf *, struct mbuf *);
 int	sbappendaddr(struct sockbuf *, const struct sockaddr *, struct mbuf *,
@@ -307,6 +312,7 @@ int	sosend(struct socket *, struct mbuf *, struct uio *,
 int	sosetopt(struct socket *, struct sockopt *);
 int	so_setsockopt(struct lwp *, struct socket *, int, int, const void *, size_t);
 int	soshutdown(struct socket *, int);
+int	sodrain(struct socket *);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 int	sopoll(struct socket *, int);

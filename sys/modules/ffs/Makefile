@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/11/13 10:50:26 ad Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2009/05/13 17:22:19 jym Exp $
 
 .include "../Makefile.inc"
 
@@ -13,7 +13,7 @@ SRCS=	ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_ihash.c ufs_inode.c \
 
 .PATH:	${S}/ufs/ffs
 SRCS+=	ffs_alloc.c ffs_balloc.c ffs_inode.c ffs_subr.c ffs_tables.c \
-	ffs_vfsops.c ffs_vnops.c ffs_softdep.stub.c ffs_snapshot.c \
+	ffs_vfsops.c ffs_vnops.c ffs_snapshot.c \
 	ffs_bswap.c ffs_wapbl.c ffs_appleufs.c
 
 .include <bsd.kmodule.mk>

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_reg.h,v 1.3 2003/03/11 23:11:27 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_reg.h,v 1.19 2008/04/24 15:35:28 ad Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.19.16.1 2009/05/13 17:21:08 jym Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp$
  *
@@ -49,8 +49,8 @@
 #endif
 
 #ifdef __NetBSD__
-#include <sys/bus.h>		/* struct device */
-#include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/device.h>			/* device_t */
 #include <sys/select.h>			/* struct selinfo */
 #include <sys/reboot.h>			/* AB_* for bootverbose */
 #endif

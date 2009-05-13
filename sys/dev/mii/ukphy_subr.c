@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.10 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.10.14.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.10 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.10.14.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,10 @@ ukphy_status(struct mii_softc *phy)
 		else if ((gtcr & GTCR_ADV_1000THDX) &&
 			 (gtsr & GTSR_LP_1000THDX))
 			mii->mii_media_active |= IFM_1000_T;
-		else if (anlpar & ANLPAR_T4)
-			mii->mii_media_active |= IFM_100_T4;
 		else if (anlpar & ANLPAR_TX_FD)
 			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+		else if (anlpar & ANLPAR_T4)
+			mii->mii_media_active |= IFM_100_T4;
 		else if (anlpar & ANLPAR_TX)
 			mii->mii_media_active |= IFM_100_TX;
 		else if (anlpar & ANLPAR_10_FD)

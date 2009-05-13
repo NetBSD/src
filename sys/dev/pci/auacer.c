@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.21 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: auacer.c,v 1.21.14.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.21 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.21.14.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,7 @@ static int	auacer_write_codec(void *, uint8_t, uint16_t);
 static int	auacer_reset_codec(void *);
 
 static int
-auacer_match(struct device *parent, struct cfdata *match,
-    void *aux)
+auacer_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -249,7 +248,7 @@ auacer_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-auacer_attach(struct device *parent, struct device *self, void *aux)
+auacer_attach(device_t parent, device_t self, void *aux)
 {
 	struct auacer_softc *sc;
 	struct pci_attach_args *pa;
@@ -259,7 +258,7 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	int i;
 
-	sc = (struct auacer_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 	aprint_normal(": Acer Labs M5455 Audio controller\n");
 

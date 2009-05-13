@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.312 2009/01/16 21:11:27 cegger Exp $
+#	$NetBSD: files.pci,v 1.312.2.1 2009/05/13 17:20:24 jym Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -909,6 +909,10 @@ device	msk: ether, ifnet, arp, mii
 attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
 
+# SD Host Controller
+attach sdhc at pci with sdhc_pci
+file	dev/pci/sdhc_pci.c		sdhc_pci
+
 #
 # Direct Rendering Manager
 #
@@ -941,6 +945,11 @@ defflag	opt_r128fb.h	R128FB_WAIT
 device	age: ether, ifnet, arp, mii, mii_phy
 attach	age at pci
 file	dev/pci/if_age.c		age
+
+# Attanisc/Atheros L1E Gigabit Ethernet
+device	ale: ether, ifnet, arp, mii, mii_phy
+attach	ale at pci
+file	dev/pci/if_ale.c		ale
 
 # Atheros/Attansic L2 Fast-Ethernet
 device	lii: ether, ifnet, arp, mii

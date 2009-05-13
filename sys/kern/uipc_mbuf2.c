@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.26 2007/03/04 06:03:11 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.26.56.1 2009/05/13 17:21:58 jym Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.26 2007/03/04 06:03:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.26.56.1 2009/05/13 17:21:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ m_tag_copy(struct m_tag *t)
 	p = m_tag_get(t->m_tag_id, t->m_tag_len, M_NOWAIT);
 	if (p == NULL)
 		return (NULL);
-	bcopy(t + 1, p + 1, t->m_tag_len); /* Copy the data */
+	memcpy(p + 1, t + 1, t->m_tag_len); /* Copy the data */
 	return (p);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.37 2008/06/12 21:48:16 cegger Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.37.10.1 2009/05/13 17:19:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.37 2008/06/12 21:48:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.37.10.1 2009/05/13 17:19:17 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -310,7 +310,7 @@ pdq_eisa_attach(
 	return -1;
     }
 
-    bcopy((void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    memcpy(sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
     pdq_ifattach(sc, pdq_eisa_ifwatchdog);
 
     ed->kdc->kdc_state = DC_BUSY;	 /* host adapters always busy */
@@ -332,8 +332,8 @@ pdq_eisa_shutdown(
 #if defined(__bsdi__)
 static int
 pdq_eisa_probe(
-    struct device *parent,
-    struct cfdata *cf,
+    device_t parent,
+    cfdata_t cf,
     void *aux)
 {
     struct isa_attach_args *ia = (struct isa_attach_args *) aux;
@@ -389,8 +389,8 @@ pdq_eisa_probe(
 
 static void
 pdq_eisa_attach(
-    struct device *parent,
-    struct device *self,
+    device_t parent,
+    device_t self,
     void *aux)
 {
     pdq_softc_t *sc = (pdq_softc_t *) self;
@@ -413,7 +413,7 @@ pdq_eisa_attach(
 	return;
     }
 
-    bcopy((void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    memcpy(sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
 
     pdq_ifattach(sc, pdq_eisa_ifwatchdog);
 
@@ -444,8 +444,8 @@ struct cfdriver feacd = {
 #if defined(__NetBSD__)
 static int
 pdq_eisa_match(
-    struct device *parent,
-    struct cfdata *match,
+    device_t parent,
+    cfdata_t match,
     void *aux)
 {
     const struct eisa_attach_args * const ea = (struct eisa_attach_args *) aux;
@@ -458,8 +458,8 @@ pdq_eisa_match(
 
 static void
 pdq_eisa_attach(
-    struct device *parent,
-    struct device *self,
+    device_t parent,
+    device_t self,
     void *aux)
 {
     pdq_softc_t * const sc = device_private(self);

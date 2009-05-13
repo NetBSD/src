@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2009/01/12 11:32:44 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.2.1 2009/05/13 17:18:09 jym Exp $	*/
 
 /*
  * This is a slightly modified version of mvme68k's standalone clock.c.
@@ -56,7 +56,7 @@ chiptotime(int sec, int min, int hour, int day, int mon, int year)
 }
 
 satime_t
-getsecs()
+getsecs(void)
 {
 	struct bug_rtc_rd rr;
 

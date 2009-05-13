@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.3 2006/06/28 16:28:51 lukem Exp $
+#	$NetBSD: Makefile.bootxx,v 1.3.76.1 2009/05/13 17:17:41 jym Exp $
 
 NOMAN		=
 
@@ -29,7 +29,7 @@ CPPFLAGS	+= -D_STANDALONE
 CPPFLAGS	+= -nostdinc -I${.OBJDIR} -I${COMMON} -I${S}
 CPPFLAGS	+= -D__daddr_t=int32_t
 
-CLEANFILES	+= ${PROG} ${PROG}.bin ${PROG}.elf ${PROG}.tmp machine mips
+CLEANFILES	+= ${PROG} ${PROG}.bin ${PROG}.elf ${PROG}.tmp
 
 KERN_AS		= library
 .include	"${S}/lib/libkern/Makefile.inc"
@@ -37,12 +37,11 @@ LIBKERN		= ${KERNLIB}
 
 LIBS		= ${LIBKERN}
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s $S/arch/${MACHINE}/include machine
-	@[ -h mips ] || ln -s $S/arch/mips/include mips
-.NOPATH: machine mips
-.endif
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 ${PROG}: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
@@ -59,4 +58,5 @@ clean cleandir distclean: cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

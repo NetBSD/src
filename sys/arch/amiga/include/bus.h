@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.20.92.1 2009/05/13 17:16:10 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -237,9 +237,9 @@ struct amiga_bus_space_methods {
 /* 
  * Bus read/write barrier methods.
  * 
- *      void bus_space_barrier __P((bus_space_tag_t tag,
+ *      void bus_space_barrier(bus_space_tag_t tag,
  *          bus_space_handle_t bsh, bus_size_t offset,
- *          bus_size_t len, int flags));
+ *          bus_size_t len, int flags);
  *    
  * Note: the 680x0 does not currently require barriers, but we must
  * provide the flags to MI code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.7 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7.94.1 2009/05/13 17:16:17 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -71,12 +71,12 @@ struct buf;
 struct disklabel;
 
 /* for readdisklabel.  rv != 0 -> matches, msg == NULL -> success */
-int	mbr_label_read __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *, const char **, int *, int *));
+int	mbr_label_read(dev_t, void (*)(struct buf *), struct disklabel *,
+	    struct cpu_disklabel *, const char **, int *, int *);
 
 /* for writedisklabel.  rv == 0 -> dosen't match, rv > 0 -> success */
-int	mbr_label_locate __P((dev_t, void (*)(struct buf *),
-	    struct disklabel *, struct cpu_disklabel *, int *, int *));
+int	mbr_label_locate(dev_t, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *, int *, int *);
 #endif /* _KERNEL */
 
 #endif /* _ARM_DISKLABEL_H_ */

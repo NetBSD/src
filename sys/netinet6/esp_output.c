@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.32 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.32.16.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.32 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.32.16.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -79,8 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.32 2008/04/23 06:09:05 thorpej Exp 
 
 #include <net/net_osdep.h>
 
-static int esp_output __P((struct mbuf *, u_char *, struct mbuf *,
-	struct ipsecrequest *, int));
+static int esp_output(struct mbuf *, u_char *, struct mbuf *,
+	struct ipsecrequest *, int);
 
 /*
  * compute ESP header size.
@@ -509,7 +509,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		key_randomfill(extend, extendsiz);
 		break;
 	case SADB_X_EXT_PZERO:
-		bzero(extend, extendsiz);
+		memset(extend, 0, extendsiz);
 		break;
 	case SADB_X_EXT_PSEQ:
 		for (i = 0; i < extendsiz; i++)
@@ -650,7 +650,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		m->m_pkthdr.len += siz;
 		p = mtod(nn, u_char *);
 	}
-	bcopy(authbuf, p, siz);
+	memcpy(p, authbuf, siz);
 
 	/* modify IP header (for ESP header part only) */
 	switch (af) {

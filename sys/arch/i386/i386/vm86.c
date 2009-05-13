@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.49 2008/11/19 18:35:59 ad Exp $	*/
+/*	$NetBSD: vm86.c,v 1.49.4.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.49 2008/11/19 18:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.49.4.1 2009/05/13 17:17:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,7 @@ static inline int is_bitset(int, void *);
 	} while (0)
 
 static inline int
-is_bitset(nr, bitmap)
-	int nr;
-	void *bitmap;
+is_bitset(int nr, void *bitmap)
 {
 	u_int byte;		/* bt instruction doesn't do
 					   bytes--it examines ints! */
@@ -124,9 +122,7 @@ is_bitset(nr, bitmap)
 #define V86_AL(regs)	(((u_char *)&((regs)->tf_eax))[0])
 
 static void
-fast_intxx(l, intrno)
-	struct lwp *l;
-	int intrno;
+fast_intxx(struct lwp *l, int intrno)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	/*
@@ -200,9 +196,7 @@ vector:
 }
 
 void
-vm86_return(l, retval)
-	struct lwp *l;
-	int retval;
+vm86_return(struct lwp *l, int retval)
 {
 	struct proc *p = l->l_proc;
 	ksiginfo_t ksi;

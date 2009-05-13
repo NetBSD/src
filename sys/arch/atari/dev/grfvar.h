@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.10 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.10.58.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,18 +101,18 @@ struct	grf_softc {
 	dev_t		g_grfdev;	/* grf device number		*/
 	dev_t		g_viewdev;	/* view device number		*/
 	void *		g_data;		/* device dependent data	*/
-	int		(*g_mode) __P((struct grf_softc *, int, void *,
-								int, int));
+	int		(*g_mode)(struct grf_softc *, int, void *,
+								int, int);
 	int		g_conpri;	/* priority of ite as console	*/
-	void		(*g_iteinit)   __P((struct ite_softc *));
-	void		(*g_itedeinit) __P((struct ite_softc *));
-	void		(*g_iteclear)  __P((struct ite_softc *, int, int,
-								int, int));
-	void		(*g_iteputc)   __P((struct ite_softc *, int, int,
-								int, int));
-	void		(*g_itecursor) __P((struct ite_softc *, int));
-	void		(*g_itescroll) __P((struct ite_softc *, int, int,
-								int, int));
+	void		(*g_iteinit)(struct ite_softc *);
+	void		(*g_itedeinit)(struct ite_softc *);
+	void		(*g_iteclear)(struct ite_softc *, int, int,
+								int, int);
+	void		(*g_iteputc)(struct ite_softc *, int, int,
+								int, int);
+	void		(*g_itecursor)(struct ite_softc *, int);
+	void		(*g_itescroll)(struct ite_softc *, int, int,
+								int, int);
 };
 
 /* flags */
@@ -145,8 +145,8 @@ struct	grf_softc {
 
 #ifdef _KERNEL
 
-int  grf_mode __P((struct grf_softc *, int, void *, int, int));
-void grf_viewsync __P((struct grf_softc *));
+int  grf_mode(struct grf_softc *, int, void *, int, int);
+void grf_viewsync(struct grf_softc *);
 
 extern struct grf_softc *grfsp[]; /* XXX */
 #endif /* _KERNEL */

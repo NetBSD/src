@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.15 2008/04/28 20:24:01 martin Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.15.14.1 2009/05/13 17:21:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.15 2008/04/28 20:24:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.15.14.1 2009/05/13 17:21:42 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -187,7 +187,78 @@ static struct compose_tab_s {
 	{ { KS_dead_semi,		KS_gr_y },		KS_gr_yt  },
 	{ { KS_dead_semi,		KS_gr_v },		KS_gr_vt  },
 	{ { KS_dead_colon,		KS_gr_i },		KS_gr_id  },
-	{ { KS_dead_colon,		KS_gr_y },		KS_gr_yd  }
+	{ { KS_dead_colon,		KS_gr_y },		KS_gr_yd  },
+
+	/* Latin 2*/
+
+        { { KS_dead_acute,		KS_S },			KS_Sacute },
+	{ { KS_dead_acute,		KS_Z },			KS_Zacute },
+	{ { KS_dead_acute,		KS_s },			KS_sacute },
+	{ { KS_dead_acute,		KS_z },			KS_zacute },
+	{ { KS_dead_acute,		KS_R },			KS_Racute },
+	{ { KS_dead_acute,		KS_A },			KS_Aacute },
+	{ { KS_dead_acute,		KS_L },			KS_Lacute },
+	{ { KS_dead_acute,		KS_C },			KS_Cacute },
+	{ { KS_dead_acute,		KS_E },			KS_Eacute },
+	{ { KS_dead_acute,		KS_I },			KS_Iacute },
+	{ { KS_dead_acute,		KS_N },			KS_Nacute },
+	{ { KS_dead_acute,		KS_O },			KS_Oacute },
+	{ { KS_dead_acute,		KS_U },			KS_Uacute },
+	{ { KS_dead_acute,		KS_Y },			KS_Yacute },
+	{ { KS_dead_acute,		KS_r },			KS_racute },
+	{ { KS_dead_acute,		KS_a },			KS_aacute },
+	{ { KS_dead_acute,		KS_l },			KS_lacute },
+	{ { KS_dead_acute,		KS_c },			KS_cacute },
+	{ { KS_dead_acute,		KS_e },			KS_eacute },
+	{ { KS_dead_acute,		KS_i },			KS_iacute },
+	{ { KS_dead_acute,		KS_n },			KS_nacute },
+	{ { KS_dead_acute,		KS_o },			KS_oacute },
+	{ { KS_dead_acute,		KS_u },			KS_uacute },
+	{ { KS_dead_acute,		KS_y },			KS_yacute },
+	{ { KS_dead_breve,		KS_A },			KS_Abreve },
+	{ { KS_dead_breve,		KS_a },			KS_abreve },
+	{ { KS_dead_caron,		KS_L },			KS_Lcaron },
+	{ { KS_dead_caron,		KS_S },			KS_Scaron },
+	{ { KS_dead_caron,		KS_T },			KS_Tcaron },
+	{ { KS_dead_caron,		KS_Z },			KS_Zcaron },
+	{ { KS_dead_caron,		KS_l },			KS_lcaron },
+	{ { KS_dead_caron,		KS_s },			KS_scaron },
+	{ { KS_dead_caron,		KS_t },			KS_tcaron },
+	{ { KS_dead_caron,		KS_z },			KS_zcaron },
+	{ { KS_dead_caron,		KS_C },			KS_Ccaron },
+	{ { KS_dead_caron,		KS_E },			KS_Ecaron },
+	{ { KS_dead_caron,		KS_D },			KS_Dcaron },
+	{ { KS_dead_caron,		KS_N },			KS_Ncaron },
+	{ { KS_dead_caron,		KS_R },			KS_Rcaron },
+	{ { KS_dead_caron,		KS_c },			KS_ccaron },
+	{ { KS_dead_caron,		KS_e },			KS_ecaron },
+	{ { KS_dead_caron,		KS_d },			KS_dcaron },
+	{ { KS_dead_caron,		KS_n },			KS_ncaron },
+	{ { KS_dead_caron,		KS_r },			KS_rcaron },
+	{ { KS_dead_cedilla,		KS_S },			KS_Scedilla },
+	{ { KS_dead_cedilla,		KS_s },			KS_scedilla },
+	{ { KS_dead_cedilla,		KS_C },			KS_Ccedilla },
+	{ { KS_dead_cedilla,		KS_T },			KS_Tcedilla },
+	{ { KS_dead_cedilla,		KS_c },			KS_ccedilla },
+	{ { KS_dead_cedilla,		KS_t },			KS_tcedilla },
+	{ { KS_dead_circumflex,		KS_A },			KS_Acircumflex },
+	{ { KS_dead_circumflex,		KS_I },			KS_Icircumflex },
+	{ { KS_dead_circumflex,		KS_O },			KS_Ocircumflex },
+	{ { KS_dead_circumflex,		KS_a },			KS_acircumflex },
+	{ { KS_dead_circumflex,		KS_i },			KS_icircumflex },
+	{ { KS_dead_circumflex,		KS_o },			KS_ocircumflex },
+	{ { KS_dead_diaeresis,		KS_A },			KS_Adiaeresis },
+	{ { KS_dead_diaeresis,		KS_E },			KS_Ediaeresis },
+	{ { KS_dead_diaeresis,		KS_O },			KS_Odiaeresis },
+	{ { KS_dead_diaeresis,		KS_U },			KS_Udiaeresis },
+	{ { KS_dead_diaeresis,		KS_a },			KS_adiaeresis },
+	{ { KS_dead_diaeresis,		KS_e },			KS_ediaeresis },
+	{ { KS_dead_diaeresis,		KS_o },			KS_odiaeresis },
+	{ { KS_dead_diaeresis,		KS_u },			KS_udiaeresis },
+	{ { KS_dead_ogonek,		KS_A },			KS_Aogonek },
+	{ { KS_dead_ogonek,		KS_a },			KS_aogonek },
+	{ { KS_dead_ogonek,		KS_E },			KS_Eogonek },
+	{ { KS_dead_ogonek,		KS_e },			KS_eogonek }
 };
 
 #define COMPOSE_SIZE	sizeof(compose_tab)/sizeof(compose_tab[0])

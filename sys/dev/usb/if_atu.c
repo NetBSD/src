@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.29 2008/05/24 16:40:58 cube Exp $ */
+/*	$NetBSD: if_atu.c,v 1.29.12.1 2009/05/13 17:21:34 jym Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.29 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.29.12.1 2009/05/13 17:21:34 jym Exp $");
 
 #include "bpfilter.h"
 
@@ -1336,7 +1336,7 @@ atu_complete_attach(struct atu_softc *sc)
 	sc->atu_wepkeylen = ATU_WEP_104BITS;
 	sc->atu_wepkey = 0;
 
-	bzero(sc->atu_bssid, ETHER_ADDR_LEN);
+	memset(sc->atu_bssid, 0, ETHER_ADDR_LEN);
 	sc->atu_channel = ATU_DEFAULT_CHANNEL;
 	sc->atu_desired_channel = IEEE80211_CHAN_ANY;
 	sc->atu_mode = INFRASTRUCTURE_MODE;

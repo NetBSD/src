@@ -1,4 +1,4 @@
-/*	$NetBSD: winfs.h,v 1.2 2000/01/16 03:07:27 takemura Exp $	*/
+/*	$NetBSD: winfs.h,v 1.2.148.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -35,11 +35,11 @@
  * SUCH DAMAGE.
  *
  */
-int win_open __P((char *path, struct open_file *f));
-int win_read __P((struct open_file *f,void *addr,
-              size_t size, size_t *resid));
-int win_close __P((struct open_file *f));
-int win_write __P((struct open_file *f,void *addr,
-              size_t size, size_t *resid));
-int win_stat __P((struct open_file *f, struct stat *sb));
-off_t win_seek __P((struct open_file *f, off_t offset, int where));
+int win_open(char *path, struct open_file *f);
+int win_read(struct open_file *f,void *addr,
+              size_t size, size_t *resid);
+int win_close(struct open_file *f);
+int win_write(struct open_file *f,void *addr,
+              size_t size, size_t *resid);
+int win_stat(struct open_file *f, struct stat *sb);
+off_t win_seek(struct open_file *f, off_t offset, int where);

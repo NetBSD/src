@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.90 2008/06/04 12:41:41 ad Exp $ */
+/*	$NetBSD: iommu.c,v 1.90.12.1 2009/05/13 17:18:36 jym Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.90 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.90.12.1 2009/05/13 17:18:36 jym Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -289,7 +289,7 @@ iommu_attach(struct device *parent, struct device *self, void *aux)
 		struct iommu_attach_args ia;
 		struct openprom_addr sbus_iommu_reg = { 0, 0x10001000, 0x28 };
 
-		bzero(&ia, sizeof ia);
+		memset(&ia, 0, sizeof ia);
 
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
@@ -310,7 +310,7 @@ iommu_attach(struct device *parent, struct device *self, void *aux)
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct iommu_attach_args ia;
 
-		bzero(&ia, sizeof ia);
+		memset(&ia, 0, sizeof ia);
 		ia.iom_name = prom_getpropstring(node, "name");
 
 		/* Propagate BUS & DMA tags */

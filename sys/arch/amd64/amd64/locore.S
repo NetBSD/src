@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50 2008/12/03 12:04:59 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.4.1 2009/05/13 17:16:08 jym Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -160,6 +160,7 @@
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
+#include "opt_modular.h"
 #include "opt_realmem.h"
 
 #include "opt_compat_netbsd.h"

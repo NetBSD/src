@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.167 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.167.14.1 2009/05/13 17:22:28 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.167 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.167.14.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1220,7 +1220,7 @@ send:
 		*bp++ = TCPOPT_SIGNATURE;
 		*bp++ = TCPOLEN_SIGNATURE;
 		sigoff = optlen + 2;
-		bzero(bp, TCP_SIGLEN);
+		memset(bp, 0, TCP_SIGLEN);
 		bp += TCP_SIGLEN;
 		optlen += TCPOLEN_SIGNATURE;
 		/*

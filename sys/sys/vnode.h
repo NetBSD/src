@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.200 2009/01/17 07:02:35 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.200.2.1 2009/05/13 17:23:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,8 @@ enum vtagtype	{
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
-	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS
+	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS,
+	VT_RUMP
 };
 
 #define	VNODE_TAGS \
@@ -112,7 +113,8 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", "VT_ZFS"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS","VT_EFS","VT_ZFS",\
+    "VT_RUMP"
 
 struct vnode;
 struct buf;
@@ -238,13 +240,12 @@ typedef struct vnode vnode_t;
  * The third set are locked by the underlying file system.
  */
 #define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
-#define	VU_SOFTDEP	0x02000000	/* FFS: involved in softdep processing */
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
     "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
-    "\28INACTNOW\31DIROP\32SOFTDEP" 
+    "\30INACTNOW\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -658,10 +659,11 @@ int	vlockstatus(struct vnlock *);
 void	vfs_getnewfsid(struct mount *);
 int	vfs_drainvnodes(long target, struct lwp *);
 void	vfs_timestamp(struct timespec *);
-#ifdef DDB
+#if defined(DDB) || defined(DEBUGPRINT)
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));
 #endif /* DDB */
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_VNODE_H_ */

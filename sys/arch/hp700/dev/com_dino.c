@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_dino.c,v 1.1 2004/02/13 20:39:31 mickey Exp $	*/
+/*	$OpenBSD: com_dino.c,v 1.4 2007/07/15 19:25:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -16,13 +16,14 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -39,6 +40,7 @@
 #include <dev/ic/comvar.h>
 
 #include <hp700/dev/cpudevs.h>
+#include <hp700/hp700/machdep.h>
 
 void *dino_intr_establish(void *sc, int irq, int pri,
     int (*handler)(void *v), void *arg);
@@ -65,7 +67,7 @@ struct com_dino_regs {
 int	com_dino_match(device_t, cfdata_t, void *);
 void	com_dino_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(com_dino, sizeof(struct com_dino_softc), com_dino_match, 
+CFATTACH_DECL_NEW(com_dino, sizeof(struct com_dino_softc), com_dino_match,
     com_dino_attach, NULL, NULL);
 
 int
@@ -88,47 +90,54 @@ com_dino_attach(device_t parent, device_t self, void *aux)
 	struct com_softc *sc = &sc_dino->sc_com;
 	struct confargs *ca = aux;
 	struct com_dino_regs *regs = (struct com_dino_regs *)ca->ca_hpa;
+	int pagezero_cookie;
+
 	bus_addr_t iobase;
 	bus_space_handle_t ioh;
 
 	sc->sc_dev = self;
 	iobase = (bus_addr_t)ca->ca_hpa + IOMOD_DEVOFFSET;
+	sc->sc_frequency = COM_DINO_FREQ;
 
-#ifdef work_in_progress
+	/* Test if this is the console.  Compare either HPA or device path. */
+	pagezero_cookie = hp700_pagezero_map();
+	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX &&
+	    PAGE0->mem_cons.pz_hpa == (struct iomod *)ca->ca_hpa) {
+
+		/*
+		 * This port is the console.  In this case we must call
+		 * comcnattach() and later com_is_console() to initialize
+		 * everything properly.
+		 */
+
+		if (comcnattach(ca->ca_iot, iobase, B9600,
+		    sc->sc_frequency, COM_TYPE_NORMAL,
+		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0) {
+			aprint_error(": can't comcnattach\n");
+			hp700_pagezero_unmap(pagezero_cookie);
+			return;
+		}
+	}
+	hp700_pagezero_unmap(pagezero_cookie);
+
 	/*
-	 * XXX: gdamore: this is all wrong, the correct way is to use
-	 * com_is_console() as a test, which takes the bus_space_tag
-	 * and io base addresses as arguments.  comconsioh is not
-	 * present anymore, and was never really exported anyway.
-	 *
-	 * This code was already ifdef'd out, but if someone wants me
-	 * to fix it, let me know and I'll try to do so.  I don't have
-	 * hp700 h/w to test with, though.  - gdamore@NetBSD.org
+	 * Get the already initialized console ioh via com_is_console() if
+	 * this is the console or map the I/O space if this isn't the console.
 	 */
-	if (sc->sc_iobase == CONADDR)
-		sc->sc_ioh = comconsioh;
-	else 
-#endif
 
-	if (bus_space_map(ca->ca_iot, iobase, COM_NPORTS, 0, &ioh)) {
-		aprint_error(": cannot map io space\n");
+	if (!com_is_console(ca->ca_iot, iobase, &ioh) &&
+	    bus_space_map(ca->ca_iot, iobase, COM_NPORTS, 0, &ioh) != 0) {
+		aprint_error(": can't map I/O space\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, ca->ca_iot, ioh, iobase);
 
-#ifdef work_in_progress
-	/* XXX gdamore: wtf? */
-	if (sc->sc_iobase != CONADDR) {
-		/* regs->reset = 0xd0;
-		DELAY(1000); */
-	}
-#endif
-
 	/* select clock freq */
 	regs->test = COM_DINO_CLK_SEL;
-	sc->sc_frequency = COM_DINO_FREQ;
 
 	com_attach_subr(sc);
+
+	ca->ca_irq = 11;
 
 	sc_dino->sc_ih = dino_intr_establish(parent, ca->ca_irq, IPL_TTY,
 	    comintr, sc);

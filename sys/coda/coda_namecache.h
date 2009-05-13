@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.h,v 1.11 2007/11/22 22:26:19 plunky Exp $	*/
+/*	$NetBSD: coda_namecache.h,v 1.11.32.1 2009/05/13 17:18:55 jym Exp $	*/
 
 /*
  *
@@ -75,7 +75,7 @@
 
 #define CODA_NAMEMATCH(cp, name, namelen, dcp) \
 	((namelen == cp->namelen) && (dcp == cp->dcp) && \
-		 (bcmp(cp->name,name,namelen) == 0))
+		 (memcmp(cp->name,name,namelen) == 0))
 
 #define CODA_NC_VALID(cncp)	(cncp->dcp != (struct cnode *)0)
 

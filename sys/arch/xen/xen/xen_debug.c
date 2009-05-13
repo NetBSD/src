@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_debug.c,v 1.5 2007/11/22 16:17:09 bouyer Exp $	*/
+/*	$NetBSD: xen_debug.c,v 1.5.32.1 2009/05/13 17:18:50 jym Exp $	*/
 
 /*
  *
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_debug.c,v 1.5 2007/11/22 16:17:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_debug.c,v 1.5.32.1 2009/05/13 17:18:50 jym Exp $");
 
 #define XENDEBUG
 
@@ -106,7 +106,7 @@ void failsafe_callback(void);
 
 void xen_dbglow_init(void);
 void
-xen_dbglow_init()
+xen_dbglow_init(void)
 {
 	start_info_t *si;
 #if 0

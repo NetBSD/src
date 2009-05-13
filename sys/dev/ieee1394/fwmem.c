@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.9 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.9.4.1 2009/05/13 17:19:52 jym Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.9 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.9.4.1 2009/05/13 17:19:52 jym Exp $");
 #if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwmem.c,v 1.34 2007/06/06 14:31:36 simokawa Exp $");
 #endif
@@ -417,7 +417,7 @@ FW_OPEN(fwmem)
 			return ENOMEM;
 		dev->si_iosize_max = DFLTPHYS;
 		fms = (struct fwmem_softc *)dev->si_drv1;
-		bcopy(&fwmem_eui64, &fms->eui, sizeof(struct fw_eui64));
+		memcpy(&fms->eui, &fwmem_eui64, sizeof(struct fw_eui64));
 		fms->sc = sc;
 		fms->refcount = 1;
 		STAILQ_INIT(&fms->xferlist);
@@ -551,10 +551,10 @@ FW_IOCTL(fwmem)
 	fms = (struct fwmem_softc *)dev->si_drv1;
 	switch (cmd) {
 	case FW_SDEUI64:
-		bcopy(data, &fms->eui, sizeof(struct fw_eui64));
+		memcpy(&fms->eui, data, sizeof(struct fw_eui64));
 		break;
 	case FW_GDEUI64:
-		bcopy(&fms->eui, data, sizeof(struct fw_eui64));
+		memcpy(data, &fms->eui, sizeof(struct fw_eui64));
 		break;
 	default:
 		err = EINVAL;

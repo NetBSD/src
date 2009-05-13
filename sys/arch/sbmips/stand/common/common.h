@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.1 2002/11/09 06:20:40 cgd Exp $ */
+/* $NetBSD: common.h,v 1.1.128.1 2009/05/13 17:18:17 jym Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void		halt __P((void));
-void		putstr __P((const char *));
+void		halt(void);
+void		putstr(const char *);
 void		init_console(void);
 void		putchar(int);
 int		getchar(void);

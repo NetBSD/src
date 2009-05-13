@@ -1,9 +1,9 @@
-/*	$NetBSD: cpu.h,v 1.28 2008/09/06 09:45:57 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28.8.1 2009/05/13 17:17:43 jym Exp $	*/
 
-/*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
 /*
- * Copyright (c) 2000-2001 Michael Shalayeff
+ * Copyright (c) 2000-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* 
+/*
  * Copyright (c) 1988-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -60,46 +55,62 @@
 
 #include <machine/trap.h>
 #include <machine/frame.h>
+#include <machine/reg.h>
 
-/*
- * CPU types and features
- */
-#define	HPPA_FTRS_BTLBS		0x00000001
-#define	HPPA_FTRS_BTLBU		0x00000002
-#define	HPPA_FTRS_HVT		0x00000004
-#define	HPPA_FTRS_W32B		0x00000008
 
 #ifndef _LOCORE
+
+/* types */
+enum hppa_cpu_type {
+	hpcx,	/* PA7000 (x)		PA 1.0 */
+	hpcxs,	/* PA7000 (s)		PA 1.1a */
+	hpcxt,	/* PA7100 (t)		PA 1.1b */
+	hpcxl,	/* PA7100LC (l)		PA 1.1c */
+	hpcxtp,	/* PA7200 (t')		PA 1.1d */
+	hpcxl2,	/* PA7300LC (l2)	PA 1.1e */
+	hpcxu,	/* PA8000 (u)		PA 2.0 */
+	hpcxup,	/* PA8200 (u+)		PA 2.0 */	
+	hpcxw,	/* PA8500 (w)		PA 2.0 */
+	hpcxwp,	/* PA8600 (w+)		PA 2.0 */
+	hpcxw2, /* PA8700 (piranha)	PA 2.0 */
+	mako	/* PA8800 (mako)	PA 2.0 */
+};
 
 /*
  * A CPU description.
  */
 struct hppa_cpu_info {
-
 	/* The official name of the chip. */
-	const char *hppa_cpu_info_chip_name;
+	const char *hci_chip_name;
 
 	/* The nickname for the chip. */
-	const char *hppa_cpu_info_chip_nickname;
+	const char *hci_chip_nickname;
 
 	/* The type and PA-RISC specification of the chip. */
-	const char *hppa_cpu_info_chip_type;
-	unsigned short hppa_cpu_info_pa_spec;
-#define HPPA_PA_SPEC_MAKE(major, minor, letter) \
-  (((major) << 8) | \
-   ((minor) << 4) | \
-   ((letter) == '\0' ? 0 : ((letter) + 0xa - 'a')))
-#define HPPA_PA_SPEC_MAJOR(x) (((x) >> 8) & 0xf)
-#define HPPA_PA_SPEC_MINOR(x) (((x) >> 4) & 0xf)
-#define HPPA_PA_SPEC_LETTER(x) \
-  (((x) & 0xf) == 0 ? '\0' : 'a' + ((x) & 0xf) - 0xa)
+	const char hci_chip_type[8];
+	enum hppa_cpu_type hci_cputype;
+	int  hci_cpuid;
+	int  hci_features;		/* CPU types and features */
+#define	HPPA_FTRS_TLBU		0x00000001
+#define	HPPA_FTRS_BTLBU		0x00000002
+#define	HPPA_FTRS_HVT		0x00000004
+#define	HPPA_FTRS_W32B		0x00000008
+
+	const char *hci_chip_spec;
 
 	int (*desidhash)(void);
-	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
+	const u_int *itlbh, *dtlbh, *itlbnah, *dtlbnah, *tlbdh;
+	int (*dbtlbins)(int, pa_space_t, vaddr_t, paddr_t, vsize_t, u_int);
+	int (*ibtlbins)(int, pa_space_t, vaddr_t, paddr_t, vsize_t, u_int);
+	int (*btlbprg)(int);
 	int (*hptinit)(vaddr_t, vsize_t);
 };
+
 #ifdef _KERNEL
 extern const struct hppa_cpu_info *hppa_cpu_info;
+extern int cpu_hvers;
+extern int cpu_revision;
+extern register_t kpsw;
 #endif
 #endif
 
@@ -132,6 +143,7 @@ extern const struct hppa_cpu_info *hppa_cpu_info;
 #define	HPPA_FPU_RM	0x00000600
 #define	HPPA_FPU_CQ	0x00fff800
 #define	HPPA_FPU_C	0x04000000
+#define	HPPA_FPU_FLSH	27
 #define	HPPA_FPU_INIT	(0)
 #define	HPPA_FPU_FORK(s) ((s) & ~((uint64_t)(HPPA_FPU_XMASK) << 32))
 
@@ -146,13 +158,15 @@ extern const struct hppa_cpu_info *hppa_cpu_info;
 #define	HPPA_SPAMASK	0xf0f0f000
 
 #define	HPPA_IOSPACE	0xf0000000
-#define	HPPA_IOBCAST	0xfffc0000
+#define	HPPA_IOLEN      0x10000000
 #define	HPPA_PDC_LOW	0xef000000
 #define	HPPA_PDC_HIGH	0xf1000000
+#define	HPPA_IOBCAST	0xfffc0000
+#define	HPPA_LBCAST	0xfffc0000
+#define	HPPA_GBCAST	0xfffe0000
 #define	HPPA_FPA	0xfff80000
 #define	HPPA_FLEX_DATA	0xfff80001
 #define	HPPA_DMA_ENABLE	0x00000001
-#define	HPPA_FLEX_MASK	0xfffc0000
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
 
@@ -214,7 +228,6 @@ extern struct cpu_info cpu_info_store;
 #define cpu_proc_fork(p1, p2)
 
 #ifdef MULTIPROCESSOR
-#define	curlwp				(curcpu()->ci_curlwp)
 #define	CPU_IS_PRIMARY(ci)		1
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = curcpu(), cii < 1; cii++
@@ -222,10 +235,17 @@ extern struct cpu_info cpu_info_store;
 void	cpu_boot_secondary_processors(void);
 #endif
 
-/*
- * DON'T CHANGE THIS - this is assumed in lots of places.
- */
-#define	HPPA_SID_KERNEL 0
+static __inline struct lwp *
+hppa_curlwp(void)
+{
+	struct lwp *l;
+
+	__asm volatile("mfctl %1, %0" : "=r" (l): "i" (CR_CURLWP));
+
+	return (struct lwp *)l;
+}
+
+#define	curlwp				hppa_curlwp()
 
 #define DELAY(x) delay(x)
 

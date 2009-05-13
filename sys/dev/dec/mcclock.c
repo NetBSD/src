@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.21 2008/04/08 07:39:11 cegger Exp $ */
+/* $NetBSD: mcclock.c,v 1.21.18.1 2009/05/13 17:19:16 jym Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21 2008/04/08 07:39:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21.18.1 2009/05/13 17:19:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21 2008/04/08 07:39:11 cegger Exp $");
 #endif
 
 
-void	mcclock_init(struct device *);
+void	mcclock_init(device_t);
 int	mcclock_get(todr_chip_handle_t, volatile struct timeval *);
 int	mcclock_set(todr_chip_handle_t, volatile struct timeval *);
 
@@ -65,9 +65,7 @@ const struct clockfns mcclock_clockfns = {
 	    (*(dev)->sc_busfns->mc_bf_read)(dev, reg)
 
 void
-mcclock_attach(sc, busfns)
-	struct mcclock_softc *sc;
-	const struct mcclock_busfns *busfns;
+mcclock_attach(struct mcclock_softc *sc, const struct mcclock_busfns *busfns)
 {
 
 	printf(": mc146818 or compatible");
@@ -86,8 +84,7 @@ mcclock_attach(sc, busfns)
 }
 
 void
-mcclock_init(dev)
-	struct device *dev;
+mcclock_init(device_t dev)
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
 	int rate;

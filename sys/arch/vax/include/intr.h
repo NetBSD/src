@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.27 2008/02/20 16:37:52 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.27.24.1 2009/05/13 17:18:41 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.

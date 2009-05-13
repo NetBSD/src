@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.8 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: mkclock.c,v 1.8.14.1 2009/05/13 17:18:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.8 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.8.14.1 2009/05/13 17:18:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,18 +67,13 @@ static int mk_read (struct mkclock_softc *, int);
 static void mk_write (struct mkclock_softc *, int, int);
 
 int
-mkclock_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mkclock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return 1;
 }
 
 void
-mkclock_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mkclock_attach(struct device *parent, struct device *self, void *aux)
 {
         struct mkclock_softc *sc = (void *)self;
 	struct confargs *ca = aux;
@@ -101,9 +96,7 @@ mkclock_attach(parent, self, aux)
 }
 
 static int
-mk_read(sc, reg)
-	struct mkclock_softc *sc;
-	int reg;
+mk_read(struct mkclock_softc *sc, int reg)
 {
 	u_int8_t val;
 
@@ -112,9 +105,7 @@ mk_read(sc, reg)
 }
 
 static void
-mk_write(sc, reg, val)
-	struct mkclock_softc *sc;
-	int reg, val;
+mk_write(struct mkclock_softc *sc, int reg, int val)
 {
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh,
 			  DATA_PORT + reg*4, TOBCD(val));

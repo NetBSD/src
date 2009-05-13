@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.32 2009/01/17 05:23:28 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.32.2.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.32 2009/01/17 05:23:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.32.2.1 2009/05/13 17:16:22 jym Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -115,16 +115,16 @@ dev_type_poll(kbdpoll);
 dev_type_kqfilter(kbdkqfilter);
 
 /* Interrupt handler */
-void	kbdintr __P((int));
+void	kbdintr(int);
 
-static void kbdsoft __P((void *, void *));
-static void kbdattach __P((struct device *, struct device *, void *));
-static int  kbdmatch __P((struct device *, struct cfdata *, void *));
+static void kbdsoft(void *, void *);
+static void kbdattach(struct device *, struct device *, void *);
+static int  kbdmatch(struct device *, struct cfdata *, void *);
 #if NITE>0
-static int  kbd_do_modifier __P((u_char));
+static int  kbd_do_modifier(u_char);
 #endif
-static int  kbd_write_poll __P((u_char *, int));
-static void kbd_pkg_start __P((struct kbd_softc *, u_char));
+static int  kbd_write_poll(u_char *, int);
+static void kbd_pkg_start(struct kbd_softc *, u_char);
 
 CFATTACH_DECL(kbd, sizeof(struct device),
     kbdmatch, kbdattach, NULL, NULL);
@@ -166,10 +166,7 @@ static struct wskbd_mapdata kbd_mapdata = {
 
 /*ARGSUSED*/
 static	int
-kbdmatch(pdp, cfp, auxp)
-struct	device	*pdp;
-struct	cfdata	*cfp;
-void		*auxp;
+kbdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if (!strcmp((char *)auxp, "kbd"))
 		return (1);
@@ -178,9 +175,7 @@ void		*auxp;
 
 /*ARGSUSED*/
 static void
-kbdattach(pdp, dp, auxp)
-struct	device *pdp, *dp;
-void	*auxp;
+kbdattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	int	timeout;
 	u_char	kbd_rst[]  = { 0x80, 0x01 };
@@ -248,7 +243,7 @@ void	*auxp;
 }
 
 void
-kbdenable()
+kbdenable(void)
 {
 	int	s, code;
 
@@ -374,8 +369,8 @@ kbdkqfilter(dev_t dev, struct knote *kn)
  * Keyboard interrupt handler called straight from MFP at spl6.
  */
 void
-kbdintr(sr)
-int sr;	/* sr at time of interrupt	*/
+kbdintr(int sr)
+	/* sr:	 sr at time of interrupt	*/
 {
 	int	code;
 	int	got_char = 0;
@@ -428,8 +423,7 @@ int sr;	/* sr at time of interrupt	*/
  * Keyboard soft interrupt handler
  */
 void
-kbdsoft(junk1, junk2)
-void	*junk1, *junk2;
+kbdsoft(void *junk1, void *junk2)
 {
 	int			s;
 	u_char			code;
@@ -550,7 +544,7 @@ static	u_char sound[] = {
 };
 
 void
-kbdbell()
+kbdbell(void)
 {
 	register int	i, sps;
 
@@ -571,8 +565,7 @@ kbdbell()
 #define KBDBELLDURATION	128	/* 256 / 2MHz */
 
 void
-kbd_bell_gparms(volume, pitch, duration)
-	u_int	*volume, *pitch, *duration;
+kbd_bell_gparms(u_int *volume, u_int *pitch, u_int *duration)
 {
 	u_int	tmp;
 
@@ -586,8 +579,7 @@ kbd_bell_gparms(volume, pitch, duration)
 }
 
 void
-kbd_bell_sparms(volume, pitch, duration)
-	u_int	volume, pitch, duration;
+kbd_bell_sparms(u_int volume, u_int pitch, u_int duration)
 {
 	u_int	f, t;
 
@@ -615,7 +607,7 @@ kbd_bell_sparms(volume, pitch, duration)
 }
 
 int
-kbdgetcn()
+kbdgetcn(void)
 {
 	u_char	code;
 	int	s = spltty();
@@ -653,9 +645,7 @@ kbdgetcn()
  * Write a command to the keyboard in 'polled' mode.
  */
 static int
-kbd_write_poll(cmd, len)
-u_char	*cmd;
-int	len;
+kbd_write_poll(u_char *cmd, int len)
 {
 	int	timeout;
 
@@ -673,9 +663,7 @@ int	len;
  * Write a command to the keyboard. Return when command is send.
  */
 void
-kbd_write(cmd, len)
-u_char	*cmd;
-int	len;
+kbd_write(u_char *cmd, int len)
 {
 	struct kbd_softc	*k = &kbd_softc;
 	int			sps;
@@ -721,9 +709,7 @@ int	len;
  * Setup softc-fields to assemble a keyboard package.
  */
 static void
-kbd_pkg_start(kp, msg_start)
-struct kbd_softc *kp;
-u_char		 msg_start;
+kbd_pkg_start(struct kbd_softc *kp, u_char msg_start)
 {
 	kp->k_pkg_idx    = 1;
 	kp->k_package[0] = msg_start;
@@ -766,8 +752,7 @@ u_char		 msg_start;
  * Modifier processing
  */
 static int
-kbd_do_modifier(code)
-u_char	code;
+kbd_do_modifier(u_char code)
 {
 	u_char	up, mask;
 

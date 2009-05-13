@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.53 2008/05/25 19:22:21 ad Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.53.12.1 2009/05/13 17:22:20 jym Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.53 2008/05/25 19:22:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.53.12.1 2009/05/13 17:22:20 jym Exp $");
 
 #include "ppp.h"
 
@@ -208,8 +208,9 @@ pppopen(dev_t dev, struct tty *tp)
     struct ppp_softc *sc;
     int error, s;
 
-    if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	NULL)) != 0)
+    error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE_PPP,
+	KAUTH_REQ_NETWORK_INTERFACE_PPP_ADD, NULL, NULL, NULL);
+    if (error)
 	return (error);
 
     s = spltty();
@@ -454,8 +455,8 @@ ppptioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	break;
 
     case PPPIOCSASYNCMAP:
-	if ((error = kauth_authorize_generic(l->l_cred,
- 	  KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	if ((error = kauth_authorize_device_tty(l->l_cred,
+ 	  KAUTH_DEVICE_TTY_PRIVSET, tp)) != 0)
 	    break;
 	sc->sc_asyncmap[0] = *(u_int *)data;
 	break;
@@ -465,8 +466,8 @@ ppptioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	break;
 
     case PPPIOCSRASYNCMAP:
-	if ((error = kauth_authorize_generic(l->l_cred,
-	  KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	if ((error = kauth_authorize_device_tty(l->l_cred,
+	  KAUTH_DEVICE_TTY_PRIVSET, tp)) != 0)
 	    break;
 	sc->sc_rasyncmap = *(u_int *)data;
 	break;
@@ -476,8 +477,8 @@ ppptioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	break;
 
     case PPPIOCSXASYNCMAP:
-	if ((error = kauth_authorize_generic(l->l_cred,
-	  KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	if ((error = kauth_authorize_device_tty(l->l_cred,
+	  KAUTH_DEVICE_TTY_PRIVSET, tp)) != 0)
 	    break;
 	s = spltty();
 	bcopy(data, sc->sc_asyncmap, sizeof(sc->sc_asyncmap));

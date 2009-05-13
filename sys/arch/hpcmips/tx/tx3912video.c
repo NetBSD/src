@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.39 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.39.14.1 2009/05/13 17:17:46 jym Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.39 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.39.14.1 2009/05/13 17:17:46 jym Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -233,8 +233,7 @@ tx3912video_power(void *ctx, int type, long id, void *msg)
 }
 
 void
-tx3912video_hpcfbinit(sc)
-	struct tx3912video_softc *sc;
+tx3912video_hpcfbinit(struct tx3912video_softc *sc)
 {
 	struct video_chip *chip = sc->sc_chip;
 	struct hpcfb_fbconf *fb = &sc->sc_fbconf;

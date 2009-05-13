@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: copy.c,v 1.2.88.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -45,14 +45,14 @@
 int
 ski_copyin(void *src, vaddr_t dest, size_t len)
 {
-	bcopy(src, (void*) IA64_RR_MASK(dest), len);
+	memcpy( (void*) IA64_RR_MASK(dest), src, len);
 	return (len);
 }
 
 int
 ski_copyout(vaddr_t src, void *dest, size_t len)
 {
-	bcopy((void*) IA64_RR_MASK(src), dest, len);
+	memcpy( dest, (void*) IA64_RR_MASK(src), len);
 	return (len);
 }
 

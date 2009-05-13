@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.19 2008/12/11 15:50:35 hauke Exp $	*/
+/*	$NetBSD: spif.c,v 1.19.2.1 2009/05/13 17:21:22 jym Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.19 2008/12/11 15:50:35 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.19.2.1 2009/05/13 17:21:22 jym Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -143,10 +143,7 @@ const struct cdevsw sbpp_cdevsw = {
 
 
 int
-spif_match(parent, vcf, aux)
-	struct device *parent;
-	struct cfdata *vcf;
-	void *aux;
+spif_match(device_t parent, cfdata_t vcf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -157,9 +154,7 @@ spif_match(parent, vcf, aux)
 }
 
 void
-spif_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+spif_attach(device_t parent, device_t self, void *aux)
 {
 	struct spif_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
@@ -274,10 +269,7 @@ fail_unmapregs:
 }
 
 int
-stty_match(parent, vcf, aux)
-	struct device *parent;
-	struct cfdata *vcf;
-	void *aux;
+stty_match(device_t parent, cfdata_t vcf, void *aux)
 {
 	struct spif_softc *sc = device_private(parent);
 
@@ -285,9 +277,7 @@ stty_match(parent, vcf, aux)
 }
 
 void
-stty_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+stty_attach(device_t parent, device_t dev, void *aux)
 {
 	struct spif_softc *sc = device_private(parent);
 	struct stty_softc *ssc = device_private(dev);
@@ -492,9 +482,7 @@ stty_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 }
 
 int
-stty_modem_control(sp, bits, how)
-	struct stty_port *sp;
-	int bits, how;
+stty_modem_control(struct stty_port *sp, int bits, int how)
 {
 	struct spif_softc *csc = sp->sp_sc;
 	struct tty *tp = sp->sp_tty;
@@ -726,9 +714,7 @@ stty_start(struct tty *tp)
 }
 
 int
-spif_stcintr_rxexception(sc, needsoftp)
-	struct spif_softc *sc;
-	int *needsoftp;
+spif_stcintr_rxexception(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, *ptr;
@@ -753,9 +739,7 @@ spif_stcintr_rxexception(sc, needsoftp)
 }
 
 int
-spif_stcintr_rx(sc, needsoftp)
-	struct spif_softc *sc;
-	int *needsoftp;
+spif_stcintr_rx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, *ptr, cnt, rcsr;
@@ -788,9 +772,7 @@ spif_stcintr_rx(sc, needsoftp)
 }
 
 int
-spif_stcintr_tx(sc, needsoftp)
-	struct spif_softc *sc;
-	int *needsoftp;
+spif_stcintr_tx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, ch;
@@ -841,9 +823,7 @@ spif_stcintr_tx(sc, needsoftp)
 }
 
 int
-spif_stcintr_mx(sc, needsoftp)
-	struct spif_softc *sc;
-	int *needsoftp;
+spif_stcintr_mx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, mcr;
@@ -861,8 +841,7 @@ spif_stcintr_mx(sc, needsoftp)
 }
 
 int
-spif_stcintr(vsc)
-	void *vsc;
+spif_stcintr(void *vsc)
 {
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	int needsoft = 0, r = 0, i;
@@ -894,8 +873,7 @@ spif_stcintr(vsc)
 }
 
 void
-spif_softintr(vsc)
-	void *vsc;
+spif_softintr(void *vsc)
 {
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	struct stty_softc *stc = sc->sc_ttys;
@@ -965,9 +943,7 @@ spif_softintr(vsc)
 }
 
 void
-stty_write_ccr(sc, val)
-	struct spif_softc *sc;
-	u_int8_t val;
+stty_write_ccr(struct spif_softc *sc, u_int8_t val)
 {
 	int tries = 100000;
 
@@ -979,10 +955,7 @@ stty_write_ccr(sc, val)
 }
 
 int
-stty_compute_baud(speed, clock, bprlp, bprhp)
-	speed_t speed;
-	int clock;
-	u_int8_t *bprlp, *bprhp;
+stty_compute_baud(speed_t speed, int clock, u_int8_t *bprlp, u_int8_t *bprhp)
 {
 	u_int32_t rate;
 
@@ -1001,10 +974,7 @@ stty_compute_baud(speed, clock, bprlp, bprhp)
 }
 
 int
-sbpp_match(parent, vcf, aux)
-	struct device *parent;
-	struct cfdata *vcf;
-	void *aux;
+sbpp_match(device_t parent, cfdata_t vcf, void *aux)
 {
 	struct spif_softc *sc = device_private(parent);
 
@@ -1012,9 +982,7 @@ sbpp_match(parent, vcf, aux)
 }
 
 void
-sbpp_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+sbpp_attach(device_t parent, device_t dev, void *aux)
 {
 	struct spif_softc *sc = device_private(parent);
 	struct sbpp_softc *psc = device_private(dev);
@@ -1030,74 +998,49 @@ sbpp_attach(parent, dev, aux)
 }
 
 int
-sbpp_open(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+sbpp_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	return (ENXIO);
 }
 
 int
-sbpp_close(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+sbpp_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	return (ENXIO);
 }
 
 int
-spif_ppcintr(v)
-	void *v;
+spif_ppcintr(void *v)
 {
 	return (0);
 }
 
 int
-sbpp_read(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sbpp_read(dev_t dev, struct uio *uio, int flags)
 {
 	return (sbpp_rw(dev, uio));
 }
 
 int
-sbpp_write(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sbpp_write(dev_t dev, struct uio *uio, int flags)
 {
 	return (sbpp_rw(dev, uio));
 }
 
 int
-sbpp_rw(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+sbpp_rw(dev_t dev, struct uio *uio)
 {
 	return (ENXIO);
 }
 
 int
-sbpp_poll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+sbpp_poll(dev_t dev, int events, struct lwp *l)
 {
 	return (seltrue(dev, events, l));
 }
 
 int
-sbpp_ioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+sbpp_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	int error;
 

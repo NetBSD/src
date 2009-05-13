@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.51 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: ahb.c,v 1.51.14.1 2009/05/13 17:19:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.51 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.51.14.1 2009/05/13 17:19:17 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -137,8 +137,8 @@ static int	ahb_create_ecbs(struct ahb_softc *, struct ahb_ecb *, int);
 
 static int	ahb_init_ecb(struct ahb_softc *, struct ahb_ecb *);
 
-static int	ahbmatch(struct device *, struct cfdata *, void *);
-static void	ahbattach(struct device *, struct device *, void *);
+static int	ahbmatch(device_t, cfdata_t, void *);
+static void	ahbattach(device_t, device_t, void *);
 
 CFATTACH_DECL(ahb, sizeof(struct ahb_softc),
     ahbmatch, ahbattach, NULL, NULL);
@@ -151,7 +151,7 @@ CFATTACH_DECL(ahb, sizeof(struct ahb_softc),
  * the actual probe routine to check it out.
  */
 static int
-ahbmatch(struct device *parent, struct cfdata *match,
+ahbmatch(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -182,7 +182,7 @@ ahbmatch(struct device *parent, struct cfdata *match,
  * Attach all the sub-devices we can find
  */
 static void
-ahbattach(struct device *parent, struct device *self, void *aux)
+ahbattach(device_t parent, device_t self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct ahb_softc *sc = device_private(self);
@@ -471,7 +471,7 @@ ahb_create_ecbs(struct ahb_softc *sc, struct ahb_ecb *ecbstore, int count)
 	struct ahb_ecb *ecb;
 	int i, error;
 
-	bzero(ecbstore, sizeof(struct ahb_ecb) * count);
+	memset(ecbstore, 0, sizeof(struct ahb_ecb) * count);
 	for (i = 0; i < count; i++) {
 		ecb = &ecbstore[i];
 		if ((error = ahb_init_ecb(sc, ecb)) != 0) {
@@ -844,7 +844,7 @@ ahb_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		ecb->opcode = ECB_SCSI_OP;
 		ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
 		ecb->opt2 = periph->periph_lun | ECB_NRB;
-		bcopy(xs->cmd, &ecb->scsi_cmd,
+		memcpy(&ecb->scsi_cmd, xs->cmd,
 		    ecb->scsi_cmd_length = xs->cmdlen);
 		ecb->sense_ptr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
 		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_sense);

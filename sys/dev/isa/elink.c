@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.16 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: elink.c,v 1.16.14.1 2009/05/13 17:19:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.16 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.16.14.1 2009/05/13 17:19:52 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,7 @@ static int elink_all_resets_initialized;
  * NOTE: the caller MUST provide an access handle for ELINK_ID_PORT!
  */
 void
-elink_reset(iot, ioh, bus)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int bus;
+elink_reset(bus_space_tag_t iot, bus_space_handle_t ioh, int bus)
 {
 	struct elink_done_reset *er;
 
@@ -110,10 +107,7 @@ elink_reset(iot, ioh, bus)
  * NOTE: the caller MUST provide an access handle for ELINK_ID_PORT!
  */
 void
-elink_idseq(iot, ioh, p)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_char p;
+elink_idseq(bus_space_tag_t iot, bus_space_handle_t ioh, u_char p)
 {
 	int i;
 	u_char c;

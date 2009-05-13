@@ -1,7 +1,7 @@
-/*	$NetBSD: ffs_alloc.c,v 1.120 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.120.2.1 2009/05/13 17:23:06 jym Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.120 2009/01/11 02:45:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.120.2.1 2009/05/13 17:23:06 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -216,7 +216,8 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
 		goto nospace;
 	if (freespace(fs, fs->fs_minfree) <= 0 &&
-	    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0)
+	    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_RESERVEDSPACE, 0, NULL,
+	    NULL, NULL) != 0)
 		goto nospace;
 #ifdef QUOTA
 	mutex_exit(&ump->um_lock);
@@ -323,7 +324,8 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		panic("ffs_realloccg: missing credential");
 #endif /* DIAGNOSTIC */
 	if (freespace(fs, fs->fs_minfree) <= 0 &&
-	    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+	    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_RESERVEDSPACE, 0, NULL,
+	    NULL, NULL) != 0) {
 		mutex_exit(&ump->um_lock);
 		goto nospace;
 	}
@@ -441,15 +443,14 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	}
 	bno = ffs_hashalloc(ip, cg, bpref, request, 0, ffs_alloccg);
 	if (bno > 0) {
-		if (!DOINGSOFTDEP(ITOV(ip))) {
-			if ((ip->i_ump->um_mountp->mnt_wapbl) &&
-			    (ITOV(ip)->v_type != VREG)) {
-				UFS_WAPBL_REGISTER_DEALLOCATION(
-				    ip->i_ump->um_mountp, fsbtodb(fs, bprev),
-				    osize);
-			} else
-				ffs_blkfree(fs, ip->i_devvp, bprev, (long)osize,
-				    ip->i_number);
+		if ((ip->i_ump->um_mountp->mnt_wapbl) &&
+		    (ITOV(ip)->v_type != VREG)) {
+			UFS_WAPBL_REGISTER_DEALLOCATION(
+			    ip->i_ump->um_mountp, fsbtodb(fs, bprev),
+			    osize);
+		} else {
+			ffs_blkfree(fs, ip->i_devvp, bprev, (long)osize,
+			    ip->i_number);
 		}
 		if (nsize < request) {
 			if ((ip->i_ump->um_mountp->mnt_wapbl) &&
@@ -1030,8 +1031,6 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 	fs->fs_fmod = 1;
 	ACTIVECG_CLR(fs, cg);
 	mutex_exit(&ump->um_lock);
-	if (DOINGSOFTDEP(ITOV(ip)))
-		softdep_setup_blkmapdep(bp, fs, bprev);
 	bdwrite(bp);
 	return (bprev);
 
@@ -1141,11 +1140,9 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 	ufs_add32(cgp->cg_frsum[allocsiz], -1, needswap);
 	if (frags != allocsiz)
 		ufs_add32(cgp->cg_frsum[allocsiz - frags], 1, needswap);
-	blkno = cg * fs->fs_fpg + bno;
+	blkno = cgbase(fs, cg) + bno;
 	ACTIVECG_CLR(fs, cg);
 	mutex_exit(&ump->um_lock);
-	if (DOINGSOFTDEP(ITOV(ip)))
-		softdep_setup_blkmapdep(bp, fs, blkno);
 	bdwrite(bp);
 	return blkno;
 
@@ -1172,6 +1169,7 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref, int flags)
 	struct ufsmount *ump;
 	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
+	int cg;
 	daddr_t blkno;
 	int32_t bno;
 	u_int8_t *blksfree;
@@ -1230,12 +1228,8 @@ gotit:
 		ufs_add32(old_cg_blktot(cgp, needswap)[cylno], -1, needswap);
 	}
 	fs->fs_fmod = 1;
-	blkno = ufs_rw32(cgp->cg_cgx, needswap) * fs->fs_fpg + bno;
-	if (DOINGSOFTDEP(ITOV(ip))) {
-		mutex_exit(&ump->um_lock);
-		softdep_setup_blkmapdep(bp, fs, blkno);
-		mutex_enter(&ump->um_lock);
-	}
+	cg = ufs_rw32(cgp->cg_cgx, needswap);
+	blkno = cgbase(fs, cg) + bno;
 	return (blkno);
 }
 
@@ -1284,7 +1278,7 @@ retry:
 	if (ibp != NULL &&
 	    initediblk != ufs_rw32(cgp->cg_initediblk, needswap)) {
 		/* Another thread allocated more inodes so we retry the test. */
-		brelse(ibp, BC_INVAL);
+		brelse(ibp, 0);
 		ibp = NULL;
 	}
 	/*
@@ -1384,8 +1378,6 @@ gotit:
 		fs->fs_cs(fs, cg).cs_ndir++;
 	}
 	mutex_exit(&ump->um_lock);
-	if (DOINGSOFTDEP(ITOV(ip)))
-		softdep_setup_inomapdep(bp, ip, cg * fs->fs_ipg + ipref);
 	if (ibp != NULL) {
 		bwrite(bp);
 		bawrite(ibp);
@@ -1396,7 +1388,7 @@ gotit:
 	if (bp != NULL)
 		brelse(bp, 0);
 	if (ibp != NULL)
-		brelse(ibp, BC_INVAL);
+		brelse(ibp, 0);
 	mutex_enter(&ump->um_lock);
 	return (0);
 }
@@ -1739,10 +1731,6 @@ int
 ffs_vfree(struct vnode *vp, ino_t ino, int mode)
 {
 
-	if (DOINGSOFTDEP(vp)) {
-		softdep_freefile(vp, ino, mode);
-		return (0);
-	}
 	return ffs_freefile(vp->v_mount, ino, mode);
 }
 

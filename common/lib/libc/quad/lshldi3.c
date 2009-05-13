@@ -1,4 +1,4 @@
-/*	$NetBSD: lshldi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: lshldi3.c,v 1.1.36.1 2009/05/13 17:23:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lshldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lshldi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: lshldi3.c,v 1.1.36.1 2009/05/13 17:23:12 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,9 +49,7 @@ __RCSID("$NetBSD: lshldi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
  * This is the same as arithmetic shift left!
  */
 quad_t
-__lshldi3(a, shift)
-	quad_t a;
-	qshift_t shift;
+__lshldi3(quad_t a, qshift_t shift)
 {
 	union uu aa;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.91 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.91.2.1 2009/05/13 17:19:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.91 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.91.2.1 2009/05/13 17:19:52 jym Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -203,7 +203,7 @@ const struct fd_type fd_types[] = {
 #endif /* defined(atari) */
 
 void fdcfinishattach(device_t);
-int fdprobe(device_t, struct cfdata *, void *);
+int fdprobe(device_t, cfdata_t, void *);
 void fdattach(device_t, device_t, void *);
 static int fddetach(device_t, int);
 static int fdcintr1(struct fdc_softc *);
@@ -462,7 +462,7 @@ int
 fdprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct fdc_softc *fdc = device_private(parent);
-	struct cfdata *cf = match;
+	cfdata_t cf = match;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
 	bus_space_tag_t iot = fdc->sc_iot;

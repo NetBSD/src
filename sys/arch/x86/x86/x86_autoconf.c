@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.35 2008/10/14 15:48:44 tsutsui Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.35.8.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35 2008/10/14 15:48:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35.8.1 2009/05/13 17:18:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,19 +51,35 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35 2008/10/14 15:48:44 tsutsui Ex
 #include <sys/kauth.h>
 
 #include <machine/bootinfo.h>
+#include <machine/pio.h>
 
 #include "pci.h"
+#include "genfb.h"
+#include "wsdisplay.h"
 
 #include <dev/isa/isavar.h>
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
 #endif
+#include <dev/wsfb/genfbvar.h>
+#include <dev/ic/vgareg.h>
+
+struct genfb_colormap_callback gfb_cb;
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
 
 static void
-handle_wedges(struct device *dv, int par)
+x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
+{
+	outb(0x3c0 + VGA_DAC_ADDRW, index);
+	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)r >> 2);
+	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)g >> 2);
+	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)b >> 2);
+}
+
+static void
+handle_wedges(device_t dv, int par)
 {
 	if (config_handle_wedges(dv, par) == 0)
 		return;
@@ -72,7 +88,7 @@ handle_wedges(struct device *dv, int par)
 }
 
 static int
-is_valid_disk(struct device *dv)
+is_valid_disk(device_t dv)
 {
 
 	if (device_class(dv) != DV_DISK)
@@ -94,7 +110,7 @@ matchbiosdisks(void)
 {
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
-	struct device *dv;
+	device_t dv;
 	int i, ck, error, m, n;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
@@ -201,7 +217,7 @@ matchbiosdisks(void)
  * Return non-zero if wedge device matches bootinfo.
  */
 static int
-match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
+match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 {
 	MD5_CTX ctx;
 	struct vnode *tmpvn;
@@ -250,7 +266,7 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
  * Return non-zero if disk device matches bootinfo.
  */
 static int
-match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
+match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 {
 	struct vnode *tmpvn;
 	int error;
@@ -324,7 +340,7 @@ findroot(void)
 
 	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
-			struct cfdata *cd;
+			cfdata_t cd;
 			size_t len;
 
 			if (device_class(dv) != DV_DISK)
@@ -484,8 +500,9 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
+	static bool found_console = false;
 
 	/*
 	 * Handle network interfaces here, the attachment information is
@@ -534,6 +551,53 @@ device_register(struct device *dev, void *aux)
 		}
 #endif /* NPCI > 0 */
 	}
+#if NPCI > 0
+	if (device_parent(dev) && device_is_a(device_parent(dev), "pci") &&
+	    found_console == false) {
+		struct btinfo_framebuffer *fbinfo;
+		struct pci_attach_args *pa = aux;
+		prop_dictionary_t dict;
+
+		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY) {
+#if NWSDISPLAY > 0 && NGENFB > 0
+			extern struct vcons_screen x86_genfb_console_screen;
+#endif
+
+			fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
+			if (fbinfo == NULL || fbinfo->physaddr == 0)
+				return;
+			dict = device_properties(dev);
+			prop_dictionary_set_uint32(dict, "width",
+			    fbinfo->width);
+			prop_dictionary_set_uint32(dict, "height",
+			    fbinfo->height);
+			prop_dictionary_set_uint8(dict, "depth",
+			    fbinfo->depth);
+			prop_dictionary_set_uint64(dict, "address",
+			    fbinfo->physaddr);
+			prop_dictionary_set_uint16(dict, "linebytes",
+			    fbinfo->stride);
+			prop_dictionary_set_bool(dict, "is_console", true);
+			prop_dictionary_set_bool(dict, "clear-screen", false);
+#if NWSDISPLAY > 0 && NGENFB > 0
+			prop_dictionary_set_uint16(dict, "cursor-row",
+			    x86_genfb_console_screen.scr_ri.ri_crow);
+#endif
+#if notyet
+			prop_dictionary_set_bool(dict, "splash",
+			    fbinfo->flags & BI_FB_SPLASH ? true : false);
+#endif
+			if (fbinfo->depth == 8) {
+				gfb_cb.gcc_cookie = NULL;
+				gfb_cb.gcc_set_mapreg = x86_genfb_set_mapreg;
+				prop_dictionary_set_uint64(dict,
+				    "cmap_callback", (uint64_t)&gfb_cb);
+			}
+			found_console = true;
+			return;
+		}
+	}
+#endif
 	return;
 
  found:

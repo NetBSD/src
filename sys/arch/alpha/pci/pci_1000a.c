@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.20 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.20.14.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.20 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.20.14.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,27 +94,24 @@ __KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.20 2008/04/28 20:23:11 martin Exp $"
 static bus_space_tag_t mystery_icu_iot;
 static bus_space_handle_t mystery_icu_ioh[2];
 
-int	dec_1000a_intr_map __P((struct pci_attach_args *,
-	    pci_intr_handle_t *));
-const char *dec_1000a_intr_string __P((void *, pci_intr_handle_t));
-const struct evcnt *dec_1000a_intr_evcnt __P((void *, pci_intr_handle_t));
-void	*dec_1000a_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *));
-void	dec_1000a_intr_disestablish __P((void *, void *));
+int	dec_1000a_intr_map(struct pci_attach_args *,
+	    pci_intr_handle_t *);
+const char *dec_1000a_intr_string(void *, pci_intr_handle_t);
+const struct evcnt *dec_1000a_intr_evcnt(void *, pci_intr_handle_t);
+void	*dec_1000a_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *);
+void	dec_1000a_intr_disestablish(void *, void *);
 
 struct alpha_shared_intr *dec_1000a_pci_intr;
 
-static void dec_1000a_iointr __P((void *arg, unsigned long vec));
-static void dec_1000a_enable_intr __P((int irq));
-static void dec_1000a_disable_intr __P((int irq));
-static void pci_1000a_imi __P((void));
+static void dec_1000a_iointr(void *arg, unsigned long vec);
+static void dec_1000a_enable_intr(int irq);
+static void dec_1000a_disable_intr(int irq);
+static void pci_1000a_imi(void);
 static pci_chipset_tag_t pc_tag;
 
 void
-pci_1000a_pickintr(core, iot, memt, pc)
-	void *core;
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
+pci_1000a_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc)
 {
 	char *cp;
 	int i;
@@ -153,9 +150,7 @@ pci_1000a_pickintr(core, iot, memt, pc)
 }
 
 int     
-dec_1000a_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_1000a_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
@@ -203,9 +198,7 @@ bad:	printf("dec_1000a_intr_map: can't map dev %d pin %d\n", device, buspin);
 }
 
 const char *
-dec_1000a_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_1000a_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 	static const char irqmsg_fmt[] = "dec_1000a irq %ld";
         static char irqstr[sizeof irqmsg_fmt];
@@ -219,9 +212,7 @@ dec_1000a_intr_string(ccv, ih)
 }
 
 const struct evcnt *
-dec_1000a_intr_evcnt(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_1000a_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 {
 
 	if (ih >= PCI_NIRQ)
@@ -235,7 +226,7 @@ dec_1000a_intr_establish(ccv, ih, level, func, arg)
         void *ccv, *arg;
         pci_intr_handle_t ih;
         int level;
-        int (*func) __P((void *));
+        int (*func)(void *);
 {           
 	void *cookie;
 
@@ -255,8 +246,7 @@ dec_1000a_intr_establish(ccv, ih, level, func, arg)
 }
 
 void    
-dec_1000a_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+dec_1000a_intr_disestablish(void *ccv, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
@@ -277,9 +267,7 @@ dec_1000a_intr_disestablish(ccv, cookie)
 }
 
 static void
-dec_1000a_iointr(framep, vec)
-	void *framep;
-	unsigned long vec;
+dec_1000a_iointr(void *framep, unsigned long vec)
 {
 	int irq;
 
@@ -306,8 +294,7 @@ dec_1000a_iointr(framep, vec)
  */
 
 static void
-dec_1000a_enable_intr(irq)
-	int irq;
+dec_1000a_enable_intr(int irq)
 {
 	int imrval = IRQ2IMR(irq);
 	int i = imrval >= 16;
@@ -316,8 +303,7 @@ dec_1000a_enable_intr(irq)
 }
 
 static void
-dec_1000a_disable_intr(irq)
-	int irq;
+dec_1000a_disable_intr(int irq)
 {
 	int imrval = IRQ2IMR(irq);
 	int i = imrval >= 16;

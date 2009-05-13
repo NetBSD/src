@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.47 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.47.16.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.47 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.47.16.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -256,7 +256,7 @@ esp4_input(m, va_alist)
 		goto bad;
 	}
 
-	if (bcmp(sum0, sum, siz) != 0) {
+	if (memcmp(sum0, sum, siz) != 0) {
 		ipseclog((LOG_WARNING, "auth fail in IPv4 ESP input: %s %s\n",
 		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
 		IPSEC_STATINC(IPSEC_STAT_IN_ESPAUTHFAIL);
@@ -672,7 +672,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 		goto bad;
 	}
 
-	if (bcmp(sum0, sum, siz) != 0) {
+	if (memcmp(sum0, sum, siz) != 0) {
 		ipseclog((LOG_WARNING, "auth fail in IPv6 ESP input: %s %s\n",
 		    ipsec6_logpacketstr(ip6, spi), ipsec_logsastr(sav)));
 		IPSEC6_STATINC(IPSEC_STAT_IN_ESPAUTHFAIL);
@@ -941,7 +941,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		 * no possibility of an infinite loop of function calls,
 		 * because we don't pass the inner IPv6 header.
 		 */
-		bzero(&ip6cp1, sizeof(ip6cp1));
+		memset(&ip6cp1, 0, sizeof(ip6cp1));
 		ip6cp1.ip6c_src = ip6cp->ip6c_src;
 		pfctlinput2(cmd, sa, (void *)&ip6cp1);
 

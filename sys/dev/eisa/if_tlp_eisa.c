@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.21 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.21.14.1 2009/05/13 17:19:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.21 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.21.14.1 2009/05/13 17:19:17 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -106,10 +106,10 @@ struct tulip_eisa_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-static int	tlp_eisa_match(struct device *, struct cfdata *, void *);
-static void	tlp_eisa_attach(struct device *, struct device *, void *);
+static int	tlp_eisa_match(device_t, cfdata_t, void *);
+static void	tlp_eisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(tlp_eisa, sizeof(struct tulip_eisa_softc),
+CFATTACH_DECL_NEW(tlp_eisa, sizeof(struct tulip_eisa_softc),
     tlp_eisa_match, tlp_eisa_attach, NULL, NULL);
 
 static const int tlp_eisa_irqs[] = { 5, 9, 10, 11 };
@@ -139,7 +139,7 @@ tlp_eisa_lookup(const struct eisa_attach_args *ea)
 }
 
 static int
-tlp_eisa_match(struct device *parent, struct cfdata *match,
+tlp_eisa_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -151,7 +151,7 @@ tlp_eisa_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-tlp_eisa_attach(struct device *parent, struct device *self, void *aux)
+tlp_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	static const u_int8_t testpat[] =
 	    { 0xff, 0, 0x55, 0xaa, 0xff, 0, 0x55, 0xaa };
@@ -177,6 +177,7 @@ tlp_eisa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_dev = self;
 	sc->sc_st = iot;
 	sc->sc_sh = ioh;
 
@@ -244,7 +245,7 @@ tlp_eisa_attach(struct device *parent, struct device *self, void *aux)
 	 * None of the DE425 boards have the new-style SROMs.
 	 */
 	if (tlp_parse_old_srom(sc, enaddr) == 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to decode old-style SROM\n");
+		aprint_error_dev(self, "unable to decode old-style SROM\n");
 		return;
 	}
 
@@ -264,7 +265,7 @@ tlp_eisa_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (eisa_intr_map(ec, irq, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map interrupt (%u)\n",
+		aprint_error_dev(self, "unable to map interrupt (%u)\n",
 		    irq);
 		return;
 	}
@@ -272,14 +273,14 @@ tlp_eisa_attach(struct device *parent, struct device *self, void *aux)
 	esc->sc_ih = eisa_intr_establish(ec, ih,
 	    (val & 0x01) ? IST_EDGE : IST_LEVEL, IPL_NET, tlp_intr, sc);
 	if (esc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
+		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev),
+		printf("%s: interrupting at %s\n", device_xname(self),
 		    intrstr);
 
 	/*

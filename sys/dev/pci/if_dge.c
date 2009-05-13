@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.22 2008/11/07 00:20:07 dyoung Exp $ */
+/*	$NetBSD: if_dge.c,v 1.22.4.1 2009/05/13 17:20:25 jym Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.22 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.22.4.1 2009/05/13 17:20:25 jym Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -631,8 +631,8 @@ static void	dge_txintr(struct dge_softc *);
 static void	dge_rxintr(struct dge_softc *);
 static void	dge_linkintr(struct dge_softc *, uint32_t);
 
-static int	dge_match(struct device *, struct cfdata *, void *);
-static void	dge_attach(struct device *, struct device *, void *);
+static int	dge_match(device_t, cfdata_t, void *);
+static void	dge_attach(device_t, device_t, void *);
 
 static int	dge_read_eeprom(struct dge_softc *sc);
 static int	dge_eeprom_clockin(struct dge_softc *sc);
@@ -641,7 +641,7 @@ static uint16_t	dge_eeprom_word(struct dge_softc *sc, int addr);
 static int	dge_xgmii_mediachange(struct ifnet *);
 static void	dge_xgmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static void	dge_xgmii_reset(struct dge_softc *);
-static void	dge_xgmii_writereg(struct device *, int, int, int);
+static void	dge_xgmii_writereg(device_t, int, int, int);
 
 
 CFATTACH_DECL(dge, sizeof(struct dge_softc),
@@ -655,7 +655,7 @@ static char (*dge_txseg_evcnt_names)[DGE_NTXSEGS][8 /* "txseg00" + \0 */];
 #endif /* DGE_EVENT_COUNTERS */
 
 static int
-dge_match(struct device *parent, struct cfdata *cf, void *aux)
+dge_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -667,9 +667,9 @@ dge_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-dge_attach(struct device *parent, struct device *self, void *aux)
+dge_attach(device_t parent, device_t self, void *aux)
 {
-	struct dge_softc *sc = (void *) self;
+	struct dge_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -1306,8 +1306,8 @@ dge_start(struct ifnet *ifp)
 			DPRINTF(DGE_DEBUG_TX,
 			    ("%s: TX: desc %d: low 0x%08lx, len 0x%04lx\n",
 			    device_xname(&sc->sc_dev), nexttx,
-			    le32toh(dmamap->dm_segs[seg].ds_addr),
-			    le32toh(dmamap->dm_segs[seg].ds_len)));
+			    (unsigned long)le32toh(dmamap->dm_segs[seg].ds_addr),
+			    (unsigned long)le32toh(dmamap->dm_segs[seg].ds_len)));
 		}
 
 		KASSERT(lasttx != -1);
@@ -2397,9 +2397,9 @@ phwait(struct dge_softc *sc, int p, int r, int d, int type)
 
 
 static void
-dge_xgmii_writereg(struct device *self, int phy, int reg, int val)
+dge_xgmii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct dge_softc *sc = (void *) self;
+	struct dge_softc *sc = device_private(self);
 	int mdic;
 
 	CSR_WRITE(sc, DGE_MDIRW, val);

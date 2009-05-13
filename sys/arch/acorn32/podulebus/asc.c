@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.15 2008/06/12 23:22:36 cegger Exp $	*/
+/*	$NetBSD: asc.c,v 1.15.10.1 2009/05/13 17:16:03 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -98,7 +98,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15 2008/06/12 23:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15.10.1 2009/05/13 17:16:03 jym Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -268,7 +268,7 @@ ascattach(struct device *pdp, struct device *dp, void *auxp)
 #endif
 	{
 		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		    dp->dv_xname, "intr");
+		    device_xname(dp), "intr");
 		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 		    asc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.34 2008/06/11 22:37:21 cegger Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.34.10.1 2009/05/13 17:16:18 jym Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.34 2008/06/11 22:37:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.34.10.1 2009/05/13 17:16:18 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -337,9 +337,7 @@ ixpcomparam(struct tty *tp, struct termios *t)
 }
 
 static int
-ixpcomhwiflow(tp, block)
-	struct tty *tp;
-	int block;
+ixpcomhwiflow(struct tty *tp, int block)
 {
 	return (0);
 }
@@ -755,8 +753,7 @@ ixpcomstop(struct tty *tp, int flag)
 }
 
 static u_int
-cflag2cr(cflag)
-	tcflag_t cflag;
+cflag2cr(tcflag_t cflag)
 {
 	u_int cr;
 
@@ -769,8 +766,7 @@ cflag2cr(cflag)
 }
 
 static void
-ixpcom_iflush(sc)
-	struct ixpcom_softc *sc;
+ixpcom_iflush(struct ixpcom_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -810,12 +806,7 @@ ixpcom_set_cr(struct ixpcom_softc *sc)
 }
 
 int
-ixpcomcnattach(iot, iobase, ioh, ospeed, cflag)
-	bus_space_tag_t iot;
-	bus_addr_t iobase;
-	bus_space_handle_t ioh;
-	int ospeed;
-	tcflag_t cflag;
+ixpcomcnattach(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t ioh, int ospeed, tcflag_t cflag)
 {
 	int cr;
 
@@ -855,23 +846,18 @@ ixpcomcnattach(iot, iobase, ioh, ospeed, cflag)
 }
 
 void
-ixpcomcnprobe(cp)
-	struct consdev *cp;
+ixpcomcnprobe(struct consdev *cp)
 {
 	cp->cn_pri = CN_REMOTE;
 }
 
 void
-ixpcomcnpollc(dev, on)
-	dev_t dev;
-	int on;
+ixpcomcnpollc(dev_t dev, int on)
 {
 }
 
 void
-ixpcomcnputc(dev, c)
-	dev_t dev;
-	int c;
+ixpcomcnputc(dev_t dev, int c)
 {
 	int			s;
 	bus_space_tag_t		iot = ixpcomcn_sc.sc_iot;
@@ -895,8 +881,7 @@ ixpcomcnputc(dev, c)
 }
 
 int
-ixpcomcngetc(dev)
-        dev_t dev;
+ixpcomcngetc(dev_t dev)
 {
 	int			c;
 	int			s;
@@ -916,9 +901,7 @@ ixpcomcngetc(dev)
 }
 
 inline static void
-ixpcom_txsoft(sc, tp)
-	struct ixpcom_softc *sc;
-	struct tty *tp;
+ixpcom_txsoft(struct ixpcom_softc *sc, struct tty *tp)
 {
 	CLR(tp->t_state, TS_BUSY);
 	if (ISSET(tp->t_state, TS_FLUSH))
@@ -929,11 +912,9 @@ ixpcom_txsoft(sc, tp)
 }
 
 inline static void
-ixpcom_rxsoft(sc, tp)
-	struct ixpcom_softc *sc;
-	struct tty *tp;
+ixpcom_rxsoft(struct ixpcom_softc *sc, struct tty *tp)
 {
-	int (*rint) __P((int, struct tty *)) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char lsr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.5 2008/11/21 17:13:07 matt Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.5.4.1 2009/05/13 17:16:18 jym Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -184,7 +184,12 @@ void	_setsoftintr(int);
 void omap_irq_handler(void *);
 void *omap_intr_establish(int, int, const char *, int (*)(void *), void *);
 void omap_intr_disestablish(void *);
-int omapintc_match(device_t, cfdata_t, void *);
+/* XXX MARTY -- This is a hack to work around the circular dependency
+ * between sys/device.h and omap_intr.h  It should be removed when
+ * the circular dependency is fixed and the declaration repaired.
+ */
+struct cfdata;
+int omapintc_match(device_t, struct cfdata *, void *);
 void omapintc_attach(device_t, device_t, void *);
 
 #endif /* ! _LOCORE */

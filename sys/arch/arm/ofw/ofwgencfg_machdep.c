@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.15 2008/11/30 18:21:32 martin Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.15.4.1 2009/05/13 17:16:18 jym Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.15 2008/11/30 18:21:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.15.4.1 2009/05/13 17:16:18 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -85,14 +85,14 @@ extern u_int undefined_handler_address;
 /*
  *  Imported routines
  */
-extern void data_abort_handler		__P((trapframe_t *frame));
-extern void prefetch_abort_handler	__P((trapframe_t *frame));
-extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
-int	ofbus_match __P((struct device *, struct cfdata *, void *));
-void	ofbus_attach __P((struct device *, struct device *, void *));
+extern void data_abort_handler(trapframe_t *frame);
+extern void prefetch_abort_handler(trapframe_t *frame);
+extern void undefinedinstruction_bounce(trapframe_t *frame);
+int	ofbus_match(struct device *, struct cfdata *, void *);
+void	ofbus_attach(struct device *, struct device *, void *);
 
 /* Local routines */
-static void process_kernel_args	__P((void));
+static void process_kernel_args(void);
 
 /*
  *  Exported variables
@@ -121,9 +121,7 @@ CFATTACH_DECL(ofbus_root, sizeof(struct device),
  */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	/* Just call OFW common routine. */
 	ofw_boot(howto, bootstr);

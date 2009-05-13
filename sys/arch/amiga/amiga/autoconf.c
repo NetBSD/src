@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.99 2008/06/13 08:17:24 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.99.10.1 2009/05/13 17:16:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99 2008/06/13 08:17:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99.10.1 2009/05/13 17:16:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ int amiga_realconfig;
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	int s;
 #ifdef DEBUG_KERNEL_START
@@ -115,7 +115,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 #ifdef DEBUG_KERNEL_START
@@ -129,23 +129,20 @@ cpu_rootconf()
 
 /*ARGSUSED*/
 int
-simple_devprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+simple_devprint(void *auxp, const char *pnp)
 {
 	return(QUIET);
 }
 
 int
-matchname(fp, sp)
-	const char *fp, *sp;
+matchname(const char *fp, const char *sp)
 {
 	int len;
 
 	len = strlen(fp);
 	if (strlen(sp) != len)
 		return(0);
-	if (bcmp(fp, sp, len) == 0)
+	if (memcmp(fp, sp, len) == 0)
 		return(1);
 	return(0);
 }
@@ -157,11 +154,7 @@ matchname(fp, sp)
  * by checking for NULL.
  */
 int
-amiga_config_found(pcfp, pdp, auxp, pfn)
-	struct cfdata *pcfp;
-	struct device *pdp;
-	void *auxp;
-	cfprint_t pfn;
+amiga_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp, cfprint_t pfn)
 {
 	struct device temp;
 	struct cfdata *cf;
@@ -197,7 +190,7 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
  * the console. Kinda hacky but it works.
  */
 void
-config_console()
+config_console(void)
 {
 	struct cfdata *cf;
 
@@ -237,10 +230,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
     mbmatch, mbattach, NULL, NULL);
 
 int
-mbmatch(pdp, cfp, auxp)
-	struct device	*pdp;
-	struct cfdata	*cfp;
-	void		*auxp;
+mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 #if 0	/*
 	 * XXX is this right? but we need to be found twice
@@ -261,9 +251,7 @@ mbmatch(pdp, cfp, auxp)
  * "find" all the things that should be there.
  */
 void
-mbattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+mbattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	printf("\n");
 	config_found(dp, __UNCONST("clock"), simple_devprint);
@@ -312,9 +300,7 @@ mbattach(pdp, dp, auxp)
 }
 
 int
-mbprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+mbprint(void *auxp, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("%s at %s", (char *)auxp, pnp);

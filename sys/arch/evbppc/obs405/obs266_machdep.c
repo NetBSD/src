@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.9.4.1 2009/05/13 17:16:41 jym Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,11 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.9.4.1 2009/05/13 17:16:41 jym Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

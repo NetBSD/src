@@ -1,4 +1,4 @@
-/*	$NetBSD: tdfx_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $	*/
+/*	$NetBSD: tdfx_drv.c,v 1.5.8.1 2009/05/13 17:21:08 jym Exp $	*/
 
 /* tdfx_drv.c -- tdfx driver -*- linux-c -*-
  * Created: Thu Oct  7 10:38:32 1999 by faith@precisioninsight.com
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.5.8.1 2009/05/13 17:21:08 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/tdfx_drv.c,v 1.10 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -77,7 +77,7 @@ tdfx_attach(device_t nbdev)
 {
 	drm_device_t *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	memset(dev, 0, sizeof(drm_device_t));
 	tdfx_configure(dev);
 	return drm_attach(nbdev, tdfx_pciidlist);
 }
@@ -108,14 +108,14 @@ MODULE_DEPEND(tdfx, drm, 1, 1, 1);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 static int
-tdfxdrm_probe(struct device *parent, struct cfdata *match, void *aux)
+tdfxdrm_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	return drm_probe(pa, tdfx_pciidlist);
 }
 
 static void
-tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
+tdfxdrm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	drm_device_t *dev = device_private(self);

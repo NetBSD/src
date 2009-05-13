@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.55 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.55.4.1 2009/05/13 17:22:20 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.55 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.55.4.1 2009/05/13 17:22:20 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -311,7 +311,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			void *tha = (void *)ar_tha(ah);
 			KASSERT(tha);
 			if (tha)
-				bcopy(tha, (void *)edst, sizeof(edst));
+				memcpy((void *)edst, tha, sizeof(edst));
 			trh = (struct token_header *)M_TRHSTART(m);
 			trh->token_ac = TOKEN_AC;
 			trh->token_fc = TOKEN_FC;
@@ -321,9 +321,9 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 				trrif = TOKEN_RIF(trh);
 				riflen = (ntohs(trrif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 			}
-			bcopy((void *)edst, (void *)trh->token_dhost,
+			memcpy((void *)trh->token_dhost, (void *)edst,
 			    sizeof (edst));
-			bcopy(CLLADDR(ifp->if_sadl), (void *)trh->token_shost,
+			memcpy((void *)trh->token_shost, CLLADDR(ifp->if_sadl),
 			    sizeof(trh->token_shost));
 			if (riflen != 0)
 				trh->token_shost[0] |= TOKEN_RI_PRESENT;
@@ -423,7 +423,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		l->llc_dsap = l->llc_ssap = LLC_SNAP_LSAP;
 		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] =
 		    l->llc_snap.org_code[2] = 0;
-		bcopy((void *) &etype, (void *) &l->llc_snap.ether_type,
+		memcpy((void *) &l->llc_snap.ether_type, (void *) &etype,
 		    sizeof(uint16_t));
 	}
 
@@ -438,8 +438,8 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	trh = mtod(m, struct token_header *);
 	trh->token_ac = TOKEN_AC;
 	trh->token_fc = TOKEN_FC;
-	bcopy((void *)edst, (void *)trh->token_dhost, sizeof (edst));
-	bcopy(CLLADDR(ifp->if_sadl), (void *)trh->token_shost,
+	memcpy((void *)trh->token_dhost, (void *)edst, sizeof (edst));
+	memcpy((void *)trh->token_shost, CLLADDR(ifp->if_sadl),
 	    sizeof(trh->token_shost));
 
 	if (riflen != 0) {
@@ -447,7 +447,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 
 		trh->token_shost[0] |= TOKEN_RI_PRESENT;
 		trrif = TOKEN_RIF(trh);
-		bcopy(rif, trrif, riflen);
+		memcpy(trrif, rif, riflen);
 	}
 #ifdef INET
 send:
@@ -455,7 +455,7 @@ send:
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
-		bcopy(CLLADDR(ifp0->if_sadl), (void *)trh->token_shost,	    
+		memcpy((void *)trh->token_shost, CLLADDR(ifp0->if_sadl),	    
 		    sizeof(trh->token_shost));
 	}
 #endif /* NCARP > 0 */

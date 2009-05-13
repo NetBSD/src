@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.80 2008/11/12 12:36:16 ad Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.80.4.1 2009/05/13 17:21:09 jym Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.80 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.80.4.1 2009/05/13 17:21:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.80 2008/11/12 12:36:16 ad Exp $")
 #include <dev/microcode/wi/spectrum24t_cf.h>
 #endif
 
-static int	wi_pcmcia_match(struct device *, struct cfdata *, void *);
+static int	wi_pcmcia_match(device_t, cfdata_t, void *);
 static int	wi_pcmcia_validate_config(struct pcmcia_config_entry *);
-static void	wi_pcmcia_attach(struct device *, struct device *, void *);
-static int	wi_pcmcia_detach(struct device *, int);
+static void	wi_pcmcia_attach(device_t, device_t, void *);
+static int	wi_pcmcia_detach(device_t, int);
 static int	wi_pcmcia_enable(struct wi_softc *);
 static void	wi_pcmcia_disable(struct wi_softc *);
 
@@ -251,7 +251,7 @@ static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
 
 static int
-wi_pcmcia_match(struct device *parent, struct cfdata *match,
+wi_pcmcia_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -263,8 +263,7 @@ wi_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 static int
-wi_pcmcia_enable(sc)
-	struct wi_softc *sc;
+wi_pcmcia_enable(struct wi_softc *sc)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
@@ -302,8 +301,7 @@ wi_pcmcia_enable(sc)
 }
 
 static void
-wi_pcmcia_disable(sc)
-	struct wi_softc *sc;
+wi_pcmcia_disable(struct wi_softc *sc)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)sc;
 
@@ -313,8 +311,7 @@ wi_pcmcia_disable(sc)
 }
 
 static int
-wi_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+wi_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace != 1 ||
@@ -325,7 +322,7 @@ wi_pcmcia_validate_config(cfe)
 }
 
 static void
-wi_pcmcia_attach(struct device  *parent, struct device *self,
+wi_pcmcia_attach(struct device  *parent, device_t self,
     void *aux)
 {
 	struct wi_pcmcia_softc *psc = (void *)self;
@@ -395,7 +392,7 @@ fail:
 }
 
 static int
-wi_pcmcia_detach(struct device *self, int flags)
+wi_pcmcia_detach(device_t self, int flags)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)self;
 	int error;
@@ -425,10 +422,7 @@ wi_pcmcia_detach(struct device *self, int flags)
 
 #if WI_PCMCIA_SPECTRUM24T_FW
 static int
-wi_pcmcia_load_firm(sc, primsym, primlen, secsym, seclen)
-	struct wi_softc *sc;
-	const void *primsym, *secsym;
-	int primlen, seclen;
+wi_pcmcia_load_firm(struct wi_softc *sc, const void *primsym, int primlen, const void *secsym, int seclen)
 {
 	u_int8_t ebuf[256];
 	int i;
@@ -475,10 +469,7 @@ wi_pcmcia_load_firm(sc, primsym, primlen, secsym, seclen)
 }
 
 static int
-wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
-	struct wi_softc *sc;
-	const void *buf, *ebuf;
-	int buflen, ebuflen;
+wi_pcmcia_write_firm(struct wi_softc *sc, const void *buf, int buflen, const void *ebuf, int ebuflen)
 {
 	const u_int8_t *p, *ep, *q, *eq;
 	char *endp;
@@ -539,9 +530,7 @@ wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
 }
 
 static int
-wi_pcmcia_set_hcr(sc, mode)
-	struct wi_softc *sc;
-	int mode;
+wi_pcmcia_set_hcr(struct wi_softc *sc, int mode)
 {
 	u_int16_t hcr;
 

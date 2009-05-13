@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.10 2008/06/12 21:51:12 cegger Exp $ */
+/* $NetBSD: vsxxx.c,v 1.10.10.1 2009/05/13 17:19:16 jym Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.10 2008/06/12 21:51:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.10.10.1 2009/05/13 17:19:16 jym Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet
@@ -86,8 +86,7 @@ struct wsmouse_accessops vsxxx_accessops = {	/* EXPORT */
 };
 
 static int
-vsxxx_enable(v)
-	void *v;
+vsxxx_enable(void *v)
 {
 	/* turn on the hardware? */
 	((struct vsxxx_softc *)v)->sc_nbyte = 0;
@@ -95,20 +94,14 @@ vsxxx_enable(v)
 }
 
 static void
-vsxxx_disable(v)
-	void *v;
+vsxxx_disable(void *v)
 {
 	/* turn off the hardware? */
 }
 
 /*ARGUSED*/
 static int
-vsxxx_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct proc *p;
+vsxxx_ioctl(void *v, u_long cmd, void *data, int flag, struct proc *p)
 {
 	if (cmd == WSMOUSEIO_GTYPE) {
 		*(u_int *)data = WSMOUSE_TYPE_VSXXX;

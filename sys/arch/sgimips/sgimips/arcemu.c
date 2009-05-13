@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.17 2007/10/17 19:57:05 garbled Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.17.34.1 2009/05/13 17:18:21 jym Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.17 2007/10/17 19:57:05 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.17.34.1 2009/05/13 17:18:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,17 +42,17 @@ __KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.17 2007/10/17 19:57:05 garbled Exp $");
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 
-#include <dev/ic/smc93cx6var.h>
+#include <dev/ic/wd33c93reg.h>
 
 #define _ARCEMU_PRIVATE
 #include <sgimips/sgimips/arcemu.h>
 #include <sgimips/dev/picreg.h>
 
-static struct consdev arcemu_ip12_cn = {
+static struct consdev arcemu_cn = {
 	NULL,			/* probe */
 	NULL,			/* init */
 	NULL,			/* getc */ /* XXX: this would be nice */
-	arcemu_ip12_putc,	/* putc */
+	arcemu_prom_putc,	/* putc */
 	nullcnpollc,		/* pollc */
 	NULL,			/* bell */
 	NULL,
@@ -109,9 +109,10 @@ static struct arcbios_fv arcemu_v = {
 int
 arcemu_init(const char **env)
 {
-	switch (arcemu_identify()) {
+	switch ((mach_type = arcemu_identify())) {
+	case MACH_SGI_IP6 | MACH_SGI_IP10:
 	case MACH_SGI_IP12:
-		arcemu_ip12_init(ARCEMU_IP12_ENVOK(env) ? env : NULL);
+		arcemu_ipN_init(ARCEMU_ENVOK(env) ? env : NULL);
 		break;
 
 	default:
@@ -123,16 +124,30 @@ arcemu_init(const char **env)
 	return (0);
 }
 
-/* Attempt to identify the SGI IP%d platform. */
+/*
+ * Attempt to identify the SGI IP%d platform. This is extra ugly since
+ * we don't yet have badaddr to fall back on.
+ */
 static int
-arcemu_identify()
+arcemu_identify(void)
 {
+	int mach;
 
 	/*
-	 * XXX - identifying an HPC should be sufficient for IP12
-	 *       since it's the only non-ARCS offering with one.
+	 * Try to write a value to one of IP12's pic(4) graphics DMA registers.
+	 * This is at the same location as four byte parity strobes on IP6,
+	 * which appear to always read 0.
 	 */
-	return (MACH_SGI_IP12); /* boy, that was easy! */
+	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1faa0000) = 0xdeadbeef;
+	DELAY(1000);
+	if (*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1faa0000) == 0xdeadbeef)
+		mach = MACH_SGI_IP12;
+	else
+		mach = MACH_SGI_IP6;
+	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1faa0000) = 0;
+	(void)*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1faa0000);
+
+	return (mach);
 }
 
 static boolean_t
@@ -154,20 +169,16 @@ extractenv(const char **env, const char *key, char *dest, int len)
 	return (false);
 }
 
-/*
- * IP12 specific
- */
-
 /* Prom Vectors */
-static void   (*ip12_prom_reset)(void) = (void *)MIPS_PHYS_TO_KSEG1(0x1fc00000);
-static void   (*ip12_prom_reinit)(void) =(void *)MIPS_PHYS_TO_KSEG1(0x1fc00018);
-static int    (*ip12_prom_printf)(const char *, ...) =
+static void   (*sgi_prom_reset)(void) = (void *)MIPS_PHYS_TO_KSEG1(0x1fc00000);
+static void   (*sgi_prom_reinit)(void) =(void *)MIPS_PHYS_TO_KSEG1(0x1fc00018);
+static int    (*sgi_prom_printf)(const char *, ...) =
 					 (void *)MIPS_PHYS_TO_KSEG1(0x1fc00080);
 
 /*
- * The following matches IP12 NVRAM memory layout
+ * The following matches IP6's and IP12's NVRAM memory layout
  */
-static struct arcemu_ip12_nvramdata {
+static struct arcemu_nvramdata {
 	char bootmode;
 	char state;
 	char netaddr[16];
@@ -186,10 +197,11 @@ static struct arcemu_ip12_nvramdata {
 	char passwd[17];
 	char volume[3];
 	uint8_t enaddr[6];
-} ip12nvram;
-static char ip12enaddr[18];
+} nvram;
 
-static struct arcemu_ip12env {
+static char enaddr[18];
+
+static struct arcemu_sgienv {
 	char dbaud[5];
 	char rbaud[5];
 	char bootmode;
@@ -201,122 +213,162 @@ static struct arcemu_ip12env {
 	char netaddr[32];
 	char dlserver[32];
 	char osloadoptions[32];
-} ip12env;
+} sgienv;
 
+/*
+ * EEPROM reading routines. IP6's wiring is sufficiently ugly and the routine
+ * sufficiently small that we just roll our own, rather than contorting the MD
+ * driver.
+ */
 static void
-arcemu_ip12_eeprom_read()
+eeprom_read(uint8_t *eeprom_buf, size_t len, int is_cs56,
+    void (*set_pre)(int), void (*set_cs)(int), void (*set_sk)(int),
+    int (*get_do)(void), void (*set_di)(int))
 {
-	struct seeprom_descriptor sd;
-	bus_space_handle_t bsh;
-	bus_space_tag_t tag;
-	u_int32_t reg;
+	int i, j;
 
-	tag = SGIMIPS_BUS_SPACE_NORMAL;
-	bus_space_map(tag, 0x1fa00000 + 0x1801bf, 1, 0, &bsh);
+	for (i = 0; i < (len / 2); i++) {
+		uint16_t instr = 0xc000 | (i << ((is_cs56) ? 5 : 7));
+		uint16_t bitword = 0;
 
-	/*
-	 * 4D/3x and VIP12 sport a smaller EEPROM than Indigo HP1/HPLC.
-	 * We're only interested in the first 64 half-words in either
-	 * case, but the seeprom driver has to know how many addressing
-	 * bits to feed the chip.
-	 */
+		set_di(0);
+		set_sk(0);
+		set_pre(0);
+		set_cs(0);
+		set_cs(1);
+		set_sk(1);
 
-	/* 
-	 * This appears to not be the case on my 4D/35.  We'll assume that
-	 * we use eight-bit addressing mode for all IP12 variants.
-	 */
+		for (j = 0; j < ((is_cs56) ? 11 : 9); j++) {
+			set_di(instr & 0x8000);
+			set_sk(0);
+			set_sk(1);
+			instr <<= 1;
+		}
 
-	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
+		set_di(0);
 
-#if 0
-	if ((reg & 0x8000) == 0)
-		sd.sd_chip = C46;
-	else
-		sd.sd_chip = C56_66;
-#endif
+		for (j = 0; j < 17; j++) {
+			bitword = (bitword << 1) | get_do();
+			set_sk(0);
+			set_sk(1);
+		}
 
-	sd.sd_chip = C56_66;
+		eeprom_buf[i * 2 + 0] = bitword >> 8;
+		eeprom_buf[i * 2 + 1] = bitword & 0xff;
+	
+		set_sk(0);
+		set_cs(0);
+	}
+}
 
-	sd.sd_tag = tag;
-	sd.sd_bsh = bsh;
-	sd.sd_regsize = 1;
-	sd.sd_control_offset = 0;
-	sd.sd_status_offset = 0;
-	sd.sd_dataout_offset = 0;
-	sd.sd_DI = 0x10;	/* EEPROM -> CPU */
-	sd.sd_DO = 0x08;	/* CPU -> EEPROM */
-	sd.sd_CK = 0x04;
-	sd.sd_CS = 0x02;
-	sd.sd_MS = 0;
-	sd.sd_RDY = 0;
+/*
+ * Read the EEPROM. It's not clear which machines have which parts, and
+ * there's a difference in instruction length between the two. We'll try
+ * both and see which doesn't give us garbage.
+ */
+static void
+arcemu_eeprom_read(void)
+{
+	int i;
 
-	if (read_seeprom(&sd, (uint16_t *)&ip12nvram, 0, 64) != 1)
-		panic("arcemu: NVRAM read failed");
+	/* try long instruction length first (the only one I've seen) */
+	for (i = 1; i >= 0; i--) {
+		if (mach_type == (MACH_SGI_IP6 | MACH_SGI_IP10)) {
+			eeprom_read((uint8_t *)&nvram, sizeof(nvram), i,
+			    ip6_set_pre, ip6_set_cs, ip6_set_sk,
+			    ip6_get_do,  ip6_set_di);
+		} else {
+			eeprom_read((uint8_t *)&nvram, sizeof(nvram), i,
+			    ip12_set_pre, ip12_set_cs, ip12_set_sk,
+			    ip12_get_do,  ip12_set_di);
+		}
 
-	bus_space_unmap(tag, bsh, 1); /* play technically nice */
+		if (nvram.enaddr[0] == 0x08 && nvram.enaddr[1] == 0x00 &&
+		    nvram.enaddr[2] == 0x69)
+			break;
+
+		if (memcmp(nvram.lbaud, "9600\x0", 5) == 0)
+			break;
+
+		if (memcmp(nvram.bootfile, "dksc(", 5) == 0 ||
+		    memcmp(nvram.bootfile, "bootp(", 6) == 0)
+			break;
+	}
 
 	/* cache enaddr string */
-	sprintf(ip12enaddr, "%02x:%02x:%02x:%02x:%02x:%02x",
-	    ip12nvram.enaddr[0],
-	    ip12nvram.enaddr[1],
-	    ip12nvram.enaddr[2],
-	    ip12nvram.enaddr[3],
-	    ip12nvram.enaddr[4],
-	    ip12nvram.enaddr[5]);
+	sprintf(enaddr, "%02x:%02x:%02x:%02x:%02x:%02x",
+	    nvram.enaddr[0],
+	    nvram.enaddr[1],
+	    nvram.enaddr[2],
+	    nvram.enaddr[3],
+	    nvram.enaddr[4],
+	    nvram.enaddr[5]);
 }
 
 static void
-arcemu_ip12_init(const char **env)
+arcemu_ipN_init(const char **env)
 {
 
-	arcemu_v.GetPeer =		  arcemu_ip12_GetPeer;
-	arcemu_v.GetChild =		  arcemu_ip12_GetChild;
-	arcemu_v.GetEnvironmentVariable = arcemu_ip12_GetEnvironmentVariable;
-	arcemu_v.GetMemoryDescriptor =    arcemu_ip12_GetMemoryDescriptor;
-	arcemu_v.Reboot =                 (void *)ip12_prom_reset; 
-	arcemu_v.PowerDown =		  (void *)ip12_prom_reinit; 
-	arcemu_v.EnterInteractiveMode =   (void *)ip12_prom_reinit;	
+	arcemu_v.GetPeer =		  arcemu_GetPeer;
+	arcemu_v.GetChild =		  arcemu_GetChild;
+	arcemu_v.GetEnvironmentVariable = arcemu_GetEnvironmentVariable;
 
-	cn_tab = &arcemu_ip12_cn;
-	arcemu_ip12_eeprom_read();
+	if (mach_type == MACH_SGI_IP6 || mach_type == MACH_SGI_IP10)
+		arcemu_v.GetMemoryDescriptor = arcemu_ip6_GetMemoryDescriptor;
+	else if (mach_type == MACH_SGI_IP12)
+		arcemu_v.GetMemoryDescriptor = arcemu_ip12_GetMemoryDescriptor;
 
-	memset(&ip12env, 0, sizeof(ip12env));
-	extractenv(env, "dbaud", ip12env.dbaud, sizeof(ip12env.dbaud));
-	extractenv(env, "rbaud", ip12env.rbaud, sizeof(ip12env.rbaud));
-	extractenv(env, "bootmode",&ip12env.bootmode, sizeof(ip12env.bootmode));
-	extractenv(env, "console", &ip12env.console, sizeof(ip12env.console));
-	extractenv(env, "diskless",&ip12env.diskless, sizeof(ip12env.diskless));
-	extractenv(env, "volume", ip12env.volume, sizeof(ip12env.volume));
-	extractenv(env, "cpufreq", ip12env.cpufreq, sizeof(ip12env.cpufreq));
-	extractenv(env, "gfx", ip12env.gfx, sizeof(ip12env.gfx));
-	extractenv(env, "netaddr", ip12env.netaddr, sizeof(ip12env.netaddr));
-	extractenv(env, "dlserver", ip12env.dlserver, sizeof(ip12env.dlserver));
-	extractenv(env, "osloadoptions", ip12env.osloadoptions,
-	    sizeof(ip12env.osloadoptions));
+	arcemu_v.Reboot =                 (void *)sgi_prom_reset; 
+	arcemu_v.PowerDown =		  (void *)sgi_prom_reinit; 
+	arcemu_v.EnterInteractiveMode =   (void *)sgi_prom_reinit;	
 
-	strcpy(arcbios_system_identifier, "SGI-IP12");
+	cn_tab = &arcemu_cn;
+
+	arcemu_eeprom_read();
+
+	memset(&sgienv, 0, sizeof(sgienv));
+	extractenv(env, "dbaud", sgienv.dbaud, sizeof(sgienv.dbaud));
+	extractenv(env, "rbaud", sgienv.rbaud, sizeof(sgienv.rbaud));
+	extractenv(env, "bootmode",&sgienv.bootmode, sizeof(sgienv.bootmode));
+	extractenv(env, "console", &sgienv.console, sizeof(sgienv.console));
+	extractenv(env, "diskless",&sgienv.diskless, sizeof(sgienv.diskless));
+	extractenv(env, "volume", sgienv.volume, sizeof(sgienv.volume));
+	extractenv(env, "cpufreq", sgienv.cpufreq, sizeof(sgienv.cpufreq));
+	extractenv(env, "gfx", sgienv.gfx, sizeof(sgienv.gfx));
+	extractenv(env, "netaddr", sgienv.netaddr, sizeof(sgienv.netaddr));
+	extractenv(env, "dlserver", sgienv.dlserver, sizeof(sgienv.dlserver));
+	extractenv(env, "osloadoptions", sgienv.osloadoptions,
+	    sizeof(sgienv.osloadoptions));
+
 	strcpy(arcbios_sysid_vendor, "SGI");
-	strcpy(arcbios_sysid_product, "IP12");
+	if (mach_type == MACH_SGI_IP6 || mach_type == MACH_SGI_IP10) {
+		strcpy(arcbios_system_identifier, "SGI-IP6");
+		strcpy(arcbios_sysid_product, "IP6");
+	} else if (mach_type == MACH_SGI_IP12) {
+		strcpy(arcbios_system_identifier, "SGI-IP12");
+		strcpy(arcbios_sysid_product, "IP12");
+	}
 }
 
 static void *
-arcemu_ip12_GetPeer(void *node)
+arcemu_GetPeer(void *node)
 {
 	int i;
 
 	if (node == NULL)
 		return (NULL);
 
-	for (i = 0; ip12_tree[i].Class != -1; i++) {
-		if (&ip12_tree[i] == node && ip12_tree[i+1].Class != -1)
-			return (&ip12_tree[i+1]);
+	for (i = 0; arcemu_component_tree[i].Class != -1; i++) {
+		if (&arcemu_component_tree[i] == node &&
+		     arcemu_component_tree[i+1].Class != -1)
+			return (&arcemu_component_tree[i+1]);
 	}
 
 	return (NULL);
 }
 
 static void *
-arcemu_ip12_GetChild(void *node)
+arcemu_GetChild(void *node)
 {
 
 	/*
@@ -324,13 +376,13 @@ arcemu_ip12_GetChild(void *node)
 	 * emulated tree as a single level and avoid messy hierarchies. 
 	 */
 	if (node == NULL)
-		return (&ip12_tree[0]);
+		return (&arcemu_component_tree[0]);
 
 	return (NULL);
 }
 
 static const char *
-arcemu_ip12_GetEnvironmentVariable(const char *var)
+arcemu_GetEnvironmentVariable(const char *var)
 {
 
 	/* 'd'ebug (serial), 'g'raphics, 'G'raphics w/ logo */
@@ -338,10 +390,10 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 	/* XXX This does not indicate the actual current console */
 	if (strcasecmp("ConsoleOut", var) == 0) {
 		/* if no keyboard is attached, we should default to serial */
-		if (strstr(ip12env.gfx, "dead") != NULL)
+		if (strstr(sgienv.gfx, "dead") != NULL)
 			return "serial(0)";
 
-		switch (ip12nvram.console) {
+		switch (nvram.console) {
 		case 'd':
 		case 'D':
 		case 's':
@@ -352,27 +404,32 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 			return "video()";
 		default:
 			printf("arcemu: unknown console \"%c\", using serial\n",
-			    ip12nvram.console);
+			    nvram.console);
 			return "serial(0)";
 		}
 	}
 
 	if (strcasecmp("cpufreq", var) == 0) {
-		if (ip12env.cpufreq[0] != '\0')
-			return (ip12env.cpufreq);
-		else
-			return ("33");
+		if (sgienv.cpufreq[0] != '\0')
+			return (sgienv.cpufreq);
+
+		/* IP6 is 12, IP10 is 20 */
+		if (mach_type == MACH_SGI_IP6 || mach_type == MACH_SGI_IP10)
+			return ("16");
+			
+		/* IP12 is 30, 33 or 36 */
+		return ("33");
 	}
 
 	if (strcasecmp("dbaud", var) == 0)
-		return (ip12nvram.lbaud);
+		return (nvram.lbaud);
 
 	if (strcasecmp("eaddr", var) == 0)
-		return (ip12enaddr);
+		return (enaddr);
 
 	if (strcasecmp("gfx", var) == 0) {
-		if (ip12env.gfx[0] != '\0')
-			return (ip12env.gfx);
+		if (sgienv.gfx[0] != '\0')
+			return (sgienv.gfx);
 	}
 
 	/*
@@ -388,17 +445,17 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 	if (strcasecmp("OSLoadPartition", var) == 0) {
 		char *hack;
 
-		hack = strstr(ip12nvram.bootfile, ",8)");
+		hack = strstr(nvram.bootfile, ",8)");
 		if (hack != NULL)
 			hack[1] = '0';
-		return (ip12nvram.bootfile);
+		return (nvram.bootfile);
 	}
 
 	/* pull filename from e.g.: "dksc(0,1,0)netbsd" */
 	if (strcasecmp("OSLoadFilename", var) == 0) {
 		char *file;
 
-		if ((file = strrchr(ip12nvram.bootfile, ')')) != NULL)
+		if ((file = strrchr(nvram.bootfile, ')')) != NULL)
 			return (file + 1);
 		else	
 			return (NULL);
@@ -411,13 +468,98 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 	 * something other than "auto".
 	 */
 	if (strcasecmp("OSLoadOptions", var) == 0) {
-		if (ip12env.osloadoptions[0] == '\0')
+		if (sgienv.osloadoptions[0] == '\0')
 			return ("auto");
 		else
-			return (ip12env.osloadoptions);
+			return (sgienv.osloadoptions);
 	}
 
 	return (NULL);
+}
+
+static void *
+arcemu_ip6_GetMemoryDescriptor(void *mem)
+{
+	static struct arcbios_mem am;
+	static int invoc;
+
+	unsigned int pages;
+	u_int8_t memcfg;
+
+	if (mem == NULL) {
+		/*
+		 * We know pages 0, 1 are occupied, emulate the reserved space.
+		 */
+		am.Type = ARCBIOS_MEM_ExceptionBlock;
+		am.BasePage = 0;
+		am.PageCount = 2;
+
+		invoc = 0;
+		return (&am);
+	}
+
+	memcfg = *(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1f800000) & 0x1f;
+	pages = (memcfg & 0x0f) + 1;
+
+	/* 4MB or 1MB units? */
+	if (memcfg & 0x10) {
+		pages *= 4096;
+
+#if 0 // may cause an an exception and bring us down in flames; disable until tested
+		/* check for aliasing and adjust page count if necessary */
+		volatile uint8_t *tp1, *tp2;
+		uint8_t tmp;
+
+		tp1 = (volatile uint8_t *)MIPS_PHYS_TO_KSEG1((pages - 4096) << 12);
+		tp2 = tp1 + (4 * 1024 * 1024);
+
+		tmp = *tp1;
+		*tp2 = ~tmp;
+		if (*tp1 != tmp)
+			pages -= (3 * 1024);
+#endif
+	} else {
+		pages *= 1024;
+	}
+
+	/*
+	 * It appears that the PROM's stack is at 0x400000 in physical memory.
+	 * Don't destroy it, and assume (based on IP12 specs), that the prom bss
+	 * is below it at 0x380000. This is probably overly conservative.
+	 *
+	 * Also note that we preserve the first two pages.
+	 */
+	switch (invoc) {
+	case 0:
+		/* free: pages [2, 896) */
+		am.BasePage = 2;
+		am.PageCount = 894;
+		am.Type = ARCBIOS_MEM_FreeContiguous; 
+		break;
+
+	case 1:
+		/* prom bss/stack: pages [896, 1023) */
+		am.BasePage = 896;
+		am.PageCount = 128;
+		am.Type = ARCBIOS_MEM_FirmwareTemporary;
+		break;
+
+	case 2:
+		/* free: pages [1024, ...) */
+		am.BasePage = 1024;
+		if (pages < 1024)
+			am.PageCount = 0;
+		else
+			am.PageCount = pages - 1024;
+		am.Type = ARCBIOS_MEM_FreeContiguous; 
+		break;
+
+	default:
+		return (NULL);
+	}
+
+	invoc++;
+	return (&am);
 }
 
 static void *
@@ -429,36 +571,38 @@ arcemu_ip12_GetMemoryDescriptor(void *mem)
 
 	if (mem == NULL) {
 		/*
-		 * We know page 0 is occupied, emulate the reserved space.
+		 * We know pages 0, 1 are occupied, emulate the reserved space.
 		 */
 		am.Type = ARCBIOS_MEM_ExceptionBlock;
 		am.BasePage = 0;
-		am.PageCount = 1;
+		am.PageCount = 2;
 
 		bank = 0;
 		return (&am);
-	} else if (bank > 3)
+	}
+
+	if (bank > 3)
 		return (NULL);
 
 	switch (bank) {
 	case 0:
-		memcfg = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(PIC_MEMCFG0_PHYSADDR)
-		    >>16;
+		memcfg = *(u_int32_t *)
+		    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG0_PHYSADDR) >> 16;
 		break;
 
 	case 1:
-		memcfg = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(PIC_MEMCFG0_PHYSADDR)
-		    & 0xffff;
+		memcfg = *(u_int32_t *)
+		    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG0_PHYSADDR) & 0xffff;
 		break;
 
 	case 2:
-		memcfg = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(PIC_MEMCFG1_PHYSADDR)
-		    >> 16;
+		memcfg = *(u_int32_t *)
+		    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG1_PHYSADDR) >> 16;
 		break;
 
 	case 3:
-		memcfg = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(PIC_MEMCFG1_PHYSADDR)
-		    & 0xffff;
+		memcfg = *(u_int32_t *)
+		    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG1_PHYSADDR) & 0xffff;
 		break;
 
 	default:
@@ -475,10 +619,10 @@ arcemu_ip12_GetMemoryDescriptor(void *mem)
 		am.BasePage = PIC_MEMCFG_ADDR(memcfg) / ARCBIOS_PAGESIZE;
 		am.PageCount = PIC_MEMCFG_SIZ(memcfg) / ARCBIOS_PAGESIZE;
 
-		/* page 0 is occupied (if clause before switch), compensate */
+		/* pages 0, 1 are occupied (if clause before switch), compensate */
 		if (am.BasePage == 0) {
-			am.BasePage = 1;
-			am.PageCount--;	/* won't overflow */
+			am.BasePage = 2;
+			am.PageCount -= 2;	/* won't overflow */
 		}
 	}
 
@@ -490,14 +634,14 @@ arcemu_ip12_GetMemoryDescriptor(void *mem)
  * If this breaks.. well.. then it breaks.
  */
 static void
-arcemu_ip12_putc(dev_t dummy, int c)
+arcemu_prom_putc(dev_t dummy, int c)
 {
-	ip12_prom_printf("%c", c);
+	sgi_prom_printf("%c", c);
 }
 
 /* Unimplemented Vector */
 static void
-arcemu_unimpl()
+arcemu_unimpl(void)
 {
 
 	panic("arcemu vector not established on IP%d", mach_type);

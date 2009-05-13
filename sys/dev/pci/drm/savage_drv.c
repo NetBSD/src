@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $	*/
+/*	$NetBSD: savage_drv.c,v 1.5.8.1 2009/05/13 17:21:08 jym Exp $	*/
 
 /* savage_drv.c -- Savage DRI driver
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.5.8.1 2009/05/13 17:21:08 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_drv.c,v 1.3 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -83,7 +83,7 @@ savage_attach(device_t nbdev)
 {
 	drm_device_t *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	memset(dev, 0, sizeof(drm_device_t));
 	savage_configure(dev);
 	return drm_attach(nbdev, savage_pciidlist);
 }
@@ -114,14 +114,14 @@ MODULE_DEPEND(savage, drm, 1, 1, 1);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 static int
-savagedrm_probe(struct device *parent, struct cfdata *match, void *aux)
+savagedrm_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	return drm_probe(pa, savage_pciidlist);
 }
 
 static void
-savagedrm_attach(struct device *parent, struct device *self, void *aux)
+savagedrm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	drm_device_t *dev = device_private(self);

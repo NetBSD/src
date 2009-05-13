@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.22 2007/03/04 06:02:37 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.22.56.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -82,8 +82,6 @@ struct RF_DiskQueueData_s {
 	int  error;             /* Indicate if an error occurred
 				   on this I/O (1=yes, 0=no) */
 };
-#define RF_LOCK_DISK_QUEUE   0x01
-#define RF_UNLOCK_DISK_QUEUE 0x02
 
 /* note: "Create" returns type-specific queue header pointer cast to (void *) */
 struct RF_DiskQueueSW_s {
@@ -114,10 +112,6 @@ struct RF_DiskQueue_s {
 	int     curPriority;	/* the priority of accs all that are currently
 				 * outstanding */
 	long    queueLength;	/* number of requests in queue */
-	RF_DiskQueueData_t *nextLockingOp;	/* a locking op that has
-						 * arrived at the head of the
-						 * queue & is waiting for
-						 * drainage */
 	RF_DiskQueueFlags_t flags;	/* terminate, locked */
 	RF_Raid_t *raidPtr;	/* associated array */
 	dev_t   dev;		/* device number for kernel version */
@@ -130,18 +124,11 @@ struct RF_DiskQueue_s {
 				 * explicitly unlocked */
 
 /* macros setting & returning information about queues and requests */
-#define RF_QUEUE_LOCKED(_q)                 ((_q)->flags & RF_DQ_LOCKED)
-#define RF_QUEUE_EMPTY(_q)                  (((_q)->numOutstanding == 0) && ((_q)->nextLockingOp == NULL) && !RF_QUEUE_LOCKED(_q))
+#define RF_QUEUE_EMPTY(_q)                  ((_q)->numOutstanding == 0)
 #define RF_QUEUE_FULL(_q)                   ((_q)->numOutstanding == (_q)->maxOutstanding)
-
-#define RF_LOCK_QUEUE(_q)                   (_q)->flags |= RF_DQ_LOCKED
-#define RF_UNLOCK_QUEUE(_q)                 (_q)->flags &= ~RF_DQ_LOCKED
 
 #define RF_LOCK_QUEUE_MUTEX(_q_,_wh_)   RF_LOCK_MUTEX((_q_)->mutex)
 #define RF_UNLOCK_QUEUE_MUTEX(_q_,_wh_) RF_UNLOCK_MUTEX((_q_)->mutex)
-
-#define RF_LOCKING_REQ(_r)                  ((_r)->flags & RF_LOCK_DISK_QUEUE)
-#define RF_UNLOCKING_REQ(_r)                ((_r)->flags & RF_UNLOCK_DISK_QUEUE)
 
 /* whether it is ok to dispatch a regular request */
 #define RF_OK_TO_DISPATCH(_q_,_r_) \

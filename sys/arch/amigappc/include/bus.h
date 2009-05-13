@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.86.1 2009/05/13 17:16:11 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -273,9 +273,9 @@ bus_space_write_region_stream_1(t, h, o, a, c)
 /* 
  * Bus read/write barrier methods.
  * 
- *      void bus_space_barrier __P((bus_space_tag_t tag,
+ *      void bus_space_barrier(bus_space_tag_t tag,
  *          bus_space_handle_t bsh, bus_size_t offset,
- *          bus_size_t len, int flags));
+ *          bus_size_t len, int flags);
  *    
  * Note: the 680x0 does not currently require barriers, but we must
  * provide the flags to MI code.

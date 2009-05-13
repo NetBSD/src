@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.34 2007/10/25 13:03:05 yamt Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.34.34.1 2009/05/13 17:18:39 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -125,14 +125,6 @@
  */
 #ifndef USRIOSIZE
 #define USRIOSIZE	128		/* 1 MB */
-#endif
-
-/*
- * PTEs for system V style shared memory.
- * This is basically slop for kmempt which we actually allocate (malloc) from.
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS	512 	/* 4 MB */
 #endif
 
 #define	PAGER_MAP_DEFAULT_SIZE (4 * 1024 * 1024)

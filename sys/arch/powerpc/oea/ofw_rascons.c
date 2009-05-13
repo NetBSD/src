@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.2 2008/03/03 17:15:57 phx Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.2.18.1 2009/05/13 17:18:15 jym Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.2 2008/03/03 17:15:57 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.2.18.1 2009/05/13 17:18:15 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -135,7 +135,7 @@ rascons_cnattach(void)
 }
 
 static int
-copy_rom_font()
+copy_rom_font(void)
 {
 	u_char *romfont;
 	int char_width, char_height;
@@ -256,7 +256,7 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 }
 #else	/* NWSDISPLAY > 0 */
 int
-rascons_cnattach()
+rascons_cnattach(void)
 {
 	return -1;
 }

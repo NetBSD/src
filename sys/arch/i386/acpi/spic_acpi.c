@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.20 2008/05/04 16:13:35 xtraeme Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.20.14.1 2009/05/13 17:17:48 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.20 2008/05/04 16:13:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.20.14.1 2009/05/13 17:17:48 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,6 @@ spic_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_resources res;
 
 	ACPI_STATUS rv;
-
-	aprint_naive(": Sony Programmable I/O Controller\n");
-	aprint_normal(": Sony Programmable I/O Controller\n");
 
 	sc->sc_spic.sc_dev = self;
 	sc->sc_node = aa->aa_node;

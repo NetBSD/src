@@ -1,4 +1,4 @@
-#       $NetBSD: files.ep93xx,v 1.3 2008/05/27 14:31:36 hamajima Exp $
+#       $NetBSD: files.ep93xx,v 1.3.12.1 2009/05/13 17:16:13 jym Exp $
 #
 # Configuration info for Cirrus Logic EP93XX CPU support
 #
@@ -31,6 +31,21 @@ file	arch/arm/ep93xx/epcom.c		epcom needs-flag
 device	epgpio { [port=-1], [bit1=-1], [bit2=-1] }: gpiobus
 attach	epgpio at epsoc
 file	arch/arm/ep93xx/epgpio.c	epgpio	needs-flag
+
+#
+# Support selective disabling of certain EP93xx GPIO lines when attaching
+# a gpiobus (they may be used for other functions by the hardware and using
+# them could be harmful).  The default is all GPIO lines are available
+#
+
+defparam opt_ep93xx_gpio_mask.h		EPGPIO_PORT_A_MASK=0xff
+defparam opt_ep93xx_gpio_mask.h		EPGPIO_PORT_B_MASK=0xff
+defparam opt_ep93xx_gpio_mask.h		EPGPIO_PORT_C_MASK=0xff
+defparam opt_ep93xx_gpio_mask.h		EPGPIO_PORT_D_MASK=0xff
+defparam opt_ep93xx_gpio_mask.h		EPGPIO_PORT_E_MASK=0xff
+defparam opt_ep93xx_gpio_mask.h		EPGPIO_PORT_F_MASK=0xff
+defparam opt_ep93xx_gpio_mask.h		EPGPIO_PORT_G_MASK=0xff
+defparam opt_ep93xx_gpio_mask.h		EPGPIO_PORT_H_MASK=0xff
 
 device	epwdog
 attach	epwdog at epsoc

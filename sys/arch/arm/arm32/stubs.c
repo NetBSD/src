@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.20 2009/01/21 16:24:34 he Exp $	*/
+/*	$NetBSD: stubs.c,v 1.20.2.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.20 2009/01/21 16:24:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.20.2.1 2009/05/13 17:16:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct pcb dumppcb;
  */
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
@@ -124,7 +124,7 @@ cpu_dumpconf()
  * cpu_dump: dump the machine-dependent kernel core dump headers.
  */
 int
-cpu_dump()
+cpu_dump(void)
 {
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char bf[dbtob(1)];
@@ -175,7 +175,7 @@ cpu_dump()
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -192,7 +192,7 @@ cpu_dumpsize()
  * cpu_dump_mempagecnt: calculate the size of RAM (in pages) to be dumped.
  */
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	u_long i, n;
 
@@ -216,7 +216,7 @@ extern vaddr_t memhook;		/* XXX */
 void dodumpsys(void);
 
 void
-dodumpsys()
+dodumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;

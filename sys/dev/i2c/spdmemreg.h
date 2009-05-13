@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemreg.h,v 1.2 2008/09/27 06:58:09 pgoyette Exp $ */
+/* $NetBSD: spdmemreg.h,v 1.2.8.1 2009/05/13 17:19:21 jym Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -91,3 +91,15 @@
 #define	SPDMEM_SUPERSET_DDR_ESDRAM	0x02
 #define	SPDMEM_SUPERSET_EDO_PEM		0x03
 #define	SPDMEM_SUPERSET_SDRAM_PEM	0x04
+
+/* bit masks for "registered" module attribute */
+#define	SPDMEM_SDR_MASK_REG		0x02
+#define	SPDMEM_DDR_MASK_REG		0x02
+#define	SPDMEM_DDR2_MASK_REG		0x05
+
+#define	SPDMEM_DDR3_TYPE_RDIMM		0x01
+#define	SPDMEM_DDR3_TYPE_UDIMM		0x02
+#define	SPDMEM_DDR3_TYPE_SODIMM		0x03
+#define	SPDMEM_DDR3_TYPE_MICRODIMM	0x04
+#define	SPDMEM_DDR3_TYPE_MINI_RDIMM	0x05
+#define	SPDMEM_DDR3_TYPE_MINI_UDIMM	0x06

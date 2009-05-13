@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.6 2008/12/18 12:18:20 cegger Exp $ */
+/* $NetBSD: platform.c,v 1.6.2.1 2009/05/13 17:18:45 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.6 2008/12/18 12:18:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.6.2.1 2009/05/13 17:18:45 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,16 +98,16 @@ platform_print(void)
 	ver = pmf_get_platform("system-version");
 
 	if (manuf == NULL)
-		aprint_normal("Generic");
+		aprint_verbose("Generic");
 	else
-		aprint_normal("%s", manuf);
+		aprint_verbose("%s", manuf);
 	if (prod == NULL)
-		aprint_normal(" PC");
+		aprint_verbose(" PC");
 	else
-		aprint_normal(" %s", prod);
+		aprint_verbose(" %s", prod);
 	if (ver != NULL)
-		aprint_normal(" (%s)", ver);
-	aprint_normal("\n");
+		aprint_verbose(" (%s)", ver);
+	aprint_verbose("\n");
 }
 
 static void

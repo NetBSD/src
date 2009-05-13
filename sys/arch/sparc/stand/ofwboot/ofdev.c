@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.20 2008/05/18 13:18:19 mlelstv Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.20.12.1 2009/05/13 17:18:37 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,13 +127,7 @@ filename(char *str, char *ppart)
 }
 
 static int
-strategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf, size_t *rsize)
 {
 	struct of_dev *dev = devdata;
 	u_quad_t pos;
@@ -364,7 +358,7 @@ search_label(struct of_dev *devp, u_long off, char *buf,
 		return (disklabel_sun_to_bsd(buf, lp));
 
 
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 	return ("no disk label");
 }
 
@@ -468,7 +462,7 @@ open_again:
 		return ENXIO;
 	}
 	DPRINTF(("devopen: %s is now open\n", fname));
-	bzero(&ofdev, sizeof ofdev);
+	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
 	if (!strcmp(b.buf, "block")) {
 		ofdev.type = OFDEV_DISK;
@@ -521,10 +515,10 @@ open_again:
 		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
 #ifdef SPARC_BOOT_UFS
-		bcopy(&file_system_ufs, &file_system[nfsys++], sizeof file_system[0]);
+		memcpy( &file_system[nfsys++], &file_system_ufs, sizeof file_system[0]);
 #endif
 #ifdef SPARC_BOOT_CD9660
-		bcopy(&file_system_cd9660, &file_system[nfsys++],
+		memcpy( &file_system[nfsys++], &file_system_cd9660,
 		    sizeof file_system[0]);
 #endif
 		DPRINTF(("devopen: return 0\n"));
@@ -541,13 +535,13 @@ open_again:
 
 		if (!strncmp(*file,"/tftp:",6)) {
 			*file += 6;
-			bcopy(&file_system_tftp, &file_system[0], sizeof file_system[0]);
+			memcpy( &file_system[0], &file_system_tftp, sizeof file_system[0]);
 			if (net_tftp_bootp(&of->f_devdata)) {
 				net_close(&ofdev);
 				goto bad;
 			}
 		} else {
-			bcopy(&file_system_nfs, &file_system[0], sizeof file_system[0]);
+			memcpy( &file_system[0], &file_system_nfs, sizeof file_system[0]);
 			if (error = net_mountroot()) {
 				net_close(&ofdev);
 				goto bad;

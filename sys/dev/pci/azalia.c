@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.66 2008/12/17 15:35:17 cegger Exp $	*/
+/*	$NetBSD: azalia.c,v 1.66.2.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.66 2008/12/17 15:35:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.66.2.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -153,7 +153,7 @@ typedef struct azalia_t {
 
 
 /* prototypes */
-static int	azalia_pci_match(device_t, struct cfdata *, void *);
+static int	azalia_pci_match(device_t, cfdata_t, void *);
 static void	azalia_pci_attach(device_t, device_t, void *);
 static int	azalia_pci_activate(device_t, enum devact);
 static int	azalia_pci_detach(device_t, int);
@@ -281,7 +281,7 @@ static const char *pin_devices[16] = {
  * ================================================================ */
 
 static int
-azalia_pci_match(device_t parent, struct cfdata *match, void *aux)
+azalia_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -459,17 +459,15 @@ azalia_intr(void *v)
 	uint8_t rirbsts;
 
 	az = v;
-	ret = 0;
 
 	if (!device_has_power(az->dev))
 		return 0;
 
-	intsts = AZ_READ_4(az, INTSTS);
-	if (intsts == 0)
-		return ret;
+	if ((intsts = AZ_READ_4(az, INTSTS)) == 0)
+		return 0;
 
-	ret += azalia_stream_intr(&az->pstream, intsts);
-	ret += azalia_stream_intr(&az->rstream, intsts);
+	ret = azalia_stream_intr(&az->pstream, intsts) +
+	      azalia_stream_intr(&az->rstream, intsts);
 
 	rirbsts = AZ_READ_1(az, RIRBSTS);
 	if (rirbsts & (HDA_RIRBSTS_RIRBOIS | HDA_RIRBSTS_RINTFL)) {
@@ -2074,6 +2072,7 @@ azalia_stream_halt(stream_t *this)
 
 	if (this->bdlist.addr == NULL)
 		return EINVAL;
+	this->intr = this->intr_arg = NULL;
 	ctl = STR_READ_2(this, CTL);
 	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
 	STR_WRITE_2(this, CTL, ctl);

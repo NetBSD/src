@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.15 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.15.68.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.15 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.15.68.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -70,10 +70,7 @@ static void do_dequeue(RF_SstfQ_t *, RF_DiskQueueData_t *);
 
 
 static void
-do_sstf_ord_q(queuep, tailp, req)
-	RF_DiskQueueData_t **queuep;
-	RF_DiskQueueData_t **tailp;
-	RF_DiskQueueData_t *req;
+do_sstf_ord_q(RF_DiskQueueData_t **queuep, RF_DiskQueueData_t **tailp, RF_DiskQueueData_t *req)
 {
 	RF_DiskQueueData_t *r, *s;
 
@@ -164,11 +161,7 @@ q_at_end:
 }
 
 static RF_DiskQueueData_t *
-closest_to_arm(queue, arm_pos, dir, allow_reverse)
-	RF_SstfQ_t *queue;
-	RF_SectorNum_t arm_pos;
-	int    *dir;
-	int     allow_reverse;
+closest_to_arm(RF_SstfQ_t *queue, RF_SectorNum_t arm_pos, int *dir, int allow_reverse)
 {
 	RF_SectorNum_t best_pos_l = 0, this_pos_l = 0, last_pos = 0;
 	RF_SectorNum_t best_pos_r = 0, this_pos_r = 0;
@@ -287,10 +280,7 @@ rf_CscanCreate(
 }
 
 void
-rf_SstfEnqueue(qptr, req, priority)
-	void   *qptr;
-	RF_DiskQueueData_t *req;
-	int     priority;
+rf_SstfEnqueue(void *qptr, RF_DiskQueueData_t *req, int priority)
 {
 	RF_Sstf_t *sstfq;
 
@@ -322,9 +312,7 @@ rf_SstfEnqueue(qptr, req, priority)
 }
 
 static void
-do_dequeue(queue, req)
-	RF_SstfQ_t *queue;
-	RF_DiskQueueData_t *req;
+do_dequeue(RF_SstfQ_t *queue, RF_DiskQueueData_t *req)
 {
 	RF_DiskQueueData_t *req2;
 
@@ -352,8 +340,7 @@ do_dequeue(queue, req)
 }
 
 RF_DiskQueueData_t *
-rf_SstfDequeue(qptr)
-	void   *qptr;
+rf_SstfDequeue(void *qptr)
 {
 	RF_DiskQueueData_t *req = NULL;
 	RF_Sstf_t *sstfq;
@@ -417,8 +404,7 @@ rf_SstfDequeue(qptr)
 }
 
 RF_DiskQueueData_t *
-rf_ScanDequeue(qptr)
-	void   *qptr;
+rf_ScanDequeue(void *qptr)
 {
 	RF_DiskQueueData_t *req = NULL;
 	RF_Sstf_t *scanq;
@@ -473,8 +459,7 @@ rf_ScanDequeue(qptr)
 }
 
 RF_DiskQueueData_t *
-rf_CscanDequeue(qptr)
-	void   *qptr;
+rf_CscanDequeue(void *qptr)
 {
 	RF_DiskQueueData_t *req = NULL;
 	RF_Sstf_t *cscanq;
@@ -525,8 +510,7 @@ rf_CscanDequeue(qptr)
 }
 
 RF_DiskQueueData_t *
-rf_SstfPeek(qptr)
-	void   *qptr;
+rf_SstfPeek(void *qptr)
 {
 	RF_DiskQueueData_t *req;
 	RF_Sstf_t *sstfq;
@@ -559,8 +543,7 @@ rf_SstfPeek(qptr)
 }
 
 RF_DiskQueueData_t *
-rf_ScanPeek(qptr)
-	void   *qptr;
+rf_ScanPeek(void *qptr)
 {
 	RF_DiskQueueData_t *req;
 	RF_Sstf_t *scanq;
@@ -603,8 +586,7 @@ rf_ScanPeek(qptr)
 }
 
 RF_DiskQueueData_t *
-rf_CscanPeek(qptr)
-	void   *qptr;
+rf_CscanPeek(void *qptr)
 {
 	RF_DiskQueueData_t *req;
 	RF_Sstf_t *cscanq;
@@ -639,10 +621,7 @@ rf_CscanPeek(qptr)
 }
 
 int
-rf_SstfPromote(qptr, parityStripeID, which_ru)
-	void   *qptr;
-	RF_StripeNum_t parityStripeID;
-	RF_ReconUnitNum_t which_ru;
+rf_SstfPromote(void *qptr, RF_StripeNum_t parityStripeID, RF_ReconUnitNum_t which_ru)
 {
 	RF_DiskQueueData_t *r, *next;
 	RF_Sstf_t *sstfq;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.33 2008/01/12 09:54:29 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33.24.1 2009/05/13 17:18:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2008/01/12 09:54:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33.24.1 2009/05/13 17:18:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	cputobsdlabel(lp, clp);
 #ifdef DEBUG
 	if(disksubr_debug > 0) {
-		printlp(lp, "%s:bsd label", __func__);
-		printclp(clp, "%s:cpu label", __func__);
+		printlp(lp, "readdisklabel: bsd label");
+		printclp(clp, "readdisklabel: cpu label");
 	}
 #endif
 	return msg;
@@ -121,9 +121,9 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 
 #ifdef DEBUG
 	if (disksubr_debug > 0) {
-		printlp(nlp, "%s:new disklabel", __func__);
-		printlp(olp, "%s:old disklabel", __func__);
-		printclp(clp, "%s:cpu disklabel", __func__);
+		printlp(nlp, "setdisklabel: new disklabel");
+		printlp(olp, "setdisklabel: old disklabel");
+		printclp(clp, "setdisklabel:cpu disklabel");
 	}
 #endif
 
@@ -169,7 +169,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 	*olp = *nlp;
 #ifdef DEBUG
 	if(disksubr_debug > 0) {
-		printlp(olp, "%s:old->new disklabel", __func__);
+		printlp(olp, "setdisklabel: old->new disklabel");
 	}
 #endif
 	return 0;
@@ -187,7 +187,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 #ifdef DEBUG
 	if(disksubr_debug > 0) {
-		printlp(lp, "%s: bsd label", __func__);
+		printlp(lp, "writedisklabel: bsd label");
 	}
 #endif
 
@@ -220,7 +220,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 #ifdef DEBUG
 	if (disksubr_debug > 0) {
-		printclp(clp, "%s:cpu label", __func__);
+		printclp(clp, "writedisklabel: cpu label");
 	}
 #endif
 

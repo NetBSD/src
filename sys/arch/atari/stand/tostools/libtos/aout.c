@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.11 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: aout.c,v 1.11.2.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ aout_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 	if ((read(fd, (char *)(od->kstart), ehdr.a_text) != ehdr.a_text)
 	    ||(read(fd,(char *)(od->kstart+textsz),ehdr.a_data) != ehdr.a_data))
 		goto error;
-	bzero(od->kstart + textsz + ehdr.a_data, ehdr.a_bss);
+	memset(od->kstart + textsz + ehdr.a_data, 0, ehdr.a_bss);
 
 	/*
 	 * Read symbol and string table

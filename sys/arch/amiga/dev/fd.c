@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.80 2009/01/13 13:35:51 yamt Exp $ */
+/*	$NetBSD: fd.c,v 1.80.2.1 2009/05/13 17:16:09 jym Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80 2009/01/13 13:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80.2.1 2009/05/13 17:16:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -728,7 +728,7 @@ fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 /* (variable part) XXX ick */
 {
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 	lp->d_secsize = FDSECSIZE;
 	lp->d_ntracks = FDNHEADS;
 	lp->d_ncylinders = sc->type->ncylinders;
@@ -772,8 +772,8 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 	part = FDPART(dev);
 	lp = sc->dkdev.dk_label;
 	clp =  sc->dkdev.dk_cpulabel;
-	bzero(lp, sizeof(struct disklabel));
-	bzero(clp, sizeof(struct cpu_disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
+	memset(clp, 0, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = FDSECSIZE;
 	lp->d_ntracks = FDNHEADS;
@@ -805,7 +805,7 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 		error = EINVAL;
 		goto nolabel;
 	}
-	bcopy(dlp, lp, sizeof(struct disklabel));
+	memcpy( lp, dlp, sizeof(struct disklabel));
 	if (lp->d_trkseek > FDSTEPDELAY)
 		sc->stepdelay = lp->d_trkseek;
 	brelse(bp, 0);
@@ -873,7 +873,7 @@ fdsetdisklabel(struct fd_softc *sc, struct disklabel *lp)
 	    (pp->p_frag * pp->p_fsize % PAGE_SIZE))
 		return(EINVAL);
 done:
-	bcopy(lp, clp, sizeof(struct disklabel));
+	memcpy( clp, lp, sizeof(struct disklabel));
 	return(0);
 }
 
@@ -909,7 +909,7 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	 * copy disklabel to buf and write it out synchronous
 	 */
 	dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
-	bcopy(lp, dlp, sizeof(struct disklabel));
+	memcpy( dlp, lp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
 	bp->b_flags &= ~(B_READ);
@@ -1555,9 +1555,9 @@ fddone(struct fd_softc *sc)
 		sz *= FDSECSIZE;
 		sz = min(dp->b_bcount, sz);
 		if (bp->b_flags & B_READ)
-			bcopy(data, dp->b_data, sz);
+			memcpy( dp->b_data, data, sz);
 		else {
-			bcopy(dp->b_data, data, sz);
+			memcpy( data, dp->b_data, sz);
 			sc->flags |= FDF_DIRTY;
 		}
 		bp->b_resid = dp->b_bcount - sz;

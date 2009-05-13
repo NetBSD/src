@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxvar.h,v 1.8 2001/07/27 00:25:20 thorpej Exp $ */
+/* $NetBSD: dwlpxvar.h,v 1.8.142.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -72,12 +72,12 @@ struct dwlpx_softc {
 #define	DWLPX_SG64K	2
 #define	DWLPX_SG128K	3
 
-void	dwlpx_init __P((struct dwlpx_softc *));
-void	dwlpx_pci_init __P((pci_chipset_tag_t, void *));
-void	dwlpx_dma_init __P((struct dwlpx_config *));
+void	dwlpx_init(struct dwlpx_softc *);
+void	dwlpx_pci_init(pci_chipset_tag_t, void *);
+void	dwlpx_dma_init(struct dwlpx_config *);
 
-void	dwlpx_bus_io_init __P((bus_space_tag_t, void *));
-void	dwlpx_bus_mem_init __P((bus_space_tag_t, void *));
+void	dwlpx_bus_io_init(bus_space_tag_t, void *);
+void	dwlpx_bus_mem_init(bus_space_tag_t, void *);
 
 /*
  * Each DWLPX supports up to 15 devices, 12 of which are PCI slots.

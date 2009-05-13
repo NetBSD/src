@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.12 2008/03/26 18:04:15 matt Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.12.18.1 2009/05/13 17:19:11 jym Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.12 2008/03/26 18:04:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.12.18.1 2009/05/13 17:19:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -570,7 +570,7 @@ adbkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 int
-adbkbd_cnattach()
+adbkbd_cnattach(void)
 {
 
 	adbkbd_is_console = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.8 2008/05/11 08:23:17 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.8.12.1 2009/05/13 17:16:38 jym Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.8 2008/05/11 08:23:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.8.12.1 2009/05/13 17:16:38 jym Exp $");
 
 #include "opt_gxio.h"
 
@@ -198,7 +198,7 @@ gxioprint(void *aux, const char *name)
  * configure for GPIO pin and expansion boards.
  */
 void
-gxio_config_pin()
+gxio_config_pin(void)
 {
 	struct pxa2x0_gpioconf *gumstix_gpioconf[] = {
 		pxa25x_com_ffuart_gpioconf,
@@ -259,7 +259,7 @@ gxio_config_gpio(const struct gxioconf *gxioconflist, char *expansion)
 
 
 static void
-basix_config()
+basix_config(void)
 {
 
 	pxa2x0_gpio_set_function(8, GPIO_ALT_FN_1_OUT);		/* MMCCS0 */
@@ -272,7 +272,7 @@ basix_config()
 }
 
 static void
-cfstix_config()
+cfstix_config(void)
 {
 	u_int gpio, npoe_fn;
 
@@ -301,7 +301,7 @@ cfstix_config()
 }
 
 static void
-etherstix_config()
+etherstix_config(void)
 {
 
 	pxa2x0_gpio_set_function(49, GPIO_ALT_FN_2_OUT);	/* nPWE */
@@ -313,7 +313,7 @@ etherstix_config()
 }
 
 static void
-netcf_config()
+netcf_config(void)
 {
 
 	etherstix_config();
@@ -321,7 +321,7 @@ netcf_config()
 }
 
 static void
-netduommc_config()
+netduommc_config(void)
 {
 
 	netduo_config();
@@ -329,7 +329,7 @@ netduommc_config()
 }
 
 static void
-netduo_config()
+netduo_config(void)
 {
 
 	etherstix_config();
@@ -342,7 +342,7 @@ netduo_config()
 }
 
 static void
-netmmc_config()
+netmmc_config(void)
 {
 
 	etherstix_config();
@@ -350,7 +350,7 @@ netmmc_config()
 }
 
 static void
-wifistix_cf_config()
+wifistix_cf_config(void)
 {
 
 #if 1

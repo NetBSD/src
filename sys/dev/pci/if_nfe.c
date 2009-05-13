@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.39 2009/01/18 11:21:06 cegger Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.39.2.1 2009/05/13 17:20:26 jym Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.39 2009/01/18 11:21:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.39.2.1 2009/05/13 17:20:26 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -224,6 +224,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	bus_size_t memsize;
 	pcireg_t memtype;
 	char devinfo[256];
+	int mii_flags = 0;
 
 	sc->sc_dev = self;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
@@ -244,7 +245,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(self, "could not map interrupt\n");
-		return;
+		goto fail;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
@@ -254,7 +255,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -292,11 +293,14 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP77_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP77_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP77_LAN4:
+		sc->sc_flags |= NFE_40BIT_ADDR | NFE_HW_CSUM |
+		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
+		break;
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN4:
-		sc->sc_flags |= NFE_40BIT_ADDR | NFE_HW_CSUM |
+		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
 		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
 		break;
 	case PCI_PRODUCT_NVIDIA_CK804_LAN1:
@@ -311,6 +315,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN4:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR |
 		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
+		mii_flags = MIIF_DOPAUSE;
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN2:
@@ -340,7 +345,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (nfe_alloc_tx_ring(sc, &sc->txq) != 0) {
 		aprint_error_dev(self, "could not allocate Tx ring\n");
-		return;
+		goto fail;
 	}
 
 	mutex_init(&sc->rxq.mtx, MUTEX_DEFAULT, IPL_NET);
@@ -348,7 +353,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	if (nfe_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		aprint_error_dev(self, "could not allocate Rx ring\n");
 		nfe_free_tx_ring(sc, &sc->txq);
-		return;
+		goto fail;
 	}
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -388,8 +393,10 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
+
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, mii_flags);
+
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
@@ -409,6 +416,16 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
+
+	return;
+
+fail:
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (memsize)
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
 }
 
 void
@@ -1355,6 +1372,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create desc DMA map\n");
+		ring->map = NULL;
 		goto fail;
 	}
 
@@ -1381,7 +1399,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 		goto fail;
 	}
 
-	bzero(*desc, NFE_RX_RING_COUNT * descsize);
+	memset(*desc, 0, NFE_RX_RING_COUNT * descsize);
 	ring->physaddr = ring->map->dm_segs[0].ds_addr;
 
 	if (sc->sc_flags & NFE_USE_JUMBO) {
@@ -1423,6 +1441,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 			if (error != 0) {
 				aprint_error_dev(sc->sc_dev,
 				    "could not create DMA map\n");
+				data->map = NULL;
 				goto fail;
 			}
 			MCLGET(data->m, M_DONTWAIT);
@@ -1592,6 +1611,7 @@ nfe_jpool_alloc(struct nfe_softc *sc)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create jumbo DMA map\n");
+		ring->jmap = NULL;
 		goto fail;
 	}
 
@@ -1683,6 +1703,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create desc DMA map\n");
+		ring->map = NULL;
 		goto fail;
 	}
 
@@ -1709,7 +1730,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		goto fail;
 	}
 
-	bzero(*desc, NFE_TX_RING_COUNT * descsize);
+	memset(*desc, 0, NFE_TX_RING_COUNT * descsize);
 	ring->physaddr = ring->map->dm_segs[0].ds_addr;
 
 	for (i = 0; i < NFE_TX_RING_COUNT; i++) {
@@ -1719,6 +1740,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not create DMA map\n");
+			ring->data[i].map = NULL;
 			goto fail;
 		}
 	}
@@ -1815,20 +1837,20 @@ nfe_setmulti(struct nfe_softc *sc)
 	int i;
 
 	if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
-		bzero(addr, ETHER_ADDR_LEN);
-		bzero(mask, ETHER_ADDR_LEN);
+		memset(addr, 0, ETHER_ADDR_LEN);
+		memset(mask, 0, ETHER_ADDR_LEN);
 		goto done;
 	}
 
-	bcopy(etherbroadcastaddr, addr, ETHER_ADDR_LEN);
-	bcopy(etherbroadcastaddr, mask, ETHER_ADDR_LEN);
+	memcpy(addr, etherbroadcastaddr, ETHER_ADDR_LEN);
+	memcpy(mask, etherbroadcastaddr, ETHER_ADDR_LEN);
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
-			bzero(addr, ETHER_ADDR_LEN);
-			bzero(mask, ETHER_ADDR_LEN);
+			memset(addr, 0, ETHER_ADDR_LEN);
+			memset(mask, 0, ETHER_ADDR_LEN);
 			goto done;
 		}
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {

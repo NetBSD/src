@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.77 2009/01/13 22:27:43 pooka Exp $
+	$NetBSD: syscalls.master,v 1.77.2.1 2009/05/13 17:19:00 jym Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -367,9 +367,14 @@
 174	STD		{ netbsd32_ssize_t|netbsd32||pwrite(int fd, \
 			    netbsd32_voidp buf, netbsd32_size_t nbyte, \
 			    int pad, off_t offset); }
+#if defined(NTP) || !defined(_KERNEL_OPT)
 175	COMPAT_30	{ int|netbsd32||ntp_gettime( \
 			    netbsd32_ntptimeval50p_t ntvp); }
 176	STD		{ int|netbsd32||ntp_adjtime(netbsd32_timexp_t tp); }
+#else
+175	EXCL		ntp_gettime
+176	EXCL		ntp_adjtime
+#endif
 177	UNIMPL
 178	UNIMPL
 179	UNIMPL
@@ -828,8 +833,12 @@
 392	COMPAT_30	{ int|netbsd32|30|fhstat( \
 			    netbsd32_fhandlep_t fhp, \
 			    netbsd32_stat50p_t sb); }
+#if defined(NTP) || !defined(_KERNEL_OPT)
 393	COMPAT_50	{ int|netbsd32||ntp_gettime( \
 			    netbsd32_ntptimeval50p_t ntvp); }
+#else
+393	EXCL		__ntp_gettime30
+#endif
 394	STD		{ int|netbsd32|30|socket(int domain, int type, \
 			    int protocol); }
 395	STD		{ int|netbsd32|30|getfh(netbsd32_charp fname, \
@@ -975,6 +984,6 @@
 			    netbsd32_intp status, \
 			    int options, netbsd32_rusagep_t rusage); }
 450	STD 		{ int|netbsd32|50|mknod(const netbsd32_charp path, \
-			    mode_t mode, dev_t dev); }
+			    mode_t mode, netbsd32_dev_t dev); }
 451	STD	 	{ int|netbsd32|50|fhstat(const netbsd32_voidp fhp, \
 			    netbsd32_size_t fh_size, netbsd32_statp_t sb); }

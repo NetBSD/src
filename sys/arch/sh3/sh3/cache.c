@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.15 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: cache.c,v 1.15.14.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.15 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.15.14.1 2009/05/13 17:18:22 jym Exp $");
 
 #include "opt_cache.h"
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
@@ -75,7 +75,7 @@ int sh_cache_alias_mask;
 int sh_cache_prefer_mask;
 
 void
-sh_cache_init()
+sh_cache_init(void)
 {
 
 #ifdef CACHE_DEBUG
@@ -92,7 +92,7 @@ sh_cache_init()
 }
 
 void
-sh_cache_information()
+sh_cache_information(void)
 {
 
 #ifdef CACHE_DEBUG
@@ -150,7 +150,7 @@ sh_cache_information()
  * CPU-independent cache flush.
  */
 void
-__cache_flush()
+__cache_flush(void)
 {
 	volatile int *p = (int *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 	int i;

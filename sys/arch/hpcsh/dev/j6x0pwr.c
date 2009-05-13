@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.14 2008/03/27 03:34:14 uwe Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.14.18.1 2009/05/13 17:17:47 jym Exp $ */
 
 /*
  * Copyright (c) 2003, 2006 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.14 2008/03/27 03:34:14 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.14.18.1 2009/05/13 17:17:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,6 +187,9 @@ j6x0pwr_attach(device_t parent, device_t self, void *aux)
 	    j6x0pwr_intr, sc);
 
 	_reg_write_1(SH7709_PKDR, 0);	/* Green LED on */
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 

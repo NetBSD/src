@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7 2008/08/04 06:01:18 cegger Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7.8.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2008/08/04 06:01:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.8.1 2009/05/13 17:18:45 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,8 +54,9 @@ void	pcibattach(device_t, device_t, void *);
 int	pcibdetach(device_t, int);
 void	pcibchilddet(device_t, device_t);
 
-CFATTACH_DECL2_NEW(pcib, sizeof(struct pcib_softc),
-    pcibmatch, pcibattach, pcibdetach, NULL, NULL, pcibchilddet);
+CFATTACH_DECL3_NEW(pcib, sizeof(struct pcib_softc),
+    pcibmatch, pcibattach, pcibdetach, NULL, NULL, pcibchilddet,
+    DVF_DETACH_SHUTDOWN);
 
 void	pcib_callback(device_t);
 

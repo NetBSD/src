@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.81 2009/01/21 06:59:29 yamt Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.81.2.1 2009/05/13 17:22:17 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.81 2009/01/21 06:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.81.2.1 2009/05/13 17:22:17 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,7 @@ const struct vnodeopv_desc portal_vnodeop_opv_desc =
 	{ &portal_vnodeop_p, portal_vnodeop_entries };
 
 static void
-portal_closefd(l, fd)
-	struct lwp *l;
-	int fd;
+portal_closefd(struct lwp *l, int fd)
 {
 	struct sys_close_args /* {
 		syscallarg(int) fd;
@@ -180,8 +178,7 @@ portal_closefd(l, fd)
  * cnp is the name to locate in that directory...
  */
 int
-portal_lookup(v)
-	void *v;
+portal_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode * a_dvp;
@@ -244,9 +241,7 @@ bad:;
 }
 
 static int
-portal_connect(so, so2)
-	struct socket *so;
-	struct socket *so2;
+portal_connect(struct socket *so, struct socket *so2)
 {
 	/* from unp_connect, bypassing the namei stuff... */
 	struct socket *so3;
@@ -279,8 +274,7 @@ portal_connect(so, so2)
 }
 
 int
-portal_open(v)
-	void *v;
+portal_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode *a_vp;
@@ -522,8 +516,7 @@ bad:;
 }
 
 int
-portal_getattr(v)
-	void *v;
+portal_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -568,8 +561,7 @@ portal_getattr(v)
 }
 
 int
-portal_setattr(v)
-	void *v;
+portal_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
@@ -600,8 +592,7 @@ portal_readdir(void *v)
 
 /*ARGSUSED*/
 int
-portal_inactive(v)
-	void *v;
+portal_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -612,8 +603,7 @@ portal_inactive(v)
 }
 
 int
-portal_reclaim(v)
-	void *v;
+portal_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -634,8 +624,7 @@ portal_reclaim(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-portal_pathconf(v)
-	void *v;
+portal_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -683,8 +672,7 @@ portal_print(void *v)
 }
 
 int
-portal_link(v)
-	void *v;
+portal_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -698,8 +686,7 @@ portal_link(v)
 }
 
 int
-portal_symlink(v)
-	void *v;
+portal_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_jmicron.c,v 1.3 2008/09/15 11:44:50 tron Exp $	*/
+/*	$NetBSD: ata_raid_jmicron.c,v 1.3.14.1 2009/05/13 17:19:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.3 2008/09/15 11:44:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.3.14.1 2009/05/13 17:19:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -223,7 +223,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 		break;
 	default:
 		DPRINTF(("%s: unknown JMicron RAID type 0x%02x\n",
-		    sc->sc_dev->dv_xname, info->type));
+		    device_xname(sc->sc_dev), info->type));
 		error = EINVAL;
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21.24.1 2009/05/13 17:17:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2008/02/12 17:30:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21.24.1 2009/05/13 17:17:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ static void get_device(const char *);
  * and the drivers are initialized.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	/* Kick off autoconfiguration. */
@@ -118,7 +118,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	get_device(__booted_device_name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2008/01/04 22:17:04 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.24.1 2009/05/13 17:16:40 jym Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2008/01/04 22:17:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.24.1 2009/05/13 17:16:40 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2008/01/04 22:17:04 ad Exp $");
 static void	findroot(void);
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	intr_init();
@@ -67,7 +67,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 
@@ -104,9 +104,7 @@ findroot(void)
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	if ((booted_device == NULL) && (netboot == 1))
 		if (device_class(dev) == DV_IFNET)

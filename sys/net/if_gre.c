@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.139 2008/11/07 00:20:13 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.139.4.1 2009/05/13 17:22:19 jym Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.139 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.139.4.1 2009/05/13 17:22:19 jym Exp $");
 
+#include "opt_atalk.h"
 #include "opt_gre.h"
 #include "opt_inet.h"
 #include "bpfilter.h"
 
-#ifdef INET
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -66,11 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.139 2008/11/07 00:20:13 dyoung Exp $");
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/intr.h>
-#if __NetBSD__
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
-#endif
 
 #include <sys/kernel.h>
 #include <sys/mutex.h>
@@ -85,16 +83,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.139 2008/11/07 00:20:13 dyoung Exp $");
 #include <net/netisr.h>
 #include <net/route.h>
 
-#ifdef INET
-#include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <netinet/ip.h> /* we always need this for sizeof(struct ip) */
+
+#ifdef INET
 #include <netinet/in_var.h>
-#include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#else
-#error "Huh? if_gre without inet?"
 #endif
 
+#ifdef INET6
+#include <netinet6/in6_var.h>
+#endif
 
 #ifdef NETATALK
 #include <netatalk/at.h>
@@ -317,6 +317,11 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	int rc;
 	struct gre_softc *sc;
 	struct gre_soparm *sp;
+	const struct sockaddr *any;
+
+	if ((any = sockaddr_any_by_family(AF_INET)) == NULL &&
+	    (any = sockaddr_any_by_family(AF_INET6)) == NULL)
+		return -1;
 
 	sc = malloc(sizeof(struct gre_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_SOFTNET);
@@ -334,10 +339,8 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_output = gre_output;
 	sc->sc_if.if_ioctl = gre_ioctl;
 	sp = &sc->sc_soparm;
-	sockaddr_copy(sstosa(&sp->sp_dst), sizeof(sp->sp_dst),
-	    sintocsa(&in_any));
-	sockaddr_copy(sstosa(&sp->sp_src), sizeof(sp->sp_src),
-	    sintocsa(&in_any));
+	sockaddr_copy(sstosa(&sp->sp_dst), sizeof(sp->sp_dst), any);
+	sockaddr_copy(sstosa(&sp->sp_src), sizeof(sp->sp_src), any);
 	sp->sp_proto = IPPROTO_GRE;
 	sp->sp_type = SOCK_RAW;
 
@@ -531,6 +534,7 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
  		GRE_DPRINTF(sc, "so_setsockopt ttl failed\n");
   		rc = 0;
   	}
+
  	val = 1;
  	rc = so_setsockopt(curlwp, so, SOL_SOCKET, SO_NOHEADER,
 	    &val, sizeof(val));
@@ -881,11 +885,13 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 		hlen += 4;
 
 	switch (ntohs(gh->ptype)) { /* ethertypes */
+#ifdef INET
 	case ETHERTYPE_IP:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
 		af = AF_INET;
 		break;
+#endif
 #ifdef NETATALK
 	case ETHERTYPE_ATALK:
 		ifq = &atintrq1;
@@ -946,8 +952,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	int error = 0;
 	struct gre_softc *sc = ifp->if_softc;
 	struct gre_h *gh;
-	struct ip *ip;
-	uint8_t ip_tos = 0;
 	uint16_t etype = 0;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
@@ -965,11 +969,14 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	GRE_DPRINTF(sc, "dst->sa_family=%d\n", dst->sa_family);
 	switch (dst->sa_family) {
+#ifdef INET
 	case AF_INET:
-		ip = mtod(m, struct ip *);
-		ip_tos = ip->ip_tos;
+		/* TBD Extract the IP ToS field and set the
+		 * encapsulating protocol's ToS to suit.
+		 */
 		etype = htons(ETHERTYPE_IP);
 		break;
+#endif
 #ifdef NETATALK
 	case AF_APPLETALK:
 		etype = htons(ETHERTYPE_ATALK);
@@ -1537,15 +1544,11 @@ out:
 	return error;
 }
 
-#endif
-
 void	greattach(int);
 
 /* ARGSUSED */
 void
 greattach(int count)
 {
-#ifdef INET
 	if_clone_attach(&gre_cloner);
-#endif
 }

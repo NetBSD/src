@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.6 2007/01/24 13:08:13 hubertf Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.6.62.1 2009/05/13 17:16:11 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.6 2007/01/24 13:08:13 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.6.62.1 2009/05/13 17:16:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,7 @@ static vaddr_t z2mem_end;	/* XXX */
 int use_z2_mem = 1;		/* XXX */
 
 void *
-chipmem_steal(amount)
-        long amount;
+chipmem_steal(long amount)
 {
         /*
          * steal from top of chipmem, so we don't collide with
@@ -84,8 +83,7 @@ chipmem_steal(amount)
  * XXX
  */
 void *
-alloc_z2mem(amount)
-	long amount;
+alloc_z2mem(long amount)
 {
 	if (use_z2_mem && z2mem_end && (z2mem_end - amount) >= z2mem_start) {
 		z2mem_end -= amount;

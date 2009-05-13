@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.2 2009/02/03 16:27:13 pgoyette Exp $ */
+/*	$NetBSD: alipm.c,v 1.2.2.1 2009/05/13 17:20:23 jym Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.2 2009/02/03 16:27:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.2.2.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,8 +107,8 @@ struct alipm_softc {
 	krwlock_t sc_smb_lock;
 };
 
-static int	alipm_match(struct device *, cfdata_t, void *);
-static void	alipm_attach(struct device *, struct device *, void *);
+static int	alipm_match(device_t, cfdata_t, void *);
+static void	alipm_attach(device_t, device_t, void *);
 
 int	alipm_smb_acquire_bus(void *, int);
 void	alipm_smb_release_bus(void *, int);
@@ -119,7 +119,7 @@ CFATTACH_DECL(alipm, sizeof(struct alipm_softc),
 	alipm_match, alipm_attach, NULL, NULL);
 
 static int
-alipm_match(struct device *parent, cfdata_t match, void *aux)
+alipm_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -130,9 +130,9 @@ alipm_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 static void
-alipm_attach(struct device *parent, struct device *self, void *aux)
+alipm_attach(device_t parent, device_t self, void *aux)
 {
-	struct alipm_softc *sc = (struct alipm_softc *) self;
+	struct alipm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
 	pcireg_t iobase, reg;
@@ -208,7 +208,7 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_smb_tag.ic_release_bus = alipm_smb_release_bus;
 	sc->sc_smb_tag.ic_exec = alipm_smb_exec;
 
-	bzero(&iba, sizeof iba);
+	memset(&iba, 0, sizeof iba);
 	iba.iba_tag = &sc->sc_smb_tag;
 	(void)config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
@@ -251,7 +251,7 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	int retries, error = 0;
 
 	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
-	    "flags 0x%x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
+	    "flags 0x%x\n", device_xname(&sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)

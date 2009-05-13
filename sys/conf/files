@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.939 2009/02/06 18:50:29 jym Exp $
+#	$NetBSD: files,v 1.939.2.1 2009/05/13 17:19:04 jym Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20081219
+version 	20090313
 
 #
 # device classes
@@ -23,6 +23,7 @@ defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
 defflag				COREDUMP
+defflag				MODULAR
 
 defparam			DEFCORENAME
 defparam			HZ
@@ -212,7 +213,6 @@ defparam			SB_MAX
 
 # file system options
 #
-defflag				SOFTDEP			# XXX files.ufs?
 defflag				QUOTA			# XXX files.ufs?
 defflag				VNODE_LOCKDEBUG
 defflag				MAGICLINKS
@@ -1091,6 +1091,7 @@ define	acpibus	{ }			# ACPI "bus" attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 define	cbbus	{ }			# CardBus attachment
 define	pcmciaslot { }			# PCMCIA slot itself
+define	sdmmcbus { }			# SD/MMC attachment
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
@@ -1123,6 +1124,10 @@ file	dev/ic/sl811hs.c		slhci			needs-flag
 # USB HID processing (as used by bluetooth and usb code)
 define	hid
 file	dev/usb/hid.c			hid
+
+# SD Host controller
+device sdhc: sdmmcbus
+file	dev/sdmmc/sdhc.c		sdhc			needs-flag
 
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
@@ -1423,6 +1428,7 @@ file	kern/kern_rwlock.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
 file	kern/kern_softint.c
+file	kern/kern_ssp.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
 file	kern/kern_synch.c
@@ -1650,3 +1656,8 @@ include "lib/libx86emu/files.x86emu"
 # "tprof" profiler.
 #
 include	"dev/tprof/files.tprof"
+
+#
+# alternate memory device
+#
+include "dev/altmem/files.altmem"

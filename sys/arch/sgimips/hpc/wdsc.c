@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.27 2009/01/27 11:26:15 tsutsui Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.27.2.1 2009/05/13 17:18:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.27 2009/01/27 11:26:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.27.2.1 2009/05/13 17:18:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,10 +150,14 @@ wdsc_attach(device_t parent, device_t self, void *aux)
 	wsc->sc_hpcdma.hpc = haa->hpc_regs;
 
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-					haa->ha_devoff,
-					wsc->sc_hpcdma.hpc->scsi0_devregs_size,
-					&sc->sc_regh)) != 0) {
-		printf(": unable to map regs, err=%d\n", err);
+	    haa->ha_devoff + 0, 4, &sc->sc_asr_regh)) != 0) {
+		printf(": unable to map asr reg, err=%d\n", err);
+		return;
+	}
+
+	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+	    haa->ha_devoff + 4,  4, &sc->sc_data_regh)) != 0) {
+		printf(": unable to map asr reg, err=%d\n", err);
 		return;
 	}
 

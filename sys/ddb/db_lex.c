@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.20 2005/11/27 13:05:28 yamt Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.20.90.1 2009/05/13 17:19:04 jym Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,19 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.20 2005/11/27 13:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.20.90.1 2009/05/13 17:19:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/db_machdep.h>
-
-#include <ddb/db_lex.h>
-#include <ddb/db_output.h>
-#include <ddb/db_command.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_interface.h>
+#include <ddb/ddb.h>
 
 db_expr_t	db_tok_number;
 char		db_tok_string[TOK_STRING_SIZE];
@@ -330,4 +323,27 @@ db_lex(void)
 	db_printf("Bad character\n");
 	db_flush_lex();
 	return (tEOF);
+}
+
+/*
+ * Utility routine - discard tokens through end-of-line.
+ */
+void
+db_skip_to_eol(void)
+{
+	int t;
+
+	do {
+		t = db_read_token();
+	} while (t != tEOL);
+}
+
+void
+db_error(const char *s)
+{
+
+	if (s)
+		db_printf("%s", s);
+	db_flush_lex();
+	longjmp(db_recover);
 }

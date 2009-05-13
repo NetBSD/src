@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.108 2009/01/02 12:57:29 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.108.2.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.108 2009/01/02 12:57:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.108.2.1 2009/05/13 17:22:51 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -81,7 +81,7 @@ static const struct genfs_ops nfs_genfsops = {
  * Reinitialize inode hash table.
  */
 void
-nfs_node_init()
+nfs_node_init(void)
 {
 
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
@@ -98,7 +98,7 @@ nfs_node_init()
  * Free resources previously allocated in nfs_node_reinit().
  */
 void
-nfs_node_done()
+nfs_node_done(void)
 {
 
 	pool_destroy(&nfs_node_pool);
@@ -158,12 +158,7 @@ nfs_rbtinit(struct nfsmount *nmp)
  * nfsnode structure is returned.
  */
 int
-nfs_nget1(mntp, fhp, fhsize, npp, lkflags)
-	struct mount *mntp;
-	nfsfh_t *fhp;
-	int fhsize;
-	struct nfsnode **npp;
-	int lkflags;
+nfs_nget1(struct mount *mntp, nfsfh_t *fhp, int fhsize, struct nfsnode **npp, int lkflags)
 {
 	struct nfsnode *np;
 	struct vnode *vp;
@@ -247,8 +242,7 @@ loop:
 }
 
 int
-nfs_inactive(v)
-	void *v;
+nfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -287,8 +281,7 @@ nfs_inactive(v)
  * Reclaim an nfsnode so that it can be used for other purposes.
  */
 int
-nfs_reclaim(v)
-	void *v;
+nfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;

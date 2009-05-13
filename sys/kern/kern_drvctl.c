@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.22 2009/01/17 07:02:35 yamt Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.22.2.1 2009/05/13 17:21:56 jym Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.22 2009/01/17 07:02:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.22.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.22 2009/01/17 07:02:35 yamt Exp $"
 #include <sys/poll.h>
 #include <sys/drvctlio.h>
 #include <sys/devmon.h>
+#include <sys/stat.h>
+#include <sys/kauth.h>
+#include <sys/lwp.h>
 
 struct drvctl_event {
 	TAILQ_ENTRY(drvctl_event) dce_link;
@@ -75,17 +78,19 @@ static int	drvctl_write(struct file *, off_t *, struct uio *,
 			     kauth_cred_t, int);
 static int	drvctl_ioctl(struct file *, u_long, void *);
 static int	drvctl_poll(struct file *, int);
+static int	drvctl_stat(struct file *, struct stat *);
 static int	drvctl_close(struct file *);
 
 static const struct fileops drvctl_fileops = {
-	drvctl_read,
-	drvctl_write,
-	drvctl_ioctl,
-	fnullop_fcntl,
-	drvctl_poll,
-	fbadop_stat,
-	drvctl_close,
-	fnullop_kqfilter
+	.fo_read = drvctl_read,
+	.fo_write = drvctl_write,
+	.fo_ioctl = drvctl_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = drvctl_poll,
+	.fo_stat = drvctl_stat,
+	.fo_close = drvctl_close,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 #define MAXLOCATORS 100
@@ -154,7 +159,7 @@ drvctlopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	ret = fd_allocfile(&fp, &fd);
 	if (ret)
-		return (ret);
+		return ret;
 
 	/* XXX setup context */
 	mutex_enter(&drvctl_lock);
@@ -196,7 +201,11 @@ listdevbyname(struct devlistargs *l)
 	deviter_t di;
 	int cnt = 0, idx, error = 0;
 
-	if ((d = device_find_by_xname(l->l_devname)) == NULL)
+	if (*l->l_devname == '\0')
+		d = (device_t)NULL;
+	else if (memchr(l->l_devname, 0, sizeof(l->l_devname)) == NULL)
+		return EINVAL;
+	else if ((d = device_find_by_xname(l->l_devname)) == NULL)
 		return ENXIO;
 
 	for (child = deviter_first(&di, 0); child != NULL;
@@ -230,12 +239,12 @@ detachdevbyname(const char *devname)
 	 * If the parent cannot be notified, it might keep
 	 * pointers to the detached device.
 	 * There might be a private notification mechanism,
-	 * but better play save here.
+	 * but better play it safe here.
 	 */
 	if (d->dv_parent && !d->dv_parent->dv_cfattach->ca_childdetached)
-		return (ENOTSUP);
+		return ENOTSUP;
 #endif
-	return (config_detach(d, 0));
+	return config_detach(d, 0);
 }
 
 static int
@@ -264,12 +273,12 @@ rescanbus(const char *busname, const char *ifattr,
 	 */
 	if (!d->dv_cfattach->ca_rescan ||
 	    !d->dv_cfdriver->cd_attrs)
-		return (ENODEV);
+		return ENODEV;
 
 	/* allow to omit attribute if there is exactly one */
 	if (!ifattr) {
 		if (d->dv_cfdriver->cd_attrs[1])
-			return (EINVAL);
+			return EINVAL;
 		ifattr = d->dv_cfdriver->cd_attrs[0]->ci_name;
 	} else {
 		/* check for valid attribute passed */
@@ -277,7 +286,7 @@ rescanbus(const char *busname, const char *ifattr,
 			if (!strcmp((*ap)->ci_name, ifattr))
 				break;
 		if (!*ap)
-			return (EINVAL);
+			return EINVAL;
 	}
 
 	rc = (*d->dv_cfattach->ca_rescan)(d, ifattr, locs);
@@ -289,14 +298,14 @@ static int
 drvctl_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
-	return (ENODEV);
+	return ENODEV;
 }
 
 static int
 drvctl_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
-	return (ENODEV);
+	return ENODEV;
 }
 
 static int
@@ -335,13 +344,13 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 
 		if (d->numlocators) {
 			if (d->numlocators > MAXLOCATORS)
-				return (EINVAL);
+				return EINVAL;
 			locs_sz = d->numlocators * sizeof(int);
 			locs = kmem_alloc(locs_sz, KM_SLEEP);
 			res = copyin(d->locators, locs, locs_sz);
 			if (res) {
 				kmem_free(locs, locs_sz);
-				return (res);
+				return res;
 			}
 		} else
 			locs = NULL;
@@ -359,9 +368,18 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 		    fp->f_flag);
 		break;
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
-	return (res);
+	return res;
+}
+
+static int
+drvctl_stat(struct file *fp, struct stat *st)
+{
+	(void)memset(st, 0, sizeof(*st));
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	return 0;
 }
 
 static int
@@ -398,7 +416,7 @@ drvctl_close(struct file *fp)
 	}
 	mutex_exit(&drvctl_lock);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -422,11 +440,11 @@ drvctl_command_get_properties(struct lwp *l,
 	
 	args_dict = prop_dictionary_get(command_dict, "drvctl-arguments");
 	if (args_dict == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	devname_string = prop_dictionary_get(args_dict, "device-name");
 	if (devname_string == NULL)
-		return (EINVAL);
+		return EINVAL;
 	
 	for (dev = deviter_first(&di, 0); dev != NULL;
 	     dev = deviter_next(&di)) {
@@ -441,9 +459,9 @@ drvctl_command_get_properties(struct lwp *l,
 	deviter_release(&di);
 
 	if (dev == NULL)
-		return (ESRCH);
+		return ESRCH;
 
-	return (0);
+	return 0;
 }
 
 struct drvctl_command_desc {
@@ -474,12 +492,12 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 
 	error = prop_dictionary_copyin_ioctl(pref, ioctl_cmd, &command_dict);
 	if (error)
-		return (error);
+		return error;
 
 	results_dict = prop_dictionary_create();
 	if (results_dict == NULL) {
 		prop_object_release(command_dict);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 	
 	command_string = prop_dictionary_get(command_dict, "drvctl-command");
@@ -512,7 +530,7 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
  out:
 	prop_object_release(command_dict);
 	prop_object_release(results_dict);
-	return (error);
+	return error;
 }
 
 static int
@@ -523,19 +541,19 @@ drvctl_getevent(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 	int ret;
 
 	if ((fflag & (FREAD|FWRITE)) != (FREAD|FWRITE))
-		return (EPERM);
+		return EPERM;
 
 	mutex_enter(&drvctl_lock);
 	while ((dce = TAILQ_FIRST(&drvctl_eventq)) == NULL) {
 		if (fflag & O_NONBLOCK) {
 			mutex_exit(&drvctl_lock);
-			return (EWOULDBLOCK);
+			return EWOULDBLOCK;
 		}
 
 		ret = cv_wait_sig(&drvctl_cond, &drvctl_lock);
 		if (ret) {
 			mutex_exit(&drvctl_lock);
-			return (ret);
+			return ret;
 		}
 	}
 	TAILQ_REMOVE(&drvctl_eventq, dce, dce_link);
@@ -548,5 +566,5 @@ drvctl_getevent(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 	prop_object_release(dce->dce_event);
 	kmem_free(dce, sizeof(*dce));
 
-	return (ret);
+	return ret;
 }

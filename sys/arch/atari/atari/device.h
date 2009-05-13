@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.3 2008/06/11 14:35:53 tsutsui Exp $	*/
+/*	$NetBSD: device.h,v 1.3.10.1 2009/05/13 17:16:21 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -39,10 +39,9 @@
  * *and know it* (i.e. everything is really tight certain params won't be 
  * passed in some cases and the devices will deal with it)
  */
-int atari_config_found __P((struct cfdata *, struct device *,
-    void *, cfprint_t ));
-int simple_devprint __P((void *, const char *));
-int matchname __P((char *, char *));
+int atari_config_found(struct cfdata *, struct device *, void *, cfprint_t);
+int simple_devprint(void *, const char *);
+int matchname(char *, char *);
 /*
  * false when initing for the console.
  */

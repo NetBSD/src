@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_mem.c,v 1.3 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_mem.c,v 1.4 2007/03/04 06:02:27 christos Exp $	*/
+/*	$NetBSD: bktr_mem.c,v 1.4.56.1 2009/05/13 17:21:08 jym Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_mem.c,v 1.4 2000/09/11 12:23:50 roger Exp$ */
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_mem.c,v 1.4 2007/03/04 06:02:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_mem.c,v 1.4.56.1 2009/05/13 17:21:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,7 +79,7 @@ bktr_mem_modevent(module_t mod, int type, void *unused) {
 		printf("bktr_mem: memory holder loaded\n");
 /*
  * bzero causes a panic.
-		bzero((void *)memory_list, sizeof(memory_list));
+		memset((void *)memory_list, 0, sizeof(memory_list));
  * So use a simple for loop for now.
 */
 		{int x;

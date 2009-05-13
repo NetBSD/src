@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.121 2008/12/16 22:35:33 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.121.2.1 2009/05/13 17:20:27 jym Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.121 2008/12/16 22:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.121.2.1 2009/05/13 17:20:27 jym Exp $");
 
 #include "opt_pci.h"
 
@@ -401,8 +401,9 @@ pcidevdetached(device_t self, device_t child)
 	c->c_dev = NULL;
 }
 
-CFATTACH_DECL2_NEW(pci, sizeof(struct pci_softc),
-    pcimatch, pciattach, pcidetach, NULL, pcirescan, pcidevdetached);
+CFATTACH_DECL3_NEW(pci, sizeof(struct pci_softc),
+    pcimatch, pciattach, pcidetach, NULL, pcirescan, pcidevdetached,
+    DVF_DETACH_SHUTDOWN);
 
 int
 pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,

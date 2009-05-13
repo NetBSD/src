@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.4 2008/05/16 03:11:09 macallan Exp $	*/
+/*	$NetBSD: deq.c,v 1.4.12.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.4 2008/05/16 03:11:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.4.12.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,10 +56,7 @@ CFATTACH_DECL_NEW(deq, sizeof(struct deq_softc),
     deq_match, deq_attach, NULL, NULL);
 
 int
-deq_match(parent, cf, aux)
-	device_t parent;
-	struct cfdata *cf;
-	void *aux;
+deq_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct ki2c_confargs *ka = aux;
 	char compat[32];
@@ -74,9 +71,7 @@ deq_match(parent, cf, aux)
 }
 
 void
-deq_attach(parent, self, aux)
-	device_t parent, self;
-	void *aux;
+deq_attach(device_t parent, device_t self, void *aux)
 {
 	struct deq_softc *sc = device_private(self);
 	struct ki2c_confargs *ka = aux;

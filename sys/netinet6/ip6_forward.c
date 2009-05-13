@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.65 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.65.16.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.65 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.65.16.1 2009/05/13 17:22:29 jym Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -287,7 +287,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 *
 	 * IPv6 [ESP|AH] IPv6 [extension headers] payload
 	 */
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 	state.m = m;
 	state.ro = NULL;	/* update at ipsec6_output_tunnel() */
 	state.dst = NULL;	/* update at ipsec6_output_tunnel() */

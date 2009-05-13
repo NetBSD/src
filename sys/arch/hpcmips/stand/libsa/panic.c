@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.3 2001/04/06 11:13:56 wiz Exp $	*/
+/*	$NetBSD: panic.c,v 1.3.144.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 Kazuma Arino.
@@ -31,7 +31,7 @@
 #include <stand.h>
 
 void
-abort()
+abort(void)
 {
 	exit (1);
 }

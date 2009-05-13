@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.14 2007/03/04 06:00:33 christos Exp $	*/
+/*	$NetBSD: ibus.c,v 1.14.58.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.14 2007/03/04 06:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.14.58.1 2009/05/13 17:18:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.14 2007/03/04 06:00:33 christos Exp $");
 #include "locators.h"
 
 void
-ibusattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ibusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ibus_dev_attach_args *ida = aux;
 	struct ibus_attach_args *ia;
@@ -73,9 +71,7 @@ ibusattach(parent, self, aux)
 }
 
 int
-ibusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ibusprint(void *aux, const char *pnp)
 {
 	struct ibus_attach_args *ia = aux;
 
@@ -88,12 +84,7 @@ ibusprint(aux, pnp)
 }
 
 void
-ibus_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
+ibus_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, arg);
 }

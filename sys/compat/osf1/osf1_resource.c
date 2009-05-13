@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.13 2008/04/24 18:39:23 ad Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.13.16.1 2009/05/13 17:19:03 jym Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.13 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.13.16.1 2009/05/13 17:19:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,9 @@ osf1_sys_getrlimit(struct lwp *l, const struct osf1_sys_getrlimit_args *uap, reg
 	case OSF1_RLIMIT_NOFILE:
 		SCARG(&a, which) = RLIMIT_NOFILE;
 		break;
-	case OSF1_RLIMIT_AS:		/* unhandled */
+	case OSF1_RLIMIT_AS:
+		SCARG(&a, which) = RLIMIT_AS;
+		break;
 	default:
 		return (EINVAL);
 	}
@@ -141,7 +143,9 @@ osf1_sys_setrlimit(struct lwp *l, const struct osf1_sys_setrlimit_args *uap, reg
 	case OSF1_RLIMIT_NOFILE:
 		SCARG(&a, which) = RLIMIT_NOFILE;
 		break;
-	case OSF1_RLIMIT_AS:		/* unhandled */
+	case OSF1_RLIMIT_AS:
+		SCARG(&a, which) = RLIMIT_AS;
+		break;
 	default:
 		return (EINVAL);
 	}

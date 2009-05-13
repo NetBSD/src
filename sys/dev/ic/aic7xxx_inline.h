@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.13 2008/02/11 21:43:46 dyoung Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.13.24.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -506,8 +506,7 @@ static __inline int	ahc_intr(void *arg);
 static __inline void	ahc_minphys(struct buf *bp);
 
 static __inline void
-ahc_minphys(bp)
-	struct buf *bp;
+ahc_minphys(struct buf *bp)
 {
 /*
  * Even though the card can transfer up to 16megs per command

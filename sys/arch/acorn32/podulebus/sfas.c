@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.16 2006/03/08 23:46:22 lukem Exp $	*/
+/*	$NetBSD: sfas.c,v 1.16.84.1 2009/05/13 17:16:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.16 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.16.84.1 2009/05/13 17:16:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,7 @@ int	sfas_debug = 2;
  * default minphys routine for sfas based controllers
  */
 void
-sfas_minphys(bp)
-	struct buf *bp;
+sfas_minphys(struct buf *bp)
 {
 
 	/*
@@ -163,11 +162,9 @@ sfas_minphys(bp)
  * Initialize the nexus structs.
  */
 void
-sfas_init_nexus(dev, nexus)
-	struct sfas_softc *dev;
-	struct nexus	  *nexus;
+sfas_init_nexus(struct sfas_softc *dev, struct nexus *nexus)
 {
-	bzero(nexus, sizeof(struct nexus));
+	memset(nexus, 0, sizeof(struct nexus));
 
 	nexus->state	= SFAS_NS_IDLE;
 	nexus->period	= 200;
@@ -178,8 +175,7 @@ sfas_init_nexus(dev, nexus)
 }
 
 void
-sfasinitialize(dev)
-	struct sfas_softc *dev;
+sfasinitialize(struct sfas_softc *dev)
 {
 	u_int		*pte;
 	int		 i;
@@ -320,9 +316,7 @@ sfas_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
  * Actually select the unit, whereby the whole scsi-process is started.
  */
 void
-sfas_donextcmd(dev, pendp)
-	struct sfas_softc	*dev;
-	struct sfas_pending	*pendp;
+sfas_donextcmd(struct sfas_softc *dev, struct sfas_pending *pendp)
 {
 	int	s;
 
@@ -374,10 +368,7 @@ sfas_donextcmd(dev, pendp)
 }
 
 void
-sfas_scsidone(dev, xs, stat)
-	struct sfas_softc *dev;
-	struct scsipi_xfer *xs;
-	int		 stat;
+sfas_scsidone(struct sfas_softc *dev, struct scsipi_xfer *xs, int stat)
 {
 	struct sfas_pending	*pendp;
 	int			 s;
@@ -431,9 +422,7 @@ sfas_scsidone(dev, xs, stat)
  * delay time.
  */
 void
-sfasreset(dev, how)
-	struct sfas_softc *dev;
-	int		 how;
+sfasreset(struct sfas_softc *dev, int how)
 {
 	sfas_regmap_p	rp;
 	int		i, s;
@@ -489,8 +478,7 @@ sfasreset(dev, how)
  * Save active data pointers to the nexus block currently active.
  */
 void
-sfas_save_pointers(dev)
-	struct sfas_softc *dev;
+sfas_save_pointers(struct sfas_softc *dev)
 {
 	struct nexus	*nx;
 
@@ -512,8 +500,7 @@ sfas_save_pointers(dev)
  * Restore data pointers from the currently active nexus block.
  */
 void
-sfas_restore_pointers(dev)
-	struct sfas_softc *dev;
+sfas_restore_pointers(struct sfas_softc *dev)
 {
 	struct nexus	*nx;
 
@@ -539,8 +526,7 @@ sfas_restore_pointers(dev)
  * the FAS chip. This function MUST NOT BE CALLED without interrupt disabled.
  */
 void
-sfasiwait(dev)
-	struct sfas_softc *dev;
+sfasiwait(struct sfas_softc *dev)
 {
 	sfas_regmap_p	rp;
 
@@ -573,9 +559,7 @@ sfasiwait(dev)
  * rules that apply to sfasiwait also applies here.
  */
 void
-sfas_ixfer(v, polling)
-	void *v;
-	int polling;
+sfas_ixfer(void *v, int polling)
 {
 	struct sfas_softc *dev = v;
 	sfas_regmap_p	 rp;
@@ -629,10 +613,7 @@ sfas_ixfer(v, polling)
  * Build a Synchronous Data Transfer Request message
  */
 void
-sfas_build_sdtrm(dev, period, offset)
-	struct sfas_softc *dev;
-	int		  period;
-	int		  offset;
+sfas_build_sdtrm(struct sfas_softc *dev, int period, int offset)
 {
 	dev->sc_msg_out[0] = 0x01;
 	dev->sc_msg_out[1] = 0x03;
@@ -646,9 +627,7 @@ sfas_build_sdtrm(dev, period, offset)
  * Arbitate the scsi bus and select the unit
  */
 int
-sfas_select_unit(dev, target)
-	struct sfas_softc *dev;
-	short		  target;
+sfas_select_unit(struct sfas_softc *dev, short target)
 {
 	sfas_regmap_p	 rp;
 	struct nexus	*nexus;
@@ -709,9 +688,7 @@ sfas_select_unit(dev, target)
  * Grab the nexus if available else return 0.
  */
 struct nexus *
-sfas_arbitate_target(dev, target)
-	struct sfas_softc *dev;
-	int		  target;
+sfas_arbitate_target(struct sfas_softc *dev, int target)
 {
 	struct nexus	*nexus;
 	int		 s;
@@ -737,15 +714,7 @@ sfas_arbitate_target(dev, target)
  * Setup a nexus for use. Initializes command, buffer pointers and DMA chain.
  */
 void
-sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
-	struct sfas_softc	*dev;
-	struct nexus		*nexus;
-	struct sfas_pending	*pendp;
-	unsigned char		*cbuf;
-	int			 clen;
-	unsigned char		*buf;
-	int			 len;
-	int			 mode;
+sfas_setup_nexus(struct sfas_softc *dev, struct nexus *nexus, struct sfas_pending *pendp, unsigned char *cbuf, int clen, unsigned char *buf, int len, int mode)
 {
 	char	sync, target, lun;
 
@@ -770,7 +739,7 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 /* Setup the nexus struct. */
 	nexus->ID	   = ((mode & SFAS_SELECT_R) ? 0xC0 : 0x80) | lun;
 	nexus->clen	   = clen;
-	bcopy(cbuf, nexus->cbuf, nexus->clen);
+	memcpy( nexus->cbuf, cbuf, nexus->clen);
 	nexus->cbuf[1] |= lun << 5;		/* Fix the lun bits */
 	nexus->cur_link	   = 0;
 	nexus->dma_len	   = 0;
@@ -846,14 +815,7 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 }
 
 int
-sfasselect(dev, pendp, cbuf, clen, buf, len, mode)
-	struct sfas_softc	*dev;
-	struct sfas_pending	*pendp;
-	unsigned char		*cbuf;
-	int			 clen;
-	unsigned char		*buf;
-	int			 len;
-	int			 mode;
+sfasselect(struct sfas_softc *dev, struct sfas_pending *pendp, unsigned char *cbuf, int clen, unsigned char *buf, int len, int mode)
 {
 	struct nexus	*nexus;
 
@@ -872,9 +834,7 @@ sfasselect(dev, pendp, cbuf, clen, buf, len, mode)
 }
 
 void
-sfasgo(dev, pendp)
-	struct sfas_softc   *dev;
-	struct sfas_pending *pendp;
+sfasgo(struct sfas_softc *dev, struct sfas_pending *pendp)
 {
 	int	 s;
 	char	*buf;
@@ -911,9 +871,7 @@ sfasgo(dev, pendp)
  * We don't know if we have an active nexus here!
  */
 int
-sfas_pretests(dev, rp)
-	struct sfas_softc *dev;
-	sfas_regmap_p	  rp;
+sfas_pretests(struct sfas_softc *dev, sfas_regmap_p rp)
 {
 	struct nexus	*nexus;
 	int		 i, s;
@@ -1013,10 +971,7 @@ sfas_pretests(dev, rp)
  * processing. We know that we have an active nexus here.
  */
 int
-sfas_midaction(dev, rp, nexus)
-	struct sfas_softc *dev;
-	sfas_regmap_p	  rp;
-	struct nexus	 *nexus;
+sfas_midaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 {
 	int	i, left, len, s;
 	u_char	status, msg;
@@ -1168,7 +1123,7 @@ sfas_midaction(dev, rp, nexus)
 				    && left)
 				dev->sc_bump_va[len-(left--)] = *rp->sfas_fifo;
 
-			      bcopy(dev->sc_bump_va, dev->sc_buf, len-left);
+			      memcpy( dev->sc_buf, dev->sc_bump_va, len-left);
 			    }
 			  } else {
 			    /* Count any unsent bytes and flush them. */
@@ -1233,10 +1188,7 @@ sfas_midaction(dev, rp, nexus)
  * phase passes). We know that we have an active nexus here.
  */
 int
-sfas_postaction(dev, rp, nexus)
-	struct sfas_softc *dev;
-	sfas_regmap_p	  rp;
-	struct nexus	 *nexus;
+sfas_postaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 {
 	int	i, len;
 	u_char	cmd;
@@ -1285,7 +1237,7 @@ sfas_postaction(dev, rp, nexus)
 			dev->sc_dma_len = len;
 
 			if (nexus->state == SFAS_NS_DATA_OUT)
-			  bcopy(dev->sc_buf, dev->sc_bump_va, dev->sc_dma_len);
+			  memcpy( dev->sc_bump_va, dev->sc_buf, dev->sc_dma_len);
 		  } else {
 			dev->sc_dma_buf = dev->sc_dma_blk_ptr;
 			dev->sc_dma_len = dev->sc_dma_blk_len;
@@ -1558,8 +1510,7 @@ sfas_postaction(dev, rp, nexus)
  * Stub for interrupt machine.
  */
 void
-sfasintr(dev)
-	struct sfas_softc *dev;
+sfasintr(struct sfas_softc *dev)
 {
 	sfas_regmap_p	 rp;
 	struct nexus	*nexus;
@@ -1584,9 +1535,7 @@ sfasintr(dev)
  * sfasintr.
  */
 void
-sfasicmd(dev, pendp)
-	struct sfas_softc   *dev;
-	struct sfas_pending *pendp;
+sfasicmd(struct sfas_softc *dev, struct sfas_pending *pendp)
 {
 	sfas_regmap_p	 rp;
 	struct nexus	*nexus;
@@ -1611,8 +1560,7 @@ sfasicmd(dev, pendp)
 #ifdef SFAS_DEBUG
 
 void
-dump_nexus(nexus)
-	struct nexus *nexus;
+dump_nexus(struct nexus *nexus)
 {
 	int loop;
 
@@ -1653,8 +1601,7 @@ dump_nexus(nexus)
 }
 
 void
-dump_nexii(sc)
-	struct sfas_softc *sc;
+dump_nexii(struct sfas_softc *sc)
 {
 	int loop;
 
@@ -1664,8 +1611,7 @@ dump_nexii(sc)
 }
 
 void
-dump_sfassoftc(sc)
-	struct sfas_softc *sc;
+dump_sfassoftc(struct sfas_softc *sc)
 {
 	printf("sfassoftc @ 0x%08x\n", (u_int)sc);
 	printf("clock_freq = %d\n", sc->sc_clock_freq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.14 2007/12/11 11:34:08 lukem Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.14.26.1 2009/05/13 17:19:52 jym Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.14 2007/12/11 11:34:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.14.26.1 2009/05/13 17:19:52 jym Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -467,7 +467,7 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	const struct tcode_info *tinfo;
 	int err;
 
-	bzero(&pkt, sizeof(struct fw_pkt));
+	memset(&pkt, 0, sizeof(struct fw_pkt));
 	if ((err = uiomove((void *)&pkt, sizeof(uint32_t), uio)))
 		return (err);
 	tinfo = &d->fc->tcode[pkt.mode.hdr.tcode];
@@ -479,7 +479,7 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	    PAGE_SIZE/*XXX*/)) == NULL)
 		return (ENOMEM);
 
-	bcopy(&pkt, &xfer->send.hdr, sizeof(struct fw_pkt));
+	memcpy(&xfer->send.hdr, &pkt, sizeof(struct fw_pkt));
 	xfer->send.pay_len = uio->uio_resid;
 	if (uio->uio_resid > 0) {
 		if ((err = uiomove((void *)&xfer->send.payload[0],
@@ -690,16 +690,16 @@ FW_IOCTL(fw)
 			err = EINVAL;
 		break;
 	case FW_SSTBUF:
-		bcopy(ibufreq, &d->bufreq, sizeof(d->bufreq));
+		memcpy(&d->bufreq, ibufreq, sizeof(d->bufreq));
 		break;
 	case FW_GSTBUF:
-		bzero(&ibufreq->rx, sizeof(ibufreq->rx));
+		memset(&ibufreq->rx, 0, sizeof(ibufreq->rx));
 		if (ir != NULL) {
 			ibufreq->rx.nchunk = ir->bnchunk;
 			ibufreq->rx.npacket = ir->bnpacket;
 			ibufreq->rx.psize = ir->psize;
 		}
-		bzero(&ibufreq->tx, sizeof(ibufreq->tx));
+		memset(&ibufreq->tx, 0, sizeof(ibufreq->tx));
 		if (it != NULL) {
 			ibufreq->tx.nchunk = it->bnchunk;
 			ibufreq->tx.npacket = it->bnpacket;
@@ -742,7 +742,7 @@ FW_IOCTL(fw)
 			break;
 		}
 
-		bcopy(fp, (void *)&xfer->send.hdr, tinfo->hdr_len);
+		memcpy((void *)&xfer->send.hdr, fp, tinfo->hdr_len);
 		if (pay_len > 0)
 			bcopy((char *)fp + tinfo->hdr_len,
 			    (void *)xfer->send.payload, pay_len);
@@ -775,8 +775,8 @@ FW_IOCTL(fw)
 		} else {
 			pay_len = 0;
 		}
-		bcopy(&xfer->recv.hdr, fp, tinfo->hdr_len);
-		bcopy(xfer->recv.payload, (char *)fp + tinfo->hdr_len, pay_len);
+		memcpy(fp, &xfer->recv.hdr, tinfo->hdr_len);
+		memcpy((char *)fp + tinfo->hdr_len, xfer->recv.payload, pay_len);
 out:
 		fw_xfer_free_buf(xfer);
 		break;
@@ -847,7 +847,7 @@ out:
 		fwdevlst->info_len = len;
 		break;
 	case FW_GTPMAP:
-		bcopy(fc->topology_map, data,
+		memcpy(data, fc->topology_map,
 				(fc->topology_map->crc_len + 1) * 4);
 		break;
 	case FW_GCROM:

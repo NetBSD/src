@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.13 2009/01/11 02:45:52 christos Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.13.2.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.13 2009/01/11 02:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.13.2.1 2009/05/13 17:21:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -84,13 +84,21 @@ static LIST_HEAD(, mqueue)	mqueue_head =
 	LIST_HEAD_INITIALIZER(mqueue_head);
 
 static int	mq_poll_fop(file_t *, int);
+static int	mq_stat_fop(file_t *, struct stat *);
 static int	mq_close_fop(file_t *);
 
 #define	FNOVAL	-1
 
 static const struct fileops mqops = {
-	fbadop_read, fbadop_write, fbadop_ioctl, fnullop_fcntl, mq_poll_fop,
-	fbadop_stat, mq_close_fop, fnullop_kqfilter
+	.fo_read = fbadop_read,
+	.fo_write = fbadop_write,
+	.fo_ioctl = fbadop_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = mq_poll_fop,
+	.fo_stat = mq_stat_fop,
+	.fo_close = mq_close_fop,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*
@@ -228,6 +236,27 @@ abstimeout2timo(struct timespec *ts, int *timo)
 	 */
 	error = itimespecfix(ts);
 	*timo = (error == 0) ? tstohz(ts) : -1;
+
+	return 0;
+}
+
+static int
+mq_stat_fop(file_t *fp, struct stat *st)
+{
+	struct mqueue *mq = fp->f_data;
+
+	(void)memset(st, 0, sizeof(*st));
+
+	mutex_enter(&mq->mq_mtx);
+	st->st_mode = mq->mq_mode;
+	st->st_uid = mq->mq_euid;
+	st->st_gid = mq->mq_egid;
+	st->st_atimespec = mq->mq_atime;
+	st->st_mtimespec = mq->mq_mtime;
+	st->st_ctimespec = st->st_birthtimespec = mq->mq_btime;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	mutex_exit(&mq->mq_mtx);
 
 	return 0;
 }
@@ -437,6 +466,8 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 		mutex_enter(&mq->mq_mtx);
 		LIST_INSERT_HEAD(&mqueue_head, mq, mq_list);
 		mq_new = NULL;
+		getnanotime(&mq->mq_btime);
+		mq->mq_atime = mq->mq_mtime = mq->mq_btime;
 	}
 
 	/* Increase the counters, and make descriptor ready */
@@ -486,6 +517,7 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 		return error;
 	mq = fp->f_data;
 
+	getnanotime(&mq->mq_atime);
 	/* Check the message size limits */
 	if (msg_len < mq->mq_attrib.mq_msgsize) {
 		error = EMSGSIZE;
@@ -647,6 +679,8 @@ mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 		return error;
 	}
 	mq = fp->f_data;
+
+	getnanotime(&mq->mq_mtime);
 
 	/* Check the message size limit */
 	if (msg_len <= 0 || msg_len > mq->mq_attrib.mq_msgsize) {

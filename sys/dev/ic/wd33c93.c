@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.22 2009/01/27 11:26:15 tsutsui Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.22.2.1 2009/05/13 17:19:24 jym Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.22 2009/01/27 11:26:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.22.2.1 2009/05/13 17:19:24 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -463,7 +463,8 @@ wd33c93_setsync(struct wd33c93_softc *sc, struct wd33c93_tinfo *ti)
 int
 wd33c93_dmaok(struct wd33c93_softc *sc, struct scsipi_xfer *xs)
 {
-	if (wd33c93_nodma || (xs->xs_control & XS_CTL_POLL) || xs->datalen == 0)
+	if (wd33c93_nodma || sc->sc_dmamode == SBIC_CTL_NO_DMA ||
+	    (xs->xs_control & XS_CTL_POLL) || xs->datalen == 0)
 		return (0);
 	return(1);
 }

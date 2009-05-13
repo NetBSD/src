@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.12 2007/03/04 06:00:43 christos Exp $	*/
+/*	$NetBSD: profile.c,v 1.12.60.1 2009/05/13 17:18:23 jym Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.12 2007/03/04 06:00:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.12.60.1 2009/05/13 17:18:23 jym Exp $");
 
 #include "profiler.h"
 
@@ -122,8 +122,7 @@ const struct cdevsw prof_cdevsw = {
 };
 
 void 
-profilerattach(n)
-    int n;
+profilerattach(int n)
 {
     /* reset the profiler state */
     prof_sc.state = 0;
@@ -138,11 +137,7 @@ profilerattach(n)
  *       EROFS if attempt to open in write mode.
  */
 int
-profopen(dev, flag, mode, p)
-    dev_t dev;
-    int flag;
-    int mode;
-    struct proc *p;
+profopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
     /* check that the minor number is correct. */
@@ -174,11 +169,7 @@ profopen(dev, flag, mode, p)
  * 
  */
 int
-profclose(dev, flag, mode, p)
-    dev_t dev;
-    int flag;
-    int mode;
-    struct proc *p;
+profclose(dev_t dev, int flag, int mode, struct proc *p)
 {
     /* clear the state, and stop profiling if 
      * it is happening.
@@ -189,10 +180,7 @@ profclose(dev, flag, mode, p)
 }
 
 int
-profread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+profread(dev_t dev, struct uio *uio, int flags)
 {
     int error;
     int real, backup;
@@ -285,12 +273,7 @@ profread(dev, uio, flags)
 static int profcount = 0;
 static int ints = 0;
 int
-profioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct proc *p;
+profioctl(dev_t dev, u_long cmd, void *data, int flag, struct proc *p)
 {
     int error = 0;
     struct profStartInfo *info = (struct profStartInfo *) data;

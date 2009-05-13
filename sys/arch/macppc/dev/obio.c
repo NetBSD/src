@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.28 2008/09/26 03:19:05 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.28.8.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.28 2008/09/26 03:19:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.28.8.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,9 +276,7 @@ static const char * const skiplist[] = {
 #define N_LIST (sizeof(skiplist) / sizeof(skiplist[0]))
 
 int
-obio_print(aux, obio)
-	void *aux;
-	const char *obio;
+obio_print(void *aux, const char *obio)
 {
 	struct confargs *ca = aux;
 	int i;

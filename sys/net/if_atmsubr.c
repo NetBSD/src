@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.43 2008/12/17 20:51:36 cegger Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.43.2.1 2009/05/13 17:22:19 jym Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.43 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.43.2.1 2009/05/13 17:22:19 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -187,7 +187,7 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			 * assuming dst contains 12 bytes (atm pseudo
 			 * header (4) + LLC/SNAP (8))
 			 */
-			bcopy(dst->sa_data, &atmdst, sizeof(atmdst));
+			memcpy(&atmdst, dst->sa_data, sizeof(atmdst));
 			break;
 
 		default:
@@ -214,7 +214,7 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		*ad = atmdst;
 		if (atm_flags & ATM_PH_LLCSNAP) {
 			atmllc = (struct atmllc *)(ad + 1);
-			bcopy(ATMLLC_HDR, atmllc->llchdr,
+			memcpy(atmllc->llchdr, ATMLLC_HDR,
 						sizeof(atmllc->llchdr));
 			ATM_LLC_SETTYPE(atmllc, etype);
 		}
@@ -269,7 +269,7 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 	    if (m->m_len < sizeof(*alc) && (m = m_pullup(m, sizeof(*alc))) == 0)
 		  return; /* failed */
 	    alc = mtod(m, struct atmllc *);
-	    if (bcmp(alc, ATMLLC_HDR, 6)) {
+	    if (memcmp(alc, ATMLLC_HDR, 6)) {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	      printf("%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
 		  ifp->if_xname, ATM_PH_VPI(ah), ATM_PH_VCI(ah));

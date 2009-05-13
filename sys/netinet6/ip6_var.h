@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.51 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.51.8.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ int	ip6_ctloutput(int, struct socket *, struct sockopt *);
 int	ip6_raw_ctloutput(int, struct socket *, struct sockopt *);
 void	ip6_initpktopts(struct ip6_pktopts *);
 int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
-			    struct ip6_pktopts *, int, int);
+			    struct ip6_pktopts *, kauth_cred_t, int);
 void	ip6_clearpktopts(struct ip6_pktopts *, int);
 struct ip6_pktopts *ip6_copypktopts(struct ip6_pktopts *, int);
 int	ip6_optlen(struct in6pcb *);
@@ -361,6 +361,7 @@ void	frag6_slowtimo(void);
 void	frag6_drain(void);
 
 int	ip6flow_init(int);
+void	ip6flow_poolinit(void);
 struct  ip6flow *ip6flow_reap(int);
 void    ip6flow_create(const struct route *, struct mbuf *);
 void    ip6flow_slowtimo(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.55 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.55.10.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.55 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.55.10.1 2009/05/13 17:21:50 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -191,12 +191,12 @@ filecorefs_modcmd(modcmd_t cmd, void *arg)
  * Name is updated by mount(8) after booting.
  */
 
-static int filecore_mountfs __P((struct vnode *devvp, struct mount *mp,
-		struct lwp *l, struct filecore_args *argp));
+static int filecore_mountfs(struct vnode *devvp, struct mount *mp,
+		struct lwp *l, struct filecore_args *argp);
 
 #if 0
 int
-filecore_mountroot()
+filecore_mountroot(void)
 {
 	struct mount *mp;
 	extern struct vnode *rootvp;
@@ -237,11 +237,7 @@ filecore_mountroot()
  * mount system call
  */
 int
-filecore_mount(mp, path, data, data_len)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	size_t *data_len;
+filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;
@@ -292,14 +288,12 @@ filecore_mount(mp, path, data, data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			vrele(devvp);
-			return (error);
-		}
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, VREAD, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
+	if (error) {
+		vrele(devvp);
+		return (error);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = filecore_mountfs(devvp, mp, l, args);
@@ -322,11 +316,7 @@ filecore_mount(mp, path, data, data_len)
  * Common code for mount and mountroot
  */
 static int
-filecore_mountfs(devvp, mp, l, argp)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct lwp *l;
-	struct filecore_args *argp;
+filecore_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct filecore_args *argp)
 {
 	struct filecore_mnt *fcmp = (struct filecore_mnt *)0;
 	struct buf *bp = NULL;
@@ -449,9 +439,7 @@ out:
  */
 /* ARGSUSED */
 int
-filecore_start(mp, flags)
-	struct mount *mp;
-	int flags;
+filecore_start(struct mount *mp, int flags)
 {
 	return 0;
 }
@@ -460,9 +448,7 @@ filecore_start(mp, flags)
  * unmount system call
  */
 int
-filecore_unmount(mp, mntflags)
-	struct mount *mp;
-	int mntflags;
+filecore_unmount(struct mount *mp, int mntflags)
 {
 	struct filecore_mnt *fcmp;
 	int error, flags = 0;
@@ -489,9 +475,7 @@ filecore_unmount(mp, mntflags)
  * Return root of a filesystem
  */
 int
-filecore_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+filecore_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
         int error;
@@ -506,9 +490,7 @@ filecore_root(mp, vpp)
  * Get file system statistics.
  */
 int
-filecore_statvfs(mp, sbp)
-	struct mount *mp;
-	struct statvfs *sbp;
+filecore_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 
@@ -529,10 +511,7 @@ filecore_statvfs(mp, sbp)
 
 /* ARGSUSED */
 int
-filecore_sync(mp, waitfor, cred)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t cred;
+filecore_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	return (0);
 }
@@ -555,10 +534,7 @@ struct ifid {
 
 /* ARGSUSED */
 int
-filecore_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+filecore_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ifid ifh;
 	struct vnode *nvp;
@@ -592,10 +568,7 @@ filecore_fhtovp(mp, fhp, vpp)
  */
 
 int
-filecore_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+filecore_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct filecore_mnt *fcmp;
 	struct filecore_node *ip;
@@ -714,10 +687,7 @@ filecore_vget(mp, ino, vpp)
  */
 /* ARGSUSED */
 int
-filecore_vptofh(vp, fhp, fh_size)
-	struct vnode *vp;
-	struct fid *fhp;
-	size_t *fh_size;
+filecore_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct filecore_node *ip = VTOI(vp);
 	struct ifid ifh;

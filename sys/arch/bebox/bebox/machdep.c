@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2008/11/11 06:46:40 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.4.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2008/11/11 06:46:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.4.1 2009/05/13 17:16:33 jym Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -170,7 +170,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	/*
 	 * BeBox Mother Board's Register Mapping
@@ -218,8 +218,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
@@ -255,7 +254,7 @@ disable_device(const char *name)
  * Initialize system console.
  */
 void
-consinit()
+consinit(void)
 {
 	struct btinfo_console *consinfo;
 	static int initted;

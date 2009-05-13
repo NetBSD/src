@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $	*/
+/*	$NetBSD: gemini_timer.c,v 1.2.6.1 2009/05/13 17:16:17 jym Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_geminitmr.c,v 1.1 2008/08/27 11:03:10 matt Exp
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.2.6.1 2009/05/13 17:16:17 jym Exp $");
 
 #include "opt_gemini.h"
 #include "opt_cpuoptions.h"
@@ -271,7 +271,7 @@ timer_init(geminitmr_softc_t *sc, int schz, boolean_t autoload, boolean_t intr)
 }
 
 void
-gemini_microtime_init()
+gemini_microtime_init(void)
 {
 	if (ref_sc == NULL)
 		panic("microtime reference timer was not configured.");

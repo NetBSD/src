@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.15 2002/10/02 04:06:38 thorpej Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.15.126.1 2009/05/13 17:16:05 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2002/10/02 04:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15.126.1 2009/05/13 17:16:05 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2002/10/02 04:06:38 thorpej Exp
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-int isabeepmatch __P((struct device *, struct cfdata *, void *));
-void isabeepattach __P((struct device *, struct device *, void *));
+int isabeepmatch(struct device *, struct cfdata *, void *);
+void isabeepattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(isabeep, sizeof(struct device),
     isabeepmatch, isabeepattach, NULL, NULL);
@@ -68,8 +68,7 @@ static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
 int
-isa_display_console(iot, memt)
-	bus_space_tag_t iot, memt;
+isa_display_console(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	int res = ENXIO;
 #if NVGA_ISA
@@ -82,18 +81,13 @@ isa_display_console(iot, memt)
 
 #if (NPCPPI > 0)
 int
-isabeepmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+isabeepmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-isabeepattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isabeepattach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 
@@ -103,8 +97,7 @@ isabeepattach(parent, self, aux)
 #endif
 
 void
-isabeep(pitch, period)
-	int pitch, period;
+isabeep(int pitch, int period)
 {
 #if (NPCPPI > 0)
 	if (ppi_attached)

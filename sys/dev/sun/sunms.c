@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.29 2008/04/21 08:16:12 martin Exp $	*/
+/*	$NetBSD: sunms.c,v 1.29.16.1 2009/05/13 17:21:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.29 2008/04/21 08:16:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.29.16.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ int	sunms_bps = MS_DEFAULT_BPS;
 
 static int	sunms_match(device_t, cfdata_t, void *);
 static void	sunms_attach(device_t, device_t, void *);
-static int	sunmsiopen(struct device *, int mode);
+static int	sunmsiopen(device_t, int mode);
 int	sunmsinput(int, struct tty *);
 
 CFATTACH_DECL_NEW(ms_tty, sizeof(struct ms_softc),
@@ -141,7 +141,7 @@ sunms_attach(device_t parent, device_t self, void *aux)
 {
 	struct ms_softc *ms = device_private(self);
 	struct kbd_ms_tty_attach_args *args = aux;
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct tty *tp = args->kmta_tp;
 	int ms_unit;
 #if NWSMOUSE > 0

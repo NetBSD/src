@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.73 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: ums.c,v 1.73.12.1 2009/05/13 17:21:35 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.73 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.73.12.1 2009/05/13 17:21:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.73 2008/05/24 16:40:58 cube Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>

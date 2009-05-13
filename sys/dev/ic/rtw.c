@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.106 2008/11/12 12:36:11 ad Exp $ */
+/* $NetBSD: rtw.c,v 1.106.4.1 2009/05/13 17:19:24 jym Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.106 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.106.4.1 2009/05/13 17:19:24 jym Exp $");
 
 #include "bpfilter.h"
 
@@ -1766,10 +1766,11 @@ rtw_reset_oactive(struct rtw_softc *sc)
 }
 
 /* Collect transmitted packets. */
-static void
+static bool
 rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
     struct rtw_txdesc_blk *tdb, int force)
 {
+	bool collected = false;
 	int ndesc;
 	struct rtw_txsoft *ts;
 
@@ -1822,6 +1823,8 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 			break;
 		}
 
+		collected = true;
+
 		rtw_collect_txpkt(sc, tdb, ts, ndesc);
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_dirtyq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
@@ -1831,6 +1834,8 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 	if (ts == NULL)
 		tsb->tsb_tx_timer = 0;
 	rtw_reset_oactive(sc);
+
+	return collected;
 }
 
 static void
@@ -3340,7 +3345,8 @@ rtw_start(struct ifnet *ifp)
                  * seem to care, since we don't activate h/w Tx
                  * encryption.
 		 */
-		if (k != NULL) {
+		if (k != NULL &&
+		    k->wk_cipher->ic_cipher == IEEE80211_CIPHER_WEP) {
 			ctl0 |= __SHIFTIN(k->wk_keyix, RTW_TXCTL0_KEYID_MASK) &
 			    RTW_TXCTL0_KEYID_MASK;
 		}
@@ -3510,6 +3516,9 @@ rtw_watchdog(struct ifnet *ifp)
 		else if (--tsb->tsb_tx_timer == 0) {
 			if (SIMPLEQ_EMPTY(&tsb->tsb_dirtyq))
 				continue;
+			else if (rtw_collect_txring(sc, tsb,
+			    &sc->sc_txdesc_blk[pri], 0))
+				continue;
 			printf("%s: transmit timeout, priority %d\n",
 			    ifp->if_xname, pri);
 			ifp->if_oerrors++;
@@ -3526,9 +3535,9 @@ rtw_watchdog(struct ifnet *ifp)
 		 * TBD Stop/restart just the broken rings?
 		 */
 		rtw_idle(&sc->sc_regs);
-		rtw_io_enable(sc, RTW_CR_TE, 0);
+		rtw_io_enable(sc, RTW_CR_RE | RTW_CR_TE, 0);
 		rtw_txdescs_reset(sc);
-		rtw_io_enable(sc, RTW_CR_TE, 1);
+		rtw_io_enable(sc, RTW_CR_RE | RTW_CR_TE, 1);
 		rtw_start(ifp);
 	}
 	ieee80211_watchdog(&sc->sc_ic);
@@ -3761,7 +3770,7 @@ rtw_set80211props(struct ieee80211com *ic)
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_IBSS |
-	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR;
+	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR | IEEE80211_C_WEP;
 
 	nrate = 0;
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] =

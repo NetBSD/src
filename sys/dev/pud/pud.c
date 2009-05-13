@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.7 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: pud.c,v 1.7.2.1 2009/05/13 17:21:15 jym Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.7 2009/01/20 18:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.7.2.1 2009/05/13 17:21:15 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -371,7 +371,7 @@ pud_config(int fd, int flags, int fmt)
 }
 
 void
-pudattach()
+pudattach(void)
 {
 	int error;
 

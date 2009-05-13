@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.43 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.43.2.1 2009/05/13 17:20:05 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.43 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.43.2.1 2009/05/13 17:20:05 jym Exp $");
 
 #include "rnd.h"
 
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.43 2009/01/13 13:35:53 yamt Exp $");
 
 #define	EDLABELDEV(dev) (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
 
-static int     ed_mca_probe  (struct device *, struct cfdata *, void *);
-static void    ed_mca_attach (struct device *, struct device *, void *);
+static int     ed_mca_probe  (device_t, cfdata_t, void *);
+static void    ed_mca_attach (device_t, device_t, void *);
 
 CFATTACH_DECL(ed_mca, sizeof(struct ed_softc),
     ed_mca_probe, ed_mca_attach, NULL, NULL);
@@ -115,7 +115,7 @@ static struct dkdriver eddkdriver = { edmcastrategy, minphys };
  * Just check if it's possible to identify the disk.
  */
 static int
-ed_mca_probe(struct device *parent, struct cfdata *cf,
+ed_mca_probe(device_t parent, cfdata_t cf,
     void *aux)
 {
 	u_int16_t cmd_args[2];
@@ -135,9 +135,7 @@ ed_mca_probe(struct device *parent, struct cfdata *cf,
 }
 
 static void
-ed_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ed_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct ed_softc *ed = device_private(self);
 	struct edc_mca_softc *sc = device_private(parent);
@@ -197,8 +195,7 @@ ed_mca_attach(parent, self, aux)
  * transfer.  Does not wait for the transfer to complete.
  */
 void
-edmcastrategy(bp)
-	struct buf *bp;
+edmcastrategy(struct buf *bp)
 {
 	struct ed_softc *ed;
 	struct disklabel *lp;
@@ -392,9 +389,7 @@ edmcaclose(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 static void
-edgetdefaultlabel(ed, lp)
-	struct ed_softc *ed;
-	struct disklabel *lp;
+edgetdefaultlabel(struct ed_softc *ed, struct disklabel *lp)
 {
 	ATADEBUG_PRINT(("edgetdefaultlabel\n"), DEBUG_FUNCS);
 	memset(lp, 0, sizeof(struct disklabel));
@@ -429,9 +424,7 @@ edgetdefaultlabel(ed, lp)
  * Fabricate a default disk label, and try to read the correct one.
  */
 static void
-edgetdisklabel(dev, ed)
-	dev_t dev;
-	struct ed_softc *ed;
+edgetdisklabel(dev_t dev, struct ed_softc *ed)
 {
 	struct disklabel *lp = ed->sc_dk.dk_label;
 	const char *errstring;
@@ -465,12 +458,7 @@ edgetdisklabel(dev, ed)
 }
 
 int
-edmcaioctl(dev, xfer, addr, flag, l)
-	dev_t dev;
-	u_long xfer;
-	void *addr;
-	int flag;
-	struct lwp *l;
+edmcaioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
 	struct ed_softc *ed = device_lookup_private(&ed_cd, DISKUNIT(dev));
 	int error;
@@ -614,8 +602,7 @@ edmcaioctl(dev, xfer, addr, flag, l)
 }
 
 int
-edmcasize(dev)
-	dev_t dev;
+edmcasize(dev_t dev)
 {
 	struct ed_softc *wd;
 	int part, omask;
@@ -651,11 +638,7 @@ static int eddumpmulti = 1;
  * Dump core after a system crash.
  */
 int
-edmcadump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	void *va;
-	size_t size;
+edmcadump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct ed_softc *ed;	/* disk unit to do the I/O */
 	struct disklabel *lp;   /* disk's disklabel */
@@ -718,9 +701,7 @@ edmcadump(dev, blkno, va, size)
 }
 
 static int
-ed_get_params(ed, drv_flags)
-	struct ed_softc *ed;
-	int *drv_flags;
+ed_get_params(struct ed_softc *ed, int *drv_flags)
 {
 	u_int16_t cmd_args[2];
 

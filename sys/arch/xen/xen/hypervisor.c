@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.43.2.1 2009/02/09 00:03:55 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.43.2.2 2009/05/13 17:18:50 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.1 2009/02/09 00:03:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.2 2009/05/13 17:18:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,11 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
+#ifdef DOM0OPS
+	if (xendomain_is_privileged()) {
+		xenkernfs_init();
+	}
+#endif
 #ifdef XEN3
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
 	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
@@ -287,6 +292,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif
 #if NPCI > 0
 #ifdef XEN3
+#ifdef DOM0OPS
 #if NACPI > 0
 	if (acpi_present) {
 		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
@@ -313,12 +319,12 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_bus = 0;
 #if NACPI > 0 && defined(ACPI_SCANPCI)
 	if (mpacpi_active)
-		mpacpi_scan_pci(self, &hac.hac_pba, pcibusprint);
+		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
 	if (mpbios_scanned != 0)
-		mpbios_scan_pci(self, &hac.hac_pba, pcibusprint);
+		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
 #endif
 	config_found_ia(self, "pcibus", &hac.hac_pba, pcibusprint);
@@ -326,6 +332,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	if (mp_verbose)
 		acpi_pci_link_state();
 #endif
+#endif /* DOM0OPS */
 #else /* !XEN3 */
 	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
 	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
@@ -377,7 +384,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 
 #ifdef DOM0OPS
 	if (xendomain_is_privileged()) {
-		xenkernfs_init();
 		xenprivcmd_init();
 		xen_shm_init();
 #ifndef XEN3

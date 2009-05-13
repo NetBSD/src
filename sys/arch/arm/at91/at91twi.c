@@ -1,5 +1,5 @@
-/*	$Id: at91twi.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91twi.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91twi.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $	*/
+/*	$NetBSD: at91twi.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -139,18 +139,13 @@ found_ckdiv:
 }
 
 u_int
-at91twi_readreg(sc, reg)
-	struct at91twi_softc *sc;
-	int reg;
+at91twi_readreg(struct at91twi_softc *sc, int reg)
 {
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
 }
 
 void
-at91twi_writereg(sc, reg, val)
-	struct at91twi_softc *sc;
-	int reg;
-	u_int val;
+at91twi_writereg(struct at91twi_softc *sc, int reg, u_int val)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, val);
 }
@@ -217,9 +212,7 @@ out:
 }
 
 int
-at91twi_poll(sc, timo, flags)
-	struct at91twi_softc *sc;
-	int timo, flags;
+at91twi_poll(struct at91twi_softc *sc, int timo, int flags)
 {
 
 	timo = 1000000U;
@@ -281,11 +274,7 @@ at91twi_start(struct at91twi_softc *sc, int addr, void *data, int len,
 }
 
 int
-at91twi_read(sc, addr, data, len, flags)
-	struct at91twi_softc *sc;
-	int addr, len;
-	void *data;
-	int flags;
+at91twi_read(struct at91twi_softc *sc, int addr, void *data, int len, int flags)
 {
 	sc->sc_flags = I2C_READING;
 	#ifdef AT91TWI_DEBUG
@@ -295,11 +284,7 @@ at91twi_read(sc, addr, data, len, flags)
 }
 
 int
-at91twi_write(sc, addr, data, len, flags)
-	struct at91twi_softc *sc;
-	int addr, len;
-	void *data;
-	int flags;
+at91twi_write(struct at91twi_softc *sc, int addr, void *data, int len, int flags)
 {
 	sc->sc_flags = 0;
 	#ifdef AT91TWI_DEBUG

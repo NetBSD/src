@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.10 2008/11/30 18:21:33 martin Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.10.4.1 2009/05/13 17:16:39 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.10 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.10.4.1 2009/05/13 17:16:39 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -218,7 +218,7 @@ struct user *proc0paddr;
 /* Prototypes */
 
 void	consinit(void);
-u_int	cpu_get_control   __P((void));
+u_int	cpu_get_control(void);
 
 /*
  * Define the default console speed for the board.  This is generally

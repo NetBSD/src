@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.6 2009/01/29 16:00:33 nonaka Exp $	*/
+/*	$NetBSD: zssp.c,v 1.6.2.1 2009/05/13 17:18:51 jym Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.6 2009/01/29 16:00:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.6.2.1 2009/05/13 17:18:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,8 @@ int
 zssp_read_max1111(uint32_t cmd)
 {
 	struct zssp_softc *sc;
-	int voltage[2];
+	int data[3];
+	int voltage[3];	/* voltage[0]: dummy */
 	int i;
 	int s;
 
@@ -248,24 +249,14 @@ zssp_read_max1111(uint32_t cmd)
 
 	delay(1);
 
-	/* Send the command word and read a dummy word back. */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, cmd);
-	while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
-	    & SSSR_TNF) != SSSR_TNF)
-		continue;	/* poll */
-	/* XXX is this delay necessary? */
-	delay(1);
-	while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
-	    & SSSR_RNE) != SSSR_RNE)
-		continue;	/* poll */
-	(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
-
-	for (i = 0; i < 2; i++) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, 0);
+	memset(data, 0, sizeof(data));
+	data[0] = cmd;
+	for (i = 0; i < __arraycount(data); i++) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, data[i]);
 		while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
 		    & SSSR_TNF) != SSSR_TNF)
 			continue;	/* poll */
-		/* XXX again, is this delay necessary? */
+		/* XXX is this delay necessary? */
 		delay(1);
 		while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
 		    & SSSR_RNE) != SSSR_RNE)
@@ -283,14 +274,9 @@ zssp_read_max1111(uint32_t cmd)
 	splx(s);
 
 	/* XXX no idea what this means, but it's what Linux would do. */
-	if ((voltage[0] & 0xc0) != 0 || (voltage[1] & 0x3f) != 0) {
-		voltage[0] = -1;
-	} else {
-		voltage[0] = ((voltage[0] << 2) & 0xfc) |
-		    ((voltage[1] >> 6) & 0x03);
-	}
-
-	return voltage[0];
+	if ((voltage[1] & 0xc0) != 0 || (voltage[2] & 0x3f) != 0)
+		return -1;
+	return ((voltage[1] << 2) & 0xfc) | ((voltage[2] >> 6) & 0x03);
 }
 
 /* XXX - only does CS_ADS7846 */

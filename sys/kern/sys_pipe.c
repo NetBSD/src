@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.107 2009/02/06 23:04:57 enami Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.107.2.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.107 2009/02/06 23:04:57 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.107.2.1 2009/05/13 17:21:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,15 @@ static int pipe_stat(struct file *fp, struct stat *sb);
 static int pipe_ioctl(struct file *fp, u_long cmd, void *data);
 
 static const struct fileops pipeops = {
-	pipe_read, pipe_write, pipe_ioctl, fnullop_fcntl, pipe_poll,
-	pipe_stat, pipe_close, pipe_kqfilter
+	.fo_read = pipe_read,
+	.fo_write = pipe_write,
+	.fo_ioctl = pipe_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = pipe_poll,
+	.fo_stat = pipe_stat,
+	.fo_close = pipe_close,
+	.fo_kqfilter = pipe_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*
@@ -342,9 +349,8 @@ pipe_create(struct pipe **pipep, pool_cache_t cache, kmutex_t *mutex)
 	KASSERT(pipe != NULL);
 	*pipep = pipe;
 	error = 0;
-	getmicrotime(&pipe->pipe_ctime);
-	pipe->pipe_atime = pipe->pipe_ctime;
-	pipe->pipe_mtime = pipe->pipe_ctime;
+	getnanotime(&pipe->pipe_btime);
+	pipe->pipe_atime = pipe->pipe_mtime = pipe->pipe_btime;
 	pipe->pipe_lock = mutex;
 	if (cache == pipe_rd_cache) {
 		error = pipespace(pipe, PIPE_SIZE);
@@ -578,7 +584,7 @@ again:
 	}
 
 	if (error == 0)
-		getmicrotime(&rpipe->pipe_atime);
+		getnanotime(&rpipe->pipe_atime);
 	pipeunlock(rpipe);
 
 unlocked_error:
@@ -1025,7 +1031,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		error = 0;
 
 	if (error == 0)
-		getmicrotime(&wpipe->pipe_mtime);
+		getnanotime(&wpipe->pipe_mtime);
 
 	/*
 	 * We have something to offer, wake up select/poll.
@@ -1179,16 +1185,17 @@ pipe_stat(struct file *fp, struct stat *ub)
 {
 	struct pipe *pipe = fp->f_data;
 
-	memset((void *)ub, 0, sizeof(*ub));
+	mutex_enter(pipe->pipe_lock);
+	memset(ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	if (ub->st_blksize == 0 && pipe->pipe_peer)
 		ub->st_blksize = pipe->pipe_peer->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
+	ub->st_atimespec = pipe->pipe_atime;
+	ub->st_mtimespec = pipe->pipe_mtime;
+	ub->st_ctimespec = ub->st_birthtimespec = pipe->pipe_btime;
 	ub->st_uid = kauth_cred_geteuid(fp->f_cred);
 	ub->st_gid = kauth_cred_getegid(fp->f_cred);
 
@@ -1196,7 +1203,8 @@ pipe_stat(struct file *fp, struct stat *ub)
 	 * Left as 0: st_dev, st_ino, st_nlink, st_rdev, st_flags, st_gen.
 	 * XXX (st_dev, st_ino) should be unique.
 	 */
-	return (0);
+	mutex_exit(pipe->pipe_lock);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -1280,6 +1288,13 @@ pipeclose(struct file *fp, struct pipe *pipe)
 		cv_broadcast(&ppipe->pipe_rcv);
 		ppipe->pipe_peer = NULL;
 	}
+
+	/*
+	 * Any knote objects still left in the list are
+	 * the one attached by peer.  Since no one will
+	 * traverse this list, we just clear it.
+	 */
+	SLIST_INIT(&pipe->pipe_sel.sel_klist);
 
 	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
 	mutex_exit(lock);

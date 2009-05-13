@@ -1,4 +1,4 @@
-/*	$NetBSD: moddi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: moddi3.c,v 1.1.36.1 2009/05/13 17:23:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)moddi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: moddi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: moddi3.c,v 1.1.36.1 2009/05/13 17:23:12 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,7 @@ __RCSID("$NetBSD: moddi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
  * XXX	we assume a % b < 0 iff a < 0, but this is actually machine-dependent.
  */
 quad_t
-__moddi3(a, b)
-	quad_t a, b;
+__moddi3(quad_t a, quad_t b)
 {
 	u_quad_t ua, ub, ur;
 	int neg = 0;

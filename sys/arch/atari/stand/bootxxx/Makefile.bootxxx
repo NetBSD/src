@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxxx,v 1.5 2009/01/13 13:44:01 tsutsui Exp $
+#	$NetBSD: Makefile.bootxxx,v 1.5.2.1 2009/05/13 17:16:31 jym Exp $
 
 NOMAN=	# defined
 
@@ -25,7 +25,8 @@ S_LIBTOS=${S}/arch/atari/stand/tostools/libtos
 
 S_MACHSAOBJ!=	cd ${S_MACHSA} && ${PRINTOBJDIR}
 
-LIBSA=${S_MACHSAOBJ}/libsa.a
+LIBSA=${S_MACHSAOBJ}/lib/sa/libsa.a
+LIBKERN=${S_MACHSAOBJ}/lib/kern/libkern.a
 
 .include "../../Makefile.booters"
 .include "../../xxboot/${BTYPE}_LOADADDR"
@@ -44,7 +45,7 @@ LINKFLAGS=	-static -N -Ttext ${LOADADDR3}
 #
 SRCS=	start.S bootxxx.c aout.c bsdstart.s elf.c filesystem.c sysinfo.c
 
-LIBS=	${LIBSA}
+LIBS=	${LIBSA} ${LIBKERN}
 
 beforeinstall:
 	${INSTALL_DIR} ${DESTDIR}${BINDIR}

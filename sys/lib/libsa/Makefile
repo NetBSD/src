@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.67.8.1 2009/05/13 17:22:16 jym Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -13,6 +13,10 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 		-DCOMPAT_UFS ${DEBUGCPPFLAGS}
 
 #COPTS+= -ansi -pedantic -Wall
+
+.if defined(SA_EXTRADIR)
+.-include "${SA_EXTRADIR}/Makefile.inc"
+.endif
 
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/string
 

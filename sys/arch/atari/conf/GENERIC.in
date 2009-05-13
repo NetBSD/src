@@ -1,8 +1,11 @@
 #
-#	$NetBSD: GENERIC.in,v 1.79 2009/01/24 05:06:05 mrg Exp $
+#	$NetBSD: GENERIC.in,v 1.79.2.1 2009/05/13 17:16:22 jym Exp $
 #
 # Generic atari
 #
+# Note: We have size targets for gzipped kernels:
+# - ATARITT and FALCON - 1.44M floppy
+# - SMALL030 - 720K (or worst case 800K) floppy
 
 #if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
 include "arch/atari/conf/std.atari"
@@ -11,6 +14,10 @@ include "arch/atari/conf/std.hades"
 #elif defined (MILAN_KERNEL)
 include "arch/atari/conf/std.milan"
 #endif /* TT030_KERNEL / FALCON_KERNEL / HADES_KERNEL / MILAN_KERNEL */
+
+#if defined(SMALL030_KERNEL)
+makeoptions    COPTS="-Os"
+#endif
 
 #if !defined(SMALL030_KERNEL)
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
@@ -70,15 +77,13 @@ options 	INET6		# IPV6
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #if !defined(NO_PHYS_NETWORK)
-options 	NETATALK	# AppleTalk networking protocols
+#options 	NETATALK	# AppleTalk networking protocols
 #endif /* NO_PHYS_NETWORK */
-#endif /* !SMALL030_KERNEL */
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
-#if !defined(SMALL030_KERNEL)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
@@ -120,14 +125,14 @@ file-system 	UNION		# union file system
 file-system 	UMAPFS		# null file system (with uid & gid remapping)
 file-system 	PORTAL		# portal file system
 file-system 	EXT2FS		# second extended file system (linux)
-file-system 	LFS		# log-structured file system
+#file-system 	LFS		# log-structured file system
 file-system	PTYFS		# /dev/pts/N support
 #endif /* !SMALL030_KERNEL */
 
 # File system options
 options 	WAPBL		# File system journaling support - Experimental
 #if !defined(SMALL030_KERNEL)
-options 	QUOTA		# Disk quotas for local disks
+#options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
@@ -148,13 +153,15 @@ options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #
 # Compatibility options for various existing systems
 #
-options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
+#if !defined(SMALL030_KERNEL)
+options 	COMPAT_43	# 4.3 BSD compatible system calls
 options 	COMPAT_10	# Compatibility with NetBSD 1.0
 options 	COMPAT_11	# Compatibility with NetBSD 1.1
 options 	COMPAT_12	# Compatibility with NetBSD 1.2
 options 	COMPAT_13	# Compatibility with NetBSD 1.3
 options 	COMPAT_14	# Compatibility with NetBSD 1.4
 options 	COMPAT_15	# Compatibility with NetBSD 1.5
+#endif /* !SMALL030_KERNEL */
 options 	COMPAT_16	# Compatibility with NetBSD 1.6
 options 	COMPAT_20	# Compatibility with NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -201,7 +208,7 @@ options 	SCSIVERBOSE		# human readable SCSI error messages
 #endif /* !SMALL030_KERNEL */
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
-options 	PCIVERBOSE		# verbose PCI device autoconfig messages
+#options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 #endif
 
@@ -242,17 +249,19 @@ options 	TRY_SCSI_LINKED_COMMANDS=0x7f
 config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
+#if !defined(SMALL030_KERNEL)
 pseudo-device	ppp			# ppp
+#endif /* !SMALL030_KERNEL */
 #if !defined(NO_PHYS_NETWORK)
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #endif /* NO_PHYS_NETWORK */
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
-pseudo-device	vnd			# 3 pseudo disks (see vnconfig)
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	md		3	# Boot memory disk
 
 #if !defined(SMALL030_KERNEL)
+pseudo-device	vnd			# 3 pseudo disks (see vnconfig)
 pseudo-device	bpfilter		# berkeley packet filters
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	tun			# network tunnel
@@ -262,14 +271,14 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #if !defined(NO_PHYS_NETWORK)
-pseudo-device	vlan			# IEEE 802.1q encapsulation
-pseudo-device	bridge			# simple inter-network bridging
-pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
 #endif /* NO_PHYS_NETWORK */
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	cgd		4	# cryptographic disk driver
-pseudo-device	raid		8	# RAIDframe disk driver
-options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	raid		8	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
 # options	RF_INCLUDE_RAID5_RS=1
@@ -323,7 +332,6 @@ pseudo-device	mouse	1	# mouse
 # The following sections describe various hardware options.
 #
 ncrscsi0	at mainbus0	# NCR5380 SCSI driver
-scsibus0	at ncrscsi0	# SCSI bus
 zs0		at mainbus0	# Serial support through 8530
 grfbus0 	at mainbus0	# bitmapped display's
 grfcc0		at grfbus0	# graphics driver
@@ -360,10 +368,11 @@ cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
 #endif /* FALCON_KERNEL */
 
 # SCSI devices
+scsibus* at scsi?			# SCSI bus
 sd* 	at scsibus? target ? lun ?	# SCSI disk drives
-st* 	at scsibus? target ? lun ?	# SCSI tape drives
 cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #if !defined (SMALL030_KERNEL)
+st* 	at scsibus? target ? lun ?	# SCSI tape drives
 ch* 	at scsibus? target ? lun ?	# SCSI autochangers
 ss* 	at scsibus? target ? lun ?	# SCSI scanners
 se* 	at scsibus? target ? lun ?	# SCSI ethernet

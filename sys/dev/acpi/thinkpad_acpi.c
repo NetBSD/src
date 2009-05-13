@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.17 2008/11/01 19:22:25 hans Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.17.4.1 2009/05/13 17:19:10 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.17 2008/11/01 19:22:25 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.17.4.1 2009/05/13 17:19:10 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,7 +107,7 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_DISPLAY_ALL \
 	(THINKPAD_DISPLAY_LCD | THINKPAD_DISPLAY_CRT | THINKPAD_DISPLAY_DVI)
 
-static int	thinkpad_match(device_t, struct cfdata *, void *);
+static int	thinkpad_match(device_t, cfdata_t, void *);
 static void	thinkpad_attach(device_t, device_t, void *);
 
 static ACPI_STATUS thinkpad_mask_init(thinkpad_softc_t *, uint32_t);
@@ -136,7 +136,7 @@ static const char * const thinkpad_ids[] = {
 };
 
 static int
-thinkpad_match(device_t parent, struct cfdata *match, void *opaque)
+thinkpad_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct acpi_attach_args *aa = (struct acpi_attach_args *)opaque;
 	ACPI_INTEGER ver;
@@ -182,7 +182,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	if (ACPI_FAILURE(rv))
 		sc->sc_cmoshdl_valid = false;
 	else {
-		aprint_verbose_dev(self, "using CMOS at \\UCMS\n");
+		aprint_debug_dev(self, "using CMOS at \\UCMS\n");
 		sc->sc_cmoshdl_valid = true;
 	}
 
@@ -194,7 +194,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 			break;
 		}
 	if (sc->sc_ecdev)
-		aprint_verbose_dev(self, "using EC at %s\n",
+		aprint_debug_dev(self, "using EC at %s\n",
 		    device_xname(sc->sc_ecdev));
 
 	/* Get the supported event mask */

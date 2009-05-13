@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.20 2008/04/05 21:31:23 cegger Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.20.18.1 2009/05/13 17:21:09 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.20 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.20.18.1 2009/05/13 17:21:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,9 @@ struct tr_pcmcia_softc {
 	struct	pcmcia_function *sc_pf;
 };
 
-static int	tr_pcmcia_match(struct device *, struct cfdata *, void *);
-static void	tr_pcmcia_attach(struct device *, struct device *, void *);
-static int	tr_pcmcia_detach(struct device *, int);
+static int	tr_pcmcia_match(device_t, cfdata_t, void *);
+static void	tr_pcmcia_attach(device_t, device_t, void *);
+static int	tr_pcmcia_detach(device_t, int);
 static int	tr_pcmcia_enable(struct tr_softc *);
 static int	tr_pcmcia_mediachange(struct tr_softc *);
 static void	tr_pcmcia_mediastatus(struct tr_softc *, struct ifmediareq *);
@@ -106,7 +106,7 @@ CFATTACH_DECL(tr_pcmcia, sizeof(struct tr_pcmcia_softc),
     tr_pcmcia_match, tr_pcmcia_attach, tr_pcmcia_detach, tr_activate);
 
 static int
-tr_pcmcia_match(struct device *parent, struct cfdata *match,
+tr_pcmcia_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -121,7 +121,7 @@ tr_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-tr_pcmcia_attach(struct device *parent, struct device *self, void *aux)
+tr_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct tr_pcmcia_softc *psc = (void *)self;
 	struct tr_softc *sc = &psc->sc_tr;
@@ -211,8 +211,7 @@ fail1:
 }
 
 static int
-tr_pcmcia_enable(sc)
-	struct tr_softc *sc;
+tr_pcmcia_enable(struct tr_softc *sc)
 {
 	struct tr_pcmcia_softc *psc = (struct tr_pcmcia_softc *) sc;
 	int ret;
@@ -238,8 +237,7 @@ tr_pcmcia_enable(sc)
 }
 
 static void
-tr_pcmcia_disable(sc)
-	struct tr_softc *sc;
+tr_pcmcia_disable(struct tr_softc *sc)
 {
 	struct tr_pcmcia_softc *psc = (struct tr_pcmcia_softc *) sc;
 
@@ -248,8 +246,7 @@ tr_pcmcia_disable(sc)
 }
 
 static int
-tr_pcmcia_mediachange(sc)
-	struct tr_softc *sc;
+tr_pcmcia_mediachange(struct tr_softc *sc)
 {
 	int setspeed = 0;
 
@@ -287,9 +284,7 @@ tr_pcmcia_mediachange(sc)
  * XXX Copy of tropic_mediastatus()
  */
 static void
-tr_pcmcia_mediastatus(sc, ifmr)
-	struct tr_softc *sc;
-	struct ifmediareq *ifmr;
+tr_pcmcia_mediastatus(struct tr_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifmedia	*ifm = &sc->sc_media;
 
@@ -297,9 +292,7 @@ tr_pcmcia_mediastatus(sc, ifmr)
 }
 
 int
-tr_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+tr_pcmcia_detach(device_t self, int flags)
 {
 	struct tr_pcmcia_softc *psc = (struct tr_pcmcia_softc *)self;
 	int rv;
@@ -319,8 +312,7 @@ tr_pcmcia_detach(self, flags)
 }
 
 static void
-tr_pcmcia_setup(sc)
-	struct tr_softc *sc;
+tr_pcmcia_setup(struct tr_softc *sc)
 {
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_aesxcbcmac.c,v 1.5 2008/12/19 18:49:39 cegger Exp $	*/
+/*	$NetBSD: ah_aesxcbcmac.c,v 1.5.2.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: ah_aesxcbcmac.c,v 1.7 2004/06/02 05:53:14 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_aesxcbcmac.c,v 1.5 2008/12/19 18:49:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_aesxcbcmac.c,v 1.5.2.1 2009/05/13 17:22:28 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,12 +127,12 @@ ah_aes_xcbc_mac_loop(struct ah_algorithm_state *state, u_int8_t *addr,
 		ctx->buflen = 0;
 	}
 	if (ctx->buflen + len < sizeof(ctx->buf)) {
-		bcopy(addr, ctx->buf + ctx->buflen, len);
+		memcpy(ctx->buf + ctx->buflen, addr, len);
 		ctx->buflen += len;
 		return;
 	}
 	if (ctx->buflen && ctx->buflen + len > sizeof(ctx->buf)) {
-		bcopy(addr, ctx->buf + ctx->buflen,
+		memcpy(ctx->buf + ctx->buflen, addr,
 		    sizeof(ctx->buf) - ctx->buflen);
 		for (i = 0; i < sizeof(ctx->e); i++)
 			ctx->buf[i] ^= ctx->e[i];
@@ -142,14 +142,14 @@ ah_aes_xcbc_mac_loop(struct ah_algorithm_state *state, u_int8_t *addr,
 	}
 	/* due to the special processing for M[n], "=" case is not included */
 	while (addr + AES_BLOCKSIZE < ep) {
-		bcopy(addr, buf, AES_BLOCKSIZE);
+		memcpy(buf, addr, AES_BLOCKSIZE);
 		for (i = 0; i < sizeof(buf); i++)
 			buf[i] ^= ctx->e[i];
 		rijndaelEncrypt(ctx->r_k1s, ctx->r_nr, buf, ctx->e);
 		addr += AES_BLOCKSIZE;
 	}
 	if (addr < ep) {
-		bcopy(addr, ctx->buf + ctx->buflen, ep - addr);
+		memcpy(ctx->buf + ctx->buflen, addr, ep - addr);
 		ctx->buflen += ep - addr;
 	}
 }
@@ -180,7 +180,7 @@ ah_aes_xcbc_mac_result(struct ah_algorithm_state *state, u_int8_t *addr,
 		rijndaelEncrypt(ctx->r_k1s, ctx->r_nr, ctx->buf, digest);
 	}
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadkmap.c,v 1.4 2006/08/04 01:51:31 mhitch Exp $	*/
+/*	$NetBSD: loadkmap.c,v 1.4.76.1 2009/05/13 17:16:32 jym Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,13 +9,11 @@
 #include <stdlib.h>
 
 
-int load_kmap __P((const char *, int));
+int load_kmap(const char *, int);
 int dump_kmap(); 
 
 int
-main(argc, argv)
-     int argc;
-     char *argv[];
+main(int argc, char *argv[])
 {
 	int	set_sysmap = 0;
 	char	*mapfile;
@@ -42,9 +40,7 @@ main(argc, argv)
 
 
 int
-load_kmap(file, set_sysmap)
-const char	*file;
-int		set_sysmap;
+load_kmap(const char *file, int set_sysmap)
 {
 	int	fd;
 	char	buf[sizeof (struct kbdmap)];
@@ -69,7 +65,7 @@ int		set_sysmap;
 }
 
 int
-dump_kmap()
+dump_kmap(void)
 {
 	char buf[sizeof (struct kbdmap)];
 

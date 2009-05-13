@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.14 2008/07/04 11:59:45 bsh Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.14.10.1 2009/05/13 17:16:18 jym Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.14 2008/07/04 11:59:45 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.14.10.1 2009/05/13 17:16:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ statintr(void *arg)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	struct s3c2800_softc *sc = (struct s3c2800_softc *)s3c2xx0_softc;
 	long tc;

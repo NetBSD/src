@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.4 2009/02/08 16:18:09 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.4.2.1 2009/05/13 17:22:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.4 2009/02/08 16:18:09 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.4.2.1 2009/05/13 17:22:58 jym Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -93,7 +93,7 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
 }
 
 void
-rumpuser_thread_exit()
+rumpuser_thread_exit(void)
 {
 
 }
@@ -161,6 +161,7 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
 
 	if (write) {
 		rw->v++;
+		assert(rw->v == 1);
 	} else {
 		assert(rw->v <= 0);
 		rw->v--;
@@ -281,7 +282,7 @@ rumpuser_set_curlwp(struct lwp *l)
 }
 
 struct lwp *
-rumpuser_get_curlwp()
+rumpuser_get_curlwp(void)
 {
 
 	return curlwp;

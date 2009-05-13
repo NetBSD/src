@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 2008/12/19 18:49:38 cegger Exp $	*/
+/*	$NetBSD: mem.c,v 1.12.2.1 2009/05/13 17:16:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.12 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.12.2.1 2009/05/13 17:16:36 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vm_offset_t o, v;
 	int c;
@@ -226,10 +223,7 @@ unlock:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this

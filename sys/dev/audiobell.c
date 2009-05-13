@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.6 2008/12/17 20:51:34 cegger Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.6.2.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.6 2008/12/17 20:51:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.6.2.1 2009/05/13 17:19:05 jym Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -136,7 +136,7 @@ audiobell_synthesize(uint8_t *buf, u_int pitch, u_int period, u_int volume)
 void
 audiobell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
 {
-	struct device *audio = arg;
+	device_t audio = arg;
 	uint8_t *buf;
 	struct uio auio;
 	struct iovec aiov;

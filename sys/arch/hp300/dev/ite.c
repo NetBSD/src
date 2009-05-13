@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.82 2008/06/13 09:41:15 cegger Exp $	*/
+/*	$NetBSD: ite.c,v 1.82.10.1 2009/05/13 17:17:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2008/06/13 09:41:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.10.1 2009/05/13 17:17:42 jym Exp $");
 
 #include "hil.h"
 
@@ -336,7 +336,7 @@ iteinit(struct ite_data *ip)
 
 	ip->attribute = 0;
 	if (ip->attrbuf == NULL)
-		ip->attrbuf = (u_char *)malloc(ip->rows * ip->cols,
+		ip->attrbuf = malloc(ip->rows * ip->cols,
 		    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	ip->imode = 0;
@@ -429,7 +429,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 static int
 iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
+	struct ite_softc *sc = device_lookup_private(&ite_cd, ITEUNIT(dev));
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 
@@ -439,7 +439,7 @@ iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 #if 0
 	tty_detach(tp);
 	ttyfree(tp);
-	ip->tty = (struct tty *)0;
+	ip->tty = NULL;
 #endif
 	return 0;
 }
@@ -447,7 +447,7 @@ iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 static int
 iteread(dev_t dev, struct uio *uio, int flag)
 {
-	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
+	struct ite_softc *sc = device_lookup_private(&ite_cd, ITEUNIT(dev));
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
@@ -456,7 +456,7 @@ iteread(dev_t dev, struct uio *uio, int flag)
 int
 itewrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
+	struct ite_softc *sc = device_lookup_private(&ite_cd, ITEUNIT(dev));
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
@@ -465,7 +465,7 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 int
 itepoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
+	struct ite_softc *sc = device_lookup_private(&ite_cd, ITEUNIT(dev));
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -474,7 +474,7 @@ itepoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 itetty(dev_t dev)
 {
-	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
+	struct ite_softc *sc = device_lookup_private(&ite_cd, ITEUNIT(dev));
 
 	return sc->sc_data->tty;
 }
@@ -482,7 +482,7 @@ itetty(dev_t dev)
 int
 iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
+	struct ite_softc *sc = device_lookup_private(&ite_cd, ITEUNIT(dev));
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 	int error;
@@ -501,7 +501,7 @@ itestart(struct tty *tp)
 	struct ite_softc *sc;
 	struct ite_data *ip;
 
-	sc = device_lookup_private(&ite_cd,ITEUNIT(tp->t_dev));
+	sc = device_lookup_private(&ite_cd, ITEUNIT(tp->t_dev));
 	ip = sc->sc_data;
 
 	s = splkbd();
@@ -884,6 +884,7 @@ ignore:
 static void
 itecheckwrap(struct ite_data *ip, struct itesw *sp)
 {
+
 	if (++ip->curx == ip->cols) {
 		ip->curx = 0;
 		clr_attr(ip, ATTR_INV);
@@ -901,11 +902,12 @@ itecheckwrap(struct ite_data *ip, struct itesw *sp)
 static void
 ite_dchar(struct ite_data *ip, struct itesw *sp)
 {
+
 	if (ip->curx < ip->cols - 1) {
 		ite_erasecursor(ip, sp);
 		(*sp->ite_scroll)(ip, ip->cury, ip->curx + 1, 1, SCROLL_LEFT);
 		attrmov(ip, ip->cury, ip->curx + 1, ip->cury, ip->curx,
-			1, ip->cols - ip->curx - 1);
+		    1, ip->cols - ip->curx - 1);
 	}
 	attrclr(ip, ip->cury, ip->cols - 1, 1, 1);
 	(*sp->ite_putc)(ip, ' ', ip->cury, ip->cols - 1, ATTR_NOR);
@@ -915,11 +917,12 @@ ite_dchar(struct ite_data *ip, struct itesw *sp)
 static void
 ite_ichar(struct ite_data *ip, struct itesw *sp)
 {
+
 	if (ip->curx < ip->cols - 1) {
 		ite_erasecursor(ip, sp);
 		(*sp->ite_scroll)(ip, ip->cury, ip->curx, 1, SCROLL_RIGHT);
 		attrmov(ip, ip->cury, ip->curx, ip->cury, ip->curx + 1,
-			1, ip->cols - ip->curx - 1);
+		    1, ip->cols - ip->curx - 1);
 	}
 	attrclr(ip, ip->cury, ip->curx, 1, 1);
 	(*sp->ite_putc)(ip, ' ', ip->cury, ip->curx, ATTR_NOR);
@@ -929,11 +932,12 @@ ite_ichar(struct ite_data *ip, struct itesw *sp)
 static void
 ite_dline(struct ite_data *ip, struct itesw *sp)
 {
+
 	if (ip->cury < ip->rows - 1) {
 		ite_erasecursor(ip, sp);
 		(*sp->ite_scroll)(ip, ip->cury + 1, 0, 1, SCROLL_UP);
 		attrmov(ip, ip->cury + 1, 0, ip->cury, 0,
-			ip->rows - ip->cury - 1, ip->cols);
+		    ip->rows - ip->cury - 1, ip->cols);
 	}
 	ite_clrtoeol(ip, sp, ip->rows - 1, 0);
 }
@@ -941,11 +945,12 @@ ite_dline(struct ite_data *ip, struct itesw *sp)
 static void
 ite_iline(struct ite_data *ip, struct itesw *sp)
 {
+
 	if (ip->cury < ip->rows - 1) {
 		ite_erasecursor(ip, sp);
 		(*sp->ite_scroll)(ip, ip->cury, 0, 1, SCROLL_DOWN);
 		attrmov(ip, ip->cury, 0, ip->cury + 1, 0,
-			ip->rows - ip->cury - 1, ip->cols);
+		    ip->rows - ip->cury - 1, ip->cols);
 	}
 	ite_clrtoeol(ip, sp, ip->cury, 0);
 }
@@ -953,6 +958,7 @@ ite_iline(struct ite_data *ip, struct itesw *sp)
 static void
 ite_clrtoeol(struct ite_data *ip, struct itesw *sp, int y, int x)
 {
+
 	(*sp->ite_clear)(ip, y, x, 1, ip->cols - x);
 	attrclr(ip, y, x, 1, ip->cols - x);
 	ite_drawcursor(ip, sp);
@@ -961,6 +967,7 @@ ite_clrtoeol(struct ite_data *ip, struct itesw *sp, int y, int x)
 void
 ite_clrtoeos(struct ite_data *ip, struct itesw *sp)
 {
+
 	(*sp->ite_clear)(ip, ip->cury, 0, ip->rows - ip->cury, ip->cols);
 	attrclr(ip, ip->cury, 0, ip->rows - ip->cury, ip->cols);
 	ite_drawcursor(ip, sp);

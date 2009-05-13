@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.5 2007/03/04 05:59:38 christos Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.5.60.1 2009/05/13 17:16:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -53,6 +53,7 @@
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
+#include <arm/xscale/pxa2x0cpu.h>
 
 #include <arm/xscale/pxa2x0_dmac.h>
 
@@ -105,6 +106,7 @@ struct dmac_xfer_state {
 #define	DMAC_NO_CHANNEL	(~0)
 	u_int32_t dxs_dcmd;
 	struct dmac_desc_segs dxs_segs[2];
+	bool dxs_misaligned_flag;
 };
 
 
@@ -759,7 +761,8 @@ pxa2x0_dmac_free_xfer(struct dmac_xfer *dx)
 }
 
 static inline int
-dmac_validate_desc(struct dmac_xfer_desc *xd, size_t *psize)
+dmac_validate_desc(struct dmac_xfer_desc *xd, size_t *psize,
+    bool *misaligned_flag)
 {
 	size_t size;
 	int i;
@@ -773,8 +776,11 @@ dmac_validate_desc(struct dmac_xfer_desc *xd, size_t *psize)
 		return (EINVAL);
 
 	for (i = 0, size = 0; i < xd->xd_nsegs; i++) {
-		if (xd->xd_dma_segs[i].ds_addr & 0x7)
-			return (EFAULT);
+		if (xd->xd_dma_segs[i].ds_addr & 0x7) {
+			if (!CPU_IS_PXA270)
+				return (EFAULT);
+			*misaligned_flag = true;
+		}
 		size += xd->xd_dma_segs[i].ds_len;
 	}
 
@@ -784,11 +790,11 @@ dmac_validate_desc(struct dmac_xfer_desc *xd, size_t *psize)
 
 static inline int
 dmac_init_desc(struct dmac_desc_segs *ds, struct dmac_xfer_desc *xd,
-    size_t *psize)
+    size_t *psize, bool *misaligned_flag)
 {
 	int err;
 
-	if ((err = dmac_validate_desc(xd, psize)))
+	if ((err = dmac_validate_desc(xd, psize, misaligned_flag)))
 		return (err);
 
 	ds->ds_curseg = xd->xd_dma_segs;
@@ -813,14 +819,18 @@ pxa2x0_dmac_start_xfer(struct dmac_xfer *dx)
 	src = &dxs->dxs_desc[DMAC_DESC_SRC];
 	dst = &dxs->dxs_desc[DMAC_DESC_DST];
 
-	if ((err = dmac_init_desc(&dxs->dxs_segs[DMAC_DESC_SRC], src, &size)))
+	dxs->dxs_misaligned_flag = false;
+
+	if ((err = dmac_init_desc(&dxs->dxs_segs[DMAC_DESC_SRC], src, &size,
+	    &dxs->dxs_misaligned_flag)))
 		return (err);
 	if (src->xd_addr_hold == false &&
 	    dxs->dxs_loop_notify != DMAC_DONT_LOOP &&
 	    (size % dxs->dxs_loop_notify) != 0)
 		return (EINVAL);
 
-	if ((err = dmac_init_desc(&dxs->dxs_segs[DMAC_DESC_DST], dst, &size)))
+	if ((err = dmac_init_desc(&dxs->dxs_segs[DMAC_DESC_DST], dst, &size,
+	    &dxs->dxs_misaligned_flag)))
 		return (err);
 	if (dst->xd_addr_hold == false &&
 	    dxs->dxs_loop_notify != DMAC_DONT_LOOP &&
@@ -976,6 +986,17 @@ dmac_start(struct pxadmac_softc *sc, dmac_priority_t priority)
 		 */
 		KDASSERT(sc->sc_active[channel] == NULL);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue[priority], dxs_link);
+
+		/* set DMA alignment register */
+		if (CPU_IS_PXA270) {
+			uint32_t dalgn;
+
+			dalgn = dmac_reg_read(sc, DMAC_DALGN);
+			dalgn &= ~(1U << channel);
+			if (dxs->dxs_misaligned_flag)
+				dalgn |= (1U << channel);
+			dmac_reg_write(sc, DMAC_DALGN, dalgn);
+		}
 
 		dxs->dxs_channel = channel;
 		sc->sc_active[channel] = dxs;

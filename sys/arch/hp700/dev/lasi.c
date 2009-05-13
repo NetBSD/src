@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.11 2008/03/29 15:59:26 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.11.18.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -33,11 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11 2008/03/29 15:59:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.18.1 2009/05/13 17:17:43 jym Exp $");
 
 #undef LASIDEBUG
-
-#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11 2008/03/29 15:59:26 skrll Exp $");
 #include <hp700/dev/cpudevs.h>
 
 #include <hp700/gsc/gscbusvar.h>
-#include <hp700/hp700/power.h>
 
 struct lasi_hwr {
 	u_int32_t lasi_power;
+#define	LASI_BLINK	0x01
+#define	LASI_OFF	0x02
 	u_int32_t lasi_error;
 	u_int32_t lasi_version;
 	u_int32_t lasi_reset;
@@ -74,7 +73,7 @@ struct lasi_trs {
 #define	LASI_REG_MISC	0x10c000
 
 struct lasi_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	
 	struct hp700_int_reg sc_int_reg;
 
@@ -82,11 +81,15 @@ struct lasi_softc {
 	struct lasi_trs volatile *sc_trs;
 };
 
-int	lasimatch(struct device *, struct cfdata *, void *);
-void	lasiattach(struct device *, struct device *, void *);
+int	lasimatch(device_t, cfdata_t, void *);
+void	lasiattach(device_t, device_t, void *);
 
-CFATTACH_DECL(lasi, sizeof(struct lasi_softc),
+CFATTACH_DECL_NEW(lasi, sizeof(struct lasi_softc),
     lasimatch, lasiattach, NULL, NULL);
+
+extern struct cfdriver lasi_cd;
+
+void	lasi_cold_hook(int);
 
 /*
  * Before a module is matched, this fixes up its gsc_attach_args.
@@ -128,7 +131,7 @@ lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
 }
 
 int
-lasimatch(struct device *parent, struct cfdata *cf, void *aux)
+lasimatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -150,14 +153,15 @@ lasimatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-lasiattach(struct device *parent, struct device *self, void *aux)
+lasiattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct lasi_softc *sc = (struct lasi_softc *)self;
+	struct lasi_softc *sc = device_private(self);
 	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
 	int s, in;
 
+	sc->sc_dev = self;
 	/*
 	 * Map the LASI interrupt registers.
 	 */
@@ -176,7 +180,7 @@ lasiattach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX should we reset the chip here? */
 
-	printf (": rev %d.%d\n", (sc->sc_hw->lasi_version & 0xf0) >> 4,
+	aprint_normal(": rev %d.%d\n", (sc->sc_hw->lasi_version & 0xf0) >> 4,
 		sc->sc_hw->lasi_version & 0xf);
 
 	/* interrupts guts */
@@ -193,17 +197,47 @@ lasiattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
 	sc->sc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
 
-#ifdef POWER_SWITCH
-	/* Tell power switch handling code about the Power Control Register */
-	lasi_pwr_sw_reg = &sc->sc_hw->lasi_power;
-#endif /* POWER_SWITCH */
-
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
+	if (strcmp(parent->dv_xname, "mainbus0") == 0) {
+		ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
+		ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
+		ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];
+		ga.ga_dp.dp_bc[3] = ga.ga_dp.dp_bc[4];
+		ga.ga_dp.dp_bc[4] = ga.ga_dp.dp_bc[5];
+		ga.ga_dp.dp_bc[5] = ga.ga_dp.dp_mod;
+		ga.ga_dp.dp_mod = 0;
+	}
+
 	ga.ga_name = "gsc";
 	ga.ga_int_reg = &sc->sc_int_reg;
 	ga.ga_fix_args = lasi_fix_args;
 	ga.ga_fix_args_cookie = sc;
 	ga.ga_scsi_target = 7; /* XXX */
 	config_found(self, &ga, gscprint);
+
+	/* could be already set by power(4) */
+	if (!cold_hook)
+		cold_hook = lasi_cold_hook;
+}
+
+void
+lasi_cold_hook(int on)
+{
+	struct lasi_softc *sc = device_private(lasi_cd.cd_devs[0]);
+
+	if (!sc)
+		return;
+
+	switch (on) {
+	case HPPA_COLD_COLD:
+		sc->sc_hw->lasi_power = LASI_BLINK;
+		break;
+	case HPPA_COLD_HOT:
+		sc->sc_hw->lasi_power = 0;
+		break;
+	case HPPA_COLD_OFF:
+		sc->sc_hw->lasi_power = LASI_OFF;
+		break;
+	}
 }

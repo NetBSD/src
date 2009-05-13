@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.58 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: uda.c,v 1.58.18.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.58 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.58.18.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -116,10 +116,10 @@ struct	uda_softc {
 
 static	int udamatch(device_t, cfdata_t, void *);
 static	void udaattach(device_t, device_t, void *);
-static	void udareset(device_t );
+static	void udareset(device_t);
 static	void udaintr(void *);
 static	int udaready(struct uba_unit *);
-static	void udactlrdone(device_t );
+static	void udactlrdone(device_t);
 static	int udaprint(void *, const char *);
 static	void udasaerror(device_t, int);
 static	void udago(device_t, struct mscp_xi *);
@@ -239,7 +239,7 @@ udaattach(device_t parent, device_t self, void *aux)
 	if ((error = ubmemalloc(sc->sc_uh, &sc->sc_ui, UBA_CANTWAIT)))
 		return printf("ubmemalloc failed: %d\n", error);
 
-	bzero(sc->sc_ui.ui_vaddr, sizeof (struct mscp_pack));
+	memset(sc->sc_ui.ui_vaddr, 0, sizeof (struct mscp_pack));
 
 	/*
 	 * The only thing that differ UDA's and Tape ctlr's is

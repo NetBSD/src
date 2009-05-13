@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.25 2008/02/27 18:26:15 xtraeme Exp $ */
+/* $NetBSD: cpu.h,v 1.25.18.1 2009/05/13 17:17:59 jym Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -179,18 +179,18 @@ extern	char *intiobase, *intiolimit;		/* XXX */
 extern	u_int intiobase_phys, intiotop_phys;	/* XXX */
 
 /* machdep.c functions */
-void	dumpconf __P((void));
-void	dumpsys __P((void));
+void	dumpconf(void);
+void	dumpsys(void);
 
 /* locore.s functions */
 struct fpframe;
-int	suline __P((void *, void *));
-void	loadustp __P((int));
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
+int	suline(void *, void *);
+void	loadustp(int);
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
 
 /* machdep.c functions */
-int	badaddr __P((void *, int));
+int	badaddr(void *, int);
 
 #endif
 

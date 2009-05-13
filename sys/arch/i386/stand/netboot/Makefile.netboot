@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.netboot,v 1.7 2008/10/20 20:00:57 christos Exp $
+#	$NetBSD: Makefile.netboot,v 1.7.8.1 2009/05/13 17:17:52 jym Exp $
 
 NOMAN=	# defined
 
@@ -7,7 +7,7 @@ PIE_LDFLAGS=
 PIE_AFLAGS=
 .include "../Makefile.inc"
 
-S=	${.CURDIR}/../../../../../
+S=	${.CURDIR}/../../../../..
 
 BASE= netboot_${USE_NETIF}
 PROG= ${BASE}.rom

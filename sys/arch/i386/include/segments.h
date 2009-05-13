@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.50 2008/10/26 17:41:11 christos Exp $	*/
+/*	$NetBSD: segments.h,v 1.50.8.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -320,12 +320,13 @@ void idt_vec_free(int);
 #define GTRAPTSS_SEL	18
 #define GIPITSS_SEL	19
 #define GUCODEBIG_SEL	20	/* User code with executable stack */
-#define	GUFS_SEL	21
-#define	GUGS_SEL	22
+#define	GUFS_SEL	21	/* Per-thread %fs */
+#define	GUGS_SEL	22	/* Per-thread %gs */
 #define	NGDT		23
 
 /*
- * Entries in the Local Descriptor Table (LDT)
+ * Entries in the Local Descriptor Table (LDT).
+ * DO NOT ADD KERNEL DATA/CODE SEGMENTS TO THIS TABLE.
  */
 #define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
 #define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */

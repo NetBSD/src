@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.35 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.35.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.35 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.35.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ clalloc(struct clist *clp, int size, int quot)
 	if (!clp->c_cs)
 		return (-1);
 
-	if(quot) {
+	if (quot) {
 		clp->c_cq = kmem_zalloc(QMEM(size), KM_SLEEP);
 		if (!clp->c_cq) {
 			kmem_free(clp->c_cs, size);
@@ -95,9 +95,9 @@ clalloc(struct clist *clp, int size, int quot)
 void
 clfree(struct clist *clp)
 {
-	if(clp->c_cs)
+	if (clp->c_cs)
 		kmem_free(clp->c_cs, clp->c_cn);
-	if(clp->c_cq)
+	if (clp->c_cq)
 		kmem_free(clp->c_cq, QMEM(clp->c_cn));
 	clp->c_cs = clp->c_cq = NULL;
 }
@@ -263,7 +263,7 @@ putc(int c, struct clist *clp)
 #if defined(DIAGNOSTIC) || 1
 			printf("putc: required clalloc\n");
 #endif
-			if(clalloc(clp, 1024, 1)) {
+			if (clalloc(clp, 1024, 1)) {
 out:
 				splx(s);
 				return -1;
@@ -307,7 +307,7 @@ clrbits(u_char *cp, int off, int len)
 	int i;
 	u_char mask;
 
-	if(len==1) {
+	if (len==1) {
 		clrbit(cp, off);
 		return;
 	}
@@ -320,10 +320,10 @@ clrbits(u_char *cp, int off, int len)
 		mask = ((1 << (ebi - sbi)) - 1) << sbi;
 		cp[sby] &= ~mask;
 	} else {
-		mask = (1<<sbi) - 1;
+		mask = (1 << sbi) - 1;
 		cp[sby++] &= mask;
 
-		mask = (1<<ebi) - 1;
+		mask = (1 << ebi) - 1;
 		cp[eby] &= ~mask;
 
 		for (i = sby; i < eby; i++)
@@ -355,7 +355,7 @@ b_to_q(const u_char *cp, int count, struct clist *clp)
 #if defined(DIAGNOSTIC) || 1
 			printf("b_to_q: required clalloc\n");
 #endif
-			if(clalloc(clp, 1024, 1))
+			if (clalloc(clp, 1024, 1))
 				goto out;
 		}
 		clp->c_cf = clp->c_cl = clp->c_cs;
@@ -447,7 +447,7 @@ firstc(struct clist *clp, int *c)
 		return NULL;
 	cp = clp->c_cf;
 	*c = *cp & 0xff;
-	if(clp->c_cq) {
+	if (clp->c_cq) {
 #ifdef QBITS
 		if (isset(clp->c_cq, cp - clp->c_cs))
 			*c |= TTY_QUOTE;

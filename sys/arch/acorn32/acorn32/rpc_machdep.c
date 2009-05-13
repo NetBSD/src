@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.74 2008/11/30 18:21:31 martin Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.74.4.1 2009/05/13 17:16:02 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -48,13 +48,14 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 #include "vidcvideo.h"
 #include "podulebus.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.74 2008/11/30 18:21:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.74.4.1 2009/05/13 17:16:02 jym Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

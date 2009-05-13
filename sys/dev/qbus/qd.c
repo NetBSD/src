@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.44 2008/06/12 23:06:14 cegger Exp $	*/
+/*	$NetBSD: qd.c,v 1.44.10.1 2009/05/13 17:21:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.44 2008/06/12 23:06:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.44.10.1 2009/05/13 17:21:16 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -402,7 +402,7 @@ int qd0cninited = 0, qd0iscons = 0;
  * any memory for it in bootstrap.
  */
 void
-qdearly()
+qdearly(void)
 {
 	extern vaddr_t virtual_avail;
 	int tmp;
@@ -435,8 +435,7 @@ qdearly()
 }
 
 void
-qdcnprobe(cndev)
-	struct  consdev *cndev;
+qdcnprobe(struct consdev *cndev)
 {
 	int i;
 
@@ -459,8 +458,7 @@ qdcnprobe(cndev)
  * Init QDSS as console (before probe routine)
  */
 void
-qdcninit(cndev)
-	struct  consdev *cndev;
+qdcninit(struct consdev *cndev)
 {
 	void *phys_adr;		/* physical QDSS base adrs */
 	u_int mapix;			/* index into QVmap[] array */
@@ -549,10 +547,7 @@ CFATTACH_DECL(qd, sizeof(struct qd_softc),
  *
  */
 static int
-qd_match(parent, match, aux)
-	device_t parent;
-	cfdata_t match;
-	void *aux;
+qd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct qd_softc ssc;
 	struct qd_softc *sc = &ssc;
@@ -1071,12 +1066,7 @@ qdclose(dev_t dev, int flag, int mode, struct proc *p)
 } /* qdclose */
 
 int
-qdioctl(dev, cmd, datap, flags, p)
-	dev_t dev;
-	u_long cmd;
-	void *datap;
-	int flags;
-	struct proc *p;
+qdioctl(dev_t dev, u_long cmd, void *datap, int flags, struct proc *p)
 {
 	volatile int *ptep;	/* page table entry pointer */
 	int mapix;		/* QVmap[] page table index */
@@ -1117,7 +1107,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		s = spl5();
 		GETEND(eq_header[unit]);
 		splx(s);
-		bcopy((void *)event, datap, sizeof(struct _vs_event));
+		memcpy(datap, (void *)event, sizeof(struct _vs_event));
 		break;
 
 	case QD_RESET:
@@ -1236,7 +1226,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		/*
 		 * stuff qdmap structure in return buffer
 		 */
-		bcopy((void *)qd, datap, sizeof(struct qdmap));
+		memcpy(datap, (void *)qd, sizeof(struct qdmap));
 
 		break;
 
@@ -1501,10 +1491,7 @@ qdioctl(dev, cmd, datap, flags, p)
 
 
 int
-qdpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+qdpoll(dev_t dev, int events, struct proc *p)
 {
 	int s;
 	int unit;
@@ -1634,10 +1621,7 @@ void qd_strategy(struct buf *bp);
 
 /*ARGSUSED*/
 int
-qdwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+qdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
 	int minor_dev;
@@ -1664,10 +1648,7 @@ qdwrite(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-qdread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+qdread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
 	int minor_dev;
@@ -1699,8 +1680,7 @@ qdread(dev, uio, flag)
 ***************************************************************/
 
 void
-qd_strategy(bp)
-	struct buf *bp;
+qd_strategy(struct buf *bp)
 {
 	volatile struct dga *dga;
 	volatile struct adder *adder;
@@ -1812,9 +1792,7 @@ out:
 
 /*ARGSUSED*/
 void
-qdstop(tp, flag)
-	struct tty *tp;
-	int flag;
+qdstop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -1832,9 +1810,7 @@ qdstop(tp, flag)
  *  Output a character to the QDSS screen
  */
 void
-blitc(unit, chr)
-	int unit;
-	u_char chr;
+blitc(int unit, u_char chr)
 {
 	volatile struct adder *adder;
 	volatile struct dga *dga;
@@ -2041,8 +2017,7 @@ blitc(unit, chr)
  */
 
 static void
-qddint(arg)
-	void *arg;
+qddint(void *arg)
 {
 	device_t dv = arg;
 	struct DMAreq_header *header;
@@ -2219,8 +2194,7 @@ qddint(arg)
  * ADDER interrupt service routine
  */
 static void
-qdaint(arg)
-	void *arg;
+qdaint(void *arg)
 {
 	device_t dv = arg;
 	volatile struct adder *adder;
@@ -2899,8 +2873,7 @@ GET_TBUTTON:
  *
  */
 void
-clear_qd_screen(unit)
-	int unit;
+clear_qd_screen(int unit)
 {
 	volatile struct adder *adder;
 	adder = (struct adder *) qdmap[unit].adder;
@@ -2932,9 +2905,7 @@ clear_qd_screen(unit)
  *  kernel console output to the glass tty
  */
 void
-qdcnputc(dev, chr)
-	dev_t dev;
-	int chr;
+qdcnputc(dev_t dev, int chr)
 {
 
 	/*
@@ -2953,9 +2924,7 @@ qdcnputc(dev, chr)
  *  load the mouse cursor's template RAM bitmap
  */
 void
-ldcursor(unit, bitmap)
-	int unit;
-	short *bitmap;
+ldcursor(int unit, short *bitmap)
 {
 	volatile struct dga *dga;
 	volatile short *temp;
@@ -2988,8 +2957,7 @@ ldcursor(unit, bitmap)
  *  Put the console font in the QDSS off-screen memory
  */
 void
-ldfont(unit)
-	int unit;
+ldfont(int unit)
 {
 	volatile struct adder *adder;
 
@@ -3119,9 +3087,7 @@ ldfont(unit)
  * kernel debugger.
  */
 void
-qdcnpollc(dev, onoff)
-	dev_t dev;
-	int onoff;
+qdcnpollc(dev_t dev, int onoff)
 {
 	qdpolling = onoff;
 }
@@ -3131,8 +3097,7 @@ qdcnpollc(dev, onoff)
  *  Get a character from the LK201 (polled)
  */
 int
-qdcngetc(dev)
-	dev_t dev;
+qdcngetc(dev_t dev)
 {
 	short key;
 	char chr;
@@ -3229,8 +3194,7 @@ LOOP:
  *  led_control()... twiddle LK-201 LED's
  */
 void
-led_control(unit, cmd, led_mask)
-	int unit, cmd, led_mask;
+led_control(int unit, int cmd, int led_mask)
 {
 	int i;
 	volatile struct duart *duart;
@@ -3257,8 +3221,7 @@ led_control(unit, cmd, led_mask)
  *  scroll_up()... move the screen up one character height
  */
 void
-scroll_up(adder)
-	volatile struct adder *adder;
+scroll_up(volatile struct adder *adder)
 {
 	/*
 	* setup VIPER operand control registers
@@ -3320,8 +3283,7 @@ scroll_up(adder)
  *  init shared memory pointers and structures
  */
 void
-init_shared(unit)
-	int unit;
+init_shared(int unit)
 {
 	volatile struct dga *dga;
 
@@ -3383,8 +3345,7 @@ init_shared(unit)
  * init the ADDER, VIPER, bitmaps, & color map
  */
 void
-setup_dragon(unit)
-	int unit;
+setup_dragon(int unit)
 {
 
 	volatile struct adder *adder;
@@ -3638,8 +3599,7 @@ setup_dragon(unit)
  * Init the DUART and set defaults in input
  */
 void
-setup_input(unit)
-	int unit;
+setup_input(int unit)
 {
 	volatile struct duart *duart;	/* DUART register structure pointer */
 	int i, bits;
@@ -3805,9 +3765,7 @@ OUT:
  *		GOOD otherwise
  */
 int
-wait_status(adder, mask)
-	volatile struct adder *adder;
-	int mask;
+wait_status(volatile struct adder *adder, int mask)
 {
 	int i;
 
@@ -3828,10 +3786,7 @@ wait_status(adder, mask)
  * write out onto the ID bus
  */
 void
-write_ID(adder, adrs, data)
-	volatile struct adder *adder;
-	short adrs;
-	short data;
+write_ID(volatile struct adder *adder, short adrs, short data)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.48 2008/06/11 16:46:11 tsutsui Exp $	*/
+/*	$NetBSD: tc.c,v 1.48.10.1 2009/05/13 17:21:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.48 2008/06/11 16:46:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.48.10.1 2009/05/13 17:21:30 jym Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.48 2008/06/11 16:46:11 tsutsui Exp $");
 #include "locators.h"
 
 /* Definition of the driver for autoconfig. */
-static int	tcmatch(struct device *, struct cfdata *, void *);
+static int	tcmatch(device_t, cfdata_t, void *);
 
 CFATTACH_DECL(tc, sizeof(struct tc_softc),
     tcmatch, tcattach, NULL, NULL);
@@ -56,7 +56,7 @@ static int	tcprint(void *, const char *);
 static void	tc_devinfo(const char *, char *, size_t);
 
 static int
-tcmatch(struct device *parent, struct cfdata *cf, void *aux)
+tcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct tcbus_attach_args *tba = aux;
 
@@ -67,7 +67,7 @@ tcmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-tcattach(struct device *parent, struct device *self, void *aux)
+tcattach(device_t parent, device_t self, void *aux)
 {
 	struct tc_softc *sc = device_private(self);
 	struct tcbus_attach_args *tba = aux;
@@ -243,7 +243,7 @@ tc_checkslot(tc_addr_t slotbase, char *namep)
 }
 
 const struct evcnt *
-tc_intr_evcnt(struct device *dev, void *cookie)
+tc_intr_evcnt(device_t dev, void *cookie)
 {
 	struct tc_softc *sc = device_lookup_private(&tc_cd, 0);
 
@@ -251,7 +251,7 @@ tc_intr_evcnt(struct device *dev, void *cookie)
 }
 
 void
-tc_intr_establish(struct device *dev, void *cookie, int level,
+tc_intr_establish(device_t dev, void *cookie, int level,
     int (*handler)(void *), void *arg)
 {
 	struct tc_softc *sc = device_lookup_private(&tc_cd, 0);
@@ -260,7 +260,7 @@ tc_intr_establish(struct device *dev, void *cookie, int level,
 }
 
 void
-tc_intr_disestablish(struct device *dev, void *cookie)
+tc_intr_disestablish(device_t dev, void *cookie)
 {
 	struct tc_softc *sc = device_lookup_private(&tc_cd, 0);
 

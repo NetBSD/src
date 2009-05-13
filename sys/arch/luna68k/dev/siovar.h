@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.3 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: siovar.h,v 1.3.14.1 2009/05/13 17:17:59 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 struct sio_softc {
 	struct device scp_dev;
 	void *scp_ctl;
-	void (*scp_intr[2]) __P((int));
+	void (*scp_intr[2])(int);
 };
 
 struct sio_attach_args {
@@ -48,5 +48,5 @@ struct sioreg {
 #define sio_stat sio_cmd
 };
 
-int  getsiocsr __P((struct sioreg *));
-void setsioreg __P((struct sioreg *, int, int));
+int  getsiocsr(struct sioreg *);
+void setsioreg(struct sioreg *, int, int);

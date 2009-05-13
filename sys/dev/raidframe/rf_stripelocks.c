@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.29 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.29.68.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.29 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.29.68.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -183,7 +183,7 @@ rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **listp)
 }
 
 static RF_LockTableEntry_t *
-rf_MakeLockTable()
+rf_MakeLockTable(void)
 {
 	RF_LockTableEntry_t *lockTable;
 	int     i;

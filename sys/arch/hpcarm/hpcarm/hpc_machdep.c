@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.90 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.90.2.1 2009/05/13 17:17:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,9 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.90 2008/12/19 17:11:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.90.2.1 2009/05/13 17:17:45 jym Exp $");
 
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 #include "fs_nfs.h"
 #include "ksyms.h"

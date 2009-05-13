@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2008/12/09 20:45:46 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.2.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*
  *
@@ -159,15 +159,12 @@ struct pmap {
 	int pm_flags;			/* see below */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
-	int pm_ldt_len;			/* number of LDT entries */
+	size_t pm_ldt_len;		/* size of LDT in bytes */
 	int pm_ldt_sel;			/* LDT selector */
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
 };
-
-/* pm_flags */
-#define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
 
 /* macro to access pm_pdirpa */
 #ifdef PAE
@@ -177,6 +174,11 @@ struct pmap {
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa + (index) * sizeof(pd_entry_t))
 #endif
+
+/*
+ * MD flags that we use for pmap_enter:
+ */
+#define PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
 /*
  * global kernel variables
@@ -220,6 +222,7 @@ void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 void		pmap_remove_all(struct pmap *);
+void		pmap_ldt_sync(struct pmap *);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -395,7 +398,7 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 /* pmap functions with machine addresses */
 void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
-	    vm_prot_t, int, int);
+	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 
 paddr_t	vtomach(vaddr_t);

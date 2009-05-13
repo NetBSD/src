@@ -1,4 +1,4 @@
-/* $NetBSD: a12cvar.h,v 1.4 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: a12cvar.h,v 1.4.92.1 2009/05/13 17:16:05 jym Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -70,12 +70,12 @@ struct a12c_softc {
 	struct	a12c_config *sc_ccp;
 };
 
-void	a12c_init __P((struct a12c_config *, int));
-void	a12c_pci_init __P((pci_chipset_tag_t, void *));
-void	a12c_dma_init __P((struct a12c_config *));
+void	a12c_init(struct a12c_config *, int);
+void	a12c_pci_init(pci_chipset_tag_t, void *);
+void	a12c_dma_init(struct a12c_config *);
 
-bus_space_tag_t	a12c_bus_io_init __P((void *));
-bus_space_tag_t	a12c_bus_mem_init __P((void *));
+bus_space_tag_t	a12c_bus_io_init(void *);
+bus_space_tag_t	a12c_bus_mem_init(void *);
 /*
  * The following two CPU numbers are relative to the local switch;
  * in a multistage system these numbers will not be unique. a12_ethercpu
@@ -85,9 +85,9 @@ int	a12_cpu_local;	/* our CPU number relative to the local switch */
 int	a12_cpu_ether;	/* relative CPU number with outside world access */
 int	a12_cpu_global;	/* XXX used to construct MSN routing tables XXX */
 
-void	a12_intr_register_xb	__P((int (*)(void *)));
-void	a12_intr_register_icw	__P((int (*)(void *)));
-void	configure_xb		__P((void));
-void	configure_a12dc		__P((void));
+void	a12_intr_register_xb(int (*)(void *));
+void	a12_intr_register_icw(int (*)(void *));
+void	configure_xb(void);
+void	configure_a12dc(void);
 
 #endif

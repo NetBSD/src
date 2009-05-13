@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.13 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.13.92.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.13 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.13.92.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.13 2005/12/11 12:16:54 christos Exp $")
 /*
  * Function decls
  */
-static dmode_t    *get_best_display_mode __P((dimen_t *, int, dmode_t *));
+static dmode_t    *get_best_display_mode(dimen_t *, int, dmode_t *);
 
 /*
  * List of available graphic modes
@@ -100,8 +100,7 @@ u_long gra_def_color16[16] = {
  * Initialize list of possible video modes.
  */
 int
-grfabs_probe(probe_fun)
-grf_probe_t	probe_fun;
+grfabs_probe(grf_probe_t probe_fun)
 {
 	static int	inited = 0;
 
@@ -115,10 +114,7 @@ grf_probe_t	probe_fun;
 }
 
 view_t *
-grf_alloc_view(d, dim, depth)
-dmode_t	*d;
-dimen_t	*dim;
-u_char	depth;
+grf_alloc_view(dmode_t *d, dimen_t *dim, u_char depth)
 {
 	if (!d)
 		d = get_best_display_mode(dim, depth, NULL);
@@ -128,9 +124,7 @@ u_char	depth;
 }
 
 dmode_t	*
-grf_get_best_mode(dim, depth)
-dimen_t	*dim;
-u_char	depth;
+grf_get_best_mode(dimen_t *dim, u_char depth)
 {
 	return (get_best_display_mode(dim, depth, NULL));
 }
@@ -160,9 +154,7 @@ view_t *v;
 }
 
 int
-grf_get_colormap(v, cm)
-view_t		*v;
-colormap_t	*cm;
+grf_get_colormap(view_t *v, colormap_t *cm)
 {
 	colormap_t	*gcm;
 	int		i, n;
@@ -181,25 +173,20 @@ colormap_t	*cm;
 	/*
 	 * Copy the colors
 	 */
-	bzero(cm->entry, cm->size * sizeof(long));
+	memset(cm->entry, 0, cm->size * sizeof(long));
 	for (i = 0; i < n; i++)
 		cm->entry[i] = gcm->entry[i];
 	return (0);
 }
 
 int
-grf_use_colormap(v, cm)
-view_t		*v;
-colormap_t	*cm;
+grf_use_colormap(view_t *v, colormap_t *cm)
 {
 	return (v->mode->grfabs_funcs->use_colormap)(v, cm);
 }
 
 static dmode_t *
-get_best_display_mode(dim, depth, curr_mode)
-int	depth;
-dimen_t	*dim;
-dmode_t	*curr_mode;
+get_best_display_mode(dimen_t *dim, int depth, dmode_t *curr_mode)
 {
 	dmode_t		*save;
 	dmode_t		*dm;

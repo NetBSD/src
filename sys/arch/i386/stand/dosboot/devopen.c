@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.10 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: devopen.c,v 1.10.92.1 2009/05/13 17:17:51 jym Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -74,10 +74,7 @@ static struct {
 static int dev2bios(char *, unsigned int, int *);
 
 static int
-dev2bios(devname, unit, biosdev)
-	char           *devname;
-	unsigned int    unit;
-	int            *biosdev;
+dev2bios(char *devname, unsigned int unit, int *biosdev)
 {
 	unsigned             i;
 
@@ -94,10 +91,7 @@ dev2bios(devname, unit, biosdev)
 struct btinfo_bootpath bibp;
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char     *fname;
-	char          **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	char           *devname;
 	char           *fsmode;

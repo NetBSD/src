@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_trace.c,v 1.13 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_trace.c,v 1.13.56.1 2009/05/13 17:22:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.13 2007/03/04 06:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.13.56.1 2009/05/13 17:22:42 jym Exp $");
 
 #define TP_TRACEFILE
 
@@ -111,12 +111,12 @@ tpTrace(struct tp_pcb  *tpcb, u_int event, u_int arg, u_int src, u_int len,
 	tp->tpt_arg = arg;
 	if (tpcb)
 		tp->tpt_arg2 = tpcb->tp_lref;
-	bcopy((void *) & time, (void *) & tp->tpt_time, sizeof(struct timeval));
+	memcpy((void *) & tp->tpt_time, (void *) & time, sizeof(struct timeval));
 
 	switch (event) {
 
 	case TPPTertpdu:
-		bcopy((void *) src, (void *) & tp->tpt_ertpdu,
+		memcpy((void *) & tp->tpt_ertpdu, (void *) src,
 		      (unsigned) MIN((int) len, sizeof(struct tp_Trace)));
 		break;
 
@@ -124,7 +124,7 @@ tpTrace(struct tp_pcb  *tpcb, u_int event, u_int arg, u_int src, u_int len,
 	case TPPTmisc:
 
 		/* arg is a string */
-		bcopy((void *) arg, (void *) tp->tpt_str,
+		memcpy((void *) tp->tpt_str, (void *) arg,
 		 (unsigned) MIN(1 + strlen((void *) arg), TPTRACE_STRLEN));
 		tp->tpt_m2 = src;
 		tp->tpt_m3 = len;
@@ -147,16 +147,16 @@ tpTrace(struct tp_pcb  *tpcb, u_int event, u_int arg, u_int src, u_int len,
 		tp->tpt_m1 = arg5;
 		break;
 	case TPPTparam:
-		bcopy((void *) src, (void *) & tp->tpt_param, sizeof(struct tp_param));
+		memcpy((void *) & tp->tpt_param, (void *) src, sizeof(struct tp_param));
 		break;
 	case TPPTref:
-		bcopy((void *) src, (void *) & tp->tpt_ref, sizeof(struct tp_ref));
+		memcpy((void *) & tp->tpt_ref, (void *) src, sizeof(struct tp_ref));
 		break;
 
 	case TPPTtpduin:
 	case TPPTtpduout:
 		tp->tpt_arg2 = arg4;
-		bcopy((void *) src, (void *) & tp->tpt_tpdu,
+		memcpy((void *) & tp->tpt_tpdu, (void *) src,
 		      (unsigned) MIN((int) len, sizeof(struct tp_Trace)));
 		break;
 	}

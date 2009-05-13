@@ -1,4 +1,4 @@
-/*	$NetBSD: lif.c,v 1.7 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: lif.c,v 1.7.90.1 2009/05/13 17:17:44 jym Exp $	*/
 
 /*	$OpenBSD: lif.c,v 1.7 2001/06/09 03:54:41 mickey Exp $	*/
 
@@ -184,7 +184,7 @@ lif_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 		if (p == bbuf) {
 			bsize = sizeof(bbuf) - (foff & (sizeof(bbuf) - 1));
 			bsize = min(bsize, size);
-			bcopy(bbuf + (foff & (sizeof(bbuf) - 1)), buf, bsize);
+			memcpy( buf, bbuf + (foff & (sizeof(bbuf) - 1)), bsize);
 			p = buf;
 		}
 		count = size -= bsize;

@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.21 2008/11/24 11:41:12 ad Exp $
+# $NetBSD: XEN2_DOMU,v 1.21.4.1 2009/05/13 17:17:49 jym Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -38,7 +38,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 
@@ -151,7 +150,8 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
 #options 	NFS_BOOTSTATIC_GWIP="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
@@ -184,7 +184,7 @@ pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

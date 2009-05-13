@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.40 2008/11/25 18:28:06 pooka Exp $	*/
+/*	$NetBSD: radix.c,v 1.40.4.1 2009/05/13 17:22:20 jym Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.40 2008/11/25 18:28:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.40.4.1 2009/05/13 17:22:20 jym Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -1003,9 +1003,7 @@ rn_walktree(
 }
 
 int
-rn_inithead(head, off)
-	void **head;
-	int off;
+rn_inithead(void **head, int off)
 {
 	struct radix_node_head *rnh;
 
@@ -1019,9 +1017,7 @@ rn_inithead(head, off)
 }
 
 int
-rn_inithead0(rnh, off)
-	struct radix_node_head *rnh;
-	int off;
+rn_inithead0(struct radix_node_head *rnh, int off)
 {
 	struct radix_node *t;
 	struct radix_node *tt;
@@ -1046,7 +1042,7 @@ rn_inithead0(rnh, off)
 }
 
 void
-rn_init()
+rn_init(void)
 {
 	char *cp, *cplim;
 #ifdef _KERNEL

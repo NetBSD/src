@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.16 2007/02/25 06:03:32 macallan Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.16.60.1 2009/05/13 17:18:37 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.16 2007/02/25 06:03:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.16.60.1 2009/05/13 17:18:37 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,9 +89,7 @@ timer_init_4m(void)
 	int n;
 
 	timerreg4m->t_limit = tmr_ustolim4m(tick);
-	for (n = 0; n < sparc_ncpus; n++) {
-		if ((cpi = cpus[n]) == NULL)
-			continue;
+	for (CPU_INFO_FOREACH(n, cpi)) {
 		cpi->counterreg_4m->t_limit = tmr_ustolim4m(statint);
 	}
 	icr_si_bic(SINTR_T);
@@ -201,10 +199,7 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 		 * Check whether the CPU corresponding to this timer
 		 * register is installed.
 		 */
-		cpi = NULL;
-		for (n = 0; n < sparc_ncpus; n++) {
-			if ((cpi = cpus[n]) == NULL)
-				continue;
+		for (CPU_INFO_FOREACH(n, cpi)) {
 			if ((i == 0 && sparc_ncpus == 1) || cpi->mid == i + 8) {
 				/* We got a corresponding MID. */
 				break;

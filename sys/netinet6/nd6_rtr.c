@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.77 2008/12/19 18:49:39 cegger Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.77.2.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.77 2008/12/19 18:49:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.77.2.1 2009/05/13 17:22:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 				continue;
 			}
 
-			bzero(&pr, sizeof(pr));
+			memset(&pr, 0, sizeof(pr));
 			sockaddr_in6_init(&pr.ndpr_prefix,
 			    &pi->nd_opt_pi_prefix, 0, 0, 0);
 			pr.ndpr_ifp = (struct ifnet *)m->m_pkthdr.rcvif;
@@ -418,7 +418,7 @@ nd6_rtmsg(int cmd, struct rtentry *rt)
 {
 	struct rt_addrinfo info;
 
-	bzero((void *)&info, sizeof(info));
+	memset((void *)&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_getkey(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
@@ -777,7 +777,7 @@ defrtrlist_update(struct nd_defrouter *new)
 		splx(s);
 		return (NULL);
 	}
-	bzero(n, sizeof(*n));
+	memset(n, 0, sizeof(*n));
 	*n = *new;
 
 insert:
@@ -1580,7 +1580,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	 * in6_ifinit() sets nd6_rtrequest to ifa_rtrequest for all ifaddrs.
 	 * ifa->ifa_rtrequest = nd6_rtrequest;
 	 */
-	bzero(&mask6, sizeof(mask6));
+	memset(&mask6, 0, sizeof(mask6));
 	mask6.sin6_len = sizeof(mask6);
 	mask6.sin6_addr = pr->ndpr_mask;
 	/* rtrequest() will probably set RTF_UP, but we're not sure. */

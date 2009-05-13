@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.90 2008/12/12 18:13:55 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.90.2.1 2009/05/13 17:16:12 jym Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.90 2008/12/12 18:13:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.90.2.1 2009/05/13 17:16:12 jym Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1246,10 +1246,10 @@ struct cachetab cachetab[] = {
     { 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-static void get_cachetype_table __P((void));
+static void get_cachetype_table(void);
 
 static void
-get_cachetype_table()
+get_cachetype_table(void)
 {
 	int i;
 	u_int32_t cpuid = cpu_id();
@@ -1280,7 +1280,7 @@ get_cachetype_table()
  */
 
 int
-set_cpufuncs()
+set_cpufuncs(void)
 {
 	if (cputype == 0) {
 		cputype = cpufunc_id();
@@ -1654,8 +1654,7 @@ u_int arm250_id(void)
  * For use when no fixup is required.
  */
 int
-cpufunc_null_fixup(arg)
-	void *arg;
+cpufunc_null_fixup(void *arg)
 {
 	return(ABORT_FIXUP_OK);
 }
@@ -1681,8 +1680,7 @@ cpufunc_null_fixup(arg)
  * In early aborts, we may have to fix up LDM, STM, LDC and STC.
  */
 int
-early_abort_fixup(arg)
-	void *arg;
+early_abort_fixup(void *arg)
 {
 	trapframe_t *frame = arg;
 	u_int fault_pc;
@@ -1823,8 +1821,7 @@ early_abort_fixup(arg)
  * LDM, STM, LDC and STC fixup to the early-abort handler.
  */
 int
-late_abort_fixup(arg)
-	void *arg;
+late_abort_fixup(void *arg)
 {
 	trapframe_t *frame = arg;
 	u_int fault_pc;
@@ -2016,13 +2013,10 @@ struct cpu_option {
 	int	co_value;
 };
 
-static u_int parse_cpu_options __P((char *, struct cpu_option *, u_int));
+static u_int parse_cpu_options(char *, struct cpu_option *, u_int);
 
 static u_int
-parse_cpu_options(args, optlist, cpuctrl)
-	char *args;
-	struct cpu_option *optlist;    
-	u_int cpuctrl; 
+parse_cpu_options(char *args, struct cpu_option *optlist, u_int cpuctrl)
 {
 	int integer;
 
@@ -2076,8 +2070,7 @@ struct cpu_option arm6_options[] = {
 };
 
 void
-arm6_setup(args)
-	char *args;
+arm6_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2129,8 +2122,7 @@ struct cpu_option arm7_options[] = {
 };
 
 void
-arm7_setup(args)
-	char *args;
+arm7_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2178,8 +2170,7 @@ struct cpu_option arm7tdmi_options[] = {
 };
 
 void
-arm7tdmi_setup(args)
-	char *args;
+arm7tdmi_setup(char *args)
 {
 	int cpuctrl;
 
@@ -2218,8 +2209,7 @@ struct cpu_option arm8_options[] = {
 };
 
 void
-arm8_setup(args)
-	char *args;
+arm8_setup(char *args)
 {
 	int integer;
 	int cpuctrl, cpuctrlmask;
@@ -2304,8 +2294,7 @@ struct cpu_option arm9_options[] = {
 };
 
 void
-arm9_setup(args)
-	char *args;
+arm9_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2358,8 +2347,7 @@ struct cpu_option arm10_options[] = {
 };
 
 void
-arm10_setup(args)
-	char *args;
+arm10_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2412,8 +2400,7 @@ struct cpu_option arm11_options[] = {
 };
 
 void
-arm11_setup(args)
-	char *args;
+arm11_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2580,8 +2567,7 @@ struct cpu_option sa110_options[] = {
 };
 
 void
-sa110_setup(args)
-	char *args;
+sa110_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2644,8 +2630,7 @@ struct cpu_option sa11x0_options[] = {
 };
 
 void
-sa11x0_setup(args)
-	char *args;
+sa11x0_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2749,8 +2734,7 @@ struct cpu_option ixp12x0_options[] = {
 };
 
 void
-ixp12x0_setup(args)
-	char *args;
+ixp12x0_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2806,8 +2790,7 @@ struct cpu_option xscale_options[] = {
 };
 
 void
-xscale_setup(args)
-	char *args;
+xscale_setup(char *args)
 {
 	uint32_t auxctl;
 	int cpuctrl, cpuctrlmask;

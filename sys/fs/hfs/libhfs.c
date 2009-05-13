@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.5 2007/12/11 12:04:23 lukem Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.5.26.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.5 2007/12/11 12:04:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.5.26.1 2009/05/13 17:21:50 jym Exp $");
 
 #include "libhfs.h"
 
@@ -161,6 +161,7 @@ hfslib_open_volume(
 	void*		buffer;
 	void*		buffer2;	/* used as temporary pointer for realloc() */
 	int			result;
+	int		isopen = 0;
 	
 	result = 1;
 	buffer = NULL;
@@ -173,6 +174,7 @@ hfslib_open_volume(
 
 	if(hfslib_openvoldevice(out_vol, in_device, cbargs) != 0)
 		HFS_LIBERR("could not open device");
+	isopen = 1;
 
 	/*
 	 *	Read the volume header.
@@ -353,6 +355,8 @@ hfslib_open_volume(
 
 	/* FALLTHROUGH */
 error:	
+	if (result != 0 && isopen)
+		hfslib_close_volume(out_vol, cbargs);
 	if(buffer!=NULL)
 		hfslib_free(buffer, cbargs);
 

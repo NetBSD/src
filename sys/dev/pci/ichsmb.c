@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.19 2009/02/03 16:27:13 pgoyette Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.19.2.1 2009/05/13 17:20:24 jym Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.19 2009/02/03 16:27:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.19.2.1 2009/05/13 17:20:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,7 +69,7 @@ struct ichsmb_softc {
 	}			sc_i2c_xfer;
 };
 
-static int	ichsmb_match(device_t, struct cfdata *, void *);
+static int	ichsmb_match(device_t, cfdata_t, void *);
 static void	ichsmb_attach(device_t, device_t, void *);
 
 static int	ichsmb_i2c_acquire_bus(void *, int);
@@ -85,7 +85,7 @@ CFATTACH_DECL_NEW(ichsmb, sizeof(struct ichsmb_softc),
 
 
 static int
-ichsmb_match(device_t parent, struct cfdata *match, void *aux)
+ichsmb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -174,7 +174,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = ichsmb_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = ichsmb_i2c_exec;
 
-	bzero(&iba, sizeof(iba));
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);

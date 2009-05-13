@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.232 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: systm.h,v 1.232.2.1 2009/05/13 17:23:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -216,6 +216,7 @@ int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
 int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
 void	twiddle(void);
+void	banner(void);
 #endif /* _KERNEL */
 
 void	panic(const char *, ...)
@@ -258,6 +259,9 @@ int	copyout_vmspace(struct vmspace *, const void *, void *, size_t);
 int	ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len);
 int	ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len);
 
+int	ucas_ptr(volatile void *, void *, void *, void *);
+int	ucas_int(volatile int *, int, int, int *);
+
 int	subyte(void *, int);
 int	suibyte(void *, int);
 int	susword(void *, short);
@@ -286,6 +290,8 @@ void	hardpps(struct timespec *, long);
 #else
 void	ntp_init(void);	/* also provides adjtime() functionality */
 #endif /* NTP */
+
+void	ssp_init(void);
 
 void	initclocks(void);
 void	inittodr(time_t);

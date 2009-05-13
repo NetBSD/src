@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.14 2008/04/05 20:08:52 cegger Exp $ */
+/* $NetBSD: if_ea.c,v 1.14.18.1 2009/05/13 17:21:15 jym Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.14 2008/04/05 20:08:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.14.18.1 2009/05/13 17:21:15 jym Exp $");
 
 #include <sys/param.h>
 
@@ -71,8 +71,8 @@ struct ea_softc {
  * prototypes
  */
 
-int eaprobe(struct device *, struct cfdata *, void *);
-void eaattach(struct device *, struct device *, void *);
+int eaprobe(device_t, cfdata_t, void *);
+void eaattach(device_t, device_t, void *);
 
 /* driver structure for autoconf */
 
@@ -88,7 +88,7 @@ CFATTACH_DECL(ea, sizeof(struct ea_softc),
  */
 
 int
-eaprobe(struct device *parent, struct cfdata *cf, void *aux)
+eaprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -101,7 +101,7 @@ eaprobe(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 void
-eaattach(struct device *parent, struct device *self, void *aux)
+eaattach(device_t parent, device_t self, void *aux)
 {
 	struct ea_softc *sc = device_private(self);
 	struct podulebus_attach_args *pa = aux;

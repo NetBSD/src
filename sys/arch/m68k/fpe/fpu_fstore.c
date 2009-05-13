@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.10 2007/03/09 16:23:01 tsutsui Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.10.58.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.10 2007/03/09 16:23:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.10.58.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -42,9 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.10 2007/03/09 16:23:01 tsutsui Exp 
  *	(word1 & 0xe000) == 0x6000
  */
 int
-fpu_emul_fstore(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 {
     struct frame *frame = fe->fe_frame;
     u_int *fpregs = fe->fe_fpframe->fpf_regs;

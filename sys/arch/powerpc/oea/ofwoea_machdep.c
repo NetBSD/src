@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.16 2008/11/30 18:21:35 martin Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.16.4.1 2009/05/13 17:18:15 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.16 2008/11/30 18:21:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.16.4.1 2009/05/13 17:18:15 jym Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h" 
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>

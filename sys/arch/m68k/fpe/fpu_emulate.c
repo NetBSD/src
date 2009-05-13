@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.28 2009/01/20 14:57:21 tsutsui Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.28.2.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.28 2009/01/20 14:57:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.28.2.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,13 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.28 2009/01/20 14:57:21 tsutsui Exp
 	    return -1;					\
     } while (/*CONSTCOND*/0)
 
-static int fpu_emul_fmovmcr __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_fmovm __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_arith __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_type1 __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_brcc __P((struct fpemu *fe, struct instruction *insn));
-static int test_cc __P((struct fpemu *fe, int pred));
-static struct fpn *fpu_cmp __P((struct fpemu *fe));
+static int fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_arith(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_type1(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_brcc(struct fpemu *fe, struct instruction *insn);
+static int test_cc(struct fpemu *fe, int pred);
+static struct fpn *fpu_cmp(struct fpemu *fe);
 
 #if DEBUG_FPE
 #  define DUMP_INSN(insn)						\
@@ -82,10 +82,7 @@ static struct fpn *fpu_cmp __P((struct fpemu *fe));
  * (Typically: zero, SIGFPE, SIGILL, SIGSEGV)
  */
 int
-fpu_emulate(frame, fpf, ksi)
-     struct frame *frame;
-     struct fpframe *fpf;
-     ksiginfo_t *ksi;
+fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 {
     static struct instruction insn;
     static struct fpemu fe;
@@ -272,8 +269,7 @@ fpu_emulate(frame, fpf, ksi)
 
 /* update accrued exception bits and see if there's an FP exception */
 int
-fpu_upd_excp(fe)
-     struct fpemu *fe;
+fpu_upd_excp(struct fpemu *fe)
 {
     u_int fpsr;
     u_int fpcr;
@@ -305,9 +301,7 @@ fpu_upd_excp(fe)
 
 /* update fpsr according to fp (= result of an fp op) */
 u_int
-fpu_upd_fpsr(fe, fp)
-     struct fpemu *fe;
-     struct fpn *fp;
+fpu_upd_fpsr(struct fpemu *fe, struct fpn *fp)
 {
     u_int fpsr;
 
@@ -374,9 +368,7 @@ fpu_upd_fpsr(fe, fp)
 }
 
 static int
-fpu_emul_fmovmcr(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 {
     struct frame *frame = fe->fe_frame;
     struct fpframe *fpf = fe->fe_fpframe;
@@ -469,9 +461,7 @@ fpu_emul_fmovmcr(fe, insn)
  * and the FPSR is not affected.
  */
 static int
-fpu_emul_fmovm(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn)
 {
     struct frame *frame = fe->fe_frame;
     struct fpframe *fpf = fe->fe_fpframe;
@@ -549,8 +539,7 @@ fpu_emul_fmovm(fe, insn)
 }
 
 static struct fpn *
-fpu_cmp(fe)
-     struct fpemu *fe;
+fpu_cmp(struct fpemu *fe)
 {
     struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
 
@@ -602,9 +591,7 @@ fpu_cmp(fe)
  * arithmetic oprations
  */
 static int
-fpu_emul_arith(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 {
     struct frame *frame = fe->fe_frame;
     u_int *fpregs = &(fe->fe_fpframe->fpf_regs[0]);
@@ -959,9 +946,7 @@ fpu_emul_arith(fe, insn)
  * signal numbers are returned when an error is detected.
  */
 static int
-test_cc(fe, pred)
-     struct fpemu *fe;
-     int pred;
+test_cc(struct fpemu *fe, int pred)
 {
     int result, sig_bsun, invert;
     int fpsr;
@@ -1077,9 +1062,7 @@ test_cc(fe, pred)
  *   (opcode & 0x01C0) == 0x0040
  */
 static int
-fpu_emul_type1(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 {
     struct frame *frame = fe->fe_frame;
     int advance, sig, branch, displ;
@@ -1176,9 +1159,7 @@ fpu_emul_type1(fe, insn)
  *   (opcode & 0x0180) == 0x0080
  */
 static int
-fpu_emul_brcc(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_brcc(struct fpemu *fe, struct instruction *insn)
 {
     int displ, word2;
     int sig;

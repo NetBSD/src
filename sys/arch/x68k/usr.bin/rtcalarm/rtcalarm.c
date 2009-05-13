@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.6 2008/12/20 13:20:59 isaki Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.6.2.1 2009/05/13 17:18:43 jym Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -46,22 +46,20 @@
 
 char           *prog;
 
-static void usage __P((void)) __attribute__((__noreturn__));
-static void myperror __P((const char *, int)) __attribute__((__noreturn__));
+static void usage(void) __attribute__((__noreturn__));
+static void myperror(const char *, int) __attribute__((__noreturn__));
 
-static void showinfo __P((void));
-static char    *numstr __P((unsigned int));
-static void showontime __P((unsigned int));
+static void showinfo(void);
+static char    *numstr(unsigned int);
+static void showontime(unsigned int);
 
-static void disablealarm __P((void));
+static void disablealarm(void);
 
-static void setinfo __P((int, char **));
-static int strnum __P((const char *, int));
+static void setinfo(int, char **);
+static int strnum(const char *, int);
 
 int
-main(argc, argv)
-	int             argc;
-	char           *argv[];
+main(int argc, char *argv[])
 {
 	prog = argv[0];
 
@@ -85,9 +83,7 @@ usage(void)
 }
 
 static void
-myperror(str, fd)
-	const char     *str;
-	int             fd;
+myperror(const char *str, int fd)
 {
 	fprintf(stderr, "%s: %s: %s\n", prog, str, strerror(errno));
 
@@ -135,8 +131,7 @@ showinfo(void)
 }
 
 static char    *
-numstr(num)
-	unsigned int    num;
+numstr(unsigned int num)
 {
 	static char     buffer[4];
 
@@ -167,8 +162,7 @@ const char     *weekname[] =
 };
 
 static void
-showontime(ontime)
-	unsigned int    ontime;
+showontime(unsigned int ontime)
 {
 	printf("At %s:", numstr((ontime & 0x0000ff00) >> 8));
 	printf("%s ", numstr(ontime & 0x000000ff));
@@ -210,9 +204,7 @@ disablealarm(void)
 
 
 static void
-setinfo(argc, argv)
-	int             argc;
-	char          **argv;
+setinfo(int argc, char **argv)
 {
 	int             ch;
 	int             week = 0x0f;
@@ -273,9 +265,7 @@ setinfo(argc, argv)
 }
 
 static int
-strnum(str, wid)
-	const char     *str;
-	int             wid;
+strnum(const char *str, int wid)
 {
 	int             r;
 

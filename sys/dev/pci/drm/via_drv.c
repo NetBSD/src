@@ -1,4 +1,4 @@
-/* $NetBSD: via_drv.c,v 1.4 2008/07/08 06:50:23 mrg Exp $ */
+/* $NetBSD: via_drv.c,v 1.4.8.1 2009/05/13 17:21:08 jym Exp $ */
 
 /* via_drv.c -- VIA unichrome driver -*- linux-c -*-
  * Created: Fri Aug 12 2005 by anholt@FreeBSD.org
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.4 2008/07/08 06:50:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.4.8.1 2009/05/13 17:21:08 jym Exp $");
 
 #include "drmP.h"
 #include "drm.h"
@@ -77,14 +77,14 @@ static void viadrm_configure(drm_device_t *dev)
 }
 
 static int
-viadrm_probe(struct device *parent, struct cfdata *match, void *opaque)
+viadrm_probe(device_t parent, cfdata_t match, void *opaque)
 {
 	struct pci_attach_args *pa = opaque;
 	return drm_probe(pa, via_pciidlist);
 }
 
 static void
-viadrm_attach(struct device *parent, struct device *self, void *opaque)
+viadrm_attach(device_t parent, device_t self, void *opaque)
 {
 	struct pci_attach_args *pa = opaque;
 	drm_device_t *dev = device_private(self);

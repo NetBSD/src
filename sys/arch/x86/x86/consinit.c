@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.15 2007/11/14 17:55:00 ad Exp $	*/
+/*	$NetBSD: consinit.c,v 1.15.32.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15 2007/11/14 17:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15.32.1 2009/05/13 17:18:45 jym Exp $");
 
 #include "opt_kgdb.h"
 
@@ -36,7 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15 2007/11/14 17:55:00 ad Exp $");
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
+#include <arch/x86/include/genfb_machdep.h>
 
+#include "genfb.h"
 #include "vga.h"
 #include "ega.h"
 #include "pcdisplay.h"
@@ -64,11 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15 2007/11/14 17:55:00 ad Exp $");
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
 
-#ifdef __i386__
-#include "vesafb.h"
-#if (NVESAFB > 0)
-#include <arch/i386/bios/vesafbvar.h>
-#endif
+#if (NGENFB > 0)
+#include <dev/wsfb/genfbvar.h>
 #endif
 
 #ifdef __i386__
@@ -147,9 +146,10 @@ int comkgdbmode = KGDB_DEVMODE;
  * it shouldn't be called from init386 either.
  */
 void
-consinit()
+consinit(void)
 {
 	const struct btinfo_console *consinfo;
+	const struct btinfo_framebuffer *fbinfo;
 	static int initted;
 
 	if (initted)
@@ -162,12 +162,20 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0) || (NVESAFB > 0) || (NXBOXFB > 0)
+	fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
+
 	if (!strcmp(consinfo->devname, "pc")) {
 		int error;
-#if (NVESAFB > 0)
-		if (!vesafb_cnattach())
+#if (NGENFB > 0)
+		if (fbinfo && fbinfo->physaddr > 0) {
+			if (x86_genfb_cnattach() == -1) {
+				initted = 0;	/* defer */
+				return;
+			}
+			genfb_cnattach();
 			goto dokbd;
+		}
+		genfb_disable();
 #endif
 #if (NXBOXFB > 0)
 		switch (xboxfb_cnattach()) {
@@ -210,7 +218,6 @@ dokbd:
 			       error);
 		return;
 	}
-#endif /* PC | VT | VGA | PCDISPLAY | VESAFB | XBOXFB */
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = X86_BUS_SPACE_IO;
@@ -234,7 +241,7 @@ dokbd:
 
 #ifdef KGDB
 void
-kgdb_port_init()
+kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {

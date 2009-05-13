@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsfield - Dispatcher field routines
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.18.1 $
  *
  *****************************************************************************/
 
@@ -559,11 +559,6 @@ AcpiDsInitFieldObjects (
 
     default:
         return_ACPI_STATUS (AE_BAD_PARAMETER);
-    }
-
-    if (!Arg)
-    {
-        return_ACPI_STATUS (AE_AML_NO_OPERAND);
     }
 
     /* Creating new namespace node(s), should not already exist */

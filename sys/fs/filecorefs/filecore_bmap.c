@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.8 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.8.12.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.8 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.8.12.1 2009/05/13 17:21:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.8 2008/05/16 09:21:59 hannken Ex
  * number to index into the data block (extent) for the file.
  */
 int
-filecore_bmap(v)
-	void *v;
+filecore_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -133,11 +132,7 @@ filecore_bmap(v)
 }
 
 int
-filecore_map(fcmp, addr, lbn, bnp)
-	struct filecore_mnt *fcmp;
-	u_int32_t addr;
-	daddr_t lbn;
-	daddr_t *bnp;
+filecore_map(struct filecore_mnt *fcmp, u_int32_t addr, daddr_t lbn, daddr_t *bnp)
 {
 	struct buf *bp;
 	u_long frag, sect, zone, izone, a, b, m, n;
@@ -238,12 +233,7 @@ filecore_map(fcmp, addr, lbn, bnp)
 }
 
 int
-filecore_bread(fcmp, addr, size, cred, bp)
-	struct filecore_mnt *fcmp;
-	u_int32_t addr;
-	int size;
-	kauth_cred_t cred;
-	struct buf **bp;
+filecore_bread(struct filecore_mnt *fcmp, u_int32_t addr, int size, kauth_cred_t cred, struct buf **bp)
 {
 	int error = 0;
 	daddr_t bn;
@@ -265,9 +255,7 @@ filecore_bread(fcmp, addr, size, cred, bp)
 }
 
 int
-filecore_dbread(ip, bp)
-	struct filecore_node *ip;
-	struct buf **bp;
+filecore_dbread(struct filecore_node *ip, struct buf **bp)
 {
 	int error = 0;
 

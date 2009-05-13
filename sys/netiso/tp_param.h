@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.18 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.18.56.1 2009/05/13 17:22:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -275,7 +275,7 @@ typedef unsigned short RefNum;
 
 struct tp_vbp {
 	u_char          tpv_code;
-	char            tpv_len;
+	u_char          tpv_len;
 	char            tpv_val;
 };
 #define vbptr(x) ((struct tp_vbp *)(x))
@@ -284,7 +284,7 @@ struct tp_vbp {
 #define vblen(x) (vbptr(x)->tpv_len)
 
 #define vb_putval(dst,type,src)\
-	bcopy((void *)&(src),(void *)&(((struct tp_vbp *)(dst))->tpv_val),\
+	memcpy((void *)&(((struct tp_vbp *)(dst))->tpv_val), (void *)&(src),\
 	sizeof(type))
 
 #define vb_getval(src,type,dst)\

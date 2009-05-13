@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcpu.c,v 1.2 2009/01/01 19:07:43 pooka Exp $	*/
+/*	$NetBSD: rumpcpu.c,v 1.2.6.1 2009/05/13 17:22:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.2 2009/01/01 19:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.2.6.1 2009/05/13 17:22:58 jym Exp $");
 
 #include <sys/param.h>
 
@@ -54,7 +54,7 @@ x86_curlwp()
 }
 
 void
-wbinvd()
+wbinvd(void)
 {
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.16 2008/12/12 18:48:25 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.16.2.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.16 2008/12/12 18:48:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.16.2.1 2009/05/13 17:21:22 jym Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.16 2008/12/12 18:48:25 macallan Exp $");
 
 #include "opt_agten.h"
 
-static int	agten_match(device_t, struct cfdata *, void *);
+static int	agten_match(device_t, cfdata_t, void *);
 static void	agten_attach(device_t, device_t, void *);
 
 static int	agten_ioctl(void *, void *, u_long, void *, int, struct lwp *);
@@ -200,7 +200,7 @@ agten_write_dac_10(struct agten_softc *sc, int reg, uint16_t val)
 }
 	
 static int
-agten_match(device_t dev, struct cfdata *cf, void *aux)
+agten_match(device_t dev, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -245,7 +245,7 @@ agten_attach(device_t parent, device_t dev, void *aux)
 
 	reg = prom_getpropint(node, "i128_fb_physaddr", -1);
 	sc->sc_i128_fbsz = prom_getpropint(node, "i128_fb_size", -1);
-	if (sbus_bus_map(sc->sc_bustag,
+	if (sparc_bus_map_large(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg,
 	    sc->sc_stride * sc->sc_height, BUS_SPACE_MAP_LINEAR, 
 	    &sc->sc_i128_fbh) != 0) {

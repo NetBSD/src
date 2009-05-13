@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.18 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.18.10.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -110,9 +110,9 @@ extern struct pool filecore_node_pool;
 
 VFS_PROTOS(filecore);
 
-extern int (**filecore_vnodeop_p) __P((void *));
+extern int (**filecore_vnodeop_p)(void *);
 
-int filecore_bbchecksum __P((void *));
-int filecore_bread __P((struct filecore_mnt *, u_int32_t, int,
-    kauth_cred_t, struct buf **));
-int filecore_map __P((struct filecore_mnt *, u_int32_t, daddr_t, daddr_t *));
+int filecore_bbchecksum(void *);
+int filecore_bread(struct filecore_mnt *, u_int32_t, int,
+    kauth_cred_t, struct buf **);
+int filecore_map(struct filecore_mnt *, u_int32_t, daddr_t, daddr_t *);

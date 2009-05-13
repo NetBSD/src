@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.5 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: if_de.c,v 1.5.2.1 2009/05/13 17:18:40 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -122,7 +122,7 @@ deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		map[i] = PG_V | (cdata + i);
 	}
 
-	bzero((char *)dc, sizeof(struct de_cdata));
+	memset((char *)dc, 0, sizeof(struct de_cdata));
 	
 	/* Tell the DEUNA about our PCB */
 	DE_WCSR(DE_PCSR2, LOWORD(pdc));
@@ -134,7 +134,7 @@ deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	dc->dc_pcbb.pcbb0 = FC_RDPHYAD;
 	DE_WLOW(CMD_GETCMD);
 	dewait("read physaddr");
-	bcopy((char *)&dc->dc_pcbb.pcbb2, eaddr, 6);
+	memcpy( eaddr, (char *)&dc->dc_pcbb.pcbb2, 6);
 
 	/* Create and link the descriptors */
 	for (i=0; i < NRCV; i++) {
@@ -213,7 +213,7 @@ retry:
 	if (len > maxlen)
 		len = maxlen;
 	if (len)
-		bcopy((char *)&dc->dc_rbuf[crx][0], pkt, len);
+		memcpy( pkt, (char *)&dc->dc_rbuf[crx][0], len);
 
 	dc->dc_rrent[crx].r_flags = RFLG_OWN;
 	dc->dc_rrent[crx].r_lenerr = 0;
@@ -247,7 +247,7 @@ retry:
 	if (dc->dc_xrent[ctx].r_flags & RFLG_OWN)
 		goto retry;
 
-	bcopy(pkt, (char *)&dc->dc_xbuf[ctx][0], len);
+	memcpy( (char *)&dc->dc_xbuf[ctx][0], pkt, len);
 
 	dc->dc_xrent[ctx].r_slen = len;
 	dc->dc_xrent[ctx].r_tdrerr = 0;

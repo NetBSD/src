@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.7 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.7.92.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.7 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.7.92.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/types.h>
 
@@ -40,8 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.7 2005/12/11 12:17:52 christos Exp $")
 
 /* FINTRZ - always round to zero */
 struct fpn *
-fpu_intrz(fe)
-     struct fpemu *fe;
+fpu_intrz(struct fpemu *fe)
 {
   register struct fpn *x = &fe->fe_f2;
   register int sh, clr, mask, i;
@@ -76,8 +75,7 @@ fpu_intrz(fe)
 
 /* FINT */
 struct fpn *
-fpu_int(fe)
-     struct fpemu *fe;
+fpu_int(struct fpemu *fe)
 {
   register struct fpn *x = &fe->fe_f2;
   register int rsh, lsh, wsh, i;

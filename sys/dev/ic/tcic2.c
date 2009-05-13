@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.30 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.30.18.1 2009/05/13 17:19:24 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.30 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.30.18.1 2009/05/13 17:19:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,7 @@ int tcic_io_speed = 165;	/* io access time in nanoseconds */
  * Check various reserved and otherwise in their value restricted bits.
  */
 int
-tcic_check_reserved_bits(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+tcic_check_reserved_bits(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int val, auxreg;
 
@@ -217,9 +215,7 @@ tcic_check_reserved_bits(iot, ioh)
  * Read chip ID from AR_ILOCK in test mode.
  */
 int
-tcic_chipid(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+tcic_chipid(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	unsigned id, otest;
 
@@ -240,8 +236,7 @@ tcic_chipid(iot, ioh)
  * Indicate whether the driver can handle the chip.
  */
 int
-tcic_chipid_known(id)
-	int id;
+tcic_chipid_known(int id)
 {
 	/* XXX only know how to handle DB86082 -chb */
 	switch (id) {
@@ -261,8 +256,7 @@ tcic_chipid_known(id)
 }
 
 const char *
-tcic_chipid_to_string(id)
-	int id;
+tcic_chipid_to_string(int id)
 {
 	switch (id) {
 	case TCIC_CHIPID_DB86082_1:
@@ -292,8 +286,7 @@ tcic_chipid_to_string(id)
  * XXX should be table driven.
  */
 int
-tcic_validirqs(chipid)
-	int chipid;
+tcic_validirqs(int chipid)
 {
 	switch (chipid) {
 	case TCIC_CHIPID_DB86082_1:
@@ -311,8 +304,7 @@ tcic_validirqs(chipid)
 }
 
 void
-tcic_attach(sc)
-	struct tcic_softc *sc;
+tcic_attach(struct tcic_softc *sc)
 {
 	int i, reg;
 
@@ -393,8 +385,7 @@ tcic_attach(sc)
 }
 
 void
-tcic_attach_sockets(sc)
-	struct tcic_softc *sc;
+tcic_attach_sockets(struct tcic_softc *sc)
 {
 	int i;
 
@@ -404,8 +395,7 @@ tcic_attach_sockets(sc)
 }
 
 void
-tcic_attach_socket(h)
-	struct tcic_handle *h;
+tcic_attach_socket(struct tcic_handle *h)
 {
 	struct pcmciabus_attach_args paa;
 	int locs[PCMCIABUSCF_NLOCS];
@@ -438,8 +428,7 @@ tcic_attach_socket(h)
 }
 
 void
-tcic_create_event_thread(arg)
-	void *arg;
+tcic_create_event_thread(void *arg)
 {
 	struct tcic_handle *h = arg;
 	const char *cs;
@@ -463,8 +452,7 @@ tcic_create_event_thread(arg)
 }
 
 void
-tcic_event_thread(arg)
-	void *arg;
+tcic_event_thread(void *arg)
 {
 	struct tcic_handle *h = arg;
 	struct tcic_event *pe;
@@ -508,8 +496,7 @@ tcic_event_thread(arg)
 
 
 void
-tcic_init_socket(h)
-	struct tcic_handle *h;
+tcic_init_socket(struct tcic_handle *h)
 {
 	int reg;
 
@@ -531,9 +518,7 @@ tcic_init_socket(h)
 }
 
 int
-tcic_print(arg, pnp)
-	void *arg;
-	const char *pnp;
+tcic_print(void *arg, const char *pnp)
 {
 	struct pcmciabus_attach_args *paa = arg;
 	struct tcic_handle *h = (struct tcic_handle *) paa->pch;
@@ -548,8 +533,7 @@ tcic_print(arg, pnp)
 }
 
 int
-tcic_intr(arg)
-	void *arg;
+tcic_intr(void *arg)
 {
 	struct tcic_softc *sc = arg;
 	int i, ret = 0;
@@ -564,8 +548,7 @@ tcic_intr(arg)
 }
 
 int
-tcic_intr_socket(h)
-	struct tcic_handle *h;
+tcic_intr_socket(struct tcic_handle *h)
 {
 	int icsr, rv;
 
@@ -646,9 +629,7 @@ tcic_intr_socket(h)
 }
 
 void
-tcic_queue_event(h, event)
-	struct tcic_handle *h;
-	int event;
+tcic_queue_event(struct tcic_handle *h, int event)
 {
 	struct tcic_event *pe;
 	int s;
@@ -664,8 +645,7 @@ tcic_queue_event(h, event)
 	wakeup(&h->events);
 }
 void
-tcic_attach_card(h)
-	struct tcic_handle *h;
+tcic_attach_card(struct tcic_handle *h)
 {
 	DPRINTF(("tcic_attach_card\n"));
 
@@ -680,9 +660,8 @@ tcic_attach_card(h)
 }
 
 void
-tcic_detach_card(h, flags)
-	struct tcic_handle *h;
-	int flags;		/* DETACH_* */
+tcic_detach_card(struct tcic_handle *h, int flags)
+	/* flags:		 DETACH_* */
 {
 	DPRINTF(("tcic_detach_card\n"));
 
@@ -698,8 +677,7 @@ tcic_detach_card(h, flags)
 }
 
 void
-tcic_deactivate_card(h)
-	struct tcic_handle *h;
+tcic_deactivate_card(struct tcic_handle *h)
 {
 	int val, reg;
 
@@ -731,10 +709,7 @@ tcic_deactivate_card(h)
 
 /* XXX the following routine may need to be rewritten. -chb */
 int
-tcic_chip_mem_alloc(pch, size, pcmhp)
-	pcmcia_chipset_handle_t pch;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmhp;
+tcic_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size, struct pcmcia_mem_handle *pcmhp)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	bus_space_handle_t memh;
@@ -753,7 +728,8 @@ tcic_chip_mem_alloc(pch, size, pcmhp)
 		i++;
 	sizepg = max(i, TCIC_MEM_SHIFT) - (TCIC_MEM_SHIFT-1);
 
-	DPRINTF(("tcic_chip_mem_alloc: size %ld sizepg %ld\n", size, sizepg));
+	DPRINTF(("tcic_chip_mem_alloc: size %ld sizepg %ld\n", (u_long)size,
+	    (u_long)sizepg));
 
 	/* can't allocate that much anyway */
 	if (sizepg > TCIC_MEM_PAGES)	/* XXX -chb */
@@ -797,9 +773,7 @@ tcic_chip_mem_alloc(pch, size, pcmhp)
 
 /* XXX the following routine may need to be rewritten. -chb */
 void
-tcic_chip_mem_free(pch, pcmhp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_mem_handle *pcmhp;
+tcic_chip_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pcmhp)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 
@@ -807,9 +781,7 @@ tcic_chip_mem_free(pch, pcmhp)
 }
 
 void
-tcic_chip_do_mem_map(h, win)
-	struct tcic_handle *h;
-	int win;
+tcic_chip_do_mem_map(struct tcic_handle *h, int win)
 {
 	int reg, hwwin, wscnt;
 
@@ -888,14 +860,7 @@ tcic_chip_do_mem_map(h, win)
 
 /* XXX needs work */
 int
-tcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int kind;
-	bus_addr_t card_addr;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmhp;
-	bus_size_t *offsetp;
-	int *windowp;
+tcic_chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr, bus_size_t size, struct pcmcia_mem_handle *pcmhp, bus_size_t *offsetp, int *windowp)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	bus_addr_t busaddr;
@@ -961,9 +926,7 @@ tcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 }
 
 void
-tcic_chip_mem_unmap(pch, window)
-	pcmcia_chipset_handle_t pch;
-	int window;
+tcic_chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int hwwin;
@@ -978,12 +941,7 @@ tcic_chip_mem_unmap(pch, window)
 }
 
 int
-tcic_chip_io_alloc(pch, start, size, align, pcihp)
-	pcmcia_chipset_handle_t pch;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_size_t align;
-	struct pcmcia_io_handle *pcihp;
+tcic_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size, bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	bus_space_tag_t iot;
@@ -1061,9 +1019,7 @@ static int tcic_iowidth_map[] =
     { TCIC_ICTL_AUTOSZ, TCIC_ICTL_B8, TCIC_ICTL_B16 };
 
 void
-tcic_chip_do_io_map(h, win)
-	struct tcic_handle *h;
-	int win;
+tcic_chip_do_io_map(struct tcic_handle *h, int win)
 {
 	int reg, size2, iotiny, wbase, hwwin, wscnt;
 
@@ -1119,13 +1075,7 @@ tcic_chip_do_io_map(h, win)
 }
 
 int
-tcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int width;
-	bus_addr_t offset;
-	bus_size_t size;
-	struct pcmcia_io_handle *pcihp;
-	int *windowp;
+tcic_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset, bus_size_t size, struct pcmcia_io_handle *pcihp, int *windowp)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	bus_addr_t ioaddr = pcihp->addr + offset;
@@ -1175,9 +1125,7 @@ tcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 }
 
 void
-tcic_chip_io_unmap(pch, window)
-	pcmcia_chipset_handle_t pch;
-	int window;
+tcic_chip_io_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int hwwin;
@@ -1192,8 +1140,7 @@ tcic_chip_io_unmap(pch, window)
 }
 
 void
-tcic_chip_socket_enable(pch)
-	pcmcia_chipset_handle_t pch;
+tcic_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int reg, win;
@@ -1269,9 +1216,7 @@ tcic_chip_socket_enable(pch)
 }
 
 void
-tcic_chip_socket_settype(pch, type)
-	pcmcia_chipset_handle_t pch;
-	int type;
+tcic_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int reg;
@@ -1293,8 +1238,7 @@ tcic_chip_socket_settype(pch, type)
 }
 
 void
-tcic_chip_socket_disable(pch)
-	pcmcia_chipset_handle_t pch;
+tcic_chip_socket_disable(pcmcia_chipset_handle_t pch)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int val;
@@ -1323,8 +1267,7 @@ tcic_chip_socket_disable(pch)
  * in the manual.
  */
 int
-tcic_ns2wscnt(ns)
-	int ns;
+tcic_ns2wscnt(int ns)
 {
 	if (ns < 14) {
 		return 0;
@@ -1334,8 +1277,7 @@ tcic_ns2wscnt(ns)
 }
 
 int
-tcic_log2(val)
-	u_int val;
+tcic_log2(u_int val)
 {
 	int i, l2;
 

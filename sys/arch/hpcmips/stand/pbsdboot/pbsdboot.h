@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.11 2007/03/04 05:59:53 christos Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.11.58.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -105,7 +105,7 @@ struct system_info {
 	DWORD si_pagesize;
 	unsigned char *si_asmcode;
 	int si_asmcodelen;
-	int (*si_boot) __P((void *));
+	int (*si_boot)(void *);
 	int si_intrvec;
 };
 extern struct system_info system_info;

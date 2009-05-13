@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic.h,v 1.6 2007/10/17 19:56:41 garbled Exp $	*/
+/*	$NetBSD: openpic.h,v 1.6.34.1 2009/05/13 17:18:14 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -32,10 +32,10 @@
 
 extern volatile unsigned char *openpic_base;
 
-static __inline u_int openpic_read __P((int));
-static __inline void openpic_write __P((int, u_int));
-static __inline int openpic_read_irq __P((int));
-static __inline void openpic_eoi __P((int));
+static __inline u_int openpic_read(int);
+static __inline void openpic_write(int, u_int);
+static __inline int openpic_read_irq(int);
+static __inline void openpic_eoi(int);
 
 static __inline u_int
 openpic_read(reg)

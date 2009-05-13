@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.20 2008/07/01 18:49:20 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.20.10.1 2009/05/13 17:16:08 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -209,6 +209,10 @@ ENTRY(spllower)
 	nop
 	nop
 	.align	16
+#ifdef GPROF
+	nop
+	.align	16
+#endif
 LABEL(spllower_end)
 
 #endif /* !XEN */

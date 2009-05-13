@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.13 2009/01/18 18:23:59 bjh21 Exp $
+# $NetBSD: files.acorn26,v 1.13.2.1 2009/05/13 17:16:01 jym Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -84,14 +84,9 @@ attach	latches at ioc
 file	arch/acorn26/ioc/latches.c		latches
 
 # On-board keyboard interface
-device	arckbd { }
+device	arckbd: wskbddev, wsmousedev
 attach	arckbd at ioc
-device	arcwskbd: wskbddev
-attach	arcwskbd at arckbd
-device	arcwsmouse: wsmousedev
-attach	arcwsmouse at arckbd
-file	arch/acorn26/ioc/arckbd.c		arckbd | arcwskbd | arcwsmouse
-								needs-flag
+file	arch/acorn26/ioc/arckbd.c		arckbd needs-flag
 file	arch/acorn26/ioc/arckbdmap.c		arckbd
 
 # On-board WD 1772 floppy controller (usually at bank 1 irq 12 fiq 0/1)

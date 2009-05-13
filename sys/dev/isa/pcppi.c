@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.32 2008/03/05 22:46:43 cube Exp $ */
+/* $NetBSD: pcppi.c,v 1.32.18.1 2009/05/13 17:19:53 jym Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32 2008/03/05 22:46:43 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32.18.1 2009/05/13 17:19:53 jym Exp $");
 
 #include "attimer.h"
 
@@ -60,14 +60,16 @@ int	pcppi_match(device_t, cfdata_t, void *);
 void	pcppi_isa_attach(device_t, device_t, void *);
 void	pcppi_childdet(device_t, device_t);
 
-CFATTACH_DECL2_NEW(pcppi, sizeof(struct pcppi_softc),
-    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, NULL, pcppi_childdet);
+CFATTACH_DECL3_NEW(pcppi, sizeof(struct pcppi_softc),
+    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, NULL, pcppi_childdet,
+    DVF_DETACH_SHUTDOWN);
 
 static int pcppisearch(device_t, cfdata_t, const int *, void *);
 static void pcppi_bell_stop(void*);
 
 #if NATTIMER > 0
 static void pcppi_attach_speaker(device_t);
+static void pcppi_detach_speaker(struct pcppi_softc *);
 #endif
 
 #define PCPPIPRI (PZERO - 1)
@@ -164,8 +166,7 @@ pcppi_isa_attach(device_t parent, device_t self, void *aux)
         if (bus_space_map(iot, IO_PPI, sc->sc_size, 0, &sc->sc_ppi_ioh))
                 panic("pcppi_attach: couldn't map");
 
-        printf("\n");
-
+	aprint_normal("\n");
         pcppi_attach(sc);
 }
 
@@ -180,6 +181,10 @@ pcppi_detach(device_t self, int flags)
 {
 	int rc;
 	struct pcppi_softc *sc = device_private(self);
+
+#if NATTIMER > 0
+	pcppi_detach_speaker(sc);
+#endif
 
 	if ((rc = config_detach_children(sc->sc_dv, flags)) != 0)
 		return rc;
@@ -234,6 +239,15 @@ pcppisearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 }
 
 #if NATTIMER > 0
+static void
+pcppi_detach_speaker(struct pcppi_softc *sc)
+{
+	if (sc->sc_timer != NULL) {
+		attimer_detach_speaker(sc->sc_timer);
+		sc->sc_timer = NULL;
+	}
+}
+
 static void
 pcppi_attach_speaker(device_t self)
 {

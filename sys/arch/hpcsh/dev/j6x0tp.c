@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.22 2008/03/27 03:58:47 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.22.18.1 2009/05/13 17:17:47 jym Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.22 2008/03/27 03:58:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.22.18.1 2009/05/13 17:17:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -279,6 +279,9 @@ j6x0tp_attach(device_t parent, device_t self, void *aux)
 	intc_intr_establish(SH7709_INTEVT2_IRQ3, IST_EDGE, IPL_TTY,
 			    j6x0tp_intr, sc);
 	intc_intr_disable(SH7709_INTEVT2_IRQ3);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 

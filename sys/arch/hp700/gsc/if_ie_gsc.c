@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.15 2008/10/06 15:57:50 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.15.8.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.15 2008/10/06 15:57:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.15.8.1 2009/05/13 17:17:43 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ struct ie_gsc_regs {
 
 #define	IE_SIZE	0x8000
 
-struct ie_gsc_softc { 
+struct ie_gsc_softc {
 	struct ie_softc ie;
 	
 	/* tag and handle to hp700-specific adapter registers. */
@@ -122,10 +122,10 @@ struct ie_gsc_softc {
 	/* miscellaneous flags. */
 	int flags;
 #define	IEGSC_GECKO	(1 << 0)
-}; 
+};
 
-int	ie_gsc_probe(struct device *, struct cfdata *, void *);
-void	ie_gsc_attach(struct device *, struct device *, void *);
+int	ie_gsc_probe(device_t, cfdata_t, void *);
+void	ie_gsc_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ie_gsc, sizeof(struct ie_gsc_softc),
     ie_gsc_probe, ie_gsc_attach, NULL, NULL);
@@ -226,17 +226,17 @@ ie_gsc_port(struct ie_softc *sc, u_int cmd)
 	}
 
 	if (gsc->flags & IEGSC_GECKO) {
-		bus_space_write_4(gsc->iot, gsc->ioh, 
+		bus_space_write_4(gsc->iot, gsc->ioh,
 				  IE_GSC_REG_PORT, (cmd & 0xffff));
 		DELAY(1000);
-		bus_space_write_4(gsc->iot, gsc->ioh, 
+		bus_space_write_4(gsc->iot, gsc->ioh,
 				  IE_GSC_REG_PORT, (cmd >> 16));
 		DELAY(1000);
 	} else {
-		bus_space_write_4(gsc->iot, gsc->ioh, 
+		bus_space_write_4(gsc->iot, gsc->ioh,
 				  IE_GSC_REG_PORT, (cmd >> 16));
 		DELAY(1000);
-		bus_space_write_4(gsc->iot, gsc->ioh, 
+		bus_space_write_4(gsc->iot, gsc->ioh,
 				  IE_GSC_REG_PORT, (cmd & 0xffff));
 		DELAY(1000);
 	}
@@ -271,7 +271,7 @@ ie_gsc_write24(struct ie_softc *sc, int offset, int addr)
 {
 
 	/*
-	 * i82586.c assumes that the chip address space starts at 
+	 * i82586.c assumes that the chip address space starts at
 	 * zero, so we have to add in the appropriate offset here.
 	 */
 	addr += sc->sc_dmamap->dm_segs[0].ds_addr;
@@ -337,7 +337,7 @@ i82596_probe(struct ie_softc *sc)
 	sc->ie_bus_write16(sc, IE_ISCP_BUSY(sc->iscp), 1);
 
 	/* Reset the adapter. */
-	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize, 
+	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize,
 			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	sc->hwreset(sc, CARD_RESET);
 
@@ -348,11 +348,11 @@ i82596_probe(struct ie_softc *sc)
 #endif
 		return 0;
 	}
- 
+
 	/* Run the chip self-test. */
 	sc->ie_bus_write24(sc, 0, -sc->sc_dmamap->dm_segs[0].ds_addr);
 	sc->ie_bus_write24(sc, 4, -(sc->sc_dmamap->dm_segs[0].ds_addr + 1));
-	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize, 
+	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize,
 			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	ie_gsc_port(sc, IE_PORT_SELF_TEST);
 	for (i = 9000; i-- &&
@@ -370,7 +370,7 @@ i82596_probe(struct ie_softc *sc)
 }
 
 int
-ie_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
+ie_gsc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -383,9 +383,9 @@ ie_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ie_gsc_attach(struct device *parent, struct device *self, void *aux)
+ie_gsc_attach(device_t parent, device_t self, void *aux)
 {
-	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)self;
+	struct ie_gsc_softc *gsc = device_private(self);
 	struct ie_softc *sc = &gsc->ie;
 	struct gsc_attach_args *ga = aux;
 	bus_dma_segment_t seg;
@@ -417,14 +417,14 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_msize = IE_SIZE;
 
 	/*
-	 * Allocate one contiguous segment of physical memory 
+	 * Allocate one contiguous segment of physical memory
 	 * to be used with the i82596.  Since we're running the
 	 * chip in i82586 mode, we're restricted to 24-bit
 	 * physical addresses.
 	 */
 	if (bus_dmamem_alloc(gsc->iemt, sc->sc_msize, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) {
-		printf (": cannot allocate %d bytes of DMA memory\n",
+		printf (": can't allocate %d bytes of DMA memory\n",
 			sc->sc_msize);
 		return;
 	}
@@ -434,7 +434,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamem_map(gsc->iemt, &seg, rseg, sc->sc_msize,
 			   (void **)&sc->sc_maddr, BUS_DMA_NOWAIT)) {
-		printf (": cannot map DMA memory\n");
+		printf (": can't map DMA memory\n");
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
 		return;
 	}
@@ -444,7 +444,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamap_create(gsc->iemt, sc->sc_msize, rseg, sc->sc_msize,
 			      0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) {
-		printf(": cannot create DMA map\n");
+		printf(": can't create DMA map\n");
 		bus_dmamem_unmap(gsc->iemt,
 				 (void *)sc->sc_maddr, sc->sc_msize);
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
@@ -454,10 +454,10 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Load the mapped DMA memory into the DMA map.
 	 */
-	if (bus_dmamap_load(gsc->iemt, sc->sc_dmamap, 
-			    sc->sc_maddr, sc->sc_msize, 
+	if (bus_dmamap_load(gsc->iemt, sc->sc_dmamap,
+			    sc->sc_maddr, sc->sc_msize,
 			    NULL, BUS_DMA_NOWAIT)) {
-		printf(": cannot load DMA map\n");
+		printf(": can't load DMA map\n");
 		bus_dmamap_destroy(gsc->iemt, sc->sc_dmamap);
 		bus_dmamem_unmap(gsc->iemt,
 				 (void *)sc->sc_maddr, sc->sc_msize);
@@ -471,9 +471,9 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if I82596_DEBUG
-	printf(" mem %x[%p]/%x\n%s", 
-		(u_int)sc->sc_dmamap->dm_segs[0].ds_addr, 
-		sc->sc_maddr, 
+	printf(" mem %x[%p]/%x\n%s",
+		(u_int)sc->sc_dmamap->dm_segs[0].ds_addr,
+		sc->sc_maddr,
 		sc->sc_msize,
 		sc->sc_dev.dv_xname);
 	sc->sc_debug = IED_ALL;
@@ -492,7 +492,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Clear all RAM. */
 	memset(sc->sc_maddr, 0, sc->sc_msize);
-	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize, 
+	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize,
 			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
@@ -549,10 +549,10 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	sc->ie_bus_write16(sc, IE_ISCP_BUSY(sc->iscp), 1);
 
 	/* Reset the adapter. */
-	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize, 
+	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize,
 			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	sc->hwreset(sc, CARD_RESET);
-	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize, 
+	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize,
 			BUS_DMASYNC_PREREAD);
 
 	/* Now call the MI attachment. */

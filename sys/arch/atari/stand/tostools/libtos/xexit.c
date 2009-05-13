@@ -1,4 +1,4 @@
-/*	$NetBSD: xexit.c,v 1.1.1.1 1996/01/07 21:50:50 leo Exp $	*/
+/*	$NetBSD: xexit.c,v 1.1.1.1.184.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -38,22 +38,21 @@
 static int	wait_for_key = 0;
 
 void
-set_wait_for_key()
+set_wait_for_key(void)
 {
 	if (isatty(STDERR_FILENO))
 		wait_for_key = 1;
 }
 
 void
-press_any_key()
+press_any_key(void)
 {
 	if (wait_for_key)
 		(void)key_wait(NULL);
 }
 
 void
-xexit(status)
-	int	status;
+xexit(int status)
 {
 	press_any_key();
 	exit(status);

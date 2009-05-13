@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.147 2009/01/24 22:42:32 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.147.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.147 2009/01/24 22:42:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.147.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.147 2009/01/24 22:42:32 rmind Exp $"
 #include <sys/file.h>
 #include <ufs/ufs/quota.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/pset.h>
 #include <sys/mbuf.h>
@@ -214,7 +213,6 @@ int maxuprc = MAXUPRC;
 int cmask = CMASK;
 
 MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
-MALLOC_DEFINE(M_PROC, "proc", "Proc structures");
 MALLOC_DEFINE(M_SUBPROC, "subproc", "Proc sub-structures");
 
 /*
@@ -228,8 +226,9 @@ const struct proclist_desc proclists[] = {
 	{ NULL		},
 };
 
-static void orphanpg(struct pgrp *);
-static void pg_delete(pid_t);
+static struct pgrp *	pg_remove(pid_t);
+static void		pg_delete(pid_t);
+static void		orphanpg(struct pgrp *);
 
 static specificdata_domain_t proc_specificdata_domain;
 
@@ -242,16 +241,16 @@ void
 procinit(void)
 {
 	const struct proclist_desc *pd;
-	int i;
+	u_int i;
 #define	LINK_EMPTY ((PID_MAX + INITIAL_PID_TABLE_SIZE) & ~(INITIAL_PID_TABLE_SIZE - 1))
 
 	for (pd = proclists; pd->pd_list != NULL; pd++)
 		LIST_INIT(pd->pd_list);
 
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	pid_table = kmem_alloc(INITIAL_PID_TABLE_SIZE
+	    * sizeof(struct pid_table), KM_SLEEP);
 
-	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
-			    M_PROC, M_WAITOK);
 	/* Set free list running through table...
 	   Preset 'use count' above PID_MAX so we allocate pid 1 next. */
 	for (i = 0; i <= pid_tbl_mask; i++) {
@@ -378,6 +377,41 @@ proc0_init(void)
 }
 
 /*
+ * Session reference counting.
+ */
+
+void
+proc_sesshold(struct session *ss)
+{
+
+	KASSERT(mutex_owned(proc_lock));
+	ss->s_count++;
+}
+
+void
+proc_sessrele(struct session *ss)
+{
+
+	KASSERT(mutex_owned(proc_lock));
+	/*
+	 * We keep the pgrp with the same id as the session in order to
+	 * stop a process being given the same pid.  Since the pgrp holds
+	 * a reference to the session, it must be a 'zombie' pgrp by now.
+	 */
+	if (--ss->s_count == 0) {
+		struct pgrp *pg;
+
+		pg = pg_remove(ss->s_sid);
+		mutex_exit(proc_lock);
+
+		kmem_free(pg, sizeof(struct pgrp));
+		kmem_free(ss, sizeof(struct session));
+	} else {
+		mutex_exit(proc_lock);
+	}
+}
+
+/*
  * Check that the specified process group is in the session of the
  * specified process.
  * Treats -ve ids as process ids.
@@ -412,18 +446,18 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 }
 
 /*
- * Is p an inferior of q?
- *
- * Call with the proc_lock held.
+ * p_inferior: is p an inferior of q?
  */
-int
-inferior(struct proc *p, struct proc *q)
+static inline bool
+p_inferior(struct proc *p, struct proc *q)
 {
+
+	KASSERT(mutex_owned(proc_lock));
 
 	for (; p != q; p = p->p_pptr)
 		if (p->p_pid == 0)
-			return 0;
-	return 1;
+			return false;
+	return true;
 }
 
 /*
@@ -484,20 +518,22 @@ pg_find(pid_t pgid, uint flags)
 static void
 expand_pid_table(void)
 {
-	uint pt_size = pid_tbl_mask + 1;
+	size_t pt_size, tsz;
 	struct pid_table *n_pt, *new_pt;
 	struct proc *proc;
 	struct pgrp *pgrp;
-	int i;
 	pid_t pid;
+	u_int i;
 
-	new_pt = malloc(pt_size * 2 * sizeof *new_pt, M_PROC, M_WAITOK);
+	pt_size = pid_tbl_mask + 1;
+	tsz = pt_size * 2 * sizeof(struct pid_table);
+	new_pt = kmem_alloc(tsz, KM_SLEEP);
 
 	mutex_enter(proc_lock);
 	if (pt_size != pid_tbl_mask + 1) {
 		/* Another process beat us to it... */
 		mutex_exit(proc_lock);
-		free(new_pt, M_PROC);
+		kmem_free(new_pt, tsz);
 		return;
 	}
 
@@ -540,7 +576,8 @@ expand_pid_table(void)
 			break;
 	}
 
-	/* Switch tables */
+	/* Save old table size and switch tables */
+	tsz = pt_size * sizeof(struct pid_table);
 	n_pt = pid_table;
 	pid_table = new_pt;
 	pid_tbl_mask = pt_size * 2 - 1;
@@ -556,7 +593,7 @@ expand_pid_table(void)
 		pid_alloc_lim <<= 1;	/* doubles number of free slots... */
 
 	mutex_exit(proc_lock);
-	free(n_pt, M_PROC);
+	kmem_free(n_pt, tsz);
 }
 
 struct proc *
@@ -648,7 +685,7 @@ proc_free_mem(struct proc *p)
 }
 
 /*
- * Move p to a new or existing process group (and session)
+ * proc_enterpgrp: move p to a new or existing process group (and session).
  *
  * If we are creating a new pgrp, the pgid should equal
  * the calling process' pid.
@@ -659,7 +696,7 @@ proc_free_mem(struct proc *p)
  * Only called from sys_setsid and sys_setpgid.
  */
 int
-enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
+proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 {
 	struct pgrp *new_pgrp, *pgrp;
 	struct session *sess;
@@ -667,10 +704,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	int rval;
 	pid_t pg_id = NO_PGID;
 
-	if (mksess)
-		sess = kmem_alloc(sizeof(*sess), KM_SLEEP);
-	else
-		sess = NULL;
+	sess = mksess ? kmem_alloc(sizeof(*sess), KM_SLEEP) : NULL;
 
 	/* Allocate data areas we might need before doing any validity checks */
 	mutex_enter(proc_lock);		/* Because pid_table might change */
@@ -691,7 +725,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	if (pid != curp->p_pid) {
 		/* must exist and be one of our children... */
 		if ((p = p_find(pid, PFIND_LOCKED)) == NULL ||
-		    !inferior(p, curp)) {
+		    !p_inferior(p, curp)) {
 			rval = ESRCH;
 			goto done;
 		}
@@ -763,7 +797,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 			p->p_lflag &= ~PL_CONTROLT;
 		} else {
 			sess = p->p_pgrp->pg_session;
-			SESSHOLD(sess);
+			proc_sesshold(sess);
 		}
 		pgrp->pg_session = sess;
 		sess = NULL;
@@ -803,9 +837,12 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	mutex_spin_exit(&tty_lock);
 
     done:
-	if (pg_id != NO_PGID)
+	if (pg_id != NO_PGID) {
+		/* Releases proc_lock. */
 		pg_delete(pg_id);
-	mutex_exit(proc_lock);
+	} else {
+		mutex_exit(proc_lock);
+	}
 	if (sess != NULL)
 		kmem_free(sess, sizeof(*sess));
 	if (new_pgrp != NULL)
@@ -819,11 +856,11 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 }
 
 /*
- * Remove a process from its process group.  Must be called with the
- * proc_lock held.
+ * proc_leavepgrp: remove a process from its process group.
+ *  => must be called with the proc_lock held, which will be released;
  */
 void
-leavepgrp(struct proc *p)
+proc_leavepgrp(struct proc *p)
 {
 	struct pgrp *pgrp;
 
@@ -836,15 +873,21 @@ leavepgrp(struct proc *p)
 	p->p_pgrp = NULL;
 	mutex_spin_exit(&tty_lock);
 
-	if (LIST_EMPTY(&pgrp->pg_members))
+	if (LIST_EMPTY(&pgrp->pg_members)) {
+		/* Releases proc_lock. */
 		pg_delete(pgrp->pg_id);
+	} else {
+		mutex_exit(proc_lock);
+	}
 }
 
 /*
- * Free a process group.  Must be called with the proc_lock held.
+ * pg_remove: remove a process group from the table.
+ *  => must be called with the proc_lock held;
+ *  => returns process group to free;
  */
-static void
-pg_free(pid_t pg_id)
+static struct pgrp *
+pg_remove(pid_t pg_id)
 {
 	struct pgrp *pgrp;
 	struct pid_table *pt;
@@ -853,91 +896,66 @@ pg_free(pid_t pg_id)
 
 	pt = &pid_table[pg_id & pid_tbl_mask];
 	pgrp = pt->pt_pgrp;
-#ifdef DIAGNOSTIC
-	if (__predict_false(!pgrp || pgrp->pg_id != pg_id
-	    || !LIST_EMPTY(&pgrp->pg_members)))
-		panic("pg_free: process group absent or has members");
-#endif
-	pt->pt_pgrp = 0;
+
+	KASSERT(pgrp != NULL);
+	KASSERT(pgrp->pg_id == pg_id);
+	KASSERT(LIST_EMPTY(&pgrp->pg_members));
+
+	pt->pt_pgrp = NULL;
 
 	if (!P_VALID(pt->pt_proc)) {
-		/* orphaned pgrp, put slot onto free list */
-#ifdef DIAGNOSTIC
-		if (__predict_false(P_NEXT(pt->pt_proc) & pid_tbl_mask))
-			panic("pg_free: process slot on free list");
-#endif
+		/* Orphaned pgrp, put slot onto free list. */
+		KASSERT((P_NEXT(pt->pt_proc) & pid_tbl_mask) == 0);
 		pg_id &= pid_tbl_mask;
 		pt = &pid_table[last_free_pt];
 		pt->pt_proc = P_FREE(P_NEXT(pt->pt_proc) | pg_id);
 		last_free_pt = pg_id;
 		pid_alloc_cnt--;
 	}
-	kmem_free(pgrp, sizeof(*pgrp));
+	return pgrp;
 }
 
 /*
- * Delete a process group.  Must be called with the proc_lock held.
+ * pg_delete: delete and free a process group.
+ *  => must be called with the proc_lock held, which will be released.
  */
 static void
 pg_delete(pid_t pg_id)
 {
-	struct pgrp *pgrp;
+	struct pgrp *pg;
 	struct tty *ttyp;
 	struct session *ss;
-	int is_pgrp_leader;
 
 	KASSERT(mutex_owned(proc_lock));
 
-	pgrp = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
-	if (pgrp == NULL || pgrp->pg_id != pg_id ||
-	    !LIST_EMPTY(&pgrp->pg_members))
+	pg = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
+	if (pg == NULL || pg->pg_id != pg_id || !LIST_EMPTY(&pg->pg_members)) {
+		mutex_exit(proc_lock);
 		return;
+	}
 
-	ss = pgrp->pg_session;
+	ss = pg->pg_session;
 
 	/* Remove reference (if any) from tty to this process group */
 	mutex_spin_enter(&tty_lock);
 	ttyp = ss->s_ttyp;
-	if (ttyp != NULL && ttyp->t_pgrp == pgrp) {
+	if (ttyp != NULL && ttyp->t_pgrp == pg) {
 		ttyp->t_pgrp = NULL;
-#ifdef DIAGNOSTIC
-		if (ttyp->t_session != ss)
-			panic("pg_delete: wrong session on terminal");
-#endif
+		KASSERT(ttyp->t_session == ss);
 	}
 	mutex_spin_exit(&tty_lock);
 
 	/*
-	 * The leading process group in a session is freed
-	 * by sessdelete() if last reference.
+	 * The leading process group in a session is freed by proc_sessrele(),
+	 * if last reference.  Note: proc_sessrele() releases proc_lock.
 	 */
-	is_pgrp_leader = (ss->s_sid == pgrp->pg_id);
-	SESSRELE(ss);
+	pg = (ss->s_sid != pg->pg_id) ? pg_remove(pg_id) : NULL;
+	proc_sessrele(ss);
 
-	if (is_pgrp_leader)
-		return;
-
-	pg_free(pg_id);
-}
-
-/*
- * Delete session - called from SESSRELE when s_count becomes zero.
- * Must be called with the proc_lock held.
- */
-void
-sessdelete(struct session *ss)
-{
-
-	KASSERT(mutex_owned(proc_lock));
-
-	/*
-	 * We keep the pgrp with the same id as the session in
-	 * order to stop a process being given the same pid.
-	 * Since the pgrp holds a reference to the session, it
-	 * must be a 'zombie' pgrp by now.
-	 */
-	pg_free(ss->s_sid);
-	kmem_free(ss, sizeof(*ss));
+	if (pg != NULL) {
+		/* Free it, if was not done by proc_sessrele(). */
+		kmem_free(pg, sizeof(struct pgrp));
+	}
 }
 
 /*
@@ -1067,9 +1085,8 @@ pidtbl_dump(void)
 #define	KSTACK_MAGIC	0xdeadbeaf
 
 /* XXX should be per process basis? */
-int kstackleftmin = KSTACK_SIZE;
-int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is
-					  less than this */
+static int	kstackleftmin = KSTACK_SIZE;
+static int	kstackleftthres = KSTACK_SIZE / 8;
 
 void
 kstack_setup_magic(const struct lwp *l)

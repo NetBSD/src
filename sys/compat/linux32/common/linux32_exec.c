@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.17 2008/12/17 20:51:33 cegger Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.17.2.1 2009/05/13 17:18:59 jym Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.17 2008/12/17 20:51:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.17.2.1 2009/05/13 17:18:59 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,9 +123,7 @@ struct emul emul_linux32 = {
 };
 
 static void
-linux32_e_proc_init(p, parent, forkflags)
-	struct proc *p, *parent;
-	int forkflags;
+linux32_e_proc_init(struct proc *p, struct proc *parent, int forkflags)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 	struct linux_emuldata_shared *s;
@@ -252,9 +250,7 @@ linux32_e_proc_exit(struct proc *p)
  * Emulation fork hook.
  */
 static void
-linux32_e_proc_fork(p, parent, forkflags)
-	struct proc *p, *parent;
-	int forkflags;
+linux32_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 {
 	/*
 	 * The new process might share some vmspace-related stuff

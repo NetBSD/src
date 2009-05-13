@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbusvar.h,v 1.5 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: gscbusvar.h,v 1.5.92.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*	$OpenBSD: gscbusvar.h,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
 
@@ -37,6 +37,7 @@
 struct gsc_attach_args {
 	struct confargs ga_ca;
 #define	ga_name		ga_ca.ca_name
+#define	ga_dp		ga_ca.ca_dp
 #define	ga_iot		ga_ca.ca_iot
 #define	ga_mod		ga_ca.ca_mod
 #define	ga_type		ga_ca.ca_type
@@ -57,6 +58,6 @@ struct gsc_attach_args {
 
 	/* The address for the Ethernet adapter. */
 	u_int8_t ga_ether_address[6];
-}; 
+};
 
 int gscprint(void *, const char *);

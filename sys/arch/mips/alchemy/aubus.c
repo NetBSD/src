@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.18 2006/02/06 23:23:53 gdamore Exp $ */
+/* $NetBSD: aubus.c,v 1.18.86.1 2009/05/13 17:18:02 jym Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.18 2006/02/06 23:23:53 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.18.86.1 2009/05/13 17:18:02 jym Exp $");
 
 #include "locators.h"
 
@@ -188,9 +188,7 @@ aubus_print(void *aux, const char *pnp)
 }
 
 void
-aubus_alloc_dma_tag(sc, pdt)
-	struct device *sc;
-	bus_dma_tag_t pdt;
+aubus_alloc_dma_tag(struct device *sc, bus_dma_tag_t pdt)
 {
 	bus_dma_tag_t	t;
 

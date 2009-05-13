@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.10 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: i82072.c,v 1.10.14.1 2009/05/13 17:18:04 jym Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82072.c,v 1.10 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82072.c,v 1.10.14.1 2009/05/13 17:18:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,7 @@ fdstrategy(struct buf *bp)
 }
 
 static int
-fd_intr(arg)
-	void *arg;
+fd_intr(void *arg)
 {
 	struct fd_softc *sc = arg;
 

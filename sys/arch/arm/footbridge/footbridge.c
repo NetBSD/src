@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.18 2007/12/14 11:08:03 chris Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.18.24.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.18 2007/12/14 11:08:03 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.18.24.1 2009/05/13 17:16:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,12 +68,12 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.18 2007/12/14 11:08:03 chris Exp $"
 
 /* Declare prototypes */
 
-static int footbridge_match	__P((struct device *parent, struct cfdata *cf,
-	                             void *aux));
-static void footbridge_attach	__P((struct device *parent, struct device *self,
-        	                     void *aux));
-static int footbridge_print	__P((void *aux, const char *pnp));
-static int footbridge_intr	__P((void *arg));
+static int footbridge_match(struct device *parent, struct cfdata *cf,
+	                             void *aux);
+static void footbridge_attach(struct device *parent, struct device *self,
+        	                     void *aux);
+static int footbridge_print(void *aux, const char *pnp);
+static int footbridge_intr(void *arg);
 
 /* Driver and attach structures */
 CFATTACH_DECL(footbridge, sizeof(struct footbridge_softc),
@@ -115,9 +115,7 @@ footbridge_pci_bs_tag_init(void)
  */
 
 static int
-footbridge_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+footbridge_print(void *aux, const char *pnp)
 {
 	union footbridge_attach_args *fba = aux;
 
@@ -133,10 +131,7 @@ footbridge_print(aux, pnp)
  */ 
  
 static int
-footbridge_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+footbridge_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (footbridge_found)
 		return(0);
@@ -150,10 +145,7 @@ footbridge_match(parent, cf, aux)
  */
   
 static void
-footbridge_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+footbridge_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct footbridge_softc *sc = (struct footbridge_softc *)self;
 	union footbridge_attach_args fba;
@@ -275,8 +267,7 @@ footbridge_attach(parent, self, aux)
 /* Generic footbridge interrupt handler */
 
 int
-footbridge_intr(arg)
-	void *arg;
+footbridge_intr(void *arg)
 {
 	struct footbridge_softc *sc = arg;
 	u_int ctrl, intr;

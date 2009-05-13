@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_logic.c,v 1.4 2007/11/21 22:49:07 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_logic.c,v 1.4.32.1 2009/05/13 17:23:02 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.4 2007/11/21 22:49:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.4.32.1 2009/05/13 17:23:02 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.4 2007/11/21 22:49:07 ela
 #include <secmodel/securelevel/securelevel.h>
 
 int secmodel_bsd44_curtain;
+int dovfsusermount;
 
 /*
  * Initialize the traditional NetBSD security model.
@@ -49,4 +50,5 @@ secmodel_bsd44_init(void)
 {
 	secmodel_securelevel_init();
 	secmodel_bsd44_curtain = 0;
+	dovfsusermount = 0;
 }

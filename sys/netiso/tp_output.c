@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.35 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.35.8.1 2009/05/13 17:22:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.35 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.35.8.1 2009/05/13 17:22:42 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -502,8 +502,9 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 #define INA(t) (((struct inpcb *)(t->tp_npcb))->inp_laddr.s_addr)
 #define ISOA(t) (((struct isopcb *)(t->tp_npcb))->isop_laddr->siso_addr)
 
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL))) {
+		if (l == NULL || (error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_SOCKET, KAUTH_REQ_NETWORK_SOCKET_SETPRIV,
+		    KAUTH_ARG(optname), NULL, NULL))) {
 			error = EPERM;
 		} else if (cmd != PRCO_SETOPT || tpcb->tp_state != TP_CLOSED ||
 			   (tpcb->tp_flags & TPF_GENERAL_ADDR) ||
@@ -526,7 +527,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 #endif
 #ifdef ISO
 					case AF_ISO:
-						if (bcmp(ISOA(t).isoa_genaddr, ISOA(tpcb).isoa_genaddr,
+						if (memcmp(ISOA(t).isoa_genaddr, ISOA(tpcb).isoa_genaddr,
 						     ISOA(t).isoa_len) == 0)
 							goto done;
 						continue;
@@ -545,7 +546,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 	case TPOPT_MY_TSEL:
 		if (cmd == PRCO_GETOPT) {
 			ASSERT(tpcb->tp_lsuffixlen <= MAX_TSAP_SEL_LEN);
-			bcopy((void *) tpcb->tp_lsuffix, value, tpcb->tp_lsuffixlen);
+			memcpy(value, (void *) tpcb->tp_lsuffix, tpcb->tp_lsuffixlen);
 			(*mp)->m_len = tpcb->tp_lsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
@@ -553,7 +554,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 				    val_len, (*mp));
 				error = EINVAL;
 			} else {
-				bcopy(value, (void *) tpcb->tp_lsuffix, val_len);
+				memcpy((void *) tpcb->tp_lsuffix, value, val_len);
 				tpcb->tp_lsuffixlen = val_len;
 			}
 		}
@@ -562,7 +563,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 	case TPOPT_PEER_TSEL:
 		if (cmd == PRCO_GETOPT) {
 			ASSERT(tpcb->tp_fsuffixlen <= MAX_TSAP_SEL_LEN);
-			bcopy((void *) tpcb->tp_fsuffix, value, tpcb->tp_fsuffixlen);
+			memcpy(value, (void *) tpcb->tp_fsuffix, tpcb->tp_fsuffixlen);
 			(*mp)->m_len = tpcb->tp_fsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
@@ -570,7 +571,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 				    val_len, (*mp));
 				error = EINVAL;
 			} else {
-				bcopy(value, (void *) tpcb->tp_fsuffix, val_len);
+				memcpy((void *) tpcb->tp_fsuffix, value, val_len);
 				tpcb->tp_fsuffixlen = val_len;
 			}
 		}
@@ -645,7 +646,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 				error = ENOBUFS; goto done;
 			}
 			(*mp)->m_len = sizeof(struct tp_pmeas);
-			bcopy(tpcb->tp_p_meas, mtod(*mp), sizeof(struct tp_pmeas));
+			memcpy(mtod(*mp), tpcb->tp_p_meas, sizeof(struct tp_pmeas));
 		}
 		else {
 			error = EINVAL;

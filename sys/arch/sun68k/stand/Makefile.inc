@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2009/01/12 07:00:59 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.14.2.1 2009/05/13 17:18:40 jym Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -23,7 +23,7 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 
 SRTOBJ= ${LIBSA}/SRT0.o ${LIBSA}/SRT1.o
-SRTLIB= ${LIBSA}/libsa.a
+SRTLIB= ${LIBSA}/lib/sa/libsa.a ${LIBSA}/lib/kern/libkern.a
 
 CLEANFILES+= ${SA_PROG} ${SA_PROG}.bin
 
@@ -45,20 +45,4 @@ proginstall: ${SA_PROG}.bin
 
 .endif	# defined(SA_PROG)
 
-CLEANFILES+= machine m68k sun68k
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine m68k sun68k
-.NOPATH: machine m68k sun68k
-.endif
-
-machine :
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-m68k :
-	-rm -f $@
-	ln -s ${S}/arch/m68k/include $@
-
-sun68k :
-	-rm -f $@
-	ln -s ${S}/arch/sun68k/include $@
+.include <bsd.klinks.mk>

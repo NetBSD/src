@@ -1,4 +1,4 @@
-/*      $NetBSD: i8042reg.h,v 1.4 2005/12/11 12:19:05 christos Exp $     */
+/*      $NetBSD: i8042reg.h,v 1.4.94.1 2009/05/13 17:18:23 jym Exp $     */
 
 /*
  * Copyright 1997
@@ -139,19 +139,19 @@
 /*
 ** Forward routine declarations
 */
-extern void i8042_flush       __P((bus_space_tag_t,
-                                   bus_space_handle_t)); 
-extern int  i8042_cmd         __P((bus_space_tag_t,
+extern void i8042_flush(bus_space_tag_t,
+                                   bus_space_handle_t); 
+extern int  i8042_cmd(bus_space_tag_t,
                                    bus_space_handle_t,
                                    u_char,
                                    u_char,
                                    u_char,
-                                   u_char));
-extern int  i8042_wait_output __P((bus_space_tag_t,
-                                   bus_space_handle_t));
-extern int  i8042_wait_input  __P((bus_space_tag_t,
+                                   u_char);
+extern int  i8042_wait_output(bus_space_tag_t,
+                                   bus_space_handle_t);
+extern int  i8042_wait_input(bus_space_tag_t,
                                    bus_space_handle_t,
-                                   u_char));
+                                   u_char);
 
 /* Macro to map bus space for the 8042 device.
 ** Returns 0 on success.

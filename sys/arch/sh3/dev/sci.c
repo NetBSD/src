@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.51 2008/06/13 13:08:57 cegger Exp $ */
+/* $NetBSD: sci.c,v 1.51.10.1 2009/05/13 17:18:21 jym Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.51 2008/06/13 13:08:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.51.10.1 2009/05/13 17:18:21 jym Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -981,9 +981,7 @@ sci_rxsoft(struct sci_softc *sc, struct tty *tp)
 }
 
 integrate void
-sci_txsoft(sc, tp)
-	struct sci_softc *sc;
-	struct tty *tp;
+sci_txsoft(struct sci_softc *sc, struct tty *tp)
 {
 
 	CLR(tp->t_state, TS_BUSY);
@@ -1273,8 +1271,7 @@ sciintr(void *arg)
 }
 
 void
-scicnprobe(cp)
-	struct consdev *cp;
+scicnprobe(struct consdev *cp)
 {
 	int maj;
 

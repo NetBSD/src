@@ -1,8 +1,11 @@
-/*	$NetBSD: kern_descrip.c,v 1.185 2008/12/21 09:58:22 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.185.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.185 2008/12/21 09:58:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.185.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,15 +581,20 @@ fd_close(unsigned fd)
 		 *
 		 */
 		atomic_or_uint(&ff->ff_refcnt, FR_CLOSING);
+
 		/*
 		 * Remove any knotes attached to the file.  A knote
 		 * attached to the descriptor can hold references on it.
 		 */
+		mutex_exit(&ff->ff_lock);
 		if (!SLIST_EMPTY(&ff->ff_knlist)) {
-			mutex_exit(&ff->ff_lock);
 			knote_fdclose(fd);
-			mutex_enter(&ff->ff_lock);
 		}
+
+		/* Try to drain out descriptor references. */
+		(*fp->f_ops->fo_drain)(fp);
+		mutex_enter(&ff->ff_lock);
+
 		/*
 		 * We need to see the count drop to zero at least once,
 		 * in order to ensure that all pre-existing references
@@ -995,6 +1003,8 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 
 	fp = pool_cache_get(file_cache, PR_WAITOK);
 	KASSERT(fp->f_count == 0);
+	KASSERT(fp->f_msgcount == 0);
+	KASSERT(fp->f_unpcount == 0);
 	fp->f_cred = kauth_cred_get();
 	kauth_cred_hold(fp->f_cred);
 
@@ -1004,10 +1014,18 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 		return ENFILE;
 	}
 
+	/*
+	 * Don't allow recycled files to be scanned.
+	 */
+	if ((fp->f_flag & FSCAN) != 0) {
+		mutex_enter(&fp->f_lock);
+		atomic_and_uint(&fp->f_flag, ~FSCAN);
+		mutex_exit(&fp->f_lock);
+	}
+
 	fp->f_advice = 0;
 	fp->f_msgcount = 0;
 	fp->f_offset = 0;
-	fp->f_iflags = 0;
 	*resultfp = fp;
 
 	return 0;
@@ -1284,7 +1302,7 @@ fd_copy(void)
 				i /= 2;
 			}
 			newfdp->fd_ofiles = fd_ofile_alloc(i);
-			KASSERT(i >= NDFILE);
+			KASSERT(i > NDFILE);
 		}
 		if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
 			newfdp->fd_himap = newfdp->fd_dhimap;
@@ -1313,7 +1331,7 @@ fd_copy(void)
 			break;
 		}
 		mutex_exit(&fdp->fd_lock);
-		if (i >= NDFILE) {
+		if (i > NDFILE) {
 			fd_ofile_free(i, newfdp->fd_ofiles);
 		}
 		if (NDHISLOTS(i) > NDHISLOTS(NDFILE)) {
@@ -1625,11 +1643,13 @@ fgetown(pid_t pgid, u_long cmd, void *data)
 void
 fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 {
-	struct proc *p1;
-	struct pgrp *pgrp;
 	ksiginfo_t ksi;
 
 	KASSERT(!cpu_intr_p());
+
+	if (pgid == 0) {
+		return;
+	}
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
@@ -1637,10 +1657,22 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	ksi.ksi_band = band;
 
 	mutex_enter(proc_lock);
-	if (pgid > 0 && (p1 = p_find(pgid, PFIND_LOCKED)))
-		kpsignal(p1, &ksi, fdescdata);
-	else if (pgid < 0 && (pgrp = pg_find(-pgid, PFIND_LOCKED)))
-		kpgsignal(pgrp, &ksi, fdescdata, 0);
+	if (pgid > 0) {
+		struct proc *p1;
+
+		p1 = p_find(pgid, PFIND_LOCKED);
+		if (p1 != NULL) {
+			kpsignal(p1, &ksi, fdescdata);
+		}
+	} else {
+		struct pgrp *pgrp;
+
+		KASSERT(pgid < 0);
+		pgrp = pg_find(-pgid, PFIND_LOCKED);
+		if (pgrp != NULL) {
+			kpgsignal(pgrp, &ksi, fdescdata, 0);
+		}
+	}
 	mutex_exit(proc_lock);
 }
 
@@ -1681,6 +1713,12 @@ fnullop_kqfilter(file_t *fp, struct knote *kn)
 {
 
 	return 0;
+}
+
+void
+fnullop_drain(file_t *fp)
+{
+
 }
 
 int

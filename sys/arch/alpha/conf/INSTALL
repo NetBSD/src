@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.97 2009/02/06 18:50:26 jym Exp $
+# $NetBSD: INSTALL,v 1.97.2.1 2009/05/13 17:16:05 jym Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -46,7 +46,6 @@ file-system	FFS		# Fast file system
 file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NFS		# Sun NFS-compatible file system client
-file-system	KERNFS		# Kernel variable file system (/kern)
 
 # File system options
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space

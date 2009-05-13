@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.6.14.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6.14.1 2009/05/13 17:18:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -42,11 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2008/04/28 20:23:28 martin Exp $")
 #include <machine/sysconf.h>
 
 void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
+cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	struct cpu_info *ci;
 

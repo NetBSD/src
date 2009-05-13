@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.22 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.22.2.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.22 2009/01/19 19:39:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.22.2.1 2009/05/13 17:21:57 jym Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.22 2009/01/19 19:39:41 christos Exp $
 #include <sys/shm.h>
 #endif
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
@@ -112,7 +112,7 @@ static int
 sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 {
 	void *where = oldp;
-	size_t *sizep = oldlenp;
+	size_t sz, *sizep = oldlenp;
 #ifdef SYSVMSG
 	struct msg_sysctl_info *msgsi = NULL;
 #endif
@@ -194,7 +194,8 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 		*sizep = 0;
 		return ENOMEM;
 	}
-	bf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK | M_ZERO);
+	sz = min(tsize, buflen);
+	bf = kmem_zalloc(sz, KM_SLEEP);
 
 	switch (*name) {
 #ifdef SYSVMSG
@@ -254,7 +255,7 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 	if (error == 0)
 		error = ret;
 	if (bf)
-		free(bf, M_TEMP);
+		kmem_free(bf, sz);
 	return error;
 }
 

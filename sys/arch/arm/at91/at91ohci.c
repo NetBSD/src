@@ -1,5 +1,5 @@
-/*	$Id: at91ohci.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91ohci.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91ohci.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $	*/
+/*	$NetBSD: at91ohci.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,8 +114,7 @@ at91ohci_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-at91ohci_callback(self)
-        device_t self;
+at91ohci_callback(device_t self)
 {
 	struct at91ohci_softc *sc = (struct at91ohci_softc *)self;
 	usbd_status r;

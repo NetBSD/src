@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.150 2008/11/06 03:34:37 dyoung Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.150.4.1 2009/05/13 17:22:28 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.150 2008/11/06 03:34:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.150.4.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -369,7 +369,7 @@ tcp_usrreq(struct socket *so, int req,
 #endif
 #ifdef INET6
 		if (in6p && in6p->in6p_lport == 0) {
-			error = in6_pcbbind(in6p, NULL, NULL);
+			error = in6_pcbbind(in6p, NULL, l);
 			if (error)
 				break;
 		}
@@ -398,7 +398,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET6
 		if (in6p) {
 			if (in6p->in6p_lport == 0) {
-				error = in6_pcbbind(in6p, NULL, NULL);
+				error = in6_pcbbind(in6p, NULL, l);
 				if (error)
 					break;
 			}
@@ -1108,6 +1108,7 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 	 */
 	switch (rnode->sysctl_num) {
 	case IPCTL_ANONPORTMIN:
+	case IPV6CTL_ANONPORTMIN:
 		if (tmp >= apmax)
 			return (EINVAL);
 #ifndef IPNOPRIVPORTS
@@ -1117,6 +1118,7 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 		break;
 
 	case IPCTL_ANONPORTMAX:
+	case IPV6CTL_ANONPORTMAX:
                 if (apmin >= tmp)
 			return (EINVAL);
 #ifndef IPNOPRIVPORTS
@@ -1127,6 +1129,7 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 
 #ifndef IPNOPRIVPORTS
 	case IPCTL_LOWPORTMIN:
+	case IPV6CTL_LOWPORTMIN:
 		if (tmp >= lpmax ||
 		    tmp > IPPORT_RESERVEDMAX ||
 		    tmp < IPPORT_RESERVEDMIN)
@@ -1134,6 +1137,7 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 		break;
 
 	case IPCTL_LOWPORTMAX:
+	case IPV6CTL_LOWPORTMAX:
 		if (lpmin >= tmp ||
 		    tmp > IPPORT_RESERVEDMAX ||
 		    tmp < IPPORT_RESERVEDMIN)
@@ -1148,23 +1152,6 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 	*(int*)rnode->sysctl_data = tmp;
 
 	return (0);
-}
-
-/*
- * The superuser can drop any connection.  Normal users can only drop
- * their own connections.
- */
-static inline int
-check_sockuid(struct socket *sockp, kauth_cred_t cred)
-{
-	uid_t sockuid;
-
-	sockuid = sockp->so_uidinfo->ui_uid;
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-	    sockuid == kauth_cred_getuid(cred) ||
-	    sockuid == kauth_cred_geteuid(cred))
-		return 0;
-	return EACCES;
 }
 
 static inline int
@@ -1201,13 +1188,16 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
 
 	if (dodrop) {
 		struct tcpcb *tp;
+		int error;
 		
 		if (inp == NULL || (tp = intotcpcb(inp)) == NULL ||
 		    (inp->inp_socket->so_options & SO_ACCEPTCONN) != 0)
 			return ESRCH;
-		
-		if (check_sockuid(inp->inp_socket, l->l_cred) != 0)
-			return EACCES;
+
+		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_DROP, inp->inp_socket, tp, NULL);
+		if (error)
+			return (error);
 		
 		(void)tcp_drop(tp, ECONNABORTED);
 		return 0;
@@ -1233,13 +1223,16 @@ inet6_ident_core(struct in6_addr *raddr, u_int rport,
 	
 	if (dodrop) {
 		struct tcpcb *tp;
+		int error;
 		
 		if (in6p == NULL || (tp = in6totcpcb(in6p)) == NULL ||
 		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) != 0)
 			return ESRCH;
 
-		if (check_sockuid(in6p->in6p_socket, l->l_cred) != 0)
-			return EACCES;
+		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_DROP, in6p->in6p_socket, tp, NULL);
+		if (error)
+			return (error);
 
 		(void)tcp_drop(tp, ECONNABORTED);
 		return 0;
@@ -1556,11 +1549,9 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 			dp += elem_size;
 			len -= elem_size;
 		}
-		if (elem_count > 0) {
-			needed += elem_size;
-			if (elem_count != INT_MAX)
-				elem_count--;
-		}
+		needed += elem_size;
+		if (elem_count > 0 && elem_count != INT_MAX)
+			elem_count--;
 	}
 
 	*oldlenp = needed;

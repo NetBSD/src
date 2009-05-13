@@ -1,4 +1,4 @@
-/* $NetBSD: lcavar.h,v 1.8 1997/09/02 12:40:22 thorpej Exp $ */
+/* $NetBSD: lcavar.h,v 1.8.172.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -60,9 +60,9 @@ struct lca_softc {
 	struct	lca_config *sc_lcp;
 };
 
-void	lca_init __P((struct lca_config *, int));
-void	lca_pci_init __P((pci_chipset_tag_t, void *));
-void	lca_dma_init __P((struct lca_config *));
+void	lca_init(struct lca_config *, int);
+void	lca_pci_init(pci_chipset_tag_t, void *);
+void	lca_dma_init(struct lca_config *);
 
-void	lca_bus_io_init __P((bus_space_tag_t, void *));
-void	lca_bus_mem_init __P((bus_space_tag_t, void *));
+void	lca_bus_io_init(bus_space_tag_t, void *);
+void	lca_bus_mem_init(bus_space_tag_t, void *);

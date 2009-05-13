@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.38 2008/03/21 08:17:30 dyoung Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.38.18.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.38 2008/03/21 08:17:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.38.18.1 2009/05/13 17:19:21 jym Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5799,7 +5799,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (sg_map == NULL)
 			return (0);
 
-		bzero(sg_map, sizeof(*sg_map));
+		memset(sg_map, 0, sizeof(*sg_map));
 
 		/* Allocate the next batch of S/G lists */
 		if (ahd_createdmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd), ahd->sc_dmaflags,
@@ -5839,7 +5839,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (sense_map == NULL)
 			return (0);
 
-		bzero(sense_map, sizeof(*sense_map));
+		memset(sense_map, 0, sizeof(*sense_map));
 
 		/* Allocate the next batch of sense buffers */
 		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
@@ -9711,16 +9711,7 @@ ahd_handle_target_cmd(struct ahd_softc *ahd, struct target_cmd *cmd)
 #endif
 
 static int
-ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
-	bus_dma_tag_t tag;
-	int size;
-	int flags;
-	bus_dmamap_t *mapp;
-	void **vaddr;
-	bus_addr_t *baddr;
-	bus_dma_segment_t *seg;
-	int *nseg;
-	const char *myname, *what;
+ahd_createdmamem(bus_dma_tag_t tag, int size, int flags, bus_dmamap_t *mapp, void **vaddr, bus_addr_t *baddr, bus_dma_segment_t *seg, int *nseg, const char *myname, const char *what)
 {
 	int error, level = 0;
 
@@ -9779,13 +9770,7 @@ out:
 }
 
 static void
-ahd_freedmamem(tag, size, map, vaddr, seg, nseg)
-	bus_dma_tag_t tag;
-	int size;
-	bus_dmamap_t map;
-	void *vaddr;
-	bus_dma_segment_t *seg;
-	int nseg;
+ahd_freedmamem(bus_dma_tag_t tag, int size, bus_dmamap_t map, void *vaddr, bus_dma_segment_t *seg, int nseg)
 {
 
 	bus_dmamap_unload(tag, map);

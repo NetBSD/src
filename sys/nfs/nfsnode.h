@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.70 2009/01/02 21:06:11 christos Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.70.2.1 2009/05/13 17:22:52 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -239,53 +239,53 @@ extern u_long nfsdirhashmask;
 /*
  * Prototypes for NFS vnode operations
  */
-int	nfs_lookup	__P((void *));
-int	nfs_create	__P((void *));
-int	nfs_mknod	__P((void *));
-int	nfs_open	__P((void *));
-int	nfs_close	__P((void *));
-int	nfsspec_close	__P((void *));
-int	nfsfifo_close	__P((void *));
-int	nfs_access	__P((void *));
-int	nfsspec_access	__P((void *));
-int	nfs_getattr	__P((void *));
-int	nfs_setattr	__P((void *));
-int	nfs_read	__P((void *));
-int	nfs_write	__P((void *));
-int	nfsspec_read	__P((void *));
-int	nfsspec_write	__P((void *));
-int	nfsfifo_read	__P((void *));
-int	nfsfifo_write	__P((void *));
+int	nfs_lookup(void *);
+int	nfs_create(void *);
+int	nfs_mknod(void *);
+int	nfs_open(void *);
+int	nfs_close(void *);
+int	nfsspec_close(void *);
+int	nfsfifo_close(void *);
+int	nfs_access(void *);
+int	nfsspec_access(void *);
+int	nfs_getattr(void *);
+int	nfs_setattr(void *);
+int	nfs_read(void *);
+int	nfs_write(void *);
+int	nfsspec_read(void *);
+int	nfsspec_write(void *);
+int	nfsfifo_read(void *);
+int	nfsfifo_write(void *);
 #define	nfs_ioctl	genfs_enoioctl
 #define	nfs_poll	genfs_poll
 #define nfs_revoke	genfs_revoke
 #define	nfs_mmap	genfs_mmap
-int	nfs_fsync	__P((void *));
+int	nfs_fsync(void *);
 #define nfs_seek	genfs_seek
-int	nfs_remove	__P((void *));
-int	nfs_link	__P((void *));
-int	nfs_rename	__P((void *));
-int	nfs_mkdir	__P((void *));
-int	nfs_rmdir	__P((void *));
-int	nfs_symlink	__P((void *));
-int	nfs_readdir	__P((void *));
-int	nfs_readlink	__P((void *));
+int	nfs_remove(void *);
+int	nfs_link(void *);
+int	nfs_rename(void *);
+int	nfs_mkdir(void *);
+int	nfs_rmdir(void *);
+int	nfs_symlink(void *);
+int	nfs_readdir(void *);
+int	nfs_readlink(void *);
 #define	nfs_abortop	genfs_abortop
-int	nfs_inactive	__P((void *));
-int	nfs_reclaim	__P((void *));
+int	nfs_inactive(void *);
+int	nfs_reclaim(void *);
 #define nfs_lock	genfs_lock
-int	nfs_unlock	__P((void *));
+int	nfs_unlock(void *);
 #define nfs_islocked	genfs_islocked
-int	nfs_bmap	__P((void *));
-int	nfs_strategy	__P((void *));
-int	nfs_print	__P((void *));
-int	nfs_pathconf	__P((void *));
-int	nfs_advlock	__P((void *));
-int	nfs_getpages	__P((void *));
-int	nfs_putpages	__P((void *));
-int	nfs_kqfilter	__P((void *));
+int	nfs_bmap(void *);
+int	nfs_strategy(void *);
+int	nfs_print(void *);
+int	nfs_pathconf(void *);
+int	nfs_advlock(void *);
+int	nfs_getpages(void *);
+int	nfs_putpages(void *);
+int	nfs_kqfilter(void *);
 
-extern int (**nfsv2_vnodeop_p) __P((void *));
+extern int (**nfsv2_vnodeop_p)(void *);
 
 #define	NFS_INVALIDATE_ATTRCACHE(np)	(np)->n_attrstamp = 0
 

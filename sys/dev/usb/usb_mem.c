@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.37 2008/06/28 17:42:53 bouyer Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.37.10.1 2009/05/13 17:21:35 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.37 2008/06/28 17:42:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.37.10.1 2009/05/13 17:21:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	u_long start;
 	bus_addr_t baddr;
 
-	if (rs->vaddr == 0)
+	if (rs->vaddr == 0 || size > USB_MEM_RESERVE)
 		return USBD_NOMEM;
 
 	dma->block = malloc(sizeof *dma->block, M_USB, M_ZERO | M_NOWAIT);
@@ -378,7 +378,7 @@ usb_setup_reserve(device_t dv, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
 
 	rs->paddr = rs->map->dm_segs[0].ds_addr;
 	rs->extent = extent_create(device_xname(dv), (u_long)rs->paddr,
-	    (u_long)(rs->paddr + USB_MEM_RESERVE),
+	    (u_long)(rs->paddr + USB_MEM_RESERVE - 1),
 	    M_USB, 0, 0, 0);
 	if (rs->extent == NULL) {
 		rs->vaddr = 0;

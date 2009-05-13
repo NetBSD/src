@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.21 2009/01/01 13:53:07 jdc Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.21.2.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.21 2009/01/01 13:53:07 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.21.2.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,20 +96,18 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.21 2009/01/01 13:53:07 jdc Exp $");
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 
-#include "wsdisplay.h"
-#if NWSDISPLAY > 0
-#include <dev/wscons/wsconsio.h>
-#include <dev/wsfont/wsfont.h>
-#include <dev/rasops/rasops.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
-
-#include "opt_wsemul.h"
-#endif
-
 #include <dev/sun/btreg.h>
 #include <dev/sun/bwtworeg.h>
 #include <dev/sun/bwtwovar.h>
 #include <dev/sun/pfourreg.h>
+
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsconsio.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+
+#include "opt_wsemul.h"
+#endif
 
 extern struct cfdriver bwtwo_cd;
 
@@ -123,7 +121,7 @@ const struct cdevsw bwtwo_cdevsw = {
 };
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */
-static void	bwtwounblank(struct device *);
+static void	bwtwounblank(device_t);
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
@@ -174,11 +172,9 @@ static struct vcons_screen bw2_console_screen;
 #endif /* NWSDISPLAY > 0 */
 
 int
-bwtwo_pfour_probe(vaddr, arg)
-	void *vaddr;
-	void *arg;
+bwtwo_pfour_probe(void *vaddr, void *arg)
 {
-	struct cfdata *cf = arg;
+	cfdata_t cf = arg;
 
 	switch (fb_pfour_id(vaddr)) {
 	case PFOUR_ID_BW:
@@ -194,10 +190,7 @@ bwtwo_pfour_probe(vaddr, arg)
 }
 
 void
-bwtwoattach(sc, name, isconsole)
-	struct	bwtwo_softc *sc;
-	const char *name;
-	int	isconsole;
+bwtwoattach(struct bwtwo_softc *sc, const char *name, int isconsole)
 {
 	struct fbdevice *fb = &sc->sc_fb;
 	int isoverlay;
@@ -327,10 +320,7 @@ bwtwoattach(sc, name, isconsole)
 }
 
 int
-bwtwoopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+bwtwoopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -341,12 +331,7 @@ bwtwoopen(dev, flags, mode, l)
 }
 
 int
-bwtwoioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+bwtwoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct bwtwo_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 
@@ -371,8 +356,7 @@ bwtwoioctl(dev, cmd, data, flags, l)
 }
 
 static void
-bwtwounblank(dev)
-	struct device *dev;
+bwtwounblank(device_t dev)
 {
 	struct bwtwo_softc *sc = device_private(dev);
 
@@ -384,10 +368,7 @@ bwtwounblank(dev)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-bwtwommap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+bwtwommap(dev_t dev, off_t off, int prot)
 {
 	struct bwtwo_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 

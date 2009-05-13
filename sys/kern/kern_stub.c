@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.17 2009/01/11 19:40:38 christos Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.17.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.17 2009/01/11 19:40:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.17.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
+#include "opt_modular.h"
 #include "opt_sa.h"
 #ifdef _KERNEL_OPT
 #include "fs_lfs.h"

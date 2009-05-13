@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.3 2009/01/14 00:56:15 haad Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.3.6.1 2009/05/13 17:19:16 jym Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,9 +61,10 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if ((dmt = dm_target_lookup("mirror")) != NULL)
+		if ((dmt = dm_target_lookup("mirror")) != NULL){
+			dm_target_unbusy(dmt);
 			return EEXIST;
-
+		}
 		dmt = dm_target_alloc("mirror");
 		
 		dmt->version[0] = 1;
@@ -97,7 +98,11 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 
 #endif
 
-/* Init function called from dm_table_load_ioctl. */
+/*
+ * Init function called from dm_table_load_ioctl.
+ * start length mirror log_type #logargs logarg1 ... logargN #devs device1 offset1 ... deviceN offsetN
+ * 0 52428800 mirror clustered_disk 4 253:2 1024 UUID block_on_error 3 253:3 0 253:4 0 253:5 0
+ */
 int
 dm_target_mirror_init(dm_dev_t *dmv, void **target_config, char *argv)
 {

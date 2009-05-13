@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.h,v 1.2 2000/01/16 03:07:26 takemura Exp $	*/
+/*	$NetBSD: winblk.h,v 1.2.148.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  */
-int winblkstrategy __P((void*, int, daddr_t, size_t, void*, size_t*));
-int winblkopen __P((struct open_file*, ...));
-int winblkclose __P((struct open_file*));
-int winblkioctl __P((struct open_file*, u_long, void*));
+int winblkstrategy(void*, int, daddr_t, size_t, void*, size_t*);
+int winblkopen(struct open_file*, ...);
+int winblkclose(struct open_file*);
+int winblkioctl(struct open_file*, u_long, void*);

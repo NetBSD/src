@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44 2008/09/20 18:29:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.44.8.1 2009/05/13 17:18:02 jym Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -276,9 +276,6 @@ define	TF_REG_MULLO	offsetof(struct trapframe, tf_regs[TF_MULLO])
 define	TF_REG_MULHI	offsetof(struct trapframe, tf_regs[TF_MULHI])
 define	TF_REG_EPC	offsetof(struct trapframe, tf_regs[TF_EPC])
 define	TF_PPL		offsetof(struct trapframe, tf_ppl)
-
-# XXX Atheros HAL
-define	TF_PAD		offsetof(struct trapframe, tf_pad)
 
 define	CTXSWFRAME_SIZ	sizeof(label_t)
 define	SF_REG_SR	offsetof(label_t, val[11])

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.224 2008/12/16 22:35:36 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.224.2.1 2009/05/13 17:21:35 jym Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.224 2008/12/16 22:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.224.2.1 2009/05/13 17:21:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,10 +563,11 @@ uhci_init(uhci_softc_t *sc)
 	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
 	DPRINTFN(1,("uhci_init: enabling\n"));
+
+	err =  uhci_run(sc, 1);		/* and here we go... */
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE |
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
-
-	return (uhci_run(sc, 1));		/* and here we go... */
+	return err;
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -618,6 +619,9 @@ uhci_detach(struct uhci_softc *sc, int flags)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 		free(xfer, M_USB);
 	}
+
+	callout_halt(&sc->sc_poll_handle, NULL);
+	callout_destroy(&sc->sc_poll_handle);
 
 	/* XXX free other data structures XXX */
 
@@ -1030,12 +1034,15 @@ uhci_poll_hub(void *addr)
 {
 	usbd_xfer_handle xfer = addr;
 	usbd_pipe_handle pipe = xfer->pipe;
-	uhci_softc_t *sc = pipe->device->bus->hci_private;
+	uhci_softc_t *sc;
 	int s;
 	u_char *p;
 
 	DPRINTFN(20, ("uhci_poll_hub\n"));
 
+	if (__predict_false(pipe->device == NULL || pipe->device->bus == NULL))
+		return;	/* device has detached */
+	sc = pipe->device->bus->hci_private;
 	usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
 
 	p = KERNADDR(&xfer->dmabuf, 0);
@@ -1309,7 +1316,7 @@ uhci_intr(void *arg)
 	if (sc->sc_dying || !device_has_power(sc->sc_dev))
 		return (0);
 
-	if (sc->sc_bus.use_polling) {
+	if (sc->sc_bus.use_polling || UREAD2(sc, UHCI_INTR) == 0) {
 #ifdef DIAGNOSTIC
 		DPRINTFN(16, ("uhci_intr: ignored interrupt while polling\n"));
 #endif

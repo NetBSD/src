@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_getexp.c,v 1.3 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_getexp.c,v 1.3.92.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,15 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_getexp.c,v 1.3 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_getexp.c,v 1.3.92.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/types.h>
 
 #include "fpu_emulate.h"
 
 struct fpn *
-fpu_getexp(fe)
-     struct fpemu *fe;
+fpu_getexp(struct fpemu *fe)
 {
   struct fpn *fp = &fe->fe_f2;
 
@@ -59,8 +58,7 @@ fpu_getexp(fe)
 }
 
 struct fpn *
-fpu_getman(fe)
-     struct fpemu *fe;
+fpu_getman(struct fpemu *fe)
 {
   struct fpn *fp = &fe->fe_f2;
 

@@ -1,6 +1,16 @@
-# $NetBSD: files.ioc,v 1.2 2005/12/11 12:18:53 christos Exp $
+# $NetBSD: files.ioc,v 1.2.92.1 2009/05/13 17:18:18 jym Exp $
 
-device ioc {[offset = -1], [intr = -1] }
-attach ioc at mainbus
-file arch/sgimips/ioc/ioc.c			ioc
+device	ioc {[offset = -1], [intr = -1] }
+attach	ioc at mainbus
+file	arch/sgimips/ioc/ioc.c			ioc
 
+device	oioc {[offset = -1], [intr = -1] }
+attach	oioc at mainbus
+file	arch/sgimips/ioc/oioc.c			oioc
+
+attach	le at oioc: le24
+file	arch/sgimips/ioc/if_le_oioc.c		le24
+
+device	oiocsc: wd33c93, scsi
+attach	oiocsc at oioc
+file	arch/sgimips/ioc/oiocsc.c		oiocsc

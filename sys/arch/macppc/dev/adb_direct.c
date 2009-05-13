@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.39 2007/10/17 19:55:17 garbled Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.39.34.1 2009/05/13 17:18:00 jym Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.39 2007/10/17 19:55:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.39.34.1 2009/05/13 17:18:00 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.39 2007/10/17 19:55:17 garbled Exp 
  * A structure for storing information about each ADB device.
  */
 struct ADBDevEntry {
-	void	(*ServiceRtPtr) __P((void));
+	void	(*ServiceRtPtr)(void);
 	void	*DataAreaAddr;
 	int	devType;
 	int	origAddr;
@@ -227,38 +227,38 @@ struct callout adb_soft_intr_ch;
 volatile u_char *Via1Base;
 extern int adb_polling;			/* Are we polling? */
 
-void	pm_setup_adb __P((void));
-void	pm_check_adb_devices __P((int));
-int	pm_adb_op __P((u_char *, void *, volatile void *, int));
-void	pm_init_adb_device __P((void));
+void	pm_setup_adb(void);
+void	pm_check_adb_devices(int);
+int	pm_adb_op(u_char *, void *, volatile void *, int);
+void	pm_init_adb_device(void);
 
 /*
  * The following are private routines.
  */
 #ifdef ADB_DEBUG
-void	print_single __P((u_char *));
+void	print_single(u_char *);
 #endif
-void	adb_soft_intr __P((void));
-int	send_adb_cuda __P((u_char *, u_char *, adbComp *, volatile void *, int));
-void	adb_intr_cuda_test __P((void));
-void	adb_cuda_tickle __P((void));
-void	adb_pass_up __P((struct adbCommand *));
-void	adb_op_comprout __P((void *, volatile int *, int));
-void	adb_reinit __P((void));
-int	count_adbs __P((void));
-int	get_ind_adb_info __P((ADBDataBlock *, int));
-int	get_adb_info __P((ADBDataBlock *, int));
-int	set_adb_info __P((ADBSetInfoBlock *, int));
-void	adb_setup_hw_type __P((void));
+void	adb_soft_intr(void);
+int	send_adb_cuda(u_char *, u_char *, adbComp *, volatile void *, int);
+void	adb_intr_cuda_test(void);
+void	adb_cuda_tickle(void);
+void	adb_pass_up(struct adbCommand *);
+void	adb_op_comprout(void *, volatile int *, int);
+void	adb_reinit(void);
+int	count_adbs(void);
+int	get_ind_adb_info(ADBDataBlock *, int);
+int	get_adb_info(ADBDataBlock *, int);
+int	set_adb_info(ADBSetInfoBlock *, int);
+void	adb_setup_hw_type(void);
 int	adb_op (Ptr, adbComp *, volatile void *, short);
-int	adb_op_sync __P((Ptr, adbComp *, Ptr, short));
-void	adb_hw_setup __P((void));
-int	adb_cmd_result __P((u_char *));
-int	adb_cmd_extra __P((u_char *));
+int	adb_op_sync(Ptr, adbComp *, Ptr, short);
+void	adb_hw_setup(void);
+int	adb_cmd_result(u_char *);
+int	adb_cmd_extra(u_char *);
 /* we should create this and it will be the public version */
-int	send_adb __P((u_char *, void *, void *));
+int	send_adb(u_char *, void *, void *);
 
-int	setsoftadb __P((void));
+int	setsoftadb(void);
 
 #ifdef ADB_DEBUG
 /*
@@ -268,8 +268,7 @@ int	setsoftadb __P((void));
  * is in [0].
  */
 void
-print_single(str)
-	u_char *str;
+print_single(u_char *str)
 {
 	int x;
 
@@ -1614,14 +1613,14 @@ ADBOp(Ptr buffer, adbComp *compRout, Ptr data, short commandNum)
 #endif
 
 int
-setsoftadb()
+setsoftadb(void)
 {
 	callout_reset(&adb_soft_intr_ch, 1, (void *)adb_soft_intr, NULL);
 	return 0;
 }
 
 void
-adb_cuda_autopoll()
+adb_cuda_autopoll(void)
 {
 	volatile int flag = 0;
 	int result;

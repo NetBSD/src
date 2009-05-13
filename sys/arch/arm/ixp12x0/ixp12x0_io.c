@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.11 2005/11/24 13:08:32 yamt Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.11.94.1 2009/05/13 17:16:18 jym Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.11 2005/11/24 13:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.11.94.1 2009/05/13 17:16:18 jym Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0
@@ -196,11 +196,7 @@ ixp12x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 }
 
 int
-ixp12x0_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+ixp12x0_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -208,9 +204,7 @@ ixp12x0_bs_subregion(t, bsh, offset, size, nbshp)
 }
 
 void *
-ixp12x0_bs_vaddr(t, bsh)
-	void *t;
-	bus_space_handle_t bsh;
+ixp12x0_bs_vaddr(void *t, bus_space_handle_t bsh)
 {
 	return ((void *)bsh);
 }
@@ -232,11 +226,7 @@ ixp12x0_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 }
 
 void
-ixp12x0_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+ixp12x0_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 /* NULL */
 }	

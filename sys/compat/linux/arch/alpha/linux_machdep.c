@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.43 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.43.14.1 2009/05/13 17:18:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.43 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.43.14.1 2009/05/13 17:18:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 	    fpcurlwp = NULL;
 
 	/* Restore fp regs and fpr_cr */
-	bcopy((struct fpreg *)context.sc_fpregs, &l->l_addr->u_pcb.pcb_fp,
+	memcpy( &l->l_addr->u_pcb.pcb_fp, (struct fpreg *)context.sc_fpregs,
 	    sizeof(struct fpreg));
 	/* XXX sc_ownedfp ? */
 	/* XXX sc_fp_control ? */

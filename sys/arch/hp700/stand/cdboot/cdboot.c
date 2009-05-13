@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.c,v 1.1 2008/05/10 19:11:59 skrll Exp $	*/
+/*	$NetBSD: cdboot.c,v 1.1.20.1 2009/05/13 17:17:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,8 +50,8 @@
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -95,14 +95,14 @@ boot(dev_t boot_dev)
 	char path[128];
 	int fd;
 
-        machdep();
+	machdep();
 #ifdef	DEBUGBUG
 	debug = 1;
 #endif
 	devboot(boot_dev, path);
 
 	strncpy(path + strlen(path), ":/netbsd", 9);
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);  
+	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> Booting %s: ", path);
 
 #define	round_to_size(x) \

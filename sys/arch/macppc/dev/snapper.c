@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.31 2008/12/16 22:35:24 christos Exp $	*/
+/*	$NetBSD: snapper.c,v 1.31.2.1 2009/05/13 17:18:01 jym Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.31 2008/12/16 22:35:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.31.2.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -696,7 +696,7 @@ snapper_match(device_t parent, struct cfdata *match, void *aux)
 	    (soundchip = OF_child(soundbus)) == 0)
 		return 0;
 
-	bzero(compat, sizeof compat);
+	memset(compat, 0, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
 	if (strcmp(compat, "snapper") == 0)
@@ -733,7 +733,7 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	ca = aux;
 
 	soundbus = OF_child(ca->ca_node);
-	bzero(compat, sizeof compat);
+	memset(compat, 0, sizeof compat);
 	OF_getprop(OF_child(soundbus), "compatible", compat, sizeof compat);
 
 	if (strcmp(compat, "tumbler") == 0)
@@ -2035,8 +2035,8 @@ snapper_init(struct snapper_softc *sc, int node)
 		int intr[2];
 		char *addr;
 
-		bzero(name, sizeof name);
-		bzero(audio_gpio, sizeof audio_gpio);
+		memset(name, 0, sizeof name);
+		memset(audio_gpio, 0, sizeof audio_gpio);
 		addr = 0;
 		OF_getprop(gpio, "name", name, sizeof name);
 		OF_getprop(gpio, "audio-gpio", audio_gpio, sizeof audio_gpio);

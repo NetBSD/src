@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_disk.c,v 1.94 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.94.2.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.94 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.94.2.1 2009/05/13 17:21:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -269,6 +269,16 @@ disk_unbusy(struct disk *diskp, long bcount, int read)
 {
 
 	iostat_unbusy(diskp->dk_stats, bcount, read);
+}
+
+/*
+ * Return true if disk has an I/O operation in flight.
+ */
+bool
+disk_isbusy(struct disk *diskp)
+{
+
+	return iostat_isbusy(diskp->dk_stats);
 }
 
 /*

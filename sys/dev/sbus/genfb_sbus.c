@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.5 2008/04/29 06:53:03 martin Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.5.14.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.5 2008/04/29 06:53:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.5.14.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ struct genfb_sbus_softc {
 	paddr_t sc_paddr;
 };
 
-static int	genfb_match_sbus(struct device *, struct cfdata *, void *);
-static void	genfb_attach_sbus(struct device *, struct device *, void *);
+static int	genfb_match_sbus(device_t, cfdata_t, void *);
+static void	genfb_attach_sbus(device_t, device_t, void *);
 static int	genfb_ioctl_sbus(void *, void *, u_long, void *, int,
 				 struct lwp*);
 static paddr_t	genfb_mmap_sbus(void *, void *, off_t, int);
@@ -70,7 +70,7 @@ CFATTACH_DECL(genfb_sbus, sizeof(struct genfb_sbus_softc),
  * Match a graphics device.
  */
 static int
-genfb_match_sbus(struct device *parent,	struct cfdata *cf, void *aux)
+genfb_match_sbus(device_t parent,	cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -88,7 +88,7 @@ genfb_match_sbus(struct device *parent,	struct cfdata *cf, void *aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 static void
-genfb_attach_sbus(struct device *parent, struct device *self, void *args)
+genfb_attach_sbus(device_t parent, device_t self, void *args)
 {
 	struct genfb_sbus_softc *sc = (struct genfb_sbus_softc *)self;
 	struct sbusdev *sd = &sc->sc_sd;

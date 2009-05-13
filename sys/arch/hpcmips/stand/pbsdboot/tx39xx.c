@@ -1,4 +1,4 @@
-/* $NetBSD: tx39xx.c,v 1.6 2007/03/04 05:59:53 christos Exp $ */
+/* $NetBSD: tx39xx.c,v 1.6.58.1 2009/05/13 17:17:46 jym Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura, UCHIYAMA Yasushi
@@ -40,7 +40,7 @@
 
 extern void tx39xx_asm_code();
 extern void tx39xx_asm_code_end();
-void tx39xx_asm_code_holder __P((void));
+void tx39xx_asm_code_holder(void);
 
 #define TX39_SYSADDR_CONFIG_REG		0x10C00000
 #define TX39_SYSADDR_CONFIG_REG_LEN	0x00200000
@@ -48,18 +48,13 @@ typedef int tx_chipset_tag_t;
 u_int32_t __tx39conf_addr;
 
 u_int32_t
-tx_conf_read(t, reg)
-	tx_chipset_tag_t t;
-	int reg;
+tx_conf_read(tx_chipset_tag_t t, int reg)
 {
 	return *((u_int32_t*)(__tx39conf_addr + reg));
 }
 
 void
-tx_conf_write(t, reg, val)
-	tx_chipset_tag_t t;
-	int reg;
-	u_int32_t val;
+tx_conf_write(tx_chipset_tag_t t, int reg, u_int32_t val)
 {
 	u_int32_t addr = (u_int32_t)t;
 	*((u_int32_t*)(__tx39conf_addr +reg)) = val;

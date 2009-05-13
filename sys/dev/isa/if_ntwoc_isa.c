@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.17 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.17.18.1 2009/05/13 17:19:53 jym Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.17 2008/04/08 20:08:50 cegger Exp $
+ * $Id: if_ntwoc_isa.c,v 1.17.18.1 2009/05/13 17:19:53 jym Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.18.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17 2008/04/08 20:08:50 cegger Exp
 #endif
 
 #if __NetBSD_Version__ >= 104160000
-static	void ntwoc_isa_config_interrupts(struct device *);
+static	void ntwoc_isa_config_interrupts(device_t);
 #else
 #define	SCA_BASECLOCK	9830400
 #endif
@@ -84,8 +84,8 @@ struct ntwoc_isa_softc {
 	struct sca_softc sc_sca;	/* the SCA itself */
 };
 
-static  int ntwoc_isa_probe(struct device *, struct cfdata *, void *);
-static  void ntwoc_isa_attach(struct device *, struct device *, void *);
+static  int ntwoc_isa_probe(device_t, cfdata_t, void *);
+static  void ntwoc_isa_attach(device_t, device_t, void *);
 
 static	void ntwoc_isa_clock_callback(void *, int, int);
 static	void ntwoc_isa_dtr_callback(void *, int, int);
@@ -186,7 +186,7 @@ ntwoc_isa_set_off(struct sca_softc *sca)
 }
 
 static int
-ntwoc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+ntwoc_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia;
 	bus_space_tag_t iot, memt;
@@ -381,7 +381,7 @@ out:
  * we win! attach the card
  */
 static void
-ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
+ntwoc_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ntwoc_isa_softc *sc;
 	struct isa_attach_args *ia;
@@ -465,7 +465,7 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	     sca->scu_pagesize, 0, &sca->scu_memh))) {
 		aprint_error_dev(&sc->sc_dev, "can't map mem 0x%x sz %ld, %d\n",
 		    ia->ia_iomem[0].ir_addr,
-		    sca->scu_pagesize, rv);
+		    (u_long)sca->scu_pagesize, rv);
 		return;
 	}
 
@@ -548,7 +548,7 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	    (sca->sc_numports > 1 ? "s" : ""));
 #else
 	printf("%s: dpram %ldk %d serial port%s\n",
-	    device_xname(&sc->sc_dev), pgs * (sca->scu_pagesize / 1024),
+	    device_xname(&sc->sc_dev), (u_long)pgs * (sca->scu_pagesize / 1024),
 	    sca->sc_numports, (sca->sc_numports > 1 ? "s" : ""));
 #endif
 
@@ -802,8 +802,7 @@ ntwoc_isa_setup_memory(struct sca_softc *sc)
  * get the base clock frequency
  */
 static void
-ntwoc_isa_config_interrupts(self)
-	struct device *self;
+ntwoc_isa_config_interrupts(device_t self)
 {
 	struct ntwoc_isa_softc *sc;
 

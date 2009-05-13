@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.8 2007/03/04 05:59:06 christos Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.8.60.1 2009/05/13 17:16:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.8 2007/03/04 05:59:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.8.60.1 2009/05/13 17:16:02 jym Exp $");
 
 #include "opt_md.h"
 
@@ -56,15 +56,13 @@ char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 size_t md_root_size = 0;		/* set by machdep.c */
 static struct md_conf *bootmd = NULL;
 
-extern int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
+extern int load_memory_disc_from_floppy(struct md_conf *md, dev_t dev);
 
 #include "fdc.h"
 #endif	/* MEMORY_DISK_ROOT_SIZE */
 
 void
-md_attach_hook(unit, md)
-	int unit;
-	struct md_conf *md;
+md_attach_hook(int unit, struct md_conf *md)
 {
 	if (unit == 0) {
 #ifdef MEMORY_DISK_ROOT_SIZE
@@ -95,9 +93,7 @@ md_attach_hook(unit, md)
  */
 
 void
-md_open_hook(unit, md)
-	int unit;
-	struct md_conf *md;
+md_open_hook(int unit, struct md_conf *md)
 {
 	if (unit == 0) {
 		/* The root memory disk only works single-user. */

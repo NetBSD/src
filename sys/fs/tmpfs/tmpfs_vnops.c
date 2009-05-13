@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.53 2009/02/07 19:42:57 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.53.2.1 2009/05/13 17:21:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.53 2009/02/07 19:42:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.53.2.1 2009/05/13 17:21:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -204,9 +204,7 @@ tmpfs_lookup(void *v)
 				goto out;
 			}
 
-			/* If we are deleting or renaming the entry, keep
-			 * track of its tmpfs_dirent so that it can be
-			 * easily deleted later. */
+			/* Check permissions */
 			if ((cnp->cn_flags & ISLASTCN) &&
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
@@ -219,6 +217,7 @@ tmpfs_lookup(void *v)
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (error != 0)
 					goto out;
+				cnp->cn_flags |= SAVENAME;
 			} else
 				de = NULL;
 
@@ -270,8 +269,10 @@ tmpfs_mknod(void *v)
 	struct vattr *vap = ((struct vop_mknod_args *)v)->a_vap;
 
 	if (vap->va_type != VBLK && vap->va_type != VCHR &&
-	    vap->va_type != VFIFO)
+	    vap->va_type != VFIFO) {
+		vput(dvp);
 		return EINVAL;
+	}
 
 	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
 }
@@ -650,10 +651,7 @@ tmpfs_remove(void *v)
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 	de = tmpfs_dir_lookup(dnode, cnp);
-	if (de == NULL) {
-		error = ENOENT;
-		goto out;
-	}
+	KASSERT(de);
 	KASSERT(de->td_node == node);
 
 	/* Files marked as immutable or append-only cannot be deleted. */
@@ -679,6 +677,7 @@ out:
 		vrele(dvp);
 	else
 		vput(dvp);
+	PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }
@@ -822,26 +821,20 @@ tmpfs_rename(void *v)
 			goto out_unlocked;
 	}
 
+	/*
+	 * If the node we were renaming has scarpered, just give up.
+	 */
 	de = tmpfs_dir_lookup(fdnode, fcnp);
-	if (de == NULL) {
+	if (de == NULL || de->td_node != fnode) {
 		error = ENOENT;
 		goto out;
 	}
-	KASSERT(de->td_node == fnode);
 
 	/* If source and target are the same file, there is nothing to do. */
 	if (fvp == tvp) {
 		error = 0;
 		goto out;
 	}
-
-	/* Avoid manipulating '.' and '..' entries. */
-	if (de == NULL) {
-		KASSERT(fvp->v_type == VDIR);
-		error = EINVAL;
-		goto out;
-	}
-	KASSERT(de->td_node == fnode);
 
 	/* If replacing an existing entry, ensure we can do the operation. */
 	if (tvp != NULL) {
@@ -1035,10 +1028,7 @@ tmpfs_rmdir(void *v)
 
 	/* Get the directory entry associated with node (vp). */
 	de = tmpfs_dir_lookup(dnode, cnp);
-	if (de == NULL) {
-		error = ENOENT;
-		goto out;
-	}
+	KASSERT(de);
 	KASSERT(de->td_node == node);
 
 	/* Check flags to see if we are allowed to remove the directory. */
@@ -1070,6 +1060,7 @@ tmpfs_rmdir(void *v)
 	/* Release the nodes. */
 	vput(dvp);
 	vput(vp);
+	PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }

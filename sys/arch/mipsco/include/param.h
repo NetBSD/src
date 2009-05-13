@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2007/10/17 19:55:46 garbled Exp $	*/
+/*	$NetBSD: param.h,v 1.9.34.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,7 +137,7 @@
 
 #include <machine/intr.h>
 
-extern void delay __P((int n));
+extern void delay(int n);
 extern int cpuspeed;
 static __inline void __attribute__((__unused__))
 DELAY(int n)

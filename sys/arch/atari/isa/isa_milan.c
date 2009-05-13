@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.9 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.9.14.1 2009/05/13 17:16:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.9 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.9.14.1 2009/05/13 17:16:30 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ static u_int16_t imask_enable = 0xffff;
 static isa_intr_info_t milan_isa_iinfo[MILAN_MAX_ISA_INTS];
 
 void
-isa_bus_init()
+isa_bus_init(void)
 {
 	volatile u_int8_t	*icu;
 
@@ -96,7 +96,7 @@ isa_bus_init()
  * array for enabled interrupts.
  */
 static void
-new_imask()
+new_imask(void)
 {
 	int		irq;
 	u_int16_t	nmask = 0;
@@ -113,8 +113,7 @@ new_imask()
 }
 
 static void
-isa_callback(vector)
-	int	vector;
+isa_callback(int vector)
 {
 	isa_intr_info_t	*iinfo_p;
 	int		s;
@@ -131,8 +130,7 @@ isa_callback(vector)
 
 void milan_isa_intr(int, int);
 void
-milan_isa_intr(vector, sr)
-	int	vector, sr;
+milan_isa_intr(int vector, int sr)
 {
 	isa_intr_info_t *iinfo_p;
 	int		s;
@@ -175,11 +173,7 @@ milan_isa_intr(vector, sr)
 #define	MILAN_AVAIL_ISA_INTS	0x1720
 
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	int	i;
 
@@ -201,11 +195,7 @@ isa_intr_alloc(ic, mask, type, irq)
 }
 
 void *
-isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int		  irq, type, level;
-	int		  (*ih_fun) __P((void *));
-	void		  *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg)
 {
 	isa_intr_info_t *iinfo_p;
 
@@ -228,9 +218,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 }
 
 void
-isa_intr_disestablish(ic, handler)
-	isa_chipset_tag_t	ic;
-	void			*handler;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *handler)
 {
 	isa_intr_info_t *iinfo_p = (isa_intr_info_t *)handler;
 

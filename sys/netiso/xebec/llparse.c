@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.c,v 1.12 2007/02/22 06:16:03 thorpej Exp $	*/
+/*	$NetBSD: llparse.c,v 1.12.58.1 2009/05/13 17:22:50 jym Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.12 2007/02/22 06:16:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.12.58.1 2009/05/13 17:22:50 jym Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -31,7 +31,7 @@ LLtoken		lltoken;
 void		prt_token();
 
 int
-llparse()
+llparse(void)
 {
 	register int		havetoken = false;
 	register int		sym;
@@ -171,8 +171,7 @@ llpushprod(prod) 	/* recognize production prod - push rhs on stack */
 }
 
 int
-llepsilonok(term)
-	int term;
+llepsilonok(int term)
 {
 	register int	ptr;
 	register int	sym;
@@ -225,9 +224,7 @@ llepsilonok(term)
 
 
 short
-llfindaction(sym, term)
-	int sym;
-	int term;
+llfindaction(int sym, int term)
 {
 	register int	index;
 
@@ -246,8 +243,7 @@ llfindaction(sym, term)
 }
 
 void
-llparsererror(token)
-LLtoken *token;
+llparsererror(LLtoken *token)
 {
 	IFDEBUG(L)
 		fprintf(stderr,"llparsererror() enter\n");
@@ -261,8 +257,7 @@ LLtoken *token;
 }
 
 void
-llgettoken(token)
-	LLtoken *token;
+llgettoken(LLtoken *token)
 {
 	llscan(token);
 	token->llstate = NORMAL;
@@ -296,8 +291,7 @@ struct llattr	llattrdesc[LLMAXDESC];
 int	lldescindex = 1;
 
 void
-llsetattr(n)
-	int n;
+llsetattr(int n)
 {
 	register struct llattr *ptr;
 
@@ -320,8 +314,7 @@ llsetattr(n)
 }
 
 void
-llpushattr(attr)
-	LLattrib attr;
+llpushattr(LLattrib attr)
 {
 	struct llattr *a;
 
@@ -338,7 +331,7 @@ llpushattr(attr)
 }
 
 void
-llfinprod()
+llfinprod(void)
 {
 	IFDEBUG(L)
 		printf("llfinprod() enter\n");
@@ -353,7 +346,7 @@ llfinprod()
 #ifndef LINT
 #ifdef DEBUG
 void
-dump_parse_stack()
+dump_parse_stack(void)
 {
 	int ind;
 
@@ -369,8 +362,7 @@ dump_parse_stack()
 #endif /* !LINT */
 
 void
-prt_token(t)
-	LLtoken *t;
+prt_token(LLtoken *t)
 {
 	fprintf(stdout, "t at %p\n", t);
 	fprintf(stdout, "t->llterm=0x%x\n", t->llterm); (void) fflush(stdout);

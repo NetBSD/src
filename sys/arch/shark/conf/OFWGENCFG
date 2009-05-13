@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.32 2008/11/12 12:36:06 ad Exp $
+#	$NetBSD: OFWGENCFG,v 1.32.4.1 2009/05/13 17:18:22 jym Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -91,7 +91,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

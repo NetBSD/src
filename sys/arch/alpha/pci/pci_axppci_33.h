@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.h,v 1.4 1997/04/07 02:00:00 cgd Exp $ */
+/* $NetBSD: pci_axppci_33.h,v 1.4.176.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,4 +27,4 @@
  * rights to redistribute these changes.
  */
 
-void	pci_axppci_33_pickintr __P((struct lca_config *));
+void	pci_axppci_33_pickintr(struct lca_config *);

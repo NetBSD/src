@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.35 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.35.8.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.35 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.35.8.1 2009/05/13 17:17:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,7 @@ freebsd_syscall_intern(struct proc *p)
  * Like trap(), argument is call by reference.
  */
 void
-freebsd_syscall_plain(frame)
-	struct trapframe *frame;
+freebsd_syscall_plain(struct trapframe *frame)
 {
 	char *params;
 	const struct sysent *callp;
@@ -151,8 +150,7 @@ freebsd_syscall_plain(frame)
 }
 
 void
-freebsd_syscall_fancy(frame)
-	struct trapframe *frame;
+freebsd_syscall_fancy(struct trapframe *frame)
 {
 	char *params;
 	const struct sysent *callp;

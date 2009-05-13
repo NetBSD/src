@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwovar.h,v 1.7 2008/12/05 11:52:42 jdc Exp $ */
+/*	$NetBSD: bwtwovar.h,v 1.7.4.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
  *
  *	@(#)bwtwo.c	8.1 (Berkeley) 6/11/93
  */
+
+#include "wsdisplay.h"
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 /* per-display variables */
 struct bwtwo_softc {

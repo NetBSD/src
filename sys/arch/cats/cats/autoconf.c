@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.24.1 2009/05/13 17:16:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2008/02/12 17:30:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.24.1 2009/05/13 17:16:36 jym Exp $");
 
 #include "opt_md.h"
 
@@ -101,7 +101,7 @@ get_device(const char *name)
 }
 
 static void
-set_root_device()
+set_root_device(void)
 {
 	char *ptr;
             

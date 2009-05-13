@@ -1,39 +1,17 @@
-#	$NetBSD: Makefile,v 1.25 2009/01/12 07:00:59 tsutsui Exp $
-
-LIB=sa
-
-# 
-# We're not actually building a profiled version,
-# but this way the separate object files get built
-#
-
-POBJS=SRT0.o
-
-NOLINT=# defined
-NOPIC=# defined
-NOPROFILE=# defined
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.25.2.1 2009/05/13 17:18:40 jym Exp $
 
 # Logically src/sys
-S=${.CURDIR}/../../../..
+S!= cd ${.CURDIR}/../../../..; pwd
 DIR_SA=${S}/lib/libsa
 DIR_KERN=${S}/lib/libkern ${S}/lib/libkern/arch/m68k
 DIR_LIBC=${S}/../common/lib/libc
-
-.PATH:  ${DIR_SA} ${DIR_KERN} \
-	${DIR_LIBC}/gen ${DIR_LIBC}/arch/m68k/gen \
-	${DIR_LIBC}/inet ${DIR_LIBC}/arch/m68k/inet \
-	${DIR_LIBC}/quad ${DIR_LIBC}/arch/m68k/quad \
-	${DIR_LIBC}/string ${DIR_LIBC}/arch/m68k/string \
-	${S}/arch/sun68k/sun68k
 
 # DEBUG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 #  -DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG -DDEBUG_PROM
 
 CPUFLAGS=	# ignore settings in /etc/mk.conf
 DEFS= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
-INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S} -I${.CURDIR}/../../..
+INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S} -I${S}/arch
 AFLAGS= -Wa,-mc68020 -Wa,-mc68851
 CFLAGS= -mc68000 -Wa,-mc68010 -Wa,-m68851 -msoft-float
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
@@ -41,45 +19,29 @@ COPTS= -Os -fno-defer-pop -ffreestanding
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 CLEANFILES= SRT0.o SRT1.o vers.c
 
-SRC_net= net.c ether.c arp.c ip_cksum.c rarp.c
+SRCS= SRT0.S SRT1.c
+OBJS= SRT0.o SRT1.o
 
-SRC_sa = alloc.c bcopy.c close.c files.c getfile.c loadfile.c loadfile_aout.c \
-	loadfile_elf32.c lseek.c memcpy.c memmove.c open.c printf.c read.c \
-	snprintf.c sprintf.c strerror.c subr_prf.c twiddle.c ctrlsp.S
+realall: ${OBJS}
 
-SRC_kern= intoa.c
+.include <bsd.prog.mk>
 
-# bring in the required libgcc integer support:
-SRC_libc_gen= mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S muldi3.c
+### find out what to use for libkern
+KERN_AS= library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN= ${KERNLIB}
 
-SRC_libc_inet= inet_addr.c
+### find out what to use for libsa
+SA_AS= library
+SAMISCMAKEFLAGS= SA_USE_LOADFILE=yes SA_EXTRADIR=${.CURDIR}
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA= ${SALIB}
 
-SRC_libc_quad= ashldi3.c ashrdi3.c
+LIBS= ${LIBSA} ${LIBKERN}
 
-SRC_libc_string= bcmp.S bzero.S memcmp.S memset.S strcmp.S strlen.S strncmp.S
+realall: ${LIBS}
 
-SRC_here= SRT1.c clock.c dev_disk.c devopen.c \
-	 gets.c idprom.c netif_sun.c panic.c \
-	 promboot.c promcons.c promdev.c putstr.c \
-	 sun2.c sun3.c sun3x.c vers.c xxboot.c
+cleandir distclean: cleanlibdir
 
-SRCS=	${SRC_net} ${SRC_sa} ${SRC_kern} \
-	${SRC_libc_gen} ${SRC_libc_inet} ${SRC_libc_quad} ${SRC_libc_string} \
-	${SRC_here}
-
-# only needed during build
-libinstall::
-
-
-.undef DESTDIR=
-.include <bsd.lib.mk>
-
-# Nuke these...
-LOBJS=
-POBJS=
-SOBJS=
-
-# Customized rules...
-
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "${MACHINE}"
+cleanlibdir:
+	-rm -rf lib

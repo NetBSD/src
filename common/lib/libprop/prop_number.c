@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.21 2009/01/03 18:31:33 pooka Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.21.2.1 2009/05/13 17:23:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ _prop_number_init(void)
 }
 
 static void 
-_prop_number_lock()
+_prop_number_lock(void)
 {
 	/* XXX: init necessary? */
 	_PROP_ONCE_RUN(_prop_number_init_once, _prop_number_init);
@@ -183,7 +183,7 @@ _prop_number_lock()
 }
 
 static void
-_prop_number_unlock()
+_prop_number_unlock(void)
 {
 	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.20 2008/12/16 22:35:23 christos Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.20.2.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.20 2008/12/16 22:35:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.20.2.1 2009/05/13 17:17:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1, reg);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1);
-	snprintb(buf, sizeof(buf)
+	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
 	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
 	printf("%s: MSYSINT1 = 0x%s\n", sc->sc_dev.dv_xname, buf);

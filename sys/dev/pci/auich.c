@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.128 2008/11/08 00:26:35 dyoung Exp $	*/
+/*	$NetBSD: auich.c,v 1.128.4.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128 2008/11/08 00:26:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128.4.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,11 +241,13 @@ int auich_debug = 0xfffe;
 static int	auich_match(device_t, cfdata_t, void *);
 static void	auich_attach(device_t, device_t, void *);
 static int	auich_detach(device_t, int);
+static void	auich_childdet(device_t, device_t);
 static int	auich_activate(device_t, enum devact);
 static int	auich_intr(void *);
 
-CFATTACH_DECL_NEW(auich, sizeof(struct auich_softc),
-    auich_match, auich_attach, auich_detach, auich_activate);
+CFATTACH_DECL2_NEW(auich, sizeof(struct auich_softc),
+    auich_match, auich_attach, auich_detach, auich_activate, NULL,
+    auich_childdet);
 
 static int	auich_open(void *, int);
 static void	auich_close(void *);
@@ -689,6 +691,15 @@ auich_activate(device_t self, enum devact act)
 		return ret;
 	}
 	return EOPNOTSUPP;
+}
+ 
+static void
+auich_childdet(device_t self, device_t child)
+{
+	struct auich_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_audiodev == child);
+	sc->sc_audiodev = NULL;
 }
 
 static int

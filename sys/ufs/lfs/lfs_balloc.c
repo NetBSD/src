@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.67 2008/05/16 09:22:00 hannken Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.67.12.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.67 2008/05/16 09:22:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.67.12.1 2009/05/13 17:23:07 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -460,7 +460,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 			mutex_exit(&lfs_lock);
 		}
 
-		bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
+		memset((char *)((*bpp)->b_data) + osize, 0, (u_int)(nsize - osize));
 	}
 
     out:

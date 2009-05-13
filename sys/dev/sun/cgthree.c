@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.19 2009/01/01 13:53:07 jdc Exp $ */
+/*	$NetBSD: cgthree.c,v 1.19.2.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.19 2009/01/01 13:53:07 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.19.2.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,22 +56,20 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.19 2009/01/01 13:53:07 jdc Exp $");
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 
-#include "wsdisplay.h"
-#if NWSDISPLAY > 0
-#include <dev/wscons/wsconsio.h>
-#include <dev/wsfont/wsfont.h>
-#include <dev/rasops/rasops.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
-
-#include "opt_wsemul.h"
-#endif
-
 #include <dev/sun/btreg.h>
 #include <dev/sun/btvar.h>
 #include <dev/sun/cgthreereg.h>
 #include <dev/sun/cgthreevar.h>
 
-static void	cgthreeunblank(struct device *);
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsconsio.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+
+#include "opt_wsemul.h"
+#endif
+
+static void	cgthreeunblank(device_t);
 static void	cgthreeloadcmap(struct cgthree_softc *, int, int);
 static void	cgthree_set_video(struct cgthree_softc *, int);
 static int	cgthree_get_video(struct cgthree_softc *);
@@ -157,10 +155,7 @@ static struct vcons_screen cg3_console_screen;
 #endif /* NWSDISPLAY > 0 */
 
 void
-cgthreeattach(sc, name, isconsole)
-	struct cgthree_softc *sc;
-	const char *name;
-	int isconsole;
+cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 {
 	int i;
 	struct fbdevice *fb = &sc->sc_fb;
@@ -273,10 +268,7 @@ cgthreeattach(sc, name, isconsole)
 
 
 int
-cgthreeopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+cgthreeopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -286,12 +278,7 @@ cgthreeopen(dev, flags, mode, l)
 }
 
 int
-cgthreeioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+cgthreeioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cgthree_softc *sc = device_lookup_private(&cgthree_cd,
 							 minor(dev));
@@ -349,17 +336,14 @@ cgthreeioctl(dev, cmd, data, flags, l)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgthreeunblank(dev)
-	struct device *dev;
+cgthreeunblank(device_t dev)
 {
 
 	cgthree_set_video(device_private(dev), 1);
 }
 
 static void
-cgthree_set_video(sc, enable)
-	struct cgthree_softc *sc;
-	int enable;
+cgthree_set_video(struct cgthree_softc *sc, int enable)
 {
 
 	if (enable)
@@ -369,8 +353,7 @@ cgthree_set_video(sc, enable)
 }
 
 static int
-cgthree_get_video(sc)
-	struct cgthree_softc *sc;
+cgthree_get_video(struct cgthree_softc *sc)
 {
 
 	return ((sc->sc_fbc->fbc_ctrl & FBC_VENAB) != 0);
@@ -380,9 +363,7 @@ cgthree_get_video(sc)
  * Load a subset of the current (new) colormap into the Brooktree DAC.
  */
 static void
-cgthreeloadcmap(sc, start, ncolors)
-	struct cgthree_softc *sc;
-	int start, ncolors;
+cgthreeloadcmap(struct cgthree_softc *sc, int start, int ncolors)
 {
 	volatile struct bt_regs *bt;
 	u_int *ip;
@@ -411,10 +392,7 @@ cgthreeloadcmap(sc, start, ncolors)
  * mapped in flat mode without the cg4 emulation.
  */
 paddr_t
-cgthreemmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+cgthreemmap(dev_t dev, off_t off, int prot)
 {
 	struct cgthree_softc *sc = device_lookup_private(&cgthree_cd,
 							 minor(dev));

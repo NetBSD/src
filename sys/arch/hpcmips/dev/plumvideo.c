@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.39 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.39.14.1 2009/05/13 17:17:45 jym Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.39 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.39.14.1 2009/05/13 17:17:45 jym Exp $");
 
 #undef PLUMVIDEODEBUG
 
@@ -748,7 +748,7 @@ __plumvideo_clut_access(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
 
 /* !!! */
 static void
-_flush_cache()
+_flush_cache(void)
 {
 	mips_dcache_wbinv_all();
 	mips_icache_sync_all();

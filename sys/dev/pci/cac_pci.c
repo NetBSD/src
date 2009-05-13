@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.28 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.28.14.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.28 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.28.14.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,15 +130,14 @@ cac_pci_findtype(struct pci_attach_args *pa)
 }
 
 static int
-cac_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+cac_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (cac_pci_findtype(aux) != NULL);
 }
 
 static void
-cac_pci_attach(struct device *parent, struct device *self, void *aux)
+cac_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	const struct cac_pci_type *ct;
@@ -151,7 +150,7 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": RAID controller\n");
 
-	sc = (struct cac_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	ct = cac_pci_findtype(pa);

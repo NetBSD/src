@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: Makefile,v 1.34.92.1 2009/05/13 17:18:37 jym Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -16,7 +16,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 
 .include "../Makefile.buildboot"
 
-.if ${MACHINE} == sparc64
+.if ${MACHINE_ARCH} == sparc64
 CFLAGS+=	-m32
 LDFLAGS+=	-m elf32_sparc
 AFLAGS+=	-Wa,-32

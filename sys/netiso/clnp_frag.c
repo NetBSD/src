@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.21 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.21.2.1 2009/05/13 17:22:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.21 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.21.2.1 2009/05/13 17:22:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,8 +435,8 @@ clnp_newpkt(
 		return (0);
 	}
 	/* Fill in rest of fragl structure */
-	bcopy((void *) src, (void *) & cfh->cfl_src, sizeof(struct iso_addr));
-	bcopy((void *) dst, (void *) & cfh->cfl_dst, sizeof(struct iso_addr));
+	memcpy((void *) & cfh->cfl_src, (void *) src, sizeof(struct iso_addr));
+	memcpy((void *) & cfh->cfl_dst, (void *) dst, sizeof(struct iso_addr));
 	cfh->cfl_id = seg->cng_id;
 	cfh->cfl_ttl = clnp->cnf_ttl;
 	cfh->cfl_last = (seg->cng_tot_len - clnp->cnf_hdr_len) - 1;
@@ -873,7 +873,7 @@ static int      troll_cnt;
  * NOTES:		This is based on the clock.
  */
 float
-troll_random()
+troll_random(void)
 {
 	extern struct timeval time;
 	long            t = time.tv_usec % 100;
@@ -899,11 +899,7 @@ troll_random()
  *			troll control structure (Troll).
  */
 int
-troll_output(ifp, m, dst, rt)
-	struct ifnet   *ifp;
-	struct mbuf    *m;
-	const struct sockaddr *dst;
-	struct rtentry *rt;
+troll_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst, struct rtentry *rt)
 {
 	int             err = 0;
 	troll_cnt++;

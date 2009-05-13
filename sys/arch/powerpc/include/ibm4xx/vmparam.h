@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2007/10/25 13:03:05 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5.34.1 2009/05/13 17:18:14 jym Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,13 +62,6 @@
 
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
-#endif
-
-/*
- * Size of shared memory map
- */
-#ifndef	SHMMAXPGS
-#define	SHMMAXPGS	1024
 #endif
 
 /*

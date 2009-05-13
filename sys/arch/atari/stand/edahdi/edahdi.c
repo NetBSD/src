@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.5 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.5.92.1 2009/05/13 17:16:31 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -99,23 +99,21 @@ typedef struct {
  */
 char	*Clr_screen = "";
 
-void	ahdi_cksum __P((void *));
-u_int	ahdi_getparts __P((int, ptable_t *, u_int, u_int));
-int	bsd_label __P((int, u_int));
-int	dkcksum __P((struct disklabel *));
-int	edit_parts __P((int, ptable_t *));
-void   *disk_read __P((int, u_int, u_int));
-void	disk_write __P((int, u_int, u_int, void  *));
-char   *get_id __P((void));
-void	get_termcap __P((void));
-int	lex __P((int *));
-int	show_parts __P((ptable_t *, int));
-void	update_disk __P((ptable_t *, int, int));
+void	ahdi_cksum(void *);
+u_int	ahdi_getparts(int, ptable_t *, u_int, u_int);
+int	bsd_label(int, u_int);
+int	dkcksum(struct disklabel *);
+int	edit_parts(int, ptable_t *);
+void   *disk_read(int, u_int, u_int);
+void	disk_write(int, u_int, u_int, void  *);
+char   *get_id(void);
+void	get_termcap(void);
+int	lex(int *);
+int	show_parts(ptable_t *, int);
+void	update_disk(ptable_t *, int, int);
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
 	int		fd;
 	ptable_t	ptable;
@@ -159,9 +157,7 @@ char	*argv[];
 }
 
 int
-edit_parts(fd, ptable)
-	int		fd;
-	ptable_t	*ptable;
+edit_parts(int fd, ptable_t *ptable)
 {
 	int	scr_base = 0;
 	int	value;
@@ -248,9 +244,7 @@ edit_parts(fd, ptable)
 }
 
 int
-show_parts(ptable, nr)
-	ptable_t	*ptable;
-	int		nr;
+show_parts(ptable_t *ptable, int nr)
 {
 	int	i;
 	part_t	*p;
@@ -273,8 +267,7 @@ show_parts(ptable, nr)
 }
 
 int
-lex(value)
-	int	*value;
+lex(int *value)
 {
 	char	c[1];
 	int	rv, nch;
@@ -326,7 +319,7 @@ out:
 }
 
 char *
-get_id()
+get_id(void)
 {
 	static char	buf[5];
 	       int	n;
@@ -343,9 +336,7 @@ get_id()
 }
 
 int
-bsd_label(fd, offset)
-	int		fd;
-	u_int		offset;
+bsd_label(int fd, u_int offset)
 {
 	u_char		*bblk;
 	u_int		nsec;
@@ -381,8 +372,7 @@ bsd_label(fd, offset)
 }
 
 int
-dkcksum(dl)
-	struct disklabel *dl;
+dkcksum(struct disklabel *dl)
 {
 	u_short	*start, *end, sum = 0;
 
@@ -394,8 +384,7 @@ dkcksum(dl)
 }
 
 void
-ahdi_cksum(buf)
-void	*buf;
+ahdi_cksum(void *buf)
 {
 	unsigned short	*p = (unsigned short *)buf;
 	unsigned short	csum = 0;
@@ -491,9 +480,7 @@ disk_read(fd, start, count)
 }
 
 void
-update_disk(ptable, fd, pno)
-	ptable_t	*ptable;
-	int		fd, pno;
+update_disk(ptable_t *ptable, int fd, int pno)
 {
 	struct ahdi_root	*root;
 	struct ahdi_part	*apart;
@@ -547,7 +534,7 @@ disk_write(fd, start, count, buf)
 }
 
 void
-get_termcap()
+get_termcap(void)
 {
 	char	*term, tbuf[1024], buf[1024], *p;
 

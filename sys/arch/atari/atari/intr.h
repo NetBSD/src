@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.14.1 2009/05/13 17:16:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  * the list.  The handler is called with its (single) argument or with a
  * 'standard' clockframe. This depends on 'ih_type'.
  */
-typedef int	(*hw_ifun_t) __P((void *, int));
+typedef int	(*hw_ifun_t)(void *, int);
 
 struct intrhand {
 	LIST_ENTRY(intrhand)	ih_link;
@@ -56,11 +56,11 @@ struct intrhand {
 	u_long			*ih_intrcnt;
 };
 
-void		intr_init __P((void));
-struct intrhand *intr_establish __P((int, int, int, hw_ifun_t, void *));
-int		intr_disestablish __P((struct intrhand *));
-void		intr_dispatch __P((struct clockframe));
-void		intr_glue __P((void));
+void		intr_init(void);
+struct intrhand *intr_establish(int, int, int, hw_ifun_t, void *);
+int		intr_disestablish(struct intrhand *);
+void		intr_dispatch(struct clockframe);
+void		intr_glue(void);
 
 /*
  * Exported by intrcnt.h

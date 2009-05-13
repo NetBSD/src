@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.7 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.7.14.1 2009/05/13 17:16:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.7 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.7.14.1 2009/05/13 17:16:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.7 2008/04/28 20:23:15 martin Ex
  *	Map I/O regions used by PnP
  */
 int
-isapnp_map(sc)
-	struct isapnp_softc *sc;
+isapnp_map(struct isapnp_softc *sc)
 {
 #ifdef _KERNEL
 	int error;
@@ -129,8 +128,7 @@ isapnp_map(sc)
  *	Unmap I/O regions used by PnP
  */
 void
-isapnp_unmap(sc)
-	struct isapnp_softc *sc;
+isapnp_unmap(struct isapnp_softc *sc)
 {
 
 #ifdef DIAGNOSTIC
@@ -149,8 +147,7 @@ isapnp_unmap(sc)
  *	NOTE: assumes the caller has filled in sc->sc_read_port!
  */
 int
-isapnp_map_readport(sc)
-	struct isapnp_softc *sc;
+isapnp_map_readport(struct isapnp_softc *sc)
 {
 #ifdef _KERNEL
 	int error;
@@ -174,8 +171,7 @@ isapnp_map_readport(sc)
  *	Pretend to unmap a previously mapped `read port'.
  */
 void
-isapnp_unmap_readport(sc)
-	struct isapnp_softc *sc;
+isapnp_unmap_readport(struct isapnp_softc *sc)
 {
 
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.75 2009/01/14 19:31:25 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.75.2.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75 2009/01/14 19:31:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75.2.1 2009/05/13 17:18:45 jym Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -1142,7 +1142,7 @@ mpacpi_pci_attach_hook(device_t parent, device_t self,
 		 */
 		mpb->mb_name = "pci";
 
-	mpb->mb_configured = 1;
+	mpb->mb_dev = self;
 	mpb->mb_pci_bridge_tag = pba->pba_bridgetag;
 	mpb->mb_pci_chipset_tag = pba->pba_pc;
 
@@ -1156,27 +1156,6 @@ mpacpi_pci_attach_hook(device_t parent, device_t self,
 
 	return 0;
 }
-
-int
-mpacpi_scan_pci(device_t self, struct pcibus_attach_args *pba,
-	        cfprint_t print)
-{
-	int i;
-	struct mp_bus *mpb;
-	struct pci_attach_args;
-
-	for (i = 0; i < mp_nbus; i++) {
-		mpb = &mp_busses[i];
-		if (mpb->mb_name == NULL)
-			continue;
-		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
-			pba->pba_bus = i;
-			config_found_ia(self, "pcibus", pba, print);
-		}
-	}
-	return 0;
-}
-
 #endif
 
 int

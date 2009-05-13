@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.30 2008/06/24 10:37:19 gmcgarry Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.30.10.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.30 2008/06/24 10:37:19 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.30.10.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ smb_rq_init(struct smb_rq *rqp, struct smb_connobj *layer, u_char cmd,
 	int error;
 	struct timeval timo;
 
-	bzero(rqp, sizeof(*rqp));
+	memset(rqp, 0, sizeof(*rqp));
 	smb_sl_init(&rqp->sr_slock, "srslock");
 	error = smb_rq_getenv(layer, &rqp->sr_vc, &rqp->sr_share);
 	if (error)
@@ -417,7 +417,7 @@ smb_t2_init(struct smb_t2rq *t2p, struct smb_connobj *source, u_short setup,
 {
 	int error;
 
-	bzero(t2p, sizeof(*t2p));
+	memset(t2p, 0, sizeof(*t2p));
 	t2p->t2_source = source;
 	t2p->t2_setupcount = 1;
 	t2p->t2_setupdata = t2p->t2_setup;

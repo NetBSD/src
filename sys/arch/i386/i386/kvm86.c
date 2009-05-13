@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.15 2008/04/27 11:37:48 ad Exp $ */
+/* $NetBSD: kvm86.c,v 1.15.16.1 2009/05/13 17:17:49 jym Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.15 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.15.16.1 2009/05/13 17:17:49 jym Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.15 2008/04/27 11:37:48 ad Exp $");
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -113,11 +114,13 @@ kvm86_init()
 		vmd->iomap[i] = 0;
 	tss->tss_iobase = ((char *)vmd->iomap - (char *)tss) << 16;
 
+	/* setup TSS descriptor (including our iomap) */
+	mutex_enter(&cpu_lock);
 	slot = gdt_get_slot();
 	kvm86_tss_sel = GSEL(slot, SEL_KPL);
-	/* setup TSS descriptor (including our iomap) */
 	setgdt(slot, tss, sizeof(*tss) + sizeof(vmd->iomap) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	mutex_exit(&cpu_lock);
 
 	/* prepare VM for BIOS calls */
 	kvm86_mapbios(vmd);
@@ -135,8 +138,7 @@ kvm86_init()
  */
 static void kvm86_prepare(struct kvm86_data *);
 static void
-kvm86_prepare(vmd)
-	struct kvm86_data *vmd;
+kvm86_prepare(struct kvm86_data *vmd)
 {
 	extern paddr_t vm86newptd;
 	extern struct trapframe *vm86frame;
@@ -148,18 +150,14 @@ kvm86_prepare(vmd)
 }
 
 static void
-kvm86_map(vmd, pa, vmva)
-	struct kvm86_data *vmd;
-	paddr_t pa;
-	uint32_t vmva;
+kvm86_map(struct kvm86_data *vmd, paddr_t pa, uint32_t vmva)
 {
 
 	vmd->pgtbl[vmva >> 12] = pa | PG_V | PG_RW | PG_U | PG_u;
 }
 
 static void
-kvm86_mapbios(vmd)
-	struct kvm86_data *vmd;
+kvm86_mapbios(struct kvm86_data *vmd)
 {
 	paddr_t pa;
 
@@ -172,8 +170,7 @@ kvm86_mapbios(vmd)
 }
 
 void *
-kvm86_bios_addpage(vmva)
-	uint32_t vmva;
+kvm86_bios_addpage(uint32_t vmva)
 {
 	void *mem;
 
@@ -191,9 +188,7 @@ kvm86_bios_addpage(vmva)
 }
 
 void
-kvm86_bios_delpage(vmva, kva)
-	uint32_t vmva;
-	void *kva;
+kvm86_bios_delpage(uint32_t vmva, void *kva)
 {
 
 	bioscallvmd->pgtbl[vmva >> 12] = 0;
@@ -201,10 +196,7 @@ kvm86_bios_delpage(vmva, kva)
 }
 
 size_t
-kvm86_bios_read(vmva, buf, len)
-	uint32_t vmva;
-	char *buf;
-	size_t len;
+kvm86_bios_read(uint32_t vmva, char *buf, size_t len)
 {
 	size_t todo, now;
 	paddr_t vmpa;
@@ -229,9 +221,7 @@ kvm86_bios_read(vmva, buf, len)
 }
 
 int
-kvm86_bioscall(intno, tf)
-	int intno;
-	struct trapframe *tf;
+kvm86_bioscall(int intno, struct trapframe *tf)
 {
 	static const unsigned char call[] = {
 		0xfa, /* CLI */
@@ -265,9 +255,7 @@ kvm86_bioscall(intno, tf)
 }
 
 int
-kvm86_bioscall_simple(intno, r)
-	int intno;
-	struct bioscallregs *r;
+kvm86_bioscall_simple(int intno, struct bioscallregs *r)
 {
 	struct trapframe tf;
 	int res;
@@ -296,8 +284,7 @@ kvm86_bioscall_simple(intno, r)
 }
 
 void
-kvm86_gpfault(tf)
-	struct trapframe *tf;
+kvm86_gpfault(struct trapframe *tf)
 {
 	unsigned char *kva, insn, trapno;
 	uint16_t *sp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.8 2009/01/29 21:13:15 nonaka Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.8.2.1 2009/05/13 17:17:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platid_gen.c,v 1.8 2009/01/29 21:13:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platid_gen.c,v 1.8.2.1 2009/05/13 17:17:45 jym Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -224,7 +224,7 @@ table_getnum(char **table, const char *s, int def, int opt)
 	table_getnum(mode_names, (s), MODE_INVALID, SEARCH_IGNORECASE)
 
 void
-enter()
+enter(void)
 {
 	nest++;
 	if (MAXNEST <= nest) {
@@ -241,7 +241,7 @@ enter()
 }
 
 void
-leave()
+leave(void)
 {
 	nest--;
 	if (nest < 0) {
@@ -341,7 +341,7 @@ gen_list(node_t* np)
 }
 
 void
-gen_output()
+gen_output(void)
 {
 	switch (form) {
 	case FORM_GENHDR:
@@ -380,7 +380,7 @@ gen_output()
  *     PLATID_MACH_XXX)
  */
 void
-gen_header()
+gen_header(void)
 {
 	char *prefix = prefix_names[mode];
 	char *name = genctx[mode][nest].sym;
@@ -411,7 +411,7 @@ gen_header()
  * #endif
  */
 void
-gen_mask_h()
+gen_mask_h(void)
 {
 	char *name = genctx[mode][nest].sym;
 
@@ -433,7 +433,7 @@ gen_mask_h()
  * }};
  */
 void
-gen_mask_c()
+gen_mask_c(void)
 {
 	char *name = genctx[mode][nest].sym;
 
@@ -464,7 +464,7 @@ gen_mask_c()
  * platid_name.c:
  */
 void
-gen_name_c()
+gen_name_c(void)
 {
 	fprintf(fp_out, "\t{ &platid_mask_%s_%s,\n",
 	    prefix_names[mode], genctx[mode][nest].sym);

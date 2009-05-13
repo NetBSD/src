@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_pnpbus.c,v 1.4 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: if_we_pnpbus.c,v 1.4.14.1 2009/05/13 17:18:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.4 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.4.14.1 2009/05/13 17:18:15 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,12 +252,7 @@ we_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static const char *
-we_params(asict, asich, typep, memsizep, flagp, is790p)
-	bus_space_tag_t asict;
-	bus_space_handle_t asich;
-	u_int8_t *typep, *flagp;
-	bus_size_t *memsizep;
-	int *is790p;
+we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep, bus_size_t *memsizep, u_int8_t *flagp, int *is790p)
 {
 	const char *typestr;
 	bus_size_t memsize;

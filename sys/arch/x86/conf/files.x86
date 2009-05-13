@@ -1,10 +1,13 @@
-#	$NetBSD: files.x86,v 1.44 2008/08/03 19:32:03 joerg Exp $
+#	$NetBSD: files.x86,v 1.44.8.1 2009/05/13 17:18:44 jym Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
 
 # MTRR support
 defflag                 MTRR
+
+# Interrupt debug
+defflag opt_intrdebug.h	INTRDEBUG
 
 # PCI fixup options
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
@@ -45,10 +48,14 @@ file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
 file	arch/x86/x86/bus_space.c
 file	arch/x86/x86/consinit.c
+file	arch/x86/x86/core_machdep.c	coredump
+file	arch/x86/x86/cpu_topology.c
 file	arch/x86/x86/errata.c
+file	arch/x86/x86/genfb_machdep.c
 file	arch/x86/x86/identcpu.c
 file	arch/x86/x86/i8259.c
 file	arch/x86/x86/intr.c
+file	arch/x86/x86/nmi.c
 file	arch/x86/x86/idt.c
 file	arch/x86/x86/ipi.c
 file	arch/x86/x86/msr_ipifuncs.c
@@ -57,6 +64,8 @@ file 	arch/x86/x86/patch.c
 file	arch/x86/x86/platform.c
 file 	arch/x86/x86/pmap.c
 file	arch/x86/x86/sys_machdep.c
+file	arch/x86/x86/syscall.c
+file	arch/x86/x86/vm_machdep.c
 file	arch/x86/x86/x86_autoconf.c
 file	arch/x86/x86/x86_machdep.c
 
@@ -69,6 +78,9 @@ file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 # MP configuration using Intel SMP specification 1.4
 file 	arch/x86/x86/mpbios.c		mpbios
+
+# MP configuration using either ACPI or Intel SMP specification 1.4
+file 	arch/x86/x86/mp.c		acpi | mpbios
 
 # MP configuration using ACPI
 file 	arch/x86/x86/mpacpi.c		acpi

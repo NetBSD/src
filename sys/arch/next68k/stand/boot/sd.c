@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.10 2006/08/04 02:09:19 mhitch Exp $        */
+/*      $NetBSD: sd.c,v 1.10.76.1 2009/05/13 17:18:11 jym Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -79,7 +79,7 @@ sdprobe(char target, char lun)
     int error, retries;
     int count;
 
-    bzero(&cdb1, sizeof(cdb1));
+    memset(&cdb1, 0, sizeof(cdb1));
     cdb1.opcode =  SCSI_TEST_UNIT_READY;
 
     retries = 0;
@@ -95,7 +95,7 @@ sdprobe(char target, char lun)
     if (error)
 	return error<0 ? ENODEV : error;
 
-    bzero(&cdb2, sizeof(cdb2));
+    memset(&cdb2, 0, sizeof(cdb2));
     cdb2.opcode = INQUIRY;
     cdb2.length = sizeof(inq);
     count = sizeof (inq);
@@ -125,7 +125,7 @@ sdgetinfo(struct sd_softc *ss)
     int count;
     int sc_blkshift = 0;
 
-    bzero(&cdb, sizeof(cdb));
+    memset(&cdb, 0, sizeof(cdb));
     cdb.opcode = READ_CAPACITY_10;
     count = sizeof(cap);
     error = scsiicmd(ss->sc_unit, ss->sc_lun, (u_char *)&cdb, sizeof(cdb),
@@ -267,7 +267,7 @@ sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
 	    DPRINTF(("sdstrategy: read block %ld, %d bytes (%ld blks a %d bytes).\n",
 		     blk, tsize, nblks, ss->sc_dev_bsize));
 
-	    bzero(&cdb, sizeof(cdb));
+	    memset(&cdb, 0, sizeof(cdb));
 	    cdb.opcode = READ_10;
 	    cdb.addr[0] = (blk & 0xff000000) >> 24;
 	    cdb.addr[1] = (blk & 0xff0000) >> 16;

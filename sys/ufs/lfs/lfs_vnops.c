@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.219 2009/01/16 05:15:29 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.219.2.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.219 2009/01/16 05:15:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.219.2.1 2009/05/13 17:23:07 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -343,8 +343,6 @@ lfs_inactive(void *v)
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-
-	KASSERT(VTOI(ap->a_vp)->i_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
 
 	lfs_unmark_vnode(ap->a_vp);
 
@@ -1077,8 +1075,6 @@ lfs_reclaim(void *v)
 	struct lfs *fs = ip->i_lfs;
 	int error;
 
-	KASSERT(ip->i_nlink == ip->i_ffs_effnlink);
-
 	mutex_enter(&lfs_lock);
 	LFS_CLR_UINO(ip, IN_ALLMOD);
 	mutex_exit(&lfs_lock);
@@ -1548,8 +1544,8 @@ lfs_fcntl(void *v)
 #ifdef COMPAT_30
 	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		if ((error = kauth_authorize_system(l->l_cred,
+		    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;

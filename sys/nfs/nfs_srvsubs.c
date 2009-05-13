@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.1 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.1.10.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.1 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.1.10.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -116,17 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.1 2008/11/19 18:36:09 ad Exp $");
  * it is not.
  */
 int
-nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
-	struct nameidata *ndp;
-	nfsrvfh_t *nsfh;
-	uint32_t len;
-	struct nfssvc_sock *slp;
-	struct mbuf *nam;
-	struct mbuf **mdp;
-	char **dposp;
-	struct vnode **retdirp;
-	struct lwp *l;
-	int kerbflag, pubflag;
+nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_sock *slp, struct mbuf *nam, struct mbuf **mdp, char **dposp, struct vnode **retdirp, struct lwp *l, int kerbflag, int pubflag)
 {
 	int i, rem;
 	struct mbuf *md;
@@ -294,10 +284,14 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 				vput(ndp->ni_dvp);
 			}
 		}
-		if (cnp->cn_flags & (SAVENAME | SAVESTART))
+		if (cnp->cn_flags & (SAVENAME | SAVESTART)) {
 			cnp->cn_flags |= HASBUF;
-		else
+		} else {
 			PNBUF_PUT(cnp->cn_pnbuf);
+#if defined(DIAGNOSTIC)
+			cnp->cn_pnbuf = NULL;
+#endif /* defined(DIAGNOSTIC) */
+		}
 		return (0);
 	} else {
 		if (!pubflag) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.29 2008/04/08 20:08:50 cegger Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.29.18.1 2009/05/13 17:19:53 jym Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.29 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.29.18.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,20 +63,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.29 2008/04/08 20:08:50 cegger Exp $"
 extern struct cfdriver lc_cd;
 
 static int lemac_isa_find(lemac_softc_t *, struct isa_attach_args *, int);
-static int lemac_isa_probe(struct device *, struct cfdata *, void *);
-static void lemac_isa_attach(struct device *, struct device *, void *);
+static int lemac_isa_probe(device_t, cfdata_t, void *);
+static void lemac_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(lc_isa, sizeof(lemac_softc_t),
     lemac_isa_probe, lemac_isa_attach, NULL, NULL);
 
 static int
-lemac_isa_find(sc, ia, attach)
-	lemac_softc_t *sc;
-	struct isa_attach_args *ia;
-	int attach;
+lemac_isa_find(lemac_softc_t *sc, struct isa_attach_args *ia, int attach)
 {
 	bus_addr_t maddr;
-	bus_addr_t msiz;
+	bus_size_t msiz;
 	int rv = 0, irq;
 
 	if (ia->ia_nio < 1)
@@ -185,10 +182,10 @@ outio:
 }
 
 static int
-lemac_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+lemac_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = match;
+	cfdata_t cf = match;
 	lemac_softc_t sc;
 	snprintf(sc.sc_dv.dv_xname, sizeof(sc.sc_dv.dv_xname), "%s%d",
 	    lc_cd.cd_name, cf->cf_unit);
@@ -197,7 +194,7 @@ lemac_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-lemac_isa_attach(struct device *parent, struct device *self, void *aux)
+lemac_isa_attach(device_t parent, device_t self, void *aux)
 {
 	lemac_softc_t *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

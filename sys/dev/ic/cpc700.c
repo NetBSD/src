@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.14 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.14.14.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.14 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.14.14.1 2009/05/13 17:19:22 jym Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -79,7 +79,7 @@ union attach_args {
 
 
 void
-cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
+cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	   bus_space_tag_t pciio, bus_dma_tag_t tag, int attachpci,
 	   uint freq);
 
@@ -104,7 +104,7 @@ cpc_print(void *aux, const char *pnp)
 }
 
 static int
-cpc_submatch(struct device *parent, struct cfdata *cf,
+cpc_submatch(device_t parent, cfdata_t cf,
 	     const int *ldesc, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
@@ -119,7 +119,7 @@ cpc_submatch(struct device *parent, struct cfdata *cf,
  * Attach the cpc.
  */
 void
-cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
+cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	   bus_space_tag_t pciio, bus_dma_tag_t dma, int attachpci,
 	   uint freq)
 {

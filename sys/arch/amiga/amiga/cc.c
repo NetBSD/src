@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.18 2003/05/03 18:10:42 wiz Exp $	*/
+/*	$NetBSD: cc.c,v 1.18.122.1 2009/05/13 17:16:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.18 2003/05/03 18:10:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.18.122.1 2009/05/13 17:16:09 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +53,7 @@ vaddr_t CUSTOMADDR, CUSTOMbase;
 
 /* init all the "custom chips" */
 void
-custom_chips_init()
+custom_chips_init(void)
 {
 	cc_init_chipmem();
 	cc_init_vbl();
@@ -68,8 +68,7 @@ custom_chips_init()
 LIST_HEAD(vbllist, vbl_node) vbl_list;
 
 void
-turn_vbl_function_off(n)
-	struct vbl_node *n;
+turn_vbl_function_off(struct vbl_node *n)
 {
 	if (n->flags & VBLNF_OFF)
 		return;
@@ -81,17 +80,13 @@ turn_vbl_function_off(n)
 
 /* allow function to be called on next vbl interrupt. */
 void
-turn_vbl_function_on(n)
-	struct vbl_node *n;
+turn_vbl_function_on(struct vbl_node *n)
 {
 	n->flags &= (short) ~(VBLNF_OFF);
 }
 
 void
-add_vbl_function(add, priority, data)
-	struct vbl_node *add;
-	short priority;
-	void *data;
+add_vbl_function(struct vbl_node *add, short priority, void *data)
 {
 	int s;
 	struct vbl_node *n, *prev;
@@ -122,8 +117,7 @@ add_vbl_function(add, priority, data)
 }
 
 void
-remove_vbl_function(n)
-	struct vbl_node *n;
+remove_vbl_function(struct vbl_node *n)
 {
 	int s;
 
@@ -134,7 +128,7 @@ remove_vbl_function(n)
 
 /* Level 3 hardware interrupt */
 void
-vbl_handler()
+vbl_handler(void)
 {
 	struct vbl_node *n;
 
@@ -152,7 +146,7 @@ vbl_handler()
 }
 
 void
-cc_init_vbl()
+cc_init_vbl(void)
 {
 	LIST_INIT(&vbl_list);
 	/*
@@ -167,13 +161,13 @@ cc_init_vbl()
  */
 
 void
-cc_init_blitter()
+cc_init_blitter(void)
 {
 }
 
 /* test twice to cover blitter bugs if BLTDONE (BUSY) is set it is not done. */
 int
-is_blitter_busy()
+is_blitter_busy(void)
 {
 	u_short bb;
 
@@ -184,7 +178,7 @@ is_blitter_busy()
 }
 
 void
-wait_blit()
+wait_blit(void)
 {
 	/*
 	 * V40 state this covers all blitter bugs.
@@ -194,30 +188,27 @@ wait_blit()
 }
 
 void
-blitter_handler()
+blitter_handler(void)
 {
 	custom.intreq = INTF_BLIT;
 }
 
 
 void
-do_blit(size)
-	u_short size;
+do_blit(u_short size)
 {
 	custom.bltsize = size;
 }
 
 void
-set_blitter_control(con0, con1)
-	u_short con0, con1;
+set_blitter_control(u_short con0, u_short con1)
 {
 	custom.bltcon0 = con0;
 	custom.bltcon1 = con1;
 }
 
 void
-set_blitter_mods(a, b, c, d)
-	u_short a, b, c, d;
+set_blitter_mods(u_short a, u_short b, u_short c, u_short d)
 {
 	custom.bltamod = a;
 	custom.bltbmod = b;
@@ -226,16 +217,14 @@ set_blitter_mods(a, b, c, d)
 }
 
 void
-set_blitter_masks(fm, lm)
-	u_short fm, lm;
+set_blitter_masks(u_short fm, u_short lm)
 {
 	custom.bltafwm = fm;
 	custom.bltalwm = lm;
 }
 
 void
-set_blitter_data(da, db, dc)
-	u_short da, db, dc;
+set_blitter_data(u_short da, u_short db, u_short dc)
 {
 	custom.bltadat = da;
 	custom.bltbdat = db;
@@ -243,8 +232,7 @@ set_blitter_data(da, db, dc)
 }
 
 void
-set_blitter_pointers(a, b, c, d)
-	void *a, *b, *c, *d;
+set_blitter_pointers(void *a, void *b, void *c, void *d)
 {
 	custom.bltapt = a;
 	custom.bltbpt = b;
@@ -262,7 +250,7 @@ set_blitter_pointers(a, b, c, d)
  * sleep/wakeup system newly introduced in the vbl manager
  */
 void
-wait_tof()
+wait_tof(void)
 {
 	/*
 	 * wait until bottom of frame.
@@ -287,9 +275,7 @@ wait_tof()
 }
 
 cop_t *
-find_copper_inst(l, inst)
-	cop_t *l;
-	u_short inst;
+find_copper_inst(cop_t *l, u_short inst)
 {
 	cop_t *r = NULL;
 	while ((l->cp.data & 0xff01ff01) != 0xff01ff00) {
@@ -303,8 +289,7 @@ find_copper_inst(l, inst)
 }
 
 void
-install_copper_list(l)
-	cop_t *l;
+install_copper_list(cop_t *l)
 {
 	wait_tof();
 	wait_tof();
@@ -313,7 +298,7 @@ install_copper_list(l)
 
 
 void
-cc_init_copper()
+cc_init_copper(void)
 {
 }
 
@@ -321,7 +306,7 @@ cc_init_copper()
  * level 3 interrupt
  */
 void
-copper_handler()
+copper_handler(void)
 {
 	custom.intreq = INTF_COPER;
 }
@@ -339,7 +324,7 @@ struct audio_channel channel[4];
 struct vbl_node audio_vbl_node;
 
 void
-cc_init_audio()
+cc_init_audio(void)
 {
 	int i;
 
@@ -363,7 +348,7 @@ cc_init_audio()
  * Audio Interrupt Handler
  */
 void
-audio_handler()
+audio_handler(void)
 {
 	u_short audio_dma, disable_dma, flag, ir;
 	int i;
@@ -435,9 +420,7 @@ out:
 }
 
 void
-play_sample(len, data, period, volume, channels, count)
-	u_short len, *data, period, volume, channels;
-	u_long count;
+play_sample(u_short len, u_short *data, u_short period, u_short volume, u_short channels, u_long count)
 {
 	u_short dmabits, ch;
 	register int i;
@@ -483,7 +466,7 @@ static u_long   chip_total;		/* total free. */
 static u_long   chip_size;		/* size of it all. */
 
 void
-cc_init_chipmem()
+cc_init_chipmem(void)
 {
 	int s = splhigh ();
 	struct mem_node *mem;
@@ -503,8 +486,7 @@ cc_init_chipmem()
 }
 
 void *
-alloc_chipmem(size)
-	u_long size;
+alloc_chipmem(u_long size)
 {
 	int s;
 	struct mem_node *mn, *new;
@@ -561,8 +543,7 @@ alloc_chipmem(size)
 }
 
 void
-free_chipmem(mem)
-	void *mem;
+free_chipmem(void *mem)
 {
 	struct mem_node *mn, *next, *prev;
 	int s;
@@ -640,8 +621,7 @@ free_chipmem(mem)
 }
 
 u_long
-sizeof_chipmem(mem)
-	void *mem;
+sizeof_chipmem(void *mem)
 {
 	struct mem_node *mn;
 
@@ -653,8 +633,7 @@ sizeof_chipmem(mem)
 }
 
 u_long
-avail_chipmem(largest)
-	int largest;
+avail_chipmem(int largest)
 {
 	struct mem_node *mn;
 	u_long val;

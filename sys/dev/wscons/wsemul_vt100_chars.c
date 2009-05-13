@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_chars.c,v 1.11 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsemul_vt100_chars.c,v 1.11.90.1 2009/05/13 17:21:42 jym Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.11 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.11.90.1 2009/05/13 17:21:42 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ static const struct {
 	/* norwegian /danish */
 	{{0x0023, 0x0040, 0x00c6, 0x00d8, 0x00c5, 0x005e,
 	0x005f, 0x0060, 0x00e6, 0x00f8, 0x00e5, 0x007e}},
-	/* portugese */
+	/* portuguese */
 	{{0x0023, 0x0040, 0x00c3, 0x00c7, 0x00d5, 0x005e,
 	0x005f, 0x0060, 0x00e3, 0x00e7, 0x00f5, 0x007e}},
 	/* spanish */

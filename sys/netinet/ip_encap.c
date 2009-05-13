@@ -74,7 +74,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.33 2008/11/25 18:28:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.33.4.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -192,7 +192,7 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 #endif
 	ip = mtod(m, struct ip *);
 
-	bzero(&pack, sizeof(pack));
+	memset(&pack, 0, sizeof(pack));
 	pack.p.sp_len = sizeof(pack);
 	pack.mine.sin_family = pack.yours.sin_family = AF_INET;
 	pack.mine.sin_len = pack.yours.sin_len = sizeof(struct sockaddr_in);
@@ -316,7 +316,7 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 #endif
 	ip6 = mtod(m, struct ip6_hdr *);
 
-	bzero(&pack, sizeof(pack));
+	memset(&pack, 0, sizeof(pack));
 	pack.p.sp_len = sizeof(pack);
 	pack.mine.sin6_family = pack.yours.sin6_family = AF_INET6;
 	pack.mine.sin6_len = pack.yours.sin6_len = sizeof(struct sockaddr_in6);
@@ -514,12 +514,12 @@ encap_attach(int af, int proto,
 			panic("null pointers in encaptab");
 #endif
 		if (ep->src->sa_len != sp->sa_len ||
-		    bcmp(ep->src, sp, sp->sa_len) != 0 ||
-		    bcmp(ep->srcmask, sm, sp->sa_len) != 0)
+		    memcmp(ep->src, sp, sp->sa_len) != 0 ||
+		    memcmp(ep->srcmask, sm, sp->sa_len) != 0)
 			continue;
 		if (ep->dst->sa_len != dp->sa_len ||
-		    bcmp(ep->dst, dp, dp->sa_len) != 0 ||
-		    bcmp(ep->dstmask, dm, dp->sa_len) != 0)
+		    memcmp(ep->dst, dp, dp->sa_len) != 0 ||
+		    memcmp(ep->dstmask, dm, dp->sa_len) != 0)
 			continue;
 
 		error = EEXIST;
@@ -581,10 +581,10 @@ encap_attach(int af, int proto,
 #endif
 	}
 
-	bcopy(sp, ep->src, sp->sa_len);
-	bcopy(sm, ep->srcmask, sp->sa_len);
-	bcopy(dp, ep->dst, dp->sa_len);
-	bcopy(dm, ep->dstmask, dp->sa_len);
+	memcpy(ep->src, sp, sp->sa_len);
+	memcpy(ep->srcmask, sm, sp->sa_len);
+	memcpy(ep->dst, dp, dp->sa_len);
+	memcpy(ep->dstmask, dm, dp->sa_len);
 	ep->psw = psw;
 	ep->arg = arg;
 
@@ -633,7 +633,7 @@ encap_attach_func(int af, int proto,
 		error = ENOBUFS;
 		goto fail;
 	}
-	bzero(ep, sizeof(*ep));
+	memset(ep, 0, sizeof(*ep));
 
 	ep->af = af;
 	ep->proto = proto;
@@ -846,8 +846,8 @@ mask_match(const struct encaptab *ep,
 	d.ss_len = dp->sa_len;
 	d.ss_family = dp->sa_family;
 
-	if (bcmp(&s, ep->src, ep->src->sa_len) == 0 &&
-	    bcmp(&d, ep->dst, ep->dst->sa_len) == 0) {
+	if (memcmp(&s, ep->src, ep->src->sa_len) == 0 &&
+	    memcmp(&d, ep->dst, ep->dst->sa_len) == 0) {
 		return matchlen;
 	} else
 		return 0;

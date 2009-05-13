@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.21 2007/11/19 18:51:50 ad Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.21.32.1 2009/05/13 17:21:21 jym Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.21 2007/11/19 18:51:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.21.32.1 2009/05/13 17:21:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,8 +60,7 @@ static struct rconsole *mydevicep; /* XXX */
 static void rcons_output(struct tty *);
 
 void
-rcons_cnputc(c)
-	int c;
+rcons_cnputc(int c)
 {
 	char buf[1];
 	long attr;
@@ -82,8 +81,7 @@ rcons_cnputc(c)
 }
 
 static void
-rcons_output(tp)
-	struct tty *tp;
+rcons_output(struct tty *tp)
 {
 	int s, n;
 	char buf[OBUFSIZ];
@@ -110,8 +108,7 @@ rcons_output(tp)
 
 /* Ring the console bell */
 void
-rcons_bell(rc)
-	struct rconsole *rc;
+rcons_bell(struct rconsole *rc)
 {
 	int i, s;
 
@@ -139,8 +136,7 @@ rcons_bell(rc)
 
 /* Bell timer service routine */
 static void
-rcons_belltmr(p)
-	void *p;
+rcons_belltmr(void *p)
 {
 	struct rconsole *rc = p;
 	int s = splhigh(), i;
@@ -164,9 +160,7 @@ rcons_belltmr(p)
 }
 
 void
-rcons_init(rc, clear)
-	struct rconsole *rc;
-	int clear;
+rcons_init(struct rconsole *rc, int clear)
 {
 	mydevicep = rc;
 
@@ -183,8 +177,7 @@ rcons_init(rc, clear)
 }
 
 void
-rcons_ttyinit(tp)
-	struct tty *tp;
+rcons_ttyinit(struct tty *tp)
 {
 	/* XXX this should go away */
 	struct rconsole *rc = mydevicep;

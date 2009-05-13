@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.234 2009/01/29 20:38:22 pooka Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.234.2.1 2009/05/13 17:22:28 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.234 2009/01/29 20:38:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.234.2.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -490,7 +490,7 @@ tcp_template(struct tcpcb *tp)
 		m->m_pkthdr.len = m->m_len = hlen + sizeof(struct tcphdr);
 	}
 
-	bzero(mtod(m, void *), m->m_len);
+	memset(mtod(m, void *), 0, m->m_len);
 
 	n = (struct tcphdr *)(mtod(m, char *) + hlen);
 
@@ -822,7 +822,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 	case AF_INET:
 	    {
 		struct ipovly *ipov = (struct ipovly *)ip;
-		bzero(ipov->ih_x1, sizeof ipov->ih_x1);
+		memset(ipov->ih_x1, 0, sizeof ipov->ih_x1);
 		ipov->ih_len = htons((u_int16_t)tlen);
 
 		th->th_sum = 0;
@@ -885,7 +885,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		if (family == AF_INET) {
 			if (!IN6_IS_ADDR_V4MAPPED(&tp->t_in6pcb->in6p_faddr))
 				panic("tcp_respond: not mapped addr");
-			if (bcmp(&ip->ip_dst,
+			if (memcmp(&ip->ip_dst,
 			    &tp->t_in6pcb->in6p_faddr.s6_addr32[3],
 			    sizeof(ip->ip_dst)) != 0) {
 				panic("tcp_respond: ip_dst != in6p_faddr");
@@ -1455,7 +1455,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			return NULL;
 		}
 
-		bzero(&th, sizeof(th));
+		memset(&th, 0, sizeof(th));
 		m_copydata(m, off, sizeof(th), (void *)&th);
 
 		if (cmd == PRC_MSGSIZE) {
@@ -1641,7 +1641,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		    inetctlerrmap[cmd] == ENETUNREACH ||
 		    inetctlerrmap[cmd] == EHOSTDOWN)) {
 			struct sockaddr_in sin;
-			bzero(&sin, sizeof(sin));
+			memset(&sin, 0, sizeof(sin));
 			sin.sin_len = sizeof(sin);
 			sin.sin_family = AF_INET;
 			sin.sin_port = th->th_sport;
@@ -1760,7 +1760,7 @@ tcp6_mtudisc_callback(struct in6_addr *faddr)
 {
 	struct sockaddr_in6 sin6;
 
-	bzero(&sin6, sizeof(sin6));
+	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.59 2008/06/24 19:44:52 drochner Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.59.10.1 2009/05/13 17:19:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.59 2008/06/24 19:44:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.59.10.1 2009/05/13 17:19:15 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -112,11 +112,11 @@ struct tulip_cardbus_softc {
 	cardbus_intr_line_t sc_intrline; /* interrupt line */
 };
 
-int	tlp_cardbus_match(struct device *, struct cfdata *, void *);
-void	tlp_cardbus_attach(struct device *, struct device *, void *);
-int	tlp_cardbus_detach(struct device *, int);
+int	tlp_cardbus_match(device_t, cfdata_t, void *);
+void	tlp_cardbus_attach(device_t, device_t, void *);
+int	tlp_cardbus_detach(device_t, int);
 
-CFATTACH_DECL(tlp_cardbus, sizeof(struct tulip_cardbus_softc),
+CFATTACH_DECL_NEW(tlp_cardbus, sizeof(struct tulip_cardbus_softc),
     tlp_cardbus_match, tlp_cardbus_attach, tlp_cardbus_detach, tlp_activate);
 
 const struct tulip_cardbus_product {
@@ -189,8 +189,7 @@ void tlp_cardbus_get_quirks(struct tulip_cardbus_softc *,
     const u_int8_t *, const struct tlp_cardbus_quirks *);
 
 const struct tulip_cardbus_product *
-tlp_cardbus_lookup(ca)
-	const struct cardbus_attach_args *ca;
+tlp_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct tulip_cardbus_product *tcp;
 
@@ -205,10 +204,7 @@ tlp_cardbus_lookup(ca)
 }
 
 void
-tlp_cardbus_get_quirks(csc, enaddr, tpq)
-	struct tulip_cardbus_softc *csc;
-	const u_int8_t *enaddr;
-	const struct tlp_cardbus_quirks *tpq;
+tlp_cardbus_get_quirks(struct tulip_cardbus_softc *csc, const u_int8_t *enaddr, const struct tlp_cardbus_quirks *tpq)
 {
 
 	for (; tpq->tpq_func != NULL; tpq++) {
@@ -222,7 +218,7 @@ tlp_cardbus_get_quirks(csc, enaddr, tpq)
 }
 
 int
-tlp_cardbus_match(struct device *parent, struct cfdata *match,
+tlp_cardbus_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
@@ -234,7 +230,7 @@ tlp_cardbus_match(struct device *parent, struct cfdata *match,
 }
 
 void
-tlp_cardbus_attach(struct device *parent, struct device *self,
+tlp_cardbus_attach(device_t parent, device_t self,
     void *aux)
 {
 	struct tulip_cardbus_softc *csc = device_private(self);
@@ -246,6 +242,7 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 	bus_addr_t adr;
 	pcireg_t reg;
 
+	sc->sc_dev = self;
 	sc->sc_devno = 0;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -337,7 +334,7 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 		csc->sc_bar_reg = TULIP_PCI_IOBA;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
 	} else {
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 
@@ -403,7 +400,7 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 		 */
 		if (sc->sc_mediasw == NULL) {
 			printf("%s: defaulting to MII-over-SIO; no bets...\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(self));
 			sc->sc_mediasw = &tlp_sio_mii_mediasw;
 		}
 		break;
@@ -445,7 +442,7 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 	default:
  cant_cope:
 		printf("%s: sorry, unable to handle your board\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(self));
 		return;
 	}
 
@@ -464,7 +461,7 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 }
 
 int
-tlp_cardbus_detach(struct device *self, int flags)
+tlp_cardbus_detach(device_t self, int flags)
 {
 	struct tulip_cardbus_softc *csc = device_private(self);
 	struct tulip_softc *sc = &csc->sc_tulip;
@@ -473,7 +470,7 @@ tlp_cardbus_detach(struct device *self, int flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
+		panic("%s: data structure lacks", device_xname(self));
 #endif
 
 	rv = tlp_detach(sc);
@@ -497,8 +494,7 @@ tlp_cardbus_detach(struct device *self, int flags)
 }
 
 int
-tlp_cardbus_enable(sc)
-	struct tulip_softc *sc;
+tlp_cardbus_enable(struct tulip_softc *sc)
 {
 	struct tulip_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -521,7 +517,7 @@ tlp_cardbus_enable(sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    tlp_intr, sc);
 	if (csc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 				 "unable to establish interrupt\n");
 		Cardbus_function_disable(csc->sc_ct);
 		return (1);
@@ -530,8 +526,7 @@ tlp_cardbus_enable(sc)
 }
 
 void
-tlp_cardbus_disable(sc)
-	struct tulip_softc *sc;
+tlp_cardbus_disable(struct tulip_softc *sc)
 {
 	struct tulip_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -547,9 +542,7 @@ tlp_cardbus_disable(sc)
 }
 
 void
-tlp_cardbus_power(sc, why)
-	struct tulip_softc *sc;
-	int why;
+tlp_cardbus_power(struct tulip_softc *sc, int why)
 {
 
 	switch (why) {
@@ -563,8 +556,7 @@ tlp_cardbus_power(sc, why)
 }
 
 void
-tlp_cardbus_setup(csc)
-	struct tulip_cardbus_softc *csc;
+tlp_cardbus_setup(struct tulip_cardbus_softc *csc)
 {
 	struct tulip_softc *sc = &csc->sc_tulip;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -623,8 +615,7 @@ tlp_cardbus_setup(csc)
 }
 
 void
-tlp_cardbus_x3201_reset(sc)
-	struct tulip_softc *sc;
+tlp_cardbus_x3201_reset(struct tulip_softc *sc)
 {
 	u_int32_t reg;
 

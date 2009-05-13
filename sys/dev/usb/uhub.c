@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.103 2008/08/18 18:03:21 kent Exp $	*/
+/*	$NetBSD: uhub.c,v 1.103.8.1 2009/05/13 17:21:35 jym Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.103 2008/08/18 18:03:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.103.8.1 2009/05/13 17:21:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,9 @@ void uhub_childdet(device_t, device_t);
 int uhub_detach(device_t, int);
 int uhub_activate(device_t, enum devact);
 extern struct cfdriver uhub_cd;
-CFATTACH_DECL2_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
-    uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet);
+CFATTACH_DECL3_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
+    uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet,
+    DVF_DETACH_SHUTDOWN);
 CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
     uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet);
 

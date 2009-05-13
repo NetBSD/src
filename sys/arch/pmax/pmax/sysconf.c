@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.10 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.10.92.1 2009/05/13 17:18:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.10 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.10.92.1 2009/05/13 17:18:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,14 +41,14 @@ __KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.10 2005/12/11 12:18:39 christos Exp $"
 
 #include "opt_dec_3100.h"
 #ifdef DEC_3100
-  void	dec_3100_init __P((void));
+  void	dec_3100_init(void);
 #else
 # define dec_3100_init		platform_not_configured
 #endif
 
 #include "opt_dec_3max.h"
 #ifdef DEC_3MAX
-  void	dec_3max_init __P((void));
+  void	dec_3max_init(void);
 #else
 # define dec_3max_init	platform_not_configured
 #endif
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.10 2005/12/11 12:18:39 christos Exp $"
 
 #include "opt_dec_3min.h"
 #ifdef DEC_3MIN
-  void	dec_3min_init __P((void));
+  void	dec_3min_init(void);
 #else
 # define dec_3min_init	platform_not_configured
 #endif
@@ -64,35 +64,35 @@ __KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.10 2005/12/11 12:18:39 christos Exp $"
 
 #include "opt_dec_maxine.h"
 #ifdef DEC_MAXINE
-  void	dec_maxine_init __P((void));
+  void	dec_maxine_init(void);
 #else
 # define dec_maxine_init	platform_not_configured
 #endif
 
 #include "opt_dec_3maxplus.h"
 #ifdef DEC_3MAXPLUS
-  void	dec_3maxplus_init __P((void));
+  void	dec_3maxplus_init(void);
 #else
 # define dec_3maxplus_init	platform_not_configured
 #endif
 
 #include "opt_dec_5100.h"
 #ifdef DEC_5100
-  void	dec_5100_init __P((void));
+  void	dec_5100_init(void);
 #else
 # define dec_5100_init	platform_not_configured
 #endif
 
 #include "opt_dec_5400.h"
 #ifdef DEC_5400
-  void	dec_5400_init __P((void));
+  void	dec_5400_init(void);
 #else
 # define dec_5400_init	platform_not_configured
 #endif
 
 #include "opt_dec_5500.h"
 #ifdef DEC_5500
-  void	dec_5500_init __P((void));
+  void	dec_5500_init(void);
 #else
 # define dec_5500_init	platform_not_configured
 #endif
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.10 2005/12/11 12:18:39 christos Exp $"
 
 #include "opt_dec_5800.h"
 #ifdef DEC_5800
-  void	dec_5800_init __P((void));
+  void	dec_5800_init(void);
 #else
 # define dec_5800_init	platform_not_configured
 #endif
@@ -125,7 +125,7 @@ int nsysinit = (sizeof(sysinit) / sizeof(sysinit[0]));
 
 
 void
-platform_not_configured()
+platform_not_configured(void)
 {
 	printf("\n");
 	printf("Support for system type %d is not present in this kernel.\n",
@@ -137,7 +137,7 @@ platform_not_configured()
 }
 
 void
-platform_not_supported()
+platform_not_supported(void)
 {
 	const char *typestr;
 

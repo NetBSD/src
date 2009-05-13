@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.65 2008/06/24 17:04:11 cegger Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.65.10.1 2009/05/13 17:21:54 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.65 2008/06/24 17:04:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.65.10.1 2009/05/13 17:21:54 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,8 +161,7 @@ const struct vnodeopv_desc smbfs_vnodeop_opv_desc =
 	{ &smbfs_vnodeop_p, smbfs_vnodeop_entries };
 
 int
-smbfs_access(v)
-     void *v;
+smbfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -206,8 +205,7 @@ smbfs_access(v)
 
 /* ARGSUSED */
 int
-smbfs_open(v)
-     void *v;
+smbfs_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode *a_vp;
@@ -294,8 +292,7 @@ do_open:
  * Close called.
  */
 int
-smbfs_close(v)
-     void *v;
+smbfs_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnodeop_desc *a_desc;
@@ -335,8 +332,7 @@ smbfs_close(v)
  * smbfs_getattr call from vfs.
  */
 int
-smbfs_getattr(v)
-     void *v;
+smbfs_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -373,8 +369,7 @@ smbfs_getattr(v)
 }
 
 int
-smbfs_setattr(v)
-     void *v;
+smbfs_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
@@ -441,13 +436,10 @@ smbfs_setattr(v)
 	if (vap->va_atime.tv_sec != VNOVAL)
 		atime = &vap->va_atime;
 	if (mtime != atime) {
-                if (kauth_cred_geteuid(ap->a_cred) !=
-		    VTOSMBFS(vp)->sm_args.uid &&
-                    (error = kauth_authorize_generic(ap->a_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) &&
-                    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-                    (error = VOP_ACCESS(ap->a_vp, VWRITE, ap->a_cred))))
-                        return (error);
+		error = genfs_can_chtimes(ap->a_vp, vap->va_vaflags,
+		    VTOSMBFS(vp)->sm_args.uid, ap->a_cred);
+		if (error)
+			return (error);
 
 #if 0
 		if (mtime == NULL)
@@ -505,8 +497,7 @@ smbfs_setattr(v)
  * smbfs_read call.
  */
 int
-smbfs_read(v)
-     void *v;
+smbfs_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -523,8 +514,7 @@ smbfs_read(v)
 }
 
 int
-smbfs_write(v)
-     void *v;
+smbfs_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -548,8 +538,7 @@ smbfs_write(v)
  * only if the SAVESTART bit in cn_flags is clear on success.
  */
 int
-smbfs_create(v)
-     void *v;
+smbfs_create(void *v)
 {
 	struct vop_create_args /* {
 		struct vnode *a_dvp;
@@ -598,8 +587,7 @@ smbfs_create(v)
 }
 
 int
-smbfs_remove(v)
-     void *v;
+smbfs_remove(void *v)
 {
 	struct vop_remove_args /* {
 		struct vnodeop_desc *a_desc;
@@ -637,8 +625,7 @@ smbfs_remove(v)
  * smbfs_file rename call
  */
 int
-smbfs_rename(v)
-     void *v;
+smbfs_rename(void *v)
 {
 	struct vop_rename_args  /* {
 		struct vnode *a_fdvp;
@@ -738,8 +725,7 @@ out:
  * somtime it will come true...
  */
 int
-smbfs_link(v)
-     void *v;
+smbfs_link(void *v)
 {
 	return genfs_eopnotsupp(v);
 }
@@ -749,15 +735,13 @@ smbfs_link(v)
  * Sometime it will be functional...
  */
 int
-smbfs_symlink(v)
-     void *v;
+smbfs_symlink(void *v)
 {
 	return genfs_eopnotsupp(v);
 }
 
 int
-smbfs_mkdir(v)
-     void *v;
+smbfs_mkdir(void *v)
 {
 	struct vop_mkdir_args /* {
 		struct vnode *a_dvp;
@@ -806,8 +790,7 @@ smbfs_mkdir(v)
  * smbfs_remove directory call
  */
 int
-smbfs_rmdir(v)
-     void *v;
+smbfs_rmdir(void *v)
 {
 	struct vop_rmdir_args /* {
 		struct vnode *a_dvp;
@@ -847,8 +830,7 @@ smbfs_rmdir(v)
  * smbfs_readdir call
  */
 int
-smbfs_readdir(v)
-     void *v;
+smbfs_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -880,8 +862,7 @@ smbfs_fsync(void *v)
 }
 
 int
-smbfs_print(v)
-     void *v;
+smbfs_print(void *v)
 {
 	struct vop_print_args /* {
 	struct vnode *a_vp;
@@ -897,8 +878,7 @@ smbfs_print(v)
 }
 
 int
-smbfs_pathconf(v)
-     void *v;
+smbfs_pathconf(void *v)
 {
 	struct vop_pathconf_args  /* {
 		struct vnode *vp;
@@ -933,8 +913,7 @@ smbfs_pathconf(v)
 }
 
 int
-smbfs_strategy(v)
-	void *v;
+smbfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -1009,8 +988,7 @@ smbfs_getextattr(struct vop_getextattr_args *ap)
  * a callback mechanism because it will help to improve a level of consistency.
  */
 int
-smbfs_advlock(v)
-     void *v;
+smbfs_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
@@ -1162,8 +1140,7 @@ smbfs_pathcheck(struct smbmount *smp, const char *name, int nmlen)
  * Things go even weird without fixed inode numbers...
  */
 int
-smbfs_lookup(v)
-     void *v;
+smbfs_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;

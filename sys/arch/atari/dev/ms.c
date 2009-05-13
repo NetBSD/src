@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.21 2009/01/17 05:23:28 tsutsui Exp $	*/
+/*	$NetBSD: ms.c,v 1.21.2.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21 2009/01/17 05:23:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21.2.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21 2009/01/17 05:23:28 tsutsui Exp $");
 #define NMOUSE 1
 #endif
 
-typedef void	(*FPV) __P((void *));
+typedef void	(*FPV)(void *);
 
 static struct ms_softc	ms_softc[NMOUSE];
 
@@ -95,11 +95,10 @@ const struct cdevsw ms_cdevsw = {
 	nostop, notty, mspoll, nommap, mskqfilter,
 };
 
-static	void	ms_3b_delay __P((struct ms_softc *));
+static	void	ms_3b_delay(struct ms_softc *);
 
 int
-mouseattach(cnt)
-	int cnt;
+mouseattach(int cnt)
 {
 	printf("1 mouse configured\n");
 	ms_softc[0].ms_emul3b = 1;
@@ -108,8 +107,7 @@ mouseattach(cnt)
 }
 
 static void
-ms_3b_delay(ms)
-struct ms_softc	*ms;
+ms_3b_delay(struct ms_softc *ms)
 {
 	REL_MOUSE	rel_ms;
 
@@ -121,9 +119,7 @@ struct ms_softc	*ms;
  * Note that we are called from the keyboard software interrupt!
  */
 void
-mouse_soft(rel_ms, size, type)
-REL_MOUSE	*rel_ms;
-int		size, type;
+mouse_soft(REL_MOUSE *rel_ms, int size, int type)
 {
 	struct ms_softc		*ms = &ms_softc[0];
 	struct firm_event	*fe, *fe2;
@@ -306,10 +302,7 @@ out:
 }
 
 int
-msopen(dev, flags, mode, l)
-dev_t		dev;
-int		flags, mode;
-struct lwp	*l;
+msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	u_char		report_ms_joy[] = { 0x14, 0x08 };
 	struct ms_softc	*ms;
@@ -339,10 +332,7 @@ struct lwp	*l;
 }
 
 int
-msclose(dev, flags, mode, l)
-dev_t		dev;
-int		flags, mode;
-struct lwp	*l;
+msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	u_char		disable_ms_joy[] = { 0x12, 0x1a };
 	int		unit;
@@ -361,10 +351,7 @@ struct lwp	*l;
 }
 
 int
-msread(dev, uio, flags)
-dev_t		dev;
-struct uio	*uio;
-int		flags;
+msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_softc *ms;
 
@@ -373,12 +360,7 @@ int		flags;
 }
 
 int
-msioctl(dev, cmd, data, flag, l)
-dev_t			dev;
-u_long			cmd;
-register void *	data;
-int			flag;
-struct lwp		*l;
+msioctl(dev_t dev, u_long cmd, register void * data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
 	int		unit;
@@ -419,10 +401,7 @@ struct lwp		*l;
 }
 
 int
-mspoll(dev, events, l)
-dev_t		dev;
-int		events;
-struct lwp	*l;
+mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_softc *ms;
 

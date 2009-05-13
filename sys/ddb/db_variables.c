@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.40 2009/01/30 21:30:56 ad Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.40.2.1 2009/05/13 17:19:04 jym Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,33 +27,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.40 2009/01/30 21:30:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.40.2.1 2009/05/13 17:19:04 jym Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
-#include <machine/db_machdep.h>
-
+#include <ddb/ddb.h>
 #include <ddb/ddbvar.h>
-
-#include <ddb/db_lex.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_command.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_output.h>
-
 
 /*
  * If this is non-zero, the DDB will be entered when the system
  * panics.  Initialize it so that it's patchable.
  */
 #ifndef DDB_ONPANIC
-#define DDB_ONPANIC	0
+#define DDB_ONPANIC	1
 #endif
 int		db_onpanic = DDB_ONPANIC;
 
@@ -108,6 +101,7 @@ db_rw_internal_variable(const struct db_variable *vp, db_expr_t *valp, int rw)
 /*
  * sysctl(3) access to the DDB variables defined above.
  */
+#ifdef _KERNEL
 SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 {
 
@@ -174,6 +168,7 @@ SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 		       NULL, 0, &db_cmd_on_enter, DB_LINE_MAXLEN,
 		       CTL_DDB, CTL_CREATE, CTL_EOL);
 }
+#endif	/* _KERNEL */
 
 int
 db_find_variable(const struct db_variable **varp)

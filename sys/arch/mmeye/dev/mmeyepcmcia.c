@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.14 2007/10/17 19:55:46 garbled Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.14.34.1 2009/05/13 17:18:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.14 2007/10/17 19:55:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.14.34.1 2009/05/13 17:18:07 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -302,12 +302,7 @@ mmeyepcmcia_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void *
-mmeyepcmcia_chip_intr_establish(pch, pf, ipl, fct, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
+mmeyepcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg)
 {
 	struct mmeyepcmcia_handle *h = (struct mmeyepcmcia_handle *) pch;
 	int irq = h->sc->card_irq;

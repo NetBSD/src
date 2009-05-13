@@ -1,4 +1,34 @@
-/*	$NetBSD: db_command.c,v 1.126 2009/01/05 22:19:40 haad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.126.2.1 2009/05/13 17:19:04 jym Exp $	*/
+
+/*
+ * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Adam Hamsik, and by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -24,48 +54,24 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-/*
- * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Adam Hamsik.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
 
 /*
  * Command dispatcher.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.126 2009/01/05 22:19:40 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.126.2.1 2009/05/13 17:19:04 jym Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_aio.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_inet.h"
 #include "opt_uvmhist.h"
 #include "opt_ddbparam.h"
+#include "opt_multiprocessor.h"
+#include "arp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.126 2009/01/05 22:19:40 haad Exp $"
 #include <sys/vnode.h>
 #include <sys/vmem.h>
 #include <sys/lockdebug.h>
-#include <sys/sleepq.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
 #include <sys/module.h>
@@ -88,27 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.126 2009/01/05 22:19:40 haad Exp $"
 /*include queue macros*/
 #include <sys/queue.h>
 
-#include <machine/db_machdep.h>		/* type definitions */
-
-#if defined(_KERNEL_OPT)
-#include "opt_multiprocessor.h"
-#endif
-
-#include <ddb/db_lex.h>
-#include <ddb/db_output.h>
-#include <ddb/db_command.h>
-#include <ddb/db_break.h>
-#include <ddb/db_watch.h>
-#include <ddb/db_run.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
+#include <ddb/ddb.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
-
-#include "arp.h"
 
 /*
  * Results of command search.
@@ -220,12 +208,13 @@ static void	db_uvmhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
-static void	db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
 	/*added from all sub cmds*/
+#ifdef _KERNEL	/* XXX CRASH(8) */
 	{ DDB_ADD_CMD("callout",  db_show_callout,
 	    0 ,"List all used callout functions.",NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD("pages",	db_show_all_pages,
 	    0 ,"List all used memory pages.",NULL,NULL) },
 	{ DDB_ADD_CMD("procs",	db_show_all_procs,
@@ -242,8 +231,10 @@ static const struct db_command db_show_cmds[] = {
 #if defined(INET) && (NARP > 0)
 	{ DDB_ADD_CMD("arptab",	db_show_arptab,		0,NULL,NULL,NULL) },
 #endif
+#ifdef _KERNEL
 	{ DDB_ADD_CMD("breaks",	db_listbreak_cmd, 	0,
 	    "Display all breaks.",NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD("buf",	db_buf_print_cmd,	0,
 	    "Print the struct buf at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
@@ -290,8 +281,10 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the vmem usage.", "[/a] address", NULL) },
 	{ DDB_ADD_CMD("vmems", db_show_all_vmems,	0,
 	    "Show all vmems.", NULL, NULL) },
+#ifdef _KERNEL
 	{ DDB_ADD_CMD("watches",	db_listwatch_cmd, 	0,
 	    "Display all watchpoints.", NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD(NULL,		NULL,			0,NULL,NULL,NULL) }
 };
 
@@ -311,8 +304,10 @@ static const struct db_command db_command_table[] = {
 	    "Continue execution.", "[/c]",NULL) },
 	{ DDB_ADD_CMD("call",	db_fncall,		CS_OWN,
 	    "Call the function", "address[(expression[,...])]",NULL) },
+#ifdef _KERNEL	/* XXX CRASH(8) */
 	{ DDB_ADD_CMD("callout",	db_show_callout,	0, NULL,
 	    NULL,NULL ) },
+#endif
 	{ DDB_ADD_CMD("continue",	db_continue_cmd,	0,
 	    "Continue execution.", "[/c]",NULL) },
 	{ DDB_ADD_CMD("d",		db_delete_cmd,		0,
@@ -326,6 +321,8 @@ static const struct db_command db_command_table[] = {
 	{ DDB_ADD_CMD("examine",	db_examine_cmd,		CS_SET_DOT,
 	    "Display the address locations.",
 	    "[/modifier] address[,count]",NULL) },
+	{ DDB_ADD_CMD("exit",		db_continue_cmd,	0,
+	    "Continue execution.", "[/c]",NULL) },
 	{ DDB_ADD_CMD("help",   db_help_print_cmd, CS_OWN|CS_NOREPEAT,
 	    "Display help about commands",
 	    "Use other commands as arguments.",NULL) },
@@ -350,6 +347,8 @@ static const struct db_command db_command_table[] = {
 	    "[/axzodurc] address [address ...]",NULL) },
 	{ DDB_ADD_CMD("ps",		db_show_all_procs,	0,
 	    "Print all processes.","See show all procs",NULL) },
+	{ DDB_ADD_CMD("quit",		db_continue_cmd,	0,
+	    "Continue execution.", "[/c]",NULL) },
 	{ DDB_ADD_CMD("reboot",	db_reboot_cmd,		CS_OWN,
 	    "Reboot","0x1  RB_ASKNAME, 0x2 RB_SINGLE, 0x4 RB_NOSYNC, 0x8 RB_HALT,"
 	    "0x40 RB_KDB, 0x100 RB_DUMP, 0x808 RB_POWERDOWN",NULL) },
@@ -396,29 +395,6 @@ char db_cmd_on_enter[DB_LINE_MAXLEN + 1] = ___STRING(DDB_COMMANDONENTER);
 char db_cmd_on_enter[DB_LINE_MAXLEN + 1] = "";
 #endif /* defined(DDB_COMMANDONENTER) */
 #define	DB_LINE_SEP	';'
-
-/*
- * Utility routine - discard tokens through end-of-line.
- */
-void
-db_skip_to_eol(void)
-{
-	int t;
-
-	do {
-		t = db_read_token();
-	} while (t != tEOL);
-}
-
-void
-db_error(const char *s)
-{
-
-	if (s)
-		db_printf("%s", s);
-	db_flush_lex();
-	longjmp(db_recover);
-}
 
 /*
  * Execute commandlist after ddb start
@@ -484,7 +460,7 @@ db_register_tbl(uint8_t type, const struct db_command *cmd_tbl)
 	db_init_commands();
 
 	/* now create a list entry for this table */
-	list_ent = malloc(sizeof(struct db_cmd_tbl_en), M_TEMP, M_ZERO);
+	list_ent = db_zalloc(sizeof(*list_ent));
 	if (list_ent == NULL)
 		return ENOMEM;
 	list_ent->db_cmd=cmd_tbl;
@@ -545,7 +521,7 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 		if (list_ent->db_cmd == cmd_tbl){
 			TAILQ_REMOVE(list,
 			    list_ent, db_cmd_next);
-			free(list_ent,M_TEMP);
+			db_free(list_ent, sizeof(*list_ent));
 			return 0;
 		}
 	}
@@ -584,15 +560,7 @@ db_command_loop(void)
 		if (db_print_position() != 0)
 			db_printf("\n");
 		db_output_line = 0;
-
-
-#ifdef MULTIPROCESSOR
-		db_printf("db{%ld}> ", (long)cpu_number());
-#else
-		db_printf("db> ");
-#endif
 		(void) db_read_line();
-
 		db_command(&db_last_command);
 	}
 
@@ -825,7 +793,7 @@ static void
 db_command(const struct db_command **last_cmdp)
 {
 	const struct db_command *command;
-	static db_expr_t last_count;
+	static db_expr_t last_count = 0;
 	db_expr_t	addr, count;
 	char		modif[TOK_STRING_SIZE];
 	
@@ -833,7 +801,6 @@ db_command(const struct db_command **last_cmdp)
 	bool		have_addr = false;
 
 	command = NULL;
-	last_count = 0;
 	
 	t = db_read_token();
 	if ((t == tEOL) || (t == tCOMMA)) {
@@ -1007,9 +974,11 @@ db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		full = true;
 
 	if (have_addr == false)
-		addr = (db_expr_t)(uintptr_t) kernel_map;
+		addr = (db_expr_t)(uintptr_t)db_read_ptr("kernel_map");
 
+#ifdef _KERNEL
 	uvm_map_printit((struct vm_map *)(uintptr_t) addr, full, db_printf);
+#endif	/* XXX CRASH(8) */
 }
 
 /*ARGSUSED*/
@@ -1038,8 +1007,10 @@ db_object_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
+#ifdef _KERNEL /* XXX CRASH(8) */
 	uvm_object_printit((struct uvm_object *)(uintptr_t) addr, full,
 	    db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1052,7 +1023,9 @@ db_page_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
+#ifdef _KERNEL /* XXX CRASH(8) */
 	uvm_page_printit((struct vm_page *)(uintptr_t) addr, full, db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1061,7 +1034,9 @@ db_show_all_pages(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
+#ifdef _KERNEL /* XXX CRASH(8) */
 	uvm_page_printall(db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1074,7 +1049,9 @@ db_buf_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
+#ifdef _KERNEL /* XXX CRASH(8) */
 	vfs_buf_print((struct buf *)(uintptr_t) addr, full, db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1083,11 +1060,23 @@ db_event_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	bool full = false;
+	struct evcnt ev, *evp;
+	char buf[80];
 
 	if (modif[0] == 'f')
 		full = true;
 
-	event_print(full, db_printf);
+	evp = (struct evcnt *)db_read_ptr("allevents");
+	while (evp != NULL) {
+		db_read_bytes((db_addr_t)evp, sizeof(ev), (char *)&ev);
+		evp = ev.ev_list.tqe_next;
+		if (ev.ev_count == 0 && !full)
+			continue;
+		db_read_bytes((db_addr_t)ev.ev_group, ev.ev_grouplen + 1, buf);
+		db_printf("evcnt type %d: %s ", ev.ev_type, buf);
+		db_read_bytes((db_addr_t)ev.ev_name, ev.ev_namelen + 1, buf);
+		db_printf("%s = %lld\n", buf, (long long)ev.ev_count);
+	}
 }
 
 /*ARGSUSED*/
@@ -1100,7 +1089,9 @@ db_vnode_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
+#ifdef _KERNEL /* XXX CRASH(8) */
 	vfs_vnode_print((struct vnode *)(uintptr_t) addr, full, db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1108,15 +1099,10 @@ static void
 db_vmem_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	vmem_print((uintptr_t) addr, modif, db_printf);
-}
 
-/*ARGSUSED*/
-static void
-db_show_all_vmems(db_expr_t addr, bool have_addr,
-    db_expr_t count, const char *modif)
-{
-	vmem_print((uintptr_t)addr, "a", db_printf);
+#ifdef _KERNEL /* XXX CRASH(8) */
+	vmem_print((uintptr_t) addr, modif, db_printf);
+#endif
 }
 
 static void
@@ -1128,7 +1114,9 @@ db_mount_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
+#ifdef _KERNEL	/* XXX CRASH(8) */
 	vfs_mount_print((struct mount *)(uintptr_t) addr, full, db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1137,7 +1125,9 @@ db_mbuf_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
+#ifdef _KERNEL /* XXX CRASH(8) */
 	m_print((const struct mbuf *)(uintptr_t) addr, modif, db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1146,7 +1136,9 @@ db_pool_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
+#ifdef _KERNEL /* XXX CRASH(8) */
 	pool_printit((struct pool *)(uintptr_t) addr, modif, db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1155,7 +1147,9 @@ db_namecache_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
+#ifdef _KERNEL /* XXX CRASH(8) */
 	namecache_print((struct vnode *)(uintptr_t) addr, db_printf);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1164,7 +1158,9 @@ db_uvmexp_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
+#ifdef _KERNEL	/* XXX CRASH(8) */
 	uvmexp_print(db_printf);
+#endif
 }
 
 #ifdef UVMHIST
@@ -1184,7 +1180,9 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
+#ifdef _KERNEL	/* XXX CRASH(8) */
 	lockdebug_lock_print((void *)(uintptr_t)addr, db_printf);
+#endif
 }
 
 /*
@@ -1196,6 +1194,7 @@ static void
 db_fncall(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL
 	db_expr_t	fn_addr;
 #define	MAXARGS		11
 	db_expr_t	args[MAXARGS];
@@ -1245,12 +1244,16 @@ db_fncall(db_expr_t addr, bool have_addr,
 	retval = (*func)(args[0], args[1], args[2], args[3], args[4],
 			 args[5], args[6], args[7], args[8], args[9]);
 	db_printf("%s\n", db_num_to_str(retval));
+#else	/* _KERNEL */
+	db_printf("This command can only be used in-kernel.\n");
+#endif	/* _KERNEL */
 }
 
 static void
 db_reboot_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL
 	db_expr_t bootflags;
 
 	/* Flags, default to RB_AUTOBOOT */
@@ -1267,6 +1270,9 @@ db_reboot_cmd(db_expr_t addr, bool have_addr,
 	 */
 	db_recover = 0;
 	cpu_reboot((int)bootflags, NULL);
+#else	/* _KERNEL */
+	db_printf("This command can only be used in-kernel.\n");
+#endif	/* _KERNEL */
 }
 
 static void
@@ -1310,7 +1316,7 @@ db_stack_trace_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *
 	pr = db_printf;
 	while ((c = *cp++) != 0)
 		if (c == 'l')
-			pr = printf;
+			pr = (void (*)(const char *, ...))printf;
 
 	if (count == -1)
 		count = 65535;
@@ -1322,7 +1328,7 @@ static void
 db_sync_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-
+#ifdef _KERNEL
 	/*
 	 * We are leaving DDB, never to return upward.
 	 * Clear db_recover so that we can debug faults in functions
@@ -1331,6 +1337,9 @@ db_sync_cmd(db_expr_t addr, bool have_addr,
 	db_recover = 0;
 	panicstr = "dump forced via kernel debugger";
 	cpu_reboot(RB_DUMP, NULL);
+#else	/* _KERNEL */
+	db_printf("This command can only be used in-kernel.\n");
+#endif	/* _KERNEL */
 }
 
 /*
@@ -1342,9 +1351,11 @@ db_whatis_cmd(db_expr_t address, bool have_addr,
 {
 	const uintptr_t addr = (uintptr_t)address;
 
-	lwp_whatis(addr, db_printf);
+	db_lwp_whatis(addr, db_printf);
+#ifdef _KERNEL	/* XXX CRASH(8) */
 	pool_whatis(addr, db_printf);
 	vmem_whatis(addr, db_printf);
 	uvm_whatis(addr, db_printf);
 	module_whatis(addr, db_printf);
+#endif
 }

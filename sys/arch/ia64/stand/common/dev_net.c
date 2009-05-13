@@ -1,5 +1,5 @@
 /*	
- * $NetBSD: dev_net.c,v 1.3 2008/04/28 20:23:25 martin Exp $
+ * $NetBSD: dev_net.c,v 1.3.14.1 2009/05/13 17:17:57 jym Exp $
  */
 
 /*-
@@ -145,8 +145,7 @@ net_open(struct open_file *f, ...)
 }
 
 int
-net_close(f)
-    struct open_file *f;
+net_close(struct open_file *f)
 {
 
 #ifdef	NETIF_DEBUG
@@ -174,7 +173,7 @@ net_close(f)
 }
 
 int
-net_strategy()
+net_strategy(void)
 {
     return EIO;
 }
@@ -199,8 +198,7 @@ int try_bootp = 1;
 extern n_long ip_convertaddr(char *p);
 
 static int
-net_getparams(sock)
-    int sock;
+net_getparams(int sock)
 {
     char buf[MAXHOSTNAMELEN];
     char temp[FNAME_SIZE];
@@ -275,8 +273,8 @@ net_getparams(sock)
 	    rootpath[i++] = '\0';
 	    if (inet_addr(&rootpath[0]) != INADDR_NONE)
 		    rootip.s_addr = inet_addr(&rootpath[0]);
-	    bcopy(&rootpath[i], &temp[0], strlen(&rootpath[i])+1);
-	    bcopy(&temp[0], &rootpath[0], strlen(&rootpath[i])+1);	    
+	    memcpy( &temp[0], &rootpath[i], strlen(&rootpath[i])+1);
+	    memcpy( &rootpath[0], &temp[0], strlen(&rootpath[i])+1);	    
     }
     printf("net_open: server addr: %s\n", inet_ntoa(rootip));
     printf("net_open: server path: %s\n", rootpath);	    

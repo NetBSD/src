@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.9 2008/11/06 22:16:03 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.9.4.1 2009/05/13 17:18:17 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -206,6 +206,18 @@
 
 /* clip mode */
 #define DE_CLIPMODE_ENABLE	0x00000800
+/* enable testing against mask register n */
+#define DE_CLIPMODE_MASK0_EN	0x00000200
+#define DE_CLIPMODE_MASK1_EN	0x00000100
+#define DE_CLIPMODE_MASK2_EN	0x00000080
+#define DE_CLIPMODE_MASK3_EN	0x00000040
+#define DE_CLIPMODE_MASK4_EN	0x00000020
+/* let pixels pass if inside mask n, otherwise outside */
+#define DE_CLIPMODE_MASK0_IN	0x00000010
+#define DE_CLIPMODE_MASK1_IN	0x00000008
+#define DE_CLIPMODE_MASK2_IN	0x00000004
+#define DE_CLIPMODE_MASK3_IN	0x00000002
+#define DE_CLIPMODE_MASK4_IN	0x00000001
 
 /* draw mode */
 #define DE_DRAWMODE_NO_CONF	0x00800000	/* disable coherency testing */
@@ -270,6 +282,17 @@
 /* status register */
 #define CRIME_DE_STATUS		0x4000
 #define CRIME_DE_IDLE		0x10000000
-#define CRIME_DE_READY		0x02000000
+#define CRIME_DE_SETUP_IDLE	0x08000000
+#define CRIME_DE_PIXPIPE_IDLE	0x04000000
+#define CRIME_DE_MTE_IDLE	0x02000000
+#define CRIME_DE_LEVEL_MASK	0x01fc0000
+#define CRIME_DE_RD_PTR_MASK	0x0003f000
+#define CRIME_DE_WR_PTR_MASK	0x00000fc0
+#define CRIME_DE_BUF_START	0x0000003f
+
+#define CRIME_DE_LEVEL_SHIFT	18
+#define CRIME_DE_LEVEL_MAX	0x7f
+#define CRIME_PIPE_LEVEL(x)	((x & CRIME_DE_LEVEL_MASK) >>  \
+				  CRIME_DE_LEVEL_SHIFT)
 
 #endif /* CRMFBREG_H */

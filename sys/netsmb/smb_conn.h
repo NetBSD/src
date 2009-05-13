@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.18 2008/01/30 14:08:01 ad Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.18.24.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -174,7 +174,7 @@ struct smb_share_info {
 #include <netsmb/smb_subr.h>
 
 #define CONNADDREQ(a1,a2)	((a1)->sa_len == (a2)->sa_len && \
-				 bcmp(a1, a2, (a1)->sa_len) == 0)
+				 memcmp(a1, a2, (a1)->sa_len) == 0)
 
 struct smb_vc;
 struct smb_share;

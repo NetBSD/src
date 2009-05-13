@@ -1,8 +1,11 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.385 2009/02/05 13:37:24 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.385.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.385 2009/02/05 13:37:24 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.385.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -113,8 +116,6 @@ static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
 
 void checkdirs(struct vnode *);
-
-int dovfsusermount = 0;
 
 /*
  * Virtual File System System Calls
@@ -329,24 +330,10 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	if (vp->v_mountedhere != NULL)
 		return EBUSY;
 
-	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
-	if (mp == NULL)
+	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL)
 		return ENOMEM;
 
-	mp->mnt_op = vfsops;
-	mp->mnt_refcnt = 1;
-
-	TAILQ_INIT(&mp->mnt_vnodelist);
-	rw_init(&mp->mnt_unmounting);
- 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
-	error = vfs_busy(mp, NULL);
-	KASSERT(error == 0);
-	mutex_enter(&mp->mnt_updating);
-
-	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
-	mount_initspecific(mp);
 
 	/*
 	 * The underlying file system may refuse the mount for
@@ -360,6 +347,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_LOG | MNT_IGNORE | MNT_RDONLY);
 
+	mutex_enter(&mp->mnt_updating);
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
@@ -710,10 +698,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 
 	/*
 	 * XXX Syncer must be frozen when we get here.  This should really
-	 * be done on a per-mountpoint basis, but especially the softdep
-	 * code possibly called from the syncer doesn't exactly work on a
-	 * per-mountpoint basis, so the softdep code would become a maze
-	 * of vfs_busy() calls.
+	 * be done on a per-mountpoint basis, but the syncer doesn't work
+	 * like that.
 	 *
 	 * The caller of dounmount() must acquire syncer_mutex because
 	 * the syncer itself acquires locks in syncer_mutex -> vfs_busy
@@ -882,25 +868,25 @@ done:
 			return error;
 		}
 		len = strlen(bp);
-		/*
-		 * for mount points that are below our root, we can see
-		 * them, so we fix up the pathname and return them. The
-		 * rest we cannot see, so we don't allow viewing the
-		 * data.
-		 */
-		if (strncmp(bp, sp->f_mntonname, len) == 0 &&
-		    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
-			(void)strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
-			    sizeof(sp->f_mntonname));
-			if (sp->f_mntonname[0] == '\0')
-				(void)strlcpy(sp->f_mntonname, "/",
+		if (len != 1) {
+			/*
+			 * for mount points that are below our root, we can see
+			 * them, so we fix up the pathname and return them. The
+			 * rest we cannot see, so we don't allow viewing the
+			 * data.
+			 */
+			if (strncmp(bp, sp->f_mntonname, len) == 0 &&
+			    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
+				(void)strlcpy(sp->f_mntonname,
+				    c == '\0' ? "/" : &sp->f_mntonname[len],
 				    sizeof(sp->f_mntonname));
-		} else {
-			if (root)
-				(void)strlcpy(sp->f_mntonname, "/",
-				    sizeof(sp->f_mntonname));
-			else
-				error = EPERM;
+			} else {
+				if (root)
+					(void)strlcpy(sp->f_mntonname, "/",
+					    sizeof(sp->f_mntonname));
+				else
+					error = EPERM;
+			}
 		}
 		PNBUF_PUT(path);
 	}
@@ -2118,7 +2104,6 @@ do_sys_unlink(const char *arg, enum uio_seg seg)
 	struct vnode *vp;
 	int error;
 	struct nameidata nd;
-	kauth_cred_t cred;
 	char *path;
 	const char *cpath;
 
@@ -2156,7 +2141,6 @@ do_sys_unlink(const char *arg, enum uio_seg seg)
 	}
 #endif /* NVERIEXEC > 0 */
 	
-	cred = kauth_cred_get();
 #ifdef FILEASSOC
 	(void)fileassoc_file_delete(vp);
 #endif /* FILEASSOC */
@@ -3035,7 +3019,7 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	if (setbirthtime)
 		vattr.va_birthtime = ts[1];
 	if (vanull)
-		vattr.va_flags |= VA_UTIMES_NULL;
+		vattr.va_vaflags |= VA_UTIMES_NULL;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 
@@ -3139,9 +3123,6 @@ sys_fsync(struct lwp *l, const struct sys_fsync_args *uap, register_t *retval)
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0);
-	if (error == 0 && bioopsp != NULL &&
-	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioopsp->io_fsync)(vp, 0);
 	VOP_UNLOCK(vp, 0);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -3210,11 +3191,6 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e);
-
-	if (error == 0 && bioopsp != NULL &&
-	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioopsp->io_fsync)(vp, nflags);
-
 	VOP_UNLOCK(vp, 0);
 out:
 	fd_putfile(SCARG(uap, fd));

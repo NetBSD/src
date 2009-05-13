@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.11 2009/01/03 03:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.11.2.1 2009/05/13 17:20:23 jym Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_sge.c,v 1.30 2007/09/09 04:34:03 kmacy Exp $");
@@ -792,7 +792,7 @@ alloc_ring(adapter_t *sc, size_t nelem, size_t elem_size, size_t sw_size,
     }
 
     bus_dmamap_load(*tag, *map, p, len, alloc_ring_cb, phys, 0);
-    bzero(p, len);
+    memset(p, 0, len);
     *(void **)desc = p;
 
     if (sw_size) {
@@ -837,7 +837,7 @@ alloc_ring(adapter_t *sc, size_t nelem, size_t elem_size, size_t sw_size,
         return (ENOMEM);
     }
 
-    bzero(p, len);
+    memset(p, 0, len);
     *(void **)desc = p;
 
     if (sw_size)
@@ -1882,7 +1882,7 @@ t3_free_qset(adapter_t *sc, struct sge_qset *q)
 #endif
     }
 
-    bzero(q, sizeof(*q));
+    memset(q, 0, sizeof(*q));
 }
 
 /**

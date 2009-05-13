@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.11 2008/11/12 12:36:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.11.4.1 2009/05/13 17:19:52 jym Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -49,16 +49,9 @@ __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24
 #include <net/if_media.h>
 
 #include <sys/bus.h>
-#ifdef __FreeBSD__
-#include <machine/resource.h>
-#include <sys/bus.h>
-#include <sys/rman.h>
-#endif
 
-#ifdef __NetBSD__
 #include <sys/kthread.h>
 #include <net/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 
@@ -74,20 +67,12 @@ __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24
 
 #include "ndis_driver_data.h"
 
-#ifdef __NetBSD__
 #ifndef NDIS_LKM
 #include <compat/ndis/hal_var.h>
 #endif
-#endif /* __NetBSD__ */
 
 #ifdef NDIS_PCI_DEV_TABLE 
 
-#ifdef __FreeBSD
-MODULE_DEPEND(ndis, pci, 1, 1, 1);
-MODULE_DEPEND(ndis, ether, 1, 1, 1);
-MODULE_DEPEND(ndis, wlan, 1, 1, 1);
-MODULE_DEPEND(ndis, ndisapi, 1, 1, 1);
-#endif
 
 /*
  * Various supported device vendors/types and their names.
@@ -100,39 +85,19 @@ static struct ndis_pci_type ndis_devs[] = {
 	{ 0, 0, 0, NULL }
 };
 
-#ifdef __FreeBSD__
-static int ndis_probe_pci	(device_t);
-static int ndis_attach_pci	(device_t);
-#else /* __NetBSD__ */
-/*static*/ int  ndis_probe_pci(struct device *parent, 
-				struct cfdata *match,
+/*static*/ int  ndis_probe_pci(device_t parent, 
+				cfdata_t match,
 				void *aux);
-/*static*/ void ndis_attach_pci(struct device *parent,
-				struct device *self,
+/*static*/ void ndis_attach_pci(device_t parent,
+				device_t self,
 				void *aux);
-#endif
-#ifdef __FreeBSD__
-static struct resource_list *ndis_get_resource_list
-				(device_t, device_t);
-extern int ndisdrv_modevent	(module_t, int, void *);
-#endif
-#ifdef __FreeBSD__
-extern int ndis_attach		(device_t);
-#else /* __NetBSD__ */
 extern void ndis_attach		(void *);
-#endif
 extern int ndis_shutdown	(device_t);
-#ifdef __FreeBSD__
-extern int ndis_detach		(device_t);
-#else /* __NetBSD__ */
 extern int ndis_detach		(device_t, int);
-#endif
 extern int ndis_suspend		(device_t);
 extern int ndis_resume		(device_t);
 
-#ifdef __NetBSD__
 extern int ndis_intr(void *);
-#endif
 
 extern unsigned char drv_data[];
 
@@ -143,49 +108,6 @@ extern unsigned char drv_data[];
 //static funcptr ndis_linksts_done_wrap;
 #endif
 
-#ifdef __FreeBSD__
-static device_method_t ndis_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		ndis_probe_pci),
-	DEVMETHOD(device_attach,	ndis_attach_pci),
-	DEVMETHOD(device_detach,	ndis_detach),
-	DEVMETHOD(device_shutdown,	ndis_shutdown),
-	DEVMETHOD(device_suspend,	ndis_suspend),
-	DEVMETHOD(device_resume,	ndis_resume),
-
-	/* Bus interface */
-	DEVMETHOD(bus_get_resource_list, ndis_get_resource_list),
-
-	{ 0, 0 }
-};
-
-static driver_t ndis_driver = {
-#ifdef NDIS_DEVNAME
-	NDIS_DEVNAME,
-#else
-	"ndis",
-#endif
-	ndis_methods,
-	sizeof(struct ndis_softc)
-};
-
-static devclass_t ndis_devclass;
-
-#ifdef NDIS_MODNAME
-#define NDIS_MODNAME_OVERRIDE_PCI(x)					\
-	DRIVER_MODULE(x, pci, ndis_driver, ndis_devclass, ndisdrv_modevent, 0)
-#define NDIS_MODNAME_OVERRIDE_CARDBUS(x)				\
-	DRIVER_MODULE(x, cardbus, ndis_driver, ndis_devclass,		\
-		ndisdrv_modevent, 0)
-NDIS_MODNAME_OVERRIDE_PCI(NDIS_MODNAME);
-NDIS_MODNAME_OVERRIDE_CARDBUS(NDIS_MODNAME);
-#else
-DRIVER_MODULE(ndis, pci, ndis_driver, ndis_devclass, ndisdrv_modevent, 0);
-DRIVER_MODULE(ndis, cardbus, ndis_driver, ndis_devclass, ndisdrv_modevent, 0);
-#endif
-
-#endif  /* __FreeBSD__ */
-#ifdef __NetBSD__
 
 CFATTACH_DECL(
 #ifdef NDIS_DEVNAME
@@ -199,44 +121,7 @@ CFATTACH_DECL(
 	ndis_detach,
 	NULL);
 
-#endif /* __NetBSD__ */
 
-#ifdef __FreeBSD__
-/*
- * Probe for an NDIS device. Check the PCI vendor and device
- * IDs against our list and return a device name if we find a match.
- */
-static int
-ndis_probe_pci(dev)
-	device_t		dev;
-{
-	struct ndis_pci_type	*t;
-	driver_object		*drv;
-
-	t = ndis_devs;
-	drv = windrv_lookup(0, "PCI Bus");
-
-	if (drv == NULL)
-		return(ENXIO);
-
-	while(t->ndis_name != NULL) {
-		if ((pci_get_vendor(dev) == t->ndis_vid) &&
-		    (pci_get_device(dev) == t->ndis_did) &&
-		    ((pci_read_config(dev, PCIR_SUBVEND_0, 4) ==
-		    t->ndis_subsys) || t->ndis_subsys == 0)) {
-			device_set_desc(dev, t->ndis_name);
-
-			/* Create PDO for this device instance */
-			windrv_create_pdo(drv, dev);
-			return(0);
-		}
-		t++;
-	}
-
-	return(ENXIO);
-}
-#endif /* __FreeBSD__ */
-#ifdef __NetBSD__
 
 extern int
 ndis_lkm_handle(struct lkm_table *lkmtp, int cmd);
@@ -260,7 +145,7 @@ void load_ndisdrv(void *arg)
 }
 
 /*static*/ int
-ndis_probe_pci(struct device *parent, struct cfdata *match, void *aux)
+ndis_probe_pci(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int vendor  = PCI_VENDOR(pa->pa_id);
@@ -297,177 +182,12 @@ ndis_probe_pci(struct device *parent, struct cfdata *match, void *aux)
 	
 	return 0;  /* dosen't match */
 }
-#endif /* __NetBSD__ */
 
-#ifdef __FreeBSD__
-/*
- * Attach the interface. Allocate softc structures, do ifmedia
- * setup and ethernet/BPF attach.
- */
-static int
-ndis_attach_pci(dev)
-	device_t		dev;
-{
-	struct ndis_softc	*sc;
-	int			unit, error = 0, rid;
-	struct ndis_pci_type	*t;
-	int			devidx = 0, defidx = 0;
-	struct resource_list	*rl;
-	struct resource_list_entry	*rle;
-
-	sc = device_get_softc(dev);
-	unit = device_get_unit(dev);
-	sc->ndis_dev = dev;
-
-	/*
-	 * Map control/status registers.
-	 */
-
-	pci_enable_busmaster(dev);
-
-	rl = BUS_GET_RESOURCE_LIST(device_get_parent(dev), dev);
-	if (rl != NULL) {
-		SLIST_FOREACH(rle, rl, link) {
-			switch (rle->type) {
-			case SYS_RES_IOPORT:
-				sc->ndis_io_rid = rle->rid;
-				sc->ndis_res_io = bus_alloc_resource(dev,
-				    SYS_RES_IOPORT, &sc->ndis_io_rid,
-				    0, ~0, 1, RF_ACTIVE);
-				if (sc->ndis_res_io == NULL) {
-					aprint_error_dev(dev, "couldn't map iospace\n");
-					error = ENXIO;
-					goto fail;
-				}
-				break;
-			case SYS_RES_MEMORY:
-				if (sc->ndis_res_altmem != NULL &&
-				    sc->ndis_res_mem != NULL) {
-					aprint_error_dev(dev, "too many memory resources\n");
-					error = ENXIO;
-					goto fail;
-				}
-				if (sc->ndis_res_mem) {
-					sc->ndis_altmem_rid = rle->rid;
-					sc->ndis_res_altmem =
-					    bus_alloc_resource(dev,
-					        SYS_RES_MEMORY,
-						&sc->ndis_altmem_rid,
-						0, ~0, 1, RF_ACTIVE);
-					if (sc->ndis_res_altmem == NULL) {
-						aprint_error_dev(dev, "couldn't map alt "
-							     "memory\n");
-						error = ENXIO;
-						goto fail;
-					}
-				} else {
-					sc->ndis_mem_rid = rle->rid;
-					sc->ndis_res_mem =
-					    bus_alloc_resource(dev,
-					        SYS_RES_MEMORY,
-						&sc->ndis_mem_rid,
-						0, ~0, 1, RF_ACTIVE);
-					if (sc->ndis_res_mem == NULL) {
-						aprint_error_dev(dev, "couldn't map memory\n");
-						error = ENXIO;
-						goto fail;
-					}
-				}
-				break;
-			case SYS_RES_IRQ:
-				rid = rle->rid;
-				sc->ndis_irq = bus_alloc_resource(dev,
-				    SYS_RES_IRQ, &rid, 0, ~0, 1,
-	    			    RF_SHAREABLE | RF_ACTIVE);
-				if (sc->ndis_irq == NULL) {
-					aprint_error_dev(dev, "couldn't map interrupt\n");
-					error = ENXIO;
-					goto fail;
-				}
-				break;
-			default:
-				break;
-			}
-			sc->ndis_rescnt++;
-		}
-	}
-
-	/*
-	 * If the BIOS did not set up an interrupt for this device,
-	 * the resource traversal code above will fail to set up
-	 * an IRQ resource. This is usually a bad thing, so try to
-	 * force the allocation of an interrupt here. If one was
-	 * not assigned to us by the BIOS, bus_alloc_resource()
-	 * should route one for us.
-	 */
-	if (sc->ndis_irq == NULL) {
-		rid = 0;
-		sc->ndis_irq = bus_alloc_resource(dev, SYS_RES_IRQ,
-		    &rid, 0, ~0, 1, RF_SHAREABLE | RF_ACTIVE);
-		if (sc->ndis_irq == NULL) {
-			aprint_error_dev(dev, "couldn't route interrupt\n");
-			error = ENXIO;
-			goto fail;
-		}
-		sc->ndis_rescnt++;
-	}
-
-	/*
-	 * Allocate the parent bus DMA tag appropriate for PCI.
-	 */
-#define NDIS_NSEG_NEW 32
-	error = bus_dma_tag_create(NULL,	/* parent */
-			1, 0,			/* alignment, boundary */
-			BUS_SPACE_MAXADDR_32BIT,/* lowaddr */
-                        BUS_SPACE_MAXADDR,	/* highaddr */
-			NULL, NULL,		/* filter, filterarg */
-			MAXBSIZE, NDIS_NSEG_NEW,/* maxsize, nsegments */
-			BUS_SPACE_MAXSIZE_32BIT,/* maxsegsize */
-			BUS_DMA_ALLOCNOW,       /* flags */
-			NULL, NULL,		/* lockfunc, lockarg */
-			&sc->ndis_parent_tag);
-
-        if (error)
-                goto fail;
-
-	sc->ndis_iftype = PCIBus;
-
-	/* Figure out exactly which device we matched. */
-
-	t = ndis_devs;
-
-	while(t->ndis_name != NULL) {
-		if ((pci_get_vendor(dev) == t->ndis_vid) &&
-		    (pci_get_device(dev) == t->ndis_did)) {
-			if (t->ndis_subsys == 0)
-				defidx = devidx;
-			else {
-				if (t->ndis_subsys ==
-				    pci_read_config(dev, PCIR_SUBVEND_0, 4))
-					break;
-			}
-		}
-		t++;
-		devidx++;
-	}
-
-	if (ndis_devs[devidx].ndis_name == NULL)
-		sc->ndis_devidx = defidx;
-	else
-		sc->ndis_devidx = devidx;
-
-	error = ndis_attach(dev);
-
-fail:
-	return(error);
-}
-#endif /* __FreeBSD__ */
-#ifdef __NetBSD__
 /* 6 BADR's + 1 IRQ  (so far) */
 #define MAX_RESOURCES 7
 
 /*static*/ 
-void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
+void ndis_attach_pci(device_t parent, device_t self, void *aux)
 {
 	struct ndis_softc *sc = (struct ndis_softc*)self;
 	struct pci_attach_args *pa = aux;
@@ -651,19 +371,6 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 	
 	kthread_create(ndis_attach, (void *)sc);
 }
-#endif /* __NetBSD__ */
 
-#ifdef __FreeBSD__
-static struct resource_list *
-ndis_get_resource_list(dev, child)
-	device_t		dev;
-	device_t		child;
-{
-	struct ndis_softc	*sc;
-
-	sc = device_get_softc(dev);
-	return (BUS_GET_RESOURCE_LIST(device_get_parent(sc->ndis_dev), dev));
-}
-#endif /* __FreeBSD__ */
 
 #endif /* NDIS_PCI_DEV_TABLE */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/01/12 06:50:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2009/05/13 17:18:10 jym Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -8,23 +8,11 @@ CFLAGS= -Os -Wall
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -D_STANDALONE
-CPPFLAGS+= -DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S} -I.
 CPPFLAGS+= -D__daddr_t=int32_t
 AFLAGS= -D_LOCORE
 
-CLEANFILES+= machine m68k
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.PHONY: machine-links
-beforedepend: machine-links
-machine-links:
-	-rm -f machine
-	ln -s ${S}/arch/${MACHINE}/include machine
-	-rm -f ${MACHINE_ARCH}
-	ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-.endif
-
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 ### find out what to use for libkern
@@ -39,13 +27,13 @@ LIBZ= ${ZLIB}
 
 ### find out what to use for libsa
 SA_AS= library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
+SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_EXTRADIR=${.CURDIR}
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
 LIBS= ${LIBSA} ${LIBZ} ${LIBKERN}
 
-realall: machine-links ${LIBS}
+realall: ${LIBS}
 
 cleandir distclean: cleanlibdir
 

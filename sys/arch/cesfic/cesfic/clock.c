@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.5 2006/09/06 04:29:01 gdamore Exp $ */
+/* $NetBSD: clock.c,v 1.5.74.1 2009/05/13 17:16:36 jym Exp $ */
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2006/09/06 04:29:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5.74.1 2009/05/13 17:16:36 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ char *clockbase;
 
 extern void sic_enable_int(int, int, int, int, int);
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	mainbus_map(0x5a000000, 0x1000, 0, (void *)&clockbase);
 	sic_enable_int(25, 0, 1, 6, 0);

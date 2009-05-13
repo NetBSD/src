@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.28 2007/03/04 05:59:52 christos Exp $	*/
+/*	$NetBSD: mq200.c,v 1.28.58.1 2009/05/13 17:17:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.28 2007/03/04 05:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.28.58.1 2009/05/13 17:17:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -338,7 +338,7 @@ mq200_fbinit(struct hpcfb_fbconf *fb)
 	}
 
 	/* zero fill */
-	bzero(fb, sizeof(*fb));
+	memset(fb, 0, sizeof(*fb));
 
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/
@@ -463,12 +463,7 @@ mq200_fbinit(struct hpcfb_fbconf *fb)
 }
 
 int
-mq200_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+mq200_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mq200_softc *sc = (struct mq200_softc *)v;
 	struct hpcfb_fbconf *fbconf;

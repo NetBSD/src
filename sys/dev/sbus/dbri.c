@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.21 2009/01/03 03:43:22 yamt Exp $	*/
+/*	$NetBSD: dbri.c,v 1.21.2.1 2009/05/13 17:21:22 jym Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.21 2009/01/03 03:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.21.2.1 2009/05/13 17:21:22 jym Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -94,7 +94,7 @@ enum io {
 
 /* softc stuff */
 static void	dbri_attach_sbus(device_t, device_t, void *);
-static int	dbri_match_sbus(device_t, struct cfdata *, void *);
+static int	dbri_match_sbus(device_t, cfdata_t, void *);
 
 static void	dbri_config_interrupts(device_t);
 
@@ -249,7 +249,7 @@ enum {
  * Autoconfig routines
  */
 static int
-dbri_match_sbus(device_t parent, struct cfdata *match, void *aux)
+dbri_match_sbus(device_t parent, cfdata_t match, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	char *ver;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14 2008/09/05 13:37:24 tron Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14.8.1 2009/05/13 17:16:08 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14 2008/09/05 13:37:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14.8.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ db_sym_t db_frame_info(long *, db_addr_t, const char **, db_expr_t *,
 
 
 void
-db_find_trace_symbols()
+db_find_trace_symbols(void)
 {
 	db_expr_t	value;
 

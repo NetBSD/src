@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.1 2001/10/05 22:27:52 reinoud Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.1.146.1 2009/05/13 17:16:03 jym Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -150,15 +150,15 @@ struct podule_attach_args {
 
 extern podule_t podules[MAX_PODULES + MAX_NETSLOTS];
 
-int matchpodule __P((struct podule_attach_args *pa,
-    int manufacturer, int product, int required_slot));
+int matchpodule(struct podule_attach_args *pa,
+    int manufacturer, int product, int required_slot);
 
-void netslot_ea	__P((u_int8_t *buffer));
+void netslot_ea(u_int8_t *buffer);
 
-extern void *podulebus_irq_establish __P((podulebus_intr_handle_t, int,
-    int (*)(void *), void *, struct evcnt *));
-extern void podulebus_shift_tag __P((bus_space_tag_t, u_int,
-    bus_space_tag_t *));
+extern void *podulebus_irq_establish(podulebus_intr_handle_t, int,
+    int (*)(void *), void *, struct evcnt *);
+extern void podulebus_shift_tag(bus_space_tag_t, u_int,
+    bus_space_tag_t *);
 
 /* Used internally by the podulebus code */
 extern void netslotscan(struct device *);

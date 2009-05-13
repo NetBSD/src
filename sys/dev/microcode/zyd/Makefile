@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2007/06/09 11:20:54 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.1.52.1 2009/05/13 17:20:15 jym Exp $
 
 NOMAN=	# defined
 
-FILES=	zyd-zd1211 zyd-zd1211b zd1211-licence
+FILES=	zyd-zd1211 zyd-zd1211b zd1211-license
 
 # XXX
 includes:

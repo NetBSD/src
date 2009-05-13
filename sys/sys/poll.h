@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.13 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: poll.h,v 1.13.2.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,10 +71,10 @@ struct pollfd {
 #include <sys/signal.h>		/* for sigset_t */
 
 struct lwp;
-struct timeval;
+struct timespec;
 
 int	pollcommon(struct lwp *, register_t *, struct pollfd *, u_int,
-	    struct timeval *, sigset_t *);
+    struct timespec *, sigset_t *);
 #else
 #include <sys/cdefs.h>
 

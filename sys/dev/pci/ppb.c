@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.39 2008/05/03 05:44:06 cegger Exp $	*/
+/*	$NetBSD: ppb.c,v 1.39.14.1 2009/05/13 17:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.39 2008/05/03 05:44:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.39.14.1 2009/05/13 17:20:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,5 +206,6 @@ ppbchilddet(device_t self, device_t child)
 	/* we keep no references to child devices, so do nothing */
 }
 
-CFATTACH_DECL2_NEW(ppb, sizeof(struct ppb_softc),
-    ppbmatch, ppbattach, ppbdetach, NULL, NULL, ppbchilddet);
+CFATTACH_DECL3_NEW(ppb, sizeof(struct ppb_softc),
+    ppbmatch, ppbattach, ppbdetach, NULL, NULL, ppbchilddet,
+    DVF_DETACH_SHUTDOWN);

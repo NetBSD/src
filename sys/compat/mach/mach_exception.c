@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.13 2008/04/28 20:23:44 martin Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.13.14.1 2009/05/13 17:18:59 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.13 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.13.14.1 2009/05/13 17:18:59 jym Exp $");
 
 #include "opt_compat_darwin.h"
 
@@ -114,10 +114,8 @@ mach_trapsignal1(struct lwp *l, struct ksiginfo *ksi)
 }
 
 int
-mach_exception(exc_l, exc, code)
-	struct lwp *exc_l;	/* currently running lwp */
-	int exc;
-	int *code;
+mach_exception(struct lwp *exc_l, int exc, int *code)
+	/* exc_l:	 currently running lwp */
 {
 	int behavior, flavor;
 	mach_msg_header_t *msgh;

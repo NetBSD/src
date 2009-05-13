@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.16 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: lunafb.c,v 1.16.14.1 2009/05/13 17:17:58 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.16 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.16.14.1 2009/05/13 17:17:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,11 +104,11 @@ struct omfb_softc {
 	int nscreens;
 };
 
-static int  omgetcmap __P((struct omfb_softc *, struct wsdisplay_cmap *));
-static int  omsetcmap __P((struct omfb_softc *, struct wsdisplay_cmap *));
+static int  omgetcmap(struct omfb_softc *, struct wsdisplay_cmap *);
+static int  omsetcmap(struct omfb_softc *, struct wsdisplay_cmap *);
 
 static struct om_hwdevconfig omfb_console_dc;
-static void omfb_getdevconfig __P((paddr_t, struct om_hwdevconfig *));
+static void omfb_getdevconfig(paddr_t, struct om_hwdevconfig *);
 
 extern struct wsdisplay_emulops omfb_emulops;
 
@@ -127,14 +127,14 @@ static const struct wsscreen_list omfb_screenlist = {
 	sizeof(_omfb_scrlist) / sizeof(struct wsscreen_descr *), _omfb_scrlist
 };
 
-static int   omfbioctl __P((void *, void *, u_long, void *, int,
-		            struct lwp *));
-static paddr_t omfbmmap __P((void *, void *, off_t, int));
-static int   omfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-static void  omfb_free_screen __P((void *, void *));
-static int   omfb_show_screen __P((void *, void *, int,
-				void (*) (void *, int, int), void *));
+static int   omfbioctl(void *, void *, u_long, void *, int,
+		            struct lwp *);
+static paddr_t omfbmmap(void *, void *, off_t, int);
+static int   omfb_alloc_screen(void *, const struct wsscreen_descr *,
+				      void **, int *, int *, long *);
+static void  omfb_free_screen(void *, void *);
+static int   omfb_show_screen(void *, void *, int,
+				void (*) (void *, int, int), void *);
 
 static const struct wsdisplay_accessops omfb_accessops = {
 	omfbioctl,
@@ -145,8 +145,8 @@ static const struct wsdisplay_accessops omfb_accessops = {
 	0 /* load_font */
 };
 
-static int  omfbmatch __P((struct device *, struct cfdata *, void *));
-static void omfbattach __P((struct device *, struct device *, void *));
+static int  omfbmatch(struct device *, struct cfdata *, void *);
+static void omfbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(fb, sizeof(struct omfb_softc),
     omfbmatch, omfbattach, NULL, NULL);
@@ -155,13 +155,10 @@ extern struct cfdriver fb_cd;
 extern int hwplanemask;	/* hardware planemask; retrieved at boot */
 
 static int omfb_console;
-int  omfb_cnattach __P((void));
+int  omfb_cnattach(void);
 
 static int
-omfbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+omfbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -178,9 +175,7 @@ omfbmatch(parent, cf, aux)
 }
 
 static void
-omfbattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+omfbattach(struct device *parent, struct device *self, void *args)
 {
 	struct omfb_softc *sc = (struct omfb_softc *)self;
 	struct wsemuldisplaydev_attach_args waa;
@@ -211,7 +206,7 @@ omfbattach(parent, self, args)
 }
 
 /* EXPORT */ int
-omfb_cnattach()
+omfb_cnattach(void)
 {
 	struct om_hwdevconfig *dc = &omfb_console_dc;
 	long defattr;
@@ -224,13 +219,7 @@ omfb_cnattach()
 }
 
 static int
-omfbioctl(v, vs, cmd, data, flag, l)
-	void *v;
-	void *vs;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+omfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct omfb_softc *sc = v;
 	struct om_hwdevconfig *dc = sc->sc_dc;
@@ -272,11 +261,7 @@ omfbioctl(v, vs, cmd, data, flag, l)
  * offset, allowing for the given protection, or return -1 for error.
  */
 static paddr_t
-omfbmmap(v, vs, offset, prot)
-	void *v;
-	void *vs;
-	off_t offset;
-	int prot;
+omfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct omfb_softc *sc = v;
 
@@ -286,9 +271,7 @@ omfbmmap(v, vs, offset, prot)
 }
 
 static int
-omgetcmap(sc, p)
-	struct omfb_softc *sc;
-	struct wsdisplay_cmap *p;
+omgetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
 	int cmsize, error;
@@ -308,9 +291,7 @@ omgetcmap(sc, p)
 }
 
 static int
-omsetcmap(sc, p)
-	struct omfb_softc *sc;
-	struct wsdisplay_cmap *p;
+omsetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap cmap;
 	u_int index = p->index, count = p->count;
@@ -355,9 +336,7 @@ omsetcmap(sc, p)
 }
 
 static void
-omfb_getdevconfig(paddr, dc)
-	paddr_t paddr;
-	struct om_hwdevconfig *dc;
+omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 {
 	int bpp, i;
 	struct raster *rap;
@@ -453,12 +432,7 @@ omfb_getdevconfig(paddr, dc)
 }
 
 static int
-omfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+omfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct omfb_softc *sc = v;
 	long defattr;
@@ -476,9 +450,7 @@ omfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-omfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+omfb_free_screen(void *v, void *cookie)
 {
 	struct omfb_softc *sc = v;
 
@@ -489,12 +461,7 @@ omfb_free_screen(v, cookie)
 }
 
 static int
-omfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
+omfb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int), void *cbarg)
 {
 	return 0;
 }

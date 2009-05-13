@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.27 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.27.14.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.27 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.27.14.1 2009/05/13 17:18:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -76,6 +76,7 @@ intc_init(void)
 #ifdef SH3
 	case CPU_PRODUCT_7709:
 	case CPU_PRODUCT_7709A:
+	case CPU_PRODUCT_7706:
 		_reg_write_2(SH7709_IPRC, 0);
 		_reg_write_2(SH7709_IPRD, 0);
 		_reg_write_2(SH7709_IPRE, 0);
@@ -215,7 +216,7 @@ intc_intr_enable(int evtcode)
  * int intc_intr_priority(int evtcode, int level)
  *	Setup interrupt priority register.
  *	SH7708, SH7708S, SH7708R, SH7750, SH7750S ... evtcode is INTEVT
- *	SH7709, SH7709A				  ... evtcode is INTEVT2
+ *	SH7709, SH7709A, SH7706			  ... evtcode is INTEVT2
  */
 static void
 intc_intr_priority(int evtcode, int level)
@@ -391,7 +392,9 @@ intc_unknown_intr(void *arg)
 {
 
 	printf("INTEVT=0x%x", _reg_read_4(SH_(INTEVT)));
-	if (cpu_product == CPU_PRODUCT_7709 || cpu_product == CPU_PRODUCT_7709A)
+	if (cpu_product == CPU_PRODUCT_7709 ||
+	    cpu_product == CPU_PRODUCT_7709A ||
+	    cpu_product == CPU_PRODUCT_7706)
 		printf(" INTEVT2=0x%x", _reg_read_4(SH7709_INTEVT2));
 	printf("\n");
 

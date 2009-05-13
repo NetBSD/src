@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.38 2007/10/19 11:59:45 ad Exp $        */
+/* $NetBSD: adwlib.c,v 1.38.34.1 2009/05/13 17:19:21 jym Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.38 2007/10/19 11:59:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.38.34.1 2009/05/13 17:19:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,8 +256,7 @@ static const ADW_EEPROM adw_38C1600_Default_EEPROM = {
  * Note: Chip is stopped on entry.
  */
 int
-AdwInitFromEEPROM(sc)
-ADW_SOFTC      *sc;
+AdwInitFromEEPROM(ADW_SOFTC *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -545,8 +544,7 @@ XXX	  TODO!!!	if (ASC_PCI_ID2FUNC(sc->cfg.pci_slot_info) != 0) {
  * On failure return the error code.
  */
 int
-AdwInitDriver(sc)
-ADW_SOFTC      *sc;
+AdwInitDriver(ADW_SOFTC *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -949,10 +947,7 @@ ADW_SOFTC      *sc;
 
 
 int
-AdwRamSelfTest(iot, ioh, chip_type)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t chip_type;
+AdwRamSelfTest(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t chip_type)
 {
 	int		i;
 	u_int8_t	byte;
@@ -1038,11 +1033,7 @@ AdwRamSelfTest(iot, ioh, chip_type)
 
 
 int
-AdwLoadMCode(iot, ioh, bios_mem, chip_type)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int16_t *bios_mem;
-	u_int8_t chip_type;
+AdwLoadMCode(bus_space_tag_t iot, bus_space_handle_t ioh, u_int16_t *bios_mem, u_int8_t chip_type)
 {
 	const u_int8_t	*mcode_data;
 	u_int32_t	 mcode_chksum;
@@ -1191,10 +1182,7 @@ AdwLoadMCode(iot, ioh, bios_mem, chip_type)
 
 
 int
-AdwASC3550Cabling(iot, ioh, cfg)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	ADW_DVC_CFG *cfg;
+AdwASC3550Cabling(bus_space_tag_t iot, bus_space_handle_t ioh, ADW_DVC_CFG *cfg)
 {
 	u_int16_t	scsi_cfg1;
 
@@ -1316,10 +1304,7 @@ AdwASC3550Cabling(iot, ioh, cfg)
 
 
 int
-AdwASC38C0800Cabling(iot, ioh, cfg)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	ADW_DVC_CFG *cfg;
+AdwASC38C0800Cabling(bus_space_tag_t iot, bus_space_handle_t ioh, ADW_DVC_CFG *cfg)
 {
 	u_int16_t	scsi_cfg1;
 
@@ -1445,10 +1430,7 @@ AdwASC38C0800Cabling(iot, ioh, cfg)
 
 
 int
-AdwASC38C1600Cabling(iot, ioh, cfg)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	ADW_DVC_CFG *cfg;
+AdwASC38C1600Cabling(bus_space_tag_t iot, bus_space_handle_t ioh, ADW_DVC_CFG *cfg)
 {
 	u_int16_t	scsi_cfg1;
 
@@ -1576,10 +1558,7 @@ AdwASC38C1600Cabling(iot, ioh, cfg)
  * Return a checksum based on the EEPROM configuration read.
  */
 static u_int16_t
-AdwGetEEPROMConfig(iot, ioh, cfg_buf)
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
-	ADW_EEPROM		*cfg_buf;
+AdwGetEEPROMConfig(bus_space_tag_t iot, bus_space_handle_t ioh, ADW_EEPROM *cfg_buf)
 {
 	u_int16_t	       wval, chksum;
 	u_int16_t	       *wbuf;
@@ -1613,10 +1592,7 @@ AdwGetEEPROMConfig(iot, ioh, cfg_buf)
  * Read the EEPROM from specified location
  */
 static u_int16_t
-AdwReadEEPWord(iot, ioh, eep_word_addr)
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
-	int			eep_word_addr;
+AdwReadEEPWord(bus_space_tag_t iot, bus_space_handle_t ioh, int eep_word_addr)
 {
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 		ASC_EEP_CMD_READ | eep_word_addr);
@@ -1630,9 +1606,7 @@ AdwReadEEPWord(iot, ioh, eep_word_addr)
  * Wait for EEPROM command to complete
  */
 static void
-AdwWaitEEPCmd(iot, ioh)
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
+AdwWaitEEPCmd(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int eep_delay_ms;
 
@@ -1653,10 +1627,7 @@ AdwWaitEEPCmd(iot, ioh)
  * Write the EEPROM from 'cfg_buf'.
  */
 static void
-AdwSetEEPROMConfig(iot, ioh, cfg_buf)
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
-	ADW_EEPROM		*cfg_buf;
+AdwSetEEPROMConfig(bus_space_tag_t iot, bus_space_handle_t ioh, ADW_EEPROM *cfg_buf)
 {
 	u_int16_t *wbuf;
 	u_int16_t addr, chksum;
@@ -1727,9 +1698,7 @@ AdwSetEEPROMConfig(iot, ioh, cfg_buf)
  *                       host IC error.
  */
 int
-AdwExeScsiQueue(sc, scsiq)
-ADW_SOFTC	*sc;
-ADW_SCSI_REQ_Q	*scsiq;
+AdwExeScsiQueue(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1842,9 +1811,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 
 
 void
-AdwResetChip(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+AdwResetChip(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 
 	/*
@@ -1868,8 +1835,7 @@ AdwResetChip(iot, ioh)
  *                      may be hung which requires driver recovery.
  */
 int
-AdwResetCCB(sc)
-ADW_SOFTC	*sc;
+AdwResetCCB(ADW_SOFTC *sc)
 {
 	int	    status;
 
@@ -1913,8 +1879,7 @@ ADW_SOFTC	*sc;
  *      ADW_FALSE(0) -  Chip re-initialization and SCSI Bus Reset failure.
  */
 int
-AdwResetSCSIBus(sc)
-ADW_SOFTC	*sc;
+AdwResetSCSIBus(ADW_SOFTC *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2008,8 +1973,7 @@ ADW_SOFTC	*sc;
  *   ADW_FALSE(0) - no interrupt was pending
  */
 int
-AdwISR(sc)
-ADW_SOFTC	*sc;
+AdwISR(ADW_SOFTC *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2164,10 +2128,7 @@ ADW_SOFTC	*sc;
  *   ADW_ERROR - command timed out
  */
 int
-AdwSendIdleCmd(sc, idle_cmd, idle_cmd_parameter)
-ADW_SOFTC      *sc;
-u_int16_t       idle_cmd;
-u_int32_t       idle_cmd_parameter;
+AdwSendIdleCmd(ADW_SOFTC *sc, u_int16_t idle_cmd, u_int32_t idle_cmd_parameter)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2232,9 +2193,7 @@ u_int32_t       idle_cmd_parameter;
  * Queuing.
  */
 static void
-AdwInquiryHandling(sc, scsiq)
-ADW_SOFTC	*sc;
-ADW_SCSI_REQ_Q *scsiq;
+AdwInquiryHandling(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 {
 #ifndef FAILSAFE
 	bus_space_tag_t iot = sc->sc_iot;
@@ -2407,8 +2366,7 @@ ADW_SCSI_REQ_Q *scsiq;
 
 
 static void
-AdwSleepMilliSecond(n)
-u_int32_t	n;
+AdwSleepMilliSecond(u_int32_t n)
 {
 
 	DELAY(n * 1000);
@@ -2416,8 +2374,7 @@ u_int32_t	n;
 
 
 static void
-AdwDelayMicroSecond(n)
-u_int32_t	n;
+AdwDelayMicroSecond(u_int32_t n)
 {
 
 	DELAY(n);

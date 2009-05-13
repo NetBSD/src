@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.278 2009/01/19 02:27:57 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.278.2.1 2009/05/13 17:22:28 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.278 2009/01/19 02:27:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.278.2.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1562,7 +1562,7 @@ ip_dooptions(struct mbuf *m)
 			/*
 			 * locate outgoing interface
 			 */
-			bcopy((void *)(cp + off), (void *)&ipaddr.sin_addr,
+			memcpy((void *)&ipaddr.sin_addr, (void *)(cp + off),
 			    sizeof(ipaddr.sin_addr));
 			if (opt == IPOPT_SSRR)
 				ia = ifatoia(ifa_ifwithladdr(sintosa(&ipaddr)));
@@ -1598,7 +1598,7 @@ ip_dooptions(struct mbuf *m)
 			off--;			/* 0 origin */
 			if ((off + sizeof(struct in_addr)) > optlen)
 				break;
-			bcopy((void *)(&ip->ip_dst), (void *)&ipaddr.sin_addr,
+			memcpy((void *)&ipaddr.sin_addr, (void *)(&ip->ip_dst),
 			    sizeof(ipaddr.sin_addr));
 			/*
 			 * locate outgoing interface; if we're the destination,
@@ -1665,7 +1665,7 @@ ip_dooptions(struct mbuf *m)
 					    (u_char *)ip;
 					goto bad;
 				}
-				bcopy(cp0, &ipaddr.sin_addr,
+				memcpy(&ipaddr.sin_addr, cp0,
 				    sizeof(struct in_addr));
 				if (ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)))
 				    == NULL)
@@ -1739,7 +1739,7 @@ save_rte(u_char *option, struct in_addr dst)
 #endif /* 0 */
 	if (olen > sizeof(ip_srcrt) - (1 + sizeof(dst)))
 		return;
-	bcopy((void *)option, (void *)ip_srcrt.srcopt, olen);
+	memcpy((void *)ip_srcrt.srcopt, (void *)option, olen);
 	ip_nhops = (olen - IPOPT_OFFSET - 1) / sizeof(struct in_addr);
 	ip_srcrt.dst = dst;
 }
@@ -2136,9 +2136,10 @@ sysctl_net_inet_ip_forwsrcrt(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FORWSRCRT,
-	    0, NULL, NULL, NULL))
-		return (EPERM);
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FORWSRCRT,
+	    0, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	ip_forwsrcrt = tmp;
 

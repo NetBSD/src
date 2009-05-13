@@ -1,8 +1,11 @@
-/*	$NetBSD: sys_socket.c,v 1.58 2008/04/29 18:35:14 ad Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.58.14.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.58 2008/04/29 18:35:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.58.14.1 2009/05/13 17:21:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +81,15 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.58 2008/04/29 18:35:14 ad Exp $");
 #include <net/route.h>
 
 const struct fileops socketops = {
-	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
-	soo_stat, soo_close, soo_kqfilter
+	.fo_read = soo_read,
+	.fo_write = soo_write,
+	.fo_ioctl = soo_ioctl,
+	.fo_fcntl = soo_fcntl,
+	.fo_poll = soo_poll,
+	.fo_stat = soo_stat,
+	.fo_close = soo_close,
+	.fo_kqfilter = soo_kqfilter,
+	.fo_drain = fnullop_drain, 	/* soo_drain, */
 };
 
 /* ARGSUSED */
@@ -116,12 +126,12 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 	struct socket *so = fp->f_data;
 	int error = 0;
 
-	if (cmd == FIONBIO) {
-		so->so_nbio = *(int *)data;
-		return 0;
-	}
-
 	switch (cmd) {
+
+	case FIONBIO:
+		/* No reason to lock and this call is made very often. */
+		so->so_nbio = *(int *)data;
+		break;
 
 	case FIOASYNC:
 		solock(so);
@@ -247,4 +257,11 @@ soo_close(file_t *fp)
 	fp->f_data = 0;
 
 	return error;
+}
+
+void
+soo_drain(file_t *fp)
+{
+
+	(void)sodrain(fp->f_data);
 }

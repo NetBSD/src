@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.13 2008/03/28 01:19:12 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.13.18.1 2009/05/13 17:17:47 jym Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.13 2008/03/28 01:19:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.13.18.1 2009/05/13 17:17:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -277,6 +277,10 @@ j6x0lcd_attach(device_t parent, device_t self, void *aux)
 		    CONFIG_HOOK_POWERCONTROL_LCD,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_power, sc);
+
+	/* XXX: TODO: don't rely on CONFIG_HOOK_POWERCONTROL_LCD */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 

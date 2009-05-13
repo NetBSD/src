@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_aesxcbcmac.h,v 1.2 2005/12/10 23:39:56 elad Exp $	*/
+/*	$NetBSD: ah_aesxcbcmac.h,v 1.2.90.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: ah_aesxcbcmac.h,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -33,11 +33,11 @@
 #ifndef _NETINET6_AH_AESXCBCMAC_H_
 #define _NETINET6_AH_AESXCBCMAC_H_
 
-extern int ah_aes_xcbc_mac_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-extern void ah_aes_xcbc_mac_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-extern void ah_aes_xcbc_mac_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
+extern int ah_aes_xcbc_mac_init(struct ah_algorithm_state *,
+	struct secasvar *);
+extern void ah_aes_xcbc_mac_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+extern void ah_aes_xcbc_mac_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
 
 #endif /* !_NETINET6_AH_AESXCBCMAC_H_ */

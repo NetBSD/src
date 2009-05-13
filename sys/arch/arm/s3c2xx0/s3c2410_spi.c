@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_spi.c,v 1.4 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c2410_spi.c,v 1.4.94.1 2009/05/13 17:16:18 jym Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.4 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.4.94.1 2009/05/13 17:16:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,11 +135,7 @@ ssspi_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ssspi_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+ssspi_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct ssspi_softc *sc = (struct ssspi_softc *)parent;
 	struct ssspi_attach_args spia;

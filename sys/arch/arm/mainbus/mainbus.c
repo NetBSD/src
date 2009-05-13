@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.14 2008/04/27 18:58:45 matt Exp $ */
+/* $NetBSD: mainbus.c,v 1.14.14.1 2009/05/13 17:16:18 jym Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.14.1 2009/05/13 17:16:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,11 +68,11 @@ extern struct bus_space mainbus_bs_tag;
 
 /* Prototypes for functions provided */
 
-static int  mainbusmatch  __P((struct device *, struct cfdata *, void *));
-static void mainbusattach __P((struct device *, struct device *, void *));
-static int  mainbusprint  __P((void *aux, const char *mainbus));
-static int  mainbussearch __P((struct device *, struct cfdata *,
-				const int *, void *));
+static int  mainbusmatch(struct device *, struct cfdata *, void *);
+static void mainbusattach(struct device *, struct device *, void *);
+static int  mainbusprint(void *aux, const char *mainbus);
+static int  mainbussearch(struct device *, struct cfdata *,
+				const int *, void *);
 
 /* attach and device structures for the device */
 
@@ -86,10 +86,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
  */
 
 static int
-mainbusmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return (1);
 }
@@ -101,9 +98,7 @@ mainbusmatch(parent, cf, aux)
  */
 
 static int
-mainbusprint(aux, mainbus)
-	void *aux;
-	const char *mainbus;
+mainbusprint(void *aux, const char *mainbus)
 {
 	struct mainbus_attach_args *mb = aux;
 
@@ -127,11 +122,7 @@ mainbusprint(aux, mainbus)
  */
 
 static int
-mainbussearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args mb;
 	int tryagain;
@@ -170,10 +161,7 @@ mainbussearch(parent, cf, ldesc, aux)
  */
 
 static void
-mainbusattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbusattach(struct device *parent, struct device *self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");

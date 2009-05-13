@@ -1,18 +1,9 @@
-# $NetBSD: Makefile.booters,v 1.47 2009/01/12 07:29:23 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.47.2.1 2009/05/13 17:18:13 jym Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s $S/arch/${MACHINE}/include machine
-	@[ -h pmax ] || ln -s $S/arch/${MACHINE}/include pmax
-	@[ -h mips ] || ln -s $S/arch/mips/include mips
-.NOPATH: machine pmax mips
-.endif
-CLEANFILES+= machine pmax mips
 
 BINMODE?=	444
 
@@ -57,14 +48,14 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 		-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_WRITE \
 		-DLIBSA_NO_FS_CLOSE \
 		-DLIBSA_NO_DEV_CLOSE \
+		-DLIBSA_NO_DEV_IOCTL \
 		-DLIBSA_SINGLE_DEVICE=rz \
 		-D"rzioctl(x,y,z)=EINVAL" -D"rzclose(f)=0" \
 		-DLIBSA_NO_TWIDDLE \
 		-DLIBSA_NO_FD_CHECKING \
 		-DLIBSA_NO_RAW_ACCESS \
 		-DLIBSA_NO_DISKLABEL_MSGS \
-		-DALLOC_FIRST_FIT \
-		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+		-DALLOC_FIRST_FIT
 
 CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
@@ -111,7 +102,7 @@ LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
 
-${PROG}: machine mips pmax ${OBJS} ${LIBS}
+${PROG}: ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    ${LDBUG} -e start -o ${PROG} ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}
@@ -126,9 +117,10 @@ ${PROG}: machine mips pmax ${OBJS} ${LIBS}
 	@echo done.
 .endif
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
-CLEANFILES+=	${PROG}.map
+CLEANFILES+=	${PROG}.map ${PROG}.elf
 
 cleandir distclean: cleanlibdir
 

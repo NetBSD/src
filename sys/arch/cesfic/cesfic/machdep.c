@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2009/01/17 07:17:35 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46.2.1 2009/05/13 17:16:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2009/01/17 07:17:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.2.1 2009/05/13 17:16:36 jym Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -163,23 +163,23 @@ int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 
-void fic_init __P((void));
+void fic_init(void);
 
 /* prototypes for local functions */
-void    identifycpu __P((void));
-void	dumpmem __P((int *, int, int));
-char	*hexstr __P((int, int));
+void    identifycpu(void);
+void	dumpmem(int *, int, int);
+char	*hexstr(int, int);
 
 /* functions called from locore.s */
-void    dumpsys __P((void));
-void    straytrap __P((int, u_short));
-void	nmihand __P((struct frame));
+void    dumpsys(void);
+void    straytrap(int, u_short);
+void	nmihand(struct frame);
 
 int	delay_divisor;		/* delay constant */
 
-extern void sicinit __P((void*));
+extern void sicinit(void*);
 
-void fic_init()
+void fic_init(void)
 {
 	int i;
 
@@ -218,9 +218,7 @@ void fic_init()
 }
 
 int
-zs_check_kgdb(cs, dev)
-	struct zs_chanstate *cs;
-	int dev;
+zs_check_kgdb(struct zs_chanstate *cs, int dev)
 {
 	
 	if((boothowto & RB_KDB) && (dev == makedev(10, 0)))
@@ -228,14 +226,14 @@ zs_check_kgdb(cs, dev)
 	return (0);
 }
 
-void zs_kgdb_cnputc __P((dev_t, int));
+void zs_kgdb_cnputc(dev_t, int);
 void zs_kgdb_cnputc(dev, c)
 dev_t dev;
 int c;
 {
 	zscnputc(dev, c);
 }
-int zs_kgdb_cngetc __P((dev_t));
+int zs_kgdb_cngetc(dev_t);
 int zs_kgdb_cngetc(dev)
 dev_t dev;
 {
@@ -247,9 +245,9 @@ dev_t dev;
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
-extern void sic_enable_int __P((int, int, int, int, int));
+extern void sic_enable_int(int, int, int, int, int);
 void
-consinit()
+consinit(void)
 {
 
 	/*
@@ -282,7 +280,7 @@ consinit()
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 #ifdef DEBUG
@@ -329,10 +327,7 @@ cpu_startup()
  * but would break init; should be fixed soon.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -367,7 +362,7 @@ setregs(l, pack, stack)
 char	cpu_model[] = "FIC8234";
 
 void
-identifycpu()
+identifycpu(void)
 {
 	printf("%s\n", cpu_model);
 	printf("delay constant: %d\n", delay_divisor);
@@ -395,9 +390,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
@@ -469,7 +462,7 @@ long	dumplo = 0;		/* blocks */
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks;	/* size of dump area */
@@ -508,12 +501,12 @@ cpu_dumpconf()
  * in locore.s or by cpu_reboot() here in machdep.c
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, void *, size_t));
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int pg;			/* page being dumped */
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -587,9 +580,7 @@ dumpsys()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
@@ -600,8 +591,7 @@ straytrap(pc, evec)
 int	*nofault;
 
 int
-badaddr(addr)
-	void *addr;
+badaddr(void *addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -617,8 +607,7 @@ badaddr(addr)
 }
 
 int
-badbaddr(addr)
-	void *addr;
+badbaddr(void *addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -640,13 +629,12 @@ badbaddr(addr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int candbdiv = 2;	/* give em half a second (hz / candbdiv) */
 
-void	candbtimer __P((void *));
+void	candbtimer(void *);
 
 int crashandburn;
 
 void
-candbtimer(arg)
-	void *arg;
+candbtimer(void *arg)
 {
 
 	crashandburn = 0;
@@ -659,8 +647,7 @@ static int innmihand;	/* simple mutex */
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
 void
-nmihand(frame)
-	struct frame frame;
+nmihand(struct frame frame)
 {
 
 	/* Prevent unwanted recursion. */
@@ -690,9 +677,7 @@ nmihand(frame)
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
 	u_long midmag, magic;

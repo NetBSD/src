@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.120 2009/01/18 13:53:03 hans Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.120.2.1 2009/05/13 17:19:04 jym Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -95,6 +95,7 @@ CFLAGS+=	-fno-strict-aliasing
 .if ${USE_SSP:Uno} == "yes"
 CFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
+COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
 .endif
 
 # If we want the bpendtsleep: label in kern_synch.c, we need to use
@@ -253,11 +254,19 @@ assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 .endif
 
+MKREPRO?=no
+
+.if ${MKREPRO} == "yes"
+_NVFLAGS=-r
+.else
+_NVFLAGS=
+.endif
+
 .if !target(vers.o)
 newvers: vers.o
 vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 	${_MKMSG_CREATE} vers.c
-	${HOST_SH} $S/conf/newvers.sh
+	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
 	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 .endif
@@ -421,11 +430,11 @@ cscope.out: Makefile depend
 	${_MKTARGET_CREATE}
 	@${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/kern/.depend \
 	    | tr -s ' ' '\n' \
-	    | ${TOOL_SED} 's|^\([^.\\]\)|lib/kern/\1|;s|^../../||;' \
+	    | ${TOOL_SED} ';s|^../../||;' \
 	    > cscope.tmp
 	@${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/compat/.depend \
 	    | tr -s ' ' '\n' \
-	    | ${TOOL_SED} 's|^\([^.\\]\)|lib/compat/\1|;s|^../../||;' \
+	    | ${TOOL_SED} 's|^../../||;' \
 	    >> cscope.tmp
 	@echo ${SRCS} | cat - cscope.tmp | tr -s ' ' '\n' | sort -u | \
 	    ${CSCOPE} -k -i - -b `echo ${INCLUDES} | ${TOOL_SED} s/-nostdinc//`

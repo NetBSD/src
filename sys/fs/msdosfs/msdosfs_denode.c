@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.33 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.33.12.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.33 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.33.12.1 2009/05/13 17:21:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ static void msdosfs_hashrem(struct denode *);
 MALLOC_DECLARE(M_MSDOSFSFAT);
 
 void
-msdosfs_init()
+msdosfs_init(void)
 {
 
 	malloc_type_attach(M_MSDOSFSMNT);
@@ -115,7 +115,7 @@ msdosfs_init()
  */
 
 void
-msdosfs_reinit()
+msdosfs_reinit(void)
 {
 	struct denode *dep;
 	struct ihashhead *oldhash, *hash;
@@ -142,7 +142,7 @@ msdosfs_reinit()
 }
 
 void
-msdosfs_done()
+msdosfs_done(void)
 {
 	hashdone(dehashtbl, HASH_LIST, dehash);
 	pool_destroy(&msdosfs_denode_pool);
@@ -154,11 +154,7 @@ msdosfs_done()
 }
 
 static struct denode *
-msdosfs_hashget(dev, dirclust, diroff, flags)
-	dev_t dev;
-	u_long dirclust;
-	u_long diroff;
-	int flags;
+msdosfs_hashget(dev_t dev, u_long dirclust, u_long diroff, int flags)
 {
 	struct denode *dep;
 	struct vnode *vp;
@@ -187,8 +183,7 @@ loop:
 }
 
 static void
-msdosfs_hashins(dep)
-	struct denode *dep;
+msdosfs_hashins(struct denode *dep)
 {
 	struct ihashhead *depp;
 	int val;
@@ -203,8 +198,7 @@ msdosfs_hashins(dep)
 }
 
 static void
-msdosfs_hashrem(dep)
-	struct denode *dep;
+msdosfs_hashrem(struct denode *dep)
 {
 	mutex_enter(&msdosfs_ihash_lock);
 	LIST_REMOVE(dep, de_hash);
@@ -224,11 +218,11 @@ msdosfs_hashrem(dep)
  * depp	     - returns the address of the gotten denode.
  */
 int
-deget(pmp, dirclust, diroffset, depp)
-	struct msdosfsmount *pmp;	/* so we know the maj/min number */
-	u_long dirclust;		/* cluster this dir entry came from */
-	u_long diroffset;		/* index of entry within the cluster */
-	struct denode **depp;		/* returns the addr of the gotten denode */
+deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode **depp)
+	/* pmp:	 so we know the maj/min number */
+	/* dirclust:		 cluster this dir entry came from */
+	/* diroffset:		 index of entry within the cluster */
+	/* depp:		 returns the addr of the gotten denode */
 {
 	int error;
 	extern int (**msdosfs_vnodeop_p)(void *);
@@ -396,9 +390,7 @@ deget(pmp, dirclust, diroffset, depp)
 }
 
 int
-deupdat(dep, waitfor)
-	struct denode *dep;
-	int waitfor;
+deupdat(struct denode *dep, int waitfor)
 {
 
 	return (msdosfs_update(DETOV(dep), NULL, NULL,
@@ -544,10 +536,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
  * Extend the file described by dep to length specified by length.
  */
 int
-deextend(dep, length, cred)
-	struct denode *dep;
-	u_long length;
-	kauth_cred_t cred;
+deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long count, osize;
@@ -603,8 +592,7 @@ deextend(dep, length, cred)
  * been moved to a new directory.
  */
 void
-reinsert(dep)
-	struct denode *dep;
+reinsert(struct denode *dep)
 {
 	/*
 	 * Fix up the denode cache.  If the denode is for a directory,
@@ -623,8 +611,7 @@ reinsert(dep)
 }
 
 int
-msdosfs_reclaim(v)
-	void *v;
+msdosfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -661,8 +648,7 @@ msdosfs_reclaim(v)
 }
 
 int
-msdosfs_inactive(v)
-	void *v;
+msdosfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;

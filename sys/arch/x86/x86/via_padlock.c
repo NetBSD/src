@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.10 2008/12/17 20:51:33 cegger Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.10.2.1 2009/05/13 17:18:45 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10 2008/12/17 20:51:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.1 2009/05/13 17:18:45 jym Exp $");
+
+#include "rnd.h"
+
+#if NRND == 0
+#error padlock requires rnd pseudo-devices
+#endif
 
 #include "opt_viapadlock.h"
 
@@ -32,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10 2008/12/17 20:51:33 cegger Exp 
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/cpu.h>
+#include <sys/rnd.h>
 
 #include <x86/specialreg.h>
 
@@ -46,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10 2008/12/17 20:51:33 cegger Exp 
 
 #ifdef VIA_PADLOCK
 
+char	xxx_via_buffer[1024];
+
 int	via_padlock_crypto_newsession(void *, uint32_t *, struct cryptoini *);
 int	via_padlock_crypto_process(void *, struct cryptop *, int);
 int	via_padlock_crypto_swauth(struct cryptop *, struct cryptodesc *,
@@ -56,19 +65,74 @@ int	via_padlock_crypto_freesession(void *, uint64_t);
 static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 	    void *);
 
-void
-via_padlock_attach(void)
+static void
+via_c3_rnd(void *arg)
 {
-#define VIA_ACE (CPUID_VIA_HAS_ACE|CPUID_VIA_DO_ACE)
-	if ((cpu_feature_padlock & VIA_ACE) != VIA_ACE)
-		return;
+	struct via_padlock_softc *vp_sc = arg;
 
-	struct via_padlock_softc *vp_sc;
-	if ((vp_sc = malloc(sizeof(*vp_sc), M_DEVBUF, M_NOWAIT)) == NULL)
-		return;
-	memset(vp_sc, 0, sizeof(*vp_sc));
+	unsigned int rv, creg0, len = VIAC3_RNG_BUFSIZ;
+	static uint32_t buffer[VIAC3_RNG_BUFSIZ + 2];	/* XXX 2? */
 
-	vp_sc->sc_cid = crypto_get_driverid(0);
+	/*
+	 * Sadly, we have to monkey with the coprocessor enable and fault
+	 * registers, which are really for the FPU, in order to read
+	 * from the RNG.
+	 *
+ 	 * Don't remove CR0_TS from the call below -- comments in the Linux
+	 * driver indicate that the xstorerng instruction can generate
+	 * spurious DNA faults though no FPU or SIMD state is changed
+	 * even if such a fault is generated.
+	 *
+	 */
+	kpreempt_disable();
+	x86_disable_intr();
+	creg0 = rcr0();	
+	lcr0(creg0 & ~(CR0_EM|CR0_TS));	/* Permit access to SIMD/FPU path */
+	/*
+	 * Collect the random data from the C3 RNG into our buffer.
+	 * We turn on maximum whitening (is this actually desirable
+	 * if we will feed the data to SHA1?) (%edx[0,1] = "11").
+	 */
+	__asm __volatile("rep xstorerng"
+			 : "=a" (rv) : "d" (3), "D" (buffer),
+			 "c" (len * sizeof(int)) : "memory", "cc");
+	/* Put CR0 back how it was */
+	lcr0(creg0);
+	x86_enable_intr();
+	kpreempt_enable();
+	rnd_add_data(&vp_sc->sc_rnd_source, buffer, len * sizeof(int),
+		     len * sizeof(int));
+	callout_reset(&vp_sc->sc_rnd_co, vp_sc->sc_rnd_hz, via_c3_rnd, vp_sc);
+}	
+
+static void
+via_c3_rnd_init(struct via_padlock_softc *const vp_sc)
+{
+	if (hz >= 100) {
+	    vp_sc->sc_rnd_hz = 10 * hz / 100;
+	} else {
+	    vp_sc->sc_rnd_hz = 10;
+	}
+	/* See hifn7751.c re use of RND_FLAG_NO_ESTIMATE */
+	rnd_attach_source(&vp_sc->sc_rnd_source, "padlock",
+			  RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
+	callout_init(&vp_sc->sc_rnd_co, 0);
+	/* Call once to prime the pool early and set callout. */
+	via_c3_rnd(vp_sc);
+}
+
+static void
+via_c3_ace_init(struct via_padlock_softc *const vp_sc)
+{
+	/*
+	 * There is no reason to call into the kernel to use this
+	 * driver from userspace, because the crypto instructions can
+	 * be directly accessed there.  Setting CRYPTOCAP_F_SOFTWARE
+	 * has approximately the right semantics though the name is
+	 * confusing (however, consider that crypto via unprivileged
+	 * instructions _is_ "just software" in some sense).
+	 */
+	vp_sc->sc_cid = crypto_get_driverid(CRYPTOCAP_F_SOFTWARE);
 	if (vp_sc->sc_cid < 0) {
 		printf("PadLock: Could not get a crypto driver ID\n");
 		free(vp_sc, M_DEVBUF);
@@ -80,6 +144,19 @@ via_padlock_attach(void)
 	 * we don't support hardware offloading for various HMAC algorithms,
 	 * we will handle them, because opencrypto prefers drivers that
 	 * support all requested algorithms.
+	 *
+	 *
+	 * XXX We should actually implement the HMAC modes this hardware
+	 * XXX can accellerate (wrap its plain SHA1/SHA2 as HMAC) and
+	 * XXX strongly consider removing those passed through to cryptosoft.
+	 * XXX As it stands, we can "steal" sessions from drivers which could
+	 * XXX better accellerate them.
+	 *
+	 * XXX Note the ordering dependency between when this (or any
+	 * XXX crypto driver) attaches and when cryptosoft does.  We are
+	 * XXX basically counting on the swcrypto pseudo-device to just
+	 * XXX happen to attach last, or _it_ will steal every session
+	 * XXX from _us_!
 	 */
 #define REGISTER(alg) \
 	crypto_register(vp_sc->sc_cid, alg, 0, 0, \
@@ -94,8 +171,36 @@ via_padlock_attach(void)
 	REGISTER(CRYPTO_RIPEMD160_HMAC_96);
 	REGISTER(CRYPTO_RIPEMD160_HMAC);
 	REGISTER(CRYPTO_SHA2_HMAC);
+}
 
-	printf("PadLock: registered support for AES_CBC\n");
+void
+via_padlock_attach(void)
+{
+	struct via_padlock_softc *vp_sc;
+
+	printf("%s", xxx_via_buffer);
+
+	if (!((cpu_feature_padlock & CPUID_VIA_HAS_ACE) ||
+	      (cpu_feature_padlock & CPUID_VIA_HAS_RNG))) {
+		printf("PadLock: Nothing (%08x ! %08X ! %08X)\n",
+			cpu_feature_padlock, CPUID_VIA_HAS_ACE,
+			CPUID_VIA_HAS_RNG);
+		return;		/* Nothing to see here, move along. */
+	}
+
+	if ((vp_sc = malloc(sizeof(*vp_sc), M_DEVBUF, M_NOWAIT)) == NULL)
+		return;
+	memset(vp_sc, 0, sizeof(*vp_sc));
+
+	if (cpu_feature_padlock & CPUID_VIA_HAS_RNG) {
+		via_c3_rnd_init(vp_sc);
+		printf("PadLock: RNG attached\n");
+	}
+
+	if (cpu_feature_padlock & CPUID_VIA_HAS_ACE) {
+		via_c3_ace_init(vp_sc);
+		printf("PadLock: AES-CBC attached\n");
+	}
 }
 
 int

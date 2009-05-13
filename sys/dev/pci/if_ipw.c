@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.45 2009/01/09 21:14:36 jmcneill Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.45.2.1 2009/05/13 17:20:25 jym Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.45 2009/01/09 21:14:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.45.2.1 2009/05/13 17:20:25 jym Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -93,9 +93,9 @@ static int ipw_accept_eula;
 
 static int	ipw_dma_alloc(struct ipw_softc *);
 static void	ipw_release(struct ipw_softc *);
-static int	ipw_match(struct device *, struct cfdata *, void *);
-static void	ipw_attach(struct device *, struct device *, void *);
-static int	ipw_detach(struct device *, int);
+static int	ipw_match(device_t, cfdata_t, void *);
+static void	ipw_attach(device_t, device_t, void *);
+static int	ipw_detach(device_t, int);
 
 static int	ipw_media_change(struct ifnet *);
 static void	ipw_media_status(struct ifnet *, struct ifmediareq *);
@@ -158,8 +158,7 @@ CFATTACH_DECL(ipw, sizeof (struct ipw_softc), ipw_match, ipw_attach,
     ipw_detach, NULL);
 
 static int
-ipw_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ipw_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -174,9 +173,9 @@ ipw_match(struct device *parent, struct cfdata *match,
 #define IPW_PCI_BAR0	0x10
 
 static void
-ipw_attach(struct device *parent, struct device *self, void *aux)
+ipw_attach(device_t parent, device_t self, void *aux)
 {
-	struct ipw_softc *sc = (struct ipw_softc *)self;
+	struct ipw_softc *sc = device_private(self);
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 	struct pci_attach_args *pa = aux;
@@ -343,7 +342,7 @@ fail:	ipw_detach(self, 0);
 static int
 ipw_detach(struct device* self, int flags)
 {
-	struct ipw_softc *sc = (struct ipw_softc *)self;
+	struct ipw_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 
 	if (ifp->if_softc) {

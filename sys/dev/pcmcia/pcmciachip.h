@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.15 2008/06/26 12:33:18 drochner Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.15.10.1 2009/05/13 17:21:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -149,8 +149,8 @@ struct pcmciabus_attach_args {
 
 /* interfaces for the chipset to call pcmcia */
 
-int	pcmcia_card_attach(struct device *);
-void	pcmcia_card_detach(struct device *, int);
-void	pcmcia_card_deactivate(struct device *);
+int	pcmcia_card_attach(device_t);
+void	pcmcia_card_detach(device_t, int);
+void	pcmcia_card_deactivate(device_t);
 
 #endif /* _PCMCIA_PCMCIACHIP_H_ */

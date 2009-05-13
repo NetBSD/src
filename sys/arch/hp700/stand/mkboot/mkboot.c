@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.6 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.6.92.1 2009/05/13 17:17:44 jym Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 	if ((to = open(to_file, O_RDWR | O_TRUNC | O_CREAT, 0644)) < 0)
 		err(1, "%s: open", to_file);
 
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 
 	/* record volume info */
 	lifv->vol_id = htobe16(HP700_LIF_VOL_ID);
@@ -320,7 +320,7 @@ putfile(char *from_file, int to)
 		err(1, "%s", to_file);
 	lseek(to, total - sizeof(load), SEEK_CUR);
 
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 	/* pad to int */
 	n = sizeof(int) - total % sizeof(int);
 	if (total % sizeof(int)) {

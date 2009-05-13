@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.33 2008/09/06 22:07:11 rmind Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.33.8.1 2009/05/13 17:21:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.33 2008/09/06 22:07:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.33.8.1 2009/05/13 17:21:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,8 +275,7 @@ static const int pcmcia_cis_nquirks =
    sizeof(pcmcia_cis_quirks) / sizeof(pcmcia_cis_quirks[0]);
 
 void
-pcmcia_check_cis_quirks(sc)
-	struct pcmcia_softc *sc;
+pcmcia_check_cis_quirks(struct pcmcia_softc *sc)
 {
 	int wiped = 0;
 	size_t i, j;

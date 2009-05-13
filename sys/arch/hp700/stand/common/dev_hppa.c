@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.9 2009/01/22 07:57:17 skrll Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.9.2.1 2009/05/13 17:17:44 jym Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -20,8 +20,8 @@
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -116,7 +116,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		printf ("devopen: no mem\n");
 #endif
 	} else {
-		bzero(hpd, sizeof *hpd);
+		memset(hpd, 0, sizeof *hpd);
 		hpd->bootdev = bootdev;
 		hpd->buf = (char *)(((u_int)hpd->ua_buf + IODC_MINIOSIZ-1) &
 			~(IODC_MINIOSIZ-1));

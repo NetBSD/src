@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.64 2007/03/07 13:54:50 tsutsui Exp $	*/
+/*	$NetBSD: nubus.h,v 1.64.58.1 2009/05/13 17:18:00 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -155,8 +155,11 @@
 #define   NUBUS_DRSW_PLI		0x0108
 #define    NUBUS_DRHW_PLI		0x0100
 #define  NUBUS_TYPE_SCSIW	0x000B  /* FWB JackHammer Fast/Wide */
-#define   NUBUS_DRSW_FWB	0x0001	/* XXX Allen says 0x010C */
-#define    NUBUS_DRHW_FWB		0x0100
+#define   NUBUS_DRSW_FWB	0x0001
+#define    NUBUS_DRHW_FWB	0x0100
+#define  NUBUS_TYPE_SCSIAW	0x0106  /* Atto SiliconExpress IV f/w */
+#define   NUBUS_DRSW_ATTOSE	0x0101
+#define    NUBUS_DRHW_ATTOSE	0x0100
 
 #define NUBUS_CATEGORY_DOCK	0x0020
 #define  NUBUS_TYPE_STATION	0x0001

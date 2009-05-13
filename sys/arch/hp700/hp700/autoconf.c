@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2008/03/30 12:39:32 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.18.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,11 +86,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2008/03/30 12:39:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.18.1 2009/05/13 17:17:43 jym Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
-#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2008/03/30 12:39:32 skrll Exp $");
 #include <dev/cons.h>
 
 #include <hp700/hp700/machdep.h>
-#include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
 
@@ -133,6 +131,8 @@ static struct callout hp700_led_callout;
 static void hp700_led_blinker(void *);
 extern int hz;
 #endif
+
+void (*cold_hook)(int); /* see below */
 
 /*
  * cpu_configure:
@@ -166,11 +166,8 @@ cpu_configure(void)
 	kpsw |= PSW_I;
 	spl0();
 
-	cold = 0;
-#ifdef POWER_SWITCH
-	/* Give OS control over the power switch. */
-	pwr_sw_ctrl(PWR_SW_CTRL_ENABLE);
-#endif /* POWER_SWITCH */
+	if (cold_hook)
+		(*cold_hook)(HPPA_COLD_HOT);
 
 #ifdef USELEDS
 	memset(_hp700_led_on_cycles, 0, sizeof(_hp700_led_on_cycles));
@@ -231,7 +228,7 @@ hp700_led_blinker(void *arg)
 #define HP700_HEARTBEAT_CYCLES	(_HP700_LED_FREQ / 8)
 	if (led_cycle == (0 * HP700_HEARTBEAT_CYCLES) ||
 	    led_cycle == (2 * HP700_HEARTBEAT_CYCLES)) {
-		_hp700_led_on_cycles[HP700_LED_HEARTBEAT] = 
+		_hp700_led_on_cycles[HP700_LED_HEARTBEAT] =
 			HP700_HEARTBEAT_CYCLES;
 	}
 
@@ -312,14 +309,14 @@ bad:
 
 /****************************************************************/
 
-struct device *boot_device = NULL;
+device_t boot_device = NULL;
 
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	int pagezero_cookie;
-	struct device *pdev;
+	device_t pdev;
 
 	if ((pdev = device_parent(dev)) == NULL ||
 	    device_parent(pdev) == NULL)
@@ -327,36 +324,36 @@ device_register(struct device *dev, void *aux)
 	pagezero_cookie = hp700_pagezero_map();
 
 	/*
-	 * The boot device is described in PAGE0->mem_boot. We need to do it 
-	 * this way as the MD device path (DP) information in struct confargs 
-	 * is only available in hp700 MD devices. So boot_device is used to 
+	 * The boot device is described in PAGE0->mem_boot. We need to do it
+	 * this way as the MD device path (DP) information in struct confargs
+	 * is only available in hp700 MD devices. So boot_device is used to
 	 * propagate information down the device tree.
-	 * 
-	 * If the boot device is a GSC network device all we need to compare 
-	 * is the HPA or device path (DP) to get the boot device. 
-	 * If the boot device is a SCSI device below a GSC attached SCSI 
-	 * controller PAGE0->mem_boot.pz_hpa contains the HPA of the SCSI 
-	 * controller. In that case we remember the the pointer to the 
-	 * controller's struct dev in boot_device. The SCSI device is located 
+	 *
+	 * If the boot device is a GSC network device all we need to compare
+	 * is the HPA or device path (DP) to get the boot device.
+	 * If the boot device is a SCSI device below a GSC attached SCSI
+	 * controller PAGE0->mem_boot.pz_hpa contains the HPA of the SCSI
+	 * controller. In that case we remember the the pointer to the
+	 * controller's struct dev in boot_device. The SCSI device is located
 	 * later, see below.
 	 */
 	if ((device_is_a(pdev, "gsc") || device_is_a(pdev, "phantomas"))
-	    && (hppa_hpa_t)PAGE0->mem_boot.pz_hpa == 
+	    && (hppa_hpa_t)PAGE0->mem_boot.pz_hpa ==
 	    ((struct gsc_attach_args *)aux)->ga_ca.ca_hpa)
 		/* This is (the controller of) the boot device. */
 		boot_device = dev;
 	/*
-	 * If the boot device is a PCI device the HPA is the address where the 
-	 * firmware has maped the PCI memory of the PCI device. This is quite 
-	 * device dependent, so we compare the DP. It encodes the bus routing 
-	 * information to the PCI bus bridge in the DP head and the PCI device 
-	 * and PCI function in the last two DP components. So we compare the 
-	 * head of the DP when a PCI bridge attaches and remember the struct 
-	 * dev of the PCI bridge in boot_dev if it machtes. Later, when PCI 
-	 * devices are attached, we look if this PCI device hangs below the 
-	 * boot PCI bridge. If yes we compare the PCI device and PCI function 
-	 * to the DP tail. In case of a network boot we found the boot device 
-	 * on a match. In case of a SCSI boot device we have to do the same 
+	 * If the boot device is a PCI device the HPA is the address where the
+	 * firmware has maped the PCI memory of the PCI device. This is quite
+	 * device dependent, so we compare the DP. It encodes the bus routing
+	 * information to the PCI bus bridge in the DP head and the PCI device
+	 * and PCI function in the last two DP components. So we compare the
+	 * head of the DP when a PCI bridge attaches and remember the struct
+	 * dev of the PCI bridge in boot_dev if it machtes. Later, when PCI
+	 * devices are attached, we look if this PCI device hangs below the
+	 * boot PCI bridge. If yes we compare the PCI device and PCI function
+	 * to the DP tail. In case of a network boot we found the boot device
+	 * on a match. In case of a SCSI boot device we have to do the same
 	 * check when SCSI devices are attached like on GSC SCSI controllers.
 	 */
 	if (device_is_a(dev, "dino")) {
@@ -371,7 +368,7 @@ device_register(struct device *dev, void *aux)
 			if (PAGE0->mem_boot.pz_dp.dp_bc[i] < 0)
 				continue;
 			/* and compare the rest. */
-			if (PAGE0->mem_boot.pz_dp.dp_bc[i] 
+			if (PAGE0->mem_boot.pz_dp.dp_bc[i]
 			    != ca->ca_dp.dp_bc[n]) {
 				hp700_pagezero_unmap(pagezero_cookie);
 				return;
@@ -402,10 +399,10 @@ device_register(struct device *dev, void *aux)
 	    == PAGE0->mem_boot.pz_dp.dp_mod)
 		/* This is (the controller of) the boot device. */
 		boot_device = dev;
-	/* 
-	 * When SCSI devices are attached, we look if the SCSI device hangs 
-	 * below the controller remembered in boot_device. If so, we compare 
-	 * the SCSI ID and LUN with the DP layer information. If they match 
+	/*
+	 * When SCSI devices are attached, we look if the SCSI device hangs
+	 * below the controller remembered in boot_device. If so, we compare
+	 * the SCSI ID and LUN with the DP layer information. If they match
 	 * we found the boot device.
 	 */
 	if (device_is_a(pdev, "scsibus")
@@ -420,8 +417,6 @@ device_register(struct device *dev, void *aux)
 	hp700_pagezero_unmap(pagezero_cookie);
 	return;
 }
-
-
 
 /*
  * Choose root and swap devices.
@@ -441,7 +436,7 @@ cpu_rootconf(void)
 	}
 	printf("%d dp_layers ", PAGE0->mem_boot.pz_dp.dp_mod);
 	for (n = 0 ; n < 6 ; n++) {
-		printf( "0x%x%c", PAGE0->mem_boot.pz_dp.dp_layers[n], 
+		printf( "0x%x%c", PAGE0->mem_boot.pz_dp.dp_layers[n],
 		    n < 5 ? '/' : ' ');
 	}
 	printf("dp_flags 0x%x pz_class 0x%x\n", PAGE0->mem_boot.pz_dp.dp_flags,
@@ -458,59 +453,24 @@ cpu_rootconf(void)
 /*static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };*/
 #endif
 
+static struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
+static struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
+static struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
+static struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
+
 void
-pdc_scanbus_memory_map(struct device *self, struct confargs *ca,
-    void (*callback)(struct device *, struct confargs *))
+pdc_scanbus(device_t self, struct confargs *ca,
+    void (*callback)(device_t, struct confargs *))
 {
 	int i;
-	struct confargs nca;
-	struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
-	struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
 
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < ca->ca_nmodules; i++) {
+		struct confargs nca;
+		int error;
+
 		memset(&nca, 0, sizeof(nca));
-		nca.ca_dp.dp_bc[0] = -1;
-		nca.ca_dp.dp_bc[1] = -1;
-		nca.ca_dp.dp_bc[2] = -1;
-		nca.ca_dp.dp_bc[3] = -1;
-		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_mod;
-		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod < 0 ? -1 : 0;
-		nca.ca_dp.dp_mod = i;
-
-		if (pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP, PDC_MEMMAP_HPA, 
-		    &pdc_memmap, &nca.ca_dp) < 0)
-			continue;
-
-		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
-		     &pdc_iodc_read, pdc_memmap.hpa, IODC_DATA,
-		     &nca.ca_type, sizeof(nca.ca_type)) < 0)
-			continue;
-
-		nca.ca_mod = i;
-		nca.ca_hpa = pdc_memmap.hpa;
 		nca.ca_iot = ca->ca_iot;
 		nca.ca_dmatag = ca->ca_dmatag;
-		nca.ca_irq = HP700CF_IRQ_UNDEF;
-		nca.ca_pdc_iodc_read = &pdc_iodc_read;
-		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
-		    nca.ca_type.iodc_sv_model);
-		(*callback)(self, &nca);
-	}
-}
-
-void
-pdc_scanbus_system_map(struct device *self, struct confargs *ca,
-    void (*callback)(struct device *, struct confargs *))
-{
-	int i;
-	int ia;
-	struct confargs nca;
-	struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
-	struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
-	struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
-
-	for (i = 0; i <= 64; i++) {
-		memset(&nca, 0, sizeof(nca));
 		nca.ca_dp.dp_bc[0] = ca->ca_dp.dp_bc[1];
 		nca.ca_dp.dp_bc[1] = ca->ca_dp.dp_bc[2];
 		nca.ca_dp.dp_bc[2] = ca->ca_dp.dp_bc[3];
@@ -518,44 +478,66 @@ pdc_scanbus_system_map(struct device *self, struct confargs *ca,
 		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_bc[5];
 		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod;
 		nca.ca_dp.dp_mod = i;
+		nca.ca_naddrs = 0;
+		nca.ca_hpa = 0;
 
-		if (pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP, 
-		    PDC_SYSTEM_MAP_TRANS_PATH, &pdc_find_mod, &nca.ca_dp) != 0)
-			continue;
-		nca.ca_hpa = pdc_find_mod.hpa;
-		nca.ca_hpasz = pdc_find_mod.size << PGSHIFT;
-		if (pdc_find_mod.naddrs > 0) {
-			nca.ca_naddrs = pdc_find_mod.naddrs;
-			if (nca.ca_naddrs > 16) { 
-				nca.ca_naddrs = 16;
-				printf("WARNING: too many (%d) addrs\n",
-				    pdc_find_mod.naddrs);
-			}
-			for (ia = 0; pdc_call((iodcio_t)pdc, 0, 
-			    PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_ADDR, 
-			    &pdc_find_addr, pdc_find_mod.mod_index, ia) == 0
-			    && ia < nca.ca_naddrs; ia++) {
-				nca.ca_addrs[ia].addr = pdc_find_addr.hpa;
-				nca.ca_addrs[ia].size = 
-				    pdc_find_addr.size << PGSHIFT;
+		if (ca->ca_hpabase) {
+			nca.ca_hpa = ca->ca_hpabase + IOMOD_HPASIZE * i;
+			nca.ca_dp.dp_mod = i;
+		} else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
+		    PDC_MEMMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0)
+			nca.ca_hpa = pdc_memmap.hpa;
+		else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP,
+		    PDC_SYSTEM_MAP_TRANS_PATH, &pdc_memmap, &nca.ca_dp)) == 0) {
+			struct device_path path;
+			int im, ia;
+
+			nca.ca_hpa = pdc_memmap.hpa;
+
+			for (im = 0; !(error = pdc_call((iodcio_t)pdc, 0,
+			    PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_MOD,
+			    &pdc_find_mod, &path, im)) &&
+			    pdc_find_mod.hpa != nca.ca_hpa; im++)
+				;
+
+			if (!error)
+				nca.ca_hpasz = pdc_find_mod.size << PGSHIFT;
+
+			if (!error && pdc_find_mod.naddrs) {
+				nca.ca_naddrs = pdc_find_mod.naddrs;
+				if (nca.ca_naddrs > 16) {
+					nca.ca_naddrs = 16;
+					printf("WARNING: too many (%d) addrs\n",
+					    pdc_find_mod.naddrs);
+				}
+
+				for (ia = 0; !(error = pdc_call((iodcio_t)pdc,
+				    0, PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_ADDR,
+				    &pdc_find_addr, im, ia + 1)) && ia < nca.ca_naddrs; ia++) {
+					nca.ca_addrs[ia].addr = pdc_find_addr.hpa;
+					nca.ca_addrs[ia].size =
+					    pdc_find_addr.size << PGSHIFT;
+
+				}
 			}
 		}
 
-		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
-		     &pdc_iodc_read, nca.ca_hpa, IODC_DATA,
-		     &nca.ca_type, sizeof(nca.ca_type)) < 0) {
+		if (!nca.ca_hpa)
 			continue;
-		}
 
-		nca.ca_mod = i;
-		nca.ca_iot = ca->ca_iot;
-		nca.ca_dmatag = ca->ca_dmatag;
+		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
+		    PDC_IODC_READ, &pdc_iodc_read, nca.ca_hpa, IODC_DATA,
+		    &nca.ca_type, sizeof(nca.ca_type))) < 0)
+			continue;
+
 		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 		    nca.ca_type.iodc_sv_model);
+
 		(*callback)(self, &nca);
 	}
+
 }
 
 static const struct hppa_mod_info hppa_knownmods[] = {

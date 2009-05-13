@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7.92.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7.92.1 2009/05/13 17:18:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,13 +48,10 @@ CFATTACH_DECL(cpu, sizeof(struct device),
 
 extern struct cfdriver cpu_cd;
 
-extern void cpu_identify __P((void));
+extern void cpu_identify(void);
 
 static int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -66,10 +63,7 @@ cpumatch(parent, cfdata, aux)
 }
 
 static void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpuattach(struct device *parent, struct device *dev, void *aux)
 {
 
 	printf(": ");

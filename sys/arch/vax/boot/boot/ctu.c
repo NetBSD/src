@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.3 2000/05/20 13:30:03 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.3.148.1 2009/05/13 17:18:40 jym Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -62,13 +62,11 @@ volatile struct tu_softc {
 	int	sc_bbytes;	/* Number of xfer'd bytes this block */
 } tu_sc;
 
-void	ctutintr __P((void));
-void	cturintr __P((void));
+void	ctutintr(void);
+void	cturintr(void);
 
 int
-ctuopen(f, adapt, ctlr, unit, part)
-	struct open_file *f;
-	int ctlr, unit, part;
+ctuopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 
 	tu_sc.sc_state = SC_INIT;
@@ -81,12 +79,7 @@ ctuopen(f, adapt, ctlr, unit, part)
 }
 
 int
-ctustrategy(f, func, dblk, size, buf, rsize)
-        void *f;
-        int func;
-        daddr_t dblk;
-        void *buf;
-        size_t size, *rsize;
+ctustrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 
@@ -113,7 +106,7 @@ ctustrategy(f, func, dblk, size, buf, rsize)
 }
 
 void
-cturintr()
+cturintr(void)
 {
 	int	status;
 
@@ -154,7 +147,7 @@ cturintr()
 }
 
 void
-ctutintr()
+ctutintr(void)
 {
 	int	c;
 
@@ -170,9 +163,7 @@ ctutintr()
 }
 
 short
-ctu_cksum(buf, words)
-	unsigned short *buf;
-	int words;
+ctu_cksum(unsigned short *buf, int words)
 {
 	int i, cksum;
 

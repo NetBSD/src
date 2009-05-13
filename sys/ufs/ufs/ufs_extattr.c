@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.23 2008/12/17 20:51:39 cegger Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.23.2.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.23 2008/12/17 20:51:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.23.2.1 2009/05/13 17:23:07 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -265,7 +265,6 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	memset(&cnp, 0, sizeof(cnp));
 	cnp.cn_nameiop = LOOKUP;
 	cnp.cn_flags = ISLASTCN | lockparent;
-	cnp.cn_lwp = l;
 	cnp.cn_cred = l->l_cred;
 	cnp.cn_pnbuf = PNBUF_GET();
 	cnp.cn_nameptr = cnp.cn_pnbuf;
@@ -604,7 +603,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	strncpy(attribute->uele_attrname, attrname,
 	    UFS_EXTATTR_MAXEXTATTRNAME);
 	attribute->uele_attrnamespace = attrnamespace;
-	bzero(&attribute->uele_fileheader,
+	memset(&attribute->uele_fileheader, 0,
 	    sizeof(struct ufs_extattr_fileheader));
 	
 	attribute->uele_backing_vnode = backing_vnode;
@@ -1294,14 +1293,14 @@ ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l)
 }
 
 void
-ufs_extattr_init()
+ufs_extattr_init(void)
 {
 
 	malloc_type_attach(M_UFS_EXTATTR);
 }
 
 void
-ufs_extattr_done()
+ufs_extattr_done(void)
 {
 
 	malloc_type_detach(M_UFS_EXTATTR);

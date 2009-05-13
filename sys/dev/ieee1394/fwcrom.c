@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.7 2008/05/02 19:50:04 xtraeme Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.7.14.1 2009/05/13 17:19:51 jym Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.7 2008/05/02 19:50:04 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.7.14.1 2009/05/13 17:19:51 jym Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwcrom.c,v 1.14 2006/02/04 21:37:39 imp Exp $");
 #endif
@@ -489,8 +489,8 @@ crom_add_simple_text(struct crom_src *src, struct crom_chunk *parent,
 	tl->spec_id = 0;
 	tl->spec_type = 0;
 	tl->lang_id = 0;
-	bzero(&t[0], roundup2(len, sizeof(uint32_t)));
-	bcopy(buf, &t[0], len);
+	memset(&t[0], 0, roundup2(len, sizeof(uint32_t)));
+	memcpy(&t[0], buf, len);
 	p = (uint32_t *)&t[0];
 	for (i = 0; i < howmany(len, sizeof(uint32_t)); i ++)
 		tl->text[i] = ntohl(*p++);
@@ -504,7 +504,7 @@ crom_copy(uint32_t *src, uint32_t *dst, int *offset, int len, int maxlen)
 		printf("Config. ROM is too large for the buffer\n");
 		return(-1);
 	}
-	bcopy(src, (char *)(dst + *offset), len * sizeof(uint32_t));
+	memcpy((char *)(dst + *offset), src, len * sizeof(uint32_t));
 	*offset += len;
 	return(0);
 }
@@ -577,19 +577,19 @@ main () {
 	uint32_t buf[256], *p;
 	int i;
 
-	bzero(&src, sizeof(src));
-	bzero(&root, sizeof(root));
-	bzero(&unit1, sizeof(unit1));
-	bzero(&unit2, sizeof(unit2));
-	bzero(&unit3, sizeof(unit3));
-	bzero(&text1, sizeof(text1));
-	bzero(&text2, sizeof(text2));
-	bzero(&text3, sizeof(text3));
-	bzero(&text3, sizeof(text4));
-	bzero(&text3, sizeof(text5));
-	bzero(&text3, sizeof(text6));
-	bzero(&text3, sizeof(text7));
-	bzero(buf, sizeof(buf));
+	memset(&src, 0, sizeof(src));
+	memset(&root, 0, sizeof(root));
+	memset(&unit1, 0, sizeof(unit1));
+	memset(&unit2, 0, sizeof(unit2));
+	memset(&unit3, 0, sizeof(unit3));
+	memset(&text1, 0, sizeof(text1));
+	memset(&text2, 0, sizeof(text2));
+	memset(&text3, 0, sizeof(text3));
+	memset(&text3, 0, sizeof(text4));
+	memset(&text3, 0, sizeof(text5));
+	memset(&text3, 0, sizeof(text6));
+	memset(&text3, 0, sizeof(text7));
+	memset(buf, 0, sizeof(buf));
 
 	/* BUS info sample */
 	src.hdr.info_len = 4;

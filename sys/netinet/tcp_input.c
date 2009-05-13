@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.292 2009/01/29 20:38:22 pooka Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.292.2.1 2009/05/13 17:22:28 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.292 2009/01/29 20:38:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.292.2.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -407,7 +407,7 @@ struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
 static struct pool tcpipqent_pool;
 
 void
-tcpipqent_init()
+tcpipqent_init(void)
 {
 
 	pool_init(&tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
@@ -1027,7 +1027,7 @@ tcp_input(struct mbuf *m, ...)
 
 	TCP_STATINC(TCP_STAT_RCVTOTAL);
 
-	bzero(&opti, sizeof(opti));
+	memset(&opti, 0, sizeof(opti));
 	opti.ts_present = 0;
 	opti.maxseg = 0;
 
@@ -1205,10 +1205,10 @@ findpcb:
 			struct in6_addr s, d;
 
 			/* mapped addr case */
-			bzero(&s, sizeof(s));
+			memset(&s, 0, sizeof(s));
 			s.s6_addr16[5] = htons(0xffff);
 			bcopy(&ip->ip_src, &s.s6_addr32[3], sizeof(ip->ip_src));
-			bzero(&d, sizeof(d));
+			memset(&d, 0, sizeof(d));
 			d.s6_addr16[5] = htons(0xffff);
 			bcopy(&ip->ip_dst, &d.s6_addr32[3], sizeof(ip->ip_dst));
 			in6p = in6_pcblookup_connect(&tcbtable, &s,
@@ -1347,8 +1347,8 @@ findpcb:
 		union syn_cache_sa src;
 		union syn_cache_sa dst;
 
-		bzero(&src, sizeof(src));
-		bzero(&dst, sizeof(dst));
+		memset(&src, 0, sizeof(src));
+		memset(&dst, 0, sizeof(dst));
 		switch (af) {
 #ifdef INET
 		case AF_INET:
@@ -2874,7 +2874,7 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 
 #ifdef FAST_IPSEC
 	/* Extract the destination from the IP header in the mbuf. */
-	bzero(&dst, sizeof(union sockaddr_union));
+	memset(&dst, 0, sizeof(union sockaddr_union));
 	if (ip !=NULL) {
 		dst.sa.sa_len = sizeof(struct sockaddr_in);
 		dst.sa.sa_family = AF_INET;
@@ -3092,7 +3092,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		case TCPOPT_SIGNATURE:
 			if (optlen != TCPOLEN_SIGNATURE)
 				continue;
-			if (sigp && bcmp(sigp, cp + 2, TCP_SIGLEN))
+			if (sigp && memcmp(sigp, cp + 2, TCP_SIGLEN))
 				return (-1);
 
 			sigp = sigbuf;
@@ -3140,7 +3140,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		}
 		tcp_fields_to_host(th);
 
-		if (bcmp(sig, sigp, TCP_SIGLEN)) {
+		if (memcmp(sig, sigp, TCP_SIGLEN)) {
 			TCP_STATINC(TCP_STAT_BADSIG);
 			if (sav == NULL)
 				return (-1);
@@ -3571,8 +3571,8 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
 	     sc = TAILQ_NEXT(sc, sc_bucketq)) {
 		if (sc->sc_hash != hash)
 			continue;
-		if (!bcmp(&sc->sc_src, src, src->sa_len) &&
-		    !bcmp(&sc->sc_dst, dst, dst->sa_len)) {
+		if (!memcmp(&sc->sc_src, src, src->sa_len) &&
+		    !memcmp(&sc->sc_dst, dst, dst->sa_len)) {
 			splx(s);
 			return (sc);
 		}
@@ -3690,7 +3690,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #ifdef INET6
 		else if (in6p) {
 			/* IPv4 packet to AF_INET6 socket */
-			bzero(&in6p->in6p_laddr, sizeof(in6p->in6p_laddr));
+			memset(&in6p->in6p_laddr, 0, sizeof(in6p->in6p_laddr));
 			in6p->in6p_laddr.s6_addr16[5] = htons(0xffff);
 			bcopy(&((struct sockaddr_in *)dst)->sin_addr,
 				&in6p->in6p_laddr.s6_addr32[3],
@@ -3783,7 +3783,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 			struct sockaddr_in6 *sin6;
 			sin6 = mtod(am, struct sockaddr_in6 *);
 			am->m_len = sizeof(*sin6);
-			bzero(sin6, sizeof(*sin6));
+			memset(sin6, 0, sizeof(*sin6));
 			sin6->sin6_family = AF_INET6;
 			sin6->sin6_len = sizeof(*sin6);
 			sin6->sin6_port = ((struct sockaddr_in *)src)->sin_port;
@@ -4009,7 +4009,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 	tp = sototcpcb(so);
 
-	bzero(&opti, sizeof(opti));
+	memset(&opti, 0, sizeof(opti));
 
 	/*
 	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
@@ -4093,7 +4093,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * Fill in the cache, and put the necessary IP and TCP
 	 * options into the reply.
 	 */
-	bzero(sc, sizeof(struct syn_cache));
+	memset(sc, 0, sizeof(struct syn_cache));
 	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 	bcopy(src, &sc->sc_src, src->sa_len);
 	bcopy(dst, &sc->sc_dst, dst->sa_len);
@@ -4415,7 +4415,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		*optp++ = TCPOPT_SIGNATURE;
 		*optp++ = TCPOLEN_SIGNATURE;
 		sigp = optp;
-		bzero(optp, TCP_SIGLEN);
+		memset(optp, 0, TCP_SIGLEN);
 		optp += TCP_SIGLEN;
 		*optp++ = TCPOPT_NOP;
 		*optp++ = TCPOPT_EOL;

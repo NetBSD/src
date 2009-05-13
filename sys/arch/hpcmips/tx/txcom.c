@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.40 2008/06/12 16:50:53 tsutsui Exp $ */
+/*	$NetBSD: txcom.c,v 1.40.10.1 2009/05/13 17:17:46 jym Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.40 2008/06/12 16:50:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.40.10.1 2009/05/13 17:17:46 jym Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -183,10 +183,7 @@ const struct cdevsw txcom_cdevsw = {
 };
 
 int
-txcom_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+txcom_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	/* if the autoconfiguration got this far, there's a slot here */
 	return 1;
