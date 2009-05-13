@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.472 2009/05/12 18:07:54 plunky Exp $
+# $NetBSD: shl.mi,v 1.473 2009/05/13 02:50:31 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -27,7 +27,7 @@
 ./lib/libradius.so.3.0				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
 ./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
-./lib/libutil.so.7.16				base-sys-shlib		dynamicroot
+./lib/libutil.so.7.17				base-sys-shlib		dynamicroot
 ./lib/libz.so.1.0				base-sys-shlib		dynamicroot
 ./usr/lib/i18n/libBIG5.so.5.0			base-i18n-shlib
 ./usr/lib/i18n/libDECHanyu.so.5.0		base-i18n-shlib
@@ -152,7 +152,7 @@
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
 ./usr/lib/libukfs.so.1.0			base-sys-shlib
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
-./usr/lib/libutil.so.7.16			base-sys-shlib
+./usr/lib/libutil.so.7.17			base-sys-shlib
 ./usr/lib/libwrap.so.1.0			base-net-shlib
 ./usr/lib/libz.so.1.0				base-sys-shlib
 ./usr/lib/security/pam_afslog.so.2		base-sys-shlib		kerberos,pam

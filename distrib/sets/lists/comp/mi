@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1258 2009/05/12 18:07:55 plunky Exp $
+#	$NetBSD: mi,v 1.1259 2009/05/13 02:50:31 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7519,6 +7519,7 @@
 ./usr/share/man/cat3/sl_init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sleep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/snprintb.0			comp-c-catman		.cat
+./usr/share/man/cat3/snprintb_m.0		comp-c-catman		.cat
 ./usr/share/man/cat3/snprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sockaddr_snprintf.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sockatmark.0		comp-c-catman		.cat
@@ -12899,6 +12900,7 @@
 ./usr/share/man/html3/sl_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/sleep.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintb.html		comp-c-htmlman		html
+./usr/share/man/html3/snprintb_m.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/sockaddr_snprintf.html	comp-c-htmlman		html
 ./usr/share/man/html3/sockatmark.html		comp-c-htmlman		html
@@ -18318,6 +18320,7 @@
 ./usr/share/man/man3/sl_init.3			comp-c-man		.man
 ./usr/share/man/man3/sleep.3			comp-c-man		.man
 ./usr/share/man/man3/snprintb.3			comp-c-man		.man
+./usr/share/man/man3/snprintb_m.3		comp-c-man		.man
 ./usr/share/man/man3/snprintf.3			comp-c-man		.man
 ./usr/share/man/man3/sockaddr_snprintf.3	comp-c-man		.man
 ./usr/share/man/man3/sockatmark.3		comp-c-man		.man
