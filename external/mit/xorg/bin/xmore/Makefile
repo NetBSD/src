@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.10.1 2009/05/13 18:53:24 jym Exp $
 
 .include <bsd.own.mk>
 
 PROG=		xmore
 APPDEFS=	XMore.ad
 
-SRCS=	xmore.c print.c printdialog.c
+SRCS=	xmore.c
 
-CPPFLAGS+=	-DXMORE -DUSE_XPRINT
+CPPFLAGS+=	-DXMORE
 
-LDADD+=	-lXprintUtil -lXp -lXaw -lXmu -lXt -lSM -lICE -lXpm -lXp -lXext -lX11
-DPADD+=	${LIBXPRINTUTIL} ${LIBXP} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} \
+LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
+DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} \
 	${LIBICE} ${LIBXPM} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}}

@@ -17,8 +17,6 @@ aux() {
 	#"$@"
 }
 
-not () { "$@" && exit 1 || return 0; }
-
 STACKTRACE() {
 	trap - ERR;
 	i=0;
@@ -33,7 +31,7 @@ teardown() {
 	echo $PREFIX
 
 	test -n "$PREFIX" && {
-		rm -rf /dev/$PREFIX*
+		rm -rf $G_root_/dev/$PREFIX*
 		while dmsetup table | grep -q ^$PREFIX; do
 			for s in `dmsetup table | grep ^$PREFIX| cut -f1 -d:`; do
 				dmsetup resume $s 2>/dev/null > /dev/null || true
@@ -44,7 +42,10 @@ teardown() {
 
 	test -n "$LOOP" && losetup -d $LOOP
 	test -n "$LOOPFILE" && rm -f $LOOPFILE
+}
 
+teardown_() {
+	teardown
 	cleanup_ # user-overridable cleanup
 	testlib_cleanup_ # call test-lib cleanup routine, too
 }
@@ -52,7 +53,7 @@ teardown() {
 make_ioerror() {
 	echo 0 10000000 error | dmsetup create ioerror
 	dmsetup resume ioerror
-	ln -s /dev/mapper/ioerror /dev/ioerror
+	ln -s $G_dev_/mapper/ioerror $G_dev_/ioerror
 }
 
 prepare_loop() {
@@ -60,7 +61,7 @@ prepare_loop() {
 	test -n "$size" || size=32
 
 	test -n "$LOOP" && return 0
-	trap 'aux teardown' EXIT # don't forget to clean up
+	trap 'aux teardown_' EXIT # don't forget to clean up
 	trap 'set +vex; STACKTRACE; set -vex' ERR
 	#trap - ERR
 
@@ -73,15 +74,19 @@ prepare_loop() {
 		return 0
 	else
 		# no -f support 
-		# Iterate through $G_dev_/loop{,/}{0,1,2,3,4,5,6,7,8,9}
+		# Iterate through $G_dev_/loop{,/}{0,1,2,3,4,5,6,7}
 		for slash in '' /; do
-			for i in 0 1 2 3 4 5 6 7 8 9; do
+			for i in 0 1 2 3 4 5 6 7; do
 				local dev=$G_dev_/loop$slash$i
 				! losetup $dev >/dev/null 2>&1 || continue
 				# got a free
 				losetup "$dev" "$LOOPFILE"
 				LOOP=$dev
+				break
 			done
+			if [ -n "$LOOP" ]; then 
+				break
+			fi
 		done
 		test -n "$LOOP" # confirm or fail
 		return 0
@@ -99,7 +104,10 @@ prepare_devs() {
 
 	PREFIX="LVMTEST$$"
 
-	local loopsz=`blockdev --getsz $LOOP`
+	if ! loopsz=`blockdev --getsz $LOOP 2>/dev/null`; then
+  		loopsz=`blockdev --getsize $LOOP 2>/dev/null`
+	fi
+
 	local size=$(($loopsz/$n))
 
 	for i in `seq 1 $n`; do
@@ -137,6 +145,22 @@ enable_dev() {
 		local name=`echo "$dev" | sed -e 's,.*/,,'`
 		dmsetup create $name $name.table || dmsetup load $name $name.table
 		dmsetup resume $dev
+	done
+}
+
+backup_dev() {
+	for dev in "$@"; do
+		dd if=$dev of=$dev.backup bs=1024
+	done
+}
+
+restore_dev() {
+	for dev in "$@"; do
+		test -e $dev.backup || {
+			echo "Internal error: $dev not backed up, can't restore!"
+			exit 1
+		}
+		dd of=$dev if=$dev.backup bs=1024
 	done
 }
 

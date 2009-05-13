@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.h,v 1.1.1.1 2008/09/19 20:07:15 christos Exp $	*/
+/*	$NetBSD: amd.h,v 1.1.1.1.8.1 2009/05/13 18:49:02 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -510,6 +510,7 @@ struct am_node {
   autofs_fh_t *am_autofs_fh;
   time_t am_autofs_ttl;	/* Time to expire autofs nodes */
 #endif /* HAVE_FS_AUTOFS */
+  int am_fd[2];		/* parent child pipe fd's for sync umount */
 };
 
 /*
@@ -529,7 +530,10 @@ extern int *amqproc_getpid_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_mount_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp);
 extern voidp amqproc_null_1_svc(voidp argp, struct svc_req *rqstp);
-extern voidp amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp);
+extern int *amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp);
+extern int *amqproc_sync_umnt_1_svc_parent(voidp argp, struct svc_req *rqstp);
+extern amq_sync_umnt *amqproc_sync_umnt_1_svc_child(voidp argp, struct svc_req *rqstp);
+extern amq_sync_umnt *amqproc_sync_umnt_1_svc_async(voidp argp, struct svc_req *rqstp);
 
 /* other external definitions */
 extern am_nfs_fh *get_root_nfs_fh(char *dir);
@@ -615,6 +619,7 @@ extern void mp_to_fh(am_node *, am_nfs_fh *);
 extern void new_ttl(am_node *);
 extern void nfs_quick_reply(am_node *mp, int error);
 extern void normalize_slash(char *);
+extern void notify_child(am_node *, au_etype, int, int);
 extern void ops_showamfstypes(char *buf, size_t l);
 extern void ops_showfstypes(char *outbuf, size_t l);
 extern void rem_que(qelem *);
@@ -725,6 +730,15 @@ extern am_ops cdfs_ops;
 #ifdef HAVE_FS_PCFS
 extern am_ops pcfs_ops;
 #endif /* HAVE_FS_PCFS */
+
+/*
+ * UDF File System
+ * Many systems can't support this, and in any case most of the
+ * functionality is available with program FS.
+ */
+#ifdef HAVE_FS_UDF
+extern am_ops udf_ops;
+#endif /* HAVE_FS_UDF */
 
 /*
  * Caching File System (Solaris)

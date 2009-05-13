@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_link.c,v 1.1.1.1 2008/09/19 20:07:15 christos Exp $	*/
+/*	$NetBSD: amfs_link.c,v 1.1.1.1.8.1 2009/05/13 18:49:02 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,7 +111,7 @@ amfs_link_match(am_opts *fo)
    */
   if (fo->opt_fs[0] == '/') {
     char *link_hack = str3cat(NULL, ".", fo->opt_fs, "");
-    if (!fo->opt_sublink)
+    if (fo->opt_sublink == NULL || fo->opt_sublink[0] == '\0')
       fo->opt_sublink = strdup(fo->opt_fs);
     XFREE(fo->opt_fs);
     fo->opt_fs = link_hack;

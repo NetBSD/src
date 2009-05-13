@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/25 13:14:49 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2009/05/13 18:53:25 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ FREETYPE=	${X11SRCDIR.${LIB}}
 SUBDIR=	freetype
 
 .PATH:	${FREETYPE}/src/base
-SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
+SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfstype.c ftglyph.c \
 	ftinit.c ftlcdfil.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
 	ftsystem.c fttype1.c ftwinfnt.c ftxf86.c ftbitmap.c
 
@@ -83,6 +83,10 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${DESTDIR}${X11INCDIR}/freetype2/freetype/config \
 		-I${X11SRCDIR.${LIB}}/include
 
+.if defined(MKSUBPIXEL) && ${MKSUBPIXEL} != "no"
+CPPFLAGS+=	-DFT_CONFIG_OPTION_SUBPIXEL_RENDERING
+.endif
+
 .if defined(MKTTINTERP) && ${MKTTINTERP} != "no"
 CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
 .endif
@@ -92,7 +96,7 @@ LIBDPLIBS= \
 
 PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
-PKGCONFIG_VERSION.freetype2=	9.17.3
+PKGCONFIG_VERSION.freetype2=	9.20.3
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

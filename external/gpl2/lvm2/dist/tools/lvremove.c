@@ -1,4 +1,4 @@
-/*	$NetBSD: lvremove.c,v 1.1.1.1 2008/12/22 00:19:05 haad Exp $	*/
+/*	$NetBSD: lvremove.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -20,7 +20,7 @@
 static int lvremove_single(struct cmd_context *cmd, struct logical_volume *lv,
 			   void *handle __attribute((unused)))
 {
-	if (!lv_remove_single(cmd, lv, arg_count(cmd, force_ARG)))
+	if (!lv_remove_with_dependencies(cmd, lv, arg_count(cmd, force_ARG)))
 		return ECMD_FAILED;
 
 	return ECMD_PROCESSED;

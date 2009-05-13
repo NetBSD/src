@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.3.10.1 2009/05/13 18:53:29 jym Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -45,7 +45,7 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 		-D__VENDORDWEBSUPPORT__='"http://wiki.X.Org"' \
 		-DXVENDORNAME='"The X.Org Foundation"'
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
 

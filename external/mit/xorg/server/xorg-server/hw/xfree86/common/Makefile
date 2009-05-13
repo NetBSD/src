@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/12/03 23:17:56 hubertf Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2009/05/13 18:53:28 jym Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -28,7 +28,7 @@ SRCS=	xf86Configure.c xf86Bus.c xf86Config.c \
 	xf86DefModeSet.c ${SRCS.xv} \
 	${SRCS.xiso} ${SRCS.randr} ${SRCS.bus} ${SRCS.xkb}
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 SRCS.bus+=	xf86sbusBus.c
 .endif
 
@@ -87,7 +87,7 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 		-D__VENDORDWEBSUPPORT__='"http://wiki.X.Org"' \
 		-DXVENDORNAME='"The X.Org Foundation"'
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
 

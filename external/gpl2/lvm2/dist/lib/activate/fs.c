@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.2 2008/12/22 00:56:58 haad Exp $	*/
+/*	$NetBSD: fs.c,v 1.2.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -415,11 +415,17 @@ int fs_del_lv_byname(const char *dev_dir, const char *vg_name, const char *lv_na
 	return _fs_op(FS_DEL, dev_dir, vg_name, lv_name, "", "");
 }
 
-int fs_rename_lv(struct logical_volume *lv,
-		 const char *dev, const char *old_name)
+int fs_rename_lv(struct logical_volume *lv, const char *dev, 
+		const char *old_vgname, const char *old_lvname)
 {
-	return _fs_op(FS_RENAME, lv->vg->cmd->dev_dir, lv->vg->name, lv->name,
-		      dev, old_name);
+	if (strcmp(old_vgname, lv->vg->name)) {
+		return
+			(_fs_op(FS_DEL, lv->vg->cmd->dev_dir, old_vgname, old_lvname, "", "") &&
+			 _fs_op(FS_ADD, lv->vg->cmd->dev_dir, lv->vg->name, lv->name, dev, ""));
+	}
+	else 
+		return _fs_op(FS_RENAME, lv->vg->cmd->dev_dir, lv->vg->name, lv->name,
+			      dev, old_lvname);
 }
 
 void fs_unlock(void)

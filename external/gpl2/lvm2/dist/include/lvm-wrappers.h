@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-wrappers.h,v 1.1.1.1 2008/12/22 00:18:43 haad Exp $	*/
+/*	$NetBSD: lvm-wrappers.h,v 1.1.1.1.2.1 2009/05/13 18:52:41 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -19,5 +19,10 @@
 #define _LVM_WRAPPERS_H
 
 int lvm_getpagesize(void);
+
+/*
+ * Read 'len' bytes of entropy from /dev/urandom and store in 'buf'.
+ */
+int read_urandom(void *buf, size_t len);
 
 #endif

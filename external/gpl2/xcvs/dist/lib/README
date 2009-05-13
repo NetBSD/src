@@ -1,0 +1,9 @@
+Many of the source files in this directory come from the GNULIB project
+<http://savannah.gnu.org/projects/gnulib/>/<mailto:bug-gnulib@gnu.org>, and,
+if they don't, they should.
+
+What this means is that there is often at least one corresponding Autoconf
+macro in the CVS/m4 directory and that bug fixes and enhancements to this code
+should be sent to the GNULIB project and then reimported here after the GNULIB
+developers approve and adopt the change.  Changes should not be made locally
+without good reason!

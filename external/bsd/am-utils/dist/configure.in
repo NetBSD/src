@@ -55,8 +55,8 @@ AH_BOTTOM([
 dnl
 dnl AC_CONFIG_AUX_DIR(m4)
 AC_PREREQ(2.52)
-AC_REVISION($Revision: 1.2 $)
-AC_COPYRIGHT([Copyright (c) 1997-2007 Erez Zadok])
+AC_REVISION(Revision: 1.2)
+AC_COPYRIGHT([Copyright (c) 1997-2009 Erez Zadok])
 dnl find out system type
 AC_MSG_NOTICE(*** SYSTEM TYPES ***)
 dnl run by libtool, but must be kept here because HOST_MACROS depends on it
@@ -433,6 +433,7 @@ AC_CHECK_HEADERS(			\
 	bsd/rpc/rpc.h			\
 	cdfs/cdfsmount.h		\
  	cdfs/cdfs_mount.h		\
+	fs/udf/udf_mount.h		\
 	db1/ndbm.h			\
 	fs/efs/efs_mount.h		\
 	fs/msdosfs/msdosfsmount.h	\
@@ -624,6 +625,9 @@ AC_CHECK_HEADERS([			\
 #ifdef HAVE_RPC_RPC_H
 # include <rpc/rpc.h>
 #endif /* HAVE_RPC_RPC_H */
+#ifdef HAVE_NFS_RPCV2_H
+# include <nfs/rpcv2.h>
+#endif /* HAVE_NFS_RPCV2_H */
 ])
 AC_CHECK_HEADERS([			\
 	linux/auto_fs.h			\
@@ -769,6 +773,7 @@ fi
 dnl -----------------------------------------------------------------------
 AMU_STRUCT_FIELD_NFS_FH
 AMU_STRUCT_NFS_FH
+AMU_STRUCT_NFS_FH3
 AMU_CHECK_FS_MNTENT(nfs3)
 dnl ======================================================================
 
@@ -807,6 +812,7 @@ AMU_TYPE_SVC_IN_ARG
 AMU_TYPE_AUTOFS_ARGS
 AMU_TYPE_CACHEFS_ARGS
 AMU_TYPE_CDFS_ARGS
+AMU_TYPE_UDF_ARGS
 AMU_TYPE_LOFS_ARGS
 AMU_TYPE_MFS_ARGS
 AMU_TYPE_PCFS_ARGS
@@ -910,6 +916,16 @@ AMU_CHECK_FIELD(cdfs_args_t.iso_flags)
 AMU_CHECK_FIELD(cdfs_args_t.iso_pgthresh)
 AMU_CHECK_FIELD(cdfs_args_t.norrip)
 AMU_CHECK_FIELD(cdfs_args_t.ssector)
+AMU_CHECK_FIELD(udf_args_t.version)
+AMU_CHECK_FIELD(udf_args_t.fspec)
+AMU_CHECK_FIELD(udf_args_t.sessionnr)
+AMU_CHECK_FIELD(udf_args_t.udfmflags)
+AMU_CHECK_FIELD(udf_args_t.gmtoff)
+AMU_CHECK_FIELD(udf_args_t.anon_uid)
+AMU_CHECK_FIELD(udf_args_t.anon_gid)
+AMU_CHECK_FIELD(udf_args_t.nobody_uid)
+AMU_CHECK_FIELD(udf_args_t.nobody_gid)
+AMU_CHECK_FIELD(udf_args_t.sector_size)
 AMU_CHECK_FIELD(pcfs_args_t.dirmask)
 AMU_CHECK_FIELD(pcfs_args_t.dsttime)
 AMU_CHECK_FIELD(pcfs_args_t.fspec)
@@ -949,6 +965,8 @@ AMU_CHECK_FIELD(nfs_args_t.pathconf)
 AMU_CHECK_FIELD(nfs_args_t.proto)
 AMU_CHECK_FIELD(nfs_args_t.sotype)
 AMU_CHECK_FIELD(nfs_args_t.version)
+AMU_CHECK_FIELD(nfs_args_t.pseudoflavor)
+AMU_CHECK_FIELD(nfs_args_t.context)
 AMU_CHECK_FIELD(struct ifreq.ifr_addr)
 AMU_CHECK_FIELD(struct ifaddrs.ifa_next)
 AMU_CHECK_FIELD(struct sockaddr.sa_len)
@@ -999,6 +1017,7 @@ dnl check for filesystem existence if MNTTYPE_<filesystem> exists, then if
 dnl MOUNT_<fs>, then MNT_<fs>, then in /proc/filesystems, and getvfsbyname()
 AMU_CHECK_FS_MNTENT(autofs)
 AMU_CHECK_FS_MNTENT(cdfs hsfs cd9660 iso9660 isofs cdrom, cdfs)
+AMU_CHECK_FS_MNTENT(udf)
 AMU_CHECK_FS_MNTENT(cache)
 AMU_CHECK_FS_MNTENT(lofs lo, lofs)
 AMU_CHECK_FS_MNTENT(mfs)
@@ -1025,6 +1044,7 @@ AMU_CHECK_FS_MNTENT(umap umapfs, umapfs)
 dnl check for filesystem existence if their headers exist
 dnl AMU_CHECK_FS_HEADERS(cfs.h, cfs)
 AMU_CHECK_FS_HEADERS(hsfs/hsfs.h, cdfs)
+AMU_CHECK_FS_HEADERS(fs/udf/udf_mount.h, udf)
 AMU_CHECK_FS_HEADERS(tmpfs/tmp.h, tmpfs)
 AMU_CHECK_FS_HEADERS(fs/tmpfs/tmpfs_args.h, tmpfs)
 AMU_CHECK_FS_HEADERS(fs/efs/efs_mount.h, efs)
@@ -1063,6 +1083,7 @@ AMU_CHECK_MOUNT_TYPE(ext3 ext2 ffs ufs 4.2 4.3 4.4 efs xfs jfs ultrix, ufs)
 AMU_CHECK_MOUNT_TYPE(xfs)
 AMU_CHECK_MOUNT_TYPE(efs)
 AMU_CHECK_MOUNT_TYPE(cdfs hsfs cd9660 iso9660 isofs cdrom, cdfs)
+AMU_CHECK_MOUNT_TYPE(udf)
 AMU_CHECK_MOUNT_TYPE(vfat pcfs pc msdos msdosfs fat, pcfs)
 AMU_CHECK_MOUNT_TYPE(mfs)
 AMU_CHECK_MOUNT_TYPE(tmpfs tmp, tmpfs)
@@ -1086,6 +1107,7 @@ AMU_CHECK_MNTTAB_TYPE(ext3 ext2 ffs ufs 4.2 4.3 4.4 efs xfs jfs ultrix, ufs)
 AMU_CHECK_MNTTAB_TYPE(xfs)
 AMU_CHECK_MNTTAB_TYPE(efs)
 AMU_CHECK_MNTTAB_TYPE(cdfs hsfs cd9660 iso9660 isofs cdrom, cdfs)
+AMU_CHECK_MNTTAB_TYPE(udf)
 AMU_CHECK_MNTTAB_TYPE(vfat pcfs pc msdos msdosfs fat, pcfs)
 AMU_CHECK_MNTTAB_TYPE(mfs)
 AMU_CHECK_MNTTAB_TYPE(tmpfs tmp, tmpfs)
@@ -1270,6 +1292,15 @@ AMU_CHECK_MNT2_CDFS_OPTS(\
 	noversion	\
 	rrcaseins	\
 	rrip		\
+	)
+dnl ======================================================================
+
+dnl ######################################################################
+dnl UDF-specific mount(2) options (hex numbers) like M_*
+AC_MSG_NOTICE(*** UDF-SPECIFIC MOUNT(2) OPTIONS ***)
+dnl if found, defines MNT2_UDF_OPT_*
+AMU_CHECK_MNT2_UDF_OPTS(\
+	closesession	\
 	)
 dnl ======================================================================
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: metadata.c,v 1.1.1.1 2008/12/22 00:18:08 haad Exp $	*/
+/*	$NetBSD: metadata.c,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -339,6 +339,7 @@ int vg_remove_single(struct cmd_context *cmd, const char *vg_name,
 {
 	struct physical_volume *pv;
 	struct pv_list *pvl;
+	unsigned lv_count;
 	int ret = 1;
 
 	if (!vg || !consistent || vg_missing_pv_count(vg)) {
@@ -352,22 +353,26 @@ int vg_remove_single(struct cmd_context *cmd, const char *vg_name,
 	if (!vg_check_status(vg, EXPORTED_VG))
 		return 0;
 
-	if (vg->lv_count) {
+	lv_count = displayable_lvs_in_vg(vg);
+
+	if (lv_count) {
 		if ((force == PROMPT) &&
 		    (yes_no_prompt("Do you really want to remove volume "
-				   "group \"%s\" containing %d "
+				   "group \"%s\" containing %u "
 				   "logical volumes? [y/n]: ",
-				   vg_name, vg->lv_count) == 'n')) {
+				   vg_name, lv_count) == 'n')) {
 			log_print("Volume group \"%s\" not removed", vg_name);
 			return 0;
 		}
 		if (!remove_lvs_in_vg(cmd, vg, force))
 			return 0;
 	}
+
+	lv_count = displayable_lvs_in_vg(vg);
 	
-	if (vg->lv_count) {
-		log_error("Volume group \"%s\" still contains %d "
-			  "logical volume(s)", vg_name, vg->lv_count);
+	if (lv_count) {
+		log_error("Volume group \"%s\" still contains %u "
+			  "logical volume(s)", vg_name, lv_count);
 		return 0;
 	}
 
@@ -1098,6 +1103,18 @@ int vg_remove(struct volume_group *vg)
 	}
 
 	return 1;
+}
+
+unsigned displayable_lvs_in_vg(const struct volume_group *vg)
+{
+	struct lv_list *lvl;
+	unsigned lv_count = 0;
+
+	dm_list_iterate_items(lvl, &vg->lvs)
+		if (lv_is_displayable(lvl->lv))
+			lv_count++;
+
+	return lv_count;
 }
 
 /*

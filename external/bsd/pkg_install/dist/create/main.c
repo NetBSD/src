@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -26,7 +26,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $");
 #include "lib.h"
 #include "create.h"
 
-static const char Options[] = "B:C:D:EFI:K:L:OP:RS:T:UVb:c:d:f:g:i:k:ln:p:r:s:u:v";
+static const char Options[] = "B:C:D:EFI:K:L:OP:S:T:UVb:c:d:f:g:i:k:ln:p:r:s:u:v";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -53,14 +53,13 @@ int	update_pkgdb = 1;
 int	create_views = 0;
 int     PlistOnly = 0;
 int     RelativeLinks = 0;
-int     ReorderDirs = 0;
 Boolean File2Pkg = FALSE;
 
 static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: pkg_create [-ElORUVv] [-B build-info-file] [-b build-version-file]\n"
+	    "usage: pkg_create [-ElOUVv] [-B build-info-file] [-b build-version-file]\n"
             "                  [-C cpkgs] [-D displayfile] [-I realprefix] [-i iscript]\n"
             "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir]\n"
             "                  [-n preserve-file] [-P dpkgs] [-p prefix] [-r rscript]\n"
@@ -98,10 +97,6 @@ main(int argc, char **argv)
 
 		case 'O':
 			PlistOnly = 1;
-			break;
-
-		case 'R':
-			ReorderDirs = 1;
 			break;
 
 		case 'U':

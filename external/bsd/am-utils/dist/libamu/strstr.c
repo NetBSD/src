@@ -1,7 +1,7 @@
-/*	$NetBSD: strstr.c,v 1.1.1.1 2008/09/19 20:07:22 christos Exp $	*/
+/*	$NetBSD: strstr.c,v 1.1.1.1.8.1 2009/05/13 18:49:08 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,0 +1,115 @@
+; File written on Tue Dec 16 14:31:43 2008
+; dnssec_signzone version 9.6.0rc1
+dyn.example.net.	7200	IN SOA	ns1.example.net. hostmaster.example.net. (
+					9          ; serial
+					43200      ; refresh (12 hours)
+					1800       ; retry (30 minutes)
+					1209600    ; expire (2 weeks)
+					7200       ; minimum (2 hours)
+					)
+			7200	RRSIG	SOA 5 3 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					G4QPBPbeEnPfKggesblu+QPI6rlt8gOaqnJB
+					k/98pbkDxhgLmpPP9RdjD3bftSFRgOdPGN1Y
+					xE4AxSdo4AR5NA== )
+			7200	NS	ns1.example.net.
+			7200	NS	ns2.example.net.
+			7200	RRSIG	NS 5 3 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					le7/8D28Oia0Ai/aSZsno5TILSCaPKNnuauM
+					MGEGfCixiCXFIOCuND54qMpUR3wNEnTkHkyl
+					OBYt6dGy5pH0dw== )
+			7200	NSEC	localhost.dyn.example.net. NS SOA RRSIG NSEC DNSKEY
+			7200	RRSIG	NSEC 5 3 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					ovWzUD/vXa15hxBDTtMKP4TcJEpG3RX+2CrZ
+					ztcRdF9uy3JXI3+dEgmB+cPaDVW1AiNIrIYF
+					3MRaCHa4jhJISw== )
+$INCLUDE dnskey.db
+			3600	RRSIG	DNSKEY 3 3 3600 20081222123143 (
+					20081216123143 42138 dyn.example.net.
+					CL4xO8K27EV8Aq25hhFsk7Q5uL7sGO0HnsBH
+					tr6Iomd+JCqxBGvZSBg= )
+			3600	RRSIG	DNSKEY 5 3 3600 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					DkobINneyOshuB+T7nfnGx/O7JvEBRPT/svs
+					ysxDmzZ8CaPF04lskwrLPFcRfMhrGX2JFYjE
+					uIWUFMbDBVHilA== )
+localhost.dyn.example.net. 7200	IN A	127.0.0.1
+			7200	RRSIG	A 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					HDt+/eQ8d52VglJFPDwO3W7Gez2TUbvdz8Gk
+					SVDqIjHSTvJWN3L0vnBdHXOYUT8WLIMtQXXm
+					Y+JU8nNWxrD8yQ== )
+			7200	NSEC	ns1.dyn.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					d+CMf40oITbKKIV2AE3JTmGKtxb1RJPEEm2p
+					z8RHSPFrdcC9ieJrdZIx1+Uxs5PjNbZcjdft
+					oiLcZ/pr+2QXew== )
+ns1.dyn.example.net.	7200	IN A	1.0.0.5
+			7200	RRSIG	A 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					p99aPrpCC+FU8uRCJuRCo4aibhuFelbDXR1q
+					9WRVJBJiDV4FO6EH/tCBAUQmNT0fh+mERKNd
+					39Qjr5mH5gFcQw== )
+			7200	AAAA	2001:db8::53
+			7200	RRSIG	AAAA 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					ajT50HHhQUY5mD8SH1nPd+mf4HosL1lVvDVN
+					HTnpoqCjG0guDuRk/BCLTBj1MPcPDYlkdDcd
+					Rpv5xbYbYNu5qQ== )
+			7200	NSEC	ns2.dyn.example.net. A AAAA RRSIG NSEC
+			7200	RRSIG	NSEC 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					lQESBjK8+FQmGgndAMbPvQ2WMomT3sa1ozPQ
+					/7ykGFFgM3YeUyA2h0AlUWHatLNDvMy2HeaM
+					C1ozcV9M/iHR0A== )
+ns2.dyn.example.net.	7200	IN A	1.2.0.6
+			7200	RRSIG	A 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					OrkPhnVeL0kTY6hJzrBgXy1NGeiQQR+5ykSh
+					qFOOwR1C0YiBWGF3kkLE0ZAZ7XD+CPxc6Z/H
+					WL/+o/AVAtWrtg== )
+			7200	NSEC	x.dyn.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					ZE+qfvafm4vmGkkpcI1Z1ND2doEwnGELDiYQ
+					SpNu3bWTHDO6B8vHql1QayGPLzDH8licFAXL
+					FdyUOVHrXZMZNw== )
+x.dyn.example.net.	7200	IN A	1.2.3.4
+			7200	RRSIG	A 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					kYuQrOUinJDCsIGlv+qAPROyDOP6vCI11Us4
+					V0c6HK18FaaNE0BeivHAMN9QkliHF9GjYVm2
+					JbklfT3DUMSuIA== )
+			7200	NSEC	y.dyn.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					AR2flkOCH0YPbmTGxPj4v8Ug/L2dasQElmZW
+					+NZK4vlyxwtGFowBDtcjiD10defZNP3Wuzus
+					YjuVA5JpZpTW8A== )
+y.dyn.example.net.	7200	IN A	1.2.3.5
+			7200	RRSIG	A 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					HYDO2JtuRZWZ+XyDj7GZOlC3b2Y2rozEzzEf
+					OC/CChOsplwm1MDx+5nXPHM8wcIUUofrlq+b
+					lRLJfqwLt9erxg== )
+			7200	NSEC	z.dyn.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					mtz25BnhPmwYaHG2DLth2f3XTUeAMFDnmXby
+					/kUWbflanujxvWDnB2hFs4qKGeE+WL36F/aw
+					/Ui1oFyMOcdvPg== )
+z.dyn.example.net.	7200	IN A	1.2.3.6
+			7200	RRSIG	A 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					CxCptk9vpGT/9oG9WXiLmgKrWrxvuxFkgjEu
+					gBsp7loIM6x3Pr+CDXdsvbjDW1DwsjYBPyCa
+					JL7B7wczIlxQrA== )
+			7200	NSEC	dyn.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 4 7200 20081222123143 (
+					20081216123143 1355 dyn.example.net.
+					hOjfx9YA8O7tSXycALMnI+cQw3hs4euTVNPf
+					fCiYukAFjwpQAmS8xVbtydTH7TVs5UcObyqB
+					8gsnXboAW9x07g== )

@@ -1,7 +1,7 @@
-/*	$NetBSD: info_ldap.c,v 1.1.1.1 2008/09/19 20:07:16 christos Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.1.1.1.8.1 2009/05/13 18:49:02 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -150,30 +150,32 @@ string2he(char *s_orig)
 {
   char *c, *p;
   char *s;
-  HE_ENT *new, *old = NULL;
+  HE_ENT *first = NULL, *cur = NULL;
 
   if (NULL == s_orig || NULL == (s = strdup(s_orig)))
     return NULL;
-  for (p = s; p; p = strchr(p, ',')) {
-    if (old != NULL) {
-      new = ALLOC(HE_ENT);
-      old->next = new;
-      old = new;
-    } else {
-      old = ALLOC(HE_ENT);
-      old->next = NULL;
-    }
+  for (p = strtok(s, ","); p; p = strtok(NULL, ",")) {
+    if (cur != NULL) {
+      cur->next = ALLOC(HE_ENT);
+      cur = cur->next;
+    } else
+      first = cur = ALLOC(HE_ENT);
+
+    cur->next = NULL;
     c = strchr(p, ':');
     if (c) {            /* Host and port */
       *c++ = '\0';
-      old->host = strdup(p);
-      old->port = atoi(c);
-    } else
-      old->host = strdup(p);
-
+      cur->host = strdup(p);
+      cur->port = atoi(c);
+    } else {
+      cur->host = strdup(p);
+      cur->port = LDAP_PORT;
+    }
+    plog(XLOG_USER, "Adding ldap server %s:%d",
+      cur->host, cur->port);
   }
   XFREE(s);
-  return (old);
+  return first;
 }
 
 
@@ -318,7 +320,7 @@ amu_ldap_rebind(ALD *a)
     for (h = a->hostent; h != NULL; h = h->next) {
       if ((ld = ldap_open(h->host, h->port)) == NULL) {
 	plog(XLOG_WARNING, "Unable to ldap_open to %s:%d\n", h->host, h->port);
-	break;
+	continue;
       }
 #if LDAP_VERSION_MAX > LDAP_VERSION2
       /* handle LDAPv3 and heigher, if available and amd.conf-igured */
@@ -327,16 +329,16 @@ amu_ldap_rebind(ALD *a)
           dlog("amu_ldap_rebind: LDAP protocol version set to %ld\n",
 	       gopt.ldap_proto_version);
         } else {
-          plog(XLOG_WARNING, "Unable to set ldap protocol version to %ld\n",
-	       gopt.ldap_proto_version);
-	  break;
+          plog(XLOG_WARNING, "Unable to set ldap protocol version to %ld for "
+	       "%s:%d\n", gopt.ldap_proto_version, h->host, h->port);
+	  continue;
         }
       }
 #endif /* LDAP_VERSION_MAX > LDAP_VERSION2 */
       if (ldap_bind_s(ld, c->who, c->pw, c->method) != LDAP_SUCCESS) {
 	plog(XLOG_WARNING, "Unable to ldap_bind to %s:%d as %s\n",
 	     h->host, h->port, c->who);
-	break;
+	continue;
       }
       if (gopt.ldap_cache_seconds > 0) {
 #if defined(HAVE_LDAP_ENABLE_CACHE) && defined(HAVE_EXTERN_LDAP_ENABLE_CACHE)

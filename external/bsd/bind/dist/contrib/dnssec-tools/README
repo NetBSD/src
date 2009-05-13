@@ -1,0 +1,9 @@
+
+		DNSSEC Tools
+
+	DNSSEC tools from SPARTA is a useful tools set in particular
+	"trustman" which can be used to manage trusted-keys in named.conf.
+
+	http://www.dnssec-tools.org/
+
+	http://www.dnssec-tools.org/wiki/index.php/Recursive_Server#Trustman

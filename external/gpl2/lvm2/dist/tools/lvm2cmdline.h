@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm2cmdline.h,v 1.1.1.1 2008/12/22 00:19:04 haad Exp $	*/
+/*	$NetBSD: lvm2cmdline.h,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  
@@ -28,12 +28,12 @@ struct cmdline_context {
         int interactive;
 };
 
-int lvm2_main(int argc, char **argv, unsigned is_static);
+int lvm2_main(int argc, char **argv);
 
-void *cmdlib_lvm2_init(unsigned is_static);
+void *cmdlib_lvm2_init(unsigned static_compile);
 void lvm_fin(struct cmd_context *cmd);
 
-struct cmd_context *init_lvm(unsigned is_static);
+struct cmd_context *init_lvm(void);
 void lvm_register_commands(void);
 int lvm_split(char *str, int *argc, char **argv, int max);
 int lvm_run_command(struct cmd_context *cmd, int argc, char **argv);

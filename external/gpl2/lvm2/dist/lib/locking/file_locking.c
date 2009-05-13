@@ -1,4 +1,4 @@
-/*	$NetBSD: file_locking.c,v 1.1.1.1 2008/12/22 00:18:04 haad Exp $	*/
+/*	$NetBSD: file_locking.c,v 1.1.1.1.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -94,7 +94,7 @@ static void _reset_file_locking(void)
 	_release_lock(NULL, 0);
 }
 
-static void _remove_ctrl_c_handler()
+static void _remove_ctrl_c_handler(void)
 {
 	siginterrupt(SIGINT, 0);
 	if (!_handler_installed)

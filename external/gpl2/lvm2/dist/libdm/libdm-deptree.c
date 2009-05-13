@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-deptree.c,v 1.2 2008/12/22 00:56:59 haad Exp $	*/
+/*	$NetBSD: libdm-deptree.c,v 1.2.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2005-2007 Red Hat, Inc. All rights reserved.
@@ -136,22 +136,6 @@ struct dm_tree {
 	int skip_lockfs;		/* 1 skips lockfs (for non-snapshots) */
 	int no_flush;		/* 1 sets noflush (mirrors/multipath) */
 };
-
-/* FIXME Consider exporting this */
-static int _dm_snprintf(char *buf, size_t bufsize, const char *format, ...)
-{
-        int n;
-        va_list ap;
-
-        va_start(ap, format);
-        n = vsnprintf(buf, bufsize, format, ap);
-        va_end(ap);
-
-        if (n < 0 || (n > (int) bufsize - 1))
-                return -1;
-
-        return n;
-}
 
 struct dm_tree *dm_tree_create(void)
 {
@@ -1240,27 +1224,29 @@ static int _build_dev_string(char *devbuf, size_t bufsize, struct dm_tree_node *
 	return 1;
 }
 
+/* simplify string emiting code */
+#define EMIT_PARAMS(p, str...)\
+do {\
+	int w;\
+	if ((w = dm_snprintf(params + p, paramsize - (size_t) p, str)) < 0) {\
+		stack; /* Out of space */\
+		return -1;\
+	}\
+	p += w;\
+} while (0)
+
 static int _emit_areas_line(struct dm_task *dmt __attribute((unused)),
 			    struct load_segment *seg, char *params,
 			    size_t paramsize, int *pos)
 {
 	struct seg_area *area;
 	char devbuf[DM_FORMAT_DEV_BUFSIZE];
-	int tw;
-	const char *prefix = "";
 
 	dm_list_iterate_items(area, &seg->areas) {
 		if (!_build_dev_string(devbuf, sizeof(devbuf), area->dev_node))
 			return_0;
 
-		if ((tw = _dm_snprintf(params + *pos, paramsize - *pos, "%s%s %" PRIu64,
-					prefix, devbuf, area->offset)) < 0) {
-                        stack;	/* Out of space */
-                        return -1;
-                }
-
-		prefix = " ";
-		*pos += tw;
+		EMIT_PARAMS(*pos, " %s %" PRIu64, devbuf, area->offset);
 	}
 
 	return 1;
@@ -1269,9 +1255,8 @@ static int _emit_areas_line(struct dm_task *dmt __attribute((unused)),
 static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uint64_t *seg_start, char *params, size_t paramsize)
 {
 	unsigned log_parm_count;
-        int pos = 0;
-	int tw;
-        int r;
+	int pos = 0;
+	int r;
 	char originbuf[DM_FORMAT_DEV_BUFSIZE], cowbuf[DM_FORMAT_DEV_BUFSIZE];
 	char logbuf[DM_FORMAT_DEV_BUFSIZE];
 	const char *logtype;
@@ -1291,11 +1276,7 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 		if (seg->clustered) {
 			if (seg->uuid)
 				log_parm_count++;
-			if ((tw = _dm_snprintf(params + pos, paramsize - pos, "clustered-")) < 0) {
-                        	stack;	/* Out of space */
-                        	return -1;
-                	}
-			pos += tw;
+			EMIT_PARAMS(pos, "clustered-");
 		}
 
 		if (!seg->log)
@@ -1307,61 +1288,25 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 				return_0;
 		}
 
-		if ((tw = _dm_snprintf(params + pos, paramsize - pos, "%s %u ", logtype, log_parm_count)) < 0) {
-                        stack;	/* Out of space */
-                        return -1;
-                }
-		pos += tw;
+		EMIT_PARAMS(pos, "%s %u", logtype, log_parm_count);
 
-		if (seg->log) {
-			if ((tw = _dm_snprintf(params + pos, paramsize - pos, "%s ", logbuf)) < 0) {
-                        	stack;	/* Out of space */
-                        	return -1;
-                	}
-			pos += tw;
-		}
+		if (seg->log)
+			EMIT_PARAMS(pos, " %s", logbuf);
 
-		if ((tw = _dm_snprintf(params + pos, paramsize - pos, "%u ", seg->region_size)) < 0) {
-                       	stack; /* Out of space */
-                       	return -1;
-               	}
-		pos += tw;
+		EMIT_PARAMS(pos, " %u", seg->region_size);
 
-		if (seg->clustered && seg->uuid) {
-			if ((tw = _dm_snprintf(params + pos, paramsize - pos, "%s ", seg->uuid)) < 0) {
-				stack;  /* Out of space */
-				return -1;
-			}
-			pos += tw;
-		}
+		if (seg->clustered && seg->uuid)
+			EMIT_PARAMS(pos, " %s", seg->uuid);
 
-		if ((seg->flags & DM_NOSYNC)) {
-			if ((tw = _dm_snprintf(params + pos, paramsize - pos, "nosync ")) < 0) {
-                       		stack; /* Out of space */
-                       		return -1;
-               		}
-			pos += tw;
-		} else if ((seg->flags & DM_FORCESYNC)) {
-			if ((tw = _dm_snprintf(params + pos, paramsize - pos, "sync ")) < 0) {
-                       		stack; /* Out of space */
-                       		return -1;
-               		}
-			pos += tw;
-		}
+		if ((seg->flags & DM_NOSYNC))
+			EMIT_PARAMS(pos, " nosync");
+		else if ((seg->flags & DM_FORCESYNC))
+			EMIT_PARAMS(pos, " sync");
 
-		if ((seg->flags & DM_BLOCK_ON_ERROR)) {
-			if ((tw = _dm_snprintf(params + pos, paramsize - pos, "block_on_error ")) < 0) {
-                       		stack; /* Out of space */
-                       		return -1;
-               		}
-			pos += tw;
-		}
+		if ((seg->flags & DM_BLOCK_ON_ERROR))
+			EMIT_PARAMS(pos, " block_on_error");
 
-		if ((tw = _dm_snprintf(params + pos, paramsize - pos, "%u ", seg->mirror_area_count)) < 0) {
-                       	stack; /* Out of space */
-                       	return -1;
-               	}
-		pos += tw;
+		EMIT_PARAMS(pos, " %u", seg->mirror_area_count);
 
 		break;
 	case SEG_SNAPSHOT:
@@ -1369,30 +1314,16 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 			return_0;
 		if (!_build_dev_string(cowbuf, sizeof(cowbuf), seg->cow))
 			return_0;
-		if ((pos = _dm_snprintf(params, paramsize, "%s %s %c %d",
-                                        originbuf, cowbuf,
-					seg->persistent ? 'P' : 'N',
-                                        seg->chunk_size)) < 0) {
-                        stack;	/* Out of space */
-                        return -1;
-                }
+		EMIT_PARAMS(pos, "%s %s %c %d", originbuf, cowbuf,
+			    seg->persistent ? 'P' : 'N', seg->chunk_size);
 		break;
 	case SEG_SNAPSHOT_ORIGIN:
 		if (!_build_dev_string(originbuf, sizeof(originbuf), seg->origin))
 			return_0;
-		if ((pos = _dm_snprintf(params, paramsize, "%s",
-                                        originbuf)) < 0) {
-                        stack;	/* Out of space */
-                        return -1;
-                }
+		EMIT_PARAMS(pos, "%s", originbuf);
 		break;
 	case SEG_STRIPED:
-		if ((pos = _dm_snprintf(params, paramsize, "%u %u ",
-                                         seg->area_count,
-                                         seg->stripe_size)) < 0) {
-                        stack;	/* Out of space */
-                        return -1;
-                }
+		EMIT_PARAMS(pos, "%u %u", seg->area_count, seg->stripe_size);
 		break;
 	}
 
@@ -1422,6 +1353,8 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 
 	return 1;
 }
+
+#undef EMIT_PARAMS
 
 static int _emit_segment(struct dm_task *dmt, struct load_segment *seg,
 			 uint64_t *seg_start)

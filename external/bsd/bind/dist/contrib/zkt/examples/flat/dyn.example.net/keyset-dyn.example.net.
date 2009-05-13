@@ -1,0 +1,18 @@
+$ORIGIN .
+dyn.example.net		7200	IN DNSKEY 257 3 3 (
+					CNtFdVrUUJ9MPDyzGoPm+tSKUgnX4bble5+V
+					NGd4RjwWpEDj8RhEAhQ7LybJzr0wtHXT2Q/K
+					S55xARkUtcH2TVO/ayMupa30pM38rd8uF38s
+					m+ABKLEvCbPjaLZyW+s10di8nLp1aAxKFFfA
+					EfXkIhl3Wm5g9CvjrMlrxAOfNy/jtz4v+asI
+					r6/d992V80G9wMKMvTMQoCr4Sp9s2JubW79i
+					4RBVWgHHJMmtyqq+SqEkPhZvsTuo2sXgIH9v
+					RS3XgfkGtw/KyTUM29bhZ2eB+Ldq+bggp1gb
+					BDiSsxZPjxciizI/mCzXWbq8BdfZ6LsddMjA
+					olJwCtaPCD4e4infmw+YSxjGau+YGgI0Cc0u
+					ItzQmNNpSoejM3IWGV+SN/YuPJIzw8wixDfO
+					6kCNiPsW45Fvq31148cAvUvwiqYPQ3fONeOT
+					dQjsJWLLdLTApVEH10kjAGfa30Tm92lQhhG5
+					ovWrWCMbFlw4Lbvlon+X2snWPNut0a1Pz4Wd
+					clDcmNU8dxi1lFvGbcJ0E4qBoJVBIzDh4HX1
+					) ; key id = 42138

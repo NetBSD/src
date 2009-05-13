@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2008/10/05 17:54:29 cube Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2009/05/13 18:53:23 jym Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	cleanlinks cxpm editres fc-cache fc-cat fc-list fc-match \
 	fonttosfnt fslsfonts fstobdf glxgears glxinfo \
-	iceauth ico imake lbxproxy listres luit makedepend \
+	iceauth ico imake listres luit makedepend \
 	makeg makestrs mergelib mkdirhier mkfontdir \
 	mkfontscale mkhtmlindex oclock proxymngr revpath \
 	rgb setxkbmap smproxy sxpm \
@@ -13,8 +13,6 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	xfs xfsinfo xft-config xfwp xgamma xgc xhost xinit xinput xkbcomp \
 	xkbevd xkbprint xkbutils xkill xload xlogo xlsatoms xlsclients \
 	xlsfonts xmag xman xmessage xmh xmkmf xmlwf xmodmap xmore \
-	xplsprinters xprehashprinterlist xphelloworld \
-	xpxthelloworld xpsimplehelloworld \
 	xprop xrandr xrdb xrefresh xset xsetmode xsetpointer \
 	xsetroot xsm xstdcmap xterm xtrap xvidtune \
 	xvinfo xwd xwininfo xwud xdriinfo sessreg

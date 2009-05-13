@@ -1,0 +1,91 @@
+HOSTNAME(7)          BSD Miscellaneous Information Manual          HOSTNAME(7)
+
+NNAAMMEE
+     hhoossttnnaammee - host name resolution description
+
+DDEESSCCRRIIPPTTIIOONN
+     Hostnames are domains.  A domain is a hierarchical, dot-separated list of
+     subdomains.  For example, the machine “monet”, in the “Berkeley” subdo‐
+     main of the “EDU” subdomain of the Internet Domain Name System would be
+     represented as
+
+           monet.Berkeley.EDU
+
+     (with no trailing dot).
+
+     Hostnames are often used with network client and server programs, which
+     must generally translate the name to an address for use.  (This task is
+     usually performed by the library routine gethostbyname(3).)  The default
+     method for resolving hostnames by the Internet name resolver is to follow
+     RFC 1535’s security recommendations.  Actions can be taken by the admin‐
+     istrator to override these recommendations and to have the resolver
+     behave the same as earlier, non-RFC 1535 resolvers.
+
+     The default method (using RFC 1535 guidelines) follows:
+
+     If the name consists of a single component, i.e. contains no dot, and if
+     the environment variable “HOSTALIASES” is set to the name of a file, that
+     file is searched for a string matching the input hostname.  The file
+     should consist of lines made up of two strings separated by white-space,
+     the first of which is the hostname alias, and the second of which is the
+     complete hostname to be substituted for that alias.  If a case-insensi‐
+     tive match is found between the hostname to be resolved and the first
+     field of a line in the file, the substituted name is looked up with no
+     further processing.
+
+     If there is at least one dot in the name, then the name is first tried
+     “as-is”.  The number of dots to cause this action is configurable by set‐
+     ting the threshold using the “ndots” option in _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f (default:
+     1).  If the name ends with a dot, the trailing dot is removed, and the
+     remaining name is looked up (regardless of the setting of the ndots
+     option), without further processing.
+
+     If the input name does not end with a trailing dot, it is looked up by
+     searching through a list of domains until a match is found.  If neither
+     the search option in the _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f file or the “LOCALDOMAIN” envi‐
+     ronment variable is used, then the search list of domains contains only
+     the full domain specified by the domain option (in _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f) or
+     the domain used in the local hostname.  For example, if the “domain”
+     option is set to CS.Berkeley.EDU, then only CS.Berkeley.EDU will be in
+     the search list, and this will be the only domain appended to the partial
+     hostname.  For example, if “lithium” is the name to be resolved, this
+     would make lithium.CS.Berkeley.EDU the only name to be tried using the
+     search list.
+
+     If the search option is used in _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f or the environment vari‐
+     able “LOCALDOMAIN” is set by the user, then the search list will include
+     what is set by these methods.  For example, if the “search” option con‐
+     tained
+
+           CS.Berkeley.EDU CChem.Berkeley.EDU Berkeley.EDU
+
+     then the partial hostname (e.g., “lithium”) will be tried with _e_a_c_h
+     domain name appended (in the same order specified); the resulting host‐
+     names that would be tried are:
+
+           lithium.CS.Berkeley.EDU
+           lithium.CChem.Berkeley.EDU
+           lithium.Berkeley.EDU
+
+     The environment variable “LOCALDOMAIN” overrides the “search” and
+     “domain” options, and if both search and domain options are present in
+     the resolver configuration file, then only the _l_a_s_t one listed is used
+     (see resolver(5)).
+
+     If the name was not previously tried “as-is” (i.e., it fell below the
+     “ndots” threshold or did not contain a dot), then the name as originally
+     provided is attempted.
+
+EENNVVIIRROONNMMEENNTT
+     LOCALDOMAIN         Affects domains appended to partial hostnames.
+
+     HOSTALIASES         Name of file containing (_h_o_s_t _a_l_i_a_s, _f_u_l_l _h_o_s_t_n_a_m_e)
+                         pairs.
+
+FFIILLEESS
+     /etc/resolv.conf    See resolve(5).
+
+SSEEEE AALLSSOO
+     gethostbyname(3), resolver(5), mailaddr(7),
+
+4th Berkeley Distribution      February 16, 1994     4th Berkeley Distribution

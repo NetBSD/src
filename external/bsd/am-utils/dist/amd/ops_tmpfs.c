@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_tmpfs.c,v 1.1.1.1 2008/09/19 20:07:16 christos Exp $	*/
+/*	$NetBSD: ops_tmpfs.c,v 1.1.1.1.8.1 2009/05/13 18:49:03 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,6 +117,7 @@ mount_tmpfs(char *mntdir, char *fs_name, char *opts, int on_autofs)
    */
   MTYPE_TYPE type = MOUNT_TYPE_TMPFS;
 
+  p = NULL;
   memset((voidp) &tmpfs_args, 0, sizeof(tmpfs_args)); /* Paranoid */
 
   /*

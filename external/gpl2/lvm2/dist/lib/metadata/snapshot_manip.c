@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot_manip.c,v 1.1.1.1 2008/12/22 00:18:07 haad Exp $	*/
+/*	$NetBSD: snapshot_manip.c,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -36,6 +36,14 @@ int lv_is_visible(const struct logical_volume *lv)
 		return lv_is_visible(find_cow(lv)->lv);
 
 	return lv->status & VISIBLE_LV ? 1 : 0;
+}
+
+int lv_is_displayable(const struct logical_volume *lv)
+{
+	if (lv->status & SNAPSHOT)
+		return 0;
+
+	return (lv->status & VISIBLE_LV) || lv_is_cow(lv) ? 1 : 0;
 }
 
 /* Given a cow LV, return the snapshot lv_segment that uses it */

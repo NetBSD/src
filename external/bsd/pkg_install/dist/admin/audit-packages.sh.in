@@ -7,7 +7,8 @@ usage() {
 	echo '                      [-g file] [-h file]' >& $2
 	echo '                      [-K pkg_dbdir] [-n package] [-p package]' >& $2
 	echo '                      [-Q varname] [-t type]' >& $2
-	echo "Please use \`\`pkg_admin fetch-pkg-vulnerabilities'' instead." >& $2
+	echo "Please use the audit, audit-pkg, audit-batch and fetch-pkg-vulnerabilities" >& $2
+	echo "commands of pkg_admin instead." >& $2
 	exit $1
 }
 
@@ -50,7 +51,8 @@ while [ $# -gt 0 ]; do
 		;;
 	-c)
 		echo "The audit-packages wrapper does not support -c" >&2
-		echo "Please switch to \`\`pkg_admin fetch-pkg-vulnerabilities''." >&2
+		echo "Please use the audit, audit-pkg, audit-batch and fetch-pkg-vulnerabilities" >& 2
+		echo "commands of pkg_admin instead." >& 2
 		exit 1
 		;;
 	-d)

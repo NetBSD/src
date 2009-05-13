@@ -1,4 +1,4 @@
-/*	$NetBSD: toolcontext.c,v 1.3 2009/01/06 23:21:16 haad Exp $	*/
+/*	$NetBSD: toolcontext.c,v 1.3.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -164,6 +164,7 @@ static void _init_logging(struct cmd_context *cmd)
 	/* Test mode */
 	cmd->default_settings.test =
 	    find_config_tree_int(cmd, "global/test", 0);
+	init_test(cmd->default_settings.test);
 
 	/* Settings for logging to file */
 	if (find_config_tree_int(cmd, "log/overwrite", DEFAULT_OVERWRITE))
@@ -739,7 +740,7 @@ static int _init_formats(struct cmd_context *cmd)
 
 #ifdef HAVE_LIBDL
 	/* Load any formats in shared libs if not static */
-	if (!cmd->is_static &&
+	if (!is_static() &&
 	    (cn = find_config_tree_node(cmd, "global/format_libraries"))) {
 
 		struct config_value *cv;
@@ -785,6 +786,7 @@ static int _init_formats(struct cmd_context *cmd)
 		if (!strcasecmp(fmt->name, format) ||
 		    (fmt->alias && !strcasecmp(fmt->alias, format))) {
 			cmd->default_settings.fmt = fmt;
+			cmd->fmt = cmd->default_settings.fmt;
 			return 1;
 		}
 	}
@@ -848,7 +850,7 @@ static int _init_segtypes(struct cmd_context *cmd)
 
 #ifdef HAVE_LIBDL
 	/* Load any formats in shared libs unless static */
-	if (!cmd->is_static &&
+	if (!is_static() &&
 	    (cn = find_config_tree_node(cmd, "global/segment_libraries"))) {
 
 		struct config_value *cv;
@@ -926,8 +928,8 @@ static int _init_backup(struct cmd_context *cmd)
 
 	if (!cmd->sys_dir) {
 		log_warn("WARNING: Metadata changes will NOT be backed up");
-		backup_init(cmd, "");
-		archive_init(cmd, "", 0, 0);
+		backup_init(cmd, "", 0);
+		archive_init(cmd, "", 0, 0, 0);
 		return 1;
 	}
 
@@ -953,7 +955,8 @@ static int _init_backup(struct cmd_context *cmd)
 	dir = find_config_tree_str(cmd, "backup/archive_dir",
 			      default_dir);
 
-	if (!archive_init(cmd, dir, days, min)) {
+	if (!archive_init(cmd, dir, days, min,
+			  cmd->default_settings.archive)) {
 		log_debug("backup_init failed.");
 		return 0;
 	}
@@ -973,7 +976,7 @@ static int _init_backup(struct cmd_context *cmd)
 	
 	dir = find_config_tree_str(cmd, "backup/backup_dir", default_dir);
 
-	if (!backup_init(cmd, dir)) {
+	if (!backup_init(cmd, dir, cmd->default_settings.backup)) {
 		log_debug("backup_init failed.");
 		return 0;
 	}
@@ -981,9 +984,23 @@ static int _init_backup(struct cmd_context *cmd)
 	return 1;
 }
 
+static void _init_rand(struct cmd_context *cmd)
+{
+	if (read_urandom(&cmd->rand_seed, sizeof(cmd->rand_seed)))
+		return;
+
+	cmd->rand_seed = (unsigned) time(NULL) + (unsigned) getpid();
+}
+
+static void _init_globals(struct cmd_context *cmd)
+{
+	init_full_scan_done(0);
+	init_mirror_in_sync(0);
+
+}
+
 /* Entry point */
-struct cmd_context *create_toolcontext(struct arg *the_args, unsigned is_static,
-				       unsigned is_long_lived)
+struct cmd_context *create_toolcontext(unsigned is_long_lived)
 {
 	struct cmd_context *cmd;
 
@@ -1005,8 +1022,6 @@ struct cmd_context *create_toolcontext(struct arg *the_args, unsigned is_static,
 		return NULL;
 	}
 	memset(cmd, 0, sizeof(*cmd));
-	cmd->args = the_args;
-	cmd->is_static = is_static;
 	cmd->is_long_lived = is_long_lived;
 	cmd->handles_missing_pvs = 0;
 	cmd->hosttags = 0;
@@ -1078,6 +1093,10 @@ struct cmd_context *create_toolcontext(struct arg *the_args, unsigned is_static,
 
 	if (!_init_backup(cmd))
 		goto error;
+
+	_init_rand(cmd);
+
+	_init_globals(cmd);
 
 	cmd->default_settings.cache_vgmetadata = 1;
 	cmd->current_settings = cmd->default_settings;

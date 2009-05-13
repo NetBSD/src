@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,9 @@
 #define DHCP_H
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <stdint.h>
-
-#include "config.h"
-#include "dhcpcd.h"
-#include "net.h"
 
 /* Max MTU - defines dhcp option length */
 #define MTU_MAX             1500
@@ -61,9 +58,26 @@
 #define DHCP_RELEASE        7
 #define DHCP_INFORM         8
 
+/* Constants taken from RFC 2131. */
+#define T1			0.5
+#define T2			0.875
+#define DHCP_BASE		4
+#define DHCP_MAX		64
+#define DHCP_RAND_MIN		-1
+#define DHCP_RAND_MAX		1
+#define DHCP_ARP_FAIL		10
+
+/* number of usecs in a second. */
+#define USECS_SECOND		1000000
+/* As we use timevals, we should use the usec part for
+ * greater randomisation. */
+#define DHCP_RAND_MIN_U		DHCP_RAND_MIN * USECS_SECOND
+#define DHCP_RAND_MAX_U		DHCP_RAND_MAX * USECS_SECOND
+#define PROBE_MIN_U		PROBE_MIN * USECS_SECOND
+#define PROBE_MAX_U		PROBE_MAX * USECS_SECOND
+
 /* DHCP options */
-enum DHO
-{
+enum DHO {
 	DHO_PAD                    = 0,
 	DHO_SUBNETMASK             = 1,
 	DHO_ROUTER                 = 3,
@@ -112,13 +126,9 @@ enum FQDN {
 #define DHCP_CHADDR_LEN         16
 #define SERVERNAME_LEN          64
 #define BOOTFILE_LEN            128
-#define DHCP_UDP_LEN            (20 + 8)
-#define DHCP_BASE_LEN           (4 + 4 + 2 + 2 + 4 + 4 + 4 + 4 + 4)
-#define DHCP_RESERVE_LEN        (4 + 4 + 4 + 4 + 2)
-#define DHCP_FIXED_LEN          (DHCP_BASE_LEN + DHCP_CHADDR_LEN + \
-				 + SERVERNAME_LEN + BOOTFILE_LEN)
-#define DHCP_OPTION_LEN         (MTU_MAX - DHCP_FIXED_LEN - DHCP_UDP_LEN \
-				 - DHCP_RESERVE_LEN)
+#define DHCP_UDP_LEN            (14 + 20 + 8)
+#define DHCP_FIXED_LEN          (DHCP_UDP_LEN + 226)
+#define DHCP_OPTION_LEN         (MTU_MAX - DHCP_FIXED_LEN)
 
 /* Some crappy DHCP servers require the BOOTP minimum length */
 #define BOOTP_MESSAGE_LENTH_MIN 300
@@ -140,11 +150,12 @@ struct dhcp_message {
 	uint8_t bootfile[BOOTFILE_LEN];    /* boot file name */
 	uint32_t cookie;
 	uint8_t options[DHCP_OPTION_LEN]; /* message options - cookie */
-};
+} _packed;
 
 struct dhcp_lease {
 	struct in_addr addr;
 	struct in_addr net;
+	struct in_addr brd;
 	uint32_t leasetime;
 	uint32_t renewaltime;
 	uint32_t rebindtime;
@@ -154,25 +165,34 @@ struct dhcp_lease {
 	uint8_t frominfo;
 };
 
+#include "dhcpcd.h"
+#include "if-options.h"
+#include "net.h"
+
 #define add_option_mask(var, val) (var[val >> 3] |= 1 << (val & 7))
 #define del_option_mask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
 #define has_option_mask(var, val) (var[val >> 3] & (1 << (val & 7)))
-int make_option_mask(uint8_t *, char **, int);
+int make_option_mask(uint8_t *, const char *, int);
 void print_options(void);
 char *get_option_string(const struct dhcp_message *, uint8_t);
 int get_option_addr(uint32_t *, const struct dhcp_message *, uint8_t);
 int get_option_uint32(uint32_t *, const struct dhcp_message *, uint8_t);
 int get_option_uint16(uint16_t *, const struct dhcp_message *, uint8_t);
 int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
+#define is_bootp(m) (m &&						\
+	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
+	    get_option_uint8(NULL, m, DHO_MESSAGETYPE) == -1)
 struct rt *get_option_routes(const struct dhcp_message *);
 ssize_t configure_env(char **, const char *, const struct dhcp_message *,
-		      const struct options *);
+    const struct if_options *);
 
-ssize_t make_message(struct dhcp_message **,
-			const struct interface *, const struct dhcp_lease *,
-	     		uint32_t, uint8_t, const struct options *);
+int dhcp_message_add_addr(struct dhcp_message *, uint8_t, struct in_addr);
+ssize_t make_message(struct dhcp_message **, const struct interface *,
+    uint8_t);
 int valid_dhcp_packet(unsigned char *);
 
 ssize_t write_lease(const struct interface *, const struct dhcp_message *);
-struct dhcp_message *read_lease(const struct interface *iface);
+struct dhcp_message *read_lease(const struct interface *);
+void get_lease(struct dhcp_lease *, const struct dhcp_message *);
+
 #endif
