@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.13 2007/06/01 11:24:22 jnemeth Exp $
+.\"	$NetBSD: com.4,v 1.14 2009/05/13 12:40:37 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -73,7 +73,8 @@ driver provides support for NS8250-, NS16450-, and NS16550-based
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
-communications interfaces.  The NS8250 and NS16450 have single character
+communications interfaces.
+The NS8250 and NS16450 have single character
 buffers, and the NS16550 has a 16 character buffer.
 .Pp
 Input and output for each line may set to one of following baud rates;
@@ -82,26 +83,33 @@ Input and output for each line may set to one of following baud rates;
 of 115200.
 .Pp
 The ttyXX devices are traditional dial-in devices; the dtyXX devices are
-used for dial-out.  (See
+used for dial-out.
+(See
 .Xr tty 4 . )
 .Pp
-The
-.Va COM_HAYESP
-kernel option adds support for the Hayes ESP serial board.
+.Cd options COM_HAYESP
+adds support for the Hayes ESP serial board.
 .Pp
-With options RND_COM enabled, the
+With
+.Cd options RND_COM
+enabled, the
 .Nm
 driver can be used to collect entropy for the
 .Xr rnd 4
-entropy pool.  The entropy is generated from interrupt randomness.
+entropy pool.
+The entropy is generated from interrupt randomness.
 .Ss Arm32 specific
 If
 .Dq flags 1
 is specified, the
 .Nm
-driver will not set the MCR_IENABLE bit on the UART.  This is mainly for
-use on AST multiport boards, where the MCR_IENABLE bit is used to control
-whether or not the devices use a shared interrupt.
+driver will not set the
+.Dv MCR_IENABLE
+bit on the UART.
+This is mainly for use on AST multiport boards, where the
+.Dv MCR_IENABLE
+bit is used to control whether or not the devices use a shared
+interrupt.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/dty00
