@@ -1,4 +1,4 @@
-.\" $NetBSD: stuirda.4,v 1.6 2008/10/13 10:38:43 wiz Exp $
+.\" $NetBSD: stuirda.4,v 1.7 2009/05/13 12:38:55 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,22 +50,18 @@ the bridge specification:
 .Pp
 Access to the IrDA device is through the
 .Xr irframe 4
-driver. Before accessing it, a firmware patch must be downloaded.
+driver.
+Before accessing it, a firmware patch must be downloaded.
 At the time of writing this, it can be found at:
 .Pa http://www.sigmatel.com/documents/stir4210_4220_4116_patch_files.tar.gz
 .Pp
-Unpack the archive with 
+Unpack the archive with
 .Pp
 .Nm tar
-.Fl C 
+.Fl C
 .Pa /libdata/firmware/stuirda/
 .Fl xzf
 .Ar stir4210_4220_4116_patch_files.tar.gz
-.Sh BUGS
-.Nm stuirda
-needs the firmware for configuration, so it can't be loaded at kernel
-startup time. As a workaround, you can plug in the USB-IrDA-bridge 
-after booting.
 .Sh SEE ALSO
 .Xr irframe 4 ,
 .Xr usb 4
@@ -75,3 +71,8 @@ The
 driver
 appeared in
 .Nx 5.0 .
+.Sh BUGS
+.Nm stuirda
+needs the firmware for configuration, so it can't be loaded at kernel
+startup time.
+As a workaround, you can plug in the USB-IrDA-bridge after booting.
