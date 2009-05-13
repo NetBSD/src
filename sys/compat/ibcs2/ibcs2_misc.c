@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.105 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.105.2.1 2009/05/13 17:18:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.105 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.105.2.1 2009/05/13 17:18:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1075,6 +1075,8 @@ ibcs2_sys_pgrpsys(struct lwp *l, const struct ibcs2_sys_pgrpsys_args *uap, regis
 }
 
 /*
+ * See http://docsrv.sco.com:507/en/man/html.S/plock.S.html
+ *
  * XXX - need to check for nested calls
  */
 
@@ -1089,9 +1091,12 @@ ibcs2_sys_plock(struct lwp *l, const struct ibcs2_sys_plock_args *uap, register_
 #define IBCS2_TEXTLOCK	2
 #define IBCS2_DATALOCK	4
 
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0)
-		return EPERM;
+	/*
+	 * NOTE: This is a privileged operation. Normally it would require root
+	 * access. When implementing, please make sure to use an appropriate
+	 * kauth(9) request. See the man-page for more information.
+	 */
+
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
 	case IBCS2_PROCLOCK:
@@ -1102,6 +1107,9 @@ ibcs2_sys_plock(struct lwp *l, const struct ibcs2_sys_plock_args *uap, register_
 	return EINVAL;
 }
 
+/*
+ * See http://docsrv.sco.com:507/en/man/html.S/uadmin.S.html
+ */
 int
 ibcs2_sys_uadmin(struct lwp *l, const struct ibcs2_sys_uadmin_args *uap, register_t *retval)
 {
@@ -1153,11 +1161,12 @@ ibcs2_sys_uadmin(struct lwp *l, const struct ibcs2_sys_uadmin_args *uap, registe
 	case SCO_A_CLOCK:
 	case SCO_A_SETCONFIG:
 	case SCO_A_GETDEV:
-		/* XXX Use proper kauth(9) requests when updating this. */
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
-		if (error)
-			return (error);
+		/*
+		 * NOTE: These are all privileged operations, that otherwise
+		 * would require root access or similar. When implementing,
+		 * please use appropriate kauth(9) requests. See the man-page
+		 * for more information.
+		 */
 
 		if (SCARG(uap, cmd) != SCO_A_GETDEV)
 			return 0;

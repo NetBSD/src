@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.30 2008/04/04 12:25:07 tsutsui Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.30.18.1 2009/05/13 17:21:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.30 2008/04/04 12:25:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.30.18.1 2009/05/13 17:21:30 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -264,7 +264,7 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 	if (boff) {
 		int xfer;
 		xfer = min(len, 16 - boff);
-		bcopy(from, bptr + boff, xfer);
+		memcpy(bptr + boff, from, xfer);
 		from += xfer;
 		bptr += 32;
 		len -= xfer;
@@ -317,7 +317,7 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 		default:
 		/* Does odd-aligned case ever happen? */
 		do {
-			bcopy(from, bptr, 16);
+			memcpy(bptr, from, 16);
 			from += 16;
 			bptr += 32;
 			len -= 16;
@@ -325,7 +325,7 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 		break;
 	}
 	if (len)
-		bcopy(from, bptr, len);
+		memcpy(bptr, from, len);
 }
 
 void
@@ -343,7 +343,7 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 	if (boff) {
 		int xfer;
 		xfer = min(len, 16 - boff);
-		bcopy(bptr + boff, to, xfer);
+		memcpy(to, bptr + boff, xfer);
 		to += xfer;
 		bptr += 32;
 		len -= xfer;
@@ -391,7 +391,7 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 	/* XXX Does odd-byte-aligned case ever happen? */
 	default:
 		do {
-			bcopy(bptr, to, 16);
+			memcpy(to, bptr, 16);
 			to += 16;
 			bptr += 32;
 			len -= 16;
@@ -399,7 +399,7 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 		break;
 	}
 	if (len)
-		bcopy(bptr, to, len);
+		memcpy(to, bptr, len);
 }
 
 void
@@ -413,7 +413,7 @@ le_ioasic_zerobuf_gap16(struct lance_softc *sc, int boff, int len)
 	boff &= 0xf;
 	xfer = min(len, 16 - boff);
 	while (len > 0) {
-		bzero(bptr + boff, xfer);
+		memset(bptr + boff, 0, xfer);
 		bptr += 32;
 		boff = 0;
 		len -= xfer;

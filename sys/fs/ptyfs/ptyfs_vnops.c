@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.27 2008/01/02 11:48:43 ad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.27.24.1 2009/05/13 17:21:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.27 2008/01/02 11:48:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.27.24.1 2009/05/13 17:21:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,11 +419,9 @@ ptyfs_setattr(void *v)
 			return EROFS;
 		if ((ptyfs->ptyfs_flags & SF_SNAPSHOT) != 0)
 			return EPERM;
-		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
-		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL)) &&
-		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred)) != 0))
+		error = genfs_can_chtimes(vp, vap->va_vaflags, ptyfs->ptyfs_uid,
+		    cred);
+		if (error)
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -464,10 +462,11 @@ ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	int error;
 
-	if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
-		return error;
+	error = genfs_can_chmod(vp, cred, ptyfs->ptyfs_uid,
+	    ptyfs->ptyfs_gid, mode);
+	if (error)
+		return (error);
+
 	ptyfs->ptyfs_mode &= ~ALLPERMS;
 	ptyfs->ptyfs_mode |= (mode & ALLPERMS);
 	return 0;
@@ -482,25 +481,17 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     struct lwp *l)
 {
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
-	int		error, ismember = 0;
+	int error;
 
 	if (uid == (uid_t)VNOVAL)
 		uid = ptyfs->ptyfs_uid;
 	if (gid == (gid_t)VNOVAL)
 		gid = ptyfs->ptyfs_gid;
-	/*
-	 * If we don't own the file, are trying to change the owner
-	 * of the file, or are not a member of the target group,
-	 * the caller's credentials must imply super-user privilege
-	 * or the call fails.
-	 */
-	if ((kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid || uid != ptyfs->ptyfs_uid ||
-	    (gid != ptyfs->ptyfs_gid &&
-	    !(kauth_cred_getegid(cred) == gid ||
-	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
-	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0))
-		return error;
+
+	error = genfs_can_chown(vp, cred, ptyfs->ptyfs_uid,
+	    ptyfs->ptyfs_gid, uid, gid);
+	if (error)
+		return (error);
 
 	ptyfs->ptyfs_gid = gid;
 	ptyfs->ptyfs_uid = uid;

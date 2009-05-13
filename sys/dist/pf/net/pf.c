@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.53 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: pf.c,v 1.53.8.1 2009/05/13 17:21:43 jym Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.53 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.53.8.1 2009/05/13 17:21:43 jym Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -3118,6 +3118,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			state_icmp++;
 		break;
 #endif /* INET */
+
 #ifdef INET6
 	case IPPROTO_ICMPV6:
 		if (pd->af != AF_INET6)
@@ -5883,6 +5884,15 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		break;
 	}
 
+#ifdef INET6
+	case IPPROTO_ICMPV6: {
+		action = PF_DROP;
+		DPFPRINTF(PF_DEBUG_MISC,
+		    ("pf: dropping IPv4 packet with ICMPv6 payload\n"));
+		goto done;
+	}
+#endif
+
 	default:
 		action = pf_test_state_other(&s, dir, kif, &pd);
 		if (action == PF_PASS) {
@@ -6268,6 +6278,15 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
 		break;
 	}
+
+#ifdef INET
+	case IPPROTO_ICMP: {
+		action = PF_DROP;
+		DPFPRINTF(PF_DEBUG_MISC,
+		    ("pf: dropping IPv6 packet with ICMPv4 payload\n"));
+		goto done;
+	}
+#endif
 
 	case IPPROTO_ICMPV6: {
 		struct icmp6_hdr	ih;

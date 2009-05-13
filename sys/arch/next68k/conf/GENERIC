@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116 2009/01/24 05:06:06 mrg Exp $
+# $NetBSD: GENERIC,v 1.116.2.1 2009/05/13 17:18:10 jym Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.116.2.1 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -37,7 +37,6 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE	# POSIX semaphore support
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support

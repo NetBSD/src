@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.14 2007/03/04 05:59:32 christos Exp $ */
+/*      $NetBSD: cpu.h,v 1.14.58.1 2009/05/13 17:16:11 jym Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -45,8 +45,8 @@
 
 #ifdef _KERNEL
 
-u_long	clkread	__P((void));
-void	physaccess	__P((void *, void *, int, int));
+u_long	clkread(void);
+void	physaccess(void *, void *, int, int);
 
 #endif /* _KERNEL */
 
@@ -62,7 +62,7 @@ void	physaccess	__P((void *, void *, int, int));
 #define cpu_swapout(p)		/* nothing */
 #define cpu_number()            0
 
-extern void delay __P((unsigned));
+extern void delay(unsigned);
 #define DELAY(n)                delay(n)
 
 extern char bootpath[];
@@ -96,14 +96,14 @@ int machineid;
 /*
  * Prototypes from amiga_init.c
  */
-void    *alloc_z2mem __P((long));
+void    *alloc_z2mem(long);
 
 /*
  * Prototypes from autoconf.c
  */
-int     is_a1200 __P((void));
-int     is_a3000 __P((void));
-int     is_a4000 __P((void));
+int     is_a1200(void);
+int     is_a3000(void);
+int     is_a4000(void);
 #endif
 
 #endif /* !_MACHINE_CPU_H_ */

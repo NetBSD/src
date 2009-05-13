@@ -1,4 +1,4 @@
-/*	$NetBSD: sifbios.c,v 1.8 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: sifbios.c,v 1.8.14.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sifbios.c,v 1.8 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sifbios.c,v 1.8.14.1 2009/05/13 17:18:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ STATIC void sifbios_rpc_callback(void *, int);
 STATIC int sifbios_rpc_call(int, void *, int *);
 
 void
-sifbios_init()
+sifbios_init(void)
 {
 	/* check BIOS exits */
 	if (*(u_int32_t *)SIFBIOS_SIGNATURE_PTR != SIFBIOS_SIGNATURE)
@@ -126,7 +126,7 @@ sifbios_rpc_callback(void *arg, int result)
  * System misc.
  */
 int
-sifbios_getver()
+sifbios_getver(void)
 {
 
 	return CALL(int, 0, 0);
@@ -157,7 +157,7 @@ sifbios_putchar(int c)
 }
 
 int
-sifbios_getchar()
+sifbios_getchar(void)
 {
 
 	return CALL(int, 4, 0);
@@ -167,14 +167,14 @@ sifbios_getchar()
  * SIF DMA
  */
 int
-sifdma_init()
+sifdma_init(void)
 {
 
 	return CALL(int, 16, 0);
 }
 
 void
-sifdma_exit()
+sifdma_exit(void)
 {
 
 	CALL(void, 17, 0);
@@ -211,7 +211,7 @@ sifdma_stat(sifdma_id_t id)
 
 /* reset DMA channel */
 void
-sifdma_reset()
+sifdma_reset(void)
 {
 
 	CALL(void, 20, 0);
@@ -221,14 +221,14 @@ sifdma_reset()
  * SIF CMD
  */
 int
-sifcmd_init()
+sifcmd_init(void)
 {
 	
 	return CALL(int, 32, 0);
 }
 
 void
-sifcmd_exit()
+sifcmd_exit(void)
 {
 
 	CALL(void, 33, 0);
@@ -310,14 +310,14 @@ sifcmd_handler_init(struct sifcmd_callback_holder *holder, int n)
  * SIF RPC
  */
 int
-sifrpc_init()
+sifrpc_init(void)
 {
 
 	return CALL(int, 48, 0);
 }
 
 void
-sifrpc_exit()
+sifrpc_exit(void)
 {
 
 	CALL(void, 49, 0);
@@ -495,7 +495,7 @@ sifrpc_dispatch_service(struct sifrpc_server *server)
  * IOP memory
  */
 int
-iopmem_init()
+iopmem_init(void)
 {
 	int result;
 

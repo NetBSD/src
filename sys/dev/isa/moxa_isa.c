@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.16 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.16.18.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.16 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.16.18.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,16 +64,15 @@ struct moxa_isa_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int moxa_isaprobe(struct device *, struct cfdata *, void *);
-void moxa_isaattach(struct device *, struct device *, void *);
+int moxa_isaprobe(device_t, cfdata_t, void *);
+void moxa_isaattach(device_t, device_t, void *);
 int moxa_isaintr(void *);
 
 CFATTACH_DECL(moxa_isa, sizeof(struct moxa_isa_softc),
     moxa_isaprobe, moxa_isaattach, NULL, NULL);
 
 int
-moxa_isaprobe(struct device *parent, struct cfdata *self,
-    void *aux)
+moxa_isaprobe(device_t parent, cfdata_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -142,7 +141,7 @@ out:
 }
 
 void
-moxa_isaattach(struct device *parent, struct device *self, void *aux)
+moxa_isaattach(device_t parent, device_t self, void *aux)
 {
 	struct moxa_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -182,8 +181,7 @@ moxa_isaattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-moxa_isaintr(arg)
-	void *arg;
+moxa_isaintr(void *arg)
 {
 	struct moxa_isa_softc *sc = arg;
 	int bits;

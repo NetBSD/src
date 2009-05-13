@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.4 2009/01/10 13:03:19 cegger Exp $	*/
+/*	$NetBSD: bwi.c,v 1.4.6.1 2009/05/13 17:19:22 jym Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.4 2009/01/10 13:03:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.4.6.1 2009/05/13 17:19:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -94,7 +94,7 @@ int bwi_debug = ~BWI_DBG_INTR;
 #define DPRINTF(sc, dbg, fmt, ...)					\
 do {									\
 	if ((sc)->sc_debug & (dbg))					\
-		aprint_debug_dev(&(sc)->sc_dev, fmt, ##__VA_ARGS__);	\
+		aprint_debug_dev((sc)->sc_dev, fmt, ##__VA_ARGS__);	\
 } while (0)
 
 #else	/* !BWI_DEBUG */
@@ -657,7 +657,7 @@ bwi_sysctlattach(struct bwi_softc *sc)
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, sc->sc_dev.dv_xname,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, device_xname(sc->sc_dev),
 	    SYSCTL_DESCR("bwi controls and statistics"),
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
@@ -718,7 +718,7 @@ bwi_intr(void *arg)
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
 	int i, txrx_error, tx = 0, rx_data = -1;
 
-	if (!device_is_active(&sc->sc_dev) ||
+	if (!device_is_active(sc->sc_dev) ||
 	    (ifp->if_flags & IFF_RUNNING) == 0)
 		return (0);
 
@@ -752,7 +752,7 @@ bwi_intr(void *arg)
 		    CSR_READ_4(sc, BWI_TXRX_INTR_STATUS(i)) & mask;
 
 		if (txrx_intr_status[i] & BWI_TXRX_INTR_ERROR) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "intr fatal TX/RX (%d) error 0x%08x\n",
 			    i, txrx_intr_status[i]);
 			txrx_error = 1;
@@ -772,7 +772,7 @@ bwi_intr(void *arg)
 
 	if (intr_status & BWI_INTR_PHY_TXERR) {
 		if (mac->mac_flags & BWI_MAC_F_PHYE_RESET) {
-			aprint_error_dev(&sc->sc_dev, "intr PHY TX error\n");
+			aprint_error_dev(sc->sc_dev, "intr PHY TX error\n");
 			/* XXX to netisr0? */
 			bwi_init_statechg(sc, 0);
 			return (0);
@@ -787,7 +787,7 @@ bwi_intr(void *arg)
 		bwi_mac_config_ps(mac);
 
 	if (intr_status & BWI_INTR_EO_ATIM)
-		aprint_normal_dev(&sc->sc_dev, "EO_ATIM\n");
+		aprint_normal_dev(sc->sc_dev, "EO_ATIM\n");
 
 	if (intr_status & BWI_INTR_PMQ) {
 		for (;;) {
@@ -798,7 +798,7 @@ bwi_intr(void *arg)
 	}
 
 	if (intr_status & BWI_INTR_NOISE)
-		aprint_normal_dev(&sc->sc_dev, "intr noise\n");
+		aprint_normal_dev(sc->sc_dev, "intr noise\n");
 
 	if (txrx_intr_status[0] & BWI_TXRX_INTR_RX)
 		rx_data = (sc->sc_rxeof)(sc);
@@ -949,7 +949,7 @@ bwi_attach(struct bwi_softc *sc)
 	ifp->if_watchdog = bwi_watchdog;
 	ifp->if_stop = bwi_stop;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
-	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Get locale */
@@ -991,7 +991,7 @@ bwi_attach(struct bwi_softc *sc)
 		if (IEEE80211_IS_MULTICAST(ic->ic_myaddr)) {
 			bwi_get_eaddr(sc, BWI_SPROM_11A_EADDR, ic->ic_myaddr);
 			if (IEEE80211_IS_MULTICAST(ic->ic_myaddr))
-				aprint_error_dev(&sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "invalid MAC address: %s\n",
 				    ether_sprintf(ic->ic_myaddr));
 		}
@@ -1277,7 +1277,7 @@ bwi_mac_init(struct bwi_mac *mac)
 	/* Calibrate PHY */
 	error = bwi_phy_calibrate(mac);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "PHY calibrate failed\n");
+		aprint_error_dev(sc->sc_dev, "PHY calibrate failed\n");
 		return (error);
 	}
 
@@ -1380,7 +1380,7 @@ bwi_mac_init(struct bwi_mac *mac)
 	for (i = 0; i < BWI_TX_NRING; ++i) {
 		error = (sc->sc_init_tx_ring)(sc, i);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't initialize %dth TX ring\n", i);
 			return (error);
 		}
@@ -1391,7 +1391,7 @@ bwi_mac_init(struct bwi_mac *mac)
 	 */
 	error = (sc->sc_init_rx_ring)(sc);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't initialize RX ring\n");
+		aprint_error_dev(sc->sc_dev, "can't initialize RX ring\n");
 		return (error);
 	}
 
@@ -1401,7 +1401,7 @@ bwi_mac_init(struct bwi_mac *mac)
 	if (mac->mac_flags & BWI_MAC_F_HAS_TXSTATS) {
 		error = (sc->sc_init_txstats)(sc);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't initialize TX stats ring\n");
 			return (error);
 		}
@@ -1517,7 +1517,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	MOBJ_WRITE_4(mac, BWI_COMM_MOBJ, 0, TEST_VAL1);
 	val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 	if (val != TEST_VAL1) {
-		aprint_error_dev(&sc->sc_dev, "TEST1 failed\n");
+		aprint_error_dev(sc->sc_dev, "TEST1 failed\n");
 		return (ENXIO);
 	}
 
@@ -1525,7 +1525,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	MOBJ_WRITE_4(mac, BWI_COMM_MOBJ, 0, TEST_VAL2);
 	val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 	if (val != TEST_VAL2) {
-		aprint_error_dev(&sc->sc_dev, "TEST2 failed\n");
+		aprint_error_dev(sc->sc_dev, "TEST2 failed\n");
 		return (ENXIO);
 	}
 
@@ -1534,14 +1534,14 @@ bwi_mac_test(struct bwi_mac *mac)
 
 	val = CSR_READ_4(sc, BWI_MAC_STATUS);
 	if ((val & ~BWI_MAC_STATUS_PHYLNK) != BWI_MAC_STATUS_IHREN) {
-		aprint_error_dev(&sc->sc_dev, "%s failed, MAC status 0x%08x\n",
+		aprint_error_dev(sc->sc_dev, "%s failed, MAC status 0x%08x\n",
 		    __func__, val);
 		return (ENXIO);
 	}
 
 	val = CSR_READ_4(sc, BWI_MAC_INTR_STATUS);
 	if (val != 0) {
-		aprint_error_dev(&sc->sc_dev, "%s failed, intr status %08x\n",
+		aprint_error_dev(sc->sc_dev, "%s failed, intr status %08x\n",
 		    __func__, val);
 		return (ENXIO);
 	}
@@ -1749,10 +1749,10 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 		struct bwi_tpctl tpctl;
 
 		/* Backup original TX power control variables */
-		bcopy(&mac->mac_tpctl, &tpctl_orig, sizeof(tpctl_orig));
+		memcpy(&tpctl_orig, &mac->mac_tpctl, sizeof(tpctl_orig));
 		restore_tpctl = 1;
 
-		bcopy(&mac->mac_tpctl, &tpctl, sizeof(tpctl));
+		memcpy(&tpctl, &mac->mac_tpctl, sizeof(tpctl));
 		tpctl.bbp_atten = 11;
 		tpctl.tp_ctrl1 = 0;
 #ifdef notyet
@@ -1773,7 +1773,7 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 	    "base tssi %d\n", rf->rf_base_tssi);
 
 	if (abs(rf->rf_base_tssi - rf->rf_idle_tssi) >= 20) {
-		aprint_error_dev(&sc->sc_dev, "base tssi measure failed\n");
+		aprint_error_dev(sc->sc_dev, "base tssi measure failed\n");
 		mac->mac_flags |= BWI_MAC_F_TPCTL_ERROR;
 	}
 
@@ -1815,7 +1815,7 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 	else if (mac->mac_rev >= 5 && mac->mac_rev <= 20)
 		idx = 5;
 	else {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "no suitable IV for MAC rev %d\n", mac->mac_rev);
 		error = ENODEV;
 		goto fail_iv;
@@ -1834,7 +1834,7 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 	else if (mac->mac_rev >= 5 && mac->mac_rev <= 10)
 		idx = 5;
 	else {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "no suitable ExtIV for MAC rev %d\n", mac->mac_rev);
 		error = ENODEV;
 		goto fail_iv_ext;
@@ -1891,14 +1891,14 @@ bwi_mac_fw_image_alloc(struct bwi_mac *mac, const char *prefix, int idx,
 
 	error = firmware_open("bwi", fw_name, &fwh);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "firmware_open failed on %s\n",
+		aprint_error_dev(sc->sc_dev, "firmware_open failed on %s\n",
 		    fw_name);
 		goto fail;
 	}
 
 	fwi->fwi_size = firmware_get_size(fwh);
 	if (fwi->fwi_size < sizeof(struct bwi_fwhdr)) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "firmware image %s has no header\n",
 		    fw_name);
 		error = EIO;
@@ -1932,7 +1932,7 @@ bwi_mac_fw_image_alloc(struct bwi_mac *mac, const char *prefix, int idx,
 		 */
 		size_t fw_size = (size_t)be32toh(hdr->fw_size);
 		if (fw_size != fwi->fwi_size - sizeof(*hdr)) {
-			aprint_error_dev(&sc->sc_dev, "firmware image %s"
+			aprint_error_dev(sc->sc_dev, "firmware image %s"
 			    " size mismatch, fw %zx, real %zx\n", fw_name,
 			    fw_size, fwi->fwi_size - sizeof(*hdr));
 			goto invalid;
@@ -1940,14 +1940,14 @@ bwi_mac_fw_image_alloc(struct bwi_mac *mac, const char *prefix, int idx,
 	}
 
 	if (hdr->fw_type != fw_type) {
-		aprint_error_dev(&sc->sc_dev, "firmware image %s"
+		aprint_error_dev(sc->sc_dev, "firmware image %s"
 		    " type mismatch, fw `%c', target `%c'\n", fw_name,
 		    hdr->fw_type, fw_type);
 		goto invalid;
 	}
 
 	if (hdr->fw_gen != BWI_FW_GEN_1) {
-		aprint_error_dev(&sc->sc_dev, "firmware image %s"
+		aprint_error_dev(sc->sc_dev, "firmware image %s"
 		    " generation mismatch, fw %d, target %d\n", fw_name,
 		    hdr->fw_gen, BWI_FW_GEN_1);
 		goto invalid;
@@ -2043,7 +2043,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "timeout loading ucode & pcm firmware\n");
 		return (ETIMEDOUT);
 	}
@@ -2053,12 +2053,12 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 
 	fw_rev = MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWREV);
 	if (fw_rev > BWI_FW_VERSION3_REVMAX) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "firmware version 4 is not supported yet\n");
 		return (ENODEV);
 	}
 
-	aprint_normal_dev(&sc->sc_dev, "firmware rev 0x%04x,"
+	aprint_normal_dev(sc->sc_dev, "firmware rev 0x%04x,"
 	    " patch level 0x%04x\n", fw_rev,
 	    MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWPATCHLV));
 
@@ -2146,7 +2146,7 @@ bwi_mac_fw_load_iv(struct bwi_mac *mac, const struct bwi_fw_image *fwi)
 		int sz = 0;
 
 		if (iv_img_size < sizeof(iv->iv_ofs)) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "invalid IV image, ofs\n");
 			return (EINVAL);
 		}
@@ -2157,7 +2157,7 @@ bwi_mac_fw_load_iv(struct bwi_mac *mac, const struct bwi_fw_image *fwi)
 
 		ofs = __SHIFTOUT(iv_ofs, BWI_FW_IV_OFS_MASK);
 		if (ofs >= 0x1000) {
-			aprint_error_dev(&sc->sc_dev, "invalid ofs (0x%04x) "
+			aprint_error_dev(sc->sc_dev, "invalid ofs (0x%04x) "
 			    "for %dth iv\n", ofs, i);
 			return (EINVAL);
 		}
@@ -2166,7 +2166,7 @@ bwi_mac_fw_load_iv(struct bwi_mac *mac, const struct bwi_fw_image *fwi)
 			uint32_t val32;
 
 			if (iv_img_size < sizeof(iv->iv_val.val32)) {
-				aprint_error_dev(&sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "invalid IV image, val32\n");
 				return (EINVAL);
 			}
@@ -2179,7 +2179,7 @@ bwi_mac_fw_load_iv(struct bwi_mac *mac, const struct bwi_fw_image *fwi)
 			uint16_t val16;
 
 			if (iv_img_size < sizeof(iv->iv_val.val16)) {
-				aprint_error_dev(&sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "invalid IV image, val16\n");
 				return (EINVAL);
 			}
@@ -2194,7 +2194,7 @@ bwi_mac_fw_load_iv(struct bwi_mac *mac, const struct bwi_fw_image *fwi)
 	}
 
 	if (iv_img_size != 0) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "invalid IV image, size left %zx\n", iv_img_size);
 		return (EINVAL);
 	}
@@ -2210,14 +2210,14 @@ bwi_mac_fw_init(struct bwi_mac *mac)
 
 	error = bwi_mac_fw_load_iv(mac, &mac->mac_iv_fwi);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "load IV failed\n");
+		aprint_error_dev(sc->sc_dev, "load IV failed\n");
 		return (error);
 	}
 
 	if (mac->mac_iv_ext != NULL) {
 		error = bwi_mac_fw_load_iv(mac, &mac->mac_iv_ext_fwi);
 		if (error)
-			aprint_error_dev(&sc->sc_dev, "load ExtIV failed\n");
+			aprint_error_dev(sc->sc_dev, "load ExtIV failed\n");
 	}
 
 	return (error);
@@ -2332,7 +2332,7 @@ bwi_mac_bss_param_init(struct bwi_mac *mac)
 	/*
 	 * Set short/long retry limits
 	 */
-	bzero(&lim, sizeof(lim));
+	memset(&lim, 0, sizeof(lim));
 	lim.shretry = BWI_SHRETRY;
 	lim.shretry_fb = BWI_SHRETRY_FB;
 	lim.lgretry = BWI_LGRETRY;
@@ -2455,7 +2455,7 @@ bwi_mac_stop(struct bwi_mac *mac)
 		DELAY(1);
 	}
 	if (i == NRETRY) {
-		aprint_error_dev(&sc->sc_dev, "can't stop MAC\n");
+		aprint_error_dev(sc->sc_dev, "can't stop MAC\n");
 		return (ETIMEDOUT);
 	}
 #undef NRETRY
@@ -2489,7 +2489,7 @@ bwi_mac_config_ps(struct bwi_mac *mac)
 			DELAY(10);
 		}
 		if (i == NRETRY) {
-			aprint_error_dev(&sc->sc_dev, "config PS failed\n");
+			aprint_error_dev(sc->sc_dev, "config PS failed\n");
 			return (ETIMEDOUT);
 		}
 #undef NRETRY
@@ -2576,7 +2576,7 @@ bwi_mac_get_property(struct bwi_mac *mac)
 	}
 
 	if (old_bus_space != 0 && old_bus_space != sc->sc_bus_space) {
-		aprint_error_dev(&sc->sc_dev, "MACs bus space mismatch!\n");
+		aprint_error_dev(sc->sc_dev, "MACs bus space mismatch!\n");
 		return (ENXIO);
 	}
 
@@ -2610,7 +2610,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 	KASSERT(sc->sc_nmac <= BWI_MAC_MAX && sc->sc_nmac >= 0);
 
 	if (sc->sc_nmac == BWI_MAC_MAX) {
-		aprint_error_dev(&sc->sc_dev, "too many MACs\n");
+		aprint_error_dev(sc->sc_dev, "too many MACs\n");
 		return (0);
 	}
 
@@ -2628,7 +2628,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 
 	/* XXX will this happen? */
 	if (BWI_REGWIN_EXIST(&mac->mac_regwin)) {
-		aprint_error_dev(&sc->sc_dev, "%dth MAC already attached\n",
+		aprint_error_dev(sc->sc_dev, "%dth MAC already attached\n",
 		    sc->sc_nmac);
 		return (0);
 	}
@@ -2642,7 +2642,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 			break;
 	}
 	if (i == N(bwi_sup_macrev)) {
-		aprint_error_dev(&sc->sc_dev, "MAC rev %u is not supported\n",
+		aprint_error_dev(sc->sc_dev, "MAC rev %u is not supported\n",
 		    rev);
 		return (ENXIO);
 	}
@@ -2658,7 +2658,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 		mac->mac_flags |= BWI_MAC_F_PHYE_RESET;
 	}
 
-	aprint_normal_dev(&sc->sc_dev, "MAC: rev %u\n", rev);
+	aprint_normal_dev(sc->sc_dev, "MAC: rev %u\n", rev);
 	return (0);
 }
 
@@ -2728,7 +2728,7 @@ bwi_mac_adjust_tpctl(struct bwi_mac *mac, int rf_atten_adj, int bbp_atten_adj)
 	struct bwi_tpctl tpctl;
 	int bbp_atten, rf_atten, tp_ctrl1;
 
-	bcopy(&mac->mac_tpctl, &tpctl, sizeof(tpctl));
+	memcpy(&tpctl, &mac->mac_tpctl, sizeof(tpctl));
 
 	/* NOTE: Use signed value to do calulation */
 	bbp_atten = tpctl.bbp_atten;
@@ -2983,7 +2983,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 	phyrev = __SHIFTOUT(val, BWI_PHYINFO_REV_MASK);
 	phytype = __SHIFTOUT(val, BWI_PHYINFO_TYPE_MASK);
 	phyver = __SHIFTOUT(val, BWI_PHYINFO_VER_MASK);
-	aprint_normal_dev(&sc->sc_dev, "PHY type %d, rev %d, ver %d\n",
+	aprint_normal_dev(sc->sc_dev, "PHY type %d, rev %d, ver %d\n",
 	    phytype, phyrev, phyver);
 
 	/*
@@ -2993,7 +2993,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 	switch (phytype) {
 	case BWI_PHYINFO_TYPE_11A:
 		if (phyrev >= 4) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "unsupported 11A PHY, rev %u\n",
 			    phyrev);
 			return (ENXIO);
@@ -3013,7 +3013,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 			}
 		}
 		if (i == N(bwi_sup_bphy)) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "unsupported 11B PHY, rev %u\n",
 			    phyrev);
 			return (ENXIO);
@@ -3023,7 +3023,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 		break;
 	case BWI_PHYINFO_TYPE_11G:
 		if (phyrev > 8) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "unsupported 11G PHY, rev %u\n",
 			    phyrev);
 			return (ENXIO);
@@ -3035,7 +3035,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 		phy->phy_tbl_data_hi = BWI_PHYR_TBL_DATA_HI_11G;
 		break;
 	default:
-		aprint_error_dev(&sc->sc_dev, "unsupported PHY type %d\n",
+		aprint_error_dev(sc->sc_dev, "unsupported PHY type %d\n",
 		    phytype);
 		return (ENXIO);
 	}
@@ -3251,7 +3251,7 @@ bwi_phy_init_11b_rev2(struct bwi_mac *mac)
 	sc = mac->mac_sc;
 
 	/* TODO: 11B */
-	aprint_error_dev(&sc->sc_dev, "%s is not implemented yet\n", __func__);
+	aprint_error_dev(sc->sc_dev, "%s is not implemented yet\n", __func__);
 }
 
 static void
@@ -3941,7 +3941,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 		type = __SHIFTOUT(val, BWI_RFINFO_TYPE_MASK);
 		rev = __SHIFTOUT(val, BWI_RFINFO_REV_MASK);
 	}
-	aprint_normal_dev(&sc->sc_dev, "RF manu 0x%03x, type 0x%04x, rev %u\n",
+	aprint_normal_dev(sc->sc_dev, "RF manu 0x%03x, type 0x%04x, rev %u\n",
 	    manu, type, rev);
 
 	/*
@@ -3954,7 +3954,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 		if (manu != BWI_RF_MANUFACT_BCM ||
 		    type != BWI_RF_T_BCM2060 ||
 		    rev != 1) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "only BCM2060 rev 1 RF is supported for"
 			    " 11A PHY\n");
 			return (ENXIO);
@@ -3972,7 +3972,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 			rf->rf_ctrl_adj = 1;
 			rf->rf_calc_rssi = bwi_rf_calc_rssi_bcm2053;
 		} else {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "only BCM2050/BCM2053 RF is supported for"
 			    " 11B phy\n");
 			return (ENXIO);
@@ -3988,7 +3988,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 		break;
 	case IEEE80211_MODE_11G:
 		if (type != BWI_RF_T_BCM2050) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "only BCM2050 RF is supported for"
 			    " 11G PHY\n");
 			return (ENXIO);
@@ -4005,7 +4005,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 		rf->rf_lo_update = bwi_rf_lo_update_11g;
 		break;
 	default:
-		aprint_error_dev(&sc->sc_dev, "unsupported PHY mode\n");
+		aprint_error_dev(sc->sc_dev, "unsupported PHY mode\n");
 		return (ENXIO);
 	}
 
@@ -4249,7 +4249,7 @@ bwi_rf_workaround(struct bwi_mac *mac, uint chan)
 	struct bwi_rf *rf = &mac->mac_rf;
 
 	if (chan == IEEE80211_CHAN_ANY) {
-		aprint_error_dev(&sc->sc_dev, "%s invalid channel!\n",
+		aprint_error_dev(sc->sc_dev, "%s invalid channel!\n",
 		    __func__);
 		return;
 	}
@@ -4788,7 +4788,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			rf->rf_txpower_max -= 3;
 	}
 	if (rf->rf_txpower_max <= 0) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "invalid max txpower in sprom\n");
 		rf->rf_txpower_max = 74;
 	}
@@ -4807,7 +4807,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 		ant_gain = __SHIFTOUT(val, BWI_SPROM_ANT_GAIN_MASK_11BG);
 	if (ant_gain == 0xff) {
 		/* XXX why this always invalid? */
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "invalid antenna gain in sprom\n");
 		ant_gain = 2;
 	}
@@ -4834,7 +4834,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	if (sc->sc_bbp_id == BWI_BBPID_BCM4301 &&
 	    rf->rf_type != BWI_RF_T_BCM2050) {
 		rf->rf_idle_tssi0 = BWI_DEFAULT_IDLE_TSSI;
-		bcopy(bwi_txpower_map_11b, rf->rf_txpower_map0,
+		memcpy(rf->rf_txpower_map0, bwi_txpower_map_11b,
 		      sizeof(rf->rf_txpower_map0));
 		goto back;
 	}
@@ -4860,7 +4860,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			const int8_t *txpower_map;
 
 			if (phy->phy_mode == IEEE80211_MODE_11A) {
-				aprint_error_dev(&sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "no tssi2dbm table for 11a PHY\n");
 				return (ENXIO);
 			}
@@ -4880,7 +4880,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			}
 
 			rf->rf_idle_tssi0 = BWI_DEFAULT_IDLE_TSSI;
-			bcopy(txpower_map, rf->rf_txpower_map0,
+			memcpy(rf->rf_txpower_map0, txpower_map,
 			      sizeof(rf->rf_txpower_map0));
 			goto back;
 		}
@@ -4918,7 +4918,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 		error = bwi_rf_calc_txpower(&rf->rf_txpower_map0[i], i,
 					    pa_params);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "bwi_rf_calc_txpower failed\n");
 			break;
 		}
@@ -4927,7 +4927,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			if (i % 8 == 0) {
 				if (i != 0)
 					aprint_debug("\n");
-				aprint_debug_dev(&sc->sc_dev, "");
+				aprint_debug_dev(sc->sc_dev, "");
 			}
 			aprint_debug(" %d", rf->rf_txpower_map0[i]);
 		}
@@ -4963,7 +4963,7 @@ bwi_rf_lo_update_11g(struct bwi_mac *mac)
 	 * Save RF/PHY registers for later restoration
 	 */
 	orig_chan = rf->rf_curchan;
-	bzero(&regs, sizeof(regs));
+	memset(&regs, 0, sizeof(regs));
 
 	if (phy->phy_flags & BWI_PHY_F_LINKED) {
 		SAVE_PHY_REG(mac, &regs, 429);
@@ -5157,7 +5157,7 @@ _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 	uint8_t devi_ctrl = 0;
 	int idx, adj_rf7a = 0;
 
-	bzero(&lo_save, sizeof(lo_save));
+	memset(&lo_save, 0, sizeof(lo_save));
 	for (idx = 0; idx < RF_ATTEN_LISTSZ; ++idx) {
 		int init_rf_atten = rf_atten_init_list[idx];
 		int rf_atten = rf_atten_list[idx];
@@ -5168,15 +5168,15 @@ _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 
 			if ((ifp->if_flags & IFF_RUNNING) == 0) {
 				if (idx == 0) {
-					bzero(&lo_save, sizeof(lo_save));
+					memset(&lo_save, 0, sizeof(lo_save));
 				} else if (init_rf_atten < 0) {
 					lo = bwi_get_rf_lo(mac,
 					    rf_atten, 2 * bbp_atten);
-					bcopy(lo, &lo_save, sizeof(lo_save));
+					memcpy(&lo_save, lo, sizeof(lo_save));
 				} else {
 					lo = bwi_get_rf_lo(mac,
 					    init_rf_atten, 0);
-					bcopy(lo, &lo_save, sizeof(lo_save));
+					memcpy(&lo_save, lo, sizeof(lo_save));
 				}
 
 				devi_ctrl = 0;
@@ -5203,7 +5203,7 @@ _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 					rf_atten, 2 * bbp_atten);
 				if (!bwi_rf_lo_isused(mac, lo))
 					continue;
-				bcopy(lo, &lo_save, sizeof(lo_save));
+				memcpy(&lo_save, lo, sizeof(lo_save));
 
 				devi_ctrl = 3;
 				adj_rf7a = 0;
@@ -5260,7 +5260,7 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 	uint32_t devi_min;
 	int found, loop_count, adjust_state;
 
-	bcopy(src_lo, &lo_min, sizeof(lo_min));
+	memcpy(&lo_min, src_lo, sizeof(lo_min));
 	RF_LO_WRITE(mac, &lo_min);
 	devi_min = bwi_rf_lo_devi_measure(mac, devi_ctrl);
 
@@ -5290,7 +5290,7 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 			fin -= LO_ADJUST_MAX;
 		KASSERT(fin <= LO_ADJUST_MAX && fin >= LO_ADJUST_MIN);
 
-		bcopy(&lo_min, &lo_base, sizeof(lo_base));
+		memcpy(&lo_base, &lo_min, sizeof(lo_base));
 		for (;;) {
 			struct bwi_rf_lo lo;
 
@@ -5308,7 +5308,7 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 					devi_min = devi;
 					adjust_state = i;
 					found = 1;
-					bcopy(&lo, &lo_min, sizeof(lo_min));
+					memcpy(&lo_min, &lo, sizeof(lo_min));
 				}
 			}
 			if (i == fin)
@@ -5320,7 +5320,7 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 		}
 	} while (loop_count-- && found);
 
-	bcopy(&lo_min, dst_lo, sizeof(*dst_lo));
+	memcpy(dst_lo, &lo_min, sizeof(*dst_lo));
 
 #undef LO_ADJUST_MIN
 #undef LO_ADJUST_MAX
@@ -5527,7 +5527,7 @@ bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 		PHY_FILT_SETBITS(mac, 0x3, 0xff9f, 0x40);
 		RF_SETBITS(mac, 0x7a, 0xf);
 
-		bzero(&gains, sizeof(gains));
+		memset(&gains, 0, sizeof(gains));
 		gains.tbl_gain1 = 3;
 		gains.tbl_gain2 = 0;
 		gains.phy_gain = 1;
@@ -5662,7 +5662,7 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 	 */
 	RF_SETBITS(mac, 0x7a, 0x70);
 
-	bzero(&gains, sizeof(gains));
+	memset(&gains, 0, sizeof(gains));
 	gains.tbl_gain1 = 0;
 	gains.tbl_gain2 = 8;
 	gains.phy_gain = 0;
@@ -5693,7 +5693,7 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 		PHY_FILT_SETBITS(mac, 0x811, 0xffcf, 0x20);
 	}
 
-	bzero(&gains, sizeof(gains));
+	memset(&gains, 0, sizeof(gains));
 	gains.tbl_gain1 = 3;
 	gains.tbl_gain2 = 0;
 	gains.phy_gain = 1;
@@ -5936,8 +5936,8 @@ bwi_rf_clear_state(struct bwi_rf *rf)
 	int i;
 
 	rf->rf_flags &= ~BWI_RF_CLEAR_FLAGS;
-	bzero(rf->rf_lo, sizeof(rf->rf_lo));
-	bzero(rf->rf_lo_used, sizeof(rf->rf_lo_used));
+	memset(rf->rf_lo, 0, sizeof(rf->rf_lo));
+	memset(rf->rf_lo_used, 0, sizeof(rf->rf_lo_used));
 
 	rf->rf_nrssi_slope = 0;
 	rf->rf_nrssi[0] = BWI_INVALID_NRSSI;
@@ -5949,7 +5949,7 @@ bwi_rf_clear_state(struct bwi_rf *rf)
 	rf->rf_lo_gain = 0;
 	rf->rf_rx_gain = 0;
 
-	bcopy(rf->rf_txpower_map0, rf->rf_txpower_map,
+	memcpy(rf->rf_txpower_map, rf->rf_txpower_map0,
 	      sizeof(rf->rf_txpower_map));
 	rf->rf_idle_tssi = rf->rf_idle_tssi0;
 }
@@ -6265,7 +6265,7 @@ bwi_rf_lo_update_11b(struct bwi_mac *mac)
 
 	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_INIT, "%s enter\n", __func__);
 
-	bzero(&regs, sizeof(regs));
+	memset(&regs, 0, sizeof(regs));
 	bphy_ctrl = 0;
 
 	/*
@@ -6490,7 +6490,7 @@ bwi_regwin_switch(struct bwi_softc *sc, struct bwi_regwin *rw,
 	if (sc->sc_cur_regwin != rw) {
 		error = bwi_regwin_select(sc, rw->rw_id);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't select regwin %d\n", rw->rw_id);
 			return (error);
 		}
@@ -6763,7 +6763,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	 */
 	error = bwi_regwin_select(sc, 0);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't select regwin 0\n");
+		aprint_error_dev(sc->sc_dev, "can't select regwin 0\n");
 		return (error);
 	}
 	bwi_regwin_info(sc, &rw_type, &rw_rev);
@@ -6792,7 +6792,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 			}
 		}
 		if (bbp_id == 0) {
-			aprint_error_dev(&sc->sc_dev, "no BBP id for device id"
+			aprint_error_dev(sc->sc_dev, "no BBP id for device id"
 			    " 0x%04x\n", did);
 			return (ENXIO);
 		}
@@ -6815,7 +6815,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 			}
 		}
 		if (nregwin == 0) {
-			aprint_error_dev(&sc->sc_dev, "no number of win for"
+			aprint_error_dev(sc->sc_dev, "no number of win for"
 			    " BBP id 0x%04x\n", bbp_id);
 			return (ENXIO);
 		}
@@ -6825,7 +6825,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	sc->sc_bbp_id = bbp_id;
 	sc->sc_bbp_rev = __SHIFTOUT(info, BWI_INFO_BBPREV_MASK);
 	sc->sc_bbp_pkg = __SHIFTOUT(info, BWI_INFO_BBPPKG_MASK);
-	aprint_normal_dev(&sc->sc_dev,
+	aprint_normal_dev(sc->sc_dev,
 	    "BBP id 0x%04x, BBP rev 0x%x, BBP pkg %d\n",
 	    sc->sc_bbp_id, sc->sc_bbp_rev, sc->sc_bbp_pkg);
 	DPRINTF(sc, BWI_DBG_ATTACH, "nregwin %d, cap 0x%08x\n",
@@ -6844,7 +6844,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		 */
 		error = bwi_regwin_select(sc, i);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev, "can't select regwin"
+			aprint_error_dev(sc->sc_dev, "can't select regwin"
 			    " %d\n", i);
 			return (error);
 		}
@@ -6859,7 +6859,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		if (rw_type == BWI_REGWIN_T_BUSPCI ||
 		    rw_type == BWI_REGWIN_T_BUSPCIE) {
 			if (BWI_REGWIN_EXIST(&sc->sc_bus_regwin)) {
-				aprint_error_dev(&sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "bus regwin already exists\n");
 			} else {
 				BWI_CREATE_REGWIN(&sc->sc_bus_regwin, i,
@@ -6873,14 +6873,14 @@ bwi_bbp_attach(struct bwi_softc *sc)
 
 	/* At least one MAC shold exist */
 	if (!BWI_REGWIN_EXIST(&sc->sc_mac[0].mac_regwin)) {
-		aprint_error_dev(&sc->sc_dev, "no MAC was found\n");
+		aprint_error_dev(sc->sc_dev, "no MAC was found\n");
 		return (ENXIO);
 	}
 	KASSERT(sc->sc_nmac > 0);
 
 	/* Bus regwin must exist */
 	if (!BWI_REGWIN_EXIST(&sc->sc_bus_regwin)) {
-		aprint_error_dev(&sc->sc_dev, "no bus regwin was found\n");
+		aprint_error_dev(sc->sc_dev, "no bus regwin was found\n");
 		return (ENXIO);
 	}
 
@@ -7027,7 +7027,7 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 	uint div;
 	int src;
 
-	bzero(freq, sizeof(*freq));
+	memset(freq, 0, sizeof(*freq));
 	com = &sc->sc_com_regwin;
 
 	KASSERT(BWI_REGWIN_EXIST(com));
@@ -7239,7 +7239,7 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 			CSR_READ_4(sc, BWI_TXSTATUS_1);
 		}
 		if (i == NRETRY)
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't drain TX status\n");
 #undef NRETRY
 	}
@@ -7286,13 +7286,15 @@ bwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error = 0;
 
 	/* [TRC: XXX Superstitiously cargo-culted from wi(4).] */
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (ENXIO);
 
 	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING)) {
 			struct bwi_mac *mac;
@@ -7519,12 +7521,12 @@ bwi_watchdog(struct ifnet *ifp)
 	ifp->if_timer = 0;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    !device_is_active(&sc->sc_dev))
+	    !device_is_active(sc->sc_dev))
 		return;
 
 	if (sc->sc_tx_timer) {
 		if (--sc->sc_tx_timer == 0) {
-			aprint_error_dev(&sc->sc_dev, "device timeout\n");
+			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			ifp->if_oerrors++;
 			/* TODO */
 			/* [TRC: XXX TODO what?  Stop the device?
@@ -7621,7 +7623,7 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	/* [TRC: XXX What channel do we set this to? */
 	error = bwi_set_chan(sc, ic->ic_curchan);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't set channel to %u\n",
+		aprint_error_dev(sc->sc_dev, "can't set channel to %u\n",
 		    ieee80211_chan2ieee(ic, ic->ic_curchan));
 		return (error);
 	}
@@ -7819,14 +7821,14 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		    tx_ring_sz, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_tx_rdata[i].rdata_dmap);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "%dth TX ring DMA create failed\n", i);
 			return (error);
 		}
 		error = bwi_dma_ring_alloc(sc,
 		    &sc->sc_tx_rdata[i], tx_ring_sz, TXRX_CTRL(i));
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "%dth TX ring DMA alloc failed\n", i);
 			return (error);
 		}
@@ -7839,21 +7841,21 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	    rx_ring_sz, 0, BUS_DMA_NOWAIT,
 	    &sc->sc_rx_rdata.rdata_dmap);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "RX ring DMA create failed\n");
+		aprint_error_dev(sc->sc_dev, "RX ring DMA create failed\n");
 		return (error);
 	}
 
 	error = bwi_dma_ring_alloc(sc, &sc->sc_rx_rdata,
 	    rx_ring_sz, TXRX_CTRL(0));
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "RX ring DMA alloc failed\n");
+		aprint_error_dev(sc->sc_dev, "RX ring DMA alloc failed\n");
 		return (error);
 	}
 
 	if (has_txstats) {
 		error = bwi_dma_txstats_alloc(sc, TXRX_CTRL(3), desc_sz);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "TX stats DMA alloc failed\n");
 			return (error);
 		}
@@ -7894,21 +7896,21 @@ bwi_dma_ring_alloc(struct bwi_softc *sc,
 	error = bus_dmamem_alloc(sc->sc_dmat, size, BWI_ALIGN, 0,
 	    &rd->rdata_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't allocate DMA mem\n");
+		aprint_error_dev(sc->sc_dev, "can't allocate DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &rd->rdata_seg, nsegs,
 	    size, (void **)&rd->rdata_desc, BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't map DMA mem\n");
+		aprint_error_dev(sc->sc_dev, "can't map DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, rd->rdata_dmap, rd->rdata_desc,
 	    size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't load DMA mem\n");
+		aprint_error_dev(sc->sc_dev, "can't load DMA mem\n");
 		bus_dmamem_free(sc->sc_dmat, &rd->rdata_seg, nsegs);
 		rd->rdata_desc = NULL;
 		return (error);
@@ -7939,7 +7941,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
 	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "can't create txstats ring DMA mem\n");
 		return (error);
 	}
@@ -7952,7 +7954,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
 	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "can't create txstats ring DMA mem\n");
 		return (error);
 	}
@@ -7960,7 +7962,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_RING_ALIGN, 0,
 	     &st->stats_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "can't allocate txstats ring DMA mem\n");
 		return (error);
 	}
@@ -7968,7 +7970,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamem_map(sc->sc_dmat, &st->stats_ring_seg, nsegs,
 	    dma_size, (void **)&st->stats_ring, BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "can't map txstats ring DMA mem\n");
 		return (error);
 	}
@@ -7976,13 +7978,13 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_load(sc->sc_dmat, st->stats_ring_dmap,
 	    st->stats_ring, dma_size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "can't load txstats ring DMA mem\n");
 		bus_dmamem_free(sc->sc_dmat, &st->stats_ring_seg, nsegs);
 		return (error);
 	}
 
-	bzero(st->stats_ring, dma_size);
+	memset(st->stats_ring, 0, dma_size);
 	st->stats_ring_paddr = st->stats_ring_dmap->dm_segs[0].ds_addr;
 
 	/*
@@ -7994,7 +7996,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
 	    BUS_DMA_NOWAIT, &st->stats_dmap);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "can't create txstats ring DMA mem\n");
 		return (error);
 	}
@@ -8002,7 +8004,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_ALIGN, 0,
 	    &st->stats_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "can't allocate txstats DMA mem\n");
 		return (error);
 	}
@@ -8010,19 +8012,19 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamem_map(sc->sc_dmat, &st->stats_seg, nsegs,
 	    dma_size, (void **)&st->stats, BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't map txstats DMA mem\n");
+		aprint_error_dev(sc->sc_dev, "can't map txstats DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, st->stats_dmap, st->stats,
 	    dma_size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't load txstats DMA mem\n");
+		aprint_error_dev(sc->sc_dev, "can't load txstats DMA mem\n");
 		bus_dmamem_free(sc->sc_dmat, &st->stats_seg, nsegs);
 		return (error);
 	}
 
-	bzero(st->stats, dma_size);
+	memset(st->stats, 0, dma_size);
 	st->stats_paddr = st->stats_dmap->dm_segs[0].ds_addr;
 	st->stats_ctrl_base = ctrl_base;
 
@@ -8065,7 +8067,7 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 			error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 			    0, BUS_DMA_NOWAIT, &tbd->tbd_buf[j].tb_dmap);
 			if (error) {
-				aprint_error_dev(&sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "can't create %dth tbd, %dth DMA map\n",
 				    i, j);
 				ntx = i;
@@ -8085,7 +8087,7 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 	    BUS_DMA_NOWAIT, &rbd->rbd_tmp_dmap);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "can't create spare RX buf DMA map\n");
 		goto fail;
 	}
@@ -8094,7 +8096,7 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 		    BUS_DMA_NOWAIT, &rbd->rbd_buf[j].rb_dmap);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't create %dth RX buf DMA map\n", j);
 
 			for (k = 0; k < j; ++k) {
@@ -8179,7 +8181,7 @@ bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	tbd->tbd_idx = 0;
 	tbd->tbd_used = 0;
 
-	bzero(rd->rdata_desc, sizeof(struct bwi_desc32) * BWI_TX_NDESC);
+	memset(rd->rdata_desc, 0, sizeof(struct bwi_desc32) * BWI_TX_NDESC);
 	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
 	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
@@ -8232,7 +8234,7 @@ bwi_init_rx_ring32(struct bwi_softc *sc)
 	for (i = 0; i < BWI_RX_NDESC; ++i) {
 		error = bwi_newbuf(sc, i, 1);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't allocate %dth RX buffer\n", i);
 			return (error);
 		}
@@ -8252,7 +8254,7 @@ bwi_init_txstats32(struct bwi_softc *sc)
 	bus_addr_t stats_paddr;
 	int i;
 
-	bzero(st->stats, BWI_TXSTATS_NDESC * sizeof(struct bwi_txstats));
+	memset(st->stats, 0, BWI_TXSTATS_NDESC * sizeof(struct bwi_txstats));
 	bus_dmamap_sync(sc->sc_dmat, st->stats_dmap, 0,
 	    st->stats_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
@@ -8394,7 +8396,7 @@ back:
 	 * Clear RX buf header
 	 */
 	hdr = mtod(rxbuf->rb_mbuf, struct bwi_rxbuf_hdr *);
-	bzero(hdr, sizeof(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 	bus_dmamap_sync(sc->sc_dmat, rxbuf->rb_dmap, 0,
 	    rxbuf->rb_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
@@ -8500,7 +8502,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 
 		buflen = le16toh(hdr->rxh_buflen);
 		if (buflen < BWI_FRAME_MIN_LEN(wh_ofs)) {
-			aprint_error_dev(&sc->sc_dev, "short frame %d,"
+			aprint_error_dev(sc->sc_dev, "short frame %d,"
 			    " hdr_extra %d\n", buflen, hdr_extra);
 			ifp->if_ierrors++;
 			m_freem(m);
@@ -8617,7 +8619,7 @@ bwi_reset_rx_ring32(struct bwi_softc *sc, uint32_t rx_ctrl)
 		DELAY(1000);
 	}
 	if (i == NRETRY)
-		aprint_error_dev(&sc->sc_dev, "reset rx ring timedout\n");
+		aprint_error_dev(sc->sc_dev, "reset rx ring timedout\n");
 #undef NRETRY
 
 	CSR_WRITE_4(sc, rx_ctrl + BWI_RX32_RINGINFO, 0);
@@ -8673,7 +8675,7 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 		DELAY(1000);
 	}
 	if (i == NRETRY)
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "wait for TX ring(%d) stable timed out\n", ring_idx);
 
 	CSR_WRITE_4(sc, rd->rdata_txrx_ctrl + BWI_TX32_CTRL, 0);
@@ -8686,7 +8688,7 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 		DELAY(1000);
 	}
 	if (i == NRETRY)
-		aprint_error_dev(&sc->sc_dev, "reset TX ring (%d) timed out\n",
+		aprint_error_dev(sc->sc_dev, "reset TX ring (%d) timed out\n",
 		    ring_idx);
 #undef NRETRY
 
@@ -9062,7 +9064,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	/*
 	 * Find TX rate
 	 */
-	bzero(tb->tb_rate_idx, sizeof(tb->tb_rate_idx));
+	memset(tb->tb_rate_idx, 0, sizeof(tb->tb_rate_idx));
 	if (!mgt_pkt) {
 		if (ic->ic_fixed_rate != -1) {
 			rate = ic->ic_sup_rates[ic->ic_curmode].
@@ -9091,7 +9093,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 
 	/* [TRC: XXX Check fallback rate.] */
 	if (rate == 0) {
-		aprint_error_dev(&sc->sc_dev, "invalid rate %u", rate);
+		aprint_error_dev(sc->sc_dev, "invalid rate %u", rate);
 		/* [TRC: In the margin of the following line,
 		   DragonFlyBSD writes `Force 1Mbits/s', whereas
 		   OpenBSD writes `Force 1Mbytes/s'.] */
@@ -9128,15 +9130,15 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	 */
 	M_PREPEND(m, sizeof(*hdr), M_DONTWAIT);
 	if (m == NULL) {
-		aprint_error_dev(&sc->sc_dev, "prepend TX header failed\n");
+		aprint_error_dev(sc->sc_dev, "prepend TX header failed\n");
 		return (ENOBUFS);
 	}
 	hdr = mtod(m, struct bwi_txbuf_hdr *);
 
-	bzero(hdr, sizeof(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 
-	bcopy(wh->i_fc, hdr->txh_fc, sizeof(hdr->txh_fc));
-	bcopy(wh->i_addr1, hdr->txh_addr1, sizeof(hdr->txh_addr1));
+	memcpy(hdr->txh_fc, wh->i_fc, sizeof(hdr->txh_fc));
+	memcpy(hdr->txh_addr1, wh->i_addr1, sizeof(hdr->txh_addr1));
 
 	if (!mcast_pkt) {
 		uint16_t dur;
@@ -9182,7 +9184,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 	    BUS_DMA_NOWAIT);
 	if (error && error != EFBIG) {
-		aprint_error_dev(&sc->sc_dev, "can't load TX buffer (1) %d\n",
+		aprint_error_dev(sc->sc_dev, "can't load TX buffer (1) %d\n",
 		    error);
 		goto back;
 	}
@@ -9196,7 +9198,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		if (m_new == NULL) {
 			m_freem(m);
 			error = ENOBUFS;
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't defrag TX buffer (1)\n");
 			goto back;
 		}
@@ -9212,7 +9214,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		}
 		
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't defrag TX buffer (2)\n");
 			goto back;
 		}
@@ -9225,7 +9227,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 		    BUS_DMA_NOWAIT);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "can't load TX buffer (2) %d\n", error);
 			goto back;
 		}
@@ -9250,7 +9252,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		if (i % 8 == 0) {
 			if (i != 0)
 				aprint_debug("\n");
-			aprint_debug_dev(&sc->sc_dev, "");
+			aprint_debug_dev(sc->sc_dev, "");
 		}
 		aprint_debug(" %02x", p[i]);
 	}
@@ -9327,7 +9329,7 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 
 	if (tx_id == 0) {
 		/* [TRC: XXX What is the severity of this message?] */
-		aprint_normal_dev(&sc->sc_dev, "zero tx id\n");
+		aprint_normal_dev(sc->sc_dev, "zero tx id\n");
 		return;
 	}
 
@@ -9563,7 +9565,7 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		aprint_error_dev(&sc->sc_dev, "%s disable clock timeout\n",
+		aprint_error_dev(sc->sc_dev, "%s disable clock timeout\n",
 		    bwi_regwin_name(rw));
 	}
 
@@ -9576,7 +9578,7 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		aprint_error_dev(&sc->sc_dev, "%s wait BUSY unset timeout\n",
+		aprint_error_dev(sc->sc_dev, "%s wait BUSY unset timeout\n",
 		    bwi_regwin_name(rw));
 	}
 #undef NRETRY
@@ -9666,8 +9668,8 @@ bwi_set_bssid(struct bwi_softc *sc, const uint8_t *bssid)
 
 	bwi_set_addr_filter(sc, BWI_ADDR_FILTER_BSSID, bssid);
 
-	bcopy(ic->ic_myaddr, buf.myaddr, sizeof(buf.myaddr));
-	bcopy(bssid, buf.bssid, sizeof(buf.bssid));
+	memcpy(buf.myaddr, ic->ic_myaddr, sizeof(buf.myaddr));
+	memcpy(buf.bssid, bssid, sizeof(buf.bssid));
 
 	n = sizeof(buf) / sizeof(val);
 	p = (const uint8_t *)&buf;
@@ -9736,4 +9738,24 @@ bwi_calc_rssi(struct bwi_softc *sc, const struct bwi_rxbuf_hdr *hdr)
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
 	return (bwi_rf_calc_rssi(mac, hdr));
+}
+
+bool
+bwi_suspend(device_t dv PMF_FN_ARGS)
+{
+	struct bwi_softc *sc = device_private(dv);
+
+	bwi_power_off(sc, 0);
+
+	return true;
+}
+
+bool
+bwi_resume(device_t dv PMF_FN_ARGS)
+{
+	struct bwi_softc *sc = device_private(dv);
+
+	bwi_power_on(sc, 1);
+
+	return true;
 }

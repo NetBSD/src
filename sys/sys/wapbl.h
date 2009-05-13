@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.9 2008/11/24 16:05:21 joerg Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.9.4.1 2009/05/13 17:23:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 
 #if 0
 #define	WAPBL_DEBUG_BUFBYTES
-#define	WAPBL_DEBUG_SERIALIZE
 #endif
 
 #endif

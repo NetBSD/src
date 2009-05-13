@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.23 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.23.92.1 2009/05/13 17:18:37 jym Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
@@ -34,7 +34,7 @@ RELOC_BOOTXX=	300000
 CPPFLAGS+=	-D_STANDALONE -DSUN4 -DSUN4C -DSUN4M -DSUN4D -DHEAP_VARIABLE
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
-CFLAGS=		-O2
+CFLAGS=		-Os
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -ffreestanding
 
 ### find out what to use for libkern
@@ -55,13 +55,7 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/sparc/include machine)
-	@([ -h sparc ] || ln -s ${S}/arch/sparc/include sparc)
-.NOPATH: machine sparc
-.endif
-CLEANFILES+= machine sparc
+.include <bsd.klinks.mk>
 
 cleandir distclean: cleanlibdir
 

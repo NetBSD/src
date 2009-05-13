@@ -1,4 +1,4 @@
-/*	$NetBSD: attimervar.h,v 1.6 2008/04/29 06:53:02 martin Exp $	*/
+/*	$NetBSD: attimervar.h,v 1.6.14.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -39,4 +39,5 @@ struct attimer_softc {
 void		attimer_attach(struct attimer_softc *);
 int		attimer_detach(device_t, int);
 device_t	attimer_attach_speaker(void);
+void		attimer_detach_speaker(device_t);
 void		attimer_set_pitch(device_t, int);

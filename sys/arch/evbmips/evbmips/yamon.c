@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.c,v 1.11 2008/05/26 15:59:29 tsutsui Exp $	*/
+/*	$NetBSD: yamon.c,v 1.11.12.1 2009/05/13 17:16:40 jym Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 /* XXX move to arch/mips/yamon/yamon.c or similar? */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.11 2008/05/26 15:59:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.11.12.1 2009/05/13 17:16:40 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,8 +71,7 @@ struct consdev yamon_promcd = {
  * Get character from PROM console.
  */
 static int
-yamongetc(dev)
-	dev_t dev;
+yamongetc(dev_t dev)
 {
 	char chr;
 

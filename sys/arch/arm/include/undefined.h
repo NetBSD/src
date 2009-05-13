@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.11 2008/03/15 10:16:43 rearnsha Exp $	*/
+/*	$NetBSD: undefined.h,v 1.11.18.1 2009/05/13 17:16:17 jym Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -50,7 +50,7 @@
 
 #include <sys/queue.h>
 
-typedef int (*undef_handler_t) __P((unsigned int, unsigned int, trapframe_t *, int));
+typedef int (*undef_handler_t)(unsigned int, unsigned int, trapframe_t *, int);
 
 /*
  * Enumeration of coprocessor numbers.  Values may be duplicated
@@ -77,9 +77,9 @@ enum arm_coprocs {
 
 /* Prototypes for undefined.c */
 
-void *install_coproc_handler __P((int, undef_handler_t));
-void remove_coproc_handler __P((void *));
-void undefined_init __P((void));
+void *install_coproc_handler(int, undef_handler_t);
+void remove_coproc_handler(void *);
+void undefined_init(void);
 
 /*
  * XXX Stuff below here is for use before malloc() is available.  Most code
@@ -95,7 +95,7 @@ struct undefined_handler {
  * Handlers installed using install_coproc_handler_static shouldn't be
  * removed.
  */
-void install_coproc_handler_static __P((int, struct undefined_handler *));
+void install_coproc_handler_static(int, struct undefined_handler *);
 
 /* Calls up to undefined.c from trap handlers */
 void undefinedinstruction(struct trapframe *);

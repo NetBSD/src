@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.90 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.90.2.1 2009/05/13 17:22:20 jym Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.90 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.90.2.1 2009/05/13 17:22:20 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -475,8 +475,10 @@ stripopen(dev_t dev, struct tty *tp)
 	struct strip_softc *sc;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	error = kauth_authorize_network(l->l_cred,
+	    KAUTH_NETWORK_INTERFACE_STRIP,
+	    KAUTH_REQ_NETWORK_INTERFACE_STRIP_ADD, NULL, NULL, NULL);
+	if (error)
 		return (error);
 
 	if (tp->t_linesw == &strip_disc)
@@ -1628,7 +1630,7 @@ strip_newpacket(struct strip_softc *sc, u_char *ptr, u_char *end)
 	}
 
 	/* XXX redundant copy */
-	bcopy(sc->sc_rxbuf, sc->sc_pktstart, packetlen );
+	memcpy(sc->sc_pktstart, sc->sc_rxbuf, packetlen );
 	return (packetlen);
 }
 

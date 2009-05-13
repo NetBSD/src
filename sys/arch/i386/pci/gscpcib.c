@@ -1,4 +1,4 @@
-/*	$NetBSD: gscpcib.c,v 1.11 2008/05/05 11:49:40 xtraeme Exp $	*/
+/*	$NetBSD: gscpcib.c,v 1.11.14.1 2009/05/13 17:17:50 jym Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.11 2008/05/05 11:49:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.11.14.1 2009/05/13 17:17:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ gscpcib_childdetached(device_t self, device_t child)
 }
 
 int
-gscpcib_match(device_t parent, struct cfdata *match, void *aux)
+gscpcib_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

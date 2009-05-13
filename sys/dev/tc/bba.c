@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.34 2008/04/28 20:23:58 martin Exp $ */
+/* $NetBSD: bba.c,v 1.34.14.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.34 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.34.14.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,8 @@ struct bba_softc {
 	struct bba_dma_state sc_rx_dma_state;
 };
 
-static int	bba_match(struct device *, struct cfdata *, void *);
-static void	bba_attach(struct device *, struct device *, void *);
+static int	bba_match(device_t, cfdata_t, void *);
+static void	bba_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(bba, sizeof(struct bba_softc),
     bba_match, bba_attach, NULL, NULL);
@@ -190,7 +190,7 @@ static void	bba_codec_dwrite(struct am7930_softc *, int, u_int8_t);
 static uint8_t	bba_codec_dread(struct am7930_softc *, int);
 
 static int
-bba_match(struct device *parent, struct cfdata *cf, void *aux)
+bba_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ioasicdev_attach_args *ia;
 
@@ -204,7 +204,7 @@ bba_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-bba_attach(struct device *parent, struct device *self, void *aux)
+bba_attach(device_t parent, device_t self, void *aux)
 {
 	struct ioasicdev_attach_args *ia;
 	struct bba_softc *sc;

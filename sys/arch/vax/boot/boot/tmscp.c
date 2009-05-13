@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.6 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: tmscp.c,v 1.6.92.1 2009/05/13 17:18:40 jym Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -77,9 +77,7 @@ static struct ra_softc ra_softc;
 static int curblock;
 
 
-tmscpopen(f, adapt, ctlr, unit, part)
-	struct open_file *f;
-        int ctlr, unit, part;
+tmscpopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	char *msg;
 	extern u_int tmsaddr;
@@ -156,12 +154,7 @@ command(cmd, arg)
 
 }
 
-tmscpstrategy(ra, func, dblk, size, buf, rsize)
-	struct ra_softc *ra;
-	int func;
-	daddr_t	dblk;
-	char *buf;
-	u_int size, *rsize;
+tmscpstrategy(struct ra_softc *ra, int func, daddr_t dblk, u_int size, char *buf, u_int *rsize)
 {
 	u_int i,j,pfnum, mapnr, nsize, bn, cn, sn, tn;
 	volatile struct udadevice *udadev=(void*)ra->udaddr;

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.rump,v 1.32 2009/01/23 19:14:30 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.32.2.1 2009/05/13 17:22:56 jym Exp $
 #
 
-WARNS?=		4
+WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
 NOLINT=		# kernel code
 
 .include <bsd.own.mk>
@@ -17,6 +17,7 @@ CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
 CPPFLAGS+=	-DMAXUSERS=32
 CPPFLAGS+=	-DDIAGNOSTIC
 CPPFLAGS+=	-DCOMPAT_50
+CPPFLAGS+=	-DDEBUGPRINT
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include -I${RUMPTOP}/../arch
 CPPFLAGS+=	-I${RUMPTOP}/include
@@ -56,11 +57,12 @@ _SYMQUIRK='|\$$\$$'
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 	${NM} -go ${.TARGET} | ${TOOL_AWK} '	\
 	    $$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
 	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
 	    | sort | uniq  > renametab.${.TARGET}
-	${OBJCOPY} --redefine-syms renametab.${.TARGET} ${.TARGET}
+	${OBJCOPY} --preserve-dates --redefine-syms \
+	    renametab.${.TARGET} ${.TARGET}
 	rm -f renametab.${.TARGET}
-	${RANLIB} ${.TARGET}
+	${AR} ${_ARRANFL} ${.TARGET}

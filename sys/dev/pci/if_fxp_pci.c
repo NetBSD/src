@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.61 2009/01/18 10:37:04 mrg Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.61.2.1 2009/05/13 17:20:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.61 2009/01/18 10:37:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.61.2.1 2009/05/13 17:20:25 jym Exp $");
 
 #include "rnd.h"
 
@@ -98,7 +98,7 @@ CFATTACH_DECL_NEW(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, NULL, NULL);
 
 static const struct fxp_pci_product {
-	u_int32_t	fpp_prodid;	/* PCI product ID */
+	uint32_t	fpp_prodid;	/* PCI product ID */
 	const char	*fpp_name;	/* device name */
 } fxp_pci_products[] = {
 	{ PCI_PRODUCT_INTEL_82557,
@@ -252,6 +252,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const struct fxp_pci_product *fpp;
+	const char *chipname = NULL;
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -328,10 +329,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 
 	switch (fpp->fpp_prodid) {
 	case PCI_PRODUCT_INTEL_82557:
-	case PCI_PRODUCT_INTEL_82559ER:
 	case PCI_PRODUCT_INTEL_IN_BUSINESS:
-	    {
-		const char *chipname = NULL;
 
 		if (sc->sc_rev >= FXP_REV_82558_A4) {
 			chipname = "i82558 Ethernet";
@@ -342,14 +340,19 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 			if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
 				sc->sc_flags |= FXPF_MWI;
 		}
-		if (sc->sc_rev >= FXP_REV_82559_A0)
+		if (sc->sc_rev >= FXP_REV_82559_A0) {
 			chipname = "i82559 Ethernet";
+			sc->sc_flags |= FXPF_82559_RXCSUM;
+		}
 		if (sc->sc_rev >= FXP_REV_82559S_A)
 			chipname = "i82559S Ethernet";
 		if (sc->sc_rev >= FXP_REV_82550) {
 			chipname = "i82550 Ethernet";
-			sc->sc_flags |= FXPF_EXT_RFA|FXPF_IPCB;
+			sc->sc_flags &= ~FXPF_82559_RXCSUM;
+			sc->sc_flags |= FXPF_EXT_RFA;
 		}
+		if (sc->sc_rev >= FXP_REV_82551)
+			chipname = "i82551 Ethernet";
 
 		/*
 		 * Mark all i82559 and i82550 revisions as having
@@ -361,7 +364,28 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
 		    fpp->fpp_name, sc->sc_rev);
 		break;
-	    }
+
+	case PCI_PRODUCT_INTEL_82559ER:
+		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
+
+		/*
+		 * i82559ER/82551ER don't support RX hardware checksumming
+		 * even though it has a newer revision number than 82559_A0.
+		 */
+
+		/* All i82559 have the "resume bug". */
+		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+
+		/* Enable the MWI command for memory writes. */
+		if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+			sc->sc_flags |= FXPF_MWI;
+
+		if (sc->sc_rev >= FXP_REV_82551)
+			chipname = "Intel i82551ER Ethernet";
+
+		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
+		    fpp->fpp_name, sc->sc_rev);
+		break;
 
 	case PCI_PRODUCT_INTEL_82801BA_LAN:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
@@ -372,17 +396,19 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_1:
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
-		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 		/*
 		 * The ICH-2 and ICH-3 have the "resume bug".
 		 */
 		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
-		break;
+		/* FALLTHROUGH */
 
 	default:
 		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
-		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB|FXPF_EXT_RFA|FXPF_IPCB;
+		if (sc->sc_rev >= FXP_REV_82558_A4)
+			sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
+		if (sc->sc_rev >= FXP_REV_82559_A0)
+			sc->sc_flags |= FXPF_82559_RXCSUM;
+
 		break;
 	}
 

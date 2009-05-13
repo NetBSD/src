@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.7 2007/11/28 20:16:12 plunky Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.7.32.1 2009/05/13 17:22:27 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.7 2007/11/28 20:16:12 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.7.32.1 2009/05/13 17:22:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -222,8 +222,9 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		break;
 
 	case SIOCSBTFLAGS:	/* set unit flags (privileged) */
-		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		err = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
+		    btr, NULL);
 		if (err)
 			break;
 
@@ -248,8 +249,9 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		break;
 
 	case SIOCSBTPOLICY:	/* set unit link policy (privileged) */
-		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		err = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
+		    btr, NULL);
 		if (err)
 			break;
 
@@ -259,8 +261,9 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		break;
 
 	case SIOCSBTPTYPE:	/* set unit packet types (privileged) */
-		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		err = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
+		    btr, NULL);
 		if (err)
 			break;
 
@@ -274,8 +277,9 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		break;
 
 	case SIOCZBTSTATS:	/* get & reset unit statistics */
-		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		err = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
+		    btr, NULL);
 		if (err)
 			break;
 
@@ -289,8 +293,9 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		 * sent to USB bluetooth controllers that are not an
 		 * integer number of frame sizes, the USB bus locks up.
 		 */
-		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		err = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
+		    btr, NULL);
 		if (err)
 			break;
 

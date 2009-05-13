@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.144 2009/01/14 02:20:45 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.144.2.1 2009/05/13 17:23:10 jym Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.144 2009/01/14 02:20:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.144.2.1 2009/05/13 17:23:10 jym Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -279,11 +279,11 @@ uvm_swap_init(void)
 	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	if (bdevvp(swapdev, &swapdev_vp))
-		panic("uvm_swap_init: can't get vnode for swap device");
+		panic("%s: can't get vnode for swap device", __func__);
 	if (vn_lock(swapdev_vp, LK_EXCLUSIVE | LK_RETRY))
-		panic("uvm_swap_init: can't lock swap device");
+		panic("%s: can't lock swap device", __func__);
 	if (VOP_OPEN(swapdev_vp, FREAD | FWRITE, NOCRED))
-		panic("uvm_swap_init: can't open swap device");
+		panic("%s: can't open swap device", __func__);
 	VOP_UNLOCK(swapdev_vp, 0);
 
 	/*
@@ -295,7 +295,7 @@ uvm_swap_init(void)
 	swapmap = vmem_create("swapmap", 1, INT_MAX - 1, 1, NULL, NULL, NULL, 0,
 	    VM_NOSLEEP, IPL_NONE);
 	if (swapmap == 0)
-		panic("uvm_swap_init: extent_create failed");
+		panic("%s: vmem_create failed", __func__);
 
 	/*
 	 * done!
@@ -1014,7 +1014,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 			KASSERT(sw_reg_workqueue == NULL);
 			if (workqueue_create(&sw_reg_workqueue, "swapiod",
 			    sw_reg_iodone, NULL, PRIBIO, IPL_BIO, 0) != 0)
-				panic("swap_add: workqueue_create failed");
+				panic("%s: workqueue_create failed", __func__);
 		}
 	}
 
@@ -1115,7 +1115,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	uvmexp.swpginuse -= sdp->swd_npgbad;
 
 	if (swaplist_find(sdp->swd_vp, true) == NULL)
-		panic("swap_off: swapdev not in list");
+		panic("%s: swapdev not in list", __func__);
 	swaplist_trim();
 	mutex_exit(&uvm_swap_data_lock);
 
@@ -1182,7 +1182,7 @@ swstrategy(struct buf *bp)
 	vp = sdp->swd_vp;		/* swapdev vnode pointer */
 	switch (vp->v_type) {
 	default:
-		panic("swstrategy: vnode type 0x%x", vp->v_type);
+		panic("%s: vnode type 0x%x", __func__, vp->v_type);
 
 	case VBLK:
 
@@ -1315,7 +1315,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 			 * this condition doesn't destabilize the system.
 			 */
 #if 1
-			panic("sw_reg_strategy: swap to sparse file");
+			panic("%s: swap to sparse file", __func__);
 #else
 			error = EIO;	/* failure */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.51 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: disk.h,v 1.51.14.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -502,6 +502,7 @@ void	disk_init(struct disk *, const char *, const struct dkdriver *);
 void	disk_destroy(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
+bool	disk_isbusy(struct disk *);
 void	disk_blocksize(struct disk *, int);
 struct disk *disk_find(const char *);
 int	disk_ioctl(struct disk *, u_long, void *, int, struct lwp *);

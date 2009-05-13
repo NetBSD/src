@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.40 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.40.92.1 2009/05/13 17:17:47 jym Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.40 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.40.92.1 2009/05/13 17:17:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ vrgiu_dump_iosetting(struct vrgiu_softc *sc)
 }
 
 void
-vrgiu_diff_iosetting()
+vrgiu_diff_iosetting(void)
 {
 	struct vrgiu_softc *sc = this_giu;
 	static long oiosel = 0, ointen = 0, ouseupdn = 0, otermupdn = 0;
@@ -371,7 +371,7 @@ vrgiu_dump_io(struct vrgiu_softc *sc)
 }
 
 void
-vrgiu_diff_io()
+vrgiu_diff_io(void)
 {
 	struct vrgiu_softc *sc  = this_giu;
 	static u_int32_t opreg[2] = {0, 0};

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.29 2008/06/01 16:43:53 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.29.12.1 2009/05/13 17:20:29 jym Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.29 2008/06/01 16:43:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.29.12.1 2009/05/13 17:20:29 jym Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.29 2008/06/01 16:43:53 macallan Exp $
 #include <dev/pci/radeonfbvar.h>
 #include "opt_radeonfb.h"
 
-static int radeonfb_match(struct device *, struct cfdata *, void *);
-static void radeonfb_attach(struct device *, struct device *, void *);
+static int radeonfb_match(device_t, cfdata_t, void *);
+static void radeonfb_attach(device_t, device_t, void *);
 static int radeonfb_ioctl(void *, void *, unsigned long, void *, int,
     struct lwp *);
 static paddr_t radeonfb_mmap(void *, void *, off_t, int);
@@ -407,7 +407,7 @@ CFATTACH_DECL(radeonfb, sizeof (struct radeonfb_softc),
     radeonfb_match, radeonfb_attach, NULL, NULL);
 
 static int
-radeonfb_match(struct device *parent, struct cfdata *match, void *aux)
+radeonfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args	*pa = aux;
 	int			i;
@@ -424,9 +424,9 @@ radeonfb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-radeonfb_attach(struct device *parent, struct device *dev, void *aux)
+radeonfb_attach(device_t parent, device_t dev, void *aux)
 {
-	struct radeonfb_softc	*sc = (struct radeonfb_softc *)dev;
+	struct radeonfb_softc	*sc = device_private(dev);
 	struct pci_attach_args	*pa = aux;
 	const char		*mptr;
 	bus_size_t		bsz;
@@ -1061,9 +1061,6 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data	*vd;
 	struct radeonfb_display	*dp;
 	struct radeonfb_softc	*sc;
-#ifdef RADEONFB_MMAP_BARS
-	struct lwp *me;
-#endif
 	paddr_t			pa;
 
 	vd = (struct vcons_data *)v;
@@ -1085,13 +1082,10 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	me = curlwp;
-	if (me != NULL) {
-		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
-			return -1;
-		}
+	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) != 0) {
+		aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
+		return -1;
 	}
 
 	if ((offset >= sc->sc_regaddr) && 

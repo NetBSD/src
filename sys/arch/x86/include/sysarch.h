@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.7 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.7.14.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -174,7 +174,6 @@ struct mtrr;
 int x86_iopl(struct lwp *, void *, register_t *);
 int x86_get_mtrr(struct lwp *, void *, register_t *);
 int x86_set_mtrr(struct lwp *, void *, register_t *);
-int x86_get_ldt_len(struct lwp *l);
 int x86_get_ldt(struct lwp *l, void *, register_t *);
 int x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *, union descriptor *);
 int x86_set_ldt(struct lwp *l, void *, register_t *);

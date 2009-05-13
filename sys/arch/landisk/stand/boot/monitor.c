@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.2 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: monitor.c,v 1.2.14.1 2009/05/13 17:17:58 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -106,8 +106,7 @@ db_monitor(void)
 }
 
 static int
-db_atob(p)
-	char *p;
+db_atob(char *p)
 {
 	int b = 0, width, tmp, exp, x = 0;
 	
@@ -133,9 +132,7 @@ db_atob(p)
 }
 
 static void
-db_cmd_dump(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_dump(int argc, char **argv)
 {
 	char *p, *r, *pp;
 	int mode, add, size, i;
@@ -211,9 +208,7 @@ out:
 }
 
 static void
-db_cmd_get(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_get(int argc, char **argv)
 {
 	char *p, *r;
 	int mode, add;
@@ -271,9 +266,7 @@ out:
 }
 
 static void
-db_cmd_put(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_put(int argc, char **argv)
 {
 	char *p, *r, *pp;
 	int mode, add, data;
@@ -330,9 +323,7 @@ out:
 }
 
 static void
-db_cmd_help(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_help(int argc, char **argv)
 {
 	int i = 0;
 

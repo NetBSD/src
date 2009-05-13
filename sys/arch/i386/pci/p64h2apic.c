@@ -1,4 +1,4 @@
-/* $NetBSD: p64h2apic.c,v 1.14 2008/07/09 20:45:33 joerg Exp $ */
+/* $NetBSD: p64h2apic.c,v 1.14.8.1 2009/05/13 17:17:50 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.14 2008/07/09 20:45:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.14.8.1 2009/05/13 17:17:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.14 2008/07/09 20:45:33 joerg Exp $")
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-static int	p64h2match(struct device *, struct cfdata *, void *);
-static void	p64h2attach(struct device *, struct device *, void *);
+static int	p64h2match(device_t, cfdata_t, void *);
+static void	p64h2attach(device_t, device_t, void *);
 
 struct p64h2apic_softc {
 	pcitag_t sc_tag;

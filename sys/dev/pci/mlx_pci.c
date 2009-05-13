@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.19 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.19.14.1 2009/05/13 17:20:27 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.19 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.19.14.1 2009/05/13 17:20:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.19 2008/04/28 20:23:55 martin Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-static void	mlx_pci_attach(struct device *, struct device *, void *);
-static int	mlx_pci_match(struct device *, struct cfdata *, void *);
+static void	mlx_pci_attach(device_t, device_t, void *);
+static int	mlx_pci_match(device_t, cfdata_t, void *);
 static const struct mlx_pci_ident *mlx_pci_findmpi(struct pci_attach_args *);
 
 static int	mlx_v3_submit(struct mlx_softc *, struct mlx_ccb *);
@@ -178,8 +178,7 @@ mlx_pci_findmpi(struct pci_attach_args *pa)
  * Match a supported board.
  */
 static int
-mlx_pci_match(struct device *parent, struct cfdata *cfdata,
-    void *aux)
+mlx_pci_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 
 	return (mlx_pci_findmpi(aux) != NULL);
@@ -189,7 +188,7 @@ mlx_pci_match(struct device *parent, struct cfdata *cfdata,
  * Attach a supported board.
  */
 static void
-mlx_pci_attach(struct device *parent, struct device *self, void *aux)
+mlx_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct mlx_softc *mlx;
@@ -202,7 +201,7 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 	int ior, memr, i;
 	const struct mlx_pci_ident *mpi;
 
-	mlx = (struct mlx_softc *)self;
+	mlx = device_private(self);
 	pa = aux;
 	pc = pa->pa_pc;
 	mpi = mlx_pci_findmpi(aux);

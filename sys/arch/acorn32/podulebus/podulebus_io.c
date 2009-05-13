@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.4 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.4.94.1 2009/05/13 17:16:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus_io.c,v 1.4 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus_io.c,v 1.4.94.1 2009/05/13 17:16:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,12 +130,7 @@ struct bus_space podulebus_bs_tag = {
 /* bus space functions */
 
 int
-podulebus_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+podulebus_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
 {
 	/*
 	 * Temporary implementation as all I/O is already mapped etc.
@@ -147,24 +142,16 @@ podulebus_bs_map(t, bpa, size, cacheable, bshp)
 	}
 
 int
-podulebus_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+podulebus_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+    int cacheable, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	panic("podulebus_bs_alloc(): Help!");
 }
 
 
 void
-podulebus_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+podulebus_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/*
 	 * Temporary implementation
@@ -172,10 +159,7 @@ podulebus_bs_unmap(t, bsh, size)
 }
 
 void    
-podulebus_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+podulebus_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	panic("podulebus_bs_free(): Help!");
@@ -184,11 +168,7 @@ podulebus_bs_free(t, bsh, size)
 }
 
 int
-podulebus_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+podulebus_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + (offset << ((int)t));
@@ -196,11 +176,7 @@ podulebus_bs_subregion(t, bsh, offset, size, nbshp)
 }
 
 void
-podulebus_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+podulebus_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 }	
 

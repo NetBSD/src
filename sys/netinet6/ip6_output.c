@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.135 2008/10/27 20:03:07 plunky Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.135.6.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.135 2008/10/27 20:03:07 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.135.6.1 2009/05/13 17:22:29 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -128,9 +128,9 @@ struct ip6_exthdrs {
 };
 
 static int ip6_pcbopt(int, u_char *, int, struct ip6_pktopts **,
-	int, int);
+	kauth_cred_t, int);
 static int ip6_getpcbopt(struct ip6_pktopts *, int, struct sockopt *);
-static int ip6_setpktopt(int, u_char *, int, struct ip6_pktopts *, int,
+static int ip6_setpktopt(int, u_char *, int, struct ip6_pktopts *, kauth_cred_t,
 	int, int, int);
 static int ip6_setmoptions(const struct sockopt *, struct ip6_moptions **);
 static int ip6_getmoptions(struct sockopt *, struct ip6_moptions *);
@@ -237,7 +237,7 @@ ip6_output(
 	}								\
     } while (/*CONSTCOND*/ 0)
 
-	bzero(&exthdrs, sizeof(exthdrs));
+	memset(&exthdrs, 0, sizeof(exthdrs));
 	if (opt) {
 		/* Hop-by-Hop options header */
 		MAKE_EXTHDR(opt->ip6po_hbh, &exthdrs.ip6e_hbh);
@@ -467,7 +467,7 @@ ip6_output(
 			rh->ip6r_segleft = 0;
 		}
 
-		bzero(&state, sizeof(state));
+		memset(&state, 0, sizeof(state));
 		state.m = m;
 		error = ipsec6_output_trans(&state, nexthdrp, mprev, sp, flags,
 		    &needipsectun);
@@ -613,10 +613,10 @@ skip_ipsec2:;
 		 *
 		 * IPv6 [ESP|AH] IPv6 [extension headers] payload
 		 */
-		bzero(&exthdrs, sizeof(exthdrs));
+		memset(&exthdrs, 0, sizeof(exthdrs));
 		exthdrs.ip6e_ip6 = m;
 
-		bzero(&state, sizeof(state));
+		memset(&state, 0, sizeof(state));
 		state.m = m;
 		state.ro = ro;
 		state.dst = rtcache_getdst(ro);
@@ -941,7 +941,7 @@ skip_ipsec2:;
 		struct ip6ctlparam ip6cp;
 
 		mtu32 = (u_int32_t)mtu;
-		bzero(&ip6cp, sizeof(ip6cp));
+		memset(&ip6cp, 0, sizeof(ip6cp));
 		ip6cp.ip6c_cmdarg = (void *)&mtu32;
 		pfctlinput2(PRC_MSGSIZE,
 		    rtcache_getdst(ro_pmtu), &ip6cp);
@@ -1038,7 +1038,7 @@ skip_ipsec2:;
 
 		/* Notify a proper path MTU to applications. */
 		mtu32 = (u_int32_t)mtu;
-		bzero(&ip6cp, sizeof(ip6cp));
+		memset(&ip6cp, 0, sizeof(ip6cp));
 		ip6cp.ip6c_cmdarg = (void *)&mtu32;
 		pfctlinput2(PRC_MSGSIZE,
 		    rtcache_getdst(ro_pmtu), &ip6cp);
@@ -1466,11 +1466,10 @@ ip6_getpmtu(struct route *ro_pmtu, struct route *ro, struct ifnet *ifp,
 int
 ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
-	int privileged, optdatalen, uproto;
+	int optdatalen, uproto;
 	void *optdata;
 	struct in6pcb *in6p = sotoin6pcb(so);
 	int error, optval;
-	struct lwp *l = curlwp;	/* XXX */
 	int level, optname;
 
 	KASSERT(sopt != NULL);
@@ -1479,8 +1478,6 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	optname = sopt->sopt_name;
 
 	error = optval = 0;
-	privileged = (l == 0 || kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) ? 0 : 1;
 	uproto = (int)so->so_proto->pr_protocol;
 
 	if (level != IPPROTO_IPV6) {
@@ -1511,10 +1508,10 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IPV6_RECVHOPOPTS:
 		case IPV6_RECVDSTOPTS:
 		case IPV6_RECVRTHDRDSTOPTS:
-			if (!privileged) {
-				error = EPERM;
+			error = kauth_authorize_generic(kauth_cred_get(),
+			    KAUTH_GENERIC_ISSUSER, NULL);
+			if (error)
 				break;
-			}
 			/* FALLTHROUGH */
 		case IPV6_UNICAST_HOPS:
 		case IPV6_HOPLIMIT:
@@ -1586,7 +1583,7 @@ else 					\
 						   (u_char *)&optval,
 						   sizeof(optval),
 						   optp,
-						   privileged, uproto);
+						   kauth_cred_get(), uproto);
 				break;
 			}
 
@@ -1705,7 +1702,7 @@ else 					\
 					   (u_char *)&tclass,
 					   sizeof(tclass),
 					   optp,
-					   privileged, uproto);
+					   kauth_cred_get(), uproto);
 			break;
 		}
 
@@ -1722,7 +1719,7 @@ else 					\
 						   (u_char *)&optval,
 						   sizeof(optval),
 						   optp,
-						   privileged, uproto);
+						   kauth_cred_get(), uproto);
 				break;
 			}
 
@@ -1749,13 +1746,19 @@ else 					\
 				 * Check super-user privilege.
 				 * See comments for IPV6_RECVHOPOPTS.
 				 */
-				if (!privileged)
-					return (EPERM);
+				error =
+				    kauth_authorize_generic(kauth_cred_get(),
+				    KAUTH_GENERIC_ISSUSER, NULL);
+				if (error)
+					return (error);
 				OPTSET2292(IN6P_HOPOPTS);
 				break;
 			case IPV6_2292DSTOPTS:
-				if (!privileged)
-					return (EPERM);
+				error =
+				    kauth_authorize_generic(kauth_cred_get(),
+				    KAUTH_GENERIC_ISSUSER, NULL);
+				if (error)
+					return (error);
 				OPTSET2292(IN6P_DSTOPTS|IN6P_RTHDRDSTOPTS); /* XXX */
 				break;
 			case IPV6_2292RTHDR:
@@ -1793,7 +1796,7 @@ else 					\
 			sockopt_get(sopt, optbuf, optbuflen);
 			optp = &in6p->in6p_outputopts;
 			error = ip6_pcbopt(optname, optbuf, optbuflen,
-			    optp, privileged, uproto);
+			    optp, kauth_cred_get(), uproto);
 			break;
 			}
 #undef OPTSET
@@ -1837,7 +1840,7 @@ else 					\
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		case IPV6_IPSEC_POLICY:
 			error = ipsec6_set_policy(in6p, optname,
-			    sopt->sopt_data, sopt->sopt_size, privileged);
+			    sopt->sopt_data, sopt->sopt_size, kauth_cred_get());
 			break;
 #endif /* IPSEC */
 
@@ -2120,8 +2123,6 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct socket *so,
 	struct ip6_pktopts *opt = *pktopt;
 	struct mbuf *m;
 	int error = 0;
-	struct lwp *l = curlwp;	/* XXX */
-	int priv = 0;
 
 	/* turn off any old options. */
 	if (opt) {
@@ -2149,17 +2150,14 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct socket *so,
 	}
 
 	/*  set options specified by user. */
-	if (l && !kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL))
-		priv = 1;
-
 	m = sockopt_getmbuf(sopt);
 	if (m == NULL) {
 		free(opt, M_IP6OPT);
 		return (ENOBUFS);
 	}
 
-	error = ip6_setpktopts(m, opt, NULL, priv, so->so_proto->pr_protocol);
+	error = ip6_setpktopts(m, opt, NULL, kauth_cred_get(),
+	    so->so_proto->pr_protocol);
 	m_freem(m);
 	if (error != 0) {
 		ip6_clearpktopts(opt, -1); /* XXX: discard all options */
@@ -2188,7 +2186,7 @@ ip6_initpktopts(struct ip6_pktopts *opt)
 #define sin6tosa(sin6)	((struct sockaddr *)(sin6)) /* XXX */
 static int
 ip6_pcbopt(int optname, u_char *buf, int len, struct ip6_pktopts **pktopt,
-    int priv, int uproto)
+    kauth_cred_t cred, int uproto)
 {
 	struct ip6_pktopts *opt;
 
@@ -2202,7 +2200,7 @@ ip6_pcbopt(int optname, u_char *buf, int len, struct ip6_pktopts **pktopt,
 	}
 	opt = *pktopt;
 
-	return (ip6_setpktopt(optname, buf, len, opt, priv, 1, 0, uproto));
+	return (ip6_setpktopt(optname, buf, len, opt, cred, 1, 0, uproto));
 }
 
 static int
@@ -2778,7 +2776,7 @@ ip6_freemoptions(struct ip6_moptions *im6o)
  */
 int
 ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt, 
-	struct ip6_pktopts *stickyopt, int priv, int uproto)
+	struct ip6_pktopts *stickyopt, kauth_cred_t cred, int uproto)
 {
 	struct cmsghdr *cm = 0;
 
@@ -2809,7 +2807,8 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 	if (control->m_next)
 		return (EINVAL);
 
-	for (; control->m_len; control->m_data += CMSG_ALIGN(cm->cmsg_len),
+	/* XXX if cm->cmsg_len is not aligned, control->m_len can become <0 */
+	for (; control->m_len > 0; control->m_data += CMSG_ALIGN(cm->cmsg_len),
 	    control->m_len -= CMSG_ALIGN(cm->cmsg_len)) {
 		int error;
 
@@ -2823,7 +2822,7 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 			continue;
 
 		error = ip6_setpktopt(cm->cmsg_type, CMSG_DATA(cm),
-		    cm->cmsg_len - CMSG_LEN(0), opt, priv, 0, 1, uproto);
+		    cm->cmsg_len - CMSG_LEN(0), opt, cred, 0, 1, uproto);
 		if (error)
 			return (error);
 	}
@@ -2842,9 +2841,10 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
  */
 static int
 ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
-    int priv, int sticky, int cmsg, int uproto)
+    kauth_cred_t cred, int sticky, int cmsg, int uproto)
 {
 	int minmtupolicy;
+	int error;
 
 	if (!sticky && !cmsg) {
 #ifdef DIAGNOSTIC
@@ -2998,8 +2998,10 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 	case IPV6_2292NEXTHOP:
 #endif
 	case IPV6_NEXTHOP:
-		if (!priv)
-			return (EPERM);
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (error)
+			return (error);
 
 		if (len == 0) {	/* just remove the option */
 			ip6_clearpktopts(opt, IPV6_NEXTHOP);
@@ -3014,7 +3016,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		case AF_INET6:
 		{
 			struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)buf;
-			int error;
 
 			if (sa6->sin6_len != sizeof(struct sockaddr_in6))
 				return (EINVAL);
@@ -3055,8 +3056,10 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		 * options, since per-option restriction has too much
 		 * overhead.
 		 */
-		if (!priv)
-			return (EPERM);
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (error)
+			return (error);
 
 		if (len == 0) {
 			ip6_clearpktopts(opt, IPV6_HOPOPTS);
@@ -3090,8 +3093,11 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		struct ip6_dest *dest, **newdest = NULL;
 		int destlen;
 
-		if (!priv)	/* XXX: see the comment for IPV6_HOPOPTS */
-			return (EPERM);
+		/* XXX: see the comment for IPV6_HOPOPTS */
+		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (error)
+			return (error);
 
 		if (len == 0) {
 			ip6_clearpktopts(opt, optname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.102 2008/11/16 19:31:21 bouyer Exp $	*/
+/*	$NetBSD: ata.c,v 1.102.4.1 2009/05/13 17:19:11 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.102 2008/11/16 19:31:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.102.4.1 2009/05/13 17:19:11 jym Exp $");
 
 #include "opt_ata.h"
 
@@ -162,6 +162,7 @@ ata_channel_attach(struct ata_channel *chp)
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
 
+	/* XXX callout_destroy */
 	callout_init(&chp->ch_callout, 0);
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
@@ -414,7 +415,7 @@ atabus_thread(void *arg)
  *	Autoconfiguration match routine.
  */
 static int
-atabus_match(device_t parent, struct cfdata *cf, void *aux)
+atabus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ata_channel *chp = aux;
 
@@ -498,6 +499,8 @@ atabus_activate(device_t self, enum devact act)
 		}
 
 		for (i = 0; i < chp->ch_ndrive; i++) {
+			if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
+				continue;
 			if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
 				ATADEBUG_PRINT(("atabus_activate: %s: "
 				    "deactivating %s\n", device_xname(self),
@@ -557,6 +560,7 @@ atabus_detach(device_t self, int flags)
 		error = config_detach(dev, flags);
 		if (error)
 			goto out;
+		KASSERT(chp->atapibus == NULL);
 	}
 
 	/*
@@ -565,20 +569,23 @@ atabus_detach(device_t self, int flags)
 	for (i = 0; i < chp->ch_ndrive; i++) {
 		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
-		if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
-			ATADEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
-			    device_xname(self), device_xname(dev)),
+		if ((dev = chp->ata_drives[i]) != NULL) {
+			ATADEBUG_PRINT(("%s.%d: %s: detaching %s\n", __func__,
+			    __LINE__, device_xname(self), device_xname(dev)),
 			    DEBUG_DETACH);
+			KASSERT(chp->ch_drive[i].drv_softc ==
+			        chp->ata_drives[i]);
 			error = config_detach(dev, flags);
 			if (error)
 				goto out;
+			KASSERT(chp->ata_drives[i] == NULL);
 		}
 	}
 
  out:
 #ifdef ATADEBUG
 	if (dev != NULL && error != 0)
-		ATADEBUG_PRINT(("atabus_detach: %s: error %d detaching %s\n",
+		ATADEBUG_PRINT(("%s: %s: error %d detaching %s\n", __func__,
 		    device_xname(self), error, device_xname(dev)),
 		    DEBUG_DETACH);
 #endif /* ATADEBUG */
@@ -589,6 +596,7 @@ atabus_detach(device_t self, int flags)
 void
 atabus_childdetached(device_t self, device_t child)
 {
+	bool found = false;
 	struct atabus_softc *sc = device_private(self);
 	struct ata_channel *chp = sc->sc_chan;
 	int i;
@@ -598,7 +606,7 @@ atabus_childdetached(device_t self, device_t child)
 	 */
 	if (child == chp->atapibus) {
 		chp->atapibus = NULL;
-		return;
+		found = true;
 	}
 
 	/*
@@ -607,19 +615,24 @@ atabus_childdetached(device_t self, device_t child)
 	for (i = 0; i < chp->ch_ndrive; i++) {
 		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
-		if (child == chp->ch_drive[i].drv_softc) {
+		if (child == chp->ata_drives[i]) {
+			KASSERT(chp->ata_drives[i] ==
+			        chp->ch_drive[i].drv_softc);
+			chp->ata_drives[i] = NULL;
 			chp->ch_drive[i].drv_softc = NULL;
 			chp->ch_drive[i].drive_flags = 0;
-			return;
+			found = true;
 		}
 	}
 
-	aprint_error_dev(self, "unknown child %p", (const void *)child);
+	if (!found)
+		panic("%s: unknown child %p", device_xname(self),
+		    (const void *)child);
 }
 
-CFATTACH_DECL2_NEW(atabus, sizeof(struct atabus_softc),
+CFATTACH_DECL3_NEW(atabus, sizeof(struct atabus_softc),
     atabus_match, atabus_attach, atabus_detach, atabus_activate, NULL,
-    atabus_childdetached);
+    atabus_childdetached, DVF_DETACH_SHUTDOWN);
 
 /*****************************************************************************
  * Common ATA bus operations.

@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.c,v 1.3 2007/02/28 04:21:51 thorpej Exp $	*/
+/*	$NetBSD: stackframe.c,v 1.3.58.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /* Contributed to the NetBSD foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains routines to use decoded unwind descriptor entries
@@ -896,7 +896,7 @@ void poprecord(struct staterecord *srec, int n)
 	unwind_rsp -= n;
 	memcpy(srec, unwind_rsp, sizeof(struct staterecord));
 #ifdef DEBUG
-	bzero(unwind_rsp, sizeof(struct staterecord) * n);
+	memset(unwind_rsp, 0, sizeof(struct staterecord) * n);
 #endif
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.121 2009/01/11 04:34:16 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.121.2.1 2009/05/13 17:22:20 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.121 2009/01/11 04:34:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.121.2.1 2009/05/13 17:22:20 jym Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -109,9 +109,9 @@ static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
 static int sysctl_dumpentry(struct rtentry *, void *);
 static int sysctl_iflist(int, struct rt_walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
-static inline void rt_adjustcount(int, int);
+static void rt_adjustcount(int, int);
 
-static inline void
+static void
 rt_adjustcount(int af, int cnt)
 {
 	route_cb.any_count += cnt;
@@ -135,7 +135,8 @@ rt_adjustcount(int af, int cnt)
 		return;
 	}
 }
-static inline void
+
+static void
 cvtmetrics(struct rt_metrics *ortm, const struct nrt_metrics *rtm)
 {
 	ortm->rmx_locks = rtm->rmx_locks;
@@ -221,9 +222,9 @@ route_output(struct mbuf *m, ...)
 	struct rtentry *rt = NULL;
 	struct rtentry *saved_nrt = NULL;
 	struct rt_addrinfo info;
-	int len, error = 0, ifa_route = 0;
+	int len, error = 0;
 	struct ifnet *ifp = NULL;
-	struct ifaddr *ifa = NULL, *oifa;
+	struct ifaddr *ifa = NULL;
 	struct socket *so;
 	va_list ap;
 	sa_family_t family;
@@ -300,12 +301,6 @@ route_output(struct mbuf *m, ...)
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			(rt = saved_nrt)->rt_refcnt++;
-			ifa = rt_get_ifa(rt);
-			/*
-			 * If deleting an automatic route, scrub the flag.
-			 */
-			if (ifa->ifa_flags & IFA_ROUTE)
-				ifa->ifa_flags &= ~IFA_ROUTE;
 			goto report;
 		}
 		break;
@@ -423,28 +418,13 @@ route_output(struct mbuf *m, ...)
 			    rt_getkey(rt), info.rti_info[RTAX_GATEWAY])))) {
 				ifp = ifa->ifa_ifp;
 			}
-			oifa = rt->rt_ifa;
-			if (oifa && oifa->ifa_flags & IFA_ROUTE) {
-				/*
-				 * If changing an automatically added route,
-				 * remove the flag and store the fact.
-				 */
-				oifa->ifa_flags &= ~IFA_ROUTE;
-				ifa_route = 1;
-			}
 			if (ifa) {
+				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
 					if (oifa && oifa->ifa_rtrequest) {
 						oifa->ifa_rtrequest(RTM_DELETE,
 						    rt, &info);
 					}
-					/*
-					 * If changing an automatically added
-					 * route, store this if not static.
-					 */
-					if (ifa_route &&
-					    !(rt->rt_flags & RTF_STATIC))
-						ifa->ifa_flags |= IFA_ROUTE;
 					rt_replace_ifa(rt, ifa);
 					rt->rt_ifp = ifp;
 				}
@@ -530,14 +510,10 @@ rt_setmetrics(u_long which, const struct rt_metrics *in, struct nrt_metrics *out
 	metric(RTV_RTTVAR, rmx_rttvar);
 	metric(RTV_HOPCOUNT, rmx_hopcount);
 	metric(RTV_MTU, rmx_mtu);
-	/* XXX time_t: Will not work after 2038 */
+	/* XXX time_t: Will not work after February 2145 (u_long time) */
 	metric(RTV_EXPIRE, rmx_expire);
 #undef metric
 }
-
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static int
 rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
@@ -550,7 +526,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
 		rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
-		ADVANCE(cp, sa);
+		RT_ADVANCE(cp, sa);
 	}
 
 	/*
@@ -566,7 +542,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
 	/* Check for bad data length.  */
 	if (cp != cplim) {
 		if (i == RTAX_NETMASK + 1 && sa != NULL &&
-		    cp - ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
+		    cp - RT_ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
 			/*
 			 * The last sockaddr was info.rti_info[RTAX_NETMASK].
 			 * We accept this for now for the sake of old
@@ -646,7 +622,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 		if ((sa = rtinfo->rti_info[i]) == NULL)
 			continue;
 		rtinfo->rti_addrs |= (1 << i);
-		dlen = ROUNDUP(sa->sa_len);
+		dlen = RT_ROUNDUP(sa->sa_len);
 		m_copyback(m, len, dlen, sa);
 		len += dlen;
 	}
@@ -715,7 +691,7 @@ again:
 		if ((sa = rtinfo->rti_info[i]) == NULL)
 			continue;
 		rtinfo->rti_addrs |= (1 << i);
-		dlen = ROUNDUP(sa->sa_len);
+		dlen = RT_ROUNDUP(sa->sa_len);
 		if (cp) {
 			(void)memcpy(cp, sa, (size_t)dlen);
 			cp += dlen;

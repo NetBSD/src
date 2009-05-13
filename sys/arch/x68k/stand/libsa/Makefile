@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2009/01/12 07:56:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2009/05/13 17:18:43 jym Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -8,7 +8,7 @@ LIBZDIST=	$S/../common/dist/zlib
 
 LIB=		sa
 
-SRCS+=		alloc.c bcmp.c bcopy.c bzero.c errno.c getfile.c gets.c
+SRCS+=		alloc.c bcopy.c bzero.c errno.c getfile.c gets.c
 SRCS+=		memcmp.c memcpy.c memmove.c memset.c panic.c
 SRCS+=		printf.c snprintf.c sprintf.c subr_prf.c twiddle.c vsprintf.c
 

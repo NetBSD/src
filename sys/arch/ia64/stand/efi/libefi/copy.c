@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: copy.c,v 1.2.88.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -40,7 +40,7 @@ int
 efi_copyin(void *src, vaddr_t va, size_t len)
 {
 
-	bcopy(src, (void *)efimd_va2pa(va), len);
+	memcpy( (void *)efimd_va2pa(va), src, len);
 	return (len);
 }
 
@@ -48,7 +48,7 @@ int
 efi_copyout(vaddr_t va, void *dst, size_t len)
 {
 
-	bcopy((void *)efimd_va2pa(va), dst, len);
+	memcpy( dst, (void *)efimd_va2pa(va), len);
 	return (len);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.15 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.15.14.1 2009/05/13 17:18:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -231,16 +231,16 @@ extern int ext_intr_stats_enb;
 extern ext_intr_stat_t ext_intr_stats[];
 extern ext_intr_stat_t *ext_intr_statp;
 
-extern void ext_intr_stats_init __P((void));
+extern void ext_intr_stats_init(void);
 extern void ext_intr_stats_cause
-	__P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
+(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern void ext_intr_stats_pend
-	__P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-extern void ext_intr_stats_commit __P((imask_t *));
-extern void ext_intr_stats_commit_m __P((imask_t *));
-extern void ext_intr_stats_commit_irq __P((u_int));
-extern u_int64_t ext_intr_stats_pre  __P((int));
-extern void ext_intr_stats_post __P((int, u_int64_t));
+(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void ext_intr_stats_commit(imask_t *);
+extern void ext_intr_stats_commit_m(imask_t *);
+extern void ext_intr_stats_commit_irq(u_int);
+extern u_int64_t ext_intr_stats_pre(int);
+extern void ext_intr_stats_post(int, u_int64_t);
 
 #define EXT_INTR_STATS_INIT() ext_intr_stats_init()
 #define EXT_INTR_STATS_CAUSE(l, h, g, s)  ext_intr_stats_cause(l, h, g, s)
@@ -293,15 +293,15 @@ extern unsigned int spl_stats_enb;
 #endif	/* SPL_STATS */
 
 
-void intr_dispatch __P((void));
+void intr_dispatch(void);
 #ifdef SPL_INLINE
-static inline int splraise __P((int));
-static inline int spllower __P((int));
-static inline void splx __P((int));
+static inline int splraise(int);
+static inline int spllower(int);
+static inline void splx(int);
 #else
-extern int splraise __P((int));
-extern int spllower __P((int));
-extern void splx __P((int));
+extern int splraise(int);
+extern int spllower(int);
+extern void splx(int);
 #endif
 
 extern volatile int tickspending;

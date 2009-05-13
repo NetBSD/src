@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.8 2007/10/28 18:01:55 jmmv Exp $	*/
+/*	$NetBSD: consinit.c,v 1.8.34.1 2009/05/13 17:18:23 jym Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8 2007/10/28 18:01:55 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8.34.1 2009/05/13 17:18:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ int comconsole = 0;
  * initialize the system console.
  */
 void
-consinit()
+consinit(void)
 {
 	struct consdev *cp;
 	static int initted;

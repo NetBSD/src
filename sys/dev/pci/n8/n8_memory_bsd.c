@@ -61,7 +61,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.1.10.1 2009/05/13 17:21:08 jym Exp $";
 /*****************************************************************************/
 /** @file n8_memory_bsd.c
  *  @brief NetOctaveMemory Services - FreeBSD-specific support routines.
@@ -271,7 +271,7 @@ n8_GetLargeAllocation(N8_MemoryType_t bankIndex,
 {
 
 	NspInstance_t	*nip  = &NSPDeviceTable_g[0];	/* can only attach once */
-	struct nsp_softc *sc = (struct nsp_softc *)nip->dev;
+	struct nsp_softc *sc = device_private(nip->dev);
 
 	bus_dma_segment_t seg;
 	int rseg;
@@ -287,33 +287,34 @@ n8_GetLargeAllocation(N8_MemoryType_t bankIndex,
 #endif
 	if (bus_dmamem_alloc(sc->dma_tag, size, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc DMA buffer\n", sc->device.dv_xname);
+		printf("%s: can't alloc DMA buffer\n",
+		    device_xname(&sc->device));
 		return 0;
         }
 	if (bus_dmamem_map(sc->dma_tag, &seg, rseg, size, &kva,
 	    BUS_DMA_NOWAIT)) {
-		printf("%s: can't map DMA buffers (%lu bytes)\n", sc->device.dv_xname,
-			size);
+		printf("%s: can't map DMA buffers (%lu bytes)\n",
+		    device_xname(&sc->device), size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 0;
 	}
 	if (bus_dmamap_create(sc->dma_tag, size, 1,
 	    size, 0, BUS_DMA_NOWAIT, &DmaMap_g[bankIndex])) {
-		printf("%s: can't create DMA map\n", sc->device.dv_xname);
+		printf("%s: can't create DMA map\n", device_xname(&sc->device));
 		bus_dmamem_unmap(sc->dma_tag, kva, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 0;
 	}
 	if (bus_dmamap_load(sc->dma_tag, DmaMap_g[bankIndex], kva, size,
 	    NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load DMA map\n", sc->device.dv_xname);
+		printf("%s: can't load DMA map\n", device_xname(&sc->device));
 		bus_dmamap_destroy(sc->dma_tag, DmaMap_g[bankIndex]);
 		bus_dmamem_unmap(sc->dma_tag, kva, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 0;
 	}
 	if (kva) {
-	    /* bzero(kva, size) */
+	    /* memset(kva, 0, size) */
 	    BasePointer_g[bankIndex]    = kva;
 	    MemSize_g[bankIndex]        = size;
 	    Seg_g[bankIndex]            = seg;
@@ -355,7 +356,7 @@ n8_FreeLargeAllocation(N8_MemoryType_t bankIndex,
 		       unsigned char   debug) 
 {
 	NspInstance_t	*nip  = &NSPDeviceTable_g[0];	/* can only attach once */
-	struct nsp_softc *sc = (struct nsp_softc *)nip->dev;
+	struct nsp_softc *sc = device_private(nip->dev);
 
         printf("n8_FreeLargeAllocation: freeing %p for bankIndex %d\n",
 		  BasePointer_g[bankIndex], bankIndex);

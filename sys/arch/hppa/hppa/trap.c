@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.57.8.1 2009/05/13 17:17:48 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57.8.1 2009/05/13 17:17:48 jym Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -418,8 +418,6 @@ frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 	extern int kernel_text;
 	extern int etext;
 	extern register_t kpsw;
-	extern vaddr_t hpt_base;
-	extern vsize_t hpt_mask;
 #define SANITY(e)					\
 do {							\
 	if (sanity_frame == NULL && !(e)) {		\
@@ -430,7 +428,6 @@ do {							\
 } while (/* CONSTCOND */ 0)
 
 	SANITY((tf->tf_ipsw & kpsw) == kpsw);
-	SANITY(tf->tf_hptm == hpt_mask && tf->tf_vtop == hpt_base);
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
 		vaddr_t minsp, maxsp;
@@ -459,11 +456,7 @@ do {							\
 		SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_tail < (u_int) &etext);
 
-#ifdef HPPA_REDZONE
-		maxsp = (u_int)(l->l_addr) + HPPA_REDZONE;
-#else
-		maxsp = (u_int)(l->l_addr) + USPACE;
-#endif
+		maxsp = (u_int)(l->l_addr) + USPACE + PAGE_SIZE;
 		minsp = (u_int)(l->l_addr) + PAGE_SIZE;
 
 		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
@@ -855,10 +848,10 @@ do_onfault:
 
 		va = trunc_page(va);
 
-		if (map->pmap->pmap_space != space) {
+		if (map->pmap->pm_space != space) {
 #ifdef TRAPDEBUG
 			printf("trap: space mismatch %d != %d\n",
-			    space, map->pmap->pmap_space);
+			    space, map->pmap->pm_space);
 #endif
 			/* actually dump the user, crap the kernel */
 			goto dead_end;
@@ -1180,11 +1173,6 @@ syscall(struct trapframe *frame, int *args)
 	 * will probably screw up any and all emulation.
 	 */
 	switch (code) {
-	/*
-	 * BEGIN automatically generated
-	 * by /home/fredette/project/hppa/makescargfix.pl
-	 * do not edit!
-	 */
 	case SYS_pread:
 		/*
 		 * 	syscallarg(int) fd;
@@ -1277,13 +1265,31 @@ syscall(struct trapframe *frame, int *args)
 		args[4] = args[4 + 1];
 		args[4 + 1] = tmp;
 		break;
+	case SYS___posix_fadvise50:
+		/*
+		 *	syscallarg(int) fd;
+		 *	syscallarg(int) pad;
+		 *	syscallarg(off_t) offset;
+		 *	syscallarg(off_t) len;
+		 *	syscallarg(int) advice;
+		 */
+		tmp = args[2];
+		args[2] = args[2 + 1];
+		args[2 + 1] = tmp;
+		tmp = args[4];
+		args[4] = args[4 + 1];
+		args[4 + 1] = tmp;
+	case SYS___mknod50:
+		/*
+		 *	syscallarg(const char *) path;
+		 *	syscallarg(mode_t) mode;
+		 *	syscallarg(dev_t) dev;
+		 */
+		tmp = args[2];
+		args[2] = args[2 + 1];
+		args[2 + 1] = tmp;
 	default:
 		break;
-	/*
-	 * END automatically generated
-	 * by /home/fredette/project/hppa/makescargfix.pl
-	 * do not edit!
-	 */
 	}
 
 #ifdef USERTRACE

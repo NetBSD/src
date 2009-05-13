@@ -1,4 +1,4 @@
-/* $NetBSD: drm_memory.c,v 1.14 2008/06/29 12:49:08 jmcneill Exp $ */
+/* $NetBSD: drm_memory.c,v 1.14.10.1 2009/05/13 17:19:16 jym Exp $ */
 
 /* drm_memory.h -- Memory management wrappers for DRM -*- linux-c -*-
  * Created: Thu Feb  4 14:00:34 1999 by faith@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.14 2008/06/29 12:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.14.10.1 2009/05/13 17:19:16 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -52,6 +52,15 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anhol
 #if NAGP_I810 > 0 /* XXX hack to borrow agp's register mapping */
 #include <dev/pci/agpvar.h>
 #endif
+#endif
+
+#if defined(_KERNEL_OPT)
+#include "genfb.h"
+#if NGENFB > 0
+#include <dev/wsfb/genfbvar.h>
+#endif
+#else
+#define NGENFB 0	/* XXX */
 #endif
 
 #if !defined(_MODULE)
@@ -125,6 +134,10 @@ void *drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
 				dev->pci_map_data[i].mapped--;
 #if NAGP_I810 > 0 /* XXX horrible kludge: agp might have mapped it */
 				if (agp_i810_borrow(map->offset, &map->bsh))
+					return bus_space_vaddr(map->bst, map->bsh);
+#endif
+#if NGENFB > 0
+				if (genfb_borrow(map->offset, &map->bsh))
 					return bus_space_vaddr(map->bst, map->bsh);
 #endif
 				DRM_DEBUG("ioremap: failed to map (%d)\n",

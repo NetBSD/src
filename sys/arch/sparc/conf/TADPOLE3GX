@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.44 2009/02/08 13:05:51 jdc Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.44.2.1 2009/05/13 17:18:23 jym Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -64,7 +64,6 @@ options 	KTRACE
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
 
@@ -143,6 +142,7 @@ options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility
+options 	COMPAT_50	# NetBSD 5.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

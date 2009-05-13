@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom_ts.c,v 1.2 2005/12/11 12:17:11 christos Exp $ */
+/*	$NetBSD: epcom_ts.c,v 1.2.92.1 2009/05/13 17:16:39 jym Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.2 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.2.92.1 2009/05/13 17:16:39 jym Exp $");
 
 /* Front-end of epcom */
 
@@ -63,10 +63,7 @@ CFATTACH_DECL(epcom_ts, sizeof(struct epcom_ts_softc),
     epcom_ts_match, epcom_ts_attach, NULL, NULL);
 
 static int
-epcom_ts_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+epcom_ts_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	if (strcmp(match->cf_name, "epcom") == 0)
 		return 1;

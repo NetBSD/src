@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.57 2008/07/02 19:49:58 rmind Exp $ */
+/*	$NetBSD: mach_message.c,v 1.57.10.1 2009/05/13 17:18:59 jym Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.57 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.57.10.1 2009/05/13 17:18:59 jym Exp $");
 
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 #include "opt_compat_darwin.h"
@@ -726,11 +726,11 @@ mach_drop_rights(struct mach_right *mr, int bits)
  * namespace.
  */
 static inline void
-mach_trade_rights(ll, rl, mnp, bits)
-	struct lwp *ll;		/* local lwp (receiver, current lwp) */
-	struct lwp *rl;		/* remote lwp (sender) */
-	mach_port_t *mnp;	/* pointer to the port name */
-	int bits;		/* right bits */
+mach_trade_rights(struct lwp *ll, struct lwp *rl, mach_port_t *mnp, int bits)
+	/* ll:		 local lwp (receiver, current lwp) */
+	/* rl:		 remote lwp (sender) */
+	/* mnp:	 pointer to the port name */
+	/* bits:		 right bits */
 {
 	int lr;			/* local right type (to be added) */
 	int rr;			/* remote right type */
@@ -1115,7 +1115,7 @@ mach_message_get(mach_msg_header_t *msgh, size_t size, struct mach_port *mp, str
 	struct mach_message *mm;
 
 	mm = (struct mach_message *)pool_get(&mach_message_pool, PR_WAITOK);
-	bzero(mm, sizeof(*mm));
+	memset(mm, 0, sizeof(*mm));
 	mm->mm_msg = msgh;
 	mm->mm_size = size;
 	mm->mm_port = mp;

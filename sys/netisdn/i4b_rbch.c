@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.23 2008/03/01 14:16:52 rmind Exp $
+ *	$Id: i4b_rbch.c,v 1.23.18.1 2009/05/13 17:22:41 jym Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.23 2008/03/01 14:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.23.18.1 2009/05/13 17:22:41 jym Exp $");
 
 #include "isdnbchan.h"
 
@@ -174,17 +174,17 @@ static void* rbch_get_softc(int unit);
 #ifndef __FreeBSD__
 #define PDEVSTATIC	/* - not static - */
 #define IOCTL_CMD_T	u_long
-void isdnbchanattach __P((void));
-int isdnbchanopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
-int isdnbchanclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
-int isdnbchanread __P((dev_t dev, struct uio *uio, int ioflag));
-int isdnbchanwrite __P((dev_t dev, struct uio *uio, int ioflag));
-int isdnbchanioctl __P((dev_t dev, IOCTL_CMD_T cmd, void *arg, int flag, struct lwp* l));
+void isdnbchanattach(void);
+int isdnbchanopen(dev_t dev, int flag, int fmt, struct lwp *l);
+int isdnbchanclose(dev_t dev, int flag, int fmt, struct lwp *l);
+int isdnbchanread(dev_t dev, struct uio *uio, int ioflag);
+int isdnbchanwrite(dev_t dev, struct uio *uio, int ioflag);
+int isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, void *arg, int flag, struct lwp* l);
 #ifdef OS_USES_POLL
-int isdnbchanpoll __P((dev_t dev, int events, struct lwp *l));
-int isdnbchankqfilter __P((dev_t dev, struct knote *kn));
+int isdnbchanpoll(dev_t dev, int events, struct lwp *l);
+int isdnbchankqfilter(dev_t dev, struct knote *kn);
 #else
-PDEVSTATIC int isdnbchanselect __P((dev_t dev, int rw, struct lwp *l));
+PDEVSTATIC int isdnbchanselect(dev_t dev, int rw, struct lwp *l);
 #endif
 #endif
 
@@ -320,7 +320,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 isdnbchanattach(void *dummy)
 #else
-isdnbchanattach()
+isdnbchanattach(void)
 #endif
 {
 	int i;

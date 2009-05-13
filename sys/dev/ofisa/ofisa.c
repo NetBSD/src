@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.18 2007/10/19 12:00:38 ad Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.18.34.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.18 2007/10/19 12:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.18.34.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.18 2007/10/19 12:00:38 ad Exp $");
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
 
-static int	ofisamatch(struct device *, struct cfdata *, void *);
-static void	ofisaattach(struct device *, struct device *, void *);
+static int	ofisamatch(device_t, cfdata_t, void *);
+static void	ofisaattach(device_t, device_t, void *);
 
 CFATTACH_DECL(ofisa, sizeof(struct device),
     ofisamatch, ofisaattach, NULL, NULL);
@@ -62,9 +62,7 @@ extern struct cfdriver ofisa_cd;
 static int	ofisaprint(void *, const char *);
 
 static int
-ofisaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ofisaprint(void *aux, const char *pnp)
 {
 	struct ofbus_attach_args *oba = aux;
 	char name[64];
@@ -78,10 +76,7 @@ ofisaprint(aux, pnp)
 }
 
 int
-ofisamatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ofisamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	static const char *const compatible_strings[] = { "pnpPNP,a00", NULL };
@@ -99,9 +94,7 @@ ofisamatch(parent, cf, aux)
 }
 
 void
-ofisaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofisaattach(device_t parent, device_t self, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	struct isabus_attach_args iba;
@@ -127,7 +120,7 @@ ofisaattach(parent, self, aux)
 		if (ofisa_ignore_child(oba->oba_phandle, child))
 			continue;
 
-		bzero(&aa, sizeof aa);
+		memset(&aa, 0, sizeof aa);
 
 		aa.oba.oba_busname = "ofw";			/* XXX */
 		aa.oba.oba_phandle = child;
@@ -141,8 +134,7 @@ ofisaattach(parent, self, aux)
 }
 
 int
-ofisa_reg_count(phandle)
-	int phandle;
+ofisa_reg_count(int phandle)
 {
 	int len;
 
@@ -155,10 +147,7 @@ ofisa_reg_count(phandle)
 }
 
 int
-ofisa_reg_get(phandle, descp, ndescs)
-	int phandle;
-	struct ofisa_reg_desc *descp;
-	int ndescs;
+ofisa_reg_get(int phandle, struct ofisa_reg_desc *descp, int ndescs)
 {
 	char *buf, *bp;
 	int i, proplen, allocated, rv;
@@ -200,9 +189,7 @@ out:
 }
 
 void
-ofisa_reg_print(descp, ndescs)
-	struct ofisa_reg_desc *descp;
-	int ndescs;
+ofisa_reg_print(struct ofisa_reg_desc *descp, int ndescs)
 {
 	int i;
 
@@ -219,8 +206,7 @@ ofisa_reg_print(descp, ndescs)
 }
 
 int
-ofisa_intr_count(phandle)
-	int phandle;
+ofisa_intr_count(int phandle)
 {
 	int len;
 
@@ -233,10 +219,7 @@ ofisa_intr_count(phandle)
 }
 
 int
-ofisa_intr_get(phandle, descp, ndescs)
-	int phandle;
-	struct ofisa_intr_desc *descp;
-	int ndescs;
+ofisa_intr_get(int phandle, struct ofisa_intr_desc *descp, int ndescs)
 {
 	char *buf, *bp;
 	int i, proplen, allocated, rv;
@@ -291,9 +274,7 @@ out:
 }
 
 void
-ofisa_intr_print(descp, ndescs)
-	struct ofisa_intr_desc *descp;
-	int ndescs;
+ofisa_intr_print(struct ofisa_intr_desc *descp, int ndescs)
 {
 	int i;
 
@@ -309,8 +290,7 @@ ofisa_intr_print(descp, ndescs)
 }
 
 int
-ofisa_dma_count(phandle)
-	int phandle;
+ofisa_dma_count(int phandle)
 {
 	int len;
 
@@ -323,10 +303,7 @@ ofisa_dma_count(phandle)
 }
 
 int
-ofisa_dma_get(phandle, descp, ndescs)
-	int phandle;
-	struct ofisa_dma_desc *descp;
-	int ndescs;
+ofisa_dma_get(int phandle, struct ofisa_dma_desc *descp, int ndescs)
 {
 	char *buf, *bp;
 	int i, proplen, allocated, rv;
@@ -367,9 +344,7 @@ out:
 }
 
 void
-ofisa_dma_print(descp, ndescs)
-	struct ofisa_dma_desc *descp;
-	int ndescs;
+ofisa_dma_print(struct ofisa_dma_desc *descp, int ndescs)
 {
 	char unkmode[16];
 	const char *modestr;

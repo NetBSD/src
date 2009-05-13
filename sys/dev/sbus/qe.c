@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.47 2008/12/16 22:35:35 christos Exp $	*/
+/*	$NetBSD: qe.c,v 1.47.2.1 2009/05/13 17:21:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.47 2008/12/16 22:35:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.47.2.1 2009/05/13 17:21:22 jym Exp $");
 
 #define QEDEBUG
 
@@ -149,8 +149,8 @@ struct qe_softc {
 #endif
 };
 
-int	qematch(struct device *, struct cfdata *, void *);
-void	qeattach(struct device *, struct device *, void *);
+int	qematch(device_t, cfdata_t, void *);
+void	qeattach(device_t, device_t, void *);
 
 void	qeinit(struct qe_softc *);
 void	qestart(struct ifnet *);
@@ -177,10 +177,7 @@ CFATTACH_DECL(qe, sizeof(struct qe_softc),
     qematch, qeattach, NULL, NULL);
 
 int
-qematch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+qematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -188,9 +185,7 @@ qematch(parent, cf, aux)
 }
 
 void
-qeattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qeattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *qec = (struct qec_softc *)parent;
@@ -332,9 +327,7 @@ qeattach(parent, self, aux)
  * we copy into clusters.
  */
 static inline struct mbuf *
-qe_get(sc, idx, totlen)
-	struct qe_softc *sc;
-	int idx, totlen;
+qe_get(struct qe_softc *sc, int idx, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -385,10 +378,7 @@ qe_get(sc, idx, totlen)
  * network buffer memory.
  */
 inline int
-qe_put(sc, idx, m)
-	struct qe_softc *sc;
-	int idx;
-	struct mbuf *m;
+qe_put(struct qe_softc *sc, int idx, struct mbuf *m)
 {
 	struct mbuf *n;
 	int len, tlen = 0, boff = 0;
@@ -414,9 +404,7 @@ qe_put(sc, idx, m)
  * Pass a packet to the higher levels.
  */
 inline void
-qe_read(sc, idx, len)
-	struct qe_softc *sc;
-	int idx, len;
+qe_read(struct qe_softc *sc, int idx, int len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -463,8 +451,7 @@ qe_read(sc, idx, len)
  *     (i.e. that the output part of the interface is idle)
  */
 void
-qestart(ifp)
-	struct ifnet *ifp;
+qestart(struct ifnet *ifp)
 {
 	struct qe_softc *sc = (struct qe_softc *)ifp->if_softc;
 	struct qec_xd *txd = sc->sc_rb.rb_txd;
@@ -517,8 +504,7 @@ qestart(ifp)
 }
 
 void
-qestop(sc)
-	struct qe_softc *sc;
+qestop(struct qe_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mr = sc->sc_mr;
@@ -551,8 +537,7 @@ qestop(sc)
  * Reset interface.
  */
 void
-qereset(sc)
-	struct qe_softc *sc;
+qereset(struct qe_softc *sc)
 {
 	int s;
 
@@ -563,8 +548,7 @@ qereset(sc)
 }
 
 void
-qewatchdog(ifp)
-	struct ifnet *ifp;
+qewatchdog(struct ifnet *ifp)
 {
 	struct qe_softc *sc = ifp->if_softc;
 
@@ -578,8 +562,7 @@ qewatchdog(ifp)
  * Interrupt dispatch.
  */
 int
-qeintr(arg)
-	void *arg;
+qeintr(void *arg)
 {
 	struct qe_softc *sc = (struct qe_softc *)arg;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -648,8 +631,7 @@ qeintr(arg)
  * Transmit interrupt.
  */
 int
-qe_tint(sc)
-	struct qe_softc *sc;
+qe_tint(struct qe_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	unsigned int bix, txflags;
@@ -688,8 +670,7 @@ qe_tint(sc)
  * Receive interrupt.
  */
 int
-qe_rint(sc)
-	struct qe_softc *sc;
+qe_rint(struct qe_softc *sc)
 {
 	struct qec_xd *xd = sc->sc_rb.rb_rxd;
 	unsigned int bix, len;
@@ -738,9 +719,7 @@ qe_rint(sc)
  * Error interrupt.
  */
 int
-qe_eint(sc, why)
-	struct qe_softc *sc;
-	u_int32_t why;
+qe_eint(struct qe_softc *sc, u_int32_t why)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int r = 0, rst = 0;
@@ -909,10 +888,7 @@ qe_eint(sc, why)
 }
 
 int
-qeioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -999,8 +975,7 @@ qeioctl(ifp, cmd, data)
 
 
 void
-qeinit(sc)
-	struct qe_softc *sc;
+qeinit(struct qe_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1100,8 +1075,7 @@ qeinit(sc)
  * Reset multicast filter.
  */
 void
-qe_mcreset(sc)
-	struct qe_softc *sc;
+qe_mcreset(struct qe_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1192,9 +1166,7 @@ qe_mcreset(sc)
  * Get current media settings.
  */
 void
-qe_ifmedia_sts(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+qe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1232,8 +1204,7 @@ qe_ifmedia_sts(ifp, ifmr)
  * Set media options.
  */
 int
-qe_ifmedia_upd(ifp)
-	struct ifnet *ifp;
+qe_ifmedia_upd(struct ifnet *ifp)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_ifmedia;

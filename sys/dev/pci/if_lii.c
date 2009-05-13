@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.5 2008/07/08 12:39:27 sborrill Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.5.8.1 2009/05/13 17:20:25 jym Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.5 2008/07/08 12:39:27 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.5.8.1 2009/05/13 17:20:25 jym Exp $");
 
 #include "bpfilter.h"
 
@@ -243,6 +243,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t cmd;
+	bus_size_t memsize = 0;
 
 	aprint_naive("\n");
 	aprint_normal(": Attansic/Atheros L2 Fast Ethernet\n");
@@ -267,7 +268,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, cmd, 0,
-	    &sc->sc_mmiot, &sc->sc_mmioh, NULL, NULL) != 0) {
+	    &sc->sc_mmiot, &sc->sc_mmioh, NULL, &memsize) != 0) {
 		aprint_error_dev(self, "failed to map registers\n");
 		return;
 	}
@@ -291,7 +292,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(self, "failed to map interrupt\n");
-		return;
+		goto fail;
 	}
 	intrstr = pci_intr_string(sc->sc_pc, ih);
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, lii_intr, sc);
@@ -300,14 +301,12 @@ lii_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	if (lii_alloc_rings(sc)) {
-		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-		return;
-	}
+	if (lii_alloc_rings(sc))
+		goto fail;
 
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, lii_tick, sc);
@@ -347,6 +346,14 @@ lii_attach(device_t parent, device_t self, void *aux)
 		pmf_class_network_register(self, ifp);
 
 	return;
+
+fail:
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (memsize)
+		bus_space_unmap(sc->sc_mmiot, sc->sc_mmioh, memsize);
 }
 
 static int

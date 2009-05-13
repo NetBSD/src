@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.19 2008/11/07 00:20:01 dyoung Exp $ */
+/* $NetBSD: if_xb.c,v 1.19.4.1 2009/05/13 17:16:04 jym Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.19 2008/11/07 00:20:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.19.4.1 2009/05/13 17:16:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,12 +129,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.19 2008/11/07 00:20:01 dyoung Exp $");
 
 #define	FIFO_WORDCOUNT 60
 
-static int  xb_put_blk __P((struct mbuf *));
-static int  xb_put __P((struct mbuf *));
+static int  xb_put_blk(struct mbuf *);
+static int  xb_put(struct mbuf *);
 static long xb_fifo_empty(void);
 
-int	xbmatch __P((struct device *, struct cfdata *, void *));
-void	xbattach __P((struct device *, struct device *, void *));
+int	xbmatch(struct device *, struct cfdata *, void *);
+void	xbattach(struct device *, struct device *, void *);
 
 struct xb_softc {
 	struct	device d;
@@ -190,30 +190,27 @@ Static struct ifnet xbi;
 Static int frame_len;
 static int xb_debug;
 
-Static void xb_start __P((struct ifnet *));
-Static void xb_mcrp_write __P((long *, int, int));
-static inline void xb_onefree __P((void));
+Static void xb_start(struct ifnet *);
+Static void xb_mcrp_write(long *, int, int);
+static inline void xb_onefree(void);
 static long set_interrupt_on_fifo_empty(void);
 static void xb_init(struct ifnet *);
-static int  xb_intr __P((void *));
-static void xb_intr_rcv __P((void));
-Static void quickload __P((volatile long *, long *));
-static void xb_init_config __P((struct xb_config *, int));
-static int  xb_output __P((struct ifnet *, struct mbuf *,
-			const struct sockaddr *, struct rtentry *));
-static int  xb_ioctl __P((struct ifnet *, u_long, void *));
-static void xb_stop __P((void));
-static void a12_xbar_setup __P((void));
+static int  xb_intr(void *);
+static void xb_intr_rcv(void);
+Static void quickload(volatile long *, long *);
+static void xb_init_config(struct xb_config *, int);
+static int  xb_output(struct ifnet *, struct mbuf *,
+			const struct sockaddr *, struct rtentry *);
+static int  xb_ioctl(struct ifnet *, u_long, void *);
+static void xb_stop(void);
+static void a12_xbar_setup(void);
 
 /* There Can Be Only One */
 
 int xbfound;
 
 int
-xbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+xbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return	cputype == ST_AVALON_A12
@@ -221,9 +218,7 @@ xbmatch(parent, match, aux)
 }
 
 void
-xbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct xb_config *ccp;
 
@@ -231,13 +226,11 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.19 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.19.4.1 $", xbi.if_mtu);
 }
 
 static void
-xb_init_config(ccp, mallocsafe)
-	struct xb_config *ccp;
-	int mallocsafe;
+xb_init_config(struct xb_config *ccp, int mallocsafe)
 {
 	/* 
 	 * The driver actually only needs about 64 bytes of buffer but with a
@@ -284,8 +277,7 @@ xb_init_config(ccp, mallocsafe)
  *
  */
 static int
-xb_intr(p)
-	void *p;
+xb_intr(void *p)
 {
 	int	n;
 	long	mcsrval;
@@ -314,7 +306,7 @@ xb_intr(p)
  * frame boundaries. As those are panic-level errors: Don't Get Them.
  */
 static void
-xb_intr_rcv()
+xb_intr_rcv(void)
 {
 struct	mbuf *m;
 long	frameword[2];
@@ -400,21 +392,20 @@ long	t1,t2;
  * Verify during debugging that we have not overflowed the FIFO 
  */
 static inline void
-xb_onefree()
+xb_onefree(void)
 {
 	if (XB_DEBUG && REGVAL(A12_MCSR) & A12_MCSR_OMFF)
 		DIE();
 }
 
 static void
-xb_init(ifp)
-	struct ifnet *ifp;
+xb_init(struct ifnet *ifp)
 {
 	ifp->if_flags |= IFF_RUNNING;
 }
 
 static void
-xb_stop()
+xb_stop(void)
 {
 }
 
@@ -472,11 +463,7 @@ xb_fifo_empty(void)
  * [ ... data : length ]
  */
 static int
-xb_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	const struct sockaddr *dst;
-	struct rtentry *rt0;
+xb_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst, struct rtentry *rt0)
 {
 	int	i,s;
 	struct	mbuf *m = m0;
@@ -564,8 +551,7 @@ xb_output(ifp, m0, dst, rt0)
 }
 
 void
-xb_start(ifp)
-	struct ifnet *ifp;
+xb_start(struct ifnet *ifp)
 {
 	struct	mbuf *m;
 
@@ -589,8 +575,7 @@ xb_start(ifp)
 }
 
 static int
-xb_put(m)
-	struct mbuf *m;
+xb_put(struct mbuf *m)
 {
 	struct mbuf *n;
 	int len;
@@ -615,8 +600,7 @@ xb_put(m)
  * alignment. Of course, we don't DMA at all, right now.
  */
 static int
-xb_put_blk(m)
-	struct	mbuf *m;
+xb_put_blk(struct mbuf *m)
 {
 	static	long leftover[2];	/* 0-15 bytes from last xb_put_blk() */
 	static	int  leftover_len;	/* non-aligned amount from last call */
@@ -721,8 +705,7 @@ set_interrupt_on_fifo_empty(void)
  * Write an aligned block of switch words to the FIFO
  */
 Static void
-xb_mcrp_write(d, n, islast)
-	long *d;
+xb_mcrp_write(long *d, int n, int islast)
 {
 	volatile long *xb_fifo = islast ? REGADDR(A12_FIFO_LWE) 
 					: REGADDR(A12_FIFO);

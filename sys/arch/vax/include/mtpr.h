@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.20 2007/02/16 01:34:03 matt Exp $     */
+/*      $NetBSD: mtpr.h,v 1.20.62.1 2009/05/13 17:18:41 jym Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -172,7 +172,8 @@ mtpr(register_t val, int reg)
 	__asm volatile (
 		"mtpr %0,%1"
 	    : /* No output */
-	    : "g" (val), "g" (reg));
+	    : "g" (val), "g" (reg)
+	    : "memory");
 }
 
 static inline register_t

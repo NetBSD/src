@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.27 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.27.58.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.27 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.27.58.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -90,24 +90,24 @@ static ipriv_t	con_ipriv;
 extern font_info	font_info_8x8;
 extern font_info	font_info_8x16;
 
-static void view_init __P((struct ite_softc *));
-static void view_deinit __P((struct ite_softc *));
-static int  itecc_ioctl __P((struct ite_softc *, u_long, void *, int,
-							struct lwp *));
-static int  ite_newsize __P((struct ite_softc *, struct itewinsize *));
-static void cursor32 __P((struct ite_softc *, int));
-static void putc8 __P((struct ite_softc *, int, int, int, int));
-static void clear8 __P((struct ite_softc *, int, int, int, int));
-static void scroll8 __P((struct ite_softc *, int, int, int, int));
-static void scrollbmap __P((bmap_t *, u_short, u_short, u_short, u_short,
-							short, short));
+static void view_init(struct ite_softc *);
+static void view_deinit(struct ite_softc *);
+static int  itecc_ioctl(struct ite_softc *, u_long, void *, int,
+							struct lwp *);
+static int  ite_newsize(struct ite_softc *, struct itewinsize *);
+static void cursor32(struct ite_softc *, int);
+static void putc8(struct ite_softc *, int, int, int, int);
+static void clear8(struct ite_softc *, int, int, int, int);
+static void scroll8(struct ite_softc *, int, int, int, int);
+static void scrollbmap(bmap_t *, u_short, u_short, u_short, u_short,
+							short, short);
 
 /*
  * grfcc config stuff
  */
-void grfccattach __P((struct device *, struct device *, void *));
-int  grfccmatch __P((struct device *, struct cfdata *, void *));
-int  grfccprint __P((void *, const char *));
+void grfccattach(struct device *, struct device *, void *);
+int  grfccmatch(struct device *, struct cfdata *, void *);
+int  grfccprint(void *, const char *);
 
 CFATTACH_DECL(grfcc, sizeof(struct grf_softc),
     grfccmatch, grfccattach, NULL, NULL);
@@ -121,17 +121,14 @@ static struct cfdata *cfdata_grf   = NULL;
  * Probe functions we can use:
  */
 #ifdef TT_VIDEO
-void	tt_probe_video __P((MODES *));
+void	tt_probe_video(MODES *);
 #endif /* TT_VIDEO */
 #ifdef FALCON_VIDEO
-void	falcon_probe_video __P((MODES *));
+void	falcon_probe_video(MODES *);
 #endif /* FALCON_VIDEO */
 
 int
-grfccmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+grfccmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int	did_consinit = 0;
 	static int	must_probe = 1;
@@ -198,9 +195,7 @@ void		*auxp;
  * note  : dp is NULL during early console init.
  */
 void
-grfccattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+grfccattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	static struct grf_softc		congrf;
 	static int			first_attach = 1;
@@ -243,7 +238,7 @@ void		*auxp;
 		 * We inited earlier just copy the info, take care
 		 * not to copy the device struct though.
 		 */
-		bcopy(&congrf.g_display, &gp->g_display,
+		memcpy( &gp->g_display, &congrf.g_display,
 			(char *)&gp[1] - (char *)&gp->g_display);
 	}
 	else {
@@ -281,9 +276,7 @@ void		*auxp;
 }
 
 int
-grfccprint(auxp, pnp)
-void		*auxp;
-const char	*pnp;
+grfccprint(void *auxp, const char *pnp)
 {
 	if(pnp)
 		aprint_normal("ite at %s", pnp);
@@ -294,7 +287,7 @@ const char	*pnp;
  * called from grf_cc to return console priority
  */
 int
-grfcc_cnprobe()
+grfcc_cnprobe(void)
 {
 	return(CN_INTERNAL);
 }
@@ -303,8 +296,7 @@ grfcc_cnprobe()
  * grf_softc struct
  */
 void
-grfcc_iteinit(gp)
-struct grf_softc *gp;
+grfcc_iteinit(struct grf_softc *gp)
 {
 
 	gp->g_itecursor = cursor32;
@@ -316,15 +308,13 @@ struct grf_softc *gp;
 }
 
 static void
-view_deinit(ip)
-struct ite_softc	*ip;
+view_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
 
 static void
-view_init(ip)
-register struct ite_softc *ip;
+view_init(register struct ite_softc *ip)
 {
 	struct itewinsize	wsz;
 	ipriv_t			*cci;
@@ -349,7 +339,7 @@ register struct ite_softc *ip;
 	else ip->priv = cci = (ipriv_t*)malloc(sizeof(*cci), M_DEVBUF,M_WAITOK);
 	if(cci == NULL)
 		panic("No memory for ite-view");
-	bzero(cci, sizeof(*cci));
+	memset(cci, 0, sizeof(*cci));
 
 	cci->cursor_opt    = 0;
 	cci->row_ptr       = NULL;
@@ -371,9 +361,7 @@ register struct ite_softc *ip;
 }
 
 static int
-ite_newsize(ip, winsz)
-struct ite_softc	*ip;
-struct itewinsize	*winsz;
+ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 {
 	struct view_size	vs;
 	ipriv_t			*cci = ip->priv;    
@@ -457,12 +445,7 @@ struct itewinsize	*winsz;
 }
 
 int
-itecc_ioctl(ip, cmd, addr, flag, l)
-struct ite_softc	*ip;
-u_long			cmd;
-void *			addr;
-int			flag;
-struct lwp		*l;
+itecc_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct winsize		ws;
 	struct itewinsize	*is;
@@ -625,7 +608,7 @@ clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 			int		i;
 			u_char	*ptr = cci->row_ptr[sy]; 
 			for(i = 0; i < ip->font.height; i++) {
-				bzero(ptr, bm->bytes_per_row);
+				memset(ptr, 0, bm->bytes_per_row);
 				ptr += bm->bytes_per_row;
 			}
 			sy++;
@@ -657,10 +640,7 @@ clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 
 /* Note: sx is only relevant for SCROLL_LEFT or SCROLL_RIGHT.  */
 static void
-scroll8(ip, sy, sx, count, dir)
-register struct ite_softc	*ip;
-register int			sy;
-int				dir, sx, count;
+scroll8(register struct ite_softc *ip, register int sy, int sx, int count, int dir)
 {
 	bmap_t *bm = viewview(ip->grf->g_viewdev)->bitmap;
 	u_char *pl = ((ipriv_t *)ip->priv)->row_ptr[sy];

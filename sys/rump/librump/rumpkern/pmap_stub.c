@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.12 2009/01/23 13:14:16 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.12.2.1 2009/05/13 17:22:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.12 2009/01/23 13:14:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.12.2.1 2009/05/13 17:22:57 jym Exp $");
 
 #include <sys/param.h>
 
@@ -113,12 +113,36 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 /*
  * Begin MD stubs
  */
-#if !defined(__i386__) && !defined(__x86_64__) && !defined(__vax__)
+#if !defined(__i386__) && !defined(__x86_64__) && \
+    !defined(__hppa__) && \
+    !defined(__vax__) 
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 
 	/* nada */
+}
+#endif
+
+#ifdef __hppa__
+void
+pmap_page_remove(struct vm_page *pg)
+{
+
+}
+
+bool
+pmap_changebit(struct vm_page *pg, unsigned int set, unsigned int clear)
+{
+
+	return true;
+}
+
+bool
+pmap_testbit(struct vm_page *pg, unsigned int bit)
+{
+
+	return true;
 }
 #endif
 

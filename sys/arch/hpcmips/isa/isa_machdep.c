@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.34 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.34.14.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.34 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.34.14.1 2009/05/13 17:17:46 jym Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -259,9 +259,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int intr, int type, int level,
 }
 
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	struct vrisab_softc *sc = ic->ic_sc;
 	/* Call Vr routine */
@@ -346,7 +344,7 @@ probe_com(u_int32_t port_addr)
 }
 
 static void
-__find_comport()
+__find_comport(void)
 {
 	int found;
 	u_int32_t port, step;

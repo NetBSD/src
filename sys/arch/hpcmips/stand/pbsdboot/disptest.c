@@ -1,4 +1,4 @@
-/*	$NetBSD: disptest.c,v 1.5 2001/09/24 10:42:02 takemura Exp $	*/
+/*	$NetBSD: disptest.c,v 1.5.140.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -49,7 +49,7 @@ static struct area {
 int ntargets = ARRAYSIZEOF(targets);
 
 void
-flush_XX()
+flush_XX(void)
 {
   static volatile unsigned char tmp[1024*64];
   int i, s;
@@ -60,7 +60,7 @@ flush_XX()
 }
 
 static void
-gpio_test()
+gpio_test(void)
 {
 #define GIUBASE 0xab000000
 #define GIUOFFSET 0x0100
@@ -245,7 +245,7 @@ regfetch(struct regdesc* desc)
 }
 
 static void
-register_test()
+register_test(void)
 {
     int i;
     int nregs = sizeof(test_regs)/sizeof(*test_regs);
@@ -272,7 +272,7 @@ register_test()
 }
 
 static void
-dump_memory()
+dump_memory(void)
 {
 	HANDLE fh = INVALID_HANDLE_VALUE;
 #define UNICODE_MEMORY_CARD \
@@ -317,7 +317,7 @@ dump_memory()
 }
 
 static void
-serial_test()
+serial_test(void)
 {
 #if 1
 #  define SIUADDR 0xac000000
@@ -400,7 +400,7 @@ examine(char* addr, int size)
 }
 
 void
-display_search()
+display_search(void)
 {
 	int step = 0x10000;
 	int i;
@@ -446,7 +446,7 @@ display_search()
 }
 
 void
-display_draw()
+display_draw(void)
 {
 	long addr = 0x13000000;
 	int size = 0x80000;
@@ -495,7 +495,7 @@ display_draw()
 #define PCIC_IDENT_EXPECTED	0x83
 
 void
-pcic_search()
+pcic_search(void)
 {
 	long addr;
 	int window_size = 0x10000;
@@ -528,7 +528,7 @@ pcic_search()
 #define VRPCIU_CONFD	(*(u_int32_t*)0xaf000c14)
 
 void
-pci_dump()
+pci_dump(void)
 {
 	int mode, i;
 	BOOL SetKMode(BOOL);
@@ -587,7 +587,7 @@ pci_dump()
 }
 
 void
-hardware_test()
+hardware_test(void)
 {
 	int do_gpio_test = 0;
 	int do_register_test = 0;

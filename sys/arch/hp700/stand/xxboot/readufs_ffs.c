@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.3 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.3.92.1 2009/05/13 17:17:44 jym Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.8 2004/06/12 04:26:39 itohy Exp	*/
 
 /*
@@ -23,7 +23,7 @@
  * If it is an FFS, save information from the superblock.
  */
 int
-try_ffs()
+try_ffs(void)
 {
 	union {
 		struct fs	sblk;
@@ -121,9 +121,7 @@ try_ffs()
  * Get inode from disk.
  */
 int
-get_ffs_inode(ino, dibuf)
-	ino32_t ino;
-	union ufs_dinode *dibuf;
+get_ffs_inode(ino32_t ino, union ufs_dinode *dibuf)
 {
 	struct ufs_info *ufsinfo = &ufs_info;
 	union ufs_dinode *buf = alloca((size_t) fsi.bsize);

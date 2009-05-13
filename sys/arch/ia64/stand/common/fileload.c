@@ -1,4 +1,4 @@
-/*	$NetBSD: fileload.c,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: fileload.c,v 1.1.92.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -265,10 +265,10 @@ file_alloc(void)
     struct preloaded_file	*fp;
     
     if ((fp = alloc(sizeof(struct preloaded_file))) != NULL) {
-	bzero(fp, sizeof(struct preloaded_file));
+	memset(fp, 0, sizeof(struct preloaded_file));
 
 	if (fp->marks = alloc(sizeof(u_long))) {
-		bzero(fp->marks, sizeof(u_long));
+		memset(fp->marks, 0, sizeof(u_long));
 	}
     }
     return (fp);

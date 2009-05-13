@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.39 2008/11/24 11:41:09 ad Exp $
+# $NetBSD: INSTALL,v 1.39.4.1 2009/05/13 17:16:37 jym Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.39 $"
+#ident 		"INSTALL-$Revision: 1.39.4.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -26,7 +26,6 @@ maxusers	32
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	NTP		# network time protocol
 #options 	USERCONF	# userconf(4) support

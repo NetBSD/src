@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_bus_mem.c,v 1.5 2000/04/17 17:30:48 drochner Exp $ */
+/* $NetBSD: a12c_bus_mem.c,v 1.5.148.1 2009/05/13 17:16:05 jym Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -46,121 +46,121 @@
 
 #define	A12C_BUS_MEM()	/* Generate ctags(1) key */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.5 2000/04/17 17:30:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.5.148.1 2009/05/13 17:16:05 jym Exp $");
 
 /* Memory barrier */
-void		pci_a12c_mem_barrier __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_size_t, int));
+void		pci_a12c_mem_barrier(void *, bus_space_handle_t,
+		    bus_size_t, bus_size_t, int);
 
 /* Memory read (single) */
-u_int8_t	pci_a12c_mem_read_1 __P((void *, bus_space_handle_t,
-		    bus_size_t));
-u_int16_t	pci_a12c_mem_read_2 __P((void *, bus_space_handle_t,
-		    bus_size_t));
-u_int32_t	pci_a12c_mem_read_4 __P((void *, bus_space_handle_t,
-		    bus_size_t));
-u_int64_t	pci_a12c_mem_read_8 __P((void *, bus_space_handle_t,
-		    bus_size_t));
+u_int8_t	pci_a12c_mem_read_1(void *, bus_space_handle_t,
+		    bus_size_t);
+u_int16_t	pci_a12c_mem_read_2(void *, bus_space_handle_t,
+		    bus_size_t);
+u_int32_t	pci_a12c_mem_read_4(void *, bus_space_handle_t,
+		    bus_size_t);
+u_int64_t	pci_a12c_mem_read_8(void *, bus_space_handle_t,
+		    bus_size_t);
 
 /* Memory read multiple */
-void		pci_a12c_mem_read_multi_1 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t));
-void		pci_a12c_mem_read_multi_2 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t *, bus_size_t));
-void		pci_a12c_mem_read_multi_4 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t *, bus_size_t));
-void		pci_a12c_mem_read_multi_8 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t *, bus_size_t));
+void		pci_a12c_mem_read_multi_1(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t);
+void		pci_a12c_mem_read_multi_2(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t *, bus_size_t);
+void		pci_a12c_mem_read_multi_4(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t *, bus_size_t);
+void		pci_a12c_mem_read_multi_8(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t *, bus_size_t);
 
 /* Memory read region */
-void		pci_a12c_mem_read_region_1 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t));
-void		pci_a12c_mem_read_region_2 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t *, bus_size_t));
-void		pci_a12c_mem_read_region_4 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t *, bus_size_t));
-void		pci_a12c_mem_read_region_8 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t *, bus_size_t));
+void		pci_a12c_mem_read_region_1(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t);
+void		pci_a12c_mem_read_region_2(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t *, bus_size_t);
+void		pci_a12c_mem_read_region_4(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t *, bus_size_t);
+void		pci_a12c_mem_read_region_8(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t *, bus_size_t);
 
 /* Memory write (single) */
-void		pci_a12c_mem_write_1 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t));
-void		pci_a12c_mem_write_2 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t));
-void		pci_a12c_mem_write_4 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t));
-void		pci_a12c_mem_write_8 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t));
+void		pci_a12c_mem_write_1(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t);
+void		pci_a12c_mem_write_2(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t);
+void		pci_a12c_mem_write_4(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t);
+void		pci_a12c_mem_write_8(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t);
 
 /* Memory write multiple */
-void		pci_a12c_mem_write_multi_1 __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int8_t *, bus_size_t));
-void		pci_a12c_mem_write_multi_2 __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int16_t *, bus_size_t));
-void		pci_a12c_mem_write_multi_4 __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int32_t *, bus_size_t));
-void		pci_a12c_mem_write_multi_8 __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int64_t *, bus_size_t));
+void		pci_a12c_mem_write_multi_1(void *, bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t);
+void		pci_a12c_mem_write_multi_2(void *, bus_space_handle_t,
+		    bus_size_t, const u_int16_t *, bus_size_t);
+void		pci_a12c_mem_write_multi_4(void *, bus_space_handle_t,
+		    bus_size_t, const u_int32_t *, bus_size_t);
+void		pci_a12c_mem_write_multi_8(void *, bus_space_handle_t,
+		    bus_size_t, const u_int64_t *, bus_size_t);
 
 /* Memory write region */
-void		pci_a12c_mem_write_region_1 __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int8_t *, bus_size_t));
-void		pci_a12c_mem_write_region_2 __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int16_t *, bus_size_t));
-void		pci_a12c_mem_write_region_4 __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int32_t *, bus_size_t));
-void		pci_a12c_mem_write_region_8 __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int64_t *, bus_size_t));
+void		pci_a12c_mem_write_region_1(void *, bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t);
+void		pci_a12c_mem_write_region_2(void *, bus_space_handle_t,
+		    bus_size_t, const u_int16_t *, bus_size_t);
+void		pci_a12c_mem_write_region_4(void *, bus_space_handle_t,
+		    bus_size_t, const u_int32_t *, bus_size_t);
+void		pci_a12c_mem_write_region_8(void *, bus_space_handle_t,
+		    bus_size_t, const u_int64_t *, bus_size_t);
 
 /* Memory set multiple */
-void		pci_a12c_mem_set_multi_1 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t, bus_size_t));
-void		pci_a12c_mem_set_multi_2 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t, bus_size_t));
-void		pci_a12c_mem_set_multi_4 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t, bus_size_t));
-void		pci_a12c_mem_set_multi_8 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t, bus_size_t));
+void		pci_a12c_mem_set_multi_1(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t, bus_size_t);
+void		pci_a12c_mem_set_multi_2(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t, bus_size_t);
+void		pci_a12c_mem_set_multi_4(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t, bus_size_t);
+void		pci_a12c_mem_set_multi_8(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t, bus_size_t);
 
 /* Memory set region */
-void		pci_a12c_mem_set_region_1 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t, bus_size_t));
-void		pci_a12c_mem_set_region_2 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t, bus_size_t));
-void		pci_a12c_mem_set_region_4 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t, bus_size_t));
-void		pci_a12c_mem_set_region_8 __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t, bus_size_t));
+void		pci_a12c_mem_set_region_1(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t, bus_size_t);
+void		pci_a12c_mem_set_region_2(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t, bus_size_t);
+void		pci_a12c_mem_set_region_4(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t, bus_size_t);
+void		pci_a12c_mem_set_region_8(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t, bus_size_t);
 
 /* Memory copy */
-void		pci_a12c_mem_copy_region_1 __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		pci_a12c_mem_copy_region_2 __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		pci_a12c_mem_copy_region_4 __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		pci_a12c_mem_copy_region_8 __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+void		pci_a12c_mem_copy_region_1(void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void		pci_a12c_mem_copy_region_2(void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void		pci_a12c_mem_copy_region_4(void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void		pci_a12c_mem_copy_region_8(void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
 #define	__S(S)		__STRING(S)
 
 /* mapping/unmapping */
-int		pci_a12c_mem_map __P((void *, bus_addr_t, bus_size_t, int,
-		    bus_space_handle_t *, int));
-void		pci_a12c_mem_unmap __P((void *, bus_space_handle_t,
-		    bus_size_t, int));
-int		pci_a12c_mem_subregion __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_size_t, bus_space_handle_t *));
+int		pci_a12c_mem_map(void *, bus_addr_t, bus_size_t, int,
+		    bus_space_handle_t *, int);
+void		pci_a12c_mem_unmap(void *, bus_space_handle_t,
+		    bus_size_t, int);
+int		pci_a12c_mem_subregion(void *, bus_space_handle_t,
+		    bus_size_t, bus_size_t, bus_space_handle_t *);
 
 /* allocation/deallocation */
-int		pci_a12c_mem_alloc __P((void *, bus_addr_t, bus_addr_t,
+int		pci_a12c_mem_alloc(void *, bus_addr_t, bus_addr_t,
 		    bus_size_t, bus_size_t, bus_addr_t, int, bus_addr_t *,
-                    bus_space_handle_t *));
-void		pci_a12c_mem_free __P((void *, bus_space_handle_t,
-		    bus_size_t));
+                    bus_space_handle_t *);
+void		pci_a12c_mem_free(void *, bus_space_handle_t,
+		    bus_size_t);
 
 /* get kernel virtual address*/
-void		*pci_a12c_mem_vaddr __P((void *, bus_space_handle_t));
+void		*pci_a12c_mem_vaddr(void *, bus_space_handle_t);
 
 static struct alpha_bus_space pci_a12c_mem_space = {
 	/* cookie */
@@ -237,8 +237,7 @@ static struct alpha_bus_space pci_a12c_mem_space = {
 };
 
 bus_space_tag_t
-a12c_bus_mem_init(v)
-	void *v;
+a12c_bus_mem_init(void *v)
 {
         bus_space_tag_t t;
 
@@ -248,13 +247,7 @@ a12c_bus_mem_init(v)
 }
 
 int
-pci_a12c_mem_map(v, memaddr, memsize, flags, memhp, acct)
-	void *v;
-	bus_addr_t memaddr;
-	bus_size_t memsize;
-	int flags;
-	bus_space_handle_t *memhp;
-	int acct;
+pci_a12c_mem_map(void *v, bus_addr_t memaddr, bus_size_t memsize, int flags, bus_space_handle_t *memhp, int acct)
 {
 	if(flags & BUS_SPACE_MAP_LINEAR)
 		printf("warning, linear a12 pci map requested\n");
@@ -265,19 +258,12 @@ pci_a12c_mem_map(v, memaddr, memsize, flags, memhp, acct)
 }
 
 void
-pci_a12c_mem_unmap(v, memh, memsize, acct)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t memsize;
-	int acct;
+pci_a12c_mem_unmap(void *v, bus_space_handle_t memh, bus_size_t memsize, int acct)
 {
 }
 
 int
-pci_a12c_mem_subregion(v, memh, offset, size, nmemh)
-	void *v;
-	bus_space_handle_t memh, *nmemh;
-	bus_size_t offset, size;
+pci_a12c_mem_subregion(void *v, bus_space_handle_t memh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nmemh)
 {
 	*nmemh = memh + offset;
 	return 0;
@@ -296,28 +282,19 @@ pci_a12c_mem_alloc(v, rstart, rend, size, align, boundary, flags,
 }
 
 void
-pci_a12c_mem_free(v, bsh, size)
-	void *v;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+pci_a12c_mem_free(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
 }
 
 void *
-pci_a12c_mem_vaddr(v, bsh)
-	void *v;
-	bus_space_handle_t bsh;
+pci_a12c_mem_vaddr(void *v, bus_space_handle_t bsh)
 {
 	/* not supported (could panic() if pci_a12c_mem_map() caught it) */
 	return (0);
 }
 
 void
-pci_a12c_mem_barrier(v, h, o, l, f)
-	void *v;
-	bus_space_handle_t h;
-	bus_size_t o, l;
-	int f;
+pci_a12c_mem_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int f)
 {
 	/* optimize for wmb-only case but fall back to the more general mb */
 

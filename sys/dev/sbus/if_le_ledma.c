@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.30 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.30.14.1 2009/05/13 17:21:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.30 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.30.14.1 2009/05/13 17:21:22 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -83,6 +83,8 @@ struct	le_softc {
 	bus_space_handle_t	sc_reg;		/* LANCE registers */
 	struct	lsi64854_softc	*sc_dma;	/* pointer to my dma */
 	u_int			sc_laddr;	/* LANCE DMA address */
+	u_int			sc_lostcount;
+#define LE_LOSTTHRESH	5	/* lost carrior count to switch media */
 };
 
 #define MEMSIZE		(16*1024)	/* LANCE memory size */
@@ -277,6 +279,12 @@ lenocarrier(struct lance_softc *sc)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
+	/* it may take a while for modern switches to set 10baseT media */
+	if (lesc->sc_lostcount++ < LE_LOSTTHRESH)
+		return;
+
+	lesc->sc_lostcount = 0;
+
 	/*
 	 * Check if the user has requested a certain cable type, and
 	 * if so, honor that request.
@@ -379,7 +387,7 @@ leattach_ledma(device_t parent, device_t self, void *aux)
 	lesc->sc_laddr = lesc->sc_dmamap->dm_segs[0].ds_addr;
 	sc->sc_addr = lesc->sc_laddr & 0xffffff;
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
-
+	lesc->sc_lostcount = 0;
 
 	/* Assume SBus is grandparent */
 	lesc->sc_sd.sd_reset = (void *)lance_reset;

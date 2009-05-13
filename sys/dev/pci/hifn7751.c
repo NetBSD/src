@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.37 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.37.18.1 2009/05/13 17:20:24 jym Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.37 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.37.18.1 2009/05/13 17:20:24 jym Exp $");
 
 #include "rnd.h"
 
@@ -105,9 +105,9 @@ int hifn_debug = 1;
 #ifdef __OpenBSD__
 static int hifn_probe((struct device *, void *, void *);
 #else
-static int hifn_probe(struct device *, struct cfdata *, void *);
+static int hifn_probe(device_t, cfdata_t, void *);
 #endif
-static void hifn_attach(struct device *, struct device *, void *);
+static void hifn_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(hifn, sizeof(struct hifn_softc),
     hifn_probe, hifn_attach, NULL, NULL);
@@ -227,21 +227,20 @@ hifn_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-hifn_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+hifn_probe(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa = aux;
 
 	if (hifn_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
-hifn_attach(struct device *parent, struct device *self, void *aux)
+hifn_attach(device_t parent, device_t self, void *aux)
 {
-	struct hifn_softc *sc = (struct hifn_softc *)self;
+	struct hifn_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	const struct hifn_product *hp;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -325,7 +324,7 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_dmamap = dmamap;
 	sc->sc_dma = (struct hifn_dma *)kva;
-	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
+	memset(sc->sc_dma, 0, sizeof(*sc->sc_dma));
 
 	hifn_reset_board(sc, 0);
 
@@ -732,7 +731,7 @@ hifn_reset_board(struct hifn_softc *sc, int full)
 		hifn_reset_puc(sc);
 	}
 
-	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
+	memset(sc->sc_dma, 0, sizeof(*sc->sc_dma));
 
 	/* Bring dma unit out of reset */
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
@@ -1051,7 +1050,7 @@ hifn_ramtype(struct hifn_softc *sc)
 		return (-1);
 	if (hifn_readramaddr(sc, 0, data))
 		return (-1);
-	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
+	if (memcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
 		return (0);
 	}
@@ -1062,7 +1061,7 @@ hifn_ramtype(struct hifn_softc *sc)
 		return (-1);
 	if (hifn_readramaddr(sc, 0, data))
 		return (-1);
-	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
+	if (memcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
 		return (0);
 	}
@@ -1087,16 +1086,16 @@ hifn_sramsize(struct hifn_softc *sc)
 
 	for (i = HIFN_SRAM_GRANULARITY - 1; i >= 0; i--) {
 		a = i * HIFN_SRAM_STEP_SIZE;
-		bcopy(&i, data, sizeof(i));
+		memcpy(data, &i, sizeof(i));
 		hifn_writeramaddr(sc, a, data);
 	}
 
 	for (i = 0; i < HIFN_SRAM_GRANULARITY; i++) {
 		a = i * HIFN_SRAM_STEP_SIZE;
-		bcopy(&i, dataexpect, sizeof(i));
+		memcpy(dataexpect, &i, sizeof(i));
 		if (hifn_readramaddr(sc, a, data) < 0)
 			return (0);
-		if (bcmp(data, dataexpect, sizeof(data)) != 0)
+		if (memcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
 		sc->sc_ramsize = a + HIFN_SRAM_STEP_SIZE;
 	}
@@ -1194,9 +1193,9 @@ hifn_writeramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
 	/* build write command */
-	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
+	memset(dma->command_bufs[cmdi], 0, HIFN_MAX_COMMAND);
 	*(struct hifn_base_command *)dma->command_bufs[cmdi] = wc;
-	bcopy(data, &dma->test_src, sizeof(dma->test_src));
+	memcpy(&dma->test_src, data, sizeof(dma->test_src));
 
 	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr
 	    + offsetof(struct hifn_dma, test_src));
@@ -1258,7 +1257,7 @@ hifn_readramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
 	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
-	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
+	memset(dma->command_bufs[cmdi], 0, HIFN_MAX_COMMAND);
 	*(struct hifn_base_command *)dma->command_bufs[cmdi] = rc;
 
 	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
@@ -1294,7 +1293,7 @@ hifn_readramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 		r = -1;
 	} else {
 		r = 0;
-		bcopy(&dma->test_dst, data, sizeof(dma->test_dst));
+		memcpy(data, &dma->test_dst, sizeof(dma->test_dst));
 	}
 
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
@@ -1415,18 +1414,18 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 	}
 
 	if (using_mac && cmd->mac_masks & HIFN_MAC_CMD_NEW_KEY) {
-		bcopy(cmd->mac, buf_pos, HIFN_MAC_KEY_LENGTH);
+		memcpy(buf_pos, cmd->mac, HIFN_MAC_KEY_LENGTH);
 		buf_pos += HIFN_MAC_KEY_LENGTH;
 	}
 
 	if (using_crypt && cmd->cry_masks & HIFN_CRYPT_CMD_NEW_KEY) {
 		switch (cmd->cry_masks & HIFN_CRYPT_CMD_ALG_MASK) {
 		case HIFN_CRYPT_CMD_ALG_3DES:
-			bcopy(cmd->ck, buf_pos, HIFN_3DES_KEY_LENGTH);
+			memcpy(buf_pos, cmd->ck, HIFN_3DES_KEY_LENGTH);
 			buf_pos += HIFN_3DES_KEY_LENGTH;
 			break;
 		case HIFN_CRYPT_CMD_ALG_DES:
-			bcopy(cmd->ck, buf_pos, HIFN_DES_KEY_LENGTH);
+			memcpy(buf_pos, cmd->ck, HIFN_DES_KEY_LENGTH);
 			buf_pos += HIFN_DES_KEY_LENGTH;
 			break;
 		case HIFN_CRYPT_CMD_ALG_RC4:
@@ -1435,11 +1434,11 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 				int clen;
 
 				clen = MIN(cmd->cklen, len);
-				bcopy(cmd->ck, buf_pos, clen);
+				memcpy(buf_pos, cmd->ck, clen);
 				len -= clen;
 				buf_pos += clen;
 			} while (len > 0);
-			bzero(buf_pos, 4);
+			memset(buf_pos, 0, 4);
 			buf_pos += 4;
 			break;
 		case HIFN_CRYPT_CMD_ALG_AES:
@@ -1447,7 +1446,7 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 			 * AES keys are variable 128, 192 and
 			 * 256 bits (16, 24 and 32 bytes).
 			 */
-			bcopy(cmd->ck, buf_pos, cmd->cklen);
+			memcpy(buf_pos, cmd->ck, cmd->cklen);
 			buf_pos += cmd->cklen;
 			break;
 		}
@@ -1462,13 +1461,13 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 			ivlen = HIFN_IV_LENGTH;
 			break;
 		}
-		bcopy(cmd->iv, buf_pos, ivlen);
+		memcpy(buf_pos, cmd->iv, ivlen);
 		buf_pos += ivlen;
 	}
 
 	if ((cmd->base_masks & (HIFN_BASE_CMD_MAC | HIFN_BASE_CMD_CRYPT |
 	    HIFN_BASE_CMD_COMP)) == 0) {
-		bzero(buf_pos, 8);
+		memset(buf_pos, 0, 8);
 		buf_pos += 8;
 	}
 
@@ -2143,7 +2142,7 @@ hifn_freesession(void *arg, u_int64_t tid)
 	if (session >= sc->sc_maxses)
 		return (EINVAL);
 
-	bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
+	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
 	return (0);
 }
 
@@ -2283,7 +2282,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
 			if (enccrd->crd_flags & CRD_F_ENCRYPT) {
 				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-					bcopy(enccrd->crd_iv, cmd->iv, ivlen);
+					memcpy(cmd->iv, enccrd->crd_iv, ivlen);
 				else
 					bcopy(sc->sc_sessions[session].hs_iv,
 					    cmd->iv, ivlen);
@@ -2301,7 +2300,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 				}
 			} else {
 				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-					bcopy(enccrd->crd_iv, cmd->iv, ivlen);
+					memcpy(cmd->iv, enccrd->crd_iv, ivlen);
 				else if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copydata(cmd->srcu.src_m,
 					    enccrd->crd_inject, ivlen, cmd->iv);
@@ -2370,8 +2369,8 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		     maccrd->crd_alg == CRYPTO_MD5_HMAC_96) &&
 		    sc->sc_sessions[session].hs_state == HS_STATE_USED) {
 			cmd->mac_masks |= HIFN_MAC_CMD_NEW_KEY;
-			bcopy(maccrd->crd_key, cmd->mac, maccrd->crd_klen >> 3);
-			bzero(cmd->mac + (maccrd->crd_klen >> 3),
+			memcpy(cmd->mac, maccrd->crd_key, maccrd->crd_klen >> 3);
+			memset(cmd->mac + (maccrd->crd_klen >> 3), 0,
 			    HIFN_MAC_KEY_LENGTH - (maccrd->crd_klen >> 3));
 		}
 	}
@@ -2608,7 +2607,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 				m_copyback((struct mbuf *)crp->crp_buf,
 				    crd->crd_inject, len, macbuf);
 			else if ((crp->crp_flags & CRYPTO_F_IOV) && crp->crp_mac)
-				bcopy((void *)macbuf, crp->crp_mac, len);
+				memcpy(crp->crp_mac, (void *)macbuf, len);
 			break;
 		}
 	}
@@ -2875,7 +2874,7 @@ hifn_callback_comp(struct hifn_softc *sc, struct hifn_command *cmd,
 	dstsize = cmd->dst_map->dm_mapsize;
 	bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
 
-	bcopy(resbuf, &baseres, sizeof(struct hifn_base_result));
+	memcpy(&baseres, resbuf, sizeof(struct hifn_base_result));
 
 	i = dma->dstk; u = dma->dstu;
 	while (u != 0) {

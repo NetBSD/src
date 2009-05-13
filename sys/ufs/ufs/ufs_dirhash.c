@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.27 2008/07/03 09:56:15 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.27.10.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.27 2008/07/03 09:56:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.27.10.1 2009/05/13 17:23:07 jym Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -140,7 +140,7 @@ ufsdirhash_build(struct inode *ip)
 	}
 
 	/* Don't hash removed directories. */
-	if (ip->i_ffs_effnlink == 0)
+	if (ip->i_nlink == 0)
 		return (-1);
 
 	vp = ip->i_vnode;
@@ -430,7 +430,7 @@ restart:
 			return (EJUSTRETURN);
 		}
 		if (dp->d_namlen == namelen &&
-		    bcmp(dp->d_name, name, namelen) == 0) {
+		    memcmp(dp->d_name, name, namelen) == 0) {
 			/* Found. Get the prev offset if needed. */
 			if (prevoffp != NULL) {
 				if (offset & (dirblksiz - 1)) {
@@ -1147,7 +1147,7 @@ ufsdirhash_sysctl_init(void)
 }
 
 void
-ufsdirhash_init()
+ufsdirhash_init(void)
 {
 
 	mutex_init(&ufsdirhash_lock, MUTEX_DEFAULT, IPL_NONE);

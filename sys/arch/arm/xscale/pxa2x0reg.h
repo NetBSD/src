@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.17 2007/10/17 19:53:45 garbled Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.17.34.1 2009/05/13 17:16:19 jym Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -186,6 +186,7 @@
 #define  DCSR_STOPIRQEN     (1<<29)     /* stop interrupt enable */
 #define  DCSR_NODESCFETCH   (1<<30)	/* no-descriptor fetch mode */
 #define  DCSR_RUN  	    (1<<31)
+#define DMAC_DALGN 	0x00a0		/* DMA alignment (PXA27x only) */
 #define DMAC_DINT 	0x00f0		/* DMA interrupt */
 #define  DMAC_DINT_MASK	0xffffu
 #define DMAC_DRCMR(n)	(0x100+(n)*4)	/* Channel map register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xalloc.c,v 1.2 2002/02/24 20:51:08 leo Exp $	*/
+/*	$NetBSD: xalloc.c,v 1.2.136.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -34,8 +34,7 @@
 #include "libtos.h"
 
 void *
-xmalloc(size)
-	size_t	size;
+xmalloc(size_t size)
 {
 	void *	p = malloc(size);
 
@@ -46,9 +45,7 @@ xmalloc(size)
 }
 
 void *
-xrealloc(ptr, size)
-	void	*ptr;
-	size_t	size;
+xrealloc(void *ptr, size_t size)
 {
 	void *	p = realloc(ptr, size);
 

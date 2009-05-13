@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.48.32.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48.32.1 2009/05/13 17:18:01 jym Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -98,10 +98,7 @@ extern void openpic_set_priority(int, int);
 #endif
 
 int
-cpumatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int *reg = ca->ca_reg;
@@ -159,9 +156,7 @@ cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
 }
 
 void
-cpuattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpuattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_info *ci;
 	struct confargs *ca = aux;
@@ -191,7 +186,7 @@ cpuattach(parent, self, aux)
 #define CACHE_REG 0xf8000000
 
 void
-ohare_init()
+ohare_init(void)
 {
 	volatile uint32_t *cache_reg, x;
 

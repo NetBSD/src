@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.22 2008/05/31 08:00:34 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.22.12.1 2009/05/13 17:18:38 jym Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.22 2008/05/31 08:00:34 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.22.12.1 2009/05/13 17:18:38 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -256,7 +256,7 @@ sparc64_ipi_wait(sparc64_cpuset_t volatile *cpus_watchset, sparc64_cpuset_t cpus
  * Halt all cpus but ourselves.
  */
 void
-mp_halt_cpus()
+mp_halt_cpus(void)
 {
 	sparc64_cpuset_t cpumask, cpuset;
 
@@ -277,7 +277,7 @@ mp_halt_cpus()
  * Pause all cpus but ourselves.
  */
 void
-mp_pause_cpus()
+mp_pause_cpus(void)
 {
 	sparc64_cpuset_t cpuset;
 
@@ -306,7 +306,7 @@ mp_resume_cpu(int cno)
  * Resume all paused cpus.
  */
 void
-mp_resume_cpus()
+mp_resume_cpus(void)
 {
 	sparc64_cpuset_t cpuset;
 
@@ -403,7 +403,7 @@ smp_tlb_flush_ctx(pmap_t pm)
  * Flush whole TLB on all active processors.
  */
 void
-smp_tlb_flush_all()
+smp_tlb_flush_all(void)
 {
 	/* Flush our own TLB */
 	sp_tlb_flush_all();

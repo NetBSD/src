@@ -1,6 +1,6 @@
-/*	$NetBSD: pte.h,v 1.2 2002/08/11 22:29:09 fredette Exp $	*/
+/*	$NetBSD: pte.h,v 1.2.126.1 2009/05/13 17:17:48 jym Exp $	*/
 
-/*	$OpenBSD: pte.h,v 1.8 2001/01/12 23:37:49 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.11 2002/09/05 18:41:19 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1993,1994 The University of Utah and
@@ -29,43 +29,61 @@
 #ifndef	_HPPA_PTE_H_
 #define	_HPPA_PTE_H_
 
+typedef	uint32_t	pt_entry_t;
+
+#define	PTE_PROT_SHIFT	19
+#define	PTE_PROT(tlb)	((tlb) >> PTE_PROT_SHIFT)
+#define	TLB_PROT(pte)	((pte) << PTE_PROT_SHIFT)
+#define	PDE_MASK	(0xffc00000)
+#define	PDE_SIZE	(0x00400000)
+#define	PTE_MASK	(0x003ff000)
+#define	PTE_PAGE(pte)	((pte) & ~PGOFSET)
+
 /* TLB access/protection values */
-#define TLB_REF		0x80000000	/* software/HPT only */
-#define TLB_NO_RW_ALIAS	0x40000000	/* software only */
-#define TLB_TRAP	0x20000000
-#define TLB_DIRTY	0x10000000
-#define TLB_BREAK	0x08000000
-#define TLB_AR_MASK	0x07f00000
-#define		TLB_AR_NA	0x07300000
-#define		TLB_AR_KR	0x00000000
-#define		TLB_AR_KRW	0x01000000
-#define		TLB_AR_KRX	0x02000000
-#define		TLB_AR_KRWX	0x03000000
-#define		TLB_AR_UR	0x00f00000
-#define		TLB_AR_URW	0x01f00000
-#define		TLB_AR_URX	0x02f00000
-#define		TLB_AR_URWX	0x03f00000
-#define		TLB_AR_WRITABLE(x) (((x) & 0x05000000) == 0x01000000)
-#define TLB_UNCACHEABLE	0x00080000
-#define TLB_UNMANAGED	0x00040000	/* software only */
+#define	TLB_WIRED	0x40000000	/* software only */
+#define	TLB_REFTRAP	0x20000000	/* bit 2, T */
+#define	TLB_DIRTY	0x10000000	/* bit 3, D */
+#define	TLB_BREAK	0x08000000	/* bit 4, B */
+#define	TLB_AR_MASK	0x07f00000	/* bits 5-11, Access Rights */
+#define	TLB_READ	0x00000000
+#define	TLB_WRITE	0x01000000
+#define	TLB_EXECUTE	0x02000000
+#define	TLB_GATEWAY	0x04000000
+#define	TLB_USER	0x00f00000
+#define	 TLB_AR_NA	0x07300000
+#define	 TLB_AR_R	TLB_READ
+#define	 TLB_AR_RW	TLB_READ|TLB_WRITE
+#define	 TLB_AR_RX	TLB_READ|TLB_EXECUTE
+#define	 TLB_AR_RWX	TLB_READ|TLB_WRITE|TLB_EXECUTE
+#define TLB_UNCACHEABLE	0x00080000	/* bit 12, U */
+					/* bit 13-30, Access ID */
 #define TLB_PID_MASK	0x0000fffe
-#define TLB_WIRED	0x00000001	/* software only */
 
-#define	TLB_BITS	"\020\024U\031W\032X\033N\034B\035D\036T\037A\040R"
-
-#define TLB_REF_POS		0
-#define TLB_NO_RW_ALIAS_POS	1
-#define TLB_TRAP_POS		2
-#define TLB_DIRTY_POS		3
-#define TLB_BREAK_POS		4
-#define TLB_UNCACHEABLE_POS	12
-#define TLB_UNMANAGED_POS	13
-#define TLB_WIRED_POS		31
+#define TLB_BITS	\
+	"\177\020"	/* New bitmask */		\
+	"b\036WIRED\0"	/* bit 30 (1) */		\
+	"b\035T\0"	/* bit 29 (2) */		\
+	"b\034D\0"	/* bit 28 (3) */		\
+	"b\033B\0"	/* bit 27 (4) */		\
+	"b\023U\0"	/* bit 19 (12) */		\
+	"f\024\07AR\0"	/* bit 20 (11) .. 26 (5) */	\
+	    "=\x73" "------\0"				\
+	    "=\x00" "r-----\0"				\
+	    "=\x10" "rw----\0"				\
+	    "=\x20" "r-x---\0"				\
+	    "=\x30" "rwx---\0"				\
+	    "=\x0f" "r--r--\0"				\
+	    "=\x1f" "rw-rw-\0"				\
+	    "=\x2f" "r-xr-x\0"				\
+	    "=\x3f" "rwxrwx\0"				\
+	    "=\x4c" "gate\0"				\
+	    "=\x2c" "break\0"				\
+	"f\001\017PID\0\0" /* bit 1 (30) .. 15 (16)	*/
 
 /* protection for a gateway page */
-#define TLB_GATE_PROT	0x04c00000
+#define	TLB_GATE_PROT	0x04c00000
 
 /* protection for break page */
-#define TLB_BREAK_PROT	0x02c00000
+#define	TLB_BREAK_PROT	0x02c00000
 
 #endif	/* _HPPA_PTE_H_ */

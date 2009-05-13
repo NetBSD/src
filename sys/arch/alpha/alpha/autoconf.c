@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.44 2007/12/03 15:33:04 ad Exp $ */
+/* $NetBSD: autoconf.c,v 1.44.32.1 2009/05/13 17:16:04 jym Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2007/12/03 15:33:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44.32.1 2009/05/13 17:16:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,15 +62,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2007/12/03 15:33:04 ad Exp $");
 
 struct bootdev_data	*bootdev_data;
 
-void	parse_prom_bootdev __P((void));
-int	atoi __P((char *));
+void	parse_prom_bootdev(void);
+int	atoi(char *);
 
 /*
  * cpu_configure:
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	parse_prom_bootdev();
@@ -94,7 +94,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	if (booted_device == NULL)
@@ -104,7 +104,7 @@ cpu_rootconf()
 }
 
 void
-parse_prom_bootdev()
+parse_prom_bootdev(void)
 {
 	static char hacked_boot_dev[128];
 	static struct bootdev_data bd;
@@ -164,8 +164,7 @@ parse_prom_bootdev()
 }
 
 int
-atoi(s)
-	char *s;
+atoi(char *s)
 {
 	int n, neg;
 
@@ -189,9 +188,7 @@ atoi(s)
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	if (bootdev_data == NULL) {
 		/*

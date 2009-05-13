@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.123 2009/01/30 12:51:03 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.123.2.1 2009/05/13 17:19:10 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.123 2009/01/30 12:51:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.123.2.1 2009/05/13 17:19:10 jym Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -117,9 +117,14 @@ static int acpi_dbgr = 0x00;
 
 static ACPI_TABLE_DESC	acpi_initial_tables[128];
 
-static int	acpi_match(device_t, struct cfdata *, void *);
+static int	acpi_match(device_t, cfdata_t, void *);
 static void	acpi_attach(device_t, device_t, void *);
 static void	acpi_childdet(device_t, device_t);
+static int	acpi_detach(device_t, int);
+
+static int	acpi_rescan(device_t, const char *, const int *);
+static void	acpi_rescan1(struct acpi_softc *, const char *, const int *);
+static void	acpi_rescan_nodes(struct acpi_softc *);
 
 static int	acpi_print(void *aux, const char *);
 
@@ -128,7 +133,7 @@ static int	sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS);
 extern struct cfdriver acpi_cd;
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
-    acpi_match, acpi_attach, NULL, NULL, NULL, acpi_childdet);
+    acpi_match, acpi_attach, acpi_detach, NULL, acpi_rescan, acpi_childdet);
 
 /*
  * This is a flag we set when the ACPI subsystem is active.  Machine
@@ -364,7 +369,7 @@ acpi_OsGetRootPointer(void)
  *	Autoconfiguration `match' routine.
  */
 static int
-acpi_match(device_t parent, struct cfdata *match, void *aux)
+acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	/*
 	 * XXX Check other locators?  Hard to know -- machine
@@ -385,6 +390,9 @@ acpi_childdet(device_t self, device_t child)
 	struct acpi_softc *sc = device_private(self);
 	struct acpi_scope *as;
 	struct acpi_devnode *ad;
+
+	if (sc->sc_apmbus == child)
+		sc->sc_apmbus = NULL;
 
 	TAILQ_FOREACH(as, &sc->sc_scopes, as_list) {
 		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
@@ -511,7 +519,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 #endif
 	acpi_build_tree(sc);
 
-	sprintf(acpi_supported_states, "%s%s%s%s%s%s",
+	snprintf(acpi_supported_states, sizeof(acpi_supported_states),
+	    "%s%s%s%s%s%s",
 	    is_available_state(sc, ACPI_STATE_S0) ? "S0 " : "",
 	    is_available_state(sc, ACPI_STATE_S1) ? "S1 " : "",
 	    is_available_state(sc, ACPI_STATE_S2) ? "S2 " : "",
@@ -523,6 +532,81 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_dbgr & ACPI_DBGR_RUNNING)
 		acpi_osd_debugger();
 #endif
+}
+
+static int
+acpi_detach(device_t self, int flags)
+{
+	int rc;
+
+#ifdef ACPI_DEBUGGER
+	if (acpi_dbgr & ACPI_DBGR_RUNNING)
+		acpi_osd_debugger();
+#endif
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+#ifdef ACPI_DEBUGGER
+	if (acpi_dbgr & ACPI_DBGR_PROBE)
+		acpi_osd_debugger();
+#endif
+
+	if ((rc = acpitimer_detach()) != 0)
+		return rc;
+
+#if 0
+	/*
+	 * Bring ACPI on-line.
+	 */
+#ifdef ACPI_DEBUGGER
+	if (acpi_dbgr & ACPI_DBGR_ENABLE)
+		acpi_osd_debugger();
+#endif
+
+#define ACPI_ENABLE_PHASE1 \
+    (ACPI_NO_HANDLER_INIT | ACPI_NO_EVENT_INIT)
+#define ACPI_ENABLE_PHASE2 \
+    (ACPI_NO_HARDWARE_INIT | ACPI_NO_ACPI_ENABLE | \
+     ACPI_NO_ADDRESS_SPACE_INIT)
+
+	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE1);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "unable to enable ACPI: %s\n",
+		    AcpiFormatException(rv));
+		return;
+	}
+
+	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE2);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "unable to enable ACPI: %s\n",
+		    AcpiFormatException(rv));
+		return;
+	}
+
+	/* early EC handler initialization if ECDT table is available */
+	config_found_ia(self, "acpiecdtbus", NULL, NULL);
+
+	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self,
+		    "unable to initialize ACPI objects: %s\n",
+		    AcpiFormatException(rv));
+		return;
+	}
+	acpi_active = 1;
+
+	acpi_enable_fixed_events(sc);
+#endif
+
+	pmf_device_deregister(self);
+
+#if 0
+	sysmon_power_settype("acpi");
+#endif
+	acpi_softc = NULL;
+
+	return 0;
 }
 
 static bool
@@ -580,10 +664,8 @@ acpi_build_tree(struct acpi_softc *sc)
 		"\\_TZ_",	/* ACPI 1.0 thermal zone namespace */
 		NULL,
 	};
-	struct acpi_attach_args aa;
 	struct acpi_make_devnode_state state;
 	struct acpi_scope *as;
-	struct acpi_devnode *ad;
 	ACPI_HANDLE parent;
 	ACPI_STATUS rv;
 	int i;
@@ -610,9 +692,54 @@ acpi_build_tree(struct acpi_softc *sc)
 			AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
 			    acpi_make_devnode, &state, NULL);
 		}
+	}
 
-		/* Now, for this namespace, try and attach the devices. */
+	acpi_rescan1(sc, NULL, NULL);
+}
+
+static int
+acpi_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct acpi_softc *sc = device_private(self);
+
+	acpi_rescan1(sc, ifattr, locators);
+	return 0;
+}
+
+/* XXX share this with sys/arch/i386/pci/elan520.c */
+static bool
+ifattr_match(const char *snull, const char *t)
+{
+	return (snull == NULL) || strcmp(snull, t) == 0;
+}
+
+static void
+acpi_rescan1(struct acpi_softc *sc, const char *ifattr, const int *locators)
+{
+	if (ifattr_match(ifattr, "acpinodebus"))
+		acpi_rescan_nodes(sc);
+
+	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL) {
+		sc->sc_apmbus = config_found_ia(sc->sc_dev, "acpiapmbus", NULL,
+		    NULL);
+	}
+}
+
+static void
+acpi_rescan_nodes(struct acpi_softc *sc)
+{
+	struct acpi_scope *as;
+
+	TAILQ_FOREACH(as, &sc->sc_scopes, as_list) {
+		struct acpi_devnode *ad;
+
+		/* Now, for this namespace, try to attach the devices. */
 		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
+			struct acpi_attach_args aa;
+
+			if (ad->ad_device != NULL)
+				continue;
+
 			aa.aa_node = ad;
 			aa.aa_iot = sc->sc_iot;
 			aa.aa_memt = sc->sc_memt;
@@ -669,7 +796,6 @@ acpi_build_tree(struct acpi_softc *sc)
 			    "acpinodebus", &aa, acpi_print);
 		}
 	}
-	config_found_ia(sc->sc_dev, "acpiapmbus", NULL, NULL);
 }
 
 #ifdef ACPI_ACTIVATE_DEV

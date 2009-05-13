@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.50 2008/12/02 20:48:24 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.50.4.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.50 2008/12/02 20:48:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.50.4.1 2009/05/13 17:17:47 jym Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -223,6 +223,8 @@ hd64461video_attach(device_t parent, device_t self, void *aux)
 
 	/* update chip status */
 	hd64461video_update_videochip_status(&hd64461video_chip);
+
+	hd64461video_display_onoff(&hd64461video_chip, true);
 //	hd64461video_set_display_mode(&hd64461video_chip);
 
 	if (hd64461video_chip.console)
@@ -269,6 +271,21 @@ hd64461video_attach(device_t parent, device_t self, void *aux)
 	hfa.ha_dspconflist = &hd64461video_chip.hd;
 	
 	config_found(self, &hfa, hpcfbprint);
+
+	/*
+	 * XXX: TODO: for now this device manages power using
+	 * config_hook(9) registered with hpcapm(4).
+	 *
+	 * We cannot yet switch it to pmf(9) hooks because only apm(4)
+	 * uses them, apmdev(4) doesn't, but hpcapm(4) is the parent
+	 * device for both, so its hooks are always run.
+	 *
+	 * We probably want to register shutdown hook with pmf(9) to
+	 * make sure display is powered on before we reboot in case we
+	 * end up in ddb early on.
+	 */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 /* console support */

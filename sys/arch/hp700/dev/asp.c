@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.10 2006/09/22 14:08:03 skrll Exp $	*/
+/*	$NetBSD: asp.c,v 1.10.70.1 2009/05/13 17:17:42 jym Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.10 2006/09/22 14:08:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.10.70.1 2009/05/13 17:17:42 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ const struct asp_spus_tag {
 };
 
 struct asp_softc {
-	struct  device sc_dev;
+	device_t sc_dev;
 
 	struct hp700_int_reg sc_int_reg;
 
@@ -135,10 +135,10 @@ struct asp_softc {
 	volatile struct asp_trs *sc_trs;
 };
 
-int	aspmatch(struct device *, struct cfdata *, void *);
-void	aspattach(struct device *, struct device *, void *);
+int	aspmatch(device_t, cfdata_t, void *);
+void	aspattach(device_t, device_t, void *);
 
-CFATTACH_DECL(asp, sizeof(struct asp_softc),
+CFATTACH_DECL_NEW(asp, sizeof(struct asp_softc),
     aspmatch, aspattach, NULL, NULL);
 
 /*
@@ -151,7 +151,7 @@ asp_fix_args(void *_sc, struct gsc_attach_args *ga)
 	hppa_hpa_t module_offset;
 	struct asp_softc *sc = _sc;
 
-	/*  
+	/*
 	 * Determine this module's interrupt bit.
 	 */
 	module_offset = ga->ga_hpa - (hppa_hpa_t) sc->sc_trs;
@@ -165,10 +165,10 @@ asp_fix_args(void *_sc, struct gsc_attach_args *ga)
 	ASP_IRQ(0x30000, 3);	/* siop */
 	ASP_IRQ(0x800000, 13);	/* harmony */
 #undef ASP_IRQ
-}      
+}
 
 int
-aspmatch(struct device *parent, struct cfdata *cf, void *aux)
+aspmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -190,14 +190,16 @@ aspmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-aspattach(struct device *parent, struct device *self, void *aux)
+aspattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct asp_softc *sc = (struct asp_softc *)self;
+	struct asp_softc *sc = device_private(self);
 	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
 	uint32_t irr;
 	int s;
+
+	sc->sc_dev = self;
 
 	/*
 	 * Map the ASP interrupt registers.
@@ -242,7 +244,7 @@ aspattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_trs->asp_imr = 0;
 	splx(s);
 
-	printf (": %s rev %d, lan %d scsi %d\n",
+	aprint_normal(": %s rev %d, lan %d scsi %d\n",
 	    asp_spus[sc->sc_trs->asp_spu].name, sc->sc_hw->asp_version,
 	    sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
 
@@ -253,6 +255,16 @@ aspattach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
+	if (strcmp(parent->dv_xname, "mainbus0") == 0) {
+		ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
+		ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
+		ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];
+		ga.ga_dp.dp_bc[3] = ga.ga_dp.dp_bc[4];
+		ga.ga_dp.dp_bc[4] = ga.ga_dp.dp_bc[5];
+		ga.ga_dp.dp_bc[5] = ga.ga_dp.dp_mod;
+		ga.ga_dp.dp_mod = 0;
+	}
+
 	ga.ga_name = "gsc";
 	ga.ga_int_reg = &sc->sc_int_reg;
 	ga.ga_fix_args = asp_fix_args;

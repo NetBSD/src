@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.6 2007/03/07 09:10:21 he Exp $	*/
+/*	$NetBSD: itevar.h,v 1.6.58.1 2009/05/13 17:17:42 jym Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -139,7 +139,7 @@ struct itesw {
 	(ip->attrbuf + ((y) * ip->cols) + (x))
 
 #define attrclr(ip, sy, sx, h, w) \
-	bzero(ip->attrbuf + ((sy) * ip->cols) + (sx), (h) * (w))
+	memset(ip->attrbuf + ((sy) * ip->cols) + (sx), 0, (h) * (w))
   
 #define attrmov(ip, sy, sx, dy, dx, h, w) \
 	bcopy(ip->attrbuf + ((sy) * ip->cols) + (sx), \

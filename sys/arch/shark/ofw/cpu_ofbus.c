@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_ofbus.c,v 1.6 2005/12/11 12:19:04 christos Exp $	*/
+/*	$NetBSD: cpu_ofbus.c,v 1.6.94.1 2009/05/13 17:18:23 jym Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ofbus.c,v 1.6 2005/12/11 12:19:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ofbus.c,v 1.6.94.1 2009/05/13 17:18:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -19,10 +19,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_ofbus.c,v 1.6 2005/12/11 12:19:04 christos Exp $
  */ 
  
 static int
-cpu_ofbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpu_ofbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ofbus_attach_args *aa = aux;
 	char buf[32];
@@ -41,10 +38,7 @@ cpu_ofbus_match(parent, cf, aux)
  */
   
 static void
-cpu_ofbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpu_ofbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	cpu_attach(self);
 }

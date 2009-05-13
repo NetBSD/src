@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.48 2008/07/02 19:49:58 rmind Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.48.10.1 2009/05/13 17:18:56 jym Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.48 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.48.10.1 2009/05/13 17:18:56 jym Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -315,7 +315,7 @@ irix_sproc(void *entry, unsigned int inh, void *arg, void *sp, size_t len, pid_t
 		}
 
 		/* Now map the new stack */
-		bzero(&vmc, sizeof(vmc));
+		memset(&vmc, 0, sizeof(vmc));
 		vmc.ev_addr = trunc_page((u_long)sp);
 		vmc.ev_len = round_page(len);
 		vmc.ev_prot = UVM_PROT_RWX;
@@ -627,7 +627,7 @@ irix_prda_init(struct proc *p)
 	struct irix_prda_sys ips;
 	struct lwp *l;
 
-	bzero(&evc, sizeof(evc));
+	memset(&evc, 0, sizeof(evc));
 	evc.ev_addr = (u_long)IRIX_PRDA;
 	evc.ev_len = sizeof(struct irix_prda);
 	evc.ev_prot = UVM_PROT_RW;
@@ -641,7 +641,7 @@ irix_prda_init(struct proc *p)
 		return error;
 
 	ip = (struct irix_prda *)IRIX_PRDA;
-	bzero(&ips, sizeof(ips));
+	memset(&ips, 0, sizeof(ips));
 
 	ips.t_pid = p->p_pid;
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.16 2005/12/24 22:50:07 perry Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.16.92.1 2009/05/13 17:18:02 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -99,8 +99,7 @@ __asm(
 
 
 static inline int
-OF_finddevice(name)
-	char *name;
+OF_finddevice(char *name)
 {
 	static struct {
 		char *name;
@@ -121,11 +120,7 @@ OF_finddevice(name)
 }
 
 static inline int
-OF_getprop(handle, prop, buf, buflen)
-	int handle;
-	char *prop;
-	void *buf;
-	int buflen;
+OF_getprop(int handle, char *prop, void *buf, int buflen)
 {
 	static struct {
 		char *name;
@@ -152,8 +147,7 @@ OF_getprop(handle, prop, buf, buflen)
 }
 
 static inline int
-OF_open(dname)
-	char *dname;
+OF_open(char *dname)
 {
 	static struct {
 		char *name;
@@ -174,10 +168,7 @@ OF_open(dname)
 }
 
 static inline int
-OF_read(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
+OF_read(int handle, void *addr, int len)
 {
 	static struct {
 		char *name;
@@ -202,9 +193,7 @@ OF_read(handle, addr, len)
 }
 
 static inline int
-OF_seek(handle, pos)
-	int handle;
-	u_quad_t pos;
+OF_seek(int handle, u_quad_t pos)
 {
 	static struct {
 		char *name;
@@ -229,10 +218,7 @@ OF_seek(handle, pos)
 }
 
 static inline int
-OF_write(handle, addr, len)
-	int handle;
-	const void *addr;
-	int len;
+OF_write(int handle, const void *addr, int len)
 {
 	static struct {
 		char *name;
@@ -269,9 +255,7 @@ putstrn(const char *s, size_t n)
 
 
 void
-startup(arg1, arg2, openfirm)
-	int arg1, arg2;
-	void *openfirm;
+startup(int arg1, int arg2, void *openfirm)
 {
 	int fd, blk, chosen, options, j;
 	size_t i;

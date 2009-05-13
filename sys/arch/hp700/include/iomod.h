@@ -1,9 +1,9 @@
-/*	$NetBSD: iomod.h,v 1.4 2008/04/06 08:03:36 skrll Exp $	*/
+/*	$NetBSD: iomod.h,v 1.4.18.1 2009/05/13 17:17:43 jym Exp $	*/
 
-/*	$OpenBSD: iomod.h,v 1.8 2000/05/15 15:16:41 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.18 2007/10/20 16:41:45 miod Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2000-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -101,7 +96,7 @@
  *   "Fixed Physical" is used by modules on the central bus,
  *   "Local Broadcast" is used to reach all modules on the same bus, and
  *   "Global Broadcast" is used to reach all modules (thru bus converters).
- *   
+ *
  * SPA space (see below) ranges from 0xF1000000 thru 0xFFFC0000.
  */
 
@@ -316,7 +311,7 @@ struct bpa {
 /*
  * All I/O and Memory modules have 4K-bytes of HPA space associated with
  * it (described above), however not all modules implement every register.
- * The first 2K-bytes of registers are "priviliged".
+ * The first 2K-bytes of registers are "privileged".
  *
  * (WO) == Write Only, (RO) == Read Only
  */
@@ -393,14 +388,14 @@ struct iomod {
 #define	IO_ERR_DEPEND	 0	/* unspecified error */
 #define	IO_ERR_SPA	 1	/* (module-type specific) */
 #define	IO_ERR_INTERNAL	 2	/* (module-type specific) */
-#define	IO_ERR_MODE	 3	/* invlaid mode or address space mapping */
+#define	IO_ERR_MODE	 3	/* invalid mode or address space mapping */
 #define	IO_ERR_ERROR_M	 4	/* bus error (master detect) */
 #define	IO_ERR_DPARITY_S 5	/* data parity (slave detect) */
 #define	IO_ERR_PROTO_M	 6	/* protocol error (master detect) */
 #define	IO_ERR_ADDRESS	 7	/* no slave acknowledgement in transaction */
-#define	IO_ERR_MORE	 8	/* device transfered more data than expected */
-#define	IO_ERR_LESS	 9	/* device transfered less data than expected */
-#define	IO_ERR_SAPARITY	10	/* slave addrss phase parity */
+#define	IO_ERR_MORE	 8	/* device transferred more data than expected */
+#define	IO_ERR_LESS	 9	/* device transferred less data than expected */
+#define	IO_ERR_SAPARITY	10	/* slave address phase parity */
 #define	IO_ERR_MAPARITY	11	/* master address phase parity */
 #define	IO_ERR_MDPARITY	12	/* mode phase parity */
 #define	IO_ERR_STPARITY	13	/* status phase parity */
@@ -416,7 +411,7 @@ struct iomod {
 #define	IO_ERR_PROTOCOL	54	/* protocol error (slave detect) */
 #define	IO_ERR_SELFTEST	58	/* (module-type specific) */
 #define	IO_ERR_BUSY	59	/* slave was busy too often or too long */
-#define	IO_ERR_RETRY	60	/* "busied" transaction not retried soon enuf */
+#define	IO_ERR_RETRY	60	/* "busied" transaction not retried soon enough */
 #define	IO_ERR_ACCESS	61	/* illegal register access */
 #define	IO_ERR_IMPROP	62	/* "improper" data written */
 #define	IO_ERR_UNKNOWN	63

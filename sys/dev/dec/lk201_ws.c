@@ -1,4 +1,4 @@
-/* $NetBSD: lk201_ws.c,v 1.7 2005/12/11 12:21:20 christos Exp $ */
+/* $NetBSD: lk201_ws.c,v 1.7.90.1 2009/05/13 17:19:16 jym Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.7 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.7.90.1 2009/05/13 17:19:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.7 2005/12/11 12:21:20 christos Exp $"
 #define send(lks, c) ((*((lks)->attmt.sendchar))((lks)->attmt.cookie, c))
 
 int
-lk201_init(lks)
-	struct lk201_state *lks;
+lk201_init(struct lk201_state *lks)
 {
 	int i;
 
@@ -74,11 +73,7 @@ lk201_init(lks)
 }
 
 int
-lk201_decode(lks, datain, type, dataout)
-	struct lk201_state *lks;
-	int datain;
-	u_int *type;
-	int *dataout;
+lk201_decode(struct lk201_state *lks, int datain, u_int *type, int *dataout)
 {
 	int i, freeslot;
 
@@ -132,9 +127,7 @@ lk201_decode(lks, datain, type, dataout)
 }
 
 void
-lk201_bell(lks, bell)
-	struct lk201_state *lks;
-	struct wskbd_bell_data *bell;
+lk201_bell(struct lk201_state *lks, struct wskbd_bell_data *bell)
 {
 	unsigned int vol;
 
@@ -154,9 +147,7 @@ lk201_bell(lks, bell)
 }
 
 void
-lk201_set_leds(lks, leds)
-	struct lk201_state *lks;
-	int leds;
+lk201_set_leds(struct lk201_state *lks, int leds)
 {
 	int newleds;
 
@@ -176,9 +167,7 @@ lk201_set_leds(lks, leds)
 }
 
 void
-lk201_set_keyclick(lks, vol)
-	struct lk201_state *lks;
-	int vol;
+lk201_set_keyclick(struct lk201_state *lks, int vol)
 {
 	unsigned int newvol;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.115 2008/11/13 21:15:01 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.115.4.1 2009/05/13 17:23:03 jym Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -82,6 +82,8 @@
 
 typedef struct device *device_t;
 #ifdef _KERNEL
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/pmf.h>
 #endif
 
@@ -121,6 +123,16 @@ typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
 
 #ifdef _KERNEL
+struct device_lock {
+	int		dvl_nwait;
+	int		dvl_nlock;
+	lwp_t		*dvl_holder;
+	kmutex_t	dvl_mtx;
+	kcondvar_t	dvl_cv;
+};
+
+typedef struct device_lock *device_lock_t;
+
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
@@ -157,7 +169,7 @@ struct device {
 	bool		(*dv_class_resume)(device_t PMF_FN_PROTO);
 	void		(*dv_class_deregister)(device_t);
 
-	void		*dv_pmf_private;
+	struct device_lock	dv_lock;
 };
 
 /* dv_flags */
@@ -168,6 +180,7 @@ struct device {
 #define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
 #define	DVF_SELF_SUSPENDED	0x0040	/* device suspended itself */
+#define	DVF_DETACH_SHUTDOWN	0x0080	/* device detaches safely at shutdown */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -287,11 +300,25 @@ struct cfattach {
 };
 LIST_HEAD(cfattachlist, cfattach);
 
-#define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
-	rescanfn, chdetfn) \
+#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn) \
 struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_name		= ___STRING(name),			\
 	.ca_devsize		= ddsize,				\
+	.ca_flags		= 0,					\
+	.ca_match 		= matfn,				\
+	.ca_attach		= attfn,				\
+	.ca_detach		= detfn,				\
+	.ca_activate		= actfn,				\
+	.ca_rescan		= NULL,					\
+	.ca_childdetached	= NULL,					\
+}
+
+#define	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
+	rescanfn, chdetfn, __flags) \
+struct cfattach __CONCAT(name,_ca) = {					\
+	.ca_name		= ___STRING(name),			\
+	.ca_devsize		= ddsize,				\
+	.ca_flags		= (__flags) | DVF_PRIV_ALLOC,		\
 	.ca_match 		= matfn,				\
 	.ca_attach		= attfn,				\
 	.ca_detach		= detfn,				\
@@ -300,29 +327,18 @@ struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_childdetached	= chdetfn,				\
 }
 
-#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
-	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
+#define	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn,	\
+	rescanfn, chdetfn)						\
+	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn,	\
+	    rescanfn, chdetfn, 0)
 
-#define	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
-	rescanfn, chdetfn) \
-struct cfattach __CONCAT(name,_ca) = {					\
-	.ca_name		= ___STRING(name),			\
-	.ca_devsize		= ddsize,				\
-	.ca_flags		= DVF_PRIV_ALLOC,			\
-	.ca_match 		= matfn,				\
-	.ca_attach		= attfn,				\
-	.ca_detach		= detfn,				\
-	.ca_activate		= actfn,				\
-	.ca_rescan		= rescanfn,				\
-	.ca_childdetached	= chdetfn,				\
-}
-
-#define	CFATTACH_DECL_NEW(name, ddsize, matfn, attfn, detfn, actfn)		\
+#define	CFATTACH_DECL_NEW(name, ddsize, matfn, attfn, detfn, actfn)	\
 	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
 
 /* Flags given to config_detach(), and the ca_detach function. */
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
 #define	DETACH_QUIET	0x02		/* don't print a notice */
+#define	DETACH_SHUTDOWN	0x04		/* detach because of system shutdown */
 
 struct cfdriver {
 	LIST_ENTRY(cfdriver) cd_list;	/* link on allcfdrivers */
@@ -396,6 +412,7 @@ int config_handle_wedges(struct device *, int);
 void	config_init(void);
 void	drvctl_init(void);
 void	configure(void);
+void	configure2(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
 int	config_cfdriver_detach(struct cfdriver *);
@@ -497,7 +514,7 @@ bool		device_pmf_bus_suspend(device_t PMF_FN_PROTO);
 bool		device_pmf_bus_resume(device_t PMF_FN_PROTO);
 bool		device_pmf_bus_shutdown(device_t, int);
 
-void		*device_pmf_private(device_t);
+device_lock_t	device_getlock(device_t);
 void		device_pmf_unlock(device_t PMF_FN_PROTO);
 bool		device_pmf_lock(device_t PMF_FN_PROTO);
 

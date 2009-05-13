@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96 2009/01/24 05:06:06 mrg Exp $
+# $NetBSD: GENERIC,v 1.96.2.1 2009/05/13 17:18:09 jym Exp $
 #
 # GENERIC machine description file
 # 
@@ -142,7 +142,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Device options

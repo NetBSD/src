@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 2006/09/16 02:14:56 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.19.72.1 2009/05/13 17:17:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2006/09/16 02:14:56 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19.72.1 2009/05/13 17:17:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ platform_clock_attach(void *ctx, struct platform_clock *clock)
  *	Leave stathz 0 since there are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	struct platform_clock *clock = platform.clock;
 

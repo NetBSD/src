@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.10 2008/07/09 19:08:44 joerg Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.10.8.1 2009/05/13 17:19:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.10 2008/07/09 19:08:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.10.8.1 2009/05/13 17:19:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-njs_cardbus_detach(struct device *self, int flags)
+njs_cardbus_detach(device_t self, int flags)
 {
 	struct njsc32_cardbus_softc *csc = device_private(self);
 	struct njsc32_softc *sc = &csc->sc_njsc32;

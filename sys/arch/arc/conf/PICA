@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.63 2008/11/24 11:41:08 ad Exp $
+#	$NetBSD: PICA,v 1.63.4.1 2009/05/13 17:16:11 jym Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -22,8 +22,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
-
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.49 2008/04/24 15:35:28 ad Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.49.16.1 2009/05/13 17:21:08 jym Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.49 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.49.16.1 2009/05/13 17:21:08 jym Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -566,7 +566,7 @@ bktr_store_address(unit, BKTR_MEM_BUF,          sbuf);
 	if (sbuf != 0) {
 		bktr->bigbuf = sbuf;
 		bktr->alloc_pages = BROOKTREE_ALLOC_PAGES;
-		bzero((void *) bktr->bigbuf, BROOKTREE_ALLOC);
+		memset((void *) bktr->bigbuf, 0, BROOKTREE_ALLOC);
 	} else {
 		bktr->alloc_pages = 0;
 	}
@@ -1092,8 +1092,8 @@ vbi_open(bktr_ptr_t bktr)
 	bktr->vbi_sequence_number = 0;
 	bktr->vbi_read_blocked = FALSE;
 
-	bzero((void *) bktr->vbibuffer, VBI_BUFFER_SIZE);
-	bzero((void *) bktr->vbidata,  VBI_DATA_SIZE);
+	memset((void *) bktr->vbibuffer, 0, VBI_BUFFER_SIZE);
+	memset((void *) bktr->vbidata, 0,  VBI_DATA_SIZE);
 
 	return(0);
 }
@@ -3660,7 +3660,7 @@ start_capture(bktr_ptr_t bktr, unsigned type)
 
 	/*  If requested, clear out capture buf first  */
 	if (bktr->clr_on_start && (bktr->video.addr == 0)) {
-		bzero((void *)bktr->bigbuf,
+		memset((void *)bktr->bigbuf, 0,
 		      (size_t)bktr->rows * bktr->cols * bktr->frames *
 			pixfmt_table[bktr->pixfmt].public.Bpp);
 	}

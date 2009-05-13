@@ -1,4 +1,4 @@
-/*	$NetBSD: eprintf.c,v 1.1.1.1 1996/01/07 21:50:49 leo Exp $	*/
+/*	$NetBSD: eprintf.c,v 1.1.1.1.184.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -40,8 +40,7 @@
 static int	output_redirected = 0;
 
 void
-redirect_output(fn)
-	char	*fn;
+redirect_output(char *fn)
 {
 	int	fd;
 
@@ -56,8 +55,7 @@ redirect_output(fn)
  * also write it to stdout.
  */
 int
-eprintf(frm)
-	char	*frm;
+eprintf(char *frm)
 {
 	va_list	args;
 	int	rv;
@@ -69,9 +67,7 @@ eprintf(frm)
 }
 
 int
-veprintf(frm, args)
-	char	*frm;
-	va_list	args;
+veprintf(char *frm, va_list args)
 {
 	int	rv;
 

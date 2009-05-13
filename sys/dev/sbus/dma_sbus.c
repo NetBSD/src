@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.33 2008/05/17 18:09:03 macallan Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.33.12.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.33 2008/05/17 18:09:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.33.12.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ dmaprint_sbus(void *aux, const char *busname)
 }
 
 int
-dmamatch_sbus(device_t parent, struct cfdata *cf, void *aux)
+dmamatch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

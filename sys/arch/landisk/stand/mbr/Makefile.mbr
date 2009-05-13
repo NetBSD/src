@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mbr,v 1.1 2006/09/01 21:26:19 uwe Exp $
+#	$NetBSD: Makefile.mbr,v 1.1.80.1 2009/05/13 17:17:58 jym Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -23,24 +23,12 @@ BINMODE=	444
 LDFLAGS+=	-N -e start
 CPPFLAGS=	-nostdinc -I${.OBJDIR} -I${.CURDIR}/.. -I${S}
 
-CLEANFILES+=	${PROG}.tmp machine sh3
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine sh3
-.NOPATH: machine sh3
-
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-sh3::
-	-rm -f $@
-	ln -s ${S}/arch/sh3/include $@
-.endif
+CLEANFILES+=	${PROG}.tmp
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x8c200200 ${OBJS}
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
 	-rm -f ${PROG}.tmp
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.4 2003/03/25 06:53:16 igy Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.4.122.1 2009/05/13 17:16:39 jym Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2002, 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.4 2003/03/25 06:53:16 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.4.122.1 2009/05/13 17:16:39 jym Exp $");
 
 /*
  * IXM1200 PCI interrupt support.
@@ -66,9 +66,7 @@ void *ixm1200_pci_intr_establish(void *, pci_intr_handle_t, int,
 void ixm1200_pci_intr_disestablish(void *, void *);
 
 void
-ixm1200_pci_init(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+ixm1200_pci_init(pci_chipset_tag_t pc, void *cookie)
 {
 	pc->pc_intr_v = cookie;
 	pc->pc_intr_map = ixm1200_pci_intr_map;
@@ -79,9 +77,7 @@ ixm1200_pci_init(pc, cookie)
 }
 
 int
-ixm1200_pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+ixm1200_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 #ifdef PCI_DEBUG
 	void *v = pa->pa_pc;
@@ -100,9 +96,7 @@ ixm1200_pci_intr_map(pa, ihp)
 }
 
 const char *
-ixm1200_pci_intr_string(v, ih)
-	void *v;
-	pci_intr_handle_t ih;
+ixm1200_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char irqstr[IRQNAMESIZE];
 
@@ -111,20 +105,13 @@ ixm1200_pci_intr_string(v, ih)
 }
 
 const struct evcnt *
-ixm1200_pci_intr_evcnt(v, ih)
-	void *v;
-	pci_intr_handle_t ih;
+ixm1200_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 {
 	return (NULL);
 }
 
 void *
-ixm1200_pci_intr_establish(v, ih, ipl, func, arg)
-	void *v;
-	pci_intr_handle_t ih;
-	int ipl;
-	int (*func)(void *);
-	void *arg;
+ixm1200_pci_intr_establish(void *v, pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg)
 {
 #ifdef PCI_DEBUG
 	printf("ixm1200_pci_intr_establish(v=%p, irq=%d, ipl=%d, func=%p, arg=%p)\n",

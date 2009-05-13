@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.109 2009/02/01 17:36:43 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.109.2.1 2009/05/13 17:23:06 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.109 2009/02/01 17:36:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.109.2.1 2009/05/13 17:23:06 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -289,13 +289,8 @@ ffs_fsync(void *v)
 	vp = ap->a_vp;
 
 	fstrans_start(vp->v_mount, FSTRANS_LAZY);
-	/*
-	 * XXX no easy way to sync a range in a file with softdep.
-	 */
-	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(vp) ||
-	    (vp->v_type != VREG)) {
-		int flags = ap->a_flags;
-		error = ffs_full_fsync(vp, flags);
+	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || (vp->v_type != VREG)) {
+		error = ffs_full_fsync(vp, ap->a_flags);
 		goto out;
 	}
 
@@ -319,7 +314,13 @@ ffs_fsync(void *v)
 #ifdef WAPBL
 	mp = wapbl_vptomp(vp);
 	if (mp->mnt_wapbl) {
-		if (ap->a_flags & FSYNC_DATAONLY) {
+		/*
+		 * Don't bother writing out metadata if the syncer is
+		 * making the request.  We will let the sync vnode
+		 * write it out in a single burst through a call to
+		 * VFS_SYNC().
+		 */
+		if ((ap->a_flags & (FSYNC_DATAONLY | FSYNC_LAZY)) != 0) {
 			fstrans_done(vp->v_mount);
 			return 0;
 		}
@@ -332,11 +333,11 @@ ffs_fsync(void *v)
 				fstrans_done(vp->v_mount);
 				return error;
 			}
-			error = ffs_update(vp, NULL, NULL,
-				(ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
+			error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
+			    ((ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
 			UFS_WAPBL_END(mp);
 		}
-		if (error || (ap->a_flags & FSYNC_NOLOG)) {
+		if (error || (ap->a_flags & FSYNC_NOLOG) != 0) {
 			fstrans_done(vp->v_mount);
 			return error;
 		}
@@ -377,9 +378,9 @@ ffs_fsync(void *v)
 		mutex_exit(&vp->v_interlock);
 	}
 
-	error = ffs_update(vp, NULL, NULL,
-	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
-	    ? UPDATE_WAIT : 0);
+	error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
+	    (((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
+	    ? UPDATE_WAIT : 0));
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
@@ -393,43 +394,31 @@ out:
 }
 
 /*
- * Synch an open file.  Called for VOP_FSYNC() and VFS_FSYNC().
- *
- * BEWARE: THIS ROUTINE ACCEPTS BOTH FFS AND NON-FFS VNODES.
+ * Synch an open file.  Called for VOP_FSYNC().
  */
 /* ARGSUSED */
 int
 ffs_full_fsync(struct vnode *vp, int flags)
 {
 	struct buf *bp, *nbp;
-	int error, passes, skipmeta, inodedeps_only, waitfor;
+	int error, passes, skipmeta, waitfor, i;
 	struct mount *mp;
+
+	KASSERT(VTOI(vp) != NULL);
+	KASSERT(vp->v_tag == VT_UFS);
 
 	error = 0;
 
-	if ((flags & FSYNC_VFS) != 0) {
-		KASSERT(vp->v_specmountpoint != NULL);
+	mp = vp->v_mount;
+	if (vp->v_type == VBLK && vp->v_specmountpoint != NULL) {
 		mp = vp->v_specmountpoint;
-		KASSERT(vp->v_type == VBLK);
 	} else {
 		mp = vp->v_mount;
-		KASSERT(vp->v_tag == VT_UFS);
 	}
 
-	if (vp->v_type == VBLK &&
-	    vp->v_specmountpoint != NULL &&
-	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
-		softdep_fsync_mountdev(vp);
-
-	mutex_enter(&vp->v_interlock);
-
-	inodedeps_only = DOINGSOFTDEP(vp) && (flags & FSYNC_RECLAIM)
-	    && UVM_OBJ_IS_CLEAN(&vp->v_uobj) && LIST_EMPTY(&vp->v_dirtyblkhd);
-
 	/*
-	 * Flush all dirty data associated with a vnode.
+	 * Flush all dirty data associated with the vnode.
 	 */
-
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
 		int pflags = PGO_ALLPAGES | PGO_CLEANIT;
 
@@ -438,30 +427,34 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		if (vp->v_type == VREG &&
 		    fstrans_getstate(mp) == FSTRANS_SUSPENDING)
 			pflags |= PGO_FREE;
+		mutex_enter(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, pflags);
 		if (error)
 			return error;
-	} else {
-		mutex_exit(&vp->v_interlock);
 	}
 
 #ifdef WAPBL
+	mp = wapbl_vptomp(vp);
 	if (mp && mp->mnt_wapbl) {
-		error = 0;
-		if (flags & FSYNC_DATAONLY)
-			return error;
+		/*
+		 * Don't bother writing out metadata if the syncer is
+		 * making the request.  We will let the sync vnode
+		 * write it out in a single burst through a call to
+		 * VFS_SYNC().
+		 */
+		if ((flags & (FSYNC_DATAONLY | FSYNC_LAZY)) != 0)
+			return 0;
 
-		if ((flags & FSYNC_VFS) == 0 && VTOI(vp) != NULL &&
-		    (VTOI(vp)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE
+		if ((VTOI(vp)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE
 		    | IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) != 0) {
 			error = UFS_WAPBL_BEGIN(mp);
 			if (error)
 				return error;
-			error = ffs_update(vp, NULL, NULL,
-				(flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
+			error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
+			    ((flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
 			UFS_WAPBL_END(mp);
 		}
-		if (error || (flags & FSYNC_NOLOG))
+		if (error || (flags & FSYNC_NOLOG) != 0)
 			return error;
 
 		/*
@@ -476,7 +469,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 
 		if ((flags & FSYNC_WAIT) != 0) {
 			mutex_enter(&vp->v_interlock);
-			while (vp->v_numoutput)
+			while (vp->v_numoutput != 0)
 				cv_wait(&vp->v_cv, &vp->v_interlock);
 			mutex_exit(&vp->v_interlock);
 		}
@@ -485,6 +478,10 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	}
 #endif /* WAPBL */
 
+	/*
+	 * Write out metadata for non-logging file systems. XXX This block
+	 * should be simplified now that softdep is gone.
+	 */
 	passes = NIADDR + 1;
 	skipmeta = 0;
 	if (flags & FSYNC_WAIT)
@@ -538,9 +535,6 @@ loop:
 		 * Ensure that any filesystem metadata associated
 		 * with the vnode has been written.
 		 */
-		if ((error = softdep_sync_metadata(vp)) != 0)
-			return (error);
-
 		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			/*
 			* Block devices associated with filesystems may
@@ -561,21 +555,12 @@ loop:
 		}
 	}
 
-	if (inodedeps_only)
-		waitfor = 0;
-	else
-		waitfor = (flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0;
-
-	if ((flags & FSYNC_VFS) == 0)
-		error = ffs_update(vp, NULL, NULL, waitfor);
+	waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
+	error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE | waitfor);
 
 	if (error == 0 && (flags & FSYNC_CACHE) != 0) {
-		int i = 0;
-		if ((flags & FSYNC_VFS) == 0) {
-			KASSERT(VTOI(vp) != NULL);
-			vp = VTOI(vp)->i_devvp;
-		}
-		VOP_IOCTL(vp, DIOCCACHESYNC, &i, FWRITE, curlwp->l_cred);
+		(void)VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
+		    kauth_cred_get());
 	}
 
 	return error;
@@ -626,43 +611,6 @@ ffs_reclaim(void *v)
 	fstrans_done(mp);
 	return (0);
 }
-
-#if 0
-int
-ffs_getpages(void *v)
-{
-	struct vop_getpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offset;
-		struct vm_page **a_m;
-		int *a_count;
-		int a_centeridx;
-		vm_prot_t a_access_type;
-		int a_advice;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-
-	/*
-	 * don't allow a softdep write to create pages for only part of a block.
-	 * the dependency tracking requires that all pages be in memory for
-	 * a block involved in a dependency.
-	 */
-
-	if (ap->a_flags & PGO_OVERWRITE &&
-	    (blkoff(fs, ap->a_offset) != 0 ||
-	     blkoff(fs, *ap->a_count << PAGE_SHIFT) != 0) &&
-	    DOINGSOFTDEP(ap->a_vp)) {
-		if ((ap->a_flags & PGO_LOCKED) == 0) {
-			mutex_exit(&vp->v_interlock);
-		}
-		return EINVAL;
-	}
-	return genfs_getpages(v);
-}
-#endif
 
 /*
  * Return the last logical file offset that should be written for this file

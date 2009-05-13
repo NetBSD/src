@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.59 2008/11/12 14:32:34 ad Exp $	*/
+/*	$NetBSD: param.c,v 1.59.4.1 2009/05/13 17:19:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.59 2008/11/12 14:32:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.59.4.1 2009/05/13 17:19:04 jym Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -151,8 +151,10 @@ int	mcllowat = MCLLOWAT;
  * Values in support of System V compatible shared memory.	XXX
  */
 #ifdef SYSVSHM
-#ifndef	SHMMAX
+#if !defined(SHMMAX) && defined(SHMMAXPGS)
 #define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= PAGE_SIZE' */
+#elif !defined(SHMMAX)
+#define SHMMAX 0
 #endif
 #ifndef	SHMMIN
 #define	SHMMIN	1
@@ -163,14 +165,13 @@ int	mcllowat = MCLLOWAT;
 #ifndef	SHMSEG
 #define	SHMSEG	128
 #endif
-#define	SHMALL	SHMMAXPGS
 
 struct	shminfo shminfo = {
 	SHMMAX,
 	SHMMIN,
 	SHMMNI,
 	SHMSEG,
-	SHMALL
+	0
 };
 #endif
 

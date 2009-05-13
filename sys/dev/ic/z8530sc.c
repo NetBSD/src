@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.28 2008/03/29 19:15:36 tsutsui Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.28.18.1 2009/05/13 17:19:25 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.28 2008/03/29 19:15:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.28.18.1 2009/05/13 17:19:25 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,55 +289,65 @@ int
 zsc_intr_hard(void *arg)
 {
 	struct zsc_softc *zsc = arg;
-	struct zs_chanstate *cs;
+	struct zs_chanstate *cs0, *cs1;
+	int handled;
 	uint8_t rr3;
 
-	/* First look at channel A. */
-	cs = zsc->zsc_cs[0];
+	handled = 0;
 
-	/* Lock both channels */
-	mutex_spin_enter(&cs->cs_lock);
-	mutex_spin_enter(&zsc->zsc_cs[1]->cs_lock);
-	/* Note: only channel A has an RR3 */
-	rr3 = zs_read_reg(cs, 3);
+	/* First look at channel A. */
+	cs0 = zsc->zsc_cs[0];
+	cs1 = zsc->zsc_cs[1];
 
 	/*
-	 * Clear interrupt first to avoid a race condition.
-	 * If a new interrupt condition happens while we are
-	 * servicing this one, we will get another interrupt
-	 * shortly.  We can NOT just sit here in a loop, or
-	 * we will cause horrible latency for other devices
-	 * on this interrupt level (i.e. sun3x floppy disk).
+	 * We have to clear interrupt first to avoid a race condition,
+	 * but it will be done in each MD handler.
 	 */
-	if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
-		zs_write_csr(cs, ZSWR0_CLR_INTR);
+	for (;;) {
+		/* Lock both channels */
+		mutex_spin_enter(&cs1->cs_lock);
+		mutex_spin_enter(&cs0->cs_lock);
+		/* Note: only channel A has an RR3 */
+		rr3 = zs_read_reg(cs0, 3);
+
+		if ((rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT |
+		    ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) == 0) {
+			mutex_spin_exit(&cs0->cs_lock);
+			mutex_spin_exit(&cs1->cs_lock);
+			break;
+		}
+		handled = 1;
+
+		/* First look at channel A. */
+		if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT))
+			zs_write_csr(cs0, ZSWR0_CLR_INTR);
+
 		if (rr3 & ZSRR3_IP_A_RX)
-			(*cs->cs_ops->zsop_rxint)(cs);
+			(*cs0->cs_ops->zsop_rxint)(cs0);
 		if (rr3 & ZSRR3_IP_A_STAT)
-			(*cs->cs_ops->zsop_stint)(cs, 0);
+			(*cs0->cs_ops->zsop_stint)(cs0, 0);
 		if (rr3 & ZSRR3_IP_A_TX)
-			(*cs->cs_ops->zsop_txint)(cs);
-	}
+			(*cs0->cs_ops->zsop_txint)(cs0);
 
-	/* Done with channel A */
-	mutex_spin_exit(&cs->cs_lock);
+		/* Done with channel A */
+		mutex_spin_exit(&cs0->cs_lock);
 
-	/* Now look at channel B. */
-	cs = zsc->zsc_cs[1];
-	if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
-		zs_write_csr(cs, ZSWR0_CLR_INTR);
+		/* Now look at channel B. */
+		if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT))
+			zs_write_csr(cs1, ZSWR0_CLR_INTR);
+
 		if (rr3 & ZSRR3_IP_B_RX)
-			(*cs->cs_ops->zsop_rxint)(cs);
+			(*cs1->cs_ops->zsop_rxint)(cs1);
 		if (rr3 & ZSRR3_IP_B_STAT)
-			(*cs->cs_ops->zsop_stint)(cs, 0);
+			(*cs1->cs_ops->zsop_stint)(cs1, 0);
 		if (rr3 & ZSRR3_IP_B_TX)
-			(*cs->cs_ops->zsop_txint)(cs);
-	}
+			(*cs1->cs_ops->zsop_txint)(cs1);
 
-	mutex_spin_exit(&cs->cs_lock);
+		mutex_spin_exit(&cs1->cs_lock);
+	}
 
 	/* Note: caller will check cs_x->cs_softreq and DTRT. */
-	return (rr3);
+	return handled;
 }
 
 

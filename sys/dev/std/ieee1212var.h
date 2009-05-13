@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212var.h,v 1.4 2008/04/28 20:23:58 martin Exp $	*/
+/*	$NetBSD: ieee1212var.h,v 1.4.14.1 2009/05/13 17:21:30 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ void p1212_walk(struct p1212_dir *, void *,
 struct p1212_key **p1212_find(struct p1212_dir *, int, int, int);
 void p1212_print(struct p1212_dir *);
 void p1212_free(struct p1212_rom *);
-struct device **p1212_match_units(struct device *, struct p1212_dir *,
+device_t *p1212_match_units(device_t, struct p1212_dir *,
     int (*)(void *, const char *));
 
 #endif /* _DEV_STD_IEEE1212VAR_H */

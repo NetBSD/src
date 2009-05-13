@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.23 2007/12/15 00:39:17 perry Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.23.24.1 2009/05/13 17:17:45 jym Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.23 2007/12/15 00:39:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.23.24.1 2009/05/13 17:17:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -910,7 +910,7 @@ plum_csc_intr(void *arg)
 }
 
 static struct plumpcmcia_event *
-plumpcmcia_event_alloc()
+plumpcmcia_event_alloc(void)
 {
 	int i;
 	/* I assume called from interrupt context only. so don't lock */

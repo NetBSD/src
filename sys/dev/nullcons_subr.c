@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.6 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.6.14.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.6 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.6.14.1 2009/05/13 17:19:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.6 2008/04/28 20:23:47 martin Exp
 #include <sys/vnode.h>
 
 #include <dev/cons.h>
-
-
-extern struct consdev *cn_tab;		/* physical console device info */
 
 static struct tty *nulltty;		/* null console tty */
 
@@ -67,40 +64,30 @@ const struct cdevsw nullcn_devsw = {
  * invocation.
  */
 int
-nullcndev_read(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+nullcndev_read(dev_t dev, struct uio *uio, int flag)
 {
 
-	for(;;);
-	return (0);
+	return EIO;
 }
 
 int
-nullcndev_ioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+nullcndev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 
 	error = (*nulltty->t_linesw->l_ioctl)(nulltty, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	error = ttioctl(nulltty, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
 struct tty*
-nullcndev_tty(dev)
-	dev_t dev;
+nullcndev_tty(dev_t dev)
 {
 
 	return nulltty;
@@ -111,8 +98,7 @@ nullcndev_tty(dev)
  * to nullconsattach().
  */
 void
-nullcnprobe(cn)
-	struct consdev *cn;
+nullcnprobe(struct consdev *cn)
 {
 
 	cn->cn_pri = CN_NULL;
@@ -124,8 +110,7 @@ nullcnprobe(cn)
  * a new tty.
  */
 void
-nullcninit(cn)
-	struct consdev *cn;
+nullcninit(struct consdev *cn)
 {
 	static struct consdev nullcn = cons_init(null);
 
@@ -137,21 +122,19 @@ nullcninit(cn)
  * Dumb getc() implementation. Simply blocks on call.
  */
 int
-nullcngetc(dev)
-	dev_t dev;
+nullcngetc(dev_t dev)
 {
 
-	for(;;);
-	return (0);
+	for (;;)
+		;
+	return 0;
 }
 
 /*
  * Dumb putc() implementation.
  */
 void
-nullcnputc(dev, c)
-	dev_t dev;
-	int c;
+nullcnputc(dev_t dev, int c)
 {
 
 }
@@ -160,21 +143,20 @@ nullcnputc(dev, c)
  * Allocate a new console device and a tty to handle console ioctls.
  */
 int
-nullcons_newdev(cn)
-	struct consdev *cn;
+nullcons_newdev(struct consdev *cn)
 {
 	int error;
 	int bmajor = -1, cmajor = -1;
 
 	if ((cn == NULL) || (cn->cn_pri != CN_NULL) || (cn->cn_dev != NODEV))
-		return (0);
+		return 0;
 
 	/*
 	 * Attach no-op device to the device list.
 	 */
 	error = devsw_attach("nullcn", NULL, &bmajor, &nullcn_devsw, &cmajor);
 	if (error != 0)
-		return (error);
+		return error;
 
 	/*
 	 * Allocate tty (mostly to have sane ioctl()).
@@ -184,7 +166,7 @@ nullcons_newdev(cn)
 	tty_attach(nulltty);
 	cn->cn_dev = nulltty->t_dev;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -192,8 +174,7 @@ nullcons_newdev(cn)
  * initialization.
  */
 void
-nullconsattach(pdev_count)
-	int pdev_count;
+nullconsattach(int pdev_count)
 {
 
 	nullcons_newdev(cn_tab);

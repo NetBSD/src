@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.32 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: if_url.c,v 1.32.12.1 2009/05/13 17:21:35 jym Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.32 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.32.12.1 2009/05/13 17:21:35 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1090,7 +1090,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 #if 0
-Static void url_intr()
+Static void url_intr(void)
 {
 }
 #endif

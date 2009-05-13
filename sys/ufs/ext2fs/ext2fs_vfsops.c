@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.141 2008/12/08 11:34:30 pooka Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.141.2.1 2009/05/13 17:23:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.141 2008/12/08 11:34:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.141.2.1 2009/05/13 17:23:04 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -380,18 +380,19 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
+	 *
+	 * Permission to update a mount is checked higher, so here we presume
+	 * updating the mount is okay (for example, as far as securelevel goes)
+	 * which leaves us with the normal check.
 	 */
-	if (error == 0 && kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		accessmode = VREAD;
-		if (update ?
-		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
-		    (mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-	}
+	accessmode = VREAD;
+	if (update ?
+	    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+	    (mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
 
 	if (error) {
 		vrele(devvp);
@@ -572,7 +573,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	fs->e2fs_bmask = ~fs->e2fs_qbmask;
 	fs->e2fs_ngdb =
 	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE;
+	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
 
 	/*
@@ -640,7 +641,7 @@ loop:
 			break;
 		}
 		cp = (char *)bp->b_data +
-		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
+		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE(fs));
 		e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
 		ext2fs_set_inode_guid(ip);
 		brelse(bp, 0);
@@ -690,8 +691,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	ump = NULL;
 
 #ifdef DEBUG_EXT2
-	printf("sb size: %d ino size %d\n", sizeof(struct ext2fs),
-	    EXT2_DINODE_SIZE);
+	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
 #endif
 	error = bread(devvp, (SBOFF / size), SBSIZE, cred, 0, &bp);
 	if (error)
@@ -711,6 +711,10 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	bp = NULL;
 	m_fs = ump->um_e2fs;
 	m_fs->e2fs_ronly = ronly;
+
+#ifdef DEBUG_EXT2
+	printf("ext2 ino size %d\n", EXT2_DINODE_SIZE(m_fs));
+#endif
 	if (ronly == 0) {
 		if (m_fs->e2fs.e2fs_state == E2FS_ISCLEAN)
 			m_fs->e2fs.e2fs_state = 0;
@@ -731,7 +735,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	m_fs->e2fs_bmask = ~m_fs->e2fs_qbmask;
 	m_fs->e2fs_ngdb =
 	    howmany(m_fs->e2fs_ncg, m_fs->e2fs_bsize / sizeof(struct ext2_gd));
-	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE;
+	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE(m_fs);
 	m_fs->e2fs_itpg = m_fs->e2fs.e2fs_ipg / m_fs->e2fs_ipb;
 
 	m_fs->e2fs_gd = malloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize,
@@ -1072,7 +1076,7 @@ retry:
 		*vpp = NULL;
 		return (error);
 	}
-	cp = (char *)bp->b_data + (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE);
+	cp = (char *)bp->b_data + (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE(fs));
 	ip->i_din.e2fs_din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
 	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
 	ext2fs_set_inode_guid(ip);
@@ -1253,9 +1257,8 @@ ext2fs_checksb(struct ext2fs *fs, int ronly)
 		return (EINVAL);	   /* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
-		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO ||
-		    fs2h16(fs->e2fs_inode_size) != EXT2_DINODE_SIZE) {
-			printf("Ext2 fs: unsupported inode size\n");
+		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO) {
+			printf("Ext2 fs: unsupported first inode position\n");
 			return (EINVAL);      /* XXX needs translation */
 		}
 		if (fs2h32(fs->e2fs_features_incompat) &

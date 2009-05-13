@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.5 2007/03/04 05:59:11 christos Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.5.58.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.5 2007/03/04 05:59:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.5.58.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,23 +48,21 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.5 2007/03/04 05:59:11 christos Exp 
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static void mcpcia_attach_hook __P((struct device *, struct device *,
-	struct pcibus_attach_args *));
+static void mcpcia_attach_hook(struct device *, struct device *,
+	struct pcibus_attach_args *);
 static int
-mcpcia_bus_maxdevs __P((void *, int));
+mcpcia_bus_maxdevs(void *, int);
 static pcitag_t
-mcpcia_make_tag __P((void *, int, int, int));
+mcpcia_make_tag(void *, int, int, int);
 static void
-mcpcia_decompose_tag __P((void *, pcitag_t, int *, int *, int *));
+mcpcia_decompose_tag(void *, pcitag_t, int *, int *, int *);
 static pcireg_t
-mcpcia_conf_read __P((void *, pcitag_t, int));
+mcpcia_conf_read(void *, pcitag_t, int);
 static void
-mcpcia_conf_write __P((void *, pcitag_t, int, pcireg_t));
+mcpcia_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-mcpcia_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+mcpcia_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
 	pc->pc_attach_hook = mcpcia_attach_hook;
@@ -76,24 +74,18 @@ mcpcia_pci_init(pc, v)
 }
 
 static void
-mcpcia_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+mcpcia_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
 static int
-mcpcia_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+mcpcia_bus_maxdevs(void *cpv, int busno)
 {
 	return (MCPCIA_MAXDEV);
 }
 
 static pcitag_t
-mcpcia_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+mcpcia_make_tag(void *cpv, int b, int d, int f)
 {
 	pcitag_t tag;
 	tag = (b << 21) | (d << 16) | (f << 13);
@@ -101,10 +93,7 @@ mcpcia_make_tag(cpv, b, d, f)
 }
 
 static void
-mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+mcpcia_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 	if (bp != NULL)
 		*bp = (tag >> 21) & 0xff;
@@ -115,10 +104,7 @@ mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
 }
 
 static pcireg_t
-mcpcia_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+mcpcia_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct mcpcia_config *ccp = cpv;
 	pcireg_t *dp, data = (pcireg_t) -1;
@@ -146,11 +132,7 @@ mcpcia_conf_read(cpv, tag, offset)
 }
 
 static void
-mcpcia_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+mcpcia_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct mcpcia_config *ccp = cpv;
 	pcireg_t *dp;

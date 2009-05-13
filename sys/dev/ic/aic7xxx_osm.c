@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.27 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.27.18.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.27 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.27.18.1 2009/05/13 17:19:21 jym Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -76,7 +76,7 @@ ahc_attach(struct ahc_softc *ahc)
 
 	ahc_lock(ahc, &s);
 
-	ahc->sc_adapter.adapt_dev = &ahc->sc_dev;
+	ahc->sc_adapter.adapt_dev = ahc->sc_dev;
 	ahc->sc_adapter.adapt_nchannels = (ahc->features & AHC_TWIN) ? 2 : 1;
 
 	ahc->sc_adapter.adapt_openings = ahc->scb_data->numscbs - 1;
@@ -101,19 +101,19 @@ ahc_attach(struct ahc_softc *ahc)
 	}
 
 	ahc_controller_info(ahc, ahc_info, sizeof(ahc_info));
-	printf("%s: %s\n", device_xname(&ahc->sc_dev), ahc_info);
+	printf("%s: %s\n", device_xname(ahc->sc_dev), ahc_info);
 
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
-		ahc->sc_child = config_found((void *)&ahc->sc_dev,
+		ahc->sc_child = config_found(ahc->sc_dev,
 		    &ahc->sc_channel, scsiprint);
 		if (ahc->features & AHC_TWIN)
-			ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
+			ahc->sc_child_b = config_found(ahc->sc_dev,
 			    &ahc->sc_channel_b, scsiprint);
 	} else {
 		if (ahc->features & AHC_TWIN)
-			ahc->sc_child = config_found((void *)&ahc->sc_dev,
+			ahc->sc_child = config_found(ahc->sc_dev,
 			    &ahc->sc_channel_b, scsiprint);
-		ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
+		ahc->sc_child_b = config_found(ahc->sc_dev,
 		    &ahc->sc_channel, scsiprint);
 	}
 
@@ -246,7 +246,7 @@ static int
 ahc_ioctl(struct scsipi_channel *channel, u_long cmd, void *addr,
     int flag, struct proc *p)
 {
-	struct ahc_softc *ahc = (void *)channel->chan_adapter->adapt_dev;
+	struct ahc_softc *ahc = device_private(channel->chan_adapter->adapt_dev);
 	int s, ret = ENOTTY;
 
 	switch (cmd) {
@@ -272,7 +272,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	struct ahc_initiator_tinfo *tinfo;
 	struct ahc_tmode_tstate *tstate;
 
-	ahc  = (void *)chan->chan_adapter->adapt_dev;
+	ahc  = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (req) {
 
@@ -475,7 +475,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	xs->error = 0;
 	xs->status = 0;
 	xs->xs_status = 0;
-	ahc = (void *)xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
+	ahc = device_private(xs->xs_periph->periph_channel->chan_adapter->adapt_dev);
 
 	if (nsegments != 0) {
 		struct ahc_dma_seg *sg;
@@ -1037,7 +1037,7 @@ ahc_softc_comp(struct ahc_softc *lahc, struct ahc_softc *rahc)
 }
 
 int
-ahc_detach(struct device *self, int flags)
+ahc_detach(device_t self, int flags)
 {
 	int rv = 0;
 

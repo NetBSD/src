@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.27 2007/10/17 19:52:55 garbled Exp $ */
+/* $NetBSD: db_interface.c,v 1.27.34.1 2009/05/13 17:16:04 jym Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.27 2007/10/17 19:52:55 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.27.34.1 2009/05/13 17:16:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -89,7 +89,7 @@ int	db_active = 0;
 db_regs_t *ddb_regp;
 
 #if defined(MULTIPROCESSOR)
-void	db_mach_cpu __P((db_expr_t, bool, db_expr_t, const char *));
+void	db_mach_cpu(db_expr_t, bool, db_expr_t, const char *);
 #endif
 
 const struct db_command db_machine_command_table[] = {
@@ -99,7 +99,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) },
 };
 
-static int db_alpha_regop __P((const struct db_variable *, db_expr_t *, int));
+static int db_alpha_regop(const struct db_variable *, db_expr_t *, int);
 
 #define	dbreg(xx)	((long *)(xx))
 
@@ -174,9 +174,7 @@ db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
  * ddb_trap - field a kernel trap
  */
 int
-ddb_trap(a0, a1, a2, entry, regs)
-	unsigned long a0, a1, a2, entry;
-	db_regs_t *regs;
+ddb_trap(unsigned long a0, unsigned long a1, unsigned long a2, unsigned long entry, db_regs_t *regs)
 {
 	struct cpu_info *ci = curcpu();
 	int s;
@@ -227,10 +225,7 @@ ddb_trap(a0, a1, a2, entry, regs)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(vaddr_t addr, register size_t size, register char *data)
 {
 	register char	*src;
 
@@ -243,10 +238,7 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register const char *data;
+db_write_bytes(vaddr_t addr, register size_t size, register const char *data)
 {
 	register char	*dst;
 
@@ -257,7 +249,7 @@ db_write_bytes(addr, size, data)
 }
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 
 	__asm volatile("call_pal 0x81");		/* bugchk */
@@ -272,11 +264,7 @@ cpu_Debugger()
 
 #if defined(MULTIPROCESSOR)
 void
-db_mach_cpu(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	bool		have_addr;
-	db_expr_t	count;
-	const char *		modif;
+db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char * modif)
 {
 	struct cpu_info *ci;
 
@@ -355,9 +343,7 @@ static int reg_to_frame[32] = {
 };
 
 u_long
-db_register_value(regs, regno)
-	db_regs_t *regs;
-	int regno;
+db_register_value(db_regs_t *regs, int regno)
 {
 
 	if (regno > 31 || regno < 0) {
@@ -376,8 +362,7 @@ db_register_value(regs, regno)
  */
 
 bool
-db_inst_call(ins)
-	int ins;
+db_inst_call(int ins)
 {
 	alpha_instruction insn;
 
@@ -388,8 +373,7 @@ db_inst_call(ins)
 }
 
 bool
-db_inst_return(ins)
-	int ins;
+db_inst_return(int ins)
 {
 	alpha_instruction insn;
 
@@ -399,8 +383,7 @@ db_inst_return(ins)
 }
 
 bool
-db_inst_trap_return(ins)
-	int ins;
+db_inst_trap_return(int ins)
 {
 	alpha_instruction insn;
 
@@ -410,8 +393,7 @@ db_inst_trap_return(ins)
 }
 
 bool
-db_inst_branch(ins)
-	int ins;
+db_inst_branch(int ins)
 {
 	alpha_instruction insn;
 
@@ -440,8 +422,7 @@ db_inst_branch(ins)
 }
 
 bool
-db_inst_unconditional_flow_transfer(ins)
-	int ins;
+db_inst_unconditional_flow_transfer(int ins)
 {
 	alpha_instruction insn;
 
@@ -465,8 +446,7 @@ db_inst_unconditional_flow_transfer(ins)
 
 #if 0
 bool
-db_inst_spill(ins, regn)
-	int ins, regn;
+db_inst_spill(int ins, int regn)
 {
 	alpha_instruction insn;
 
@@ -477,8 +457,7 @@ db_inst_spill(ins, regn)
 #endif
 
 bool
-db_inst_load(ins)
-	int ins;
+db_inst_load(int ins)
 {
 	alpha_instruction insn;
 
@@ -508,8 +487,7 @@ db_inst_load(ins)
 }
 
 bool
-db_inst_store(ins)
-	int ins;
+db_inst_store(int ins)
 {
 	alpha_instruction insn;
 
@@ -537,10 +515,7 @@ db_inst_store(ins)
 }
 
 db_addr_t
-db_branch_taken(ins, pc, regs)
-	int ins;
-	db_addr_t pc;
-	db_regs_t *regs;
+db_branch_taken(int ins, db_addr_t pc, db_regs_t *regs)
 {
 	long signed_immediate;
 	alpha_instruction insn;

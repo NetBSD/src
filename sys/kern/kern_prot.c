@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.108 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.108.8.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.108 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.108.8.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_compat_43.h"
 
@@ -238,14 +238,13 @@ sys_getgroups(struct lwp *l, const struct sys_getgroups_args *uap, register_t *r
 	    UIO_USERSPACE);
 }
 
-/* ARGSUSED */
 int
 sys_setsid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error;
 
-	error = enterpgrp(p, p->p_pid, p->p_pid, 1);
+	error = proc_enterpgrp(p, p->p_pid, p->p_pid, true);
 	*retval = p->p_pid;
 	return (error);
 }
@@ -265,11 +264,11 @@ sys_setsid(struct lwp *l, const void *v, register_t *retval)
  * 	there must exist some pid in same session having pgid (EPERM)
  * pid must not be session leader (EPERM)
  *
- * Permission checks now in enterpgrp()
+ * Permission checks now in proc_enterpgrp()
  */
-/* ARGSUSED */
 int
-sys_setpgid(struct lwp *l, const struct sys_setpgid_args *uap, register_t *retval)
+sys_setpgid(struct lwp *l, const struct sys_setpgid_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) pid;
@@ -285,7 +284,7 @@ sys_setpgid(struct lwp *l, const struct sys_setpgid_args *uap, register_t *retva
 	if ((pgid = SCARG(uap, pgid)) == 0)
 		pgid = targp;
 
-	return enterpgrp(p, targp, pgid, 0);
+	return proc_enterpgrp(p, targp, pgid, false);
 }
 
 /*

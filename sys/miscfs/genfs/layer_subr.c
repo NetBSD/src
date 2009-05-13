@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.25 2008/01/24 17:32:55 ad Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.25.24.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.25 2008/01/24 17:32:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.25.24.1 2009/05/13 17:22:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ int layerfs_debug = 1;
  * Initialise cache headers
  */
 void
-layerfs_init()
+layerfs_init(void)
 {
 #ifdef LAYERFS_DIAGNOSTIC
 	if (layerfs_debug)
@@ -114,7 +114,7 @@ layerfs_init()
  * Free global resources of layerfs.
  */
 void
-layerfs_done()
+layerfs_done(void)
 {
 #ifdef LAYERFS_DIAGNOSTIC
 	if (layerfs_debug)
@@ -128,9 +128,7 @@ layerfs_done()
  * It will be held upon return iff we return NULL.
  */
 struct vnode *
-layer_node_find(mp, lowervp)
-	struct mount *mp;
-	struct vnode *lowervp;
+layer_node_find(struct mount *mp, struct vnode *lowervp)
 {
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
 	struct layer_node_hashhead *hd;
@@ -197,10 +195,7 @@ loop:
  * Maintain a reference to lowervp.
  */
 int
-layer_node_alloc(mp, lowervp, vpp)
-	struct mount *mp;
-	struct vnode *lowervp;
-	struct vnode **vpp;
+layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 {
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
 	struct layer_node_hashhead *hd;
@@ -292,10 +287,7 @@ layer_node_alloc(mp, lowervp, vpp)
  * propagate the lock state to upper node <<
  */
 int
-layer_node_create(mp, lowervp, newvpp)
-	struct mount *mp;
-	struct vnode *lowervp;
-	struct vnode **newvpp;
+layer_node_create(struct mount *mp, struct vnode *lowervp, struct vnode **newvpp)
 {
 	struct vnode *aliasvp;
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
@@ -362,10 +354,7 @@ layer_node_create(mp, lowervp, newvpp)
 
 #ifdef LAYERFS_DIAGNOSTIC
 struct vnode *
-layer_checkvp(vp, fil, lno)
-	struct vnode *vp;
-	const char *fil;
-	int lno;
+layer_checkvp(struct vnode *vp, const char *fil, int lno)
 {
 	struct layer_node *a = VTOLAYER(vp);
 #ifdef notyet

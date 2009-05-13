@@ -1,5 +1,5 @@
-/*	$NetBSD: openpicreg.h,v 1.2 2001/02/05 19:22:24 briggs Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.2.146.1 2009/05/13 17:18:01 jym Exp $	*/
 
-void openpic_init __P((void));
+void openpic_init(void);
 
 #include <powerpc/openpicreg.h>

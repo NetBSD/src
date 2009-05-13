@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.2 2007/10/17 19:56:43 garbled Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.2.40.1 2009/05/13 17:18:15 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.2 2007/10/17 19:56:43 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.2.40.1 2009/05/13 17:18:15 jym Exp $");
 
 #include <sys/param.h>
 
@@ -52,12 +52,12 @@ int savesr;
 #endif
 
 void
-kgdbinit()
+kgdbinit(void)
 {
 }
 
 int
-kgdb_poll()
+kgdb_poll(void)
 {
 	/* for now: */
 	return 0;

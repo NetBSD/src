@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.14 2008/09/09 12:09:31 tron Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.14.8.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -36,6 +36,7 @@
 #define BTINFO_MEMMAP		9
 #define	BTINFO_BOOTWEDGE	10
 #define BTINFO_MODULELIST	11
+#define BTINFO_FRAMEBUFFER	12
 
 #ifndef _LOCORE
 
@@ -178,6 +179,23 @@ struct btinfo_modulelist {
 	int num;
 	uint32_t endpa;
 	/* bi_modulelist_entry list follows */
+};
+
+struct btinfo_framebuffer {
+	struct btinfo_common common;
+	uint64_t physaddr;
+	uint32_t flags;
+	uint32_t width;
+	uint32_t height;
+	uint16_t stride;
+	uint8_t depth;
+	uint8_t rnum;
+	uint8_t gnum;
+	uint8_t bnum;
+	uint8_t rpos;
+	uint8_t gpos;
+	uint8_t bpos;
+	uint8_t reserved[16];
 };
 
 #endif /* _LOCORE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.5 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.5.6.1 2009/05/13 17:23:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
 	.text
 
 ENTRY(_atomic_cas_64)
-1:	ldarx	r10,0,r3
-	cmpd	r10,r4
+1:	ldarx	%r10,0,%r3
+	cmpd	%r10,%r4
 	bne-	2f
-	stdcx.	r5,0,r3
+	stdcx.	%r5,0,%r3
 	bne-	1b
-2:	mr	r3,r10
+2:	mr	%r3,%r10
 	blr
 
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)

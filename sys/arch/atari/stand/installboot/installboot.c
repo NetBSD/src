@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.22 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.22.2.1 2009/05/13 17:16:32 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -53,18 +53,18 @@
 
 #include "installboot.h"
 
-static void	usage __P((void));
-static void	oscheck __P((void));
-static u_int	abcksum __P((void *));
-static void	setNVpref __P((void));
-static void	setIDEpar __P((u_int8_t *, size_t));
-static void	mkahdiboot __P((struct ahdi_root *, char *,
-						char *, u_int32_t));
-static void	mkbootblock __P((struct bootblock *, char *,
-				char *, struct disklabel *, u_int));
-static void	install_fd __P((char *, struct disklabel *));
-static void	install_sd __P((char *, struct disklabel *));
-static void	install_wd __P((char *, struct disklabel *));
+static void	usage(void);
+static void	oscheck(void);
+static u_int	abcksum(void *);
+static void	setNVpref(void);
+static void	setIDEpar(u_int8_t *, size_t);
+static void	mkahdiboot(struct ahdi_root *, char *,
+						char *, u_int32_t);
+static void	mkbootblock(struct bootblock *, char *,
+				char *, struct disklabel *, u_int);
+static void	install_fd(char *, struct disklabel *);
+static void	install_sd(char *, struct disklabel *);
+static void	install_wd(char *, struct disklabel *);
 
 static struct bootblock	bootarea;
 static struct ahdi_root ahdiboot;
@@ -92,9 +92,7 @@ usage ()
 }
 
 int
-main (argc, argv)
-	int	argc;
-	char	*argv[];
+main (int argc, char *argv[])
 {
 	struct disklabel dl;
 	char		 *dn;
@@ -209,9 +207,7 @@ oscheck ()
 }
 
 static void
-install_fd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_fd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxboot, *bootxx;
@@ -265,9 +261,7 @@ install_fd (devnm, label)
 }
 
 static void
-install_sd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_sd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
@@ -339,9 +333,7 @@ install_sd (devnm, label)
 }
 
 static void
-install_wd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_wd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
@@ -512,9 +504,7 @@ mkbootblock (bb, xxb, bxx, label, magic)
 }
 
 static void
-setIDEpar (start, size)
-	u_int8_t	*start;
-	size_t		size;
+setIDEpar (u_int8_t *start, size_t size)
 {
 	static const u_int8_t	mark[] = { 'N', 'e', 't', 'B', 'S', 'D' };
 
@@ -578,8 +568,7 @@ setNVpref ()
 }
 
 static u_int
-abcksum (bs)
-	void	*bs;
+abcksum (void *bs)
 {
 	u_int16_t sum  = 0,
 		  *st  = (u_int16_t *)bs,

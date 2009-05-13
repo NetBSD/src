@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6.92.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@ struct confargs {
 /* Locator aliases */
 #define cf_addr	cf_loc[OBIOCF_ADDR]
 
-int	badaddr __P((void *, u_int));
-void	makebootdev __P((char *));
+int	badaddr(void *, u_int);
+void	makebootdev(char *);
 
 #endif	/* !_MIPSCO_AUTOCONF_H_ */

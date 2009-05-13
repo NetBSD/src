@@ -1,9 +1,7 @@
-#	$NetBSD: files.i386,v 1.341 2008/12/20 12:41:19 ad Exp $
+#	$NetBSD: files.i386,v 1.341.2.1 2009/05/13 17:17:49 jym Exp $
 #
 # new style config file for i386 architecture
 #
-
-version 20071109
 
 ifndef xen
 
@@ -64,7 +62,6 @@ defflag 	POWERNOW_K7
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/aout_machdep.c	exec_aout
 file	arch/i386/i386/busfunc.S
-file	arch/i386/i386/core_machdep.c	coredump
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
@@ -85,13 +82,10 @@ file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
-file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
-file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
 
 file	arch/i386/i386/mptramp.S  	multiprocessor
-file    arch/i386/i386/ipifuncs.c       multiprocessor
 
 file	arch/i386/i386/pmc.c		perfctrs
 
@@ -134,7 +128,6 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 # i386 specific mainbus attributes
 define	apmbus {}
 define	pnpbiosbus {}
-define	vesabiosbus {}
 
 #
 # System bus types
@@ -142,7 +135,7 @@ define	vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus,
+	cpubus, ioapicbus, apmbus, pnpbiosbus, ipmibus,
 	bioscall
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
@@ -474,6 +467,8 @@ include	"dev/usb/files.usb"
 
 include	"dev/bluetooth/files.bluetooth"
 
+include	"dev/sdmmc/files.sdmmc"
+
 include	"dev/ieee1394/files.ieee1394"
 
 include	"arch/i386/pnpbios/files.pnpbios"
@@ -494,20 +489,10 @@ file	arch/i386/acpi/spic_acpi.c		spic_acpi
 attach	npx at acpinodebus with npx_acpi
 file	arch/i386/acpi/npx_acpi.c		npx_acpi
 
-device	vesabios {}
-attach	vesabios at vesabiosbus
-file	arch/i386/bios/vesabios.c		vesabios needs-flag
-defflag	opt_vesabios.h	VESABIOSVERBOSE
-
-device	vesafb: displaydev, wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
-attach	vesafb at vesabios
-file	arch/i386/bios/vesafb.c		vesafb needs-flag
-defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
-defflag	opt_vesafb.h	VESAFB_PM
-
-device	vesatext
-attach	vesatext at vesabios
-file	arch/i386/bios/vesa_text.c	vesatext
+# Obsolete vesabios/vesafb flags
+obsolete	defflag	opt_vesabios.h	VESABIOSVERBOSE
+obsolete	defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+obsolete	defflag	opt_vesafb.h	VESAFB_PM
 
 # AMD PowerNow K7
 file	arch/i386/i386/powernow_k7.c	powernow_k7

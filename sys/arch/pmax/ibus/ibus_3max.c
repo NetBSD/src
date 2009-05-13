@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_3max.c,v 1.11 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: ibus_3max.c,v 1.11.12.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.11 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.11.12.1 2009/05/13 17:18:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ static struct ibus_attach_args kn02sys_devs[] = {
 	{ "dc",  	SYS_DEV_SCC0,	KV(KN02_SYS_DZ),	0 },
 };
 
-static int	kn02sys_match __P((struct device *, struct cfdata *, void *));
-static void	kn02sys_attach __P((struct device *, struct device *, void *));
+static int	kn02sys_match(struct device *, struct cfdata *, void *);
+static void	kn02sys_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(kn02sys, sizeof(struct ibus_softc),
     kn02sys_match, kn02sys_attach, NULL, NULL);
@@ -64,9 +64,7 @@ kn02sys_match(parent, cfdata, aux)
 }
 
 static void
-kn02sys_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+kn02sys_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ibus_dev_attach_args ida;
 

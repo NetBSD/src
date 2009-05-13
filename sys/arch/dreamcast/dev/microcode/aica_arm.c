@@ -1,4 +1,4 @@
-/*	$NetBSD: aica_arm.c,v 1.4 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: aica_arm.c,v 1.4.92.1 2009/05/13 17:16:37 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -66,7 +66,7 @@ void aica_stop(void);
 void aica_main(void);
 
 void
-aica_init()
+aica_init(void)
 {
 	int ch, off;
 
@@ -192,7 +192,7 @@ rate2reg(unsigned int rate)
 
 
 void
-aica_stop()
+aica_stop(void)
 {
 
 	CH_WRITE_4(0, 0x00, 0x8000);
@@ -202,7 +202,7 @@ aica_stop()
 }
 
 void
-aica_main()
+aica_main(void)
 {
 	volatile aica_cmd_t *aicacmd = (volatile aica_cmd_t *)AICA_ARM_CMD;
 	int play_state;

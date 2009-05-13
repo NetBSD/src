@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.9 2008/06/12 22:30:30 cegger Exp $	*/
+/*	$NetBSD: attimer.c,v 1.9.10.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.9 2008/06/12 22:30:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.9.10.1 2009/05/13 17:19:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,9 @@ int
 attimer_detach(device_t self, int flags)
 {
 	struct attimer_softc *sc = device_private(self);
+	
+	if ((sc->sc_flags & ATT_ATTACHED) != 0)
+		return EBUSY;
 
 	pmf_device_deregister(self);
 	sc->sc_flags &= ~ATT_CONFIGURED;
@@ -95,6 +98,14 @@ attimer_attach_speaker(void)
 		}
 	}
 	return NULL;
+}
+
+void
+attimer_detach_speaker(device_t dev)
+{
+	struct attimer_softc *sc = device_private(dev);
+
+	sc->sc_flags &= ~ATT_ATTACHED;
 }
 
 void

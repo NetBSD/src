@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2009/01/21 16:24:34 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.214.2.1 2009/05/13 17:16:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -82,10 +82,11 @@
 #include "opt_fpu_emulate.h"
 #include "opt_lev6_defer.h"
 #include "opt_m060sp.h"
+#include "opt_modular.h"
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2009/01/21 16:24:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214.2.1 2009/05/13 17:16:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +216,7 @@ volatile struct drioct *draco_ioct;
  * to choose and initialize a console.
  */
 void
-consinit()
+consinit(void)
 {
 	/* initialize custom chip interface */
 #ifdef DRACO
@@ -249,7 +250,7 @@ consinit()
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	char pbuf[9];
 	u_int i;
@@ -336,10 +337,7 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -366,7 +364,7 @@ setregs(l, pack, stack)
 	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 #ifdef FPU_EMULATE
 	if (!fputype)
-		bzero(&l->l_addr->u_pcb.pcb_fpregs, sizeof(struct fpframe));
+		memset(&l->l_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpframe));
 	else
 #endif
 		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
@@ -383,7 +381,7 @@ int m68060_pcr_init = 0x21;	/* make this patchable */
 
 
 void
-identifycpu()
+identifycpu(void)
 {
         /* there's alot of XXX in here... */
 	const char *mach, *mmu, *fpu;
@@ -495,9 +493,7 @@ bootsync(void)
 
 
 void
-cpu_reboot(howto, bootstr)
-	register int howto;
-	char *bootstr;
+cpu_reboot(register int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curlwp->l_addr)
@@ -537,7 +533,7 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 #define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -547,7 +543,7 @@ cpu_dumpconf()
 	extern u_int Sysseg_pa;
 	extern int end[];
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Intitialize the `dispatcher' portion of the header.
@@ -632,15 +628,14 @@ cpu_dumpconf()
 static vm_offset_t dumpspace;
 
 vm_offset_t
-reserve_dumppages(p)
-	vm_offset_t p;
+reserve_dumppages(vm_offset_t p)
 {
 	dumpspace = p;
 	return (p + BYTES_PER_DUMP);
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	unsigned bytes, i, n, seg;
 	int     maddr, psize;
@@ -679,7 +674,7 @@ dumpsys()
 	}
 	kseg_p = (kcore_seg_t *)dump_hdr;
 	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
-	bzero(dump_hdr, sizeof(dump_hdr));
+	memset(dump_hdr, 0, sizeof(dump_hdr));
 
 	/*
 	 * Generate a segment header
@@ -758,7 +753,7 @@ dumpsys()
 }
 
 void
-initcpu()
+initcpu(void)
 {
 	typedef void trapfun(void);
 
@@ -886,9 +881,7 @@ initcpu()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
 	printf("unexpected trap format %x (vector offset %x) from %x\n",
 	       evec>>12, evec & 0xFFF, pc);
@@ -898,8 +891,7 @@ straytrap(pc, evec)
 int	*nofault;
 
 int
-badaddr(addr)
-	register void *addr;
+badaddr(register void *addr)
 {
 	register int i;
 	label_t	faultbuf;
@@ -918,8 +910,7 @@ badaddr(addr)
 }
 
 int
-badbaddr(addr)
-	register void *addr;
+badbaddr(register void *addr)
 {
 	register int i;
 	label_t	faultbuf;
@@ -967,7 +958,7 @@ static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
 void
-alloc_sicallback()
+alloc_sicallback(void)
 {
 	struct si_callback *si;
 	int s;
@@ -985,9 +976,7 @@ alloc_sicallback()
 }
 
 void
-add_sicallback (function, rock1, rock2)
-	void (*function)(void *rock1, void *rock2);
-	void *rock1, *rock2;
+add_sicallback (void (*function)(void *rock1, void *rock2), void *rock1, void *rock2)
 {
 	struct si_callback *si;
 	int s;
@@ -1031,8 +1020,7 @@ add_sicallback (function, rock1, rock2)
 
 
 void
-rem_sicallback(function)
-	void (*function)(void *rock1, void *rock2);
+rem_sicallback(void (*function)(void *rock1, void *rock2))
 {
 	struct si_callback *si, *psi, *nsi;
 	int s;
@@ -1059,7 +1047,7 @@ rem_sicallback(function)
 
 /* purge the list */
 static void
-call_sicallbacks()
+call_sicallbacks(void)
 {
 	struct si_callback *si;
 	int s;
@@ -1103,8 +1091,7 @@ struct isr *isr_supio;
 struct isr *isr_exter;
 
 void
-add_isr(isr)
-	struct isr *isr;
+add_isr(struct isr *isr)
 {
 	struct isr **p, *q;
 
@@ -1151,8 +1138,7 @@ add_isr(isr)
 }
 
 void
-remove_isr(isr)
-	struct isr *isr;
+remove_isr(struct isr *isr)
 {
 	struct isr **p, *q;
 
@@ -1225,8 +1211,7 @@ remove_isr(isr)
 static int idepth;
 
 void
-intrhand(sr)
-	int sr;
+intrhand(int sr)
 {
 	register unsigned int ipl;
 	register unsigned short ireq;
@@ -1396,7 +1381,7 @@ void candbtimer(void);
 callout_t candbtimer_ch;
 
 void
-candbtimer()
+candbtimer(void)
 {
 	crashandburn = 0;
 }
@@ -1406,8 +1391,7 @@ candbtimer()
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
-nmihand(frame)
-	struct frame frame;
+nmihand(struct frame frame)
 {
 	if (kbdnmi()) {
 #ifdef PANICBUTTON
@@ -1449,9 +1433,7 @@ nmihand(frame)
  * MID and proceed to new zmagic code ;-)
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 #ifdef COMPAT_NOMID

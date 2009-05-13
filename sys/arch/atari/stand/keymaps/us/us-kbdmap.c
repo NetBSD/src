@@ -1,4 +1,4 @@
-/*	$NetBSD: us-kbdmap.c,v 1.2 2001/09/07 23:09:37 thomas Exp $	*/
+/*	$NetBSD: us-kbdmap.c,v 1.2.140.1 2009/05/13 17:16:32 jym Exp $	*/
 
 #include "../../../dev/kbdmap.h"
 
@@ -152,7 +152,7 @@ struct kbdmap ascii_kbdmap = {
 };
 
 #ifndef _KERNEL
-main()
+main(void)
 {
   exit(write (1, &ascii_kbdmap, sizeof (kbdmap)) == sizeof (kbdmap) ? 0 : 1);
 }

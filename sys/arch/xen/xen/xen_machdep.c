@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4.12.1 2009/02/09 00:03:55 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4.12.2 2009/05/13 17:18:50 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.1 2009/02/09 00:03:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.2 2009/05/13 17:18:50 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.1 2009/02/09 00:03:55 jym Exp
 #include <sys/reboot.h>
 #include <sys/timetc.h>
 #include <sys/sysctl.h>
+#include <sys/pmf.h>
 
 #include <xen/hypervisor.h>
 
@@ -208,6 +209,11 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 					opt++;
 				}
 			}
+			break;
+		case XEN_PARSE_PCIBACK:
+			if (strncasecmp(opt, "pciback.hide=", 13) == 0)
+				strncpy(xcp->xcp_pcidevs, opt + 13,
+				    sizeof(xcp->xcp_pcidevs));
 			break;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.21 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.21.18.1 2009/05/13 17:20:26 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.21 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.21.18.1 2009/05/13 17:20:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.21 2008/04/10 19:13:37 cegger Exp
 #endif
 
 #if __NetBSD_Version__ >= 104160000
-static	void ntwoc_pci_config_interrupts(struct device *);
+static	void ntwoc_pci_config_interrupts(device_t);
 #else
 #define	SCA_BASECLOCK	16000000
 #endif
@@ -113,8 +113,8 @@ struct ntwoc_pci_softc {
 	struct sca_softc sc_sca;	/* the SCA itself */
 };
 
-static  int ntwoc_pci_match(struct device *, struct cfdata *, void *);
-static  void ntwoc_pci_attach(struct device *, struct device *, void *);
+static  int ntwoc_pci_match(device_t, cfdata_t, void *);
+static  void ntwoc_pci_attach(device_t, device_t, void *);
 
 static	int ntwoc_pci_alloc_dma(struct sca_softc *);
 static	void ntwoc_pci_clock_callback(void *, int, int);
@@ -175,8 +175,7 @@ ntwoc_pci_sca_read_2(struct sca_softc *sc, u_int reg)
 
 
 static int
-ntwoc_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ntwoc_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -188,9 +187,9 @@ ntwoc_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
+ntwoc_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ntwoc_pci_softc *sc = (void *)self;
+	struct ntwoc_pci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct sca_softc *sca = &sc->sc_sca;
 	pci_intr_handle_t ih;
@@ -723,8 +722,7 @@ ntwoc_pci_setup_dma(struct sca_softc *sc)
 
 #if __NetBSD_Version__ >= 104160000
 static void
-ntwoc_pci_config_interrupts(self)
-	struct device *self;
+ntwoc_pci_config_interrupts(device_t self)
 {
 	struct ntwoc_pci_softc *sc;
 

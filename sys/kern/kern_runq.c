@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.24 2009/01/18 05:07:51 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.24.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.24 2009/01/18 05:07:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.24.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,8 +100,12 @@ static void	sched_balance(void *);
  * Preemption control.
  */
 int		sched_upreempt_pri = PRI_KERNEL;
-#if defined(__HAVE_PREEMPTION)
+#ifdef __HAVE_PREEMPTION
+# ifdef DEBUG
+int		sched_kpreempt_pri = 0;
+# else
 int		sched_kpreempt_pri = PRI_USER_RT;
+# endif
 #else
 int		sched_kpreempt_pri = 1000;
 #endif
@@ -193,7 +197,7 @@ sched_cpuattach(struct cpu_info *ci)
  * Control of the runqueue.
  */
 
-static void *
+static inline void *
 sched_getrq(runqueue_t *ci_rq, const pri_t prio)
 {
 

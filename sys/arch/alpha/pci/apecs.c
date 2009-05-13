@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.46 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: apecs.c,v 1.46.14.1 2009/05/13 17:16:05 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.46 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.46.14.1 2009/05/13 17:16:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,26 +97,23 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.46 2008/04/28 20:23:11 martin Exp $");
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	apecsmatch __P((struct device *, struct cfdata *, void *));
-void	apecsattach __P((struct device *, struct device *, void *));
+int	apecsmatch(struct device *, struct cfdata *, void *);
+void	apecsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(apecs, sizeof(struct apecs_softc),
     apecsmatch, apecsattach, NULL, NULL);
 
 extern struct cfdriver apecs_cd;
 
-int	apecs_bus_get_window __P((int, int,
-	    struct alpha_bus_space_translation *));
+int	apecs_bus_get_window(int, int,
+	    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
 int apecsfound;
 struct apecs_config apecs_configuration;
 
 int
-apecsmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+apecsmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -134,9 +131,7 @@ apecsmatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-apecs_init(acp, mallocsafe)
-	struct apecs_config *acp;
-	int mallocsafe;
+apecs_init(struct apecs_config *acp, int mallocsafe)
 {
 	acp->ac_comanche_pass2 =
 	    (REGVAL(COMANCHE_ED) & COMANCHE_ED_PASS2) != 0;
@@ -169,9 +164,7 @@ apecs_init(acp, mallocsafe)
 }
 
 void
-apecsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apecsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apecs_softc *sc = (struct apecs_softc *)self;
 	struct apecs_config *acp;
@@ -245,9 +238,7 @@ apecsattach(parent, self, aux)
 }
 
 int
-apecs_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+apecs_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct apecs_config *acp = &apecs_configuration;
 	bus_space_tag_t st;

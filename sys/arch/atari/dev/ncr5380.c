@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.57 2008/11/15 21:35:31 abs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.57.4.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.57 2008/11/15 21:35:31 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.57.4.1 2009/05/13 17:16:22 jym Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -80,10 +80,10 @@ static volatile int	main_running = 0;
  */
 static u_char	busy;
 
-static void	ncr5380_minphys __P((struct buf *bp));
-static void	ncr5380_scsi_request __P((struct scsipi_channel *,
-					scsipi_adapter_req_t, void *));
-static void	ncr5380_show_scsi_cmd __P((struct scsipi_xfer *xs));
+static void	ncr5380_minphys(struct buf *bp);
+static void	ncr5380_scsi_request(struct scsipi_channel *,
+					scsipi_adapter_req_t, void *);
+static void	ncr5380_show_scsi_cmd(struct scsipi_xfer *xs);
 
 static SC_REQ	req_queue[NREQ];
 static SC_REQ	*free_head = NULL;	/* Free request structures	*/
@@ -123,7 +123,7 @@ extern inline int wait_req_false(void)
 	return (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ));
 }
 
-extern inline void ack_message()
+extern inline void ack_message(void)
 {
 	SET_5380_REG(NCR5380_ICOM, 0);
 }
@@ -169,8 +169,8 @@ extern inline void finish_req(SC_REQ *reqp)
 /*
  * Auto config stuff....
  */
-void	ncr_attach __P((struct device *, struct device *, void *));
-int	ncr_match __P((struct device *, struct cfdata *, void *));
+void	ncr_attach(struct device *, struct device *, void *);
+int	ncr_match(struct device *, struct cfdata *, void *);
 
 /*
  * Tricks to make driver-name configurable
@@ -186,18 +186,13 @@ CFATTACH_DECL(CFDRNAME(DRNAME), sizeof(struct ncr_softc),
 extern struct cfdriver CFNAME(DRNAME);
 
 int
-ncr_match(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+ncr_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	return (machine_match(pdp, cfp, auxp, &CFNAME(DRNAME)));
 }
 
 void
-ncr_attach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+ncr_attach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct ncr_softc	*sc;
 	int			i;
@@ -263,10 +258,7 @@ void		*auxp;
  * Carry out a request from the high level driver.
  */
 static void
-ncr5380_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+ncr5380_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -381,7 +373,7 @@ ncr5380_scsi_request(chan, req, arg)
 			tmp->xs = reqp->xs;
 			tmp->targ_id = reqp->targ_id;
 			tmp->targ_lun = reqp->targ_lun;
-			bcopy(sense_cmd, &tmp->xcmd, sizeof(sense_cmd));
+			memcpy( &tmp->xcmd, sense_cmd, sizeof(sense_cmd));
 			tmp->xcmd_len = sizeof(sense_cmd);
 			tmp->xdata_ptr = (u_char *)&tmp->xs->sense.scsi_sense;
 			tmp->xdata_len = sizeof(tmp->xs->sense.scsi_sense);
@@ -452,8 +444,7 @@ ncr5380_show_scsi_cmd(struct scsipi_xfer *xs)
  * The body of the driver.
  */
 static void
-scsi_main(sc)
-struct ncr_softc *sc;
+scsi_main(struct ncr_softc *sc)
 {
 	SC_REQ	*req, *prev;
 	int	itype;
@@ -633,8 +624,7 @@ main_exit:
  * out of a single buffer.
  */
 static void
-ncr_dma_intr(sc)
-struct ncr_softc *sc;
+ncr_dma_intr(struct ncr_softc *sc)
 {
 	SC_REQ	*reqp;
 	int	dma_done;
@@ -657,8 +647,7 @@ struct ncr_softc *sc;
  * the machine-dependent hardware interrupt.
  */
 static void
-ncr_ctrl_intr(sc)
-struct ncr_softc *sc;
+ncr_ctrl_intr(struct ncr_softc *sc)
 {
 	int	itype;
 
@@ -702,9 +691,7 @@ struct ncr_softc *sc;
  * to a non-zero value. This is the case when 'select' is called by abort.
  */
 static int
-scsi_select(reqp, code)
-SC_REQ	*reqp;
-int	code;
+scsi_select(SC_REQ *reqp, int code)
 {
 	u_char			tmp[1];
 	u_char			phase;
@@ -958,8 +945,7 @@ identify_failed:
  *	-1: keep on calling information_transfer() from scsi_main()
  */
 static int
-information_transfer(sc)
-struct ncr_softc *sc;
+information_transfer(struct ncr_softc *sc)
 {
 	SC_REQ	*reqp = connected;
 	u_char	tmp, phase;
@@ -1033,7 +1019,7 @@ struct ncr_softc *sc;
 		 */
 		if (reqp->xdata_ptr == reqp->xs->data) { /* XXX */
 		    if (reqp->dr_flag & DRIVER_BOUNCING)
-			bcopy(reqp->xdata_ptr, reqp->bounceb, reqp->xdata_len);
+			memcpy( reqp->bounceb, reqp->xdata_ptr, reqp->xdata_len);
 		}
 
 	   case PH_DATAIN:
@@ -1117,9 +1103,7 @@ struct ncr_softc *sc;
  *	-1 : Get on to the next phase.
  */
 static int
-handle_message(reqp, msg)
-SC_REQ	*reqp;
-u_int	msg;
+handle_message(SC_REQ *reqp, u_int msg)
 {
 	int	sps;
 	SC_REQ	*prev, *req;
@@ -1252,8 +1236,7 @@ u_int	msg;
  * disconnected queue.
  */
 static void
-reselect(sc)
-struct ncr_softc *sc;
+reselect(struct ncr_softc *sc)
 {
 	u_char	phase;
 	u_long	len;
@@ -1355,11 +1338,7 @@ struct ncr_softc *sc;
  * phase.
  */
 static int
-transfer_pio(phase, data, len, dont_drop_ack)
-u_char	*phase;
-u_char	*data;
-u_long	*len;
-int	dont_drop_ack;
+transfer_pio(u_char *phase, u_char *data, u_long *len, int dont_drop_ack)
 {
 	u_int	cnt = *len;
 	u_char	ph  = *phase;
@@ -1431,10 +1410,7 @@ int	dont_drop_ack;
  * If 'poll' is true, the function busy-waits until DMA has completed.
  */
 static void
-transfer_dma(reqp, phase, poll)
-SC_REQ	*reqp;
-u_int	phase;
-int	poll;
+transfer_dma(SC_REQ *reqp, u_int phase, int poll)
 {
 	int	dma_done;
 	u_char	mbase = 0;
@@ -1490,7 +1466,7 @@ again:
  * Check results of a DMA data-transfer.
  */
 static int
-dma_ready()
+dma_ready(void)
 {
 	SC_REQ	*reqp = connected;
 	int	dmstat, is_edma;
@@ -1532,7 +1508,7 @@ dma_ready()
 		 * before copying.
 		 */
 		PCIA();
-		bcopy(reqp->bouncerp, reqp->xdata_ptr, bytes_done);
+		memcpy( reqp->xdata_ptr, reqp->bouncerp, bytes_done);
 		reqp->bouncerp += bytes_done;
 	}
 
@@ -1593,9 +1569,7 @@ ncr_tprint(reqp, "dma-ready: code = %d\n", reqp->xs->error); /* LWP */
 #endif /* REAL_DMA */
 
 static int
-check_autosense(reqp, linked)
-SC_REQ	*reqp;
-int	linked;
+check_autosense(SC_REQ *reqp, int linked)
 {
 	int	sps;
 
@@ -1620,7 +1594,7 @@ int	linked;
 	if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
 		switch (reqp->status & SCSMASK) {
 		    case SCSCHKC:
-			bcopy(sense_cmd, &reqp->xcmd, sizeof(sense_cmd));
+			memcpy( &reqp->xcmd, sense_cmd, sizeof(sense_cmd));
 			reqp->xcmd_len = sizeof(sense_cmd);
 			reqp->xdata_ptr = (u_char *)&reqp->xs->sense.scsi_sense;
 			reqp->xdata_len = sizeof(reqp->xs->sense.scsi_sense);
@@ -1635,7 +1609,7 @@ int	linked;
 			else reqp->xcmd.bytes[sizeof(sense_cmd)-2] |= 1;
 
 #ifdef DBG_REQ
-			bzero(reqp->xdata_ptr, reqp->xdata_len);
+			memset(reqp->xdata_ptr, 0, reqp->xdata_len);
 			if (dbg_target_mask & (1 << reqp->targ_id))
 				show_request(reqp, "AUTO-SENSE");
 #endif
@@ -1660,9 +1634,7 @@ int	linked;
 }
 
 static int
-reach_msg_out(sc, len)
-struct ncr_softc *sc;
-u_long		 len;
+reach_msg_out(struct ncr_softc *sc, u_long len)
 {
 	u_char	phase;
 	u_char	data;
@@ -1712,7 +1684,7 @@ u_long		 len;
 }
 
 void
-scsi_reset()
+scsi_reset(void)
 {
 	SC_REQ	*tmp, *next;
 	int	sps;
@@ -1764,9 +1736,7 @@ scsi_reset()
 }
 
 static void
-scsi_reset_verbose(sc, why)
-struct ncr_softc *sc;
-const char	 *why;
+scsi_reset_verbose(struct ncr_softc *sc, const char *why)
 {
 	ncr_aprint(sc, "Resetting SCSI-bus (%s)\n", why);
 
@@ -1780,8 +1750,7 @@ const char	 *why;
  * and INTR_SPURIOUS is returned.
  */
 static int
-check_intr(sc)
-struct ncr_softc *sc;
+check_intr(struct ncr_softc *sc)
 {
 	SC_REQ	*reqp;
 
@@ -1807,8 +1776,7 @@ struct ncr_softc *sc;
  * the DMA-chain.
  */
 static int
-scsi_dmaok(reqp)
-SC_REQ	*reqp;
+scsi_dmaok(SC_REQ *reqp)
 {
 	u_long			phy_buf;
 	u_long			phy_len;
@@ -1916,8 +1884,7 @@ bounceit:
 #endif /* REAL_DMA */
 
 static void
-run_main(sc)
-struct ncr_softc *sc;
+run_main(struct ncr_softc *sc)
 {
 	int	sps = splbio();
 
@@ -1977,16 +1944,13 @@ static const char *phase_names[] = {
 };
 
 static void
-show_phase(reqp, phase)
-SC_REQ	*reqp;
-int	phase;
+show_phase(SC_REQ *reqp, int phase)
 {
 	printf("INFTRANS: %d Phase = %s\n", reqp->targ_id, phase_names[phase]);
 }
 
 static void
-show_data_sense(xs)
-struct scsipi_xfer	*xs;
+show_data_sense(struct scsipi_xfer *xs)
 {
 	u_char	*p1, *p2;
 	int	i;
@@ -2005,9 +1969,7 @@ struct scsipi_xfer	*xs;
 }
 
 static void
-show_request(reqp, qtxt)
-SC_REQ	*reqp;
-const char *qtxt;
+show_request(SC_REQ *reqp, const char *qtxt)
 {
 	printf("REQ-%s: %d %p[%ld] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
 			qtxt, reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
@@ -2024,8 +1986,7 @@ static const char *sig_names[] = {
 };
 
 static void
-show_signals(dmstat, idstat)
-u_char	dmstat, idstat;
+show_signals(u_char dmstat, u_char idstat)
 {
 	u_short	tmp, mask;
 	int	j, need_pipe;
@@ -2045,7 +2006,7 @@ u_char	dmstat, idstat;
 }
 
 void
-scsi_show()
+scsi_show(void)
 {
 	SC_REQ	*tmp;
 	int	sps = splhigh();

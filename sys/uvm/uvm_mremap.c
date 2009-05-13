@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.12 2008/06/17 16:17:21 tsutsui Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.12.10.1 2009/05/13 17:23:10 jym Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.12 2008/06/17 16:17:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.12.10.1 2009/05/13 17:23:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -282,5 +282,4 @@ sys_mremap(struct lwp *l, const struct sys_mremap_args *uap, register_t *retval)
 done:
 	*retval = (error != 0) ? 0 : (register_t)newva;
 	return error;
-
 }

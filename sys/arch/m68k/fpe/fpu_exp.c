@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_exp.c,v 1.3 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_exp.c,v 1.3.92.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.3 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.3.92.1 2009/05/13 17:17:59 jym Exp $");
 
 #include "fpu_emulate.h"
 
@@ -41,32 +41,28 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.3 2005/12/11 12:17:52 christos Exp $")
  */
 
 struct fpn *
-fpu_etox(fe)
-     struct fpemu *fe;
+fpu_etox(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_etoxm1(fe)
-     struct fpemu *fe;
+fpu_etoxm1(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_tentox(fe)
-     struct fpemu *fe;
+fpu_tentox(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_twotox(fe)
-     struct fpemu *fe;
+fpu_twotox(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;

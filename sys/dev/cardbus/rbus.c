@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.25 2007/10/19 11:59:39 ad Exp $	*/
+/*	$NetBSD: rbus.c,v 1.25.34.1 2009/05/13 17:19:16 jym Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.25 2007/10/19 11:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.25.34.1 2009/05/13 17:19:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,14 +61,7 @@ static rbus_tag_t rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent,
 
 
 int
-rbus_space_alloc(rbt, addr, size, mask, align, flags, addrp, bshp)
-	rbus_tag_t rbt;
-	bus_addr_t addr;
-	bus_size_t size;
-	bus_addr_t mask, align;
-	int flags;
-	bus_addr_t *addrp;
-	bus_space_handle_t *bshp;
+rbus_space_alloc(rbus_tag_t rbt, bus_addr_t addr, bus_size_t size, bus_addr_t mask, bus_addr_t align, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 	return rbus_space_alloc_subregion(rbt, rbt->rb_start, rbt->rb_end,
 	    addr, size, mask, align, flags, addrp, bshp);
@@ -78,16 +71,7 @@ rbus_space_alloc(rbt, addr, size, mask, align, flags, addrp, bshp)
 
 
 int
-rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags, addrp, bshp)
-	rbus_tag_t rbt;
-	bus_addr_t addr;
-	bus_addr_t substart;
-	bus_addr_t subend;
-	bus_size_t size;
-	bus_addr_t mask, align;
-	int flags;
-	bus_addr_t *addrp;
-	bus_space_handle_t *bshp;
+rbus_space_alloc_subregion(rbus_tag_t rbt, bus_addr_t substart, bus_addr_t subend, bus_addr_t addr, bus_size_t size, bus_addr_t mask, bus_addr_t align, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 	bus_addr_t decodesize = mask + 1;
 	bus_addr_t boundary, search_addr;
@@ -186,11 +170,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 
 
 int
-rbus_space_free(rbt, bsh, size, addrp)
-	rbus_tag_t rbt;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-	bus_addr_t *addrp;
+rbus_space_free(rbus_tag_t rbt, bus_space_handle_t bsh, bus_size_t size, bus_addr_t *addrp)
 {
 	int exflags = EX_FAST | EX_NOWAIT;
 	bus_addr_t addr;
@@ -225,12 +205,7 @@ rbus_space_free(rbt, bsh, size, addrp)
  *
  */
 static rbus_tag_t
-rbus_new_body(bt, parent, ex, start, end, offset, flags)
-	bus_space_tag_t bt;
-	rbus_tag_t parent;
-	struct extent *ex;
-	bus_addr_t start, end, offset;
-	int flags;
+rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent, struct extent *ex, bus_addr_t start, bus_addr_t end, bus_addr_t offset, int flags)
 {
 	rbus_tag_t rb;
 
@@ -278,12 +253,7 @@ rbus_new_body(bt, parent, ex, start, end, offset, flags)
  *  This function makes a new child rbus instance.
  */
 rbus_tag_t
-rbus_new(parent, start, size, offset, flags)
-	rbus_tag_t parent;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_addr_t offset;
-	int flags;
+rbus_new(rbus_tag_t parent, bus_addr_t start, bus_size_t size, bus_addr_t offset, int flags)
 {
 	rbus_tag_t rb;
 	struct extent *ex = NULL;
@@ -323,11 +293,7 @@ rbus_new(parent, start, size, offset, flags)
  *  This function makes a root rbus instance.
  */
 rbus_tag_t
-rbus_new_root_delegate(bt, start, size, offset)
-	bus_space_tag_t bt;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_addr_t offset;
+rbus_new_root_delegate(bus_space_tag_t bt, bus_addr_t start, bus_size_t size, bus_addr_t offset)
 {
 	rbus_tag_t rb;
 	struct extent *ex;
@@ -356,12 +322,7 @@ rbus_new_root_delegate(bt, start, size, offset)
  *  This function makes a root rbus instance.
  */
 rbus_tag_t
-rbus_new_root_share(bt, ex, start, size, offset)
-	bus_space_tag_t bt;
-	struct extent *ex;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_addr_t offset;
+rbus_new_root_share(bus_space_tag_t bt, struct extent *ex, bus_addr_t start, bus_size_t size, bus_addr_t offset)
 {
 	/* sanity check */
 	if (start < ex->ex_start || start + size > ex->ex_end) {
@@ -387,8 +348,7 @@ rbus_new_root_share(bt, ex, start, size, offset)
  *   This function deletes the rbus structure pointed in the argument.
  */
 int
-rbus_delete(rb)
-	rbus_tag_t rb;
+rbus_delete(rbus_tag_t rb)
 {
 	DPRINTF(("rbus_delete called [%s]\n",
 	    rb->rb_ext != NULL ? rb->rb_ext->ex_name : "noname"));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.143 2008/11/28 06:47:08 pooka Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.143.4.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.143 2008/11/28 06:47:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.143.4.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.143 2008/11/28 06:47:08 pooka Exp
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
-extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
+extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 						struct nfssvc_sock *,
-						struct lwp *, struct mbuf **));
+						struct lwp *, struct mbuf **);
 extern int nfsrvw_procrastinate;
 extern int nuidhash_max;
 
@@ -96,9 +96,9 @@ int nfsd_head_flag;
 struct nfssvc_sock *nfs_udpsock;
 struct nfssvc_sock *nfs_udp6sock;
 
-static struct nfssvc_sock *nfsrv_sockalloc __P((void));
-static void nfsrv_sockfree __P((struct nfssvc_sock *));
-static void nfsd_rt __P((int, struct nfsrv_descript *, int));
+static struct nfssvc_sock *nfsrv_sockalloc(void);
+static void nfsrv_sockfree(struct nfssvc_sock *);
+static void nfsd_rt(int, struct nfsrv_descript *, int);
 
 /*
  * NFS server system calls
@@ -296,7 +296,7 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 }
 
 static struct nfssvc_sock *
-nfsrv_sockalloc()
+nfsrv_sockalloc(void)
 {
 	struct nfssvc_sock *slp;
 
@@ -332,9 +332,7 @@ nfsrv_sockfree(struct nfssvc_sock *slp)
  * Adds a socket to the list for servicing by nfsds.
  */
 int
-nfssvc_addsock(fp, mynam)
-	file_t *fp;
-	struct mbuf *mynam;
+nfssvc_addsock(file_t *fp, struct mbuf *mynam)
 {
 	int siz;
 	struct nfssvc_sock *slp;
@@ -423,10 +421,7 @@ nfssvc_addsock(fp, mynam)
  * until it is killed by a signal.
  */
 int
-nfssvc_nfsd(nsd, argp, l)
-	struct nfsd_srvargs *nsd;
-	void *argp;
-	struct lwp *l;
+nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 {
 	struct timeval tv;
 	struct mbuf *m;
@@ -437,7 +432,6 @@ nfssvc_nfsd(nsd, argp, l)
 	u_quad_t cur_usec;
 	int error = 0, cacherep, siz, sotype, writes_todo;
 	struct proc *p = l->l_proc;
-	int s;
 	bool doreinit;
 
 #ifndef nolint
@@ -687,14 +681,14 @@ nfssvc_nfsd(nsd, argp, l)
 			getmicrotime(&tv);
 			cur_usec = (u_quad_t)tv.tv_sec * 1000000 +
 			    (u_quad_t)tv.tv_usec;
-			s = splsoftclock();
+			mutex_enter(&nfsd_lock);
 			if (LIST_FIRST(&slp->ns_tq) &&
 			    LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec) {
 				cacherep = RC_DOIT;
 				writes_todo = 1;
 			} else
 				writes_todo = 0;
-			splx(s);
+			mutex_exit(&nfsd_lock);
 		} while (writes_todo);
 		if (nfsrv_dorec(slp, nfsd, &nd, &dummy)) {
 			nfsd->nfsd_slp = NULL;
@@ -727,8 +721,7 @@ done:
  * called at splsoftnet.
  */
 void
-nfsrv_zapsock(slp)
-	struct nfssvc_sock *slp;
+nfsrv_zapsock(struct nfssvc_sock *slp)
 {
 	struct nfsuid *nuidp, *nnuidp;
 	struct nfsrv_descript *nwp;
@@ -754,8 +747,6 @@ nfsrv_zapsock(slp)
 	soshutdown(so, SHUT_RDWR);
 	sounlock(so);
 
-	if (slp->ns_nam)
-		m_free(slp->ns_nam);
 	m_freem(slp->ns_raw);
 	m = slp->ns_rec;
 	while (m != NULL) {
@@ -765,6 +756,7 @@ nfsrv_zapsock(slp)
 		m_freem(m);
 		m = n;
 	}
+	/* XXX what about freeing ns_frag ? */
 	for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != 0;
 	    nuidp = nnuidp) {
 		nnuidp = TAILQ_NEXT(nuidp, nu_lru);
@@ -789,19 +781,16 @@ nfsrv_zapsock(slp)
  * is no longer valid, you can throw it away.
  */
 void
-nfsrv_slpderef(slp)
-	struct nfssvc_sock *slp;
+nfsrv_slpderef(struct nfssvc_sock *slp)
 {
 	uint32_t ref;
 
 	mutex_enter(&nfsd_lock);
 	KASSERT(slp->ns_sref > 0);
 	ref = --slp->ns_sref;
-	mutex_exit(&nfsd_lock);
 	if (ref == 0 && (slp->ns_flags & SLP_VALID) == 0) {
 		file_t *fp;
 
-		mutex_enter(&nfsd_lock);
 		KASSERT((slp->ns_gflags & SLP_G_DOREC) == 0);
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
 		mutex_exit(&nfsd_lock);
@@ -815,9 +804,12 @@ nfsrv_slpderef(slp)
 			closef(fp);
 			slp->ns_so = NULL;
 		}
-
+		
+		if (slp->ns_nam)
+			m_free(slp->ns_nam);
 		nfsrv_sockfree(slp);
-	}
+	} else
+		mutex_exit(&nfsd_lock);
 }
 
 /*
@@ -826,8 +818,7 @@ nfsrv_slpderef(slp)
  * corruption.
  */
 void
-nfsrv_init(terminating)
-	int terminating;
+nfsrv_init(int terminating)
 {
 	struct nfssvc_sock *slp;
 
@@ -889,10 +880,7 @@ nfsrv_fini(void)
  * Add entries to the server monitor log.
  */
 static void
-nfsd_rt(sotype, nd, cacherep)
-	int sotype;
-	struct nfsrv_descript *nd;
-	int cacherep;
+nfsd_rt(int sotype, struct nfsrv_descript *nd, int cacherep)
 {
 	struct timeval tv;
 	struct drt *rt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.28 2008/06/11 23:24:43 cegger Exp $	*/
+/*	$NetBSD: plcom.c,v 1.28.10.1 2009/05/13 17:16:38 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.28 2008/06/11 23:24:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.28.10.1 2009/05/13 17:16:38 jym Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -467,9 +467,7 @@ plcom_config(struct plcom_softc *sc)
 }
 
 int
-plcom_detach(self, flags)
-	struct device *self;
-	int flags;
+plcom_detach(struct device *self, int flags)
 {
 	struct plcom_softc *sc = (struct plcom_softc *)self;
 	int maj, mn;

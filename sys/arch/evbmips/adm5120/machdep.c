@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.9.4.1 2009/05/13 17:16:39 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,12 +107,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.4.1 2009/05/13 17:16:39 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include "opt_memsize.h"
+#include "opt_modular.h"
 #include "opt_ethaddr.h"
 
 #include "opt_pci.h"

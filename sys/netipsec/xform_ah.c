@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.22 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.22.2.1 2009/05/13 17:22:41 jym Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.22 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.22.2.1 2009/05/13 17:22:41 jym Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -214,7 +214,7 @@ ah_init0(struct secasvar *sav, struct xformsw *xsp, struct cryptoini *cria)
 	sav->tdb_authalgxform = thash;
 
 	/* Initialize crypto session. */
-	bzero(cria, sizeof (*cria));
+	memset(cria, 0, sizeof (*cria));
 	cria->cri_alg = sav->tdb_authalgxform->type;
 	cria->cri_klen = _KEYBITS(sav->key_auth);
 	cria->cri_key = _KEYBUF(sav->key_auth);
@@ -252,7 +252,7 @@ ah_zeroize(struct secasvar *sav)
 	int err;
 
 	if (sav->key_auth)
-		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
+		memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
 
 	mutex_spin_enter(&crypto_mtx);
 	err = crypto_freesession(sav->tdb_cryptoid);
@@ -428,7 +428,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 				/* Zeroize all other options. */
 				count = ptr[off + 1];
-				bcopy(ipseczeroes, ptr, count);
+				memcpy(ptr, ipseczeroes, count);
 				off += count;
 				break;
 			}
@@ -537,7 +537,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 					/* If mutable option, zeroize. */
 					if (ptr[count] & IP6OPT_MUTABLE)
-						bcopy(ipseczeroes, ptr + count,
+						memcpy(ptr + count, ipseczeroes,
 						    ptr[count + 1]);
 
 					count += ad;
@@ -687,7 +687,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		if (tdbi->proto == sav->sah->saidx.proto &&
 		    tdbi->spi == sav->spi &&
-		    !bcmp(&tdbi->dst, &sav->sah->saidx.dst,
+		    !memcmp(&tdbi->dst, &sav->sah->saidx.dst,
 			  sizeof (union sockaddr_union)))
 			break;
 	}
@@ -877,7 +877,7 @@ ah_input_cb(struct cryptop *crp)
 	authsize = AUTHSIZE(sav);
 
 	if (ipsec_debug)
-	  bzero(calc, sizeof(calc));
+	  memset(calc, 0, sizeof(calc));
 
 	/* Copy authenticator off the packet. */
 	m_copydata(m, skip + rplen, authsize, calc);
@@ -890,7 +890,7 @@ ah_input_cb(struct cryptop *crp)
 		ptr = (char *) (tc + 1);
 
 		/* Verify authenticator. */
-		if (bcmp(ptr + skip + rplen, calc, authsize)) {
+		if (memcmp(ptr + skip + rplen, calc, authsize)) {
 			u_int8_t *pppp = ptr + skip+rplen;
 			DPRINTF(("ah_input: authentication hash mismatch " \
 			    "over %d bytes " \

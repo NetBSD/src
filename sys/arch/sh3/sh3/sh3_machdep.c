@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.78 2008/11/22 01:53:41 uwe Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.78.4.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.78 2008/11/22 01:53:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.78.4.1 2009/05/13 17:18:22 jym Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -242,7 +242,7 @@ sh_proc0_init()
 }
 
 void
-sh_startup()
+sh_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -290,12 +290,12 @@ sh_startup()
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 }
 
@@ -411,10 +411,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -455,10 +452,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
@@ -553,7 +547,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  * Jump to reset vector.
  */
 void
-cpu_reset()
+cpu_reset(void)
 {
 
 	_cpu_exception_suspend();

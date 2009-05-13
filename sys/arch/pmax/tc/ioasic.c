@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.15 2002/10/02 04:15:10 thorpej Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.15.126.1 2009/05/13 17:18:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.15 2002/10/02 04:15:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.15.126.1 2009/05/13 17:18:14 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ static int kn03_builtin_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs) - 3;
 static int kn03_ioasic_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs);
 #endif
 
-static int	ioasicmatch __P((struct device *, struct cfdata *, void *));
-static void	ioasicattach __P((struct device *, struct device *, void *));
+static int	ioasicmatch(struct device *, struct cfdata *, void *);
+static void	ioasicattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ioasic, sizeof(struct ioasic_softc),
     ioasicmatch, ioasicattach, NULL, NULL);
@@ -107,10 +107,7 @@ tc_addr_t ioasic_base;	/* XXX XXX XXX */
 int ioasicfound;
 
 static int
-ioasicmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+ioasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -125,9 +122,7 @@ ioasicmatch(parent, cfdata, aux)
 }
 
 static void
-ioasicattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ioasicattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
@@ -192,9 +187,7 @@ ioasicattach(parent, self, aux)
 }
 
 const struct evcnt *
-ioasic_intr_evcnt(dev, cookie)
-	struct device *dev;
-	void *cookie;
+ioasic_intr_evcnt(struct device *dev, void *cookie)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -202,12 +195,7 @@ ioasic_intr_evcnt(dev, cookie)
 }
 
 void
-ioasic_intr_establish(dev, cookie, level, handler, val)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *val;
+ioasic_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *val)
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, val);
 }

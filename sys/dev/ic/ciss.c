@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.14 2008/09/04 19:03:14 he Exp $	*/
+/*	$NetBSD: ciss.c,v 1.14.8.1 2009/05/13 17:19:22 jym Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.14 2008/09/04 19:03:14 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.14.8.1 2009/05/13 17:19:22 jym Exp $");
 
 #include "bio.h"
 
@@ -97,7 +97,7 @@ static int	ciss_ldmap(struct ciss_softc *sc);
 int	ciss_pdid(struct ciss_softc *, u_int8_t, struct ciss_pdid *, int);
 
 #if NBIO > 0
-int		ciss_ioctl(struct device *, u_long, void *);
+int		ciss_ioctl(device_t, u_long, void *);
 int		ciss_ioctl_vol(struct ciss_softc *, struct bioc_vol *);
 int		ciss_blink(struct ciss_softc *, int, int, int, struct ciss_blink *);
 int		ciss_create_sensors(struct ciss_softc *);
@@ -231,7 +231,7 @@ ciss_attach(struct ciss_softc *sc)
 		printf(": cannot map CCBs (%d)\n", error);
 		return -1;
 	}
-	bzero(sc->ccbs, total);
+	memset(sc->ccbs, 0, total);
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, total, 1,
 	    total, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->cmdmap))) {
@@ -299,7 +299,7 @@ ciss_attach(struct ciss_softc *sc)
 		printf(": cannot map scratch buffer (%d)\n", error);
 		return -1;
 	}
-	bzero(sc->scratch, PAGE_SIZE);
+	memset(sc->scratch, 0, PAGE_SIZE);
 	sc->sc_waitflag = XS_CTL_NOSLEEP;		/* can't sleep yet */
 
 	mutex_enter(&sc->sc_mutex_scratch);		/* is this really needed? */
@@ -348,7 +348,7 @@ ciss_attach(struct ciss_softc *sc)
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
 		return -1;
 	}
-	bzero(sc->sc_lds, sc->maxunits * sizeof(*sc->sc_lds));
+	memset(sc->sc_lds, 0, sc->maxunits * sizeof(*sc->sc_lds));
 
 	sc->sc_flush = CISS_FLUSH_ENABLE;
 	if (!(sc->sc_sh = shutdownhook_establish(ciss_shutdown, sc))) {
@@ -372,7 +372,7 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_channel.chan_flags = 0;
 	sc->sc_channel.chan_id = sc->maxunits;
 
-	sc->sc_adapter.adapt_dev = (struct device *) sc;
+	sc->sc_adapter.adapt_dev = (device_t) sc;
 	sc->sc_adapter.adapt_openings = sc->sc_channel.chan_openings;
 	sc->sc_adapter.adapt_max_periph = sc->maxunits;
 	sc->sc_adapter.adapt_request = ciss_scsi_cmd;
@@ -470,7 +470,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 
 		sgd = dmap->dm_segs;
 		CISS_DPRINTF(CISS_D_DMA, ("data=%p/%u<0x%lx/%lu",
-		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr, sgd->ds_len));
+		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr,
+		    (u_long)sgd->ds_len));
 
 		for (i = 0; i < dmap->dm_nsegs; sgd++, i++) {
 			cmd->sgl[i].addr_lo = htole32(sgd->ds_addr);
@@ -480,7 +481,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			cmd->sgl[i].flags = htole32(0);
 			if (i) {
 				CISS_DPRINTF(CISS_D_DMA,
-				    (",0x%lx/%lu", sgd->ds_addr, sgd->ds_len));
+				    (",0x%lx/%lu", sgd->ds_addr,
+				    (u_long)sgd->ds_len));
 			}
 		}
 
@@ -491,7 +493,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	} else
 		cmd->sgin = 0;
 	cmd->sglen = htole16((u_int16_t)cmd->sgin);
-	bzero(&ccb->ccb_err, sizeof(ccb->ccb_err));
+	memset(&ccb->ccb_err, 0, sizeof(ccb->ccb_err));
 
 	bus_dmamap_sync(sc->sc_dmat, sc->cmdmap, 0, sc->cmdmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -639,7 +641,7 @@ ciss_error(struct ciss_ccb *ccb)
 		    device_xname(&sc->sc_dev), ccb->ccb_cmd.id,
 		    err->err_info, err->err_type[3], err->err_type[2]);
 		if (xs) {
-			bzero(&xs->sense, sizeof(xs->sense));
+			memset(&xs->sense, 0, sizeof(xs->sense));
 			xs->sense.scsi_sense.response_code =
 				SSD_RCODE_CURRENT | SSD_RCODE_VALID;
 			xs->sense.scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
@@ -665,7 +667,7 @@ ciss_error(struct ciss_ccb *ccb)
 			switch (err->scsi_stat) {
 			case SCSI_CHECK:
 				xs->error = XS_SENSE;
-				bcopy(&err->sense[0], &xs->sense,
+				memcpy(&xs->sense, &err->sense[0],
 				    sizeof(xs->sense));
 				CISS_DPRINTF(CISS_D_CMD, (" sense=%02x %02x %02x %02x ",
 					     err->sense[0], err->sense[1], err->sense[2], err->sense[3]));
@@ -709,7 +711,7 @@ ciss_inq(struct ciss_softc *sc, struct ciss_inquiry *inq)
 	cmd->cdblen = 10;
 	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL | CISS_CDB_IN;
 	cmd->tmo = htole16(0);
-	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
+	memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
 	cmd->cdb[0] = CISS_CMD_CTRL_GET;
 	cmd->cdb[6] = CISS_CMS_CTRL_CTRL;
 	cmd->cdb[7] = sizeof(*inq) >> 8;	/* biiiig endian */
@@ -741,7 +743,7 @@ ciss_ldmap(struct ciss_softc *sc)
 	cmd->cdblen = 12;
 	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL | CISS_CDB_IN;
 	cmd->tmo = htole16(30);
-	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
+	memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
 	cmd->cdb[0] = CISS_CMD_LDMAP;
 	cmd->cdb[8] = total >> 8;	/* biiiig endian */
 	cmd->cdb[9] = total & 0xff;
@@ -770,7 +772,7 @@ ciss_sync(struct ciss_softc *sc)
 
 	mutex_enter(&sc->sc_mutex_scratch);
 	flush = sc->scratch;
-	bzero(flush, sizeof(*flush));
+	memset(flush, 0, sizeof(*flush));
 	flush->flush = sc->sc_flush;
 
 	ccb = ciss_get_ccb(sc);
@@ -783,7 +785,7 @@ ciss_sync(struct ciss_softc *sc)
 	cmd->cdblen = 10;
 	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL | CISS_CDB_OUT;
 	cmd->tmo = 0;
-	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
+	memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
 	cmd->cdb[0] = CISS_CMD_CTRL_SET;
 	cmd->cdb[6] = CISS_CMS_CTRL_FLUSH;
 	cmd->cdb[7] = sizeof(*flush) >> 8;	/* biiiig endian */
@@ -813,7 +815,7 @@ ciss_ldid(struct ciss_softc *sc, int target, struct ciss_ldid *id)
 	cmd->cdblen = 10;
 	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL | CISS_CDB_IN;
 	cmd->tmo = htole16(0);
-	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
+	memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
 	cmd->cdb[0] = CISS_CMD_CTRL_GET;
 	cmd->cdb[1] = target;
 	cmd->cdb[6] = CISS_CMS_CTRL_LDIDEXT;
@@ -841,7 +843,7 @@ ciss_ldstat(struct ciss_softc *sc, int target, struct ciss_ldstat *stat)
 	cmd->cdblen = 10;
 	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL | CISS_CDB_IN;
 	cmd->tmo = htole16(0);
-	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
+	memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
 	cmd->cdb[0] = CISS_CMD_CTRL_GET;
 	cmd->cdb[1] = target;
 	cmd->cdb[6] = CISS_CMS_CTRL_LDSTAT;
@@ -869,7 +871,7 @@ ciss_pdid(struct ciss_softc *sc, u_int8_t drv, struct ciss_pdid *id, int wait)
 	cmd->cdblen = 10;
 	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL | CISS_CDB_IN;
 	cmd->tmo = htole16(0);
-	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
+	memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
 	cmd->cdb[0] = CISS_CMD_CTRL_GET;
 	cmd->cdb[2] = drv;
 	cmd->cdb[6] = CISS_CMS_CTRL_PDID;
@@ -913,10 +915,10 @@ ciss_pdscan(struct ciss_softc *sc, int ld)
 	if (!ldp)
 		return NULL;
 
-	bzero(&ldp->bling, sizeof(ldp->bling));
+	memset(&ldp->bling, 0, sizeof(ldp->bling));
 	ldp->ndrives = k;
 	ldp->xname[0] = 0;
-	bcopy(buf, ldp->tgts, k);
+	memcpy(ldp->tgts, buf, k);
 	return ldp;
 }
 
@@ -940,7 +942,7 @@ ciss_scsi_raw_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	case ADAPTER_REQ_RUN_XFER:
 		if (xs->cmdlen > CISS_MAX_CDB) {
 			CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
-			bzero(&xs->sense, sizeof(xs->sense));
+			memset(&xs->sense, 0, sizeof(xs->sense));
 			printf("ciss driver stuffup in %s:%d: %s()\n",
 			       __FILE__, __LINE__, __func__);
 			xs->error = XS_DRIVER_STUFFUP;
@@ -966,8 +968,8 @@ ciss_scsi_raw_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		else if (xs->xs_control & XS_CTL_DATA_OUT)
 			cmd->flags |= CISS_CDB_OUT;
 		cmd->tmo = xs->timeout < 1000? 1 : xs->timeout / 1000;
-		bzero(&cmd->cdb[0], sizeof(cmd->cdb));
-		bcopy(xs->cmd, &cmd->cdb[0], CISS_MAX_CDB);
+		memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
+		memcpy(&cmd->cdb[0], xs->cmd, CISS_MAX_CDB);
 
 		if (ciss_cmd(ccb, BUS_DMA_WAITOK,
 		    xs->xs_control & (XS_CTL_POLL|XS_CTL_NOSLEEP))) {
@@ -1018,7 +1020,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		CISS_DPRINTF(CISS_D_CMD, ("targ=%d ", target));
 		if (xs->cmdlen > CISS_MAX_CDB) {
 			CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
-			bzero(&xs->sense, sizeof(xs->sense));
+			memset(&xs->sense, 0, sizeof(xs->sense));
 			printf("ciss driver stuffup in %s:%d: %s()\n",
 			       __FILE__, __LINE__, __func__);
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1045,8 +1047,8 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		else if (xs->xs_control & XS_CTL_DATA_OUT)
 			cmd->flags |= CISS_CDB_OUT;
 		cmd->tmo = xs->timeout < 1000? 1 : xs->timeout / 1000;
-		bzero(&cmd->cdb[0], sizeof(cmd->cdb));
-		bcopy(xs->cmd, &cmd->cdb[0], CISS_MAX_CDB);
+		memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
+		memcpy(&cmd->cdb[0], xs->cmd, CISS_MAX_CDB);
 		CISS_DPRINTF(CISS_D_CMD, ("cmd=%02x %02x %02x %02x %02x %02x ",
 			     cmd->cdb[0], cmd->cdb[1], cmd->cdb[2],
 			     cmd->cdb[3], cmd->cdb[4], cmd->cdb[5]));
@@ -1144,7 +1146,7 @@ const int ciss_stat[] = { BIOC_SVONLINE, BIOC_SVOFFLINE, BIOC_SVOFFLINE,
     BIOC_SVOFFLINE, BIOC_SVBUILDING };
 
 int
-ciss_ioctl(struct device *dev, u_long cmd, void *addr)
+ciss_ioctl(device_t dev, u_long cmd, void *addr)
 {
 	struct ciss_softc	*sc = (struct ciss_softc *)dev;
 	struct bioc_inq *bi;
@@ -1314,7 +1316,7 @@ ciss_ioctl_vol(struct ciss_softc *sc, struct bioc_vol *bv)
 	}
 	strlcpy(bv->bv_vendor, "CISS", sizeof(bv->bv_vendor));
 	ldstat = sc->scratch;
-	bzero(ldstat, sizeof(*ldstat));
+	memset(ldstat, 0, sizeof(*ldstat));
 	if ((error = ciss_ldstat(sc, bv->bv_volid, ldstat))) {
 		return error;
 	}
@@ -1368,7 +1370,7 @@ ciss_blink(struct ciss_softc *sc, int ld, int pd, int stat,
 
 	ldp->bling.pdtab[ldp->tgts[pd]] = stat == BIOC_SBUNBLINK? 0 :
 	    CISS_BLINK_ALL;
-	bcopy(&ldp->bling, blink, sizeof(*blink));
+	memcpy(blink, &ldp->bling, sizeof(*blink));
 
 	ccb = ciss_get_ccb(sc);
 	if (ccb == NULL)
@@ -1382,7 +1384,7 @@ ciss_blink(struct ciss_softc *sc, int ld, int pd, int stat,
 	cmd->cdblen = 10;
 	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL | CISS_CDB_OUT;
 	cmd->tmo = htole16(0);
-	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
+	memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
 	cmd->cdb[0] = CISS_CMD_CTRL_SET;
 	cmd->cdb[6] = CISS_CMS_CTRL_PDBLINK;
 	cmd->cdb[7] = sizeof(*blink) >> 8;	/* biiiig endian */
@@ -1443,7 +1445,7 @@ ciss_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (edata->sensor >= sc->maxunits)
 		return;
 
-	bzero(&bv, sizeof(bv));
+	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
 	if (ciss_ioctl_vol(sc, &bv)) {
 		return;

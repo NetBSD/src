@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2008/04/09 19:18:25 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.6.18.1 2009/05/13 17:17:44 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -99,10 +99,7 @@ extern char diskbuf[2048];
 #define MASK_BLK_PER_READ	(BLK_PER_READ - 1)
 
 void
-RAW_READ(buf, blkpos, bytelen)
-	void *buf;
-	daddr_t blkpos;
-	size_t bytelen;
+RAW_READ(void *buf, daddr_t blkpos, size_t bytelen)
 {
 	char *b = buf;
 	size_t off, readlen;
@@ -156,9 +153,7 @@ RAW_READ(buf, blkpos, bytelen)
  * buf must have enough space
  */
 static char *
-hexstr(buf, val)
-	char *buf;
-	unsigned val;
+hexstr(char *buf, unsigned val)
 {
 	unsigned v;
 	char rev[16];
@@ -180,10 +175,10 @@ hexstr(buf, val)
 }
 
 void
-ipl_main(interactive, sptop, psw)
-	unsigned interactive;		/* parameters from PDC */
-	unsigned sptop;			/* value of sp on function entry */
-	unsigned psw;			/* PSW on startup */
+ipl_main(unsigned interactive, unsigned sptop, unsigned psw)
+	/* interactive:		 parameters from PDC */
+	/* sptop:			 value of sp on function entry */
+	/* psw:			 PSW on startup */
 {
 	char buf[32];
 	int part = 0;		/* default partition "a" */
@@ -299,10 +294,7 @@ ipl_main(interactive, sptop, psw)
 }
 
 void
-load_file(path, loadadr, interactive, part)
-	const char *path;
-	unsigned loadadr, interactive;
-	int part;
+load_file(const char *path, unsigned loadadr, unsigned interactive, int part)
 {
 
 	/* look-up the file */
@@ -313,11 +305,8 @@ load_file(path, loadadr, interactive, part)
 }
 
 void
-load_file_ino(ino, fn, loadadr, interactive, part)
-	ino32_t ino;
-	const char *fn;		/* for message only */
-	unsigned loadadr, interactive;
-	int part;
+load_file_ino(ino32_t ino, const char *fn, unsigned loadadr, unsigned interactive, int part)
+	/* fn:		 for message only */
 {
 	union ufs_dinode dinode;
 	size_t sz;
@@ -355,9 +344,7 @@ load_file_ino(ino, fn, loadadr, interactive, part)
  * fill in loading information from an ELF executable
  */
 static inline void
-xi_elf32(inf, hdr)
-	struct loadinfo *inf;
-	Elf32_Ehdr *hdr;
+xi_elf32(struct loadinfo *inf, Elf32_Ehdr *hdr)
 {
 	char *top = (void *) hdr;
 	Elf32_Phdr *ph;
@@ -374,9 +361,7 @@ xi_elf32(inf, hdr)
 }
 
 static inline void
-xi_elf64(inf, hdr)
-	struct loadinfo *inf;
-	Elf64_Ehdr *hdr;
+xi_elf64(struct loadinfo *inf, Elf64_Ehdr *hdr)
 {
 	char *top = (void *) hdr;
 	Elf64_Phdr *ph;
@@ -397,9 +382,7 @@ xi_elf64(inf, hdr)
 }
 
 int
-xi_load(inf, buf)
-	struct loadinfo *inf;
-	void *buf;
+xi_load(struct loadinfo *inf, void *buf)
 {
 	Elf32_Ehdr *e32hdr = buf;
 	Elf64_Ehdr *e64hdr = buf;
@@ -445,7 +428,7 @@ xi_load(inf, buf)
 	memmove(buf, inf->sec_image, inf->sec_size);
 
 #if 0	/* XXX bss clear is done by the secondary boot itself */
-	bzero((char *) buf + inf->sec_size, inf->sec_pad);
+	memset((char *) buf + inf->sec_size, 0, inf->sec_pad);
 #endif
 
 	return 0;

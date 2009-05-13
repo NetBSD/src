@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_turnstile.c,v 1.23 2008/08/12 14:13:34 thorpej Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.23.8.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.23 2008/08/12 14:13:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.23.8.1 2009/05/13 17:21:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -96,7 +96,7 @@ turnstile_init(void)
 	for (i = 0; i < TS_HASH_SIZE; i++) {
 		tc = &turnstile_tab[i];
 		LIST_INIT(&tc->tc_chain);
-		mutex_init(&tc->tc_mutex, MUTEX_DEFAULT, IPL_SCHED);
+		tc->tc_mutex = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 	}
 
 	turnstile_cache = pool_cache_init(sizeof(turnstile_t), 0, 0, 0,
@@ -169,7 +169,7 @@ turnstile_lookup(wchan_t obj)
 	tschain_t *tc;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
-	mutex_spin_enter(&tc->tc_mutex);
+	mutex_spin_enter(tc->tc_mutex);
 
 	LIST_FOREACH(ts, &tc->tc_chain, ts_chain)
 		if (ts->ts_obj == obj)
@@ -193,7 +193,7 @@ turnstile_exit(wchan_t obj)
 	tschain_t *tc;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
-	mutex_spin_exit(&tc->tc_mutex);
+	mutex_spin_exit(tc->tc_mutex);
 }
 
 /*
@@ -217,7 +217,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	l = cur = curlwp;
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
-	KASSERT(mutex_owned(&tc->tc_mutex));
+	KASSERT(mutex_owned(tc->tc_mutex));
 	KASSERT(l != NULL && l->l_ts != NULL);
 
 	if (ts == NULL) {
@@ -252,8 +252,8 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 
 	sq = &ts->ts_sleepq[q];
 	ts->ts_waiters[q]++;
-	sleepq_enter(sq, l, &tc->tc_mutex);
-	LOCKDEBUG_BARRIER(&tc->tc_mutex, 1);
+	sleepq_enter(sq, l, tc->tc_mutex);
+	LOCKDEBUG_BARRIER(tc->tc_mutex, 1);
 	l->l_kpriority = true;
 	obase = l->l_kpribase;
 	if (obase < PRI_KTHREAD)
@@ -352,7 +352,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
 	KASSERT(count > 0 && count <= TS_WAITERS(ts, q));
-	KASSERT(mutex_owned(&tc->tc_mutex));
+	KASSERT(mutex_owned(tc->tc_mutex));
 	KASSERT(ts->ts_inheritor == curlwp || ts->ts_inheritor == NULL);
 
 	/*
@@ -425,7 +425,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 			turnstile_remove(ts, l, q);
 		}
 	}
-	mutex_spin_exit(&tc->tc_mutex);
+	mutex_spin_exit(tc->tc_mutex);
 }
 
 /*

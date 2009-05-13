@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.45 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.45.2.1 2009/05/13 17:22:29 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -237,7 +237,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 * the interface must be specified; otherwise, ifa_ifwithaddr()
 		 * will fail matching the address.
 		 */
-		bzero(&srcsock, sizeof(srcsock));
+		memset(&srcsock, 0, sizeof(srcsock));
 		srcsock.sin6_family = AF_INET6;
 		srcsock.sin6_len = sizeof(srcsock);
 		srcsock.sin6_addr = pi->ipi6_addr;
@@ -814,7 +814,7 @@ in6_selecthlim(struct in6pcb *in6p, struct ifnet *ifp)
  * Find an empty port and set it to the specified PCB.
  */
 int
-in6_pcbsetport(struct in6_addr *laddr, struct in6pcb *in6p, struct lwp *l)
+in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
 {
 	struct socket *so = in6p->in6p_socket;
 	struct inpcbtable *table = in6p->in6p_table;
@@ -823,6 +823,8 @@ in6_pcbsetport(struct in6_addr *laddr, struct in6pcb *in6p, struct lwp *l)
 	u_int16_t lport, *lastport;
 	int wild = 0;
 	void *t;
+	int error;
+	enum kauth_network_req req;
 
 	/* XXX: this is redundant when called from in6_pcbbind */
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
@@ -832,18 +834,27 @@ in6_pcbsetport(struct in6_addr *laddr, struct in6pcb *in6p, struct lwp *l)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		if (l == 0 || (kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL) != 0))
-			return (EACCES);
+		req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
+#else
+		req = KAUTH_REQ_NETWORK_BIND_PORT;
 #endif
+
 		minport = ip6_lowportmin;
 		maxport = ip6_lowportmax;
 		lastport = &table->inpt_lastlow;
 	} else {
+		req = KAUTH_REQ_NETWORK_BIND_PORT;
+
 		minport = ip6_anonportmin;
 		maxport = ip6_anonportmax;
 		lastport = &table->inpt_lastport;
 	}
+
+	/* XXX-kauth: KAUTH_REQ_NETWORK_BIND_AUTOASSIGN_{,PRIV}PORT */
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_BIND, req, so,
+	    sin6, NULL);
+	if (error)
+		return (EACCES);
 
 	if (minport > maxport) {	/* sanity check */
 		u_int16_t swp;
@@ -858,18 +869,28 @@ in6_pcbsetport(struct in6_addr *laddr, struct in6pcb *in6p, struct lwp *l)
 		if (lport < minport || lport > maxport)
 			lport = maxport;
 #ifdef INET
-		if (IN6_IS_ADDR_V4MAPPED(laddr)) {
+		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
 			t = in_pcblookup_port(table,
-			    *(struct in_addr *)&laddr->s6_addr32[3],
+			    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
 			    htons(lport), wild);
 		} else
 #endif
 		{
-			t = in6_pcblookup_port(table, laddr, htons(lport),
-			    wild);
+			t = in6_pcblookup_port(table, &sin6->sin6_addr,
+			    htons(lport), wild);
 		}
-		if (t == 0)
+		if (t == 0) {
+			/* We have a free port. Check with the secmodel. */
+			sin6->sin6_port = lport;
+			error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_BIND, req, so, sin6, NULL);
+			if (error) {
+				/* Secmodel says no. Keep looking. */
+				continue;
+			}
+	
 			goto found;
+		}
 	}
 
 	return (EAGAIN);
@@ -888,7 +909,7 @@ addrsel_policy_init(void)
 	init_policy_queue();
 
 	/* initialize the "last resort" policy */
-	bzero(&defaultaddrpolicy, sizeof(defaultaddrpolicy));
+	memset(&defaultaddrpolicy, 0, sizeof(defaultaddrpolicy));
 	defaultaddrpolicy.label = ADDR_LABEL_NOTAPP;
 }
 

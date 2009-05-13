@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2008/09/20 18:29:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.16.8.1 2009/05/13 17:17:43 jym Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -46,8 +46,10 @@ include <sys/syscall.h>
 include <sys/user.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
+include <sys/device.h>
 
 include <uvm/uvm.h>
+include <uvm/uvm_extern.h>
 
 include	<machine/types.h>
 include <machine/cpu.h>
@@ -64,6 +66,7 @@ include <hp700/hp700/intr.h>
 include <hppa/hppa/hpt.h>
 
 # general constants
+export	PAGE_SIZE
 export	PGSHIFT
 export	USRSTACK
 export	HPPA_PID_KERNEL
@@ -82,36 +85,12 @@ member	INT_REG_REQ	int_reg_req
 member	INT_REG_BITS_MAP int_reg_bits_map
 export	INT_REG_BIT_REG
 
-# pte things
-export	TLB_REF_POS
-export	TLB_NO_RW_ALIAS_POS
-export	TLB_DIRTY_POS
-export	TLB_UNMANAGED_POS
-
-# hpt_table fields
-struct	hpt_entry
-member	HPT_TLBPROT	hpt_tlbprot
-member	HPT_TLBPAGE	hpt_tlbpage
-member	HPT_ENTRY	hpt_entry
-define	HPT_TAG		0
-
-# pv_entry fields
-struct	pv_entry
-member	PV_HASH	pv_hash
-member	PV_SPACE	pv_space
-member	PV_VA		pv_va
-member	PV_TLBPAGE	pv_tlbpage
-member	PV_TLBPROT	pv_tlbprot
-member	PV_NEXT		pv_next
-member	PV_HPT		pv_hpt
-
-# pv_head fields
-struct	pv_head
-member	PV_HEAD_PVS	pv_head_pvs
-member	PV_HEAD_WRITABLE_DIRTY_REF pv_head_writable_dirty_ref
-export	PV_HEAD_DIRTY_POS
-export	PV_HEAD_REF_POS
-export	PV_HEAD_WRITABLE_POS
+# struct cpu_info fields
+#define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+#define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
+#define	CI_SOFTLWPS		offsetof(struct cpu_info, ci_softlwps)
+define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
+#define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 
 define	MTX_IPL			offsetof(struct kmutex, mtx_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, mtx_lock)
@@ -177,6 +156,7 @@ member	TF_IISQH	tf_iisq_head
 member	TF_IISQT	tf_iisq_tail
 member	TF_CR8		tf_pidr1
 member	TF_CR9		tf_pidr2
+member	TF_CR10		tf_ccr
 member	TF_CR11		tf_sar
 member	TF_CR12		tf_pidr3
 member	TF_CR13		tf_pidr4
@@ -186,7 +166,6 @@ member	TF_CR20		tf_isr
 member	TF_CR21		tf_ior
 member	TF_CR22		tf_ipsw
 member	TF_CR23		tf_eirr
-member	TF_CR24		tf_hptm
 member	TF_CR25		tf_vtop
 member	TF_CR28		tf_cr28
 member	TF_CR30		tf_cr30
@@ -198,12 +177,14 @@ member	P_MD		p_md
 
 struct	lwp
 member	L_PROC		l_proc
+member	L_CPU		l_cpu
 member	L_ADDR		l_addr
 member	L_PRIORITY	l_priority
 member	L_STAT		l_stat
 member	L_WCHAN		l_wchan
 member	L_MD		l_md
 member	L_MD_REGS	l_md.md_regs
+member	L_CTXSWTCH	l_ctxswtch
 
 struct	pcb
 member	PCB_FPREGS	pcb_fpregs

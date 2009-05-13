@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.24 2007/10/17 19:57:28 garbled Exp $	*/
+/*	$NetBSD: consinit.c,v 1.24.34.1 2009/05/13 17:18:38 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.24 2007/10/17 19:57:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.24.34.1 2009/05/13 17:18:38 jym Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -174,7 +174,7 @@ int prom_stdout_node;
  * the PROM "input source" and "output sink".
  */
 void
-consinit()
+consinit(void)
 {
 	int chosen;
 	char buffer[128];

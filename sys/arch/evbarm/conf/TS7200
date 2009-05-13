@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.36 2008/12/19 04:23:52 kenh Exp $
+#	$NetBSD: TS7200,v 1.36.2.1 2009/05/13 17:16:37 jym Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -107,7 +107,6 @@ options 	SEMMNS=60	# number of semaphores in system
 options 	SEMUME=10	# max number of undo entries per process
 options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
@@ -176,6 +175,16 @@ isa0		at tspld?
 wdc0		at tspld?
 # TS-5620 battery-backed real-time clock
 tsrtc*		at tspld?
+# On-board GPIO ports.  Note that only 20 total GPIO pins are available
+# across all ports
+epgpio0		at epsoc? addr 0x80840000 size 0xcc intr 59
+gpio*		at epgpio?
+options		EPGPIO_PORT_C_MASK=0x00
+options		EPGPIO_PORT_D_MASK=0x00
+options		EPGPIO_PORT_E_MASK=0x00
+options		EPGPIO_PORT_F_MASK=0x02
+options		EPGPIO_PORT_G_MASK=0x00
+options		EPGPIO_PORT_H_MASK=0x38
 
 # HD44780 LCD on LCD header
 #tslcd*		at tspld?

@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.35 2008/01/03 23:02:24 joerg Exp $ */
+/* $NetBSD: clock.c,v 1.35.24.1 2009/05/13 17:18:12 jym Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2008/01/03 23:02:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35.24.1 2009/05/13 17:18:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,9 +100,7 @@ extern int fixtick;		/* XXX */
 #endif
 
 void
-clockattach(dev, fns)
-	struct device *dev;
-	const struct clockfns *fns;
+clockattach(struct device *dev, const struct clockfns *fns)
 {
 
 	/*
@@ -132,7 +130,7 @@ clockattach(dev, fns)
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	if (clockfns == NULL)
@@ -173,8 +171,7 @@ cpu_initclocks()
  * but that would be a drag.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* nothing we can do */

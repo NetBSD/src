@@ -1,8 +1,8 @@
-/*	$NetBSD: nvm.h,v 1.1 2002/06/06 19:48:09 fredette Exp $	*/
+/*	$NetBSD: nvm.h,v 1.1.130.1 2009/05/13 17:17:44 jym Exp $	*/
 
 /*	$OpenBSD: nvm.h,v 1.2 1998/11/23 03:28:22 mickey Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1990, 1994 The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.

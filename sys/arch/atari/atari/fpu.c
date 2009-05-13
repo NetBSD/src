@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.13.14.1 2009/05/13 17:16:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13.14.1 2009/05/13 17:16:21 jym Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -64,8 +64,7 @@ static const char *fpu_descr[] = {
 	"??? " };
 
 const char *
-fpu_describe(type)
-int	type;
+fpu_describe(int type)
 {
 	int	maxtype = sizeof(fpu_descr)/sizeof(fpu_descr[0]) - 1;
 
@@ -75,7 +74,7 @@ int	type;
 }
 
 int
-fpu_probe()
+fpu_probe(void)
 {
 	/*
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.

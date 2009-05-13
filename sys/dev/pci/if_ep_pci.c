@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.49 2008/08/27 05:33:47 christos Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.49.8.1 2009/05/13 17:20:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.49 2008/08/27 05:33:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.49.8.1 2009/05/13 17:20:25 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.49 2008/08/27 05:33:47 christos Exp 
  */
 #define PCI_CBIO		0x10    /* Configuration Base IO Address */
 
-static int	ep_pci_match(device_t , cfdata_t , void *);
+static int	ep_pci_match(device_t , cfdata_t, void *);
 static void	ep_pci_attach(device_t , device_t , void *);
 
 CFATTACH_DECL_NEW(ep_pci, sizeof(struct ep_softc),

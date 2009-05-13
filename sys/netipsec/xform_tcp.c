@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.4 2007/12/11 12:40:10 lukem Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.4.26.1 2009/05/13 17:22:41 jym Exp $ */
 /*	$FreeBSD: sys/netipsec/xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 /* TCP MD5 Signature Option (RFC2385) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.4 2007/12/11 12:40:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.4.26.1 2009/05/13 17:22:41 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -122,7 +122,7 @@ tcpsignature_zeroize(struct secasvar *sav)
 {
 
 	if (sav->key_auth)
-		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
+		memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
 
 	sav->tdb_cryptoid = 0;
 	sav->tdb_authalgxform = NULL;

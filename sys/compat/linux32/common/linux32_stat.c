@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.12 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.12.4.1 2009/05/13 17:18:59 jym Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.12 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.12.4.1 2009/05/13 17:18:59 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,7 +80,7 @@ static inline void linux32_from_stat(struct stat *, struct linux32_stat64 *);
 static inline void
 linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
 {
-	bzero(st32, sizeof(*st32));
+	memset(st32, 0, sizeof(*st32));
 	st32->lst_dev = linux_fakedev(st->st_dev, 0);
 	st32->__lst_ino = st->st_ino;
 	st32->lst_mode = st->st_mode;

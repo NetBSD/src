@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.27 2008/01/20 18:09:12 joerg Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.27.24.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.27 2008/01/20 18:09:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.27.24.1 2009/05/13 17:21:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -170,8 +170,9 @@ inittodr(time_t base)
 				    deltat / SECDAY);
 				badrtc = 1;
 			} else {
-				printf("WARNING: clock gained %d days\n",
-				    deltat / SECDAY);
+				aprint_verbose("WARNING: clock gained %d "
+				    "days\n", deltat / SECDAY);
+				goodtime = 1;
 			}
 		} else {
 			goodtime = 1;
@@ -284,16 +285,6 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		todr_debug("TODR-GET-YMDHMS", rv, &dt, NULL);
 		if (rv)
 			return rv;
-
-		/*
-		 * Formerly we had code here that explicitly checked
-		 * for 2038 year rollover.
-		 *
-		 * However, clock_ymdhms_to_secs performs the same
-		 * check for us, so we need not worry about it.  Note
-		 * that this assumes that the tvp->tv_sec member is
-		 * a time_t.
-		 */
 
 		/*
 		 * Simple sanity checks.  Note that this includes a

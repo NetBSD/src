@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.56 2008/12/16 22:35:35 christos Exp $ */
+/*	$NetBSD: stp4020.c,v 1.56.2.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.56 2008/12/16 22:35:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.56.2.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,8 @@ struct stp4020_softc {
 
 
 static int	stp4020print(void *, const char *);
-static int	stp4020match(struct device *, struct cfdata *, void *);
-static void	stp4020attach(struct device *, struct device *, void *);
+static int	stp4020match(device_t, cfdata_t, void *);
+static void	stp4020attach(device_t, device_t, void *);
 static int	stp4020_intr(void *);
 static void	stp4020_map_window(struct stp4020_socket *h, int win, int speed);
 static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *cmd_delay);
@@ -210,29 +210,21 @@ static struct pcmcia_chip_functions stp4020_functions = {
 
 
 static inline int
-stp4020_rd_sockctl(h, idx)
-	struct stp4020_socket *h;
-	int idx;
+stp4020_rd_sockctl(struct stp4020_socket *h, int idx)
 {
 	int o = ((STP4020_SOCKREGS_SIZE * (h->sock)) + idx);
 	return (bus_space_read_2(h->tag, h->regs, o));
 }
 
 static inline void
-stp4020_wr_sockctl(h, idx, v)
-	struct stp4020_socket *h;
-	int idx;
-	int v;
+stp4020_wr_sockctl(struct stp4020_socket *h, int idx, int v)
 {
 	int o = (STP4020_SOCKREGS_SIZE * (h->sock)) + idx;
 	bus_space_write_2(h->tag, h->regs, o, v);
 }
 
 static inline int
-stp4020_rd_winctl(h, win, idx)
-	struct stp4020_socket *h;
-	int win;
-	int idx;
+stp4020_rd_winctl(struct stp4020_socket *h, int win, int idx)
 {
 	int o = (STP4020_SOCKREGS_SIZE * (h->sock)) +
 		(STP4020_WINREGS_SIZE * win) + idx;
@@ -240,11 +232,7 @@ stp4020_rd_winctl(h, win, idx)
 }
 
 static inline void
-stp4020_wr_winctl(h, win, idx, v)
-	struct stp4020_socket *h;
-	int win;
-	int idx;
-	int v;
+stp4020_wr_winctl(struct stp4020_socket *h, int win, int idx, int v)
 {
 	int o = (STP4020_SOCKREGS_SIZE * (h->sock)) +
 		(STP4020_WINREGS_SIZE * win) + idx;
@@ -277,67 +265,44 @@ static	void	stp4020_write_8(bus_space_tag_t,
 				u_int64_t);
 
 static u_int16_t
-stp4020_read_2(space, handle, offset)
-	bus_space_tag_t space;
-	bus_space_handle_t handle;
-	bus_size_t offset;
+stp4020_read_2(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset)
 {
 	return (le16toh(*(volatile u_int16_t *)(handle + offset)));
 }
 
 static u_int32_t
-stp4020_read_4(space, handle, offset)
-	bus_space_tag_t space;
-	bus_space_handle_t handle;
-	bus_size_t offset;
+stp4020_read_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset)
 {
 	return (le32toh(*(volatile u_int32_t *)(handle + offset)));
 }
 
 static u_int64_t
-stp4020_read_8(space, handle, offset)
-	bus_space_tag_t space;
-	bus_space_handle_t handle;
-	bus_size_t offset;
+stp4020_read_8(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset)
 {
 	return (le64toh(*(volatile u_int64_t *)(handle + offset)));
 }
 
 static void
-stp4020_write_2(space, handle, offset, value)
-	bus_space_tag_t space;
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int16_t value;
+stp4020_write_2(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, u_int16_t value)
 {
 	(*(volatile u_int16_t *)(handle + offset)) = htole16(value);
 }
 
 static void
-stp4020_write_4(space, handle, offset, value)
-	bus_space_tag_t space;
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int32_t value;
+stp4020_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, u_int32_t value)
 {
 	(*(volatile u_int32_t *)(handle + offset)) = htole32(value);
 }
 
 static void
-stp4020_write_8(space, handle, offset, value)
-	bus_space_tag_t space;
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int64_t value;
+stp4020_write_8(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, u_int64_t value)
 {
 	(*(volatile u_int64_t *)(handle + offset)) = htole64(value);
 }
 #endif	/* SUN4U */
 
 int
-stp4020print(aux, busname)
-	void *aux;
-	const char *busname;
+stp4020print(void *aux, const char *busname)
 {
 	struct pcmciabus_attach_args *paa = aux;
 	struct stp4020_socket *h = paa->pch;
@@ -347,10 +312,7 @@ stp4020print(aux, busname)
 }
 
 int
-stp4020match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+stp4020match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -361,9 +323,7 @@ stp4020match(parent, cf, aux)
  * Attach all the sub-devices we can find
  */
 void
-stp4020attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+stp4020attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct stp4020_softc *sc = (void *)self;
@@ -530,9 +490,7 @@ stp4020attach(parent, self, aux)
 }
 
 void
-stp4020_attach_socket(h, speed)
-	struct stp4020_socket *h;
-	int speed;
+stp4020_attach_socket(struct stp4020_socket *h, int speed)
 {
 	struct pcmciabus_attach_args paa;
 	int v;
@@ -601,8 +559,7 @@ stp4020_attach_socket(h, speed)
  * The actual event handling thread.
  */
 void
-stp4020_event_thread(arg)
-	void *arg;
+stp4020_event_thread(void *arg)
 {
 	struct stp4020_softc *sc = arg;
 	struct stp4020_event *e;
@@ -643,9 +600,7 @@ stp4020_event_thread(arg)
 }
 
 void
-stp4020_queue_event(sc, sock, event)
-	struct stp4020_softc *sc;
-	int sock, event;
+stp4020_queue_event(struct stp4020_softc *sc, int sock, int event)
 {
 	struct stp4020_event *e;
 	int s;
@@ -667,8 +622,7 @@ stp4020_queue_event(sc, sock, event)
  * Softinterrupt called to invoke the real driver interrupt handler.
  */
 static void
-stp4020_intr_dispatch(arg)
-	void *arg;
+stp4020_intr_dispatch(void *arg)
 {
 	struct stp4020_socket *h = arg;
 	int s;
@@ -684,8 +638,7 @@ stp4020_intr_dispatch(arg)
 #endif
 
 int
-stp4020_intr(arg)
-	void *arg;
+stp4020_intr(void *arg)
 {
 	struct stp4020_softc *sc = arg;
 #ifndef SUN4U
@@ -878,10 +831,7 @@ stp4020_map_window(struct stp4020_socket *h, int win, int speed)
 }
 
 int
-stp4020_chip_mem_alloc(pch, size, pcmhp)
-	pcmcia_chipset_handle_t pch;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmhp;
+stp4020_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size, struct pcmcia_mem_handle *pcmhp)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
@@ -896,21 +846,12 @@ stp4020_chip_mem_alloc(pch, size, pcmhp)
 }
 
 void
-stp4020_chip_mem_free(pch, pcmhp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_mem_handle *pcmhp;
+stp4020_chip_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pcmhp)
 {
 }
 
 int
-stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int kind;
-	bus_addr_t card_addr;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmhp;
-	bus_size_t *offsetp;
-	int *windowp;
+stp4020_chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr, bus_size_t size, struct pcmcia_mem_handle *pcmhp, bus_size_t *offsetp, int *windowp)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	int win = (kind&PCMCIA_MEM_ATTR)? STP_WIN_ATTR : STP_WIN_MEM;
@@ -932,19 +873,12 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 }
 
 void
-stp4020_chip_mem_unmap(pch, win)
-	pcmcia_chipset_handle_t pch;
-	int win;
+stp4020_chip_mem_unmap(pcmcia_chipset_handle_t pch, int win)
 {
 }
 
 int
-stp4020_chip_io_alloc(pch, start, size, align, pcihp)
-	pcmcia_chipset_handle_t pch;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_size_t align;
-	struct pcmcia_io_handle *pcihp;
+stp4020_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size, bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
@@ -954,20 +888,12 @@ stp4020_chip_io_alloc(pch, start, size, align, pcihp)
 }
 
 void
-stp4020_chip_io_free(pch, pcihp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_io_handle *pcihp;
+stp4020_chip_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pcihp)
 {
 }
 
 int
-stp4020_chip_io_map(pch, width, offset, size, pcihp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int width;
-	bus_addr_t offset;
-	bus_size_t size;
-	struct pcmcia_io_handle *pcihp;
-	int *windowp;
+stp4020_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset, bus_size_t size, struct pcmcia_io_handle *pcihp, int *windowp)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
@@ -984,15 +910,12 @@ stp4020_chip_io_map(pch, width, offset, size, pcihp, windowp)
 }
 
 void
-stp4020_chip_io_unmap(pch, win)
-	pcmcia_chipset_handle_t pch;
-	int win;
+stp4020_chip_io_unmap(pcmcia_chipset_handle_t pch, int win)
 {
 }
 
 void
-stp4020_chip_socket_enable(pch)
-	pcmcia_chipset_handle_t pch;
+stp4020_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	int i, v;
@@ -1055,9 +978,7 @@ stp4020_chip_socket_enable(pch)
 }
 
 void
-stp4020_chip_socket_settype(pch, type)
-	pcmcia_chipset_handle_t pch;
-	int type;
+stp4020_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	int v;
@@ -1091,8 +1012,7 @@ stp4020_chip_socket_settype(pch, type)
 }
 
 void
-stp4020_chip_socket_disable(pch)
-	pcmcia_chipset_handle_t pch;
+stp4020_chip_socket_disable(pcmcia_chipset_handle_t pch)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	int v;
@@ -1115,12 +1035,7 @@ stp4020_chip_socket_disable(pch)
 }
 
 void *
-stp4020_chip_intr_establish(pch, pf, ipl, handler, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*handler)(void *);
-	void *arg;
+stp4020_chip_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf, int ipl, int (*handler)(void *), void *arg)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
@@ -1139,9 +1054,7 @@ stp4020_chip_intr_establish(pch, pf, ipl, handler, arg)
 }
 
 void
-stp4020_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+stp4020_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
@@ -1160,9 +1073,7 @@ stp4020_chip_intr_disestablish(pch, ih)
  * XXX - assumes a context
  */
 void
-stp4020_delay(sc, ms)
-	struct stp4020_softc *sc;
-	unsigned int ms;
+stp4020_delay(struct stp4020_softc *sc, unsigned int ms)
 {
 	unsigned int ticks = mstohz(ms);
 
@@ -1180,8 +1091,7 @@ stp4020_delay(sc, ms)
 
 #ifdef STP4020_DEBUG
 void
-stp4020_dump_regs(h)
-	struct stp4020_socket *h;
+stp4020_dump_regs(struct stp4020_socket *h)
 {
 	char bits[64];
 	/*

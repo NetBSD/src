@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.c,v 1.8 2007/10/17 19:55:18 garbled Exp $	*/
+/*	$NetBSD: dbdma.c,v 1.8.34.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.8 2007/10/17 19:55:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.8.34.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -38,9 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.8 2007/10/17 19:55:18 garbled Exp $");
 dbdma_command_t	*dbdma_alloc_commands = NULL;
 
 void
-dbdma_start(dmap, commands)
-	dbdma_regmap_t *dmap;
-	dbdma_command_t *commands;
+dbdma_start(dbdma_regmap_t *dmap, dbdma_command_t *commands)
 {
 	unsigned long addr = vtophys((vaddr_t)commands);
 
@@ -66,8 +64,7 @@ dbdma_start(dmap, commands)
 }
 
 void
-dbdma_stop(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_stop(dbdma_regmap_t *dmap)
 {
 	out32rb(&dmap->d_control, DBDMA_CLEAR_CNTRL(DBDMA_CNTRL_RUN) |
 			  DBDMA_SET_CNTRL(DBDMA_CNTRL_FLUSH));
@@ -77,8 +74,7 @@ dbdma_stop(dmap)
 }
 
 void
-dbdma_flush(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_flush(dbdma_regmap_t *dmap)
 {
 	out32rb(&dmap->d_control, DBDMA_SET_CNTRL(DBDMA_CNTRL_FLUSH));
 
@@ -86,8 +82,7 @@ dbdma_flush(dmap)
 }
 
 void
-dbdma_reset(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_reset(dbdma_regmap_t *dmap)
 {
 	out32rb(&dmap->d_control, 
 			 DBDMA_CLEAR_CNTRL( (DBDMA_CNTRL_ACTIVE	|
@@ -101,8 +96,7 @@ dbdma_reset(dmap)
 }
 
 void
-dbdma_continue(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_continue(dbdma_regmap_t *dmap)
 {
 	out32rb(&dmap->d_control,
 		DBDMA_SET_CNTRL(DBDMA_CNTRL_RUN | DBDMA_CNTRL_WAKE) |
@@ -110,8 +104,7 @@ dbdma_continue(dmap)
 }
 
 void
-dbdma_pause(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_pause(dbdma_regmap_t *dmap)
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control,DBDMA_SET_CNTRL(DBDMA_CNTRL_PAUSE));
 
@@ -120,8 +113,7 @@ dbdma_pause(dmap)
 }
 
 dbdma_command_t	*
-dbdma_alloc(size)
-	int size;
+dbdma_alloc(int size)
 {
 	u_int buf;
 

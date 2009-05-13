@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.5 2005/12/11 12:17:52 christos Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.5.92.1 2009/05/13 17:17:59 jym Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.5 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.5.92.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/types.h>
 
@@ -150,8 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.5 2005/12/11 12:17:52 christos Exp $")
  */
 
 struct fpn *
-fpu_div(fe)
-	register struct fpemu *fe;
+fpu_div(register struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
 	register u_int q, bit;

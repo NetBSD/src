@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.116 2008/11/13 22:22:24 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.116.4.1 2009/05/13 17:22:20 jym Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.116 2008/11/13 22:22:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.116.4.1 2009/05/13 17:22:20 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -3432,7 +3432,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 #endif
 		case IPV6CP_OPT_IFID:
 			memset(&desiredaddr, 0, sizeof(desiredaddr));
-			bcopy(&p[2], &desiredaddr.s6_addr[8], 8);
+			memcpy(&desiredaddr.s6_addr[8], &p[2], 8);
 			collision = (memcmp(&desiredaddr.s6_addr[8],
 					&myaddr.s6_addr[8], 8) == 0);
 			nohisaddr = IN6_IS_ADDR_UNSPECIFIED(&desiredaddr);
@@ -3465,7 +3465,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				 */
 				type = CONF_NAK;
 				sppp_suggest_ip6_addr(sp, &suggestaddr);
-				bcopy(&suggestaddr.s6_addr[8], &p[2], 8);
+				memcpy(&p[2], &suggestaddr.s6_addr[8], 8);
 			}
 			if (debug)
 				addlog(" %s [%s]", ip6_sprintf(&desiredaddr),
@@ -3599,7 +3599,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			memset(&suggestaddr, 0, sizeof(suggestaddr));
 			suggestaddr.s6_addr16[0] = htons(0xfe80);
 			(void)in6_setscope(&suggestaddr, &sp->pp_if, NULL);
-			bcopy(&p[2], &suggestaddr.s6_addr[8], 8);
+			memcpy(&suggestaddr.s6_addr[8], &p[2], 8);
 
 			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
 			if (debug)
@@ -3698,7 +3698,7 @@ sppp_ipv6cp_scr(struct sppp *sp)
 		sppp_get_ip6_addrs(sp, &ouraddr, 0, 0);
 		opt[i++] = IPV6CP_OPT_IFID;
 		opt[i++] = 10;
-		bcopy(&ouraddr.s6_addr[8], &opt[i], 8);
+		memcpy(&opt[i], &ouraddr.s6_addr[8], 8);
 		i += 8;
 	}
 
@@ -4706,7 +4706,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 			return;
 		}
 
-		bcopy(msg, p, mlen);
+		memcpy(p, msg, mlen);
 		p += mlen;
 	}
 	va_end(ap);
@@ -5002,22 +5002,22 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 		}
 	if (ifa) {
 		if (si && !IN6_IS_ADDR_UNSPECIFIED(&si->sin6_addr)) {
-			bcopy(&si->sin6_addr, &ssrc, sizeof(ssrc));
+			memcpy(&ssrc, &si->sin6_addr, sizeof(ssrc));
 			if (srcmask) {
-				bcopy(&sm->sin6_addr, srcmask,
+				memcpy(srcmask, &sm->sin6_addr,
 				    sizeof(*srcmask));
 			}
 		}
 
 		si = (struct sockaddr_in6 *)ifa->ifa_dstaddr;
 		if (si && !IN6_IS_ADDR_UNSPECIFIED(&si->sin6_addr))
-			bcopy(&si->sin6_addr, &ddst, sizeof(ddst));
+			memcpy(&ddst, &si->sin6_addr, sizeof(ddst));
 	}
 
 	if (dst)
-		bcopy(&ddst, dst, sizeof(*dst));
+		memcpy(dst, &ddst, sizeof(*dst));
 	if (src)
-		bcopy(&ssrc, src, sizeof(*src));
+		memcpy(src, &ssrc, sizeof(*src));
 }
 
 #ifdef IPV6CP_MYIFID_DYN
@@ -5061,7 +5061,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 		int error;
 		struct sockaddr_in6 new_sin6 = *sin6;
 
-		bcopy(src, &new_sin6.sin6_addr, sizeof(new_sin6.sin6_addr));
+		memcpy(&new_sin6.sin6_addr, src, sizeof(new_sin6.sin6_addr));
 		error = in6_ifinit(ifp, ifatoia6(ifa), &new_sin6, 1);
 		if (debug && error)
 		{
@@ -5098,7 +5098,7 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 		myaddr.s6_addr[15] ^= (tv.tv_sec & 0xff);
 	}
 	if (suggest)
-		bcopy(&myaddr, suggest, sizeof(myaddr));
+		memcpy(suggest, &myaddr, sizeof(myaddr));
 }
 #endif /*INET6*/
 

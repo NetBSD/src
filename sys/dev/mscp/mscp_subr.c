@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.37 2009/01/19 19:15:07 mjf Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.37.2.1 2009/05/13 17:20:16 jym Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.37 2009/01/19 19:15:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.37.2.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,8 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.37 2009/01/19 19:15:07 mjf Exp $");
 
 #define b_forw	b_hash.le_next
 
-int	mscp_match(struct device *, struct cfdata *, void *);
-void	mscp_attach(struct device *, struct device *, void *);
+int	mscp_match(device_t, cfdata_t, void *);
+void	mscp_attach(device_t, device_t, void *);
 void	mscp_start(struct	mscp_softc *);
 int	mscp_init(struct  mscp_softc *);
 void	mscp_initds(struct mscp_softc *);
@@ -136,9 +136,7 @@ mscp_free_workitems(struct mscp_softc *mi)
 
 #define DELAYTEN 1000
 int
-mscp_waitstep(mi, mask, result)
-	struct mscp_softc *mi;
-	int mask, result;
+mscp_waitstep(struct mscp_softc *mi, int mask, int result)
 {
 	int	status = 1;
 
@@ -157,10 +155,7 @@ mscp_waitstep(mi, mask, result)
 }
 
 int
-mscp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mscp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct	mscp_attach_args *ma = aux;
 
@@ -176,9 +171,7 @@ mscp_match(parent, match, aux)
 };
 
 void
-mscp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mscp_attach(device_t parent, device_t self, void *aux)
 {
 	struct	mscp_attach_args *ma = aux;
 	struct	mscp_softc *mi = device_private(self);
@@ -369,8 +362,7 @@ gotit:	/*
  * fails, 0 otherwise.
  */
 int
-mscp_init(mi)
-	struct	mscp_softc *mi;
+mscp_init(struct mscp_softc *mi)
 {
 	struct	mscp *mp;
 	volatile int i;
@@ -475,8 +467,7 @@ out:
  * Initialise the various data structures that control the mscp protocol.
  */
 void
-mscp_initds(mi)
-	struct mscp_softc *mi;
+mscp_initds(struct mscp_softc *mi)
 {
 	struct mscp_pack *ud = mi->mi_uda;
 	struct mscp *mp;
@@ -503,8 +494,7 @@ mscp_initds(mi)
 static	void mscp_kickaway(struct mscp_softc *);
 
 void
-mscp_intr(mi)
-	struct mscp_softc *mi;
+mscp_intr(struct mscp_softc *mi)
 {
 	struct mscp_pack *ud = mi->mi_uda;
 
@@ -530,9 +520,7 @@ mscp_intr(mi)
 }
 
 int
-mscp_print(aux, name)
-	void *aux;
-	const char *name;
+mscp_print(void *aux, const char *name)
 {
 	struct drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
@@ -553,9 +541,7 @@ mscp_print(aux, name)
  * common strategy routine for all types of MSCP devices.
  */
 void
-mscp_strategy(bp, usc)
-	struct buf *bp;
-	struct device *usc;
+mscp_strategy(struct buf *bp, device_t usc)
 {
 	struct	mscp_softc *mi = (void *)usc;
 	int s = spluba();
@@ -567,8 +553,7 @@ mscp_strategy(bp, usc)
 
 
 void
-mscp_kickaway(mi)
-	struct	mscp_softc *mi;
+mscp_kickaway(struct mscp_softc *mi)
 {
 	struct buf *bp;
 	struct	mscp *mp;
@@ -613,9 +598,7 @@ mscp_kickaway(mi)
 }
 
 void
-mscp_dgo(mi, mxi)
-	struct mscp_softc *mi;
-	struct mscp_xi *mxi;
+mscp_dgo(struct mscp_softc *mi, struct mscp_xi *mxi)
 {
 	volatile int i;
 	struct	mscp *mp;
@@ -636,8 +619,7 @@ mscp_dgo(mi, mxi)
  * for debugging....
  */
 void
-mscp_hexdump(mp)
-	struct mscp *mp;
+mscp_hexdump(struct mscp *mp)
 {
 	long *p = (long *) mp;
 	int i = mp->mscp_msglen;
@@ -829,8 +811,7 @@ struct code_decode {
  * Print the decoded error event from an MSCP error datagram.
  */
 void
-mscp_printevent(mp)
-	struct mscp *mp;
+mscp_printevent(struct mscp *mp)
 {
 	int event = mp->mscp_event;
 	struct code_decode *cdc;
@@ -871,10 +852,7 @@ static const char *codemsg[16] = {
  * NICE IF DEC SOLD DOCUMENTATION FOR THEIR OWN CONTROLLERS.
  */
 int
-mscp_decodeerror(name, mp, mi)
-	const char *name;
-	struct mscp *mp;
-	struct mscp_softc *mi;
+mscp_decodeerror(const char *name, struct mscp *mp, struct mscp_softc *mi)
 {
 	int issoft;
 	/*

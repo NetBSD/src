@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.8 2009/01/12 11:32:44 tsutsui Exp $	*/
+/*	$NetBSD: common.h,v 1.8.2.1 2009/05/13 17:18:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,18 +34,18 @@ extern int debug;	/* only used for network debugging for now */
 #endif
 
 /* startprog.S */
-void startprog __P((int, int, int, char **, int, const void *, int, int));
+void startprog(int, int, int, char **, int, const void *, int, int);
 
 /* PROM callbacks */
-int bootinit __P((const char *));
-int bootread __P((int, void *, int));
-int bootwrite __P((int, void *, int));
-char *getenv __P((const char *));
-int prom_close __P((int));
-int prom_lseek __P((int, int, int));
-int prom_open __P((const char *, int));
-int prom_read __P((int, void *, int));
-int prom_write __P((int, void *, int));
+int bootinit(const char *);
+int bootread(int, void *, int);
+int bootwrite(int, void *, int);
+char *getenv(const char *);
+int prom_close(int);
+int prom_lseek(int, int, int);
+int prom_open(const char *, int);
+int prom_read(int, void *, int);
+int prom_write(int, void *, int);
 
 
 /*

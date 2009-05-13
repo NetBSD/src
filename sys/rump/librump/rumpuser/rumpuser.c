@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.31.2.1 2009/05/13 17:22:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.31.2.1 2009/05/13 17:22:58 jym Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
@@ -63,25 +64,58 @@ __RCSID("$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $");
 #include "rumpuser_int.h"
 
 int
-rumpuser_stat(const char *path, struct stat *sb, int *error)
+rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 {
+	struct stat sb;
+	int rv;
 
-	DOCALL(int, (stat(path, sb)));
+	rv = stat(path, &sb);
+	if (rv == -1) {
+		*error = errno;
+		return rv;
+	}
+
+	*size = sb.st_size;
+	switch (sb.st_mode & S_IFMT) {
+	case S_IFDIR:
+		*ft = RUMPUSER_FT_DIR;
+		break;
+	case S_IFREG:
+		*ft = RUMPUSER_FT_REG;
+		break;
+	case S_IFBLK:
+		*ft = RUMPUSER_FT_BLK;
+		break;
+	case S_IFCHR:
+		*ft = RUMPUSER_FT_CHR;
+		break;
+	default:
+		*ft = RUMPUSER_FT_OTHER;
+		break;
+	}
+
+	return rv;
 }
 
 int
-rumpuser_lstat(const char *path, struct stat *sb, int *error)
+rumpuser_nanosleep(uint64_t *sec, uint64_t *nsec, int *error)
 {
+	struct timespec rqt, rmt;
+	int rv;
 
-	DOCALL(int, (lstat(path, sb)));
-}
+	/*LINTED*/
+	rqt.tv_sec = *sec;
+	/*LINTED*/
+	rqt.tv_nsec = *nsec;
 
-int
-rumpuser_nanosleep(const struct timespec *rqtp, struct timespec *rmtp, 
-		   int *error)
-{
+	KLOCK_WRAP(rv = nanosleep(&rqt, &rmt));
+	if (rv == -1)
+		*error = errno;
 
-	DOCALL_KLOCK(int, (nanosleep(rqtp, rmtp)));
+	*sec = rmt.tv_sec;
+	*nsec = rmt.tv_nsec;
+
+	return rv;
 }
 
 void *
@@ -94,9 +128,6 @@ rumpuser__malloc(size_t howmuch, int canfail, const char *func, int line)
 		warn("malloc failed %s (%d)", func, line);
 		abort();
 	}
-
-	if (rv)
-		memset(rv, 0, howmuch);
 
 	return rv;
 }
@@ -150,11 +181,49 @@ rumpuser_unmap(void *addr, size_t len)
 	assert(rv == 0);
 }
 
+void *
+rumpuser_filemmap(int fd, off_t offset, size_t len, int flags, int *error)
+{
+	void *rv;
+	int mmflags, prot;
+
+	if (flags & RUMPUSER_FILEMMAP_TRUNCATE)
+		ftruncate(fd, offset + len);
+
+	mmflags = MAP_FILE;
+	if (flags & RUMPUSER_FILEMMAP_SHARED)
+		mmflags |= MAP_SHARED;
+	else
+		mmflags |= MAP_PRIVATE;
+
+	prot = 0;
+	if (flags & RUMPUSER_FILEMMAP_READ)
+		prot |= PROT_READ;
+	if (flags & RUMPUSER_FILEMMAP_WRITE)
+		prot |= PROT_WRITE;
+
+	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, mmflags, fd, offset);
+	if (rv == MAP_FAILED) {
+		*error = errno;
+		return NULL;
+	}
+
+	*error = 0;
+	return rv;
+}
+
+int
+rumpuser_memsync(void *addr, size_t len, int *error)
+{
+
+	DOCALL_KLOCK(int, (msync(addr, len, MS_SYNC)));
+}
+
 int
 rumpuser_open(const char *path, int flags, int *error)
 {
 
-	DOCALL(int, (open(path, flags)));
+	DOCALL(int, (open(path, flags, 0644)));
 }
 
 int
@@ -202,18 +271,6 @@ rumpuser_pread(int fd, void *data, size_t size, off_t offset, int *error)
 	return rv;
 }
 
-ssize_t 
-rumpuser_readv(int fd, const struct iovec *iov, int iovcnt, int *error)
-{
-	ssize_t rv;
-
-	KLOCK_WRAP(rv = readv(fd, iov, iovcnt));
-	if (rv == -1)
-		*error = errno;
-
-	return rv;
-}
-
 void
 rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	rump_biodone_fn biodone, void *biodonecookie)
@@ -221,7 +278,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	ssize_t rv;
 	int error = 0;
 
-	KLOCK_WRAP(rv = rumpuser_pread(fd, data, size, offset, &error));
+	rv = rumpuser_pread(fd, data, size, offset, &error);
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
@@ -254,18 +311,6 @@ rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
 	return rv;
 }
 
-ssize_t 
-rumpuser_writev(int fd, const struct iovec *iov, int iovcnt, int *error)
-{
-	ssize_t rv;
-
-	KLOCK_WRAP(rv = writev(fd, iov, iovcnt));
-	if (rv == -1)
-		*error = errno;
-
-	return rv;
-}
-
 void
 rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	rump_biodone_fn biodone, void *biodonecookie)
@@ -273,7 +318,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	ssize_t rv;
 	int error = 0;
 
-	KLOCK_WRAP(rv = rumpuser_pwrite(fd, data, size, offset, &error));
+	rv = rumpuser_pwrite(fd, data, size, offset, &error);
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
@@ -282,11 +327,76 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	biodone(biodonecookie, rv, error);
 }
 
-int
-rumpuser_gettimeofday(struct timeval *tv, int *error)
+ssize_t 
+rumpuser_readv(int fd, const struct rumpuser_iovec *riov, int iovcnt,
+	int *error)
 {
+	struct iovec *iovp;
+	ssize_t rv;
+	int i;
 
-	DOCALL(int, gettimeofday(tv, NULL));
+	iovp = malloc(iovcnt * sizeof(struct iovec));
+	if (iovp == NULL) {
+		*error = ENOMEM;
+		return -1;
+	}
+	for (i = 0; i < iovcnt; i++) {
+		iovp[i].iov_base = riov[i].iov_base;
+		/*LINTED*/
+		iovp[i].iov_len = riov[i].iov_len;
+	}
+
+	KLOCK_WRAP(rv = readv(fd, iovp, iovcnt));
+	if (rv == -1)
+		*error = errno;
+	free(iovp);
+
+	return rv;
+}
+
+ssize_t 
+rumpuser_writev(int fd, const struct rumpuser_iovec *riov, int iovcnt,
+	int *error)
+{
+	struct iovec *iovp;
+	ssize_t rv;
+	int i;
+
+	iovp = malloc(iovcnt * sizeof(struct iovec));
+	if (iovp == NULL) {
+		*error = ENOMEM;
+		return -1;
+	}
+	for (i = 0; i < iovcnt; i++) {
+		iovp[i].iov_base = riov[i].iov_base;
+		/*LINTED*/
+		iovp[i].iov_len = riov[i].iov_len;
+	}
+
+	KLOCK_WRAP(rv = writev(fd, iovp, iovcnt));
+	if (rv == -1)
+		*error = errno;
+	free(iovp);
+
+	return rv;
+}
+
+int
+rumpuser_gettime(uint64_t *sec, uint64_t *nsec, int *error)
+{
+	struct timeval tv;
+	int rv;
+
+	rv = gettimeofday(&tv, NULL);
+	if (rv == -1) {
+		*error = errno;
+		return rv;
+	}
+
+	*sec = tv.tv_sec;
+	*nsec = tv.tv_usec * 1000;
+
+	return 0;
 }
 
 int
@@ -328,11 +438,11 @@ int
 rumpuser_putchar(int c, int *error)
 {
 
-	DOCALL(int, (putchar_unlocked(c)));
+	DOCALL(int, (putchar(c)));
 }
 
 void
-rumpuser_panic()
+rumpuser_panic(void)
 {
 
 	abort();
@@ -343,4 +453,44 @@ rumpuser_seterrno(int error)
 {
 
 	errno = error;
+}
+
+int
+rumpuser_writewatchfile_setup(int kq, int fd, intptr_t opaque, int *error)
+{
+	struct kevent kev;
+
+	if (kq == -1) {
+		kq = kqueue();
+		if (kq == -1) {
+			*error = errno;
+			return -1;
+		}
+	}
+
+	EV_SET(&kev, fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR,
+	    NOTE_WRITE, 0, opaque);
+	if (kevent(kq, &kev, 1, NULL, 0, NULL) == -1) {
+		*error = errno;
+		return -1;
+	}
+
+	return kq;
+}
+
+int
+rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
+{
+	struct kevent kev;
+	int rv;
+
+	KLOCK_WRAP(rv = kevent(kq, NULL, 0, &kev, 1, NULL));
+	if (rv == -1) {
+		*error = errno;
+		return -1;
+	}
+
+	if (opaque)
+		*opaque = kev.udata;
+	return rv;
 }

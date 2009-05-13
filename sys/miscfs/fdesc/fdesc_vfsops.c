@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.78 2008/12/17 20:51:36 cegger Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.78.2.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.78 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.78.2.1 2009/05/13 17:22:16 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -147,9 +147,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 }
 
 int
-fdesc_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+fdesc_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *vp;
 
@@ -164,9 +162,7 @@ fdesc_root(mp, vpp)
 }
 
 int
-fdesc_statvfs(mp, sbp)
-	struct mount *mp;
-	struct statvfs *sbp;
+fdesc_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct lwp *l = curlwp;
 	struct filedesc *fdp;

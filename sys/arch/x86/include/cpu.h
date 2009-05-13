@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.2.1 2009/02/09 00:03:55 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.2.2 2009/05/13 17:18:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #ifndef _X86_CPU_H_
 #define _X86_CPU_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
 #ifdef i386
@@ -59,8 +59,6 @@
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
-
-#include <lib/libkern/libkern.h>	/* offsetof */
 
 struct intrsource;
 struct pmap;
@@ -113,6 +111,7 @@ struct cpu_info {
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
 	int ci_curldt;		/* current LDT descriptor */
+	int ci_nintrhand;	/* number of H/W interrupt handlers */
 	uint64_t ci_scratch;
 
 #ifdef XEN
@@ -199,6 +198,23 @@ struct cpu_info {
 	int		ci_want_resched __aligned(64);
 	int		ci_padout __aligned(64);
 };
+
+/*
+ * Macros to handle (some) trapframe registers for common x86 code.
+ */
+#ifdef __x86_64__
+#define	X86_TF_RAX(tf)		tf->tf_rax
+#define	X86_TF_RDX(tf)		tf->tf_rdx
+#define	X86_TF_RSP(tf)		tf->tf_rsp
+#define	X86_TF_RIP(tf)		tf->tf_rip
+#define	X86_TF_RFLAGS(tf)	tf->tf_rflags
+#else
+#define	X86_TF_RAX(tf)		tf->tf_eax
+#define	X86_TF_RDX(tf)		tf->tf_edx
+#define	X86_TF_RSP(tf)		tf->tf_esp
+#define	X86_TF_RIP(tf)		tf->tf_eip
+#define	X86_TF_RFLAGS(tf)	tf->tf_eflags
+#endif
 
 /*
  * Processor flag notes: The "primary" CPU has certain MI-defined
@@ -337,6 +353,9 @@ void 	tmx86_init_longrun(void);
 void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
 
+/* cpu_topology.c */
+void	x86_cpu_toplogy(struct cpu_info *);
+
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
 
@@ -375,7 +394,7 @@ void	npxsave_lwp(struct lwp *, bool);
 void	npxsave_cpu(bool);
 
 /* vm_machdep.c */
-int kvtop(void *);
+paddr_t	kvtop(void *);
 
 #ifdef USER_LDT
 /* sys_machdep.h */
@@ -401,7 +420,13 @@ void x86_bus_space_mallocok(void);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
-#endif /* _KERNEL */
+#endif /* _KERNEL || __KMEMUSER */
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#else
+#include <stdbool.h>
+#endif /* _KERNEL || _STANDALONE */
 
 /*
  * CTL_MACHDEP definitions.

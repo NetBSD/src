@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.8 2007/10/17 19:55:35 garbled Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.8.34.1 2009/05/13 17:18:02 jym Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.8 2007/10/17 19:55:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.8.34.1 2009/05/13 17:18:02 jym Exp $");
 
 #include "locators.h"
 
@@ -85,6 +85,8 @@ static int	ausmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 				size_t buflen, int flags);
 
 /* subroutine functions for i2c_controller */
+static int	ausmbus_quick_write(struct ausmbus_softc *);
+static int	ausmbus_quick_read(struct ausmbus_softc *);
 static int	ausmbus_receive_1(struct ausmbus_softc *, uint8_t *);
 static int	ausmbus_read_1(struct ausmbus_softc *, uint8_t, uint8_t *);
 static int	ausmbus_read_2(struct ausmbus_softc *, uint8_t, uint16_t *);
@@ -233,6 +235,11 @@ ausmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 		return ausmbus_read_2(sc, *cmd, (uint16_t *)vbuf);
 	}
 
+	/* Read quick */
+	if ((I2C_OP_READ_P(op)) && (cmdlen == 0) && (buflen == 0)) {
+		return ausmbus_quick_read(sc);
+	}
+
 	/* Send byte */
 	if ((I2C_OP_WRITE_P(op)) && (cmdlen == 0) && (buflen == 1)) {
 		return ausmbus_send_1(sc, *((uint8_t *)vbuf));
@@ -248,13 +255,19 @@ ausmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 		return ausmbus_write_2(sc, *cmd, *((uint16_t *)vbuf));
 	}
 
+	/* Write quick */
+	if ((I2C_OP_WRITE_P(op)) && (cmdlen == 0) && (buflen == 0)) {
+		return ausmbus_quick_write(sc);
+	}
+
 	/*
 	 * XXX: TODO Please Support other protocols defined in SMBus 2.0
-	 * - Quick Command
 	 * - Process call
 	 * - Block write/read
 	 * - Clock write-block read process cal
 	 * - SMBus host notify protocol
+	 *
+	 * - Read quick and write quick have not been tested!
 	 */
 
 	return -1;
@@ -414,6 +427,23 @@ ausmbus_write_2(struct ausmbus_softc *sc, uint8_t cmd, uint16_t val)
 	return 0;
 }
 
+/*
+ * XXX The quick_write() and quick_read() routines have not been tested!
+ */
+static int
+ausmbus_quick_write(struct ausmbus_softc *sc)
+{
+	return ausmbus_initiate_xfer(sc, sc->sc_smbus_slave_addr,
+			I2C_F_STOP | I2C_F_WRITE);
+}
+
+static int
+ausmbus_quick_read(struct ausmbus_softc *sc)
+{
+	return ausmbus_initiate_xfer(sc, sc->sc_smbus_slave_addr,
+			I2C_F_STOP | I2C_F_READ);
+}
+
 static int
 ausmbus_wait_mastertx(struct ausmbus_softc *sc)
 {
@@ -494,6 +524,8 @@ ausmbus_initiate_xfer(void *arg, i2c_addr_t addr, int flags)
 	v = (addr << 1) & SMBUS_TXRX_ADDRDATA;
 	if ((flags & I2C_F_READ) != 0)
 		v |= 1;
+	if ((flags & I2C_F_STOP) != 0)
+		v |= SMBUS_TXRX_STP;
 	ausmbus_reg_write(sc, AUPSC_SMBTXRX, v);
 
 	/* Master Start */

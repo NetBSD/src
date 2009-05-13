@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2008/10/20 03:02:07 christos Exp $
+#	$NetBSD: Makefile,v 1.15.8.1 2009/05/13 17:17:52 jym Exp $
 
-S=	${.CURDIR}/../../../../
+S=	${.CURDIR}/../../../..
 
 BASE?= pxeboot_ia32
 PROG= ${BASE}.bin
@@ -25,7 +25,7 @@ PIE_LDFLAGS=
 
 .include <bsd.own.mk>
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
 AFLAGS+=	-m32
 LIBKERN_ARCH=	i386

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.30 2007/10/17 19:53:16 garbled Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.30.34.1 2009/05/13 17:16:10 jym Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.30 2007/10/17 19:53:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.30.34.1 2009/05/13 17:16:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ alloc_bitmap(u_short width, u_short height, u_short depth, u_short flags)
 	bm = alloc_chipmem(total_size);
 	if (bm) {
 		if (flags & BMF_CLEAR) {
-			bzero(bm, total_size);
+			memset(bm, 0, total_size);
 		}
 		bm->bytes_per_row = bpr;
 		bm->rows = height;
@@ -751,7 +751,7 @@ cc_init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 	vdata_t *vd = VDATA(v);
 	v->bitmap = bm;
 	vd->mode = mode;
-	bcopy(dbox, &v->display, sizeof(box_t));
+	memcpy( &v->display, dbox, sizeof(box_t));
 
 	v->display_view = DMDATA(vd->mode)->display_view;
 	v->use_colormap = DMDATA(vd->mode)->use_colormap;
@@ -839,8 +839,8 @@ cc_init_ntsc_hires(void)
 
 		h_this = &hires_mode;
 		h_this_data = &hires_mode_data;
-		bzero(h_this, sizeof(dmode_t));
-		bzero(h_this_data, sizeof(dmdata_t));
+		memset(h_this, 0, sizeof(dmode_t));
+		memset(h_this_data, 0, sizeof(dmdata_t));
 
 		h_this->name = "ntsc: hires";
 		h_this->nominal_size.width = 640;
@@ -872,9 +872,9 @@ cc_init_ntsc_hires(void)
 		h_this_data->frames[F_STORE_LONG] =
 			&h_this_data->frames[F_LONG][len];
 
-		bcopy(std_copper_list, h_this_data->frames[F_STORE_LONG],
+		memcpy( h_this_data->frames[F_STORE_LONG], std_copper_list,
 			std_copper_list_size);
-		bcopy(std_copper_list, h_this_data->frames[F_LONG],
+		memcpy( h_this_data->frames[F_LONG], std_copper_list,
 			std_copper_list_size);
 
 		h_this_data->bplcon0 = 0x8200 | USE_CON3;	/* hires, color
@@ -1021,8 +1021,8 @@ cc_init_ntsc_hires_lace(void)
 
 		hl_this = &hires_lace_mode;
 		hl_this_data = &hires_lace_mode_data;
-		bzero(hl_this, sizeof(dmode_t));
-		bzero(hl_this_data, sizeof(dmdata_t));
+		memset(hl_this, 0, sizeof(dmode_t));
+		memset(hl_this_data, 0, sizeof(dmdata_t));
 
 		hl_this->name = "ntsc: hires interlace";
 		hl_this->nominal_size.width = 640;
@@ -1060,13 +1060,13 @@ cc_init_ntsc_hires_lace(void)
 		hl_this_data->frames[F_LACE_STORE_SHORT] =
 				&hl_this_data->frames[F_LACE_STORE_LONG][len];
 
-		bcopy(std_copper_list, hl_this_data->frames[F_LACE_STORE_LONG],
+		memcpy( hl_this_data->frames[F_LACE_STORE_LONG], std_copper_list,
 			std_copper_list_size);
-		bcopy(std_copper_list, hl_this_data->frames[F_LACE_STORE_SHORT],
+		memcpy( hl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list,
 			std_copper_list_size);
-		bcopy(std_copper_list, hl_this_data->frames[F_LACE_LONG],
+		memcpy( hl_this_data->frames[F_LACE_LONG], std_copper_list,
 			std_copper_list_size);
-		bcopy(std_copper_list, hl_this_data->frames[F_LACE_SHORT],
+		memcpy( hl_this_data->frames[F_LACE_SHORT], std_copper_list,
 			std_copper_list_size);
 
 		hl_this_data->bplcon0 = 0x8204 | USE_CON3;	/* hires, color
@@ -1247,8 +1247,8 @@ cc_init_ntsc_hires_dlace(void)
 
 		hdl_this = &hires_dlace_mode;
 		hdl_this_data = &hires_dlace_mode_data;
-		bzero(hdl_this, sizeof(dmode_t));
-		bzero(hdl_this_data, sizeof(dmdata_t));
+		memset(hdl_this, 0, sizeof(dmode_t));
+		memset(hdl_this_data, 0, sizeof(dmdata_t));
 
 		hdl_this->name = "ntsc: hires double interlace";
 		hdl_this->nominal_size.width = 640;
@@ -1503,8 +1503,8 @@ cc_init_ntsc_a2024(void)
 
 		a24_this = &a2024_mode;
 		a24_this_data = &a2024_mode_data;
-		bzero(a24_this, sizeof(dmode_t));
-		bzero(a24_this_data, sizeof(dmdata_t));
+		memset(a24_this, 0, sizeof(dmode_t));
+		memset(a24_this_data, 0, sizeof(dmdata_t));
 
 		a24_this->name = "ntsc: A2024 15 kHz";
 		a24_this->nominal_size.width = 1024;
@@ -1545,7 +1545,7 @@ cc_init_ntsc_a2024(void)
 		hedley_init[0] = 0x03;
 
 		/* copy image of standard copper list. */
-		bcopy(std_a2024_copper_list, a24_this_data->frames[0],
+		memcpy( a24_this_data->frames[0], std_a2024_copper_list,
 			std_a2024_copper_list_size);
 
 		/* set the init plane pointer. */
@@ -1792,8 +1792,8 @@ cc_init_ntsc_aga(void)
 
 		aga_this = &aga_mode;
 		aga_this_data = &aga_mode_data;
-		bzero(aga_this, sizeof(dmode_t));
-		bzero(aga_this_data, sizeof(dmdata_t));
+		memset(aga_this, 0, sizeof(dmode_t));
+		memset(aga_this_data, 0, sizeof(dmdata_t));
 
 		aga_this->name = "ntsc: AGA dbl";
 		aga_this->nominal_size.width = 640;
@@ -1823,8 +1823,8 @@ cc_init_ntsc_aga(void)
 		}
 		aga_this_data->frames[F_STORE_LONG] = &aga_this_data->frames[F_LONG][len];
 
-		bcopy(aga_copper_list, aga_this_data->frames[F_STORE_LONG], aga_copper_list_size);
-		bcopy(aga_copper_list, aga_this_data->frames[F_LONG], aga_copper_list_size);
+		memcpy( aga_this_data->frames[F_STORE_LONG], aga_copper_list, aga_copper_list_size);
+		memcpy( aga_this_data->frames[F_LONG], aga_copper_list, aga_copper_list_size);
 
 		aga_this_data->bplcon0 = 0x0240 | USE_CON3;	/* color composite
 								 * enable,
@@ -2101,8 +2101,8 @@ cc_init_super72(void)
 
 		super72_this = &super72_mode;
 		super72_this_data = &super72_mode_data;
-		bzero(super72_this, sizeof(dmode_t));
-		bzero(super72_this_data, sizeof(dmdata_t));
+		memset(super72_this, 0, sizeof(dmode_t));
+		memset(super72_this_data, 0, sizeof(dmdata_t));
 
 		super72_this->name = "super72: superhires interlace";
 		super72_this->nominal_size.width = 800;
@@ -2393,8 +2393,8 @@ cc_init_pal_hires(void)
 
 		ph_this = &pal_hires_mode;
 		ph_this_data = &pal_hires_mode_data;
-		bzero(ph_this, sizeof(dmode_t));
-		bzero(ph_this_data, sizeof(dmdata_t));
+		memset(ph_this, 0, sizeof(dmode_t));
+		memset(ph_this_data, 0, sizeof(dmdata_t));
 
 		ph_this->name = "pal: hires";
 		ph_this->nominal_size.width = 640;
@@ -2424,8 +2424,8 @@ cc_init_pal_hires(void)
 		}
 		ph_this_data->frames[F_STORE_LONG] = &ph_this_data->frames[F_LONG][len];
 
-		bcopy(std_copper_list, ph_this_data->frames[F_STORE_LONG], std_copper_list_size);
-		bcopy(std_copper_list, ph_this_data->frames[F_LONG], std_copper_list_size);
+		memcpy( ph_this_data->frames[F_STORE_LONG], std_copper_list, std_copper_list_size);
+		memcpy( ph_this_data->frames[F_LONG], std_copper_list, std_copper_list_size);
 
 		ph_this_data->bplcon0 = 0x8200 | USE_CON3;	/* pal_hires, color
 								 * composite enable,
@@ -2562,8 +2562,8 @@ cc_init_pal_hires_lace(void)
 
 		phl_this = &pal_hires_lace_mode;
 		phl_this_data = &pal_hires_lace_mode_data;
-		bzero(phl_this, sizeof(dmode_t));
-		bzero(phl_this_data, sizeof(dmdata_t));
+		memset(phl_this, 0, sizeof(dmode_t));
+		memset(phl_this_data, 0, sizeof(dmdata_t));
 
 		phl_this->name = "pal: hires interlace";
 		phl_this->nominal_size.width = 640;
@@ -2597,10 +2597,10 @@ cc_init_pal_hires_lace(void)
 		phl_this_data->frames[F_LACE_STORE_LONG] = &phl_this_data->frames[F_LACE_SHORT][len];
 		phl_this_data->frames[F_LACE_STORE_SHORT] = &phl_this_data->frames[F_LACE_STORE_LONG][len];
 
-		bcopy(std_copper_list, phl_this_data->frames[F_LACE_STORE_LONG], std_copper_list_size);
-		bcopy(std_copper_list, phl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list_size);
-		bcopy(std_copper_list, phl_this_data->frames[F_LACE_LONG], std_copper_list_size);
-		bcopy(std_copper_list, phl_this_data->frames[F_LACE_SHORT], std_copper_list_size);
+		memcpy( phl_this_data->frames[F_LACE_STORE_LONG], std_copper_list, std_copper_list_size);
+		memcpy( phl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list, std_copper_list_size);
+		memcpy( phl_this_data->frames[F_LACE_LONG], std_copper_list, std_copper_list_size);
+		memcpy( phl_this_data->frames[F_LACE_SHORT], std_copper_list, std_copper_list_size);
 
 		phl_this_data->bplcon0 = 0x8204 | USE_CON3;	/* hires, color
 								 * composite enable,
@@ -2720,7 +2720,7 @@ display_pal_hires_lace_view(view_t *v)
 		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(phl_this_data->frames[F_LACE_STORE_SHORT]));
 
 
-		bcopy(phl_this_data->frames[F_LACE_STORE_LONG], phl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list_size);
+		memcpy( phl_this_data->frames[F_LACE_STORE_SHORT], phl_this_data->frames[F_LACE_STORE_LONG], std_copper_list_size);
 
 		/* these are the only ones that are different from long frame. */
 		cp = phl_this_data->frames[F_LACE_STORE_SHORT];
@@ -2762,8 +2762,8 @@ cc_init_pal_hires_dlace(void)
 
 		phdl_this = &pal_hires_dlace_mode;
 		phdl_this_data = &pal_hires_dlace_mode_data;
-		bzero(phdl_this, sizeof(dmode_t));
-		bzero(phdl_this_data, sizeof(dmdata_t));
+		memset(phdl_this, 0, sizeof(dmode_t));
+		memset(phdl_this_data, 0, sizeof(dmdata_t));
 
 		phdl_this->name = "pal: hires double interlace";
 		phdl_this->nominal_size.width = 640;
@@ -2797,10 +2797,10 @@ cc_init_pal_hires_dlace(void)
 		phdl_this_data->frames[F_LACE_STORE_LONG] = &phdl_this_data->frames[F_LACE_SHORT][len];
 		phdl_this_data->frames[F_LACE_STORE_SHORT] = &phdl_this_data->frames[F_LACE_STORE_LONG][len];
 
-		bcopy(std_dlace_copper_list, phdl_this_data->frames[F_LACE_STORE_LONG], std_dlace_copper_list_size);
-		bcopy(std_dlace_copper_list, phdl_this_data->frames[F_LACE_STORE_SHORT], std_dlace_copper_list_size);
-		bcopy(std_dlace_copper_list, phdl_this_data->frames[F_LACE_LONG], std_dlace_copper_list_size);
-		bcopy(std_dlace_copper_list, phdl_this_data->frames[F_LACE_SHORT], std_dlace_copper_list_size);
+		memcpy( phdl_this_data->frames[F_LACE_STORE_LONG], std_dlace_copper_list, std_dlace_copper_list_size);
+		memcpy( phdl_this_data->frames[F_LACE_STORE_SHORT], std_dlace_copper_list, std_dlace_copper_list_size);
+		memcpy( phdl_this_data->frames[F_LACE_LONG], std_dlace_copper_list, std_dlace_copper_list_size);
+		memcpy( phdl_this_data->frames[F_LACE_SHORT], std_dlace_copper_list, std_dlace_copper_list_size);
 
 		phdl_this_data->bplcon0 = 0x8204 | USE_CON3;	/* hires, color
 								 * composite enable,
@@ -2931,7 +2931,7 @@ display_pal_hires_dlace_view(view_t *v)
 		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(phdl_this_data->frames[F_LACE_STORE_SHORT]));
 		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(phdl_this_data->frames[F_LACE_STORE_SHORT]));
 
-		bcopy(phdl_this_data->frames[F_LACE_STORE_LONG], phdl_this_data->frames[F_LACE_STORE_SHORT], std_dlace_copper_list_size);
+		memcpy( phdl_this_data->frames[F_LACE_STORE_SHORT], phdl_this_data->frames[F_LACE_STORE_LONG], std_dlace_copper_list_size);
 
 		/* these are the only ones that are different from long frame. */
 		cp = phdl_this_data->frames[F_LACE_STORE_SHORT];
@@ -2981,8 +2981,8 @@ cc_init_pal_a2024(void)
 
 		p24_this = &pal_a2024_mode;
 		p24_this_data = &pal_a2024_mode_data;
-		bzero(p24_this, sizeof(dmode_t));
-		bzero(p24_this_data, sizeof(dmdata_t));
+		memset(p24_this, 0, sizeof(dmode_t));
+		memset(p24_this_data, 0, sizeof(dmdata_t));
 
 		p24_this->name = "pal: A2024 15 kHz";
 		p24_this->nominal_size.width = 1024;
@@ -3022,7 +3022,7 @@ cc_init_pal_a2024(void)
 		hedley_init[0] = 0x03;
 
 		/* copy image of standard copper list. */
-		bcopy(std_pal_a2024_copper_list, p24_this_data->frames[0], std_pal_a2024_copper_list_size);
+		memcpy( p24_this_data->frames[0], std_pal_a2024_copper_list, std_pal_a2024_copper_list_size);
 
 		/* set the init plane pointer. */
 		cp = find_copper_inst(p24_this_data->frames[F_QD_QUAD0], CI_MOVE(R_BPL0PTH));
@@ -3031,7 +3031,7 @@ cc_init_pal_a2024(void)
 
 		for (i = 1; i < F_QD_TOTAL; i++) {
 			p24_this_data->frames[i] = &p24_this_data->frames[i - 1][len];
-			bcopy(p24_this_data->frames[0], p24_this_data->frames[i], std_pal_a2024_copper_list_size);
+			memcpy( p24_this_data->frames[i], p24_this_data->frames[0], std_pal_a2024_copper_list_size);
 		}
 
 		p24_this_data->bplcon0 = 0x8200;	/* hires */
@@ -3069,9 +3069,9 @@ display_pal_a2024_view(view_t *v)
 		tmp = find_copper_inst(tmp, CI_MOVE(R_BPLCON0));	/* grab third one. */
 		tmp->cp.inst.operand = p24_this_data->bplcon0 | ((depth & 0x7) << 13);	/* times 2 */
 
-		bcopy(p24_this_data->frames[F_QD_STORE_QUAD0], p24_this_data->frames[F_QD_STORE_QUAD1], std_pal_a2024_copper_list_size);
-		bcopy(p24_this_data->frames[F_QD_STORE_QUAD0], p24_this_data->frames[F_QD_STORE_QUAD2], std_pal_a2024_copper_list_size);
-		bcopy(p24_this_data->frames[F_QD_STORE_QUAD0], p24_this_data->frames[F_QD_STORE_QUAD3], std_pal_a2024_copper_list_size);
+		memcpy( p24_this_data->frames[F_QD_STORE_QUAD1], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
+		memcpy( p24_this_data->frames[F_QD_STORE_QUAD2], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
+		memcpy( p24_this_data->frames[F_QD_STORE_QUAD3], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
 
 		/*
 		 * Mark Id's
@@ -3217,8 +3217,8 @@ cc_init_pal_aga(void)
 
 		paga_this = &paga_mode;
 		paga_this_data = &paga_mode_data;
-		bzero(paga_this, sizeof(dmode_t));
-		bzero(paga_this_data, sizeof(dmdata_t));
+		memset(paga_this, 0, sizeof(dmode_t));
+		memset(paga_this_data, 0, sizeof(dmdata_t));
 
 		paga_this->name = "pal: AGA dbl";
 		paga_this->nominal_size.width = 640;
@@ -3248,8 +3248,8 @@ cc_init_pal_aga(void)
 		}
 		paga_this_data->frames[F_STORE_LONG] = &paga_this_data->frames[F_LONG][len];
 
-		bcopy(aga_copper_list, paga_this_data->frames[F_STORE_LONG], aga_copper_list_size);
-		bcopy(aga_copper_list, paga_this_data->frames[F_LONG], aga_copper_list_size);
+		memcpy( paga_this_data->frames[F_STORE_LONG], aga_copper_list, aga_copper_list_size);
+		memcpy( paga_this_data->frames[F_LONG], aga_copper_list, aga_copper_list_size);
 
 		paga_this_data->bplcon0 = 0x0240 | USE_CON3;	/* color composite
 								 * enable,

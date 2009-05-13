@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.78 2009/01/09 21:14:36 jmcneill Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.78.2.1 2009/05/13 17:20:25 jym Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.78 2009/01/09 21:14:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.78.2.1 2009/05/13 17:20:25 jym Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -93,7 +93,7 @@ int iwi_debug = 4;
 /* Permit loading the Intel firmware */
 static int iwi_accept_eula;
 
-static int	iwi_match(device_t, struct cfdata *, void *);
+static int	iwi_match(device_t, cfdata_t, void *);
 static void	iwi_attach(device_t, device_t, void *);
 static int	iwi_detach(device_t, int);
 
@@ -102,7 +102,7 @@ static int	iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *,
 static void	iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 static void	iwi_free_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 static int	iwi_alloc_tx_ring(struct iwi_softc *, struct iwi_tx_ring *,
-    int, bus_addr_t, bus_size_t);
+    int, bus_size_t, bus_size_t);
 static void	iwi_reset_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 static void	iwi_free_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 static struct mbuf *
@@ -188,7 +188,7 @@ CFATTACH_DECL_NEW(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
     iwi_detach, NULL);
 
 static int
-iwi_match(device_t parent, struct cfdata *match, void *aux)
+iwi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -278,49 +278,9 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	if (iwi_reset(sc) != 0) {
+		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 		aprint_error_dev(self, "could not reset adapter\n");
 		return;
-	}
-
-	/*
-	 * Allocate rings.
-	 */
-	if (iwi_alloc_cmd_ring(sc, &sc->cmdq, IWI_CMD_RING_COUNT) != 0) {
-		aprint_error_dev(self, "could not allocate command ring\n");
-		goto fail;
-	}
-
-	error = iwi_alloc_tx_ring(sc, &sc->txq[0], IWI_TX_RING_COUNT,
-	    IWI_CSR_TX1_RIDX, IWI_CSR_TX1_WIDX);
-	if (error != 0) {
-		aprint_error_dev(self, "could not allocate Tx ring 1\n");
-		goto fail;
-	}
-
-	error = iwi_alloc_tx_ring(sc, &sc->txq[1], IWI_TX_RING_COUNT,
-	    IWI_CSR_TX2_RIDX, IWI_CSR_TX2_WIDX);
-	if (error != 0) {
-		aprint_error_dev(self, "could not allocate Tx ring 2\n");
-		goto fail;
-	}
-
-	error = iwi_alloc_tx_ring(sc, &sc->txq[2], IWI_TX_RING_COUNT,
-	    IWI_CSR_TX3_RIDX, IWI_CSR_TX3_WIDX);
-	if (error != 0) {
-		aprint_error_dev(self, "could not allocate Tx ring 3\n");
-		goto fail;
-	}
-
-	error = iwi_alloc_tx_ring(sc, &sc->txq[3], IWI_TX_RING_COUNT,
-	    IWI_CSR_TX4_RIDX, IWI_CSR_TX4_WIDX);
-	if (error != 0) {
-		aprint_error_dev(self, "could not allocate Tx ring 4\n");
-		goto fail;
-	}
-
-	if (iwi_alloc_rx_ring(sc, &sc->rxq, IWI_RX_RING_COUNT) != 0) {
-		aprint_error_dev(self, "could not allocate Rx ring\n");
-		goto fail;
 	}
 
 	ic->ic_ifp = ifp;
@@ -413,6 +373,47 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	ic->ic_newstate = iwi_newstate;
 	ieee80211_media_init(ic, iwi_media_change, iwi_media_status);
 
+	/*
+	 * Allocate rings.
+	 */
+	if (iwi_alloc_cmd_ring(sc, &sc->cmdq, IWI_CMD_RING_COUNT) != 0) {
+		aprint_error_dev(self, "could not allocate command ring\n");
+		goto fail;
+	}
+
+	error = iwi_alloc_tx_ring(sc, &sc->txq[0], IWI_TX_RING_COUNT,
+	    IWI_CSR_TX1_RIDX, IWI_CSR_TX1_WIDX);
+	if (error != 0) {
+		aprint_error_dev(self, "could not allocate Tx ring 1\n");
+		goto fail;
+	}
+
+	error = iwi_alloc_tx_ring(sc, &sc->txq[1], IWI_TX_RING_COUNT,
+	    IWI_CSR_TX2_RIDX, IWI_CSR_TX2_WIDX);
+	if (error != 0) {
+		aprint_error_dev(self, "could not allocate Tx ring 2\n");
+		goto fail;
+	}
+
+	error = iwi_alloc_tx_ring(sc, &sc->txq[2], IWI_TX_RING_COUNT,
+	    IWI_CSR_TX3_RIDX, IWI_CSR_TX3_WIDX);
+	if (error != 0) {
+		aprint_error_dev(self, "could not allocate Tx ring 3\n");
+		goto fail;
+	}
+
+	error = iwi_alloc_tx_ring(sc, &sc->txq[3], IWI_TX_RING_COUNT,
+	    IWI_CSR_TX4_RIDX, IWI_CSR_TX4_WIDX);
+	if (error != 0) {
+		aprint_error_dev(self, "could not allocate Tx ring 4\n");
+		goto fail;
+	}
+
+	if (iwi_alloc_rx_ring(sc, &sc->rxq, IWI_RX_RING_COUNT) != 0) {
+		aprint_error_dev(self, "could not allocate Rx ring\n");
+		goto fail;
+	}
+
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + 64, &sc->sc_drvbpf);
@@ -494,6 +495,7 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring,
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create command ring DMA map\n");
+		ring->desc_map = NULL;
 		goto fail;
 	}
 
@@ -529,8 +531,7 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring,
 
 	return 0;
 
-fail:	iwi_free_cmd_ring(sc, ring);
-	return error;
+fail:	return error;
 }
 
 static void
@@ -571,7 +572,7 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 {
 	int i, error, nsegs;
 
-	ring->count = count;
+	ring->count  = 0;
 	ring->queued = 0;
 	ring->cur = ring->next = 0;
 	ring->csr_ridx = csr_ridx;
@@ -587,6 +588,7 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create tx ring DMA map\n");
+		ring->desc_map = NULL;
 		goto fail;
 	}
 
@@ -626,6 +628,7 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 		error = ENOMEM;
 		goto fail;
 	}
+	ring->count = count;
 
 	/*
 	 * Allocate Tx buffers DMA maps
@@ -636,13 +639,13 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not create tx buf DMA map");
+			ring->data[i].map = NULL;
 			goto fail;
 		}
 	}
 	return 0;
 
-fail:	iwi_free_tx_ring(sc, ring);
-	return error;
+fail:	return error;
 }
 
 static void
@@ -655,11 +658,14 @@ iwi_reset_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 		data = &ring->data[i];
 
 		if (data->m != NULL) {
+			m_freem(data->m);
+			data->m = NULL;
+		}
+		
+		if (data->map != NULL) {
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
-			m_freem(data->m);
-			data->m = NULL;
 		}
 
 		if (data->ni != NULL) {
@@ -676,6 +682,7 @@ static void
 iwi_free_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 {
 	int i;
+	struct iwi_tx_data *data;
 
 	if (ring->desc_map != NULL) {
 		if (ring->desc != NULL) {
@@ -688,11 +695,16 @@ iwi_free_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 	}
 
 	for (i = 0; i < ring->count; i++) {
-		if (ring->data[i].m != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, ring->data[i].map);
-			m_freem(ring->data[i].m);
+		data = &ring->data[i];
+
+		if (data->m != NULL) {
+			m_freem(data->m);
 		}
-		bus_dmamap_destroy(sc->sc_dmat, ring->data[i].map);
+
+		if (data->map != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			bus_dmamap_destroy(sc->sc_dmat, data->map);
+		}
 	}
 }
 
@@ -701,7 +713,7 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring, int count)
 {
 	int i, error;
 
-	ring->count = count;
+	ring->count = 0;
 	ring->cur = 0;
 
 	ring->data = malloc(count * sizeof (struct iwi_rx_data), M_DEVBUF,
@@ -711,6 +723,8 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring, int count)
 		error = ENOMEM;
 		goto fail;
 	}
+
+	ring->count = count;
 
 	/*
 	 * Allocate and map Rx buffers
@@ -722,6 +736,7 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring, int count)
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not create rx buf DMA map");
+			ring->data[i].map = NULL;
 			goto fail;
 		}
 
@@ -744,8 +759,7 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring, int count)
 
 	return 0;
 
-fail:	iwi_free_rx_ring(sc, ring);
-	return error;
+fail:	return error;
 }
 
 static void
@@ -758,13 +772,20 @@ static void
 iwi_free_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 {
 	int i;
+	struct iwi_rx_data *data;
 
 	for (i = 0; i < ring->count; i++) {
-		if (ring->data[i].m != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, ring->data[i].map);
-			m_freem(ring->data[i].m);
+		data = &ring->data[i];
+
+		if (data->m != NULL) {
+			m_freem(data->m);
 		}
-		bus_dmamap_destroy(sc->sc_dmat, ring->data[i].map);
+
+		if (data->map != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			bus_dmamap_destroy(sc->sc_dmat, data->map);
+		}
+
 	}
 }
 
@@ -2020,7 +2041,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	int ntries, nsegs, error;
 	int sn;
 
-	nsegs = atop((char*)fw+size-1) - atop((char *)fw) + 1;
+	nsegs = atop((vaddr_t)fw+size-1) - atop((vaddr_t)fw) + 1;
 
 	/* Create a DMA map for the firmware image */
 	error = bus_dmamap_create(sc->sc_dmat, size, nsegs, size, 0,
@@ -2028,6 +2049,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create firmware DMA map\n");
+		map = NULL;
 		goto fail1;
 	}
 
@@ -2137,7 +2159,8 @@ fail3:
 	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, map);
 fail2:
-	bus_dmamap_destroy(sc->sc_dmat, map);
+	if (map != NULL)
+		bus_dmamap_destroy(sc->sc_dmat, map);
 
 fail1:
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.25 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.25.14.1 2009/05/13 17:20:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.25 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.25.14.1 2009/05/13 17:20:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,8 @@ struct elmc_mca_softc {
 	void		*sc_ih;		/* interrupt handle */
 };
 
-int	elmc_mca_match(struct device *, struct cfdata *, void *);
-void	elmc_mca_attach(struct device *, struct device *, void *);
+int	elmc_mca_match(device_t, cfdata_t, void *);
+void	elmc_mca_attach(device_t, device_t, void *);
 
 static void	elmc_mca_copyin(struct ie_softc *, void *, int, size_t);
 static void	elmc_mca_copyout(struct ie_softc *, const void *, int, size_t);
@@ -85,7 +85,7 @@ static void	elmc_mca_hwreset(struct ie_softc *, int);
 static int	elmc_mca_intrhook(struct ie_softc *, int);
 
 int
-elmc_mca_match(struct device *parent, struct cfdata *cf,
+elmc_mca_match(device_t parent, cfdata_t cf,
     void *aux)
 {
 	struct mca_attach_args *ma = aux;
@@ -99,7 +99,7 @@ elmc_mca_match(struct device *parent, struct cfdata *cf,
 }
 
 void
-elmc_mca_attach(struct device *parent, struct device *self, void *aux)
+elmc_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct elmc_mca_softc *asc = device_private(self);
 	struct ie_softc *sc = &asc->sc_ie;
@@ -272,11 +272,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-elmc_mca_copyin (sc, dst, offset, size)
-        struct ie_softc *sc;
-        void *dst;
-        int offset;
-        size_t size;
+elmc_mca_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int dribble;
 	u_int8_t* bptr = dst;
@@ -301,11 +297,7 @@ elmc_mca_copyin (sc, dst, offset, size)
 }
 
 static void
-elmc_mca_copyout (sc, src, offset, size)
-        struct ie_softc *sc;
-        const void *src;
-        int offset;
-        size_t size;
+elmc_mca_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int dribble;
 	int osize = size;
@@ -331,28 +323,21 @@ elmc_mca_copyout (sc, src, offset, size)
 }
 
 static u_int16_t
-elmc_mca_read_16 (sc, offset)
-        struct ie_softc *sc;
-        int offset;
+elmc_mca_read_16 (struct ie_softc *sc, int offset)
 {
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
         return bus_space_read_2(sc->bt, sc->bh, offset);
 }
 
 static void
-elmc_mca_write_16 (sc, offset, value)
-        struct ie_softc *sc;
-        int offset;
-        u_int16_t value;
+elmc_mca_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 {
         bus_space_write_2(sc->bt, sc->bh, offset, value);
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
-elmc_mca_write_24 (sc, offset, addr)
-        struct ie_softc *sc;
-        int offset, addr;
+elmc_mca_write_24 (struct ie_softc *sc, int offset, int addr)
 {
         bus_space_write_4(sc->bt, sc->bh, offset, addr +
                                 (u_long) sc->sc_maddr - (u_long) sc->sc_iobase);
@@ -363,9 +348,7 @@ elmc_mca_write_24 (sc, offset, addr)
  * Channel attention hook.
  */
 static void
-elmc_mca_attn(sc, why)
-	struct ie_softc *sc;
-	int why;
+elmc_mca_attn(struct ie_softc *sc, int why)
 {
     struct elmc_mca_softc* asc = (struct elmc_mca_softc *) sc;
     int intr = 0;
@@ -390,9 +373,7 @@ elmc_mca_attn(sc, why)
  * Do full card hardware reset.
  */
 static void
-elmc_mca_hwreset(sc, why)
-	struct ie_softc *sc;
-	int why;
+elmc_mca_hwreset(struct ie_softc *sc, int why)
 {
     struct elmc_mca_softc* asc = (struct elmc_mca_softc *) sc;
 
@@ -410,9 +391,7 @@ elmc_mca_hwreset(sc, why)
  * Interrupt hook.
  */
 static int
-elmc_mca_intrhook(sc, why)
-	struct ie_softc *sc;
-	int why;
+elmc_mca_intrhook(struct ie_softc *sc, int why)
 {
 	switch (why) {
 	case INTR_ACK:

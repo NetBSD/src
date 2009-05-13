@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.14 2009/02/06 01:19:33 dyoung Exp $ */
+/* $NetBSD: pmf.h,v 1.14.2.1 2009/05/13 17:23:03 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,7 @@
 #ifdef _KERNEL
 
 #include <sys/types.h>
+#include <sys/device.h>
 
 typedef enum {
 	PMFE_DISPLAY_ON,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.25 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.25.14.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.25 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.25.14.1 2009/05/13 17:17:47 jym Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -101,7 +101,7 @@ static const struct {
 
 
 void
-pfckbd_cnattach()
+pfckbd_cnattach(void)
 {
 	struct pfckbd_core *pc = &pfckbd_core;
 
@@ -147,6 +147,9 @@ pfckbd_attach(device_t parent, device_t self, void *aux)
 	callout_init(&pfckbd_core.pc_soft_ch, 0);
 	callout_reset(&pfckbd_core.pc_soft_ch, 1,
 		      pfckbd_core.pc_callout, &pfckbd_core);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 static void
@@ -435,7 +438,7 @@ pfckbd_callout_hitachi(void *arg)
 }
 
 void
-pfckbd_poll_hitachi_power()
+pfckbd_poll_hitachi_power(void)
 {
 	static const struct {
 		uint16_t cc, dc, ec; uint8_t c, d, e;

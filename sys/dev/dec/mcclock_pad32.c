@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_pad32.c,v 1.14 2008/01/03 23:02:25 joerg Exp $	*/
+/*	$NetBSD: mcclock_pad32.c,v 1.14.24.1 2009/05/13 17:19:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.14 2008/01/03 23:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.14.24.1 2009/05/13 17:19:16 jym Exp $");
 
 
 /*
@@ -67,9 +67,7 @@ const struct mcclock_busfns mcclock_pad32_busfns = {
 };
 
 void
-mcclock_pad32_write(dev, reg, datum)
-	struct mcclock_softc *dev;
-	u_int reg, datum;
+mcclock_pad32_write(struct mcclock_softc *dev, u_int reg, u_int datum)
 {
 	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)dev;
 
@@ -77,9 +75,7 @@ mcclock_pad32_write(dev, reg, datum)
 }
 
 u_int
-mcclock_pad32_read(dev, reg)
-	struct mcclock_softc *dev;
-	u_int reg;
+mcclock_pad32_read(struct mcclock_softc *dev, u_int reg)
 {
 	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)dev;
 

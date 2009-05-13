@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.15 2008/06/29 12:49:08 jmcneill Exp $ */
+/* $NetBSD: drm_vm.c,v 1.15.10.1 2009/05/13 17:19:17 jym Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.15 2008/06/29 12:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.15.10.1 2009/05/13 17:19:17 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -41,8 +41,9 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	drm_file_t *priv;
 	drm_map_type_t type;
 	paddr_t phys;
-	uintptr_t roffset;
+	off_t roffset;
 
+	DRM_DEBUG("dev %llx offset %llx prot %d\n", (long long)kdev, (long long)offset, prot);
 	DRM_LOCK();
 	priv = drm_find_file_by_proc(dev, DRM_CURPROC);
 	DRM_UNLOCK();
@@ -63,6 +64,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			unsigned long page = offset >> PAGE_SHIFT;
 			unsigned long pphys = dma->pagelist[page];
 
+			DRM_SPINUNLOCK(&dev->dma_lock);
 #ifdef macppc
 			return pphys;
 #else
@@ -72,7 +74,6 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			DRM_SPINUNLOCK(&dev->dma_lock);
 			return -1;
 		}
-		DRM_SPINUNLOCK(&dev->dma_lock);
 	}
 
 				/* A sequential search of a linked list is
@@ -85,7 +86,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	DRM_LOCK();
 	roffset = DRM_NETBSD_HANDLE2ADDR(offset);
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (map->type == _DRM_SHM) {
+		if (DRM_HANDLE_NEEDS_MASK(map->type)) {
 			if (roffset >= (uintptr_t)map->handle && roffset < (uintptr_t)map->handle + map->size)
 				break;
 		} else {
@@ -117,16 +118,15 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		phys = vtophys((paddr_t)map->handle + (offset - map->offset));
 		break;
 	case _DRM_SCATTER_GATHER:
-		phys = vtophys(offset);
-		break;
 	case _DRM_SHM:
-		phys = vtophys(DRM_NETBSD_HANDLE2ADDR(offset));
+		phys = vtophys(roffset);
 		break;
 	default:
 		DRM_ERROR("bad map type %d\n", type);
 		return -1;	/* This should never happen. */
 	}
 
+	DRM_DEBUG("going to return phys %lx\n", phys);
 #ifdef macppc
 	return phys;
 #else

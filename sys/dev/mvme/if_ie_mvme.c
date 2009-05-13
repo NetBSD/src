@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.13 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.13.14.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.13 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.13.14.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.13 2008/04/28 20:23:54 martin Exp $
 #include <dev/mvme/pcctworeg.h>
 
 
-int ie_pcctwo_match(struct device *, struct cfdata *, void *);
-void ie_pcctwo_attach(struct device *, struct device *, void *);
+int ie_pcctwo_match(device_t, cfdata_t, void *);
+void ie_pcctwo_attach(device_t, device_t, void *);
 
 struct ie_pcctwo_softc {
 	struct ie_softc ps_ie;
@@ -93,9 +93,7 @@ static void ie_write_24(struct ie_softc *, int, int);
  * i82596 Support Routines for MVME1[67][27] and MVME187 Boards
  */
 static void
-ie_reset(sc, why)
-	struct ie_softc *sc;
-	int why;
+ie_reset(struct ie_softc *sc, int why)
 {
 	struct ie_pcctwo_softc *ps;
 	u_int32_t scp_addr;
@@ -132,9 +130,7 @@ ie_reset(sc, why)
 
 /* ARGSUSED */
 static int
-ie_intrhook(sc, when)
-	struct ie_softc *sc;
-	int when;
+ie_intrhook(struct ie_softc *sc, int when)
 {
 	struct ie_pcctwo_softc *ps;
 	u_int8_t reg;
@@ -151,8 +147,7 @@ ie_intrhook(sc, when)
 
 /* ARGSUSED */
 static void
-ie_hwinit(sc)
-	struct ie_softc *sc;
+ie_hwinit(struct ie_softc *sc)
 {
 	u_int8_t reg;
 
@@ -163,9 +158,7 @@ ie_hwinit(sc)
 
 /* ARGSUSED */
 static void
-ie_atten(sc, reason)
-	struct ie_softc *sc;
-	int reason;
+ie_atten(struct ie_softc *sc, int reason)
 {
 	struct ie_pcctwo_softc *ps;
 
@@ -174,11 +167,7 @@ ie_atten(sc, reason)
 }
 
 static void
-ie_copyin(sc, dst, offset, size)
-	struct ie_softc *sc;
-	void *dst;
-	int offset;
-	size_t size;
+ie_copyin(struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	if (size == 0)		/* This *can* happen! */
 		return;
@@ -192,11 +181,7 @@ ie_copyin(sc, dst, offset, size)
 }
 
 static void
-ie_copyout(sc, src, offset, size)
-	struct ie_softc *sc;
-	const void *src;
-	int offset;
-	size_t size;
+ie_copyout(struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	if (size == 0)		/* This *can* happen! */
 		return;
@@ -210,29 +195,21 @@ ie_copyout(sc, src, offset, size)
 }
 
 static u_int16_t
-ie_read_16(sc, offset)
-	struct ie_softc *sc;
-	int offset;
+ie_read_16(struct ie_softc *sc, int offset)
 {
 
 	return (bus_space_read_2(sc->bt, sc->bh, offset));
 }
 
 static void
-ie_write_16(sc, offset, value)
-	struct ie_softc *sc;
-	int offset;
-	u_int16_t value;
+ie_write_16(struct ie_softc *sc, int offset, u_int16_t value)
 {
 
 	bus_space_write_2(sc->bt, sc->bh, offset, value);
 }
 
 static void
-ie_write_24(sc, offset, addr)
-	struct ie_softc *sc;
-	int offset;
-	int addr;
+ie_write_24(struct ie_softc *sc, int offset, int addr)
 {
 
 	addr += (int) sc->sc_iobase;
@@ -243,10 +220,7 @@ ie_write_24(sc, offset, addr)
 
 /* ARGSUSED */
 int
-ie_pcctwo_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+ie_pcctwo_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct pcctwo_attach_args *pa;
 
@@ -262,10 +236,7 @@ ie_pcctwo_match(parent, cf, args)
 
 /* ARGSUSED */
 void
-ie_pcctwo_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+ie_pcctwo_attach(device_t parent, device_t self, void *args)
 {
 	struct pcctwo_attach_args *pa;
 	struct ie_pcctwo_softc *ps;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.31 2008/03/26 13:33:58 ad Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.31.18.1 2009/05/13 17:19:16 jym Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.31 2008/03/26 13:33:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.31.18.1 2009/05/13 17:19:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.31 2008/03/26 13:33:58 ad Exp $");
 #include <sys/systm.h>
 #include <sys/workqueue.h>
 #include <sys/once.h>
+#include <sys/stat.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -100,6 +102,9 @@ struct dmio_state {
 	volatile int ds_flags;
 	u_int ds_nreqs;
 	struct simplelock ds_slock;
+	struct timespec ds_atime;
+	struct timespec ds_mtime;
+	struct timespec ds_btime;
 };
 
 static ONCE_DECL(dmio_cleaner_control);
@@ -358,6 +363,7 @@ dmio_read(struct file *fp, off_t *offp, struct uio *uio,
 	if (ds->ds_session == NULL)
 		return (ENXIO);
 
+	getnanotime(&ds->ds_atime);
 	s = splsoftclock();
 	simple_lock(&ds->ds_slock);
 
@@ -487,6 +493,7 @@ dmio_write(struct file *fp, off_t *offp, struct uio *uio,
 	if (ds->ds_session == NULL)
 		return (ENXIO);
 
+	getnanotime(&ds->ds_mtime);
 	s = splsoftclock();
 	simple_lock(&ds->ds_slock);
 
@@ -567,6 +574,23 @@ dmio_write(struct file *fp, off_t *offp, struct uio *uio,
 	splx(s);
 
 	return (error);
+}
+
+static int
+dmio_stat(struct file *fp, struct stat *st)
+{
+	struct dmio_state *ds = fp->f_data;
+
+	(void)memset(st, 0, sizeof(st));
+	KERNEL_LOCK(1, NULL);
+	st->st_dev = makedev(cdevsw_lookup_major(&dmoverio_cdevsw), 0);
+	st->st_atimespec = ds->ds_atime;
+	st->st_mtimespec = ds->ds_mtime;
+	st->st_ctimespec = st->st_birthtimespec = ds->ds_btime;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }
 
 /*
@@ -729,14 +753,15 @@ dmio_close(struct file *fp)
 }
 
 static const struct fileops dmio_fileops = {
-	dmio_read,
-	dmio_write,
-	dmio_ioctl,
-	fnullop_fcntl,
-	dmio_poll,
-	fbadop_stat,
-	dmio_close,
-	fnullop_kqfilter
+	.fo_read = dmio_read,
+	.fo_write = dmio_write,
+	.fo_ioctl = dmio_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = dmio_poll,
+	.fo_stat = dmio_stat,
+	.fo_close = dmio_close,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 /*
@@ -758,6 +783,8 @@ dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	s = splsoftclock();
 	ds = pool_get(&dmio_state_pool, PR_WAITOK);
 	splx(s);
+	getnanotime(&ds->ds_btime);
+	ds->ds_atime = ds->ds_mtime = ds->ds_btime;
 
 	memset(ds, 0, sizeof(*ds));
 	simple_lock_init(&ds->ds_slock);

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.18 2006/05/14 21:42:27 elad Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.18.78.1 2009/05/13 17:19:23 jym Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -55,18 +55,14 @@ static __inline u_int8_t _pcdisplay_6845_read(struct pcdisplay_handle *, int);
 static __inline void _pcdisplay_6845_write(struct pcdisplay_handle *, int,
 					 u_int8_t);
 
-static __inline u_int8_t _pcdisplay_6845_read(ph, reg)
-	struct pcdisplay_handle *ph;
-	int reg;
+static __inline u_int8_t _pcdisplay_6845_read(struct pcdisplay_handle *ph, int reg)
 {
 	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_INDEX, reg);
 	return (bus_space_read_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_DATA));
 }
 
-static __inline void _pcdisplay_6845_write(ph, reg, val)
-	struct pcdisplay_handle *ph;
-	int reg;
-	u_int8_t val;
+static __inline void _pcdisplay_6845_write(struct pcdisplay_handle *ph,
+					int reg, uint8_t val)
 {
 	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_INDEX, reg);
 	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_DATA, val);

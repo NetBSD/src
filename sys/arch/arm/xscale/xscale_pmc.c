@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.12 2007/10/17 19:53:45 garbled Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.12.34.1 2009/05/13 17:16:19 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.12 2007/10/17 19:53:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.12.34.1 2009/05/13 17:16:19 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -190,7 +190,7 @@ xscale_fork(struct proc *p1, struct proc *p2)
 
 	p2->p_md.pmc_enabled = p1->p_md.pmc_enabled;
 	p2->p_md.pmc_state = malloc(sizeof(struct xscale_pmc_state),
-				    M_PROC, M_NOWAIT);
+				    M_TEMP, M_NOWAIT);
 	if (p2->p_md.pmc_state == NULL) {
 		/* XXX
 		 * Can't return failure at this point, so just disable
@@ -364,7 +364,7 @@ xscale_process_exit(struct proc *p)
 		}
 	}
 	if (p->p_md.pmc_state)
-		free(p->p_md.pmc_state, M_PROC);
+		free(p->p_md.pmc_state, M_TEMP);
 	p->p_md.pmc_state = NULL;
 	p->p_md.pmc_enabled = 0;
 }
@@ -452,7 +452,7 @@ xscale_configure_counter(struct proc *p, int ctr, struct pmc_counter_cfg *cfg)
 
 	if (p->p_md.pmc_state == NULL) {
 		p->p_md.pmc_state = malloc(sizeof(struct xscale_pmc_state),
-					   M_PROC, M_WAITOK);
+					   M_TEMP, M_WAITOK);
 		if (!p->p_md.pmc_state)
 			return ENOMEM;
 	}

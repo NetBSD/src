@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.15 2008/11/12 12:36:02 ad Exp $
+# $NetBSD: XBOX,v 1.15.4.1 2009/05/13 17:17:49 jym Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -13,8 +13,6 @@ options 	REALEXTMEM=60416	# size of extended memory (in KB)
 options 	MSGBUFSIZE=65536	# for PCI_CONFIG_DUMP space
 
 #options 	NFS_BOOT_RWSIZE=1024	# kue0 USB ethernet has issues here
-
-makeoptions 	CPUFLAGS="-march=i686 -mtune=pentiumpro"
 
 options 	TIMER_FREQ=1125000
 options 	XBOX		# kernel support for xbox

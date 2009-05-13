@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: ztp.c,v 1.6.2.1 2009/05/13 17:18:51 jym Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.6.2.1 2009/05/13 17:18:51 jym Exp $");
 
 #include "lcd.h"
 
@@ -99,7 +99,6 @@ struct ztp_softc {
 	device_t sc_dev;
 	struct callout sc_tp_poll;
 	void *sc_gh;
-	void *sc_powerhook;
 	int sc_enabled;
 	int sc_buttons; /* button emulation ? */
 	struct device *sc_wsmousedev;
@@ -117,7 +116,8 @@ CFATTACH_DECL_NEW(ztp, sizeof(struct ztp_softc),
 
 static int	ztp_enable(void *);
 static void	ztp_disable(void *);
-static void	ztp_power(int, void *);
+static bool	ztp_suspend(device_t dv PMF_FN_ARGS);
+static bool	ztp_resume(device_t dv PMF_FN_ARGS);
 static void	ztp_poll(void *);
 static int	ztp_irq(void *);
 static int	ztp_ioctl(void *, u_long, void *, int, struct lwp *);
@@ -196,12 +196,9 @@ ztp_enable(void *v)
 
 	callout_stop(&sc->sc_tp_poll);
 
-	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
-	    ztp_power, sc);
-	if (sc->sc_powerhook == NULL) {
-		aprint_error_dev(sc->sc_dev, "couldn't establish powerhook\n");
-		return ENOMEM;
-	}
+	if (!pmf_device_register(sc->sc_dev, ztp_suspend, ztp_resume))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_IN);
 
@@ -229,66 +226,55 @@ ztp_disable(void *v)
 
 	callout_stop(&sc->sc_tp_poll);
 
-	if (sc->sc_powerhook != NULL) {
-		powerhook_disestablish(sc->sc_powerhook);
-		sc->sc_powerhook = NULL;
-	}
+	pmf_device_deregister(sc->sc_dev);
 
 	if (sc->sc_gh) {
-#if 0
-		pxa2x0_gpio_intr_disestablish(sc->sc_gh);
-		sc->sc_gh = NULL;
-#else
 		pxa2x0_gpio_intr_mask(sc->sc_gh);
-#endif
 	}
 
 	/* disable interrupts */
 	sc->sc_enabled = 0;
 }
 
-static void
-ztp_power(int why, void *v)
+static bool
+ztp_suspend(device_t dv PMF_FN_ARGS)
 {
-	struct ztp_softc *sc = (struct ztp_softc *)v;
+	struct ztp_softc *sc = device_private(dv);
 
-	DPRINTF(("%s: ztp_power()\n", device_xname(sc->sc_dev)));
+	DPRINTF(("%s: ztp_suspend()\n", device_xname(sc->sc_dev)));
 
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-		sc->sc_enabled = 0;
-#if 0
-		pxa2x0_gpio_intr_disestablish(sc->sc_gh);
-#endif
-		callout_stop(&sc->sc_tp_poll);
+	sc->sc_enabled = 0;
+	pxa2x0_gpio_intr_mask(sc->sc_gh);
 
-		pxa2x0_gpio_intr_mask(sc->sc_gh);
+	callout_stop(&sc->sc_tp_poll);
 
-		/* Turn off reference voltage but leave ADC on. */
-		(void)zssp_ic_send(ZSSP_IC_ADS7846, (1 << ADSCTRL_PD1_SH) |
-		    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
+	/* Turn off reference voltage but leave ADC on. */
+	(void)zssp_ic_send(ZSSP_IC_ADS7846, (1 << ADSCTRL_PD1_SH) |
+	    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
 
-		pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_OUT | GPIO_SET);
-		break;
+	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_OUT | GPIO_SET);
 
-	case PWR_RESUME:
-		pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_IN);
-		pxa2x0_gpio_intr_mask(sc->sc_gh);
+	return true;
+}
 
-		/* Enable automatic low power mode. */
-		(void)zssp_ic_send(ZSSP_IC_ADS7846,
-		    (4 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
+static bool
+ztp_resume(device_t dv PMF_FN_ARGS)
+{
+	struct ztp_softc *sc = device_private(dv);
 
-#if 0
-		sc->sc_gh = pxa2x0_gpio_intr_establish(GPIO_TP_INT_C3K,
-		    IST_EDGE_FALLING, IPL_TTY, ztp_irq, sc);
-#else
-		pxa2x0_gpio_intr_unmask(sc->sc_gh);
-#endif
-		sc->sc_enabled = 1;
-		break;
-	}
+	DPRINTF(("%s: ztp_resume()\n", device_xname(sc->sc_dev)));
+
+	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_IN);
+	pxa2x0_gpio_intr_mask(sc->sc_gh);
+
+	/* Enable automatic low power mode. */
+	(void)zssp_ic_send(ZSSP_IC_ADS7846,
+	    (4 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
+
+	pxa2x0_gpio_intr_unmask(sc->sc_gh);
+	sc->sc_enabled = 1;
+	
+	return true;
 }
 
 #define HSYNC()								\

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.19 2008/04/08 20:09:27 cegger Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.19.18.1 2009/05/13 17:20:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.19 2008/04/08 20:09:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.19.18.1 2009/05/13 17:20:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.19 2008/04/08 20:09:27 cegger Exp $
 #include <dev/isa/essreg.h>
 #include <dev/isa/essvar.h>
 
-int	ess_isapnp_match(struct device *, struct cfdata *, void *);
-void	ess_isapnp_attach(struct device *, struct device *, void *);
+int	ess_isapnp_match(device_t, cfdata_t, void *);
+void	ess_isapnp_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ess_isapnp, sizeof(struct ess_softc),
     ess_isapnp_match, ess_isapnp_attach, NULL, NULL);
@@ -75,8 +75,7 @@ CFATTACH_DECL(ess_isapnp, sizeof(struct ess_softc),
  * Probe for the ess hardware.
  */
 int
-ess_isapnp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ess_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
@@ -92,8 +91,7 @@ ess_isapnp_match(struct device *parent, struct cfdata *match,
  * pseudo-device driver.
  */
 void
-ess_isapnp_attach(struct device *parent, struct device *self,
-    void *aux)
+ess_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct ess_softc *sc;
 	struct isapnp_attach_args *ipa;

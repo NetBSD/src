@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.5 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: sio.c,v 1.5.14.1 2009/05/13 17:17:58 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.5 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.5.14.1 2009/05/13 17:17:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,22 +43,19 @@ __KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.5 2008/04/28 20:23:26 martin Exp $");
 #include <luna68k/luna68k/isr.h>
 #include <luna68k/dev/siovar.h>
 
-static int  sio_match __P((struct device *, struct cfdata *, void *));
-static void sio_attach __P((struct device *, struct device *, void *));
-static int  sio_print __P((void *, const char *));
+static int  sio_match(struct device *, struct cfdata *, void *);
+static void sio_attach(struct device *, struct device *, void *);
+static int  sio_print(void *, const char *);
 
 CFATTACH_DECL(sio, sizeof(struct sio_softc),
     sio_match, sio_attach, NULL, NULL);
 extern struct cfdriver sio_cd;
 
-static void nullintr __P((int));
-static int xsiointr __P((void *));
+static void nullintr(int);
+static int xsiointr(void *);
 
 static int
-sio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -70,9 +67,7 @@ sio_match(parent, cf, aux)
 }
 
 static void
-sio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sio_softc *sc = (void *)self;
 	struct mainbus_attach_args *ma = aux;
@@ -94,9 +89,7 @@ sio_attach(parent, self, aux)
 }
 
 static int
-sio_print(aux, name)
-	void *aux;
-	const char *name;
+sio_print(void *aux, const char *name)
 {
 	struct sio_attach_args *args = aux;
 
@@ -110,8 +103,7 @@ sio_print(aux, name)
 }
 
 static int
-xsiointr(arg)
-	void *arg;
+xsiointr(void *arg)
 {
 	struct sio_softc *sc = arg;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.3 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: exec.c,v 1.3.14.1 2009/05/13 17:17:57 jym Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ static int	elf64_exec(struct preloaded_file *amp);
 struct file_format ia64_elf = { elf64_loadfile, elf64_exec };
 
 static __inline u_int64_t
-disable_ic()
+disable_ic(void)
 {
 	u_int64_t psr;
 	__asm __volatile("mov %0=psr;;" : "=r" (psr));
@@ -161,7 +161,7 @@ elf64_exec(struct preloaded_file *fp)
 		return (ENOMEM);
 	}
 
-	bzero(bi, sizeof(struct bootinfo));
+	memset(bi, 0, sizeof(struct bootinfo));
 	bi_load(bi, fp, &mapkey, pages);
 
 	printf("Entering %s at 0x%lx...\n", fp->f_name, fp->marks[MARK_ENTRY]);

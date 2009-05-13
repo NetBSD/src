@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_machdep.c,v 1.16 2008/11/19 18:36:01 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16.4.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16 2008/11/19 18:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16.4.1 2009/05/13 17:18:45 jym Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -52,13 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16 2008/11/19 18:36:01 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
-
+#include <sys/cpu.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
 #include <machine/psl.h>
@@ -94,8 +93,8 @@ int x86_get_ioperm(struct lwp *, void *, register_t *);
 int x86_set_ioperm(struct lwp *, void *, register_t *);
 int x86_get_mtrr(struct lwp *, void *, register_t *);
 int x86_set_mtrr(struct lwp *, void *, register_t *);
-int x86_set_sdbase(void *arg, char which);
-int x86_get_sdbase(void *arg, char which);
+int x86_set_sdbase(void *, char, lwp_t *, bool);
+int x86_get_sdbase(void *, char);
 
 #ifdef LDT_DEBUG
 static void x86_print_ldt(int, const struct segment_descriptor *);
@@ -109,28 +108,6 @@ x86_print_ldt(int i, const struct segment_descriptor *d)
 	    d->sd_hilimit, d->sd_xx, d->sd_def32, d->sd_gran, d->sd_hibase);
 }
 #endif
-
-int
-x86_get_ldt_len(struct lwp *l)
-{
-#ifndef USER_LDT
-	return -1;
-#else
-	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
-	int nldt;
-
-	mutex_enter(&pmap->pm_lock);
-
-	if (pmap->pm_flags & PMF_USER_LDT) {
-		nldt = pmap->pm_ldt_len;
-	} else {
-		nldt = NLDT;
-	}
-	mutex_exit(&pmap->pm_lock);
-	return nldt;
-#endif
-}
-
 
 int
 x86_get_ldt(struct lwp *l, void *args, register_t *retval)
@@ -188,10 +165,10 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	    ua->start + ua->num > 8192)
 		return (EINVAL);
 
-	mutex_enter(&pmap->pm_lock);
+	mutex_enter(&cpu_lock);
 
-	if (pmap->pm_flags & PMF_USER_LDT) {
-		nldt = pmap->pm_ldt_len;
+	if (pmap->pm_ldt != NULL) {
+		nldt = pmap->pm_ldt_len / sizeof(*lp);
 		lp = pmap->pm_ldt;
 	} else {
 		nldt = NLDT;
@@ -199,7 +176,7 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	}
 
 	if (ua->start > nldt) {
-		mutex_exit(&pmap->pm_lock);
+		mutex_exit(&cpu_lock);
 		return (EINVAL);
 	}
 
@@ -215,7 +192,7 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 #endif
 
 	memcpy(cp, lp, num * sizeof(union descriptor));
-	mutex_exit(&pmap->pm_lock);
+	mutex_exit(&cpu_lock);
 
 	return 0;
 #endif
@@ -258,12 +235,11 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 #ifndef USER_LDT
 	return EINVAL;
 #else
-	int error, i, n, sel, free_sel;
+	int error, i, n, old_sel, new_sel;
 	struct proc *p = l->l_proc;
-	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	size_t old_len, new_len, ldt_len, free_len;
-	union descriptor *old_ldt, *new_ldt, *free_ldt;
+	size_t old_len, new_len;
+	union descriptor *old_ldt, *new_ldt;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
 	    NULL, NULL, NULL, NULL);
@@ -336,89 +312,72 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		}
 	}
 
-	/* allocate user ldt */
-	free_sel = -1;
-	new_ldt = NULL;
-	new_len = 0;
-	free_ldt = NULL;
-	free_len = 0;
-	mutex_enter(&pmap->pm_lock);
-	kpreempt_disable();
-	if (pmap->pm_ldt == 0 || (ua->start + ua->num) > pmap->pm_ldt_len) {
-		if (pmap->pm_flags & PMF_USER_LDT)
-			ldt_len = pmap->pm_ldt_len;
-		else
-			ldt_len = 512;
-		while ((ua->start + ua->num) > ldt_len)
-			ldt_len *= 2;
-		new_len = ldt_len * sizeof(union descriptor);
+	/*
+	 * Install selected changes.  We perform a copy, write, swap dance
+	 * here to ensure that all updates happen atomically.
+	 */
 
-		mutex_exit(&pmap->pm_lock);
+	/* Allocate a new LDT. */
+	for (;;) {
+		new_len = (ua->start + ua->num) * sizeof(union descriptor);
+		new_len = max(new_len, pmap->pm_ldt_len);
+		new_len = max(new_len, NLDT * sizeof(union descriptor));
+		new_len = round_page(new_len);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
-		    new_len, 0, UVM_KMF_WIRED);
-		memset(new_ldt, 0, new_len);
-		sel = ldt_alloc(new_ldt, new_len);
-		mutex_enter(&pmap->pm_lock);
-
-		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
-			/*
-			 * Another thread (re)allocated the LDT to
-			 * sufficient size while we were blocked in
-			 * uvm_km_alloc. Oh well. The new entries
-			 * will quite probably not be right, but
-			 * hey.. not our problem if user applications
-			 * have race conditions like that.
-			 */
-			goto copy;
+		    new_len, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
+		mutex_enter(&cpu_lock);
+		if (pmap->pm_ldt_len <= new_len) {
+			break;
 		}
-
-		old_ldt = pmap->pm_ldt;
-		free_ldt = old_ldt;
-		free_len = pmap->pm_ldt_len * sizeof(union descriptor);
-
-		if (old_ldt != NULL) {
-			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
-		} else {
-			old_len = NLDT * sizeof(union descriptor);
-			old_ldt = ldt;
-		}
-
-		memcpy(new_ldt, old_ldt, old_len);
-		memset((char *)new_ldt + old_len, 0, new_len - old_len);
-
-		pmap->pm_ldt = new_ldt;
-		pmap->pm_ldt_len = ldt_len;
-
-		if (pmap->pm_flags & PMF_USER_LDT)
-			free_sel = pmap->pm_ldt_sel;
-		else {
-			pmap->pm_flags |= PMF_USER_LDT;
-			free_sel = -1;
-		}
-		pmap->pm_ldt_sel = sel;
-		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
-			lldt(pcb->pcb_ldt_sel);
-		new_ldt = NULL;
-	}
-copy:
-	/* Now actually replace the descriptors. */
-	for (i = 0, n = ua->start; i < ua->num; i++, n++)
-		pmap->pm_ldt[n] = descv[i];
-
-	kpreempt_enable();
-	mutex_exit(&pmap->pm_lock);
-
-	if (new_ldt != NULL)
+		mutex_exit(&cpu_lock);
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
 		    UVM_KMF_WIRED);
-	if (free_sel != -1)
-		ldt_free(free_sel);
-	if (free_ldt != NULL)
-		uvm_km_free(kernel_map, (vaddr_t)free_ldt, free_len,
-		    UVM_KMF_WIRED);
+	}
 
-	return (error);
+	/* Copy existing entries, if any. */
+	if (pmap->pm_ldt != NULL) {
+		old_ldt = pmap->pm_ldt;
+		old_len = pmap->pm_ldt_len;
+		old_sel = pmap->pm_ldt_sel;
+		memcpy(new_ldt, old_ldt, old_len);
+	} else {
+		old_ldt = NULL;
+		old_len = 0;
+		old_sel = -1;
+		memcpy(new_ldt, ldt, NLDT * sizeof(union descriptor));
+	}
+
+	/* Apply requested changes. */
+	for (i = 0, n = ua->start; i < ua->num; i++, n++) {
+		new_ldt[n] = descv[i];
+	}
+
+	/* Allocate LDT selector. */
+	new_sel = ldt_alloc(new_ldt, new_len);
+	if (new_sel == -1) {
+		mutex_exit(&cpu_lock);
+		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
+		    UVM_KMF_WIRED);
+		return ENOMEM;
+	}
+
+	/* All changes are now globally visible.  Swap in the new LDT. */
+	pmap->pm_ldt = new_ldt;
+	pmap->pm_ldt_len = new_len;
+	pmap->pm_ldt_sel = new_sel;
+
+	/* Switch existing users onto new LDT. */
+	pmap_ldt_sync(pmap);
+
+	/* Free existing LDT (if any). */
+	if (old_ldt != NULL) {
+		ldt_free(old_sel);
+		uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,
+		    UVM_KMF_WIRED);
+	}
+	mutex_exit(&cpu_lock);
+
+	return error;
 #endif
 }
 
@@ -629,16 +588,21 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 }
 
 int
-x86_set_sdbase(void *arg, char which)
+x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 {
 #ifdef i386
 	struct segment_descriptor sd;
+	struct pcb *pcb;
 	vaddr_t base;
 	int error;
 
-	error = copyin(arg, &base, sizeof(base));
-	if (error != 0)
-		return error;
+	if (direct) {
+		base = (vaddr_t)arg;
+	} else {
+		error = copyin(arg, &base, sizeof(base));
+		if (error != 0)
+			return error;
+	}
 
 	sd.sd_lobase = base & 0xffffff;
 	sd.sd_hibase = (base >> 24) & 0xff;
@@ -652,12 +616,17 @@ x86_set_sdbase(void *arg, char which)
 	sd.sd_gran = 1;
 
 	kpreempt_disable();
+	pcb = &l->l_addr->u_pcb;
 	if (which == 'f') {
-		memcpy(&curpcb->pcb_fsd, &sd, sizeof(sd));
-		memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
+		memcpy(&pcb->pcb_fsd, &sd, sizeof(sd));
+		if (l == curlwp) {
+			memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
+		}
 	} else /* which == 'g' */ {
-		memcpy(&curpcb->pcb_gsd, &sd, sizeof(sd));
-		memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
+		memcpy(&pcb->pcb_gsd, &sd, sizeof(sd));
+		if (l == curlwp) {
+			memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
+		}
 	}
 	kpreempt_enable();
 
@@ -759,11 +728,11 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 #endif
 
 	case X86_SET_FSBASE:
-		error = x86_set_sdbase(SCARG(uap, parms), 'f');
+		error = x86_set_sdbase(SCARG(uap, parms), 'f', curlwp, false);
 		break;
 
 	case X86_SET_GSBASE:
-		error = x86_set_sdbase(SCARG(uap, parms), 'g');
+		error = x86_set_sdbase(SCARG(uap, parms), 'g', curlwp, false);
 		break;
 
 	case X86_GET_FSBASE:
@@ -779,4 +748,11 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		break;
 	}
 	return (error);
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+
+	return x86_set_sdbase(addr, 'g', l, true);
 }

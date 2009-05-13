@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.68 2008/06/12 22:29:41 cegger Exp $	*/
+/*	$NetBSD: midi.c,v 1.68.10.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.68 2008/06/12 22:29:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.68.10.1 2009/05/13 17:19:05 jym Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -191,7 +191,7 @@ mididetach(device_t self, int flags)
 	struct midi_softc *sc = device_private(self);
 	int maj, mn;
 
-	DPRINTFN(2,("midi_detach: sc=%p flags=%d\n", sc, flags));
+	DPRINTFN(2,("%s: sc=%p flags=%d\n", __func__, sc, flags));
 
 	pmf_device_deregister(self);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.42 2007/03/04 15:18:10 yamt Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.42.58.1 2009/05/13 17:16:04 jym Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.42 2007/03/04 15:18:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.42.58.1 2009/05/13 17:16:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.42 2007/03/04 15:18:10 yamt Exp $
 
 #include "wsdisplay.h"
 
-void dec_3000_500_init __P((void));
-static void dec_3000_500_cons_init __P((void));
-static void dec_3000_500_device_register __P((struct device *, void *));
+void dec_3000_500_init(void);
+static void dec_3000_500_cons_init(void);
+static void dec_3000_500_device_register(struct device *, void *);
 
 static const char dec_3000_500_sp[] = "DEC 3000/400 (\"Sandpiper\")";
 static const char dec_3000_500_sf[] = "DEC 3000/500 (\"Flamingo\")";
@@ -163,9 +163,7 @@ dec_3000_500_cons_init()
 }
 
 static void
-dec_3000_500_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_3000_500_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, scsiboot, netboot;
 	static struct device *scsidev;

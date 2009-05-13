@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.28 2007/05/02 20:40:29 dyoung Exp $	*/
+/*	$NetBSD: keydb.h,v 1.28.48.1 2009/05/13 17:22:50 jym Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -157,23 +157,23 @@ struct key_cb {
 /* secpolicy */
 struct secpolicy;
 struct secpolicyindex;
-extern struct secpolicy *keydb_newsecpolicy __P((void));
-extern u_int32_t keydb_newspid __P((void));
-extern void keydb_delsecpolicy __P((struct secpolicy *));
+extern struct secpolicy *keydb_newsecpolicy(void);
+extern u_int32_t keydb_newspid(void);
+extern void keydb_delsecpolicy(struct secpolicy *);
 extern int keydb_setsecpolicyindex
-	__P((struct secpolicy *, struct secpolicyindex *));
+(struct secpolicy *, struct secpolicyindex *);
 /* secashead */
-extern struct secashead *keydb_newsecashead __P((void));
-extern void keydb_delsecashead __P((struct secashead *));
+extern struct secashead *keydb_newsecashead(void);
+extern void keydb_delsecashead(struct secashead *);
 /* secasvar */
-extern struct secasvar *keydb_newsecasvar __P((void));
-extern void keydb_delsecasvar __P((struct secasvar *));
+extern struct secasvar *keydb_newsecasvar(void);
+extern void keydb_delsecasvar(struct secasvar *);
 /* secreplay */
-extern struct secreplay *keydb_newsecreplay __P((size_t));
-extern void keydb_delsecreplay __P((struct secreplay *));
+extern struct secreplay *keydb_newsecreplay(size_t);
+extern void keydb_delsecreplay(struct secreplay *);
 /* secreg */
-extern struct secreg *keydb_newsecreg __P((void));
-extern void keydb_delsecreg __P((struct secreg *));
+extern struct secreg *keydb_newsecreg(void);
+extern void keydb_delsecreg(struct secreg *);
 
 #endif /* _KERNEL */
 

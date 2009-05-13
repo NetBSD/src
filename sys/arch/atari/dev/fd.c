@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.63 2009/01/13 13:35:51 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.63.2.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63 2009/01/13 13:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63.2.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ static short	def_type = 0;		/* Reflects config-switches	*/
 #define	FLP_DEFTYPE	1		/* 720Kb, reasonable default	*/
 #define	FLP_TYPE(dev)	( DISKPART(dev) == 0 ? def_type : DISKPART(dev) - 1 )
 
-typedef void	(*FPV) __P((void *));
+typedef void	(*FPV)(void *);
 
 dev_type_open(fdopen);
 dev_type_close(fdclose);
@@ -206,24 +206,24 @@ dev_type_strategy(fdstrategy);
 /*
  * Private drive functions....
  */
-static void	fdstart __P((struct fd_softc *));
-static void	fddone __P((struct fd_softc *));
-static void	fdstatus __P((struct fd_softc *));
-static void	fd_xfer __P((struct fd_softc *));
-static void	fdcint __P((struct fd_softc *));
-static int	fd_xfer_ok __P((struct fd_softc *));
-static void	fdmotoroff __P((struct fd_softc *));
-static void	fdminphys __P((struct buf *));
-static void	fdtestdrv __P((struct fd_softc *));
-static void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *,
-		    int));
-static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
-static int	fdselect __P((int, int, int));
-static void	fddeselect __P((void));
-static void	fdmoff __P((struct fd_softc *));
-       u_char	read_fdreg __P((u_short));
-       void	write_fdreg __P((u_short, u_short));
-       u_char	read_dmastat __P((void));
+static void	fdstart(struct fd_softc *);
+static void	fddone(struct fd_softc *);
+static void	fdstatus(struct fd_softc *);
+static void	fd_xfer(struct fd_softc *);
+static void	fdcint(struct fd_softc *);
+static int	fd_xfer_ok(struct fd_softc *);
+static void	fdmotoroff(struct fd_softc *);
+static void	fdminphys(struct buf *);
+static void	fdtestdrv(struct fd_softc *);
+static void	fdgetdefaultlabel(struct fd_softc *, struct disklabel *,
+		    int);
+static int	fdgetdisklabel(struct fd_softc *, dev_t);
+static int	fdselect(int, int, int);
+static void	fddeselect(void);
+static void	fdmoff(struct fd_softc *);
+       u_char	read_fdreg(u_short);
+       void	write_fdreg(u_short, u_short);
+       u_char	read_dmastat(void);
 
 extern inline u_char read_fdreg(u_short regno)
 {
@@ -250,7 +250,7 @@ extern inline u_char read_dmastat(void)
  * Note: This location _must_ be read as an u_short. Failure to do so
  *       will return garbage!
  */
-static u_short rd_cfg_switch __P((void));
+static u_short rd_cfg_switch(void);
 static u_short rd_cfg_switch(void)
 {
 	return(*((u_short*)AD_CFG_SWITCH));
@@ -267,9 +267,9 @@ static u_short rd_cfg_switch(void)
  */
 extern struct cfdriver fd_cd;
 
-static int	fdcmatch __P((struct device *, struct cfdata *, void *));
-static int	fdcprint __P((void *, const char *));
-static void	fdcattach __P((struct device *, struct device *, void *));
+static int	fdcmatch(struct device *, struct cfdata *, void *);
+static int	fdcprint(void *, const char *);
+static void	fdcattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(fdc, sizeof(struct device),
     fdcmatch, fdcattach, NULL, NULL);
@@ -284,10 +284,7 @@ const struct cdevsw fd_cdevsw = {
 };
 
 static int
-fdcmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+fdcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int	fdc_matched = 0;
 
@@ -299,9 +296,7 @@ void		*auxp;
 }
 
 static void
-fdcattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+fdcattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct fd_softc	fdsoftc;
 	int		i, nfound, first_found;
@@ -349,9 +344,7 @@ void		*auxp;
 }
 
 static int
-fdcprint(auxp, pnp)
-void	*auxp;
-const char	*pnp;
+fdcprint(void *auxp, const char *pnp)
 {
 	if (pnp != NULL)
 		aprint_normal("fd%d at %s:", (int)auxp, pnp);
@@ -359,8 +352,8 @@ const char	*pnp;
 	return(UNCONF);
 }
 
-static int	fdmatch __P((struct device *, struct cfdata *, void *));
-static void	fdattach __P((struct device *, struct device *, void *));
+static int	fdmatch(struct device *, struct cfdata *, void *);
+static void	fdattach(struct device *, struct device *, void *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
@@ -370,18 +363,13 @@ CFATTACH_DECL(fd, sizeof(struct fd_softc),
 extern struct cfdriver fd_cd;
 
 static int
-fdmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+fdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	return(1);
 }
 
 static void
-fdattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+fdattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct fd_softc	*sc;
 	struct fd_types *type;
@@ -411,12 +399,7 @@ void		*auxp;
 }
 
 int
-fdioctl(dev, cmd, addr, flag, l)
-dev_t		dev;
-u_long		cmd;
-int		flag;
-void *		addr;
-struct lwp	*l;
+fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct fd_softc *sc;
 
@@ -462,10 +445,7 @@ struct lwp	*l;
  *	partition 1: 780Kb
  */
 int
-fdopen(dev, flags, devtype, l)
-dev_t		dev;
-int		flags, devtype;
-struct lwp	*l;
+fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc	*sc;
 	int		sps;
@@ -564,10 +544,7 @@ struct lwp	*l;
 }
 
 int
-fdclose(dev, flags, devtype, l)
-dev_t		dev;
-int		flags, devtype;
-struct lwp	*l;
+fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc	*sc;
 
@@ -583,8 +560,7 @@ struct lwp	*l;
 }
 
 void
-fdstrategy(bp)
-struct buf	*bp;
+fdstrategy(struct buf *bp)
 {
 	struct fd_softc	 *sc;
 	struct disklabel *lp;
@@ -651,19 +627,13 @@ done:
 }
 
 int
-fdread(dev, uio, flags)
-dev_t		dev;
-struct uio	*uio;
-int		flags;
+fdread(dev_t dev, struct uio *uio, int flags)
 {
 	return(physio(fdstrategy, NULL, dev, B_READ, fdminphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-dev_t		dev;
-struct uio	*uio;
-int		flags;
+fdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	return(physio(fdstrategy, NULL, dev, B_WRITE, fdminphys, uio));
 }
@@ -672,8 +642,7 @@ int		flags;
  * Called through DMA-dispatcher, get status.
  */
 static void
-fdstatus(sc)
-struct fd_softc	*sc;
+fdstatus(struct fd_softc *sc)
 {
 #ifdef FLP_DEBUG
 	printf("fdstatus\n");
@@ -690,8 +659,7 @@ struct fd_softc	*sc;
  * it going.
  */
 static void
-fdstart(sc)
-struct fd_softc	*sc;
+fdstart(struct fd_softc *sc)
 {
 	struct buf	*bp;
 
@@ -715,8 +683,7 @@ struct fd_softc	*sc;
  * Find a new transaction to work on.
  */
 static void
-fddone(sc)
-register struct fd_softc	*sc;
+fddone(register struct fd_softc *sc)
 {
 	struct buf	*bp;
 	struct fd_softc	*sc1;
@@ -781,8 +748,7 @@ register struct fd_softc	*sc;
 }
 
 static int
-fdselect(drive, head, dense)
-int	drive, head, dense;
+fdselect(int drive, int head, int dense)
 {
 	int	i, spinning;
 #ifdef FLP_DEBUG
@@ -810,7 +776,7 @@ int	drive, head, dense;
 }
 
 static void
-fddeselect()
+fddeselect(void)
 {
 	ym2149_fd_select(PA_FDSEL);
 	motoron = selected = 0;
@@ -834,8 +800,7 @@ fddeselect()
  *                                                                          *
  ****************************************************************************/
 static void
-fd_xfer(sc)
-struct fd_softc	*sc;
+fd_xfer(struct fd_softc *sc)
 {
 	register int	head;
 	register int	track, sector, hbit;
@@ -928,7 +893,7 @@ struct fd_softc	*sc;
 		 */
 		phys_addr = (u_long)kvtop(sc->bounceb);
 		if(sc->io_dir == B_WRITE)
-			bcopy(sc->io_data, sc->bounceb, SECTOR_SIZE);
+			memcpy( sc->bounceb, sc->io_data, SECTOR_SIZE);
 		sc->flags |= FLPF_BOUNCE;
 	}
 	st_dmaaddr_set((void *)phys_addr);	/* DMA address setup */
@@ -962,8 +927,7 @@ struct fd_softc	*sc;
  * Hardware interrupt function.
  */
 static void
-fdcint(sc)
-struct fd_softc	*sc;
+fdcint(struct fd_softc *sc)
 {
 	struct	buf	*bp;
 
@@ -1030,7 +994,7 @@ struct fd_softc	*sc;
 			}
 
 			if((sc->flags & FLPF_BOUNCE) && (sc->io_dir == B_READ))
-				bcopy(sc->bounceb, sc->io_data, SECTOR_SIZE);
+				memcpy( sc->io_data, sc->bounceb, SECTOR_SIZE);
 			sc->flags &= ~FLPF_BOUNCE;
 
 			sc->sector++;
@@ -1056,8 +1020,7 @@ struct fd_softc	*sc;
  * This function only affects sc->curtrk.
  */
 static int
-fd_xfer_ok(sc)
-register struct fd_softc	*sc;
+fd_xfer_ok(register struct fd_softc *sc)
 {
 	register int	status;
 
@@ -1155,8 +1118,7 @@ register struct fd_softc	*sc;
  * All timeouts will call this function.
  */
 static void
-fdmotoroff(sc)
-struct fd_softc	*sc;
+fdmotoroff(struct fd_softc *sc)
 {
 	int	sps;
 
@@ -1208,8 +1170,7 @@ struct fd_softc	*sc;
  * min byte count to whats left of the track in question
  */
 static void
-fdminphys(bp)
-struct buf	*bp;
+fdminphys(struct buf *bp)
 {
 	struct fd_softc	*sc;
 	int		sec, toff, tsz;
@@ -1247,8 +1208,7 @@ struct buf	*bp;
  * to spin _even_ when you insert a floppy later on...
  */
 static void
-fdmoff(fdsoftc)
-struct fd_softc	*fdsoftc;
+fdmoff(struct fd_softc *fdsoftc)
 {
 	int tmp;
 
@@ -1271,8 +1231,7 @@ struct fd_softc	*fdsoftc;
  * if the drive is present but no floppy is inserted.
  */
 static void
-fdtestdrv(fdsoftc)
-struct fd_softc	*fdsoftc;
+fdtestdrv(struct fd_softc *fdsoftc)
 {
 	int	status;
 
@@ -1301,13 +1260,10 @@ struct fd_softc	*fdsoftc;
 }
 
 static void
-fdgetdefaultlabel(sc, lp, part)
-	struct fd_softc *sc;
-	struct disklabel *lp;
-	int part;
+fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 {
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize     = SECTOR_SIZE;
 	lp->d_ntracks     = sc->nheads;
@@ -1337,9 +1293,7 @@ fdgetdefaultlabel(sc, lp, part)
  * from 'sc'.
  */
 static int
-fdgetdisklabel(sc, dev)
-struct fd_softc *sc;
-dev_t			dev;
+fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 {
 	struct disklabel	*lp;
 	int			part;

@@ -1,7 +1,7 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3 2008/09/25 21:03:22 christos Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.3.8.1 2009/05/13 17:18:44 jym Exp $	 */
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,11 +45,12 @@
 #define	WARN(a)			(void)(printf a, \
 				    printf((errno ? ": %s\n" : "\n"), \
 				    strerror(errno)))
-#define PROGRESS(a)		(void) printf a
+#define PROGRESS(a)		x86_progress a
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		((a) == ZMAGIC)
 
+void x86_progress(const char *, ...);
 void vpbcopy(const void *, void *, size_t);
 void pbzero(void *, size_t);
 ssize_t pread(int, void *, size_t);

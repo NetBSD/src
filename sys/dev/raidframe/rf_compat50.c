@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.1 2009/01/18 16:37:19 christos Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.1.4.1 2009/05/13 17:21:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -152,7 +152,8 @@ rf_config50(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 	    sizeof(k_cfg->spare_names));
 
 	k_cfg->sectPerSU = k50_cfg->sectPerSU;
-	k_cfg->SUsPerPU = k50_cfg->SUsPerRU;
+	k_cfg->SUsPerPU = k50_cfg->SUsPerPU;
+	k_cfg->SUsPerRU = k50_cfg->SUsPerRU;
 	k_cfg->parityConfig = k50_cfg->parityConfig;
 
 	memcpy(k_cfg->diskQueueType, k50_cfg->diskQueueType,

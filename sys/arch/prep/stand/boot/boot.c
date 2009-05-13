@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2006/06/10 07:49:29 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.15.78.1 2009/05/13 17:18:15 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -159,7 +159,7 @@ exec_kernel(char *name)
 	u_long marks[MARK_MAX];
 #ifdef DBMONITOR
 	int go_monitor;
-	extern int db_monitor __P((void));
+	extern int db_monitor(void);
 
 ret:
 #endif /* DBMONITOR */

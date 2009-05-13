@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc.S,v 1.4 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: atomic_inc.S,v 1.4.6.1 2009/05/13 17:23:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
 	.text
 
 ENTRY(_atomic_inc_64)
-1:	ldarx	r10,0,r3
-	addi	r10,r10,1
-	stdcx.	r10,0,r3
+1:	ldarx	%r10,0,%r3
+	addi	%r10,%r10,1
+	stdcx.	%r10,0,%r3
 	bne-	1b
 	blr
 ATOMIC_OP_ALIAS(atomic_inc_64,_atomic_inc_64)
@@ -48,11 +48,11 @@ ATOMIC_OP_ALIAS(atomic_inc_ptr,_atomic_inc_64)
 STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_64)
 
 ENTRY(_atomic_inc_64_nv)
-1:	ldarx	r10,0,r3
-	addi	r10,r10,1
-	stdcx.	r10,0,r3
+1:	ldarx	%r10,0,%r3
+	addi	%r10,%r10,1
+	stdcx.	%r10,0,%r3
 	bne-	1b
-	mr	r3,r10
+	mr	%r3,%r10
 	blr
 ATOMIC_OP_ALIAS(atomic_inc_64_nv,_atomic_inc_64_nv)
 ATOMIC_OP_ALIAS(atomic_inc_ulong_nv,_atomic_inc_64_nv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.6 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.6.92.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.6 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.6.92.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -85,12 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.6 2005/12/11 12:17:52 christos Exp $")
  *                R := 0. Return signQ, last 7 bits of Q, and R.
  */                
 
-static struct fpn * __fpu_modrem __P((struct fpemu *fe, int modrem));
+static struct fpn * __fpu_modrem(struct fpemu *fe, int modrem);
 
 static struct fpn *
-__fpu_modrem(fe, modrem)
-     struct fpemu *fe;
-     int modrem;
+__fpu_modrem(struct fpemu *fe, int modrem)
 {
     static struct fpn X, Y;
     struct fpn *x, *y, *r;
@@ -220,15 +218,13 @@ __fpu_modrem(fe, modrem)
 }
 
 struct fpn *
-fpu_rem(fe)
-     struct fpemu *fe;
+fpu_rem(struct fpemu *fe)
 {
   return __fpu_modrem(fe, 1);
 }
 
 struct fpn *
-fpu_mod(fe)
-     struct fpemu *fe;
+fpu_mod(struct fpemu *fe)
 {
   return __fpu_modrem(fe, 0);
 }

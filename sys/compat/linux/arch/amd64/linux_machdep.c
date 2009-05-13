@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.34 2008/10/26 20:25:49 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.34.8.1 2009/05/13 17:18:56 jym Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34 2008/10/26 20:25:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34.8.1 2009/05/13 17:18:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -174,7 +174,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    ((((long)sp - sizeof(struct linux_rt_sigframe)) & ~0xfUL) - 8);
 	sfp = (struct linux_rt_sigframe *)sp;
 
-	bzero(&sigframe, sizeof(sigframe));
+	memset(&sigframe, 0, sizeof(sigframe));
 	if (ps->sa_sigdesc[sig].sd_vers != 0)
 		sigframe.pretcode = 
 		    (char *)(u_long)ps->sa_sigdesc[sig].sd_tramp;
@@ -284,7 +284,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (fpsp != NULL) {
 		(void)process_read_fpregs(l, &fpregs);
-		bzero(&fpstate, sizeof(fpstate));
+		memset(&fpstate, 0, sizeof(fpstate));
 		fpstate.cwd = fpregs.fp_fcw;
 		fpstate.swd = fpregs.fp_fsw;
 		fpstate.twd = fpregs.fp_ftw;
@@ -396,7 +396,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	luctx = &frame.uc;
 	lsigctx = &luctx->luc_mcontext;
 
-	bzero(&uctx, sizeof(uctx));
+	memset(&uctx, 0, sizeof(uctx));
 	mctx = (mcontext_t *)&uctx.uc_mcontext;
 	fxarea = (struct fxsave64 *)&mctx->__fpregs;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.64 2009/01/13 13:35:52 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.64.2.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.64 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.64.2.1 2009/05/13 17:19:05 jym Exp $");
 
 #include "rnd.h"
 
@@ -70,7 +70,7 @@ static void	ldminphys(struct buf *bp);
 static bool	ld_shutdown(device_t, int);
 static void	ldstart(struct ld_softc *, struct buf *);
 static void	ld_set_properties(struct ld_softc *);
-static void	ld_config_interrupts (struct device *);
+static void	ld_config_interrupts (device_t);
 
 extern struct	cfdriver ld_cd;
 
@@ -915,7 +915,7 @@ ld_set_properties(struct ld_softc *ld)
 }
 
 static void
-ld_config_interrupts (struct device *d)
+ld_config_interrupts(device_t d)
 {
 	struct ld_softc *sc = device_private(d);
 	dkwedge_discover(&sc->sc_dk);

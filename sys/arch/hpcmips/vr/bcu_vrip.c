@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.28 2007/12/15 00:39:18 perry Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.28.24.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.28 2007/12/15 00:39:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.28.24.1 2009/05/13 17:17:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ struct vrbcu_softc *the_bcu_sc = NULL;
 #else
 static bus_addr_t vrbcu_addr(void);
 static bus_addr_t
-vrbcu_addr()
+vrbcu_addr(void)
 {
 	static bus_addr_t addr = 0;
 	static struct platid_data addrs[] = {
@@ -143,7 +143,7 @@ vrbcu_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-vrbcu_dump_regs()
+vrbcu_dump_regs(void)
 {
 	struct vrbcu_softc *sc = the_bcu_sc;
 	int cpuclock = 0, tclock = 0, vtclock = 0, cpuid;

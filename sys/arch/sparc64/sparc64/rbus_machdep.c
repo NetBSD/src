@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.14 2008/12/09 13:14:38 nakayama Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.14.2.1 2009/05/13 17:18:38 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.14 2008/12/09 13:14:38 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.14.2.1 2009/05/13 17:18:38 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,11 +66,7 @@ md_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 }
 
 void
-md_space_unmap(t, bsh, size, adrp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-	bus_addr_t *adrp;
+md_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size, bus_addr_t *adrp)
 {
 	DPRINTF("md_space_unmap: 0x%" PRIxPTR ", 0x%" PRIx64 ", 0x%" PRIx64
 		"\n", (u_long)t->cookie, bsh._ptr, size);

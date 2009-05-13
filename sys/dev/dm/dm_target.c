@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.6 2009/01/02 11:03:24 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.6.6.1 2009/05/13 17:19:16 jym Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #include <sys/param.h>
 
 #include <sys/kmem.h>
+#include <sys/module.h>
+
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -52,15 +54,54 @@ kmutex_t dm_target_mutex;
 void
 dm_target_busy(dm_target_t *target)
 {
-	target->ref_cnt++;	
+	atomic_inc_32(&target->ref_cnt);
 }
 
+/*
+ * Release reference counter on target.
+ */
 void
 dm_target_unbusy(dm_target_t *target)
 {
-	target->ref_cnt--;
+	KASSERT(target->ref_cnt > 0);
+	atomic_dec_32(&target->ref_cnt);
 }
 
+/*
+ * Try to autoload target module if it was not found in current
+ * target list.
+ */
+dm_target_t *
+dm_target_autoload(const char *dm_target_name)
+{
+	char name[30];
+	u_int gen;
+	dm_target_t *dmt;
+
+	snprintf(name, sizeof(name), "dm_target_%s", dm_target_name);
+	name[29]='\0';
+	
+	do {
+		gen = module_gen;
+		
+		/* Try to autoload target module */
+		mutex_enter(&module_lock);
+		(void) module_autoload(name, MODULE_CLASS_MISC);
+		mutex_exit(&module_lock);
+	} while (gen != module_gen);	
+
+	mutex_enter(&dm_target_mutex);
+	dmt = dm_target_lookup_name(dm_target_name);
+	if (dmt != NULL)
+		dm_target_busy(dmt);
+	mutex_exit(&dm_target_mutex);
+	
+	return dmt;
+}
+
+/*
+ * Lookup for target in global target list.
+ */
 dm_target_t *
 dm_target_lookup(const char *dm_target_name)
 {
@@ -68,11 +109,12 @@ dm_target_lookup(const char *dm_target_name)
 
 	dmt = NULL;
 
+	if (dm_target_name == NULL)
+		return NULL;
+
 	mutex_enter(&dm_target_mutex);
 
-	if (dm_target_name != NULL)
-		dmt = dm_target_lookup_name(dm_target_name);
-
+	dmt = dm_target_lookup_name(dm_target_name);
 	if (dmt != NULL)
 		dm_target_busy(dmt);
 	
@@ -94,13 +136,11 @@ dm_target_lookup_name(const char *dm_target_name)
 
 	TAILQ_FOREACH(dm_target, &dm_target_list, dm_target_next) {
 		dlen = strlen(dm_target->name) + 1;
-
 		if (dlen != slen)
 			continue;
 		
-		if (strncmp(dm_target_name, dm_target->name, slen) == 0){
+		if (strncmp(dm_target_name, dm_target->name, slen) == 0)
 			return dm_target;
-		}
 	}
 
 	return NULL;
@@ -170,7 +210,6 @@ dm_target_rem(char *dm_target_name)
  * This routine is called from dm_detach, before module
  * is unloaded.
  */
-
 int
 dm_target_destroy(void)
 {

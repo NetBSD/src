@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.33 2007/12/15 00:39:18 perry Exp $	*/
+/*	$NetBSD: vrip.c,v 1.33.24.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.33 2007/12/15 00:39:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.33.24.1 2009/05/13 17:17:47 jym Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -362,7 +362,7 @@ __vrip_intr_disestablish(vrip_chipset_tag_t vc, vrip_intr_handle_t handle)
 }
 
 void
-vrip_intr_suspend()
+vrip_intr_suspend(void)
 {
 	struct vrip_softc *sc = the_vrip_sc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -373,7 +373,7 @@ vrip_intr_suspend()
 }
 
 void
-vrip_intr_resume()
+vrip_intr_resume(void)
 {
 	struct vrip_softc *sc = the_vrip_sc;
 	u_int32_t reg = sc->sc_intrmask;

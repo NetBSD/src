@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.20 2009/02/02 00:10:18 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.20.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*-
- * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.20 2009/02/02 00:10:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.20.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include <sys/param.h>
 
@@ -257,13 +257,13 @@ struct wapbl_ops wapbl_ops = {
 };
 
 void
-wapbl_init()
+wapbl_init(void)
 {
 
-	/* nothing */
+	malloc_type_attach(M_WAPBL);
 }
 
-static  int
+static int
 wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
 {
 	int error, i;
@@ -770,26 +770,8 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 {
 	int doflush;
 	unsigned lockcount;
-	krw_t op;
 
 	KDASSERT(wl);
-
-/*
- *	XXX: The original code calls for the use of a RW_READER lock 
- *	here, but it turns out there are performance issues with high 
- *	metadata-rate workloads (e.g. multiple simultaneous tar
- *	extractions).  For now, we force the lock to be RW_WRITER, 
- *	since that currently has the best performance characteristics 
- *	(even for a single tar-file extraction). 
- *	
- */
-#define WAPBL_DEBUG_SERIALIZE 1
-
-#ifdef WAPBL_DEBUG_SERIALIZE
-	op = RW_WRITER;
-#else
-	op = RW_READER;
-#endif
 
 	/*
 	 * XXX this needs to be made much more sophisticated.
@@ -820,12 +802,12 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 			return error;
 	}
 
-	rw_enter(&wl->wl_rwlock, op);
+	rw_enter(&wl->wl_rwlock, RW_READER);
 	mutex_enter(&wl->wl_mtx);
 	wl->wl_lock_count++;
 	mutex_exit(&wl->wl_mtx);
 
-#if defined(WAPBL_DEBUG_PRINT) && defined(WAPBL_DEBUG_SERIALIZE)
+#if defined(WAPBL_DEBUG_PRINT)
 	WAPBL_PRINTF(WAPBL_PRINT_TRANSACTION,
 	    ("wapbl_begin thread %d.%d with bufcount=%zu "
 	    "bufbytes=%zu bcount=%zu at %s:%d\n",
@@ -840,7 +822,7 @@ void
 wapbl_end(struct wapbl *wl)
 {
 
-#if defined(WAPBL_DEBUG_PRINT) && defined(WAPBL_DEBUG_SERIALIZE)
+#if defined(WAPBL_DEBUG_PRINT)
 	WAPBL_PRINTF(WAPBL_PRINT_TRANSACTION,
 	     ("wapbl_end thread %d.%d with bufcount=%zu "
 	      "bufbytes=%zu bcount=%zu\n",
@@ -1552,20 +1534,14 @@ void
 wapbl_jlock_assert(struct wapbl *wl)
 {
 
-#ifdef WAPBL_DEBUG_SERIALIZE
-	KASSERT(rw_write_held(&wl->wl_rwlock));
-#else
-	KASSERT(rw_read_held(&wl->wl_rwlock) || rw_write_held(&wl->wl_rwlock));
-#endif
+	KASSERT(rw_lock_held(&wl->wl_rwlock));
 }
 
 void
 wapbl_junlock_assert(struct wapbl *wl)
 {
 
-#ifdef WAPBL_DEBUG_SERIALIZE
 	KASSERT(!rw_write_held(&wl->wl_rwlock));
-#endif
 }
 
 /****************************************************************/
@@ -2098,8 +2074,7 @@ wapbl_blkhash_init(struct wapbl_replay *wr, u_int size)
 #else /* ! _KERNEL */
 	/* Manually implement hashinit */
 	{
-		int i;
-		unsigned long hashsize;
+		unsigned long i, hashsize;
 		for (hashsize = 1; hashsize < size; hashsize <<= 1)
 			continue;
 		wr->wr_blkhash = wapbl_malloc(hashsize * sizeof(*wr->wr_blkhash));
@@ -2169,7 +2144,7 @@ wapbl_blkhash_rem(struct wapbl_replay *wr, daddr_t blk)
 static void
 wapbl_blkhash_clear(struct wapbl_replay *wr)
 {
-	int i;
+	unsigned long i;
 	for (i = 0; i <= wr->wr_blkhashmask; i++) {
 		struct wapbl_blk *wb;
 

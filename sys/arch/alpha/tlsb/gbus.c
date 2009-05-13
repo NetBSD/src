@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.19 2007/03/04 05:59:12 christos Exp $ */
+/* $NetBSD: gbus.c,v 1.19.58.1 2009/05/13 17:16:08 jym Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.19 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.19.58.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,13 +61,13 @@ struct gbus_softc {
 	int		sc_tlsbnode;	/* node on the TurboLaser */
 };
 
-static int	gbusmatch __P((struct device *, struct cfdata *, void *));
-static void	gbusattach __P((struct device *, struct device *, void *));
+static int	gbusmatch(struct device *, struct cfdata *, void *);
+static void	gbusattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gbus, sizeof(struct gbus_softc),
     gbusmatch, gbusattach, NULL, NULL);
 
-static int	gbusprint __P((void *, const char *));
+static int	gbusprint(void *, const char *);
 
 struct gbus_attach_args gbus_children[] = {
 	{ "zsc",	GBUS_DUART0_OFFSET },
@@ -77,9 +77,7 @@ struct gbus_attach_args gbus_children[] = {
 };
 
 static int
-gbusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+gbusprint(void *aux, const char *pnp)
 {
 	struct gbus_attach_args *ga = aux;
 
@@ -90,10 +88,7 @@ gbusprint(aux, pnp)
 }
 
 static int
-gbusmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+gbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct tlsb_dev_attach_args *ta = aux;
 
@@ -113,10 +108,7 @@ gbusmatch(parent, cf, aux)
 }
 
 static void
-gbusattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gbusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gbus_softc *sc = (struct gbus_softc *)self;
 	struct tlsb_dev_attach_args *ta = aux;

@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.5 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: timekeeper.c,v 1.5.14.1 2009/05/13 17:17:59 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.5 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.5.14.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,23 +54,20 @@ struct timekeeper_softc {
 	struct todr_chip_handle sc_todr;
 };
 
-static int  clock_match __P((struct device *, struct cfdata *, void *));
-static void clock_attach __P((struct device *, struct device *, void *));
+static int  clock_match(struct device *, struct cfdata *, void *);
+static void clock_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(clock, sizeof (struct timekeeper_softc),
     clock_match, clock_attach, NULL, NULL);
 extern struct cfdriver clock_cd;
 
-static int mkclock_get __P((todr_chip_handle_t, struct clock_ymdhms *));
-static int mkclock_set __P((todr_chip_handle_t, struct clock_ymdhms *));
-static int dsclock_get __P((todr_chip_handle_t, struct clock_ymdhms *));
-static int dsclock_set __P((todr_chip_handle_t, struct clock_ymdhms *));
+static int mkclock_get(todr_chip_handle_t, struct clock_ymdhms *);
+static int mkclock_set(todr_chip_handle_t, struct clock_ymdhms *);
+static int dsclock_get(todr_chip_handle_t, struct clock_ymdhms *);
+static int dsclock_set(todr_chip_handle_t, struct clock_ymdhms *);
 
 static int
-clock_match(parent, match, aux)
-        struct device *parent;
-        struct cfdata *match;
-        void *aux;
+clock_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -80,9 +77,7 @@ clock_match(parent, match, aux)
 }
 
 static void
-clock_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+clock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct timekeeper_softc *sc = (void *)self;
 	struct mainbus_attach_args *ma = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.5 2003/02/02 17:56:55 thomas Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.5.122.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -71,12 +71,12 @@ struct kbd_softc {
 #ifdef _KERNEL
 extern	u_char	kbd_modifier;
 
-void	kbd_bell_gparms __P((u_int *, u_int *, u_int *));
-void	kbd_bell_sparms __P((u_int, u_int, u_int));
-void	kbd_write __P((u_char *, int));
-int	kbdgetcn __P((void));
-void	kbdbell __P((void));
-void	kbdenable __P((void));
+void	kbd_bell_gparms(u_int *, u_int *, u_int *);
+void	kbd_bell_sparms(u_int, u_int, u_int);
+void	kbd_write(u_char *, int);
+int	kbdgetcn(void);
+void	kbdbell(void);
+void	kbdenable(void);
 #endif /* _KERNEL */
 
 #endif /* _KBDVAR_H */

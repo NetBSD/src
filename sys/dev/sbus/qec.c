@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.39 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: qec.c,v 1.39.14.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.39 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.39.14.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.39 2008/04/28 20:23:57 martin Exp $");
 #include <dev/sbus/qecvar.h>
 
 static int	qecprint(void *, const char *);
-static int	qecmatch(struct device *, struct cfdata *, void *);
-static void	qecattach(struct device *, struct device *, void *);
+static int	qecmatch(device_t, cfdata_t, void *);
+static void	qecattach(device_t, device_t, void *);
 void		qec_init(struct qec_softc *);
 
 static int qec_bus_map(
@@ -71,9 +71,7 @@ CFATTACH_DECL(qec, sizeof(struct qec_softc),
     qecmatch, qecattach, NULL, NULL);
 
 int
-qecprint(aux, busname)
-	void *aux;
-	const char *busname;
+qecprint(void *aux, const char *busname)
 {
 	struct sbus_attach_args *sa = aux;
 	bus_space_tag_t t = sa->sa_bustag;
@@ -86,10 +84,7 @@ qecprint(aux, busname)
 }
 
 int
-qecmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+qecmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -100,9 +95,7 @@ qecmatch(parent, cf, aux)
  * Attach all the sub-devices we can find
  */
 void
-qecattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qecattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *sc = (void *)self;
@@ -220,13 +213,8 @@ qecattach(parent, self, aux)
 }
 
 int
-qec_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	bus_size_t size;
-	int	flags;
-	vaddr_t va;	/* Ignored */
-	bus_space_handle_t *hp;
+qec_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags, vaddr_t va, bus_space_handle_t *hp)
+	/* va:	 Ignored */
 {
 	int error;
 
@@ -265,8 +253,7 @@ qec_intr_establish(t, pri, level, handler, arg, fastvec)
 }
 
 void
-qec_init(sc)
-	struct qec_softc *sc;
+qec_init(struct qec_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t qr = sc->sc_regs;
@@ -313,9 +300,7 @@ qec_init(sc)
  * Called from be & qe drivers.
  */
 void
-qec_meminit(qr, pktbufsz)
-	struct qec_ring *qr;
-	unsigned int pktbufsz;
+qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 {
 	bus_addr_t txbufdma, rxbufdma;
 	bus_addr_t dma;

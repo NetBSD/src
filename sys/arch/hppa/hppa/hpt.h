@@ -1,4 +1,4 @@
-/*	$NetBSD: hpt.h,v 1.3 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: hpt.h,v 1.3.14.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -108,33 +108,9 @@
  *	Pmap header for hppa.
  */
 
-/* Predeclare struct hpt_entry. */
-struct hpt_entry;
-
 /*
- * keep it at 32 bytes for the cache overall satisfaction
- * also, align commonly used pairs on double-word boundary
- */
-struct pv_entry {
-	struct pv_entry	*pv_next;	/* list of mappings of a given PA */
-	pmap_t		pv_pmap;	/* back link to pmap */
-	u_int		pv_va;		/* virtual page number */
-	u_int		pv_space;	/* copy of space id from pmap */
-	u_int		pv_tlbpage;	/* physical page (for TLB load) */
-	u_int		pv_tlbprot;	/* TLB format protection */
-	struct pv_entry *pv_hash;	/* VTOP hash bucket list */
-	struct hpt_entry *pv_hpt;	/* pointer to HPT entry */
-};
-
-/*
- * If HPT is defined, we cache the last miss for each bucket using a
- * structure defined for the 7100 hardware TLB walker. On non-7100s, this
- * acts as a software cache that cuts down on the number of times we have
- * to search the hash chain. (thereby reducing the number of instructions
- * and cache misses incurred during the TLB miss).
+ * HPT structure as used in the 7100LC/7300LC hardware TLB walker.
  *
- * The pv_entry pointer is the address of the associated hash bucket
- * list for fast tlbmiss search.
  */
 struct hpt_entry {
 	u_int	hpt_valid:1,	/* Valid bit */
@@ -142,39 +118,5 @@ struct hpt_entry {
 		hpt_space:16;	/* Space ID */
 	u_int	hpt_tlbprot;	/* prot/access rights (for TLB load) */
 	u_int	hpt_tlbpage;	/* physical page (<<5 for TLB load) */
-	struct pv_entry	*hpt_entry;	/* Pointer to associated hash list */
+	struct pv_entry	*hpt_next;	/* Pointer to associated hash list */
 };
-
-/*
- * This structure contains information for a single physical page.
- */
-struct pv_head {
-
-	/* The struct pv_entry chain for this physical page. */
-	struct pv_entry	*pv_head_pvs;
-
-	/*
-	 * This word has three fields:
-	 *
-	 * The least significant bit is a page-referenced bit.
-	 *
-	 * The next least significant bit is a page-dirty bit.
-	 *
-	 * The remaining bits are the struct pv_entry * of any
-	 * mapping currently in the TLB/cache as writable.
-	 * This address is shifted to the right by two bits.
-	 * (I.e., mask off the referenced and dirty bits to
-	 * recover the pointer.)
-	 */
-	u_int	pv_head_writable_dirty_ref;
-#define PV_HEAD_DIRTY_POS	30
-#define PV_HEAD_DIRTY		(1 << (31 - PV_HEAD_DIRTY_POS))
-#define PV_HEAD_REF_POS		31
-#define PV_HEAD_REF		(1 << (31 - PV_HEAD_REF_POS))
-#define PV_HEAD_WRITABLE_POS	29
-};
-
-#define	HPPA_MAX_PID	0xfffa
-#define	HPPA_PID_KERNEL	2
-
-#define	KERNEL_ACCESS_ID 1

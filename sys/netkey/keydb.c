@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.17 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: keydb.c,v 1.17.90.1 2009/05/13 17:22:50 jym Exp $	*/
 /*	$KAME: keydb.c,v 1.81 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.17 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.17.90.1 2009/05/13 17:22:50 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -63,7 +63,7 @@ MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
  * secpolicy management
  */
 struct secpolicy *
-keydb_newsecpolicy()
+keydb_newsecpolicy(void)
 {
 	struct secpolicy *p;
 
@@ -102,8 +102,7 @@ again:
 }
 
 void
-keydb_delsecpolicy(p)
-	struct secpolicy *p;
+keydb_delsecpolicy(struct secpolicy *p)
 {
 
 	TAILQ_REMOVE(&sptailq, p, tailq);
@@ -117,9 +116,7 @@ keydb_delsecpolicy(p)
 }
 
 int
-keydb_setsecpolicyindex(p, idx)
-	struct secpolicy *p;
-	struct secpolicyindex *idx;
+keydb_setsecpolicyindex(struct secpolicy *p, struct secpolicyindex *idx)
 {
 
 	if (!p->spidx)
@@ -135,7 +132,7 @@ keydb_setsecpolicyindex(p, idx)
  * secashead management
  */
 struct secashead *
-keydb_newsecashead()
+keydb_newsecashead(void)
 {
 	struct secashead *p;
 	int i;
@@ -149,8 +146,7 @@ keydb_newsecashead()
 }
 
 void
-keydb_delsecashead(p)
-	struct secashead *p;
+keydb_delsecashead(struct secashead *p)
 {
 
 	free(p, M_SECA);
@@ -160,7 +156,7 @@ keydb_delsecashead(p)
  * secasvar management (reference counted)
  */
 struct secasvar *
-keydb_newsecasvar()
+keydb_newsecasvar(void)
 {
 	struct secasvar *p, *q;
 	static u_int32_t said = 0;
@@ -195,8 +191,7 @@ again:
 }
 
 void
-keydb_delsecasvar(p)
-	struct secasvar *p;
+keydb_delsecasvar(struct secasvar *p)
 {
 
 	TAILQ_REMOVE(&satailq, p, tailq);
@@ -208,8 +203,7 @@ keydb_delsecasvar(p)
  * secreplay management
  */
 struct secreplay *
-keydb_newsecreplay(wsize)
-	size_t wsize;
+keydb_newsecreplay(size_t wsize)
 {
 	struct secreplay *p;
 
@@ -229,8 +223,7 @@ keydb_newsecreplay(wsize)
 }
 
 void
-keydb_delsecreplay(p)
-	struct secreplay *p;
+keydb_delsecreplay(struct secreplay *p)
 {
 
 	if (p->bitmap)
@@ -242,7 +235,7 @@ keydb_delsecreplay(p)
  * secreg management
  */
 struct secreg *
-keydb_newsecreg()
+keydb_newsecreg(void)
 {
 	struct secreg *p;
 
@@ -251,8 +244,7 @@ keydb_newsecreg()
 }
 
 void
-keydb_delsecreg(p)
-	struct secreg *p;
+keydb_delsecreg(struct secreg *p)
 {
 
 	free(p, M_SECA);

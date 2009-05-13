@@ -1,4 +1,4 @@
-/*	$NetBSD: machtype.h,v 1.6 2006/12/22 01:32:37 rumble Exp $	*/
+/*	$NetBSD: machtype.h,v 1.6.62.1 2009/05/13 17:18:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -39,13 +39,14 @@
 #define MACH_SGI_IP6		6	/* 4D/20 */
 #define MACH_SGI_IP7		7	/* 4D/2x0, 4D/3x0, 4D/4x0 */
 #define MACH_SGI_IP9		9	/* 4D/210 */
-#define MACH_SGI_IP10		10	/* 4D/25 */
+#define MACH_SGI_IP10	MACH_SGI_IP6	/* 4D/25 */
 #define MACH_SGI_IP12		12	/* 4D/30, 4D/35, Indigo R3K */
 #define MACH_SGI_IP17		17	/* Crimson */
 #define MACH_SGI_IP19		19	/* Onyx, Challenge M/L(/XL?) */
 #define MACH_SGI_IP20		20	/* Indigo R4K */
 #define MACH_SGI_IP21		21	/* Power Challenge, Power Onyx */
-#define MACH_SGI_IP22		22	/* Indigo2, Indy, Challenge S */
+#define MACH_SGI_IP22		22	/* Indigo2, Challenge M */
+#define MACH_SGI_IP24	MACH_SGI_IP22	/* Indy, Challenge S */
 #define MACH_SGI_IP25		25	/* Power Challenge R10K */
 #define MACH_SGI_IP26		26	/* Power Indigo2 R8K ("Teton") */
 #define MACH_SGI_IP27		27	/* Origin 200, Origin 2000, Onyx2 */

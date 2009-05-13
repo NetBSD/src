@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.44 2009/01/09 17:21:19 briggs Exp $
+#	$NetBSD: IQ31244,v 1.44.2.1 2009/05/13 17:16:37 jym Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -102,7 +102,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

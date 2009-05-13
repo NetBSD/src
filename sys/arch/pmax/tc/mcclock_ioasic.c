@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ioasic.c,v 1.19 2008/01/03 23:02:25 joerg Exp $ */
+/*	$NetBSD: mcclock_ioasic.c,v 1.19.24.1 2009/05/13 17:18:14 jym Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.19 2008/01/03 23:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.19.24.1 2009/05/13 17:18:14 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,19 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.19 2008/01/03 23:02:25 joerg Ex
 #include <dev/tc/tcvar.h> 
 #include <dev/tc/ioasicvar.h>
 
-static int	mcclock_ioasic_match __P((struct device *, struct cfdata *,
-		    void *));
-static void	mcclock_ioasic_attach __P((struct device *, struct device *,
-		    void *));
+static int	mcclock_ioasic_match(struct device *, struct cfdata *,
+		    void *);
+static void	mcclock_ioasic_attach(struct device *, struct device *,
+		    void *);
 
 CFATTACH_DECL(mcclock_ioasic, sizeof (struct mcclock_pad32_softc),
     mcclock_ioasic_match, mcclock_ioasic_attach, NULL, NULL);
 
 static int
-mcclock_ioasic_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mcclock_ioasic_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -67,9 +64,7 @@ mcclock_ioasic_match(parent, match, aux)
 }
 
 static void
-mcclock_ioasic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mcclock_ioasic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioasicdev_attach_args *ioasicdev = aux;
 	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)self;

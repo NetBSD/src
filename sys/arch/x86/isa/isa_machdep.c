@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.24 2008/12/18 12:18:20 cegger Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.24.2.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.24 2008/12/18 12:18:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.24.2.1 2009/05/13 17:18:44 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.24 2008/12/18 12:18:20 cegger Exp 
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
-#include <machine/bus.h>
 #include <machine/bus_private.h>
-
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
@@ -119,7 +119,7 @@ struct x86_bus_dma_tag isa_bus_dma_tag = {
 };
 
 #define	IDTVEC(name)	__CONCAT(X,name)
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector *IDTVEC(intr)[];
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < NUM_LEGACY_IRQS && (x) != 2)
@@ -127,7 +127,6 @@ extern vector *IDTVEC(intr)[];
 int
 isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
-	extern kmutex_t x86_intr_lock;
 	int i, tmp, bestirq, count;
 	struct intrhand **p, *q;
 	struct intrsource *isp;
@@ -150,7 +149,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	 */
 	mask &= 0xefbf;
 
-	mutex_enter(&x86_intr_lock);
+	mutex_enter(&cpu_lock);
 
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
@@ -161,7 +160,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 			 * if nothing's using the irq, just return it
 			 */
 			*irq = i;
-			mutex_exit(&x86_intr_lock);
+			mutex_exit(&cpu_lock);
 			return (0);
 		}
 
@@ -194,7 +193,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 		}
 	}
 
-	mutex_exit(&x86_intr_lock);
+	mutex_exit(&cpu_lock);
 
 	if (bestirq == -1)
 		return (1);

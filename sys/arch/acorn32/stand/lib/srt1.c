@@ -1,4 +1,4 @@
-/*	$NetBSD: srt1.c,v 1.5 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: srt1.c,v 1.5.94.1 2009/05/13 17:16:04 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -39,7 +39,7 @@
 void *HIMEM = (void *) 0x12000;
 
 
-static int whitespace __P((char));
+static int whitespace(char);
 
 static int whitespace(char c) {
 	if ((c == '\0') || (c == ' ') || (c == '\t')

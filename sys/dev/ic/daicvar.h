@@ -1,4 +1,4 @@
-/* $NetBSD: daicvar.h,v 1.10 2008/04/28 20:23:49 martin Exp $ */
+/* $NetBSD: daicvar.h,v 1.10.14.1 2009/05/13 17:19:22 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct daic_unit {
 };
 
 /* superclass of all softc structs for attachments, you should
- * always be able to cast an attachments struct device *self to this. */
+ * always be able to cast an attachments device_t self to this. */
 struct daic_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;		/* bus identifier */
@@ -113,7 +113,7 @@ struct daic_softc {
  * functions exported from MI part
  */
 extern int daic_probe(bus_space_tag_t bus, bus_space_handle_t io);
-extern void daic_attach(struct device *self, struct daic_softc *sc);
+extern void daic_attach(device_t self, struct daic_softc *sc);
 extern int daic_intr(struct daic_softc *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.24 2008/04/05 16:06:12 cegger Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.24.18.1 2009/05/13 17:21:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.24 2008/04/05 16:06:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.24.18.1 2009/05/13 17:21:42 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,8 @@ static void ie_vmeattend(struct ie_softc *, int);
 static void ie_vmerun(struct ie_softc *);
 static int  ie_vmeintr(struct ie_softc *, int);
 
-int ie_vme_match(struct device *, struct cfdata *, void *);
-void ie_vme_attach(struct device *, struct device *, void *);
+int ie_vme_match(device_t, cfdata_t, void *);
+void ie_vme_attach(device_t, device_t, void *);
 
 struct ie_vme_softc {
 	struct ie_softc ie;
@@ -259,9 +259,7 @@ CFATTACH_DECL(ie_vme, sizeof(struct ie_vme_softc),
  * MULTIBUS/VME support routines
  */
 void
-ie_vmereset(sc, what)
-	struct ie_softc *sc;
-	int what;
+ie_vmereset(struct ie_softc *sc, int what)
 {
 	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 	write_iev(vsc, status, IEVME_RESET);
@@ -270,9 +268,7 @@ ie_vmereset(sc, what)
 }
 
 void
-ie_vmeattend(sc, why)
-	struct ie_softc *sc;
-	int why;
+ie_vmeattend(struct ie_softc *sc, int why)
 {
 	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 
@@ -283,8 +279,7 @@ ie_vmeattend(sc, why)
 }
 
 void
-ie_vmerun(sc)
-	struct ie_softc *sc;
+ie_vmerun(struct ie_softc *sc)
 {
 	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 
@@ -293,9 +288,7 @@ ie_vmerun(sc)
 }
 
 int
-ie_vmeintr(sc, where)
-	struct ie_softc *sc;
-	int where;
+ie_vmeintr(struct ie_softc *sc, int where)
 {
 	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 
@@ -322,11 +315,7 @@ void ie_memcopyout(struct ie_softc *, const void *, int, size_t);
  * Copy board memory to kernel.
  */
 void
-ie_memcopyin(sc, p, offset, size)
-	struct ie_softc	*sc;
-	void *p;
-	int offset;
-	size_t size;
+ie_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
 	size_t help;
 
@@ -356,11 +345,7 @@ ie_memcopyin(sc, p, offset, size)
  * Copy from kernel space to board memory.
  */
 void
-ie_memcopyout(sc, p, offset, size)
-	struct ie_softc	*sc;
-	const void *p;
-	int offset;
-	size_t size;
+ie_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
 	size_t help;
 
@@ -393,9 +378,7 @@ void ie_vme_write16(struct ie_softc *, int offset, u_int16_t value);
 void ie_vme_write24(struct ie_softc *, int offset, int addr);
 
 u_int16_t
-ie_vme_read16(sc, offset)
-	struct ie_softc *sc;
-	int offset;
+ie_vme_read16(struct ie_softc *sc, int offset)
 {
 	u_int16_t v;
 
@@ -405,10 +388,7 @@ ie_vme_read16(sc, offset)
 }
 
 void
-ie_vme_write16(sc, offset, v)
-	struct ie_softc *sc;
-	int offset;
-	u_int16_t v;
+ie_vme_write16(struct ie_softc *sc, int offset, u_int16_t v)
 {
 	int v0 = ((((v)&0xff)<<8) | (((v)>>8)&0xff));
 	bus_space_write_2(sc->bt, sc->bh, offset, v0);
@@ -416,10 +396,7 @@ ie_vme_write16(sc, offset, v)
 }
 
 void
-ie_vme_write24(sc, offset, addr)
-	struct ie_softc *sc;
-	int offset;
-	int addr;
+ie_vme_write24(struct ie_softc *sc, int offset, int addr)
 {
 	u_char *f = (u_char *)&addr;
 	u_int16_t v0, v1;
@@ -437,10 +414,7 @@ ie_vme_write24(sc, offset, addr)
 }
 
 int
-ie_vme_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ie_vme_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args *va = aux;
 	vme_chipset_tag_t ct = va->va_vct;
@@ -490,10 +464,7 @@ ie_vme_match(parent, cf, aux)
 }
 
 void
-ie_vme_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void   *aux;
+ie_vme_attach(device_t parent, device_t self, void *aux)
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	struct ie_vme_softc *vsc = (void *) self;

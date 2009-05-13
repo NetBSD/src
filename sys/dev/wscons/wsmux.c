@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.52 2009/01/15 04:22:11 yamt Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.52.2.1 2009/05/13 17:21:42 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.52 2009/01/15 04:22:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.52.2.1 2009/05/13 17:21:42 jym Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_modular.h"
 
 #include "wsdisplay.h"
 #include "wsmux.h"

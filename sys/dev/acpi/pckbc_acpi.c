@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.30 2008/09/16 11:24:55 pgoyette Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.30.8.1 2009/05/13 17:19:10 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.30 2008/09/16 11:24:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.30.8.1 2009/05/13 17:19:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,7 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 		panic("pckbc_acpi_attach: impossible");
 	}
 
-	aprint_naive("\n");
-	aprint_normal(": %s port\n", pckbc_slot_names[psc->sc_slot]);
+	aprint_normal(" (%s port)", pckbc_slot_names[psc->sc_slot]);
 
 	/* parse resources */
 	rv = acpi_resource_parse(sc->sc_dv, aa->aa_node->ad_handle, "_CRS",

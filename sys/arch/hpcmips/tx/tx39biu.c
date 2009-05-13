@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biu.c,v 1.13 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.13.14.1 2009/05/13 17:17:46 jym Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.13 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.13.14.1 2009/05/13 17:17:46 jym Exp $");
 
 #include "opt_tx39_watchdogtimer.h"
 #include "opt_tx39biu_debug.h"
@@ -74,19 +74,13 @@ CFATTACH_DECL(tx39biu, sizeof(struct tx39biu_softc),
     tx39biu_match, tx39biu_attach, NULL, NULL);
 
 int
-tx39biu_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tx39biu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return (ATTACH_NORMAL);
 }
 
 void
-tx39biu_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tx39biu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
 	struct tx39biu_softc *sc = (void*)self;
@@ -130,8 +124,7 @@ tx39biu_attach(parent, self, aux)
 }
 
 void
-tx39biu_callback(self)
-	struct device *self;
+tx39biu_callback(struct device *self)
 {
 	struct tx39biu_softc *sc = (void*)self;
 	struct csbus_attach_args cba;
@@ -142,16 +135,13 @@ tx39biu_callback(self)
 }
 
 int
-tx39biu_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+tx39biu_print(void *aux, const char *pnp)
 {
 	return (pnp ? QUIET : UNCONF);
 }
 
 int
-tx39biu_intr(arg)
-	void *arg;
+tx39biu_intr(void *arg)
 {
 	struct tx39biu_softc *sc = __sc;
 	tx_chipset_tag_t tc;

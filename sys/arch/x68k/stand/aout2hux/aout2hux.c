@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.5 1999/11/19 03:54:08 itohy Exp $
+ *	$NetBSD: aout2hux.c,v 1.5.148.1 2009/05/13 17:18:42 jym Exp $
  */
 
 #include <sys/types.h>
@@ -67,8 +67,8 @@ void put_uint16 PROTO((be_uint16_t *be, unsigned v));
 void put_uint32 PROTO((be_uint32_t *be, u_int32_t v));
 void *do_realloc PROTO((void *p, size_t s));
 
-static int open_aout __P((const char *fn, struct aout_m68k *hdr,
-		struct exec_info *inf));
+static int open_aout(const char *fn, struct aout_m68k *hdr,
+		struct exec_info *inf);
 static int open_elf PROTO((const char *fn, FILE *fp, struct elf_m68k_hdr *hdr,
 		struct exec_info *inf));
 FILE *open_exec PROTO((const char *fn, struct exec_info *inf));
@@ -88,25 +88,21 @@ int main PROTO((int argc, char *argv[]));
  */
 
 unsigned
-get_uint16(be)
-	be_uint16_t *be;
+get_uint16(be_uint16_t *be)
 {
 
 	return be->val[0] << 8 | be->val[1];
 }
 
 u_int32_t
-get_uint32(be)
-	be_uint32_t *be;
+get_uint32(be_uint32_t *be)
 {
 
 	return be->val[0]<<24 | be->val[1]<<16 | be->val[2]<<8 | be->val[3];
 }
 
 void
-put_uint16(be, v)
-	be_uint16_t *be;
-	unsigned v;
+put_uint16(be_uint16_t *be, unsigned v)
 {
 
 	be->val[0] = (u_int8_t) (v >> 8);
@@ -114,9 +110,7 @@ put_uint16(be, v)
 }
 
 void
-put_uint32(be, v)
-	be_uint32_t *be;
-	u_int32_t v;
+put_uint32(be_uint32_t *be, u_int32_t v)
 {
 
 	be->val[0] = (u_int8_t) (v >> 24);
@@ -126,9 +120,7 @@ put_uint32(be, v)
 }
 
 void *
-do_realloc(p, s)
-	void *p;
-	size_t s;
+do_realloc(void *p, size_t s)
 {
 
 	p = p ? realloc(p, s) : malloc(s);	/* for portability */
@@ -145,10 +137,7 @@ do_realloc(p, s)
  * check a.out header
  */
 static int
-open_aout(fn, hdr, inf)
-	const char *fn;
-	struct aout_m68k *hdr;
-	struct exec_info *inf;
+open_aout(const char *fn, struct aout_m68k *hdr, struct exec_info *inf)
 {
 	int i;
 
@@ -185,11 +174,7 @@ open_aout(fn, hdr, inf)
  * digest ELF structure
  */
 static int
-open_elf(fn, fp, hdr, inf)
-	const char *fn;
-	FILE *fp;
-	struct elf_m68k_hdr *hdr;
-	struct exec_info *inf;
+open_elf(const char *fn, FILE *fp, struct elf_m68k_hdr *hdr, struct exec_info *inf)
 {
 	int i;
 	size_t nphdr;
@@ -379,9 +364,7 @@ data_found:;
  * open an executable
  */
 FILE *
-open_exec(fn, inf)
-	const char *fn;
-	struct exec_info *inf;
+open_exec(const char *fn, struct exec_info *inf)
 {
 	FILE *fp;
 	int i;
@@ -456,8 +439,7 @@ out:	fclose(fp);
  * compare two executables and check if they are compatible
  */
 int
-check_2_exec_inf(inf1, inf2)
-	struct exec_info *inf1, *inf2;
+check_2_exec_inf(struct exec_info *inf1, struct exec_info *inf2)
 {
 
 	if (inf1->text_size != inf2->text_size ||
@@ -555,9 +537,7 @@ check_2_exec_inf(inf1, inf2)
 	}
 
 int
-aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
-	const char *fn1, *fn2, *fnx;
-	u_int32_t loadadr1, loadadr2;
+aout2hux(const char *fn1, const char *fn2, u_int32_t loadadr1, u_int32_t loadadr2, const char *fnx)
 {
 	int status = 1;			/* the default is "failed" */
 	FILE *fpa1 = NULL, *fpa2 = NULL;
@@ -635,7 +615,7 @@ aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
 	/*
 	 * prepare for .x header
 	 */
-	bzero((void *) &xhdr, sizeof xhdr);
+	memset((void *) &xhdr, 0, sizeof xhdr);
 	put_uint16(&xhdr.x_magic, HUXMAGIC);
 	put_uint32(&xhdr.x_entry, execoff);
 	put_uint32(&xhdr.x_text, textsize + paddingsize);
@@ -750,7 +730,7 @@ void bist PROTO((void));
  * built-in self test
  */
 void
-bist()
+bist(void)
 {
 	be_uint16_t be16;
 	be_uint32_t be32;
@@ -779,9 +759,7 @@ bist()
 #endif
 
 int
-gethex(pval, str)
-	u_int32_t *pval;
-	const char *str;
+gethex(u_int32_t *pval, const char *str)
 {
 	const unsigned char *p = (const unsigned char *) str;
 	u_int32_t val;
@@ -831,8 +809,7 @@ bad:
 }
 
 void
-usage(name)
-	const char *name;
+usage(const char *name)
 {
 
 	fprintf(stderr, "\
@@ -847,9 +824,7 @@ The default output filename is \"%s\".\n" ,name, DEFAULT_OUTPUT_FILE);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const char *outfile = DEFAULT_OUTPUT_FILE;
 	u_int32_t adr1, adr2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.87 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: siop.c,v 1.87.18.1 2009/05/13 17:19:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.87 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.87.18.1 2009/05/13 17:19:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,7 @@ void siop_printstats(void);
 
 static inline void siop_script_sync(struct siop_softc *, int);
 static inline void
-siop_script_sync(sc, ops)
-	struct siop_softc *sc;
-	int ops;
+siop_script_sync(struct siop_softc *sc, int ops)
 {
 	if ((sc->sc_c.features & SF_CHIP_RAM) == 0)
 		bus_dmamap_sync(sc->sc_c.sc_dmat, sc->sc_c.sc_scriptdma, 0,
@@ -129,9 +127,7 @@ siop_script_sync(sc, ops)
 
 static inline u_int32_t siop_script_read(struct siop_softc *, u_int);
 static inline u_int32_t
-siop_script_read(sc, offset)
-	struct siop_softc *sc;
-	u_int offset;
+siop_script_read(struct siop_softc *sc, u_int offset)
 {
 	if (sc->sc_c.features & SF_CHIP_RAM) {
 		return bus_space_read_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
@@ -144,10 +140,7 @@ siop_script_read(sc, offset)
 static inline void siop_script_write(struct siop_softc *, u_int,
 	u_int32_t);
 static inline void
-siop_script_write(sc, offset, val)
-	struct siop_softc *sc;
-	u_int offset;
-	u_int32_t val;
+siop_script_write(struct siop_softc *sc, u_int offset, u_int32_t val)
 {
 	if (sc->sc_c.features & SF_CHIP_RAM) {
 		bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
@@ -158,8 +151,7 @@ siop_script_write(sc, offset, val)
 }
 
 void
-siop_attach(sc)
-	struct siop_softc *sc;
+siop_attach(struct siop_softc *sc)
 {
 	if (siop_common_attach(&sc->sc_c) != 0)
 		return;
@@ -191,8 +183,7 @@ siop_attach(sc)
 }
 
 void
-siop_reset(sc)
-	struct siop_softc *sc;
+siop_reset(struct siop_softc *sc)
 {
 	int i, j;
 	struct siop_lunsw *lunsw;
@@ -311,8 +302,7 @@ bus_space_write_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSP, sc->sc_c.sc_scriptad
 #endif
 
 int
-siop_intr(v)
-	void *v;
+siop_intr(void *v)
 {
 	struct siop_softc *sc = v;
 	struct siop_target *siop_target;
@@ -1006,8 +996,7 @@ end:
 }
 
 void
-siop_scsicmd_end(siop_cmd)
-	struct siop_cmd *siop_cmd;
+siop_scsicmd_end(struct siop_cmd *siop_cmd)
 {
 	struct scsipi_xfer *xs = siop_cmd->cmd_c.xs;
 	struct siop_softc *sc = (struct siop_softc *)siop_cmd->cmd_c.siop_sc;
@@ -1072,10 +1061,7 @@ siop_scsicmd_end(siop_cmd)
 }
 
 void
-siop_unqueue(sc, target, lun)
-	struct siop_softc *sc;
-	int target;
-	int lun;
+siop_unqueue(struct siop_softc *sc, int target, int lun)
 {
  	int slot, tag;
 	struct siop_cmd *siop_cmd;
@@ -1126,8 +1112,7 @@ siop_unqueue(sc, target, lun)
  * has to adjust the reselect script.
  */
 int
-siop_handle_qtag_reject(siop_cmd)
-	struct siop_cmd *siop_cmd;
+siop_handle_qtag_reject(struct siop_cmd *siop_cmd)
 {
 	struct siop_softc *sc = (struct siop_softc *)siop_cmd->cmd_c.siop_sc;
 	int target = siop_cmd->cmd_c.xs->xs_periph->periph_target;
@@ -1171,8 +1156,7 @@ siop_handle_qtag_reject(siop_cmd)
  * all active commands in a temporary queue.
  */
 void
-siop_handle_reset(sc)
-	struct siop_softc *sc;
+siop_handle_reset(struct siop_softc *sc)
 {
 	struct siop_cmd *siop_cmd;
 	struct siop_lun *siop_lun;
@@ -1231,10 +1215,7 @@ siop_handle_reset(sc)
 }
 
 void
-siop_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -1426,9 +1407,7 @@ siop_scsipi_request(chan, req, arg)
 }
 
 static void
-siop_start(sc, siop_cmd)
-	struct siop_softc *sc;
-	struct siop_cmd *siop_cmd;
+siop_start(struct siop_softc *sc, struct siop_cmd *siop_cmd)
 {
 	struct siop_lun *siop_lun;
 	struct siop_xfer *siop_xfer;
@@ -1562,8 +1541,7 @@ siop_start(sc, siop_cmd)
 }
 
 void
-siop_timeout(v)
-	void *v;
+siop_timeout(void *v)
 {
 	struct siop_cmd *siop_cmd = v;
 	struct siop_softc *sc = (struct siop_softc *)siop_cmd->cmd_c.siop_sc;
@@ -1593,8 +1571,7 @@ siop_timeout(v)
 }
 
 void
-siop_dump_script(sc)
-	struct siop_softc *sc;
+siop_dump_script(struct siop_softc *sc)
 {
 	int i;
 	for (i = 0; i < PAGE_SIZE / 4; i += 2) {
@@ -1612,8 +1589,7 @@ siop_dump_script(sc)
 }
 
 void
-siop_morecbd(sc)
-	struct siop_softc *sc;
+siop_morecbd(struct siop_softc *sc)
 {
 	int error, off, i, j, s;
 	bus_dma_segment_t seg;
@@ -1767,8 +1743,7 @@ bad3:
 }
 
 struct siop_lunsw *
-siop_get_lunsw(sc)
-	struct siop_softc *sc;
+siop_get_lunsw(struct siop_softc *sc)
 {
 	struct siop_lunsw *lunsw;
 	int i;
@@ -1816,9 +1791,7 @@ siop_get_lunsw(sc)
 }
 
 void
-siop_add_reselsw(sc, target)
-	struct siop_softc *sc;
-	int target;
+siop_add_reselsw(struct siop_softc *sc, int target)
 {
 	int i, j;
 	struct siop_target *siop_target;
@@ -1867,9 +1840,7 @@ siop_add_reselsw(sc, target)
 }
 
 void
-siop_update_scntl3(sc, _siop_target)
-	struct siop_softc *sc;
-	struct siop_common_target *_siop_target;
+siop_update_scntl3(struct siop_softc *sc, struct siop_common_target *_siop_target)
 {
 	struct siop_target *siop_target = (struct siop_target *)_siop_target;
 	/* MOVE target->id >> 24 TO SCNTL3 */
@@ -1884,10 +1855,7 @@ siop_update_scntl3(sc, _siop_target)
 }
 
 void
-siop_add_dev(sc, target, lun)
-	struct siop_softc *sc;
-	int target;
-	int lun;
+siop_add_dev(struct siop_softc *sc, int target, int lun)
 {
 	struct siop_lunsw *lunsw;
 	struct siop_target *siop_target =
@@ -1980,10 +1948,7 @@ siop_add_dev(sc, target, lun)
 }
 
 void
-siop_del_dev(sc, target, lun)
-	struct siop_softc *sc;
-	int target;
-	int lun;
+siop_del_dev(struct siop_softc *sc, int target, int lun)
 {
 	int i;
 	struct siop_target *siop_target;
@@ -2022,7 +1987,7 @@ siop_del_dev(sc, target, lun)
 
 #ifdef SIOP_STATS
 void
-siop_printstats()
+siop_printstats(void)
 {
 	printf("siop_stat_intr %d\n", siop_stat_intr);
 	printf("siop_stat_intr_shortxfer %d\n", siop_stat_intr_shortxfer);

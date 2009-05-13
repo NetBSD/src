@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.56 2008/03/29 19:15:34 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.56.18.1 2009/05/13 17:18:00 jym Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.56 2008/03/29 19:15:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.56.18.1 2009/05/13 17:18:00 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mac68k.h"
@@ -193,7 +193,7 @@ zs_get_chan_addr(int channel)
 int zsinited = 0; /* 0 = not, 1 = inited, not attached, 2= attached */
 
 void
-zs_init()
+zs_init(void)
 {
 	zsinited = 1;
 	if (zs_conschan != 0){ /* we might have moved io under the console */

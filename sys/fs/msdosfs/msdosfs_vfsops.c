@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.71 2009/02/05 18:39:15 abs Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.71.2.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.71 2009/02/05 18:39:15 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.71.2.1 2009/05/13 17:21:50 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -187,9 +187,7 @@ msdosfs_modcmd(modcmd_t cmd, void *arg)
 }
 
 static int
-update_mp(mp, argp)
-	struct mount *mp;
-	struct msdosfs_args *argp;
+update_mp(struct mount *mp, struct msdosfs_args *argp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error;
@@ -234,7 +232,7 @@ update_mp(mp, argp)
 }
 
 int
-msdosfs_mountroot()
+msdosfs_mountroot(void)
 {
 	struct mount *mp;
 	struct lwp *l = curlwp;	/* XXX */
@@ -284,11 +282,7 @@ msdosfs_mountroot()
  * special file to treat as a filesystem.
  */
 int
-msdosfs_mount(mp, path, data, data_len)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	size_t *data_len;
+msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;
@@ -340,7 +334,8 @@ msdosfs_mount(mp, path, data, data_len)
 	if (mp->mnt_flag & MNT_UPDATE) {
 		pmp = VFSTOMSDOSFS(mp);
 		error = 0;
-		if (!(pmp->pm_flags & MSDOSFSMNT_RONLY) && (mp->mnt_flag & MNT_RDONLY)) {
+		if (!(pmp->pm_flags & MSDOSFSMNT_RONLY) &&
+		    (mp->mnt_flag & MNT_RDONLY)) {
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
@@ -353,22 +348,26 @@ msdosfs_mount(mp, path, data, data_len)
 			DPRINTF(("vflush %d\n", error));
 			return (error);
 		}
-		if ((pmp->pm_flags & MSDOSFSMNT_RONLY) && (mp->mnt_iflag & IMNT_WANTRDWR)) {
+		if ((pmp->pm_flags & MSDOSFSMNT_RONLY) &&
+		    (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
+			 *
+			 * Permission to update a mount is checked higher, so
+			 * here we presume updating the mount is okay (for
+			 * example, as far as securelevel goes) which leaves us
+			 * with the normal check.
 			 */
-			if (kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-				devvp = pmp->pm_devvp;
-				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   l->l_cred);
-				VOP_UNLOCK(devvp, 0);
-				DPRINTF(("VOP_ACCESS %d\n", error));
-				if (error)
-					return (error);
-			}
+			devvp = pmp->pm_devvp;
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			error = genfs_can_mount(devvp, VREAD | VWRITE,
+			    l->l_cred);
+			VOP_UNLOCK(devvp, 0);
+			DPRINTF(("genfs_can_mount %d\n", error));
+			if (error)
+				return (error);
+
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 		}
 		if (args->fspec == NULL) {
@@ -401,18 +400,16 @@ msdosfs_mount(mp, path, data, data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			DPRINTF(("VOP_ACCESS2 %d\n", error));
-			vrele(devvp);
-			return (error);
-		}
+	accessmode = VREAD;
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		accessmode |= VWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
+	if (error) {
+		DPRINTF(("genfs_can_mount %d\n", error));
+		vrele(devvp);
+		return (error);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
 		int xflags;
@@ -463,11 +460,7 @@ fail:
 }
 
 int
-msdosfs_mountfs(devvp, mp, l, argp)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct lwp *l;
-	struct msdosfs_args *argp;
+msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msdosfs_args *argp)
 {
 	struct msdosfsmount *pmp;
 	struct buf *bp;
@@ -878,9 +871,7 @@ msdosfs_start(struct mount *mp, int flags)
  * Unmount the filesystem described by mp.
  */
 int
-msdosfs_unmount(mp, mntflags)
-	struct mount *mp;
-	int mntflags;
+msdosfs_unmount(struct mount *mp, int mntflags)
 {
 	struct msdosfsmount *pmp;
 	int error, flags;
@@ -928,9 +919,7 @@ msdosfs_unmount(mp, mntflags)
 }
 
 int
-msdosfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+msdosfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct denode *ndep;
@@ -967,10 +956,7 @@ msdosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 }
 
 int
-msdosfs_sync(mp, waitfor, cred)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t cred;
+msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp, *mvp;
 	struct denode *dep;
@@ -1039,10 +1025,7 @@ loop:
 }
 
 int
-msdosfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid defh;
@@ -1067,10 +1050,7 @@ msdosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-msdosfs_vptofh(vp, fhp, fh_size)
-	struct vnode *vp;
-	struct fid *fhp;
-	size_t *fh_size;
+msdosfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct denode *dep;
 	struct defid defh;

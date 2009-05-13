@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.6 2007/12/11 12:30:20 lukem Exp $	*/
+/*	$NetBSD: scope6.c,v 1.6.26.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.6 2007/12/11 12:30:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.6.26.1 2009/05/13 17:22:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -60,7 +60,7 @@ static struct scope6_id sid_default;
 	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->scope6_id)
 
 void
-scope6_init()
+scope6_init(void)
 {
 
 	memset(&sid_default, 0, sizeof(sid_default));

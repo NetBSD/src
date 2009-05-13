@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.30 2009/01/19 19:15:07 mjf Exp $	*/
+/*	$NetBSD: mscp.c,v 1.30.2.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.30 2009/01/19 19:15:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.30.2.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -101,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.30 2009/01/19 19:15:07 mjf Exp $");
  * we cannot wait.
  */
 struct mscp *
-mscp_getcp(mi, canwait)
-	struct mscp_softc *mi;
-	int canwait;
+mscp_getcp(struct mscp_softc *mi, int canwait)
 {
 #define mri	(&mi->mi_cmd)
 	struct mscp *mp;
@@ -165,10 +163,9 @@ int	mscp_aeb_xor = 0x8000bb80;
  * Handle a response ring transition.
  */
 void
-mscp_dorsp(mi)
-	struct mscp_softc *mi;
+mscp_dorsp(struct mscp_softc *mi)
 {
-	struct device *drive;
+	device_t drive;
 	struct mscp_device *me = mi->mi_me;
 	struct mscp_ctlr *mc = mi->mi_mc;
 	struct buf *bp;
@@ -217,7 +214,7 @@ loop:
 	 */
 	if (mp->mscp_unit >= mi->mi_driveno) { /* Must expand drive table */
 		int tmpno = (mp->mscp_unit + 32) & ~31;
-		struct device **tmp = (struct device **)
+		device_t *tmp = (device_t *)
 		    malloc(tmpno * sizeof(tmp[0]), M_DEVBUF, M_NOWAIT|M_ZERO);
 		/* XXX tmp should be checked for NULL */
 		if (mi->mi_driveno) {
@@ -291,7 +288,7 @@ loop:
 		 * status.
 		 */
 		if (cold)
-			bcopy(mp, &slavereply, sizeof(struct mscp));
+			memcpy(&slavereply, mp, sizeof(struct mscp));
 
 		if (mp->mscp_status == (M_ST_OFFLINE|M_OFFLINE_UNKNOWN))
 			break;
@@ -476,8 +473,7 @@ done:
  * info pending.
  */
 void
-mscp_requeue(mi)
-	struct mscp_softc *mi;
+mscp_requeue(struct mscp_softc *mi)
 {
 	panic("mscp_requeue");
 }

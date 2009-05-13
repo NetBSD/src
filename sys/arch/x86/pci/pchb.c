@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.17 2009/01/27 08:34:45 markd Exp $ */
+/*	$NetBSD: pchb.c,v 1.17.2.1 2009/05/13 17:18:44 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.17 2009/01/27 08:34:45 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.17.2.1 2009/05/13 17:18:44 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,8 +78,8 @@ int	pchbdetach(device_t, int);
 static bool	pchb_resume(device_t PMF_FN_ARGS);
 static bool	pchb_suspend(device_t PMF_FN_ARGS);
 
-CFATTACH_DECL_NEW(pchb, sizeof(struct pchb_softc),
-    pchbmatch, pchbattach, pchbdetach, NULL);
+CFATTACH_DECL3_NEW(pchb, sizeof(struct pchb_softc),
+    pchbmatch, pchbattach, pchbdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 int
 pchbmatch(device_t parent, cfdata_t match, void *aux)

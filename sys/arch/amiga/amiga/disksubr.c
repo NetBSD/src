@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.56 2008/01/02 11:48:22 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.56.24.1 2009/05/13 17:16:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.56 2008/01/02 11:48:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.56.24.1 2009/05/13 17:16:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,11 +128,7 @@ struct rdbmap *getrdbmap(dev_t, void (*)(struct buf *), struct disklabel *,
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct adostype adt;
 	struct partition *pp = NULL;
@@ -499,10 +495,7 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *clp)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -542,11 +535,7 @@ setdisklabel(olp, nlp, openmask, clp)
  * label.  Hope the user was carefull.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct rdbmap *bmap;
 	struct buf *bp;
@@ -593,8 +582,7 @@ done:
 }
 
 u_long
-rdbchksum(bdata)
-	void *bdata;
+rdbchksum(void *bdata)
 {
 	u_long *blp, cnt, val;
 
@@ -608,8 +596,7 @@ rdbchksum(bdata)
 }
 
 struct adostype
-getadostype(dostype)
-	u_long dostype;
+getadostype(u_long dostype)
 {
 	struct adostype adt;
 	u_long t3, b1;
@@ -694,11 +681,7 @@ getadostype(dostype)
  * lseg or end the chain for part, badb, fshd)
  */
 struct rdbmap *
-getrdbmap(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+getrdbmap(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 

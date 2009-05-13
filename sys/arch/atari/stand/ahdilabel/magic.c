@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.2 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: magic.c,v 1.2.14.1 2009/05/13 17:16:31 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,10 +36,7 @@
  * Check label magic numbers for AHDI partitions
  */
 int
-check_magic(fd, offset, flags)
-	int			 fd;
-	u_int			 offset;
-	int			 flags;
+check_magic(int fd, u_int offset, int flags)
 {
 	u_char	*bblk;
 	u_int	 nsec;

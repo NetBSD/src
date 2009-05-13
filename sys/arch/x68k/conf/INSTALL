@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.86 2009/02/06 18:50:29 jym Exp $
+#	$NetBSD: INSTALL,v 1.86.2.1 2009/05/13 17:18:42 jym Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.86 $"
+#ident 		"INSTALL-$Revision: 1.86.2.1 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -71,7 +71,6 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support
 

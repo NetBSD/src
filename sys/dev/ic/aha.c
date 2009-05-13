@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.57 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: aha.c,v 1.57.14.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.57 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.57.14.1 2009/05/13 17:19:21 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -238,9 +238,7 @@ aha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_softc *sc,
 }
 
 void
-aha_attach(sc, apd)
-	struct aha_softc *sc;
-	struct aha_probe_data *apd;
+aha_attach(struct aha_softc *sc, struct aha_probe_data *apd)
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
@@ -389,8 +387,7 @@ AGAIN:
  * Catch an interrupt from the adaptor
  */
 int
-aha_intr(arg)
-	void *arg;
+aha_intr(void *arg)
 {
 	struct aha_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -733,10 +730,7 @@ aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
  * Find the board and find its irq/drq
  */
 int
-aha_find(iot, ioh, sc)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct aha_probe_data *sc;
+aha_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_probe_data *sc)
 {
 	int i;
 	u_char sts;

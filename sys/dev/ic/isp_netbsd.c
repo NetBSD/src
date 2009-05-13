@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.78 2008/07/15 16:18:08 christos Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.78.8.1 2009/05/13 17:19:23 jym Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.78 2008/07/15 16:18:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.78.8.1 2009/05/13 17:19:23 jym Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.78 2008/07/15 16:18:08 christos Exp
  */
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
-static void isp_config_interrupts(struct device *);
+static void isp_config_interrupts(device_t);
 static void ispminphys_1020(struct buf *);
 static void ispminphys(struct buf *);
 static void ispcmd(struct ispsoftc *, XS_T *);
@@ -154,11 +154,11 @@ isp_attach(struct ispsoftc *isp)
 	/*
          * Defer enabling mailbox interrupts until later.
          */
-        config_interrupts((struct device *) isp, isp_config_interrupts);
+        config_interrupts((device_t) isp, isp_config_interrupts);
 }
 
 static void
-isp_config_interrupts(struct device *self)
+isp_config_interrupts(device_t self)
 {
 	int i;
         struct ispsoftc *isp = (struct ispsoftc *) self;

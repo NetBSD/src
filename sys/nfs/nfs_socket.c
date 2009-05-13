@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.178 2009/02/04 20:36:54 ad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.178.2.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.178 2009/02/04 20:36:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.178.2.1 2009/05/13 17:22:51 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -196,10 +196,7 @@ static void nfs_rcvunlock(struct nfsmount *);
  * We do not free the sockaddr if error.
  */
 int
-nfs_connect(nmp, rep, l)
-	struct nfsmount *nmp;
-	struct nfsreq *rep;
-	struct lwp *l;
+nfs_connect(struct nfsmount *nmp, struct nfsreq *rep, struct lwp *l)
 {
 	struct socket *so;
 	int error, rcvreserve, sndreserve;
@@ -406,8 +403,7 @@ nfs_reconnect(struct nfsreq *rep)
  * NFS disconnect. Clean up and unlink.
  */
 void
-nfs_disconnect(nmp)
-	struct nfsmount *nmp;
+nfs_disconnect(struct nfsmount *nmp)
 {
 	struct socket *so;
 	int drain = 0;
@@ -444,8 +440,7 @@ nfs_disconnect(nmp)
 }
 
 void
-nfs_safedisconnect(nmp)
-	struct nfsmount *nmp;
+nfs_safedisconnect(struct nfsmount *nmp)
 {
 	struct nfsreq dummyreq;
 
@@ -470,12 +465,7 @@ nfs_safedisconnect(nmp)
  * - do any cleanup required by recoverable socket errors (? ? ?)
  */
 int
-nfs_send(so, nam, top, rep, l)
-	struct socket *so;
-	struct mbuf *nam;
-	struct mbuf *top;
-	struct nfsreq *rep;
-	struct lwp *l;
+nfs_send(struct socket *so, struct mbuf *nam, struct mbuf *top, struct nfsreq *rep, struct lwp *l)
 {
 	struct mbuf *sendnam;
 	int error, soflags, flags;
@@ -966,16 +956,7 @@ nfsmout:
  * nb: always frees up mreq mbuf list
  */
 int
-nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
-	struct nfsnode *np;
-	struct mbuf *mrest;
-	int procnum;
-	struct lwp *lwp;
-	kauth_cred_t cred;
-	struct mbuf **mrp;
-	struct mbuf **mdp;
-	char **dposp;
-	int *rexmitp;
+nfs_request(struct nfsnode *np, struct mbuf *mrest, int procnum, struct lwp *lwp, kauth_cred_t cred, struct mbuf **mrp, struct mbuf **mdp, char **dposp, int *rexmitp)
 {
 	struct mbuf *m, *mrep;
 	struct nfsreq *rep;
@@ -1438,16 +1419,7 @@ nfsmout:
  * siz arg. is used to decide if adding a cluster is worthwhile
  */
 int
-nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
-	int siz;
-	struct nfsrv_descript *nd;
-	struct nfssvc_sock *slp;
-	int err;
-	int cache;
-	u_quad_t *frev;
-	struct mbuf **mrq;
-	struct mbuf **mbp;
-	char **bposp;
+nfs_rephead(int siz, struct nfsrv_descript *nd, struct nfssvc_sock *slp, int err, int cache, u_quad_t *frev, struct mbuf **mrq, struct mbuf **mbp, char **bposp)
 {
 	u_int32_t *tl;
 	struct mbuf *mreq;
@@ -1775,10 +1747,7 @@ nfs_timer(void *arg)
  * This is used for NFSMNT_INT mounts.
  */
 int
-nfs_sigintr(nmp, rep, l)
-	struct nfsmount *nmp;
-	struct nfsreq *rep;
-	struct lwp *l;
+nfs_sigintr(struct nfsmount *nmp, struct nfsreq *rep, struct lwp *l)
 {
 	sigset_t ss;
 
@@ -1930,10 +1899,7 @@ nfs_rcvunlock(struct nfsmount *nmp)
  * - allocate and fill in the cred.
  */
 int
-nfs_getreq(nd, nfsd, has_header)
-	struct nfsrv_descript *nd;
-	struct nfsd *nfsd;
-	int has_header;
+nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 {
 	int len, i;
 	u_int32_t *tl;
@@ -2182,9 +2148,7 @@ errout:
 }
 
 int
-nfs_msg(l, server, msg)
-	struct lwp *l;
-	const char *server, *msg;
+nfs_msg(struct lwp *l, const char *server, const char *msg)
 {
 	tpr_t tpr;
 

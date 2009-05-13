@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.29 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.29.18.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.29 2008/03/21 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.29.18.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -204,7 +204,7 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype,
 		    NSMB_NAME"%d", dev2unit(dev));
 #endif /* !__NetBSD__ */
 
-	bzero(sdp, sizeof(*sdp));
+	memset(sdp, 0, sizeof(*sdp));
 /*
 	STAILQ_INIT(&sdp->sd_rqlist);
 	STAILQ_INIT(&sdp->sd_rplist);

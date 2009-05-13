@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.44 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.44.14.1 2009/05/13 17:20:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.44 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.44.14.1 2009/05/13 17:20:30 jym Exp $");
 
 #include "ehci.h"
 
@@ -68,7 +68,7 @@ struct uhci_pci_softc {
 };
 
 static int
-uhci_pci_match(device_t parent, struct cfdata *match, void *aux)
+uhci_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -208,6 +208,12 @@ uhci_pci_detach(device_t self, int flags)
 	rv = uhci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
+
+	/* disable interrupts and acknowledge any pending */
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
+	    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
+
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -234,6 +240,6 @@ uhci_pci_resume(device_t dv PMF_FN_ARGS)
 	return uhci_resume(dv PMF_FN_CALL);
 }
 
-CFATTACH_DECL2_NEW(uhci_pci, sizeof(struct uhci_pci_softc),
+CFATTACH_DECL3_NEW(uhci_pci, sizeof(struct uhci_pci_softc),
     uhci_pci_match, uhci_pci_attach, uhci_pci_detach, uhci_activate,
-    NULL, uhci_childdet);
+    NULL, uhci_childdet, DVF_DETACH_SHUTDOWN);

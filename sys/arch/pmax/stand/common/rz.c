@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.23 2009/01/12 07:29:23 tsutsui Exp $	*/
+/*	$NetBSD: rz.c,v 1.23.2.1 2009/05/13 17:18:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,13 +57,8 @@ struct	rz_softc {
 };
 
 int
-rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
-	void *devdata;
-	int rw;
-	daddr_t bn;
-	size_t reqcnt;
-	void *addr;
-	size_t *cnt;	/* out: number of bytes transfered */
+rzstrategy(void *devdata, int rw, daddr_t bn, size_t reqcnt, void *addr, size_t *cnt)
+	/* cnt:	 out: number of bytes transfered */
 {
 	struct rz_softc *sc = (struct rz_softc *)devdata;
 	int part = sc->sc_part;
@@ -182,8 +177,7 @@ rzopen(struct open_file *f, ...)
 
 #ifndef LIBSA_NO_DEV_CLOSE
 int
-rzclose(f)
-	struct open_file *f;
+rzclose(struct open_file *f)
 {
 	if (callv == &callvec)
 		prom_close(((struct rz_softc *)f->f_devdata)->sc_fd);

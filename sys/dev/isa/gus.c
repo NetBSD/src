@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.103 2008/12/17 20:51:34 cegger Exp $	*/
+/*	$NetBSD: gus.c,v 1.103.2.1 2009/05/13 17:19:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.103 2008/12/17 20:51:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.103.2.1 2009/05/13 17:19:52 jym Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -434,8 +434,8 @@ void	stereo_dmaintr(void *);
  * ISA bus driver routines
  */
 
-int	gusprobe(struct device *, struct cfdata *, void *);
-void	gusattach(struct device *, struct device *, void *);
+int	gusprobe(device_t, cfdata_t, void *);
+void	gusattach(device_t, device_t, void *);
 
 CFATTACH_DECL(gus, sizeof(struct gus_softc),
     gusprobe, gusattach, NULL, NULL);
@@ -653,8 +653,7 @@ struct audio_device gus_device = {
 
 
 int
-gusprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+gusprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia;
 	int iobase, recdrq;
@@ -814,7 +813,7 @@ bad1:
  */
 
 void
-gusattach(struct device *parent, struct device *self, void *aux)
+gusattach(device_t parent, device_t self, void *aux)
 {
 	struct gus_softc *sc;
 	struct isa_attach_args *ia;

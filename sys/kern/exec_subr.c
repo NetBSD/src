@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.61 2008/06/02 16:16:27 ad Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.61.12.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.61 2008/06/02 16:16:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.61.12.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_pax.h"
 
@@ -327,6 +327,8 @@ vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
 			UVM_MAPFLAG(prot, maxprot, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
+	if (cmd->ev_flags & VMCMD_STACK)
+		curproc->p_vmspace->vm_issize += atop(round_page(cmd->ev_len));
 	return error;
 }
 
@@ -409,12 +411,13 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
+		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
 	KASSERT(access_size > 0);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE,
+	    VMCMD_STACK);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.18 2008/04/10 19:13:37 cegger Exp $ */
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.18.18.1 2009/05/13 17:20:27 jym Exp $ */
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -32,7 +32,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.18 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.18.18.1 2009/05/13 17:20:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -206,9 +206,7 @@ eqs1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
  *---------------------------------------------------------------------------*/
 
 int
-isic_attach_Eqs1pp(psc, pa)
-	struct pci_isic_softc *psc;
-	struct pci_attach_args *pa;
+isic_attach_Eqs1pp(struct pci_isic_softc *psc, struct pci_attach_args *pa)
 {
 	struct isic_softc *sc = &psc->sc_isic;
 
@@ -277,8 +275,7 @@ isic_attach_Eqs1pp(psc, pa)
 }
 
 int
-isic_intr_qs1p(vsc)
-	void *vsc;
+isic_intr_qs1p(void *vsc)
 {
 	struct pci_isic_softc *psc = vsc;
 	struct isic_softc *sc = &psc->sc_isic;

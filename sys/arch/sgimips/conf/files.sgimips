@@ -1,11 +1,10 @@
-#	$NetBSD: files.sgimips,v 1.47 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.sgimips,v 1.47.24.1 2009/05/13 17:18:17 jym Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
 
-# XXX: arcemu needs smc93cx6, so put it here pending a better solution
-device mainbus {[addr = -1]}: smc93cx6
+device mainbus {[addr = -1]}
 attach mainbus at root
 file arch/sgimips/sgimips/mainbus.c	mainbus
 
@@ -34,8 +33,8 @@ file dev/md_root.c			memory_disk_hooks
 file dev/cons.c
 
 # Machine-dependent drivers
-include "arch/sgimips/ioc/files.ioc"
 include "arch/sgimips/dev/files.dev"
+include "arch/sgimips/ioc/files.ioc"		# depends on int0 (files.dev)
 defflag opt_sgimace.h MACE_NEEDS_DELAYS
 include "arch/sgimips/mace/files.mace"
 

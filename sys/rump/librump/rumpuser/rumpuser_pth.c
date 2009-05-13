@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.28 2009/02/07 01:50:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.28.2.1 2009/05/13 17:22:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.28 2009/02/07 01:50:29 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.28.2.1 2009/05/13 17:22:58 jym Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: rumpuser_pth.c,v 1.28 2009/02/07 01:50:29 pooka Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include <rump/rumpuser.h>
 
@@ -129,6 +130,8 @@ iothread(void *arg)
 {
 	struct rumpuser_aio *rua;
 	rump_biodone_fn biodone = arg;
+	ssize_t rv;
+	int error;
 
 	NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
 	for (;;) {
@@ -141,16 +144,37 @@ iothread(void *arg)
 		assert(rua->rua_bp != NULL);
 		pthread_mutex_unlock(&rumpuser_aio_mtx.pthmtx);
 
-		if (rua->rua_op)
-			rumpuser_read_bio(rua->rua_fd, rua->rua_data,
-			    rua->rua_dlen, rua->rua_off, biodone, rua->rua_bp);
-		else
-			rumpuser_write_bio(rua->rua_fd, rua->rua_data,
-			    rua->rua_dlen, rua->rua_off, biodone, rua->rua_bp);
+		if (rua->rua_op & RUA_OP_READ) {
+			error = 0;
+			rv = pread(rua->rua_fd, rua->rua_data,
+			    rua->rua_dlen, rua->rua_off);
+			if (rv < 0) {
+				rv = 0;
+				error = errno;
+			}
+		} else {
+			error = 0;
+			rv = pwrite(rua->rua_fd, rua->rua_data,
+			    rua->rua_dlen, rua->rua_off);
+			if (rv < 0) {
+				rv = 0;
+				error = errno;
+			} else if (rua->rua_op & RUA_OP_SYNC) {
+#ifdef __NetBSD__
+				fsync_range(rua->rua_fd, FDATASYNC,
+				    rua->rua_off, rua->rua_dlen);
+#else
+				fsync(rua->rua_fd);
+#endif
+			}
+		}
+		biodone(rua->rua_bp, rv, error);
+			
 		rua->rua_bp = NULL;
 
 		NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
-		rumpuser_aio_tail = (rumpuser_aio_tail+1) % (N_AIOS-1);
+		rumpuser_aio_tail = (rumpuser_aio_tail+1) % N_AIOS;
+		pthread_cond_signal(&rumpuser_aio_cv.pthcv);
 	}
 }
 
@@ -181,7 +205,7 @@ rumpuser_bioinit(rump_biodone_fn biodone)
 
 #if 0
 void
-rumpuser__thrdestroy()
+rumpuser__thrdestroy(void)
 {
 
 	pthread_key_delete(curlwpkey);
@@ -204,7 +228,7 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
 }
 
 void
-rumpuser_thread_exit()
+rumpuser_thread_exit(void)
 {
 
 	pthread_exit(NULL);
@@ -312,10 +336,10 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 }
 
 void
-rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
+rumpuser_rw_enter(struct rumpuser_rw *rw, int iswrite)
 {
 
-	if (write) {
+	if (iswrite) {
 		KLOCK_WRAP(NOFAIL_ERRNO(pthread_rwlock_wrlock(&rw->pthrw)));
 		RURW_SETWRITE(rw);
 	} else {
@@ -325,11 +349,11 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
 }
 
 int
-rumpuser_rw_tryenter(struct rumpuser_rw *rw, int write)
+rumpuser_rw_tryenter(struct rumpuser_rw *rw, int iswrite)
 {
 	int rv;
 
-	if (write) {
+	if (iswrite) {
 		rv = pthread_rwlock_trywrlock(&rw->pthrw);
 		if (rv == 0)
 			RURW_SETWRITE(rw);
@@ -465,7 +489,7 @@ rumpuser_set_curlwp(struct lwp *l)
 }
 
 struct lwp *
-rumpuser_get_curlwp()
+rumpuser_get_curlwp(void)
 {
 
 	return pthread_getspecific(curlwpkey);

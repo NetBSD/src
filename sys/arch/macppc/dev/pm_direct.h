@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.h,v 1.11 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.11.92.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -45,13 +45,13 @@ typedef	struct	{
 				/* null command seen w/ 120 data bytes  */
 }	PMData;
 
-int pmgrop __P((PMData *));
-int pm_intr __P((void *));
-void pm_init __P((void));
-void pm_adb_restart __P((void));
-void pm_adb_poweroff __P((void));
-void pm_read_date_time __P((u_long *));
-void pm_set_date_time __P((u_long));
+int pmgrop(PMData *);
+int pm_intr(void *);
+void pm_init(void);
+void pm_adb_restart(void);
+void pm_adb_poweroff(void);
+void pm_read_date_time(u_long *);
+void pm_set_date_time(u_long);
 
 struct pmu_battery_info
 {
@@ -63,14 +63,14 @@ struct pmu_battery_info
 	unsigned int secs_remaining;
 };
 
-int pm_battery_info __P((int, struct pmu_battery_info *));
+int pm_battery_info(int, struct pmu_battery_info *);
 
-int pm_read_nvram __P((int));
-void pm_write_nvram __P((int, int));
-int pm_read_brightness __P((void));
-void pm_set_brightness __P((int));
-void pm_init_brightness __P((void));
-void pm_eject_pcmcia __P((int));
+int pm_read_nvram(int);
+void pm_write_nvram(int, int);
+int pm_read_brightness(void);
+void pm_set_brightness(int);
+void pm_init_brightness(void);
+void pm_eject_pcmcia(int);
 
 /* PMU commands */
 #define PMU_POWER_OFF		0x7e	/* Turn Power off */

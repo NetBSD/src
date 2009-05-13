@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.21 2008/06/13 12:08:01 cegger Exp $ */
+/* $NetBSD: sbjcn.c,v 1.21.10.1 2009/05/13 17:18:03 jym Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.21 2008/06/13 12:08:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.21.10.1 2009/05/13 17:18:03 jym Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -842,10 +842,7 @@ sbjcn_to_tiocm(struct sbjcn_channel *ch)
 }
 
 static int
-cflag2modes(cflag, mode1p, mode2p)
-	tcflag_t cflag;
-	u_char *mode1p;
-	u_char *mode2p;
+cflag2modes(tcflag_t cflag, u_char *mode1p, u_char *mode2p)
 {
 	u_char mode1;
 	u_char mode2;
@@ -1584,8 +1581,7 @@ sbjcn_kgdb_attach(u_long addr, int chan, int rate, tcflag_t cflag)
 
 /* ARGSUSED */
 int
-sbjcn_kgdb_getc(arg)
-	void *arg;
+sbjcn_kgdb_getc(void *arg)
 {
 
 	return (sbjcn_common_getc(sbjcn_kgdb_addr, sbjcn_kgdb_chan));
@@ -1593,9 +1589,7 @@ sbjcn_kgdb_getc(arg)
 
 /* ARGSUSED */
 void
-sbjcn_kgdb_putc(arg, c)
-	void *arg;
-	int c;
+sbjcn_kgdb_putc(void *arg, int c)
 {
 
 	sbjcn_common_putc(sbjcn_kgdb_addr, sbjcn_kgdb_chan, c);

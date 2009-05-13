@@ -1,8 +1,11 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.135 2009/01/21 06:59:29 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.135.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.135 2009/01/21 06:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.135.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include "opt_pipe.h"
 
@@ -300,7 +303,7 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	}
 	solock(so);
 	MCLAIM(nam, so->so_mowner);
-	if (so->so_state & SS_ISCONNECTING) {
+	if ((so->so_state & SS_ISCONNECTING) != 0) {
 		error = EALREADY;
 		goto out;
 	}
@@ -308,12 +311,17 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	error = soconnect(so, nam, l);
 	if (error)
 		goto bad;
-	if (so->so_nbio && (so->so_state & SS_ISCONNECTING)) {
+	if (so->so_nbio && (so->so_state & SS_ISCONNECTING) != 0) {
 		error = EINPROGRESS;
 		goto out;
 	}
-	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
+	while ((so->so_state & SS_ISCONNECTING) != 0 && so->so_error == 0) {
 		error = sowait(so, true, 0);
+		if (__predict_false((so->so_state & SS_ISDRAINING) != 0)) {
+			error = EPIPE;
+			interrupted = 1;
+			break;
+		}
 		if (error) {
 			if (error == EINTR || error == ERESTART)
 				interrupted = 1;

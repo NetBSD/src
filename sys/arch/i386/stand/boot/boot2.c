@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.42 2009/01/11 02:45:45 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.42.2.1 2009/05/13 17:17:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include <libi386.h>
 #include <bootmod.h>
 #include <bootmenu.h>
+#include <vbe.h>
 #include "devopen.h"
 
 #ifdef SUPPORT_PS2
@@ -133,6 +134,7 @@ const struct bootblk_command commands[] = {
 	{ "modules",	command_modules },
 	{ "load",	module_add },
 	{ "multiboot",	command_multiboot },
+	{ "vesa",	command_vesa },
 	{ NULL,		NULL },
 };
 
@@ -218,6 +220,14 @@ sprint_bootsel(const char *filename)
 	return "(invalid)";
 }
 
+static void
+clearit(void)
+{
+
+	if (bootconf.clear)
+		clear_pc_screen();
+}
+
 void
 bootit(const char *filename, int howto, int tell)
 {
@@ -229,7 +239,7 @@ bootit(const char *filename, int howto, int tell)
 		printf("\n");
 	}
 
-	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80) < 0)
+	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
@@ -239,9 +249,8 @@ bootit(const char *filename, int howto, int tell)
 void
 print_banner(void)
 {
-	if (bootconf.clear)
-		clear_pc_screen();
 
+	clearit();
 #ifndef SMALL
 	int n;
 	if (bootconf.banner[0]) {
@@ -285,6 +294,8 @@ boot2(int biosdev, u_int biossector)
 	if (boot_params.bp_flags & X86_BP_FLAGS_RESET_VIDEO)
 		biosvideomode();
 
+	vbe_init();
+
 	/* need to remember these */
 	boot_biosdev = biosdev;
 	boot_biossector = biossector;
@@ -314,6 +325,7 @@ boot2(int biosdev, u_int biossector)
 		/* Does not return */
 		doboottypemenu();
 	}
+
 #else
 	twiddle_toggle = 0;
 	print_banner();
@@ -359,6 +371,7 @@ command_help(char *arg)
 	       "ls [path]\n"
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "vesa {enabled|disabled|list|modenum}\n"
 	       "modules {enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
@@ -396,7 +409,7 @@ command_boot(char *arg)
 	int howto;
 
 	if (parseboot(arg, &filename, &howto))
-		bootit(filename, howto, 1);
+		bootit(filename, howto, (howto & AB_VERBOSE) != 0);
 }
 
 void

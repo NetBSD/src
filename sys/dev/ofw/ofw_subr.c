@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.13 2007/11/07 19:26:45 garbled Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.13.32.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.13 2007/11/07 19:26:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.13.32.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.13 2007/11/07 19:26:45 garbled Exp $"
  *	None.
  */
 int
-of_decode_int(p)
-	const unsigned char *p;
+of_decode_int(const unsigned char *p)
 {
 	unsigned int i = *p++ << 8;
 	i = (i + *p++) << 8;

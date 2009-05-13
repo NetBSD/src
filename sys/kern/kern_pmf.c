@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.21 2009/02/06 01:19:33 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.21.2.1 2009/05/13 17:21:56 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.21 2009/02/06 01:19:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.21.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -234,7 +234,7 @@ pmf_system_suspend(PMF_FN_ARGS1)
 	if (wsdisplay_handlex(0))
 		return false;
 #endif
-	KERNEL_LOCK(1, 0);
+	KERNEL_LOCK(1, NULL);
 
 	/*
 	 * Flush buffers only if the shutdown didn't do so
@@ -288,34 +288,72 @@ shutdown_next(struct shutdown_state *s)
 	while ((dv = deviter_next(&s->di)) != NULL && !device_is_active(dv))
 		;
 
+	if (dv == NULL)
+		s->initialized = false;
+
 	return dv;
+}
+
+static bool
+detach_all(int how)
+{
+	static struct shutdown_state s;
+	device_t curdev;
+	bool progress = false;
+
+	if ((how & RB_NOSYNC) != 0)
+		return false;
+
+	for (curdev = shutdown_first(&s); curdev != NULL;
+	     curdev = shutdown_next(&s)) {
+		aprint_debug(" detaching %s, ", device_xname(curdev));
+		if (config_detach(curdev, DETACH_SHUTDOWN) == 0) {
+			progress = true;
+			aprint_debug("success.");
+		} else
+			aprint_debug("failed.");
+	}
+	return progress;
+}
+
+static bool
+shutdown_all(int how)
+{
+	static struct shutdown_state s;
+	device_t curdev;
+	bool progress = false;
+
+	for (curdev = shutdown_first(&s); curdev != NULL;
+	     curdev = shutdown_next(&s)) {
+		aprint_debug(" shutting down %s, ", device_xname(curdev));
+		if (!device_pmf_is_registered(curdev))
+			aprint_debug("skipped.");
+#if 0 /* needed? */
+		else if (!device_pmf_class_shutdown(curdev, how))
+			aprint_debug("failed.");
+#endif
+		else if (!device_pmf_driver_shutdown(curdev, how))
+			aprint_debug("failed.");
+		else if (!device_pmf_bus_shutdown(curdev, how))
+			aprint_debug("failed.");
+		else {
+			progress = true;
+			aprint_debug("success.");
+		}
+	}
+	return progress;
 }
 
 void
 pmf_system_shutdown(int how)
 {
-	static struct shutdown_state s;
-	device_t curdev;
-
 	aprint_debug("Shutting down devices:");
+	suspendsched();
 
-	for (curdev = shutdown_first(&s); curdev != NULL;
-	     curdev = shutdown_next(&s)) {
-		aprint_debug(" attempting %s shutdown",
-		    device_xname(curdev));
-		if (!device_pmf_is_registered(curdev))
-			aprint_debug("(skipped)");
-#if 0 /* needed? */
-		else if (!device_pmf_class_shutdown(curdev, how))
-			aprint_debug("(failed)");
-#endif
-		else if (!device_pmf_driver_shutdown(curdev, how))
-			aprint_debug("(failed)");
-		else if (!device_pmf_bus_shutdown(curdev, how))
-			aprint_debug("(failed)");
-	}
+	while (detach_all(how))
+		;
 
-	aprint_debug(".\n");
+	shutdown_all(how);
 }
 
 bool

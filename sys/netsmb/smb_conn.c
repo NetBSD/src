@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.24 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.24.14.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.24 2008/04/28 20:24:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.24.14.1 2009/05/13 17:22:51 jym Exp $");
 
 /*
  * Connection engine.
@@ -712,7 +712,7 @@ smb_vc_getpass(struct smb_vc *vcp)
 static int
 smb_vc_getinfo(struct smb_vc *vcp, struct smb_vc_info *vip)
 {
-	bzero(vip, sizeof(struct smb_vc_info));
+	memset(vip, 0, sizeof(struct smb_vc_info));
 	vip->itype = SMB_INFO_VC;
 	vip->usecount = vcp->obj.co_usecount;
 	vip->uid = vcp->vc_uid;
@@ -721,7 +721,7 @@ smb_vc_getinfo(struct smb_vc *vcp, struct smb_vc_info *vip)
 	vip->flags = vcp->obj.co_flags;
 	vip->sopt = vcp->vc_sopt;
 	vip->iodstate = vcp->vc_iod->iod_state;
-	bzero(&vip->sopt.sv_skey, sizeof(vip->sopt.sv_skey));
+	memset(&vip->sopt.sv_skey, 0, sizeof(vip->sopt.sv_skey));
 	snprintf(vip->srvname, sizeof(vip->srvname), "%s", vcp->vc_srvname);
 	snprintf(vip->vcname, sizeof(vip->vcname), "%s", vcp->vc_username);
 	return 0;
@@ -909,7 +909,7 @@ smb_share_getpass(struct smb_share *ssp)
 static int
 smb_share_getinfo(struct smb_share *ssp, struct smb_share_info *sip)
 {
-	bzero(sip, sizeof(struct smb_share_info));
+	memset(sip, 0, sizeof(struct smb_share_info));
 	sip->itype = SMB_INFO_SHARE;
 	sip->usecount = ssp->obj.co_usecount;
 	sip->tid  = ssp->ss_tid;

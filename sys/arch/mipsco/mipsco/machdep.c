@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2008/11/30 18:21:35 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61.4.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,12 +76,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2008/11/30 18:21:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.4.1 2009/05/13 17:18:03 jym Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,26 +152,26 @@ char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void to_monitor __P((int)) __attribute__((__noreturn__));
-void prom_halt __P((int)) __attribute__((__noreturn__));
+void to_monitor(int) __attribute__((__noreturn__));
+void prom_halt(int) __attribute__((__noreturn__));
 
 #ifdef	KGDB
-void zs_kgdb_init __P((void));
-void kgdb_connect __P((int));
+void zs_kgdb_init(void);
+void kgdb_connect(int);
 #endif
 
 /*
  *  Local functions.
  */
-int initcpu __P((void));
-void configure __P((void));
+int initcpu(void);
+void configure(void);
 
-void mach_init __P((int, char *[], char*[], u_int, char *));
-int  memsize_scan __P((void *));
+void mach_init(int, char *[], char*[], u_int, char *);
+int  memsize_scan(void *);
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
+extern void stacktrace(void); /*XXX*/
 #endif
 
 /*
@@ -183,15 +184,15 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 extern struct user *proc0paddr;
 
 /* locore callback-vector setup */
-extern void mips_vector_init  __P((void));
-extern void prom_init  __P((void));
-extern void pizazz_init __P((void));
+extern void mips_vector_init(void);
+extern void prom_init(void);
+extern void pizazz_init(void);
 
 /* platform-specific initialization vector */
-static void	unimpl_cons_init __P((void));
-static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
-static int	unimpl_memsize __P((void *));
-static void	unimpl_intr_establish __P((int, int (*)__P((void *)), void *));
+static void	unimpl_cons_init(void);
+static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
+static int	unimpl_memsize(void *);
+static void	unimpl_intr_establish(int, int (*)(void *), void *);
 
 struct platform platform = {
 	.iobus = "iobus not set",
@@ -206,11 +207,11 @@ struct consdev *cn_tab = NULL;
 extern struct consdev consdev_prom;
 extern struct consdev consdev_zs;
 
-static void null_cnprobe __P((struct consdev *));
-static void prom_cninit __P((struct consdev *));
-static int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-static void null_cnpollc __P((dev_t, int));
+static void null_cnprobe(struct consdev *);
+static void prom_cninit(struct consdev *);
+static int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
+static void null_cnpollc(dev_t, int);
 
 struct consdev consdev_prom = {
         null_cnprobe,
@@ -227,12 +228,7 @@ struct consdev consdev_prom = {
  * Return the first page address following the system.
  */
 void
-mach_init(argc, argv, envp, bim, bip)
-	int    argc;
-	char   *argv[];
-	char   *envp[];
-	u_int  bim;
-	char   *bip;
+mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 {
 	u_long first, last;
 	char *kernend, *v;
@@ -393,7 +389,7 @@ mach_init(argc, argv, envp, bim, bip)
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -436,8 +432,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -463,8 +458,7 @@ int	waittime = -1;
  * call PROM to halt or reboot.
  */
 void
-prom_halt(howto)
-	int howto;
+prom_halt(int howto)
 {
 	if (howto & RB_HALT)
 		MIPS_PROM(reinit)();
@@ -473,9 +467,7 @@ prom_halt(howto)
 }
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto;
-	char *bootstr;
+cpu_reboot(volatile int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
@@ -539,50 +531,41 @@ haltsys:
 }
 
 int
-initcpu()
+initcpu(void)
 {
 	spl0();		/* safe to turn interrupts on now */
 	return 0;
 }
 
 static void
-unimpl_cons_init()
+unimpl_cons_init(void)
 {
 
 	panic("sysconf.init didn't set cons_init");
 }
 
 static void
-unimpl_iointr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
+unimpl_iointr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
 {
 
 	panic("sysconf.init didn't set intr");
 }
 
 static int
-unimpl_memsize(first)
-void *first;
+unimpl_memsize(void *first)
 {
 
 	panic("sysconf.init didn't set memsize");
 }
 
 void
-unimpl_intr_establish(level, func, arg)
-	int level;
-	int (*func) __P((void *));
-	void *arg;
+unimpl_intr_establish(int level, int (*func)(void *), void *arg)
 {
 	panic("sysconf.init didn't init intr_establish");
 }
 
 void
-delay(n)
-	int n;
+delay(int n)
 {
 	DELAY(n);
 }
@@ -592,8 +575,7 @@ delay(n)
  * Be careful to save and restore the original contents for msgbuf.
  */
 int
-memsize_scan(first)
-	void *first;
+memsize_scan(void *first)
 {
 	volatile int *vp, *vp0;
 	int mem, tmp, tmp0;
@@ -638,14 +620,12 @@ memsize_scan(first)
  */
 
 static void
-null_cnprobe(cn)
-     struct consdev *cn;
+null_cnprobe(struct consdev *cn)
 {
 }
 
 static void
-prom_cninit(cn)
-	struct consdev *cn;
+prom_cninit(struct consdev *cn)
 {
 	extern const struct cdevsw cons_cdevsw;
 
@@ -654,29 +634,24 @@ prom_cninit(cn)
 }
 
 static int
-prom_cngetc(dev)
-	dev_t dev;
+prom_cngetc(dev_t dev)
 {
 	return MIPS_PROM(getchar)();
 }
 
 static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
+prom_cnputc(dev_t dev, int c)
 {
 	MIPS_PROM(putchar)(c);
 }
 
 static void
-null_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+null_cnpollc(dev_t dev, int on)
 {
 }
 
 void
-consinit()
+consinit(void)
 {
 	int zs_unit;
 

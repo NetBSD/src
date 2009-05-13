@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.8 2009/01/16 11:19:02 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.8.6.1 2009/05/13 17:19:16 jym Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
+
+#include <sys/disklabel.h>
+
+#include <prop/proplib.h>
 
 #define DM_MAX_TYPE_NAME 16
 #define DM_NAME_LEN 128
@@ -130,7 +134,6 @@ typedef struct dm_dev {
 
 	struct dm_dev_head upcalls;
 	
-	struct disklabel *dk_label;    /* Disklabel for this table. */
 	struct disk *diskp;
 	
 	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
@@ -163,6 +166,14 @@ typedef struct target_linear_config {
 	uint64_t offset;
 } dm_target_linear_config_t;
 
+/* for stripe : */
+typedef struct target_stripe_config {
+#define MAX_STRIPES 2
+	struct target_linear_config stripe_devs[MAX_STRIPES];
+	uint8_t stripe_num;
+	uint64_t stripe_chunksize;
+	size_t params_len;
+} dm_target_stripe_config_t;
 
 /* for mirror : */
 typedef struct target_mirror_config {
@@ -255,6 +266,7 @@ int dm_table_status_ioctl(prop_dictionary_t);
 
 /* dm_target.c */
 dm_target_t* dm_target_alloc(const char *);
+dm_target_t* dm_target_autoload(const char *);
 int dm_target_destroy(void);
 int dm_target_insert(dm_target_t *);
 prop_array_t dm_target_prop_list(void);

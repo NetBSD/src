@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.4.1 2009/05/13 17:17:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -86,6 +86,8 @@
 
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/ia64/ia64/machdep.c,v 1.203 2005/10/14 12:43:45 davidxu Exp $"); */
+
+#include "opt_modular.h"
 
 #include <sys/param.h> 
 #include <sys/cpu.h>
@@ -239,7 +241,7 @@ identifycpu(void)
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	
@@ -322,7 +324,7 @@ cpu_switchto(lwp_t *cur, lwp_t *new, bool b)
 }
 
 bool
-cpu_intr_p()
+cpu_intr_p(void)
 {
 	return 0;
 }
@@ -335,19 +337,19 @@ cpu_intr_p()
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	return;
 }
 
 void
-consinit()
+consinit(void)
 {
 	cninit();
 }
 
 void
-map_pal_code()
+map_pal_code(void)
 {
 	pt_entry_t pte;
 	u_int64_t psr;
@@ -376,7 +378,7 @@ map_pal_code()
 }
 
 void
-map_gateway_page()
+map_gateway_page(void)
 {
 	pt_entry_t pte;
 	u_int64_t psr;
@@ -470,7 +472,7 @@ ia64_init()
 	bootinfo = *(struct bootinfo *)(IA64_PHYS_TO_RR7(pa_bootinfo));
 
 	if (bootinfo.bi_magic != BOOTINFO_MAGIC || bootinfo.bi_version != 1) {
-		bzero(&bootinfo, sizeof(bootinfo));
+		memset(&bootinfo, 0, sizeof(bootinfo));
 		bootinfo.bi_kernend = (vaddr_t) round_page((vaddr_t)&end);
 	}
 
@@ -792,10 +794,10 @@ setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
 	 */
 	KASSERT((tf->tf_special.ndirty & ~PAGE_MASK) == 0);
 
-	bzero(&tf->tf_special, sizeof(tf->tf_special));
+	memset(&tf->tf_special, 0, sizeof(tf->tf_special));
 	if ((tf->tf_flags & FRAME_SYSCALL) == 0) {	/* break syscalls. */
-		bzero(&tf->tf_scratch, sizeof(tf->tf_scratch));
-		bzero(&tf->tf_scratch_fp, sizeof(tf->tf_scratch_fp));
+		memset(&tf->tf_scratch, 0, sizeof(tf->tf_scratch));
+		memset(&tf->tf_scratch_fp, 0, sizeof(tf->tf_scratch_fp));
 		tf->tf_special.cfm = (1UL<<63) | (3UL<<7) | 3UL;
 		tf->tf_special.bspstore = IA64_BACKINGSTORE;
 		/*

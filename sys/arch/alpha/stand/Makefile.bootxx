@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.8 2008/10/25 22:27:36 apb Exp $
+# $NetBSD: Makefile.bootxx,v 1.8.8.1 2009/05/13 17:16:07 jym Exp $
 
 SRCS = start.S bootxx.c booted_dev.c blkdev.c prom.c prom_disp.S \
        putstr.c panic_putstr.c
@@ -16,8 +16,7 @@ CPPFLAGS += ${PRIMARY_CPPFLAGS} \
 		-DLIBSA_NO_TWIDDLE \
 		-DLIBSA_NO_FD_CHECKING \
 		-DLIBSA_NO_RAW_ACCESS \
-		-DLIBSA_NO_DISKLABEL_MSGS \
-		-DLIBSA_USE_MEMCPY
+		-DLIBSA_NO_DISKLABEL_MSGS
 
 CLEANFILES+= ${PROG}.sym ${PROG}.map ${PROG}.lds
 

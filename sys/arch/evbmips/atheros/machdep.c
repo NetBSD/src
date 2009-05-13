@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.16 2008/11/30 18:21:33 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.16.4.1 2009/05/13 17:16:40 jym Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,10 +147,11 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16.4.1 2009/05/13 17:16:40 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.54 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.54.18.1 2009/05/13 17:18:41 jym Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.54 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.54.18.1 2009/05/13 17:18:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 	paddr_t pa;
 
 	if ((vaddr_t)to & KERNBASE) { /* In kernel space */
-		bcopy(from, to, len);
+		memcpy( to, from, len);
 		return;
 	}
 
@@ -305,7 +305,7 @@ vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 		int cz = round_page((vaddr_t)to) - (vaddr_t)to;
 
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | (PAGE_SIZE - cz) | KERNBASE;
-		bcopy(from, (void *)pa, min(cz, len));
+		memcpy((void *)pa, from, min(cz, len));
 		from += cz;
 		to += cz;
 		len -= cz;
@@ -313,7 +313,7 @@ vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 	}
 	while (len > 0) {
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
-		bcopy(from, (void *)pa, min(PAGE_SIZE, len));
+		memcpy((void *)pa, from, min(PAGE_SIZE, len));
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -329,7 +329,7 @@ vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 	paddr_t pa;
 
 	if ((vaddr_t)from & KERNBASE) { /* In kernel space */
-		bcopy(from, to, len);
+		memcpy( to, from, len);
 		return;
 	}
 
@@ -346,7 +346,7 @@ vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 		int cz = round_page((vaddr_t)from) - (vaddr_t)from;
 
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | (PAGE_SIZE - cz) | KERNBASE;
-		bcopy((void *)pa, to, min(cz, len));
+		memcpy(to, (void *)pa, min(cz, len));
 		from += cz;
 		to += cz;
 		len -= cz;
@@ -354,7 +354,7 @@ vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 	}
 	while (len > 0) {
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
-		bcopy((void *)pa, to, min(PAGE_SIZE, len));
+		memcpy(to,  (void *)pa, min(PAGE_SIZE, len));
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		len -= PAGE_SIZE;

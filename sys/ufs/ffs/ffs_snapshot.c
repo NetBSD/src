@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.91 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.91.2.1 2009/05/13 17:23:06 jym Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.91 2009/01/11 02:45:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.91.2.1 2009/05/13 17:23:06 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -455,10 +455,7 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp);
 		if (error)
 			goto out;
-		if (DOINGSOFTDEP(vp))
-			bawrite(ibp);
-		else
-			brelse(ibp, 0);
+		brelse(ibp, 0);
 		if ((++i % 16) == 0) {
 			UFS_WAPBL_END(mp);
 			error = UFS_WAPBL_BEGIN(mp);
@@ -513,7 +510,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 	if (loc > 0)
 		memset(*sbbuf, 0, loc);
 	copyfs = (struct fs *)((char *)(*sbbuf) + loc);
-	bcopy(fs, copyfs, fs->fs_sbsize);
+	memcpy(copyfs, fs, fs->fs_sbsize);
 	size = fs->fs_bsize < SBLOCKSIZE ? fs->fs_bsize : SBLOCKSIZE;
 	if (fs->fs_sbsize < size)
 		memset((char *)(*sbbuf) + loc + fs->fs_sbsize, 0, 
@@ -523,7 +520,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 		size += fs->fs_ncg * sizeof(int32_t);
 	space = malloc(size, M_UFSMNT, M_WAITOK);
 	copyfs->fs_csp = space;
-	bcopy(fs->fs_csp, copyfs->fs_csp, fs->fs_cssize);
+	memcpy(copyfs->fs_csp, fs->fs_csp, fs->fs_cssize);
 	space = (char *)space + fs->fs_cssize;
 	loc = howmany(fs->fs_cssize, fs->fs_fsize);
 	i = fs->fs_frag - loc % fs->fs_frag;
@@ -537,7 +534,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 			*sbbuf = NULL;
 			return error;
 		}
-		bcopy(bp->b_data, space, (u_int)len);
+		memcpy(space, bp->b_data, (u_int)len);
 		space = (char *)space + len;
 		brelse(bp, BC_INVAL | BC_NOCACHE);
 	}
@@ -727,7 +724,7 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 		error = expunge(vp, xp, fs, snapacct, BLK_SNAP);
 		if (error)
 			break;
-		if (xp->i_ffs_effnlink != 0)
+		if (xp->i_nlink != 0)
 			continue;
 		error = ffs_freefile_snap(copy_fs, vp, xp->i_number, xp->i_mode);
 		if (error)
@@ -814,7 +811,7 @@ snapshot_writefs(struct mount *mp, struct vnode *vp, void *sbbuf)
 			brelse(bp, 0);
 			break;
 		}
-		bcopy(space, bp->b_data, fs->fs_bsize);
+		memcpy(bp->b_data, space, fs->fs_bsize);
 		space = (char *)space + fs->fs_bsize;
 		bawrite(bp);
 	}
@@ -826,7 +823,7 @@ snapshot_writefs(struct mount *mp, struct vnode *vp, void *sbbuf)
 		brelse(bp, 0);
 		goto out;
 	} else {
-		bcopy(sbbuf, bp->b_data, fs->fs_bsize);
+		memcpy(bp->b_data, sbbuf, fs->fs_bsize);
 		bawrite(bp);
 	}
 	/*
@@ -924,7 +921,7 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 	}
 	ACTIVECG_SET(fs, cg);
 
-	bcopy(bp->b_data, data, fs->fs_cgsize);
+	memcpy(data, bp->b_data, fs->fs_cgsize);
 	brelse(bp, 0);
 	if (fs->fs_cgsize < fs->fs_bsize)
 		memset((char *)data + fs->fs_cgsize, 0,
@@ -1020,23 +1017,23 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	if (fs->fs_magic == FS_UFS1_MAGIC) {
 		dip1 = (struct ufs1_dinode *)bp->b_data +
 		    ino_to_fsbo(fs, cancelip->i_number);
-		if (expungetype == BLK_NOCOPY || cancelip->i_ffs_effnlink == 0)
+		if (expungetype == BLK_NOCOPY || cancelip->i_nlink == 0)
 			dip1->di_mode = 0;
 		dip1->di_size = 0;
 		dip1->di_blocks = 0;
 		dip1->di_flags =
 		    ufs_rw32(ufs_rw32(dip1->di_flags, ns) & ~SF_SNAPSHOT, ns);
-		bzero(&dip1->di_db[0], (NDADDR + NIADDR) * sizeof(int32_t));
+		memset(&dip1->di_db[0], 0, (NDADDR + NIADDR) * sizeof(int32_t));
 	} else {
 		dip2 = (struct ufs2_dinode *)bp->b_data +
 		    ino_to_fsbo(fs, cancelip->i_number);
-		if (expungetype == BLK_NOCOPY || cancelip->i_ffs_effnlink == 0)
+		if (expungetype == BLK_NOCOPY || cancelip->i_nlink == 0)
 			dip2->di_mode = 0;
 		dip2->di_size = 0;
 		dip2->di_blocks = 0;
 		dip2->di_flags =
 		    ufs_rw32(ufs_rw32(dip2->di_flags, ns) & ~SF_SNAPSHOT, ns);
-		bzero(&dip2->di_db[0], (NDADDR + NIADDR) * sizeof(int64_t));
+		memset(&dip2->di_db[0], 0, (NDADDR + NIADDR) * sizeof(int64_t));
 	}
 	bdwrite(bp);
 	/*
@@ -1119,7 +1116,7 @@ indiracct(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	if (last > NINDIR(fs))
 		last = NINDIR(fs);
 	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK | M_ZERO);
-	bcopy(bp->b_data, (void *)bap, fs->fs_bsize);
+	memcpy((void *)bap, bp->b_data, fs->fs_bsize);
 	brelse(bp, 0);
 	error = (*acctfunc)(snapvp, bap, 0, last,
 	    fs, level == 0 ? rlbn : -1, expungetype);
@@ -1486,7 +1483,7 @@ retry:
 				idb_assign(ip, ibp->b_data, indiroff,
 				    BLK_NOCOPY);
 				mutex_exit(&si->si_lock);
-				if (ip->i_ffs_effnlink > 0)
+				if (ip->i_nlink > 0)
 					bwrite(ibp);
 				else
 					bdwrite(ibp);
@@ -1526,14 +1523,14 @@ retry:
 				db_assign(ip, lbn, bno);
 			} else {
 				idb_assign(ip, ibp->b_data, indiroff, bno);
-				if (ip->i_ffs_effnlink > 0)
+				if (ip->i_nlink > 0)
 					bwrite(ibp);
 				else
 					bdwrite(ibp);
 			}
 			DIP_ADD(ip, blocks, btodb(size));
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (ip->i_ffs_effnlink > 0 && mp->mnt_wapbl)
+			if (ip->i_nlink > 0 && mp->mnt_wapbl)
 				error = syncsnap(vp);
 			else
 				error = 0;
@@ -1568,7 +1565,7 @@ retry:
 			}
 		}
 		error = wrsnapblk(vp, saved_data, lbn);
-		if (error == 0 && ip->i_ffs_effnlink > 0 && mp->mnt_wapbl)
+		if (error == 0 && ip->i_nlink > 0 && mp->mnt_wapbl)
 			error = syncsnap(vp);
 		mutex_enter(&si->si_lock);
 		if (error)
@@ -1730,7 +1727,7 @@ ffs_snapshot_unmount(struct mount *mp)
 		if (xp->i_snapblklist == si->si_snapblklist)
 			si->si_snapblklist = NULL;
 		free(xp->i_snapblklist, M_UFSMNT);
-		if (xp->i_ffs_effnlink > 0) {
+		if (xp->i_nlink > 0) {
 			si->si_gen++;
 			mutex_exit(&si->si_lock);
 			vrele(vp);
@@ -1909,7 +1906,7 @@ retry:
 			}
 		}
 		error = wrsnapblk(vp, saved_data, lbn);
-		if (error == 0 && ip->i_ffs_effnlink > 0 && mp->mnt_wapbl)
+		if (error == 0 && ip->i_nlink > 0 && mp->mnt_wapbl)
 			error = syncsnap(vp);
 		mutex_enter(&si->si_lock);
 		if (error)
@@ -2114,11 +2111,11 @@ wrsnapblk(struct vnode *vp, void *data, daddr_t lbn)
 	int error;
 
 	error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn), fs->fs_bsize,
-	    FSCRED, (ip->i_ffs_effnlink > 0 ? B_SYNC : 0), &bp);
+	    FSCRED, (ip->i_nlink > 0 ? B_SYNC : 0), &bp);
 	if (error)
 		return error;
-	bcopy(data, bp->b_data, fs->fs_bsize);
-	if (ip->i_ffs_effnlink > 0)
+	memcpy(bp->b_data, data, fs->fs_bsize);
+	if (ip->i_nlink > 0)
 		error = bwrite(bp);
 	else
 		bawrite(bp);

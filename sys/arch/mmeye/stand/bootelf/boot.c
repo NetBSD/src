@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2006/04/03 06:15:00 uebayasi Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.80.1 2009/05/13 17:18:07 jym Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -42,14 +42,12 @@
 # define DPRINTF while (0) printf
 #endif
 
-void LoadAndReset __P((void *));
+void LoadAndReset(void *);
 
 char *netbsd = "/netbsd";
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	u_long marks[MARK_MAX];
 	u_long start, entry;
@@ -108,8 +106,7 @@ main(argc, argv)
 }
 
 void
-LoadAndReset(image)
-	void *image;
+LoadAndReset(void *image)
 {
 	int mib[2];
 	u_long val;

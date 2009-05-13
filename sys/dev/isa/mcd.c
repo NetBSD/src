@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.106 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: mcd.c,v 1.106.2.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.106 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.106.2.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,8 @@ int mcd_getqchan(struct mcd_softc *, union mcd_qchninfo *, int);
 int mcd_setlock(struct mcd_softc *, int);
 
 int mcd_find(bus_space_tag_t, bus_space_handle_t, struct mcd_softc *);
-int mcdprobe(struct device *, struct cfdata *, void *);
-void mcdattach(struct device *, struct device *, void *);
+int mcdprobe(device_t, cfdata_t, void *);
+void mcdattach(device_t, device_t, void *);
 
 CFATTACH_DECL(mcd, sizeof(struct mcd_softc),
     mcdprobe, mcdattach, NULL, NULL);
@@ -235,7 +235,7 @@ struct dkdriver mcddkdriver = { mcdstrategy, NULL, };
 #define DELAY_GETREPLY		100000	/* 100000 * 25us */
 
 void
-mcdattach(struct device *parent, struct device *self, void *aux)
+mcdattach(device_t parent, device_t self, void *aux)
 {
 	struct mcd_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -420,8 +420,7 @@ mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 void
-mcdstrategy(bp)
-	struct buf *bp;
+mcdstrategy(struct buf *bp)
 {
 	struct mcd_softc *sc;
 	struct disklabel *lp;
@@ -486,8 +485,7 @@ done:
 }
 
 void
-mcdstart(sc)
-	struct mcd_softc *sc;
+mcdstart(struct mcd_softc *sc)
 {
 	struct buf *bp;
 	int s;
@@ -738,9 +736,7 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 }
 
 void
-mcdgetdefaultlabel(sc, lp)
-	struct mcd_softc *sc;
-	struct disklabel *lp;
+mcdgetdefaultlabel(struct mcd_softc *sc, struct disklabel *lp)
 {
 
 	memset(lp, 0, sizeof(struct disklabel));
@@ -779,8 +775,7 @@ mcdgetdefaultlabel(sc, lp)
  * whether the scsi cd driver is linked in.
  */
 void
-mcdgetdisklabel(sc)
-	struct mcd_softc *sc;
+mcdgetdisklabel(struct mcd_softc *sc)
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
 
@@ -790,8 +785,7 @@ mcdgetdisklabel(sc)
 }
 
 int
-mcd_get_parms(sc)
-	struct mcd_softc *sc;
+mcd_get_parms(struct mcd_softc *sc)
 {
 	struct mcd_mbox mbx;
 	daddr_t size;
@@ -837,10 +831,7 @@ mcddump(dev_t dev, daddr_t blkno, void *va,
  * Find the board and fill in the softc.
  */
 int
-mcd_find(iot, ioh, sc)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct mcd_softc *sc;
+mcd_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct mcd_softc *sc)
 {
 	int i;
 	struct mcd_mbox mbx;
@@ -918,8 +909,7 @@ mcd_find(iot, ioh, sc)
 }
 
 int
-mcdprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+mcdprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct mcd_softc sc;
@@ -966,8 +956,7 @@ mcdprobe(struct device *parent, struct cfdata *match,
 }
 
 int
-mcd_getreply(sc)
-	struct mcd_softc *sc;
+mcd_getreply(struct mcd_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -988,8 +977,7 @@ mcd_getreply(sc)
 }
 
 int
-mcd_getstat(sc)
-	struct mcd_softc *sc;
+mcd_getstat(struct mcd_softc *sc)
 {
 	struct mcd_mbox mbx;
 
@@ -1000,9 +988,7 @@ mcd_getstat(sc)
 }
 
 int
-mcd_getresult(sc, res)
-	struct mcd_softc *sc;
-	struct mcd_result *res;
+mcd_getresult(struct mcd_softc *sc, struct mcd_result *res)
 {
 	int i, x;
 
@@ -1056,8 +1042,7 @@ mcd_getresult(sc, res)
 }
 
 void
-mcd_setflags(sc)
-	struct mcd_softc *sc;
+mcd_setflags(struct mcd_softc *sc)
 {
 
 	/* Check flags. */
@@ -1081,10 +1066,7 @@ mcd_setflags(sc)
 }
 
 int
-mcd_send(sc, mbx, diskin)
-	struct mcd_softc *sc;
-	struct mcd_mbox *mbx;
-	int diskin;
+mcd_send(struct mcd_softc *sc, struct mcd_mbox *mbx, int diskin)
 {
 	int retry, i, error;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1116,25 +1098,21 @@ mcd_send(sc, mbx, diskin)
 }
 
 static int
-bcd2bin(b)
-	bcd_t b;
+bcd2bin(bcd_t b)
 {
 
 	return (b >> 4) * 10 + (b & 15);
 }
 
 static bcd_t
-bin2bcd(b)
-	int b;
+bin2bcd(int b)
 {
 
 	return ((b / 10) << 4) | (b % 10);
 }
 
 static void
-hsg2msf(hsg, msf)
-	int hsg;
-	bcd_t *msf;
+hsg2msf(int hsg, bcd_t *msf)
 {
 
 	hsg += 150;
@@ -1146,9 +1124,7 @@ hsg2msf(hsg, msf)
 }
 
 static daddr_t
-msf2hsg(msf, relative)
-	bcd_t *msf;
-	int relative;
+msf2hsg(bcd_t *msf, int relative)
 {
 	daddr_t blkno;
 
@@ -1161,8 +1137,7 @@ msf2hsg(msf, relative)
 }
 
 void
-mcd_pseudointr(v)
-	void *v;
+mcd_pseudointr(void *v)
 {
 	struct mcd_softc *sc = v;
 	int s;
@@ -1179,8 +1154,7 @@ mcd_pseudointr(v)
  * MCD_S_WAITREAD: wait for read ready, read data.
  */
 int
-mcdintr(arg)
-	void *arg;
+mcdintr(void *arg)
 {
 	struct mcd_softc *sc = arg;
 	struct mcd_mbx *mbx = &sc->mbx;
@@ -1340,8 +1314,7 @@ changed:
 }
 
 void
-mcd_soft_reset(sc)
-	struct mcd_softc *sc;
+mcd_soft_reset(struct mcd_softc *sc)
 {
 
 	sc->debug = 0;
@@ -1353,8 +1326,7 @@ mcd_soft_reset(sc)
 }
 
 int
-mcd_hard_reset(sc)
-	struct mcd_softc *sc;
+mcd_hard_reset(struct mcd_softc *sc)
 {
 	struct mcd_mbox mbx;
 
@@ -1367,9 +1339,7 @@ mcd_hard_reset(sc)
 }
 
 int
-mcd_setmode(sc, mode)
-	struct mcd_softc *sc;
-	int mode;
+mcd_setmode(struct mcd_softc *sc, int mode)
 {
 	struct mcd_mbox mbx;
 	int error;
@@ -1392,9 +1362,7 @@ mcd_setmode(sc, mode)
 }
 
 int
-mcd_setupc(sc, upc)
-	struct mcd_softc *sc;
-	int upc;
+mcd_setupc(struct mcd_softc *sc, int upc)
 {
 	struct mcd_mbox mbx;
 	int error;
@@ -1418,9 +1386,7 @@ mcd_setupc(sc, upc)
 }
 
 int
-mcd_toc_header(sc, th)
-	struct mcd_softc *sc;
-	struct ioc_toc_header *th;
+mcd_toc_header(struct mcd_softc *sc, struct ioc_toc_header *th)
 {
 
 	if (sc->debug)
@@ -1435,8 +1401,7 @@ mcd_toc_header(sc, th)
 }
 
 int
-mcd_read_toc(sc)
-	struct mcd_softc *sc;
+mcd_read_toc(struct mcd_softc *sc)
 {
 	struct ioc_toc_header th;
 	union mcd_qchninfo q;
@@ -1489,11 +1454,7 @@ mcd_read_toc(sc)
 }
 
 int
-mcd_toc_entries(sc, te, entries, count)
-	struct mcd_softc *sc;
-	struct ioc_read_toc_entry *te;
-	struct cd_toc_entry *entries;
-	int *count;
+mcd_toc_entries(struct mcd_softc *sc, struct ioc_read_toc_entry *te, struct cd_toc_entry *entries, int *count)
 {
 	int len = te->data_len;
 	struct ioc_toc_header header;
@@ -1552,8 +1513,7 @@ mcd_toc_entries(sc, te, entries, count)
 }
 
 int
-mcd_stop(sc)
-	struct mcd_softc *sc;
+mcd_stop(struct mcd_softc *sc)
 {
 	struct mcd_mbox mbx;
 	int error;
@@ -1572,10 +1532,7 @@ mcd_stop(sc)
 }
 
 int
-mcd_getqchan(sc, q, qchn)
-	struct mcd_softc *sc;
-	union mcd_qchninfo *q;
-	int qchn;
+mcd_getqchan(struct mcd_softc *sc, union mcd_qchninfo *q, int qchn)
 {
 	struct mcd_mbox mbx;
 	int error;
@@ -1606,10 +1563,7 @@ mcd_getqchan(sc, q, qchn)
 }
 
 int
-mcd_read_subchannel(sc, ch, info)
-	struct mcd_softc *sc;
-	struct ioc_read_subchannel *ch;
-	struct cd_sub_channel_info *info;
+mcd_read_subchannel(struct mcd_softc *sc, struct ioc_read_subchannel *ch, struct cd_sub_channel_info *info)
 {
 	int len = ch->data_len;
 	union mcd_qchninfo q;
@@ -1684,9 +1638,7 @@ mcd_read_subchannel(sc, ch, info)
 }
 
 int
-mcd_playtracks(sc, p)
-	struct mcd_softc *sc;
-	struct ioc_play_track *p;
+mcd_playtracks(struct mcd_softc *sc, struct ioc_play_track *p)
 {
 	struct mcd_mbox mbx;
 	int a = p->start_track;
@@ -1722,9 +1674,7 @@ mcd_playtracks(sc, p)
 }
 
 int
-mcd_playmsf(sc, p)
-	struct mcd_softc *sc;
-	struct ioc_play_msf *p;
+mcd_playmsf(struct mcd_softc *sc, struct ioc_play_msf *p)
 {
 	struct mcd_mbox mbx;
 	int error;
@@ -1756,9 +1706,7 @@ mcd_playmsf(sc, p)
 }
 
 int
-mcd_playblocks(sc, p)
-	struct mcd_softc *sc;
-	struct ioc_play_blocks *p;
+mcd_playblocks(struct mcd_softc *sc, struct ioc_play_blocks *p)
 {
 	struct mcd_mbox mbx;
 	int error;
@@ -1784,8 +1732,7 @@ mcd_playblocks(sc, p)
 }
 
 int
-mcd_pause(sc)
-	struct mcd_softc *sc;
+mcd_pause(struct mcd_softc *sc)
 {
 	union mcd_qchninfo q;
 	int error;
@@ -1816,8 +1763,7 @@ mcd_pause(sc)
 }
 
 int
-mcd_resume(sc)
-	struct mcd_softc *sc;
+mcd_resume(struct mcd_softc *sc)
 {
 	struct mcd_mbox mbx;
 	int error;
@@ -1834,8 +1780,7 @@ mcd_resume(sc)
 }
 
 int
-mcd_eject(sc)
-	struct mcd_softc *sc;
+mcd_eject(struct mcd_softc *sc)
 {
 	struct mcd_mbox mbx;
 
@@ -1846,9 +1791,7 @@ mcd_eject(sc)
 }
 
 int
-mcd_setlock(sc, mode)
-	struct mcd_softc *sc;
-	int mode;
+mcd_setlock(struct mcd_softc *sc, int mode)
 {
 	struct mcd_mbox mbx;
 

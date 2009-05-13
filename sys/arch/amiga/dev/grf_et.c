@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.26 2007/10/17 19:53:16 garbled Exp $ */
+/*	$NetBSD: grf_et.c,v 1.26.34.1 2009/05/13 17:16:10 jym Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.26 2007/10/17 19:53:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.26.34.1 2009/05/13 17:16:10 jym Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -292,7 +292,7 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
-		bcopy(&congrf.g_display, &gp->g_display,
+		memcpy( &gp->g_display, &congrf.g_display,
 		    (char *) &gp[1] - (char *) &gp->g_display);
 	} else {
 		gp->g_regkva = (volatile void *) et_regaddr;
@@ -560,7 +560,7 @@ et_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
 #ifdef TSENGCONSOLE
 	/* Handle grabbing console mode */
 	if (vm->mode_num == 255) {
-		bcopy(&etconsole_mode, vm, sizeof(struct grfvideo_mode));
+		memcpy( vm, &etconsole_mode, sizeof(struct grfvideo_mode));
 	/* XXX so grfconfig can tell us the correct text dimensions. */
 		vm->depth = etconsole_mode.fy;
 	} else
@@ -574,7 +574,7 @@ et_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
 		if (gv->mode_num == 0)
 			return (EINVAL);
 
-		bcopy(gv, vm, sizeof(struct grfvideo_mode));
+		memcpy( vm, gv, sizeof(struct grfvideo_mode));
 	}
 
 	/* adjust internal values to pixel values */
@@ -795,7 +795,7 @@ et_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 #ifdef TSENGCONSOLE
 	/* handle interactive setting of console mode */
 	if (gv->mode_num == 255) {
-		bcopy(gv, &etconsole_mode.gv, sizeof(struct grfvideo_mode));
+		memcpy( &etconsole_mode.gv, gv, sizeof(struct grfvideo_mode));
 		etconsole_mode.gv.hblank_start /= 8;
 		etconsole_mode.gv.hsync_start /= 8;
 		etconsole_mode.gv.hsync_stop /= 8;
@@ -810,7 +810,7 @@ et_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 #endif
 
 	md = monitor_def + (gv->mode_num - 1);
-	bcopy(gv, md, sizeof(struct grfvideo_mode));
+	memcpy( md, gv, sizeof(struct grfvideo_mode));
 
 	/* adjust pixel oriented values to internal rep. */
 

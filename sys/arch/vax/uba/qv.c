@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.20 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: qv.c,v 1.20.18.1 2009/05/13 17:18:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.20 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.20.18.1 2009/05/13 17:18:41 jym Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -290,9 +290,7 @@ const struct cdevsw qv_cdevsw = {
  */
 
 /*ARGSUSED*/
-qvprobe(reg, ctlr)
-	void *reg;
-	int ctlr;
+qvprobe(void *reg, int ctlr)
 {
 	register int br, cvec;		/* these are ``value-result'' */
 	register struct qvdevice *qvaddr = (struct qvdevice *)reg;
@@ -353,8 +351,7 @@ qvprobe(reg, ctlr)
 /*
  * Routine called to attach a qv.
  */
-qvattach(ui)
-        struct uba_device *ui;
+qvattach(struct uba_device *ui)
 {
 
         /*
@@ -369,10 +366,7 @@ qvattach(ui)
 
 /*ARGSUSED*/
 int
-qvopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+qvopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	register struct tty *tp;
 	register int unit, qv;
@@ -439,10 +433,7 @@ qvopen(dev, flag, mode, p)
  */
 /*ARGSUSED*/
 int
-qvclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+qvclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	register struct tty *tp;
 	register unit;
@@ -477,10 +468,7 @@ qvclose(dev, flag, mode, p)
 }
 
 int
-qvread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+qvread(dev_t dev, struct uio *uio, int flag)
 {
 	register struct tty *tp;
 	int unit = minor( dev );
@@ -493,10 +481,7 @@ qvread(dev, uio, flag)
 }
 
 int
-qvwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+qvwrite(dev_t dev, struct uio *uio, int flag)
 {
 	register struct tty *tp;
 	int unit = minor( dev );
@@ -515,10 +500,7 @@ qvwrite(dev, uio, flag)
 }
 
 int
-qvpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+qvpoll(dev_t dev, int events, struct proc *p)
 {
 	register struct tty *tp;
 	int unit = minor( dev );
@@ -538,8 +520,7 @@ qvpoll(dev, events, p)
 /*
  * Mouse activity select routine
  */
-qvselect(dev, rw)
-dev_t dev;
+qvselect(dev_t dev, rw)
 {
 	register int s = spl5();
 	register struct qv_info *qp = qv_scn;
@@ -568,8 +549,7 @@ dev_t dev;
 /*
  * QVSS keyboard interrupt.
  */
-qvkint(qv)
-	int qv;
+qvkint(int qv)
 {
 	struct tty *tp;
 	register c;
@@ -679,12 +659,7 @@ qvkint(qv)
  */
 /*ARGSUSED*/
 int
-qvioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	register void *data;
-	int flag;
-	struct proc *p;
+qvioctl(dev_t dev, u_long cmd, register void *data, int flag, struct proc *p)
 {
 	register struct tty *tp;
 	register int unit = minor(dev);
@@ -698,7 +673,7 @@ qvioctl(dev, cmd, data, flag, p)
 	 */
 	switch( cmd ) {
 	case QIOCGINFO:					/* return screen info */
-		bcopy((void *)qp, data, sizeof (struct qv_info));
+		memcpy( data, (void *)qp, sizeof (struct qv_info));
 		break;
 
 	case QIOCSMSTATE:				/* set mouse state */
@@ -737,8 +712,7 @@ qvioctl(dev, cmd, data, flag, p)
 /*
  * Initialize the screen and the scanmap
  */
-qv_init(qvaddr)
-struct qvdevice *qvaddr;
+qv_init(struct qvdevice *qvaddr)
 {
 	register short *scanline;
 	register int i;
@@ -750,7 +724,7 @@ struct qvdevice *qvaddr;
 	 * Clear the bit map
 	 */
 	for( i=0 , ptr = qp->bitmap ; i<240 ; i += 2 , ptr += 2048)
-		bzero( ptr, 2048 );
+		memset( ptr, 0, 2048 );
 	/*
 	 * Reinitialize the scanmap
 	 */
@@ -776,10 +750,10 @@ struct qvdevice *qvaddr;
 	qvkbdreset();
 }
 
-qvreset()
+qvreset(void)
 {
 }
-qvkbdreset()
+qvkbdreset(void)
 {
 	register int i;
 	qv_key_out(LK_DEFAULTS);
@@ -793,8 +767,7 @@ qvkbdreset()
 /*
  * QVSS vertical sync interrupt
  */
-qvvint(qv)
-	int qv;
+qvvint(int qv)
 {
 	extern int selwait;
 	register struct qvdevice *qvaddr;
@@ -937,8 +910,7 @@ switches:if( om_switch != ( m_switch = (qvaddr->qv_csr & QV_MOUSE_ANY) >> 8 ) ) 
 /*
  * Start  transmission
  */
-qvstart(tp)
-	register struct tty *tp;
+qvstart(register struct tty *tp)
 {
 	register int unit, c;
 	register struct tty *tp0;
@@ -992,9 +964,7 @@ out:
  */
 /*ARGSUSED*/
 void
-qvstop(tp, flag)
-	register struct tty *tp;
-	int flag;
+qvstop(register struct tty *tp, int flag)
 {
 	register int s;
 
@@ -1011,8 +981,7 @@ qvstop(tp, flag)
 	splx(s);
 }
 
-qvputc(c)
-char c;
+qvputc(char c)
 {
 	qvputchar(c);
 	if (c == '\n')
@@ -1166,7 +1135,7 @@ register int x,y;
  * The only drawback is that the scanline map must be reset when the user 
  * wants to do graphics.
  */
-qvscroll()
+qvscroll(void)
 {
 	short tmpscanlines[15];
 	register char *b_row;
@@ -1185,7 +1154,7 @@ qvscroll()
 	 * Save the first 15 scanlines so that we can put them at
 	 * the bottom when done.
 	 */
-	bcopy((void *)qp->scanmap, (void *)tmpscanlines, sizeof tmpscanlines);
+	memcpy( (void *)tmpscanlines, (void *)qp->scanmap, sizeof tmpscanlines);
 
 	/*
 	 * Clear the wrapping line so that it won't flash on the bottom
@@ -1193,18 +1162,18 @@ qvscroll()
 	 */
         scanline = qp->scanmap;
         b_row = qp->bitmap+(*scanline&0x3ff)*128;
-	bzero( b_row, 1920 );
+	memset( b_row, 0, 1920 );
 
 	/*
 	 * Now move the scanlines down 
 	 */
-	bcopy((void *)(qp->scanmap+15), (void *)qp->scanmap,
+	memcpy( (void *)qp->scanmap, (void *)(qp->scanmap+15),
 	      (qp->row * 15) * sizeof (short) );
 
 	/*
 	 * Now put the other lines back
 	 */
-	bcopy((void *)tmpscanlines, (void *)(qp->scanmap+(qp->row * 15)),
+	memcpy( (void *)(qp->scanmap+(qp->row * 15)), (void *)tmpscanlines,
 	      sizeof (tmpscanlines) );
 
 }
@@ -1213,8 +1182,7 @@ qvscroll()
  * Output to the keyboard. This routine status polls the transmitter on the
  * keyboard to output a code. The timer is to avoid hanging on a bad device.
  */
-qv_key_out(c)
-	u_short c;
+qv_key_out(u_short c)
 {
 	int timer = 30000;
 	register struct qv_info *qp = qv_scn;
@@ -1232,7 +1200,7 @@ qv_key_out(c)
  * In this case it must map the q-bus and device areas and initialize the qvss 
  * screen.
  */
-qvcons_init()
+qvcons_init(void)
 {
         struct percpu *pcpu;            /* pointer to percpu structure  */
 	register struct qbus *qb;
@@ -1286,10 +1254,7 @@ qvcons_init()
 /*
  * Do the board specific setup
  */
-qv_setup(qvaddr, unit, probed)
-struct qvdevice *qvaddr;
-int unit;
-int probed;
+qv_setup(struct qvdevice *qvaddr, int unit, int probed)
 {
         void *qvssmem;		/* pointer to the display mem   */
         register i;			/* simple index                 */

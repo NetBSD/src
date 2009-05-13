@@ -33,7 +33,7 @@
  *	isdn4bsd layer1 driver for Dynalink IS64PH isdn TA
  *	==================================================
  *
- *	$Id: isic_isapnp_dynalink.c,v 1.10 2008/04/08 20:09:27 cegger Exp $
+ *	$Id: isic_isapnp_dynalink.c,v 1.10.18.1 2009/05/13 17:20:04 jym Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -75,7 +75,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.10 2008/04/08 20:09:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.10.18.1 2009/05/13 17:20:04 jym Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DYNALINK
@@ -351,13 +351,13 @@ set_softc(struct isic_softc *sc, struct isa_attach_args *ia, int unit)
 }
 
 int
-isapnp_match_dynalink(struct device *parent, struct cfdata *cf,
+isapnp_match_dynalink(device_t parent, cfdata_t cf,
 		struct isa_attach_args *ia)
 {
 	struct isic_softc dummysc, *sc = &dummysc;
 	pnp_resource_t res;
 	char *ids[] = {"ASU1688", NULL};
-	bzero(&res, sizeof res);
+	memset(&res, 0, sizeof res);
 	res.res_irq[0].irq_level = ia->ia_irq;
 	res.res_port[0].prt_base = ia->ia_iobase;
 	res.res_port[0].prt_length = 4;
@@ -390,7 +390,7 @@ isapnp_match_dynalink(struct device *parent, struct cfdata *cf,
 }
 
 int
-isic_attach_Dyn(struct device *parent, struct device *self,
+isic_attach_Dyn(device_t parent, device_t self,
 		struct isa_attach_args *ia)
 {
 	struct isic_softc *sc = (struct isic_softc *)self;

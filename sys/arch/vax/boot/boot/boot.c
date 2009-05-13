@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.27 2009/01/12 11:32:45 tsutsui Exp $ */
+/*	$NetBSD: boot.c,v 1.27.2.1 2009/05/13 17:18:40 jym Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -265,7 +265,7 @@ load:
 
 
 void
-loadpcs()
+loadpcs(void)
 {
 	static int pcsdone = 0;
 	int mid = mfpr(PR_SID);
@@ -280,7 +280,7 @@ loadpcs()
 		if (*cp == ')' || *cp == ':')
 			break;
 	if (*cp) {
-		bcopy(line, pcs, 99);
+		memcpy( pcs, line, 99);
 		pcs[99] = 0;
 		i = cp - line + 1;
 	} else

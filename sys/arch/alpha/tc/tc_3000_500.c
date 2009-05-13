@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.25 2002/09/27 15:35:39 provos Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.25.126.1 2009/05/13 17:16:08 jym Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.25 2002/09/27 15:35:39 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.25.126.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,17 +48,17 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.25 2002/09/27 15:35:39 provos Exp 
 #include "sfb.h"
 
 #if NSFB > 0
-extern int	sfb_cnattach __P((tc_addr_t));
+extern int	sfb_cnattach(tc_addr_t);
 #endif
 
-void	tc_3000_500_intr_setup __P((void));
-void	tc_3000_500_intr_establish __P((struct device *, void *,
-	    tc_intrlevel_t, int (*)(void *), void *));
-void	tc_3000_500_intr_disestablish __P((struct device *, void *));
-void	tc_3000_500_iointr __P((void *, unsigned long));
+void	tc_3000_500_intr_setup(void);
+void	tc_3000_500_intr_establish(struct device *, void *,
+	    tc_intrlevel_t, int (*)(void *), void *);
+void	tc_3000_500_intr_disestablish(struct device *, void *);
+void	tc_3000_500_iointr(void *, unsigned long);
 
-int	tc_3000_500_intrnull __P((void *));
-int	tc_3000_500_fb_cnattach __P((u_int64_t));
+int	tc_3000_500_intrnull(void *);
+int	tc_3000_500_fb_cnattach(u_int64_t);
 
 #define C(x)	((void *)(u_long)x)
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
@@ -104,7 +104,7 @@ u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 };
 
 struct tcintr {
-	int	(*tci_func) __P((void *));
+	int	(*tci_func)(void *);
 	void	*tci_arg;
 	struct evcnt tci_evcnt;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
@@ -144,9 +144,7 @@ tc_3000_500_intr_setup()
 }
 
 const struct evcnt *
-tc_3000_500_intr_evcnt(tcadev, cookie)
-	struct device *tcadev;
-	void *cookie;
+tc_3000_500_intr_evcnt(struct device *tcadev, void *cookie)
 {
 	u_long dev = (u_long)cookie;
 
@@ -158,11 +156,7 @@ tc_3000_500_intr_evcnt(tcadev, cookie)
 }
 
 void
-tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
-	struct device *tcadev;
-	void *cookie, *arg;
-	tc_intrlevel_t level;
-	int (*func) __P((void *));
+tc_3000_500_intr_establish(struct device *tcadev, void *cookie, tc_intrlevel_t level, int (*func)(void *), void *arg)
 {
 	u_long dev = (u_long)cookie;
 
@@ -182,9 +176,7 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 }
 
 void
-tc_3000_500_intr_disestablish(tcadev, cookie)
-	struct device *tcadev;
-	void *cookie;
+tc_3000_500_intr_disestablish(struct device *tcadev, void *cookie)
 {
 	u_long dev = (u_long)cookie;
 
@@ -205,8 +197,7 @@ tc_3000_500_intr_disestablish(tcadev, cookie)
 }
 
 int
-tc_3000_500_intrnull(val)
-	void *val;
+tc_3000_500_intrnull(void *val)
 {
 
 	panic("tc_3000_500_intrnull: uncaught TC intr for cookie %ld",
@@ -214,9 +205,7 @@ tc_3000_500_intrnull(val)
 }
 
 void
-tc_3000_500_iointr(arg, vec)
-        void *arg;
-        unsigned long vec;
+tc_3000_500_iointr(void *arg, unsigned long vec)
 {
         u_int32_t ir;
 	int ifound;
@@ -292,8 +281,7 @@ tc_3000_500_iointr(arg, vec)
  * framebuffer as the output side of the console.
  */
 int
-tc_3000_500_fb_cnattach(turbo_slot)
-	u_int64_t turbo_slot;
+tc_3000_500_fb_cnattach(u_int64_t turbo_slot)
 {
 	u_int32_t output_slot;
 
@@ -332,9 +320,7 @@ tc_3000_500_fb_cnattach(turbo_slot)
  *	Set the PBS bits for devices on the TC.
  */
 void
-tc_3000_500_ioslot(slot, flags, set)
-	u_int32_t slot, flags;
-	int set;
+tc_3000_500_ioslot(u_int32_t slot, u_int32_t flags, int set)
 {
 	volatile u_int32_t *iosp;
 	u_int32_t ios;

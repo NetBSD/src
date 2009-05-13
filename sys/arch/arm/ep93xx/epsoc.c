@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.8 2008/05/10 15:31:04 martin Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.8.12.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.8 2008/05/10 15:31:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.8.12.1 2009/05/13 17:16:13 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,11 +185,7 @@ epsoc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-epsoc_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+epsoc_submatch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct epsoc_attach_args *sa = aux;
 
@@ -203,11 +199,7 @@ epsoc_submatch(parent, cf, ldesc, aux)
 }
 
 int
-epsoc_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+epsoc_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct epsoc_attach_args *sa = aux;
 
@@ -222,9 +214,7 @@ epsoc_search(parent, cf, ldesc, aux)
 }
 
 static int
-epsoc_print(aux, name)
-	void *aux;
-	const char *name;
+epsoc_print(void *aux, const char *name)
 {
         struct epsoc_attach_args *sa = (struct epsoc_attach_args*)aux;
 

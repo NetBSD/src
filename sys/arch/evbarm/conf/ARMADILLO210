@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.11 2009/02/06 18:50:26 jym Exp $
+#	$NetBSD: ARMADILLO210,v 1.11.2.1 2009/05/13 17:16:37 jym Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -93,7 +93,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options

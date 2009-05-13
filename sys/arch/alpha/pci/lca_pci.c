@@ -1,4 +1,4 @@
-/* $NetBSD: lca_pci.c,v 1.15 2002/05/15 16:57:42 thorpej Exp $ */
+/* $NetBSD: lca_pci.c,v 1.15.130.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.15 2002/05/15 16:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.15.130.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,19 +43,17 @@ __KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.15 2002/05/15 16:57:42 thorpej Exp $")
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-void		lca_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		lca_bus_maxdevs __P((void *, int));
-pcitag_t	lca_make_tag __P((void *, int, int, int));
-void		lca_decompose_tag __P((void *, pcitag_t, int *, int *,
-		    int *));
-pcireg_t	lca_conf_read __P((void *, pcitag_t, int));
-void		lca_conf_write __P((void *, pcitag_t, int, pcireg_t));
+void		lca_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		lca_bus_maxdevs(void *, int);
+pcitag_t	lca_make_tag(void *, int, int, int);
+void		lca_decompose_tag(void *, pcitag_t, int *, int *,
+		    int *);
+pcireg_t	lca_conf_read(void *, pcitag_t, int);
+void		lca_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-lca_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+lca_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
@@ -68,16 +66,12 @@ lca_pci_init(pc, v)
 }
 
 void
-lca_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+lca_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
 int
-lca_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+lca_bus_maxdevs(void *cpv, int busno)
 {
 
 	if (busno == 0)
@@ -87,19 +81,14 @@ lca_bus_maxdevs(cpv, busno)
 }
 
 pcitag_t
-lca_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+lca_make_tag(void *cpv, int b, int d, int f)
 {
 
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
 void
-lca_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+lca_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)
@@ -111,10 +100,7 @@ lca_decompose_tag(cpv, tag, bp, dp, fp)
 }
 
 pcireg_t
-lca_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+lca_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap, data;
@@ -164,11 +150,7 @@ lca_conf_read(cpv, tag, offset)
 }
 
 void
-lca_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+lca_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.19 2007/03/04 05:59:02 christos Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.19.56.1 2009/05/13 17:16:01 jym Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.19 2007/03/04 05:59:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.19.56.1 2009/05/13 17:16:01 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -304,7 +304,7 @@ rio_getstats(rio_t *rp, struct redstats *sp)
 	int	i;
 
 	for (i = 0; i < RIO_NDROPPREC; i++) {
-		bcopy(&rp->q_stats[i], sp, sizeof(struct redstats));
+		memcpy(sp, &rp->q_stats[i], sizeof(struct redstats));
 		sp->q_avg = rp->rio_precstate[i].avg >> rp->rio_wshift;
 		sp++;
 	}
@@ -629,7 +629,7 @@ rioioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 
 			for (i = 0; i < RIO_NDROPPREC; i++) {
 				q_stats->q_len[i] = rp->rio_precstate[i].qlen;
-				bcopy(&rp->q_stats[i], &q_stats->q_stats[i],
+				memcpy(&q_stats->q_stats[i], &rp->q_stats[i],
 				      sizeof(struct redstats));
 				q_stats->q_stats[i].q_avg =
 				    rp->rio_precstate[i].avg >> rp->rio_wshift;

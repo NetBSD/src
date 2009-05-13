@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.18 2008/12/21 11:18:19 ad Exp $	*/
+/*	$NetBSD: pte.h,v 1.18.2.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -260,7 +260,12 @@ typedef uint32_t pt_entry_t;		/* PTE */
 
 #define	PG_KR		0x00000000	/* kernel read-only */
 #define	PG_KW		0x00000002	/* kernel read-write */
+
+#ifdef PAE
+#define	PG_NX		0x8000000000000000 /* No-execute */
+#else
 #define	PG_NX		0		/* dummy */
+#endif
 
 /*
  * page protection exception bits

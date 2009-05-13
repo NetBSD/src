@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.14.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.14.1 2009/05/13 17:18:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2008/04/28 20:23:31 martin Exp $");
 #include <playstation2/playstation2/interrupt.h>	/* interrupt_init */
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 	/*
 	 * During autoconfiguration, SIF BIOS uses DMAC SIF0 interrupt.
@@ -56,7 +56,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	setroot(NULL, 0);

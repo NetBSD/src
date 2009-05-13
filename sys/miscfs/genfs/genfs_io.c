@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.18 2009/02/04 20:32:19 rmind Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.18.2.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.18 2009/02/04 20:32:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.18.2.1 2009/05/13 17:22:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,6 +574,9 @@ loopdone:
 		error = biowait(mbp);
 	}
 
+	/* Remove the mapping (make KVA available as soon as possible) */
+	uvm_pagermapout(kva, npages);
+
 	/*
 	 * if this we encountered a hole then we have to do a little more work.
 	 * for read faults, we marked the page PG_RDONLY so that future
@@ -615,7 +618,6 @@ loopdone:
 	rw_exit(&gp->g_glock);
 
 	putiobuf(mbp);
-	uvm_pagermapout(kva, npages);
 
 	mutex_enter(&uobj->vmobjlock);
 
@@ -1387,26 +1389,6 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	splx(s);
 	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
 	return (error);
-}
-
-/*
- * VOP_PUTPAGES() for vnodes which never have pages.
- */
-
-int
-genfs_null_putpages(void *v)
-{
-	struct vop_putpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offlo;
-		voff_t a_offhi;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	KASSERT(vp->v_uobj.uo_npages == 0);
-	mutex_exit(&vp->v_interlock);
-	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.29 2009/01/03 17:46:05 christos Exp $
+#	$NetBSD: TWINTAIL,v 1.29.2.1 2009/05/13 17:16:37 jym Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -104,7 +104,6 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

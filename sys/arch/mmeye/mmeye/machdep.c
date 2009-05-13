@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2008/11/30 18:21:35 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46.4.1 2009/05/13 17:18:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,10 +65,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2008/11/30 18:21:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.4.1 2009/05/13 17:18:07 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,11 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2008/11/30 18:21:35 martin Exp $");
 char machine[] = MACHINE;		/* mmeye */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb */
 
-void initSH3 __P((void *));
-void LoadAndReset __P((const char *));
-void XLoadAndReset __P((char *));
-void consinit __P((void));
-void sh3_cache_on __P((void));
+void initSH3(void *);
+void LoadAndReset(const char *);
+void XLoadAndReset(char *);
+void consinit(void);
+void sh3_cache_on(void);
 void InitializeBsc(void);
 
 struct mmeye_intrhand {
@@ -121,7 +122,7 @@ struct mmeye_intrhand {
  * This is called from main() in kern/main.c.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 
 	sh_startup();
@@ -175,9 +176,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	if (cold) {
 		howto |= RB_HALT;
@@ -276,7 +275,7 @@ initSH3(void *pc)	/* XXX return address */
  * initialize the system console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted;
 
@@ -292,7 +291,7 @@ consinit()
  * : BSC(Bus State Controller)
  */
 void
-InitializeBsc()
+InitializeBsc(void)
 {
 #ifdef NOPCMCIA
 	/*
@@ -439,8 +438,7 @@ sh3_cache_on(void)
 #define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
 
 void
-LoadAndReset(osimage)
-	const char *osimage;
+LoadAndReset(const char *osimage)
 {
 	void *buf_addr;
 	u_long size;
@@ -616,12 +614,7 @@ mmeye_intr_disestablish(void *ih)
 }
 
 int
-bus_space_map(t, addr, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+bus_space_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	*bshp = (bus_space_handle_t)addr;
 
@@ -629,11 +622,7 @@ bus_space_map(t, addr, size, flags, bshp)
 }
 
 int
-sh_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+sh_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.28 2008/06/11 02:09:16 kiyohara Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.28.10.1 2009/05/13 17:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.28 2008/06/11 02:09:16 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.28.10.1 2009/05/13 17:20:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,6 +344,9 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 		aprint_normal("\n");
 		return 0;
 	}
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+	    PCI_COMMAND_MASTER_ENABLE);
 	return 1;
 }
 

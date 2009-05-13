@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.31 2008/07/16 18:54:09 drochner Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.31.8.1 2009/05/13 17:21:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -90,8 +90,6 @@ struct sd_softc {
 	callout_t sc_callout;
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
-
-	void *sc_sdhook;		/* our shutdown hook */
 
 #if NRND > 0
 	rndsource_element_t rnd_source;

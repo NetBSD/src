@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.10 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.10.14.1 2009/05/13 17:20:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.10 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.10.14.1 2009/05/13 17:20:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.10 2008/04/28 20:23:53 martin Exp $
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcadevs.h>
 
-int	tiara_mca_match __P((struct device *, struct cfdata *, void *));
-void	tiara_mca_attach __P((struct device *, struct device *, void *));
+int	tiara_mca_match(device_t, cfdata_t, void *);
+void	tiara_mca_attach(device_t, device_t, void *);
 
 #define TIARA_NPORTS 0x20 /* 32 */
 #define TIARA_PROM_ID 24 /* offset to mac addr stored in prom */
@@ -82,11 +82,10 @@ static const struct tiara_mca_product {
 	{ 0,			NULL },
 };
 
-static const struct tiara_mca_product *tiara_mca_lookup __P((u_int32_t));
+static const struct tiara_mca_product *tiara_mca_lookup(u_int32_t);
 
 static const struct tiara_mca_product *
-tiara_mca_lookup(id)
-	u_int32_t id;
+tiara_mca_lookup(u_int32_t id)
 {
 	const struct tiara_mca_product *tra_p;
 
@@ -98,7 +97,7 @@ tiara_mca_lookup(id)
 }
 
 int
-tiara_mca_match(struct device *parent, struct cfdata *match,
+tiara_mca_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct mca_attach_args *ma = (struct mca_attach_args *) aux;
@@ -121,7 +120,7 @@ static const int smc_irq[] = {
 };
 
 void
-tiara_mca_attach(struct device *parent, struct device *self, void *aux)
+tiara_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct tiara_softc *isc = device_private(self);
 	struct mb86950_softc *sc = &isc->sc_mb86950;

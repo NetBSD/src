@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.10 2007/10/18 18:55:10 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.10.34.1 2009/05/13 17:17:48 jym Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -163,9 +163,11 @@ pdtlbe(pa_space_t sp, vaddr_t va)
 }
 
 #ifdef _KERNEL
-void ficache(pa_space_t sp, vaddr_t va, vsize_t size);
-void fdcache(pa_space_t sp, vaddr_t va, vsize_t size);
-void pdcache(pa_space_t sp, vaddr_t va, vsize_t size);
+extern int (*cpu_hpt_init)(vaddr_t, vsize_t);
+
+void ficache(pa_space_t, vaddr_t, vsize_t);
+void fdcache(pa_space_t, vaddr_t, vsize_t);
+void pdcache(pa_space_t, vaddr_t, vsize_t);
 void fcacheall(void);
 void ptlball(void);
 hppa_hpa_t cpu_gethpa(int);

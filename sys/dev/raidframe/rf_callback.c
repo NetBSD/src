@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.20 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.20.68.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.20 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.20.68.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -58,8 +58,7 @@ rf_ShutdownCallback(void *ignored)
 }
 
 int
-rf_ConfigureCallback(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureCallback(RF_ShutdownList_t **listp)
 {
 
 	rf_pool_init(&rf_pools.callback, sizeof(RF_CallbackDesc_t),
@@ -70,7 +69,7 @@ rf_ConfigureCallback(listp)
 }
 
 RF_CallbackDesc_t *
-rf_AllocCallbackDesc()
+rf_AllocCallbackDesc(void)
 {
 	RF_CallbackDesc_t *p;
 
@@ -79,8 +78,7 @@ rf_AllocCallbackDesc()
 }
 
 void
-rf_FreeCallbackDesc(p)
-	RF_CallbackDesc_t *p;
+rf_FreeCallbackDesc(RF_CallbackDesc_t *p)
 {
 	pool_put(&rf_pools.callback, p);
 }

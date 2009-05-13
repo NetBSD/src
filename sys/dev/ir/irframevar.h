@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.18 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.18.14.1 2009/05/13 17:19:52 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,5 +58,5 @@ struct irframe_softc {
 #define IRDA_MAX_FRAME_SIZE	2048
 #define IRDA_MAX_EBOFS		64
 
-void irframe_attach(struct device *, struct device *, void *);
-int irframe_detach(struct device *, int);
+void irframe_attach(device_t, device_t, void *);
+int irframe_detach(device_t, int);

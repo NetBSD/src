@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.3 2008/02/16 17:37:13 apb Exp $	*/
+/*	$NetBSD: sha1.c,v 1.3.12.1 2009/05/13 17:23:11 jym Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -20,14 +20,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha1.c,v 1.3 2008/02/16 17:37:13 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha1.c,v 1.3.12.1 2009/05/13 17:23:11 jym Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1.c,v 1.3 2008/02/16 17:37:13 apb Exp $");
+__RCSID("$NetBSD: sha1.c,v 1.3.12.1 2009/05/13 17:23:11 jym Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -145,9 +145,7 @@ do_R4(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d, uint32_t *e, CHAR64LON
 /*
  * Hash a single 512-bit block. This is the core of the algorithm.
  */
-void SHA1Transform(state, buffer)
-    uint32_t state[5];
-    const u_char buffer[64];
+void SHA1Transform(uint32_t state[5], const u_char buffer[64])
 {
     uint32_t a, b, c, d, e;
     CHAR64LONG16 *block;
@@ -217,8 +215,7 @@ void SHA1Transform(state, buffer)
 /*
  * SHA1Init - Initialize new context
  */
-void SHA1Init(context)
-    SHA1_CTX *context;
+void SHA1Init(SHA1_CTX *context)
 {
 
     _DIAGASSERT(context != 0);
@@ -236,10 +233,7 @@ void SHA1Init(context)
 /*
  * Run your data through this.
  */
-void SHA1Update(context, data, len)
-    SHA1_CTX *context;
-    const u_char *data;
-    u_int len;
+void SHA1Update(SHA1_CTX *context, const u_char *data, u_int len)
 {
     u_int i, j;
 
@@ -266,9 +260,7 @@ void SHA1Update(context, data, len)
 /*
  * Add padding and return the message digest.
  */
-void SHA1Final(digest, context)
-    u_char digest[20];
-    SHA1_CTX* context;
+void SHA1Final(u_char digest[20], SHA1_CTX *context)
 {
     u_int i;
     u_char finalcount[8];

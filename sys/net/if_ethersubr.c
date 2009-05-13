@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.170 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.170.4.1 2009/05/13 17:22:19 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.170 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.170.4.1 2009/05/13 17:22:19 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1448,7 +1448,6 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ethercom *ec = (void *) ifp;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct if_laddrreq *iflr = data;
 	const struct sockaddr_dl *sdl;
 	static const uint8_t zero[ETHER_ADDR_LEN];
@@ -1463,8 +1462,12 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				return error;
 		}
 #ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(ifp, ifa);
+		{
+			struct ifaddr *ifa = (struct ifaddr *)data;
+
+			if (ifa->ifa_addr->sa_family == AF_INET)
+				arp_ifinit(ifp, ifa);
+		}
 #endif /* INET */
 		return 0;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.7 2007/11/27 11:37:27 pooka Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.7.32.1 2009/05/13 17:18:51 jym Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.7 2007/11/27 11:37:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.7.32.1 2009/05/13 17:18:51 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -81,7 +81,7 @@ static const struct kernfs_fileop xsd_port_fileops[] = {
 };
 
 void
-xenbus_kernfs_init()
+xenbus_kernfs_init(void)
 {
 	kernfs_entry_t *dkt;
 	kfstype kfst;

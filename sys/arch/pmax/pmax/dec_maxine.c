@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.52.24.1 2009/05/13 17:18:13 jym Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52.24.1 2009/05/13 17:18:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,16 +131,16 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $"
 #include "wsdisplay.h"
 #include "xcfb.h"
 
-void		dec_maxine_init __P((void));		/* XXX */
-static void	dec_maxine_bus_reset __P((void));
-static void	dec_maxine_cons_init __P((void));
-static void	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_maxine_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
+void		dec_maxine_init(void);		/* XXX */
+static void	dec_maxine_bus_reset(void);
+static void	dec_maxine_cons_init(void);
+static void	dec_maxine_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_maxine_intr_establish(struct device *, void *,
+		    int, int (*)(void *), void *);
 
 static void	dec_maxine_tc_init(void);
 
-static void	kn02ca_wbflush __P((void));
+static void	kn02ca_wbflush(void);
 
 /*
  * local declarations
@@ -162,7 +162,7 @@ static const int dec_maxine_ipl2spl_table[] = {
 };
 
 void
-dec_maxine_init()
+dec_maxine_init(void)
 {
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_maxine_bus_reset;
@@ -206,7 +206,7 @@ dec_maxine_init()
  * Initialize the memory system and I/O buses.
  */
 static void
-dec_maxine_bus_reset()
+dec_maxine_bus_reset(void)
 {
 	/*
 	 * Reset interrupts, clear any errors from newconf probes
@@ -221,7 +221,7 @@ dec_maxine_bus_reset()
 
 
 static void
-dec_maxine_cons_init()
+dec_maxine_cons_init(void)
 {
 	int kbd, crt, screen;
 
@@ -256,12 +256,7 @@ dec_maxine_cons_init()
 }
 
 static void
-dec_maxine_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
+dec_maxine_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 	unsigned mask;
 
@@ -317,11 +312,7 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static void
-dec_maxine_intr(status, cause, pc, ipending)
-	unsigned ipending;
-	unsigned pc;
-	unsigned status;
-	unsigned cause;
+dec_maxine_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 {
 	if (ipending & MIPS_INT_MASK_4)
 		prom_haltbutton();

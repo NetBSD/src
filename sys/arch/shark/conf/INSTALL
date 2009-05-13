@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.40 2009/02/06 18:50:28 jym Exp $
+#	$NetBSD: INSTALL,v 1.40.2.1 2009/05/13 17:18:22 jym Exp $
 #
 #	Shark installation kernel
 #
@@ -104,7 +104,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

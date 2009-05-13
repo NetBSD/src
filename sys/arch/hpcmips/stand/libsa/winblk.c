@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.7 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: winblk.c,v 1.7.90.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -74,13 +74,7 @@ struct winblk {
 static int rawread(struct winblk *ctx, int start, int nsecs, char *buf);
 
 int 
-winblkstrategy(devdata, flag, dblk, size, buf, rsize)
-	void           *devdata;
-	int             flag;
-	daddr_t         dblk;
-	size_t          size;
-	void           *buf;
-	size_t         *rsize;
+winblkstrategy(void *devdata, int flag, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct winblk *ctx = (struct winblk*)devdata;
 	int error;
@@ -296,8 +290,7 @@ winblkopen(struct open_file *f, ...)
 }
 
 int 
-winblkclose(f)
-	struct open_file *f;
+winblkclose(struct open_file *f)
 {
 	struct winblk *ctx = f->f_devdata;
 
@@ -308,19 +301,13 @@ winblkclose(f)
 }
 
 int 
-winblkioctl(f, cmd, arg)
-	struct open_file *f;
-	u_long          cmd;
-	void           *arg;
+winblkioctl(struct open_file *f, u_long cmd, void *arg)
 {
 	return EIO;
 }
 
 static int
-rawread(ctx, start, nsecs, buf)
-	struct winblk *ctx;
-	int start, nsecs;
-	char *buf;
+rawread(struct winblk *ctx, int start, int nsecs, char *buf)
 {
 	SG_REQ req;
 	DWORD res;

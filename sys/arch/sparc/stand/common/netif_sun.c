@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.10 2009/01/12 11:32:44 tsutsui Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.10.2.1 2009/05/13 17:18:37 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -87,7 +87,7 @@ netif_open(void *machdep_hint)
 		errno = ENFILE;
 		return (-1);
 	}
-	bzero(io, sizeof(*io));
+	memset(io, 0, sizeof(*io));
 
 	netif_prom.nif_devdata = pd;
 	io->io_netif = &netif_prom;

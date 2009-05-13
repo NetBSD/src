@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.172 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.172.2.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.172 2009/01/11 02:45:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.172.2.1 2009/05/13 17:23:07 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.172 2009/01/11 02:45:56 christos Exp
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
+#include <miscfs/genfs/genfs.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
@@ -355,7 +356,7 @@ ufs_getattr(void *v)
 	vap->va_fsid = ip->i_dev;
 	vap->va_fileid = ip->i_number;
 	vap->va_mode = ip->i_mode & ALLPERMS;
-	vap->va_nlink = ip->i_ffs_effnlink;
+	vap->va_nlink = ip->i_nlink;
 	vap->va_uid = ip->i_uid;
 	vap->va_gid = ip->i_gid;
 	vap->va_size = vp->v_size;
@@ -584,11 +585,8 @@ ufs_setattr(void *v)
 			error = EPERM;
 			goto out;
 		}
-		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) &&
-		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred))))
+		error = genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred);
+		if (error)
 			goto out;
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
@@ -640,21 +638,16 @@ static int
 ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct inode	*ip;
-	int		error, ismember = 0;
+	int		error;
 
 	UFS_WAPBL_JLOCK_ASSERT(vp->v_mount);
 
 	ip = VTOI(vp);
-	if (kauth_cred_geteuid(cred) != ip->i_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)))
+
+	error = genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode);
+	if (error)
 		return (error);
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		if (vp->v_type != VDIR && (mode & S_ISTXT))
-			return (EFTYPE);
-		if ((kauth_cred_ismember_gid(cred, ip->i_gid, &ismember) != 0 ||
-		    !ismember) && (mode & ISGID))
-			return (EPERM);
-	}
+
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
@@ -672,7 +665,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     	struct lwp *l)
 {
 	struct inode	*ip;
-	int		error, ismember = 0;
+	int		error = 0;
 #ifdef QUOTA
 	uid_t		ouid;
 	gid_t		ogid;
@@ -685,19 +678,9 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		uid = ip->i_uid;
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
-	/*
-	 * If we don't own the file, are trying to change the owner
-	 * of the file, or are not a member of the target group,
-	 * the caller's credentials must imply super-user privilege
-	 * or the call fails.
-	 */
-	if ((kauth_cred_geteuid(cred) != ip->i_uid || uid != ip->i_uid ||
-	    (gid != ip->i_gid &&
-	    !(kauth_cred_getegid(cred) == gid ||
-	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
-	    ismember)))) &&
-	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0))
+
+	error = genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid);
+	if (error)
 		return (error);
 
 #ifdef QUOTA
@@ -743,7 +726,6 @@ ufs_remove(void *v)
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
 	int		error;
-	bool		pace;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
@@ -765,16 +747,8 @@ ufs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	pace = DOINGSOFTDEP(dvp);
 	vput(dvp);
 	fstrans_done(dvp->v_mount);
-	if (pace) {
-		/*
-		 * Give the syncer some breathing room so that it
-		 * can flush removes.  XXX
-		 */
-		softdep_pace_dirrem();
-	}
 	return (error);
 }
 
@@ -833,12 +807,9 @@ ufs_link(void *v)
 		VOP_ABORTOP(dvp, cnp);
 		goto out1;
 	}
-	ip->i_ffs_effnlink++;
 	ip->i_nlink++;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
-	if (DOINGSOFTDEP(vp))
-		softdep_change_linkcnt(ip);
 	error = UFS_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
@@ -847,13 +818,10 @@ ufs_link(void *v)
 		pool_cache_put(ufs_direct_cache, newdir);
 	}
 	if (error) {
-		ip->i_ffs_effnlink--;
 		ip->i_nlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
 		UFS_WAPBL_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
-		if (DOINGSOFTDEP(vp))
-			softdep_change_linkcnt(ip);
 	}
 	PNBUF_PUT(cnp->cn_pnbuf);
 	UFS_WAPBL_END(vp->v_mount);
@@ -1101,12 +1069,9 @@ ufs_rename(void *v)
 	 *    completing our work, the link count
 	 *    may be wrong, but correctable.
 	 */
-	ip->i_ffs_effnlink++;
 	ip->i_nlink++;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
-	if (DOINGSOFTDEP(fvp))
-		softdep_change_linkcnt(ip);
 	if ((error = UFS_UPDATE(fvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		VOP_UNLOCK(fvp, 0);
 		goto bad;
@@ -1168,20 +1133,14 @@ ufs_rename(void *v)
 				error = EMLINK;
 				goto bad;
 			}
-			dp->i_ffs_effnlink++;
 			dp->i_nlink++;
 			DIP_ASSIGN(dp, nlink, dp->i_nlink);
 			dp->i_flag |= IN_CHANGE;
-			if (DOINGSOFTDEP(tdvp))
-				softdep_change_linkcnt(dp);
 			if ((error = UFS_UPDATE(tdvp, NULL, NULL,
 			    UPDATE_DIROP)) != 0) {
-				dp->i_ffs_effnlink--;
 				dp->i_nlink--;
 				DIP_ASSIGN(dp, nlink, dp->i_nlink);
 				dp->i_flag |= IN_CHANGE;
-				if (DOINGSOFTDEP(tdvp))
-					softdep_change_linkcnt(dp);
 				goto bad;
 			}
 		}
@@ -1191,12 +1150,9 @@ ufs_rename(void *v)
 		pool_cache_put(ufs_direct_cache, newdir);
 		if (error != 0) {
 			if (doingdirectory && newparent) {
-				dp->i_ffs_effnlink--;
 				dp->i_nlink--;
 				DIP_ASSIGN(dp, nlink, dp->i_nlink);
 				dp->i_flag |= IN_CHANGE;
-				if (DOINGSOFTDEP(tdvp))
-					softdep_change_linkcnt(dp);
 				(void)UFS_UPDATE(tdvp, NULL, NULL,
 						 UPDATE_WAIT|UPDATE_DIROP);
 			}
@@ -1232,7 +1188,7 @@ ufs_rename(void *v)
 		 * (both directories, or both not directories).
 		 */
 		if ((xp->i_mode & IFMT) == IFDIR) {
-			if (xp->i_ffs_effnlink > 2 ||
+			if (xp->i_nlink > 2 ||
 			    !ufs_dirempty(xp, dp->i_number, tcnp->cn_cred)) {
 				error = ENOTEMPTY;
 				goto bad;
@@ -1251,26 +1207,12 @@ ufs_rename(void *v)
 		    newparent : doingdirectory, IN_CHANGE | IN_UPDATE)) != 0)
 			goto bad;
 		if (doingdirectory) {
-			if (!newparent) {
-				dp->i_ffs_effnlink--;
-				if (DOINGSOFTDEP(tdvp))
-					softdep_change_linkcnt(dp);
-			}
-			xp->i_ffs_effnlink--;
-			if (DOINGSOFTDEP(tvp))
-				softdep_change_linkcnt(xp);
-		}
-		if (doingdirectory && !DOINGSOFTDEP(tvp)) {
 			/*
 			 * Truncate inode. The only stuff left in the directory
 			 * is "." and "..". The "." reference is inconsequential
 			 * since we are quashing it. We have removed the "."
 			 * reference and the reference in the parent directory,
-			 * but there may be other hard links. The soft
-			 * dependency code will arrange to do these operations
-			 * after the parent directory entry has been deleted on
-			 * disk, so when running with that code we avoid doing
-			 * them now.
+			 * but there may be other hard links.
 			 */
 			if (!newparent) {
 				dp->i_nlink--;
@@ -1360,13 +1302,10 @@ ufs_rename(void *v)
 	if (doingdirectory)
 		ip->i_flag &= ~IN_RENAME;
 	if (vn_lock(fvp, LK_EXCLUSIVE) == 0) {
-		ip->i_ffs_effnlink--;
 		ip->i_nlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
 		ip->i_flag &= ~IN_RENAME;
-		if (DOINGSOFTDEP(fvp))
-			softdep_change_linkcnt(ip);
 		vput(fvp);
 	} else
 		vrele(fvp);
@@ -1394,7 +1333,7 @@ ufs_mkdir(void *v)
 	struct buf		*bp;
 	struct dirtemplate	dirtemplate;
 	struct direct		*newdir;
-	int			error, dmode, blkoff;
+	int			error, dmode;
 	struct ufsmount		*ump = dp->i_ump;
 	int			dirblksiz = ump->um_dirblksiz;
 
@@ -1441,11 +1380,8 @@ ufs_mkdir(void *v)
 	ip->i_mode = dmode;
 	DIP_ASSIGN(ip, mode, dmode);
 	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
-	ip->i_ffs_effnlink = 2;
 	ip->i_nlink = 2;
 	DIP_ASSIGN(ip, nlink, 2);
-	if (DOINGSOFTDEP(tvp))
-		softdep_change_linkcnt(ip);
 	if (cnp->cn_flags & ISWHITEOUT) {
 		ip->i_flags |= UF_OPAQUE;
 		DIP_ASSIGN(ip, flags, ip->i_flags);
@@ -1456,12 +1392,9 @@ ufs_mkdir(void *v)
 	 * Should be done before reference is created so cleanup is
 	 * possible if we crash.
 	 */
-	dp->i_ffs_effnlink++;
 	dp->i_nlink++;
 	DIP_ASSIGN(dp, nlink, dp->i_nlink);
 	dp->i_flag |= IN_CHANGE;
-	if (DOINGSOFTDEP(dvp))
-		softdep_change_linkcnt(dp);
 	if ((error = UFS_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 
@@ -1497,36 +1430,15 @@ ufs_mkdir(void *v)
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	uvm_vnp_setsize(tvp, ip->i_size);
 	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
-	if (DOINGSOFTDEP(tvp)) {
-		/*
-		 * Ensure that the entire newly allocated block is a
-		 * valid directory so that future growth within the
-		 * block does not have to ensure that the block is
-		 * written before the inode.
-		 */
-		blkoff = dirblksiz;
-		while (blkoff < bp->b_bcount) {
-			((struct direct *)
-			  ((char *)bp->b_data + blkoff))->d_reclen = dirblksiz;
-			blkoff += dirblksiz;
-		}
-	}
+
 	/*
 	 * Directory set up, now install it's entry in the parent directory.
-	 *
-	 * If we are not doing soft dependencies, then we must write out the
-	 * buffer containing the new directory body before entering the new
-	 * name in the parent. If we are doing soft dependencies, then the
-	 * buffer containing the new directory body will be passed to and
-	 * released in the soft dependency code after the code has attached
-	 * an appropriate ordering dependency to the buffer which ensures that
-	 * the buffer is written before the new name is written in the parent.
+	 * We must write out the buffer containing the new directory body
+	 * before entering the new name in the parent.
 	 */
-	if (!DOINGSOFTDEP(tvp) && ((error = VOP_BWRITE(bp)) != 0))
+	if ((error = VOP_BWRITE(bp)) != 0)
 		goto bad;
 	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
-		if (DOINGSOFTDEP(tvp))
-			(void)VOP_BWRITE(bp);
 		goto bad;
 	}
 	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
@@ -1538,26 +1450,20 @@ ufs_mkdir(void *v)
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		UFS_WAPBL_END(dvp->v_mount);
 	} else {
-		dp->i_ffs_effnlink--;
 		dp->i_nlink--;
 		DIP_ASSIGN(dp, nlink, dp->i_nlink);
 		dp->i_flag |= IN_CHANGE;
 		UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
-		if (DOINGSOFTDEP(dvp))
-			softdep_change_linkcnt(dp);
 		/*
 		 * No need to do an explicit UFS_TRUNCATE here, vrele will
 		 * do this for us because we set the link count to 0.
 		 */
-		ip->i_ffs_effnlink = 0;
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
 		ip->i_flag |= IN_CHANGE;
 		/* If IN_ADIROP, account for it */
 		UFS_UNMARK_VNODE(tvp);
 		UFS_WAPBL_UPDATE(tvp, NULL, NULL, UPDATE_DIROP);
-		if (DOINGSOFTDEP(tvp))
-			softdep_change_linkcnt(ip);
 		UFS_WAPBL_END(dvp->v_mount);
 		vput(tvp);
 	}
@@ -1580,7 +1486,6 @@ ufs_rmdir(void *v)
 	struct componentname	*cnp;
 	struct inode		*ip, *dp;
 	int			error;
-	bool			pace;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
@@ -1612,7 +1517,7 @@ ufs_rmdir(void *v)
 		error = EINVAL;
 		goto out;
 	}
-	if (ip->i_ffs_effnlink != 2 ||
+	if (ip->i_nlink != 2 ||
 	    !ufs_dirempty(ip, dp->i_number, cnp->cn_cred)) {
 		error = ENOTEMPTY;
 		goto out;
@@ -1630,20 +1535,8 @@ ufs_rmdir(void *v)
 	 * inode.  If we crash in between, the directory
 	 * will be reattached to lost+found,
 	 */
-	if (DOINGSOFTDEP(vp)) {
-		dp->i_ffs_effnlink--;
-		ip->i_ffs_effnlink--;
-		softdep_change_linkcnt(dp);
-		softdep_change_linkcnt(ip);
-	}
 	error = ufs_dirremove(dvp, ip, cnp->cn_flags, 1);
 	if (error) {
-		if (DOINGSOFTDEP(vp)) {
-			dp->i_ffs_effnlink++;
-			ip->i_ffs_effnlink++;
-			softdep_change_linkcnt(dp);
-			softdep_change_linkcnt(ip);
-		}
 		UFS_WAPBL_END(dvp->v_mount);
 		goto out;
 	}
@@ -1652,22 +1545,16 @@ ufs_rmdir(void *v)
 	/*
 	 * Truncate inode.  The only stuff left in the directory is "." and
 	 * "..".  The "." reference is inconsequential since we're quashing
-	 * it. The soft dependency code will arrange to do these operations
-	 * after the parent directory entry has been deleted on disk, so
-	 * when running with that code we avoid doing them now.
+	 * it.
 	 */
-	if (!DOINGSOFTDEP(vp)) {
-		dp->i_nlink--;
-		dp->i_ffs_effnlink--;
-		DIP_ASSIGN(dp, nlink, dp->i_nlink);
-		dp->i_flag |= IN_CHANGE;
-		UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
-		ip->i_nlink--;
-		ip->i_ffs_effnlink--;
-		DIP_ASSIGN(ip, nlink, ip->i_nlink);
-		ip->i_flag |= IN_CHANGE;
-		error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
-	}
+	dp->i_nlink--;
+	DIP_ASSIGN(dp, nlink, dp->i_nlink);
+	dp->i_flag |= IN_CHANGE;
+	UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
+	ip->i_nlink--;
+	DIP_ASSIGN(ip, nlink, ip->i_nlink);
+	ip->i_flag |= IN_CHANGE;
+	error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
 	/*
 	 * Unlock the log while we still have reference to unlinked
@@ -1681,16 +1568,8 @@ ufs_rmdir(void *v)
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	fstrans_done(dvp->v_mount);
-	pace = DOINGSOFTDEP(dvp);
 	vput(dvp);
 	vput(vp);
-	if (pace) {
-		/*
-		 * Give the syncer some breathing room so that it
-		 * can flush removes.  XXX
-		 */
-		softdep_pace_dirrem();
-	}
 	return (error);
 }
 
@@ -2000,8 +1879,8 @@ ufs_print(void *v)
 	    (unsigned long long)ip->i_number,
 	    (unsigned long long)major(ip->i_dev),
 	    (unsigned long long)minor(ip->i_dev));
-	printf(" flags 0x%x, effnlink %d, nlink %d\n",
-	    ip->i_flag, ip->i_ffs_effnlink, ip->i_nlink);
+	printf(" flags 0x%x, nlink %d\n",
+	    ip->i_flag, ip->i_nlink);
 	printf("\tmode 0%o, owner %d, group %d, size %qd",
 	    ip->i_mode, ip->i_uid, ip->i_gid,
 	    (long long)ip->i_size);
@@ -2317,11 +2196,8 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->i_mode = mode;
 	DIP_ASSIGN(ip, mode, mode);
 	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
-	ip->i_ffs_effnlink = 1;
 	ip->i_nlink = 1;
 	DIP_ASSIGN(ip, nlink, 1);
-	if (DOINGSOFTDEP(tvp))
-		softdep_change_linkcnt(ip);
 	if ((ip->i_mode & ISGID) && (kauth_cred_ismember_gid(cnp->cn_cred,
 	    ip->i_gid, &ismember) != 0 || !ismember) &&
 	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
@@ -2356,15 +2232,12 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	 * Write error occurred trying to update the inode
 	 * or the directory so must deallocate the inode.
 	 */
-	ip->i_ffs_effnlink = 0;
 	ip->i_nlink = 0;
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
 	/* If IN_ADIROP, account for it */
 	UFS_UNMARK_VNODE(tvp);
 	UFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
-	if (DOINGSOFTDEP(tvp))
-		softdep_change_linkcnt(ip);
 	tvp->v_type = VNON;		/* explodes later if VBLK */
 	UFS_WAPBL_END1(dvp->v_mount, dvp);
 	vput(tvp);

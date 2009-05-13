@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.78 2009/01/24 05:06:07 mrg Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.78.2.1 2009/05/13 17:18:17 jym Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.78 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.78.2.1 $"
 
 maxusers	32
 
@@ -211,7 +211,12 @@ gio0		at pic0
 imc0 		at mainbus0 addr 0x1fa00000
 gio0 		at imc0
 eisa0 		at imc0
+
 int0		at mainbus0		# Interrupt controller
+
+# Some clocks actually in HPC space, but not all
+dpclock0	at mainbus0 addr 0x1fb80e00	# IP12 / IP20
+dsclock0	at mainbus0 addr 0x1fbe0000	# IP22 / 24
 
 hpc0 		at gio? addr 0x1fb80000
 hpc1 		at gio? addr 0x1fb00000
@@ -241,8 +246,6 @@ tlphy*		at mii? phy ?		 # ThunderLAN PHY (unused)
 # HPC devices
 sq* 		at hpc? offset ?	# On-board ethernet / E++ adapter
 wdsc* 		at hpc? offset ?	# On-board SCSI / GIO32 SCSI adapter
-dpclock*	at hpc0 offset ?	# IP12 / IP20
-dsclock*	at hpc0 offset ?	# IP22 / 24
 haltwo*         at hpc0 offset ?	# IP22 / 24
 pckbc*		at hpc0 offset ?
 

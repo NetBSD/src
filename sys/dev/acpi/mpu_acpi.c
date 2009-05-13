@@ -1,4 +1,4 @@
-/* $NetBSD: mpu_acpi.c,v 1.8 2008/03/27 10:22:00 xtraeme Exp $ */
+/* $NetBSD: mpu_acpi.c,v 1.8.18.1 2009/05/13 17:19:10 jym Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.8 2008/03/27 10:22:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.8.18.1 2009/05/13 17:19:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,9 +97,6 @@ mpu_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_io *io;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	/* parse resources */
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",

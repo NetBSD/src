@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.8 2007/01/21 23:19:57 macallan Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.8.64.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.8 2007/01/21 23:19:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.8.64.1 2009/05/13 17:18:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,9 +304,7 @@ struct bus_space isa_mem_bs_tag = {
 /* bus space functions */
 
 void
-isa_io_init(isa_io_addr, isa_mem_addr)
-	vaddr_t isa_io_addr;
-	vaddr_t isa_mem_addr;
+isa_io_init(vaddr_t isa_io_addr, vaddr_t isa_mem_addr)
 {
 	isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
 	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
@@ -330,22 +328,14 @@ isa_mem_data_vaddr(void)
 }
 
 int
-isa_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+isa_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
 {
 	*bshp = bpa + (bus_addr_t)t;
 	return(0);
 }
 
 void
-isa_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+isa_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/* Nothing to do. */
 }
@@ -380,11 +370,7 @@ isa_bs_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
 }
 
 int
-isa_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+isa_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 /*	printf("isa_subregion(tag=%p, bsh=%lx, off=%lx, sz=%lx)\n",
 	    t, bsh, offset, size);*/
@@ -406,29 +392,20 @@ isa_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 }
 
 void    
-isa_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+isa_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("isa_free(): Help!");
 }
 
 void *
-isa_bs_vaddr(t, bsh)
-	void *t;
-	bus_space_handle_t bsh;
+isa_bs_vaddr(void *t, bus_space_handle_t bsh)
 {
 
 	return ((void *)bsh);
 }
 
 void
-isa_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+isa_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 	/* just return */
 }	

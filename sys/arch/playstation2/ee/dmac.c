@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac.c,v 1.9 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: dmac.c,v 1.9.14.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.9 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.9.14.1 2009/05/13 17:18:12 jym Exp $");
 
 #include "debug_playstation2.h"
 
@@ -77,7 +77,7 @@ STATIC SLIST_HEAD(, _ipl_dispatcher) __dmac_dispatcher_head =
  SLIST_HEAD_INITIALIZER(__dmac_dispatcher_head);
 
 void
-dmac_init()
+dmac_init(void)
 {
 	int i;
 
@@ -302,7 +302,7 @@ dmac_stop_channel(enum dmac_channel ch)
 }
 
 void
-dmac_sync_buffer()
+dmac_sync_buffer(void)
 {
 
 	mips_dcache_wbinv_all();
@@ -335,7 +335,7 @@ dmac_cpc_clear(enum dmac_channel ch)
 }
 
 void
-dmac_cpc_poll()
+dmac_cpc_poll(void)
 {
 	__asm volatile(
 		".set noreorder;"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.231 2008/12/10 11:10:19 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.231.2.1 2009/05/13 17:18:38 jym Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.231 2008/12/10 11:10:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.231.2.1 2009/05/13 17:18:38 jym Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -486,7 +486,7 @@ pmap_mp_init(void)
 		panic("pmap_mp_init: Cannot claim a page.");
 	}
 
-	bcopy(mp_tramp_code, v, mp_tramp_code_len);
+	memcpy( v, mp_tramp_code, mp_tramp_code_len);
 	*(u_long *)(v + mp_tramp_tlb_slots) = kernel_tlb_slots;
 	*(u_long *)(v + mp_tramp_func) = (u_long)cpu_mp_startup;
 	*(u_long *)(v + mp_tramp_ci) = (u_long)cpu_args;
@@ -1223,7 +1223,7 @@ cpu_pmap_init(struct cpu_info *ci)
  * Called during vm_init().
  */
 void
-pmap_init()
+pmap_init(void)
 {
 	struct vm_page *pg;
 	struct pglist pglist;
@@ -1279,8 +1279,7 @@ pmap_init()
  */
 static vaddr_t kbreak; /* End of kernel VA */
 void
-pmap_virtual_space(start, end)
-	vaddr_t *start, *end;
+pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 
 	/*
@@ -1303,8 +1302,7 @@ pmap_virtual_space(start, end)
  * expect it to be called that often.
  */
 vaddr_t
-pmap_growkernel(maxkvaddr)
-        vaddr_t maxkvaddr;
+pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *pm = pmap_kernel();
 	paddr_t pa;
@@ -1340,7 +1338,7 @@ pmap_growkernel(maxkvaddr)
  * Create and return a physical map.
  */
 struct pmap *
-pmap_create()
+pmap_create(void)
 {
 	struct pmap *pm;
 
@@ -1365,8 +1363,7 @@ pmap_create()
  * Add a reference to the given pmap.
  */
 void
-pmap_reference(pm)
-	struct pmap *pm;
+pmap_reference(struct pmap *pm)
 {
 
 	atomic_inc_uint(&pm->pm_refs);
@@ -1377,8 +1374,7 @@ pmap_reference(pm)
  * Should only be called if the map contains no valid mappings.
  */
 void
-pmap_destroy(pm)
-	struct pmap *pm;
+pmap_destroy(struct pmap *pm)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
@@ -1420,10 +1416,7 @@ pmap_destroy(pm)
  * This routine is only advisory and need not do anything.
  */
 void
-pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	struct pmap *dst_pmap, *src_pmap;
-	vaddr_t dst_addr, src_addr;
-	vsize_t len;
+pmap_copy(struct pmap *dst_pmap, struct pmap *src_pmap, vaddr_t dst_addr, vsize_t len, vaddr_t src_addr)
 {
 
 	DPRINTF(PDB_CREATE, ("pmap_copy(%p, %p, %p, %lx, %p)\n",
@@ -1440,8 +1433,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  * Called by the pageout daemon when pages are scarce.
  */
 void
-pmap_collect(pm)
-	struct pmap *pm;
+pmap_collect(struct pmap *pm)
 {
 	int64_t data;
 	paddr_t pa, *pdir, *ptbl;
@@ -1504,8 +1496,7 @@ pmap_collect(pm)
  * process is the current process, load the new MMU context.
  */
 void
-pmap_activate(l)
-	struct lwp *l;
+pmap_activate(struct lwp *l)
 {
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
@@ -1541,8 +1532,7 @@ pmap_activate_pmap(struct pmap *pmap)
  * Deactivate the address space of the specified process.
  */
 void
-pmap_deactivate(l)
-	struct lwp *l;
+pmap_deactivate(struct lwp *l)
 {
 }
 
@@ -1555,10 +1545,7 @@ pmap_deactivate(l)
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pte_t tte;
 	paddr_t ptp;
@@ -1630,9 +1617,7 @@ pmap_kenter_pa(va, pa, prot)
  *	for size bytes (assumed to be page rounded).
  */
 void
-pmap_kremove(va, size)
-	vaddr_t va;
-	vsize_t size;
+pmap_kremove(vaddr_t va, vsize_t size)
 {
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
@@ -1698,12 +1683,7 @@ pmap_kremove(va, size)
  */
 
 int
-pmap_enter(pm, va, pa, prot, flags)
-	struct pmap *pm;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pte_t tte;
 	int64_t data;
@@ -1966,8 +1946,7 @@ pmap_enter(pm, va, pa, prot, flags)
 }
 
 void
-pmap_remove_all(pm)
-	struct pmap *pm;
+pmap_remove_all(struct pmap *pm)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
@@ -1996,9 +1975,7 @@ pmap_remove_all(pm)
  * Remove the given range of mapping entries.
  */
 void
-pmap_remove(pm, va, endva)
-	struct pmap *pm;
-	vaddr_t va, endva;
+pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 {
 	int64_t data;
 	paddr_t pa;
@@ -2103,10 +2080,7 @@ pmap_remove(pm, va, endva)
  * Change the protection on the specified range of this pmap.
  */
 void
-pmap_protect(pm, sva, eva, prot)
-	struct pmap *pm;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	paddr_t pa;
 	int64_t data;
@@ -2188,10 +2162,7 @@ pmap_protect(pm, sva, eva, prot)
  * with the given map/virtual_address pair.
  */
 bool
-pmap_extract(pm, va, pap)
-	struct pmap *pm;
-	vaddr_t va;
-	paddr_t *pap;
+pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
 	int64_t data = 0;
@@ -2270,9 +2241,7 @@ pmap_extract(pm, va, pap)
  * This should only be called from MD code.
  */
 void
-pmap_kprotect(va, prot)
-	vaddr_t va;
-	vm_prot_t prot;
+pmap_kprotect(vaddr_t va, vm_prot_t prot)
 {
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
@@ -2299,7 +2268,7 @@ pmap_kprotect(va, prot)
  * Return the number bytes that pmap_dumpmmu() will dump.
  */
 int
-pmap_dumpsize()
+pmap_dumpsize(void)
 {
 	int	sz;
 
@@ -2502,8 +2471,7 @@ ptelookup_va(vaddr_t va)
  */
 
 bool
-pmap_clear_modify(pg)
-	struct vm_page *pg;
+pmap_clear_modify(struct vm_page *pg)
 {
 	pv_entry_t pv;
 	int rv;
@@ -2586,8 +2554,7 @@ pmap_clear_modify(pg)
 }
 
 bool
-pmap_clear_reference(pg)
-	struct vm_page *pg;
+pmap_clear_reference(struct vm_page *pg)
 {
 	pv_entry_t pv;
 	int rv;
@@ -2678,8 +2645,7 @@ pmap_clear_reference(pg)
 }
 
 bool
-pmap_is_modified(pg)
-	struct vm_page *pg;
+pmap_is_modified(struct vm_page *pg)
 {
 	pv_entry_t pv, npv;
 	bool res = false;
@@ -2825,9 +2791,7 @@ pmap_is_referenced(struct vm_page *pg)
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_unwire(pmap, va)
-	pmap_t	pmap;
-	vaddr_t va;
+pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	int64_t data;
 	int rv;
@@ -2863,9 +2827,7 @@ pmap_unwire(pmap, va)
  */
 
 void
-pmap_page_protect(pg, prot)
-	struct vm_page *pg;
-	vm_prot_t prot;
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	int64_t clear, set;
 	int64_t data = 0;
@@ -3521,7 +3483,7 @@ db_dump_pv(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
  * Test ref/modify handling.  */
 void pmap_testout(void);
 void
-pmap_testout()
+pmap_testout(void)
 {
 	vaddr_t va;
 	volatile int *loc;

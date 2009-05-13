@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.27 2008/03/14 15:09:11 cube Exp $ */
+/* $NetBSD: com_acpi.c,v 1.27.18.1 2009/05/13 17:19:10 jym Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.27 2008/03/14 15:09:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.27.18.1 2009/05/13 17:19:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,6 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_irq *irq;
 	bus_space_handle_t ioh;
 	ACPI_STATUS rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	sc->sc_dev = self;
 

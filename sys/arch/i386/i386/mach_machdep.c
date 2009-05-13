@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.24 2008/05/11 14:44:54 ad Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.24.12.1 2009/05/13 17:17:49 jym Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.24 2008/05/11 14:44:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.24.12.1 2009/05/13 17:17:49 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -83,8 +83,7 @@ void mach_trap(struct trapframe);
  * Fast syscall gate trap...
  */
 void
-mach_trap(frame)
-	struct trapframe frame;
+mach_trap(struct trapframe frame)
 {
 	int ok = 0;
 	ksiginfo_t ksi;
@@ -153,8 +152,7 @@ abort:
 }
 
 void
-mach_host_basic_info(info)
-    struct mach_host_basic_info *info;
+mach_host_basic_info(struct mach_host_basic_info *info)
 {
 	int active, inactive;
 
@@ -185,8 +183,7 @@ mach_host_basic_info(info)
 }
 
 void
-mach_create_thread_child(arg)
-	void *arg;
+mach_create_thread_child(void *arg)
 {
 	/* 
 	 * This is a plain copy of the powerpc version. 

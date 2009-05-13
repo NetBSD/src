@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.15 2007/12/03 15:33:19 ad Exp $
+#	$NetBSD: files.pxa2x0,v 1.15.32.1 2009/05/13 17:16:18 jym Exp $
 #
 # Configuration info for Intel PXA2[751]0 CPU support
 #
@@ -90,5 +90,5 @@ attach	pxartc at pxaip
 file	arch/arm/xscale/pxa2x0_rtc.c		pxartc
 
 # MMC controller
-#device	pxamci: sdmmcbus
-#file	arch/arm/xscale/pxa2x0_mci.c		pxamci
+device	pxamci: sdmmcbus
+file	arch/arm/xscale/pxa2x0_mci.c		pxamci

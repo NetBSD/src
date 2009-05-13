@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.27 2008/11/24 11:41:14 ad Exp $
+# 	$NetBSD: NONPLUS64,v 1.27.4.1 2009/05/13 17:18:37 jym Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.27 $"
+#ident		"NONPLUS64-$Revision: 1.27.4.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -45,7 +45,6 @@ options 	KTRACE
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
 

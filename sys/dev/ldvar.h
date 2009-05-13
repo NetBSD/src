@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.15 2008/09/09 12:45:39 tron Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.15.8.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,9 +33,10 @@
 #define	_DEV_LDVAR_H_
 
 #include <sys/mutex.h>
+#include <sys/device.h>	/* for device_t */
 
 struct ld_softc {
-	struct	device *sc_dv;
+	device_t sc_dv;
 	struct	disk sc_dk;
 	struct	bufq_state *sc_bufq;
 	kmutex_t sc_mutex;

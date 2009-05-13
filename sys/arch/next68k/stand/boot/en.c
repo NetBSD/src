@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.15 2009/01/12 11:32:44 tsutsui Exp $        */
+/*      $NetBSD: en.c,v 1.15.2.1 2009/05/13 17:18:11 jym Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -221,7 +221,7 @@ en_put(struct iodesc *desc, void *pkt, size_t len)
 
 	for (retries = 0; retries < EN_RETRIES; retries++) {
 		er->txstat = 0xff;
-		bcopy(pkt, dma_buffers[0], len);
+		memcpy( dma_buffers[0], pkt, len);
 		txdma->dd_csr = (turbo ? DMACSR_INITBUFTURBO : DMACSR_INITBUF) |
 			DMACSR_RESET | DMACSR_WRITE;
 		txdma->dd_csr = 0;
@@ -391,7 +391,7 @@ dump_pkt(gotpkt, rlen < 255 ? rlen : 128);
 		rlen = len;
 	}
 
-	bcopy(gotpkt, pkt, rlen);
+	memcpy( pkt, gotpkt, rlen);
 
 #if 0
 	printf("DEBUG: gotpkt = 0x%lx, pkt = 0x%lx, rlen = %d\n",

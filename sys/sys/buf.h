@@ -1,7 +1,7 @@
-/*     $NetBSD: buf.h,v 1.110 2008/07/31 05:38:05 simonb Exp $ */
+/*     $NetBSD: buf.h,v 1.110.8.1 2009/05/13 17:23:03 jym Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -85,11 +85,6 @@ struct kauth_cred;
 #define NOLIST ((struct buf *)0x87654321)
 
 /*
- * To avoid including <ufs/ffs/softdep.h>
- */
-LIST_HEAD(workhead, worklist);
-
-/*
  * These are currently used only by the soft dependency code, hence
  * are stored once in a global variable. If other subsystems wanted
  * to use these hooks, a pointer to a set of bio_ops could be added
@@ -158,7 +153,7 @@ struct buf {
 
 	kcondvar_t		b_busy;		/* c: threads waiting on buf */
 	u_int			b_refcnt;	/* c: refcount for b_busy */
-	struct workhead		b_dep;		/* c: softdep */
+	void			*b_unused;	/*  : unused */
 	LIST_ENTRY(buf)		b_hash;		/* c: hash chain */
 	LIST_ENTRY(buf)		b_vnbufs;	/* c: associated vnode */
 	TAILQ_ENTRY(buf)	b_freelist;	/* c: position if not active */
@@ -262,7 +257,6 @@ do {									\
 #define	BPRIO_TIMENONCRITICAL	0
 #define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
-extern	const struct bio_ops *bioopsp;
 extern	u_int nbuf;		/* The number of buffer headers */
 
 /*
@@ -317,7 +311,7 @@ int	buf_syncwait(void);
 u_long	buf_memcalc(void);
 int	buf_drain(int);
 int	buf_setvalimit(vsize_t);
-#ifdef DDB
+#if defined(DDB) || defined(DEBUGPRINT)
 void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...));
 #endif
 buf_t	*getiobuf(struct vnode *, bool);

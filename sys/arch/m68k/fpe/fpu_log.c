@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.9 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.9.92.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.9 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.9.92.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -187,15 +187,14 @@ static struct sfpn {
     { 0x3FFE - 0x3fff, 0xB07197A2U, 0x3C46C654U },
 };
 
-static struct fpn *__fpu_logn __P((struct fpemu *fe));
+static struct fpn *__fpu_logn(struct fpemu *fe);
 
 /*
  * natural log - algorithm taken from Motorola FPSP,
  * except this doesn't bother to check for invalid input.
  */
 static struct fpn *
-__fpu_logn(fe)
-     struct fpemu *fe;
+__fpu_logn(struct fpemu *fe)
 {
     static struct fpn X, F, U, V, W, KLOG2;
     struct fpn *d;
@@ -470,8 +469,7 @@ __fpu_logn(fe)
 }
 
 struct fpn *
-fpu_log10(fe)
-     struct fpemu *fe;
+fpu_log10(struct fpemu *fe)
 {
     struct fpn *fp = &fe->fe_f2;
     u_int fpsr;
@@ -508,8 +506,7 @@ fpu_log10(fe)
 }
 
 struct fpn *
-fpu_log2(fe)
-     struct fpemu *fe;
+fpu_log2(struct fpemu *fe)
 {
     struct fpn *fp = &fe->fe_f2;
     u_int fpsr;
@@ -552,8 +549,7 @@ fpu_log2(fe)
 }
 
 struct fpn *
-fpu_logn(fe)
-     struct fpemu *fe;
+fpu_logn(struct fpemu *fe)
 {
     struct fpn *fp = &fe->fe_f2;
     u_int fpsr;
@@ -586,8 +582,7 @@ fpu_logn(fe)
 }
 
 struct fpn *
-fpu_lognp1(fe)
-     struct fpemu *fe;
+fpu_lognp1(struct fpemu *fe)
 {
     struct fpn *fp;
 

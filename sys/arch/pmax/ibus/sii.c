@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.4 2007/10/17 19:56:15 garbled Exp $	*/
+/*	$NetBSD: sii.c,v 1.4.34.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.4 2007/10/17 19:56:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.4.34.1 2009/05/13 17:18:12 jym Exp $");
 
 #include "sii.h"
 /*
@@ -132,18 +132,18 @@ static u_char	sii_buf[256];	/* used for extended messages */
  * Forward references
  */
 
-static void	sii_Reset __P((struct siisoftc *sc, int resetbus));
-static void	sii_StartCmd __P((struct siisoftc *sc, int target));
-static void	sii_CmdDone __P((struct siisoftc *sc, int target, int error));
-static void	sii_DoIntr __P((struct siisoftc *sc, u_int dstat));
-static void	sii_StateChg __P((struct siisoftc *sc, u_int cstat));
-static int	sii_GetByte __P((SIIRegs *regs, int phase, int ack));
-static void	sii_DoSync __P((SIIRegs *regs, State *state));
-static void	sii_StartDMA __P((SIIRegs *regs, int phase, u_short *dmaAddr,
-				  int size));
+static void	sii_Reset(struct siisoftc *sc, int resetbus);
+static void	sii_StartCmd(struct siisoftc *sc, int target);
+static void	sii_CmdDone(struct siisoftc *sc, int target, int error);
+static void	sii_DoIntr(struct siisoftc *sc, u_int dstat);
+static void	sii_StateChg(struct siisoftc *sc, u_int cstat);
+static int	sii_GetByte(SIIRegs *regs, int phase, int ack);
+static void	sii_DoSync(SIIRegs *regs, State *state);
+static void	sii_StartDMA(SIIRegs *regs, int phase, u_short *dmaAddr,
+				  int size);
 
 #ifdef DEBUG
-static void	sii_DumpLog __P((void));
+static void	sii_DumpLog(void);
 #endif
 
 
@@ -151,8 +151,7 @@ static void	sii_DumpLog __P((void));
  * Match driver based on name
  */
 void
-siiattach(sc)
-	struct siisoftc *sc;
+siiattach(struct siisoftc *sc)
 {
 	int i;
 
@@ -202,10 +201,7 @@ siiattach(sc)
  */
 
 void
-sii_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+sii_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -270,8 +266,7 @@ sii_scsi_request(chan, req, arg)
  * and process as appropriate.
  */
 int
-siiintr(xxxsc)
-	void *xxxsc;
+siiintr(void *xxxsc)
 {
 	struct siisoftc *sc = xxxsc;
 	u_int dstat;
@@ -294,9 +289,8 @@ siiintr(xxxsc)
  * since a SCSI bus reset will set UNIT_ATTENTION.
  */
 static void
-sii_Reset(sc, reset)
-	struct siisoftc* sc;
-	int reset;				/* TRUE => reset SCSI bus */
+sii_Reset(struct siisoftc* sc, int reset)
+	/* reset:				 TRUE => reset SCSI bus */
 {
 	SIIRegs *regs = sc->sc_regs;
 
@@ -360,9 +354,9 @@ sii_Reset(sc, reset)
  * NOTE: we should be called with interrupts disabled.
  */
 static void
-sii_StartCmd(sc, target)
-	struct siisoftc *sc;	/* which SII to use */
-	int target;		/* which command to start */
+sii_StartCmd(struct siisoftc *sc, int target)
+	/* sc:	 which SII to use */
+	/* target:		 which command to start */
 {
 	SIIRegs *regs;
 	ScsiCmd *scsicmd;
@@ -568,9 +562,7 @@ sii_StartCmd(sc, target)
  * Process interrupt conditions.
  */
 static void
-sii_DoIntr(sc, dstat)
-	struct siisoftc *sc;
-	u_int dstat;
+sii_DoIntr(struct siisoftc *sc, u_int dstat)
 {
 	SIIRegs *regs = sc->sc_regs;
 	State *state;
@@ -1440,9 +1432,7 @@ abort:
 }
 
 static void
-sii_StateChg(sc, cstat)
-	struct siisoftc *sc;
-	u_int cstat;
+sii_StateChg(struct siisoftc *sc, u_int cstat)
 {
 	SIIRegs *regs = sc->sc_regs;
 	State *state;
@@ -1547,9 +1537,7 @@ sii_StateChg(sc, cstat)
  * If 'ack' is true, acknowledge the byte.
  */
 static int
-sii_GetByte(regs, phase, ack)
-	SIIRegs *regs;
-	int phase, ack;
+sii_GetByte(SIIRegs *regs, int phase, int ack)
 {
 	u_int dstat;
 	u_int state;
@@ -1612,9 +1600,7 @@ sii_GetByte(regs, phase, ack)
  * Exchange messages to initiate synchronous data transfers.
  */
 static void
-sii_DoSync(regs, state)
-	SIIRegs *regs;
-	State *state;
+sii_DoSync(SIIRegs *regs, State *state)
 {
 	u_int dstat, comm;
 	int i, j;
@@ -1721,11 +1707,11 @@ sii_DoSync(regs, state)
  * NOTE: the data buffer should be word-aligned for DMA out.
  */
 static void
-sii_StartDMA(regs, phase, dmaAddr, size)
-	SIIRegs *regs;	/* which SII to use */
-	int phase;		/* phase to send/receive data */
-	u_short *dmaAddr;	/* DMA buffer address */
-	int size;		/* # of bytes to transfer */
+sii_StartDMA(SIIRegs *regs, int phase, u_short *dmaAddr, int size)
+	/* regs:	 which SII to use */
+	/* phase:		 phase to send/receive data */
+	/* dmaAddr:	 DMA buffer address */
+	/* size:		 # of bytes to transfer */
 {
 
 	if (regs->dstat & SII_DNE) { /* XXX */
@@ -1757,10 +1743,10 @@ sii_StartDMA(regs, phase, dmaAddr, size)
  * before allowing the same device to start another command.
  */
 static void
-sii_CmdDone(sc, target, error)
-	struct siisoftc *sc;	/* which SII to use */
-	int target;			/* which device is done */
-	int error;			/* error code if any errors */
+sii_CmdDone(struct siisoftc *sc, int target, int error)
+	/* sc:	 which SII to use */
+	/* target:			 which device is done */
+	/* error:			 error code if any errors */
 {
 	ScsiCmd *scsicmd;
 	int i;
@@ -1814,7 +1800,7 @@ sii_CmdDone(sc, target, error)
 
 #ifdef DEBUG
 static void
-sii_DumpLog()
+sii_DumpLog(void)
 {
 	struct sii_log *lp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.212 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.212.2.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.212 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.212.2.1 2009/05/13 17:22:51 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -564,7 +564,7 @@ extern struct nfsrtt nfsrtt;
 
 u_long nfsdirhashmask;
 
-int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
+int nfs_webnamei(struct nameidata *, struct vnode *, struct proc *);
 
 /*
  * Create the header for an rpc request packet
@@ -596,20 +596,10 @@ nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, char **bposp)
  * Returns the head of the mbuf list.
  */
 struct mbuf *
-nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
-	verf_str, mrest, mrest_len, mbp, xidp)
-	kauth_cred_t cr;
-	int nmflag;
-	int procid;
-	int auth_type;
-	int auth_len;
-	char *auth_str;
-	int verf_len;
-	char *verf_str;
-	struct mbuf *mrest;
-	int mrest_len;
-	struct mbuf **mbp;
-	u_int32_t *xidp;
+nfsm_rpchead(kauth_cred_t cr, int nmflag, int procid,
+	int auth_type, int auth_len, char *auth_str, int verf_len,
+	char *verf_str, struct mbuf *mrest, int mrest_len,
+	struct mbuf **mbp, uint32_t *xidp)
 {
 	struct mbuf *mb;
 	u_int32_t *tl;
@@ -743,11 +733,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
  * copies mbuf chain to the uio scatter/gather list
  */
 int
-nfsm_mbuftouio(mrep, uiop, siz, dpos)
-	struct mbuf **mrep;
-	struct uio *uiop;
-	int siz;
-	char **dpos;
+nfsm_mbuftouio(struct mbuf **mrep, struct uio *uiop, int siz, char **dpos)
 {
 	char *mbufcp, *uiocp;
 	int xfer, left, len;
@@ -814,11 +800,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
  * NOTE: can ony handle iovcnt == 1
  */
 int
-nfsm_uiotombuf(uiop, mq, siz, bpos)
-	struct uio *uiop;
-	struct mbuf **mq;
-	int siz;
-	char **bpos;
+nfsm_uiotombuf(struct uio *uiop, struct mbuf **mq, int siz, char **bpos)
 {
 	char *uiocp;
 	struct mbuf *mp, *mp2;
@@ -901,12 +883,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
  * cases. (The macros use the vars. dpos and dpos2)
  */
 int
-nfsm_disct(mdp, dposp, siz, left, cp2)
-	struct mbuf **mdp;
-	char **dposp;
-	int siz;
-	int left;
-	char **cp2;
+nfsm_disct(struct mbuf **mdp, char **dposp, int siz, int left, char **cp2)
 {
 	struct mbuf *m1, *m2;
 	struct mbuf *havebuf = NULL;
@@ -1046,11 +1023,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
  * Advance the position in the mbuf chain.
  */
 int
-nfs_adv(mdp, dposp, offs, left)
-	struct mbuf **mdp;
-	char **dposp;
-	int offs;
-	int left;
+nfs_adv(struct mbuf **mdp, char **dposp, int offs, int left)
 {
 	struct mbuf *m;
 	int s;
@@ -1073,11 +1046,7 @@ nfs_adv(mdp, dposp, offs, left)
  * Copy a string into mbufs for the hard cases...
  */
 int
-nfsm_strtmbuf(mb, bpos, cp, siz)
-	struct mbuf **mb;
-	char **bpos;
-	const char *cp;
-	long siz;
+nfsm_strtmbuf(struct mbuf **mb, char **bpos, const char *cp, long siz)
 {
 	struct mbuf *m1 = NULL, *m2;
 	long left, xfer, len, tlen;
@@ -1172,8 +1141,7 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
  */
 
 u_long
-nfs_dirhash(off)
-	off_t off;
+nfs_dirhash(off_t off)
 {
 	int i;
 	char *cp = (char *)&off;
@@ -1191,8 +1159,7 @@ nfs_dirhash(off)
 #define	NFSDC_ASSERT_LOCKED(np) KASSERT(mutex_owned(_NFSDC_MTX(np)))
 
 void
-nfs_initdircache(vp)
-	struct vnode *vp;
+nfs_initdircache(struct vnode *vp)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *dircache;
@@ -1213,8 +1180,7 @@ nfs_initdircache(vp)
 }
 
 void
-nfs_initdirxlatecookie(vp)
-	struct vnode *vp;
+nfs_initdirxlatecookie(struct vnode *vp)
 {
 	struct nfsnode *np = VTONFS(vp);
 	unsigned *dirgens;
@@ -1234,14 +1200,12 @@ nfs_initdirxlatecookie(vp)
 
 static const struct nfsdircache dzero;
 
-static void nfs_unlinkdircache __P((struct nfsnode *np, struct nfsdircache *));
-static void nfs_putdircache_unlocked __P((struct nfsnode *,
-    struct nfsdircache *));
+static void nfs_unlinkdircache(struct nfsnode *np, struct nfsdircache *);
+static void nfs_putdircache_unlocked(struct nfsnode *,
+    struct nfsdircache *);
 
 static void
-nfs_unlinkdircache(np, ndp)
-	struct nfsnode *np;
-	struct nfsdircache *ndp;
+nfs_unlinkdircache(struct nfsnode *np, struct nfsdircache *ndp)
 {
 
 	NFSDC_ASSERT_LOCKED(np);
@@ -1258,9 +1222,7 @@ nfs_unlinkdircache(np, ndp)
 }
 
 void
-nfs_putdircache(np, ndp)
-	struct nfsnode *np;
-	struct nfsdircache *ndp;
+nfs_putdircache(struct nfsnode *np, struct nfsdircache *ndp)
 {
 	int ref;
 
@@ -1293,11 +1255,7 @@ nfs_putdircache_unlocked(struct nfsnode *np, struct nfsdircache *ndp)
 }
 
 struct nfsdircache *
-nfs_searchdircache(vp, off, do32, hashent)
-	struct vnode *vp;
-	off_t off;
-	int do32;
-	int *hashent;
+nfs_searchdircache(struct vnode *vp, off_t off, int do32, int *hashent)
 {
 	struct nfsdirhashhead *ndhp;
 	struct nfsdircache *ndp = NULL;
@@ -1468,9 +1426,7 @@ done:
 }
 
 void
-nfs_invaldircache(vp, flags)
-	struct vnode *vp;
-	int flags;
+nfs_invaldircache(struct vnode *vp, int flags)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdircache *ndp = NULL;
@@ -1585,7 +1541,7 @@ nfs_fini(void)
  * Called once at VFS init to initialize client-specific data structures.
  */
 void
-nfs_vfs_init()
+nfs_vfs_init(void)
 {
 
 	/* Initialize NFS server / client shared data. */
@@ -1596,7 +1552,7 @@ nfs_vfs_init()
 }
 
 void
-nfs_vfs_done()
+nfs_vfs_done(void)
 {
 
 	nfs_node_done();
@@ -1617,12 +1573,7 @@ nfs_vfs_done()
  *    copy the attributes to *vaper
  */
 int
-nfsm_loadattrcache(vpp, mdp, dposp, vaper, flags)
-	struct vnode **vpp;
-	struct mbuf **mdp;
-	char **dposp;
-	struct vattr *vaper;
-	int flags;
+nfsm_loadattrcache(struct vnode **vpp, struct mbuf **mdp, char **dposp, struct vattr *vaper, int flags)
 {
 	int32_t t1;
 	char *cp2;
@@ -1639,11 +1590,7 @@ nfsm_loadattrcache(vpp, mdp, dposp, vaper, flags)
 }
 
 int
-nfs_loadattrcache(vpp, fp, vaper, flags)
-	struct vnode **vpp;
-	struct nfs_fattr *fp;
-	struct vattr *vaper;
-	int flags;
+nfs_loadattrcache(struct vnode **vpp, struct nfs_fattr *fp, struct vattr *vaper, int flags)
 {
 	struct vnode *vp = *vpp;
 	struct vattr *vap;
@@ -1654,7 +1601,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	struct timespec ctime;
 	int32_t rdev;
 	struct nfsnode *np;
-	extern int (**spec_nfsv2nodeop_p) __P((void *));
+	extern int (**spec_nfsv2nodeop_p)(void *);
 	uid_t uid;
 	gid_t gid;
 
@@ -1696,7 +1643,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	if (vp->v_type == VNON) {
 		vp->v_type = vtyp;
 		if (vp->v_type == VFIFO) {
-			extern int (**fifo_nfsv2nodeop_p) __P((void *));
+			extern int (**fifo_nfsv2nodeop_p)(void *);
 			vp->v_op = fifo_nfsv2nodeop_p;
 		} else if (vp->v_type == VREG) {
 			mutex_init(&np->n_commitlock, MUTEX_DEFAULT, IPL_NONE);
@@ -1810,9 +1757,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
  * otherwise return an error
  */
 int
-nfs_getattrcache(vp, vaper)
-	struct vnode *vp;
-	struct vattr *vaper;
+nfs_getattrcache(struct vnode *vp, struct vattr *vaper)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -1850,8 +1795,7 @@ nfs_getattrcache(vp, vaper)
 }
 
 void
-nfs_delayedtruncate(vp)
-	struct vnode *vp;
+nfs_delayedtruncate(struct vnode *vp)
 {
 	struct nfsnode *np = VTONFS(vp);
 
@@ -1970,11 +1914,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
  */
 
 void
-nfs_cookieheuristic(vp, flagp, l, cred)
-	struct vnode *vp;
-	int *flagp;
-	struct lwp *l;
-	kauth_cred_t cred;
+nfs_cookieheuristic(struct vnode *vp, int *flagp, struct lwp *l, kauth_cred_t cred)
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -2036,10 +1976,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
  * 2. add zero-padding 'nul' bytes at the end of the mbuf chain.
  */
 void
-nfs_zeropad(mp, len, nul)
-	struct mbuf *mp;
-	int len;
-	int nul;
+nfs_zeropad(struct mbuf *mp, int len, int nul)
 {
 	struct mbuf *m;
 	int count;
@@ -2117,14 +2054,7 @@ nfs_zeropad(mp, len, nul)
  * doesn't get too big...
  */
 void
-nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp, bposp)
-	struct nfsrv_descript *nfsd;
-	int before_ret;
-	struct vattr *before_vap;
-	int after_ret;
-	struct vattr *after_vap;
-	struct mbuf **mbp;
-	char **bposp;
+nfsm_srvwcc(struct nfsrv_descript *nfsd, int before_ret, struct vattr *before_vap, int after_ret, struct vattr *after_vap, struct mbuf **mbp, char **bposp)
 {
 	struct mbuf *mb = *mbp;
 	char *bpos = *bposp;
@@ -2148,12 +2078,7 @@ nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp, bposp)
 }
 
 void
-nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp, bposp)
-	struct nfsrv_descript *nfsd;
-	int after_ret;
-	struct vattr *after_vap;
-	struct mbuf **mbp;
-	char **bposp;
+nfsm_srvpostopattr(struct nfsrv_descript *nfsd, int after_ret, struct vattr *after_vap, struct mbuf **mbp, char **bposp)
 {
 	struct mbuf *mb = *mbp;
 	char *bpos = *bposp;
@@ -2174,10 +2099,7 @@ nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp, bposp)
 }
 
 void
-nfsm_srvfattr(nfsd, vap, fp)
-	struct nfsrv_descript *nfsd;
-	struct vattr *vap;
-	struct nfs_fattr *fp;
+nfsm_srvfattr(struct nfsrv_descript *nfsd, struct vattr *vap, struct nfs_fattr *fp)
 {
 
 	fp->fa_nlink = txdr_unsigned(vap->va_nlink);
@@ -2222,10 +2144,7 @@ nfsm_srvfattr(nfsd, vap, fp)
  * don't need to be saved to store "struct in_addr", which is only 4 bytes.
  */
 int
-netaddr_match(family, haddr, nam)
-	int family;
-	union nethostaddr *haddr;
-	struct mbuf *nam;
+netaddr_match(int family, union nethostaddr *haddr, struct mbuf *nam)
 {
 	struct sockaddr_in *inetaddr;
 
@@ -2260,8 +2179,7 @@ netaddr_match(family, haddr, nam)
  * the mount point.
  */
 void
-nfs_clearcommit(mp)
-	struct mount *mp;
+nfs_clearcommit(struct mount *mp)
 {
 	struct vnode *vp;
 	struct nfsnode *np;
@@ -2293,8 +2211,7 @@ nfs_clearcommit(mp)
 }
 
 void
-nfs_merge_commit_ranges(vp)
-	struct vnode *vp;
+nfs_merge_commit_ranges(struct vnode *vp)
 {
 	struct nfsnode *np = VTONFS(vp);
 
@@ -2321,9 +2238,7 @@ nfs_merge_commit_ranges(vp)
 }
 
 int
-nfs_in_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_in_committed_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2337,9 +2252,7 @@ nfs_in_committed_range(vp, off, len)
 }
 
 int
-nfs_in_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_in_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2353,9 +2266,7 @@ nfs_in_tobecommitted_range(vp, off, len)
 }
 
 void
-nfs_add_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_add_committed_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2380,9 +2291,7 @@ nfs_add_committed_range(vp, off, len)
 }
 
 void
-nfs_del_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_del_committed_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2417,9 +2326,7 @@ nfs_del_committed_range(vp, off, len)
 }
 
 void
-nfs_add_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_add_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2444,9 +2351,7 @@ nfs_add_tobecommitted_range(vp, off, len)
 }
 
 void
-nfs_del_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_del_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2486,9 +2391,7 @@ nfs_del_tobecommitted_range(vp, off, len)
  * numbers not specified for the associated procedure.
  */
 int
-nfsrv_errmap(nd, err)
-	struct nfsrv_descript *nd;
-	int err;
+nfsrv_errmap(struct nfsrv_descript *nd, int err)
 {
 	const short *defaulterrp, *errp;
 
@@ -2511,7 +2414,7 @@ nfsrv_errmap(nd, err)
 }
 
 u_int32_t
-nfs_getxid()
+nfs_getxid(void)
 {
 	u_int32_t newxid;
 

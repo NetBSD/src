@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.49 2008/12/19 18:49:38 cegger Exp $ */
+/*	$NetBSD: smg.c,v 1.49.2.1 2009/05/13 17:18:41 jym Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.49 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.49.2.1 2009/05/13 17:18:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -330,12 +330,12 @@ smg_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 	struct smg_screen * const ss = id;
 	int i;
 
-	bcopy(&ss->ss_image[row][srccol], &ss->ss_image[row][dstcol], ncols);
-	bcopy(&ss->ss_attr[row][srccol], &ss->ss_attr[row][dstcol], ncols);
+	memcpy( &ss->ss_image[row][dstcol], &ss->ss_image[row][srccol], ncols);
+	memcpy( &ss->ss_attr[row][dstcol], &ss->ss_attr[row][srccol], ncols);
 	if (ss != curscr)
 		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
-		bcopy(&SM_ADDR(row,srccol, i), &SM_ADDR(row, dstcol, i),ncols);
+		memcpy(&SM_ADDR(row, dstcol, i), &SM_ADDR(row, srccol, i), ncols);
 }
 
 /*
@@ -347,12 +347,12 @@ smg_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
 	struct smg_screen * const ss = id;
 	int i;
 
-	bzero(&ss->ss_image[row][startcol], ncols);
-	bzero(&ss->ss_attr[row][startcol], ncols);
+	memset(&ss->ss_image[row][startcol], 0, ncols);
+	memset(&ss->ss_attr[row][startcol], 0, ncols);
 	if (ss != curscr)
 		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
-		bzero(&SM_ADDR(row, startcol, i), ncols);
+		memset(&SM_ADDR(row, startcol, i), 0, ncols);
 }
 
 static void
@@ -361,9 +361,9 @@ smg_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	struct smg_screen * const ss = id;
 	int frows;
 
-	bcopy(&ss->ss_image[srcrow][0], &ss->ss_image[dstrow][0],
+	memcpy( &ss->ss_image[dstrow][0], &ss->ss_image[srcrow][0],
 	    nrows * SM_COLS);
-	bcopy(&ss->ss_attr[srcrow][0], &ss->ss_attr[dstrow][0],
+	memcpy( &ss->ss_attr[dstrow][0], &ss->ss_attr[srcrow][0],
 	    nrows * SM_COLS);
 	if (ss != curscr)
 		return;
@@ -395,17 +395,17 @@ smg_eraserows(void *id, int startrow, int nrows, long fillattr)
 	struct smg_screen * const ss = id;
 	int frows;
 
-	bzero(&ss->ss_image[startrow][0], nrows * SM_COLS);
-	bzero(&ss->ss_attr[startrow][0], nrows * SM_COLS);
+	memset(&ss->ss_image[startrow][0], 0, nrows * SM_COLS);
+	memset(&ss->ss_attr[startrow][0], 0, nrows * SM_COLS);
 	if (ss != curscr)
 		return;
 	if (nrows > 25) {
 		frows = nrows >> 1;
-		bzero(&sm_addr[(startrow * SM_NEXTROW)], frows * SM_NEXTROW);
-		bzero(&sm_addr[((startrow + frows) * SM_NEXTROW)],
+		memset(&sm_addr[(startrow * SM_NEXTROW)], 0, frows * SM_NEXTROW);
+		memset(&sm_addr[((startrow + frows) * SM_NEXTROW)], 0,
 		    (nrows - frows) * SM_NEXTROW);
 	} else
-		bzero(&sm_addr[(startrow * SM_NEXTROW)], nrows * SM_NEXTROW);
+		memset(&sm_addr[(startrow * SM_NEXTROW)], 0, nrows * SM_NEXTROW);
 }
 
 static int

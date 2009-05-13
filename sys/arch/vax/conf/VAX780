@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.1 2009/01/22 18:49:02 christos Exp $
+# $NetBSD: VAX780,v 1.1.2.1 2009/05/13 17:18:40 jym Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -101,7 +101,6 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 #options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER

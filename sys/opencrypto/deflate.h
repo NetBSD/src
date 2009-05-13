@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.5 2008/05/05 13:41:30 ad Exp $ */
+/*	$NetBSD: deflate.h,v 1.5.14.1 2009/05/13 17:22:56 jym Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.h,v 1.3 2002/03/14 01:26:51 millert Exp $ */
 
@@ -45,6 +45,7 @@
 #define ZBUF		10
 
 u_int32_t deflate_global(u_int8_t *, u_int32_t, int, u_int8_t **);
+u_int32_t gzip_global(u_int8_t *, u_int32_t, int, u_int8_t **);
 void *z_alloc(void *, u_int, u_int);
 void z_free(void *, void *);
 

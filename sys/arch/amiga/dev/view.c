@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.27 2008/03/23 15:50:51 cube Exp $ */
+/*	$NetBSD: view.c,v 1.27.18.1 2009/05/13 17:16:10 jym Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.27 2008/03/23 15:50:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.27.18.1 2009/05/13 17:16:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,14 +306,14 @@ viewioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		view_remove(vu);
 		break;
 	case VIOCGSIZE:
-		bcopy(&vu->size, data, sizeof (struct view_size));
+		memcpy( data, &vu->size, sizeof (struct view_size));
 		break;
 	case VIOCSSIZE:
 		error = view_setsize(vu, (struct view_size *)data);
 		break;
 	case VIOCGBMAP:
 		bm = (bmap_t *)data;
-		bcopy(vu->view->bitmap, bm, sizeof(bmap_t));
+		memcpy( bm, vu->view->bitmap, sizeof(bmap_t));
 		if (flag != -1) {
 			bm->plane = 0;
 			bm->blit_temp = 0;

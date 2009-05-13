@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.10 2008/09/04 10:42:55 christos Exp $ */
+/* $NetBSD: pad.c,v 1.10.8.1 2009/05/13 17:20:22 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.10 2008/09/04 10:42:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.10.8.1 2009/05/13 17:20:22 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,9 +147,7 @@ padattach(int n)
 	int i, err;
 	cfdata_t cf;
 
-#ifdef DEBUG
-	printf("pad: requested %d units\n", n);
-#endif
+	aprint_debug("pad: requested %d units\n", n);
 
 	err = config_cfattach_attach(pad_cd.cd_name, &pad_ca);
 	if (err) {

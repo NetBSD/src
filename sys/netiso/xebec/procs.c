@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.12 2007/01/18 12:43:38 cbiere Exp $	*/
+/*	$NetBSD: procs.c,v 1.12.60.1 2009/05/13 17:22:50 jym Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.12 2007/01/18 12:43:38 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.12.60.1 2009/05/13 17:22:50 jym Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -43,7 +43,7 @@ extern FILE *astringfile;
 int predtable();
 
 void
-end_events()
+end_events(void)
 {
 	int size, part;
 	char *addr;
@@ -74,7 +74,7 @@ end_events()
 	IFDEBUG(N)
 		fprintf(OUT, "bzero addr %p part %d size %d\n",addr, part, size);
 	ENDDEBUG
-		bzero(addr, part);
+		memset(addr, 0, part);
 	IFDEBUG(N)
 		fprintf(OUT, "after bzero addr %p part %d size %d\n",addr, part, size);
 	ENDDEBUG
@@ -88,9 +88,7 @@ end_events()
 }
 
 int
-acttable(f,actstring)
-	char *actstring;
-	FILE *f;
+acttable(FILE *f,char *actstring)
 {
 	static int Actindex = 0;
 	extern FILE *astringfile;
@@ -148,10 +146,7 @@ acttable(f,actstring)
 static int Npred=0, Ndefpred=0, Ntrans=0, Ndefevent=0, Nnulla=0;
 
 void
-statetable(string, oldstate, newstate, action, event)
-	char *string;
-	int action;
-	struct Object *oldstate, *newstate, *event;
+statetable(char *string, struct Object *oldstate, struct Object *newstate, int action, struct Object *event)
 {
 	register int different;
 
@@ -177,9 +172,7 @@ statetable(string, oldstate, newstate, action, event)
 }
 
 void
-stateentry(idx, oldstate, newstate, action)
-	int idx, action;
-	int oldstate, newstate;
+stateentry(int idx, int oldstate, int newstate, int action)
 {
 	extern FILE *statevalfile;
 
@@ -193,10 +186,7 @@ stateentry(idx, oldstate, newstate, action)
 }
 
 int
-predtable(os, oe, str, action, newstate)
-	struct Object *os, *oe;
-	char *str;
-	int action, newstate;
+predtable(struct Object *os, struct Object *oe, char *str, int action, int newstate)
 {
 	register struct Predicate *p, **q;
 	register int event, state;
@@ -283,7 +273,7 @@ predtable(os, oe, str, action, newstate)
 }
 
 void
-printprotoerrs()
+printprotoerrs(void)
 {
 	register int e,s;
 
@@ -300,8 +290,7 @@ printprotoerrs()
 
 #ifndef LINT
 void
-dump_predtable(f)
-	FILE *f;
+dump_predtable(FILE *f)
 {
 	struct Predicate *p;
 	register int e,s, hadapred;
@@ -410,8 +399,7 @@ dump_predtable(f)
 #endif /* LINT */
 
 char *
-stash(buf)
-char *buf;
+stash(char *buf)
 {
 	register int len;
 	register char *c;
@@ -431,8 +419,7 @@ char *buf;
 }
 
 #ifdef notdef
-dump_pentry(event,state)
-int event,state;
+dump_pentry(int event,int state)
 {
 	register struct Predicate *p, **q;
 

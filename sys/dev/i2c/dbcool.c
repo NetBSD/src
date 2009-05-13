@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.10 2009/02/08 17:48:02 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.10.2.1 2009/05/13 17:19:20 jym Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.10 2009/02/08 17:48:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.10.2.1 2009/05/13 17:19:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -591,6 +591,7 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	struct dbcool_softc sc;
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_addr = ia->ia_addr;
+	sc.sc_chip = NULL;
 	sc.sc_readreg = dbcool_readreg;
 	sc.sc_writereg = dbcool_writereg;
 
@@ -615,6 +616,7 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_readreg = dbcool_readreg;
 	sc->sc_writereg = dbcool_writereg;
+	sc->sc_chip = NULL;
 	(void)dbcool_chip_ident(sc);
 
 	aprint_naive("\n");
@@ -699,9 +701,9 @@ dbcool_readreg(struct dbcool_softc *sc, uint8_t reg)
 	uint8_t data = 0;
 
 	if (iic_acquire_bus(sc->sc_tag, 0) != 0)
-		goto bad;
+		return data;
 
-	if (sc->sc_chip->flags & DBCFLAG_ADM1027) {
+	if ( sc->sc_chip == NULL || sc->sc_chip->flags & DBCFLAG_ADM1027) {
 		/* ADM1027 doesn't support i2c read_byte protocol */
 		if (iic_smbus_send_byte(sc->sc_tag, sc->sc_addr, reg, 0) != 0)
 			goto bad;

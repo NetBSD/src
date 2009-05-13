@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.23 2008/12/04 11:48:14 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.23.4.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.23 2008/12/04 11:48:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.23.4.1 2009/05/13 17:19:23 jym Exp $");
 
 #include "rnd.h"
 
@@ -97,6 +97,7 @@ ld_cac_attach(device_t parent, device_t self, void *aux)
 	caca = aux;
 	ld->sc_dv = self;
 	sc->sc_mutex = &cac->sc_mutex;
+	sc->sc_hwunit = caca->caca_unit;
 
 	if (cac_cmd(cac, CAC_CMD_GET_LOG_DRV_INFO, &dinfo, sizeof(dinfo),
 	    sc->sc_hwunit, 0, CAC_CCB_DATA_IN, NULL)) {
@@ -177,7 +178,7 @@ ld_cac_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 }
 
 void
-ld_cac_done(struct device *dv, void *context, int error)
+ld_cac_done(device_t dv, void *context, int error)
 {
 	struct buf *bp;
 	struct ld_cac_softc *sc;

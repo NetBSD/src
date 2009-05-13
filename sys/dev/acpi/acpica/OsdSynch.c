@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.11 2009/01/30 12:51:03 jmcneill Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.11.2.1 2009/05/13 17:19:11 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.11 2009/01/30 12:51:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.11.2.1 2009/05/13 17:19:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -183,7 +183,7 @@ AcpiOsWaitSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units, UINT16 Timeout)
 
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	if (cold || acpi_suspended)
+	if (cold || doing_shutdown || acpi_suspended)
 		return_ACPI_STATUS(AE_OK);
 
 	/* A timeout of 0xFFFF means "forever". */

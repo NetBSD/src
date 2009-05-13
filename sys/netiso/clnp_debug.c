@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_debug.c,v 1.18 2007/02/17 22:34:16 dyoung Exp $	*/
+/*	$NetBSD: clnp_debug.c,v 1.18.58.1 2009/05/13 17:22:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_debug.c,v 1.18 2007/02/17 22:34:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_debug.c,v 1.18.58.1 2009/05/13 17:22:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -103,7 +103,7 @@ int main        (void);
 
 #include <stdio.h>
 int
-main()
+main(void)
 {
 	struct iso_addr a;
 

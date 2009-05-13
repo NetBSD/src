@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.39 2007/10/17 19:52:56 garbled Exp $ */
+/* $NetBSD: mem.c,v 1.39.34.1 2009/05/13 17:16:05 jym Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.39 2007/10/17 19:52:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.39.34.1 2009/05/13 17:16:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -110,10 +110,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vaddr_t o, v;
 	register int c;
@@ -201,10 +198,7 @@ kmemphys:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.135 2009/01/31 09:13:09 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.135.2.1 2009/05/13 17:23:10 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.135 2009/01/31 09:13:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.135.2.1 2009/05/13 17:23:10 jym Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -253,12 +253,8 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2->l_flag |= LW_INMEM;
 	}
 
-#ifdef KSTACK_CHECK_MAGIC
-	/*
-	 * fill stack with magic number
-	 */
+	/* Fill stack with magic number. */
 	kstack_setup_magic(l2);
-#endif
 
 	/*
 	 * cpu_lwp_fork() copy and update the pcb, and make the child ready
@@ -425,6 +421,8 @@ uvm_init_limits(struct proc *p)
 	p->p_rlimit[RLIMIT_STACK].rlim_max = maxsmap;
 	p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
 	p->p_rlimit[RLIMIT_DATA].rlim_max = maxdmap;
+	p->p_rlimit[RLIMIT_AS].rlim_cur = RLIM_INFINITY;
+	p->p_rlimit[RLIMIT_AS].rlim_max = RLIM_INFINITY;
 	p->p_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
 }
 

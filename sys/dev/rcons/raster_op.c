@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.15 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: raster_op.c,v 1.15.90.1 2009/05/13 17:21:21 jym Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raster_op.c,v 1.15 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raster_op.c,v 1.15.90.1 2009/05/13 17:21:21 jym Exp $");
 
 #include <sys/types.h>
 #ifdef _KERNEL
@@ -1117,7 +1117,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 5 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
+	    memset( (char*) dstlin1, 0, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/
@@ -1213,7 +1213,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 4 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
+	    memset( (char*) dstlin1, 0, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/
@@ -1320,7 +1320,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 3 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
+	    memset( (char*) dstlin1, 0, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/
@@ -1425,7 +1425,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 2 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
+	    memset( (char*) dstlin1, 0, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/
@@ -1530,7 +1530,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 1 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
+	    memset( (char*) dstlin1, 0, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/

@@ -1,12 +1,12 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.120 2009/02/08 16:38:12 pooka Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.120.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.120 2009/02/08 16:38:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.120.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.120 2009/02/08 16:38:12 pooka Exp 
 #include <sys/kmem.h>
 #include <sys/atomic.h>
 #include <sys/uidinfo.h>
+#include <sys/kernel.h>
+#include <sys/kthread.h>
 
 /*
  * Unix communications domain.
@@ -169,7 +171,18 @@ const struct sockaddr_un sun_noname = {
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
 struct mbuf *unp_addsockcred(struct lwp *, struct mbuf *);
+static void unp_mark(file_t *);
+static void unp_scan(struct mbuf *, void (*)(file_t *), int);
+static void unp_discard_now(file_t *);
+static void unp_discard_later(file_t *);
+static void unp_thread(void *);
+static void unp_thread_kick(void);
 static kmutex_t *uipc_lock;
+
+static kcondvar_t unp_thread_cv;
+static lwp_t *unp_thread_lwp;
+static SLIST_HEAD(,file) unp_thread_discard;
+static int unp_defer;
 
 /*
  * Initialize Unix protocols.
@@ -177,8 +190,15 @@ static kmutex_t *uipc_lock;
 void
 uipc_init(void)
 {
+	int error;
 
 	uipc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&unp_thread_cv, "unpgc");
+
+	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, unp_thread,
+	    NULL, &unp_thread_lwp, "unpgc");
+	if (error != 0)
+		panic("uipc_init %d", error);
 }
 
 /*
@@ -203,7 +223,8 @@ unp_setpeerlocks(struct socket *so, struct socket *so2)
 	 * with the head when the pair of sockets stand completely
 	 * on their own.
 	 */
-	if (so->so_head != NULL || so2->so_head != NULL)
+	KASSERT(so->so_head == NULL);
+	if (so2->so_head != NULL)
 		return;
 
 	/*
@@ -290,11 +311,9 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		so2->so_rcv.sb_overflowed++;
-	    	sounlock(so2);
 		unp_dispose(control);
 		m_freem(control);
 		m_freem(m);
-	    	solock(so2);
 		return (ENOBUFS);
 	} else {
 		sorwakeup(so2);
@@ -357,7 +376,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif
 	p = l ? l->l_proc : NULL;
 	if (req != PRU_ATTACH) {
-		if (unp == 0) {
+		if (unp == NULL) {
 			error = EINVAL;
 			goto release;
 		}
@@ -367,7 +386,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (unp != 0) {
+		if (unp != NULL) {
 			error = EISCONN;
 			break;
 		}
@@ -389,7 +408,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * locked by uipc_lock.
 		 */
 		unp_resetlock(so);
-		if (unp->unp_vnode == 0)
+		if (unp->unp_vnode == NULL)
 			error = EINVAL;
 		break;
 
@@ -518,11 +537,9 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					error = ENOTCONN;
 			}
 			if (error) {
-				sounlock(so);
 				unp_dispose(control);
 				m_freem(control);
 				m_freem(m);
-				solock(so);
 				break;
 			}
 			KASSERT(p != NULL);
@@ -571,10 +588,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #undef snd
 #undef rcv
 			if (control != NULL) {
-				sounlock(so);
 				unp_dispose(control);
 				m_freem(control);
-				solock(so);
 			}
 			break;
 
@@ -588,7 +603,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		KASSERT(so->so_head == NULL);
 #ifdef DIAGNOSTIC
-		if (so->so_pcb == 0)
+		if (so->so_pcb == NULL)
 			panic("uipc 5: drop killed pcb");
 #endif
 		unp_detach(unp);
@@ -724,7 +739,8 @@ u_long	unpst_recvspace = PIPSIZ;
 u_long	unpdg_sendspace = 2*1024;	/* really max datagram size */
 u_long	unpdg_recvspace = 4*1024;
 
-u_int	unp_rights;			/* file descriptors in flight */
+u_int	unp_rights;			/* files in flight */
+u_int	unp_rights_ratio = 2;		/* limit, fraction of maxfiles */
 
 int
 unp_attach(struct socket *so)
@@ -769,7 +785,7 @@ unp_attach(struct socket *so)
 	unp = malloc(sizeof(*unp), M_PCB, M_NOWAIT);
 	if (unp == NULL)
 		return (ENOBUFS);
-	memset((void *)unp, 0, sizeof(*unp));
+	memset(unp, 0, sizeof(*unp));
 	unp->unp_socket = so;
 	so->so_pcb = unp;
 	nanotime(&unp->unp_ctime);
@@ -808,17 +824,14 @@ unp_detach(struct unpcb *unp)
 	so->so_pcb = NULL;
 	if (unp_rights) {
 		/*
-		 * Normally the receive buffer is flushed later,
-		 * in sofree, but if our receive buffer holds references
-		 * to descriptors that are now garbage, we will dispose
-		 * of those descriptor references after the garbage collector
-		 * gets them (resulting in a "panic: closef: count < 0").
+		 * Normally the receive buffer is flushed later, in sofree,
+		 * but if our receive buffer holds references to files that
+		 * are now garbage, we will enqueue those file references to
+		 * the garbage collector and kick it into action.
 		 */
 		sorflush(so);
 		unp_free(unp);
-		sounlock(so);
-		unp_gc();
-		solock(so);
+		unp_thread_kick();
 	} else
 		unp_free(unp);
 }
@@ -973,7 +986,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		KASSERT((so->so_options & SO_ACCEPTCONN) == 0 ||
 		    so2->so_lock == uipc_lock);
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
-		    (so3 = sonewconn(so2, 0)) == 0) {
+		    (so3 = sonewconn(so2, 0)) == NULL) {
 			error = ECONNREFUSED;
 			sounlock(so);
 			goto bad;
@@ -1026,9 +1039,10 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 	 * queue head (so->so_head, only if PR_CONNREQUIRED)
 	 */
 	KASSERT(solocked2(so, so2));
-	if (so->so_head != NULL) {
-		KASSERT(so->so_lock == uipc_lock);
-		KASSERT(solocked2(so, so->so_head));
+	KASSERT(so->so_head == NULL);
+	if (so2->so_head != NULL) {
+		KASSERT(so2->so_lock == uipc_lock);
+		KASSERT(solocked2(so2, so2->so_head));
 	}
 
 	unp2 = sotounpcb(so2);
@@ -1056,8 +1070,10 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 		 * require that the locks already match (the sockets
 		 * are created that way).
 		 */
-		if (req == PRU_CONNECT)
+		if (req == PRU_CONNECT) {
+			KASSERT(so2->so_head != NULL);
 			unp_setpeerlocks(so, so2);
+		}
 		break;
 
 	default:
@@ -1165,7 +1181,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
 
-	/* Make sure the recipient should be able to see the descriptors.. */
+	/* Make sure the recipient should be able to see the files.. */
 	if (p->p_cwdi->cwdi_rdir != NULL) {
 		rp = (file_t **)CMSG_DATA(cm);
 		for (i = 0; i < nfds; i++) {
@@ -1192,19 +1208,15 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 	if (error != 0) {
 		for (i = 0; i < nfds; i++) {
 			fp = *rp;
-			/*
-			 * zero the pointer before calling unp_discard,
-			 * since it may end up in unp_gc()..
-			 */
 			*rp++ = 0;
-			unp_discard(fp);
+			unp_discard_now(fp);
 		}
 		goto out;
 	}
 
 	/*
 	 * First loop -- allocate file descriptor table slots for the
-	 * new descriptors.
+	 * new files.
 	 */
 	for (i = 0; i < nfds; i++) {
 		fp = *rp++;
@@ -1232,7 +1244,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 
 	/*
 	 * Now that adding them has succeeded, update all of the
-	 * descriptor passing state.
+	 * file passing state and affix the descriptors.
 	 */
 	rp = (file_t **)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
@@ -1267,13 +1279,14 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 int
 unp_internalize(struct mbuf **controlp)
 {
-	struct filedesc *fdescp = curlwp->l_fd;
+	filedesc_t *fdescp = curlwp->l_fd;
 	struct mbuf *control = *controlp;
 	struct cmsghdr *newcm, *cm = mtod(control, struct cmsghdr *);
 	file_t **rp, **files;
 	file_t *fp;
 	int i, fd, *fdp;
 	int nfds, error;
+	u_int maxmsg;
 
 	error = 0;
 	newcm = NULL;
@@ -1290,9 +1303,17 @@ unp_internalize(struct mbuf **controlp)
 	 */
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof(int);
 	fdp = (int *)CMSG_DATA(cm);
+	maxmsg = maxfiles / unp_rights_ratio;
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
+		if (atomic_inc_uint_nv(&unp_rights) > maxmsg) {
+			atomic_dec_uint(&unp_rights);
+			nfds = i;
+			error = EAGAIN;
+			goto out;
+		}
 		if ((fp = fd_getfile(fd)) == NULL) {
+			atomic_dec_uint(&unp_rights);
 			nfds = i;
 			error = EBADF;
 			goto out;
@@ -1324,7 +1345,6 @@ unp_internalize(struct mbuf **controlp)
 		fp->f_count++;
 		fp->f_msgcount++;
 		mutex_exit(&fp->f_lock);
-		atomic_inc_uint(&unp_rights);
 	}
 
  out:
@@ -1332,6 +1352,9 @@ unp_internalize(struct mbuf **controlp)
 	fdp = (int *)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fd_putfile(*fdp++);
+		if (error != 0) {
+			atomic_dec_uint(&unp_rights);
+		}
 	}
 
 	if (error == 0) {
@@ -1404,68 +1427,82 @@ unp_addsockcred(struct lwp *l, struct mbuf *control)
 	return (control);
 }
 
-int	unp_defer, unp_gcing;
-extern	struct domain unixdomain;
-
 /*
- * Comment added long after the fact explaining what's going on here.
- * Do a mark-sweep GC of file descriptors on the system, to free up
- * any which are caught in flight to an about-to-be-closed socket.
- *
- * Traditional mark-sweep gc's start at the "root", and mark
- * everything reachable from the root (which, in our case would be the
- * process table).  The mark bits are cleared during the sweep.
- *
- * XXX For some inexplicable reason (perhaps because the file
- * descriptor tables used to live in the u area which could be swapped
- * out and thus hard to reach), we do multiple scans over the set of
- * descriptors, using use *two* mark bits per object (DEFER and MARK).
- * Whenever we find a descriptor which references other descriptors,
- * the ones it references are marked with both bits, and we iterate
- * over the whole file table until there are no more DEFER bits set.
- * We also make an extra pass *before* the GC to clear the mark bits,
- * which could have been cleared at almost no cost during the previous
- * sweep.
+ * Do a mark-sweep GC of files in the system, to free up any which are
+ * caught in flight to an about-to-be-closed socket.  Additionally,
+ * process deferred file closures.
  */
-void
-unp_gc(void)
+static void
+unp_gc(file_t *dp)
 {
-	file_t *fp, *nextfp;
+	extern	struct domain unixdomain;
+	file_t *fp, *np;
 	struct socket *so, *so1;
-	file_t **extra_ref, **fpp;
-	int nunref, nslots, i;
+	u_int i, old, new;
+	bool didwork;
 
-	if (atomic_swap_uint(&unp_gcing, 1) == 1)
-		return;
+	KASSERT(curlwp == unp_thread_lwp);
+	KASSERT(mutex_owned(&filelist_lock));
 
- restart:
- 	nslots = nfiles * 2;
- 	extra_ref = kmem_alloc(nslots * sizeof(file_t *), KM_SLEEP);
-
-	mutex_enter(&filelist_lock);
-	unp_defer = 0;
-
-	/* Clear mark bits */
-	LIST_FOREACH(fp, &filehead, f_list) {
-		atomic_and_uint(&fp->f_flag, ~(FMARK|FDEFER));
+	/*
+	 * First, process deferred file closures.
+	 */
+	while (!SLIST_EMPTY(&unp_thread_discard)) {
+		fp = SLIST_FIRST(&unp_thread_discard);
+		KASSERT(fp->f_unpcount > 0);
+		KASSERT(fp->f_count > 0);
+		KASSERT(fp->f_msgcount > 0);
+		KASSERT(fp->f_count >= fp->f_unpcount);
+		KASSERT(fp->f_count >= fp->f_msgcount);
+		KASSERT(fp->f_msgcount >= fp->f_unpcount);
+		SLIST_REMOVE_HEAD(&unp_thread_discard, f_unplist);
+		i = fp->f_unpcount;
+		fp->f_unpcount = 0;
+		mutex_exit(&filelist_lock);
+		for (; i != 0; i--) {
+			unp_discard_now(fp);
+		}
+		mutex_enter(&filelist_lock);
 	}
 
 	/*
-	 * Iterate over the set of descriptors, marking ones believed
-	 * (based on refcount) to be referenced from a process, and
-	 * marking for rescan descriptors which are queued on a socket.
+	 * Clear mark bits.  Ensure that we don't consider new files
+	 * entering the file table during this loop (they will not have
+	 * FSCAN set).
+	 */
+	unp_defer = 0;
+	LIST_FOREACH(fp, &filehead, f_list) {
+		for (old = fp->f_flag;; old = new) {
+			new = atomic_cas_uint(&fp->f_flag, old,
+			    (old | FSCAN) & ~(FMARK|FDEFER));
+			if (__predict_true(old == new)) {
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Iterate over the set of sockets, marking ones believed (based on
+	 * refcount) to be referenced from a process, and marking for rescan
+	 * sockets which are queued on a socket.  Recan continues descending
+	 * and searching for sockets referenced by sockets (FDEFER), until
+	 * there are no more socket->socket references to be discovered.
 	 */
 	do {
-		LIST_FOREACH(fp, &filehead, f_list) {
+		didwork = false;
+		for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
+			KASSERT(mutex_owned(&filelist_lock));
+			np = LIST_NEXT(fp, f_list);
 			mutex_enter(&fp->f_lock);
-			if (fp->f_flag & FDEFER) {
+			if ((fp->f_flag & FDEFER) != 0) {
 				atomic_and_uint(&fp->f_flag, ~FDEFER);
 				unp_defer--;
 				KASSERT(fp->f_count != 0);
 			} else {
 				if (fp->f_count == 0 ||
-				    (fp->f_flag & FMARK) ||
-				    fp->f_count == fp->f_msgcount) {
+				    (fp->f_flag & FMARK) != 0 ||
+				    fp->f_count == fp->f_msgcount ||
+				    fp->f_unpcount != 0) {
 					mutex_exit(&fp->f_lock);
 					continue;
 				}
@@ -1475,44 +1512,25 @@ unp_gc(void)
 			if (fp->f_type != DTYPE_SOCKET ||
 			    (so = fp->f_data) == NULL ||
 			    so->so_proto->pr_domain != &unixdomain ||
-			    (so->so_proto->pr_flags&PR_RIGHTS) == 0) {
+			    (so->so_proto->pr_flags & PR_RIGHTS) == 0) {
 				mutex_exit(&fp->f_lock);
 				continue;
 			}
-#ifdef notdef
-			if (so->so_rcv.sb_flags & SB_LOCK) {
-				mutex_exit(&fp->f_lock);
-				mutex_exit(&filelist_lock);
-				kmem_free(extra_ref, nslots * sizeof(file_t *));
-				/*
-				 * This is problematical; it's not clear
-				 * we need to wait for the sockbuf to be
-				 * unlocked (on a uniprocessor, at least),
-				 * and it's also not clear what to do
-				 * if sbwait returns an error due to receipt
-				 * of a signal.  If sbwait does return
-				 * an error, we'll go into an infinite
-				 * loop.  Delete all of this for now.
-				 */
-				(void) sbwait(&so->so_rcv);
-				goto restart;
-			}
-#endif
+
+			/* Gain file ref, mark our position, and unlock. */
+			didwork = true;
+			LIST_INSERT_AFTER(fp, dp, f_list);
+			fp->f_count++;
 			mutex_exit(&fp->f_lock);
+			mutex_exit(&filelist_lock);
 
 			/*
-			 * XXX Locking a socket with filelist_lock held
-			 * is ugly.  filelist_lock can be taken by the
-			 * pagedaemon when reclaiming items from file_cache.
-			 * Socket activity could delay the pagedaemon.
+			 * Mark files referenced from sockets queued on the
+			 * accept queue as well.
 			 */
 			solock(so);
 			unp_scan(so->so_rcv.sb_mb, unp_mark, 0);
-			/*
-			 * Mark descriptors referenced from sockets queued
-			 * on the accept queue as well.
-			 */
-			if (so->so_options & SO_ACCEPTCONN) {
+			if ((so->so_options & SO_ACCEPTCONN) != 0) {
 				TAILQ_FOREACH(so1, &so->so_q0, so_qe) {
 					unp_scan(so1->so_rcv.sb_mb, unp_mark, 0);
 				}
@@ -1521,84 +1539,115 @@ unp_gc(void)
 				}
 			}
 			sounlock(so);
+
+			/* Re-lock and restart from where we left off. */
+			closef(fp);
+			mutex_enter(&filelist_lock);
+			np = LIST_NEXT(dp, f_list);
+			LIST_REMOVE(dp, f_list);
 		}
-	} while (unp_defer);
+		/*
+		 * Bail early if we did nothing in the loop above.  Could
+		 * happen because of concurrent activity causing unp_defer
+		 * to get out of sync.
+		 */
+	} while (unp_defer != 0 && didwork);
 
 	/*
-	 * Sweep pass.  Find unmarked descriptors, and free them.
+	 * Sweep pass.
 	 *
-	 * We grab an extra reference to each of the file table entries
-	 * that are not otherwise accessible and then free the rights
-	 * that are stored in messages on them.
-	 *
-	 * The bug in the original code is a little tricky, so I'll describe
-	 * what's wrong with it here.
-	 *
-	 * It is incorrect to simply unp_discard each entry for f_msgcount
-	 * times -- consider the case of sockets A and B that contain
-	 * references to each other.  On a last close of some other socket,
-	 * we trigger a gc since the number of outstanding rights (unp_rights)
-	 * is non-zero.  If during the sweep phase the gc code un_discards,
-	 * we end up doing a (full) closef on the descriptor.  A closef on A
-	 * results in the following chain.  Closef calls soo_close, which
-	 * calls soclose.   Soclose calls first (through the switch
-	 * uipc_usrreq) unp_detach, which re-invokes unp_gc.  Unp_gc simply
-	 * returns because the previous instance had set unp_gcing, and
-	 * we return all the way back to soclose, which marks the socket
-	 * with SS_NOFDREF, and then calls sofree.  Sofree calls sorflush
-	 * to free up the rights that are queued in messages on the socket A,
-	 * i.e., the reference on B.  The sorflush calls via the dom_dispose
-	 * switch unp_dispose, which unp_scans with unp_discard.  This second
-	 * instance of unp_discard just calls closef on B.
-	 *
-	 * Well, a similar chain occurs on B, resulting in a sorflush on B,
-	 * which results in another closef on A.  Unfortunately, A is already
-	 * being closed, and the descriptor has already been marked with
-	 * SS_NOFDREF, and soclose panics at this point.
-	 *
-	 * Here, we first take an extra reference to each inaccessible
-	 * descriptor.  Then, if the inaccessible descriptor is a
-	 * socket, we call sorflush in case it is a Unix domain
-	 * socket.  After we destroy all the rights carried in
-	 * messages, we do a last closef to get rid of our extra
-	 * reference.  This is the last close, and the unp_detach etc
-	 * will shut down the socket.
-	 *
-	 * 91/09/19, bsy@cs.cmu.edu
+	 * We grab an extra reference to each of the files that are
+	 * not otherwise accessible and then free the rights that are
+	 * stored in messages on them.
 	 */
-	if (nslots < nfiles) {
-		mutex_exit(&filelist_lock);
-		kmem_free(extra_ref, nslots * sizeof(file_t *));
-		goto restart;
-	}
-	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
-	    fp = nextfp) {
-		nextfp = LIST_NEXT(fp, f_list);
+	for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
+		KASSERT(mutex_owned(&filelist_lock));
+		np = LIST_NEXT(fp, f_list);
 		mutex_enter(&fp->f_lock);
-		if (fp->f_count != 0 &&
-		    fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
-			*fpp++ = fp;
-			nunref++;
-			fp->f_count++;
-		}
-		mutex_exit(&fp->f_lock);
-	}
-	mutex_exit(&filelist_lock);
 
-	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
-		fp = *fpp;
-		if (fp->f_type == DTYPE_SOCKET) {
-			so = fp->f_data;
-			solock(so);
-			sorflush(fp->f_data);
-			sounlock(so);
+		/*
+		 * Ignore non-sockets.
+		 * Ignore dead sockets, or sockets with pending close.
+		 * Ignore sockets obviously referenced elsewhere. 
+		 * Ignore sockets marked as referenced by our scan.
+		 * Ignore new sockets that did not exist during the scan.
+		 */
+		if (fp->f_type != DTYPE_SOCKET ||
+		    fp->f_count == 0 || fp->f_unpcount != 0 ||
+		    fp->f_count != fp->f_msgcount ||
+		    (fp->f_flag & (FMARK | FSCAN)) != FSCAN) {
+			mutex_exit(&fp->f_lock);
+			continue;
 		}
+
+		/* Gain file ref, mark our position, and unlock. */
+		LIST_INSERT_AFTER(fp, dp, f_list);
+		fp->f_count++;
+		mutex_exit(&fp->f_lock);
+		mutex_exit(&filelist_lock);
+
+		/*
+		 * Flush all data from the socket's receive buffer.
+		 * This will cause files referenced only by the
+		 * socket to be queued for close.
+		 */
+		so = fp->f_data;
+		solock(so);
+		sorflush(so);
+		sounlock(so);
+
+		/* Re-lock and restart from where we left off. */
+		closef(fp);
+		mutex_enter(&filelist_lock);
+		np = LIST_NEXT(dp, f_list);
+		LIST_REMOVE(dp, f_list);
 	}
-	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
-		closef(*fpp);
+}
+
+/*
+ * Garbage collector thread.  While SCM_RIGHTS messages are in transit,
+ * wake once per second to garbage collect.  Run continually while we
+ * have deferred closes to process.
+ */
+static void
+unp_thread(void *cookie)
+{
+	file_t *dp;
+
+	/* Allocate a dummy file for our scans. */
+	if ((dp = fgetdummy()) == NULL) {
+		panic("unp_thread");
 	}
-	kmem_free(extra_ref, nslots * sizeof(file_t *));
-	atomic_swap_uint(&unp_gcing, 0);
+
+	mutex_enter(&filelist_lock);
+	for (;;) {
+		KASSERT(mutex_owned(&filelist_lock));
+		if (SLIST_EMPTY(&unp_thread_discard)) {
+			if (unp_rights != 0) {
+				(void)cv_timedwait(&unp_thread_cv,
+				    &filelist_lock, hz);
+			} else {
+				cv_wait(&unp_thread_cv, &filelist_lock);
+			}
+		}
+		unp_gc(dp);
+	}
+	/* NOTREACHED */
+}
+
+/*
+ * Kick the garbage collector into action if there is something for
+ * it to process.
+ */
+static void
+unp_thread_kick(void)
+{
+
+	if (!SLIST_EMPTY(&unp_thread_discard) || unp_rights != 0) {
+		mutex_enter(&filelist_lock);
+		cv_signal(&unp_thread_cv);
+		mutex_exit(&filelist_lock);
+	}
 }
 
 void
@@ -1606,37 +1655,37 @@ unp_dispose(struct mbuf *m)
 {
 
 	if (m)
-		unp_scan(m, unp_discard, 1);
+		unp_scan(m, unp_discard_later, 1);
 }
 
 void
 unp_scan(struct mbuf *m0, void (*op)(file_t *), int discard)
 {
 	struct mbuf *m;
-	file_t **rp;
+	file_t **rp, *fp;
 	struct cmsghdr *cm;
-	int i;
-	int qfds;
+	int i, qfds;
 
 	while (m0) {
 		for (m = m0; m; m = m->m_next) {
-			if (m->m_type == MT_CONTROL &&
-			    m->m_len >= sizeof(*cm)) {
-				cm = mtod(m, struct cmsghdr *);
-				if (cm->cmsg_level != SOL_SOCKET ||
-				    cm->cmsg_type != SCM_RIGHTS)
-					continue;
-				qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm)))
-				    / sizeof(file_t *);
-				rp = (file_t **)CMSG_DATA(cm);
-				for (i = 0; i < qfds; i++) {
-					file_t *fp = *rp;
-					if (discard)
-						*rp = 0;
-					(*op)(fp);
-					rp++;
+			if (m->m_type != MT_CONTROL ||
+			    m->m_len < sizeof(*cm)) {
+			    	continue;
+			}
+			cm = mtod(m, struct cmsghdr *);
+			if (cm->cmsg_level != SOL_SOCKET ||
+			    cm->cmsg_type != SCM_RIGHTS)
+				continue;
+			qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm)))
+			    / sizeof(file_t *);
+			rp = (file_t **)CMSG_DATA(cm);
+			for (i = 0; i < qfds; i++) {
+				fp = *rp;
+				if (discard) {
+					*rp = 0;
 				}
-				break;		/* XXX, but saves time */
+				(*op)(fp);
+				rp++;
 			}
 		}
 		m0 = m0->m_nextpkt;
@@ -1658,10 +1707,9 @@ unp_mark(file_t *fp)
 	}
 
 	/*
-	 * Minimize the number of deferrals...  Sockets are the only
-	 * type of descriptor which can hold references to another
-	 * descriptor, so just mark other descriptors, and defer
-	 * unmarked sockets for the next pass.
+	 * Minimize the number of deferrals...  Sockets are the only type of
+	 * file which can hold references to another file, so just mark
+	 * other files, and defer unmarked sockets for the next pass.
 	 */
 	if (fp->f_type == DTYPE_SOCKET) {
 		unp_defer++;
@@ -1671,20 +1719,38 @@ unp_mark(file_t *fp)
 		atomic_or_uint(&fp->f_flag, FMARK);
 	}
 	mutex_exit(&fp->f_lock);
-	return;
 }
 
-void
-unp_discard(file_t *fp)
+static void
+unp_discard_now(file_t *fp)
 {
 
 	if (fp == NULL)
 		return;
 
-	mutex_enter(&fp->f_lock);
 	KASSERT(fp->f_count > 0);
+	KASSERT(fp->f_msgcount > 0);
+
+	mutex_enter(&fp->f_lock);
 	fp->f_msgcount--;
 	mutex_exit(&fp->f_lock);
 	atomic_dec_uint(&unp_rights);
 	(void)closef(fp);
+}
+
+static void
+unp_discard_later(file_t *fp)
+{
+
+	if (fp == NULL)
+		return;
+
+	KASSERT(fp->f_count > 0);
+	KASSERT(fp->f_msgcount > 0);
+
+	mutex_enter(&filelist_lock);
+	if (fp->f_unpcount++ == 0) {
+		SLIST_INSERT_HEAD(&unp_thread_discard, fp, f_unplist);
+	}
+	mutex_exit(&filelist_lock);
 }

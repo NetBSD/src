@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2009/01/12 07:19:08 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2009/05/13 17:17:44 jym Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
@@ -57,6 +57,7 @@ CLEANFILES+=	${PROG}1 ${PROG}2 ${PROG}1.bin ${PROG}2.bin ${PROG}.bin iplsum
 CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>
 
 # override default rules
 
@@ -78,13 +79,3 @@ CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 			echo 'found non-relocatable code' >&2 && exit 1; \
 		fi
 	${TOOL_SED} -e 's/\.text/.data/' $@.S | ${AS} -o ${.TARGET}
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] || ln -s $S/arch/hp700/include machine)
-	@([ -h hppa ] || ln -s $S/arch/hppa/include hppa)
-
-.NOPATH: machine hppa
-.endif
-
-CLEANFILES+=machine hppa

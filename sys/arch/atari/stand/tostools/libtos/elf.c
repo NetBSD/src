@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.9 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: elf.c,v 1.9.2.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,11 +65,7 @@
 				(ELFMAG2 << 8) | ELFMAG3)
 
 int
-elf_load(fd, od, errp, loadsyms)
-int	fd;
-osdsc_t	*od;
-char	**errp;
-int	loadsyms;
+elf_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 {
 	int		i,j;
 	int		err;
@@ -161,7 +157,7 @@ int	loadsyms;
 		if (read(fd, p, php->p_filesz) != php->p_filesz)
 		    goto error;
 		if (php->p_memsz > php->p_filesz)
-		    bzero(p + php->p_filesz, php->p_memsz - php->p_filesz);
+		    memset(p + php->p_filesz, 0, php->p_memsz - php->p_filesz);
 	    }
 	}
 
@@ -216,7 +212,7 @@ int	loadsyms;
 		}
 	    }
 	    ehdr.e_shoff = sizeof(ehdr);
-	    bcopy(&ehdr, symtab, sizeof(ehdr));
+	    memcpy(symtab, &ehdr, sizeof(ehdr));
 	}
 	return 0;
 

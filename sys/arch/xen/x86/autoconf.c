@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2008/12/18 12:19:02 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.2.1 2009/05/13 17:18:50 jym Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2008/12/18 12:19:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.1 2009/05/13 17:18:50 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -281,19 +281,20 @@ device_register(device_t dev, void *aux)
 	if (device_class(dev) == DV_IFNET) {
 		union xen_cmdline_parseinfo xcp;
 
-		xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
-		if (strncmp(xcp.xcp_bootdev, device_xname(dev),
-		    sizeof(xcp.xcp_bootdev)) == 0) {
 #ifdef NFS_BOOT_BOOTSTATIC
 #ifdef DOM0OPS
-			if (xendomain_is_privileged()) {
-				nfs_bootstatic_callback = dom0_bootstatic_callback;
-			} else
+		if (xendomain_is_privileged()) {
+			nfs_bootstatic_callback = dom0_bootstatic_callback;
+		} else
 #endif
 #if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0
-			nfs_bootstatic_callback = xennet_bootstatic_callback;
+		nfs_bootstatic_callback = xennet_bootstatic_callback;
 #endif
 #endif
+		xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
+		if (strncmp(xcp.xcp_bootdev, device_xname(dev),
+		    sizeof(xcp.xcp_bootdev)) == 0)
+		{
 			goto found;
 		}
 	}

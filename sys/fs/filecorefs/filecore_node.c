@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.17 2008/05/05 17:11:16 ad Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.17.14.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.17 2008/05/05 17:11:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.17.14.1 2009/05/13 17:21:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ extern int prtactive;	/* 1 => print out reclaim of active vnodes */
  * Initialize hash links for inodes and dnodes.
  */
 void
-filecore_init()
+filecore_init(void)
 {
 
 	malloc_type_attach(M_FILECOREMNT);
@@ -120,7 +120,7 @@ filecore_init()
  * Reinitialize inode hash table.
  */
 void
-filecore_reinit()
+filecore_reinit(void)
 {
 	struct filecore_node *ip;
 	struct ihashhead *oldhash, *hash;
@@ -149,7 +149,7 @@ filecore_reinit()
  * Destroy node pool and hash table.
  */
 void
-filecore_done()
+filecore_done(void)
 {
 	hashdone(filecorehashtbl, HASH_LIST, filecorehash);
 	pool_destroy(&filecore_node_pool);
@@ -162,9 +162,7 @@ filecore_done()
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-filecore_ihashget(dev, inum)
-	dev_t dev;
-	ino_t inum;
+filecore_ihashget(dev_t dev, ino_t inum)
 {
 	struct filecore_node *ip;
 	struct vnode *vp;
@@ -189,8 +187,7 @@ loop:
  * Insert the inode into the hash table, and return it locked.
  */
 void
-filecore_ihashins(ip)
-	struct filecore_node *ip;
+filecore_ihashins(struct filecore_node *ip)
 {
 	struct ihashhead *ipp;
 	struct vnode *vp;
@@ -208,8 +205,7 @@ filecore_ihashins(ip)
  * Remove the inode from the hash table.
  */
 void
-filecore_ihashrem(ip)
-	struct filecore_node *ip;
+filecore_ihashrem(struct filecore_node *ip)
 {
 	simple_lock(&filecore_ihash_slock);
 	LIST_REMOVE(ip, i_hash);
@@ -221,8 +217,7 @@ filecore_ihashrem(ip)
  * truncate and deallocate the file.
  */
 int
-filecore_inactive(v)
-	void *v;
+filecore_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -246,8 +241,7 @@ filecore_inactive(v)
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-filecore_reclaim(v)
-	void *v;
+filecore_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;

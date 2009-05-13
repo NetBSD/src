@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.260 2009/02/04 21:29:54 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.260.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.260 2009/02/04 21:29:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.260.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -302,7 +302,7 @@ wakeup(wchan_t ident)
 	sleepq_t *sq;
 	kmutex_t *mp;
 
-	if (cold)
+	if (__predict_false(cold))
 		return;
 
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
@@ -321,7 +321,7 @@ wakeup_one(wchan_t ident)
 	sleepq_t *sq;
 	kmutex_t *mp;
 
-	if (cold)
+	if (__predict_false(cold))
 		return;
 
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
@@ -376,13 +376,14 @@ preempt(void)
 static char	in_critical_section;
 static char	kernel_lock_held;
 static char	is_softint;
+static char	cpu_kpreempt_enter_fail;
 
 bool
 kpreempt(uintptr_t where)
 {
 	uintptr_t failed;
 	lwp_t *l;
-	int s, dop;
+	int s, dop, lsflag;
 
 	l = curlwp;
 	failed = 0;
@@ -399,8 +400,8 @@ kpreempt(uintptr_t where)
 		}
 		if (__predict_false((l->l_flag & LW_IDLE) != 0)) {
 			/* Can't preempt idle loop, don't count as failure. */
-		    	l->l_dopreempt = 0;
-		    	return true;
+			l->l_dopreempt = 0;
+			return true;
 		}
 		if (__predict_false(l->l_nopreempt != 0)) {
 			/* LWP holds preemption disabled, explicitly. */
@@ -411,10 +412,10 @@ kpreempt(uintptr_t where)
 			break;
 		}
 		if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		    	/* Can't preempt soft interrupts yet. */
-		    	l->l_dopreempt = 0;
-		    	failed = (uintptr_t)&is_softint;
-		    	break;
+			/* Can't preempt soft interrupts yet. */
+			l->l_dopreempt = 0;
+			failed = (uintptr_t)&is_softint;
+			break;
 		}
 		s = splsched();
 		if (__predict_false(l->l_blcnt != 0 ||
@@ -434,6 +435,7 @@ kpreempt(uintptr_t where)
 			 * interrupt to retry later.
 			 */
 			splx(s);
+			failed = (uintptr_t)&cpu_kpreempt_enter_fail;
 			break;
 		}
 		/* Do it! */
@@ -450,26 +452,27 @@ kpreempt(uintptr_t where)
 		l->l_nopreempt--;
 	}
 
-	/* Record preemption failure for reporting via lockstat. */
-	if (__predict_false(failed)) {
-		int lsflag = 0;
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_COUNTED);
-		LOCKSTAT_ENTER(lsflag);
-		/* Might recurse, make it atomic. */
-		if (__predict_false(lsflag)) {
-			if (where == 0) {
-				where = (uintptr_t)__builtin_return_address(0);
-			}
-			if (atomic_cas_ptr_ni((void *)&l->l_pfailaddr,
-			    NULL, (void *)where) == NULL) {
-				LOCKSTAT_START_TIMER(lsflag, l->l_pfailtime);
-				l->l_pfaillock = failed;
-			}
-		}
-		LOCKSTAT_EXIT(lsflag);
+	if (__predict_true(!failed)) {
+		return false;
 	}
 
-	return failed;
+	/* Record preemption failure for reporting via lockstat. */
+	atomic_or_uint(&l->l_dopreempt, DOPREEMPT_COUNTED);
+	lsflag = 0;
+	LOCKSTAT_ENTER(lsflag);
+	if (__predict_false(lsflag)) {
+		if (where == 0) {
+			where = (uintptr_t)__builtin_return_address(0);
+		}
+		/* Preemption is on, might recurse, so make it atomic. */
+		if (atomic_cas_ptr_ni((void *)&l->l_pfailaddr, NULL,
+		    (void *)where) == NULL) {
+			LOCKSTAT_START_TIMER(lsflag, l->l_pfailtime);
+			l->l_pfaillock = failed;
+		}
+	}
+	LOCKSTAT_EXIT(lsflag);
+	return true;
 }
 
 /*
@@ -478,9 +481,7 @@ kpreempt(uintptr_t where)
 bool
 kpreempt_disabled(void)
 {
-	lwp_t *l;
-
-	l = curlwp;
+	const lwp_t *l = curlwp;
 
 	return l->l_nopreempt != 0 || l->l_stat == LSZOMB ||
 	    (l->l_flag & LW_IDLE) != 0 || cpu_kpreempt_disabled();
@@ -516,7 +517,7 @@ void
 updatertime(lwp_t *l, const struct bintime *now)
 {
 
-	if ((l->l_flag & LW_IDLE) != 0)
+	if (__predict_false(l->l_flag & LW_IDLE))
 		return;
 
 	/* rtime += now - stime */
@@ -552,7 +553,7 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 		newl->l_stat = LSONPROC;
 		newl->l_pflag |= LP_RUNNING;
 	}
-	
+
 	/*
 	 * Only clear want_resched if there are no pending (slow)
 	 * software interrupts.
@@ -583,9 +584,7 @@ mi_switch(lwp_t *l)
 	KASSERT(kpreempt_disabled());
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
 
-#ifdef KSTACK_CHECK_MAGIC
 	kstack_check_magic(l);
-#endif
 
 	binuptime(&bt);
 
@@ -752,7 +751,7 @@ mi_switch(lwp_t *l)
 		 * We may need to spin-wait for if 'newl' is still
 		 * context switching on another CPU.
 		 */
-		if (newl->l_ctxswtch != 0) {
+		if (__predict_false(newl->l_ctxswtch != 0)) {
 			u_int count;
 			count = SPINLOCK_BACKOFF_MIN;
 			while (newl->l_ctxswtch)
@@ -828,9 +827,7 @@ lwp_exit_switchaway(lwp_t *l)
 	KASSERT(ci == curcpu());
 	LOCKDEBUG_BARRIER(NULL, 0);
 
-#ifdef KSTACK_CHECK_MAGIC
 	kstack_check_magic(l);
-#endif
 
 	/* Count time spent in current system call */
 	SYSCALL_TIME_SLEEP(l);
@@ -893,7 +890,7 @@ lwp_exit_switchaway(lwp_t *l)
 	 * We may need to spin-wait for if 'newl' is still
 	 * context switching on another CPU.
 	 */
-	if (newl->l_ctxswtch != 0) {
+	if (__predict_false(newl->l_ctxswtch != 0)) {
 		u_int count;
 		count = SPINLOCK_BACKOFF_MIN;
 		while (newl->l_ctxswtch)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.40 2009/01/21 06:59:29 yamt Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.40.2.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.40 2009/01/21 06:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.40.2.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.40 2009/01/21 06:59:29 yamt Exp $"
 
 static int nb_tcpsndbuf = NB_SNDQ;
 static int nb_tcprcvbuf = NB_RCVQ;
-static const struct timeval nb_timo = { 15, 0 };	/* XXX sysctl? */
+static const struct timespec nb_timo = { 15, 0 };	/* XXX sysctl? */
 
 #define nb_sosend(so,m,flags,l) (*(so)->so_send)(so, NULL, (struct uio *)0, \
 					m, (struct mbuf *)0, flags, l)
@@ -113,11 +113,11 @@ nb_setsockopt_int(struct socket *so, int level, int name, int val)
 }
 
 static int
-nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
+nbssn_rselect(struct nbpcb *nbp, const struct timespec *ts, int events,
 	struct lwp *l)
 {
 
-	return pollsock(nbp->nbp_tso, tv, events);
+	return pollsock(nbp->nbp_tso, ts, events);
 }
 
 static int
@@ -393,7 +393,7 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 		while (resid > 0) {
 			tm = NULL;
 			rcvflg = MSG_WAITALL;
-			bzero(&auio, sizeof(auio));
+			memset(&auio, 0, sizeof(auio));
 			auio.uio_resid = min(resid, NB_SORECEIVE_CHUNK);
 			/* not need to setup uio_vmspace */
 			resid -= auio.uio_resid;
@@ -636,6 +636,7 @@ smb_nbst_intr(struct smb_vc *vcp)
 static int
 smb_nbst_getparam(struct smb_vc *vcp, int param, void *data)
 {
+	struct timeval *tvp;
 	switch (param) {
 	case SMBTP_SNDSZ:
 		*(int*)data = nb_tcpsndbuf;
@@ -644,7 +645,9 @@ smb_nbst_getparam(struct smb_vc *vcp, int param, void *data)
 		*(int*)data = nb_tcprcvbuf;
 		break;
 	case SMBTP_TIMEOUT:
-		*(struct timeval*)data = nb_timo;
+		tvp = (struct timeval *)data;
+		tvp->tv_sec = nb_timo.tv_sec;
+		tvp->tv_usec = nb_timo.tv_nsec / 1000;
 		break;
 	default:
 		return EINVAL;

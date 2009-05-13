@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.13 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: copy.c,v 1.13.90.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)copy.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: copy.c,v 1.13 2005/12/11 12:25:20 christos Exp $");
+__RCSID("$NetBSD: copy.c,v 1.13.90.1 2009/05/13 17:23:03 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: copy.c,v 1.13 2005/12/11 12:25:20 christos Exp $");
 /*
  * Copy from from to to.  Intended for use in system installation.
  */
-main()
+main(void)
 {
 	extern int errno;
 	register int from, to, record, rcc, wcc, bsize = BSIZE;

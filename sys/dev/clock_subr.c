@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.12 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.12.90.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.12 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.12.90.1 2009/05/13 17:19:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,7 @@ static const int month_days[12] = {
  * It is otherwise equivalent.
  */
 static inline int
-leapyear(year)
-	int year;
+leapyear(int year)
 {
 	int rv = 0;
 
@@ -126,8 +125,7 @@ leapyear(year)
 }
 
 time_t
-clock_ymdhms_to_secs(dt)
-	struct clock_ymdhms *dt;
+clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 {
 	uint64_t secs;
 	int i, year, days;
@@ -161,9 +159,7 @@ clock_ymdhms_to_secs(dt)
 }
 
 void
-clock_secs_to_ymdhms(secs, dt)
-	time_t secs;
-	struct clock_ymdhms *dt;
+clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 {
 	int mthdays[12];
 	int i, days;

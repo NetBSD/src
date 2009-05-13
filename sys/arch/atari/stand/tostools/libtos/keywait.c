@@ -1,4 +1,4 @@
-/*	$NetBSD: keywait.c,v 1.1.1.1 1996/01/07 21:50:50 leo Exp $	*/
+/*	$NetBSD: keywait.c,v 1.1.1.1.184.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -37,8 +37,7 @@
 #include "libtos.h"
 
 int
-key_wait(text)
-	char	*text;
+key_wait(char *text)
 {
 	struct termios	term_attr;
 	tcflag_t	lfl_orig;

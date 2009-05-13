@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_compr.c,v 1.4 2008/01/29 18:21:10 pooka Exp $	*/
+/*	$NetBSD: ntfs_compr.c,v 1.4.24.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.4 2008/01/29 18:21:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.4.24.1 2009/05/13 17:21:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ ntfs_uncompblock(
 			    len, 0xfff));
 		}
 		memcpy(dbuf, cbuf + 2, len + 1);
-		bzero(dbuf + len + 1, NTFS_COMPBLOCK_SIZE - 1 - len);
+		memset(dbuf + len + 1, 0, NTFS_COMPBLOCK_SIZE - 1 - len);
 		return len + 3;
 	}
 	cpos = 2;

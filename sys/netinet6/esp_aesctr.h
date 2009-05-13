@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.h,v 1.2 2005/12/10 23:39:56 elad Exp $	*/
+/*	$NetBSD: esp_aesctr.h,v 1.2.90.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: esp_aesctr.h,v 1.2 2003/07/20 00:29:38 itojun Exp $	*/
 
 /*
@@ -33,13 +33,13 @@
 #ifndef _NETINET6_ESP_AESCTR_H_
 #define _NETINET6_ESP_AESCTR_H_
 
-extern int esp_aesctr_mature __P((struct secasvar *));
-extern size_t esp_aesctr_schedlen __P((const struct esp_algorithm *));
-extern int esp_aesctr_schedule __P((const struct esp_algorithm *,
-	struct secasvar *));
-extern int esp_aesctr_decrypt __P((struct mbuf *, size_t,
-	struct secasvar *, const struct esp_algorithm *, int));
-extern int esp_aesctr_encrypt __P((struct mbuf *, size_t, size_t,
-	struct secasvar *, const struct esp_algorithm *, int));
+extern int esp_aesctr_mature(struct secasvar *);
+extern size_t esp_aesctr_schedlen(const struct esp_algorithm *);
+extern int esp_aesctr_schedule(const struct esp_algorithm *,
+	struct secasvar *);
+extern int esp_aesctr_decrypt(struct mbuf *, size_t,
+	struct secasvar *, const struct esp_algorithm *, int);
+extern int esp_aesctr_encrypt(struct mbuf *, size_t, size_t,
+	struct secasvar *, const struct esp_algorithm *, int);
 
 #endif /* !_NETINET6_ESP_AESCTR_H_ */

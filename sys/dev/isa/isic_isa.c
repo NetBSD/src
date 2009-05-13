@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.31 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.31.14.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -74,9 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.31 2008/04/28 20:23:52 martin Exp $")
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 /* local functions */
-static int isic_isa_probe(struct device *, struct cfdata *, void *);
+static int isic_isa_probe(device_t, cfdata_t, void *);
 
-static void isic_isa_attach(struct device *, struct device *, void *);
+static void isic_isa_attach(device_t, device_t, void *);
 static int setup_io_map(int flags, bus_space_tag_t iot,
 	bus_space_tag_t memt, bus_size_t iobase, bus_size_t maddr,
 	int *num_mappings, struct isic_io_map *maps, int *iosize,
@@ -94,7 +94,7 @@ CFATTACH_DECL(isic_isa, sizeof(struct isic_softc),
  * Probe card
  */
 static int
-isic_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
+isic_isa_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt, iot = ia->ia_iot;
@@ -775,7 +775,7 @@ isicattach(int flags, struct isic_softc *sc)
  * Attach the card
  */
 static void
-isic_isa_attach(struct device *parent, struct device *self, void *aux)
+isic_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isic_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -970,11 +970,7 @@ isic_isa_attach(struct device *parent, struct device *self, void *aux)
  * mappings already setup when returning!
  */
 static int
-setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
-	int flags, *num_mappings, *iosize, *msize;
-	bus_size_t iobase, maddr;
-	bus_space_tag_t iot, memt;
-	struct isic_io_map *maps;
+setup_io_map(int flags, bus_space_tag_t iot, bus_space_tag_t memt, bus_size_t iobase, bus_size_t maddr, int *num_mappings, struct isic_io_map *maps, int *iosize, int *msize)
 {
 	/* nothing mapped yet */
 	*num_mappings = 0;
@@ -1272,9 +1268,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 }
 
 static void
-args_unmap(num_mappings, maps)
-	int *num_mappings;
-	struct isic_io_map *maps;
+args_unmap(int *num_mappings, struct isic_io_map *maps)
 {
 	int i, n;
 	for (i = 0, n = *num_mappings; i < n; i++)

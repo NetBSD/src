@@ -1,11 +1,11 @@
-/*	$NetBSD: pcb.h,v 1.46 2008/10/26 06:57:30 mrg Exp $	*/
+/*	$NetBSD: pcb.h,v 1.46.8.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,7 +85,7 @@ struct pcb {
 	int	pcb_esp0;		/* ring0 esp */
 	int	pcb_esp;		/* kernel esp */
 	int	pcb_ebp;		/* kernel ebp */
-	int	pcb_ldt_sel;
+	int	pcb_unused;		/* unused */
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_cr2;		/* page fault address (CR2) */
 	int	pcb_cr3;		/* page directory pointer */

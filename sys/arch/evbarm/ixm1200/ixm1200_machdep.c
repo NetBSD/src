@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.37 2008/11/30 18:21:33 martin Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.37.4.1 2009/05/13 17:16:39 jym Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.37 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.37.4.1 2009/05/13 17:16:39 jym Exp $");
 
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
@@ -215,8 +216,8 @@ static vaddr_t ixp12x0_cc_base;
 
 /* Prototypes */
 
-void consinit		__P((void));
-u_int cpu_get_control	__P((void));
+void consinit(void);
+u_int cpu_get_control(void);
 
 void ixdp_ixp12x0_cc_setup(void);
 
@@ -230,9 +231,7 @@ void ixdp_ixp12x0_cc_setup(void);
  */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	/*
 	 * If we are still cold then hit the air brakes

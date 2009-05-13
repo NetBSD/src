@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.3 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.3.92.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,62 +32,54 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.3 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.3.92.1 2009/05/13 17:17:59 jym Exp $");
 
 #include "fpu_emulate.h"
 
 struct fpn *
-fpu_acos(fe)
-     struct fpemu *fe;
+fpu_acos(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_asin(fe)
-     struct fpemu *fe;
+fpu_asin(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_atan(fe)
-     struct fpemu *fe;
+fpu_atan(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_cos(fe)
-     struct fpemu *fe;
+fpu_cos(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_sin(fe)
-     struct fpemu *fe;
+fpu_sin(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_tan(fe)
-     struct fpemu *fe;
+fpu_tan(struct fpemu *fe)
 {
   /* stub */
   return &fe->fe_f2;
 }
 
 struct fpn *
-fpu_sincos(fe, regc)
-     struct fpemu *fe;
-     int regc;
+fpu_sincos(struct fpemu *fe, int regc)
 {
   /* stub */
   return &fe->fe_f2;

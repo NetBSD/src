@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.25 2009/02/06 18:50:26 jym Exp $
+# $NetBSD: INSTALL,v 1.25.2.1 2009/05/13 17:16:01 jym Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -88,7 +88,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -138,10 +137,8 @@ iic0		at iociic0
 pcfrtc0		at iic0 addr 0x50	# Real-time clock
 
 arckbd0 	at ioc0 bank 0 offset 0x04 # System keyboard
-arcwskbd0	at arckbd0		# Logical devices...
-wskbd0		at arcwskbd0
-#arcwsmouse0	at arckbd0
-#wsmouse0	at arcwsmouse0
+wskbd0		at arckbd0
+#wsmouse0	at arckbd0
 
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
 latches0	at ioc0 bank 5		# Printer/FDC control latches (Arc)
@@ -195,8 +192,8 @@ wsdisplay0	at arcvideo0
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
-#pseudo-device	ipfilter	1
-pseudo-device	loop		1
+#pseudo-device	ipfilter
+pseudo-device	loop
 pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_ROOT_SIZE=

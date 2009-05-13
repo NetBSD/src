@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169var.h,v 1.3 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: rtl8169var.h,v 1.3.90.1 2009/05/13 17:19:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -31,5 +31,5 @@
 void	re_attach(struct rtk_softc*);
 int	re_intr(void *);
 int	re_detach(struct rtk_softc *);
-int	re_activate(struct device *, enum devact);
+int	re_activate(device_t, enum devact);
 int	re_diag(struct rtk_softc *);

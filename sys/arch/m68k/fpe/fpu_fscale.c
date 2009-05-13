@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.12 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.12.92.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.12 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.12.92.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -48,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.12 2005/12/11 12:17:52 christos Exp
 #include "fpu_emulate.h"
 
 int
-fpu_emul_fscale(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 {
     struct frame *frame;
     u_int *fpregs;

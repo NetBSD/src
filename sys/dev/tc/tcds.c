@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.23 2008/07/09 13:19:33 joerg Exp $ */
+/* $NetBSD: tcds.c,v 1.23.8.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.23 2008/07/09 13:19:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.23.8.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -222,7 +222,7 @@ tcdsattach(device_t parent, device_t self, void *aux)
 		char *cp;
 
 		slotc = &sc->sc_slots[i];
-		bzero(slotc, sizeof *slotc);	/* clear everything */
+		memset(slotc, 0, sizeof *slotc);	/* clear everything */
 
 		cp = slotc->sc_name;
 		snprintf(cp, sizeof(slotc->sc_name), "chip %d", i);

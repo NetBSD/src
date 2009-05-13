@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.11 2008/01/15 23:15:59 joerg Exp $	*/
+/*	$NetBSD: todclock.c,v 1.11.24.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.11 2008/01/15 23:15:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.11.24.1 2009/05/13 17:16:13 jym Exp $");
 
 /* Include header files */
 
@@ -75,16 +75,16 @@ static int tod_set_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 struct todclock_softc {
 	struct device	sc_dev;			/* device node */
 	void	*sc_rtc_arg;			/* arg to read/write */
-	int	(*sc_rtc_write)	__P((void *, rtc_t *));	/* rtc write function */
-	int	(*sc_rtc_read)	__P((void *, rtc_t *));	/* rtc read function */
+	int	(*sc_rtc_write)(void *, rtc_t *);	/* rtc write function */
+	int	(*sc_rtc_read)(void *, rtc_t *);	/* rtc read function */
 };
 
 /* prototypes for functions */
 
-static void todclockattach __P((struct device *parent, struct device *self,
-				void *aux));
-static int  todclockmatch  __P((struct device *parent, struct cfdata *cf,
-				void *aux));
+static void todclockattach(struct device *parent, struct device *self,
+				void *aux);
+static int  todclockmatch(struct device *parent, struct cfdata *cf,
+				void *aux);
 
 /*
  * We need to remember our softc for functions like inittodr()
@@ -108,10 +108,7 @@ CFATTACH_DECL(todclock, sizeof(struct todclock_softc),
  */
 
 int
-todclockmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+todclockmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct todclock_attach_args *ta = aux;
 
@@ -133,10 +130,7 @@ todclockmatch(parent, cf, aux)
  */
 
 void
-todclockattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+todclockattach(struct device *parent, struct device *self, void *aux)
 {
 	static struct todr_chip_handle	tch;
 

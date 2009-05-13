@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.30 2006/11/16 01:33:31 christos Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.30.68.1 2009/05/13 17:21:42 jym Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.30 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.30.68.1 2009/05/13 17:21:42 jym Exp $");
 
 #include "opt_wsmsgattrs.h"
 
@@ -662,7 +662,7 @@ wsemul_vt100_output_scs96(struct wsemul_vt100_emuldata *edp, u_char c)
 	int nrc;
 
 	switch (c) {
-	case '%': /* probably portugese */
+	case '%': /* probably portuguese */
 		newstate = VT100_EMUL_STATE_SCS96_PERCENT;
 		break;
 	case 'A': /* ISO-latin-1 supplemental */
@@ -713,7 +713,7 @@ static u_int
 wsemul_vt100_output_scs96_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
-	case '6': /* portugese */
+	case '6': /* portuguese */
 		vt100_setnrc(edp, 8);
 		break;
 	default:

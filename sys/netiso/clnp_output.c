@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.22 2008/01/14 04:17:35 dyoung Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.22.24.1 2009/05/13 17:22:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.22 2008/01/14 04:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.22.24.1 2009/05/13 17:22:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -352,7 +352,7 @@ clnp_output(struct mbuf *m0, ...)
 			printf("clnp_output: NEW clcp %p\n", clcp);
 		}
 #endif
-		bzero((void *) clcp, sizeof(struct clnp_cache));
+		memset((void *) clcp, 0, sizeof(struct clnp_cache));
 
 		if (isop->isop_optindex)
 			oidx = mtod(isop->isop_optindex, struct clnp_optidx *);
@@ -508,7 +508,7 @@ clnp_output(struct mbuf *m0, ...)
 		 * the option was not specified previously
 		 */
 		if ((m->m_len + sizeof(qos_option)) < MLEN) {
-			bcopy((void *) qos_option, hoff, sizeof(qos_option));
+			memcpy(hoff, (void *) qos_option, sizeof(qos_option));
 			clnp->cnf_hdr_len += sizeof(qos_option);
 			hdrlen += sizeof(qos_option);
 			m->m_len += sizeof(qos_option);

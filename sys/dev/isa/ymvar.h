@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.11 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.11.14.1 2009/05/13 17:19:54 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2002 The NetBSD Foundation, Inc.
@@ -184,11 +184,11 @@ struct ym_softc {
 #define YM_EQ_OFF(v)	((v)->left < YM_EQ_ON_MIN && (v)->right < YM_EQ_ON_MIN)
 #define YM_WIDE_OFF(v)	((v)->left < YM_3D_ON_MIN && (v)->right < YM_3D_ON_MIN)
 
-	struct device *sc_audiodev;
+	device_t sc_audiodev;
 
 #if NMPU_YM > 0
 	bus_space_handle_t sc_mpu_ioh;
-	struct device *sc_mpudev;
+	device_t sc_mpudev;
 #endif
 
 #ifndef AUDIO_NO_POWER_CTL

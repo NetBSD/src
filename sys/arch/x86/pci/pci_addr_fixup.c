@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.3 2008/12/19 12:58:43 cegger Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.3.2.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.3 2008/12/19 12:58:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.3.2.1 2009/05/13 17:18:44 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 					    srp->size, 
 					    EX_NOWAIT| EX_MALLOCOK);	
 		if (error != 0) {
-			printf("WARNING: can't reserve area for %s.\n",
+			aprint_error("WARNING: can't reserve area for %s.\n",
 			       srp->name);
 		}
 	}
@@ -181,7 +181,7 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 	val = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(val)) {
 	default:
-		printf("WARNING: unknown PCI device header.");
+		aprint_error("WARNING: unknown PCI device header.");
 		pciaddr.nbogus++;
 		return;
 	case 0: 
@@ -300,16 +300,16 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
 	/* check */
 	if (!pciaddrverbose)
 	{
-		printf("pci_addr_fixup: ");
+		aprint_verbose("pci_addr_fixup: ");
 		pciaddr_print_devid(pc, tag);
 	}
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
-		printf("fixup failed. (new address=%#x)\n", (unsigned)*addr);
+		aprint_error("fixup failed. (new address=%#x)\n", (unsigned)*addr);
 		return (1);
 	}
 	if (!pciaddrverbose)
-		printf("new address 0x%08x\n", (unsigned)*addr);
+		aprint_verbose("new address 0x%08x\n", (unsigned)*addr);
 
 	return (0);
 }
@@ -354,7 +354,7 @@ pciaddr_print_devid(pci_chipset_tag_t pc, pcitag_t tag)
 	
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
-	printf("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function, 
+	aprint_verbose("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function, 
 	       PCI_VENDOR(id), PCI_PRODUCT(id));
 }
 

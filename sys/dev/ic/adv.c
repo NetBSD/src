@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.42 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: adv.c,v 1.42.18.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.42 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.42.18.1 2009/05/13 17:19:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,7 @@ static void adv_watchdog(void *);
 
 
 static int
-adv_alloc_control_data(sc)
-	ASC_SOFTC      *sc;
+adv_alloc_control_data(ASC_SOFTC *sc)
 {
 	int error;
 
@@ -157,8 +156,7 @@ adv_alloc_control_data(sc)
 }
 
 static void
-adv_free_control_data(sc)
-	ASC_SOFTC *sc;
+adv_free_control_data(ASC_SOFTC *sc)
 {
 
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap_control);
@@ -176,10 +174,7 @@ adv_free_control_data(sc)
  * by adv_init().  We return the number of CCBs successfully created.
  */
 static int
-adv_create_ccbs(sc, ccbstore, count)
-	ASC_SOFTC      *sc;
-	ADV_CCB        *ccbstore;
-	int             count;
+adv_create_ccbs(ASC_SOFTC *sc, ADV_CCB *ccbstore, int count)
 {
 	ADV_CCB        *ccb;
 	int             i, error;
@@ -203,9 +198,7 @@ adv_create_ccbs(sc, ccbstore, count)
  * A ccb is put onto the free list.
  */
 static void
-adv_free_ccb(sc, ccb)
-	ASC_SOFTC      *sc;
-	ADV_CCB        *ccb;
+adv_free_ccb(ASC_SOFTC *sc, ADV_CCB *ccb)
 {
 	int             s;
 
@@ -217,8 +210,7 @@ adv_free_ccb(sc, ccb)
 
 
 static void
-adv_reset_ccb(ccb)
-	ADV_CCB        *ccb;
+adv_reset_ccb(ADV_CCB *ccb)
 {
 
 	ccb->flags = 0;
@@ -226,9 +218,7 @@ adv_reset_ccb(ccb)
 
 
 static int
-adv_init_ccb(sc, ccb)
-	ASC_SOFTC      *sc;
-	ADV_CCB        *ccb;
+adv_init_ccb(ASC_SOFTC *sc, ADV_CCB *ccb)
 {
 	int	hashnum, error;
 
@@ -268,8 +258,7 @@ adv_init_ccb(sc, ccb)
  * If there are none, see if we can allocate a new one
  */
 static ADV_CCB *
-adv_get_ccb(sc)
-	ASC_SOFTC      *sc;
+adv_get_ccb(ASC_SOFTC *sc)
 {
 	ADV_CCB        *ccb = 0;
 	int             s;
@@ -289,9 +278,7 @@ adv_get_ccb(sc)
  * Given a physical address, find the ccb that it corresponds to.
  */
 ADV_CCB *
-adv_ccb_phys_kv(sc, ccb_phys)
-	ASC_SOFTC	*sc;
-	u_long		ccb_phys;
+adv_ccb_phys_kv(ASC_SOFTC *sc, u_long ccb_phys)
 {
 	int hashnum = CCB_HASH(ccb_phys);
 	ADV_CCB *ccb = sc->sc_ccbhash[hashnum];
@@ -309,9 +296,7 @@ adv_ccb_phys_kv(sc, ccb_phys)
  * Queue a CCB to be sent to the controller, and send it if possible.
  */
 static void
-adv_queue_ccb(sc, ccb)
-	ASC_SOFTC      *sc;
-	ADV_CCB        *ccb;
+adv_queue_ccb(ASC_SOFTC *sc, ADV_CCB *ccb)
 {
 
 	TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
@@ -321,8 +306,7 @@ adv_queue_ccb(sc, ccb)
 
 
 static void
-adv_start_ccbs(sc)
-	ASC_SOFTC      *sc;
+adv_start_ccbs(ASC_SOFTC *sc)
 {
 	ADV_CCB        *ccb;
 
@@ -352,8 +336,7 @@ adv_start_ccbs(sc)
 
 
 int
-adv_init(sc)
-	ASC_SOFTC      *sc;
+adv_init(ASC_SOFTC *sc)
 {
 	int             warn;
 
@@ -432,8 +415,7 @@ adv_init(sc)
 
 
 void
-adv_attach(sc)
-	ASC_SOFTC      *sc;
+adv_attach(ASC_SOFTC *sc)
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
@@ -518,9 +500,7 @@ adv_attach(sc)
 }
 
 int
-adv_detach(sc, flags)
-	ASC_SOFTC *sc;
-	int flags;
+adv_detach(ASC_SOFTC *sc, int flags)
 {
 	int rv = 0;
 
@@ -533,8 +513,7 @@ adv_detach(sc, flags)
 }
 
 static void
-advminphys(bp)
-	struct buf     *bp;
+advminphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > ((ASC_MAX_SG_LIST - 1) * PAGE_SIZE))
@@ -549,10 +528,7 @@ advminphys(bp)
  */
 
 static void
-adv_scsipi_request(chan, req, arg)
- 	struct scsipi_channel *chan;
- 	scsipi_adapter_req_t req;
- 	void *arg;
+adv_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
  	struct scsipi_xfer *xs;
  	struct scsipi_periph *periph;
@@ -765,8 +741,7 @@ out_bad:
 }
 
 int
-adv_intr(arg)
-	void           *arg;
+adv_intr(void *arg)
 {
 	ASC_SOFTC      *sc = arg;
 
@@ -793,10 +768,7 @@ adv_intr(arg)
  * Poll a particular unit, looking for a particular xs
  */
 static int
-adv_poll(sc, xs, count)
-	ASC_SOFTC      *sc;
-	struct scsipi_xfer *xs;
-	int             count;
+adv_poll(ASC_SOFTC *sc, struct scsipi_xfer *xs, int count)
 {
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
@@ -812,8 +784,7 @@ adv_poll(sc, xs, count)
 
 
 static void
-adv_timeout(arg)
-	void           *arg;
+adv_timeout(void *arg)
 {
 	ADV_CCB        *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;
@@ -854,8 +825,7 @@ adv_timeout(arg)
 
 
 static void
-adv_watchdog(arg)
-	void           *arg;
+adv_watchdog(void *arg)
 {
 	ADV_CCB        *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;
@@ -884,9 +854,7 @@ adv_watchdog(arg)
  * Interrupt callback function for the Narrow SCSI Asc Library.
  */
 static void
-adv_narrow_isr_callback(sc, qdonep)
-	ASC_SOFTC      *sc;
-	ASC_QDONE_INFO *qdonep;
+adv_narrow_isr_callback(ASC_SOFTC *sc, ASC_QDONE_INFO *qdonep)
 {
 	bus_dma_tag_t   dmat = sc->sc_dmat;
 	ADV_CCB        *ccb;

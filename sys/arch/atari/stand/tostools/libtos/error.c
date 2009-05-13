@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.2 2002/02/24 20:51:08 leo Exp $	*/
+/*	$NetBSD: error.c,v 1.2.136.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -43,8 +43,7 @@ static void	errmsg PROTO((int, char *, va_list));
 const char	*program_name;
 
 void
-init_toslib(arg0)
-	char	*arg0;
+init_toslib(char *arg0)
 {
 	char	*p;
 
@@ -57,9 +56,7 @@ init_toslib(arg0)
 }
 
 void
-error(err, frm)
-	int	err;
-	char	*frm;
+error(int err, char *frm)
 {
 	va_list		args;
 
@@ -69,9 +66,7 @@ error(err, frm)
 }
 
 void
-fatal(err, frm)
-	int	err;
-	char	*frm;
+fatal(int err, char *frm)
 {
 	va_list		args;
 
@@ -83,10 +78,7 @@ fatal(err, frm)
 }
 
 static void
-errmsg(err, frm, args)
-	int	err;
-	char	*frm;
-	va_list	args;
+errmsg(int err, char *frm, va_list args)
 {
 	extern const char *program_name;
 

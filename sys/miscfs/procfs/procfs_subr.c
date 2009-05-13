@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.93 2008/12/17 20:51:36 cegger Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.93.2.1 2009/05/13 17:22:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.93 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.93.2.1 2009/05/13 17:22:17 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,13 +158,7 @@ kmutex_t pfs_ihash_lock;
  * the vnode free list.
  */
 int
-procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
-	struct mount *mp;
-	struct vnode **vpp;
-	pid_t pid;
-	pfstype pfs_type;
-	int fd;
-	struct proc *p;
+procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid, pfstype pfs_type, int fd, struct proc *p)
 {
 	struct pfsnode *pfs;
 	struct vnode *vp;
@@ -322,8 +316,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 }
 
 int
-procfs_freevp(vp)
-	struct vnode *vp;
+procfs_freevp(struct vnode *vp)
 {
 	struct pfsnode *pfs = VTOPFS(vp);
 
@@ -335,8 +328,7 @@ procfs_freevp(vp)
 }
 
 int
-procfs_rw(v)
-	void *v;
+procfs_rw(void *v)
 {
 	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -501,10 +493,7 @@ procfs_rw(v)
  * EFAULT:    user i/o buffer is not addressable
  */
 int
-vfs_getuserstr(uio, bf, buflenp)
-	struct uio *uio;
-	char *bf;
-	int *buflenp;
+vfs_getuserstr(struct uio *uio, char *bf, int *buflenp)
 {
 	int xlen;
 	int error;
@@ -536,10 +525,7 @@ vfs_getuserstr(uio, bf, buflenp)
 }
 
 const vfs_namemap_t *
-vfs_findname(nm, bf, buflen)
-	const vfs_namemap_t *nm;
-	const char *bf;
-	int buflen;
+vfs_findname(const vfs_namemap_t *nm, const char *bf, int buflen)
 {
 
 	for (; nm->nm_name; nm++)
@@ -553,7 +539,7 @@ vfs_findname(nm, bf, buflen)
  * Initialize pfsnode hash table.
  */
 void
-procfs_hashinit()
+procfs_hashinit(void)
 {
 	mutex_init(&pfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -561,7 +547,7 @@ procfs_hashinit()
 }
 
 void
-procfs_hashreinit()
+procfs_hashreinit(void)
 {
 	struct pfsnode *pp;
 	struct pfs_hashhead *oldhash, *hash;
@@ -589,7 +575,7 @@ procfs_hashreinit()
  * Free pfsnode hash table.
  */
 void
-procfs_hashdone()
+procfs_hashdone(void)
 {
 	hashdone(pfs_hashtbl, HASH_LIST, pfs_ihash);
 	mutex_destroy(&pfs_hashlock);
@@ -597,12 +583,7 @@ procfs_hashdone()
 }
 
 struct vnode *
-procfs_hashget(pid, type, fd, mp, flags)
-	pid_t pid;
-	pfstype type;
-	int fd;
-	struct mount *mp;
-	int flags;
+procfs_hashget(pid_t pid, pfstype type, int fd, struct mount *mp, int flags)
 {
 	struct pfs_hashhead *ppp;
 	struct pfsnode *pp;
@@ -634,8 +615,7 @@ loop:
  * Insert the pfsnode into the hash table and lock it.
  */
 void
-procfs_hashins(pp)
-	struct pfsnode *pp;
+procfs_hashins(struct pfsnode *pp)
 {
 	struct pfs_hashhead *ppp;
 
@@ -652,8 +632,7 @@ procfs_hashins(pp)
  * Remove the pfsnode from the hash table.
  */
 void
-procfs_hashrem(pp)
-	struct pfsnode *pp;
+procfs_hashrem(struct pfsnode *pp)
 {
 	mutex_enter(&pfs_ihash_lock);
 	LIST_REMOVE(pp, pfs_hash);
@@ -661,9 +640,7 @@ procfs_hashrem(pp)
 }
 
 void
-procfs_revoke_vnodes(p, arg)
-	struct proc *p;
-	void *arg;
+procfs_revoke_vnodes(struct proc *p, void *arg)
 {
 	struct pfsnode *pfs, *pnext;
 	struct vnode *vp;

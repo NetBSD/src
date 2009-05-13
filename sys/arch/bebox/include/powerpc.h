@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc.h,v 1.7 2007/10/17 19:54:00 garbled Exp $	*/
+/*	$NetBSD: powerpc.h,v 1.7.34.1 2009/05/13 17:16:34 jym Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -45,7 +45,7 @@ void mem_regions(struct mem_region **, struct mem_region **);
  *
  * Not sure whether boot itself should be implementation dependent instead.	XXX
  */
-void ppc_exit __P((void)) __attribute__((__noreturn__));
-void ppc_boot __P((char *bootspec)) __attribute__((__noreturn__));
+void ppc_exit(void) __attribute__((__noreturn__));
+void ppc_boot(char *bootspec) __attribute__((__noreturn__));
 
 #endif	/* _MACHINE_POWERPC_H_ */

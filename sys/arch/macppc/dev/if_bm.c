@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.38 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.38.4.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.38 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.38.4.1 2009/05/13 17:18:01 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -267,8 +267,7 @@ bmac_attach(struct device *parent, struct device *self, void *aux)
  * Reset and enable bmac by heathrow FCR.
  */
 void
-bmac_reset_chip(sc)
-	struct bmac_softc *sc;
+bmac_reset_chip(struct bmac_softc *sc)
 {
 	u_int v;
 
@@ -293,8 +292,7 @@ bmac_reset_chip(sc)
 }
 
 void
-bmac_init(sc)
-	struct bmac_softc *sc;
+bmac_init(struct bmac_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
@@ -399,8 +397,7 @@ bmac_init(sc)
 }
 
 void
-bmac_init_dma(sc)
-	struct bmac_softc *sc;
+bmac_init_dma(struct bmac_softc *sc)
 {
 	dbdma_command_t *cmd = sc->sc_rxcmd;
 	int i;
@@ -427,8 +424,7 @@ bmac_init_dma(sc)
 }
 
 int
-bmac_intr(v)
-	void *v;
+bmac_intr(void *v)
 {
 	struct bmac_softc *sc = v;
 	int stat;
@@ -454,8 +450,7 @@ bmac_intr(v)
 }
 
 int
-bmac_rint(v)
-	void *v;
+bmac_rint(void *v)
 {
 	struct bmac_softc *sc = v;
 	struct ifnet *ifp = &sc->sc_if;
@@ -530,8 +525,7 @@ next:
 }
 
 void
-bmac_reset(sc)
-	struct bmac_softc *sc;
+bmac_reset(struct bmac_softc *sc)
 {
 	int s;
 
@@ -541,8 +535,7 @@ bmac_reset(sc)
 }
 
 void
-bmac_stop(sc)
-	struct bmac_softc *sc;
+bmac_stop(struct bmac_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	int s;
@@ -569,8 +562,7 @@ bmac_stop(sc)
 }
 
 void
-bmac_start(ifp)
-	struct ifnet *ifp;
+bmac_start(struct ifnet *ifp)
 {
 	struct bmac_softc *sc = ifp->if_softc;
 	struct mbuf *m;
@@ -607,10 +599,7 @@ bmac_start(ifp)
 }
 
 void
-bmac_transmit_packet(sc, buff, len)
-	struct bmac_softc *sc;
-	void *buff;
-	int len;
+bmac_transmit_packet(struct bmac_softc *sc, void *buff, int len)
 {
 	dbdma_command_t *cmd = sc->sc_txcmd;
 	vaddr_t va = (vaddr_t)buff;
@@ -630,10 +619,7 @@ bmac_transmit_packet(sc, buff, len)
 }
 
 int
-bmac_put(sc, buff, m)
-	struct bmac_softc *sc;
-	void *buff;
-	struct mbuf *m;
+bmac_put(struct bmac_softc *sc, void *buff, struct mbuf *m)
 {
 	struct mbuf *n;
 	int len, tlen = 0;
@@ -656,10 +642,7 @@ bmac_put(sc, buff, m)
 }
 
 struct mbuf *
-bmac_get(sc, pkt, totlen)
-	struct bmac_softc *sc;
-	void *pkt;
-	int totlen;
+bmac_get(struct bmac_softc *sc, void *pkt, int totlen)
 {
 	struct mbuf *m;
 	struct mbuf *top, **mp;
@@ -704,8 +687,7 @@ bmac_get(sc, pkt, totlen)
 }
 
 void
-bmac_watchdog(ifp)
-	struct ifnet *ifp;
+bmac_watchdog(struct ifnet *ifp)
 {
 	struct bmac_softc *sc = ifp->if_softc;
 
@@ -806,8 +788,7 @@ bmac_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
  * Set up the logical address filter.
  */
 void
-bmac_setladrf(sc)
-	struct bmac_softc *sc;
+bmac_setladrf(struct bmac_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_multi *enm;
@@ -877,24 +858,19 @@ chipit:
 }
 
 int
-bmac_mii_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+bmac_mii_readreg(struct device *dev, int phy, int reg)
 {
 	return mii_bitbang_readreg(dev, &bmac_mbo, phy, reg);
 }
 
 void
-bmac_mii_writereg(dev, phy, reg, val)
-	struct device *dev;
-	int phy, reg, val;
+bmac_mii_writereg(struct device *dev, int phy, int reg, int val)
 {
 	mii_bitbang_writereg(dev, &bmac_mbo, phy, reg, val);
 }
 
 u_int32_t
-bmac_mbo_read(dev)
-	struct device *dev;
+bmac_mbo_read(struct device *dev)
 {
 	struct bmac_softc *sc = (void *)dev;
 
@@ -902,9 +878,7 @@ bmac_mbo_read(dev)
 }
 
 void
-bmac_mbo_write(dev, val)
-	struct device *dev;
-	u_int32_t val;
+bmac_mbo_write(struct device *dev, u_int32_t val)
 {
 	struct bmac_softc *sc = (void *)dev;
 
@@ -912,8 +886,7 @@ bmac_mbo_write(dev, val)
 }
 
 void
-bmac_mii_statchg(dev)
-	struct device *dev;
+bmac_mii_statchg(struct device *dev)
 {
 	struct bmac_softc *sc = (void *)dev;
 	int x;
@@ -933,8 +906,7 @@ bmac_mii_statchg(dev)
 }
 
 void
-bmac_mii_tick(v)
-	void *v;
+bmac_mii_tick(void *v)
 {
 	struct bmac_softc *sc = v;
 	int s;

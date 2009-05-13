@@ -1,4 +1,4 @@
-/* $NetBSD: drm_context.c,v 1.3 2007/12/11 11:17:31 lukem Exp $ */
+/* $NetBSD: drm_context.c,v 1.3.26.1 2009/05/13 17:19:16 jym Exp $ */
 
 /* drm_context.h -- IOCTLs for generic contexts -*- linux-c -*-
  * Created: Fri Nov 24 18:31:37 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.3 2007/12/11 11:17:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.3.26.1 2009/05/13 17:19:16 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_context.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -242,7 +242,7 @@ int drm_resctx(DRM_IOCTL_ARGS)
 	DRM_COPY_FROM_USER_IOCTL( res, (drm_ctx_res_t *)data, sizeof(res) );
 
 	if ( res.count >= DRM_RESERVED_CONTEXTS ) {
-		bzero(&ctx, sizeof(ctx));
+		memset(&ctx, 0, sizeof(ctx));
 		for ( i = 0 ; i < DRM_RESERVED_CONTEXTS ; i++ ) {
 			ctx.handle = i;
 			if ( DRM_COPY_TO_USER( &res.contexts[i],

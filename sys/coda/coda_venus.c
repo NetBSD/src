@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.25 2007/03/04 06:01:12 christos Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.25.56.1 2009/05/13 17:18:55 jym Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.25 2007/03/04 06:01:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.25.56.1 2009/05/13 17:18:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.25 2007/03/04 06:01:12 christos Exp
     outp = (struct coda_out_hdr *) inp
 
 #define STRCPY(struc, name, len) \
-    bcopy(name, (char *)inp + (int)inp->struc, len); \
+    memcpy((char *)inp + (int)inp->struc, name, len); \
     ((char*)inp + (int)inp->struc)[len++] = 0; \
     Isize += len
 /* XXX verify that Isize has not overrun available storage */
@@ -447,7 +447,7 @@ venus_readlink(void *mdp, CodaFid *fid,
     if (!error) {
 	    CODA_ALLOC(*str, char *, outp->count);
 	    *len = outp->count;
-	    bcopy((char *)outp + (int)(long)outp->data, *str, *len);
+	    memcpy(*str, (char *)outp + (int)(long)outp->data, *len);
     }
 
 out:
@@ -710,7 +710,7 @@ venus_readdir(void *mdp, CodaFid *fid,
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     KASSERT(outp != NULL);
     if (!error) {
-	bcopy((char *)outp + (int)(long)outp->data, buffer, outp->size);
+	memcpy(buffer, (char *)outp + (int)(long)outp->data, outp->size);
 	*len = outp->size;
     }
 

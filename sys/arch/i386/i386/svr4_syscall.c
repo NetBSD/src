@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.43 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.43.8.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.43 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.43.8.1 2009/05/13 17:17:50 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -74,8 +74,7 @@ svr4_syscall_intern(struct proc *p)
  * Like trap(), argument is call by reference.
  */
 void
-svr4_syscall_plain(frame)
-	struct trapframe *frame;
+svr4_syscall_plain(struct trapframe *frame)
 {
 	char *params;
 	const struct sysent *callp;
@@ -151,8 +150,7 @@ svr4_syscall_plain(frame)
  * Like trap(), argument is call by reference.
  */
 void
-svr4_syscall_fancy(frame)
-	struct trapframe *frame;
+svr4_syscall_fancy(struct trapframe *frame)
 {
 	char *params;
 	const struct sysent *callp;

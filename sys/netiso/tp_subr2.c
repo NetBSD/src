@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.38 2008/04/23 09:57:59 plunky Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.38.16.1 2009/05/13 17:22:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.38 2008/04/23 09:57:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.38.16.1 2009/05/13 17:22:42 jym Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -326,8 +326,8 @@ void
 tp_recycle_tsuffix(void *v)
 {
 	struct tp_pcb  *tpcb = v;
-	bzero((void *) tpcb->tp_lsuffix, sizeof(tpcb->tp_lsuffix));
-	bzero((void *) tpcb->tp_fsuffix, sizeof(tpcb->tp_fsuffix));
+	memset((void *) tpcb->tp_lsuffix, 0, sizeof(tpcb->tp_lsuffix));
+	memset((void *) tpcb->tp_fsuffix, 0, sizeof(tpcb->tp_fsuffix));
 	tpcb->tp_fsuffixlen = tpcb->tp_lsuffixlen = 0;
 
 	(tpcb->tp_nlproto->nlp_recycle_suffix) (tpcb->tp_npcb);
@@ -446,7 +446,7 @@ copyQOSparms(const struct tp_conn_param *src, struct tp_conn_params *dst)
 	/* copy all but the bits stuff at the end */
 #define COPYSIZE (12 * sizeof(short))
 
-	bcopy((void *) src, (void *) dst, COPYSIZE);
+	memcpy((void *) dst, (void *) src, COPYSIZE);
 	dst->p_tpdusize = src->p_tpdusize;
 	dst->p_ack_strat = src->p_ack_strat;
 	dst->p_rx_strat = src->p_rx_strat;

@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.2 2003/03/19 17:21:42 drochner Exp $ */
+/* $NetBSD: dev_net.c,v 1.2.122.1 2009/05/13 17:18:17 jym Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -66,7 +66,7 @@
 #include <lib/libsa/dev_net.h>
 
 #ifndef SUN_BOOTPARAMS
-void bootp      __P((int));
+void bootp(int);
 #endif
 
 extern int debug;
@@ -95,7 +95,7 @@ char hostname[FNAME_SIZE];
 static int netdev_sock = -1;
 static int netdev_opens;
 
-int net_getparams __P((int));
+int net_getparams(int);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -158,8 +158,7 @@ net_open(struct open_file *f, ...)
 }
 
 int
-net_close(f)
-	struct open_file *f;
+net_close(struct open_file *f)
 {
 
 #ifdef	NETIF_DEBUG
@@ -199,8 +198,7 @@ net_strategy(void *a, int b, daddr_t c, size_t d, void *e, size_t *f)
 }
 
 int
-net_getparams(sock)
-	int sock;
+net_getparams(int sock)
 {
 	/*
 	 * Get info for NFS boot: our IP address, our hostname,

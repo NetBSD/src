@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.37 2008/11/24 11:41:11 ad Exp $
+#	$NetBSD: EXPLORA451,v 1.37.4.1 2009/05/13 17:16:40 jym Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -33,8 +33,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
-
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

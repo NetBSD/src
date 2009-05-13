@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.4 2007/10/17 19:54:59 garbled Exp $ */
+/* $NetBSD: db_interface.c,v 1.4.34.1 2009/05/13 17:17:52 jym Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4 2007/10/17 19:54:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4.34.1 2009/05/13 17:17:52 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -361,10 +361,7 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(vaddr_t addr, register size_t size, register char *data)
 {
 	register char	*src;
 
@@ -377,10 +374,7 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register const char *data;
+db_write_bytes(vaddr_t addr, register size_t size, register const char *data)
 {
 	register char	*dst;
 

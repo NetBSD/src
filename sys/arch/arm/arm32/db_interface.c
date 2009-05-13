@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.45 2008/03/26 13:01:13 chris Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.45.18.1 2009/05/13 17:16:12 jym Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2008/03/26 13:01:13 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45.18.1 2009/05/13 17:16:12 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2008/03/26 13:01:13 chris Exp 
 
 static long nil;
 
-int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
-int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
-int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
-u_int db_fetch_reg __P((int, db_regs_t *));
+int db_access_und_sp(const struct db_variable *, db_expr_t *, int);
+int db_access_abt_sp(const struct db_variable *, db_expr_t *, int);
+int db_access_irq_sp(const struct db_variable *, db_expr_t *, int);
+u_int db_fetch_reg(int, db_regs_t *);
 
-int db_trapper __P((u_int, u_int, trapframe_t *, int));
+int db_trapper(u_int, u_int, trapframe_t *, int);
 
 const struct db_variable db_regs[] = {
 	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
@@ -193,10 +193,7 @@ db_validate_address(vaddr_t addr)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t	addr;
-	size_t	size;
-	char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*src = (char *)addr;
 

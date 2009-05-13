@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.5 2009/01/12 11:32:44 tsutsui Exp $ */
+/*      $NetBSD: if_prom.c,v 1.5.2.1 2009/05/13 17:18:13 jym Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@
 #include <stand/common/common.h>
 
 #ifdef NET_DEBUG
-void dump_packet_info __P((void *, int));
+void dump_packet_info(void *, int);
 #endif
 
 /*
@@ -63,16 +63,16 @@ struct arp_list {
 };
 extern struct arp_list arp_list[8];
 extern int arp_num;
-void fill_arpcache __P((void *, int));
+void fill_arpcache(void *, int);
 #endif
 
 /* forward declarations */
-int prom_probe __P((struct netif *, void *));
-int prom_match __P((struct netif *, void *));
-void prom_init __P((struct iodesc *, void *));
-int prom_get __P((struct iodesc *, void *, size_t, saseconds_t));
-int prom_put __P((struct iodesc *, void *, size_t));
-void prom_end __P((struct netif *));
+int prom_probe(struct netif *, void *);
+int prom_match(struct netif *, void *);
+void prom_init(struct iodesc *, void *);
+int prom_get(struct iodesc *, void *, size_t, saseconds_t);
+int prom_put(struct iodesc *, void *, size_t);
+void prom_end(struct netif *);
 
 extern struct netif_stats       prom_stats[];
 struct netif_dif prom_ifs[] = {
@@ -97,9 +97,7 @@ struct netif_driver prom_netif_driver = {
 static int sc_fd;				/* PROM file id */
 
 int
-prom_match(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+prom_match(struct netif *nif, void *machdep_hint)
 {
 
 #ifdef NET_DEBUG
@@ -110,9 +108,7 @@ prom_match(nif, machdep_hint)
 
 
 int
-prom_probe(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+prom_probe(struct netif *nif, void *machdep_hint)
 {
 
 #ifdef NET_DEBUG
@@ -123,9 +119,7 @@ prom_probe(nif, machdep_hint)
 
 
 void
-prom_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void *machdep_hint;
+prom_init(struct iodesc *desc, void *machdep_hint)
 {
 	char *device =
 		((struct netif *)desc->io_netif)->nif_driver->netif_bname;
@@ -176,10 +170,7 @@ prom_init(desc, machdep_hint)
 
 
 int
-prom_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+prom_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	int s;
 
@@ -205,11 +196,7 @@ prom_put(desc, pkt, len)
 
 
 int
-prom_get(desc, pkt, len, timeout)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
-	saseconds_t timeout;
+prom_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
 	int s;
 	satime_t t;
@@ -238,8 +225,7 @@ prom_get(desc, pkt, len, timeout)
 
 
 void
-prom_end(nif)
-	struct netif *nif;
+prom_end(struct netif *nif)
 {
 
 #ifdef NET_DEBUG

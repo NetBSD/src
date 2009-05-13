@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.4 2009/01/12 11:32:44 tsutsui Exp $ */
+/* $NetBSD: brdsetup.c,v 1.4.2.1 2009/05/13 17:18:16 jym Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ unsigned uartbase;
 #define UART_WRITE(r, v)	*(volatile char *)(uartbase + (r)) = (v)
 
 void
-brdsetup()
+brdsetup(void)
 {
 	unsigned pchb, pcib, div;
 
@@ -100,8 +100,7 @@ brdsetup()
 }
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
 	unsigned timo, lsr;
 
@@ -117,14 +116,14 @@ putchar(c)
 }
 
 void
-_rtt()
+_rtt(void)
 {
 	run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
 	/* NOTREACHED */
 }
 
 static inline u_quad_t
-mftb()
+mftb(void)
 {
 	u_long scratch;
 	u_quad_t tb;
@@ -135,7 +134,7 @@ mftb()
 }
 
 satime_t
-getsecs()
+getsecs(void)
 {
 	u_quad_t tb = mftb();
 
@@ -146,8 +145,7 @@ getsecs()
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	u_int n;
+delay(u_int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
@@ -160,8 +158,7 @@ delay(n)
 }
 
 void
-_wb(adr, siz)
-	uint32_t adr, siz;
+_wb(uint32_t adr, uint32_t siz)
 {
 	uint32_t bnd;
 
@@ -172,8 +169,7 @@ _wb(adr, siz)
 }
 
 void
-_wbinv(adr, siz)
-	uint32_t adr, siz;
+_wbinv(uint32_t adr, uint32_t siz)
 {
 	uint32_t bnd;
 
@@ -184,8 +180,7 @@ _wbinv(adr, siz)
 }
 
 void
-_inv(adr, siz)
-	uint32_t adr, siz;
+_inv(uint32_t adr, uint32_t siz)
 {
 	uint32_t off, bnd;
 
@@ -355,7 +350,7 @@ setup_83C553F()
 }
 
 void
-pcifixup()
+pcifixup(void)
 {
 	unsigned pcib, ide, nic, val, steer, irq;
 	int line;

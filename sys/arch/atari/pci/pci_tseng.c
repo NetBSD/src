@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_tseng.c,v 1.9 2007/04/29 20:23:35 msaitoh Exp $	*/
+/*	$NetBSD: pci_tseng.c,v 1.9.50.1 2009/05/13 17:16:31 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.9 2007/04/29 20:23:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.9.50.1 2009/05/13 17:16:31 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -76,12 +76,7 @@ static u_char ras_cas_tab[] = {
 	0x11, 0x14, 0x15 };
 
 void
-tseng_init(pc, tag, id, ba, fb)
-	pci_chipset_tag_t	pc;
-	pcitag_t		tag;
-	int			id;
-	volatile u_char		*ba;
-	u_char			*fb;
+tseng_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile u_char *ba, u_char *fb)
 {
 	int			i, j, csr;
 	int			is_et6000 = 0;
@@ -168,10 +163,7 @@ tseng_init(pc, tag, id, ba, fb)
  */
 
 static void
-et6000_init(ba, fb, iter)
-volatile u_char *ba;
-u_char		*fb;
-int		iter;
+et6000_init(volatile u_char *ba, u_char *fb, int iter)
 {
 
 	int		i;

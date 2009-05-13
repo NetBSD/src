@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.10 2008/09/09 03:54:56 cube Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.10.8.1 2009/05/13 17:19:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.10 2008/09/09 03:54:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.10.8.1 2009/05/13 17:19:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -144,7 +144,7 @@ struct btkbd_softc {
 };
 
 /* autoconf(9) methods */
-static int	btkbd_match(device_t, struct cfdata *, void *);
+static int	btkbd_match(device_t, cfdata_t, void *);
 static void	btkbd_attach(device_t, device_t, void *);
 static int	btkbd_detach(device_t, int);
 
@@ -194,7 +194,7 @@ static void btkbd_repeat(void *);
  */
 
 static int
-btkbd_match(device_t self, struct cfdata *cfdata, void *aux)
+btkbd_match(device_t self, cfdata_t cfdata, void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 

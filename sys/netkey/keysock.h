@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.14 2008/04/23 07:29:47 thorpej Exp $	*/
+/*	$NetBSD: keysock.h,v 1.14.16.1 2009/05/13 17:22:50 jym Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
 /*
@@ -73,16 +73,16 @@ struct keycb {
 	struct mbuf *kp_queue;	/* queued mbufs, linked by m_nextpkt */
 };
 
-extern int key_output __P((struct mbuf *, ...));
+extern int key_output(struct mbuf *, ...);
 #ifndef __NetBSD__
-extern int key_usrreq __P((struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *));
+extern int key_usrreq(struct socket *,
+	int, struct mbuf *, struct mbuf *, struct mbuf *);
 #else
-extern int key_usrreq __P((struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
+extern int key_usrreq(struct socket *,
+	int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 #endif
 
-extern int key_sendup_mbuf __P((struct socket *, struct mbuf *, int));
+extern int key_sendup_mbuf(struct socket *, struct mbuf *, int);
 #endif /* _KERNEL */
 
 #endif /* !_NETKEY_KEYSOCK_H_ */

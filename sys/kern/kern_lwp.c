@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.127 2009/02/04 21:17:39 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.127.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  *	LSZOMB:
  *
  *		Dead or dying: the LWP has released most of its resources
- *		and is: a) about to switch away into oblivion b) has already
+ *		and is about to switch away into oblivion, or has already
  *		switched away.  When it switches away, its few remaining
  *		resources can be collected.
  *
@@ -121,22 +121,23 @@
  *	LWPs may transition states in the following ways:
  *
  *	 RUN -------> ONPROC		ONPROC -----> RUN
- *		    > STOPPED			    > SLEEP
- *		    > SUSPENDED			    > STOPPED
+ *		    				    > SLEEP
+ *		    				    > STOPPED
  *						    > SUSPENDED
  *						    > ZOMB
+ *						    > IDL (special cases)
  *
  *	 STOPPED ---> RUN		SUSPENDED --> RUN
- *	            > SLEEP			    > SLEEP
+ *	            > SLEEP
  *
  *	 SLEEP -----> ONPROC		IDL --------> RUN
  *		    > RUN			    > SUSPENDED
  *		    > STOPPED			    > STOPPED
- *		    > SUSPENDED
+ *						    > ONPROC (special cases)
  *
- *	Other state transitions are possible with kernel threads (eg
- *	ONPROC -> IDL), but only happen under tightly controlled
- *	circumstances the side effects are understood.
+ *	Some state transitions are only possible with kernel threads (eg
+ *	ONPROC -> IDL) and happen under tightly controlled circumstances
+ *	free of unwanted side effects.
  *
  * Migration
  *
@@ -162,17 +163,17 @@
  *	LSONPROC, LSZOMB:
  *
  *		Always covered by spc_lwplock, which protects running LWPs.
- *		This is a per-CPU lock.
+ *		This is a per-CPU lock and matches lwp::l_cpu.
  *
  *	LSIDL, LSRUN:
  *
  *		Always covered by spc_mutex, which protects the run queues.
- *		This is a per-CPU lock.
+ *		This is a per-CPU lock and matches lwp::l_cpu.
  *
  *	LSSLEEP:
  *
  *		Covered by a lock associated with the sleep queue that the
- *		LWP resides on.
+ *		LWP resides on.  Matches lwp::l_sleepq::sq_mutex.
  *
  *	LSSTOP, LSSUSPENDED:
  *
@@ -196,17 +197,20 @@
  *
  *		LSIDL, LSZOMB, LSSTOP, LSSUSPENDED
  *
+ *	(But not always for kernel threads.  There are some special cases
+ *	as mentioned above.  See kern_softint.c.)
+ *
  *	Note that an LWP is considered running or likely to run soon if in
  *	one of the following states.  This affects the value of p_nrlwps:
  *
  *		LSRUN, LSONPROC, LSSLEEP
  *
  *	p_lock does not need to be held when transitioning among these
- *	three states.
+ *	three states, hence p_lock is rarely taken for state transitions.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.127 2009/02/04 21:17:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.127.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -640,33 +644,33 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
 
-	mutex_exit(p2->p_lock);
-
-	mutex_enter(proc_lock);
-	LIST_INSERT_HEAD(&alllwp, l2, l_list);
-	mutex_exit(proc_lock);
-
 	if ((p2->p_flag & PK_SYSTEM) == 0) {
-		/* Locking is needed, since LWP is in the list of all LWPs */
-		lwp_lock(l2);
-		/* Inherit a processor-set */
-		l2->l_psid = l1->l_psid;
 		/* Inherit an affinity */
 		if (l1->l_flag & LW_AFFINITY) {
-			proc_t *p = l1->l_proc;
-
-			mutex_enter(p->p_lock);
+			/*
+			 * Note that we hold the state lock while inheriting
+			 * the affinity to avoid race with sched_setaffinity().
+			 */
+			lwp_lock(l1);
 			if (l1->l_flag & LW_AFFINITY) {
 				kcpuset_use(l1->l_affinity);
 				l2->l_affinity = l1->l_affinity;
 				l2->l_flag |= LW_AFFINITY;
 			}
-			mutex_exit(p->p_lock);
+			lwp_unlock(l1);
 		}
+		lwp_lock(l2);
+		/* Inherit a processor-set */
+		l2->l_psid = l1->l_psid;
 		/* Look for a CPU to start */
 		l2->l_cpu = sched_takecpu(l2);
 		lwp_unlock_to(l2, l2->l_cpu->ci_schedstate.spc_mutex);
 	}
+	mutex_exit(p2->p_lock);
+
+	mutex_enter(proc_lock);
+	LIST_INSERT_HEAD(&alllwp, l2, l_list);
+	mutex_exit(proc_lock);
 
 	SYSCALL_TIME_LWP_INIT(l2);
 
@@ -810,8 +814,11 @@ lwp_exit(struct lwp *l)
 	l->l_stat = LSZOMB;
 	if (l->l_name != NULL)
 		strcpy(l->l_name, "(zombie)");
-	if (l->l_flag & LW_AFFINITY)
+	if (l->l_flag & LW_AFFINITY) {
 		l->l_flag &= ~LW_AFFINITY;
+	} else {
+		KASSERT(l->l_affinity == NULL);
+	}
 	lwp_unlock(l);
 	p->p_nrlwps--;
 	cv_broadcast(&p->p_lwpcv);

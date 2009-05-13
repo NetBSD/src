@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 2009/01/27 20:30:13 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.43.2.1 2009/05/13 17:16:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2009/01/27 20:30:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43.2.1 2009/05/13 17:16:36 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -122,18 +122,18 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2009/01/27 20:30:13 martin Exp $");
 extern struct emul emul_sunos;
 #endif
 
-int	writeback __P((struct frame *fp, int docachepush));
-void	trap __P((struct frame *fp, int type, u_int code, u_int v));
-void	syscall __P((register_t code, struct frame frame));
-void	trap_kdebug __P((int, struct trapframe));
+int	writeback(struct frame *fp, int docachepush);
+void	trap(struct frame *fp, int type, u_int code, u_int v);
+void	syscall(register_t code, struct frame frame);
+void	trap_kdebug(int, struct trapframe);
 
 #ifdef DEBUG
-void	dumpssw __P((u_short));
-void	dumpwb __P((int, u_short, u_int, u_int));
+void	dumpssw(u_short);
+void	dumpwb(int, u_short, u_int, u_int);
 #endif
 
-static inline void userret __P((struct lwp *l, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+static inline void userret(struct lwp *l, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap);
 
 int astpending;
 
@@ -219,12 +219,7 @@ int mmupid = -1;
  * to user mode.
  */
 static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr, int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -285,10 +280,7 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
@@ -301,11 +293,7 @@ machine_userret(l, f, t)
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame *fp;
-	int type;
-	unsigned code;
-	unsigned v;
+trap(struct frame *fp, int type, unsigned code, unsigned v)
 {
 	extern char fubail[], subail[];
 	struct lwp *l;
@@ -698,9 +686,7 @@ const char wberrstr[] =
 #endif
 
 int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -750,7 +736,7 @@ writeback(fp, docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
-			bcopy((void *)&f->f_pd0, (void *)fa, 16);
+			memcpy( (void *)fa, (void *)&f->f_pd0, 16);
 			pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -775,7 +761,7 @@ writeback(fp, docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			bcopy((void *)&f->f_pd0, (void *)(f->f_fa & ~0xF), 16);
+			memcpy( (void *)(f->f_fa & ~0xF), (void *)&f->f_pd0, 16);
 		else
 			err = suline((void *)(f->f_fa & ~0xF), (void *)&f->f_pd0);
 		if (err) {
@@ -936,8 +922,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 void
-dumpssw(ssw)
-	u_short ssw;
+dumpssw(u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -963,10 +948,7 @@ dumpssw(ssw)
 }
 
 void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -994,9 +976,7 @@ dumpwb(num, s, a, d)
  * because KGDB will just return 0 if not connected.
  */
 void
-trap_kdebug(type, tf)
-	int type;
-	struct trapframe tf;
+trap_kdebug(int type, struct trapframe tf)
 {
 #ifdef	KGDB
 	/* Let KGDB handle it (if connected) */

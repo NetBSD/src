@@ -1,7 +1,7 @@
-/*	$NetBSD: patch.c,v 1.15 2008/12/19 11:21:24 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.15.2.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.15 2008/12/19 11:21:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.15.2.1 2009/05/13 17:18:45 jym Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -74,6 +74,7 @@ void	_atomic_cas_cx8(void);
 void	_atomic_cas_cx8_end(void);
 
 extern void	*x86_lockpatch[];
+extern void	*x86_retpatch[];
 extern void	*atomic_lockpatch[];
 
 #define	X86_NOP		0x90
@@ -83,50 +84,74 @@ extern void	*atomic_lockpatch[];
 #define	X86_DS		0x3e
 #define	X86_GROUP_0F	0x0f
 
+static void
+adjust_jumpoff(uint8_t *ptr, void *from_s, void *to_s)
+{
+
+	/* Branch hints */
+	if (ptr[0] == X86_CS || ptr[0] == X86_DS)
+		ptr++;
+	/* Conditional jumps */
+	if (ptr[0] == X86_GROUP_0F)
+		ptr++;		
+	/* 4-byte relative jump or call */
+	*(uint32_t *)(ptr + 1 - (uintptr_t)from_s + (uintptr_t)to_s) +=
+	    ((uint32_t)(uintptr_t)from_s - (uint32_t)(uintptr_t)to_s);
+}
+
 static void __unused
 patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 	  void *pcrel)
 {
-	uint8_t *ptr;
 
 	if ((uintptr_t)from_e - (uintptr_t)from_s !=
 	    (uintptr_t)to_e - (uintptr_t)to_s)
 		panic("patchfunc: sizes do not match (from=%p)", from_s);
 
 	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
-	if (pcrel != NULL) {
-		ptr = pcrel;
-		/* Branch hints */
-		if (ptr[0] == X86_CS || ptr[0] == X86_DS)
-			ptr++;
-		/* Conditional jumps */
-		if (ptr[0] == X86_GROUP_0F)
-			ptr++;		
-		/* 4-byte relative jump or call */
-		*(uint32_t *)(ptr + 1 - (uintptr_t)from_s + (uintptr_t)to_s) +=
-		    ((uint32_t)(uintptr_t)from_s - (uint32_t)(uintptr_t)to_s);
-	}
+	if (pcrel != NULL)
+		adjust_jumpoff(pcrel, from_s, to_s);
+
+#ifdef GPROF
+#ifdef i386
+#define	MCOUNT_CALL_OFFSET	3
+#endif
+#ifdef __x86_64__
+#define	MCOUNT_CALL_OFFSET	5
+#endif
+	/* Patch mcount call offset */
+	adjust_jumpoff((uint8_t *)from_s + MCOUNT_CALL_OFFSET, from_s, to_s);
+#endif
 }
 
 static inline void __unused
-patchbytes(void *addr, const int byte1, const int byte2)
+patchbytes(void *addr, const int byte1, const int byte2, const int byte3)
 {
 
 	((uint8_t *)addr)[0] = (uint8_t)byte1;
 	if (byte2 != -1)
 		((uint8_t *)addr)[1] = (uint8_t)byte2;
+	if (byte3 != -1)
+		((uint8_t *)addr)[2] = (uint8_t)byte3;
 }
 
 void
 x86_patch(bool early)
 {
-	static int again;
+	static bool first, second;
 	u_long psl;
 	u_long cr0;
+	int i;
 
-	if (again)
-		return;
-	again = 1;
+	if (early) {
+		if (first)
+			return;
+		first = true;
+	} else {
+		if (second)
+			return;
+		second = true;
+	}
 
 	/* Disable interrupts. */
 	psl = x86_read_psl();
@@ -139,13 +164,11 @@ x86_patch(bool early)
 #if !defined(GPROF)
 	if (!early && ncpu == 1) {
 #ifndef LOCKDEBUG
-		int i;
-
 		/* Uniprocessor: kill LOCK prefixes. */
 		for (i = 0; x86_lockpatch[i] != 0; i++)
-			patchbytes(x86_lockpatch[i], X86_NOP, -1);	
+			patchbytes(x86_lockpatch[i], X86_NOP, -1, -1);
 		for (i = 0; atomic_lockpatch[i] != 0; i++)
-			patchbytes(atomic_lockpatch[i], X86_NOP, -1);
+			patchbytes(atomic_lockpatch[i], X86_NOP, -1, -1);
 #endif	/* !LOCKDEBUG */
 	}
 	if (!early && (cpu_feature & CPUID_SSE2) != 0) {
@@ -191,6 +214,21 @@ x86_patch(bool early)
 		    i686_mutex_spin_exit_patch
 		);
 #endif	/* !LOCKDEBUG */
+	}
+
+	/*
+	 * On some Opteron revisions, locked operations erroneously
+	 * allow memory references to be `bled' outside of critical
+	 * sections.  Apply workaround.
+	 */
+	if (cpu_vendor == CPUVENDOR_AMD &&
+	    (CPUID2FAMILY(cpu_info_primary.ci_signature) == 0xe ||
+	    (CPUID2FAMILY(cpu_info_primary.ci_signature) == 0xf &&
+	    CPUID2EXTMODEL(cpu_info_primary.ci_signature) < 0x4))) {
+		for (i = 0; x86_retpatch[i] != 0; i++) {
+			/* ret,nop,nop,ret -> lfence,ret */
+			patchbytes(x86_retpatch[i], 0x0f, 0xae, 0xe8);
+		}
 	}
 
 	/* Write back and invalidate cache, flush pipelines. */

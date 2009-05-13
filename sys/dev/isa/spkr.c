@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.29 2009/01/11 10:43:06 cegger Exp $	*/
+/*	$NetBSD: spkr.c,v 1.29.2.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.29 2009/01/11 10:43:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.29.2.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ static const int pitchtab[] =
 #define NOCTAVES (__arraycount(pitchtab) / OCTAVE_NOTES)
 
 static void
-playinit()
+playinit(void)
 {
     octave = DFLT_OCTAVE;
     whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;

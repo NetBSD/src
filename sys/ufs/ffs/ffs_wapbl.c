@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.11 2009/01/31 09:22:08 yamt Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.11.2.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.11 2009/01/31 09:22:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.11.2.1 2009/05/13 17:23:07 jym Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -263,11 +263,8 @@ wapbl_remove_log(struct mount *mp)
 		 * remove the log inode by setting its link count back
 		 * to zero and bail.
 		 */
-		ip->i_ffs_effnlink = 0;
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
-		if (DOINGSOFTDEP(vp))
-			softdep_change_linkcnt(ip);
 		vput(vp);
 
 	case UFS_WAPBL_JOURNALLOC_END_PARTITION:
@@ -620,11 +617,8 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	DIP_ASSIGN(ip, mode, ip->i_mode);
 	ip->i_flags = SF_LOG;
 	DIP_ASSIGN(ip, flags, ip->i_flags);
-	ip->i_ffs_effnlink = 1;
 	ip->i_nlink = 1;
 	DIP_ASSIGN(ip, nlink, 1);
-	if (DOINGSOFTDEP(vp))
-		softdep_change_linkcnt(ip);
 	ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 
 	if ((error = wapbl_allocate_log_file(mp, vp)) != 0) {
@@ -633,11 +627,8 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 		 * remove the inode by setting its link count back to
 		 * zero and bail.
 		 */
-		ip->i_ffs_effnlink = 0;
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
-		if (DOINGSOFTDEP(vp))
-			softdep_change_linkcnt(ip);
 		vput(vp);
 
 		return error;

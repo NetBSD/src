@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.22 2007/11/21 16:49:08 is Exp $	*/
+/*	$NetBSD: iso.h,v 1.22.32.1 2009/05/13 17:22:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -172,8 +172,8 @@ TSEL(const struct sockaddr_iso *siso)
 }
 
 #define SAME_ISOADDR(a, b) \
-	(bcmp((a)->siso_data, (b)->siso_data, (unsigned)(a)->siso_nlen)==0)
-#define SAME_ISOIFADDR(a, b) (bcmp((a)->siso_data, (b)->siso_data, \
+	(memcmp((a)->siso_data, (b)->siso_data, (unsigned)(a)->siso_nlen)==0)
+#define SAME_ISOIFADDR(a, b) (memcmp((a)->siso_data, (b)->siso_data, \
 	(unsigned)((b)->siso_nlen - (b)->siso_tlen)) == 0)
 /*
  * The following are specific values for siso->siso_data[0],

@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.15 2008/08/28 04:05:50 jmcneill Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.15.8.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.15 2008/08/28 04:05:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.15.8.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,12 +64,12 @@ static const char *mediabay_keylargo[] = {
 	NULL
 };
 
-void mediabay_attach __P((struct device *, struct device *, void *));
-int mediabay_match __P((struct device *, struct cfdata *, void *));
-int mediabay_print __P((void *, const char *));
-void mediabay_attach_content __P((struct mediabay_softc *));
-int mediabay_intr __P((void *));
-void mediabay_kthread __P((void *));
+void mediabay_attach(struct device *, struct device *, void *);
+int mediabay_match(struct device *, struct cfdata *, void *);
+int mediabay_print(void *, const char *);
+void mediabay_attach_content(struct mediabay_softc *);
+int mediabay_intr(void *);
+void mediabay_kthread(void *);
 
 CFATTACH_DECL(mediabay, sizeof(struct mediabay_softc),
     mediabay_match, mediabay_attach, NULL, NULL);
@@ -104,10 +104,7 @@ CFATTACH_DECL(mediabay, sizeof(struct mediabay_softc),
 #define MEDIABAY_ID_NONE	7
 
 int
-mediabay_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mediabay_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -121,9 +118,7 @@ mediabay_match(parent, cf, aux)
  * Attach all the sub-devices we can find
  */
 void
-mediabay_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mediabay_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mediabay_softc *sc = (struct mediabay_softc *)self;
 	struct confargs *ca = aux;
@@ -163,8 +158,7 @@ mediabay_attach(parent, self, aux)
 }
 
 void
-mediabay_attach_content(sc)
-	struct mediabay_softc *sc;
+mediabay_attach_content(struct mediabay_softc *sc)
 {
 	int child;
 	u_int fcr = 0;
@@ -265,9 +259,7 @@ mediabay_attach_content(sc)
 }
 
 int
-mediabay_print(aux, mediabay)
-	void *aux;
-	const char *mediabay;
+mediabay_print(void *aux, const char *mediabay)
 {
 	struct confargs *ca = aux;
 
@@ -278,8 +270,7 @@ mediabay_print(aux, mediabay)
 }
 
 int
-mediabay_intr(v)
-	void *v;
+mediabay_intr(void *v)
 {
 	struct mediabay_softc *sc = v;
 
@@ -289,8 +280,7 @@ mediabay_intr(v)
 }
 
 void
-mediabay_kthread(v)
-	void *v;
+mediabay_kthread(void *v)
 {
 	struct mediabay_softc *sc = v;
 	u_int x, fcr;

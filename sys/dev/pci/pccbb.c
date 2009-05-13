@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.182 2009/02/06 01:15:53 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.182.2.1 2009/05/13 17:20:27 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.182 2009/02/06 01:15:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.182.2.1 2009/05/13 17:20:27 jym Exp $");
 
 /*
 #define CBB_DEBUG
@@ -97,7 +97,7 @@ delay_ms(int millis, void *param)
 		tsleep(param, PWAIT, "pccbb", MAX(2, hz * millis / 1000));
 }
 
-int pcicbbmatch(device_t, struct cfdata *, void *);
+int pcicbbmatch(device_t, cfdata_t, void *);
 void pccbbattach(device_t, device_t, void *);
 int pccbbdetach(device_t, int);
 int pccbbintr(void *);
@@ -150,7 +150,7 @@ STATIC int pccbb_pcmcia_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 STATIC void pccbb_pcmcia_mem_free(pcmcia_chipset_handle_t,
     struct pcmcia_mem_handle *);
 STATIC int pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
-    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
 STATIC void pccbb_pcmcia_mem_unmap(pcmcia_chipset_handle_t, int);
 STATIC int pccbb_pcmcia_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
     bus_size_t, bus_size_t, struct pcmcia_io_handle *);
@@ -211,8 +211,9 @@ static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
     bus_space_tag_t memt, bus_space_handle_t memh);
 #endif
 
-CFATTACH_DECL_NEW(cbb_pci, sizeof(struct pccbb_softc),
-    pcicbbmatch, pccbbattach, pccbbdetach, NULL);
+CFATTACH_DECL3_NEW(cbb_pci, sizeof(struct pccbb_softc),
+    pcicbbmatch, pccbbattach, pccbbdetach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static const struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_mem_alloc,
@@ -261,7 +262,7 @@ static const struct cardbus_functions pccbb_funcs = {
 #endif
 
 int
-pcicbbmatch(device_t parent, struct cfdata *match, void *aux)
+pcicbbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -642,7 +643,7 @@ pccbb_pci_callback(device_t self)
 		    (unsigned long)pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
 #endif
-		sc->sc_flags |= CBB_MEMHMAPPED;
+		sc->sc_flags |= CBB_MEMHMAPPED|CBB_SPECMAPPED;
 	}
 
 	/* clear data structure for child device interrupt handlers */
@@ -946,7 +947,7 @@ pccbb_intrinit(struct pccbb_softc *sc)
 
 	/*
 	 * XXX pccbbintr should be called under the priority lower
-	 * than any other hard interupts.
+	 * than any other hard interrupts.
 	 */
 	KASSERT(sc->sc_ih == NULL);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
@@ -2687,7 +2688,7 @@ pccbb_pcmcia_do_mem_map(struct pccbb_softc *sc, int win)
 STATIC int
 pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t pch, int kind,
     bus_addr_t card_addr, bus_size_t size, struct pcmcia_mem_handle *pcmhp,
-    bus_addr_t *offsetp, int *windowp)
+    bus_size_t *offsetp, int *windowp)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)pch;
 	struct pcic_handle *ph = &sc->sc_pcmcia_h;

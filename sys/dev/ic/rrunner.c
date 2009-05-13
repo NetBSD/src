@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.69 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.69.2.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.69 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.69.2.1 2009/05/13 17:19:23 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -177,8 +177,7 @@ static int esh_check(struct esh_softc *);
  */
 
 void
-eshconfig(sc)
-	struct esh_softc *sc;
+eshconfig(struct esh_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -449,8 +448,7 @@ bad_dmamem_map:
  */
 
 void
-eshinit(sc)
-	struct esh_softc *sc;
+eshinit(struct esh_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1287,8 +1285,7 @@ fpwrite_done:
 }
 
 void
-esh_fpstrategy(bp)
-	struct buf *bp;
+esh_fpstrategy(struct buf *bp)
 {
 	struct esh_softc *sc;
 	int ulp = ESHULP(bp->b_dev);
@@ -1390,8 +1387,7 @@ done:
  */
 
 int
-eshintr(arg)
-	void *arg;
+eshintr(void *arg)
 {
 	struct esh_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1892,8 +1888,7 @@ eshintr(arg)
  */
 
 void
-eshstart(ifp)
-	struct ifnet *ifp;
+eshstart(struct ifnet *ifp)
 {
 	struct esh_softc *sc = ifp->if_softc;
 	struct esh_send_ring_ctl *send = &sc->sc_send;
@@ -2050,8 +2045,7 @@ eshstart(ifp)
  */
 
 static void
-esh_send(sc)
-	struct esh_softc *sc;
+esh_send(struct esh_softc *sc)
 {
 	struct esh_send_ring_ctl *send = &sc->sc_send;
 	u_int start_producer = send->ec_producer;
@@ -2130,10 +2124,7 @@ esh_send(sc)
  */
 
 static void
-eshstart_cleanup(sc, consumer, error)
-	struct esh_softc *sc;
-	u_int16_t consumer;
-	int error;
+eshstart_cleanup(struct esh_softc *sc, u_int16_t consumer, int error)
 {
 	struct esh_send_ring_ctl *send = &sc->sc_send;
 	int start_consumer = send->ec_consumer;
@@ -2223,9 +2214,7 @@ eshstart_cleanup(sc, consumer, error)
  */
 
 static struct mbuf *
-esh_adjust_mbufs(sc, m)
-	struct esh_softc *sc;
-	struct mbuf *m;
+esh_adjust_mbufs(struct esh_softc *sc, struct mbuf *m)
 {
 	struct mbuf *m0, *n, *n0;
 	u_int32_t write_len;
@@ -2313,10 +2302,7 @@ bogosity:
  */
 
 static void
-esh_read_snap_ring(sc, consumer, error)
-	struct esh_softc *sc;
-	u_int16_t consumer;
-	int error;
+esh_read_snap_ring(struct esh_softc *sc, u_int16_t consumer, int error)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct esh_snap_ring_ctl *recv = &sc->sc_snap_recv;
@@ -2437,8 +2423,7 @@ esh_read_snap_ring(sc, consumer, error)
  */
 
 static void
-esh_init_snap_ring(sc)
-	struct esh_softc *sc;
+esh_init_snap_ring(struct esh_softc *sc)
 {
 	struct rr_ring_ctl *ring = sc->sc_recv_ring_table + HIPPI_ULP_802;
 
@@ -2475,8 +2460,7 @@ esh_init_snap_ring(sc)
 }
 
 static void
-esh_close_snap_ring(sc)
-	struct esh_softc *sc;
+esh_close_snap_ring(struct esh_softc *sc)
 {
 #ifdef ESH_PRINTF
 	printf("esh_close_snap_ring:  starting\n");
@@ -2497,8 +2481,7 @@ esh_close_snap_ring(sc)
  */
 
 static void
-esh_fill_snap_ring(sc)
-	struct esh_softc *sc;
+esh_fill_snap_ring(struct esh_softc *sc)
 {
 	struct esh_snap_ring_ctl *recv = &sc->sc_snap_recv;
 	int start_producer = recv->ec_producer;
@@ -2576,8 +2559,7 @@ esh_fill_snap_ring(sc)
 }
 
 static void
-esh_init_fp_rings(sc)
-	struct esh_softc *sc;
+esh_init_fp_rings(struct esh_softc *sc)
 {
 	struct esh_fp_ring_ctl *recv;
 	struct rr_ring_ctl *ring_ctl;
@@ -2605,11 +2587,7 @@ esh_init_fp_rings(sc)
 }
 
 static void
-esh_read_fp_ring(sc, consumer, error, ulp)
-	struct esh_softc *sc;
-	u_int16_t consumer;
-	int error;
-	int ulp;
+esh_read_fp_ring(struct esh_softc *sc, u_int16_t consumer, int error, int ulp)
 {
 	struct esh_fp_ring_ctl *recv = sc->sc_fp_recv[ulp];
 	int start_consumer = recv->ec_consumer;
@@ -2732,9 +2710,7 @@ esh_read_fp_ring(sc, consumer, error, ulp)
 
 
 static void
-esh_fill_fp_ring(sc, recv)
-	struct esh_softc *sc;
-	struct esh_fp_ring_ctl *recv;
+esh_fill_fp_ring(struct esh_softc *sc, struct esh_fp_ring_ctl *recv)
 {
 	struct esh_dmainfo *di = recv->ec_cur_dmainfo;
 	int start_producer = recv->ec_producer;
@@ -2861,10 +2837,7 @@ fp_fill_done:
  */
 
 static void
-esh_flush_fp_ring(sc, recv, di)
-	struct esh_softc *sc;
-	struct esh_fp_ring_ctl *recv;
-	struct esh_dmainfo *di;
+esh_flush_fp_ring(struct esh_softc *sc, struct esh_fp_ring_ctl *recv, struct esh_dmainfo *di)
 {
 	int error = 0;
 
@@ -2916,10 +2889,7 @@ esh_flush_fp_ring(sc, recv, di)
 
 
 int
-eshioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+eshioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int error = 0;
 	struct esh_softc *sc = ifp->if_softc;
@@ -3063,8 +3033,10 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, void *data,
 			break;
 
 		default:
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL);
+			error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
+			    ifp, KAUTH_ARG(cmd), NULL);
 			if (error)
 				return (error);
 		}
@@ -3222,8 +3194,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, void *data,
 
 
 void
-eshreset(sc)
-	struct esh_softc *sc;
+eshreset(struct esh_softc *sc)
 {
 	int s;
 
@@ -3241,8 +3212,7 @@ eshreset(sc)
  */
 
 void
-eshwatchdog(ifp)
-	struct ifnet *ifp;
+eshwatchdog(struct ifnet *ifp)
 {
 	struct esh_softc *sc = ifp->if_softc;
 
@@ -3272,8 +3242,7 @@ eshwatchdog(ifp)
  */
 
 void
-eshstop(sc)
-	struct esh_softc *sc;
+eshstop(struct esh_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -3400,9 +3369,7 @@ eshstop(sc)
  */
 
 static u_int32_t
-esh_read_eeprom(sc, addr)
-	struct esh_softc *sc;
-	u_int32_t addr;
+esh_read_eeprom(struct esh_softc *sc, u_int32_t addr)
 {
 	int i;
 	u_int32_t tmp;
@@ -3434,10 +3401,7 @@ esh_read_eeprom(sc, addr)
  */
 
 static int
-esh_write_eeprom(sc, addr, value)
-	struct esh_softc *sc;
-	u_int32_t addr;
-	u_int32_t value;
+esh_write_eeprom(struct esh_softc *sc, u_int32_t addr, u_int32_t value)
 {
 	int i, j;
 	u_int32_t shifted_value, tmp = 0;
@@ -3480,11 +3444,7 @@ esh_write_eeprom(sc, addr, value)
  */
 
 static void
-esh_send_cmd(sc, cmd, ring, index)
-	struct esh_softc *sc;
-	u_int8_t cmd;
-	u_int8_t ring;
-	u_int8_t index;
+esh_send_cmd(struct esh_softc *sc, u_int8_t cmd, u_int8_t ring, u_int8_t index)
 {
 	union rr_cmd c;
 
@@ -3516,11 +3476,7 @@ esh_send_cmd(sc, cmd, ring, index)
  */
 
 static void
-esh_write_addr(iot, ioh, addr, value)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t addr;
-	bus_addr_t value;
+esh_write_addr(bus_space_tag_t iot, bus_space_handle_t ioh, bus_addr_t addr, bus_addr_t value)
 {
 	bus_space_write_4(iot, ioh, addr, 0);
 	bus_space_write_4(iot, ioh, addr + sizeof(u_int32_t), value);
@@ -3530,8 +3486,7 @@ esh_write_addr(iot, ioh, addr, value)
 /* Copy the RunCode from EEPROM to SRAM.  Ughly. */
 
 static void
-esh_reset_runcode(sc)
-	struct esh_softc *sc;
+esh_reset_runcode(struct esh_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -3583,15 +3538,7 @@ esh_reset_runcode(sc)
  */
 
 static void
-esh_dma_sync(sc, mem, start, end, entries, size, do_equal, ops)
-	struct esh_softc *sc;
-	void *mem;
-	int start;
-	int end;
-	int entries;
-	int size;
-	int do_equal;
-	int ops;
+esh_dma_sync(struct esh_softc *sc, void *mem, int start, int end, int entries, int size, int do_equal, int ops)
 {
 	int offset = (char *)mem - (char *)sc->sc_dma_addr;
 
@@ -3611,8 +3558,7 @@ esh_dma_sync(sc, mem, start, end, entries, size, do_equal, ops)
 
 
 static struct esh_dmainfo *
-esh_new_dmainfo(sc)
-	struct esh_softc *sc;
+esh_new_dmainfo(struct esh_softc *sc)
 {
 	struct esh_dmainfo *di;
 	int s;
@@ -3648,9 +3594,7 @@ esh_new_dmainfo(sc)
 }
 
 static void
-esh_free_dmainfo(sc, di)
-	struct esh_softc *sc;
-	struct esh_dmainfo *di;
+esh_free_dmainfo(struct esh_softc *sc, struct esh_dmainfo *di)
 {
 	int s = splnet();
 
@@ -3673,8 +3617,7 @@ esh_free_dmainfo(sc, di)
  */
 
 static int
-eshstatus(sc)
-	struct esh_softc *sc;
+eshstatus(struct esh_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -3721,8 +3664,7 @@ eshstatus(sc)
 /* Check to make sure that the NIC is still running */
 
 static int
-esh_check(sc)
-	struct esh_softc *sc;
+esh_check(struct esh_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;

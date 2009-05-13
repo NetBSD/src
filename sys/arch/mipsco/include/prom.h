@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.11 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: prom.h,v 1.11.14.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct mips_prom {
 	 * runs diags, check for appropriate auto boot action in
 	 * "bootmode" environment variable and performs that action.
 	 */
-	void	(*prom_reset)	__P((void)) __attribute__((__noreturn__));
+	void	(*prom_reset)(void) __attribute__((__noreturn__));
 
 	/*
 	 * called to use prom to boot new image.  After the booted
@@ -57,53 +57,53 @@ struct mips_prom {
 	 * not destroy any text, data, or stack of the parent.  the
 	 * new programs stack continues on the parents stack.
 	 */
-	int	(*prom_exec)	__P((void));
+	int	(*prom_exec)(void);
 
 	/* re-enter the prom command parser, do not reset prom state	*/
-	void	(*prom_restart) __P((void)) __attribute__((__noreturn__));
+	void	(*prom_restart)(void) __attribute__((__noreturn__));
 
 	/* reinitialize prom state and re-enter the prom command parser */
-	void	(*prom_reinit)	__P((void)) __attribute__((__noreturn__));
+	void	(*prom_reinit)(void) __attribute__((__noreturn__));
 
 	/* reboot machine using current bootmode setting.  No diags */
-	void	(*prom_reboot)	__P((void)) __attribute__((__noreturn__));
+	void	(*prom_reboot)(void) __attribute__((__noreturn__));
 
 	/* perform an autoboot sequence, no configuration or diags run */
-	void	(*prom_autoboot) __P((void)) __attribute__((__noreturn__));
+	void	(*prom_autoboot)(void) __attribute__((__noreturn__));
 
 	/*
 	 * these routines access prom "saio" routines, and may be used
 	 * by standalone programs that would like to use prom io
 	 */
-	int	(*prom_open)		__P((char *, int, ...));
-	int	(*prom_read)		__P((int, void *, int));
-	int	(*prom_write)		__P((int, void *, int));
-	int	(*prom_ioctl)		__P((int, long, ...));
-	int	(*prom_close)		__P((int));
-	int	(*prom_getchar)		__P((void));
-	int	(*prom_putchar)		__P((int c));
-	void	(*prom_showchar)	__P((int c));
-	char * 	(*prom_gets)		__P((char *s));
-	void	(*prom_puts)		__P((const char *));
-	int	(*prom_printf)		__P((const char *, ...));
+	int	(*prom_open)(char *, int, ...);
+	int	(*prom_read)(int, void *, int);
+	int	(*prom_write)(int, void *, int);
+	int	(*prom_ioctl)(int, long, ...);
+	int	(*prom_close)(int);
+	int	(*prom_getchar)(void);
+	int	(*prom_putchar)(int c);
+	void	(*prom_showchar)(int c);
+	char * 	(*prom_gets)(char *s);
+	void	(*prom_puts)(const char *);
+	int	(*prom_printf)(const char *, ...);
 
 	/* prom protocol entry points */
-	void	(*prom_initproto)	__P((void)); /* ??? */
-	void	(*prom_protoenable)	__P((void)); /* ??? */
-	void	(*prom_protodisable)	__P((void)); /* ??? */
-	void	(*prom_getpkt)		__P((void)); /* ??? */
-	void	(*prom_putpkt)		__P((void)); /* ??? */
+	void	(*prom_initproto)(void); /* ??? */
+	void	(*prom_protoenable)(void); /* ??? */
+	void	(*prom_protodisable)(void); /* ??? */
+	void	(*prom_getpkt)(void); /* ??? */
+	void	(*prom_putpkt)(void); /* ??? */
 
 	/*
 	 * read-modify-write routine use special CPU board circuitry to
 	 * accomplish vme bus r-m-w cycles.
 	 */
-	void	(*prom_orw_rmw)		__P((void));
-	void	(*prom_orh_rmw)		__P((void));
-	void	(*prom_orb_rmw)		__P((void));
-	void	(*prom_andw_rmw)	__P((void));
-	void	(*prom_andh_rmw)	__P((void));
-	void	(*prom_andb_rmw)	__P((void));
+	void	(*prom_orw_rmw)(void);
+	void	(*prom_orh_rmw)(void);
+	void	(*prom_orb_rmw)(void);
+	void	(*prom_andw_rmw)(void);
+	void	(*prom_andh_rmw)(void);
+	void	(*prom_andb_rmw)(void);
 
 	/*
 	 * cache control entry points
@@ -114,40 +114,40 @@ struct mips_prom {
 	 *      i and d cache for entries that alias to specified address
 	 *      range.
 	 */
-	void	(*prom_flushcache)	__P((void));
-	void	(*prom_clearcache)	__P((void *, size_t));
+	void	(*prom_flushcache)(void);
+	void	(*prom_clearcache)(void *, size_t);
 
 	/*
 	 * Libc compatible functions
 	 */
-	void	(*prom_setjmp)		__P((void));
-	void	(*prom_longjmp)		__P((void));
-	void	(*prom_bevutlb)		__P((void));
-	char *	(*prom_getenv)		__P((const char *name));
-	int	(*prom_setenv)		__P((char *name, char *val));
-	int	(*prom_atob)		__P((char *s));
-	int	(*prom_strcmp)		__P((char *s1, char *s2));
-	int	(*prom_strlen)		__P((char *s));
-	char *	(*prom_strcpy)		__P((char *s1, char *s2));
-	char *	(*prom_strcat)		__P((char *s1, char *s2));
+	void	(*prom_setjmp)(void);
+	void	(*prom_longjmp)(void);
+	void	(*prom_bevutlb)(void);
+	char *	(*prom_getenv)(const char *name);
+	int	(*prom_setenv)(char *name, char *val);
+	int	(*prom_atob)(char *s);
+	int	(*prom_strcmp)(char *s1, char *s2);
+	int	(*prom_strlen)(char *s);
+	char *	(*prom_strcpy)(char *s1, char *s2);
+	char *	(*prom_strcat)(char *s1, char *s2);
 
 	/*
 	 * command parser entry points
 	 */
-	void	(*prom_parser)		__P((void)); /* ??? */
-	void	(*prom_range)		__P((void)); /* ??? */
-	void	(*prom_argvize)		__P((void)); /* ??? */
-	void	(*prom_help)		__P((void));
+	void	(*prom_parser)(void); /* ??? */
+	void	(*prom_range)(void); /* ??? */
+	void	(*prom_argvize)(void); /* ??? */
+	void	(*prom_help)(void);
 
 	/*
 	 * prom commands
 	 */
-	void	(*prom_dumpcmd)		__P((void));
-	void	(*prom_setenvcmd)	__P((void));
-	void	(*prom_unsetenvcmd)	__P((void));
-	void	(*prom_bevexcept)	__P((void));
-	void	(*prom_enablecmd)	__P((void));
-	void	(*prom_disablecmd)	__P((void));
+	void	(*prom_dumpcmd)(void);
+	void	(*prom_setenvcmd)(void);
+	void	(*prom_unsetenvcmd)(void);
+	void	(*prom_bevexcept)(void);
+	void	(*prom_enablecmd)(void);
+	void	(*prom_disablecmd)(void);
 
 	/*
 	 * clear existing fault handlers
@@ -155,22 +155,22 @@ struct mips_prom {
 	 * interrupted out of prom code and wish to reenter without being
 	 * tripped up by any pending prom timers set earlier.
 	 */
-	void	(*prom_clearnofault)	__P((void));
+	void	(*prom_clearnofault)(void);
 
-	void	(*prom_notimpl)		__P((void));
+	void	(*prom_notimpl)(void);
 
 	/*
 	 * PROM_NVGET, PROM_NVSET will get/set information in the NVRAM.
 	 * Both of these routines take indexes as opposed to addresses
 	 * to guarantee portability between various platforms
 	 */
-	int	(*prom_nvget)		__P((int));
-	void	(*prom_nvset)		__P((void));
+	int	(*prom_nvget)(int);
+	void	(*prom_nvset)(void);
 };
 
 extern struct mips_prom *callv;
 
-extern void prom_init __P((void));
+extern void prom_init(void);
 
 #endif	/* _LOCORE */
 

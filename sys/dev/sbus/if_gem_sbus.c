@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.8 2008/11/20 20:56:56 jdc Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.8.4.1 2009/05/13 17:21:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.8 2008/11/20 20:56:56 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.8.4.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,14 +67,14 @@ struct gem_sbus_softc {
 	bus_space_handle_t	gsc_sbus_regs_h;
 };
 
-int	gemmatch_sbus(struct device *, struct cfdata *, void *);
-void	gemattach_sbus(struct device *, struct device *, void *);
+int	gemmatch_sbus(device_t, cfdata_t, void *);
+void	gemattach_sbus(device_t, device_t, void *);
 
 CFATTACH_DECL(gem_sbus, sizeof(struct gem_sbus_softc),
     gemmatch_sbus, gemattach_sbus, NULL, NULL);
 
 int
-gemmatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
+gemmatch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -82,7 +82,7 @@ gemmatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-gemattach_sbus(struct device *parent, struct device *self, void *aux)
+gemattach_sbus(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct gem_sbus_softc *gsc = (void *)self;

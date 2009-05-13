@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.18 2008/03/18 20:46:37 cube Exp $	*/
+/*	$NetBSD: rccide.c,v 1.18.18.1 2009/05/13 17:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.18 2008/03/18 20:46:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.18.18.1 2009/05/13 17:20:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,8 +260,7 @@ serverworks_setup_channel(struct ata_channel *chp)
 }
 
 static int
-serverworks_pci_intr(arg)
-	void *arg;
+serverworks_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
@@ -290,8 +289,7 @@ serverworks_pci_intr(arg)
 }
 
 static int
-serverworkscsb6_pci_intr(arg)
-	void *arg;
+serverworkscsb6_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;

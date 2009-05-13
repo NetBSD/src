@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.h,v 1.9 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: natm.h,v 1.9.90.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  *
@@ -136,21 +136,21 @@ struct atm_rawioctl {
 /* external functions */
 
 /* natm_pcb.c */
-struct	natmpcb *npcb_alloc __P((int));
-void	npcb_free __P((struct natmpcb *, int));
-struct	natmpcb *npcb_add __P((struct natmpcb *, struct ifnet *, int, int));
+struct	natmpcb *npcb_alloc(int);
+void	npcb_free(struct natmpcb *, int);
+struct	natmpcb *npcb_add(struct natmpcb *, struct ifnet *, int, int);
 
 /* natm.c */
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-int	natm_usrreq __P((struct socket *, int, struct mbuf *,
-                             struct mbuf *, struct mbuf *, struct lwp *));
+int	natm_usrreq(struct socket *, int, struct mbuf *,
+                             struct mbuf *, struct mbuf *, struct lwp *);
 #elif defined(__FreeBSD__)
-int	natm_usrreq __P((struct socket *, int, struct mbuf *,
-                             struct mbuf *, struct mbuf *));
+int	natm_usrreq(struct socket *, int, struct mbuf *,
+                             struct mbuf *, struct mbuf *);
 #endif
-int	natm0_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-int	natm5_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-void	natmintr __P((void));
+int	natm0_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int	natm5_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	natmintr(void);
 
 #endif
 

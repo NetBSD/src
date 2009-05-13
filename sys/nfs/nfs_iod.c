@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.1 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.1.10.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.1 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.1.10.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,15 +261,8 @@ nfs_set_niothreads(int newval)
  * on this mount point porpous out of the kernel and do it.
  */
 int
-nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
-	struct nfsmount *nmp;
-	struct nfsreq *rep;
-	kauth_cred_t cred;
-	char **auth_str;
-	int *auth_len;
-	char *verf_str;
-	int *verf_len;
-	NFSKERBKEY_T key;		/* return session key */
+nfs_getauth(struct nfsmount *nmp, struct nfsreq *rep, kauth_cred_t cred, char **auth_str, int *auth_len, char *verf_str, int *verf_len, NFSKERBKEY_T key)
+	/* key:		 return session key */
 {
 	int error = 0;
 
@@ -388,14 +381,7 @@ nfs_getnickauth(struct nfsmount *nmp, kauth_cred_t cred, char **auth_str,
  * Save the current nickname in a hash list entry on the mount point.
  */
 int
-nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
-	struct nfsmount *nmp;
-	kauth_cred_t cred;
-	int len;
-	NFSKERBKEY_T key;
-	struct mbuf **mdp;
-	char **dposp;
-	struct mbuf *mrep;
+nfs_savenickauth(struct nfsmount *nmp, kauth_cred_t cred, int len, NFSKERBKEY_T key, struct mbuf **mdp, char **dposp, struct mbuf *mrep)
 {
 	struct nfsuid *nuidp;
 	u_int32_t *tl;

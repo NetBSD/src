@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 2007/03/04 06:00:03 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.3.58.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -101,7 +101,7 @@ kern_bzero(vaddr_t dest, size_t len)
 	char buf[256];
 	size_t chunk, resid;
 
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 	resid = len;
 	while (resid > 0) {
 		chunk = min(sizeof(buf), resid);

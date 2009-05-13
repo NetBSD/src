@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.18 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.18.14.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.18 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.18.14.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,17 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.18 2008/04/28 20:23:54 martin Exp 
 #include <dev/ic/cs89x0var.h>
 #include <dev/isa/cs89x0isavar.h>
 
-int	cs_ofisa_match(struct device *, struct cfdata *, void *);
-void	cs_ofisa_attach(struct device *, struct device *, void *);
+int	cs_ofisa_match(device_t, cfdata_t, void *);
+void	cs_ofisa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(cs_ofisa, sizeof(struct cs_softc_isa),
     cs_ofisa_match, cs_ofisa_attach, NULL, NULL);
 
 int
-cs_ofisa_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cs_ofisa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = {
@@ -94,9 +91,7 @@ cs_ofisa_match(parent, cf, aux)
 }
 
 void
-cs_ofisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cs_ofisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct cs_softc *sc = device_private(self);
 	struct cs_softc_isa *isc = (void *)sc;

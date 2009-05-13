@@ -1,18 +1,18 @@
-# $NetBSD: files.gio,v 1.9 2006/12/29 00:42:01 rumble Exp $
+# $NetBSD: files.gio,v 1.9.62.1 2009/05/13 17:18:18 jym Exp $
 
 device	gio {[slot = -1], [addr = -1]}
 attach	gio at giobus
 
 file	arch/sgimips/gio/gio.c		gio needs-flag
 
-device	hpc {[offset = -1]}
+device	hpc {[offset = -1]}: smc93cx6
 attach	hpc at gio
 file	arch/sgimips/hpc/hpc.c		hpc
 
 include "arch/sgimips/hpc/files.hpc"
 
 # XL graphics
-device	newport: wsemuldisplaydev
+device	newport: wsemuldisplaydev, vcons, rasops8
 attach	newport at gio
 file	arch/sgimips/gio/newport.c	newport needs-flag
 
@@ -30,7 +30,5 @@ file	arch/sgimips/gio/light.c	light needs-flag
 device	giopci: pcibus
 attach	giopci at gio
 file	arch/sgimips/gio/pci_gio.c	giopci
-
-# Challenge/S mezzanine I/O board..
 
 # Other GIO boards..

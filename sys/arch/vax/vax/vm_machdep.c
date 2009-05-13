@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.105 2008/11/24 13:45:37 cegger Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.105.4.1 2009/05/13 17:18:41 jym Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105 2008/11/24 13:45:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105.4.1 2009/05/13 17:18:41 jym Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -175,7 +175,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 #if KERN_SA > 0
 void
-cpu_setfunc(struct lwp *l, void (*func) __P((void *)), void *arg)
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = (struct trapframe *)((u_int)l->l_addr + USPACE) - 1;

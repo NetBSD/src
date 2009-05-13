@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/02/23 05:42:51 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13.18.1 2009/05/13 17:18:21 jym Exp $
 
 PROG=	aoutboot
 
@@ -34,3 +34,7 @@ ip2xboot: ${OBJS} ${LIBS}
 	    -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
 	@${STRIP} -s ${.TARGET}.elf -o ${.TARGET}
 	@${SIZE} ${.TARGET}
+
+cleandir distclean: cleanlibdir
+cleanlibdir:
+	-rm -rf lib

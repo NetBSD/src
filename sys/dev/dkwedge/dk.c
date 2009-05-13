@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.43 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.43.2.1 2009/05/13 17:19:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.43 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.43.2.1 2009/05/13 17:19:16 jym Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -125,7 +125,7 @@ static krwlock_t dkwedge_discovery_methods_lock;
  *	Autoconfiguration match function for pseudo-device glue.
  */
 static int
-dkwedge_match(struct device *parent, struct cfdata *match,
+dkwedge_match(device_t parent, cfdata_t match,
     void *aux)
 {
 
@@ -139,7 +139,7 @@ dkwedge_match(struct device *parent, struct cfdata *match,
  *	Autoconfiguration attach function for pseudo-device glue.
  */
 static void
-dkwedge_attach(struct device *parent, struct device *self,
+dkwedge_attach(device_t parent, device_t self,
     void *aux)
 {
 
@@ -153,7 +153,7 @@ dkwedge_attach(struct device *parent, struct device *self,
  *	Autoconfiguration detach function for pseudo-device glue.
  */
 static int
-dkwedge_detach(struct device *self, int flags)
+dkwedge_detach(device_t self, int flags)
 {
 
 	pmf_device_deregister(self);
@@ -663,7 +663,7 @@ dkwedge_print_wnames(void)
  *	and offset/length.
  */
 void
-dkwedge_set_bootwedge(struct device *parent, daddr_t startblk, uint64_t nblks)
+dkwedge_set_bootwedge(device_t parent, daddr_t startblk, uint64_t nblks)
 {
 	struct dkwedge_softc *sc;
 	int i;

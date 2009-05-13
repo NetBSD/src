@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2008/11/30 18:21:33 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.4.1 2009/05/13 17:16:40 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.4.1 2009/05/13 17:16:40 jym Exp $");
 
 #include "opt_explora.h"
+#include "opt_modular.h"
 #include "ksyms.h"
 
 #include <sys/param.h>

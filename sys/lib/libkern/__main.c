@@ -1,4 +1,4 @@
-/*	$NetBSD: __main.c,v 1.4 1996/03/14 18:52:03 christos Exp $	*/
+/*	$NetBSD: __main.c,v 1.4.182.1 2009/05/13 17:22:15 jym Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -32,9 +32,9 @@
 
 #include <sys/types.h>
 
-void __main __P((void));
+void __main(void);
 
 void
-__main()
+__main(void)
 {
 }

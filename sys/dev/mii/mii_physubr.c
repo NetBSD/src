@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.62 2009/01/16 20:51:18 cegger Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.62.2.1 2009/05/13 17:20:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.62 2009/01/16 20:51:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.62.2.1 2009/05/13 17:20:15 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -534,7 +534,7 @@ mii_phy_delete_media(struct mii_softc *sc)
 }
 
 int
-mii_phy_activate(struct device *self, enum devact act)
+mii_phy_activate(device_t self, enum devact act)
 {
 	int rv = 0;
 
@@ -553,12 +553,14 @@ mii_phy_activate(struct device *self, enum devact act)
 
 /* ARGSUSED1 */
 int
-mii_phy_detach(struct device *self, int flags)
+mii_phy_detach(device_t self, int flags)
 {
 	struct mii_softc *sc = device_private(self);
 
 	if (sc->mii_flags & MIIF_DOINGAUTO)
 		callout_stop(&sc->mii_nway_ch);
+
+	callout_destroy(&sc->mii_nway_ch);
 
 	mii_phy_delete_media(sc);
 	LIST_REMOVE(sc, mii_list);

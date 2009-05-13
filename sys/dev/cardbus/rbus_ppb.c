@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.26 2008/07/21 09:51:46 drochner Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.26.8.1 2009/05/13 17:19:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.26 2008/07/21 09:51:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.26.8.1 2009/05/13 17:19:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,13 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.26 2008/07/21 09:51:46 drochner Exp $
 
 struct ppb_softc;
 
-static int  ppb_cardbus_match(struct device *, struct cfdata *, void *);
-static void ppb_cardbus_attach(struct device *, struct device *, void *);
-static int  ppb_cardbus_detach(struct device * self, int flags);
+static int  ppb_cardbus_match(device_t, cfdata_t, void *);
+static void ppb_cardbus_attach(device_t, device_t, void *);
+static int  ppb_cardbus_detach(device_t  self, int flags);
 /*static*/ void ppb_cardbus_setup(struct ppb_softc * sc);
 /*static*/ int  ppb_cardbus_enable(struct ppb_softc * sc);
 /*static*/ void ppb_cardbus_disable(struct ppb_softc * sc);
-static int  ppb_activate(struct device *, enum devact);
+static int  ppb_activate(device_t, enum devact);
 int rppbprint(void *, const char *);
 int rbus_intr_fixup(pci_chipset_tag_t, int, int, int);
 void rbus_do_header_fixup(pci_chipset_tag_t, pcitag_t, void *);
@@ -116,10 +116,7 @@ int rbus_ppb_debug = 0;   /* hack with kdb */
 #endif
 
 static int
-ppb_cardbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void   *aux;
+ppb_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -138,9 +135,7 @@ ppb_cardbus_match(parent, match, aux)
 
 
 int
-rppbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+rppbprint(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -163,10 +158,7 @@ rbus_intr_fixup(pci_chipset_tag_t pc,
 }
 
 void
-rbus_do_header_fixup(pc, tag, context)
-     	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	void *context;
+rbus_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
   int pin, irq;
   int bus, device, function;
@@ -262,8 +254,8 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	rct.iobustags = alloca(maxbus * sizeof(rbus_tag_t));
 	rct.membustags = alloca(maxbus * sizeof(rbus_tag_t));
 
-	bzero(rct.bussize_ioreqs, size);
-	bzero(rct.bussize_memreqs, size);
+	memset(rct.bussize_ioreqs, 0, size);
+	memset(rct.bussize_memreqs, 0, size);
 
 	printf("%s: sizing buses %d-%d\n",
 	       device_xname(rct.csc->sc_dev),
@@ -467,10 +459,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 }
 
 static void
-rbus_pci_phys_countspace(pc, tag, context)
-        pci_chipset_tag_t pc;
-	pcitag_t          tag;
-	void             *context;
+rbus_pci_phys_countspace(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
         int bus, device, function;
 	struct  rbus_pci_addr_fixup_context *rct =
@@ -488,13 +477,7 @@ rbus_pci_phys_countspace(pc, tag, context)
 
 
 int
-rbus_do_phys_countspace(pc, tag, mapreg, ctx, type, addr, size)
-	pci_chipset_tag_t pc;
-	pcitag_t     tag;
-	void        *ctx;
-	int mapreg, type;
-	bus_addr_t *addr;
-	bus_size_t size;
+rbus_do_phys_countspace(pci_chipset_tag_t pc, pcitag_t tag, int mapreg, void *ctx, int type, bus_addr_t *addr, bus_size_t size)
 {
 	struct  rbus_pci_addr_fixup_context *rct =
 	  (struct  rbus_pci_addr_fixup_context *)ctx;
@@ -518,10 +501,7 @@ rbus_do_phys_countspace(pc, tag, mapreg, ctx, type, addr, size)
 }
 
 static void
-rbus_pci_phys_allocate(pc, tag, context)
-        pci_chipset_tag_t pc;
-	pcitag_t          tag;
-	void             *context;
+rbus_pci_phys_allocate(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
         int bus, device, function, command;
 	struct rbus_pci_addr_fixup_context *rct =
@@ -545,13 +525,7 @@ rbus_pci_phys_allocate(pc, tag, context)
 }
 
 int
-rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
-	pci_chipset_tag_t pc;
-	pcitag_t     tag;
-	void        *ctx;
-	int mapreg, type;
-	bus_addr_t *addr;
-	bus_size_t size;
+rbus_do_phys_allocate(pci_chipset_tag_t pc, pcitag_t tag, int mapreg, void *ctx, int type, bus_addr_t *addr, bus_size_t size)
 {
 	struct  rbus_pci_addr_fixup_context *rct =
 	  (struct  rbus_pci_addr_fixup_context *)ctx;
@@ -840,9 +814,7 @@ ppb_cardbus_disable(struct ppb_softc * sc)
 }
 
 static int
-ppb_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+ppb_cardbus_detach(device_t self, int flags)
 {
   /* struct ppb_softc *sc = device_private(self);*/
 	struct ppb_cardbus_softc *csc = device_private(self);
@@ -881,9 +853,7 @@ ppb_cardbus_detach(self, flags)
 }
 
 int
-ppb_activate(self, act)
-	struct device *self;
-	enum devact act;
+ppb_activate(device_t self, enum devact act)
 {
   printf("ppb_activate called\n");
   return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.60 2008/03/15 08:50:08 tsutsui Exp $ */
+/* $NetBSD: dec_3min.c,v 1.60.18.1 2009/05/13 17:18:13 jym Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60 2008/03/15 08:50:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.18.1 2009/05/13 17:18:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,14 +133,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60 2008/03/15 08:50:08 tsutsui Exp $"
 #include <dev/tc/zs_ioasicvar.h>
 #include "wsdisplay.h"
 
-void		dec_3min_init __P((void));		/* XXX */
-static void	dec_3min_bus_reset __P((void));
-static void	dec_3min_cons_init __P((void));
-static void	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_3min_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
+void		dec_3min_init(void);		/* XXX */
+static void	dec_3min_bus_reset(void);
+static void	dec_3min_cons_init(void);
+static void	dec_3min_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_3min_intr_establish(struct device *, void *,
+		    int, int (*)(void *), void *);
 
-static void	kn02ba_wbflush __P((void));
+static void	kn02ba_wbflush(void);
 
 static void	dec_3min_tc_init(void);
 
@@ -264,12 +264,7 @@ dec_3min_cons_init()
 }
 
 static void
-dec_3min_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
+dec_3min_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 	unsigned mask;
 
@@ -354,11 +349,7 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static void
-dec_3min_intr(status, cause, pc, ipending)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
-	unsigned ipending;
+dec_3min_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 {
 	static int user_warned = 0;
 	static int intr_depth = 0;

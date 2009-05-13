@@ -1,11 +1,11 @@
-/*	$NetBSD: gdt.c,v 1.19 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.19.12.1 2009/05/13 17:16:08 jym Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by John T. Kohl and Charles M. Hannum.
+ * by John T. Kohl, by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.19 2008/05/11 15:32:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.19.12.1 2009/05/13 17:16:08 jym Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.19 2008/05/11 15:32:20 ad Exp $");
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/user.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -63,37 +64,10 @@ int gdt_dynavail;
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
-kmutex_t gdt_lock_store;
-
-static inline void gdt_lock(void);
-static inline void gdt_unlock(void);
 void gdt_init(void);
 void gdt_grow(void);
 int gdt_get_slot(void);
 void gdt_put_slot(int);
-
-/*
- * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
- * waiting for memory.
- *
- * Note that the locking done here is not sufficient for multiprocessor
- * systems.  A freshly allocated slot will still be of type SDT_SYSNULL for
- * some time after the GDT is unlocked, so gdt_compact() could attempt to
- * reclaim it.
- */
-static inline void
-gdt_lock(void)
-{
-
-	mutex_enter(&gdt_lock_store);
-}
-
-static inline void
-gdt_unlock(void)
-{
-
-	mutex_exit(&gdt_lock_store);
-}
 
 void
 set_mem_gdt(struct mem_segment_descriptor *sd, void *base, size_t limit,
@@ -148,8 +122,6 @@ gdt_init(void)
 	struct vm_page *pg;
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
-
-	mutex_init(&gdt_lock_store, MUTEX_DEFAULT, IPL_NONE);
 
 	gdt_size = MINGDTSIZ;
 	gdt_dyncount = 0;
@@ -279,7 +251,7 @@ gdt_get_slot(void)
 
 	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
 
-	gdt_lock();
+	KASSERT(mutex_owned(&cpu_lock));
 
 	if (gdt_free != GNULL_SEL) {
 		slot = gdt_free;
@@ -300,7 +272,6 @@ gdt_get_slot(void)
 	}
 
 	gdt_dyncount++;
-	gdt_unlock();
 	return (slot);
 }
 
@@ -312,16 +283,14 @@ gdt_put_slot(int slot)
 {
 	struct sys_segment_descriptor *gdt;
 
+	KASSERT(mutex_owned(&cpu_lock));
+
 	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
 
-	gdt_lock();
 	gdt_dyncount--;
-
 	gdt[slot].sd_type = SDT_SYSNULL;
 	gdt[slot].sd_xx3 = gdt_free;
 	gdt_free = slot;
-
-	gdt_unlock();
 }
 
 int
@@ -333,12 +302,14 @@ tss_alloc(struct x86_64_tss *tss)
 
 	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
 
+	mutex_enter(&cpu_lock);
 	slot = gdt_get_slot();
 #if 0
 	printf("tss_alloc: slot %d addr %p\n", slot, &gdt[slot]);
 #endif
 	set_sys_gdt(&gdt[slot], tss, sizeof (struct x86_64_tss)-1,
 	    SDT_SYS386TSS, SEL_KPL, 0);
+	mutex_exit(&cpu_lock);
 #if 0
 	printf("lolimit %lx lobase %lx type %lx dpl %lx p %lx hilimit %lx\n"
 	       "xx1 %lx gran %lx hibase %lx xx2 %lx zero %lx xx3 %lx pad %lx\n",
@@ -366,7 +337,9 @@ void
 tss_free(int sel)
 {
 #ifndef XEN
+	mutex_enter(&cpu_lock);
 	gdt_put_slot(IDXDYNSEL(sel));
+	mutex_exit(&cpu_lock);
 #else
 	KASSERT(sel == GSEL(GNULL_SEL, SEL_KPL));
 #endif
@@ -377,6 +350,8 @@ ldt_alloc(struct pmap *pmap, char *ldt, size_t len)
 {
 	int slot;
 	struct sys_segment_descriptor *gdt;
+
+	KASSERT(mutex_owned(&cpu_lock));
 
 	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
 
@@ -390,6 +365,8 @@ ldt_free(struct pmap *pmap)
 {
 	int slot;
 
+	KASSERT(mutex_owned(&cpu_lock));
+
 	slot = IDXDYNSEL(pmap->pm_ldt_sel);
 
 	gdt_put_slot(slot);
@@ -397,8 +374,7 @@ ldt_free(struct pmap *pmap)
 
 #ifdef XEN
 void
-lgdt(desc)
-	struct region_descriptor *desc;
+lgdt(struct region_descriptor *desc)
 {
 	paddr_t frames[16];
 	int i;

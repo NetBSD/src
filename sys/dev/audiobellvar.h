@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobellvar.h,v 1.4 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: audiobellvar.h,v 1.4.90.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -29,7 +29,7 @@
 
 /*
  * To make a noise, call audiobell(dev, pitch, period, volume, poll).
- * dev is a struct device * for the audio device to use.
+ * dev is a device_t for the audio device to use.
  * pitch is the pitch of the bell in Hz,
  * period is the length in ms,
  * volume is the amplitude in % of max,

@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.8 2008/11/24 11:41:10 ad Exp $
+#	$NetBSD: MERAKI,v 1.8.4.1 2009/05/13 17:16:40 jym Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.8 $"
+#ident 		"AP30-$Revision: 1.8.4.1 $"
 
 maxusers	32
 
@@ -34,7 +34,6 @@ options		SOSEND_NO_LOAN
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	NTP		# network time protocol
 
 # Debugging options

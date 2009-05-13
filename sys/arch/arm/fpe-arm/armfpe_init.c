@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.13 2007/10/17 19:53:40 garbled Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.13.34.1 2009/05/13 17:16:17 jym Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.13 2007/10/17 19:53:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.13.34.1 2009/05/13 17:16:17 jym Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -88,7 +88,7 @@ static const char *exception_errors[] = {
  */
 
 int
-initialise_arm_fpe()
+initialise_arm_fpe(void)
 {
 	int error;
 
@@ -111,7 +111,7 @@ initialise_arm_fpe()
  */
 
 int
-arm_fpe_boot()
+arm_fpe_boot(void)
 {
 	u_int workspace;
 	int id;
@@ -171,9 +171,7 @@ arm_fpe_boot()
  */
 
 void
-arm_fpe_postproc(fpframe, frame)
-	u_int fpframe;
-	struct trapframe *frame;
+arm_fpe_postproc(u_int fpframe, struct trapframe *frame)
 {
 	register int sig;
 	register struct proc *p;
@@ -222,10 +220,7 @@ arm_fpe_postproc(fpframe, frame)
  */
 
 void
-arm_fpe_exception(exception, fpframe, frame)
-	int exception;
-	u_int fpframe;
-	struct trapframe *frame;
+arm_fpe_exception(int exception, u_int fpframe, struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -245,9 +240,7 @@ arm_fpe_exception(exception, fpframe, frame)
 
 
 void
-arm_fpe_copycontext(c1, c2)
-	u_int c1;
-	u_int c2;
+arm_fpe_copycontext(u_int c1, u_int c2)
 {
 	fp_context_frame_t fpcontext;
 

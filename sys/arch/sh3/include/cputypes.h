@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.11 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.11.14.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,13 +48,14 @@
 #define	CPU_PRODUCT_7708R	3
 #define	CPU_PRODUCT_7709	4
 #define	CPU_PRODUCT_7709A	5
+#define	CPU_PRODUCT_7706	6
 
 /* SH4 series */
-#define	CPU_PRODUCT_7750	6
-#define	CPU_PRODUCT_7750S	7
-#define	CPU_PRODUCT_7750R	8
-#define	CPU_PRODUCT_7751	9
-#define	CPU_PRODUCT_7751R	10
+#define	CPU_PRODUCT_7750	7
+#define	CPU_PRODUCT_7750S	8
+#define	CPU_PRODUCT_7750R	9
+#define	CPU_PRODUCT_7751	10
+#define	CPU_PRODUCT_7751R	11
 
 
 #ifndef _LOCORE

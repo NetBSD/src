@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.12 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.12.58.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -95,19 +95,19 @@ extern int adbHardware;
 #define ADBLISTEN(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x08 | (reg))
 #define ADBTALK(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x0c | (reg))
 
-int	adb_intr __P((void *));
-int	adb_poweroff __P((void));
-void	adb_restart __P((void));
-void	adb_cuda_autopoll __P((void));
-int	adb_intr_cuda __P((void *));
-int	CountADBs __P((void));
-void	ADBReInit __P((void));
-int	GetIndADB __P((ADBDataBlock * info, int index));
-int	GetADBInfo __P((ADBDataBlock * info, int adbAddr));
-int	SetADBInfo __P((ADBSetInfoBlock * info, int adbAddr));
-int	ADBOp __P((Ptr buffer, adbComp *compRout, Ptr data, short commandNum));
-int	adb_read_date_time __P((unsigned long *t));
-int	adb_set_date_time __P((unsigned long t));
+int	adb_intr(void *);
+int	adb_poweroff(void);
+void	adb_restart(void);
+void	adb_cuda_autopoll(void);
+int	adb_intr_cuda(void *);
+int	CountADBs(void);
+void	ADBReInit(void);
+int	GetIndADB(ADBDataBlock * info, int index);
+int	GetADBInfo(ADBDataBlock * info, int adbAddr);
+int	SetADBInfo(ADBSetInfoBlock * info, int adbAddr);
+int	ADBOp(Ptr buffer, adbComp *compRout, Ptr data, short commandNum);
+int	adb_read_date_time(unsigned long *t);
+int	adb_set_date_time(unsigned long t);
 
-int	adb_op_sync __P((Ptr, adbComp *, Ptr, short));
-void	adb_op_comprout __P((void *, volatile int *, int));
+int	adb_op_sync(Ptr, adbComp *, Ptr, short);
+void	adb_op_comprout(void *, volatile int *, int);

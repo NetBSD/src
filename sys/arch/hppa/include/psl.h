@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 2008/01/18 09:42:12 skrll Exp $	*/
+/*	$NetBSD: psl.h,v 1.5.24.1 2009/05/13 17:17:48 jym Exp $	*/
 
 /*	$OpenBSD: psl.h,v 1.6 1999/11/25 18:29:01 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
 #define _HPPA_PSL_H_
 
 /*
- * Rference:
+ * Reference:
  * 1. PA-RISC 1.1 Architecture and Instruction Set Manual
  *    Hewlett Packard, 3rd Edition, February 1994; Part Number 09740-90039
  */

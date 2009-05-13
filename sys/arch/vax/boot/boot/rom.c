@@ -1,4 +1,4 @@
-/*	$NetBSD: rom.c,v 1.7 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: rom.c,v 1.7.92.1 2009/05/13 17:18:40 jym Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -68,7 +68,7 @@ romopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 
 	bqo = (void *)bootrpb.iovec;
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 	dunit = unit;
 	dpart = part;
 
@@ -87,13 +87,7 @@ int	romwrite_uvax(int, int, void *, struct rpb *);
 int	romread_uvax(int, int, void *, struct rpb *);
 
 int
-romstrategy (f, func, dblk, size, buf, rsize)
-	void *f;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+romstrategy (void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct	disklabel *lp;
 	int	block;

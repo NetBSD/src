@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.29 2008/10/24 17:07:33 dyoung Exp $       */
+/*      $NetBSD: if_atm.c,v 1.29.8.1 2009/05/13 17:22:27 jym Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.29 2008/10/24 17:07:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.29.8.1 2009/05/13 17:22:27 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -162,7 +162,7 @@ atm_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		/*
 		 * let the lower level know this circuit is active
 		 */
-		bcopy(CLLADDR(satocsdl(gate)), &api.aph, sizeof(api.aph));
+		memcpy(&api.aph, CLLADDR(satocsdl(gate)), sizeof(api.aph));
 		api.rxhand = NULL;
 		if (rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMENA, &api) != 0) {
 			printf("atm: couldn't add VC\n");
@@ -204,7 +204,7 @@ failed:
 		 * tell the lower layer to disable this circuit
 		 */
 
-		bcopy(CLLADDR(satocsdl(gate)), &api.aph, sizeof(api.aph));
+		memcpy(&api.aph, CLLADDR(satocsdl(gate)), sizeof(api.aph));
 		api.rxhand = NULL;
 		(void)rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMDIS, &api);
 
@@ -267,7 +267,7 @@ atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
 
 
 	if (sdl->sdl_family == AF_LINK && sdl->sdl_alen == sizeof(*desten)) {
-		bcopy(CLLADDR(sdl), desten, sdl->sdl_alen);
+		memcpy(desten, CLLADDR(sdl), sdl->sdl_alen);
 		return (1);	/* ok, go for it! */
 	}
 

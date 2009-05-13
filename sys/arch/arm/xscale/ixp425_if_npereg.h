@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npereg.h,v 1.1 2006/12/10 10:01:49 scw Exp $	*/
+/*	$NetBSD: ixp425_if_npereg.h,v 1.1.70.1 2009/05/13 17:16:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -124,6 +124,9 @@ struct npehwbuf {
 #define	NPE_SETRXQOSENTRY	0x0b	/* map user pri -> QoS class+rx qid */
 #define	NPE_SETFIREWALLMODE	0x0e	/* config firewall services */
 #define	NPE_SETLOOPBACK		0x12	/* enable/disable loopback */
+#define	NPE_ADDRESSFILTERCONFIG	0x14	/* update multicast filter */
+#define	NPE_NOTIFYMACRECOVERYDONE 0x16	/* MAC has been recovered */
+#define	NPE_MACRECOVERYSTART	0x17	/* message from NPE to recover MAC*/
 /* ... XXX more */
 
 #define	NPE_MAC_MSGID_SHL	24
@@ -250,8 +253,12 @@ struct npestats {
 
 #define NPE_MAC_RESET_DELAY    1
 
-/* This value applies to RMII */
+/* Slot time */
+#define NPE_MAC_SLOT_TIME_MII_DEFAULT	0x80
 #define NPE_MAC_SLOT_TIME_RMII_DEFAULT  0xFF
+
+/* TX fifo threshold */
+#define NPE_MAC_BUF_SIZE_TX_DEFAULT	0x18	/* CSR 2 or higher */
 
 /*
  * MII definitions - these have been verified against the LXT971 and LXT972 PHYs

@@ -1,4 +1,4 @@
-#	$NetBSD: files.zaurus,v 1.6 2008/03/31 23:35:39 chris Exp $
+#	$NetBSD: files.zaurus,v 1.6.18.1 2009/05/13 17:18:51 jym Exp $
 #
 # Sharp Zaurus specific configuration info
 #
@@ -16,7 +16,7 @@ include "dev/ata/files.ata"
 include "dev/i2o/files.i2o"
 
 # Machine-independent SD/MMC drivers
-#include "dev/sdmmc/files.sdmmc"
+include "dev/sdmmc/files.sdmmc"
 
 # HPC
 include "arch/hpc/conf/files.hpc"
@@ -30,6 +30,14 @@ file	arch/zaurus/zaurus/autoconf.c
 file	arch/zaurus/zaurus/machdep.c
 
 file	kern/subr_disk_mbr.c			disk
+
+# kloader
+defflag opt_kloader.h				KLOADER
+defparam opt_kloader.h				KLOADER_KERNEL_PATH
+defflag debug_kloader.h				KLOADER_DEBUG
+file	dev/kloader.c				kloader
+file	arch/zaurus/zaurus/kloader_machdep.c	kloader
+file	arch/zaurus/zaurus/kloader_zaurus.S	kloader
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
@@ -90,8 +98,8 @@ attach zusb at pxaip
 file arch/zaurus/dev/zusb.c		zusb
 
 # MMC/SD controller
-#attach pxamci at pxaip with zmci
-#file arch/zaurus/dev/zmci.c		zmci
+attach pxamci at pxaip with zmci
+file arch/zaurus/dev/zmci.c		zmci
 
 # PCMCIA drivers
 include "dev/pcmcia/files.pcmcia"

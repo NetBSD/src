@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.15 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: xbox.c,v 1.15.14.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.15 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.15.14.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -91,17 +91,15 @@ struct xbox_softc {
 };
 
 /* autoconfiguration driver */
-int	xbox_match(struct device *, struct cfdata *, void *);
-void	xbox_attach(struct device *, struct device *, void *);
+int	xbox_match(device_t, cfdata_t, void *);
+void	xbox_attach(device_t, device_t, void *);
 int	xbox_print( void *, const char *);
 
 CFATTACH_DECL(xbox, sizeof(struct xbox_softc),
     xbox_match, xbox_attach, NULL, NULL);
 
 int
-xbox_print(args, busname)
-	void *args;
-	const char *busname;
+xbox_print(void *args, const char *busname)
 {
 	struct xbox_attach_args *xa = args;
 
@@ -111,10 +109,7 @@ xbox_print(args, busname)
 }
 
 int
-xbox_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+xbox_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -125,10 +120,7 @@ xbox_match(parent, cf, aux)
  * Attach an Xbox.
  */
 void
-xbox_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+xbox_attach(device_t parent, device_t self, void *aux)
 {
 	struct xbox_softc *sc = (struct xbox_softc *)self;
 	struct sbus_attach_args *sa = aux;
@@ -152,7 +144,7 @@ xbox_attach(parent, self, aux)
 	/*
 	 * Now pretend to be another Sbus.
 	 */
-	bzero(&xa, sizeof xa);
+	memset(&xa, 0, sizeof xa);
 	xa.xa_name = "sbus";
 	xa.xa_node = node;
 	xa.xa_bustag = sa->sa_bustag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.h,v 1.2 2006/01/16 17:02:29 christos Exp $	*/
+/*	$NetBSD: zlib.h,v 1.2.36.1 2009/05/13 17:23:10 jym Exp $	*/
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.3, July 18th, 2005
@@ -1284,7 +1284,9 @@ ZEXTERN uLong ZEXPORT adler32_combine OF((uLong adler1, uLong adler2,
    seq1 and seq2 concatenated, requiring only adler1, adler2, and len2.
 */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 ZEXTERN uLong ZEXPORT crc32   OF((uLong crc, const Bytef *buf, uInt len));
+#endif
 /*
      Update a running CRC-32 with the bytes buf[0..len-1] and return the
    updated CRC-32. If buf is NULL, this function returns the required initial

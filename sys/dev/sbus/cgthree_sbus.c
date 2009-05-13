@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.21.14.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.21.14.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ struct cgthree_sbus_softc {
 
 
 /* autoconfiguration driver */
-static int	cgthreematch_sbus(struct device *, struct cfdata *, void *);
-static void	cgthreeattach_sbus(struct device *, struct device *, void *);
+static int	cgthreematch_sbus(device_t, cfdata_t, void *);
+static void	cgthreeattach_sbus(device_t, device_t, void *);
 
 CFATTACH_DECL(cgthree_sbus, sizeof(struct cgthree_softc),
     cgthreematch_sbus, cgthreeattach_sbus, NULL, NULL);
@@ -121,10 +121,7 @@ CFATTACH_DECL(cgthree_sbus, sizeof(struct cgthree_softc),
  * Match a cgthree.
  */
 int
-cgthreematch_sbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cgthreematch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -135,9 +132,7 @@ cgthreematch_sbus(parent, cf, aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-cgthreeattach_sbus(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+cgthreeattach_sbus(device_t parent, device_t self, void *args)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct sbusdev *sd = &((struct cgthree_sbus_softc *)self)->bss_sd;

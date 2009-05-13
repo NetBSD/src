@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.269 2008/11/13 11:10:41 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.269.4.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.269 2008/11/13 11:10:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.269.4.1 2009/05/13 17:23:07 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -468,7 +468,7 @@ lfs_writerd(void *arg)
  * Initialize the filesystem, most work done by ufs_init.
  */
 void
-lfs_init()
+lfs_init(void)
 {
 
 	malloc_type_attach(M_SEGMENT);
@@ -491,13 +491,13 @@ lfs_init()
 }
 
 void
-lfs_reinit()
+lfs_reinit(void)
 {
 	ufs_reinit();
 }
 
 void
-lfs_done()
+lfs_done(void)
 {
 	ufs_done();
 	mutex_destroy(&lfs_lock);
@@ -514,7 +514,7 @@ lfs_done()
  * Called by main() when ufs is going to be mounted as root.
  */
 int
-lfs_mountroot()
+lfs_mountroot(void)
 {
 	extern struct vnode *rootvp;
 	struct mount *mp;
@@ -619,15 +619,14 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+	if (error == 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
+		error = genfs_can_mount(devvp, accessmode, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -1047,8 +1046,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
 
-	printf("WARNING: the log-structured file system is experimental and "
-	    "may be unstable\n");
+	printf("WARNING: the log-structured file system is experimental\n"
+	    "WARNING: it may cause system crashes and/or corrupt data\n");
 
 	return (0);
 
@@ -1854,7 +1853,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	int i;
 
 	ip->i_mode = ip->i_ffs1_mode;
-	ip->i_ffs_effnlink = ip->i_nlink = ip->i_ffs1_nlink;
+	ip->i_nlink = ip->i_ffs1_nlink;
 	ip->i_lfs_osize = ip->i_size = ip->i_ffs1_size;
 	ip->i_flags = ip->i_ffs1_flags;
 	ip->i_gen = ip->i_ffs1_gen;

@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.22 2008/06/12 12:09:23 dogcow Exp $ */
+/* $NetBSD: mcpcia.c,v 1.22.10.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.22 2008/06/12 12:09:23 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.22.10.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,12 +96,12 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.22 2008/06/12 12:09:23 dogcow Exp $");
 	 (MCBUS_IOSPACE) | MCPCIA_PCI_BRIDGE | _MCPCIA_PCI_REV)), \
 	sizeof(u_int32_t))
 
-static int	mcpciamatch __P((struct device *, struct cfdata *, void *));
-static void	mcpciaattach __P((struct device *, struct device *, void *));
+static int	mcpciamatch(struct device *, struct cfdata *, void *);
+static void	mcpciaattach(struct device *, struct device *, void *);
 CFATTACH_DECL(mcpcia, sizeof(struct mcpcia_softc),
     mcpciamatch, mcpciaattach, NULL, NULL);
 
-void	mcpcia_init0 __P((struct mcpcia_config *, int));
+void	mcpcia_init0(struct mcpcia_config *, int);
 
 /*
  * We have one statically-allocated mcpcia_config structure; this is
@@ -110,14 +110,11 @@ void	mcpcia_init0 __P((struct mcpcia_config *, int));
  */
 struct mcpcia_config mcpcia_console_configuration;
 
-int	mcpcia_bus_get_window __P((int, int,
-	    struct alpha_bus_space_translation *abst));
+int	mcpcia_bus_get_window(int, int,
+	    struct alpha_bus_space_translation *abst);
 
 static int
-mcpciamatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mcpciamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mcbus_dev_attach_args *ma = aux;
 	if (ma->ma_type == MCBUS_TYPE_PCI)
@@ -126,10 +123,7 @@ mcpciamatch(parent, cf, aux)
 }
 
 static void
-mcpciaattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mcpciaattach(struct device *parent, struct device *self, void *aux)
 {
 	static int first = 1;
 	struct mcbus_dev_attach_args *ma = aux;
@@ -206,7 +200,7 @@ mcpciaattach(parent, self, aux)
 }
 
 void
-mcpcia_init()
+mcpcia_init(void)
 {
 	struct mcpcia_config *ccp = &mcpcia_console_configuration;
 	int i;
@@ -247,9 +241,7 @@ mcpcia_init()
 }
 
 void
-mcpcia_init0(ccp, mallocsafe)
-	struct mcpcia_config *ccp;
-	int mallocsafe;
+mcpcia_init0(struct mcpcia_config *ccp, int mallocsafe)
 {
 	u_int32_t ctl;
 
@@ -296,8 +288,7 @@ mcpcia_init0(ccp, mallocsafe)
 
 #ifdef TEST_PROBE_DEATH
 static void
-die_heathen_dog(arg)
-	void *arg;
+die_heathen_dog(void *arg)
 {
 	struct mcpcia_config *ccp = arg;
 
@@ -307,7 +298,7 @@ die_heathen_dog(arg)
 #endif
 
 void
-mcpcia_config_cleanup()
+mcpcia_config_cleanup(void)
 {
 	volatile u_int32_t ctl;
 	struct mcpcia_softc *mcp;
@@ -341,9 +332,7 @@ mcpcia_config_cleanup()
 }
 
 int
-mcpcia_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+mcpcia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct mcpcia_config *ccp = &mcpcia_console_configuration;
 	bus_space_tag_t st;

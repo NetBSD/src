@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.228 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: wi.c,v 1.228.4.1 2009/05/13 17:19:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.228 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.228.4.1 2009/05/13 17:19:25 jym Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -605,7 +605,7 @@ wi_detach(struct wi_softc *sc)
 
 #ifdef __NetBSD__
 int
-wi_activate(struct device *self, enum devact act)
+wi_activate(device_t self, enum devact act)
 {
 	struct wi_softc *sc = (struct wi_softc *)self;
 	int rv = 0, s;
@@ -1362,8 +1362,10 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = wi_get_cfg(ifp, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = kauth_authorize_generic(curlwp->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL);
 		if (error)
 			break;
 		error = wi_set_cfg(ifp, cmd, data);

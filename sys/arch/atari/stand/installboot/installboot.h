@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.9 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: installboot.h,v 1.9.2.1 2009/05/13 17:16:32 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -45,5 +45,5 @@
  */
 #define	BOOTVERSION	0x03
 
-u_int	dkcksum __P((struct disklabel *));
-u_int32_t readdisklabel __P((char *, struct disklabel *));
+u_int	dkcksum(struct disklabel *);
+u_int32_t readdisklabel(char *, struct disklabel *);

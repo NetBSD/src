@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.46 2008/06/11 02:09:16 kiyohara Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.46.10.1 2009/05/13 17:19:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.46 2008/06/11 02:09:16 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.46.10.1 2009/05/13 17:19:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.46 2008/06/11 02:09:16 kiyohara Ex
 #undef DEBUG_NEG
 
 int
-siop_common_attach(sc)
-	struct siop_common_softc *sc;
+siop_common_attach(struct siop_common_softc *sc)
 {
 	int error, i;
 	bus_dma_segment_t seg;
@@ -162,8 +161,7 @@ siop_common_attach(sc)
 }
 
 void
-siop_common_reset(sc)
-	struct siop_common_softc *sc;
+siop_common_reset(struct siop_common_softc *sc)
 {
 	u_int32_t stest1, stest3;
 
@@ -255,8 +253,7 @@ siop_common_reset(sc)
 
 /* prepare tables before sending a cmd */
 void
-siop_setuptables(siop_cmd)
-	struct siop_common_cmd *siop_cmd;
+siop_setuptables(struct siop_common_cmd *siop_cmd)
 {
 	int i;
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
@@ -340,8 +337,7 @@ siop_setuptables(siop_cmd)
 }
 
 int
-siop_wdtr_neg(siop_cmd)
-	struct siop_common_cmd *siop_cmd;
+siop_wdtr_neg(struct siop_common_cmd *siop_cmd)
 {
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	struct siop_common_target *siop_target = siop_cmd->siop_target;
@@ -420,8 +416,7 @@ siop_wdtr_neg(siop_cmd)
 }
 
 int
-siop_ppr_neg(siop_cmd)
-	struct siop_common_cmd *siop_cmd;
+siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 {
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	struct siop_common_target *siop_target = siop_cmd->siop_target;
@@ -529,8 +524,7 @@ reject:
 }
 
 int
-siop_sdtr_neg(siop_cmd)
-	struct siop_common_cmd *siop_cmd;
+siop_sdtr_neg(struct siop_common_cmd *siop_cmd)
 {
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	struct siop_common_target *siop_target = siop_cmd->siop_target;
@@ -663,10 +657,7 @@ end:
 }
 
 void
-siop_sdtr_msg(siop_cmd, offset, ssync, soff)
-	struct siop_common_cmd *siop_cmd;
-	int offset;
-	int ssync, soff;
+siop_sdtr_msg(struct siop_common_cmd *siop_cmd, int offset, int ssync, int soff)
 {
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_SDTR_LEN;
@@ -678,10 +669,7 @@ siop_sdtr_msg(siop_cmd, offset, ssync, soff)
 }
 
 void
-siop_wdtr_msg(siop_cmd, offset, wide)
-	struct siop_common_cmd *siop_cmd;
-	int offset;
-	int wide;
+siop_wdtr_msg(struct siop_common_cmd *siop_cmd, int offset, int wide)
 {
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_WDTR_LEN;
@@ -692,10 +680,7 @@ siop_wdtr_msg(siop_cmd, offset, wide)
 }
 
 void
-siop_ppr_msg(siop_cmd, offset, ssync, soff)
-	struct siop_common_cmd *siop_cmd;
-	int offset;
-	int ssync, soff;
+siop_ppr_msg(struct siop_common_cmd *siop_cmd, int offset, int ssync, int soff)
 {
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_PPR_LEN;
@@ -710,8 +695,7 @@ siop_ppr_msg(siop_cmd, offset, ssync, soff)
 }
 
 void
-siop_minphys(bp)
-	struct buf *bp;
+siop_minphys(struct buf *bp)
 {
 	minphys(bp);
 }
@@ -738,8 +722,7 @@ siop_ioctl(struct scsipi_channel *chan, u_long cmd, void *arg,
 }
 
 void
-siop_ma(siop_cmd)
-	struct siop_common_cmd *siop_cmd;
+siop_ma(struct siop_common_cmd *siop_cmd)
 {
 	int offset, dbc, sstat;
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
@@ -805,9 +788,7 @@ siop_ma(siop_cmd)
 }
 
 void
-siop_sdp(siop_cmd, offset)
-	struct siop_common_cmd *siop_cmd;
-	int offset;
+siop_sdp(struct siop_common_cmd *siop_cmd, int offset)
 {
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	scr_table_t *table;
@@ -867,9 +848,7 @@ siop_sdp(siop_cmd, offset)
 }
 
 void
-siop_update_resid(siop_cmd, offset)
-	struct siop_common_cmd *siop_cmd;
-	int offset;
+siop_update_resid(struct siop_common_cmd *siop_cmd, int offset)
 {
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	scr_table_t *table;
@@ -899,8 +878,7 @@ siop_update_resid(siop_cmd, offset)
 }
 
 int
-siop_iwr(siop_cmd)
-	struct siop_common_cmd *siop_cmd;
+siop_iwr(struct siop_common_cmd *siop_cmd)
 {
 	int offset;
 	scr_table_t *table; /* table with IWR */
@@ -952,8 +930,7 @@ siop_iwr(siop_cmd)
 }
 
 void
-siop_clearfifo(sc)
-	struct siop_common_softc *sc;
+siop_clearfifo(struct siop_common_softc *sc)
 {
 	int timeout = 0;
 	int ctest3 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3);
@@ -977,8 +954,7 @@ siop_clearfifo(sc)
 }
 
 int
-siop_modechange(sc)
-	struct siop_common_softc *sc;
+siop_modechange(struct siop_common_softc *sc)
 {
 	int retry;
 	int sist0, sist1, stest2;
@@ -1029,8 +1005,7 @@ siop_modechange(sc)
 }
 
 void
-siop_resetbus(sc)
-	struct siop_common_softc *sc;
+siop_resetbus(struct siop_common_softc *sc)
 {
 	int scntl1;
 	scntl1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1);
@@ -1042,9 +1017,7 @@ siop_resetbus(sc)
 }
 
 void
-siop_update_xfer_mode(sc, target)
-	struct siop_common_softc *sc;
-	int target;
+siop_update_xfer_mode(struct siop_common_softc *sc, int target)
 {
 	struct siop_common_target *siop_target = sc->targets[target];
 	struct scsipi_xfer_mode xm;

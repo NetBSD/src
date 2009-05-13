@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.26 2008/04/07 10:16:59 jmcneill Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.26.18.1 2009/05/13 17:19:10 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.26 2008/04/07 10:16:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.26.18.1 2009/05/13 17:19:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ static ACPI_STATUS acpi_resource_parse_callback(ACPI_RESOURCE *, void *);
 
 struct resource_parse_callback_arg {
 	const struct acpi_resource_parse_ops *ops;
-	struct device *dev;
+	device_t dev;
 	void *context;
 };
 
@@ -334,7 +334,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
  *	items, such as GPE bits.
  */
 ACPI_STATUS
-acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, const char *path,
+acpi_resource_parse(device_t dev, ACPI_HANDLE handle, const char *path,
     void *arg, const struct acpi_resource_parse_ops *ops)
 {
 	struct resource_parse_callback_arg cbarg;
@@ -369,7 +369,7 @@ acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, const char *path,
  *	Print the resources assigned to a device.
  */
 void
-acpi_resource_print(struct device *dev, struct acpi_resources *res)
+acpi_resource_print(device_t dev, struct acpi_resources *res)
 {
 	const char *sep;
 
@@ -381,7 +381,7 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 	    SIMPLEQ_EMPTY(&res->ar_drq))
 		return;
 
-	aprint_normal("%s:", device_xname(dev));
+	aprint_normal(":");
 
 	if (SIMPLEQ_EMPTY(&res->ar_io) == 0) {
 		struct acpi_io *ar;
@@ -438,6 +438,7 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 	}
 
 	aprint_normal("\n");
+	aprint_naive("\n");
 }
 
 /*
@@ -570,24 +571,24 @@ acpi_res_drq(struct acpi_resources *res, int idx)
  * Default ACPI resource parse operations.
  *****************************************************************************/
 
-static void	acpi_res_parse_init(struct device *, void *, void **);
-static void	acpi_res_parse_fini(struct device *, void *);
+static void	acpi_res_parse_init(device_t, void *, void **);
+static void	acpi_res_parse_fini(device_t, void *);
 
-static void	acpi_res_parse_ioport(struct device *, void *, uint32_t,
+static void	acpi_res_parse_ioport(device_t, void *, uint32_t,
 		    uint32_t);
-static void	acpi_res_parse_iorange(struct device *, void *, uint32_t,
+static void	acpi_res_parse_iorange(device_t, void *, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 
-static void	acpi_res_parse_memory(struct device *, void *, uint32_t,
+static void	acpi_res_parse_memory(device_t, void *, uint32_t,
 		    uint32_t);
-static void	acpi_res_parse_memrange(struct device *, void *, uint32_t,
+static void	acpi_res_parse_memrange(device_t, void *, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 
-static void	acpi_res_parse_irq(struct device *, void *, uint32_t, uint32_t);
-static void	acpi_res_parse_drq(struct device *, void *, uint32_t);
+static void	acpi_res_parse_irq(device_t, void *, uint32_t, uint32_t);
+static void	acpi_res_parse_drq(device_t, void *, uint32_t);
 
-static void	acpi_res_parse_start_dep(struct device *, void *, int);
-static void	acpi_res_parse_end_dep(struct device *, void *);
+static void	acpi_res_parse_start_dep(device_t, void *, int);
+static void	acpi_res_parse_end_dep(device_t, void *);
 
 const struct acpi_resource_parse_ops acpi_resource_parse_ops_default = {
 	.init = acpi_res_parse_init,
@@ -607,7 +608,7 @@ const struct acpi_resource_parse_ops acpi_resource_parse_ops_default = {
 };
 
 static void
-acpi_res_parse_init(struct device *dev, void *arg, void **contextp)
+acpi_res_parse_init(device_t dev, void *arg, void **contextp)
 {
 	struct acpi_resources *res = arg;
 
@@ -633,7 +634,7 @@ acpi_res_parse_init(struct device *dev, void *arg, void **contextp)
 }
 
 static void
-acpi_res_parse_fini(struct device *dev, void *context)
+acpi_res_parse_fini(device_t dev, void *context)
 {
 	struct acpi_resources *res = context;
 
@@ -642,7 +643,7 @@ acpi_res_parse_fini(struct device *dev, void *context)
 }
 
 static void
-acpi_res_parse_ioport(struct device *dev, void *context, uint32_t base,
+acpi_res_parse_ioport(device_t dev, void *context, uint32_t base,
     uint32_t length)
 {
 	struct acpi_resources *res = context;
@@ -687,7 +688,7 @@ acpi_res_parse_ioport(struct device *dev, void *context, uint32_t base,
 }
 
 static void
-acpi_res_parse_iorange(struct device *dev, void *context, uint32_t low,
+acpi_res_parse_iorange(device_t dev, void *context, uint32_t low,
     uint32_t high, uint32_t length, uint32_t align)
 {
 	struct acpi_resources *res = context;
@@ -711,7 +712,7 @@ acpi_res_parse_iorange(struct device *dev, void *context, uint32_t low,
 }
 
 static void
-acpi_res_parse_memory(struct device *dev, void *context, uint32_t base,
+acpi_res_parse_memory(device_t dev, void *context, uint32_t base,
     uint32_t length)
 {
 	struct acpi_resources *res = context;
@@ -733,7 +734,7 @@ acpi_res_parse_memory(struct device *dev, void *context, uint32_t base,
 }
 
 static void
-acpi_res_parse_memrange(struct device *dev, void *context, uint32_t low,
+acpi_res_parse_memrange(device_t dev, void *context, uint32_t low,
     uint32_t high, uint32_t length, uint32_t align)
 {
 	struct acpi_resources *res = context;
@@ -757,7 +758,7 @@ acpi_res_parse_memrange(struct device *dev, void *context, uint32_t low,
 }
 
 static void
-acpi_res_parse_irq(struct device *dev, void *context, uint32_t irq, uint32_t type)
+acpi_res_parse_irq(device_t dev, void *context, uint32_t irq, uint32_t type)
 {
 	struct acpi_resources *res = context;
 	struct acpi_irq *ar;
@@ -778,7 +779,7 @@ acpi_res_parse_irq(struct device *dev, void *context, uint32_t irq, uint32_t typ
 }
 
 static void
-acpi_res_parse_drq(struct device *dev, void *context, uint32_t drq)
+acpi_res_parse_drq(device_t dev, void *context, uint32_t drq)
 {
 	struct acpi_resources *res = context;
 	struct acpi_drq *ar;
@@ -798,7 +799,7 @@ acpi_res_parse_drq(struct device *dev, void *context, uint32_t drq)
 }
 
 static void
-acpi_res_parse_start_dep(struct device *dev, void *context,
+acpi_res_parse_start_dep(device_t dev, void *context,
     int preference)
 {
 
@@ -806,7 +807,7 @@ acpi_res_parse_start_dep(struct device *dev, void *context,
 }
 
 static void
-acpi_res_parse_end_dep(struct device *dev, void *context)
+acpi_res_parse_end_dep(device_t dev, void *context)
 {
 
 	/* Nothing to do. */

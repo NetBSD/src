@@ -1,5 +1,5 @@
-/* $NetBSD: pci_6600.h,v 1.1 1999/06/29 06:46:46 ross Exp $ */
+/* $NetBSD: pci_6600.h,v 1.1.162.1 2009/05/13 17:16:06 jym Exp $ */
 
 /* Public Domain */
 
-void pci_6600_pickintr __P((struct tsp_config *));
+void pci_6600_pickintr(struct tsp_config *);

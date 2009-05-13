@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.40 2008/12/26 22:37:29 he Exp $ */
+/*	$NetBSD: p9100.c,v 1.40.2.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.40 2008/12/26 22:37:29 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.40.2.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,10 +149,10 @@ struct wsscreen_list p9100_screenlist = {
 };
 
 /* autoconfiguration driver */
-static int	p9100_sbus_match(struct device *, struct cfdata *, void *);
-static void	p9100_sbus_attach(struct device *, struct device *, void *);
+static int	p9100_sbus_match(device_t, cfdata_t, void *);
+static void	p9100_sbus_attach(device_t, device_t, void *);
 
-static void	p9100unblank(struct device *);
+static void	p9100unblank(device_t);
 static void	p9100_shutdown(void *);
 
 CFATTACH_DECL(pnozz, sizeof(struct p9100_softc),
@@ -260,7 +260,7 @@ struct wsdisplay_accessops p9100_accessops = {
  * Match a p9100.
  */
 static int
-p9100_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
+p9100_sbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -272,7 +272,7 @@ p9100_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 static void
-p9100_sbus_attach(struct device *parent, struct device *self, void *args)
+p9100_sbus_attach(device_t parent, device_t self, void *args)
 {
 	struct p9100_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
@@ -479,8 +479,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 }
 
 static void
-p9100_shutdown(arg)
-	void *arg;
+p9100_shutdown(void *arg)
 {
 	struct p9100_softc *sc = arg;
 
@@ -894,7 +893,7 @@ p9100_ramdac_write_ctl(struct p9100_softc *sc, int off, uint8_t val)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-p9100unblank(struct device *dev)
+p9100unblank(device_t dev)
 {
 	struct p9100_softc *sc = device_private(dev);
 

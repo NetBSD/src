@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.100 2008/03/16 19:57:39 dyoung Exp $ */
+/* $NetBSD: vga.c,v 1.100.18.1 2009/05/13 17:19:24 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.100 2008/03/16 19:57:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.100.18.1 2009/05/13 17:19:24 jym Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -57,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.100 2008/03/16 19:57:39 dyoung Exp $");
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/ic/pcdisplay.h>
-
-#ifdef __i386__
-#include <arch/i386/bios/vesafbvar.h>
-#endif
 
 int vga_no_builtinfont = 0;
 
@@ -738,22 +734,6 @@ vga_cndetach(void)
 int
 vga_is_console(bus_space_tag_t iot, int type)
 {
-#ifdef __i386__
-	struct device *dv;
-	deviter_t di;
-	struct vesafb_softc *vesafb;
-
-	for (dv = deviter_first(&di, 0); dv != NULL; dv = deviter_next(&di)) {
-		if (device_is_a(dv, "vesafb")) {
-			vesafb = device_private(dv);
-			if (vesafb->sc_isconsole) {
-				deviter_release(&di);
-				return (0);
-			}
-		}
-	}
-	deviter_release(&di);
-#endif
 	if (vgaconsole &&
 	    !vga_console_attached &&
 	    iot == vga_console_vc.hdl.vh_iot &&

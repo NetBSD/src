@@ -1,4 +1,4 @@
-/*	$NetBSD: devreg.c,v 1.7 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: devreg.c,v 1.7.14.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devreg.c,v 1.7 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devreg.c,v 1.7.14.1 2009/05/13 17:18:22 jym Exp $");
 
 #include <sys/param.h>
 
@@ -152,7 +152,7 @@ SH ## x ## REG(TCPR2);							\
 } while (/*CONSTCOND*/0)
 
 void
-sh_devreg_init()
+sh_devreg_init(void)
 {
 
 	if (CPU_IS_SH3)

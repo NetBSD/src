@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.51 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.51.8.1 2009/05/13 17:23:06 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.51 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.51.8.1 2009/05/13 17:23:06 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -146,10 +146,6 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
-			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocdirect(ip, nb, newb,
-				    ufs_rw32(ip->i_ffs1_db[nb], needswap),
-				    fs->fs_bsize, osize, bpp ? *bpp : NULL);
 			ip->i_size = lblktosize(fs, nb + 1);
 			ip->i_ffs1_size = ip->i_size;
 			uvm_vnp_setsize(vp, ip->i_ffs1_size);
@@ -227,10 +223,6 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    osize, nsize, cred, bpp, &newb);
 				if (error)
 					return (error);
-				if (DOINGSOFTDEP(vp))
-					softdep_setup_allocdirect(ip, lbn,
-					    newb, nb, nsize, osize,
-					    bpp ? *bpp : NULL);
 			}
 		} else {
 
@@ -255,10 +247,6 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    nsize, (flags & B_CLRBUF) != 0, bpp);
 				if (error)
 					return error;
-			}
-			if (DOINGSOFTDEP(vp)) {
-				softdep_setup_allocdirect(ip, lbn, newb, 0,
-				    nsize, 0, bpp ? *bpp : NULL);
 			}
 		}
 		ip->i_ffs1_db[lbn] = ufs_rw32((u_int32_t)newb, needswap);
@@ -295,20 +283,12 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		    fs->fs_bsize, true, &bp);
 		if (error)
 			goto fail;
-		if (DOINGSOFTDEP(vp)) {
-			softdep_setup_allocdirect(ip, NDADDR + indirs[0].in_off,
-			    newb, 0, fs->fs_bsize, 0, bp);
-			bdwrite(bp);
-		} else {
-
-			/*
-			 * Write synchronously so that indirect blocks
-			 * never point at garbage.
-			 */
-
-			if ((error = bwrite(bp)) != 0)
-				goto fail;
-		}
+		/*
+		 * Write synchronously so that indirect blocks
+		 * never point at garbage.
+		 */
+		if ((error = bwrite(bp)) != 0)
+			goto fail;
 		unwindidx = 0;
 		allocib = &ip->i_ffs1_ib[indirs[0].in_off];
 		*allocib = ufs_rw32(nb, needswap);
@@ -357,21 +337,13 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			brelse(bp, 0);
 			goto fail;
 		}
-		if (DOINGSOFTDEP(vp)) {
-			softdep_setup_allocindir_meta(nbp, ip, bp,
-			    indirs[i - 1].in_off, nb);
-			bdwrite(nbp);
-		} else {
-
-			/*
-			 * Write synchronously so that indirect blocks
-			 * never point at garbage.
-			 */
-
-			if ((error = bwrite(nbp)) != 0) {
-				brelse(bp, 0);
-				goto fail;
-			}
+		/*
+		 * Write synchronously so that indirect blocks
+		 * never point at garbage.
+		 */
+		if ((error = bwrite(nbp)) != 0) {
+			brelse(bp, 0);
+			goto fail;
 		}
 		if (unwindidx < 0)
 			unwindidx = i - 1;
@@ -423,9 +395,6 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				goto fail;
 			}
 		}
-		if (DOINGSOFTDEP(vp))
-			softdep_setup_allocindir_page(ip, lbn, bp,
-			    indirs[num].in_off, nb, 0, bpp ? *bpp : NULL);
 		bap[indirs[num].in_off] = ufs_rw32(nb, needswap);
 		if (allocib == NULL && unwindidx < 0) {
 			unwindidx = i - 1;
@@ -501,27 +470,12 @@ fail:
 			}
 		}
 
-		/* Now flush all dependencies to disk. */
-#ifdef notyet
-		/* XXX pages locked */
-		(void)softdep_sync_metadata(vp);
-#endif
-
-		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
-		}
-
 		/*
-		 * Now that any dependencies that we created have been
-		 * resolved, we can undo the partial allocation.
+		 * Undo the partial allocation.
 		 */
-
 		if (unwindidx == 0) {
 			*allocib = 0;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (DOINGSOFTDEP(vp))
-				ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
 
@@ -556,14 +510,6 @@ fail:
 		ip->i_ffs1_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-	/*
-	 * Flush all dependencies again so that the soft updates code
-	 * doesn't find any untracked changes.
-	 */
-#ifdef notyet
-	/* XXX pages locked */
-	(void)softdep_sync_metadata(vp);
-#endif
 	return (error);
 }
 
@@ -626,11 +572,6 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    (int)fs->fs_bsize, cred, &bp);
 				if (error)
 					return (error);
-				if (DOINGSOFTDEP(vp))
-					softdep_setup_allocext(ip, nb,
-					    dbtofsb(fs, bp->b_blkno),
-					    dp->di_extb[nb],
-					    fs->fs_bsize, osize, bp);
 				dp->di_extsize = smalllblktosize(fs, nb + 1);
 				dp->di_extb[nb] = dbtofsb(fs, bp->b_blkno);
 				bp->b_xflags |= BX_ALTDATA;
@@ -688,10 +629,6 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				if (error)
 					return (error);
 				bp->b_xflags |= BX_ALTDATA;
-				if (DOINGSOFTDEP(vp))
-					softdep_setup_allocext(ip, lbn,
-					    dbtofsb(fs, bp->b_blkno), nb,
-					    nsize, osize, bp);
 			}
 		} else {
 			if (dp->di_extsize < smalllblktosize(fs, lbn + 1))
@@ -710,9 +647,6 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			if (error)
 				return error;
 			bp->b_xflags |= BX_ALTDATA;
-			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocext(ip, lbn, newb, 0,
-				    nsize, 0, bp);
 		}
 		dp->di_extb[lbn] = dbtofsb(fs, bp->b_blkno);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -738,10 +672,6 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
-			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocdirect(ip, nb, newb,
-				    ufs_rw64(ip->i_ffs2_db[nb], needswap),
-				    fs->fs_bsize, osize, bpp ? *bpp : NULL);
 			ip->i_size = lblktosize(fs, nb + 1);
 			ip->i_ffs2_size = ip->i_size;
 			uvm_vnp_setsize(vp, ip->i_size);
@@ -819,10 +749,6 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    osize, nsize, cred, bpp, &newb);
 				if (error)
 					return (error);
-				if (DOINGSOFTDEP(vp))
-					softdep_setup_allocdirect(ip, lbn,
-					    newb, nb, nsize, osize,
-					    bpp ? *bpp : NULL);
 			}
 		} else {
 
@@ -847,10 +773,6 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    nsize, (flags & B_CLRBUF) != 0, bpp);
 				if (error)
 					return error;
-			}
-			if (DOINGSOFTDEP(vp)) {
-				softdep_setup_allocdirect(ip, lbn, newb, 0,
-				    nsize, 0, bpp ? *bpp : NULL);
 			}
 		}
 		ip->i_ffs2_db[lbn] = ufs_rw64(newb, needswap);
@@ -887,20 +809,12 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		    fs->fs_bsize, true, &bp);
 		if (error)
 			goto fail;
-		if (DOINGSOFTDEP(vp)) {
-			softdep_setup_allocdirect(ip, NDADDR + indirs[0].in_off,
-			    newb, 0, fs->fs_bsize, 0, bp);
-			bdwrite(bp);
-		} else {
-
-			/*
-			 * Write synchronously so that indirect blocks
-			 * never point at garbage.
-			 */
-
-			if ((error = bwrite(bp)) != 0)
-				goto fail;
-		}
+		/*
+		 * Write synchronously so that indirect blocks
+		 * never point at garbage.
+		 */
+		if ((error = bwrite(bp)) != 0)
+			goto fail;
 		unwindidx = 0;
 		allocib = &ip->i_ffs2_ib[indirs[0].in_off];
 		*allocib = ufs_rw64(nb, needswap);
@@ -949,21 +863,13 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			brelse(bp, 0);
 			goto fail;
 		}
-		if (DOINGSOFTDEP(vp)) {
-			softdep_setup_allocindir_meta(nbp, ip, bp,
-			    indirs[i - 1].in_off, nb);
-			bdwrite(nbp);
-		} else {
-
-			/*
-			 * Write synchronously so that indirect blocks
-			 * never point at garbage.
-			 */
-
-			if ((error = bwrite(nbp)) != 0) {
-				brelse(bp, 0);
-				goto fail;
-			}
+		/*
+		 * Write synchronously so that indirect blocks
+		 * never point at garbage.
+		 */
+		if ((error = bwrite(nbp)) != 0) {
+			brelse(bp, 0);
+			goto fail;
 		}
 		if (unwindidx < 0)
 			unwindidx = i - 1;
@@ -1015,9 +921,6 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				goto fail;
 			}
 		}
-		if (DOINGSOFTDEP(vp))
-			softdep_setup_allocindir_page(ip, lbn, bp,
-			    indirs[num].in_off, nb, 0, bpp ? *bpp : NULL);
 		bap[indirs[num].in_off] = ufs_rw64(nb, needswap);
 		if (allocib == NULL && unwindidx < 0) {
 			unwindidx = i - 1;
@@ -1093,17 +996,6 @@ fail:
 			}
 		}
 
-		/* Now flush the dependencies to disk. */
-#ifdef notyet
-		/* XXX pages locked */
-		(void)softdep_sync_metadata(vp);
-#endif
-
-		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
-		}
-
 		/*
 		 * Now that any dependencies that we created have been
 		 * resolved, we can undo the partial allocation.
@@ -1112,8 +1004,6 @@ fail:
 		if (unwindidx == 0) {
 			*allocib = 0;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (DOINGSOFTDEP(vp))
-				ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
 
@@ -1149,13 +1039,5 @@ fail:
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 
-	/*
-	 * Flush all dependencies again so that the soft updates code
-	 * doesn't find any untracked changes.
-	 */
-#ifdef notyet
-	/* XXX pages locked */
-	(void)softdep_sync_metadata(vp);
-#endif
 	return (error);
 }

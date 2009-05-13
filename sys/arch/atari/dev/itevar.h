@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.12 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: itevar.h,v 1.12.58.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -93,8 +93,8 @@ struct ite_softc {
 	int			save_curx;
 	int			cury;
 	int			save_cury;
-	int			(*itexx_ioctl) __P((struct ite_softc *, u_long,
-						void *, int, struct lwp *));
+	int			(*itexx_ioctl)(struct ite_softc *, u_long,
+						void *, int, struct lwp *);
 };
 
 enum ite_flags {
@@ -185,27 +185,27 @@ struct consdev;
 struct termios;
 
 /* console related function */
-void	ite_cnprobe __P((struct consdev *));
-void	ite_cninit __P((struct consdev *));
-int	ite_cngetc __P((dev_t));
-void	ite_cnputc __P((dev_t, int));
-void	ite_cnfinish __P((struct ite_softc *));
+void	ite_cnprobe(struct consdev *);
+void	ite_cninit(struct consdev *);
+int	ite_cngetc(dev_t);
+void	ite_cnputc(dev_t, int);
+void	ite_cnfinish(struct ite_softc *);
 
 /* standard ite device entry points. */
-void	iteinit __P((dev_t));
+void	iteinit(dev_t);
 
 /* ite functions */
-void	ite_on __P((dev_t, int));
-void	ite_off __P((dev_t, int));
-void	ite_reinit __P((dev_t));
-int	ite_param __P((struct tty *, struct termios *));
-void	ite_reset __P((struct ite_softc *));
-int	ite_cnfilter __P((u_int, enum caller));
-void	ite_filter __P((u_int ,enum caller));
+void	ite_on(dev_t, int);
+void	ite_off(dev_t, int);
+void	ite_reinit(dev_t);
+int	ite_param(struct tty *, struct termios *);
+void	ite_reset(struct ite_softc *);
+int	ite_cnfilter(u_int, enum caller);
+void	ite_filter(u_int ,enum caller);
 
 /* ite_cc functions */
-int	grfcc_cnprobe __P((void));
-void	grfcc_iteinit __P((struct grf_softc *));
+int	grfcc_cnprobe(void);
+void	grfcc_iteinit(struct grf_softc *);
 #endif /* _KERNEL */
 
 #endif /* _ITEVAR_H */

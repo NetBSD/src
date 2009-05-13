@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.287 2009/01/21 17:16:12 cegger Exp $	*/
+/*	$NetBSD: cd.c,v 1.287.2.1 2009/05/13 17:21:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.287 2009/01/21 17:16:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.287.2.1 2009/05/13 17:21:22 jym Exp $");
 
 #include "rnd.h"
 
@@ -148,6 +148,7 @@ static int	cd_read_toc(struct cd_softc *, int, int, int,
 static int	cd_get_parms(struct cd_softc *, int);
 static int	cd_load_toc(struct cd_softc *, int, struct cd_formatted_toc *, int);
 static int	cdreadmsaddr(struct cd_softc *, struct cd_formatted_toc *,int *);
+static int	cdcachesync(struct scsipi_periph *periph, int flags);
 
 static int	dvd_auth(struct cd_softc *, dvd_authinfo *);
 static int	dvd_read_physical(struct cd_softc *, dvd_struct *);
@@ -180,8 +181,8 @@ static int	mmc_setup_writeparams(struct scsipi_periph *, struct mmc_writeparams 
 
 static void	cd_set_properties(struct cd_softc *);
 
-CFATTACH_DECL_NEW(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
-    cdactivate);
+CFATTACH_DECL3_NEW(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
+    cdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver cd_cd;
 
@@ -286,7 +287,7 @@ cdattach(device_t parent, device_t self, void *aux)
 	disk_init(&cd->sc_dk, device_xname(cd->sc_dev), &cddkdriver);
 	disk_attach(&cd->sc_dk);
 
-	printf("\n");
+	aprint_normal("\n");
 
 #if NRND > 0
 	rnd_attach_source(&cd->rnd_source, device_xname(cd->sc_dev),
@@ -352,12 +353,6 @@ cddetach(device_t self, int flags)
 	/* Detach from the disk list. */
 	disk_detach(&cd->sc_dk);
 	disk_destroy(&cd->sc_dk);
-
-#if 0
-	/* Get rid of the shutdown hook. */
-	if (cd->sc_sdhook != NULL)
-		shutdownhook_disestablish(cd->sc_sdhook);
-#endif
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -549,6 +544,10 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	    cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	if (cd->sc_dk.dk_openmask == 0) {
+		/* synchronise caches on last close */
+		cdcachesync(periph, 0);
+
+		/* drain outstanding calls */
 		scsipi_wait_drain(periph);
 
 		scsipi_prevent(periph, SPAMR_ALLOW,
@@ -2868,7 +2867,7 @@ mmc_getdiscinfo_cdrom(struct scsipi_periph *periph,
 
 	/* get number of sessions and first tracknr in last session */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	memset(&gtoc_cmd, 0, sizeof(gtoc_cmd));
 	gtoc_cmd.opcode      = READ_TOC;
 	gtoc_cmd.addr_mode   = CD_MSF;		/* not relevant        */
 	gtoc_cmd.resp_format = CD_TOC_MSINFO;	/* multisession info   */
@@ -2933,7 +2932,7 @@ mmc_getdiscinfo_dvdrom(struct scsipi_periph *periph,
 
 	/* get number of sessions and first tracknr in last session */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	memset(&gtoc_cmd, 0, sizeof(gtoc_cmd));
 	gtoc_cmd.opcode      = READ_TOC;
 	gtoc_cmd.addr_mode   = 0;		/* LBA                 */
 	gtoc_cmd.resp_format = CD_TOC_FORM;	/* multisession info   */
@@ -3176,7 +3175,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
 	uint8_t *buffer;
 	uint8_t track_sessionnr, last_tracknr, sessionnr, adr, tno, point;
-	uint8_t tmin, tsec, tframe, pmin, psec, pframe;
+	uint8_t control, tmin, tsec, tframe, pmin, psec, pframe;
 	int size, req_size;
 	int error, flags;
 
@@ -3195,7 +3194,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 
 	/* get raw toc to process, first header to check size */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	memset(&gtoc_cmd, 0, sizeof(gtoc_cmd));
 	gtoc_cmd.opcode      = READ_TOC;
 	gtoc_cmd.addr_mode   = CD_MSF;		/* not relevant     */
 	gtoc_cmd.resp_format = CD_TOC_RAW;	/* raw toc          */
@@ -3220,6 +3219,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 
 	/* read in complete raw toc */
 	req_size = _2btol(toc_hdr->length);
+	req_size = 2*((req_size + 1) / 2);	/* for ATAPI */
 	_lto2b(req_size, gtoc_cmd.data_len);
 
 	error = scsipi_command(periph,
@@ -3250,6 +3250,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 		tno       = rawtoc->tno;
 		sessionnr = rawtoc->sessionnr;
 		adr       = rawtoc->adrcontrol >> 4;
+		control   = rawtoc->adrcontrol & 0xf;
 		point     = rawtoc->point;
 		tmin      = rawtoc->min;
 		tsec      = rawtoc->sec;
@@ -3285,6 +3286,14 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 			if (sessionnr == track_sessionnr) {
 				next_writable = lba;
 			}
+		}
+
+		if ((control & (3<<2)) == 4)		/* 01xxb */
+			flags |= MMC_TRACKINFO_DATA;
+		if ((control & (1<<2)) == 0) {		/* x0xxb */
+			flags |= MMC_TRACKINFO_AUDIO;
+			if (control & 1)		/* xxx1b */
+				flags |= MMC_TRACKINFO_PRE_EMPH;
 		}
 
 		rawtoc++;
@@ -3346,7 +3355,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	uint32_t lba, lead_out;
 	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
 	uint8_t *buffer;
-	uint8_t last_tracknr;
+	uint8_t control, last_tracknr;
 	int size, req_size;
 	int error, flags;
 
@@ -3366,7 +3375,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 
 	/* get formatted toc to process, first header to check size */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	memset(&gtoc_cmd, 0, sizeof(gtoc_cmd));
 	gtoc_cmd.opcode      = READ_TOC;
 	gtoc_cmd.addr_mode   = 0;		/* lba's please     */
 	gtoc_cmd.resp_format = CD_TOC_FORM;	/* formatted toc    */
@@ -3412,12 +3421,15 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	track_start  = 0;
 	track_size   = 0;
 	lead_out     = 0;
+	flags        = 0;
 
 	size = req_size - sizeof(struct scsipi_toc_header) + 1;
 	while (size > 0) {
 		/* remember, DVD-ROM: tracknr == sessionnr */
 		lba     = _4btol(toc->msf_lba);
 		tracknr = toc->tracknr;
+		control = toc->adrcontrol & 0xf;
+
 		if (trackinfo->tracknr == tracknr) {
 			track_start = lba;
 		}
@@ -3428,6 +3440,17 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 		if (tracknr == 0xAA) {
 			lead_out = lba;
 		}
+
+		if ((control & (3<<2)) == 4)		/* 01xxb */
+			flags |= MMC_TRACKINFO_DATA;
+		if ((control & (1<<2)) == 0) {		/* x0xxb */
+			flags |= MMC_TRACKINFO_AUDIO;
+			if (control & (1<<3))		/* 10xxb */
+				flags |= MMC_TRACKINFO_AUDIO_4CHAN;
+			if (control & 1)		/* xxx1b */
+				flags |= MMC_TRACKINFO_PRE_EMPH;
+		}
+
 		toc++;
 		size -= sizeof(struct scsipi_toc_formatted);
 	}
@@ -3441,7 +3464,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	trackinfo->track_mode = 0;	/* unknown */
 	trackinfo->data_mode  = 8;	/* 2048 bytes mode1   */
 
-	trackinfo->flags         = 0;
+	trackinfo->flags         = flags;
 	trackinfo->track_start   = track_start;
 	trackinfo->next_writable = 0;
 	trackinfo->free_blocks   = 0;

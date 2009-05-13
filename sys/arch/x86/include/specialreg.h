@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.31 2008/10/14 15:49:04 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.31.8.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -144,12 +144,14 @@
  * AMD/VIA processor specific flags.
  */
 
+/*	CPUID_SYSCALL			   SYSCALL/SYSRET */
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
 #define CPUID_FFXSR	0x02000000	/* FXSAVE/FXSTOR Extensions */
 #define CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
 #define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
+/*	CPUID_EM64T			   Long mode */
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
 
@@ -178,6 +180,14 @@
 				    "\6LZCNT\7SSE4A\10MISALIGNSSE" \
 				    "\0113DNOWPREFETCH\12OSVW\13IBS" \
 				    "\14SSE5\15SKINIT\16WDT"
+
+/* AMD Fn8000000a %edx features (SVM features) */
+#define	CPUID_AMD_SVM_NP		0x00000001
+#define	CPUID_AMD_SVM_LbrVirt		0x00000002
+#define	CPUID_AMD_SVM_SVML		0x00000004
+#define	CPUID_AMD_SVM_NRIPS		0x00000008
+#define	CPUID_AMD_SVM_Ssse3Sse5Dis	0x00000200
+#define	CPUID_AMD_SVM_FLAGS	 "\20\1NP\2LbrVirt\3SVML\4NRIPS\12Ssse3Sse5Dis"
 
 /*
  * AMD Advanced Power Management

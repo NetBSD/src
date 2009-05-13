@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7.92.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7.92.1 2009/05/13 17:18:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,9 @@ struct mainbus_softc {
 };
 
 /* Definition of the mainbus driver. */
-static int	mbmatch __P((struct device *, struct cfdata *, void *));
-static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, const char *));
+static int	mbmatch(struct device *, struct cfdata *, void *);
+static void	mbattach(struct device *, struct device *, void *);
+static int	mbprint(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
     mbmatch, mbattach, NULL, NULL);
@@ -53,10 +53,7 @@ CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
 static int mb_attached;
 
 static int
-mbmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+mbmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 
 	if (mb_attached)
@@ -66,10 +63,7 @@ mbmatch(parent, cfdata, aux)
 }
 
 static void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	register struct device *mb = self;
 	struct confargs nca;
@@ -93,9 +87,7 @@ mbattach(parent, self, aux)
 }
 
 static int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mbprint(void *aux, const char *pnp)
 {
 
 	if (pnp)

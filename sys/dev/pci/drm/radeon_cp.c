@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cp.c,v 1.11 2008/11/09 02:35:42 christos Exp $	*/
+/*	$NetBSD: radeon_cp.c,v 1.11.4.1 2009/05/13 17:21:08 jym Exp $	*/
 
 /* radeon_cp.c -- CP support for Radeon -*- linux-c -*- */
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cp.c,v 1.11 2008/11/09 02:35:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cp.c,v 1.11.4.1 2009/05/13 17:21:08 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_cp.c,v 1.19 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -1786,6 +1786,11 @@ static int radeon_do_init_cp(drm_device_t * dev, drm_radeon_init_t * init)
 
 	DRM_GETSAREA();
 
+	init->ring_offset = DRM_NETBSD_HANDLE2ADDR(init->ring_offset);
+	init->ring_rptr_offset = DRM_NETBSD_HANDLE2ADDR(init->ring_rptr_offset);
+	init->buffers_offset = DRM_NETBSD_HANDLE2ADDR(init->buffers_offset);
+	init->gart_textures_offset = DRM_NETBSD_HANDLE2ADDR(init->gart_textures_offset);
+
 	dev_priv->ring_offset = init->ring_offset;
 	dev_priv->ring_rptr_offset = init->ring_rptr_offset;
 	dev_priv->buffers_offset = init->buffers_offset;
@@ -1799,7 +1804,8 @@ static int radeon_do_init_cp(drm_device_t * dev, drm_radeon_init_t * init)
 
 	dev_priv->cp_ring = drm_core_findmap(dev, init->ring_offset);
 	if (!dev_priv->cp_ring) {
-		DRM_ERROR("could not find cp ring region!\n");
+		DRM_ERROR("could not find cp ring region! offset 0x%lx\n",
+			  init->ring_offset);
 		radeon_do_cleanup_cp(dev);
 		return DRM_ERR(EINVAL);
 	}

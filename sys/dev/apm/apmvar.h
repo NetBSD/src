@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.7 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.7.14.1 2009/05/13 17:19:11 jym Exp $	*/
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,6 +32,7 @@
 
 #include <dev/apm/apmbios.h>
 #include <dev/apm/apmio.h>
+#include <sys/selinfo.h>	/* for struct selinfo */
 
 struct apm_accessops {
 	void	(*aa_disconnect)(void *);

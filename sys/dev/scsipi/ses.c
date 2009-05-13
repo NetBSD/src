@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.40 2008/06/08 18:18:34 tsutsui Exp $ */
+/*	$NetBSD: ses.c,v 1.40.12.1 2009/05/13 17:21:23 jym Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.40 2008/06/08 18:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.40.12.1 2009/05/13 17:21:23 jym Exp $");
 
 #include "opt_scsi.h"
 
@@ -167,8 +167,8 @@ struct ses_softc {
 
 #define SESUNIT(x)       (minor((x)))
 
-static int ses_match(struct device *, struct cfdata *, void *);
-static void ses_attach(struct device *, struct device *, void *);
+static int ses_match(device_t, cfdata_t, void *);
+static void ses_attach(device_t, device_t, void *);
 static enctyp ses_device_type(struct scsipibus_attach_args *);
 
 CFATTACH_DECL(ses, sizeof (struct ses_softc),
@@ -184,7 +184,7 @@ static const struct scsipi_periphsw ses_switch = {
 };
 
 static int
-ses_match(struct device *parent, struct cfdata *match,
+ses_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -213,7 +213,7 @@ ses_match(struct device *parent, struct cfdata *match,
  * the softc available to set stuff in.
  */
 static void
-ses_attach(struct device *parent, struct device *self, void *aux)
+ses_attach(device_t parent, device_t self, void *aux)
 {
 	const char *tname;
 	struct ses_softc *softc = device_private(self);

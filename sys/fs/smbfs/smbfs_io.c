@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.30 2008/04/24 15:35:28 ad Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.30.16.1 2009/05/13 17:21:54 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.30 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.30.16.1 2009/05/13 17:21:54 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 			int left = uiop->uio_resid;
 			int nread = bp->b_bcount - left;
 			if (left > 0)
-			    bzero((char *)bp->b_data + nread, left);
+			    memset((char *)bp->b_data + nread, 0, left);
 		}
 		break;
 	    default:
@@ -407,12 +407,7 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
  * doing the flush, just wait for completion.
  */
 int
-smbfs_vinvalbuf(vp, flags, cred, l, intrflg)
-	struct vnode *vp;
-	int flags;
-	kauth_cred_t cred;
-	struct lwp *l;
-	int intrflg;
+smbfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l, int intrflg)
 {
 	struct smbnode *np = VTOSMB(vp);
 	int error = 0, slpflag;

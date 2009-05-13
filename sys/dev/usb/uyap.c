@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.14 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: uyap.c,v 1.14.12.1 2009/05/13 17:21:35 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.14 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.14.12.1 2009/05/13 17:21:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/tty.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

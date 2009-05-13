@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.65 2008/10/07 09:48:27 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.65.8.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -108,7 +108,11 @@ void	kcpuset_unuse(kcpuset_t *, kcpuset_t **);
 int	kcpuset_copyin(const cpuset_t *, kcpuset_t *, size_t);
 int	kcpuset_copyout(const kcpuset_t *, cpuset_t *, size_t);
 void	kcpuset_zero(kcpuset_t *);
+void	kcpuset_fill(kcpuset_t *);
+void	kcpuset_set(cpuid_t, kcpuset_t *);
 int	kcpuset_isset(cpuid_t, const kcpuset_t *);
+bool	kcpuset_iszero(const kcpuset_t *);
+bool	kcpuset_match(const kcpuset_t *, const kcpuset_t *);
 
 #else
 
@@ -151,7 +155,7 @@ __END_DECLS
 #define	CP_IDLE		4
 #define	CPUSTATES	5
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/mutex.h>
 #include <sys/time.h>
@@ -189,10 +193,11 @@ struct schedstate_percpu {
 #define	SPCF_SHOULDYIELD	0x0002	/* process should yield the CPU */
 #define	SPCF_OFFLINE		0x0004	/* CPU marked offline */
 #define	SPCF_RUNNING		0x0008	/* CPU is running */
+#define	SPCF_NOINTR		0x0010	/* shielded from interrupts */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) || defined(_KMEMUSER) */
 
 /*
  * Flags passed to the Linux-compatible __clone(2) system call.
@@ -264,9 +269,11 @@ void		sched_print_runqueue(void (*pr)(const char *, ...));
 /* Dispatching */
 bool		kpreempt(uintptr_t);
 void		preempt(void);
+void		yield(void);
 int		mi_switch(struct lwp *);
 void		updatertime(lwp_t *, const struct bintime *);
 void		sched_idle(void);
+void		suspendsched(void);
 
 int		do_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 int		do_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);

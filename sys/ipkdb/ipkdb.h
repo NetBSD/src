@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb.h,v 1.5 2007/01/13 18:54:43 cube Exp $	*/
+/*	$NetBSD: ipkdb.h,v 1.5.60.1 2009/05/13 17:21:55 jym Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -56,10 +56,10 @@ struct ipkdb_if {
 	/* Data from here on is to be filled by the driver */
 	const char	*name;
 	void		*port;
-	void		(*start) __P((struct ipkdb_if *));
-	void		(*leave) __P((struct ipkdb_if *));
-	int		(*receive) __P((struct ipkdb_if *, u_char *, int));
-	void		(*send) __P((struct ipkdb_if *, u_char *, int));
+	void		(*start)(struct ipkdb_if *);
+	void		(*leave)(struct ipkdb_if *);
+	int		(*receive)(struct ipkdb_if *, u_char *, int);
+	void		(*send)(struct ipkdb_if *, u_char *, int);
 };
 
 /* flags: */
@@ -72,10 +72,10 @@ struct ipkdb_if {
 /*
  * Interface routines, to be called by machine dependent code.
  */
-extern void ipkdb_init __P((void));
-extern void ipkdb_connect __P((int));
-extern void ipkdb_panic __P((void));
-extern int ipkdbcmds __P((void));
+extern void ipkdb_init(void);
+extern void ipkdb_connect(int);
+extern void ipkdb_panic(void);
+extern int ipkdbcmds(void);
 /* Return values from ipkdbcmds: */
 #define	IPKDB_CMD_RUN	0
 #define	IPKDB_CMD_STEP	1
@@ -84,31 +84,31 @@ extern int ipkdbcmds __P((void));
 /* To be called by udp_input on receipt of a possible debugging packet */
 struct in_addr;
 struct mbuf;
-extern int checkipkdb __P((struct in_addr *, u_short, u_short,
-			struct mbuf *, int, int));
+extern int checkipkdb(struct in_addr *, u_short, u_short,
+			struct mbuf *, int, int);
 
 /*
  * Interface routines, to be called by ipkdb itself.
  */
-extern int ipkdbifinit __P((struct ipkdb_if *));
+extern int ipkdbifinit(struct ipkdb_if *);
 
 /*
  * Utilities (used to avoid calling system routines during debugging).
  */
-extern void ipkdbcopy __P((const void *, void *, int));
-extern void ipkdbzero __P((void *, int));
-extern int ipkdbcmp __P((void *, void *, int));
+extern void ipkdbcopy(const void *, void *, int);
+extern void ipkdbzero(void *, int);
+extern int ipkdbcmp(void *, void *, int);
 
 /*
  * Machine dependent routines for IPKDB.
  */
-extern void ipkdbinit __P((void));
-extern void ipkdb_trap __P((void));
-extern int ipkdb_poll __P((void));
+extern void ipkdbinit(void);
+extern void ipkdb_trap(void);
+extern int ipkdb_poll(void);
 
-extern int ipkdbif_init __P((struct ipkdb_if *));
+extern int ipkdbif_init(struct ipkdb_if *);
 
-extern int ipkdbfbyte __P((u_char *));
-extern int ipkdbsbyte __P((u_char *, int));
+extern int ipkdbfbyte(u_char *);
+extern int ipkdbsbyte(u_char *, int);
 
 #endif	/* _IPKDB_H */

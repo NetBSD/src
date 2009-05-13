@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.33 2008/12/27 16:14:13 tsutsui Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.33.2.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.33 2008/12/27 16:14:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.33.2.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,24 +61,24 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.33 2008/12/27 16:14:13 tsutsui Exp $");
 /*
  * XXX This code currently doesn't even try to allow 32-bit data port use.
  */
-static int	claim_hw (struct ata_channel *, int);
-static void	free_hw (struct ata_channel *);
-static void	read_multi_2_swap (bus_space_tag_t, bus_space_handle_t,
-				bus_size_t, u_int16_t *, bus_size_t);
-static void	write_multi_2_swap (bus_space_tag_t, bus_space_handle_t,
-				bus_size_t, const u_int16_t *, bus_size_t);
+static int	claim_hw(struct ata_channel *, int);
+static void	free_hw(struct ata_channel *);
+static void	read_multi_2_swap(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t, uint16_t *, bus_size_t);
+static void	write_multi_2_swap(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t, const uint16_t *, bus_size_t);
 
 struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
-	struct	ata_channel *sc_chanlist[1];
-	struct  ata_channel sc_channel;
-	struct	ata_queue sc_chqueue;
-	struct	wdc_regs sc_wdc_regs;
-	void	*sc_ih;
+	struct ata_channel *sc_chanlist[1];
+	struct ata_channel sc_channel;
+	struct ata_queue sc_chqueue;
+	struct wdc_regs sc_wdc_regs;
+	void *sc_ih;
 };
 
-int	wdc_mb_probe	(device_t, struct cfdata *, void *);
-void	wdc_mb_attach	(device_t, device_t, void *);
+int	wdc_mb_probe(device_t, struct cfdata *, void *);
+void	wdc_mb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(wdc_mb, sizeof(struct wdc_mb_softc),
     wdc_mb_probe, wdc_mb_attach, NULL, NULL);
@@ -86,12 +86,12 @@ CFATTACH_DECL_NEW(wdc_mb, sizeof(struct wdc_mb_softc),
 int
 wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 {
-	static int	wdc_matched = 0;
+	static int wdc_matched = 0;
 	struct ata_channel ch;
 	struct wdc_softc wdc;
 	struct wdc_regs wdr;
-	int	result = 0, i;
-	u_char	sv_ierb;
+	int result = 0, i;
+	uint8_t sv_ierb;
 
 	if ((machineid & ATARI_TT) || strcmp("wdc", aux) || wdc_matched)
 		return 0;
@@ -146,7 +146,7 @@ wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 
 	if (result)
 		wdc_matched = 1;
-	return (result);
+	return result;
 }
 
 void
@@ -214,7 +214,7 @@ wdc_mb_attach(device_t parent, device_t self, void *aux)
 	 * Setup & enable disk related interrupts.
 	 */
 	MFP->mf_ierb |= IB_DINT;
-	MFP->mf_iprb  = (u_int8_t)~IB_DINT;
+	MFP->mf_iprb  = (uint8_t)~IB_DINT;
 	MFP->mf_imrb |= IB_DINT;
 
 	wdcattach(&sc->sc_channel);
@@ -226,10 +226,9 @@ wdc_mb_attach(device_t parent, device_t self, void *aux)
 static int	wd_lock;
 
 static int
-claim_hw(chp, maysleep)
-struct ata_channel *chp;
-int  maysleep;
+claim_hw(struct ata_channel *chp, int maysleep)
 {
+
 	if (wd_lock != DMA_LOCK_GRANT) {
 		if (wd_lock == DMA_LOCK_REQ) {
 			/*
@@ -246,13 +245,13 @@ int  maysleep;
 }
 
 static void
-free_hw(chp)
-struct ata_channel *chp;
+free_hw(struct ata_channel *chp)
 {
+
 	/*
 	 * Flush pending interrupts before giving-up lock
 	 */
-	MFP->mf_iprb = (u_int8_t)~IB_DINT;
+	MFP->mf_iprb = (uint8_t)~IB_DINT;
 
 	/*
 	 * Only free the lock on a Falcon. On the Hades, keep it.
@@ -271,29 +270,23 @@ struct ata_channel *chp;
 	((u_long)(base) + ((off) << (stride)) + (wm))
 
 static void
-read_multi_2_swap(t, h, o, a, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	u_int16_t		*a;
+read_multi_2_swap(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    uint16_t *a, bus_size_t c)
 {
-	volatile u_int16_t	*ba;
+	volatile uint16_t *ba;
 
-	ba = (volatile u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	ba = (volatile uint16_t *)calc_addr(h, o, t->stride, t->wo_2);
 	for (; c; a++, c--)
 		*a = bswap16(*ba);
 }
 
 static void
-write_multi_2_swap(t, h, o, a, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	const u_int16_t		*a;
+write_multi_2_swap(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    const uint16_t *a, bus_size_t c)
 {
-	volatile u_int16_t	*ba;
+	volatile uint16_t *ba;
 
-	ba = (volatile u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	ba = (volatile uint16_t *)calc_addr(h, o, t->stride, t->wo_2);
 	for (; c; a++, c--)
 		*ba = bswap16(*a);
 }

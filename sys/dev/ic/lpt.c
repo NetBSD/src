@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.75 2008/06/10 22:53:08 cegger Exp $	*/
+/*	$NetBSD: lpt.c,v 1.75.10.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.75 2008/06/10 22:53:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.75.10.1 2009/05/13 17:19:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,7 @@ const struct cdevsw lpt_cdevsw = {
 static void	lptsoftintr(void *);
 
 void
-lpt_attach_subr(sc)
-	struct lpt_softc *sc;
+lpt_attach_subr(struct lpt_softc *sc)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -219,9 +218,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-lptnotready(status, sc)
-	u_char status;
-	struct lpt_softc *sc;
+lptnotready(u_char status, struct lpt_softc *sc)
 {
 	u_char new;
 
@@ -245,8 +242,7 @@ lptnotready(status, sc)
 }
 
 void
-lptwakeup(arg)
-	void *arg;
+lptwakeup(void *arg)
 {
 	struct lpt_softc *sc = arg;
 	int s;
@@ -286,8 +282,7 @@ lptclose(dev_t dev, int flag, int mode,
 }
 
 int
-lptpushbytes(sc)
-	struct lpt_softc *sc;
+lptpushbytes(struct lpt_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -387,8 +382,7 @@ lptwrite(dev_t dev, struct uio *uio, int flags)
  * another char.
  */
 int
-lptintr(arg)
-	void *arg;
+lptintr(void *arg)
 {
 	struct lpt_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

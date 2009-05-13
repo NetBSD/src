@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.28 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.28.14.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.28 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.28.14.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,16 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.28 2008/04/28 20:23:57 martin Exp $")
 #include <dev/sbus/lebuffervar.h>
 
 int	lebufprint(void *, const char *);
-int	lebufmatch(struct device *, struct cfdata *, void *);
-void	lebufattach(struct device *, struct device *, void *);
+int	lebufmatch(device_t, cfdata_t, void *);
+void	lebufattach(device_t, device_t, void *);
 
 CFATTACH_DECL(lebuffer, sizeof(struct lebuf_softc),
     lebufmatch, lebufattach, NULL, NULL);
 
 int
-lebufprint(aux, busname)
-	void *aux;
-	const char *busname;
+lebufprint(void *aux, const char *busname)
 {
 
 	sbus_print(aux, busname);
@@ -64,10 +62,7 @@ lebufprint(aux, busname)
 }
 
 int
-lebufmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+lebufmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -78,9 +73,7 @@ lebufmatch(parent, cf, aux)
  * Attach all the sub-devices we can find
  */
 void
-lebufattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lebufattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct lebuf_softc *sc = (void *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.11 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.11.92.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.11 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.11.92.1 2009/05/13 17:17:43 jym Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -182,7 +182,7 @@ struct hppa_isa_iv {
 };
 
 struct mongoose_softc {
-	struct  device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	bus_space_tag_t sc_bt;
@@ -209,10 +209,10 @@ union mongoose_attach_args {
 	struct isabus_attach_args mongoose_isa;
 };
 
-void mg_eisa_attach_hook(struct device *, struct device *, struct eisabus_attach_args *);
+void mg_eisa_attach_hook(device_t, device_t, struct eisabus_attach_args *);
 int mg_intr_map(void *, u_int, eisa_intr_handle_t *);
 const char *mg_intr_string(void *, int);
-void mg_isa_attach_hook(struct device *, struct device *, struct isabus_attach_args *);
+void mg_isa_attach_hook(device_t, device_t, struct isabus_attach_args *);
 void *mg_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void mg_intr_disestablish(void *, void *);
 int mg_intr_check(void *, int, int);
@@ -238,16 +238,16 @@ void mg_isa_wr_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_
 void mg_isa_sr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
 void mg_isa_sr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
 
-int	mgmatch(struct device *, struct cfdata *, void *);
-void	mgattach(struct device *, struct device *, void *);
+int	mgmatch(device_t, cfdata_t, void *);
+void	mgattach(device_t, device_t, void *);
 
-CFATTACH_DECL(mongoose, sizeof(struct mongoose_softc),
+CFATTACH_DECL_NEW(mongoose, sizeof(struct mongoose_softc),
     mgmatch, mgattach, NULL, NULL);
 
 /* TODO: DMA guts */
 
 void
-mg_eisa_attach_hook(struct device *parent, struct device *self,
+mg_eisa_attach_hook(device_t parent, device_t self,
 	struct eisabus_attach_args *mg)
 {
 }
@@ -269,7 +269,7 @@ mg_intr_string(void *v, int irq)
 }
 
 void
-mg_isa_attach_hook(struct device *parent, struct device *self,
+mg_isa_attach_hook(device_t parent, device_t self,
 	struct isabus_attach_args *iba)
 {
 
@@ -288,19 +288,15 @@ mg_intr_establish(void *v, int irq, int type, int pri,
 		return NULL;
 
 	if (type != IST_LEVEL && type != IST_EDGE) {
-#ifdef DEBUG
-		printf("%s: bad interrupt level (%d)\n", sc->sc_dev.dv_xname,
+		aprint_debug_dev(sc->sc_dev, "bad interrupt level (%d)\n",
 		    type);
-#endif
 		return NULL;
 	}
 
 	iv = &sc->sc_iv[irq];
 	if (iv->iv_handler) {
-#ifdef DEBUG
-		printf("%s: irq %d already established\n", sc->sc_dev.dv_xname,
+		aprint_debug_dev(sc->sc_dev, "irq %d already established\n",
 		    irq);
-#endif
 		return NULL;
 	}
 
@@ -571,7 +567,7 @@ mg_isa_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_
 }
 
 int
-mgmatch(struct device *parent, struct cfdata *cf, void *aux)
+mgmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
@@ -580,7 +576,7 @@ mgmatch(struct device *parent, struct cfdata *cf, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_EISA)
 		return 0;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE, 
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
 			  sizeof(struct mongoose_regs), 0, &ioh))
 		return 0;
 
@@ -592,15 +588,16 @@ mgmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-mgattach(struct device *parent, struct device *self, void *aux)
+mgattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct mongoose_softc *sc = (struct mongoose_softc *)self;
+	struct mongoose_softc *sc = device_private(self);
 	struct hppa_bus_space_tag *bt;
 	union mongoose_attach_args ea;
 	char brid[EISA_IDSTRINGLEN];
 	bus_space_handle_t ioh;
 
+	sc->sc_dev = self;
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_iomap = ca->ca_hpa;
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
@@ -640,8 +637,8 @@ mgattach(struct device *parent, struct device *self, void *aux)
 		brid[7] = '\0';
 	}
 
-	printf (": %s rev %d, %d MHz\n", brid, sc->sc_regs->version,
-		(sc->sc_regs->clock? 33 : 25));
+	aprint_normal(": %s rev %d, %d MHz\n", brid, sc->sc_regs->version,
+	    (sc->sc_regs->clock? 33 : 25));
 	sc->sc_regs->liowait = 1;	/* disable isa wait states */
 	sc->sc_regs->lock    = 1;	/* bus unlock */
 
@@ -702,7 +699,6 @@ mgattach(struct device *parent, struct device *self, void *aux)
 #undef	R
 
 	/* attach interrupt */
-	sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NONE,
-					 mg_intr, sc,
-					 &int_reg_cpu, ca->ca_irq);
+	sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_NONE, mg_intr, sc,
+	    &int_reg_cpu, ca->ca_irq);
 }

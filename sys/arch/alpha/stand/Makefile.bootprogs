@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.28 2009/01/12 07:10:13 tsutsui Exp $
+# $NetBSD: Makefile.bootprogs,v 1.28.2.1 2009/05/13 17:16:06 jym Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -6,7 +6,6 @@ S=	${.CURDIR}/../../../..
 
 .PATH:	${.CURDIR}/../common
 
-STRIPFLAG=
 BINMODE= 444
 
 STRIP?=	strip
@@ -19,17 +18,7 @@ LIBCRTEND=
 
 CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
-.PHONY: machine-links
-beforedepend: machine-links
-# ${MACHINE} then ${MACHINE_ARCH}
-machine-links:
-	-rm -f machine && \
-	    ln -s $S/arch/alpha/include machine
-	-rm -f alpha && \
-	    ln -s $S/arch/alpha/include alpha
-CLEANFILES+=machine alpha
-
-realall: machine-links ${PROG}
+realall: ${PROG}
 
 AFLAGS+=	-DASSEMBLER
 # -I${.CURDIR}/../.. done by Makefile.inc
@@ -120,7 +109,9 @@ SECONDARY_CPPFLAGS=	-DSECONDARY_BOOTBLOCK \
 STANDPROG_CPPFLAGS=	-DSTANDALONE_PROGRAM
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>
 
+STRIPFLAG=	# override values in ${MAKECONF}
 COPTS+=-Os	# override -O supplied by user
 
 ### find out what to use for libkern

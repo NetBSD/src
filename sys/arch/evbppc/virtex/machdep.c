@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.9.4.1 2009/05/13 17:17:41 jym Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,11 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.4.1 2009/05/13 17:17:41 jym Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_modular.h"
 #include "opt_virtex.h"
 #include "opt_kgdb.h"
 

@@ -1,26 +1,43 @@
-#	$NetBSD: files.dev,v 1.9 2007/10/17 19:57:04 garbled Exp $
+#	$NetBSD: files.dev,v 1.9.34.1 2009/05/13 17:18:18 jym Exp $
 
 define giobus {}
 
-device int
-attach int at mainbus
-file arch/sgimips/dev/int.c		int
+# `int' should be first, as it provides intr_establish and other platform hooks
+device	int
+attach	int at mainbus
+file	arch/sgimips/dev/int.c		int
 
-device imc: giobus, eisabus
-attach imc at mainbus
-file arch/sgimips/dev/imc.c		imc needs-flag
+device	ctl
+attach	ctl at mainbus
+file	arch/sgimips/dev/ctl.c
 
-device pic: giobus
-attach pic at mainbus
-file arch/sgimips/dev/pic.c		pic needs-flag
+device	imc: giobus, eisabus
+attach	imc at mainbus
+file	arch/sgimips/dev/imc.c		imc needs-flag
 
-device crime
-attach crime at mainbus
-file arch/sgimips/dev/crime.c		crime needs-flag
+device	pic: giobus
+attach	pic at mainbus
+file	arch/sgimips/dev/pic.c		pic needs-flag
 
-device crmfb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32
-attach crmfb at mainbus
-file arch/sgimips/dev/crmfb.c		crmfb needs-flag
+device	dpclock
+attach	dpclock at mainbus
+file	arch/sgimips/dev/dpclock.c	dpclock
+
+device	dsclock
+attach	dsclock at mainbus 
+file	arch/sgimips/dev/dsclock.c	dsclock
+
+device	crime
+attach	crime at mainbus
+file	arch/sgimips/dev/crime.c		crime needs-flag
+
+device	crmfb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32
+attach	crmfb at mainbus
+file	arch/sgimips/dev/crmfb.c		crmfb needs-flag
+
+device	scn: tty
+attach	scn at mainbus
+file	arch/sgimips/dev/scn.c			scn needs-flag
 
 device	zsc {[channel = -1]}
 device	zstty: tty

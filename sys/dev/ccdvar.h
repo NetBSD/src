@@ -1,7 +1,7 @@
-/*	$NetBSD: ccdvar.h,v 1.30 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.30.14.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -112,6 +112,7 @@
 #include <sys/buf.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
+#include <sys/condvar.h>
 
 /*
  * Dynamic configuration and disklabel support by:
@@ -177,6 +178,7 @@ struct ccdiinfo {
 	daddr_t	ii_startblk;	/* starting scaled block # for range */
 	daddr_t	ii_startoff;	/* starting component offset (block #) */
 	int	*ii_index;	/* ordered list of components in range */
+	size_t	ii_indexsz;	/* size of memory area */
 };
 
 /*
@@ -205,9 +207,14 @@ struct ccd_softc {
 	struct ccdgeom   sc_geom;		/* pseudo geometry info */
 	char		 sc_xname[8];		/* XXX external name */
 	struct disk	 sc_dkdev;		/* generic disk device info */
-	kmutex_t	 sc_lock;		/* lock on this structure */
+	kmutex_t	 sc_dvlock;		/* lock on device node */
 #if defined(_KERNEL) /* XXX ccdconfig(8) refers softc directly using kvm */
 	struct bufq_state *sc_bufq;		/* buffer queue */
+	kmutex_t	 *sc_iolock;		/* lock on I/O start/stop */
+	kcondvar_t	 sc_stop;		/* when inflight goes zero */
+	struct lwp	 *sc_thread;		/* for deferred I/O */
+	kcondvar_t	 sc_push;		/* for deferred I/O */
+	bool		 sc_zap;		/* for deferred I/O */
 #endif
 };
 
@@ -220,6 +227,7 @@ struct ccd_softc {
 #define CCDF_LABELLING	0x040	/* unit is currently being labelled */
 #define	CCDF_KLABEL	0x080	/* keep label on close */
 #define	CCDF_VLABEL	0x100	/* label is valid */
+#define	CCDF_RLABEL	0x200	/* currently reading label */
 
 /* Mask of user-settable ccd flags. */
 #define CCDF_USERMASK	(CCDF_UNIFORM|CCDF_NOLABEL)

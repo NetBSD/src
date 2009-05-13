@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.12 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.12.14.1 2009/05/13 17:20:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.12 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.12.14.1 2009/05/13 17:20:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ struct rtw_pci_softc {
 	pcitag_t		psc_pcitag;	/* our PCI tag */
 };
 
-static int	rtw_pci_match(device_t, struct cfdata *, void *);
+static int	rtw_pci_match(device_t, cfdata_t, void *);
 static void	rtw_pci_attach(device_t, device_t, void *);
 static int	rtw_pci_detach(device_t, int);
 
@@ -125,7 +125,7 @@ rtw_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-rtw_pci_match(device_t parent, struct cfdata *match, void *aux)
+rtw_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

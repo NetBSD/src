@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.h,v 1.3 1996/04/12 09:05:17 leo Exp $	*/
+/*	$NetBSD: stalloc.h,v 1.3.184.1 2009/05/13 17:16:21 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps (allocator stuff)
@@ -48,8 +48,8 @@ struct mem_node {
 #define ST_BLOCKMASK	(~(ST_BLOCKSIZE - 1))
 #define MNODES_MEM(mn)	((u_char *)(&mn[1]))
 
-void init_stmem __P((void));
-void *alloc_stmem __P((u_long, void **));
-void free_stmem __P((void *));
+void init_stmem(void);
+void *alloc_stmem(u_long, void **);
+void free_stmem(void *);
 
 #endif /* _ATARI_STALLOC_H */

@@ -111,7 +111,8 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 
 	if ((ret = bus_dmamem_alloc(dmah->tag, size, align, maxaddr,
 	    dmah->segs, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
-		printf("drm: Unable to allocate DMA, error %d\n", ret);
+		printf("drm: Unable to allocate %ld bytes of DMA, error %d\n",
+		    (long)size, ret);
 		goto fail;
 	}
 	/* XXX is there a better way to deal with this? */
@@ -125,7 +126,7 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 	     	goto free;
 	}
 	if ((ret = bus_dmamap_create(dmah->tag, size, 1, size, maxaddr,
-	     BUS_DMA_NOWAIT, &dmah->map)) != 0) {
+	     BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmah->map)) != 0) {
 		printf("drm: Unable to create DMA map, error %d\n", ret);
 		goto unmap;
 	}
@@ -166,8 +167,6 @@ drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah)
 	bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
 	bus_dma_tag_destroy(dmah->tag);
 #elif defined(__NetBSD__)
-	if (dmah == NULL)
-		return;
 	bus_dmamap_unload(dmah->tag, dmah->map);
 	bus_dmamap_destroy(dmah->tag, dmah->map);
 	bus_dmamem_unmap(dmah->tag, dmah->vaddr, dmah->size);

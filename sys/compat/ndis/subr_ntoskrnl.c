@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.13 2008/11/13 12:09:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.13.4.1 2009/05/13 17:18:59 jym Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -232,7 +232,7 @@ static struct pool mdl_pool;
 #endif
 
 int
-ntoskrnl_libinit()
+ntoskrnl_libinit(void)
 {
 	image_patch_table	*patch;
 #ifdef __FreeBSD__
@@ -277,7 +277,7 @@ ntoskrnl_libinit()
 }
 
 int
-ntoskrnl_libfini()
+ntoskrnl_libfini(void)
 {
 	image_patch_table	*patch;
 
@@ -303,19 +303,13 @@ ntoskrnl_libfini()
  * GCC only generates a local implementation of memset.
  */
 static void *
-ntoskrnl_memset(buf, ch, size)
-	void			*buf;
-	int			ch;
-	size_t			size;
+ntoskrnl_memset(void *buf, int ch, size_t size)
 {
 	return(memset(buf, ch, size));
 }
 
 __stdcall static uint8_t 
-RtlEqualUnicodeString(str1, str2, caseinsensitive)
-	ndis_unicode_string	*str1;
-	ndis_unicode_string	*str2;
-	uint8_t			caseinsensitive;
+RtlEqualUnicodeString(ndis_unicode_string *str1, ndis_unicode_string *str2, uint8_t caseinsensitive)
 {
 	int			i;
 
@@ -337,9 +331,7 @@ RtlEqualUnicodeString(str1, str2, caseinsensitive)
 }
 
 __stdcall static void
-RtlCopyUnicodeString(dest, src)
-	ndis_unicode_string	*dest;
-	ndis_unicode_string	*src;
+RtlCopyUnicodeString(ndis_unicode_string *dest, ndis_unicode_string *src)
 {
 
 	if (dest->us_maxlen >= src->us_len)
@@ -351,10 +343,7 @@ RtlCopyUnicodeString(dest, src)
 }
 
 __stdcall static ndis_status
-RtlUnicodeStringToAnsiString(dest, src, allocate)
-	ndis_ansi_string	*dest;
-	ndis_unicode_string	*src;
-	uint8_t			allocate;
+RtlUnicodeStringToAnsiString(ndis_ansi_string *dest, ndis_unicode_string *src, uint8_t allocate)
 {
 	char			*astr = NULL;
 
@@ -377,10 +366,7 @@ RtlUnicodeStringToAnsiString(dest, src, allocate)
 }
 
 __stdcall static ndis_status
-RtlAnsiStringToUnicodeString(dest, src, allocate)
-	ndis_unicode_string	*dest;
-	ndis_ansi_string	*src;
-	uint8_t			allocate;
+RtlAnsiStringToUnicodeString(ndis_unicode_string *dest, ndis_ansi_string *src, uint8_t allocate)
 {
 	uint16_t		*ustr = NULL;
 
@@ -416,19 +402,14 @@ ExAllocatePoolWithTag(
 }
 
 __stdcall void
-ExFreePool(buf)
-	void			*buf;
+ExFreePool(void *buf)
 {
 	free(buf, M_DEVBUF);
 	return;
 }
 
 __stdcall uint32_t
-IoAllocateDriverObjectExtension(drv, clid, extlen, ext)
-	driver_object		*drv;
-	void			*clid;
-	uint32_t		extlen;
-	void			**ext;
+IoAllocateDriverObjectExtension(driver_object *drv, void *clid, uint32_t extlen, void **ext)
 {
 	custom_extension	*ce;
 
@@ -447,9 +428,7 @@ IoAllocateDriverObjectExtension(drv, clid, extlen, ext)
 }
 
 __stdcall void *
-IoGetDriverObjectExtension(drv, clid)
-	driver_object		*drv;
-	void			*clid;
+IoGetDriverObjectExtension(driver_object *drv, void *clid)
 {
 	list_entry		*e;
 	custom_extension	*ce;
@@ -506,7 +485,7 @@ IoCreateDevice(
 			return(STATUS_INSUFFICIENT_RESOURCES);
 		}
 
-		bzero(dev->do_devext, devextlen);
+		memset(dev->do_devext, 0, devextlen);
 	} else
 		dev->do_devext = NULL;
 
@@ -563,8 +542,7 @@ IoCreateDevice(
 }
 
 __stdcall void
-IoDeleteDevice(dev)
-	device_object		*dev;
+IoDeleteDevice(device_object *dev)
 {
 	device_object		*prev;
 
@@ -594,8 +572,7 @@ IoDeleteDevice(dev)
 }
 
 __stdcall device_object *
-IoGetAttachedDevice(dev)
-	device_object		*dev;
+IoGetAttachedDevice(device_object *dev)
 {
 	device_object		*d;
 
@@ -611,14 +588,7 @@ IoGetAttachedDevice(dev)
 }
 
 __stdcall static irp *
-IoBuildSynchronousFsdRequest(func, dobj, buf, len, off, event, status)
-	uint32_t		func;
-	device_object		*dobj;
-	void			*buf;
-	uint32_t		len;
-	uint64_t		*off;
-	nt_kevent		*event;
-	io_status_block		*status;
+IoBuildSynchronousFsdRequest(uint32_t func, device_object *dobj, void *buf, uint32_t len, uint64_t *off, nt_kevent *event, io_status_block *status)
 {
 	irp			*ip;
 
@@ -631,13 +601,7 @@ IoBuildSynchronousFsdRequest(func, dobj, buf, len, off, event, status)
 }
 
 __stdcall static irp *
-IoBuildAsynchronousFsdRequest(func, dobj, buf, len, off, status)
-	uint32_t		func;
-	device_object		*dobj;
-	void			*buf;
-	uint32_t		len;
-	uint64_t		*off;
-	io_status_block		*status;
+IoBuildAsynchronousFsdRequest(uint32_t func, device_object *dobj, void *buf, uint32_t len, uint64_t *off, io_status_block *status)
 {
 	irp			*ip;
 	io_stack_location	*sl;
@@ -667,7 +631,7 @@ IoBuildAsynchronousFsdRequest(func, dobj, buf, len, off, status)
 			IoFreeIrp(ip);
 			return(NULL);
 		}
-		bcopy(buf, ip->irp_assoc.irp_sysbuf, len);
+		memcpy( ip->irp_assoc.irp_sysbuf, buf, len);
 	}
 
 	if (dobj->do_flags & DO_DIRECT_IO) {
@@ -753,11 +717,11 @@ IoBuildDeviceIoControlRequest(iocode, dobj, ibuf, ilen, obuf, olen,
 			}
 		}
 		if (ilen && ibuf != NULL) {
-			bcopy(ibuf, ip->irp_assoc.irp_sysbuf, ilen);
-			bzero((char *)ip->irp_assoc.irp_sysbuf + ilen,
+			memcpy( ip->irp_assoc.irp_sysbuf, ibuf, ilen);
+			memset((char *)ip->irp_assoc.irp_sysbuf + ilen, 0,
 			    buflen - ilen);
 		} else
-			bzero(ip->irp_assoc.irp_sysbuf, ilen);
+			memset(ip->irp_assoc.irp_sysbuf, 0, ilen);
 		ip->irp_userbuf = obuf;
 		break;
 	case METHOD_IN_DIRECT:
@@ -769,7 +733,7 @@ IoBuildDeviceIoControlRequest(iocode, dobj, ibuf, ilen, obuf, olen,
 				IoFreeIrp(ip);
 				return(NULL);
 			}
-			bcopy(ibuf, ip->irp_assoc.irp_sysbuf, ilen);
+			memcpy( ip->irp_assoc.irp_sysbuf, ibuf, ilen);
 		}
 		if (olen && obuf != NULL) {
 			ip->irp_mdl = IoAllocateMdl(obuf, olen,
@@ -814,9 +778,7 @@ IoAllocateIrp(
 }
 
 __stdcall static irp *
-IoMakeAssociatedIrp(ip, stsize)
-	irp			*ip;
-	uint8_t			stsize;
+IoMakeAssociatedIrp(irp *ip, uint8_t stsize)
 {
 	irp			*associrp;
 #ifdef __NetBSD__
@@ -848,20 +810,16 @@ IoMakeAssociatedIrp(ip, stsize)
 }
 
 __stdcall static void
-IoFreeIrp(ip)
-	irp			*ip;
+IoFreeIrp(irp *ip)
 {
 	ExFreePool(ip);
 	return;
 }
 
 __stdcall static void
-IoInitializeIrp(io, psize, ssize)
-	irp			*io;
-	uint16_t		psize;
-	uint8_t			ssize;
+IoInitializeIrp(irp *io, uint16_t psize, uint8_t ssize)
 {
-	bzero((char *)io, IoSizeOfIrp(ssize));
+	memset((char *)io, 0, IoSizeOfIrp(ssize));
 	io->irp_size = psize;
 	io->irp_stackcnt = ssize;
 	io->irp_currentstackloc = ssize;
@@ -873,9 +831,7 @@ IoInitializeIrp(io, psize, ssize)
 }
 
 __stdcall static void
-IoReuseIrp(ip, status)
-	irp			*ip;
-	uint32_t		status;
+IoReuseIrp(irp *ip, uint32_t status)
 {
 	uint8_t			allocflags;
 
@@ -888,16 +844,14 @@ IoReuseIrp(ip, status)
 }
 
 __stdcall void
-IoAcquireCancelSpinLock(irql)
-	uint8_t			*irql;
+IoAcquireCancelSpinLock(uint8_t *irql)
 {
 	KeAcquireSpinLock(&ntoskrnl_cancellock, irql);
 	return;
 }
 
 __stdcall void
-IoReleaseCancelSpinLock(irql)
-	uint8_t			irql;
+IoReleaseCancelSpinLock(uint8_t irql)
 {
 	KeReleaseSpinLock(&ntoskrnl_cancellock, irql);
 	return;
@@ -1020,9 +974,7 @@ IofCompleteRequest(REGARGS2(irp *ip, uint8_t prioboost))
 }
 
 __stdcall device_object *
-IoAttachDeviceToDeviceStack(src, dst)
-	device_object		*src;
-	device_object		*dst;
+IoAttachDeviceToDeviceStack(device_object *src, device_object *dst)
 {
 	device_object		*attached;
 #ifdef __NetBSD__
@@ -1050,8 +1002,7 @@ IoAttachDeviceToDeviceStack(src, dst)
 }
 
 __stdcall void
-IoDetachDevice(topdev)
-	device_object		*topdev;
+IoDetachDevice(device_object *topdev)
 {
 	device_object		*tail;
 #ifdef __NetBSD__
@@ -1096,8 +1047,7 @@ IoDetachDevice(topdev)
 
 /* Always called with dispatcher lock held. */
 static void
-ntoskrnl_wakeup(arg)
-	void			*arg;
+ntoskrnl_wakeup(void *arg)
 {
 	nt_dispatch_header	*obj;
 	wait_block		*w;
@@ -1132,8 +1082,7 @@ ntoskrnl_wakeup(arg)
 }
 
 static void 
-ntoskrnl_time(tval)
-	uint64_t                *tval;
+ntoskrnl_time(uint64_t *tval)
 {
 	struct timespec		ts;
 #ifdef __NetBSD__
@@ -1565,137 +1514,106 @@ KeWaitForMultipleObjects(
 }
 
 __stdcall static void
-WRITE_REGISTER_USHORT(reg, val)
-	uint16_t		*reg;
-	uint16_t		val;
+WRITE_REGISTER_USHORT(uint16_t *reg, uint16_t val)
 {
 	bus_space_write_2(NDIS_BUS_SPACE_MEM, 0x0, (bus_size_t)reg, val);
 	return;
 }
 
 __stdcall static uint16_t
-READ_REGISTER_USHORT(reg)
-	uint16_t		*reg;
+READ_REGISTER_USHORT(uint16_t *reg)
 {
 	return(bus_space_read_2(NDIS_BUS_SPACE_MEM, 0x0, (bus_size_t)reg));
 }
 
 __stdcall static void
-WRITE_REGISTER_ULONG(reg, val)
-	uint32_t		*reg;
-	uint32_t		val;
+WRITE_REGISTER_ULONG(uint32_t *reg, uint32_t val)
 {
 	bus_space_write_4(NDIS_BUS_SPACE_MEM, 0x0, (bus_size_t)reg, val);
 	return;
 }
 
 __stdcall static uint32_t
-READ_REGISTER_ULONG(reg)
-	uint32_t		*reg;
+READ_REGISTER_ULONG(uint32_t *reg)
 {
 	return(bus_space_read_4(NDIS_BUS_SPACE_MEM, 0x0, (bus_size_t)reg));
 }
 
 __stdcall static uint8_t
-READ_REGISTER_UCHAR(reg)
-	uint8_t			*reg;
+READ_REGISTER_UCHAR(uint8_t *reg)
 {
 	return(bus_space_read_1(NDIS_BUS_SPACE_MEM, 0x0, (bus_size_t)reg));
 }
 
 __stdcall static void
-WRITE_REGISTER_UCHAR(reg, val)
-	uint8_t			*reg;
-	uint8_t			val;
+WRITE_REGISTER_UCHAR(uint8_t *reg, uint8_t val)
 {
 	bus_space_write_1(NDIS_BUS_SPACE_MEM, 0x0, (bus_size_t)reg, val);
 	return;
 }
 
 __stdcall static int64_t
-_allmul(a, b)
-	int64_t			a;
-	int64_t			b;
+_allmul(int64_t a, int64_t b)
 {
 	return (a * b);
 }
 
 __stdcall static int64_t
-_alldiv(a, b)
-	int64_t			a;
-	int64_t			b;
+_alldiv(int64_t a, int64_t b)
 {
 	return (a / b);
 }
 
 __stdcall static int64_t
-_allrem(a, b)
-	int64_t			a;
-	int64_t			b;
+_allrem(int64_t a, int64_t b)
 {
 	return (a % b);
 }
 
 __stdcall static uint64_t
-_aullmul(a, b)
-	uint64_t		a;
-	uint64_t		b;
+_aullmul(uint64_t a, uint64_t b)
 {
 	return (a * b);
 }
 
 __stdcall static uint64_t
-_aulldiv(a, b)
-	uint64_t		a;
-	uint64_t		b;
+_aulldiv(uint64_t a, uint64_t b)
 {
 	return (a / b);
 }
 
 __stdcall static uint64_t
-_aullrem(a, b)
-	uint64_t		a;
-	uint64_t		b;
+_aullrem(uint64_t a, uint64_t b)
 {
 	return (a % b);
 }
 
 __regparm static int64_t
-_allshl(a, b)
-	int64_t			a;
-	uint8_t			b;
+_allshl(int64_t a, uint8_t b)
 {
 	return (a << b);
 }
 
 __regparm static uint64_t
-_aullshl(a, b)
-	uint64_t		a;
-	uint8_t			b;
+_aullshl(uint64_t a, uint8_t b)
 {
 	return (a << b);
 }
 
 __regparm static int64_t
-_allshr(a, b)
-	int64_t			a;
-	uint8_t			b;
+_allshr(int64_t a, uint8_t b)
 {
 	return (a >> b);
 }
 
 __regparm static uint64_t
-_aullshr(a, b)
-	uint64_t		a;
-	uint8_t			b;
+_aullshr(uint64_t a, uint8_t b)
 {
 	return (a >> b);
 }
 
 static slist_entry *
-ntoskrnl_pushsl(head, entry)
-	slist_header		*head;
-	slist_entry		*entry;
+ntoskrnl_pushsl(slist_header *head, slist_entry *entry)
 {
 	slist_entry		*oldhead;
 
@@ -1709,8 +1627,7 @@ ntoskrnl_pushsl(head, entry)
 }
 
 static slist_entry *
-ntoskrnl_popsl(head)
-	slist_header		*head;
+ntoskrnl_popsl(slist_header *head)
 {
 	slist_entry		*first;
 
@@ -1736,8 +1653,7 @@ ntoskrnl_popsl(head)
  */
 
 static funcptr
-ntoskrnl_findwrap(func)
-	funcptr			func;
+ntoskrnl_findwrap(funcptr func)
 {
 	image_patch_table	*patch;
 
@@ -1761,7 +1677,7 @@ ExInitializePagedLookasideList(
 	uint32_t		tag,
 	uint16_t		depth)
 {
-	bzero((char *)lookaside, sizeof(paged_lookaside_list));
+	memset((char *)lookaside, 0, sizeof(paged_lookaside_list));
 
 	if (size < sizeof(slist_entry))
 		lookaside->nll_l.gl_size = sizeof(slist_entry);
@@ -1792,8 +1708,7 @@ ExInitializePagedLookasideList(
 }
 
 __stdcall static void
-ExDeletePagedLookasideList(lookaside)
-	paged_lookaside_list   *lookaside;
+ExDeletePagedLookasideList(paged_lookaside_list *lookaside)
 {
 	void			*buf;
 	__stdcall void		(*freefunc)(void *);
@@ -1815,7 +1730,7 @@ ExInitializeNPagedLookasideList(
 	uint32_t		tag,
 	uint16_t		depth)
 {
-	bzero((char *)lookaside, sizeof(npaged_lookaside_list));
+	memset((char *)lookaside, 0, sizeof(npaged_lookaside_list));
 
 	if (size < sizeof(slist_entry))
 		lookaside->nll_l.gl_size = sizeof(slist_entry);
@@ -1846,8 +1761,7 @@ ExInitializeNPagedLookasideList(
 }
 
 __stdcall static void
-ExDeleteNPagedLookasideList(lookaside)
-	npaged_lookaside_list   *lookaside;
+ExDeleteNPagedLookasideList(npaged_lookaside_list *lookaside)
 {
 	void			*buf;
 	__stdcall void		(*freefunc)(void *);
@@ -1917,8 +1831,7 @@ ExInterlockedPopEntrySList(REGARGS2(slist_header *head, kspin_lock *lock))
 }
 
 __stdcall static uint16_t
-ExQueryDepthSList(head)
-	slist_header		*head;
+ExQueryDepthSList(slist_header *head)
 {
 	uint16_t		depth;
 	uint8_t			irql;
@@ -1943,8 +1856,7 @@ ExQueryDepthSList(head)
  * function. Instead, we grab a mutex from the mutex pool.
  */
 __stdcall void
-KeInitializeSpinLock(lock)
-	kspin_lock		*lock;
+KeInitializeSpinLock(kspin_lock *lock)
 {
 #ifdef __FreeBSD__
 	*lock = 0;
@@ -2107,8 +2019,7 @@ IoAllocateMdl(
 }
 
 __stdcall void
-IoFreeMdl(m)
-	mdl			*m;
+IoFreeMdl(mdl *m)
 {
 	if (m == NULL)
 		return;
@@ -2126,9 +2037,7 @@ IoFreeMdl(m)
 }
 
 __stdcall static uint32_t
-MmSizeOfMdl(vaddr, len)
-	void			*vaddr;
-	size_t			len;
+MmSizeOfMdl(void *vaddr, size_t len)
 {
 	uint32_t		l;
 
@@ -2146,8 +2055,7 @@ MmSizeOfMdl(vaddr, len)
  * addresses of the buffers.
  */
 __stdcall static void
-MmBuildMdlForNonPagedPool(m)
-	mdl			*m;
+MmBuildMdlForNonPagedPool(mdl *m)
 {
 	vm_offset_t		*mdl_pages;
 	int			pagecnt, i;
@@ -2199,10 +2107,7 @@ MmUnmapLockedPages(
 }
 
 __stdcall static size_t
-RtlCompareMemory(s1, s2, len)
-	const void		*s1;
-	const void		*s2;
-	size_t			len;
+RtlCompareMemory(const void *s1, const void *s2, size_t len)
 {
 	size_t			i, total = 0;
 	uint8_t			*m1, *m2;
@@ -2218,9 +2123,7 @@ RtlCompareMemory(s1, s2, len)
 }
 
 __stdcall static void
-RtlInitAnsiString(dst, src)
-	ndis_ansi_string	*dst;
-	char			*src;
+RtlInitAnsiString(ndis_ansi_string *dst, char *src)
 {
 	ndis_ansi_string	*a;
 
@@ -2239,9 +2142,7 @@ RtlInitAnsiString(dst, src)
 }
 
 __stdcall static void
-RtlInitUnicodeString(dst, src)
-	ndis_unicode_string	*dst;
-	uint16_t		*src;
+RtlInitUnicodeString(ndis_unicode_string *dst, uint16_t *src)
 {
 	ndis_unicode_string	*u;
 	int			i;
@@ -2264,10 +2165,7 @@ RtlInitUnicodeString(dst, src)
 }
 
 __stdcall ndis_status
-RtlUnicodeStringToInteger(ustr, base, val)
-	ndis_unicode_string	*ustr;
-	uint32_t		base;
-	uint32_t		*val;
+RtlUnicodeStringToInteger(ndis_unicode_string *ustr, uint32_t base, uint32_t *val)
 {
 	uint16_t		*uchr;
 	int			len, neg = 0;
@@ -2276,7 +2174,7 @@ RtlUnicodeStringToInteger(ustr, base, val)
 
 	uchr = ustr->us_buf;
 	len = ustr->us_len;
-	bzero(abuf, sizeof(abuf));
+	memset(abuf, 0, sizeof(abuf));
 
 	if ((char)((*uchr) & 0xFF) == '-') {
 		neg = 1;
@@ -2318,8 +2216,7 @@ RtlUnicodeStringToInteger(ustr, base, val)
 }
 
 __stdcall static void
-RtlFreeUnicodeString(ustr)
-	ndis_unicode_string	*ustr;
+RtlFreeUnicodeString(ndis_unicode_string *ustr)
 {
 	if (ustr->us_buf == NULL)
 		return;
@@ -2329,8 +2226,7 @@ RtlFreeUnicodeString(ustr)
 }
 
 __stdcall static void
-RtlFreeAnsiString(astr)
-	ndis_ansi_string	*astr;
+RtlFreeAnsiString(ndis_ansi_string *astr)
 {
 	if (astr->nas_buf == NULL)
 		return;
@@ -2340,8 +2236,7 @@ RtlFreeAnsiString(astr)
 }
 
 static int
-atoi(str)
-	const char		*str;
+atoi(const char *str)
 {
 #ifdef __FreeBSD__
 	return (int)strtol(str, (char **)NULL, 10);
@@ -2356,8 +2251,7 @@ atoi(str)
 }
 
 static long
-atol(str)
-	const char		*str;
+atol(const char *str)
 {
 #ifdef __FreeBSD__
 	return strtol(str, (char **)NULL, 10);
@@ -2393,17 +2287,14 @@ rand(void)
 }
 
 static void
-srand(seed)
-	unsigned int		seed;
+srand(unsigned int seed)
 {
 	srandom(seed);
 	return;
 }
 
 __stdcall static uint8_t
-IoIsWdmVersionAvailable(major, minor)
-	uint8_t			major;
-	uint8_t			minor;
+IoIsWdmVersionAvailable(uint8_t major, uint8_t minor)
 {
 	if (major == WDM_MAJOR && minor == WDM_MINOR_WINXP)
 		return(TRUE);
@@ -2496,17 +2387,13 @@ KeReleaseMutex(
 }
 
 __stdcall static uint32_t
-KeReadStateMutex(kmutex)
-	kmutant			*kmutex;
+KeReadStateMutex(kmutant *kmutex)
 {
 	return(kmutex->km_header.dh_sigstate);
 }
 
 __stdcall void
-KeInitializeEvent(kevent, type, state)
-	nt_kevent		*kevent;
-	uint32_t		type;
-	uint8_t			state;
+KeInitializeEvent(nt_kevent *kevent, uint32_t type, uint8_t state)
 {
 	INIT_LIST_HEAD((&kevent->k_header.dh_waitlisthead));
 	kevent->k_header.dh_sigstate = state;
@@ -2516,8 +2403,7 @@ KeInitializeEvent(kevent, type, state)
 }
 
 __stdcall uint32_t
-KeResetEvent(kevent)
-	nt_kevent		*kevent;
+KeResetEvent(nt_kevent *kevent)
 {
 	uint32_t		prevstate;
 #ifdef __NetBSD__
@@ -2572,16 +2458,14 @@ KeSetEvent(
 }
 
 __stdcall void
-KeClearEvent(kevent)
-	nt_kevent		*kevent;
+KeClearEvent(nt_kevent *kevent)
 {
 	kevent->k_header.dh_sigstate = FALSE;
 	return;
 }
 
 __stdcall uint32_t
-KeReadStateEvent(kevent)
-	nt_kevent		*kevent;
+KeReadStateEvent(nt_kevent *kevent)
 {
 	return(kevent->k_header.dh_sigstate);
 }
@@ -2633,8 +2517,7 @@ ZwClose(ndis_handle handle)
  * PsTerminateSystemThread().
  */
 static void
-ntoskrnl_thrfunc(arg)
-	void			*arg;
+ntoskrnl_thrfunc(void *arg)
 {
 	thread_context		*thrctx;
 	__stdcall uint32_t (*tfunc)(void *);
@@ -2765,8 +2648,7 @@ DbgBreakPoint(void)
 }
 
 static void
-ntoskrnl_timercall(arg)
-	void			*arg;
+ntoskrnl_timercall(void *arg)
 {
 	ktimer			*timer;
 	struct timeval		tv;
@@ -2828,8 +2710,7 @@ ntoskrnl_timercall(arg)
 }
 
 __stdcall void
-KeInitializeTimer(timer)
-	ktimer			*timer;
+KeInitializeTimer(ktimer *timer)
 {
 	if (timer == NULL)
 		return;
@@ -2840,9 +2721,7 @@ KeInitializeTimer(timer)
 }
 
 __stdcall void
-KeInitializeTimerEx(timer, type)
-	ktimer			*timer;
-	uint32_t		type;
+KeInitializeTimerEx(ktimer *timer, uint32_t type)
 {
 	if (timer == NULL)
 		return;
@@ -2868,8 +2747,7 @@ KeInitializeTimerEx(timer, type)
  * I can tell, defered procedure calls must run at DISPATCH_LEVEL.
  */
 static void
-ntoskrnl_run_dpc(arg)
-	void			*arg;
+ntoskrnl_run_dpc(void *arg)
 {
 	__stdcall kdpc_func	dpcfunc;
 	kdpc			*dpc;
@@ -2886,10 +2764,7 @@ ntoskrnl_run_dpc(arg)
 }
 
 __stdcall void
-KeInitializeDpc(dpc, dpcfunc, dpcctx)
-	kdpc			*dpc;
-	void			*dpcfunc;
-	void			*dpcctx;
+KeInitializeDpc(kdpc *dpc, void *dpcfunc, void *dpcctx)
 {
 
 	if (dpc == NULL)
@@ -2902,10 +2777,7 @@ KeInitializeDpc(dpc, dpcfunc, dpcctx)
 }
 
 __stdcall uint8_t
-KeInsertQueueDpc(dpc, sysarg1, sysarg2)
-	kdpc			*dpc;
-	void			*sysarg1;
-	void			*sysarg2;
+KeInsertQueueDpc(kdpc *dpc, void *sysarg1, void *sysarg2)
 {
 	dpc->k_sysarg1 = sysarg1;
 	dpc->k_sysarg2 = sysarg2;
@@ -2917,8 +2789,7 @@ KeInsertQueueDpc(dpc, sysarg1, sysarg2)
 }
 
 __stdcall uint8_t
-KeRemoveQueueDpc(dpc)
-	kdpc			*dpc;
+KeRemoveQueueDpc(kdpc *dpc)
 {
 	if (ndis_unsched(ntoskrnl_run_dpc, dpc, NDIS_SWI))
 		return(FALSE);
@@ -2927,11 +2798,7 @@ KeRemoveQueueDpc(dpc)
 }
 
 __stdcall uint8_t
-KeSetTimerEx(timer, duetime, period, dpc)
-	ktimer			*timer;
-	int64_t			duetime;
-	uint32_t		period;
-	kdpc			*dpc;
+KeSetTimerEx(ktimer *timer, int64_t duetime, uint32_t period, kdpc *dpc)
 {
 	struct timeval		tv;
 	uint64_t		curtime;
@@ -2997,17 +2864,13 @@ KeSetTimerEx(timer, duetime, period, dpc)
 }
 
 __stdcall uint8_t
-KeSetTimer(timer, duetime, dpc)
-	ktimer			*timer;
-	int64_t			duetime;
-	kdpc			*dpc;
+KeSetTimer(ktimer *timer, int64_t duetime, kdpc *dpc)
 {
 	return (KeSetTimerEx(timer, duetime, 0, dpc));
 }
 
 __stdcall uint8_t
-KeCancelTimer(timer)
-	ktimer			*timer;
+KeCancelTimer(ktimer *timer)
 {
 	uint8_t			pending;
 #ifdef __NetBSD__
@@ -3043,14 +2906,13 @@ KeCancelTimer(timer)
 }
 
 __stdcall uint8_t
-KeReadStateTimer(timer)
-	ktimer			*timer;
+KeReadStateTimer(ktimer *timer)
 {
 	return(timer->k_header.dh_sigstate);
 }
 
 __stdcall static void
-dummy()
+dummy(void)
 {
 	printf ("ntoskrnl dummy called...\n");
 	return;

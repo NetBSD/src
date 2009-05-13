@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.21 2008/08/27 05:33:47 christos Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.21.8.1 2009/05/13 17:20:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.21 2008/08/27 05:33:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.21.8.1 2009/05/13 17:20:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,7 @@ static const struct ep_mca_product *ep_mca_lookup
    (const struct mca_attach_args *);
 
 static const struct ep_mca_product *
-ep_mca_lookup(ma)
-	const struct mca_attach_args *ma;
+ep_mca_lookup(const struct mca_attach_args *ma)
 {
 	const struct ep_mca_product *epp;
 

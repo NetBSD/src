@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.77 2009/02/04 21:07:19 pooka Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.77.2.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.77 2009/02/04 21:07:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.77.2.1 2009/05/13 17:23:07 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -98,9 +98,6 @@ ufs_inactive(void *v)
 	 */
 	if (ip->i_mode == 0)
 		goto out;
-	if (ip->i_ffs_effnlink == 0 && DOINGSOFTDEP(vp))
-		softdep_releasefile(ip);
-
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
@@ -143,12 +140,6 @@ ufs_inactive(void *v)
 			if (!error)
 				error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
-		/*
-		 * Setting the mode to zero needs to wait for the inode
-		 * to be written just as does a change to the link count.
-		 * So, rather than creating a new entry point to do the
-		 * same thing, we just use softdep_change_linkcnt().
-		 */
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
@@ -157,8 +148,6 @@ ufs_inactive(void *v)
 		mutex_enter(&vp->v_interlock);
 		vp->v_iflag |= VI_FREEING;
 		mutex_exit(&vp->v_interlock);
-		if (DOINGSOFTDEP(vp))
-			softdep_change_linkcnt(ip);
 		UFS_VFREE(vp, ip->i_number, mode);
 	}
 

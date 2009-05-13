@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.160 2008/12/13 20:48:10 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.160.2.1 2009/05/13 17:18:38 jym Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,10 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.160 2008/12/13 20:48:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.160.2.1 2009/05/13 17:18:38 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>

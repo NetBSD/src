@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.h,v 1.1 2002/02/10 01:58:10 thorpej Exp $	*/
+/*	$NetBSD: sequoia.h,v 1.1.142.1 2009/05/13 17:18:23 jym Exp $	*/
 
 /*
  * Copyright 1997
@@ -5064,38 +5064,38 @@
 #ifndef _LOCORE
 
 void sequoiaInit(void);
-void sequoiaWrite __P((int reg,u_int16_t value));     
-void sequoiaRead  __P((int reg,u_int16_t * value_ptr));     
+void sequoiaWrite(int reg,u_int16_t value);     
+void sequoiaRead(int reg,u_int16_t * value_ptr);     
 
 /* x console functions */
-void    consXTvOn   __P((void));
-void    consXTvOff  __P((void));
+void    consXTvOn(void);
+void    consXTvOff(void);
 
 
 /* smart card reader functions */
-int     scrGetDetect             __P((void));
-void    scrSetPower              __P((int value));
-void    scrSetClock              __P((int value));
-void    scrSetReset              __P((int value));
-void    scrSetDataHighZ          __P((void));
-void    scrSetData               __P((int value));   
-int     scrGetData               __P((void));	
+int     scrGetDetect(void);
+void    scrSetPower(int value);
+void    scrSetClock(int value);
+void    scrSetReset(int value);
+void    scrSetDataHighZ(void);
+void    scrSetData(int value);   
+int     scrGetData(void);	
 
 
 /* just used to debug scr - remove when done - ejg */		
-void    scrToggleTestPin		   __P((void));
+void    scrToggleTestPin(void);
 void sequoiaOneAccess(void);
 
 
 /* biled functions */
-void ledNetActive   __P((void));
-void ledNetBlock    __P((void));
-void ledNetUnblock  __P((void));
-void ledPanic       __P((void));
+void ledNetActive(void);
+void ledNetBlock(void);
+void ledNetUnblock(void);
+void ledPanic(void);
 
 
 /* function to get the hw rev */
-int  hwGetRev       __P((void));
+int  hwGetRev(void);
 
 /* debug led functions */
 #define LED_DEBUG_STATE_0           0
@@ -5110,7 +5110,7 @@ int  hwGetRev       __P((void));
 #define LED_DEBUG_GREEN_ON          7
 
 
-void ledSetDebug    __P((int command));
+void ledSetDebug(int command);
 
 
 

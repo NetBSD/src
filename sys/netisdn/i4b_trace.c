@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.18 2007/03/04 06:03:31 christos Exp $
+ *	$Id: i4b_trace.c,v 1.18.56.1 2009/05/13 17:22:41 jym Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.18 2007/03/04 06:03:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.18.56.1 2009/05/13 17:22:41 jym Exp $");
 
 #include "isdntrc.h"
 
@@ -81,11 +81,11 @@ static int txunit = -1;			/* l2 isdnif of transmitting driver */
 static int outunit = -1;		/* output device for trace data */
 
 #define	PDEVSTATIC	/* - not static - */
-void isdntrcattach __P((void));
-int isdntrcopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
-int isdntrcclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
-int isdntrcread __P((dev_t dev, struct uio * uio, int ioflag));
-int isdntrcioctl __P((dev_t dev, u_long cmd, void *data, int flag, struct lwp *l));
+void isdntrcattach(void);
+int isdntrcopen(dev_t dev, int flag, int fmt, struct lwp *l);
+int isdntrcclose(dev_t dev, int flag, int fmt, struct lwp *l);
+int isdntrcread(dev_t dev, struct uio * uio, int ioflag);
+int isdntrcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l);
 
 #ifdef __NetBSD__
 const struct cdevsw isdntrc_cdevsw = {
@@ -101,7 +101,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 isdntrcattach(void *dummy)
 #else
-isdntrcattach()
+isdntrcattach(void)
 #endif
 {
 	int i;

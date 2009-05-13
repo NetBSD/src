@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2009/01/08 06:40:44 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.2.1 2009/05/13 17:17:58 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,13 +65,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2009/01/08 06:40:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.2.1 2009/05/13 17:17:58 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_kloader.h"
 #include "opt_kloader_kernel_path.h"
 #include "opt_memsize.h"
+#include "opt_modular.h"
 #include "fs_mfs.h"
 
 #include "ksyms.h"

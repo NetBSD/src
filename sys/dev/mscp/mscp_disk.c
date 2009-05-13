@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.63 2009/01/22 17:32:20 cegger Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.63.2.1 2009/05/13 17:20:16 jym Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.63 2009/01/22 17:32:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.63.2.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -126,14 +126,14 @@ struct ra_softc {
 
 #define rx_softc ra_softc
 
-void	rxattach(struct device *, struct device *, void *);
+void	rxattach(device_t, device_t, void *);
 int	rx_putonline(struct rx_softc *);
 void	rrmakelabel(struct disklabel *, long);
 
 #if NRA
 
-int	ramatch(struct device *, struct cfdata *, void *);
-void	raattach(struct device *, struct device *, void *);
+int	ramatch(device_t, cfdata_t, void *);
+void	raattach(device_t, device_t, void *);
 int	ra_putonline(struct ra_softc *);
 
 CFATTACH_DECL(ra, sizeof(struct ra_softc),
@@ -166,10 +166,7 @@ static struct dkdriver radkdriver = {
  */
 
 int
-ramatch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+ramatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
@@ -193,8 +190,7 @@ ramatch(parent, cf, aux)
  * drive is opened, or if it har fallen offline.
  */
 int
-ra_putonline(ra)
-	struct ra_softc *ra;
+ra_putonline(struct ra_softc *ra)
 {
 	struct	disklabel *dl;
 	const char *msg;
@@ -226,10 +222,7 @@ ra_putonline(ra)
  */
 /*ARGSUSED*/
 int
-raopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct	lwp *l;
+raopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct ra_softc *ra;
 	int error, part, unit, mask;
@@ -305,10 +298,7 @@ raopen(dev, flag, fmt, l)
 
 /* ARGSUSED */
 int
-raclose(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct	lwp *l;
+raclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra = device_lookup_private(&ra_cd, unit);
@@ -350,8 +340,7 @@ raclose(dev, flags, fmt, l)
  * Queue a transfer request, and if possible, hand it to the controller.
  */
 void
-rastrategy(bp)
-	struct buf *bp;
+rastrategy(struct buf *bp)
 {
 	int unit;
 	struct ra_softc *ra;
@@ -403,20 +392,14 @@ done:
 }
 
 int
-raread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+raread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(rastrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-rawrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+rawrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(rastrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -426,12 +409,7 @@ rawrite(dev, uio, flags)
  * I/O controls.
  */
 int
-raioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp, *tp;
@@ -446,14 +424,14 @@ raioctl(dev, cmd, data, flag, l)
 	switch (cmd) {
 
 	case DIOCGDINFO:
-		bcopy(lp, data, sizeof (struct disklabel));
+		memcpy(data, lp, sizeof (struct disklabel));
 		break;
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
-		bcopy(lp, &newlabel, sizeof disklabel);
+		memcpy(&newlabel, lp, sizeof disklabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;
-		bcopy(&newlabel, data, sizeof (struct olddisklabel));
+		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
 
@@ -511,7 +489,7 @@ raioctl(dev, cmd, data, flag, l)
 #else
 		tp = (struct disklabel *)data;
 #endif
-		bzero(tp, sizeof(struct disklabel));
+		memset(tp, 0, sizeof(struct disklabel));
 		tp->d_secsize = lp->d_secsize;
 		tp->d_nsectors = lp->d_nsectors;
 		tp->d_ntracks = lp->d_ntracks;
@@ -572,11 +550,7 @@ raioctl(dev, cmd, data, flag, l)
 
 
 int
-radump(dev, blkno, va, size)
-	dev_t	dev;
-	daddr_t blkno;
-	void *va;
-	size_t	size;
+radump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	return ENXIO;
 }
@@ -585,8 +559,7 @@ radump(dev, blkno, va, size)
  * Return the size of a partition, if known, or -1 if not.
  */
 int
-rasize(dev)
-	dev_t dev;
+rasize(dev_t dev)
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra;
@@ -607,7 +580,7 @@ rasize(dev)
 
 #if NRX
 
-int	rxmatch(struct device *, struct cfdata *, void *);
+int	rxmatch(device_t, cfdata_t, void *);
 
 CFATTACH_DECL(rx, sizeof(struct rx_softc),
     rxmatch, rxattach, NULL, NULL);
@@ -638,10 +611,7 @@ static struct dkdriver rxdkdriver = {
  */
 
 int
-rxmatch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+rxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
@@ -668,9 +638,7 @@ rxmatch(parent, cf, aux)
  * the first time.
  */
 void
-rxattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+rxattach(device_t parent, device_t self, void *aux)
 {
 	struct	rx_softc *rx = device_private(self);
 	struct	drive_attach_args *da = aux;
@@ -723,8 +691,7 @@ rxattach(parent, self, aux)
  * drive is opened, or if it har fallen offline.
  */
 int
-rx_putonline(rx)
-	struct rx_softc *rx;
+rx_putonline(struct rx_softc *rx)
 {
 	struct	mscp *mp;
 	struct	mscp_softc *mi =
@@ -756,10 +723,7 @@ rx_putonline(rx)
  */
 /*ARGSUSED*/
 int
-rxopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct	lwp *l;
+rxopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rx_softc *rx;
 	int unit;
@@ -791,8 +755,7 @@ rxopen(dev, flag, fmt, l)
  * revectoring routine.
  */
 void
-rxstrategy(bp)
-	struct buf *bp;
+rxstrategy(struct buf *bp)
 {
 	int unit;
 	struct rx_softc *rx;
@@ -835,20 +798,14 @@ done:
 }
 
 int
-rxread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+rxread(dev_t dev, struct uio *uio, int flag)
 {
 
 	return (physio(rxstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-rxwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+rxwrite(dev_t dev, struct uio *uio, int flag)
 {
 
 	return (physio(rxstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -858,12 +815,7 @@ rxwrite(dev, uio, flag)
  * I/O controls.
  */
 int
-rxioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+rxioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp;
@@ -875,7 +827,7 @@ rxioctl(dev, cmd, data, flag, l)
 	switch (cmd) {
 
 	case DIOCGDINFO:
-		bcopy(lp, data, sizeof (struct disklabel));
+		memcpy(data, lp, sizeof (struct disklabel));
 		break;
 
 	case DIOCGPART:
@@ -898,11 +850,7 @@ rxioctl(dev, cmd, data, flag, l)
 }
 
 int
-rxdump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	void *va;
-	size_t size;
+rxdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 
 	/* Not likely. */
@@ -910,8 +858,7 @@ rxdump(dev, blkno, va, size)
 }
 
 int
-rxsize(dev)
-	dev_t dev;
+rxsize(dev_t dev)
 {
 
 	return -1;
@@ -919,14 +866,14 @@ rxsize(dev)
 
 #endif /* NRX */
 
-void	rrdgram(struct device *, struct mscp *, struct mscp_softc *);
-void	rriodone(struct device *, struct buf *);
-int	rronline(struct device *, struct mscp *);
-int	rrgotstatus(struct device *, struct mscp *);
-void	rrreplace(struct device *, struct mscp *);
-int	rrioerror(struct device *, struct mscp *, struct buf *);
+void	rrdgram(device_t, struct mscp *, struct mscp_softc *);
+void	rriodone(device_t, struct buf *);
+int	rronline(device_t, struct mscp *);
+int	rrgotstatus(device_t, struct mscp *);
+void	rrreplace(device_t, struct mscp *);
+int	rrioerror(device_t, struct mscp *, struct buf *);
 void	rrfillin(struct buf *, struct mscp *);
-void	rrbb(struct device *, struct mscp *, struct buf *);
+void	rrbb(device_t, struct mscp *, struct buf *);
 
 
 struct	mscp_device ra_device = {
@@ -945,10 +892,7 @@ struct	mscp_device ra_device = {
  * This can come from an unconfigured drive as well.
  */
 void
-rrdgram(usc, mp, mi)
-	struct device *usc;
-	struct mscp *mp;
-	struct mscp_softc *mi;
+rrdgram(device_t usc, struct mscp *mp, struct mscp_softc *mi)
 {
 	if (mscp_decodeerror(usc == NULL?"unconf disk" : device_xname(usc), mp, mi))
 		return;
@@ -964,9 +908,7 @@ rrdgram(usc, mp, mi)
 }
 
 void
-rriodone(usc, bp)
-	struct device *usc;
-	struct buf *bp;
+rriodone(device_t usc, struct buf *bp)
 {
 	struct ra_softc *ra;
 	int unit;
@@ -997,9 +939,7 @@ rriodone(usc, bp)
  * sleeping on the drive on-line-ness.
  */
 int
-rronline(usc, mp)
-	struct device *usc;
-	struct mscp *mp;
+rronline(device_t usc, struct mscp *mp)
 {
 	struct rx_softc *rx = (struct rx_softc *)usc;
 	struct disklabel *dl;
@@ -1030,9 +970,7 @@ rronline(usc, mp)
 }
 
 void
-rrmakelabel(dl, type)
-	struct disklabel *dl;
-	long type;
+rrmakelabel(struct disklabel *dl, long type)
 {
 	int n, p = 0;
 
@@ -1068,9 +1006,7 @@ rrmakelabel(dl, type)
  * We got some (configured) unit's status.  Return DONE if it succeeded.
  */
 int
-rrgotstatus(usc, mp)
-	struct device *usc;
-	struct mscp *mp;
+rrgotstatus(device_t usc, struct mscp *mp)
 {
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		aprint_error_dev(usc, "attempt to get status failed: ");
@@ -1089,9 +1025,7 @@ rrgotstatus(usc, mp)
  */
 /*ARGSUSED*/
 void
-rrreplace(usc, mp)
-	struct device *usc;
-	struct mscp *mp;
+rrreplace(device_t usc, struct mscp *mp)
 {
 
 	panic("udareplace");
@@ -1103,10 +1037,7 @@ rrreplace(usc, mp)
  */
 /*ARGSUSED*/
 int
-rrioerror(usc, mp, bp)
-	struct device *usc;
-	struct mscp *mp;
-	struct buf *bp;
+rrioerror(device_t usc, struct mscp *mp, struct buf *bp)
 {
 	struct ra_softc *ra = (void *)usc;
 	int code = mp->mscp_event;
@@ -1137,9 +1068,7 @@ rrioerror(usc, mp, bp)
  * Fill in disk addresses in a mscp packet waiting for transfer.
  */
 void
-rrfillin(bp, mp)
-	struct buf *bp;
-	struct mscp *mp;
+rrfillin(struct buf *bp, struct mscp *mp)
 {
 	struct rx_softc *rx = 0; /* Wall */
 	struct disklabel *lp;
@@ -1166,10 +1095,7 @@ rrfillin(bp, mp)
  */
 /*ARGSUSED*/
 void
-rrbb(usc, mp, bp)
-	struct device *usc;
-	struct mscp *mp;
-	struct buf *bp;
+rrbb(device_t usc, struct mscp *mp, struct buf *bp)
 {
 
 	panic("udabb");

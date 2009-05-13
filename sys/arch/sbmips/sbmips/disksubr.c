@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.17 2008/01/02 11:48:28 ad Exp $ */
+/* $NetBSD: disksubr.c,v 1.17.24.1 2009/05/13 17:18:17 jym Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2008/01/02 11:48:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17.24.1 2009/05/13 17:18:17 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,7 @@ mbr_findslice(struct mbr_partition* dp, struct buf *bp);
  */
 static
 struct mbr_partition *
-mbr_findslice(dp, bp)
-	struct mbr_partition *dp;
-	struct buf *bp;
+mbr_findslice(struct mbr_partition *dp, struct buf *bp)
 {
 	struct mbr_partition *ourdp = NULL;
 	uint16_t *mbrmagicp;
@@ -95,11 +93,7 @@ mbr_findslice(dp, bp)
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
@@ -271,10 +265,7 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -327,11 +318,7 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct mbr_partition *dp;
 	struct buf *bp;

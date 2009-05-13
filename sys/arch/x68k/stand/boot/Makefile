@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/01/12 07:56:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2009/05/13 17:18:42 jym Exp $
 
 NOMAN=		# defined
 
@@ -24,7 +24,7 @@ OBJCOPY?=	/usr/bin/objcopy
 
 SRCS=		srt0.S boot.c conf.c exec_image.S
 S=		${.CURDIR}/../../../..
-M=		$S/arch/${MACHINE}
+M=		${.CURDIR}/../..
 COMMONDIR=	$M/stand/common
 .PATH:		${COMMONDIR}
 

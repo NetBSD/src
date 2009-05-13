@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.8 2005/11/24 13:08:33 yamt Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.8.92.1 2009/05/13 17:16:38 jym Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.8 2005/11/24 13:08:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.8.92.1 2009/05/13 17:16:38 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,12 +159,7 @@ void ifpga_create_mem_bs_tag(t, cookie)
 /* bus space functions */
 
 int
-ifpga_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+ifpga_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
 {
         /* The cookie is the base address for the I/O area */
         *bshp = bpa + (bus_addr_t)t;
@@ -172,12 +167,7 @@ ifpga_bs_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-ifpga_mem_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+ifpga_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
 {
 	bus_addr_t startpa, endpa;
 	vaddr_t va;
@@ -225,19 +215,13 @@ ifpga_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 
 
 void
-ifpga_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ifpga_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/* Nothing to do for an io map.  */
 }
 
 void
-ifpga_mem_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ifpga_mem_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	vaddr_t startva, endva;
 
@@ -250,10 +234,7 @@ ifpga_mem_bs_unmap(t, bsh, size)
 }
 
 void    
-ifpga_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ifpga_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	panic("ifpga_free(): Help!");
@@ -262,11 +243,7 @@ ifpga_bs_free(t, bsh, size)
 }
 
 int
-ifpga_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+ifpga_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + (offset << ((int)t));
@@ -274,19 +251,13 @@ ifpga_bs_subregion(t, bsh, offset, size, nbshp)
 }
 
 void *
-ifpga_bs_vaddr(t, bsh)
-	void *t;
-	bus_space_handle_t bsh;
+ifpga_bs_vaddr(void *t, bus_space_handle_t bsh)
 {
 
 	return ((void *)bsh);
 }
 
 void
-ifpga_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+ifpga_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 }	

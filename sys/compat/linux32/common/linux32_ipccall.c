@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.2 2008/09/17 20:11:51 scw Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.2.8.1 2009/05/13 17:18:59 jym Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.2 2008/09/17 20:11:51 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.2.8.1 2009/05/13 17:18:59 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -253,7 +253,7 @@ static int
 linux32_semctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
     register_t *retval)
 {
-	int cmd, error;
+	int lcmd, cmd, error;
 	struct semid_ds bs;
 	struct linux32_semid_ds ls;
 	struct linux32_semid64_ds ls64;
@@ -264,28 +264,28 @@ linux32_semctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	if ((error = copyin(SCARG_P32(uap, ptr), &lsem, sizeof lsem)))
 		return error;
 
-	switch (SCARG(uap, a3)) {
+	lcmd = SCARG(uap, a3);
+
+	switch (lcmd & ~LINUX32_IPC_64) {
 	case LINUX32_IPC_RMID:
 		cmd = IPC_RMID;
 		break;
 	case LINUX32_IPC_STAT:
-	case LINUX32_IPC_STAT|LINUX32_IPC_64:
 		cmd = IPC_STAT;
 		buf = &bs;
 		break;
 	case LINUX32_IPC_SET:
-		error = copyin(NETBSD32PTR64(lsem.l_buf), &ls, sizeof ls);
+		if (lcmd & LINUX32_IPC_64) {
+			error = copyin(NETBSD32PTR64(lsem.l_buf), &ls64,
+			    sizeof ls64);
+			linux32_to_bsd_semid64_ds(&ls64, &bs);
+		} else {
+			error = copyin(NETBSD32PTR64(lsem.l_buf), &ls,
+			    sizeof ls);
+			linux32_to_bsd_semid_ds(&ls, &bs);
+		}
 		if (error)
 			return error;
-		linux32_to_bsd_semid_ds(&ls, &bs);
-		cmd = IPC_SET;
-		buf = &bs;
-		break;
-	case LINUX32_IPC_SET|LINUX32_IPC_64:
-		error = copyin(NETBSD32PTR64(lsem.l_buf), &ls64, sizeof ls64);
-		if (error)
-			return error;
-		linux32_to_bsd_semid64_ds(&ls64, &bs);
 		cmd = IPC_SET;
 		buf = &bs;
 		break;
@@ -324,7 +324,7 @@ linux32_semctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	if (error)
 		return error;
 
-	switch (SCARG(uap, a3)) {
+	switch (lcmd) {
 	case LINUX32_IPC_STAT:
 		bsd_to_linux32_semid_ds(&bs, &ls);
 		error = copyout(&ls, NETBSD32PTR64(lsem.l_buf), sizeof ls);
@@ -451,68 +451,58 @@ linux32_shmctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
     register_t *retval)
 {
 	int shmid, cmd, error;
-	struct shmid_ds bs, *bsp = NULL;
+	struct shmid_ds bs;
 	struct linux32_shmid_ds ls;
 	struct linux32_shmid64_ds ls64;
 
 	shmid = SCARG(uap, a1);
+	cmd = SCARG(uap, a2);
 
-	switch (SCARG(uap, a2)) {
-	case LINUX32_IPC_RMID:
-		cmd = IPC_RMID;
-		break;
+	switch (cmd & ~LINUX32_IPC_64) {
+
 	case LINUX32_SHM_STAT:
-	case LINUX32_SHM_STAT|LINUX32_IPC_64:
 		return ENOSYS;
+
 	case LINUX32_IPC_STAT:
-	case LINUX32_IPC_STAT|LINUX32_IPC_64:
-		cmd = IPC_STAT;
-		bsp = &bs;
-		break;
+		error = shmctl1(l, shmid, IPC_STAT, &bs);
+		if (error != 0)
+			return error;
+		if (cmd & LINUX32_IPC_64) {
+			bsd_to_linux32_shmid64_ds(&bs, &ls64);
+			error = copyout(&ls64, SCARG_P32(uap, ptr), sizeof ls64);
+		} else {
+			bsd_to_linux32_shmid_ds(&bs, &ls);
+			error = copyout(&ls, SCARG_P32(uap, ptr), sizeof ls);
+		}
+		return error;
+
 	case LINUX32_IPC_SET:
-		cmd = IPC_SET;
-		bsp = &bs;
-		if ((error = copyin(SCARG_P32(uap, ptr), &ls, sizeof ls)))
+		if (cmd & LINUX32_IPC_64) {
+			error = copyin(SCARG_P32(uap, ptr), &ls64, sizeof ls64);
+			linux32_to_bsd_shmid64_ds(&ls64, &bs);
+		} else {
+			error = copyin(SCARG_P32(uap, ptr), &ls, sizeof ls);
+			linux32_to_bsd_shmid_ds(&ls, &bs);
+		}
+		if (error != 0)
 			return error;
-		linux32_to_bsd_shmid_ds(&ls, &bs);
-		break;
-	case LINUX32_IPC_SET|LINUX32_IPC_64:
-		cmd = IPC_SET;
-		bsp = &bs;
-		if ((error = copyin(SCARG_P32(uap, ptr), &ls64, sizeof ls64)))
-			return error;
-		linux32_to_bsd_shmid64_ds(&ls64, &bs);
-		break;
+		return shmctl1(l, shmid, IPC_SET, &bs);
+
+	case LINUX32_IPC_RMID:
+		return shmctl1(l, shmid, IPC_RMID, NULL);
+
 	case LINUX32_SHM_LOCK:
-		cmd = SHM_LOCK;
-		break;
+		return shmctl1(l, shmid, SHM_LOCK, NULL);
+
 	case LINUX32_SHM_UNLOCK:
-		cmd = SHM_UNLOCK;
-		break;
+		return shmctl1(l, shmid, SHM_UNLOCK, NULL);
+
 	case LINUX32_IPC_INFO:
 	case LINUX32_SHM_INFO:
 		return ENOSYS;
+
 	default:
 		return EINVAL;
 	}
-
-	if ((error = shmctl1(l, shmid, cmd, bsp)))
-		return error;
-
-	switch (SCARG(uap, a2)) {
-	case LINUX32_IPC_STAT:
-	case LINUX32_SHM_STAT:
-		bsd_to_linux32_shmid_ds(&bs, &ls);
-		error = copyout(&ls, SCARG_P32(uap, ptr), sizeof ls);
-		break;
-	case LINUX32_IPC_STAT|LINUX32_IPC_64:
-	case LINUX32_SHM_STAT|LINUX32_IPC_64:
-		bsd_to_linux32_shmid64_ds(&bs, &ls64);
-		error = copyout(&ls64, SCARG_P32(uap, ptr), sizeof ls64);
-	default:
-		break;
-	}
-
-	return error;
 }               
 #endif /* SYSVSHM */

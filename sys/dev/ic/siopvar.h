@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.25 2007/12/25 18:33:39 perry Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.25.24.1 2009/05/13 17:19:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -100,9 +100,7 @@ struct siop_lunsw {
 
 static __inline void siop_table_sync(struct siop_cmd *, int);
 static __inline void
-siop_table_sync(siop_cmd, ops)
-	struct siop_cmd *siop_cmd;
-	int ops;
+siop_table_sync(struct siop_cmd *siop_cmd, int ops)
 {
 	struct siop_common_softc *sc  = siop_cmd->cmd_c.siop_sc;
 	bus_addr_t offset;

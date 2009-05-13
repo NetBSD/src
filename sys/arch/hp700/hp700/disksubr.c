@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2008/01/10 12:44:50 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25.24.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2008/01/10 12:44:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25.24.1 2009/05/13 17:17:43 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2008/01/10 12:44:50 skrll Exp $");
 
 const char *readliflabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
-const char *readbsdlabel(struct buf *, void (*)(struct buf *), int, 
+const char *readbsdlabel(struct buf *, void (*)(struct buf *), int,
     int, int, struct disklabel *, int);
 
 /*
@@ -264,7 +264,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if (partoffp)
 		*partoffp = fsoff;
 
-	return readbsdlabel(bp, strat, 0,  fsoff + LABELSECTOR, LABELOFFSET, 
+	return readbsdlabel(bp, strat, 0,  fsoff + LABELSECTOR, LABELOFFSET,
 	    lp, spoofonly);
 }
 

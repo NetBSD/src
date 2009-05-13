@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.1 2009/01/04 18:00:55 pooka Exp $
+#	$NetBSD: Makefile.libkern,v 1.1.6.1 2009/05/13 17:22:15 jym Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -52,7 +52,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 # Other stuff
 SRCS+=	__cmsg_alignbytes.c cpuset.c inet_addr.c intoa.c
 SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c
-SRCS+=	pmatch.c arc4random.c bcd.c mcount.c mertwist.c
+SRCS+=	pmatch.c arc4random.c bcd.c mcount.c mertwist.c crc32.c
 
 SRCS+=	strsep.c strstr.c strlcpy.c strlcat.c
 

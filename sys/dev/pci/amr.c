@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: amr.c,v 1.49.12.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.49.12.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,14 +91,14 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $");
 
 #include "locators.h"
 
-static void	amr_attach(struct device *, struct device *, void *);
+static void	amr_attach(device_t, device_t, void *);
 static void	amr_ccb_dump(struct amr_softc *, struct amr_ccb *);
 static void	*amr_enquire(struct amr_softc *, u_int8_t, u_int8_t, u_int8_t,
 			     void *);
 static int	amr_init(struct amr_softc *, const char *,
 			 struct pci_attach_args *pa);
 static int	amr_intr(void *);
-static int	amr_match(struct device *, struct cfdata *, void *);
+static int	amr_match(device_t, cfdata_t, void *);
 static int	amr_print(void *, const char *);
 static void	amr_shutdown(void *);
 static void	amr_teardown(struct amr_softc *);
@@ -221,8 +221,7 @@ amr_outl(struct amr_softc *amr, int off, u_int32_t val)
  * Match a supported device.
  */
 static int
-amr_match(struct device *parent, struct cfdata *match,
-    void *aux)
+amr_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 	pcireg_t s;
@@ -256,7 +255,7 @@ amr_match(struct device *parent, struct cfdata *match,
  * Attach a supported device.
  */
 static void
-amr_attach(struct device *parent, struct device *self, void *aux)
+amr_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct amr_attach_args amra;
@@ -272,7 +271,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": RAID controller\n");
 
-	amr = (struct amr_softc *)self;
+	amr = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.28 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.28.16.1 2009/05/13 17:22:19 jym Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -93,6 +93,9 @@ struct bpf_d {
 	pid_t		bd_pid;		/* corresponding PID */
 	LIST_ENTRY(bpf_d) bd_list;	/* list of all BPF's */
 	void		*bd_sih;	/* soft interrupt handle */
+	struct timespec bd_atime;	/* access time */
+	struct timespec bd_mtime;	/* modification time */
+	struct timespec bd_btime;	/* birth time */
 };
 
 
@@ -133,7 +136,7 @@ struct bpf_if {
 };
 
 #ifdef _KERNEL
-int	 bpf_setf __P((struct bpf_d *, struct bpf_program *));
+int	 bpf_setf(struct bpf_d *, struct bpf_program *);
 #endif
 
 #endif /* !_NET_BPFDESC_H_ */

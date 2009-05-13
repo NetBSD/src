@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.41 2009/01/24 22:14:45 rmind Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.41.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.41 2009/01/24 22:14:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.41.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #endif
 
 #include <sys/param.h>

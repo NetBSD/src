@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm_machdep.c,v 1.2 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: hpcapm_machdep.c,v 1.2.92.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.2 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.2.92.1 2009/05/13 17:17:46 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.2 2005/12/11 12:17:33 christos 
 #endif
 
 void
-machine_standby()
+machine_standby(void)
 {
 #if NVRIP_COMMON > 0
 	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
@@ -88,7 +88,7 @@ machine_standby()
 }
 
 void
-machine_sleep()
+machine_sleep(void)
 {
 #if NVRIP_COMMON > 0
 	 if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {

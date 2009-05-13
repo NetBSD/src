@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_dma.c,v 1.16 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: apecs_dma.c,v 1.16.14.1 2009/05/13 17:16:05 jym Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.16 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.16.14.1 2009/05/13 17:16:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,21 +50,21 @@ __KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.16 2008/04/28 20:23:11 martin Exp $"
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
 
-bus_dma_tag_t apecs_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
+bus_dma_tag_t apecs_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	apecs_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+int	apecs_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
 
-int	apecs_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+int	apecs_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
 
-int	apecs_bus_dmamap_load_uio_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+int	apecs_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
 
-int	apecs_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+int	apecs_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	apecs_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+void	apecs_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Direct-mapped window: 1G at 1G
@@ -92,8 +92,7 @@ do { \
 } while (0)
 
 void
-apecs_dma_init(acp)
-	struct apecs_config *acp;
+apecs_dma_init(struct apecs_config *acp)
 {
 	bus_addr_t tbase;
 	bus_dma_tag_t t;
@@ -198,9 +197,7 @@ apecs_dma_init(acp)
  * INTERNAL USE ONLY!
  */
 bus_dma_tag_t
-apecs_dma_get_tag(t, bustype)
-	bus_dma_tag_t t;
-	alpha_bus_t bustype;
+apecs_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct apecs_config *acp = t->_cookie;
 
@@ -231,13 +228,7 @@ apecs_dma_get_tag(t, bustype)
  * Load an APECS SGMAP-mapped DMA map with a linear buffer.
  */
 int
-apecs_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+apecs_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 
@@ -253,11 +244,7 @@ apecs_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
  * Load an APECS SGMAP-mapped DMA map with an mbuf chain.
  */
 int
-apecs_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+apecs_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m, int flags)
 {
 	int error;
 
@@ -272,11 +259,7 @@ apecs_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
  * Load an APECS SGMAP-mapped DMA map with a uio.
  */
 int
-apecs_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+apecs_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
 {
 	int error;
 
@@ -291,13 +274,7 @@ apecs_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
  * Load an APECS SGMAP-mapped DMA map with raw memory.
  */
 int
-apecs_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+apecs_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 
@@ -313,9 +290,7 @@ apecs_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
  * Unload an APECS DMA map.
  */
 void
-apecs_bus_dmamap_unload_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+apecs_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	/*

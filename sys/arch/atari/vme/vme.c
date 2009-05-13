@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.13 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: vme.c,v 1.13.14.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.13 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.13.14.1 2009/05/13 17:16:33 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,21 +40,18 @@ __KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.13 2008/04/28 20:23:15 martin Exp $");
 
 #include <atari/vme/vmevar.h>
 
-int vmematch __P((struct device *, struct cfdata *, void *));
-void vmeattach __P((struct device *, struct device *, void *));
-int vmeprint __P((void *, const char *));
+int vmematch(struct device *, struct cfdata *, void *);
+void vmeattach(struct device *, struct device *, void *);
+int vmeprint(void *, const char *);
 
 CFATTACH_DECL(vme, sizeof(struct vme_softc),
     vmematch, vmeattach, NULL, NULL);
 
-int	vmesearch __P((struct device *, struct cfdata *,
-		       const int *, void *));
+int	vmesearch(struct device *, struct cfdata *,
+		       const int *, void *);
 
 int
-vmematch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vmematch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vmebus_attach_args *vba = aux;
 
@@ -65,9 +62,7 @@ vmematch(parent, cf, aux)
 }
 
 void
-vmeattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vmeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vme_softc *sc = (struct vme_softc *)self;
 	struct vmebus_attach_args *vba = aux;
@@ -82,9 +77,7 @@ vmeattach(parent, self, aux)
 }
 
 int
-vmeprint(aux, vme)
-	void *aux;
-	const char *vme;
+vmeprint(void *aux, const char *vme)
 {
 	struct vme_attach_args *va = aux;
 
@@ -102,11 +95,7 @@ vmeprint(aux, vme)
 }
 
 int
-vmesearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+vmesearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct vme_softc *sc = (struct vme_softc *)parent;
 	struct vme_attach_args va;

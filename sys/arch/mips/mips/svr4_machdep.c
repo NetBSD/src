@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.12 2008/11/19 18:36:00 ad Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.12.4.1 2009/05/13 17:18:03 jym Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.12 2008/11/19 18:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.12.4.1 2009/05/13 17:18:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.12 2008/11/19 18:36:00 ad Exp $")
  * XXX This should be filled later 
  */
 int
-svr4_setmcontext(l, mc, flags)
-	struct lwp *l;
-	svr4_mcontext_t *mc;
-	unsigned long flags;
+svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, unsigned long flags)
 {
 	printf("Warning: svr4_setmcontext() called\n");
 	return 0;

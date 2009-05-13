@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.21 2007/11/24 14:20:41 elad Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.21.32.1 2009/05/13 17:21:55 jym Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.21 2007/11/24 14:20:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.21.32.1 2009/05/13 17:21:55 jym Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -70,27 +70,27 @@ static char ipkdbkey[] = IPKDBKEY;
 
 static struct ipkdb_if ipkdb_if;
 
-static u_char *ipkdbaddr __P((u_char *, int *, void **));
-static void peekmem __P((struct ipkdb_if *, u_char *, void *, long));
-static void pokemem __P((struct ipkdb_if *, u_char *, void *, long));
-static u_int32_t getnl __P((void *));
-static u_int getns __P((void *));
-static void setnl __P((void *, u_int32_t));
-static void setns __P((void *, int));
-static u_short cksum __P((u_short, void *, int));
-static int assemble __P((struct ipkdb_if *, void *));
-static char *inpkt __P((struct ipkdb_if *, char *, int));
-static void outpkt __P((struct ipkdb_if *, char *, int, int, int));
-static void init __P((struct ipkdb_if *));
-static void *chksum __P((void *, int));
-static void getpkt __P((struct ipkdb_if *, char *, int *));
-static void putpkt __P((struct ipkdb_if *, const char *, int));
-static int check_ipkdb __P((struct ipkdb_if *, struct in_addr *, char *, int));
-static int connectipkdb __P((struct ipkdb_if *, char *, int));
-static int hmac_init __P((void));
+static u_char *ipkdbaddr(u_char *, int *, void **);
+static void peekmem(struct ipkdb_if *, u_char *, void *, long);
+static void pokemem(struct ipkdb_if *, u_char *, void *, long);
+static u_int32_t getnl(void *);
+static u_int getns(void *);
+static void setnl(void *, u_int32_t);
+static void setns(void *, int);
+static u_short cksum(u_short, void *, int);
+static int assemble(struct ipkdb_if *, void *);
+static char *inpkt(struct ipkdb_if *, char *, int);
+static void outpkt(struct ipkdb_if *, char *, int, int, int);
+static void init(struct ipkdb_if *);
+static void *chksum(void *, int);
+static void getpkt(struct ipkdb_if *, char *, int *);
+static void putpkt(struct ipkdb_if *, const char *, int);
+static int check_ipkdb(struct ipkdb_if *, struct in_addr *, char *, int);
+static int connectipkdb(struct ipkdb_if *, char *, int);
+static int hmac_init(void);
 
 void
-ipkdb_init()
+ipkdb_init(void)
 {
 	ipkdbinit();
 	if (   ipkdbifinit(&ipkdb_if) < 0
@@ -103,8 +103,7 @@ ipkdb_init()
 }
 
 void
-ipkdb_connect(when)
-	int when;
+ipkdb_connect(int when)
 {
 	boothowto |= RB_KDB;
 	if (when == 0)
@@ -113,7 +112,7 @@ ipkdb_connect(when)
 }
 
 void
-ipkdb_panic()
+ipkdb_panic(void)
 {
 	ipkdbpanic = 1;
 	ipkdb_trap();
@@ -123,10 +122,7 @@ ipkdb_panic()
  * Doesn't handle overlapping regions!
  */
 void
-ipkdbcopy(s, d, n)
-	const void *s;
-	void *d;
-	int n;
+ipkdbcopy(const void *s, void *d, int n)
 {
 	const char *sp = s;
 	char *dp = d;
@@ -136,9 +132,7 @@ ipkdbcopy(s, d, n)
 }
 
 void
-ipkdbzero(d, n)
-	void *d;
-	int n;
+ipkdbzero(void *d, int n)
 {
 	char *dp = d;
 
@@ -147,9 +141,7 @@ ipkdbzero(d, n)
 }
 
 int
-ipkdbcmp(s, d, n)
-	void *s, *d;
-	int n;
+ipkdbcmp(void *s, void *d, int n)
 {
 	char *sp = s, *dp = d;
 
@@ -160,7 +152,7 @@ ipkdbcmp(s, d, n)
 }
 
 int
-ipkdbcmds()
+ipkdbcmds(void)
 {
 	static char buf[512];
 	char *cp;
@@ -244,10 +236,7 @@ ipkdbcmds()
 }
 
 static u_char *
-ipkdbaddr(cp, pl, dp)
-	u_char *cp;
-	int *pl;
-	void **dp;
+ipkdbaddr(u_char *cp, int *pl, void **dp)
 {
 	/* Assume that sizeof(void *) <= sizeof(u_long) */
 	u_long l;
@@ -264,11 +253,7 @@ ipkdbaddr(cp, pl, dp)
 }
 
 static void
-peekmem(ifp, buf, addr, len)
-	struct ipkdb_if *ifp;
-	u_char *buf;
-	void *addr;
-	long len;
+peekmem(struct ipkdb_if *ifp, u_char *buf, void *addr, long len)
 {
 	u_char *cp, *p = addr;
 	int l;
@@ -281,11 +266,7 @@ peekmem(ifp, buf, addr, len)
 }
 
 static void
-pokemem(ifp, cp, addr, len)
-	struct ipkdb_if *ifp;
-	u_char *cp;
-	void *addr;
-	long len;
+pokemem(struct ipkdb_if *ifp, u_char *cp, void *addr, long len)
 {
 	u_char *p = addr;
 
@@ -295,8 +276,7 @@ pokemem(ifp, cp, addr, len)
 }
 
 inline static u_int32_t
-getnl(vs)
-	void *vs;
+getnl(void *vs)
 {
 	u_char *s = vs;
 
@@ -304,8 +284,7 @@ getnl(vs)
 }
 
 inline static u_int
-getns(vs)
-	void *vs;
+getns(void *vs)
 {
 	u_char *s = vs;
 
@@ -313,9 +292,7 @@ getns(vs)
 }
 
 inline static void
-setnl(vs, l)
-	void *vs;
-	u_int32_t l;
+setnl(void *vs, u_int32_t l)
 {
 	u_char *s = vs;
 
@@ -326,9 +303,7 @@ setnl(vs, l)
 }
 
 inline static void
-setns(vs, l)
-	void *vs;
-	int l;
+setns(void *vs, int l)
 {
 	u_char *s = vs;
 
@@ -337,10 +312,7 @@ setns(vs, l)
 }
 
 static u_short
-cksum(st, vcp, l)
-	u_short st;
-	void *vcp;
-	int l;
+cksum(u_short st, void *vcp, int l)
 {
 	u_char *cp = vcp;
 	u_long s;
@@ -355,9 +327,7 @@ cksum(st, vcp, l)
 }
 
 static int
-assemble(ifp, buf)
-	struct ipkdb_if *ifp;
-	void *buf;
+assemble(struct ipkdb_if *ifp, void *buf)
 {
 	struct ip *ip, iph;
 	int off, len, i;
@@ -432,10 +402,7 @@ assemble(ifp, buf)
 }
 
 static char *
-inpkt(ifp, ibuf, poll)
-	struct ipkdb_if *ifp;
-	char *ibuf;
-	int poll;
+inpkt(struct ipkdb_if *ifp, char *ibuf, int poll)
 {
 	int cnt = 1000000;
 	int l, ul;
@@ -587,11 +554,7 @@ inpkt(ifp, ibuf, poll)
 static short ipkdb_ipid = 0;
 
 static void
-outpkt(ifp, in, l, srcport, dstport)
-	struct ipkdb_if *ifp;
-	char *in;
-	int l;
-	int srcport, dstport;
+outpkt(struct ipkdb_if *ifp, char *in, int l, int srcport, int dstport)
 {
 	struct ether_header *eh;
 	struct ip *ip;
@@ -661,8 +624,7 @@ outpkt(ifp, in, l, srcport, dstport)
 }
 
 static void
-init(ifp)
-	struct ipkdb_if *ifp;
+init(struct ipkdb_if *ifp)
 {
 	u_char *cp;
 	u_char _ibuf[ETHERMTU + 16];
@@ -723,16 +685,15 @@ static struct ipkdb_MD5Context {
 	u_char in[64];
 } icontext, ocontext;
 
-static u_int32_t getNl __P((void *));
-static void setNl __P((void *, u_int32_t));
-static void ipkdb_MD5Transform __P((struct ipkdb_MD5Context *));
-static void ipkdb_MD5Init __P((struct ipkdb_MD5Context *));
-static void ipkdb_MD5Update __P((struct ipkdb_MD5Context *, u_char *, u_int));
-static u_char *ipkdb_MD5Final __P((struct ipkdb_MD5Context *));
+static u_int32_t getNl(void *);
+static void setNl(void *, u_int32_t);
+static void ipkdb_MD5Transform(struct ipkdb_MD5Context *);
+static void ipkdb_MD5Init(struct ipkdb_MD5Context *);
+static void ipkdb_MD5Update(struct ipkdb_MD5Context *, u_char *, u_int);
+static u_char *ipkdb_MD5Final(struct ipkdb_MD5Context *);
 
 inline static u_int32_t
-getNl(vs)
-	void *vs;
+getNl(void *vs)
 {
 	u_char *s = vs;
 
@@ -740,9 +701,7 @@ getNl(vs)
 }
 
 inline static void
-setNl(vs, l)
-	void *vs;
-	u_int32_t l;
+setNl(void *vs, u_int32_t l)
 {
 	u_char *s = vs;
 
@@ -771,8 +730,7 @@ setNl(vs, l)
  * the data for this routine.
  */
 static void
-ipkdb_MD5Transform(ctx)
-	struct ipkdb_MD5Context *ctx;
+ipkdb_MD5Transform(struct ipkdb_MD5Context *ctx)
 {
 	u_int a, b, c, d, i;
 	u_int in[16];
@@ -864,8 +822,7 @@ ipkdb_MD5Transform(ctx)
  * initialization constants.
  */
 static void
-ipkdb_MD5Init(ctx)
-	struct ipkdb_MD5Context *ctx;
+ipkdb_MD5Init(struct ipkdb_MD5Context *ctx)
 {
 	ctx->buf[0] = 0x67452301;
 	ctx->buf[1] = 0xefcdab89;
@@ -881,10 +838,7 @@ ipkdb_MD5Init(ctx)
  * of bytes.
  */
 static void
-ipkdb_MD5Update(ctx, buf, len)
-	struct ipkdb_MD5Context *ctx;
-	u_char *buf;
-	unsigned len;
+ipkdb_MD5Update(struct ipkdb_MD5Context *ctx, u_char *buf, unsigned len)
 {
 	u_int t;
 
@@ -928,8 +882,7 @@ ipkdb_MD5Update(ctx, buf, len)
  * 1 0* (64-bit count of bits processed, LSB-first)
  */
 static u_char *
-ipkdb_MD5Final(ctx)
-	struct ipkdb_MD5Context *ctx;
+ipkdb_MD5Final(struct ipkdb_MD5Context *ctx)
 {
 	static u_char digest[16];
 	unsigned count;
@@ -977,7 +930,7 @@ ipkdb_MD5Final(ctx)
  * optimized as suggested in this same paper.
  */
 static int
-hmac_init()
+hmac_init(void)
 {
 	char pad[64];
 	char tk[16];
@@ -1041,9 +994,7 @@ hmac_init()
  * This is more or less hmac_md5 from the HMAC IETF draft, Appendix.
  */
 static void *
-chksum(buf, len)
-	void *buf;
-	int len;
+chksum(void *buf, int len)
 {
 	u_char *digest;
 	struct ipkdb_MD5Context context;
@@ -1078,10 +1029,7 @@ chksum(buf, len)
 }
 
 static void
-getpkt(ifp, buf, lp)
-	struct ipkdb_if *ifp;
-	char *buf;
-	int *lp;
+getpkt(struct ipkdb_if *ifp, char *buf, int *lp)
 {
 	char *got;
 	int l;
@@ -1111,10 +1059,7 @@ getpkt(ifp, buf, lp)
 }
 
 static void
-putpkt(ifp, buf, l)
-	struct ipkdb_if *ifp;
-	const char *buf;
-	int l;
+putpkt(struct ipkdb_if *ifp, const char *buf, int l)
 {
 	setnl(ifp->pkt, ifp->seq++);
 	setns(ifp->pkt + 4, l);
@@ -1128,11 +1073,7 @@ putpkt(ifp, buf, l)
 }
 
 static int
-check_ipkdb(ifp, shost, p, l)
-	struct ipkdb_if *ifp;
-	struct in_addr *shost;
-	char *p;
-	int l;
+check_ipkdb(struct ipkdb_if *ifp, struct in_addr *shost, char *p, int l)
 {
 	u_char hisenet[6];
 	u_char hisinet[4];
@@ -1141,7 +1082,7 @@ check_ipkdb(ifp, shost, p, l)
 
 #ifndef	IPKDBSECURE
 	if (kauth_authorize_system(curlwp->l_cred, KAUTH_SYSTEM_DEBUG,
-	    KAUTH_ARG(KAUTH_REQ_SYSTEM_DEBUG_IPKDB), NULL, NULL, NULL))
+	    KAUTH_REQ_SYSTEM_DEBUG_IPKDB, NULL, NULL, NULL))
 		return 0;
 #endif
 	if (ipkdbcmp(chksum(p, l), p + l, LENCHK))
@@ -1167,11 +1108,7 @@ check_ipkdb(ifp, shost, p, l)
  * Should check whether packet came across the correct interface.	XXX
  */
 int
-checkipkdb(shost, sport, dport, m, off, len)
-	struct in_addr *shost;
-	u_short sport, dport;
-	struct mbuf *m;
-	int off, len;
+checkipkdb(struct in_addr *shost, u_short sport, u_short dport, struct mbuf *m, int off, int len)
 {
 	char *p;
 	int l;
@@ -1194,10 +1131,7 @@ checkipkdb(shost, sport, dport, m, off, len)
 }
 
 static int
-connectipkdb(ifp, buf, l)
-	struct ipkdb_if *ifp;
-	char *buf;
-	int l;
+connectipkdb(struct ipkdb_if *ifp, char *buf, int l)
 {
 	char *cp;
 	u_char *ip;

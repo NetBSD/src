@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.17 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: timex.h,v 1.17.2.1 2009/05/13 17:23:04 jym Exp $	*/
 
 /*-
  ***********************************************************************
@@ -167,14 +167,14 @@ b\4INS\0\
 b\5DEL\0\
 b\6UNSYNC\0\
 b\7FREQHOLD\0\
-b\x8PPSSIGNAL\0\
-b\x9PPSJITTER\0\
-b\xaPPSWANDER\0\
-b\xbPPSERROR\0\
-b\xcCLOCKERR\0\
-b\xdNANO\0\
-f\xe\1MODE\0=\0PLL\0=\1FLL\0\
-f\xf\1CLK\0=\0A\0=\1B\0"
+b\10PPSSIGNAL\0\
+b\11PPSJITTER\0\
+b\12PPSWANDER\0\
+b\13PPSERROR\0\
+b\14CLOCKERR\0\
+b\15NANO\0\
+f\16\1MODE\0=\0PLL\0=\1FLL\0\
+f\17\1CLK\0=\0A\0=\1B\0"
 
 #define STA_RONLY (STA_PPSSIGNAL | STA_PPSJITTER | STA_PPSWANDER | \
     STA_PPSERROR | STA_CLOCKERR | STA_NANO | STA_MODE | STA_CLK)

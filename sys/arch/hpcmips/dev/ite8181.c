@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.25 2007/03/04 05:59:52 christos Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.25.58.1 2009/05/13 17:17:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.25 2007/03/04 05:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.25.58.1 2009/05/13 17:17:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -519,7 +519,7 @@ ite8181_fbinit(struct hpcfb_fbconf *fb)
 	}
 
 	/* zero fill */
-	bzero(fb, sizeof(*fb));
+	memset(fb, 0, sizeof(*fb));
 
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/
@@ -629,12 +629,7 @@ ite8181_fbinit(struct hpcfb_fbconf *fb)
 }
 
 int
-ite8181_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+ite8181_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ite8181_softc *sc = (struct ite8181_softc *)v;
 	struct hpcfb_fbconf *fbconf;

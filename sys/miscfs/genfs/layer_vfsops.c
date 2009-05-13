@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.30 2008/12/05 13:05:37 ad Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.30.4.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.30 2008/12/05 13:05:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.30.4.1 2009/05/13 17:22:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -125,9 +125,7 @@ layerfs_start(struct mount *mp, int flags)
 }
 
 int
-layerfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+layerfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *vp;
 
@@ -153,20 +151,14 @@ layerfs_root(mp, vpp)
 }
 
 int
-layerfs_quotactl(mp, cmd, uid, arg)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	void *arg;
+layerfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg)
 {
 
 	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, cmd, uid, arg);
 }
 
 int
-layerfs_statvfs(mp, sbp)
-	struct mount *mp;
-	struct statvfs *sbp;
+layerfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	int error;
 	struct statvfs *sbuf;
@@ -220,10 +212,7 @@ layerfs_sync(struct mount *mp, int waitfor,
 }
 
 int
-layerfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	int error;
 	struct vnode *vp;
@@ -243,10 +232,7 @@ layerfs_vget(mp, ino, vpp)
 }
 
 int
-layerfs_fhtovp(mp, fidp, vpp)
-	struct mount *mp;
-	struct fid *fidp;
-	struct vnode **vpp;
+layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
 {
 	int error;
 	struct vnode *vp;
@@ -265,10 +251,7 @@ layerfs_fhtovp(mp, fidp, vpp)
 }
 
 int
-layerfs_vptofh(vp, fhp, fh_size)
-	struct vnode *vp;
-	struct fid *fhp;
-	size_t *fh_size;
+layerfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 
 	return (VFS_VPTOFH(LAYERVPTOLOWERVP(vp), fhp, fh_size));

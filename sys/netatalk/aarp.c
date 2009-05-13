@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.27 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: aarp.c,v 1.27.16.1 2009/05/13 17:22:27 jym Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.27 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.27.16.1 2009/05/13 17:22:27 jym Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -129,9 +129,7 @@ aarptimer(void *ignored)
  * network.. remember to take netranges into consideration.
  */
 struct ifaddr *
-at_ifawithnet(sat, ifp)
-	const struct sockaddr_at *sat;
-	struct ifnet *ifp;
+at_ifawithnet(const struct sockaddr_at *sat, struct ifnet *ifp)
 {
 	struct ifaddr  *ifa;
 	struct sockaddr_at *sat2;
@@ -155,9 +153,7 @@ at_ifawithnet(sat, ifp)
 }
 
 static void
-aarpwhohas(ifp, sat)
-	struct ifnet *ifp;
-	const struct sockaddr_at *sat;
+aarpwhohas(struct ifnet *ifp, const struct sockaddr_at *sat)
 {
 	struct mbuf    *m;
 	struct ether_header *eh;
@@ -175,14 +171,14 @@ aarpwhohas(ifp, sat)
 	MH_ALIGN(m, sizeof(*ea));
 
 	ea = mtod(m, struct ether_aarp *);
-	bzero(ea, sizeof(*ea));
+	memset(ea, 0, sizeof(*ea));
 
 	ea->aarp_hrd = htons(AARPHRD_ETHER);
 	ea->aarp_pro = htons(ETHERTYPE_ATALK);
 	ea->aarp_hln = sizeof(ea->aarp_sha);
 	ea->aarp_pln = sizeof(ea->aarp_spu);
 	ea->aarp_op = htons(AARPOP_REQUEST);
-	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	memcpy(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha));
 
 	/*
          * We need to check whether the output ethernet type should
@@ -198,7 +194,7 @@ aarpwhohas(ifp, sat)
 	eh = (struct ether_header *) sa.sa_data;
 
 	if (aa->aa_flags & AFA_PHASE2) {
-		bcopy(atmulticastaddr, eh->ether_dhost,
+		memcpy(eh->ether_dhost, atmulticastaddr,
 		    sizeof(eh->ether_dhost));
 		eh->ether_type = 0;	/* if_output will treat as 802 */
 		M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
@@ -208,17 +204,17 @@ aarpwhohas(ifp, sat)
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 		llc->llc_control = LLC_UI;
-		bcopy(aarp_org_code, llc->llc_org_code, sizeof(aarp_org_code));
+		memcpy(llc->llc_org_code, aarp_org_code, sizeof(aarp_org_code));
 		llc->llc_ether_type = htons(ETHERTYPE_AARP);
 
-		bcopy(&AA_SAT(aa)->sat_addr.s_net, ea->aarp_spnet,
+		memcpy(ea->aarp_spnet, &AA_SAT(aa)->sat_addr.s_net,
 		      sizeof(ea->aarp_spnet));
-		bcopy(&sat->sat_addr.s_net, ea->aarp_tpnet,
+		memcpy(ea->aarp_tpnet, &sat->sat_addr.s_net,
 		      sizeof(ea->aarp_tpnet));
 		ea->aarp_spnode = AA_SAT(aa)->sat_addr.s_node;
 		ea->aarp_tpnode = sat->sat_addr.s_node;
 	} else {
-		bcopy(etherbroadcastaddr, eh->ether_dhost,
+		memcpy(eh->ether_dhost, etherbroadcastaddr,
 		    sizeof(eh->ether_dhost));
 		eh->ether_type = htons(ETHERTYPE_AARP);
 
@@ -253,10 +249,10 @@ aarpresolve(struct ifnet *ifp, struct mbuf *m,
 			return (0);
 		}
 		if (aa->aa_flags & AFA_PHASE2)
-			bcopy(atmulticastaddr, desten,
+			memcpy(desten, atmulticastaddr,
 			    sizeof(atmulticastaddr));
 		else
-			bcopy(etherbroadcastaddr, desten,
+			memcpy(desten, etherbroadcastaddr,
 			    sizeof(etherbroadcastaddr));
 		return 1;
 	}
@@ -276,7 +272,7 @@ aarpresolve(struct ifnet *ifp, struct mbuf *m,
 	/* found an entry */
 	aat->aat_timer = 0;
 	if (aat->aat_flags & ATF_COM) {	/* entry is COMplete */
-		bcopy(aat->aat_enaddr, desten, sizeof(aat->aat_enaddr));
+		memcpy(desten, aat->aat_enaddr, sizeof(aat->aat_enaddr));
 		splx(s);
 		return 1;
 	}
@@ -292,9 +288,7 @@ aarpresolve(struct ifnet *ifp, struct mbuf *m,
 }
 
 void
-aarpinput(ifp, m)
-	struct ifnet   *ifp;
-	struct mbuf    *m;
+aarpinput(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arphdr  *ar;
 
@@ -325,9 +319,7 @@ out:
 }
 
 static void
-at_aarpinput(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+at_aarpinput(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_aarp *ea;
 	struct at_ifaddr *aa;
@@ -344,12 +336,12 @@ at_aarpinput(ifp, m)
 	ea = mtod(m, struct ether_aarp *);
 
 	/* Check to see if from my hardware address */
-	if (!bcmp(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
+	if (!memcmp(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
 		m_freem(m);
 		return;
 	}
 	op = ntohs(ea->aarp_op);
-	bcopy(ea->aarp_tpnet, &net, sizeof(net));
+	memcpy(&net, ea->aarp_tpnet, sizeof(net));
 
 	if (net != 0) {		/* should be ATADDR_ANYNET? */
 		sat.sat_len = sizeof(struct sockaddr_at);
@@ -360,8 +352,8 @@ at_aarpinput(ifp, m)
 			m_freem(m);
 			return;
 		}
-		bcopy(ea->aarp_spnet, &spa.s_net, sizeof(spa.s_net));
-		bcopy(ea->aarp_tpnet, &tpa.s_net, sizeof(tpa.s_net));
+		memcpy(&spa.s_net, ea->aarp_spnet, sizeof(spa.s_net));
+		memcpy(&tpa.s_net, ea->aarp_tpnet, sizeof(tpa.s_net));
 	} else {
 		/*
 		 * Since we don't know the net, we just look for the first
@@ -423,7 +415,7 @@ at_aarpinput(ifp, m)
 			m_freem(m);
 			return;
 		}
-		bcopy(ea->aarp_sha, aat->aat_enaddr, sizeof(ea->aarp_sha));
+		memcpy(aat->aat_enaddr, ea->aarp_sha, sizeof(ea->aarp_sha));
 		aat->aat_flags |= ATF_COM;
 		if (aat->aat_hold) {
 			sat.sat_len = sizeof(struct sockaddr_at);
@@ -437,7 +429,7 @@ at_aarpinput(ifp, m)
 	if (aat == 0 && tpa.s_net == ma.s_net && tpa.s_node == ma.s_node
 	    && op != AARPOP_PROBE) {
 		if ((aat = aarptnew(&spa)) != NULL) {
-			bcopy(ea->aarp_sha, aat->aat_enaddr,
+			memcpy(aat->aat_enaddr, ea->aarp_sha,
 			    sizeof(ea->aarp_sha));
 			aat->aat_flags |= ATF_COM;
 		}
@@ -451,12 +443,12 @@ at_aarpinput(ifp, m)
 		m_freem(m);
 		return;
 	}
-	bcopy(ea->aarp_sha, ea->aarp_tha, sizeof(ea->aarp_sha));
-	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	memcpy(ea->aarp_tha, ea->aarp_sha, sizeof(ea->aarp_sha));
+	memcpy(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha));
 
 	/* XXX */
 	eh = (struct ether_header *) sa.sa_data;
-	bcopy(ea->aarp_tha, eh->ether_dhost, sizeof(eh->ether_dhost));
+	memcpy(eh->ether_dhost, ea->aarp_tha, sizeof(eh->ether_dhost));
 
 	if (aa->aa_flags & AFA_PHASE2) {
 		M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
@@ -466,11 +458,11 @@ at_aarpinput(ifp, m)
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 		llc->llc_control = LLC_UI;
-		bcopy(aarp_org_code, llc->llc_org_code, sizeof(aarp_org_code));
+		memcpy(llc->llc_org_code, aarp_org_code, sizeof(aarp_org_code));
 		llc->llc_ether_type = htons(ETHERTYPE_AARP);
 
-		bcopy(ea->aarp_spnet, ea->aarp_tpnet, sizeof(ea->aarp_tpnet));
-		bcopy(&ma.s_net, ea->aarp_spnet, sizeof(ea->aarp_spnet));
+		memcpy(ea->aarp_tpnet, ea->aarp_spnet, sizeof(ea->aarp_tpnet));
+		memcpy(ea->aarp_spnet, &ma.s_net, sizeof(ea->aarp_spnet));
 		eh->ether_type = 0;	/* if_output will treat as 802 */
 	} else {
 		eh->ether_type = htons(ETHERTYPE_AARP);
@@ -487,8 +479,7 @@ at_aarpinput(ifp, m)
 }
 
 static void
-aarptfree(aat)
-	struct aarptab *aat;
+aarptfree(struct aarptab *aat)
 {
 
 	if (aat->aat_hold)
@@ -536,8 +527,7 @@ out:
 
 
 void
-aarpprobe(arp)
-	void *arp;
+aarpprobe(void *arp)
 {
 	struct mbuf    *m;
 	struct ether_header *eh;
@@ -588,19 +578,19 @@ aarpprobe(arp)
 	MH_ALIGN(m, sizeof(*ea));
 
 	ea = mtod(m, struct ether_aarp *);
-	bzero(ea, sizeof(*ea));
+	memset(ea, 0, sizeof(*ea));
 
 	ea->aarp_hrd = htons(AARPHRD_ETHER);
 	ea->aarp_pro = htons(ETHERTYPE_ATALK);
 	ea->aarp_hln = sizeof(ea->aarp_sha);
 	ea->aarp_pln = sizeof(ea->aarp_spu);
 	ea->aarp_op = htons(AARPOP_PROBE);
-	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	memcpy(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha));
 
 	eh = (struct ether_header *) sa.sa_data;
 
 	if (aa->aa_flags & AFA_PHASE2) {
-		bcopy(atmulticastaddr, eh->ether_dhost,
+		memcpy(eh->ether_dhost, atmulticastaddr,
 		    sizeof(eh->ether_dhost));
 		eh->ether_type = 0;	/* if_output will treat as 802 */
 		M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
@@ -612,17 +602,17 @@ aarpprobe(arp)
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 		llc->llc_control = LLC_UI;
-		bcopy(aarp_org_code, llc->llc_org_code, sizeof(aarp_org_code));
+		memcpy(llc->llc_org_code, aarp_org_code, sizeof(aarp_org_code));
 		llc->llc_ether_type = htons(ETHERTYPE_AARP);
 
-		bcopy(&AA_SAT(aa)->sat_addr.s_net, ea->aarp_spnet,
+		memcpy(ea->aarp_spnet, &AA_SAT(aa)->sat_addr.s_net,
 		      sizeof(ea->aarp_spnet));
-		bcopy(&AA_SAT(aa)->sat_addr.s_net, ea->aarp_tpnet,
+		memcpy(ea->aarp_tpnet, &AA_SAT(aa)->sat_addr.s_net,
 		      sizeof(ea->aarp_tpnet));
 		ea->aarp_spnode = ea->aarp_tpnode =
 		    AA_SAT(aa)->sat_addr.s_node;
 	} else {
-		bcopy(etherbroadcastaddr, eh->ether_dhost,
+		memcpy(eh->ether_dhost, etherbroadcastaddr,
 		    sizeof(eh->ether_dhost));
 		eh->ether_type = htons(ETHERTYPE_AARP);
 		ea->aarp_spa = ea->aarp_tpa = AA_SAT(aa)->sat_addr.s_node;
@@ -642,7 +632,7 @@ aarpprobe(arp)
 }
 
 void
-aarp_clean()
+aarp_clean(void)
 {
 	struct aarptab *aat;
 	int             i;

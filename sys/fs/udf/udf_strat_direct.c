@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.8 2009/02/08 19:14:52 reinoud Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.8.2.1 2009/05/13 17:21:55 jym Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.8 2009/02/08 19:14:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.8.2.1 2009/05/13 17:21:55 jym Exp $");
 #endif /* not lint */
 
 
@@ -301,23 +301,10 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 			"type %d, b_resid %d, b_bcount %d, b_bufsize %d\n",
 			buf, (uint32_t) buf->b_blkno / blks, buf->b_udf_c_type,
 			buf->b_resid, buf->b_bcount, buf->b_bufsize));
-		/* if we have FIDs fixup using buffer's sector number(s) */
-		if (buf->b_udf_c_type == UDF_C_FIDS) {
-			panic("UDF_C_FIDS in SHED_WRITING!\n");
-			buf_len = buf->b_bcount;
-			sectornr = our_sectornr;
-			bpos = 0;
-			while (buf_len) {
-				len = MIN(buf_len, sector_size);
-				fidblk = (uint8_t *) buf->b_data + bpos;
-				udf_fixup_fid_block(fidblk, sector_size,
-					0, len, sectornr);
-				sectornr++;
-				bpos += len;
-				buf_len -= len;
-			}
-		}
-		udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
+		KASSERT(buf->b_udf_c_type == UDF_C_DSCR || 
+			buf->b_udf_c_type == UDF_C_ABSOLUTE ||
+			buf->b_udf_c_type == UDF_C_NODE);
+		 udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
 		VOP_STRATEGY(ump->devvp, buf);
 		return;
 	}

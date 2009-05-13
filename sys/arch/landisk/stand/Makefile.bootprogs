@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.1 2006/09/01 21:26:18 uwe Exp $
+# $NetBSD: Makefile.bootprogs,v 1.1.80.1 2009/05/13 17:17:58 jym Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -21,7 +21,7 @@ LIBC=		# nothing
 
 .PATH:	${.CURDIR}/..
 
-COPTS=		-Os -ffreestanding
+COPTS=		-m4-nofpu -Os -ffreestanding
 
 LDFLAGS+=	-N
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes
@@ -29,30 +29,16 @@ CPPFLAGS+=	-nostdinc -D_STANDALONE
 CPPFLAGS+=	-DSH4
 CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../boot -I${S}
 
-LANDISK_STAND_DIR?= $S/arch/landisk/stand
-
-CLEANFILES+=	machine sh3
-
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine sh3
-.NOPATH: machine sh3
-
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-sh3::
-	-rm -f $@
-	ln -s ${S}/arch/sh3/include $@
-.endif
-
-lib:
+.BEGIN:
+	-rm -f machine && \
+	    ln -s ${S}/arch/${MACHINE}/include machine
+	-rm -f ${MACHINE_CPU} && \
+	    ln -s ${S}/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
 .ifdef LIBOBJ
-	-rm -f $@
-	ln -s ${LIBOBJ}/lib .
-	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
-.else
-	mkdir lib
+	-rm -f lib && ln -s ${LIBOBJ}/lib lib
+	mkdir -p ${LIBOBJ}/lib
+.endif
 .endif
 
 ### find out what to use for libsa
@@ -70,8 +56,6 @@ LIBKERN= ${KERNLIB}
 Z_AS= library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
-
-realdepend realall: lib
 
 cleandir distclean: cleanlibdir
 

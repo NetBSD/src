@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.20 2006/09/13 07:14:36 gdamore Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.20.70.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.20 2006/09/13 07:14:36 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.20.70.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,8 @@ struct ofrtc_softc {
 	struct todr_chip_handle sc_todr;
 };
 
-static int ofrtc_match(struct device *, struct cfdata *, void *);
-static void ofrtc_attach(struct device *, struct device *, void *);
+static int ofrtc_match(device_t, cfdata_t, void *);
+static void ofrtc_attach(device_t, device_t, void *);
 static int ofrtc_gettod(todr_chip_handle_t, struct clock_ymdhms *);
 static int ofrtc_settod(todr_chip_handle_t, struct clock_ymdhms *);
 
@@ -98,7 +98,7 @@ CFATTACH_DECL(ofrtc, sizeof(struct ofrtc_softc),
     ofrtc_match, ofrtc_attach, NULL, NULL);
 
 static int
-ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
+ofrtc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[8];
@@ -117,7 +117,7 @@ ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ofrtc_attach(struct device *parent, struct device *self, void *aux)
+ofrtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct ofrtc_softc *of = device_private(self);
 	struct ofbus_attach_args *oba = aux;

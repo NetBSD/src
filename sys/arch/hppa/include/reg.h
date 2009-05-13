@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.6 2008/01/10 21:08:41 skrll Exp $	*/
+/*	$NetBSD: reg.h,v 1.6.24.1 2009/05/13 17:17:48 jym Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -84,14 +84,16 @@
 #define	CR_IOR		21
 #define	CR_IPSW		22
 #define	CR_EIRR		23
-#define	CR_HPTMASK	24
-#define	CR_VTOP		25
-#define	CR_TR2		26
-#define	CR_TR3		27
-#define	CR_HVTP		28	/* points to a faulted HVT slot on LC cpus */
-#define	CR_TR5		29
-#define	CR_UPADDR	30	/* paddr of U-area of curproc */
-#define	CR_TR7		31
+
+/* Temporary control registers */
+#define	CR_CURLWP	24	/* tr0: curlwp				*/
+#define	CR_VTOP		25	/* tr1: virt to phys table address	*/
+#define	CR_TR2		26	/* tr2: (TLS?)				*/
+#define	CR_TR3		27	/* tr3: (TLS?)				*/
+#define	CR_HVTP		28	/* tr4: faulted HVT slot ptr on LC cpus */
+#define	CR_TR5		29	/* tr5: emu / TLB_STATS_{PRE,AFT}	*/
+#define	CR_UPADDR	30	/* tr6: paddr of U-area of curlwp	*/
+#define	CR_TR7		31	/* tr7: trap temporary register		*/
 
 /*
  * Diagnostic registers and bit positions

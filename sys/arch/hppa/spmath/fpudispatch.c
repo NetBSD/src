@@ -1,4 +1,4 @@
-/*	$NetBSD: fpudispatch.c,v 1.3 2005/12/11 12:17:40 christos Exp $	 */
+/*	$NetBSD: fpudispatch.c,v 1.3.92.1 2009/05/13 17:17:48 jym Exp $	 */
 
 /*
  *  (c) Copyright 1991 HEWLETT-PACKARD COMPANY
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpudispatch.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpudispatch.c,v 1.3.92.1 2009/05/13 17:17:48 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -113,9 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpudispatch.c,v 1.3 2005/12/11 12:17:40 christos Exp
 #define PA83_UNIMP_EXCP	UNIMPLEMENTEDEXCEPTION
 
 int
-decode_0c(ir,class,subop,fpregs)
-unsigned ir,class,subop;
-unsigned fpregs[];
+decode_0c(unsigned ir,unsigned class,unsigned subop,unsigned fpregs[])
 {
 	unsigned r1,r2,t;	/* operand register offsets */ 
 	unsigned fmt;		/* also sf for class 1 conversions */
@@ -393,9 +391,7 @@ unsigned fpregs[];
 }
 
 int
-decode_0e(ir,class,subop,fpregs)
-unsigned ir,class,subop;
-unsigned fpregs[];
+decode_0e(unsigned ir,unsigned class,unsigned subop,unsigned fpregs[])
 {
 	unsigned r1,r2,t;	/* operand register offsets */
 	unsigned fmt;		/* also sf for class 1 conversions */
@@ -658,9 +654,7 @@ unsigned fpregs[];
  * routine to decode the 06 (FMPYADD and FMPYCFXT) instruction
  */
 int
-decode_06(ir,fpregs)
-unsigned ir;
-unsigned fpregs[];
+decode_06(unsigned ir,unsigned fpregs[])
 {
 	unsigned rm1, rm2, tm, ra, ta; /* operands */
 	unsigned fmt;
@@ -784,9 +778,7 @@ unsigned fpregs[];
  * routine to decode the 26 (FMPYSUB) instruction
  */
 int
-decode_26(ir,fpregs)
-unsigned ir;
-unsigned fpregs[];
+decode_26(unsigned ir,unsigned fpregs[])
 {
 	unsigned rm1, rm2, tm, ra, ta; /* operands */
 	unsigned fmt;

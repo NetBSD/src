@@ -1,4 +1,4 @@
-/*	$NetBSD: xmivar.h,v 1.2 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: xmivar.h,v 1.2.18.1 2009/05/13 17:21:42 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -34,7 +34,7 @@
  * per-XMI-adapter state.
  */
 struct xmi_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;		/* Space tag for the XMI bus */
 	bus_dma_tag_t sc_dmat;
 	bus_addr_t sc_addr;		/* Address base address for this bus */

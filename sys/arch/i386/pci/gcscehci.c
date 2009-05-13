@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.4 2008/07/06 08:01:15 cegger Exp $ */
+/* $NetBSD: gcscehci.c,v 1.4.10.1 2009/05/13 17:17:50 jym Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4 2008/07/06 08:01:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4.10.1 2009/05/13 17:17:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ struct gcscehci_softc {
 };
 
 static int
-gcscehci_match(struct device *parent, struct cfdata *match, void *aux)
+gcscehci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -88,7 +88,7 @@ gcscehci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-gcscehci_attach(struct device *parent, struct device *self, void *aux)
+gcscehci_attach(device_t parent, device_t self, void *aux)
 {
 	struct gcscehci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_300.c,v 1.4 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: tc_dma_3000_300.c,v 1.4.14.1 2009/05/13 17:16:08 jym Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_300.c,v 1.4 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_300.c,v 1.4.14.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 
@@ -44,8 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_300.c,v 1.4 2008/04/28 20:23:12 martin E
  * Return the DMA tag for the given slot.
  */
 bus_dma_tag_t
-tc_dma_get_tag_3000_300(slot)
-	int slot;
+tc_dma_get_tag_3000_300(int slot)
 {
 	extern struct alpha_bus_dma_tag tc_dmat_direct;
 

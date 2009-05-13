@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.53 2009/01/16 20:51:18 cegger Exp $	*/
+/*	$NetBSD: miivar.h,v 1.53.2.1 2009/05/13 17:20:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -45,9 +45,9 @@ struct mii_softc;
 /*
  * Callbacks from MII layer into network interface device driver.
  */
-typedef	int (*mii_readreg_t)(struct device *, int, int);
-typedef	void (*mii_writereg_t)(struct device *, int, int, int);
-typedef	void (*mii_statchg_t)(struct device *);
+typedef	int (*mii_readreg_t)(device_t, int, int);
+typedef	void (*mii_writereg_t)(device_t, int, int, int);
+typedef	void (*mii_statchg_t)(device_t);
 
 /*
  * A network interface driver has one of these structures in its softc.
@@ -110,7 +110,8 @@ struct mii_softc {
 
 	LIST_ENTRY(mii_softc) mii_list;	/* entry on parent's PHY list */
 
-	u_int32_t mii_mpd_model;	/* the PHY's model (MII_MODEL())*/
+	uint32_t mii_mpd_model;		/* the PHY's model (MII_MODEL())*/
+	uint32_t mii_mpd_rev;		/* the PHY's revision (MII_REV())*/
 	int mii_phy;			/* our MII address */
 	int mii_offset;			/* first PHY, second PHY, etc. */
 	u_int mii_inst;			/* instance for ifmedia */

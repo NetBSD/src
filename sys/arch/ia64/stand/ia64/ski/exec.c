@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.4 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: exec.c,v 1.4.14.1 2009/05/13 17:17:57 jym Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ elf64_exec(struct preloaded_file *fp)
 	 * special page reserved in the link map.
 	 */
 	bi = &bootinfo;
-	bzero(bi, sizeof(struct bootinfo));
+	memset(bi, 0, sizeof(struct bootinfo));
 	bi_load(bi, fp);
 
 	/*
@@ -170,7 +170,7 @@ elf64_exec(struct preloaded_file *fp)
 	ia64_set_rr(IA64_RR_BASE(6), (6 << 8) | (28 << 2));
 	ia64_set_rr(IA64_RR_BASE(7), (7 << 8) | (28 << 2));
 
-	bzero(&pte, sizeof(pte));
+	memset(&pte, 0, sizeof(pte));
 	pte.pte_p = 1;
 	pte.pte_ma = PTE_MA_WB;
 	pte.pte_a = 1;

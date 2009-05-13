@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.14 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.14.14.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.14 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.14.14.1 2009/05/13 17:18:22 jym Exp $");
 
 #include "opt_cache.h"
 
@@ -77,6 +77,8 @@ sh3_cache_config()
 		cache_size = 8 * 1024;
 		break;
 	case CPU_PRODUCT_7709A:
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7706:
 		cache_size = 16 * 1024;
 		break;
 	}

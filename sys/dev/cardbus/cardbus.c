@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.95 2008/06/25 11:42:32 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.95.10.1 2009/05/13 17:19:15 jym Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.95 2008/06/25 11:42:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.95.10.1 2009/05/13 17:19:15 jym Exp $");
 
 #include "opt_cardbus.h"
 
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.95 2008/06/25 11:42:32 drochner Exp $"
 
 STATIC void cardbusattach(device_t, device_t, void *);
 STATIC int cardbusdetach(device_t, int);
-STATIC int cardbusmatch(device_t, struct cfdata *, void *);
+STATIC int cardbusmatch(device_t, cfdata_t, void *);
 int cardbus_rescan(device_t, const char *, const int *);
 void cardbus_childdetached(device_t, device_t);
 static int cardbusprint(void *, const char *);
@@ -91,9 +91,9 @@ static void disable_function(struct cardbus_softc *, int);
 
 static bool cardbus_child_register(device_t);
 
-CFATTACH_DECL2_NEW(cardbus, sizeof(struct cardbus_softc),
+CFATTACH_DECL3_NEW(cardbus, sizeof(struct cardbus_softc),
     cardbusmatch, cardbusattach, cardbusdetach, NULL,
-    cardbus_rescan, cardbus_childdetached);
+    cardbus_rescan, cardbus_childdetached, DVF_DETACH_SHUTDOWN);
 
 #ifndef __NetBSD_Version__
 struct cfdriver cardbus_cd = {
@@ -103,7 +103,7 @@ struct cfdriver cardbus_cd = {
 
 
 STATIC int
-cardbusmatch(device_t parent, struct cfdata *cf, void *aux)
+cardbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);

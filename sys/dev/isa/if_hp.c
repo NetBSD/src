@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.45 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.45.4.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.45 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.45.4.1 2009/05/13 17:19:53 jym Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -182,8 +182,7 @@ u_short boarddata[16];
 #define HP_RUN (0x01)
 #define HP_DATA (0x10)
 
-hpprobe(dvp)
-	struct isa_device *dvp;
+hpprobe(struct isa_device *dvp)
 {
 	int     val, i, s, sum, pat;
 	struct hp_softc *ns = &hp_softc[0];
@@ -244,9 +243,7 @@ hpprobe(dvp)
 /*
  * Fetch from onboard ROM/RAM
  */
-hpfetch(ns, up, ad, len)
-	struct hp_softc *ns;
-	void *up;
+hpfetch(struct hp_softc *ns, void *up, int ad, int len)
 {
 	u_char  cmd;
 	int	hpc = ns->ns_port;
@@ -306,9 +303,7 @@ hpfetch(ns, up, ad, len)
 /*
  * Put to onboard RAM
  */
-hpput(ns, up, ad, len)
-	struct hp_softc *ns;
-	void *up;
+hpput(struct hp_softc *ns, void *up, int ad, int len)
 {
 	u_char  cmd;
 	int	hpc = ns->ns_port;
@@ -380,8 +375,7 @@ hpput(ns, up, ad, len)
 /*
  * Reset of interface.
  */
-hpreset(unit, uban)
-	int     unit, uban;
+hpreset(int unit, int uban)
 {
 	struct hp_softc *ns = &hp_softc[unit];
 	int	hpc = ns->ns_port;
@@ -394,8 +388,7 @@ hpreset(unit, uban)
 }
 
 static char *
-hp_id(type)
-	u_char  type;
+hp_id(u_char type)
 {
 	static struct {
 		u_char  type;
@@ -428,8 +421,7 @@ hp_id(type)
  * record.  System will initialize the interface when it is ready
  * to accept packets.  We get the ethernet address here.
  */
-hpattach(dvp)
-	struct isa_device *dvp;
+hpattach(struct isa_device *dvp)
 {
 	int     unit = dvp->id_unit;
 	struct hp_softc *ns = &hp_softc[unit];
@@ -465,8 +457,7 @@ hpattach(dvp)
  * Initialization of interface; set up initialization block
  * and transmit/receive descriptor rings.
  */
-hpinit(unit)
-	int     unit;
+hpinit(int unit)
 {
 	struct hp_softc *ns = &hp_softc[unit];
 	struct ifnet *ifp = &ns->ns_if;
@@ -546,8 +537,7 @@ hpinit(unit)
  * and map it to the interface before starting the output.
  * called only at splnet or interrupt level.
  */
-hpstart(ifp)
-	struct ifnet *ifp;
+hpstart(struct ifnet *ifp)
 {
 	struct hp_softc *ns = &hp_softc[ifp->if_unit];
 	struct mbuf *m0, *m;
@@ -822,10 +812,7 @@ loop:
  * Pass a packet to the higher levels.
  * We deal with the trailer protocol here.
  */
-hpread(ns, buf, len)
-	struct hp_softc *ns;
-	char   *buf;
-	int     len;
+hpread(struct hp_softc *ns, char *buf, int len)
 {
 	struct ether_header *eh;
 	struct mbuf *m;
@@ -895,10 +882,7 @@ hpread(ns, buf, len)
  * we copy into clusters.
  */
 struct mbuf *
-hpget(buf, totlen, off0, ifp)
-	void *buf;
-	int     totlen, off0;
-	struct ifnet *ifp;
+hpget(void *buf, int totlen, int off0, struct ifnet *ifp)
 {
 	struct mbuf *top, **mp, *m, *p;
 	int     off = off0, len;

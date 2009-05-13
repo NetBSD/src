@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.61 2008/05/21 07:39:24 ghen Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.61.12.1 2009/05/13 17:21:42 jym Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -153,7 +153,6 @@
 #define	KS_braceright 		0x7d
 #define	KS_asciitilde 		0x7e
 #define	KS_Delete 		0x7f
-
 #define	KS_nobreakspace 	0xa0
 #define	KS_exclamdown 		0xa1
 #define	KS_cent 		0xa2
@@ -248,27 +247,90 @@
 #define	KS_ucircumflex 		0xfb
 #define	KS_udiaeresis 		0xfc
 #define	KS_yacute 		0xfd
-#define	KS_thorn 		0xfe
+#define KS_thorn		0xfe
 #define	KS_ydiaeresis 		0xff
+#define KS_Abreve		0x0102
+#define KS_abreve		0x0103
+#define KS_Aogonek		0x0104
+#define KS_aogonek		0x0105
+#define KS_Cacute		0x0106
+#define KS_cacute		0x0107
+#define KS_Ccaron		0x010c
+#define KS_ccaron		0x010d
+#define KS_Dcaron		0x010e
+#define KS_dcaron		0x010f
+#define KS_Dstroke		0x0110
+#define KS_dstroke		0x0111
+#define KS_Eogonek		0x0118
+#define KS_eogonek		0x0119
+#define KS_Ecaron		0x011a
+#define KS_ecaron		0x011b
+#define KS_Lacute		0x0139
+#define KS_lacute		0x013a
+#define KS_Lcaron		0x013d
+#define KS_lcaron		0x013e
+#define KS_Lstroke		0x0141
+#define KS_lstroke		0x0142
+#define KS_Nacute		0x0143
+#define KS_nacute		0x0144
+#define KS_Ncaron		0x0147
+#define KS_ncaron		0x0148
+#define KS_Odoubleacute 	0x0150
+#define KS_odoubleacute 	0x0151
+#define KS_Racute		0x0154
+#define KS_racute		0x0155
+#define KS_Rcaron		0x0158
+#define KS_rcaron		0x0159
+#define KS_Sacute		0x015a
+#define KS_sacute		0x015b
+#define KS_Scedilla		0x015e
+#define KS_scedilla		0x015f
+#define KS_Scaron		0x0160
+#define KS_scaron		0x0161
+#define KS_Tcedilla		0x0162
+#define KS_tcedilla		0x0163
+#define KS_Tcaron		0x0164
+#define KS_tcaron		0x0165
+#define KS_Uabovering		0x016e
+#define KS_uabovering		0x016f
+#define KS_Udoubleacute 	0x0170
+#define KS_udoubleacute 	0x0171
+#define KS_Zacute		0x0179
+#define KS_zacute		0x017a
+#define KS_Zabovedot		0x017b
+#define KS_zabovedot		0x017c
+#define KS_Zcaron		0x017d
+#define KS_zcaron		0x017e
 
-#define KS_Odoubleacute 	0x150
-#define KS_odoubleacute 	0x151
-#define KS_Udoubleacute 	0x170
-#define KS_udoubleacute 	0x171
+#define KS_caron		0x02c7
+#define KS_breve		0x02d8
+#define KS_abovedot		0x02d9
+#define KS_ogonek		0x02db
+#define KS_doubleacute		0x02dd
 
 /*
  * Group Dead (dead accents)
+ * http://www.unicode.org/charts/PDF/U0300.pdf
+ * dotaccent	= "dot above"
+ * hungarumlaut	= "double acute"
+ * slash	= "short solidus"
  */
 
 #define	KS_dead_grave 		0x0300
 #define	KS_dead_acute 		0x0301
 #define	KS_dead_circumflex 	0x0302
 #define	KS_dead_tilde 		0x0303
+#define KS_dead_breve		0x0306
 #define	KS_dead_diaeresis 	0x0308
 #define	KS_dead_abovering 	0x030a
+#define KS_dead_caron		0x030c
+#define KS_dead_dotaccent	0x0307
+#define KS_dead_hungarumlaut	0x030b
+#define KS_dead_ogonek		0x0328
+#define KS_dead_slash		0x0337
 #define	KS_dead_cedilla 	0x0327
-#define        KS_dead_semi		0x0328
-#define        KS_dead_colon		0x0329
+#define KS_dead_semi		0x0328
+#define KS_dead_colon		0x0329
 
 /*
  * Group Greek
@@ -580,6 +642,7 @@ action(KB_USER,	0,	0x0100,	"user",	,	"User-defined")	\
 action(KB_US,	0,	0x0200,	"us",	,	"US-English")	\
 action(KB_UK,	0,	0x0700,	"uk",	,	"UK-English")	\
 action(KB_BE,	0,	0x1300,	"be",	,	"Belgian")	\
+action(KB_CZ,	0,	0x1500, "cz",	,	"Czech")	\
 action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")	\
 action(KB_FI,	0,	0x0900,	"fi",	,	"Finnish")	\
 action(KB_FR,	0,	0x0600,	"fr",	,	"French")	\
@@ -590,18 +653,18 @@ action(KB_IT,	0,	0x0500,	"it",	,	"Italian")	\
 action(KB_JP,	0,	0x0800,	"jp",	,	"Japanese")	\
 action(KB_NO,	0,	0x0a00,	"no",	,	"Norwegian")	\
 action(KB_PL,	0,	0x0d00,	"pl",	,	"Polish")	\
-action(KB_PT,	0,	0x1100,	"pt",	,	"Portugese")	\
+action(KB_PT,	0,	0x1100,	"pt",	,	"Portuguese")	\
 action(KB_RU,	0,	0x0e00,	"ru",	,	"Russian")	\
 action(KB_ES,	0,	0x0b00,	"es",	,	"Spanish")	\
 action(KB_SV,	0,	0x0900,	"sv",	,	"Swedish")	\
 action(KB_SF,	0,	0x1000,	"sf",	,	"Swiss French")	\
 action(KB_SG,	0,	0x0f00,	"sg",	,	"Swiss German")	\
-action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")
+action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")	
 #define KB_NONE 0x0000
 
 /* Define all the KB_xx numeric values using above table */
 #define KBF_ENUM(tag, tagf, value, cc, ccf, country) tag=value,
-enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1500 };
+enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1600 };
 
 /* Define list of KB_xxx and country codes for array initialisation */
 #define KBF_ENCTAB(tag, tagf, value, cc, ccf, country) { tag, cc },

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.33 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.33.4.1 2009/05/13 17:20:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.33 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.33.4.1 2009/05/13 17:20:15 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.33 2008/11/17 03:04:27 dyoung Exp $")
 static int	nsphytermatch(device_t, cfdata_t, void *);
 static void	nsphyterattach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(nsphyter, sizeof(struct mii_softc),
-    nsphytermatch, nsphyterattach, mii_phy_detach, mii_phy_activate);
+CFATTACH_DECL3_NEW(nsphyter, sizeof(struct mii_softc),
+    nsphytermatch, nsphyterattach, mii_phy_detach, mii_phy_activate, NULL,
+    NULL, DVF_DETACH_SHUTDOWN);
 
 static int	nsphyter_service(struct mii_softc *, struct mii_data *, int);
 static void	nsphyter_status(struct mii_softc *);

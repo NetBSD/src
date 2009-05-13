@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.52 2007/03/05 19:48:20 he Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.52.58.1 2009/05/13 17:16:10 jym Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.52 2007/03/05 19:48:20 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.52.58.1 2009/05/13 17:16:10 jym Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -856,7 +856,7 @@ grfrtattach(struct device *pdp, struct device *dp, void *auxp)
 		 * we inited earlier just copy the info
 		 * take care not to copy the device struct though.
 		 */
-		bcopy(&congrf.g_display, &gp->g_display,
+		memcpy( &gp->g_display, &congrf.g_display,
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
 		gp->g_regkva = (volatile void *)zap->va;

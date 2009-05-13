@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.18 2008/06/17 22:41:30 he Exp $	*/
+/*	$NetBSD: gt.c,v 1.18.10.1 2009/05/13 17:20:04 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.18 2008/06/17 22:41:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.18.10.1 2009/05/13 17:20:04 jym Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -115,7 +115,7 @@ gt_cfprint (void *aux, const char *pnp)
 
 
 static int
-gt_cfsearch(struct device *parent, struct cfdata *cf,
+gt_cfsearch(device_t parent, cfdata_t cf,
 	    const int *ldesc, void *aux)
 {
 	struct gt_softc *gt = (struct gt_softc *) parent;
@@ -863,7 +863,7 @@ gt_watchdog_service(void)
  * gt_watchdog_reset - force a watchdog reset using Preset_VAL=0
  */
 void
-gt_watchdog_reset()
+gt_watchdog_reset(void)
 {
 	struct gt_softc *gt = gt_watchdog_sc;
 	u_int32_t r;
@@ -932,8 +932,8 @@ gt_devbus_intr_enb(struct gt_softc *gt)
 
 int
 gt_mii_read(
-	struct device *child,
-	struct device *parent,
+	device_t child,
+	device_t parent,
 	int phy,
 	int reg)
 {
@@ -973,8 +973,8 @@ gt_mii_read(
 
 void
 gt_mii_write (
-	struct device *child,
-	struct device *parent,
+	device_t child,
+	device_t parent,
 	int phy, int reg,
 	int value)
 {

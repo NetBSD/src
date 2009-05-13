@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.75 2008/09/14 18:12:16 mhitch Exp $	*/
+/*	$NetBSD: iop.c,v 1.75.8.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.75 2008/09/14 18:12:16 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.75.8.1 2009/05/13 17:19:21 jym Exp $");
 
 #include "iop.h"
 
@@ -203,7 +203,7 @@ static inline void	iop_outl(struct iop_softc *, int, u_int32_t);
 static inline u_int32_t	iop_inl_msg(struct iop_softc *, int);
 static inline void	iop_outl_msg(struct iop_softc *, int, u_int32_t);
 
-static void	iop_config_interrupts(struct device *);
+static void	iop_config_interrupts(device_t);
 static void	iop_configure_devices(struct iop_softc *, int, int);
 static void	iop_devinfo(int, char *, size_t);
 static int	iop_print(void *, const char *);
@@ -213,7 +213,7 @@ static void	iop_adjqparam(struct iop_softc *, int);
 static int	iop_handle_reply(struct iop_softc *, u_int32_t);
 static int	iop_hrt_get(struct iop_softc *);
 static int	iop_hrt_get0(struct iop_softc *, struct i2o_hrt *, int);
-static void	iop_intr_event(struct device *, struct iop_msg *, void *);
+static void	iop_intr_event(device_t, struct iop_msg *, void *);
 static int	iop_lct_get0(struct iop_softc *, struct i2o_lct *, int,
 			     u_int32_t);
 static void	iop_msg_poll(struct iop_softc *, struct iop_msg *, int);
@@ -417,7 +417,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
  	 * Defer further configuration until (a) interrupts are working and
  	 * (b) we have enough information to build the system table.
  	 */
-	config_interrupts((struct device *)sc, iop_config_interrupts);
+	config_interrupts((device_t)sc, iop_config_interrupts);
 
 	/* Configure shutdown hook before we start any device activity. */
 	if (iop_sdh == NULL)
@@ -461,7 +461,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
  * Perform autoconfiguration tasks.
  */
 static void
-iop_config_interrupts(struct device *self)
+iop_config_interrupts(device_t self)
 {
 	struct iop_attach_args ia;
 	struct iop_softc *sc, *iop;
@@ -770,7 +770,7 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 	struct iop_attach_args ia;
 	struct iop_initiator *ii;
 	const struct i2o_lct_entry *le;
-	struct device *dv;
+	device_t dv;
 	int i, j, nent;
 	u_int usertid;
 	int locs[IOPCF_NLOCS];
@@ -1803,7 +1803,7 @@ iop_intr(void *arg)
  * Handle an event signalled by the executive.
  */
 static void
-iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
+iop_intr_event(device_t dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
 	u_int event;

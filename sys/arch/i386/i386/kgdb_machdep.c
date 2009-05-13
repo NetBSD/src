@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.19 2009/01/11 10:20:54 cegger Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.19.2.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.19 2009/01/11 10:20:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.19.2.1 2009/05/13 17:17:49 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -85,9 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.19 2009/01/11 10:20:54 cegger Exp
  * Determine if the memory at va..(va+len) is valid.
  */
 int
-kgdb_acc(va, len)
-	vaddr_t va;
-	size_t len;
+kgdb_acc(vaddr_t va, size_t len)
 {
 	vaddr_t last_va;
 	pt_entry_t *pte;
@@ -117,8 +115,7 @@ kgdb_acc(va, len)
  * (gdb only understands unix signal numbers).
  */
 int 
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	switch (type) {
 	case T_NMI:
@@ -163,9 +160,7 @@ kgdb_signal(type)
  * understood by gdb.
  */
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 
 	gdb_regs[ 0] = regs->tf_eax;
@@ -197,9 +192,7 @@ kgdb_getregs(regs, gdb_regs)
  * Reverse the above.
  */
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 
 	regs->tf_eax    = gdb_regs[ 0];

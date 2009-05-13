@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.295 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.295.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.295 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.295.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -106,13 +106,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.295 2009/01/22 14:38:35 yamt Exp $");
 
 static void	ksiginfo_exechook(struct proc *, void *);
 static void	proc_stop_callout(void *);
-
-int	sigunwait(struct proc *, const ksiginfo_t *);
-void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
-int	sigpost(struct lwp *, sig_t, int, int, int);
-int	sigchecktrace(void);
-void	sigswitch(bool, int, int);
-void	sigrealloc(ksiginfo_t *);
+static int	sigchecktrace(void);
+static int	sigpost(struct lwp *, sig_t, int, int, int);
+static void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
+static int	sigunwait(struct proc *, const ksiginfo_t *);
+static void	sigswitch(bool, int, int);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
 static pool_cache_t sigacts_cache; /* memory pool for sigacts structures */
@@ -549,14 +547,12 @@ out:
 /*
  * sigput:
  * 
- *	Append a new ksiginfo element to the list of pending ksiginfo's, if
- *	we need to (e.g. SA_SIGINFO was requested).
+ *	Append a new ksiginfo element to the list of pending ksiginfo's.
  */
-void
+static void
 sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 {
 	ksiginfo_t *kp;
-	struct sigaction *sa = &SIGACTION_PS(p->p_sigacts, ksi->ksi_signo);
 
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT((ksi->ksi_flags & KSI_QUEUED) == 0);
@@ -564,11 +560,9 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 	sigaddset(&sp->sp_set, ksi->ksi_signo);
 
 	/*
-	 * If there is no siginfo, or is not required (and we don't add
-	 * it for the benefit of ktrace, we are done).
+	 * If there is no siginfo, we are done.
 	 */
-	if (KSI_EMPTY_P(ksi) ||
-	    (!KTRPOINT(p, KTR_PSIG) && (sa->sa_flags & SA_SIGINFO) == 0))
+	if (KSI_EMPTY_P(ksi))
 		return;
 
 	KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
@@ -887,10 +881,11 @@ kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
 	KASSERT(!cpu_intr_p());
 	KASSERT(mutex_owned(proc_lock));
 
-	if (pgrp)
-		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
-			if (checkctty == 0 || p->p_lflag & PL_CONTROLT)
-				kpsignal(p, ksi, data);
+	if (__predict_false(pgrp == 0))
+		return;
+	LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
+		if (checkctty == 0 || p->p_lflag & PL_CONTROLT)
+			kpsignal(p, ksi, data);
 }
 
 /*
@@ -1041,7 +1036,7 @@ sigismasked(struct lwp *l, int sig)
  *	 Post a pending signal to an LWP.  Returns non-zero if the LWP may
  *	 be able to take the signal.
  */
-int
+static int
 sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 {
 	int rv, masked;
@@ -1073,13 +1068,14 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 	}
 
 	/*
-	 * SIGCONT can be masked, but must always restart stopped LWPs.
+	 * SIGCONT can be masked, but if LWP is stopped, it needs restart.
+	 * Note: SIGKILL and SIGSTOP cannot be masked.
 	 */
 #if KERN_SA
 	if (p->p_sa != NULL)
 		masked = sigismember(&p->p_sa->sa_sigmask, sig);
 	else
-#endif /* KERN_SA */
+#endif
 		masked = sigismember(&l->l_sigmask, sig);
 	if (masked && ((prop & SA_CONT) == 0 || l->l_stat != LSSTOP)) {
 		lwp_unlock(l);
@@ -1177,7 +1173,7 @@ signotify(struct lwp *l)
  * Find an LWP within process p that is waiting on signal ksi, and hand
  * it on.
  */
-int
+static int
 sigunwait(struct proc *p, const ksiginfo_t *ksi)
 {
 	struct lwp *l;
@@ -1392,8 +1388,6 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 */
 		if ((prop & SA_CONT) != 0 && action == SIG_DFL)
 			goto out;
-
-		sigput(&p->p_sigpend, p, kp);
 	} else {
 		/*
 		 * Process is stopped or stopping.  If traced, then no
@@ -1402,7 +1396,10 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		if ((p->p_slflag & PSL_TRACED) != 0 && signo != SIGKILL)
 			goto out;
 
-		if ((prop & (SA_CONT | SA_KILL)) != 0) {
+		/*
+		 * Run the process only if sending SIGCONT or SIGKILL.
+		 */
+		if ((prop & SA_CONT) != 0 || signo == SIGKILL) {
 			/*
 			 * Re-adjust p_nstopchild if the process wasn't
 			 * collected by its parent.
@@ -1413,27 +1410,28 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 				p->p_pptr->p_nstopchild--;
 
 			/*
-			 * If SIGCONT is default (or ignored), we continue
-			 * the process but don't leave the signal in
-			 * ps_siglist, as it has no further action.  If
-			 * SIGCONT is held, we continue the process and
-			 * leave the signal in ps_siglist.  If the process
-			 * catches SIGCONT, let it handle the signal itself. 
-			 * If it isn't waiting on an event, then it goes
-			 * back to run state.  Otherwise, process goes back
-			 * to sleep state.
+			 * Do not make signal pending if SIGCONT is default.
+			 *
+			 * If the process catches SIGCONT, let it handle the
+			 * signal itself (if waiting on event - process runs,
+			 * otherwise continues sleeping).
 			 */
-			if ((prop & SA_CONT) == 0 || action != SIG_DFL)
-				sigput(&p->p_sigpend, p, kp);
+			if ((prop & SA_CONT) != 0 && action == SIG_DFL) {
+				KASSERT(signo != SIGKILL);
+				goto deliver;
+			}
 		} else if ((prop & SA_STOP) != 0) {
 			/*
 			 * Already stopped, don't need to stop again.
 			 * (If we did the shell could get confused.)
 			 */
 			goto out;
-		} else
-			sigput(&p->p_sigpend, p, kp);
+		}
 	}
+	/*
+	 * Make signal pending.
+	 */
+	sigput(&p->p_sigpend, p, kp);
 
  deliver:
 	/*
@@ -1598,7 +1596,7 @@ proc_stop_done(struct proc *p, bool ppsig, int ppmask)
 /*
  * Stop the current process and switch away when being stopped or traced.
  */
-void
+static void
 sigswitch(bool ppsig, int ppmask, int signo)
 {
 	struct lwp *l = curlwp;
@@ -1664,7 +1662,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 /*
  * Check for a signal from the debugger.
  */
-int
+static int
 sigchecktrace(void)
 {
 	struct lwp *l = curlwp;

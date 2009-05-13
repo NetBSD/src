@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.24 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.24.14.1 2009/05/13 17:18:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.24 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.24.14.1 2009/05/13 17:18:41 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -272,7 +272,7 @@ le_vsbus_attach(device_t parent, device_t self, void *aux)
 		sc->sc_am7990.lsc.sc_enaddr[i] = (u_char)lance_addr[i];
 	vax_unmap_physmem((vaddr_t)lance_addr, 1);
 
-	bcopy(device_xname(self), sc->sc_am7990.lsc.sc_ethercom.ec_if.if_xname,
+	memcpy( sc->sc_am7990.lsc.sc_ethercom.ec_if.if_xname, device_xname(self),
 	    IFNAMSIZ);
 
 	/* Prettier printout */

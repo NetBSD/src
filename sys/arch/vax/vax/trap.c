@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 2008/10/15 06:51:19 wrstuden Exp $     */
+/*	$NetBSD: trap.c,v 1.116.8.1 2009/05/13 17:18:41 jym Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116.8.1 2009/05/13 17:18:41 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2008/10/15 06:51:19 wrstuden Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
+#include <vax/vax/db_disasm.h>
 #include <kern/syscalls.c>
 #include <sys/ktrace.h>
 
@@ -285,15 +286,25 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	case T_ARITHFLT|T_USER:
 		sig = SIGFPE;
 		switch (frame->code) {
+		case ATRP_INTOVF: code = FPE_INTOVF; break;
+		case ATRP_INTDIV: code = FPE_INTDIV; break;
+		case ATRP_FLTOVF: code = FPE_FLTOVF; break;
+		case ATRP_FLTDIV: code = FPE_FLTDIV; break;
+		case ATRP_FLTUND: code = FPE_FLTUND; break;
+		case ATRP_DECOVF: code = FPE_INTOVF; break;
+		case ATRP_FLTSUB: code = FPE_FLTSUB; break;
 		case AFLT_FLTDIV: code = FPE_FLTDIV; break;
 		case AFLT_FLTUND: code = FPE_FLTUND; break;
 		case AFLT_FLTOVF: code = FPE_FLTOVF; break;
+		default:	  code = FPE_FLTINV; break;
 		}
 		break;
 
 	case T_ASTFLT|T_USER:
 		mtpr(AST_NO,PR_ASTLVL);
 		trapsig = false;
+		if (curcpu()->ci_want_resched)
+			preempt();
 		break;
 
 #ifdef DDB
@@ -316,6 +327,21 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		ksi.ksi_trap = frame->trap;
 		ksi.ksi_addr = (void *)frame->code;
 		ksi.ksi_code = code;
+
+		/*
+		 * Arithmetic exceptions can be of two kinds:
+		 * - traps (codes 1..7), where pc points to the
+		 *   next instruction to execute.
+		 * - faults (codes 8..10), where pc points to the
+		 *   faulting instruction.
+		 * In the latter case, we need to advance pc by ourselves
+		 * to prevent a signal loop.
+		 *
+		 * XXX this is gross -- miod
+		 */
+		if (type == (T_ARITHFLT | T_USER) && (frame->code & 8))
+			frame->pc = skip_opcode(frame->pc);
+
 		trapsignal(l, &ksi);
 	}
 

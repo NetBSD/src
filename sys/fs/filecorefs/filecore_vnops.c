@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.28 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.28.4.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.28 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.28.4.1 2009/05/13 17:21:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.28 2008/11/26 20:17:33 pooka Ex
  * super user is granted all permissions.
  */
 int
-filecore_access(v)
-	void *v;
+filecore_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -130,8 +129,7 @@ filecore_access(v)
 }
 
 int
-filecore_getattr(v)
-	void *v;
+filecore_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -168,8 +166,7 @@ filecore_getattr(v)
  * Vnode op for reading.
  */
 int
-filecore_read(v)
-	void *v;
+filecore_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -263,8 +260,7 @@ out:
  * Vnode op for readdir
  */
 int
-filecore_readdir(v)
-	void *v;
+filecore_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -390,8 +386,7 @@ out:
  * But otherwise the block read here is in the block buffer two times.
  */
 int
-filecore_readlink(v)
-	void *v;
+filecore_readlink(void *v)
 {
 #if 0
 	struct vop_readlink_args /* {
@@ -405,8 +400,7 @@ filecore_readlink(v)
 }
 
 int
-filecore_link(v)
-	void *v;
+filecore_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -420,8 +414,7 @@ filecore_link(v)
 }
 
 int
-filecore_symlink(v)
-	void *v;
+filecore_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -441,8 +434,7 @@ filecore_symlink(v)
  * then call the device strategy routine.
  */
 int
-filecore_strategy(v)
-	void *v;
+filecore_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -477,8 +469,7 @@ filecore_strategy(v)
  */
 /*ARGSUSED*/
 int
-filecore_print(v)
-	void *v;
+filecore_print(void *v)
 {
 
 	printf("tag VT_FILECORE, filecore vnode\n");
@@ -489,8 +480,7 @@ filecore_print(v)
  * Return POSIX pathconf information applicable to filecore filesystems.
  */
 int
-filecore_pathconf(v)
-	void *v;
+filecore_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -546,7 +536,7 @@ filecore_pathconf(v)
 /*
  * Global vfs data structures for filecore
  */
-int (**filecore_vnodeop_p) __P((void *));
+int (**filecore_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, filecore_lookup },		/* lookup */

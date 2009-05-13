@@ -1,4 +1,4 @@
-/*	$NetBSD: criov.c,v 1.6 2008/02/01 04:52:35 tls Exp $ */
+/*	$NetBSD: criov.c,v 1.6.24.1 2009/05/13 17:22:56 jym Exp $ */
 /*      $OpenBSD: criov.c,v 1.11 2002/06/10 19:36:43 espie Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.6 2008/02/01 04:52:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.6.24.1 2009/05/13 17:22:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,7 @@ int cuio_getindx(struct uio *uio, int loc, int *off);
 
 
 void
-cuio_copydata(uio, off, len, cp)
-	struct uio *uio;
-	int off, len;
-	void *cp;
+cuio_copydata(struct uio *uio, int off, int len, void *cp)
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;
@@ -82,10 +79,7 @@ cuio_copydata(uio, off, len, cp)
 }
 
 void
-cuio_copyback(uio, off, len, cp)
-	struct uio *uio;
-	int off, len;
-	void *cp;
+cuio_copyback(struct uio *uio, int off, int len, void *cp)
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;

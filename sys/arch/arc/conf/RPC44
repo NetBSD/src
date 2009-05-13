@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.33 2008/11/24 11:41:08 ad Exp $
+# $NetBSD: RPC44,v 1.33.4.1 2009/05/13 17:16:11 jym Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.33 $"
+#ident		"GENERIC-$Revision: 1.33.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -43,8 +43,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
-
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

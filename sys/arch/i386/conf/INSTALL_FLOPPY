@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.4 2009/02/06 18:50:27 jym Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.4.2.1 2009/05/13 17:17:48 jym Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -57,8 +57,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
-
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

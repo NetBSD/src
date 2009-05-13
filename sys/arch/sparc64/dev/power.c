@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.8 2006/05/12 23:35:24 uwe Exp $ */
+/*	$NetBSD: power.c,v 1.8.80.1 2009/05/13 17:18:38 jym Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.8 2006/05/12 23:35:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.8.80.1 2009/05/13 17:18:38 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,10 +68,7 @@ extern struct cfdriver power_cd;
  */
 
 static int
-powermatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+powermatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	register struct confargs *ca = aux;
 
@@ -83,9 +80,7 @@ powermatch(parent, cf, aux)
 
 /* ARGSUSED */
 static void
-powerattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+powerattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
@@ -96,7 +91,7 @@ powerattach(parent, self, aux)
 }
 
 void
-powerdown()
+powerdown(void)
 {
 	*POWER_REG |= POWER_OFF;
 }

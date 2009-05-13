@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.37 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.37.58.1 2009/05/13 17:16:05 jym Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.37 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.37.58.1 2009/05/13 17:16:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.37 2007/03/04 05:59:10 christos Exp 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 
-void dec_kn8ae_init __P((void));
-void dec_kn8ae_cons_init __P((void));
-static void dec_kn8ae_device_register __P((struct device *, void *));
+void dec_kn8ae_init(void);
+void dec_kn8ae_cons_init(void);
+static void dec_kn8ae_device_register(struct device *, void *);
 
 static void dec_kn8ae_mcheck_handler
-    __P((unsigned long, struct trapframe *, unsigned long, unsigned long));
+(unsigned long, struct trapframe *, unsigned long, unsigned long);
 
 const struct alpha_variation_table dec_kn8ae_variations[] = {
 	{ 0, "AlphaServer 8400" },
@@ -115,9 +115,7 @@ dec_kn8ae_cons_init()
 
 /* #define	BDEBUG	1 */
 static void
-dec_kn8ae_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_kn8ae_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *primarydev, *pcidev, *ctrlrdev;
@@ -249,23 +247,22 @@ dec_kn8ae_device_register(dev, aux)
 /*
  * KN8AE Machine Check Handlers.
  */
-void kn8ae_harderr __P((unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
+void kn8ae_harderr(unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
 
-static void kn8ae_softerr __P((unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
+static void kn8ae_softerr(unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
 
-void kn8ae_mcheck __P((unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
+void kn8ae_mcheck(unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
 
 /*
  * Support routine for clearing errors
  */
-static void clear_tlsb_ebits __P((int));
+static void clear_tlsb_ebits(int);
 
 static void
-clear_tlsb_ebits(cpuonly)
-	int cpuonly;
+clear_tlsb_ebits(int cpuonly)
 {
 	int node;
 	u_int32_t tldev;
@@ -343,11 +340,7 @@ clear_tlsb_ebits(cpuonly)
 static const char *fmt1 = "        %-25s = 0x%l016x\n";
 
 void
-kn8ae_harderr(mces, type, logout, framep)
-	unsigned long mces;
-	unsigned long type;
-	unsigned long logout;
-	struct trapframe *framep;
+kn8ae_harderr(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
 {
 	int whami, cpuwerr, dof_cnt;
 	mc_hdr_ev5 *hdr;
@@ -426,11 +419,7 @@ kn8ae_harderr(mces, type, logout, framep)
  */
 
 static void
-kn8ae_softerr(mces, type, logout, framep)
-	unsigned long mces;
-	unsigned long type;
-	unsigned long logout;
-	struct trapframe *framep;
+kn8ae_softerr(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
 {
 	int whami, cpuwerr, dof_cnt;
 	mc_hdr_ev5 *hdr;
@@ -478,11 +467,7 @@ kn8ae_softerr(mces, type, logout, framep)
  */
 
 void
-kn8ae_mcheck(mces, type, logout, framep)
-	unsigned long mces;
-	unsigned long type;
-	unsigned long logout;
-	struct trapframe *framep;
+kn8ae_mcheck(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
 {
 	struct mchkinfo *mcp;
 	int get_dwlpx_regs;
@@ -583,11 +568,7 @@ kn8ae_mcheck(mces, type, logout, framep)
 }
 
 static void
-dec_kn8ae_mcheck_handler(mces, framep, vector, param)
-	unsigned long mces;
-	struct trapframe *framep;
-	unsigned long vector;
-	unsigned long param;
+dec_kn8ae_mcheck_handler(unsigned long mces, struct trapframe *framep, unsigned long vector, unsigned long param)
 {
 	switch (vector) {
 	case ALPHA_SYS_ERROR:

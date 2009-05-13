@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_cpu.c,v 1.41 2009/01/19 23:04:26 njoly Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.41.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,9 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.41 2009/01/19 23:04:26 njoly Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.41.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.41 2009/01/19 23:04:26 njoly Exp $");
 #include <sys/callout.h>
 
 #include <uvm/uvm_extern.h>
-
-#ifdef COMPAT_50
-#include <compat/sys/cpuio.h>
-#endif
 
 void	cpuctlattach(int);
 
@@ -163,17 +157,6 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 
 	mutex_enter(&cpu_lock);
 	switch (cmd) {
-#ifdef IOC_CPU_OSETSTATE
-		cpustate_t csb;
-
-	case IOC_CPU_OSETSTATE: {
-		cpustate50_t *ocs = data;
-		cpustate50_to_cpustate(ocs, &csb);
-		cs = &csb;
-		error = 1;
-		/*FALLTHROUGH*/
-	}
-#endif
 	case IOC_CPU_SETSTATE:
 		if (error == 0)
 			cs = data;
@@ -187,22 +170,10 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			error = ESRCH;
 			break;
 		}
-		if (!cs->cs_intr) {
-			error = EOPNOTSUPP;
-			break;
-		}
+		error = cpu_setintr(ci, cs->cs_intr);
 		error = cpu_setstate(ci, cs->cs_online);
 		break;
 
-#ifdef IOC_CPU_OGETSTATE
-	case IOC_CPU_OGETSTATE: {
-		cpustate50_t *ocs = data;
-		cpustate50_to_cpustate(ocs, &csb);
-		cs = &csb;
-		error = 1;
-		/*FALLTHROUGH*/
-	}
-#endif
 	case IOC_CPU_GETSTATE:
 		if (error == 0)
 			cs = data;
@@ -218,15 +189,14 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			cs->cs_online = false;
 		else
 			cs->cs_online = true;
-		cs->cs_intr = true;
-		cs->cs_lastmod = ci->ci_schedstate.spc_lastmod;
-#ifdef IOC_CPU_OGETSTATE
-		if (cmd == IOC_CPU_OGETSTATE) {
-			cpustate50_t *ocs = data;
-			cpustate_to_cpustate50(cs, ocs);
-			error = 0;
-		}
-#endif
+		if ((ci->ci_schedstate.spc_flags & SPCF_NOINTR) != 0)
+			cs->cs_intr = false;
+		else
+			cs->cs_intr = true;
+		cs->cs_lastmod = (int32_t)ci->ci_schedstate.spc_lastmod;
+		cs->cs_lastmodhi = (int32_t)
+		    (ci->ci_schedstate.spc_lastmod >> 32);
+		cs->cs_intrcnt = cpu_intr_count(ci) + 1;
 		break;
 
 	case IOC_CPU_MAPID:
@@ -275,15 +245,15 @@ cpu_xc_offline(struct cpu_info *ci)
 	int s;
 
 	/*
-	 * Thread which sent unicast (separate context) is holding
-	 * the cpu_lock for us.
+	 * Thread that made the cross call (separate context) holds
+	 * cpu_lock on our behalf.
 	 */
 	spc = &ci->ci_schedstate;
 	s = splsched();
 	spc->spc_flags |= SPCF_OFFLINE;
 	splx(s);
 
-	/* Take the first available CPU for the migration */
+	/* Take the first available CPU for the migration. */
 	for (CPU_INFO_FOREACH(cii, target_ci)) {
 		mspc = &target_ci->ci_schedstate;
 		if ((mspc->spc_flags & SPCF_OFFLINE) == 0)
@@ -401,6 +371,99 @@ cpu_setstate(struct cpu_info *ci, bool online)
 	spc->spc_lastmod = time_second;
 	return 0;
 }
+
+#ifdef __HAVE_INTR_CONTROL
+static void
+cpu_xc_intr(struct cpu_info *ci)
+{
+	struct schedstate_percpu *spc;
+	int s;
+
+	spc = &ci->ci_schedstate;
+	s = splsched();
+	spc->spc_flags &= ~SPCF_NOINTR;
+	splx(s);
+}
+
+static void
+cpu_xc_nointr(struct cpu_info *ci)
+{
+	struct schedstate_percpu *spc;
+	int s;
+
+	spc = &ci->ci_schedstate;
+	s = splsched();
+	spc->spc_flags |= SPCF_NOINTR;
+	splx(s);
+}
+
+int
+cpu_setintr(struct cpu_info *ci, bool intr)
+{
+	struct schedstate_percpu *spc;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci2;
+	uint64_t where;
+	xcfunc_t func;
+	int nintr;
+
+	spc = &ci->ci_schedstate;
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	if (intr) {
+		if ((spc->spc_flags & SPCF_NOINTR) == 0)
+			return 0;
+		func = (xcfunc_t)cpu_xc_intr;
+	} else {
+		if ((spc->spc_flags & SPCF_NOINTR) != 0)
+			return 0;
+		/*
+		 * Ensure that at least one CPU within the system
+		 * is handing device interrupts.
+		 */
+		nintr = 0;
+		for (CPU_INFO_FOREACH(cii, ci2)) {
+			if ((ci2->ci_schedstate.spc_flags & SPCF_NOINTR) != 0)
+				continue;
+			if (ci2 == ci)
+				continue;
+			nintr++;
+		}
+		if (nintr == 0)
+			return EBUSY;
+		func = (xcfunc_t)cpu_xc_nointr;
+	}
+
+	where = xc_unicast(0, func, ci, NULL, ci);
+	xc_wait(where);
+	if (intr) {
+		KASSERT((spc->spc_flags & SPCF_NOINTR) == 0);
+	} else if ((spc->spc_flags & SPCF_NOINTR) == 0) {
+		/* If was not set offline, then it is busy */
+		return EBUSY;
+	}
+
+	/* Direct interrupts away from the CPU and record the change. */
+	cpu_intr_redistribute();
+	spc->spc_lastmod = time_second;
+	return 0;
+}
+#else	/* __HAVE_INTR_CONTROL */
+int
+cpu_setintr(struct cpu_info *ci, bool intr)
+{
+
+	return EOPNOTSUPP;
+}
+
+u_int
+cpu_intr_count(struct cpu_info *ci)
+{
+
+	return 0;	/* 0 == "don't know" */
+}
+#endif	/* __HAVE_INTR_CONTROL */
 
 bool
 cpu_softintr_p(void)

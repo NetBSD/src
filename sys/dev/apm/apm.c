@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.22 2008/06/12 21:47:46 cegger Exp $ */
+/*	$NetBSD: apm.c,v 1.22.10.1 2009/05/13 17:19:11 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.22 2008/06/12 21:47:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.22.10.1 2009/05/13 17:19:11 jym Exp $");
 
 #include "opt_apm.h"
 
@@ -835,6 +835,7 @@ apmioctl(dev_t dev, u_long cmd, void *data, int flag,
 		}
 		break;
 
+	case OAPM_IOC_GETPOWER:
 	case APM_IOC_GETPOWER:
 		powerp = (struct apm_power_info *)data;
 		if ((error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, 0,

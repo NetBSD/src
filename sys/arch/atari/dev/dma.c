@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.18 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: dma.c,v 1.18.58.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.18 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.18.58.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,12 +88,12 @@ static  TAILQ_HEAD(acthead, dma_entry)	dma_active;
 
 static	int	must_init = 1;		/* Must initialize		*/
 
-int	cdmaint __P((void *, int));
+int	cdmaint(void *, int);
 
-static	void	st_dma_init __P((void));
+static	void	st_dma_init(void);
 
 static void
-st_dma_init()
+st_dma_init(void)
 {
 	int	i;
 
@@ -108,12 +108,7 @@ st_dma_init()
 }
 
 int
-st_dmagrab(int_func, call_func, softc, lock_stat, rcaller)
-dma_farg	int_func;
-dma_farg 	call_func;
-void		*softc;
-int		*lock_stat;
-int		rcaller;
+st_dmagrab(dma_farg int_func, dma_farg call_func, void *softc, int *lock_stat, int rcaller)
 {
 	int		sps;
 	DMA_ENTRY	*req;
@@ -170,9 +165,7 @@ int		rcaller;
 }
 
 void
-st_dmafree(softc, lock_stat)
-void	*softc;
-int	*lock_stat;
+st_dmafree(void *softc, int *lock_stat)
 {
 	int		sps;
 	DMA_ENTRY	*req;
@@ -212,15 +205,14 @@ int	*lock_stat;
 }
 
 int
-st_dmawanted()
+st_dmawanted(void)
 {
 	return(dma_active.tqh_first->entries.tqe_next != NULL);
 }
 
 int
-cdmaint(unused, sr)
-void	*unused;
-int	sr;	/* sr at time of interrupt */
+cdmaint(void *unused, int sr)
+	/* sr:	 sr at time of interrupt */
 {
 	dma_farg	int_func;
 	void		*softc;
@@ -250,8 +242,7 @@ int	sr;	/* sr at time of interrupt */
  * Note: The order _is_ important!
  */
 void
-st_dmaaddr_set(address)
-void *	address;
+st_dmaaddr_set(void * address)
 {
 	register u_long ad = (u_long)address;
 
@@ -264,7 +255,7 @@ void *	address;
  * Get address from DMA unit.
  */
 u_long
-st_dmaaddr_get()
+st_dmaaddr_get(void)
 {
 	register u_long ad = 0;
 
@@ -279,8 +270,7 @@ st_dmaaddr_get()
  * The DMA_WRBIT trick flushes the FIFO before doing DMA.
  */
 void
-st_dmacomm(mode, nblk)
-int	mode, nblk;
+st_dmacomm(int mode, int nblk)
 {
 	DMA->dma_mode = mode;
 	DMA->dma_mode = mode ^ DMA_WRBIT;

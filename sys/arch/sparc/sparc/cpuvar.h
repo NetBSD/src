@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.75 2008/04/28 20:23:36 martin Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.75.14.1 2009/05/13 17:18:36 jym Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -416,9 +416,9 @@ struct cpu_info {
 
 #define CPU_INFO_ITERATOR		int
 #ifdef MULTIPROCESSOR
-#define CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = cpus[cii], cii < sparc_ncpus; cii++
+#define CPU_INFO_FOREACH(cii, cp)	cii = 0; cp = &cpus[cii].ci, cii < sparc_ncpus; cii++
 #else
-#define	CPU_INFO_FOREACH(cii, ci)	(void)cii, ci = curcpu(); ci != NULL; ci = NULL
+#define	CPU_INFO_FOREACH(cii, cp)	(void)cii, cp = curcpu(); cp != NULL; cp = NULL
 #endif
 
 /*
@@ -433,7 +433,6 @@ struct cpu_info {
 void getcpuinfo (struct cpu_info *sc, int node);
 void mmu_install_tables (struct cpu_info *);
 void pmap_alloc_cpu (struct cpu_info *);
-void pmap_globalize_boot_cpu (struct cpu_info *);
 
 #define	CPUSET_ALL	0xffffffffU	/* xcall to all configured CPUs */
 
@@ -473,8 +472,14 @@ void xcall(xcall_func_t, xcall_trap_t, int, int, int, u_int);
 extern int bootmid;			/* Module ID of boot CPU */
 #define CPU_MID2CPUNO(mid)		((mid) != 0 ? (mid) - 8 : 0)
 
-extern struct cpu_info **cpus;
+#ifdef MULTIPROCESSOR
+union cpu_info_pg {
+	struct cpu_info ci;	/* cpu info (aliased (per cpu) to CPUINFO_VA */
+	char pad[32 * 1024];	/* XXX: force 32K alignment for now */
+};				/* SMP capable cpu types */
+extern union cpu_info_pg *cpus;
 extern u_int cpu_ready_mask;		/* the set of CPUs marked as READY */
+#endif
 
 #define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
 

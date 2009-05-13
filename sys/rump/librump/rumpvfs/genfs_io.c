@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.7 2009/02/05 19:59:35 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.7.2.1 2009/05/13 17:22:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.7 2009/02/05 19:59:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.7.2.1 2009/05/13 17:22:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -41,6 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.7 2009/02/05 19:59:35 pooka Exp $");
 #include <miscfs/genfs/genfs.h>
 
 #include "rump_private.h"
+
+#if 0
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 void
 genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
@@ -81,6 +87,7 @@ genfs_getpages(void *v)
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1<<bshift;
 	int count = *ap->a_count;
+	int opflags = ap->a_flags;
 	int async;
 	int i, error;
 
@@ -97,7 +104,8 @@ genfs_getpages(void *v)
 		panic("%s: centeridx != not supported", __func__);
 
 	if (ap->a_access_type & VM_PROT_WRITE)
-		vp->v_iflag |= VI_ONWORKLST;
+		if ((vp->v_iflag & VI_ONWORKLST) == 0)
+			vn_syncer_add_to_worklist(vp, filedelay);
 
 	curoff = ap->a_offset & ~PAGE_MASK;
 	for (i = 0; i < count; i++, curoff += PAGE_SIZE) {
@@ -122,7 +130,8 @@ genfs_getpages(void *v)
 
 	/* got everything?  if so, just return */
 	if (i == count) {
-		mutex_exit(&uobj->vmobjlock);
+		if ((opflags & PGO_LOCKED) == 0)
+			mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
 
@@ -219,8 +228,10 @@ genfs_getpages(void *v)
 
 		VOP_STRATEGY(devvp, bp);
 		
-		if (!async)
+		if (!async) {
+			biowait(bp);
 			putiobuf(bp);
+		}
 	}
 
 	/* skip to beginning of pages we're interested in */
@@ -247,6 +258,8 @@ genfs_getpages(void *v)
 
 	kmem_free(tmpbuf, bufsize);
 
+	if (opflags & PGO_LOCKED)
+		mutex_enter(&uobj->vmobjlock);
 	return 0;
 }
 
@@ -274,6 +287,14 @@ genfs_putpages(void *v)
 	    ap->a_flags, NULL);
 }
 
+static void
+rump_putiodone(struct buf *bp)
+{
+
+	kmem_free(bp->b_data, bp->b_bufsize);
+	putiobuf(bp);
+}
+
 /*
  * This is a slightly strangely structured routine.  It always puts
  * all the pages for a vnode.  It starts by releasing pages which
@@ -287,20 +308,17 @@ int
 genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	struct vm_page **busypg)
 {
-	char databuf[MAXPHYS];
+	uint8_t databuf[MAXPHYS], *datap;
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pg, *pg_next;
+	struct buf *bp, *mbp;
 	voff_t smallest;
 	voff_t curoff, bufoff;
 	off_t eof;
-	size_t xfersize;
+	size_t xfersize, skipbytes = 0;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
-#if 0
 	int async = (flags & PGO_SYNCIO) == 0;
-#else
-	int async = 0;
-#endif
 
 	DPRINTF(("genfs_do_putpages: vnode %p, startoff %lld, endoff %lld\n",
 	    vp, (long long)startoff, (long long)endoff));
@@ -332,9 +350,16 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	/* all done? */
 	if (TAILQ_EMPTY(&uobj->memq)) {
-		vp->v_iflag &= ~VI_ONWORKLST;
+		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+			vn_syncer_remove_from_worklist(vp);
 		mutex_exit(&uobj->vmobjlock);
 		return 0;
+	}
+
+	if (async) {
+		datap = kmem_alloc(MAXPHYS, KM_SLEEP);
+	} else {
+		datap = databuf;
 	}
 
 	/* we need to flush */
@@ -351,21 +376,34 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		/* XXX: see comment about above KASSERT */
 		KASSERT((pg->flags & PG_BUSY) == 0);
 
-		curva = databuf + (curoff-smallest);
+		curva = datap + (curoff-smallest);
 		memcpy(curva, (void *)pg->uanon, PAGE_SIZE);
 		rumpvm_enterva((vaddr_t)curva, pg);
 
 		pg->flags |= PG_CLEAN | PG_BUSY;
 	}
 	KASSERT(curoff > smallest);
-
 	mutex_exit(&uobj->vmobjlock);
 
+	mbp = getiobuf(vp, true);
+	mbp->b_bufsize = MAXPHYS;
+	mbp->b_data = datap;
+	mbp->b_resid = mbp->b_bcount = MIN(curoff,eof)-smallest;
+	mbp->b_cflags |= BC_BUSY;
+	mbp->b_flags = B_WRITE;
+	if (async) {
+		mbp->b_flags |= B_ASYNC;
+		mbp->b_iodone = rump_putiodone;
+	}
+	mutex_enter(&vp->v_interlock);
+	++vp->v_numoutput;
+	mutex_exit(&vp->v_interlock);
+
 	/* then we write */
-	for (bufoff = 0; bufoff < MIN(curoff-smallest,eof); bufoff+=xfersize) {
-		struct buf *bp;
+	for (bufoff = 0; bufoff < MIN(curoff,eof)-smallest; bufoff+=xfersize) {
 		struct vnode *devvp;
 		daddr_t bn, lbn;
+		size_t iotodo;
 		int run, error;
 
 		lbn = (smallest + bufoff) >> bshift;
@@ -382,60 +420,42 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		 * in the kernel page cache while truncate has already
 		 * enlarged the file.  So just ignore those ranges.
 		 */
-		if (bn == -1)
+		if (bn == -1) {
+			skipbytes += xfersize;
 			continue;
-
-		bp = getiobuf(vp, true);
+		}
 
 		/* only write max what we are allowed to write */
-		bp->b_bcount = xfersize;
+		iotodo = xfersize;
 		if (smallest + bufoff + xfersize > eof)
-			bp->b_bcount -= (smallest+bufoff+xfersize) - eof;
-		bp->b_bcount = (bp->b_bcount + DEV_BSIZE-1) & ~(DEV_BSIZE-1);
+			iotodo -= (smallest+bufoff+xfersize) - eof;
+		iotodo = (iotodo + DEV_BSIZE-1) & ~(DEV_BSIZE-1);
 
-		KASSERT(bp->b_bcount > 0);
+		KASSERT(iotodo > 0);
 		KASSERT(smallest >= 0);
 
 		DPRINTF(("putpages writing from %x to %x (vp size %x)\n",
 		    (int)(smallest + bufoff),
-		    (int)(smallest + bufoff + bp->b_bcount),
+		    (int)(smallest + bufoff + iotodo),
 		    (int)eof));
 
-		bp->b_bufsize = round_page(bp->b_bcount);
+		bp = getiobuf(vp, true);
+		nestiobuf_setup(mbp, bp, bufoff, iotodo);
 		bp->b_lblkno = 0;
 		bp->b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
-		bp->b_data = databuf + bufoff;
-		bp->b_flags = B_WRITE;
-		bp->b_cflags |= BC_BUSY;
 
-		if (async) {
-			bp->b_flags |= B_ASYNC;
-			bp->b_iodone = uvm_aio_biodone;
-		}
-
-		vp->v_numoutput++;
 		VOP_STRATEGY(devvp, bp);
-		if (bp->b_error)
-			panic("%s: VOP_STRATEGY lazy bum %d",
-			    __func__, bp->b_error);
-		if (!async)
-			putiobuf(bp);
 	}
 	rumpvm_flushva(uobj);
+	nestiobuf_done(mbp, skipbytes, 0);
+
+	if (!async) {
+		biowait(mbp);
+		putiobuf(mbp);
+	}
 
 	mutex_enter(&uobj->vmobjlock);
 	goto restart;
-}
-
-int
-genfs_null_putpages(void *v)
-{
-	struct vop_putpages_args *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	KASSERT(vp->v_uobj.uo_npages == 0);
-	mutex_exit(&vp->v_interlock);
-	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.14.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
  * and the maximum number of interrupt registers.
  */
 #define	HP700_INT_BITS	(32)
+#define CPU_NINTS	HP700_INT_BITS		/* Use this one */
 
 /*
  * This describes one HP700 interrupt register.
@@ -55,14 +56,14 @@ struct hp700_int_reg {
 	volatile int *int_reg_level;
 
 	/*
-	 * This array has one entry for each bit in the 
-	 * interrupt request register. If the 24 most 
+	 * This array has one entry for each bit in the
+	 * interrupt request register. If the 24 most
 	 * significant bits are set, the low 8
 	 * bits are the index of the hp700_int_reg
-	 * that this interrupt bit leads to, with zero 
+	 * that this interrupt bit leads to, with zero
 	 * meaning that the interrupt bit is unused.
-	 * Otherwise this bits correspond to the 
-	 * hp700_int_bits. I.e. this bits are ored to 
+	 * Otherwise this bits correspond to the
+	 * hp700_int_bits. I.e. this bits are ored to
 	 * ipending_new in hp700_intr_ipending_new()
 	 * when an interrupt happend.
 	 *
@@ -85,7 +86,7 @@ struct hp700_int_reg {
 extern	struct hp700_int_reg int_reg_cpu;
 void	hp700_intr_bootstrap(void);
 void	hp700_intr_reg_establish(struct hp700_int_reg *);
-void *	hp700_intr_establish(struct device *, int, int (*)(void *), void *,
+void *	hp700_intr_establish(device_t, int, int (*)(void *), void *,
 	    struct hp700_int_reg *, int);
 int	hp700_intr_allocate_bit(struct hp700_int_reg *);
 int	_hp700_intr_ipl_next(void);

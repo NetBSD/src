@@ -1,4 +1,4 @@
-/* $NetBSD: toaster.c,v 1.7 2008/04/28 20:23:52 martin Exp $ */
+/* $NetBSD: toaster.c,v 1.7.14.1 2009/05/13 17:19:53 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.7 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.7.14.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ struct toaster_softc {
 	callout_t led_callout[4];
 };
 
-static int	toaster_match(struct device *, struct cfdata *, void *);
-static void	toaster_attach(struct device *, struct device *, void *);
+static int	toaster_match(device_t, cfdata_t, void *);
+static void	toaster_attach(device_t, device_t, void *);
 
 extern struct cfdriver toaster_cd;
 
@@ -74,10 +74,7 @@ CFATTACH_DECL(toaster, sizeof(struct toaster_softc),
 static struct toaster_softc *toaster_sc = NULL;
 
 static int
-toaster_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+toaster_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* No more than one toaster per system */
 	if (toaster_sc == NULL)
@@ -222,10 +219,7 @@ burner_sysctl(SYSCTLFN_ARGS)
 
 
 static void
-toaster_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+toaster_attach(device_t parent, device_t self, void *aux)
 {
 	struct toaster_softc *sc = (void *)self;
 	struct tsdio_attach_args *taa = aux;

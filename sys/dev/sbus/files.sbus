@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.31 2007/08/26 00:39:39 macallan Exp $
+#	$NetBSD: files.sbus,v 1.31.40.1 2009/05/13 17:21:22 jym Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -119,7 +119,7 @@ device	tcx: bt_dac, fb, rasops8, rasops24
 attach	tcx at sbus
 file	dev/sbus/tcx.c			tcx needs-flag
 
-device	zx: fb, rasops32
+device	zx: fb, rasops32, wsemuldisplaydev, vcons
 attach	zx at sbus
 file	dev/sbus/zx.c			zx
 

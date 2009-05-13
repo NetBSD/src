@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.13 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.13.92.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -142,12 +142,12 @@ enum colormap_type {
 #define MAKE_GREY_ENTRY(l)	(l & 0xff)
 
 struct grfabs_sw {
-	void	 (*display_view) __P((view_t*));
-	view_t	* (*alloc_view) __P((dmode_t *, dimen_t *, u_char));
-	void	 (*free_view) __P((view_t *));
-	void	 (*remove_view) __P((view_t *));
-	void	 (*save_view) __P((view_t *));
-	int 	 (*use_colormap) __P((view_t *, colormap_t *));
+	void	 (*display_view)(view_t*);
+	view_t	* (*alloc_view)(dmode_t *, dimen_t *, u_char);
+	void	 (*free_view)(view_t *);
+	void	 (*remove_view)(view_t *);
+	void	 (*save_view)(view_t *);
+	int 	 (*use_colormap)(view_t *, colormap_t *);
 };
 
 /* display mode */
@@ -181,7 +181,7 @@ typedef LIST_HEAD(modelist, display_mode) MODES;
 /*
  * Prototype for the probe function
  */
-typedef void (*grf_probe_t) __P((MODES *));
+typedef void (*grf_probe_t)(MODES *);
 
 /*
  * Common variables
@@ -194,14 +194,14 @@ extern u_long		gra_def_color16[16];
 /*
  * Prototypes:
  */
-int	grfabs_probe __P((grf_probe_t));
-view_t	*grf_alloc_view __P((dmode_t *d, dimen_t *dim, u_char depth));
-dmode_t	*grf_get_best_mode __P((dimen_t *dim, u_char depth));
-void	grf_display_view __P((view_t *v));
-void	grf_remove_view __P((view_t *v));
-void	grf_free_view __P((view_t *v));
-int	grf_get_colormap __P((view_t *, colormap_t *));
-int	grf_use_colormap __P((view_t *, colormap_t *));
-void	grf_save_view __P((view_t *v));
+int	grfabs_probe(grf_probe_t);
+view_t	*grf_alloc_view(dmode_t *d, dimen_t *dim, u_char depth);
+dmode_t	*grf_get_best_mode(dimen_t *dim, u_char depth);
+void	grf_display_view(view_t *v);
+void	grf_remove_view(view_t *v);
+void	grf_free_view(view_t *v);
+int	grf_get_colormap(view_t *, colormap_t *);
+int	grf_use_colormap(view_t *, colormap_t *);
+void	grf_save_view(view_t *v);
 
 #endif /* _GRFABS_REG_H */

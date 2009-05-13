@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.35 2008/04/28 20:23:45 martin Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.35.14.1 2009/05/13 17:19:03 jym Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.35 2008/04/28 20:23:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.35.14.1 2009/05/13 17:19:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -68,10 +68,7 @@ static void svr4_decode_cmd(u_long, char *, char *, int *, int *);
  * Decode an ioctl command symbolically
  */
 static void
-svr4_decode_cmd(cmd, dir, c, num, argsiz)
-	u_long		  cmd;
-	char		 *dir, *c;
-	int		 *num, *argsiz;
+svr4_decode_cmd(u_long cmd, char *dir, char *c, int *num, int *argsiz)
 {
 	if (cmd & SVR4_IOC_VOID)
 		*dir++ = 'V';

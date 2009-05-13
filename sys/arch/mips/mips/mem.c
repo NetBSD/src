@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35 2007/10/17 19:55:38 garbled Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.34.1 2009/05/13 17:18:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35 2007/10/17 19:55:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.34.1 2009/05/13 17:18:02 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -117,10 +117,7 @@ const struct cdevsw mem_ultrix_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t v;
 	int c;

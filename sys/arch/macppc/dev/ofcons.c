@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.23 2008/06/13 11:54:31 cegger Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.23.10.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.23 2008/06/13 11:54:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.23.10.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -63,8 +63,8 @@ struct ofcons_softc {
 
 static int stdin, stdout;
 
-static int ofcmatch __P((struct device *, struct cfdata *, void *));
-static void ofcattach __P((struct device *, struct device *, void *));
+static int ofcmatch(struct device *, struct cfdata *, void *);
+static void ofcattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(macofcons, sizeof(struct ofcons_softc),
     ofcmatch, ofcattach, NULL, NULL);

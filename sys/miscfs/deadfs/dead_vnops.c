@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.47 2008/01/25 14:32:15 ad Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.47.24.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.47 2008/01/25 14:32:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.47.24.1 2009/05/13 17:22:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,7 @@ dead_open(void *v)
  */
 /* ARGSUSED */
 int
-dead_read(v)
-	void *v;
+dead_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -151,8 +150,7 @@ dead_read(v)
  */
 /* ARGSUSED */
 int
-dead_write(v)
-	void *v;
+dead_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -171,8 +169,7 @@ dead_write(v)
  */
 /* ARGSUSED */
 int
-dead_ioctl(v)
-	void *v;
+dead_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
@@ -190,8 +187,7 @@ dead_ioctl(v)
 
 /* ARGSUSED */
 int
-dead_poll(v)
-	void *v;
+dead_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
@@ -209,8 +205,7 @@ dead_poll(v)
  * Just call the device strategy routine
  */
 int
-dead_strategy(v)
-	void *v;
+dead_strategy(void *v)
 {
 
 	struct vop_strategy_args /* {
@@ -232,8 +227,7 @@ dead_strategy(v)
  * Wait until the vnode has finished changing state.
  */
 int
-dead_lock(v)
-	void *v;
+dead_lock(void *v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
@@ -256,8 +250,7 @@ dead_lock(v)
  * Wait until the vnode has finished changing state.
  */
 int
-dead_bmap(v)
-	void *v;
+dead_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -308,9 +301,7 @@ dead_getpages(void *v)
  * in a state of change.
  */
 int
-chkvnlock(vp, interlock)
-	struct vnode *vp;
-	bool interlock;
+chkvnlock(struct vnode *vp, bool interlock)
 {
 	int locked = 0;
 

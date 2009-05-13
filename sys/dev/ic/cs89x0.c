@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.23 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.23.18.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.23 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.23.18.1 2009/05/13 17:19:22 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -2174,7 +2174,7 @@ cs_stop(struct ifnet *ifp, int disable)
 }
 
 int
-cs_activate(struct device *self, enum devact act)
+cs_activate(device_t self, enum devact act)
 {
 	struct cs_softc *sc = (void *)self;
 	int s, error = 0;

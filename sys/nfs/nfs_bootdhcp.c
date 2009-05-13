@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.45 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.45.4.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.45 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.45.4.1 2009/05/13 17:22:51 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -271,8 +271,11 @@ nfs_bootdhcp(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 		goto out;
 	}
 
-	if ((*flags & NFS_BOOT_ALLINFO) != NFS_BOOT_ALLINFO)
+	if ((*flags & NFS_BOOT_ALLINFO) != NFS_BOOT_ALLINFO) {
+		printf("nfs_boot: missing options (need IP, netmask, "
+		       "gateway, next-server, root-path)\n");
 		return EADDRNOTAVAIL;
+	}
 
 out:
 	if (error) {
@@ -322,13 +325,13 @@ bootpcheck(struct mbuf *m, void *context)
 	 * Is this a valid reply?
 	 */
 	if (m->m_pkthdr.len < BOOTP_SIZE_MIN) {
-		DPRINTF(("bootpcheck: short packet %d < %d\n", m->m_pkthdr.len,
-		    BOOTP_SIZE_MIN));
+		DPRINTF(("bootpcheck: short packet %d < %zu\n", 
+		    m->m_pkthdr.len, BOOTP_SIZE_MIN));
 		return (-1);
 	}
 	if (m->m_pkthdr.len > BOOTP_SIZE_MAX) {
-		DPRINTF(("Bootpcheck: long packet %d > %d\n", m->m_pkthdr.len,
-		    BOOTP_SIZE_MAX));
+		DPRINTF(("Bootpcheck: long packet %d > %zu\n", 
+		   m->m_pkthdr.len, BOOTP_SIZE_MAX));
 		return (-1);
 	}
 

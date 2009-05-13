@@ -1,4 +1,4 @@
-/*	$NetBSD: intoa.c,v 1.1 1999/05/07 14:49:52 drochner Exp $	*/
+/*	$NetBSD: intoa.c,v 1.1.156.1 2009/05/13 17:22:15 jym Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -44,13 +44,12 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <lib/libkern/libkern.h>
 #else
-char *intoa __P((u_int32_t)); /* XXX */
+char *intoa(u_int32_t); /* XXX */
 #endif
 
 /* Similar to inet_ntoa() */
 char *
-intoa(addr)
-	u_int32_t addr;
+intoa(u_int32_t addr)
 {
 	char *cp;
 	u_int byte;

@@ -1,4 +1,4 @@
-/*	$NetBSD: strspn.c,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: strspn.c,v 1.1.92.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strspn.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strspn.c,v 1.1 2006/04/07 14:21:29 cherry Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.1.92.1 2009/05/13 17:17:57 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,9 +46,7 @@ __RCSID("$NetBSD: strspn.c,v 1.1 2006/04/07 14:21:29 cherry Exp $");
  * Span the string s2 (skip characters that are in s2).
  */
 size_t
-strspn(s1, s2)
-	const char *s1;
-	const char *s2;
+strspn(const char *s1, const char *s2)
 {
 	const char *p = s1, *spanp;
 	char c, sc;

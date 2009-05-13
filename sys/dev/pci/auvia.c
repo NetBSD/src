@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.67 2008/10/11 20:08:15 dholland Exp $	*/
+/*	$NetBSD: auvia.c,v 1.67.8.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.67 2008/10/11 20:08:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.67.8.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct auvia_dma_op {
 #define AUVIA_DMAOP_COUNT(x)	((x)&0x00FFFFFF)
 };
 
-static int	auvia_match(device_t, struct cfdata *, void *);
+static int	auvia_match(device_t, cfdata_t, void *);
 static void	auvia_attach(device_t, device_t, void *);
 static int	auvia_detach(device_t, int);
 static void	auvia_childdet(device_t, device_t);
@@ -124,7 +124,7 @@ static int	auvia_waitready_codec(struct auvia_softc *);
 static int	auvia_waitvalid_codec(struct auvia_softc *);
 static void	auvia_spdif_event(void *, bool);
 
-CFATTACH_DECL2(auvia, sizeof (struct auvia_softc),
+CFATTACH_DECL2_NEW(auvia, sizeof (struct auvia_softc),
     auvia_match, auvia_attach, auvia_detach, NULL, NULL, auvia_childdet);
 
 /* VIA VT823xx revision number */
@@ -267,7 +267,7 @@ static const struct audio_format auvia_spdif_formats[AUVIA_SPDIF_NFORMATS] = {
 
 
 static int
-auvia_match(device_t parent, struct cfdata *match, void *aux)
+auvia_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -333,6 +333,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 
 	pa = aux;
 	sc = device_private(self);
+	sc->sc_dev = self;
 	intrstr = NULL;
 	pc = pa->pa_pc;
 	pt = pa->pa_tag;
@@ -411,7 +412,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auvia_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
@@ -419,7 +420,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* disable SBPro compat & others */
 	pr = pci_conf_read(pc, pt, AUVIA_PCICONF_JUNK);
@@ -442,7 +443,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 	sc->host_if.spdif_event = auvia_spdif_event;
 
 	if ((r = ac97_attach(&sc->host_if, self)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't attach codec (error 0x%X)\n", r);
+		aprint_error_dev(sc->sc_dev, "can't attach codec (error 0x%X)\n", r);
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
@@ -470,7 +471,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		sc->codec_if->vtbl->detach(sc->codec_if);
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
-		aprint_error_dev(&sc->sc_dev, "can't create encodings\n");
+		aprint_error_dev(sc->sc_dev, "can't create encodings\n");
 		return;
 	}
 	if (0 != auconv_create_encodings(auvia_spdif_formats,
@@ -478,14 +479,14 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		sc->codec_if->vtbl->detach(sc->codec_if);
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
-		aprint_error_dev(&sc->sc_dev, "can't create spdif encodings\n");
+		aprint_error_dev(sc->sc_dev, "can't create spdif encodings\n");
 		return;
 	}
 
 	if (!pmf_device_register(self, NULL, auvia_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&auvia_hw_if, sc, sc->sc_dev);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
 	return;
 }
@@ -523,7 +524,7 @@ auvia_reset_codec(void *addr)
 		AUVIA_PCICONF_JUNK) & AUVIA_PCICONF_PRIVALID); i--)
 		DELAY(1);
 	if (i == 0) {
-		printf("%s: codec reset timed out\n", device_xname(&sc->sc_dev));
+		printf("%s: codec reset timed out\n", device_xname(sc->sc_dev));
 		return ETIMEDOUT;
 	}
 	return 0;
@@ -539,7 +540,7 @@ auvia_waitready_codec(struct auvia_softc *sc)
 		AUVIA_CODEC_CTL) & AUVIA_CODEC_BUSY); i++)
 		delay(1);
 	if (i >= TIMEOUT) {
-		printf("%s: codec busy\n", device_xname(&sc->sc_dev));
+		printf("%s: codec busy\n", device_xname(sc->sc_dev));
 		return 1;
 	}
 
@@ -556,7 +557,7 @@ auvia_waitvalid_codec(struct auvia_softc *sc)
 		AUVIA_CODEC_CTL) & AUVIA_CODEC_PRIVALID); i++)
 			delay(1);
 	if (i >= TIMEOUT) {
-		printf("%s: codec invalid\n", device_xname(&sc->sc_dev));
+		printf("%s: codec invalid\n", device_xname(sc->sc_dev));
 		return 1;
 	}
 
@@ -849,27 +850,27 @@ auvia_malloc(void *addr, int direction, size_t size,
 	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
 				      1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to allocate DMA, error = %d\n", error);
+		aprint_error_dev(sc->sc_dev, "unable to allocate DMA, error = %d\n", error);
 		goto fail_alloc;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &p->seg, rseg, size, &p->addr,
 				    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map DMA, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to map DMA, error = %d\n",
 		       error);
 		goto fail_map;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 				       BUS_DMA_NOWAIT, &p->map)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to create DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to create DMA map, error = %d\n",
 		       error);
 		goto fail_create;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, size, NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to load DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to load DMA map, error = %d\n",
 		       error);
 		goto fail_load;
 	}
@@ -981,7 +982,7 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 			sizeof(struct auvia_dma_op) * segs, M_DEVBUF, M_WAITOK);
 
 		if (ch->sc_dma_ops == NULL) {
-			aprint_error_dev(&sc->sc_dev, "couldn't build dmaops\n");
+			aprint_error_dev(sc->sc_dev, "couldn't build dmaops\n");
 			return 1;
 		}
 
@@ -992,7 +993,7 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 
 		if (!dp)
 			panic("%s: build_dma_ops: where'd my memory go??? "
-				"address (%p)\n", device_xname(&sc->sc_dev),
+				"address (%p)\n", device_xname(sc->sc_dev),
 				ch->sc_dma_ops);
 
 		ch->sc_dma_op_count = segs;

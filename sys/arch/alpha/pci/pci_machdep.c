@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.15 2001/07/16 00:55:17 elric Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.15.142.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15 2001/07/16 00:55:17 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15.142.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,16 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15 2001/07/16 00:55:17 elric Exp $
 #endif
 
 void
-pci_display_console(iot, memt, pc, bus, device, function)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_display_console(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 	pcireg_t id, class;
 	int match, nmatch;
-	int (*fn) __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
-	    int, int, int));
+	int (*fn)(bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+	    int, int, int);
 
 	tag = pci_make_tag(pc, bus, device, function);
 	id = pci_conf_read(pc, tag, PCI_ID_REG);

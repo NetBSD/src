@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.73 2008/12/09 23:05:25 pooka Exp $ */
+/* $NetBSD: pmap.h,v 1.73.2.1 2009/05/13 17:16:05 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -288,10 +288,7 @@ static __inline pt_entry_t *pmap_l3pte(pmap_t, vaddr_t, pt_entry_t *);
 	(&(pmap)->pm_lev1map[l1pte_index((vaddr_t)(v))])
 
 static __inline pt_entry_t *
-pmap_l2pte(pmap, v, l1pte)
-	pmap_t pmap;
-	vaddr_t v;
-	pt_entry_t *l1pte;
+pmap_l2pte(pmap_t pmap, vaddr_t v, pt_entry_t *l1pte)
 {
 	pt_entry_t *lev2map;
 
@@ -306,10 +303,7 @@ pmap_l2pte(pmap, v, l1pte)
 }
 
 static __inline pt_entry_t *
-pmap_l3pte(pmap, v, l2pte)
-	pmap_t pmap;
-	vaddr_t v;
-	pt_entry_t *l2pte;
+pmap_l3pte(pmap_t pmap, vaddr_t v, pt_entry_t *l2pte)
 {
 	pt_entry_t *l1pte, *lev2map, *lev3map;
 

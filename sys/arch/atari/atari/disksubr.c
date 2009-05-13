@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.35 2008/01/02 11:48:23 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.35.24.1 2009/05/13 17:16:21 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.35 2008/01/02 11:48:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.35.24.1 2009/05/13 17:16:21 jym Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -56,14 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.35 2008/01/02 11:48:23 ad Exp $");
 #error BBSIZE smaller than BBMINSIZE
 #endif
 
-static void  ck_label __P((struct disklabel *, struct cpu_disklabel *));
-static int   bsd_label __P((dev_t, void (*)(struct buf *),
-			struct disklabel *, u_int, u_int *));
-static int   ahdi_label __P((dev_t, void (*)(struct buf *),
-			struct disklabel *, struct cpu_disklabel *));
-static void  ahdi_to_bsd __P((struct disklabel *, struct ahdi_ptbl *));
-static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
-					u_int, u_int, struct ahdi_ptbl *));
+static void  ck_label(struct disklabel *, struct cpu_disklabel *);
+static int   bsd_label(dev_t, void (*)(struct buf *),
+			struct disklabel *, u_int, u_int *);
+static int   ahdi_label(dev_t, void (*)(struct buf *),
+			struct disklabel *, struct cpu_disklabel *);
+static void  ahdi_to_bsd(struct disklabel *, struct ahdi_ptbl *);
+static u_int ahdi_getparts(dev_t, void (*)(struct buf *), u_int,
+					u_int, u_int, struct ahdi_ptbl *);
 
 /*
  * Attempt to read a disk label from a device using the
@@ -74,16 +74,12 @@ static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
  * Returns NULL on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t			dev;
-	void			(*strat)(struct buf *);
-	struct disklabel	*lp;
-	struct cpu_disklabel	*clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int			e;
 
 	if (clp != NULL)
-		bzero(clp, sizeof *clp);
+		memset(clp, 0, sizeof *clp);
 	else printf("Warning: clp == NULL\n");
 
 	/*
@@ -103,7 +99,7 @@ readdisklabel(dev, strat, lp, clp)
 	 * 'if 0'
 	 */
 #if 0
-	bzero(lp->d_partitions, sizeof lp->d_partitions);
+	memset(lp->d_partitions, 0, sizeof lp->d_partitions);
 #endif
 
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
@@ -145,10 +141,7 @@ readdisklabel(dev, strat, lp, clp)
  * Check new disk label for sensibility before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel	*olp, *nlp;
-	u_long			openmask;
-	struct cpu_disklabel	*clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *clp)
 {
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {
@@ -198,11 +191,7 @@ setdisklabel(olp, nlp, openmask, clp)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t			dev;
-	void			(*strat)(struct buf *);
-	struct disklabel	*lp;
-	struct cpu_disklabel	*clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf		*bp;
 	u_int			blk;
@@ -229,7 +218,7 @@ writedisklabel(dev, strat, lp, clp)
 		 */
 		if (clp->cd_label != LABELOFFSET) {
 			clp->cd_label = LABELOFFSET;
-			bzero(bb, sizeof(*bb));
+			memset(bb, 0, sizeof(*bb));
 		}
 		bb->bb_magic = (blk == 0) ? NBDAMAGIC : AHDIMAGIC;
 		BBSETLABEL(bb, lp);
@@ -321,9 +310,7 @@ bsd_label(dev, strat, label, blkno, offsetp)
  * partitions.
  */
 static void
-ck_label(dl, cdl)
-	struct disklabel	*dl;
-	struct cpu_disklabel	*cdl;
+ck_label(struct disklabel *dl, struct cpu_disklabel *cdl)
 {
 	u_int			*rp, i;
 
@@ -358,11 +345,7 @@ ck_label(dl, cdl)
  *          +1 if no valid AHDI label was found.
  */
 int
-ahdi_label(dev, strat, dl, cdl)
-	dev_t			dev;
-	void			(*strat)(struct buf *);
-	struct disklabel	*dl;
-	struct cpu_disklabel	*cdl;
+ahdi_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *dl, struct cpu_disklabel *cdl)
 {
 	struct ahdi_ptbl	apt;
 	u_int			i;
@@ -479,9 +462,7 @@ ahdi_label(dev, strat, dl, cdl)
  * be recognized as such. The others are mapped as user partitions.
  */
 static void
-ahdi_to_bsd(dl, apt)
-	struct disklabel	*dl;
-	struct ahdi_ptbl	*apt;
+ahdi_to_bsd(struct disklabel *dl, struct ahdi_ptbl *apt)
 {
 	int		i, have_root, user_part;
 

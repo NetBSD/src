@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2009/01/27 20:30:12 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.122.2.1 2009/05/13 17:16:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2009/01/27 20:30:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122.2.1 2009/05/13 17:16:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,10 +237,7 @@ void _wb_fault(void);
 
 
 static void
-userret(l, pc, oticks)
-	struct lwp *l;
-	int pc;
-	u_quad_t oticks;
+userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
@@ -264,20 +261,14 @@ userret(l, pc, oticks)
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f->f_pc, t);
 }
 
 void
-panictrap(type, code, v, fp)
-	int type;
-	u_int code, v;
-	struct frame *fp;
+panictrap(int type, u_int code, u_int v, struct frame *fp)
 {
 	static int panicking = 0;
 	if (panicking++ == 0) {
@@ -298,9 +289,7 @@ panictrap(type, code, v, fp)
  * return to fault handler
  */
 void
-trapcpfault(l, fp)
-	struct lwp *l;
-	struct frame *fp;
+trapcpfault(struct lwp *l, struct frame *fp)
 {
 	/*
 	 * We have arranged to catch this fault in one of the
@@ -316,12 +305,7 @@ trapcpfault(l, fp)
 int donomore = 0;
 
 void
-trapmmufault(type, code, v, fp, l, sticks)
-	int type;
-	u_int code, v;
-	struct frame *fp;
-	struct lwp *l;
-	u_quad_t sticks;
+trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_quad_t sticks)
 {
 #if defined(DEBUG) && defined(M68060)
 	static u_int oldcode=0, oldv=0;
@@ -550,10 +534,7 @@ nogo:
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame *fp;
-	int type;
-	u_int code, v;
+trap(struct frame *fp, int type, u_int code, u_int v)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -779,12 +760,11 @@ trap(fp, type, code, v)
  * Process a pending write back
  */
 int
-_write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
-	u_int wb;	/* writeback type: 1, 2, or 3 */
-	u_int wb_sts;	/* writeback status information */
-	u_int wb_data;	/* data to writeback */
-	u_int wb_addr;	/* address to writeback to */
-	struct vm_map *wb_map;
+_write_back (u_int wb, u_int wb_sts, u_int wb_data, u_int wb_addr, struct vm_map *wb_map)
+	/* wb:	 writeback type: 1, 2, or 3 */
+	/* wb_sts:	 writeback status information */
+	/* wb_data:	 data to writeback */
+	/* wb_addr:	 address to writeback to */
 {
 	u_int wb_extra_page = 0;
 	u_int wb_rc, mmusr;
@@ -907,7 +887,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
  * fault handler for write back
  */
 void
-_wb_fault()
+_wb_fault(void)
 {
 #ifdef DEBUG
 	printf ("trap: writeback fault\n");

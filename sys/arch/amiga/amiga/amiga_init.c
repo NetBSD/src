@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.106 2009/01/17 07:17:35 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.106.2.1 2009/05/13 17:16:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.106 2009/01/17 07:17:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.106.2.1 2009/05/13 17:16:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,8 +156,7 @@ chipmem_steal(long amount)
  * XXX
  */
 void *
-alloc_z2mem(amount)
-	long amount;
+alloc_z2mem(long amount)
 {
 	if (use_z2_mem && z2mem_end && (z2mem_end - amount) >= z2mem_start) {
 		z2mem_end -= amount;
@@ -766,7 +765,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 }
 
 void
-start_c_finish()
+start_c_finish(void)
 {
 #ifdef	P5PPC68KBOARD
         struct cfdev *cdp, *ecdp;
@@ -906,8 +905,7 @@ start_c_finish()
 }
 
 void
-rollcolor(color)
-	int color;
+rollcolor(int color)
 {
 	int s, i;
 
@@ -941,7 +939,7 @@ static u_long kernel_symbol_size, kernel_symbol_esym;
  * will be needed after a kernel image to be reloaded.
  */
 static int
-kernel_image_magic_size()
+kernel_image_magic_size(void)
 {
 	int sz;
 
@@ -953,12 +951,11 @@ kernel_image_magic_size()
 
 /* This actually copies the magic information.  */
 static void
-kernel_image_magic_copy(dest)
-	u_char *dest;
+kernel_image_magic_copy(u_char *dest)
 {
 	*((int*)dest) = ncfdev;
 	dest += 4;
-	bcopy(cfdev, dest, ncfdev * sizeof(struct cfdev)
+	memcpy( dest, cfdev, ncfdev * sizeof(struct cfdev)
 	    + memlist->m_nseg * sizeof(struct boot_memseg) + 4);
 }
 
@@ -966,8 +963,7 @@ kernel_image_magic_copy(dest)
 #define AOUT_LDPGSZ 8192 /* XXX ??? */
 
 int
-kernel_reload_write(uio)
-	struct uio *uio;
+kernel_reload_write(struct uio *uio)
 {
 	extern int eclockfreq;
 	struct iovec *iov;
@@ -1105,7 +1101,7 @@ kernel_reload_write(uio)
 		if (kernel_image == NULL)
 			panic("kernel_reload failed second malloc");
 		for (c = 0; c < kernel_load_ofs; c += MAXPHYS)
-			bcopy(kernel_image_copy + c, kernel_image + c,
+			memcpy( kernel_image + c, kernel_image_copy + c,
 			    (kernel_load_ofs - c) > MAXPHYS ? MAXPHYS :
 			    kernel_load_ofs - c);
 #endif

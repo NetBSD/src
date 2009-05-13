@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.51 2008/04/04 12:36:06 tsutsui Exp $	*/
+/*	$NetBSD: vr.c,v 1.51.18.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51 2008/04/04 12:36:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51.18.1 2009/05/13 17:17:47 jym Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -289,7 +289,7 @@ static struct vr_kiu_platdep {
 #endif /* NVRKIU > 0 */
 
 void
-vr_init()
+vr_init(void)
 {
 	/*
 	 * Platform Specific Function Hooks
@@ -348,7 +348,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 			goto bad;
 
 		/* stop memory probing at first memory image */
-		if (bcmp(page, (void *)MIPS_PHYS_TO_KSEG0(0), 128) == 0)
+		if (memcmp(page, (void *)MIPS_PHYS_TO_KSEG0(0), 128) == 0)
 			return;
 
 		*(volatile int *)(page+0) = 0xa5a5a5a5;
@@ -403,7 +403,7 @@ vr_fb_init(void **kernend)
 }
 
 void
-vr_cons_init()
+vr_cons_init(void)
 {
 #if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
 	bus_space_tag_t iot = hpcmips_system_bus_space();

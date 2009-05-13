@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.37 2007/12/30 13:28:20 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.37.24.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.37 2007/12/30 13:28:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.37.24.1 2009/05/13 17:17:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -900,11 +900,8 @@ db_addr_t db_disasm_esc(db_addr_t, int, int, int, const char *);
  * Read address at location and return updated location.
  */
 db_addr_t
-db_read_address(loc, short_addr, regmodrm, addrp)
-	db_addr_t	loc;
-	int		short_addr;
-	int		regmodrm;
-	struct i_addr	*addrp;		/* out */
+db_read_address(db_addr_t loc, int short_addr, int regmodrm, struct i_addr *addrp)
+	/* addrp:		 out */
 {
 	int		mod, rm, sib, index, disp;
 
@@ -980,10 +977,7 @@ db_read_address(loc, short_addr, regmodrm, addrp)
 }
 
 void
-db_print_address(seg, size, addrp)
-	const char *	seg;
-	int		size;
-	struct i_addr	*addrp;
+db_print_address(const char * seg, int size, struct i_addr *addrp)
 {
 	if (addrp->is_reg) {
 		db_printf("%s", db_reg[size][addrp->disp]);
@@ -1114,6 +1108,8 @@ db_disasm(
 	int	imm2;
 	int	len;
 	struct i_addr	address;
+
+#ifdef _KERNEL
 	pt_entry_t *pte, *pde;
 
 	/*
@@ -1131,6 +1127,7 @@ db_disasm(
 		db_printf("invalid address\n");
 		return (loc);
 	}
+#endif
 
 	get_value_inc(inst, loc, 1, false);
 	short_addr = false;

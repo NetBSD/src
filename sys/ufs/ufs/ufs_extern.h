@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.60 2008/05/31 21:37:08 ad Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.60.12.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -171,20 +171,6 @@ void	ufs_gop_markupdate(struct vnode *, int);
  */
 
 void	ffs_snapgone(struct inode *);
-
-/*
- * Soft dependency function prototypes.
- */
-int   softdep_setup_directory_add(struct buf *, struct inode *, off_t,
-				  ino_t, struct buf *, int);
-void  softdep_change_directoryentry_offset(struct inode *, void *,
-					   void *, void *, int);
-void  softdep_setup_remove(struct buf *, struct inode *, struct inode *, int);
-void  softdep_setup_directory_change(struct buf *, struct inode *,
-				     struct inode *, ino_t, int);
-void  softdep_change_linkcnt(struct inode *);
-void  softdep_releasefile(struct inode *);
-void  softdep_pace_dirrem(void);
 
 __END_DECLS
 

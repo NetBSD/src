@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.39 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: neo.c,v 1.39.18.1 2009/05/13 17:20:27 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39.18.1 2009/05/13 17:20:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,8 +174,8 @@ static int	nm_waitcd(struct neo_softc *);
 static int	nm_loadcoeff(struct neo_softc *, int, int);
 static int	nm_init(struct neo_softc *);
 
-static int	neo_match(struct device *, struct cfdata *, void *);
-static void	neo_attach(struct device *, struct device *, void *);
+static int	neo_match(device_t, cfdata_t, void *);
+static void	neo_attach(device_t, device_t, void *);
 static int	neo_intr(void *);
 
 static int	neo_query_encoding(void *, struct audio_encoding *);
@@ -498,8 +498,7 @@ nm_init(struct neo_softc *sc)
 }
 
 static int
-neo_match(struct device *parent, struct cfdata *match,
-    void *aux)
+neo_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 	pcireg_t subdev;
@@ -561,7 +560,7 @@ neo_resume(device_t dv PMF_FN_ARGS)
 }
 
 static void
-neo_attach(struct device *parent, struct device *self, void *aux)
+neo_attach(device_t parent, device_t self, void *aux)
 {
 	struct neo_softc *sc;
 	struct pci_attach_args *pa;
@@ -570,7 +569,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 
-	sc = (struct neo_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.126 2008/02/11 21:43:46 dyoung Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.126.24.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.126 2008/02/11 21:43:46 dyoung Exp $
+ * $Id: aic7xxx.c,v 1.126.24.1 2009/05/13 17:19:21 jym Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.126 2008/02/11 21:43:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.126.24.1 2009/05/13 17:19:21 jym Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -7367,16 +7367,7 @@ ahc_handle_target_cmd(struct ahc_softc *ahc, struct target_cmd *cmd)
 #endif
 
 static int
-ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
-	bus_dma_tag_t tag;
-	int size;
-	int flags;
-	bus_dmamap_t *mapp;
-	void **vaddr;
-	bus_addr_t *baddr;
-	bus_dma_segment_t *seg;
-	int *nseg;
-	const char *myname, *what;
+ahc_createdmamem(bus_dma_tag_t tag, int size, int flags, bus_dmamap_t *mapp, void **vaddr, bus_addr_t *baddr, bus_dma_segment_t *seg, int *nseg, const char *myname, const char *what)
 {
 	int error, level = 0;
 
@@ -7435,13 +7426,7 @@ out:
 }
 
 static void
-ahc_freedmamem(tag, size, map, vaddr, seg, nseg)
-	bus_dma_tag_t tag;
-	int size;
-	bus_dmamap_t map;
-	void *vaddr;
-	bus_dma_segment_t *seg;
-	int nseg;
+ahc_freedmamem(bus_dma_tag_t tag, int size, bus_dmamap_t map, void *vaddr, bus_dma_segment_t *seg, int nseg)
 {
 
 	bus_dmamap_unload(tag, map);

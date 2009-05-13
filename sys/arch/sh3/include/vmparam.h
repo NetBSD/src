@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18.14.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,13 +67,6 @@
 /* initial stack size limit */
 #ifndef	DFLSSIZ
 #define	DFLSSIZ			(2 * 1024 * 1024)
-#endif
-
-/*
- * Size of shared memory map
- */
-#ifndef SHMMAXPGS
-#define	SHMMAXPGS		1024
 #endif
 
 /* Size of user raw I/O map */

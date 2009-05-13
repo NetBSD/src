@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.23 2008/03/18 20:46:37 cube Exp $	*/
+/*	$NetBSD: siside.c,v 1.23.18.1 2009/05/13 17:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.23 2008/03/18 20:46:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.23.18.1 2009/05/13 17:20:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,11 +100,20 @@ siside_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = device_private(self);
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t csr;
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_sis_products));
+
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (csr & PCI_COMMAND_INTERRUPT_DISABLE) {
+		csr &= ~PCI_COMMAND_INTERRUPT_DISABLE;
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+	}
 }
 
 static struct sis_hostbr_type {

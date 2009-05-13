@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.43 2009/01/17 07:02:35 yamt Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.43.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.43 2009/01/17 07:02:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.43.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -147,7 +147,6 @@ static struct sysctllog *vfs_sysctllog;
 static void
 sysctl_vfs_setup(void)
 {
-	extern int dovfsusermount;
 	extern int vfs_magiclinks;
 
 	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
@@ -161,13 +160,6 @@ sysctl_vfs_setup(void)
 		       SYSCTL_DESCR("Non-specific vfs related information"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, CTL_EOL);
-	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "usermount",
-		       SYSCTL_DESCR("Whether unprivileged users may mount "
-				    "filesystems"),
-		       NULL, 0, &dovfsusermount, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
 	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "fstypes",

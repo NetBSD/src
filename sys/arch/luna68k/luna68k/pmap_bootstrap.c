@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.16 2009/01/17 07:17:35 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.16.2.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.16 2009/01/17 07:17:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.16.2.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -57,7 +57,7 @@ extern char *proc0paddr;
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
 
-void	pmap_bootstrap __P((paddr_t, paddr_t));
+void	pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -83,9 +83,7 @@ void *msgbufaddr;
  * XXX a PIC compiler would make this much easier.
  */
 void
-pmap_bootstrap(nextpa, firstpa)
-	paddr_t nextpa;
-	paddr_t firstpa;
+pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t kstpa, kptpa, kptmpa, p0upa;
 	u_int nptpages, kstsize;

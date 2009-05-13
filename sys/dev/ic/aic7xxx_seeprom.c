@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_seeprom.c,v 1.12 2007/10/19 11:59:46 ad Exp $	*/
+/*	$NetBSD: aic7xxx_seeprom.c,v 1.12.34.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -46,13 +46,13 @@
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@NetBSD.org>
  *
- * $Id: aic7xxx_seeprom.c,v 1.12 2007/10/19 11:59:46 ad Exp $
+ * $Id: aic7xxx_seeprom.c,v 1.12.34.1 2009/05/13 17:19:21 jym Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.12 2007/10/19 11:59:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.12.34.1 2009/05/13 17:19:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,8 +732,7 @@ write_brdctl(struct ahc_softc *ahc, uint8_t value)
 }
 
 static uint8_t
-read_brdctl(ahc)
-	struct 	ahc_softc *ahc;
+read_brdctl(struct ahc_softc *ahc)
 {
 	uint8_t brdctl;
 	uint8_t value;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm_symbol.c,v 1.5 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: aicasm_symbol.c,v 1.5.90.1 2009/05/13 17:20:05 jym Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler symbol table implementation
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm_symbol.c,v 1.5 2005/12/11 12:22:18 christos Exp $");
+__RCSID("$NetBSD: aicasm_symbol.c,v 1.5.90.1 2009/05/13 17:20:05 jym Exp $");
 
 #include <sys/types.h>
 
@@ -131,7 +131,7 @@ symbol_delete(symbol_t *symbol)
 }
 
 void
-symtable_open()
+symtable_open(void)
 {
 	symtable = dbopen(/*filename*/NULL,
 			  O_CREAT | O_NONBLOCK | O_RDWR, /*mode*/0, DB_HASH,
@@ -145,7 +145,7 @@ symtable_open()
 }
 
 void
-symtable_close()
+symtable_close(void)
 {
 	if (symtable != NULL) {
 		DBT	 key;

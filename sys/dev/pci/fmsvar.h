@@ -1,4 +1,4 @@
-/*	$NetBSD: fmsvar.h,v 1.4 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: fmsvar.h,v 1.4.14.1 2009/05/13 17:20:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct fms_softc {
 	bus_space_handle_t sc_opl_ioh;
 
 	bus_space_handle_t sc_mpu_ioh;
-	struct device * sc_mpu_dev;
+	device_t  sc_mpu_dev;
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;

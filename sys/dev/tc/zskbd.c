@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.16 2008/03/29 19:15:36 tsutsui Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.16.18.1 2009/05/13 17:21:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.16 2008/03/29 19:15:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.16.18.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ struct zskbd_softc {
 	int sc_enabled;
 	int kbd_type;
 
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 };
 
 static struct zsops zsops_zskbd;

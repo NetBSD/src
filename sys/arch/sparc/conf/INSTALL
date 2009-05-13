@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.66 2009/02/08 13:05:51 jdc Exp $
+#	$NetBSD: INSTALL,v 1.66.2.1 2009/05/13 17:18:23 jym Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -79,7 +79,6 @@ config		netbsd	root on ? type ?
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
 
@@ -566,8 +565,7 @@ cgfourteen*	at obio0			# sun4m
 pnozz0		at sbus? slot ? offset ?
 
 # Sun ZX/Leo 24-bit framebuffer
-# XXX no wsdisplay support
-#zx*		at sbus? slot ? offset ?
+zx*		at sbus? slot ? offset ?
 
 # Fujitsu AG-10e accelerated graphics 8/24-bit board
 agten*	at sbus? slot ? offset ?

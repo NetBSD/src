@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.22 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: bios32.c,v 1.22.14.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.22 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.22.14.1 2009/05/13 17:17:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ struct smbios_entry smbios_entry;
  * Initialize the BIOS32 interface.
  */
 void
-bios32_init()
+bios32_init(void)
 {
 	paddr_t entry = 0;
 	char *p;
@@ -214,10 +214,7 @@ bios32_init()
  * in the entry point information.
  */
 int
-bios32_service(service, e, ei)
-	uint32_t service;
-	bios32_entry_t e;
-	bios32_entry_info_t ei;
+bios32_service(uint32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 {
 	uint32_t eax, ebx, ecx, edx;
 	paddr_t entry;
@@ -330,7 +327,7 @@ smbios_get_string(struct smbtable *st, uint8_t indx, char *dest, size_t len)
 	if (i == indx) {
 		if (va + len < end) {
 			ret = dest;
-			bcopy(va, ret, len);
+			memcpy( ret, va, len);
 			ret[len - 1] = '\0';
 		}
 	}

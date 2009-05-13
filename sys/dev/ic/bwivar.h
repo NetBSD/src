@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.2.6.1 2009/05/13 17:19:22 jym Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -523,7 +523,7 @@ struct bwi_node {
 };
 
 struct bwi_softc {
-	struct device		 sc_dev;
+	device_t		 sc_dev;
 	struct ethercom		 sc_ec;
 	struct ieee80211com	 sc_ic;
 #define sc_if sc_ec.ec_if
@@ -790,5 +790,9 @@ bwi_rf_lo_update(struct bwi_mac *_mac)
 int		bwi_intr(void *);
 int		bwi_attach(struct bwi_softc *);
 void		bwi_detach(struct bwi_softc *);
+
+/* Power Management Framework */
+bool		bwi_suspend(device_t db PMF_FN_ARGS);
+bool		bwi_resume(device_t db PMF_FN_ARGS);
 
 #endif	/* !_DEV_IC_BWIVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10.24.1 2009/05/13 17:16:40 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2008/02/12 17:30:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.24.1 2009/05/13 17:16:40 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,15 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2008/02/12 17:30:57 joerg Exp $");
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-void findroot __P((void));
+void findroot(void);
 
 /*
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
-        extern void init_interrupt __P((void));
+        extern void init_interrupt(void);
 
 	extintr_disable();
 
@@ -86,7 +86,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 

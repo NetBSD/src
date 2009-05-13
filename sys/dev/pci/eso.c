@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.53 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: eso.c,v 1.53.18.1 2009/05/13 17:20:24 jym Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.53 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.53.18.1 2009/05/13 17:20:24 jym Exp $");
 
 #include "mpu.h"
 
@@ -94,9 +94,9 @@ struct eso_dma {
 #define DMAADDR(dma)	((dma)->ed_map->dm_segs[0].ds_addr)
 
 /* Autoconfiguration interface */
-static int eso_match(struct device *, struct cfdata *, void *);
-static void eso_attach(struct device *, struct device *, void *);
-static void eso_defer(struct device *);
+static int eso_match(device_t, cfdata_t, void *);
+static void eso_attach(device_t, device_t, void *);
+static void eso_defer(device_t);
 static int eso_print(void *, const char *);
 
 CFATTACH_DECL(eso, sizeof (struct eso_softc),
@@ -210,8 +210,7 @@ static struct eso_dma *	eso_kva2dma(const struct eso_softc *, const void *);
 
 
 static int
-eso_match(struct device *parent, struct cfdata *match,
-    void *aux)
+eso_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -224,7 +223,7 @@ eso_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-eso_attach(struct device *parent, struct device *self, void *aux)
+eso_attach(device_t parent, device_t self, void *aux)
 {
 	struct eso_softc *sc;
 	struct pci_attach_args *pa;
@@ -235,7 +234,7 @@ eso_attach(struct device *parent, struct device *self, void *aux)
 	int idx;
 	uint8_t a2mode, mvctl;
 
-	sc = (struct eso_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 	aprint_naive(": Audio controller\n");
 
@@ -421,13 +420,13 @@ eso_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-eso_defer(struct device *self)
+eso_defer(device_t self)
 {
 	struct eso_softc *sc;
 	struct pci_attach_args *pa;
 	bus_addr_t addr, start;
 
-	sc = (struct eso_softc *)self;
+	sc = device_private(self);
 	pa = &sc->sc_pa;
 	aprint_normal_dev(&sc->sc_dev, "");
 

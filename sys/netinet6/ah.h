@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.25 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: ah.h,v 1.25.16.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -67,28 +67,28 @@ struct ah_algorithm_state {
 };
 
 struct ah_algorithm {
-	int (*sumsiz) __P((struct secasvar *));
-	int (*mature) __P((struct secasvar *));
+	int (*sumsiz)(struct secasvar *);
+	int (*mature)(struct secasvar *);
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
 	const char *name;
-	int (*init) __P((struct ah_algorithm_state *, struct secasvar *));
-	void (*update) __P((struct ah_algorithm_state *, u_int8_t *, size_t));
-	void (*result) __P((struct ah_algorithm_state *, u_int8_t *, size_t));
+	int (*init)(struct ah_algorithm_state *, struct secasvar *);
+	void (*update)(struct ah_algorithm_state *, u_int8_t *, size_t);
+	void (*result)(struct ah_algorithm_state *, u_int8_t *, size_t);
 };
 
 #define	AH_MAXSUMSIZE	(512 / 8)
 
-extern const struct ah_algorithm *ah_algorithm_lookup __P((int));
+extern const struct ah_algorithm *ah_algorithm_lookup(int);
 
 /* cksum routines */
-extern int ah_hdrlen __P((struct secasvar *));
+extern int ah_hdrlen(struct secasvar *);
 
-extern size_t ah_hdrsiz __P((struct ipsecrequest *));
-extern void ah4_input __P((struct mbuf *, ...));
-extern int ah4_output __P((struct mbuf *, struct ipsecrequest *));
-extern int ah4_calccksum __P((struct mbuf *, u_int8_t *, size_t,
-	const struct ah_algorithm *, struct secasvar *));
+extern size_t ah_hdrsiz(struct ipsecrequest *);
+extern void ah4_input(struct mbuf *, ...);
+extern int ah4_output(struct mbuf *, struct ipsecrequest *);
+extern int ah4_calccksum(struct mbuf *, u_int8_t *, size_t,
+	const struct ah_algorithm *, struct secasvar *);
 
 extern void ah4_init(void);
 extern void *ah4_ctlinput(int, const struct sockaddr *, void *);

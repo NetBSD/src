@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2008/01/09 11:26:15 simonb Exp $
+#	$NetBSD: Makefile,v 1.37.24.1 2009/05/13 17:16:01 jym Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
@@ -22,7 +22,7 @@ ARCHSUBDIR= powerpc
 SUBDIR+= ${ARCHSUBDIR}
 .endif
 .endif
-.if ${MACHINE} == sparc
+.if ${MACHINE_ARCH} == sparc
 SUBDIR+= sparc64
 .endif
 .if (${MACHINE} == hpcmips || ${MACHINE} == hpcsh)

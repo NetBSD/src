@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.17 2008/12/19 18:49:38 cegger Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.17.2.1 2009/05/13 17:20:30 jym Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.17 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.17.2.1 2009/05/13 17:20:30 jym Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.17 2008/12/19 18:49:38 cegger Exp $");
 /*
  * Prototypes and count for the pci_device structure
  */
-static	int ubsec_probe(struct device *, struct cfdata *, void *);
-static	void ubsec_attach(struct device *, struct device *, void *);
+static	int ubsec_probe(device_t, cfdata_t, void *);
+static	void ubsec_attach(device_t, device_t, void *);
 static	void ubsec_reset_board(struct ubsec_softc *);
 static	void ubsec_init_board(struct ubsec_softc *);
 static	void ubsec_init_pciregs(struct pci_attach_args *pa);
@@ -287,8 +287,7 @@ ubsec_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ubsec_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+ubsec_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -299,9 +298,9 @@ ubsec_probe(struct device *parent, struct cfdata *match,
 }
 
 static void
-ubsec_attach(struct device *parent, struct device *self, void *aux)
+ubsec_attach(device_t parent, device_t self, void *aux)
 {
-	struct ubsec_softc *sc = (struct ubsec_softc *)self;
+	struct ubsec_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	const struct ubsec_product *up;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -680,7 +679,7 @@ ubsec_feed(struct ubsec_softc *sc)
 		v = ((void *)&q2->q_dma->d_dma->d_mcr);
 		v = (char*)v + (sizeof(struct ubsec_mcr) -
 				 sizeof(struct ubsec_mcr_add));
-		bcopy(v, &q->q_dma->d_dma->d_mcradd[i], sizeof(struct ubsec_mcr_add));
+		memcpy(&q->q_dma->d_dma->d_mcradd[i], v, sizeof(struct ubsec_mcr_add));
 		q->q_stacked_mcr[i] = q2;
 	}
 	q->q_dma->d_dma->d_mcr.mcr_pkts = htole16(npkts);
@@ -795,9 +794,9 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    sizeof(struct ubsec_session), M_DEVBUF, M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);
-			bcopy(sc->sc_sessions, ses, sesn *
+			memcpy(ses, sc->sc_sessions, sesn *
 			    sizeof(struct ubsec_session));
-			bzero(sc->sc_sessions, sesn *
+			memset(sc->sc_sessions, 0, sesn *
 			    sizeof(struct ubsec_session));
 			free(sc->sc_sessions, M_DEVBUF);
 			sc->sc_sessions = ses;
@@ -806,7 +805,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 		}
 	}
 
-	bzero(ses, sizeof(struct ubsec_session));
+	memset(ses, 0, sizeof(struct ubsec_session));
 	ses->ses_used = 1;
 	if (encini) {
 		/* get an IV, network byte order */
@@ -819,11 +818,11 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 
 		/* Go ahead and compute key in ubsec's byte order */
 		if (encini->cri_alg == CRYPTO_DES_CBC) {
-			bcopy(encini->cri_key, &ses->ses_deskey[0], 8);
-			bcopy(encini->cri_key, &ses->ses_deskey[2], 8);
-			bcopy(encini->cri_key, &ses->ses_deskey[4], 8);
+			memcpy(&ses->ses_deskey[0], encini->cri_key, 8);
+			memcpy(&ses->ses_deskey[2], encini->cri_key, 8);
+			memcpy(&ses->ses_deskey[4], encini->cri_key, 8);
 		} else
-			bcopy(encini->cri_key, ses->ses_deskey, 24);
+			memcpy(ses->ses_deskey, encini->cri_key, 24);
 
 		SWAP32(ses->ses_deskey[0]);
 		SWAP32(ses->ses_deskey[1]);
@@ -843,7 +842,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    macini->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer,
 			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
-			bcopy(md5ctx.state, ses->ses_hminner,
+			memcpy(ses->ses_hminner, md5ctx.state,
 			    sizeof(md5ctx.state));
 		} else {
 			SHA1Init(&sha1ctx);
@@ -851,7 +850,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    macini->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer,
 			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
-			bcopy(sha1ctx.state, ses->ses_hminner,
+			memcpy(ses->ses_hminner, sha1ctx.state,
 			    sizeof(sha1ctx.state));
 		}
 
@@ -864,7 +863,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    macini->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_opad_buffer,
 			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
-			bcopy(md5ctx.state, ses->ses_hmouter,
+			memcpy(ses->ses_hmouter, md5ctx.state,
 			    sizeof(md5ctx.state));
 		} else {
 			SHA1Init(&sha1ctx);
@@ -872,7 +871,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    macini->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_opad_buffer,
 			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
-			bcopy(sha1ctx.state, ses->ses_hmouter,
+			memcpy(ses->ses_hmouter, sha1ctx.state,
 			    sizeof(sha1ctx.state));
 		}
 
@@ -901,7 +900,7 @@ ubsec_freesession(void *arg, u_int64_t tid)
 	if (session >= sc->sc_nsessions)
 		return (EINVAL);
 
-	bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
+	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
 	return (0);
 }
 
@@ -920,7 +919,7 @@ ubsec_op_cb(void *arg, bus_dma_segment_t *seg, int nsegs, bus_size_t mapsize, in
 #endif
 	op->mapsize = mapsize;
 	op->nsegs = nsegs;
-	bcopy(seg, op->segs, nsegs * sizeof (seg[0]));
+	memcpy(op->segs, seg, nsegs * sizeof (seg[0]));
 }
 #endif
 
@@ -967,8 +966,8 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	splx(s);
 
 	dmap = q->q_dma; /* Save dma pointer */
-	bzero(q, sizeof(struct ubsec_q));
-	bzero(&ctx, sizeof(ctx));
+	memset(q, 0, sizeof(struct ubsec_q));
+	memset(&ctx, 0, sizeof(ctx));
 
 	q->q_sesn = UBSEC_SESSION(crp->crp_sid);
 	q->q_dma = dmap;
@@ -986,7 +985,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 		goto errout;	/* XXX we don't handle contiguous blocks! */
 	}
 
-	bzero(&dmap->d_dma->d_mcr, sizeof(struct ubsec_mcr));
+	memset(&dmap->d_dma->d_mcr, 0, sizeof(struct ubsec_mcr));
 
 	dmap->d_dma->d_mcr.mcr_pkts = htole16(1);
 	dmap->d_dma->d_mcr.mcr_flags = 0;
@@ -1047,7 +1046,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			q->q_flags |= UBSEC_QFLAGS_COPYOUTIV;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
+				memcpy(ctx.pc_iv, enccrd->crd_iv, 8);
 			else {
 				ctx.pc_iv[0] = ses->ses_iv[0];
 				ctx.pc_iv[1] = ses->ses_iv[1];
@@ -1067,7 +1066,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			ctx.pc_flags |= htole16(UBS_PKTCTX_INBOUND);
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
+				memcpy(ctx.pc_iv, enccrd->crd_iv, 8);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(q->q_src_m, enccrd->crd_inject,
 				    8, (void *)ctx.pc_iv);
@@ -1675,7 +1674,7 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 			krp->krp_status = E2BIG;
 		else {
 			if (sc->sc_flags & UBS_FLAGS_HWNORM) {
-				bzero(krp->krp_param[krp->krp_iparams].crp_p,
+				memset(krp->krp_param[krp->krp_iparams].crp_p, 0,
 				    (krp->krp_param[krp->krp_iparams].crp_nbits
 					+ 7) / 8);
 				bcopy(me->me_C.dma_vaddr,
@@ -1691,10 +1690,10 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		crypto_kdone(krp);
 
 		/* bzero all potentially sensitive data */
-		bzero(me->me_E.dma_vaddr, me->me_E.dma_size);
-		bzero(me->me_M.dma_vaddr, me->me_M.dma_size);
-		bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
-		bzero(me->me_q.q_ctx.dma_vaddr, me->me_q.q_ctx.dma_size);
+		memset(me->me_E.dma_vaddr, 0, me->me_E.dma_size);
+		memset(me->me_M.dma_vaddr, 0, me->me_M.dma_size);
+		memset(me->me_C.dma_vaddr, 0, me->me_C.dma_size);
+		memset(me->me_q.q_ctx.dma_vaddr, 0, me->me_q.q_ctx.dma_size);
 
 		/* Can't free here, so put us on the free list. */
 		SIMPLEQ_INSERT_TAIL(&sc->sc_q2free, &me->me_q, q_next);
@@ -1716,9 +1715,9 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 
 		crypto_kdone(krp);
 
-		bzero(rp->rpr_msgin.dma_vaddr, rp->rpr_msgin.dma_size);
-		bzero(rp->rpr_msgout.dma_vaddr, rp->rpr_msgout.dma_size);
-		bzero(rp->rpr_q.q_ctx.dma_vaddr, rp->rpr_q.q_ctx.dma_size);
+		memset(rp->rpr_msgin.dma_vaddr, 0, rp->rpr_msgin.dma_size);
+		memset(rp->rpr_msgout.dma_vaddr, 0, rp->rpr_msgout.dma_size);
+		memset(rp->rpr_q.q_ctx.dma_vaddr, 0, rp->rpr_q.q_ctx.dma_size);
 
 		/* Can't free here, so put us on the free list. */
 		SIMPLEQ_INSERT_TAIL(&sc->sc_q2free, &rp->rpr_q, q_next);
@@ -2110,7 +2109,7 @@ ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp,
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(me, sizeof *me);
+	memset(me, 0, sizeof *me);
 	me->me_krp = krp;
 	me->me_q.q_type = UBS_CTXOP_MODEXP;
 
@@ -2172,7 +2171,7 @@ ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp,
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
+	memset(me->me_C.dma_vaddr, 0, me->me_C.dma_size);
 
 	ebits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_E]);
 	if (ebits > nbits) {
@@ -2229,7 +2228,7 @@ ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp,
 #endif
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
-	bzero(ctx, sizeof(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 	ubsec_kshift_r(shiftbits,
 	    krp->krp_param[UBS_MODEXP_PAR_N].crp_p, nbits,
 	    ctx->me_N, normbits);
@@ -2272,19 +2271,19 @@ errout:
 		if (me->me_q.q_mcr.dma_map != NULL)
 			ubsec_dma_free(sc, &me->me_q.q_mcr);
 		if (me->me_q.q_ctx.dma_map != NULL) {
-			bzero(me->me_q.q_ctx.dma_vaddr, me->me_q.q_ctx.dma_size);
+			memset(me->me_q.q_ctx.dma_vaddr, 0, me->me_q.q_ctx.dma_size);
 			ubsec_dma_free(sc, &me->me_q.q_ctx);
 		}
 		if (me->me_M.dma_map != NULL) {
-			bzero(me->me_M.dma_vaddr, me->me_M.dma_size);
+			memset(me->me_M.dma_vaddr, 0, me->me_M.dma_size);
 			ubsec_dma_free(sc, &me->me_M);
 		}
 		if (me->me_E.dma_map != NULL) {
-			bzero(me->me_E.dma_vaddr, me->me_E.dma_size);
+			memset(me->me_E.dma_vaddr, 0, me->me_E.dma_size);
 			ubsec_dma_free(sc, &me->me_E);
 		}
 		if (me->me_C.dma_map != NULL) {
-			bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
+			memset(me->me_C.dma_vaddr, 0, me->me_C.dma_size);
 			ubsec_dma_free(sc, &me->me_C);
 		}
 		if (me->me_epb.dma_map != NULL)
@@ -2315,7 +2314,7 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(me, sizeof *me);
+	memset(me, 0, sizeof *me);
 	me->me_krp = krp;
 	me->me_q.q_type = UBS_CTXOP_MODEXP;
 
@@ -2370,7 +2369,7 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(me->me_M.dma_vaddr, normbits / 8);
+	memset(me->me_M.dma_vaddr, 0, normbits / 8);
 	bcopy(krp->krp_param[UBS_MODEXP_PAR_M].crp_p,
 	    me->me_M.dma_vaddr, (mbits + 7) / 8);
 
@@ -2378,7 +2377,7 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
+	memset(me->me_C.dma_vaddr, 0, me->me_C.dma_size);
 
 	ebits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_E]);
 	if (ebits > nbits) {
@@ -2389,7 +2388,7 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(me->me_E.dma_vaddr, normbits / 8);
+	memset(me->me_E.dma_vaddr, 0, normbits / 8);
 	bcopy(krp->krp_param[UBS_MODEXP_PAR_E].crp_p,
 	    me->me_E.dma_vaddr, (ebits + 7) / 8);
 
@@ -2435,8 +2434,8 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 #endif
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
-	bzero(ctx, sizeof(*ctx));
-	bcopy(krp->krp_param[UBS_MODEXP_PAR_N].crp_p, ctx->me_N,
+	memset(ctx, 0, sizeof(*ctx));
+	memcpy(ctx->me_N, krp->krp_param[UBS_MODEXP_PAR_N].crp_p,
 	    (nbits + 7) / 8);
 	ctx->me_len = htole16((normbits / 8) + (4 * sizeof(u_int16_t)));
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
@@ -2476,19 +2475,19 @@ errout:
 		if (me->me_q.q_mcr.dma_map != NULL)
 			ubsec_dma_free(sc, &me->me_q.q_mcr);
 		if (me->me_q.q_ctx.dma_map != NULL) {
-			bzero(me->me_q.q_ctx.dma_vaddr, me->me_q.q_ctx.dma_size);
+			memset(me->me_q.q_ctx.dma_vaddr, 0, me->me_q.q_ctx.dma_size);
 			ubsec_dma_free(sc, &me->me_q.q_ctx);
 		}
 		if (me->me_M.dma_map != NULL) {
-			bzero(me->me_M.dma_vaddr, me->me_M.dma_size);
+			memset(me->me_M.dma_vaddr, 0, me->me_M.dma_size);
 			ubsec_dma_free(sc, &me->me_M);
 		}
 		if (me->me_E.dma_map != NULL) {
-			bzero(me->me_E.dma_vaddr, me->me_E.dma_size);
+			memset(me->me_E.dma_vaddr, 0, me->me_E.dma_size);
 			ubsec_dma_free(sc, &me->me_E);
 		}
 		if (me->me_C.dma_map != NULL) {
-			bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
+			memset(me->me_C.dma_vaddr, 0, me->me_C.dma_size);
 			ubsec_dma_free(sc, &me->me_C);
 		}
 		if (me->me_epb.dma_map != NULL)
@@ -2564,7 +2563,7 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp,
 		goto errout;
 	}
 	ctx = (struct ubsec_ctx_rsapriv *)rp->rpr_q.q_ctx.dma_vaddr;
-	bzero(ctx, sizeof *ctx);
+	memset(ctx, 0, sizeof *ctx);
 
 	/* Copy in p */
 	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_P].crp_p,
@@ -2603,7 +2602,7 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp,
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(rp->rpr_msgin.dma_vaddr, (msglen + 7) / 8);
+	memset(rp->rpr_msgin.dma_vaddr, 0, (msglen + 7) / 8);
 	bcopy(krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_p,
 	    rp->rpr_msgin.dma_vaddr,
 	    (krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_nbits + 7) / 8);
@@ -2618,7 +2617,7 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp,
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(rp->rpr_msgout.dma_vaddr, (msglen + 7) / 8);
+	memset(rp->rpr_msgout.dma_vaddr, 0, (msglen + 7) / 8);
 
 	mcr->mcr_pkts = htole16(1);
 	mcr->mcr_flags = 0;
@@ -2672,11 +2671,11 @@ errout:
 		if (rp->rpr_q.q_mcr.dma_map != NULL)
 			ubsec_dma_free(sc, &rp->rpr_q.q_mcr);
 		if (rp->rpr_msgin.dma_map != NULL) {
-			bzero(rp->rpr_msgin.dma_vaddr, rp->rpr_msgin.dma_size);
+			memset(rp->rpr_msgin.dma_vaddr, 0, rp->rpr_msgin.dma_size);
 			ubsec_dma_free(sc, &rp->rpr_msgin);
 		}
 		if (rp->rpr_msgout.dma_map != NULL) {
-			bzero(rp->rpr_msgout.dma_vaddr, rp->rpr_msgout.dma_size);
+			memset(rp->rpr_msgout.dma_vaddr, 0, rp->rpr_msgout.dma_size);
 			ubsec_dma_free(sc, &rp->rpr_msgout);
 		}
 		free(rp, M_DEVBUF);

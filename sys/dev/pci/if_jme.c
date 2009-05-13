@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.6 2009/01/31 13:57:03 bouyer Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.6.2.1 2009/05/13 17:20:25 jym Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.6 2009/01/31 13:57:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.6.2.1 2009/05/13 17:20:25 jym Exp $");
 
 
 #include <sys/param.h>
@@ -781,7 +781,7 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 	sc->jme_tx_cons = sc->jme_tx_prod = sc->jme_tx_cnt = 0;
 
 	/* Reprogram the station address. */
-	bcopy(CLLADDR(ifp->if_sadl), eaddr, ETHER_ADDR_LEN);
+	memcpy(eaddr, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 	bus_space_write_4(sc->jme_bt_mac, sc->jme_bh_mac, JME_PAR0,
 	    eaddr[3] << 24 | eaddr[2] << 16 | eaddr[1] << 8 | eaddr[0]);
 	bus_space_write_4(sc->jme_bt_mac, sc->jme_bh_mac,
@@ -1859,7 +1859,7 @@ jme_set_filter(jme_softc_t *sc)
 	 * select the bit within the register.
 	 */
 	rxcfg |= RXMAC_MULTICAST;
-	bzero(hash, sizeof(hash));
+	memset(hash, 0, sizeof(hash));
 
 	ETHER_FIRST_MULTI(step, &sc->jme_ec, enm);
 	while (enm != NULL) {
@@ -1998,7 +1998,7 @@ jme_eeprom_macaddr(struct jme_softc *sc)
 	} while (match != ETHER_ADDR_LEN && offset < JME_EEPROM_END);
 
 	if (match == ETHER_ADDR_LEN) {
-		bcopy(eaddr, sc->jme_enaddr, ETHER_ADDR_LEN);
+		memcpy(sc->jme_enaddr, eaddr, ETHER_ADDR_LEN);
 		return (0);
 	}
 

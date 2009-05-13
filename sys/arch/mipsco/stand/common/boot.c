@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.14.1 2009/05/13 17:18:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,8 +92,8 @@ char *kernelnames[] = {
 };
 
 
-static char *devsplit __P((char *, char *));
-int main __P((int, char **));
+static char *devsplit(char *, char *);
+int main(int, char **);
 
 /*
  * This gets arguments from the first stage boot lader, calls PROM routines
@@ -101,9 +101,7 @@ int main __P((int, char **));
  * that new program.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *name, **namep, *dev, *kernel;
 	char bootname[PATH_MAX], bootpath[PATH_MAX];
@@ -111,8 +109,8 @@ main(argc, argv)
 	u_long marks[MARK_MAX];
 	struct btinfo_symtab bi_syms;
 	struct btinfo_bootpath bi_bpath;
-	extern void prom_init __P((void));
-	void (*entry) __P((int, char **, char **, u_int, char *));
+	extern void prom_init(void);
+	void (*entry)(int, char **, char **, u_int, char *);
 
 	prom_init();
 
@@ -186,8 +184,7 @@ fail:
  * strip out device name and kernel name
  */
 static char *
-devsplit(fname, devname)
-	char *fname, *devname;
+devsplit(char *fname, char *devname)
 {
 	char *src, *dst;
 

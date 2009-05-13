@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.6 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.6.90.1 2009/05/13 17:20:05 jym Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm.c,v 1.6 2005/12/11 12:22:18 christos Exp $");
+__RCSID("$NetBSD: aicasm.c,v 1.6.90.1 2009/05/13 17:20:05 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -309,7 +309,7 @@ main(int argc, char *argv[])
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
@@ -321,7 +321,7 @@ usage()
 }
 
 static void
-back_patch()
+back_patch(void)
 {
 	struct instruction *cur_instr;
 
@@ -350,7 +350,7 @@ back_patch()
 }
 
 static void
-output_code()
+output_code(void)
 {
 	struct instruction *cur_instr;
 	patch_t *cur_patch;
@@ -725,7 +725,7 @@ stop(const char *string, int err_code)
 }
 
 struct instruction *
-seq_alloc()
+seq_alloc(void)
 {
 	struct instruction *new_instr;
 
@@ -739,7 +739,7 @@ seq_alloc()
 }
 
 critical_section_t *
-cs_alloc()
+cs_alloc(void)
 {
 	critical_section_t *new_cs;
 
@@ -753,7 +753,7 @@ cs_alloc()
 }
 
 scope_t *
-scope_alloc()
+scope_alloc(void)
 {
 	scope_t *new_scope;
 

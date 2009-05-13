@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.51 2007/03/04 06:02:36 christos Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.51.56.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.51 2007/03/04 06:02:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.51.56.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -254,7 +254,7 @@ rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 }
 
 RF_DagHeader_t *
-rf_AllocDAGHeader()
+rf_AllocDAGHeader(void)
 {
 	RF_DagHeader_t *dh;
 
@@ -270,7 +270,7 @@ rf_FreeDAGHeader(RF_DagHeader_t * dh)
 }
 
 RF_DagNode_t *
-rf_AllocDAGNode()
+rf_AllocDAGNode(void)
 {
 	RF_DagNode_t *node;
 
@@ -292,7 +292,7 @@ rf_FreeDAGNode(RF_DagNode_t *node)
 }
 
 RF_DagList_t *
-rf_AllocDAGList()
+rf_AllocDAGList(void)
 {
 	RF_DagList_t *dagList;
 
@@ -309,7 +309,7 @@ rf_FreeDAGList(RF_DagList_t *dagList)
 }
 
 void *
-rf_AllocDAGPCache()
+rf_AllocDAGPCache(void)
 {
 	void *p;
 	p = pool_get(&rf_pools.dagpcache, PR_WAITOK);
@@ -325,7 +325,7 @@ rf_FreeDAGPCache(void *p)
 }
 
 RF_FuncList_t *
-rf_AllocFuncList()
+rf_AllocFuncList(void)
 {
 	RF_FuncList_t *funcList;
 

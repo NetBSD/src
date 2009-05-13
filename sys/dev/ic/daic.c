@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.27 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.27.14.1 2009/05/13 17:19:22 jym Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -133,8 +133,7 @@ static u_int8_t parm_global_assign[] = {
  *	Return the name of a card with given cardtype
  *---------------------------------------------------------------------------*/
 static const char *
-cardtypename(cardtype)
-	int cardtype;
+cardtypename(int cardtype)
 {
 	if (cardtype >= 0 && cardtype < (sizeof(cardnames) / sizeof(cardnames[0])))
 		return cardnames[cardtype];
@@ -148,9 +147,7 @@ cardtypename(cardtype)
  * calculate the share memory size).
  *---------------------------------------------------------------------------*/
 int
-daic_probe(bus, io)
-	bus_space_tag_t bus;
-	bus_space_handle_t io;
+daic_probe(bus_space_tag_t bus, bus_space_handle_t io)
 {
 	return (daic_reset(bus, io, 0, NULL));
 }
@@ -159,9 +156,7 @@ daic_probe(bus, io)
  * Attach and initialize the card at given io space.
  *---------------------------------------------------------------------------*/
 void
-daic_attach(self, sc)
-	struct device *self;
-	struct daic_softc *sc;
+daic_attach(device_t self, struct daic_softc *sc)
 {
 	int i, num_ports, memsize = 0;
 
@@ -194,9 +189,7 @@ daic_attach(self, sc)
  * handle interrupts for one port of the card
  *---------------------------------------------------------------------------*/
 static int
-daic_handle_intr(sc, port)
-	struct daic_softc *sc;
-	int port;
+daic_handle_intr(struct daic_softc *sc, int port)
 {
 	struct outcallentry *assoc;
 	struct daic_unit * du = &sc->sc_port[port];
@@ -354,8 +347,7 @@ done:
  * Handle interrupts
  *---------------------------------------------------------------------------*/
 int
-daic_intr(sc)
-	struct daic_softc *sc;
+daic_intr(struct daic_softc *sc)
 {
 	int handeld = 0;
 	if (sc->sc_cardtype == DAIC_TYPE_QUAD) {
@@ -371,10 +363,7 @@ daic_intr(sc)
  * Download primary protocol microcode to on-board processor
  *---------------------------------------------------------------------------*/
 static int
-daic_download(token, count, data)
-	void *token;
-	int count;
-	struct isdn_dr_prot *data;
+daic_download(void *token, int count, struct isdn_dr_prot *data)
 {
 	struct daic_unit *du = token;
 	struct daic_softc *sc = du->du_sc;
@@ -501,11 +490,7 @@ daic_download(token, count, data)
  *	or -1 if no known card is detected.
  *---------------------------------------------------------------------------*/
 static int
-daic_reset(bus, io, port, memsize)
-	bus_space_tag_t bus;
-	bus_space_handle_t io;
-	int port;
-	int *memsize;
+daic_reset(bus_space_tag_t bus, bus_space_handle_t io, int port, int *memsize)
 {
 	int i, off = port * DAIC_ISA_MEMSIZE;
 	int cardtype, mem, quiet = memsize == NULL;	/* no output if we are only probing */
@@ -555,9 +540,7 @@ daic_reset(bus, io, port, memsize)
  * userland, but hey, this is only a diagnostic tool...
  *---------------------------------------------------------------------------*/
 static int
-daic_diagnostic(token, req)
-	void *token;
-	struct isdn_diagnostic_request *req;
+daic_diagnostic(void *token, struct isdn_diagnostic_request *req)
 {
 	struct daic_unit *du = token;
 	struct daic_softc *sc = du->du_sc;

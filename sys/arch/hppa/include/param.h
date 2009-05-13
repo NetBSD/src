@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2008/01/10 21:08:41 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.12.24.1 2009/05/13 17:17:48 jym Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -67,8 +67,11 @@
 #define	SSIZE		(1)		/* initial stack size/NBPG */
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
-#define	USHIFT		(3)		/* log2(UPAGES) */
-#define	UPAGES		(1<<USHIFT)	/* pages of u-area */
+#ifdef DIAGNOSTIC
+#define	UPAGES		5		/* pages of u-area + redzone */
+#else
+#define	UPAGES		4		/* pages of u-area */
+#endif
 #define	USPACE		(UPAGES * NBPG)	/* pages for user struct and kstack */
 
 #ifndef	MSGBUFSIZE

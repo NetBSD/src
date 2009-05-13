@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.22 2009/01/08 12:46:23 njoly Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.22.2.1 2009/05/13 17:18:57 jym Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.22 2009/01/08 12:46:23 njoly Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.22.2.1 2009/05/13 17:18:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -107,13 +107,6 @@ static void futex_put(struct futex *);
 static int futex_sleep(struct futex *, lwp_t *, unsigned long);
 static int futex_wake(struct futex *, int, struct futex *, int);
 static int futex_atomic_op(lwp_t *, int, void *);
-
-/* from linux_support.S */
-int	futex_xchgl(int, void *, int *);
-int	futex_addl(int, void *, int *);
-int	futex_orl(int, void *, int *);
-int	futex_andl(int, void *, int *);
-int	futex_xorl(int, void *, int *);
 
 int
 linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t *retval)
@@ -436,40 +429,52 @@ futex_wake(struct futex *f, int n, struct futex *newf, int n2)
 static int
 futex_atomic_op(lwp_t *l, int encoded_op, void *uaddr)
 {
-	int op = (encoded_op >> 28) & 7;
-	int cmp = (encoded_op >> 24) & 15;
+	const int op = (encoded_op >> 28) & 7;
+	const int cmp = (encoded_op >> 24) & 15;
+	const int cmparg = (encoded_op << 20) >> 20;
 	int oparg = (encoded_op << 8) >> 20;
-	int cmparg = (encoded_op << 20) >> 20;
-	int oldval = 0, ret;
+	int error, oldval, cval;
 
 	if (encoded_op & (FUTEX_OP_OPARG_SHIFT << 28))
 		oparg = 1 << oparg;
 
 	/* XXX: linux verifies access here and returns EFAULT */
 
-	switch (op) {
-	case FUTEX_OP_SET:
-		ret = futex_xchgl(oparg, uaddr, &oldval);
-		break;
-	case FUTEX_OP_ADD:
-		ret = futex_addl(oparg, uaddr, &oldval);
-		break;
-	case FUTEX_OP_OR:
-		ret = futex_orl(oparg, uaddr, &oldval);
-		break;
-	case FUTEX_OP_ANDN:
-		ret = futex_andl(~oparg, uaddr, &oldval);
-		break;
-	case FUTEX_OP_XOR:
-		ret = futex_xorl(oparg, uaddr, &oldval);
-		break;
-	default:
-		ret = -ENOSYS;
-		break;
+	if (copyin(uaddr, &cval, sizeof(int)) != 0)
+		return -EFAULT;
+
+	for (;;) {
+		int nval;
+
+		switch (op) {
+		case FUTEX_OP_SET:
+			nval = oparg;
+			break;
+		case FUTEX_OP_ADD:
+			nval = cval + oparg;
+			break;
+		case FUTEX_OP_OR:
+			nval = cval | oparg;
+			break;
+		case FUTEX_OP_ANDN:
+			nval = cval & ~oparg;
+			break;
+		case FUTEX_OP_XOR:
+			nval = cval ^ oparg;
+			break;
+		default:
+			return -ENOSYS;
+		}
+
+		error = ucas_int(uaddr, cval, nval, &oldval);
+		if (oldval == cval || error) {
+			break;
+		}
+		cval = oldval;
 	}
 
-	if (ret)
-		return ret;
+	if (error)
+		return -EFAULT;
 
 	switch (cmp) {
 	case FUTEX_OP_CMP_EQ:
@@ -496,6 +501,8 @@ linux_sys_set_robust_list(struct lwp *l,
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = p->p_emuldata;
 
+	if (SCARG(uap, len) != sizeof(*(led->robust_futexes)))
+		return EINVAL;
 	led->robust_futexes = SCARG(uap, head);
 	*retval = 0;
 	return 0;
@@ -506,13 +513,13 @@ linux_sys_get_robust_list(struct lwp *l,
     const struct linux_sys_get_robust_list_args *uap, register_t *retval)
 {
 	struct linux_emuldata *led;
-	struct linux_robust_list_head *head;
-	size_t len = sizeof(struct linux_robust_list_head);
+	struct linux_robust_list_head **head;
+	size_t len = sizeof(*led->robust_futexes);
 	int error = 0;
 
 	if (!SCARG(uap, pid)) {
 		led = l->l_proc->p_emuldata;
-		head = led->robust_futexes;
+		head = &led->robust_futexes;
 	} else {
 		struct proc *p;
 
@@ -523,15 +530,14 @@ linux_sys_get_robust_list(struct lwp *l,
 			return ESRCH;
 		}
 		led = p->p_emuldata;
-		head = led->robust_futexes;
+		head = &led->robust_futexes;
 		mutex_exit(proc_lock);
 	}
 
-	error = copyout(&len, SCARG(uap, len), sizeof(size_t));
+	error = copyout(&len, SCARG(uap, len), sizeof(len));
 	if (error)
 		return error;
-	return copyout(head, SCARG(uap, head),
-	    sizeof(struct linux_robust_list_head));
+	return copyout(head, SCARG(uap, head), sizeof(*head));
 }
 
 static int
@@ -582,7 +588,7 @@ fetch_robust_entry(struct linux_robust_list **entry,
 void
 release_futexes(struct proc *p)
 {
-	struct linux_robust_list_head *head = NULL;
+	struct linux_robust_list_head head;
 	struct linux_robust_list *entry, *next_entry = NULL, *pending;
 	unsigned int limit = 2048, pi, next_pi, pip;
 	struct linux_emuldata *led;
@@ -590,21 +596,22 @@ release_futexes(struct proc *p)
 	int rc;
 
 	led = p->p_emuldata;
-	head = led->robust_futexes;
-
-	if (head == NULL)
+	if (led->robust_futexes == NULL)
 		return;
 
-	if (fetch_robust_entry(&entry, &head->list.next, &pi))
+	if (copyin(led->robust_futexes, &head, sizeof(head)))
 		return;
 
-	if (copyin(&head->futex_offset, &futex_offset, sizeof(unsigned long)))
+	if (fetch_robust_entry(&entry, &head.list.next, &pi))
 		return;
 
-	if (fetch_robust_entry(&pending, &head->pending_list, &pip))
+	if (copyin(&head.futex_offset, &futex_offset, sizeof(unsigned long)))
 		return;
 
-	while (entry != &head->list) {
+	if (fetch_robust_entry(&pending, &head.pending_list, &pip))
+		return;
+
+	while (entry != &head.list) {
 		rc = fetch_robust_entry(&next_entry, &entry->next, &next_pi);
 
 		if (entry != pending)

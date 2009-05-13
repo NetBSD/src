@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.13 2009/01/12 07:12:17 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.13.2.1 2009/05/13 17:18:04 jym Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -66,14 +66,14 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 		-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_WRITE \
 		-DLIBSA_NO_FS_CLOSE \
 		-DLIBSA_NO_DEV_CLOSE \
+		-DLIBSA_NO_DEV_IOCTL \
 		-DLIBSA_SINGLE_DEVICE=saio \
 		-D"saioioctl(x,y,z)=EINVAL" -D"saioclose(f)=0" \
 		-DLIBSA_NO_TWIDDLE \
 		-DLIBSA_NO_FD_CHECKING \
 		-DLIBSA_NO_DISKLABEL_MSGS \
 		-DLIBSA_NO_RAW_ACCESS \
-		-DALLOC_FIRST_FIT \
-		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+		-DALLOC_FIRST_FIT
 
 
 CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh

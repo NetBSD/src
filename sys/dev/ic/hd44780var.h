@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780var.h,v 1.5 2007/03/04 06:01:55 christos Exp $ */
+/* $NetBSD: hd44780var.h,v 1.5.56.1 2009/05/13 17:19:22 jym Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -107,7 +107,7 @@ struct hd44780_chip {
 	bus_space_handle_t sc_ioir;	/* instruction register */
 	bus_space_handle_t sc_iodr;	/* data register */
 
-	struct device *sc_dev;		/* Pointer to parent device */
+	device_t sc_dev;		/* Pointer to parent device */
 	struct hlcd_screen sc_screen;	/* currently displayed screen copy */
 	struct hlcd_screen *sc_curscr;	/* active screen */
 	struct callout redraw;		/* wsdisplay refresh/redraw timer */

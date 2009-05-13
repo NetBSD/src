@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.9 2006/06/27 11:12:57 tsutsui Exp $
+ * $NetBSD: xd.c,v 1.9.76.1 2009/05/13 17:16:11 jym Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.
@@ -76,10 +76,7 @@ xdinit(void *aio)
  */
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	f->f_devdata = aio_save;
 	f->f_dev = &devsw[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.10 2007/07/27 18:38:13 tron Exp $	*/
+/*	$NetBSD: mpt.c,v 1.10.46.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.10 2007/07/27 18:38:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.10.46.1 2009/05/13 17:19:23 jym Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -433,7 +433,7 @@ mpt_get_iocfacts(mpt_softc_t *mpt, MSG_IOC_FACTS_REPLY *freplp)
 	MSG_IOC_FACTS f_req;
 	int error;
 
-	bzero(&f_req, sizeof f_req);
+	memset(&f_req, 0, sizeof f_req);
 	f_req.Function = MPI_FUNCTION_IOC_FACTS;
 	f_req.MsgContext =  0x12071942;
 	error = mpt_send_handshake_cmd(mpt, sizeof f_req, &f_req);
@@ -450,7 +450,7 @@ mpt_get_portfacts(mpt_softc_t *mpt, MSG_PORT_FACTS_REPLY *freplp)
 	int error;
 
 	/* XXX: Only getting PORT FACTS for Port 0 */
-	bzero(&f_req, sizeof f_req);
+	memset(&f_req, 0, sizeof f_req);
 	f_req.Function = MPI_FUNCTION_PORT_FACTS;
 	f_req.MsgContext =  0x12071943;
 	error = mpt_send_handshake_cmd(mpt, sizeof f_req, &f_req);
@@ -473,7 +473,7 @@ mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
 	MSG_IOC_INIT init;
 	MSG_IOC_INIT_REPLY reply;
 
-	bzero(&init, sizeof init);
+	memset(&init, 0, sizeof init);
 	init.WhoInit = who;
 	init.Function = MPI_FUNCTION_IOC_INIT;
 	init.MaxDevices = mpt->mpt_max_devices;
@@ -509,7 +509,7 @@ mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,
 	req = mpt_get_request(mpt);
 
 	cfgp = req->req_vbuf;
-	bzero(cfgp, sizeof *cfgp);
+	memset(cfgp, 0, sizeof *cfgp);
 
 	cfgp->Action = MPI_CONFIG_ACTION_PAGE_HEADER;
 	cfgp->Function = MPI_FUNCTION_CONFIG;
@@ -540,7 +540,7 @@ mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,
 		mpt_free_reply(mpt, (req->sequence << 1));
 		return (-1);
 	}
-	bcopy(&reply->Header, rslt, sizeof (fCONFIG_PAGE_HEADER));
+	memcpy(rslt, &reply->Header, sizeof (fCONFIG_PAGE_HEADER));
 	mpt_free_reply(mpt, (req->sequence << 1));
 	mpt_free_request(mpt, req);
 	return (0);
@@ -561,7 +561,7 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	req = mpt_get_request(mpt);
 
 	cfgp = req->req_vbuf;
-	bzero(cfgp, MPT_REQUEST_AREA);
+	memset(cfgp, 0, MPT_REQUEST_AREA);
 	cfgp->Action = MPI_CONFIG_ACTION_PAGE_READ_CURRENT;
 	cfgp->Function = MPI_FUNCTION_CONFIG;
 	cfgp->Header = *hdr;
@@ -635,7 +635,7 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	req = mpt_get_request(mpt);
 
 	cfgp = req->req_vbuf;
-	bzero(cfgp, sizeof *cfgp);
+	memset(cfgp, 0, sizeof *cfgp);
 
 	hdr_attr = hdr->PageType & MPI_CONFIG_PAGEATTR_MASK;
 	if (hdr_attr != MPI_CONFIG_PAGEATTR_CHANGEABLE &&
@@ -929,7 +929,7 @@ mpt_send_port_enable(mpt_softc_t *mpt, int port)
 	req = mpt_get_request(mpt);
 
 	enable_req = req->req_vbuf;
-	bzero(enable_req, sizeof *enable_req);
+	memset(enable_req, 0, sizeof *enable_req);
 
 	enable_req->Function   = MPI_FUNCTION_PORT_ENABLE;
 	enable_req->MsgContext = req->index | 0x80000000;
@@ -969,7 +969,7 @@ mpt_send_event_request(mpt_softc_t *mpt, int onoff)
 	req = mpt_get_request(mpt);
 
 	enable_req = req->req_vbuf;
-	bzero(enable_req, sizeof *enable_req);
+	memset(enable_req, 0, sizeof *enable_req);
 
 	enable_req->Function   = MPI_FUNCTION_EVENT_NOTIFICATION;
 	enable_req->MsgContext = req->index | 0x80000000;

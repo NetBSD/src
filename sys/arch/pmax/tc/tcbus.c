@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.21 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.21.12.1 2009/05/13 17:18:14 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.21 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.21.12.1 2009/05/13 17:18:14 jym Exp $");
 
 /*
  * Which system models were configured?
@@ -53,19 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.21 2008/05/26 10:31:22 nisimura Exp $");
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
 
-static const struct evcnt *tc_ds_intr_evcnt __P((struct device *, void *));
-static void	tc_ds_intr_establish __P((struct device *, void *,
-				int, int (*)(void *), void *));
-static void	tc_ds_intr_disestablish __P((struct device *, void *));
-static bus_dma_tag_t tc_ds_get_dma_tag __P((int));
+static const struct evcnt *tc_ds_intr_evcnt(struct device *, void *);
+static void	tc_ds_intr_establish(struct device *, void *,
+				int, int (*)(void *), void *);
+static void	tc_ds_intr_disestablish(struct device *, void *);
+static bus_dma_tag_t tc_ds_get_dma_tag(int);
 
 extern struct tcbus_attach_args kn02_tc_desc[];	/* XXX */
 extern struct tcbus_attach_args kmin_tc_desc[];	/* XXX */
 extern struct tcbus_attach_args xine_tc_desc[];	/* XXX */
 extern struct tcbus_attach_args kn03_tc_desc[];	/* XXX */
 
-static int	tcbus_match __P((struct device *, struct cfdata *, void *));
-static void	tcbus_attach __P((struct device *, struct device *, void *));
+static int	tcbus_match(struct device *, struct cfdata *, void *);
+static void	tcbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tcbus, sizeof(struct tc_softc),
     tcbus_match, tcbus_attach, NULL, NULL);
@@ -73,10 +73,7 @@ CFATTACH_DECL(tcbus, sizeof(struct tc_softc),
 static int tcbus_found;
 
 static int
-tcbus_match(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+tcbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -87,9 +84,7 @@ tcbus_match(parent, cfdata, aux)
 }
 
 static void
-tcbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tcbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcbus_attach_args *tba;
 
@@ -130,9 +125,7 @@ tcbus_attach(parent, self, aux)
  * Dispatch to model specific interrupt line evcnt fetch rontine
  */
 static const struct evcnt *
-tc_ds_intr_evcnt(dev, cookie)
-	struct device *dev;
-	void *cookie;
+tc_ds_intr_evcnt(struct device *dev, void *cookie)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -143,21 +136,14 @@ tc_ds_intr_evcnt(dev, cookie)
  * Dispatch to model specific interrupt establishing routine
  */
 static void
-tc_ds_intr_establish(dev, cookie, level, handler, val)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *val;
+tc_ds_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *val)
 {
 
 	(*platform.intr_establish)(dev, cookie, level, handler, val);
 }
 
 static void
-tc_ds_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
+tc_ds_intr_disestablish(struct device *dev, void *arg)
 {
 
 	printf("cannot disestablish TC interrupts\n");
@@ -167,8 +153,7 @@ tc_ds_intr_disestablish(dev, arg)
  * Return the DMA tag for use by the specified TURBOchannel slot.
  */
 static bus_dma_tag_t
-tc_ds_get_dma_tag(slot)
-	int slot;
+tc_ds_get_dma_tag(int slot)
 {
 	/*
 	 * All DECstations use the default DMA tag.
@@ -192,7 +177,7 @@ tc_ds_get_dma_tag(slot)
 #include <pmax/pmax/cons.h>
 #include <machine/dec_prom.h>
 
-int	tc_checkslot __P((tc_addr_t, char *));
+int	tc_checkslot(tc_addr_t, char *);
 
 struct cnboards {
 	const char	*cb_tcname;
@@ -229,8 +214,7 @@ struct cnboards {
 };
 
 int
-tcfb_cnattach(slotno)
-	int slotno;
+tcfb_cnattach(int slotno)
 {
 	paddr_t tcaddr;
 	char tcname[TC_ROM_LLEN];

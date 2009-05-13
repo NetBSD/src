@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.24 2008/12/16 22:35:34 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.24.2.1 2009/05/13 17:21:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.24 2008/12/16 22:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.24.2.1 2009/05/13 17:21:16 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -180,7 +180,7 @@ static	void deattach(device_t, device_t, void *);
 static	void dewait(struct de_softc *, const char *);
 static	int deinit(struct ifnet *);
 static	int deioctl(struct ifnet *, u_long, void *);
-static	void dereset(device_t );
+static	void dereset(device_t);
 static	void destop(struct ifnet *, int);
 static	void destart(struct ifnet *);
 static	void derecv(struct de_softc *);
@@ -261,7 +261,7 @@ deattach(device_t parent, device_t self, void *aux)
 	DE_WLOW(CMD_GETCMD);
 	dewait(sc, "read addr ");
 
-	bcopy((void *)&sc->sc_dedata->dc_pcbb.pcbb2, myaddr, sizeof (myaddr));
+	memcpy(myaddr, (void *)&sc->sc_dedata->dc_pcbb.pcbb2, sizeof (myaddr));
 	printf(": %s, hardware address %s\n", c, ether_sprintf(myaddr));
 
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr, sc,

@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.3 2001/02/27 19:07:53 cgd Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.3.144.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.3 2001/02/27 19:07:53 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.3.144.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,19 +53,17 @@ __KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.3 2001/02/27 19:07:53 cgd Exp $");
 
 #define tsp_pci() { Generate ctags(1) key. }
 
-void		tsp_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		tsp_bus_maxdevs __P((void *, int));
-pcitag_t	tsp_make_tag __P((void *, int, int, int));
-void		tsp_decompose_tag __P((void *, pcitag_t, int *, int *,
-		    int *));
-pcireg_t	tsp_conf_read __P((void *, pcitag_t, int));
-void		tsp_conf_write __P((void *, pcitag_t, int, pcireg_t));
+void		tsp_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		tsp_bus_maxdevs(void *, int);
+pcitag_t	tsp_make_tag(void *, int, int, int);
+void		tsp_decompose_tag(void *, pcitag_t, int *, int *,
+		    int *);
+pcireg_t	tsp_conf_read(void *, pcitag_t, int);
+void		tsp_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-tsp_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+tsp_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
 	pc->pc_attach_hook = tsp_attach_hook;
@@ -77,33 +75,24 @@ tsp_pci_init(pc, v)
 }
 
 void
-tsp_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+tsp_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
 int
-tsp_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+tsp_bus_maxdevs(void *cpv, int busno)
 {
 	return 32;
 }
 
 pcitag_t
-tsp_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+tsp_make_tag(void *cpv, int b, int d, int f)
 {
 	return b << 16 | d << 11 | f << 8;
 }
 
 void
-tsp_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+tsp_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 	if (bp != NULL)
 		*bp = (tag >> 16) & 0xff;
@@ -118,10 +107,7 @@ tsp_decompose_tag(cpv, tag, bp, dp, fp)
  * no errors on unanswered probes.
  */
 pcireg_t
-tsp_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+tsp_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	pcireg_t *datap, data;
 	struct tsp_config *pcp = cpv;
@@ -134,11 +120,7 @@ tsp_conf_read(cpv, tag, offset)
 }
 
 void
-tsp_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+tsp_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	pcireg_t *datap;
 	struct tsp_config *pcp = cpv;

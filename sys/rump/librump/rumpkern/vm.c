@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.52 2009/02/06 18:29:19 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.52.2.1 2009/05/13 17:22:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.52 2009/02/06 18:29:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.52.2.1 2009/05/13 17:22:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.52 2009/02/06 18:29:19 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_ddb.h>
 #include <uvm/uvm_prot.h>
 
 #include "rump_private.h"
@@ -239,6 +240,7 @@ uao_detach(struct uvm_object *uobj)
 
 	mutex_enter(&uobj->vmobjlock);
 	ao_put(uobj, 0, 0, PGO_ALLPAGES | PGO_FREE);
+	mutex_destroy(&uobj->vmobjlock);
 	kmem_free(uobj, sizeof(*uobj));
 }
 
@@ -249,7 +251,7 @@ uao_detach(struct uvm_object *uobj)
 static kmutex_t cachepgmtx;
 
 void
-rumpvm_init()
+rumpvm_init(void)
 {
 
 	uvmexp.free = 1024*1024; /* XXX */
@@ -439,11 +441,26 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 	panic("%s: unimplemented", __func__);
 }
 
+void
+uvm_object_printit(struct uvm_object *uobj, bool full,
+	void (*pr)(const char *, ...))
+{
+
+	/* nada for now */
+}
+
 /*
  * Kmem
  */
 
 #ifndef RUMP_USE_REAL_ALLOCATORS
+void
+kmem_init()
+{
+
+	/* nothing to do */
+}
+
 void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {

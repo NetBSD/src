@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.6 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.6.14.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.6 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.6.14.1 2009/05/13 17:17:46 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ kloader_hpcmips_jump(kloader_bootfunc_t func, vaddr_t sp,
 }
 
 void
-kloader_hpcmips_reset()
+kloader_hpcmips_reset(void)
 {
 
 	(*platform.reboot)(0, 0);

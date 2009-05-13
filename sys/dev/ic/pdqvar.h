@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.40 2008/06/24 10:12:06 gmcgarry Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.40.10.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -382,7 +382,7 @@ extern void pdq_ifattach(pdq_softc_t *, ifnet_ret_t (*ifwatchdog)(int));
 
 #define	PDQ_OS_PAGESIZE			PAGESIZE
 #define	PDQ_OS_USEC_DELAY(n)		drv_usecwait(n)
-#define	PDQ_OS_MEMZERO(p, n)		bzero((void *)(p), (n))
+#define	PDQ_OS_MEMZERO(p, n)		memset((void *)(p), 0, (n))
 #define	PDQ_OS_VA_TO_BUSPA(pdq, p)		vtop((void *)p, NULL)
 #define	PDQ_OS_MEMALLOC(n)		kmem_zalloc(n, KM_NOSLEEP)
 #define	PDQ_OS_MEMFREE(p, n)		kmem_free((void *) p, n)

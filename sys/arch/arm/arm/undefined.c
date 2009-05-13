@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.36 2008/12/17 20:51:32 cegger Exp $	*/
+/*	$NetBSD: undefined.c,v 1.36.2.1 2009/05/13 17:16:12 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.36 2008/12/17 20:51:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.36.2.1 2009/05/13 17:16:12 jym Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -167,7 +167,7 @@ static struct undefined_handler gdb_uh_thumb;
 #endif
 
 void
-undefined_init()
+undefined_init(void)
 {
 	int loop;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.26 2008/11/24 11:41:09 ad Exp $
+#	$NetBSD: IXDP425,v 1.26.4.1 2009/05/13 17:16:37 jym Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -106,7 +106,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

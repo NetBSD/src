@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.36 2007/04/12 13:10:59 jmcneill Exp $	*/
+/*	$NetBSD: console.c,v 1.36.50.1 2009/05/13 17:18:21 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,13 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36 2007/04/12 13:10:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36.50.1 2009/05/13 17:18:21 jym Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/machtype.h>
@@ -53,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36 2007/04/12 13:10:59 jmcneill Exp $"
 #include <sgimips/mace/macereg.h>
 
 #include "com.h"
+#include "scn.h"
 #include "zsc.h"
 #include "gio.h"
 #include "pckbc.h"
@@ -64,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36 2007/04/12 13:10:59 jmcneill Exp $"
 #endif
 int comcnmode = CONMODE;
 
+extern struct consdev scn_cn;
 extern struct consdev zs_cn;
 
 extern void	zs_kgdb_init(void);
@@ -73,12 +76,13 @@ extern int	crmfb_probe(void);
 #endif
 
 void		kgdb_port_init(void);
+static int	scn_serial_init(const char *);
 static int	zs_serial_init(const char *);
 static int	gio_video_init(const char *);
 static int	mace_serial_init(const char *);
 
 void
-consinit()
+consinit(void)
 {
 	const char *consdev;
 	
@@ -91,6 +95,11 @@ consinit()
 	}
 
 	switch (mach_type) {
+	case MACH_SGI_IP6 | MACH_SGI_IP10:
+		if (scn_serial_init(consdev))
+			return;
+		break;
+
 	case MACH_SGI_IP12:
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
@@ -124,6 +133,22 @@ consinit()
 	}
 
 	printf("Using ARCS for console I/O.\n");
+}
+
+static int
+scn_serial_init(const char *consdev)
+{
+#if (NSCN > 0)
+	if ((strlen(consdev) == 9) && (!strncmp(consdev, "serial", 6)) &&
+	    (consdev[7] == '0' || consdev[7] == '1')) {
+		cn_tab = &scn_cn;
+		(*cn_tab->cn_init)(cn_tab);
+			
+		return (1);
+	}
+#endif
+	
+	return (0);
 }
 
 static int
@@ -200,7 +225,7 @@ mace_serial_init(const char *consdev)
 		delay(10000);
 
 		/* XXX: hardcoded MACE iotag */
-		if (comcnattach(3, MIPS_PHYS_TO_KSEG1(MACE_BASE + base),
+		if (comcnattach(SGIMIPS_BUS_SPACE_MACE, MIPS_PHYS_TO_KSEG1(MACE_BASE + base),
 		    speed, COM_FREQ, COM_TYPE_NORMAL, comcnmode) == 0)
 			return (1);
 	}
@@ -211,12 +236,12 @@ mace_serial_init(const char *consdev)
 
 #if defined(KGDB)
 void
-kgdb_port_init()
+kgdb_port_init(void)
 {
 # if (NCOM > 0)
 #  define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
 	if (mach_type == MACH_SGI_IP32)
-		com_kgdb_attach(3, 0xbf398000, 9600, COM_FREQ, COM_TYPE_NORMAL,
+		com_kgdb_attach(SGIMIPS_BUS_SPACE_MACE, 0xbf398000, 9600, COM_FREQ, COM_TYPE_NORMAL,
 		    KGDB_DEVMODE);
 # endif	/* (NCOM > 0) */
 

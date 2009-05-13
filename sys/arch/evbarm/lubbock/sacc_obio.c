@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.8 2008/04/28 20:23:17 martin Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.8.14.1 2009/05/13 17:16:39 jym Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.8 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.8.14.1 2009/05/13 17:16:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,7 @@ CFATTACH_DECL(sacc_obio, sizeof(struct sacc_softc), sacc_probe,
 uint16_t cs2_memctl_init = 0x7ff0;
 
 static void
-sacc_obio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sacc_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	int i;
 	u_int32_t skid, tmp;

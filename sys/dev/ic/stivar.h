@@ -1,4 +1,4 @@
-/* $NetBSD: stivar.h,v 1.2 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: stivar.h,v 1.2.90.1 2009/05/13 17:19:24 jym Exp $ */
 
 /*	$OpenBSD: stivar.h,v 1.15 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -32,7 +32,7 @@
 #define _IC_STIVAR_H_
 
 struct sti_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	u_int	sc_wsmode;

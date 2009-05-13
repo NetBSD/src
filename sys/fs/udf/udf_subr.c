@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.85 2009/02/08 19:14:52 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.85.2.1 2009/05/13 17:21:55 jym Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.85 2009/02/08 19:14:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.85.2.1 2009/05/13 17:21:55 jym Exp $");
 #endif /* not lint */
 
 
@@ -332,7 +332,7 @@ udf_synchronise_caches(struct udf_mount *ump)
 	if (ump->discinfo.mmc_class == MMC_CLASS_DISC)
 		return 0;
 
-	bzero(&mmc_op, sizeof(struct mmc_op));
+	memset(&mmc_op, 0, sizeof(struct mmc_op));
 	mmc_op.operation = MMC_OP_SYNCHRONISECACHE;
 
 	/* ignore return code */
@@ -2166,7 +2166,7 @@ udf_adjust_filecount(struct udf_node *udf_node, int sign)
 void
 udf_osta_charset(struct charspec *charspec)
 {
-	bzero(charspec, sizeof(struct charspec));
+	memset(charspec, 0, sizeof(struct charspec));
 	charspec->type = 0;
 	strcpy((char *) charspec->inf, "OSTA Compressed Unicode");
 }
@@ -2176,7 +2176,7 @@ udf_osta_charset(struct charspec *charspec)
 void
 udf_set_regid(struct regid *regid, char const *name)
 {
-	bzero(regid, sizeof(struct regid));
+	memset(regid, 0, sizeof(struct regid));
 	regid->flags    = 0;		/* not dirty and not protected */
 	strcpy((char *) regid->id, name);
 }
@@ -6491,7 +6491,6 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 	uint32_t    buf_offset, lb_num, rbuflen, rblk;
 	uint32_t    from, lblkno;
 	uint32_t    num_lb;
-	uint8_t    *buf_pos;
 	int error, run_length, isdir, what, s;
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
@@ -6543,7 +6542,6 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 	buf->b_resid = buf->b_bcount;
 	for (lb_num = 0; lb_num < num_lb; lb_num++) {
 		buf_offset = lb_num * lb_size;
-		buf_pos    = (uint8_t *) buf->b_data + buf_offset;
 		DPRINTF(WRITE, ("\tprocessing rel lb_num %d\n", lb_num));
 
 		/*

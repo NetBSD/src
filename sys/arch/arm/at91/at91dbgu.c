@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.2 2008/07/03 01:15:38 matt Exp $ */
+/*	$Id: at91dbgu.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.2.12.1 2009/05/13 17:16:13 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -204,10 +204,7 @@ struct consdev at91dbgu_cons = {
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && device_is_active((sc)->sc_dev))
 
 static int
-at91dbgu_match(parent, match, aux)
-	device_t parent;
-	cfdata_t match;
-	void *aux;
+at91dbgu_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (strcmp(match->cf_name, "at91dbgu") == 0)
 		return 2;
@@ -218,10 +215,7 @@ static int
 dbgu_intr(void* arg);
 
 static void
-at91dbgu_attach(parent, self, aux)
-	device_t parent;
-	device_t self;
-	void *aux;
+at91dbgu_attach(device_t parent, device_t self, void *aux)
 {
 	struct at91dbgu_softc *sc = device_private(self);
 	struct at91bus_attach_args *sa = aux;

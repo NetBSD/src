@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.14 2006/07/01 05:55:34 mrg Exp $ */
+/*	$NetBSD: consio.c,v 1.14.76.1 2009/05/13 17:18:40 jym Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,19 +44,19 @@
 
 #include "data.h"
 
-void setup __P((void));
+void setup(void);
 
-static void (*put_fp) __P((int))  = NULL;
-static int (*get_fp) __P((void)) = NULL;
-static int (*test_fp) __P((void)) = NULL;
+static void (*put_fp)(int)  = NULL;
+static int (*get_fp)(void) = NULL;
+static int (*test_fp)(void) = NULL;
 
-void pr_putchar __P((int c));	/* putchar() using mtpr/mfpr */
-int pr_getchar __P((void));
-int pr_testchar __P((void));
+void pr_putchar(int c);	/* putchar() using mtpr/mfpr */
+int pr_getchar(void);
+int pr_testchar(void);
 
-void rom_putchar __P((int c));	/* putchar() using ROM routines */
-int rom_getchar __P((void));
-int rom_testchar __P((void));
+void rom_putchar(int c);	/* putchar() using ROM routines */
+int rom_getchar(void);
+int rom_testchar(void);
 
 int rom_putc;		/* ROM-address of put-routine */
 int rom_getc;		/* ROM-address of get-routine */
@@ -65,12 +65,12 @@ int rom_getc;		/* ROM-address of get-routine */
 unsigned char  *ka630_conspage; 
 
 /* Function that initializes things for KA630 ROM console I/O */
-void ka630_consinit __P((void));
+void ka630_consinit(void);
 
 /* Functions that use KA630 ROM for console I/O */
-void ka630_rom_putchar __P((int c));
-int ka630_rom_getchar __P((void));
-int ka630_rom_testchar __P((void));
+void ka630_rom_putchar(int c);
+int ka630_rom_getchar(void);
+int ka630_rom_testchar(void);
 
 /* Also added such a thing for KA53 - MK-991208 */
 unsigned char  *ka53_conspage;

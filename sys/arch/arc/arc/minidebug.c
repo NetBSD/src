@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.18 2007/02/22 05:09:01 thorpej Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.18.60.1 2009/05/13 17:16:11 jym Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: minidebug.c,v 1.18 2007/02/22 05:09:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: minidebug.c,v 1.18.60.1 2009/05/13 17:16:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,8 +305,7 @@ break_restore(void)
 }
 
 static int
-break_find(va)
-	int va;
+break_find(int va)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63.4.1 2009/05/13 17:17:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63.4.1 2009/05/13 17:17:41 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,9 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2008/11/30 18:21:34 martin Exp $");
 char machine[] = MACHINE;		/* evbsh3 */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb or sh3el */
 
-void initSH3 __P((void *));
-void LoadAndReset __P((const char *));
-void XLoadAndReset __P((char *));
+void initSH3(void *);
+void LoadAndReset(const char *);
+void XLoadAndReset(char *);
 
 /*
  * Machine-dependent startup code
@@ -116,7 +116,7 @@ void XLoadAndReset __P((char *));
  * This is called from main() in kern/main.c.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 
 	sh_startup();
@@ -168,9 +168,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	static int waittime = -1;
 
@@ -287,7 +285,7 @@ initSH3(void *pc)	/* XXX return address */
  * it shouldn't be called from init386 either.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted;
 
@@ -299,12 +297,7 @@ consinit()
 }
 
 int
-bus_space_map (t, addr, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+bus_space_map (bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 
 	*bshp = (bus_space_handle_t)addr;
@@ -313,11 +306,7 @@ bus_space_map (t, addr, size, flags, bshp)
 }
 
 int
-sh_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+sh_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -340,19 +329,13 @@ sh_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 }
 
 void
-sh_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+sh_memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 }
 
 void
-sh_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+sh_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	return;
 }
@@ -360,12 +343,7 @@ sh_memio_unmap(t, bsh, size)
 #ifdef SH4_PCMCIA
 
 int
-shpcmcia_memio_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+shpcmcia_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	int error;
 	struct extent *ex;
@@ -413,11 +391,7 @@ shpcmcia_memio_map(t, bpa, size, flags, bshp)
 }
 
 int
-shpcmcia_mem_add_mapping(bpa, size, type, bshp)
-	bus_addr_t bpa;
-	bus_size_t size;
-	int type;
-	bus_space_handle_t *bshp;
+shpcmcia_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int type, bus_space_handle_t *bshp)
 {
 	u_long pa, endpa;
 	vaddr_t va;
@@ -474,10 +448,7 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 }
 
 void
-shpcmcia_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+shpcmcia_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	struct extent *ex;
 	u_long va, endva;
@@ -521,10 +492,7 @@ shpcmcia_memio_unmap(t, bsh, size)
 }
 
 void    
-shpcmcia_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+shpcmcia_memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* sh3_pcmcia_memio_unmap() does all that we need to do. */
@@ -532,11 +500,7 @@ shpcmcia_memio_free(t, bsh, size)
 }
 
 int
-shpcmcia_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+shpcmcia_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -550,10 +514,10 @@ shpcmcia_memio_subregion(t, bsh, offset, size, nbshp)
  * InitializeBsc
  * : BSC(Bus State Controller)
  */
-void InitializeBsc __P((void));
+void InitializeBsc(void);
 
 void
-InitializeBsc()
+InitializeBsc(void)
 {
 
 	/*
@@ -690,8 +654,7 @@ InitializeBsc()
 #define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
 
 void
-LoadAndReset(osimage)
-	const char *osimage;
+LoadAndReset(const char *osimage)
 {
 	void *buf_addr;
 	u_long size;

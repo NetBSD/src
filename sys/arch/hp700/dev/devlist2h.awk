@@ -1,9 +1,9 @@
-#	$NetBSD: devlist2h.awk,v 1.4 2005/12/11 12:17:24 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.4.92.1 2009/05/13 17:17:43 jym Exp $
 
-#	$OpenBSD: devlist2h.awk,v 1.4 2001/03/29 00:43:00 mickey Exp $
+#	$OpenBSD: devlist2h.awk,v 1.6 2004/04/07 18:24:19 mickey Exp $
 
 #
-# Copyright (c) 1998-2001 Michael Shalayeff
+# Copyright (c) 1998-2003 Michael Shalayeff
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -14,22 +14,18 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by Michael Shalayeff.
-# 4. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
-# USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+# THE POSSIBILITY OF SUCH DAMAGE.
 #
 
 BEGIN	{
@@ -58,13 +54,17 @@ busted	{
 	}
 }
 
+# first line is rcsid, beware
 NR == 1	{
+	VERSION = $0;
+	gsub("\\$", "", VERSION);
+
 	printf("/*\t$NetBSD" "$\t*/\n\n") > cpud;
-	printf("/* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n") \
-		> cpud;
+	printf("/*\n * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.\n" \
+	       " * generated from:\n *\t%s\n */\n\n", VERSION) > cpud;
 	printf("/*\t$NetBSD" "$\t*/\n\n") > cpuh;
-	printf("/* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n") \
-		> cpuh;
+	printf("/*\n * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.\n" \
+	       " * generated from:\n *\t%s\n */\n\n", VERSION) > cpuh;
 }
 
 /^\$/ {
@@ -79,15 +79,10 @@ NF > 0 && $1 == "type"	{
 
 NR > 1 {
 	if (tolower($1) in types) {
-		printf("{HPPA_TYPE_%s,\t", toupper($1)) > cpud;
-		if ($2 != "x") {
-			printf("#define\tHPPA_%s_%s\t%s\n", toupper($1),
-			       toupper($2), $3) > cpuh;
-			printf("HPPA_%s_%s", toupper($1), toupper($2)) > cpud;
-		} else {
-			printf("%s", $3) > cpud;
-		}
-		printf(",\t\"") > cpud;
+		printf("#define\tHPPA_%s_%s\t%s\n", toupper($1),
+		       toupper($2), $3) > cpuh;
+		printf("{HPPA_TYPE_%s,\tHPPA_%s_%s,\t\"", toupper($1),
+		       toupper($1), toupper($2), $3) > cpud;
 		f = 4;
 		while (f <= NF) {
 			sub(/[ \t]*/, "", $f);
@@ -124,7 +119,7 @@ NR > 1 {
 
 END	{
 	if (busted) {
-		print("unteminated comment at the EOF\n");
+		print("unterminated comment at the EOF\n");
 		exit(1);
 	}
 	printf("{ -1 }\n") > cpud;

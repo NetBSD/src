@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.25 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.25.18.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.25 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.25.18.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,15 +71,15 @@ extern int	wssdebug;
 #define DPRINTF(x)
 #endif
 
-static int	wssfind(struct device *, struct wss_softc *, int,
+static int	wssfind(device_t, struct wss_softc *, int,
 		    struct isa_attach_args *);
 
 static void	madprobe(struct wss_softc *, int);
 static void	madunmap(struct wss_softc *);
 static int	detect_mad16(struct wss_softc *, int);
 
-int		wss_isa_probe(struct device *, struct cfdata *, void *);
-void		wss_isa_attach(struct device *, struct device *, void *);
+int		wss_isa_probe(device_t, cfdata_t, void *);
+void		wss_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(wss_isa, sizeof(struct wss_softc),
     wss_isa_probe, wss_isa_attach, NULL, NULL);
@@ -88,7 +88,7 @@ CFATTACH_DECL(wss_isa, sizeof(struct wss_softc),
  * Probe for the Microsoft Sound System hardware.
  */
 int
-wss_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+wss_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia;
 	struct wss_softc probesc, *sc;
@@ -120,7 +120,7 @@ wss_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static int
-wssfind(struct device *parent, struct wss_softc *sc, int probing,
+wssfind(device_t parent, struct wss_softc *sc, int probing,
     struct isa_attach_args *ia)
 {
 	static u_char interrupt_bits[12] = {
@@ -232,7 +232,7 @@ bad1:
  * pseudo-device driver .
  */
 void
-wss_isa_attach(struct device *parent, struct device *self, void *aux)
+wss_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct wss_softc *sc;
 	struct ad1848_softc *ac;

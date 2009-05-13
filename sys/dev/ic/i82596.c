@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.19 2008/04/04 17:03:42 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.19.18.1 2009/05/13 17:19:23 jym Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.19 2008/04/04 17:03:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.19.18.1 2009/05/13 17:19:23 jym Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -123,10 +123,28 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * MI backend doesn't distinguish different chip types when programming
  * the chip.
  * 
- * sc->sc_flags has to be set to 0 on little endian hardware and to
- * IEE_NEED_SWAP on big endian hardware, when endianess conversion is not
- * done by the bus attachment. Usually you need to set IEE_NEED_SWAP
- * when IEE_SYSBUS_BE is set in the sysbus byte.
+ * IEE_NEED_SWAP in sc->sc_flags has to be cleared on little endian hardware
+ * and set on big endian hardware, when endianess conversion is not done
+ * by the bus attachment but done by i82596 chip itself.
+ * Usually you need to set IEE_NEED_SWAP on big endian machines
+ * where the hardware (the LE/~BE pin) is configured as BE mode.
+ * 
+ * If the chip is configured as BE mode, all 8 bit (byte) and 16 bit (word)
+ * entities can be written in big endian. But Rev A chip doesn't support
+ * 32 bit (dword) entities with big endian byte ordering, so we have to
+ * treat all 32 bit (dword) entities as two 16 bit big endian entities.
+ * Rev B and C chips support big endian byte ordering for 32 bit entities,
+ * and this new feature is enabled by IEE_SYSBUS_BE in the sysbus byte.
+ *
+ * With the IEE_SYSBUS_BE feature, all 32 bit address ponters are
+ * treated as true 32 bit entities but the SCB absolute address and
+ * statistical counters are still treated as two 16 bit big endian entities,
+ * so we have to always swap high and low words for these entities.
+ * IEE_SWAP32() should be used for the SCB address and statistical counters,
+ * and IEE_SWAPA32() should be used for other 32 bit pointers in the shmem.
+ *
+ * IEE_REV_A flag must be set in sc->sc_flags if the IEE_SYSBUS_BE feature
+ * is disabled even on big endian machines for the old Rev A chip in backend.
  * 
  * sc->sc_cl_align must be set to 1 or to the cache line size. When set to
  * 1 no special alignment of DMA descriptors is done. If sc->sc_cl_align != 1
@@ -135,15 +153,14 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * I/O coherent caches and are unable to map the shared memory uncachable.
  * (At least pre PA7100LC CPUs are unable to map memory uncachable.)
  * 
- * sc->sc_cl_align MUST BE INITIALIZED BEFORE THE FOLLOWING MACROS ARE USED:
- * SC_* IEE_*_SZ IEE_*_OFF IEE_SHMEM_MAX (shell style glob(3) pattern)
- * 
- * The MD frontend has to allocate a piece of DMA memory at least of
- * IEE_SHMEM_MAX bytes size. All communication with the chip is done via
- * this shared memory. If possible map this memory non-cachable on
- * archs with non DMA I/O coherent caches. The base of the memory needs
- * to be aligned to an even address if sc->sc_cl_align == 1 and aligned
- * to a cache line if sc->sc_cl_align != 1.
+ * The MD frontend also has to set sc->sc_cl_align and sc->sc_sysbus
+ * to allocate and setup shared DMA memory in MI iee_attach().
+ * All communication with the chip is done via this shared memory.
+ * This memory is mapped with BUS_DMA_COHERENT so it will be uncached
+ * if possible for archs with non DMA I/O coherent caches.
+ * The base of the memory needs to be aligned to an even address
+ * if sc->sc_cl_align == 1 and aligned to a cache line if sc->sc_cl_align != 1.
+ * Each descriptor offsets are calculated in iee_attach() to handle this.
  * 
  * An interrupt with iee_intr() as handler must be established.
  * 
@@ -172,8 +189,8 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * a frame the mbuf cluster is handled to upper protocol layers, a new mbuf
  * cluster is allocated and the RFD / RBD are reinitialized accordingly.
  * 
- * When a RFD list overrun occurred the whole RFD and RBD lists are reinitialized
- * and frame reception is started again.
+ * When a RFD list overrun occurred the whole RFD and RBD lists are
+ * reinitialized and frame reception is started again.
  */
 int
 iee_intr(void *intarg)
@@ -188,42 +205,60 @@ iee_intr(void *intarg)
 	int scb_status;
 	int scb_cmd;
 	int n, col;
+	uint16_t status, count, cmd;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		(sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
 		return 1;
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
-	    BUS_DMASYNC_POSTREAD);
-	scb_status = SC_SCB->scb_status;
-	scb_cmd = SC_SCB->scb_cmd;
-	rfd = SC_RFD(sc->sc_rx_done);
-	while ((rfd->rfd_status & IEE_RFD_C) != 0) {
+	IEE_SCBSYNC(sc, BUS_DMASYNC_POSTREAD);
+	scb_status = SC_SCB(sc)->scb_status;
+	scb_cmd = SC_SCB(sc)->scb_cmd;
+	for (;;) {
+		rfd = SC_RFD(sc, sc->sc_rx_done);
+		IEE_RFDSYNC(sc, sc->sc_rx_done,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = rfd->rfd_status;
+		if ((status & IEE_RFD_C) == 0) {
+			IEE_RFDSYNC(sc, sc->sc_rx_done, BUS_DMASYNC_PREREAD);
+			break;
+		}
+		rfd->rfd_status = 0;
+		IEE_RFDSYNC(sc, sc->sc_rx_done,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
 		/* At least one packet was received. */
-		rbd = SC_RBD(sc->sc_rx_done);
 		rx_map = sc->sc_rx_map[sc->sc_rx_done];
 		rx_mbuf = sc->sc_rx_mbuf[sc->sc_rx_done];
-		SC_RBD((sc->sc_rx_done + IEE_NRFD - 1) % IEE_NRFD)->rbd_size
+		IEE_RBDSYNC(sc, (sc->sc_rx_done + IEE_NRFD - 1) % IEE_NRFD,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		SC_RBD(sc, (sc->sc_rx_done + IEE_NRFD - 1) % IEE_NRFD)->rbd_size
 		    &= ~IEE_RBD_EL;
-		if ((rfd->rfd_status & IEE_RFD_OK) == 0
-		    || (rbd->rbd_count & IEE_RBD_EOF) == 0
-		    || (rbd->rbd_count & IEE_RBD_F) == 0){
+		IEE_RBDSYNC(sc, (sc->sc_rx_done + IEE_NRFD - 1) % IEE_NRFD,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		rbd = SC_RBD(sc, sc->sc_rx_done);
+		IEE_RBDSYNC(sc, sc->sc_rx_done,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		count = rbd->rbd_count;
+		if ((status & IEE_RFD_OK) == 0
+		    || (count & IEE_RBD_EOF) == 0
+		    || (count & IEE_RBD_F) == 0){
 			/* Receive error, skip frame and reuse buffer. */
-			rfd->rfd_status = 0;
 			rbd->rbd_count = 0;
 			rbd->rbd_size = IEE_RBD_EL | rx_map->dm_segs[0].ds_len;
+			IEE_RBDSYNC(sc, sc->sc_rx_done,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			printf("%s: iee_intr: receive error %d, rfd_status="
 			    "0x%.4x, rfd_count=0x%.4x\n",
 			    device_xname(sc->sc_dev),
-			    ++sc->sc_rx_err, rfd->rfd_status, rbd->rbd_count);
+			    ++sc->sc_rx_err, status, count);
 			sc->sc_rx_done = (sc->sc_rx_done + 1) % IEE_NRFD;
 			continue;
 		}
-		rfd->rfd_status = 0;
 		bus_dmamap_sync(sc->sc_dmat, rx_map, 0, rx_mbuf->m_ext.ext_size,
 		    BUS_DMASYNC_POSTREAD);
 		rx_mbuf->m_pkthdr.len = rx_mbuf->m_len =
-		    rbd->rbd_count & IEE_RBD_COUNT;
+		    count & IEE_RBD_COUNT;
 		rx_mbuf->m_pkthdr.rcvif = ifp;
 		MGETHDR(new_mbuf, M_DONTWAIT, MT_DATA);
 		if (new_mbuf == NULL) {
@@ -240,13 +275,14 @@ iee_intr(void *intarg)
 			break;
 		}
 		bus_dmamap_unload(sc->sc_dmat, rx_map);
-		if (bus_dmamap_load(sc->sc_dmat, rx_map,
-		    new_mbuf->m_ext.ext_buf, new_mbuf->m_ext.ext_size,
-		    NULL, BUS_DMA_READ | BUS_DMA_NOWAIT) != 0)
+		new_mbuf->m_len = new_mbuf->m_pkthdr.len = MCLBYTES - 2;
+		new_mbuf->m_data += 2;
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, rx_map,
+		    new_mbuf, BUS_DMA_READ | BUS_DMA_NOWAIT) != 0)
 			panic("%s: iee_intr: can't load RX DMA map\n",
 			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmat, rx_map, 0,
-		    new_mbuf->m_ext.ext_size, BUS_DMASYNC_PREREAD);
+		    rx_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 #if NBPFILTER > 0
 		if (ifp->if_bpf != 0)
 			bpf_mtap(ifp->if_bpf, rx_mbuf);
@@ -256,112 +292,139 @@ iee_intr(void *intarg)
 		sc->sc_rx_mbuf[sc->sc_rx_done] = new_mbuf;
 		rbd->rbd_count = 0;
 		rbd->rbd_size = IEE_RBD_EL | rx_map->dm_segs[0].ds_len;
-		rbd->rbd_rb_addr = rx_map->dm_segs[0].ds_addr;
+		rbd->rbd_rb_addr = IEE_SWAPA32(rx_map->dm_segs[0].ds_addr);
+		IEE_RBDSYNC(sc, sc->sc_rx_done,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		sc->sc_rx_done = (sc->sc_rx_done + 1) % IEE_NRFD;
-		rfd = SC_RFD(sc->sc_rx_done);
 	}
 	if ((scb_status & IEE_SCB_RUS) == IEE_SCB_RUS_NR1
 	    || (scb_status & IEE_SCB_RUS) == IEE_SCB_RUS_NR2
 	    || (scb_status & IEE_SCB_RUS) == IEE_SCB_RUS_NR3) {
 		/* Receive Overrun, reinit receive ring buffer. */
 		for (n = 0 ; n < IEE_NRFD ; n++) {
-			SC_RFD(n)->rfd_cmd = IEE_RFD_SF;
-			SC_RFD(n)->rfd_link_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF
-			    + IEE_RFD_SZ * ((n + 1) % IEE_NRFD));
-			SC_RBD(n)->rbd_next_rbd = IEE_PHYS_SHMEM(IEE_RBD_OFF
-			    + IEE_RBD_SZ * ((n + 1) % IEE_NRFD));
-			SC_RBD(n)->rbd_size = IEE_RBD_EL |
+			rfd = SC_RFD(sc, n);
+			rbd = SC_RBD(sc, n);
+			rfd->rfd_cmd = IEE_RFD_SF;
+			rfd->rfd_link_addr =
+			    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_rfd_off
+			    + sc->sc_rfd_sz * ((n + 1) % IEE_NRFD)));
+			rbd->rbd_next_rbd =
+			    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_rbd_off
+			    + sc->sc_rbd_sz * ((n + 1) % IEE_NRFD)));
+			rbd->rbd_size = IEE_RBD_EL |
 			    sc->sc_rx_map[n]->dm_segs[0].ds_len;
-			SC_RBD(n)->rbd_rb_addr =
-			    sc->sc_rx_map[n]->dm_segs[0].ds_addr;
+			rbd->rbd_rb_addr =
+			    IEE_SWAPA32(sc->sc_rx_map[n]->dm_segs[0].ds_addr);
 		}
-		SC_RFD(0)->rfd_rbd_addr = IEE_PHYS_SHMEM(IEE_RBD_OFF);
+		SC_RFD(sc, 0)->rfd_rbd_addr =
+		    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_rbd_off));
 		sc->sc_rx_done = 0;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_RFD_OFF,
-		    IEE_RFD_LIST_SZ + IEE_RBD_LIST_SZ, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, sc->sc_rfd_off,
+		    sc->sc_rfd_sz * IEE_NRFD + sc->sc_rbd_sz * IEE_NRFD,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		(sc->sc_iee_cmd)(sc, IEE_SCB_RUC_ST);
 		printf("%s: iee_intr: receive ring buffer overrun\n",
 		    device_xname(sc->sc_dev));
 	}
 
-	if (sc->sc_next_cb != 0
-	    && (SC_CB(sc->sc_next_cb - 1)->cb_status & IEE_CB_C) != 0) {
-		/* CMD list finished */
-		ifp->if_timer = 0;
-		if (sc->sc_next_tbd != 0) {
-			/* A TX CMD list finished, cleanup */
-			for (n = 0 ; n < sc->sc_next_cb ; n++) {
-				m_freem(sc->sc_tx_mbuf[n]);
-				sc->sc_tx_mbuf[n] = NULL;
-				bus_dmamap_unload(sc->sc_dmat,sc->sc_tx_map[n]);
-				if ((SC_CB(n)->cb_status & IEE_CB_COL) != 0 &&
-				    (SC_CB(n)->cb_status & IEE_CB_MAXCOL) == 0)
-					col = 16;
-				else
-					col = SC_CB(n)->cb_status
-					    & IEE_CB_MAXCOL;
-				sc->sc_tx_col += col;
-				if ((SC_CB(n)->cb_status & IEE_CB_OK) != 0) {
-					ifp->if_opackets++;
-					ifp->if_collisions += col;
+	if (sc->sc_next_cb != 0) {
+		IEE_CBSYNC(sc, sc->sc_next_cb - 1,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = SC_CB(sc, sc->sc_next_cb - 1)->cb_status;
+		IEE_CBSYNC(sc, sc->sc_next_cb - 1,
+		    BUS_DMASYNC_PREREAD);
+		if ((status & IEE_CB_C) != 0) {
+			/* CMD list finished */
+			ifp->if_timer = 0;
+			if (sc->sc_next_tbd != 0) {
+				/* A TX CMD list finished, cleanup */
+				for (n = 0 ; n < sc->sc_next_cb ; n++) {
+					m_freem(sc->sc_tx_mbuf[n]);
+					sc->sc_tx_mbuf[n] = NULL;
+					bus_dmamap_unload(sc->sc_dmat,
+					    sc->sc_tx_map[n]);
+					IEE_CBSYNC(sc, n,
+				    	    BUS_DMASYNC_POSTREAD|
+					    BUS_DMASYNC_POSTWRITE);
+					status = SC_CB(sc, n)->cb_status;
+					IEE_CBSYNC(sc, n,
+				    	    BUS_DMASYNC_PREREAD);
+					if ((status & IEE_CB_COL) != 0 &&
+					    (status & IEE_CB_MAXCOL) == 0)
+						col = 16;
+					else
+						col = status
+						    & IEE_CB_MAXCOL;
+					sc->sc_tx_col += col;
+					if ((status & IEE_CB_OK) != 0) {
+						ifp->if_opackets++;
+						ifp->if_collisions += col;
+					}
 				}
+				sc->sc_next_tbd = 0;
+				ifp->if_flags &= ~IFF_OACTIVE;
 			}
-			sc->sc_next_tbd = 0;
-			ifp->if_flags &= ~IFF_OACTIVE;
+			for (n = 0 ; n < sc->sc_next_cb; n++) {
+				/*
+				 * Check if a CMD failed, but ignore TX errors.
+				 */
+				IEE_CBSYNC(sc, n,
+				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+				cmd = SC_CB(sc, n)->cb_cmd;
+				status = SC_CB(sc, n)->cb_status;
+				IEE_CBSYNC(sc, n, BUS_DMASYNC_PREREAD);
+				if ((cmd & IEE_CB_CMD) != IEE_CB_CMD_TR &&
+				    (status & IEE_CB_OK) == 0)
+					printf("%s: iee_intr: scb_status=0x%x "
+					    "scb_cmd=0x%x failed command %d: "
+					    "cb_status[%d]=0x%.4x "
+					    "cb_cmd[%d]=0x%.4x\n",
+					    device_xname(sc->sc_dev),
+					    scb_status, scb_cmd,
+					    ++sc->sc_cmd_err,
+					    n, status, n, cmd);
+			}
+			sc->sc_next_cb = 0;
+			if ((sc->sc_flags & IEE_WANT_MCAST) != 0) {
+				iee_cb_setup(sc, IEE_CB_CMD_MCS |
+				    IEE_CB_S | IEE_CB_EL | IEE_CB_I);
+				(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
+			} else
+				/* Try to get deferred packets going. */
+				iee_start(ifp);
 		}
-		for (n = 0 ; n < sc->sc_next_cb ; n++) {
-			/* Check if a CMD failed, but ignore TX errors. */
-			if ((SC_CB(n)->cb_cmd & IEE_CB_CMD) != IEE_CB_CMD_TR
-			    && ((SC_CB(n)->cb_status & IEE_CB_OK) == 0))
-				printf("%s: iee_intr: scb_status=0x%x "
-				    "scb_cmd=0x%x failed command %d: "
-				    "cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x\n",
-				    device_xname(sc->sc_dev),
-				    scb_status, scb_cmd,
-				    ++sc->sc_cmd_err, n, SC_CB(n)->cb_status,
-				    n, SC_CB(n)->cb_cmd);
-		}
-		sc->sc_next_cb = 0;
-		if ((sc->sc_flags & IEE_WANT_MCAST) != 0) {
-			iee_cb_setup(sc, IEE_CB_CMD_MCS | IEE_CB_S | IEE_CB_EL
-			    | IEE_CB_I);
-			(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
-		} else
-			/* Try to get deferred packets going. */
-			iee_start(ifp);
 	}
-	if (IEE_SWAP(SC_SCB->scb_crc_err) != sc->sc_crc_err) {
-		sc->sc_crc_err = IEE_SWAP(SC_SCB->scb_crc_err);
+	if (IEE_SWAP32(SC_SCB(sc)->scb_crc_err) != sc->sc_crc_err) {
+		sc->sc_crc_err = IEE_SWAP32(SC_SCB(sc)->scb_crc_err);
 		printf("%s: iee_intr: crc_err=%d\n", device_xname(sc->sc_dev),
 		    sc->sc_crc_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_align_err) != sc->sc_align_err) {
-		sc->sc_align_err = IEE_SWAP(SC_SCB->scb_align_err);
+	if (IEE_SWAP32(SC_SCB(sc)->scb_align_err) != sc->sc_align_err) {
+		sc->sc_align_err = IEE_SWAP32(SC_SCB(sc)->scb_align_err);
 		printf("%s: iee_intr: align_err=%d\n", device_xname(sc->sc_dev),
 		    sc->sc_align_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_resource_err) != sc->sc_resource_err) {
-		sc->sc_resource_err = IEE_SWAP(SC_SCB->scb_resource_err);
+	if (IEE_SWAP32(SC_SCB(sc)->scb_resource_err) != sc->sc_resource_err) {
+		sc->sc_resource_err = IEE_SWAP32(SC_SCB(sc)->scb_resource_err);
 		printf("%s: iee_intr: resource_err=%d\n",
 		    device_xname(sc->sc_dev), sc->sc_resource_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_overrun_err) != sc->sc_overrun_err) {
-		sc->sc_overrun_err = IEE_SWAP(SC_SCB->scb_overrun_err);
+	if (IEE_SWAP32(SC_SCB(sc)->scb_overrun_err) != sc->sc_overrun_err) {
+		sc->sc_overrun_err = IEE_SWAP32(SC_SCB(sc)->scb_overrun_err);
 		printf("%s: iee_intr: overrun_err=%d\n",
 		    device_xname(sc->sc_dev), sc->sc_overrun_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_rcvcdt_err) != sc->sc_rcvcdt_err) {
-		sc->sc_rcvcdt_err = IEE_SWAP(SC_SCB->scb_rcvcdt_err);
+	if (IEE_SWAP32(SC_SCB(sc)->scb_rcvcdt_err) != sc->sc_rcvcdt_err) {
+		sc->sc_rcvcdt_err = IEE_SWAP32(SC_SCB(sc)->scb_rcvcdt_err);
 		printf("%s: iee_intr: rcvcdt_err=%d\n",
 		    device_xname(sc->sc_dev), sc->sc_rcvcdt_err);
 	}
-	if (IEE_SWAP(SC_SCB->scb_short_fr_err) != sc->sc_short_fr_err) {
-		sc->sc_short_fr_err = IEE_SWAP(SC_SCB->scb_short_fr_err);
+	if (IEE_SWAP32(SC_SCB(sc)->scb_short_fr_err) != sc->sc_short_fr_err) {
+		sc->sc_short_fr_err = IEE_SWAP32(SC_SCB(sc)->scb_short_fr_err);
 		printf("%s: iee_intr: short_fr_err=%d\n",
 		    device_xname(sc->sc_dev), sc->sc_short_fr_err);
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	IEE_SCBSYNC(sc, BUS_DMASYNC_PREREAD);
 	(sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
 	return 1;
 }
@@ -411,14 +474,14 @@ iee_intr(void *intarg)
 void
 iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 {
-	struct iee_cb *cb = SC_CB(sc->sc_next_cb);
+	struct iee_cb *cb = SC_CB(sc, sc->sc_next_cb);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 
-	memset(cb, 0, IEE_CB_SZ);
+	memset(cb, 0, sc->sc_cb_sz);
 	cb->cb_cmd = cmd;
-	switch(cmd & IEE_CB_CMD) {
+	switch (cmd & IEE_CB_CMD) {
 	case IEE_CB_CMD_NOP:	/* NOP CMD */
 		break;
 	case IEE_CB_CMD_IAS:	/* Individual Address Setup */
@@ -442,15 +505,16 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 			return;
 		}
 		/* Leave room for a CONF CMD to en/dis-able ALLMULTI mode */
-		cb = SC_CB(sc->sc_next_cb + 1);
+		cb = SC_CB(sc, sc->sc_next_cb + 1);
 		cb->cb_cmd = cmd;
 		cb->cb_mcast.mc_size = 0;
 		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN) != 0 || cb->cb_mcast.mc_size
-			    * ETHER_ADDR_LEN + 2 * IEE_CB_SZ
-			    > IEE_CB_LIST_SZ + IEE_TBD_LIST_SZ) {
+			    * ETHER_ADDR_LEN + 2 * sc->sc_cb_sz >
+			    sc->sc_cb_sz * IEE_NCB +
+			    sc->sc_tbd_sz * IEE_NTBD * IEE_NCB) {
 				cb->cb_mcast.mc_size = 0;
 				break;
 			}
@@ -468,16 +532,19 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 			/* disable ALLMULTI and load mcast list */
 			ifp->if_flags &= ~IFF_ALLMULTI;
 			sc->sc_cf[11] |= IEE_CF_11_MCALL;
-			/* Mcast setup may need more then IEE_CB_SZ bytes. */
+			/* Mcast setup may need more then sc->sc_cb_sz bytes. */
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map,
-			    IEE_CB_OFF, IEE_CB_LIST_SZ + IEE_TBD_LIST_SZ,
+			    sc->sc_cb_off,
+			    sc->sc_cb_sz * IEE_NCB +
+			    sc->sc_tbd_sz * IEE_NTBD * IEE_NCB,
 			    BUS_DMASYNC_PREWRITE);
 		}
 		iee_cb_setup(sc, IEE_CB_CMD_CONF);
 		break;
 	case IEE_CB_CMD_TR:	/* Transmit */
-		cb->cb_transmit.tx_tbd_addr = IEE_PHYS_SHMEM(IEE_TBD_OFF
-		    + IEE_TBD_SZ * sc->sc_next_tbd);
+		cb->cb_transmit.tx_tbd_addr =
+		    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_tbd_off
+		    + sc->sc_tbd_sz * sc->sc_next_tbd));
 		cb->cb_cmd |= IEE_CB_SF; /* Always use Flexible Mode. */
 		break;
 	case IEE_CB_CMD_TDR:	/* Time Domain Reflectometry */
@@ -490,13 +557,12 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 		/* can't happen */
 		break;
 	}
-	cb->cb_link_addr = IEE_PHYS_SHMEM(IEE_CB_OFF + IEE_CB_SZ *
-	    (sc->sc_next_cb + 1));
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_CB_OFF
-	    + IEE_CB_SZ * sc->sc_next_cb, IEE_CB_SZ, BUS_DMASYNC_PREWRITE);
+	cb->cb_link_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_cb_off +
+	    sc->sc_cb_sz * (sc->sc_next_cb + 1)));
+	IEE_CBSYNC(sc, sc->sc_next_cb,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_next_cb++;
 	ifp->if_timer = 5;
-	return;
 }
 
 
@@ -508,16 +574,79 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int n;
 
+	KASSERT(sc->sc_cl_align > 0 && powerof2(sc->sc_cl_align));
+
+	/*
+	 * Calculate DMA descriptor offsets and sizes in shmem
+	 * which should be cache line aligned.
+	 */
+	sc->sc_scp_off  = 0;
+	sc->sc_scp_sz   = roundup2(sizeof(struct iee_scp), sc->sc_cl_align);
+	sc->sc_iscp_off = sc->sc_scp_sz;
+	sc->sc_iscp_sz  = roundup2(sizeof(struct iee_iscp), sc->sc_cl_align);
+	sc->sc_scb_off  = sc->sc_iscp_off + sc->sc_iscp_sz;
+	sc->sc_scb_sz   = roundup2(sizeof(struct iee_scb), sc->sc_cl_align);
+	sc->sc_rfd_off  = sc->sc_scb_off + sc->sc_scb_sz;
+	sc->sc_rfd_sz   = roundup2(sizeof(struct iee_rfd), sc->sc_cl_align);
+	sc->sc_rbd_off  = sc->sc_rfd_off + sc->sc_rfd_sz * IEE_NRFD;
+	sc->sc_rbd_sz   = roundup2(sizeof(struct iee_rbd), sc->sc_cl_align);
+	sc->sc_cb_off   = sc->sc_rbd_off + sc->sc_rbd_sz * IEE_NRFD;
+	sc->sc_cb_sz    = roundup2(sizeof(struct iee_cb), sc->sc_cl_align);
+	sc->sc_tbd_off  = sc->sc_cb_off + sc->sc_cb_sz * IEE_NCB;
+	sc->sc_tbd_sz   = roundup2(sizeof(struct iee_tbd), sc->sc_cl_align);
+	sc->sc_shmem_sz = sc->sc_tbd_off + sc->sc_tbd_sz * IEE_NTBD * IEE_NCB;
+
+	/* allocate memory for shared DMA descriptors */
+	if (bus_dmamem_alloc(sc->sc_dmat, sc->sc_shmem_sz, PAGE_SIZE, 0,
+	    &sc->sc_dma_segs, 1, &sc->sc_dma_rsegs, BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": can't allocate %d bytes of DMA memory\n",
+		    sc->sc_shmem_sz);
+		return;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, sc->sc_dma_rsegs,
+	    sc->sc_shmem_sz, (void **)&sc->sc_shmem_addr,
+	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": can't map DMA memory\n");
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
+		    sc->sc_dma_rsegs);
+		return;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, sc->sc_shmem_sz, sc->sc_dma_rsegs,
+	    sc->sc_shmem_sz, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
+		aprint_error(": can't create DMA map\n");
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr,
+		    sc->sc_shmem_sz);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
+		    sc->sc_dma_rsegs);
+		return;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_shmem_map, sc->sc_shmem_addr,
+	    sc->sc_shmem_sz, NULL, BUS_DMA_NOWAIT) != 0) {
+		aprint_error(": can't load DMA map\n");
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr,
+		    sc->sc_shmem_sz);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs,
+		    sc->sc_dma_rsegs);
+		return;
+	}
+	memset(sc->sc_shmem_addr, 0, sc->sc_shmem_sz);
+
 	/* Set pointer to Intermediate System Configuration Pointer. */
 	/* Phys. addr. in big endian order. (Big endian as defined by Intel.) */
-	SC_SCP->scp_iscp_addr = IEE_SWAP(IEE_PHYS_SHMEM(IEE_ISCP_OFF));
+	SC_SCP(sc)->scp_iscp_addr = IEE_SWAP32(IEE_PHYS_SHMEM(sc->sc_iscp_off));
+	SC_SCP(sc)->scp_sysbus = sc->sc_sysbus;
 	/* Set pointer to System Control Block. */
 	/* Phys. addr. in big endian order. (Big endian as defined by Intel.) */
-	SC_ISCP->iscp_scb_addr = IEE_SWAP(IEE_PHYS_SHMEM(IEE_SCB_OFF));
+	SC_ISCP(sc)->iscp_scb_addr = IEE_SWAP32(IEE_PHYS_SHMEM(sc->sc_scb_off));
 	/* Set pointer to Receive Frame Area. (physical address) */
-	SC_SCB->scb_rfa_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF);
+	SC_SCB(sc)->scb_rfa_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_rfd_off));
 	/* Set pointer to Command Block. (physical address) */
-	SC_SCB->scb_cmd_blk_addr = IEE_PHYS_SHMEM(IEE_CB_OFF);
+	SC_SCB(sc)->scb_cmd_blk_addr =
+	    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_cb_off));
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, sc->sc_shmem_sz,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	ifmedia_init(&sc->sc_ifmedia, 0, iee_mediachange, iee_mediastatus);
 	if (media != NULL) {
@@ -569,6 +698,10 @@ iee_detach(struct iee_softc *sc, int flags)
 		iee_stop(ifp, 1);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_shmem_map);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, sc->sc_shmem_sz);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, sc->sc_dma_rsegs);
 }
 
 
@@ -603,6 +736,7 @@ iee_start(struct ifnet *ifp)
 {
 	struct iee_softc *sc = ifp->if_softc;
 	struct mbuf *m = NULL;
+	struct iee_tbd *tbd;
 	int t;
 	int n;
 
@@ -645,7 +779,7 @@ iee_start(struct ifnet *ifp)
 			m->m_len = sc->sc_tx_mbuf[t]->m_pkthdr.len;
 			m_freem(sc->sc_tx_mbuf[t]);
 			sc->sc_tx_mbuf[t] = m;
-			if(bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_tx_map[t],
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_tx_map[t],
 		    	    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 				printf("%s: iee_start: can't load TX DMA map\n",
 				    device_xname(sc->sc_dev));
@@ -655,15 +789,20 @@ iee_start(struct ifnet *ifp)
 			}
 		}
 		for (n = 0 ; n < sc->sc_tx_map[t]->dm_nsegs ; n++) {
-			SC_TBD(sc->sc_next_tbd + n)->tbd_tb_addr =
-			    sc->sc_tx_map[t]->dm_segs[n].ds_addr;
-			SC_TBD(sc->sc_next_tbd + n)->tbd_size =
+			tbd = SC_TBD(sc, sc->sc_next_tbd + n);
+			tbd->tbd_tb_addr =
+			    IEE_SWAPA32(sc->sc_tx_map[t]->dm_segs[n].ds_addr);
+			tbd->tbd_size =
 			    sc->sc_tx_map[t]->dm_segs[n].ds_len;
-			SC_TBD(sc->sc_next_tbd + n)->tbd_link_addr =
-			    IEE_PHYS_SHMEM(IEE_TBD_OFF + IEE_TBD_SZ
-			    * (sc->sc_next_tbd + n + 1));
+			tbd->tbd_link_addr =
+			    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_tbd_off +
+			    sc->sc_tbd_sz * (sc->sc_next_tbd + n + 1)));
 		}
-		SC_TBD(sc->sc_next_tbd + n - 1)->tbd_size |= IEE_CB_EL;
+		SC_TBD(sc, sc->sc_next_tbd + n - 1)->tbd_size |= IEE_CB_EL;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map,
+		    sc->sc_tbd_off + sc->sc_next_tbd * sc->sc_tbd_sz,
+		    sc->sc_tbd_sz * sc->sc_tx_map[t]->dm_nsegs,
+		    BUS_DMASYNC_PREWRITE);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_map[t], 0,
 		    sc->sc_tx_map[t]->dm_mapsize, BUS_DMASYNC_PREWRITE);
 		IFQ_POLL(&ifp->if_snd, m);
@@ -684,8 +823,6 @@ iee_start(struct ifnet *ifp)
 		return;
 	if (t == IEE_NCB)
 		ifp->if_flags |= IFF_OACTIVE;
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_CB_SZ,
-	    IEE_CB_LIST_SZ + IEE_TBD_LIST_SZ, BUS_DMASYNC_PREWRITE);
 	(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
 }
 
@@ -744,12 +881,12 @@ iee_init(struct ifnet *ifp)
 	sc->sc_next_tbd = 0;
 	sc->sc_flags &= ~IEE_WANT_MCAST;
 	sc->sc_rx_done = 0;
-	SC_SCB->scb_crc_err = 0;
-	SC_SCB->scb_align_err = 0;
-	SC_SCB->scb_resource_err = 0;
-	SC_SCB->scb_overrun_err = 0;
-	SC_SCB->scb_rcvcdt_err = 0;
-	SC_SCB->scb_short_fr_err = 0;
+	SC_SCB(sc)->scb_crc_err = 0;
+	SC_SCB(sc)->scb_align_err = 0;
+	SC_SCB(sc)->scb_resource_err = 0;
+	SC_SCB(sc)->scb_overrun_err = 0;
+	SC_SCB(sc)->scb_rcvcdt_err = 0;
+	SC_SCB(sc)->scb_short_fr_err = 0;
 	sc->sc_crc_err = 0;
 	sc->sc_align_err = 0;
 	sc->sc_resource_err = 0;
@@ -774,15 +911,17 @@ iee_init(struct ifnet *ifp)
 	}
 	/* Initialize Receive Frame and Receive Buffer Descriptors */
 	err = 0;
-	memset(SC_RFD(0), 0, IEE_RFD_LIST_SZ);
-	memset(SC_RBD(0), 0, IEE_RBD_LIST_SZ);
+	memset(SC_RFD(sc, 0), 0, sc->sc_rfd_sz * IEE_NRFD);
+	memset(SC_RBD(sc, 0), 0, sc->sc_rbd_sz * IEE_NRFD);
 	for (r = 0 ; r < IEE_NRFD ; r++) {
-		SC_RFD(r)->rfd_cmd = IEE_RFD_SF;
-		SC_RFD(r)->rfd_link_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF
-		    + IEE_RFD_SZ * ((r + 1) % IEE_NRFD));
+		SC_RFD(sc, r)->rfd_cmd = IEE_RFD_SF;
+		SC_RFD(sc, r)->rfd_link_addr =
+		    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_rfd_off
+		    + sc->sc_rfd_sz * ((r + 1) % IEE_NRFD)));
 
-		SC_RBD(r)->rbd_next_rbd = IEE_PHYS_SHMEM(IEE_RBD_OFF
-		    + IEE_RBD_SZ * ((r + 1) % IEE_NRFD));
+		SC_RBD(sc, r)->rbd_next_rbd =
+		    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_rbd_off
+		    + sc->sc_rbd_sz * ((r + 1) % IEE_NRFD)));
 		if (sc->sc_rx_mbuf[r] == NULL) {
 			MGETHDR(sc->sc_rx_mbuf[r], M_DONTWAIT, MT_DATA);
 			if (sc->sc_rx_mbuf[r] == NULL) {
@@ -800,6 +939,9 @@ iee_init(struct ifnet *ifp)
 				err = 1;
 				break;
 			}
+			sc->sc_rx_mbuf[r]->m_len =
+			    sc->sc_rx_mbuf[r]->m_pkthdr.len = MCLBYTES - 2;
+			sc->sc_rx_mbuf[r]->m_data += 2;
 		}
 		if (sc->sc_rx_map[r] == NULL && bus_dmamap_create(sc->sc_dmat,
 		    MCLBYTES, 1, MCLBYTES , 0, BUS_DMA_NOWAIT,
@@ -810,10 +952,8 @@ iee_init(struct ifnet *ifp)
 				err = 1;
 				break;
 			}
-		if (bus_dmamap_load(sc->sc_dmat, sc->sc_rx_map[r],
-		    sc->sc_rx_mbuf[r]->m_ext.ext_buf,
-		    sc->sc_rx_mbuf[r]->m_ext.ext_size, NULL,
-		    BUS_DMA_READ | BUS_DMA_NOWAIT) != 0) {
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_rx_map[r],
+		    sc->sc_rx_mbuf[r], BUS_DMA_READ | BUS_DMA_NOWAIT) != 0) {
 			printf("%s: iee_init: can't load RX DMA map\n",
 			    device_xname(sc->sc_dev));
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_map[r]);
@@ -822,11 +962,13 @@ iee_init(struct ifnet *ifp)
 			break;
 		}
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_map[r], 0,
-		    sc->sc_rx_mbuf[r]->m_ext.ext_size, BUS_DMASYNC_PREREAD);
-		SC_RBD(r)->rbd_size = sc->sc_rx_map[r]->dm_segs[0].ds_len;
-		SC_RBD(r)->rbd_rb_addr= sc->sc_rx_map[r]->dm_segs[0].ds_addr;
+		    sc->sc_rx_map[r]->dm_mapsize, BUS_DMASYNC_PREREAD);
+		SC_RBD(sc, r)->rbd_size = sc->sc_rx_map[r]->dm_segs[0].ds_len;
+		SC_RBD(sc, r)->rbd_rb_addr =
+		    IEE_SWAPA32(sc->sc_rx_map[r]->dm_segs[0].ds_addr);
 	}
-	SC_RFD(0)->rfd_rbd_addr = IEE_PHYS_SHMEM(IEE_RBD_OFF);
+	SC_RFD(sc, 0)->rfd_rbd_addr =
+	    IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_rbd_off));
 	if (err != 0) {
 		for (n = 0 ; n < r; n++) {
 			m_freem(sc->sc_rx_mbuf[n]);
@@ -860,9 +1002,9 @@ iee_init(struct ifnet *ifp)
 	sc->sc_cf[12] = IEE_CF_12_DEF;
 	sc->sc_cf[13] = IEE_CF_13_DEF;
 	iee_cb_setup(sc, IEE_CB_CMD_CONF | IEE_CB_S | IEE_CB_EL);
-	SC_SCB->scb_rfa_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
-	    BUS_DMASYNC_PREWRITE);
+	SC_SCB(sc)->scb_rfa_addr = IEE_SWAPA32(IEE_PHYS_SHMEM(sc->sc_rfd_off));
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, sc->sc_shmem_sz,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE | IEE_SCB_RUC_ST);
 	/* Issue a Channel Attention to ACK interrupts we may have caused. */
 	(sc->sc_iee_cmd)(sc, IEE_SCB_ACK);

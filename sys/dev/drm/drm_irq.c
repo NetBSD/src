@@ -1,4 +1,4 @@
-/* $NetBSD: drm_irq.c,v 1.16 2008/07/07 00:33:23 mrg Exp $ */
+/* $NetBSD: drm_irq.c,v 1.16.10.1 2009/05/13 17:19:16 jym Exp $ */
 
 /* drm_irq.c -- IRQ IOCTL and function support
  * Created: Fri Oct 18 2003 by anholt@FreeBSD.org
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.16 2008/07/07 00:33:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.16.10.1 2009/05/13 17:19:16 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_irq.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -94,8 +94,6 @@ int drm_irq_install(drm_device_t *dev)
 
 	dev->context_flag = 0;
 
-	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
-
 				/* Before installing handler */
 
 	dev->driver.irq_preinstall(dev);
@@ -141,7 +139,6 @@ int drm_irq_uninstall(drm_device_t *dev)
 	dev->driver.irq_uninstall(dev);
 
 	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
-	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;
 }

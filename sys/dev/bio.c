@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.8 2008/04/09 05:47:19 cegger Exp $ */
+/*	$NetBSD: bio.c,v 1.8.18.1 2009/05/13 17:19:05 jym Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.8 2008/04/09 05:47:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.8.18.1 2009/05/13 17:19:05 jym Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.8 2008/04/09 05:47:19 cegger Exp $");
 
 struct bio_mapping {
 	LIST_ENTRY(bio_mapping) bm_link;
-	struct device *bm_dev;
-	int (*bm_ioctl)(struct device *, u_long, void *);
+	device_t bm_dev;
+	int (*bm_ioctl)(device_t, u_long, void *);
 };
 
 static LIST_HEAD(, bio_mapping) bios = LIST_HEAD_INITIALIZER(bios);
@@ -222,7 +222,7 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 }
 
 int
-bio_register(struct device *dev, int (*ioctl)(struct device *, u_long, void *))
+bio_register(device_t dev, int (*ioctl)(device_t, u_long, void *))
 {
 	struct bio_mapping *bm;
 
@@ -241,7 +241,7 @@ bio_register(struct device *dev, int (*ioctl)(struct device *, u_long, void *))
 }
 
 void
-bio_unregister(struct device *dev)
+bio_unregister(device_t dev)
 {
 	struct bio_mapping *bm, *next;
 

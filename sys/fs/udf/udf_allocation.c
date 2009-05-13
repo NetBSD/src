@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.19 2008/12/16 16:18:25 pooka Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.19.2.1 2009/05/13 17:21:55 jym Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,11 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.19 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.19.2.1 2009/05/13 17:21:55 jym Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
+#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -506,10 +507,7 @@ translate_again:
 		lb_num   = udf_rw32(s_icb_loc.loc.lb_num);
 		vpart    = udf_rw16(s_icb_loc.loc.part_num);
 		lb_num  += (ext_offset + lb_size -1) / lb_size;
-		len     -= ext_offset;
 		ext_offset = 0;
-
-		flags = UDF_EXT_FLAGS(s_icb_loc.len);
 
 		UDF_UNLOCK_NODE(ump->metadata_node, 0);
 		if (flags != UDF_EXT_ALLOCATED) {
@@ -826,6 +824,13 @@ udf_bitmap_allocate(struct udf_bitmap *bitmap, int ismetadata,
 				offset += 8;
 				continue;
 			}
+
+			/* check for ffs overshoot */
+			if (offset + bit-1 >= bitmap->max_offset) {
+				offset = bitmap->max_offset;
+				break;
+			}
+
 			DPRINTF(PARANOIA, ("XXX : allocate %d, %p, bit %d\n",
 				offset + bit -1, bpos, bit-1));
 			*bpos &= ~(1 << (bit-1));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.27 2008/03/21 08:17:30 dyoung Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.27.18.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.27 2008/03/21 08:17:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.27.18.1 2009/05/13 17:20:23 jym Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -286,7 +286,7 @@ ahd_find_pci_device(pcireg_t id, pcireg_t subid)
 }
 
 static int
-ahd_pci_probe(device_t parent, struct cfdata *match, void *aux)
+ahd_pci_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahd_pci_identity *entry;

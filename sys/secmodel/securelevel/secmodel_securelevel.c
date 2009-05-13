@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.10 2009/01/11 02:45:55 christos Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.10.2.1 2009/05/13 17:23:03 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.10 2009/01/11 02:45:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.10.2.1 2009/05/13 17:23:03 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -258,6 +258,9 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 			break;
 		}
 		break;
+
+	default:
+		break;
 	}
 
 	return (result);
@@ -314,6 +317,9 @@ secmodel_securelevel_process_cb(kauth_cred_t cred,
 		if (securelevel > 1)
 			result = KAUTH_RESULT_DENY;
 		break;
+
+	default:
+		break;
 	}
 
 	return (result);
@@ -355,6 +361,9 @@ secmodel_securelevel_network_cb(kauth_cred_t cred,
 		if (securelevel > 0)
 			result = KAUTH_RESULT_DENY;
 		break;
+
+	default:
+		break;
 	}
 
 	return (result);
@@ -386,6 +395,9 @@ secmodel_securelevel_machdep_cb(kauth_cred_t cred,
 	case KAUTH_MACHDEP_UNMANAGEDMEM:
 		if (securelevel > 0)
 			result = KAUTH_RESULT_DENY;
+		break;
+
+	default:
 		break;
 	}
 
@@ -434,6 +446,9 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 			case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW:
 				if (securelevel > 0)
 					result = KAUTH_RESULT_DENY;
+				break;
+
+			default:
 				break;
 			}
 
@@ -496,6 +511,9 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 				result = KAUTH_RESULT_DENY;
 
 			break;
+
+		default:
+			break;
 		}
 
 		break;
@@ -514,6 +532,9 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 				result = KAUTH_RESULT_DENY;
 		}
 
+		break;
+
+	default:
 		break;
 	}
 

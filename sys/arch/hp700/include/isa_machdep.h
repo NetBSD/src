@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 2008/04/06 08:03:36 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2.18.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*	$OpenBSD: isa_machdep.h,v 1.2 1999/05/05 02:36:54 todd Exp $	*/
 
@@ -42,7 +42,7 @@ typedef struct hppa_isa_chipset *isa_chipset_tag_t;
 struct hppa_isa_chipset {
 	void	*ic_v;
 
-	void	(*ic_attach_hook)(struct device *, struct device *,
+	void	(*ic_attach_hook)(device_t, device_t,
 		    struct isabus_attach_args *);
 	void	*(*ic_intr_establish)(void *, int, int, int,
 		    int (*)(void *), void *);

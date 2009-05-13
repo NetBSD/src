@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.5 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.5.18.1 2009/05/13 17:20:23 jym Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.5 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.5.18.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.5 2008/04/10 19:13:36 cegger Exp $");
 
 #define	CISS_BAR	0x10
 
-int	ciss_pci_match(struct device *, struct cfdata *, void *);
-void	ciss_pci_attach(struct device *, struct device *, void *);
+int	ciss_pci_match(device_t, cfdata_t, void *);
+void	ciss_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ciss_pci, sizeof(struct ciss_softc),
 	ciss_pci_match, ciss_pci_attach, NULL, NULL);
@@ -225,8 +225,7 @@ const struct {
 };
 
 int
-ciss_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ciss_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pcireg_t reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
@@ -245,9 +244,9 @@ ciss_pci_match(struct device *parent, struct cfdata *match,
 }
 
 void
-ciss_pci_attach(struct device *parent, struct device *self, void *aux)
+ciss_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ciss_softc *sc = (struct ciss_softc *)self;
+	struct ciss_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	bus_size_t size, cfgsz;
 	pci_intr_handle_t ih;

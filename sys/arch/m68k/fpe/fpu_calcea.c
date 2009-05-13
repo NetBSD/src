@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.18 2007/03/09 16:33:27 tsutsui Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.18.58.1 2009/05/13 17:17:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.18 2007/03/09 16:33:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.18.58.1 2009/05/13 17:17:59 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -45,13 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.18 2007/03/09 16:33:27 tsutsui Exp 
 /*
  * Prototypes of static functions
  */
-static int decode_ea6 __P((struct frame *frame, struct instruction *insn,
-			   struct insn_ea *ea, int modreg));
-static int fetch_immed __P((struct frame *frame, struct instruction *insn,
-			    int *dst));
-static int fetch_disp __P((struct frame *frame, struct instruction *insn,
-			   int size, int *res));
-static int calc_ea __P((struct insn_ea *ea, char *ptr, char **eaddr));
+static int decode_ea6(struct frame *frame, struct instruction *insn,
+			   struct insn_ea *ea, int modreg);
+static int fetch_immed(struct frame *frame, struct instruction *insn,
+			    int *dst);
+static int fetch_disp(struct frame *frame, struct instruction *insn,
+			   int size, int *res);
+static int calc_ea(struct insn_ea *ea, char *ptr, char **eaddr);
 
 /*
  * Helper routines for dealing with "effective address" values.
@@ -62,11 +62,7 @@ static int calc_ea __P((struct insn_ea *ea, char *ptr, char **eaddr));
  * Returns zero on success, else signal number.
  */
 int
-fpu_decode_ea(frame, insn, ea, modreg)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     int modreg;
+fpu_decode_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea, int modreg)
 {
     int sig;
 
@@ -219,11 +215,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
  * Decode Mode=6 address modes
  */
 static int
-decode_ea6(frame, insn, ea, modreg)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     int modreg;
+decode_ea6(struct frame *frame, struct instruction *insn, struct insn_ea *ea, int modreg)
 {
     int extword, idx;
     int basedisp, outerdisp;
@@ -319,11 +311,7 @@ decode_ea6(frame, insn, ea, modreg)
  * Returns zero on success, else signal number.
  */
 int
-fpu_load_ea(frame, insn, ea, dst)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     char *dst;
+fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea, char *dst)
 {
     int *reg;
     char *src;
@@ -484,11 +472,7 @@ fpu_load_ea(frame, insn, ea, dst)
  * Returns zero on success, else signal number.
  */
 int
-fpu_store_ea(frame, insn, ea, src)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     char *src;
+fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea, char *src)
 {
     int *reg;
     char *dst;
@@ -618,10 +602,7 @@ fpu_store_ea(frame, insn, ea, src)
  * fetch_immed: fetch immediate operand
  */
 static int
-fetch_immed(frame, insn, dst)
-     struct frame *frame;
-     struct instruction *insn;
-     int *dst;
+fetch_immed(struct frame *frame, struct instruction *insn, int *dst)
 {
     int data, ext_bytes;
 
@@ -691,10 +672,7 @@ fetch_immed(frame, insn, dst)
  * fetch_disp: fetch displacement in full extension words
  */
 static int
-fetch_disp(frame, insn, size, res)
-     struct frame *frame;
-     struct instruction *insn;
-     int size, *res;
+fetch_disp(struct frame *frame, struct instruction *insn, int size, int *res)
 {
     int disp, word;
 
@@ -735,10 +713,9 @@ fetch_disp(frame, insn, size, res)
  * Returns a signal value (0 == no error).
  */
 static int
-calc_ea(ea, ptr, eaddr)
-     struct insn_ea *ea;
-     char *ptr;		/* base address (usually a register content) */
-     char **eaddr;	/* pointer to result pointer */
+calc_ea(struct insn_ea *ea, char *ptr, char **eaddr)
+	/* ptr:		 base address (usually a register content) */
+	/* eaddr:	 pointer to result pointer */
 {
     int data, word;
 

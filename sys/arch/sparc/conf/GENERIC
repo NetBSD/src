@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.211 2009/02/08 13:05:51 jdc Exp $
+# $NetBSD: GENERIC,v 1.211.2.1 2009/05/13 17:18:23 jym Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.211 $"
+#ident 		"GENERIC-$Revision: 1.211.2.1 $"
 
 maxusers	32
 
@@ -331,6 +331,8 @@ zs0	at obio0					# sun4m
 zs0	at obio0 addr 0xf1000000 level 12		# sun4/200 and sun4/300
 zs0	at obio0 addr 0x01000000 level 12		# sun4/100
 zs0	at bootbus0					# sun4d
+zstty0	at zs0 channel 0				# ttya
+zstty1	at zs0 channel 1				# ttyb
 
 zs1	at mainbus0					# sun4c
 zs1	at obio0					# sun4m
@@ -696,11 +698,13 @@ cgfourteen*	at obio0			# sun4m
 pnozz0		at sbus? slot ? offset ?
 
 # Sun ZX/Leo 24-bit framebuffer
-# XXX no wsdisplay support
-#zx*		at sbus? slot ? offset ?
+zx*		at sbus? slot ? offset ?
 
 # Fujitsu AG-10e accelerated graphics 8/24-bit board
 agten*	at sbus? slot ? offset ?
+
+# generic framebuffer console
+genfb*	at sbus? slot ? offset ?
 
 # make sure wsdisplay0 is the console
 wsdisplay0	at wsemuldisplaydev? console 1

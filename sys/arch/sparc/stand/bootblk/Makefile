@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/10/19 22:05:21 apb Exp $
+#	$NetBSD: Makefile,v 1.11.8.1 2009/05/13 17:18:37 jym Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -32,7 +32,7 @@ sparc:
 machine:
 	ln -s ${.CURDIR}/../../../${MACHINE}/include machine
 
-assym.fth.h: genfth.cf machine
+assym.fth.h: genfth.cf machine sparc
 	${TOOL_GENASSYM} -f -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    <${.CURDIR}/genfth.cf >assym.fth.h.tmp && \
 	    mv -f assym.fth.h.tmp assym.fth.h

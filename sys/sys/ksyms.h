@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.22 2008/12/05 21:38:10 ad Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.22.4.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -88,7 +88,7 @@ struct ksyms_gsymbol {
 #define	KIOCGSIZE	_IOR('l', 3, int)
 
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 /*
  * Definitions used in ksyms_getname() and ksyms_getval().
  */

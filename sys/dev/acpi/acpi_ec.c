@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.52 2008/06/03 15:12:39 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.52.12.1 2009/05/13 17:19:10 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.52 2008/06/03 15:12:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.52.12.1 2009/05/13 17:19:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,10 +139,10 @@ struct acpiec_softc {
 	uint8_t sc_cur_addr, sc_cur_val;
 };
 
-static int acpiecdt_match(device_t, struct cfdata *, void *);
+static int acpiecdt_match(device_t, cfdata_t, void *);
 static void acpiecdt_attach(device_t, device_t, void *);
 
-static int acpiec_match(device_t, struct cfdata *, void *);
+static int acpiec_match(device_t, cfdata_t, void *);
 static void acpiec_attach(device_t, device_t, void *);
 
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
@@ -206,7 +206,7 @@ acpiecdt_find(device_t parent, ACPI_HANDLE *ec_handle,
 }
 
 static int
-acpiecdt_match(device_t parent, struct cfdata *match, void *aux)
+acpiecdt_match(device_t parent, cfdata_t match, void *aux)
 {
 	ACPI_HANDLE ec_handle;
 	bus_addr_t cmd_reg, data_reg;
@@ -228,7 +228,7 @@ acpiecdt_attach(device_t parent, device_t self, void *aux)
 	if (!acpiecdt_find(parent, &ec_handle, &cmd_reg, &data_reg, &gpebit))
 		panic("ECDT disappeared");
 
-	aprint_naive(": ACPI Embedded Controller via ECDT\n");
+	aprint_naive("\n");
 	aprint_normal(": ACPI Embedded Controller via ECDT\n");
 
 	acpiec_common_attach(parent, self, ec_handle, cmd_reg, data_reg,
@@ -236,7 +236,7 @@ acpiecdt_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-acpiec_match(device_t parent, struct cfdata *match, void *aux)
+acpiec_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -257,15 +257,12 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 
 	if (ec_singleton != NULL) {
-		aprint_naive(": ACPI Embedded Controller (disabled)\n");
-		aprint_normal(": ACPI Embedded Controller (disabled)\n");
+		aprint_naive(": using %s\n", device_xname(ec_singleton));
+		aprint_normal(": using %s\n", device_xname(ec_singleton));
 		if (!pmf_device_register(self, NULL, NULL))
 			aprint_error_dev(self, "couldn't establish power handler\n");
 		return;
 	}
-
-	aprint_naive(": ACPI Embedded Controller\n");
-	aprint_normal(": ACPI Embedded Controller\n");
 
 	if (!acpiec_parse_gpe_package(self, aa->aa_node->ad_handle,
 				      &gpe_handle, &gpebit))

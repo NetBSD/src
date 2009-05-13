@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.31 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.31.4.1 2009/05/13 17:20:04 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.31 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.31.4.1 2009/05/13 17:20:04 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -144,8 +144,8 @@ enum gfe_hash_op {
 
 #define	STATIC
 
-STATIC int gfe_match (struct device *, struct cfdata *, void *);
-STATIC void gfe_attach (struct device *, struct device *, void *);
+STATIC int gfe_match (device_t, cfdata_t, void *);
+STATIC void gfe_attach (device_t, device_t, void *);
 
 STATIC int gfe_dmamem_alloc(struct gfe_softc *, struct gfe_dmamem *, int,
 	size_t, int);
@@ -155,9 +155,9 @@ STATIC int gfe_ifioctl (struct ifnet *, u_long, void *);
 STATIC void gfe_ifstart (struct ifnet *);
 STATIC void gfe_ifwatchdog (struct ifnet *);
 
-STATIC int gfe_mii_read (struct device *, int, int);
-STATIC void gfe_mii_write (struct device *, int, int, int);
-STATIC void gfe_mii_statchg (struct device *);
+STATIC int gfe_mii_read (device_t, int, int);
+STATIC void gfe_mii_write (device_t, int, int, int);
+STATIC void gfe_mii_statchg (device_t);
 
 STATIC void gfe_tick(void *arg);
 
@@ -196,7 +196,7 @@ CFATTACH_DECL(gfe, sizeof(struct gfe_softc),
 extern struct cfdriver gfe_cd;
 
 int
-gfe_match(struct device *parent, struct cfdata *cf, void *aux)
+gfe_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gt_softc *gt = (struct gt_softc *) parent;
 	struct gt_attach_args *ga = aux;
@@ -219,7 +219,7 @@ gfe_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-gfe_attach(struct device *parent, struct device *self, void *aux)
+gfe_attach(device_t parent, device_t self, void *aux)
 {
 	struct gt_attach_args * const ga = aux;
 	struct gt_softc * const gt = device_private(parent);
@@ -1480,19 +1480,19 @@ gfe_intr(void *arg)
 }
 
 int
-gfe_mii_read (struct device *self, int phy, int reg)
+gfe_mii_read (device_t self, int phy, int reg)
 {
 	return gt_mii_read(self, device_parent(self), phy, reg);
 }
 
 void
-gfe_mii_write (struct device *self, int phy, int reg, int value)
+gfe_mii_write (device_t self, int phy, int reg, int value)
 {
 	gt_mii_write(self, device_parent(self), phy, reg, value);
 }
 
 void
-gfe_mii_statchg (struct device *self)
+gfe_mii_statchg (device_t self)
 {
 	/* struct gfe_softc *sc = device_private(self); */
 	/* do nothing? */

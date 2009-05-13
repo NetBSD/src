@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.25 2008/12/10 11:10:20 pooka Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.25.2.1 2009/05/13 17:23:10 jym Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -99,6 +99,9 @@ typedef struct pmap_statistics	*pmap_statistics_t;
  */
 #define	PMAP_WIRED	0x00000010	/* wired mapping */
 #define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
+
+#define	PMAP_MD_MASK	0xff000000	/* Machine-dependent bits */
+
 /*
  * Flags passed to pmap_kenter_pa().  Note the bottom 3 bits are VM_PROT_*
  * bits, used to indicate the access type.
@@ -132,7 +135,7 @@ void		pmap_copy_page(paddr_t, paddr_t);
 #endif
 struct pmap	*pmap_create(void);
 void		pmap_destroy(pmap_t);
-int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #if defined(PMAP_GROWKERNEL)
 vaddr_t		pmap_growkernel(vaddr_t);

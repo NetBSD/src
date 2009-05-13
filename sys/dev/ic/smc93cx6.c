@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.14 2007/10/19 12:00:02 ad Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.14.34.1 2009/05/13 17:19:24 jym Exp $	*/
 
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.14 2007/10/19 12:00:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.14.34.1 2009/05/13 17:19:24 jym Exp $");
 
 #ifndef __NetBSD__
 #include "opt_aic7xxx.h"
@@ -105,11 +105,7 @@ static struct seeprom_cmd {
  * not successful.
  */
 int
-read_seeprom(sd, buf, start_addr, count)
-	struct seeprom_descriptor *sd;
-	u_int16_t *buf;
-	bus_size_t start_addr;
-	bus_size_t count;
+read_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf, bus_size_t start_addr, bus_size_t count)
 {
 	int i = 0;
 	u_int k = 0;

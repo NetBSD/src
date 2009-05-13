@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.5 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.5.90.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -76,8 +76,8 @@ struct tcdsdev_attach_args {
 /*
  * TCDS functions.
  */
-void	tcds_intr_establish(struct device *, int, int (*)(void *), void *);
-void	tcds_intr_disestablish(struct device *, int);
+void	tcds_intr_establish(device_t, int, int (*)(void *), void *);
+void	tcds_intr_disestablish(device_t, int);
 void	tcds_dma_enable(struct tcds_slotconfig *, int);
 void	tcds_scsi_enable(struct tcds_slotconfig *, int);
 int	tcds_scsi_iserr(struct tcds_slotconfig *);

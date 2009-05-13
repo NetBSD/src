@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.49 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: gencons.c,v 1.49.18.1 2009/05/13 17:18:41 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.49 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.49.18.1 2009/05/13 17:18:41 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.49 2008/03/11 05:34:03 matt Exp $");
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
-#include <machine/../vax/gencons.h>
+#include <vax/vax/gencons.h>
 
 static	struct gc_softc {
 	short alive;

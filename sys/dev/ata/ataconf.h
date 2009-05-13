@@ -1,4 +1,4 @@
-/*	$NetBSD: ataconf.h,v 1.2 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: ataconf.h,v 1.2.4.1 2009/05/13 17:19:11 jym Exp $	*/
 
 /*
  * Written in 2006 by ITOH Yasufumi.
@@ -7,6 +7,10 @@
 
 #ifndef _DEV_ATA_ATACONF_H_
 #define _DEV_ATA_ATACONF_H_
+
+#if defined(_KERNEL_OPT)
+#include "opt_modular.h"
+#endif /* defined(_KERNEL_OPT) */
 
 #if !defined(_KERNEL_OPT) || defined(MODULAR)
 

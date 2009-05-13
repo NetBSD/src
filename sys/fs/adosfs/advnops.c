@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.31 2008/12/16 16:18:25 pooka Exp $	*/
+/*	$NetBSD: advnops.c,v 1.31.2.1 2009/05/13 17:21:49 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.31 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.31.2.1 2009/05/13 17:21:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,24 +58,24 @@ __KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.31 2008/12/16 16:18:25 pooka Exp $");
 extern struct vnodeops adosfs_vnodeops;
 
 #define	adosfs_open	genfs_nullop
-int	adosfs_getattr	__P((void *));
-int	adosfs_read	__P((void *));
-int	adosfs_write	__P((void *));
+int	adosfs_getattr(void *);
+int	adosfs_read(void *);
+int	adosfs_write(void *);
 #define	adosfs_fcntl	genfs_fcntl
 #define	adosfs_ioctl	genfs_enoioctl
 #define	adosfs_poll	genfs_poll
-int	adosfs_strategy	__P((void *));
-int	adosfs_link	__P((void *));
-int	adosfs_symlink	__P((void *));
+int	adosfs_strategy(void *);
+int	adosfs_link(void *);
+int	adosfs_symlink(void *);
 #define	adosfs_abortop	genfs_abortop
-int	adosfs_bmap	__P((void *));
-int	adosfs_print	__P((void *));
-int	adosfs_readdir	__P((void *));
-int	adosfs_access	__P((void *));
-int	adosfs_readlink	__P((void *));
-int	adosfs_inactive	__P((void *));
-int	adosfs_reclaim	__P((void *));
-int	adosfs_pathconf	__P((void *));
+int	adosfs_bmap(void *);
+int	adosfs_print(void *);
+int	adosfs_readdir(void *);
+int	adosfs_access(void *);
+int	adosfs_readlink(void *);
+int	adosfs_inactive(void *);
+int	adosfs_reclaim(void *);
+int	adosfs_pathconf(void *);
 
 #define adosfs_close 	genfs_nullop
 #define adosfs_fsync 	genfs_nullop
@@ -142,8 +142,7 @@ const struct vnodeopv_desc adosfs_vnodeop_opv_desc =
 	{ &adosfs_vnodeop_p, adosfs_vnodeop_entries };
 
 int
-adosfs_getattr(v)
-	void *v;
+adosfs_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -208,8 +207,7 @@ adosfs_getattr(v)
  * deleted or changed (data block pointer blocks moving about.)
  */
 int
-adosfs_read(v)
-	void *v;
+adosfs_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -341,8 +339,7 @@ reterr:
 }
 
 int
-adosfs_write(v)
-	void *v;
+adosfs_write(void *v)
 {
 #ifdef ADOSFS_DIAGNOSTIC
 	struct vop_write_args /* {
@@ -361,8 +358,7 @@ adosfs_write(v)
  * Just call the device strategy routine
  */
 int
-adosfs_strategy(v)
-	void *v;
+adosfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -408,8 +404,7 @@ reterr:
 }
 
 int
-adosfs_link(v)
-	void *v;
+adosfs_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -423,8 +418,7 @@ adosfs_link(v)
 }
 
 int
-adosfs_symlink(v)
-	void *v;
+adosfs_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -443,8 +437,7 @@ adosfs_symlink(v)
  * Wait until the vnode has finished changing state.
  */
 int
-adosfs_bmap(v)
-	void *v;
+adosfs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -574,8 +567,7 @@ reterr:
  */
 /* ARGSUSED */
 int
-adosfs_print(v)
-	void *v;
+adosfs_print(void *v)
 {
 #if 0
 	struct vop_print_args /* {
@@ -586,8 +578,7 @@ adosfs_print(v)
 }
 
 int
-adosfs_readdir(v)
-	void *v;
+adosfs_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -758,8 +749,7 @@ reterr:
 
 
 int
-adosfs_access(v)
-	void *v;
+adosfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -805,8 +795,7 @@ adosfs_access(v)
 }
 
 int
-adosfs_readlink(v)
-	void *v;
+adosfs_readlink(void *v)
 {
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
@@ -829,8 +818,7 @@ adosfs_readlink(v)
 
 /*ARGSUSED*/
 int
-adosfs_inactive(v)
-	void *v;
+adosfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -855,8 +843,7 @@ adosfs_inactive(v)
  * no lock needed we are being called from vclean()
  */
 int
-adosfs_reclaim(v)
-	void *v;
+adosfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -887,8 +874,7 @@ adosfs_reclaim(v)
  * not valid currently
  */
 int
-adosfs_pathconf(v)
-	void *v;
+adosfs_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;

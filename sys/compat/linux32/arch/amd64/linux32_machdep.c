@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.20 2008/10/19 09:44:31 njoly Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.20.8.1 2009/05/13 17:18:59 jym Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.20 2008/10/19 09:44:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.20.8.1 2009/05/13 17:18:59 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,11 +355,8 @@ linux32_save_ucontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask,
 }
 
 static void
-linux32_save_sigcontext(l, tf, mask, sc)
-	struct lwp *l; 
-	struct trapframe *tf; 
-	const sigset_t *mask;
-	struct linux32_sigcontext *sc; 
+linux32_save_sigcontext(struct lwp *l, struct trapframe *tf,
+			const sigset_t *mask, struct linux32_sigcontext *sc)
 {
 	/* Save register context. */
 	sc->sc_gs = tf->tf_gs;
@@ -422,10 +419,8 @@ linux32_sys_rt_sigreturn(struct lwp *l, const struct linux32_sys_rt_sigreturn_ar
 }
 
 static int
-linux32_restore_sigcontext(l, scp, retval)
-	struct lwp *l;
-	struct linux32_sigcontext *scp;
-	register_t *retval;
+linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
+			register_t *retval)
 {	
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;

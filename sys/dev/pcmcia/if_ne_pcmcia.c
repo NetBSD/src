@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.155 2008/05/16 20:27:20 jnemeth Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.155.12.1 2009/05/13 17:21:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.155 2008/05/16 20:27:20 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.155.12.1 2009/05/13 17:21:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,11 +733,21 @@ found:
 	if (ne2000_attach(nsc, enaddr))
 		goto fail2;
 
+	/* dopowerhooks(9) - deprecated, only called by hpcs* apmdev(4) */
 	psc->sc_powerhook = powerhook_establish(device_xname(self),
 	    ne2000_power, nsc);
 	if (psc->sc_powerhook == NULL)
 		aprint_error_dev(self,
 		   "WARNING: unable to establish power hook\n");
+
+	/* pmf(9) power hooks */
+	if (!pmf_device_register(self, ne2000_suspend, ne2000_resume))
+		aprint_error_dev(self, "unable to establish power handler\n");
+	else {
+#if 0 /* XXX: notyet: if_stop is NULL! */
+		pmf_class_network_register(self, &dsc->sc_ec.ec_if);
+#endif
+	}
 
 	psc->sc_state = NE_PCMCIA_ATTACHED;
 	ne_pcmcia_disable(dsc);

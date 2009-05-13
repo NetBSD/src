@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.30 2008/11/13 19:44:02 dyoung Exp $ */
+/* $NetBSD: sbmac.c,v 1.30.4.1 2009/05/13 17:18:03 jym Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.30 2008/11/13 19:44:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.30.4.1 2009/05/13 17:18:03 jym Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -421,7 +421,7 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *s, int chan, int txrx,
 	d->sbdma_dscrtable = (sbdmadscr_t *)
 	    KMALLOC(d->sbdma_maxdescr * sizeof(sbdmadscr_t));
 
-	bzero(d->sbdma_dscrtable, d->sbdma_maxdescr*sizeof(sbdmadscr_t));
+	memset(d->sbdma_dscrtable, 0, d->sbdma_maxdescr*sizeof(sbdmadscr_t));
 
 	d->sbdma_dscrtable_phys = KVTOPHYS(d->sbdma_dscrtable);
 
@@ -432,7 +432,7 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *s, int chan, int txrx,
 	d->sbdma_ctxtable = (struct mbuf **)
 	    KMALLOC(d->sbdma_maxdescr*sizeof(struct mbuf *));
 
-	bzero(d->sbdma_ctxtable, d->sbdma_maxdescr*sizeof(struct mbuf *));
+	memset(d->sbdma_ctxtable, 0, d->sbdma_maxdescr*sizeof(struct mbuf *));
 }
 
 /*
@@ -1976,7 +1976,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				memcpy( LLADDR(ifp->if_sadl), ina->x_host.c_host,
 				    ifp->if_addrlen);
 			/* Set new address. */
 			sbmac_init_and_start(sc);
@@ -2345,7 +2345,7 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
 	    IFF_NOTRAILERS;
 	ifp->if_ioctl = sbmac_ioctl;

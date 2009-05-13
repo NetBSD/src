@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.28 2008/04/05 16:46:15 cegger Exp $ */
+/*	$NetBSD: fb.c,v 1.28.18.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.28 2008/04/05 16:46:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.28.18.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ const struct cdevsw fb_cdevsw = {
 };
 
 void
-fb_unblank()
+fb_unblank(void)
 {
 
 	struct fbdevlist *fbl = &fblist;
@@ -111,8 +111,7 @@ fb_unblank()
  * other sources of configuration information (e.g. EEPROM entries).
  */
 int
-fb_is_console(node)
-	int node;
+fb_is_console(int node)
 {
 #if !defined(SUN4U)
 	int fbnode;
@@ -147,9 +146,7 @@ fb_is_console(node)
 }
 
 void
-fb_attach(fb, isconsole)
-	struct fbdevice *fb;
-	int isconsole;
+fb_attach(struct fbdevice *fb, int isconsole)
 {
 	static int seen_force = 0;
 	int nfb = 0;
@@ -207,10 +204,7 @@ fb_attach(fb, isconsole)
 }
 
 int
-fbopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+fbopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -227,10 +221,7 @@ fbopen(dev, flags, mode, l)
 }
 
 int
-fbclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -247,12 +238,7 @@ fbclose(dev, flags, mode, l)
 }
 
 int
-fbioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -269,10 +255,7 @@ fbioctl(dev, cmd, data, flags, l)
 }
 
 int
-fbpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+fbpoll(dev_t dev, int events, struct lwp *l)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -289,9 +272,7 @@ fbpoll(dev, events, l)
 }
 
 int
-fbkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+fbkqfilter(dev_t dev, struct knote *kn)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -307,10 +288,7 @@ fbkqfilter(dev, kn)
 }
 
 paddr_t
-fbmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+fbmmap(dev_t dev, off_t off, int prot)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -330,9 +308,7 @@ fbmmap(dev, off, prot)
 }
 
 void
-fb_setsize_obp(fb, depth, def_width, def_height, node)
-	struct fbdevice *fb;
-	int depth, def_width, def_height, node;
+fb_setsize_obp(struct fbdevice *fb, int depth, int def_width, int def_height, int node)
 {
 	fb->fb_type.fb_width = prom_getpropint(node, "width", def_width);
 	fb->fb_type.fb_height = prom_getpropint(node, "height", def_height);
@@ -341,9 +317,7 @@ fb_setsize_obp(fb, depth, def_width, def_height, node)
 }
 
 void
-fb_setsize_eeprom(fb, depth, def_width, def_height)
-	struct fbdevice *fb;
-	int depth, def_width, def_height;
+fb_setsize_eeprom(struct fbdevice *fb, int depth, int def_width, int def_height)
 {
 #if !defined(SUN4U)
 	struct eeprom *eep = (struct eeprom *)eeprom_va;
@@ -403,8 +377,7 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 static void fb_bell(int);
 
 static void
-fb_bell(on)
-	int on;
+fb_bell(int on)
 {
 #if NKBD > 0
 	kbd_bell(on);
@@ -412,8 +385,7 @@ fb_bell(on)
 }
 
 void
-fbrcons_init(fb)
-	struct fbdevice *fb;
+fbrcons_init(struct fbdevice *fb)
 {
 	struct rconsole	*rc = &fb->fb_rcons;
 	struct rasops_info *ri = &fb->fb_rinfo;
@@ -423,7 +395,7 @@ fbrcons_init(fb)
 #endif
 
 	/* Set up what rasops needs to know about */
-	bzero(ri, sizeof *ri);
+	memset(ri, 0, sizeof *ri);
 	ri->ri_stride = fb->fb_linebytes;
 	ri->ri_bits = (void *)fb->fb_pixels;
 	ri->ri_depth = fb->fb_type.fb_depth;
@@ -529,14 +501,14 @@ fbrcons_init(fb)
 }
 
 int
-fbrcons_rows()
+fbrcons_rows(void)
 {
 	return ((fblist.fb_dev != NULL) ?
 	    fblist.fb_dev->fb_rcons.rc_maxrow : 0);
 }
 
 int
-fbrcons_cols()
+fbrcons_cols(void)
 {
 	return ((fblist.fb_dev != NULL) ?
 	    fblist.fb_dev->fb_rcons.rc_maxcol : 0);

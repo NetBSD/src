@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.73 2009/01/03 17:48:42 christos Exp $
+#	$NetBSD: JORNADA720,v 1.73.2.1 2009/05/13 17:17:45 jym Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.73 $"
+#ident 		"GENERIC-$Revision: 1.73.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -99,7 +99,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

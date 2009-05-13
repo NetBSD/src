@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.22 2007/03/05 20:29:07 he Exp $ */
+/*	$NetBSD: ite_rt.c,v 1.22.58.1 2009/05/13 17:16:10 jym Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.22 2007/03/05 20:29:07 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.22.58.1 2009/05/13 17:16:10 jym Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -448,7 +448,7 @@ retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 #ifdef	RETINA_SPEED_HACK
 		screen_up(ip, sy - count, ip->bottom_margin, count);
 #else
-		bcopy(fb + sy * ip->cols, fb + (sy - count) * ip->cols,
+		memcpy( fb + (sy - count) * ip->cols, fb + sy * ip->cols,
 		    4 * (ip->bottom_margin - sy + 1) * ip->cols);
 		retina_clear(ip, ip->bottom_margin + 1 - count, 0, count,
 		    ip->cols);
@@ -457,16 +457,16 @@ retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 #ifdef	RETINA_SPEED_HACK
 		screen_down(ip, sy, ip->bottom_margin, count);
 #else
-		bcopy(fb + sy * ip->cols, fb + (sy + count) * ip->cols,
+		memcpy( fb + (sy + count) * ip->cols, fb + sy * ip->cols,
 		    4 * (ip->bottom_margin - sy - count + 1) * ip->cols);
 		retina_clear(ip, sy, 0, count, ip->cols);
 #endif
 	} else if (dir == SCROLL_RIGHT) {
-		bcopy(fb + sx + sy * ip->cols, fb + sx + sy * ip->cols + count,
+		memcpy( fb + sx + sy * ip->cols + count, fb + sx + sy * ip->cols,
 		    4 * (ip->cols - (sx + count)));
 		retina_clear(ip, sy, sx, 1, count);
 	} else {
-		bcopy(fb + sx + sy * ip->cols, fb + sx - count + sy * ip->cols,
+		memcpy( fb + sx - count + sy * ip->cols, fb + sx + sy * ip->cols,
 		    4 * (ip->cols - sx));
 		retina_clear(ip, sy, ip->cols - count, 1, count);
 	}

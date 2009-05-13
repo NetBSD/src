@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.30 2008/11/18 12:59:58 darran Exp $ */
+/*	$NetBSD: crypto.c,v 1.30.4.1 2009/05/13 17:22:56 jym Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.30 2008/11/18 12:59:58 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.30.4.1 2009/05/13 17:22:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -338,8 +338,10 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 		/* See if all the algorithms are supported. */
 		for (cr = cri; cr; cr = cr->cri_next)
-			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0)
+			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0) {
+				DPRINTF(("crypto_newsession: alg %d not supported\n", cr->cri_alg));
 				break;
+			}
 
 		if (cr == NULL) {
 			/* Ok, all algorithms are supported. */
@@ -411,7 +413,7 @@ crypto_freesession(u_int64_t sid)
 	 */
 	if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) &&
 	    crypto_drivers[hid].cc_sessions == 0)
-		bzero(&crypto_drivers[hid], sizeof(struct cryptocap));
+		memset(&crypto_drivers[hid], 0, sizeof(struct cryptocap));
 
 done:
 	return err;
@@ -453,7 +455,7 @@ crypto_get_driverid(u_int32_t flags)
 			return -1;
 		}
 
-		bcopy(crypto_drivers, newdrv,
+		memcpy(newdrv, crypto_drivers,
 		    crypto_drivers_num * sizeof(struct cryptocap));
 
 		crypto_drivers_num *= 2;
@@ -610,7 +612,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 
 		if (i == CRYPTO_ALGORITHM_MAX + 1) {
 			ses = cap->cc_sessions;
-			bzero(cap, sizeof(struct cryptocap));
+			memset(cap, 0, sizeof(struct cryptocap));
 			if (ses != 0) {
 				/*
 				 * If there are pending sessions, just mark as invalid.
@@ -653,7 +655,7 @@ crypto_unregister_all(u_int32_t driverid)
 			cap->cc_max_op_len[i] = 0;
 		}
 		ses = cap->cc_sessions;
-		bzero(cap, sizeof(struct cryptocap));
+		memset(cap, 0, sizeof(struct cryptocap));
 		if (ses != 0) {
 			/*
 			 * If there are pending sessions, just mark as invalid.
@@ -714,6 +716,10 @@ crypto_dispatch(struct cryptop *crp)
 	int result;
 
 	mutex_spin_enter(&crypto_mtx);
+	DPRINTF(("crypto_dispatch: crp %08x, reqid 0x%x, alg %d\n",
+			(uint32_t)crp,
+			crp->crp_reqid,
+			crp->crp_desc->crd_alg));
 
 	cryptostats.cs_ops++;
 
@@ -962,6 +968,8 @@ crypto_freereq(struct cryptop *crp)
 
 	if (crp == NULL)
 		return;
+	DPRINTF(("crypto_freereq[%d]: crp %p\n",
+			(uint32_t)crp->crp_sid, crp));
 
 	/* sanity check */
 	if (crp->crp_flags & CRYPTO_F_ONRETQ) {
@@ -989,7 +997,7 @@ crypto_getreq(int num)
 	if (crp == NULL) {
 		return NULL;
 	}
-	bzero(crp, sizeof(struct cryptop));
+	memset(crp, 0, sizeof(struct cryptop));
 	cv_init(&crp->crp_cv, "crydev");
 
 	while (num--) {
@@ -999,7 +1007,7 @@ crypto_getreq(int num)
 			return NULL;
 		}
 
-		bzero(crd, sizeof(struct cryptodesc));
+		memset(crd, 0, sizeof(struct cryptodesc));
 		crd->crd_next = crp->crp_desc;
 		crp->crp_desc = crd;
 	}
@@ -1021,6 +1029,8 @@ crypto_done(struct cryptop *crp)
 	if (crypto_timing)
 		crypto_tstat(&cryptostats.cs_done, &crp->crp_tstamp);
 #endif
+	DPRINTF(("crypto_done[%d]: crp %08x\n",
+			(uint32_t)crp->crp_sid, (uint32_t)crp));
 
 	/*
 	 * Normal case; queue the callback for the thread.
@@ -1067,14 +1077,18 @@ crypto_done(struct cryptop *crp)
 			 * This is an optimization to avoid
 			 * unecessary context switches.
 			 */
+			DPRINTF(("crypto_done[%d]: crp %08x CRYPTO_F_USER\n",
+				(uint32_t)crp->crp_sid, (uint32_t)crp));
 		} else {
 			wasempty = TAILQ_EMPTY(&crp_ret_q);
-			DPRINTF(("crypto_done: queueing %08x\n", (uint32_t)crp));
+			DPRINTF(("crypto_done[%d]: queueing %08x\n",
+					(uint32_t)crp->crp_sid, (uint32_t)crp));
 			crp->crp_flags |= CRYPTO_F_ONRETQ;
 			TAILQ_INSERT_TAIL(&crp_ret_q, crp, crp_next);
 			if (wasempty) {
-				DPRINTF(("crypto_done: waking cryptoret, %08x " \
-					"hit empty queue\n.", (uint32_t)crp));
+				DPRINTF(("crypto_done[%d]: waking cryptoret, crp %08x " \
+					"hit empty queue\n.",
+					(uint32_t)crp->crp_sid, (uint32_t)crp));
 				cv_signal(&cryptoret_cv);
 			}
 		}

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.booters,v 1.16 2009/01/12 07:23:59 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.16.2.1 2009/05/13 17:18:08 jym Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
 RELOC?=		0x3F0000
-COPTS?=		-O2 -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes \
-		-ffreestanding
+COPTS?=		-Os -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes \
+		-ffreestanding -fomit-frame-pointer
 DEFS?= 
 STRIPFLAG?=
 
@@ -20,7 +20,7 @@ INCPATH=-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
         -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
 CFLAGS= -nostdinc -m68020-60 -Wa,-m68030
 CPPFLAGS+= -D__daddr_t=int32_t
-CPPFLAGS+= -D_STANDALONE -DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY
+CPPFLAGS+= -D_STANDALONE
 CPPFLAGS+= ${INCPATH} ${DEFS}
 BINDIR= ${MDEC_DIR}
 

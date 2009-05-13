@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_test.c,v 1.2 2001/09/24 14:29:31 takemura Exp $	*/
+/*	$NetBSD: platid_test.c,v 1.2.140.1 2009/05/13 17:17:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -38,13 +38,13 @@
 #define PLATID_DEFINE_MASK_NICKNAME
 #include <machine/platid_mask.h>
 
-platid_bit_test()
+platid_bit_test(void)
 {
 	platid_t pid;
 	int err_count = 0;
 	int verbose = 0;
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.cpu_arch = ~0;
 	if (pid.dw.dw0 != PLATID_CPU_ARCH_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -52,7 +52,7 @@ platid_bit_test()
 		printf("%14s: %08lx00000000\n", "", PLATID_CPU_ARCH_MASK);
 	}
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.cpu_series = ~0;
 	if (pid.dw.dw0 != PLATID_CPU_SERIES_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -60,7 +60,7 @@ platid_bit_test()
 		printf("%14s: %08lx00000000\n", "", PLATID_CPU_SERIES_MASK);
 	}
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.cpu_model = ~0;
 	if (pid.dw.dw0 != PLATID_CPU_MODEL_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -68,7 +68,7 @@ platid_bit_test()
 		printf("%14s: %08lx00000000\n", "", PLATID_CPU_MODEL_MASK);
 	}
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.cpu_submodel = ~0;
 	if (pid.dw.dw0 != PLATID_CPU_SUBMODEL_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -76,7 +76,7 @@ platid_bit_test()
 		printf("%14s: %08lx00000000\n", "", PLATID_CPU_SUBMODEL_MASK);
 	}
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.flags = ~0;
 	if (pid.dw.dw0 != PLATID_FLAGS_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -84,7 +84,7 @@ platid_bit_test()
 		printf("%14s: %08lx00000000\n", "", PLATID_FLAGS_MASK);
 	}
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.vendor = ~0;
 	if (pid.dw.dw1 != PLATID_VENDOR_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -92,7 +92,7 @@ platid_bit_test()
 		printf("%14s: 00000000%08lx\n", "", PLATID_VENDOR_MASK);
 	}
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.series = ~0;
 	if (pid.dw.dw1 != PLATID_SERIES_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -100,7 +100,7 @@ platid_bit_test()
 		printf("%14s: 00000000%08lx\n", "", PLATID_SERIES_MASK);
 	}
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.model = ~0;
 	if (pid.dw.dw1 != PLATID_MODEL_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -108,7 +108,7 @@ platid_bit_test()
 		printf("%14s: 00000000%08lx\n", "", PLATID_MODEL_MASK);
 	}
 
-	bzero((char*)&pid, sizeof(pid));
+	memset((char*)&pid, 0, sizeof(pid));
 	pid.s.submodel = ~0;
 	if (pid.dw.dw1 != PLATID_SUBMODEL_MASK && err_count++ || verbose) {
 		platid_hton(&pid);
@@ -122,7 +122,7 @@ platid_bit_test()
 }
 
 void
-platid_search_data_test()
+platid_search_data_test(void)
 {
 	char *mcr700str = "MC-R700";
 	char *mcr500str = "MC-R500";
@@ -166,7 +166,7 @@ platid_search_data_test()
 }
 
 void
-platid_search_test()
+platid_search_test(void)
 {
 	struct platid_name *res;
 	struct platid_name tab[] = {
@@ -217,7 +217,7 @@ platid_search_test()
 
 
 void
-platid_name_test()
+platid_name_test(void)
 {
 	int i, err;
 
@@ -238,7 +238,7 @@ platid_name_test()
 #define __PP(p)	PLATID_DEREFP(p)
 
 void
-main()
+main(void)
 {
 	platid_t pid = platid_unknown;
 

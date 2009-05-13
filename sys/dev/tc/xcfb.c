@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.48 2008/12/27 10:23:54 he Exp $ */
+/* $NetBSD: xcfb.c,v 1.48.2.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.48 2008/12/27 10:23:54 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.48.2.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,8 @@ struct xcfb_softc {
 	int sc_csr;			/* software copy of IMS332 CSR A */
 };
 
-static int  xcfbmatch(struct device *, struct cfdata *, void *);
-static void xcfbattach(struct device *, struct device *, void *);
+static int  xcfbmatch(device_t, cfdata_t, void *);
+static void xcfbattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(xcfb, sizeof(struct xcfb_softc),
     xcfbmatch, xcfbattach, NULL, NULL);

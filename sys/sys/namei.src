@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.9 2008/11/17 07:20:37 pooka Exp $	*/
+/*	$NetBSD: namei.src,v 1.9.4.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -100,15 +100,18 @@ NAMEIFL	OPMASK		3	/* mask for operation */
 /*
  * namei operational modifier flags, stored in ni_cnd.cn_flags
  */
-NAMEIFL	LOCKLEAF	0x0004	/* lock inode on return */
-NAMEIFL	LOCKPARENT	0x0008	/* want parent vnode returned locked */
-NAMEIFL	NOCHROOT	0x0010	/* no chroot on abs path lookups */
-NAMEIFL	NOCACHE		0x0020	/* name must not be left in cache */
-NAMEIFL	FOLLOW		0x0040	/* follow symbolic links */
-NAMEIFL	NOFOLLOW	0x0000	/* do not follow symbolic links (pseudo) */
-NAMEIFL	TRYEMULROOT	0x0010	/* try relative to emulation root first */
-NAMEIFL	EMULROOTSET	0x0080	/* emulation root already in ni_erootdir */
-NAMEIFL	MODMASK		0x00fc	/* mask of operational modifiers */
+NAMEIFL	LOCKLEAF	0x00000004	/* lock inode on return */
+NAMEIFL	LOCKPARENT	0x00000008	/* want parent vnode returned locked */
+NAMEIFL	TRYEMULROOT	0x00000010	/* try relative to emulation root
+					   first */
+NAMEIFL	NOCACHE		0x00000020	/* name must not be left in cache */
+NAMEIFL	FOLLOW		0x00000040	/* follow symbolic links */
+NAMEIFL	NOFOLLOW	0x00000000	/* do not follow symbolic links
+					   (pseudo) */
+NAMEIFL	EMULROOTSET	0x00000080	/* emulation root already
+					   in ni_erootdir */
+NAMEIFL	NOCHROOT	0x01000000	/* no chroot on abs path lookups */
+NAMEIFL	MODMASK		0x010000fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.20 2008/07/05 08:46:25 tsutsui Exp $	*/
+/*	$NetBSD: btl.c,v 1.20.10.1 2009/05/13 17:16:12 jym Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.20 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.20.10.1 2009/05/13 17:16:12 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -867,7 +867,7 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 			thisbounce = PHYSTOKV(phystol(sg->seg_addr));
 			bytes_this_page = phystol(sg->seg_len);
 			if(xs->xs_control & XS_CTL_DATA_IN) {
-				bcopy((void *)thisbounce, (void *)thiskv, bytes_this_page);
+				memcpy( (void *)thiskv, (void *)thisbounce, bytes_this_page);
 			}
 			bt_free_buf(sc, (struct bt_buf *)thisbounce);
 			thiskv += bytes_this_page;
@@ -1252,7 +1252,7 @@ bt_scsi_cmd(struct scsipi_xfer *xs)
 		}
 		ccb->opcode = (xs->datalen ? BT_INIT_SCAT_GATH_CCB
 					   : BT_INITIATOR_CCB);
-		bcopy(xs->cmd, &ccb->scsi_cmd,
+		memcpy( &ccb->scsi_cmd, xs->cmd,
 		    ccb->scsi_cmd_length = xs->cmdlen);
 	}
 
@@ -1278,7 +1278,7 @@ bt_scsi_cmd(struct scsipi_xfer *xs)
 			ltophys(KVTOPHYS(thisbounce), sg->seg_addr);
 			bytes_this_page = min(sizeof(struct bt_buf), datalen);
 			if (control & XS_CTL_DATA_OUT) {
-				bcopy((void *)thiskv, (void *)thisbounce, bytes_this_page);
+				memcpy( (void *)thisbounce, (void *)thiskv, bytes_this_page);
 			}
 			thiskv += bytes_this_page;
 			datalen -= bytes_this_page;

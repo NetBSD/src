@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.49.8.1 2009/05/13 17:18:14 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.8.1 2009/05/13 17:18:14 jym Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -111,13 +111,13 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2008/10/15 06:51:18 wrstuden Exp $");
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((void *)((int)(sp) + 8)) /* more args go here */
 
-static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
+static int fix_unaligned(struct lwp *l, struct trapframe *frame);
 
-void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
+void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
-int badaddr __P((void *, size_t));
-int badaddr_read __P((void *, size_t, int *));
-int ctx_setup __P((int, int));
+int badaddr(void *, size_t);
+int badaddr_read(void *, size_t, int *);
+int ctx_setup(int, int);
 
 #ifdef DEBUG
 #define TDB_ALL	0x1
@@ -407,10 +407,10 @@ ctx_setup(int ctx, int srr1)
 /*
  * Used by copyin()/copyout()
  */
-extern vaddr_t vmaprange __P((struct proc *, vaddr_t, vsize_t, int));
-extern void vunmaprange __P((vaddr_t, vsize_t));
-static int bigcopyin __P((const void *, void *, size_t ));
-static int bigcopyout __P((const void *, void *, size_t ));
+extern vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
+extern void vunmaprange(vaddr_t, vsize_t);
+static int bigcopyin(const void *, void *, size_t );
+static int bigcopyout(const void *, void *, size_t );
 
 int
 copyin(const void *udaddr, void *kaddr, size_t len)
@@ -706,8 +706,7 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
@@ -728,8 +727,7 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(l)
-	struct lwp *l;
+upcallret(struct lwp *l)
 {
 
 	/* Invoke MI userret code */

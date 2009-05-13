@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.56 2008/09/13 17:13:57 tsutsui Exp $	*/
+/*	$NetBSD: pccons.c,v 1.56.8.1 2009/05/13 17:16:12 jym Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.56 2008/09/13 17:13:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.56.8.1 2009/05/13 17:16:12 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -349,8 +349,7 @@ kbc_get8042cmd(void)
  * Pass command byte to keyboard controller (8042).
  */
 int
-kbc_put8042cmd(val)
-	uint8_t val;
+kbc_put8042cmd(uint8_t val)
 {
 
 	if (!kbd_wait_output())

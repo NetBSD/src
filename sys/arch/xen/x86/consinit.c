@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.11 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: consinit.c,v 1.11.8.1 2009/05/13 17:18:50 jym Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11.8.1 2009/05/13 17:18:50 jym Exp $");
 
 #include "opt_kgdb.h"
 
@@ -141,7 +141,7 @@ int comkgdbmode = KGDB_DEVMODE;
  * it shouldn't be called from init386 either.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted = 0;
 	union xen_cmdline_parseinfo xcp;
@@ -189,7 +189,7 @@ consinit()
 
 #ifdef KGDB
 void
-kgdb_port_init()
+kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {

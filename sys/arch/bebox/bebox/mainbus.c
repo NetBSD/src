@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 2008/03/16 17:39:56 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.23.18.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2008/03/16 17:39:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23.18.1 2009/05/13 17:16:33 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -145,7 +145,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif /* NPCI */
 
 #if NPCI > 0
-	bzero(&mba, sizeof(mba));
+	memset(&mba, 0, sizeof(mba));
 	mba.mba_pba.pba_iot = &prep_io_space_tag;
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;

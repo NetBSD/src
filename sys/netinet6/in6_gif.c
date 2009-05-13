@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.57 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.57.4.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.57 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.57.4.1 2009/05/13 17:22:29 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.57 2008/11/07 00:20:18 dyoung Exp $");
 
 #include <net/net_osdep.h>
 
-static int gif_validate6 __P((const struct ip6_hdr *, struct gif_softc *,
-	struct ifnet *));
+static int gif_validate6(const struct ip6_hdr *, struct gif_softc *,
+	struct ifnet *);
 
 int	ip6_gif_hlim = GIF_HLIM;
 

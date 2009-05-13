@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49 2008/01/07 16:40:17 joerg Exp $	 */
+/*	$NetBSD: clock.c,v 1.49.24.1 2009/05/13 17:18:41 jym Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49 2008/01/07 16:40:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.24.1 2009/05/13 17:18:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,7 +108,7 @@ static struct timecounter vax_diag_tc = {
 static struct timecounter vax_mfpr_tc = {
 	vax_mfpr_get_counter,	/* get_timecount */
 	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
+	0x1fff,			/* counter_mask */
 	1000000,		/* frequency */
 	"mfpr",			/* name */
 	100,			/* quality */

@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.8 2008/09/09 03:54:56 cube Exp $	*/
+/*	$NetBSD: btms.c,v 1.8.8.1 2009/05/13 17:19:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.8 2008/09/09 03:54:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.8.8.1 2009/05/13 17:19:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -114,7 +114,7 @@ struct btms_softc {
 #define BTMS_HASW		(1 << 2)	/* has W direction */
 
 /* autoconf(9) methods */
-static int	btms_match(device_t, struct cfdata *, void *);
+static int	btms_match(device_t, cfdata_t, void *);
 static void	btms_attach(device_t, device_t, void *);
 static int	btms_detach(device_t, int);
 
@@ -141,7 +141,7 @@ static void btms_input(struct bthidev *, uint8_t *, int);
  */
 
 static int
-btms_match(device_t parent, struct cfdata *match, void *aux)
+btms_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 

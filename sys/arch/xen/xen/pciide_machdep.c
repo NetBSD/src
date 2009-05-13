@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.11 2008/07/03 15:44:19 drochner Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.11.10.1 2009/05/13 17:18:50 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11 2008/07/03 15:44:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11.10.1 2009/05/13 17:18:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,12 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11 2008/07/03 15:44:19 drochner
 #endif  
 
 void *
-pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func) __P((void *));
-	void *arg;
+pciide_machdep_compat_intr_establish(device_t dev,
+	struct pci_attach_args *pa, int chan,
+	int (*func)(void *), void *arg)
 {
 	struct pintrhand *ih;
 	char evname[8];
@@ -89,11 +86,12 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
 		panic("HYPERVISOR_physdev_op(PHYSDEVOP_PCI_INITIALISE_DEVICE)");
 #endif /* !XEN3 */
-	xenih.pirq = PCIIDE_COMPAT_IRQ(chan);
+	xenih.pirq = 0;
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(mp_isa_bus, xenih.pirq, &xenih) == 0 ||
-		    intr_find_mpmapping(mp_eisa_bus, xenih.pirq, &xenih) == 0) {
+		int irq = PCIIDE_COMPAT_IRQ(chan);
+		if (intr_find_mpmapping(mp_isa_bus, irq, &xenih) == 0 ||
+		    intr_find_mpmapping(mp_eisa_bus, irq, &xenih) == 0) {
 			if (!APIC_IRQ_ISLEGACY(xenih.pirq)) {
 				pic = ioapic_find(APIC_IRQ_APIC(xenih.pirq));
 				if (pic == NULL) {
@@ -108,6 +106,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 			    "no MP mapping found\n");
 	}
 #endif
+	xenih.pirq |= PCIIDE_COMPAT_IRQ(chan);
 	evtch = xen_intr_map(&xenih.pirq, IST_EDGE);
 	if (evtch == -1)
 		return NULL;

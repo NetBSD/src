@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.13 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13.14.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <machine/asm.h>
 #include <machine/mutex.h>
+#include <machine/reg.h>
 
 #include "assym.h"
 
@@ -58,7 +59,6 @@
 	.global mutex_enter_crit_start
 	.global mutex_enter_crit_end
 
-	.import	curlwp, data
 	.import mutex_vector_enter, code
 	.import mutex_vector_exit, code
 	.import mutex_wakeup, code
@@ -186,8 +186,7 @@ LEAF_ENTRY(mutex_enter)
 mutex_enter_crit_start:
 	comib,=	0,%ret0,.Lenter_slowpath
 
-	ldil	L%curlwp, %t1
-	ldw	R%curlwp(%t1), %t2
+	mfctl	CR_CURLWP, %t2
 
 	bv	%r0(%rp)
 mutex_enter_crit_end:

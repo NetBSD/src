@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2007/10/17 19:55:51 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10.34.1 2009/05/13 17:18:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2007/10/17 19:55:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10.34.1 2009/05/13 17:18:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -67,10 +67,7 @@ struct genppc_pci_chipset *genppc_pct;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	if (mainbus_found)
@@ -82,10 +79,7 @@ mainbus_match(parent, match, aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcibus_attach_args pba;
 #if NPCI > 0
@@ -148,9 +142,7 @@ mainbus_attach(parent, self, aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 
 	if (pnp)

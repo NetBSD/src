@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.35 2009/01/12 03:18:26 mhitch Exp $ */
+/*	$NetBSD: ms.c,v 1.35.2.1 2009/05/13 17:16:10 jym Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.35 2009/01/12 03:18:26 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.35.2.1 2009/05/13 17:16:10 jym Exp $");
 
 /*
  * Mouse driver.
@@ -523,9 +523,7 @@ mspoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-mskqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+mskqfilter(dev_t dev, struct knote *kn)
 {
 	struct ms_port *ms;
 

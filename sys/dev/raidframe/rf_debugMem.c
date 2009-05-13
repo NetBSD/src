@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.19 2008/02/12 03:12:41 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.19.24.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.19 2008/02/12 03:12:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.19.24.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -93,7 +93,7 @@ rf_unrecord_malloc(void *p, int sz)
 }
 
 void
-rf_print_unfreed()
+rf_print_unfreed(void)
 {
 	int     i, foundone = 0;
 	struct mh_struct *p;

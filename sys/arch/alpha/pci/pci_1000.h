@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.h,v 1.2 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_1000.h,v 1.2.14.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,5 +29,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	pci_1000_pickintr __P((void *, bus_space_tag_t, bus_space_tag_t,
-				pci_chipset_tag_t));
+void	pci_1000_pickintr(void *, bus_space_tag_t, bus_space_tag_t,
+				pci_chipset_tag_t);

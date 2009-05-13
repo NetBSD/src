@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.12 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.12.10.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.12 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.12.10.1 2009/05/13 17:18:44 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,7 +129,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	*ihp = 0;
 
 	if (pin > PCI_INTERRUPT_PIN_MAX) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		aprint_normal("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -163,16 +163,16 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * the BIOS has not configured the device.
 	 */
 	if (line == 0 || line == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
-		printf("pci_intr_map: no mapping for pin %c (line=%02x)\n",
+		aprint_normal("pci_intr_map: no mapping for pin %c (line=%02x)\n",
 		       '@' + pin, line);
 		goto bad;
 	} else {
 		if (line >= NUM_LEGACY_IRQS) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
+			aprint_normal("pci_intr_map: bad interrupt line %d\n", line);
 			goto bad;
 		}
 		if (line == 2) {
-			printf("pci_intr_map: changed line 2 to line 9\n");
+			aprint_normal("pci_intr_map: changed line 2 to line 9\n");
 			line = 9;
 		}
 	}
@@ -190,9 +190,9 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			return 0;
 		}
 #endif
-		printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
+		aprint_normal("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
 		    bus, dev, func, pin, line);
-		printf("pci_intr_map: no MP mapping found\n");
+		aprint_normal("pci_intr_map: no MP mapping found\n");
 	}
 #endif
 
@@ -257,7 +257,7 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	if (ih & APIC_INT_VIA_APIC) {
 		ioapic = ioapic_find(APIC_IRQ_APIC(ih));
 		if (ioapic == NULL) {
-			printf("pci_intr_establish: bad ioapic %d\n",
+			aprint_normal("pci_intr_establish: bad ioapic %d\n",
 			    APIC_IRQ_APIC(ih));
 			return NULL;
 		}

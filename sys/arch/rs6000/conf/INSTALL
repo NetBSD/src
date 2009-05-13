@@ -1,0 +1,13 @@
+#	$NetBSD: INSTALL,v 1.1.4.2 2009/05/13 17:18:16 jym Exp $
+
+include "arch/rs6000/conf/GENERIC"
+
+no options 	INCLUDE_CONFIG_FILE
+
+makeoptions	COPTS="-Os -mmultiple"
+
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
+options 	MEMORY_DISK_ROOT_SIZE=4096	# 2mb
+options 	MEMORY_DISK_SERVER=0		# don't need for install
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

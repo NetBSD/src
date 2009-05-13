@@ -55,8 +55,8 @@ const char copyright[] = "NetBSD/x68k SCSI Primary Boot. ";
 
 int verbose = 0, dry_run = 0, force = 0, check_only = 0, mark_only = 0;
 
-void usage __P((void)) __attribute__((__noreturn__));
-int main __P((int, char *[]));
+void usage(void) __attribute__((__noreturn__));
+int main(int, char *[]);
 
 void
 usage(void)
@@ -69,9 +69,7 @@ usage(void)
 }
 
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     extern int optind;
     int ch;

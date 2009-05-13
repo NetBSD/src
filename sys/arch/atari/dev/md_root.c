@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.28 2008/12/28 23:00:39 tsutsui Exp $	*/
+/*	$NetBSD: md_root.c,v 1.28.2.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.28 2008/12/28 23:00:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.28.2.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,21 +100,19 @@ struct read_info {
 };
 
 
-static int  loaddisk __P((struct  md_conf *, dev_t ld_dev, struct lwp *));
-static int  ramd_norm_read __P((struct read_info *));
+static int  loaddisk(struct  md_conf *, dev_t ld_dev, struct lwp *);
+static int  ramd_norm_read(struct read_info *);
 
 #ifdef support_compression
-static int  cpy_uncompressed __P((void *, int, struct read_info *));
-static int  md_compressed __P((void *, int, struct read_info *));
+static int  cpy_uncompressed(void *, int, struct read_info *);
+static int  md_compressed(void *, int, struct read_info *);
 #endif
 
 /*
  * This is called during autoconfig.
  */
 void
-md_attach_hook(unit, md)
-int		unit;
-struct md_conf	*md;
+md_attach_hook(int unit, struct md_conf *md)
 {
 	if (atari_realconfig && (unit < RAMD_NDEV) && rd_info[unit].ramd_flag) {
 		printf ("md%d: %sauto-load on open. Size %ld bytes.\n", unit,
@@ -125,9 +123,7 @@ struct md_conf	*md;
 }
 
 void
-md_open_hook(unit, md)
-int		unit;
-struct md_conf	*md;
+md_open_hook(int unit, struct md_conf *md)
 {
 	struct ramd_info *ri;
 
@@ -152,10 +148,7 @@ struct md_conf	*md;
 }
 
 static int
-loaddisk(md, ld_dev, lwp)
-struct md_conf		*md;
-dev_t			ld_dev;
-struct lwp		*lwp;
+loaddisk(struct md_conf *md, dev_t ld_dev, struct lwp *lwp)
 {
 	struct buf		*buf;
 	int			error;
@@ -214,8 +207,7 @@ struct lwp		*lwp;
 }
 
 static int
-ramd_norm_read(rsp)
-struct read_info	*rsp;
+ramd_norm_read(struct read_info *rsp)
 {
 	long		bytes_left;
 	int		done, error;
@@ -275,14 +267,11 @@ struct read_info	*rsp;
  * Copy from the uncompression buffer to the ramdisk
  */
 static int
-cpy_uncompressed(buf, nbyte, rsp)
-void *			buf;
-struct read_info	*rsp;
-int			nbyte;
+cpy_uncompressed(void * buf, int nbyte, struct read_info *rsp)
 {
 	if((rsp->bufp + nbyte) >= rsp->ebufp)
 		return(0);
-	bcopy(buf, rsp->bufp, nbyte);
+	memcpy( rsp->bufp, buf, nbyte);
 	rsp->bufp += nbyte;
 	return(0);
 }
@@ -291,10 +280,7 @@ int			nbyte;
  * Read a maximum of 'nbyte' bytes into 'buf'.
  */
 static int
-md_compressed(buf, nbyte, rsp)
-void *			buf;
-struct read_info	*rsp;
-int			nbyte;
+md_compressed(void * buf, int nbyte, struct read_info *rsp)
 {
 	static int	dotc = 0;
 	struct buf	*bp;

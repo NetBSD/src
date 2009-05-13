@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.197 2008/12/16 22:35:36 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.197.2.1 2009/05/13 17:21:35 jym Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.197 2008/12/16 22:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.197.2.1 2009/05/13 17:21:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,8 +396,10 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	usb_uncallout(sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
+	usb_callout_destroy(sc->sc_tmo_rhsc);
 
-	usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
+	if (sc->sc_hcca != NULL)
+		usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
 	while((xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 		free(xfer, M_USB);
@@ -691,6 +693,16 @@ ohci_init(ohci_softc_t *sc)
 #else
 	printf("%s:", device_xname(sc->sc_dev));
 #endif
+	sc->sc_hcca = NULL;
+	usb_callout_init(sc->sc_tmo_rhsc);
+
+	for (i = 0; i < OHCI_HASH_SIZE; i++)
+		LIST_INIT(&sc->sc_hash_tds[i]);
+	for (i = 0; i < OHCI_HASH_SIZE; i++)
+		LIST_INIT(&sc->sc_hash_itds[i]);
+
+	SIMPLEQ_INIT(&sc->sc_free_xfers);
+
 	rev = OREAD4(sc, OHCI_REVISION);
 	printf(" OHCI version %d.%d%s\n", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
 	       OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
@@ -703,13 +715,6 @@ ohci_init(ohci_softc_t *sc)
 	}
 	sc->sc_bus.usbrev = USBREV_1_0;
 
-	for (i = 0; i < OHCI_HASH_SIZE; i++)
-		LIST_INIT(&sc->sc_hash_tds[i]);
-	for (i = 0; i < OHCI_HASH_SIZE; i++)
-		LIST_INIT(&sc->sc_hash_itds[i]);
-
-	SIMPLEQ_INIT(&sc->sc_free_xfers);
-
 #ifdef __NetBSD__
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
@@ -719,8 +724,10 @@ ohci_init(ohci_softc_t *sc)
 	/* Allocate the HCCA area. */
 	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE,
 			 OHCI_HCCA_ALIGN, &sc->sc_hccadma);
-	if (err)
-		return (err);
+	if (err) {
+		sc->sc_hcca = NULL;
+		return err;
+	}
 	sc->sc_hcca = KERNADDR(&sc->sc_hccadma, 0);
 	memset(sc->sc_hcca, 0, OHCI_HCCA_SIZE);
 
@@ -927,8 +934,6 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_control = sc->sc_intre = 0;
 #endif
 
-	usb_callout_init(sc->sc_tmo_rhsc);
-
 	/* Finally, turn on interrupts. */
 	DPRINTFN(1,("ohci_init: enabling\n"));
 	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, sc->sc_eintrs | OHCI_MIE);
@@ -946,6 +951,7 @@ ohci_init(ohci_softc_t *sc)
 	ohci_free_sed(sc, sc->sc_ctrl_head);
  bad1:
 	usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
+	sc->sc_hcca = NULL;
 	return (err);
 }
 

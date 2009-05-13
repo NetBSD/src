@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2007/12/03 15:33:57 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.32.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2007/12/03 15:33:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.32.1 2009/05/13 17:18:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2007/12/03 15:33:57 ad Exp $");
  */
 int	cpuspeed = 25;	/* approx # instr per usec. */
 
-extern int initcpu __P((void));		/*XXX*/
+extern int initcpu(void);		/*XXX*/
 
-void	findroot __P((struct device **, int *));
+void	findroot(struct device **, int *);
 
 struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
 
@@ -123,7 +123,7 @@ struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
  * for attached scsi devices.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
   	int s;
 
@@ -137,7 +137,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot(&booted_device, &booted_partition);
 
@@ -154,9 +154,7 @@ int	boot_id, boot_lun, boot_part;
  * Attempt to find the device from which we were booted.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(struct device **devpp, int *partp)
 {
 	struct device *dv;
 
@@ -179,8 +177,7 @@ findroot(devpp, partp)
 }
 
 void
-makebootdev(cp)
-	char *cp;
+makebootdev(char *cp)
 {
 	boot_class = -1;
 	boot_id = boot_lun = boot_part = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.38 2009/01/11 02:45:51 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.38.2.1 2009/05/13 17:21:50 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.38 2009/01/11 02:45:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.38.2.1 2009/05/13 17:21:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,39 @@ struct ptm_pty ptm_ptyfspty = {
 	NULL
 };
 
+static const char *
+ptyfs__getpath(struct lwp *l, const struct mount *mp)
+{
+#define MAXBUF (sizeof(mp->mnt_stat.f_mntonname) + 32)
+	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+	char *buf;
+	const char *rv;
+	size_t len;
+	char *bp;
+	int error;
+	struct ptyfsmount *pmnt = mp->mnt_data;
+
+	rv = mp->mnt_stat.f_mntonname;
+	if (cwdi->cwdi_rdir == NULL ||
+	    (pmnt->pmnt_flags & PTYFSMNT_CHROOT) == 0)
+		return rv;
+
+	buf = malloc(MAXBUF, M_TEMP, M_WAITOK);
+	bp = buf + MAXBUF;
+	*--bp = '\0';
+	error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+	    buf, MAXBUF / 2, 0, l);
+	if (error)	/* XXX */
+		goto out;
+
+	len = strlen(bp);
+	if (len < sizeof(mp->mnt_stat.f_mntonname))	/* XXX */
+		rv += len;
+out:
+	free(buf, M_TEMP);
+	return rv;
+}
+
 static int
 ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
     dev_t dev, char ms)
@@ -104,8 +137,7 @@ ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
 		len = snprintf(tbuf, bufsiz, "/dev/null");
 		break;
 	case 't':
-		len = snprintf(tbuf, bufsiz, "%s/%llu",
-		    mp->mnt_stat.f_mntonname,
+		len = snprintf(tbuf, bufsiz, "%s/%llu", ptyfs__getpath(l, mp),
 		    (unsigned long long)minor(dev));
 		break;
 	default:
@@ -176,6 +208,7 @@ ptyfs_done(void)
 	malloc_type_detach(M_PTYFSMNT);
 }
 
+#define OSIZE sizeof(struct { int f; gid_t g; mode_t m; })
 /*
  * Mount the Pseudo tty params filesystem
  */
@@ -187,7 +220,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args *args = data;
 
-	if (*data_len < sizeof *args)
+	if (*data_len != sizeof *args && *data_len != OSIZE)
 		return EINVAL;
 
 	if (UIO_MX & (UIO_MX - 1)) {
@@ -199,10 +232,14 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		pmnt = VFSTOPTY(mp);
 		if (pmnt == NULL)
 			return EIO;
-		args->version = PTYFS_ARGSVERSION;
 		args->mode = pmnt->pmnt_mode;
 		args->gid = pmnt->pmnt_gid;
-		*data_len = sizeof *args;
+		if (args->version >= PTYFS_ARGSVERSION) {
+			args->flags = pmnt->pmnt_flags;
+			*data_len = sizeof *args;
+		} else {
+			*data_len = OSIZE;
+		}
 		return 0;
 	}
 
@@ -213,7 +250,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
 
-	if (args->version != PTYFS_ARGSVERSION)
+	if (args->version > PTYFS_ARGSVERSION)
 		return EINVAL;
 
 	pmnt = malloc(sizeof(struct ptyfsmount), M_PTYFSMNT, M_WAITOK);
@@ -221,6 +258,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_data = pmnt;
 	pmnt->pmnt_gid = args->gid;
 	pmnt->pmnt_mode = args->mode;
+	if (args->version >= PTYFS_ARGSVERSION)
+		pmnt->pmnt_flags = args->flags;
+	else
+		pmnt->pmnt_flags = 0;
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 

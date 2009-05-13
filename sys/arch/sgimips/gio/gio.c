@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.29 2007/02/22 16:54:26 thorpej Exp $	*/
+/*	$NetBSD: gio.c,v 1.29.60.1 2009/05/13 17:18:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.29 2007/02/22 16:54:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.29.60.1 2009/05/13 17:18:18 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -176,8 +176,11 @@ static const struct gio_probe gfx_bases[] = {
 static int
 gio_match(struct device *parent, struct cfdata *match, void *aux)
 {
-
-	return 1;
+	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20 ||
+	    mach_type == MACH_SGI_IP22)
+		return 1;
+	
+	return 0;
 }
 
 static void
@@ -355,7 +358,7 @@ gio_submatch(struct device *parent, struct cfdata *cf,
 }
 
 int
-gio_cnattach()
+gio_cnattach(void)
 {
 	struct gio_attach_args ga;
 	int i;

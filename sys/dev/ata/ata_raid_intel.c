@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.3 2008/09/16 11:45:30 tron Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.3.14.1 2009/05/13 17:19:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.3 2008/09/16 11:45:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.3.14.1 2009/05/13 17:19:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -224,7 +224,7 @@ findvol:
 		break;
 	default:
 		DPRINTF(("%s: unknown Intel MatrixRAID type 0x%02x\n",
-		    sc->sc_dev->dv_xname, map->type));
+		    device_xname(sc->sc_dev), map->type));
 		error = EINVAL;
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_crypt.c,v 1.10 2008/12/19 18:49:39 cegger Exp $	*/
+/*	$NetBSD: smb_crypt.c,v 1.10.2.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.10 2008/12/19 18:49:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.10.2.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -111,7 +111,7 @@ smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN)
 	return 0;
 #else
 	SMBERROR(("password encryption is not available\n"));
-	bzero(RN, 24);
+	memset(RN, 0, 24);
 	return EAUTH;
 #endif
 }
@@ -135,7 +135,7 @@ smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN)
 	MD4Init(ctxp);
 	MD4Update(ctxp, (u_char*)unipwd, len * sizeof(u_int16_t));
 	free(unipwd, M_SMBTEMP);
-	bzero(S21, 21);
+	memset(S21, 0, 21);
 	MD4Final(S21, ctxp);
 	free(ctxp, M_SMBTEMP);
 
@@ -145,7 +145,7 @@ smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN)
 	return 0;
 #else
 	SMBERROR(("password encryption is not available\n"));
-	bzero(RN, 24);
+	memset(RN, 0, 24);
 	return EAUTH;
 #endif
 }

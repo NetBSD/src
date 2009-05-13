@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.24 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.24.14.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.24 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.24.14.1 2009/05/13 17:18:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ __wdc_spd_bus_space(struct ata_channel *ch)
 }
 
 void
-__wdc_spd_enable()
+__wdc_spd_enable(void)
 {
 	u_int16_t r;
 
@@ -250,7 +250,7 @@ __wdc_spd_enable()
 }
 
 void
-__wdc_spd_disable()
+__wdc_spd_disable(void)
 {
 	u_int16_t r;
 

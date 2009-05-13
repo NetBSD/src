@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.1 2007/12/29 14:38:37 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.1.32.1 2009/05/13 17:18:40 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1 2007/12/29 14:38:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.32.1 2009/05/13 17:18:40 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ pmap_wired_count(pmap_t pmap)
 }
 
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	return 0;
 }

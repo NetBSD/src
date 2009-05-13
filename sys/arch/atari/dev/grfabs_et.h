@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.h,v 1.1 1996/10/11 21:02:48 leo Exp $	*/
+/*	$NetBSD: grfabs_et.h,v 1.1.182.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -57,7 +57,7 @@ typedef struct {
 	/* actually longer... */
 } save_area_t;
 
-void	et_hwrest __P((et_sv_reg_t *));
-void	et_hwsave __P((et_sv_reg_t *));
-int	et_probe_card __P((void));
-void	et_probe_video __P((MODES *));
+void	et_hwrest(et_sv_reg_t *);
+void	et_hwsave(et_sv_reg_t *);
+int	et_probe_card(void);
+void	et_probe_video(MODES *);

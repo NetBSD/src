@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.65 2008/11/07 00:20:12 dyoung Exp $ */
+/*	$NetBSD: if_xi.c,v 1.65.4.1 2009/05/13 17:21:09 jym Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.65 2008/11/07 00:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.65.4.1 2009/05/13 17:21:09 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -149,21 +149,19 @@ STATIC int xi_ether_ioctl(struct ifnet *, u_long cmd, void *);
 STATIC void xi_full_reset(struct xi_softc *);
 STATIC void xi_init(struct xi_softc *);
 STATIC int xi_ioctl(struct ifnet *, u_long, void *);
-STATIC int xi_mdi_read(struct device *, int, int);
-STATIC void xi_mdi_write(struct device *, int, int, int);
+STATIC int xi_mdi_read(device_t, int, int);
+STATIC void xi_mdi_write(device_t, int, int, int);
 STATIC int xi_mediachange(struct ifnet *);
 STATIC u_int16_t xi_get(struct xi_softc *);
 STATIC void xi_reset(struct xi_softc *);
 STATIC void xi_set_address(struct xi_softc *);
 STATIC void xi_start(struct ifnet *);
-STATIC void xi_statchg(struct device *);
+STATIC void xi_statchg(device_t);
 STATIC void xi_stop(struct xi_softc *);
 STATIC void xi_watchdog(struct ifnet *);
 
 void
-xi_attach(sc, myea)
-	struct xi_softc *sc;
-	u_int8_t *myea;
+xi_attach(struct xi_softc *sc, u_int8_t *myea)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -259,7 +257,7 @@ xi_attach(sc, myea)
 }
 
 int
-xi_detach(struct device *self, int flags)
+xi_detach(device_t self, int flags)
 {
 	struct xi_softc *sc = (void *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -281,9 +279,7 @@ xi_detach(struct device *self, int flags)
 }
 
 int
-xi_activate(self, act)
-	struct device *self;
-	enum devact act;
+xi_activate(device_t self, enum devact act)
 {
 	struct xi_softc *sc = (void *)self;
 	int s, rv = 0;
@@ -305,8 +301,7 @@ xi_activate(self, act)
 }
 
 int
-xi_intr(arg)
-	void *arg;
+xi_intr(void *arg)
 {
 	struct xi_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -430,8 +425,7 @@ end:
  * Pull a packet from the card into an mbuf chain.
  */
 STATIC u_int16_t
-xi_get(sc)
-	struct xi_softc *sc;
+xi_get(struct xi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
@@ -535,8 +529,7 @@ xi_get(sc)
 /* Let the MII serial management be idle for one period. */
 static INLINE void xi_mdi_idle(struct xi_softc *);
 static INLINE void
-xi_mdi_idle(sc)
-	struct xi_softc *sc;
+xi_mdi_idle(struct xi_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -553,9 +546,7 @@ xi_mdi_idle(sc)
 /* Pulse out one bit of data. */
 static INLINE void xi_mdi_pulse(struct xi_softc *, int);
 static INLINE void
-xi_mdi_pulse(sc, data)
-	struct xi_softc *sc;
-	int data;
+xi_mdi_pulse(struct xi_softc *sc, int data)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -573,8 +564,7 @@ xi_mdi_pulse(sc, data)
 /* Probe one bit of data. */
 static INLINE int xi_mdi_probe(struct xi_softc *sc);
 static INLINE int
-xi_mdi_probe(sc)
-	struct xi_softc *sc;
+xi_mdi_probe(struct xi_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -595,10 +585,7 @@ xi_mdi_probe(sc)
 /* Pulse out a sequence of data bits. */
 static INLINE void xi_mdi_pulse_bits(struct xi_softc *, u_int32_t, int);
 static INLINE void
-xi_mdi_pulse_bits(sc, data, len)
-	struct xi_softc *sc;
-	u_int32_t data;
-	int len;
+xi_mdi_pulse_bits(struct xi_softc *sc, u_int32_t data, int len)
 {
 	u_int32_t mask;
 
@@ -608,10 +595,7 @@ xi_mdi_pulse_bits(sc, data, len)
 
 /* Read a PHY register. */
 STATIC int
-xi_mdi_read(self, phy, reg)
-	struct device *self;
-	int phy;
-	int reg;
+xi_mdi_read(device_t self, int phy, int reg)
 {
 	struct xi_softc *sc = (struct xi_softc *)self;
 	int i;
@@ -641,11 +625,7 @@ xi_mdi_read(self, phy, reg)
 
 /* Write a PHY register. */
 STATIC void
-xi_mdi_write(self, phy, reg, value)
-	struct device *self;
-	int phy;
-	int reg;
-	int value;
+xi_mdi_write(device_t self, int phy, int reg, int value)
 {
 	struct xi_softc *sc = (struct xi_softc *)self;
 	int i;
@@ -665,7 +645,7 @@ xi_mdi_write(self, phy, reg, value)
 }
 
 STATIC void
-xi_statchg(struct device *self)
+xi_statchg(device_t self)
 {
 	/* XXX Update ifp->if_baudrate */
 }
@@ -674,8 +654,7 @@ xi_statchg(struct device *self)
  * Change media according to request.
  */
 STATIC int
-xi_mediachange(ifp)
-	struct ifnet *ifp;
+xi_mediachange(struct ifnet *ifp)
 {
 	int s;
 
@@ -690,8 +669,7 @@ xi_mediachange(ifp)
 }
 
 STATIC void
-xi_reset(sc)
-	struct xi_softc *sc;
+xi_reset(struct xi_softc *sc)
 {
 	int s;
 
@@ -704,8 +682,7 @@ xi_reset(sc)
 }
 
 STATIC void
-xi_watchdog(ifp)
-	struct ifnet *ifp;
+xi_watchdog(struct ifnet *ifp)
 {
 	struct xi_softc *sc = ifp->if_softc;
 
@@ -716,8 +693,7 @@ xi_watchdog(ifp)
 }
 
 STATIC void
-xi_stop(sc)
-	register struct xi_softc *sc;
+xi_stop(register struct xi_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -739,8 +715,7 @@ xi_stop(sc)
 }
 
 STATIC int
-xi_enable(sc)
-	struct xi_softc *sc;
+xi_enable(struct xi_softc *sc)
 {
 	int error;
 
@@ -755,8 +730,7 @@ xi_enable(sc)
 }
 
 STATIC void
-xi_disable(sc)
-	struct xi_softc *sc;
+xi_disable(struct xi_softc *sc)
 {
 
 	if (sc->sc_enabled) {
@@ -766,8 +740,7 @@ xi_disable(sc)
 }
 
 STATIC void
-xi_init(sc)
-	struct xi_softc *sc;
+xi_init(struct xi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -811,8 +784,7 @@ xi_init(sc)
  * Always called as splnet().
  */
 STATIC void
-xi_start(ifp)
-	struct ifnet *ifp;
+xi_start(struct ifnet *ifp)
 {
 	struct xi_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -902,10 +874,7 @@ xi_start(ifp)
 }
 
 STATIC int
-xi_ether_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+xi_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct xi_softc *sc = ifp->if_softc;
@@ -1021,8 +990,7 @@ xi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 STATIC void
-xi_set_address(sc)
-	struct xi_softc *sc;
+xi_set_address(struct xi_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1123,8 +1091,7 @@ done:
 }
 
 STATIC void
-xi_cycle_power(sc)
-	struct xi_softc *sc;
+xi_cycle_power(struct xi_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1144,8 +1111,7 @@ xi_cycle_power(sc)
 }
 
 STATIC void
-xi_full_reset(sc)
-	struct xi_softc *sc;
+xi_full_reset(struct xi_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;

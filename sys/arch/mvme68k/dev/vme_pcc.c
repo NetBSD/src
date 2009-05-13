@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.22 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.22.14.1 2009/05/13 17:18:08 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.22 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.22.14.1 2009/05/13 17:18:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -128,10 +128,7 @@ static struct mvmebus_range vme_pcc_masters[] = {
 
 /* ARGSUSED */
 int
-vme_pcc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vme_pcc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcc_attach_args *pa;
 
@@ -148,10 +145,7 @@ vme_pcc_match(parent, cf, aux)
 }
 
 void
-vme_pcc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vme_pcc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcc_attach_args *pa;
 	struct vme_pcc_softc *sc;
@@ -247,12 +241,7 @@ vme_pcc_attach(parent, self, aux)
 }
 
 void
-vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg, evcnt)
-	void *csc;
-	int prior, level, vector, first;
-	int (*func)(void *);
-	void *arg;
-	struct evcnt *evcnt;
+vme_pcc_intr_establish(void *csc, int prior, int level, int vector, int first, int (*func)(void *), void *arg, struct evcnt *evcnt)
 {
 	struct vme_pcc_softc *sc = csc;
 
@@ -276,10 +265,7 @@ vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg, evcnt)
 }
 
 void
-vme_pcc_intr_disestablish(csc, level, vector, last, evcnt)
-	void *csc;
-	int level, vector, last;
-	struct evcnt *evcnt;
+vme_pcc_intr_disestablish(void *csc, int level, int vector, int last, struct evcnt *evcnt)
 {
 	struct vme_pcc_softc *sc = csc;
 

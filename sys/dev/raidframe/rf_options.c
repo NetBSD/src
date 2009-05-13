@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_options.c,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_options.c,v 1.7.90.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * rf_options.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_options.c,v 1.7 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_options.c,v 1.7.90.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -72,7 +72,7 @@ RF_DebugName_t rf_debugNames[] = {
 #endif				/* __STDC__ */
 
 void
-rf_ResetDebugOptions()
+rf_ResetDebugOptions(void)
 {
 #include "rf_optnames.h"
 }

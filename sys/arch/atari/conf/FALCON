@@ -1,11 +1,11 @@
 #
-# $NetBSD: FALCON,v 1.90 2009/01/24 00:22:12 abs Exp $
+# $NetBSD: FALCON,v 1.90.2.1 2009/05/13 17:16:21 jym Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.78 2009/01/24 00:19:47 abs Exp $
+#		NetBSD: GENERIC.in,v 1.80 2009/03/06 23:38:07 abs Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -39,15 +39,13 @@ file-system UNION # union file system
 file-system UMAPFS # null file system (with uid & gid remapping)
 file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
-file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
 options WAPBL # File system journaling support - Experimental
-options QUOTA # Disk quotas for local disks
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
 options DDB_HISTORY_SIZE=100 # Enable history editing in DDB
-options COMPAT_43 # 4.3 BSD compatible system calls (required)
+options COMPAT_43 # 4.3 BSD compatible system calls
 options COMPAT_10 # Compatibility with NetBSD 1.0
 options COMPAT_11 # Compatibility with NetBSD 1.1
 options COMPAT_12 # Compatibility with NetBSD 1.2
@@ -58,6 +56,7 @@ options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
 options COMPAT_30 # NetBSD 3.0 compatibility.
 options COMPAT_40 # NetBSD 4.0 compatibility.
+options COMPAT_50 # NetBSD 5.0 compatibility.
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
@@ -83,16 +82,14 @@ pseudo-device sl # Slip
 pseudo-device ppp # ppp
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device md 3 # Boot memory disk
+pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device bpfilter # berkeley packet filters
 pseudo-device tun # network tunnel
 pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device raid 8 # RAIDframe disk driver
-options RAID_AUTOCONFIG # auto-configuration of RAID components
 pseudo-device fss 4 # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
@@ -100,7 +97,6 @@ pseudo-device clockctl # user control of clock subsystem
 pseudo-device view 4 # View (graphics mapping)
 pseudo-device mouse 1 # mouse
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
-scsibus0 at ncrscsi0 # SCSI bus
 zs0 at mainbus0 # Serial support through 8530
 grfbus0 at mainbus0 # bitmapped display's
 grfcc0 at grfbus0 # graphics driver
@@ -117,9 +113,10 @@ atabus* at wdc? channel ?
 wd* at atabus? drive ?
 atapibus* at atabus?
 cd* at atapibus? drive ? # ATAPI CD-ROM drives
+scsibus* at scsi? # SCSI bus
 sd* at scsibus? target ? lun ? # SCSI disk drives
-st* at scsibus? target ? lun ? # SCSI tape drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
+st* at scsibus? target ? lun ? # SCSI tape drives
 ch* at scsibus? target ? lun ? # SCSI autochangers
 ss* at scsibus? target ? lun ? # SCSI scanners
 se* at scsibus? target ? lun ? # SCSI ethernet

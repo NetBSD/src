@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_small.c,v 1.10 2009/01/12 11:32:44 tsutsui Exp $	*/
+/*	$NetBSD: netif_small.c,v 1.10.2.1 2009/05/13 17:17:52 jym Exp $	*/
 
 /* minimal netif - for boot ROMs we don't have to select between
   several interfaces, and we have to save space
@@ -64,8 +64,7 @@ int netif_debug = 1;
 static struct iodesc iosocket;
 
 struct iodesc *
-socktodesc(sock)
-	int sock;
+socktodesc(int sock)
 {
 	if (sock != 0) {
 		return NULL;

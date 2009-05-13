@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.24 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.24.12.1 2009/05/13 17:21:35 jym Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.24 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.24.12.1 2009/05/13 17:21:35 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1208,7 +1208,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 #if 0
-Static void udav_intr()
+Static void udav_intr(void)
 {
 }
 #endif

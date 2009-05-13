@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.191 2009/01/24 15:49:14 cegger Exp $
+# $NetBSD: ALL,v 1.191.2.1 2009/05/13 17:17:48 jym Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.191 $"
+#ident 		"ALL-$Revision: 1.191.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -84,7 +84,6 @@ options 	SEMMNS=60	# number of semaphores in system
 options 	SEMUME=10	# max number of undo entries per process
 options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	MODULAR		# new modules framework
@@ -115,6 +114,8 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
+#options 	IPKDB		# IP Kernel Debugger
+#options 	IPKDBKEY="\"yes\""
 makeoptions 	DEBUG="-g"	# compile full symbol table
 options 	SYSCALL_STATS	# per syscall counts
 options 	SYSCALL_TIMES 	# per syscall times
@@ -521,21 +522,13 @@ vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
+genfb*		at pci? dev ? function ? # generic linear framebuffer driver
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
 wsdisplay* 	at machfb? console ?
+wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-
-# VESA framebuffer console
-options 	KVM86			# required for vesabios
-vesabios*	at vesabiosbus?
-vesafb* 	at vesabios?
-options 	VESAFB_WIDTH=640
-options 	VESAFB_HEIGHT=480
-options 	VESAFB_DEPTH=8
-options 	VESAFB_PM		# power management support
-wsdisplay*	at vesafb? console ?
 
 # VIA Unichrome framebuffer console
 unichromefb*	at pci? dev ? function ?
@@ -675,8 +668,9 @@ ug0    at isa? port 0xe0
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 viaenv* 	at pci? dev ? function ?
 
-# Serial Presence Detect capable memory modules
+# Serial Presence Detect capable memory modules and optional temp sensors
 spdmem*	at iic? addr 0x50
+sdtemp*	at iic? addr 0x18
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -906,6 +900,7 @@ ed*	at edc?
 # PCI network interfaces
 age*	at pci? dev ? function ?	# Attansic/Atheros L1 gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
@@ -1254,6 +1249,15 @@ fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*  at pci?				# SD Host Controller
+sdmmc* at sdhc?				# SD/MMC bus
+
+ld*	at sdmmc?
+
+
 # Audio Devices
 
 # PCI audio devices
@@ -1363,6 +1367,7 @@ video* at videobus?
 bktr* at pci? dev ? function ?
 radio* at bktr?
 
+isv* at isa? port 0x3e0			# IDEC Supervision/16 image capture
 
 # Bluetooth Controller and Device support
 

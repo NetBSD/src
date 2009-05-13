@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.c,v 1.7 2005/12/24 22:45:34 perry Exp $ */
+/* $NetBSD: blkdev.c,v 1.7.92.1 2009/05/13 17:16:07 jym Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -108,10 +108,8 @@ u_int32_t	blkdev_part_offset;
  * do any device munging, we can just set *file to fname.
  */
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;	/* out */
+devopen(struct open_file *f, const char *fname, char **file)
+	/* file:	 out */
 {
 #if defined(BOOTXX_FS_TYPE)
 	int i;
@@ -166,13 +164,8 @@ devopen(f, fname, file)
 }
 
 int
-blkdevstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
-	void *devdata;
-	int rw;
-	daddr_t bn;
-	size_t reqcnt;
-	void *addrvoid;
-	size_t *cnt;	/* out: number of bytes transfered */
+blkdevstrategy(void *devdata, int rw, daddr_t bn, size_t reqcnt, void *addrvoid, size_t *cnt)
+	/* cnt:	 out: number of bytes transfered */
 {
 	char *addr = addrvoid;
 	prom_return_t ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.6 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.6.14.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -106,6 +106,11 @@ int	rw_lock_held(krwlock_t *);
 
 void	rw_enter(krwlock_t *, const krw_t);
 void	rw_exit(krwlock_t *);
+
+void	rw_obj_init(void);
+krwlock_t *rw_obj_alloc(void);
+void	rw_obj_hold(krwlock_t *);
+bool	rw_obj_free(krwlock_t *);
 
 #endif	/* _KERNEL */
 

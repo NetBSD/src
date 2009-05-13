@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.19 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: pcib.c,v 1.19.14.1 2009/05/13 17:16:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.19 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.19.14.1 2009/05/13 17:16:04 jym Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -289,8 +289,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-pcib_bridge_callback(self)
-	struct device *self;
+pcib_bridge_callback(struct device *self)
 {
 	struct pcib_softc *sc = (struct pcib_softc *)self;
 	struct isabus_attach_args iba;

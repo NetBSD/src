@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.7 2008/07/03 15:44:19 drochner Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.7.10.1 2009/05/13 17:18:50 jym Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7 2008/07/03 15:44:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.1 2009/05/13 17:18:50 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,8 +109,12 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
-			if ((ihp->pirq & 0xff) == 0)
+			if (ihp->pirq & APIC_INT_VIA_APIC) {
+				/* make sure a new IRQ will be allocated */
+				ihp->pirq &= ~0xff;
+			} else {
 				ihp->pirq |= line;
+			}
 			goto end;
 		}
 		/*
@@ -126,10 +130,12 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 	}
 #ifdef XEN3
+#ifdef DOM0OPS
 	if (line >= NUM_LEGACY_IRQS) {
 		printf("pci_intr_map: bad interrupt line %d\n", line);
 		goto bad;
 	}
+#endif
 	if (line == 2) {
 		printf("pci_intr_map: changed line 2 to line 9\n");
 		line = 9;

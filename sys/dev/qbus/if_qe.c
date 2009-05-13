@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.68 2008/11/07 00:20:12 dyoung Exp $ */
+/*      $NetBSD: if_qe.c,v 1.68.4.1 2009/05/13 17:21:16 jym Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.68 2008/11/07 00:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.68.4.1 2009/05/13 17:21:16 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -148,7 +148,7 @@ qematch(device_t parent, cfdata_t cf, void *aux)
 	int error;
 
 	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK|M_ZERO);
-	bzero(sc, sizeof(*sc));
+	memset(sc, 0, sizeof(*sc));
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_dmat = ua->ua_dmat;
@@ -240,7 +240,7 @@ qeattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Zero the newly allocated memory.
 	 */
-	bzero(sc->sc_qedata, sizeof(struct qe_cdata) + ETHER_PAD_LEN);
+	memset(sc->sc_qedata, 0, sizeof(struct qe_cdata) + ETHER_PAD_LEN);
 	nullbuf = ((char*)sc->sc_qedata) + sizeof(struct qe_cdata);
 	/*
 	 * Create the transmit descriptor DMA maps. We take advantage

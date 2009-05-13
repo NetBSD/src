@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npe.c,v 1.3 2008/01/08 02:07:53 matt Exp $	*/
+/*	$NetBSD: ixp425_npe.c,v 1.3.24.1 2009/05/13 17:16:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -62,7 +62,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.3 2008/01/08 02:07:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.3.24.1 2009/05/13 17:16:18 jym Exp $");
 
 /*
  * Intel XScale Network Processing Engine (NPE) support.
@@ -102,29 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.3 2008/01/08 02:07:53 matt Exp $");
 
 #include <arm/xscale/ixp425_npereg.h>
 #include <arm/xscale/ixp425_npevar.h>
+#include <arm/xscale/ixp425_if_npereg.h>
 
 #include "locators.h"
-
-struct ixpnpe_softc {
-    struct device	sc_dev;
-    bus_dma_tag_t	sc_dt;
-    bus_space_tag_t	sc_iot;
-    bus_space_handle_t	sc_ioh;
-    bus_size_t		sc_size;	/* size of mapped register window */
-    int			sc_unit;
-    void		*sc_ih;		/* interrupt handler */
-    struct simplelock	sc_lock;	/* mailbox lock */
-    uint32_t		sc_msg[2];	/* reply msg collected in ixpnpe_intr */
-    int			sc_msgwaiting;	/* sc_msg holds valid data */
-
-    int			validImage;	/* valid ucode image loaded */
-    int			started;	/* NPE is started */
-    uint8_t		functionalityId;/* ucode functionality ID */
-    int			insMemSize;	/* size of instruction memory */
-    int			dataMemSize;	/* size of data memory */
-    uint32_t		savedExecCount;
-    uint32_t		savedEcsDbgCtxtReg2;
-};
 
 /*
  * IXP425_NPE_MICROCODE will be defined by ixp425-fw.mk IFF the
@@ -876,7 +856,7 @@ npe_cpu_reset(struct ixpnpe_softc *sc)
 
     /* un-fuse and un-reset the NPE & coprocessor */
     DPRINTFn(2, sc->sc_dev, "%s: FCTRL unfuse parity, write 0x%x\n",
-	__func__, regVal & resetNpeParity);
+	__func__, regVal & ~resetNpeParity);
     EXP_BUS_WRITE_4(ixp425_softc, EXP_FCTRL_OFFSET, regVal &~ resetNpeParity);
 
     /*
@@ -1347,7 +1327,20 @@ ixpnpe_intr(void *arg)
 	    sc->sc_msgwaiting = 1;	/* successful fetch */
 	}
     }
+    if (sc->sc_msg[0] == (NPE_MACRECOVERYSTART << NPE_MAC_MSGID_SHL)) {
+	    int s;
+
+	    s = splnet();
+	    delay(100); /* delay 100usec */
+	    if (sc->macresetcbfunc != NULL)
+		    sc->macresetcbfunc(sc->macresetcbarg);
+	    splx(s);
+    }
+
+#if 0
+    /* XXX Too dangerous! see ixpnpe_recvmsg_locked() */
     wakeup(sc);
+#endif
 
     return (1);
 }
@@ -1390,11 +1383,20 @@ static int
 ixpnpe_recvmsg_locked(struct ixpnpe_softc *sc, uint32_t msg[2])
 {
 
-    if (!sc->sc_msgwaiting)
-	ltsleep(sc, 0, "npemh", 0, &sc->sc_lock);
-    bcopy(sc->sc_msg, msg, sizeof(sc->sc_msg));
-    /* NB: sc_msgwaiting != 1 means the ack fetch failed */
-    return sc->sc_msgwaiting != 1 ? EIO : 0;
+	if (!sc->sc_msgwaiting) {
+#if 0
+		/*
+		 * This ltsleep() is dangerous because this function may be
+		 * called under interrupt context.
+		 */
+		ltsleep(sc, 0, "npemh", 0, &sc->sc_lock);
+#else
+		delay(1000);	/* wait 1ms (is it ok?)*/
+#endif
+	}
+	memcpy( msg, sc->sc_msg, sizeof(sc->sc_msg));
+	/* NB: sc_msgwaiting != 1 means the ack fetch failed */
+	return sc->sc_msgwaiting != 1 ? EIO : 0;
 }
 
 /*
@@ -1441,7 +1443,7 @@ ixpnpe_recvmsg(struct ixpnpe_softc *sc, uint32_t msg[2])
 
     simple_lock(&sc->sc_lock);
     if (sc->sc_msgwaiting)
-	bcopy(sc->sc_msg, msg, sizeof(sc->sc_msg));
+	memcpy( msg, sc->sc_msg, sizeof(sc->sc_msg));
     /* NB: sc_msgwaiting != 1 means the ack fetch failed */
     error = sc->sc_msgwaiting != 1 ? EIO : 0;
     simple_unlock(&sc->sc_lock);

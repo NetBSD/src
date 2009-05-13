@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.25 2009/02/06 02:00:50 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.25.2.1 2009/05/13 17:19:15 jym Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.25 2009/02/06 02:00:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.25.2.1 2009/05/13 17:19:15 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -116,8 +116,9 @@ static int	atw_cardbus_match(device_t, cfdata_t, void *);
 static void	atw_cardbus_attach(device_t, device_t, void *);
 static int	atw_cardbus_detach(device_t, int);
 
-CFATTACH_DECL_NEW(atw_cardbus, sizeof(struct atw_cardbus_softc),
-    atw_cardbus_match, atw_cardbus_attach, atw_cardbus_detach, atw_activate);
+CFATTACH_DECL3_NEW(atw_cardbus, sizeof(struct atw_cardbus_softc),
+    atw_cardbus_match, atw_cardbus_attach, atw_cardbus_detach, atw_activate,
+    NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 static void	atw_cardbus_setup(struct atw_cardbus_softc *);
 

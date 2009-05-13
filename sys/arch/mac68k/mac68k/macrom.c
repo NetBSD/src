@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.68 2008/01/05 00:31:55 ad Exp $	*/
+/*	$NetBSD: macrom.c,v 1.68.24.1 2009/05/13 17:18:00 jym Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.68 2008/01/05 00:31:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.68.24.1 2009/05/13 17:18:00 jym Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -513,7 +513,7 @@ mrg_NewPtr(void)
 #endif
 		*(u_int32_t *)ptr = numbytes;
 		ptr += 4;
-		bzero(ptr, numbytes); /* NewPtr, Clear ! */
+		memset(ptr, 0, numbytes); /* NewPtr, 0, Clear ! */
 	}
 
 	__asm volatile("movl	%0,%%a0" :  : "g" (ptr) : "a0");

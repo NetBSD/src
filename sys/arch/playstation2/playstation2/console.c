@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.4 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: console.c,v 1.4.14.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.4 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.4.14.1 2009/05/13 17:18:12 jym Exp $");
 
 #include "ukbd.h"
 
@@ -52,7 +52,7 @@ struct consdev constab[] = {
 static int initialize = 1;
 
 void
-consinit()
+consinit(void)
 {
 	if (initialize)
 		cninit();

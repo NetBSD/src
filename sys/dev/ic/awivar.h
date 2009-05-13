@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.23 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: awivar.h,v 1.23.14.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ struct awi_softc {
 int	awi_attach(struct awi_softc *);
 int	awi_detach(struct awi_softc *);
 #ifdef __NetBSD__
-int	awi_activate(struct device *, enum devact);
+int	awi_activate(device_t, enum devact);
 void	awi_power(int, void *);
 #endif
 void	awi_shutdown(void *);

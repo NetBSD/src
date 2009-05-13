@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.112 2009/01/17 07:02:35 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.112.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.112 2009/01/17 07:02:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.112.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -287,10 +287,10 @@ namei(struct nameidata *ndp)
 					ndp->ni_erootdir = dp;
 				}
 			}
-		} else if (cnp->cn_flags & NOCHROOT) {
-			ndp->ni_rootdir = rootvnode;
 		} else {
 			ndp->ni_erootdir = NULL;
+			if (cnp->cn_flags & NOCHROOT)
+				dp = ndp->ni_rootdir = rootvnode;
 		}
 	} else {
 		dp = cwdi->cwdi_cdir;
@@ -356,10 +356,14 @@ namei(struct nameidata *ndp)
 					vput(ndp->ni_dvp);
 				}
 			}
-			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
+			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
 				PNBUF_PUT(cnp->cn_pnbuf);
-			else
+#if defined(DIAGNOSTIC)
+				cnp->cn_pnbuf = NULL;
+#endif /* defined(DIAGNOSTIC) */
+			} else {
 				cnp->cn_flags |= HASBUF;
+			}
 			return (0);
 		}
 

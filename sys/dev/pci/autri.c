@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.40 2008/07/03 12:26:41 gson Exp $	*/
+/*	$NetBSD: autri.c,v 1.40.10.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.40 2008/07/03 12:26:41 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.40.10.1 2009/05/13 17:20:23 jym Exp $");
 
 #include "midi.h"
 
@@ -473,8 +473,7 @@ autri_flags_codec(void *sc)
  */
 
 static int
-autri_match(struct device *parent, struct cfdata *match,
-    void *aux)
+autri_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -512,7 +511,7 @@ autri_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-autri_attach(struct device *parent, struct device *self, void *aux)
+autri_attach(device_t parent, device_t self, void *aux)
 {
 	struct autri_softc *sc;
 	struct pci_attach_args *pa;
@@ -524,7 +523,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	int r;
 	uint32_t reg;
 
-	sc = (struct autri_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	aprint_naive(": Audio controller\n");

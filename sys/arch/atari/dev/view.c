@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.25 2008/03/23 15:50:51 cube Exp $	*/
+/*	$NetBSD: view.c,v 1.25.18.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25 2008/03/23 15:50:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25.18.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25 2008/03/23 15:50:51 cube Exp $");
 #include <atari/dev/viewvar.h>
 #include "view.h"
 
-static void view_display __P((struct view_softc *));
-static void view_remove __P((struct view_softc *));
-static int  view_setsize __P((struct view_softc *, struct view_size *));
-static int  view_get_colormap __P((struct view_softc *, colormap_t *));
-static int  view_set_colormap __P((struct view_softc *, colormap_t *));
+static void view_display(struct view_softc *);
+static void view_remove(struct view_softc *);
+static int  view_setsize(struct view_softc *, struct view_size *);
+static int  view_get_colormap(struct view_softc *, colormap_t *);
+static int  view_set_colormap(struct view_softc *, colormap_t *);
 
 struct view_softc views[NVIEW];
 static int view_inited;
@@ -83,11 +83,10 @@ const struct cdevsw view_cdevsw = {
 /* 
  *  functions for probeing.
  */
-void	viewattach __P((int));
+void	viewattach(int);
 
 void
-viewattach(cnt)
-	int cnt;
+viewattach(int cnt)
 {
 	viewprobe();
 	printf("%d view%s configured\n", NVIEW, NVIEW > 1 ? "s" : "");
@@ -95,7 +94,7 @@ viewattach(cnt)
 
 /* this function is called early to set up a display. */
 int
-viewprobe()
+viewprobe(void)
 {
     	int i;
 	
@@ -117,8 +116,7 @@ viewprobe()
  */
 
 static void
-view_display (vu)
-	struct view_softc *vu;
+view_display (struct view_softc *vu)
 {
 	int s, i;
 
@@ -164,8 +162,7 @@ view_display (vu)
  * switch to a new display.
  */
 static void
-view_remove(vu)
-	struct view_softc *vu;
+view_remove(struct view_softc *vu)
 {
 	int i;
 
@@ -186,9 +183,7 @@ view_remove(vu)
 }
 
 static int
-view_setsize(vu, vs)
-	struct view_softc *vu;
-	struct view_size *vs;
+view_setsize(struct view_softc *vu, struct view_size *vs)
 {
 	view_t	*new, *old;
 	dmode_t	*dmode;
@@ -242,9 +237,7 @@ view_setsize(vu, vs)
 }
 
 static int
-view_get_colormap (vu, ucm)
-struct view_softc	*vu;
-colormap_t		*ucm;
+view_get_colormap (struct view_softc *vu, colormap_t *ucm)
 {
 	int	error;
 	long	*cme;
@@ -270,9 +263,7 @@ colormap_t		*ucm;
 }
 
 static int
-view_set_colormap(vu, ucm)
-struct view_softc	*vu;
-colormap_t		*ucm;
+view_set_colormap(struct view_softc *vu, colormap_t *ucm)
 {
 	colormap_t	*cm;
 	int		error = 0;
@@ -285,7 +276,7 @@ colormap_t		*ucm;
 	if(cm == NULL)
 		return(ENOMEM);
 
-	bcopy(ucm, cm, sizeof(colormap_t));
+	memcpy( cm, ucm, sizeof(colormap_t));
 	cm->entry = (long *)&cm[1];		 /* table directly after. */
 	if (((error = 
 	    copyin(ucm->entry,cm->entry,sizeof(ucm->entry[0])*ucm->size)) == 0)
@@ -301,11 +292,7 @@ colormap_t		*ucm;
 
 /*ARGSUSED*/
 int
-viewopen(dev, flags, mode, l)
-dev_t		dev;
-int		flags;
-int		mode;
-struct lwp	*l;
+viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	dimen_t			size;
 	struct view_softc	*vu;
@@ -337,11 +324,7 @@ struct lwp	*l;
 
 /*ARGSUSED*/
 int
-viewclose (dev, flags, mode, l)
-	dev_t		dev;
-	int 		flags;
-	int		mode;
-	struct lwp	*l;
+viewclose (dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct view_softc *vu;
 
@@ -359,12 +342,7 @@ viewclose (dev, flags, mode, l)
 
 /*ARGSUSED*/
 int
-viewioctl (dev, cmd, data, flag, l)
-dev_t		dev;
-u_long		cmd;
-void *		data;
-int		flag;
-struct lwp	*l;
+viewioctl (dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 	struct view_softc	*vu;
 	bmap_t			*bm;
@@ -381,14 +359,14 @@ struct lwp	*l;
 		view_remove(vu);
 		break;
 	case VIOCGSIZE:
-		bcopy(&vu->size, data, sizeof (struct view_size)); 
+		memcpy( data, &vu->size, sizeof (struct view_size)); 
 		break;
 	case VIOCSSIZE:
 		error = view_setsize(vu, (struct view_size *)data);
 		break;
 	case VIOCGBMAP:
 		bm = (bmap_t *)data;
-		bcopy(vu->view->bitmap, bm, sizeof(bmap_t));
+		memcpy( bm, vu->view->bitmap, sizeof(bmap_t));
 		if (l != NOLWP) {
 			bm->plane      = NULL;
 			bm->hw_address = NULL;
@@ -411,10 +389,7 @@ struct lwp	*l;
 
 /*ARGSUSED*/
 paddr_t
-viewmmap(dev, off, prot)
-	dev_t	dev;
-	off_t	off;
-	int	prot;
+viewmmap(dev_t dev, off_t off, int prot)
 {
 	struct view_softc	*vu;
 	bmap_t			*bm;
@@ -449,8 +424,7 @@ viewmmap(dev, off, prot)
 }
 
 view_t	*
-viewview(dev)
-dev_t	dev;
+viewview(dev_t dev)
 {
 	return(views[minor(dev)].view);
 }

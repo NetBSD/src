@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.17 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.17.14.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.17 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.17.14.1 2009/05/13 17:17:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,14 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.17 2008/04/28 20:23:25 martin Exp 
 #include <dev/isa/essreg.h>
 #include <dev/isa/essvar.h>
 
-int ess_pnpbios_match(struct device *, struct cfdata *, void *);
-void ess_pnpbios_attach(struct device *, struct device *, void *);
+int ess_pnpbios_match(device_t, cfdata_t, void *);
+void ess_pnpbios_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ess_pnpbios, sizeof(struct ess_softc),
     ess_pnpbios_match, ess_pnpbios_attach, NULL, NULL);
 
 int
-ess_pnpbios_match(struct device *parent, struct cfdata *match,
+ess_pnpbios_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
@@ -82,10 +82,10 @@ ess_pnpbios_match(struct device *parent, struct cfdata *match,
 }
 
 void
-ess_pnpbios_attach(struct device *parent, struct device *self,
+ess_pnpbios_attach(device_t parent, device_t self,
     void *aux)
 {
-	struct ess_softc *sc = (void *)self;
+	struct ess_softc *sc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {

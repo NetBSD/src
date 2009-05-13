@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.64 2008/07/11 11:58:37 cube Exp $ */
+/* $NetBSD: pnpbios.c,v 1.64.8.1 2009/05/13 17:17:50 jym Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.64 2008/07/11 11:58:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.64.8.1 2009/05/13 17:17:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,12 +124,10 @@ static int	pnpbios_sendmessage(int);
 #endif
 
 /* configuration stuff */
-static void *	pnpbios_mapit(u_long, u_long, int);
+static void *	pnpbios_mapit(paddr_t, u_long, int);
 static void *	pnpbios_find(void);
-static int	pnpbios_match(struct device *,
-			    struct cfdata *, void *);
-static void	pnpbios_attach(struct device *,
-			    struct device *, void *);
+static int	pnpbios_match(device_t, cfdata_t, void *);
+static void	pnpbios_attach(device_t, device_t, void *);
 static void	pnpbios_printres(struct pnpresources *);
 static int	pnpbios_print(void *aux, const char *);
 static void	pnpbios_id_to_string(uint32_t, char *);
@@ -255,9 +253,9 @@ pnpbios_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static void *
-pnpbios_mapit(u_long addr, u_long len, int prot)
+pnpbios_mapit(paddr_t addr, u_long len, int prot)
 {
-	u_long startpa, pa, endpa;
+	paddr_t startpa, pa, endpa;
 	vaddr_t startva, va;
 
 	pa = startpa = x86_trunc_page(addr);
@@ -761,7 +759,7 @@ pnpbios_print(void *aux, const char *pnp)
 }
 
 void
-pnpbios_print_devres(struct device *dev, struct pnpbiosdev_attach_args *aa)
+pnpbios_print_devres(device_t dev, struct pnpbiosdev_attach_args *aa)
 {
 
 	aprint_normal_dev(dev, "");

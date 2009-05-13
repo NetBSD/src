@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.977 2009/02/06 19:40:31 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.977.2.1 2009/05/13 17:20:27 jym Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.976 2009/02/06 19:36:35 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.987 2009/05/09 15:15:50 sborrill Exp
  */
 
 /*
@@ -593,6 +593,7 @@
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom (SiByte) */
 #define	PCI_VENDOR_MYSON	0x1516		/* Myson-Century Technology */
+#define	PCI_VENDOR_MELLANOX	0x15b3		/* Mellanox Technologies */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics */
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros Communications */
@@ -2121,6 +2122,7 @@
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* PCI-WDT50x Watchdog Timer */
 
 /* Initio products */
+#define	PCI_PRODUCT_INITIO_1622	0x1622		/* INIC-1622 SATA */
 #define	PCI_PRODUCT_INITIO_I920	0x0002		/* INIC-920 SCSI */
 #define	PCI_PRODUCT_INITIO_I850	0x0850		/* INIC-850 SCSI */
 #define	PCI_PRODUCT_INITIO_I1060	0x1060		/* INIC-1060 SCSI */
@@ -2250,8 +2252,11 @@
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801J_D_BM_LF	0x10cd		/* i82801J (LF) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN Controller */
+#define	PCI_PRODUCT_INTEL_82574L	0x10d3		/* i82574L 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82567LM_3	0x10de		/* i82567LM-3 LAN Controller */
+#define	PCI_PRODUCT_INTEL_82567LF_3	0x10df		/* i82567LF-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I Mobile (AMT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
@@ -2544,6 +2549,8 @@
 #define	PCI_PRODUCT_INTEL_82801I_SATA_3	0x2926		/* 82801I SATA Controller w/ 2 ports */
 #define	PCI_PRODUCT_INTEL_82801I_SATA_4	0x2928		/* 82801I Mobile AHCI SATA Controller with 2 ports */
 #define	PCI_PRODUCT_INTEL_82801I_SATA_5	0x2929		/* 82801I Mobile AHCI SATA Controller with 4 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_6	0x292d		/* 82801I Mobile AHCI SATA Controller with 2 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_7	0x292e		/* 82801I Mobile AHCI SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801I_SMB	0x2930		/* 82801I SMBus Controller */
 #define	PCI_PRODUCT_INTEL_82801I_THERMAL	0x2932		/* 82801I Thermal Controller */
 #define	PCI_PRODUCT_INTEL_82801I_USB_1	0x2934		/* 82801I USB UHCI Controller */
@@ -2793,7 +2800,7 @@
 #define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* ORCA FPGA w/ 32-bit PCI ASIC Core */
 #define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* ORCA FPGA w/ 64-bit PCI ASIC Core */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
-#define	PCI_PRODUCT_LUCENT_EVDO	0x5802		/* Sierra Wireless AirCard 580 */
+#define	PCI_PRODUCT_LUCENT_USBHC2	0x5802		/* 2-port USB Host Controller */
 #define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_LUCENT_ET1310	0xed00		/* ET1310 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_LUCENT_ET1301	0xed01		/* ET1301 10/100 Ethernet */
@@ -2828,6 +2835,21 @@
 
 /* MediaQ products */
 #define	PCI_PRODUCT_MEDIAQ_MQ200	0x0200		/* MQ200 */
+
+/* Mellanox Technologies */
+#define	PCI_PRODUCT_MELLANOX_MT23108	0x5a44		/* InfiniHost (Tavor) */
+#define	PCI_PRODUCT_MELLANOX_MT23108_PCI	0x5a46		/* InfiniHost PCI Bridge (Tavor) */
+#define	PCI_PRODUCT_MELLANOX_MT25204_OLD	0x5e8c		/* InfiniHost III Lx (old Sinai) */
+#define	PCI_PRODUCT_MELLANOX_MT25204	0x6274		/* InfiniHost III Lx (Sinai) */
+#define	PCI_PRODUCT_MELLANOX_MT25208_COMPAT	0x6278		/* InfiniHost III Ex (Arbel in Tavor compatility) */
+#define	PCI_PRODUCT_MELLANOX_MT25208	0x6282		/* InfiniHost III Ex (Arbel) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_SDR	0x6340		/* ConnectX SDR (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_DDR	0x634a		/* ConnectX DDR (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_QDR	0x6354		/* ConnectX QDR PCIe 2.0 2.5GT/s (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_EN	0x6368		/* ConnectX EN 10GigE PCIe 2.0 2.5GT/s (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_DDR_2	0x6732		/* ConnectX DDR PCIe 2.0 5GT/s (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_QDR_2	0x673c		/* ConnectX QDR PCIe 2.0 5GT/s (Hermon) */
+#define	PCI_PRODUCT_MELLANOX_MT25408_EN_2	0x6750		/* ConnectX EN 10GigE PCIe 2.0 5GT/s (Hermon) */
 
 /* Microsoft products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 Ethernet Notebook Adapter */
@@ -2903,6 +2925,8 @@
 #define	PCI_PRODUCT_NATIONALINST_MXI3	0x2c30		/* MXI-3 PCI Extender */
 
 /* National Semiconductor products */
+#define	PCI_PRODUCT_NS_PC87415	0x0002		/* PC87415 IDE */
+#define	PCI_PRODUCT_NS_PC87560	0x000e		/* 87560 Legacy I/O */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 Ethernet */
@@ -3484,12 +3508,12 @@
 #define	PCI_PRODUCT_REALTEK_RT8139D	0x8039		/* 8139D 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8100	0x8100		/* 8100 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 10/100 Ethernet */
-#define	PCI_PRODUCT_REALTEK_RT8101E	0x8136		/* 8101E 10/100 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8101E	0x8136		/* 8100E/8101E/8102E 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8169SC	0x8167		/* 8169SC/8110SC 10/100/1000 Ethernet */
-#define	PCI_PRODUCT_REALTEK_RT8168	0x8168		/* 8168B/8111B 10/100/1000 Ethernet */
-#define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169/S/SB 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8168	0x8168		/* 8168/8111 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169/8110 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
 #define	PCI_PRODUCT_REALTEK_RT8185	0x8185		/* 8185 802.11a/b/g */
 
@@ -4074,6 +4098,7 @@
 #define	PCI_PRODUCT_VIATECH_KT880_4	0x4269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT3351_HB_4351	0x4351		/* VT3351 Host Bridge */
 #define	PCI_PRODUCT_VIATECH_CX700M2_IDE	0x5324		/* CX700M2/VX700 IDE Controller */
+#define	PCI_PRODUCT_VIATECH_VT8237A_SATA_2	0x5337		/* VT8237A Integrated SATA Controller */
 #define	PCI_PRODUCT_VIATECH_VT3351_IOAPIC	0x5351		/* VT3351 I/O APIC Interrupt Controller */
 #define	PCI_PRODUCT_VIATECH_VT8237S_SATA	0x5372		/* VT8237S Integrated SATA Controller */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.28 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.28.14.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.28 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.28.14.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,16 +98,14 @@ static int 	check_ie_present(struct ie_softc*, bus_space_tag_t,
 static int	ai_find_mem_size(struct ai_softc*, bus_space_tag_t,
 					bus_size_t);
 
-int ai_match(struct device *, struct cfdata *, void *);
-void ai_attach(struct device *, struct device *, void *);
+int ai_match(device_t, cfdata_t, void *);
+void ai_attach(device_t, device_t, void *);
 
 /*
  * AT&T StarLan support routines
  */
 static void
-ai_reset(sc, why)
-	struct ie_softc *sc;
-	int why;
+ai_reset(struct ie_softc *sc, int why)
 {
 	struct ai_softc* asc = (struct ai_softc *) sc;
 
@@ -135,11 +133,7 @@ ai_atten(struct ie_softc *sc, int why)
 }
 
 static void
-ai_copyin (sc, dst, offset, size)
-        struct ie_softc *sc;
-        void *dst;
-        int offset;
-        size_t size;
+ai_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int dribble;
 	u_int8_t* bptr = dst;
@@ -164,11 +158,7 @@ ai_copyin (sc, dst, offset, size)
 }
 
 static void
-ai_copyout (sc, src, offset, size)
-        struct ie_softc *sc;
-        const void *src;
-        int offset;
-        size_t size;
+ai_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int dribble;
 	int osize = size;
@@ -194,28 +184,21 @@ ai_copyout (sc, src, offset, size)
 }
 
 static u_int16_t
-ai_read_16 (sc, offset)
-        struct ie_softc *sc;
-        int offset;
+ai_read_16 (struct ie_softc *sc, int offset)
 {
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
         return bus_space_read_2(sc->bt, sc->bh, offset);
 }
 
 static void
-ai_write_16 (sc, offset, value)
-        struct ie_softc *sc;
-        int offset;
-        u_int16_t value;
+ai_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 {
         bus_space_write_2(sc->bt, sc->bh, offset, value);
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
-ai_write_24 (sc, offset, addr)
-        struct ie_softc *sc;
-        int offset, addr;
+ai_write_24 (struct ie_softc *sc, int offset, int addr)
 {
         bus_space_write_4(sc->bt, sc->bh, offset, addr +
                                 (u_long) sc->sc_maddr - (u_long) sc->sc_iobase);
@@ -223,7 +206,7 @@ ai_write_24 (sc, offset, addr)
 }
 
 int
-ai_match(struct device *parent, struct cfdata *cf, void *aux)
+ai_match(device_t parent, cfdata_t cf, void *aux)
 {
 	int rv = 0;
 	u_int8_t val, type;
@@ -319,7 +302,7 @@ out:
 }
 
 void
-ai_attach(struct device *parent, struct device *self, void *aux)
+ai_attach(device_t parent, device_t self, void *aux)
 {
 	struct ai_softc *asc = (void *)self;
 	struct ie_softc *sc = &asc->sc_ie;
@@ -430,10 +413,7 @@ ai_attach(struct device *parent, struct device *self, void *aux)
  * Better hope there's nothing important hiding just below the card...
  */
 static int
-ai_find_mem_size(asc, memt, maddr)
-	struct ai_softc* asc;
-	bus_space_tag_t memt;
-	bus_size_t maddr;
+ai_find_mem_size(struct ai_softc* asc, bus_space_tag_t memt, bus_size_t maddr)
 {
 	int size;
 	bus_space_handle_t memh;
@@ -456,11 +436,7 @@ ai_find_mem_size(asc, memt, maddr)
  * Check to see if there's an 82586 out there.
  */
 static int
-check_ie_present(sc, memt, memh, size)
-	struct ie_softc* sc;
-	bus_space_tag_t memt;
-	bus_space_handle_t memh;
-	bus_size_t size;
+check_ie_present(struct ie_softc* sc, bus_space_tag_t memt, bus_space_handle_t memh, bus_size_t size)
 {
 	sc->hwreset = ai_reset;
 	sc->chan_attn = ai_atten;

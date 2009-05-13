@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.17 2008/11/08 10:18:10 he Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.17.4.1 2009/05/13 17:18:23 jym Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.17 2008/11/08 10:18:10 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.17.4.1 2009/05/13 17:18:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,8 +58,8 @@ struct ofrom_softc {
 	paddr_t		size;
 };
 
-int ofromprobe __P((struct device *, struct cfdata *, void *));
-void ofromattach __P((struct device *, struct device *, void *));
+int ofromprobe(struct device *, struct cfdata *, void *);
+void ofromattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ofrom, sizeof(struct ofrom_softc),
     ofromprobe, ofromattach, NULL, NULL);
@@ -76,10 +76,7 @@ const struct cdevsw ofrom_cdevsw = {
 };
 
 int
-ofromprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ofromprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	static const char *const compatible_strings[] = { "rom", NULL };
@@ -90,9 +87,7 @@ ofromprobe(parent, cf, aux)
 
 
 void
-ofromattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofromattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofrom_softc *sc = (struct ofrom_softc *)self;
 	struct ofbus_attach_args *oba = aux;

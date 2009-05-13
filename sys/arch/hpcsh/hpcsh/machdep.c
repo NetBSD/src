@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.2.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2008/12/19 17:11:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.2.1 2009/05/13 17:17:47 jym Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
@@ -622,14 +623,18 @@ intc_intr(int ssr, int spc, int ssp)
 		__dbg_heart_beat(HEART_BEAT_RED);
 	} else if (evtcode ==
 	    (CPU_IS_SH3 ? SH7709_INTEVT2_IRQ4 : SH_INTEVT_IRL11)) {
-		int cause = r & hd6446x_ienable;
-		struct hd6446x_intrhand *hh = &hd6446x_intrhand[ffs(cause) - 1];
+		struct hd6446x_intrhand *hh;
+		int cause;
+
+		cause = r & hd6446x_ienable;
 		if (cause == 0) {
-			printf("masked HD6446x interrupt.0x%04x\n", r);
+			printf("masked HD6446x interrupt 0x%04x\n",
+			       r & ~hd6446x_ienable);
 			_reg_write_2(HD6446X_NIRR, 0x0000);
 			return;
 		}
 		/* Enable higher level interrupt*/
+		hh = &hd6446x_intrhand[ffs(cause) - 1];
 		hd6446x_intr_resume(hh->hh_ipl);
 		KDASSERT(hh->hh_func != NULL);
 		(*hh->hh_func)(hh->hh_arg);

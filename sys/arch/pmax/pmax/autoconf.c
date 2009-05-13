@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71 2007/12/03 15:34:09 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71.32.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71 2007/12/03 15:34:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.32.1 2009/05/13 17:18:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ static const char	*booted_protocol;
  * Configure all devices on system
  */     
 void
-cpu_configure()
+cpu_configure(void)
 {
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
@@ -136,8 +136,7 @@ cpu_configure()
  *	dev(controller[,uni-number[,partition-number]]])[filename]
  */
 void
-makebootdev(cp)
-	char *cp;
+makebootdev(char *cp)
 {
 	booted_device = NULL;
 	booted_slot = booted_unit = booted_partition = 0;
@@ -184,7 +183,7 @@ makebootdev(cp)
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -196,9 +195,7 @@ cpu_rootconf()
  * Try to determine the boot device.
  */
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	static int found, initted, scsiboot, netboot;
 	static struct device *ioasicdev;

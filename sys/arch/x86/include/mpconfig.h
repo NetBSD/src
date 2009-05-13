@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.10 2008/04/16 16:06:51 cegger Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.10.18.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -43,7 +43,7 @@ struct mp_bus
 	void (*mb_intr_cfg)(const struct mpbios_int *, uint32_t *);
 	struct mp_intr_map *mb_intrs;
 	uint32_t mb_data;	/* random bus-specific datum. */
-	int mb_configured;	/* has been autoconfigured */
+	device_t mb_dev;	/* has been autoconfigured if mb_dev != NULL */
 	pcitag_t *mb_pci_bridge_tag;
 	pci_chipset_tag_t mb_pci_chipset_tag;
 };
@@ -75,6 +75,8 @@ extern struct mp_intr_map *mp_intrs;
 extern int mp_nintr;
 extern int mp_isa_bus, mp_eisa_bus;
 extern int mp_nbus;
+int mp_pci_scan(device_t, struct pcibus_attach_args *, cfprint_t);
+void mp_pci_childdetached(device_t, device_t);
 #endif
 #endif
 

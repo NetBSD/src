@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.9 2008/04/29 22:21:45 scw Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.9.14.1 2009/05/13 17:20:26 jym Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.9 2008/04/29 22:21:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.9.14.1 2009/05/13 17:20:26 jym Exp $");
 
 #include "bpfilter.h"
 
@@ -90,15 +90,15 @@ struct ral_pci_softc {
 /* Base Address Register */
 #define RAL_PCI_BAR0	0x10
 
-int	ral_pci_match(struct device *, struct cfdata *, void *);
-void	ral_pci_attach(struct device *, struct device *, void *);
-int	ral_pci_detach(struct device *, int);
+int	ral_pci_match(device_t, cfdata_t, void *);
+void	ral_pci_attach(device_t, device_t, void *);
+int	ral_pci_detach(device_t, int);
 
 CFATTACH_DECL(ral_pci, sizeof (struct ral_pci_softc),
 	ral_pci_match, ral_pci_attach, ral_pci_detach, NULL);
 
 int
-ral_pci_match(struct device *parent, struct cfdata *cfdata,
+ral_pci_match(device_t parent, cfdata_t cfdata,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -119,9 +119,9 @@ ral_pci_match(struct device *parent, struct cfdata *cfdata,
 }
 
 void
-ral_pci_attach(struct device *parent, struct device *self, void *aux)
+ral_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
+	struct ral_pci_softc *psc = device_private(self);
 	struct rt2560_softc *sc = &psc->sc_sc;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
@@ -178,9 +178,9 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ral_pci_detach(struct device *self, int flags)
+ral_pci_detach(device_t self, int flags)
 {
-	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
+	struct ral_pci_softc *psc = device_private(self);
 	struct rt2560_softc *sc = &psc->sc_sc;
 
 	(*psc->sc_opns->detach)(sc);

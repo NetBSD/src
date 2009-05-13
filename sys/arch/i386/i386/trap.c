@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.241.8.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.8.1 2009/05/13 17:17:50 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -78,11 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $");
 #include "opt_kvm86.h"
 #include "opt_kstack_dr0.h"
 #include "opt_xen.h"
-#if !defined(XEN)
-#include "tprof.h"
-#else /* defined(XEN) */
-#define	NTPROF	0
-#endif /* defined(XEN) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,10 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#if NTPROF > 0
-#include <x86/tprof.h>
-#endif /* NTPROF > 0 */
-
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -119,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $");
 #if NMCA > 0
 #include <machine/mca_machdep.h>
 #endif
+
+#include <x86/nmi.h>
 
 #include "isa.h"
 
@@ -269,20 +262,15 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe *frame;
+trap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p;
 	int type = frame->tf_trapno;
 	struct pcb *pcb;
-	extern char fusubail[], kcopy_fault[],
-		    resume_iret[], resume_pop_ds[], resume_pop_es[],
-		    resume_pop_fs[], resume_pop_gs[],
-		    IDTVEC(osyscall)[];
+	extern char fusubail[], kcopy_fault[], trapreturn[], IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
-	int resume;
 	void *onfault;
 	int error;
 	uint32_t cr2;
@@ -397,52 +385,25 @@ copyfault:
 		/*
 		 * Check for failure during return to user mode.
 		 *
-		 * We do this by looking at the instruction we faulted on.  The
-		 * specific instructions we recognize only happen when
+		 * We do this by looking at the instruction we faulted on.
+		 * The specific instructions we recognize only happen when
 		 * returning from a trap, syscall, or interrupt.
 		 *
 		 * At this point, there are (at least) two trap frames on
 		 * the kernel stack; we presume here that we faulted while
 		 * loading our registers out of the outer one.
-		 *
-		 * The inner frame does not involve a ring crossing, so it
-		 * ends right before &frame.tf_esp.  The outer frame has
-		 * been partially consumed by the INTRFASTEXIT; exactly
-		 * how much depends which register we were popping when we
-		 * faulted, so we compute the outer frame address based on
-		 * register-dependant offsets computed from &frame.tf_esp
-		 * below.  To decide whether this was a kernel-mode or
-		 * user-mode error, we look at this outer frame's tf_cs
-		 * and tf_eflags, which are (fortunately) not consumed until
-		 * the final instruction of INTRFASTEXIT.
-		 *
-		 * XXX
-		 * The heuristic used here will currently fail for the case of
-		 * one of the 2 pop instructions faulting when returning from a
-		 * a fast interrupt.  This should not be possible.  It can be
-		 * fixed by rearranging the trap frame so that the stack format
-		 * at this point is the same as on exit from a `slow'
-		 * interrupt.
 		 */
 		switch (*(u_char *)frame->tf_eip) {
 		case 0xcf:	/* iret */
 			vframe = (void *)((int)&frame->tf_esp -
 			    offsetof(struct trapframe, tf_eip));
-			resume = (int)resume_iret;
 			break;
 		case 0x8e:
 			switch (*(uint32_t *)frame->tf_eip) {
 			case 0x0c245c8e:	/* movl 0xc(%esp,1),%ds */
-				resume = (int)resume_pop_ds;
-				break;
 			case 0x0824448e:	/* movl 0x8(%esp,1),%es */
-				resume = (int)resume_pop_es;
-				break;
 			case 0x0424648e:	/* movl 0x4(%esp,1),%fs */
-				resume = (int)resume_pop_fs;
-				break;
 			case 0x00246c8e:	/* movl 0x0(%esp,1),%gs */
-				resume = (int)resume_pop_gs;
 				break;
 			default:
 				goto we_re_toast;
@@ -455,18 +416,34 @@ copyfault:
 		if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
 			goto we_re_toast;
 
-		frame->tf_eip = resume;
-
 		/*
-		 * clear PSL_NT.  it can be set by userland because setting it
-		 * isn't a privileged operation.
+		 * Arrange to signal the thread, which will reset its
+		 * registers in the outer frame.  This also allows us to
+		 * capture the invalid register state in sigcontext,
+		 * packaged up with the signal delivery.  We restart
+		 * on return at 'trapreturn', acting as if nothing
+		 * happened, restarting the return to user with our new
+		 * set of registers.
 		 *
-		 * set PSL_I.  otherwise, if SIGSEGV is ignored, we'll
+		 * Clear PSL_NT.  It can be set by userland because setting
+		 * it isn't a privileged operation.
+		 *
+		 * Set PSL_I.  Otherwise, if SIGSEGV is ignored, we'll
 		 * continue to generate traps infinitely with
 		 * interrupts disabled.
 		 */
-
+		frame->tf_ds = GSEL(GDATA_SEL, SEL_KPL);
+		frame->tf_es = GSEL(GDATA_SEL, SEL_KPL);
+		frame->tf_gs = GSEL(GDATA_SEL, SEL_KPL);
+		frame->tf_fs = GSEL(GCPU_SEL, SEL_KPL);
+		frame->tf_eip = (uintptr_t)trapreturn;
 		frame->tf_eflags = (frame->tf_eflags & ~PSL_NT) | PSL_I;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_addr = (void *)rcr2();
+		ksi.ksi_code = SEGV_ACCERR;
+		ksi.ksi_trap = type & ~T_USER;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
@@ -768,12 +745,8 @@ copyfault:
 		break;
 
 	case T_NMI:
-#if NTPROF > 0
-		if (tprof_pmi_nmi(frame))
-			return;
-#endif /* NTPROF > 0 */
 #if !defined(XEN)
-		if (nmi_dispatch())
+		if (nmi_dispatch(frame))
 			return;
 #if (NISA > 0 || NMCA > 0)
 #if defined(KGDB) || defined(DDB)
@@ -833,8 +806,7 @@ upcallret(struct lwp *l)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;

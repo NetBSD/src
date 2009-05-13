@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.51 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.51.14.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ struct ncr53c9x_softc {
 	struct evcnt sc_intrcnt;		/* intr count */
 	struct scsipi_adapter sc_adapter;	/* out scsipi adapter */
 	struct scsipi_channel sc_channel;	/* our scsipi channel */
-	struct device *sc_child;		/* attached scsibus, if any */
+	device_t sc_child;		/* attached scsibus, if any */
 	struct callout sc_watchdog;		/* periodic timer */
 
 	const struct ncr53c9x_glue *sc_glue;	/* glue to MD code */

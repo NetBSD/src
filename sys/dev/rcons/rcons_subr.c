@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.16 2006/01/21 19:28:44 chs Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.16.88.1 2009/05/13 17:21:21 jym Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.16 2006/01/21 19:28:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.16.88.1 2009/05/13 17:21:21 jym Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -65,8 +65,7 @@ extern void rcons_bell(struct rconsole *);
 
 /* Initialize our operations set */
 void
-rcons_init_ops(rc)
-	struct rconsole *rc;
+rcons_init_ops(struct rconsole *rc)
 {
 	long tmp;
 	int i, m;
@@ -103,10 +102,7 @@ rcons_init_ops(rc)
 
 /* Output (or at least handle) a string sent to the console */
 void
-rcons_puts(rc, str, n)
-	struct rconsole *rc;
-	const unsigned char *str;
- 	int n;
+rcons_puts(struct rconsole *rc, const unsigned char *str, int n)
 {
 	int c, i, j;
 	const unsigned char *cp;
@@ -176,9 +172,7 @@ rcons_puts(rc, str, n)
 
 /* Handle a control character sent to the console */
 void
-rcons_pctrl(rc, c)
-	struct rconsole *rc;
-	int c;
+rcons_pctrl(struct rconsole *rc, int c)
 {
 
 	switch (c) {
@@ -221,9 +215,7 @@ rcons_pctrl(rc, c)
 
 /* Handle the next character in an escape sequence */
 void
-rcons_esc(rc, c)
-	struct rconsole *rc;
-	int c;
+rcons_esc(struct rconsole *rc, int c)
 {
 
 	if (c == '[') {
@@ -267,9 +259,7 @@ rcons_esc(rc, c)
 
 /* Handle an SGR (Select Graphic Rendition) escape */
 void
-rcons_sgresc(rc, c)
-	struct rconsole *rc;
-	int c;
+rcons_sgresc(struct rconsole *rc, int c)
 {
 
 	switch (c) {
@@ -316,9 +306,7 @@ rcons_sgresc(rc, c)
 
 /* Process a complete escape sequence */
 void
-rcons_doesc(rc, c)
-	struct rconsole *rc;
-	int c;
+rcons_doesc(struct rconsole *rc, int c)
 {
 
 #ifdef notdef
@@ -487,9 +475,7 @@ rcons_doesc(rc, c)
 
 /* Set ANSI colors */
 void
-rcons_setcolor(rc, fg, bg)
-	struct rconsole *rc;
-	int fg, bg;
+rcons_setcolor(struct rconsole *rc, int fg, int bg)
 {
 	int flg;
 
@@ -526,10 +512,7 @@ rcons_setcolor(rc, fg, bg)
 
 /* Actually write a string to the frame buffer */
 void
-rcons_text(rc, str, n)
-	struct rconsole *rc;
-	const unsigned char *str;
-	int n;
+rcons_text(struct rconsole *rc, const unsigned char *str, int n)
 {
 	u_int uc;
 
@@ -550,8 +533,7 @@ rcons_text(rc, str, n)
 
 /* Paint (or unpaint) the cursor */
 void
-rcons_cursor(rc)
-	struct rconsole *rc;
+rcons_cursor(struct rconsole *rc)
 {
 	rc->rc_bits ^= FB_CURSOR;
 
@@ -564,9 +546,7 @@ rcons_cursor(rc)
 
 /* Possibly change to SUNWOB or SUNBOW mode */
 void
-rcons_invert(rc, wob)
-	struct rconsole *rc;
-	int wob;
+rcons_invert(struct rconsole *rc, int wob)
 {
 
 	rc->rc_bits ^= FB_INVERT;
@@ -575,8 +555,7 @@ rcons_invert(rc, wob)
 
 /* Clear to the end of the page */
 void
-rcons_clear2eop(rc)
-	struct rconsole *rc;
+rcons_clear2eop(struct rconsole *rc)
 {
 	if (rc->rc_col || rc->rc_row) {
 		rcons_clear2eol(rc);
@@ -591,8 +570,7 @@ rcons_clear2eop(rc)
 
 /* Clear to the end of the line */
 void
-rcons_clear2eol(rc)
-	struct rconsole *rc;
+rcons_clear2eol(struct rconsole *rc)
 {
 	rc->rc_ops->erasecols(rc->rc_cookie, rc->rc_row, rc->rc_col,
 	    rc->rc_maxcol - rc->rc_col, rc->rc_attr);
@@ -601,9 +579,7 @@ rcons_clear2eol(rc)
 
 /* Scroll up */
 void
-rcons_scroll(rc, n)
-	struct rconsole *rc;
-	int n;
+rcons_scroll(struct rconsole *rc, int n)
 {
 	/* Can't scroll more than the whole screen */
 	if (n > rc->rc_maxrow)
@@ -621,9 +597,7 @@ rcons_scroll(rc, n)
 
 /* Delete characters */
 void
-rcons_delchar(rc, n)
-	struct rconsole *rc;
-	int n;
+rcons_delchar(struct rconsole *rc, int n)
 {
 	/* Can't delete more chars than there are */
 	if (n > rc->rc_maxcol - rc->rc_col)
@@ -638,9 +612,7 @@ rcons_delchar(rc, n)
 
 /* Delete a number of lines */
 void
-rcons_delline(rc, n)
-	struct rconsole *rc;
-	int n;
+rcons_delline(struct rconsole *rc, int n)
 {
 	/* Can't delete more lines than there are */
 	if (n > rc->rc_maxrow - rc->rc_row)
@@ -655,9 +627,7 @@ rcons_delline(rc, n)
 
 /* Insert some characters */
 void
-rcons_insertchar(rc, n)
-	struct rconsole *rc;
-	int n;
+rcons_insertchar(struct rconsole *rc, int n)
 {
 	/* Can't insert more chars than can fit */
 	if (n > rc->rc_maxcol - rc->rc_col)
@@ -672,9 +642,7 @@ rcons_insertchar(rc, n)
 
 /* Insert some lines */
 void
-rcons_insertline(rc, n)
-	struct rconsole *rc;
-	int n;
+rcons_insertline(struct rconsole *rc, int n)
 {
 	/* Can't insert more lines than can fit */
 	if (n > rc->rc_maxrow - rc->rc_row)

@@ -118,7 +118,7 @@ unionfs_nodeget(struct mount *mp, struct vnode *uppervp,
 	if (path != NULL) {
 		unp->un_path = (char *)
 		    malloc(cnp->cn_namelen +1, M_UNIONFSPATH, M_WAITOK|M_ZERO);
-		bcopy(cnp->cn_nameptr, unp->un_path, cnp->cn_namelen);
+		memcpy(unp->un_path, cnp->cn_nameptr, cnp->cn_namelen);
 		unp->un_path[cnp->cn_namelen] = '\0';
 	}
 	vp->v_type = (uppervp != NULLVP ? uppervp->v_type : lowervp->v_type);
@@ -309,7 +309,7 @@ unionfs_relookup(struct vnode *dvp, struct vnode **vpp,
 
 	cn->cn_namelen = pathlen;
 	cn->cn_pnbuf = PNBUF_GET();
-	bcopy(path, cn->cn_pnbuf, pathlen);
+	memcpy(cn->cn_pnbuf, path, pathlen);
 	cn->cn_pnbuf[pathlen] = '\0';
 
 	cn->cn_nameiop = nameiop;
@@ -643,7 +643,7 @@ unionfs_vn_create_on_upper(struct vnode **vpp, struct vnode *udvp,
 
 	cn.cn_namelen = strlen(unp->un_path);
 	cn.cn_pnbuf = PNBUF_GET();
-	bcopy(unp->un_path, cn.cn_pnbuf, cn.cn_namelen + 1);
+	memcpy(cn.cn_pnbuf, unp->un_path, cn.cn_namelen + 1);
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT | LOCKLEAF | HASBUF | SAVENAME | ISLASTCN);
 	cn.cn_cred = cred;
@@ -877,7 +877,7 @@ unionfs_check_rmdir(struct vnode *vp, kauth_cred_t cred)
 		     dp = (struct dirent*)((char *)dp + dp->d_reclen)) {
 			if (dp->d_type == DT_WHT ||
 			    (dp->d_namlen == 1 && dp->d_name[0] == '.') ||
-			    (dp->d_namlen == 2 && !bcmp(dp->d_name, "..", 2)))
+			    (dp->d_namlen == 2 && !memcmp(dp->d_name, "..", 2)))
 				continue;
 
 			cn.cn_namelen = dp->d_namlen;

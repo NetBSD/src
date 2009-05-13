@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.32 2008/06/24 10:37:19 gmcgarry Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.32.10.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.32 2008/06/24 10:37:19 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.32.10.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ smb_strdup(const char *s)
 	len = s ? strlen(s) + 1 : 1;
 	p = malloc(len, M_SMBSTR, M_WAITOK);
 	if (s)
-		bcopy(s, p, len);
+		memcpy(p, s, len);
 	else
 		*p = 0;
 	return p;

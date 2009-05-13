@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.35 2008/11/12 12:36:03 ad Exp $
+# 	$NetBSD: RC3230,v 1.35.4.1 2009/05/13 17:18:03 jym Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -14,7 +14,6 @@ options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	NTP			# network time protocol
 options 	HZ=25
 options 	USERCONF		# userconf(4) support

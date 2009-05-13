@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.23 2008/06/13 09:58:06 cegger Exp $ */
+/* $NetBSD: siotty.c,v 1.23.10.1 2009/05/13 17:17:59 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.23 2008/06/13 09:58:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.23.10.1 2009/05/13 17:17:59 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,13 +81,13 @@ struct siotty_softc {
 };
 
 #include "siotty.h"
-static void siostart __P((struct tty *));
-static int  sioparam __P((struct tty *, struct termios *));
-static void siottyintr __P((int));
-static int  siomctl __P((struct siotty_softc *, int, int));
+static void siostart(struct tty *);
+static int  sioparam(struct tty *, struct termios *);
+static void siottyintr(int);
+static int  siomctl(struct siotty_softc *, int, int);
 
-static int  siotty_match __P((struct device *, struct cfdata *, void *));
-static void siotty_attach __P((struct device *, struct device *, void *));
+static int  siotty_match(struct device *, struct cfdata *, void *);
+static void siotty_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(siotty, sizeof(struct siotty_softc),
     siotty_match, siotty_attach, NULL, NULL);
@@ -108,10 +108,7 @@ const struct cdevsw siotty_cdevsw = {
 };
 
 static int 
-siotty_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+siotty_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sio_attach_args *args = aux;
 
@@ -121,16 +118,14 @@ siotty_match(parent, cf, aux)
 }
 
 static void 
-siotty_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+siotty_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sio_softc *scp = (void *)parent;
 	struct siotty_softc *sc = (void *)self;
 	struct sio_attach_args *args = aux;
 
 	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + args->channel;
-	bcopy(ch0_regs, sc->sc_wr, sizeof(ch0_regs));
+	memcpy( sc->sc_wr, ch0_regs, sizeof(ch0_regs));
 	scp->scp_intr[args->channel] = siottyintr;
 
 	if (args->hwflags == 1) {
@@ -222,9 +217,7 @@ out:
 }
 
 void
-siostop(tp, flag)
-	struct tty *tp;
-	int flag;
+siostop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -297,9 +290,7 @@ sioparam(struct tty *tp, struct termios *t)
 }
 
 static int
-siomctl(sc, control, op)
-	struct siotty_softc *sc;
-	int control, op;
+siomctl(struct siotty_softc *sc, int control, int op)
 {
 	int val, s, wr5, rr;
 
@@ -534,9 +525,9 @@ getsiocsr(struct sioreg *sio)
 
 /*---------------------  console interface ----------------------*/
 
-void syscnattach __P((int));
-int  syscngetc __P((dev_t));
-void syscnputc __P((dev_t, int));
+void syscnattach(int);
+int  syscngetc(dev_t);
+void syscnputc(dev_t, int);
 
 struct consdev syscons = {
 	NULL,
@@ -552,8 +543,7 @@ struct consdev syscons = {
 };
 
 /* EXPORT */ void
-syscnattach(channel)
-	int channel;
+syscnattach(int channel)
 {
 /*
  * Channel A is immediately initialized with 9600N1 right after cold
@@ -577,8 +567,7 @@ syscnattach(channel)
 }
 
 /* EXPORT */ int
-syscngetc(dev)
-	dev_t dev;
+syscngetc(dev_t dev)
 {
 	struct sioreg *sio;
 	int s, c;
@@ -594,9 +583,7 @@ syscngetc(dev)
 }
 
 /* EXPORT */ void
-syscnputc(dev, c)
-	dev_t dev;
-	int c;
+syscnputc(dev_t dev, int c)
 {
 	struct sioreg *sio;
 	int s;

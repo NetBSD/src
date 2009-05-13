@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.13 2006/11/16 01:33:00 christos Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.13.68.1 2009/05/13 17:19:53 jym Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.13 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.13.68.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.13 2006/11/16 01:33:00 christos Exp $
 #define SF16FMR2_READ_CLOCK_HIGH	\
 		SF16FMR2_DATA_ON | SF16FMR2_CLCK_ON | SF16FMR2_WREN_OFF
 
-int	sf2r_probe(struct device *, struct cfdata *, void *);
-void	sf2r_attach(struct device *, struct device * self, void *);
+int	sf2r_probe(device_t, cfdata_t, void *);
+void	sf2r_attach(device_t, device_t  self, void *);
 
 int	sf2r_get_info(void *, struct radio_info *);
 int	sf2r_set_info(void *, struct radio_info *);
@@ -121,8 +121,7 @@ void	sf2r_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf2r_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
 
 int
-sf2r_probe(struct device *parent, struct cfdata *cf,
-    void *aux)
+sf2r_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -165,7 +164,7 @@ sf2r_probe(struct device *parent, struct cfdata *cf,
 }
 
 void
-sf2r_attach(struct device *parent, struct device *self, void *aux)
+sf2r_attach(device_t parent, device_t self, void *aux)
 {
 	struct sf2r_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;

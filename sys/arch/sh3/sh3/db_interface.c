@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.57 2008/06/08 22:13:09 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.57.12.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2008/06/08 22:13:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57.12.1 2009/05/13 17:18:22 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -178,7 +178,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 }
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 
 	__asm volatile("trapa %0" :: "i"(_SH_TRA_BREAK));

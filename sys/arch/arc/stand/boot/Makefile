@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2006/08/28 13:42:39 tsutsui Exp $
+# $NetBSD: Makefile,v 1.6.74.1 2009/05/13 17:16:12 jym Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -28,26 +28,10 @@ CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2
 CFLAGS+=   -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CPPFLAGS+= -nostdinc -I. -I${S}
 CPPFLAGS+= -D_STANDALONE -DNO_ABICALLS -D${MACHINE}
-CPPFLAGS+= -DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 #CPPFLAGS+= -DBOOT_DEBUG
 LDSCRIPT=  ${S}/arch/mips/conf/stand.ldscript
 TEXTADDR=  0x80f00000
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine mips
-.NOPATH: machine mips
-
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-mips::
-	-rm -f $@
-	ln -s ${S}/arch/mips/include $@
-.endif
-
-CLEANFILES+= machine mips
 
 # if there is a 'version' file, add rule for vers.c and add it to SRCS
 # and CLEANFILES
@@ -89,4 +73,5 @@ ${PROG}: ${OBJS} ${LIBS}
 
 CLEANFILES+=	${PROG}.elf ${PROG}.map
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

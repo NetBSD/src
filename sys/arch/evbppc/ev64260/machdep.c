@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2008/11/30 18:21:33 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.4.1 2009/05/13 17:16:40 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.4.1 2009/05/13 17:16:40 jym Exp $");
 
 #include "opt_marvell.h"
+#include "opt_modular.h"
 #include "opt_ev64260.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -197,9 +198,7 @@ const struct gt_decode_info {
 };
 
 void
-initppc(startkernel, endkernel, args, btinfo)
-	u_int startkernel, endkernel, args;
-	void *btinfo;
+initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
 	oea_batinit(0xf0000000, BAT_BL_256M);
 	oea_init((void (*)(void))ext_intr);

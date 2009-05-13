@@ -1,7 +1,7 @@
-/*	$NetBSD: cpuio.h,v 1.3 2009/01/19 17:39:02 christos Exp $	*/
+/*	$NetBSD: cpuio.h,v 1.3.2.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -49,16 +49,16 @@ typedef struct cpustate {
 	bool		cs_online;	/* running unbound LWPs */
 	bool		cs_intr;	/* fielding interrupts */
 	bool		cs_unused[2];	/* reserved */
-	time_t		cs_lastmod;	/* time of last state change */
+	int32_t		cs_lastmod;	/* time of last state change */
 	char		cs_name[16];	/* reserved */
-	uint32_t	cs_reserved[4];	/* reserved */
+	int32_t		cs_lastmodhi;	/* time of last state change */
+	uint32_t	cs_intrcnt;	/* count of interrupt handlers + 1 */
+	uint32_t	cs_reserved[2];	/* reserved */
 } cpustate_t;
 
-/* 0 IOC_CPU_OSETSTATE */
-/* 1 IOC_CPU_OGETSTATE */
+#define	IOC_CPU_SETSTATE	_IOW('c', 0, cpustate_t)
+#define	IOC_CPU_GETSTATE	_IOWR('c', 1, cpustate_t)
 #define	IOC_CPU_GETCOUNT	_IOR('c', 2, int)
 #define	IOC_CPU_MAPID		_IOWR('c', 3, int)
-#define	IOC_CPU_SETSTATE	_IOW('c', 4, cpustate_t)
-#define	IOC_CPU_GETSTATE	_IOWR('c', 5, cpustate_t)
 
 #endif /* !_SYS_CPUIO_H_ */

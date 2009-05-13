@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.212 2008/12/19 18:49:38 cegger Exp $ */
+/*	$NetBSD: cpu.c,v 1.212.2.1 2009/05/13 17:18:36 jym Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.212 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.212.2.1 2009/05/13 17:18:36 jym Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -102,10 +102,10 @@ char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 int	sparc_ncpus;			/* # of CPUs detected by PROM */
-struct	cpu_info **cpus;
+#ifdef MULTIPROCESSOR
+union cpu_info_pg *cpus;
 u_int	cpu_ready_mask;			/* the set of CPUs marked as READY */
-static	int cpu_instance;		/* current # of CPUs wired by us */
-
+#endif
 
 /* The CPU configuration driver. */
 static void cpu_mainbus_attach(struct device *, struct device *, void *);
@@ -138,117 +138,39 @@ void fpu_init(struct cpu_info *);
 int bootmid;		/* Module ID of boot CPU */
 #if defined(MULTIPROCESSOR)
 void cpu_spinup(struct cpu_info *);
-struct cpu_info *alloc_cpuinfo_global_va(int, vsize_t *);
-struct cpu_info	*alloc_cpuinfo(void);
+static void init_cpuinfo(struct cpu_info *, int);
 
 int go_smp_cpus = 0;	/* non-primary CPUs wait for this to go */
 
 /* lock this to send IPI's */
 struct simplelock xpmsg_lock = SIMPLELOCK_INITIALIZER;
 
-struct cpu_info *
-alloc_cpuinfo_global_va(int ismaster, vsize_t *sizep)
+static void
+init_cpuinfo(struct cpu_info *cpi, int node)
 {
-	int align;
-	vaddr_t sva, va;
-	vsize_t sz, esz;
+	vaddr_t intstack, va;
 
 	/*
-	 * Allocate aligned KVA.  `cpuinfo' resides at a fixed virtual
-	 * address. Since we need to access an other CPU's cpuinfo
-	 * structure occasionally, this must be done at a virtual address
-	 * that's cache congruent to the fixed address CPUINFO_VA.
-	 *
-	 * NOTE: we're using the cache properties of the boot CPU to
-	 * determine the alignment (XXX).
+	 * Finish initialising this cpu_info.
 	 */
-	align = PAGE_SIZE;
-	if (CACHEINFO.c_totalsize > align) {
-		/* Need a power of two */
-		while (align <= CACHEINFO.c_totalsize)
-			align <<= 1;
-		align >>= 1;
-	}
-
-	sz = sizeof(struct cpu_info);
-
-	if (ismaster == 0) {
-		/*
-		 * While we're here, allocate a per-CPU idle PCB and
-		 * interrupt stack as well (8KB + 16KB).
-		 */
-		sz += USPACE;		/* `idle' u-area for this CPU */
-		sz += INT_STACK_SIZE;	/* interrupt stack for this CPU */
-	}
-
-	sz = (sz + PAGE_SIZE - 1) & -PAGE_SIZE;
-	esz = sz + align - PAGE_SIZE;
-
-	sva = vm_map_min(kernel_map);
-	if (uvm_map(kernel_map, &sva, esz, NULL, UVM_UNKNOWN_OFFSET,
-	    0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, UVM_FLAG_NOWAIT)))
-		panic("alloc_cpuinfo_global_va: no virtual space");
-
-	va = sva + (((CPUINFO_VA & (align - 1)) + align - sva) & (align - 1));
-
-	/* Return excess virtual memory space */
-	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va);
-	if (va + sz != sva + esz)
-		(void)uvm_unmap(kernel_map, va + sz, sva + esz);
-
-	if (sizep != NULL)
-		*sizep = sz;
-
-	return ((struct cpu_info *)va);
-}
-
-struct cpu_info *
-alloc_cpuinfo(void)
-{
-	vaddr_t va;
-	vsize_t sz;
-	vaddr_t low, high;
-	struct vm_page *m;
-	struct pglist mlist;
-	struct cpu_info *cpi;
-
-	/* Allocate the aligned VA and determine the size. */
-	cpi = alloc_cpuinfo_global_va(0, &sz);
-	va = (vaddr_t)cpi;
-
-	/* Allocate physical pages */
-	low = vm_first_phys;
-	high = vm_first_phys + vm_num_phys - PAGE_SIZE;
-	if (uvm_pglistalloc(sz, low, high, PAGE_SIZE, 0, &mlist, 1, 0) != 0)
-		panic("alloc_cpuinfo: no pages");
-
-	/* Map the pages */
-	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
-		paddr_t pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		va += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-
-	bzero((void *)cpi, sz);
+	getcpuinfo(cpi, node);
 
 	/*
-	 * Arrange pcb and interrupt stack in the same
-	 * way as is done for the boot CPU in locore.
+	 * Arrange pcb and interrupt stack.
 	 */
-	cpi->eintstack = (void *)((vaddr_t)cpi + sz - USPACE);
+	intstack = uvm_km_alloc(kernel_map, INT_STACK_SIZE,
+		0, UVM_KMF_WIRED);
+	if (intstack == 0)
+		panic("%s: no uspace/intstack", __func__);
+	cpi->eintstack = (void*)(intstack + INT_STACK_SIZE);
 
 	/* Allocate virtual space for pmap page_copy/page_zero */
 	va = uvm_km_alloc(kernel_map, 2*PAGE_SIZE, 0, UVM_KMF_VAONLY);
 	if (va == 0)
-		panic("alloc_cpuinfo: no virtual space");
+		panic("%s: no virtual space", __func__);
 
 	cpi->vpage[0] = (void *)(va + 0);
 	cpi->vpage[1] = (void *)(va + PAGE_SIZE);
-
-	return (cpi);
 }
 #endif /* MULTIPROCESSOR */
 
@@ -405,34 +327,19 @@ static void
 cpu_attach(struct cpu_softc *sc, int node, int mid)
 {
 	struct cpu_info *cpi;
+	int idx;
+	static int cpu_attach_count = 0;
 
 	/*
 	 * The first CPU we're attaching must be the boot CPU.
 	 * (see autoconf.c and cpuunit.c)
 	 */
-	if (cpus == NULL) {
-		cpus = malloc(sparc_ncpus * sizeof(cpi),
-				M_DEVBUF, M_NOWAIT|M_ZERO);
-
+	idx = cpu_attach_count++;
+	if (cpu_attach_count == 1) {
 		getcpuinfo(&cpuinfo, node);
 
 #if defined(MULTIPROCESSOR)
-		/*
-		 * Allocate a suitable global VA for the boot CPU's
-		 * cpu_info (which is already statically allocated),
-		 * and double map it to that global VA.  Then fixup
-		 * the self-reference to use the globalized address.
-		 */
-		cpi = sc->sc_cpuinfo = alloc_cpuinfo_global_va(1, NULL);
-		pmap_globalize_boot_cpuinfo(cpi);
-
-		cpuinfo.ci_self = cpi;
-
-		/* XXX - fixup lwp0 and idlelwp l_cpu */
-		lwp0.l_cpu = cpi;
-		cpi->ci_data.cpu_idlelwp->l_cpu = cpi;
-		cpi->ci_data.cpu_idlelwp->l_mutex =
-		    cpi->ci_schedstate.spc_lwplock;
+		cpi = sc->sc_cpuinfo = cpuinfo.ci_self;
 #else
 		/* The `local' VA is global for uniprocessor. */
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
@@ -453,10 +360,10 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		int error;
 
 		/*
-		 * Allocate and initiize this cpu's cpu_info.
+		 * Initialise this cpu's cpu_info.
 		 */
-		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
-		cpi->ci_self = cpi;
+		cpi = sc->sc_cpuinfo = &cpus[idx].ci;
+		init_cpuinfo(cpi, node);
 
 		/*
 		 * Call the MI attach which creates an idle LWP for us.
@@ -470,13 +377,12 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		}
 
 		/*
-		 * Note: `eintstack' is set in alloc_cpuinfo() above.
+		 * Note: `eintstack' is set in init_cpuinfo() above.
 		 * The %wim register will be initialized in cpu_hatch().
 		 */
 		cpi->ci_curlwp = cpi->ci_data.cpu_idlelwp;
 		cpi->curpcb = (struct pcb *)cpi->ci_curlwp->l_addr;
 		cpi->curpcb->pcb_wim = 1;
-		getcpuinfo(cpi, node);
 
 #else
 		sc->sc_cpuinfo = NULL;
@@ -489,12 +395,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	cpi->redzone = (void *)((long)cpi->eintstack + REDSIZE);
 #endif
 
-	/*
-	 * Allocate a slot in the cpus[] array such that the following
-	 * invariant holds: cpus[cpi->ci_cpuid] == cpi;
-	 */
-	cpus[cpu_instance] = cpi;
-	cpi->ci_cpuid = cpu_instance++;
+	cpi->ci_cpuid = idx;
 	cpi->mid = mid;
 	cpi->node = node;
 
@@ -530,16 +431,13 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 
 	cache_print(sc);
 
-	if (sparc_ncpus > 1 && cpu_instance == sparc_ncpus) {
-		int n;
+	if (sparc_ncpus > 1 && idx == sparc_ncpus-1) {
+		CPU_INFO_ITERATOR n;
 		/*
 		 * Install MP cache flush functions, unless the
 		 * single-processor versions are no-ops.
 		 */
-		for (n = 0; n < sparc_ncpus; n++) {
-			cpi = cpus[n];
-			if (cpi == NULL)
-				continue;
+		for (CPU_INFO_FOREACH(n, cpi)) {
 #define SET_CACHE_FUNC(x) \
 	if (cpi->x != __CONCAT(noop_,x)) cpi->x = __CONCAT(smp_,x)
 			SET_CACHE_FUNC(vcache_flush_page);
@@ -558,20 +456,13 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 void
 cpu_boot_secondary_processors(void)
 {
-	int n;
-
-	if (cpu_instance != sparc_ncpus) {
-		printf("NOTICE: only %d out of %d CPUs were configured\n",
-			cpu_instance, sparc_ncpus);
-		return;
-	}
+	CPU_INFO_ITERATOR n;
+	struct cpu_info *cpi;
 
 	printf("cpu0: booting secondary processors:");
-	for (n = 0; n < sparc_ncpus; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-			(cpi->flags & CPUFLG_HATCHED) == 0)
+	for (CPU_INFO_FOREACH(n, cpi)) {
+		if (cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_HATCHED) == 0)
 			continue;
 
 		printf(" cpu%d", cpi->ci_cpuid);
@@ -597,8 +488,7 @@ cpu_boot_secondary_processors(void)
 void
 cpu_setup(void)
 {
-
-	if (cpuinfo.hotfix)
+ 	if (cpuinfo.hotfix)
 		(*cpuinfo.hotfix)(&cpuinfo);
 
 	/* Initialize FPU */
@@ -665,6 +555,7 @@ void
 xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
       u_int cpuset)
 {
+	struct cpu_info *cpi;
 	int s, n, i, done, callself, mybit;
 	volatile struct xpmsg_func *p;
 	int fasttrap;
@@ -707,11 +598,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	 * finished by the time we start looking.
 	 */
 	fasttrap = trap != NULL ? 1 : 0;
-	for (n = 0; n < sparc_ncpus; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (!cpi)
-			continue;
+	for (CPU_INFO_FOREACH(n, cpi)) {
 
 		/* Note: n == cpi->ci_cpuid */
 		if ((cpuset & (1 << n)) == 0)
@@ -750,10 +637,8 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 		}
 
 		done = 1;
-		for (n = 0; n < sparc_ncpus; n++) {
-			struct cpu_info *cpi = cpus[n];
-
-			if (!cpi || (cpuset & (1 << n)) == 0)
+		for (CPU_INFO_FOREACH(n, cpi)) {
+			if ((cpuset & (1 << n)) == 0)
 				continue;
 
 			if (cpi->msg.complete == 0) {
@@ -779,15 +664,15 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 void
 mp_pause_cpus(void)
 {
-	int n;
+	CPU_INFO_ITERATOR n;
+	struct cpu_info *cpi;
 
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < sparc_ncpus; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+	for (CPU_INFO_FOREACH(n, cpi)) {
+		if (cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_HATCHED) == 0)
 			continue;
 
 		/*
@@ -806,15 +691,15 @@ mp_pause_cpus(void)
 void
 mp_resume_cpus(void)
 {
-	int n;
+	CPU_INFO_ITERATOR n;
+	struct cpu_info *cpi;
 
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < sparc_ncpus; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+	for (CPU_INFO_FOREACH(n, cpi)) {
+		if (cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_HATCHED) == 0)
 			continue;
 
 		/*
@@ -832,16 +717,16 @@ mp_resume_cpus(void)
 void
 mp_halt_cpus(void)
 {
-	int n;
+	CPU_INFO_ITERATOR n;
+	struct cpu_info *cpi;
 
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < sparc_ncpus; n++) {
-		struct cpu_info *cpi = cpus[n];
+	for (CPU_INFO_FOREACH(n, cpi)) {
 		int r;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpuinfo.mid == cpi->mid)
 			continue;
 
 		/*
@@ -859,15 +744,15 @@ mp_halt_cpus(void)
 void
 mp_pause_cpus_ddb(void)
 {
-	int n;
+	CPU_INFO_ITERATOR n;
+	struct cpu_info *cpi;
 
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < sparc_ncpus; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (cpi == NULL || cpi->mid == cpuinfo.mid)
+	for (CPU_INFO_FOREACH(n, cpi)) {
+		if (cpi == NULL || cpi->mid == cpuinfo.mid ||
+		    (cpi->flags & CPUFLG_HATCHED) == 0)
 			continue;
 
 		cpi->msg_lev15.tag = XPMSG15_PAUSECPU;
@@ -878,15 +763,15 @@ mp_pause_cpus_ddb(void)
 void
 mp_resume_cpus_ddb(void)
 {
-	int n;
+	CPU_INFO_ITERATOR n;
+	struct cpu_info *cpi;
 
 	if (cpus == NULL)
 		return;
 
-	for (n = 0; n < sparc_ncpus; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+	for (CPU_INFO_FOREACH(n, cpi)) {
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_PAUSED) == 0)
 			continue;
 
 		/* tell it to continue */
@@ -1762,15 +1647,11 @@ int
 viking_module_error(void)
 {
 	uint64_t v;
-	int n, fatal = 0;
+	int n = 0, fatal = 0;
+	struct cpu_info *cpi;
 
 	/* Report on MXCC error registers in each module */
-	for (n = 0; n < sparc_ncpus; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (cpi == NULL)
-			continue;
-
+	for (CPU_INFO_FOREACH(n, cpi)) {
 		if (cpi->ci_mxccregs == 0) {
 			printf("\tMXCC registers not mapped\n");
 			continue;

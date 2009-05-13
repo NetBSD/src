@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.13 2008/02/18 13:27:55 joerg Exp $
+# $NetBSD: Makefile.hp700,v 1.13.24.1 2009/05/13 17:17:42 jym Exp $
 
 # Makefile for NetBSD
 #
@@ -44,6 +44,11 @@ LIBSPMATH=	${SPMATH_PROF}
 
 CFLAGS+=	-mno-space-regs -mfast-indirect-calls -mportable-runtime
 APPFLAGS=	-x assembler-with-cpp -P -traditional ${CPPFLAGS} -D_LOCORE
+
+OPT_DDB=	%DDB%
+.if !empty(OPT_DDB)
+CFLAGS+=	-fno-omit-frame-pointer
+.endif
 
 # Do NOT assume the compiler does "-x funny_format" (gcc-specific)
 # This needs an intermediate file.  The original file is always
@@ -95,7 +100,7 @@ copypage.o: assym.h hppa/asm.h
 db_machdep.o machdep.o pmap.o vm_machdep.o: Makefile
 
 # depends on KGDBDEV, KGDBRATE, DDB, etc.
-com_gsc.o clock.o pdc.o autoconf.o machdep.o: Makefile  
+com_gsc.o clock.o pdc.o autoconf.o machdep.o: Makefile
 
 ##
 ## (7) misc settings

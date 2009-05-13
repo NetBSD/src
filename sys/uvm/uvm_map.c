@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.269 2009/01/13 14:04:35 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.269.2.1 2009/05/13 17:23:10 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.269 2009/01/13 14:04:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.269.2.1 2009/05/13 17:23:10 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.269 2009/01/13 14:04:35 yamt Exp $");
 
 #include <uvm/uvm.h>
 
-#ifdef DDB
+#if defined(DDB) || defined(DEBUGPRINT)
 #include <uvm/uvm_ddb.h>
 #endif
 
@@ -4934,7 +4934,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	return merged;
 }
 
-#if defined(DDB)
+#if defined(DDB) || defined(DEBUGPRINT)
 
 /*
  * DDB hooks
@@ -5257,7 +5257,7 @@ vm_map_starved_p(struct vm_map *map)
 	return false;
 }
 
-#if defined(DDB)
+#if defined(DDB) || defined(DEBUGPRINT)
 void
 uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 {
@@ -5278,4 +5278,4 @@ uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 		map = entry->object.sub_map;
 	}
 }
-#endif /* defined(DDB) */
+#endif /* defined(DDB) || defined(DEBUGPRINT) */

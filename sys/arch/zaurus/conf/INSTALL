@@ -1,9 +1,11 @@
-# $NetBSD: INSTALL,v 1.4 2009/02/06 18:50:29 jym Exp $
+# $NetBSD: INSTALL,v 1.4.2.1 2009/05/13 17:18:51 jym Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
 
 include 	"arch/zaurus/conf/GENERIC"
+
+no options 	KLOADER
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

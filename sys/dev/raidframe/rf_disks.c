@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.70 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.70.14.1 2009/05/13 17:21:16 jym Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.70 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.70.14.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -143,9 +143,9 @@ rf_ConfigureDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		} else {
 			if (disks[c].numBlocks < min_numblks)
 				min_numblks = disks[c].numBlocks;
-			DPRINTF6("Disk at col %d: dev %s numBlocks %ld blockSize %d (%ld MB)\n",
+			DPRINTF6("Disk at col %d: dev %s numBlocks %" PRIu64 " blockSize %d (%ld MB)\n",
 				 c, disks[c].devname,
-				 (long int) disks[c].numBlocks,
+				 disks[c].numBlocks,
 				 disks[c].blockSize,
 				 (long int) disks[c].numBlocks *
 				 disks[c].blockSize / 1024 / 1024);
@@ -253,9 +253,9 @@ rf_ConfigureSpareDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		} else {
 			disks[i].status = rf_ds_spare;	/* change status to
 							 * spare */
-			DPRINTF6("Spare Disk %d: dev %s numBlocks %ld blockSize %d (%ld MB)\n", i,
+			DPRINTF6("Spare Disk %d: dev %s numBlocks %" PRIu64 " blockSize %d (%ld MB)\n", i,
 			    disks[i].devname,
-			    (long int) disks[i].numBlocks, disks[i].blockSize,
+			    disks[i].numBlocks, disks[i].blockSize,
 			    (long int) disks[i].numBlocks *
 				 disks[i].blockSize / 1024 / 1024);
 		}
@@ -271,17 +271,17 @@ rf_ConfigureSpareDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			goto fail;
 		}
 		if (disks[i].numBlocks < raidPtr->sectorsPerDisk) {
-			RF_ERRORMSG3("Spare disk %s (%d blocks) is too small to serve as a spare (need %ld blocks)\n",
+			RF_ERRORMSG3("Spare disk %s (%d blocks) is too small to serve as a spare (need %" PRIu64 " blocks)\n",
 				     disks[i].devname, disks[i].blockSize,
-				     (long int) raidPtr->sectorsPerDisk);
+				     raidPtr->sectorsPerDisk);
 			ret = EINVAL;
 			goto fail;
 		} else
 			if (disks[i].numBlocks > raidPtr->sectorsPerDisk) {
-				RF_ERRORMSG3("Warning: truncating spare disk %s to %ld blocks (from %ld)\n",
+				RF_ERRORMSG3("Warning: truncating spare disk %s to %" PRIu64 " blocks (from %" PRIu64 ")\n",
 				    disks[i].devname,
-				    (long int) raidPtr->sectorsPerDisk,
-				    (long int) disks[i].numBlocks);
+				    raidPtr->sectorsPerDisk,
+				    disks[i].numBlocks);
 
 				disks[i].numBlocks = raidPtr->sectorsPerDisk;
 			}
@@ -980,9 +980,10 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 		goto fail;
 	} else {
 		disks[spare_number].status = rf_ds_spare;
-		DPRINTF6("Spare Disk %d: dev %s numBlocks %ld blockSize %d (%ld MB)\n", spare_number,
+		DPRINTF6("Spare Disk %d: dev %s numBlocks %" PRIu64 " blockSize %d (%ld MB)\n",
+			 spare_number,
 			 disks[spare_number].devname,
-			 (long int) disks[spare_number].numBlocks,
+			 disks[spare_number].numBlocks,
 			 disks[spare_number].blockSize,
 			 (long int) disks[spare_number].numBlocks *
 			 disks[spare_number].blockSize / 1024 / 1024);
@@ -998,20 +999,20 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 		goto fail;
 	}
 	if (disks[spare_number].numBlocks < raidPtr->sectorsPerDisk) {
-		RF_ERRORMSG3("Spare disk %s (%d blocks) is too small to serve as a spare (need %ld blocks)\n",
+		RF_ERRORMSG3("Spare disk %s (%d blocks) is too small to serve as a spare (need %" PRIu64 " blocks)\n",
 			     disks[spare_number].devname,
 			     disks[spare_number].blockSize,
-			     (long int) raidPtr->sectorsPerDisk);
+			     raidPtr->sectorsPerDisk);
 		rf_close_component(raidPtr, raidPtr->raid_cinfo[raidPtr->numCol+spare_number].ci_vp, 0);
 		ret = EINVAL;
 		goto fail;
 	} else {
 		if (disks[spare_number].numBlocks >
 		    raidPtr->sectorsPerDisk) {
-			RF_ERRORMSG3("Warning: truncating spare disk %s to %ld blocks (from %ld)\n",
+			RF_ERRORMSG3("Warning: truncating spare disk %s to %" PRIu64 " blocks (from %" PRIu64 ")\n",
 			    disks[spare_number].devname,
-			    (long int) raidPtr->sectorsPerDisk,
-			    (long int) disks[spare_number].numBlocks);
+			    raidPtr->sectorsPerDisk,
+			    disks[spare_number].numBlocks);
 
 			disks[spare_number].numBlocks = raidPtr->sectorsPerDisk;
 		}

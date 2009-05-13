@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.4 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: cread.c,v 1.4.92.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -83,14 +83,14 @@ static struct sd {
 	int		compressed;	/* 1 if input file is a .gz file */
 } *ss[SOPEN_MAX];
 
-static int		get_byte __P((struct sd *));
-static unsigned long	getLong __P((struct sd *));
-static void		check_header __P((struct sd *));
+static int		get_byte(struct sd *);
+static unsigned long	getLong(struct sd *);
+static void		check_header(struct sd *);
 
 /* XXX - find suitable headerf ile for these: */
-void	*zcalloc __P((void *, unsigned int, unsigned int));
-void	zcfree __P((void *, void *));
-void	zmemcpy __P((unsigned char *, unsigned char *, unsigned int));
+void	*zcalloc(void *, unsigned int, unsigned int);
+void	zcfree(void *, void *);
+void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
 
 
 /*
@@ -98,34 +98,25 @@ void	zmemcpy __P((unsigned char *, unsigned char *, unsigned int));
  */
 
 void *
-zcalloc (opaque, items, size)
-	void *opaque;
-	unsigned items;
-	unsigned size;
+zcalloc (void *opaque, unsigned items, unsigned size)
 {
 	return(malloc(items * size));
 }
 
 void
-zcfree (opaque, ptr)
-	void *opaque;
-	void *ptr;
+zcfree (void *opaque, void *ptr)
 {
 	free(ptr);
 }
 
 void
-zmemcpy(dest, source, len)
-	unsigned char *dest;
-	unsigned char *source;
-	unsigned int len;
+zmemcpy(unsigned char *dest, unsigned char *source, unsigned int len)
 {
-	bcopy(source, dest, len);
+	memcpy(dest, source, len);
 }
 
 static int
-get_byte(s)
-	struct sd *s;
+get_byte(struct sd *s)
 {
 	if (s->z_eof)
 		return (EOF);
@@ -148,8 +139,7 @@ get_byte(s)
 }
 
 static unsigned long
-getLong (s)
-    struct sd *s;
+getLong (struct sd *s)
 {
 	unsigned long x = (unsigned long)get_byte(s);
 	int c;
@@ -164,8 +154,7 @@ getLong (s)
 }
 
 static void
-check_header(s)
-	struct sd *s;
+check_header(struct sd *s)
 {
 	int method; /* method byte */
 	int flags;  /* flags byte */
@@ -234,9 +223,7 @@ check_header(s)
  */
 
 int
-copen(fname, mode)
-	const char *fname;
-	int mode;
+copen(const char *fname, int mode)
 {
 	int fd;
 	struct sd *s = 0;
@@ -248,7 +235,7 @@ copen(fname, mode)
 	ss[fd] = s = malloc(sizeof(struct sd));
 	if (s == 0)
 		goto errout;
-	bzero(s, sizeof(struct sd));
+	memset(s, 0, sizeof(struct sd));
 
 	if (inflateInit2(&(s->stream), -15) != Z_OK)
 		goto errout;
@@ -271,8 +258,7 @@ errout:
 }
 
 int
-cclose(fd)
-	int fd;
+cclose(int fd)
 {
 	struct sd *s;
 
@@ -287,10 +273,7 @@ cclose(fd)
 }
 
 size_t
-cread(fd, buf, len)
-	int fd;
-	void *buf;
-	size_t len;
+cread(int fd, void *buf, size_t len)
 {
 	struct sd *s;
 	unsigned char *start = buf; /* starting point for crc computation */
@@ -378,10 +361,7 @@ cread(fd, buf, len)
 }
 
 off_t
-clseek(fd, offset, where)
-	int fd;
-	off_t offset;
-	int where;
+clseek(int fd, off_t offset, int where)
 {
 	struct sd *s;
 
@@ -413,7 +393,7 @@ clseek(fd, offset, where)
 			inflateEnd(&(s->stream));
 
 			sav_inbuf = s->inbuf; /* don't allocate again */
-			bzero(s, sizeof(struct sd)); /* this resets total_out to 0! */
+			memset(s, 0, sizeof(struct sd)); /* this resets total_out to 0! */
 
 			inflateInit2(&(s->stream), -15);
 			s->stream.next_in = s->inbuf = sav_inbuf;

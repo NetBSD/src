@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.93 2008/11/16 19:34:29 pooka Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.93.4.1 2009/05/13 17:23:10 jym Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.93 2008/11/16 19:34:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.93.4.1 2009/05/13 17:23:10 jym Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.93 2008/11/16 19:34:29 pooka Exp $")
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 
@@ -70,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.93 2008/11/16 19:34:29 pooka Exp $")
 #endif
 
 size_t pager_map_size = PAGER_MAP_SIZE;
-
-struct pool *uvm_aiobuf_pool;
 
 /*
  * list of uvm pagers in the system
@@ -487,9 +484,6 @@ uvm_aio_aiodone(struct buf *bp)
 
 	error = bp->b_error;
 	write = (bp->b_flags & B_READ) == 0;
-	/* XXXUBC BC_NOCACHE is for swap pager, should be done differently */
-	if (write && !(bp->b_cflags & BC_NOCACHE) && bioopsp != NULL)
-		(*bioopsp->io_pageiodone)(bp);
 
 	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));

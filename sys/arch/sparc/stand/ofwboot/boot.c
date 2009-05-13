@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2007/10/17 19:57:16 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.18.34.1 2009/05/13 17:18:37 jym Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -297,14 +297,14 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 	 * strings.
 	 */
 	l = strlen(args) + 1;
-	bcopy(&esym, args + l, sizeof(esym));
+	memcpy( args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
 
 	/*
 	 * Tell the kernel we're an OpenFirmware system.
 	 */
 	machine_tag = SPARC_MACHINE_OPENFIRMWARE;
-	bcopy(&machine_tag, args + l, sizeof(machine_tag));
+	memcpy( args + l, &machine_tag, sizeof(machine_tag));
 	l += sizeof(machine_tag);
 
 	/* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.21.14.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.21.14.1 2009/05/13 17:21:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.21 2008/04/28 20:23:57 martin Exp $
 #include <dev/sun/pfourreg.h>
 
 /* autoconfiguration driver */
-static void	bwtwoattach_sbus (struct device *, struct device *, void *);
-static int	bwtwomatch_sbus (struct device *, struct cfdata *, void *);
+static void	bwtwoattach_sbus (device_t, device_t, void *);
+static int	bwtwomatch_sbus (device_t, cfdata_t, void *);
 
 /* Allocate an `sbusdev' in addition to the bwtwo softc */
 struct bwtwo_sbus_softc {
@@ -122,10 +122,7 @@ static void	bwtwo_set_video (struct bwtwo_softc *, int);
  * Match a bwtwo.
  */
 static int
-bwtwomatch_sbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+bwtwomatch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -137,9 +134,7 @@ bwtwomatch_sbus(parent, cf, aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-bwtwoattach_sbus(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+bwtwoattach_sbus(device_t parent, device_t self, void *args)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	struct sbusdev *sd = &((struct bwtwo_sbus_softc *)self)->bss_sd;
@@ -204,9 +199,7 @@ bwtwoattach_sbus(parent, self, args)
 }
 
 static void
-bwtwo_set_video(sc, enable)
-	struct bwtwo_softc *sc;
-	int enable;
+bwtwo_set_video(struct bwtwo_softc *sc, int enable)
 {
 
 	if (enable)
@@ -223,8 +216,7 @@ bwtwo_set_video(sc, enable)
 }
 
 static int
-bwtwo_get_video(sc)
-	struct bwtwo_softc *sc;
+bwtwo_get_video(struct bwtwo_softc *sc)
 {
 
 	return ((sc->sc_reg->fbc_ctrl & FBC_VENAB) != 0);

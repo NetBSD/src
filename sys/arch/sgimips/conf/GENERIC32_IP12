@@ -1,21 +1,304 @@
-#	$NetBSD: GENERIC32_IP12,v 1.4 2007/10/17 19:57:03 garbled Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.4.34.1 2009/05/13 17:18:17 jym Exp $
 #
-# sgimips GENERIC kernel for IP12
+# GENERIC32_IP12 machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
-# The IP12 is very, very similar to the IP2x, with two important differences:
-# it is MIPS1 and has a different memory map. This means that while we can
-# produce a kernel that works on both CPU architectures, our start addresses
-# must differ.
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
 #
-# To keep things simple, include the IP2x kernel config and "no option" the
-# offending bits.
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+#
+#
+# Currently this config file supports Personal IRIS 4D/2x (IP6/IP10),
+# Personal IRIS 4D/3x (IP12) and Indigo R3k (IP12).
+#
+# Note that to load at beginning of memory, the kernel _must_ be under
+# 3.5MB in size to avoid stomping on (or being stomped on by) the PROM.
+#
 
-# Pull in standard `install' config
-include 	"arch/sgimips/conf/GENERIC32_IP2x"
+include		"arch/sgimips/conf/std.sgimips"
 
-no options	MIPS3
-options		MIPS1
-no options	INDY_R4600_CACHE
+makeoptions	TEXTADDR=0x80002000	# entry point
 
-no makeoptions	TEXTADDR
-makeoptions	TEXTADDR=0x80002000
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident		"GENERIC32-IP2x-$Revision: 1.4.34.1 $"
+
+maxusers	32
+
+# CPU related options
+options 	MIPS1			# MIPS1 support
+
+makeoptions	WANT_ECOFF="yes"	# Create an ECOFF kernel in addition
+					# to an ELF kernel -- required for
+					# booting from the PROM. 
+
+options 	BLINK		# blinkenlitzen
+
+# Standard system options
+#options 	INSECURE	# disable kernel security levels
+
+#options 	NTP		# NTP phase/frequence locked loop
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
+options 	SYSVSHM		# System V shared memory
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
+
+
+options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Enable experimental buffer queue strategy for better responsiveness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
+
+# Diagnostic/debugging support options
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	KGDB_DEV=0x2301		# KGDB port - this is Serial(1)
+#options 	KGDB_DEVRATE=19200	# KGDB Baud Rate
+#makeoptions	DEBUG="-g"	# compile full symbol table
+
+# Compatibility options
+options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+
+options 	COMPAT_IRIX	# binary compatibility with IRIX
+#options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# File systems
+file-system 	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+#file-system 	NTFS		# Windows/NT file system (experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+#file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+#file-system 	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system	EFS		# Silicon Graphics Extent File System
+
+# File system options
+options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options 	NFSSERVER	# Network File System server
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT
+#options 	MEMORY_DISK_SERVER=0
+#options 	MINIROOTSIZE=8192
+
+#options 	SCSI_DELAY=5
+
+#
+# wscons options
+#
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+# Main bus and CPU
+mainbus0 	at root
+cpu0 		at mainbus?
+
+sd*     at scsibus? target ? lun ?	# SCSI disks
+st*     at scsibus? target ? lun ?	# SCSI tapes
+cd*     at scsibus? target ? lun ?	# SCSI CD-ROMs
+ch*     at scsibus? target ? lun ?	# SCSI changer devices
+ss*     at scsibus? target ? lun ?	# SCSI scanners
+ses*    at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
+uk*     at scsibus? target ? lun ?	# unknown SCSI
+
+# Common devices
+int0		at mainbus0			# Interrupt controller
+scsibus*	at scsi?			# HPC or IOC SCSI
+
+# IP6/10 devices
+ctl0		at mainbus0 addr 0x1f800000	# Memory controller
+oioc0		at mainbus0 addr 0x1f900000	# 'Old' I/O Controller
+dpclock0	at mainbus0 addr 0x1fbc0000	# RTC
+scn0		at mainbus0 addr 0x1fb80004	# Signetics 2681 Serial Port
+oiocsc* 	at oioc? offset ?		# On-board WD33C93 SCSI
+le*		at oioc? offset ?		# AMD LANCE AM7990 Ethernet
+
+# Personal Iris / Indigo R3k devices
+pic0		at mainbus0 addr 0x1fa00000	# Memory Controller
+gio0		at pic0				# GIO32 bus
+dpclock0	at mainbus0 addr 0x1fb80e00	# RTC
+hpc0 		at gio? addr 0x1fb80000		# High-perf. Peripheral. Ctrlers
+hpc1 		at gio? addr 0x1fb00000
+hpc2 		at gio? addr 0x1f980000
+grtwo*		at gio?				# Express (GR2) graphics
+wsdisplay*	at grtwo? console ?
+light*		at gio?			# Light/Starter/Entry (LG1/LG2) graphics
+wsdisplay*	at light? console ?
+sq* 		at hpc? offset ?	# On-board ethernet / E++ adapter
+wdsc* 		at hpc? offset ?	# On-board SCSI / GIO32 SCSI adapter
+wskbd*		at zskbd? console ?
+wsmouse*	at zsms? mux 0
+zsc0 		at hpc0 offset ?
+zstty*		at zsc0 channel ?
+zsc1 		at hpc0 offset ?	# IP12 keyboard/mouse
+zskbd0		at zsc1 channel 0
+zsms0		at zsc1 channel 1
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	fss		4	# file system snapshot device
+pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+#pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	agr			# IEEE 802.3ad link aggregation
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	wsmux                   # mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# pseudo devices used for IRIX binary compatibility
+pseudo-device	irix_kmem		# IRIX /dev/kmem
+pseudo-device	irix_usema		# IRIX /dev/usema
+
+# Veriexec
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.26 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.26.14.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.26 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.26.14.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,8 @@ static void	ef_mediastatus(struct ie_softc *, struct ifmediareq *);
 /* Local routines */
 static int 	ef_port_check(bus_space_tag_t, bus_space_handle_t);
 
-int ef_match(struct device *, struct cfdata *, void *);
-void ef_attach(struct device *, struct device *, void *);
+int ef_match(device_t, cfdata_t, void *);
+void ef_attach(device_t, device_t, void *);
 
 /*
  * This keeps track of which ISAs have been through an ie probe sequence.
@@ -121,7 +121,7 @@ void ef_attach(struct device *, struct device *, void *);
 
 struct ef_isabus {
 	LIST_ENTRY(ef_isabus) isa_link;
-	struct device *isa_bus;
+	device_t isa_bus;
 
 	int bus_state;
 
@@ -166,9 +166,7 @@ ef_card_add(
  * 3C507 support routines
  */
 static void
-ef_reset(sc, why)
-	struct ie_softc *sc;
-	int why;
+ef_reset(struct ie_softc *sc, int why)
 {
 	struct ef_softc* esc = (struct ef_softc *) sc;
 
@@ -200,17 +198,14 @@ ef_atten(struct ie_softc *sc, int why)
 }
 
 static void
-ef_hwinit(sc)
-	struct ie_softc *sc;
+ef_hwinit(struct ie_softc *sc)
 {
 	struct ef_softc* esc = (struct ef_softc *) sc;
 	bus_space_write_1(esc->sc_regt, esc->sc_regh, EF_ICTRL, 1);
 }
 
 static int
-ef_intrhook(sc, where)
-	struct ie_softc *sc;
-	int where;
+ef_intrhook(struct ie_softc *sc, int where)
 {
 	unsigned char cr;
 	struct ef_softc* esc = (struct ef_softc *) sc;
@@ -241,20 +236,14 @@ ef_intrhook(sc, where)
 }
 
 static u_int16_t
-ef_read_16 (sc, offset)
-	struct ie_softc *sc;
-	int offset;
+ef_read_16 (struct ie_softc *sc, int offset)
 {
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
 	return bus_space_read_2(sc->bt, sc->bh, offset);
 }
 
 static void
-ef_copyin (sc, dst, offset, size)
-	struct ie_softc *sc;
-	void *dst;
-	int offset;
-	size_t size;
+ef_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int dribble;
 	u_int8_t* bptr = dst;
@@ -279,11 +268,7 @@ ef_copyin (sc, dst, offset, size)
 }
 
 static void
-ef_copyout (sc, src, offset, size)
-	struct ie_softc *sc;
-	const void *src;
-	int offset;
-	size_t size;
+ef_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int dribble;
 	int osize = size;
@@ -309,19 +294,14 @@ ef_copyout (sc, src, offset, size)
 }
 
 static void
-ef_write_16 (sc, offset, value)
-	struct ie_softc *sc;
-	int offset;
-	u_int16_t value;
+ef_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 {
 	bus_space_write_2(sc->bt, sc->bh, offset, value);
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
-ef_write_24 (sc, offset, addr)
-	struct ie_softc *sc;
-	int offset, addr;
+ef_write_24 (struct ie_softc *sc, int offset, int addr)
 {
 	bus_space_write_4(sc->bt, sc->bh, offset, addr +
 			  (u_long) sc->sc_maddr - (u_long) sc->sc_iobase);
@@ -329,9 +309,7 @@ ef_write_24 (sc, offset, addr)
 }
 
 static void
-ef_mediastatus(sc, ifmr)
-        struct ie_softc *sc;
-        struct ifmediareq *ifmr;
+ef_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 {
         struct ifmedia *ifm = &sc->sc_media;
 
@@ -342,7 +320,7 @@ ef_mediastatus(sc, ifmr)
 }
 
 int
-ef_match(struct device *parent, struct cfdata *cf, void *aux)
+ef_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args * const ia = aux;
 
@@ -492,10 +470,7 @@ ef_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ef_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void   *aux;
+ef_attach(device_t parent, device_t self, void *aux)
 {
 	struct ef_softc *esc = (void *)self;
 	struct ie_softc *sc = &esc->sc_ie;
@@ -674,9 +649,7 @@ ef_attach(parent, self, aux)
 }
 
 static int
-ef_port_check(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ef_port_check(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i;
         u_char ch;

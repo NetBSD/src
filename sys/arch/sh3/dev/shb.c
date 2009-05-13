@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.13 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: shb.c,v 1.13.14.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.13 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.13.14.1 2009/05/13 17:18:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,13 @@ shb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search_ia(shb_search, self, "shb", NULL);
+
+	/*
+	 * XXX: TODO: provide hooks to manage on-chip modules.  For
+	 * now register null hooks which is no worse than before.
+	 */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19.14.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19.14.1 2009/05/13 17:17:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	/* APM */
 	config_found_ia(self, "hpcapmif", NULL, mainbus_print);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2008/01/02 11:48:26 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23.24.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2008/01/02 11:48:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23.24.1 2009/05/13 17:18:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2008/01/02 11:48:26 ad Exp $");
 
 #define	b_cylin	b_resid
 
-static const char *disklabel_mips_to_bsd __P((struct mips_volheader *,
-					  struct disklabel *));
-static int disklabel_bsd_to_mips __P((struct disklabel *,
-					struct mips_volheader *));
-static int mipsvh_cksum __P((struct mips_volheader *)); 
+static const char *disklabel_mips_to_bsd(struct mips_volheader *,
+					  struct disklabel *);
+static int disklabel_bsd_to_mips(struct disklabel *,
+					struct mips_volheader *);
+static int mipsvh_cksum(struct mips_volheader *); 
 
 #define LABELSIZE(lp)	((char *)&lp->d_partitions[lp->d_npartitions] -	\
 			 (char *)lp)
@@ -64,11 +64,7 @@ static int mipsvh_cksum __P((struct mips_volheader *));
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat) __P((struct buf *bp));
-	register struct disklabel *lp;
-	struct cpu_disklabel *clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *bp), register struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	register struct buf *bp;
 	struct disklabel *dlp;
@@ -146,10 +142,7 @@ readdisklabel(dev, strat, lp, clp)
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	register struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+setdisklabel(register struct disklabel *olp, register struct disklabel *nlp, u_long openmask, struct cpu_disklabel *clp)
 {
 	register int i;
 	register struct partition *opp, *npp;
@@ -192,11 +185,7 @@ setdisklabel(olp, nlp, openmask, clp)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat) __P((struct buf *bp));
-	register struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *bp), register struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	int labelpart;
@@ -287,9 +276,7 @@ struct partitionmap partition_map[] = {
  * Returns NULL on success, otherwise an error string
  */
 static const char *
-disklabel_mips_to_bsd(vh, lp)
-	struct mips_volheader *vh;
-	struct disklabel *lp;
+disklabel_mips_to_bsd(struct mips_volheader *vh, struct disklabel *lp)
 {
 	int  i, bp, mp;
 	struct partition *lpp;
@@ -335,9 +322,7 @@ disklabel_mips_to_bsd(vh, lp)
  * Returns NULL on success, otherwise an error string
  */
 static int
-disklabel_bsd_to_mips(lp, vh)
-	struct disklabel *lp;
-	struct mips_volheader *vh;
+disklabel_bsd_to_mips(struct disklabel *lp, struct mips_volheader *vh)
 {
 	int  i, bp, mp;
 	struct partition *lpp;
@@ -392,8 +377,7 @@ disklabel_bsd_to_mips(lp, vh)
  * of the entire volume header structure
  */
 int
-mipsvh_cksum(vhp)
-	struct mips_volheader *vhp;
+mipsvh_cksum(struct mips_volheader *vhp)
 {
 	int i, *ptr;
 	int cksum = 0;

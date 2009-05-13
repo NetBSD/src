@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.27 2008/07/03 18:10:08 drochner Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.27.10.1 2009/05/13 17:20:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.27 2008/07/03 18:10:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.27.10.1 2009/05/13 17:20:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,8 @@ struct an_pci_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-static int	an_pci_match(struct device *, struct cfdata *, void *);
-static void	an_pci_attach(struct device *, struct device *, void *);
+static int	an_pci_match(device_t, cfdata_t, void *);
+static void	an_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(an_pci, sizeof(struct an_pci_softc),
     an_pci_match, an_pci_attach, NULL, NULL);
@@ -99,8 +99,7 @@ static const struct an_pci_product {
 };
 
 static int
-an_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+an_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct an_pci_product *app;
@@ -114,7 +113,7 @@ an_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-an_pci_attach(struct device *parent, struct device *self, void *aux)
+an_pci_attach(device_t parent, device_t self, void *aux)
 {
         struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct an_pci_softc *psc = device_private(self);

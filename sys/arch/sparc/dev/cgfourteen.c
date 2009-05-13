@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.56 2009/02/05 16:04:00 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.56.2.1 2009/05/13 17:18:36 jym Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -271,7 +271,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 			self->dv_xname, sa->sa_nreg);
 		return;
 	}
-	bcopy(sa->sa_reg, sc->sc_physadr,
+	memcpy( sc->sc_physadr, sa->sa_reg,
 	      sa->sa_nreg * sizeof(struct sbus_reg));
 
 	sc->sc_vramsize = sc->sc_physadr[CG14_PXL_IDX].sbr_size;
@@ -367,11 +367,12 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 #if NWSDISPLAY > 0
 	prom_getprop(sa->sa_node, "address", 4, &items, &ptr);
 	if (fbva[1] == 0) {
-		if (sbus_bus_map( sc->sc_bustag,
+		if (sparc_bus_map_large( sc->sc_bustag,
 		    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
 		    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
 		    ramsize, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-			printf("%s: cannot map pixels\n", device_xname(sc->sc_dev));
+			printf("%s: cannot map pixels\n", 
+				device_xname(sc->sc_dev));
 			return;
 		}
 		sc->sc_fb.fb_pixels = bus_space_vaddr(sc->sc_bustag, bh);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.77 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.77.4.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.77 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.77.4.1 2009/05/13 17:19:53 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -121,8 +121,8 @@ struct eg_softc {
 #endif
 };
 
-int egprobe(struct device *, struct cfdata *, void *);
-void egattach(struct device *, struct device *, void *);
+int egprobe(device_t, cfdata_t, void *);
+void egattach(device_t, device_t, void *);
 
 CFATTACH_DECL(eg, sizeof(struct eg_softc),
     egprobe, egattach, NULL, NULL);
@@ -151,8 +151,7 @@ static int egreadPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
  */
 
 static inline void
-egprintpcb(pcb)
-	u_int8_t *pcb;
+egprintpcb(u_int8_t *pcb)
 {
 	int i;
 
@@ -175,10 +174,7 @@ egprintstat(u_char b)
 }
 
 static int
-egoutPCB(iot, ioh, b)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t b;
+egoutPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t b)
 {
 	int i;
 
@@ -194,10 +190,7 @@ egoutPCB(iot, ioh, b)
 }
 
 static int
-egreadPCBstat(iot, ioh, statb)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t statb;
+egreadPCBstat(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t statb)
 {
 	int i;
 
@@ -213,9 +206,7 @@ egreadPCBstat(iot, ioh, statb)
 }
 
 static int
-egreadPCBready(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+egreadPCBready(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i;
 
@@ -229,10 +220,7 @@ egreadPCBready(iot, ioh)
 }
 
 static int
-egwritePCB(iot, ioh, pcb)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t *pcb;
+egwritePCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
 {
 	int i;
 	u_int8_t len;
@@ -261,10 +249,7 @@ egwritePCB(iot, ioh, pcb)
 }
 
 static int
-egreadPCB(iot, ioh, pcb)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t *pcb;
+egreadPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
 {
 	int i;
 
@@ -313,8 +298,7 @@ egreadPCB(iot, ioh, pcb)
  */
 
 int
-egprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+egprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -399,7 +383,7 @@ egprobe(struct device *parent, struct cfdata *match,
 }
 
 void
-egattach(struct device *parent, struct device *self, void *aux)
+egattach(device_t parent, device_t self, void *aux)
 {
 	struct eg_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -508,8 +492,7 @@ egattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-eginit(sc)
-	struct eg_softc *sc;
+eginit(struct eg_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -567,8 +550,7 @@ eginit(sc)
 }
 
 void
-egrecv(sc)
-	struct eg_softc *sc;
+egrecv(struct eg_softc *sc)
 {
 
 	while (sc->eg_incount < EG_INLEN) {
@@ -589,8 +571,7 @@ egrecv(sc)
 }
 
 void
-egstart(ifp)
-	struct ifnet *ifp;
+egstart(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -662,8 +643,7 @@ loop:
 }
 
 int
-egintr(arg)
-	void *arg;
+egintr(void *arg)
 {
 	struct eg_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -751,10 +731,7 @@ egintr(arg)
  * Pass a packet up to the higher levels.
  */
 void
-egread(sc, buf, len)
-	struct eg_softc *sc;
-	void *buf;
-	int len;
+egread(struct eg_softc *sc, void *buf, int len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -791,10 +768,7 @@ egread(sc, buf, len)
  * convert buf into mbufs
  */
 struct mbuf *
-egget(sc, buf, totlen)
-	struct eg_softc *sc;
-	void *buf;
-	int totlen;
+egget(struct eg_softc *sc, void *buf, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m, *m0, *newm;
@@ -908,8 +882,7 @@ egioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 }
 
 void
-egreset(sc)
-	struct eg_softc *sc;
+egreset(struct eg_softc *sc)
 {
 	int s;
 
@@ -921,8 +894,7 @@ egreset(sc)
 }
 
 void
-egwatchdog(ifp)
-	struct ifnet *ifp;
+egwatchdog(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
 
@@ -933,8 +905,7 @@ egwatchdog(ifp)
 }
 
 void
-egstop(sc)
-	struct eg_softc *sc;
+egstop(struct eg_softc *sc)
 {
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EG_CONTROL, 0);

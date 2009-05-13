@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.14 2008/10/12 02:15:02 dholland Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.14.8.1 2009/05/13 17:19:15 jym Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.14 2008/10/12 02:15:02 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.14.8.1 2009/05/13 17:19:15 jym Exp $");
 
 #include "bpfilter.h"
 
@@ -93,9 +93,9 @@ struct ral_cardbus_softc {
 	cardbus_intr_line_t	sc_intrline;
 };
 
-int	ral_cardbus_match(struct device *, struct cfdata *, void *);
-void	ral_cardbus_attach(struct device *, struct device *, void *);
-int	ral_cardbus_detach(struct device *, int);
+int	ral_cardbus_match(device_t, cfdata_t, void *);
+void	ral_cardbus_attach(device_t, device_t, void *);
+int	ral_cardbus_detach(device_t, int);
 
 CFATTACH_DECL(ral_cardbus, sizeof (struct ral_cardbus_softc),
     ral_cardbus_match, ral_cardbus_attach, ral_cardbus_detach, NULL);
@@ -106,8 +106,8 @@ void	ral_cardbus_power(struct rt2560_softc *, int);
 void	ral_cardbus_setup(struct ral_cardbus_softc *);
 
 int
-ral_cardbus_match(struct device *parent,
-    struct cfdata *cfdata, void *aux)
+ral_cardbus_match(device_t parent,
+    cfdata_t cfdata, void *aux)
 {
         struct cardbus_attach_args *ca = aux;
 
@@ -127,7 +127,7 @@ ral_cardbus_match(struct device *parent,
 }
 
 void
-ral_cardbus_attach(struct device *parent, struct device *self,
+ral_cardbus_attach(device_t parent, device_t self,
     void *aux)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
@@ -180,7 +180,7 @@ ral_cardbus_attach(struct device *parent, struct device *self,
 }
 
 int
-ral_cardbus_detach(struct device *self, int flags)
+ral_cardbus_detach(device_t self, int flags)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
 	struct rt2560_softc *sc = &csc->sc_sc;

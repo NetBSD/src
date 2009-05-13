@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.36 2009/01/03 04:38:07 dholland Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.36.2.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.36 2009/01/03 04:38:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.36.2.1 2009/05/13 17:22:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,6 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.36 2009/01/03 04:38:07 dholland Ex
  *    The 10-Apr-92 version was optimized for speed, throwing away some
  * safety checks.  It should still always work, but it's not as
  * robust to programmer errors.
- *    Define SAFETY to include some error checking code.
  *
  * In general, we map all vnodes going down and unmap them on the way back.
  *
@@ -283,8 +282,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.36 2009/01/03 04:38:07 dholland Ex
  *   problems on rmdir'ing mount points and renaming?)
  */
 int
-layer_bypass(v)
-	void *v;
+layer_bypass(void *v)
 {
 	struct vop_generic_args /* {
 		struct vnodeop_desc *a_desc;
@@ -300,7 +298,7 @@ layer_bypass(v)
 	struct vnodeop_desc *descp = ap->a_desc;
 	int reles, i, flags;
 
-#ifdef SAFETY
+#ifdef DIAGNOSTIC
 	/*
 	 * We require at least one vp.
 	 */
@@ -420,8 +418,7 @@ layer_bypass(v)
  * if this layer is mounted read-only.
  */
 int
-layer_lookup(v)
-	void *v;
+layer_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnodeop_desc *a_desc;
@@ -479,8 +476,7 @@ layer_lookup(v)
  * Setattr call. Disallow write attempts if the layer is mounted read-only.
  */
 int
-layer_setattr(v)
-	void *v;
+layer_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnodeop_desc *a_desc;
@@ -524,8 +520,7 @@ layer_setattr(v)
  *  We handle getattr only to change the fsid.
  */
 int
-layer_getattr(v)
-	void *v;
+layer_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -544,8 +539,7 @@ layer_getattr(v)
 }
 
 int
-layer_access(v)
-	void *v;
+layer_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -580,8 +574,7 @@ layer_access(v)
  * We must handle open to be able to catch MNT_NODEV and friends.
  */
 int
-layer_open(v)
-	void *v;
+layer_open(void *v)
 {
 	struct vop_open_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -600,8 +593,7 @@ layer_open(v)
  * vnodes below us on the stack.
  */
 int
-layer_lock(v)
-	void *v;
+layer_lock(void *v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
@@ -651,8 +643,7 @@ layer_lock(v)
 /*
  */
 int
-layer_unlock(v)
-	void *v;
+layer_unlock(void *v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
@@ -676,8 +667,7 @@ layer_unlock(v)
 }
 
 int
-layer_islocked(v)
-	void *v;
+layer_islocked(void *v)
 {
 	struct vop_islocked_args /* {
 		struct vnode *a_vp;
@@ -705,8 +695,7 @@ layer_islocked(v)
  */
 
 int
-layer_fsync(v)
-	void *v;
+layer_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -726,8 +715,7 @@ layer_fsync(v)
 
 
 int
-layer_inactive(v)
-	void *v;
+layer_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -760,8 +748,7 @@ layer_inactive(v)
 }
 
 int
-layer_remove(v)
-	void *v;
+layer_remove(void *v)
 {
 	struct vop_remove_args /* {
 		struct vonde		*a_dvp;
@@ -782,8 +769,7 @@ layer_remove(v)
 }
 
 int
-layer_rename(v)
-	void *v;
+layer_rename(void *v)
 {
 	struct vop_rename_args  /* {
 		struct vnode		*a_fdvp;
@@ -816,8 +802,7 @@ layer_rename(v)
 }
 
 int
-layer_rmdir(v)
-	void *v;
+layer_rmdir(void *v)
 {
 	struct vop_rmdir_args /* {
 		struct vnode		*a_dvp;
@@ -837,8 +822,7 @@ layer_rmdir(v)
 }
 
 int
-layer_reclaim(v)
-	void *v;
+layer_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -881,8 +865,7 @@ layer_reclaim(v)
  * i/o. :-)
  */
 int
-layer_bmap(v)
-	void *v;
+layer_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -899,8 +882,7 @@ layer_bmap(v)
 }
 
 int
-layer_print(v)
-	void *v;
+layer_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
@@ -916,8 +898,7 @@ layer_print(v)
  * This goes away with a merged VM/buffer cache.
  */
 int
-layer_bwrite(v)
-	void *v;
+layer_bwrite(void *v)
 {
 	struct vop_bwrite_args /* {
 		struct buf *a_bp;
@@ -937,8 +918,7 @@ layer_bwrite(v)
 }
 
 int
-layer_getpages(v)
-	void *v;
+layer_getpages(void *v)
 {
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
@@ -968,8 +948,7 @@ layer_getpages(v)
 }
 
 int
-layer_putpages(v)
-	void *v;
+layer_putpages(void *v)
 {
 	struct vop_putpages_args /* {
 		struct vnode *a_vp;

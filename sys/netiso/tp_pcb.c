@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.37 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.37.2.1 2009/05/13 17:22:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.37 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.37.2.1 2009/05/13 17:22:42 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -333,7 +333,7 @@ tp_init(void)
 	tp_start_win = 2;
 
 	tp_timerinit();
-	bzero((void *) & tp_stat, sizeof(struct tp_stat));
+	memset((void *) & tp_stat, 0, sizeof(struct tp_stat));
 }
 
 /*
@@ -367,9 +367,9 @@ tp_soisdisconnecting(struct socket *so)
 		u_int           fsufx, lsufx;
 		struct timeval	now;
 
-		bcopy((void *) tpcb->tp_fsuffix, (void *) &fsufx,
+		memcpy((void *) &fsufx, (void *) tpcb->tp_fsuffix,
 		      sizeof(u_int));
-		bcopy((void *) tpcb->tp_lsuffix, (void *) &lsufx,
+		memcpy((void *) &lsufx, (void *) tpcb->tp_lsuffix,
 		      sizeof(u_int));
 
 		getmicrotime(&now);
@@ -418,9 +418,9 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 		struct timeval	now;
 
 		/* CHOKE */
-		bcopy((void *) ttpcb->tp_fsuffix, (void *) &fsufx,
+		memcpy((void *) &fsufx, (void *) ttpcb->tp_fsuffix,
 		      sizeof(u_int));
-		bcopy((void *) ttpcb->tp_lsuffix, (void *) &lsufx,
+		memcpy((void *) &lsufx, (void *) ttpcb->tp_lsuffix,
 		      sizeof(u_int));
 
 		getmicrotime(&now);
@@ -538,7 +538,7 @@ tp_getref(struct tp_pcb *tpcb)
 	memcpy(r, obase, size);
 	free(obase, M_PCB);
 	r = (struct tp_ref *)(size + (char *)r);
-	bzero((void *) r, size);
+	memset((void *) r, 0, size);
 
 got_one:
 	r->tpr_pcb = tpcb;
@@ -897,7 +897,7 @@ tp_tselinuse(int tlen, const char *tsel, struct sockaddr_iso *siso,
 			l = t->tp_nextlisten;
 		} else
 			break;
-		if (tlen == t->tp_lsuffixlen && bcmp(tsel, t->tp_lsuffix, tlen) == 0) {
+		if (tlen == t->tp_lsuffixlen && memcmp(tsel, t->tp_lsuffix, tlen) == 0) {
 			if (t->tp_flags & TPF_GENERAL_ADDR) {
 				if (siso == 0 || reuseaddr == 0)
 					return 1;
@@ -980,7 +980,7 @@ tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 #endif
 				}
 		}
-		bcopy(tsel, tpcb->tp_lsuffix, (tpcb->tp_lsuffixlen = tlen));
+		memcpy(tpcb->tp_lsuffix, tsel, (tpcb->tp_lsuffixlen = tlen));
 		iso_insque(tpcb, &tp_bound_pcbs);
 	} else {
 		if (tlen || siso == 0)

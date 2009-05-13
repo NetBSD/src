@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.41 2008/11/12 12:36:04 ad Exp $
+#	$NetBSD: MMTAICE,v 1.41.4.1 2009/05/13 17:18:07 jym Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -62,8 +62,6 @@ options 	HZ=10		# clock interrupt generates every 1/10 sec
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
-
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

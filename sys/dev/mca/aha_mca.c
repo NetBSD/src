@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.18 2008/04/08 20:41:00 cegger Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.18.18.1 2009/05/13 17:20:05 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.18 2008/04/08 20:41:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.18.18.1 2009/05/13 17:20:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,14 +77,14 @@ __KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.18 2008/04/08 20:41:00 cegger Exp $");
 
 #define	AHA_ISA_IOSIZE	4
 
-int	aha_mca_probe(struct device *, struct cfdata *, void *);
-void	aha_mca_attach(struct device *, struct device *, void *);
+int	aha_mca_probe(device_t, cfdata_t, void *);
+void	aha_mca_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(aha_mca, sizeof(struct aha_softc),
     aha_mca_probe, aha_mca_attach, NULL, NULL);
 
 int
-aha_mca_probe(struct device *parent, struct cfdata *match,
+aha_mca_probe(device_t parent, cfdata_t match,
     void *aux)
 {
 	register struct mca_attach_args *ma = aux;
@@ -97,7 +97,7 @@ aha_mca_probe(struct device *parent, struct cfdata *match,
 
 
 void
-aha_mca_attach(struct device *parent, struct device *self, void *aux)
+aha_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct mca_attach_args *ma = aux;
 	struct aha_softc *sc = device_private(self);

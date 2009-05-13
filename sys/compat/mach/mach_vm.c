@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.60 2008/04/28 20:23:45 martin Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.60.14.1 2009/05/13 17:18:59 jym Exp $ */
 
 /*-
  * Copyright (c) 2002-2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.60 2008/04/28 20:23:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.60.14.1 2009/05/13 17:18:59 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -269,7 +269,7 @@ mach_vm_wire(struct mach_trap_args *args)
 	    (void *)req->req_address, req->req_size, req->req_access);
 #endif
 
-	bzero(&rep, sizeof(*rep));
+	memset(&rep, 0, sizeof(*rep));
 
 	if ((req->req_access & ~VM_PROT_ALL) != 0)
 		return mach_msg_error(args, EINVAL);
@@ -373,7 +373,7 @@ mach_sys_map_fd(struct lwp *l, const struct mach_sys_map_fd_args *uap, register_
 	printf("vm_map_fd: addr = %p len = 0x%08lx\n",
 	    va, (long)SCARG(uap, size));
 #endif
-	bzero(&evc, sizeof(evc));
+	memset(&evc, 0, sizeof(evc));
 	evc.ev_addr = (u_long)va;
 	evc.ev_len = SCARG(uap, size);
 	evc.ev_prot = VM_PROT_ALL;
@@ -404,7 +404,7 @@ mach_sys_map_fd(struct lwp *l, const struct mach_sys_map_fd_args *uap, register_
 
 		va = (void *)evc.ev_addr;
 
-		bzero(&evc, sizeof(evc));
+		memset(&evc, 0, sizeof(evc));
 		evc.ev_addr = (u_long)va;
 		evc.ev_len = SCARG(uap, size);
 		evc.ev_prot = VM_PROT_ALL;

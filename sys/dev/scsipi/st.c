@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.210 2009/01/13 13:35:54 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.210.2.1 2009/05/13 17:21:23 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.210 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.210.2.1 2009/05/13 17:21:23 jym Exp $");
 
 #include "opt_scsi.h"
 
@@ -350,7 +350,7 @@ static const struct scsipi_periphsw st_switch = {
  * A device suitable for this driver
  */
 void
-stattach(struct device *parent, struct st_softc *st, void *aux)
+stattach(device_t parent, struct st_softc *st, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
@@ -411,7 +411,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 }
 
 int
-stactivate(struct device *self, enum devact act)
+stactivate(device_t self, enum devact act)
 {
 	int rv = 0;
 
@@ -430,7 +430,7 @@ stactivate(struct device *self, enum devact act)
 }
 
 int
-stdetach(struct device *self, int flags)
+stdetach(device_t self, int flags)
 {
 	struct st_softc *st = device_private(self);
 	int s, bmaj, cmaj, mn;

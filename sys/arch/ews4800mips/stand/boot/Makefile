@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/07/16 14:45:17 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8.8.1 2009/05/13 17:17:42 jym Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -12,6 +12,12 @@ LIBSADIR	= ${S}/lib/libsa
 SYSVBFSDIR	= ${S}/fs/sysvbfs
 EWS4800MIPSDIR	= ${.CURDIR}/../../ews4800mips
 DEVDIR		= ${.CURDIR}/../../dev
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PATH:		${COMMON} ${LIBSADIR} ${SYSVBFSDIR}	\
 		${EWS4800MIPSDIR} ${SBDDIR} ${DEVDIR}
@@ -68,7 +74,6 @@ CFLAGS		= ${FLAGS} -ffreestanding
 CPPFLAGS	+= -D_STANDALONE -DSUPPORT_BOOTP
 CPPFLAGS	+= -nostdinc -I${.OBJDIR} -I${.CURDIR} -I${COMMON} -I${S}
 CPPFLAGS	+= -D__daddr_t=int32_t
-CPPFLAGS	+= -DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 #CPPFLAGS	+= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG
 #CPPFLAGS	+= -DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 
@@ -77,7 +82,6 @@ CLEANFILES	+= ${PROG} ${PROG}.elf ${PROG}.coff ${PROG}.tmp ${PROG}.dis
 CLEANFILES	+= ${COFFHDRFIX}
 CLEANFILES	+= ${BOOT_KERNEL} ${BOOT_KERNEL}.elf ${BOOT_KERNEL}.tmp
 CLEANFILES	+= ${BOOT_KERNEL}.gz ${BOOT_KERNEL}.gz.tmp
-CLEANFILES	+= machine mips
 
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
@@ -94,13 +98,6 @@ LIBS		= ${LIBSA} ${LIBZ} ${LIBKERN}
 # fixup GNU binutils file offset error.
 coffhdrfix:	${COMMON}/coffhdrfix.c
 	${HOST_CC} -o ${COFFHDRFIX} ${COMMON}/coffhdrfix.c
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s $S/arch/${MACHINE}/include machine
-	@[ -h mips ] || ln -s $S/arch/mips/include mips
-.NOPATH: machine mips
-.endif
 
 clean cleandir distclean: cleanlibdir
 
@@ -127,6 +124,7 @@ ${PROG}: ${BINKERNEL_DUMMY_O} ${OBJS} ${LIBS}
 	mv ${PROG}.elf ${PROG}
 	ls -al ${PROG}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 ${PROG}.coff:	${PROG}

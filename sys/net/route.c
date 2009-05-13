@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.114 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.114.4.1 2009/05/13 17:22:20 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.114 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.114.4.1 2009/05/13 17:22:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -192,9 +192,50 @@ rt_set_ifa1(struct rtentry *rt, struct ifaddr *ifa)
 		rt->rt_ifa_seqno = *ifa->ifa_seqno;
 }
 
+/*
+ * Is this route the connected route for the ifa?
+ */
+static int
+rt_ifa_connected(const struct rtentry *rt, const struct ifaddr *ifa)
+{
+	const struct sockaddr *key, *dst, *odst;
+	struct sockaddr_storage maskeddst;
+
+	key = rt_getkey(rt);
+	dst = rt->rt_flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
+	if (dst == NULL ||
+	    dst->sa_family != key->sa_family ||
+	    dst->sa_len != key->sa_len)
+		return 0;
+	if ((rt->rt_flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
+		odst = dst;
+		dst = (struct sockaddr *)&maskeddst;
+		rt_maskedcopy(odst, (struct sockaddr *)&maskeddst,
+		    ifa->ifa_netmask);
+	}
+	return (memcmp(dst, key, dst->sa_len) == 0);
+}
+
 void
 rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 {
+	if (rt->rt_ifa &&
+	    rt->rt_ifa != ifa &&
+	    rt->rt_ifa->ifa_flags & IFA_ROUTE &&
+	    rt_ifa_connected(rt, rt->rt_ifa))
+	{
+		RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
+		    "replace deleted IFA_ROUTE\n",
+		    (void *)rt->_rt_key, (void *)rt->rt_ifa);
+		rt->rt_ifa->ifa_flags &= ~IFA_ROUTE;
+		if (rt_ifa_connected(rt, ifa)) {
+			RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
+			    "replace added IFA_ROUTE\n",
+			    (void *)rt->_rt_key, (void *)ifa);
+			ifa->ifa_flags |= IFA_ROUTE;
+		}
+	}
+
 	IFAREF(ifa);
 	IFAFREE(rt->rt_ifa);
 	rt_set_ifa1(rt, ifa);
@@ -358,12 +399,6 @@ ifafree(struct ifaddr *ifa)
 	free(ifa, M_IFADDR);
 }
 
-static inline int
-equal(const struct sockaddr *sa1, const struct sockaddr *sa2)
-{
-	return sockaddr_cmp(sa1, sa2) == 0;
-}
-
 /*
  * Force a routing table entry to the specified
  * destination to go through the given gateway.
@@ -396,7 +431,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 	 * going down recently.
 	 */
 	if (!(flags & RTF_DONE) && rt &&
-	     (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
+	     (sockaddr_cmp(src, rt->rt_gateway) != 0 || rt->rt_ifa != ifa))
 		error = EINVAL;
 	else if (ifa_ifwithaddr(gateway))
 		error = EHOSTUNREACH;
@@ -573,8 +608,6 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 	return ifa;
 }
 
-#define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-
 int
 rtrequest(int req, const struct sockaddr *dst, const struct sockaddr *gateway,
 	const struct sockaddr *netmask, int flags, struct rtentry **ret_nrt)
@@ -678,8 +711,17 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt->rt_parent = NULL;
 		}
 		rt->rt_flags &= ~RTF_UP;
-		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(RTM_DELETE, rt, info);
+		if ((ifa = rt->rt_ifa)) {
+			if (ifa->ifa_flags & IFA_ROUTE &&
+			    rt_ifa_connected(rt, ifa)) {
+				RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
+				    "deleted IFA_ROUTE\n",
+				    (void *)rt->_rt_key, (void *)ifa);
+				ifa->ifa_flags &= ~IFA_ROUTE;
+			}
+			if (ifa->ifa_rtrequest)
+				ifa->ifa_rtrequest(RTM_DELETE, rt, info);
+		}
 		rttrash++;
 		if (ret_nrt)
 			*ret_nrt = rt;

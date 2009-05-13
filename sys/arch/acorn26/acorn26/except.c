@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.21 2008/06/23 17:58:17 matt Exp $ */
+/* $NetBSD: except.c,v 1.21.10.1 2009/05/13 17:16:01 jym Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.21 2008/06/23 17:58:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.21.10.1 2009/05/13 17:16:01 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,7 +78,7 @@ int want_resched;
 
 #ifdef DIAGNOSTIC
 void
-checkvectors()
+checkvectors(void)
 {
 	u_int32_t *ptr;
 

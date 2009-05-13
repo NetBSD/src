@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.60 2007/10/17 19:57:04 garbled Exp $	*/
+/*	$NetBSD: hpc.c,v 1.60.34.1 2009/05/13 17:18:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.60 2007/10/17 19:57:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.60.34.1 2009/05/13 17:18:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,12 +144,6 @@ static const struct hpc_device hpc1_devices[] = {
 	  23,
 	  HPCDEV_IP24 },
 
-	{ "dpclock",	/* Personal Iris/Indigo clock */
-	  HPC_BASE_ADDRESS_0,
-	  HPC1_PBUS_BBRAM, 0,
-	  -1,
-	  HPCDEV_IP12 | HPCDEV_IP20 },
-
 	{ NULL,
 	  0,
 	  0, 0,
@@ -195,12 +189,6 @@ static const struct hpc_device hpc3_devices[] = {
 	  HPC3_SCSI1_DEVREGS, HPC3_SCSI1_REGS,
 	  2,	/* XXX 2 = IRQ_LOCAL0 + 2 */
 	  HPCDEV_IP22 },
-
-	{ "dsclock",	/* Indigo2/Indy/Challenge S/Challenge M clock */
-	  HPC_BASE_ADDRESS_0,
-	  HPC3_PBUS_BBRAM, 0,
-	  -1,
-	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "haltwo",	/* Indigo2/Indy onboard audio */
 	  HPC_BASE_ADDRESS_0,
@@ -384,12 +372,15 @@ hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct gio_attach_args* ga = aux;
 
-	/* Make sure it's actually there and readable */
-	if (platform.badaddr((void*)MIPS_PHYS_TO_KSEG1(ga->ga_addr),
-	    sizeof(u_int32_t)))
-		return 0;
+	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20 ||
+	    mach_type == MACH_SGI_IP22) {
+		/* Make sure it's actually there and readable */
+		if (!platform.badaddr((void*)MIPS_PHYS_TO_KSEG1(ga->ga_addr),
+		    sizeof(u_int32_t)))
+			return 1;
+	}
 
-	return 1;
+	return 0;
 }
 
 static void

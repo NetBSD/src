@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.114 2008/06/28 09:14:56 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.114.10.1 2009/05/13 17:21:35 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.114 2008/06/28 09:14:56 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.114.10.1 2009/05/13 17:21:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.114 2008/06/28 09:14:56 kent Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/reboot.h>		/* for bootverbose */
 #include <sys/select.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: tskp.c,v 1.6 2008/04/28 20:23:17 martin Exp $ */
+/* $NetBSD: tskp.c,v 1.6.14.1 2009/05/13 17:16:39 jym Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.6 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.6.14.1 2009/05/13 17:16:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,7 @@ CFATTACH_DECL(tskp, sizeof(struct tskp_softc),
     tskp_match, tskp_attach, NULL, NULL);
 
 static int
-tskp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tskp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
@@ -127,10 +124,7 @@ tskp_match(parent, match, aux)
 	(EP93XX_GPIO_ ## x), GPIO_GET(x) & (~(y)))
 
 static void
-tskp_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tskp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tskp_softc *sc = (void *)self;
 	struct tspld_attach_args *taa = aux;
@@ -161,9 +155,7 @@ tskp_attach(parent, self, aux)
 }
 
 static void
-tskp_scankeys(mxkp_sc, keys)
-	struct matrixkp_softc *mxkp_sc;
-	u_int32_t *keys;
+tskp_scankeys(struct matrixkp_softc *mxkp_sc, u_int32_t *keys)
 {
 	struct tskp_softc *sc = (void *)mxkp_sc->sc_dev;
 	u_int32_t pos;

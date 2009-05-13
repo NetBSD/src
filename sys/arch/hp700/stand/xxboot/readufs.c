@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.c,v 1.5 2008/04/09 19:18:25 skrll Exp $	*/
+/*	$NetBSD: readufs.c,v 1.5.18.1 2009/05/13 17:17:44 jym Exp $	*/
 /*	from Id: readufs.c,v 1.9 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -28,10 +28,7 @@ int main((int argc, char *argv[]);
 int fd;
 
 void
-RAW_READ(buf, blkpos, bytelen)
-	void *buf;
-	daddr_t blkpos;
-	size_t bytelen;
+RAW_READ(void *buf, daddr_t blkpos, size_t bytelen)
 {
 
 	if (pread(fd, buf, bytelen, (off_t)dbtob(blkpos)) != (ssize_t) bytelen)
@@ -48,10 +45,8 @@ struct ufs_info fs;
 static size_t rq_len;
 
 static void
-raw_read_queue(buf, blkpos, bytelen)
-	void *buf;
-	daddr_t blkpos;
-	size_t bytelen;		/* must be DEV_BSIZE aligned */
+raw_read_queue(void *buf, daddr_t blkpos, size_t bytelen)
+	/* bytelen:		 must be DEV_BSIZE aligned */
 {
 	static daddr_t rq_start;
 	static char *rq_buf;
@@ -84,11 +79,8 @@ raw_read_queue(buf, blkpos, bytelen)
  * No support for holes or (short) symbolic links.
  */
 size_t
-ufs_read(di, buf, off, count)
-	union ufs_dinode *di;
-	void *buf;
-	unsigned off;	/* position in block */
-	size_t count;
+ufs_read(union ufs_dinode *di, void *buf, unsigned off, size_t count)
+	/* off:	 position in block */
 {
 	struct ufs_info *ufsinfo = &fs;
 	size_t bsize = ufsinfo->bsize;
@@ -154,12 +146,8 @@ ufs_read(di, buf, off, count)
 }
 
 static int
-ufs_read_indirect(blk, level, buf, poff, count)
-	daddr_t blk;
-	int level;
-	void **buf;
-	unsigned *poff;	/* position in block */
-	size_t count;
+ufs_read_indirect(daddr_t blk, int level, void **buf, unsigned *poff, size_t count)
+	/* poff:	 position in block */
 {
 	struct ufs_info *ufsinfo = &fs;
 	size_t bsize = ufsinfo->bsize;
@@ -233,9 +221,7 @@ ufs_read_indirect(blk, level, buf, poff, count)
  * look-up fn in directory dirino
  */
 ino32_t
-ufs_lookup(dirino, fn)
-	ino32_t dirino;
-	const char *fn;
+ufs_lookup(ino32_t dirino, const char *fn)
 {
 	union ufs_dinode dirdi;
 	struct direct *pdir;
@@ -264,8 +250,7 @@ ufs_lookup(dirino, fn)
  * look-up a file in absolute pathname from the root directory
  */
 ino32_t
-ufs_lookup_path(path)
-	const char *path;
+ufs_lookup_path(const char *path)
 {
 	char fn[FFS_MAXNAMLEN + 1];
 	char *p;
@@ -285,10 +270,7 @@ ufs_lookup_path(path)
 
 #if 0
 size_t
-ufs_load_file(buf, dirino, fn)
-	void *buf;
-	ino32_t dirino;
-	const char *fn;
+ufs_load_file(void *buf, ino32_t dirino, const char *fn)
 {
 	size_t cnt, disize;
 	union ufs_dinode dinode;
@@ -303,7 +285,7 @@ ufs_load_file(buf, dirino, fn)
 #endif
 
 int
-ufs_init()
+ufs_init(void)
 {
 	return 1
 #ifdef USE_FFS
@@ -317,8 +299,7 @@ ufs_init()
 
 #ifdef DEBUG_WITH_STDIO
 void
-ufs_list_dir(dirino)
-	ino32_t dirino;
+ufs_list_dir(ino32_t dirino)
 {
 	union ufs_dinode dirdi;
 	struct direct *pdir;

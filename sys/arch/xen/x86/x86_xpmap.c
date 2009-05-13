@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12.4.1 2009/02/09 00:03:55 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.12.4.2 2009/05/13 17:18:50 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.1 2009/02/09 00:03:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.2 2009/05/13 17:18:50 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -144,7 +144,6 @@ static krwlock_t xen_ptom_lock;
 
 void
 xen_init_ptom_lock(void) {
-	xen_suspending = 0;
 	rw_init(&xen_ptom_lock);
 }
 

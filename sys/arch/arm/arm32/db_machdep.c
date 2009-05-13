@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.11 2007/02/22 04:38:03 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11.62.1 2009/05/13 17:16:12 jym Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.11 2007/02/22 04:38:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.11.62.1 2009/05/13 17:16:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,11 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.11 2007/02/22 04:38:03 matt Exp $")
 
 
 void
-db_show_panic_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	bool            have_addr;
-	db_expr_t       count;
-	const char     *modif;
+db_show_panic_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	int s;
 	
@@ -61,11 +57,7 @@ db_show_panic_cmd(addr, have_addr, count, modif)
 
 
 void
-db_show_frame_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	bool            have_addr;
-	db_expr_t       count;
-	const char     *modif;
+db_show_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct trapframe *frame;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: avalon_a12.c,v 1.13 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.13.86.1 2009/05/13 17:16:04 jym Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.13 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.13.86.1 2009/05/13 17:16:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.13 2006/02/25 17:32:43 thorpej Exp 
 #define	AVALON_A12()	/* Generate ctags(1) key */
 #endif
 
-void avalon_a12_init __P((void));
-static void avalon_a12_cons_init __P((void));
-static void avalon_a12_device_register __P((struct device *, void *));
-static int  a12env __P((int));
+void avalon_a12_init(void);
+static void avalon_a12_cons_init(void);
+static void avalon_a12_device_register(struct device *, void *);
+static int  a12env(int);
 
 void
 avalon_a12_init()
@@ -123,8 +123,7 @@ avalon_a12_init()
  * call.
  */
 static int
-a12env(code)
-	int    code;
+a12env(int code)
 {
 	int	q;
 	char	string[16];
@@ -146,9 +145,7 @@ avalon_a12_cons_init()
 }
 
 void
-avalon_a12_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+avalon_a12_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

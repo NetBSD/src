@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.26 2007/02/21 22:59:45 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.26.60.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -127,7 +127,9 @@ int kdb_trap(int, int, db_regs_t *);
 /*
  * We define some of our own commands
  */
+#ifdef _KERNEL
 #define DB_MACHINE_COMMANDS
+#endif
 
 /*
  * We use either a.out or Elf32 symbols in DDB.

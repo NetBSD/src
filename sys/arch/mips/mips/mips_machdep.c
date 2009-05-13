@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.208 2009/01/22 11:01:32 dogcow Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.208.2.1 2009/05/13 17:18:03 jym Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.208 2009/01/22 11:01:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.208.2.1 2009/05/13 17:18:03 jym Exp $");
 
 #include "opt_cputype.h"
 
@@ -973,8 +973,7 @@ mips_vector_init(void)
 }
 
 void
-mips_set_wbflush(flush_fn)
-	void (*flush_fn)(void);
+mips_set_wbflush(void (*flush_fn)(void))
 {
 #undef wbflush
 	mips_locore_jumpvec.wbflush = flush_fn;
@@ -1120,10 +1119,7 @@ cpu_identify(void)
  * code by the MIPS elf abi).
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
@@ -1506,8 +1502,7 @@ mips_init_msgbuf(void)
 }
 
 void
-savefpregs(l)
-	struct lwp *l;
+savefpregs(struct lwp *l)
 {
 #ifndef NOFPU
 	u_int32_t status, fpcsr, *fp;
@@ -1585,8 +1580,7 @@ savefpregs(l)
 }
 
 void
-loadfpregs(l)
-	struct lwp *l;
+loadfpregs(struct lwp *l)
 {
 #ifndef NOFPU
 	u_int32_t status, *fp;
@@ -1666,8 +1660,7 @@ loadfpregs(l)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
@@ -1732,10 +1725,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct frame *f = (struct frame *)l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -1778,10 +1768,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;

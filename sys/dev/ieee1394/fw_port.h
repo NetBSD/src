@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.30 2008/06/24 10:12:42 gmcgarry Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.30.10.1 2009/05/13 17:19:51 jym Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -401,7 +401,7 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 #define SBP_ATTACH_START          		\
         struct cam_devq *devq;			\
 						\
-        bzero(sbp, sizeof(struct sbp_softc));	\
+        memset(sbp, 0, sizeof(struct sbp_softc));	\
 	sbp->fd.dev = dev
 #define SBP_SCSIBUS_ATTACH						    \
 	do {								    \
@@ -1312,19 +1312,6 @@ typedef struct scsipi_inquiry_data sbp_scsi_inquiry_data;
 #ifndef rounddown
 #define rounddown(x, y) ((x) / (y) * (y))
 #endif
-
-
-/*
- * additional queue macros for NetBSD
- */
-#define STAILQ_LAST(head, type, field) \
-	(STAILQ_EMPTY((head)) ? (struct type *)NULL : \
-	(struct type *) \
-	((char *)(head)->stqh_last - (size_t)&((struct type *)0)->field))
-#define STAILQ_FOREACH_SAFE(var, head, field, _var)	\
-				(void)(_var);		\
-				STAILQ_FOREACH(var, head, field)
-
 
 /*
  * additional mbuf macros for NetBSD

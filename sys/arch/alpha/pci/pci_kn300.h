@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.h,v 1.2 2000/06/05 21:47:27 thorpej Exp $ */
+/* $NetBSD: pci_kn300.h,v 1.2.146.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -30,4 +30,4 @@
  * SUCH DAMAGE.
  */
 
-void	pci_kn300_pickintr __P((struct mcpcia_config *, int));
+void	pci_kn300_pickintr(struct mcpcia_config *, int);

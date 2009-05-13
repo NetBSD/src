@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: satlink.c,v 1.39.12.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.39.12.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,8 @@ struct satlink_softc {
  */
 #define	SATLINK_TIMEOUT		(hz/10)
 
-int	satlinkprobe(struct device *, struct cfdata *, void *);
-void	satlinkattach(struct device *, struct device *, void *);
+int	satlinkprobe(device_t, cfdata_t, void *);
+void	satlinkattach(device_t, device_t, void *);
 void	satlinktimeout(void *);
 
 CFATTACH_DECL(satlink, sizeof(struct satlink_softc),
@@ -115,8 +115,7 @@ const struct cdevsw satlink_cdevsw = {
 };
 
 int
-satlinkprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+satlinkprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -159,7 +158,7 @@ satlinkprobe(struct device *parent, struct cfdata *match,
 }
 
 void
-satlinkattach(struct device *parent, struct device *self, void *aux)
+satlinkattach(device_t parent, device_t self, void *aux)
 {
 	struct satlink_softc *sc = (struct satlink_softc *)self;
 	struct isa_attach_args *ia = aux;
@@ -298,10 +297,7 @@ satlinkclose(dev_t dev, int flags, int fmt,
 }
 
 int
-satlinkread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+satlinkread(dev_t dev, struct uio *uio, int flags)
 {
 	struct satlink_softc *sc;
 	int error, s, count, sptr;
@@ -400,10 +396,7 @@ satlinkioctl(dev_t dev, u_long cmd, void *data, int flags,
 }
 
 int
-satlinkpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+satlinkpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct satlink_softc *sc;
 	int s, revents;
@@ -494,8 +487,7 @@ satlinkkqfilter(dev_t dev, struct knote *kn)
 }
 
 void
-satlinktimeout(arg)
-	void *arg;
+satlinktimeout(void *arg)
 {
 	struct satlink_softc *sc = arg;
 	bus_size_t resid;

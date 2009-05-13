@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.52 2008/11/07 00:20:02 dyoung Exp $ */
+/*	$NetBSD: if_ie.c,v 1.52.4.1 2009/05/13 17:18:39 jym Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.52 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.52.4.1 2009/05/13 17:18:39 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -656,7 +656,7 @@ ietint(struct ie_softc *sc)
  * version of this...   XXX: Who wanted that? mycroft?
  * I wrote one, but the following is just as efficient.
  * This expands to 10 short m68k instructions! -gwr
- * Note: use this like bcmp()
+ * Note: use this like memcmp()
  */
 static inline uint16_t
 ether_cmp(uint8_t *one, uint8_t *two)

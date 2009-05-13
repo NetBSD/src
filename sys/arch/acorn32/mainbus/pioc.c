@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.12 2005/12/11 12:16:05 christos Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.12.94.1 2009/05/13 17:16:03 jym Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.12 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.12.94.1 2009/05/13 17:16:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,16 +91,16 @@ bus_space_tag_t comconstag = &mainbus_bs_tag;
 
 /* Prototypes for functions */
 
-static int  piocmatch	 __P((struct device *, struct cfdata *, void *));
-static void piocattach	 __P((struct device *, struct device *, void *));
-static int  piocprint	 __P((void *aux, const char *name));
+static int  piocmatch(struct device *, struct cfdata *, void *);
+static void piocattach(struct device *, struct device *, void *);
+static int  piocprint(void *aux, const char *name);
 #if 0
-static int  piocsearch	 __P((struct device *, struct cfdata *, void *));
+static int  piocsearch(struct device *, struct cfdata *, void *);
 #endif
-static int  piocsubmatch __P((struct device *, struct cfdata *,
-			      const int *, void *));
-static void piocgetid	 __P((bus_space_tag_t iot, bus_space_handle_t ioh,
-			      int config_entry, int *id, int *revision));
+static int  piocsubmatch(struct device *, struct cfdata *,
+			      const int *, void *);
+static void piocgetid(bus_space_tag_t iot, bus_space_handle_t ioh,
+			      int config_entry, int *id, int *revision);
 
 /* device attach and driver structure */
 
@@ -115,12 +115,7 @@ CFATTACH_DECL(pioc, sizeof(struct pioc_softc),
  */
 
 static void
-piocgetid(iot, ioh, config_entry, id, revision)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int config_entry;
-	int *id;
-	int *revision;
+piocgetid(bus_space_tag_t iot, bus_space_handle_t ioh, int config_entry, int *id, int *revision)
 {
 	/*
 	 * Put the chip info configuration mode and read the ID and revision
@@ -146,10 +141,7 @@ piocgetid(iot, ioh, config_entry, id, revision)
  */ 
  
 static int
-piocmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+piocmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *mb = aux;
 	bus_space_tag_t iot;
@@ -189,9 +181,7 @@ out:
  */
 
 static int
-piocprint(aux, name)
-	void *aux;
-	const char *name;
+piocprint(void *aux, const char *name)
 {
 	struct pioc_attach_args *pa = aux;
 
@@ -222,11 +212,7 @@ piocprint(aux, name)
  */
 
 static int
-piocsearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+piocsearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct pioc_softc *sc = (struct pioc_softc *)parent;
 	struct pioc_attach_args pa;
@@ -268,11 +254,7 @@ piocsearch(parent, cf, ldesc, aux)
  */
 
 static int
-piocsubmatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+piocsubmatch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct pioc_attach_args *pa = aux;
 	int tryagain;
@@ -302,10 +284,7 @@ piocsubmatch(parent, cf, ldesc, aux)
  */
   
 static void
-piocattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+piocattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *mb = aux;
 	struct pioc_softc *sc = (struct pioc_softc *)self;
@@ -326,7 +305,7 @@ piocattach(parent, self, aux)
 	if (id != PIOC_CM_ID_665)
 		piocgetid(iot, ioh, PIOC_CM_ENTER_666, &id, &rev);
 	
-	printf("\n%s: ", self->dv_xname);
+	printf("\n%s: ", device_xname(self));
 
 	/* Do we recognise it ? */
 	switch (id) {
@@ -365,7 +344,7 @@ piocattach(parent, self, aux)
 	bus_space_write_1(iot, ioh, PIOC_CM_SELECT_REG, PIOC_CM_EXIT);
 
 #ifdef PIOC_DEBUG
-	printf("%s: ", self->dv_xname);
+	printf("%s: ", device_xname(self));
 
 	for (loop = 0; loop < PIOC_CM_REGS; ++loop)
 		printf("%02x ", sc->sc_config[loop]);

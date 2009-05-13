@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.206 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.206.2.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.206 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.206.2.1 2009/05/13 17:22:51 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -133,8 +133,8 @@ extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
 static struct sysctllog *nfs_clog;
 
-static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
-    struct mount **, struct vnode **, struct lwp *));
+static int nfs_mount_diskless(struct nfs_dlmount *, const char *,
+    struct mount **, struct vnode **, struct lwp *);
 static void nfs_sysctl_init(void);
 static void nfs_sysctl_fini(void);
 
@@ -165,9 +165,7 @@ nfs_modcmd(modcmd_t cmd, void *arg)
  * nfs statvfs call
  */
 int
-nfs_statvfs(mp, sbp)
-	struct mount *mp;
-	struct statvfs *sbp;
+nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct lwp *l = curlwp;
 	struct vnode *vp;
@@ -259,11 +257,7 @@ nfs_statvfs(mp, sbp)
  * nfs version 3 fsinfo rpc call
  */
 int
-nfs_fsinfo(nmp, vp, cred, l)
-	struct nfsmount *nmp;
-	struct vnode *vp;
-	kauth_cred_t cred;
-	struct lwp *l;
+nfs_fsinfo(struct nfsmount *nmp, struct vnode *vp, kauth_cred_t cred, struct lwp *l)
 {
 	struct nfsv3_fsinfo *fsp;
 	char *cp;
@@ -333,7 +327,7 @@ nfs_fsinfo(nmp, vp, cred, l)
  * - build the rootfs mount point and call mountnfs() to do the rest.
  */
 int
-nfs_mountroot()
+nfs_mountroot(void)
 {
 	struct timespec ts;
 	struct nfs_diskless *nd;
@@ -413,12 +407,8 @@ out:
  * (once for root and once for swap)
  */
 static int
-nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
-	struct nfs_dlmount *ndmntp;
-	const char *mntname;	/* mount point name */
-	struct mount **mpp;
-	struct vnode **vpp;
-	struct lwp *l;
+nfs_mount_diskless(struct nfs_dlmount *ndmntp, const char *mntname, struct mount **mpp, struct vnode **vpp, struct lwp *l)
+	/* mntname:	 mount point name */
 {
 	struct mount *mp;
 	struct mbuf *m;
@@ -456,10 +446,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
 }
 
 void
-nfs_decode_args(nmp, argp, l)
-	struct nfsmount *nmp;
-	struct nfs_args *argp;
-	struct lwp *l;
+nfs_decode_args(struct nfsmount *nmp, struct nfs_args *argp, struct lwp *l)
 {
 	int s;
 	int adjsock;
@@ -704,13 +691,7 @@ free_nfh:
  * Common code for mount and mountroot
  */
 int
-mountnfs(argp, mp, nam, pth, hst, vpp, l)
-	struct nfs_args *argp;
-	struct mount *mp;
-	struct mbuf *nam;
-	const char *pth, *hst;
-	struct vnode **vpp;
-	struct lwp *l;
+mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *pth, const char *hst, struct vnode **vpp, struct lwp *l)
 {
 	struct nfsmount *nmp;
 	struct nfsnode *np;
@@ -938,9 +919,7 @@ nfs_unmount(struct mount *mp, int mntflags)
  * Return root of a filesystem
  */
 int
-nfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+nfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *vp;
 	struct nfsmount *nmp;
@@ -962,10 +941,7 @@ extern int syncprt;
  */
 /* ARGSUSED */
 int
-nfs_sync(mp, waitfor, cred)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t cred;
+nfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp, *mvp;
 	int error, allerror = 0;

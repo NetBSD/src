@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.40 2007/05/23 17:15:00 christos Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.40.48.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.40 2007/05/23 17:15:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.40.48.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -66,49 +66,49 @@ __KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.40 2007/05/23 17:15:00 christos Exp $
 
 #include <net/net_osdep.h>
 
-static int esp_null_mature __P((struct secasvar *));
-static int esp_null_decrypt __P((struct mbuf *, size_t,
-	struct secasvar *, const struct esp_algorithm *, int));
-static int esp_null_encrypt __P((struct mbuf *, size_t, size_t,
-	struct secasvar *, const struct esp_algorithm *, int));
-static int esp_descbc_mature __P((struct secasvar *));
-static int esp_descbc_ivlen __P((const struct esp_algorithm *,
-	struct secasvar *));
-static int esp_des_schedule __P((const struct esp_algorithm *,
-	struct secasvar *));
-static size_t esp_des_schedlen __P((const struct esp_algorithm *));
-static int esp_des_blockdecrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-static int esp_des_blockencrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-static int esp_cbc_mature __P((struct secasvar *));
-static int esp_blowfish_schedule __P((const struct esp_algorithm *,
-	struct secasvar *));
-static size_t esp_blowfish_schedlen __P((const struct esp_algorithm *));
-static int esp_blowfish_blockdecrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-static int esp_blowfish_blockencrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-static int esp_cast128_schedule __P((const struct esp_algorithm *,
-	struct secasvar *));
-static size_t esp_cast128_schedlen __P((const struct esp_algorithm *));
-static int esp_cast128_blockdecrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-static int esp_cast128_blockencrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-static int esp_3des_schedule __P((const struct esp_algorithm *,
-	struct secasvar *));
-static size_t esp_3des_schedlen __P((const struct esp_algorithm *));
-static int esp_3des_blockdecrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-static int esp_3des_blockencrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-static int esp_common_ivlen __P((const struct esp_algorithm *,
-	struct secasvar *));
-static int esp_cbc_decrypt __P((struct mbuf *, size_t,
-	struct secasvar *, const struct esp_algorithm *, int));
-static int esp_cbc_encrypt __P((struct mbuf *, size_t, size_t,
-	struct secasvar *, const struct esp_algorithm *, int));
+static int esp_null_mature(struct secasvar *);
+static int esp_null_decrypt(struct mbuf *, size_t,
+	struct secasvar *, const struct esp_algorithm *, int);
+static int esp_null_encrypt(struct mbuf *, size_t, size_t,
+	struct secasvar *, const struct esp_algorithm *, int);
+static int esp_descbc_mature(struct secasvar *);
+static int esp_descbc_ivlen(const struct esp_algorithm *,
+	struct secasvar *);
+static int esp_des_schedule(const struct esp_algorithm *,
+	struct secasvar *);
+static size_t esp_des_schedlen(const struct esp_algorithm *);
+static int esp_des_blockdecrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+static int esp_des_blockencrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+static int esp_cbc_mature(struct secasvar *);
+static int esp_blowfish_schedule(const struct esp_algorithm *,
+	struct secasvar *);
+static size_t esp_blowfish_schedlen(const struct esp_algorithm *);
+static int esp_blowfish_blockdecrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+static int esp_blowfish_blockencrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+static int esp_cast128_schedule(const struct esp_algorithm *,
+	struct secasvar *);
+static size_t esp_cast128_schedlen(const struct esp_algorithm *);
+static int esp_cast128_blockdecrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+static int esp_cast128_blockencrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+static int esp_3des_schedule(const struct esp_algorithm *,
+	struct secasvar *);
+static size_t esp_3des_schedlen(const struct esp_algorithm *);
+static int esp_3des_blockdecrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+static int esp_3des_blockencrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+static int esp_common_ivlen(const struct esp_algorithm *,
+	struct secasvar *);
+static int esp_cbc_decrypt(struct mbuf *, size_t,
+	struct secasvar *, const struct esp_algorithm *, int);
+static int esp_cbc_encrypt(struct mbuf *, size_t, size_t,
+	struct secasvar *, const struct esp_algorithm *, int);
 
 #define MAXIVLEN	16
 
@@ -174,7 +174,7 @@ esp_algorithm_lookup(int idx)
 }
 
 int
-esp_max_padbound()
+esp_max_padbound(void)
 {
 	int idx;
 	static int padbound = 0;
@@ -191,7 +191,7 @@ esp_max_padbound()
 }
 
 int
-esp_max_ivlen()
+esp_max_ivlen(void)
 {
 	int idx;
 	static int ivlen = 0;
@@ -240,7 +240,7 @@ esp_schedule(const struct esp_algorithm *algo, struct secasvar *sav)
 	if (error) {
 		ipseclog((LOG_ERR, "esp_schedule %s: error %d\n",
 		    algo->name, error));
-		bzero(sav->sched, sav->schedlen);
+		memset(sav->sched, 0, sav->schedlen);
 		free(sav->sched, M_SECA);
 		sav->sched = NULL;
 		sav->schedlen = 0;
@@ -363,7 +363,7 @@ esp_des_blockdecrypt( const struct esp_algorithm *algo,
 {
 
 	/* assumption: d has a good alignment */
-	bcopy(s, d, sizeof(DES_LONG) * 2);
+	memcpy(d, s, sizeof(DES_LONG) * 2);
 	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d,
 	    *(des_key_schedule *)sav->sched, DES_DECRYPT);
 	return 0;
@@ -375,7 +375,7 @@ esp_des_blockencrypt(const struct esp_algorithm *algo,
 {
 
 	/* assumption: d has a good alignment */
-	bcopy(s, d, sizeof(DES_LONG) * 2);
+	memcpy(d, s, sizeof(DES_LONG) * 2);
 	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d,
 	    *(des_key_schedule *)sav->sched, DES_ENCRYPT);
 	return 0;
@@ -550,7 +550,7 @@ esp_3des_blockdecrypt(const struct esp_algorithm *algo,
 
 	/* assumption: d has a good alignment */
 	p = (des_key_schedule *)sav->sched;
-	bcopy(s, d, sizeof(DES_LONG) * 2);
+	memcpy(d, s, sizeof(DES_LONG) * 2);
 	des_ecb3_encrypt((des_cblock *)d, (des_cblock *)d,
 			 p[0], p[1], p[2], DES_DECRYPT);
 	return 0;
@@ -564,7 +564,7 @@ esp_3des_blockencrypt(const struct esp_algorithm *algo,
 
 	/* assumption: d has a good alignment */
 	p = (des_key_schedule *)sav->sched;
-	bcopy(s, d, sizeof(DES_LONG) * 2);
+	memcpy(d, s, sizeof(DES_LONG) * 2);
 	des_ecb3_encrypt((des_cblock *)d, (des_cblock *)d,
 			 p[0], p[1], p[2], DES_ENCRYPT);
 	return 0;
@@ -643,7 +643,7 @@ esp_cbc_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 	if (ivlen == blocklen)
 		;
 	else if (ivlen == 4 && blocklen == 8) {
-		bcopy(&iv[0], &iv[4], 4);
+		memcpy(&iv[4], &iv[0], 4);
 		iv[4] ^= 0xff;
 		iv[5] ^= 0xff;
 		iv[6] ^= 0xff;
@@ -744,7 +744,7 @@ esp_cbc_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 
 		/* next iv */
 		if (sp == sbuf) {
-			bcopy(sbuf, iv, blocklen);
+			memcpy(iv, sbuf, blocklen);
 			ivp = NULL;
 		} else
 			ivp = sp;
@@ -769,8 +769,8 @@ esp_cbc_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 	scut->m_next = d0;
 
 	/* just in case */
-	bzero(iv, sizeof(iv));
-	bzero(sbuf, sizeof(sbuf));
+	memset(iv, 0, sizeof(iv));
+	memset(sbuf, 0, sizeof(sbuf));
 
 	return 0;
 }
@@ -845,7 +845,7 @@ esp_cbc_encrypt(
 	if (derived)
 		m_copydata(m, ivoff, ivlen, (void *)iv);
 	else {
-		bcopy(sav->iv, iv, ivlen);
+		memcpy(iv, sav->iv, ivlen);
 		/* maybe it is better to overwrite dest, not source */
 		m_copyback(m, ivoff, ivlen, (void *)iv);
 	}
@@ -854,7 +854,7 @@ esp_cbc_encrypt(
 	if (ivlen == blocklen)
 		;
 	else if (ivlen == 4 && blocklen == 8) {
-		bcopy(&iv[0], &iv[4], 4);
+		memcpy(&iv[4], &iv[0], 4);
 		iv[4] ^= 0xff;
 		iv[5] ^= 0xff;
 		iv[6] ^= 0xff;
@@ -976,8 +976,8 @@ esp_cbc_encrypt(
 	scut->m_next = d0;
 
 	/* just in case */
-	bzero(iv, sizeof(iv));
-	bzero(sbuf, sizeof(sbuf));
+	memset(iv, 0, sizeof(iv));
+	memset(sbuf, 0, sizeof(sbuf));
 
 	key_sa_stir_iv(sav);
 
@@ -1078,7 +1078,7 @@ esp_auth(struct mbuf *m0, size_t skip, size_t length,
 		}
 	}
 	(*algo->result)(&s, sumbuf, sizeof(sumbuf));
-	bcopy(sumbuf, sum, siz);	/* XXX */
+	memcpy(sum, sumbuf, siz);	/* XXX */
 
 	return 0;
 }

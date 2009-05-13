@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.17 2009/01/01 19:07:43 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.17.2.1 2009/05/13 17:22:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,17 +28,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.17 2009/01/01 19:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.17.2.1 2009/05/13 17:22:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
 #include <sys/event.h>
+#include <sys/kauth.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
+
+#include <secmodel/securelevel/securelevel.h>
 
 #ifdef __sparc__
  /* 
@@ -60,17 +63,10 @@ yield(void)
 }
 
 void
-preempt()
+preempt(void)
 {
 
 	/* see yield */
-	return;
-}
-
-void
-knote(struct klist *list, long hint)
-{
-
 	return;
 }
 
@@ -82,22 +78,16 @@ cpu_lookup(u_int index)
 	return &rump_cpu;
 }
 
-void
-evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
-    const char *group, const char *name)
-{
-
-}
-
-void
-evcnt_detach(struct evcnt *ev)
-{
-
-}
-
 int
 syscall_establish(const struct emul *em, const struct syscall_package *sp)
 {
+	extern struct sysent rump_sysent[];
+	int i;
+
+	KASSERT(em == NULL || em == &emul_netbsd);
+
+	for (i = 0; sp[i].sp_call; i++)
+		rump_sysent[sp[i].sp_code].sy_call = sp[i].sp_call;
 
 	return 0;
 }
@@ -119,6 +109,28 @@ xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
 
 void
 xc_wait(uint64_t where)
+{
+
+}
+
+/*
+ * XXX: bsd44 secmodel depends on securelevel
+ */
+int
+secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
+{
+
+	return 0;
+}
+
+void
+secmodel_securelevel_init()
+{
+
+}
+
+void
+secmodel_securelevel_start()
 {
 
 }

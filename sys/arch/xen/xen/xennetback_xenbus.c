@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.27.2.1 2009/02/09 00:03:55 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.27.2.2 2009/05/13 17:18:51 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -336,11 +336,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	err = xenbus_switch_state(xbusd, NULL, XenbusStateInitWait);
 	if (err) {
 		printf("failed to switch state on %s: %d\n",
-		    xbusd->xbusd_path, err);
-		goto fail;
-	}
-	if (err) {
-		printf("failed to write %s/hotplug-status: %d\n",
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.18 2009/01/18 20:31:08 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.18.2.1 2009/05/13 17:16:02 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.18 2009/01/18 20:31:08 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.18.2.1 2009/05/13 17:16:02 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -192,7 +192,7 @@ ioc_irq_status(int irq)
 }
 
 u_int32_t
-ioc_irq_status_full()
+ioc_irq_status_full(void)
 {
 	struct ioc_softc *sc = device_private(the_ioc);
 	bus_space_tag_t bst = sc->sc_bst;

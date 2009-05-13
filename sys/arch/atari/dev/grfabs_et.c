@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.27 2007/03/06 14:40:25 tsutsui Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.27.58.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.27 2007/03/06 14:40:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.27.58.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -92,15 +92,15 @@ __KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.27 2007/03/06 14:40:25 tsutsui Exp $
 /*
  * Function decls
  */
-static void       init_view __P((view_t *, bmap_t *, dmode_t *, box_t *));
-static colormap_t *alloc_colormap __P((dmode_t *));
-static void	  et_display_view __P((view_t *));
-static view_t	  *et_alloc_view __P((dmode_t *, dimen_t *, u_char));
-static void	  et_free_view __P((view_t *));
-static void	  et_loadmode __P((struct grfvideo_mode *, et_sv_reg_t *));
-static void	  et_remove_view __P((view_t *));
-static void	  et_save_view __P((view_t *));
-static int	  et_use_colormap __P((view_t *, colormap_t *));
+static void       init_view(view_t *, bmap_t *, dmode_t *, box_t *);
+static colormap_t *alloc_colormap(dmode_t *);
+static void	  et_display_view(view_t *);
+static view_t	  *et_alloc_view(dmode_t *, dimen_t *, u_char);
+static void	  et_free_view(view_t *);
+static void	  et_loadmode(struct grfvideo_mode *, et_sv_reg_t *);
+static void	  et_remove_view(view_t *);
+static void	  et_save_view(view_t *);
+static int	  et_use_colormap(view_t *, colormap_t *);
 
 /*
  * Our function switch table
@@ -173,8 +173,7 @@ struct grfabs_et_priv {
  * Initialize list of posible video modes.
  */
 void
-et_probe_video(modelp)
-MODES	*modelp;
+et_probe_video(MODES *modelp)
 {
 	dmode_t	*dm;
 	int	i;
@@ -185,8 +184,7 @@ MODES	*modelp;
 }
 
 static void
-et_display_view(v)
-view_t *v;
+et_display_view(view_t *v)
 {
 	dmode_t		*dm = v->mode;
 	bmap_t		*bm = v->bitmap;
@@ -226,8 +224,7 @@ view_t *v;
 }
 
 void
-et_remove_view(v)
-view_t *v;
+et_remove_view(view_t *v)
 {
 	dmode_t *mode = v->mode;
 
@@ -242,8 +239,7 @@ view_t *v;
 }
 
 void
-et_save_view(v)
-view_t *v;
+et_save_view(view_t *v)
 {
 	bmap_t		*bm = v->bitmap;
 	u_char		font_height;
@@ -288,8 +284,7 @@ view_t *v;
 }
 
 void
-et_free_view(v)
-view_t *v;
+et_free_view(view_t *v)
 {
 	if(v) {
 		et_remove_view(v);
@@ -305,18 +300,13 @@ view_t *v;
 }
 
 static int
-et_use_colormap(v, cm)
-view_t		*v;
-colormap_t	*cm;
+et_use_colormap(view_t *v, colormap_t *cm)
 {
 	return (0); /* XXX: Nothing here for now... */
 }
 
 static view_t *
-et_alloc_view(mode, dim, depth)
-dmode_t	*mode;
-dimen_t	*dim;
-u_char   depth;
+et_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 {
 	view_t		*v;
 	bmap_t		*bm;
@@ -380,22 +370,17 @@ u_char   depth;
 }
 
 static void
-init_view(v, bm, mode, dbox)
-view_t	*v;
-bmap_t	*bm;
-dmode_t	*mode;
-box_t	*dbox;
+init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 {
 	v->bitmap    = bm;
 	v->mode      = mode;
 	v->flags     = 0;
-	bcopy(dbox, &v->display, sizeof(box_t));
+	memcpy( &v->display, dbox, sizeof(box_t));
 }
 
 /* XXX: No more than a stub... */
 static colormap_t *
-alloc_colormap(dm)
-dmode_t		*dm;
+alloc_colormap(dmode_t *dm)
 {
 	colormap_t	*cm;
 	int		i;
@@ -417,7 +402,7 @@ dmode_t		*dm;
  * bus0 for et4000/et6000 cards. The first card found is used.
  */
 int
-et_probe_card()
+et_probe_card(void)
 {
 	pci_chipset_tag_t	pc = NULL; /* XXX */
 	pcitag_t		tag;
@@ -490,9 +475,7 @@ et_probe_card()
 }
 
 static void
-et_loadmode(mode, regs)
-struct grfvideo_mode	*mode;
-et_sv_reg_t		*regs;
+et_loadmode(struct grfvideo_mode *mode, et_sv_reg_t *regs)
 {
 	unsigned short	HDE, VDE;
 	int	    	lace, dblscan;
@@ -658,8 +641,7 @@ et_sv_reg_t		*regs;
 }
 
 void
-et_hwsave(et_regs)
-et_sv_reg_t	*et_regs;
+et_hwsave(et_sv_reg_t *et_regs)
 {
 	volatile u_char *ba;
 	int		i, s;
@@ -696,8 +678,7 @@ et_sv_reg_t	*et_regs;
 }
 
 void
-et_hwrest(et_regs)
-et_sv_reg_t	*et_regs;
+et_hwrest(et_sv_reg_t *et_regs)
 {
 	volatile u_char *ba;
 	int		i, s;

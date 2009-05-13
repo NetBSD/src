@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.c,v 1.3 2007/10/17 19:53:44 garbled Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.c,v 1.3.34.1 2009/05/13 17:16:18 jym Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.c,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.3 2007/10/17 19:53:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.3.34.1 2009/05/13 17:16:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,6 +206,61 @@ retry:
 	bus_space_write_4(iot, ioh, I2C_IDBR, value);
 	rv = bus_space_read_4(iot, ioh, I2C_ICR);
 	bus_space_write_4(iot, ioh, I2C_ICR, rv | ICR_TB);
+
+	timeout = 10000;
+	while ((bus_space_read_4(iot, ioh, I2C_ISR) & ISR_ITE) == 0) {
+		if (timeout-- == 0)
+			goto err;
+		delay(1);
+	}
+	if ((bus_space_read_4(iot, ioh, I2C_ISR) & ISR_ACKNAK) != 0)
+		goto err;
+
+	bus_space_write_4(iot, ioh, I2C_ISR, ISR_ITE);
+
+	rv = bus_space_read_4(iot, ioh, I2C_ICR);
+	bus_space_write_4(iot, ioh, I2C_ICR, rv & ~ICR_STOP);
+
+	return 0;
+
+err:
+	if (tries-- >= 0)
+		goto retry;
+
+	bus_space_write_4(iot, ioh, I2C_ICR, ICR_UR);
+	bus_space_write_4(iot, ioh, I2C_ISAR, 0x00);
+	bus_space_write_4(iot, ioh, I2C_ISR, ISR_ITE);
+	bus_space_write_4(iot, ioh, I2C_ICR, ICR_IUE | ICR_SCLE);
+
+	return EIO;
+}
+
+/*
+ * XXX The quick_{read,write} opertions are untested!
+ */
+int
+pxa2x0_i2c_quick(struct pxa2x0_i2c_softc *sc, u_char slave, u_char rw)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int timeout;
+	int tries = I2C_RETRY_COUNT;
+	uint32_t rv;
+
+retry:
+	bus_space_write_4(iot, ioh, I2C_ICR, ICR_UR);
+	bus_space_write_4(iot, ioh, I2C_ISAR, 0x00);
+	bus_space_write_4(iot, ioh, I2C_ISR, ISR_ITE);
+	delay(1);
+	bus_space_write_4(iot, ioh, I2C_ICR, ICR_IUE | ICR_SCLE);
+
+	/* Write slave device address. */
+	bus_space_write_4(iot, ioh, I2C_IDBR, (slave<<1) | (rw & 1));
+	rv = bus_space_read_4(iot, ioh, I2C_ICR);
+	bus_space_write_4(iot, ioh, I2C_ICR, rv | ICR_START);
+	rv = bus_space_read_4(iot, ioh, I2C_ICR);
+	bus_space_write_4(iot, ioh, I2C_ICR, rv | ICR_STOP);
+	rv = bus_space_read_4(iot, ioh, I2C_ICR);
 
 	timeout = 10000;
 	while ((bus_space_read_4(iot, ioh, I2C_ISR) & ISR_ITE) == 0) {

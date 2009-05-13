@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2008/11/03 15:13:16 rjs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7.4.1 2009/05/13 17:17:58 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -135,7 +135,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	extent_destroy(memext);
 #endif
 
-	bzero(&mba, sizeof(mba));
+	memset(&mba, 0, sizeof(mba));
 	mba.mba_pba.pba_iot = &prep_io_space_tag;
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
@@ -152,7 +152,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	obio_reserve_resource_unmap();
 
 	if (platform->obiodevs != obiodevs_nodev) {
-		bzero(&mba, sizeof(mba));
+		memset(&mba, 0, sizeof(mba));
 		mba.mba_busname = "obio"; /* XXX needs placeholder in pba */
 		mba.mba_pba.pba_iot = &isa_io_space_tag;
 		mba.mba_pba.pba_memt = &isa_mem_space_tag;

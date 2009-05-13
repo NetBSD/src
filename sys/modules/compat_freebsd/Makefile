@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/12/08 12:56:00 njoly Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2009/05/13 17:22:18 jym Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -15,7 +15,7 @@ SRCS+=	freebsd_file.c freebsd_fork.c freebsd_ioctl.c freebsd_ipc.c
 SRCS+=	freebsd_misc.c freebsd_ptrace.c freebsd_sched.c freebsd_syscalls.c
 SRCS+=	freebsd_sysctl.c freebsd_sysent.c freebsd_mod.c
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_AOUT
 .PATH:	${S}/arch/i386/i386
 SRCS+=	freebsd_machdep.c freebsd_syscall.c freebsd_sigcode.S

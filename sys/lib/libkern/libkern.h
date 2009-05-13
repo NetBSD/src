@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.85 2008/12/16 22:35:38 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.85.2.1 2009/05/13 17:22:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,25 +43,25 @@
 #define LIBKERN_BODY
 #endif
 
-LIBKERN_INLINE int imax __P((int, int)) __unused;
-LIBKERN_INLINE int imin __P((int, int)) __unused;
-LIBKERN_INLINE u_int max __P((u_int, u_int)) __unused;
-LIBKERN_INLINE u_int min __P((u_int, u_int)) __unused;
-LIBKERN_INLINE long lmax __P((long, long)) __unused;
-LIBKERN_INLINE long lmin __P((long, long)) __unused;
-LIBKERN_INLINE u_long ulmax __P((u_long, u_long)) __unused;
-LIBKERN_INLINE u_long ulmin __P((u_long, u_long)) __unused;
-LIBKERN_INLINE int abs __P((int)) __unused;
+LIBKERN_INLINE int imax(int, int) __unused;
+LIBKERN_INLINE int imin(int, int) __unused;
+LIBKERN_INLINE u_int max(u_int, u_int) __unused;
+LIBKERN_INLINE u_int min(u_int, u_int) __unused;
+LIBKERN_INLINE long lmax(long, long) __unused;
+LIBKERN_INLINE long lmin(long, long) __unused;
+LIBKERN_INLINE u_long ulmax(u_long, u_long) __unused;
+LIBKERN_INLINE u_long ulmin(u_long, u_long) __unused;
+LIBKERN_INLINE int abs(int) __unused;
 
-LIBKERN_INLINE int isspace __P((int)) __unused;
-LIBKERN_INLINE int isascii __P((int)) __unused;
-LIBKERN_INLINE int isupper __P((int)) __unused;
-LIBKERN_INLINE int islower __P((int)) __unused;
-LIBKERN_INLINE int isalpha __P((int)) __unused;
-LIBKERN_INLINE int isdigit __P((int)) __unused;
-LIBKERN_INLINE int isxdigit __P((int)) __unused;
-LIBKERN_INLINE int toupper __P((int)) __unused;
-LIBKERN_INLINE int tolower __P((int)) __unused;
+LIBKERN_INLINE int isspace(int) __unused;
+LIBKERN_INLINE int isascii(int) __unused;
+LIBKERN_INLINE int isupper(int) __unused;
+LIBKERN_INLINE int islower(int) __unused;
+LIBKERN_INLINE int isalpha(int) __unused;
+LIBKERN_INLINE int isdigit(int) __unused;
+LIBKERN_INLINE int isxdigit(int) __unused;
+LIBKERN_INLINE int toupper(int) __unused;
+LIBKERN_INLINE int tolower(int) __unused;
 
 #ifdef LIBKERN_BODY
 LIBKERN_INLINE int
@@ -253,30 +253,24 @@ struct mtprng_state {
 	uint32_t mt_sparse[3];
 };
 
-/* Prototypes for non-quad routines. */
-/* XXX notyet #ifdef _STANDALONE */
-int	 bcmp __P((const void *, const void *, size_t));
-void 	 bcopy __P((const void *, void *, size_t));
-void	 bzero __P((void *, size_t));
-/* #endif */
-
 /* Prototypes for which GCC built-ins exist. */
-void	*memcpy __P((void *, const void *, size_t));
-int	 memcmp __P((const void *, const void *, size_t));
-void	*memset __P((void *, int, size_t));
-#if __GNUC_PREREQ__(2, 95) && (__GNUC_PREREQ__(4, 0) || !defined(__vax__))
+void	*memcpy(void *, const void *, size_t);
+int	 memcmp(const void *, const void *, size_t);
+void	*memset(void *, int, size_t);
+#if __GNUC_PREREQ__(2, 95) && (__GNUC_PREREQ__(4, 0) || !defined(__vax__)) && \
+    !defined(_STANDALONE)
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
 #endif
-#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
+#if __GNUC_PREREQ__(2, 95) && !defined(__vax__) && !defined(_STANDALONE)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
 #endif
 
-char	*strcpy __P((char *, const char *));
-int	 strcmp __P((const char *, const char *));
-size_t	 strlen __P((const char *));
+char	*strcpy(char *, const char *);
+int	 strcmp(const char *, const char *);
+size_t	 strlen(const char *);
 char	*strsep(char **, const char *);
-#if __GNUC_PREREQ__(2, 95)
+#if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
 #define	strlen(a)		__builtin_strlen(a)
@@ -288,59 +282,61 @@ char	*strsep(char **, const char *);
 #endif
 
 /* These exist in GCC 3.x, but we don't bother. */
-char	*strcat __P((char *, const char *));
-char	*strncpy __P((char *, const char *, size_t));
-int	 strncmp __P((const char *, const char *, size_t));
-char	*strchr __P((const char *, int));
-char	*strrchr __P((const char *, int));
+char	*strcat(char *, const char *);
+char	*strncpy(char *, const char *, size_t);
+int	 strncmp(const char *, const char *, size_t);
+char	*strchr(const char *, int);
+char	*strrchr(const char *, int);
 
-char	*strstr __P((const char *, const char *));
+char	*strstr(const char *, const char *);
 
 /*
  * ffs is an instruction on vax.
  */
-int	 ffs __P((int));
+int	 ffs(int);
 #if __GNUC_PREREQ__(2, 95) && (!defined(__vax__) || __GNUC_PREREQ__(4,1))
 #define	ffs(x)		__builtin_ffs(x)
 #endif
 
-void	 __kernassert __P((const char *, const char *, int, const char *));
+void	 __kernassert(const char *, const char *, int, const char *);
 unsigned int
-	bcdtobin __P((unsigned int));
+	bcdtobin(unsigned int);
 unsigned int
-	bintobcd __P((unsigned int));
+	bintobcd(unsigned int);
 u_int32_t
-	inet_addr __P((const char *));
+	inet_addr(const char *);
 struct in_addr;
-int	inet_aton __P((const char *, struct in_addr *));
-char	*intoa __P((u_int32_t));
+int	inet_aton(const char *, struct in_addr *);
+char	*intoa(u_int32_t);
 #define inet_ntoa(a) intoa((a).s_addr)
-void	*memchr __P((const void *, int, size_t));
-void	*memmove __P((void *, const void *, size_t));
-int	 pmatch __P((const char *, const char *, const char **));
-u_int32_t arc4random __P((void));
-void	 arc4randbytes __P((void *, size_t));
+void	*memchr(const void *, int, size_t);
+void	*memmove(void *, const void *, size_t);
+int	 pmatch(const char *, const char *, const char **);
+u_int32_t arc4random(void);
+void	 arc4randbytes(void *, size_t);
 #ifndef SMALL_RANDOM
-void	 srandom __P((unsigned long));
-char	*initstate __P((unsigned long, char *, size_t));
-char	*setstate __P((char *));
+void	 srandom(unsigned long);
+char	*initstate(unsigned long, char *, size_t);
+char	*setstate(char *);
 #endif /* SMALL_RANDOM */
-long	 random __P((void));
+long	 random(void);
 void	 mtprng_init32(struct mtprng_state *, uint32_t);
 void	 mtprng_initarray(struct mtprng_state *, const uint32_t *, size_t);
 uint32_t mtprng_rawrandom(struct mtprng_state *);
 uint32_t mtprng_random(struct mtprng_state *);
-int	 scanc __P((u_int, const u_char *, const u_char *, int));
-int	 skpc __P((int, size_t, u_char *));
-int	 strcasecmp __P((const char *, const char *));
-size_t	 strlcpy __P((char *, const char *, size_t));
-size_t	 strlcat __P((char *, const char *, size_t));
-int	 strncasecmp __P((const char *, const char *, size_t));
-u_long	 strtoul __P((const char *, char **, int));
-long long strtoll __P((const char *, char **, int));
-unsigned long long strtoull __P((const char *, char **, int));
-uintmax_t strtoumax __P((const char *, char **, int));
-int	 snprintb __P((char *, size_t, const char *, uint64_t));
+int	 scanc(u_int, const u_char *, const u_char *, int);
+int	 skpc(int, size_t, u_char *);
+int	 strcasecmp(const char *, const char *);
+size_t	 strlcpy(char *, const char *, size_t);
+size_t	 strlcat(char *, const char *, size_t);
+int	 strncasecmp(const char *, const char *, size_t);
+u_long	 strtoul(const char *, char **, int);
+long long strtoll(const char *, char **, int);
+unsigned long long strtoull(const char *, char **, int);
+uintmax_t strtoumax(const char *, char **, int);
+int	 snprintb(char *, size_t, const char *, uint64_t);
+int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
 		   void *);
+uint32_t crc32(uint32_t, const uint8_t *, size_t);
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

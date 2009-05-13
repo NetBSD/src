@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.9 2008/06/24 16:30:09 ad Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.9.10.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /*
  * Copyright (C) 2000 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.9 2008/06/24 16:30:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.9.10.1 2009/05/13 17:17:49 jym Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -57,27 +57,26 @@ int ne_pci_ipkdb_attach(struct ipkdb_if *, bus_space_tag_t,		/* XXX */
 static char ipkdb_mode = IPKDB_CMD_EXIT;
 
 void
-ipkdbinit()
+ipkdbinit(void)
 {
 }
 
 int
-ipkdb_poll()
+ipkdb_poll(void)
 {
 	/* For now */
 	return 0;
 }
 
 void
-ipkdb_trap()
+ipkdb_trap(void)
 {
 	ipkdb_mode = IPKDB_CMD_STEP;
-	x86_write_eflags(x86_read_eflags() | PSL_T));
+	x86_write_eflags(x86_read_eflags() | PSL_T);
 }
 
 int
-ipkdb_trap_glue(frame)
-	struct trapframe frame;
+ipkdb_trap_glue(struct trapframe frame)
 {
 	if (ISPL(frame.tf_cs) != SEL_KPL)
 		return 0;
@@ -132,8 +131,7 @@ ipkdb_trap_glue(frame)
 }
 
 int
-ipkdbif_init(kip)
-	struct ipkdb_if *kip;
+ipkdbif_init(struct ipkdb_if *kip)
 {
 #ifdef IPKDB_NE_PCI
 	pci_mode_detect();	/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.29 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.29.14.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.29 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.29.14.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,16 +102,14 @@ static void	ix_eeprom_outbits(bus_space_tag_t, bus_space_handle_t, int, int);
 static int	ix_eeprom_inbits (bus_space_tag_t, bus_space_handle_t);
 static void	ix_eeprom_clock  (bus_space_tag_t, bus_space_handle_t, int);
 
-int ix_match(struct device *, struct cfdata *, void *);
-void ix_attach(struct device *, struct device *, void *);
+int ix_match(device_t, cfdata_t, void *);
+void ix_attach(device_t, device_t, void *);
 
 /*
  * EtherExpress/16 support routines
  */
 static void
-ix_reset(sc, why)
-	struct ie_softc *sc;
-	int why;
+ix_reset(struct ie_softc *sc, int why)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -137,10 +135,7 @@ ix_atten(struct ie_softc *sc, int why)
 }
 
 static u_int16_t
-ix_read_eeprom(iot, ioh, location)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int location;
+ix_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int location)
 {
 	int ectrl, edata;
 
@@ -161,10 +156,7 @@ ix_read_eeprom(iot, ioh, location)
 }
 
 static void
-ix_eeprom_outbits(iot, ioh, edata, count)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int edata, count;
+ix_eeprom_outbits(bus_space_tag_t iot, bus_space_handle_t ioh, int edata, int count)
 {
 	int ectrl, i;
 
@@ -186,9 +178,7 @@ ix_eeprom_outbits(iot, ioh, edata, count)
 }
 
 static int
-ix_eeprom_inbits(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ix_eeprom_inbits(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int ectrl, edata, i;
 
@@ -207,10 +197,7 @@ ix_eeprom_inbits(iot, ioh)
 }
 
 static void
-ix_eeprom_clock(iot, ioh, state)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int state;
+ix_eeprom_clock(bus_space_tag_t iot, bus_space_handle_t ioh, int state)
 {
 	int ectrl;
 
@@ -224,9 +211,7 @@ ix_eeprom_clock(iot, ioh, state)
 }
 
 static int
-ix_intrhook(sc, where)
-	struct ie_softc *sc;
-	int where;
+ix_intrhook(struct ie_softc *sc, int where)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -249,11 +234,7 @@ ix_intrhook(sc, where)
 
 
 static void
-ix_copyin (sc, dst, offset, size)
-        struct ie_softc *sc;
-        void *dst;
-        int offset;
-        size_t size;
+ix_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int i, dribble;
 	u_int8_t* bptr = dst;
@@ -305,11 +286,7 @@ ix_copyin (sc, dst, offset, size)
 }
 
 static void
-ix_copyout (sc, src, offset, size)
-        struct ie_softc *sc;
-        const void *src;
-        int offset;
-        size_t size;
+ix_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int i, dribble;
 	int osize = size;
@@ -365,9 +342,7 @@ ix_copyout (sc, src, offset, size)
 }
 
 static void
-ix_bus_barrier(sc, offset, length, flags)
-        struct ie_softc *sc;
-        int offset, length, flags;
+ix_bus_barrier(struct ie_softc *sc, int offset, int length, int flags)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -378,9 +353,7 @@ ix_bus_barrier(sc, offset, length, flags)
 }
 
 static u_int16_t
-ix_read_16 (sc, offset)
-        struct ie_softc *sc;
-        int offset;
+ix_read_16 (struct ie_softc *sc, int offset)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -402,10 +375,7 @@ ix_read_16 (sc, offset)
 }
 
 static void
-ix_write_16 (sc, offset, value)
-        struct ie_softc *sc;
-        int offset;
-        u_int16_t value;
+ix_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -426,9 +396,7 @@ ix_write_16 (sc, offset, value)
 }
 
 static void
-ix_write_24 (sc, offset, addr)
-        struct ie_softc *sc;
-        int offset, addr;
+ix_write_24 (struct ie_softc *sc, int offset, int addr)
 {
 	char* ptr;
 	struct ix_softc* isc = (struct ix_softc *) sc;
@@ -455,9 +423,7 @@ ix_write_24 (sc, offset, addr)
 }
 
 static void
-ix_zeromem(sc, offset, count)
-        struct ie_softc *sc;
-        int offset, count;
+ix_zeromem(struct ie_softc *sc, int offset, int count)
 {
 	int i;
 	int dribble;
@@ -491,9 +457,7 @@ ix_zeromem(sc, offset, count)
 }
 
 static void
-ix_mediastatus(sc, ifmr)
-        struct ie_softc *sc;
-        struct ifmediareq *ifmr;
+ix_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 {
         struct ifmedia *ifm = &sc->sc_media;
 
@@ -504,7 +468,7 @@ ix_mediastatus(sc, ifmr)
 }
 
 int
-ix_match(struct device *parent, struct cfdata *cf, void *aux)
+ix_match(device_t parent, cfdata_t cf, void *aux)
 {
 	int i;
 	int rv = 0;
@@ -708,7 +672,7 @@ out:
 }
 
 void
-ix_attach(struct device *parent, struct device *self, void *aux)
+ix_attach(device_t parent, device_t self, void *aux)
 {
 	struct ix_softc *isc = (void *)self;
 	struct ie_softc *sc = &isc->sc_ie;

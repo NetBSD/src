@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.3 2008/11/12 12:36:09 ad Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.3.4.1 2009/05/13 17:18:55 jym Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -24,8 +24,6 @@
 #include "compat_linux.h"
 
 #include <machine/bootinfo.h>
-
-#define BOOTARGS_BUFSIZ	256
 
 #define ZBOOTDEV_MAJOR	99
 #define ZBOOTDEV_MODE	0222
@@ -351,14 +349,12 @@ zbsdmod_close(struct inode *ino, struct file *f)
 		printk("%s: loaded %d bytes\n", ZBOOTDEV_NAME,
 		    position);
 
-		if (position < BOOTARGS_BUFSIZ) {
+		if (position < BOOTINFO_MAXSIZE) {
 			*(u_int *)bootargs = BOOTARGS_MAGIC;
-			bootargs[position + sizeof(u_int)] = '\0';
-			memcpy(bootargs + sizeof(u_int), bsdimage,
-			    position);
+			memcpy(bootargs + sizeof(u_int), bsdimage, position);
 		} else {
 			elf32bsdboot();
-			printk("%s: boot failed\n", ZBOOTDEV_NAME);       
+			printk("%s: boot failed\n", ZBOOTDEV_NAME);
 		}
 	}
 	isopen = 0;

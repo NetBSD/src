@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.50 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.50.18.1 2009/05/13 17:18:41 jym Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.50 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.50.18.1 2009/05/13 17:18:41 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -165,7 +165,7 @@ kdb_trap(struct trapframe *frame)
 
 			df = (void *)frame->fp; /* start of debug's calls */
 			pf = (void *)df->ca_fp; /* start of panic's calls */
-			bcopy(&pf->ca_argno, &ddb_regs.r0, sizeof(int) * 12);
+			memcpy( &ddb_regs.r0, &pf->ca_argno, sizeof(int) * 12);
 			ddb_regs.fp = pf->ca_fp;
 			ddb_regs.pc = pf->ca_pc;
 			ddb_regs.ap = pf->ca_ap;
@@ -195,9 +195,9 @@ kdb_trap(struct trapframe *frame)
 #endif
 #ifndef MULTIPROCESSOR
 	if (!panicstr)
-		bcopy(frame, &ddb_regs, sizeof(struct trapframe));
+		memcpy( &ddb_regs, frame, sizeof(struct trapframe));
 #else
-	bcopy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
+	memcpy( &ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
 	printf("stopped on CPU %d\n", stopcpu->ci_cpuid);
 #endif
 
@@ -213,9 +213,9 @@ kdb_trap(struct trapframe *frame)
 
 #ifndef MULTIPROCESSOR
 	if (!panicstr)
-		bcopy(&ddb_regs, frame, sizeof(struct trapframe));
+		memcpy( frame, &ddb_regs, sizeof(struct trapframe));
 #else
-	bcopy(&ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
+	memcpy( stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 #endif
 	frame->sp = mfpr(PR_USP);
 #ifdef MULTIPROCESSOR
@@ -631,9 +631,9 @@ db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	if ((ci != curcpu()) && ((ci->ci_flags & CI_STOPPED) == 0))
 		return db_printf("CPU %ld not stopped???\n", addr);
 
-	bcopy(&ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
+	memcpy( stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 	stopcpu = ci;
-	bcopy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
+	memcpy( &ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
 	db_printf("using CPU %ld", addr);
 	if (ci->ci_curlwp)
 		db_printf(" in proc %d.%d (%s)\n",

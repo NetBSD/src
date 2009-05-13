@@ -1,7 +1,20 @@
-#	$NetBSD: files.hpcapm,v 1.2 2006/10/09 10:33:42 peter Exp $
+#	$NetBSD: files.hpcapm,v 1.2.68.1 2009/05/13 17:19:20 jym Exp $
 #	H/PC APM device emulator
 
 include "dev/hpc/apm/files.apm"
+
+# Transitioning from apmdev(4) to apm(4)
+# While drivers are not converted let kernels have either old
+#
+#   apmdev0 at hpcapm0
+#
+# to maintain status quo, xor new
+#
+#   apm0 at hpcapm0
+#
+# for those who do driver convertion to pmf(9).
+attach	apm at apmdevif with apm_apmdevif
+file	dev/hpc/apm_apmdevif.c	apm_apmdevif
 
 define	hpcapmif { }
 device	hpcapm: apmdevif

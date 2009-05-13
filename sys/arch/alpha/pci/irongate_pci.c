@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_pci.c,v 1.5 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: irongate_pci.c,v 1.5.14.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.5 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.5.14.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,14 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.5 2008/04/28 20:23:11 martin Exp 
 #include <alpha/pci/irongatereg.h>
 #include <alpha/pci/irongatevar.h>
 
-void		irongate_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		irongate_bus_maxdevs __P((void *, int));
-pcitag_t	irongate_make_tag __P((void *, int, int, int));
-void		irongate_decompose_tag __P((void *, pcitag_t, int *, int *,
-		    int *));
-pcireg_t	irongate_conf_read __P((void *, pcitag_t, int));
-void		irongate_conf_write __P((void *, pcitag_t, int, pcireg_t));
+void		irongate_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		irongate_bus_maxdevs(void *, int);
+pcitag_t	irongate_make_tag(void *, int, int, int);
+void		irongate_decompose_tag(void *, pcitag_t, int *, int *,
+		    int *);
+pcireg_t	irongate_conf_read(void *, pcitag_t, int);
+void		irongate_conf_write(void *, pcitag_t, int, pcireg_t);
 
 /* AMD 751 systems are always single-processor, so this is easy. */
 #define	PCI_CONF_LOCK(s)	(s) = splhigh()

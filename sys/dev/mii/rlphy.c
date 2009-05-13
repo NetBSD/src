@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.24 2009/01/16 20:52:20 cegger Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.24.2.1 2009/05/13 17:20:15 jym Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.24 2009/01/16 20:52:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.24.2.1 2009/05/13 17:20:15 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,10 +259,10 @@ rlphy_status(struct mii_softc *sc)
 
 		if ((anlpar = PHY_READ(sc, MII_ANAR) &
 		    PHY_READ(sc, MII_ANLPAR))) {
-			if (anlpar & ANLPAR_T4)
-				mii->mii_media_active |= IFM_100_T4;
-			else if (anlpar & ANLPAR_TX_FD)
+			if (anlpar & ANLPAR_TX_FD)
 				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			else if (anlpar & ANLPAR_T4)
+				mii->mii_media_active |= IFM_100_T4;
 			else if (anlpar & ANLPAR_TX)
 				mii->mii_media_active |= IFM_100_TX;
 			else if (anlpar & ANLPAR_10_FD)

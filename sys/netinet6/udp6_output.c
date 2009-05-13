@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.37 2008/10/24 22:30:32 dyoung Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.37.8.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.37 2008/10/24 22:30:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.37.8.1 2009/05/13 17:22:29 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.37 2008/10/24 22:30:32 dyoung Exp 
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -127,7 +128,6 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	u_int16_t fport;
 	int error = 0;
 	struct ip6_pktopts *optp, opt;
-	int priv;
 	int af = AF_INET6, hlen = sizeof(struct ip6_hdr);
 #ifdef INET
 	struct ip *ip;
@@ -135,11 +135,6 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	int flags = 0;
 #endif
 	struct sockaddr_in6 tmp;
-
-	priv = 0;
-	if (l && !kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL))
-		priv = 1;
 
 	if (addr6) {
 		if (addr6->m_len != sizeof(*sin6)) {
@@ -172,7 +167,7 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 
 	if (control) {
 		if ((error = ip6_setpktopts(control, &opt,
-		    in6p->in6p_outputopts, priv, IPPROTO_UDP)) != 0)
+		    in6p->in6p_outputopts, l->l_cred, IPPROTO_UDP)) != 0)
 			goto release;
 		optp = &opt;
 	} else
@@ -283,9 +278,22 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 				error = EADDRNOTAVAIL;
 			goto release;
 		}
-		if (in6p->in6p_lport == 0 &&
-		    (error = in6_pcbsetport(laddr, in6p, l)) != 0)
-			goto release;
+		if (in6p->in6p_lport == 0) {
+			/*
+			 * Craft a sockaddr_in6 for the local endpoint. Use the
+			 * "any" as a base, set the address, and recover the
+			 * scope.
+			 */
+			struct sockaddr_in6 lsin6 =
+			    *((const struct sockaddr_in6 *)in6p->in6p_socket->so_proto->pr_domain->dom_sa_any);
+			lsin6.sin6_addr = *laddr;
+			error = sa6_recoverscope(&lsin6);
+			if (error)
+				goto release;
+			error = in6_pcbsetport(&lsin6, in6p, l);
+			if (error)
+				goto release;
+		}
 	} else {
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
 			error = ENOTCONN;

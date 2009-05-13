@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.5 2008/02/26 18:16:51 xtraeme Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.5.18.1 2009/05/13 17:20:27 jym Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.5 2008/02/26 18:16:51 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.5.18.1 2009/05/13 17:20:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.5 2008/02/26 18:16:51 xtraeme Exp $");
 #define	MFI_PCI_MEMSIZE	0x2000 /* 8k */
 
 const struct mfi_pci_device *mfi_pci_find_device(struct pci_attach_args *);
-int	mfi_pci_match(struct device *, struct cfdata *, void *);
-void	mfi_pci_attach(struct device *, struct device *, void *);
+int	mfi_pci_match(device_t, cfdata_t, void *);
+void	mfi_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(mfi_pci, sizeof(struct mfi_softc),
     mfi_pci_match, mfi_pci_attach, NULL, NULL);
@@ -112,15 +112,15 @@ mfi_pci_find_device(struct pci_attach_args *pa)
 }
 
 int
-mfi_pci_match(struct device *parent, struct cfdata *match, void *aux)
+mfi_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	return (mfi_pci_find_device(aux) != NULL) ? 1 : 0;
 }
 
 void
-mfi_pci_attach(struct device *parent, struct device *self, void *aux)
+mfi_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct mfi_softc	*sc = (struct mfi_softc *)self;
+	struct mfi_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	const struct mfi_pci_device *mpd;
 	const struct mfi_pci_subtype *st;

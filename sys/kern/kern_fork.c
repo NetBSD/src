@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.172 2009/01/17 07:02:35 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.172.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.172 2009/01/17 07:02:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.172.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_ktrace.h"
 
@@ -240,8 +240,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Enforce limits.
 	 */
 	count = chgproccnt(uid, 1);
-	if (uid != 0 &&
-	    __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
+	if (kauth_authorize_generic(l1->l_cred, KAUTH_GENERIC_ISSUSER, NULL) !=
+	    0 && __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		atomic_dec_uint(&nprocs);
 		if (forkfsleep)

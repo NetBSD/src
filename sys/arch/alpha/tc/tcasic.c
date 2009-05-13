@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.40 2007/12/03 15:33:09 ad Exp $ */
+/* $NetBSD: tcasic.c,v 1.40.32.1 2009/05/13 17:16:08 jym Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.40 2007/12/03 15:33:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.40.32.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,16 +54,13 @@ CFATTACH_DECL(tcasic, sizeof (struct device),
 
 extern struct cfdriver tcasic_cd;
 
-int	tcasicprint __P((void *, const char *));
+int	tcasicprint(void *, const char *);
 
 /* There can be only one. */
 int	tcasicfound;
 
 int
-tcasicmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+tcasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -82,14 +79,11 @@ tcasicmatch(parent, cfdata, aux)
 }
 
 void
-tcasicattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tcasicattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcbus_attach_args tba;
-	void (*intr_setup) __P((void));
-	void (*iointr) __P((void *, unsigned long));
+	void (*intr_setup)(void);
+	void (*iointr)(void *, unsigned long);
 
 	printf("\n");
 	tcasicfound = 1;
@@ -157,9 +151,7 @@ tcasicattach(parent, self, aux)
 }
 
 int
-tcasicprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+tcasicprint(void *aux, const char *pnp)
 {
 
 	/* only TCs can attach to tcasics; easy. */
@@ -180,14 +172,14 @@ tcasicprint(aux, pnp)
 #include "px.h"
 #include "pxg.h"
 
-extern void	sfb_cnattach __P((tc_addr_t));
-extern void	sfbp_cnattach __P((tc_addr_t));
-extern void	cfb_cnattach __P((tc_addr_t));
-extern void	mfb_cnattach __P((tc_addr_t));
-extern void	tfb_cnattach __P((tc_addr_t));
-extern void	px_cnattach __P((tc_addr_t));
-extern void	pxg_cnattach __P((tc_addr_t));
-extern int	tc_checkslot __P((tc_addr_t, char *));
+extern void	sfb_cnattach(tc_addr_t);
+extern void	sfbp_cnattach(tc_addr_t);
+extern void	cfb_cnattach(tc_addr_t);
+extern void	mfb_cnattach(tc_addr_t);
+extern void	tfb_cnattach(tc_addr_t);
+extern void	px_cnattach(tc_addr_t);
+extern void	pxg_cnattach(tc_addr_t);
+extern int	tc_checkslot(tc_addr_t, char *);
 
 struct cnboards {
 	const char	*cb_tcname;
@@ -226,8 +218,7 @@ struct cnboards {
  * output console.
  */
 int
-tc_fb_cnattach(tcaddr)
-	tc_addr_t tcaddr;
+tc_fb_cnattach(tc_addr_t tcaddr)
 {
 	char tcname[TC_ROM_LLEN];
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: efifs.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: efifs.c,v 1.2.88.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -231,7 +231,7 @@ efifs_stat(struct open_file *f, struct stat *sb)
 	static EFI_GUID infoid = EFI_FILE_INFO_ID;
 	EFI_FILE_INFO *info;
 
-	bzero(sb, sizeof(*sb));
+	memset(sb, 0, sizeof(*sb));
 
 	buf = alloc(1024);
 	sz = 1024;

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.20 2008/10/25 22:12:33 he Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.20.8.1 2009/05/13 17:16:01 jym Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2008/10/25 22:12:33 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20.8.1 2009/05/13 17:16:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -127,7 +127,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sf = (struct switchframe *)tf - 1;
 	/* Duplicate old process's trapframe (if it had one) */
 	if (l1->l_addr->u_pcb.pcb_tf == NULL)
-		bzero(tf, sizeof(*tf));
+		memset(tf, 0, sizeof(*tf));
 	else
 		*tf = *l1->l_addr->u_pcb.pcb_tf;
 	/* If specified, give the child a different stack. */
@@ -135,7 +135,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 	l2->l_addr->u_pcb.pcb_tf = tf;
 	/* Fabricate a new switchframe */
-	bzero(sf, sizeof(*sf));
+	memset(sf, 0, sizeof(*sf));
 
 	cpu_setfunc(l2, func, arg);
 }

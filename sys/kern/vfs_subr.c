@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.368 2009/02/05 13:37:24 enami Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.368.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.368 2009/02/05 13:37:24 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.368.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -455,6 +455,30 @@ vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 	}
 }
 
+struct mount *
+vfs_mountalloc(struct vfsops *vfsops, struct vnode *vp)
+{
+	int error;
+	struct mount *mp;
+
+	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
+	if (mp == NULL)
+		return NULL;
+
+	mp->mnt_op = vfsops;
+	mp->mnt_refcnt = 1;
+	TAILQ_INIT(&mp->mnt_vnodelist);
+	rw_init(&mp->mnt_unmounting);
+	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
+	error = vfs_busy(mp, NULL);
+	KASSERT(error == 0);
+	mp->mnt_vnodecovered = vp;
+	mount_initspecific(mp);
+
+	return mp;
+}
+
 /*
  * Lookup a filesystem type, and if found allocate and initialize
  * a mount structure for it.
@@ -480,18 +504,9 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	vfsp->vfs_refcount++;
 	mutex_exit(&vfs_list_lock);
 
-	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
-	if (mp == NULL)
+	if ((mp = vfs_mountalloc(vfsp, NULL)) == NULL)
 		return ENOMEM;
-	mp->mnt_refcnt = 1;
-	rw_init(&mp->mnt_unmounting);
-	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	(void)vfs_busy(mp, NULL);
-	TAILQ_INIT(&mp->mnt_vnodelist);
-	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
-	mp->mnt_vnodecovered = NULL;
 	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name,
 	    sizeof(mp->mnt_stat.f_fstypename));
 	mp->mnt_stat.f_mntonname[0] = '/';
@@ -500,7 +515,6 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	    '\0';
 	(void)copystr(devname, mp->mnt_stat.f_mntfromname,
 	    sizeof(mp->mnt_stat.f_mntfromname) - 1, 0);
-	mount_initspecific(mp);
 	*mpp = mp;
 	return (0);
 }
@@ -735,7 +749,6 @@ insmntque(vnode_t *vp, struct mount *mp)
 #ifdef DIAGNOSTIC
 	if ((mp != NULL) &&
 	    (mp->mnt_iflag & IMNT_UNMOUNT) &&
-	    !(mp->mnt_flag & MNT_SOFTDEP) &&
 	    vp->v_tag != VT_VFS) {
 		panic("insmntque into dying filesystem");
 	}
@@ -2126,10 +2139,9 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		}
 		savebp = bp;
 		/* Allocate a marker vnode. */
-		if ((mvp = vnalloc(mp)) == NULL) {
-			sysctl_relock();
-			return (ENOMEM);
-		}
+		mvp = vnalloc(mp);
+		/* Should never fail for mp != NULL */
+		KASSERT(mvp != NULL);
 		mutex_enter(&mntvnode_lock);
 		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 			vmark(mvp, vp);
@@ -2231,14 +2243,21 @@ vfs_mountedon(vnode_t *vp)
  * We traverse the list in reverse order under the assumption that doing so
  * will avoid needing to worry about dependencies.
  */
-void
+bool
 vfs_unmountall(struct lwp *l)
 {
-	struct mount *mp, *nmp;
-	int allerror, error;
-
 	printf("unmounting file systems...");
-	for (allerror = 0, mp = CIRCLEQ_LAST(&mountlist);
+	return vfs_unmountall1(l, true, true);
+}
+
+bool
+vfs_unmountall1(struct lwp *l, bool force, bool verbose)
+{
+	struct mount *mp, *nmp;
+	bool any_error, progress;
+	int error;
+
+	for (any_error = false, mp = CIRCLEQ_LAST(&mountlist);
 	     !CIRCLEQ_EMPTY(&mountlist);
 	     mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
@@ -2247,15 +2266,21 @@ vfs_unmountall(struct lwp *l)
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
 		atomic_inc_uint(&mp->mnt_refcnt);
-		if ((error = dounmount(mp, MNT_FORCE, l)) != 0) {
-			printf("unmount of %s failed with error %d\n",
-			    mp->mnt_stat.f_mntonname, error);
-			allerror = 1;
+		if ((error = dounmount(mp, force ? MNT_FORCE : 0, l)) == 0)
+			progress = true;
+		else {
+			if (verbose) {
+				printf("unmount of %s failed with error %d\n",
+				    mp->mnt_stat.f_mntonname, error);
+			}
+			any_error = true;
 		}
 	}
-	printf(" done\n");
-	if (allerror)
+	if (verbose)
+		printf(" done\n");
+	if (any_error && verbose)
 		printf("WARNING: some file systems would not unmount\n");
+	return progress;
 }
 
 /*
@@ -2267,9 +2292,7 @@ vfs_shutdown(void)
 	struct lwp *l;
 
 	/* XXX we're certainly not running in lwp0's context! */
-	l = curlwp;
-	if (l == NULL)
-		l = &lwp0;
+	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
 	printf("syncing disks... ");
 
@@ -2487,7 +2510,7 @@ vattr_null(struct vattr *vap)
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 #define ARRAY_PRINT(idx, arr) \
-    ((idx) > 0 && (idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
+    ((unsigned int)(idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
 
 const char * const vnode_tags[] = { VNODE_TAGS };
 const char * const vnode_types[] = { VNODE_TYPES };
@@ -3054,7 +3077,7 @@ VFS_SUSPENDCTL(struct mount *mp, int a)
 	return error;
 }
 
-#ifdef DDB
+#if defined(DDB) || defined(DEBUGPRINT)
 static const char buf_flagbits[] = BUF_FLAGBITS;
 
 void
@@ -3072,8 +3095,8 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 
 	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
 		  bp->b_bufsize, bp->b_bcount, bp->b_resid);
-	(*pr)("  data %p saveaddr %p dep %p\n",
-		  bp->b_data, bp->b_saveaddr, LIST_FIRST(&bp->b_dep));
+	(*pr)("  data %p saveaddr %p\n",
+		  bp->b_data, bp->b_saveaddr);
 	(*pr)("  iodone %p objlock %p\n", bp->b_iodone, bp->b_objlock);
 }
 
@@ -3202,4 +3225,5 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		(*pr)("\n", vp);
 	}
 }
-#endif /* DDB */
+#endif /* DDB || DEBUGPRINT */
+

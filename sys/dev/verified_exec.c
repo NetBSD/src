@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.64 2008/12/14 23:20:23 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.64.2.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.64 2008/12/14 23:20:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.64.2.1 2009/05/13 17:19:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.64 2008/12/14 23:20:23 elad Exp 
 
 #include <prop/proplib.h>
 
-void veriexecattach(struct device *, struct device *, void *);
+void veriexecattach(device_t, device_t, void *);
 static dev_type_open(veriexecopen);
 static dev_type_close(veriexecclose);
 static dev_type_ioctl(veriexecioctl);

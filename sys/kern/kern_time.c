@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.159 2009/01/31 15:53:36 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.159.2.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.159 2009/01/31 15:53:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.159.2.1 2009/05/13 17:21:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -297,8 +297,8 @@ nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
 	struct timespec rmtstart;
 	int error, timo;
 
-	if (itimespecfix(rqt))
-		return (EINVAL);
+	if ((error = itimespecfix(rqt)) != 0)
+		return error;
 
 	timo = tstohz(rqt);
 	/*
@@ -769,14 +769,16 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	struct itimerspec val, oval;
 	struct ptimers *pts;
 	struct ptimer *pt;
+	int error;
 
 	pts = p->p_timers;
 
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
 		return EINVAL;
 	val = *value;
-	if (itimespecfix(&val.it_value) || itimespecfix(&val.it_interval))
-		return EINVAL;
+	if ((error = itimespecfix(&val.it_value)) != 0 ||
+	    (error = itimespecfix(&val.it_interval)) != 0)
+		return error;
 
 	mutex_spin_enter(&timer_lock);
 	if ((pt = pts->pts_timers[timerid]) == NULL) {

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.52 2007/11/17 08:59:51 skrll Exp $
+#	$NetBSD: newvers.sh,v 1.52.32.1 2009/05/13 17:19:04 jym Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ if [ ! -e version ]; then
 fi
 
 v=$(cat version)
-t=$(date)
+t=$(LC_ALL=C date)
 u=${USER-root}
 h=$(hostname)
 d=$(pwd)
@@ -58,7 +58,14 @@ osrelcmd=${cwd}/osrelease.sh
 ost="NetBSD"
 osr=$(sh $osrelcmd)
 
-fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
+case $1 in
+-r)
+	fullversion="${ost} ${osr} (${id})\n"
+	;;
+*)
+	fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
+	;;
+esac
 
 cat << _EOF > vers.c
 /*

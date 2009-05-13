@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.5 2009/01/12 11:32:45 tsutsui Exp $ */
+/*	$NetBSD: if_ni.c,v 1.5.2.1 2009/05/13 17:18:40 jym Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -413,7 +413,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	msg->nm_len = 18;
 	msg->nm_opcode2 = NI_STPTDB;
 	ptdb = (struct ni_ptdb *)&msg->nm_text[0];
-	bzero(ptdb, sizeof(struct ni_ptdb));
+	memset(ptdb, 0, sizeof(struct ni_ptdb));
 	ptdb->np_index = 1;
 	ptdb->np_fque = 1;
 
@@ -426,7 +426,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 #endif
 	msg = REMQHI(&fqb->nf_mforw);
 	ptdb = (struct ni_ptdb *)&msg->nm_text[0];
-	bzero(ptdb, sizeof(struct ni_ptdb));
+	memset(ptdb, 0, sizeof(struct ni_ptdb));
 	msg->nm_opcode = BVP_MSG;
 	msg->nm_len = 18;
 	ptdb->np_index = 2;
@@ -471,7 +471,7 @@ loop:
 		len = data->bufs[0]._len;
 		if (len > maxlen)
 			len = maxlen;
-		bcopy((void *)data->nd_cmdref, pkt, len);
+		memcpy( pkt, (void *)data->nd_cmdref, len);
 		bd->nb_pte = (int)&syspte[data->nd_cmdref>>9];
 		data->bufs[0]._len = bd->nb_len = 2048;
 		data->bufs[0]._offset = 0;
@@ -512,7 +512,7 @@ ni_put(struct iodesc *desc, void *pkt, size_t len)
 	bdp = &bbd[(data->bufs[0]._index & 0x7fff)];
 	bdp->nb_status = NIBD_VALID;
 	bdp->nb_len = (len < 64 ? 64 : len);
-	bcopy(pkt, (void *)data->nd_cmdref, len);
+	memcpy( (void *)data->nd_cmdref, pkt, len);
 	data->bufs[0]._offset = 0;
 	data->bufs[0]._len = bdp->nb_len;
 	data->nd_opcode = BVP_DGRAM;

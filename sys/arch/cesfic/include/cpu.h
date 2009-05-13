@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2008/02/27 18:26:15 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21.18.1 2009/05/13 17:16:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -180,19 +180,19 @@ extern int astpending;		/* need to trap before returning to user mode */
 struct fpframe;
 
 /* locore.s functions */
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
-int	suline __P((void *, void *));
-void	loadustp __P((int));
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
+int	suline(void *, void *);
+void	loadustp(int);
 
-void	doboot __P((void))
+void	doboot(void)
 	__attribute__((__noreturn__));
 
 /* machdep.c functions */
-int	badaddr __P((void *));
-int	badbaddr __P((void *));
+int	badaddr(void *);
+int	badbaddr(void *);
 
-void kgdb_panic __P((void));
+void kgdb_panic(void);
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()

@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.43 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: sio.c,v 1.43.14.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.43 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.43.14.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,14 +105,14 @@ struct sio_softc {
 	isa_chipset_tag_t sc_ic;
 };
 
-int	siomatch __P((struct device *, struct cfdata *, void *));
-void	sioattach __P((struct device *, struct device *, void *));
+int	siomatch(struct device *, struct cfdata *, void *);
+void	sioattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sio, sizeof(struct sio_softc),
     siomatch, sioattach, NULL, NULL);
 
 #if NPCEB > 0
-int	pcebmatch __P((struct device *, struct cfdata *, void *));
+int	pcebmatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(pceb, sizeof(struct sio_softc),
     pcebmatch, sioattach, NULL, NULL);
@@ -123,22 +123,19 @@ union sio_attach_args {
 	struct eisabus_attach_args sa_eba;
 };
 
-void	sio_isa_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
+void	sio_isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
 #if NPCEB > 0
-void	sio_eisa_attach_hook __P((struct device *, struct device *,
-	    struct eisabus_attach_args *));
-int	sio_eisa_maxslots __P((void *));
-int	sio_eisa_intr_map __P((void *, u_int, eisa_intr_handle_t *));
+void	sio_eisa_attach_hook(struct device *, struct device *,
+	    struct eisabus_attach_args *);
+int	sio_eisa_maxslots(void *);
+int	sio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
 #endif
 
-void	sio_bridge_callback __P((struct device *));
+void	sio_bridge_callback(struct device *);
 
 int
-siomatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+siomatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -165,10 +162,7 @@ siomatch(parent, match, aux)
 
 #if NPCEB > 0
 int
-pcebmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcebmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -181,9 +175,7 @@ pcebmatch(parent, match, aux)
 #endif
 
 void
-sioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -208,8 +200,7 @@ sioattach(parent, self, aux)
 }
 
 void
-sio_bridge_callback(self)
-	struct device *self;
+sio_bridge_callback(struct device *self)
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
 	union sio_attach_args sa;
@@ -294,9 +285,7 @@ sio_bridge_callback(self)
 }
 
 void
-sio_isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+sio_isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
 {
 
 	/* Nothing to do. */
@@ -305,9 +294,7 @@ sio_isa_attach_hook(parent, self, iba)
 #if NPCEB > 0
 
 void
-sio_eisa_attach_hook(parent, self, eba)
-	struct device *parent, *self;
-	struct eisabus_attach_args *eba;
+sio_eisa_attach_hook(struct device *parent, struct device *self, struct eisabus_attach_args *eba)
 {
 
 #if NEISA > 0
@@ -316,18 +303,14 @@ sio_eisa_attach_hook(parent, self, eba)
 }
 
 int
-sio_eisa_maxslots(v)
-	void *v;
+sio_eisa_maxslots(void *v)
 {
 
 	return 16;		/* as good a number as any.  only 8, maybe? */
 }
 
 int
-sio_eisa_intr_map(v, irq, ihp)
-	void *v;
-	u_int irq;
-	eisa_intr_handle_t *ihp;
+sio_eisa_intr_map(void *v, u_int irq, eisa_intr_handle_t *ihp)
 {
 
 #define	ICU_LEN		16	/* number of ISA IRQs (XXX) */

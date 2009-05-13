@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.237 2009/01/29 21:48:13 ad Exp $
+# $NetBSD: GENERIC,v 1.237.2.1 2009/05/13 17:16:08 jym Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.237 $"
+#ident 		"GENERIC-$Revision: 1.237.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -89,6 +89,7 @@ options 	BUFQ_PRIOCSCAN
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
+#options 	LOCKDEBUG	# expensive locking checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 
 #
@@ -326,6 +327,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and Speedstep support.
+#hpet* 	at ichlpcib?
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 
@@ -355,7 +357,9 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga*		at pci? dev ? function ?
+genfb*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
+wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
@@ -606,7 +610,9 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
+age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
@@ -692,6 +698,7 @@ tlp*	at cardbus? function ?	# DECchip 21143
 # MII/PHY support
 acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
 amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
+atphy*	at mii?	phy ?			# Attansic/Atheros PHYs
 bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
@@ -974,6 +981,9 @@ radio* at bktr?
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
+# Bluetooth SDIO Controllers
+sbt* at sdmmc?
+
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
@@ -982,6 +992,7 @@ bthub* at bcsp?
 bthub* at bt3c?
 bthub* at btbc?
 bthub* at btuart?
+bthub* at sbt?
 bthub* at ubt?
 
 # Bluetooth HID support
@@ -997,6 +1008,15 @@ wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Audio support
 btsco* at bthub?
+
+
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*  at pci?		# SD Host Controller
+sdmmc* at sdhc?		# SD/MMC bus
+
+ld*    at sdmmc?
 
 
 # Mice

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic77xx.c,v 1.7 2007/10/19 11:59:46 ad Exp $	*/
+/*	$NetBSD: aic77xx.c,v 1.7.34.1 2009/05/13 17:19:21 jym Exp $	*/
 
 /*
  * Common routines for AHA-27/284X and aic7770 motherboard SCSI controllers.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.7 2007/10/19 11:59:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.7.34.1 2009/05/13 17:19:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.7 2007/10/19 11:59:46 ad Exp $");
  * Return irq setting of the board, otherwise -1.
  */
 int
-ahc_aic77xx_irq(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ahc_aic77xx_irq(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int irq;
 	u_int8_t intdef;
@@ -84,8 +82,7 @@ ahc_aic77xx_irq(iot, ioh)
 }
 
 int
-ahc_aic77xx_attach(ahc)
-	struct ahc_softc *ahc;
+ahc_aic77xx_attach(struct ahc_softc *ahc)
 {
 	u_int8_t sblkctl;
 	u_int8_t sblkctl_orig;

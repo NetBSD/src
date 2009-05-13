@@ -1,4 +1,4 @@
-/* $NetBSD: if_cfe.c,v 1.3 2009/01/12 11:32:44 tsutsui Exp $ */
+/* $NetBSD: if_cfe.c,v 1.3.2.1 2009/05/13 17:18:17 jym Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -78,28 +78,21 @@ struct netif_driver prom_netif_driver = {
 };
 
 int
-cfenet_match(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+cfenet_match(struct netif *nif, void *machdep_hint)
 {
 
 	return (1);
 }
 
 int
-cfenet_probe(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+cfenet_probe(struct netif *nif, void *machdep_hint)
 {
 
 	return 0;
 }
 
 int
-cfenet_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+cfenet_put(struct iodesc *desc, void *pkt, size_t len)
 {
 
     cfe_write(booted_dev_fd,pkt,len);
@@ -109,11 +102,7 @@ cfenet_put(desc, pkt, len)
 
 
 int
-cfenet_get(desc, pkt, len, timeout)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
-	saseconds_t timeout;
+cfenet_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
 	satime_t t;
 	int cc;
@@ -130,9 +119,7 @@ cfenet_get(desc, pkt, len, timeout)
 }
 
 void
-cfenet_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void *machdep_hint;
+cfenet_init(struct iodesc *desc, void *machdep_hint)
 {
 	u_int8_t eaddr[6];
 	int res;
@@ -144,7 +131,7 @@ cfenet_init(desc, machdep_hint)
 	    goto punt;
 	    }
 
-	bcopy(eaddr,desc->myea,6);
+	memcpy(desc->myea, eaddr,6);
 
 	printf("boot: ethernet address: %s\n", ether_sprintf(desc->myea));
 	return;
@@ -155,8 +142,7 @@ punt:
 }
 
 void
-cfenet_end(nif)
-	struct netif *nif;
+cfenet_end(struct netif *nif)
 {
 
 	/* nothing to do */

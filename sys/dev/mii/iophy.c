@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.34 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: iophy.c,v 1.34.4.1 2009/05/13 17:20:15 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.34 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.34.4.1 2009/05/13 17:20:15 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,14 +240,13 @@ iophy_status(struct mii_softc *sc)
 		}
 		ext0 = PHY_READ(sc, MII_IOPHY_EXT0);
 
-		if (ext0 & EXT0_SPEED)
-			if (bmsr & BMSR_100T4) {
-				mii->mii_media_active |= IFM_100_T4;
-				return;
-			} else {
+		if (ext0 & EXT0_SPEED) {
+			if ((bmsr & BMSR_100TXFDX) || (bmsr & BMSR_100TXHDX)) {
 				mii->mii_media_active |= IFM_100_TX;
+			} else if (bmsr & BMSR_100T4) {
+				mii->mii_media_active |= IFM_100_T4;
 			}
-		else
+		} else
 			mii->mii_media_active |= IFM_10_T;
 
 		if (ext0 & EXT0_DUPLEX)

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.34 2009/01/03 18:31:33 pooka Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.34.2.1 2009/05/13 17:23:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -936,7 +936,10 @@ _prop_dictionary_get(prop_dictionary_t pd, const char *key, bool locked)
 prop_object_t
 prop_dictionary_get(prop_dictionary_t pd, const char *key)
 {
-	prop_object_t po;
+	prop_object_t po = NULL;
+
+	if (! prop_object_is_dictionary(pd))
+		return (NULL);
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
 	po = _prop_dictionary_get(pd, key, true);

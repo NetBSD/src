@@ -1,4 +1,4 @@
-/*	$NetBSD: mqueue.h,v 1.6 2009/01/20 02:15:32 rmind Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.6.2.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -88,6 +88,9 @@ struct mqueue {
 	TAILQ_HEAD(, mq_msg)	mq_head;
 	/* Entry of the global list */
 	LIST_ENTRY(mqueue)	mq_list;
+	struct timespec		mq_atime;
+	struct timespec		mq_mtime;
+	struct timespec		mq_btime;
 };
 
 /* Structure of the message */

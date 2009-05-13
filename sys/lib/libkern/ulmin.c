@@ -1,4 +1,4 @@
-/*	$NetBSD: ulmin.c,v 1.5 2005/12/11 12:24:37 christos Exp $	*/
+/*	$NetBSD: ulmin.c,v 1.5.90.1 2009/05/13 17:22:15 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
@@ -35,8 +35,7 @@
 #include <lib/libkern/libkern.h>
 
 unsigned long
-ulmin(a, b)
-	unsigned long a, b;
+ulmin(unsigned long a, unsigned long b)
 {
 	return (a < b ? a : b);
 }
