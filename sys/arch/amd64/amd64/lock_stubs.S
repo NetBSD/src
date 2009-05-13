@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.20.6.1.2.1 2009/05/13 00:28:25 snj Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.20.6.1.2.2 2009/05/13 00:29:02 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -334,7 +334,7 @@ LABEL(x86_lockpatch)
 
 LABEL(x86_retpatch)
 #ifndef LOCKDEBUG
-	.long	.Lret1, .Lret2, .Lret3, .Lret4, .Lret5, .Lret6
+	.quad	.Lret1, .Lret2, .Lret3, .Lret4, .Lret5, .Lret6
 #endif
-	.long	.Lret7, .Lret8
-	.long	0
+	.quad	.Lret7, .Lret8
+	.quad	0
