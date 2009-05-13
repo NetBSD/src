@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.987 2009/05/09 15:16:42 sborrill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.988 2009/05/13 14:49:57 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.987 2009/05/09 15:15:50 sborrill Exp
+ *	NetBSD: pcidevs,v 1.988 2009/05/13 14:49:20 cegger Exp
  */
 
 /*
@@ -1297,6 +1297,7 @@
 #define	PCI_PRODUCT_ATI_RD580	0x5952		/* RD580 CrossFire Xpress 3200 Host Bridge */
 #define	PCI_PRODUCT_ATI_RADEON_RV370_5954	0x5954		/* Radeon Xpress 200G Series */
 #define	PCI_PRODUCT_ATI_RD790_NB	0x5956		/* RD790 North Bridge (Dual Slot) */
+#define	PCI_PRODUCT_ATI_RX780_790_HB	0x5957		/* RX780/RX790 Chipset Host Bridge */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_5960	0x5960		/* Radeon 9200PRO 5960 */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_5961	0x5961		/* Radeon 9200 5961 */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_5962	0x5962		/* Radeon 9200 5962 */
@@ -1354,6 +1355,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_X700_S	0x5e6b		/* Radeon X700 Pro Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_X1300	0x7146		/* Radeon X1300 Series (RV515) */
 #define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x7166		/* Radeon X1300 Series (RV515) Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_X1600	0x71c5		/* Radeon Mobility X1600 */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7834	0x7834		/* Radeon 9100 PRO IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7835	0x7835		/* Radeon 9200 IGP */
 #define	PCI_PRODUCT_ATI_RS690_HB	0x7911		/* RS690 Host Bridge */
