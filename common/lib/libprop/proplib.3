@@ -1,4 +1,4 @@
-.\"	$NetBSD: proplib.3,v 1.5 2008/04/30 13:10:46 martin Exp $
+.\"	$NetBSD: proplib.3,v 1.6 2009/05/13 22:31:59 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,8 @@ If you create an object and do not explicitly maintain a reference to it,
 you must release it.
 .It
 If you get a reference to an object from other code and wish to maintain
-a reference to it, you must retain the object.  You are responsible for
+a reference to it, you must retain the object.
+You are responsible for
 releasing the object once you drop that reference.
 .It
 You must never release an object unless you create it or retain it.
