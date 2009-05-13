@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.28 2008/07/29 16:13:39 thorpej Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.28.10.1 2009/05/13 00:24:48 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.28 2008/07/29 16:13:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.28.10.1 2009/05/13 00:24:48 snj Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -329,9 +329,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			    ~RW_WRITE_WANTED);
 			if (__predict_true(next == owner)) {
 				/* Got it! */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 				membar_enter();
-#endif
 				break;
 			}
 
@@ -453,9 +451,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * proceed to do direct handoff if there are waiters, and if the
 	 * lock would become unowned.
 	 */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_exit();
-#endif
 	for (;;) {
 		new = (owner - decr);
 		if ((new & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
@@ -555,13 +551,11 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 		next = rw_cas(rw, owner, owner + incr);
 		if (__predict_true(next == owner)) {
 			/* Got it! */
+			membar_enter();
 			break;
 		}
 	}
 
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
-#endif
 	RW_WANTLOCK(rw, op, true);
 	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
@@ -588,10 +582,7 @@ rw_downgrade(krwlock_t *rw)
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 	RW_UNLOCKED(rw, RW_WRITER);
 
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_producer();
-#endif
-
 	owner = rw->rw_owner;
 	if ((owner & RW_HAS_WAITERS) == 0) {
 		/*
@@ -685,18 +676,16 @@ rw_tryupgrade(krwlock_t *rw)
 		}
 		new = curthread | RW_WRITE_LOCKED | (owner & ~RW_THREAD);
 		next = rw_cas(rw, owner, new);
-		if (__predict_true(next == owner))
+		if (__predict_true(next == owner)) {
+			membar_producer();
 			break;
+		}
 	}
 
 	RW_UNLOCKED(rw, RW_READER);
 	RW_LOCKED(rw, RW_WRITER);
 	RW_DASSERT(rw, rw->rw_owner & RW_WRITE_LOCKED);
 	RW_DASSERT(rw, RW_OWNER(rw) == curthread);
-
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_producer();
-#endif
 
 	return 1;
 }
