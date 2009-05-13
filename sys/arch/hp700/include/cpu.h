@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2009/05/09 11:39:31 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2009/05/13 14:33:42 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -62,6 +62,7 @@
 
 /* types */
 enum hppa_cpu_type {
+	hpc_unknown,
 	hpcx,	/* PA7000 (x)		PA 1.0 */
 	hpcxs,	/* PA7000 (s)		PA 1.1a */
 	hpcxt,	/* PA7100 (t)		PA 1.1b */
@@ -89,7 +90,7 @@ struct hppa_cpu_info {
 	/* The type and PA-RISC specification of the chip. */
 	const char hci_chip_type[8];
 	enum hppa_cpu_type hci_cputype;
-	int  hci_cpuid;
+	int  hci_cpuversion;
 	int  hci_features;		/* CPU types and features */
 #define	HPPA_FTRS_TLBU		0x00000001
 #define	HPPA_FTRS_BTLBU		0x00000002
