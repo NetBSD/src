@@ -1,4 +1,4 @@
-.\" $NetBSD: puc.4,v 1.22 2008/04/03 20:45:08 riz Exp $
+.\" $NetBSD: puc.4,v 1.23 2009/05/13 12:44:22 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Christopher G. Demetriou
 .\" All rights reserved.
@@ -138,15 +138,16 @@ driver was written by Chris Demetriou.
 .Sh BUGS
 The current design of this driver keeps any
 .Nm com
-ports on these cards from easily being used as console.  Of
-course, because boards with those are PCI boards, they also suffer
-from dynamic address assignment, which also means that they
+ports on these cards from easily being used as console.
+Of course, because boards with those are PCI boards, they also
+suffer from dynamic address assignment, which also means that they
 can't easily be used as console.
 .Pp
 Some of the cards supported by this driver have jumper-selectable
 .Nm com
 port clock multipliers, which are unsupported by this
-driver.  Those can be easily accommodated with driver flags, or by
+driver.
+Those can be easily accommodated with driver flags, or by
 using a properly scaled baud rate when talking to the card.
 .Pp
 Some of the cards supported by this driver, e.g. the VScom PCI-800,
@@ -158,8 +159,8 @@ a properly scaled baud rate when talking to the card.
 .Pp
 Some ports use an
 .Nm lpt
-driver other than the machine-independent driver.  Those ports
-will not be able to use
+driver other than the machine-independent driver.
+Those ports will not be able to use
 .Nm lpt
 ports attached to
 .Nm
