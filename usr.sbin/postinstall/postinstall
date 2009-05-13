@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.16 2009/04/07 23:36:38 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.16.2.1 2009/05/13 00:39:27 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -708,6 +708,23 @@ do_defaults()
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$op" "${dir}" "${DEST_DIR}/etc/defaults" 444 pf.boot.conf
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	dhcpcd
+#
+additem dhcpcd "dhcpcd configuration is up to date"
+do_dhcpcd()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_dhcpcd fix|check"
+	op="$1"
+	failed=0
+
+	populate_dir "$op" true "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
+		dhcpcd.conf
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
