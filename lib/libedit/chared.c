@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.26 2009/02/06 12:45:25 sketch Exp $	*/
+/*	$NetBSD: chared.c,v 1.26.2.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.26 2009/02/06 12:45:25 sketch Exp $");
+__RCSID("$NetBSD: chared.c,v 1.26.2.1 2009/05/13 19:18:29 jym Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -60,12 +60,12 @@ cv_undo(EditLine *el)
 {
 	c_undo_t *vu = &el->el_chared.c_undo;
 	c_redo_t *r = &el->el_chared.c_redo;
-	unsigned int size;
+	size_t size;
 
 	/* Save entire line for undo */
 	size = el->el_line.lastchar - el->el_line.buffer;
 	vu->len = size;
-	vu->cursor = el->el_line.cursor - el->el_line.buffer;
+	vu->cursor = (int)(el->el_line.cursor - el->el_line.buffer);
 	memcpy(vu->buf, el->el_line.buffer, size);
 
 	/* save command info for redo */
@@ -84,7 +84,7 @@ cv_yank(EditLine *el, const char *ptr, int size)
 {
 	c_kill_t *k = &el->el_chared.c_kill;
 
-	memcpy(k->buf, ptr, size +0u);
+	memcpy(k->buf, ptr, (size_t)size);
 	k->last = k->buf + size;
 }
 
@@ -98,7 +98,7 @@ c_insert(EditLine *el, int num)
 	char *cp;
 
 	if (el->el_line.lastchar + num >= el->el_line.limit) {
-		if (!ch_enlargebufs(el, num +0u))
+		if (!ch_enlargebufs(el, (size_t)num))
 			return;		/* can't go past end of buffer */
 	}
 
@@ -119,7 +119,7 @@ c_delafter(EditLine *el, int num)
 {
 
 	if (el->el_line.cursor + num > el->el_line.lastchar)
-		num = el->el_line.lastchar - el->el_line.cursor;
+		num = (int)(el->el_line.lastchar - el->el_line.cursor);
 
 	if (el->el_map.current != el->el_map.emacs) {
 		cv_undo(el);
@@ -160,7 +160,7 @@ c_delbefore(EditLine *el, int num)
 {
 
 	if (el->el_line.cursor - num < el->el_line.buffer)
-		num = el->el_line.cursor - el->el_line.buffer;
+		num = (int)(el->el_line.cursor - el->el_line.buffer);
 
 	if (el->el_map.current != el->el_map.emacs) {
 		cv_undo(el);
@@ -376,7 +376,7 @@ cv_delfini(EditLine *el)
 		/* sanity */
 		return;
 
-	size = el->el_line.cursor - el->el_chared.c_vcmd.pos;
+	size = (int)(el->el_line.cursor - el->el_chared.c_vcmd.pos);
 	if (size == 0)
 		size = 1;
 	el->el_line.cursor = el->el_chared.c_vcmd.pos;
@@ -530,8 +530,7 @@ ch_reset(EditLine *el, int mclear)
 }
 
 private void
-ch__clearmacro(el)
-	EditLine *el;
+ch__clearmacro(EditLine *el)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 	while (ma->level >= 0)
@@ -543,9 +542,7 @@ ch__clearmacro(el)
  *	Returns 1 if successful, 0 if not.
  */
 protected int
-ch_enlargebufs(el, addlen)
-	EditLine *el;
-	size_t addlen;
+ch_enlargebufs(EditLine *el, size_t addlen)
 {
 	size_t sz, newsz;
 	char *newbuffer, *oldbuf, *oldkbuf;
@@ -696,12 +693,12 @@ protected int
 c_gets(EditLine *el, char *buf, const char *prompt)
 {
 	char ch;
-	int len;
+	ssize_t len;
 	char *cp = el->el_line.buffer;
 
 	if (prompt) {
 		len = strlen(prompt);
-		memcpy(cp, prompt, len + 0u);
+		memcpy(cp, prompt, (size_t)len);
 		cp += len;
 	}
 	len = 0;
@@ -722,7 +719,7 @@ c_gets(EditLine *el, char *buf, const char *prompt)
 
 		case 0010:	/* Delete and backspace */
 		case 0177:
-			if (len <= 0) {
+			if (len == 0) {
 				len = -1;
 				break;
 			}
@@ -750,7 +747,7 @@ c_gets(EditLine *el, char *buf, const char *prompt)
 	el->el_line.buffer[0] = '\0';
 	el->el_line.lastchar = el->el_line.buffer;
 	el->el_line.cursor = el->el_line.buffer;
-	return len;
+	return (int)len;
 }
 
 
@@ -772,6 +769,6 @@ c_hpos(EditLine *el)
 		     ptr >= el->el_line.buffer && *ptr != '\n';
 		     ptr--)
 			continue;
-		return (el->el_line.cursor - ptr - 1);
+		return (int)(el->el_line.cursor - ptr - 1);
 	}
 }

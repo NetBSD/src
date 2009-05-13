@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.26 2009/01/25 22:08:38 abs Exp $
+#	$NetBSD: list,v 1.26.2.1 2009/05/13 19:17:44 jym Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -64,7 +64,7 @@ LIBS	-lrmt -ledit -lutil -lcurses -ltermcap -lbz2 -lcrypt -lintl -ll -lm -lkvm -
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # and the installation scripts

@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.29 2009/02/06 23:47:44 lukem Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.29.2.1 2009/05/13 19:18:23 jym Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_elf32.c,v 1.29 2009/02/06 23:47:44 lukem Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.29.2.1 2009/05/13 19:18:23 jym Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -110,7 +110,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	/*
 	 * Map the file in its entirety.
 	 */
-	if ((size_t)st.st_size > SIZE_T_MAX) {
+	if ((uintmax_t)st.st_size > (uintmax_t)SIZE_T_MAX) {
 		errno = EFBIG;
 		BAD;
 	}

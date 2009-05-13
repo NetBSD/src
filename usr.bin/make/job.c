@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.144 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.144.2.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.144 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.144.2.1 2009/05/13 19:19:56 jym Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.144 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.144.2.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -341,6 +341,8 @@ static sigset_t caught_signals;	/* Set of signals we handle */
 #else
 #define KILLPG(pid, sig)	killpg((pid), (sig))
 #endif
+
+static char *tmpdir;		/* directory name, always ending with "/" */
 
 static void JobChildSig(int);
 static void JobContinueSig(int);
@@ -1538,11 +1540,10 @@ JobStart(GNode *gn, int flags)
 	    (!noExecute && !touchFlag)) {
 	/*
 	 * tfile is the name of a file into which all shell commands are
-	 * put. It is used over by removing it before the child shell is
-	 * executed. The XXXXXX in the string are replaced by the pid of
-	 * the make process in a 6-character field with leading zeroes.
+	 * put. It is removed before the child shell is executed, unless
+	 * DEBUG(SCRIPT) is set.
 	 */
-	char     tfile[sizeof(TMPPAT)];
+	char *tfile;
 	sigset_t mask;
 	/*
 	 * We're serious here, but if the commands were bogus, we're
@@ -1553,7 +1554,9 @@ JobStart(GNode *gn, int flags)
 	}
 
 	JobSigLock(&mask);
-	(void)strcpy(tfile, TMPPAT);
+	tfile = bmake_malloc(strlen(tmpdir) + sizeof(TMPPAT));
+	strcpy(tfile, tmpdir);
+	strcat(tfile, TMPPAT);
 	if ((tfd = mkstemp(tfile)) == -1)
 	    Punt("Could not create temporary file %s", strerror(errno));
 	if (!DEBUG(SCRIPT))
@@ -1584,6 +1587,8 @@ JobStart(GNode *gn, int flags)
 	if (numCommands == 0) {
 	    noExec = TRUE;
 	}
+
+	free(tfile);
     } else if (NoExecute(gn)) {
 	/*
 	 * Not executing anything -- just print all the commands to stdout
@@ -2116,6 +2121,8 @@ void
 Job_Init(void)
 {
     GNode         *begin;     /* node for commands to do at the very start */
+    const char    *p;
+    size_t        len;
 
     /* Allocate space for all the job info */
     job_table = bmake_malloc(maxJobs * sizeof *job_table);
@@ -2127,6 +2134,18 @@ Job_Init(void)
     errors = 	  0;
 
     lastNode =	  NULL;
+
+    /* set tmpdir, and ensure that it ends with "/" */
+    p = getenv("TMPDIR");
+    if (p == NULL || *p == '\0') {
+	p = _PATH_TMP;
+    }
+    len = strlen(p);
+    tmpdir = bmake_malloc(len + 2);
+    strcpy(tmpdir, p);
+    if (tmpdir[len - 1] != '/') {
+	strcat(tmpdir, "/");
+    }
 
     if (maxJobs == 1) {
 	/*

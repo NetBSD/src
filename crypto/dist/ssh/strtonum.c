@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.2 2006/09/28 21:22:15 christos Exp $	*/
+/*	$NetBSD: strtonum.c,v 1.2.26.1 2009/05/13 19:15:59 jym Exp $	*/
 /*	$OpenBSD: strtonum.c,v 1.6 2004/08/03 19:38:01 millert Exp $	*/
 
 /*
@@ -21,7 +21,7 @@
 /* OPENBSD ORIGINAL: lib/libc/stdlib/strtonum.c */
 
 #include "includes.h"
-__RCSID("$NetBSD: strtonum.c,v 1.2 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: strtonum.c,v 1.2.26.1 2009/05/13 19:15:59 jym Exp $");
 
 #ifndef HAVE_STRTONUM
 
@@ -29,6 +29,7 @@ __RCSID("$NetBSD: strtonum.c,v 1.2 2006/09/28 21:22:15 christos Exp $");
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
+#include <time.h>
 #include "misc.h"
 
 #define INVALID 	1

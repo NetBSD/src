@@ -1,4 +1,4 @@
-/*	$NetBSD: keysym.c,v 1.8 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: keysym.c,v 1.8.6.1 2009/05/13 19:19:07 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ bcmp_ksym(const void *a, const void *b)
 static void
 sort_ksym_tab(void)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < NUMKSYMS; i++)
 		ksym_tab_by_ksym[i] = ksym_tab_by_name[i];

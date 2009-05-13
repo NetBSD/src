@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.19 2003/07/26 20:17:34 salo Exp $
+.\" $NetBSD: lpt.4,v 1.19.42.1 2009/05/13 19:19:11 jym Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -55,7 +55,7 @@ specified in the kernel configuration, only the polling device may be used.
 .Bl -column "Minor Bit" "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
 .It Sy "Minor Bit"	Function
 .It 128	Use the interruptless driver. (polling)
-.It  64	Do not initialize the device on the port.
+.It  64	\&Do not initialize the device on the port.
 .It  32	Automatic LF on CR.
 .El
 .Sh FILES

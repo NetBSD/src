@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.98 2008/08/29 04:52:44 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.98.4.1 2009/05/13 19:19:16 jym Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -34,7 +34,7 @@ _MNUMBERS=	1 2 3 4 5 6 7 8 9
 MANCOMPRESS?=
 MANSUFFIX?=
 .else
-MANCOMPRESS?=	gzip -cf
+MANCOMPRESS?=	gzip -ncf
 MANSUFFIX?=	.gz
 .endif
 
@@ -54,8 +54,10 @@ __installpage: .USE
 # XXX consider including bsd.links.mk and using __linkinstall instead
 __linkinstallpage: .USE
 	${_MKSHMSG_INSTALL} ${.TARGET}; \
-	${_MKSHECHO} "${INSTALL_LINK} ${.ALLSRC} ${.TARGET}" && \
-	${INSTALL_LINK} ${.ALLSRC} ${.TARGET}
+	${_MKSHECHO} "${INSTALL_LINK} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+	    ${.ALLSRC} ${.TARGET}" && \
+	${INSTALL_LINK} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+	    ${.ALLSRC} ${.TARGET}
 
 ##### Build and install rules (source form pages)
 

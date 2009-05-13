@@ -1,4 +1,4 @@
-/*	$NetBSD: ttgeneric.c,v 1.9 2003/08/07 11:17:30 agc Exp $	*/
+/*	$NetBSD: ttgeneric.c,v 1.9.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttgeneric.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttgeneric.c,v 1.9 2003/08/07 11:17:30 agc Exp $");
+__RCSID("$NetBSD: ttgeneric.c,v 1.9.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ void	gen_setinsert(char);
 void	gen_setmodes(int);
 void	gen_setscroll(int, int);
 void	gen_start(void);
-void	gen_write(char *, int);
+void	gen_write(const char *, int);
 
 void
 gen_setinsert(char new)
@@ -248,7 +248,7 @@ gen_putc(char c)
 }
 
 void
-gen_write(char *p, int n)
+gen_write(const char *p, int n)
 {
 	if (tt.tt_insert)
 		gen_setinsert(0);
@@ -526,8 +526,8 @@ tt_generic(void)
 	 */
 	if (gen_SF == 0 && !gen_NS)
 		gen_SF = gen_NL;
-	BC = gen_LE ? gen_LE->ts_str : 0;
-	UP = gen_UP ? gen_UP->ts_str : 0;
+	BC = gen_LE ? __UNCONST(gen_LE->ts_str) : 0;
+	UP = gen_UP ? __UNCONST(gen_UP->ts_str) : 0;
 	/*
 	 * Fix up display attributes that we can't handle, or don't
 	 * really exist.

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshpty.h,v 1.5 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: sshpty.h,v 1.10 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sshpty.h,v 1.5.26.1 2009/05/13 19:15:59 jym Exp $	*/
+/* $OpenBSD: sshpty.h,v 1.11 2008/05/19 15:45:07 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,7 +17,7 @@
 
 #include <termios.h>
 
-struct termios get_saved_tio(void);
+struct termios *get_saved_tio(void);
 void	 leave_raw_mode(void);
 void	 enter_raw_mode(void);
 

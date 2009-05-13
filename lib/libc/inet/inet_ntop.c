@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.7 2008/09/11 15:40:43 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.7.8.1 2009/05/13 19:18:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_ntop.c,v 1.5 2005/11/03 22:59:52 marka Exp";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.7 2008/09/11 15:40:43 christos Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.7.8.1 2009/05/13 19:18:24 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

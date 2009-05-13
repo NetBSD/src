@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.94 2008/11/09 19:57:18 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.94.2.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 9, 2008
+.Dd March 12, 2009
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -68,21 +68,16 @@ out, if there is room.
 .Pp
 There are also several miscellaneous functions.
 .Sh INITIALIZATION
-.Ft void
-.br
+.Bl -ohang
+.It Ft void
 .Fn uvm_init "void" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_init_limits "struct lwp *l" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_setpagesize "void" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_swap_init "void" ;
+.El
 .Pp
 .Fn uvm_init
 sets up the UVM system at system boot time, after the
@@ -108,61 +103,36 @@ call (see
 .Fn uvm_swap_init
 initializes the swap sub-system.
 .Sh VIRTUAL ADDRESS SPACE MANAGEMENT
-.Ft int
-.br
+.Bl -ohang
+.It Ft int
 .Fn uvm_map "struct vm_map *map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "vsize_t align" "uvm_flag_t flags" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_unmap "struct vm_map *map" "vaddr_t start" "vaddr_t end" ;
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn uvm_map_pageable "struct vm_map *map" "vaddr_t start" "vaddr_t end" "bool new_pageable" "int lockflags" ;
-.Pp
-.Ft bool
-.br
+.It Ft bool
 .Fn uvm_map_checkprot "struct vm_map *map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection" ;
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn uvm_map_protect "struct vm_map *map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "bool set_max" ;
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn uvm_deallocate "struct vm_map *map" "vaddr_t start" "vsize_t size" ;
-.Pp
-.Ft struct vmspace *
-.br
+.It Ft struct vmspace *
 .Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvmspace_exec "struct lwp *l" "vaddr_t start" "vaddr_t end" ;
-.Pp
-.Ft struct vmspace *
-.br
+.It Ft struct vmspace *
 .Fn uvmspace_fork "struct vmspace *vm" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvmspace_free "struct vmspace *vm1" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvmspace_share "struct proc *p1" "struct proc *p2" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvmspace_unshare "struct lwp *l" ;
-.Pp
-.Ft bool
-.br
+.It Ft bool
 .Fn uvm_uarea_alloc "vaddr_t *uaddrp" ;
-.Pp
-.Ft void
-.br
+.It  Ft void
 .Fn uvm_uarea_free "vaddr_t uaddr" ;
+.El
 .Pp
 .Fn uvm_map
 establishes a valid mapping in map
@@ -415,9 +385,10 @@ frees a u-area allocated with
 freeing both the virtual space and any physical pages which may have been
 allocated to back that virtual space later.
 .Sh PAGE FAULT HANDLING
-.Ft int
-.br
+.Bl -ohang
+.It Ft int
 .Fn uvm_fault "struct vm_map *orig_map" "vaddr_t vaddr" "vm_prot_t access_type" ;
+.El
 .Pp
 .Fn uvm_fault
 is the main entry point for faults.
@@ -431,23 +402,18 @@ describing the type of access requested.
 .Fn uvm_fault
 returns a standard UVM return value.
 .Sh MEMORY MAPPING FILES AND DEVICES
-.Ft void
-.br
+.Bl -ohang
+.It Ft void
 .Fn uvm_vnp_setsize "struct vnode *vp" "voff_t newsize" ;
-.Pp
-.Ft void *
-.br
+.It Ft void *
 .Fn ubc_alloc "struct uvm_object *uobj" "voff_t offset" "vsize_t *lenp" \
 "int advice" "int flags" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn ubc_release "void *va" "int flags" ;
-.Pp
-int
-.br
+.It Ft int
 .Fn ubc_uiomove "struct uvm_object *uobj" "struct uio *uio" "vsize_t todo" \
 "int advice" "int flags" ;
+.El
 .Pp
 .Fn uvm_vnp_setsize
 sets the size of vnode
@@ -531,9 +497,10 @@ Additionally, the flag
 can be provided to indicate that it is acceptable to return if an error
 occurs mid-transfer.
 .Sh VIRTUAL MEMORY I/O
-.Ft int
-.br
+.Bl -ohang
+.It Ft int
 .Fn uvm_io "struct vm_map *map" "struct uio *uio" ;
+.El
 .Pp
 .Fn uvm_io
 performs the I/O described in
@@ -541,18 +508,15 @@ performs the I/O described in
 on the memory described in
 .Fa map .
 .Sh ALLOCATION OF KERNEL MEMORY
-.Ft vaddr_t
-.br
+.Bl -ohang
+.It Ft vaddr_t
 .Fn uvm_km_alloc "struct vm_map *map" "vsize_t size" "vsize_t align" "uvm_flag_t flags" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_km_free "struct vm_map *map" "vaddr_t addr" "vsize_t size" "uvm_flag_t flags" ;
-.Pp
-.Ft struct vm_map *
-.br
+.It Ft struct vm_map *
 .Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max" \
 "vsize_t size" "int flags" "bool fixed" "struct vm_map *submap" ;
+.El
 .Pp
 .Fn uvm_km_alloc
 allocates
@@ -674,30 +638,22 @@ Entries in the map may be paged out.
 Map should be interrupt-safe.
 .It VM_MAP_TOPDOWN
 A top-down mapping should be arranged.
+.El
 .Sh ALLOCATION OF PHYSICAL MEMORY
-.Ft struct vm_page *
-.br
+.Bl -ohang
+.It Ft struct vm_page *
 .Fn uvm_pagealloc "struct uvm_object *uobj" "voff_t off" "struct vm_anon *anon" "int flags" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_pagerealloc "struct vm_page *pg" "struct uvm_object *newobj" "voff_t newoff" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_pagefree "struct vm_page *pg" ;
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn uvm_pglistalloc "psize_t size" "paddr_t low" "paddr_t high" "paddr_t alignment" "paddr_t boundary" "struct pglist *rlist" "int nsegs" "int waitok" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_pglistfree "struct pglist *list" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_page_physload "vaddr_t start" "vaddr_t end" "vaddr_t avail_start" "vaddr_t avail_end" "int free_list" ;
+.El
 .Pp
 .Fn uvm_pagealloc
 allocates a page of memory at virtual address
@@ -805,19 +761,20 @@ and
 .Fa end
 of the physical addresses of the segment, and the available start and end
 addresses of pages not already in use.
+If a system has memory banks of
+different speeds the slower memory should be given a higher
+.Fa free_list
+value.
 .\" XXX expand on "system boot time"!
 .Sh PROCESSES
-.Ft void
-.br
+.Bl -ohang
+.It Ft void
 .Fn uvm_pageout "void" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_scheduler "void" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_swapin "struct lwp *l" ;
+.El
 .Pp
 .Fn uvm_pageout
 is the main loop for the page daemon.
@@ -831,13 +788,12 @@ order.
 .Fn uvm_swapin
 swaps in the named lwp.
 .Sh PAGE LOAN
-.Ft int
-.br
+.Bl -ohang
+.It Ft int
 .Fn uvm_loan "struct vm_map *map" "vaddr_t start" "vsize_t len" "void *v" "int flags" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_unloan "void *v" "int npages" "int flags" ;
+.El
 .Pp
 .Fn uvm_loan
 loans pages in a map out to anons or to the kernel.
@@ -891,53 +847,32 @@ should be one of
 and should match what was used for previous call to
 .Fn uvm_loan .
 .Sh MISCELLANEOUS FUNCTIONS
-.Ft struct uvm_object *
-.br
+.Bl -ohang
+.It Ft struct uvm_object *
 .Fn uao_create "vsize_t size" "int flags" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uao_detach "struct uvm_object *uobj" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uao_reference "struct uvm_object *uobj" ;
-.Pp
-.Ft bool
-.br
+.It Ft bool
 .Fn uvm_chgkprot "void *addr" "size_t len" "int rw" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_kernacc "void *addr" "size_t len" "int rw" ;
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn uvm_vslock "struct vmspace *vs" "void *addr" "size_t len" "vm_prot_t prot" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_vsunlock "struct vmspace *vs" "void *addr" "size_t len" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_meter "void" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_fork "struct lwp *l1" "struct lwp *l2" "bool shared" ;
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn uvm_grow "struct proc *p" "vaddr_t sp" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvn_findpages "struct uvm_object *uobj" "voff_t offset" "int *npagesp" "struct vm_page **pps" "int flags" ;
-.Pp
-.Ft void
-.br
+.It Ft void
 .Fn uvm_swap_stats "int cmd" "struct swapent *sep" "int sec" "register_t *retval" ;
+.El
 .Pp
 The
 .Fn uao_create ,

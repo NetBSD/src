@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.10 2008/07/15 17:51:38 perry Exp $ 
+ *	$Id: main.c,v 1.10.6.1 2009/05/13 19:20:26 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -510,7 +510,7 @@ mloop(
 )
 {
 	fd_set set;
-	struct timeval timeout;
+	struct timeval timeo;
 	int ret;
 	int high_selfd;
 
@@ -557,10 +557,10 @@ mloop(
 		}
 #endif
 		
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
+		timeo.tv_sec = 1;
+		timeo.tv_usec = 0;
 
-		ret = select(high_selfd + 1, &set, NULL, NULL, &timeout);
+		ret = select(high_selfd + 1, &set, NULL, NULL, &timeo);
 
 		if (ret > 0)
 		{	

@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.9 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: files.c,v 1.9.2.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,9 +69,6 @@ static int	checkaux(const char *, void *);
 static int	fixcount(const char *, void *);
 static int	fixfsel(const char *, void *);
 static int	fixsel(const char *, void *);
-static int	expr_eval(struct nvlist *,
-		    int (*)(const char *, void *), void *);
-static void	expr_free(struct nvlist *);
 
 void
 initfiles(void)
@@ -496,7 +493,7 @@ fixsel(const char *name, void *context)
  * No short circuiting ever occurs.  fn must return 0 or 1 (otherwise
  * our mixing of C's bitwise & boolean here may give surprises).
  */
-static int
+int
 expr_eval(struct nvlist *expr, int (*fn)(const char *, void *), void *context)
 {
 	int lhs, rhs;
@@ -527,7 +524,7 @@ expr_eval(struct nvlist *expr, int (*fn)(const char *, void *), void *context)
 /*
  * Free an expression tree.
  */
-static void
+void
 expr_free(struct nvlist *expr)
 {
 	struct nvlist *rhs;

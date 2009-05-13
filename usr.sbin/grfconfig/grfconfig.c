@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.13 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.13.6.1 2009/05/13 19:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1997\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: grfconfig.c,v 1.13 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: grfconfig.c,v 1.13.6.1 2009/05/13 19:20:23 jym Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -55,7 +55,7 @@ static void print_rawdata __P((struct grfvideo_mode *, int));
 
 static struct grf_flag {
 	u_short	grf_flag_number;
-	char	*grf_flag_name;
+	const char	*grf_flag_name;
 } grf_flags[] = {
 	{GRF_FLAGS_DBLSCAN,		"doublescan"},
 	{GRF_FLAGS_LACE,		"interlace"},
@@ -87,7 +87,7 @@ main(ac, av)
 	char	buf[_POSIX2_LINE_MAX];
 	char	*cps[31];
 	char	*p;
-	char	*errortext;
+	const char	*errortext;
 
 
 	while ((c = getopt(ac, av, "rt")) != -1) {

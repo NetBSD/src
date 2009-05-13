@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2006/04/09 18:54:28 christos Exp $
+#	$NetBSD: Makefile,v 1.2.30.1 2009/05/13 19:20:01 jym Exp $
 
 .if (${MACHINE_ARCH} == "i386")
 PROG=	pmc
-WARNS?= 4
 
 LDADD+=	-li386
 DPADD+=	${LIBI386}

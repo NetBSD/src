@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.9 2006/05/11 07:08:40 mrg Exp $ 
+ *	$Id: exec.c,v 1.9.28.1 2009/05/13 19:20:25 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -105,7 +105,7 @@ sigchild_handler(int sig)
  *	execute prog as a subprocess and pass an argumentlist
  *---------------------------------------------------------------------------*/
 pid_t
-exec_prog(char *prog, char **arglist)
+exec_prog(const char *prog, const char **arglist)
 {
 	char tmp[MAXPATHLEN];
 	char path[MAXPATHLEN+1];
@@ -152,7 +152,7 @@ exec_prog(char *prog, char **arglist)
 		fclose(logfp);
 	
 
-	if (execvp(path,arglist) < 0 )
+	if (execvp(path, __UNCONST(arglist)) < 0 )
 		_exit(127);
 
 	return(-1);
@@ -164,14 +164,14 @@ exec_prog(char *prog, char **arglist)
 int
 exec_connect_prog(struct cfg_entry *cep, const char *prog, int link_down)
 {
-	char *argv[32], **av = argv;
+	const char *argv[32], **av = argv;
 	char devicename[MAXPATHLEN], addr[100];
 	int s;
 	struct ifreq ifr;
 
 	/* the obvious things */
 	snprintf(devicename, sizeof(devicename), "%s%d", cep->usrdevicename, cep->usrdeviceunit);
-	*av++ = (char*)prog;
+	*av++ = prog;
 	*av++ = "-d";
 	*av++ = devicename;
 	*av++ = "-f";
@@ -196,7 +196,7 @@ exec_connect_prog(struct cfg_entry *cep, const char *prog, int link_down)
 	/* terminate argv */
 	*av++ = NULL;
 
-	return exec_prog((char*)prog, argv);
+	return exec_prog(prog, argv);
 }
 
 /*---------------------------------------------------------------------------*
@@ -205,7 +205,7 @@ exec_connect_prog(struct cfg_entry *cep, const char *prog, int link_down)
 int
 exec_answer(struct cfg_entry *cep)
 {
-	char *argv[32];
+	const char *argv[32];
 	char devicename[MAXPATHLEN];	
 	int pid;
 

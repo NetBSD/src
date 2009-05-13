@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2009/01/25 22:08:37 abs Exp $
+#	$NetBSD: list,v 1.11.2.1 2009/05/13 19:17:39 jym Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -60,8 +60,8 @@ SPECIAL	/bin/rm dev/MAKEDEV
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/group			etc/group
 COPY	${CURDIR}/../../../../etc/master.passwd		etc/master.passwd
-COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/netconfig		etc/netconfig
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 

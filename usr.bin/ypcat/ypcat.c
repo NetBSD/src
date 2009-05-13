@@ -1,4 +1,4 @@
-/*	$NetBSD: ypcat.c,v 1.11 2003/12/10 12:06:26 agc Exp $	*/
+/*	$NetBSD: ypcat.c,v 1.11.42.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypcat.c,v 1.11 2003/12/10 12:06:26 agc Exp $");
+__RCSID("$NetBSD: ypcat.c,v 1.11.42.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: ypcat.c,v 1.11 2003/12/10 12:06:26 agc Exp $");
 #include <rpcsvc/ypclnt.h>
 
 const struct ypalias {
-	char *alias, *name;
+	const char *alias, *name;
 } ypaliases[] = {
 	{ "passwd", "passwd.byname" },
 	{ "group", "group.byname" },
@@ -72,9 +72,10 @@ main(argc, argv)
 {
 	char *domainname;
 	struct ypall_callback ypcb;
-	char *inmap;
+	const char *inmap;
 	int notrans;
-	int c, r, i;
+	int c, r;
+	size_t i;
 
 	domainname = NULL;
 	notrans = key = 0;

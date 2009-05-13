@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.4.42.1 2009/05/13 19:20:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: extern.h,v 1.4 2003/10/13 07:41:22 agc Exp $
+ *	$NetBSD: extern.h,v 1.4.42.1 2009/05/13 19:20:01 jym Exp $
  */
 
 extern int eoptind;
@@ -47,11 +47,11 @@ int	 inln __P((FILE *, char *, int, int *, int, int *));
 int	 inskip __P((FILE *, int, int));
 void	 mfail __P((void));
 int	 mulfile __P((int, char **));
-FILE	*nxtfile __P((int, char **, char **, char *, int));
+FILE	*nxtfile __P((int, char **, const char **, char *, int));
 int	 onecol __P((int, char **));
 int	 otln __P((char *, int, int *, int *, int));
 void	 pfail __P((void));
-int	 prhead __P((char *, char *, int));
+int	 prhead __P((char *, const char *, int));
 int	 prtail __P((int, int));
 int	 setup __P((int, char **));
 void	 terminate __P((int));

@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.373 2009/02/07 15:32:11 wiz Exp $
+.\"	$NetBSD: options.4,v 1.373.2.1 2009/05/13 19:19:09 jym Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,9 +30,9 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 6, 2009
-.Os
+.Dd April 10, 2009
 .Dt OPTIONS 4
+.Os
 .Sh NAME
 .Nm options
 .Nd Miscellaneous kernel configuration options
@@ -62,21 +62,14 @@ form removes a previously specified option.
 .Ss Keywords
 The following keywords are recognized in a kernel configuration file:
 .Bl -ohang
-.It Sy cinclude Xo
-.Qq Ar filename
-.Xc
+.It Sy cinclude Qq Ar filename
 Conditionally includes another kernel configuration file whose name is
 .Ar filename ,
 which may be double-quoted and may be an explicit path or relative to
 the kernel source directory.
 Failure to open the named file is ignored.
-.It Sy config Xo
-.Ar exec_name
-.No root on
-.Ar rootdev
-.Op type Ar fstype
-.Op dumps on Ar dumpdev
-.Xc
+.It Sy config Ar exec_name No root on Ar rootdev Oo type Ar fstype Oc \
+Oo dumps on Ar dumpdev Oc
 Defines a configuration whose kernel executable is named
 .Ar exec_name ,
 normally
@@ -100,12 +93,8 @@ The root
 and
 .Ar dumpdev
 are optional and assumed to be wild carded if they are not specified.
-.It Ar device_instance Xo
-at
-.Ar attachment
-.Op Ar locators value Op ...
-.Op flags Ar value
-.Xc
+.It Ar device_instance No at Ar attachment \
+Oo Ar locators value Oo ... Oc Oc Oo flags Ar value Oc
 Define an instance of the device driver
 .Ar device_instance
 that attaches to the bus or device named
@@ -122,27 +111,19 @@ often may be a wild card,
 Some device drivers have one or more
 .Ar flags
 that can be adjusted to affect the way they operate.
-.It Sy file-system Xo
-.Ar fs_name Op , Ar fs_name Op ...
-.Xc
+.It Sy file-system Ar fs_name Op , Ar fs_name Op ...
 Include support for the file-system
 .Ar fs_name .
-.It Sy ident Xo
-.Qq Ar string
-.Xc
+.It Sy ident Qq Ar string
 Sets the kernel identification string to
 .Ar string .
-.It Sy include Xo
-.Qq Ar filename
-.Xc
+.It Sy include Qq Ar filename
 Functions the same as
 .Ar cinclude ,
 except failure to open
 .Ar filename
 produces a fatal error.
-.It Sy options Xo
-.Ar option_name Op , Ar option_name=value Op ...
-.Xc
+.It Sy options Ar option_name Op , Ar option_name=value Op ...
 Specifies (or sets) the option, or comma-separated list of options,
 .Ar option_name .
 Some options expect to be assigned a value, which may be an integer,
@@ -156,9 +137,7 @@ Options that are not defined by device definition files are passed to
 the compile process as
 .Fl D
 flags to the C compiler.
-.It Sy makeoptions Xo
-.Ar name=value
-.Xc
+.It Sy makeoptions Ar name=value
 Defines a
 .Xr make 1
 macro
@@ -166,13 +145,9 @@ macro
 with the value
 .Ar value
 in the kernel Makefile.
-.It Sy maxusers Xo
-.Ar integer
-.Xc
+.It Sy maxusers Ar integer
 Set the maxusers variable in the kernel.
-.It Sy no Xo
-.Ar keyword Ar name Op Ar arguments Op ...
-.Xc
+.It Sy no Ar keyword Ar name Op Ar arguments Op ...
 For the
 .Xr config 1
 .Ar keywords
@@ -190,10 +165,7 @@ include "arch/i386/conf/GENERIC"
 no options COMPAT_09
 no pseudo-device bridge
 .Ed
-.It Sy pseudo-device Xo
-.Ar name
-.Op Ar N
-.Xc
+.It Sy pseudo-device Ar name Op Ar N
 Includes support for the pseudo-device
 .Ar name .
 Some pseudo-devices can have multiple or
@@ -644,6 +616,17 @@ Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
 structures is detected.
 These checks can decrease performance up to 15%.
+.It Cd options LOCKDEBUG
+Adds code to the kernel to detect incorrect use of locking primitives
+(mutex, rwlock, simplelock).
+This code will cause the kernel to check for dead lock conditions.
+It will also check for memory being freed to not contain initialised
+lock primitives.
+Functions for use in
+.Xr ddb 4
+to check lock chains etc. are also enabled.
+These checks are very expensive and can decrease performance on
+multi-processor machines by a factor of three.
 .It Cd options KSTACK_CHECK_MAGIC
 Check kernel stack usage and panic if stack overflow is detected.
 This check is performance sensitive because it scans stack on each context
@@ -701,11 +684,11 @@ the very earliest parts of kernel initialization.
 .Bl -ohang
 .It Cd file-system FFS
 Includes code implementing the Berkeley Fast File System
-.Em ( FFS ) .
+.Po Em FFS Pc .
 Most machines need this if they are not running diskless.
 .It Cd file-system EXT2FS
 Includes code implementing the Second Extended File System
-.Em ( EXT2FS ) ,
+.Po Em EXT2FS Pc ,
 revision 0 and revision 1 with the
 .Em filetype
 and
@@ -723,7 +706,7 @@ for details.
 .It Cd file-system LFS
 .Bq Em EXPERIMENTAL
 Include the Log-structured File System
-.Em ( LFS ) .
+.Po Em LFS Pc .
 See
 .Xr mount_lfs 8
 and
@@ -731,7 +714,7 @@ and
 for details.
 .It Cd file-system MFS
 Include the Memory File System
-.Em ( MFS ) .
+.Po Em MFS Pc .
 This file system stores files in swappable memory, and produces
 notable performance improvements when it is used as the file store
 for
@@ -1082,16 +1065,6 @@ for details.
 Reduce the size of the NFS client code by omitting code that's only required
 for NFSv3 and NQNFS support, leaving only that code required to use NFSv2
 servers.
-.It Cd options SOFTDEP
-Enable kernel support for soft-dependencies in FFS file systems.
-Softdep improves write performance by aggregating and properly
-ordering disk metadata writes, achieving near-asynchronous write
-performance while maintaining the file system consistency of
-synchronous writes.
-Soft-dependencies are enabled on a per-mount basis.
-See
-.Xr mount 8
-for details.
 .It Cd options UFS_DIRHASH
 Increase lookup performance by maintaining in-core hash tables
 for large directories.
@@ -2221,7 +2194,7 @@ User space memory allocations (as made by
 will be arranged in a
 .Dq top down
 fashion instead of the traditional
-.Dq upwards from MAXDSIZ \+ vm_daddr
+.Dq upwards from MAXDSIZ \&+ vm_daddr
 method.
 This includes the placement of
 .Xr ld.so 1 .
@@ -2447,7 +2420,7 @@ in the node
 if supported.
 .It Cd options POWERNOW_K8
 Include support for AMD Athlon 64 PowerNow! and Cool`n'Quiet
-Technology, used to change the cpu voltage and frequency
+Technology, used to change the CPU voltage and frequency
 on the fly.
 .El
 .Ss atari-specific Options

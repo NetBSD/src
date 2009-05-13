@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.17 2006/08/13 23:24:53 wiz Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.17.28.1 2009/05/13 19:19:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.17 2006/08/13 23:24:53 wiz Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.17.28.1 2009/05/13 19:19:07 jym Exp $");
 #endif
 
 
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 {
 	enum cmd command = CMD_NONE;
 	int period_flag = 0;
-	int ch;
+	int ch, tmp;
 	u_int period = WDOG_PERIOD_DEFAULT;
 
 	while ((ch = getopt(argc, argv, "Adekp:utx")) != -1) {
@@ -119,9 +119,10 @@ main(int argc, char *argv[])
 
 		case 'p':
 			period_flag = 1;
-			period = atoi(optarg);
-			if (period == -1)
+			tmp = atoi(optarg);
+			if (tmp < 0)
 				usage();
+			period = (unsigned int)tmp;
 			break;
 
 		case 'x':

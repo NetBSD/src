@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.30 2007/12/16 09:49:28 lukem Exp $
+.\"	$NetBSD: getsockopt.2,v 1.30.14.1 2009/05/13 19:18:28 jym Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,7 +149,7 @@ Except as noted, each may be examined with
 .Fn getsockopt
 and set with
 .Fn setsockopt .
-.Bl -column SO_OOBINLINE -offset indent
+.Bl -column SO_OOBINLINE data -offset indent
 .It Dv SO_DEBUG Ta "enables recording of debugging information"
 .It Dv SO_REUSEADDR Ta "enables local address reuse"
 .It Dv SO_REUSEPORT Ta "enables duplicate address and port bindings"

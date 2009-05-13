@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.22.6.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,10 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.22.6.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
+#include <err.h>
 #include <fcntl.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -51,6 +52,7 @@ __RCSID("$NetBSD: main.c,v 1.22 2008/07/20 01:03:22 lukem Exp $");
 #include <time.h>
 #include <unistd.h>
 #include "extern.h"
+#include "pathnames.h"
 #include "restart.h"
 
 int
@@ -68,6 +70,10 @@ main(int argc, char **argv)
 	if (fd < 3)
 		exit(1);
 	close(fd);
+
+	if (chdir(_PATH_SAILDIR) < 0) {
+		err(1, "%s", _PATH_SAILDIR);
+	}
 
 	srandom((u_long)time(NULL));
 
@@ -101,8 +107,7 @@ main(int argc, char **argv)
 			nobells++;
 			break;
 		default:
-			fprintf(stderr, "SAIL: Unknown flag %s.\n", p);
-			exit(1);
+			errx(1, "Usage: %s [-bdlsx] [scenario-number]", p);
 		}
 
 	argc -= optind;
@@ -124,7 +129,7 @@ main(int argc, char **argv)
 	case MODE_LOGGER:
 		return lo_main();
 	default:
-		fprintf(stderr, "SAIL: Unknown mode %d.\n", mode);
+		warnx("Unknown mode %d", mode);
 		abort();
 	}
 	/*NOTREACHED*/

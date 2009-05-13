@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.11 2008/10/13 20:41:21 apb Exp $
+.\"	$NetBSD: pxeboot.8,v 1.11.4.1 2009/05/13 19:19:14 jym Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,9 +24,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 13, 2008
-.Os
+.Dd April 10, 2008
 .Dt PXEBOOT 8 i386
+.Os
 .Sh NAME
 .Nm pxeboot
 .Nd network boot NetBSD/i386 through a PXE BIOS extension
@@ -66,16 +66,33 @@ The
 .Nx
 .Nm
 program takes control.
-An interactive mode is entered if the
-user presses a key within five seconds.
-After this time or after the user's
+It immediately issues another
+.Tn DHCP
+request to get the name of a
+.Xr boot.cfg 5
+file to load, using
+.Dq boot.cfg
+by default.
+If the boot config file is not found, or if the supplied file appears
+not to be a boot configuration file, the file is skipped.
+Otherwise it is loaded and obeyed as described in
+.Xr boot.cfg 5 .
+.\" XXX Now, if the boot.cfg is loaded, is DHCP still used to get the
+.\" XXX file name for the kernel? If only the person who had made the
+.\" XXX changes had documented them.
+If a boot configuration is not loaded, the user has the option to
+enter a limited version of the standard interactive boot mode by
+pressing a key within five seconds.
+After this time, or after the user's
 .Ic boot
 command, another
 .Tn DHCP
-request is issued and the kernel
-is loaded as specified in the
+request is issued and the kernel filename returned by the
 .Tn DHCP
-reply.
+reply, using
+.Dq netbsd
+by default,
+is loaded.
 To read the kernel file, the
 .Tn NFS
 .Pq version 2
@@ -92,11 +109,14 @@ request issued by the
 program has the following special parameters:
 .Bl -tag -width xxxx
 .It Bootfile name
-is set to the
+is set to
+.Dq boot.cfg
+during the first request, and then to
+the
 .Va filename
 argument on the
 .Ic boot
-command line typed in by the user (can be empty), or to
+command line typed in by the user (can be empty), using
 .Dq netbsd
 in the non-interactive case.
 .It DHCP Vendor class identifier tag
@@ -106,15 +126,18 @@ is set to
 .Pp
 The
 .Tn DHCP
-server can use these fields to distinguish between
-the various originators of requests (first and second
-.Tn PXE
+server can use these fields (i.e. the
+.Tn DHCP
+vendor class identifier tag and the requested file name, possibly
+supplied by the user's command line input to the
+.Nm
+program) to distinguish between the various originators of requests
+(PXE BIOS, first and second
+.Nm
 stage,
 .Nx
-kernel), and to control conditional behaviour depending on the
-user's command line input to the
-.Nm
-program, e.g. to support alternative
+kernel), and to alter its behaviour.
+For example, this can be used to support alternative
 .Nx
 installations on one machine.
 .Pp
@@ -125,14 +148,15 @@ reply are interpreted:
 .Bl -tag -width xxxx
 .It Bootfile name
 specifies the protocol to be used, and the filename of the
+boot config or
 .Nx
 kernel to be booted, separated by a colon.
 Available protocols are
 .Dq nfs
 and
 .Dq tftp .
-The kernel filename part is interpreted relatively to the NFS root directory
-(see the
+The boot config or kernel filename part is interpreted relatively to
+the NFS root directory (see the
 .Em Root path
 reply field below) or the TFTP server's root directory (which might be a
 subdirectory within the TFTP server's filesystem, depending on the
@@ -152,6 +176,8 @@ field in the DHCP request above) is used.
 If no protocol was specified,
 .Dq nfs
 is assumed.
+.It Next server
+is used as the location of the tftp server.
 .It Swap server
 can be used to override the
 .Dq server IP address
@@ -190,11 +216,7 @@ The commands accepted in interactive mode are:
 .\" and in other i386-specific *boot.8 files;
 .\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
-.It Xo Ic boot
-.Op Va device : Ns
-.Op Va filename
-.Op Fl 1234abcdmqsvxz
-.Xc
+.It Ic boot Oo Va device : Ns Oc Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
 Boot
 .Nx .
 See
@@ -225,7 +247,9 @@ file.
 .Sh EXAMPLES
 The first
 .Pa /etc/dhcpd.conf
-example shows a simple configuration which just loads a file
+example shows a simple configuration which just loads
+.Dq boot.cfg
+and
 .Dq netbsd
 from the client's NFS root directory, using the defaults for
 protocol and kernel filename.
@@ -244,6 +268,36 @@ host myhost {
 .Pp
 The following
 .Pa /etc/dhcpd.conf
+entry sets loads the boot config and kernel over tftp.
+This can be used, for example, for installing machines by using
+an install kernel.
+.Pp
+.Bd -literal
+host myhost {
+    hardware ethernet 00:00:00:00:00:00;
+    fixed-address myhost;
+    option host-name "myhost";
+    next-server mytftpserver;
+
+    # This section allows dhcpd to respond with different answers
+    # for the different tftp requests for the bootloader and kernel.
+    if substring (option vendor-class-identifier, 0, 20)
+      = "PXEClient:Arch:00000" {
+        filename "pxeboot_ia32.bin";
+    } elsif substring (option vendor-class-identifier, 0, 17)
+      = "NetBSD:i386:libsa" {
+        if filename = "boot.cfg" {
+            filename "tftp:boot.cfg";
+        } else if filename = "netbsd" {
+            filename "tftp:netbsd-INSTALL.gz";
+        }
+    }
+}
+}
+.Ed
+.Pp
+The following
+.Pa /etc/dhcpd.conf
 entry shows how different system installations can be booted depending on
 the user's input on the
 .Nm
@@ -254,8 +308,11 @@ host myhost {
     hardware ethernet 00:00:00:00:00:00;
     fixed-address myhost;
     option host-name "myhost";
+    next-server mytftpserver;
     if substring (option vendor-class-identifier, 0, 9) = "PXEClient" {
         filename "pxeboot_ia32.bin";
+    } elsif filename = "boot.cfg" {
+        filename "tftp:boot.cfg";
     } elsif filename = "tftp" {
         filename "tftp:netbsd.myhost";
     } else {
@@ -270,15 +327,12 @@ host myhost {
 }
 .Ed
 .Pp
-It is assumed that the
+The
 .Tn TFTP
-server is the same as the
-.Tn DHCP
-server unless a
+server is supplied using the
 .Em next-server
-directive is specified somewhere else in
-.Pa dhcpd.conf ,
-and that the
+directive.
+The
 .Tn NFS
 server for the root file system is
 .Em mynfsserver .
@@ -290,6 +344,7 @@ case and by the
 .Nx
 kernel to mount the root file system.
 .Sh SEE ALSO
+.Xr boot.cfg 5 ,
 .Xr boot 8 ,
 .Xr dhcpd 8 ,
 .Xr diskless 8 ,

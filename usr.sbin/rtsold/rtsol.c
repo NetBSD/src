@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.14 2007/09/06 09:26:21 jnemeth Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.14.14.1 2009/05/13 19:20:38 jym Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ sendpacket(struct ifinfo *ifinfo)
 	struct in6_pktinfo *pi;
 	struct cmsghdr *cm;
 	int hoplimit = 255;
-	int i;
+	ssize_t i;
 	struct sockaddr_in6 dst;
 
 	dst = sin6_allrouters;
@@ -211,7 +211,7 @@ sendpacket(struct ifinfo *ifinfo)
 
 	i = sendmsg(rssock, &sndmhdr, 0);
 
-	if (i < 0 || i != ifinfo->rs_datalen) {
+	if (i < 0 || (size_t)i != ifinfo->rs_datalen) {
 		/*
 		 * ENETDOWN is not so serious, especially when using several
 		 * network cards on a mobile node. We ignore it.
@@ -229,7 +229,8 @@ void
 rtsol_input(int s)
 {
 	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
-	int ifindex = 0, i, *hlimp = NULL;
+	int ifindex = 0, *hlimp = NULL;
+	ssize_t i;
 	struct in6_pktinfo *pi = NULL;
 	struct ifinfo *ifi = NULL;
 	struct icmp6_hdr *icp;
@@ -267,9 +268,9 @@ rtsol_input(int s)
 		return;
 	}
 
-	if (i < sizeof(struct nd_router_advert)) {
+	if (i < (ssize_t)sizeof(struct nd_router_advert)) {
 		warnmsg(LOG_ERR, __func__,
-		    "packet size(%d) is too short", i);
+		    "packet size(%zd) is too short", i);
 		return;
 	}
 

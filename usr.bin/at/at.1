@@ -1,4 +1,4 @@
-.\" $NetBSD: at.1,v 1.23 2008/03/11 01:04:18 christos Exp $
+.\" $NetBSD: at.1,v 1.23.10.1 2009/05/13 19:19:43 jym Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd March 10, 2008
@@ -86,7 +86,7 @@ or
 for running in the morning or the evening.
 You can also say what day the job will be run,
 by giving a date in the form
-.Ar \%month-name day
+.Ar %month-name day
 with an optional
 .Ar year ,
 or giving a date of the form
@@ -101,7 +101,7 @@ You can also give times like
 .Op Nm now
 or
 .Op Nm now
-.Sq + Ar count \%time-units ,
+.Sq + Ar count %time-units ,
 where the time-units can be
 .Sq minutes ,
 .Sq hours ,
@@ -263,13 +263,13 @@ Otherwise, a
 value of 20 is used.
 .It Ar MM
 The month of the year, from 01 to 12.
-.It Ar DD
+.It Ar \&DD
 The day of the month, from 01 to 31.
 .It Ar hh
 The hour of the day, from 00 to 23.
 .It Ar mm
 The minute of the hour, from 00 to 59.
-.It Ar SS
+.It Ar \&SS
 The second of the minute, from 00 to 61.
 .El
 .It Fl V

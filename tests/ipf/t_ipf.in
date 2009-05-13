@@ -1,0 +1,398 @@
+# $NetBSD: t_ipf.in,v 1.1.2.2 2009/05/13 19:19:23 jym Exp $
+#
+# Copyright (c) 2008 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#
+# (C)opyright 1993-1996 by Darren Reed.
+#
+# See the IPFILTER.LICENCE file for details on licencing.
+#
+
+h_copydata()
+{
+	test -f $(atf_get_srcdir)/input/$1 && \
+	    cp $(atf_get_srcdir)/input/$1 in
+	test -f $(atf_get_srcdir)/regress/$1 && \
+	    cp $(atf_get_srcdir)/regress/$1 reg
+	test -f $(atf_get_srcdir)/expected/$1 && \
+	    cp $(atf_get_srcdir)/expected/$1 exp
+}
+
+h_dotest()
+{
+	h_copydata $1
+
+	{ while read rule; do
+		atf_check -x "echo \"$rule\" | ipftest -F \
+$2 -Rbr - -i in $4 >>out"
+		echo "--------" >>out
+	done; } <reg
+
+	diff -u exp out || atf_fail "results differ"
+}
+
+h_mtest()
+{
+	h_copydata $1
+
+	atf_check -o save:out ipftest -F $2 -Rbr reg -i in
+	echo "--------" >>out
+
+	diff -u exp out || atf_fail "results differ"
+}
+
+h_itest()
+{
+	h_copydata $1
+
+	case $3 in
+	ipf)
+		atf_check -o file:exp -e ignore ipf -Rnvf reg
+		;;
+	ipftest)
+		atf_check -o file:exp ipftest -D -r reg -i /dev/null
+		;;
+	esac
+}
+
+h_itest_i19()
+{
+	cp "$(atf_get_srcdir)/expected/i19.dist" .
+
+	if [ "`grep LOG_SECURITY /usr/include/sys/syslog.h 2>&1`" = "" ] ; then
+		if [ "`grep LOG_AUDIT /usr/include/sys/syslog.h 2>&1`" = "" ] ; then
+				sed -e 's/security/!!!/g' i19.dist > i19.p1;
+		else
+				sed -e 's/security/audit/g' i19.dist > i19.p1;
+		fi
+	else
+		cp i19.dist i19.p1;
+	fi
+	if [ "`grep LOG_AUTHPRIV /usr/include/sys/syslog.h 2>&1`" = "" ] ; then
+		sed -e 's/authpriv/!!!/g' i19.p1 > i19.p2;
+	else
+		cp i19.p1 i19.p2;
+	fi
+	if [ "`grep LOG_LOGALERT /usr/include/sys/syslog.h 2>&1`" = "" ] ; then
+		sed -e 's/logalert/!!!/g' i19.p2 > i19.p1;
+	else
+		cp i19.p2 i19.p1;
+	fi
+	if [ "`grep LOG_FTP /usr/include/sys/syslog.h 2>&1`" = "" ] ; then
+		sed -e 's/ftp/!!!/g' i19.p1 > i19.p2;
+	else
+		cp i19.p1 i19.p2;
+	fi
+	if [ "`egrep 'LOG_CRON.*15' /usr/include/sys/syslog.h 2>&1`" != "" ] ; then
+		sed -e 's/cron/cron2/g' i19.p2 > i19;
+	else
+		cp i19.p2 i19;
+	fi
+	/bin/rm i19.p?
+
+	mv i19 exp
+	h_itest "$@"
+}
+
+h_nattest()
+{
+	h_copydata $1
+
+	if [ $3 = hex ] ; then
+		format="-xF $2"
+	else
+		format="-F $2"
+	fi
+
+	format="$4 $format"
+
+	{ while read rule; do
+		atf_check -o save:save -x \
+		    "echo \"$rule\" | ipftest $format -RbN - -i in"
+		cat save >>out
+		echo "-------------------------------" >>out
+	done; } <reg
+
+	diff -u exp out || atf_fail "results differ"
+}
+
+h_natipftest()
+{
+	h_copydata $1
+	cp $(atf_get_srcdir)/regress/$1.nat nat
+	cp $(atf_get_srcdir)/regress/$1.ipf ipf
+
+	if [ $4 = hex ] ; then
+		format="-xF $3"
+	else
+		format="-F $3"
+	fi
+
+	case $2 in
+	single)
+		{ while read rule; do
+			atf_check -o save:save -x "echo \"$rule\" | \
+ipftest -R $5 $format -b -r ipf -N - -i in"
+			cat save >>out
+			echo "-------------------------------" >>out
+		done; } <nat
+		;;
+	multi)
+		atf_check -o save:out ipftest -R $5 \
+			$format -b -r ipf -N nat -i in
+		echo "-------------------------------" >>out
+		;;
+	esac
+
+	diff -u exp out || atf_fail "results differ"
+}
+
+h_intest()
+{
+	h_copydata $1
+
+	atf_check -o file:exp -e ignore ipnat -Rnvf reg
+}
+
+h_iptest()
+{
+	h_copydata $1
+	mkdir input
+	cp $(atf_get_srcdir)/input/ip2.data input/
+
+	atf_check -o file:exp -e ignore ippool -f reg -nRv
+}
+
+h_logtest()
+{
+	h_copydata $1
+	cp $(atf_get_srcdir)/expected/$1.b exp.b
+
+	case `uname -s` in
+	OSF1)
+		GMT=:
+		;;
+	*)
+		GMT=GMT
+		;;
+	esac
+
+	{ while read rule; do
+		echo $rule >>out
+		atf_check -o ignore -x \
+		    "echo $rule | ipftest -br - -F $2 -i in -l logout"
+
+		atf_check -o save:save -x "TZ=$GMT ipmon -P /dev/null -f logout"
+		cat save >>out
+		echo "--------" >>out
+
+		atf_check -o save:save -x "TZ=$GMT ipmon -P /dev/null -bf logout"
+		cat save >>out.b
+		echo "--------" >>out.b
+	done; } <reg
+
+	atf_check -o ignore ipftest -br reg -F $2 -i in -l logout
+
+	atf_check -o save:save -x "TZ=$GMT ipmon -P /dev/null -f logout"
+	cat save >>out
+	echo "--------" >>out
+
+	atf_check -o save:save -x "TZ=$GMT ipmon -P /dev/null -bf logout"
+	cat save >>out.b
+	echo "--------" >>out.b
+
+	diff -u exp out || atf_fail "results differ"
+	diff -u exp.b out.b || atf_fail "results differ"
+}
+
+h_dotest6()
+{
+	h_copydata $(echo ${1} | tr _ .)
+
+	ipftest -6 -r /dev/null -i /dev/null >/dev/null 2>&1 \
+	    || atf_skip "skipping IPv6 tests"
+
+	{ while read rule; do
+		atf_check -o save:save -x "echo \"$rule\" | \
+ipftest -F $2 -6br - -i in"
+		cat save >>out
+		echo "--------" >>out
+	done; } <reg
+
+	diff -u exp out || atf_fail "results differ"
+}
+
+h_ptest()
+{
+	h_copydata $1
+	cp $(atf_get_srcdir)/regress/$1.pool pool 2>/dev/null
+	cp $(atf_get_srcdir)/regress/$1.ipf ipf
+
+	if [ -f pool ] ; then
+		atf_check -o save:out ipftest -RD -b -P pool -r ipf -i in
+	else
+		atf_check -o save:out ipftest -RD -b -r ipf -i in
+	fi
+
+	echo "-------------------------------" >>out
+
+}
+
+h_bpftest()
+{
+	h_copydata $(echo ${1} | tr _ .)
+	cp "$(atf_get_srcdir)/input/$(echo ${1} | sed s,bpf_,,)" in
+
+	{ while read rule; do
+		atf_check -o save:save -x "echo '$rule' | ipftest -Rbr - -i in"
+		cat save >>out
+		echo "--------" >>out
+	done; } <reg
+
+	diff -u exp out || atf_fail "results differ"
+}
+
+tc_desc:desc_f:Checks filter rules
+tc:f1:dotest:desc_f:text:text
+tc:f2:dotest:desc_f:text:text
+tc:f3:dotest:desc_f:text:text
+tc:f4:dotest:desc_f:text:text
+tc:f5:dotest:desc_f:text:text
+tc:f6:dotest:desc_f:text:text
+tc:f7:dotest:desc_f:text:text
+tc:f8:dotest:desc_f:text:text
+tc:f9:dotest:desc_f:text:text
+tc:f10:dotest:desc_f:text:text
+tc:f11:dotest:desc_f:text:text:-D
+tc:f12:dotest:desc_f:hex:hex
+tc:f13:dotest:desc_f:hex:hex
+tc:f14:dotest:desc_f:text:text
+tc:f15:mtest:desc_f:text:text
+tc:f16:mtest:desc_f:text:text
+tc:f17:mtest:desc_f:hex:hex
+tc:f18:mtest:desc_f:text:text
+tc:f19:dotest:desc_f:text:text:-T fr_statemax=3
+tc:f20:mtest:desc_f:text:text
+tc:f24:mtest:desc_f:hex:text
+
+tc_desc:desc_i:Checks parsing and printing of ipf rules
+tc:i1:itest:desc_i:text:ipf
+tc:i2:itest:desc_i:text:ipf
+tc:i3:itest:desc_i:text:ipf
+tc:i4:itest:desc_i:text:ipf
+tc:i5:itest:desc_i:text:ipf
+tc:i6:itest:desc_i:text:ipf
+tc:i7:itest:desc_i:text:ipf
+tc:i8:itest:desc_i:text:ipf
+tc:i9:itest:desc_i:text:ipf
+tc:i10:itest:desc_i:text:ipf
+tc:i11:itest:desc_i:text:ipf
+tc:i12:itest:desc_i:text:ipf
+tc:i13:itest:desc_i:text:ipf
+tc:i14:itest:desc_i:text:ipf
+tc:i15:itest:desc_i:text:ipf
+tc:i16:itest:desc_i:text:ipf
+tc:i17:itest:desc_i:text:ipftest
+tc:i18:itest:desc_i:text:ipf
+tc:i19:itest_i19:desc_i:text:ipf
+tc:i20:itest:desc_i:text:ipf
+tc:i21:itest:desc_i:text:ipf
+
+tc_desc:desc_n:Checks NAT
+tc:n1:nattest:desc_n:text:text
+tc:n2:nattest:desc_n:text:text
+tc:n3:nattest:desc_n:text:text
+tc:n4:nattest:desc_n:text:text
+tc:n5:nattest:desc_n:text:text
+tc:n6:nattest:desc_n:text:text
+tc:n7:nattest:desc_n:text:text
+tc:n8:nattest:desc_n:hex:hex:-T fr_update_ipid=0
+tc:n9:nattest:desc_n:hex:hex:-T fr_update_ipid=0
+tc:n10:nattest:desc_n:hex:hex:-T fr_update_ipid=0
+tc:n11:nattest:desc_n:text:text
+tc:n12:nattest:desc_n:hex:hex:-T fr_update_ipid=0
+tc:n13:nattest:desc_n:text:text
+tc:n14:nattest:desc_n:text:text
+tc:n16:nattest:desc_n:hex:hex:-D
+tc:n17:nattest:desc_n:hex:hex:-D
+
+tc_desc:desc_ni:Checks combined NAT and IPF
+tc:ni1:natipftest:desc_ni:multi:hex:hex:-T fr_update_ipid=1
+tc:ni2:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni3:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni4:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni5:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni6:natipftest:desc_ni:multi:hex:hex:-T fr_update_ipid=1
+tc:ni7:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni8:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni9:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni10:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni11:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni12:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni13:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni14:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni15:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni16:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc:ni19:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=0
+tc:ni20:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=0
+tc:ni21:natipftest:desc_ni:multi:text:text
+tc:ni23:natipftest:desc_ni:multi:text:text:-D
+
+tc_desc:desc_in:Checks parsing and printing of ipnat rules
+tc:in1:intest:desc_in:text:text
+tc:in2:intest:desc_in:text:text
+tc:in3:intest:desc_in:text:text
+tc:in4:intest:desc_in:text:text
+tc:in5:intest:desc_in:text:text
+tc:in6:intest:desc_in:text:text
+
+tc_desc:desc_p:Checks pools
+tc:p1:ptest:desc_p:text:text
+tc:p2:ptest:desc_p:text:text
+tc:p3:ptest:desc_p:text:text
+tc:p5:ptest:desc_p:text:text
+
+tc_desc:desc_ip:Checks pools
+tc:ip1:iptest:desc_ip:text:text
+tc:ip2:iptest:desc_ip:text:text
+
+tc_desc:desc_log:Checks logging
+tc:l1:logtest:desc_log:hex:hex
+
+tc_desc:desc_ipv6:Checks ipv6 filter rules
+tc:ipv6_1:dotest6:desc_ipv6:hex:hex
+tc:ipv6_2:dotest6:desc_ipv6:hex:hex
+tc:ipv6_3:dotest6:desc_ipv6:hex:hex
+tc:ipv6_5:dotest6:desc_ipv6:hex:hex
+tc:ipv6_6:dotest6:desc_ipv6:hex:text
+
+tc_desc:desc_bpf:Checks BPF
+tc:bpf1:itest:desc_bpf:text:ipf
+tc:bpf_f1:bpftest:desc_bpf:text:text
+
+atf_init_test_cases()
+{
+tc_list
+}

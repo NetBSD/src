@@ -1,4 +1,4 @@
-.\" $NetBSD: ippp.4,v 1.7 2005/06/23 12:47:38 peter Exp $
+.\" $NetBSD: ippp.4,v 1.7.30.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: ippp.4,v 1.7 2005/06/23 12:47:38 peter Exp $
+.\"	$Id: ippp.4,v 1.7.30.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -81,8 +81,7 @@ flags given as parameters to
 have the following meaning for the
 .Nm
 devices:
-.Bl -tag -width link0 -compact
-.Pp
+.Bl -tag -width link0
 .It Li link0
 Wait passively for connection.
 The administrative
@@ -99,7 +98,6 @@ Receipt of a
 .Em Down
 event from the lower layer will not take the interface completely down
 in this case.
-.Pp
 .It Li link1
 Dial-on-demand mode.
 The administrative

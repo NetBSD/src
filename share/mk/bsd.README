@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.246 2009/01/22 14:04:15 christos Exp $
+#	$NetBSD: bsd.README,v 1.246.2.1 2009/05/13 19:19:16 jym Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -656,6 +656,8 @@ TOOL_GENCAT		Generate NLS message catalogs.  [gencat]
 
 TOOL_GMAKE		GNU make utility.  [gmake]
 
+TOOL_GREP		Print lines matching a pattern.  [grep]
+
 TOOL_GROFF		Front end for groff document formatting system.  [groff]
 
 TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
@@ -936,6 +938,15 @@ LIB		The name of the library to build.
 
 LIBDIR		Target directory for libraries.
 
+MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
+		permissions in files inside its archives to those of
+		the file it was fed. This leads to non-reproduceable
+		builds. If MKARZERO is set to "yes" (default is "no")
+		then the "D" flag is passed to ar, causing the
+		timestamp, uid and gid to be zeroed and the file
+		permissions to be set to 644. This allows .a files
+		from different builds to be bit identical.
+
 SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
 		is not "no".
 
@@ -1013,6 +1024,11 @@ Libraries are ranlib'd when made.
 The include file <bsd.links.mk> handles the LINKS and SYMLINKS variables
 and is included from from <bsd.lib.mk> and <bsd.prog.mk>.
 
+LINKSOWN, LINKSGRP, and LINKSMODE, are relevant only if a metadata log
+is used. The defaults may be modified by other bsd.*.mk files which
+include bsd.links.mk.  In the future, these variables may be replaced
+by a method for explicitly recording hard links in a metadata log.
+
 LINKS		The list of hard links, consisting of pairs of paths:
 			source-file target-file
 		${DESTDIR} is prepended to both paths before linking.
@@ -1033,6 +1049,18 @@ SYMLINKS	The list of symbolic links, consisting of pairs of paths:
 CONFIGSYMLINKS	Similar semantics to SYMLINKS, except that the symbolic links
 		are installed by the `configinstall' target,
 		not the `install' target.
+
+LINKSOWN	Link owner.  [${BINOWN}]
+
+LINKSGRP	Link group.  [${BINGRP}]
+
+LINKSMODE	Link mode.  [${NONBINMODE}]
+
+LINKSOWN_<fn>	Link owner of the specific file <fn>.
+
+LINKSGRP_<fn>	Link group of the specific file <fn>.
+
+LINKSMODE_<fn>	Link mode of the specific file <fn>.
 
 
 =-=-=-=-=   bsd.man.mk   =-=-=-=-=
@@ -1290,7 +1318,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
 		LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 		LIBRT?=		${DESTDIR}/usr/lib/librt.a
-		LIBSDP?=	${DESTDIR}/usr/lib/libsdp.a
 		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 		LIBSL?=		${DESTDIR}/usr/lib/libsl.a
 		LIBSS?=		${DESTDIR}/usr/lib/libss.a

@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.24 2007/10/29 23:20:38 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.24.14.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.24 2007/10/29 23:20:38 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.24.14.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
 #include "thread.h"
+#include "sig.h"
 
 /*
  * Mail -- a mail program
@@ -107,10 +108,10 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 		goto out;
 	}
 	nf = NULL;
-	if ((editcmd =
-		value(editortype == 'e' ? ENAME_EDITOR : ENAME_VISUAL)) == NULL)
+	editcmd = value(editortype == 'e' ? ENAME_EDITOR : ENAME_VISUAL);
+	if (editcmd == NULL)
 		editcmd = editortype == 'e' ? _PATH_EX : _PATH_VI;
-	if (run_command(editcmd, 0, 0, -1, tempname, NULL) < 0) {
+	if (run_command(editcmd, NULL, 0, -1, tempname, NULL) < 0) {
 		(void)unlink(tempname);
 		goto out;
 	}
@@ -163,14 +164,15 @@ edit1(int *msgvec, int editortype)
 	 */
 	msgCount = get_msgCount();
 	for (i = 0; msgvec[i] && i < msgCount; i++) {
-		sig_t sigint;
+		sigset_t oset;
+		struct sigaction osa;
 
 		if (i > 0) {
 			char buf[100];
 			char *p;
 
 			(void)printf("Edit message %d [ynq]? ", msgvec[i]);
-			if (fgets(buf, sizeof(buf), stdin) == 0)
+			if (fgets(buf, (int)sizeof(buf), stdin) == 0)
 				break;
 			p = skip_WSP(buf);
 			if (*p == 'q')
@@ -180,7 +182,8 @@ edit1(int *msgvec, int editortype)
 		}
 		dot = mp = get_message(msgvec[i]);
 		touch(mp);
-		sigint = signal(SIGINT, SIG_IGN);
+		sig_check();
+		(void)sig_ignore(SIGINT, &osa, &oset);
 		fp = run_editor(setinput(mp), mp->m_size, editortype,
 				readonly);
 		if (fp != NULL) {
@@ -213,7 +216,8 @@ edit1(int *msgvec, int editortype)
 				warn("/tmp");
 			(void)Fclose(fp);
 		}
-		(void)signal(SIGINT, sigint);
+		(void)sig_restore(SIGINT, &osa, &oset);
+		sig_check();
 	}
 	return 0;
 }

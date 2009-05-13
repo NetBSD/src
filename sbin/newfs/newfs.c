@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.102 2008/08/01 15:32:30 simonb Exp $	*/
+/*	$NetBSD: newfs.c,v 1.102.4.1 2009/05/13 19:19:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.102 2008/08/01 15:32:30 simonb Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.102.4.1 2009/05/13 19:19:03 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -468,6 +468,10 @@ main(int argc, char *argv[])
 		special = device;
 		if (fsi < 0 || fstat(fsi, &sb) == -1)
 			err(1, "%s: open for read", special);
+		if (S_ISBLK(sb.st_mode)) {
+			errx(1, "%s is a block device. use raw device",
+			    special);
+		}
 
 		if (!Nflag) {
 			fso = open(special, O_WRONLY, 0);
@@ -547,7 +551,7 @@ main(int argc, char *argv[])
 			errx(1, "Unable to determine file system size");
 	}
 
-	if (dkw.dkw_parent[0] && fssize > dkw.dkw_size)
+	if (dkw.dkw_parent[0] && (uint64_t)fssize > dkw.dkw_size)
 		errx(1, "size %" PRIu64 " exceeds maximum file system size on "
 		    "`%s' of %" PRIu64 " sectors",
 		    fssize, special, dkw.dkw_size);
@@ -719,7 +723,7 @@ mfs_group(const char *gname)
 
 	if (!(gp = getgrnam(gname)) && !isdigit((unsigned char)*gname))
 		errx(1, "unknown gname %s", gname);
-	return gp ? gp->gr_gid : atoi(gname);
+	return gp ? gp->gr_gid : (gid_t)atoi(gname);
 }
 
 static uid_t
@@ -729,7 +733,7 @@ mfs_user(const char *uname)
 
 	if (!(pp = getpwnam(uname)) && !isdigit((unsigned char)*uname))
 		errx(1, "unknown user %s", uname);
-	return pp ? pp->pw_uid : atoi(uname);
+	return pp ? pp->pw_uid : (uid_t)atoi(uname);
 }
 
 static int64_t
@@ -793,7 +797,7 @@ struct help_strings {
 	{ NEWFS,	"-I \t\tdo not check that the file system type is '4.2BSD'" },
 	{ BOTH,		"-N \t\tdo not create file system, just print out "
 			    "parameters" },
-	{ NEWFS,	"-O N\t\tfilesystem format: 0 ==> 4.3BSD, 1 ==> FFS, 2 ==> UFS2" },
+	{ NEWFS,	"-O N\t\tfilesystem format: 0 ==> 4.3BSD, 1 ==> FFSv1, 2 ==> FFSv2" },
 	{ NEWFS,	"-S secsize\tsector size" },
 #ifdef COMPAT
 	{ NEWFS,	"-T disktype\tdisk type" },

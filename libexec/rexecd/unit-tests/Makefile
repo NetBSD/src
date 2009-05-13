@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2005/02/23 01:27:32 christos Exp $
+#	$NetBSD: Makefile,v 1.1.34.1 2009/05/13 19:18:42 jym Exp $
 
-WARNS=3
 PROG=	rexec
 NOMAN=	yes
 

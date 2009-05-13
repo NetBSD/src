@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.37 2008/07/31 15:55:41 simonb Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.37.4.1 2009/05/13 19:19:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.37 2008/07/31 15:55:41 simonb Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.37.4.1 2009/05/13 19:19:07 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,13 +94,6 @@ static	void	usage(void);
 int
 main(int argc, char *argv[])
 {
-#define	OPTSTRINGBASE	"AFNe:g:h:l:m:o:"
-#ifdef TUNEFS_SOFTDEP
-	int		softdep;
-#define	OPTSTRING	OPTSTRINGBASE ## "n:"
-#else
-#define	OPTSTRING	OPTSTRINGBASE
-#endif
 	int		i, ch, Aflag, Fflag, Nflag, openflags;
 	const char	*special, *chg[2];
 	char		device[MAXPATHLEN];
@@ -112,13 +105,10 @@ main(int argc, char *argv[])
 	maxbpg = minfree = optim = -1;
 	avgfilesize = avgfpdir = -1;
 	logfilesize = -1;
-#ifdef TUNEFS_SOFTDEP
-	softdep = -1;
-#endif
 	chg[FS_OPTSPACE] = "space";
 	chg[FS_OPTTIME] = "time";
 
-	while ((ch = getopt(argc, argv, OPTSTRING)) != -1) {
+	while ((ch = getopt(argc, argv, "AFNe:g:h:l:m:o:")) != -1) {
 		switch (ch) {
 
 		case 'A':
@@ -159,19 +149,6 @@ main(int argc, char *argv[])
 			minfree = strsuftoll("minimum percentage of free space",
 			    optarg, 0, 99);
 			break;
-
-#ifdef TUNEFS_SOFTDEP
-		case 'n':
-			if (strcmp(optarg, "enable") == 0)
-				softdep = 1;
-			else if (strcmp(optarg, "disable") == 0)
-				softdep = 0;
-			else {
-				errx(10, "bad soft dependencies "
-					"(options are `enable' or `disable')");
-			}
-			break;
-#endif
 
 		case 'o':
 			if (strcmp(optarg, chg[FS_OPTSPACE]) == 0)
@@ -230,15 +207,6 @@ main(int argc, char *argv[])
 		    sblock.fs_optim == FS_OPTTIME)
 			warnx(OPTWARN, "space", "<", MINFREE);
 	}
-#ifdef TUNEFS_SOFTDEP
-	if (softdep == 1) {
-		sblock.fs_flags |= FS_DOSOFTDEP;
-		warnx("soft dependencies set");
-	} else if (softdep == 0) {
-		sblock.fs_flags &= ~FS_DOSOFTDEP;
-		warnx("soft dependencies cleared");
-	}
-#endif
 	if (optim != -1) {
 		if (sblock.fs_optim == optim) {
 			warnx("%s remains unchanged as %s",
@@ -273,10 +241,6 @@ main(int argc, char *argv[])
 		    sblock.fs_maxbpg);
 		printf("\tminimum percentage of free space %d%%\n",
 		    sblock.fs_minfree);
-#ifdef TUNEFS_SOFTDEP
-		printf("\tsoft dependencies: %s\n",
-		    (sblock.fs_flags & FS_DOSOFTDEP) ? "on" : "off");
-#endif
 		printf("\toptimization preference: %s\n", chg[sblock.fs_optim]);
 		printf("\taverage file size: %d\n", sblock.fs_avgfilesize);
 		printf("\texpected number of files per directory: %d\n",
@@ -392,7 +356,7 @@ change_log_info(long long logfilesize)
 	if (!in_fs_log)
 		errx(1, "Can't change size of non-in-filesystem log");
 
-	if (old_size == logfilesize && logfilesize > 0) {
+	if (logfilesize > 0 && old_size == (uint64_t)logfilesize) {
 		/* no action */
 		warnx("log file size remains unchanged at %lld", logfilesize);
 		return;
@@ -438,9 +402,6 @@ usage(void)
 	fprintf(stderr, "\t-h expected number of files per directory\n");
 	fprintf(stderr, "\t-l journal log file size (`0' to clear journal)\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
-#ifdef TUNEFS_SOFTDEP
-	fprintf(stderr, "\t-n soft dependencies (`enable' or `disable')\n");
-#endif
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
 	exit(2);
 }

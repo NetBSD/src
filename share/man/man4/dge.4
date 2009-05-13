@@ -1,4 +1,4 @@
-.\"	$NetBSD: dge.4,v 1.7 2004/10/04 19:06:46 rumble Exp $
+.\"	$NetBSD: dge.4,v 1.7.36.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" Copyright (c) 2004, SUNET, Swedish University Computer Network.
 .\" All rights reserved.
@@ -112,7 +112,7 @@ The error is probably caused in the fiber communication.
 This is a fatal error and means that the hardware is broken and
 will most likely not function correctly.
 .Pp
-.It "dge%d: unable to allocate or map rx buffer %d error = %d
+.It "dge%d: unable to allocate or map rx buffer %d error = %d"
 The driver was not able to map a mbuf cluster page to a receive
 descriptor entry in the receive ring.
 Most likely the system has run out of mbuf clusters or have a too

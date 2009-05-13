@@ -1,4 +1,4 @@
-/* $NetBSD: strpct.c,v 1.7 2008/04/28 20:22:51 martin Exp $ */
+/* $NetBSD: strpct.c,v 1.7.8.1 2009/05/13 19:15:48 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpct.c,v 1.7 2008/04/28 20:22:51 martin Exp $");
+__RCSID("$NetBSD: strpct.c,v 1.7.8.1 2009/05/13 19:15:48 jym Exp $");
 
 #include <sys/types.h>
 
@@ -54,11 +54,11 @@ strpct(u_long numerator, u_long denominator, u_int digits)
 {
 	static char percent[32];
 	u_long factor, result;
-	int i;
+	u_int u;
 
 	/* I should check for digit overflow here, too XXX */
 	factor = 100L;
-	for (i = 0; i < digits; i++) {
+	for (u = 0; u < digits; u++) {
 		factor *= 10;
 	}
 

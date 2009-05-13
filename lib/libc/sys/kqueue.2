@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.20 2006/10/13 20:58:50 wiz Exp $
+.\"	$NetBSD: kqueue.2,v 1.20.28.1 2009/05/13 19:18:28 jym Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -80,14 +80,12 @@ on a file descriptor will remove any kevents that reference the descriptor.
 creates a new kernel event queue and returns a descriptor.
 The queue is not inherited by a child created with
 .Xr fork 2 .
-.ig
-However, if
-.Xr rfork 2
-is called without the
-.Dv RFFDG
-flag, then the descriptor table is shared,
-which will allow sharing of the kqueue between two processes.
-..
+.\" However, if
+.\" .Xr rfork 2
+.\" is called without the
+.\" .Dv RFFDG
+.\" flag, then the descriptor table is shared,
+.\" which will allow sharing of the kqueue between two processes.
 .Pp
 .Fn kevent
 is used to register events with the queue, and return any pending
@@ -485,12 +483,12 @@ The
 .Fn kqueue
 function fails if:
 .Bl -tag -width Er
-.It Bq Er ENOMEM
-The kernel failed to allocate enough memory for the kernel queue.
 .It Bq Er EMFILE
 The per-process descriptor table is full.
 .It Bq Er ENFILE
 The system file table is full.
+.It Bq Er ENOMEM
+The kernel failed to allocate enough memory for the kernel queue.
 .El
 .Pp
 The
@@ -499,12 +497,12 @@ function fails if:
 .Bl -tag -width Er
 .It Bq Er EACCES
 The process does not have permission to register a filter.
+.It Bq Er EBADF
+The specified descriptor is invalid.
 .It Bq Er EFAULT
 There was an error reading or writing the
 .Va kevent
 structure.
-.It Bq Er EBADF
-The specified descriptor is invalid.
 .It Bq Er EINTR
 A signal was delivered before the timeout expired and before any
 events were placed on the kqueue for return.
@@ -539,14 +537,3 @@ functions first appeared in
 .Fx 4.1 ,
 and then in
 .Nx 2.0 .
-.Sh AUTHORS
-The
-.Fn kqueue
-system and this manual page were written by
-.An Jonathan Lemon Aq jlemon@FreeBSD.org .
-.Nx
-port and manpage additions were done by
-.An Luke Mewburn Aq lukem@NetBSD.org ,
-.An Jason Thorpe Aq thorpej@NetBSD.org ,
-and
-.An Jaromir Dolecek Aq jdolecek@NetBSD.org .

@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.3 2009/02/04 19:24:18 plunky Exp $	*/
+/*	$NetBSD: bnep.c,v 1.3.2.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.3 2009/02/04 19:24:18 plunky Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.3.2.1 2009/05/13 19:20:19 jym Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -168,6 +168,11 @@ bnep_recv(packet_t *pkt)
 	    || pkt->chan->state != CHANNEL_OPEN)
 		return false;	/* no forwarding */
 
+	if (pkt->len > ETHER_MAX_LEN)
+		log_debug("received long packet "
+			  "(type=0x%2.2x, proto=0x%4.4x, len=%zu)",
+		    	  type, be16dec(pkt->type), pkt->len);
+
 	return true;
 }
 
@@ -288,8 +293,8 @@ bnep_recv_control_command_not_understood(channel_t *chan, uint8_t *ptr, size_t s
 	type = *ptr++;
 	log_err("received Control Command Not Understood (0x%2.2x)", type);
 
-	/* we didn't send any reserved commands, just cut them off */
-	channel_close(chan);
+	/* we didn't send any reserved commands, just shut them down */
+	chan->down(chan);
 
 	return 1;
 }
@@ -390,7 +395,7 @@ bnep_recv_setup_connection_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 		chan->state = CHANNEL_OPEN;
 		channel_timeout(chan, 0);
 	} else {
-		channel_close(chan);
+		chan->down(chan);
 	}
 
 	return 2;
@@ -471,9 +476,9 @@ bnep_recv_filter_net_type_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 	}
 
 	rsp = be16dec(ptr);
-
-	log_debug("addr %s response 0x%2.2x",
-	    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
+	if (rsp != BNEP_FILTER_SUCCESS)
+		log_err("filter_net_type: addr %s response 0x%2.2x",
+		    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
 
 	/* we did not send any filter_net_type_set message */
 	return 2;
@@ -561,8 +566,9 @@ bnep_recv_filter_multi_addr_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 	}
 
 	rsp = be16dec(ptr);
-	log_debug("addr %s response 0x%2.2x",
-	    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
+	if (rsp != BNEP_FILTER_SUCCESS)
+		log_err("filter_multi_addr: addr %s response 0x%2.2x",
+		    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
 
 	/* we did not send any filter_multi_addr_set message */
 	return 2;
@@ -575,7 +581,7 @@ bnep_send_control(channel_t *chan, uint8_t type, ...)
 	uint8_t *p;
 	va_list ap;
 
-	_DIAGASSERT(chan->state != CHANNEL_CLOSED);
+	assert(chan->state != CHANNEL_CLOSED);
 
 	pkt = packet_alloc(chan);
 	if (pkt == NULL)

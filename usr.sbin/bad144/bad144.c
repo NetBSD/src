@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.26 2008/07/21 13:36:57 lukem Exp $	*/
+/*	$NetBSD: bad144.c,v 1.26.6.1 2009/05/13 19:20:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.26 2008/07/21 13:36:57 lukem Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.26.6.1 2009/05/13 19:20:16 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -283,7 +283,7 @@ main(int argc, char *argv[])
 		i = 0;
 	else
 		i = badfile * 2;
-	for (; i < 10 && i < dp->d_nsectors; i += 2) {
+	for (; i < 10 && i < (int)dp->d_nsectors; i += 2) {
 		if (lseek(f,
 		    (off_t)(dp->d_secsize * (size - dp->d_nsectors + i)),
 		    SEEK_SET) < 0)
@@ -328,11 +328,11 @@ getold(int f, struct dkbad *bad)
 		i = 0;
 	else
 		i = badfile * 2;
-	for (; i < 10 && i < dp->d_nsectors; i += 2) {
+	for (; i < 10 && i < (int)dp->d_nsectors; i += 2) {
 		sn = size - dp->d_nsectors + i;
 		if (lseek(f, (off_t)(sn * dp->d_secsize), SEEK_SET) < 0)
 			err(4, "lseek");
-		if (read(f, (char *) bad, dp->d_secsize) == dp->d_secsize) {
+		if ((size_t)read(f, (char *) bad, dp->d_secsize) == dp->d_secsize) {
 			if (i > 0)
 				printf("Using bad-sector file %d\n", i/2);
 			return(sn);
@@ -449,10 +449,10 @@ blkcopy(int f, daddr_t s1, daddr_t s2)
 	for (tries = 0; tries < RETRIES; tries++) {
 		if (lseek(f, (off_t)(dp->d_secsize * s1), SEEK_SET) < 0)
 			err(4, "lseek");
-		if ((n = read(f, buf, dp->d_secsize)) == dp->d_secsize)
+		if ((size_t)(n = read(f, buf, dp->d_secsize)) == dp->d_secsize)
 			break;
 	}
-	if (n != dp->d_secsize) {
+	if ((size_t)n != dp->d_secsize) {
 		if (n < 0)
 			err(4, "can't read sector, %lld", (long long)s1);
 		else
@@ -463,7 +463,7 @@ blkcopy(int f, daddr_t s1, daddr_t s2)
 		err(4, "lseek");
 	if (verbose)
 		printf("copying %lld to %lld\n", (long long)s1, (long long)s2);
-	if (nflag == 0 && write(f, buf, dp->d_secsize) != dp->d_secsize) {
+	if (nflag == 0 && (size_t)write(f, buf, dp->d_secsize) != dp->d_secsize) {
 		warn("can't write replacement sector, %lld", (long long)s2);
 		return(0);
 	}
@@ -484,7 +484,7 @@ blkzero(int f, daddr_t sn)
 	}
 	if (verbose)
 		printf("zeroing %lld\n", (long long)sn);
-	if (nflag == 0 && write(f, zbuf, dp->d_secsize) != dp->d_secsize)
+	if (nflag == 0 && (size_t)write(f, zbuf, dp->d_secsize) != dp->d_secsize)
 		warn("can't write replacement sector, %lld",
 		    (long long)sn);
 	free(zbuf);

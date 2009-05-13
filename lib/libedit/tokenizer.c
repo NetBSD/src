@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.14 2003/12/05 13:37:48 lukem Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.14.40.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.14 2003/12/05 13:37:48 lukem Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.14.40.1 2009/05/13 19:18:29 jym Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -200,7 +200,7 @@ tok_line(Tokenizer *tok, const LineInfo *line,
 			ptr = "";
 		if (ptr == line->cursor) {
 			cc = tok->argc;
-			co = tok->wptr - tok->wstart;
+			co = (int)(tok->wptr - tok->wstart);
 		}
 		switch (*ptr) {
 		case '\'':
@@ -419,7 +419,7 @@ tok_line(Tokenizer *tok, const LineInfo *line,
  tok_line_outok:
 	if (cc == -1 && co == -1) {
 		cc = tok->argc;
-		co = tok->wptr - tok->wstart;
+		co = (int)(tok->wptr - tok->wstart);
 	}
 	if (cursorc != NULL)
 		*cursorc = cc;

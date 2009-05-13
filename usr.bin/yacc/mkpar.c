@@ -1,4 +1,4 @@
-/*	$NetBSD: mkpar.c,v 1.11 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.11.28.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mkpar.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: mkpar.c,v 1.11 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.11.28.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ get_shifts(int stateno)
 {
     action *actions, *temp;
     shifts *sp;
-    short *to_state;
+    short *state;
     int i, k;
     int symbol;
 
@@ -112,10 +112,10 @@ get_shifts(int stateno)
     sp = shift_table[stateno];
     if (sp)
     {
-	to_state = sp->shift;
+	state = sp->shift;
 	for (i = sp->nshifts - 1; i >= 0; i--)
 	{
-	    k = to_state[i];
+	    k = state[i];
 	    symbol = accessing_symbol[k];
 	    if (ISTOKEN(symbol))
 	    {
@@ -200,15 +200,15 @@ static void
 find_final_state(void)
 {
     int goal, i;
-    short *to_state;
+    short *state;
     shifts *p;
 
     p = shift_table[0];
-    to_state = p->shift;
+    state = p->shift;
     goal = ritem[1];
     for (i = p->nshifts - 1; i >= 0; --i)
     {
-	final_state = to_state[i];
+	final_state = state[i];
 	if (accessing_symbol[final_state] == goal) break;
     }
 }

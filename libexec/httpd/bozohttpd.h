@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.6 2009/02/04 22:55:58 tls Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.6.2.1 2009/05/13 19:18:38 jym Exp $	*/
 
-/*	$eterna: bozohttpd.h,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.26 2009/04/18 07:38:56 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +15,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -35,6 +33,8 @@
 #include <sys/stat.h>
 
 #include <stdio.h>
+
+/* lots of "const" but gets free()'ed etc at times, sigh */
 
 /* headers */
 struct headers {
@@ -55,8 +55,8 @@ typedef struct {
 #define HTTP_TRACE	0x07	/* not supported */
 #define HTTP_CONNECT	0x08	/* not supported */
 	const char *hr_methodstr;
-	char	   *hr_file;
-        char       *hr_query;  
+	char	*hr_file;
+	char	*hr_query;  
 	const char *hr_proto;
 	const char *hr_content_type;
 	const char *hr_content_length;
@@ -64,16 +64,17 @@ typedef struct {
 	const char *hr_host;		/* HTTP/1.1 Host: */
 	const char *hr_referrer;
 	const char *hr_range;
+	const char *hr_if_modified_since;
 	int         hr_have_range;
 	off_t       hr_first_byte_pos;
 	off_t       hr_last_byte_pos;
-	const char *hr_remotehost;
-	const char *hr_remoteaddr;
-	const char *hr_serverport;
+	/*const*/ char *hr_remotehost;
+	/*const*/ char *hr_remoteaddr;
+	/*const*/ char *hr_serverport;
 #ifdef DO_HTPASSWD
-	const char *hr_authrealm;
-	const char *hr_authuser;
-	const char *hr_authpass;
+	/*const*/ char *hr_authrealm;
+	/*const*/ char *hr_authuser;
+	/*const*/ char *hr_authpass;
 #endif
 	SIMPLEQ_HEAD(, headers)	hr_headers;
 	int	hr_nheaders;
@@ -87,7 +88,9 @@ struct content_map {
 	const char *cgihandler;	/* optional CGI handler */
 };
 
+/* write in upto 64KiB chunks, and mmap in upto 64MiB chunks */
 #define WRSZ	(64 * 1024)
+#define MMAPSZ	(WRSZ * 1024)
 
 /* debug flags */
 #define DEBUG_NORMAL	1
@@ -113,11 +116,12 @@ void	debug__(int, const char *, ...)
 void	warning(const char *, ...)
 		__attribute__((__format__(__printf__, 1, 2)));
 void	error(int, const char *, ...)
-		__attribute__((__format__(__printf__, 2, 3)));
-void	http_error(int, http_req *, const char *)
+		__attribute__((__format__(__printf__, 2, 3)))
+		__attribute__((__noreturn__));
+int	http_error(int, http_req *, const char *)
 		__attribute__((__noreturn__));
 
-void	check_special_files(http_req *, const char *);
+int	check_special_files(http_req *, const char *);
 char	*http_date(void);
 void	print_header(http_req *, struct stat *, const char *, const char *);
 
@@ -160,16 +164,18 @@ extern	void	ssl_destroy(void);
 
 /* auth-bozo.c */
 #ifdef DO_HTPASSWD
-extern	void	auth_check(http_req *, const char *);
+extern	int	auth_check(http_req *, const char *);
+extern	void	auth_cleanup(http_req *);
 extern	int	auth_check_headers(http_req *, char *, char *, ssize_t);
-extern	void	auth_check_special_files(http_req *, const char *);
+extern	int	auth_check_special_files(http_req *, const char *);
 extern	void	auth_check_401(http_req *, int);
 extern	void	auth_cgi_setenv(http_req *, char ***);
 extern	int	auth_cgi_count(http_req *);
 #else
-#define		auth_check(x, y)		/* nothing */
+#define		auth_check(x, y)		0
+#define		auth_cleanup(x)			/* nothing */
 #define		auth_check_headers(x, y, z, a)	0
-#define		auth_check_special_files(x, y)	/* nothing */
+#define		auth_check_special_files(x, y)	0
 #define		auth_check_401(x, y)		/* nothing */
 #define		auth_cgi_setenv(x, y)		/* nothing */
 #define		auth_cgi_count(x)		0
@@ -178,12 +184,12 @@ extern	int	auth_cgi_count(http_req *);
 
 /* cgi-bozo.c */
 #ifndef NO_CGIBIN_SUPPORT
-void	set_cgibin(char *);
-void	spsetenv(const char *env, const char *val, char **envp);
-void	process_cgi(http_req *);
-void	add_content_map_cgi(char *, char *);
+extern	void	set_cgibin(char *);
+extern	void	spsetenv(const char *env, const char *val, char **envp);
+extern	int	process_cgi(http_req *);
+extern	void	add_content_map_cgi(char *, char *);
 #else
-#define	process_cgi(r)				/* nothing */
+#define	process_cgi(r)				0
 #endif /* NO_CGIBIN_SUPPORT */
 
 
@@ -193,8 +199,8 @@ extern	int	Iflag_set;
 #ifndef NO_DAEMON_MODE
 extern	char	*iflag;
 
-void	daemon_init(void);
-void	daemon_fork(void);
+extern	void	daemon_init(void);
+extern	void	daemon_fork(void);
 #else
 #define daemon_init()				/* nothing */
 #define daemon_fork()				/* nothing */
@@ -206,7 +212,9 @@ void	daemon_fork(void);
 extern	int	uflag;
 extern	const char *public_html;
 
-char *	user_transform(http_req *, int *);
+int	user_transform(http_req *, int *);
+#else
+#define user_transform(a, b)			0
 #endif /* NO_USER_SUPPORT */
 
 
@@ -221,10 +229,10 @@ int	directory_index(http_req *, const char *, int);
 
 
 /* content-bozo.c */
-const char *content_type(http_req *, const char *);
-const char *content_encoding(http_req *, const char *);
-struct content_map *match_content_map(const char *, int);
-struct content_map *get_content_map(const char *);
+extern	const char *content_type(http_req *, const char *);
+extern	const char *content_encoding(http_req *, const char *);
+extern	struct content_map *match_content_map(const char *, int);
+extern	struct content_map *get_content_map(const char *);
 #ifndef NO_DYNAMIC_CONTENT
 void	add_content_map_mime(char *, char *, char *, char *);
 #endif

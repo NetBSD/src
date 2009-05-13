@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.11 2008/09/06 22:14:45 tsutsui Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.11.4.1 2009/05/13 19:17:47 jym Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -15,9 +15,9 @@ The BootROM is what is first executed when you power on or reset your system.
 The BootROM then loads Open Firmware, which boots your operating system.
 .Pp
 Go to the
-.Sq "Apple Software Downloads"
+.Sq "Apple Support Downloads"
 web site at
-.Lk http://www.info.apple.com/support/downloads.html
+.Lk http://support.apple.com/downloads/
 and search for
 .Sq firmware
 and install the most recent version for your model. For most G3 and G4
@@ -717,7 +717,7 @@ and MS-DOS FAT).  Unfortunately, Open Firmware is
 able to directly boot from the
 .Nx
 file system (FFS) or Apple's 
-.if \*[OF_VERSION_3] new BSD-based file system (UFS),
+.if \*[OF_VERSION_3] BSD-based file system (UFS),
 .if \*[OF_VERSION_12] file systems (HFS, HFS+, or UFS),
 so we must put the bootloader in a location that Open Firmware is capable 
 of understanding.
@@ -890,13 +890,13 @@ In theory, Open Firmware 2.4 systems should be able to load the
 bootloader from an HFS or HFS+ partition or a hybrid CD-R, but users have 
 reported that it doesn't work.
 .Pp
-The boot floppy images provided with the distribution sets have a
+The boot floppy images provided have a
 .Sq "partition zero"
 bootloader and a
 .Nx
 file system with an installation kernel.
 .\}
-The boot CD-R images provided with the distribution sets has both a
+The boot CD image provided has both a
 .Sq "partition zero"
 bootloader and
 .Pa ofwboot.xcf
@@ -1062,8 +1062,7 @@ usage.
 Must be at least 20 MB.
 Alternatively, you may decide to use one partition for your entire
 .Nx
-installation, in which case it should be at least 200 MB without X, or 260
-MB with X.
+installation, in which case it should be at least 200 MB.
 .Nx
 interprets an
 .Em "A/UX Root"

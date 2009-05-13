@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3 2006/04/05 16:55:06 garbled Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3.32.1 2009/05/13 19:18:00 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,7 @@ message nopreppart
 
 message preptoosmall
 {The PReP boot partition is too small.  It needs to be at least 2MB in size,
-however a size of at least 5MB is reccomended.}
+however a size of at least 5MB is recommended.}
 
 message prepnobootpart
 {There is no boot partition in the disklabel.  The boot partition should 

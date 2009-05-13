@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.12 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: rs.c,v 1.12.6.1 2009/05/13 19:20:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.12 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: rs.c,v 1.12.6.1 2009/05/13 19:20:03 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ int	propgutter;
 char	isep = ' ', osep = ' ';
 int	owidth = 80, gutter = 2;
 
-void	  usage __P((char *, ...))
+void	  usage __P((const char *, ...))
      __attribute__((__format__(__printf__, 1, 2)));
 void	  getargs __P((int, char *[]));
 void	  getfile __P((void));
@@ -130,6 +130,7 @@ main(argc, argv)
 void
 getfile()
 {
+	char empty[1] = { '\0' };
 	char *p;
 	char *endp;
 	char **ep = 0;
@@ -170,7 +171,7 @@ getfile()
 			if (*p == isep && multisep)
 				continue;	/* eat up column separators */
 			if (*p == isep)		/* must be an empty column */
-				*ep = "";
+				*ep = empty;
 			else			/* store column entry */
 				*ep = p;
 			while (p < endp && *p != isep)
@@ -184,7 +185,7 @@ getfile()
 		if (nullpad) {			/* pad missing entries */
 			padto = elem + irows * icols;
 			while (ep < padto) {
-				*ep = "";
+				*ep = empty;
 				INCR(ep);
 			}
 		}
@@ -239,7 +240,7 @@ prints(s, col)
 }
 
 void
-usage(char *msg, ...)
+usage(const char *msg, ...)
 {
 	va_list ap;
 

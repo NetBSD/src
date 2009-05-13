@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.27 2007/12/15 19:44:37 perry Exp $ */
+/* $NetBSD: exec.c,v 1.27.12.1 2009/05/13 19:15:48 jym Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.27 2007/12/15 19:44:37 perry Exp $");
+__RCSID("$NetBSD: exec.c,v 1.27.12.1 2009/05/13 19:15:48 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -440,7 +440,8 @@ dohash(Char **v, struct command *t)
     struct varent *pathv;
     DIR *dirp;
     Char **pv;
-    int cnt, hashval, i;
+    size_t cnt;
+    int hashval, i;
 
     i = 0;
     havhash = 1;

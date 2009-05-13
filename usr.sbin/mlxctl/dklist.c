@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.8 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: dklist.c,v 1.8.8.1 2009/05/13 19:20:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.8 2008/04/28 20:24:17 martin Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.8.8.1 2009/05/13 19:20:29 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,10 +90,10 @@ static SIMPLEQ_HEAD(, mlx_disk) mlx_disks;
 
 static struct nlist namelist[] = {
 #define X_DISK_COUNT	0
-	{ "_iostat_count" },	/* number of disks */
+	{ "_iostat_count", 0, 0, 0, 0 },	/* number of disks */
 #define X_DISKLIST	1
-	{ "_iostatlist" },	/* TAILQ of disks */
-	{ NULL },
+	{ "_iostatlist", 0, 0, 0, 0 },	/* TAILQ of disks */
+	{ NULL, 0, 0, 0, 0 },
 };
 
 #define	KVM_ERROR(_string) {						\
@@ -219,7 +219,7 @@ deref_kptr(kvm_t *kd, void *kptr, void *ptr, size_t len)
 {
 	char buf[128];
 
-	if (kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len) {
+	if ((size_t)kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len) {
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof buf, "can't dereference kptr 0x%lx",
 		    (u_long)kptr);

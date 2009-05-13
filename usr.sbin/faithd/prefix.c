@@ -1,4 +1,4 @@
-/*	$NetBSD: prefix.c,v 1.6 2003/09/02 22:56:11 itojun Exp $	*/
+/*	$NetBSD: prefix.c,v 1.6.40.1 2009/05/13 19:20:22 jym Exp $	*/
 /*	$KAME: prefix.c,v 1.13 2003/09/02 22:50:17 itojun Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ config_load1(const char *line)
 	char buf[BUFSIZ];
 	char *p;
 	char *token[4];
-	int i;
+	size_t i;
 
 	if (strlen(line) + 1 > sizeof(buf))
 		return NULL;

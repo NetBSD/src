@@ -1,11 +1,11 @@
-#       $NetBSD: Makefile,v 1.277 2009/01/16 09:51:34 uebayasi Exp $
+#       $NetBSD: Makefile,v 1.277.2.1 2009/05/13 19:19:15 jym Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bluetooth.9 bzero.9 \
-	buffercache.9 bufq.9 bus_dma.9 bus_space.9 \
+	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 \
 	callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 cons.9 copy.9 \
 	coredump_write.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 \
@@ -152,12 +152,22 @@ MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
 	bus_dma.9 bus_dmamem_map.9 bus_dma.9 bus_dmamem_unmap.9 \
 	bus_dma.9 bus_dmamem_mmap.9 \
 	bus_dma.9 bus_dmatag_subregion.9 bus_dma.9 bus_dmatag_destroy.9
+MLINKS+=byteorder.9 bswap16.9 byteorder.9 bswap32.9 byteorder.9 bswap64.9 \
+	byteorder.9 be16toh.9 byteorder.9 be32toh.9 byteorder.9 be64toh.9 \
+	byteorder.9 htobe16.9 byteorder.9 htobe32.9 byteorder.9 htobe64.9 \
+	byteorder.9 htole16.9 byteorder.9 htole32.9 byteorder.9 htole64.9 \
+	byteorder.9 le16toh.9 byteorder.9 le32toh.9 byteorder.9 le64toh.9 \
+	byteorder.9 be16dec.9 byteorder.9 be32dec.9 byteorder.9 be64dec.9 \
+	byteorder.9 le16dec.9 byteorder.9 le32dec.9 byteorder.9 le64dec.9 \
+	byteorder.9 be16enc.9 byteorder.9 be32enc.9 byteorder.9 be64enc.9 \
+	byteorder.9 le16enc.9 byteorder.9 le32enc.9 byteorder.9 le64enc.9
 MLINKS+=callout.9 callout_init.9 callout.9 callout_destroy.9 \
 	callout.9 callout_reset.9 callout.9 callout_schedule.9 \
 	callout.9 callout_setfunc.9 callout.9 callout_stop.9 \
 	callout.9 callout_pending.9 callout.9 callout_expired.9 \
 	callout.9 callout_invoking.9 callout.9 callout_ack.9 \
-	callout.9 timeout.9 callout.9 untimeout.9
+	callout.9 timeout.9 callout.9 untimeout.9 \
+	callout.9 callout_halt.9
 MLINKS+=cardbus.9 cardbus_attach_card.9 \
 	cardbus.9 cardbus_detach_card.9 \
 	cardbus.9 cardbus_function_enable.9 \
@@ -502,6 +512,19 @@ MLINKS+=pmc.9 pmc_get_num_counters.9 \
 	pmc.9 pmc_start_profiling.9 \
 	pmc.9 pmc_stop_profiling.9 \
 	pmc.9 PMC_ENABLED.9
+MLINKS+=pmf.9 pmf_device_register.9 pmf.9 pmf_device_register1.9 \
+	pmf.9 pmf_device_deregister.9 \
+	pmf.9 pmf_device_suspend.9 pmf.9 pmf_device_resume.9 \
+	pmf.9 pmf_device_recursive_suspend.9 \
+	pmf.9 pmf_device_recursive_resume.9 \
+	pmf.9 pmf_device_resume_subtree.9 \
+	pmf.9 pmf_class_network_register.9 pmf.9 pmf_class_input_register.9 \
+	pmf.9 pmf_class_display_register.9 \
+	pmf.9 pmf_system_suspend.9 pmf.9 pmf_system_resume.9 \
+	pmf.9 pmf_system_shutdown.9 \
+	pmf.9 pmf_event_register.9 pmf.9 pmf_event_deregister.9 \
+	pmf.9 pmf_event_inject.9 \
+	pmf.9 pmf_set_platform.9 pmf.9 pmf_get_platform.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
 	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
@@ -683,6 +706,7 @@ MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_unmountall.9 \
 	vfssubr.9 vfs_busy.9 \
 	vfssubr.9 vfs_unbusy.9 \
+	vfssubr.9 vfs_mountalloc.9 \
 	vfssubr.9 vfs_rootmountalloc.9 \
 	vfssubr.9 vfs_shutdown.9 \
 	vfssubr.9 vfs_attach.9 \

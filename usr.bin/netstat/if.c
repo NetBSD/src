@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.62 2008/04/23 15:35:37 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.62.8.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.62 2008/04/23 15:35:37 thorpej Exp $");
+__RCSID("$NetBSD: if.c,v 1.62.8.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ void
 intpr(interval, ifnetaddr, pfunc)
 	int interval;
 	u_long ifnetaddr;
-	void (*pfunc)(char *);
+	void (*pfunc)(const char *);
 {
 	struct ifnet ifnet;
 	union {
@@ -256,9 +256,9 @@ intpr(interval, ifnetaddr, pfunc)
 						sin6->sin6_len,
 						hbuf, sizeof(hbuf), NULL, 0,
 						niflag) != 0) {
-					cp = "?";
-				} else
-					cp = hbuf;
+					strlcpy(hbuf, "?", sizeof(hbuf));
+				}
+				cp = hbuf;
 				if (vflag)
 					n = strlen(cp) < 17 ? 17 : strlen(cp);
 				else
@@ -267,28 +267,28 @@ intpr(interval, ifnetaddr, pfunc)
 				if (aflag) {
 					u_long multiaddr;
 					struct in6_multi inm;
-					struct sockaddr_in6 sin6;
+					struct sockaddr_in6 as6;
 		
 					multiaddr = (u_long)
 					    ifaddr.in6.ia6_multiaddrs.lh_first;
 					while (multiaddr != 0) {
 						kread(multiaddr, (char *)&inm,
 						   sizeof inm);
-						memset(&sin6, 0, sizeof(sin6));
-						sin6.sin6_len = sizeof(struct sockaddr_in6);
-						sin6.sin6_family = AF_INET6;
-						sin6.sin6_addr = inm.in6m_addr;
+						memset(&as6, 0, sizeof(as6));
+						as6.sin6_len = sizeof(struct sockaddr_in6);
+						as6.sin6_family = AF_INET6;
+						as6.sin6_addr = inm.in6m_addr;
 #ifdef __KAME__
-						if (IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) {
-							sin6.sin6_scope_id =
+						if (IN6_IS_ADDR_MC_LINKLOCAL(&as6.sin6_addr)) {
+							as6.sin6_scope_id =
 							    ntohs(*(u_int16_t *)
-								&sin6.sin6_addr.s6_addr[2]);
-							sin6.sin6_addr.s6_addr[2] = 0;
-							sin6.sin6_addr.s6_addr[3] = 0;
+								&as6.sin6_addr.s6_addr[2]);
+							as6.sin6_addr.s6_addr[2] = 0;
+							as6.sin6_addr.s6_addr[3] = 0;
 						}
 #endif
-						if (getnameinfo((struct sockaddr *)&sin6,
-						    sin6.sin6_len, hbuf,
+						if (getnameinfo((struct sockaddr *)&as6,
+						    as6.sin6_len, hbuf,
 						    sizeof(hbuf), NULL, 0,
 						    niflag) != 0) {
 							strlcpy(hbuf, "??",
@@ -320,9 +320,9 @@ intpr(interval, ifnetaddr, pfunc)
 				if (getnameinfo(sa, sa->sa_len,
 				    hbuf, sizeof(hbuf), NULL, 0,
 				    NI_NUMERICHOST) != 0) {
-					cp = "?";
-				} else
-					cp = hbuf;
+					strlcpy(hbuf, "?", sizeof(hbuf));
+				}
+				cp = hbuf;
 				if (vflag)
 					n = strlen(cp) < 17 ? 17 : strlen(cp);
 				else

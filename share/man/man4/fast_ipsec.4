@@ -1,4 +1,4 @@
-.\"	$NetBSD: fast_ipsec.4,v 1.7 2008/05/25 20:08:12 wiz Exp $
+.\"	$NetBSD: fast_ipsec.4,v 1.7.4.1 2009/05/13 19:19:08 jym Exp $
 .\"	$FreeBSD: fast_ipsec.4,v 1.2 2003/03/03 11:51:30 ru Exp $
 .\"
 .\" Copyright (c) 2004
@@ -32,8 +32,8 @@
 .Dt FAST_IPSEC 4
 .Os
 .Sh NAME
-.Nm "Fast IPsec"
-.Nd hardware-accelerated IP Security Protocols
+.Nm fast_ipsec
+.Nd Fast IPsec hardware-accelerated IP Security Protocols
 .Sh SYNOPSIS
 .Cd "options FAST_IPSEC"
 .Cd "options IPSEC_NAT_T"
@@ -49,7 +49,7 @@ and
 .Tn IPComp
 (for IP Payload Compression Protocol)
 that provide security services for IP datagrams.
-.Nm
+Fast IPsec
 is an implementation of these protocols that uses the
 .Xr opencrypto 9
 subsystem to carry out cryptographic operations.
@@ -57,7 +57,7 @@ This means, in particular, that cryptographic hardware devices are
 employed whenever possible to optimize the performance of these protocols.
 .Pp
 In general, the
-.Nm
+Fast IPsec
 implementation is intended to be compatible with the
 .Tn KAME IPsec
 implementation.
@@ -70,7 +70,7 @@ System configuration requires the
 .Xr opencrypto 9
 subsystem.
 When the
-.Nm
+Fast IPsec
 protocols are configured for use, all protocols are included in the system.
 To selectively enable/disable protocols, use
 .Xr sysctl 8 .
@@ -93,7 +93,7 @@ implementation found in their
 .Tn IPsec
 protocols.
 The
-.Nm
+Fast IPsec
 protocols are based on code which appeared in
 .Fx 4.7 .
 The

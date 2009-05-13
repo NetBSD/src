@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.10 2007/01/28 22:30:12 cbiere Exp $	*/
+/*	$NetBSD: eval.c,v 1.10.20.1 2009/05/13 19:15:49 jym Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.10 2007/01/28 22:30:12 cbiere Exp $");
+__RCSID("$NetBSD: eval.c,v 1.10.20.1 2009/05/13 19:15:49 jym Exp $");
 #endif
 
 
@@ -1208,10 +1208,10 @@ debunk(dp, sp, dlen)
 	char *d, *s;
 
 	if ((s = strchr(sp, MAGIC))) {
-		if (s - sp >= dlen)
+		if (s - sp >= (ptrdiff_t)dlen)
 			return dp;
 		memcpy(dp, sp, s - sp);
-		for (d = dp + (s - sp); *s && (d - dp < dlen); s++)
+		for (d = dp + (s - sp); *s && (d - dp < (ptrdiff_t)dlen); s++)
 			if (!ISMAGIC(*s) || !(*++s & 0x80)
 			    || !strchr("*+?@! ", *s & 0x7f))
 				*d++ = *s;
@@ -1219,7 +1219,7 @@ debunk(dp, sp, dlen)
 				/* extended pattern operators: *+?@! */
 				if ((*s & 0x7f) != ' ')
 					*d++ = *s & 0x7f;
-				if (d - dp < dlen)
+				if (d - dp < (ptrdiff_t)dlen)
 					*d++ = '(';
 			}
 		*d = '\0';

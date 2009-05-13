@@ -1,13 +1,12 @@
-# $NetBSD: Makefile,v 1.3 2008/08/29 00:02:25 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.3.6.1 2009/05/13 19:20:24 jym Exp $
 
+WARNS?=	2	# XXX -Wextra -Wsign-compare
 NOLINT= # defined
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/kadm5
-
-WARNS?=  1
 
 PROG= iprop-log
 

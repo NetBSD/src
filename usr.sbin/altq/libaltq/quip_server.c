@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_server.c,v 1.4 2001/08/22 08:52:37 itojun Exp $	*/
+/*	$NetBSD: quip_server.c,v 1.4.44.1 2009/05/13 19:20:15 jym Exp $	*/
 /*	$KAME: quip_server.c,v 1.6 2001/08/20 06:41:32 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -154,7 +154,7 @@ next_word(char **cpp, char *b)
 		return(0);
 
 	tp = strpbrk(*cpp, " \t\n#");
-	L = MIN((tp)?(tp-*cpp):strlen(*cpp), 63);
+	L = MIN((tp)?(tp-*cpp):(int)strlen(*cpp), 63);
 	strncpy(b, *cpp, L);
 	*(b + L) = '\0';
 	*cpp += L;

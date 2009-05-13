@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.38 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: mknod.c,v 1.38.4.1 2009/05/13 19:19:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: mknod.c,v 1.38 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.38.4.1 2009/05/13 19:19:02 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -276,7 +276,7 @@ main(int argc, char **argv)
 	}
 	if (rval < 0)
 		err(1, "%s", name);
-	if ((uid != -1 || gid != -1) && chown(name, uid, gid) == -1)
+	if ((uid != (uid_t)-1 || gid != (uid_t)-1) && chown(name, uid, gid) == -1)
 		/* XXX Should we unlink the files here? */
 		warn("%s: uid/gid not changed", name);
 

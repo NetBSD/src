@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbopen.3,v 1.16 2004/08/31 17:11:33 uwe Exp $
+.\"	$NetBSD: dbopen.3,v 1.16.36.1 2009/05/13 19:18:23 jym Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -401,7 +401,7 @@ If the database is in memory only, the
 routine has no effect and will always succeed.
 .Pp
 The flag value may be set to the following value:
-.Bl -tag -width
+.Bl -tag -width ".Dv R_RECNOSYNC"
 .It Dv R_RECNOSYNC
 If the
 .Dv DB_RECNO

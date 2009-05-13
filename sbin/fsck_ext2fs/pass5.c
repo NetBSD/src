@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.15 2008/03/16 23:17:55 lukem Exp $	*/
+/*	$NetBSD: pass5.c,v 1.15.8.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.15 2008/03/16 23:17:55 lukem Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.15.8.1 2009/05/13 19:19:01 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: pass5.c,v 1.15 2008/03/16 23:17:55 lukem Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs.h>
+#include <inttypes.h>
 #include <string.h>
 #include <malloc.h>
 #include <stdio.h>
@@ -90,7 +91,7 @@ pass5(void)
 	struct m_ext2fs *fs = &sblock;
 	daddr_t dbase, dmax;
 	daddr_t d;
-	long i, j;
+	uint32_t i, j;
 	struct inodesc idesc[3];
 	struct bufarea *ino_bitmap = NULL, *blk_bitmap = NULL;
 	char *ibmap, *bbmap;
@@ -167,13 +168,13 @@ pass5(void)
 				break;
 
 			default:
-				errexit("BAD STATE %d FOR INODE I=%ld",
+				errexit("BAD STATE %d FOR INODE I=%"PRIu32,
 				    statemap[j], j);
 			}
 		}
 
 		/* fill in unused par of the inode map */
-		for (i = fs->e2fs.e2fs_ipg / NBBY; i < fs->e2fs_bsize; i++)
+		for (i = fs->e2fs.e2fs_ipg / NBBY; i < (uint32_t)fs->e2fs_bsize; i++)
 			ibmap[i] = 0xff; 
 
 		dbase = c * sblock.e2fs.e2fs_bpg +
@@ -269,7 +270,7 @@ pass5(void)
 void 
 print_bmap(u_char *map, u_int32_t size)
 {
-	int i, j;
+	uint32_t i, j;
 
 	i = 0;
 	while (i < size) {

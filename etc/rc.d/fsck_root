@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# $NetBSD: fsck_root,v 1.2.2.2 2009/05/13 19:18:03 jym Exp $
+#
+
+# PROVIDE: fsck_root
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="fsck_root"
+start_cmd="fsck_root_start"
+stop_cmd=":"
+
+fsck_root_start()
+{
+	if [ -e /fastboot ]; then
+		echo "Fast boot: skipping disk checks."
+		return
+	fi
+	trap : 2 		# Ignore SIGINT, SIGQUIT, so we
+	trap : 3		# enter single-user mode on failure.
+
+	echo "Starting root file system check:"
+	fsck $fsck_flags /
+	local fsck_error="$?"
+	case $fsck_error in
+	0)	# OK
+		return
+		;;
+	2)	# Needs re-run, still fs errors
+		echo "file system still has errors; re-run fsck manually!"
+		;;
+	4)	# Root modified
+		echo "Root filesystem was modified, rebooting ..."
+		reboot
+		echo "Reboot failed; help!"
+		;;
+	8)	# Check failed
+		echo "Automatic file system check failed; help!"
+		;;
+	12)	# Got signal
+		echo "Boot interrupted."
+		;;
+	*)
+		echo "Unknown error $fsck_error; help!"
+		;;
+	esac
+	stop_boot
+}
+
+load_rc_config $name
+run_rc_command "$1"

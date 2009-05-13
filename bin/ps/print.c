@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.109 2009/02/03 17:37:02 drochner Exp $	*/
+/*	$NetBSD: print.c,v 1.109.2.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.109 2009/02/03 17:37:02 drochner Exp $");
+__RCSID("$NetBSD: print.c,v 1.109.2.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -491,7 +491,7 @@ state(void *arg, VARENT *ve, int mode)
 
 	case LSSLEEP:
 		if (flag & L_SINTR)	/* interruptable (long) */
-			*cp = k->p_slptime >= maxslp ? 'I' : 'S';
+			*cp = (int)k->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';
 		break;
@@ -571,7 +571,7 @@ lstate(void *arg, VARENT *ve, int mode)
 
 	case LSSLEEP:
 		if (flag & L_SINTR)	/* interruptible (long) */
-			*cp = k->l_slptime >= maxslp ? 'I' : 'S';
+			*cp = (int)k->l_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';
 		break;
@@ -973,8 +973,7 @@ vsize(void *arg, VARENT *ve, int mode)
 
 	k = arg;
 	v = ve->var;
-	intprintorsetwidth(v,
-	    pgtok(k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize), mode);
+	intprintorsetwidth(v, pgtok(k->p_vm_msize), mode);
 }
 
 void

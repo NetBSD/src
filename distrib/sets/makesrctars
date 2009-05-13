@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.34 2008/03/16 07:02:22 lukem Exp $
+#	$NetBSD: makesrctars,v 1.34.8.1 2009/05/13 19:17:50 jym Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -14,7 +14,7 @@ rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 xsrcdir=
 quiet=false
 
-GZIP=-9
+GZIP=-9n
 export GZIP
 
 usage()
@@ -87,7 +87,7 @@ makeset()
 		egrep='.'
 	fi
 	set -f
-	${MTREE} -c -X "${intmp}" | ${MTREE} -C -k type | \
+	${MTREE} -c -X "${intmp}" | ${MTREE} -CS -k type | \
 		${EGREP} -v 'type=link' | ${EGREP} ${egrep} | \
 		${SED} -e 's:type=file:& mode=0664:' \
 			-e 's:type=dir:& mode=0775:' \

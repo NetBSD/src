@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_calls 1.5 89/07/25 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_calls.3,v 1.10 2004/05/03 15:57:36 lukem Exp $
+.\"	$NetBSD: rpc_svc_calls.3,v 1.10.36.1 2009/05/13 19:18:26 jym Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CALLS 3
 .Os
@@ -226,7 +226,6 @@ Service implementors who do not call
 and who wish to use this array must perform this derivation themselves.
 .Pp
 .It Fn svc_run
-.IP
 This routine never returns.
 It waits for RPC
 requests to arrive, and calls the appropriate service

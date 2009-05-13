@@ -1,4 +1,4 @@
-.\"	$NetBSD: np.4,v 1.13 2003/08/07 10:31:13 agc Exp $
+.\"	$NetBSD: np.4,v 1.13.42.1 2009/05/13 19:19:12 jym Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -99,10 +99,10 @@ A failure occurred during initialization, such that the UNIBUS
 address expected for the board was found to be bad.
 Probably indicates hardware problems with the board, as do the following:
 .Pp
-.Bd -filled -offset indent -compact
-.It NP100 Unit %d timed out!
-.It NP100 Unit %d Failed diagnostics!
-.It Status from CSR0: %x.
+.Bd -literal -offset indent -compact
+NP100 Unit %d timed out!
+NP100 Unit %d Failed diagnostics!
+Status from CSR0: %x.
 .Ed
 .Pp
 .It "Panic from NP100 unit %d!"

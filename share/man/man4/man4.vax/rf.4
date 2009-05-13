@@ -1,4 +1,4 @@
-.\"	$NetBSD: rf.4,v 1.3 2003/05/03 18:10:40 wiz Exp $
+.\"	$NetBSD: rf.4,v 1.3.42.1 2009/05/13 19:19:12 jym Exp $
 .\" Copyright (c) 2002 Jochen Kunz.
 .\" All rights reserved.
 .\"
@@ -34,8 +34,8 @@
 .Tn DEC RX01 / RX02
 floppy disk interface
 .Sh SYNOPSIS
-.Cd "rfc0 at uba? csr 0177170     # RX01/RX02 controller
-.Cd "rf*  at rfc? drive?          # RX01/RX02 floppy disk drive
+.Cd "rfc0 at uba? csr 0177170     # RX01/RX02 controller"
+.Cd "rf*  at rfc? drive?          # RX01/RX02 floppy disk drive"
 .Sh DESCRIPTION
 The
 .Nm rf
@@ -73,11 +73,11 @@ When this 512 byte block is read the last 256 bytes contain undefined data.
 .Pp
 This driver supports three minor devices corresponding to the slices:
 .Pp
-.Bl -column Otherx -offset indent
-.Sy Slice   Description
-a     Single density only mode.
-b     Double density only mode.
-c     Density autodetect.
+.Bl -column Slice -offset indent
+.It Sy Slice	Description
+.It a	Single density only mode.
+.It b	Double density only mode.
+.It c	Density autodetect.
 .El
 .Pp
 As the
@@ -91,15 +91,15 @@ Formatting a blank disk may be initiated
 by the following commands on the VAX chevron prompt:
 .Pp
 .Bl -column Otherx -offset indent
-Single density
-d/p/w 20001E78 9
-d/p/w 20001E7A 92
+.It Single density
+.It d/p/w 20001E78 9
+.It d/p/w 20001E7A 92
 .El
 .Pp
 .Bl -column Otherx -offset indent
-Double density
-d/p/w 20001E78 109
-d/p/w 20001E7A 92
+.It Double density
+.It d/p/w 20001E78 109
+.It d/p/w 20001E7A 92
 .El
 .Sh FILES
 .Bl -tag -width /dev/rx?xx -compact

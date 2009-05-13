@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.9 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: nl.c,v 1.9.6.1 2009/05/13 19:20:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.9 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: nl.c,v 1.9.6.1 2009/05/13 19:20:00 jym Exp $");
 #endif    
 
 #include <errno.h>
@@ -69,9 +69,9 @@ struct numbering_property {
 #define NP_LAST		HEADER
 
 static struct numbering_property numbering_properties[NP_LAST + 1] = {
-	{ "footer",	number_none	},
-	{ "body",	number_nonempty	},
-	{ "header",	number_none	}
+	{ "footer",	number_none,	{ 0, 0, 0, 0 } },
+	{ "body",	number_nonempty, { 0, 0, 0, 0 } },
+	{ "header",	number_none,	{ 0, 0, 0, 0 } },
 };
 
 #define max(a, b)	((a) > (b) ? (a) : (b))
@@ -276,7 +276,7 @@ main(argc, argv)
 	}
 
 	/* Allocate a buffer suitable for preformatting line number. */
-	intbuffersize = max(INT_STRLEN_MAXIMUM, width) + 1;	/* NUL */
+	intbuffersize = max((int)INT_STRLEN_MAXIMUM, width) + 1; /* NUL */
 	if ((intbuffer = malloc(intbuffersize)) == NULL) {
 		perror("cannot allocate preformatting buffer");
 		exit(EXIT_FAILURE);

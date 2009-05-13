@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_flush.3,v 1.7 2008/08/12 19:44:39 pooka Exp $
+.\"	$NetBSD: puffs_flush.3,v 1.7.6.1 2009/05/13 19:18:35 jym Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -58,15 +58,6 @@
 .Fa "off_t end"
 .Fc
 .Sh DESCRIPTION
-.Em IMPORTANT NOTE!
-This document describes interfaces which are not yet guaranteed to be
-stable.
-In case you update your system sources, please recompile everything
-and fix compilation errors.
-If your sources are out-of-sync, incorrect operation may result.
-The interfaces in this document will most likely be hugely simplified
-in later versions or made transparent to the implementation.
-.Pp
 These routines are used inform the kernel that any information it might
 have cached is no longer valid.
 .Fn puffs_inval_namecache_dir

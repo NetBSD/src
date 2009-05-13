@@ -1,5 +1,3 @@
-.\"	$NetBSD: upgrade,v 1.1 2001/11/30 23:48:52 thorpej Exp $
+.\"	$NetBSD: upgrade,v 1.1.44.1 2009/05/13 19:17:46 jym Exp $
 .
-There is no previous release of
-.Nx*M
-from which to upgrade.
+.so ../common/upgrade

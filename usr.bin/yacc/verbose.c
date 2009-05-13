@@ -1,4 +1,4 @@
-/*	$NetBSD: verbose.c,v 1.9 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.9.28.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: verbose.c,v 1.9 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: verbose.c,v 1.9.28.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,7 +328,7 @@ print_shifts(action *p)
 
 
 static void
-print_reductions(action *p, int defred)
+print_reductions(action *p, int prdefred)
 {
     int k, anyreds;
     action *q;
@@ -349,7 +349,7 @@ print_reductions(action *p, int defred)
     {
 	for (; p; p = p->next)
 	{
-	    if (p->action_code == REDUCE && p->number != defred)
+	    if (p->action_code == REDUCE && p->number != prdefred)
 	    {
 		k = p->number - 2;
 		if (p->suppressed == 0)
@@ -358,8 +358,8 @@ print_reductions(action *p, int defred)
 	    }
 	}
 
-        if (defred > 0)
-	    fprintf(verbose_file, "\t.  reduce %d\n", defred - 2);
+        if (prdefred > 0)
+	    fprintf(verbose_file, "\t.  reduce %d\n", prdefred - 2);
     }
 }
 
@@ -369,15 +369,15 @@ print_gotos(int stateno)
 {
     int i, k;
     int as;
-    short *to_state;
+    short *state;
     shifts *sp;
 
     putc('\n', verbose_file);
     sp = shift_table[stateno];
-    to_state = sp->shift;
+    state = sp->shift;
     for (i = 0; i < sp->nshifts; ++i)
     {
-	k = to_state[i];
+	k = state[i];
 	as = accessing_symbol[k];
 	if (ISVAR(as))
 	    fprintf(verbose_file, "\t%s  goto %d\n", symbol_name[as], k);

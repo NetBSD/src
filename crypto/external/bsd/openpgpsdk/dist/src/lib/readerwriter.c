@@ -416,12 +416,14 @@ get_secret_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * c
 char           *
 ops_malloc_passphrase(char *pp)
 {
-	char           *passphrase;
 	size_t          n;
+	char           *passphrase;
 
 	n = strlen(pp);
-	passphrase = malloc(n + 1);
-	strncpy(passphrase, pp, n + 1);
+	if ((passphrase = malloc(n + 1)) != NULL) {
+		(void) memcpy(passphrase, pp, n);
+		passphrase[n] = 0x0;
+	}
 	return passphrase;
 }
 

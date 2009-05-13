@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.15 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.15.10.1 2009/05/13 19:18:26 jym Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.15 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.15.10.1 2009/05/13 19:18:26 jym Exp $");
 #endif
 #endif
  
@@ -208,7 +208,7 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 		} else
 			memset(vc_fd_locks, '\0', fd_allocsz);
 
-		assert(vc_cv == NULL);
+		_DIAGASSERT(vc_cv == NULL);
 		cv_allocsz = dtbsize * sizeof (cond_t);
 		vc_cv = mem_alloc(cv_allocsz);
 		if (vc_cv == NULL) {
@@ -224,7 +224,7 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 				cond_init(&vc_cv[i], 0, (void *) 0);
 		}
 	} else
-		assert(vc_cv != NULL);
+		_DIAGASSERT(vc_cv != NULL);
 #endif
 
 	/*

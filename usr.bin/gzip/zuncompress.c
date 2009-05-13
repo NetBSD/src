@@ -1,4 +1,4 @@
-/*	$NetBSD: zuncompress.c,v 1.6 2005/11/22 09:05:30 mrg Exp $ */
+/*	$NetBSD: zuncompress.c,v 1.6.30.1 2009/05/13 19:19:52 jym Exp $ */
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -146,7 +146,7 @@ zuncompress(FILE *in, FILE *out, char *pre, size_t prelen,
 		compressed_pre = NULL;
 
 	while ((bin = fread(buf, 1, sizeof(buf), in)) != 0) {
-		if (tflag == 0 && fwrite(buf, 1, bin, out) != bin) {
+		if (tflag == 0 && (off_t)fwrite(buf, 1, bin, out) != bin) {
 			free(buf);
 			return -1;
 		}

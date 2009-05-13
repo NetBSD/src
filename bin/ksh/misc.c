@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.12.28.1 2009/05/13 19:15:49 jym Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.12 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12.28.1 2009/05/13 19:15:49 jym Exp $");
 #endif
 
 
@@ -128,7 +128,7 @@ Xcheck_grow_(xsp, xp, more)
 {
 	char *old_beg = xsp->beg;
 
-	xsp->len += more > xsp->len ? more : xsp->len;
+	xsp->len += (size_t)more > xsp->len ? (size_t)more : xsp->len;
 	xsp->beg = aresize(xsp->beg, xsp->len + 8, xsp->areap);
 	xsp->end = xsp->beg + xsp->len;
 	return xsp->beg + (xp - old_beg);
@@ -202,7 +202,7 @@ option(n)
 {
 	int i;
 
-	for (i = 0; i < NELEM(goptions); i++)
+	for (i = 0; i < (int)NELEM(goptions); i++)
 		if (goptions[i].name && strcmp(goptions[i].name, n) == 0)
 			return i;
 
@@ -249,7 +249,7 @@ printoptions(verbose)
 		/* verbose version */
 		shprintf("Current option settings\n");
 
-		for (i = n = oi.opt_width = 0; i < NELEM(goptions); i++)
+		for (i = n = oi.opt_width = 0; i < (int)NELEM(goptions); i++)
 			if (goptions[i].name) {
 				len = strlen(goptions[i].name);
 				oi.opts[n].name = goptions[i].name;
@@ -262,7 +262,7 @@ printoptions(verbose)
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
-		for (i = 0; i < NELEM(goptions); i++)
+		for (i = 0; i < (int)NELEM(goptions); i++)
 			if (Flag(i) && goptions[i].name)
 				shprintf(" -o %s", goptions[i].name);
 		shprintf(newline);
@@ -272,7 +272,7 @@ printoptions(verbose)
 char *
 getoptions()
 {
-	int i;
+	size_t i;
 	char m[(int) FNFLAGS + 1];
 	register char *cp = m;
 
@@ -370,7 +370,7 @@ parse_args(argv, what, setargsp)
 		/* see set_opts[] declaration */
 		strlcpy(set_opts, "A:o;s", sizeof set_opts);
 		q = set_opts + strlen(set_opts);
-		for (i = 0; i < NELEM(goptions); i++) {
+		for (i = 0; i < (int)NELEM(goptions); i++) {
 			if (goptions[i].c) {
 				if (goptions[i].flags & OF_CMDLINE)
 					*p++ = goptions[i].c;
@@ -438,7 +438,7 @@ parse_args(argv, what, setargsp)
 				sortargs = 1;
 				break;
 			}
-			for (i = 0; i < NELEM(goptions); i++)
+			for (i = 0; i < (int)NELEM(goptions); i++)
 				if (optc == goptions[i].c
 				    && (what & goptions[i].flags))
 				{
@@ -544,7 +544,7 @@ gmatch(s, p, isfile)
 	if (!isfile && !has_globbing(p, pe)) {
 		int len = pe - p + 1;
 		char tbuf[64];
-		char *t = len <= sizeof(tbuf) ? tbuf
+		char *t = len <= (int)sizeof(tbuf) ? tbuf
 				: (char *) alloc(len, ATEMP);
 		debunk(t, p, len);
 		return !strcmp(t, s);

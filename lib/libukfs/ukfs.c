@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.21 2009/01/23 19:36:01 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.21.2.1 2009/05/13 19:18:36 jym Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -163,6 +163,7 @@ struct ukfs *
 ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen)
 {
+	struct stat sb;
 	struct ukfs *fs = NULL;
 	struct vfsops *vfsops;
 	struct mount *mp = NULL;
@@ -190,13 +191,30 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	rdonly = mntflags & MNT_RDONLY;
 	devfd = open(devpath, rdonly ? O_RDONLY : O_RDWR);
 	if (devfd != -1) {
-		if (flock(devfd, LOCK_NB | (rdonly ? LOCK_SH:LOCK_EX)) == -1) {
-			warnx("ukfs_mount: cannot get %s lock on device",
-			    rdonly ? "shared" : "exclusive");
+		if (fstat(devfd, &sb) == -1) {
 			close(devfd);
 			devfd = -1;
 			rv = errno;
 			goto out;
+		}
+
+		/*
+		 * We do this only for non-block device since the
+		 * (NetBSD) kernel allows block device open only once.
+		 */
+		if (!S_ISBLK(sb.st_mode)) {
+			if (flock(devfd, LOCK_NB | (rdonly ? LOCK_SH:LOCK_EX))
+			    == -1) {
+				warnx("ukfs_mount: cannot get %s lock on "
+				    "device", rdonly ? "shared" : "exclusive");
+				close(devfd);
+				devfd = -1;
+				rv = errno;
+				goto out;
+			}
+		} else {
+			close(devfd);
+			devfd = -1;
 		}
 	}
 
@@ -251,6 +269,7 @@ ukfs_release(struct ukfs *fs, int flags)
 		kauth_cred_t cred;
 
 		rump_vp_rele(fs->ukfs_cdir);
+		rump_vp_rele(fs->ukfs_rvp);
 		cred = rump_cred_suserget();
 		rv = rump_vfs_sync(fs->ukfs_mp, 1, cred);
 		rump_cred_suserput(cred);
@@ -279,22 +298,36 @@ ukfs_release(struct ukfs *fs, int flags)
 	return rv;
 
 int
-ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
-	uint8_t *buf, size_t bufsize)
+ukfs_opendir(struct ukfs *ukfs, const char *dirname, struct ukfs_dircookie **c)
 {
-	struct uio *uio;
 	struct vnode *vp;
-	size_t resid;
-	kauth_cred_t cred;
-	int rv, eofflag;
+	int rv;
 
 	precall(ukfs);
 	rv = rump_namei(RUMP_NAMEI_LOOKUP, RUMP_NAMEI_LOCKLEAF, dirname,
 	    NULL, &vp, NULL);
 	postcall(ukfs);
-	if (rv)
-		goto out;
-		
+
+	if (rv == 0) {
+		RUMP_VOP_UNLOCK(vp, 0);
+	} else {
+		errno = rv;
+		rv = -1;
+	}
+
+	/*LINTED*/
+	*c = (struct ukfs_dircookie *)vp;
+	return rv;
+}
+
+static int
+getmydents(struct vnode *vp, off_t *off, uint8_t *buf, size_t bufsize)
+{
+	struct uio *uio;
+	size_t resid;
+	int rv, eofflag;
+	kauth_cred_t cred;
+	
 	uio = rump_uio_setup(buf, bufsize, *off, RUMPUIO_READ);
 	cred = rump_cred_suserget();
 	rv = RUMP_VOP_READDIR(vp, uio, cred, &eofflag, NULL, NULL);
@@ -302,9 +335,7 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 	RUMP_VOP_UNLOCK(vp, 0);
 	*off = rump_uio_getoff(uio);
 	resid = rump_uio_free(uio);
-	rump_vp_rele(vp);
 
- out:
 	if (rv) {
 		errno = rv;
 		return -1;
@@ -312,6 +343,63 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 
 	/* LINTED: not totally correct return type, but follows syscall */
 	return bufsize - resid;
+}
+
+/*ARGSUSED*/
+int
+ukfs_getdents_cookie(struct ukfs *ukfs, struct ukfs_dircookie *c, off_t *off,
+	uint8_t *buf, size_t bufsize)
+{
+	/*LINTED*/
+	struct vnode *vp = (struct vnode *)c;
+
+	RUMP_VOP_LOCK(vp, RUMP_LK_SHARED);
+	return getmydents(vp, off, buf, bufsize);
+}
+
+int
+ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
+	uint8_t *buf, size_t bufsize)
+{
+	struct vnode *vp;
+	int rv;
+
+	precall(ukfs);
+	rv = rump_namei(RUMP_NAMEI_LOOKUP, RUMP_NAMEI_LOCKLEAF, dirname,
+	    NULL, &vp, NULL);
+	postcall(ukfs);
+	if (rv) {
+		errno = rv;
+		return -1;
+	}
+
+	rv = getmydents(vp, off, buf, bufsize);
+	rump_vp_rele(vp);
+	return rv;
+}
+
+/*ARGSUSED*/
+int
+ukfs_closedir(struct ukfs *ukfs, struct ukfs_dircookie *c)
+{
+
+	/*LINTED*/
+	rump_vp_rele((struct vnode *)c);
+	return 0;
+}
+
+int
+ukfs_open(struct ukfs *ukfs, const char *filename, int flags)
+{
+	int fd;
+
+	precall(ukfs);
+	fd = rump_sys_open(filename, flags, 0);
+	postcall(ukfs);
+	if (fd == -1)
+		return -1;
+
+	return fd;
 }
 
 ssize_t
@@ -335,6 +423,14 @@ ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 		return -1;
 	}
 	return xfer;
+}
+
+/*ARGSUSED*/
+ssize_t
+ukfs_read_fd(struct ukfs *ukfs, int fd, off_t off, uint8_t *buf, size_t buflen)
+{
+
+	return rump_sys_pread(fd, buf, buflen, 0, off);
 }
 
 ssize_t
@@ -362,6 +458,29 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 		return -1;
 	}
 	return xfer;
+}
+
+/*ARGSUSED*/
+ssize_t
+ukfs_write_fd(struct ukfs *ukfs, int fd, off_t off, uint8_t *buf, size_t buflen,
+	int dosync)
+{
+	ssize_t xfer;
+
+	xfer = rump_sys_pwrite(fd, buf, buflen, 0, off);
+	if (xfer > 0 && dosync)
+		rump_sys_fsync(fd);
+
+	return xfer;
+}
+
+/*ARGSUSED*/
+int
+ukfs_close(struct ukfs *ukfs, int fd)
+{
+
+	rump_sys_close(fd);
+	return 0;
 }
 
 int
@@ -553,13 +672,12 @@ ukfs_lutimes(struct ukfs *ukfs, const char *filename,
  * can't protect against other threads calling dl*() outside of ukfs,
  * so just live with it being flimsy
  */
-#define UFSLIB "librumpfs_ufs.so"
 int
 ukfs_modload(const char *fname)
 {
-	void *handle, *thesym;
+	void *handle;
+	struct modinfo **mi;
 	struct stat sb;
-	const char *p;
 	int error;
 
 	if (stat(fname, &sb) == -1)
@@ -575,23 +693,9 @@ ukfs_modload(const char *fname)
 		return -1;
 	}
 
-	/*
-	 * XXX: the ufs module is not loaded in the same fashion as the
-	 * others.  But we can't do dlclose() for it, since that would
-	 * lead to not being able to load ffs/ext2fs/lfs.  Hence hardcode
-	 * and kludge around the issue for now.  But this should really
-	 * be fixed by fixing sys/ufs/ufs to be a kernel module.
-	 */
-	if ((p = strrchr(fname, '/')) != NULL)
-		p++;
-	else
-		p = fname;
-	if (strcmp(p, UFSLIB) == 0)
-		return 1;
-
-	thesym = dlsym(handle, "__start_link_set_modules");
-	if (thesym) {
-		error = rump_module_load(thesym);
+	mi = dlsym(handle, "__start_link_set_modules");
+	if (mi) {
+		error = rump_module_init(*mi, NULL);
 		if (error)
 			goto errclose;
 		return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.12 2007/08/22 16:49:17 christos Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.12.16.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.12 2007/08/22 16:49:17 christos Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.12.16.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -357,7 +357,7 @@ void *
 ypproc_master_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_master res;
-	static char *nopeer = "";
+	static const char *nopeer = "";
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_nokey *k = argp;
 	int secure;
@@ -389,7 +389,7 @@ ypproc_master_2_svc(void *argp, struct svc_req *rqstp)
 	 * xdr_string in ypserv_xdr.c may be a better place?
 	 */
 	if (res.master == NULL)
-		res.master = nopeer;
+		res.master = __UNCONST(nopeer);
 
 	return ((void *)&res);
 }

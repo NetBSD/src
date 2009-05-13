@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.22 2003/04/16 13:34:58 wiz Exp $
+.\"	$NetBSD: tzset.3,v 1.22.42.1 2009/05/13 19:18:28 jym Exp $
 .Dd April 1, 2001
 .Dt TZSET 3
 .Os
@@ -151,7 +151,6 @@ Each
 .Cm time
 field describes when, in current local time, the change to the other
 time is made.
-.IP
 The format of
 .Fa date
 is one of the following:
@@ -172,9 +171,7 @@ The zero-based Julian day (0\ \*[Le]
 Leap days are counted, and it is possible to refer to
 February 29.
 .Sm off
-.It Xo Cm M Ns Ar m
-.No . Ar n No . Ar d
-.Xc
+.It Cm M Ns Ar m No . Ar n No . Ar d
 .Sm on
 The
 .Ar d Ns 'th

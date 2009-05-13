@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.so.conf.5,v 1.18 2008/05/29 14:51:25 mrg Exp $
+.\"	$NetBSD: ld.so.conf.5,v 1.18.4.1 2009/05/13 19:19:13 jym Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -35,8 +35,7 @@ The
 .Nm
 file specifies additional default directories (beyond the standard set,
 normally
-.Dq /usr/lib
-).
+.Dq Pa /usr/lib ) .
 .Pp
 On
 .Xr a.out 5
@@ -52,32 +51,35 @@ systems, this file is scanned directly by the run-time linker
 .Pa /usr/libexec/ld.elf_so .
 .Pp
 Lines beginning with
-.Dq #
-are treated as comments and ignored.  Any other non-blank lines beginning
-with '/' are stripped of leading whitespace and trailing comments
+.Sq #
+are treated as comments and ignored.
+Any other non-blank lines beginning
+with
+.Sq /
+are stripped of leading whitespace and trailing comments
 (introduced with
-.Dq # )
+.Sq # )
 together with any preceding whitespace, then treated as directories to be
 scanned for shared libraries to add to the hints.
 .Pp
 On
 .Xr elf 5
-lines that do not begin with a '/' are parsed as hardware dependent per
+lines that do not begin with a
+.Sq /
+are parsed as hardware dependent per
 library directives:
-.sp
-.nf
-\*[Lt]library_name\*[Gt] \*[Lt]sysctl_variable\*[Gt] \*[Lt]variable_value\*[Gt][,...]:\*[Lt]library_name\*[Gt][,...] ...
-.fi
-.sp
+.Bd -literal
+\*[Lt]library\*[Gt] \*[Lt]sysctl\*[Gt] \*[Lt]variable\*[Gt][,...]:\*[Lt]library\*[Gt][,...] ...
+.Ed
+.Pp
 If there is no match, the standard action is taken.
 .Sh FILES
 .Pa /etc/ld.so.conf
 .Sh EXAMPLES
-.sp
-.nf
+.Bd -literal
 libm.so.0	machdep.fpu_present	1:libm387.so.0,libm.so.0
-.fi
-.sp
+.Ed
+.Pp
 The above line loads both libm387 and libm when the
 .Xr sysctl 3
 variable fpu_present has the value 1.
@@ -96,6 +98,6 @@ The ELF support for it was added in
 .Nx 1.5 .
 .Sh BUGS
 Directory names containing the comment character
-.Pq Dq #
-and/or leading or trailing whitespace cannot be included.  (Embedded blanks
-are allowed, however.)
+.Pq Sq #
+and/or leading or trailing whitespace cannot be included.
+(Embedded blanks are allowed, however.)

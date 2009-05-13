@@ -1,6 +1,6 @@
-.\"	$NetBSD: rwlock.9,v 1.10 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: rwlock.9,v 1.10.6.1 2009/05/13 19:19:16 jym Exp $
 .\"
-.\" Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 4, 2007
+.Dd March 23, 2009
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -74,10 +74,6 @@ to an object among LWPs (lightweight processes) and soft interrupt handlers.
 .Pp
 In addition to the capabilities provided by mutexes, RW locks distinguish
 between read (shared) and write (exclusive) access.
-RW locks are intended to provide protection for kernel data
-or objects that are read much more frequently than updated.
-For objects that are updated as frequently as they are read, mutexes should
-be used to guarantee atomic access.
 .Pp
 RW locks are in one of three distinct states at any given time:
 .Bl -tag -width cdosrunrundo
@@ -182,6 +178,27 @@ Otherwise, return zero.
 These functions must never be used to make locking decisions at run time:
 they are provided only for diagnostic purposes.
 .El
+.Sh PERFORMANCE CONSIDERATIONS
+RW locks are subject to high cache contention on multiprocessor systems,
+and scale poorly when the write:read ratio is not strongly in favour of
+readers.
+Ideally, RW locks should only be used in settings when the following three
+conditions are met:
+.Bl -bullet
+.It
+The data object(s) protected by the RW lock are read much more frequently
+than written.
+.It
+The read-side hold time for the RW lock is long (in the order of thousands
+of processor clock cycles).
+.It
+Strong synchronization semantics are required: there is no scope for
+lockless, lazy or optimistic synchronization.
+.El
+.Pp
+Generally speaking, it is better to organise code paths and/or
+data flows such that fewer and weaker synchronization points are required
+to ensure correct operation.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
@@ -197,6 +214,7 @@ The header file
 describes the public interface, and interfaces that machine-dependent
 code must provide to support RW locks.
 .Sh SEE ALSO
+.Xr lockstat 8 ,
 .Xr condvar 9 ,
 .Xr mb 9 ,
 .Xr mutex 9

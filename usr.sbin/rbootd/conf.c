@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2003/08/07 11:25:41 agc Exp $	*/
+/*	$NetBSD: conf.c,v 1.8.40.1 2009/05/13 19:20:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)conf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: conf.c,v 1.8 2003/08/07 11:25:41 agc Exp $");
+__RCSID("$NetBSD: conf.c,v 1.8.40.1 2009/05/13 19:20:36 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,11 +114,11 @@ char	MyHost[MAXHOSTNAMELEN+1];		/* host name */
 int	DebugFlg = 0;				/* set true if debugging */
 int	BootAny = 0;				/* set true if we boot anyone */
 
-char	*ConfigFile = NULL;			/* configuration file */
-char	*DfltConfig = _PATH_RBOOTDCONF;		/* default configuration file */
-char	*PidFile = _PATH_RBOOTDPID;		/* file w/pid of server */
-char	*BootDir = _PATH_RBOOTDLIB;		/* directory w/boot files */
-char	*DbgFile = _PATH_RBOOTDDBG;		/* debug output file */
+const char *ConfigFile = NULL;			/* configuration file */
+const char *DfltConfig = _PATH_RBOOTDCONF;	/* default configuration file */
+const char *PidFile = _PATH_RBOOTDPID;		/* file w/pid of server */
+const char *BootDir = _PATH_RBOOTDLIB;		/* directory w/boot files */
+const char *DbgFile = _PATH_RBOOTDDBG;		/* debug output file */
 
 FILE	*DbgFp = NULL;				/* debug file pointer */
 char	*IntfName = NULL;			/* intf we are attached to */

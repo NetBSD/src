@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.27 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: util.c,v 1.27.6.1 2009/05/13 19:19:07 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006 The NetBSD Foundation, Inc.
@@ -330,11 +330,12 @@ pr_bitfield(unsigned int f)
 	if (f == 0)
 		(void)printf("none");
 	else {
-		int i, first, mask;
+		unsigned int i;
+		int first, mask;
 
 		for (i = 0, first = 1, mask = 1; i < sizeof(f) * 8; i++) {
 			if (f & mask) {
-				(void)printf("%s%d", first ? "" : " ", i);
+				(void)printf("%s%u", first ? "" : " ", i);
 				first = 0;
 			}
 			mask = mask << 1;
@@ -396,14 +397,14 @@ rd_field(struct field *f, char *val, int merge)
 		if (merge) {
 			if (newkbmap.maplen < kbmap.maplen)
 				newkbmap.maplen = kbmap.maplen;
-			for (i = 0; i < kbmap.maplen; i++) {
-				mp = newkbmap.map + i;
+			for (u = 0; u < kbmap.maplen; u++) {
+				mp = newkbmap.map + u;
 				if (mp->command == KS_voidSymbol &&
 				    mp->group1[0] == KS_voidSymbol &&
 				    mp->group1[1] == KS_voidSymbol &&
 				    mp->group2[0] == KS_voidSymbol &&
 				    mp->group2[1] == KS_voidSymbol)
-					*mp = kbmap.map[i];
+					*mp = kbmap.map[u];
 			}
 		}
 		kbmap.maplen = newkbmap.maplen;
@@ -455,7 +456,7 @@ rd_bitfield(const char *str)
 			errx(EXIT_FAILURE, "%s: not a valid number list", str);
 		if (errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN))
 			errx(EXIT_FAILURE, "%s: not a valid number list", str);
-		if (lval >= sizeof(result) * 8)
+		if (lval >= (long)sizeof(result) * 8)
 			errx(EXIT_FAILURE, "%ld: number out of range", lval);
 		result |= (1 << lval);
 
@@ -470,7 +471,7 @@ rd_bitfield(const char *str)
 static void
 print_kmap(struct wskbd_map_data *map)
 {
-	int i;
+	unsigned int i;
 	struct wscons_keymap *mp;
 
 	for (i = 0; i < map->maplen; i++) {

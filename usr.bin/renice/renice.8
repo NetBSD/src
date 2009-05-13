@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.12 2003/08/07 11:15:38 agc Exp $
+.\"	$NetBSD: renice.8,v 1.12.42.1 2009/05/13 19:20:02 jym Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: renice.8,v 1.12 2003/08/07 11:15:38 agc Exp $
+.\"	$NetBSD: renice.8,v 1.12.42.1 2009/05/13 19:20:02 jym Exp $
 .\"
 .Dd June 9, 1993
 .Dt RENICE 8
@@ -105,7 +105,7 @@ interpretation to be (the default) process ID's.
 .El
 .Pp
 For example,
-.Bd -literal -offset
+.Bd -literal -offset indent
 renice +1 987 -u daemon root -p 32
 .Ed
 .Pp

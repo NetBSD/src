@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_sqrt.c,v 1.12 2002/05/26 22:01:52 wiz Exp $");
+__RCSID("$NetBSD: e_sqrt.c,v 1.12.40.1 2009/05/13 19:18:34 jym Exp $");
 #endif
 
 /* __ieee754_sqrt(x)
@@ -155,7 +155,7 @@ __ieee754_sqrt(double x)
 	    t  = s0;
 	    if((t<ix0)||((t==ix0)&&(t1<=ix1))) {
 		s1  = t1+r;
-		if(((t1&sign)==sign)&&(s1&sign)==0) s0 += 1;
+		if(((t1&sign)==(u_int32_t)sign)&&(s1&sign)==0) s0 += 1;
 		ix0 -= t;
 		if (ix1 < t1) ix0 -= 1;
 		ix1 -= t1;

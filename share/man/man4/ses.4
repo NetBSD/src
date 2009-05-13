@@ -1,4 +1,4 @@
-.\" $NetBSD: ses.4,v 1.6 2008/05/02 19:04:17 martin Exp $
+.\" $NetBSD: ses.4,v 1.6.6.1 2009/05/13 19:19:09 jym Exp $
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -60,7 +60,7 @@ Environmental Services device can be configured.
 The following
 .Xr ioctl 2
 calls apply to
-.B SES
+.Em SES
 devices.
 They are defined in the header file
 .Aq Pa scsipi/ses.h
@@ -69,12 +69,12 @@ They are defined in the header file
 .Bl -tag -width SESIOC_GETENCSTAT
 .It Dv SESIOC_GETNOBJ
 Used to find out how many
-.B SES
+.Em SES
 objects are driven by this particular device instance.
 .It Dv SESIOC_GETOBJMAP
 Read, from the kernel, an array of SES objects which contains
 the object identifier, which sub-enclosure it is in, and the
-.B SES
+.Em SES
 type of the object.
 .It Dv SESIOC_GETENCSTAT
 Get the overall enclosure status.
@@ -86,7 +86,7 @@ Get the status of a particular object.
 Set the status of a particular object.
 .It Dv SESIOC_GETTEXT
 Get the associated help text for an object (not yet implemented).
-.B SES
+.Em SES
 devices often have descriptive text for an object which can tell
 you things like location (e.g, "left power supply").
 .It Dv SESIOC_INIT
@@ -115,5 +115,6 @@ The
 .Nm
 driver was written for the
 .Tn SCSI
-subsystem by Matthew Jacob. This is the functional equivalent of a similar
+subsystem by Matthew Jacob.
+This is the functional equivalent of a similar
 driver available in Solaris, Release 7.

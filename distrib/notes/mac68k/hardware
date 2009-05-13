@@ -1,20 +1,12 @@
-.\"	$NetBSD: hardware,v 1.23 2007/12/14 21:15:58 pavel Exp $
+.\"	$NetBSD: hardware,v 1.23.14.1 2009/05/13 19:17:46 jym Exp $
 .
 .Nx*M
 \*V runs on several of the older Macintosh computers.
 About 4 MB of RAM is sufficient to boot a stripped-down custom kernel, and a
 subset of the system can be squeezed onto a 40 MB hard disk with considerable
-creativity and persistence. However, an 80 MB disk should be considered a
+creativity and persistence. However, 100 MB of disk should be considered a
 practical minimum, and to do anything more interesting than booting at least
 8 MB of RAM and more disk space is recommended.
-About 180 MB will be necessary to install all of the
-.Nx*M
-\*V binary system distribution
-sets (note that this does not count swap space!). You can drop this
-to 150 MB if you choose not to install
-the binary X11 distribution sets. Much more disk space is
-required to install the source and objects as well; a complete source
-distribution, including X11, consumes nearly 1 GB of storage.
 .Pp
 Please note that to install
 .Nx*M
@@ -58,7 +50,7 @@ Internal sound \(em enough to beep on some machines, anyway
 .It
 Most basic NuBus video cards (there have been some
 problems with some 24-bit color cards and with most
-QuickDraw acclerators)
+QuickDraw accelerators)
 .It
 Both internal serial ports
 .It
@@ -120,11 +112,11 @@ can use a serial console on these systems.
 PowerPC-based Macs
 .Pp
 This is a separate effort from the \*M port. PowerMacs use hardware that
-is often fairly different from that of the \*M port.  If you are
-interested in this, you might want to take a look at the new
+is quite different from that of the \*M port.  See the
 .Nx Ns /macppc
-port:
-.Lk http://www.NetBSD.org/ports/macppc/index.html
+port webpage at
+.Lk http://www.NetBSD.org/ports/macppc/
+for more information.
 .bullet)
 .
 .Ss2 Known hardware issues with this release
@@ -134,7 +126,7 @@ Real Time Clock
 Due to oddities of the Macintosh hardware interrupt priority scheme,
 .Nx*M
 keeps very poor time. Under a high interrupt load (e.g.
-SCSI or serial port activity) , a machine can lose several minutes
+SCSI or serial port activity), a machine can lose several minutes
 per hour. A consequence of this problem is that attempting to run
 .Ic ntpd
 is generally rather pointless.

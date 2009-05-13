@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1 2008/09/13 15:43:07 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.1.8.1 2009/05/13 19:17:45 jym Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -14,7 +14,7 @@ also happen even on normal operations.
 .
 The ARC firmware on most machines allows for system booting using:
 .(bullet -compact
-Local floppy disk, harddisk or CD-ROM with the following file systems:
+Local floppy disk, hard disk or CD-ROM with the following file systems:
 .(bullet -compact
 MS-DOS (FAT12) file system
 .It
@@ -22,18 +22,18 @@ ISO9660 CD-ROM file system
 .bullet)
 .bullet)
 .Pp
-Some ARC implementation might support netboot, but current
+Some ARC implementation might support netboot, but the
 .Nx*M
 bootloader doesn't support netboot due to lack of information.
 .Pp
-There is no bootable floppies in the distribution because the
+There are no bootable floppies in the distribution because the
 .Nx*M
 bootloader doesn't support loading a kernel from multiple floppies
 and the installation kernel is too large to fit one floppy.
 .
 .Ss2 Preparing the Bootable Media
 .
-This section desribes how to get a
+This section describes how to get a
 .Nx*M
 install kernel onto a CD-R.
 .Pp
@@ -62,15 +62,15 @@ speed for your CD writer, and the
 correct device for your system (for i386 it would be
 .Pa /dev/cd0d ) .
 .
-.Ss2 Booting from CD-ROM and Harddisk
+.Ss2 Booting from CD-ROM and Hard disk
 .
-To boot from a CD-ROM and a harddisk, choose
+To boot from a CD-ROM and a hard disk, choose the
 .Sq Run a program
 menu on the ARC BIOS prompt and specify the
 .Sq Ic boot
 program with appropriate boot device paths.
 The first argument is a path to bootloader, and
-the second arcument is a path to a kernel to be loaded.
+the second argument is a path to a kernel to be loaded.
 .Pp
 The device pathnames might be machine dependent.
 See
@@ -99,7 +99,7 @@ instead.
 after
 .Sq Pa cdrom
 is a SCSI ID of the CD-ROM.
-You might have to use an appropriate number.
+You might have to use a different number.
 .Note)
 .Pp
 .It
@@ -118,8 +118,8 @@ Booting a kernel in the FFS partition via bootloader in the FAT partition:
 .Sq Pq Pa 0
 after
 .Sq Pa disk
-is a SCSI ID of the disk.
-You might have to use an appropriate number.
+is the SCSI ID of the disk.
+You might have to use a different number.
 .Pp
 .Sq Pq Pa 1
 and
@@ -127,23 +127,23 @@ and
 after
 .Sq Pa partition
 are the partition numbers of the FDISK (MBR) partition of the disk.
-Usually FAT partition (which is mandatory for bootloader) is in
+Usually the FAT partition (which is mandatory for the bootloader) is in
 the first partition and
 .Nx*M
 will be installed in the second partition, so use
 .Sq Pa partition(1)
 for a bootloader and specify
 .Sq Pa partition(2)
-for
+for the
 .Nx*M
-kernel once after it's installed in the
+kernel after it's installed in the
 .Nx*M
 partition.
 .Note)
 .bullet)
 Once you have successfully installed
 .Nx*M ,
-you can store the above default boot command into NV-RAM by
+you can store the above default boot command into NV-RAM with the
 .Sq Sy Run setup
 and
 .Sq Sy Manage startup

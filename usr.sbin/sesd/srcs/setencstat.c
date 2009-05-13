@@ -1,4 +1,4 @@
-/* $NetBSD: setencstat.c,v 1.2 2000/02/22 06:06:09 mjacob Exp $ */ 
+/* $NetBSD: setencstat.c,v 1.2.46.1 2009/05/13 19:20:40 jym Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -50,7 +50,7 @@ main(a, v)
 {
 	int fd;
 	long val;
-	ses_encstat stat;
+	ses_encstat sestat;
 
 	if (a != 3) {
 		fprintf(stderr, "usage: %s device enclosure_status\n", *v);
@@ -63,8 +63,8 @@ main(a, v)
 	}
 	
 	val =  strtol(v[2], NULL, 0);
-	stat = (ses_encstat) val;
-	if (ioctl(fd, SESIOC_SETENCSTAT, (caddr_t) &stat) < 0) {
+	sestat = (ses_encstat) val;
+	if (ioctl(fd, SESIOC_SETENCSTAT, (caddr_t) &sestat) < 0) {
 		perror("SESIOC_SETENCSTAT");
 	}
 	(void) close(fd);

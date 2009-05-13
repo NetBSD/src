@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.4.28.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /*	$KAME: dnssec.c,v 1.2 2001/08/05 18:46:07 itojun Exp $	*/
 
@@ -55,11 +55,11 @@
 
 extern int h_errno;
 
-cert_t *
+vchar_t *
 dnssec_getcert(id)
 	vchar_t *id;
 {
-	cert_t *cert = NULL;
+	vchar_t *cert = NULL;
 	struct certinfo *res = NULL;
 	struct ipsecdoi_id_b *id_b;
 	int type;
@@ -116,39 +116,22 @@ dnssec_getcert(id)
 	}
 
 	/* create cert holder */
-	cert = oakley_newcert();
+	cert = vmalloc(res->ci_certlen + 1);
 	if (cert == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get cert buffer.\n");
 		goto err;
 	}
-	cert->pl = vmalloc(res->ci_certlen + 1);
-	if (cert->pl == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to get cert buffer.\n");
-		goto err;
-	}
-	memcpy(cert->pl->v + 1, res->ci_cert, res->ci_certlen);
-	cert->pl->v[0] = type;
-	cert->cert.v = cert->pl->v + 1;
-	cert->cert.l = cert->pl->l - 1;
+	cert->v[0] = type;
+	memcpy(&cert->v[1], res->ci_cert, res->ci_certlen);
 
 	plog(LLV_DEBUG, LOCATION, NULL, "created CERT payload:\n");
-	plogdump(LLV_DEBUG, cert->pl->v, cert->pl->l);
-
-end:
-	if (res)
-		freecertinfo(res);
-
-	return cert;
+	plogdump(LLV_DEBUG, cert->v, cert->l);
 
 err:
 	if (name)
 		racoon_free(name);
-	if (cert) {
-		oakley_delcert(cert);
-		cert = NULL;
-	}
-
-	goto end;
+	if (res)
+		freecertinfo(res);
+	return cert;
 }

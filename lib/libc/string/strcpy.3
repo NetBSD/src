@@ -30,12 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.17 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: strcpy.3,v 1.17.28.1 2009/05/13 19:18:27 jym Exp $
 .\"
-.Dd May 6, 2002
+.Dd May 1, 2009
 .Dt STRCPY 3
 .Os
 .Sh NAME
+.Nm stpcpy ,
+.Nm stpncpy ,
 .Nm strcpy ,
 .Nm strncpy
 .Nd copy strings
@@ -44,14 +46,18 @@
 .Sh SYNOPSIS
 .In string.h
 .Ft char *
+.Fn stpcpy "char * restrict dst" "const char * restrict src"
+.Ft char *
+.Fn stpncpy "char * restrict dst" "const char * restrict src" "size_t len"
+.Ft char *
 .Fn strcpy "char * restrict dst" "const char * restrict src"
 .Ft char *
 .Fn strncpy "char * restrict dst" "const char * restrict src" "size_t len"
 .Sh DESCRIPTION
 The
-.Fn strcpy
+.Fn stpcpy
 and
-.Fn strncpy
+.Fn strcpy
 functions
 copy the string
 .Fa src
@@ -62,26 +68,30 @@ to
 character).
 .Pp
 The
+.Fn stpncpy
+and
 .Fn strncpy
-function copies not more than
+functions copy at most
 .Fa len
-characters into
-.Fa dst ,
-appending
-.Ql \e0
-characters if
+characters from
+.Fa src
+into
+.Fa dst .
+If
 .Fa src
 is less than
 .Fa len
-characters long, and
-.Em not
-terminating
+characters long,
+the remainder of
 .Fa dst
-if
-.Fa src
+is filled with
+.Ql \e0
+characters.
+Otherwise,
+.Fa dst
 is
-.Fa len
-or more characters long.
+.Em not
+terminated.
 .Sh RETURN VALUES
 The
 .Fn strcpy
@@ -90,64 +100,95 @@ and
 functions
 return
 .Fa dst .
+The
+.Fn stpcpy
+and
+.Fn stpncpy
+functions return a pointer to the terminating
+.Ql \e0
+character of
+.Fa dst .
+If
+.Fn stpncpy
+does not terminate
+.Fa dst
+with a
+.Dv NUL
+character, it instead returns a pointer to
+.Li dst[len]
+(which does not necessarily refer to a valid memory location.)
 .Sh EXAMPLES
 The following sets
-.Dq Li chararray
+.Va chararray
 to
-.Dq Li abc\e0\e0\e0 .
+.Dq Li abc\e0\e0\e0 :
 .Bd -literal -offset indent
-(void)strncpy(chararray, "abc", 6);
+char chararray[6];
+
+(void)strncpy(chararray, "abc", sizeof(chararray));
 .Ed
 .Pp
 The following sets
-.Dq Li chararray
-to
-.Dq Li abcdef
-and does
-.Em not
-nul-terminate
 .Va chararray
-because the source string is \*[Gt]= the length parameter.
+to
+.Dq Li abcdef :
+.Bd -literal -offset indent
+char chararray[6];
+
+(void)strncpy(chararray, "abcdefgh", sizeof(chararray));
+.Ed
+.Pp
+Note that it does
+.Em not
+.Dv NUL Ns No -terminate
+.Va chararray
+because the length of the source string is greater than or equal
+to the length parameter.
 .Fn strncpy
 .Em only
-nul-terminates the destination string when the length of the source
+.Dv NUL Ns No -terminates
+the destination string when the length of the source
 string is less than the length parameter.
-.Bd -literal -offset indent
-(void)strncpy(chararray, "abcdefgh", 6);
-.Ed
 .Pp
 The following copies as many characters from
 .Va input
 to
 .Va buf
-as will fit and nul-terminates the result.
+as will fit and
+.Dv NUL Ns No -terminates
+the result.
 Because
 .Fn strncpy
 does
 .Em not
-guarantee to nul-terminate the string itself, we must do this by hand.
+guarantee to
+.Dv NUL Ns No -terminate
+the string itself, this must be done explicitly.
 .Bd -literal -offset indent
-char buf[BUFSIZ];
+char buf[1024];
 
 (void)strncpy(buf, input, sizeof(buf) - 1);
 buf[sizeof(buf) - 1] = '\e0';
 .Ed
 .Pp
-Note that
-.Xr strlcpy 3
-is a better choice for this kind of operation.
-The equivalent using
-.Xr strlcpy 3
-is simply:
+This could be better and more simply achieved using
+.Xr strlcpy 3 ,
+as shown in the following example:
 .Bd -literal -offset indent
 (void)strlcpy(buf, input, sizeof(buf));
 .Ed
+.Pp
+Note that because
+.Xr strlcpy 3
+is not defined in any standards, it should
+only be used when portability is not a concern.
 .Sh SEE ALSO
 .Xr bcopy 3 ,
 .Xr memccpy 3 ,
 .Xr memcpy 3 ,
 .Xr memmove 3 ,
-.Xr strlcpy 3
+.Xr strlcpy 3 ,
+.Xr wcscpy 3
 .Sh STANDARDS
 The
 .Fn strcpy
@@ -156,3 +197,24 @@ and
 functions
 conform to
 .St -isoC-99 .
+The
+.Fn stpcpy
+and
+.Fn stpncpy
+functions conform to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn stpcpy
+and
+.Fn stpncpy
+functions first appeared in
+.Nx 6.0 .
+.Sh SECURITY CONSIDERATIONS
+The
+.Fn strcpy
+and
+.Fn stpcpy
+functions are easily misused in a manner which enables malicious users
+to arbitrarily change a running program's functionality through a
+buffer overflow attack.

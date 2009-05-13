@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.20 2007/02/09 23:44:18 junyoung Exp $	*/
+/*	$NetBSD: regexec.c,v 1.20.22.1 2009/05/13 19:18:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.20 2007/02/09 23:44:18 junyoung Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.20.22.1 2009/05/13 19:18:25 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -227,7 +227,7 @@ regexec(
 
 	s = __UNCONST(string);
 
-	if (g->nstates <= CHAR_BIT*sizeof(states1) && !(eflags&REG_LARGE))
+	if (g->nstates <= (sopno)(CHAR_BIT*sizeof(states1)) && !(eflags&REG_LARGE))
 		return(smatcher(g, s, nmatch, pmatch, eflags));
 	else
 		return(lmatcher(g, s, nmatch, pmatch, eflags));

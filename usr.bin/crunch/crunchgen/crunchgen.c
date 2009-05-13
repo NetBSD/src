@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.74 2008/10/19 22:10:05 apb Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.74.4.1 2009/05/13 19:19:47 jym Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.74 2008/10/19 22:10:05 apb Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.74.4.1 2009/05/13 19:19:47 jym Exp $");
 #endif
 
 #include <stdlib.h>
@@ -100,7 +100,7 @@ char dbg[MAXPATHLEN] = "-Os";
 int linenum = -1;
 int goterror = 0;
 
-char *pname = "crunchgen";
+const char *pname = "crunchgen";
 
 int verbose, readcache, useobjs, oneobj;	/* options */
 int reading_cache;
@@ -111,11 +111,11 @@ char *makeflags;
 
 /* general library routines */
 
-void status(char *str);
+void status(const char *str);
 void out_of_memory(void);
 void add_string(strlst_t **listp, char *str);
-int is_dir(char *pathname);
-int is_nonempty_file(char *pathname);
+int is_dir(const char *pathname);
+int is_nonempty_file(const char *pathname);
 
 /* helper routines for main() */
 
@@ -316,11 +316,11 @@ parse_one_file(char *filename)
 
 
 void 
-parse_line(char *line, int *fc, char **fv, int nf)
+parse_line(char *pline, int *fc, char **fv, int nf)
 {
     char *p;
 
-    p = line;
+    p = pline;
     *fc = 0;
     for (;;) {
 	while (isspace((unsigned char)*p))
@@ -1071,7 +1071,7 @@ output_strlst(FILE *outf, strlst_t *lst)
  */
 
 void
-status(char *str)
+status(const char *str)
 {
     static int lastlen = 0;
     int len, spaces;
@@ -1124,7 +1124,7 @@ add_string(strlst_t **listp, char *str)
 
 
 int
-is_dir(char *pathname)
+is_dir(const char *pathname)
 {
     struct stat buf;
 
@@ -1134,7 +1134,7 @@ is_dir(char *pathname)
 }
 
 int
-is_nonempty_file(char *pathname)
+is_nonempty_file(const char *pathname)
 {
     struct stat buf;
 

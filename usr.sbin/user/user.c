@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.120 2008/07/21 13:37:00 lukem Exp $ */
+/* $NetBSD: user.c,v 1.120.6.1 2009/05/13 19:20:43 jym Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.120 2008/07/21 13:37:00 lukem Exp $");
+__RCSID("$NetBSD: user.c,v 1.120.6.1 2009/05/13 19:20:43 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1385,7 +1385,7 @@ is_local(char *name, const char *file)
 static int
 moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 {
-	struct passwd  *pwp;
+	struct passwd  *pwp, pw;
 	struct group   *grp;
 	const char     *homedir;
 	char	       *locked_pwd;
@@ -1395,6 +1395,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 	FILE	       *master;
 	char		newdir[MaxFileNameLen];
 	char	        buf[MaxEntryLen];
+	char		pwbuf[MaxEntryLen];
 	char	       *colon;
 	int		masterfd;
 	int		ptmpfd;
@@ -1404,7 +1405,8 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 		errx(EXIT_FAILURE, "Can't modify user `%s': invalid login name",
 		    login_name);
 	}
-	if ((pwp = getpwnam(login_name)) == NULL) {
+	if (getpwnam_r(login_name, &pw, pwbuf, sizeof(pwbuf), &pwp) != 0
+	    || pwp == NULL) {
 		errx(EXIT_FAILURE, "Can't modify user `%s': no such user",
 		    login_name);
 	}
@@ -1540,7 +1542,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 		if (up->u_flags & F_GROUP) {
 			/* if -g=uid was specified, check gid is unused */
 			if (strcmp(up->u_primgrp, "=uid") == 0) {
-				if (getgrgid((gid_t)(up->u_uid)) != NULL) {
+				if (getgrgid((gid_t)(pwp->pw_uid)) != NULL) {
 					(void)close(ptmpfd);
 					(void)pw_abort();
 					errx(EXIT_FAILURE,
@@ -1548,7 +1550,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 					    "gid %d is already in use",
 					    login_name, up->u_uid);
 				}
-				pwp->pw_gid = up->u_uid;
+				pwp->pw_gid = pwp->pw_uid;
 			} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
 				pwp->pw_gid = grp->gr_gid;
 			} else if (is_number(up->u_primgrp) &&
@@ -2347,6 +2349,10 @@ groupmod(int argc, char **argv)
 	}
 	if (dupgid && gid < 0) {
 		errx(EXIT_FAILURE, "Duplicate which gid?");
+	}
+	if (!dupgid && getgrgid((gid_t) gid) != NULL) {
+		errx(EXIT_FAILURE, "Can't modify group: gid %d is a duplicate",
+		    gid);
 	}
 	if ((grp = find_group_info(*argv)) == NULL) {
 		errx(EXIT_FAILURE, "Can't find group `%s' to modify", *argv);

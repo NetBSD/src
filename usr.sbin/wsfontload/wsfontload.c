@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.13 2008/05/26 12:15:42 drochner Exp $ */
+/* $NetBSD: wsfontload.c,v 1.13.6.1 2009/05/13 19:20:44 jym Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -87,7 +87,7 @@ usage(void)
 static const char *
 rgetfontorder(int fontorder)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(fontorders) / sizeof(fontorders[0]); i++)
 		if (fontorders[i].val == fontorder)
@@ -102,7 +102,7 @@ rgetfontorder(int fontorder)
 static const char *
 rgetencoding(int enc)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(encodings) / sizeof(encodings[0]); i++)
 		if (encodings[i].val == enc)
@@ -117,15 +117,16 @@ rgetencoding(int enc)
 static int
 getencoding(char *name)
 {
-	int i;
+	size_t i;
+	int j;
 
 	for (i = 0; i < sizeof(encodings) / sizeof(encodings[0]); i++)
 		if (!strcmp(name, encodings[i].name))
 			return (encodings[i].val);
 
-	if (sscanf(name, "%d", &i) != 1)
+	if (sscanf(name, "%d", &j) != 1)
 		errx(1, "invalid encoding");
-	return (i);
+	return (j);
 }
 
 int
@@ -213,7 +214,7 @@ main(int argc, char **argv)
 	res = read(ffd, buf, len);
 	if (res < 0)
 		err(4, "read font");
-	if (res != len)
+	if ((size_t)res != len)
 		errx(4, "short read");
 
 	f.data = buf;

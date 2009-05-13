@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: mountcritlocal,v 1.9 2006/11/12 01:22:58 christos Exp $
+# $NetBSD: mountcritlocal,v 1.9.28.1 2009/05/13 19:18:03 jym Exp $
 #
 
 # PROVIDE: mountcritlocal
-# REQUIRE: root
+# REQUIRE: fsck
 
 $_rc_subr_loaded . /etc/rc.subr
 

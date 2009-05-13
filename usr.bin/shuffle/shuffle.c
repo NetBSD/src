@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.19 2006/08/26 18:17:43 christos Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.19.26.1 2009/05/13 19:20:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.19 2006/08/26 18:17:43 christos Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.19.26.1 2009/05/13 19:20:05 jym Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -160,11 +160,11 @@ get_number(const char *str, int ch)
 int
 main(int argc, char *argv[])
 {
-	int i, nflag = 0, pflag = 0, ch;
+	int nflag = 0, pflag = 0, ch;
 	char *fname = NULL;
 	size_t *shuffle = NULL;
 	char **lines = NULL;
-	size_t nlines = 0, pick = 0;
+	size_t nlines = 0, pick = 0, i;
 	char sep = '\n';
 	
 	while ((ch = getopt(argc, argv, "0f:n:p:")) != -1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.22 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.22.6.1 2009/05/13 19:20:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.22 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.22.6.1 2009/05/13 19:20:36 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,8 @@ __RCSID("$NetBSD: quotaon.c,v 1.22 2008/07/21 13:36:59 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-char *qfname = QUOTAFILENAME;
-char *qfextension[] = INITQFNAMES;
+const char *qfname = QUOTAFILENAME;
+const char *qfextension[] = INITQFNAMES;
 
 int	aflag;		/* all file systems */
 int	gflag;		/* operate on group quotas */

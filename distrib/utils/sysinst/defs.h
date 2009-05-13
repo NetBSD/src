@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.137 2008/11/06 15:30:23 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.137.2.1 2009/05/13 19:17:55 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -187,7 +187,7 @@ typedef struct _partinfo {
 #define PIF_NODEVMTIME	0x0080		/* mount -o nodevmtime */
 #define PIF_NOEXEC	0x0100		/* mount -o noexec */
 #define PIF_NOSUID	0x0200		/* mount -o nosuid */
-#define PIF_SOFTDEP	0x0400		/* mount -o softdep */
+#define PIF__UNUSED	0x0400		/* unused */
 #define PIF_LOG		0x0800		/* mount -o log */
 #define PIF_MOUNT_OPTS	0x0ff0		/* all above mount flags */
 #define PIF_RESET	0x1000		/* internal - restore previous values */
@@ -339,6 +339,7 @@ int	make_fstab(void);
 int	mount_disks(void);
 int	set_swap(const char *, partinfo *);
 int	check_swap(const char *, int);
+char	*bootxx_name(void);
 
 /* from disks_lfs.c */
 int	fs_is_lfs(void *);
@@ -413,7 +414,6 @@ void	scripting_vfprintf(FILE *, const char *, va_list);
 void	add_rc_conf(const char *, ...);
 void	add_sysctl_conf(const char *, ...);
 void	enable_rc_conf(void);
-int	check_partitions(void);
 void	set_sizemultname_cyl(void);
 void	set_sizemultname_meg(void);
 int	check_lfs_progs(void);

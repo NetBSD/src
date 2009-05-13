@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.28 2008/04/05 04:02:06 lukem Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.28.10.1 2009/05/13 19:20:05 jym Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -17,7 +17,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: skeyinit.c,v 1.28 2008/04/05 04:02:06 lukem Exp $");
+__RCSID("$NetBSD: skeyinit.c,v 1.28.10.1 2009/05/13 19:20:05 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -44,7 +44,8 @@ __RCSID("$NetBSD: skeyinit.c,v 1.28 2008/04/05 04:02:06 lukem Exp $");
 
 int main(int argc, char **argv)
 {
-	int     rval, nn, i, l;
+	int     rval, nn, i;
+	size_t	l;
 	int n = 0, defaultsetup = 1, zerokey = 0, hexmode = 0;
 	int	argpass = 0, argkey = 0;
 	time_t  now;

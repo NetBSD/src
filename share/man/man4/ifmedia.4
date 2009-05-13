@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifmedia.4,v 1.28 2008/04/30 13:10:54 martin Exp $
+.\"	$NetBSD: ifmedia.4,v 1.28.6.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001, 2002, 2003, 2004
 .\"	The NetBSD Foundation, Inc.
@@ -248,12 +248,11 @@ Orthogonal Frequency Division Multiplexing 72Mbps.  [OFDM72]
 .El
 .Pp
 The following media options are defined for IEEE802.11 Wireless LAN:
-.Bl -tag -offset indent -width IFM_IEEE80211_MONITOR -compact
+.Bl -tag -offset indent -width IFM_IEEE80211_MONITOR
 .It Dv IFM_IEEE80211_ADHOC
 Ad-hoc (IBSS) mode. [adhoc, ibss]
-.br
-In some drivers,
-it may be used with the
+.Lp
+In some drivers, it may be used with the
 .Dv IFM_FLAG0
 [flag0] media option to specify non-standard ad-hoc demo mode.
 .It Dv IFM_IEEE80211_HOSTAP

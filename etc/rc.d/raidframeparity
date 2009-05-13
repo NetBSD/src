@@ -1,8 +1,9 @@
 #!/bin/sh
 #
-# $NetBSD: raidframeparity,v 1.3 2004/10/11 15:00:51 christos Exp $
+# $NetBSD: raidframeparity,v 1.3.36.1 2009/05/13 19:18:03 jym Exp $
 #
 
+# PROVIDE: raidframeparity
 # REQUIRE: quota
 
 $_rc_subr_loaded . /etc/rc.subr

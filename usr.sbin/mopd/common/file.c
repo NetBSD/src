@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.10 2002/11/05 06:08:29 thorpej Exp $	*/
+/*	$NetBSD: file.c,v 1.10.40.1 2009/05/13 19:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.10 2002/11/05 06:08:29 thorpej Exp $");
+__RCSID("$NetBSD: file.c,v 1.10.40.1 2009/05/13 19:20:29 jym Exp $");
 #endif
 
 #include "os.h"
@@ -86,73 +86,73 @@ FileTypeName(type)
 }
 
 void
-mopFilePutLX(buf, index, value, cnt)
+mopFilePutLX(buf, idx, value, cnt)
 	u_char	       *buf;
-	int		index, cnt;
+	int		idx, cnt;
 	u_int32_t	value;
 {
 	int i;
 	for (i = 0; i < cnt; i++) {
-		buf[index+i] = value % 256;
+		buf[idx+i] = value % 256;
 		value = value / 256;
 	}
 }
 
 void
-mopFilePutBX(buf, index, value, cnt)
+mopFilePutBX(buf, idx, value, cnt)
 	u_char	       *buf;
-	int		index, cnt;
+	int		idx, cnt;
 	u_int32_t	value;
 {
 	int i;
 	for (i = 0; i < cnt; i++) {
-		buf[index+cnt-1-i] = value % 256;
+		buf[idx+cnt-1-i] = value % 256;
 		value = value / 256;
 	}
 }
 
 u_int32_t
-mopFileGetLX(buf, index, cnt)
+mopFileGetLX(buf, idx, cnt)
 	u_char	*buf;
-	int	index, cnt;
+	int	idx, cnt;
 {
 	u_int32_t ret = 0;
 	int i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = ret*256 + buf[index+cnt-1-i];
+		ret = ret*256 + buf[idx+cnt-1-i];
 	}
 
 	return(ret);
 }
 
 u_int32_t
-mopFileGetBX(buf, index, cnt)
+mopFileGetBX(buf, idx, cnt)
 	u_char	*buf;
-	int	index, cnt;
+	int	idx, cnt;
 {
 	u_int32_t ret = 0;
 	int i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = ret*256 + buf[index+i];
+		ret = ret*256 + buf[idx+i];
 	}
 
 	return(ret);
 }
 
 void
-mopFileSwapX(buf, index, cnt)
+mopFileSwapX(buf, idx, cnt)
 	u_char	*buf;
-	int	index, cnt;
+	int	idx, cnt;
 {
 	int i;
 	u_char c;
 
 	for (i = 0; i < (cnt / 2); i++) {
-		c = buf[index+i];
-		buf[index+i] = buf[index+cnt-1-i];
-		buf[index+cnt-1-i] = c;
+		c = buf[idx+i];
+		buf[idx+i] = buf[idx+cnt-1-i];
+		buf[idx+cnt-1-i] = c;
 	}
 
 }
@@ -689,14 +689,14 @@ GetAOutFileInfo(dl)
 
 	mid = getMID(mid, N_GETMID (ex));
 
-	if (mid == -1) {
+	if (mid == (uint32_t)-1) {
 		mid = getMID(mid, N_GETMID (ex_swap));
-		if (mid != -1) {
+		if (mid != (uint32_t)-1) {
 			mopFileSwapX((u_char *)&ex, 0, 4);
 		}
 	}
 
-	if (mid == -1) {
+	if (mid == (uint32_t)-1) {
 		return(-1);
 	}
 
@@ -871,30 +871,30 @@ int
 GetFileInfo(dl)
 	struct dllist	*dl;
 {
-	int	err;
+	int	error;
 
-	err = CheckElfFile(dl->ldfd);
-	if (err == 0) {
-		err = GetElfFileInfo(dl);
-		if (err != 0) {
+	error = CheckElfFile(dl->ldfd);
+	if (error == 0) {
+		error = GetElfFileInfo(dl);
+		if (error != 0) {
 			return(-1);
 		}
 		return (0);
 	}
 
-	err = CheckAOutFile(dl->ldfd);
-	if (err == 0) {
-		err = GetAOutFileInfo(dl);
-		if (err != 0) {
+	error = CheckAOutFile(dl->ldfd);
+	if (error == 0) {
+		error = GetAOutFileInfo(dl);
+		if (error != 0) {
 			return(-1);
 		}
 		return (0);
 	}
 
-	err = CheckMopFile(dl->ldfd);
-	if (err == 0) {
-		err = GetMopFileInfo(dl);
-		if (err != 0) {
+	error = CheckMopFile(dl->ldfd);
+	if (error == 0) {
+		error = GetMopFileInfo(dl);
+		if (error != 0) {
 			return(-1);
 		}
 		return (0);

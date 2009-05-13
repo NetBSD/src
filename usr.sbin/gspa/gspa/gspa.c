@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.13 2006/12/18 20:12:21 christos Exp $	*/
+/*	$NetBSD: gspa.c,v 1.13.20.1 2009/05/13 19:20:23 jym Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.13 2006/12/18 20:12:21 christos Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.13.20.1 2009/05/13 19:20:23 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@ extern YYSTYPE yylval;
 int err_count;
 
 char line[MAXLINE];
-int lineno;
+unsigned lineno;
 
 extern int yydebug;
 short pass2;
@@ -250,7 +250,7 @@ get_line(char *lp, int maxlen)
 }
 
 void
-perr(char *fmt, ...)
+perr(const char *fmt, ...)
 {
 	va_list ap;
 	char error_string[256];
@@ -267,7 +267,7 @@ perr(char *fmt, ...)
 }
 
 void
-p1err(char *fmt, ...)
+p1err(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -280,10 +280,10 @@ p1err(char *fmt, ...)
 }
 
 void
-yyerror(char *err)
+yyerror(const char *errs)
 {
 
-	perr("%s", err);
+	perr("%s", errs);
 	longjmp(synerrjmp, 1);
 }
 

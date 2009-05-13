@@ -533,11 +533,6 @@ void SYNTAX(const char *fmt, ...)
 	eprint();
 }
 
-void fpecatch(int n)
-{
-	FATAL("floating point exception %d", n);
-}
-
 extern int bracecnt, brackcnt, parencnt;
 
 void bracecheck(void)
@@ -715,7 +710,9 @@ int is_number(const char *s)
 	char *ep;
 	errno = 0;
 	r = strtod(s, &ep);
-	if (ep == s || r == HUGE_VAL || errno == ERANGE)
+	if (ep == s || errno == ERANGE)
+		return 0;
+	if (ep - s >= 3 && strncasecmp(ep - 3, "nan", 3) == 0)
 		return 0;
 	while (*ep == ' ' || *ep == '\t' || *ep == '\n')
 		ep++;

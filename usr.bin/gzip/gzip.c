@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.93 2008/08/03 09:25:05 skrll Exp $	*/
+/*	$NetBSD: gzip.c,v 1.93.6.1 2009/05/13 19:19:52 jym Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.93 2008/08/03 09:25:05 skrll Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.93.6.1 2009/05/13 19:19:52 jym Exp $");
 #endif /* not lint */
 
 /*
@@ -1263,7 +1263,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	enum filetype method;
 	int fd, ofd, zfd = -1;
 #ifndef SMALL
-	int rv;
+	ssize_t rv;
 	time_t timestamp = 0;
 	unsigned char name[PATH_MAX + 1];
 #endif
@@ -1311,7 +1311,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		unsigned char ts[4];	/* timestamp */
 
 		rv = pread(fd, ts, sizeof ts, GZIP_TIMESTAMP);
-		if (rv >= 0 && rv < sizeof ts)
+		if (rv >= 0 && rv < (ssize_t)(sizeof ts))
 			goto unexpected_EOF;
 		if (rv == -1) {
 			if (!fflag)

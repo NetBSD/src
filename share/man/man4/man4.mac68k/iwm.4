@@ -1,5 +1,5 @@
-.\" $NetBSD: iwm.4,v 1.8 2002/01/15 01:47:22 wiz Exp $
-.\"	$Id: iwm.4,v 1.8 2002/01/15 01:47:22 wiz Exp $
+.\" $NetBSD: iwm.4,v 1.8.44.1 2009/05/13 19:19:11 jym Exp $
+.\"	$Id: iwm.4,v 1.8.44.1 2009/05/13 19:19:11 jym Exp $
 .\"
 .\" Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
 .\"
@@ -48,11 +48,11 @@ driver sets up a fake in-core disklabel, using the minor device
 number to select from the supported disk formats.
 .Pp
 The following formats are supported:
-.Bl -column header Partition Size sides tracks sectors/track
-.Sy    "Partition   Size   sides  tracks  sectors/track"
-    a       800Kb    2      80          10          (default)
-    b       400Kb    1      80          10
-    c       800Kb    2      80          10
+.Bl -column Partition Size sides tracks sectors/track
+.It Sy Partition Ta Sy Size Ta Sy sides Ta Sy tracks Ta Sy sectors/track
+.It a Ta 800Kb Ta 2 Ta 80 Ta 10 (default)
+.It b Ta 400Kb Ta 1 Ta 80 Ta 10
+.It c Ta 800Kb Ta 2 Ta 80 Ta 10
 .El
 .Pp
 (The above table describes the logical mapping as implemented by the

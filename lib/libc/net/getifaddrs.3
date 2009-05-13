@@ -1,4 +1,4 @@
-.\"	$NetBSD: getifaddrs.3,v 1.8 2003/04/16 13:34:42 wiz Exp $
+.\"	$NetBSD: getifaddrs.3,v 1.8.42.1 2009/05/13 19:18:25 jym Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -21,8 +21,9 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd October 12, 1995
+.Dd April 21, 2009
 .Dt GETIFADDRS 3
+.Os
 .Sh NAME
 .Nm getifaddrs
 .Nd get interface addresses
@@ -78,7 +79,8 @@ utility.
 The
 .Li ifa_addr
 field references either the address of the interface or the link level
-address of the interface, if one exists, otherwise it is NULL.
+address of the interface, if one exists, otherwise it is
+.Dv NULL .
 (The
 .Li sa_family
 field of the
@@ -91,7 +93,8 @@ The
 .Li ifa_netmask
 field references the netmask associated with
 .Li ifa_addr ,
-if one is set, otherwise it is NULL.
+if one is set, otherwise it is
+.Dv NULL .
 .Pp
 The
 .Li ifa_broadaddr
@@ -99,25 +102,26 @@ field,
 which should only be referenced for non-P2P interfaces,
 references the broadcast address associated with
 .Li ifa_addr ,
-if one exists, otherwise it is NULL.
+if one exists, otherwise it is
+.Dv NULL .
 .Pp
 The
 .Li ifa_dstaddr
 field references the destination address on a P2P interface,
-if one exists, otherwise it is NULL.
+if one exists, otherwise it is
+.Dv NULL .
 .Pp
 The
 .Li ifa_data
-field references address family specific data.  For
+field references address family specific data.
+For
 .Dv AF_LINK
 addresses it contains a pointer to the
 .Fa struct if_data
 .Pq as defined in include file Aq Pa net/if.h
 which contains various interface attributes and statistics.
-For all other address families, it contains a pointer to the
-.Fa struct ifa_data
-.Pq as defined in include file Aq Pa net/if.h
-which contains per-address interface statistics.
+For all other address families, it is
+.Dv NULL .
 .Pp
 The data returned by
 .Fn getifaddrs

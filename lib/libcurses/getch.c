@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.51 2008/04/14 20:32:53 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.51.10.1 2009/05/13 19:18:28 jym Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.51 2008/04/14 20:32:53 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.51.10.1 2009/05/13 19:18:28 jym Exp $");
 #endif
 #endif					/* not lint */
 
@@ -600,7 +600,7 @@ reread:
 			}
 
 			c = getchar();
-			if (c == -1 || ferror(infd)) {
+			if (ferror(infd)) {
 				clearerr(infd);
 				return ERR;
 			}
@@ -608,13 +608,12 @@ reread:
 			if ((to || delay) && (__notimeout() == ERR))
 					return ERR;
 
-			k = (wchar_t) c;
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey (state assembling) got '%s'\n", unctrl(k));
 #endif
-			if (feof(infd)) {	/* inter-char timeout,
-						 * start backing out */
+			if (feof(infd) || c == -1) {	/* inter-char timeout,
+							 * start backing out */
 				clearerr(infd);
 				if (start == end)
 					/* no chars in the buffer, restart */
@@ -623,6 +622,7 @@ reread:
 				k = inbuf[start];
 				state = INKEY_TIMEOUT;
 			} else {
+				k = (wchar_t) c;
 				inbuf[working] = k;
 				INC_POINTER(working);
 				end = working;
@@ -808,8 +808,8 @@ wgetch(WINDOW *win)
 		wrefresh(win);
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wgetch: __echoit = %d, "
-	    "__rawmode = %d, __nl = %d, flags = %#.4x\n",
-	    __echoit, __rawmode, _cursesi_screen->nl, win->flags);
+	    "__rawmode = %d, __nl = %d, flags = %#.4x, delay = %d\n",
+	    __echoit, __rawmode, _cursesi_screen->nl, win->flags, win->delay);
 #endif
 	if (_cursesi_screen->resized) {
 		_cursesi_screen->resized = 0;

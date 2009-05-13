@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.47 2008/07/21 13:36:57 lukem Exp $ */
+/*	$NetBSD: arp.c,v 1.47.6.1 2009/05/13 19:20:16 jym Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,17 +42,13 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.47 2008/07/21 13:36:57 lukem Exp $");
+__RCSID("$NetBSD: arp.c,v 1.47.6.1 2009/05/13 19:20:16 jym Exp $");
 #endif
 #endif /* not lint */
 
 /*
  * arp - display, set, and delete arp table entries
  */
-
-/* Roundup the same way rt_xaddrs does */
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -285,7 +281,7 @@ tryagain:
 		return (1);
 	}
 	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(void *)(ROUNDUP(sina->sin_len) +
+	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(sina->sin_len) +
 	    (char *)(void *)sina);
 	if (sina->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (is_llinfo(sdl, rtm->rtm_flags))
@@ -379,7 +375,7 @@ tryagain:
 		return (1);
 	}
 	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(void *)(ROUNDUP(sina->sin_len) +
+	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(sina->sin_len) +
 	    (char *)(void *)sina);
 	if (sina->sin_addr.s_addr == sin_m.sin_addr.s_addr &&
 	    is_llinfo(sdl, rtm->rtm_flags))
@@ -439,7 +435,7 @@ dump(uint32_t addr)
 		rtm = (struct rt_msghdr *)(void *)next;
 		sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
 		sdl = (struct sockaddr_dl *)(void *)
-		    (ROUNDUP(sina->sin_len) + (char *)(void *)sina);
+		    (RT_ROUNDUP(sina->sin_len) + (char *)(void *)sina);
 		if (addr) {
 			if (addr != sina->sin_addr.s_addr)
 				continue;
@@ -471,7 +467,7 @@ dump(uint32_t addr)
 			(void)printf(" published (proxy only)");
 		if (rtm->rtm_addrs & RTA_NETMASK) {
 			sina = (struct sockaddr_inarp *)(void *)
-				(ROUNDUP(sdl->sdl_len) + (char *)(void *)sdl);
+			    (RT_ROUNDUP(sdl->sdl_len) + (char *)(void *)sdl);
 			if (sina->sin_addr.s_addr == 0xffffffff)
 				(void)printf(" published");
 			if (sina->sin_len != 8)
@@ -626,7 +622,7 @@ rtmsg(int cmd)
 	if (rtm->rtm_addrs & (w)) { \
 		(void)memcpy(cp, &s, \
 		(size_t)((struct sockaddr *)(void *)&s)->sa_len); \
-		cp += ROUNDUP(((struct sockaddr *)(void *)&s)->sa_len); \
+		RT_ADVANCE(cp, ((struct sockaddr *)(void *)&s)); \
 	}
 
 	NEXTADDR(RTA_DST, sin_m);

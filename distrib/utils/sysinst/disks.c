@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.100 2008/08/08 02:54:06 simonb Exp $ */
+/*	$NetBSD: disks.c,v 1.100.4.1 2009/05/13 19:17:55 jym Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -506,10 +506,9 @@ make_fstab(void)
 			s = "# ";
 
  		scripting_fprintf(f,
-		  "%s/dev/%s%c\t\t%s\t%s\trw%s%s%s%s%s%s%s%s%s\t\t %d %d\n",
+		  "%s/dev/%s%c\t\t%s\t%s\trw%s%s%s%s%s%s%s%s\t\t %d %d\n",
 		   s, diskdev, 'a' + i, mp, fstype,
 		   bsdlabel[i].pi_flags & PIF_LOG ? ",log" : "",
-		   bsdlabel[i].pi_flags & PIF_SOFTDEP ? ",softdep" : "",
 		   bsdlabel[i].pi_flags & PIF_MOUNT ? "" : ",noauto",
 		   bsdlabel[i].pi_flags & PIF_ASYNC ? ",async" : "",
 		   bsdlabel[i].pi_flags & PIF_NOATIME ? ",noatime" : "",
@@ -532,7 +531,7 @@ make_fstab(void)
 	/* Add /kern, /proc and /dev/pts to fstab and make mountpoint. */
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
-	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw,noauto\n");
+	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
 	scripting_fprintf(f, "/dev/cd0a\t\t/cdrom\tcd9660\tro,noauto\n");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
@@ -824,3 +823,49 @@ check_swap(const char *disk, int remove_swap)
 	rval = -1;
 	goto done;
 }
+
+#ifdef HAVE_BOOTXX_xFS
+char *
+bootxx_name(void)
+{
+	int fstype;
+	const char *bootxxname;
+	char *bootxx;
+
+	/* check we have boot code for the root partition type */
+	fstype = bsdlabel[rootpart].pi_fstype;
+	switch (fstype) {
+#if defined(BOOTXX_FFSV1) || defined(BOOTXX_FFSV2)
+	case FS_BSDFFS:
+		if (bsdlabel[rootpart].pi_flags & PIF_FFSv2) {
+#ifdef BOOTXX_FFSV2
+			bootxxname = BOOTXX_FFSV2;
+#else
+			bootxxname = NULL;
+#endif
+		} else {
+#ifdef BOOTXX_FFSV1
+			bootxxname = BOOTXX_FFSV1;
+#else
+			bootxxname = NULL;
+#endif
+		}
+		break;
+#endif
+#ifdef BOOTXX_LFS
+	case FS_BSDLFS:
+		bootxxname = BOOTXX_LFS;
+		break;
+#endif
+	default:
+		bootxxname = NULL;
+		break;
+	}
+
+	if (bootxxname == NULL)
+		return NULL;
+
+	asprintf(&bootxx, "%s/%s", BOOTXXDIR, bootxxname);
+	return bootxx;
+}
+#endif

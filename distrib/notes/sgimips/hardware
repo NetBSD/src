@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.13 2006/12/20 00:40:16 hubertf Exp $
+.\"	$NetBSD: hardware,v 1.13.22.1 2009/05/13 19:17:47 jym Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by 
@@ -92,6 +92,10 @@ On-board HAL2 controller (IP22/24)
 .It
 Graphics adapters
 .(bullet -compact
+SGI CRIME (Found in O2s)
+.Pq Em crmfb ,
+.bullet)
+.(bullet -compact
 SGI NG1 "newport" (IP22/24)
 .Pq Em newport ,
 .bullet)
@@ -119,7 +123,7 @@ On-board Parallel Port (IP22/24)
 .
 .Ss2 Unsupported devices
 .(bullet -offset indent
-Some graphics adapters (e.g. the O2 framebuffer)
+Some graphics adapters
 .It
 Video hardware
 .It

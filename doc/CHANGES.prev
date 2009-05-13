@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.88 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.88.2.1 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8670,6 +8670,11 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	i386: Add fatboot, sub-512 byte bootloader that can be written into
 		the first sector of a FAT16 filesystem and will load
 		the secondary bootloader from it. [dsl 20070101]
+	kernel: Make mount(2) and unmount(2) use kauth(9) for security
+		policy.  One incompatible change is that an unprivileged
+		mount without the MNT_NOSUID and MNT_NODEV flags
+		will now fail, whereas previously those flags were
+		automatically added.  [elad 20070102]
 	udf: Implement read-only access to UDF 2.50 and UDF 2.60 discs
 		that use metadata partition mappings. [reinoud 20070104]
 	i386: Add support for Microsoft Xbox. [jmcneill 20070105]
@@ -9056,7 +9061,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	compat_linux32: Add missing chown's syscalls family members.
 		This makes chown(1)/chgrp(1) works under compat linux32.
 		[njoly 20071027]
-	pcc(1): Import pcc-071127. [ragge 20071127]
+	pcc(1): Import pcc-071027. [ragge 20071027]
 	shark: Removed pccons(4), obsoleted by wscons(4). [jmmv 20071028]
 	coretemp(4): Driver for Intel Core's on-die thermal sensor,
 		available on Core or newer CPUs. Ported from FreeBSD.
@@ -9145,7 +9150,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
 		ported from OpenBSD. [xtraeme 20071204]
 	symlink(7): Implement a new magic string for magic symlinks, @ruid,
-		which exapnds to the real user id of the process and
+		which expands to the real user id of the process and
 		use this magic string for per-user tmp. [mjf 20071204]
 	fxp(4): Fix some TX timeout and RX pool corruption problems.
 		Mostly from OpenBSD. [tsutsui 20071208]
@@ -9836,6 +9841,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	acorn26: Initialise cpu_info_store so that acorn26 kernel works.
 		[bjh21 20090103]
 	atari: Fix lost interrupt problem on Falcon wdc(4). [tsutsui 20090103]
+	rc.d(8): Add etc/rc.d/rndctl script. [apb 20090104]
 	evbarm: Misc fixes to make i80321-based boards booting.
 		[briggs 20090105]
 	openssl(1):  Correct error checking for DSA and ECDSA keys
@@ -9858,5 +9864,58 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[tsutsui 20090120]
 	atari: Merge ATARITT.in and FALCON.in, rename BOOT to SMALL030, and
 		remove BOOTX kernel. [abs 20090124]
+	evbppc: Fix sysinst(8) to refer proper WALNUT and OPENBLOCKS266
+		kernels. [abs 20090125]
 	m68k: Fix floating point handling regressions for m68k.
 		[martin 20090127]
+	dhcpcd(8): Import 4.0.8. [roy 20090128]
+	amd64, i386: Enable BUFQ_PRIOCSCAN by default. [ad 20090129]
+	bge(4): Make fibre cards work. [he 20090130]
+	dhcpcd(8): Import 4.0.9. [roy 20090131]
+	dhcpcd(8): Import 4.0.10. [roy 20090204]
+	atari: Add support for installation from GEMDOS partition.
+		[abs 20090206]
+	newport(4): Imported and adapted to NetBSD Xorg's xf86-video-newport
+		0.2.1 driver for SGI's NG1 / Newport graphics boards found
+		mostly in Indys. [macallan 20090213]
+	crime(4): add an Xorg driver for the CRIME rendering engine found in
+		SGI's O2 workstations. [macallan 20090219]
+	mount_procfs(8): Default to -o linux. [pooka 20090223]
+	sgimips: build Xorg by default [macallan 20090223]
+	wm(4): Add support for 82574L. [sborrill 20090227]
+	azalia(4): Add proper Realtek ALC268 support. [jmcneill 20090228]
+	wm(4): Fix the multicast hash bug on ICH9. [msaitoh 20090228]
+	compat_sa: Disable PTHREAD_CONCURRENCY until the bugs are fixed.
+		[christos 20090306]
+	build.sh: In build.sh and bsd.own.mk, if uname -p fails, or
+		prints "unknown", or prints something that does not
+		look like an identifier, then use uname -m instead.
+		[apb 20090306]
+	ddb(4): Change value for ddb.onpanic to 0 in sysctl.conf(5).
+		[martin 20090311]
+	compat_sa: Disable SA via sysctl.conf(5), to keep binary compatibility
+		for incomplete (kernel only) updates. [martin 20090312]
+	atari: Use separate free lists for TT and ST ram, and give TT
+		a lower id so all TT ram will be used before any ST ram.
+		[abs 20090313]
+	cpuctl(8): Print some L2 cache size properly. [tsutsui 20090316]
+	re(4): Fix reset issue on newer 8168C/8111C/8102E chipes.
+		[tsutsui 20090320]
+	wdc(4): Work around a problem with PCMCIA adapter drivers (eg for hpc*)
+		which attach pcmcia devices before interrupts are enabled.
+		[drochner 20090321]
+	savecore(8): Use ksyms(4) if it's available. [tls 20090321]
+	httpd(8): Fix redirection core dump as reported in PR#41042.
+		[reinoud 20080323]
+	rc.conf(5), rc.d(8): Add flags to rc.d/ipfilter. [hannken 20090323]
+	ahcisata(4): Handle quirks of more NVIDIA MCP65 SATA controllers.
+		[dholland 20090327]
+	openssl(1): Apply patches from upstream to fix security problems,
+		ASN1 printing crash (CVE-2009-0590),
+		Incorrect Error Checking During CMS verification
+		(CVE-2009-0591), and Invalid ASN1 clearing check
+		(CVE-2009-0789). [drochner 20090327]
+	zx(4): Use bus_space(9) to access registers so that this works on gcc4.
+		[tsutsui 20090327]
+	sysctl(8): Add sysctl -w name?=value syntax which doesn't print
+		an error even if name does not exist. [christos 20090401]

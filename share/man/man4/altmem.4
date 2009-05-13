@@ -1,0 +1,67 @@
+.\"	$NetBSD: altmem.4,v 1.2.2.2 2009/05/13 19:19:08 jym Exp $
+.\"
+.\" Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Neither the name of the author nor the names of any
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 11, 2009
+.Dt ALTMEM 4
+.Os
+.Sh NAME
+.Nm altmem
+.Nd Alternative memory disk driver
+.Sh SYNOPSIS
+.Cd "altmem* at altmemdev?"
+.Sh DESCRIPTION
+The
+.Nm
+driver enables use of physical memory that is normally inaccessable by the
+machine-dependent
+.Xr pmap 9
+as a swap device.
+.Pp
+When an alternative memory disk device is present, this device is generally
+preferred to hard disk-based swap space.
+See the
+.Xr swapctl 8
+and
+.Xr fstab 5
+man pages for instructions on how to assign priorities to swap devices.
+.Sh FILES
+.Bl -tag -width /dev/raltmemXX -compact
+.It Pa "/dev/altmem??"
+block mode alternative memory disk devices.
+.It Pa "/dev/raltmem??"
+raw mode alternative memory disk devices.
+.El
+.Sh SEE ALSO
+.Xr md 4 ,
+.Xr fstab 5 ,
+.Xr swapctl 8
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Jared D. McNeill Aq jmcneill@NetBSD.org

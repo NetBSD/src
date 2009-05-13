@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.240 2008/11/24 02:13:08 cube Exp $
+#	$NetBSD: bsd.prog.mk,v 1.240.2.1 2009/05/13 19:19:17 jym Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -95,7 +95,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	fetch form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
 	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
-	puffs radius resolv rmt roken rpcsvc rt rump rumpuser sdp skey sl ss \
+	puffs radius resolv rmt roken rpcsvc rt rump rumpuser skey sl ss \
 	ssh ssl termcap usbhid util wrap y z bind9 dns lwres isccfg isccc isc \
 	\
 	rumpfs_cd9660fs rumpfs_efs rumpfs_ext2fs rumpfs_ffs rumpfs_hfs \
@@ -442,6 +442,9 @@ scriptsinstall::
 .PHONY:		scriptsinstall
 
 ##### Pull in related .mk logic
+LINKSOWN?= ${BINOWN}
+LINKSGRP?= ${BINGRP}
+LINKSMODE?= ${BINMODE}
 .include <bsd.man.mk>
 .include <bsd.nls.mk>
 .include <bsd.files.mk>

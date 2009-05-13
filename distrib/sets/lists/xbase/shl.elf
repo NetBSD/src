@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.21 2009/01/11 23:14:53 jnemeth Exp $
+# $NetBSD: shl.elf,v 1.21.2.1 2009/05/13 19:17:53 jym Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -132,14 +132,11 @@
 ./usr/X11R7/lib/libXau.so			-unknown-		xorg
 ./usr/X11R7/lib/libXau.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXaw.so			-unknown-		xorg
-./usr/X11R7/lib/libXaw.so.6			-unknown-		xorg
-./usr/X11R7/lib/libXaw.so.7			-unknown-		xorg
-./usr/X11R7/lib/libXaw.so.8			-unknown-		xorg
 ./usr/X11R7/lib/libXaw6.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXaw7.so			-unknown-		xorg
-./usr/X11R7/lib/libXaw7.so.8			-unknown-		xorg
-./usr/X11R7/lib/libXaw8.so			-unknown-		xorg
-./usr/X11R7/lib/libXaw8.so.9			-unknown-		xorg
+./usr/X11R7/lib/libXaw7.so.10			-unknown-		xorg
+./usr/X11R7/lib/libXaw8.so			-obsolete-		obsolete
+./usr/X11R7/lib/libXaw8.so.9			-obsolete-		obsolete
 ./usr/X11R7/lib/libXcomposite.so		-unknown-		xorg
 ./usr/X11R7/lib/libXcomposite.so.2		-unknown-		xorg
 ./usr/X11R7/lib/libXcursor.so			-unknown-		xorg
@@ -168,14 +165,14 @@
 ./usr/X11R7/lib/libXmu.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXmuu.so			-unknown-		xorg
 ./usr/X11R7/lib/libXmuu.so.2			-unknown-		xorg
-./usr/X11R7/lib/libXp.so			-unknown-		xorg
-./usr/X11R7/lib/libXp.so.7			-unknown-		xorg
+./usr/X11R7/lib/libXp.so			-obsolete-		obsolete
+./usr/X11R7/lib/libXp.so.7			-obsolete-		obsolete
 ./usr/X11R7/lib/libXpm.so			-unknown-		xorg
 ./usr/X11R7/lib/libXpm.so.5			-unknown-		xorg
-./usr/X11R7/lib/libXprintAppUtil.so		-unknown-		xorg
-./usr/X11R7/lib/libXprintAppUtil.so.2		-unknown-		xorg
-./usr/X11R7/lib/libXprintUtil.so		-unknown-		xorg
-./usr/X11R7/lib/libXprintUtil.so.2		-unknown-		xorg
+./usr/X11R7/lib/libXprintAppUtil.so		-obsolete-		obsolete
+./usr/X11R7/lib/libXprintAppUtil.so.2		-obsolete-		obsolete
+./usr/X11R7/lib/libXprintUtil.so		-obsolete-		obsolete
+./usr/X11R7/lib/libXprintUtil.so.2		-obsolete-		obsolete
 ./usr/X11R7/lib/libXrandr.so			-unknown-		xorg
 ./usr/X11R7/lib/libXrandr.so.3			-unknown-		xorg
 ./usr/X11R7/lib/libXrender.so			-unknown-		xorg
@@ -210,8 +207,8 @@
 ./usr/X11R7/lib/libfreetype.so.7		-unknown-		xorg
 ./usr/X11R7/lib/libglut.so			-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4			-unknown-		xorg
-./usr/X11R7/lib/liblbxutil.so			-unknown-		xorg
-./usr/X11R7/lib/liblbxutil.so.2			-unknown-		xorg
+./usr/X11R7/lib/liblbxutil.so			-obsolete		obsolete
+./usr/X11R7/lib/liblbxutil.so.2			-obsolete		obsolete
 ./usr/X11R7/lib/libpixman-1.so			-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxkbfile.so			-unknown-		xorg

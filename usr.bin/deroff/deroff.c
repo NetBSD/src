@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.5 2007/12/15 19:44:50 perry Exp $	*/
+/*	$NetBSD: deroff.c,v 1.5.12.1 2009/05/13 19:19:48 jym Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -74,13 +74,14 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.5 2007/12/15 19:44:50 perry Exp $";
+static const char rcsid[] = "$NetBSD: deroff.c,v 1.5.12.1 2009/05/13 19:19:48 jym Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <err.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -436,7 +437,8 @@ getfname(void)
 	while (C == ' ')
 		;	/* nothing */
 
-	for (p = fname ; p - fname < sizeof(fname) && (*p = c) != '\n' &&
+	for (p = fname ; p - fname < (ptrdiff_t)sizeof(fname) &&
+	    (*p = c) != '\n' &&
 	    c != ' ' && c != '\t' && c != '\\'; ++p)
 		C;
 	*p = '\0';
@@ -494,7 +496,7 @@ regline(void (*pfunc)(char *, int), int constant)
 
 	line[0] = c;
 	lp = line;
-	while (lp - line < sizeof(line)) {
+	while (lp - line < (ptrdiff_t)sizeof(line)) {
 		if (c == '\\') {
 			*lp = ' ';
 			backsl();

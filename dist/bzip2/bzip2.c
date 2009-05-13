@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.6 2008/03/18 17:35:36 christos Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.6.10.1 2009/05/13 19:17:31 jym Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -220,7 +220,7 @@ static void    crcError              ( void )        NORETURN;
 static void    cleanUpAndFail        ( Int32 )       NORETURN;
 static void    compressedStreamEOF   ( void )        NORETURN;
 
-static void    copyFileName ( Char*, Char* );
+static void    copyFileName ( Char*, const Char* );
 static void*   myMalloc     ( Int32 );
 static void    applySavedFileAttrToOutputFile ( IntNative fd );
 
@@ -470,7 +470,7 @@ Bool uncompressStream ( FILE *zStream, FILE *stream )
       }
       if (bzerr != BZ_STREAM_END) goto errhandler;
 
-      BZ2_bzReadGetUnused ( &bzerr, bzf, (void*)(&unusedTmp), &nUnused );
+      BZ2_bzReadGetUnused ( &bzerr, bzf, (void*)(&unusedTmpV), &nUnused );
       if (bzerr != BZ_OK) panic ( "decompress:bzReadGetUnused" );
 
       unusedTmp = (UChar*)unusedTmpV;
@@ -585,7 +585,7 @@ Bool testStream ( FILE *zStream )
       }
       if (bzerr != BZ_STREAM_END) goto errhandler;
 
-      BZ2_bzReadGetUnused ( &bzerr, bzf, (void*)(&unusedTmp), &nUnused );
+      BZ2_bzReadGetUnused ( &bzerr, bzf, (void*)(&unusedTmpV), &nUnused );
       if (bzerr != BZ_OK) panic ( "test:bzReadGetUnused" );
 
       unusedTmp = (UChar*)unusedTmpV;
@@ -921,7 +921,7 @@ void pad ( Char *s )
 
 /*---------------------------------------------*/
 static 
-void copyFileName ( Char* to, Char* from ) 
+void copyFileName ( Char* to, const Char* from ) 
 {
    if ( strlen(from) > FILE_NAME_LEN-10 )  {
       fprintf (
@@ -1149,8 +1149,8 @@ void compress ( Char *name )
 
    switch (srcMode) {
       case SM_I2O: 
-         copyFileName ( inName, (Char*)"(stdin)" );
-         copyFileName ( outName, (Char*)"(stdout)" ); 
+         copyFileName ( inName, "(stdin)" );
+         copyFileName ( outName, "(stdout)" ); 
          break;
       case SM_F2F: 
          copyFileName ( inName, name );
@@ -1159,7 +1159,7 @@ void compress ( Char *name )
          break;
       case SM_F2O: 
          copyFileName ( inName, name );
-         copyFileName ( outName, (Char*)"(stdout)" ); 
+         copyFileName ( outName, "(stdout)" ); 
          break;
    }
 
@@ -1333,8 +1333,8 @@ void uncompress ( Char *name )
    cantGuess = False;
    switch (srcMode) {
       case SM_I2O: 
-         copyFileName ( inName, (Char*)"(stdin)" );
-         copyFileName ( outName, (Char*)"(stdout)" ); 
+         copyFileName ( inName, "(stdin)" );
+         copyFileName ( outName, "(stdout)" ); 
          break;
       case SM_F2F: 
          copyFileName ( inName, name );
@@ -1347,7 +1347,7 @@ void uncompress ( Char *name )
          break;
       case SM_F2O: 
          copyFileName ( inName, name );
-         copyFileName ( outName, (Char*)"(stdout)" ); 
+         copyFileName ( outName, "(stdout)" ); 
          break;
    }
 
@@ -1525,9 +1525,9 @@ void testf ( Char *name )
    if (name == NULL && srcMode != SM_I2O)
       panic ( "testf: bad modes\n" );
 
-   copyFileName ( outName, (Char*)"(none)" );
+   copyFileName ( outName, "(none)" );
    switch (srcMode) {
-      case SM_I2O: copyFileName ( inName, (Char*)"(stdin)" ); break;
+      case SM_I2O: copyFileName ( inName, "(stdin)" ); break;
       case SM_F2F: copyFileName ( inName, name ); break;
       case SM_F2O: copyFileName ( inName, name ); break;
    }
@@ -1749,7 +1749,7 @@ Cell *snocString ( Cell *root, Char *name )
 
 /*---------------------------------------------*/
 static 
-void addFlagsFromEnvVar ( Cell** argList, Char* varName ) 
+void addFlagsFromEnvVar ( Cell** argList, const Char* varName ) 
 {
    Int32 i, j, k;
    Char *envbase, *p;
@@ -1819,8 +1819,8 @@ IntNative main ( IntNative argc, Char *argv[] )
 #  endif
 #endif
 
-   copyFileName ( inName,  (Char*)"(none)" );
-   copyFileName ( outName, (Char*)"(none)" );
+   copyFileName ( inName,  "(none)" );
+   copyFileName ( outName, "(none)" );
 
    copyFileName ( progNameReally, argv[0] );
    progName = &progNameReally[0];
@@ -1832,8 +1832,8 @@ IntNative main ( IntNative argc, Char *argv[] )
         expand filename wildcards in arg list.
    --*/
    argList = NULL;
-   addFlagsFromEnvVar ( &argList,  (Char*)"BZIP2" );
-   addFlagsFromEnvVar ( &argList,  (Char*)"BZIP" );
+   addFlagsFromEnvVar ( &argList,  "BZIP2" );
+   addFlagsFromEnvVar ( &argList,  "BZIP" );
    for (i = 1; i <= argc-1; i++)
       APPEND_FILESPEC(argList, argv[i]);
 

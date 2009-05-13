@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.13 2008/10/29 17:07:33 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.13.4.1 2009/05/13 19:17:44 jym Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -14,13 +14,13 @@ We recommend that you get David Pilling's !SparkPlug.
 A self-extracting version of this
 can be found in the distribution directory at
 .Pa installation/misc/splug.bas
-or at David Pilling's W3 site:
+or at David Pilling's web site:
 .Lk http://www.davidpilling.net/free.html
 .It
 A program to report your disk's geometry:
 .Bl -bullet
 .It
-Not really needed, you can simply boot the installation
+Not really needed, as you can simply boot the installation
 kernel and look for the geometry in the boot messages.
 .It
 Sergio Monesi's fsck suite (a good thing to have around
@@ -254,7 +254,7 @@ Unset the tick on your
 .Ql Empty:
 partition.
 .It
-Click on Inititialize selected partitions.
+Click on Initialize selected partitions.
 .It
 Click on yes to proceed init as you want to wipe the
 selected partitions.

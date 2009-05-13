@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.12 2007/12/05 04:48:57 ad Exp $
+.\"	$NetBSD: dmover.9,v 1.12.14.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -575,7 +575,7 @@ hw_bzero(void *buf, size_t len)
 	struct dmover_request *dreq;
 	int error;
 
-	error = dmover_session_create(DMOVER_FUNC_ZERO, &dses);
+	error = dmover_session_create(DMOVER_FUNC_ZERO, \*[Am]dses);
 	if (error)
 		return (error);
 
@@ -585,16 +585,16 @@ hw_bzero(void *buf, size_t len)
 		return (ENOMEM);
 	}
 
-	dreq->dreq_flags = DMOVER_REQ_WAIT;
-	dreq->dreq_callback = NULL;
-	dreq->dreq_outbuf.dreq_outbuf_type = DMOVER_BUF_LINEAR;
-	dreq->dreq_outbuf.dmbuf_linear.l_addr = buf;
-	dreq->dreq_outbuf.dmbuf_linear.l_len = len;
+	dreq-\*[Gt]dreq_flags = DMOVER_REQ_WAIT;
+	dreq-\*[Gt]dreq_callback = NULL;
+	dreq-\*[Gt]dreq_outbuf.dreq_outbuf_type = DMOVER_BUF_LINEAR;
+	dreq-\*[Gt]dreq_outbuf.dmbuf_linear.l_addr = buf;
+	dreq-\*[Gt]dreq_outbuf.dmbuf_linear.l_len = len;
 
 	dmover_process(dreq);
 
-	error = (dreq->dreq_flags & DMOVER_REQ_ERROR) ?
-	    dreq->dreq_error : 0;
+	error = (dreq-\*[Gt]dreq_flags \*[Am] DMOVER_REQ_ERROR) ?
+	    dreq-\*[Gt]dreq_error : 0;
 
 	dmover_request_free(dreq);
 	dmover_session_destroy(dses);

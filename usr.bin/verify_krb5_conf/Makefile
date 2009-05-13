@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2008/04/10 15:05:24 tsutsui Exp $
+# $NetBSD: Makefile,v 1.2.10.1 2009/05/13 19:20:10 jym Exp $
+
+WARNS?=	2	# XXX -Wextra
 
 NOLINT= # defined
 
@@ -6,8 +8,6 @@ NOLINT= # defined
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/krb5
-
-WARNS?=  1
 
 PROG= verify_krb5_conf
 MAN= verify_krb5_conf.8

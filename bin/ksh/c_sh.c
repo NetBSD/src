@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.12 2006/04/01 23:39:58 christos Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.12.28.1 2009/05/13 19:15:49 jym Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.12 2006/04/01 23:39:58 christos Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.12.28.1 2009/05/13 19:15:49 jym Exp $");
 #endif
 
 
@@ -825,7 +825,7 @@ clocktos(t)
 	 * 1000, must print 3 places after decimal (if non-zero, else 1).
 	 */
 	if (CLK_TCK != 100)	/* convert to 1/100'ths */
-	    t = (t < 1000000000/CLK_TCK) ?
+	    t = (t < (clock_t)(1000000000/CLK_TCK)) ?
 		    (t * 100) / CLK_TCK : (t / CLK_TCK) * 100;
 
 	*--cp = '\0';

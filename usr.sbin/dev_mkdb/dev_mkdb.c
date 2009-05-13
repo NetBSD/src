@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.26 2008/12/28 21:39:35 christos Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.26.2.1 2009/05/13 19:20:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.26 2008/12/28 21:39:35 christos Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.26.2.1 2009/05/13 19:20:21 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 			errx(1, "dbname too long");
 	} else {
 		if (snprintf(dbname, sizeof(dbname), "%sdev.db",
-		    _PATH_VARRUN) >= sizeof(dbname))
+		    _PATH_VARRUN) >= (int)sizeof(dbname))
 			errx(1, "dbname too long");
 	}
 	/* 

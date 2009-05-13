@@ -1,14 +1,12 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 2006/07/07 21:07:35 ross Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.1.30.1 2009/05/13 19:18:21 jym Exp $	*/
 
 #include <sys/syscall.h>
 
 #include <machine/asm.h>
 
-.include "ldstm.S"
-
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: __setjmp14.S,v 1.1 2006/07/07 21:07:35 ross Exp $"
+	.asciz "$NetBSD: __setjmp14.S,v 1.1.30.1 2009/05/13 19:18:21 jym Exp $"
 #endif
 
 /*
@@ -32,12 +30,61 @@ ENTRY(__setjmp14)
 	mfcr	%r12
 	mr	%r10,%r1
 	mr	%r9,%r2
-	stmd	8, 8(%r6)		# save r8-r31
+
+	std	%r8,8(%r6)		# save r8-r31
+	std	%r9,16(%r6)
+	std	%r10,24(%r6)
+	std	%r11,32(%r6)
+	std	%r12,40(%r6)
+	std	%r13,48(%r6)
+	std	%r14,56(%r6)
+	std	%r15,64(%r6)
+	std	%r16,72(%r6)
+	std	%r17,80(%r6)
+	std	%r18,88(%r6)
+	std	%r19,96(%r6)
+	std	%r20,104(%r6)
+	std	%r21,112(%r6)
+	std	%r22,120(%r6)
+	std	%r23,128(%r6)
+	std	%r24,136(%r6)
+	std	%r25,144(%r6)
+	std	%r26,152(%r6)
+	std	%r27,160(%r6)
+	std	%r28,168(%r6)
+	std	%r29,176(%r6)
+	std	%r30,184(%r6)
+	std	%r31,192(%r6)
+
 	li	%r3,0
 	blr
 
 ENTRY(__longjmp14)
-	lmd	8, 8(%r3)		# load r8-r31
+	ld	%r8,8(%r6)		# load r8-r31
+	ld	%r9,16(%r6)
+	ld	%r10,24(%r6)
+	ld	%r11,32(%r6)
+	ld	%r12,40(%r6)
+	ld	%r13,48(%r6)
+	ld	%r14,56(%r6)
+	ld	%r15,64(%r6)
+	ld	%r16,72(%r6)
+	ld	%r17,80(%r6)
+	ld	%r18,88(%r6)
+	ld	%r19,96(%r6)				   
+	ld	%r20,104(%r6)
+	ld	%r21,112(%r6)
+	ld	%r22,120(%r6)
+	ld	%r23,128(%r6)
+	ld	%r24,136(%r6)
+	ld	%r25,144(%r6)
+	ld	%r26,152(%r6)
+	ld	%r27,160(%r6)
+	ld	%r28,168(%r6)
+	ld	%r29,176(%r6)
+	ld	%r30,184(%r6)
+	ld	%r31,192(%r6)
+
 	mr	%r6,%r4
 	mtlr	%r11
 	mtcr	%r12

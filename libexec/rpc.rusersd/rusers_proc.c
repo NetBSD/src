@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.25 2005/08/01 21:08:34 christos Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.25.28.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.25 2005/08/01 21:08:34 christos Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.25.28.1 2009/05/13 19:18:43 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,7 +79,7 @@ extern int from_inetd;
 
 static int getarrays2(int);
 static int getarrays3(int);
-static int getidle(char *, char *);
+static int getidle(const char *, char *);
 static int *rusers_num_svc(void *, struct svc_req *);
 static utmp_array *do_names_3(int);
 static struct utmpidlearr *do_names_2(int);
@@ -194,7 +194,7 @@ getarrays3(int ne)
 
 static int
 /*ARGUSED*/
-getidle(char *tty, char *display)
+getidle(const char *tty, char *display)
 {
 	struct stat st;
 	char dev_name[PATH_MAX];
@@ -268,7 +268,7 @@ do_names_3(int all)
 	(void)memset(&ut, 0, sizeof(ut));
 	ut.utmp_array_val = utmps;
 
-	for (nu = 0, e = ue; e != NULL && nu < nusers; e = e->next) {
+	for (nu = 0, e = ue; e != NULL && nu < (size_t)nusers; e = e->next) {
 		if ((idle = getidle(e->line, e->host)) > 0 && !all)
 			continue;
 		utmps[nu].ut_type = RUSERS_USER_PROCESS;
@@ -315,7 +315,7 @@ do_names_2(int all)
 	ut.uia_arr = utmp_idlep;
 	ut.uia_cnt = 0;
 	
-	for (nu = 0, e = ue; e != NULL && nu < nusers; e = e->next) {
+	for (nu = 0, e = ue; e != NULL && nu < (size_t)nusers; e = e->next) {
 		if ((idle = getidle(e->line, e->host)) > 0 && !all)
 			continue;
 		utmp_idlep[nu] = &utmp_idle[nu];

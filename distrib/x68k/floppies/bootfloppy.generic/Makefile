@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/08/18 14:43:00 isaki Exp $
+#	$NetBSD: Makefile,v 1.6.42.1 2009/05/13 19:18:01 jym Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -28,7 +28,7 @@ ${BOOTNAME}: ${MDEC}/boot
 
 netbsd.gz:	${KERNOBJDIR}/GENERIC/netbsd
 	@rm -f ${.TARGET}
-	gzip -9c ${.ALLSRC} > ${.TARGET}
+	gzip -9nc ${.ALLSRC} > ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 

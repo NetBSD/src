@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.16 2006/04/14 13:14:06 blymn Exp $	*/
+/*	$NetBSD: disks.c,v 1.16.30.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.16 2006/04/14 13:14:06 blymn Exp $");
+__RCSID("$NetBSD: disks.c,v 1.16.30.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -65,7 +65,7 @@ disks_remove(char *args)
 void
 disks_drives(char *args)
 {
-	int i;
+	size_t i;
 
 	if (args) {
 		for (i = 0; i < ndrive; i++)
@@ -83,7 +83,7 @@ static void
 drvselect(char *args, int truefalse, int selections[])
 {
 	char *cp;
-	int i;
+	size_t i;
 
 	cp = strchr(args, '\n');
 	if (cp)

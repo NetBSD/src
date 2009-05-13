@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.2.2.1 2009/05/13 19:20:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,46 +96,6 @@
 
 #include <sys/stdint.h>
 #include <sys/resource.h>
-
-/* additional queue macros copied from FreeBSD	*/
-#ifndef SLIST_FOREACH_SAFE
-#define SLIST_FOREACH_SAFE(var, head, field, tvar)	    \
-    for ((var) = SLIST_FIRST((head));		    \
-	(var) && ((tvar) = SLIST_NEXT((var), field), 1);	\
-	(var) = (tvar))
-#endif /* !SLIST_FOREACH_SAFE */
-#ifndef STAILQ_FOREACH_SAFE
-#define STAILQ_FOREACH_SAFE(var, head, field, tvar)	    \
-    for ((var) = STAILQ_FIRST((head));		    \
-	(var) && ((tvar) = STAILQ_NEXT((var), field), 1);	\
-	(var) = (tvar))
-#endif /* !STAILQ_FOREACH_SAFE */
-#ifndef STAILQ_LAST
-#define STAILQ_LAST(head, type, field)			\
-    (STAILQ_EMPTY((head)) ?			\
-	NULL :				\
-	    ((struct type *)			\
-	((char *)((head)->stqh_last) - offsetof(struct type, field))))
-#endif /* !STAILQ_LAST */
-#ifndef STAILQ_CONCAT
-#define STAILQ_CONCAT(head1, head2) do {	\
-  if (!STAILQ_EMPTY((head2))) {		\
-    *(head1)->stqh_last = (head2)->stqh_first;	  \
-    (head1)->stqh_last = (head2)->stqh_last;	\
-    STAILQ_INIT((head2));	  \
-  }		  \
-} while (0)
-#endif /* !STAILQ_CONCAT */
-#ifndef TAILQ_CONCAT
-#define TAILQ_CONCAT(head1, head2, field) do {		    \
-    if (!TAILQ_EMPTY(head2)) {			\
-	*(head1)->tqh_last = (head2)->tqh_first;	\
-	(head2)->tqh_first->field.tqe_prev = (head1)->tqh_last; \
-	(head1)->tqh_last = (head2)->tqh_last;		\
-	TAILQ_INIT((head2));			\
-    }				    \
-} while (0)
-#endif /* !TAILQ_CONCAT */
 
 #include "pathnames.h"
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecgen.8,v 1.15 2008/04/30 13:11:03 martin Exp $
+.\" $NetBSD: veriexecgen.8,v 1.15.8.1 2009/05/13 19:20:43 jym Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,6 +29,7 @@
 .\"
 .Dd February 18, 2008
 .Dt VERIEXECGEN 8
+.Os
 .Sh NAME
 .Nm veriexecgen
 .Nd generate fingerprints for Veriexec
@@ -58,7 +59,7 @@ will save a backup copy in the same file only with a
 suffix.
 .Pp
 The following options are available:
-.Bl -tag
+.Bl -tag -width ".Fl p Ar prefix"
 .It Fl A
 Append to the output file, don't overwrite it.
 .It Fl a

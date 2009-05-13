@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.21 2008/04/24 01:27:07 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.21.8.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.21 2008/04/24 01:27:07 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.21.8.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ argcount(char **argv)
 
 	for (ap = argv; *ap++ != NULL; /*EMPTY*/)
 		continue;
-	return ap - argv - 1;
+	return (int)(ap - argv - 1);
 }
 
 /*
@@ -211,7 +211,7 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
 	for (;;) {
 		if (--rem < 0)
 			return -1;
-		if ((c = mail_readline(f, linebuf, LINESIZE)) <= 0)
+		if ((c = readline(f, linebuf, LINESIZE, 0)) <= 0)
 			return -1;
 		for (cp = linebuf;
 		     isprint((unsigned char)*cp) && *cp != ' ' && *cp != ':';
@@ -234,11 +234,11 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
 			(void)ungetc(c = getc(f), f);
 			if (!is_WSP(c))
 				break;
-			if ((c = mail_readline(f, line2, LINESIZE)) < 0)
+			if ((c = readline(f, line2, LINESIZE, 0)) < 0)
 				break;
 			rem--;
 			cp2 = skip_WSP(line2);
-			c -= cp2 - line2;
+			c -= (int)(cp2 - line2);
 			if (cp + c >= linebuf + LINESIZE - 2)
 				break;
 			*cp++ = ' ';
@@ -271,9 +271,9 @@ hfield(const char field[], const struct message *mp)
 #endif
 
 	ibuf = setinput(mp);
-	if ((lc = mp->m_lines - 1) < 0)
+	if ((lc = (int)(mp->m_lines - 1)) < 0)
 		return NULL;
-	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
+	if (readline(ibuf, linebuf, LINESIZE, 0) < 0)
 		return NULL;
 	while (lc > 0) {
 		if ((lc = gethfield(ibuf, linebuf, lc, &colon)) < 0)
@@ -571,7 +571,7 @@ name1(struct message *mp, int reptype)
 		return cp;
 	ibuf = setinput(mp);
 	namebuf[0] = '\0';
-	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
+	if (readline(ibuf, linebuf, LINESIZE, 0) < 0)
 		return savestr(namebuf);
  newname:
 	for (cp = linebuf; *cp && *cp != ' '; cp++)
@@ -582,7 +582,7 @@ name1(struct message *mp, int reptype)
 	     /*EMPTY*/)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
-	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
+	if (readline(ibuf, linebuf, LINESIZE, 0) < 0)
 		return savestr(namebuf);
 	if ((cp = strchr(linebuf, 'F')) == NULL)
 		return savestr(namebuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tee.c,v 1.8 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: tee.c,v 1.8.6.1 2009/05/13 19:20:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tee.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tee.c,v 1.8 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: tee.c,v 1.8.6.1 2009/05/13 19:20:08 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,11 +57,11 @@ __RCSID("$NetBSD: tee.c,v 1.8 2008/07/21 14:19:26 lukem Exp $");
 typedef struct _list {
 	struct _list *next;
 	int fd;
-	char *name;
+	const char *name;
 } LIST;
 LIST *head;
 
-void	add __P((int, char *));
+void	add __P((int, const char *));
 int	main __P((int, char **));
 
 int
@@ -139,7 +139,7 @@ main(argc, argv)
 void
 add(fd, name)
 	int fd;
-	char *name;
+	const char *name;
 {
 	LIST *p;
 

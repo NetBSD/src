@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.17 2008/04/10 15:05:24 tsutsui Exp $
+# $NetBSD: Makefile,v 1.17.10.1 2009/05/13 19:20:06 jym Exp $
+
+WARNS?=	1	# XXX -Wextra -Wshadow
 
 NOLINT= # defined
 
@@ -6,8 +8,6 @@ NOLINT= # defined
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/kdc
-
-WARNS?=  1
 
 PROG= string2key
 MAN=  string2key.8

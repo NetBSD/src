@@ -1,8 +1,8 @@
-/* $NetBSD: defs.h,v 1.1 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: defs.h,v 1.1.10.1 2009/05/13 19:20:29 jym Exp $ */
 
 /*
  * File "defs.h" is part of the UDFclient toolkit.
- * File $Id: defs.h,v 1.1 2008/05/14 16:49:48 reinoud Exp $ $Name:  $
+ * File $Id: defs.h,v 1.1.10.1 2009/05/13 19:20:29 jym Exp $
  *
  * Copyright (c) 2003, 2004, 2005, 2006 Reinoud Zandijk <reinoud@netbsd.org>
  * All rights reserved.

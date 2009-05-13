@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.4.6.1 2009/05/13 19:20:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -49,12 +49,12 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.4 2008/05/10 15:31:05 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.4.6.1 2009/05/13 19:20:42 jym Exp $");
 #endif /* not lint */
 
-void load_data(char *data_file, struct tpctl_data *);
-void save_data(char *data_file, struct tpctl_data *);
-int do_calibration(char *, struct tp *, struct wsmouse_calibcoords *);
+void load_data(const char *, struct tpctl_data *);
+void save_data(const char *, struct tpctl_data *);
+int do_calibration(const char *, struct tp *, struct wsmouse_calibcoords *);
 void drawcross(struct fb *, int, int, int, fb_pixel_t);
 int check_esc(void *);
 
@@ -79,9 +79,9 @@ main(int argc, char *argv[])
 	struct tp tp;
 	struct wsmouse_calibcoords *pref;
 	struct tpctl_data data;
-	char *data_file;
-	char *dev_name;
-	char *dispdev_name;
+	const char *data_file;
+	const char *dev_name;
+	const char *dispdev_name;
 
 	/* set default values */
 	opt_verbose = 0;
@@ -178,13 +178,13 @@ main(int argc, char *argv[])
  * return:	none (it won't return if some error occurs)
  */
 void
-load_data(char *data_file, struct tpctl_data *data)
+load_data(const char *data_file, struct tpctl_data *data)
 {
-	int err;
+	int error;
 
 	init_data(data);
-	err = read_data(data_file, data);
-	switch (err) {
+	error = read_data(data_file, data);
+	switch (error) {
 	case ERR_NONE:
 		break;
 	case ERR_NOFILE:
@@ -220,12 +220,12 @@ load_data(char *data_file, struct tpctl_data *data)
  * return:	none (it won't return if some error occurs)
  */
 void
-save_data(char *data_file, struct tpctl_data *data)
+save_data(const char *data_file, struct tpctl_data *data)
 {
-	int err;
+	int error;
 
-	err = write_data(data_file, data);
-	switch (err) {
+	error = write_data(data_file, data);
+	switch (error) {
 	case ERR_NONE:
 		break;
 	case ERR_NOFILE:
@@ -254,11 +254,12 @@ save_data(char *data_file, struct tpctl_data *data)
  *		(it won't return if some error occurs)
  */
 int
-do_calibration(char *dev, struct tp *tp, struct wsmouse_calibcoords *coords)
+do_calibration(const char *dev, struct tp *tp,
+    struct wsmouse_calibcoords *coords)
 {
 	int fbfd;
 	struct fb fb;
-	int i, x, y, xm, ym, cursize, err, res;
+	int i, x, y, xm, ym, cursize, error, res;
 
 	/* open frame buffer device and initialize frame buffer routine */
 	if ((fbfd = open(dev, O_RDWR)) < 0)
@@ -298,7 +299,7 @@ do_calibration(char *dev, struct tp *tp, struct wsmouse_calibcoords *coords)
 	coords->samples[4].y = ym;
 
 	tp_setrawmode(tp);
-	err = 0;
+	error = 0;
 	for (i = 0; i < coords->samplelen; i++) {
 		drawcross(&fb,
 		    coords->samples[i].x,
@@ -308,7 +309,7 @@ do_calibration(char *dev, struct tp *tp, struct wsmouse_calibcoords *coords)
 		tp_flush(tp);
 		res = tp_get(tp, &x, &y, check_esc, 0 /* stdin */);
 		if (res < 0) {
-			err = errno;
+			error = errno;
 			break;
 		}
 		if (0 < res) {
@@ -338,8 +339,8 @@ do_calibration(char *dev, struct tp *tp, struct wsmouse_calibcoords *coords)
 		    fb.conf.hf_offset);
 	}
 
-	if (err) {
-		errno = err;
+	if (error) {
+		errno = error;
 		errx(EXIT_FAILURE, "can't get samples");
 	}
 
@@ -380,7 +381,7 @@ int
 check_esc(void *data)
 {
 	int fd = (int)data;
-	int flg, n, err;
+	int flg, n, error;
 	char buf[1];
 	struct termios tm, raw;
 
@@ -395,11 +396,11 @@ check_esc(void *data)
 	if (fcntl(fd, F_SETFL, flg | O_NONBLOCK) == -1)
 		return (-1);
 	n = read(fd, buf, 1);
-	err = errno;
+	error = errno;
 	fcntl(fd, F_SETFL, flg);
 	tcsetattr(fd, TCSANOW, &tm);
 	if (n < 0)
-		return (err == EWOULDBLOCK ? 0 : -1);
+		return (error == EWOULDBLOCK ? 0 : -1);
 	if (n == 0)
 		return (0); /* EOF */
 	if (*buf == 0x1b)

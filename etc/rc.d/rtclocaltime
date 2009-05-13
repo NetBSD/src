@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rtclocaltime,v 1.7 2007/08/25 07:07:39 apb Exp $
+# $NetBSD: rtclocaltime,v 1.7.18.1 2009/05/13 19:18:03 jym Exp $
 #
 
 # PROVIDE: rtclocaltime
@@ -16,8 +16,8 @@ stop_cmd=":"
 
 rtclocaltime_start()
 {
-	rtcoff=$(date '+%z' | awk '{
-		offset = -int($1);
+	rtcoff=$(awk 'BEGIN{
+		offset = -int(strftime("%z"));
 		if (offset < 0) {
 			sign = -1;
 			offset = -offset;
@@ -28,6 +28,7 @@ rtclocaltime_start()
 		hours = int(offset / 100);
 		offset = sign * (hours * 60 + minutes);
 		print offset;
+		exit(0);
 	}')
 	echo "Setting RTC offset to ${rtcoff}."
 	sysctl -qw kern.rtc_offset=${rtcoff}

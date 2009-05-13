@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 2008/08/29 00:02:22 gmcgarry Exp $
+#	$NetBSD: Makefile.inc,v 1.30.6.1 2009/05/13 19:18:19 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,9 @@ crt0.o: crt0.c
 	${COMPILE.c} -DCRT0 ${.IMPSRC} -o ${.TARGET}.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
+.if ${MKSTRIPIDENT} != "no"
+	${OBJCOPY} -R .ident ${.TARGET}
+.endif
 
 # dependant on crt0.o to pick up header dependencies
 gcrt0.o: ${.CURDIR}/crt0.c crt0.o
@@ -42,18 +45,27 @@ gcrt0.o: ${.CURDIR}/crt0.c crt0.o
 	${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
+.if ${MKSTRIPIDENT} != "no"
+	${OBJCOPY} -R .ident ${.TARGET}
+.endif
 
 crti.o: crti.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
 	${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
+.if ${MKSTRIPIDENT} != "no"
+	${OBJCOPY} -R .ident ${.TARGET}
+.endif
 
 crtn.o: crtn.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
 	${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
+.if ${MKSTRIPIDENT} != "no"
+	${OBJCOPY} -R .ident ${.TARGET}
+.endif
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}

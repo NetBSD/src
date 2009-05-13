@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_suspend.3,v 1.2 2007/01/28 07:58:05 wiz Exp $
+.\"	$NetBSD: puffs_suspend.3,v 1.2.20.1 2009/05/13 19:18:35 jym Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -36,15 +36,6 @@
 .Ft int
 .Fn puffs_fs_suspend "struct puffs_usermount *pu"
 .Sh DESCRIPTION
-.Em IMPORTANT NOTE!
-This document describes interfaces which are not yet guaranteed to be
-stable.
-In case you update your system sources, please recompile everything
-and fix compilation errors.
-If your sources are out-of-sync, incorrect operation may result.
-The interfaces in this document will most likely be hugely simplified
-in later versions or made transparent to the implementation.
-.Pp
 The function
 .Fn puffs_fs_suspend
 requests the kernel to suspend operations to the file system indicated by
@@ -92,4 +83,3 @@ which do not use
 .Pp
 File system data and metadata are not always totally correctly
 synchronized at suspend.
-This will be fixed soon.

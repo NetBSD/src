@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: swap1,v 1.9 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: swap1,v 1.9.36.1 2009/05/13 19:18:03 jym Exp $
 #
 
 # PROVIDE: localswap
-# REQUIRE: disks
+# REQUIRE: DISKS root
 # KEYWORD: shutdown
 
 $_rc_subr_loaded . /etc/rc.subr

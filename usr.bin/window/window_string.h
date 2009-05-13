@@ -1,4 +1,4 @@
-/*	$NetBSD: window_string.h,v 1.7 2003/08/07 11:17:35 agc Exp $	*/
+/*	$NetBSD: window_string.h,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,11 +45,11 @@
 
 #define STR_DEBUG
 
-char	*str_cat(char *, char *);
-char	*str_cpy(char *);
+char	*str_cat(const char *, const char *);
+char	*str_cpy(const char *);
 char	*str_itoa(int);
-int	 str_match(char *, char *, int);
-char	*str_ncpy(char *, int);
+int	 str_match(const char *, const char *, int);
+char	*str_ncpy(const char *, int);
 
 #define str_cmp(a, b)	strcmp(a, b)
 

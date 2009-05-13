@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.61 2008/12/26 19:26:04 hannken Exp $	*/
+/*	$NetBSD: tape.c,v 1.61.2.1 2009/05/13 19:19:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.61 2008/12/26 19:26:04 hannken Exp $");
+__RCSID("$NetBSD: tape.c,v 1.61.2.1 2009/05/13 19:19:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -864,7 +864,7 @@ loop:
 	for (i = 0; i < spcl.c_count; i++) {
 		if (spcl.c_addr[i]) {
 			readtape(&buf[curblk++][0]);
-			if (curblk == fssize / TP_BSIZE) {
+			if ((uint32_t)curblk == fssize / TP_BSIZE) {
 				(*fill)((char *)buf, (long)(size > TP_BSIZE ?
 				     fssize : (curblk - 1) * TP_BSIZE + size));
 				curblk = 0;
@@ -1195,7 +1195,7 @@ gethead(struct s_spcl *buf)
 		swap_old_header(&u_ospcl.s_ospcl);
 	}
 
-	memset(buf, 0, (long)TP_BSIZE);
+	memset(buf, 0, TP_BSIZE);
 	buf->c_type = u_ospcl.s_ospcl.c_type;
 	buf->c_date = u_ospcl.s_ospcl.c_date;
 	buf->c_ddate = u_ospcl.s_ospcl.c_ddate;

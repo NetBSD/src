@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.28 2008/05/02 19:59:19 xtraeme Exp $       */
+/*      $NetBSD: catman.c,v 1.28.8.1 2009/05/13 19:20:19 jym Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ setdefentries(char *m_path, char *m_add, const char *sections)
 			err(1, "malloc");
 		for (p = sections; *p;) {
 			i = snprintf(buf, sizeof(buf), "man%c", *p++);
-			for (; *p && !isdigit((unsigned char)*p) && i < sizeof(buf) - 1; i++)
+			for (; *p && !isdigit((unsigned char)*p) && i < (int)sizeof(buf) - 1; i++)
 				buf[i] = *p++;
 			buf[i] = '\0';
 			if (addentry(sectnewp, buf, 0) < 0)
@@ -525,7 +525,7 @@ splitentry(char *s, char *first, size_t firstlen, char *second,
 		;
 	if (*c == '\0')
 		return(0);
-	if (c - s + 1 > firstlen)
+	if ((size_t)(c - s + 1) > firstlen)
 		return(0);
 	strncpy(first, s, c-s);
 	first[c-s] = '\0';

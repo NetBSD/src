@@ -1,8 +1,7 @@
-/*	$NetBSD: main.c,v 1.4 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.4.6.1 2009/05/13 19:20:39 jym Exp $	*/
 
-/*
- * main.c
- *
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
  * All rights reserved.
  *
@@ -27,43 +26,34 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: main.c,v 1.4 2008/07/21 13:36:59 lukem Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/main.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
+  Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2004 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.4 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.4.6.1 2009/05/13 19:20:39 jym Exp $");
 
-#include <sys/select.h>
-#include <bluetooth.h>
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
 #include <signal.h>
-#include <sdp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "log.h"
-#include "server.h"
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/queue.h>
-#include "profile.h"
-#include "provider.h"
+#include "sdpd.h"
 
 #define	SDPD			"sdpd"
 
-static int32_t	drop_root	(char const *user, char const *group);
-static void	sighandler	(int32_t s);
+static bool	drop_root	(char const *user, char const *group);
+static void	sighandler	(int s);
 static void	usage		(void);
 
-static int32_t	done;
+static bool	done;
 
 /*
  * Bluetooth Service Discovery Procotol (SDP) daemon
@@ -76,7 +66,8 @@ main(int argc, char *argv[])
 	char const		*control = SDP_LOCAL_PATH;
 	char const		*user = "_sdpd", *group = "_sdpd";
 	char const		*sgroup = NULL;
-	int32_t			 detach = 1, opt;
+	int			 opt;
+	bool			 detach = true;
 	struct sigaction	 sa;
 
 	while ((opt = getopt(argc, argv, "c:dG:g:hu:")) != -1) {
@@ -86,7 +77,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'd': /* do not detach */
-			detach = 0;
+			detach = false;
 			break;
 
 		case 'G': /* super group */
@@ -113,52 +104,55 @@ main(int argc, char *argv[])
 	/* Become daemon if required */
 	if (detach && daemon(0, 0) < 0) {
 		log_crit("Could not become daemon. %s (%d)",
-			strerror(errno), errno);
-		exit(1);
+		    strerror(errno), errno);
+
+		exit(EXIT_FAILURE);
 	}
 
 	/* Set signal handlers */
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = sighandler;
 
-	if (sigaction(SIGTERM, &sa, NULL) < 0 ||
-	    sigaction(SIGHUP,  &sa, NULL) < 0 ||
-	    sigaction(SIGINT,  &sa, NULL) < 0) {
+	if (sigaction(SIGTERM, &sa, NULL) < 0
+	    || sigaction(SIGHUP,  &sa, NULL) < 0
+	    || sigaction(SIGINT,  &sa, NULL) < 0) {
 		log_crit("Could not install signal handlers. %s (%d)",
-			strerror(errno), errno);
-		exit(1);
+		    strerror(errno), errno);
+
+		exit(EXIT_FAILURE);
 	}
 
 	sa.sa_handler = SIG_IGN;
 	if (sigaction(SIGPIPE, &sa, NULL) < 0) {
 		log_crit("Could not install signal handlers. %s (%d)",
-			strerror(errno), errno);
-		exit(1);
+		    strerror(errno), errno);
+
+		exit(EXIT_FAILURE);
 	}
 
 	/* Initialize server */
 	if (server_init(&server, control, sgroup) < 0)
-		exit(1);
+		exit(EXIT_FAILURE);
 
 	if ((user != NULL || group != NULL) && drop_root(user, group) < 0)
-		exit(1);
+		exit(EXIT_FAILURE);
 
 	for (done = 0; !done; ) {
-		if (server_do(&server) != 0)
-			done ++;
+		if (!server_do(&server))
+			done++;
 	}
 
 	server_shutdown(&server);
 	log_close();
 
-	return (0);
+	exit(EXIT_SUCCESS);
 }
 
 /*
  * Drop root
  */
 
-static int32_t
+static bool
 drop_root(char const *user, char const *group)
 {
 	int	 uid, gid;
@@ -166,7 +160,7 @@ drop_root(char const *user, char const *group)
 
 	if ((uid = getuid()) != 0) {
 		log_notice("Cannot set uid/gid. Not a superuser");
-		return (0); /* dont do anything unless root */
+		return true; /* dont do anything unless root */
 	}
 
 	gid = getgid();
@@ -177,9 +171,8 @@ drop_root(char const *user, char const *group)
 			struct passwd	*pwd = getpwnam(user);
 
 			if (pwd == NULL) {
-				log_err("Could not find passwd entry for " \
-					"user %s", user);
-				return (-1);
+				log_err("No passwd entry for user %s", user);
+				return false;
 			}
 
 			uid = pwd->pw_uid;
@@ -192,9 +185,8 @@ drop_root(char const *user, char const *group)
 			struct group	*grp = getgrnam(group);
 
 			if (grp == NULL) {
-				log_err("Could not find group entry for " \
-					"group %s", group);
-				return (-1);
+				log_err("No group entry for group %s", group);
+				return false;
 			}
 
 			gid = grp->gr_gid;
@@ -202,18 +194,20 @@ drop_root(char const *user, char const *group)
 	}
 
 	if (setgid(gid) < 0) {
-		log_err("Could not setgid(%s). %s (%d)",
-			group, strerror(errno), errno);
-		return (-1);
+		log_err("Could not setgid(%s). %s (%d)", group,
+		    strerror(errno), errno);
+
+		return false;
 	}
 
 	if (setuid(uid) < 0) {
-		log_err("Could not setuid(%s). %s (%d)",
-			user, strerror(errno), errno);
-		return (-1);
+		log_err("Could not setuid(%s). %s (%d)", user,
+		    strerror(errno), errno);
+
+		return false;
 	}
 
-	return (0);
+	return true;
 }
 
 /*
@@ -221,10 +215,11 @@ drop_root(char const *user, char const *group)
  */
 
 static void
-sighandler(int32_t s)
+sighandler(int s)
 {
+
 	log_notice("Got signal %d. Total number of signals received %d",
-		s, ++ done);
+		s, ++done);
 }
 
 /*
@@ -234,15 +229,16 @@ sighandler(int32_t s)
 static void
 usage(void)
 {
-	fprintf(stderr,
-"Usage: %s [options]\n" \
-"Where options are:\n" \
-"	-c	specify control socket name (default %s)\n" \
-"	-d	do not detach (run in foreground)\n" \
-"	-G grp	allow privileges to group\n" \
-"	-g grp	specify group\n" \
-"	-h	display usage and exit\n" \
-"	-u usr	specify user\n",
-		SDPD, SDP_LOCAL_PATH);
-	exit(255);
+
+	fprintf(stderr, "Usage: %s [options]\n"
+			"Where options are:\n"
+			"\t-c       specify control socket name (default %s)\n"
+			"\t-d       do not detach (run in foreground)\n"
+			"\t-G grp   allow privileges to group\n"
+			"\t-g grp   specify group\n"
+			"\t-h       display usage and exit\n"
+			"\t-u usr   specify user\n"
+			"", SDPD, SDP_LOCAL_PATH);
+
+	exit(EXIT_FAILURE);
 }

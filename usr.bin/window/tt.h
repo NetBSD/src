@@ -1,4 +1,4 @@
-/*	$NetBSD: tt.h,v 1.8 2003/08/07 11:17:30 agc Exp $	*/
+/*	$NetBSD: tt.h,v 1.8.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -56,7 +56,7 @@ struct tt {
 	void	(*tt_inschar)(char);
 	void	(*tt_insspace)(int);
 	void	(*tt_delchar)(int);
-	void	(*tt_write)(char *, int);	/* write a whole block */
+	void	(*tt_write)(const char *, int);	/* write a whole block */
 	void	(*tt_putc)(char);		/* write one character */
 	void	(*tt_clreol)(void);
 	void	(*tt_clreos)(void);
@@ -67,7 +67,7 @@ struct tt {
 	void	(*tt_setmodes)(int);	/* set display modes */
 	void	(*tt_set_token)(int, char *, int);
 						/* define a token */
-	void	(*tt_put_token)(int, char *, int);
+	void	(*tt_put_token)(int, const char *, int);
 						/* refer to a defined token */
 	void	(*tt_compress)(int);	/* begin, end compression */
 	void	(*tt_checksum)(char *, int);
@@ -116,7 +116,7 @@ EXTERN struct tt tt;
  * List of terminal drivers.
  */
 struct tt_tab {
-	char *tt_name;
+	const char *tt_name;
 	int tt_len;
 	int (*tt_func)(void);
 };
@@ -130,12 +130,12 @@ EXTERN char tt_strings[1024];		/* string buffer */
 EXTERN char *tt_strp;			/* pointer for it */
 
 struct tt_str {
-	char *ts_str;
+	const char *ts_str;
 	int ts_n;
 };
 
-struct tt_str *tttgetstr(char *);
-struct tt_str *ttxgetstr(char *);	/* tgetstr() and expand delays */
+struct tt_str *tttgetstr(const char *);
+struct tt_str *ttxgetstr(const char *);	/* tgetstr() and expand delays */
 
 int	tt_f100(void);
 int	tt_generic(void);
@@ -147,14 +147,14 @@ int	tt_wyse75(void);
 int	tt_zapple(void);
 int	tt_zentec(void);
 void	ttflush(void);
-struct tt_str *tttgetstr(char *);
+struct tt_str *tttgetstr(const char *);
 int	ttinit(void);
 void	ttpgoto(struct tt_str *, int, int, int);
-void	ttputs(char *);
+void	ttputs(const char *);
 int	ttstrcmp(struct tt_str *, struct tt_str *);
 void	tttgoto(struct tt_str *, int, int);
 int	tttputc(int);
-void	ttwrite(char *, int);
+void	ttwrite(const char *, int);
 int	ttxputc(int);
 
 #define tttputs(s, n)	tputs((s)->ts_str, (n), tttputc)

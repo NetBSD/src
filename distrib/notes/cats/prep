@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.10 2008/09/06 21:41:44 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.10.4.1 2009/05/13 19:17:45 jym Exp $
 .
 A \*M machine usually needs little or no preparation before installing
 .Nx ,
@@ -13,7 +13,7 @@ Currently the \*M Cyclone firmware allows for system booting using:
 .(bullet -compact
 Ethernet (netboot) using DHCP, BOOTP, TFTP, or NFS.
 .It
-Local harddisk or CD ROM with the following file systems:
+Local hard disk or CD-ROM with the following file systems:
 .(bullet -compact
 Berkeley FFS
 .It
@@ -29,7 +29,7 @@ Booting from floppy disk is not currently supported.
 .
 .Ss2 Preparing the Bootable Media
 .
-This section desribes how to get a
+This section describes how to get a
 .Nx*M
 install kernel onto a CD-R.
 .Pp

@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2007/07/02 18:41:03 christos Exp $
+#	$NetBSD: Makefile,v 1.5.20.1 2009/05/13 19:19:48 jym Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-WARNS?=	4
 PROG=	cut
 
 LDADD+=	-lutil

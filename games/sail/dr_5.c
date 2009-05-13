@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_5.c,v 1.12 2003/08/07 09:37:42 agc Exp $	*/
+/*	$NetBSD: dr_5.c,v 1.12.40.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_5.c,v 1.12 2003/08/07 09:37:42 agc Exp $");
+__RCSID("$NetBSD: dr_5.c,v 1.12.40.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,7 +42,8 @@ __RCSID("$NetBSD: dr_5.c,v 1.12 2003/08/07 09:37:42 agc Exp $");
 #include "extern.h"
 
 void
-subtract(struct ship *from, struct ship *fromcap, int totalfrom, int *crewfrom, int pcfrom)
+subtract(struct ship *from, struct ship *fromcap, int totalfrom, int *crewfrom,
+	 int pcfrom)
 {
 	int n;
 
@@ -56,16 +57,17 @@ subtract(struct ship *from, struct ship *fromcap, int totalfrom, int *crewfrom, 
 				totalfrom = 0;
 			}
 		}
-		Write(W_CREW, from, crewfrom[0], crewfrom[1], crewfrom[2], 0);
+		send_crew(from, crewfrom[0], crewfrom[1], crewfrom[2]);
 	} else if (totalfrom) {
 		pcfrom -= totalfrom;
 		pcfrom = pcfrom < 0 ? 0 : pcfrom;
-		Write(W_PCREW, from, pcfrom, 0, 0, 0);
+		send_pcrew(from, pcfrom);
 	}
 }
 
 int
-mensent(struct ship *from, struct ship *to, int *crew, struct ship **captured, int *pc, int isdefense)
+mensent(struct ship *from, struct ship *to, int *crew, struct ship **captured,
+	int *pc, int isdefense)
 {					/* returns # of crew squares sent */
 	int men = 0;
 	int n;

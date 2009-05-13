@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.21 2006/01/04 01:17:54 perry Exp $	*/
+/*	$NetBSD: lprint.c,v 1.21.30.1 2009/05/13 19:19:49 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.21 2006/01/04 01:17:54 perry Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.21.30.1 2009/05/13 19:19:49 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,9 +68,9 @@ __RCSID( "$NetBSD: lprint.c,v 1.21 2006/01/04 01:17:54 perry Exp $");
 #define	_PATH_PLAN	".plan"
 #define	_PATH_PROJECT	".project"
 
-static int	demi_print(char *, int);
+static int	demi_print(const char *, int);
 static void	lprint(PERSON *);
-static int	show_text(char *, char *, char *);
+static int	show_text(const char *, const char *, const char *);
 static void	vputc(int);
 
 #ifdef __SVR4
@@ -263,7 +263,7 @@ no_gecos:
 }
 
 static int
-demi_print(char *str, int oddfield)
+demi_print(const char *str, int oddfield)
 {
 	static int lenlast;
 	int lenthis, maxlen;
@@ -301,7 +301,7 @@ demi_print(char *str, int oddfield)
 }
 
 static int
-show_text(char *directory, char *file_name, char *header)	
+show_text(const char *directory, const char *file_name, const char *header)	
 {
 	struct stat sb;
 	FILE *fp;
@@ -316,7 +316,7 @@ show_text(char *directory, char *file_name, char *header)
 		return(0);
 
 	/* If short enough, and no newlines, show it on a single line.*/
-	if (sb.st_size <= LINE_LEN - strlen(header) - 5) {
+	if (sb.st_size <= (off_t)(LINE_LEN - strlen(header) - 5)) {
 		nr = read(fd, tbuf, sizeof(tbuf));
 		if (nr <= 0) {
 			(void)close(fd);

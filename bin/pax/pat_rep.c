@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.28 2008/02/24 20:42:46 joerg Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.28.10.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.28 2008/02/24 20:42:46 joerg Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.28.10.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ static REPLACE *reptail = NULL;		/* replacement string list tail */
 static int rep_name(char *, size_t, int *, int);
 static int tty_rename(ARCHD *);
 static int fix_path(char *, int *, char *, int);
-static int fn_match(char *, char *, char **);
+static int fn_match(char *, char *, char **, int);
 static char * range_match(char *, int);
 static int checkdotdot(const char *);
 static int resub(regex_t *, regmatch_t *, char *, char *, char *, char *);
@@ -236,7 +236,7 @@ rep_add(char *str)
  */
 
 int
-pat_add(char *str, char *chdn)
+pat_add(char *str, char *chdn, int flags)
 {
 	PATTERN *pt;
 
@@ -262,7 +262,7 @@ pat_add(char *str, char *chdn)
 	pt->pend = NULL;
 	pt->plen = strlen(str);
 	pt->fow = NULL;
-	pt->flgs = 0;
+	pt->flgs = flags;
 	pt->chdname = chdn;
 	if (pathead == NULL) {
 		pattail = pathead = pt;
@@ -471,7 +471,8 @@ pat_match(ARCHD *arcn)
 			if ((arcn->name[pt->plen] == '/') &&
 			    (strncmp(pt->pstr, arcn->name, pt->plen) == 0))
 				break;
-		} else if (fn_match(pt->pstr, arcn->name, &pt->pend) == 0)
+		} else if (fn_match(pt->pstr, arcn->name, &pt->pend,
+		    pt->flgs & NOGLOB_MTCH) == 0)
 			break;
 		pt = pt->fow;
 	}
@@ -509,7 +510,7 @@ pat_match(ARCHD *arcn)
  */
 
 static int
-fn_match(char *pattern, char *string, char **pend)
+fn_match(char *pattern, char *string, char **pend, int noglob)
 {
 	char c;
 	char test;
@@ -537,10 +538,14 @@ fn_match(char *pattern, char *string, char **pend)
 			*pend = string;
 			return 0;
 		case '?':
+			if (noglob)
+				goto regular;
 			if ((test = *string++) == '\0')
 				return (-1);
 			break;
 		case '*':
+			if (noglob)
+				goto regular;
 			c = *pattern;
 			/*
 			 * Collapse multiple *'s.
@@ -558,12 +563,14 @@ fn_match(char *pattern, char *string, char **pend)
 			 * General case, use recursion.
 			 */
 			while ((test = *string) != '\0') {
-				if (!fn_match(pattern, string, pend))
+				if (!fn_match(pattern, string, pend, noglob))
 					return (0);
 				++string;
 			}
 			return (-1);
 		case '[':
+			if (noglob)
+				goto regular;
 			/*
 			 * range match
 			 */
@@ -573,6 +580,7 @@ fn_match(char *pattern, char *string, char **pend)
 			break;
 		case '\\':
 		default:
+		regular:
 			if (c != *string++)
 				return (-1);
 			break;

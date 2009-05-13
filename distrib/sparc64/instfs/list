@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2009/01/25 22:08:39 abs Exp $
+#	$NetBSD: list,v 1.9.2.1 2009/05/13 19:17:55 jym Exp $
 
 SRCDIRS	bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -22,7 +22,6 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
-PROG	sbin/dhclient
 PROG	sbin/disklabel
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
@@ -70,7 +69,6 @@ PROG	usr/sbin/pppd
 ARGVLN	sh -sh
 
 SPECIAL	chat		srcdir	usr.sbin/pppd/chat
-SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	pppd		srcdir	usr.sbin/pppd/pppd
@@ -83,10 +81,8 @@ LIBS	-ledit -lutil -lcurses -ltermcap -lrmt -lbz2 -lcrypt -ll -lm -lpcap -lz -lp
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
-
-COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555
 
 # we need the boot block in /usr/mdec + the arch specific extras
 COPY	${DESTDIR}/usr/mdec/binstall		usr/mdec/binstall	555

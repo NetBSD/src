@@ -1,5 +1,6 @@
-# $NetBSD: ad.arm,v 1.11 2009/01/17 17:05:17 mjf Exp $
+# $NetBSD: ad.arm,v 1.11.2.1 2009/05/13 19:17:50 jym Exp $
 ./sbin/ldconfig					base-sysutil-root	pic
+./usr/bin/fdformat				base-util-bin
 ./usr/lib/libarm.so				base-sys-shlib		pic
 ./usr/lib/libarm.so.0				base-sys-shlib		pic
 ./usr/lib/libarm.so.0.0				base-sys-shlib		pic

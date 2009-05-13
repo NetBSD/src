@@ -1,4 +1,4 @@
-/*	$NetBSD: pack_dev.c,v 1.9 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: pack_dev.c,v 1.9.6.1 2009/05/13 19:19:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pack_dev.c,v 1.9 2008/04/28 20:23:09 martin Exp $");
+__RCSID("$NetBSD: pack_dev.c,v 1.9.6.1 2009/05/13 19:19:02 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,9 +70,9 @@ pack_native(int n, u_long numbers[], const char **error)
 
 	if (n == 2) {
 		dev = makedev(numbers[0], numbers[1]);
-		if (major(dev) != numbers[0])
+		if ((u_long)major(dev) != numbers[0])
 			*error = iMajorError;
-		else if (minor(dev) != numbers[1])
+		else if ((u_long)minor(dev) != numbers[1])
 			*error = iMinorError;
 	} else
 		*error = tooManyFields;
@@ -87,9 +87,9 @@ pack_netbsd(int n, u_long numbers[], const char **error)
 
 	if (n == 2) {
 		dev = makedev_netbsd(numbers[0], numbers[1]);
-		if (major_netbsd(dev) != numbers[0])
+		if ((u_long)major_netbsd(dev) != numbers[0])
 			*error = iMajorError;
-		else if (minor_netbsd(dev) != numbers[1])
+		else if ((u_long)minor_netbsd(dev) != numbers[1])
 			*error = iMinorError;
 	} else
 		*error = tooManyFields;
@@ -109,9 +109,9 @@ pack_freebsd(int n, u_long numbers[], const char **error)
 
 	if (n == 2) {
 		dev = makedev_freebsd(numbers[0], numbers[1]);
-		if (major_freebsd(dev) != numbers[0])
+		if ((u_long)major_freebsd(dev) != numbers[0])
 			*error = iMajorError;
-		if (minor_freebsd(dev) != numbers[1])
+		if ((u_long)minor_freebsd(dev) != numbers[1])
 			*error = iMinorError;
 	} else
 		*error = tooManyFields;
@@ -131,9 +131,9 @@ pack_8_8(int n, u_long numbers[], const char **error)
 
 	if (n == 2) {
 		dev = makedev_8_8(numbers[0], numbers[1]);
-		if (major_8_8(dev) != numbers[0])
+		if ((u_long)major_8_8(dev) != numbers[0])
 			*error = iMajorError;
-		if (minor_8_8(dev) != numbers[1])
+		if ((u_long)minor_8_8(dev) != numbers[1])
 			*error = iMinorError;
 	} else
 		*error = tooManyFields;
@@ -153,9 +153,9 @@ pack_12_20(int n, u_long numbers[], const char **error)
 
 	if (n == 2) {
 		dev = makedev_12_20(numbers[0], numbers[1]);
-		if (major_12_20(dev) != numbers[0])
+		if ((u_long)major_12_20(dev) != numbers[0])
 			*error = iMajorError;
-		if (minor_12_20(dev) != numbers[1])
+		if ((u_long)minor_12_20(dev) != numbers[1])
 			*error = iMinorError;
 	} else
 		*error = tooManyFields;
@@ -175,9 +175,9 @@ pack_14_18(int n, u_long numbers[], const char **error)
 
 	if (n == 2) {
 		dev = makedev_14_18(numbers[0], numbers[1]);
-		if (major_14_18(dev) != numbers[0])
+		if ((u_long)major_14_18(dev) != numbers[0])
 			*error = iMajorError;
-		if (minor_14_18(dev) != numbers[1])
+		if ((u_long)minor_14_18(dev) != numbers[1])
 			*error = iMinorError;
 	} else
 		*error = tooManyFields;
@@ -197,9 +197,9 @@ pack_8_24(int n, u_long numbers[], const char **error)
 
 	if (n == 2) {
 		dev = makedev_8_24(numbers[0], numbers[1]);
-		if (major_8_24(dev) != numbers[0])
+		if ((u_long)major_8_24(dev) != numbers[0])
 			*error = iMajorError;
-		if (minor_8_24(dev) != numbers[1])
+		if ((u_long)minor_8_24(dev) != numbers[1])
 			*error = iMinorError;
 	} else
 		*error = tooManyFields;
@@ -221,17 +221,17 @@ pack_bsdos(int n, u_long numbers[], const char **error)
 
 	if (n == 2) {
 		dev = makedev_12_20(numbers[0], numbers[1]);
-		if (major_12_20(dev) != numbers[0])
+		if ((u_long)major_12_20(dev) != numbers[0])
 			*error = iMajorError;
-		if (minor_12_20(dev) != numbers[1])
+		if ((u_long)minor_12_20(dev) != numbers[1])
 			*error = iMinorError;
 	} else if (n == 3) {
 		dev = makedev_12_12_8(numbers[0], numbers[1], numbers[2]);
-		if (major_12_12_8(dev) != numbers[0])
+		if ((u_long)major_12_12_8(dev) != numbers[0])
 			*error = iMajorError;
-		if (unit_12_12_8(dev) != numbers[1])
+		if ((u_long)unit_12_12_8(dev) != numbers[1])
 			*error = "invalid unit number";
-		if (subunit_12_12_8(dev) != numbers[2])
+		if ((u_long)subunit_12_12_8(dev) != numbers[2])
 			*error = "invalid subunit number";
 	} else
 		*error = tooManyFields;

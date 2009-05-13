@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd.c,v 1.8 2006/12/18 20:04:55 christos Exp $	*/
+/*	$NetBSD: lcmd.c,v 1.8.20.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd.c,v 1.8 2006/12/18 20:04:55 christos Exp $");
+__RCSID("$NetBSD: lcmd.c,v 1.8.20.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ struct lcmd_tab lcmd_tab[] = {
 };
 
 struct lcmd_tab *
-lcmd_lookup(char *name)
+lcmd_lookup(const char *name)
 {
 	struct lcmd_tab *p;
 

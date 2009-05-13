@@ -1,4 +1,4 @@
-.\"	$NetBSD: ossaudio.3,v 1.19 2009/02/03 12:48:00 jmcneill Exp $
+.\"	$NetBSD: ossaudio.3,v 1.19.2.1 2009/05/13 19:18:34 jym Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,26 +49,23 @@ library only for porting programs.
 The following table summarizes the mappings from native interface
 device names to OSS mixer controls.
 .Pp
-.TS
-box tab(:);
-l | l.
-Native Device Name:OSS Mixer Control
-_
-*.mic:SOUND_MIXER_MIC
-*.line:SOUND_MIXER_LINE
-*.cd:SOUND_MIXER_CD
-*.dac:SOUND_MIXER_PCM
-*.aux:SOUND_MIXER_LINE1
-*.record:SOUND_MIXER_IMIX
-*.master:SOUND_MIXER_VOLUME
-*.treble:SOUND_MIXER_TREBLE
-*.bass:SOUND_MIXER_BASS
-*.speaker:SOUND_MIXER_SPEAKER
-*.output:SOUND_MIXER_OGAIN
-*.input:SOUND_MIXER_IGAIN
-*.fmsynth:SOUND_MIXER_SYNTH
-*.midi:SOUND_MIXER_SYNTH
-.TE
+.Bl -column ".Sy Native Device Name" "SOUND_MIXER_SPEAKER"
+.It Sy "Native Device Name" Ta Sy "OSS Mixer Control"
+.It *.mic Ta SOUND_MIXER_MIC
+.It *.line Ta SOUND_MIXER_LINE
+.It *.cd Ta SOUND_MIXER_CD
+.It *.dac Ta SOUND_MIXER_PCM
+.It *.aux Ta SOUND_MIXER_LINE1
+.It *.record Ta SOUND_MIXER_IMIX
+.It *.master Ta SOUND_MIXER_VOLUME
+.It *.treble Ta SOUND_MIXER_TREBLE
+.It *.bass Ta SOUND_MIXER_BASS
+.It *.speaker Ta SOUND_MIXER_SPEAKER
+.It *.output Ta SOUND_MIXER_OGAIN
+.It *.input Ta SOUND_MIXER_IGAIN
+.It *.fmsynth Ta SOUND_MIXER_SYNTH
+.It *.midi Ta SOUND_MIXER_SYNTH
+.El
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr midi 4

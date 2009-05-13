@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.23 2008/09/06 21:33:27 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.23.4.1 2009/05/13 19:17:46 jym Exp $
 .
 There are two installation tools available.
 The traditional miniroot
@@ -95,7 +95,7 @@ You may need to first create the device nodes for your disk, as
 .Tn HP-UX
 was never very good about populating
 .Pa /dev/rdsk
-propertly.
+properly.
 .(disp
 .No # Ic "mknod /dev/dsk/IDs0 b 0 0xSCID00"
 .No # Ic "mknod /dev/rdsk/IDs0 c 4 0xSCID00"
@@ -180,18 +180,10 @@ partition is defined as the
 or the
 .Sq raw partition . )
 .Pp
-Here is a table of recommended partition sizes for a full install:
-.Bl -column -offset indent Partition Suggested Needed
-.It Partition Ta Suggested Ta Needed
-.It /\ (root) Ta "25 MB"   Ta "15 MB"
-.It /usr      Ta "150 MB"  Ta "100 MB"
-.It /var      Ta "20 MB"   Ta "5 MB"
-.It swap      Ta Em "2-3 *RAM" Ta 6 MB
-.El
-.Pp
 .(Note
-You will need at least a 6 MB swap partition if you are unable to netboot
-the installer, as the miniroot is temporarily placed in this partition.
+You will need at least a 6 MB swap partition (although 2-3*RAM is
+recommended) if you are unable to netboot the installer, as the miniroot
+is temporarily placed in this partition.
 .Note)
 .Pp
 Here is an example disklabel from a 7959B HP-IB hard drive:
@@ -305,7 +297,7 @@ instead of the bootstrap program.
 The only quirk is that you should place it at the offset of the swap
 partition you calculated above in the disklabel.
 In the example disklabel above, the offset is 38178 sectors of 512 bytes.
-Therfore, the
+Therefore, the
 .Xr dd 1
 command would be something like:
 .(disp
@@ -376,7 +368,7 @@ The second green LED should light up.
 Reset the machine.
 .br
 Press the reset button.
-For a 4XXs, ther's a small plunger on the back of
+For a 4XXs, there's a small plunger on the back of
 the machine (near the top).
 For a 4XXt or 4XXdl, there's a white button
 on the front, behind the silly door.
@@ -423,7 +415,7 @@ start loading the same OS you previously booted.
 At any time after it recognizes the keyboard, while it is doing its self
 test or searching for a bootable system, you can hit reset to return it to
 a cold-boot configuration.
-On HIL keybaords, this is
+On HIL keyboards, this is
 .Key control-shift-break ,
 where
 .Key break
@@ -645,7 +637,7 @@ Boot from the miniroot file system.
 Enter the disk from which to boot.
 The kernel in the miniroot file system will be booted into single-user mode.
 .
-.Ss2 Chosing a kernel location
+.Ss2 Choosing a kernel location
 .
 Once the bootstrap program
 .Li SYS_UBOOT

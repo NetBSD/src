@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.26 2008/09/02 21:51:10 lukem Exp $
+# $NetBSD: mi,v 1.26.4.1 2009/05/13 19:17:54 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,6 +7,7 @@
 ./usr/X11R6/bin/Xdmx					-unknown-	x11
 ./usr/X11R6/bin/Xnest					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
+./usr/X11R6/bin/Xvfb					-unknown-	x11
 ./usr/X11R6/bin/dmx					-unknown-	x11
 ./usr/X11R6/bin/dmxaddinput				-unknown-	x11
 ./usr/X11R6/bin/dmxaddscreen				-unknown-	x11
@@ -30,6 +31,7 @@
 ./usr/X11R6/man/cat1/Xdmx.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/Xnest.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/Xserver.0				-unknown-	.cat,x11
+./usr/X11R6/man/cat1/Xvfb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/dmxtodmx.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/vdltodmx.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/xdmxconfig.0			-unknown-	.cat,x11
@@ -37,6 +39,7 @@
 ./usr/X11R6/man/html1/Xdmx.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/Xnest.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/Xserver.html			-unknown-	html,x11
+./usr/X11R6/man/html1/Xvfb.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/dmxtodmx.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/vdltodmx.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/xdmxconfig.html			-unknown-	html,x11
@@ -44,28 +47,25 @@
 ./usr/X11R6/man/man1/Xdmx.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/Xnest.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/Xserver.1				-unknown-	.man,x11
+./usr/X11R6/man/man1/Xvfb.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/dmxtodmx.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/vdltodmx.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/xdmxconfig.1			-unknown-	.man,x11
 ./usr/X11R6/man/man1/xvidtune.1				-unknown-	.man,x11
+./usr/X11R7/bin/Xnest					-unknown-	xorg
+./usr/X11R7/bin/Xvfb					-unknown-	xorg
 ./usr/X11R7/man/cat1/Xmark.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xnest.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xserver.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xvfb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/SecurityPolicy.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/Xmark.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xnest.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xserver.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xvfb.html				-unknown-	html,xorg
 ./usr/X11R7/man/html5/SecurityPolicy.html		-unknown-	html,xorg
-./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/man1/Xmark.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xnest.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xserver.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/SecurityPolicy.5			-unknown-	.man,xorg
-./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2006/09/09 16:22:37 manu Exp $	*/
+/*	$NetBSD: extern.h,v 1.4.28.1 2009/05/13 19:15:55 jym Exp $	*/
 
 
 
@@ -13,6 +13,9 @@ int yylex __P((void));
 int yyparse __P((void));
 void yyfatal __P((const char *));
 void yyerror __P((const char *));
+
+u_int32_t *sendkeymsg_spigrep __P((unsigned int, struct addrinfo *,
+				   struct addrinfo *, int *));
 
 extern int f_rfcmode;
 extern int lineno;

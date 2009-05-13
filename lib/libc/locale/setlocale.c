@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale.c,v 1.56 2009/01/11 02:46:29 christos Exp $ */
+/* $NetBSD: setlocale.c,v 1.56.2.1 2009/05/13 19:18:25 jym Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale.c,v 1.56 2009/01/11 02:46:29 christos Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.56.2.1 2009/05/13 19:18:25 jym Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -47,15 +47,37 @@ const char *_PathLocale = NULL;
 
 __link_set_decl(all_categories, _locale_category_t);
 
-#ifndef __lint__
-static
+extern const _locale_category_t _generic_LC_ALL_desc;
+extern const _locale_category_t _dummy_LC_COLLATE_desc;
+#ifdef WITH_RUNE
+extern const _locale_category_t _citrus_LC_CTYPE_desc;
+extern const _locale_category_t _citrus_LC_MONETARY_desc;
+extern const _locale_category_t _citrus_LC_NUMERIC_desc;
+extern const _locale_category_t _citrus_LC_TIME_desc;
+extern const _locale_category_t _citrus_LC_MESSAGES_desc;
+#else
+extern const _locale_category_t _localeio_LC_CTYPE_desc;
+extern const _locale_category_t _localeio_LC_MONETARY_desc;
+extern const _locale_category_t _localeio_LC_NUMERIC_desc;
+extern const _locale_category_t _localeio_LC_TIME_desc;
+extern const _locale_category_t _localeio_LC_MESSAGES_desc;
 #endif
-const _locale_category_t dummy = {
-    .category = _LC_LAST, /* XXX */
-    .setlocale = NULL,
-};
 
-__link_set_add_data(all_categories, dummy);
+__link_set_add_data(all_categories, _generic_LC_ALL_desc);
+__link_set_add_data(all_categories, _dummy_LC_COLLATE_desc);
+#ifdef WITH_RUNE
+__link_set_add_data(all_categories, _citrus_LC_CTYPE_desc);
+__link_set_add_data(all_categories, _citrus_LC_MONETARY_desc);
+__link_set_add_data(all_categories, _citrus_LC_NUMERIC_desc);
+__link_set_add_data(all_categories, _citrus_LC_TIME_desc);
+__link_set_add_data(all_categories, _citrus_LC_MESSAGES_desc);
+#else
+__link_set_add_data(all_categories, _localeio_LC_CTYPE_desc);
+__link_set_add_data(all_categories, _localeio_LC_MONETARY_desc);
+__link_set_add_data(all_categories, _localeio_LC_NUMERIC_desc);
+__link_set_add_data(all_categories, _localeio_LC_TIME_desc);
+__link_set_add_data(all_categories, _localeio_LC_MESSAGES_desc);
+#endif
 
 _locale_category_t *
 _find_category(int category)

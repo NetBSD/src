@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.26 2009/01/25 22:08:37 abs Exp $
+#	$NetBSD: list,v 1.26.2.1 2009/05/13 19:17:38 jym Exp $
 
-SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
+SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
 PROG	bin/cat		usr/bin/strings
 PROG	bin/chmod
@@ -21,6 +21,7 @@ PROG	bin/stty
 PROG	bin/sync
 
 PROG	sbin/disklabel
+PROG	sbin/dmesg
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
 PROG	sbin/ifconfig
@@ -29,7 +30,6 @@ PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
-PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
@@ -64,12 +64,13 @@ LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz -lprop
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 COPY	${DESTDIR}/usr/mdec/bootxx_ffs		usr/mdec/bootxx_ffs
+COPY	${DESTDIR}/usr/mdec/bootxx_ffsv2	usr/mdec/bootxx_ffsv2
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
-COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 CMD	${TOOL_PWD_MKDB} -L -d . etc/master.passwd

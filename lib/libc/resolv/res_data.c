@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.11 2008/06/21 20:41:48 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.11.8.1 2009/05/13 19:18:26 jym Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
-static const char rcsid[] = "Id: res_data.c,v 1.5 2007/09/14 05:32:25 marka Exp";
+static const char rcsid[] = "Id: res_data.c,v 1.7 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_data.c,v 1.11 2008/06/21 20:41:48 christos Exp $");
+__RCSID("$NetBSD: res_data.c,v 1.11.8.1 2009/05/13 19:18:26 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -159,7 +159,7 @@ res_init(void) {
 	 * has set it to something in particular, we can randomize it now.
 	 */
 	if (!_nres.id)
-		_nres.id = res_randomid();
+		_nres.id = res_nrandomid(&_nres);
 
 	rv = __res_vinit(&_nres, 1);
 #ifdef COMPAT__RES
@@ -321,6 +321,16 @@ int
 res_opt(int a, u_char *b, int c, int d)
 {
 	return res_nopt(&_nres, a, b, c, d);
+}
+
+u_int
+res_randomid(void) {
+	if ((_nres.options & RES_INIT) == 0U && res_init() == -1) {
+		RES_SET_H_ERRNO(&_res, NETDB_INTERNAL);
+		return (u_int)-1;
+	}
+
+	return (res_nrandomid(&_nres));
 }
 
 const char *

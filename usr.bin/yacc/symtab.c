@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.11 2006/05/24 18:06:58 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.11.28.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.11 2006/05/24 18:06:58 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.11.28.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,13 +54,13 @@ bucket *last_symbol;
 
 static bucket **symbol_table;
 
-static int hash(char *);
+static int hash(const char *);
 
 
 static int
-hash(char *name)
+hash(const char *name)
 {
-    char *s;
+    const char *s;
     int c, k;
 
     assert(name && *name);
@@ -74,7 +74,7 @@ hash(char *name)
 
 
 bucket *
-make_bucket(char *name)
+make_bucket(const char *name)
 {
     bucket *bp;
 

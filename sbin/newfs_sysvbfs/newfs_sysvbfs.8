@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_sysvbfs.8,v 1.3 2007/08/04 10:45:36 pooka Exp $
+.\"	$NetBSD: newfs_sysvbfs.8,v 1.3.20.1 2009/05/13 19:19:04 jym Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newlfs.8	8.1 (Berkeley) 6/19/93
 .\"
-.Dd September 21, 2005
+.Dd April 9, 2009
 .Dt NEWFS_SYSVBFS 8
 .Os
 .Sh NAME
@@ -37,17 +37,30 @@
 .Nd construct a new System V Boot File System
 .Sh SYNOPSIS
 .Nm
+.Op Fl FZ
+.Op Fl s Ar sectors
 .Ar special
 .Sh DESCRIPTION
 .Nm
-builds a System V boot file system on the specified special
-device basing its defaults on the information in the disk label.
-Before running
+builds a System V boot file system on the specified special.
+If it is a device, the size information will be taken from the disk label and
+before running
 .Nm
 the disk must be labeled using
 .Xr disklabel 8 ;
 the proper fstype is
 .Dq SysVBFS .
+Otherwise, the size must be specified on the command line.
+.Pp
+The following arguments are supported:
+.Bl -tag -width Fl
+.It Fl F
+Create file system to a regular file.
+.It Fl s Ar sectors
+Create file system with specified number of disk sectors.
+.It Fl Z
+Fill file with zeroes instead of creating a sparse file.
+.El
 .Sh SEE ALSO
 .Xr disklabel 5 ,
 .Xr disktab 5 ,

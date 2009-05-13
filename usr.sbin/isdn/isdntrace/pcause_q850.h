@@ -27,7 +27,7 @@
  *	pcauseq850.h - Q.850 causes definitions
  *	---------------------------------------
  *
- *	$Id: pcause_q850.h,v 1.1.1.1 2001/01/06 13:00:30 martin Exp $
+ *	$Id: pcause_q850.h,v 1.1.1.1.42.1 2009/05/13 19:20:26 jym Exp $
  *
  * $FreeBSD$
  *
@@ -35,7 +35,7 @@
  *
  *---------------------------------------------------------------------------*/
 
-char *print_cause_q850(unsigned char code);
+const char *print_cause_q850(unsigned char code);
 
 /* Q.850 causes */
 

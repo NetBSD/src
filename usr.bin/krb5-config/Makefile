@@ -1,11 +1,9 @@
-# $NetBSD: Makefile,v 1.6 2008/10/25 22:27:38 apb Exp $
+# $NetBSD: Makefile,v 1.6.4.1 2009/05/13 19:19:54 jym Exp $
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:          ${DIST}/heimdal/tools
-
-WARNS?=		1
 
 SCRIPTS=	krb5-config
 MAN=		krb5-config.1

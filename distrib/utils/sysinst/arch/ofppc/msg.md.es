@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3 2008/02/05 19:09:02 garbled Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3.16.1 2009/05/13 19:18:00 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,7 @@ message nobootpart
 
 message boottoosmall
 {The boot partition is too small.  It needs to be at least 2MB in size,
-however a size of at least 100MB is reccomended.}
+however a size of at least 100MB is recommended.}
 
 message nobootpartdisklabel
 {There is no boot partition in the disklabel.  The boot partition should 

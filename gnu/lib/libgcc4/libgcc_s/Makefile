@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2008/10/25 22:27:35 apb Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 2009/05/13 19:18:16 jym Exp $
 
+USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
 NOLINT=		# defined
 

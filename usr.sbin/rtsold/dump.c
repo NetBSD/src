@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.8 2004/01/03 01:40:31 itojun Exp $	*/
+/*	$NetBSD: dump.c,v 1.8.40.1 2009/05/13 19:20:38 jym Exp $	*/
 /*	$KAME: dump.c,v 1.10 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -51,8 +51,8 @@ static FILE *fp;
 extern struct ifinfo *iflist;
 
 static void dump_interface_status __P((void));
-static char *sec2str __P((time_t));
-char *ifstatstr[] = {"IDLE", "DELAY", "PROBE", "DOWN", "TENTATIVE"};
+static const char *sec2str __P((time_t));
+const char *ifstatstr[] = {"IDLE", "DELAY", "PROBE", "DOWN", "TENTATIVE"};
 
 static void
 dump_interface_status(void)
@@ -94,7 +94,7 @@ dump_interface_status(void)
 }
 
 void
-rtsold_dump_file(char *dumpfile)
+rtsold_dump_file(const char *dumpfile)
 {
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
 		warnmsg(LOG_WARNING, __func__, "open a dump file(%s): %s",
@@ -105,7 +105,7 @@ rtsold_dump_file(char *dumpfile)
 	fclose(fp);
 }
 
-static char *
+static const char *
 sec2str(time_t total)
 {
 	static char result[256];

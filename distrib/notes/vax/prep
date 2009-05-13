@@ -1,7 +1,8 @@
-.\"	$NetBSD: prep,v 1.6 2000/10/10 12:55:23 lukem Exp $
+.\"	$NetBSD: prep,v 1.6.44.1 2009/05/13 19:17:48 jym Exp $
 .
 VAX machines usually need little or no preparation before installing
-NetBSD, other than the usual, well advised precaution of BACKING UP
+.Nx ,
+other than the usual well advised precaution of BACKING UP
 ALL DATA on any attached storage devices.
 .Pp
 If you are on a Q-bus or Unibus system the disk controller(s) need

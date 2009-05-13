@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.7 2008/09/06 22:21:32 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.7.4.1 2009/05/13 19:17:47 jym Exp $
 .
 .Ss2 Get to the ROM Monitor prompt
 .
@@ -35,7 +35,7 @@ which is to boot from the
 .Li "en()"
 ethernet device the kernel named
 .Li netbsd .
-You should wite down what the original
+You should write down what the original
 .Li "boot command"
 was in case you wish to boot
 .Tn NEXTSTEP

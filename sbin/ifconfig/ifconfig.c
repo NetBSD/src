@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.214 2009/01/18 00:24:29 lukem Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.214.2.1 2009/05/13 19:19:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.214 2009/01/18 00:24:29 lukem Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.214.2.1 2009/05/13 19:19:02 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -126,12 +126,12 @@ static int setifmetric(prop_dictionary_t, prop_dictionary_t);
 static int setifmtu(prop_dictionary_t, prop_dictionary_t);
 static int setifnetmask(prop_dictionary_t, prop_dictionary_t);
 static int setifprefixlen(prop_dictionary_t, prop_dictionary_t);
-static void status(const struct sockaddr_dl *, prop_dictionary_t,
+static void status(const struct sockaddr *, prop_dictionary_t,
     prop_dictionary_t);
 static void usage(void);
 
 static const struct kwinst ifflagskw[] = {
-	  IFKW("arp", IFF_NOARP)
+	  IFKW("arp", -IFF_NOARP)
 	, IFKW("debug", IFF_DEBUG)
 	, IFKW("link0", IFF_LINK0)
 	, IFKW("link1", IFF_LINK1)
@@ -724,7 +724,7 @@ printall(const char *ifname, prop_dictionary_t env0)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct ifreq ifr;
-	const struct sockaddr_dl *sdl = NULL;
+	const struct sockaddr *sdl = NULL;
 	prop_dictionary_t env, oenv;
 	int idx;
 	char *p;
@@ -754,7 +754,7 @@ printall(const char *ifname, prop_dictionary_t env0)
 		if (ifname != NULL && strcmp(ifname, ifa->ifa_name) != 0)
 			continue;
 		if (ifa->ifa_addr->sa_family == AF_LINK)
-			sdl = (const struct sockaddr_dl *) ifa->ifa_addr;
+			sdl = ifa->ifa_addr;
 		if (p && strcmp(p, ifa->ifa_name) == 0)
 			continue;
 		if (!prop_dictionary_set_cstring(env, "if", ifa->ifa_name))
@@ -1144,7 +1144,7 @@ print_human_bytes(bool humanize, uint64_t n)
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
+status(const struct sockaddr *sdl, prop_dictionary_t env,
     prop_dictionary_t oenv)
 {
 	const struct if_data *ifi;
@@ -1152,7 +1152,6 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 	statistics_func_t *statistics_f;
 	struct ifdatareq ifdr;
 	struct ifreq ifr;
-	char hbuf[NI_MAXHOST];
 	char fbuf[BUFSIZ];
 	int af, s;
 	const char *ifname;
@@ -1202,11 +1201,7 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 	SIMPLEQ_FOREACH(status_f, &status_funcs, f_next)
 		(*status_f->f_func)(env, oenv);
 
-	if (sdl != NULL &&
-	    getnameinfo((const struct sockaddr *)sdl, sdl->sdl_len,
-		hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0 &&
-	    hbuf[0] != '\0')
-		printf("\taddress: %s\n", hbuf);
+	print_link_addresses(env, true);
 
 	media_status(env, oenv);
 
@@ -1215,7 +1210,7 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 
 	estrlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name));
 
-	if (ioctl(s, zflag ? SIOCZIFDATA:SIOCGIFDATA, &ifdr) == -1)
+	if (ioctl(s, zflag ? SIOCZIFDATA : SIOCGIFDATA, &ifdr) == -1)
 		err(EXIT_FAILURE, zflag ? "SIOCZIFDATA" : "SIOCGIFDATA");
 
 	ifi = &ifdr.ifdr_data;

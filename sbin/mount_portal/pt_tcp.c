@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.20 2007/07/02 18:07:45 pooka Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.20.22.1 2009/05/13 19:19:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.20 2007/07/02 18:07:45 pooka Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.20.22.1 2009/05/13 19:19:03 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -75,7 +75,7 @@ portal_tcp(struct portal_cred *pcr, char *key, char **v, int *fdp)
 	const char *cause = "unknown";
 
 	q = strchr(p, '/');
-	if (q == 0 || q - p >= sizeof(host))
+	if (q == 0 || (size_t)(q - p) >= sizeof(host))
 		return (EINVAL);
 	*q = '\0';
 	if (strlcpy(host, p, sizeof(host)) >= sizeof(host))

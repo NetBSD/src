@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.10.6.1 2009/05/13 19:19:47 jym Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	ctags
 CPPFLAGS+=-I${.CURDIR}
 SRCS=	C.c ctags.c fortran.c lisp.c print.c tree.c yacc.c
-
-WARNS=	3
 
 .include <bsd.prog.mk>
 

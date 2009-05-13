@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2007/11/08 20:14:07 drochner Exp $
+#	$NetBSD: Makefile,v 1.42.14.1 2009/05/13 19:19:17 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -104,8 +104,10 @@ afterinstall: ${DATA} ${REDO} ${TABDATA}
 				continue; \
 			fi; \
 			${_MKSHMSG_INSTALL} $$destfile; \
-			${_MKSHECHO} ${INSTALL_LINK} $$lastfile $$destfile; \
-			${INSTALL_LINK} $$lastfile $$destfile; \
+			${_MKSHECHO} ${INSTALL_LINK} -o ${BINOWN} -g ${BINGRP} \
+			    -m ${NONBINMODE} $$lastfile $$destfile; \
+			${INSTALL_LINK} -o ${BINOWN} -g ${BINGRP} \
+			    -m ${NONBINMODE} $$lastfile $$destfile; \
 		else \
 			lastdevino=$$devino; \
 			lastfile=$$destfile; \

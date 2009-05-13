@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.56 2008/04/14 20:40:53 jdc Exp $
+.\"	$NetBSD: curses.3,v 1.56.10.1 2009/05/13 19:18:28 jym Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 14, 2008
+.Dd February 22, 2009
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -63,17 +63,6 @@ should be called before exiting.
 The routine
 .Fn start_color
 must be called before any of the other routines that deal with color are used.
-.Sh SEE ALSO
-.Xr ioctl 2 ,
-.Xr getenv 3 ,
-.Xr tty 4 ,
-.Xr termcap 5
-.Rs
-.%T Screen Updating and Cursor Movement Optimization: A Library Package
-.%A Ken Arnold
-.Re
-.Sh AUTHORS
-.An Ken Arnold
 .Sh FUNCTIONS
 .Bl -column "subwin(win,lines,cols,begin_y,begin_x)"
 .It Sy "Function Name" Ta Sy "Manual Page Name"
@@ -302,6 +291,37 @@ must be called before any of the other routines that deal with color are used.
 .It wunderscore Ta Xr curses_underscore 3
 .It wvline Ta Xr curses_line 3
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width CURSES_TRACE_MASK
+.It COLUMNS
+The number of columns in the terminal if set.
+This is usually automatically configured by querying the kernel.
+.It CURSES_TRACE_MASK
+An integer mask that enables specific debugging traces.
+Enabled only in the debug build of curses.
+.It CURSES_TRACE_FILE
+A file where to output debugging information.
+Enabled only in the debug build of curses.
+.It ESCDELAY
+The maximum delay in milliseconds between characters in multi-character
+keystrokes (such are arrow keys) where the adjacent characters are considered
+part of the same multi-character sequence.
+The default is 300 milliseconds.
+.It LINES
+The number of lines in the terminal if set.
+is usually automatically configured by querying the kernel.
+.It TERM
+The terminal type of the current terminal.
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr getenv 3 ,
+.Xr tty 4 ,
+.Xr termcap 5
+.Rs
+.%T Screen Updating and Cursor Movement Optimization: A Library Package
+.%A Ken Arnold
+.Re
 .Sh STANDARDS
 The
 .Nx
@@ -310,3 +330,5 @@ Single Unix Specification.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
+.Sh AUTHORS
+.An Ken Arnold

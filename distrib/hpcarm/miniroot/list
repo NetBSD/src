@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2008/10/30 12:39:16 tsutsui Exp $
+#	$NetBSD: list,v 1.2.4.1 2009/05/13 19:17:42 jym Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -7,7 +7,6 @@ PROG	bin/rcp
 PROG	bin/rcmd
 
 # extras in sbin
-PROG	sbin/dhclient
 PROG	sbin/disklabel
 PROG	sbin/fdisk
 PROG	sbin/mount_ext2fs
@@ -22,7 +21,6 @@ PROG	usr/bin/tset usr/bin/reset
 PROG	usr/bin/vi
 
 # crunchgen source directory specials: progs built in nonstandard places
-SPECIAL	dhclient	srcdir distrib/utils/x_dhclient
 SPECIAL	vi		srcdir usr.bin/nvi/build
 
 # Minimize use of MFS
@@ -39,6 +37,3 @@ COPY	${ARCHDIR}/dot.profile		.profile
 
 # and a spare .profile
 COPY	${DESTDIR}/.profile		tmp/.hdprofile
-
-# various files that we need in /etc for the install
-COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555

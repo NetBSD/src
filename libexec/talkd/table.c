@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.8 2008/03/04 03:05:00 dholland Exp $	*/
+/*	$NetBSD: table.c,v 1.8.10.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.8 2008/03/04 03:05:00 dholland Exp $");
+__RCSID("$NetBSD: table.c,v 1.8.10.1 2009/05/13 19:18:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: table.c,v 1.8 2008/03/04 03:05:00 dholland Exp $");
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <protocols/talkd.h>
+#include <inttypes.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -74,15 +75,14 @@ struct table_entry {
 
 TABLE_ENTRY *table = NIL;
 
-static void delete __P((TABLE_ENTRY *));
+static void delete(TABLE_ENTRY *);
 
 /*
  * Look in the table for an invitation that matches the current
  * request looking for an invitation
  */
 CTL_MSG *
-find_match(request)
-	CTL_MSG *request;
+find_match(CTL_MSG *request)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -115,8 +115,7 @@ find_match(request)
  * one as find_match does 
  */
 CTL_MSG *
-find_request(request)
-	CTL_MSG *request;
+find_request(CTL_MSG *request)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -153,9 +152,7 @@ find_request(request)
 }
 
 void
-insert_table(request, response)
-	CTL_MSG *request;
-	CTL_RESPONSE *response;
+insert_table(CTL_MSG *request, CTL_RESPONSE *response)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -182,10 +179,10 @@ insert_table(request, response)
 /*
  * Generate a unique non-zero sequence number
  */
-int
-new_id()
+uint32_t
+new_id(void)
 {
-	static int current_id = 0;
+	static uint32_t current_id = 0;
 
 	current_id = (current_id + 1) % MAX_ID;
 	/* 0 is reserved, helps to pick up bugs */
@@ -197,15 +194,14 @@ new_id()
 /*
  * Delete the invitation with id 'id_num'
  */
-int
-delete_invite(id_num)
-	int id_num;
+u_char
+delete_invite(uint32_t id_num)
 {
 	TABLE_ENTRY *ptr;
 
 	ptr = table;
 	if (debug)
-		syslog(LOG_DEBUG, "delete_invite(%d)", id_num);
+		syslog(LOG_DEBUG, "delete_invite(%"PRIu32")", id_num);
 	for (ptr = table; ptr != NIL; ptr = ptr->next) {
 		if (ptr->request.id_num == id_num)
 			break;
@@ -223,8 +219,7 @@ delete_invite(id_num)
  * Classic delete from a double-linked list
  */
 static void
-delete(ptr)
-	TABLE_ENTRY *ptr;
+delete(TABLE_ENTRY *ptr)
 {
 
 	if (debug)

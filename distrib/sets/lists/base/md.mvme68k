@@ -1,5 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.21 2008/11/29 17:57:34 tsutsui Exp $
-./sbin/edlabel					base-sysutil-bin
+# $NetBSD: md.mvme68k,v 1.21.2.1 2009/05/13 19:17:51 jym Exp $
 ./usr/mdec/bootsd				base-sysutil-bin
 ./usr/mdec/bootst				base-sysutil-bin
 ./usr/mdec/bootxx				base-sysutil-bin

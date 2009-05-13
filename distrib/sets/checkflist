@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.33 2006/09/11 22:16:10 dbj Exp $
+#	$NetBSD: checkflist,v 1.33.28.1 2009/05/13 19:17:50 jym Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -71,17 +71,12 @@ shift $((${OPTIND} - 1))
 # Exceptions to flist checking (all begin with "./"):
 #
 # * ignore var/db/syspkg and its contents
-# * ignore ${metalog}
-# * ignore METALOG
+# * ignore METALOG and METALOG.*
 # * ignore etc/mtree/set.*
 #
 IGNORE_REGEXP="^\./var/db/syspkg(\$|/)"
-if [ -n "${metalog}" ]; then
-	ml="${metalog#${DESTDIR}/}"
-	ml2="METALOG"
-	IGNORE_REGEXP="${IGNORE_REGEXP}|^\./${ml}\$|^\./${ml2}\$"
-	IGNORE_REGEXP="${IGNORE_REGEXP}|^\./etc/mtree/set\.[a-z]*\$"
-fi
+IGNORE_REGEXP="${IGNORE_REGEXP}|^\./METALOG(\..*)?\$"
+IGNORE_REGEXP="${IGNORE_REGEXP}|^\./etc/mtree/set\.[a-z]*\$"
 
 #
 # Here would be a good place to add custom exceptions to flist checking.
@@ -92,6 +87,8 @@ fi
 # * ${SDIR}/files: files present in DESTDIR.
 # * ${SDIR}/flist: files mentioned in flist;
 # * ${SDIR}/mlist: files mentioned in metalog;
+#
+# All three lists are filtered against ${IGNORE_REGEXP}.
 #
 ( cd "${DESTDIR}" && ${FIND} ${origin} \
 	\( -type d -o -type f -o -type l \) -print ) \

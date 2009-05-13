@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.38 2008/09/04 09:41:44 lukem Exp $	*/
+/*	$NetBSD: vis.c,v 1.38.8.1 2009/05/13 19:18:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.38 2008/09/04 09:41:44 lukem Exp $");
+__RCSID("$NetBSD: vis.c,v 1.38.8.1 2009/05/13 19:18:23 jym Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -91,6 +91,7 @@ static char *do_svis(char *, int, int, int, const char *);
 #define iswhite(c)	(c == ' ' || c == '\t' || c == '\n')
 #define issafe(c)	(c == '\b' || c == BELL || c == '\r')
 #define xtoa(c)		"0123456789abcdef"[c]
+#define XTOA(c)		"0123456789ABCDEF"[c]
 
 #define MAXEXTRAS	5
 
@@ -123,6 +124,29 @@ do_hvis(char *dst, int c, int flag, int nextc, const char *extra)
 		*dst++ = '%';
 		*dst++ = xtoa(((unsigned int)c >> 4) & 0xf);
 		*dst++ = xtoa((unsigned int)c & 0xf);
+	} else {
+		dst = do_svis(dst, c, flag, nextc, extra);
+	}
+	return dst;
+}
+
+/*
+ * This is do_mvis, for Quoted-Printable MIME (RFC 2045)
+ * NB: No handling of long lines or CRLF.
+ */
+static char *
+do_mvis(char *dst, int c, int flag, int nextc, const char *extra)
+{
+	if ((c != '\n') &&
+	    /* Space at the end of the line */
+	    ((isspace(c) && (nextc == '\r' || nextc == '\n')) ||
+	    /* Out of range */
+	    (!isspace(c) && (c < 33 || (c > 60 && c < 62) || c > 126)) ||
+	    /* Specific char to be escaped */ 
+	    strchr("#$@[\\]^`{|}~", c) != NULL)) {
+		*dst++ = '=';
+		*dst++ = XTOA(((unsigned int)c >> 4) & 0xf);
+		*dst++ = XTOA((unsigned int)c & 0xf);
 	} else {
 		dst = do_svis(dst, c, flag, nextc, extra);
 	}
@@ -211,6 +235,20 @@ do_svis(char *dst, int c, int flag, int nextc, const char *extra)
 	return dst;
 }
 
+typedef char *(*visfun_t)(char *, int, int, int, const char *);
+
+/*
+ * Return the appropriate encoding function depending on the flags given.
+ */
+static visfun_t
+getvisfun(int flag)
+{
+	if (flag & VIS_HTTPSTYLE)
+		return do_hvis;
+	if (flag & VIS_MIMESTYLE)
+		return do_mvis;
+	return do_svis;
+}
 
 /*
  * svis - visually encode characters, also encoding the characters
@@ -220,6 +258,7 @@ char *
 svis(char *dst, int c, int flag, int nextc, const char *extra)
 {
 	char *nextra = NULL;
+	visfun_t f;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(extra != NULL);
@@ -228,10 +267,8 @@ svis(char *dst, int c, int flag, int nextc, const char *extra)
 		*dst = '\0';		/* can't create nextra, return "" */
 		return dst;
 	}
-	if (flag & VIS_HTTPSTYLE)
-		dst = do_hvis(dst, c, flag, nextc, nextra);
-	else
-		dst = do_svis(dst, c, flag, nextc, nextra);
+	f = getvisfun(flag);
+	dst = (*f)(dst, c, flag, nextc, nextra);
 	free(nextra);
 	*dst = '\0';
 	return dst;
@@ -260,6 +297,7 @@ strsvis(char *dst, const char *csrc, int flag, const char *extra)
 	char *start;
 	char *nextra = NULL;
 	const unsigned char *src = (const unsigned char *)csrc;
+	visfun_t f;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
@@ -269,16 +307,12 @@ strsvis(char *dst, const char *csrc, int flag, const char *extra)
 		*dst = '\0';		/* can't create nextra, return "" */
 		return 0;
 	}
-	if (flag & VIS_HTTPSTYLE) {
-		for (start = dst; (c = *src++) != '\0'; /* empty */)
-			dst = do_hvis(dst, c, flag, *src, nextra);
-	} else {
-		for (start = dst; (c = *src++) != '\0'; /* empty */)
-			dst = do_svis(dst, c, flag, *src, nextra);
-	}
+	f = getvisfun(flag);
+	for (start = dst; (c = *src++) != '\0'; /* empty */)
+		dst = (*f)(dst, c, flag, *src, nextra);
 	free(nextra);
 	*dst = '\0';
-	return (dst - start);
+	return (int)(dst - start);
 }
 
 
@@ -289,6 +323,7 @@ strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
 	char *start;
 	char *nextra = NULL;
 	const unsigned char *src = (const unsigned char *)csrc;
+	visfun_t f;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
@@ -299,22 +334,14 @@ strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
 		return 0;
 	}
 
-	if (flag & VIS_HTTPSTYLE) {
-		for (start = dst; len > 0; len--) {
-			c = *src++;
-			dst = do_hvis(dst, c, flag,
-			    len > 1 ? *src : '\0', nextra);
-		}
-	} else {
-		for (start = dst; len > 0; len--) {
-			c = *src++;
-			dst = do_svis(dst, c, flag,
-			    len > 1 ? *src : '\0', nextra);
-		}
+	f = getvisfun(flag);
+	for (start = dst; len > 0; len--) {
+		c = *src++;
+		dst = (*f)(dst, c, flag, len > 1 ? *src : '\0', nextra);
 	}
 	free(nextra);
 	*dst = '\0';
-	return (dst - start);
+	return (int)(dst - start);
 }
 #endif
 
@@ -327,6 +354,7 @@ vis(char *dst, int c, int flag, int nextc)
 {
 	char *extra = NULL;
 	unsigned char uc = (unsigned char)c;
+	visfun_t f;
 
 	_DIAGASSERT(dst != NULL);
 
@@ -335,10 +363,8 @@ vis(char *dst, int c, int flag, int nextc)
 		*dst = '\0';		/* can't create extra, return "" */
 		return dst;
 	}
-	if (flag & VIS_HTTPSTYLE)
-		dst = do_hvis(dst, uc, flag, nextc, extra);
-	else
-		dst = do_svis(dst, uc, flag, nextc, extra);
+	f = getvisfun(flag);
+	dst = (*f)(dst, uc, flag, nextc, extra);
 	free(extra);
 	*dst = '\0';
 	return dst;

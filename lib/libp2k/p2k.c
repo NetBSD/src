@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.7 2008/12/12 19:50:27 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.7.2.1 2009/05/13 19:18:34 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@
 #include <errno.h>
 #include <puffs.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <rump/rump.h>
 #include <rump/p2k.h>
@@ -83,7 +84,7 @@ static __inline void
 cred_destroy(kauth_cred_t cred)
 {
 
-	rump_cred_destroy(cred);
+	rump_cred_put(cred);
 }
 
 static struct componentname *
@@ -130,6 +131,24 @@ clearlwp(struct puffs_usermount *pu)
 	 */
 	if (__predict_false(puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED))
 		rump_clear_curlwp();
+}
+
+/*ARGSUSED*/
+static void
+p2k_errcatcher(struct puffs_usermount *pu, uint8_t type, int error,
+	const char *str, puffs_cookie_t cook)
+{
+
+	fprintf(stderr, "type %d, error %d, cookie %p (%s)\n",
+	    type, error, cook, str);
+
+	/*
+	 * Trap all EINVAL responses to lookup.  It most likely means
+	 * that we supplied VNON/VBAD as the type.  The real kernel
+	 * doesn't panic from this either, but just handles it.
+	 */
+	if (type != PUFFS_VN_LOOKUP && error == EINVAL)
+		abort();
 }
 
 int
@@ -187,6 +206,18 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
 		dodaemon = false;
 	}
+	if (getenv("P2K_NODETACH") != NULL) {
+		dodaemon = false;
+	}
+	if (getenv("P2K_NOCACHE_PAGE") != NULL) {
+		puffs_flags |= PUFFS_KFLAG_NOCACHE_PAGE;
+	}
+	if (getenv("P2K_NOCACHE_NAME") != NULL) {
+		puffs_flags |= PUFFS_KFLAG_NOCACHE_NAME;
+	}
+	if (getenv("P2K_NOCACHE") != NULL) {
+		puffs_flags |= PUFFS_KFLAG_NOCACHE;
+	}
 
 	strcpy(typebuf, "p2k|");
 	if (strcmp(vfsname, "puffs") == 0) { /* XXX */
@@ -218,6 +249,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	puffs_fakecc = 1;
 
 	puffs_set_prepost(pu, makelwp, clearlwp);
+	puffs_set_errnotify(pu, p2k_errcatcher);
 
 	puffs_setspecific(pu, ukfs_getmp(ukfs));
 	if ((rv = puffs_mount(pu, mountpath, mntflags, rvp))== -1)
@@ -301,8 +333,6 @@ p2k_fs_sync(struct puffs_usermount *pu, int waitfor,
 	cred = cred_create(pcr);
 	rv = rump_vfs_sync(mp, waitfor, (kauth_cred_t)cred);
 	cred_destroy(cred);
-
-	rump_bioops_sync();
 
 	return rv;
 }

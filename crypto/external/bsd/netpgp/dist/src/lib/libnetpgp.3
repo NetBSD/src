@@ -1,0 +1,208 @@
+.\" $NetBSD: libnetpgp.3,v 1.6.2.2 2009/05/13 19:16:05 jym Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This manual page is derived from software contributed to The
+.\" NetBSD Foundation by Alistair Crooks (agc@NetBSD.org)
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 30, 2009
+.Dt LIBNETPGP 3
+.Os
+.Sh NAME
+.Nm libnetpgp
+.Nd digital signing and verification, encryption and decryption
+.Sh LIBRARY
+.Lb libnetpgp
+.Sh SYNOPSIS
+.In netpgp.h
+.Ft int
+.Fo netpgp_init
+.Fa "netpgp_t *netpgp" "char *userid" "char *pubringfile" "char *secringfile"
+.Fc
+.Ft int
+.Fo netpgp_end
+.Fa "netpgp_t *netpgp"
+.Fc
+.Ft int
+.Fo netpgp_list_keys
+.Fa "netpgp_t *netpgp"
+.Fc
+.Ft int
+.Fo netpgp_find_key
+.Fa "netpgp_t *netpgp" "char *userid"
+.Fc
+.Ft int
+.Fo netpgp_export_key
+.Fa "netpgp_t *netpgp" "char *userid"
+.Fc
+.Ft int
+.Fo netpgp_import_key
+.Fa "netpgp_t *netpgp" "char *file"
+.Fc
+.Ft int
+.Fo netpgp_generate_key
+.Fa "netpgp_t *netpgp" "char *userid" "int numbits"
+.Fc
+.Ft int
+.Fo netpgp_encrypt_file
+.Fa "netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
+.Fa "int armored"
+.Fc
+.Ft int
+.Fo netpgp_decrypt_file
+.Fa "netpgp_t *netpgp" "char *filename" "char *out" "int armored"
+.Fc
+.Ft int
+.Fo netpgp_sign_file
+.Fa "netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
+.Fa "int armored" "int cleartext"
+.Fc
+.Ft int
+.Fo netpgp_verify_file
+.Fa "netpgp_t *netpgp" "char *f" "int armored"
+.Fc
+.Ft int
+.Fo netpgp_set_debug
+.Fa "const char *filename"
+.Fc
+.Ft int
+.Fo netpgp_get_debug
+.Fa "const char *filename"
+.Fc
+.Ft int
+.Fo netpgp_get_info
+.Fa "const char *type"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a library interface to enable digital signatures to be created and
+verified, and also for files and memory to be encrypted and decrypted.
+Functions are also provided for management of user keys.
+.Pp
+The library uses functions from the openssl library for multi-precision
+integer arithmetic, and for RSA and DSA key signing and verification,
+encryption and decryption.
+.Pp
+Normal operation sees the
+.Nm
+process be initialised using the
+.Fn netpgp_init
+function, which will set up the public and private keyrings, and set the
+user identity to the
+.Ar userid
+argument passed to the function.
+If no public key ring file is provided, initial values will be taken from those
+in the
+.Pa .gnupg/pubring.gpg
+file in the user's home directory.
+Similarily, if no secret key ring file is provided,
+initial values will be taken from those
+in the
+.Pa .gnupg/secring.gpg
+file in the user's home directory.
+The
+.Fn netpgp_init
+returns 1 on sucess, 0 on failure.
+.Pp
+To list all the keys in a keyring, the
+.Fn netpgp_list_keys
+function is used.
+.Pp
+To export a key, the
+.Fn netpgp_export_key
+is used.
+Output is sent to the standard output.
+.Pp
+To import a key onto the public keyring, the
+.Fn netpgp_import_key
+is used.
+The name of the file containing the key to be imported is provided
+as the filename argument.
+.Pp
+To generate a key, the
+.Fn netpgp_generate_key
+is used.
+It takes an argument of the number of bits to use in the key.
+At the time that this manual page was created (April 2009),
+the recommendations are that the bare minimum key size
+of at least 2048 bits is used, and it would be much better
+to use at least 4096 or 8192 bits.
+This situation should be monitored to ensure that it does
+not go out of date.
+.Pp
+Encryption, decryption, signing and verification of
+files are the lifeblood of the
+.Nm
+library.
+To encrypt a file, the
+.Fn netpgp_encrypt_file
+and the
+.Fn netpgp_decrypt_file
+is used to decrypt the results of the encryption.
+To sign a file, the
+.Fn netpgp_sign_file
+is used, and the resulting signed file can be verified
+using the
+.Fn netpgp_verify_file
+function.
+.Pp
+In
+.Nm
+files are encrypted using the public key of the userid.
+The secret key is used to decrypt the results of that encryption.
+Files are signed using the secret key of the userid.
+The public key is used to verify that the file was signed,
+who signed the file, and the date and time at which it was signed.
+.Pp
+Some utility functions are also provided for debugging, and for
+finding out version and maintainer information from calling programs.
+These are the
+.Fn netpgp_set_debug
+and the
+.Fn netpgp_get_debug
+functions (for getting verbose debugging information on a per-source
+file basis).
+.Pp
+The
+.Fn netpgp_get_info
+returns the information depending upon the
+.Ar type
+argument.
+.Sh SEE ALSO
+.Xr netpgp 1 ,
+.Xr ssl 3
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Ben Laurie ,
+.An Rachel Willmer .
+.An Alistair Crooks
+wrote this high-level interface.
+.Pp
+This manual page was written by
+.An Alistair Crooks Aq agc@NetBSD.org .

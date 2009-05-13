@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.18 2008/11/06 16:01:54 apb Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.18.2.1 2009/05/13 19:19:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.18 2008/11/06 16:01:54 apb Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.18.2.1 2009/05/13 19:19:05 jym Exp $");
 #endif
 
 
@@ -163,6 +163,7 @@ do_list(int all, u_int32_t type, char *name)
 	rndstat_name_t rstat_name;
 	int fd;
 	int res;
+	uint32_t i;
 	u_int32_t start;
 
 	fd = open("/dev/urandom", O_RDONLY, 0644);
@@ -200,14 +201,14 @@ do_list(int all, u_int32_t type, char *name)
 		if (rstat.count == 0)
 			break;
 
-		for (res = 0; res < rstat.count; res++) {
+		for (i = 0; i < rstat.count; i++) {
 			if (all != 0 ||
-			    type == rstat.source[res].type)
+			    type == rstat.source[i].type)
 				printf("%-16s %10u %-4s %s\n",
-				    rstat.source[res].name,
-				    rstat.source[res].total,
-				    find_name(rstat.source[res].type),
-				    strflags(rstat.source[res].flags));
+				    rstat.source[i].name,
+				    rstat.source[i].total,
+				    find_name(rstat.source[i].type),
+				    strflags(rstat.source[i].flags));
 		}
 		start += rstat.count;
 	}

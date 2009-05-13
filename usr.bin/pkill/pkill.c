@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.23 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: pkill.c,v 1.23.8.1 2009/05/13 19:20:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.23 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.23.8.1 2009/05/13 19:20:01 jym Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 					continue;
 
 				j = 0;
-				while (j < sizeof(buf) && *pargv != NULL) {
+				while (j < (int)sizeof(buf) && *pargv != NULL) {
 					j += snprintf(buf + j, sizeof(buf) - j,
 					    pargv[1] != NULL ? "%s " : "%s",
 					    pargv[0]);
@@ -275,7 +275,7 @@ main(int argc, char **argv)
 			if (rv == 0) {
 				if (fullmatch) {
 					if (regmatch.rm_so == 0 &&
-					    regmatch.rm_eo == strlen(mstr))
+					    regmatch.rm_eo == (regoff_t)strlen(mstr))
 						selected[i] = 1;
 				} else
 					selected[i] = 1;
@@ -319,7 +319,7 @@ main(int argc, char **argv)
 		}
 
 		SLIST_FOREACH(li, &ppidlist, li_chain)
-			if (kp->p_ppid == (uid_t)li->li_number)
+			if ((uid_t)kp->p_ppid == (uid_t)li->li_number)
 				break;
 		if (SLIST_FIRST(&ppidlist) != NULL && li == NULL) {
 			selected[i] = 0;
@@ -327,7 +327,7 @@ main(int argc, char **argv)
 		}
 
 		SLIST_FOREACH(li, &pgrplist, li_chain)
-			if (kp->p__pgid == (uid_t)li->li_number)
+			if (kp->p__pgid == (pid_t)li->li_number)
 				break;
 		if (SLIST_FIRST(&pgrplist) != NULL && li == NULL) {
 			selected[i] = 0;
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 		}
 
 		SLIST_FOREACH(li, &sidlist, li_chain)
-			if (kp->p_sid == (uid_t)li->li_number)
+			if (kp->p_sid == (pid_t)li->li_number)
 				break;
 		if (SLIST_FIRST(&sidlist) != NULL && li == NULL) {
 			selected[i] = 0;
@@ -503,7 +503,7 @@ makelist(struct listhead *head, enum listtype type, char *src)
 		empty = 0;
 
 		li->li_number = (uid_t)strtol(sp, &ep, 0);
-		if (*ep == '\0') {
+		if (*ep == '\0' && type != LT_TTY) {
 			switch (type) {
 			case LT_PGRP:
 				if (li->li_number == 0)
@@ -513,9 +513,6 @@ makelist(struct listhead *head, enum listtype type, char *src)
 				if (li->li_number == 0)
 					li->li_number = getsid(mypid);
 				break;
-			case LT_TTY:
-				usage();
-				/*NOTREACHED*/
 			default:
 				break;
 			}
@@ -536,29 +533,34 @@ makelist(struct listhead *head, enum listtype type, char *src)
 			li->li_number = gr->gr_gid;
 			break;
 		case LT_TTY:
-			if (strcmp(sp, "-") == 0) {
+			p = sp;
+			if (*sp == '/')
+				prefix = "";
+			else if (strcmp(sp, "-") == 0) {
 				li->li_number = -1;
 				break;
 			} else if (strcmp(sp, "co") == 0)
 				p = "console";
 			else if (strncmp(sp, "tty", 3) == 0)
-				p = sp;
-			else {
-				p = sp;
+				/* all set */;
+			else if (strncmp(sp, "pts/", 4) == 0)
+				/* all set */;
+			else if (*ep != '\0' || (strlen(sp) == 2 && *sp == '0'))
 				prefix = _PATH_TTY;
-			}
+			else
+				prefix = _PATH_DEV_PTS;
 
 			(void)snprintf(buf, sizeof(buf), "%s%s", prefix, p);
 
 			if (stat(buf, &st) == -1) {
 				if (errno == ENOENT)
 					errx(STATUS_BADUSAGE,
-					    "No such tty: `%s'", sp);
-				err(STATUS_ERROR, "Cannot access `%s'", sp);
+					    "No such tty: `%s'", buf);
+				err(STATUS_ERROR, "Cannot access `%s'", buf);
 			}
 
 			if ((st.st_mode & S_IFCHR) == 0)
-				errx(STATUS_BADUSAGE, "Not a tty: `%s'", sp);
+				errx(STATUS_BADUSAGE, "Not a tty: `%s'", buf);
 
 			li->li_number = st.st_rdev;
 			break;

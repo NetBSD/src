@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.30 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: installboot.c,v 1.30.8.1 2009/05/13 19:20:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.30 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.30.8.1 2009/05/13 19:20:24 jym Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -370,10 +370,9 @@ parseoptions(ib_params *params, const char *option)
 			val = strtoul(option, &cp, 0);
 			if (cp > option + len || (*cp != 0 && *cp != ','))
 				break;
-			OPTION(params, int, opt) = val;
-			if (OPTION(params, int, opt) != val)
-				/* value got truncated on int convertion */
+			if (val > INT_MAX)
 				break;
+			OPTION(params, int, opt) = (int)val;
 			continue;
 		default:
 			errx(1, "Internal error: option `%s' has invalid type %d",

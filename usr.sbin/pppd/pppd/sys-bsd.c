@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.58 2008/10/25 22:12:20 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.58.4.1 2009/05/13 19:20:33 jym Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.58 2008/10/25 22:12:20 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.58.4.1 2009/05/13 19:20:33 jym Exp $");
 #endif
 #endif
 
@@ -1615,7 +1615,7 @@ sifproxyarp(int unit, u_int32_t hisaddr)
     arpmsg.dst.sin_other = SIN_PROXY;
 
     arpmsg.hdr.rtm_msglen = (char *) &arpmsg.hwa - (char *) &arpmsg
-	+ arpmsg.hwa.sdl_len;
+	+ RT_ROUNDUP(arpmsg.hwa.sdl_len);
     if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) < 0) {
 	error("Couldn't add proxy arp entry: %m");
 	close(routes);

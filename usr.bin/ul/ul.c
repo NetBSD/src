@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.13 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: ul.c,v 1.13.6.1 2009/05/13 19:20:09 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.13 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: ul.c,v 1.13.6.1 2009/05/13 19:20:09 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: ul.c,v 1.13 2008/07/21 14:19:27 lukem Exp $");
 
 struct tinfo *info;
 int	must_use_uc, must_overstrike;
-char	*CURS_UP, *CURS_RIGHT, *CURS_LEFT,
+const char *CURS_UP, *CURS_RIGHT, *CURS_LEFT,
 	*ENTER_STANDOUT, *EXIT_STANDOUT, *ENTER_UNDERLINE, *EXIT_UNDERLINE,
 	*ENTER_DIM, *ENTER_BOLD, *ENTER_REVERSE, *UNDER_CHAR, *EXIT_ATTRIBUTES;
 
@@ -103,7 +103,7 @@ main(argc, argv)
 	char **argv;
 {
 	int c;
-	char *termtype;
+	const char *termtype;
 	FILE *f;
 
 	termtype = getenv("TERM");

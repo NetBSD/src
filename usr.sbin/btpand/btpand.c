@@ -1,7 +1,7 @@
-/*	$NetBSD: btpand.c,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: btpand.c,v 1.1.8.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
- * Copyright (c) 2008 Iain Hibbert
+ * Copyright (c) 2008-2009 Iain Hibbert
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,8 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert. All rights reserved.");
-__RCSID("$NetBSD: btpand.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2008-2009 Iain Hibbert. All rights reserved.");
+__RCSID("$NetBSD: btpand.c,v 1.1.8.1 2009/05/13 19:20:19 jym Exp $");
 
 #include <sys/wait.h>
 
@@ -47,24 +47,35 @@ __RCSID("$NetBSD: btpand.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
 /* global variables */
 const char *	control_path;		/* -c <path> */
 const char *	interface_name;		/* -i <ifname> */
-const char *	service_name;		/* -s <service> */
+const char *	service_type;		/* -s <service> */
 uint16_t	service_class;
+const char *	service_name;
+const char *	service_desc;
 
 bdaddr_t	local_bdaddr;		/* -d <addr> */
 bdaddr_t	remote_bdaddr;		/* -a <addr> */
 uint16_t	l2cap_psm;		/* -p <psm> */
 int		l2cap_mode;		/* -m <mode> */
-
 int		server_limit;		/* -n <limit> */
 
 static const struct {
-	const char *	name;
+	const char *	type;
 	uint16_t	class;
+	const char *	name;
 	const char *	desc;
 } services[] = {
-	{ "PANU", SDP_SERVICE_CLASS_PANU, "Personal Area Networking User" },
-	{ "NAP",  SDP_SERVICE_CLASS_NAP,  "Network Acess Point"		  },
-	{ "GN",	  SDP_SERVICE_CLASS_GN,   "Group Network"		  },
+	{ "PANU", SDP_SERVICE_CLASS_PANU,
+	  "Personal Ad-hoc User Service",
+	  "Personal Ad-hoc User Service"
+	},
+	{ "NAP",  SDP_SERVICE_CLASS_NAP,
+	  "Network Acess Point",
+	  "Personal Ad-hoc Network Service"
+	},
+	{ "GN",	  SDP_SERVICE_CLASS_GN,
+	  "Group Ad-hoc Network",
+	  "Personal Group Ad-hoc Network Service"
+	},
 };
 
 static void main_exit(int);
@@ -139,18 +150,21 @@ main(int argc, char *argv[])
 			    || ul > 0xffff || L2CAP_PSM_INVALID(ul))
 				errx(EXIT_FAILURE, "%s: invalid PSM", optarg);
 
-			l2cap_psm = ul;
+			l2cap_psm = (uint16_t)ul;
 			break;
 
 		case 's': /* service */
 		case 'S': /* service (no SDP) */
-			for (ul = 0; strcasecmp(optarg, services[ul].name); ul++) {
+			for (ul = 0; strcasecmp(optarg, services[ul].type); ul++) {
 				if (ul == __arraycount(services))
 					errx(EXIT_FAILURE, "%s: unknown service", optarg);
 			}
 
-			if (ch == 's')
+			if (ch == 's') {
+				service_type = services[ul].type;
 				service_name = services[ul].name;
+				service_desc = services[ul].desc;
+			}
 
 			service_class = services[ul].class;
 			break;
@@ -169,7 +183,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (!bdaddr_any(&remote_bdaddr) && (server_limit != 0 ||
-	    control_path != 0 || (service_name != NULL && l2cap_psm != 0)))
+	    control_path != 0 || (service_type != NULL && l2cap_psm != 0)))
 		usage();
 
 	/* default options */
@@ -204,8 +218,8 @@ main(int argc, char *argv[])
 		openlog(getprogname(), LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_DAEMON);
 
 		channel_init();
-		server_init();
 		event_init();
+		server_init();
 		client_init();
 		tap_init();
 
@@ -261,7 +275,7 @@ static void
 usage(void)
 {
 	const char *p = getprogname();
-	int n = strlen(p);
+	size_t n = strlen(p);
 
 	fprintf(stderr,
 	    "usage: %s [-i ifname] [-m mode] -a address -d device\n"
@@ -281,10 +295,10 @@ usage(void)
 	    "\t-s service  service name\n"
 	    "\n"
 	    "Known services:\n"
-	    "", p, n, "", p, n, "");
+	    "", p, (int)n, "", p, (int)n, "");
 
 	for (n = 0; n < __arraycount(services); n++)
-		fprintf(stderr, "\t%s\t%s\n", services[n].name, services[n].desc);
+		fprintf(stderr, "\t%s\t%s\n", services[n].type, services[n].name);
 
 	exit(EXIT_FAILURE);
 }

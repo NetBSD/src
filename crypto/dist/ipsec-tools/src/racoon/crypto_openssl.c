@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.16 2009/01/10 19:08:40 tteras Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.16.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -107,6 +107,7 @@ typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
 #include "crypto_openssl.h"
 #include "debug.h"
 #include "gcmalloc.h"
+#include "isakmp.h"
 
 /*
  * I hate to cast every parameter to des_xx into void *, but it is
@@ -509,7 +510,7 @@ eay_check_x509cert(cert, CApath, CAfile, local)
 	X509_STORE_CTX_set_flags (csc, X509_V_FLAG_CRL_CHECK_ALL);
 #endif
 	error = X509_verify_cert(csc);
-	X509_STORE_CTX_cleanup(csc);
+	X509_STORE_CTX_free(csc);
 
 	/*
 	 * if x509_verify_cert() is successful then the value of error is
@@ -613,7 +614,7 @@ cb_check_cert_remote(ok, ctx)
 }
 
 /*
- * get a subjectAltName from X509 certificate.
+ * get a subjectName from X509 certificate.
  */
 vchar_t *
 eay_get_x509asn1subjectname(cert)
@@ -623,8 +624,6 @@ eay_get_x509asn1subjectname(cert)
 	u_char *bp;
 	vchar_t *name = NULL;
 	int len;
-
-	bp = (unsigned char *) cert->v;
 
 	x509 = mem2x509(cert);
 	if (x509 == NULL)
@@ -759,6 +758,46 @@ end:
 	return error;
 }
 
+/*
+ * get a issuerName from X509 certificate.
+ */
+vchar_t *
+eay_get_x509asn1issuername(cert)
+	vchar_t *cert;
+{
+	X509 *x509 = NULL;
+	u_char *bp;
+	vchar_t *name = NULL;
+	int len;
+
+	x509 = mem2x509(cert);
+	if (x509 == NULL)
+		goto error;
+
+	/* get the length of the name */
+	len = i2d_X509_NAME(x509->cert_info->issuer, NULL);
+	name = vmalloc(len);
+	if (name == NULL)
+		goto error;
+
+	/* get the name */
+	bp = (unsigned char *) name->v;
+	len = i2d_X509_NAME(x509->cert_info->issuer, &bp);
+
+	X509_free(x509);
+
+	return name;
+
+error:
+	plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
+
+	if (name != NULL)
+		vfree(name);
+	if (x509 != NULL)
+		X509_free(x509);
+
+	return NULL;
+}
 
 /*
  * decode a X509 certificate and make a readable text terminated '\n'.
@@ -825,9 +864,9 @@ mem2x509(cert)
     {
 	u_char *bp;
 
-	bp = (unsigned char *) cert->v;
+	bp = (unsigned char *) cert->v + 1;
 
-	x509 = d2i_X509(NULL, (void *)&bp, cert->l);
+	x509 = d2i_X509(NULL, (void *)&bp, cert->l - 1);
     }
 #else
     {
@@ -837,7 +876,7 @@ mem2x509(cert)
 	bio = BIO_new(BIO_s_mem());
 	if (bio == NULL)
 		return NULL;
-	len = BIO_write(bio, cert->v, cert->l);
+	len = BIO_write(bio, cert->v + 1, cert->l - 1);
 	if (len == -1)
 		return NULL;
 	x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
@@ -878,12 +917,13 @@ eay_get_x509cert(path)
 		return NULL;
 
 	len = i2d_X509(x509, NULL);
-	cert = vmalloc(len);
+	cert = vmalloc(len + 1);
 	if (cert == NULL) {
 		X509_free(x509);
 		return NULL;
 	}
-	bp = (unsigned char *) cert->v;
+	cert->v[0] = ISAKMP_CERT_X509SIGN;
+	bp = (unsigned char *) &cert->v[1];
 	error = i2d_X509(x509, &bp);
 	X509_free(x509);
 
@@ -909,27 +949,24 @@ eay_check_x509sign(source, sig, cert)
 	vchar_t *cert;
 {
 	X509 *x509;
-	u_char *bp;
 	EVP_PKEY *evp;
 	int res;
 
-	bp = (unsigned char *) cert->v;
-
-	x509 = d2i_X509(NULL, (void *)&bp, cert->l);
-	if (x509 == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, "d2i_X509(): %s\n", eay_strerror());
+	x509 = mem2x509(cert);
+	if (x509 == NULL)
 		return -1;
-	}
 
 	evp = X509_get_pubkey(x509);
 	if (! evp) {
 		plog(LLV_ERROR, LOCATION, NULL, "X509_get_pubkey(): %s\n", eay_strerror());
+		X509_free(x509);
 		return -1;
 	}
 
 	res = eay_rsa_verify(source, sig, evp->pkey.rsa);
 
 	EVP_PKEY_free(evp);
+	X509_free(x509);
 
 	return res;
 }

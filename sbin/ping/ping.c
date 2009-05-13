@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.87 2008/01/08 20:03:09 seanb Exp $	*/
+/*	$NetBSD: ping.c,v 1.87.12.1 2009/05/13 19:19:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.87 2008/01/08 20:03:09 seanb Exp $");
+__RCSID("$NetBSD: ping.c,v 1.87.12.1 2009/05/13 19:19:04 jym Exp $");
 #endif
 
 #include <stdio.h>
@@ -155,6 +155,7 @@ struct tv32 {
 u_char	*packet;
 int	packlen;
 int	pingflags = 0, options;
+int	pongflags = 0;
 char	*fill_pat;
 
 int s;					/* Socket file descriptor */
@@ -343,11 +344,12 @@ main(int argc, char *argv[])
 			options |= SO_DONTROUTE;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtol(optarg, &p, 0);
-			if (*p != '\0' || datalen < 0)
+			l = strtol(optarg, &p, 0);
+			if (*p != '\0' || l < 0)
 				errx(1, "Bad/invalid packet size %s", optarg);
-			if (datalen > MAXPACKET)
+			if (l > MAXPACKET)
 				errx(1, "packet size is too large");
+			datalen = (int)l;
 			break;
 		case 'v':
 			pingflags |= F_VERBOSE;
@@ -452,7 +454,7 @@ main(int argc, char *argv[])
 	loc_addr.sin_len = sizeof(struct sockaddr_in);
 	loc_addr.sin_addr.s_addr = htonl((127<<24)+1);
 
-	if (datalen >= PHDR_LEN)	/* can we time them? */
+	if (datalen >= (int)PHDR_LEN)	/* can we time them? */
 		pingflags |= F_TIMING;
 	packlen = datalen + 60 + 76;	/* MAXIP + MAXICMP */
 	if ((packet = (u_char *)malloc(packlen)) == NULL)
@@ -1017,8 +1019,31 @@ pr_pack(u_char *buf,
 
 		if (tot_len != opack_ip->ip_len) {
 			PR_PACK_SUB();
-			(void)printf("\nwrong total length %d instead of %d",
-				     tot_len, opack_ip->ip_len);
+			switch (opack_ip->ip_len - tot_len) {
+			case MAX_IPOPTLEN:
+				if ((pongflags & F_RECORD_ROUTE) != 0)
+					break;
+				if ((pingflags & F_RECORD_ROUTE) == 0)
+					goto out;
+				pongflags |= F_RECORD_ROUTE;
+				(void)printf("\nremote host does not "
+				    "support record route");
+				break;
+			case 8:
+				if ((pongflags & F_SOURCE_ROUTE) != 0)
+					break;
+				if ((pingflags & F_SOURCE_ROUTE) == 0)
+					goto out;
+				pongflags |= F_SOURCE_ROUTE;
+				(void)printf("\nremote host does not "
+				    "support source route");
+				break;
+			default:
+			out:
+				(void)printf("\nwrong total length %d "
+				    "instead of %d", tot_len, opack_ip->ip_len);
+				break;
+			}
 		}
 
 		if (!dupflag) {
@@ -1046,7 +1071,7 @@ pr_pack(u_char *buf,
 			PR_PACK_SUB();
 
 		/* check the data */
-		if (datalen > PHDR_LEN
+		if (datalen > (int)PHDR_LEN
 		    && !(pingflags & F_PING_RANDOM)
 		    && memcmp(&icp->icmp_data[PHDR_LEN],
 			    &opack_icmp.icmp_data[PHDR_LEN],

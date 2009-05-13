@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpgw.c,v 1.13 2007/05/27 16:31:42 tls Exp $");
+__RCSID("$NetBSD: bootpgw.c,v 1.13.20.1 2009/05/13 19:20:18 jym Exp $");
 #endif
 
 /*
@@ -449,7 +449,7 @@ main(int argc, char **argv)
 			report(LOG_INFO, "recvd pkt from IP addr %s",
 				   inet_ntoa(clnt_addr.sin_addr));
 		}
-		if (n < sizeof(struct bootp)) {
+		if (n < (int)sizeof(struct bootp)) {
 			if (debug) {
 				report(LOG_INFO, "received short packet");
 			}

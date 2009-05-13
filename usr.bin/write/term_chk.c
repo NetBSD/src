@@ -1,4 +1,4 @@
-/* $NetBSD: term_chk.c,v 1.7 2004/11/30 04:08:38 christos Exp $ */
+/* $NetBSD: term_chk.c,v 1.7.36.1 2009/05/13 19:20:12 jym Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: term_chk.c,v 1.7 2004/11/30 04:08:38 christos Exp $");
+__RCSID("$NetBSD: term_chk.c,v 1.7.36.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ term_chk(uid_t uid, const char *tty, int *msgsokP, time_t *atimeP, int ismytty,
 		return -1;
 	}
 	i = snprintf(path, sizeof path, _PATH_DEV "%s", tty);
-	if (i < 0 || i >= sizeof(path)) {
+	if (i < 0 || i >= (int)sizeof(path)) {
 		errno = ENOMEM;
 		return -1;
 	}

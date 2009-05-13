@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.8 2008/08/31 07:53:33 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.8.6.1 2009/05/13 19:17:32 jym Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -54,7 +54,7 @@
 #if 0
 FILE_RCSID("@(#)$File: ascmagic.c,v 1.64 2008/07/16 18:00:57 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.8 2008/08/31 07:53:33 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.8.6.1 2009/05/13 19:17:32 jym Exp $");
 #endif
 #endif	/* lint */
 
@@ -275,7 +275,7 @@ subtype_identified:
 
 		if ((mime == 0 || mime == MAGIC_MIME) && code_mime) {
 			if ((mime & MAGIC_MIME_TYPE) &&
-			    file_printf(ms, " charset=") == -1)
+			    file_printf(ms, "; charset=") == -1)
 				goto done;
 			if (file_printf(ms, code_mime) == -1)
 				goto done;

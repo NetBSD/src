@@ -1,3 +1,4 @@
+.\" $NetBSD: accept_filter.9,v 1.2.2.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2000 Alfred Perlstein
 .\"
@@ -26,8 +27,8 @@
 .\" $FreeBSD: src/share/man/man9/accept_filter.9,v 1.13 2004/06/16 08:33:57 ru Exp $
 .\" "
 .Dd November 12, 2008
-.Os
 .Dt ACCEPT_FILTER 9
+.Os
 .Sh NAME
 .Nm accept_filter ,
 .Nm accept_filt_add ,
@@ -53,9 +54,9 @@
 .Fn accept_filt_get "char *name"
 .Sh DESCRIPTION
 Accept filters allow an application to request
-that the kernel pre-process incoming connections.  This manual page describes
-the kernel interface for accept filters.  User applications
-request accept filters via the
+that the kernel pre-process incoming connections.
+This manual page describes the kernel interface for accept filters.
+User applications request accept filters via the
 .Xr setsockopt 2
 system call, passing in an
 .Fa optname
@@ -85,7 +86,8 @@ allocated with
 .Pp
 The accept filters currently provided with
 .Nx
-.Xr (accf_data 9 and
+.Xr ( accf_data 9
+and
 .Xr accf_http 9 )
 are implemented as pseudo-devices, but an accept filter may use any
 supported means of initializing and registering itself at system startup
@@ -150,9 +152,9 @@ by Coyote Point Systems, Inc. and appeared in
 This manual page was written by
 .An -nosplit
 .An Alfred Perlstein ,
-.An Sheldon Hearn
+.An Sheldon Hearn ,
 and
-.An Jeroen Ruigrok van der Werven.
+.An Jeroen Ruigrok van der Werven .
 .Pp
 The accept filter concept was pioneered by
 .An David Filo

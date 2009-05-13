@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.15 2009/01/24 10:43:47 wiz Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.15.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -215,7 +215,7 @@ usage()
 "  %s [opts] show-sa [protocol]\n"
 "  %s [opts] flush-sa [protocol]\n"
 "  %s [opts] delete-sa <saopts>\n"
-"  %s [opts] establish-sa [-u identity] [-w] <saopts>\n"
+"  %s [opts] establish-sa [-u identity] [-n remoteconf] [-w] <saopts>\n"
 "  %s [opts] vpn-connect [-u identity] vpn_gateway\n"
 "  %s [opts] vpn-disconnect vpn_gateway\n"
 "  %s [opts] show-event\n"
@@ -550,6 +550,7 @@ f_exchangesa(ac, av)
 	size_t com_len = 0;
 	char *id = NULL;
 	char *key = NULL;
+	char *remoteconf = NULL;
 	struct admin_com_psk *acp;
 	int wait = 0;
 
@@ -572,6 +573,13 @@ f_exchangesa(ac, av)
 		ac -= 2;
 	}
 
+	if (ac >= 2 && strcmp(av[0], "-n") == 0) {
+		/* Remoteconf name */
+		remoteconf = av[1];
+		av += 2;
+		ac -= 2;
+	}
+
 	if (ac >= 1 && strcmp(av[0], "-w") == 0) {
 		wait = 1;
 		av++;
@@ -581,6 +589,10 @@ f_exchangesa(ac, av)
 	index = get_proto_and_index(ac, av, &proto);
 	if (index == NULL)
 		return NULL;
+
+	if (proto == ADMIN_PROTO_ISAKMP && cmd == ADMIN_ESTABLISH_SA &&
+	    remoteconf != NULL)
+		com_len += strlen(remoteconf) + 1;
 
 	if (wait) {
 		switch (proto) {
@@ -604,7 +616,11 @@ f_exchangesa(ac, av)
 
 	memcpy(buf->v+sizeof(struct admin_com), index->v, index->l);
 
-	if (id && key) {
+	if (proto == ADMIN_PROTO_ISAKMP && cmd == ADMIN_ESTABLISH_SA &&
+	    remoteconf != NULL) {
+		strcpy(buf->v + sizeof(struct admin_com) + index->l,
+		       remoteconf);
+	} else if (id && key) {
 		char *data;
 		acp = (struct admin_com_psk *)
 		    (buf->v + sizeof(struct admin_com) + index->l);
@@ -724,19 +740,21 @@ f_logoutusr(ac, av)
 {
 	vchar_t *buf;
 	char *user;
+	size_t userlen;
 
 	/* need username */
 	if (ac < 1)
 		errx(1, "insufficient arguments");
 	user = av[0];
-	if ((user == NULL) || (strlen(user) > LOGINLEN))
+	userlen = strlen(user);
+	if ((user == NULL) || (userlen > LOGINLEN))
 		errx(1, "bad login (too long?)");
 
-	buf = make_request(ADMIN_LOGOUT_USER, 0, 0);
+	buf = make_request(ADMIN_LOGOUT_USER, 0, userlen);
 	if (buf == NULL)
 		return NULL;
 
-	strncpy(buf->v + sizeof(struct admin_com), user, LOGINLEN);
+	strncpy(buf->v + sizeof(struct admin_com), user, userlen);
 
 	return buf;
 }

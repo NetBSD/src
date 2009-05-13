@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.121 2008/11/25 14:25:20 ad Exp $	*/
+/*	$NetBSD: net.c,v 1.121.2.1 2009/05/13 19:17:55 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,6 +38,7 @@
 
 /* net.c -- routines to fetch files off the network. */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -102,7 +103,7 @@ static char *url_encode (char *dst, const char *src, const char *ep,
 
 static void write_etc_hosts(FILE *f);
 
-#define DHCLIENT_EX "/sbin/dhclient"
+#define DHCPCD "/sbin/dhcpcd"
 #include <signal.h>
 static int config_dhcp(char *);
 static void get_dhcp_value(char *, size_t, const char *);
@@ -1155,8 +1156,7 @@ mnt_net_config(void)
 
 		add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
-		add_rc_conf("dhclient=YES\n");
-		add_rc_conf("dhclient_flags=\"%s\"\n", net_dev);
+		add_rc_conf("ifconfig_%s=dhcp\n", net_dev);
         }
 
 #ifdef INET6
@@ -1181,73 +1181,55 @@ int
 config_dhcp(char *inter)
 {
 	int dhcpautoconf;
-	int result;
-	char *textbuf;
-	int pid;
 
-	/* check if dhclient is running, if so, kill it */
-	result = collect(T_FILE, &textbuf, "/tmp/dhclient.pid");
-	if (result >= 0) {
-		pid = atoi(textbuf);
-		if (pid > 0) {
-			kill(pid, 15);
-			sleep(1);
-			kill(pid, 9);
-		}
-	}
-	free(textbuf);
+	/*
+	 * Don't bother checking for an existing instance of dhcpcd, just
+	 * ask it to renew the lease.  It will fork and daemonize if there
+	 * wasn't already an instance.
+	 */
 
-	if (!file_mode_match(DHCLIENT_EX, S_IFREG))
+	if (!file_mode_match(DHCPCD, S_IFREG))
 		return 0;
 	process_menu(MENU_yesno, deconst(MSG_Perform_DHCP_autoconfiguration));
 	if (yesno) {
-		/* spawn off dhclient and wait for parent to exit */
+		/* spawn off dhcpcd and wait for parent to exit */
 		dhcpautoconf = run_program(RUN_DISPLAY | RUN_PROGRESS,
-		    "%s -q -pf /tmp/dhclnt.pid -lf /tmp/dhclient.leases %s",
-		    DHCLIENT_EX, inter);
+		    "%s -d -n %s", DHCPCD, inter);
 		return dhcpautoconf ? 0 : 1;
 	}
 	return 0;
 }
 
 static void
-get_dhcp_value(char *targ, size_t l, const char *line)
+get_dhcp_value(char *targ, size_t l, const char *var)
 {
-	int textsize;
-	char *textbuf;
-	char *t;
-	char *walkp;
+	static const char *lease_data = "/tmp/dhcpcd-lease";
+	FILE *fp;
+	char *line;
+	size_t len, var_len;
 
-	textsize = collect(T_FILE, &textbuf, "/tmp/dhclient.leases");
-	if (textsize < 0) {
-		if (logging)
-			(void)fprintf(logfp,
-			    "Could not open file /tmp/dhclient.leases.\n");
-		(void)fprintf(stderr, "Could not open /tmp/dhclient.leases\n");
-		/* not fatal, just assume value not found */
+	if ((fp = fopen(lease_data, "r")) == NULL) {
+		warn("Could not open %s", lease_data);
+		*targ = '\0';
+		return;
 	}
-	if (textsize >= 0) {
-		(void)strtok(textbuf, " \t\n"); /* jump past 'lease' */
-		while ((t = strtok(NULL, " \t\n")) != NULL) {
-			if (strcmp(t, line) == 0) {
-				t = strtok(NULL, " \t\n");
-				/* found the tag, extract the value */
-				/* last char should be a ';' */
-				walkp = strrchr(t, ';');
-				if (walkp != NULL) {
-					*walkp = '\0';
-				}
-				/* strip any " from the string */
-				walkp = strrchr(t, '"');
-				if (walkp != NULL) {
-					*walkp = '\0';
-					t++;
-				}
-				strlcpy(targ, t, l);
-				break;
-			}
-		}
+
+	var_len = strlen(var);
+
+	while ((line = fgetln(fp, &len)) != NULL) {
+		if (line[len - 1] == '\n')
+			--len;
+		if (len <= var_len)
+			continue;
+		if (memcmp(line, var, var_len))
+			continue;
+		if (line[var_len] != '=')
+			continue;
+		line += var_len + 1;
+		len -= var_len + 1;
+		strlcpy(targ, line, l > len ? len + 1: l);
+		break;
 	}
-	free(textbuf);
-	return;
+
+	fclose(fp);
 }

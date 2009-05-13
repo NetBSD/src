@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.24 2007/10/30 02:28:31 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.24.14.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.24 2007/10/30 02:28:31 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.24.14.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: popen.c,v 1.24 2007/10/30 02:28:31 christos Exp $");
 
 #include "rcv.h"
 #include "extern.h"
+#include "sig.h"
 
 #define READ 0
 #define WRITE 1
@@ -146,6 +147,10 @@ Fdopen(int fd, const char *mode)
 PUBLIC int
 Fclose(FILE *fp)
 {
+
+	if (fp == NULL)
+		return 0;
+
 	unregister_file(fp);
 	return fclose(fp);
 }
@@ -169,17 +174,17 @@ prepare_child(sigset_t *nset, int infd, int outfd)
 	}
 	if (outfd >= 0 && outfd != 1)
 		(void)dup2(outfd, 1);
-	if (nset == NULL)
-		return;
+
 	if (nset != NULL) {
-		for (i = 1; i < NSIG; i++)
+		for (i = 1; i < NSIG; i++) {
 			if (sigismember(nset, i))
 				(void)signal(i, SIG_IGN);
+		}
+		if (!sigismember(nset, SIGINT))
+			(void)signal(SIGINT, SIG_DFL);
+		(void)sigemptyset(&eset);
+		(void)sigprocmask(SIG_SETMASK, &eset, NULL);
 	}
-	if (nset == NULL || !sigismember(nset, SIGINT))
-		(void)signal(SIGINT, SIG_DFL);
-	(void)sigemptyset(&eset);
-	(void)sigprocmask(SIG_SETMASK, &eset, NULL);
 }
 
 /*
@@ -196,15 +201,18 @@ start_commandv(const char *cmd, sigset_t *nset, int infd, int outfd,
 {
 	pid_t pid;
 
+	sig_check();
 	if ((pid = fork()) < 0) {
 		warn("fork");
 		return -1;
 	}
 	if (pid == 0) {
 		char *argv[100];
-		int i = getrawlist(cmd, argv, sizeof(argv)/ sizeof(*argv));
+		size_t i;
 
-		while ((argv[i++] = va_arg(args, char *)) != NULL)
+		i = getrawlist(cmd, argv, (int)__arraycount(argv));
+		while (i < __arraycount(argv) - 1 &&
+		    (argv[i++] = va_arg(args, char *)) != NULL)
 			continue;
 		argv[i] = NULL;
 		prepare_child(nset, infd, outfd);
@@ -350,6 +358,9 @@ Pclose(FILE *ptr)
 	int i;
 	sigset_t nset, oset;
 
+	if (ptr == NULL)
+		return 0;
+
 	i = file_pid(ptr);
 	unregister_file(ptr);
 	(void)fclose(ptr);
@@ -429,13 +440,48 @@ run_command(const char *cmd, sigset_t *nset, int infd, int outfd, ...)
 {
 	pid_t pid;
 	va_list args;
+	int rval;
 
+#ifdef BROKEN_EXEC_TTY_RESTORE
+	struct termios ttybuf;
+	int tcrval;
+	/*
+	 * XXX - grab the tty settings as currently they can get
+	 * trashed by emacs-21 when suspending with bash-3.2.25 as the
+	 * shell.
+	 *
+	 * 1) from the mail editor, start "emacs -nw" (21.4)
+	 * 2) suspend emacs to the shell (bash 3.2.25)
+	 * 3) resume emacs
+	 * 4) exit emacs back to the mail editor
+	 * 5) discover the tty is screwed: the mail editor is no
+	 *    longer receiving characters
+	 *
+	 * - This occurs on both i386 and amd64.
+	 * - This did _NOT_ occur before 4.99.10.
+	 * - This does _NOT_ occur if the editor is vi(1) or if the shell
+	 *   is /bin/sh.
+	 * - This _DOES_ happen with the old mail(1) from 2006-01-01 (long
+	 *   before my changes).
+	 *
+	 * This is the commit that introduced this "feature":
+	 * http://mail-index.netbsd.org/source-changes/2007/02/09/0020.html
+	 */
+	if ((tcrval = tcgetattr(fileno(stdin), &ttybuf)) == -1)
+		warn("tcgetattr");
+#endif
 	va_start(args, outfd);
 	pid = start_commandv(cmd, nset, infd, outfd, args);
 	va_end(args);
 	if (pid < 0)
 		return -1;
-	return wait_command(pid);
+	rval = wait_command(pid);
+#ifdef BROKEN_EXEC_TTY_RESTORE
+	if (tcrval != -1 && tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf) == -1)
+		warn("tcsetattr");
+#endif
+	return rval;
+
 }
 
 /*ARGSUSED*/
@@ -445,15 +491,15 @@ sigchild(int signo __unused)
 	pid_t pid;
 	int status;
 	struct child *cp;
-	int save_errno = errno;
+	int save_errno;
 
-	while ((pid =
-	    waitpid((pid_t)-1, &status, WNOHANG)) > 0) {
-		cp = findchild(pid, 1);
+	save_errno = errno;
+	while ((pid = waitpid((pid_t)-1, &status, WNOHANG)) > 0) {
+		cp = findchild(pid, 1);	/* async-signal-safe: we don't alloc */
 		if (!cp)
 			continue;
 		if (cp->free)
-			delchild(cp);
+			delchild(cp);	/* async-signal-safe: list changes */
 		else {
 			cp->done = 1;
 			cp->status = status;

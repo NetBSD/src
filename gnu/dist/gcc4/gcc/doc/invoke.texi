@@ -213,8 +213,8 @@ Objective-C and Objective-C++ Dialects}.
 @item Language Independent Options
 @xref{Language Independent Options,,Options to Control Diagnostic Messages Formatting}.
 @gccoptlist{-fmessage-length=@var{n}  @gol
--fdiagnostics-show-location=@r{[}once@r{|}every-line@r{]}} @gol
--fdiagnostics-show-options
+-fdiagnostics-show-location=@r{[}once@r{|}every-line@r{]} @gol
+-fdiagnostics-show-options}
 
 @item Warning Options
 @xref{Warning Options,,Options to Request or Suppress Warnings}.
@@ -2568,11 +2568,11 @@ the prior value shall be read only to determine the value to be
 stored.''.  If a program breaks these rules, the results on any
 particular implementation are entirely unpredictable.
 
-Examples of code with undefined behavior are @code{a = a++;}, @code{a[n]
-= b[n++]} and @code{a[i++] = i;}.  Some more complicated cases are not
-diagnosed by this option, and it may give an occasional false positive
-result, but in general it has been found fairly effective at detecting
-this sort of problem in programs.
+Examples of code with undefined behavior are @code{a = a++;},
+@code{a[n] = b[n++]} and @code{a[i++] = i;}.  Some more complicated cases
+are not diagnosed by this option, and it may give an occasional false
+positive result, but in general it has been found fairly effective at
+detecting this sort of problem in programs.
 
 The present implementation of this option only works for C programs.  A
 future implementation may also work for C++ programs.
@@ -4490,7 +4490,7 @@ Force memory operands to be copied into registers before doing
 arithmetic on them.  This produces better code by making all memory
 references potential common subexpressions.  When they are not common
 subexpressions, instruction combination should eliminate the separate
-register-load. This option is now a nop and will be removed in 4.2.
+register-load.  This option is now a nop and will be removed in 4.2.
 
 @item -fforce-addr
 @opindex fforce-addr
@@ -5049,7 +5049,7 @@ default at @option{-O} and higher.
 Perform a variety of simple scalar cleanups (constant/copy
 propagation, redundancy elimination, range propagation and expression
 simplification) based on a dominator tree traversal.  This also
-performs jump threading (to reduce jumps to jumps). This flag is
+performs jump threading (to reduce jumps to jumps).  This flag is
 enabled by default at @option{-O} and higher.
 
 @item -ftree-ch
@@ -6055,7 +6055,7 @@ order to make tracer effective.
 Maximum number of basic blocks on path that cse considers.  The default is 10.
 
 @item max-cse-insns
-The maximum instructions CSE process before flushing. The default is 1000.
+The maximum instructions CSE process before flushing.  The default is 1000.
 
 @item global-var-threshold
 
@@ -6205,6 +6205,7 @@ they cause the preprocessor output to be unsuitable for actual
 compilation.
 
 @table @gcctabopt
+@item -Wp,@var{option}
 @opindex Wp
 You can use @option{-Wp,@var{option}} to bypass the compiler driver
 and pass @var{option} directly through to the preprocessor.  If
@@ -6372,8 +6373,8 @@ or model suboptions) when you specify this option.
 @item -rdynamic
 @opindex rdynamic
 Pass the flag @option{-export-dynamic} to the ELF linker, on targets
-that support it. This instructs the linker to add all symbols, not
-only used ones, to the dynamic symbol table. This option is needed
+that support it.  This instructs the linker to add all symbols, not
+only used ones, to the dynamic symbol table.  This option is needed
 for some uses of @code{dlopen} or to allow obtaining backtraces
 from within a program.
 
@@ -7868,12 +7869,12 @@ These options are defined specifically for the CRX ports.
 
 @item -mmac
 @opindex mmac
-Enable the use of multiply-accumulate instructions. Disabled by default.
+Enable the use of multiply-accumulate instructions.  Disabled by default.
 
 @item -mpush-args
 @opindex mpush-args
 Push instructions will be used to pass outgoing arguments when functions
-are called. Enabled by default.
+are called.  Enabled by default.
 @end table
 
 @node Darwin Options
@@ -11655,9 +11656,9 @@ generates IEEE floating-point instructions.  This is the default.
 @itemx -mlong-double-128
 @opindex mlong-double-64
 @opindex mlong-double-128
-These switches control the size of @code{long double} type. A size
+These switches control the size of @code{long double} type.  A size
 of 64bit makes the @code{long double} type equivalent to the @code{double}
-type. This is the default.
+type.  This is the default.
 
 @item -mbackchain
 @itemx -mno-backchain

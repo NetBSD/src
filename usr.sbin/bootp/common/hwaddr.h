@@ -1,4 +1,4 @@
-/*	$NetBSD: hwaddr.h,v 1.5 2008/05/02 19:22:10 xtraeme Exp $	*/
+/*	$NetBSD: hwaddr.h,v 1.5.8.1 2009/05/13 19:20:18 jym Exp $	*/
 
 /* hwaddr.h */
 #ifndef	HWADDR_H
@@ -17,7 +17,7 @@ struct hwinfo {
 };
 
 extern struct hwinfo hwinfolist[];
-extern int hwinfocnt;
+extern size_t hwinfocnt;
 
 extern void setarp(int, struct in_addr *, u_char *, int);
 extern char *haddrtoa(u_char *, int);

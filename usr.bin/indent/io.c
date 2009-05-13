@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.13 2003/10/16 06:51:22 itojun Exp $	*/
+/*	$NetBSD: io.c,v 1.13.42.1 2009/05/13 19:19:52 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.13 2003/10/16 06:51:22 itojun Exp $");
+__RCSID("$NetBSD: io.c,v 1.13.42.1 2009/05/13 19:19:52 jym Exp $");
 #endif
 #endif				/* not lint */
 
@@ -585,7 +585,7 @@ count_spaces(int current, char *buffer)
 int     found_err;
 
 void
-diag(int level, char *msg,...)
+diag(int level, const char *msg, ...)
 {
 	va_list ap;
 
@@ -642,9 +642,9 @@ chfont(struct fstate *of, struct fstate *nf, char *s)
 
 
 void
-parsefont(struct fstate *f, char *s0)
+parsefont(struct fstate *f, const char *s0)
 {
-	char   *s = s0;
+	const char *s = s0;
 	int     sizedelta = 0;
 	memset(f, 0, sizeof *f);
 	while (*s) {

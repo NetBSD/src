@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.86 2008/03/21 08:56:06 spz Exp $
+#	$NetBSD: RESPONSIBLE,v 1.86.10.1 2009/05/13 19:18:02 jym Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -123,7 +123,6 @@ auich		kent
 dbri		macallan
 eap		pooka
 esa		jmcneill
-esl		jmcneill
 
 console device drivers:
 
@@ -131,7 +130,6 @@ cgsix		macallan
 machfb		macallan
 ofb		macallan
 pnozz		macallan
-vesafb		jmcneill
 
 network device drivers:
 

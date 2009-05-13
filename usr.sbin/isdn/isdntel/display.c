@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *	$Id: display.c,v 1.3 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: display.c,v 1.3.40.1 2009/05/13 19:20:26 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -37,7 +37,7 @@
 
 #include "defs.h"
 
-static char *helpstr = "Enter Control-D to exit program or RETURN for command window";
+static const char *helpstr = "Enter Control-D to exit program or RETURN for command window";
 
 /*---------------------------------------------------------------------------*
  *	init curses fullscreen display
@@ -98,7 +98,7 @@ init_screen(void)
 void
 do_menu(void)
 {
-	static char *menu[WMITEMS] =
+	static const char *menu[WMITEMS] =
 	{
 		"Play   File",
 #define PLAY	0		

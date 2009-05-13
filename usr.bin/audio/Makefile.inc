@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/01/15 23:48:51 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4.44.1 2009/05/13 19:19:43 jym Exp $
 
 .include <bsd.own.mk>
 
-WARNS=3
 LIBAUDIO != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../common
 DPADD+=	${LIBAUDIO}/libaudio.a

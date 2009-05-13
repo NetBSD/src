@@ -1,9 +1,8 @@
-# $Id: Makefile,v 1.1.1.1 2005/07/25 12:17:59 hubertf Exp $
+# $Id: Makefile,v 1.1.1.1.32.1 2009/05/13 19:20:11 jym Exp $
 
 PROG=	vndcompress
 LINKS=   ${BINDIR}/vndcompress ${BINDIR}/vnduncompress
 MLINKS=  vndcompress.1 vnduncompress.1
 LDADD+=	-lz
-WARNS=	3
 
 .include <bsd.prog.mk>

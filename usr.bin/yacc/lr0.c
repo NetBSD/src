@@ -1,4 +1,4 @@
-/*	$NetBSD: lr0.c,v 1.9 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: lr0.c,v 1.9.28.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lr0.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: lr0.c,v 1.9 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: lr0.c,v 1.9.28.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -615,7 +615,7 @@ set_nullable(void)
 {
     int i, j;
     int empty;
-    int done;
+    int isdone;
 
     nullable = MALLOC(nsyms);
     if (nullable == 0) no_space();
@@ -623,10 +623,10 @@ set_nullable(void)
     for (i = 0; i < nsyms; ++i)
 	nullable[i] = 0;
 
-    done = 0;
-    while (!done)
+    isdone = 0;
+    while (!isdone)
     {
-	done = 1;
+	isdone = 1;
 	for (i = 1; i < nitems; i++)
 	{
 	    empty = 1;
@@ -642,7 +642,7 @@ set_nullable(void)
 		if (!nullable[j])
 		{
 		    nullable[j] = 1;
-		    done = 0;
+		    isdone = 0;
 		}
 	    }
 	}

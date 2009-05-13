@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.13 2006/05/11 21:17:02 mrg Exp $	*/
+/*	$NetBSD: igmp.c,v 1.13.28.1 2009/05/13 19:20:30 jym Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@ u_int32_t	dvmrp_genid;		     /* IGMP generation id          */
  * Local function definitions.
  */
 /* u_char promoted to u_int */
-static char *	packet_kind(u_int type, u_int code);
+static const char * packet_kind(u_int type, u_int code);
 static int	igmp_log_level(u_int type, u_int code);
 
 /*
@@ -75,7 +75,7 @@ init_igmp(void)
 #define PIM_GRAFT        6
 #define PIM_GRAFT_ACK    7
 
-static char *
+static const char *
 packet_kind(u_int type, u_int code)
 {
     switch (type) {
@@ -128,7 +128,7 @@ accept_igmp(int recvlen)
     struct igmp *igmp;
     int ipdatalen, iphdrlen, igmpdatalen;
 
-    if (recvlen < sizeof(struct ip)) {
+    if (recvlen < (int)sizeof(struct ip)) {
 	logit(LOG_WARNING, 0,
 	    "received packet too short (%u bytes) for IP header", recvlen);
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd.h,v 1.6 2003/08/07 11:17:25 agc Exp $	*/
+/*	$NetBSD: lcmd.h,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,14 +37,14 @@
 #define LCMD_NARG 20			/* maximum number of arguments */
 
 struct lcmd_tab {
-	char *lc_name;
+	const char *lc_name;
 	int lc_minlen;
 	void (*lc_func)(struct value *, struct value *);
 	struct lcmd_arg *lc_arg;
 };
 
 struct lcmd_arg {
-	char *arg_name;
+	const char *arg_name;
 	int arg_minlen;
 	int arg_flags;
 };
@@ -56,7 +56,7 @@ struct lcmd_arg {
 #define ARG_STR		0x02		/* must be a string */
 #define ARG_LIST	0x10		/* this arg can be a list */
 
-struct lcmd_tab	*lcmd_lookup(char *);
+struct lcmd_tab	*lcmd_lookup(const char *);
 void	l_alias(struct value *, struct value *);
 void	l_close(struct value *, struct value *);
 void	l_cursormodes(struct value *, struct value *);

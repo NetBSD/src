@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.19 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.19.10.1 2009/05/13 19:18:26 jym Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.19 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.19.10.1 2009/05/13 19:18:26 jym Exp $");
 #endif
 #endif
 
@@ -262,10 +262,10 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	struct rpc_msg	msg;	/* RPC message */
 	char 		*outbuf = NULL;	/* Broadcast msg buffer */
 	char		*inbuf = NULL; /* Reply buf */
-	int		inlen;
+	ssize_t		inlen;
 	u_int 		maxbufsize = 0;
 	AUTH 		*sys_auth = authunix_create_default();
-	int		i;
+	size_t		i;
 	void		*handle;
 	char		uaddress[1024];	/* A self imposed limit */
 	char		*uaddrp = uaddress;
@@ -467,7 +467,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				 */
 
 				if (!__rpc_lowvers)
-					if (sendto(fdlist[i].fd, outbuf,
+					if ((size_t)sendto(fdlist[i].fd, outbuf,
 					    outlen, 0, (struct sockaddr*)addr,
 					    (size_t)fdlist[i].asize) !=
 					    outlen) {
@@ -488,7 +488,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				 * for UDP/IP
 				 */
 				if (pmap_flag && fdlist[i].proto == IPPROTO_UDP) {
-					if (sendto(fdlist[i].fd, outbuf_pmap,
+					if ((size_t)sendto(fdlist[i].fd, outbuf_pmap,
 					    outlen_pmap, 0, addr,
 					    (size_t)fdlist[i].asize) !=
 						outlen_pmap) {
@@ -563,7 +563,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				stat = RPC_CANTRECV;
 				continue;
 			}
-			if (inlen < sizeof (u_int32_t))
+			if (inlen < (ssize_t)sizeof(u_int32_t))
 				continue; /* Drop that and go ahead */
 			/*
 			 * see if reply transaction id matches sent id.

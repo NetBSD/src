@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2007/11/21 15:39:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.2.16.1 2009/05/13 19:19:23 jym Exp $
 
 TESTSDIR=	${TESTSBASE}/fs/tmpfs
+WARNS=		4
 
 TESTS_SH=	t_create
 TESTS_SH+=	t_devices
@@ -27,6 +28,10 @@ TESTS_SH+=	t_trail_slash
 TESTS_SH+=	t_truncate
 TESTS_SH+=	t_vnd
 TESTS_SH+=	t_vnode_leak
+
+TESTS_C+=	t_renamerace
+
+LDADD.t_renamerace+= -lrumpfs_tmpfs -lrumpvfs -lrump -lrumpuser -lpthread
 
 FILES=		h_funcs.subr
 FILESDIR=	${TESTSDIR}

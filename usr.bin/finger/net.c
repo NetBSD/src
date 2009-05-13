@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.22 2006/01/04 01:17:54 perry Exp $	*/
+/*	$NetBSD: net.c,v 1.22.30.1 2009/05/13 19:19:49 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: net.c,v 1.22 2006/01/04 01:17:54 perry Exp $");
+__RCSID("$NetBSD: net.c,v 1.22.30.1 2009/05/13 19:19:49 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ netfinger(char *name)
 	char *host;
 	struct addrinfo hints, *res, *res0;
 	int error;
-	char *emsg = NULL;
+	const char *emsg = NULL;
 
 	lastc = 0;
 	if (!(host = strrchr(name, '@')))

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mi_switch.9,v 1.2 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: mi_switch.9,v 1.2.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,9 +40,11 @@
 The
 .Fn mi_switch
 function implements the machine-independent prelude to an LWP context
-switch. It is called from only a few distinguished places in the
-kernel code as a result of the principle of non-preemptable kernel
-mode execution. The three major uses of
+switch.
+It is called from only a few distinguished places in the kernel
+code as a result of the principle of non-preemptable kernel mode
+execution.
+The three major uses of
 .Fn mi_switch
 can be enumerated as follows:
 .Bl -enum -offset indent
@@ -75,14 +77,14 @@ cause a
 .Dv SIGKILL .
 .Pp
 Unless
-.Fa l->l_switchto
+.Fa l-\*[Gt]l_switchto
 is not
 .Dv NULL ,
 .Fn mi_switch
 will call
 .Fn sched_nextlwp
-to select a new LWP from the scheduler's runqueue structures. If no
-runnable LWP is found, the idle LWP is used.
+to select a new LWP from the scheduler's runqueue structures.
+If no runnable LWP is found, the idle LWP is used.
 If the new LWP is not equal to the current one,
 .Fn mi_switch
 will hand over control to the machine-dependent function
@@ -91,11 +93,12 @@ to switch to the new LWP.
 .Pp
 .Fn mi_switch
 has to be called with the LWP lock held
-(through calling 
+(through calling
 .Fn lwp_lock
 first) and at the
 .Xr splsched 9
-interrupt protection level. It returns with the LWP lock released.
+interrupt protection level.
+It returns with the LWP lock released.
 .Sh RETURN VALUES
 .Fn mi_switch
 returns 1 if a context switch was performed to a

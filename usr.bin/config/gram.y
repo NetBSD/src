@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.18 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: gram.y,v 1.18.2.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -507,7 +507,7 @@ condmkopt_list:
 	condmkoption;
 
 condmkoption:
-	WORD mkvarname PLUSEQ value	{ appendcondmkoption($1, $2, $4); };
+	fexpr mkvarname PLUSEQ value	{ appendcondmkoption($1, $2, $4); };
 
 no_mkopt_list:
 	no_mkopt_list ',' no_mkoption |

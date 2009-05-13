@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.53 2009/01/10 21:58:38 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.53.2.1 2009/05/13 19:15:54 jym Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 10, 2009
+.Dd March 12, 2009
 .Dt RACOON.CONF 5
 .Os
 .\"
@@ -376,19 +376,49 @@ This problem is known to be fixed in Linux 2.6.25 and later.
 .Ss Remote Nodes Specifications
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic remote ( Ar address | Ic anonymous )
-.Bq Bq Ar port
-.Bq Ic inherit Ar parent
+.Ic remote Ar name
+.Bq Ic inherit Ar parent_name
 .Ic { Ar statements Ic }
 .Xc
 Specifies the IKE phase 1 parameters for each remote node.
-The default port is 500.
-If
-.Ic anonymous
-is specified, the statements will apply to any peer that does not match a
-more specific
-.Ic remote
-directive.
+.Pp
+If connection is initiated using racoonctl, a unique match using the
+remote IP must be found or the remote block name has to be given.
+For received acquires (kernel notices traffic requiring a new SA) the
+remote IP and remoteid from matching sainfo block are used to decide
+the remoteblock.
+If no uniquely matching remoteblock is found using
+these criteria, no connection attempt is done.
+.Pp
+When acting as responder, racoon picks the first proposal that has one
+or more acceptable remote configurations.
+When determining if a remote
+specification is matching the following information is checked:
+.Bl -bullet -tag -width Ds -compact
+.It
+The remote IP is checked against
+.Ic remote_address .
+.It
+ISAKMP exchange type is checked against
+.Ic exchange_mode .
+.It
+ISAKMP SA attributes must match a
+.Ic proposal
+block.
+.It
+The remote identity is matched against
+.Ic peers_identifier
+if
+.Ic verify_identifier
+is on.
+.It
+If a certificate request was received, it must match the issuer of
+.Ic "certificate_type x509"
+certificate.
+If certificate request without issuer name was sent, the
+.Ic match_empty_cr
+parameter specifies whether or not remote block matches.
+.El
 .Pp
 Sections with
 .Ic inherit Ar parent
@@ -405,6 +435,9 @@ In these sections it is enough to redefine only the changed parameters.
 The following are valid statements.
 .Pp
 .Bl -tag -width Ds -compact
+.\"
+.It Ic remote_address Ar address ;
+Defines the IP address of the peer.
 .\"
 .It Ic exchange_mode ( main | aggressive | base ) ;
 Defines the exchange mode for phase 1 when racoon is the initiator.
@@ -639,16 +672,21 @@ The default is on.
 If you do not want to send a certificate request, set this to off.
 The default is on.
 .\"
+.It Ic match_empty_cr (on | off) ;
+Specifies whether this remote block is a valid match when a non-specific
+certificate request is received.
+The default is on.
+.\"
 .It Ic verify_cert (on | off) ;
 By default, the identifier sent by the remote host (as specified in its
 .Ic my_identifier
 statement) is compared with the credentials in the certificate
 used to authenticate the remote host as follows:
 .Bl -tag -width Ds -compact
-.It Type Ic asn1dn:
+.It Type Ic asn1dn :
 The entire certificate subject name is compared with the identifier,
 e.g. "C=XX, O=YY, ...".
-.It Type Ic address, fqdn, or user_fqdn:
+.It Type Ic address, fqdn, or user_fqdn :
 The certificate's subjectAltName is compared with the identifier.
 .El
 If the two do not match the negotiation will fail.
@@ -926,6 +964,24 @@ is used, where hostname is the value returned by the
 command.
 .El
 .El
+.Pp
+.It Xo
+.Ic remote ( Ar address | Ic anonymous )
+.Bq Bq Ar port
+.Bq Ic inherit Ar parent
+.Ic { Ar statements Ic }
+.Xc
+Deprecated format of specifying a remote block.
+This will be removed in future.
+It is a remnant from time when remote block was decided
+solely based on the peers IP address.
+.Pp
+This is equivalent to:
+.Bd -literal -offset
+remote "address" [inherit "parent-address"] {
+	remote_address address;
+}
+.Ed
 .El
 .\"
 .Ss Sainfo Specifications
@@ -972,7 +1028,7 @@ keyword can be used to match any id.
 The
 .Ic clientaddr
 keyword can be used to match a remote id that is equal to either the peer
-ip address or the mode_cfg ip address ( if assigned ).
+ip address or the mode_cfg ip address (if assigned).
 This can be useful
 to restrict policy generation when racoon is acting as a client gateway
 for peers with dynamic ip addresses.
@@ -1296,11 +1352,11 @@ The default is
 The host name or ip address of the ldap server.
 The default is
 .Ic localhost .
-.It Ic port Ar number;
+.It Ic port Ar number ;
 The port that the ldap server is configured to listen on.
 The default is
 .Ic 389 .
-.It Ic base Ar distinguished name;
+.It Ic base Ar distinguished name ;
 The ldap search base.
 This option has no default value.
 .It Ic subtree (on | off) ;
@@ -1308,20 +1364,20 @@ Use the subtree ldap search scope.
 Otherwise, use the one level search scope.
 The default is
 .Ic off .
-.It Ic bind_dn Ar distinguished name;
+.It Ic bind_dn Ar distinguished name ;
 The user dn used to optionally bind as before performing ldap search operations.
 If this option is not specified, anonymous binds are used.
-.It Ic bind_pw Ar string;
+.It Ic bind_pw Ar string ;
 The password used when binding as
 .Ic bind_dn .
-.It Ic attr_user Ar attribute name;
+.It Ic attr_user Ar attribute name ;
 The attribute used to specify a users name in an ldap directory.
 For example,
 if a user dn is "cn=jdoe,dc=my,dc=net" then the attribute would be "cn".
 The default value is
 .Ic cn .
-.It Ic attr_addr Ar attribute name;
-.It Ic attr_mask Ar attribute name;
+.It Ic attr_addr Ar attribute name ;
+.It Ic attr_mask Ar attribute name ;
 The attributes used to specify a users network address and subnet mask in an
 ldap directory.
 These values are forwarded during mode_cfg negotiation when
@@ -1330,13 +1386,13 @@ The default values are
 .Ic racoon-address
 and
 .Ic racoon-netmask .
-.It Ic attr_group Ar attribute name;
+.It Ic attr_group Ar attribute name ;
 The attribute used to specify a group name in an ldap directory.
 For example,
 if a group dn is "cn=users,dc=my,dc=net" then the attribute would be "cn".
 The default value is
 .Ic cn .
-.It Ic attr_member Ar attribute name;
+.It Ic attr_member Ar attribute name ;
 The attribute used to specify group membership in an ldap directory.
 The default value is
 .Ic member .
@@ -1357,12 +1413,12 @@ configuration file will be used instead.
 .Pp
 The following are valid statements:
 .Bl -tag -width Ds -compact
-.It Ic auth Ar (hostname | address) [port] sharedsecret;
+.It Ic auth Ar (hostname | address) [port] sharedsecret ;
 The host name or ip address, optional port value and shared secret value
 of a radius authentication server.
 Up to 5 radius authentication servers
 may be specified using multiple lines.
-.It Ic acct Ar (hostname | address) [port] sharedsecret;
+.It Ic acct Ar (hostname | address) [port] sharedsecret ;
 The host name or ip address, optional port value and shared secret value
 of a radius accounting server.
 Up to 5 radius accounting servers may be

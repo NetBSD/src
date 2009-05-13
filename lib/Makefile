@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133 2009/01/26 06:27:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.133.2.1 2009/05/13 19:18:19 jym Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -8,15 +8,11 @@ SUBDIR=	csu libc .WAIT libarch \
 	libcompat libcrypt \
 	libcurses libevent libintl libkvm libl libm \
 	libossaudio libpcap libpci libpmc libposix libprop libpthread \
-	libpthread_dbg libpuffs libresolv librmt librpcsvc librt libsdp \
+	libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 	libterm libusbhid libutil libwrap liby libz
 
 # libform and libmenu need libcurses
 SUBDIR+=	.WAIT libform libmenu 
-
-.if (${MKATF} != "no")
-SUBDIR+= ../external/bsd/atf/lib/libatf-c ../external/bsd/atf/lib/libatf-c++
-.endif
 
 .if (${MKSKEY} != "no")
 SUBDIR+= libskey
@@ -67,8 +63,6 @@ SUBDIR+=	.WAIT
 
 SUBDIR+=	libedit		# depends on libterm
 
-SUBDIR+=	libmagic	# depends on libz
-
 SUBDIR+=	libradius	# depends on libcrypto - only if ${MKCRYPTO}
 
 .if (${MKISCSI} != "no")
@@ -87,12 +81,6 @@ SUBDIR+=	libkrb5		# depends on libcrypto and more
 SUBDIR+=	librefuse	# depends on libpuffs
 SUBDIR+=	librumpuser	# depends on libpthread
 
-# XXX These bind9/ISC libraries should depend on each other but the
-# XXX dependency ordering requires considerable investigation.
-# XXX Please preserve the order below so we know the order ISC links
-# XXX them in in their Makefiles.
-SUBDIR+= libbind9 libdns liblwres libisccfg libisccc libisc # dep. libpthread
-
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -101,11 +89,6 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libheimntlm
 SUBDIR+=	.WAIT libgssapi libhdb
 SUBDIR+=	.WAIT libkadm5srv libkadm5clnt libkafs libsl libss
-.endif
-
-.if (${MKLDAP} != "no")
-				# depends on libcrypto - only if ${MKCRYPTO}
-SUBDIR+=	../external/bsd/openldap/lib
 .endif
 
 SUBDIR+=	librump		# depends on librumpuser

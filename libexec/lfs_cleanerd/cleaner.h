@@ -49,7 +49,7 @@ __BEGIN_DECLS
 void pwarn(const char *, ...);
 void calc_cb(struct clfs *, int, struct clfs_seguse *);
 int clean_fs(struct clfs *, CLEANERINFO *);
-void dlog(char *, ...);
+void dlog(const char *, ...);
 void handle_error(struct clfs **, int);
 int init_fs(struct clfs *, char *);
 int invalidate_segment(struct clfs *, int);

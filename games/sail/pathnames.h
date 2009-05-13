@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 2003/08/07 09:37:43 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5.40.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -32,5 +32,8 @@
  */
 
 #define	_PATH_LOGFILE	"/var/games/saillog"
-#define	_PATH_SYNC	"/var/games/sail/#sailsink.%d"
-#define	_PATH_LOCK	"/var/games/sail/#saillock.%d"
+#define	_PATH_SAILDIR	"/var/games/sail"
+
+/* in _PATH_SAILDIR */
+#define	_FILE_SYNC	"#sailsink.%d"
+#define	_FILE_LOCK	"#saillock.%d"

@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.16 2003/09/14 19:20:20 jschauma Exp $	*/
+/*	$NetBSD: position.c,v 1.16.40.1 2009/05/13 19:15:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.16 2003/09/14 19:20:20 jschauma Exp $");
+__RCSID("$NetBSD: position.c,v 1.16.40.1 2009/05/13 19:15:49 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,8 @@ void
 pos_out(void)
 {
 	struct mtop t_op;
-	int cnt, n;
+	int n;
+	uint64_t cnt;
 
 	/*
 	 * If not a tape, try seeking on the file.  Seeking on a pipe is
@@ -175,7 +176,7 @@ pos_out(void)
 			/* NOTREACHED */
 
 		while (cnt++ < out.offset)
-			if ((n = bwrite(out.fd, out.db, out.dbsz)) != out.dbsz)
+			if ((uint64_t)(n = bwrite(out.fd, out.db, out.dbsz)) != out.dbsz)
 				err(EXIT_FAILURE, "%s", out.name);
 				/* NOTREACHED */
 		break;

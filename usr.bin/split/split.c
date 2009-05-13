@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.24 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: split.c,v 1.24.6.1 2009/05/13 19:20:06 jym Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.24 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: split.c,v 1.24.6.1 2009/05/13 19:20:06 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -201,7 +201,7 @@ split1(off_t bytecnt, int maxcnt)
 			if (bcnt + len >= bytecnt) {
 				/* LINTED: bytecnt - bcnt <= len */
 				dist = bytecnt - bcnt;
-				if (bigwrite(ofd, bfr, dist) != dist)
+				if (bigwrite(ofd, bfr, dist) != (size_t)dist)
 					err(1, "write");
 				len -= dist;
 				for (C = bfr + dist; len >= bytecnt;
@@ -213,7 +213,7 @@ split1(off_t bytecnt, int maxcnt)
 					}
 					/* LINTED: as above */
 					if (bigwrite(ofd,
-					    C, bytecnt) != bytecnt)
+					    C, bytecnt) != (size_t)bytecnt)
 						err(1, "write");
 				}
 				if (len) {
@@ -222,7 +222,7 @@ split1(off_t bytecnt, int maxcnt)
 						nfiles++;
 					}
 					/* LINTED: len >= 0 */
-					if (bigwrite(ofd, C, len) != len)
+					if (bigwrite(ofd, C, len) != (size_t)len)
 						err(1, "write");
 				} else
 					file_open = 0;
@@ -230,7 +230,7 @@ split1(off_t bytecnt, int maxcnt)
 			} else {
 				bcnt += len;
 				/* LINTED: len >= 0 */
-				if (bigwrite(ofd, bfr, len) != len)
+				if (bigwrite(ofd, bfr, len) != (size_t)len)
 					err(1, "write");
 			}
 		}
@@ -265,7 +265,7 @@ split2(off_t numlines)
 			for (Cs = Ce = bfr; len--; Ce++)
 				if (*Ce == '\n' && ++lcnt == numlines) {
 					bcnt = Ce - Cs + 1;
-					if (bigwrite(ofd, Cs, bcnt) != bcnt)
+					if (bigwrite(ofd, Cs, bcnt) != (size_t)bcnt)
 						err(1, "write");
 					lcnt = 0;
 					Cs = Ce + 1;
@@ -276,7 +276,7 @@ split2(off_t numlines)
 				}
 			if (Cs < Ce) {
 				bcnt = Ce - Cs;
-				if (bigwrite(ofd, Cs, bcnt) != bcnt)
+				if (bigwrite(ofd, Cs, bcnt) != (size_t)bcnt)
 					err(1, "write");
 			}
 		}

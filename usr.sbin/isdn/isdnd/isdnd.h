@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.15 2007/01/16 12:07:08 hubertf Exp $ 
+ *	$Id: isdnd.h,v 1.15.20.1 2009/05/13 19:20:25 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -311,7 +311,7 @@ struct cfg_entry {
 #define ULSRC_RATE	3		/* get it dynamic from ratesfile*/
 #define ULSRC_DYN	4		/* dynamic calculated from AOCD */
 
-	char *answerprog;		/* program to use for answering */
+	const char *answerprog;		/* program to use for answering */
 	char *connectprog;	/* program run after negotiation finished */
 	char *disconnectprog;	/* program run after shutdown is complete */
 
@@ -575,7 +575,7 @@ int isdnfd;					/* file handle, /dev/isdn */
 char mailto[MAXPATHLEN] = "";			/* panic mail address */
 char mailer[MAXPATHLEN] = "";			/* panic mail address */
 
-char *configfile = CONFIG_FILE_DEF;		/* configuration filename */
+const char *configfile = CONFIG_FILE_DEF;	/* configuration filename */
 int config_error_flag = 0;			/* error counter */
 
 #ifdef DEBUG
@@ -589,10 +589,10 @@ int do_bell = 0;				/* bell on connect/disconnect */
 int do_fork = 1;				/* run as daemon/foreground */
 
 int do_ttytype = 0;				/* got new terminal type */
-char *ttype = "";				/* termcap entry name string */
+const char *ttype = "";				/* termcap entry name string */
 
 int do_rdev = 0;				/* redirect output	*/
-char *rdev = "";				/* new device string */
+const char *rdev = "";				/* new device string */
 
 int do_print = 0;				/* config file printout */
 
@@ -751,7 +751,7 @@ void cfg_setval ( int keyword );
 void check_and_kill ( struct cfg_entry *cep );
 void check_pid ( void );
 void close_allactive ( void );
-void configure ( char *filename, int reread );
+void configure ( const char *filename, int reread );
 void daemonize ( void );
 void dialresponse(struct cfg_entry *cep, int dstat);
 void display_acct ( struct cfg_entry *cep );
@@ -768,7 +768,7 @@ void do_exit ( int exitval );
 void do_menu ( void );
 int exec_answer ( struct cfg_entry *cep );
 int exec_connect_prog ( struct cfg_entry *cep, const char *prog, int link_down );
-pid_t exec_prog ( char *prog, char **arglist );
+pid_t exec_prog ( const char *prog, const char **arglist );
 struct cfg_entry * find_by_device_for_dialout ( int drivertype, int driverunit );
 struct cfg_entry *find_by_device_for_dialoutnumber(int drivertype, int driverunit, int cmdlen, char *cmd);
 struct cfg_entry * find_matching_entry_incoming ( msg_connect_ind_t *mp, int len );
@@ -782,7 +782,7 @@ struct cfg_entry * get_cep_by_cdid ( int cdid );
 int get_current_rate ( struct cfg_entry *cep, int logit );
 void handle_charge ( struct cfg_entry *cep );
 void handle_recovery ( void );
-void handle_scrprs(int cdid, int scr, int prs, char *caller);
+void handle_scrprs(int cdid, int scr, int prs, const char *caller);
 void if_up(struct cfg_entry *cep);
 void if_down(struct cfg_entry *cep);
 void init_controller ( void );
@@ -813,7 +813,7 @@ void msg_packet_ind( msg_packet_ind_t *mp );
 void msg_ctrl_ev_ind( msg_ctrl_ev_ind_t *mp );
 void next_state ( struct cfg_entry *cep, int event );
 char * print_i4b_cause( cause_t code );
-char * printstate ( struct cfg_entry *cep );
+const char * printstate ( struct cfg_entry *cep );
 int readrates ( char *filename );
 void reopenfiles ( int dummy );
 void rereadconfig ( int dummy );

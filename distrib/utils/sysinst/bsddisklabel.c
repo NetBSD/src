@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.45 2008/05/24 11:06:53 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.45.6.1 2009/05/13 19:17:55 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,6 +56,8 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+static int check_partitions(void);
+
 /* For the current state of this file blame abs@NetBSD.org */
 /* Even though he wasn't the last to hack it, but he did admit doing so :-) */
 
@@ -72,10 +74,6 @@
 #endif
 #ifndef PART_USR
 #define PART_USR	PART_ANY
-#endif
-
-#ifndef DEFSWAPRAM
-#define DEFSWAPRAM	32
 #endif
 
 #ifndef DEFVARSIZE
@@ -132,6 +130,16 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 		}
 		strlcpy(p->pi_mount, mountpt, sizeof p->pi_mount);
 		p->pi_flags |= PIF_MOUNT;
+		/* Default to logging, UFS2. */
+		if (p->pi_fstype == FS_BSDFFS) {
+			p->pi_flags |= PIF_LOG;
+#ifdef DEFAULT_UFS2
+#ifndef HAVE_UFS2_BOOT
+			if (strcmp(mountpt, "/") != 0)
+#endif
+				p->pi_flags |= PIF_FFSv2;
+#endif
+		}
 	}
 
 	return ptn;
@@ -371,8 +379,18 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 	msg_table_add(MSG_ptnheaders);
 
 	if (pi.menu_no < 0) {
-		/* If there is a swap partition elsewhere, don't add one here.*/		if (no_swap)
+		/* If there is a swap partition elsewhere, don't add one here.*/
+		if (no_swap) {
 			pi.ptn_sizes[PI_SWAP].size = 0;
+		} else {
+#if DEFSWAPSIZE == -1
+			/* Dynamic swap size. */
+			pi.ptn_sizes[PI_SWAP].dflt_size = get_ramsize();
+			pi.ptn_sizes[PI_SWAP].size =
+			    pi.ptn_sizes[PI_SWAP].dflt_size;
+#endif
+		}
+			
 		/* If installing X increase default size of /usr */
 		if (set_X11_selected())
 			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
@@ -688,7 +706,7 @@ make_bsd_partitions(void)
 		msg_display(MSG_abort);
 		return 0;
 	}
-	if (md_check_partitions() == 0)
+	if (check_partitions() == 0)
 		goto edit_check;
 
 	/* Disk name */
@@ -699,4 +717,42 @@ make_bsd_partitions(void)
 
 	/* Everything looks OK. */
 	return (1);
+}
+
+/*
+ * check that there is at least a / somewhere.
+ */
+static int
+check_partitions(void)
+{
+#ifdef HAVE_BOOTXX_xFS
+	int rv;
+	char *bootxx;
+#endif
+#ifndef HAVE_UFS2_BOOT
+	int fstype;
+#endif
+
+#ifdef HAVE_BOOTXX_xFS
+	/* check if we have boot code for the root partition type */
+	bootxx = bootxx_name();
+	if (bootxx != NULL) {
+		rv = access(bootxx, R_OK);
+		free(bootxx);
+	}
+	if (bootxx == NULL || rv != 0) {
+		process_menu(MENU_ok, deconst(MSG_No_Bootcode));
+		return 0;
+	}
+#endif
+#ifndef HAVE_UFS2_BOOT
+	fstype = bsdlabel[rootpart].pi_fstype;
+	if (fstype == FS_BSDFFS &&
+	    (bsdlabel[rootpart].pi_flags & PIF_FFSv2) != 0) {
+		process_menu(MENU_ok, deconst(MSG_cannot_ufs2_root));
+		return 0;
+	}
+#endif
+
+	return md_check_partitions();
 }

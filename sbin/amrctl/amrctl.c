@@ -92,7 +92,7 @@ void describe_drive(int, int, int, int, int);
 
 static struct {
 	const char	*product;
-	const int	signature;
+	const uint32_t	signature;
 } prodtable[] = {
 	{	"Series 431",			AMR_SIG_431	},
 	{	"Series 438",			AMR_SIG_438	},
@@ -212,7 +212,7 @@ int
 describe_card(int fd, int verbosity, int globalparam)
 {
 	struct amr_enquiry *ae;
-	int	cardtype;
+	uint32_t	cardtype;
 
 	/*
 	 * Try the 40LD firmware interface
@@ -267,7 +267,7 @@ describe_card(int fd, int verbosity, int globalparam)
 		if (globalparam) {
 			const char   *product = NULL;
 			char	bios[100], firmware[100];
-			int	i;
+			size_t	i;
 
 			for (i = 0; i < NTAB(prodtable); i++) {
 				if (cardtype == prodtable[i].signature) {
@@ -348,7 +348,7 @@ describe_card(int fd, int verbosity, int globalparam)
 char *
 describe_property(u_int8_t prop, char *buffer)
 {
-	int	i;
+	size_t	i;
 
 	strcpy(buffer, "<");
 	for (i = 0; i < NTAB(proptable); i++) {
@@ -367,7 +367,7 @@ describe_property(u_int8_t prop, char *buffer)
 const char *
 describe_state(int verbosity, u_int8_t state)
 {
-	int	i;
+	size_t	i;
 
 	if ((AMR_DRV_PREVSTATE(state) == AMR_DRV_CURSTATE(state)) &&
 	    (AMR_DRV_CURSTATE(state) == AMR_DRV_OFFLINE) && verbosity == 0)
@@ -387,7 +387,7 @@ void
 describe_battery(int fd, int verbosity, int fwint, int bflags, int globalparam)
 {
 	u_int8_t batt_status;
-	int i;
+	size_t i;
 
 	if (fwint == FIRMWARE_40LD) {
 		enq_result = amr_ioctl_enquiry(fd, AMR_CMD_CONFIG,

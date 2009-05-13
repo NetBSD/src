@@ -1,7 +1,7 @@
-/*	$NetBSD: cpuctl.c,v 1.13 2009/01/28 22:37:09 ad Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.13.2.1 2009/05/13 19:20:20 jym Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.13 2009/01/28 22:37:09 ad Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.13.2.1 2009/05/13 19:20:20 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,6 +61,8 @@ void	cpu_identify(char **);
 void	cpu_list(char **);
 void	cpu_offline(char **);
 void	cpu_online(char **);
+void	cpu_intr(char **);
+void	cpu_nointr(char **);
 
 struct cmdtab {
 	const char	*label;
@@ -71,6 +73,8 @@ struct cmdtab {
 	{ "list", 0, cpu_list },
 	{ "offline", 1, cpu_offline },
 	{ "online", 1, cpu_online },
+	{ "intr", 1, cpu_intr },
+	{ "nointr", 1, cpu_nointr },
 	{ NULL, 0, NULL },
 };
 
@@ -113,6 +117,8 @@ usage(void)
 	fprintf(stderr, "       %s list\n", progname);
 	fprintf(stderr, "       %s offline cpuno\n", progname);
 	fprintf(stderr, "       %s online cpuno\n", progname);
+	fprintf(stderr, "       %s intr cpuno\n", progname);
+	fprintf(stderr, "       %s nointr cpuno\n", progname);
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
@@ -141,6 +147,37 @@ cpu_offline(char **argv)
 	cs.cs_online = false;
 	if (ioctl(fd, IOC_CPU_SETSTATE, &cs) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_SETSTATE");
+}
+
+void
+cpu_intr(char **argv)
+{
+	cpustate_t cs;
+
+	cs.cs_id = getcpuid(argv);
+	if (ioctl(fd, IOC_CPU_GETSTATE, &cs) < 0)
+		err(EXIT_FAILURE, "IOC_CPU_GETSTATE");
+	cs.cs_intr = true;
+	if (ioctl(fd, IOC_CPU_SETSTATE, &cs) < 0)
+		err(EXIT_FAILURE, "IOC_CPU_SETSTATE");
+}
+
+void
+cpu_nointr(char **argv)
+{
+	cpustate_t cs;
+
+	cs.cs_id = getcpuid(argv);
+	if (ioctl(fd, IOC_CPU_GETSTATE, &cs) < 0)
+		err(EXIT_FAILURE, "IOC_CPU_GETSTATE");
+	cs.cs_intr = false;
+	if (ioctl(fd, IOC_CPU_SETSTATE, &cs) < 0) {
+		if (errno == EOPNOTSUPP) {
+			warnx("interrupt control not supported on "
+			    "this platform");
+		} else
+			err(EXIT_FAILURE, "IOC_CPU_SETSTATE");
+	}
 }
 
 void
@@ -186,7 +223,7 @@ getcpuid(char **argv)
 		usage();
 
 	np = sysconf(_SC_NPROCESSORS_CONF);
-	if (id >= np)
+	if (id >= (u_long)np)
 		errx(EXIT_FAILURE, "Invalid CPU number");
 
 	return id;
@@ -198,12 +235,15 @@ cpu_list(char **argv)
 	const char *state, *intr;
 	cpustate_t cs;
 	u_int cnt, i;
+	time_t lastmod;
+	char ibuf[16], *ts;
 	
 	if (ioctl(fd, IOC_CPU_GETCOUNT, &cnt) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_GETCOUNT");
 
-	printf("Num  HwId Unbound LWPs Interrupts     Last change\n");
- 	printf("---- ---- ------------ -------------- ----------------------------\n");
+	printf(
+"Num  HwId Unbound LWPs Interrupts Last change              #Intr\n"
+"---- ---- ------------ ---------- ------------------------ -----\n");
 
 	for (i = 0; i < cnt; i++) {
 		cs.cs_id = i;
@@ -219,8 +259,16 @@ cpu_list(char **argv)
 			intr = "intr";
 		else
 			intr = "nointr";
-		printf("%-4d %-4x %-12s %-12s   %s", i, cs.cs_id, state,
-		   intr, asctime(localtime(&cs.cs_lastmod)));
+		if (cs.cs_intrcnt == 0)
+			strcpy(ibuf, "?");
+		else
+			snprintf(ibuf, sizeof(ibuf), "%d", cs.cs_intrcnt - 1);
+		lastmod = (time_t)cs.cs_lastmod |
+		    ((time_t)cs.cs_lastmodhi << 32);
+		ts = asctime(localtime(&lastmod));
+		ts[strlen(ts) - 1] = '\0';
+		printf("%-4d %-4x %-12s %-10s %s %s\n", i, cs.cs_id, state,
+		   intr, ts, ibuf);
 	}
 }
 

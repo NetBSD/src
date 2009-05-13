@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2008/04/29 06:53:04 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5.8.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syscall.c,v 1.5 2008/04/29 06:53:04 martin Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.5.8.1 2009/05/13 19:20:07 jym Exp $");
 
 /* System call stats */
 
@@ -159,7 +159,7 @@ putuint64(uint64_t v, int row, int col, int width)
 	len = snprintf(buf, sizeof buf, "%" PRIu64, v);
 	if (len > width) {
 		i = (len - width) / 3;
-		if (i >= sizeof suffix) {
+		if (i >= (int)sizeof(suffix)) {
 			memset(buf, '*', width);
 			len = width;
 		} else {
@@ -223,7 +223,7 @@ showsyscall(void)
 	show_vmstat_top(&s.Total, &s.uvmexp, &s1.uvmexp);
 
 	/* Sort out the values we are going to display */
-	for (i = 0; i < nelem(s.counts); i++) {
+	for (i = 0; i < (int)nelem(s.counts); i++) {
 		switch (show) {
 		default:
 		case SHOW_COUNTS:
@@ -264,12 +264,12 @@ showsyscall(void)
 	l = SYSCALLROW;
 	c = 0;
 	move(l, c);
-	for (ii = 0; ii < nelem(s.counts); ii++) {
+	for (ii = 0; ii < (int)nelem(s.counts); ii++) {
 		i = syscall_sort[ii];
 		if (val[i] == 0 && irf[i] == 0)
 			continue;
 
-		if (i < nelem(syscallnames)) {
+		if (i < (int)nelem(syscallnames)) {
 			const char *name = syscallnames[i];
 			while (name[0] == '_')
 				name++;
@@ -361,7 +361,7 @@ syscall_order(char *args)
 		goto usage;
 
 	/* Undo all the sorting */
-	for (i = 0; i < nelem(syscall_sort); i++)
+	for (i = 0; i < (int)nelem(syscall_sort); i++)
 		syscall_sort[i] = i;
 
 	if (sort_order == NAMES) {

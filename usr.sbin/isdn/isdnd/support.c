@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.14 2005/06/02 05:54:44 lukem Exp $ 
+ *	$Id: support.c,v 1.14.28.1 2009/05/13 19:20:26 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -371,7 +371,7 @@ find_matching_entry_incoming(msg_connect_ind_t *mp, int len)
 	int i;
 
 	/* older kernels do not deliver all the information */	
-	if (((u_int8_t*)&mp->type_plan - (u_int8_t*)mp + sizeof(mp->type_plan)) <= len) {
+	if (((u_int8_t*)&mp->type_plan - (u_int8_t*)mp + (int)sizeof(mp->type_plan)) <= len) {
 		ntype = numbering_types[(mp->type_plan & 0x70)>>4];
 	} else {
 		ntype = no_type;
@@ -383,8 +383,8 @@ find_matching_entry_incoming(msg_connect_ind_t *mp, int len)
 	{
 		if (aliasing)
 	        {
-			char *src_tela = "ERROR-src_tela";
-			char *dst_tela = "ERROR-dst_tela";
+			const char *src_tela = "ERROR-src_tela";
+			const char *dst_tela = "ERROR-dst_tela";
 	
 	                src_tela = get_alias(mp->src_telno);
 	                dst_tela = get_alias(mp->dst_telno);
@@ -579,8 +579,8 @@ find_matching_entry_incoming(msg_connect_ind_t *mp, int len)
 
 	if (aliasing)
         {
-		char *src_tela = "ERROR-src_tela";
-		char *dst_tela = "ERROR-dst_tela";
+		const char *src_tela = "ERROR-src_tela";
+		const char *dst_tela = "ERROR-dst_tela";
 
                 src_tela = get_alias(mp->src_telno);
                 dst_tela = get_alias(mp->dst_telno);
@@ -874,7 +874,7 @@ dialresponse(struct cfg_entry *cep, int dstat)
 {
 	msg_dialout_resp_t mdr;
 
-	static char *stattab[] = {
+	static const char *stattab[] = {
 		"normal condition",
 		"temporary failure",
 		"permanent failure",
@@ -905,7 +905,7 @@ dialresponse(struct cfg_entry *cep, int dstat)
  *	screening/presentation indicator
  *--------------------------------------------------------------------------*/
 void
-handle_scrprs(int cdid, int scr, int prs, char *caller)
+handle_scrprs(int cdid, int scr, int prs, const char *caller)
 {
 	/* screening indicator */
 	
@@ -915,7 +915,7 @@ handle_scrprs(int cdid, int scr, int prs, char *caller)
 	}
 	else
 	{
-		static char *scrtab[] = {
+		static const char *scrtab[] = {
 			"no screening indicator",
 			"sreening user provided, not screened",
 			"screening user provided, verified & passed",
@@ -940,7 +940,7 @@ handle_scrprs(int cdid, int scr, int prs, char *caller)
 	}
 	else
 	{
-		static char *prstab[] = {
+		static const char *prstab[] = {
 			"no presentation indicator",
 			"presentation allowed",
 			"presentation restricted",
@@ -1077,12 +1077,12 @@ int count_cfg_entries()
 }
 
 struct cfg_entry *
-find_cfg_entry(int index)
+find_cfg_entry(int idx)
 {
 	struct cfg_entry *cep;
 
 	SIMPLEQ_FOREACH(cep, &cfg_entry_list, cfgq)
-		if (cep->index == index)
+		if (cep->index == idx)
 			return cep;
 	return NULL;
 }

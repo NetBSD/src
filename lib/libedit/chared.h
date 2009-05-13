@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.17 2006/03/06 21:11:56 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.17.28.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ typedef struct c_macro_t {
  * Undo information for vi - no undo in emacs (yet)
  */
 typedef struct c_undo_t {
-	int	 len;			/* length of saved line */
+	ssize_t	 len;			/* length of saved line */
 	int	 cursor;		/* position of saved cursor */
 	char	*buf;			/* full saved text */
 } c_undo_t;

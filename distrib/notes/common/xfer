@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.63 2008/09/13 15:43:07 tsutsui Exp $
+.\"	$NetBSD: xfer,v 1.63.4.1 2009/05/13 19:17:46 jym Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,46 +73,15 @@ If you are not booting off a CD-ROM, you will need to have some floppy
 disks to boot off;
 either three 1.44 MB floppies or one 1.2 MB floppy.
 .Pp
-For laptops that have cardbus slots, you should use the
-.Pa bootlap1.fs
-and
-.Pa bootlap2.fs
-floppy images.
-.Pp
-For older machines with little RAM, use
-.Pa boot-tiny.fs .
-This image is tailored towards old, small-memory systems, and thus does
-not contain any PCI or SCSI support.
-It should work on systems with 4M of RAM.
-Note that this means 4M available to NetBSD; systems that
-are said to have 4M may have 640k of base memory and 3072k of extended
-memory, which currently will not work, as this is a total of 3712k.
-.Pp
-For old machines that may have EISA, SCSI and more RAM, but only
-have a 1.2M floppy drive, use
-.Pa boot-small1.fs
-and
-.Pa boot-small2.fs .
-.Pp
-For old IBM PS/2 machines with MCA, use
-.Pa boot-ps2-1.fs
-and
-.Pa boot-ps2-2.fs
-floppy images.
-.Pp
-For all other systems, use
+Use
 .Pa boot1.fs
 and
 .Pa boot2.fs
-.
-.Pp
-For the 2-floppy sets (and the CD boot image), utilities to repair
-a badly crashed systems are included.
-The
-.Pa boot-tiny.fs
-image has a separate
-.Pa rescue-tiny.fs
-rescue floppy image because of lack of space.
+for VGA installation.
+.Pa boot-com1.fs
+and 
+.Pa boot-com2.fs
+are available if you wish to use a serial console.
 .Pp
 If you are using a
 .Ul
@@ -227,7 +196,7 @@ scope of this document.
 .Pp
 If you have an i386 machine which runs
 .Tn MS-DOS
-and use them to write the floppy image(s) to floppy disk,
+and use it to write the floppy image(s) to floppy disk,
 you can use the
 .Ic rawrite
 utility, provided in the
@@ -253,13 +222,13 @@ even after
 .Nx*M
 has been installed.
 .Pp
-If your machine doesn't have any SCSI disks, or SCSI interface
+If your machine doesn't have any SCSI disks, or the SCSI interface
 on your machine is not supported, it can still run
 .Nx*M
 diskless.
 No file transfer is needed, and all you have to do is to prepare files on
 the server.
-More information about diskless setting can be found at
+More information about diskless setups can be found at
 .Lk http://www.NetBSD.org/docs/network/netboot/
 .Pp
 .if \n[ews4800mips] \{\
@@ -482,8 +451,8 @@ on a machine with less than 5MB of memory.
 .\} \" \n[x68k]
 .
 .if !\n[hp700]:\n[x68k] \{\
-Note that if you are installing or upgrading from a writable media,
-the media can be write-protected if you wish.
+Note that if you are installing or upgrading from writable media,
+it can be write-protected if you wish.
 These systems mount a root image from inside the kernel, and will not
 need to write to the media.
 If you booted from a floppy, the floppy disk may be removed from
@@ -594,12 +563,12 @@ Likely locations are
 and
 .Pa \*M/binary/sets .
 .Pp
-Proceed to the instruction on installation.
+Proceed to the instructions on installation.
 .
 .It Em MS-DOS floppy
 .Nx
-doesn't include split sets to keep the distribution size down.
-They can be created on a separate machine using the
+does not include split distribution sets for installation by floppy.
+However, they can be created on a separate machine using the
 .Xr split 1
 command, running e.g.
 .Ic split -b 235k base.tgz base.
@@ -688,8 +657,8 @@ installation, the IPv4 address of
 is
 .Li 204.152.190.13
 and the IPv6 address is
-.Li 2001:4f8:4:7:230:48ff:fe31:43f2
-(as of December, 2007).
+.Li 2001:4f8:3:7:230:48ff:fe31:43f2
+(as of April, 2009).
 .Pp
 Once you have this information, you can proceed to the next
 step in the installation or upgrade process.
@@ -698,14 +667,6 @@ If you're installing
 from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to
 the section on upgrading.
-.(Note
-This method of installation is recommended for those familiar
-with using
-.Bx
-network configuration and management commands.
-If you aren't, this documentation should help, but is not intended to
-be all-encompassing.
-.Note)
 .
 .if \n[x68k] \{\
 .It Em M-O disk
@@ -771,14 +732,6 @@ If you're installing
 from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the
 section on upgrading.
-.(Note
-This method of installation is recommended for those already
-familiar with using
-.Bx
-network configuration and management commands.
-If you aren't, this documentation should help, but is not intended to
-be all-encompassing.
-.Note)
 .
 .It Em Tape
 To install

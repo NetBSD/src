@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.19 2008/06/22 15:42:50 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.72 2008/01/19 23:09:49 djm Exp $ */
+/*	$NetBSD: readconf.h,v 1.19.6.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: readconf.h,v 1.74 2008/06/26 11:46:31 grunk Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -137,6 +137,7 @@ typedef struct {
 
 	char	*local_command;
 	int	permit_local_command;
+	int	visual_host_key;
 
 }       Options;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser5.c,v 1.6 2003/08/07 11:17:29 agc Exp $	*/
+/*	$NetBSD: parser5.c,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser5.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser5.c,v 1.6 2003/08/07 11:17:29 agc Exp $");
+__RCSID("$NetBSD: parser5.c,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ int
 p_expr11(struct value *v, char flag)
 {
 	int op;
-	char *opname;
+	const char *opname;
 
 	switch (token) {
 	case T_DOLLAR:

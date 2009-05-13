@@ -1,9 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: cgd,v 1.5 2005/03/02 19:09:22 tv Exp $
+# $NetBSD: cgd,v 1.5.36.1 2009/05/13 19:18:03 jym Exp $
 #
 
-# PROVIDE: disks
+# PROVIDE: cgd
+# REQUIRE: rndctl
+# BEFORE:  DISKS
 
 $_rc_subr_loaded . /etc/rc.subr
 

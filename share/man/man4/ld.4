@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.4,v 1.16 2008/04/30 13:10:54 martin Exp $
+.\"	$NetBSD: ld.4,v 1.16.6.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 13, 2006
+.Dd April 22, 2009
 .Dt LD 4
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Cd "ld* at icp? unit ?"
 .Cd "ld* at iop? tid ?"
 .Cd "ld* at mlx? unit ?"
+.Cd "ld* at sdmmc?"
 .Cd "ld* at twa? unit ?"
 .Cd "ld* at twe? unit ?"
 .Cd "ld* at ataraid? vendtype ? unit ?"
@@ -69,6 +70,7 @@ partition
 .Xr intro 4 ,
 .Xr iop 4 ,
 .Xr mlx 4 ,
+.Xr sdmmc 4 ,
 .Xr twa 4 ,
 .Xr twe 4
 .Sh HISTORY

@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.57 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.57.6.1 2009/05/13 19:20:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -25,7 +25,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.57 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.57.6.1 2009/05/13 19:20:36 jym Exp $");
 #endif
 
 
@@ -375,13 +375,13 @@ rarp_check(u_char *p, int len)
 	struct ether_arp *ap = (struct ether_arp *) (p + sizeof(*ep));
 #endif
 
-	if (len < sizeof(*ep) + sizeof(*ap)) {
+	if (len < (int)(sizeof(*ep) + sizeof(*ap))) {
 		rarperr(NONFATAL, "truncated request");
 		return 0;
 	}
 #ifdef __NetBSD__
 	/* now that we know the fixed part of the ARP hdr is there: */
-	if (len < sizeof(*ap) + 2 * ap->ar_hln + 2 * ap->ar_pln) {
+	if (len < (int)(sizeof(*ap) + 2 * ap->ar_hln + 2 * ap->ar_pln)) {
 		rarperr(NONFATAL, "truncated request");
 		return 0;
 	}

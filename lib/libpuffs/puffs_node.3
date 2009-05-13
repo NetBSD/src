@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_node.3,v 1.3 2007/12/01 19:18:50 wiz Exp $
+.\"	$NetBSD: puffs_node.3,v 1.3.14.1 2009/05/13 19:18:35 jym Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -48,21 +48,6 @@
 .Ft void
 .Fn puffs_pn_put "struct puffs_node *pn"
 .Sh DESCRIPTION
-.Em IMPORTANT NOTE!
-This document describes interfaces which are not yet guaranteed to be
-stable.
-In case you update your system sources, please recompile everything
-and fix compilation errors.
-If your sources are out-of-sync, incorrect operation may result.
-The interfaces in this document will most likely be hugely simplified
-in later versions or made transparent to the implementation.
-.Pp
-.Em MORE IMPORTANT STUFF!
-It should especially be noted, that it is yet completely unsure, how
-much of the internals contents of
-.Vt struct puffs_node
-will be exposed to file systems in the end.
-.Pp
 .Bl -tag -width xxxx
 .It Fn puffs_pn_new pu priv
 Create a new node and attach it to the mountpoint

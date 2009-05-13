@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.19 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: devname.c,v 1.19.2.1 2009/05/13 19:18:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)devname.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: devname.c,v 1.19 2009/01/20 18:20:48 drochner Exp $");
+__RCSID("$NetBSD: devname.c,v 1.19.2.1 2009/05/13 19:18:23 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,6 +108,10 @@ devname(dev, type)
 		mode_t type;
 		dev_t dev;
 	} bkey;
+	struct {
+		mode_t type;
+		int32_t dev;
+	} obkey;
 	static DB *db;
 	static int failure;
 	DBT data, key;
@@ -154,6 +158,7 @@ devname(dev, type)
 	key.data = &bkey;
 	key.size = sizeof(bkey);
 	if ((db->get)(db, &key, &data, 0) == 0) {
+found_it:
 		if (ptr == NULL)
 			return (char *)data.data;
 		ptr->dev = dev;
@@ -162,6 +167,15 @@ devname(dev, type)
 		ptr->name[NAME_MAX - 1] = '\0';
 		ptr->valid = VALID;
 	} else {
+		/* Look for a 32 bit dev_t. */
+		(void)memset(&obkey, 0, sizeof(obkey));
+		obkey.dev = (int32_t)(uint32_t)dev;
+		obkey.type = type;
+		key.data = &obkey;
+		key.size = sizeof(obkey);
+		if ((db->get)(db, &key, &data, 0) == 0)
+			goto found_it;
+
 		if (ptr == NULL)
 			return (NULL);
 		ptr->valid = INVALID;

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.50 2008/04/24 04:09:27 thorpej Exp $	*/
+/*	$NetBSD: inet6.c,v 1.50.8.1 2009/05/13 19:19:59 jym Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.50 2008/04/24 04:09:27 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.50.8.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ struct	tcpcb tcpcb;
 struct	socket sockb;
 
 char	*inet6name(struct in6_addr *);
-void	inet6print(struct in6_addr *, int, char *);
+void	inet6print(struct in6_addr *, int, const char *);
 
 /*
  * Print a summary of connections related to an Internet
@@ -177,9 +177,9 @@ static void
 ip6protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 	struct in6_addr *laddr, u_int16_t lport,
 	struct in6_addr *faddr, u_int16_t fport,
-	short t_state, char *name)
+	short t_state, const char *name)
 {
-	static char *shorttcpstates[] = {
+	static const char *shorttcpstates[] = {
 		"CLOSED",       "LISTEN",       "SYNSEN",       "SYSRCV",
 		"ESTABL",       "CLWAIT",       "FWAIT1",       "CLOSNG",
 		"LASTAK",       "FWAIT2",       "TMWAIT",
@@ -215,7 +215,7 @@ ip6protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 
 
 void
-ip6protopr(u_long off, char *name)
+ip6protopr(u_long off, const char *name)
 {
 	struct inpcbtable table;
 	struct in6pcb *head, *prev, *next;
@@ -273,6 +273,9 @@ ip6protopr(u_long off, char *name)
 			memcpy(&src, &pcblist[i].ki_s, sizeof(src));
 			memcpy(&dst, &pcblist[i].ki_d, sizeof(dst));
 
+			if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&dst.sin6_addr))
+				continue;
+
 			if (first) {
 				ip6protoprhdr();
 				first = 0;
@@ -309,7 +312,7 @@ ip6protopr(u_long off, char *name)
 		if (in6pcb.in6p_af != AF_INET6)
 			continue;
 
-		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr))
+		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_faddr))
 			continue;
 		kread((u_long)in6pcb.in6p_socket, (char *)&sockb, 
 		    sizeof (sockb));
@@ -340,7 +343,7 @@ ip6protopr(u_long off, char *name)
  * Dump TCP6 statistics structure.
  */
 void
-tcp6_stats(u_long off, char *name)
+tcp6_stats(u_long off, const char *name)
 {
 	struct tcp6stat tcp6stat;
 
@@ -425,7 +428,7 @@ tcp6_stats(u_long off, char *name)
  * Dump UDP6 statistics structure.
  */
 void
-udp6_stats(u_long off, char *name)
+udp6_stats(u_long off, const char *name)
 {
 	uint64_t udp6stat[UDP6_NSTATS];
 	u_quad_t delivered;
@@ -567,7 +570,7 @@ static	const char *ip6nh[] = {
  * Dump IP6 statistics structure.
  */
 void
-ip6_stats(u_long off, char *name)
+ip6_stats(u_long off, const char *name)
 {
 	uint64_t ip6stat[IP6_NSTATS];
 	int first, i;
@@ -737,7 +740,7 @@ ip6_stats(u_long off, char *name)
  * Dump IPv6 per-interface statistics based on RFC 2465.
  */
 void
-ip6_ifstats(char *ifname)
+ip6_ifstats(const char *ifname)
 {
 	struct in6_ifreq ifr;
 	int s;
@@ -1053,7 +1056,7 @@ static	const char *icmp6names[] = {
  * Dump ICMPv6 statistics.
  */
 void
-icmp6_stats(u_long off, char *name)
+icmp6_stats(u_long off, const char *name)
 {
 	uint64_t icmp6stat[ICMP6_NSTATS];
 	register int i, first;
@@ -1135,7 +1138,7 @@ icmp6_stats(u_long off, char *name)
  * Dump ICMPv6 per-interface statistics based on RFC 2466.
  */
 void
-icmp6_ifstats(char *ifname)
+icmp6_ifstats(const char *ifname)
 {
 	struct in6_ifreq ifr;
 	int s;
@@ -1201,7 +1204,7 @@ icmp6_ifstats(char *ifname)
  * Dump PIM statistics structure.
  */
 void
-pim6_stats(u_long off, char *name)
+pim6_stats(u_long off, const char *name)
 {
 	uint64_t pim6stat[PIM6_NSTATS];
 
@@ -1233,7 +1236,7 @@ pim6_stats(u_long off, char *name)
  * Dump raw ip6 statistics structure.
  */
 void
-rip6_stats(u_long off, char *name)
+rip6_stats(u_long off, const char *name)
 {
 	uint64_t rip6stat[RIP6_NSTATS];
 	u_quad_t delivered;
@@ -1276,7 +1279,7 @@ rip6_stats(u_long off, char *name)
  * Take numeric_addr and numeric_port into consideration.
  */
 void
-inet6print(struct in6_addr *in6, int port, char *proto)
+inet6print(struct in6_addr *in6, int port, const char *proto)
 {
 #define GETSERVBYPORT6(port, proto, ret)\
 do {\
@@ -1289,12 +1292,12 @@ do {\
 } while (0)
 	struct servent *sp = 0;
 	char line[80], *cp;
-	int width;
+	int lwidth;
 
-	width = Aflag ? 12 : 16;
-	if (vflag && width < strlen(inet6name(in6)))
-		width = strlen(inet6name(in6));
-	snprintf(line, sizeof(line), "%.*s.", width, inet6name(in6));
+	lwidth = Aflag ? 12 : 16;
+	if (vflag && lwidth < (int)strlen(inet6name(in6)))
+		lwidth = strlen(inet6name(in6));
+	snprintf(line, sizeof(line), "%.*s.", lwidth, inet6name(in6));
 	cp = strchr(line, '\0');
 	if (!numeric_port && port)
 		GETSERVBYPORT6(port, proto, sp);
@@ -1304,10 +1307,10 @@ do {\
 	else
 		snprintf(cp, sizeof(line) - (cp - line),
 		    "%d", ntohs((u_short)port));
-	width = Aflag ? 18 : 22;
-	if (vflag && width < strlen(line))
-		width = strlen(line);
-	printf(" %-*.*s", width, width, line);
+	lwidth = Aflag ? 18 : 22;
+	if (vflag && lwidth < (int)strlen(line))
+		lwidth = strlen(line);
+	printf(" %-*.*s", lwidth, lwidth, line);
 }
 
 /*

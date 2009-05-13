@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.18 2005/11/29 21:07:25 christos Exp $
+# $NetBSD: named,v 1.18.30.1 2009/05/13 19:18:03 jym Exp $
 #
 
 # PROVIDE: named
@@ -13,7 +13,7 @@ $_rc_subr_loaded . /etc/rc.subr
 name="named"
 rcvar=$name
 command="/usr/sbin/${name}"
-pidfile="/var/run/${name}.pid"
+pidfile="/var/run/${name}/${name}.pid"
 start_precmd="named_precmd"
 extra_commands="reload"
 required_dirs="$named_chrootdir"	# if it is set, it must exist
@@ -31,7 +31,7 @@ named_migrate()
 		f=${f##./}
 		case $f in
 		*/*)
-			d=$dst$(dirname $f)
+			d=$dst/$(dirname $f)
 			;;
 		*)	d=$dst
 			;;
@@ -114,7 +114,12 @@ named_precmd()
 		cmp -s /etc/localtime "${named_chrootdir}/etc/localtime" || \
 		    cp -p /etc/localtime "${named_chrootdir}/etc/localtime"
 	fi
-	ln -fs "${named_chrootdir}${pidfile}" ${pidfile}
+
+	local piddir="$(dirname "${pidfile}")"
+	mkdir -p "${named_chrootdir}${piddir}" "${piddir}"
+	chmod 755 "${named_chrootdir}${piddir}" "${piddir}"
+	chown named:named "${named_chrootdir}${piddir}" "${piddir}"
+	ln -fs "${named_chrootdir}${pidfile}" "${pidfile}"
 
 	#	Change run_rc_commands()'s internal copy of $named_flags
 	#

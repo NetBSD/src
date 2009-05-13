@@ -1,9 +1,9 @@
-/*	$NetBSD: auth-bozo.c,v 1.4 2008/03/03 22:15:08 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.4.10.1 2009/05/13 19:18:38 jym Exp $	*/
 
-/*	$eterna: auth-bozo.c,v 1.8 2008/03/03 03:36:11 mrg Exp $	*/
+/*	$eterna: auth-bozo.c,v 1.13 2009/04/18 07:38:56 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +15,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,6 +37,7 @@
 #include <sys/param.h>
 
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "bozohttpd.h"
@@ -53,7 +52,7 @@ static	ssize_t	base64_decode(const unsigned char *, size_t,
 /*
  * Check if HTTP authentication is required
  */
-void
+int
 auth_check(http_req *request, const char *file)
 {
 	struct stat sb;
@@ -69,19 +68,21 @@ auth_check(http_req *request, const char *file)
 	else {
 		*basename++ = '\0';
 			/* ensure basename(file) != AUTH_FILE */
-		check_special_files(request, basename);
+		if (check_special_files(request, basename))
+			return 1;
 	}
-	request->hr_authrealm = dir;
+	request->hr_authrealm = bozostrdup(dir);
 
 	snprintf(authfile, sizeof(authfile), "%s/%s", dir, AUTH_FILE);
 	if (stat(authfile, &sb) < 0) {
 		debug((DEBUG_NORMAL,
 		    "auth_check realm `%s' dir `%s' authfile `%s' missing",
 		    dir, file, authfile));
-		return;
+		return 0;
 	}
 	if ((fp = fopen(authfile, "r")) == NULL)
-		http_error(403, request, "no permission to open authfile");
+		return http_error(403, request, "no permission to open "
+						"authfile");
 	debug((DEBUG_NORMAL,
 	    "auth_check realm `%s' dir `%s' authfile `%s' open",
 	    dir, file, authfile));
@@ -102,11 +103,25 @@ auth_check(http_req *request, const char *file)
 			if (strcmp(crypt(request->hr_authpass, pass), pass))
 				break;
 			fclose(fp);
-			return;
+			return 0;
 		}
 	}
 	fclose(fp);
-	http_error(401, request, "bad auth");
+	return http_error(401, request, "bad auth");
+}
+
+void
+auth_cleanup(http_req *request)
+{
+
+	if (request == NULL)
+		return;
+	if (request->hr_authuser)
+		free(request->hr_authuser);
+	if (request->hr_authpass)
+		free(request->hr_authpass);
+	if (request->hr_authrealm)
+		free(request->hr_authrealm);
 }
 
 int
@@ -124,7 +139,7 @@ auth_check_headers(http_req *request, char *val, char *str, ssize_t len)
 			authbuf[alen] = '\0';
 		if (alen == -1 ||
 		    (pass = strchr(authbuf, ':')) == NULL)
-			http_error(400, request,
+			return http_error(400, request,
 			    "bad authorization field");
 		*pass++ = '\0';
 		request->hr_authuser = bozostrdup(authbuf);
@@ -138,11 +153,12 @@ auth_check_headers(http_req *request, char *val, char *str, ssize_t len)
 	return 0;
 }
 
-void
+int
 auth_check_special_files(http_req *request, const char *name)
 {
 	if (strcmp(name, AUTH_FILE) == 0)
-		http_error(403, request, "no permission to open authfile");
+		return http_error(403, request, "no permission to open authfile");
+	return 0;
 }
 
 void
@@ -160,7 +176,7 @@ auth_cgi_setenv(http_req *request, char ***curenvpp)
 {
 	if (request->hr_authuser && *request->hr_authuser) {
 		spsetenv("AUTH_TYPE", "Basic", (*curenvpp)++);
-		spsetenv("REMOTEUSER", request->hr_authuser, (*curenvpp)++);
+		spsetenv("REMOTE_USER", request->hr_authuser, (*curenvpp)++);
 	}
 }
 

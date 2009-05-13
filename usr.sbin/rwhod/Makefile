@@ -1,11 +1,10 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$NetBSD: Makefile,v 1.13 2007/05/28 12:06:41 tls Exp $
+#	$NetBSD: Makefile,v 1.13.20.1 2009/05/13 19:20:38 jym Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network server
 
-WARNS=	3
 PROG=	rwhod
 SRCS=	rwhod.c utmpentry.c
 MAN=	rwhod.8

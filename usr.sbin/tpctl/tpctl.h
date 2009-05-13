@@ -1,4 +1,4 @@
-/*	$NetBSD: tpctl.h,v 1.5 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: tpctl.h,v 1.5.6.1 2009/05/13 19:20:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 TAKEMRUA Shin
@@ -86,8 +86,8 @@ struct fb {
 };
 
 int init_data(struct tpctl_data *);
-int read_data(char *, struct tpctl_data *);
-int write_data(char *, struct tpctl_data *);
+int read_data(const char *, struct tpctl_data *);
+int write_data(const char *, struct tpctl_data *);
 void write_coords(FILE *, char *, struct wsmouse_calibcoords *);
 void free_data(struct tpctl_data *);
 int replace_data(struct tpctl_data *, char *, struct wsmouse_calibcoords *);

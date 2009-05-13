@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.38 2008/09/10 01:06:58 dyoung Exp $	*/
+/*	$NetBSD: show.c,v 1.38.4.1 2009/05/13 19:19:06 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.38 2008/09/10 01:06:58 dyoung Exp $");
+__RCSID("$NetBSD: show.c,v 1.38.4.1 2009/05/13 19:19:06 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -357,7 +357,7 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 	case AF_INET6:
 		cp = routename(sa, nm, flags);
 		/* make sure numeric address is not truncated */
-		if (strchr(cp, ':') != NULL && strlen(cp) > width)
+		if (strchr(cp, ':') != NULL && (int)strlen(cp) > width)
 			width = strlen(cp);
 		break;
 #endif /* INET6 */

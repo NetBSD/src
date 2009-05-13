@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.13 2008/11/12 12:35:54 ad Exp $
+.\" $NetBSD: secmodel.9,v 1.13.2.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 31, 2007
+.Dd May 10, 2009
 .Dt SECMODEL 9
 .Os
 .Sh NAME
@@ -174,8 +174,8 @@ the credentials scope,
 .Dv KAUTH_SCOPE_CRED ,
 is required.
 .It
-Optionally, internal data-structures used by the model. These must all
-be prefixed with "secmodel_\*[Lt]model\*[Gt]_".
+Optionally, internal data-structures used by the model.
+These must all be prefixed with "secmodel_\*[Lt]model\*[Gt]_".
 .It
 A set of listeners, attached to various scopes, used to enforce the policy
 the model intends to implement.
@@ -287,7 +287,7 @@ secmodel_jenna_start(void)
 	kauth_listen_scope(JENNA_ISCOPE_NETWORK,
 	    secmodel_bsd44_suser_network_cb, NULL);
 	kauth_listen_scope(JENNA_ISCOPE_NETWORK,
-	    secmodel_bsd44_securelevel_network_cb, NULL);
+	    secmodel_securelevel_network_cb, NULL);
 }
 
 /*
@@ -383,7 +383,7 @@ The following is a list of security models available in the default
 distribution.
 To choose, one should edit
 .Pa /usr/src/sys/conf/std .
-.Bl -tag
+.Bl -tag -width secmodel_overlay
 .It secmodel_bsd44
 Traditional
 .Nx

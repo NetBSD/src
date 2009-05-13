@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.36 2008/05/02 21:36:23 martin Exp $
+.\" $NetBSD: bus_space.9,v 1.36.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -779,12 +779,8 @@ and
 functions provide these capabilities.
 .Pp
 .Bl -ohang -compact
-.It Xo
-.Fo bus_space_alloc
-.Fa "space" "reg_start" "reg_end" "size"
-.Fa "alignment" "boundary" "flags" "addrp" "handlep"
-.Fc
-.Xc
+.It Fn bus_space_alloc "space" "reg_start" "reg_end" "size" "alignment" \
+"boundary" "flags" "addrp" "handlep"
 .Pp
 The
 .Fn bus_space_alloc

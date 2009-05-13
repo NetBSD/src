@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.10 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.10.8.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.10 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.10.8.1 2009/05/13 19:19:56 jym Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: mime_attach.c,v 1.10 2008/04/28 20:24:14 martin Exp $");
 #include <fcntl.h>
 #include <libgen.h>
 #include <magic.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +59,7 @@ __RCSID("$NetBSD: mime_attach.c,v 1.10 2008/04/28 20:24:14 martin Exp $");
 #include "mime_child.h"
 #endif
 #include "glob.h"
+#include "sig.h"
 
 #if 0
 /*
@@ -337,10 +337,11 @@ content_type_by_name(char *filename)
 	magic_t magic;
 	struct stat sb;
 
+#ifdef BROKEN_MAGIC
 	/*
-	 * libmagic produces annoying results on very short files.
-	 * The common case is with mime-encode-message defined and an
-	 * empty message body.
+	 * libmagic(3) produces annoying results on very short files.
+	 * The common case is MIME encoding an empty message body.
+	 * XXX - it would be better to fix libmagic(3)!
 	 *
 	 * Note: a 1-byte message body always consists of a newline,
 	 * so size determines all there.  However, 1-byte attachments
@@ -351,6 +352,7 @@ content_type_by_name(char *filename)
 		if (sb.st_size < 2 && S_ISREG(sb.st_mode)) {
 			FILE *fp;
 			int ch;
+
 			if (sb.st_size == 0 || filename == NULL ||
 			    (fp = Fopen(filename, "r")) == NULL)
 				return "text/plain";
@@ -362,18 +364,19 @@ content_type_by_name(char *filename)
 			    "text/plain" : "application/octet-stream";
 		}
 	}
+#endif
 	magic = magic_open(MAGIC_MIME);
 	if (magic == NULL) {
-		warn("magic_open: %s", magic_error(magic));
+		warnx("magic_open: %s", magic_error(magic));
 		return NULL;
 	}
 	if (magic_load(magic, NULL) != 0) {
-		warn("magic_load: %s", magic_error(magic));
+		warnx("magic_load: %s", magic_error(magic));
 		return NULL;
 	}
 	cp = magic_file(magic, filename);
 	if (cp == NULL) {
-		warn("magic_load: %s", magic_error(magic));
+		warnx("magic_load: %s", magic_error(magic));
 		return NULL;
 	}
 	if (filename &&
@@ -787,9 +790,15 @@ get_line(el_mode_t *em, const char *pr, const char *str, int i)
 	 * seems to handle it badly.
 	 */
 	(void)easprintf(&prompt, "#%-7d %s: ", i, pr);
-	line = my_getline(em, prompt, __UNCONST(str));
-	/* LINTED */
-	line = line ? savestr(line) : __UNCONST("");
+	line = my_gets(em, prompt, __UNCONST(str));
+	if (line != NULL) {
+		(void)strip_WSP(line);	/* strip trailing whitespace */
+		line = skip_WSP(line);	/* skip leading white space */
+		line = savestr(line);	/* XXX - do we need this? */
+	}
+	else {
+		line = __UNCONST("");
+	}
 	free(prompt);
 
 	return line;
@@ -800,8 +809,8 @@ sget_line(el_mode_t *em, const char *pr, const char **str, int i)
 {
 	char *line;
 	line = get_line(em, pr, *str, i);
-	if (strcmp(line, *str) != 0)
-		*str = savestr(line);
+	if (line != NULL && strcmp(line, *str) != 0)
+		*str = line;
 }
 
 static void
@@ -949,14 +958,14 @@ edit_attachlist(struct attachment *alist)
  * Hook used by the '~@' escape to attach files.
  */
 PUBLIC struct attachment*
-mime_attach_files(struct attachment *attach, char *linebuf)
+mime_attach_files(struct attachment * volatile attach, char *linebuf)
 {
 	struct attachment *ap;
 	char *argv[MAXARGC];
 	int argc;
 	int attach_num;
 
-	argc = getrawlist(linebuf, argv, sizeofarray(argv));
+	argc = getrawlist(linebuf, argv, (int)__arraycount(argv));
 	attach_num = 1;
 	for (ap = attach; ap && ap->a_flink; ap = ap->a_flink)
 			attach_num++;
@@ -1004,7 +1013,8 @@ mime_attach_optargs(struct name *optargs)
 		int i;
 
 		if (expand_optargs != NULL)
-			argc = getrawlist(np->n_name, argv, sizeofarray(argv));
+			argc = getrawlist(np->n_name,
+			    argv, (int)__arraycount(argv));
 		else {
 			if (np->n_name == '\0')
 				argc = 0;

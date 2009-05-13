@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.8 2004/10/30 15:28:45 dsl Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.8.34.1 2009/05/13 19:20:38 jym Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -78,7 +78,7 @@
 char   *expand_alias __P((char *, char *, char *, char *));
 pr_list	list_virtual_printers __P((void));
 char   *map_printer_name __P((char *));
-void	substitute __P((char *, char *, char *));
+void	substitute __P((char *, const char *, const char *));
 int	suspicious __P((char *));
 int	valid_pr __P((char *));
 
@@ -208,8 +208,8 @@ badspool:
 	return (PI_RES_OK);
 }
 psrstat
-pr_start2(system, pr, user, fname, opts, id)
-	char   *system;
+pr_start2(sys, pr, user, fname, opts, id)
+	char   *sys;
 	char   *pr;
 	char   *user;
 	char   *fname;
@@ -230,14 +230,14 @@ pr_start2(system, pr, user, fname, opts, id)
 #endif
 
 
-	if (suspicious(system) ||
+	if (suspicious(sys) ||
 	    suspicious(pr) ||
 	    suspicious(user) ||
 	    suspicious(fname))
 		return (PS_RES_FAIL);
 
 	(void) snprintf(pathname, sizeof(pathname), "%s/%s/%s", sp_name,
-	    system,
+	    sys,
 	    fname);
 
 	*id = &req_id[0];
@@ -336,7 +336,7 @@ pr_start2(system, pr, user, fname, opts, id)
 	/*
 	** Try to match to an aliased printer
 	*/
-	xcmd = expand_alias(pr, new_pathname, user, system);
+	xcmd = expand_alias(pr, new_pathname, user, sys);
 	if (!xcmd) {
 #ifdef	SVR4
 		/*
@@ -985,7 +985,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 	char   *cp1;
 	char   *cp2;
 	int     n;
-	pirstat stat = PI_RES_NO_SUCH_PRINTER;
+	pirstat pstat = PI_RES_NO_SUCH_PRINTER;
 
 	/* assume the worst */
 	*avail = FALSE;
@@ -1014,7 +1014,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 ** We have a match. The only failure now is PI_RES_FAIL if
 ** lpstat output cannot be decoded
 */
-		stat = PI_RES_FAIL;
+		pstat = PI_RES_FAIL;
 /*
 ** The next four lines are usually if the form
 **
@@ -1060,11 +1060,11 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 			if (*needs_operator || strstr(buff2, "waiting") != NULL)
 				strlcpy(status, cp, sizeof(status));
 		}
-		stat = PI_RES_OK;
+		pstat = PI_RES_OK;
 		break;
 	}
 	(void) pclose(p);
-	return (stat);
+	return (pstat);
 }
 #endif				/* SVR4 */
 
@@ -1161,7 +1161,7 @@ pr_cancel(pr, user, id)
 	char    resbuf[256];
 	FILE   *fd;
 	int     i;
-	pcrstat stat = PC_RES_NO_SUCH_JOB;
+	pcrstat pstat = PC_RES_NO_SUCH_JOB;
 
 	pr = map_printer_name(pr);
 	if (pr == NULL || suspicious(pr))
@@ -1179,15 +1179,15 @@ pr_cancel(pr, user, id)
 		if (i)
 			resbuf[i - 1] = '\0';	/* trim NL */
 		if (strstr(resbuf, "dequeued") != NULL)
-			stat = PC_RES_OK;
+			pstat = PC_RES_OK;
 		if (strstr(resbuf, "unknown printer") != NULL)
-			stat = PC_RES_NO_SUCH_PRINTER;
+			pstat = PC_RES_NO_SUCH_PRINTER;
 		if (strstr(resbuf, "Permission denied") != NULL)
-			stat = PC_RES_NOT_OWNER;
+			pstat = PC_RES_NOT_OWNER;
 	}
 	if (su_pclose(fd) == 255)
 		msg_out("rpc.pcnfsd: su_pclose alert");
-	return (stat);
+	return (pstat);
 }
 #endif				/* SVR4 */
 
@@ -1317,8 +1317,8 @@ map_printer_name(printer)
 void
 substitute(string, token, data)
 	char   *string;
-	char   *token;
-	char   *data;
+	const char   *token;
+	const char   *data;
 {
 	char    temp[512];
 	char   *c;

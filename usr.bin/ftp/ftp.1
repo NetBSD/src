@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.127 2008/09/30 03:41:53 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.127.6.1 2009/05/13 19:19:50 jym Exp $
 .\"
 .\" Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -282,14 +282,7 @@ Uses
 as the local IP address for all connections.
 .It Fl t
 Enables packet tracing.
-.It Xo
-.Fl T
-.Sm off
-.Ar direction ,
-.Ar maximum
-.Op , Ar increment
-.Sm on
-.Xc
+.It Fl T Ar direction Ns , Ns Ar maximum Ns Oo , Ns Ar increment Oc
 Set the maximum transfer rate for
 .Ar direction
 to
@@ -493,7 +486,8 @@ Toggle the use of the extended
 .Dv EPSV
 and
 .Dv EPRT
-commands on all IP, IPv4, and IPv6 connections respectively.  First try
+commands on all IP, IPv4, and IPv6 connections respectively.
+First try
 .Dv EPSV /
 .Dv EPRT ,
 and then
@@ -1153,10 +1147,7 @@ A synonym for
 The arguments specified are sent, verbatim, to the remote
 .Tn FTP
 server.
-.It Xo
-.Ic rate Ar direction
-.Op Ar maximum Op Ar increment
-.Xc
+.It Ic rate Ar direction Oo Ar maximum Oo Ar increment Oc Oc
 Throttle the maximum transfer rate to
 .Ar maximum
 bytes/second.
@@ -1179,7 +1170,6 @@ Outgoing transfers.
 can be modified on the fly by
 .Ar increment
 bytes (default: 1024) each time a given signal is received:
-.B
 .Bl -tag -width "SIGUSR1" -offset indent
 .It Dv SIGUSR1
 Increment
@@ -1441,10 +1431,7 @@ for more information.
 .It Ic usage Ar command
 Print the usage message for
 .Ar command .
-.It Xo
-.Ic user Ar user-name
-.Op Ar password Op Ar account
-.Xc
+.It Ic user Ar user-name Oo Ar password Oo Ar account Oc Oc
 Identify yourself to the remote
 .Tn FTP
 server.
@@ -1546,14 +1533,8 @@ on the command line.
 The following formats are valid syntax for an auto-fetch element:
 .Bl -tag -width "FOO "
 .\" [user@]host:[path][/]
-.It Xo
-.Sm off
-.Op Ar user Li \&@
-.Ar host Li \&:
-.Op Ar path
-.Op Li /
-.Sm on
-.Xc
+.It Oo Ar user Ns Li \&@ Oc Ns Ar host Ns Li \&: Ns Oo Ar path Oc \
+Ns Oo Li / Oc
 .Dq Classic
 .Tn FTP
 format.
@@ -1578,18 +1559,9 @@ in the current directory.
 Otherwise, the full remote name is used as the local name,
 relative to the local root directory.
 .\" ftp://[user[:password]@]host[:port]/path[/][;type=X]
-.It Xo
-.Sm off
-.Li ftp://
-.Oo Ar user
-.Op Li \&: Ar password
-.Li \&@ Oc
-.Ar host Oo Li \&: Ar port Oc
-.Li / Ar path
-.Op Li /
-.Op Li ;type= Ar X
-.Sm on
-.Xc
+.It Li ftp:// Ns Oo Ar user Ns Oo Ns Li \&: Ns Ar password Oc Ns Li \&@ Oc \
+Ns Ar host Ns Oo Li \&: Ns Ar port Oc Ns Li / Ns Ar path Ns Oo Li / Oc \
+Ns Oo Li ;type= Ns Ar X Oc
 An
 .Tn FTP
 URL, retrieved using the
@@ -1760,16 +1732,8 @@ intermediate directories that is used in the equivalent of a
 command.
 .El
 .\" http://[user[:password]@]host[:port]/path
-.It Xo
-.Sm off
-.Li http://
-.Oo Ar user
-.Op Li \&: Ar password
-.Li \&@ Oc
-.Ar host Oo Li \&: Ar port Oc
-.Li / Ar path
-.Sm on
-.Xc
+.It Li http:// Ns Oo Ar user Ns Oo Li \&: Ns Ar password Oc Ns Li \&@ Oc \
+Ns Ar host Ns Oo Li \&: Ns Ar port Oc Ns Li / Ns Ar path
 An
 .Tn HTTP
 URL, retrieved using the
@@ -1790,21 +1754,12 @@ and
 .Sq password )
 is in the URL, use them for the first attempt to authenticate.
 .\" file:///path
-.It Xo
-.Sm off
-.Li file:/// Ar path
-.Sm on
-.Xc
+.It Li file:/// Ns Ar path
 A local URL, copied from
 .Pa / Ns Ar path
 on the local host.
 .\" about:
-.It Xo
-.Sm off
-.Li about:
-.Ar topic
-.Sm on
-.Xc
+.It Li about: Ns Ar topic
 Display information regarding
 .Ar topic ;
 no file is retrieved for this auto-fetched element.
@@ -2190,14 +2145,7 @@ information:
 .It Li \&%/
 The current remote working directory.
 .\" %c[[0]n], %.[[0]n]
-.It Xo
-.Sm off
-.Li \&%c
-.Op Oo Li 0 Oc Ar n Ns ,
-.Li \&%.
-.Op Oo Li 0 Oc Ar n
-.Sm on
-.Xc
+.It \&%c Ns Oo Oo Li 0 Oc Ns Ar n Oc , Ns Li \&%. Ns Oo Oo Li 0 Oc Ns Ar n Oc
 The trailing component of the current remote working directory, or
 .Em n
 trailing components if a digit

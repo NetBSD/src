@@ -1,4 +1,4 @@
-/*	$NetBSD: svhlabel.c,v 1.4 2007/06/30 02:05:27 rumble Exp $	*/
+/*	$NetBSD: svhlabel.c,v 1.4.22.1 2009/05/13 19:19:06 jym Exp $	*/
 
 /*
  * Copyright (C) 2007 Stephen M. Rumble.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: svhlabel.c,v 1.4 2007/06/30 02:05:27 rumble Exp $");
+__RCSID("$NetBSD: svhlabel.c,v 1.4.22.1 2009/05/13 19:19:06 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -153,7 +153,7 @@ getparts(int sd, int verbose)
 			break;
 
 		case SGI_PTYPE_VOLUME:
-			if (label.d_secperunit != vh->partitions[i].blocks)
+			if (label.d_secperunit != (uint32_t)vh->partitions[i].blocks)
 				changed++;
 			label.d_secperunit = vh->partitions[i].blocks; 
 			continue;

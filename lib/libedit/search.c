@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.20 2004/11/04 01:16:03 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.20.34.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.20 2004/11/04 01:16:03 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.20.34.1 2009/05/13 19:18:29 jym Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -209,7 +209,7 @@ ce_inc_search(EditLine *el, int dir)
 	el_action_t ret = CC_NORM;
 
 	int ohisteventno = el->el_history.eventno;
-	int oldpatlen = el->el_search.patlen;
+	size_t oldpatlen = el->el_search.patlen;
 	int newdir = dir;
 	int done, redo;
 

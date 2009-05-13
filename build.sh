@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.200 2009/01/03 08:23:00 apb Exp $
+#	$NetBSD: build.sh,v 1.200.2.1 2009/05/13 19:15:48 jym Exp $
 #
-# Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -163,14 +163,25 @@ initdefaults()
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
-	# Find information about the build platform.  Note that "uname -p"
-	# is not part of POSIX, but NetBSD's uname -p prints MACHINE_ARCH,
-	# while uname -m prints MACHINE.
+	# Find information about the build platform.  This should be
+	# kept in sync with _HOST_OSNAME, _HOST_OSREL, and _HOST_ARCH
+	# variables in share/mk/bsd.sys.mk.
+	#
+	# Note that "uname -p" is not part of POSIX, but we want uname_p
+	# to be set to the host MACHINE_ARCH, if possible.  On systems
+	# where "uname -p" fails, prints "unknown", or prints a string
+	# that does not look like an identifier, fall back to using the
+	# output from "uname -m" instead.
 	#
 	uname_s=$(uname -s 2>/dev/null)
 	uname_r=$(uname -r 2>/dev/null)
 	uname_m=$(uname -m 2>/dev/null)
-	uname_p=$(uname -p 2>/dev/null || uname -m 2>/dev/null)
+	uname_p=$(uname -p 2>/dev/null || echo "unknown")
+	case "${uname_p}" in
+	''|unknown|*[^-_A-Za-z0-9]*) uname_p="${uname_m}" ;;
+	esac
+
+	id_u=$(id -u 2>/dev/null || /usr/xpg4/bin/id -u 2>/dev/null)
 
 	# If $PWD is a valid name of the current directory, POSIX mandates
 	# that pwd return it by default which causes problems in the
@@ -259,6 +270,10 @@ initdefaults()
 	# Set the BUILDSEED to NetBSD-"N"
 	#
 	setmakeenv BUILDSEED "NetBSD-$(${HOST_SH} ${TOP}/sys/conf/osrelease.sh -m)"
+
+	# Set MKARZERO to "yes"
+	#
+	setmakeenv MKARZERO "yes"
 
 	# Set various environment variables to known defaults,
 	# to minimize (cross-)build problems observed "in the field".
@@ -596,7 +611,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
     -w wrapper  Create ${toolprefix}make script as wrapper.
                 [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
     -X x11src   Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
-    -x          Set MKX11=yes; build X11R6 from X11SRCDIR
+    -x          Set MKX11=yes; build X11 from X11SRCDIR
     -Z v        Unset ("zap") variable \`v'.
 
 _usage_
@@ -1107,7 +1122,7 @@ validatemakeparams()
 	fi
 	if ${do_build} || ${do_distribution} || ${do_release}; then
 		if ! ${do_expertmode} && \
-		    [ "$(id -u 2>/dev/null)" -ne 0 ] && \
+		    [ "$id_u" -ne 0 ] && \
 		    [ "${MKUNPRIVED}" = "no" ] ; then
 			bomb "-U or -E must be set for build as an unprivileged user."
 		fi
@@ -1118,7 +1133,7 @@ validatemakeparams()
 
 	# Install as non-root is a bad idea.
 	#
-	if ${do_install} && [ "$(id -u 2>/dev/null)" -ne 0 ] ; then
+	if ${do_install} && [ "$id_u" -ne 0 ] ; then
 		if ${do_expertmode}; then
 			warning "Will install as an unprivileged user."
 		else
@@ -1202,7 +1217,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.200 2009/01/03 08:23:00 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.200.2.1 2009/05/13 19:15:48 jym Exp $
 # with these arguments: ${_args}
 #
 
@@ -1231,23 +1246,30 @@ EOF
 	statusmsg "Updated ${makewrapper}"
 }
 
+make_in_dir()
+{
+	dir="$1"
+	op="$2"
+	${runcmd} cd "${dir}" ||
+	    bomb "Failed to cd to \"${dir}\""
+	${runcmd} "${makewrapper}" ${parallel} ${op} ||
+	    bomb "Failed to make ${op} in \"${dir}\""
+	${runcmd} cd "${TOP}" ||
+	    bomb "Failed to cd back to \"${TOP}\""
+}
+
 buildtools()
 {
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		${runcmd} "${makewrapper}" ${parallel} obj-tools ||
 		    bomb "Failed to make obj-tools"
 	fi
-	${runcmd} cd tools
 	if [ "${MKUPDATE}" = "no" ]; then
-		${runcmd} "${makewrapper}" ${parallel} cleandir ||
-		    bomb "Failed to make cleandir tools"
+		make_in_dir tools cleandir
 	fi
-	${runcmd} "${makewrapper}" ${parallel} dependall ||
-	    bomb "Failed to make dependall tools"
-	${runcmd} "${makewrapper}" ${parallel} install ||
-	    bomb "Failed to make install tools"
+	make_in_dir tools dependall
+	make_in_dir tools install
 	statusmsg "Tools built to ${TOOLDIR}"
-	${runcmd} cd "${TOP}"
 }
 
 getkernelconf()
@@ -1260,10 +1282,7 @@ getkernelconf()
 		#
 		KERNSRCDIR="$(getmakevar KERNSRCDIR)"
 		KERNARCHDIR="$(getmakevar KERNARCHDIR)"
-		${runcmd} cd "${KERNSRCDIR}/${KERNARCHDIR}/compile"
-		${runcmd} "${makewrapper}" ${parallel} obj ||
-		    bomb "Failed to make obj in ${KERNSRCDIR}/${KERNARCHDIR}/compile"
-		${runcmd} cd "${TOP}"
+		make_in_dir "${KERNSRCDIR}/${KERNARCHDIR}/compile" obj
 	fi
 	KERNCONFDIR="$(getmakevar KERNCONFDIR)"
 	KERNOBJDIR="$(getmakevar KERNOBJDIR)"
@@ -1298,22 +1317,15 @@ buildkernel()
 	${runcmd} mkdir -p "${kernelbuildpath}" ||
 	    bomb "Cannot mkdir: ${kernelbuildpath}"
 	if [ "${MKUPDATE}" = "no" ]; then
-		${runcmd} cd "${kernelbuildpath}"
-		${runcmd} "${makewrapper}" ${parallel} cleandir ||
-		    bomb "Failed to make cleandir in ${kernelbuildpath}"
-		${runcmd} cd "${TOP}"
+		make_in_dir "${kernelbuildpath}" cleandir
 	fi
 	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] \
 	|| bomb "${TOOLDIR}/bin/${toolprefix}config does not exist. You need to \"$0 tools\" first."
 	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernelbuildpath}" \
 		-s "${TOP}/sys" "${kernelconfpath}" ||
 	    bomb "${toolprefix}config failed for ${kernelconf}"
-	${runcmd} cd "${kernelbuildpath}"
-	${runcmd} "${makewrapper}" ${parallel} depend ||
-	    bomb "Failed to make depend in ${kernelbuildpath}"
-	${runcmd} "${makewrapper}" ${parallel} all ||
-	    bomb "Failed to make all in ${kernelbuildpath}"
-	${runcmd} cd "${TOP}"
+	make_in_dir "${kernelbuildpath}" depend
+	make_in_dir "${kernelbuildpath}" all
 
 	if [ "${runcmd}" != "echo" ]; then
 		statusmsg "Kernels built from ${kernelconf}:"

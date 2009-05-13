@@ -2,9 +2,10 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_create 1.3 89/06/28 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\" $NetBSD: rpc_svc_create.3,v 1.8 2003/06/27 15:33:25 wiz Exp $
+.\" $NetBSD: rpc_svc_create.3,v 1.8.42.1 2009/05/13 19:18:26 jym Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CREATE 3
+.Os
 .Sh NAME
 .Nm rpc_svc_create ,
 .Nm svc_control ,
@@ -174,8 +175,7 @@ The file descriptor
 should be open and bound.
 The server is not registered with
 .Xr rpcbind 8 .
-.IP
-Warning:
+.Em Warning :
 since connectionless-based RPC
 messages can only hold limited amount of encoded data,
 this transport cannot be used for procedures
@@ -211,8 +211,7 @@ without any kernel and networking interference.
 This routine returns
 .Dv NULL
 if it fails, and an error message is logged.
-.IP
-Note:
+.Em Note :
 .Fn svc_run
 should not be called when the raw interface is being used.
 .Pp

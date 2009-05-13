@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.22 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: xstr.c,v 1.22.6.1 2009/05/13 19:20:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,11 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.22 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.22.6.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <signal.h>
 #include <errno.h>
 #include <unistd.h>
@@ -79,8 +79,9 @@ static void	usage(void);
 
 static off_t	tellpt;
 static off_t	mesgpt;
-static char	*strings =	"strings";
-static char	*array =	0;
+static char	stringtmpfile[MAXPATHLEN];
+static const char *strings =	"strings";
+static const char *array =	0;
 static int	cflg;
 static int	vflg;
 static int	readstd;
@@ -132,8 +133,10 @@ main(int argc, char *argv[])
 	else {
 		int	fd;
 
-		strings = strdup(_PATH_TMP);
-		fd = mkstemp(strings);
+		snprintf(stringtmpfile, sizeof(stringtmpfile),
+		    "%s%s.XXXXXX", _PATH_TMP, "xstr");
+		strings = stringtmpfile;
+		fd = mkstemp(stringtmpfile);
 		if (fd == -1)
 			err(1, "mkstemp failed");
 		close(fd);
@@ -261,7 +264,7 @@ yankstr(char **cpp)
 	char *cp = *cpp;
 	int c, ch;
 	char *dbuf, *dp, *edp;
-	char *tp;
+	const char *tp;
 	off_t hash;
 	size_t bsiz = BUFSIZ;
 

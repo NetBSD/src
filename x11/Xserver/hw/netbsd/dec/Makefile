@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.40.1 2009/05/13 19:20:46 jym Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -36,7 +36,7 @@ SRCS+=	decCfb.c
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/dec/mfb
 SRCS+=	decMfb.c
 
-.if ${MACHINE} == "alpha"
+.if ${MACHINE_ARCH} == "alpha"
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/dec/tga
 SRCS+=	decTGA.c tgagc.c tgabitblt.c tgablt.c tgawindow.c tgasimpleblt.c \
 	tga32gc.c tga32bitblt.c tga32blt.c tga32window.c

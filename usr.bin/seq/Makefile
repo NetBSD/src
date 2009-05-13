@@ -1,6 +1,5 @@
-#       $NetBSD: Makefile,v 1.2 2006/01/07 07:12:27 garbled Exp $
+#       $NetBSD: Makefile,v 1.2.30.1 2009/05/13 19:20:05 jym Exp $
 
-WARNS=	3
 PROG=	seq
 DPADD=	${LIBMATH}
 LDADD=	-lm

@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.34 2008/09/06 12:29:57 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.34.6.1 2009/05/13 19:20:34 jym Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -41,6 +41,11 @@ extern unsigned int max_reads;
  * too many hoops to be compatible with all versions.
  */
 #define SFTP_PROTOVERSION 3
+
+/* extensions, held in psshfs_ctx extensions */
+#define SFTP_EXT_POSIX_RENAME	0x01
+#define SFTP_EXT_STATVFS	0x02
+#define SFTP_EXT_FSTATVFS	0x04
 
 #define DEFAULTREFRESH 30
 #define REFRESHTIMEOUT(pctx, t) \
@@ -154,6 +159,8 @@ struct psshfs_ctx {
 	char **sshargs;
 
 	int protover;
+	int extensions;
+
 	uint32_t nextreq;
 
 	struct puffs_framebuf *curpb;

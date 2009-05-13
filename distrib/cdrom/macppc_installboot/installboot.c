@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.3 2008/05/14 13:29:27 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3.4.1 2009/05/13 19:17:40 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -23,6 +23,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <err.h>
 #include <fcntl.h>

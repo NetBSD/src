@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.4 1999/08/17 12:38:09 simonb Exp $	*/
+/*	$NetBSD: dl.c,v 1.4.50.1 2009/05/13 19:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dl.c,v 1.4 1999/08/17 12:38:09 simonb Exp $");
+__RCSID("$NetBSD: dl.c,v 1.4.50.1 2009/05/13 19:20:29 jym Exp $");
 #endif
 
 #include "os.h"
@@ -46,7 +46,7 @@ mopDumpDL(fd, pkt, trans)
 	u_char 	*pkt;
 	int	 trans;
 {
-	int	i,index = 0;
+	int	i,idx = 0;
 	u_int32_t tmpl;
 	u_char	tmpc,c,program[257],code,*ucp;
 	u_short	len,tmps,moplen;
@@ -55,23 +55,23 @@ mopDumpDL(fd, pkt, trans)
 
 	switch (trans) {
 	case TRANS_8023:
-		index = 22;
+		idx = 22;
 		moplen = len - 8;
 		break;
 	default:
-		index = 16;
+		idx = 16;
 		moplen = len;
 	}
-	code = mopGetChar(pkt,&index);
+	code = mopGetChar(pkt,&idx);
 	
 	switch (code) {
 	case MOP_K_CODE_MLT:
 		
-		tmpc = mopGetChar(pkt,&index);	/* Load Number */
+		tmpc = mopGetChar(pkt,&idx);	/* Load Number */
 		(void)fprintf(fd,"Load Number  :   %02x\n",tmpc);
 		
 		if (moplen > 6) {
-			tmpl = mopGetLong(pkt,&index);/* Load Address */
+			tmpl = mopGetLong(pkt,&idx);/* Load Address */
 			(void)fprintf(fd,"Load Address : %08x\n", tmpl);
 		}
 		
@@ -90,7 +90,7 @@ mopDumpDL(fd, pkt, trans)
 				}
 				
 				(void)fprintf(fd, "%02x ",
-					      mopGetChar(pkt,&index));
+					      mopGetChar(pkt,&idx));
 				if ((i % 16) == 15)
 					(void)fprintf(fd,"\n");
 			}
@@ -98,11 +98,11 @@ mopDumpDL(fd, pkt, trans)
 			if ((i % 16) != 15)
 				(void)fprintf(fd,"\n");
 #else
-			index = index + moplen - 10;
+			idx = idx + moplen - 10;
 #endif
 		}
 		
-		tmpl = mopGetLong(pkt,&index);	/* Load Address */
+		tmpl = mopGetLong(pkt,&idx);	/* Load Address */
 		(void)fprintf(fd,"Xfer Address : %08x\n", tmpl);
 		
 		break;
@@ -113,10 +113,10 @@ mopDumpDL(fd, pkt, trans)
 		break;
 	case MOP_K_CODE_MLD:
 		
-		tmpc = mopGetChar(pkt,&index);	/* Load Number */
+		tmpc = mopGetChar(pkt,&idx);	/* Load Number */
 		(void)fprintf(fd,"Load Number  :   %02x\n",tmpc);
 		
-		tmpl = mopGetLong(pkt,&index);	/* Load Address */
+		tmpl = mopGetLong(pkt,&idx);	/* Load Address */
 		(void)fprintf(fd,"Load Address : %08x\n", tmpl);
 		
 		if (moplen > 6) {
@@ -133,7 +133,7 @@ mopDumpDL(fd, pkt, trans)
 					}
 				}
 				(void)fprintf(fd,"%02x ",
-					      mopGetChar(pkt,&index));
+					      mopGetChar(pkt,&idx));
 				if ((i % 16) == 15)
 					(void)fprintf(fd,"\n");
 			}
@@ -141,7 +141,7 @@ mopDumpDL(fd, pkt, trans)
 			if ((i % 16) != 15)
 				(void)fprintf(fd,"\n");
 #else
-			index = index + moplen - 6;
+			idx = idx + moplen - 6;
 #endif
 		}
 		
@@ -153,48 +153,48 @@ mopDumpDL(fd, pkt, trans)
 		break;
 	case MOP_K_CODE_RMD:
 
-		tmpl = mopGetLong(pkt,&index);	/* Memory Address */
+		tmpl = mopGetLong(pkt,&idx);	/* Memory Address */
 		(void)fprintf(fd,"Mem Address  : %08x\n", tmpl);
 		
-		tmps = mopGetShort(pkt,&index);	/* Count */
+		tmps = mopGetShort(pkt,&idx);	/* Count */
 		(void)fprintf(fd,"Count        : %04x (%d)\n",tmps,tmps);
 		
 		break;
 	case MOP_K_CODE_RPR:
 		
-		tmpc = mopGetChar(pkt,&index);	/* Device Type */
+		tmpc = mopGetChar(pkt,&idx);	/* Device Type */
 		(void)fprintf(fd, "Device Type  :   %02x ",tmpc);
 		mopPrintDevice(fd, tmpc); (void)fprintf(fd, "\n");
 		
-		tmpc = mopGetChar(pkt,&index);	/* Format Version */
+		tmpc = mopGetChar(pkt,&idx);	/* Format Version */
 		(void)fprintf(fd,"Format       :   %02x\n",tmpc);
 		
-		tmpc = mopGetChar(pkt,&index);	/* Program Type */
+		tmpc = mopGetChar(pkt,&idx);	/* Program Type */
 		(void)fprintf(fd,"Program Type :   %02x ",tmpc);
 		mopPrintPGTY(fd, tmpc); (void)fprintf(fd, "\n");
 		
 		program[0] = 0;
-		tmpc = mopGetChar(pkt,&index);	/* Software ID Len */
+		tmpc = mopGetChar(pkt,&idx);	/* Software ID Len */
 		for (i = 0; i < tmpc; i++) {
-			program[i] = mopGetChar(pkt,&index);
+			program[i] = mopGetChar(pkt,&idx);
 			program[i+1] = '\0';
 		}
 		
 		(void)fprintf(fd,"Software     :   %02x '%s'\n",tmpc,program);
 		
-		tmpc = mopGetChar(pkt,&index);	/* Processor */
+		tmpc = mopGetChar(pkt,&idx);	/* Processor */
 		(void)fprintf(fd,"Processor    :   %02x ",tmpc);
 		mopPrintBPTY(fd, tmpc); (void)fprintf(fd, "\n");
 		
-		mopPrintInfo(fd, pkt, &index, moplen, code, trans);
+		mopPrintInfo(fd, pkt, &idx, moplen, code, trans);
 		
 		break;
 	case MOP_K_CODE_RML:
 		
-		tmpc = mopGetChar(pkt,&index);	/* Load Number */
+		tmpc = mopGetChar(pkt,&idx);	/* Load Number */
 		(void)fprintf(fd,"Load Number  :   %02x\n",tmpc);
 		
-		tmpc = mopGetChar(pkt,&index);	/* Error */
+		tmpc = mopGetChar(pkt,&idx);	/* Error */
 		(void)fprintf(fd,"Error        :   %02x (",tmpc);
 		if ((tmpc == 0)) {
 			(void)fprintf(fd,"no error)\n");
@@ -205,25 +205,25 @@ mopDumpDL(fd, pkt, trans)
 		break;
 	case MOP_K_CODE_RDS:
 		
-		tmpc = mopGetChar(pkt,&index);	/* Device Type */
+		tmpc = mopGetChar(pkt,&idx);	/* Device Type */
 		(void)fprintf(fd, "Device Type  :   %02x ",tmpc);
 		mopPrintDevice(fd, tmpc); (void)fprintf(fd, "\n");
 		
-		tmpc = mopGetChar(pkt,&index);	/* Format Version */
+		tmpc = mopGetChar(pkt,&idx);	/* Format Version */
 		(void)fprintf(fd,"Format       :   %02x\n",tmpc);
 		
-		tmpl = mopGetLong(pkt,&index);	/* Memory Size */
+		tmpl = mopGetLong(pkt,&idx);	/* Memory Size */
 		(void)fprintf(fd,"Memory Size  : %08x\n", tmpl);
 		
-		tmpc = mopGetChar(pkt,&index);	/* Bits */
+		tmpc = mopGetChar(pkt,&idx);	/* Bits */
 		(void)fprintf(fd,"Bits         :   %02x\n",tmpc);
 		
-		mopPrintInfo(fd, pkt, &index, moplen, code, trans);
+		mopPrintInfo(fd, pkt, &idx, moplen, code, trans);
 		
 		break;
 	case MOP_K_CODE_MDD:
 		
-		tmpl = mopGetLong(pkt,&index);	/* Memory Address */
+		tmpl = mopGetLong(pkt,&idx);	/* Memory Address */
 		(void)fprintf(fd,"Mem Address  : %08x\n", tmpl);
 		
 		if (moplen > 5) {
@@ -240,33 +240,33 @@ mopDumpDL(fd, pkt, trans)
 				        }
 				}
 				(void)fprintf(fd,"%02x ",
-					      mopGetChar(pkt,&index));
+					      mopGetChar(pkt,&idx));
 				if ((i % 16) == 15)
 					(void)fprintf(fd,"\n");
 			}
 			if ((i % 16) != 15)
 				(void)fprintf(fd,"\n");
 #else
-			index = index + moplen - 5;
+			idx = idx + moplen - 5;
 #endif
 		}
 		
 		break;
 	case MOP_K_CODE_PLT:
 		
-		tmpc = mopGetChar(pkt,&index);	/* Load Number */
+		tmpc = mopGetChar(pkt,&idx);	/* Load Number */
 		(void)fprintf(fd,"Load Number  :   %02x\n",tmpc);
 		
-		tmpc = mopGetChar(pkt,&index);	/* Parameter Type */
+		tmpc = mopGetChar(pkt,&idx);	/* Parameter Type */
 		while (tmpc != MOP_K_PLTP_END) {
-			c = mopGetChar(pkt,&index);	/* Parameter Length */
+			c = mopGetChar(pkt,&idx);	/* Parameter Length */
 			switch(tmpc) {
 			case MOP_K_PLTP_TSN:		/* Target Name */
 				(void)fprintf(fd,"Target Name  :   %02x '",
 					      tmpc);
 				for (i = 0; i < ((int) c); i++) {
 					(void)fprintf(fd,"%c",
-						    mopGetChar(pkt,&index));
+						    mopGetChar(pkt,&idx));
 				}
 				(void)fprintf(fd,"'\n");
 				break;
@@ -274,7 +274,7 @@ mopDumpDL(fd, pkt, trans)
 				(void)fprintf(fd,"Target Addr  :   %02x ",c);
 				for (i = 0; i < ((int) c); i++) {
 					(void)fprintf(fd,"%02x ",
-						    mopGetChar(pkt,&index));
+						    mopGetChar(pkt,&idx));
 				}
 				(void)fprintf(fd,"\n");
 				break;
@@ -283,7 +283,7 @@ mopDumpDL(fd, pkt, trans)
 					      tmpc);
 				for (i = 0; i < ((int) c); i++) {
 					(void)fprintf(fd,"%c",
-						    mopGetChar(pkt,&index));
+						    mopGetChar(pkt,&idx));
 				}
 				(void)fprintf(fd,"'\n");
 				break;
@@ -291,12 +291,12 @@ mopDumpDL(fd, pkt, trans)
 				(void)fprintf(fd,"Host Addr    :   %02x ",c);
 				for (i = 0; i < ((int) c); i++) {
 					(void)fprintf(fd,"%02x ",
-						    mopGetChar(pkt,&index));
+						    mopGetChar(pkt,&idx));
 				}
 				(void)fprintf(fd,"\n");
 				break;
 			case MOP_K_PLTP_HST:		/* Host Time */
-				ucp = pkt + index; index = index + 10;
+				ucp = pkt + idx; idx = idx + 10;
 				(void)fprintf(fd,"Host Time    : ");
 				mopPrintTime(fd, ucp);
 				(void)fprintf(fd,"\n");
@@ -304,10 +304,10 @@ mopDumpDL(fd, pkt, trans)
 			default:
 				break;
 			}
-			tmpc = mopGetChar(pkt,&index);/* Parameter Type */
+			tmpc = mopGetChar(pkt,&idx);/* Parameter Type */
 		}
 		
-		tmpl = mopGetLong(pkt,&index);	/* Transfer Address */
+		tmpl = mopGetLong(pkt,&idx);	/* Transfer Address */
 		(void)fprintf(fd,"Transfer Addr: %08x\n", tmpl);
 		
 		break;

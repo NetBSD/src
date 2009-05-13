@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.4 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: bthset.c,v 1.4.6.1 2009/05/13 19:19:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,19 +33,20 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: bthset.c,v 1.4 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: bthset.c,v 1.4.6.1 2009/05/13 19:19:44 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+
 #include <assert.h>
 #include <bluetooth.h>
 #include <err.h>
 #include <event.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <sdp.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,10 +93,55 @@ int verbose;		/* copy to stdout */
 int mx;			/* mixer fd */
 int rf;			/* rfcomm connection fd */
 int ag;			/* rfcomm gateway fd */
-void *ss;		/* sdp handle */
+sdp_session_t ss;	/* SDP server session */
 
 char *command;		/* answer command */
 char *pidfile;		/* PID file name */
+
+/* Headset Audio Gateway service record */
+uint8_t hset_data[] = {
+	0x09, 0x00, 0x00,	//  uint16	ServiceRecordHandle
+	0x0a, 0x00, 0x00, 0x00,	//  uint32	0x00000000
+	0x00,
+
+	0x09, 0x00, 0x01,	//  uint16	ServiceClassIDList
+	0x35, 0x06,		//  seq8(6)
+	0x19, 0x11, 0x12,	//   uuid16	HeadsetAudioGateway
+	0x19, 0x12, 0x03,	//   uuid16	GenericAudio
+
+	0x09, 0x00, 0x04,	//  uint16	ProtocolDescriptorList
+	0x35, 0x0c,		//  seq8(12)
+	0x35, 0x03,		//   seq8(3)
+	0x19, 0x01, 0x00,	//    uuid16	L2CAP
+	0x35, 0x05,		//   seq8(5)
+	0x19, 0x00, 0x03,	//    uuid16	RFCOMM
+	0x08, 0x00,		//    uint8	%hset_channel%
+
+	0x09, 0x00, 0x05,	//  uint16	BrowseGroupList
+	0x35, 0x03,		//  seq8(3)
+	0x19, 0x10, 0x02,	//   uuid16	PublicBrowseGroup
+
+	0x09, 0x00, 0x06,	//  uint16	LanguageBaseAttributeIDList
+	0x35, 0x09,		//  seq8(9)
+	0x09, 0x65, 0x6e,	//   uint16	0x656e	("en")
+	0x09, 0x00, 0x6a,	//   uint16	106	(UTF-8)
+	0x09, 0x01, 0x00,	//   uint16	PrimaryLanguageBaseID
+
+	0x09, 0x00, 0x09,	//  uint16	BluetoothProfileDescriptorList
+	0x35, 0x08,		//  seq8(8)
+	0x35, 0x06,		//   seq8(6)
+	0x19, 0x11, 0x08,	//    uuid16	Headset
+	0x09, 0x01, 0x00,	//    uint16	v1.0
+
+	0x09, 0x01, 0x00,	//  uint16	PrimaryLanguageBaseID + ServiceNameOffset
+	0x25, 0x0d, 0x56, 0x6f,	//  str8(13)	"Voice Gateway"
+	0x69, 0x63, 0x65, 0x20,
+	0x47, 0x61, 0x74, 0x65,
+	0x77, 0x61, 0x79
+};
+
+sdp_data_t hset_record =	{ hset_data + 0, hset_data + 91 };
+sdp_data_t hset_channel =	{ hset_data + 36, hset_data + 37 };
 
 int
 main(int ac, char *av[])
@@ -455,7 +501,7 @@ init_rfcomm(struct btsco_info *info)
 
 	if (bind(rf, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 		return -1;
-	
+
 	bdaddr_copy(&addr.bt_bdaddr, &info->raddr);
 	addr.bt_channel = info->channel;
 
@@ -475,7 +521,6 @@ init_rfcomm(struct btsco_info *info)
 int
 init_server(struct btsco_info *info, int channel)
 {
-	sdp_hset_profile_t hset;
 	struct sockaddr_bt addr;
 
 	ag = socket(PF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -498,17 +543,13 @@ init_server(struct btsco_info *info, int channel)
 	if (event_add(&server_ev, NULL) < 0)
 		return -1;
 
-	memset(&hset, 0, sizeof(hset));
-	hset.server_channel = channel;
+	sdp_set_uint(&hset_channel, channel);
 
 	ss = sdp_open_local(NULL);
-	if (ss == NULL || (errno = sdp_error(ss)))
+	if (ss == NULL)
 		return -1;
 
-	if (sdp_register_service(ss,
-			SDP_SERVICE_CLASS_HEADSET_AUDIO_GATEWAY,
-			&info->laddr, (uint8_t *)&hset, sizeof(hset), NULL) != 0) {
-		errno = sdp_error(ss);
+	if (!sdp_record_insert(ss, &info->laddr, NULL, &hset_record)) {
 		sdp_close(ss);
 		return -1;
 	}

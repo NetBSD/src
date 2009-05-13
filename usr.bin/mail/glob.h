@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.11 2007/10/30 02:28:31 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.11.14.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)glob.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: glob.h,v 1.11 2007/10/30 02:28:31 christos Exp $
+ *	$NetBSD: glob.h,v 1.11.14.1 2009/05/13 19:19:56 jym Exp $
  */
 
 /*
@@ -90,8 +90,6 @@ EXTERN int	wait_status;			/* wait status set by wait_child() */
 EXTERN int	cond;				/* Current state of conditional exc. */
 EXTERN struct cond_stack_s	*cond_stack;	/* stack for if/else/endif condition */
 
-#include <setjmp.h>
-
-EXTERN jmp_buf	srbuf;
+EXTERN struct name *extra_headers;		/* extra header lines */
 
 #endif /* __GLOB_H__ */

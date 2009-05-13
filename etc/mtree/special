@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.127 2009/01/18 08:24:46 taca Exp $
+#	$NetBSD: special,v 1.127.2.1 2009/05/13 19:18:03 jym Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -178,6 +178,7 @@
 ./etc/rc.conf			type=file mode=0644
 ./etc/rc.d			type=dir  mode=0755
 ./etc/rc.d/DAEMON		type=file mode=0555
+./etc/rc.d/DISKS		type=file mode=0555
 ./etc/rc.d/LOGIN		type=file mode=0555
 ./etc/rc.d/NETWORKING		type=file mode=0555
 ./etc/rc.d/SERVERS		type=file mode=0555
@@ -202,6 +203,7 @@
 ./etc/rc.d/downinterfaces	type=file mode=0555
 ./etc/rc.d/envsys		type=file mode=0555
 ./etc/rc.d/fsck			type=file mode=0555
+./etc/rc.d/fsck_root		type=file mode=0555
 ./etc/rc.d/ftp_proxy		type=file mode=0555
 ./etc/rc.d/ftpd			type=file mode=0555
 ./etc/rc.d/hostapd		type=file mode=0555

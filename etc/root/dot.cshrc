@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.19 2008/11/19 18:07:20 cube Exp $
+#	$NetBSD: dot.cshrc,v 1.19.2.1 2009/05/13 19:18:04 jym Exp $
 
 alias	h	history
 alias	j	jobs -l
@@ -20,9 +20,10 @@ alias	tset	'set noglob histchars=""; eval `\tset -s \!*`; unset noglob histchars
 
 setenv BLOCKSIZE 1k
 
-# Uncomment the following line to install binary packages
+# Uncomment the following line(s) to install binary packages
 # from ftp.NetBSD.org via pkg_add.
-#setenv PKG_PATH ftp://ftp.netbsd.org/pkgsrc/packages/NetBSD/`uname -m`/5.99/All
+#setenv PKG_PATH ftp://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/5.99/All
+#setenv PKG_PATH "${PKG_PATH};ftp://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/5.0/All"
 
 set history=1000
 set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R7/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)

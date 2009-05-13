@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.193 2009/02/08 11:58:25 skrll Exp $
+$NetBSD: UPDATING,v 1.193.2.1 2009/05/13 19:15:48 jym Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,18 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20090501:
+	Several new functions were added to string.h/libc, and this
+	can cause autoconf problems during the tool build for people
+	who fail to clean out their tools objects properly. If you
+	note messages about stpcpy, stpncpy or strnlen accompanying a
+	failure during the tool build, clean out all your tools
+	objects and start again.
+
+20090325:
+	The i386 port was switched to i486 default toolchain.  This requires
+	cleaning your src/tools directory and $TOOLDIR and rebuilding them.
 
 20090126:
 	The __posix_fadvise50 system call changed assembly stub type. You need to

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.48 2008/10/25 22:27:39 apb Exp $	
+#	$NetBSD: Makefile,v 1.48.4.1 2009/05/13 19:20:42 jym Exp $	
+
+WARNS?=	1	# XXX: out of date third-party program 
 
 .include <bsd.own.mk>
 

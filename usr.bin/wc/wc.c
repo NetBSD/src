@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.31 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: wc.c,v 1.31.6.1 2009/05/13 19:20:11 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.31 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: wc.c,v 1.31.6.1 2009/05/13 19:20:11 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,8 @@ static wc_count_t	tlinect, twordct, tcharct;
 static int		doline, doword, dobyte, dochar;
 static int 		rval = 0;
 
-static void	cnt(char *);
-static void	print_counts(wc_count_t, wc_count_t, wc_count_t, char *);
+static void	cnt(const char *);
+static void	print_counts(wc_count_t, wc_count_t, wc_count_t, const char *);
 static void	usage(void);
 static size_t	do_mb(wchar_t *, const char *, size_t, mbstate_t *,
 		    size_t *, const char *);
@@ -133,20 +133,20 @@ main(int argc, char *argv[])
 }
 
 static size_t
-do_mb(wchar_t *wc, const char *p, size_t mblen, mbstate_t *st,
-    size_t *cnt, const char *file)
+do_mb(wchar_t *wc, const char *p, size_t len, mbstate_t *st,
+    size_t *retcnt, const char *file)
 {
 	size_t r;
 	size_t c = 0;
 
 	do {
-		r = mbrtowc(wc, p, mblen, st);
+		r = mbrtowc(wc, p, len, st);
 		if (r == (size_t)-1) {
 			warnx("%s: invalid byte sequence", file);
 			rval = 1;
 
 			/* XXX skip 1 byte */
-			mblen--;
+			len--;
 			p++;
 			memset(st, 0, sizeof(*st));
 			continue;
@@ -157,17 +157,17 @@ do_mb(wchar_t *wc, const char *p, size_t mblen, mbstate_t *st,
 		c++;
 		if (wc)
 			wc++;
-		mblen -= r;
+		len -= r;
 		p += r;
-	} while (mblen > 0);
+	} while (len > 0);
 
-	*cnt = c;
+	*retcnt = c;
 
 	return (r);
 }
 
 static void
-cnt(char *file)
+cnt(const char *file)
 {
 	u_char buf[MAXBSIZE];
 	wchar_t wbuf[MAXBSIZE];
@@ -176,7 +176,7 @@ cnt(char *file)
 	mbstate_t st;
 	u_char *C;
 	wchar_t *WC;
-	char *name;				/* filename or <stdin> */
+	const char *name;			/* filename or <stdin> */
 	size_t r = 0;
 	int fd, gotsp, len = 0;
 
@@ -304,7 +304,8 @@ cnt(char *file)
 }
 
 static void
-print_counts(wc_count_t lines, wc_count_t words, wc_count_t chars, char *name)
+print_counts(wc_count_t lines, wc_count_t words, wc_count_t chars,
+    const char *name)
 {
 
 	if (doline)
