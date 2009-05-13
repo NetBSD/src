@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.50 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.51 2009/05/13 02:50:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -115,6 +115,7 @@ void		pw_prompt(void);
 int		pw_setprefix(const char *);
 int		raise_default_signal(int);
 int		secure_path(const char *);
+int		snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int		snprintb(char *, size_t, const char *, uint64_t);
 int		sockaddr_snprintf(char *, size_t, const char *,
     const struct sockaddr *);

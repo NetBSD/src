@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.4 2009/01/18 12:05:49 lukem Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.5 2009/05/13 02:50:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.4 2009/01/18 12:05:49 lukem Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.5 2009/05/13 02:50:31 pgoyette Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.4 2009/01/18 12:05:49 lukem Exp $");
 #  include <errno.h>
 # else
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.4 2009/01/18 12:05:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.5 2009/05/13 02:50:31 pgoyette Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -59,11 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.4 2009/01/18 12:05:49 lukem Exp $");
 # endif
 
 int
-snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
+snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
+	   size_t l_max)
 {
-	char *bp = buf;
+	char *bp = buf, *s_bp = NULL;
+	const char *c_fmt, *s_fmt = NULL, *cur_fmt;
 	const char *sbase;
-	int bit, ch, len, sep, flen;
+	int bit, ch, t_len, s_len = 0, l_len, f_len, v_len, sep;
+	int restart = 0;
 	uint64_t field;
 
 #ifdef _KERNEL
@@ -89,12 +92,18 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 		goto internal;
 	}
 
-	len = snprintf(bp, buflen, sbase, val);
-	if (len < 0)
+	/* Reserve space for trailing blank line if needed */
+	if (l_max > 0)
+		buflen--;
+
+	t_len = snprintf(bp, buflen, sbase, val);
+	if (t_len < 0)
 		goto internal;
 
-	if ((size_t)len < buflen)
-		bp += len;
+	v_len = l_len = t_len;
+
+	if ((size_t)t_len < buflen)
+		bp += t_len;
 	else
 		bp += buflen - 1;
 
@@ -105,8 +114,55 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 	if ((val == 0) && (ch != '\177'))
 		goto terminate;
 
-#define PUTC(c) if ((size_t)(++len) < buflen) *bp++ = (c)
-#define PUTS(s) while ((ch = *(s)++) != 0) PUTC(ch)
+#define STORE(c) { l_len++;						\
+		   if ((size_t)(++t_len) < buflen)			\
+		   	*bp++ = (c);					\
+		 } while ( /* CONSTCOND */ 0)
+
+#define	BACKUP	{ if (s_bp != NULL) {					\
+			bp = s_bp; s_bp = NULL;				\
+			t_len -= l_len - s_len;				\
+			restart = 1;					\
+			bitfmt = s_fmt;					\
+		  }							\
+		  STORE('>'); STORE('\0');				\
+		  if ((size_t)t_len < buflen)				\
+			snprintf(bp, buflen - t_len, sbase, val);	\
+		  t_len += v_len; l_len = v_len; bp += v_len;		\
+		} while ( /* CONSTCOND */ 0)
+
+#define	PUTSEP								\
+		if (l_max > 0 && (size_t)l_len >= l_max) {		\
+			BACKUP;						\
+			STORE('<');					\
+		} else {						\
+			/* Remember separator location */		\
+			if ( l_max > 0 && sep != '<') {			\
+				s_len = l_len;				\
+				s_bp  = bp;				\
+				s_fmt = cur_fmt;			\
+			}						\
+			STORE(sep);					\
+			restart = 0;					\
+		}							\
+
+#define	PUTCHR(c)							\
+		if (l_max > 0 && (size_t)l_len >= (l_max - 1)) {	\
+			BACKUP;						\
+			if (restart == 0) {				\
+				STORE(c);				\
+			} else						\
+				sep = '<';				\
+		} else {						\
+			STORE(c);					\
+			restart = 0;					\
+		}							\
+
+#define PUTS(s) while ((ch = *(s)++) != 0) {				\
+			PUTCHR(ch);					\
+			if (restart)					\
+				break;					\
+		}
 
 	/*
 	 * Chris Torek's new bitmask format is identified by a leading \177
@@ -114,12 +170,18 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 	sep = '<';
 	if (ch != '\177') {
 		/* old (standard) format. */
-		for (;(bit = *bitfmt++) != 0;) {
+		for (;(bit = *bitfmt) != 0;) {
+			cur_fmt = bitfmt++;
 			if (val & (1 << (bit - 1))) {
-				PUTC(sep);
-				for (; (ch = *bitfmt) > ' '; ++bitfmt)
-					PUTC(ch);
+				PUTSEP;
+				if (restart)
+					continue;
 				sep = ',';
+				for (; (ch = *bitfmt) > ' '; ++bitfmt) {
+					PUTCHR(ch); 
+					if (restart)
+						break;
+				}
 			} else
 				for (; *bitfmt > ' '; ++bitfmt)
 					continue;
@@ -127,33 +189,50 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 	} else {
 		/* new quad-capable format; also does fields. */
 		field = val;
-		while ((ch = *bitfmt++) != '\0') {
+		while (c_fmt = bitfmt, (ch = *bitfmt++) != '\0') {
 			bit = *bitfmt++;	/* now 0-origin */
 			switch (ch) {
 			case 'b':
 				if (((u_int)(val >> bit) & 1) == 0)
 					goto skip;
-				PUTC(sep);
+				cur_fmt = c_fmt;
+				PUTSEP;
+				if (restart)
+					break;
 				PUTS(bitfmt);
-				sep = ',';
+				if (restart == 0)
+					sep = ',';
 				break;
 			case 'f':
 			case 'F':
-				flen = *bitfmt++;	/* field length */
+				cur_fmt = c_fmt;
+				f_len = *bitfmt++;	/* field length */
 				field = (val >> bit) &
-					    (((uint64_t)1 << flen) - 1);
+					    (((uint64_t)1 << f_len) - 1);
 				if (ch == 'F')	/* just extract */
 					break;
-				PUTC(sep);
-				sep = ',';
-				PUTS(bitfmt);
-				PUTC('=');
-				flen = snprintf(bp, buflen - len, sbase, field);
-				if (flen < 0)
-					goto internal;
-				len += flen;
-				if ((size_t)len < buflen)
-					bp += flen;
+				PUTSEP;
+				if (restart == 0) {
+					sep = ',';
+					PUTS(bitfmt);
+				}
+				if (restart == 0) {
+					PUTCHR('=');
+				}
+				if (restart == 0) {
+					f_len = snprintf(bp, buflen - t_len,
+							 sbase, field);
+					if (f_len < 0)
+						goto internal;
+					t_len += f_len;
+					l_len += f_len;
+					if ((size_t)t_len < buflen)
+						bp += f_len;
+					if (l_max > 0 &&
+					    (size_t)l_len > l_max) {
+						PUTCHR('#');
+					}
+				}
 				break;
 			case '=':
 			case ':':
@@ -166,7 +245,7 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 				if ((int)field != bit)
 					goto skip;
 				if (ch == '=') {
-					PUTC('=');
+					PUTCHR('=');
 				}
 				PUTS(bitfmt);
 				break;
@@ -178,16 +257,26 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 			}
 		}
 	}
-	if (sep != '<') {
-		PUTC('>');
-	}
+	l_len++;
+	if ((size_t)(++t_len) < buflen)
+		*bp++ = '>';
 terminate:
-	*bp = '\0';
-	return len;
+	*bp++ = '\0';
+	if (l_max != 0) {
+		t_len++;
+		*bp = '\0';
+	}
+	return t_len;
 internal:
 #ifndef _KERNEL
 	errno = EINVAL;
 #endif
 	return -1;
+}
+
+int
+snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
+{
+	return snprintb_m(buf, buflen, bitfmt, val, 0);
 }
 #endif
