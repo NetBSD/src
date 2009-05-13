@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.11 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.11.90.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.11 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.11.90.1 2009/05/13 17:21:16 jym Exp $");
 
 #include "rf_archs.h"
 
@@ -121,12 +121,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQ_DoubleDegRead)
 }
 
 static void
-applyPDA(raidPtr, pda, ppda, qpda, bp)
-	RF_Raid_t *raidPtr;
-	RF_PhysDiskAddr_t *pda;
-	RF_PhysDiskAddr_t *ppda;
-	RF_PhysDiskAddr_t *qpda;
-	void   *bp;
+applyPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, RF_PhysDiskAddr_t *ppda, RF_PhysDiskAddr_t *qpda, void *bp)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_RaidAddr_t s0off = rf_StripeUnitOffset(layoutPtr, ppda->startSector);
@@ -188,8 +183,7 @@ applyPDA(raidPtr, pda, ppda, qpda, bp)
 
 
 int
-rf_PQDoubleRecoveryFunc(node)
-	RF_DagNode_t *node;
+rf_PQDoubleRecoveryFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
 	RF_AccessStripeMap_t *asmap = (RF_AccessStripeMap_t *) node->params[np - 1].p;
@@ -277,8 +271,7 @@ rf_PQDoubleRecoveryFunc(node)
 }
 
 int
-rf_PQWriteDoubleRecoveryFunc(node)
-	RF_DagNode_t *node;
+rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 {
 	/* The situation:
 	 *

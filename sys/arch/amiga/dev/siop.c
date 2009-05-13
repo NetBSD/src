@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.61 2009/01/10 19:10:50 mhitch Exp $ */
+/*	$NetBSD: siop.c,v 1.61.2.1 2009/05/13 17:16:10 jym Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.61 2009/01/10 19:10:50 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.61.2.1 2009/05/13 17:16:10 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		acb->flags = ACB_ACTIVE;
 		acb->xs = xs;
-		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+		memcpy( &acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->daddr = xs->data;
 		acb->dleft = xs->datalen;
@@ -672,7 +672,7 @@ siopreset(struct siop_softc *sc)
 	rp->siop_ctest7 |= sc->sc_ctest7;
 
 	/* will need to re-negotiate sync xfers */
-	bzero(&sc->sc_sync, sizeof (sc->sc_sync));
+	memset(&sc->sc_sync, 0, sizeof (sc->sc_sync));
 
 	i = rp->siop_istat;
 	if (i & SIOP_ISTAT_SIP)
@@ -692,12 +692,12 @@ siopreset(struct siop_softc *sc)
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(struct siop_acb) * SIOP_NACB);
+		memset(acb, 0, sizeof(struct siop_acb) * SIOP_NACB);
 		for (i = 0; i < SIOP_NACB; i++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
-		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 	} else {
 		if (sc->sc_nexus != NULL) {
 			sc->sc_nexus->xs->error = XS_RESET;
@@ -772,7 +772,7 @@ siop_start(struct siop_softc *sc, int target, int lun, u_char *cbuf, int clen,
 	acb->ds.msginbuf = (char *) kvtop(&acb->msg[1]);
 	acb->ds.extmsgbuf = (char *) kvtop(&acb->msg[2]);
 	acb->ds.synmsgbuf = (char *) kvtop(&acb->msg[3]);
-	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
+	memset(&acb->ds.chain, 0, sizeof (acb->ds.chain));
 
 	/*
 	 * Negotiate wide is the initial negotiation state;  since the 53c710

@@ -1,4 +1,4 @@
-/* $NetBSD: scireg.h,v 1.8 2003/07/01 11:49:37 uwe Exp $ */
+/* $NetBSD: scireg.h,v 1.8.122.1 2009/05/13 17:18:22 jym Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -43,6 +43,7 @@
 #define	SHREG_SCTDR	(*(volatile unsigned char *)	0xFFFFFE86)
 #define	SHREG_SCSSR	(*(volatile unsigned char *)	0xFFFFFE88)
 #define	SHREG_SCRDR	(*(volatile unsigned char *)	0xFFFFFE8A)
+#define	SHREG_SCSCMR	(*(volatile unsigned char *)	0xFFFFFE8C)
 #define	SHREG_SCSPDR	(*(volatile unsigned char *)	0xf4000136)
 
 #else
@@ -59,6 +60,15 @@
 
 #endif
 
+#define	SCSMR_CA	0x80
+#define	SCSMR_CHR	0x40
+#define	SCSMR_PE	0x20
+#define	SCSMR_OE	0x10
+#define	SCSMR_STOP	0x08
+#define	SCSMR_MP	0x04
+#define	SCSMR_CKS1	0x02
+#define	SCSMR_CKS0	0x01
+
 #define	SCSCR_TIE	0x80	/* Transmit Interrupt Enable */
 #define	SCSCR_RIE	0x40	/* Receive Interrupt Enable */
 #define	SCSCR_TE	0x20	/* Transmit Enable */
@@ -73,6 +83,9 @@
 #define	SCSSR_ORER	0x20
 #define	SCSSR_FER	0x10
 #define	SCSSR_PER	0x08
+#define	SCSSR_TEND	0x04
+#define	SCSSR_MPB	0x02
+#define	SCSSR_MPBT	0x01
 
 #define	SCSPTR_SPB1IO	0x08
 #define	SCSPTR_SPB1DT	0x04

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2008/02/14 00:25:39 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.24.1 2009/05/13 17:16:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2008/02/14 00:25:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.24.1 2009/05/13 17:16:02 jym Exp $");
 
 #include "opt_md.h"
 
@@ -65,12 +65,12 @@ extern char *booted_kernel;
 
 extern dev_t dumpdev;
 
-void dumpconf __P((void));
-void isa_intr_init __P((void));
+void dumpconf(void);
+void isa_intr_init(void);
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device __P((char *name));
-static void set_root_device __P((void));
+static void get_device(char *name);
+static void set_root_device(void);
 #endif
 
 #ifndef MEMORY_DISK_IS_ROOT
@@ -113,7 +113,7 @@ get_device(char *name)
 /* Set the rootdev variable from the root specifier in the boot args */
 
 static void
-set_root_device()
+set_root_device(void)
 {
 	char *ptr;
             
@@ -129,13 +129,13 @@ set_root_device()
  * Set up the root device from the boot args
  */
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 #ifndef MEMORY_DISK_IS_ROOT
 	set_root_device();
 
 	printf("boot device: %s\n",
-	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
+	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
 #endif
 	setroot(booted_device, booted_partition);
 }
@@ -149,7 +149,7 @@ cpu_rootconf()
  */
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 	/*
 	 * Configure all the roots.

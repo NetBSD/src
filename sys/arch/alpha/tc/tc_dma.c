@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma.c,v 1.11 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: tc_dma.c,v 1.11.14.1 2009/05/13 17:16:08 jym Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.11 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.11.14.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,7 +67,7 @@ struct alpha_bus_dma_tag tc_dmat_direct = {
 };
 
 void
-tc_dma_init()
+tc_dma_init(void)
 {
 
 	/* XXX XXX BEGIN XXX XXX */

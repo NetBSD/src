@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.8 2009/01/25 15:23:42 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.8.2.1 2009/05/13 17:19:25 jym Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -122,7 +122,7 @@ struct wd33c93_softc {
 
 	struct scsipi_channel sc_channel; /* proto for sub devices */
 	struct scsipi_adapter sc_adapter;
-	struct device *sc_child;	/* attached scsibus, if any */
+	device_t sc_child;	/* attached scsibus, if any */
 	struct callout sc_watchdog;
 	void	*sc_driver;		/* driver specific field */
 
@@ -131,7 +131,8 @@ struct wd33c93_softc {
 
 	/* WD33c93 registers */
 	bus_space_tag_t 	sc_regt;
-	bus_space_handle_t 	sc_regh;
+	bus_space_handle_t 	sc_asr_regh;
+	bus_space_handle_t 	sc_data_regh;
 
 
 	/* Data about the current nexus (updated for every cmd switch) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.12 2008/11/18 18:20:10 cliff Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.12.4.1 2009/05/13 17:16:38 jym Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -141,6 +141,7 @@
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
+#include "opt_modular.h"
 #include "opt_com.h"
 #include "md.h"
 
@@ -876,7 +877,7 @@ initarm(void *arg)
 }
 
 static void
-read_system_serial()
+read_system_serial(void)
 {
 #define GUMSTIX_SYSTEM_SERIAL_ADDR	0
 #define GUMSTIX_SYSTEM_SERIAL_SIZE	8

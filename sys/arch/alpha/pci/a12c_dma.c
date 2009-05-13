@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_dma.c,v 1.4 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: a12c_dma.c,v 1.4.14.1 2009/05/13 17:16:05 jym Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_dma.c,v 1.4 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_dma.c,v 1.4.14.1 2009/05/13 17:16:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,24 +64,23 @@ __KERNEL_RCSID(0, "$NetBSD: a12c_dma.c,v 1.4 2008/04/28 20:23:11 martin Exp $");
 
 #define	A12C_DMA()	/* Generate ctags(1) key */
 
-bus_dma_tag_t a12c_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
+bus_dma_tag_t a12c_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
 
-int	a12c_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+int	a12c_bus_dmamap_load_direct(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
 
-int	a12c_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+int	a12c_bus_dmamap_load_mbuf_direct(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
 
-int	a12c_bus_dmamap_load_uio_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+int	a12c_bus_dmamap_load_uio_direct(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
 
-int	a12c_bus_dmamap_load_raw_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+int	a12c_bus_dmamap_load_raw_direct(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
 void
-a12c_dma_init(ccp)
-	struct a12c_config *ccp;
+a12c_dma_init(struct a12c_config *ccp)
 {
 }
 
@@ -90,9 +89,7 @@ a12c_dma_init(ccp)
  * INTERNAL USE ONLY!
  */
 bus_dma_tag_t
-a12c_dma_get_tag(t, bustype)
-	bus_dma_tag_t t;
-	alpha_bus_t bustype;
+a12c_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	DIE();
 }
@@ -100,13 +97,7 @@ a12c_dma_get_tag(t, bustype)
  * Load a A12C direct-mapped DMA map with a linear buffer.
  */
 int
-a12c_bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+a12c_bus_dmamap_load_direct(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 	DIE();
 #if 0
@@ -119,11 +110,7 @@ a12c_bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
  * Load a A12C direct-mapped DMA map with an mbuf chain.
  */
 int
-a12c_bus_dmamap_load_mbuf_direct(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+a12c_bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m, int flags)
 {
 	DIE();
 #if 0
@@ -136,11 +123,7 @@ a12c_bus_dmamap_load_mbuf_direct(t, map, m, flags)
  * Load a A12C direct-mapped DMA map with a uio.
  */
 int
-a12c_bus_dmamap_load_uio_direct(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+a12c_bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
 {
 	DIE();
 #if 0
@@ -153,13 +136,7 @@ a12c_bus_dmamap_load_uio_direct(t, map, uio, flags)
  * Load a A12C direct-mapped DMA map with raw memory.
  */
 int
-a12c_bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+a12c_bus_dmamap_load_raw_direct(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	DIE();
 #if 0

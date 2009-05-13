@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.148 2008/05/11 05:17:23 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.148.12.1 2009/05/13 17:21:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.148 2008/05/11 05:17:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.148.12.1 2009/05/13 17:21:23 jym Exp $");
 
 #include "opt_scsi.h"
 
@@ -499,6 +499,7 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_free_xs\n"));
 
 	TAILQ_REMOVE(&periph->periph_xferq, xs, device_q);
+	callout_destroy(&xs->xs_callout);
 	pool_put(&scsipi_xfer_pool, xs);
 
 #ifdef DIAGNOSTIC

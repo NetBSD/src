@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.235 2009/01/21 09:18:32 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.235.2.1 2009/05/13 17:18:38 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2009/01/21 09:18:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235.2.1 2009/05/13 17:18:38 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -173,7 +173,7 @@ void	stackdump(void);
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -670,7 +670,7 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	register int nblks, dumpblks;
@@ -719,7 +719,7 @@ reserve_dumppages(void *p)
  * Write a crash dump.
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	register int psize;
@@ -864,7 +864,7 @@ trapdump(struct trapframe64* tf)
  * current stack page
  */
 void
-stackdump()
+stackdump(void)
 {
 	struct frame32 *fp = (struct frame32 *)getfp(), *sfp;
 	struct frame64 *fp64;

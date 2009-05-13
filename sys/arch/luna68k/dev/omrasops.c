@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.6 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: omrasops.c,v 1.6.14.1 2009/05/13 17:17:58 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.6 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.6.14.1 2009/05/13 17:17:58 jym Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -51,17 +51,17 @@ __KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.6 2008/04/28 20:23:26 martin Exp $");
 #include <dev/wscons/wscons_rfont.h>
 #include <dev/wscons/wsdisplayvar.h>
 
-void rcons_init __P((struct rcons *, int, int));
+void rcons_init(struct rcons *, int, int);
 
 /* wscons emulator operations */
-static void	om_cursor __P((void *, int, int, int));
-static int	om_mapchar __P((void *, int, unsigned int *));
-static void	om_putchar __P((void *, int, int, u_int, long));
-static void	om_copycols __P((void *, int, int, int, int));
-static void	om_copyrows __P((void *, int, int, int num));
-static void	om_erasecols __P((void *, int, int, int, long));
-static void	om_eraserows __P((void *, int, int, long));
-static int	om_allocattr __P((void *, int, int, int, long *));
+static void	om_cursor(void *, int, int, int);
+static int	om_mapchar(void *, int, unsigned int *);
+static void	om_putchar(void *, int, int, u_int, long);
+static void	om_copycols(void *, int, int, int, int);
+static void	om_copyrows(void *, int, int, int num);
+static void	om_erasecols(void *, int, int, int, long);
+static void	om_eraserows(void *, int, int, long);
+static int	om_allocattr(void *, int, int, int, long *);
 
 struct wsdisplay_emulops omfb_emulops = {
 	om_cursor,
@@ -87,11 +87,7 @@ struct wsdisplay_emulops omfb_emulops = {
  * Blit a character at the specified co-ordinates.
  */
 static void
-om_putchar(cookie, row, startcol, uc, attr)
-	void *cookie;
-	int row, startcol;
-	u_int uc;
-	long attr;
+om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 {
 	struct rcons *rc = cookie;
 	struct raster *rap = rc->rc_sp;
@@ -143,10 +139,7 @@ om_putchar(cookie, row, startcol, uc, attr)
 }
 
 static void
-om_erasecols(cookie, row, startcol, ncols, attr)
-	void *cookie;
-	int row, startcol, ncols;
-	long attr;
+om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 {
         struct rcons *rc = cookie;
         struct raster *rap = rc->rc_sp;
@@ -196,10 +189,7 @@ om_erasecols(cookie, row, startcol, ncols, attr)
 }
 
 static void
-om_eraserows(cookie, startrow, nrows, attr)
-	void *cookie;
-	int startrow, nrows;
-	long attr;
+om_eraserows(void *cookie, int startrow, int nrows, long attr)
 {
 	struct rcons *rc = cookie;
 	struct raster *rap = rc->rc_sp;
@@ -235,9 +225,7 @@ om_eraserows(cookie, startrow, nrows, attr)
 }
 
 static void
-om_copyrows(cookie, srcrow, dstrow, nrows)
-	void *cookie;
-	int srcrow, dstrow, nrows;
+om_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 {
         struct rcons *rc = cookie;
         struct raster *rap = rc->rc_sp;
@@ -278,9 +266,7 @@ om_copyrows(cookie, srcrow, dstrow, nrows)
 }
 
 static void
-om_copycols(cookie, startrow, srccol, dstcol, ncols)
-	void *cookie;
-	int startrow, srccol, dstcol, ncols;
+om_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 {
 	struct rcons *rc = cookie;
 	struct raster *rap = rc->rc_sp;
@@ -378,10 +364,7 @@ om_copycols(cookie, startrow, srccol, dstcol, ncols)
  * Map a character.
  */
 static int
-om_mapchar(cookie, c, cp)
-	void *cookie;
-	int c;
-	u_int *cp;
+om_mapchar(void *cookie, int c, u_int *cp)
 {
 	if (c < 128) {
 		*cp = c;
@@ -395,9 +378,7 @@ om_mapchar(cookie, c, cp)
  * Position|{enable|disable} the cursor at the specified location.
  */
 static void
-om_cursor(cookie, on, row, col)
-	void *cookie;
-	int on, row, col;
+om_cursor(void *cookie, int on, int row, int col)
 {
 	struct rcons *rc = cookie;
 	struct raster *rap = rc->rc_sp;
@@ -458,10 +439,7 @@ om_cursor(cookie, on, row, col)
  * Allocate attribute. We just pack these into an integer.
  */
 static int
-om_allocattr(id, fg, bg, flags, attrp)
-	void *id;
-	int fg, bg, flags;
-	long *attrp;
+om_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	if (flags & (WSATTR_HILIT | WSATTR_BLINK |
 		     WSATTR_UNDERLINE | WSATTR_WSCOLORS))
@@ -474,9 +452,7 @@ om_allocattr(id, fg, bg, flags, attrp)
 }
 
 void
-rcons_init(rc, mrow, mcol)
-	struct rcons *rc;
-	int mrow, mcol;
+rcons_init(struct rcons *rc, int mrow, int mcol)
 {
 	struct raster *rp = rc->rc_sp;
 	int i;

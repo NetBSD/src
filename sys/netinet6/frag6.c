@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.46 2008/05/21 17:08:07 drochner Exp $	*/
+/*	$NetBSD: frag6.c,v 1.46.12.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.46 2008/05/21 17:08:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.46.12.1 2009/05/13 17:22:28 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		    M_DONTWAIT);
 		if (q6 == NULL)
 			goto dropfrag;
-		bzero(q6, sizeof(*q6));
+		memset(q6, 0, sizeof(*q6));
 
 		frag6_insque(q6, &ip6q);
 
@@ -359,7 +359,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	    M_DONTWAIT);
 	if (ip6af == NULL)
 		goto dropfrag;
-	bzero(ip6af, sizeof(*ip6af));
+	memset(ip6af, 0, sizeof(*ip6af));
 	ip6af->ip6af_head = ip6->ip6_flow;
 	ip6af->ip6af_len = ip6->ip6_plen;
 	ip6af->ip6af_nxt = ip6->ip6_nxt;

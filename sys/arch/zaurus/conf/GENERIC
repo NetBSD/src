@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.21 2009/01/28 13:39:41 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.21.2.1 2009/05/13 17:18:51 jym Exp $
 #
 # GENERIC machine description file
 #
@@ -34,6 +34,11 @@ makeoptions	CPUFLAGS="-mcpu=xscale"
 # Architecture options
 options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 options 	PXAGPIO_HAS_GPION_INTRS
+
+# in-kernel bootloader, see kloader(4)
+options 	KLOADER
+#options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+#options 	KLOADER_DEBUG
 
 # Standard system options
 options 	INSECURE	# disable kernel security levels
@@ -203,11 +208,11 @@ lcd0 at pxaip?
 wsdisplay* at lcd? console ?
 
 # Audio
-#zaudio0 at pxaip?
-#audio* at zaudio?
+zaudio0 at pxaip?
+audio* at zaudio?
 
 # Audio support
-#audio* at audiobus?
+audio* at audiobus?
 
 # integrated 16550 UARTs
 options 	COM_PXA2X0
@@ -319,15 +324,14 @@ ukphy*  at mii? phy ?                   # generic unknown PHYs
 urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
 
 
-
 # integrated MMC/SD contoller
-#pxamci0 at pxaip? addr 0x41100000 size 0x48
-#sdmmc* at pxamci?
+pxamci0 at pxaip? addr 0x41100000 size 0x48
+sdmmc* at pxamci?
 #options 	PXAMCI_DEBUG
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 
-#ld* at sdmmc?				# MMC/SD/SDHC card
+ld* at sdmmc?				# MMC/SD/SDHC card
 
 
 # Pseudo-Devices

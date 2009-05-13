@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2007/10/08 20:12:05 ad Exp $ */
+/*	$NetBSD: disksubr.c,v 1.9.36.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.9 2007/10/08 20:12:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.9.36.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,11 +88,7 @@ static	int disklabel_bsd_to_sun(struct disklabel *, char *);
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -172,10 +168,7 @@ readdisklabel(dev, strat, lp, clp)
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *clp)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -215,11 +208,7 @@ setdisklabel(olp, nlp, openmask, clp)
  * Current label is already in clp->cd_block[]
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	int error;
@@ -286,9 +275,7 @@ sun_fstypes[8] = {
  * The BSD label is cleared out before this is called.
  */
 static const char *
-disklabel_sun_to_bsd(cp, lp)
-	char *cp;
-	struct disklabel *lp;
+disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -364,9 +351,7 @@ disklabel_sun_to_bsd(cp, lp)
  * Returns zero or error code.
  */
 static int
-disklabel_bsd_to_sun(lp, cp)
-	struct disklabel *lp;
-	char *cp;
+disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -427,9 +412,7 @@ disklabel_bsd_to_sun(lp, cp)
  * Return -1 if not found.
  */
 int
-isbad(bt, cyl, trk, sec)
-	struct dkbad *bt;
-	int cyl, trk, sec;
+isbad(struct dkbad *bt, int cyl, int trk, int sec)
 {
 	int i;
 	long blk, bblk;

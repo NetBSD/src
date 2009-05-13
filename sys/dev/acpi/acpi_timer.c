@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.11 2008/05/11 22:16:45 ad Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.11.12.1 2009/05/13 17:19:10 jym Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.11 2008/05/11 22:16:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.11.12.1 2009/05/13 17:19:10 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -9,6 +9,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.11 2008/05/11 22:16:45 ad Exp $");
 #include <sys/timetc.h>
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpi_timer.h>
+#include <machine/acpi_machdep.h>
 
 static int acpitimer_test(void);
 static uint32_t acpitimer_delta(uint32_t, uint32_t);
@@ -27,7 +28,7 @@ static struct timecounter acpi_timecounter = {
 };
 
 int
-acpitimer_init()
+acpitimer_init(void)
 {
 	uint32_t bits;
 	int i, j;
@@ -54,6 +55,12 @@ acpitimer_init()
 	aprint_verbose("%s %d-bit timer\n", acpi_timecounter.tc_name, bits);
 
 	return (0);
+}
+
+int
+acpitimer_detach(void)
+{
+	return tc_detach(&acpi_timecounter);
 }
 
 static u_int
@@ -100,7 +107,7 @@ acpitimer_delta(uint32_t end, uint32_t start)
 
 #define N 2000
 static int
-acpitimer_test()
+acpitimer_test(void)
 {
 	uint32_t last, this, delta;
 	int minl, maxl, n;
@@ -108,7 +115,7 @@ acpitimer_test()
 	minl = 10000000;
 	maxl = 0;
 
-	x86_disable_intr();
+	acpi_md_OsDisableInterrupt();
 	AcpiGetTimer(&last);
 	for (n = 0; n < N; n++) {
 		AcpiGetTimer(&this);
@@ -119,7 +126,7 @@ acpitimer_test()
 			minl = delta;
 		last = this;
 	}
-	x86_enable_intr();
+	acpi_md_OsEnableInterrupt();
 
 	if (maxl - minl > 2 )
 		n = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.5 2007/12/16 20:45:59 dyoung Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.5.24.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -132,10 +132,6 @@ void	evcnt_attach_static(struct evcnt *);
 void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
 	    const char *, const char *);
 void	evcnt_detach(struct evcnt *);
-
-#ifdef DDB
-void	event_print(int, void (*)(const char *, ...));
-#endif
 #endif /* _KERNEL */
 
 #endif /* !_SYS_EVCNT_H_ */

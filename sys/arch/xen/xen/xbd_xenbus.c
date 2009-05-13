@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.38.2.1 2009/02/09 00:03:55 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.38.2.2 2009/05/13 17:18:50 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.1 2009/02/09 00:03:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.2 2009/05/13 17:18:50 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -53,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.1 2009/02/09 00:03:55 jym Exp 
 #include <dev/dkvar.h>
 
 #include <uvm/uvm.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
@@ -112,6 +116,9 @@ struct xbd_xenbus_softc {
 	uint64_t sc_xbdsize; /* size of disk in DEV_BSIZE */
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
+#if NRND > 0
+	rndsource_element_t     sc_rnd_source;
+#endif
 };
 
 #if 0
@@ -256,6 +263,11 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	/* initialize shared structures and tell backend that we are ready */
 	xbd_xenbus_resume(self, PMF_F_NONE);
 
+#if NRND > 0
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
+	    RND_TYPE_DISK, RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE);
+#endif
+
 	if (!pmf_device_register(self, xbd_xenbus_suspend, xbd_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -300,6 +312,10 @@ xbd_xenbus_detach(device_t dev, int flags)
 		/* detach disk */
 		disk_detach(&sc->sc_dksc.sc_dkdev);
 		disk_destroy(&sc->sc_dksc.sc_dkdev);
+#if NRND > 0
+		/* Unhook the entropy source. */
+		rnd_detach_source(&sc->sc_rnd_source);
+#endif
 	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
@@ -597,6 +613,10 @@ next:
 		disk_unbusy(&sc->sc_dksc.sc_dkdev,
 		    (bp->b_bcount - bp->b_resid),
 		    (bp->b_flags & B_READ));
+#if NRND > 0
+		rnd_add_uint32(&sc->sc_rnd_source,
+		    bp->b_blkno);
+#endif
 		biodone(bp);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.38 2008/10/22 18:17:46 plunky Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.38.8.1 2009/05/13 17:22:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.38 2008/10/22 18:17:46 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.38.8.1 2009/05/13 17:22:42 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ restart:
 	/* Assuming at most one xpd tpdu is in the buffer at once */
 	while (n != NULL) {
 		m->m_len += n->m_len;
-		bcopy(mtod(n, void *), mtod(m, void *), (unsigned) n->m_len);
+		memcpy(mtod(m, void *), mtod(n, void *), (unsigned) n->m_len);
 		m->m_data += n->m_len;	/* so mtod() in bcopy() above gives
 					 * right addr */
 		n = n->m_next;

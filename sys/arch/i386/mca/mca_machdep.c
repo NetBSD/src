@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.37 2008/12/16 22:35:23 christos Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.37.2.1 2009/05/13 17:17:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.37 2008/12/16 22:35:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.37.2.1 2009/05/13 17:17:50 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,7 +157,7 @@ static bus_space_handle_t dmaiot, dmacmdh, dmaexech;
  * Map the MCA DMA controller registers.
  */
 void
-mca_attach_hook(struct device *parent, struct device *self,
+mca_attach_hook(device_t parent, device_t self,
     struct mcabus_attach_args *mba)
 {
 	dmaiot = mba->mba_iot;

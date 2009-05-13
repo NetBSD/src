@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.mbr,v 1.14 2008/10/25 22:27:37 apb Exp $
+#	$NetBSD: Makefile.mbr,v 1.14.8.1 2009/05/13 17:17:52 jym Exp $
 
-S=		${.CURDIR}/../../../../../
+S=		${.CURDIR}/../../../../..
 
 NOMAN=		# defined
 
@@ -27,7 +27,7 @@ BINMODE=	444
 LDFLAGS+=	-nostdlib -Wl,-e,start
 CPPFLAGS+=	-I. -I${.CURDIR}/../../lib -I${S}
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
 AFLAGS+=	-m32
 .endif

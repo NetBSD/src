@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.34 2009/01/31 06:22:46 isaki Exp $	*/
+/*	$NetBSD: net.c,v 1.34.2.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -120,8 +120,8 @@ sendrecv(struct iodesc *d,
 				tleft = 0;
 				continue;
 			}
-			if (cc < ssize)
-				panic("sendrecv: short write! (%zd < %zd)",
+			if ((size_t)cc < ssize)
+				panic("sendrecv: short write! (%zd < %zu)",
 				    cc, ssize);
 
 			tlast = t;

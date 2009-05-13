@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.90 2008/07/31 18:24:07 matt Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.90.8.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.90 2008/07/31 18:24:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.90.8.1 2009/05/13 17:22:29 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -480,7 +480,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		 * above), but we do so here explicitly to make the intention
 		 * clearer.
 		 */
-		bzero(&src_in, sizeof(src_in));
+		memset(&src_in, 0, sizeof(src_in));
 		src = &src_in;
 	}
 	ip6->ip6_src = *src;
@@ -512,10 +512,10 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
-		bzero((void *)nd_opt, optlen);
+		memset((void *)nd_opt, 0, optlen);
 		nd_opt->nd_opt_type = ND_OPT_SOURCE_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
-		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
+		memcpy((void *)(nd_opt + 1), mac, ifp->if_addrlen);
 	}
 
 	ip6->ip6_plen = htons((u_int16_t)icmp6len);
@@ -709,7 +709,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			llchange = 0;
 		else {
 			if (sdl->sdl_alen) {
-				if (bcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
+				if (memcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
 					llchange = 1;
 				else
 					llchange = 0;
@@ -971,10 +971,10 @@ nd6_na_output(
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
-		bzero((void *)nd_opt, optlen);
+		memset((void *)nd_opt, 0, optlen);
 		nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
-		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
+		memcpy((void *)(nd_opt + 1), mac, ifp->if_addrlen);
 	} else
 		flags &= ~ND_NA_FLAG_OVERRIDE;
 
@@ -1114,7 +1114,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
-	bzero(dp, sizeof(*dp));
+	memset(dp, 0, sizeof(*dp));
 	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 

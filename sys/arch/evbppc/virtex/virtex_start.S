@@ -1,4 +1,4 @@
-/*	$NetBSD: virtex_start.S,v 1.2 2008/11/13 10:53:30 ad Exp $ */
+/*	$NetBSD: virtex_start.S,v 1.2.4.1 2009/05/13 17:17:41 jym Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -38,6 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #include "opt_ppcparam.h"

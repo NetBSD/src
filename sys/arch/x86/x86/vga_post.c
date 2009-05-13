@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.11 2008/09/08 21:32:50 joerg Exp $ */
+/* $NetBSD: vga_post.c,v 1.11.8.1 2009/05/13 17:18:45 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11 2008/09/08 21:32:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.1 2009/05/13 17:18:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -238,7 +238,7 @@ vga_post_free(struct vga_post *sc)
 
 #ifdef DDB
 void
-ddb_vgapost()
+ddb_vgapost(void)
 {
 
 	if (ddb_vgapostp)

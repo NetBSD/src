@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.50 2008/06/12 22:44:47 cegger Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.50.10.1 2009/05/13 17:20:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.50 2008/06/12 22:44:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.50.10.1 2009/05/13 17:20:25 jym Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -223,7 +223,7 @@ pdq_pci_attach(
 	free((void *) sc, M_DEVBUF);
 	return;
     }
-    bcopy((void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    memcpy(sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
     pdqs_pci[unit] = sc;
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
     pci_map_int(config_id, pdq_pci_ifintr, (void*) sc, &net_imask);
@@ -289,10 +289,7 @@ pdq_pci_match(
 }
 
 int
-pdq_pci_probe(
-    struct device *parent,
-    struct cfdata *cf,
-    void *aux)
+pdq_pci_probe(device_t parent, cfdata_t cf, void *aux)
 {
     struct isa_attach_args *ia = (struct isa_attach_args *) aux;
     pdq_uint32_t irq, data;
@@ -342,12 +339,9 @@ pdq_pci_probe(
 }
 
 void
-pdq_pci_attach(
-    struct device *parent,
-    struct device *self,
-    void *aux)
+pdq_pci_attach(device_t parent, device_t self, void *aux)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) self;
+    pdq_softc_t *sc = device_private(self);
     struct isa_attach_args *ia = (struct isa_attach_args *) aux;
     struct ifnet *ifp = &sc->sc_if;
     int i;
@@ -365,7 +359,7 @@ pdq_pci_attach(
 	return;
     }
 
-    bcopy((void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    memcpy(sc->sc_ac.ac_enaddr, (void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, 6);
 
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
@@ -391,10 +385,7 @@ struct cfdriver fpacd = {
 #elif defined(__NetBSD__)
 
 static int
-pdq_pci_match(
-    struct device *parent,
-    struct cfdata *match,
-    void *aux)
+pdq_pci_match(device_t parent, cfdata_t match, void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -407,12 +398,9 @@ pdq_pci_match(
 }
 
 static void
-pdq_pci_attach(
-    struct device * const parent,
-    struct device * const self,
-    void *const aux)
+pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
 {
-    pdq_softc_t * const sc = (pdq_softc_t *)self;
+    pdq_softc_t * const sc = device_private(self);
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     pdq_uint32_t data;
     pci_intr_handle_t intrhandle;

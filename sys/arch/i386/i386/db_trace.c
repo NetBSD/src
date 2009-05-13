@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.60 2008/07/02 19:49:58 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.60.10.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,22 +27,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60.10.1 2009/05/13 17:17:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h> 
+#include <sys/intr.h> 
+#include <sys/cpu.h> 
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
 #include <machine/trap.h>
+#include <machine/pmap.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_access.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_user.h>
+#include <ddb/db_proc.h>
+#include <ddb/db_cpu.h>
+#include <ddb/db_command.h>
 
 /*
  * Machine set.
@@ -87,7 +94,8 @@ db_i386_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
 		*regaddr = *val;
 		break;
 	default:
-		panic("db_i386_regop: unknown op %d", opcode);
+		db_printf("db_i386_regop: unknown op %d", opcode);
+		db_error(NULL);
 	}
 	return 0;
 }
@@ -265,11 +273,12 @@ db_nextframe(
     int *argp,		/* IN */
     int is_trap, void (*pr)(const char *, ...))
 {
-	struct trapframe *tf;
-	struct i386tss *tss;
+	static struct trapframe tf;
+	static struct i386tss tss;
 	struct i386_frame *fp;
 	struct intrframe *ifp;
 	int traptype, trapno, err, i;
+	uintptr_t ptr;
 
 	switch (is_trap) {
 	    case NONE:
@@ -286,9 +295,10 @@ db_nextframe(
 
 	    case TRAP_TSS:
 	    case INTERRUPT_TSS:
-		tss = (struct i386tss *)*argp;
-		*ip = tss->__tss_eip;
-		fp = (struct i386_frame *)tss->tss_ebp;
+		ptr = db_get_value((int)argp, 4, false);
+		db_read_bytes((db_addr_t)ptr, sizeof(tss), (char *)&tss);
+		*ip = tss.__tss_eip;
+		fp = (struct i386_frame *)tss.tss_ebp;
 		if (fp == NULL)
 			return 0;
 		*nextframe = (int *)&fp->f_frame;
@@ -304,15 +314,15 @@ db_nextframe(
 	    case SYSCALL:
 	    case INTERRUPT:
 	    default:
-
 		/* The only argument to trap() or syscall() is the trapframe. */
-		tf = *(struct trapframe **)argp;
+		ptr = db_get_value((int)argp, 4, false);
+		db_read_bytes((db_addr_t)ptr, sizeof(tf), (char *)&tf);
 		switch (is_trap) {
 		case TRAP:
-			(*pr)("--- trap (number %d) ---\n", tf->tf_trapno);
+			(*pr)("--- trap (number %d) ---\n", tf.tf_trapno);
 			break;
 		case SYSCALL:
-			(*pr)("--- syscall (number %d) ---\n", tf->tf_eax);
+			(*pr)("--- syscall (number %d) ---\n", tf.tf_eax);
 			break;
 		case INTERRUPT:
 			(*pr)("--- interrupt ---\n");
@@ -321,11 +331,12 @@ db_nextframe(
 			 * to interrupt stack, and convert to trapframe
 			 * (add 4).  See frame.h.
 			 */
-			tf = (struct trapframe *)(*(argp - 1) + 4);
+			ptr = db_get_value((int)(argp - 1) + 4, 4, false);
+			db_read_bytes((db_addr_t)ptr, sizeof(tf), (char *)&tf);
 			break;
 		}
-		*ip = (db_addr_t)tf->tf_eip;
-		fp = (struct i386_frame *)tf->tf_ebp;
+		*ip = (db_addr_t)tf.tf_eip;
+		fp = (struct i386_frame *)tf.tf_ebp;
 		if (fp == NULL)
 			return 0;
 		*nextframe = (int *)&fp->f_frame;
@@ -365,12 +376,12 @@ db_nextframe(
 static bool
 db_intrstack_p(const void *vp)
 {
-	const struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	const char *cp;
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		const char *cp = ci->ci_intrstack;
-
+	for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
+		db_read_bytes((db_addr_t)&ci->ci_intrstack, sizeof(cp),
+		    (char *)&cp);
 		if (cp == NULL) {
 			continue;
 		}
@@ -421,45 +432,55 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		callpc = (db_addr_t)ddb_regs.tf_eip;
 	} else {
 		if (trace_thread) {
-			struct proc *p;
 			struct user *u;
-			struct lwp *l;
+			proc_t p;
+			lwp_t l;
 			if (lwpaddr) {
-				l = (struct lwp *)addr;
-				p = l->l_proc;
-				(*pr)("trace: pid %d ", p->p_pid);
+				db_read_bytes(addr, sizeof(l),
+				    (char *)&l);
+				db_read_bytes((db_addr_t)l.l_proc,
+				    sizeof(p), (char *)&p);
+				(*pr)("trace: pid %d ", p.p_pid);
 			} else {
 				(*pr)("trace: pid %d ", (int)addr);
-				p = p_find(addr, PFIND_LOCKED);
-				if (p == NULL) {
+				lwpaddr = (db_addr_t)db_proc_find((pid_t)addr);
+				if (addr == 0) {
 					(*pr)("not found\n");
 					return;
 				}
-				l = LIST_FIRST(&p->p_lwps);
-				KASSERT(l != NULL);
+				db_read_bytes(addr, sizeof(p), (char *)&p);
+				db_read_bytes((db_addr_t)p.p_lwps.lh_first,
+				    sizeof(l), (char *)&l);
 			}
-			(*pr)("lid %d ", l->l_lid);
-			if (!(l->l_flag & LW_INMEM)) {
+			(*pr)("lid %d ", l.l_lid);
+			if (!(l.l_flag & LW_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}
-			u = l->l_addr;
-			if (p == curproc && l == curlwp) {
+			u = l.l_addr;
+#ifdef _KERNEL
+			if (l.l_proc == curproc &&
+			    (lwp_t *)lwpaddr == curlwp) {
 				frame = (int *)ddb_regs.tf_ebp;
 				callpc = (db_addr_t)ddb_regs.tf_eip;
 				(*pr)("at %p\n", frame);
-			} else {
-				frame = (int *)u->u_pcb.pcb_ebp;
-				callpc = (db_addr_t)
-				    db_get_value((int)(frame + 1), 4, false);
+			} else
+#endif
+			{
+				db_read_bytes((db_addr_t)&u->u_pcb.pcb_ebp,
+				    sizeof(frame), (char *)&frame);
+				db_read_bytes((db_addr_t)(frame + 1),
+				    sizeof(callpc), (char *)&callpc);
 				(*pr)("at %p\n", frame);
-				frame = (int *)*frame; /* XXXfvdl db_get_value? */
+				db_read_bytes((db_addr_t)frame,
+				    sizeof(frame), (char *)&frame);
 			}
 		} else {
 			frame = (int *)addr;
-			callpc = (db_addr_t)
-			    db_get_value((int)(frame + 1), 4, false);
-			frame = (int *)*frame; /* XXXfvdl db_get_value? */
+			db_read_bytes((db_addr_t)(frame + 1),
+			    sizeof(callpc), (char *)&callpc);
+			db_read_bytes((db_addr_t)frame,
+			    sizeof(frame), (char *)&frame);
 		}
 	}
 	retaddr = frame + 1;

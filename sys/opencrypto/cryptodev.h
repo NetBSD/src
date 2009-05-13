@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.15 2008/11/18 12:59:58 darran Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.15.4.1 2009/05/13 17:22:56 jym Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -131,7 +131,8 @@
 #define CRYPTO_MD5_HMAC_96	19 
 #define CRYPTO_SHA1_HMAC_96	20
 #define CRYPTO_RIPEMD160_HMAC_96	21
-#define CRYPTO_ALGORITHM_MAX	22 /* Keep updated - see below */
+#define CRYPTO_GZIP_COMP	22 /* Deflate compression algorithm */
+#define CRYPTO_ALGORITHM_MAX	23 /* Keep updated - see below */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
@@ -141,6 +142,7 @@
 struct session_op {
 	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
 	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+	u_int32_t	comp_alg;	/* ie. CRYPTO_GZIP_COMP */
 
 	u_int32_t	keylen;		/* cipher key */
 	void *		key;
@@ -155,6 +157,7 @@ struct session_op {
 struct session_n_op {
 	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
 	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+	u_int32_t	comp_alg;	/* ie. CRYPTO_GZIP_COMP */
 
 	u_int32_t	keylen;		/* cipher key */
 	void *		key;
@@ -170,12 +173,15 @@ struct crypt_op {
 	u_int16_t	op;		/* i.e. COP_ENCRYPT */
 #define COP_ENCRYPT	1
 #define COP_DECRYPT	2
+#define COP_COMP	3
+#define COP_DECOMP	4
 	u_int16_t	flags;
 #define	COP_F_BATCH 	0x0008		/* Dispatch as quickly as possible */
-	u_int		len;
+	u_int		len;		/* src len */
 	void *		src, *dst;	/* become iov[] inside kernel */
 	void *		mac;		/* must be big enough for chosen MAC */
 	void *		iv;
+	u_int		dst_len;	/* dst len if not 0 */
 };
 
 /* to support multiple session creation */
@@ -200,7 +206,8 @@ struct crypt_n_op {
 #define COP_DECRYPT	2
 	u_int16_t	flags;
 #define COP_F_BATCH	0x0008		/* Dispatch as quickly as possible */
-	u_int		len;
+#define COP_F_MORE	0x0010		/* more data to follow */
+	u_int		len;		/* src len */
 
 	u_int32_t	reqid;		/* request id */
 	int		status;		/* status of request -accepted or not */	
@@ -213,6 +220,7 @@ struct crypt_n_op {
 	void *		src, *dst;	/* become iov[] inside kernel */
 	void *		mac;		/* must be big enough for chosen MAC */
 	void *		iv;
+	u_int		dst_len;	/* dst len if not 0 */
 };
 
 /* CIOCNCRYPTM ioctl argument, supporting one or more asynchronous
@@ -340,16 +348,17 @@ struct cryptret {
 #define	CRIOGET		_IOWR('c', 100, u_int32_t)
 
 /* the following are done against the cloned descriptor */
-#define	CIOCGSESSION	_IOWR('c', 101, struct session_op)
 #define	CIOCFSESSION	_IOW('c', 102, u_int32_t)
-#define CIOCCRYPT	_IOWR('c', 103, struct crypt_op)
 #define CIOCKEY		_IOWR('c', 104, struct crypt_kop)
-#define	CIOCNGSESSION	_IOWR('c', 106, struct crypt_sgop)
-#define CIOCNCRYPTM	_IOWR('c', 107, struct crypt_mop)
 #define CIOCNFKEYM	_IOWR('c', 108, struct crypt_mkop)
 #define CIOCNFSESSION	_IOW('c', 109, struct crypt_sfop)
 #define CIOCNCRYPTRETM	_IOWR('c', 110, struct cryptret)
 #define CIOCNCRYPTRET	_IOWR('c', 111, struct crypt_result)
+
+#define	CIOCGSESSION	_IOWR('c', 112, struct session_op)
+#define	CIOCNGSESSION	_IOWR('c', 113, struct crypt_sgop)
+#define CIOCCRYPT	_IOWR('c', 114, struct crypt_op)
+#define CIOCNCRYPTM	_IOWR('c', 115, struct crypt_mop)
 
 #define CIOCASYMFEAT	_IOR('c', 105, u_int32_t)
 
@@ -404,7 +413,7 @@ struct cryptodesc {
 					   place, so don't copy. */
 #define	CRD_F_IV_EXPLICIT	0x04	/* IV explicitly provided */
 #define	CRD_F_DSA_SHA_NEEDED	0x08	/* Compute SHA-1 of buffer for DSA */
-#define CRD_F_COMP		0x0f    /* Set when doing compression */
+#define CRD_F_COMP		0x10    /* Set when doing compression */
 
 	struct cryptoini	CRD_INI; /* Initialization/context data */
 #define crd_iv		CRD_INI.cri_iv
@@ -418,11 +427,7 @@ struct cryptodesc {
 
 /* Structure describing complete operation */
 struct cryptop {
-	union {
-		TAILQ_ENTRY(cryptop) crp_tnext;
-		SLIST_ENTRY(cryptop) crp_lnext;
-	}		crp_qun;
-#define	crp_next crp_qun.crp_tnext	/* XXX compat */
+	TAILQ_ENTRY(cryptop) crp_next;
 	u_int64_t	crp_sid;	/* Session ID */
 	
 	u_int32_t	crp_reqid;	/* request id */
@@ -452,6 +457,7 @@ struct cryptop {
 #define	CRYPTO_F_CBIFSYNC	0x0040	/* Do CBIMM if op is synchronous */
 #define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
 #define	CRYPTO_F_USER		0x0100	/* Request is in user context */
+#define	CRYPTO_F_MORE		0x0200	/* more data to follow */
 
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
@@ -471,6 +477,7 @@ struct cryptop {
 	
 	struct iovec	iovec[1];
 	struct uio	uio;
+	uint32_t	magic;
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -486,11 +493,7 @@ struct cryptop {
 #define	CRYPTO_HINT_MORE	0x1	/* more ops coming shortly */
 
 struct cryptkop {
-	union {
-		TAILQ_ENTRY(cryptkop) krp_tnext;
-                SLIST_ENTRY(cryptkop) krp_lnext;
-        }               krp_qun;
-#define krp_next krp_qun.krp_tnext	/* XXX compat */
+	TAILQ_ENTRY(cryptkop) krp_next;
 
 	u_int32_t	krp_reqid;	/* request id */
 	void *		krp_usropaque;	/* Opaque pointer from user, passed along */

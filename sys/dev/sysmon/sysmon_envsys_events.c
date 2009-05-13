@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.62 2008/11/11 19:03:06 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.62.4.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.62 2008/11/11 19:03:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.62.4.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -567,7 +567,7 @@ sme_events_worker(struct work *wk, void *arg)
 		see->see_flags |= SEE_EVENT_WORKING;
 	/* 
 	 * sme_events_check marks the first event for the device to
-	 * mak us refresh it here.  Don't refresh if the driver uses
+	 * make us refresh it here.  Don't refresh if the driver uses
 	 * its own method for refreshing.
 	 */
 	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {

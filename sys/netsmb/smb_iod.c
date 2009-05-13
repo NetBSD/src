@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.29 2008/06/24 10:37:19 gmcgarry Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.29.10.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.29 2008/06/24 10:37:19 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.29.10.1 2009/05/13 17:22:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ smb_iod_recvall(struct smbiod *iod)
 		 */
 		m_dumpm(m);
 		hp = mtod(m, u_char*);
-		if (bcmp(hp, SMB_SIGNATURE, SMB_SIGLEN) != 0) {
+		if (memcmp(hp, SMB_SIGNATURE, SMB_SIGLEN) != 0) {
 			m_freem(m);
 			continue;
 		}

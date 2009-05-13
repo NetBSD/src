@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.13 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.13.90.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.13 2005/12/11 12:25:20 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.13.90.1 2009/05/13 17:23:03 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,11 +51,11 @@ __RCSID("$NetBSD: ls.c,v 1.13 2005/12/11 12:25:20 christos Exp $");
 #include <sys/ttychars.h>
 #include <lib/libsa/stand.h>
 
-int main __P((void));
-static void ls __P((int));
+int main(void);
+static void ls(int);
 
 int
-main()
+main(void)
 {
 	struct stat st;
 	int fd;
@@ -83,8 +83,7 @@ main()
 
 typedef struct dirent	DP;
 static void
-ls(fd)
-	register int fd;
+ls(register int fd)
 {
 	register int size;
 	register char *dp;

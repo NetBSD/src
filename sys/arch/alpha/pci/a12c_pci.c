@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_pci.c,v 1.3 2000/06/29 08:58:45 mrg Exp $ */
+/* $NetBSD: a12c_pci.c,v 1.3.144.1 2009/05/13 17:16:05 jym Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.3 2000/06/29 08:58:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.3.144.1 2009/05/13 17:16:05 jym Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -58,19 +58,17 @@ __KERNEL_COPYRIGHT(0,
 
 #define	A12C_PCI()	/* Generate ctags(1) key */
 
-void		a12c_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		a12c_bus_maxdevs __P((void *, int));
-pcitag_t	a12c_make_tag __P((void *, int, int, int));
-void		a12c_decompose_tag __P((void *, pcitag_t, int *, int *,
-		    int *));
-pcireg_t	a12c_conf_read __P((void *, pcitag_t, int));
-void		a12c_conf_write __P((void *, pcitag_t, int, pcireg_t));
+void		a12c_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		a12c_bus_maxdevs(void *, int);
+pcitag_t	a12c_make_tag(void *, int, int, int);
+void		a12c_decompose_tag(void *, pcitag_t, int *, int *,
+		    int *);
+pcireg_t	a12c_conf_read(void *, pcitag_t, int);
+void		a12c_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-a12c_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+a12c_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
@@ -83,34 +81,25 @@ a12c_pci_init(pc, v)
 }
 
 void
-a12c_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+a12c_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
 int
-a12c_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+a12c_bus_maxdevs(void *cpv, int busno)
 {
 	return 1;
 }
 
 pcitag_t
-a12c_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+a12c_make_tag(void *cpv, int b, int d, int f)
 {
 
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
 void
-a12c_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+a12c_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)
@@ -161,10 +150,7 @@ a12_reset_pci_config_cycle(void)
 }
 
 pcireg_t
-a12c_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+a12c_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	pcireg_t *datap, data;
 	int s, ba;
@@ -201,11 +187,7 @@ a12c_conf_read(cpv, tag, offset)
 
 
 void
-a12c_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+a12c_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	pcireg_t *datap;
 	int s;

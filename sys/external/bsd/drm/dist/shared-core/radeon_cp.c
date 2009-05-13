@@ -963,6 +963,13 @@ static int radeon_do_init_cp(struct drm_device * dev, drm_radeon_init_t * init)
 					 RADEON_ROUND_PREC_8TH_PIX);
 
 
+#ifdef __NetBSD__	/* XXX */
+
+	init->ring_offset = DRM_NETBSD_HANDLE2ADDR(init->ring_offset);
+	init->ring_rptr_offset = DRM_NETBSD_HANDLE2ADDR(init->ring_rptr_offset);
+	init->buffers_offset = DRM_NETBSD_HANDLE2ADDR(init->buffers_offset);
+	init->gart_textures_offset = DRM_NETBSD_HANDLE2ADDR(init->gart_textures_offset);
+#endif
 	dev_priv->ring_offset = init->ring_offset;
 	dev_priv->ring_rptr_offset = init->ring_rptr_offset;
 	dev_priv->buffers_offset = init->buffers_offset;
@@ -977,7 +984,8 @@ static int radeon_do_init_cp(struct drm_device * dev, drm_radeon_init_t * init)
 
 	dev_priv->cp_ring = drm_core_findmap(dev, init->ring_offset);
 	if (!dev_priv->cp_ring) {
-		DRM_ERROR("could not find cp ring region!\n");
+		DRM_ERROR("could not find cp ring region! offset 0x%lx\n",
+			  init->ring_offset);
 		radeon_do_cleanup_cp(dev);
 		return -EINVAL;
 	}

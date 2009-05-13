@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.32 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.32.14.1 2009/05/13 17:20:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.32 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.32.14.1 2009/05/13 17:20:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ struct fwohci_pci_softc {
 	void *psc_ih;
 };
 
-static int fwohci_pci_match(device_t, struct cfdata *, void *);
+static int fwohci_pci_match(device_t, cfdata_t, void *);
 static void fwohci_pci_attach(device_t, device_t, void *);
 
 static bool fwohci_pci_suspend(device_t PMF_FN_PROTO);
@@ -69,7 +69,7 @@ CFATTACH_DECL_NEW(fwohci_pci, sizeof(struct fwohci_pci_softc),
     fwohci_pci_match, fwohci_pci_attach, NULL, NULL);
 
 static int
-fwohci_pci_match(device_t parent, struct cfdata *match,
+fwohci_pci_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;

@@ -1,6 +1,6 @@
-/*	$NetBSD: dev_net.h,v 1.1 2002/02/16 16:26:23 thorpej Exp $	*/
+/*	$NetBSD: dev_net.h,v 1.1.142.1 2009/05/13 17:17:52 jym Exp $	*/
 
-int	net_open __P((struct open_file *, ...));
-int	net_close __P((struct open_file *));
-int	net_ioctl __P((struct open_file *, u_long, void *));
-int	net_strategy __P((void *, int , daddr_t , size_t, void *, size_t *));
+int	net_open(struct open_file *, ...);
+int	net_close(struct open_file *);
+int	net_ioctl(struct open_file *, u_long, void *);
+int	net_strategy(void *, int , daddr_t , size_t, void *, size_t *);

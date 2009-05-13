@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.26 2008/06/12 22:30:30 cegger Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.26.10.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /* XXXad does this even compile? */
 
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.26 2008/06/12 22:30:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.26.10.1 2009/05/13 17:19:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -195,8 +195,7 @@ struct cd18xx_revs {
 /* wait for the CCR to go to zero */
 static inline int cd18xx_wait_ccr(struct cd18xx_softc *);
 static inline int
-cd18xx_wait_ccr(sc)
-	struct cd18xx_softc *sc;
+cd18xx_wait_ccr(struct cd18xx_softc *sc)
 {
 	int i = 100000;
 
@@ -210,8 +209,7 @@ cd18xx_wait_ccr(sc)
  * device attach routine, high-end portion
  */
 void
-cd18xx_attach(sc)
-	struct cd18xx_softc *sc;
+cd18xx_attach(struct cd18xx_softc *sc)
 {
 	static int chip_id_next = 1;
 	int onehundred_pin, revision, i, port;
@@ -298,9 +296,7 @@ cd18xx_attach(sc)
  * tty portion attach routine
  */
 void
-cdtty_attach(sc, port)
-	struct	cd18xx_softc *sc;
-	int port;
+cdtty_attach(struct cd18xx_softc *sc, int port)
 {
 	struct cdtty_port *p = &sc->sc_ports[port];
 	int i;
@@ -353,9 +349,7 @@ cdtty_attach(sc, port)
  * cdtty_shutdown: called when the device is last closed.
  */
 void
-cdtty_shutdown(sc, p)
-	struct cd18xx_softc *sc;
-	struct cdtty_port *p;
+cdtty_shutdown(struct cd18xx_softc *sc, struct cdtty_port *p)
 {
 	struct tty *tp = p->p_tty;
 	int s;
@@ -393,11 +387,7 @@ cdtty_shutdown(sc, p)
  * cdttyopen:  open syscall for cdtty terminals..
  */
 int
-cdttyopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+cdttyopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
 	struct cd18xx_softc *sc;
@@ -497,11 +487,7 @@ cdttyopen(dev, flag, mode, p)
  * cdttyclose:  close syscall for cdtty terminals..
  */
 int
-cdttyclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+cdttyclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct cd18xx_softc *sc;
 	struct cdtty_port *port;
@@ -725,9 +711,7 @@ cdttystop(struct tty *tp, int flag)
  * load a channel's registers.
  */
 void
-cdtty_loadchannelregs(sc, p)
-	struct cd18xx_softc *sc;
-	struct cdtty_port *p;
+cdtty_loadchannelregs(struct cd18xx_softc *sc, struct cdtty_port *p)
 {
 
 	cd18xx_set_car(sc, CD18XX_CHANNEL(p->p_tty->t_dev));
@@ -950,10 +934,7 @@ cdttyparam(struct tty *tp, struct termios *t)
 }
 
 static void
-cdtty_break(sc, p, onoff)
-	struct cd18xx_softc *sc;
-	struct cdtty_port *p;
-	int onoff;
+cdtty_break(struct cd18xx_softc *sc, struct cdtty_port *p, int onoff)
 {
 
 	/* tell tx intr handler we need a break */
@@ -978,10 +959,7 @@ cdtty_break(sc, p, onoff)
  * in transmission, the change is deferred.
  */
 static void
-cdtty_modem(sc, p, onoff)
-	struct cd18xx_softc *sc;
-	struct cdtty_port *p;
-	int onoff;
+cdtty_modem(struct cd18xx_softc *sc, struct cdtty_port *p, int onoff)
 {
 
 	if (p->p_mcor1_dtr == 0)
@@ -1042,9 +1020,7 @@ cdttyhwiflow(struct tty *tp, int block)
  * Internal version of cdttyhwiflow, called at cdtty's priority.
  */
 static void
-cdtty_hwiflow(sc, p)
-	struct cd18xx_softc *sc;
-	struct cdtty_port *p;
+cdtty_hwiflow(struct cd18xx_softc *sc, struct cdtty_port *p)
 {
 
 	if (p->p_msvr_rts == 0)
@@ -1087,9 +1063,7 @@ do { \
 
 /* receiver interrupt */
 static inline void
-cd18xx_rint(sc, ns)
-	struct cd18xx_softc *sc;
-	int *ns;
+cd18xx_rint(struct cd18xx_softc *sc, int *ns)
 {
 	struct cdtty_port *p;
 	u_int channel, count;
@@ -1165,9 +1139,7 @@ cd18xx_rint(sc, ns)
  * drain completely
  */
 static inline void
-cd18xx_tint(sc, ns)
-	struct cd18xx_softc *sc;
-	int *ns;
+cd18xx_tint(struct cd18xx_softc *sc, int *ns)
 {
 	struct cdtty_port *p;
 	u_int channel;
@@ -1245,9 +1217,7 @@ cd18xx_tint(sc, ns)
 
 /* modem signal change interrupt */
 static inline void
-cd18xx_mint(sc, ns)
-	struct cd18xx_softc *sc;
-	int *ns;
+cd18xx_mint(struct cd18xx_softc *sc, int *ns)
 {
 	struct cdtty_port *p;
 	u_int channel;
@@ -1360,10 +1330,7 @@ cd18xx_hardintr(void *v)
  */
 
 void
-cdtty_rxsoft(sc, p, tp)
-	struct cd18xx_softc *sc;
-	struct cdtty_port *p;
-	struct tty *tp;
+cdtty_rxsoft(struct cd18xx_softc *sc, struct cdtty_port *p, struct tty *tp)
 {
 	u_char *get, *end;
 	u_int cc, scc;
@@ -1461,10 +1428,7 @@ cdtty_rxsoft(sc, p, tp)
 }
 
 void
-cdtty_txsoft(sc, p, tp)
-	struct cd18xx_softc *sc;
-	struct cdtty_port *p;
-	struct tty *tp;
+cdtty_txsoft(struct cd18xx_softc *sc, struct cdtty_port *p, struct tty *tp)
 {
 
 	CLR(tp->t_state, TS_BUSY);
@@ -1476,10 +1440,7 @@ cdtty_txsoft(sc, p, tp)
 }
 
 void
-cdtty_stsoft(sc, p, tp)
-	struct cd18xx_softc *sc;
-	struct cdtty_port *p;
-	struct tty *tp;
+cdtty_stsoft(struct cd18xx_softc *sc, struct cdtty_port *p, struct tty *tp)
 {
 	u_char msvr, delta;
 	int s;
@@ -1509,8 +1470,7 @@ cdtty_stsoft(sc, p, tp)
 }
 
 void
-cd18xx_softintr(v)
-	void *v;
+cd18xx_softintr(void *v)
 {
 	struct cd18xx_softc *sc = v;
 	struct cdtty_port *p;

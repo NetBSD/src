@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.44 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.44.8.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.44 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.44.8.1 2009/05/13 17:17:49 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -75,8 +75,7 @@ ibcs2_syscall_intern(struct proc *p)
  * Like trap(), argument is call by reference.
  */
 void
-ibcs2_syscall_plain(frame)
-	struct trapframe *frame;
+ibcs2_syscall_plain(struct trapframe *frame)
 {
 	char *params;
 	const struct sysent *callp;
@@ -154,8 +153,7 @@ ibcs2_syscall_plain(frame)
  * Like trap(), argument is call by reference.
  */
 void
-ibcs2_syscall_fancy(frame)
-	struct trapframe *frame;
+ibcs2_syscall_fancy(struct trapframe *frame)
 {
 	char * params;
 	const struct sysent *callp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe.h,v 1.4 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: armfpe.h,v 1.4.94.1 2009/05/13 17:16:17 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Neil A Carson.
@@ -109,31 +109,31 @@ typedef struct {
 
 /* Prototypes */
 
-int arm_fpe_boot	__P((void));
-int initialise_arm_fpe	__P((void));
-void arm_fpe_postproc	__P((u_int fpframe, struct trapframe *frame));
-void arm_fpe_exception	__P((int exception, u_int fpframe, struct trapframe *frame));
+int arm_fpe_boot(void);
+int initialise_arm_fpe(void);
+void arm_fpe_postproc(u_int fpframe, struct trapframe *frame);
+void arm_fpe_exception(int exception, u_int fpframe, struct trapframe *frame);
 
-void arm_fpe_core_disable	__P((void));
-void arm_fpe_core_enable	__P((void));
-u_int arm_fpe_core_initws	__P((u_int workspace, int handler1, int handler2));
-u_int arm_fpe_core_abort	__P((u_int context, int r12, int pc));
-void arm_fpe_core_initcontext	__P((u_int context));
-u_int arm_fpe_core_changecontext	__P((u_int context));
-void arm_fpe_core_shutdown		__P((void));
-void arm_fpe_core_activatecontext	__P((u_int context));
-u_int arm_fpe_core_deactivatecontext	__P((void));
-u_int arm_fpe_core_savecontext	__P((u_int context, fp_context_frame_t *savearea, int pc));
-void arm_fpe_core_loadcontext	__P((u_int context, const fp_context_frame_t *loadarea));
-void arm_fpe_copycontext	__P((u_int c1, u_int c2));
-void arm_fpe_getcontext		__P((struct proc *p, struct fpreg *fpregs));
-void arm_fpe_setcontext		__P((struct proc *p, const struct fpreg *fpregs));
+void arm_fpe_core_disable(void);
+void arm_fpe_core_enable(void);
+u_int arm_fpe_core_initws(u_int workspace, int handler1, int handler2);
+u_int arm_fpe_core_abort(u_int context, int r12, int pc);
+void arm_fpe_core_initcontext(u_int context);
+u_int arm_fpe_core_changecontext(u_int context);
+void arm_fpe_core_shutdown(void);
+void arm_fpe_core_activatecontext(u_int context);
+u_int arm_fpe_core_deactivatecontext(void);
+u_int arm_fpe_core_savecontext(u_int context, fp_context_frame_t *savearea, int pc);
+void arm_fpe_core_loadcontext(u_int context, const fp_context_frame_t *loadarea);
+void arm_fpe_copycontext(u_int c1, u_int c2);
+void arm_fpe_getcontext(struct proc *p, struct fpreg *fpregs);
+void arm_fpe_setcontext(struct proc *p, const struct fpreg *fpregs);
 
-void arm_fpe_exception_glue	__P((int exception));
-void arm_fpe_panic		__P((void));
-void undefined_entry		__P((void));
-void arm_fpe_post_proc_glue	__P((void));
-void arm_fpe_set_exception_mask	__P((fp_except));
+void arm_fpe_exception_glue(int exception);
+void arm_fpe_panic(void);
+void undefined_entry(void);
+void arm_fpe_post_proc_glue(void);
+void arm_fpe_set_exception_mask(fp_except);
 
 #endif	/* _KERNEL */
 #endif /* _ARMFPE_H_ */

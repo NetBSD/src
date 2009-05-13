@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.1 2006/09/01 21:26:19 uwe Exp $
+#	$NetBSD: Makefile.bootxx,v 1.1.80.1 2009/05/13 17:17:58 jym Exp $
 
 PROG?=		bootxx_${FS}
 
@@ -6,6 +6,10 @@ BOOTXX_SECTORS?= 15
 BOOTXX_MAXSIZE?= (( ${BOOTXX_SECTORS} * 512 ))
 
 SRCS=		pbr.S label.S bootxx.S boot1.c
+
+.if ${FS} == ustarfs
+SRCS+=		bios.S
+.endif
 
 LDFLAGS+=	-e start
 
@@ -26,8 +30,6 @@ CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 		-DLIBSA_NO_RAW_ACCESS \
 		-DLIBSA_NO_FS_WRITE \
 		-DLIBSA_NO_FS_SEEK \
-		-DLIBSA_USE_MEMCPY \
-		-DLIBSA_USE_MEMSET \
 		-DLIBSA_SINGLE_DEVICE=blkdev \
 		-DLIBKERN_OPTIMISE_SPACE \
 		-D"blkdevioctl(x,y,z)=EINVAL" \

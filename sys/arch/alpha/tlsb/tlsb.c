@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.32 2007/03/04 05:59:12 christos Exp $ */
+/* $NetBSD: tlsb.c,v 1.32.58.1 2009/05/13 17:16:08 jym Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.32 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.32.58.1 2009/05/13 17:16:08 jym Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,16 +62,16 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.32 2007/03/04 05:59:12 christos Exp $");
 
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static int	tlsbmatch __P((struct device *, struct cfdata *, void *));
-static void	tlsbattach __P((struct device *, struct device *, void *));
+static int	tlsbmatch(struct device *, struct cfdata *, void *);
+static void	tlsbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tlsb, sizeof (struct device),
     tlsbmatch, tlsbattach, NULL, NULL);
 
 extern struct cfdriver tlsb_cd;
 
-static int	tlsbprint __P((void *, const char *));
-static const char *tlsb_node_type_str __P((u_int32_t));
+static int	tlsbprint(void *, const char *);
+static const char *tlsb_node_type_str(u_int32_t);
 
 /*
  * There can be only one TurboLaser, and we'll overload it
@@ -85,9 +85,7 @@ static const char *tlsb_node_type_str __P((u_int32_t));
 int	tlsb_found;
 
 static int
-tlsbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+tlsbprint(void *aux, const char *pnp)
 {
 	struct tlsb_dev_attach_args *tap = aux;
 
@@ -102,10 +100,7 @@ tlsbprint(aux, pnp)
 }
 
 static int
-tlsbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tlsbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -125,10 +120,7 @@ tlsbmatch(parent, cf, aux)
 }
 
 static void
-tlsbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tlsbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tlsb_dev_attach_args ta;
 	u_int32_t tldev;
@@ -241,8 +233,7 @@ tlsbattach(parent, self, aux)
 }
 
 static const char *
-tlsb_node_type_str(dtype)
-	u_int32_t dtype;
+tlsb_node_type_str(u_int32_t dtype)
 {
 	static char	tlsb_line[64];
 

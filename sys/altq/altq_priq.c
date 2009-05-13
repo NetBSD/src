@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.20 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.20.10.1 2009/05/13 17:16:01 jym Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.20 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.20.10.1 2009/05/13 17:16:01 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -566,8 +566,7 @@ priq_getq(struct priq_class *cl)
 }
 
 static struct mbuf *
-priq_pollq(cl)
-	struct priq_class *cl;
+priq_pollq(struct priq_class *cl)
 {
 	return qhead(cl->cl_q);
 }

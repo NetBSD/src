@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.15 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.15.90.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.15 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.15.90.1 2009/05/13 17:21:16 jym Exp $");
 
 #include "rf_archs.h"
 
@@ -57,8 +57,7 @@ RF_RedFuncs_t rf_pFuncs = {rf_RegularONPFunc, "Regular Old-New P", rf_SimpleONPF
 RF_RedFuncs_t rf_pRecoveryFuncs = {rf_RecoveryPFunc, "Recovery P Func", rf_RecoveryPFunc, "Recovery P Func"};
 
 int
-rf_RegularONPFunc(node)
-	RF_DagNode_t *node;
+rf_RegularONPFunc(RF_DagNode_t *node)
 {
 	return (rf_RegularXorFunc(node));
 }
@@ -67,22 +66,19 @@ rf_RegularONPFunc(node)
 */
 
 int
-rf_SimpleONPFunc(node)
-	RF_DagNode_t *node;
+rf_SimpleONPFunc(RF_DagNode_t *node)
 {
 	return (rf_SimpleXorFunc(node));
 }
 
 int
-rf_RecoveryPFunc(node)
-	RF_DagNode_t *node;
+rf_RecoveryPFunc(RF_DagNode_t *node)
 {
 	return (rf_RecoveryXorFunc(node));
 }
 
 int
-rf_RegularPFunc(node)
-	RF_DagNode_t *node;
+rf_RegularPFunc(RF_DagNode_t *node)
 {
 	return (rf_RegularXorFunc(node));
 }
@@ -222,21 +218,13 @@ rf_PQDagSelect(
 */
 #if 0
 static void
-PQOne(raidPtr, nSucc, nAnte, asmap)
-	RF_Raid_t *raidPtr;
-	int    *nSucc;
-	int    *nAnte;
-	RF_AccessStripeMap_t *asmap;
+PQOne(RF_Raid_t *raidPtr, int *nSucc, int *nAnte, RF_AccessStripeMap_t *asmap)
 {
 	*nSucc = *nAnte = 1;
 }
 
 static void
-PQOneTwo(raidPtr, nSucc, nAnte, asmap)
-	RF_Raid_t *raidPtr;
-	int    *nSucc;
-	int    *nAnte;
-	RF_AccessStripeMap_t *asmap;
+PQOneTwo(RF_Raid_t *raidPtr, int *nSucc, int *nAnte, RF_AccessStripeMap_t *asmap)
 {
 	*nSucc = 1;
 	*nAnte = 2;
@@ -250,8 +238,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQCreateLargeWriteDAG)
 }
 
 int
-rf_RegularONQFunc(node)
-	RF_DagNode_t *node;
+rf_RegularONQFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
 	int     d;
@@ -315,8 +302,7 @@ rf_RegularONQFunc(node)
 */
 
 int
-rf_SimpleONQFunc(node)
-	RF_DagNode_t *node;
+rf_SimpleONQFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
 	int     d;
@@ -365,9 +351,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQCreateSmallWriteDAG)
 static void RegularQSubr(RF_DagNode_t *node, char   *qbuf);
 
 static void
-RegularQSubr(node, qbuf)
-	RF_DagNode_t *node;
-	char   *qbuf;
+RegularQSubr(RF_DagNode_t *node, char *qbuf)
 {
 	int     np = node->numParams;
 	int     d;
@@ -409,8 +393,7 @@ RegularQSubr(node, qbuf)
 static void DegrQSubr(RF_DagNode_t *node);
 
 static void
-DegrQSubr(node)
-	RF_DagNode_t *node;
+DegrQSubr(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
 	int     d;
@@ -471,16 +454,14 @@ DegrQSubr(node)
 */
 
 int
-rf_RegularPQFunc(node)
-	RF_DagNode_t *node;
+rf_RegularPQFunc(RF_DagNode_t *node)
 {
 	RegularQSubr(node, node->results[1]);
 	return (rf_RegularXorFunc(node));	/* does the wakeup */
 }
 
 int
-rf_RegularQFunc(node)
-	RF_DagNode_t *node;
+rf_RegularQFunc(RF_DagNode_t *node)
 {
 	/* Almost ... adjust Qsubr args */
 	RegularQSubr(node, node->results[0]);
@@ -508,8 +489,7 @@ rf_RegularQFunc(node)
 */
 
 void
-rf_Degraded_100_PQFunc(node)
-	RF_DagNode_t *node;
+rf_Degraded_100_PQFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
 
@@ -551,8 +531,7 @@ rf_Degraded_100_PQFunc(node)
  *
  */
 int
-rf_RecoveryQFunc(node)
-	RF_DagNode_t *node;
+rf_RecoveryQFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	RF_RaidLayout_t *layoutPtr = (RF_RaidLayout_t *) & raidPtr->Layout;
@@ -591,8 +570,7 @@ rf_RecoveryQFunc(node)
 }
 
 int
-rf_RecoveryPQFunc(node)
-	RF_DagNode_t *node;
+rf_RecoveryPQFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	printf("raid%d: Recovery from PQ not implemented.\n",raidPtr->raidid);
@@ -612,8 +590,7 @@ rf_RecoveryPQFunc(node)
 */
 
 void
-rf_PQ_DegradedWriteQFunc(node)
-	RF_DagNode_t *node;
+rf_PQ_DegradedWriteQFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
 	int     d;
@@ -670,11 +647,7 @@ rf_PQ_DegradedWriteQFunc(node)
 */
 
 void
-rf_IncQ(dest, buf, length, coeff)
-	unsigned long *dest;
-	unsigned long *buf;
-	unsigned length;
-	unsigned coeff;
+rf_IncQ(unsigned long *dest, unsigned long *buf, unsigned length, unsigned coeff)
 {
 	unsigned long a, d, new;
 	unsigned long a1, a2;
@@ -824,14 +797,7 @@ QDelta(
  * Everything about this seems wrong.
  */
 void
-rf_PQ_recover(pbuf, qbuf, abuf, bbuf, length, coeff_a, coeff_b)
-	unsigned long *pbuf;
-	unsigned long *qbuf;
-	unsigned long *abuf;
-	unsigned long *bbuf;
-	unsigned length;
-	unsigned coeff_a;
-	unsigned coeff_b;
+rf_PQ_recover(unsigned long *pbuf, unsigned long *qbuf, unsigned long *abuf, unsigned long *bbuf, unsigned length, unsigned coeff_a, unsigned coeff_b)
 {
 	unsigned long p, q, a, a0, a1;
 	int     col = (29 * coeff_a) + coeff_b;

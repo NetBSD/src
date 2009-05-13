@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.9 2009/01/12 11:32:44 tsutsui Exp $ */
+/* $NetBSD: nif.c,v 1.9.2.1 2009/05/13 17:18:16 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -66,8 +66,7 @@ static struct nifdv vnifdv[] = {
 static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
 
 int
-netif_init(tag)
-	unsigned tag;
+netif_init(unsigned tag)
 {
 	struct iodesc *s;
 	struct nifdv *dv;
@@ -93,16 +92,14 @@ netif_init(tag)
 }
 
 int
-netif_open(cookie)
-	void *cookie;
+netif_open(void *cookie)
 {
 	/* single action */
 	return 0;
 }
 
 int
-netif_close(sock)
-	int sock;
+netif_close(int sock)
 {
 	/* nothing to do for the HW */
 	return 0;
@@ -113,10 +110,7 @@ netif_close(sock)
  * Return the length sent (or -1 on error).
  */
 ssize_t
-netif_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct nifdv *dv = desc->io_netif;
 
@@ -128,11 +122,7 @@ netif_put(desc, pkt, len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(desc, pkt, maxlen, timo)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	saseconds_t timo;
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	struct nifdv *dv = desc->io_netif;
 	int len;
@@ -144,8 +134,7 @@ netif_get(desc, pkt, maxlen, timo)
 }
 
 struct iodesc *
-socktodesc(num)
-	int num;
+socktodesc(int num)
 {
 
 	return (num == 0) ? &netdesc : NULL;

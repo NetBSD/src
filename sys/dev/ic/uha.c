@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.42 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: uha.c,v 1.42.14.1 2009/05/13 17:19:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.42 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.42.14.1 2009/05/13 17:19:24 jym Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -105,9 +105,7 @@ int uha_create_mscps(struct uha_softc *, struct uha_mscp *, int);
  * Attach all the sub-devices we can find
  */
 void
-uha_attach(sc, upd)
-	struct uha_softc *sc;
-	struct uha_probe_data *upd;
+uha_attach(struct uha_softc *sc, struct uha_probe_data *upd)
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
@@ -210,9 +208,7 @@ uha_reset_mscp(struct uha_softc *sc, struct uha_mscp *mscp)
  * A mscp (and hence a mbx-out) is put onto the free list.
  */
 void
-uha_free_mscp(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+uha_free_mscp(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 	int s;
 
@@ -223,9 +219,7 @@ uha_free_mscp(sc, mscp)
 }
 
 integrate int
-uha_init_mscp(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+uha_init_mscp(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum, error;
@@ -259,10 +253,7 @@ uha_init_mscp(sc, mscp)
  * Create a set of MSCPs and add them to the free list.
  */
 int
-uha_create_mscps(sc, mscpstore, count)
-	struct uha_softc *sc;
-	struct uha_mscp *mscpstore;
-	int count;
+uha_create_mscps(struct uha_softc *sc, struct uha_mscp *mscpstore, int count)
 {
 	struct uha_mscp *mscp;
 	int i, error;
@@ -288,8 +279,7 @@ uha_create_mscps(sc, mscpstore, count)
  * hash table too otherwise either return an error or sleep.
  */
 struct uha_mscp *
-uha_get_mscp(sc)
-	struct uha_softc *sc;
+uha_get_mscp(struct uha_softc *sc)
 {
 	struct uha_mscp *mscp;
 	int s;
@@ -308,9 +298,7 @@ uha_get_mscp(sc)
  * given a physical address, find the mscp that it corresponds to.
  */
 struct uha_mscp *
-uha_mscp_phys_kv(sc, mscp_phys)
-	struct uha_softc *sc;
-	u_long mscp_phys;
+uha_mscp_phys_kv(struct uha_softc *sc, u_long mscp_phys)
 {
 	int hashnum = MSCP_HASH(mscp_phys);
 	struct uha_mscp *mscp = sc->sc_mscphash[hashnum];
@@ -328,9 +316,7 @@ uha_mscp_phys_kv(sc, mscp_phys)
  * how the operation went.
  */
 void
-uha_done(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+uha_done(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsi_sense_data *s1, *s2;
@@ -398,8 +384,7 @@ uha_done(sc, mscp)
 }
 
 void
-uhaminphys(bp)
-	struct buf *bp;
+uhaminphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > UHA_MAXXFER)
@@ -413,10 +398,7 @@ uhaminphys(bp)
  */
 
 void
-uha_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+uha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -591,8 +573,7 @@ uha_scsipi_request(chan, req, arg)
 	}
 }
 void
-uha_timeout(arg)
-	void *arg;
+uha_timeout(void *arg)
 {
 	struct uha_mscp *mscp = arg;
 	struct scsipi_xfer *xs = mscp->xs;

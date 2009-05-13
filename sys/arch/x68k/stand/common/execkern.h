@@ -4,7 +4,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: execkern.h,v 1.3 2007/12/24 15:46:45 perry Exp $
+ *	$NetBSD: execkern.h,v 1.3.24.1 2009/05/13 17:18:43 jym Exp $
  */
 
 #ifndef X68K_BOOT_EXECKERN_H
@@ -51,8 +51,8 @@ struct execkern_arg {
 	char shstrtab_fake[SIZE_SHSTRTAB_FAKE_WITH_STAB];
 };
 
-int xk_load __P((struct execkern_arg *, void *, u_long));
-void __dead exec_kernel __P((struct execkern_arg *));
+int xk_load(struct execkern_arg *, void *, u_long);
+void __dead exec_kernel(struct execkern_arg *);
 
 #endif /* __ASSEMBLER__ */
 

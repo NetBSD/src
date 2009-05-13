@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.19 2008/10/21 11:51:23 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.19.8.1 2009/05/13 17:23:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -71,8 +71,6 @@
 /*
  * Define the MI code needed before returning to user mode, for
  * trap and syscall.
- * XXX The following port doesn't use this yet:
- * XXX   vax
  */
 static __inline void
 mi_userret(struct lwp *l)

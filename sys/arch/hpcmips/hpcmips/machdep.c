@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100.2.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,11 +108,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2008/12/19 17:11:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.2.1 2009/05/13 17:17:46 jym Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 #include "opt_boot_standalone.h"
+#include "opt_modular.h"
 #include "opt_spec_platform.h"
 #include "biconsdev.h"
 #include "fs_mfs.h"
@@ -291,7 +292,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		}
 		esym = (char*)esym + symbolsz;
 		kernend = (void *)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	{
@@ -541,7 +542,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
  * allocate memory for variable-sized tables, initialize CPU.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -671,7 +672,7 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 void
-consinit()
+consinit(void)
 {
 	/* platform.cons_init() do it */
 }

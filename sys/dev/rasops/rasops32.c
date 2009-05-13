@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.16 2008/04/28 20:23:56 martin Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.16.14.1 2009/05/13 17:21:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.16 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.16.14.1 2009/05/13 17:21:17 jym Exp $");
 
 #include "opt_rasops.h"
 
@@ -48,8 +48,7 @@ static void 	rasops32_putchar(void *, int, int, u_int, long attr);
  * Initialize a 'rasops_info' descriptor for this depth.
  */
 void
-rasops32_init(ri)
-	struct rasops_info *ri;
+rasops32_init(struct rasops_info *ri)
 {
 
 	if (ri->ri_rnum == 0) {
@@ -68,11 +67,7 @@ rasops32_init(ri)
  * Paint a single character.
  */
 static void
-rasops32_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int width, height, cnt, fs, fb, clr[2];
 	struct rasops_info *ri;

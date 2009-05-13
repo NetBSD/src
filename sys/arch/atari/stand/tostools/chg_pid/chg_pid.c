@@ -1,4 +1,4 @@
-/*	$NetBSD: chg_pid.c,v 1.4 1997/11/01 06:49:21 lukem Exp $	*/
+/*	$NetBSD: chg_pid.c,v 1.4.168.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -95,7 +95,7 @@ int	read_block	PROTO((void *, int, int));
 int	write_block	PROTO((void *, int, int));
 void	set_csum	PROTO((char *));
 
-const char version[] = "$Revision: 1.4 $";
+const char version[] = "$Revision: 1.4.168.1 $";
 
 char	*Progname = NULL;		/* What are we called		*/
 int	t_flag    = 0;			/* Test -- don't actually do it	*/
@@ -103,9 +103,7 @@ int	v_flag    = 0;			/* show version			*/
 int	h_flag    = 0;			/* show help			*/
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
 	/*
 	 * Option parsing
@@ -209,7 +207,7 @@ char	*newname;
      * the buffer in case of 'XGM' partitions.
      */
     g_root  = (GEM_ROOT*)buf;
-    bcopy(g_root->parts, g_local, NGEM_PARTS*sizeof(GEM_PART));
+    memcpy(g_local, g_root->parts, NGEM_PARTS*sizeof(GEM_PART));
 
     for (i = 0; i < NGEM_PARTS; i++) {
 	if (!(g_local[i].p_flg & 1)) 
@@ -315,7 +313,7 @@ char	*buf;
 	*--p = (0x1234 - csum) & 0xffff;
 }
 
-void usage()
+void usage(void)
 {
 	eprintf("Usage: %s [-hVwt] [ -o <output file>] <driveno> <partno> "
 		    "<newid>\r\n", Progname);
@@ -323,7 +321,7 @@ void usage()
 }
 
 void
-help()
+help(void)
 {
 	eprintf("\r
 Change partition identifiers\r

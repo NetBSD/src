@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.5 2008/11/19 12:36:41 ad Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.5.4.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -189,8 +189,9 @@ read_inode(ino32_t inumber, struct open_file *f)
 	if (rsize != fs->e2fs_bsize)
 		return EIO;
 
-	dip = (struct ext2fs_dinode *)buf;
-	e2fs_iload(&dip[ino_to_fsbo(fs, inumber)], &fp->f_di);
+	dip = (struct ext2fs_dinode *)(buf +
+	    EXT2_DINODE_SIZE(fs) * ino_to_fsbo(fs, inumber));
+	e2fs_iload(dip, &fp->f_di);
 
 	/*
 	 * Clear out the old buffers
@@ -431,7 +432,7 @@ read_sblock(struct open_file *f, struct m_ext2fs *fs)
 	if (ext2fs.e2fs_rev > E2FS_REV1 ||
 	    (ext2fs.e2fs_rev == E2FS_REV1 &&
 	     (ext2fs.e2fs_first_ino != EXT2_FIRSTINO ||
-	      ext2fs.e2fs_inode_size != EXT2_DINODE_SIZE ||
+	     (ext2fs.e2fs_inode_size != 128 && ext2fs.e2fs_inode_size != 256) ||
 	      ext2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP))) {
 		return ENODEV;
 	}
@@ -449,7 +450,7 @@ read_sblock(struct open_file *f, struct m_ext2fs *fs)
 	fs->e2fs_bmask = ~fs->e2fs_qbmask;
 	fs->e2fs_ngdb =
 	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE;
+	fs->e2fs_ipb = fs->e2fs_bsize / ext2fs.e2fs_inode_size;
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
 
 	return 0;

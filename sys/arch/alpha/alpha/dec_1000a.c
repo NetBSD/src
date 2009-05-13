@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.26 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.26.14.1 2009/05/13 17:16:04 jym Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.26 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.26.14.1 2009/05/13 17:16:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.26 2008/04/28 20:23:10 martin Exp $"
 #endif
 static int comcnrate = CONSPEED;
 
-void _dec_1000a_init __P((void));
-static void dec_1000a_cons_init __P((void));
-static void dec_1000a_device_register __P((struct device *, void *));
+void _dec_1000a_init(void);
+static void dec_1000a_cons_init(void);
+static void dec_1000a_device_register(struct device *, void *);
 
 #ifdef KGDB
 #include <machine/db_machdep.h>
@@ -244,9 +244,7 @@ dec_1000a_cons_init()
 }
 
 static void
-dec_1000a_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_1000a_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

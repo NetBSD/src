@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.28 2008/12/22 11:32:04 blymn Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.28.2.1 2009/05/13 17:20:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.28 2008/12/22 11:32:04 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.28.2.1 2009/05/13 17:20:25 jym Exp $");
 
 
 /*
@@ -93,7 +93,7 @@ static const struct ieee80211_rateset iwn_rateset_11g =
 
 
 #define EDCA_NUM_AC	4
-static int		iwn_match(device_t , struct cfdata *, void *);
+static int		iwn_match(device_t , cfdata_t, void *);
 static void		iwn_attach(device_t , device_t, void *);
 static int		iwn_detach(device_t, int);
 
@@ -206,7 +206,7 @@ CFATTACH_DECL_NEW(iwn, sizeof(struct iwn_softc), iwn_match, iwn_attach,
     iwn_detach, NULL);
 
 static int
-iwn_match(device_t parent, struct cfdata *match __unused, void *aux)
+iwn_match(device_t parent, cfdata_t match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -429,9 +429,9 @@ fail1:	iwn_free_fwmem(sc);
 }
 
 static int
-iwn_detach(struct device* self, int flags __unused)
+iwn_detach(device_t self, int flags __unused)
 {
-	struct iwn_softc *sc = (struct iwn_softc *)self;
+	struct iwn_softc *sc = device_private(self);
 	struct ifnet *ifp = sc->sc_ic.ic_ifp;
 	int ac;
 

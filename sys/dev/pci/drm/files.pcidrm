@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcidrm,v 1.3 2008/07/19 07:26:54 mrg Exp $
+#	$NetBSD: files.pcidrm,v 1.3.8.1 2009/05/13 17:21:08 jym Exp $
 
 define	drmpci
 
@@ -119,9 +119,5 @@ file	external/bsd/drm/dist/shared-core/via_mm.c		viadrm & drm_external
 file	external/bsd/drm/dist/shared-core/via_verifier.c	viadrm & drm_external
 file	external/bsd/drm/dist/shared-core/via_video.c		viadrm & drm_external
 
-makeoptions	drmpci		CPPFLAGS+="-I$S/dev/pci/drm"
-
-# XXXMRG want to use the first one, but the second works.
-# XXXMRG remove the above when switching to this.
-#makeoptions	(drmpci & !drm_external)	CPPFLAGS+="-I$S/dev/pci/drm"
-#makeoptions	drm_noexternal	CPPFLAGS+="-I$S/dev/pci/drm"
+makeoptions	(drmpci & !drm_external)	CPPFLAGS+="-I$S/dev/pci/drm"
+makeoptions	(drmpci & drm_external)		CPPFLAGS+="-I$S/dev/pci/drm"

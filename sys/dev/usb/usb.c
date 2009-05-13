@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.115 2008/05/26 18:00:33 drochner Exp $	*/
+/*	$NetBSD: usb.c,v 1.115.12.1 2009/05/13 17:21:35 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.115 2008/05/26 18:00:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.115.12.1 2009/05/13 17:21:35 jym Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -153,7 +153,7 @@ Static void usb_copy_old_devinfo(struct usb_device_info_old *, const struct usb_
 
 Static const char *usbrev_str[] = USBREV_STR;
 
-static int usb_match(device_t, struct cfdata *, void *);
+static int usb_match(device_t, cfdata_t, void *);
 static void usb_attach(device_t, device_t, void *);
 static int usb_detach(device_t, int);
 static int usb_activate(device_t, enum devact);
@@ -162,8 +162,9 @@ static void usb_doattach(device_t);
 
 extern struct cfdriver usb_cd;
 
-CFATTACH_DECL2_NEW(usb, sizeof(struct usb_softc),
-    usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet);
+CFATTACH_DECL3_NEW(usb, sizeof(struct usb_softc),
+    usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet,
+    DVF_DETACH_SHUTDOWN);
 
 USB_MATCH(usb)
 {

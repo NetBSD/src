@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.h,v 1.3 2005/12/10 23:39:56 elad Exp $	*/
+/*	$NetBSD: esp_rijndael.h,v 1.3.90.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: esp_rijndael.h,v 1.1 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
@@ -33,12 +33,12 @@
 #ifndef _NETINET6_ESP_RIJNDAEL_H_
 #define _NETINET6_ESP_RIJNDAEL_H_
 
-size_t esp_rijndael_schedlen __P((const struct esp_algorithm *));
-int esp_rijndael_schedule __P((const struct esp_algorithm *,
-	struct secasvar *));
-int esp_rijndael_blockdecrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
-int esp_rijndael_blockencrypt __P((const struct esp_algorithm *,
-	struct secasvar *, u_int8_t *, u_int8_t *));
+size_t esp_rijndael_schedlen(const struct esp_algorithm *);
+int esp_rijndael_schedule(const struct esp_algorithm *,
+	struct secasvar *);
+int esp_rijndael_blockdecrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
+int esp_rijndael_blockencrypt(const struct esp_algorithm *,
+	struct secasvar *, u_int8_t *, u_int8_t *);
 
 #endif /* !_NETINET6_ESP_RIJNDAEL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.4 2008/11/30 18:21:32 martin Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.4.4.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.4 2008/11/30 18:21:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.4.4.1 2009/05/13 17:16:13 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -655,11 +655,7 @@ at91bus_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-at91bus_submatch(parent, cf, ldesc, aux)
-	device_t parent;
-	cfdata_t cf;
-	const int *ldesc;
-	void *aux;
+at91bus_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct at91bus_attach_args *sa = aux;
 
@@ -674,11 +670,7 @@ at91bus_submatch(parent, cf, ldesc, aux)
 }
 
 int
-at91bus_search(parent, cf, ldesc, aux)
-	device_t parent;
-	cfdata_t cf;
-	const int *ldesc;
-	void *aux;
+at91bus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct at91bus_attach_args *sa = aux;
 
@@ -693,9 +685,7 @@ at91bus_search(parent, cf, ldesc, aux)
 }
 
 static int
-at91bus_print(aux, name)
-	void *aux;
-	const char *name;
+at91bus_print(void *aux, const char *name)
 {
         struct at91bus_attach_args *sa = (struct at91bus_attach_args*)aux;
 

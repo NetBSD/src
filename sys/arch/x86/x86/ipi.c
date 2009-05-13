@@ -1,7 +1,7 @@
-/*	$NetBSD: ipi.c,v 1.13 2008/05/11 21:48:02 ad Exp $	*/
+/*	$NetBSD: ipi.c,v 1.13.12.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.13 2008/05/11 21:48:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.13.12.1 2009/05/13 17:18:45 jym Exp $");
+
+#include "opt_mtrr.h"
 
 #include <sys/param.h> 
 #include <sys/device.h>
@@ -41,12 +43,66 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.13 2008/05/11 21:48:02 ad Exp $");
 #include <sys/intr.h>
 #include <sys/cpu.h>
  
+#ifdef MULTIPROCESSOR
+
+#include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
+#include <machine/mtrr.h>
+#include <machine/gdt.h>
 
-#ifdef MULTIPROCESSOR
+#include <x86/cpu_msr.h>
+
+#include "acpi.h"
+
+#ifdef __x86_64__
+#include <machine/fpu.h>
+static void	x86_ipi_synch_fpu(struct cpu_info *);
+#else
+/* XXXfpu */
+#include "npx.h"
+#if NNPX > 0
+static void	x86_ipi_synch_fpu(struct cpu_info *);
+#define		fpusave_cpu(x)		npxsave_cpu(x)
+#else
+#define		x86_ipi_synch_fpu	NULL
+#endif
+#endif
+
+static void	x86_ipi_halt(struct cpu_info *);
+static void	x86_ipi_kpreempt(struct cpu_info *);
+
+#ifdef MTRR
+static void	x86_ipi_reload_mtrr(struct cpu_info *);
+#else
+#define		x86_ipi_reload_mtrr	NULL
+#endif
+
+#if NACPI > 0
+void	acpi_cpu_sleep(struct cpu_info *);
+#else
+#define	acpi_cpu_sleep	NULL
+#endif
+
+void (*ipifunc[X86_NIPI])(struct cpu_info *) =
+{
+	x86_ipi_halt,
+	NULL,
+	NULL,
+	x86_ipi_synch_fpu,
+	x86_ipi_reload_mtrr,
+	gdt_reload_cpu,
+	msr_write_ipi,
+	acpi_cpu_sleep,
+	x86_ipi_kpreempt
+};
+
+/*
+ * x86 IPI interface.
+ */
+
 int
 x86_send_ipi(struct cpu_info *ci, int ipimask)
 {
@@ -122,7 +178,56 @@ x86_ipi_handler(void)
 		(*ipifunc[bit])(ci);
 	}
 }
+
+/*
+ * Common x86 IPI handlers.
+ */
+
+static void
+x86_ipi_halt(struct cpu_info *ci)
+{
+
+	x86_disable_intr();
+	atomic_and_32(&ci->ci_flags, ~CPUF_RUNNING);
+
+	for(;;) {
+		x86_hlt();
+	}
+}
+
+#if defined(__x86_64__) || NNPX > 0	/* XXXfpu */
+static void
+x86_ipi_synch_fpu(struct cpu_info *ci)
+{
+
+	fpusave_cpu(true);
+}
+#endif
+
+#ifdef MTRR
+static void
+x86_ipi_reload_mtrr(struct cpu_info *ci)
+{
+
+	if (mtrr_funcs != NULL) {
+		/*
+		 * mtrr_reload_cpu() is a macro in mtrr.h which picks
+		 * the appropriate function to use.
+		 */
+		mtrr_reload_cpu(ci);
+	}
+}
+#endif
+
+static void
+x86_ipi_kpreempt(struct cpu_info *ci)
+{
+
+	softint_trigger(1 << SIR_PREEMPT);
+}
+
 #else
+
 int
 x86_send_ipi(struct cpu_info *ci, int ipimask)
 {
@@ -141,4 +246,5 @@ x86_multicast_ipi(int cpumask, int ipimask)
 {
 
 }
+
 #endif

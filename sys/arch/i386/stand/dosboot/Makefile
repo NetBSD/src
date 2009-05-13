@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.24 2008/10/20 03:02:07 christos Exp $
+#	$NetBSD: Makefile,v 1.24.8.1 2009/05/13 17:17:51 jym Exp $
 
-S=	${.CURDIR}/../../../../
+S=	${.CURDIR}/../../../..
 
 BASE= dosboot
 PROG= ${BASE}.com

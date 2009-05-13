@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.18 2008/06/11 22:37:21 cegger Exp $ */
+/*	$NetBSD: epcom.c,v 1.18.10.1 2009/05/13 17:16:13 jym Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.18 2008/06/11 22:37:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.18.10.1 2009/05/13 17:16:13 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -898,7 +898,7 @@ epcom_txsoft(struct epcom_softc *sc, struct tty *tp)
 inline static void
 epcom_rxsoft(struct epcom_softc *sc, struct tty *tp)
 {
-	int (*rint) __P((int, struct tty *)) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char sts;

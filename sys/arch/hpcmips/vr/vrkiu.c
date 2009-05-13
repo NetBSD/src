@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.37 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.37.92.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.37 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.37.92.1 2009/05/13 17:17:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/tty.h>
@@ -324,7 +324,7 @@ vrkiu_scan(struct vrkiu_chip* chip)
 
 /* called from bicons.c */
 int
-vrkiu_getc()
+vrkiu_getc(void)
 {
 	static int flag = 1;
 

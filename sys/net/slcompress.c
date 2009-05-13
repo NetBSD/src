@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.34 2008/06/15 16:35:35 christos Exp $   */
+/*	$NetBSD: slcompress.c,v 1.34.10.1 2009/05/13 17:22:20 jym Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.34 2008/06/15 16:35:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.34.10.1 2009/05/13 17:22:20 jym Exp $");
 
 #include "opt_inet.h"
 #ifdef INET
@@ -61,9 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.34 2008/06/15 16:35:35 christos Exp
 #else
 #define INCR(counter)
 #endif
-
-#define BCMP(p1, p2, n) bcmp((char *)(p1), (char *)(p2), (int)(n))
-#define BCOPY(p1, p2, n) bcopy((char *)(p1), (char *)(p2), (int)(n))
 
 
 void
@@ -282,9 +279,9 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 	    ((uint16_t *)ip)[4] != ((uint16_t *)&cs->cs_ip)[4] ||
 	    th->th_off != oth->th_off ||
 	    (deltaS > 5 &&
-	     BCMP(ip + 1, &cs->cs_ip + 1, (deltaS - 5) << 2)) ||
+	     memcmp(ip + 1, &cs->cs_ip + 1, (deltaS - 5) << 2)) ||
 	    (th->th_off > 5 &&
-	     BCMP(th + 1, oth + 1, (th->th_off - 5) << 2)))
+	     memcmp(th + 1, oth + 1, (th->th_off - 5) << 2)))
 		goto uncompressed;
 
 	/*
@@ -381,7 +378,7 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 	 * state with this packet's header.
 	 */
 	deltaA = ntohs(th->th_sum);
-	BCOPY(ip, &cs->cs_ip, hlen);
+	memcpy(&cs->cs_ip, ip, hlen);
 
 	/*
 	 * We want to use the original packet as our compressed packet.
@@ -409,7 +406,7 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 	m->m_data += hlen;
 	*cp++ = deltaA >> 8;
 	*cp++ = deltaA;
-	BCOPY(new_seq, cp, deltaS);
+	memcpy(cp, new_seq, deltaS);
 	INCR(sls_compressed)
 	return (TYPE_COMPRESSED_TCP);
 
@@ -419,7 +416,7 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 	 * to use on future compressed packets in the protocol field).
 	 */
 uncompressed:
-	BCOPY(ip, &cs->cs_ip, hlen);
+	memcpy(&cs->cs_ip, ip, hlen);
 	ip->ip_p = cs->cs_id;
 	comp->last_xmit = cs->cs_id;
 	return (TYPE_UNCOMPRESSED_TCP);
@@ -458,7 +455,7 @@ sl_uncompress_tcp(u_char **bufp, int len, u_int type, struct slcompress *comp)
 	}
 	cp -= hlen;
 	len += hlen;
-	BCOPY(hdr, cp, hlen);
+	memcpy(cp, hdr, hlen);
 
 	*bufp = cp;
 	return (len);
@@ -504,7 +501,7 @@ sl_uncompress_tcp_core(u_char *buf, int buflen, int total_len, u_int type,
 		hlen += ((struct tcphdr *)&((char *)ip)[hlen])->th_off << 2;
 		if (hlen > MAX_HDR || hlen > buflen)
 			goto bad;
-		BCOPY(ip, &cs->cs_ip, hlen);
+		memcpy(&cs->cs_ip, ip, hlen);
 		cs->cs_hlen = hlen;
 		INCR(sls_uncompressedin)
 		*hdrp = (u_char *) &cs->cs_ip;

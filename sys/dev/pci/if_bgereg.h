@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.48 2008/08/25 08:15:05 cegger Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.48.8.1 2009/05/13 17:20:24 jym Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -62,6 +62,7 @@
  *    Flat mode consumes so much host address space that it is not
  *    recommended.
  */
+
 #define BGE_PAGE_ZERO			0x00000000
 #define BGE_PAGE_ZERO_END		0x000000FF
 #define BGE_SEND_RING_RCB		0x00000100
@@ -262,7 +263,7 @@
 #define BGE_CHIPID_BCM5750_A1		0x40010000
 #define BGE_CHIPID_BCM5750_A3		0x40030000
 #define BGE_CHIPID_BCM5750_B0		0x40100000
-#define BGE_CHIPID_BCM5751_A1		0x41010000
+#define BGE_CHIPID_BCM5750_B1		0x41010000
 #define BGE_CHIPID_BCM5750_C0		0x42000000
 #define BGE_CHIPID_BCM5750_C1		0x42010000
 #define BGE_CHIPID_BCM5750_C2		0x42020000
@@ -300,9 +301,6 @@
 #define BGE_ASICREV_BCM5714		0x09
 #define BGE_ASICREV_BCM5755		0x0a
 #define BGE_ASICREV_BCM5787		0x0b
-/* is this one mistyped ??? */
-#define BGE_ASICREV_BCM5706		0x0c
-
 #define BGE_ASICREV_BCM5906		0x0c
 
 /* chip revisions */
@@ -361,7 +359,7 @@
  * register is set.
  */
 #define BGE_PCISTATE_FORCE_RESET	0x00000001
-#define BGE_PCISTATE_INTR_STATE		0x00000002
+#define BGE_PCISTATE_INTR_NOT_ACTIVE	0x00000002
 #define BGE_PCISTATE_PCI_BUSMODE	0x00000004 /* 1 = PCI, 0 = PCI-X */
 #define BGE_PCISTATE_PCI_BUSSPEED	0x00000008 /* 1 = 33/66, 0 = 66/133 */
 #define BGE_PCISTATE_32BIT_BUS		0x00000010 /* 1 = 32bit, 0 = 64bit */
@@ -607,6 +605,9 @@
 #define BGE_RX_BD_RULES_MASKVAL15	0x04FC
 #define BGE_RX_RULES_CFG		0x0500
 #define BGE_MAX_RX_FRAME_LOWAT		0x0504
+#define BGE_SERDES_CFG			0x0590
+#define BGE_SGDIG_CFG			0x05B0
+#define BGE_SGDIG_STS			0x05B4
 #define BGE_RX_STATS			0x0800
 #define BGE_TX_STATS			0x0880
 
@@ -736,6 +737,15 @@
 /* Receive Rules Mask register */
 #define BGE_RXRULEMASK_VALUE		0x0000FFFF
 #define BGE_RXRULEMASK_MASKVAL		0xFFFF0000
+
+/* SGDIG config (not documented) */
+#define BGE_SGDIGCFG_PAUSE_CAP		0x00000800
+#define BGE_SGDIGCFG_ASYM_PAUSE		0x00001000
+#define BGE_SGDIGCFG_SEND		0x40000000
+#define BGE_SGDIGCFG_AUTO		0x80000000
+
+/* SGDIG status (not documented) */
+#define BGE_SGDIGSTS_DONE		0x00000002
 
 /* MI communication register */
 #define BGE_MICOMM_DATA			0x0000FFFF
@@ -1785,7 +1795,11 @@
 /* Misc. config register */
 #define BGE_MISCCFG_RESET_CORE_CLOCKS	0x00000001
 #define BGE_MISCCFG_TIMER_PRESCALER	0x000000FE
+#define BGE_MISCCFG_BOARD_ID_5788	0x00010000
+#define BGE_MISCCFG_BOARD_ID_5788M	0x00018000
+#define BGE_MISCCFG_BOARD_ID_MASK	0x0001e000
 #define BGE_MISCCFG_EPHY_IDDQ		0x00200000
+#define BGE_MISCCFG_KEEP_GPHY_POWER	0x04000000
 
 #define BGE_32BITTIME_66MHZ		(0x41 << 1)
 
@@ -1882,16 +1896,6 @@ typedef struct {
 	volatile u_int32_t	bge_addr_lo;
 } bge_hostaddr;
 
-static __inline void
-bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
-{
-	x->bge_addr_lo = y & 0xffffffff;
-	if (sizeof (bus_addr_t) == 8)
-		x->bge_addr_hi = (u_int64_t)y >> 32;
-	else
-		x->bge_addr_hi = 0;
-}
-
 /* Ring control block structure */
 struct bge_rcb {
 	bge_hostaddr		bge_hostaddr;
@@ -1900,11 +1904,6 @@ struct bge_rcb {
 };
 
 #define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen) << 16 | (flags))
-
-#define RCB_WRITE_4(sc, rcb, offset, val) \
-	bus_space_write_4(sc->bge_btag, sc->bge_bhandle, \
-			  rcb + offsetof(struct bge_rcb, offset), val)
-
 
 #define BGE_RCB_FLAG_USE_EXT_RX_BD	0x0001
 #define BGE_RCB_FLAG_RING_DISABLED	0x0002
@@ -2286,11 +2285,6 @@ struct bge_gib {
 #define BGE_MIN_FRAMELEN		60
 
 /*
- * Other utility macros.
- */
-#define BGE_INC(x, y)	(x) = (x + 1) % y
-
-/*
  * Vital product data and structures.
  */
 #define BGE_VPD_FLAG		0x8000
@@ -2312,207 +2306,19 @@ struct vpd_key {
 #define VPD_RES_WRITE	0x81	/* start of read/write area */
 #define VPD_RES_END	0x78	/* end tag */
 
-
-/*
- * Register access macros. The Tigon always uses memory mapped register
- * accesses and all registers must be accessed with 32 bit operations.
- */
-
-#define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->bge_btag, sc->bge_bhandle, reg, val)
-
-#define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->bge_btag, sc->bge_bhandle, reg)
-
-#define BGE_SETBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | x))
-#define BGE_CLRBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~x))
-
-#define PCI_SETBIT(pc, tag, reg, x)	\
-	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) | x))
-#define PCI_CLRBIT(pc, tag, reg, x)	\
-	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~x))
-
-/*
- * Memory management stuff. Note: the SSLOTS, MSLOTS and JSLOTS
- * values are tuneable. They control the actual amount of buffers
- * allocated for the standard, mini and jumbo receive rings.
- */
-
-#define BGE_SSLOTS	256
-#define BGE_MSLOTS	256
-#define BGE_JSLOTS	384
-#define BGE_RSLOTS	256
-
-#define BGE_JRAWLEN (BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
-#define BGE_JLEN (BGE_JRAWLEN + (sizeof(u_int64_t) - \
-	(BGE_JRAWLEN % sizeof(u_int64_t))))
-#define BGE_JPAGESZ PAGE_SIZE
-#define BGE_RESID (BGE_JPAGESZ - (BGE_JLEN * BGE_JSLOTS) % BGE_JPAGESZ)
-#define BGE_JMEM ((BGE_JLEN * BGE_JSLOTS) + BGE_RESID)
-
-/*
- * Ring structures. Most of these reside in host memory and we tell
- * the NIC where they are via the ring control blocks. The exceptions
- * are the tx and command rings, which live in NIC memory and which
- * we access via the shared memory window.
- */
-struct bge_ring_data {
-	struct bge_rx_bd	bge_rx_std_ring[BGE_STD_RX_RING_CNT];
-	struct bge_rx_bd	bge_rx_jumbo_ring[BGE_JUMBO_RX_RING_CNT];
-	struct bge_rx_bd	bge_rx_return_ring[BGE_RETURN_RING_CNT];
-	struct bge_tx_bd	bge_tx_ring[BGE_TX_RING_CNT];
-	struct bge_status_block	bge_status_block;
-	struct bge_tx_desc	*bge_tx_ring_nic;/* pointer to shared mem */
-	struct bge_cmd_desc	*bge_cmd_ring;	/* pointer to shared mem */
-	struct bge_gib		bge_info;
-};
-
-#define BGE_RING_DMA_ADDR(sc, offset) \
-	((sc)->bge_ring_map->dm_segs[0].ds_addr + \
-	offsetof(struct bge_ring_data, offset))
-
-/*
- * Number of DMA segments in a TxCB. Note that this is carefully
- * chosen to make the total struct size an even power of two. It's
- * critical that no TxCB be split across a page boundary since
- * no attempt is made to allocate physically contiguous memory.
- *
- */
-#if 0	/* pre-TSO values */
-#define BGE_TXDMA_MAX	ETHER_MAX_LEN_JUMBO
-#ifdef _LP64
-#define BGE_NTXSEG	30
-#else
-#define BGE_NTXSEG	31
-#endif
-#else	/* TSO values */
-#define BGE_TXDMA_MAX	(round_page(IP_MAXPACKET))	/* for TSO */
-#ifdef _LP64
-#define BGE_NTXSEG	120	/* XXX just a guess */
-#else
-#define BGE_NTXSEG	124	/* XXX just a guess */
-#endif
-#endif	/* TSO values */
-
-
-/*
- * Mbuf pointers. We need these to keep track of the virtual addresses
- * of our mbuf chains since we can only convert from physical to virtual,
- * not the other way around.
- */
-struct bge_chain_data {
-	struct mbuf		*bge_tx_chain[BGE_TX_RING_CNT];
-	struct mbuf		*bge_rx_std_chain[BGE_STD_RX_RING_CNT];
-	struct mbuf		*bge_rx_jumbo_chain[BGE_JUMBO_RX_RING_CNT];
-	struct mbuf		*bge_rx_mini_chain[BGE_MINI_RX_RING_CNT];
-	bus_dmamap_t		bge_rx_std_map[BGE_STD_RX_RING_CNT];
-	bus_dmamap_t		bge_rx_jumbo_map;
-	/* Stick the jumbo mem management stuff here too. */
-	void *			bge_jslots[BGE_JSLOTS];
-	void *			bge_jumbo_buf;
-};
-
-#define BGE_JUMBO_DMA_ADDR(sc, m) \
-	((sc)->bge_cdata.bge_rx_jumbo_map->dm_segs[0].ds_addr + \
-	 (mtod((m), char *) - (char *)(sc)->bge_cdata.bge_jumbo_buf))
-
-struct bge_type {
-	u_int16_t		bge_vid;
-	u_int16_t		bge_did;
-	char			*bge_name;
-};
-
-#define BGE_HWREV_TIGON		0x01
-#define BGE_HWREV_TIGON_II	0x02
-#define BGE_TIMEOUT		1000
-#define BGE_TXCONS_UNSET		0xFFFF	/* impossible value */
-
-struct bge_jpool_entry {
-	int				slot;
-	SLIST_ENTRY(bge_jpool_entry)	jpool_entries;
-};
-
-struct bge_bcom_hack {
-	int			reg;
-	int			val;
-};
-
-struct txdmamap_pool_entry {
-	bus_dmamap_t dmamap;
-	SLIST_ENTRY(txdmamap_pool_entry) link;
-};
-
-/*
- * Flags for bge_flags.
- */
-#define BGE_TXRING_VALID	0x0001
-#define BGE_RXRING_VALID	0x0002
-#define BGE_JUMBO_RXRING_VALID	0x0004
-
-struct bge_softc {
-	device_t		bge_dev;
-	struct ethercom		ethercom;		/* interface info */
-	bus_space_handle_t	bge_bhandle;
-	bus_space_tag_t		bge_btag;
-	void			*bge_intrhand;
-	pci_chipset_tag_t	sc_pc;
-	pcitag_t		sc_pcitag;
-
-	struct mii_data		bge_mii;
-	struct ifmedia		bge_ifmedia;	/* media info */
-	u_int8_t		bge_extram;	/* has external SSRAM */
-	u_int8_t		bge_tbi;
-	u_int8_t		bge_rx_alignment_bug;
-	u_int8_t		bge_pcie;	/* on a PCI Express port */
-	u_int32_t		bge_return_ring_cnt;
-	u_int32_t		bge_tx_prodidx;
-	bus_dma_tag_t		bge_dmatag;
-	u_int32_t		bge_chipid;
-	u_int32_t		bge_quirks;
-	u_int32_t		bge_local_ctrl_reg;
-	struct bge_ring_data	*bge_rdata;	/* rings */
-	struct bge_chain_data	bge_cdata;	/* mbufs */
-	bus_dmamap_t		bge_ring_map;
-	u_int16_t		bge_tx_saved_considx;
-	u_int16_t		bge_rx_saved_considx;
-	u_int16_t		bge_ev_saved_considx;
-	u_int16_t		bge_std;	/* current std ring head */
-	u_int16_t		bge_jumbo;	/* current jumo ring head */
-	SLIST_HEAD(__bge_jfreehead, bge_jpool_entry)	bge_jfree_listhead;
-	SLIST_HEAD(__bge_jinusehead, bge_jpool_entry)	bge_jinuse_listhead;
-	u_int32_t		bge_stat_ticks;
-	u_int32_t		bge_rx_coal_ticks;
-	u_int32_t		bge_tx_coal_ticks;
-	u_int32_t		bge_rx_max_coal_bds;
-	u_int32_t		bge_tx_max_coal_bds;
-	u_int32_t		bge_tx_buf_ratio;
-	int			bge_if_flags;
-	int			bge_flags;
-	int			bge_flowflags;
-#ifdef BGE_EVENT_COUNTERS
-	/*
-	 * Event counters.
-	 */
-	struct evcnt bge_ev_intr;	/* interrupts */
-	struct evcnt bge_ev_tx_xoff;	/* send PAUSE(len>0) packets */
-	struct evcnt bge_ev_tx_xon;	/* send PAUSE(len=0) packets */
-	struct evcnt bge_ev_rx_xoff;	/* receive PAUSE(len>0) packets */
-	struct evcnt bge_ev_rx_xon;	/* receive PAUSE(len=0) packets */
-	struct evcnt bge_ev_rx_macctl;	/* receive MAC control packets */
-	struct evcnt bge_ev_xoffentered;/* XOFF state entered */
-#endif /* BGE_EVENT_COUNTERS */
-	int			bge_txcnt;
-	int			bge_link;
-	struct callout		bge_timeout;
-	char			*bge_vpd_prodname;
-	char			*bge_vpd_readonly;
-	int			bge_pending_rxintr_change;
-	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
-	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
-
-#if NRND > 0
-	rndsource_element_t	rnd_source;	/* random source */
-#endif
-};
+/* Flags for phyflags in proplib. */
+#define BGE_TXRING_VALID	0x00000001
+#define BGE_RXRING_VALID	0x00000002
+#define BGE_JUMBO_RXRING_VALID	0x00000004
+#define BGE_RX_ALIGNBUG		0x00000008
+#define BGE_PCIX		0x00000020
+#define BGE_PCIE		0x00000040
+#define BGE_PHY_FIBER_TBI	0x00000800
+#define BGE_PHY_FIBER_MII	0x00001000
+#define BGE_PHY_CRC_BUG		0x00002000
+#define BGE_PHY_ADC_BUG		0x00004000
+#define BGE_PHY_5704_A0_BUG	0x00008000
+#define BGE_PHY_JITTER_BUG	0x00010000
+#define BGE_PHY_BER_BUG		0x00020000
+#define BGE_PHY_ADJUST_TRIM	0x00040000
+#define BGE_IS_5788		0x00100000

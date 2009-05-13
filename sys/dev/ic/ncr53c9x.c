@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.137 2008/05/13 22:16:27 christos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.137.12.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.137 2008/05/13 22:16:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.137.12.1 2009/05/13 17:19:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,13 +469,14 @@ ncr53c9x_clear(struct ncr53c9x_softc *sc, scsipi_xfer_result_t result)
 				ecb->xs->error = result;
 				ncr53c9x_done(sc, ecb);
 			}
-			for (i = 0; i < 256; i++)
+			for (i = 0; i < 256; i++) {
 				ecb = li->queued[i];
 				if (ecb != NULL) {
 					li->queued[i] = NULL;
 					ecb->xs->error = result;
 					ncr53c9x_done(sc, ecb);
 				}
+			}
 			li->used = 0;
 		}
 	}

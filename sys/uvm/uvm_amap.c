@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.85 2008/12/03 11:43:51 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.85.4.1 2009/05/13 17:23:10 jym Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.85 2008/12/03 11:43:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.85.4.1 2009/05/13 17:23:10 jym Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -701,9 +701,7 @@ amap_wipeout(struct vm_amap *amap)
 
 		slot = amap->am_slots[lcv];
 		anon = amap->am_anon[slot];
-
-		if (anon == NULL || anon->an_ref == 0)
-			panic("amap_wipeout: corrupt amap");
+		KASSERT(anon != NULL && anon->an_ref != 0);
 
 		mutex_enter(&anon->an_lock);
 		UVMHIST_LOG(maphist,"  processing anon 0x%x, ref=%d", anon,
@@ -1061,8 +1059,7 @@ amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 
 	KASSERT(splitref->ar_amap == origref->ar_amap);
 	AMAP_B2SLOT(leftslots, offset);
-	if (leftslots == 0)
-		panic("amap_splitref: split at zero offset");
+	KASSERT(leftslots != 0);
 
 	amap = origref->ar_amap;
 	amap_lock(amap);
@@ -1070,9 +1067,7 @@ amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 	/*
 	 * now: amap is locked and we have a valid am_mapped array.
 	 */
-
-	if (amap->am_nslot - origref->ar_pageoff - leftslots <= 0)
-		panic("amap_splitref: map size check failed");
+	KASSERT(amap->am_nslot - origref->ar_pageoff - leftslots > 0);
 
 #ifdef UVM_AMAP_PPREF
         /*
@@ -1164,10 +1159,7 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
 	 * now adjust reference counts in range.  merge the first
 	 * changed entry with the last unchanged entry if possible.
 	 */
-
-	if (lcv != curslot)
-		panic("amap_pp_adjref: overshot target");
-
+	KASSERT(lcv == curslot);
 	for (/* lcv already set */; lcv < stopslot ; lcv += len) {
 		pp_getreflen(ppref, lcv, &ref, &len);
 		if (lcv + len > stopslot) {     /* goes past end? */
@@ -1177,8 +1169,7 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
 			len = stopslot - lcv;
 		}
 		ref += adjval;
-		if (ref < 0)
-			panic("amap_pp_adjref: negative reference count");
+		KASSERT(ref >= 0);
 		if (lcv == prevlcv + prevlen && ref == prevref) {
 			pp_setreflen(ppref, prevlcv, ref, prevlen + len);
 		} else {
@@ -1397,9 +1388,7 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
-
-	if (slot >= amap->am_nslot)
-		panic("amap_lookup: offset out of range");
+	KASSERT(slot < amap->am_nslot);
 
 	UVMHIST_LOG(maphist, "<- done (amap=0x%x, offset=0x%x, result=0x%x)",
 	    amap, offset, amap->am_anon[slot], 0);
@@ -1427,9 +1416,7 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
 	UVMHIST_LOG(maphist, "  slot=%d, npages=%d, nslot=%d", slot, npages,
 		amap->am_nslot, 0);
 
-	if ((slot + (npages - 1)) >= amap->am_nslot)
-		panic("amap_lookups: offset out of range");
-
+	KASSERT((slot + (npages - 1)) < amap->am_nslot);
 	memcpy(anons, &amap->am_anon[slot], npages * sizeof(struct vm_anon *));
 
 	UVMHIST_LOG(maphist, "<- done", 0, 0, 0, 0);
@@ -1454,14 +1441,10 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
-
-	if (slot >= amap->am_nslot)
-		panic("amap_add: offset out of range");
+	KASSERT(slot < amap->am_nslot);
 
 	if (replace) {
-
-		if (amap->am_anon[slot] == NULL)
-			panic("amap_add: replacing null anon");
+		KASSERT(amap->am_anon[slot] != NULL);
 		if (amap->am_anon[slot]->an_page != NULL &&
 		    (amap->am_flags & AMAP_SHARED) != 0) {
 			pmap_page_protect(amap->am_anon[slot]->an_page,
@@ -1471,9 +1454,7 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 			 */
 		}
 	} else {   /* !replace */
-		if (amap->am_anon[slot] != NULL)
-			panic("amap_add: slot in use");
-
+		KASSERT(amap->am_anon[slot] == NULL);
 		amap->am_bckptr[slot] = amap->am_nused;
 		amap->am_slots[amap->am_nused] = slot;
 		amap->am_nused++;
@@ -1499,12 +1480,8 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
-
-	if (slot >= amap->am_nslot)
-		panic("amap_unadd: offset out of range");
-
-	if (amap->am_anon[slot] == NULL)
-		panic("amap_unadd: nothing there");
+	KASSERT(slot < amap->am_nslot);
+	KASSERT(amap->am_anon[slot] != NULL);
 
 	amap->am_anon[slot] = NULL;
 	ptr = amap->am_bckptr[slot];

@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.44 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: lca.c,v 1.44.14.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.44 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.44.14.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,26 +93,23 @@ __KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.44 2008/04/28 20:23:11 martin Exp $");
 #include <alpha/pci/pci_eb66.h>
 #endif
 
-int	lcamatch __P((struct device *, struct cfdata *, void *));
-void	lcaattach __P((struct device *, struct device *, void *));
+int	lcamatch(struct device *, struct cfdata *, void *);
+void	lcaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lca, sizeof(struct lca_softc),
     lcamatch, lcaattach, NULL, NULL);
 
 extern struct cfdriver lca_cd;
 
-int	lca_bus_get_window __P((int, int,
-	    struct alpha_bus_space_translation *));
+int	lca_bus_get_window(int, int,
+	    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
 int lcafound;
 struct lca_config lca_configuration;
 
 int
-lcamatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lcamatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -130,9 +127,7 @@ lcamatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-lca_init(lcp, mallocsafe)
-	struct lca_config *lcp;
-	int mallocsafe;
+lca_init(struct lca_config *lcp, int mallocsafe)
 {
 
 	/*
@@ -189,9 +184,7 @@ lca_init(lcp, mallocsafe)
 }
 
 void
-lcaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lcaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct lca_softc *sc = (struct lca_softc *)self;
 	struct lca_config *lcp;
@@ -249,9 +242,7 @@ lcaattach(parent, self, aux)
 }
 
 int
-lca_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+lca_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct lca_config *lcp = &lca_configuration;
 	bus_space_tag_t st;

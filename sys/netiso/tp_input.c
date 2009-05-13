@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.30 2008/04/23 09:57:59 plunky Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.30.16.1 2009/05/13 17:22:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.30 2008/04/23 09:57:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.30.16.1 2009/05/13 17:22:42 jym Exp $");
 
 #include "opt_iso.h"
 
@@ -149,7 +149,7 @@ tp_inputprep(struct mbuf *m)
 		void *        ocp = m->m_data;
 
 		m->m_data = (void *) (((long) m->m_data) & ~0x3);
-		bcopy(ocp, m->m_data, (unsigned) m->m_len);
+		memcpy(m->m_data, ocp, (unsigned) m->m_len);
 	}
 	CHANGE_MTYPE(m, TPMT_DATA);
 
@@ -315,7 +315,7 @@ tp_newsocket(
 	newtpcb->tp_lcredit = tpcb->tp_lcredit;
 	newtpcb->tp_l_tpdusize = tpcb->tp_l_tpdusize;
 	newtpcb->tp_lsuffixlen = tpcb->tp_lsuffixlen;
-	bcopy(tpcb->tp_lsuffix, newtpcb->tp_lsuffix, newtpcb->tp_lsuffixlen);
+	memcpy(newtpcb->tp_lsuffix, tpcb->tp_lsuffix, newtpcb->tp_lsuffixlen);
 
 	if ( /* old */ tpcb->tp_ucddata) {
 		/*
@@ -355,7 +355,7 @@ tp_newsocket(
 			 * pcb_connect, which expects the name/addr in an mbuf as well.
 			 * sigh.
 			 */
-			bcopy((void *) fname, mtod(m, void *), fname->sa_len);
+			memcpy(mtod(m, void *), (void *) fname, fname->sa_len);
 			m->m_len = fname->sa_len;
 
 			/*
@@ -911,7 +911,7 @@ again:
 
 			/* stash the f suffix in the new tpcb */
 			if ((tpcb->tp_fsuffixlen = fsufxlen) != 0) {
-				bcopy(fsufxloc, tpcb->tp_fsuffix, fsufxlen);
+				memcpy(tpcb->tp_fsuffix, fsufxloc, fsufxlen);
 				(tpcb->tp_nlproto->nlp_putsufx)
 					(tpcb->tp_npcb, fsufxloc, fsufxlen, TP_FOREIGN);
 			}
@@ -1266,13 +1266,13 @@ again:
 			 */
 				if (fsufxlen) {
 				CHECK(((tpcb->tp_fsuffixlen != fsufxlen) ||
-				bcmp(fsufxloc, tpcb->tp_fsuffix, fsufxlen)),
+				memcmp(fsufxloc, tpcb->tp_fsuffix, fsufxlen)),
 				      E_TP_INV_PVAL, ts_inv_sufx, respond,
 				      (1 + (char *)fsufxloc - (char *)hdr))
 			}
 			if (lsufxlen) {
 				CHECK(((tpcb->tp_lsuffixlen != lsufxlen) ||
-				bcmp(lsufxloc, tpcb->tp_lsuffix, lsufxlen)),
+				memcmp(lsufxloc, tpcb->tp_lsuffix, lsufxlen)),
 				      E_TP_INV_PVAL, ts_inv_sufx, respond,
 				      (1 + (char *)lsufxloc - (char *)hdr))
 			}
@@ -1509,9 +1509,9 @@ again:
 			}
 			if (hdr->tpdu_type == DR_TPDU_type) {
 				datalen += sizeof(x) - sizeof(c_hdr);
-				bcopy((void *) & x, mtod(n, void *), n->m_len = sizeof(x));
+				memcpy(mtod(n, void *), (void *) &x, n->m_len = sizeof(x));
 			} else
-				bcopy((void *) & c_hdr, mtod(n, void *),
+				memcpy(mtod(n, void *), (void *) &c_hdr,
 				      n->m_len = sizeof(c_hdr));
 			n->m_next = m;
 			m = n;

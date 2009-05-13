@@ -1,4 +1,4 @@
-/* $NetBSD: sic6351.c,v 1.3 2005/12/11 12:17:04 christos Exp $ */
+/* $NetBSD: sic6351.c,v 1.3.92.1 2009/05/13 17:16:36 jym Exp $ */
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sic6351.c,v 1.3 2005/12/11 12:17:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sic6351.c,v 1.3.92.1 2009/05/13 17:16:36 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,15 +35,14 @@ __KERNEL_RCSID(0, "$NetBSD: sic6351.c,v 1.3 2005/12/11 12:17:04 christos Exp $")
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
-void sicinit __P((void*));
-int act2icr __P((int));
-void sic_enable_int __P((int, int, int, int, int));
+void sicinit(void*);
+int act2icr(int);
+void sic_enable_int(int, int, int, int, int);
 
 static char *sicbase;
 
 void
-sicinit(base)
-	void *base;
+sicinit(void *base)
 {
 	int i;
 
@@ -54,8 +53,7 @@ sicinit(base)
 }
 
 int
-act2icr(act)
-	int act;
+act2icr(int act)
 {
 	if (act == 17)
 		return (0x90); /* ILACC */
@@ -69,8 +67,7 @@ act2icr(act)
 }
 
 void
-sic_enable_int(nr, type, icod, level, vector)
-	int nr, type, icod, level, vector;
+sic_enable_int(int nr, int type, int icod, int level, int vector)
 {
 
 	if (icod == 0)

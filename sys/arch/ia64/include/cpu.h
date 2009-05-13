@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.14.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ int cpu_maxproc(void); /*XXX: Fill in machdep.c */
 
 static inline void cpu_idle(void);
 static inline
-void cpu_idle()
+void cpu_idle(void)
 {
 	asm ("hint @pause" ::: "memory");
 }

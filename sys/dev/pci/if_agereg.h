@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agereg.h,v 1.1 2009/01/16 20:18:08 cegger Exp $ */
+/*	$NetBSD: if_agereg.h,v 1.1.6.1 2009/05/13 17:20:24 jym Exp $ */
 /*	$OpenBSD: if_agereg.h,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -837,7 +837,6 @@ struct age_softc {
 	struct age_stats	age_stat;
 	struct age_chain_data	age_cdata;
 	struct age_ring_data	age_rdata;
-	int			age_if_flags;
 	int			age_process_limit;
 	int			age_int_mod;
 	int			age_max_frame_size;

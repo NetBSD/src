@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.40 2007/12/03 15:34:10 ad Exp $ */
+/* $NetBSD: dec_5100.c,v 1.40.32.1 2009/05/13 17:18:13 jym Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.40 2007/12/03 15:34:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.40.32.1 2009/05/13 17:18:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,13 +55,13 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.40 2007/12/03 15:34:10 ad Exp $");
 
 #include <pmax/pmax/cons.h>
 
-void		dec_5100_init __P((void));		/* XXX */
-static void	dec_5100_bus_reset __P((void));
-static void	dec_5100_cons_init __P((void));
-static void	dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_5100_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
-static void	dec_5100_memintr __P((void));
+void		dec_5100_init(void);		/* XXX */
+static void	dec_5100_bus_reset(void);
+static void	dec_5100_cons_init(void);
+static void	dec_5100_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_5100_intr_establish(struct device *, void *,
+		    int, int (*)(void *), void *);
+static void	dec_5100_memintr(void);
 
 static const int dec_5100_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
@@ -126,12 +126,7 @@ dec_5100_cons_init()
 }
 
 static void
-dec_5100_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
+dec_5100_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 
 	intrtab[(int)cookie].ih_func = handler;
@@ -148,11 +143,7 @@ dec_5100_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static void
-dec_5100_intr(status, cause, pc, ipending)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
-	unsigned ipending;
+dec_5100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 {
 	u_int32_t icsr;
 

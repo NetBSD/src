@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2008/04/06 07:50:04 kochi Exp $	*/
+/*	$NetBSD: main.c,v 1.4.18.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -427,7 +427,7 @@ print_trs(int type)
 	for (i = 0; i <= maxtr; i++) {
 		char lbuf[128];
 
-		bzero(&buf, sizeof(buf));
+		memset(&buf, 0, sizeof(buf));
 		res = ia64_call_pal_stacked(PAL_VM_TR_READ, i, type,
 					    (u_int64_t) &buf);
 		if (res.pal_status != 0)

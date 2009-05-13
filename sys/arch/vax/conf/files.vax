@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.115 2009/01/22 18:49:02 christos Exp $
+#	$NetBSD: files.vax,v 1.115.2.1 2009/05/13 17:18:40 jym Exp $
 #
 # new style config file for vax architecture
 #
@@ -344,6 +344,7 @@ file	arch/vax/vax/emulate.S		!no_insn_emulate
 file	arch/vax/vax/unimpl_emul.S	!no_insn_emulate
 file	arch/vax/vax/lock_stubs.S
 file	arch/vax/vax/scb.c
+file	arch/vax/vax/opcodes.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/trap.c
 file	arch/vax/vax/bus_dma.c

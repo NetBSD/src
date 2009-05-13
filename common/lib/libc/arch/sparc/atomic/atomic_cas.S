@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.9 2009/01/12 02:53:29 pooka Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.9.2.1 2009/05/13 17:23:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/param.h>
 #include "atomic_op_asm.h"
 
-#if defined(_HARKDERNEL)
+#if defined(_HARDKERNEL)
 
 #include <machine/psl.h>
 

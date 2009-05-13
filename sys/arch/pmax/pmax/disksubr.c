@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.49 2008/11/15 11:19:07 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.49.4.1 2009/05/13 17:18:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.49 2008/11/15 11:19:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.49.4.1 2009/05/13 17:18:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.49 2008/11/15 11:19:07 ad Exp $");
 #include <ufs/ufs/dinode.h>		/* XXX for fs.h */
 #include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
-const char *compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-	struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
+const char *compat_label(dev_t dev, void (*strat)(struct buf *bp),
+	struct disklabel *lp, struct cpu_disklabel *osdep);	/* XXX */
 
 /*
  * Attempt to read a disk label from a device
@@ -56,11 +56,7 @@ const char *compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *bp));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -119,11 +115,7 @@ readdisklabel(dev, strat, lp, osdep)
  * putting the partition info into a native NetBSD label
  */
 const char *
-compat_label(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *bp));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+compat_label(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	dec_disklabel *dlp;
 	struct buf *bp = NULL;
@@ -198,10 +190,7 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -239,11 +228,7 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *bp));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.8 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: pcctwo.c,v 1.8.14.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.8 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.8.14.1 2009/05/13 17:20:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,10 +57,7 @@ int pcctwoprint(void *, const char *);
 
 /* ARGSUSED */
 void
-pcctwo_init(sc, pd, devoff)
-	struct pcctwo_softc *sc;
-	const struct pcctwo_device *pd;
-	int devoff;
+pcctwo_init(struct pcctwo_softc *sc, const struct pcctwo_device *pd, int devoff)
 {
 	struct pcctwo_attach_args npa;
 	u_int8_t cid;
@@ -111,9 +108,7 @@ pcctwo_init(sc, pd, devoff)
 }
 
 int
-pcctwoprint(aux, cp)
-	void *aux;
-	const char *cp;
+pcctwoprint(void *aux, const char *cp)
 {
 	struct pcctwo_attach_args *pa;
 
@@ -169,8 +164,7 @@ pcctwointr_establish(vec, hand, lvl, arg, evcnt)
 }
 
 void
-pcctwointr_disestablish(vec)
-	int vec;
+pcctwointr_disestablish(int vec)
 {
 
 #ifdef DEBUG
@@ -192,8 +186,7 @@ pcctwointr_disestablish(vec)
 }
 
 struct evcnt *
-pcctwointr_evcnt(lev)
-	int lev;
+pcctwointr_evcnt(int lev)
 {
 
 	return ((*sys_pcctwo->sc_isrevcnt)(sys_pcctwo->sc_isrcookie, lev));

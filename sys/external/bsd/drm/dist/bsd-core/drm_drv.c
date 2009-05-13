@@ -395,6 +395,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 		return;
 
 	dev = drm_units[unit] = device_private(kdev);
+	dev->device = kdev;
 	dev->unit = unit;
 	for (unit = 0; unit < DRM_MAX_PCI_RESOURCE; unit++)
 	{
@@ -434,9 +435,13 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 
 int drm_detach(struct device *self, int flags)
 {
-	drm_device_t *dev = (drm_device_t*)self;
+	drm_device_t *dev = device_private(self);
 
-	drm_unload((struct drm_device *)self);
+	/* XXX locking */
+	if (dev->open_count)
+		return EBUSY;
+
+	drm_unload(dev);
 	drm_units[dev->unit] = NULL;
 	return 0;
 }
@@ -903,7 +908,10 @@ int drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
 #ifdef __FreeBSD__
 	DRM_DEBUG( "pid = %d, device = 0x%lx, open_count = %d\n",
 		   DRM_CURRENTPID, (long)dev->device, dev->open_count );
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__NetBSD__)
+	DRM_DEBUG( "pid = %d, device = 0x%p, open_count = %d\n",
+		   DRM_CURRENTPID, dev->device, dev->open_count);
+#elif defined(__OpenBSD__)
 	DRM_DEBUG( "pid = %d, device = 0x%lx, open_count = %d\n",
 		   DRM_CURRENTPID, (long)&dev->device, dev->open_count);
 #endif

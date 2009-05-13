@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.6 2009/01/16 00:46:12 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.6.6.1 2009/05/13 17:19:16 jym Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #include "dm.h"
 
 static uint64_t      sc_minor_num; 
+extern const struct dkdriver dmdkdriver;
 uint64_t dev_counter;
 
 #define DM_REMOVE_FLAG(flag, name) do {					\
@@ -218,10 +219,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	if ((dmv = dm_dev_alloc()) == NULL)
 		return ENOMEM;
-	
-	if ((dmv->diskp = kmem_alloc(sizeof(struct disk), KM_NOSLEEP)) == NULL)
-		return ENOMEM;
-	
+		
 	if (uuid)
 		strncpy(dmv->uuid, uuid, DM_UUID_LEN);
 	else 
@@ -247,11 +245,11 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
-	disk_init(dmv->diskp, dmv->name, NULL);
-
-	if ((r = dm_dev_insert(dmv)) != 0){
+	disk_init(dmv->diskp, dmv->name, &dmdkdriver);
+	disk_attach(dmv->diskp);
+	
+	if ((r = dm_dev_insert(dmv)) != 0)		
 		dm_dev_free(dmv);
-	}
 	
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);
 	DM_REMOVE_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
@@ -396,8 +394,9 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	
 	dm_table_head_destroy(&dmv->table_head);
 
-	mutex_destroy(&dmv->dev_mtx);
-	cv_destroy(&dmv->dev_cv);
+	/* Destroy disk device structure */
+	disk_detach(dmv->diskp);
+	disk_destroy(dmv->diskp);
 	
 	/* Destroy device */
 	(void)dm_dev_free(dmv);
@@ -535,15 +534,11 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 
 	atomic_and_32(&dmv->flags, ~(DM_SUSPEND_FLAG | DM_INACTIVE_PRESENT_FLAG));
 	atomic_or_32(&dmv->flags, DM_ACTIVE_PRESENT_FLAG);
-
 	
 	dm_table_switch_tables(&dmv->table_head);
 		
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
 
-	dmgetdisklabel(dmv->dk_label, &dmv->table_head);
-
-	disk_attach(dmv->diskp);
 	dmgetdisklabel(dmv->diskp->dk_label, &dmv->table_head);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
@@ -719,7 +714,8 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 	
-	aprint_debug("Loading table to device: %s--%d\n",name,dmv->table_head.cur_active_table);
+	aprint_debug("Loading table to device: %s--%d\n", name,
+	    dmv->table_head.cur_active_table);
 	
 	/*
 	 * I have to check if this table slot is not used by another table list.
@@ -739,17 +735,23 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 
 		prop_dictionary_get_cstring_nocopy(target_dict,
 		    DM_TABLE_TYPE, &type);
-
 		/*
 		 * If we want to deny table with 2 or more different
 		 * target we should do it here
 		 */
-		if ((target = dm_target_lookup(type)) == NULL)
+		if (((target = dm_target_lookup(type)) == NULL) &&
+		    ((target = dm_target_autoload(type)) == NULL)) {
+			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
+			dm_dev_unbusy(dmv);
 			return ENOENT;
+		}
 		
 		if ((table_en = kmem_alloc(sizeof(dm_table_entry_t),
-			    KM_NOSLEEP)) == NULL)
+			    KM_NOSLEEP)) == NULL) {
+			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
+			dm_dev_unbusy(dmv);
 			return ENOMEM;
+		}
 		
 		prop_dictionary_get_uint64(target_dict, DM_TABLE_START,
 		    &table_en->start);
@@ -792,9 +794,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			dm_dev_unbusy(dmv);
 			return ret;
 		}
-		
 		last_table = table_en;
-
 		free(str, M_TEMP);
 	}
 	prop_object_iterator_release(iter);

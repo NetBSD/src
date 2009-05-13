@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2008/02/03 12:09:41 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.9.24.1 2009/05/13 17:17:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,8 +50,8 @@
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -122,7 +122,7 @@ int howto;
 void
 boot(dev_t boot_dev)
 {
-        machdep();
+	machdep();
 #ifdef	DEBUGBUG
 	debug = 1;
 #endif
@@ -137,7 +137,7 @@ main(void)
 	char *filename, filename_buffer[MAXLEN];
 
 	printf("\n");
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);  
+	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Enter \"reset\" to reset system.\n");
 

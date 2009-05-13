@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.55 2008/11/23 10:09:26 mrg Exp $	*/
+/*	$NetBSD: inode.h,v 1.55.4.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@ struct inode {
 #define	i_lfs	inode_u.lfs
 #define	i_e2fs	inode_u.e2fs
 
-	struct	 buflists i_pcbufhd;	/* softdep pagecache buffer head */
+	void	*i_unused1;	/* Unused. */
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */
 	u_quad_t i_modrev;	/* Revision level for NFS lease. */
 	struct	 lockf *i_lockf;/* Head of byte-level lock list. */
@@ -105,7 +105,7 @@ struct inode {
 	doff_t	  i_diroff;	/* Offset in dir, where we found last entry. */
 	doff_t	  i_offset;	/* Offset of free space in directory. */
 	u_int32_t i_reclen;	/* Size of found directory entry. */
-	int       i_ffs_effnlink;  /* i_nlink when I/O completes */
+	int       i_unused;	/* was for softdep, now unused */
 	/*
 	 * Inode extensions
 	 */
@@ -272,9 +272,6 @@ struct indir {
 /* Convert between inode pointers and vnode pointers. */
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
-
-/* Determine if soft dependencies are being done */
-#define	DOINGSOFTDEP(vp)	((vp)->v_uflag & VU_SOFTDEP)
 
 /* This overlays the fid structure (see fstypes.h). */
 struct ufid {

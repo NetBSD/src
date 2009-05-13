@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.54 2008/11/24 11:41:09 ad Exp $
+#	$NetBSD: INTEGRATOR,v 1.54.4.1 2009/05/13 17:16:37 jym Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -102,7 +102,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.22 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: cread.c,v 1.22.2.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -86,6 +86,35 @@ void	*zcalloc(void *, unsigned int, unsigned int);
 void	zcfree(void *, void *);
 void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
 
+/*
+ * The libkern version of this function uses an 8K set of tables.
+ * This is the double-loop version of LE CRC32 from if_ethersubr,
+ * lightly modified -- it is 200 bytes smaller than the version using
+ * a 4-bit table and at least 8K smaller than the libkern version.
+ */
+#ifndef ETHER_CRC_POLY_LE
+#define ETHER_CRC_POLY_LE	0xedb88320
+#endif
+uint32_t
+crc32(uint32_t crc, const uint8_t *const buf, size_t len)
+{
+	uint32_t c, carry;
+	size_t i, j;
+
+	crc = 0xffffffffU ^ crc;
+	for (i = 0; i < len; i++) {
+	    c = buf[i];
+	    for (j = 0; j < 8; j++) {
+		carry = ((crc & 0x01) ? 1 : 0) ^ (c & 0x01);
+		crc >>= 1;
+		c >>= 1;
+		if (carry) {
+			crc = (crc ^ ETHER_CRC_POLY_LE);
+		}
+	    }
+	}
+	return (crc ^ 0xffffffffU);
+}
 
 /*
  * compression utilities

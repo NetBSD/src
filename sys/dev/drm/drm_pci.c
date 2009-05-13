@@ -1,4 +1,4 @@
-/* $NetBSD: drm_pci.c,v 1.13 2008/06/29 12:49:08 jmcneill Exp $ */
+/* $NetBSD: drm_pci.c,v 1.13.10.1 2009/05/13 17:19:17 jym Exp $ */
 
 /*
  * Copyright 2003 Eric Anholt.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.13 2008/06/29 12:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.13.10.1 2009/05/13 17:19:17 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -51,7 +51,8 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 		return NULL;
 	if ((error = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
 	    h->segs, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
-		printf("drm: Unable to allocate DMA, error %d\n", error);
+		printf("drm: Unable to allocate %ld bytes of DMA, error %d\n",
+		       (long)size, error);
 		goto fail;
 	}
 	if ((error = bus_dmamem_map(dev->pa.pa_dmat, h->segs, nsegs, size, 

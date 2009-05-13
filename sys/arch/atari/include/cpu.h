@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61 2008/02/27 18:26:15 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61.18.1 2009/05/13 17:16:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -207,19 +207,19 @@ extern int machineid;
 /*
  * Prototypes from atari_init.c
  */
-int	cpu_dump __P((int (*)(dev_t, daddr_t, void *, size_t), daddr_t *));
-int	cpu_dumpsize __P((void));
+int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
+int	cpu_dumpsize(void);
 
 /*
  * Prototypes from autoconf.c
  */
-void	config_console __P((void));
+void	config_console(void);
 
 /*
  * Prototypes from fpu.c
  */
-const char *fpu_describe __P((int));
-int	fpu_probe __P((void));
+const char *fpu_describe(int);
+int	fpu_probe(void);
 
 /*
  * Prototypes from locore.s
@@ -227,38 +227,38 @@ int	fpu_probe __P((void));
 struct fpframe;
 struct user;
 
-void	clearseg __P((paddr_t));
-void	doboot __P((void));
-void	loadustp __P((int));
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
-void	physcopyseg __P((paddr_t, paddr_t));
-u_int	probeva __P((u_int, u_int));
-int	suline __P((void *, void *));
+void	clearseg(paddr_t);
+void	doboot(void);
+void	loadustp(int);
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
+void	physcopyseg(paddr_t, paddr_t);
+u_int	probeva(u_int, u_int);
+int	suline(void *, void *);
 
 /*
  * Prototypes from machdep.c:
  */
-int	badbaddr __P((void *, int));
-void	consinit __P((void));
+int	badbaddr(void *, int);
+void	consinit(void);
 typedef void (*si_farg)(void *, void *);	/* XXX */
-void	init_sicallback __P((void));		/* XXX */
-void	add_sicallback __P((si_farg, void *, void *));
-void	rem_sicallback __P((si_farg));
-void	dumpsys __P((void));
-vaddr_t reserve_dumppages __P((vaddr_t));
+void	init_sicallback(void);			/* XXX */
+void	add_sicallback(si_farg, void *, void *);
+void	rem_sicallback(si_farg);
+void	dumpsys(void);
+vaddr_t reserve_dumppages(vaddr_t);
 
 
 /*
  * Prototypes from nvram.c:
  */
 struct uio;
-int	nvram_uio __P((struct uio *));
+int	nvram_uio(struct uio *);
 
 /*
  * Prototypes from pci_machdep.c
  */
-void init_pci_bus __P((void));
+void init_pci_bus(void);
 
 #endif /* _KERNEL */
 #endif /* !_MACHINE_CPU_H_ */

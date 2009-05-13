@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.43 2007/03/04 06:02:38 christos Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.43.56.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.43 2007/03/04 06:02:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.43.56.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -374,7 +374,7 @@ rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 }
 
 RF_AccessStripeMapHeader_t *
-rf_AllocAccessStripeMapHeader()
+rf_AllocAccessStripeMapHeader(void)
 {
 	RF_AccessStripeMapHeader_t *p;
 
@@ -392,7 +392,7 @@ rf_FreeAccessStripeMapHeader(RF_AccessStripeMapHeader_t *p)
 
 
 RF_VoidFunctionPointerListElem_t *
-rf_AllocVFPListElem()
+rf_AllocVFPListElem(void)
 {
 	RF_VoidFunctionPointerListElem_t *p;
 
@@ -411,7 +411,7 @@ rf_FreeVFPListElem(RF_VoidFunctionPointerListElem_t *p)
 
 
 RF_VoidPointerListElem_t *
-rf_AllocVPListElem()
+rf_AllocVPListElem(void)
 {
 	RF_VoidPointerListElem_t *p;
 
@@ -429,7 +429,7 @@ rf_FreeVPListElem(RF_VoidPointerListElem_t *p)
 }
 
 RF_ASMHeaderListElem_t *
-rf_AllocASMHeaderListElem()
+rf_AllocASMHeaderListElem(void)
 {
 	RF_ASMHeaderListElem_t *p;
 
@@ -447,7 +447,7 @@ rf_FreeASMHeaderListElem(RF_ASMHeaderListElem_t *p)
 }
 
 RF_FailedStripe_t *
-rf_AllocFailedStripeStruct()
+rf_AllocFailedStripeStruct(void)
 {
 	RF_FailedStripe_t *p;
 
@@ -468,7 +468,7 @@ rf_FreeFailedStripeStruct(RF_FailedStripe_t *p)
 
 
 RF_PhysDiskAddr_t *
-rf_AllocPhysDiskAddr()
+rf_AllocPhysDiskAddr(void)
 {
 	RF_PhysDiskAddr_t *p;
 

@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_usbd.c,v 1.1.2.1 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_usbd.c,v 1.5 2007/12/11 23:32:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_usbd.c,v 1.5.24.1 2009/05/13 17:18:59 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -122,8 +122,7 @@ usbd_iodispatch(
 }
 
 __stdcall static void
-USBD_GetUSBDIVersion(ui)
-	usbd_version_info	*ui;
+USBD_GetUSBDIVersion(usbd_version_info *ui)
 {
 	/* Pretend to be Windows XP. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.72 2009/01/14 19:41:55 pooka Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.72.2.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -214,8 +214,8 @@
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
 #elif defined(__PCC__)
-#define	__packed	_Pragma("packed")
-#define	__aligned(x)   	_Pragma("aligned " #x)
+#define	__packed	_Pragma("packed 1")
+#define	__aligned(x)   	_Pragma("aligned " __STRING(x))
 #define	__section(x)   	_Pragma("section " ## x)
 #elif defined(__lint__)
 #define	__packed	/* delete */
@@ -396,7 +396,7 @@
 
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
-	(((__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (__n)))
+    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)(__n)))
 
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\

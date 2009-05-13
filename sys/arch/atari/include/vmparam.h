@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22 2009/01/01 04:10:25 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22.2.1 2009/05/13 17:16:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -138,14 +138,6 @@
 #endif
 
 /*
- * PTEs for system V style shared memory.
- * This is basically slop for kmempt which we actually allocate (malloc) from.
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS	(1 * NPTEPG)	/* 16mb */
-#endif
-
-/*
  * user/kernel map constants
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
@@ -166,8 +158,10 @@
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 #define VM_PHYSSEG_NOADD
 
-#define	VM_NFREELIST		1
+#define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_TTRAM	VM_FREELIST_DEFAULT
+#define	VM_FREELIST_STRAM	1
 
 #define	__HAVE_PMAP_PHYSSEG
 

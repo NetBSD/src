@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.42 2009/01/16 21:06:24 cegger Exp $
+#	$NetBSD: files.mii,v 1.42.2.1 2009/05/13 17:20:15 jym Exp $
 
 defflag	opt_mii.h	MIIVERBOSE
 

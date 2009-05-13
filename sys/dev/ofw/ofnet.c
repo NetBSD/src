@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.42 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.42.4.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.42 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.42.4.1 2009/05/13 17:20:16 jym Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -73,7 +73,7 @@ CFATTACH_DECL(ipkdb_ofn, 0,
 static struct ipkdb_if *kifp;
 static struct ofnet_softc *ipkdb_of;
 
-static int ipkdbprobe (struct cfdata *, void *);
+static int ipkdbprobe (cfdata_t, void *);
 #endif
 
 struct ofnet_softc {
@@ -84,8 +84,8 @@ struct ofnet_softc {
 	struct callout sc_callout;
 };
 
-static int ofnet_match (struct device *, struct cfdata *, void *);
-static void ofnet_attach (struct device *, struct device *, void *);
+static int ofnet_match (device_t, cfdata_t, void *);
+static void ofnet_attach (device_t, device_t, void *);
 
 CFATTACH_DECL(ofnet, sizeof(struct ofnet_softc),
     ofnet_match, ofnet_attach, NULL, NULL);
@@ -100,7 +100,7 @@ static int ofnet_ioctl (struct ifnet *, u_long, void *);
 static void ofnet_watchdog (struct ifnet *);
 
 static int
-ofnet_match(struct device *parent, struct cfdata *match, void *aux)
+ofnet_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[32];
@@ -124,7 +124,7 @@ ofnet_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ofnet_attach(struct device *parent, struct device *self, void *aux)
+ofnet_attach(device_t parent, device_t self, void *aux)
 {
 	struct ofnet_softc *of = device_private(self);
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
@@ -253,7 +253,7 @@ ofnet_read(struct ofnet_softc *of)
 			}
 
 			m->m_len = l = min(len, l);
-			bcopy(bufp, mtod(m, char *), l);
+			memcpy(mtod(m, char *), bufp, l);
 			bufp += l;
 			len -= l;
 			*mp = m;
@@ -273,8 +273,7 @@ ofnet_read(struct ofnet_softc *of)
 }
 
 static void
-ofnet_timer(arg)
-	void *arg;
+ofnet_timer(void *arg)
 {
 	struct ofnet_softc *of = arg;
 
@@ -341,7 +340,7 @@ ofnet_start(struct ifnet *ifp)
 		}
 
 		for (bufp = buf; (m = m0) != NULL;) {
-			bcopy(mtod(m, char *), bufp, m->m_len);
+			memcpy(bufp, mtod(m, char *), m->m_len);
 			bufp += m->m_len;
 			MFREE(m, m0);
 		}
@@ -459,7 +458,7 @@ ipkdbofsend(struct ipkdb_if *kip, u_char *buf, int l)
 }
 
 static int
-ipkdbprobe(struct cfdata *match, void *aux)
+ipkdbprobe(cfdata_t match, void *aux)
 {
 	struct ipkdb_if *kip = aux;
 	static char name[256];

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.7 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.7.2.1 2009/05/13 17:22:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,10 +43,17 @@ struct vfsops;
 struct fid;
 struct statvfs;
 
+/* yetch */
 #if !defined(_RUMPKERNEL) && !defined(__NetBSD__)
 struct kauth_cred;
 typedef struct kauth_cred *kauth_cred_t;
 #endif
+#if defined(__NetBSD__)
+#include <prop/proplib.h>
+#else
+struct prop_dictionary;
+typedef struct prop_dictionary *prop_dictionary_t;
+#endif /* __NetBSD__ */
 
 struct lwp;
 struct modinfo;
@@ -64,7 +71,8 @@ struct modinfo;
  */
 #define RUMP_VERSION	01
 #define rump_init()	rump__init(RUMP_VERSION)
-int	rump_module_load(struct modinfo **);
+int	rump_module_init(struct modinfo *, prop_dictionary_t props);
+int	rump_module_fini(struct modinfo *);
 
 int		rump__init(int);
 struct mount	*rump_mnt_init(struct vfsops *, int);
@@ -76,7 +84,6 @@ struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
 void			rump_freecn(struct componentname *, int);
 #define RUMPCN_ISLOOKUP 0x01
 #define RUMPCN_FREECRED 0x02
-#define RUMPCN_HASNTBUF 0x04
 int			rump_namei(uint32_t, uint32_t, const char *,
 				   struct vnode **, struct vnode **,
 				   struct componentname **);
@@ -112,9 +119,9 @@ void	rump_vp_interlock(struct vnode *);
 
 kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
 kauth_cred_t	rump_cred_suserget(void);
-void		rump_cred_destroy(kauth_cred_t);
+void		rump_cred_put(kauth_cred_t);
 
-#define rump_cred_suserput(c)	rump_cred_destroy(c)
+#define rump_cred_suserput(c)	rump_cred_put(c)
 /* COMPAT_NETHACK */
 #define WizardMode()		rump_cred_suserget()
 #define YASD(cred)		rump_cred_suserput(cred)
@@ -126,11 +133,12 @@ int	rump_vfs_sync(struct mount *, int, kauth_cred_t);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void	rump_vfs_syncwait(struct mount *);
+int	rump_vfs_getmp(const char *, struct mount **);
 
-void	rump_bioops_sync(void);
-
+struct lwp	*rump_newproc_switch(void);
 struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
 struct lwp	*rump_get_curlwp(void);
+void		rump_set_curlwp(struct lwp *);
 void		rump_clear_curlwp(void);
 
 void		rump_rcvp_set(struct vnode *, struct vnode *);
@@ -138,5 +146,46 @@ struct vnode 	*rump_cdir_get(void);
 
 /* I picked the wrong header to stop sniffin' glue */
 int rump_syspuffs_glueinit(int, int *);
+
+int rump_virtif_create(int);
+
+typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
+int		rump_sysproxy_set(rump_sysproxy_t, void *);
+int		rump_sysproxy_socket_setup_client(int);
+int		rump_sysproxy_socket_setup_server(int);
+
+/*
+ * Begin rump syscall conditionals.  Yes, something a little better
+ * is required here.
+ */
+#ifdef RUMP_SYS_NETWORKING
+#define socket(a,b,c) rump_sys_socket(a,b,c)
+#define accept(a,b,c) rump_sys_accept(a,b,c)
+#define bind(a,b,c) rump_sys_bind(a,b,c)
+#define connect(a,b,c) rump_sys_connect(a,b,c)
+#define getpeername(a,b,c) rump_sys_getpeername(a,b,c)
+#define getsockname(a,b,c) rump_sys_getsockname(a,b,c)
+#define listen(a,b) rump_sys_listen(a,b)
+#define recvfrom(a,b,c,d,e,f) rump_sys_recvfrom(a,b,c,d,e,f)
+#define sendto(a,b,c,d,e,f) rump_sys_sendto(a,b,c,d,e,f)
+#define getsockopt(a,b,c,d,e) rump_sys_getsockopt(a,b,c,d,e)
+#define setsockopt(a,b,c,d,e) rump_sys_setsockopt(a,b,c,d,e)
+#define shutdown(a,b) rump_sys_shutdown(a,b)
+#endif /* RUMP_SYS_NETWORKING */
+
+#ifdef RUMP_SYS_CLOSE
+#define close(a) rump_sys_close(a)
+#endif /* RUMP_SYS_CLOSE */
+
+#ifdef RUMP_SYS_READWRITE
+#define read(a,b,c) rump_sys_read(a,b,c)
+#define readv(a,b,c) rump_sys_readv(a,b,c)
+#define pread(a,b,c,d) rump_sys_pread(a,b,c,d)
+#define preadv(a,b,c,d) rump_sys_preadv(a,b,c,d)
+#define write(a,b,c) rump_sys_write(a,b,c)
+#define writev(a,b,c) rump_sys_writev(a,b,c)
+#define pwrite(a,b,c,d) rump_sys_pwrite(a,b,c,d)
+#define pwritev(a,b,c,d) rump_sys_pwritev(a,b,c,d)
+#endif /* RUMP_SYS_READWRITE */
 
 #endif /* _RUMP_RUMP_H_ */

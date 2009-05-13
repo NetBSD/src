@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.200 2008/10/12 11:15:54 plunky Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.200.8.1 2009/05/13 17:22:28 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200 2008/10/12 11:15:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200.8.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -575,7 +575,7 @@ sendit:
 
     {
 	struct ipsec_output_state state;
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 	state.m = m;
 	if (flags & IP_ROUTETOIF) {
 		state.ro = &iproute;
@@ -1296,20 +1296,8 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
 		    {
-			int priv = 0;
-
-#ifdef __NetBSD__
-			if (l == 0 || kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL))
-				priv = 0;
-			else
-				priv = 1;
-#else
-			priv = (in6p->in6p_socket->so_state & SS_PRIV);
-#endif
-
 			error = ipsec4_set_policy(inp, sopt->sopt_name,
-			    sopt->sopt_data, sopt->sopt_size, priv);
+			    sopt->sopt_data, sopt->sopt_size, l->l_cred);
 			break;
 		    }
 #endif /*IPSEC*/

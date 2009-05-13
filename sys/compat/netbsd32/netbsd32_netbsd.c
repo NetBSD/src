@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.154 2009/01/30 13:01:36 njoly Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.154.2.1 2009/05/13 17:18:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.154 2009/01/30 13:01:36 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.154.2.1 2009/05/13 17:18:59 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -323,7 +323,7 @@ netbsd32___mknod50(struct lwp *l, const struct netbsd32___mknod50_args *uap, reg
 	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(mode_t) mode;
-		syscallarg(dev_t) dev;
+		syscallarg(netbsd32_dev_t) dev;
 	} */
 
 	return do_sys_mknod(l, SCARG_P32(uap, path), SCARG(uap, mode),
@@ -2521,8 +2521,10 @@ netbsd32___posix_fadvise50(struct lwp *l,
 		syscallarg(int) advice;
 	} */
 
-	return do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
+	*retval = do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
 	    SCARG(uap, len), SCARG(uap, advice));
+
+	return 0;
 }
 
 int

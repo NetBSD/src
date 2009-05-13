@@ -1,7 +1,7 @@
-/*	$NetBSD: hil_gpib.c,v 1.7 2008/04/08 07:38:35 cegger Exp $	*/
+/*	$NetBSD: hil_gpib.c,v 1.7.18.1 2009/05/13 17:19:20 jym Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.7 2008/04/08 07:38:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.7.18.1 2009/05/13 17:19:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,8 @@ struct  hil_softc {
 #define HILF_DELAY	0x10
 };
 
-int     hilmatch(struct device *, struct cfdata *, void *);
-void    hilattach(struct device *, struct device *, void *);
+int     hilmatch(device_t, cfdata_t, void *);
+void    hilattach(device_t, device_t, void *);
 
 const struct cfattach hil_ca = {
 	sizeof(struct hil_softc), hilmatch, hilattach,
@@ -50,10 +50,7 @@ void	hilcallback(void *, int);
 void	hilstart(void *);
 
 int
-hilmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+hilmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct gpib_attach_args *ga = aux;
 	u_int8_t *cmd = "SE;";
@@ -68,9 +65,7 @@ hilmatch(parent, match, aux)
 }
 
 void
-hilattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+hilattach(device_t parent, device_t self, void *aux)
 {
 	struct hil_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;
@@ -90,9 +85,7 @@ hilattach(parent, self, aux)
 }
 
 void
-hilcallback(v, action)
-	void *v;
-	int action;
+hilcallback(void *v, int action)
 {
 	struct hil_softc *sc = v;
 
@@ -114,8 +107,7 @@ hilcallback(v, action)
 }
 
 void
-hilstart(v)
-	void *v;
+hilstart(void *v)
 {
 	struct hil_softc *sc = v;
 

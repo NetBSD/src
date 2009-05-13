@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.39 2008/06/13 05:36:50 cegger Exp $ */
+/* $NetBSD: ioasic.c,v 1.39.10.1 2009/05/13 17:16:07 jym Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.39 2008/06/13 05:36:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.39.10.1 2009/05/13 17:16:07 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,14 +79,14 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.39 2008/06/13 05:36:50 cegger Exp $");
 #include <dev/tc/ioasicvar.h>
 
 /* Definition of the driver for autoconfig. */
-int	ioasicmatch __P((struct device *, struct cfdata *, void *));
-void	ioasicattach __P((struct device *, struct device *, void *));
+int	ioasicmatch(struct device *, struct cfdata *, void *);
+void	ioasicattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ioasic, sizeof(struct ioasic_softc),
     ioasicmatch, ioasicattach, NULL, NULL);
 
-int	ioasic_intr __P((void *));
-int	ioasic_intrnull __P((void *));
+int	ioasic_intr(void *);
+int	ioasic_intrnull(void *);
 
 #define	C(x)	((void *)(x))
 
@@ -114,7 +114,7 @@ struct ioasic_dev ioasic_devs[] = {
 int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
 
 struct ioasicintr {
-	int	(*iai_func) __P((void *));
+	int	(*iai_func)(void *);
 	void	*iai_arg;
 	struct evcnt iai_evcnt;
 } ioasicintrs[IOASIC_NCOOKIES];
@@ -125,10 +125,7 @@ tc_addr_t ioasic_base;		/* XXX XXX XXX */
 int ioasicfound;
 
 int
-ioasicmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+ioasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -147,9 +144,7 @@ ioasicmatch(parent, cfdata, aux)
 }
 
 void
-ioasicattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ioasicattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
@@ -274,8 +269,7 @@ ioasic_intr_disestablish(device_t ioa, void *cookie)
 }
 
 int
-ioasic_intrnull(val)
-	void *val;
+ioasic_intrnull(void *val)
 {
 
 	panic("ioasic_intrnull: uncaught IOASIC intr for cookie %ld",
@@ -286,8 +280,7 @@ ioasic_intrnull(val)
  * ASIC interrupt handler.
  */
 int
-ioasic_intr(val)
-	void *val;
+ioasic_intr(void *val)
 {
 	register struct ioasic_softc *sc = val;
 	register int ifound;

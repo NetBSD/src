@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.32 2007/03/04 05:59:11 christos Exp $ */
+/* $NetBSD: dwlpx.c,v 1.32.58.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.32 2007/03/04 05:59:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.32.58.1 2009/05/13 17:16:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.32 2007/03/04 05:59:11 christos Exp $");
 	     (1LL					<< 39))
 
 
-static int	dwlpxmatch __P((struct device *, struct cfdata *, void *));
-static void	dwlpxattach __P((struct device *, struct device *, void *));
+static int	dwlpxmatch(struct device *, struct cfdata *, void *);
+static void	dwlpxattach(struct device *, struct device *, void *);
 CFATTACH_DECL(dwlpx, sizeof(struct dwlpx_softc),
     dwlpxmatch, dwlpxattach, NULL, NULL);
 
@@ -74,10 +74,7 @@ extern struct cfdriver dwlpx_cd;
 void	dwlpx_errintr(void *, u_long vec);
 
 static int
-dwlpxmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dwlpxmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct kft_dev_attach_args *ka = aux;
 	unsigned long ls;
@@ -107,10 +104,7 @@ dwlpxmatch(parent, cf, aux)
 }
 
 static void
-dwlpxattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+dwlpxattach(struct device *parent, struct device *self, void *aux)
 {
 	static int once = 0;
 	struct dwlpx_softc *sc = (struct dwlpx_softc *)self;
@@ -189,8 +183,7 @@ dwlpxattach(parent, self, aux)
 }
 
 void
-dwlpx_init(sc)
-	struct dwlpx_softc *sc;
+dwlpx_init(struct dwlpx_softc *sc)
 {
 	u_int32_t ctl;
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
@@ -310,9 +303,7 @@ dwlpx_init(sc)
 }
 
 void
-dwlpx_errintr(arg, vec)
-	void *arg;
-	unsigned long vec;
+dwlpx_errintr(void *arg, unsigned long vec)
 {
 	struct dwlpx_softc *sc = arg;
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;

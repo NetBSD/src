@@ -1,4 +1,4 @@
-/*	$NetBSD: boot_ufs.h,v 1.4 2007/12/24 15:46:45 perry Exp $	*/
+/*	$NetBSD: boot_ufs.h,v 1.4.24.1 2009/05/13 17:18:42 jym Exp $	*/
 
 /***************************************************************
  *
@@ -9,15 +9,15 @@
  */
 
 /* xxboot.S */
-__dead void BOOT_ERROR __P((const char *msg));
-int badbaddr __P((volatile void *adr));
+__dead void BOOT_ERROR(const char *msg);
+int badbaddr(volatile void *adr);
 #ifdef SCSI_ADHOC_BOOTPART
-void RAW_READ0 __P((void *buf, u_int32_t blkpos, size_t bytelen));
+void RAW_READ0(void *buf, u_int32_t blkpos, size_t bytelen);
 #endif
-unsigned B_KEYINP __P((void));
-void B_PUTC __P((unsigned int c));
-void B_PRINT __P((const char *p));
-unsigned B_COLOR __P((unsigned int w));
+unsigned B_KEYINP(void);
+void B_PUTC(unsigned int c);
+void B_PRINT(const char *p);
+unsigned B_COLOR(unsigned int w);
 
 extern unsigned ID;		/* target SCSI ID */
 extern unsigned BOOT_INFO;	/* result of IOCS(__BOOTINF) */

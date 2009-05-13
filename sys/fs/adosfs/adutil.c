@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.8 2008/01/30 09:50:19 ad Exp $	*/
+/*	$NetBSD: adutil.c,v 1.8.24.1 2009/05/13 17:21:49 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.8 2008/01/30 09:50:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.8.24.1 2009/05/13 17:21:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -50,14 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.8 2008/01/30 09:50:19 ad Exp $");
  * look for anode in the mount's hash table, return locked.
  */
 #define AHASH(an) ((an) & (ANODEHASHSZ - 1))
-static int CapitalChar __P((int, int));
+static int CapitalChar(int, int);
 
 extern struct simplelock adosfs_hashlock;
 
 struct vnode *
-adosfs_ahashget(mp, an)
-	struct mount *mp;
-	ino_t an;
+adosfs_ahashget(struct mount *mp, ino_t an)
 {
 	struct anodechain *hp;
 	struct anode *ap;
@@ -87,9 +85,7 @@ start_over:
  * ap->vp must have been initialized before this call.
  */
 void
-adosfs_ainshash(amp, ap)
-	struct adosfsmount *amp;
-	struct anode *ap;
+adosfs_ainshash(struct adosfsmount *amp, struct anode *ap)
 {
 	vlockmgr(&ap->vp->v_lock, LK_EXCLUSIVE);
 
@@ -99,8 +95,7 @@ adosfs_ainshash(amp, ap)
 }
 
 void
-adosfs_aremhash(ap)
-	struct anode *ap;
+adosfs_aremhash(struct anode *ap)
 {
 	simple_lock(&adosfs_hashlock);
 	LIST_REMOVE(ap, link);
@@ -108,9 +103,7 @@ adosfs_aremhash(ap)
 }
 
 int
-adosfs_getblktype(amp, bp)
-	struct adosfsmount *amp;
-	struct buf *bp;
+adosfs_getblktype(struct adosfsmount *amp, struct buf *bp)
 {
 	if (adoscksum(bp, amp->nwords)) {
 #ifdef DIAGNOSTIC
@@ -158,8 +151,7 @@ adosfs_getblktype(amp, bp)
 }
 
 int
-adunixprot(adprot)
-	int adprot;
+adunixprot(int adprot)
 {
 	if (adprot & 0xc000ee00) {
 		adprot = (adprot & 0xee0e) >> 1;
@@ -174,8 +166,7 @@ adunixprot(adprot)
 }
 
 static int
-CapitalChar(ch, inter)
-	int ch, inter;
+CapitalChar(int ch, int inter)
 {
 	if ((ch >= 'a' && ch <= 'z') ||
 	    (inter && ch >= 0xe0 && ch <= 0xfe && ch != 0xf7))
@@ -184,9 +175,7 @@ CapitalChar(ch, inter)
 }
 
 u_int32_t
-adoscksum(bp, n)
-	struct buf *bp;
-	int n;
+adoscksum(struct buf *bp, int n)
 {
 	u_int32_t sum, *lp;
 
@@ -199,9 +188,7 @@ adoscksum(bp, n)
 }
 
 int
-adoscaseequ(name1, name2, len, inter)
-	const u_char *name1, *name2;
-	int len, inter;
+adoscaseequ(const u_char *name1, const u_char *name2, int len, int inter)
 {
 	while (len-- > 0)
 		if (CapitalChar(*name1++, inter) !=
@@ -212,9 +199,7 @@ adoscaseequ(name1, name2, len, inter)
 }
 
 int
-adoshash(nam, namlen, nelt, inter)
-	const u_char *nam;
-	int namlen, nelt, inter;
+adoshash(const u_char *nam, int namlen, int nelt, int inter)
 {
 	int val;
 
@@ -229,9 +214,7 @@ adoshash(nam, namlen, nelt, inter)
  * datestamp is local time, tv is to be UTC
  */
 int
-dstotv(dsp, tvp)
-	struct datestamp *dsp;
-	struct timeval *tvp;
+dstotv(struct datestamp *dsp, struct timeval *tvp)
 {
 }
 
@@ -239,18 +222,14 @@ dstotv(dsp, tvp)
  * tv is UTC, datestamp is to be local time
  */
 int
-tvtods(tvp, dsp)
-	struct timeval *tvp;
-	struct datestamp *dsp;
+tvtods(struct timeval *tvp, struct datestamp *dsp)
 {
 }
 #endif
 
 #if BYTE_ORDER != BIG_ENDIAN
 u_int32_t
-adoswordn(bp, wn)
-	struct buf *bp;
-	int wn;
+adoswordn(struct buf *bp, int wn)
 {
 	/*
 	 * ados stored in network (big endian) order

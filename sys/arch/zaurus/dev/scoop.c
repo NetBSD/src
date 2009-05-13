@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: scoop.c,v 1.6.2.1 2009/05/13 17:18:51 jym Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.6.2.1 2009/05/13 17:18:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,6 +253,19 @@ scoop_set_headphone(int on)
 		scoop_gpio_pin_write(sc, SCOOP0_MUTE_R,
 		    GPIO_PIN_LOW);
 	}
+}
+
+/*
+ * Enable or disable the mic bias
+ */
+void
+scoop_set_mic_bias(int onoff)
+{
+	struct scoop_softc *sc1;
+
+	sc1 = device_lookup_private(&scoop_cd, 1);
+	if (sc1 != NULL)
+		scoop_gpio_pin_write(sc1, SCOOP1_MIC_BIAS, onoff);
 }
 
 /*

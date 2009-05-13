@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.198 2009/01/11 02:45:52 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.198.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.198 2009/01/11 02:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.198.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1261,8 +1261,11 @@ humanize_number(char *buf, size_t len, uint64_t bytes, const char *suffix,
 		prefixes = " kMGTPE"; /* SI for decimal multiplies */
 
 	umax = 1;
-	for (i = 0; i < len - suffixlen - 3; i++)
+	for (i = 0; i < len - suffixlen - 3; i++) {
 		umax *= 10;
+		if (umax > bytes)
+			break;
+	}
 	for (i = 0; bytes >= umax && prefixes[i + 1]; i++)
 		bytes /= divisor;
 

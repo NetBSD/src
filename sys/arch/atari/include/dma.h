@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.9 2007/03/04 05:59:41 christos Exp $	*/
+/*	$NetBSD: dma.h,v 1.9.58.1 2009/05/13 17:16:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -96,12 +96,12 @@ struct dma {
 #ifdef _KERNEL
 typedef void (*dma_farg)(void*);
 
-int	st_dmagrab __P((dma_farg, dma_farg, void *, int *, int));
-void	st_dmafree __P((void *, int *));
-int	st_dmawanted __P((void));
-void	st_dmaaddr_set __P((void *));
-u_long	st_dmaaddr_get __P((void));
-void	st_dmacomm __P((int, int));
+int	st_dmagrab(dma_farg, dma_farg, void *, int *, int);
+void	st_dmafree(void *, int *);
+int	st_dmawanted(void);
+void	st_dmaaddr_set(void *);
+u_long	st_dmaaddr_get(void);
+void	st_dmacomm(int, int);
 #endif /* _KERNEL	*/
 
 #endif /* _MACHINE_DMA_H */

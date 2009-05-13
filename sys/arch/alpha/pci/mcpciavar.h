@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciavar.h,v 1.4 1999/04/16 02:18:07 thorpej Exp $ */
+/* $NetBSD: mcpciavar.h,v 1.4.156.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -68,19 +68,19 @@ struct mcpcia_softc {
 	struct mcpcia_config	*mcpcia_cc;	/* config info */
 };
 
-void	mcpcia_init __P((void));
-void	mcpcia_config_cleanup __P((void));
+void	mcpcia_init(void);
+void	mcpcia_config_cleanup(void);
 
-void	mcpcia_pci_init __P((pci_chipset_tag_t, void *));
-void	mcpcia_dma_init __P((struct mcpcia_config *));
+void	mcpcia_pci_init(pci_chipset_tag_t, void *);
+void	mcpcia_dma_init(struct mcpcia_config *);
 
-void	mcpcia_bus_io_init __P((bus_space_tag_t, void *));
-void	mcpcia_bus_mem_init __P((bus_space_tag_t, void *));
+void	mcpcia_bus_io_init(bus_space_tag_t, void *);
+void	mcpcia_bus_mem_init(bus_space_tag_t, void *);
 
 /*
  * IO Interrupt handler.
  */
-void 	mcpcia_iointr __P((void *, unsigned long));
+void 	mcpcia_iointr(void *, unsigned long);
 
 /*
  * There are four PCI slots per MCPCIA PCI bus here, but some are 'hidden'-

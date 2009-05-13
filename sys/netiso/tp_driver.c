@@ -1,7 +1,7 @@
-/*	$NetBSD: tp_driver.c,v 1.19 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.19.90.1 2009/05/13 17:22:42 jym Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.19 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.19.90.1 2009/05/13 17:22:42 jym Exp $");
 
 #include "tp_states.h"
 
@@ -815,9 +815,7 @@ _Xebec_action(int a, struct tp_event *e, struct tp_pcb *p)
 }
 
 static int
-_Xebec_index(e, p)
-	struct tp_event *e;
-	struct tp_pcb  *p;
+_Xebec_index(struct tp_event *e, struct tp_pcb *p)
 {
 	switch ((e->ev_number << 4) + (p->tp_state)) {
 	case 0x12:

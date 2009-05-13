@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.34 2008/03/01 18:59:45 veego Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.34.18.1 2009/05/13 17:22:41 jym Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.34 2008/03/01 18:59:45 veego Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.34.18.1 2009/05/13 17:22:41 jym Exp $");
 
 #include "isdn.h"
 
@@ -110,17 +110,17 @@ static void *devfs_token;
 #ifndef __FreeBSD__
 
 #define	PDEVSTATIC	/* - not static - */
-PDEVSTATIC void isdnattach __P((void));
-PDEVSTATIC int isdnopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
-PDEVSTATIC int isdnclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
-PDEVSTATIC int isdnread __P((dev_t dev, struct uio *uio, int ioflag));
-PDEVSTATIC int isdnioctl __P((dev_t dev, u_long cmd, void *data, int flag, struct lwp *l));
+PDEVSTATIC void isdnattach(void);
+PDEVSTATIC int isdnopen(dev_t dev, int flag, int fmt, struct lwp *l);
+PDEVSTATIC int isdnclose(dev_t dev, int flag, int fmt, struct lwp *l);
+PDEVSTATIC int isdnread(dev_t dev, struct uio *uio, int ioflag);
+PDEVSTATIC int isdnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l);
 
 #ifdef OS_USES_POLL
-PDEVSTATIC int isdnpoll __P((dev_t dev, int events, struct lwp *l));
-PDEVSTATIC int isdnkqfilter __P((dev_t dev, struct knote *kn));
+PDEVSTATIC int isdnpoll(dev_t dev, int events, struct lwp *l);
+PDEVSTATIC int isdnkqfilter(dev_t dev, struct knote *kn);
 #else
-PDEVSTATIC int isdnselect __P((dev_t dev, int rw, struct lwp *l));
+PDEVSTATIC int isdnselect(dev_t dev, int rw, struct lwp *l);
 #endif
 
 #endif /* #ifndef __FreeBSD__ */
@@ -238,7 +238,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 isdnattach(void *dummy)
 #else
-isdnattach()
+isdnattach(void)
 #endif
 {
 	i4b_rdqueue.ifq_maxlen = IFQ_MAXLEN;

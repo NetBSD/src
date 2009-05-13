@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.15 2008/03/28 16:41:37 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.15.18.1 2009/05/13 17:18:21 jym Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -68,15 +68,8 @@ SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
-	@([ -h mips ] || ln -s ${S}/arch/mips/include mips)
-.NOPATH: machine mips
-.endif
-CLEANFILES+= machine mips
-
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

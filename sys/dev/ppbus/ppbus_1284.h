@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.h,v 1.7 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_1284.h,v 1.7.18.1 2009/05/13 17:21:15 jym Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -30,6 +30,8 @@
  */
 #ifndef __PPBUS_1284_H
 #define __PPBUS_1284_H
+
+#include <sys/device.h>	/* for device_t */
 
 /*
  * IEEE1284 signals

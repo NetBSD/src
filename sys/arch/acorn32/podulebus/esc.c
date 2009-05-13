@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.18 2006/03/08 23:46:22 lukem Exp $	*/
+/*	$NetBSD: esc.c,v 1.18.84.1 2009/05/13 17:16:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.18 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.18.84.1 2009/05/13 17:16:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,21 +108,21 @@ __KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.18 2006/03/08 23:46:22 lukem Exp $");
 #include <acorn32/podulebus/escreg.h>
 #include <acorn32/podulebus/escvar.h>
 
-void escinitialize __P((struct esc_softc *));
-void esc_minphys   __P((struct buf *bp));
-void esc_scsi_request __P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
-void esc_donextcmd __P((struct esc_softc *dev, struct esc_pending *pendp));
-void esc_scsidone  __P((struct esc_softc *dev, struct scsipi_xfer *xs,
-			 int stat));
-void escintr	    __P((struct esc_softc *dev));
-void esciwait	    __P((struct esc_softc *dev));
-void escreset	    __P((struct esc_softc *dev, int how));
-int  escselect	    __P((struct esc_softc *dev, struct esc_pending *pendp,
+void escinitialize(struct esc_softc *);
+void esc_minphys(struct buf *bp);
+void esc_scsi_request(struct scsipi_channel *,
+				scsipi_adapter_req_t, void *);
+void esc_donextcmd(struct esc_softc *dev, struct esc_pending *pendp);
+void esc_scsidone(struct esc_softc *dev, struct scsipi_xfer *xs,
+			 int stat);
+void escintr(struct esc_softc *dev);
+void esciwait(struct esc_softc *dev);
+void escreset(struct esc_softc *dev, int how);
+int  escselect(struct esc_softc *dev, struct esc_pending *pendp,
 			 unsigned char *cbuf, int clen,
-			 unsigned char *buf, int len, int mode));
-void escicmd	    __P((struct esc_softc *dev, struct esc_pending *pendp));
-int escgo         __P((struct esc_softc *dev, struct esc_pending *pendp));
+			 unsigned char *buf, int len, int mode);
+void escicmd(struct esc_softc *dev, struct esc_pending *pendp);
+int escgo(struct esc_softc *dev, struct esc_pending *pendp);
 
 void esc_init_nexus(struct esc_softc *, struct nexus *);
 void esc_save_pointers(struct esc_softc *);
@@ -156,8 +156,7 @@ int	esc_debug = 2;
  * default minphys routine for esc based controllers
  */
 void
-esc_minphys(bp)
-	struct buf *bp;
+esc_minphys(struct buf *bp)
 {
 
 	/*
@@ -170,11 +169,9 @@ esc_minphys(bp)
  * Initialize the nexus structs.
  */
 void
-esc_init_nexus(dev, nexus)
-	struct esc_softc *dev;
-	struct nexus	  *nexus;
+esc_init_nexus(struct esc_softc *dev, struct nexus *nexus)
 {
-	bzero(nexus, sizeof(struct nexus));
+	memset(nexus, 0, sizeof(struct nexus));
 
 	nexus->state	= ESC_NS_IDLE;
 	nexus->period	= 200;
@@ -185,8 +182,7 @@ esc_init_nexus(dev, nexus)
 }
 
 void
-escinitialize(dev)
-	struct esc_softc *dev;
+escinitialize(struct esc_softc *dev)
 {
 	u_int		*pte;
 	int		 i;
@@ -324,9 +320,7 @@ esc_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
  * Actually select the unit, whereby the whole scsi-process is started.
  */
 void
-esc_donextcmd(dev, pendp)
-	struct esc_softc	*dev;
-	struct esc_pending	*pendp;
+esc_donextcmd(struct esc_softc *dev, struct esc_pending *pendp)
 {
 	int	s;
 
@@ -379,10 +373,7 @@ esc_donextcmd(dev, pendp)
 }
 
 void
-esc_scsidone(dev, xs, stat)
-	struct esc_softc *dev;
-	struct scsipi_xfer *xs;
-	int		 stat;
+esc_scsidone(struct esc_softc *dev, struct scsipi_xfer *xs, int stat)
 {
 	struct esc_pending	*pendp;
 	int			 s;
@@ -436,9 +427,7 @@ esc_scsidone(dev, xs, stat)
  * delay time.
  */
 void
-escreset(dev, how)
-	struct esc_softc *dev;
-	int		 how;
+escreset(struct esc_softc *dev, int how)
 {
 	esc_regmap_p	rp;
 	int		i, s;
@@ -495,8 +484,7 @@ escreset(dev, how)
  * Save active data pointers to the nexus block currently active.
  */
 void
-esc_save_pointers(dev)
-	struct esc_softc *dev;
+esc_save_pointers(struct esc_softc *dev)
 {
 	struct nexus	*nx;
 
@@ -518,8 +506,7 @@ esc_save_pointers(dev)
  * Restore data pointers from the currently active nexus block.
  */
 void
-esc_restore_pointers(dev)
-	struct esc_softc *dev;
+esc_restore_pointers(struct esc_softc *dev)
 {
 	struct nexus	*nx;
 
@@ -545,8 +532,7 @@ esc_restore_pointers(dev)
  * the FAS chip. This function MUST NOT BE CALLED without interrupt disabled.
  */
 void
-esciwait(dev)
-	struct esc_softc *dev;
+esciwait(struct esc_softc *dev)
 {
 	esc_regmap_p	rp;
 
@@ -580,8 +566,7 @@ esciwait(dev)
  * rules that apply to esciwait also applies here.
  */
 void
-esc_ixfer(dev)
-	struct esc_softc *dev;
+esc_ixfer(struct esc_softc *dev)
 {
 	esc_regmap_p	 rp;
 	u_char		*buf;
@@ -631,8 +616,7 @@ esc_ixfer(dev)
  * rules that apply to esciwait also applies here.
  */
 void
-esc_ixfer(dev)
-	struct esc_softc *dev;
+esc_ixfer(struct esc_softc *dev)
 {
 	esc_regmap_p	 rp;
 	vu_char		*esc_status;
@@ -708,10 +692,7 @@ esc_ixfer(dev)
  * Build a Synchronous Data Transfer Request message
  */
 void
-esc_build_sdtrm(dev, period, offset)
-	struct esc_softc *dev;
-	int		  period;
-	int		  offset;
+esc_build_sdtrm(struct esc_softc *dev, int period, int offset)
 {
 	dev->sc_msg_out[0] = 0x01;
 	dev->sc_msg_out[1] = 0x03;
@@ -725,9 +706,7 @@ esc_build_sdtrm(dev, period, offset)
  * Arbitate the scsi bus and select the unit
  */
 int
-esc_select_unit(dev, target)
-	struct esc_softc *dev;
-	short		  target;
+esc_select_unit(struct esc_softc *dev, short target)
 {
 	esc_regmap_p	 rp;
 	struct nexus	*nexus;
@@ -788,9 +767,7 @@ esc_select_unit(dev, target)
  * Grab the nexus if available else return 0.
  */
 struct nexus *
-esc_arbitate_target(dev, target)
-	struct esc_softc *dev;
-	int		  target;
+esc_arbitate_target(struct esc_softc *dev, int target)
 {
 	struct nexus	*nexus;
 	int		 s;
@@ -816,15 +793,7 @@ esc_arbitate_target(dev, target)
  * Setup a nexus for use. Initializes command, buffer pointers and DMA chain.
  */
 void
-esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
-	struct esc_softc	*dev;
-	struct nexus		*nexus;
-	struct esc_pending	*pendp;
-	unsigned char		*cbuf;
-	int			 clen;
-	unsigned char		*buf;
-	int			 len;
-	int			 mode;
+esc_setup_nexus(struct esc_softc *dev, struct nexus *nexus, struct esc_pending *pendp, unsigned char *cbuf, int clen, unsigned char *buf, int len, int mode)
 {
 	int	sync, target, lun;
 
@@ -849,7 +818,7 @@ esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 /* Setup the nexus struct. */
 	nexus->ID	   = ((mode & ESC_SELECT_R) ? 0xC0 : 0x80) | lun;
 	nexus->clen	   = clen;
-	bcopy(cbuf, nexus->cbuf, nexus->clen);
+	memcpy( nexus->cbuf, cbuf, nexus->clen);
 	nexus->cbuf[1] |= lun << 5;		/* Fix the lun bits */
 	nexus->cur_link	   = 0;
 	nexus->dma_len	   = 0;
@@ -925,14 +894,7 @@ esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 }
 
 int
-escselect(dev, pendp, cbuf, clen, buf, len, mode)
-	struct esc_softc	*dev;
-	struct esc_pending	*pendp;
-	unsigned char		*cbuf;
-	int			 clen;
-	unsigned char		*buf;
-	int			 len;
-	int			 mode;
+escselect(struct esc_softc *dev, struct esc_pending *pendp, unsigned char *cbuf, int clen, unsigned char *buf, int len, int mode)
 {
 	struct nexus	*nexus;
 
@@ -951,9 +913,7 @@ escselect(dev, pendp, cbuf, clen, buf, len, mode)
 }
 
 int
-escgo(dev, pendp)
-	struct esc_softc   *dev;
-	struct esc_pending *pendp;
+escgo(struct esc_softc *dev, struct esc_pending *pendp)
 {
 	int	 s;
 	char	*buf;
@@ -990,9 +950,7 @@ escgo(dev, pendp)
  * We don't know if we have an active nexus here!
  */
 int
-esc_pretests(dev, rp)
-	struct esc_softc *dev;
-	esc_regmap_p	  rp;
+esc_pretests(struct esc_softc *dev, esc_regmap_p rp)
 {
 	struct nexus	*nexus;
 	int		 i, s;
@@ -1092,10 +1050,7 @@ esc_pretests(dev, rp)
  * processing. We know that we have an active nexus here.
  */
 int
-esc_midaction(dev, rp, nexus)
-	struct esc_softc *dev;
-	esc_regmap_p	  rp;
-	struct nexus	 *nexus;
+esc_midaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 {
 	int	i, left, len, s;
 	u_char	status, msg;
@@ -1247,7 +1202,7 @@ esc_midaction(dev, rp, nexus)
 				    && left)
 				dev->sc_bump_va[len-(left--)] = *rp->esc_fifo;
 
-			      bcopy(dev->sc_bump_va, dev->sc_buf, len-left);
+			      memcpy( dev->sc_buf, dev->sc_bump_va, len-left);
 			    }
 			  } else {
 			    /* Count any unsent bytes and flush them. */
@@ -1312,10 +1267,7 @@ esc_midaction(dev, rp, nexus)
  * phase passes). We know that we have an active nexus here.
  */
 int
-esc_postaction(dev, rp, nexus)
-	struct esc_softc *dev;
-	esc_regmap_p	  rp;
-	struct nexus	 *nexus;
+esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 {
 	int	i, len;
 	u_char	cmd;
@@ -1365,7 +1317,7 @@ esc_postaction(dev, rp, nexus)
 			dev->sc_dma_len = len;
 
 			if (nexus->state == ESC_NS_DATA_OUT)
-			  bcopy(dev->sc_buf, dev->sc_bump_va, dev->sc_dma_len);
+			  memcpy( dev->sc_bump_va, dev->sc_buf, dev->sc_dma_len);
 		  } else {
 			dev->sc_dma_buf = dev->sc_dma_blk_ptr;
 			dev->sc_dma_len = dev->sc_dma_blk_len;
@@ -1638,8 +1590,7 @@ esc_postaction(dev, rp, nexus)
  * Stub for interrupt machine.
  */
 void
-escintr(dev)
-	struct esc_softc *dev;
+escintr(struct esc_softc *dev)
 {
 	esc_regmap_p	 rp;
 	struct nexus	*nexus;
@@ -1664,9 +1615,7 @@ escintr(dev)
  * escintr.
  */
 void
-escicmd(dev, pendp)
-	struct esc_softc   *dev;
-	struct esc_pending *pendp;
+escicmd(struct esc_softc *dev, struct esc_pending *pendp)
 {
 	esc_regmap_p	 rp;
 	struct nexus	*nexus;

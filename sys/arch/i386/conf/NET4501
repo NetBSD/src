@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.66 2008/12/08 19:27:50 dyoung Exp $
+# $NetBSD: NET4501,v 1.66.2.1 2009/05/13 17:17:49 jym Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,14 +10,13 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.66 $"
+#ident 		"NET4501-$Revision: 1.66.2.1 $"
 
 maxusers	32		# estimated number of users
 
 # AMD Elan SC520's timer runs at a different frequency
 options 	TIMER_FREQ=1189200
 
-makeoptions 	CPUFLAGS="-march=i486 -mtune=i486"
 makeoptions 	COPTS="-Os"
 
 # CPU-related options.
@@ -61,8 +60,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
-
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

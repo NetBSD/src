@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.255 2009/02/07 20:36:49 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.255.2.1 2009/05/13 17:21:16 jym Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.255 2009/02/07 20:36:49 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.255.2.1 2009/05/13 17:21:16 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -218,9 +218,9 @@ static void InitBP(struct buf *, struct vnode *, unsigned,
 static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
-static int raid_match(struct device *, struct cfdata *, void *);
-static void raid_attach(struct device *, struct device *, void *);
-static int raid_detach(struct device *, int);
+static int raid_match(device_t, cfdata_t, void *);
+static void raid_attach(device_t, device_t, void *);
+static int raid_detach(device_t, int);
 
 dev_type_open(raidopen);
 dev_type_close(raidclose);
@@ -248,7 +248,7 @@ static struct dkdriver rf_dkdriver = { raidstrategy, minphys };
 */
 
 struct raid_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
 	uint64_t sc_size;	/* size of the raid device */
@@ -312,7 +312,7 @@ void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
 void rf_CopybackThread(RF_Raid_t *raidPtr);
 void rf_ReconstructInPlaceThread(struct rf_recon_req *);
-int rf_autoconfig(struct device *self);
+int rf_autoconfig(device_t);
 void rf_buildroothack(RF_ConfigSet_t *);
 
 RF_AutoConfig_t *rf_find_raid_components(void);
@@ -342,9 +342,7 @@ raidattach(int num)
 	int raidID;
 	int i, rc;
 
-#ifdef DEBUG
-	printf("raidattach: Asked for %d units\n", num);
-#endif
+	aprint_debug("raidattach: Asked for %d units\n", num);
 
 	if (num <= 0) {
 #ifdef DIAGNOSTIC
@@ -419,7 +417,7 @@ raidattach(int num)
 }
 
 int
-rf_autoconfig(struct device *self)
+rf_autoconfig(device_t self)
 {
 	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *config_sets;
@@ -431,9 +429,7 @@ rf_autoconfig(struct device *self)
 	raidautoconfig = 0;
 
 	/* 1. locate all RAID components on the system */
-#ifdef DEBUG
-	printf("Searching for RAID components...\n");
-#endif
+	aprint_debug("Searching for RAID components...\n");
 	ac_list = rf_find_raid_components();
 
 	/* 2. Sort them into their respective sets. */
@@ -469,18 +465,14 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		    cset->ac->clabel->autoconfigure==1) {
 			retcode = rf_auto_config_set(cset,&raidID);
 			if (!retcode) {
-#ifdef DEBUG
-				printf("raid%d: configured ok\n", raidID);
-#endif
+				aprint_debug("raid%d: configured ok\n", raidID);
 				if (cset->rootable) {
 					rootID = raidID;
 					num_root++;
 				}
 			} else {
 				/* The autoconfig didn't work :( */
-#ifdef DEBUG
-				printf("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
-#endif
+				aprint_debug("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
 				rf_release_all_vps(cset);
 			}
 		} else {
@@ -531,10 +523,8 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 				if (strncmp(devname, device_xname(booted_device), 
 					    strlen(device_xname(booted_device))) != 0)
 					continue;
-#ifdef DEBUG
-				printf("raid%d includes boot device %s\n",
+				aprint_debug("raid%d includes boot device %s\n",
 				       raidID, devname);
-#endif
 				num_root++;
 				rootID = raidID;
 			}
@@ -807,7 +797,7 @@ int
 raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int     unit = raidunit(dev);
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct raid_softc *rs;
 	int     error = 0;
 	int     part;
@@ -980,7 +970,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int     unit = raidunit(dev);
 	int     error = 0;
 	int     part, pmask;
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct raid_softc *rs;
 	RF_Config_t *k_cfg, *u_cfg;
 	RF_Raid_t *raidPtr;
@@ -1852,7 +1842,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static void
 raidinit(RF_Raid_t *raidPtr)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 	struct raid_softc *rs;
 	int     unit;
 
@@ -2074,15 +2064,6 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 	struct buf *bp;
 
 	req->queue = queue;
-
-#if DIAGNOSTIC
-	if (queue->raidPtr->raidid >= numraid) {
-		printf("Invalid unit number: %d %d\n", queue->raidPtr->raidid,
-		    numraid);
-		panic("Invalid Unit number in rf_DispatchKernelIO");
-	}
-#endif
-
 	bp = req->bp;
 
 	switch (req->type) {
@@ -2130,8 +2111,16 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 			(int) (req->numSector <<
 			    queue->raidPtr->logBytesPerSector),
 			(int) queue->raidPtr->logBytesPerSector));
-		bdev_strategy(bp);
 
+		/*
+		 * XXX: drop lock here since this can block at 
+		 * least with backing SCSI devices.  Retake it
+		 * to minimize fuss with calling interfaces.
+		 */
+
+		RF_UNLOCK_QUEUE_MUTEX(queue, "unusedparam");
+		bdev_strategy(bp);
+		RF_LOCK_QUEUE_MUTEX(queue, "unusedparam");
 		break;
 
 	default:
@@ -2319,15 +2308,15 @@ raidgetdisklabel(dev_t dev)
 		 */
 		if (lp->d_secperunit != rs->sc_size)
 			printf("raid%d: WARNING: %s: "
-			    "total sector size in disklabel (%d) != "
-			    "the size of raid (%ld)\n", unit, rs->sc_xname,
-			    lp->d_secperunit, (long) rs->sc_size);
+			    "total sector size in disklabel (%" PRIu32 ") != "
+			    "the size of raid (%" PRIu64 ")\n", unit, rs->sc_xname,
+			    lp->d_secperunit, rs->sc_size);
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
 			if (pp->p_offset + pp->p_size > rs->sc_size)
 				printf("raid%d: WARNING: %s: end of partition `%c' "
-				       "exceeds the size of raid (%ld)\n",
-				       unit, rs->sc_xname, 'a' + i, (long) rs->sc_size);
+				       "exceeds the size of raid (%" PRIu64 ")\n",
+				       unit, rs->sc_xname, 'a' + i, rs->sc_size);
 		}
 	}
 
@@ -2854,11 +2843,11 @@ oomem:
 }
 
 RF_AutoConfig_t *
-rf_find_raid_components()
+rf_find_raid_components(void)
 {
 	struct vnode *vp;
 	struct disklabel label;
-	struct device *dv;
+	device_t dv;
 	dev_t dev;
 	int bmajor, bminor, wedge;
 	int error;
@@ -3609,24 +3598,22 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 }
 
 static int
-raid_match(struct device *self, struct cfdata *cfdata,
-    void *aux)
+raid_match(device_t self, cfdata_t cfdata, void *aux)
 {
 	return 1;
 }
 
 static void
-raid_attach(struct device *parent, struct device *self,
-    void *aux)
+raid_attach(device_t parent, device_t self, void *aux)
 {
 
 }
 
 
 static int
-raid_detach(struct device *self, int flags)
+raid_detach(device_t self, int flags)
 {
-	struct raid_softc *rs = (struct raid_softc *)self;
+	struct raid_softc *rs = device_private(self);
 
 	if (rs->sc_flags & RAIDF_INITED)
 		return EBUSY;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.33 2008/07/02 17:28:54 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.33.10.1 2009/05/13 17:16:11 jym Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2008/07/02 17:28:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.10.1 2009/05/13 17:16:11 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -96,8 +96,7 @@ static struct mem_region PPCmem[PPCMEMREGIONS + 1], PPCavail[PPCMEMREGIONS + 3];
 void show_me_regs(void);
 
 void
-initppc(startkernel, endkernel)
-        u_int startkernel, endkernel;
+initppc(u_int startkernel, u_int endkernel)
 {
 	extern void cpu_fail(void);
 	extern adamint, adamintsize;
@@ -178,7 +177,7 @@ initppc(startkernel, endkernel)
 		"r"(battable[3].batl), "r"(battable[3].batu));
 
 	proc0.p_addr = proc0paddr;
-	bzero(proc0.p_addr, sizeof *proc0.p_addr);
+	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
 	curpcb = &proc0paddr->u_pcb;
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 
@@ -259,8 +258,7 @@ initppc(startkernel, endkernel)
 
 /* XXX: for a while here, from intr.h */
 volatile int
-splraise(ncpl)
-	int ncpl;
+splraise(int ncpl)
 {
 	int ocpl;
 	volatile unsigned char *p5_ipl = (void *)0xf60030;
@@ -286,8 +284,7 @@ splraise(ncpl)
 }
 
 volatile void
-splx(ncpl)
-	int ncpl;
+splx(int ncpl)
 {
 	volatile unsigned char *p5_ipl = (void *)0xf60030;
 
@@ -310,8 +307,7 @@ splx(ncpl)
 }
 
 volatile int
-spllower(ncpl)
-	int ncpl;
+spllower(int ncpl)
 {
 	int ocpl;
 	volatile unsigned char *p5_ipl = (void *)0xf60030;
@@ -342,8 +338,7 @@ spllower(ncpl)
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
 volatile void
-softintr(ipl)
-	int ipl;
+softintr(int ipl)
 {
 	int msrsave;
 
@@ -356,7 +351,7 @@ softintr(ipl)
 
 
 /* show PPC registers */
-void show_me_regs()
+void show_me_regs(void)
 {
 	register u_long	scr0, scr1, scr2, scr3;
 
@@ -425,8 +420,7 @@ void show_me_regs()
  * to provide space for two additional entry beyond the terminating one.
  */
 void
-mem_regions(memp, availp)
-	struct mem_region **memp, **availp;
+mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	*memp = PPCmem;
 	*availp = PPCavail;
@@ -444,7 +438,7 @@ do_pending_int(void)
  * Interrupt handler
  */
 void
-intrhand()
+intrhand(void)
 {
 	register unsigned short ireq;
 
@@ -499,8 +493,7 @@ struct isr *isr_ports;
 struct isr *isr_exter;
 
 void
-add_isr(isr)
-	struct isr *isr;
+add_isr(struct isr *isr)
 {
 	struct isr **p, *q;
 
@@ -517,8 +510,7 @@ add_isr(isr)
 }
 
 void
-remove_isr(isr)
-	struct isr *isr;
+remove_isr(struct isr *isr)
 {
 	struct isr **p, *q;
 
@@ -554,7 +546,7 @@ remove_isr(isr)
  */
 struct si_callback {
 	struct si_callback *next;
-	void (*function) __P((void *rock1, void *rock2));
+	void (*function)(void *rock1, void *rock2);
 	void *rock1, *rock2;
 };
 static struct si_callback *si_callbacks;
@@ -565,7 +557,7 @@ static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
 void
-alloc_sicallback()
+alloc_sicallback(void)
 {
 	struct si_callback *si;
 	int s;
@@ -586,13 +578,13 @@ alloc_sicallback()
 
 /*
 int
-sys_sysarch()
+sys_sysarch(void)
 {
 return 0;
 }*/
 
 void
-identifycpu()
+identifycpu(void)
 {
 	register int pvr, hid1;
 	char *mach, *pup, *cpu;
@@ -699,7 +691,7 @@ identifycpu()
  * Machine dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	void *	v;
 	vaddr_t minaddr, maxaddr;
@@ -739,7 +731,7 @@ cpu_startup()
  * Initialize system console.
  */
 void
-consinit()
+consinit(void)
 {
 	custom_chips_init();
 	/*
@@ -752,9 +744,7 @@ consinit()
  * Halt or reboot the machine after syncing/dumping according to howto
  */
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 	static char str[256];
@@ -763,8 +753,7 @@ cpu_reboot(howto, what)
 }
 
 int
-lcsplx(ipl)
-	int ipl;
+lcsplx(int ipl)
 {
 	return spllower(ipl);   /* XXX */
 }
@@ -773,8 +762,7 @@ lcsplx(ipl)
  * Convert kernel VA to physical address
  */
 int
-kvtop(addr)
-	void *addr;
+kvtop(void *addr)
 {
 	vaddr_t va;
 	paddr_t pa;

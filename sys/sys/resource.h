@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.30 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.30.2.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -88,9 +88,11 @@ struct	rusage {
 #define	RLIMIT_NPROC	7		/* number of processes */
 #define	RLIMIT_NOFILE	8		/* number of open files */
 #define	RLIMIT_SBSIZE	9		/* maximum size of all socket buffers */
+#define	RLIMIT_AS	10		/* virtual process size (inclusive of mmap) */
+#define	RLIMIT_VMEM	RLIMIT_AS	/* common alias */
 
 #if defined(_NETBSD_SOURCE)
-#define	RLIM_NLIMITS	10		/* number of resource limits */
+#define	RLIM_NLIMITS	11		/* number of resource limits */
 #endif
 
 #define	RLIM_INFINITY	(~((u_quad_t)1 << 63))	/* no limit */

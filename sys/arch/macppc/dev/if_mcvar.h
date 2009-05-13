@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.11 2007/03/05 10:50:01 tsutsui Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.11.58.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -74,11 +74,11 @@ struct mc_softc {
 	u_int8_t	sc_enaddr[6];
 	u_int8_t	sc_pad[2];
 	int		sc_havecarrier; /* carrier status */
-	void		(*sc_bus_init) __P((struct mc_softc *));
-	void		(*sc_putpacket) __P((struct mc_softc *, u_int));
-	int		(*sc_mediachange) __P((struct mc_softc *));
-	void		(*sc_mediastatus) __P((struct mc_softc *,
-				struct ifmediareq *));
+	void		(*sc_bus_init)(struct mc_softc *);
+	void		(*sc_putpacket)(struct mc_softc *, u_int);
+	int		(*sc_mediachange)(struct mc_softc *);
+	void		(*sc_mediastatus)(struct mc_softc *,
+				struct ifmediareq *);
 
 	bus_space_tag_t	sc_regt;
 	bus_space_handle_t sc_regh;
@@ -94,6 +94,6 @@ struct mc_softc {
 	dbdma_command_t	*sc_rxdmacmd;
 };
 
-int	mcsetup __P((struct mc_softc *, u_int8_t *));
-int	mcintr __P((void *arg));
-void	mc_rint __P((struct mc_softc *sc));
+int	mcsetup(struct mc_softc *, u_int8_t *);
+int	mcintr(void *arg);
+void	mc_rint(struct mc_softc *sc);

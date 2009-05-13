@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2006/08/31 21:32:27 freza Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.74.1 2009/05/13 17:18:14 jym Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -68,11 +68,11 @@ extern char bootpath[];
 #include <prop/proplib.h>
 
 /* export from ibm4xx/autoconf.c */
-extern void (*md_device_register) __P((struct device *dev, void *aux));
+extern void (*md_device_register)(struct device *dev, void *aux);
 
 /* export from ibm4xx/machdep.c */
-extern void (*md_consinit) __P((void));
-extern void (*md_cpu_startup) __P((void));
+extern void (*md_consinit)(void);
+extern void (*md_cpu_startup)(void);
 
 /* export from ibm4xx/ibm40x_machdep.c */
 extern void ibm40x_memsize_init(u_int, u_int);

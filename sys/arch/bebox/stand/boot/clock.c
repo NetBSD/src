@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.12.1 2009/05/13 17:16:34 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
 static inline u_quad_t mftb(void);
 
 static inline u_quad_t
-mftb()
+mftb(void)
 {
 	u_long scratch;
 	u_quad_t tb;

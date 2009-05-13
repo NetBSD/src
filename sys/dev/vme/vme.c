@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.19 2007/10/19 12:01:23 ad Exp $ */
+/* $NetBSD: vme.c,v 1.19.34.1 2009/05/13 17:21:42 jym Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.19 2007/10/19 12:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.19.34.1 2009/05/13 17:21:42 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ static int vmesubmatch1(struct device*, struct cfdata*,
 			     const int *, void*);
 static int vmesubmatch(struct device*, struct cfdata*,
 			    const int *, void*);
-int vmematch(struct device *, struct cfdata *, void *);
+int vmematch(device_t, cfdata_t, void *);
 void vmeattach(struct device*, struct device*,void*);
 static struct extent *vme_select_map(struct vmebus_softc*, vme_am_t);
 
@@ -67,9 +67,7 @@ const struct cfattach vme_slv_ca = {
 };
 
 static void
-vme_extractlocators(loc, aa)
-	int *loc;
-	struct vme_attach_args *aa;
+vme_extractlocators(int *loc, struct vme_attach_args *aa)
 {
 	int i = 0;
 
@@ -88,9 +86,7 @@ vme_extractlocators(loc, aa)
 }
 
 static int
-vmeprint(v, dummy)
-	struct vme_attach_args *v;
-	char *dummy;
+vmeprint(struct vme_attach_args *v, char *dummy)
 {
 	int i;
 
@@ -127,11 +123,7 @@ vmeprint(v, dummy)
  * devices are attached.
  */
 static int
-vmesubmatch1(bus, dev, ldesc, aux)
-	struct device *bus;
-	struct cfdata *dev;
-	const int *ldesc;
-	void *aux;
+vmesubmatch1(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
@@ -148,11 +140,7 @@ vmesubmatch1(bus, dev, ldesc, aux)
 }
 
 static int
-vmesubmatch(bus, dev, ldesc, aux)
-	struct device *bus;
-	struct cfdata *dev;
-	const int *ldesc;
-	void *aux;
+vmesubmatch(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
@@ -173,18 +161,13 @@ vmesubmatch(bus, dev, ldesc, aux)
 }
 
 int
-vmematch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vmematch(device_t parent, cfdata_t match, void *aux)
 {
 	return (1);
 }
 
 void
-vmeattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vmeattach(device_t parent, device_t self, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc *)self;
 
@@ -244,8 +227,7 @@ vmeattach(parent, self, aux)
 
 #ifdef notyet
 int
-vmedetach(dev)
-	struct device *dev;
+vmedetach(device_t dev)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)dev;
 
@@ -280,9 +262,7 @@ vmedetach(dev)
 #endif
 
 static struct extent *
-vme_select_map(sc, ams)
-	struct vmebus_softc *sc;
-	vme_am_t ams;
+vme_select_map(struct vmebus_softc *sc, vme_am_t ams)
 {
 	if ((ams & VME_AM_ADRSIZEMASK) == VME_AM_A32)
 		return (sc->vme32ext);
@@ -295,11 +275,7 @@ vme_select_map(sc, ams)
 }
 
 int
-_vme_space_alloc(sc, addr, len, ams)
-	struct vmebus_softc *sc;
-	vme_addr_t addr;
-	vme_size_t len;
-	vme_am_t ams;
+_vme_space_alloc(struct vmebus_softc *sc, vme_addr_t addr, vme_size_t len, vme_am_t ams)
 {
 	struct extent *ex;
 
@@ -311,11 +287,7 @@ _vme_space_alloc(sc, addr, len, ams)
 }
 
 void
-_vme_space_free(sc, addr, len, ams)
-	struct vmebus_softc *sc;
-	vme_addr_t addr;
-	vme_size_t len;
-	vme_am_t ams;
+_vme_space_free(struct vmebus_softc *sc, vme_addr_t addr, vme_size_t len, vme_am_t ams)
 {
 	struct extent *ex;
 
@@ -329,12 +301,7 @@ _vme_space_free(sc, addr, len, ams)
 }
 
 int
-_vme_space_get(sc, len, ams, align, addr)
-	struct vmebus_softc *sc;
-	vme_size_t len;
-	vme_am_t ams;
-	u_long align;
-	vme_addr_t *addr;
+_vme_space_get(struct vmebus_softc *sc, vme_size_t len, vme_am_t ams, u_long align, vme_addr_t *addr)
 {
 	struct extent *ex;
 	u_long help;

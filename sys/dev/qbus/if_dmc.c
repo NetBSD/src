@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.18 2008/12/16 22:35:34 christos Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.18.2.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.18 2008/12/16 22:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.18.2.1 2009/05/13 17:21:16 jym Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -168,8 +168,8 @@ struct dmc_softc {
 	} dmc_base;
 };
 
-static  int dmcmatch(struct device *, struct cfdata *, void *);
-static  void dmcattach(struct device *, struct device *, void *);
+static  int dmcmatch(device_t, cfdata_t, void *);
+static  void dmcattach(device_t, device_t, void *);
 static  int dmcinit(struct ifnet *);
 static  void dmcrint(void *);
 static  void dmcxint(void *);
@@ -181,7 +181,7 @@ static  void dmctimeout(struct ifnet *);
 static  int dmcioctl(struct ifnet *, u_long, void *);
 static  int dmcoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *);
-static  void dmcreset(struct device *);
+static  void dmcreset(device_t);
 
 CFATTACH_DECL(dmc, sizeof(struct dmc_softc),
     dmcmatch, dmcattach, NULL, NULL);
@@ -214,7 +214,7 @@ CFATTACH_DECL(dmc, sizeof(struct dmc_softc),
 		(tail) = (head)
 
 int
-dmcmatch(struct device *parent, struct cfdata *cf, void *aux)
+dmcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 	struct dmc_softc ssc;
@@ -247,7 +247,7 @@ dmcmatch(struct device *parent, struct cfdata *cf, void *aux)
  * to accept packets.
  */
 void
-dmcattach(struct device *parent, struct device *self, void *aux)
+dmcattach(device_t parent, device_t self, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 	struct dmc_softc *sc = device_private(self);
@@ -284,7 +284,7 @@ dmcattach(struct device *parent, struct device *self, void *aux)
  * If interface is on specified UBA, reset its state.
  */
 void
-dmcreset(struct device *dev)
+dmcreset(device_t dev)
 {
 	struct dmc_softc *sc = (struct dmc_softc *)dev;
 
@@ -305,7 +305,7 @@ dmcinit(struct ifnet *ifp)
 	struct dmcbufs *rp;
 	struct dmc_command *qp;
 	struct ifaddr *ifa;
-	struct cfdata *ui = device_cfdata(&sc->sc_dev);
+	cfdata_t ui = device_cfdata(&sc->sc_dev);
 	int base;
 	int s;
 

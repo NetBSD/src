@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.10 2000/06/05 21:47:29 thorpej Exp $ */
+/* $NetBSD: siovar.h,v 1.10.146.1 2009/05/13 17:16:06 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,12 +27,12 @@
  * rights to redistribute these changes.
  */
 
-void	sio_intr_setup __P((pci_chipset_tag_t, bus_space_tag_t));
-void	sio_iointr __P((void *framep, unsigned long vec));
+void	sio_intr_setup(pci_chipset_tag_t, bus_space_tag_t);
+void	sio_iointr(void *framep, unsigned long vec);
 
-const char *sio_intr_string __P((void *, int));
-const struct evcnt *sio_intr_evcnt __P((void *, int));
-void	*sio_intr_establish __P((void *, int, int, int, int (*)(void *),
-	    void *));
-void	sio_intr_disestablish __P((void *, void *));
-int	sio_intr_alloc __P((void *, int, int, int *));
+const char *sio_intr_string(void *, int);
+const struct evcnt *sio_intr_evcnt(void *, int);
+void	*sio_intr_establish(void *, int, int, int, int (*)(void *),
+	    void *);
+void	sio_intr_disestablish(void *, void *);
+int	sio_intr_alloc(void *, int, int, int *);

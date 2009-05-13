@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.2 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.2.94.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.2 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.2.94.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,10 +55,7 @@ CFATTACH_DECL(uni_n, sizeof(struct uni_n_softc),
     uni_n_match, uni_n_attach, NULL, NULL);
 
 int
-uni_n_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+uni_n_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -77,9 +74,7 @@ uni_n_match(parent, cf, aux)
  * Attach all the sub-devices we can find
  */
 void
-uni_n_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+uni_n_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uni_n_softc *sc = (struct uni_n_softc *)self;
 	struct confargs *our_ca = aux;
@@ -119,9 +114,7 @@ uni_n_attach(parent, self, aux)
 }
 
 int
-uni_n_print(aux, uni_n)
-	void *aux;
-	const char *uni_n;
+uni_n_print(void *aux, const char *uni_n)
 {
 	struct confargs *ca = aux;
 	if (uni_n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.10 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.10.2.1 2009/05/13 17:21:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.10 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.10.2.1 2009/05/13 17:21:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_SETFD:
-		if ((long)SCARG(uap, arg) & 1) {
+		if ((long)SCARG(uap, arg) & FD_CLOEXEC) {
 			ff->ff_exclose = true;
 			fdp->fd_exclose = true;
 		} else {
@@ -674,6 +674,8 @@ sys___posix_fadvise50(struct lwp *l,
 		syscallarg(int) advice;
 	} */
 
-	return do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
+	*retval = do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
 	    SCARG(uap, len), SCARG(uap, advice));
+
+	return 0;
 }

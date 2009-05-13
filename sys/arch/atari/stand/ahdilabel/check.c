@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.5 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: check.c,v 1.5.14.1 2009/05/13 17:16:31 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,8 +45,7 @@ int	ahdi_errp2;
  *	Number of partitions in root/auxiliary root
  */
 int
-ahdi_checklabel (ptable)
-	struct ahdi_ptable	*ptable;
+ahdi_checklabel (struct ahdi_ptable *ptable)
 {
 	int		i, j, rcount, acount;
 	u_int32_t	i_end, j_end;

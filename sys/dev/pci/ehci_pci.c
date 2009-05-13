@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.38 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.38.14.1 2009/05/13 17:20:23 jym Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38.14.1 2009/05/13 17:20:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,21 +77,20 @@ struct ehci_pci_softc {
 #define EHCI_MAX_BIOS_WAIT		1000 /* ms */
 
 static int
-ehci_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ehci_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_EHCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
-ehci_pci_attach(struct device *parent, struct device *self, void *aux)
+ehci_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct ehci_pci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -101,7 +100,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	const char *vendor;
-	const char *devname = device_xname(self);
 	char devinfo[256];
 	usbd_status r;
 	int ncomp;
@@ -119,9 +117,15 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		aprint_error("%s: can't map memory space\n", devname);
+		sc->sc.sc_size = 0;
+		aprint_error_dev(self, "can't map memory space\n");
 		return;
 	}
+
+	/* Disable interrupts, so we don't get any spurious ones. */
+	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
+	DPRINTF(("%s: offs=%d\n", device_xname(self), sc->sc.sc_offs));
+	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
@@ -132,33 +136,32 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	/* Disable interrupts, so we don't get any spurious ones. */
-	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
-	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
-	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
-
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n", devname);
-		return;
+		aprint_error_dev(self, "couldn't map interrupt\n");
+		goto fail;
 	}
+
+	/*
+	 * Allocate IRQ
+	 */
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt", devname);
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", devname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
 	case PCI_USBREV_1_0:
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
-		aprint_verbose("%s: pre-2.0 USB rev\n", devname);
+		aprint_verbose_dev(self, "pre-2.0 USB rev\n");
 		return;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
@@ -182,7 +185,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_VENDOR_ATI:
 	case PCI_VENDOR_VIATECH:
 		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
-		aprint_normal("%s: dropped intr workaround enabled\n", devname);
+		aprint_normal_dev(self, "dropped intr workaround enabled\n");
 		break;
 	default:
 		break;
@@ -208,8 +211,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error("%s: init failed, error=%d\n", devname, r);
-		return;
+		aprint_error_dev(self, "init failed, error=%d\n", r);
+		goto fail;
 	}
 
 	if (!pmf_device_register1(self, ehci_pci_suspend, ehci_pci_resume,
@@ -218,10 +221,23 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	return;
+
+fail:
+	if (sc->sc_ih) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (sc->sc.sc_size) {
+		ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
+	}
+	return;
 }
 
 static int
-ehci_pci_detach(device_ptr_t self, int flags)
+ehci_pci_detach(device_t self, int flags)
 {
 	struct ehci_pci_softc *sc = device_private(self);
 	int rv;
@@ -229,7 +245,13 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	pmf_device_deregister(self);
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
-		return (rv);
+		return rv;
+
+	/* disable interrupts */
+	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
+	/* XXX grotty hack to flush the write */
+	(void)EOREAD2(&sc->sc, EHCI_USBINTR);
+
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -240,18 +262,18 @@ ehci_pci_detach(device_ptr_t self, int flags)
 		sc->sc.sc_size = 0;
 	}
 
-	return (0);
+	return 0;
 }
 
-CFATTACH_DECL2_NEW(ehci_pci, sizeof(struct ehci_pci_softc),
+CFATTACH_DECL3_NEW(ehci_pci, sizeof(struct ehci_pci_softc),
     ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate, NULL,
-    ehci_childdet);
+    ehci_childdet, DVF_DETACH_SHUTDOWN);
 
 #ifdef EHCI_DEBUG
 static void
 ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
-	u_int32_t cparams, legctlsts, addr, cap, id;
+	uint32_t cparams, legctlsts, addr, cap, id;
 	int maxdump = 10;
 
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
@@ -281,7 +303,7 @@ static void
 ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	const char *devname = device_xname(sc->sc_dev);
-	u_int32_t cparams, addr, cap;
+	uint32_t cparams, addr, cap;
 	pcireg_t legsup;
 	int maxcap = 10;
 
@@ -309,7 +331,7 @@ static void
 ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	const char *devname = device_xname(sc->sc_dev);
-	u_int32_t cparams, addr, cap;
+	uint32_t cparams, addr, cap;
 	pcireg_t legsup;
 	int maxcap = 10;
 	int ms;

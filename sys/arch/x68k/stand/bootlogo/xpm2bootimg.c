@@ -1,4 +1,4 @@
-/*	$NetBSD: xpm2bootimg.c,v 1.1 2002/01/27 01:48:00 minoura Exp $	*/
+/*	$NetBSD: xpm2bootimg.c,v 1.1.140.1 2009/05/13 17:18:42 jym Exp $	*/
 
 /*
  *	convert XPM format image to boot title format
@@ -50,8 +50,7 @@ static int curlen;
 static int obytes;
 
 static void
-putbyte(c)
-	int c;
+putbyte(int c)
 {
 	static unsigned char wbuf;
 
@@ -88,7 +87,7 @@ putbyte(c)
 }
 
 static void
-initdot()
+initdot(void)
 {
 
 	outbuf = bufbits = curval = curlen = obytes = 0;
@@ -97,8 +96,7 @@ initdot()
 static int put;
 
 static void
-putrun(val, len)
-	int val, len;
+putrun(int val, int len)
 {
 
 /*	fprintf(stderr, "val %d, len %d\n", val, len);*/
@@ -116,8 +114,7 @@ putrun(val, len)
 }
 
 static void
-adddot(val)
-	int val;
+adddot(int val)
 {
 
 	if (curval != val) {
@@ -134,7 +131,7 @@ adddot(val)
 }
 
 static void
-flushdot()
+flushdot(void)
 {
 
 	if (curlen) {
@@ -155,8 +152,7 @@ flushdot()
  * convert r8g8b8 to g5r5b5i1
  */
 static unsigned
-rgb16b(rgb)
-	int rgb;
+rgb16b(int rgb)
 {
 	unsigned r = rgb >> 16, g = (rgb >> 8) & 0xff, b = rgb & 0xff;
 	unsigned rgb16;
@@ -174,8 +170,8 @@ rgb16b(rgb)
 }
 
 static char *
-destring(str)
-	char *str;	/* must be writable */
+destring(char *str)
+	/* str:	 must be writable */
 {
 	size_t len;
 	char *p;
@@ -201,7 +197,7 @@ static FILE *infp;
 static unsigned lineno;
 
 static char *
-getline()
+getline(void)
 {
 	static char buf[256];
 	char *p;
@@ -224,8 +220,7 @@ getline()
 }
 
 static void
-error(msg)
-	char *msg;
+error(char *msg)
 {
 	if (!msg)
 		msg = "format error";
@@ -246,9 +241,7 @@ unsigned col1, col2;
 enum col bitmap[IMGHEIGHT][IMGWIDTH];
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *p;
 	unsigned u, colors, xcol, x;

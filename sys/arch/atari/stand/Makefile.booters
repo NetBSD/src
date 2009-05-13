@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.1 2009/01/06 13:35:30 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.1.10.1 2009/05/13 17:16:31 jym Exp $
 
 BINDIR=		/usr/mdec/${BTYPE:tl}
 
@@ -12,12 +12,4 @@ CFLAGS+=	-ffreestanding
 CFLAGS+=	-Wall
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] ||						\
-	    ln -s ${S}/arch/${MACHINE}/include machine)
-	@([ -h ${MACHINE_ARCH} ] ||					\
-	    ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH})
-.NOPATH: machine ${MACHINE_ARCH}
-.endif
-CLEANFILES+= machine ${MACHINE_ARCH}
+.include <bsd.klinks.mk>

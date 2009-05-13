@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.18 2008/06/28 21:34:32 chris Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.18.10.1 2009/05/13 17:18:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,13 +185,9 @@ static void bsd_termios_to_linux_termios(struct termios *,
 
 static void
 #ifdef COMPAT_LINUX32
-linux32_termio_to_bsd_termios(lt, bts)
-	struct linux32_termio *lt;
-	struct termios *bts;
+linux32_termio_to_bsd_termios(struct linux32_termio *lt, struct termios *bts)
 #else
-linux_termio_to_bsd_termios(lt, bts)
-	struct linux_termio *lt;
-	struct termios *bts;
+linux_termio_to_bsd_termios(struct linux_termio *lt, struct termios *bts)
 #endif
 {
 	int index;
@@ -274,13 +270,9 @@ linux_termio_to_bsd_termios(lt, bts)
 
 static void
 #ifdef COMPAT_LINUX32
-bsd_termios_to_linux32_termio(bts, lt)
-	struct termios *bts;
-	struct linux32_termio *lt;
+bsd_termios_to_linux32_termio(struct termios *bts, struct linux32_termio *lt)
 #else
-bsd_termios_to_linux_termio(bts, lt)
-	struct termios *bts;
-	struct linux_termio *lt;
+bsd_termios_to_linux_termio(struct termios *bts, struct linux_termio *lt)
 #endif
 {
 	int i, mask;
@@ -366,13 +358,9 @@ bsd_termios_to_linux_termio(bts, lt)
 
 static void
 #ifdef COMPAT_LINUX32
-linux32_termios_to_bsd_termios(lts, bts)
-	struct linux32_termios *lts;
-	struct termios *bts;
+linux32_termios_to_bsd_termios(struct linux32_termios *lts, struct termios *bts)
 #else
-linux_termios_to_bsd_termios(lts, bts)
-	struct linux_termios *lts;
-	struct termios *bts;
+linux_termios_to_bsd_termios(struct linux_termios *lts, struct termios *bts)
 #endif
 {
 	int index;
@@ -467,13 +455,9 @@ linux_termios_to_bsd_termios(lts, bts)
 
 static void
 #ifdef COMPAT_LINUX32
-bsd_termios_to_linux32_termios(bts, lts)
-	struct termios *bts;
-	struct linux32_termios *lts;
+bsd_termios_to_linux32_termios(struct termios *bts, struct linux32_termios *lts)
 #else
-bsd_termios_to_linux_termios(bts, lts)
-	struct termios *bts;
-	struct linux_termios *lts;
+bsd_termios_to_linux_termios(struct termios *bts, struct linux_termios *lts)
 #endif
 {
 	int i, mask;

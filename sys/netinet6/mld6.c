@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.48 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: mld6.c,v 1.48.4.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.48 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.48.4.1 2009/05/13 17:22:29 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -182,7 +182,7 @@ mld_init(void)
 	hbh_buf[3] = 0;
 	hbh_buf[4] = IP6OPT_RTALERT;
 	hbh_buf[5] = IP6OPT_RTALERT_LEN - 2;
-	bcopy((void *)&rtalert_code, &hbh_buf[6], sizeof(u_int16_t));
+	memcpy(&hbh_buf[6], (void *)&rtalert_code, sizeof(u_int16_t));
 
 	ip6_opts.ip6po_hbh = hbh;
 	/* We will specify the hoplimit by a multicast option. */

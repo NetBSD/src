@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.26 2008/10/15 06:51:18 wrstuden Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.26.8.1 2009/05/13 17:18:15 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.26 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.26.8.1 2009/05/13 17:18:15 jym Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -141,11 +141,7 @@ mach_create_thread_child(void *arg)
 }
 
 int
-mach_thread_get_state_machdep(l, flavor, state, size)
-	struct lwp *l;
-	int flavor;
-	void *state;
-	int *size;
+mach_thread_get_state_machdep(struct lwp *l, int flavor, void *state, int *size)
 {
 	struct trapframe *tf;
 
@@ -187,10 +183,7 @@ mach_thread_get_state_machdep(l, flavor, state, size)
 }
 
 int
-mach_thread_set_state_machdep(l, flavor, state)
-	struct lwp *l;
-	int flavor;
-	void *state;
+mach_thread_set_state_machdep(struct lwp *l, int flavor, void *state)
 {
 	struct trapframe *tf;
 
@@ -228,11 +221,7 @@ mach_thread_set_state_machdep(l, flavor, state)
 }
 
 int 
-mach_vm_machine_attribute_machdep(l, addr, size, valp)
-	struct lwp *l;
-	vaddr_t addr;
-	size_t size;
-	int *valp;
+mach_vm_machine_attribute_machdep(struct lwp *l, vaddr_t addr, size_t size, int *valp)
 {
 	int error = 0;
 

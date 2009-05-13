@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.50 2009/01/23 09:22:25 jmmv Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.50.2.1 2009/05/13 17:21:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.50 2009/01/23 09:22:25 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.50.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -207,7 +207,7 @@ ksymsattach(int arg)
 }
 
 void
-ksyms_init()
+ksyms_init(void)
 {
 
 #ifdef SYMTAB_SPACE

@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.10 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.10.2.1 2009/05/13 17:22:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.10 2009/02/06 20:01:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.10.2.1 2009/05/13 17:22:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -117,7 +117,7 @@ wakeup(wchan_t ident)
 }
 
 void
-rump_sleepers_init()
+rump_sleepers_init(void)
 {
 
 	mutex_init(&sleepermtx, MUTEX_DEFAULT, 0);

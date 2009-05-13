@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.12 2009/01/10 23:36:22 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.12.2.1 2009/05/13 17:23:11 jym Exp $
 
 .include <bsd.own.mk>
 
+# This is called with MACHINE=sparc64 && MACHINE_ARCH=sparc when building
+# 32 bit kernels for ultrasparc hardware
 .if ${MACHINE} == "sparc64"
 
 SPARC64DIR=	${.PARSEDIR}/../../sparc64/atomic

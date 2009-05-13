@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.8 2005/12/24 22:45:33 perry Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8.92.1 2009/05/13 17:16:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2005/12/24 22:45:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8.92.1 2009/05/13 17:16:01 jym Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -103,7 +103,7 @@ fpu_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	if (!supported)
 		printf("%s: WARNING: FPU type not supported by kernel\n",
-		       self->dv_xname);
+		       device_xname(self));
 }
 
 static label_t undef_jmp;
@@ -116,7 +116,7 @@ fpu_undef_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 }
 
 static register_t
-fpu_identify()
+fpu_identify(void)
 {
 	volatile register_t fpsr;
 	void *uh;

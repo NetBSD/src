@@ -1,4 +1,4 @@
-/*	$NetBSD: int2reg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: int2reg.h,v 1.4.92.1 2009/05/13 17:18:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -31,26 +31,27 @@
 #define	_ARCH_SGIMIPS_DEV_INT2_H_
 
 /* The INT has known locations on all SGI machines */
-#define	INT_IP12		0x1fb801c0
-#define	INT_IP20		0x1fb801c0
-#define	INT_IP22		0x1fbd9000
-#define	INT_IP24		0x1fbd9880
+#define	INT2_IP12		0x1fb801c0
+#define	INT2_IP20		0x1fb801c0
+#define	INT2_IP22		0x1fbd9000
+#define	INT2_IP24		0x1fbd9880
 
-#define INT2_LOCAL0_STATUS	0x00
+/* The following registers are all 8 bit. */
+#define INT2_LOCAL0_STATUS	0x03
 #define INT2_LOCAL0_STATUS_FIFO	0x01
-#define INT2_LOCAL0_MASK	0x04
-#define INT2_LOCAL1_STATUS	0x08
-#define INT2_LOCAL1_MASK	0x0c
-#define INT2_MAP_STATUS		0x10
-#define INT2_MAP_MASK0		0x14
-#define INT2_MAP_MASK1		0x18
-#define INT2_MAP_POL		0x1c
-#define INT2_TIMER_CLEAR	0x20
-#define INT2_ERROR_STATUS	0x24
-#define INT2_TIMER_0		0x30
-#define	INT2_TIMER_1		0x34
-#define	INT2_TIMER_2		0x38
-#define INT2_TIMER_CONTROL	0x3c
+#define INT2_LOCAL0_MASK	0x07
+#define INT2_LOCAL1_STATUS	0x0b
+#define INT2_LOCAL1_MASK	0x0f
+#define INT2_MAP_STATUS		0x13
+#define INT2_MAP_MASK0		0x17
+#define INT2_MAP_MASK1		0x1b
+#define INT2_MAP_POL		0x1f
+#define INT2_TIMER_CLEAR	0x23
+#define INT2_ERROR_STATUS	0x27
+#define INT2_TIMER_0		0x33
+#define	INT2_TIMER_1		0x37
+#define	INT2_TIMER_2		0x3b
+#define INT2_TIMER_CONTROL	0x3f
 
 #endif /* _ARCH_SGIMIPS_DEV_INT2_H_ */
 

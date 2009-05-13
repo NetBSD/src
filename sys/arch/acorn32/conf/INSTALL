@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.52 2009/02/06 18:50:26 jym Exp $
+#	$NetBSD: INSTALL,v 1.52.2.1 2009/05/13 17:16:02 jym Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.52 $"
+#ident		"INSTALL-$Revision: 1.52.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -119,7 +119,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
@@ -297,7 +296,7 @@ ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
 
-pseudo-device	loop	1		# network loopback
+pseudo-device	loop			# network loopback
 #pseudo-device	bpfilter		# packet filter
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
@@ -305,7 +304,7 @@ pseudo-device	loop	1		# network loopback
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter 1		# ip filter
+#pseudo-device	ipfilter		# ip filter
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

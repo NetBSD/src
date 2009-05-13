@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.64 2008/12/16 22:35:31 christos Exp $	*/
+/*	$NetBSD: i82586.c,v 1.64.2.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.64 2008/12/16 22:35:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.64.2.1 2009/05/13 17:19:23 jym Exp $");
 
 #include "bpfilter.h"
 
@@ -234,11 +234,7 @@ static char* padbuf = NULL;
  *
  */
 void
-i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
-	struct ie_softc *sc;
-	const char *name;
-	u_int8_t *etheraddr;
-        int *media, nmedia, defmedia;
+i82586_attach(struct ie_softc *sc, const char *name, u_int8_t *etheraddr, int *media, int nmedia, int defmedia)
 {
 	int i;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -288,8 +284,7 @@ i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
  * transmit has been started on it.
  */
 void
-i82586_watchdog(ifp)
-	struct ifnet *ifp;
+i82586_watchdog(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 
@@ -300,8 +295,7 @@ i82586_watchdog(ifp)
 }
 
 static int
-i82586_cmd_wait(sc)
-	struct ie_softc *sc;
+i82586_cmd_wait(struct ie_softc *sc)
 {
 	/* spin on i82586 command acknowledge; wait at most 0.9 (!) seconds */
 	int i, off;
@@ -336,12 +330,7 @@ i82586_cmd_wait(sc)
  * We may have to wait for the command's acceptance later though.
  */
 static int
-i82586_start_cmd(sc, cmd, iecmdbuf, mask, async)
-	struct ie_softc *sc;
-	int cmd;
-	int iecmdbuf;
-	int mask;
-	int async;
+i82586_start_cmd(struct ie_softc *sc, int cmd, int iecmdbuf, int mask, int async)
 {
 	int i;
 	int off;
@@ -399,9 +388,8 @@ i82586_start_cmd(sc, cmd, iecmdbuf, mask, async)
  * Interrupt Acknowledge.
  */
 static inline void
-ie_ack(sc, mask)
-	struct ie_softc *sc;
-	u_int mask;	/* in native byte-order */
+ie_ack(struct ie_softc *sc, u_int mask)
+	/* mask:	 in native byte-order */
 {
 	u_int status;
 
@@ -416,8 +404,7 @@ ie_ack(sc, mask)
  * Transfer accumulated chip error counters to IF.
  */
 static inline void
-i82586_count_errors(sc)
-	struct ie_softc *sc;
+i82586_count_errors(struct ie_softc *sc)
 {
 	int scb = sc->scb;
 
@@ -435,10 +422,7 @@ i82586_count_errors(sc)
 }
 
 static void
-i82586_rx_errors(sc, fn, status)
-	struct ie_softc *sc;
-	int fn;
-	int status;
+i82586_rx_errors(struct ie_softc *sc, int fn, int status)
 {
 	char bits[128];
 	snprintb(bits, sizeof(bits), IE_FD_STATUSBITS, status);
@@ -451,8 +435,7 @@ i82586_rx_errors(sc, fn, status)
  * i82586 interrupt entry point.
  */
 int
-i82586_intr(v)
-	void *v;
+i82586_intr(void *v)
 {
 	struct ie_softc *sc = v;
 	u_int status;
@@ -528,9 +511,7 @@ reset:
  * Process a received-frame interrupt.
  */
 int
-i82586_rint(sc, scbstatus)
-	struct	ie_softc *sc;
-	int	scbstatus;
+i82586_rint(struct ie_softc *sc, int scbstatus)
 {
 static	int timesthru = 1024;
 	int i, status, off;
@@ -682,9 +663,7 @@ static	int timesthru = 1024;
  * of the real work is done by i82586_start().
  */
 int
-i82586_tint(sc, scbstatus)
-	struct ie_softc *sc;
-	int	scbstatus;
+i82586_tint(struct ie_softc *sc, int scbstatus)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int status;
@@ -764,11 +743,7 @@ i82586_tint(sc, scbstatus)
  * Get a range of receive buffer descriptors that represent one packet.
  */
 static int
-i82586_get_rbd_list(sc, start, end, pktlen)
-	struct ie_softc *sc;
-	u_int16_t	*start;
-	u_int16_t	*end;
-	int		*pktlen;
+i82586_get_rbd_list(struct ie_softc *sc, u_int16_t *start, u_int16_t *end, int *pktlen)
 {
 	int	off, rbbase = sc->rbds;
 	int	rbindex, count = 0;
@@ -811,10 +786,7 @@ i82586_get_rbd_list(sc, start, end, pktlen)
  * Release a range of receive buffer descriptors after we've copied the packet.
  */
 static void
-i82586_release_rbd_list(sc, start, end)
-	struct ie_softc *sc;
-	u_int16_t	start;
-	u_int16_t	end;
+i82586_release_rbd_list(struct ie_softc *sc, u_int16_t start, u_int16_t end)
 {
 	int	off, rbbase = sc->rbds;
 	int	rbindex = start;
@@ -849,8 +821,7 @@ i82586_release_rbd_list(sc, start, end)
  * and 0 otherwise.
  */
 static int
-i82586_drop_frames(sc)
-	struct ie_softc *sc;
+i82586_drop_frames(struct ie_softc *sc)
 {
 	u_int16_t bstart, bend;
 	int pktlen;
@@ -871,8 +842,7 @@ i82586_drop_frames(sc)
  * The Receive Unit is expected to be NOT RUNNING.
  */
 static int
-i82586_chk_rx_ring(sc)
-	struct ie_softc *sc;
+i82586_chk_rx_ring(struct ie_softc *sc)
 {
 	int n, off, val;
 
@@ -916,10 +886,7 @@ i82586_chk_rx_ring(sc)
  * operation considerably.  (Provided that it works, of course.)
  */
 static inline struct mbuf *
-ieget(sc, head, totlen)
-	struct ie_softc *sc;
-	int head;
-	int totlen;
+ieget(struct ie_softc *sc, int head, int totlen)
 {
 	struct mbuf *m, *m0, *newm;
 	int len, resid;
@@ -1090,8 +1057,7 @@ ie_readframe(
  * command to the chip to be executed.
  */
 static inline void
-iexmit(sc)
-	struct ie_softc *sc;
+iexmit(struct ie_softc *sc)
 {
 	int off;
 	int cur, prev;
@@ -1164,8 +1130,7 @@ iexmit(sc)
  * Start transmission on an interface.
  */
 void
-i82586_start(ifp)
-	struct ifnet *ifp;
+i82586_start(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -1251,8 +1216,7 @@ i82586_start(ifp)
  * Use only if SCP and ISCP represent offsets into shared ram space.
  */
 int
-i82586_proberam(sc)
-	struct ie_softc *sc;
+i82586_proberam(struct ie_softc *sc)
 {
 	int result, off;
 
@@ -1285,9 +1249,7 @@ i82586_proberam(sc)
 }
 
 void
-i82586_reset(sc, hard)
-	struct ie_softc *sc;
-	int hard;
+i82586_reset(struct ie_softc *sc, int hard)
 {
 	int s = splnet();
 
@@ -1327,10 +1289,7 @@ i82586_reset(sc, hard)
 
 
 static void
-setup_simple_command(sc, cmd, cmdbuf)
-	struct ie_softc *sc;
-	int cmd;
-	int cmdbuf;
+setup_simple_command(struct ie_softc *sc, int cmd, int cmdbuf)
 {
 	/* Setup a simple command */
 	sc->ie_bus_write16(sc, IE_CMD_COMMON_STATUS(cmdbuf), 0);
@@ -1345,9 +1304,7 @@ setup_simple_command(sc, cmd, cmdbuf)
  * Run the time-domain reflectometer.
  */
 static void
-ie_run_tdr(sc, cmd)
-	struct ie_softc *sc;
-	int cmd;
+ie_run_tdr(struct ie_softc *sc, int cmd)
 {
 	int result;
 
@@ -1394,8 +1351,7 @@ ie_run_tdr(sc, cmd)
  *
  */
 static void
-i82586_setup_bufs(sc)
-	struct ie_softc *sc;
+i82586_setup_bufs(struct ie_softc *sc)
 {
 	int	ptr = sc->buf_area;	/* memory pool */
 	int     n, r;
@@ -1548,10 +1504,7 @@ i82586_setup_bufs(sc)
 }
 
 static int
-ie_cfg_setup(sc, cmd, promiscuous, manchester)
-	struct ie_softc *sc;
-	int cmd;
-	int promiscuous, manchester;
+ie_cfg_setup(struct ie_softc *sc, int cmd, int promiscuous, int manchester)
 {
 	int cmdresult, status;
 	u_int8_t buf[IE_CMD_CFG_SZ]; /* XXX malloc? */
@@ -1589,9 +1542,7 @@ ie_cfg_setup(sc, cmd, promiscuous, manchester)
 }
 
 static int
-ie_ia_setup(sc, cmdbuf)
-	struct ie_softc *sc;
-	int cmdbuf;
+ie_ia_setup(struct ie_softc *sc, int cmdbuf)
 {
 	int cmdresult, status;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1622,9 +1573,7 @@ ie_ia_setup(sc, cmdbuf)
  * Called at splnet().
  */
 static int
-ie_mc_setup(sc, cmdbuf)
-	struct ie_softc *sc;
-	int cmdbuf;
+ie_mc_setup(struct ie_softc *sc, int cmdbuf)
 {
 	int cmdresult, status;
 
@@ -1667,8 +1616,7 @@ ie_mc_setup(sc, cmdbuf)
  * THIS ROUTINE MUST BE CALLED AT splnet() OR HIGHER.
  */
 int
-i82586_init(ifp)
-	struct ifnet *ifp;
+i82586_init(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	int cmd;
@@ -1727,8 +1675,7 @@ i82586_init(ifp)
  * Start the RU and possibly the CU unit
  */
 static void
-i82586_start_transceiver(sc)
-	struct ie_softc *sc;
+i82586_start_transceiver(struct ie_softc *sc)
 {
 
 	/*
@@ -1807,8 +1754,7 @@ i82586_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 }
 
 static void
-ie_mc_reset(sc)
-	struct ie_softc *sc;
+ie_mc_reset(struct ie_softc *sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1861,8 +1807,7 @@ again:
  * Media change callback.
  */
 int
-i82586_mediachange(ifp)
-        struct ifnet *ifp;
+i82586_mediachange(struct ifnet *ifp)
 {
         struct ie_softc *sc = ifp->if_softc;
 
@@ -1875,9 +1820,7 @@ i82586_mediachange(ifp)
  * Media status callback.
  */
 void
-i82586_mediastatus(ifp, ifmr)
-        struct ifnet *ifp;
-        struct ifmediareq *ifmr;
+i82586_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
         struct ie_softc *sc = ifp->if_softc;
 
@@ -1887,9 +1830,7 @@ i82586_mediastatus(ifp, ifmr)
 
 #if I82586_DEBUG
 void
-print_rbd(sc, n)
-	struct ie_softc *sc;
-	int n;
+print_rbd(struct ie_softc *sc, int n)
 {
 
 	printf("RBD at %08x:\n  status %04x, next %04x, buffer %lx\n"

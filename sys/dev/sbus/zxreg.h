@@ -1,4 +1,4 @@
-/*	$NetBSD: zxreg.h,v 1.5 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: zxreg.h,v 1.5.8.1 2009/05/13 17:21:22 jym Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,6 +68,39 @@
 #define ZX_OFF_LC_SS1_USR	0x01201000
 #define ZX_OFF_LD_SS1		0x01400000
 #define ZX_OFF_SS1		0x01800000
+
+/* offsets relative to ZX_OFF_LC_SS0_KRN */
+/* Leo clock domain */
+#define ZX_LC_SS0_LEO_INT_ENABLE	0x00000000
+#define ZX_LC_SS0_CLR_BLIT_DONE		0x00000004
+#define ZX_LC_SS0_CLR_DEODRAW_SEM	0x00000008
+
+/* SBus clock domain */
+#define ZX_LC_SS0_CHIP_CODE		0x00000800
+#define ZX_LC_SS0_SBUS_STATUS		0x00000804
+#define ZX_LC_SS0_SBUS_INT_ENABLE	0x00000808
+#define ZX_LC_SS0_FIRST_TIMEOUT_CNTR	0x0000080c
+#define ZX_LC_SS0_RERUN_CNTR		0x00000810
+#define ZX_LC_SS0_CLR_READ_DMA_DONE	0x00000820
+#define ZX_LC_SS0_CLR_WRITE_DMA_DONE	0x00000824
+#define ZX_LC_SS0_CLR_INVALID_PTE	0x00000828
+#define ZX_LC_SS0_CLR_DMA_ERROR_ACK	0x0000082c
+#define ZX_LC_SS0_CLR_SLAVE_ILL_ADDR	0x00000830
+#define ZX_LC_SS0_CLR_SLAVE_RERUN_TOUT	0x00000834
+#define ZX_LC_SS0_LEO_RESET		0x00000840
+#define ZX_LC_SS0_CLR_LEO_RESET		0x00000844
+#define ZX_LC_SS0_DMA_READ_PAUSE	0x00000848
+
+/* Leo clock domain */
+#define ZX_LC_SS0_LEO_SYSTEM_STATUS	0x00001000
+#define ZX_LC_SS0_FB_ADDRESS_SPACE	0x00001004
+#define ZX_LC_SS0_STENCIL_MASK		0x00001008
+#define ZX_LC_SS0_STENCIL_TRANSPARENT	0x0000100c
+#define ZX_LC_SS0_DIRECTION_SIZE	0x00001010
+#define ZX_LC_SS0_SOURCE_ADDR		0x00001014
+#define ZX_LC_SS0_DEST_COPY_NOSTART	0x00001018
+#define ZX_LC_SS0_DEST_COPY_START	0x0000101c
+#define ZX_LC_SS0_DEST_FILL_START	0x00001020
 
 /* ROP register */
 #define ZX_ATTR_PICK_DISABLE	0x00000000
@@ -164,48 +197,55 @@
 /* CSR */
 #define ZX_CSR_BLT_BUSY	0x20000000
 
-struct zx_draw {
-	u_int32_t	zd_pad0[896];
-	u_int32_t	zd_csr;
-	u_int32_t	zd_wid;
-	u_int32_t	zd_wmask;
-	u_int32_t	zd_widclip;
-	u_int32_t	zd_vclipmin;
-	u_int32_t	zd_vclipmax;
-	u_int32_t	zd_pickmin;	/* SS1 only */
-	u_int32_t	zd_pickmax;	/* SS1 only */
-	u_int32_t	zd_fg;
-	u_int32_t	zd_bg;
-	u_int32_t	zd_src;		/* Copy/Scroll (SS0 only) */
-	u_int32_t	zd_dst;		/* Copy/Scroll/Fill (SS0 only) */
-	u_int32_t	zd_extent;	/* Copy/Scroll/Fill size (SS0 only) */
-	u_int32_t	zd_pad1[3];
-	u_int32_t	zd_setsem;	/* SS1 only */
-	u_int32_t	zd_clrsem;	/* SS1 only */
-	u_int32_t	zd_clrpick;	/* SS1 only */
-	u_int32_t	zd_clrdat;	/* SS1 only */
-	u_int32_t	zd_alpha;	/* SS1 only */
-	u_int32_t	zd_pad2[11];
-	u_int32_t	zd_winbg;
-	u_int32_t	zd_planemask;
-	u_int32_t	zd_rop;
-	u_int32_t	zd_z;
-	u_int32_t	zd_dczf;	/* SS1 only */
-	u_int32_t	zd_dczb;	/* SS1 only */
-	u_int32_t	zd_dcs;		/* SS1 only */
-	u_int32_t	zd_dczs;	/* SS1 only */
-	u_int32_t	zd_pickfb;	/* SS1 only */
-	u_int32_t	zd_pickbb;	/* SS1 only */
-	u_int32_t	zd_dcfc;	/* SS1 only */
-	u_int32_t	zd_forcecol;	/* SS1 only */
-	u_int32_t	zd_door[8];	/* SS1 only */
-	u_int32_t	zd_pick[5];	/* SS1 only */
-} __packed;
+/* draw ss0 ss1 */
+#define zd_csr		0x0e00
+#define zd_wid		0x0e04
+#define zd_wmask	0x0e08
+#define zd_widclip	0x0e0c
+#define zd_vclipmin	0x0e10
+#define zd_vclipmax	0x0e14
+#define zd_pickmin	0x0e18		/* SS1 only */
+#define zd_pickmax	0x0e1c		/* SS1 only */
+#define zd_fg		0x0e20
+#define zd_bg		0x0e24
+#define zd_src		0x0e28		/* Copy/Scroll (SS0 only) */
+#define zd_dst		0x0e2c		/* Copy/Scroll/Fill (SS0 only) */
+#define zd_extent	0x0e30		/* Copy/Scroll/Fill size (SS0 only) */
 
-struct zx_draw_ss1 {
-	u_int32_t	zd_pad0[957];
-	u_int32_t	zd_misc;
-} __packed;
+#define zd_setsem	0x0e40		/* SS1 only */
+#define zd_clrsem	0x0e44		/* SS1 only */
+#define zd_clrpick	0x0e48		/* SS1 only */
+#define zd_clrdat	0x0e4c		/* SS1 only */
+#define zd_alpha	0x0e50		/* SS1 only */
+
+#define zd_winbg	0x0e80
+#define zd_planemask	0x0e84
+#define zd_rop		0x0e88
+#define zd_z		0x0e8c
+#define zd_dczf		0x0e90		/* SS1 only */
+#define zd_dczb		0x0e94		/* SS1 only */
+#define zd_dcs		0x0e98		/* SS1 only */
+#define zd_dczs		0x0e9c		/* SS1 only */
+#define zd_pickfb	0x0ea0		/* SS1 only */
+#define zd_pickbb	0x0ea4		/* SS1 only */
+#define zd_dcfc		0x0ea8		/* SS1 only */
+#define zd_forcecol	0x0eac		/* SS1 only */
+#define zd_door0	0x0eb0		/* SS1 only */
+#define zd_door1	0x0eb4		/* SS1 only */
+#define zd_door2	0x0eb8		/* SS1 only */
+#define zd_door3	0x0ebc		/* SS1 only */
+#define zd_door4	0x0ec0		/* SS1 only */
+#define zd_door5	0x0ec4		/* SS1 only */
+#define zd_door6	0x0ec8		/* SS1 only */
+#define zd_door7	0x0ecc		/* SS1 only */
+#define zd_pick0	0x0ed0		/* SS1 only */
+#define zd_pick1	0x0ed4		/* SS1 only */
+#define zd_pick2	0x0ed8		/* SS1 only */
+#define zd_pick3	0x0edc		/* SS1 only */
+#define zd_pick4	0x0ee0		/* SS1 only */
+
+#define zd_misc		0x0ef4		/* SS1 only */
+
 #define	ZX_SS1_MISC_ENABLE	0x00000001
 #define	ZX_SS1_MISC_STEREO	0x00000002
 
@@ -220,17 +260,16 @@ struct zx_draw_ss1 {
 #define ZX_ADDRSPC_G		0x0a
 #define ZX_ADDRSPC_R		0x0b
 
-struct zx_command {
-	u_int32_t	zc_csr;
-	u_int32_t	zc_addrspace;
-	u_int32_t 	zc_fontmsk;
-	u_int32_t	zc_fontt;
-	u_int32_t	zc_extent;
-	u_int32_t	zc_src;
-	u_int32_t	zc_dst;
-	u_int32_t	zc_copy;
-	u_int32_t	zc_fill;
-} __packed;
+/* command */
+#define zc_csr		0x00
+#define zc_addrspace	0x04
+#define zc_fontmsk	0x08
+#define zc_fontt	0x0c
+#define zc_extent	0x10
+#define zc_src		0x14
+#define zc_dst		0x18
+#define zc_copy		0x1c
+#define zc_fill		0x20
 
 #define ZX_CROSS_TYPE_CLUT0	0x00001000
 #define ZX_CROSS_TYPE_CLUT1	0x00001001
@@ -245,18 +284,15 @@ struct zx_command {
 #define ZX_CROSS_CSR_UNK	0x00000002
 #define ZX_CROSS_CSR_UNK2	0x00000001
 
-struct zx_cross {
-	u_int32_t	zx_type;
-	u_int32_t	zx_csr;
-	u_int32_t	zx_value;
-} __packed;
+/* cross */
+#define zx_type		0x00
+#define zx_csr		0x04
+#define zx_value	0x08
 
-struct zx_cursor {
-	u_int32_t	zcu_pad0[4];
-	u_int32_t	zcu_type;
-	u_int32_t	zcu_misc;
-	u_int32_t	zcu_sxy;
-	u_int32_t	zcu_data;
-} __packed;
+/* cursor */
+#define zcu_type	0x10
+#define zcu_misc	0x14
+#define zcu_sxy		0x18
+#define zcu_data	0x1c
 
 #endif	/* !_DEV_SBUS_ZXREG_H_ */

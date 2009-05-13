@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.13 2008/03/29 15:59:26 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.13.18.1 2009/05/13 17:17:43 jym Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.13 2008/03/29 15:59:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.13.18.1 2009/05/13 17:17:43 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.13 2008/03/29 15:59:26 skrll Exp $");
 #define	STI_INEG_REV	0x60
 #define	STI_INEG_PROM	0xf0011000
 
-int sti_sgc_probe(struct device *, struct cfdata *, void *);
-void sti_sgc_attach(struct device *, struct device *, void *);
+int sti_sgc_probe(device_t, cfdata_t, void *);
+void sti_sgc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sti_gedoens, sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach,
+CFATTACH_DECL_NEW(sti_gedoens, sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach,
     NULL, NULL);
 
 paddr_t sti_sgc_getrom(struct confargs *);
@@ -123,7 +123,7 @@ sti_sgc_getrom(struct confargs *ca)
 }
 
 int
-sti_sgc_probe(struct device *parent, struct cfdata *cf, void *aux)
+sti_sgc_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	bus_space_handle_t romh;
@@ -148,7 +148,7 @@ sti_sgc_probe(struct device *parent, struct cfdata *cf, void *aux)
 	/* if it does not map, probably part of the lasi space */
 	if ((rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &romh))) {
 #ifdef STIDEBUG
-		printf ("sti: cannot map rom space (%d)\n", rv);
+		printf ("sti: can't map rom space (%d)\n", rv);
 #endif
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN) {
 			romh = rom;
@@ -179,13 +179,13 @@ sti_sgc_probe(struct device *parent, struct cfdata *cf, void *aux)
 		    + 11) <<  8) |
 		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_GRID
 		    + 15));
-		romend = (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND 
+		romend = (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
 		    +  3) << 24) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND 
+		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
 		    +  7) << 16) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND 
+		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
 		    + 11) <<  8) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND 
+		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
 		    + 15));
 		break;
 	default:
@@ -219,9 +219,9 @@ sti_sgc_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-sti_sgc_attach(struct device *parent, struct device *self, void *aux)
+sti_sgc_attach(device_t parent, device_t self, void *aux)
 {
-	struct sti_softc *sc = (void *)self;
+	struct sti_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	paddr_t rom;
 	u_int32_t romlen;
@@ -229,6 +229,7 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 	int pagezero_cookie;
 
 	pagezero_cookie = hp700_pagezero_map();
+	sc->sc_dev = self;
 	sc->memt = sc->iot = ca->ca_iot;
 	sc->base = ca->ca_hpa;
 
@@ -239,7 +240,7 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN)
 			sc->romh = rom;
 		else {
-			printf (": cannot map rom space (%d)\n", rv);
+			aprint_error(": can't map rom space (%d)\n", rv);
 			return;
 		}
 	}

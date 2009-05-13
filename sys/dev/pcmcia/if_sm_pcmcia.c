@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.51 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.51.14.1 2009/05/13 17:21:09 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.51 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.51.14.1 2009/05/13 17:21:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.51 2008/04/28 20:23:56 martin Exp
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-int	sm_pcmcia_match(struct device *, struct cfdata *, void *);
+int	sm_pcmcia_match(device_t, cfdata_t, void *);
 int	sm_pcmcia_validate_config(struct pcmcia_config_entry *);
-void	sm_pcmcia_attach(struct device *, struct device *, void *);
-int	sm_pcmcia_detach(struct device *, int);
+void	sm_pcmcia_attach(device_t, device_t, void *);
+int	sm_pcmcia_detach(device_t, int);
 
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
@@ -105,7 +105,7 @@ const size_t sm_pcmcia_nproducts =
     sizeof(sm_pcmcia_products) / sizeof(sm_pcmcia_products[0]);
 
 int
-sm_pcmcia_match(struct device *parent, struct cfdata *match,
+sm_pcmcia_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -121,8 +121,7 @@ sm_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 int
-sm_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+sm_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_memspace != 0 ||
@@ -133,7 +132,7 @@ sm_pcmcia_validate_config(cfe)
 }
 
 void
-sm_pcmcia_attach(struct device *parent, struct device *self, void *aux)
+sm_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
 	struct smc91cxx_softc *sc = &psc->sc_smc;
@@ -186,9 +185,7 @@ fail:
 }
 
 int
-sm_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+sm_pcmcia_detach(device_t self, int flags)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
 	int error;
@@ -196,7 +193,7 @@ sm_pcmcia_detach(self, flags)
 	if (psc->sc_state != SM_PCMCIA_ATTACHED)
 		return (0);
 
-	error = smc91cxx_detach((struct device *)&psc->sc_smc, flags);
+	error = smc91cxx_detach((device_t)&psc->sc_smc, flags);
 	if (error)
 		return (error);
 
@@ -206,9 +203,7 @@ sm_pcmcia_detach(self, flags)
 }
 
 int
-sm_pcmcia_ascii_enaddr(cisstr, myla)
-	const char *cisstr;
-	u_int8_t *myla;
+sm_pcmcia_ascii_enaddr(const char *cisstr, u_int8_t *myla)
 {
 	u_int8_t digit;
 	int i;
@@ -243,8 +238,7 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 }
 
 int
-sm_pcmcia_enable(sc)
-	struct smc91cxx_softc *sc;
+sm_pcmcia_enable(struct smc91cxx_softc *sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 	int error;
@@ -265,8 +259,7 @@ sm_pcmcia_enable(sc)
 }
 
 void
-sm_pcmcia_disable(sc)
-	struct smc91cxx_softc *sc;
+sm_pcmcia_disable(struct smc91cxx_softc *sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 

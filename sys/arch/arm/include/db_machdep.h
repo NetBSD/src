@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15 2008/08/29 19:08:29 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15.8.1 2009/05/13 17:16:17 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -108,9 +108,9 @@ extern db_regs_t	ddb_regs;	/* register state */
 
 #define SOFTWARE_SSTEP
 
-u_int branch_taken __P((u_int insn, u_int pc, db_regs_t *db_regs));
-int kdb_trap __P((int, db_regs_t *));
-void db_machine_init __P((void));
+u_int branch_taken(u_int insn, u_int pc, db_regs_t *db_regs);
+int kdb_trap(int, db_regs_t *);
+void db_machine_init(void);
 int db_validate_address(vm_offset_t addr);
 
 #define DB_ELF_SYMBOLS

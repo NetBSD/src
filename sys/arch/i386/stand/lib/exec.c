@@ -1,7 +1,7 @@
-/*	$NetBSD: exec.c,v 1.38 2009/01/24 22:14:45 rmind Exp $	 */
+/*	$NetBSD: exec.c,v 1.38.2.1 2009/05/13 17:17:51 jym Exp $	 */
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,8 +102,10 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/reboot.h>
 
 #include <machine/multiboot.h>
+#include <machine/stdarg.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -128,12 +130,26 @@ boot_module_t *boot_modules;
 bool boot_modules_enabled = true;
 bool kernel_loaded;
 
+static struct btinfo_framebuffer btinfo_framebuffer;
+
 static struct btinfo_modulelist *btinfo_modulelist;
 static size_t btinfo_modulelist_size;
 static uint32_t image_end;
 static char module_base[64] = "/";
+static int howto;
 
 static void	module_init(void);
+
+void
+framebuffer_configure(struct btinfo_framebuffer *fb)
+{
+	if (fb)
+		btinfo_framebuffer = *fb;
+	else {
+		btinfo_framebuffer.physaddr = 0;
+		btinfo_framebuffer.flags = 0;
+	}
+}
 
 void
 module_add(char *name)
@@ -254,7 +270,8 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 }
 
 int
-exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
+exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
+	    void (*callback)(void))
 {
 	u_long          boot_argv[BOOT_NARGS];
 	u_long		marks[MARK_MAX];
@@ -270,6 +287,10 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 	BI_ALLOC(32); /* ??? */
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
+	BI_ADD(&btinfo_framebuffer, BTINFO_FRAMEBUFFER,
+	    sizeof(struct btinfo_framebuffer));
+
+	howto = boothowto;
 
 	if (common_load_kernel(file, &basemem, &extmem, loadaddr, floppy, marks))
 		goto out;
@@ -300,6 +321,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 	btinfo_symtab.esym = marks[MARK_END];
 	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
 
+	if (callback != NULL)
+		(*callback)();
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
 		  x86_trunc_page(basemem*1024));
 	panic("exec returned");
@@ -430,7 +453,8 @@ module_init(void)
 	for (bm = boot_modules; bm; bm = bm->bm_next) {
 		if (bm->bm_len == -1)
 			continue;
-		printf("Loading %s ", bm->bm_path);
+		if ((howto & AB_SILENT) == 0)
+			printf("Loading %s ", bm->bm_path);
 		fd = module_open(bm, 0);
 		if (fd == -1) {
 			printf("ERROR: couldn't open %s\n", bm->bm_path);
@@ -439,6 +463,8 @@ module_init(void)
 		image_end = (image_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		len = pread(fd, (void *)image_end, SSIZE_MAX);
 		if (len < bm->bm_len) {
+			if ((howto & AB_SILENT) != 0)
+				printf("Loading %s ", bm->bm_path);
 			printf(" FAILED\n");
 		} else {
 			btinfo_modulelist->num++;
@@ -448,7 +474,8 @@ module_init(void)
 			bi->base = image_end;
 			bi->len = len;
 			bi->type = BI_MODULE_ELF;
-			printf(" \n");
+			if ((howto & AB_SILENT) == 0)
+				printf(" \n");
 		}
 		if (len > 0)
 			image_end += len;
@@ -531,4 +558,16 @@ exec_multiboot(const char *file, char *args)
 out:
         dealloc(mbi, 0);
 	return -1;
+}
+
+void
+x86_progress(const char *fmt, ...)
+{
+	va_list ap;
+
+	if ((howto & AB_SILENT) != 0)
+		return;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
 }

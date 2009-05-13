@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.h,v 1.1 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.h,v 1.1.70.1 2009/05/13 17:16:18 jym Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.h,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -37,5 +37,6 @@ void	pxa2x0_i2c_close(struct pxa2x0_i2c_softc *);
 int	pxa2x0_i2c_read(struct pxa2x0_i2c_softc *sc, u_char, u_char *);
 int	pxa2x0_i2c_write(struct pxa2x0_i2c_softc *, u_char, u_char);
 int	pxa2x0_i2c_write_2(struct pxa2x0_i2c_softc *, u_char, u_short);
+int	pxa2x0_i2c_quick(struct pxa2x0_i2c_softc *sc, u_char slave, u_char rw);
 
 #endif

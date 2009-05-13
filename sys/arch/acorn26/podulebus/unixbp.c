@@ -1,4 +1,4 @@
-/* $NetBSD: unixbp.c,v 1.6 2009/01/04 00:36:00 bjh21 Exp $ */
+/* $NetBSD: unixbp.c,v 1.6.2.1 2009/05/13 17:16:02 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.6 2009/01/04 00:36:00 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.6.2.1 2009/05/13 17:16:02 jym Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ unixbp_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-unixbp_irq_status_full()
+unixbp_irq_status_full(void)
 {
 	struct unixbp_softc *sc = device_private(the_unixbp);
 

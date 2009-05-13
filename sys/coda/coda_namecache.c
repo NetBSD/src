@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.22 2007/11/22 22:26:18 plunky Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.22.32.1 2009/05/13 17:18:55 jym Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.22 2007/11/22 22:26:18 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.22.32.1 2009/05/13 17:18:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -274,7 +274,7 @@ coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
     cncp->namelen = namelen;
     cncp->cred = cred;
 
-    bcopy(name, cncp->name, (unsigned)namelen);
+    memcpy(cncp->name, name, (unsigned)namelen);
 
     /* Insert into the lru and hash chains. */
     TAILQ_INSERT_TAIL(&coda_nc_lru.head, cncp, lru);
@@ -710,7 +710,7 @@ coda_nc_name(struct cnode *cp)
 
 		LIST_FOREACH(cncp, &coda_nc_hash[i].head, hash) {
 			if (cncp->cp == cp) {
-				bcopy(cncp->name, coda_nc_name_buf, cncp->namelen);
+				memcpy(coda_nc_name_buf, cncp->name, cncp->namelen);
 				coda_nc_name_buf[cncp->namelen] = 0;
 				printf(" is %s (%p,%p)@%p",
 					coda_nc_name_buf, cncp->cp, cncp->dcp, cncp);

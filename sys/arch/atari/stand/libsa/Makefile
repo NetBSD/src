@@ -1,60 +1,30 @@
-#	$NetBSD: Makefile,v 1.28 2009/01/06 13:35:30 tsutsui Exp $
-
-LIB=	sa
-
-NOPIC=		# defined
-NOPROFILE=	# defined
-NOLINT=		# defnied
-
-NO_NET=
+#	$NetBSD: Makefile,v 1.28.2.1 2009/05/13 17:16:32 jym Exp $
 
 # Logically src/sys
-S=${.CURDIR}/../../../..
-S_SA=${S}/lib/libsa
-S_KERN=${S}/lib/libkern
-S_MACHSA=${S}/arch/atari/stand/libsa
-
-.include "${S}/../common/lib/libc/Makefile.inc"
+S!=	cd ${.CURDIR}/../../../..; pwd
 
 .include "../Makefile.booters"
 
-CPPFLAGS+=	-I. -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
+CPPFLAGS+=	-I${S} -I.
 
-.PATH:  ${S_SA} ${S_KERN}
+.include <bsd.prog.mk>
 
-#
-# NetBSD/atari specific replacements: dev.c
-#
+### find out what to use for libsa
+SA_AS= library
+SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_EXTRADIR=${.CURDIR}
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA= ${SALIB}
 
-# machine dependant routines
-SRCS=	consio.S diskio.c
+### find out what to use for libkern
+KERN_AS= library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN= ${KERNLIB}
 
-# from common/lib/libc
-SRCS+=	ashldi3.c ashrdi3.c bzero.c strcmp.c strlen.c
+LIBS=	${LIBSA} ${LIBKERN}
 
-# stand routines
-SRCS+=	alloc.c bcmp.c bcopy.c exec.c files.c getfile.c gets.c globals.c \
-	panic.c memcmp.c memcpy.c memmove.c memset.c printf.c strerror.c \
-	subr_prf.c twiddle.c
+realall: ${LIBS}
 
-# io routines
-SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
-	lseek.c open.c nullfs.c read.c stat.c fstat.c write.c
+cleandir distclean: cleanlibdir
 
-.if !defined(NO_NET)
-# network routines
-SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
-.endif
-
-# network info services:
-SRCS+=	bootp.c rarp.c bootparam.c
-
-# boot filesystems
-SRCS+=	ufs.c nfs.c
-
-# only needed during build
-libinstall::
-
-.include <bsd.own.mk>
-.undef DESTDIR
-.include <bsd.lib.mk>
+cleanlibdir:
+	-rm -rf lib

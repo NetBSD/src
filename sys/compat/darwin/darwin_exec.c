@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.56 2008/11/19 18:36:02 ad Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.56.4.1 2009/05/13 17:18:55 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.56 2008/11/19 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.56.4.1 2009/05/13 17:18:55 jym Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -426,12 +426,13 @@ darwin_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
+		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
 	KASSERT(access_size > 0);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE,
+	    VMCMD_STACK);
 
 	return 0;
 }

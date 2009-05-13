@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.56 2009/01/03 03:43:22 yamt Exp $	*/
+/*	$NetBSD: machfb.c,v 1.56.2.1 2009/05/13 17:20:27 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.56 2009/01/03 03:43:22 yamt Exp $");
+	"$NetBSD: machfb.c,v 1.56.2.1 2009/05/13 17:20:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1673,12 +1673,10 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (curlwp != NULL) {
-		if (kauth_authorize_generic(kauth_cred_get(),
-		    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-			printf("%s: mmap() rejected.\n", device_xname(&sc->sc_dev));
-			return -1;
-		}
+	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) != 0) {
+		printf("%s: mmap() rejected.\n", device_xname(&sc->sc_dev));
+		return -1;
 	}
 
 	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x18) & 0xffffff00);

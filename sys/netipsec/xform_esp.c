@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.18 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.18.16.1 2009/05/13 17:22:41 jym Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.18 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.18.16.1 2009/05/13 17:22:41 jym Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -227,7 +227,7 @@ esp_init(struct secasvar *sav, struct xformsw *xsp)
 	sav->tdb_encalgxform = txform;
 
 	/* Initialize crypto session. */
-	bzero(&crie, sizeof (crie));
+	memset(&crie, 0, sizeof (crie));
 	crie.cri_alg = sav->tdb_encalgxform->type;
 	crie.cri_klen = _KEYBITS(sav->key_enc);
 	crie.cri_key = _KEYBUF(sav->key_enc);
@@ -264,7 +264,7 @@ esp_zeroize(struct secasvar *sav)
 	int error = ah_zeroize(sav);
 
 	if (sav->key_enc)
-		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
+		memset(_KEYBUF(sav->key_enc), 0, _KEYLEN(sav->key_enc));
 	/* NB: sav->iv is freed elsewhere, even though we malloc it! */
 	sav->tdb_encalgxform = NULL;
 	sav->tdb_xform = NULL;
@@ -353,7 +353,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		if (tdbi->proto == sav->sah->saidx.proto &&
 		    tdbi->spi == sav->spi &&
-		    !bcmp(&tdbi->dst, &sav->sah->saidx.dst,
+		    !memcmp(&tdbi->dst, &sav->sah->saidx.dst,
 			  sizeof(union sockaddr_union)))
 			break;
 	}
@@ -561,7 +561,7 @@ esp_input_cb(struct cryptop *crp)
 			ptr = (tc + 1);
 
 			/* Verify authenticator */
-			if (bcmp(ptr, aalg, esph->authsize) != 0) {
+			if (memcmp(ptr, aalg, esph->authsize) != 0) {
 				DPRINTF(("esp_input_cb: "
 		    "authentication hash mismatch for packet in SA %s/%08lx\n",
 				    ipsec_address(&saidx->dst),
@@ -793,7 +793,7 @@ esp_output(
 	}
 
 	/* Initialize ESP header. */
-	bcopy(&sav->spi, mtod(mo, char *) + roff, sizeof(u_int32_t));
+	memcpy(mtod(mo, char *) + roff, &sav->spi, sizeof(u_int32_t));
 	if (sav->replay) {
 		u_int32_t replay;
 
@@ -831,7 +831,7 @@ esp_output(
 		(void) read_random(pad, padding - 2);
 		break;
 	case SADB_X_EXT_PZERO:
-		bzero(pad, padding - 2);
+		memset(pad, 0, padding - 2);
 		break;
 	case SADB_X_EXT_PSEQ:
 		for (i = 0; i < padding - 2; i++)

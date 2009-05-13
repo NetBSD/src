@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.48 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.48.14.1 2009/05/13 17:18:56 jym Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.48 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.48.14.1 2009/05/13 17:18:56 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -284,7 +284,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the signal frame
 	 */
-	bzero(&sf, sizeof(sf));
+	memset(&sf, 0, sizeof(sf));
 	if (SIGACTION(p, ksi->ksi_signo).sa_flags & SA_SIGINFO) {
 		irix_set_ucontext(&sf.isf_ctx.iss.iuc, mask, ksi->ksi_trap, l);
 		irix_signal_siginfo(&sf.isf_ctx.iss.iis, ksi->ksi_signo,
@@ -370,11 +370,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 static void
-irix_set_sigcontext (scp, mask, code, l)
-	struct irix_sigcontext *scp;
-	const sigset_t *mask;
-	int code;
-	struct lwp *l;
+irix_set_sigcontext (struct irix_sigcontext *scp, const sigset_t *mask, int code, struct lwp *l)
 {
 	int i;
 	struct frame *f;

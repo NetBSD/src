@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.21 2008/06/26 12:33:17 drochner Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.21.10.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.21 2008/06/26 12:33:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.21.10.1 2009/05/13 17:19:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,8 @@ int	tcic_isa_debug = 1;
 #define	DPRINTF(arg)
 #endif
 
-int	tcic_isa_probe(struct device *, struct cfdata *, void *);
-void	tcic_isa_attach(struct device *, struct device *, void *);
+int	tcic_isa_probe(device_t, cfdata_t, void *);
+void	tcic_isa_attach(device_t, device_t, void *);
 
 void	*tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,
 	    struct pcmcia_function *, int, int (*) (void *), void *);
@@ -140,8 +140,7 @@ static const struct pcmcia_chip_functions tcic_isa_functions = {
 };
 
 int
-tcic_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+tcic_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -215,7 +214,7 @@ tcic_isa_probe(struct device *parent, struct cfdata *match,
 }
 
 void
-tcic_isa_attach(struct device *parent, struct device *self, void *aux)
+tcic_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct tcic_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
@@ -336,12 +335,8 @@ tcic_isa_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void *
-tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
+tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
+	int ipl, int (*fct)(void *), void *arg)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int irq, ist;
@@ -374,9 +369,7 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 }
 
 void
-tcic_isa_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+tcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int val, reg;

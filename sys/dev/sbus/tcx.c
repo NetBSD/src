@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.25 2008/06/11 21:25:31 drochner Exp $ */
+/*	$NetBSD: tcx.c,v 1.25.10.1 2009/05/13 17:21:22 jym Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.25 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.25.10.1 2009/05/13 17:21:22 jym Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -106,9 +106,9 @@ struct tcx_softc {
 #define TCX_CTL_PIXELMASK	0x00FFFFFF	/* mask for index/level */
 
 /* autoconfiguration driver */
-static void	tcxattach(struct device *, struct device *, void *);
-static int	tcxmatch(struct device *, struct cfdata *, void *);
-static void	tcx_unblank(struct device *);
+static void	tcxattach(device_t, device_t, void *);
+static int	tcxmatch(device_t, cfdata_t, void *);
+static void	tcx_unblank(device_t);
 
 CFATTACH_DECL(tcx, sizeof(struct tcx_softc),
     tcxmatch, tcxattach, NULL, NULL);
@@ -153,10 +153,7 @@ static void tcx_loadcmap(struct tcx_softc *, int, int);
  * Match a tcx.
  */
 int
-tcxmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tcxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -167,9 +164,7 @@ tcxmatch(parent, cf, aux)
  * Attach a display.
  */
 void
-tcxattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+tcxattach(device_t parent, device_t self, void *args)
 {
 	struct tcx_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
@@ -258,7 +253,7 @@ tcxattach(parent, self, args)
 			device_xname(self), sa->sa_nreg);
 		return;
 	}
-	bcopy(sa->sa_reg, sc->sc_physadr,
+	memcpy(sc->sc_physadr, sa->sa_reg,
 	      sa->sa_nreg * sizeof(struct openprom_addr));
 
 	/* XXX - fix THC and TEC offsets */
@@ -341,10 +336,7 @@ static int tcx_opens = 0;
 #endif
 
 int
-tcxopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+tcxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 #ifdef TCX_CG8
 	int unit = minor(dev);
@@ -377,10 +369,7 @@ tcxopen(dev, flags, mode, l)
 }
 
 int
-tcxclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+tcxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 #ifdef TCX_CG8
@@ -415,12 +404,7 @@ tcxclose(dev, flags, mode, l)
 }
 
 int
-tcxioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 	int error;
@@ -499,8 +483,7 @@ tcxioctl(dev, cmd, data, flags, l)
  * Clean up hardware state (e.g., after bootup or after X crashes).
  */
 static void
-tcx_reset(sc)
-	struct tcx_softc *sc;
+tcx_reset(struct tcx_softc *sc)
 {
 	volatile struct bt_regs *bt;
 
@@ -514,9 +497,7 @@ tcx_reset(sc)
  * Load a subset of the current (new) colormap into the color DAC.
  */
 static void
-tcx_loadcmap(sc, start, ncolors)
-	struct tcx_softc *sc;
-	int start, ncolors;
+tcx_loadcmap(struct tcx_softc *sc, int start, int ncolors)
 {
 	volatile struct bt_regs *bt;
 	u_int *ip, i;
@@ -537,8 +518,7 @@ tcx_loadcmap(sc, start, ncolors)
 }
 
 static void
-tcx_unblank(dev)
-	struct device *dev;
+tcx_unblank(device_t dev)
 {
 	struct tcx_softc *sc = device_private(dev);
 
@@ -583,10 +563,7 @@ struct mmo {
  * XXX	needs testing against `demanding' applications (e.g., aviator)
  */
 paddr_t
-tcxmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+tcxmmap(dev_t dev, off_t off, int prot)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 	struct openprom_addr *rr = sc->sc_physadr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.47 2008/10/01 15:38:15 christos Exp $	*/
+/*	$NetBSD: piixide.c,v 1.47.8.1 2009/05/13 17:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.47 2008/10/01 15:38:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.47.8.1 2009/05/13 17:20:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,26 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 82801I Serial ATA Controller (ICH9)",
 	  piixsata_chip_map,
 	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_4,
+	  0,
+	  "Intel 82801I Mobile Serial ATA Controller (ICH9)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_5,
+	  0,
+	  "Intel 82801I Mobile Serial ATA Controller (ICH9)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_6,
+	  0,
+	  "Intel 82801I Mobile Serial ATA Controller (ICH9)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_7,
+	  0,
+	  "Intel 82801I Mobile Serial ATA Controller (ICH9)",
+	  piixsata_chip_map,
+	},
 	{ PCI_PRODUCT_INTEL_63XXESB_SATA,
 	  0,
 	  "Intel 631xESB/632xESB Serial ATA Controller",
@@ -264,6 +284,12 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_ICH10_SATA2_4x2,
 	  0,
 	  "Intel ICH10 Serial ATA 2 Controller 4x2",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_82965PM_IDE,
+	  0,
+	  "Intel 82965PM IDE controller",
 	  piixsata_chip_map,
 	},
 	{ 0,
@@ -745,10 +771,7 @@ pio:		/* use PIO mode */
 
 /* setup ISP and RTC fields, based on mode */
 static u_int32_t
-piix_setup_idetim_timings(mode, dma, channel)
-	u_int8_t mode;
-	u_int8_t dma;
-	u_int8_t channel;
+piix_setup_idetim_timings(u_int8_t mode, u_int8_t dma, u_int8_t channel)
 {
 
 	if (dma)
@@ -765,8 +788,7 @@ piix_setup_idetim_timings(mode, dma, channel)
 
 /* setup DTE, PPE, IE and TIME field based on PIO mode */
 static u_int32_t
-piix_setup_idetim_drvs(drvp)
-	struct ata_drive_datas *drvp;
+piix_setup_idetim_drvs(struct ata_drive_datas *drvp)
 {
 	u_int32_t ret = 0;
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -821,10 +843,7 @@ piix_setup_idetim_drvs(drvp)
 
 /* setup values in SIDETIM registers, based on mode */
 static u_int32_t
-piix_setup_sidetim_timings(mode, dma, channel)
-	u_int8_t mode;
-	u_int8_t dma;
-	u_int8_t channel;
+piix_setup_sidetim_timings(u_int8_t mode, u_int8_t dma, u_int8_t channel)
 {
 	if (dma)
 		return PIIX_SIDETIM_ISP_SET(piix_isp_dma[mode], channel) |

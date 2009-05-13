@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.56 2009/01/11 09:51:38 cegger Exp $ */
+/* $NetBSD: cgd.c,v 1.56.2.1 2009/05/13 17:19:05 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.56 2009/01/11 09:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.56.2.1 2009/05/13 17:19:05 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -462,6 +462,21 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		ret = cgd_ioctl_clr(cs, data, l);
 		break;
+
+	case DIOCCACHESYNC:
+		/*
+		 * XXX Do we really need to care about having a writable
+		 * file descriptor here?
+		 */
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/*
+		 * We pass this call down to the underlying disk.
+		 */
+		ret = VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
+		break;
+
 	default:
 		ret = dk_ioctl(di, dksc, dev, cmd, data, flag, l);
 		break;

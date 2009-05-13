@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.20 2008/03/30 12:32:13 skrll Exp $
+#	$NetBSD: files.hp700,v 1.20.18.1 2009/05/13 17:17:42 jym Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -11,7 +11,6 @@ maxusers 2 8 64
 
 # Status LEDs
 defflag 			USELEDS
-defflag				POWER_SWITCH
 
 include "dev/pckbport/files.pckbport"
 
@@ -74,6 +73,10 @@ device	pdc
 attach	pdc at gedoens
 file	arch/hp700/dev/pdc.c		pdc
 
+device	power
+attach	power at gedoens
+file	arch/hp700/dev/power.c		power needs-flag
+
 device	mem
 attach	mem at gedoens
 file	arch/hp700/dev/mem.c		mem
@@ -90,6 +93,16 @@ file	arch/hp700/dev/fpu.c		fpu
 device	phantomas: gedoens
 attach	phantomas at gedoens
 file	arch/hp700/dev/phantomas.c	phantomas
+
+# U2/Uturn, Runway to GSC Bus bridge & IOA
+device	uturn: gedoens
+attach	uturn at gedoens
+file	arch/hp700/dev/uturn.c		uturn
+
+# Astro memory & I/O controller
+device	astro: gedoens
+attach	astro at gedoens
+file	arch/hp700/dev/astro.c			astro
 
 # 1FT1-0002, 1FU2-0002
 # as goes w/ 7100LC, 7300LC, 7200, 8000, 8200, 8500
@@ -119,6 +132,13 @@ file	arch/hp700/dev/dino.c		dino
 
 attach	com at dino with com_dino
 file	arch/hp700/dev/com_dino.c	com_dino
+
+# Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
+# Mercury; QuickSilver is an AGP also
+device	elroy: pcibus
+attach	elroy at gedoens
+file	arch/hp700/dev/elroy.c		elroy
+file	arch/hp700/dev/apic.c		elroy
 
 attach	sti at gedoens with sti_gedoens
 file	arch/hp700/dev/sti_sgc.c	sti_gedoens
@@ -228,7 +248,6 @@ file	arch/hp700/hp700/disksubr.c		disk
 file	arch/hp700/hp700/intr.c
 file	arch/hp700/hp700/machdep.c
 file	arch/hp700/hp700/sys_machdep.c
-file	arch/hp700/hp700/power.c		power_switch
 file	arch/hp700/dev/clock.c
 
 file	dev/cons.c

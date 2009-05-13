@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.36 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.36.58.1 2009/05/13 17:16:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36.58.1 2009/05/13 17:16:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -123,13 +123,13 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36 2007/03/04 05:59:40 christos Exp $");
 #define ite_reinit(d)
 #endif
 
-int grfon __P((dev_t));
-int grfoff __P((dev_t));
-int grfsinfo __P((dev_t, struct grfdyninfo *));
+int grfon(dev_t);
+int grfoff(dev_t);
+int grfsinfo(dev_t, struct grfdyninfo *);
 
-int grfbusprint __P((void *auxp, const char *));
-int grfbusmatch __P((struct device *, struct cfdata *, void *));
-void grfbusattach __P((struct device *, struct device *, void *));
+int grfbusprint(void *auxp, const char *);
+int grfbusmatch(struct device *, struct cfdata *, void *);
+void grfbusattach(struct device *, struct device *, void *);
 
 /*
  * pointers to grf drivers device structs 
@@ -157,10 +157,7 @@ const struct cdevsw grf_cdevsw = {
 static struct cfdata *cfdata_gbus  = NULL;
 
 int
-grfbusmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+grfbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if(strcmp(auxp, grfbus_cd.cd_name))
 		return(0);
@@ -171,9 +168,7 @@ void		*auxp;
 }
 
 void
-grfbusattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+grfbusattach(struct device *pdp, struct device *dp, void *auxp)
 {
     grf_auxp_t	grf_auxp;
 
@@ -189,9 +184,7 @@ void		*auxp;
 }
 
 int
-grfbusprint(auxp, name)
-void		*auxp;
-const char	*name;
+grfbusprint(void *auxp, const char *name)
 {
 	if(name == NULL)
 		return(UNCONF);
@@ -200,10 +193,7 @@ const char	*name;
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, devtype, l)
-	dev_t dev;
-	int flags, devtype;
-	struct lwp *l;
+grfopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct grf_softc *gp;
 
@@ -226,11 +216,7 @@ grfopen(dev, flags, devtype, l)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, l)
-	dev_t		dev;
-	int		flags;
-	int		mode;
-	struct lwp	*l;
+grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct grf_softc *gp;
 
@@ -242,12 +228,7 @@ grfclose(dev, flags, mode, l)
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, l)
-dev_t		dev;
-u_long		cmd;
-int		flag;
-void *		data;
-struct lwp	*l;
+grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 	struct grf_softc	*gp;
 	int			error;
@@ -259,10 +240,10 @@ struct lwp	*l;
 	switch (cmd) {
 	case OGRFIOCGINFO:
 	        /* argl.. no bank-member.. */
-	  	bcopy((void *)&gp->g_display, data, sizeof(struct grfinfo)-4);
+	  	memcpy( data, (void *)&gp->g_display, sizeof(struct grfinfo)-4);
 		break;
 	case GRFIOCGINFO:
-		bcopy((void *)&gp->g_display, data, sizeof(struct grfinfo));
+		memcpy( data, (void *)&gp->g_display, sizeof(struct grfinfo));
 		break;
 	case GRFIOCON:
 		error = grfon(dev);
@@ -312,10 +293,7 @@ struct lwp	*l;
  * memory space.
  */
 paddr_t
-grfmmap(dev, off, prot)
-	dev_t	dev;
-	off_t	off;
-	int	prot;
+grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc	*gp;
 	struct grfinfo		*gi;
@@ -348,8 +326,7 @@ grfmmap(dev, off, prot)
 }
 
 int
-grfon(dev)
-	dev_t dev;
+grfon(dev_t dev)
 {
 	struct grf_softc *gp;
 
@@ -367,8 +344,7 @@ grfon(dev)
 }
 
 int
-grfoff(dev)
-	dev_t dev;
+grfoff(dev_t dev)
 {
 	struct grf_softc *gp;
 	int error;
@@ -392,9 +368,7 @@ grfoff(dev)
 }
 
 int
-grfsinfo(dev, dyninfo)
-	dev_t dev;
-	struct grfdyninfo *dyninfo;
+grfsinfo(dev_t dev, struct grfdyninfo *dyninfo)
 {
 	struct grf_softc *gp;
 	int error;
@@ -414,8 +388,7 @@ grfsinfo(dev, dyninfo)
  * Get the grf-info in sync with underlying view.
  */
 void
-grf_viewsync(gp)
-struct grf_softc *gp;
+grf_viewsync(struct grf_softc *gp)
 {
 	struct view_size	vs;
 	bmap_t			bm;
@@ -468,10 +441,7 @@ struct grf_softc *gp;
  */
 /*ARGSUSED*/
 int
-grf_mode(gp, cmd, arg, a2, a3)
-struct grf_softc	*gp;
-int			cmd, a2, a3;
-void			*arg;
+grf_mode(struct grf_softc *gp, int cmd, void *arg, int a2, int a3)
 {
 	extern const struct cdevsw view_cdevsw;
 

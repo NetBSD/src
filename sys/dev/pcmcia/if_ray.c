@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.71 2008/11/07 00:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.71.4.1 2009/05/13 17:21:09 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.71 2008/11/07 00:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.71.4.1 2009/05/13 17:21:09 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -278,7 +278,7 @@ static int ray_alloc_ccs(struct ray_softc *, bus_size_t *, u_int, u_int);
 static bus_size_t ray_fill_in_tx_ccs(struct ray_softc *, size_t,
     u_int, u_int);
 static int ray_validate_config(struct pcmcia_config_entry *);
-static void ray_attach(struct device *, struct device *, void *);
+static void ray_attach(device_t, device_t, void *);
 static ray_cmd_func_t ray_ccs_done(struct ray_softc *, bus_size_t);
 static void ray_check_ccs(void *);
 static void ray_check_scheduled(void *);
@@ -288,8 +288,8 @@ static void ray_cmd_ran(struct ray_softc *, int);
 static int ray_cmd_is_running(struct ray_softc *, int);
 static int ray_cmd_is_scheduled(struct ray_softc *, int);
 static void ray_cmd_done(struct ray_softc *, int);
-static int ray_detach(struct device *, int);
-static int ray_activate(struct device *, enum devact);
+static int ray_detach(device_t, int);
+static int ray_activate(device_t, enum devact);
 static void ray_disable(struct ray_softc *);
 static void ray_download_params(struct ray_softc *);
 static int ray_enable(struct ray_softc *);
@@ -303,7 +303,7 @@ static int ray_intr(void *);
 static void ray_intr_start(struct ray_softc *);
 static int ray_ioctl(struct ifnet *, u_long, void *);
 static int ray_issue_cmd(struct ray_softc *, bus_size_t, u_int);
-static int ray_match(struct device *, struct cfdata *, void *);
+static int ray_match(device_t, cfdata_t, void *);
 static int ray_media_change(struct ifnet *);
 static void ray_media_status(struct ifnet *, struct ifmediareq *);
 static ray_cmd_func_t ray_rccs_intr(struct ray_softc *, bus_size_t);
@@ -469,7 +469,7 @@ CFATTACH_DECL(ray, sizeof(struct ray_softc),
  */
 
 static int
-ray_match(struct device *parent, struct cfdata *match,
+ray_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -487,8 +487,7 @@ ray_match(struct device *parent, struct cfdata *match,
 }
 
 static int
-ray_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+ray_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_memspace != 1 ||
@@ -499,7 +498,7 @@ ray_validate_config(cfe)
 }
 
 static void
-ray_attach(struct device *parent, struct device *self, void *aux)
+ray_attach(device_t parent, device_t self, void *aux)
 {
 	struct ray_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -620,9 +619,7 @@ fail:
 }
 
 static int
-ray_activate(dev, act)
-	struct device *dev;
-	enum devact act;
+ray_activate(device_t dev, enum devact act)
 {
 	struct ray_softc *sc = (struct ray_softc *)dev;
 	struct ifnet *ifp = &sc->sc_if;
@@ -646,7 +643,7 @@ ray_activate(dev, act)
 }
 
 static int
-ray_detach(struct device *self, int flags)
+ray_detach(device_t self, int flags)
 {
 	struct ray_softc *sc;
 	struct ifnet *ifp;
@@ -676,8 +673,7 @@ ray_detach(struct device *self, int flags)
  * start the card running
  */
 static int
-ray_enable(sc)
-	struct ray_softc *sc;
+ray_enable(struct ray_softc *sc)
 {
 	int error;
 
@@ -701,8 +697,7 @@ ray_enable(sc)
  * stop the card running
  */
 static void
-ray_disable(sc)
-	struct ray_softc *sc;
+ray_disable(struct ray_softc *sc)
 {
 	RAY_DPRINTF(("%s: disable\n", device_xname(&sc->sc_dev)));
 
@@ -724,8 +719,7 @@ ray_disable(sc)
  * start the card running
  */
 static int
-ray_init(sc)
-	struct ray_softc *sc;
+ray_init(struct ray_softc *sc)
 {
 	struct ray_ecf_startup *ep;
 	bus_size_t ccs;
@@ -805,8 +799,7 @@ ray_init(sc)
  * stop the card running
  */
 static void
-ray_stop(sc)
-	struct ray_softc *sc;
+ray_stop(struct ray_softc *sc)
 {
 	RAY_DPRINTF(("%s: stop\n", device_xname(&sc->sc_dev)));
 
@@ -833,8 +826,7 @@ ray_stop(sc)
  * reset the card
  */
 static void
-ray_reset(sc)
-	struct ray_softc *sc;
+ray_reset(struct ray_softc *sc)
 {
 	if (++sc->sc_resetloop >= RAY_MAX_RESETS) {
 		if (sc->sc_resetloop == RAY_MAX_RESETS) {
@@ -860,8 +852,7 @@ ray_reset(sc)
  * on these resets
  */
 static void
-ray_reset_resetloop(arg)
-	void *arg;
+ray_reset_resetloop(void *arg)
 {
 	struct ray_softc *sc;
 
@@ -1015,8 +1006,7 @@ ray_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  * ifnet interface to start transmission on the interface
  */
 static void
-ray_if_start(ifp)
-	struct ifnet *ifp;
+ray_if_start(struct ifnet *ifp)
 {
 	struct ray_softc *sc;
 
@@ -1033,8 +1023,7 @@ ray_if_stop(struct ifnet *ifp, int disable)
 }
 
 static int
-ray_media_change(ifp)
-	struct ifnet *ifp;
+ray_media_change(struct ifnet *ifp)
 {
 	struct ray_softc *sc;
 
@@ -1051,9 +1040,7 @@ ray_media_change(ifp)
 }
 
 static void
-ray_media_status(ifp, imr)
-	struct ifnet *ifp;
-	struct ifmediareq *imr;
+ray_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct ray_softc *sc;
 
@@ -1076,8 +1063,7 @@ ray_media_status(ifp, imr)
  * interrupt as a result
  */
 static void
-ray_intr_start(sc)
-	struct ray_softc *sc;
+ray_intr_start(struct ray_softc *sc)
 {
 	struct ieee80211_frame *iframe;
 	struct ether_header *eh;
@@ -1301,9 +1287,7 @@ ray_intr_start(sc)
  * recevice a packet from the card
  */
 static void
-ray_recv(sc, ccs)
-	struct ray_softc *sc;
-	bus_size_t ccs;
+ray_recv(struct ray_softc *sc, bus_size_t ccs)
 {
 	struct ieee80211_frame *frame;
 	struct ether_header *eh;
@@ -1554,9 +1538,7 @@ done:
  * receive an auth packet
  */
 static void
-ray_recv_auth(sc, frame)
-	struct ray_softc *sc;
-	struct ieee80211_frame *frame;
+ray_recv_auth(struct ray_softc *sc, struct ieee80211_frame *frame)
 {
 	u_int8_t *var = (u_int8_t *)(frame + 1);
 
@@ -1588,10 +1570,7 @@ ray_recv_auth(sc, frame)
  * send an auth packet
  */
 static int
-ray_send_auth(sc, dest, auth_type)
-	struct ray_softc *sc;
-	u_int8_t *dest;
-	u_int8_t auth_type;
+ray_send_auth(struct ray_softc *sc, u_int8_t *dest, u_int8_t auth_type)
 {
 	u_int8_t packet[sizeof(struct ieee80211_frame) + ETHER_ADDR_LEN], *var;
 	struct ieee80211_frame *frame;
@@ -1639,9 +1618,7 @@ ray_send_auth(sc, dest, auth_type)
  * this took ~ever to figure out, don't make someone do it again!
  */
 static u_int
-ray_find_free_tx_ccs(sc, hint)
-	struct ray_softc *sc;
-	u_int hint;
+ray_find_free_tx_ccs(struct ray_softc *sc, u_int hint)
 {
 	u_int i, stat;
 
@@ -1667,10 +1644,7 @@ ray_find_free_tx_ccs(sc, hint)
  * page and the current chain values
  */
 static bus_size_t
-ray_fill_in_tx_ccs(sc, pktlen, i, pi)
-	struct ray_softc *sc;
-	size_t pktlen;
-	u_int i, pi;
+ray_fill_in_tx_ccs(struct ray_softc *sc, size_t pktlen, u_int i, u_int pi)
 {
 	bus_size_t ccs, bufp;
 
@@ -1702,10 +1676,7 @@ ray_fill_in_tx_ccs(sc, pktlen, i, pi)
  * the status
  */
 static ray_cmd_func_t
-ray_update_params_done(sc, ccs, stat)
-	struct ray_softc *sc;
-	bus_size_t ccs;
-	u_int stat;
+ray_update_params_done(struct ray_softc *sc, bus_size_t ccs, u_int stat)
 {
 	ray_cmd_func_t rcmd;
 
@@ -1743,8 +1714,7 @@ ray_update_params_done(sc, ccs, stat)
  *  check too see if we have any pending commands.
  */
 static void
-ray_check_scheduled(arg)
-	void *arg;
+ray_check_scheduled(void *arg)
 {
 	struct ray_softc *sc;
 	int s, i, mask;
@@ -1793,8 +1763,7 @@ ray_check_scheduled(arg)
  * per hardware limitations
  */
 static void
-ray_check_ccs(arg)
-	void *arg;
+ray_check_ccs(void *arg)
 {
 	ray_cmd_func_t fp;
 	struct ray_softc *sc;
@@ -1860,8 +1829,7 @@ breakout:
  * if the `own' bit is one and then sets the own bit to 0.
  */
 static void
-ray_update_error_counters(sc)
-	struct ray_softc *sc;
+ray_update_error_counters(struct ray_softc *sc)
 {
 	bus_size_t csc;
 
@@ -1889,9 +1857,7 @@ ray_update_error_counters(sc)
  * one of the commands we issued has completed, process.
  */
 static ray_cmd_func_t
-ray_ccs_done(sc, ccs)
-	struct ray_softc *sc;
-	bus_size_t ccs;
+ray_ccs_done(struct ray_softc *sc, bus_size_t ccs)
 {
 	ray_cmd_func_t rcmd;
 	u_int cmd, stat;
@@ -1990,9 +1956,7 @@ done:
  * an unsolicited interrupt, i.e., the ECF is sending us a command
  */
 static ray_cmd_func_t
-ray_rccs_intr(sc, ccs)
-	struct ray_softc *sc;
-	bus_size_t ccs;
+ray_rccs_intr(struct ray_softc *sc, bus_size_t ccs)
 {
 	ray_cmd_func_t rcmd;
 	u_int cmd, stat;
@@ -2047,8 +2011,7 @@ done:
  * process an interrupt
  */
 static int
-ray_intr(arg)
-	void *arg;
+ray_intr(void *arg)
 {
 	struct ray_softc *sc;
 	ray_cmd_func_t rcmd;
@@ -2096,9 +2059,7 @@ ray_intr(arg)
  * free the chain of descriptors -- used for freeing allocated tx chains
  */
 static void
-ray_free_ccs_chain(sc, ni)
-	struct ray_softc *sc;
-	u_int ni;
+ray_free_ccs_chain(struct ray_softc *sc, u_int ni)
 {
 	u_int i;
 
@@ -2114,9 +2075,7 @@ ray_free_ccs_chain(sc, ni)
  * this routine is only used for commands
  */
 static u_int8_t
-ray_free_ccs(sc, ccs)
-	struct ray_softc *sc;
-	bus_size_t ccs;
+ray_free_ccs(struct ray_softc *sc, bus_size_t ccs)
 {
 	u_int8_t stat;
 
@@ -2142,10 +2101,7 @@ ray_free_ccs(sc, ccs)
  * this routine is only used for commands
  */
 static int
-ray_alloc_ccs(sc, ccsp, cmd, track)
-	struct ray_softc *sc;
-	bus_size_t *ccsp;
-	u_int cmd, track;
+ray_alloc_ccs(struct ray_softc *sc, bus_size_t *ccsp, u_int cmd, u_int track)
 {
 	bus_size_t ccs;
 	u_int i;
@@ -2187,9 +2143,7 @@ ray_alloc_ccs(sc, ccsp, cmd, track)
  * that uses the `host to ecf' region must be serialized.
  */
 static void
-ray_set_pending(sc, cmdf)
-	struct ray_softc *sc;
-	u_int cmdf;
+ray_set_pending(struct ray_softc *sc, u_int cmdf)
 {
 	RAY_DPRINTF(("%s: ray_set_pending 0x%x\n", device_xname(&sc->sc_dev), cmdf));
 
@@ -2206,9 +2160,7 @@ ray_set_pending(sc, cmdf)
  * schedule the `cmdf' for completion later
  */
 static void
-ray_cmd_schedule(sc, cmdf)
-	struct ray_softc *sc;
-	int cmdf;
+ray_cmd_schedule(struct ray_softc *sc, int cmdf)
 {
 	int track;
 
@@ -2228,9 +2180,7 @@ ray_cmd_schedule(sc, cmdf)
  * check to see if `cmdf' has been scheduled
  */
 static int
-ray_cmd_is_scheduled(sc, cmdf)
-	struct ray_softc *sc;
-	int cmdf;
+ray_cmd_is_scheduled(struct ray_softc *sc, int cmdf)
 {
 	RAY_DPRINTF(("%s: ray_cmd_is_scheduled 0x%x\n", device_xname(&sc->sc_dev), cmdf));
 
@@ -2241,9 +2191,7 @@ ray_cmd_is_scheduled(sc, cmdf)
  * cancel a scheduled command (not a running one though!)
  */
 static void
-ray_cmd_cancel(sc, cmdf)
-	struct ray_softc *sc;
-	int cmdf;
+ray_cmd_cancel(struct ray_softc *sc, int cmdf)
 {
 	RAY_DPRINTF(("%s: ray_cmd_cancel 0x%x\n", device_xname(&sc->sc_dev), cmdf));
 
@@ -2262,9 +2210,7 @@ ray_cmd_cancel(sc, cmdf)
  * called to indicate the 'cmdf' has been issued
  */
 static void
-ray_cmd_ran(sc, cmdf)
-	struct ray_softc *sc;
-	int cmdf;
+ray_cmd_ran(struct ray_softc *sc, int cmdf)
 {
 	RAY_DPRINTF(("%s: ray_cmd_ran 0x%x\n", device_xname(&sc->sc_dev), cmdf));
 
@@ -2284,9 +2230,7 @@ ray_cmd_ran(sc, cmdf)
  * check to see if `cmdf' has been issued
  */
 static int
-ray_cmd_is_running(sc, cmdf)
-	struct ray_softc *sc;
-	int cmdf;
+ray_cmd_is_running(struct ray_softc *sc, int cmdf)
 {
 	RAY_DPRINTF(("%s: ray_cmd_is_running 0x%x\n", device_xname(&sc->sc_dev), cmdf));
 
@@ -2297,9 +2241,7 @@ ray_cmd_is_running(sc, cmdf)
  * the given `cmdf' that was issued has completed
  */
 static void
-ray_cmd_done(sc, cmdf)
-	struct ray_softc *sc;
-	int cmdf;
+ray_cmd_done(struct ray_softc *sc, int cmdf)
 {
 	RAY_DPRINTF(("%s: ray_cmd_done 0x%x\n", device_xname(&sc->sc_dev), cmdf));
 
@@ -2320,10 +2262,7 @@ ray_cmd_done(sc, cmdf)
  * only used for commands not tx
  */
 static int
-ray_issue_cmd(sc, ccs, track)
-	struct ray_softc *sc;
-	bus_size_t ccs;
-	u_int track;
+ray_issue_cmd(struct ray_softc *sc, bus_size_t ccs, u_int track)
 {
 	u_int i;
 
@@ -2354,9 +2293,7 @@ ray_issue_cmd(sc, ccs, track)
  * send a simple command if we can
  */
 static int
-ray_simple_cmd(sc, cmd, track)
-	struct ray_softc *sc;
-	u_int cmd, track;
+ray_simple_cmd(struct ray_softc *sc, u_int cmd, u_int track)
 {
 	bus_size_t ccs;
 
@@ -2372,8 +2309,7 @@ ray_simple_cmd(sc, cmd, track)
  * run a update subcommand
  */
 static void
-ray_update_subcmd(sc)
-	struct ray_softc *sc;
+ray_update_subcmd(struct ray_softc *sc)
 {
 	int submask, i;
 
@@ -2407,8 +2343,7 @@ ray_update_subcmd(sc)
  * report a parameter
  */
 static void
-ray_report_params(sc)
-	struct ray_softc *sc;
+ray_report_params(struct ray_softc *sc)
 {
 	bus_size_t ccs;
 
@@ -2437,8 +2372,7 @@ ray_report_params(sc)
  * start an association
  */
 static void
-ray_start_assoc(sc)
-	struct ray_softc *sc;
+ray_start_assoc(struct ray_softc *sc)
 {
 	ray_cmd_cancel(sc, SCP_STARTASSOC);
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
@@ -2458,8 +2392,7 @@ ray_start_assoc(sc)
  *	-- no outstanding commands expected
  */
 static void
-ray_download_params(sc)
-	struct ray_softc *sc;
+ray_download_params(struct ray_softc *sc)
 {
 	struct ray_startup_params_head *sp;
 	struct ray_startup_params_tail_5 *sp5;
@@ -2650,8 +2583,7 @@ ray_download_params(sc)
  * start or join a network
  */
 static void
-ray_start_join_net(sc)
-	struct ray_softc *sc;
+ray_start_join_net(struct ray_softc *sc)
 {
 	struct ray_net_params np;
 	bus_size_t ccs;
@@ -2693,8 +2625,7 @@ ray_start_join_net(sc)
 }
 
 static void
-ray_start_join_timo(arg)
-	void *arg;
+ray_start_join_timo(void *arg)
 {
 	struct ray_softc *sc;
 	u_int stat;
@@ -2713,11 +2644,7 @@ ray_start_join_timo(arg)
  * marked busy.
  */
 static ray_cmd_func_t
-ray_start_join_net_done(sc, cmd, ccs, stat)
-	struct ray_softc *sc;
-	u_int cmd;
-	bus_size_t ccs;
-	u_int stat;
+ray_start_join_net_done(struct ray_softc *sc, u_int cmd, bus_size_t ccs, u_int stat)
 {
 	int i;
 	struct ray_net_params np;
@@ -2812,8 +2739,7 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
  * set the card in/out of promiscuous mode
  */
 static void
-ray_update_promisc(sc)
-	struct ray_softc *sc;
+ray_update_promisc(struct ray_softc *sc)
 {
 	bus_size_t ccs;
 	int promisc;
@@ -2845,8 +2771,7 @@ ray_update_promisc(sc)
  * update the parameter based on what the user passed in
  */
 static void
-ray_update_params(sc)
-	struct ray_softc *sc;
+ray_update_params(struct ray_softc *sc)
 {
 	bus_size_t ccs;
 
@@ -2879,8 +2804,7 @@ ray_update_params(sc)
  * set the multicast filter list
  */
 static void
-ray_update_mcast(sc)
-	struct ray_softc *sc;
+ray_update_mcast(struct ray_softc *sc)
 {
 	bus_size_t ccs;
 	struct ether_multistep step;
@@ -2944,9 +2868,7 @@ ray_update_mcast(sc)
  * expected to be called in sleepable context -- intended for user stuff
  */
 static int
-ray_user_update_params(sc, pr)
-	struct ray_softc *sc;
-	struct ray_param_req *pr;
+ray_user_update_params(struct ray_softc *sc, struct ray_param_req *pr)
 {
 	int rv;
 
@@ -2986,9 +2908,7 @@ ray_user_update_params(sc, pr)
  * expected to be called in sleepable context -- intended for user stuff
  */
 static int
-ray_user_report_params(sc, pr)
-	struct ray_softc *sc;
-	struct ray_param_req *pr;
+ray_user_report_params(struct ray_softc *sc, struct ray_param_req *pr)
 {
 	int rv;
 
@@ -3030,11 +2950,7 @@ ray_user_report_params(sc, pr)
  */
 
 static void
-ray_read_region(sc, off, vp, c)
-	struct ray_softc *sc;
-	bus_size_t off;
-	void *vp;
-	size_t c;
+ray_read_region(struct ray_softc *sc, bus_size_t off, void *vp, size_t c)
 {
 #ifdef RAY_USE_OPTIMIZED_COPY
 	u_int n2, n4, tmp;
@@ -3090,11 +3006,7 @@ ray_read_region(sc, off, vp, c)
  * presumably this is related to the inline asm on i386.
  */
 static void
-ray_write_region(sc, off, vp, c)
-	struct ray_softc *sc;
-	bus_size_t off;
-	void *vp;
-	size_t c;
+ray_write_region(struct ray_softc *sc, bus_size_t off, void *vp, size_t c)
 {
 #ifdef RAY_USE_OPTIMIZED_COPY
 	size_t n2, n4, tmp;
@@ -3226,9 +3138,7 @@ hexdump(const u_int8_t *d, int len, int br, int div, int fl)
 
 
 static void
-ray_dump_mbuf(sc, m)
-	struct ray_softc *sc;
-	struct mbuf *m;
+ray_dump_mbuf(struct ray_softc *sc, struct mbuf *m)
 {
 	u_int8_t *d, *ed;
 	u_int i;
@@ -3254,10 +3164,7 @@ ray_dump_mbuf(sc, m)
 
 #ifdef RAY_DO_SIGLEV
 static void
-ray_update_siglev(sc, src, siglev)
-	struct ray_softc *sc;
-	u_int8_t *src;
-	u_int8_t siglev;
+ray_update_siglev(struct ray_softc *sc, u_int8_t *src, u_int8_t siglev)
 {
 	int i, mini;
 	struct timeval mint;

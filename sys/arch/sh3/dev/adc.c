@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.10 2008/12/16 22:35:25 christos Exp $ */
+/*	$NetBSD: adc.c,v 1.10.2.1 2009/05/13 17:18:21 jym Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.10 2008/12/16 22:35:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.10.2.1 2009/05/13 17:18:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,8 @@ adc_match(device_t parent, cfdata_t cf, void *aux)
 
 	/* REMINDER: also in 7727 and 7729 */
 	if ((cpu_product != CPU_PRODUCT_7709)
-	    && (cpu_product != CPU_PRODUCT_7709A))
+	    && (cpu_product != CPU_PRODUCT_7709A)
+	    && (cpu_product != CPU_PRODUCT_7706))
 		return (0);
 
 	if (strcmp(cf->cf_name, "adc") != 0)
@@ -79,6 +80,15 @@ adc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search_ia(adc_search, self, "adc", NULL);
+
+	/*
+	 * XXX: TODO: provide hooks to manage power.  For now register
+	 * null hooks which is no worse than before.
+	 *
+	 * NB: ADC registers are reset by standby!
+	 */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 

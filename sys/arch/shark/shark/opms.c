@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.21 2008/06/13 13:09:55 cegger Exp $        */
+/*      $NetBSD: opms.c,v 1.21.10.1 2009/05/13 17:18:23 jym Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.21 2008/06/13 13:09:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.21.10.1 2009/05/13 17:18:23 jym Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -182,13 +182,13 @@ struct opms_softc
 /*
 ** Forward routine declarations
 */
-int                  opmsprobe       __P((struct device *, 
+int                  opmsprobe(struct device *, 
                                          struct cfdata *, 
-                                         void *));
-void                 opmsattach      __P((struct device *, 
+                                         void *);
+void                 opmsattach(struct device *, 
                                          struct device *, 
-                                         void *));
-int                  opmsintr         __P((void *));
+                                         void *);
+int                  opmsintr(void *);
 
 /* 
 ** Global variables 
@@ -254,10 +254,7 @@ int opmsdebug = KERN_DEBUG_WARNING | KERN_DEBUG_ERROR;
 **--
 */
 int
-opmsprobe(parent, match, aux)
-    struct device *parent;
-    struct cfdata *match;
-    void          *aux;
+opmsprobe(struct device *parent, struct cfdata *match, void *aux)
 {
     struct cfdata             *cf     = match;
     int                       probeOk = 0;    /* assume failure */
@@ -355,10 +352,7 @@ opmsprobe(parent, match, aux)
 **--
 */
 void
-opmsattach(parent, self, aux)
-    struct device *parent;
-    struct device *self;
-    void          *aux;
+opmsattach(struct device *parent, struct device *self, void *aux)
 {
     struct opms_softc          *sc = (void *)self;
     int                       irq = device_cfdata(self)->cf_loc[SPCKBDCF_IRQ];
@@ -759,8 +753,7 @@ opmsioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 **--
 */
 int
-opmsintr(arg)
-        void *arg;
+opmsintr(void *arg)
 {
     struct opms_softc     *sc   = arg;
     static u_char        buttons;

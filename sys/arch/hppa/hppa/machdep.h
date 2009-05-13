@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.10 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: machdep.h,v 1.10.14.1 2009/05/13 17:17:47 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #ifdef _KERNEL
 
-/*      
+/*
  * cache configuration, for most machines is the same
  * numbers, so it makes sense to do defines w/ numbers depending
  * on configured CPU types in the kernel.
@@ -58,7 +58,9 @@ extern vaddr_t vmmap;	/* XXX - See mem.c */
 extern vaddr_t virtual_start, virtual_end;
 
 /* Total physical pages, and low reserved physical pages. */
+extern int physmem;
 extern int totalphysmem;
+extern int availphysmem;
 extern int resvmem;
 
 /* BTLB minimum and maximum sizes, in pages. */
@@ -79,7 +81,6 @@ extern u_int hppa_intr_depth;
 void hppa_intr(struct trapframe *);
 
 /* Special pmap functions. */
-void pmap_bootstrap(vaddr_t *, vaddr_t *);
 void pmap_redzone(vaddr_t, vaddr_t, int);
 
 /* Functions to write low memory and the kernel text. */

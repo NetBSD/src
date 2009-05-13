@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.10 2008/12/16 22:35:33 christos Exp $ */
+/*      $NetBSD: if_xge.c,v 1.10.2.1 2009/05/13 17:20:27 jym Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.10 2008/12/16 22:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.10.2.1 2009/05/13 17:20:27 jym Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -180,8 +180,8 @@ struct xge_softc {
 #endif
 };
 
-static int xge_match(struct device *parent, struct cfdata *cf, void *aux);
-static void xge_attach(struct device *parent, struct device *self, void *aux);
+static int xge_match(device_t parent, cfdata_t cf, void *aux);
+static void xge_attach(device_t parent, device_t self, void *aux);
 static int xge_alloc_txmem(struct xge_softc *);
 static int xge_alloc_rxmem(struct xge_softc *);
 static void xge_start(struct ifnet *);
@@ -269,7 +269,7 @@ CFATTACH_DECL(xge, sizeof(struct xge_softc),
 #define	XGE_IP_MAXPACKET	65535	/* same as IP_MAXPACKET */
 
 static int
-xge_match(struct device *parent, struct cfdata *cf, void *aux)
+xge_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -281,7 +281,7 @@ xge_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-xge_attach(struct device *parent, struct device *self, void *aux)
+xge_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct xge_softc *sc;
@@ -294,7 +294,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	uint64_t val;
 	int i;
 
-	sc = (struct xge_softc *)self;
+	sc = device_private(self);
 
 	sc->sc_dmat = pa->pa_dmat;
 

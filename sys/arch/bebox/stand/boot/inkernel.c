@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.8 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.8.12.1 2009/05/13 17:16:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ int inclose(struct open_file *);
 int instrategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 void
-init_in()
+init_in(void)
 {
 	int p;
 

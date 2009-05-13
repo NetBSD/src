@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.6 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: autoconf.c,v 1.6.92.1 2009/05/13 17:16:01 jym Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.92.1 2009/05/13 17:16:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2005/12/11 12:16:03 christos Exp $"
 #include <machine/machdep.h>
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	irq_init();
@@ -54,7 +54,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	/* XXX This could actually do something */
@@ -62,7 +62,7 @@ cpu_rootconf()
 }
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 
 	printf("cpu_dumpconf: Doing something here would be useful\n");

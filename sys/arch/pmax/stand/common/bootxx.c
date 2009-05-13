@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.30 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.30.14.1 2009/05/13 17:18:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,12 +69,12 @@
 #include <lib/libkern/libkern.h>
 #include <machine/dec_prom.h>
 
-typedef void (*entrypt) __P((int, char **, int, const void *));
+typedef void (*entrypt)(int, char **, int, const void *);
 
-int main __P((int, char **));
-entrypt loadfile __P((char *path, char *name));
+int main(int, char **);
+entrypt loadfile(char *path, char *name);
 
-extern int clear_cache __P((char *addr, int len));
+extern int clear_cache(char *addr, int len);
 
 /*
  * This gets arguments from the PROM, calls other routines to open
@@ -86,9 +86,7 @@ extern int clear_cache __P((char *addr, int len));
  * The argument "-a" means netbsd should do an automatic reboot.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *cp;
 	entrypt entry;
@@ -133,8 +131,7 @@ bad:
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
 entrypt
-loadfile(path, name)
-	char *path, *name;
+loadfile(char *path, char *name)
 {
 	int fd, i;
 	char c, *buf, bootfname[64];

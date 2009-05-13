@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.16 2007/12/25 18:33:38 perry Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.16.24.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -123,9 +123,7 @@ struct esiop_target {
 
 static __inline void esiop_table_sync(struct esiop_cmd *, int);
 static __inline void
-esiop_table_sync(esiop_cmd, ops)
-	struct esiop_cmd *esiop_cmd;
-	int ops;
+esiop_table_sync(struct esiop_cmd *esiop_cmd, int ops)
 {
 	struct siop_common_softc *sc  = esiop_cmd->cmd_c.siop_sc;
 	bus_addr_t offset;

@@ -1,4 +1,4 @@
-/* $NetBSD: kftxx.c,v 1.13 2007/03/04 05:59:12 christos Exp $ */
+/* $NetBSD: kftxx.c,v 1.13.58.1 2009/05/13 17:16:08 jym Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.13 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.13.58.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,17 +64,15 @@ struct kft_softc {
 
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static int	kftmatch __P((struct device *, struct cfdata *, void *));
-static void	kftattach __P((struct device *, struct device *, void *));
+static int	kftmatch(struct device *, struct cfdata *, void *);
+static void	kftattach(struct device *, struct device *, void *);
 CFATTACH_DECL(kft, sizeof(struct kft_softc),
     kftmatch, kftattach, NULL, NULL);
 
-static int	kftprint __P((void *, const char *));
+static int	kftprint(void *, const char *);
 
 static int
-kftprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+kftprint(void *aux, const char *pnp)
 {
 	register struct kft_dev_attach_args *ka = aux;
 	if (pnp)
@@ -84,10 +82,7 @@ kftprint(aux, pnp)
 }
 
 static int
-kftmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+kftmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct tlsb_dev_attach_args *ta = aux;
 	if (TLDEV_ISIOPORT(ta->ta_dtype))
@@ -96,10 +91,7 @@ kftmatch(parent, cf, aux)
 }
 
 static void
-kftattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+kftattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tlsb_dev_attach_args *ta = aux;
 	struct kft_softc *sc = (struct kft_softc *)self;

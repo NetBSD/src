@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.65 2009/01/22 16:05:03 cegger Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.65.2.1 2009/05/13 17:21:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.65 2009/01/22 16:05:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.65.2.1 2009/05/13 17:21:49 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -264,14 +264,12 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			vrele(devvp);
-			return (error);
-		}
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = genfs_can_mount(devvp, VREAD, l->l_cred);
+	VOP_UNLOCK(devvp, 0);
+	if (error) {
+		vrele(devvp);
+		return (error);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
 		error = VOP_OPEN(devvp, FREAD, FSCRED);

@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.6 2008/12/04 18:54:24 cegger Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.6.4.1 2009/05/13 17:18:44 jym Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /* 
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6 2008/12/04 18:54:24 cegger Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.1 2009/05/13 17:18:44 jym Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,9 +219,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	uint8_t i;
 
 	aprint_naive("\n");
-	aprint_normal("\n");
-
-	aprint_normal_dev(self, "AMD CPU Temperature Sensors");
+	aprint_normal(": AMD CPU Temperature Sensors");
 
 	cpu_signature = pci_conf_read(pa->pa_pc, pa->pa_tag,
 				CPUID_FAMILY_MODEL_R);
@@ -248,7 +246,8 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		break;
 
 	default:
-		/* Not supported */
+		aprint_normal(", family 0x%x not supported\n",
+			     sc->sc_family);
 		return;
 	}
 

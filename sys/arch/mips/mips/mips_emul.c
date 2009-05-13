@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14 2006/08/26 20:15:28 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.74.1 2009/05/13 17:18:03 jym Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14 2006/08/26 20:15:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.74.1 2009/05/13 17:18:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,11 +86,7 @@ struct {
  * Analyse 'next' PC address taking account of branch/jump instructions
  */
 vaddr_t
-MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
-	struct frame *f;
-	vaddr_t instpc;
-	unsigned fpuCSR;
-	int allowNonBranch;
+MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNonBranch)
 {
 #define	BRANCHTARGET(p) (4 + (p) + ((short)((InstFmt *)(p))->IType.imm << 2))
 	InstFmt inst;
@@ -207,11 +203,7 @@ MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
  * Emulate instructions (including floating-point instructions)
  */
 void
-MachEmulateInst(status, cause, opc, frame)
-	u_int32_t status;
-	u_int32_t cause;
-	vaddr_t opc;
-	struct frame *frame;
+MachEmulateInst(u_int32_t status, u_int32_t cause, vaddr_t opc, struct frame *frame)
 {
 	u_int32_t inst;
 	ksiginfo_t ksi;

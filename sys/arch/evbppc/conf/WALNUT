@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.39 2008/11/24 11:41:11 ad Exp $
+#	$NetBSD: WALNUT,v 1.39.4.1 2009/05/13 17:16:40 jym Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -28,8 +28,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
-
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -41,7 +39,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=400000	# size for embedded symbol table
+options 	SYMTAB_SPACE=410000	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 

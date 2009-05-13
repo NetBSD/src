@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.3 2008/08/25 08:15:05 cegger Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.3.8.1 2009/05/13 17:20:15 jym Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -94,6 +94,7 @@
 
 #define BRGPHY_MII_DSP_RW_PORT	0x15	/* DSP coefficient r/w port */
 
+#define BRGPHY_MII_EPHY_PTEST	0x17	/* 5906 PHY register */
 #define BRGPHY_MII_DSP_ADDR_REG	0x17	/* DSP coefficient addr register */
 
 #define BRGPHY_DSP_TAP_NUMBER_MASK		0x00
@@ -194,6 +195,33 @@
 #define BRGPHY_IMR_LSP_CHG	0x0004	/* Link speed changed */
 #define BRGPHY_IMR_LNK_CHG	0x0002	/* Link status change */
 #define BRGPHY_IMR_CRCERR	0x0001	/* CEC error */
+
+/*******************************************************/
+/* Begin: PHY register values for the 5706 PHY         */
+/*******************************************************/
+
+/* 
+ * Shadow register 0x1C, bit 15 is write enable,
+ * bits 14-10 select function (0x00 to 0x1F).
+ */
+#define BRGPHY_MII_SHADOW_1C		0x1C
+#define BRGPHY_SHADOW_1C_WRITE_EN	0x8000
+#define BRGPHY_SHADOW_1C_SELECT_MASK	0x7C00
+
+/* Shadow 0x1C Mode Control Register (select value 0x1F) */
+#define BRGPHY_SHADOW_1C_MODE_CTRL	(0x1F << 10)
+/* When set, Regs 0-0x0F are 1000X, else 1000T */
+#define BRGPHY_SHADOW_1C_ENA_1000X	0x0001
+
+#define BRGPHY_TEST1		0x1E
+#define BRGPHY_TEST1_TRIM_EN	0x0010
+#define BRGPHY_TEST1_CRC_EN	0x8000
+
+#define BRGPHY_MII_TEST2	0x1F
+
+/*******************************************************/
+/* End: PHY register values for the 5706 PHY           */
+/*******************************************************/
 
 #define BRGPHY_INTRS	\
 	~(BRGPHY_IMR_LNK_CHG|BRGPHY_IMR_LSP_CHG|BRGPHY_IMR_DUP_CHG)

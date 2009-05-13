@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.1 2008/08/12 17:54:47 hans Exp $ */
+/*	$NetBSD: spx.c,v 1.1.14.1 2009/05/13 17:18:41 jym Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.1 2008/08/12 17:54:47 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.1.14.1 2009/05/13 17:18:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -889,7 +889,7 @@ spx_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
 	int offset = row * spx_cols + startcol;
 	int i;
 
-	bzero(&ss->ss_image[row * spx_cols + startcol], 
+	memset(&ss->ss_image[row * spx_cols + startcol], 0, 
 	      ncols * sizeof(ss->ss_image[0]));
 
 	for (i = offset; i < offset + ncols; ++i)
@@ -924,7 +924,7 @@ spx_eraserows(void *id, int startrow, int nrows, long fillattr)
 	struct spx_screen *ss = id;
 	int i;
 	
-	bzero(&ss->ss_image[startrow * spx_cols],
+	memset(&ss->ss_image[startrow * spx_cols], 0,
 	      nrows * spx_cols * sizeof(ss->ss_image[0]));
 
 	for (i = startrow * spx_cols; i < startrow + nrows * spx_cols; ++i)

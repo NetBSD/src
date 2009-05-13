@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_net.c,v 1.55 2009/01/22 16:10:19 cegger Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.55.2.1 2009/05/13 17:19:03 jym Exp $	*/
 
 /*-
- * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.55 2009/01/22 16:10:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.55.2.1 2009/05/13 17:19:03 jym Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -100,8 +100,15 @@ int svr4_netattach(int);
 int svr4_soo_close(file_t *);
 
 static const struct fileops svr4_netops = {
-	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
-	soo_stat, svr4_soo_close, soo_kqfilter
+	.fo_read = soo_read,
+	.fo_write = soo_write,
+	.fo_ioctl = soo_ioctl,
+	.fo_fcntl = soo_fcntl,
+	.fo_poll = soo_poll,
+	.fo_stat = soo_stat,
+	.fo_close = svr4_soo_close,
+	.fo_kqfilter = soo_kqfilter,
+	.fo_drain = soo_drain,
 };
 
 

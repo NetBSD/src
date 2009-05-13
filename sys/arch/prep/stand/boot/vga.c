@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.5 2006/04/10 18:40:06 garbled Exp $	*/
+/*	$NetBSD: vga.c,v 1.5.80.1 2009/05/13 17:18:15 jym Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -97,7 +97,7 @@ void video_off(void);
  * cursor() sets an offset (0-1999) into the 80x25 text area   
  */
 static void
-cursor()
+cursor(void)
 {
  	int pos = screen.cp - Crtat;
 
@@ -111,7 +111,7 @@ cursor()
 }
 
 static void
-initscreen()
+initscreen(void)
 {
 	struct screen *d = &screen;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.104 2008/12/17 20:51:36 cegger Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.104.2.1 2009/05/13 17:22:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.104 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.104.2.1 2009/05/13 17:22:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ extern const struct cdevsw ctty_cdevsw;
  * Initialise cache headers
  */
 void
-fdesc_init()
+fdesc_init(void)
 {
 	int cttymajor;
 
@@ -196,7 +196,7 @@ fdesc_init()
  * Free hash table.
  */
 void
-fdesc_done()
+fdesc_done(void)
 {
 	hashdone(fdhashtbl, HASH_LIST, fdhash);
 }
@@ -205,11 +205,7 @@ fdesc_done()
  * Return a locked vnode of the correct type.
  */
 int
-fdesc_allocvp(ftype, ix, mp, vpp)
-	fdntype ftype;
-	int ix;
-	struct mount *mp;
-	struct vnode **vpp;
+fdesc_allocvp(fdntype ftype, int ix, struct mount *mp, struct vnode **vpp)
 {
 	struct fdhashhead *fc;
 	struct fdescnode *fd;
@@ -267,8 +263,7 @@ out:;
  * ndp is the name to locate in that directory...
  */
 int
-fdesc_lookup(v)
-	void *v;
+fdesc_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode * a_dvp;
@@ -410,8 +405,7 @@ good:
 }
 
 int
-fdesc_open(v)
-	void *v;
+fdesc_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode *a_vp;
@@ -445,10 +439,7 @@ fdesc_open(v)
 }
 
 static int
-fdesc_attr(fd, vap, cred)
-	int fd;
-	struct vattr *vap;
-	kauth_cred_t cred;
+fdesc_attr(int fd, struct vattr *vap, kauth_cred_t cred)
 {
 	file_t *fp;
 	struct stat stb;
@@ -511,8 +502,7 @@ fdesc_attr(fd, vap, cred)
 }
 
 int
-fdesc_getattr(v)
-	void *v;
+fdesc_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -592,8 +582,7 @@ fdesc_getattr(v)
 }
 
 int
-fdesc_setattr(v)
-	void *v;
+fdesc_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
@@ -649,8 +638,7 @@ struct fdesc_target {
 static int nfdesc_targets = sizeof(fdesc_targets) / sizeof(fdesc_targets[0]);
 
 int
-fdesc_readdir(v)
-	void *v;
+fdesc_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -795,8 +783,7 @@ fdesc_readdir(v)
 }
 
 int
-fdesc_readlink(v)
-	void *v;
+fdesc_readlink(void *v)
 {
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
@@ -820,8 +807,7 @@ fdesc_readlink(v)
 }
 
 int
-fdesc_read(v)
-	void *v;
+fdesc_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -848,8 +834,7 @@ fdesc_read(v)
 }
 
 int
-fdesc_write(v)
-	void *v;
+fdesc_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -876,8 +861,7 @@ fdesc_write(v)
 }
 
 int
-fdesc_ioctl(v)
-	void *v;
+fdesc_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
@@ -903,8 +887,7 @@ fdesc_ioctl(v)
 }
 
 int
-fdesc_poll(v)
-	void *v;
+fdesc_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
@@ -926,8 +909,7 @@ fdesc_poll(v)
 }
 
 int
-fdesc_kqfilter(v)
-	void *v;
+fdesc_kqfilter(void *v)
 {
 	struct vop_kqfilter_args /* {
 		struct vnode *a_vp;
@@ -958,8 +940,7 @@ fdesc_kqfilter(v)
 }
 
 int
-fdesc_inactive(v)
-	void *v;
+fdesc_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -976,8 +957,7 @@ fdesc_inactive(v)
 }
 
 int
-fdesc_reclaim(v)
-	void *v;
+fdesc_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -996,8 +976,7 @@ fdesc_reclaim(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-fdesc_pathconf(v)
-	void *v;
+fdesc_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -1045,8 +1024,7 @@ fdesc_print(void *v)
 }
 
 int
-fdesc_link(v)
-	void *v;
+fdesc_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -1060,8 +1038,7 @@ fdesc_link(v)
 }
 
 int
-fdesc_symlink(v)
-	void *v;
+fdesc_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;

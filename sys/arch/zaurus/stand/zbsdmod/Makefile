@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2007/10/17 19:58:41 garbled Exp $
+#	$NetBSD: Makefile,v 1.4.34.1 2009/05/13 17:18:55 jym Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -8,9 +8,7 @@ NOMAN=	yes
 
 realall: ${OBJS}
 
-cleandir:
-	rm -f machine arm
-
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 afterinstall:
@@ -21,19 +19,6 @@ CFLAGS=		-Wall -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS+=	-DMACHINE=\"${MACHINE}\" -DUTS_RELEASE=\"2.4.20\"
 CPPFLAGS+=      -nostdinc -D_STANDALONE
 CPPFLAGS+=	-I${.OBJDIR} -I${S}
-
-.if !make(obj) && !make(clean) && !make(cleandir) && !make(release)
-.BEGIN: machine arm
-.NOPATH: machine arm
-
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-arm::
-	-rm -f $@
-	ln -s ${S}/arch/arm/include $@
-.endif
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${OBJS} \

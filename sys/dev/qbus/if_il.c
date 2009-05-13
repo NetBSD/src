@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.20 2008/12/16 22:35:34 christos Exp $	*/
+/*	$NetBSD: if_il.c,v 1.20.2.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.20 2008/12/16 22:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.20.2.1 2009/05/13 17:21:16 jym Exp $");
 
 #include "opt_inet.h"
 
@@ -111,11 +111,11 @@ struct	il_softc {
 	int	sc_ubaddr;		/* mapping registers of is_stats */
 };
 
-static	int ilmatch(struct device *, struct cfdata *, void *);
-static	void ilattach(struct device *, struct device *, void *);
+static	int ilmatch(device_t, cfdata_t, void *);
+static	void ilattach(device_t, device_t, void *);
 static	void ilcint(void *);
 static	void ilrint(void *);
-static	void ilreset(struct device *);
+static	void ilreset(device_t);
 static	int ilwait(struct il_softc *, char *);
 static	int ilinit(struct ifnet *);
 static	void ilstart(struct ifnet *);
@@ -134,7 +134,7 @@ CFATTACH_DECL(il, sizeof(struct il_softc),
 #define HIWORD(x)	(((int)(x) >> 16) & 0x3)
 
 int
-ilmatch(struct device *parent, struct cfdata *cf, void *aux)
+ilmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 	volatile int i;
@@ -153,7 +153,7 @@ ilmatch(struct device *parent, struct cfdata *cf, void *aux)
  * address and other interesting data.
  */
 void
-ilattach(struct device *parent, struct device *self, void *aux)
+ilattach(device_t parent, device_t self, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 	struct il_softc *sc = device_private(self);
@@ -242,7 +242,7 @@ ilwait(struct il_softc *sc, char *op)
  * If interface is on specified uba, reset its state.
  */
 void
-ilreset(struct device *dev)
+ilreset(device_t dev)
 {
 	struct il_softc *sc = (void *)dev;
 
@@ -304,7 +304,7 @@ ilinit(struct ifnet *ifp)
 	 * wedge the board.
 	 */
 	if (sc->sc_flags & ILF_SETADDR) {
-		bcopy(CLLADDR(ifp->if_sadl), &sc->sc_isu, ETHER_ADDR_LEN);
+		memcpy(&sc->sc_isu, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, ETHER_ADDR_LEN);
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_LDPA);
@@ -606,7 +606,7 @@ il_setaddr(u_char *physaddr, struct il_softc *sc)
 	if (! (sc->sc_flags & ILF_RUNNING))
 		return;
 
-	bcopy((void *)physaddr, (void *)is->is_addr, sizeof is->is_addr);
+	memcpy((void *)is->is_addr, (void *)physaddr, sizeof is->is_addr);
 	sc->sc_flags &= ~ILF_RUNNING;
 	sc->sc_flags |= ILF_SETADDR;
 	ilinit(&sc->sc_if);

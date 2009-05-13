@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.36 2008/01/04 00:27:27 joerg Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.36.24.1 2009/05/13 17:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -177,10 +177,7 @@ static inline void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
 					   int, u_int8_t);
 
 static inline u_int8_t
-pciide_pci_read(pc, pa, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t pa;
-	int reg;
+pciide_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
 {
 
 	return (pci_conf_read(pc, pa, (reg & ~0x03)) >>
@@ -188,11 +185,7 @@ pciide_pci_read(pc, pa, reg)
 }
 
 static inline void
-pciide_pci_write(pc, pa, reg, val)
-	pci_chipset_tag_t pc;
-	pcitag_t pa;
-	int reg;
-	u_int8_t val;
+pciide_pci_write(pci_chipset_tag_t pc, pcitag_t pa, int reg, uint8_t val)
 {
 	pcireg_t pcival;
 
@@ -220,7 +213,7 @@ void pciide_irqack(struct ata_channel *);
 
 /* Attach compat interrupt handler, returning handle or NULL if failed. */
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
-void	*pciide_machdep_compat_intr_establish(struct device *,
+void	*pciide_machdep_compat_intr_establish(device_t,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
 #endif
 

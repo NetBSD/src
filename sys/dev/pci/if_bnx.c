@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.21 2009/01/27 21:15:38 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.21.2.1 2009/05/13 17:20:25 jym Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.21 2009/01/27 21:15:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.21.2.1 2009/05/13 17:20:25 jym Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -145,6 +145,11 @@ static const struct bnx_product {
 	  PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S,
 	  0, 0,
 	  "Broadcom NetXtreme II BCM5708 1000Base-SX"
+	},
+	{
+	  PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709,
+	  0, 0,
+	  "Broadcom NetXtreme II BCM5709 1000Base-SX"
 	},
 };
 
@@ -348,8 +353,8 @@ void	bnx_tick(void *);
 /****************************************************************************/
 /* OpenBSD device dispatch table.                                           */
 /****************************************************************************/
-CFATTACH_DECL_NEW(bnx, sizeof(struct bnx_softc),
-    bnx_probe, bnx_attach, bnx_detach, NULL);
+CFATTACH_DECL3_NEW(bnx, sizeof(struct bnx_softc),
+    bnx_probe, bnx_attach, bnx_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 /****************************************************************************/
 /* Device probe function.                                                   */
@@ -738,6 +743,7 @@ bnx_detach(device_t dev, int flags)
 	splx(s);
 
 	pmf_device_deregister(dev);
+	callout_destroy(&sc->bnx_timeout);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	mii_detach(&sc->bnx_mii, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -2001,7 +2007,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	sc->status_block_paddr = sc->status_map->dm_segs[0].ds_addr;
-	bzero(sc->status_block, BNX_STATUS_BLK_SZ);
+	memset(sc->status_block, 0, BNX_STATUS_BLK_SZ);
 
 	/* DRC - Fix for 64 bit addresses. */
 	DBPRINT(sc, BNX_INFO, "status_block_paddr = 0x%08X\n",
@@ -2045,7 +2051,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	sc->stats_block_paddr = sc->stats_map->dm_segs[0].ds_addr;
-	bzero(sc->stats_block, BNX_STATS_BLK_SZ);
+	memset(sc->stats_block, 0, BNX_STATS_BLK_SZ);
 
 	/* DRC - Fix for 64 bit address. */
 	DBPRINT(sc,BNX_INFO, "stats_block_paddr = 0x%08X\n", 
@@ -2158,7 +2164,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 			goto bnx_dma_alloc_exit;
 		}
 
-		bzero(sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
+		memset(sc->rx_bd_chain[i], 0, BNX_RX_CHAIN_PAGE_SZ);
 		sc->rx_bd_chain_paddr[i] =
 		    sc->rx_bd_chain_map[i]->dm_segs[0].ds_addr;
 
@@ -2202,7 +2208,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 void
 bnx_release_resources(struct bnx_softc *sc)
 {
-	int i;
 	struct pci_attach_args	*pa = &(sc->bnx_pa);
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
@@ -2214,10 +2219,6 @@ bnx_release_resources(struct bnx_softc *sc)
 
 	if (sc->bnx_size)
 		bus_space_unmap(sc->bnx_btag, sc->bnx_bhandle, sc->bnx_size);
-
-	for (i = 0; i < TOTAL_RX_BD; i++)
-		if (sc->rx_mbuf_map[i])
-			bus_dmamap_destroy(sc->bnx_dmatag, sc->rx_mbuf_map[i]);
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 }
@@ -3330,7 +3331,7 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 
 	/* Clear each TX chain page. */
 	for (i = 0; i < TX_PAGES; i++) {
-		bzero((char *)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ);
+		memset((char *)sc->tx_bd_chain[i], 0, BNX_TX_CHAIN_PAGE_SZ);
 		bus_dmamap_sync(sc->bnx_dmatag, sc->tx_bd_chain_map[i], 0,
 		    BNX_TX_CHAIN_PAGE_SZ, BUS_DMASYNC_PREWRITE);
 	}
@@ -3458,7 +3459,7 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 
 	/* Clear each RX chain page. */
 	for (i = 0; i < RX_PAGES; i++)
-		bzero((char *)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
+		memset((char *)sc->rx_bd_chain[i], 0, BNX_RX_CHAIN_PAGE_SZ);
 
 	/* Check if we lost any mbufs in the process. */
 	DBRUNIF((sc->rx_mbuf_alloc),
@@ -4332,16 +4333,26 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) &&
-			    ((ifp->if_flags ^ sc->bnx_if_flags) &
-			    (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
+		/* XXX set an ifflags callback and let ether_ioctl
+		 * handle all of this.
+		 */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP|IFF_RUNNING:
+			if (((ifp->if_flags ^ sc->bnx_if_flags) &
+			    (IFF_ALLMULTI | IFF_PROMISC)) != 0)
 				bnx_set_rx_mode(sc);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
-				bnx_init(ifp);
-
-		} else if (ifp->if_flags & IFF_RUNNING)
+			break;
+		case IFF_UP:
+			bnx_init(ifp);
+			break;
+		case IFF_RUNNING:
 			bnx_stop(ifp, 1);
+			break;
+		case 0:
+			break;
+		}
 
 		sc->bnx_if_flags = ifp->if_flags;
 		break;
@@ -4577,7 +4588,7 @@ allmulti:
 
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto allmulti;

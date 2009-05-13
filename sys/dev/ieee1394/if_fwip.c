@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.17 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.17.4.1 2009/05/13 17:19:52 jym Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.17 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.17.4.1 2009/05/13 17:19:52 jym Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.17 2008/11/12 12:36:11 ad Exp $");
 #define TX_MAX_QUEUE	(FWMAXQUEUE - 1)
 
 #if defined(__NetBSD__)
-int fwipmatch (device_t, struct cfdata *, void *);
+int fwipmatch (device_t, cfdata_t, void *);
 void fwipattach (device_t, device_t, void *);
 int fwipdetach (device_t, int);
 int fwipactivate (device_t, enum devact);
@@ -243,7 +243,7 @@ fwip_probe(device_t dev)
 }
 #elif defined(__NetBSD__)
 int
-fwipmatch(device_t parent, struct cfdata *cf, void *aux)
+fwipmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fw_attach_args *fwa = aux;
 
@@ -607,7 +607,7 @@ fwip_post_busreset(void *arg)
 	root = fwip->fd.fc->crom_root;
 
 	/* RFC2734 IPv4 over IEEE1394 */
-	bzero(&fwip->unit4, sizeof(struct crom_chunk));
+	memset(&fwip->unit4, 0, sizeof(struct crom_chunk));
 	crom_add_chunk(src, root, &fwip->unit4, CROM_UDIR);
 	crom_add_entry(&fwip->unit4, CSRKEY_SPEC, CSRVAL_IETF);
 	crom_add_simple_text(src, &fwip->unit4, &fwip->spec4, "IANA");
@@ -615,7 +615,7 @@ fwip_post_busreset(void *arg)
 	crom_add_simple_text(src, &fwip->unit4, &fwip->ver4, "IPv4");
 
 	/* RFC3146 IPv6 over IEEE1394 */
-	bzero(&fwip->unit6, sizeof(struct crom_chunk));
+	memset(&fwip->unit6, 0, sizeof(struct crom_chunk));
 	crom_add_chunk(src, root, &fwip->unit6, CROM_UDIR);
 	crom_add_entry(&fwip->unit6, CSRKEY_SPEC, CSRVAL_IETF);
 	crom_add_simple_text(src, &fwip->unit6, &fwip->spec6, "IANA");

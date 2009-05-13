@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.19 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.19.14.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,11 @@ struct ne2000_softc {
 		NE2000_TYPE_AX88790
 	} sc_type;
 	int sc_useword;
+	enum {
+		NE2000_DMAWIDTH_UNKNOWN = 0,
+		NE2000_DMAWIDTH_16BIT,
+		NE2000_DMAWIDTH_8BIT,
+	} sc_dmawidth;
 };
 
 int	ne2000_attach(struct ne2000_softc *, u_int8_t *);
@@ -60,6 +65,11 @@ int	ne2000_detach(struct ne2000_softc *, int);
 int	ne2000_ipkdb_attach(struct ipkdb_if *);
 #endif
 
+/* dopowerhooks(9) - deprecated */
 void	ne2000_power(int, void *);
+
+/* pmf(9) */
+bool ne2000_suspend(device_t PMF_FN_PROTO);
+bool ne2000_resume(device_t PMF_FN_PROTO);
 
 #endif /* _DEV_IC_NE2000VAR_H_ */

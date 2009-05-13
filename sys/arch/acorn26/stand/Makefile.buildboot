@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.10 2005/12/11 12:16:05 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.10.92.1 2009/05/13 17:16:02 jym Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -56,7 +56,6 @@ SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 CPPFLAGS+=	-DLIBSA_NO_RAW_ACCESS \
 		-DLIBSA_SINGLE_FILESYSTEM=riscos \
 		-DLIBSA_NO_FS_WRITE \
-		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET \
 		-DHEAP_VARIABLE
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}

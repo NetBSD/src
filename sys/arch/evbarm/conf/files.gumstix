@@ -1,4 +1,4 @@
-#	$NetBSD: files.gumstix,v 1.12 2008/05/14 01:58:29 matt Exp $
+#	$NetBSD: files.gumstix,v 1.12.12.1 2009/05/13 17:16:37 jym Exp $
 #
 # Gumstix. Inc. Gumstix boards configuration info
 #
@@ -27,3 +27,9 @@ file	arch/evbarm/gumstix/gxpcic.c			pxapcic_gxpcic
 device	gxiic: pxaiic, i2cbus
 attach	gxiic at pxaip
 file	arch/evbarm/gumstix/gxiic.c			gxiic
+
+include "dev/sdmmc/files.sdmmc"
+
+# MMC/SD controller
+attach	pxamci at pxaip with gxmci
+file	arch/evbarm/gumstix/gxmci.c			gxmci

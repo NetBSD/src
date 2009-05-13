@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.8 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.8.94.1 2009/05/13 17:16:18 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.8 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.8.94.1 2009/05/13 17:16:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.8 2005/12/11 12:16:51 christos Exp
 /*
  * Prototypes
  */
-static int cpu_mainbus_match __P((struct device *, struct cfdata *, void *));
-static void cpu_mainbus_attach __P((struct device *, struct device *, void *));
+static int cpu_mainbus_match(struct device *, struct cfdata *, void *);
+static void cpu_mainbus_attach(struct device *, struct device *, void *);
  
 /*
  * int cpumatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -74,10 +74,7 @@ static void cpu_mainbus_attach __P((struct device *, struct device *, void *));
  */ 
  
 static int
-cpu_mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpu_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return(1);
 }
@@ -89,10 +86,7 @@ cpu_mainbus_match(parent, cf, aux)
  */
   
 static void
-cpu_mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	cpu_attach(self);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.24 2009/01/11 02:45:51 christos Exp $	*/
+/*	$NetBSD: sbp.c,v 1.24.2.1 2009/05/13 17:19:52 jym Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.24 2009/01/11 02:45:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.24.2.1 2009/05/13 17:19:52 jym Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -438,7 +438,7 @@ struct sbp_softc {
 #define SBP_UNLOCK(sbp)	fw_mtx_unlock(&(sbp)->mtx)
 
 #if defined(__NetBSD__)
-int sbpmatch (device_t, struct cfdata *, void *);
+int sbpmatch (device_t, cfdata_t, void *);
 void sbpattach (device_t parent, device_t self, void *aux);
 int sbpdetach (device_t self, int flags);
 #endif
@@ -579,7 +579,7 @@ END_DEBUG
 }
 #elif defined(__NetBSD__)
 int
-sbpmatch(device_t parent, struct cfdata *cf, void *aux)
+sbpmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fw_attach_args *fwa = aux;
 
@@ -685,7 +685,7 @@ END_DEBUG
 		 * realloc() doesn't allocate new buffer.
 		 */
 		if (maxlun > target->num_lun)
-			bzero(&newluns[target->num_lun],
+			memset(&newluns[target->num_lun], 0,
 			    sizeof(struct sbp_dev *) *
 			    (maxlun - target->num_lun));
 
@@ -742,7 +742,7 @@ END_DEBUG
 		sdev->login = (struct sbp_login_res *) sdev->dma.v_addr;
 		sdev->ocb = (struct sbp_ocb *)
 				((char *)sdev->dma.v_addr + SBP_LOGIN_SIZE);
-		bzero((char *)sdev->ocb,
+		memset((char *)sdev->ocb, 0,
 			sizeof (struct sbp_ocb) * SBP_QUEUE_LEN);
 
 		STAILQ_INIT(&sdev->free_ocbs);
@@ -822,8 +822,8 @@ sbp_probe_lun(struct sbp_dev *sdev)
 	struct crom_context c, *cc = &c;
 	struct csrreg *reg;
 
-	bzero(sdev->vendor, sizeof(sdev->vendor));
-	bzero(sdev->product, sizeof(sdev->product));
+	memset(sdev->vendor, 0, sizeof(sdev->vendor));
+	memset(sdev->product, 0, sizeof(sdev->product));
 
 	fwdev = sdev->target->fwdev;
 	crom_init_context(cc, fwdev->csrrom);
@@ -1584,7 +1584,7 @@ sbp_mgm_orb(struct sbp_dev *sdev, int func, struct sbp_ocb *aocb)
 	ocb->flags = OCB_ACT_MGM;
 	ocb->sdev = sdev;
 
-	bzero((void *)ocb->orb, sizeof(ocb->orb));
+	memset((void *)ocb->orb, 0, sizeof(ocb->orb));
 	ocb->orb[6] = htonl((nid << 16) | SBP_BIND_HI);
 	ocb->orb[7] = htonl(SBP_DEV2ADDR(dv_unit, sdev->lun_id));
 
@@ -1716,7 +1716,7 @@ END_DEBUG
 		if(sbp_cmd_status->ill_len)
 			sense->flags |= SSD_ILI;
 
-		bcopy(&sbp_cmd_status->info, &sense->information[0], 4);
+		memcpy(&sense->information[0], &sbp_cmd_status->info, 4);
 
 		if (sbp_status->len <= 1)
 			/* XXX not scsi status. shouldn't be happened */ 
@@ -1728,13 +1728,13 @@ END_DEBUG
 			/* fru, sense_key_spec */
 			sense->asl = 10;
 
-		bcopy(&sbp_cmd_status->cdb, &sense->csi[0], 4);
+		memcpy(&sense->csi[0], &sbp_cmd_status->cdb, 4);
 
 		sense->asc = sbp_cmd_status->s_code;
 		sense->ascq = sbp_cmd_status->s_qlfr;
 		sense->fruc = sbp_cmd_status->fru;
 
-		bcopy(&sbp_cmd_status->s_keydep[0], &sense->sks[0], 3);
+		memcpy(&sense->sks[0], &sbp_cmd_status->s_keydep[0], 3);
 		SCSI_XFER_ERROR(ocb->sxfer) = XS_SENSE;
 		SCSI_XFER_STATUS(ocb->sxfer) = sbp_cmd_status->status;
 /*
@@ -1789,9 +1789,9 @@ END_DEBUG
 		 * Some devices sometimes return strange strings.
 		 */
 #if 1
-		bcopy(sdev->vendor, inq->vendor, sizeof(inq->vendor));
-		bcopy(sdev->product, inq->product, sizeof(inq->product));
-		bcopy(sdev->revision+2, inq->revision, sizeof(inq->revision));
+		memcpy(inq->vendor, sdev->vendor, sizeof(inq->vendor));
+		memcpy(inq->product, sdev->product, sizeof(inq->product));
+		memcpy(inq->revision, sdev->revision+2, sizeof(inq->revision));
 #endif
 		break;
 	}
@@ -2654,7 +2654,7 @@ END_DEBUG
 			printf("sbp: CAM_DATA_PHYS\n");
 
 		cdb = SCSI_XFER_CMD(sxfer);
-		bcopy(cdb, (void *)&ocb->orb[5], SCSI_XFER_CMDLEN(sxfer));
+		memcpy((void *)&ocb->orb[5], cdb, SCSI_XFER_CMDLEN(sxfer));
 /*
 printf("ORB %08x %08x %08x %08x\n", ntohl(ocb->orb[0]), ntohl(ocb->orb[1]), ntohl(ocb->orb[2]), ntohl(ocb->orb[3]));
 printf("ORB %08x %08x %08x %08x\n", ntohl(ocb->orb[4]), ntohl(ocb->orb[5]), ntohl(ocb->orb[6]), ntohl(ocb->orb[7]));
@@ -3139,7 +3139,7 @@ sbp_abort_all_ocbs(struct sbp_dev *sdev, int status)
 
 	s = splfw();
 
-	bcopy(&sdev->ocbs, &temp, sizeof(temp));
+	memcpy(&temp, &sdev->ocbs, sizeof(temp));
 	STAILQ_INIT(&sdev->ocbs);
 	for (ocb = STAILQ_FIRST(&temp); ocb != NULL; ocb = next) {
 		next = STAILQ_NEXT(ocb, ocb);

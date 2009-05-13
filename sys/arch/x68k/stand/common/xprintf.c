@@ -4,7 +4,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: xprintf.c,v 1.1 1998/09/01 19:51:57 itohy Exp $
+ *	$NetBSD: xprintf.c,v 1.1.168.1 2009/05/13 17:18:43 jym Exp $
  */
 
 #include <sys/types.h>
@@ -52,17 +52,14 @@
 
 extern const char *const __progname;
 
-static char * numstr __P((char *buf, long val, int base, int sign));
+static char * numstr(char *buf, long val, int base, int sign);
 
 /*
  * convert number to string
  * buf must have enough space
  */
 static char *
-numstr(buf, val, base, sign)
-	char *buf;
-	long val;
-	int base, sign;
+numstr(char *buf, long val, int base, int sign)
 {
 	unsigned long v;
 	char rev[32];
@@ -97,11 +94,7 @@ numstr(buf, val, base, sign)
  * XXX argument/parameter types are not strictly handled
  */
 size_t
-xvsnprintf(buf, len, fmt, ap)
-	char *buf;
-	size_t len;
-	const char *fmt;
-	va_list ap;
+xvsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
 {
 	char *b = buf;
 	const char *s;
@@ -226,10 +219,7 @@ xsnprintf(buf, len, fmt, va_alist)
 }
 
 size_t
-xvfdprintf(fd, fmt, ap)
-	int fd;
-	const char *fmt;
-	va_list ap;
+xvfdprintf(int fd, const char *fmt, va_list ap)
 {
 	char buf[PRINTF_BUFSZ];
 	size_t ret;

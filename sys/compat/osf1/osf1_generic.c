@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.13 2007/12/20 23:03:02 dsl Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.13.24.1 2009/05/13 17:19:03 jym Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.13 2007/12/20 23:03:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.13.24.1 2009/05/13 17:19:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,23 +162,20 @@ int
 osf1_sys_select(struct lwp *l, const struct osf1_sys_select_args *uap, register_t *retval)
 {
 	struct osf1_timeval otv;
-	struct timeval tv, *tvp;
+	struct timespec ats, *ts = NULL;
 	int error;
 
-	if (SCARG(uap, tv) == NULL)
-		tvp = NULL;
-	else {
+	if (SCARG(uap, tv)) {
 		/* get the OSF/1 timeval argument */
 		error = copyin(SCARG(uap, tv), &otv, sizeof otv);
 		if (error != 0)
 			return error;
 
-		/* copy to the NetBSD timeval */
-		tv.tv_sec = otv.tv_sec;
-		tv.tv_usec = otv.tv_usec;
-		tvp = &tv;
+		ats.tv_sec = otv.tv_sec;
+		ats.tv_nsec = otv.tv_usec * 1000;
+		ts = &ats;
 	}
 
 	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
-	    SCARG(uap, ou), SCARG(uap, ex), tvp, NULL);
+	    SCARG(uap, ou), SCARG(uap, ex), ts, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.h,v 1.2 2006/10/26 22:49:36 bjh21 Exp $	*/
+/*	$NetBSD: ofw.h,v 1.2.72.1 2009/05/13 17:16:17 jym Exp $	*/
 
 /*
  * Copyright 1997
@@ -48,23 +48,23 @@ typedef int (*ofw_handle_t)(void *);
 
 
 /* Implemented in <ofw/ofw.c> */
-void ofw_init __P((ofw_handle_t));
-void ofw_boot __P((int, char *));
-void ofw_getbootinfo __P((char **, char **));
-void ofw_configmem __P((void));
-void ofw_configisa __P((vm_offset_t *, vm_offset_t *));
-void ofw_configisadma __P((vm_offset_t *));
-int  ofw_isadmarangeintersect __P((vm_offset_t, vm_offset_t,
-				   vm_offset_t *, vm_offset_t *));
-vm_offset_t ofw_gettranslation __P((vm_offset_t));
-vm_offset_t ofw_map __P((vm_offset_t, vm_size_t, int));
-vm_offset_t ofw_getcleaninfo __P((void));
+void ofw_init(ofw_handle_t);
+void ofw_boot(int, char *);
+void ofw_getbootinfo(char **, char **);
+void ofw_configmem(void);
+void ofw_configisa(vm_offset_t *, vm_offset_t *);
+void ofw_configisadma(vm_offset_t *);
+int  ofw_isadmarangeintersect(vm_offset_t, vm_offset_t,
+				   vm_offset_t *, vm_offset_t *);
+vm_offset_t ofw_gettranslation(vm_offset_t);
+vm_offset_t ofw_map(vm_offset_t, vm_size_t, int);
+vm_offset_t ofw_getcleaninfo(void);
 
 #ifdef	OFWGENCFG
 /* Implemented in <ofw/ofwgencfg_machdep.c> */
 extern int ofw_handleticks;
-extern void cpu_reboot		__P((int, char *));
-extern void ofrootfound		__P((void));
+extern void cpu_reboot(int, char *);
+extern void ofrootfound(void);
 #endif
 
 #endif /* !_MACHINE_OFW_H_ */

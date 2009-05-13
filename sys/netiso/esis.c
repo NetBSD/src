@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.53 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: esis.c,v 1.53.2.1 2009/05/13 17:22:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.53 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.53.2.1 2009/05/13 17:22:41 jym Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -396,7 +396,7 @@ esis_rdoutput(
 		esis_stat.es_nomem++;
 		return;
 	}
-	bzero(mtod(m, void *), MHLEN);
+	memset(mtod(m, void *), 0, MHLEN);
 
 	pdu = mtod(m, struct esis_fixed *);
 	cp = (void *) (pdu + 1);	/* pointer arith.; 1st byte after
@@ -416,7 +416,7 @@ esis_rdoutput(
 
 	/* Insert the snpa of better next hop */
 	*cp++ = sdl->sdl_alen;
-	bcopy(CLLADDR(sdl), cp, sdl->sdl_alen);
+	memcpy(cp, CLLADDR(sdl), sdl->sdl_alen);
 	cp += sdl->sdl_alen;
 	len += (sdl->sdl_alen + 1);
 
@@ -495,12 +495,12 @@ esis_rdoutput(
 	pdu->esis_hdr_len = m0->m_pkthdr.len = len;
 	iso_gen_csum(m0, ESIS_CKSUM_OFF, (int) pdu->esis_hdr_len);
 
-	bzero((void *) & siso, sizeof(siso));
+	memset((void *) & siso, 0, sizeof(siso));
 	siso.siso_family = AF_ISO;
 	siso.siso_data[0] = AFI_SNA;
 	siso.siso_nlen = 6 + 1;	/* should be taken from snpa_hdr */
 	/* +1 is for AFI */
-	bcopy(inbound_shp->snh_shost, siso.siso_data + 1, 6);
+	memcpy(siso.siso_data + 1, inbound_shp->snh_shost, 6);
 	(ifp->if_output) (ifp, m0, sisotosa(&siso), 0);
 }
 
@@ -922,7 +922,7 @@ esis_shoutput(
 		esis_stat.es_nomem++;
 		return;
 	}
-	bzero(mtod(m, void *), MHLEN);
+	memset(mtod(m, void *), 0, MHLEN);
 
 	pdu = mtod(m, struct esis_fixed *);
 	naddrp = cp = (char *) (pdu + 1);
@@ -1014,11 +1014,11 @@ esis_shoutput(
 	pdu->esis_hdr_len = len;
 	iso_gen_csum(m0, ESIS_CKSUM_OFF, (int) pdu->esis_hdr_len);
 
-	bzero((void *) & siso, sizeof(siso));
+	memset((void *) & siso, 0, sizeof(siso));
 	siso.siso_family = AF_ISO;
 	siso.siso_data[0] = AFI_SNA;
 	siso.siso_nlen = sn_len + 1;
-	bcopy(sn_addr, siso.siso_data + 1, (unsigned) sn_len);
+	memcpy(siso.siso_data + 1, sn_addr, (unsigned) sn_len);
 	(ifp->if_output) (ifp, m0, sisotosa(&siso), 0);
 }
 
@@ -1065,7 +1065,7 @@ isis_input(struct mbuf *m0, ...)
 #endif
 	esis_dl.sdl_alen = ifp->if_addrlen;
 	esis_dl.sdl_index = ifp->if_index;
-	bcopy(shp->snh_shost, (void *) esis_dl.sdl_data, esis_dl.sdl_alen);
+	memcpy((void *) esis_dl.sdl_data, shp->snh_shost, esis_dl.sdl_alen);
 	for (rp = esis_pcb.lh_first; rp != 0; rp = rp->rcb_list.le_next) {
 		if (first_rp == 0) {
 			first_rp = rp;
@@ -1146,7 +1146,7 @@ isis_output(struct mbuf *m, ...)
 		printf("\n");
 	}
 #endif
-	bzero((void *) & siso, sizeof(siso));
+	memset((void *) & siso, 0, sizeof(siso));
 	siso.siso_family = AF_ISO;	/* This convention may be useful for
 					 * X.25 */
 	if (sn_len == 0)
@@ -1154,7 +1154,7 @@ isis_output(struct mbuf *m, ...)
 	else {
 		siso.siso_data[0] = AFI_SNA;
 		siso.siso_nlen = sn_len + 1;
-		bcopy(CLLADDR(sdl), siso.siso_data + 1, sn_len);
+		memcpy(siso.siso_data + 1, CLLADDR(sdl), sn_len);
 	}
 	error = (ifp->if_output) (ifp, m, sisotosa(&siso), 0);
 	if (error) {

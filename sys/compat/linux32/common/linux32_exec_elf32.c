@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.8 2008/04/28 20:23:44 martin Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.8.14.1 2009/05/13 17:18:59 jym Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.8 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.8.14.1 2009/05/13 17:18:59 jym Exp $");
 
 #define	ELFSIZE		32
 
@@ -65,12 +65,8 @@ int linux32_copyinargs(struct exec_package *, struct ps_strings *,
 			void *, size_t, const void *, const void *);
 
 int
-ELFNAME2(linux32,probe)(l, epp, eh, itp, pos)
-	struct lwp *l;
-	struct exec_package *epp;
-	void *eh;
-	char *itp;
-	vaddr_t *pos;
+ELFNAME2(linux32,probe)(struct lwp *l, struct exec_package *epp,
+			void *eh, char *itp, vaddr_t *pos)
 {
 	int error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.27 2008/04/23 09:57:59 plunky Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.27.16.1 2009/05/13 17:22:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.27 2008/04/23 09:57:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.27.16.1 2009/05/13 17:22:42 jym Exp $");
 
 #include "opt_iso.h"
 
@@ -191,7 +191,7 @@ tp_emit(
 			m->m_nextpkt = NULL;
 			m->m_data = m->m_pktdat;
 			m->m_flags = M_PKTHDR;
-			bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+			memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 		}
 	} else {
 		MGETHDR(m, M_DONTWAIT, TPMT_TPHDR);
@@ -207,7 +207,7 @@ tp_emit(
 	m->m_nextpkt = NULL;
 
 	hdr = mtod(m, struct tpdu *);
-	bzero((void *) hdr, sizeof(struct tpdu));
+	memset((void *) hdr, 0, sizeof(struct tpdu));
 
 	{
 		hdr->tpdu_type = dutype;
@@ -643,9 +643,9 @@ tp_emit(
 				subseq = htons(tpcb->tp_r_subseq);
 				fcredit = htons(tpcb->tp_fcredit);
 
-				bcopy((void *) & lwe, (void *) & bogus[0], sizeof(SeqNum));
-				bcopy((void *) & subseq, (void *) & bogus[2], sizeof(u_short));
-				bcopy((void *) & fcredit, (void *) & bogus[3], sizeof(u_short));
+				memcpy((void *) & bogus[0], (void *) & lwe, sizeof(SeqNum));
+				memcpy((void *) & bogus[2], (void *) & subseq, sizeof(u_short));
+				memcpy((void *) & bogus[3], (void *) & fcredit, sizeof(u_short));
 
 #ifdef TPPT
 				if (tp_traceflags[D_ACKSEND]) {

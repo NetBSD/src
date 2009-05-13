@@ -1,4 +1,4 @@
-/*	$NetBSD: __cmsg_alignbytes.c,v 1.2 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: __cmsg_alignbytes.c,v 1.2.8.1 2009/05/13 17:23:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.2 2008/04/28 20:22:53 martin Exp $");
+__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.2.8.1 2009/05/13 17:23:11 jym Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.2 2008/04/28 20:22:53 martin Exp $");
 #endif
 
 int
-__cmsg_alignbytes()
+__cmsg_alignbytes(void)
 {
 	static int alignbytes = -1;
 #ifdef HW_ALIGNBYTES

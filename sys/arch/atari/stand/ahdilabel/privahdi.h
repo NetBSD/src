@@ -1,4 +1,4 @@
-/*	$NetBSD: privahdi.h,v 1.2 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: privahdi.h,v 1.2.14.1 2009/05/13 17:16:31 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,24 +64,24 @@ struct ahdi_ptable {
 	struct ptable_part	parts[MAXPARTITIONS];
 };
 
-int	 ahdi_buildlabel __P((struct ahdi_ptable *));
-int	 ahdi_checklabel __P((struct ahdi_ptable *));
-int	 ahdi_readlabel __P((struct ahdi_ptable *, char *, int));
-int	 ahdi_writedisktab __P((struct ahdi_ptable *, char *, char *, char *));
-int	 ahdi_writelabel __P((struct ahdi_ptable *, char *, int));
+int	 ahdi_buildlabel(struct ahdi_ptable *);
+int	 ahdi_checklabel(struct ahdi_ptable *);
+int	 ahdi_readlabel(struct ahdi_ptable *, char *, int);
+int	 ahdi_writedisktab(struct ahdi_ptable *, char *, char *, char *);
+int	 ahdi_writelabel(struct ahdi_ptable *, char *, int);
 
 extern int	ahdi_errp1, ahdi_errp2;
 
 /* Internal functions */
-u_int16_t		 ahdi_cksum __P((void *));
-void			 assign_letters __P((struct ahdi_ptable *));
-int			 check_magic __P((int, u_int, int));
-int			 dkcksum __P((struct disklabel *));
-void			*disk_read __P((int, u_int, u_int));
-int			 disk_write __P((int, u_int, u_int, void *));
-int			 invalidate_netbsd_label __P((int, u_int32_t));
-int			 openraw __P((const char *, int));
-struct disklabel	*read_dl __P((int));
-int			 read_rsec __P((int, struct ahdi_ptable *, u_int,
-			     u_int, int));
-int			 write_bsl __P((int));
+u_int16_t		 ahdi_cksum(void *);
+void			 assign_letters(struct ahdi_ptable *);
+int			 check_magic(int, u_int, int);
+int			 dkcksum(struct disklabel *);
+void			*disk_read(int, u_int, u_int);
+int			 disk_write(int, u_int, u_int, void *);
+int			 invalidate_netbsd_label(int, u_int32_t);
+int			 openraw(const char *, int);
+struct disklabel	*read_dl(int);
+int			 read_rsec(int, struct ahdi_ptable *, u_int,
+			     u_int, int);
+int			 write_bsl(int);

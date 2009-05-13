@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acmacros.h - C macros for the entire subsystem.
- *       $Revision: 1.4 $
+ *       $Revision: 1.4.18.1 $
  *
  *****************************************************************************/
 
@@ -312,10 +312,10 @@ typedef struct acpi_integer_overlay
 
 #define ACPI_MOVE_32_TO_16(d,s)         ACPI_MOVE_16_TO_16(d,s)    /* Truncate to 16 */
 
-#define ACPI_MOVE_32_TO_32(d,s)         {((  UINT8 *)(void *)(d))[0] = ((UINT8 *)(void *)(s))[0];\
-                                         ((  UINT8 *)(void *)(d))[1] = ((UINT8 *)(void *)(s))[1];\
-                                         ((  UINT8 *)(void *)(d))[2] = ((UINT8 *)(void *)(s))[2];\
-                                         ((  UINT8 *)(void *)(d))[3] = ((UINT8 *)(void *)(s))[3];}
+#define ACPI_MOVE_32_TO_32(d,s)         {((  UINT8 *)(void *)(d))[0] = ((const UINT8 *)(const void *)(s))[0];\
+                                         ((  UINT8 *)(void *)(d))[1] = ((const UINT8 *)(const void *)(s))[1];\
+                                         ((  UINT8 *)(void *)(d))[2] = ((const UINT8 *)(const void *)(s))[2];\
+                                         ((  UINT8 *)(void *)(d))[3] = ((const UINT8 *)(const void *)(s))[3];}
 
 #define ACPI_MOVE_32_TO_64(d,s)         {(*(UINT64 *)(void *)(d)) = 0; ACPI_MOVE_32_TO_32(d,s);}
 

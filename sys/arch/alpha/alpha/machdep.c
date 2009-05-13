@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.314 2009/01/21 16:24:34 he Exp $ */
+/* $NetBSD: machdep.c,v 1.314.2.1 2009/05/13 17:16:05 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_dec_3000_300.h"
 #include "opt_dec_3000_500.h"
@@ -67,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314 2009/01/21 16:24:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314.2.1 2009/05/13 17:16:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,20 +201,20 @@ int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];	/* low size bits overloaded */
 int	mem_cluster_cnt;
 
-int	cpu_dump __P((void));
-int	cpu_dumpsize __P((void));
-u_long	cpu_dump_mempagecnt __P((void));
-void	dumpsys __P((void));
-void	identifycpu __P((void));
-void	printregs __P((struct reg *));
+int	cpu_dump(void);
+int	cpu_dumpsize(void);
+u_long	cpu_dump_mempagecnt(void);
+void	dumpsys(void);
+void	identifycpu(void);
+void	printregs(struct reg *);
 
 void
-alpha_init(pfn, ptb, bim, bip, biv)
-	u_long pfn;		/* first free PFN number */
-	u_long ptb;		/* PFN of current level 1 page table */
-	u_long bim;		/* bootinfo magic */
-	u_long bip;		/* bootinfo pointer */
-	u_long biv;		/* bootinfo version */
+alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
+	/* pfn:		 first free PFN number */
+	/* ptb:		 PFN of current level 1 page table */
+	/* bim:		 bootinfo magic */
+	/* bip:		 bootinfo pointer */
+	/* biv:		 bootinfo version */
 {
 	extern char kernel_text[], _end[];
 	struct mddt *mddtp;
@@ -791,7 +792,7 @@ nobootinfo:
 }
 
 void
-consinit()
+consinit(void)
 {
 
 	/*
@@ -805,7 +806,7 @@ consinit()
 }
 
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -875,7 +876,7 @@ cpu_startup()
  * Retrieve the platform name from the DSR.
  */
 const char *
-alpha_dsr_sysname()
+alpha_dsr_sysname(void)
 {
 	struct dsrdb *dsr;
 	const char *sysname;
@@ -897,9 +898,7 @@ alpha_dsr_sysname()
  * returning the model string on match.
  */
 const char *
-alpha_variation_name(variation, avtp)
-	u_int64_t variation;
-	const struct alpha_variation_table *avtp;
+alpha_variation_name(u_int64_t variation, const struct alpha_variation_table *avtp)
 {
 	int i;
 
@@ -913,7 +912,7 @@ alpha_variation_name(variation, avtp)
  * Generate a default platform name based for unknown system variations.
  */
 const char *
-alpha_unknown_sysname()
+alpha_unknown_sysname(void)
 {
 	static char s[128];		/* safe size */
 
@@ -923,7 +922,7 @@ alpha_unknown_sysname()
 }
 
 void
-identifycpu()
+identifycpu(void)
 {
 	char *s;
 	int i;
@@ -958,9 +957,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 #if defined(MULTIPROCESSOR)
 	u_long cpu_id = cpu_number();
@@ -1066,7 +1063,7 @@ long	dumplo = 0; 		/* blocks */
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -1082,7 +1079,7 @@ cpu_dumpsize()
  * cpu_dump_mempagecnt: calculate size of RAM (in pages) to be dumped.
  */
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	u_long i, n;
 
@@ -1096,9 +1093,9 @@ cpu_dump_mempagecnt()
  * cpu_dump: dump machine-dependent kernel core dump headers.
  */
 int
-cpu_dump()
+cpu_dump(void)
 {
-	int (*dump) __P((dev_t, daddr_t, void *, size_t));
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -1149,7 +1146,7 @@ cpu_dump()
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
@@ -1194,14 +1191,14 @@ bad:
 #define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memcl;
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, void *, size_t));
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	/* Save registers. */
@@ -1307,9 +1304,7 @@ err:
 }
 
 void
-frametoreg(framep, regp)
-	const struct trapframe *framep;
-	struct reg *regp;
+frametoreg(const struct trapframe *framep, struct reg *regp)
 {
 
 	regp->r_regs[R_V0] = framep->tf_regs[FRAME_V0];
@@ -1347,9 +1342,7 @@ frametoreg(framep, regp)
 }
 
 void
-regtoframe(regp, framep)
-	const struct reg *regp;
-	struct trapframe *framep;
+regtoframe(const struct reg *regp, struct trapframe *framep)
 {
 
 	framep->tf_regs[FRAME_V0] = regp->r_regs[R_V0];
@@ -1387,8 +1380,7 @@ regtoframe(regp, framep)
 }
 
 void
-printregs(regp)
-	struct reg *regp;
+printregs(struct reg *regp)
 {
 	int i;
 
@@ -1398,8 +1390,7 @@ printregs(regp)
 }
 
 void
-regdump(framep)
-	struct trapframe *framep;
+regdump(struct trapframe *framep)
 {
 	struct reg reg;
 
@@ -1600,10 +1591,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	register struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tfp = l->l_md.md_tf;
 #ifdef DEBUG
@@ -1748,8 +1736,7 @@ fpusave_proc(struct lwp *l, int save)
  * Wait "n" microseconds.
  */
 void
-delay(n)
-	unsigned long n;
+delay(unsigned long n)
 {
 	unsigned long pcc0, pcc1, curcycle, cycles, usec;
 
@@ -1788,10 +1775,7 @@ delay(n)
 
 #ifdef EXEC_ECOFF
 void
-cpu_exec_ecoff_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
@@ -1806,9 +1790,7 @@ cpu_exec_ecoff_setregs(l, epp, stack)
  *
  */
 int
-cpu_exec_ecoff_probe(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	int error;
@@ -1823,8 +1805,7 @@ cpu_exec_ecoff_probe(l, epp)
 #endif /* EXEC_ECOFF */
 
 int
-alpha_pa_access(pa)
-	u_long pa;
+alpha_pa_access(u_long pa)
 {
 	int i;
 
@@ -1861,8 +1842,7 @@ alpha_XXX_dmamap(v)						/* XXX */
 /* XXX XXX END XXX XXX */
 
 char *
-dot_conv(x)
-	unsigned long x;
+dot_conv(unsigned long x)
 {
 	int i;
 	char *xc;
@@ -1883,10 +1863,7 @@ dot_conv(x)
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct trapframe *frame = l->l_md.md_tf;
 	__greg_t *gr = mcp->__gregs;
@@ -1926,10 +1903,7 @@ cpu_getmcontext(l, mcp, flags)
 
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *frame = l->l_md.md_tf;
 	const __greg_t *gr = mcp->__gregs;

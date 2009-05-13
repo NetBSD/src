@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.11 2006/12/10 10:01:49 scw Exp $ */
+/*	$NetBSD: ixp425.c,v 1.11.64.1 2009/05/13 17:16:18 jym Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -33,8 +33,10 @@
  * SUCH DAMAGE.
  */
 
+#include "pci.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.11 2006/12/10 10:01:49 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.11.64.1 2009/05/13 17:16:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,20 +53,15 @@ struct	ixp425_softc *ixp425_softc;
 void
 ixp425_attach(struct ixp425_softc *sc)
 {
+#if NPCI > 0
 	struct pcibus_attach_args pba;
+#endif
 
 	sc->sc_iot = &ixp425_bs_tag;
 
 	ixp425_softc = sc;
 
 	printf("\n");
-
-	/*
-	 * Mapping for PCI CSR
-	 */
-	if (bus_space_map(sc->sc_iot, IXP425_PCI_HWBASE, IXP425_PCI_SIZE,
-			  0, &sc->sc_pci_ioh))
-		panic("%s: unable to map PCI registers", sc->sc_dev.dv_xname);
 
 	/*
 	 * Mapping for GPIO Registers
@@ -77,6 +74,14 @@ ixp425_attach(struct ixp425_softc *sc)
 			  0, &sc->sc_exp_ioh))
 		panic("%s: unable to map Expansion Bus registers",
 		    sc->sc_dev.dv_xname);
+
+#if NPCI > 0
+	/*
+	 * Mapping for PCI CSR
+	 */
+	if (bus_space_map(sc->sc_iot, IXP425_PCI_HWBASE, IXP425_PCI_SIZE,
+			  0, &sc->sc_pci_ioh))
+		panic("%s: unable to map PCI registers", sc->sc_dev.dv_xname);
 
 	/*
 	 * Invoke the board-specific PCI initialization code
@@ -108,4 +113,5 @@ ixp425_attach(struct ixp425_softc *sc)
 			PCI_FLAGS_MRL_OKAY   | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
 	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
+#endif
 }

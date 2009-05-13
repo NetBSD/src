@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.64 2009/01/22 16:12:43 cegger Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.64.2.1 2009/05/13 17:21:35 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.64 2009/01/22 16:12:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.64.2.1 2009/05/13 17:21:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.64 2009/01/22 16:12:43 cegger Exp $")
 #include <sys/fcntl.h>
 #include <sys/filio.h>
 #endif
-#include <sys/tty.h>
 #include <sys/file.h>
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500014
 #include <sys/selinfo.h>

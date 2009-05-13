@@ -1,4 +1,4 @@
-/* $NetBSD: toastersensors.c,v 1.7 2008/04/28 20:23:17 martin Exp $ */
+/* $NetBSD: toastersensors.c,v 1.7.14.1 2009/05/13 17:16:39 jym Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.7 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.7.14.1 2009/05/13 17:16:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -112,10 +112,7 @@ CFATTACH_DECL(toastersensors, sizeof(struct toastersensors_softc),
     toastersensors_match, toastersensors_attach, NULL, NULL);
 
 static int
-toastersensors_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+toastersensors_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
@@ -133,8 +130,7 @@ toastersensors_match(parent, match, aux)
 	(EP93XX_GPIO_ ## x), GPIO_GET(x) & (~(y)))
 
 static void
-toastersensors_poll(arg)
-	void *arg;
+toastersensors_poll(void *arg)
 {
 	struct toastersensors_softc *sc = arg;
 
@@ -153,10 +149,7 @@ toastersensors_poll(arg)
 }
 
 static void
-toastersensors_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+toastersensors_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct toastersensors_softc *sc = (void *)self;
 	struct tspld_attach_args *taa = aux;
@@ -275,9 +268,7 @@ toastersensors_attach(parent, self, aux)
 }
 
 static void
-toastersensors_scankeys(mxkp_sc, keys)
-	struct matrixkp_softc *mxkp_sc;
-	u_int32_t *keys;
+toastersensors_scankeys(struct matrixkp_softc *mxkp_sc, u_int32_t *keys)
 {
 	struct toastersensors_softc *sc = (void *)mxkp_sc->sc_dev;
 	u_int32_t val = GPIO_GET(PBDR) & 0x3f;

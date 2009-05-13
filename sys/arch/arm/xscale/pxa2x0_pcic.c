@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.5 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.5.2.1 2009/05/13 17:16:19 jym Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.5 2009/01/29 12:28:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.5.2.1 2009/05/13 17:16:19 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.5 2009/01/29 12:28:15 nonaka Exp $
 #include <arm/xscale/pxa2x0_pcic.h>
 
 static int	pxapcic_print(void *, const char *);
+
+static void	pxapcic_doattach(struct device *);
 
 static void	pxapcic_event_thread(void *);
 static void	pxapcic_event_process(struct pxapcic_socket *);
@@ -335,7 +337,6 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 	struct pcmciabus_attach_args paa;
 	struct pxapcic_socket *so;
 	int s[PXAPCIC_NSLOT];
-	u_int cs;
 	int i;
 
 	printf(": %d slot%s\n", sc->sc_nslots, sc->sc_nslots < 2 ? "" : "s");
@@ -391,18 +392,46 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 
 		/* GPIO pin for interrupt */
 		so->irqpin = sc->sc_irqpin[s[i]];
+	}
+
+	config_interrupts(sc->sc_dev, pxapcic_doattach);
+}
+
+void
+pxapcic_doattach(struct device *self)
+{
+	struct pxapcic_softc *sc = device_private(self);
+	struct pxapcic_socket *sock;
+	int s[PXAPCIC_NSLOT];
+	int i;
+	u_int cs;
+
+	if (sc->sc_flags & PPF_REVERSE_ORDER) {
+		for (i = 0; i < sc->sc_nslots; i++) {
+			s[i] = sc->sc_nslots - 1 - i;
+		}
+	} else {
+		for (i = 0; i < sc->sc_nslots; i++) {
+			s[i] = i;
+		}
+	}
+
+	for (i = 0; i < sc->sc_nslots; i++) {
+		sock = &sc->sc_socket[s[i]];
+
+		config_pending_incr();
 
 		/* If there's a card there, attach it. */
-		cs = (*so->pcictag->read)(so, PXAPCIC_CARD_STATUS);
+		cs = (*sock->pcictag->read)(sock, PXAPCIC_CARD_STATUS);
 		if (cs == PXAPCIC_CARD_VALID)
-			pxapcic_attach_card(so);
+			pxapcic_attach_card(sock);
 
 		if (kthread_create(PRI_NONE, 0, NULL, pxapcic_event_thread,
-		    so, &so->event_thread, "%s,%d", device_xname(sc->sc_dev),
-		    so->socket)) {
+		    sock, &sock->event_thread, "%s,%d",
+		    device_xname(sc->sc_dev), sock->socket)) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to create event thread for %d\n",
-			    so->socket);
+			    sock->socket);
 		}
 	}
 }
@@ -427,6 +456,8 @@ pxapcic_event_thread(void *arg)
 	struct pxapcic_socket *sock = (struct pxapcic_socket *)arg;
 	u_int cs;
 	int present;
+
+	config_pending_decr();
 
 	while (sock->sc->sc_shutdown == 0) {
 		(void) tsleep(sock, PWAIT, "pxapcicev", 0);

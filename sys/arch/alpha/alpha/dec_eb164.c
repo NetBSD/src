@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.56 2007/03/04 14:46:45 yamt Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.56.58.1 2009/05/13 17:16:04 jym Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.56 2007/03/04 14:46:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.56.58.1 2009/05/13 17:16:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,9 @@ static int comcnrate = CONSPEED;
 
 #define	DR_VERBOSE(f) while (0)
 
-void dec_eb164_init __P((void));
-static void dec_eb164_cons_init __P((void));
-static void dec_eb164_device_register __P((struct device *, void *));
+void dec_eb164_init(void);
+static void dec_eb164_cons_init(void);
+static void dec_eb164_device_register(struct device *, void *);
 
 #ifdef KGDB
 #include <machine/db_machdep.h>
@@ -176,9 +176,7 @@ dec_eb164_cons_init()
 }
 
 static void
-dec_eb164_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_eb164_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

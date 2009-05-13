@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.16 2008/02/23 05:48:14 matt Exp $   */
+/*	$NetBSD: intvec.S,v 1.16.18.1 2009/05/13 17:18:41 jym Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -128,7 +128,7 @@ _C_LABEL(rpb):
 	NOVEC;				# Unused, 94
 	NOVEC;				# Unused, 98
 	NOVEC;				# Unused, 9C
-	INTVEC(softclock, KSTACK);	# Software clock interupt, A0 (IPL 08)
+	INTVEC(softclock, KSTACK);	# Software clock interrupt, A0 (IPL 08)
 	NOVEC;				# Unused, A4 (IPL 09)
 	NOVEC;				# Unused, A8 (IPL 10)
 	INTVEC(softbio, KSTACK);	# Software bio interrupt, AC (IPL 11)

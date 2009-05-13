@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4.14.1 2009/05/13 17:16:39 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4.14.1 2009/05/13 17:16:39 jym Exp $");
 
 #include "opt_irqstats.h"
 
@@ -103,11 +103,7 @@ static unsigned int isairq[3] = { 5, 6, 7 };
 static unsigned int isairq_nhandlers[3] = { 0, 0, 0 };
 
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	int i, bestirq, count;
 
@@ -147,13 +143,7 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
  * Set up an interrupt handler to start being called.
  */
 void *
-isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun) __P((void *));
-	void *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg)
 {
 	int epirq = -1, i;
 	/* Find real EP93XX irq number */
@@ -171,16 +161,13 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	ep93xx_intr_disestablish(arg);
 }
 
 void
-isa_tsarm_init(iobase16, membase16)
-        u_int iobase16, membase16;
+isa_tsarm_init(u_int iobase16, u_int membase16)
 {
         isa_io_init(iobase16, membase16);
 }
@@ -197,9 +184,7 @@ isa_intr_init(void)
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
 {
 	/*
 	 * Since we can only have one ISA bus, we just use a single

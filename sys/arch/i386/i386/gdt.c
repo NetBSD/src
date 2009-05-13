@@ -1,11 +1,11 @@
-/*	$NetBSD: gdt.c,v 1.45 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: gdt.c,v 1.45.14.1 2009/05/13 17:17:49 jym Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by John T. Kohl and Charles M. Hannum.
+ * by John T. Kohl, by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.45 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.45.14.1 2009/05/13 17:17:49 jym Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.45 2008/04/28 20:23:24 martin Exp $");
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/user.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -57,39 +58,13 @@ int gdt_next[2];	/* next available slot for sweeping */
 int gdt_free[2];	/* next free slot; terminated with GNULL_SEL */
 #endif
 
+static int ldt_count;	/* number of LDTs */
+static int ldt_max = 1000;/* max number of LDTs */
 
-static kmutex_t gdt_lock_store;
-
-static inline void gdt_lock(void);
-static inline void gdt_unlock(void);
 void gdt_init(void);
 void gdt_grow(int);
 int gdt_get_slot1(int);
 void gdt_put_slot1(int, int);
-
-/*
- * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
- * waiting for memory.
- *
- * Note that the locking done here is not sufficient for multiprocessor
- * systems.  A freshly allocated slot will still be of type SDT_SYSNULL for
- * some time after the GDT is unlocked, so gdt_compact() could attempt to
- * reclaim it.
- */
-static inline void
-gdt_lock()
-{
-
-	mutex_enter(&gdt_lock_store);
-}
-
-static inline void
-gdt_unlock()
-{
-
-	mutex_exit(&gdt_lock_store);
-}
-
 
 static void
 update_descriptor(union descriptor *table, union descriptor *entry)
@@ -133,15 +108,13 @@ setgdt(int sel, const void *base, size_t limit,
  * Initialize the GDT subsystem.  Called from autoconf().
  */
 void
-gdt_init()
+gdt_init(void)
 {
 	size_t max_len, min_len;
 	union descriptor *old_gdt;
 	struct vm_page *pg;
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
-
-	mutex_init(&gdt_lock_store, MUTEX_DEFAULT, IPL_NONE);
 
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	min_len = MINGDTSIZ * sizeof(gdt[0]);
@@ -323,8 +296,11 @@ gdt_grow(int which)
  */
 
 int
-gdt_get_slot()
+gdt_get_slot(void)
 {
+
+	KASSERT(mutex_owned(&cpu_lock));
+
 	return gdt_get_slot1(0);
 }
 
@@ -334,7 +310,7 @@ gdt_get_slot1(int which)
 	int slot;
 	size_t offset;
 
-	gdt_lock();
+	KASSERT(mutex_owned(&cpu_lock));
 
 	if (gdt_free[which] != GNULL_SEL) {
 		slot = gdt_free[which];
@@ -352,7 +328,6 @@ gdt_get_slot1(int which)
 	}
 
 	gdt_count[which]++;
-	gdt_unlock();
 	return (slot);
 }
 
@@ -362,6 +337,9 @@ gdt_get_slot1(int which)
 void
 gdt_put_slot(int slot)
 {
+
+	KASSERT(mutex_owned(&cpu_lock));
+
 	gdt_put_slot1(slot, 0);
 }
 
@@ -372,7 +350,8 @@ gdt_put_slot1(int slot, int which)
 	d.raw[0] = 0;
 	d.raw[1] = 0;
 
-	gdt_lock();
+	KASSERT(mutex_owned(&cpu_lock));
+
 	gdt_count[which]--;
 
 	d.gd.gd_type = SDT_SYSNULL;
@@ -380,8 +359,6 @@ gdt_put_slot1(int slot, int which)
 	update_descriptor(&gdt[slot], &d);
 
 	gdt_free[which] = slot;
-
-	gdt_unlock();
 }
 
 #ifndef XEN
@@ -390,9 +367,12 @@ tss_alloc(const struct i386tss *tss)
 {
 	int slot;
 
+	mutex_enter(&cpu_lock);
 	slot = gdt_get_slot();
 	setgdt(slot, tss, sizeof(struct i386tss) + IOMAPSIZE - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	mutex_exit(&cpu_lock);
+
 	return GSEL(slot, SEL_KPL);
 }
 
@@ -400,17 +380,24 @@ void
 tss_free(int sel)
 {
 
+	mutex_enter(&cpu_lock);
 	gdt_put_slot(IDXSEL(sel));
+	mutex_exit(&cpu_lock);
 }
 #endif
 
-/*
- * Caller must have pmap locked for both of these functions.
- */
 int
 ldt_alloc(union descriptor *ldtp, size_t len)
 {
 	int slot;
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	if (ldt_count >= ldt_max) {
+		return -1;
+	}
+	ldt_count++;
+
 #ifndef XEN
 	slot = gdt_get_slot();
 	setgdt(slot, ldtp, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
@@ -420,6 +407,7 @@ ldt_alloc(union descriptor *ldtp, size_t len)
 	cpu_info_primary.ci_gdt[slot].ld.ld_entries =
 	    len / sizeof(union descriptor);
 #endif
+
 	return GSEL(slot, SEL_KPL);
 }
 
@@ -428,10 +416,14 @@ ldt_free(int sel)
 {
 	int slot;
 
+	KASSERT(mutex_owned(&cpu_lock));
+	KASSERT(ldt_count > 0);
+
 	slot = IDXSEL(sel);
 #ifndef XEN
 	gdt_put_slot(slot);
 #else
 	gdt_put_slot1(slot, 1);
 #endif
+	ldt_count--;
 }

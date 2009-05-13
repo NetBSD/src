@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.71 2008/08/16 13:07:30 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.71.8.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.71 2008/08/16 13:07:30 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.71.8.1 2009/05/13 17:19:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -496,16 +496,30 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 	case FIOASYNC:
 	case RNDGETENTCNT:
 		break;
+
 	case RNDGETPOOLSTAT:
 	case RNDGETSRCNUM:
 	case RNDGETSRCNAME:
-	case RNDCTL:
-	case RNDADDDATA:
-		ret = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL);
+		ret = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_RND_GETPRIV, NULL, NULL, NULL, NULL);
 		if (ret)
 			return (ret);
 		break;
+
+	case RNDCTL:
+		ret = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_RND_SETPRIV, NULL, NULL, NULL, NULL);
+		if (ret)
+			return (ret);
+		break;
+
+	case RNDADDDATA:
+		ret = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_RND_ADDDATA, NULL, NULL, NULL, NULL);
+		if (ret)
+			return (ret);
+		break;
+
 	default:
 		return (EINVAL);
 	}

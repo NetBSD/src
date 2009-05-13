@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.43 2009/01/01 13:53:53 jdc Exp $ */
+/*	$NetBSD: cgsix.c,v 1.43.2.1 2009/05/13 17:21:30 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.43 2009/01/01 13:53:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.43.2.1 2009/05/13 17:21:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,14 +109,12 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.43 2009/01/01 13:53:53 jdc Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include "opt_wsemul.h"
 #include "rasops_glue.h"
 
 #include <dev/sun/cgsixreg.h>
 #include <dev/sun/cgsixvar.h>
-#include "wsdisplay.h"
 
 static void	cg6_unblank(device_t);
 static void	cg6_blank(struct cgsix_softc *, int);

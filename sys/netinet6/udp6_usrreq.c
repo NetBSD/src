@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.86 2008/05/04 07:22:15 thorpej Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.86.14.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.86 2008/05/04 07:22:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.86.14.1 2009/05/13 17:22:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -195,7 +195,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			return NULL;
 		}
 
-		bzero(&uh, sizeof(uh));
+		memset(&uh, 0, sizeof(uh));
 		m_copydata(m, off, sizeof(*uhp), (void *)&uh);
 
 		if (cmd == PRC_MSGSIZE) {
@@ -345,7 +345,7 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		}
 		s = splsoftnet();
 		in6_pcbdisconnect(in6p);
-		bzero((void *)&in6p->in6p_laddr, sizeof(in6p->in6p_laddr));
+		memset((void *)&in6p->in6p_laddr, 0, sizeof(in6p->in6p_laddr));
 		splx(s);
 		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
 		in6_pcbstate(in6p, IN6P_BOUND);		/* XXX */

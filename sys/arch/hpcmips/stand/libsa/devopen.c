@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 2000/01/16 03:07:24 takemura Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3.148.1 2009/05/13 17:17:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -41,8 +41,8 @@
 #include <winfs.h>
 #include <lib/libsa/ufs.h>
 
-extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
-                              unsigned int*, const char**));
+extern int parsebootfile(const char *, char**, char**, unsigned int*,
+                              unsigned int*, const char**);
 
 struct devsw devsw[] = {
 	{"winblk", winblkstrategy, winblkopen, winblkclose, winblkioctl },
@@ -63,12 +63,11 @@ struct fs_ops   file_system[] = {
 int nfsys = 1;
 
 int
-parsebootfile(fnamexx, fsmode, devname, unit, partition, file)
-        const char     *fnamexx;
-        char          **fsmode; /* out */
-        char          **devname; /* out */
-        unsigned int   *unit, *partition; /* out */
-        const char    **file; /* out */
+parsebootfile(const char *fnamexx, char **fsmode, char **devname, unsigned int *unit, unsigned int *partition, const char **file)
+	/* fsmode:  out */
+	/* devname:  out */
+	/* unit, *partition:  out */
+	/* file:  out */
 {
 	TCHAR *fname = (TCHAR*)fnamexx;
 
@@ -101,10 +100,7 @@ parsebootfile(fnamexx, fsmode, devname, unit, partition, file)
 
 
 int
-devopen(f, fname, file)
-        struct open_file *f;
-        const char     *fname;
-        char          **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
         char           *devname;
         char           *fsmode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.155 2009/01/17 09:00:24 cegger Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.155.2.1 2009/05/13 17:21:56 jym Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.155 2009/01/17 09:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.155.2.1 2009/05/13 17:21:56 jym Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_netbsd.h"
+#include "opt_modular.h"
 #include "opt_sa.h"
 #include "opt_posix.h"
 #include "pty.h"
@@ -1726,7 +1727,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	sysctl_unlock();
 	if (pid == -1) {
 		mutex_enter(proc_lock);
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			/* Grab a hold on the process. */
 			if (!rw_tryenter(&p->p_reflock, RW_READER)) {
 				continue;
@@ -2038,11 +2039,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			} else {
 				mutex_exit(&fp->f_lock);
 			}
-			if (elem_count > 0) {
-				needed += elem_size;
-				if (elem_count != INT_MAX)
-					elem_count--;
-			}
+			needed += elem_size;
+			if (elem_count > 0 && elem_count != INT_MAX)
+				elem_count--;
 		}
 		mutex_exit(&filelist_lock);
 		fputdummy(tp);
@@ -2054,7 +2053,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			return (EINVAL);
 		sysctl_unlock();
 		mutex_enter(proc_lock);
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL) {
 				/* skip embryonic processes */
 				continue;
@@ -2114,11 +2113,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				} else {
 					mutex_exit(&ff->ff_lock);
 				}
-				if (elem_count > 0) {
-					needed += elem_size;
-					if (elem_count != INT_MAX)
-						elem_count--;
-				}
+				needed += elem_size;
+				if (elem_count > 0 && elem_count != INT_MAX)
+					elem_count--;
 			}
 			mutex_exit(&fd->fd_lock);
 
@@ -2151,7 +2148,7 @@ fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 
 	kp->ki_fileaddr =	PTRTOUINT64(fp);
 	kp->ki_flag =		fp->f_flag;
-	kp->ki_iflags =		fp->f_iflags;
+	kp->ki_iflags =		0;
 	kp->ki_ftype =		fp->f_type;
 	kp->ki_count =		fp->f_count;
 	kp->ki_msgcount =	fp->f_msgcount;
@@ -2233,6 +2230,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		kproc2 = kmem_alloc(sizeof(*kproc2), KM_SLEEP);
 	}
 	marker = kmem_alloc(sizeof(*marker), KM_SLEEP);
+	marker->p_flag = PK_MARKER;
 
 	mutex_enter(proc_lock);
 	mmmbrains = false;
@@ -2246,6 +2244,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				break;
 		}
 		next = LIST_NEXT(p, p_list);
+		if ((p->p_flag & PK_MARKER) != 0)
+			continue;
 
 		/*
 		 * Skip embryonic processes.
@@ -3034,6 +3034,14 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
+		ki->p_vm_vsize = vm->vm_map.size;
+		/*
+		 * Since the stack is initially mapped mostly with
+		 * PROT_NONE and grown as needed, adjust the "mapped size"
+		 * to skip the unused stack portion.
+		 */
+		ki->p_vm_msize =
+		    atop(vm->vm_map.size) - vm->vm_issize + vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
 		l = proc_active_lwp(p);
@@ -3204,6 +3212,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
+		ep->e_vm.vm_map.size = vm->vm_map.size;
 
 		/* Pick the primary (first) LWP */
 		l = proc_active_lwp(p);

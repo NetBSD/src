@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.12 2008/01/20 16:28:24 joerg Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.12.24.1 2009/05/13 17:16:38 jym Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,7 +39,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.12 2008/01/20 16:28:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.12.24.1 2009/05/13 17:16:38 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,7 +233,7 @@ setstatclockrate(int new_hz)
  */
  
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int intvl;
 	int statint;

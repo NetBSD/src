@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.20 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.20.92.1 2009/05/13 17:18:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,50 +92,50 @@ typedef int jmp_buf[12];
 typedef void (*psig_t)(int);
 
 struct callback {
-	void	*(*_memcpy) __P((void *, void *, int));		/* 00 */
-	void	*(*_memset) __P((void *, int, int));		/* 04 */
-	char	*(*_strcat) __P((char *, char *));		/* 08 */
-	int	(*_strcmp) __P((char *, char *));		/* 0c */
-	char	*(*_strcpy) __P((char *, char *));		/* 10 */
-	int	(*_strlen) __P((char *));			/* 14 */
-	char	*(*_strncat) __P((char *, char *, int));	/* 18 */
-	char	*(*_strncpy) __P((char *, char *, int));	/* 1c */
-	int	(*_strncmp) __P((char *, char *, int));		/* 20 */
-	int	(*_getchar) __P((void));			/* 24 */
-	char	*(*_gets) __P((char *));			/* 28 */
-	int	(*_puts) __P((char *));				/* 2c */
-	int	(*_printf) __P((const char *, ...));		/* 30 */
-	int	(*_sprintf) __P((char *, char *, ...));		/* 34 */
-	int	(*_io_poll) __P((void));			/* 38 */
-	long	(*_strtol) __P((char *, char **, int));		/* 3c */
-	psig_t	(*_signal) __P((int, psig_t));			/* 40 */
-	int	(*_raise) __P((int));				/* 44 */
-	long	(*_time) __P((long *));				/* 48 */
-	int	(*_setjmp) __P((jmp_buf));			/* 4c */
-	void	(*_longjmp) __P((jmp_buf, int));		/* 50 */
-	int	(*_bootinit) __P((char *));			/* 54 */
-	int	(*_bootread) __P((int, void *, int));		/* 58 */
-	int	(*_bootwrite) __P((int, void *, int));		/* 5c */
-	int	(*_setenv) __P((char *, char *));		/* 60 */
-	char	*(*_getenv) __P((const char *));		/* 64 */
-	int	(*_unsetenv) __P((char *));			/* 68 */
-	u_long	(*_slot_address) __P((int));			/* 6c */
-	void	(*_wbflush) __P((void));			/* 70 */
-	void	(*_msdelay) __P((int));				/* 74 */
-	void	(*_leds) __P((int));				/* 78 */
-	void	(*_clear_cache) __P((char *, int));		/* 7c */
-	int	(*_getsysid) __P((void));			/* 80 */
-	int	(*_getbitmap) __P((memmap *));			/* 84 */
-	int	(*_disableintr) __P((int));			/* 88 */
-	int	(*_enableintr) __P((int));			/* 8c */
-	int	(*_testintr) __P((int));			/* 90 */
+	void	*(*_memcpy)(void *, void *, int);		/* 00 */
+	void	*(*_memset)(void *, int, int);		/* 04 */
+	char	*(*_strcat)(char *, char *);		/* 08 */
+	int	(*_strcmp)(char *, char *);		/* 0c */
+	char	*(*_strcpy)(char *, char *);		/* 10 */
+	int	(*_strlen)(char *);			/* 14 */
+	char	*(*_strncat)(char *, char *, int);	/* 18 */
+	char	*(*_strncpy)(char *, char *, int);	/* 1c */
+	int	(*_strncmp)(char *, char *, int);		/* 20 */
+	int	(*_getchar)(void);			/* 24 */
+	char	*(*_gets)(char *);			/* 28 */
+	int	(*_puts)(char *);				/* 2c */
+	int	(*_printf)(const char *, ...);		/* 30 */
+	int	(*_sprintf)(char *, char *, ...);		/* 34 */
+	int	(*_io_poll)(void);			/* 38 */
+	long	(*_strtol)(char *, char **, int);		/* 3c */
+	psig_t	(*_signal)(int, psig_t);			/* 40 */
+	int	(*_raise)(int);				/* 44 */
+	long	(*_time)(long *);				/* 48 */
+	int	(*_setjmp)(jmp_buf);			/* 4c */
+	void	(*_longjmp)(jmp_buf, int);		/* 50 */
+	int	(*_bootinit)(char *);			/* 54 */
+	int	(*_bootread)(int, void *, int);		/* 58 */
+	int	(*_bootwrite)(int, void *, int);		/* 5c */
+	int	(*_setenv)(char *, char *);		/* 60 */
+	char	*(*_getenv)(const char *);		/* 64 */
+	int	(*_unsetenv)(char *);			/* 68 */
+	u_long	(*_slot_address)(int);			/* 6c */
+	void	(*_wbflush)(void);			/* 70 */
+	void	(*_msdelay)(int);				/* 74 */
+	void	(*_leds)(int);				/* 78 */
+	void	(*_clear_cache)(char *, int);		/* 7c */
+	int	(*_getsysid)(void);			/* 80 */
+	int	(*_getbitmap)(memmap *);			/* 84 */
+	int	(*_disableintr)(int);			/* 88 */
+	int	(*_enableintr)(int);			/* 8c */
+	int	(*_testintr)(int);			/* 90 */
 	void	*_reserved_data;				/* 94 */
-	int	(*_console_init) __P((void));			/* 98 */
-	void	(*_halt) __P((int *, int));			/* 9c */
-	void	(*_showfault) __P((void));			/* a0 */
-	tcinfo	*(*_gettcinfo) __P((void)); /*XXX* bogus proto */ /* a4 */
-	int	(*_execute_cmd) __P((char *));			/* a8 */
-	void	(*_rex) __P((char));				/* ac */
+	int	(*_console_init)(void);			/* 98 */
+	void	(*_halt)(int *, int);			/* 9c */
+	void	(*_showfault)(void);			/* a0 */
+	tcinfo	*(*_gettcinfo)(void); /*XXX* bogus proto */ /* a4 */
+	int	(*_execute_cmd)(char *);			/* a8 */
+	void	(*_rex)(char);				/* ac */
 	/* b0 to d4 reserved */
 };
 

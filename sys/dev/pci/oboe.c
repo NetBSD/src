@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.32 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: oboe.c,v 1.32.14.1 2009/05/13 17:20:27 jym Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.32 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.32.14.1 2009/05/13 17:20:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.32 2008/04/28 20:23:55 martin Exp $");
 
 #include <dev/pci/oboereg.h>
 
-static int oboe_match(struct device *parent, struct cfdata *match, void *aux);
-static void oboe_attach(struct device *parent, struct device *self, void *aux);
-static int oboe_activate(struct device *self, enum devact act);
-static int oboe_detach(struct device *self, int flags);
+static int oboe_match(device_t parent, cfdata_t match, void *aux);
+static void oboe_attach(device_t parent, device_t self, void *aux);
+static int oboe_activate(device_t self, enum devact act);
+static int oboe_detach(device_t self, int flags);
 
 static int oboe_open(void *h, int flag, int mode, struct lwp *l);
 static int oboe_close(void *h, int flag, int mode, struct lwp *l);
@@ -161,8 +161,7 @@ static struct irframe_methods oboe_methods = {
 };
 
 static int
-oboe_match(struct device *parent, struct cfdata *match,
-    void *aux)
+oboe_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -174,9 +173,9 @@ oboe_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-oboe_attach(struct device *parent, struct device *self, void *aux)
+oboe_attach(device_t parent, device_t self, void *aux)
 {
-	struct oboe_softc *sc = (struct oboe_softc *)self;
+	struct oboe_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	struct ir_attach_args ia;
@@ -245,9 +244,9 @@ oboe_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-oboe_activate(struct device *self, enum devact act)
+oboe_activate(device_t self, enum devact act)
 {
-	struct oboe_softc *sc = (struct oboe_softc *)self;
+	struct oboe_softc *sc = device_private(self);
 	int error = 0;
 
 	DPRINTF(("%s: sc=%p\n", __func__, sc));
@@ -266,9 +265,9 @@ oboe_activate(struct device *self, enum devact act)
 }
 
 static int
-oboe_detach(struct device *self, int flags)
+oboe_detach(device_t self, int flags)
 {
-	struct oboe_softc *sc = (struct oboe_softc *)self;
+	struct oboe_softc *sc = device_private(self);
 
 #ifdef OBOE_DEBUG
 	/* XXX needs reference counting for proper detach. */

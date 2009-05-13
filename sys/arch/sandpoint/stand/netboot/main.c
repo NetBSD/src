@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.18 2009/01/12 09:41:59 tsutsui Exp $ */
+/* $NetBSD: main.c,v 1.18.2.1 2009/05/13 17:18:16 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ extern char bootprog_rev[], bootprog_maker[], bootprog_date[];
 int brdtype;
 
 void
-main()
+main(void)
 {
 	int n, b, d, f, howto;
 	unsigned memsize, tag;
@@ -160,8 +160,7 @@ main()
 }
 
 void
-bi_init(addr)
-	void *addr;
+bi_init(void *addr)
 {
 	struct btinfo_magic bi_magic;
 
@@ -174,9 +173,7 @@ bi_init(addr)
 }
 
 void
-bi_add(new, type, size)
-	void *new;
-	int type, size;
+bi_add(void *new, int type, int size)
 {
 	struct btinfo_common *bi;
 
@@ -197,9 +194,7 @@ static const char *cmdln[] = {
 };
 
 void
-mkatagparams(addr, kcmd)
-	unsigned addr;
-	char *kcmd;
+mkatagparams(unsigned addr, char *kcmd)
 {
 	struct tag {
 		unsigned siz;

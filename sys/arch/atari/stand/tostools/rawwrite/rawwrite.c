@@ -1,4 +1,4 @@
-/*	$NetBSD: rawwrite.c,v 1.8 1999/03/26 08:24:52 leo Exp $	*/
+/*	$NetBSD: rawwrite.c,v 1.8.162.1 2009/05/13 17:16:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -53,12 +53,10 @@ int	v_flag = 0;	/* Verbose (a dot for each track copied)	*/
 int	V_flag = 0;	/* Show version					*/
 char	*progname;
 
-const char version[] = "$Revision: 1.8 $";
+const char version[] = "$Revision: 1.8.162.1 $";
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
 	extern	int	optind;
 	extern	char	*optarg;
@@ -135,9 +133,7 @@ char	*argv[];
 }
 
 static void
-brwrite(buf, trk, spt)
-char	*buf;
-int	trk, spt;
+brwrite(char *buf, int trk, int spt)
 {
 	/*
 	 * These need to be static with my version of osbind.h :-(
@@ -155,14 +151,14 @@ int	trk, spt;
 	}
 }
 static void
-usage()
+usage(void)
 {
 	eprintf("Usage: %s [-hvVw] [-o <log-file>] <infile>\r\n", progname);
 	xexit(1);
 }
 
 static void
-help()
+help(void)
 {
 	eprintf("\r
 write a raw floppy-image to disk\r

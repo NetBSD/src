@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2008/05/28 14:04:07 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.18.12.1 2009/05/13 17:16:37 jym Exp $
 
 NOMAN= # defined
 
@@ -20,21 +20,7 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-.PHONY:		machine-links
-beforedepend:	machine-links
-
-machine-links:	machine cobalt mips
-machine cobalt:
-	-rm -f ${.TARGET}
-	ln -s ${COBALT}/include ${.TARGET}
-
-mips:
-	-rm -f ${.TARGET}
-	ln -s ${MIPS}/include ${.TARGET}
-
-CLEANFILES+=	machine cobalt mips
-
-realall: machine-links ${PROG}
+realall: ${PROG}
 
 # Load @15Mb boundary as most (all?) of the Cobalt boxes
 # had been shipped with at least 16Mb.
@@ -112,7 +98,7 @@ LIBS=		${SALIB} ${ZLIB} ${KERNLIB}
 vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "cobalt"
 
-${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
+${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    -T ${LDSCRIPT} -e start -o ${PROG} ${OBJS} ${LIBS}
 	gzip -c9 ${PROG} > ${PROG}.gz
@@ -125,4 +111,5 @@ cleandir distclean: cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

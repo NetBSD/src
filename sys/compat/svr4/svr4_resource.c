@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.17 2009/01/11 02:45:50 christos Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.17.2.1 2009/05/13 17:19:03 jym Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.17 2009/01/11 02:45:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.17.2.1 2009/05/13 17:19:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ svr4_to_native_rl(int rl)
 	case SVR4_RLIMIT_NOFILE:
 		return RLIMIT_NOFILE;
 	case SVR4_RLIMIT_VMEM:
-		return RLIMIT_RSS;
+		return RLIMIT_AS;
 	default:
 		return -1;
 	}

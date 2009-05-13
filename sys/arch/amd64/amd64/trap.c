@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 2008/11/14 15:03:44 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.1 2009/05/13 17:16:08 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,16 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2008/11/14 15:03:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53.4.1 2009/05/13 17:16:08 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_xen.h"
-#if !defined(XEN)
-#include "tprof.h"
-#else /* !defined(XEN) */
-#define	NTPROF	0
-#endif /* !defined(XEN) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,10 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2008/11/14 15:03:44 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#if NTPROF > 0
-#include <x86/tprof.h>
-#endif /* NTPROF > 0 */
-
 #include <machine/cpufunc.h>
 #include <machine/fpu.h>
 #include <machine/psl.h>
@@ -110,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2008/11/14 15:03:44 ad Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
+
+#include <x86/nmi.h>
 
 #ifndef XEN
 #include "isa.h"
@@ -157,6 +150,31 @@ int	trapdebug = 0;
 #ifdef TRAP_SIGDEBUG
 static void frame_dump(struct trapframe *);
 #endif
+
+static void *
+onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
+{
+	struct onfault_table {
+		uintptr_t start;
+		uintptr_t end;
+		void *handler;
+	};
+	extern const struct onfault_table onfault_table[];
+	const struct onfault_table *p;
+	uintptr_t pc;
+
+	if (pcb->pcb_onfault != NULL) {
+		return pcb->pcb_onfault;
+	}
+
+	pc = tf->tf_rip;
+	for (p = onfault_table; p->start; p++) {
+		if (p->start <= pc && pc < p->end) {
+			return p->handler;
+		}
+	}
+	return NULL;
+}
 
 /*
  * trap(frame):
@@ -257,11 +275,12 @@ trap(struct trapframe *frame)
 		if (p == NULL)
 			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
-		if (pcb->pcb_onfault != 0) {
+		onfault = onfault_handler(pcb, frame);
+		if (onfault != NULL) {
 copyefault:
 			error = EFAULT;
 copyfault:
-			frame->tf_rip = (uint64_t)pcb->pcb_onfault;
+			frame->tf_rip = (uintptr_t)onfault;
 			frame->tf_rax = error;
 			return;
 		}
@@ -419,7 +438,8 @@ copyfault:
 		 * fusuintrfailure is used by [fs]uswintr() to prevent
 		 * page faulting from inside the profiling interrupt.
 		 */
-		if (pcb->pcb_onfault == fusuintrfailure) {
+		onfault = pcb->pcb_onfault;
+		if (onfault == fusuintrfailure) {
 			goto copyefault;
 		}
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
@@ -496,6 +516,7 @@ faultcommon:
  				 */
 				kpreempt_disable();
 				if (curcpu()->ci_want_pmapload) {
+					onfault = onfault_handler(pcb, frame);
 					if (onfault != kcopy_fault) {
 						pmap_load();
 					}
@@ -544,7 +565,8 @@ faultcommon:
 			ksi.ksi_code = SEGV_MAPERR;
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0)
+			onfault = onfault_handler(pcb, frame);
+			if (onfault != NULL)
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);
@@ -595,10 +617,10 @@ faultcommon:
 		break;
 
 	case T_NMI:
-#if NTPROF > 0
-		if (tprof_pmi_nmi(frame))
+#if !defined(XEN)
+		if (nmi_dispatch(frame))
 			return;
-#endif /* NTPROF > 0 */
+#endif /* !defined(XEN) */
 #if	NISA > 0
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */

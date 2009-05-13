@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2bb.c,v 1.14 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: aout2bb.c,v 1.14.14.1 2009/05/13 17:16:10 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,8 +73,7 @@ u_int32_t *relbuf;
 extern char *optarg;
 
 int
-intcmp(i, j)
-	const void *i, *j;
+intcmp(const void *i, const void *j)
 {
 	int r;
 
@@ -84,9 +83,7 @@ intcmp(i, j)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ifd, ofd;
 	u_int mid, flags, magic;

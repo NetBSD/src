@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.117 2008/12/19 18:49:39 cegger Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.117.2.1 2009/05/13 17:22:28 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.117 2008/12/19 18:49:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.117.2.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -630,7 +630,7 @@ ip_mrouter_init(struct socket *so, int v)
 	ip_mrouter = so;
 
 	mfchashtbl = hashinit(MFCTBLSIZ, HASH_LIST, true, &mfchash);
-	bzero((void *)nexpire, sizeof(nexpire));
+	memset((void *)nexpire, 0, sizeof(nexpire));
 
 	pim_assert = 0;
 
@@ -693,12 +693,12 @@ ip_mrouter_done(void)
 		}
 	}
 
-	bzero((void *)nexpire, sizeof(nexpire));
+	memset((void *)nexpire, 0, sizeof(nexpire));
 	hashdone(mfchashtbl, HASH_LIST, mfchash);
 	mfchashtbl = NULL;
 
 	bw_upcalls_n = 0;
-	bzero(bw_meter_timers, sizeof(bw_meter_timers));
+	memset(bw_meter_timers, 0, sizeof(bw_meter_timers));
 
 	/* Reset de-encapsulation cache. */
 
@@ -846,7 +846,7 @@ add_vif(struct vifctl *vifcp)
 			 "mdecap%d", vifcp->vifc_vifi);
 
 		/* Prepare cached route entry. */
-		bzero(&vifp->v_route, sizeof(vifp->v_route));
+		memset(&vifp->v_route, 0, sizeof(vifp->v_route));
 #ifdef PIM
 	} else if (vifcp->vifc_flags & VIFF_REGISTER) {
 		ifp = &multicast_register_if;
@@ -854,11 +854,11 @@ add_vif(struct vifctl *vifcp)
 			log(LOG_DEBUG, "Adding a register vif, ifp: %p\n",
 			    (void *)ifp);
 		if (reg_vif_num == VIFI_INVALID) {
-			bzero(ifp, sizeof(*ifp));
+			memset(ifp, 0, sizeof(*ifp));
 			snprintf(ifp->if_xname, sizeof(ifp->if_xname),
 				 "register_vif");
 			ifp->if_flags = IFF_LOOPBACK;
-			bzero(&vifp->v_route, sizeof(vifp->v_route));
+			memset(&vifp->v_route, 0, sizeof(vifp->v_route));
 			reg_vif_num = vifcp->vifc_vifi;
 		}
 #endif
@@ -957,7 +957,7 @@ reset_vif(struct vif *vifp)
 		ifp = vifp->v_ifp;
 		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, &ifr);
 	}
-	bzero((void *)vifp, sizeof(*vifp));
+	memset((void *)vifp, 0, sizeof(*vifp));
 }
 
 /*

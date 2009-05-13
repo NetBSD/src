@@ -1,4 +1,4 @@
-/*	$NetBSD: pld_wdog.c,v 1.6 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.6.14.1 2009/05/13 17:18:38 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ pldwdog_setmode(struct sysmon_wdog *smw)
 #if 0
 static int pldwdog_intr(void);
 static int
-pldwdog_intr()
+pldwdog_intr(void)
 {
 
 	printf("pldwdog_intr:\n");

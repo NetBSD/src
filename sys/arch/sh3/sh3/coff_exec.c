@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.31 2008/11/19 18:36:00 ad Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.31.4.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.31 2008/11/19 18:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.31.4.1 2009/05/13 17:18:22 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -192,11 +192,7 @@ exec_coff_prep_omagic(struct lwp *l, struct exec_package *epp,
  */
 
 int
-exec_coff_prep_nmagic(l, epp, fp, ap)
-	struct lwp *l;
-	struct exec_package *epp;
-	struct coff_filehdr *fp;
-	struct coff_aouthdr *ap;
+exec_coff_prep_nmagic(struct lwp *l, struct exec_package *epp, struct coff_filehdr *fp, struct coff_aouthdr *ap)
 {
 	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
 	epp->ep_tsize = ap->a_tsize;

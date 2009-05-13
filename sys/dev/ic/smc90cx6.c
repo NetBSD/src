@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.58 2008/11/12 21:15:49 phx Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.58.4.1 2009/05/13 17:19:24 jym Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.58 2008/11/12 21:15:49 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.58.4.1 2009/05/13 17:19:24 jym Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -145,8 +145,7 @@ void	bah_reconwatch(void *);
 #define PUTMEM(off, v)	bus_space_write_1(bst_m, mem, (off), (v))
 
 void
-bah_attach_subr(sc)
-	struct bah_softc *sc;
+bah_attach_subr(struct bah_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arccom.ac_if;
 	int s;
@@ -222,8 +221,7 @@ bah_attach_subr(sc)
  *
  */
 void
-bah_init(sc)
-	struct bah_softc *sc;
+bah_init(struct bah_softc *sc)
 {
 	struct ifnet *ifp;
 	int s;
@@ -246,8 +244,7 @@ bah_init(sc)
  *
  */
 void
-bah_reset(sc)
-	struct bah_softc *sc;
+bah_reset(struct bah_softc *sc)
 {
 	struct ifnet *ifp;
 	uint8_t linkaddress;
@@ -325,8 +322,7 @@ bah_reset(sc)
  * Take interface offline
  */
 void
-bah_stop(sc)
-	struct bah_softc *sc;
+bah_stop(struct bah_softc *sc)
 {
 	bus_space_tag_t bst_r = sc->sc_bst_r;
 	bus_space_handle_t regs = sc->sc_regs;
@@ -351,8 +347,7 @@ bah_stop(sc)
  *
  */
 void
-bah_start(ifp)
-	struct ifnet *ifp;
+bah_start(struct ifnet *ifp)
 {
 	struct bah_softc *sc = ifp->if_softc;
 	struct mbuf *m,*mp;
@@ -506,8 +501,7 @@ bah_start(ifp)
  * get the stuff out of any filled buffer we find.
  */
 void
-bah_srint(vsc)
-	void *vsc;
+bah_srint(void *vsc)
 {
 	struct bah_softc *sc = (struct bah_softc *)vsc;
 	int buffer, len, len1, amount, offset, s, type;
@@ -651,9 +645,7 @@ cleanup:
 }
 
 inline static void
-bah_tint(sc, isr)
-	struct bah_softc *sc;
-	int isr;
+bah_tint(struct bah_softc *sc, int isr)
 {
 	struct ifnet *ifp;
 
@@ -742,8 +734,7 @@ bah_tint(sc, isr)
  * Our interrupt routine
  */
 int
-bahintr(arg)
-	void *arg;
+bahintr(void *arg)
 {
 	struct bah_softc *sc = arg;
 
@@ -882,8 +873,7 @@ bahintr(arg)
 }
 
 void
-bah_reconwatch(arg)
-	void *arg;
+bah_reconwatch(void *arg)
 {
 	struct bah_softc *sc = arg;
 
@@ -901,10 +891,7 @@ bah_reconwatch(arg)
  * This code needs some work - it looks pretty ugly.
  */
 int
-bah_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+bah_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct bah_softc *sc;
 	struct ifaddr *ifa;
@@ -995,8 +982,7 @@ bah_ioctl(ifp, cmd, data)
  */
 
 void
-bah_watchdog(ifp)
-	struct ifnet *ifp;
+bah_watchdog(struct ifnet *ifp)
 {
 	struct bah_softc *sc = ifp->if_softc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.34 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: opl.c,v 1.34.14.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.34 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.34.14.1 2009/05/13 17:19:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,7 @@ struct midisyn_methods opl3_midi = {
 };
 
 void
-opl_attach(sc)
-	struct opl_softc *sc;
+opl_attach(struct opl_softc *sc)
 {
 	int i;
 
@@ -180,9 +179,7 @@ opl_attach(sc)
 }
 
 int
-opl_detach(sc, flags)
-	struct opl_softc *sc;
-	int flags;
+opl_detach(struct opl_softc *sc, int flags)
 {
 	int rv = 0;
 
@@ -193,10 +190,7 @@ opl_detach(sc, flags)
 }
 
 static void
-opl_command(sc, offs, addr, data)
-	struct opl_softc *sc;
-	int offs;
-	int addr, data;
+opl_command(struct opl_softc *sc, int offs, int addr, int data)
 {
 	DPRINTFN(4, ("opl_command: sc=%p, offs=%d addr=0x%02x data=0x%02x\n",
 		     sc, offs, addr, data));
@@ -229,8 +223,7 @@ opl_match(bus_space_tag_t iot, bus_space_handle_t ioh, int offs)
 }
 
 int
-opl_find(sc)
-	struct opl_softc *sc;
+opl_find(struct opl_softc *sc)
 {
 	u_int8_t status1, status2;
 
@@ -289,23 +282,14 @@ opl_find(sc)
  *       any necessary sequences of register access expected by the hardware...
  */
 void
-opl_set_op_reg(sc, base, voice, op, value)
-	struct opl_softc *sc;
-	int base;
-	int voice;
-	int op;
-	u_char value;
+opl_set_op_reg(struct opl_softc *sc, int base, int voice, int op, u_char value)
 {
 	struct opl_voice *v = &sc->voices[voice];
 	opl_command(sc, v->iooffs, base + v->op[op], value);
 }
 
 void
-opl_set_ch_reg(sc, base, voice, value)
-	struct opl_softc *sc;
-	int base;
-	int voice;
-	u_char value;
+opl_set_ch_reg(struct opl_softc *sc, int base, int voice, u_char value)
 {
 	struct opl_voice *v = &sc->voices[voice];
 	opl_command(sc, v->iooffs, base + v->voiceno, value);
@@ -313,9 +297,7 @@ opl_set_ch_reg(sc, base, voice, value)
 
 
 void
-opl_load_patch(sc, v)
-	struct opl_softc *sc;
-	int v;
+opl_load_patch(struct opl_softc *sc, int v)
 {
 	const struct opl_operators *p = sc->voices[v].patch;
 
@@ -372,8 +354,7 @@ opl_get_block_fnum(midipitch_t mp)
 
 
 void
-opl_reset(sc)
-	struct opl_softc *sc;
+opl_reset(struct opl_softc *sc)
 {
 	int i;
 
@@ -409,8 +390,7 @@ oplsyn_open(midisyn *ms, int flags)
 }
 
 void
-oplsyn_close(ms)
-	midisyn *ms;
+oplsyn_close(midisyn *ms)
 {
 	struct opl_softc *sc = ms->data;
 
@@ -427,9 +407,7 @@ oplsyn_close(ms)
 
 #if 0
 void
-oplsyn_getinfo(addr, sd)
-	void *addr;
-	struct synth_dev *sd;
+oplsyn_getinfo(void *addr, struct synth_dev *sd)
 {
 	struct opl_softc *sc = addr;
 
@@ -442,8 +420,7 @@ oplsyn_getinfo(addr, sd)
 #endif
 
 void
-oplsyn_reset(addr)
-	void *addr;
+oplsyn_reset(void *addr)
 {
 	struct opl_softc *sc = addr;
 	DPRINTFN(3, ("oplsyn_reset:\n"));

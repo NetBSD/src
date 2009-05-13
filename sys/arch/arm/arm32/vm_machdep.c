@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.46 2008/10/21 19:01:00 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.46.8.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2008/10/21 19:01:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46.8.1 2009/05/13 17:16:13 jym Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2008/10/21 19:01:00 matt Exp $")
 
 extern pv_addr_t systempage;
 
-int process_read_regs	__P((struct proc *p, struct reg *regs));
-int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
+int process_read_regs(struct proc *p, struct reg *regs);
+int process_read_fpregs(struct proc *p, struct fpreg *regs);
 
 void lwp_trampoline(void);
 
@@ -89,8 +89,7 @@ void lwp_trampoline(void);
  */
 
 void
-cpu_proc_fork(p1, p2)
-	struct proc *p1, *p2;
+cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 
 #if defined(PERFCTRS)
@@ -246,8 +245,7 @@ cpu_lwp_free2(struct lwp *l)
 }
 
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 #if 0
 	struct proc *p = l->l_proc;
@@ -270,8 +268,7 @@ cpu_swapin(l)
 
 
 void
-cpu_swapout(l)
-	struct lwp *l;
+cpu_swapout(struct lwp *l)
 {
 #ifdef FPU_VFP
 	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
@@ -306,9 +303,7 @@ cpu_swapout(l)
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -350,9 +345,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

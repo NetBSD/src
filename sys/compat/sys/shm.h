@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.6 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: shm.h,v 1.6.2.1 2009/05/13 17:19:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -115,7 +115,7 @@ __native_to_shmid_ds14(const struct shmid_ds *shmbuf, struct shmid_ds14 *oshmbuf
 
 #define	CVT(x)	oshmbuf->x = shmbuf->x
 #define	CVTI(x)	oshmbuf->x = (int)shmbuf->x
-	CVT(shm_segsz);
+	CVTI(shm_segsz);
 	CVT(shm_lpid);
 	CVT(shm_cpid);
 	CVT(shm_nattch);

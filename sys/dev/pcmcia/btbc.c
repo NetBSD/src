@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.12 2008/04/06 18:55:33 plunky Exp $	*/
+/*	$NetBSD: btbc.c,v 1.12.18.1 2009/05/13 17:21:09 jym Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.12 2008/04/06 18:55:33 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.12.18.1 2009/05/13 17:21:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -101,7 +101,7 @@ struct btbc_softc {
 	uint8_t sc_ctrlreg;			/* value for control register */
 };
 
-static int btbc_match(device_t, struct cfdata *, void *);
+static int btbc_match(device_t, cfdata_t, void *);
 static void btbc_attach(device_t, device_t, void *);
 static int btbc_detach(device_t, int);
 static bool btbc_suspend(device_t PMF_FN_PROTO);
@@ -139,7 +139,7 @@ static const struct hci_if btbc_hci = {
 
 /* ARGSUSED */
 static int
-btbc_match(device_t parent, struct cfdata *match, void *aux)
+btbc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 

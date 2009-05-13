@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.5 2005/12/11 12:16:05 christos Exp $ */
+/* $NetBSD: sfasvar.h,v 1.5.94.1 2009/05/13 17:16:03 jym Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -259,10 +259,10 @@ struct	sfas_softc {
 #define SFAS_SLOW_CABLE	 0x08	/* Cable is "unsafe" for fast scsi-2 */
 #define SFAS_SLOW_START	 0x10	/* There are slow starters on the bus */
 
-void	sfasinitialize __P((struct sfas_softc *sc));
-void	sfas_minphys   __P((struct buf *bp));
-void	sfas_scsi_request __P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
-void	sfasintr       __P((struct sfas_softc *dev));
+void	sfasinitialize(struct sfas_softc *sc);
+void	sfas_minphys(struct buf *bp);
+void	sfas_scsi_request(struct scsipi_channel *,
+				scsipi_adapter_req_t, void *);
+void	sfasintr(struct sfas_softc *dev);
 
 #endif /* _SFASVAR_H_ */

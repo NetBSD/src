@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.1 2008/03/15 10:17:10 rearnsha Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.1.26.1 2009/05/13 17:16:18 jym Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -107,7 +107,7 @@ vfp_test(u_int address, u_int instruction, trapframe_t *frame, int fault_code)
 }
 
 void
-vfp_attach()
+vfp_attach(void)
 {
 	void *uh;
 	uint32_t fpsid;
@@ -335,7 +335,7 @@ vfp_saveregs_lwp(struct lwp *l, int save)
 }
 
 void
-vfp_savecontext()
+vfp_savecontext(void)
 {
 	struct cpu_info *ci = curcpu();
 	uint32_t fpexc;

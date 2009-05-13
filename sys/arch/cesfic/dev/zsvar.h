@@ -1,16 +1,16 @@
-/* $NetBSD: zsvar.h,v 1.1 2001/05/14 18:23:08 drochner Exp $ */
+/* $NetBSD: zsvar.h,v 1.1.144.1 2009/05/13 17:16:36 jym Exp $ */
 
 #define ZS_DELAY()
 
-int zscngetc __P((dev_t));
-void zscnputc __P((dev_t, int));
-void zscnpollc __P((dev_t, int));
+int zscngetc(dev_t);
+void zscnputc(dev_t, int);
+void zscnpollc(dev_t, int);
 
-void zs_cnattach __P((void *));
-void zs_cninit __P((void *));
+void zs_cnattach(void *);
+void zs_cninit(void *);
 
-void zs_config __P((struct zsc_softc *, char*));
+void zs_config(struct zsc_softc *, char*);
 
-int zshard __P((void*));
+int zshard(void*);
 
 #define ZSHARD_PRI 4

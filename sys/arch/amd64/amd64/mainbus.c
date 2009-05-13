@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 2008/11/10 14:36:59 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.4.1 2009/05/13 17:16:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2008/11/10 14:36:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.4.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,12 +263,12 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_pba.pba_bridgetag = NULL;
 #if NACPI > 0 && defined(ACPI_SCANPCI)
 		if (mpacpi_active)
-			mpacpi_scan_pci(self, &mba.mba_pba, pcibusprint);
+			mp_pci_scan(self, &mba.mba_pba, pcibusprint);
 		else
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
 		if (mpbios_scanned != 0)
-			mpbios_scan_pci(self, &mba.mba_pba, pcibusprint);
+			mp_pci_scan(self, &mba.mba_pba, pcibusprint);
 		else
 #endif
 		config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);

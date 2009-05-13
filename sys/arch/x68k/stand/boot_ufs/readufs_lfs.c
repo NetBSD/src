@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_lfs.c,v 1.8 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.8.92.1 2009/05/13 17:18:42 jym Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.7 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
@@ -20,7 +20,7 @@
  #error LFS currently requires USE_UFS1
 #endif
 
-static int get_lfs_inode __P((ino32_t ino, union ufs_dinode *dibuf));
+static int get_lfs_inode(ino32_t ino, union ufs_dinode *dibuf);
 
 static struct ufs1_dinode	ifile_dinode;
 
@@ -32,7 +32,7 @@ static struct ufs1_dinode	ifile_dinode;
  * If it is an LFS, save information from the superblock.
  */
 int
-try_lfs()
+try_lfs(void)
 {
 	struct ufs_info	*ufsinfo = &ufs_info;
 	struct dlfs	sblk, sblk2;
@@ -155,9 +155,7 @@ try_lfs()
  * Get inode from disk.
  */
 static int
-get_lfs_inode(ino, dibuf)
-	ino32_t ino;
-	union ufs_dinode *dibuf;
+get_lfs_inode(ino32_t ino, union ufs_dinode *dibuf)
 {
 	struct ufs_info *ufsinfo = &ufs_info;
 	daddr_t daddr;

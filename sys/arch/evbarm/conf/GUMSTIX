@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.34 2009/02/06 18:50:27 jym Exp $
+#	$NetBSD: GUMSTIX,v 1.34.2.1 2009/05/13 17:16:37 jym Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -119,7 +119,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
@@ -207,13 +206,13 @@ audio*	at audiobus?
 pxaudc0	at pxaip?				# USB Device Controller
 
 # integrated MMC/SD contoller
-#pxamci0	at pxaip? addr 0x41100000 size 0x48
-#sdmmc*	at pxamci?
+pxamci0	at pxaip? addr 0x41100000 size 0x48
+sdmmc*	at pxamci?
 #options 	PXAMCI_DEBUG
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 
-#ld*	at sdmmc?
+ld*	at sdmmc?
 
 # gumstix device support
 gxio0	at pxaip?

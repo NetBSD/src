@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.30 2008/07/09 20:07:19 joerg Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.30.8.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -448,7 +448,7 @@ atw_init_rxdesc(struct atw_softc *sc, int x)
 
 void	atw_attach(struct atw_softc *);
 int	atw_detach(struct atw_softc *);
-int	atw_activate(struct device *, enum devact);
+int	atw_activate(device_t, enum devact);
 int	atw_intr(void *arg);
 void	atw_power(int, void *);
 bool	atw_shutdown(device_t, int);

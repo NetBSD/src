@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.115 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.115.2.1 2009/05/13 17:21:58 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.115 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.115.2.1 2009/05/13 17:21:58 jym Exp $");
 
 #include "opt_ptm.h"
 
@@ -273,8 +273,7 @@ pty_check(int ptn)
  * new value of maxptys.
  */
 int
-pty_maxptys(newmax, set)
-	int newmax, set;
+pty_maxptys(int newmax, int set)
 {
 	if (!set)
 		return (maxptys);
@@ -303,8 +302,7 @@ pty_maxptys(newmax, set)
  * Establish n (or default if n is 1) ptys in the system.
  */
 void
-ptyattach(n)
-	int n;
+ptyattach(int n)
 {
 
 	mutex_init(&pt_softc_mutex, MUTEX_DEFAULT, IPL_NONE);
@@ -380,10 +378,7 @@ ptsclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-ptsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ptsread(dev_t dev, struct uio *uio, int flag)
 {
 	struct proc *p = curproc;
 	struct pt_softc *pti = pt_softc[minor(dev)];
@@ -444,10 +439,7 @@ again:
  * indirectly, when tty driver calls ptsstart.
  */
 int
-ptswrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ptswrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -461,10 +453,7 @@ ptswrite(dev, uio, flag)
  * Poll pseudo-tty.
  */
 int
-ptspoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+ptspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -480,8 +469,7 @@ ptspoll(dev, events, l)
  * Wake up process polling or sleeping for input from controlling tty.
  */
 void
-ptsstart(tp)
-	struct tty *tp;
+ptsstart(struct tty *tp)
 {
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
 
@@ -502,9 +490,7 @@ ptsstart(tp)
  * Stop output.
  */
 void
-ptsstop(tp, flush)
-	struct tty *tp;
-	int flush;
+ptsstop(struct tty *tp, int flush)
 {
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
 
@@ -530,9 +516,7 @@ ptsstop(tp, flush)
 }
 
 void
-ptcwakeup(tp, flag)
-	struct tty *tp;
-	int flag;
+ptcwakeup(struct tty *tp, int flag)
 {
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
 
@@ -594,10 +578,7 @@ ptcclose(dev_t dev, int flag, int devtype, struct lwp *l)
 }
 
 int
-ptcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ptcread(dev_t dev, struct uio *uio, int flag)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -682,10 +663,7 @@ out:
 
 
 int
-ptcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ptcwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -802,10 +780,7 @@ out:
 }
 
 int
-ptcpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+ptcpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -984,8 +959,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 }
 
 struct tty *
-ptytty(dev)
-	dev_t dev;
+ptytty(dev_t dev)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -995,12 +969,7 @@ ptytty(dev)
 
 /*ARGSUSED*/
 int
-ptyioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;

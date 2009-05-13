@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.21 2008/08/05 15:59:28 matt Exp $     */
+/*      $NetBSD: trap.h,v 1.21.8.1 2009/05/13 17:18:41 jym Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,6 +61,14 @@
 #define	T_WRITE		0x80
 #define	T_PTEFETCH	0x40
 
+/* Section 6.4.1 Arithmetic Traps/Faults */
+#define ATRP_INTOVF	0x1	/* integer overflow */
+#define ATRP_INTDIV	0x2	/* integer divide by zero */
+#define ATRP_FLTOVF	0x3	/* floating overflow */
+#define ATRP_FLTDIV	0x4	/* floating/decimal divide by zero */
+#define ATRP_FLTUND	0x5	/* floating underflow */
+#define ATRP_DECOVF	0x6	/* decimal underflow */
+#define ATRP_FLTSUB	0x7	/* subscript range */
 #define	AFLT_FLTOVF	0x8	/* floating overflow */
 #define	AFLT_FLTDIV	0x9	/* floating divide-by-zero */
 #define	AFLT_FLTUND	0xa	/* floating underflow */

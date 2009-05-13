@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2008/12/07 11:40:53 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.2.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -71,11 +71,15 @@ void	cpu_offline_md(void);
 lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
 struct	cpu_info *cpu_lookup(u_int);
 int	cpu_setstate(struct cpu_info *, bool);
+int	cpu_setintr(struct cpu_info *, bool);
 bool	cpu_intr_p(void);
 bool	cpu_softintr_p(void);
 bool	cpu_kpreempt_enter(uintptr_t, int);
 void	cpu_kpreempt_exit(uintptr_t);
 bool	cpu_kpreempt_disabled(void);
+int	cpu_lwp_setprivate(lwp_t *, void *);
+void	cpu_intr_redistribute(void);
+u_int	cpu_intr_count(struct cpu_info *);
 
 CIRCLEQ_HEAD(cpuqueue, cpu_info);
 
@@ -92,8 +96,8 @@ cpu_index(struct cpu_info *ci)
 #endif	/* !_LOCORE */
 
 /* flags for cpu_need_resched */
-#define	RESCHED_LAZY		0x01
-#define	RESCHED_IMMED		0x02
-#define	RESCHED_KPREEMPT	0x04
+#define	RESCHED_LAZY		0x01	/* request a ctx switch */
+#define	RESCHED_IMMED		0x02	/* request an immediate ctx switch */
+#define	RESCHED_KPREEMPT	0x04	/* request in-kernel preemption */
 
 #endif	/* !_SYS_CPU_H_ */

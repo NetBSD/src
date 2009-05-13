@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.13 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.13.2.1 2009/05/13 17:18:40 jym Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -131,22 +131,22 @@ zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	ze_rdes_list = OW_ALLOC((NRCV+1) * sizeof(struct ze_rdes));
 	ze_tdes_list = OW_ALLOC((NXMT+1) * sizeof(struct ze_tdes));
 	for (i=0; i < NRCV; i++) {
-		bzero(ze_rdes_list+i,sizeof(struct ze_rdes));
+		memset(ze_rdes_list+i, 0,sizeof(struct ze_rdes));
 		ze_rdes_list[i].ze_framelen = ZE_FRAMELEN_OW;
 		ze_rdes_list[i].ze_bufsize = ETHER_MAX_LEN;
 		ze_rdes_list[i].ze_bufaddr = alloc(ETHER_MAX_LEN);
 	}
-	bzero(ze_rdes_list+NRCV,sizeof(struct ze_rdes));
+	memset(ze_rdes_list+NRCV, 0,sizeof(struct ze_rdes));
 	ze_rdes_list[NRCV].ze_framelen = ZE_FRAMELEN_OW;
 	ze_rdes_list[NRCV].ze_rdes1 = ZE_RDES1_CA;
 	ze_rdes_list[NRCV].ze_bufaddr = (u_char *)ze_rdes_list;
 	for (i=0; i < NXMT; i++) {
-		bzero(ze_tdes_list+i,sizeof(struct ze_tdes));
+		memset(ze_tdes_list+i, 0,sizeof(struct ze_tdes));
 		ze_tdes_list[i].ze_tdes1 = ZE_TDES1_FS | ZE_TDES1_LS;
 		ze_tdes_list[i].ze_bufsize = ETHER_MAX_LEN;
 		ze_tdes_list[i].ze_bufaddr = alloc(ETHER_MAX_LEN);
 	}
-	bzero(ze_tdes_list+NXMT,sizeof(struct ze_tdes));
+	memset(ze_tdes_list+NXMT, 0,sizeof(struct ze_tdes));
 	ze_tdes_list[NXMT].ze_tdes1 = ZE_TDES1_CA;
 	ze_tdes_list[NXMT].ze_tdr = ZE_TDR_OW;
 	ze_tdes_list[NXMT].ze_bufaddr = (u_char *)ze_tdes_list;
@@ -154,14 +154,14 @@ zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	/* Build setup frame. We set the SGEC to do a
 		perfect filter on our own address. */
 	ze_setup_tdes_list = OW_ALLOC(2*sizeof(struct ze_tdes));
-	bzero(ze_setup_tdes_list+0,2*sizeof(struct ze_tdes));
+	memset(ze_setup_tdes_list+0, 0,2*sizeof(struct ze_tdes));
 	ze_setup_tdes_list[0].ze_tdr = ZE_TDR_OW;
 	ze_setup_tdes_list[0].ze_tdes1 = ZE_TDES1_DT_SETUP;
 	ze_setup_tdes_list[0].ze_bufsize = SETUP_FRAME_LEN;
 	ze_setup_tdes_list[0].ze_bufaddr = alloc(SETUP_FRAME_LEN);
-	bzero(ze_setup_tdes_list[0].ze_bufaddr,SETUP_FRAME_LEN);
+	memset(ze_setup_tdes_list[0].ze_bufaddr, 0,SETUP_FRAME_LEN);
 	for (i=0; i < 16; i++)
-		bcopy(ze_myaddr,ze_setup_tdes_list[0].ze_bufaddr+(8*i),
+		memcpy(ze_setup_tdes_list[0].ze_bufaddr+(8*i), ze_myaddr,
 			ETHER_ADDR_LEN);
 	ze_setup_tdes_list[1].ze_tdes1 = ZE_TDES1_CA;
 	ze_setup_tdes_list[1].ze_bufaddr = (u_char *)ze_setup_tdes_list;
@@ -186,11 +186,7 @@ zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 }
 
 int
-ze_get(desc, pkt, maxlen, timeout)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	saseconds_t timeout;
+ze_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timeout)
 {
 	int timeout_ctr=100000*timeout, len, rdes;
 
@@ -242,10 +238,7 @@ ze_get(desc, pkt, maxlen, timeout)
 }
 
 int
-ze_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+ze_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	int timeout=100000;
 
@@ -258,7 +251,7 @@ ze_put(desc, pkt, len)
 		;
 
 	/* Copy the packet to the buffer we allocated. */
-	bcopy(pkt, (void *)ze_tdes_list[0].ze_bufaddr, len);
+	memcpy( (void *)ze_tdes_list[0].ze_bufaddr, pkt, len);
 
 	/* Set the packet length in the descriptor, increasing it to the
 		minimum size if needed. */

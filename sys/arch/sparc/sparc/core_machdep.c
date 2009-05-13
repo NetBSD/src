@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:36:01 ad Exp $ */
+/*	$NetBSD: core_machdep.c,v 1.1.10.1 2009/05/13 17:18:36 jym Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.10.1 2009/05/13 17:18:36 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 			savefpstate(l->l_md.md_fpstate);
 		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
-		bzero((void *)&md_core.md_fpstate, sizeof(struct fpstate));
+		memset((void *)&md_core.md_fpstate, 0, sizeof(struct fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

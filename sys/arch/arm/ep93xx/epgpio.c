@@ -1,4 +1,4 @@
-/*	$NetBSD: epgpio.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: epgpio.c,v 1.1.100.1 2009/05/13 17:16:13 jym Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.1.100.1 2009/05/13 17:16:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $");
 #include <arm/ep93xx/epsocvar.h> 
 #include <arm/ep93xx/epgpioreg.h>
 #include <arm/ep93xx/epgpiovar.h>
+#include "opt_ep93xx_gpio_mask.h"
 #include "gpio.h"
 #if NGPIO > 0
 #include <sys/gpio.h>
@@ -61,6 +62,8 @@ struct port_info {
 #if NGPIO > 0
 	struct gpio_chipset_tag	gpio_chipset;
 	gpio_pin_t		pins[EPGPIO_NPINS];
+	int			gpio_mask;
+	int			gpio_npins;
 #endif
 	bus_size_t		pxdr;
 	bus_size_t		pxddr;
@@ -133,7 +136,7 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 #if NGPIO > 0
 	struct gpiobus_attach_args gba;
 	int dir, val;
-	int i, j;
+	int i, j, pin;
 #endif
 
 	printf("\n");
@@ -156,6 +159,9 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	pi->xinttype2 = EP93XX_GPIO_AIntType2;
 	pi->xeoi = EP93XX_GPIO_AEOI;
 	pi->xdb = EP93XX_GPIO_ADB;
+#if NGPIO > 0
+	pi->gpio_mask = EPGPIO_PORT_A_MASK;
+#endif
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, pi->xinten, 0);
 	/* PORT B */
 	pi = &sc->sc_port[1];
@@ -168,6 +174,9 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	pi->xinttype2 = EP93XX_GPIO_BIntType2;
 	pi->xeoi = EP93XX_GPIO_BEOI;
 	pi->xdb = EP93XX_GPIO_BDB;
+#if NGPIO > 0
+	pi->gpio_mask = EPGPIO_PORT_B_MASK;
+#endif
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, pi->xinten, 0);
 	/* PORT C */
 	pi = &sc->sc_port[2];
@@ -176,6 +185,9 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	pi->pxdr = EP93XX_GPIO_PCDR;
 	pi->pxddr = EP93XX_GPIO_PCDDR;
 	pi->xinten = pi->xinttype1 = pi->xinttype2 = pi->xeoi = pi->xdb = -1;
+#if NGPIO > 0
+	pi->gpio_mask = EPGPIO_PORT_C_MASK;
+#endif
 	/* PORT D */
 	pi = &sc->sc_port[3];
 	pi->unit = 3;
@@ -183,6 +195,9 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	pi->pxdr = EP93XX_GPIO_PDDR;
 	pi->pxddr = EP93XX_GPIO_PDDDR;
 	pi->xinten = pi->xinttype1 = pi->xinttype2 = pi->xeoi = pi->xdb = -1;
+#if NGPIO > 0
+	pi->gpio_mask = EPGPIO_PORT_D_MASK;
+#endif
 	/* PORT E */
 	pi = &sc->sc_port[4];
 	pi->unit = 4;
@@ -190,6 +205,9 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	pi->pxdr = EP93XX_GPIO_PEDR;
 	pi->pxddr = EP93XX_GPIO_PEDDR;
 	pi->xinten = pi->xinttype1 = pi->xinttype2 = pi->xeoi = pi->xdb = -1;
+#if NGPIO > 0
+	pi->gpio_mask = EPGPIO_PORT_E_MASK;
+#endif
 	/* PORT F */
 	pi = &sc->sc_port[5];
 	pi->unit = 5;
@@ -201,6 +219,9 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	pi->xinttype2 = EP93XX_GPIO_FIntType2;
 	pi->xeoi = EP93XX_GPIO_FEOI;
 	pi->xdb = EP93XX_GPIO_FDB;
+#if NGPIO > 0
+	pi->gpio_mask = EPGPIO_PORT_F_MASK;
+#endif
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, pi->xinten, 0);
 	/* PORT G */
 	pi = &sc->sc_port[6];
@@ -209,6 +230,9 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	pi->pxdr = EP93XX_GPIO_PGDR;
 	pi->pxddr = EP93XX_GPIO_PGDDR;
 	pi->xinten = pi->xinttype1 = pi->xinttype2 = pi->xeoi = pi->xdb = -1;
+#if NGPIO > 0
+	pi->gpio_mask = EPGPIO_PORT_G_MASK;
+#endif
 	/* PORT H */
 	pi = &sc->sc_port[7];
 	pi->unit = 7;
@@ -216,6 +240,9 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	pi->pxdr = EP93XX_GPIO_PHDR;
 	pi->pxddr = EP93XX_GPIO_PHDDR;
 	pi->xinten = pi->xinttype1 = pi->xinttype2 = pi->xeoi = pi->xdb = -1;
+#if NGPIO > 0
+	pi->gpio_mask = EPGPIO_PORT_H_MASK;
+#endif
 
 	/* PORT A & B */
 	sc->sc_ireq_combine.irq = EP93XX_GPIO_INTR;
@@ -242,20 +269,42 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	/* initialize and attach gpio(4) */
 	for (i = 0; i < EPGPIO_NPORTS; i++) {
 		pi = &sc->sc_port[i];
+		/*
+		 * If this port is completely disabled for gpio attachment,
+		 * then skip it.
+		 */
+		if (pi->gpio_mask == 0x00)
+			continue;
+
 		dir = bus_space_read_4(sc->sc_iot, sc->sc_ioh, pi->pxddr) & 0xff;
 		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, pi->pxdr) & 0xff;
-		for (j = 0; j < EPGPIO_NPINS; j++) {
-			pi->pins[j].pin_num = j;
-			pi->pins[j].pin_caps = (GPIO_PIN_INPUT
-						| GPIO_PIN_OUTPUT);
-			if((dir >> j) & 0x01)
-				pi->pins[j].pin_flags = GPIO_PIN_OUTPUT;
-			else
-				pi->pins[j].pin_flags = GPIO_PIN_INPUT;
-			if((val >> j) & 0x01)
-				pi->pins[j].pin_state = GPIO_PIN_HIGH;
-			else
-				pi->pins[j].pin_state = GPIO_PIN_LOW;
+
+		/*
+		 * pin_num doesn't seem to be used for anything in the GPIO
+		 * code.  So we're going to use it to refer to the REAL pin
+		 * on the port.  Just to keep things straight below:
+		 *
+		 * pin - The pin number as seen by the GPIO code
+		 * j   - The ACTUAL pin on the port
+		 */
+
+		for (j = 0, pin = 0; j < EPGPIO_NPINS; j++) {
+			if (pi->gpio_mask & (1 << j)) {
+				pi->pins[pin].pin_num = j;
+				pi->pins[pin].pin_caps = (GPIO_PIN_INPUT
+							| GPIO_PIN_OUTPUT);
+				if((dir >> j) & 0x01)
+					pi->pins[pin].pin_flags =
+							GPIO_PIN_OUTPUT;
+				else
+					pi->pins[pin].pin_flags =
+						GPIO_PIN_INPUT;
+				if((val >> j) & 0x01)
+					pi->pins[pin].pin_state = GPIO_PIN_HIGH;
+				else
+					pi->pins[pin].pin_state = GPIO_PIN_LOW;
+				pin++;
+			}
 		}
 		pi->gpio_chipset.gp_cookie = pi;
 		pi->gpio_chipset.gp_pin_read = epgpio_pin_read;
@@ -263,7 +312,7 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 		pi->gpio_chipset.gp_pin_ctl = epgpio_pin_ctl;
 		gba.gba_gc = &pi->gpio_chipset;
 		gba.gba_pins = pi->pins;
-		gba.gba_npins = EPGPIO_NPINS;
+		gba.gba_npins = pin;
 		config_found_ia(self, "gpiobus", &gba, epgpiobus_print);
 	}
 #endif
@@ -556,12 +605,12 @@ epgpio_pin_read(void *arg, int pin)
 	struct port_info *pi = arg;
 	struct epgpio_softc *sc = pi->sc;
 
-	pin %= EPGPIO_NPINS;
+	pin %= pi->gpio_npins;
 	if (!pi->pins[pin].pin_caps)
 		return 0; /* EBUSY? */
 
 	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				 pi->pxdr) >> pin) & 1;
+				 pi->pxdr) >> pi->pins[pin].pin_num) & 1;
 }
 
 static void
@@ -570,14 +619,14 @@ epgpio_pin_write(void *arg, int pin, int val)
 	struct port_info *pi = arg;
 	struct epgpio_softc *sc = pi->sc;
 
-	pin %= EPGPIO_NPINS;
+	pin %= pi->gpio_npins;
 	if (!pi->pins[pin].pin_caps)
 		return;
 
 	if (val)
-		epgpio_bit_set(sc, pi->pxdr, pin);
+		epgpio_bit_set(sc, pi->pxdr, pi->pins[pin].pin_num);
 	else
-		epgpio_bit_clear(sc, pi->pxdr, pin);
+		epgpio_bit_clear(sc, pi->pxdr, pi->pins[pin].pin_num);
 }
 
 static void
@@ -586,14 +635,14 @@ epgpio_pin_ctl(void *arg, int pin, int flags)
 	struct port_info *pi = arg;
 	struct epgpio_softc *sc = pi->sc;
 
-	pin %= EPGPIO_NPINS;
+	pin %= pi->gpio_npins;
 	if (!pi->pins[pin].pin_caps)
 		return;
 
 	if (flags & GPIO_PIN_INPUT)
-		epgpio_bit_clear(sc, pi->pxddr, pin);
+		epgpio_bit_clear(sc, pi->pxddr, pi->pins[pin].pin_num);
 	else if (flags & GPIO_PIN_OUTPUT)
-		epgpio_bit_set(sc, pi->pxddr, pin);
+		epgpio_bit_set(sc, pi->pxddr, pi->pins[pin].pin_num);
 }
 #endif
 

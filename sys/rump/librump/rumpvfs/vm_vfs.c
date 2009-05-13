@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.3 2008/12/18 00:24:13 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.3.6.1 2009/05/13 17:22:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.3 2008/12/18 00:24:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.3.6.1 2009/05/13 17:22:58 jym Exp $");
 
 #include <sys/param.h>
 
@@ -89,12 +89,10 @@ void
 uvm_aio_aiodone(struct buf *bp)
 {
 
-	if (((bp->b_flags|bp->b_cflags) & (B_READ|BC_NOCACHE)) == 0 && bioopsp)
-		bioopsp->io_pageiodone(bp);
 }
 
 struct uvm_ractx *
-uvm_ra_allocctx()
+uvm_ra_allocctx(void)
 {
 
 	return NULL;

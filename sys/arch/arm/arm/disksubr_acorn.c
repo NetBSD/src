@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.8 2008/01/02 11:48:23 ad Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.8.24.1 2009/05/13 17:16:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,14 +97,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.8 2008/01/02 11:48:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.8.24.1 2009/05/13 17:16:12 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 
-static int filecore_checksum __P((u_char *));
+static int filecore_checksum(u_char *);
 
 /*
  * static int filecore_checksum(u_char *bootblock)
@@ -139,8 +139,7 @@ static int filecore_checksum __P((u_char *));
  * so we treat such blocks as invalid.
  */
 static int
-filecore_checksum(bootblock)
-	u_char *bootblock;
+filecore_checksum(u_char *bootblock)
 {  
 	u_char byte0, accum_diff;
 	u_int sum;
@@ -177,13 +176,10 @@ filecore_checksum(bootblock)
 
 
 int
-filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	const char **msgp;
-	int *cylp, *netbsd_label_offp;
+filecore_label_read(dev_t dev, void (*strat)(struct buf *),
+	struct disklabel *lp, struct cpu_disklabel *osdep,
+	const char **msgp,
+	int *cylp, int *netbsd_label_offp)
 {
 	struct filecore_bootblock *bb;
 	int heads;
@@ -312,12 +308,11 @@ out:
 
 
 int
-filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int *cylp, *netbsd_label_offp;
+filecore_label_locate(dev_t dev,
+	void (*strat)(struct buf *),
+	struct disklabel *lp,
+	struct cpu_disklabel *osdep,
+	int *cylp, int *netbsd_label_offp)
 {
 	struct filecore_bootblock *bb;
 	int heads;

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.72 2009/02/06 18:50:26 jym Exp $
+#	$NetBSD: INSTALL,v 1.72.2.1 2009/05/13 17:16:36 jym Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -102,7 +102,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

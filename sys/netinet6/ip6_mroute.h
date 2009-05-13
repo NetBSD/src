@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.15 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.15.8.1 2009/05/13 17:22:29 jym Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -93,8 +93,8 @@ typedef	struct if_set {
 #define	IF_SET(n, p)	((p)->ifs_bits[(n)/NIFBITS] |= (1 << ((n) % NIFBITS)))
 #define	IF_CLR(n, p)	((p)->ifs_bits[(n)/NIFBITS] &= ~(1 << ((n) % NIFBITS)))
 #define	IF_ISSET(n, p)	((p)->ifs_bits[(n)/NIFBITS] & (1 << ((n) % NIFBITS)))
-#define	IF_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
-#define	IF_ZERO(p)	bzero(p, sizeof(*(p)))
+#define	IF_COPY(f, t)	memcpy( t, f, sizeof(*(f)))
+#define	IF_ZERO(p)	memset(p, 0, sizeof(*(p)))
 
 /*
  * Argument structure for MRT6_ADD_IF.

@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.9 2009/01/29 12:28:15 nonaka Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.9.2.1 2009/05/13 17:16:38 jym Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -277,7 +277,7 @@ gxpcic_intr_disestablish(struct pxapcic_socket *so, void *ih)
  * XXXXX: slot count functions from Linux
  */
 __inline void
-gxpcic_cpld_clk()
+gxpcic_cpld_clk(void)
 {
 
 	pxa2x0_gpio_set_function(48, GPIO_OUT | GPIO_CLR);

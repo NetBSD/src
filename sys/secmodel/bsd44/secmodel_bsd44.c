@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44.c,v 1.11 2007/11/21 22:49:07 elad Exp $ */
+/* $NetBSD: secmodel_bsd44.c,v 1.11.32.1 2009/05/13 17:23:02 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.11 2007/11/21 22:49:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.11.32.1 2009/05/13 17:23:02 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kauth.h>
 
 #include <sys/sysctl.h>
+#include <sys/mount.h>
 
 #include <secmodel/secmodel.h>
 
@@ -92,6 +93,38 @@ SYSCTL_SETUP(sysctl_security_bsd44_setup,
 				    "users not owning them."),
 		       NULL, 0, &secmodel_bsd44_curtain, 0,
 		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "usermount",
+		       SYSCTL_DESCR("Whether unprivileged users may mount "
+				    "filesystems"),
+		       NULL, 0, &dovfsusermount, 0,
+		       CTL_CREATE, CTL_EOL);
+
+
+	/*
+	 * For compatibility, create the "dovfsusermount" variable in its
+	 * original location.
+	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "generic",
+		       SYSCTL_DESCR("Non-specific vfs related information"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "usermount",
+		       SYSCTL_DESCR("Whether unprivileged users may mount "
+				    "filesystems"),
+		       NULL, 0, &dovfsusermount, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
 }
 
 void

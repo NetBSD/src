@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.33 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: interwave.c,v 1.33.14.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.33 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.33.14.1 2009/05/13 17:19:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -933,10 +933,7 @@ iw_dma_count(struct iw_softc *sc, u_short count, int io)
 }
 
 int
-iw_init_output(addr, sbuf, cc)
-	void	*addr;
-	void	*sbuf;
-	int	cc;
+iw_init_output(void *addr, void *sbuf, int cc)
 {
 	struct iw_softc *sc = (struct iw_softc *) addr;
 

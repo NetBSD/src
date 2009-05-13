@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.35 2008/05/30 19:03:10 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.35.12.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,6 +35,13 @@
 #define	__HAVE_FAST_SOFTINTS
 #define	__HAVE_PREEMPTION
 
+#ifdef _KERNEL
+#include <sys/types.h>
+#else
+#include <stdbool.h>
+#endif
+
+#include <sys/evcnt.h>
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
@@ -96,6 +103,7 @@ struct intrhand {
 	int	(*ih_realfun)(void *);
 	void	*ih_realarg;
 	struct	intrhand *ih_next;
+	struct	intrhand **ih_prevp;
 	int	ih_pin;
 	int	ih_slot;
 	struct cpu_info *ih_cpu;
@@ -161,9 +169,6 @@ struct cpu_info;
 struct pcibus_attach_args;
 
 void intr_default_setup(void);
-void *nmi_establish(int (*)(void *), void *);
-bool nmi_disestablish(void *);
-int nmi_dispatch(void);
 int x86_nmi(void);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
@@ -172,9 +177,7 @@ const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int, int, int *);
 struct pic *intr_findpic(int);
-#ifdef INTRDEBUG
 void intr_printconfig(void);
-#endif
 
 int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);

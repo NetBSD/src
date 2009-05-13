@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.7 2006/06/08 07:03:11 he Exp $	*/
+/*	$NetBSD: mfm.c,v 1.7.78.1 2009/05/13 17:18:40 jym Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -100,7 +100,7 @@ static int mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *bu
  * instruction. Thus the loop-overhead will be enough...
  */
 static void
-sreg_read()
+sreg_read(void)
 {
 	int	i;
 	char    *p;
@@ -112,7 +112,7 @@ sreg_read()
 }
 
 static void
-creg_write()
+creg_write(void)
 {
 	int	i;
 	char    *p;
@@ -132,7 +132,7 @@ creg_write()
  * ready...
  */
 int
-mfm_rxprepare()
+mfm_rxprepare(void)
 {
 	int	error;
 
@@ -340,8 +340,7 @@ volatile struct mfm_xbn {
 } mfm_xbn;
 
 #ifdef verbose
-display_xbn(p)
-	struct mfm_xbn *p;
+display_xbn(struct mfm_xbn *p)
 {
 	printf("**DiskData**	XBNs: %d, DBNs: %d, LBNs: %d, RBNs: %d\n",
 	    p->xbn_count, p->dbn_count, p->lbn_count, p->rbn_count);
@@ -360,9 +359,7 @@ display_xbn(p)
 #endif
 
 int
-mfmopen(f, adapt, ctlr, unit, part)
-	struct open_file *f;
-	int    ctlr, unit, part;
+mfmopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	char *msg;
 	struct disklabel *lp = &mfmlabel;
@@ -370,7 +367,7 @@ mfmopen(f, adapt, ctlr, unit, part)
 	int err;
 	size_t i;
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 	msc->unit = unit;
 	msc->part = part;
 
@@ -479,7 +476,7 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 	if (lp->d_secpercyl == 0)
 		lp->d_secpercyl = 30;
 
-	bzero((void *) 0x200D0000, size);
+	memset((void *) 0x200D0000, 0, size);
 	scount = size / 512;
 
 	while (scount) {
@@ -519,7 +516,7 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 
 			mfm_rxprepare();
 			/* copy from buf */
-			bcopy(cbuf, (void *) 0x200D0000, *rsize);
+			memcpy( (void *) 0x200D0000, cbuf, *rsize);
 			res = mfm_command(DKC_CMD_WRITE_RX33);
 		} else {
 			creg.udc_rtcnt = UDC_RC_RX33READ;
@@ -528,10 +525,10 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 
 			mfm_rxprepare();
 			/* clear disk buffer */
-			bzero((void *) 0x200D0000, *rsize);
+			memset((void *) 0x200D0000, 0, *rsize);
 			res = mfm_command(DKC_CMD_READ_RX33);
 			/* copy to buf */
-			bcopy((void *) 0x200D0000, cbuf, *rsize);
+			memcpy( cbuf, (void *) 0x200D0000, *rsize);
 		}
 
 		scount -= *rsize / 512;
@@ -567,7 +564,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 
 	mfm_rdselect(msc->unit);
 
-	bzero((void *) 0x200D0000, size);
+	memset((void *) 0x200D0000, 0, size);
 	scount = size / 512;
 
 	while (scount) {
@@ -610,7 +607,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			creg.udc_term = UDC_TC_HDD;
 			cmd = DKC_CMD_WRITE_HDD;
 
-			bcopy(cbuf, (void *) 0x200D0000, *rsize);
+			memcpy( (void *) 0x200D0000, cbuf, *rsize);
 			res = mfm_command(cmd);
 		} else {
 			creg.udc_rtcnt = UDC_RC_HDD_READ;
@@ -618,9 +615,9 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			creg.udc_term = UDC_TC_HDD;
 			cmd = DKC_CMD_READ_HDD;
 
-			bzero((void *) 0x200D0000, *rsize);
+			memset((void *) 0x200D0000, 0, *rsize);
 			res = mfm_command(cmd);
-			bcopy((void *) 0x200D0000, cbuf, *rsize);
+			memcpy( cbuf, (void *) 0x200D0000, *rsize);
 		}
 
 		scount -= *rsize / 512;
@@ -638,12 +635,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 }
 
 int
-mfmstrategy(f, func, dblk, size, buf, rsize)
-	void *f;
-	int	func;
-	daddr_t	dblk;
-	void    *buf;
-	size_t	size, *rsize;
+mfmstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct mfm_softc *msc = f;
 	int	res = -1;

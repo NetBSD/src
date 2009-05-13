@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.5 2006/08/04 01:50:30 mhitch Exp $	*/
+/*	$NetBSD: diskio.c,v 1.5.76.1 2009/05/13 17:16:32 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -34,13 +34,13 @@
 #include "atari_stand.h"
 #include <sys/disklabel.h>
 
-typedef int (*rdsec_f)__P((void *buffer, u_int offset, u_int count));
+typedef int (*rdsec_f)(void *buffer, u_int offset, u_int count);
 typedef	struct { rdsec_f rds; u_int rst; u_int rend; } bdevd_t;
 
-static int rootstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-static int rootopen __P((struct open_file *, ...));
-static int rootclose __P((struct open_file *));
-static int rootioctl __P((struct open_file *, u_long, void *));
+static int rootstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+static int rootopen(struct open_file *, ...);
+static int rootclose(struct open_file *);
+static int rootioctl(struct open_file *, u_long, void *);
 
 struct devsw devsw[] = {
 	{ "root", rootstrategy, rootopen, rootclose, rootioctl }
@@ -51,9 +51,7 @@ static bdevd_t	bootdev;
  * Initialise boot device info.
  */
 int
-init_dskio (func, label, root)
-	void	*func, *label;
-	int	root;
+init_dskio (void *func, void *label, int root)
 {
 	struct disklabel *dl = label;
 	struct partition *pd = &dl->d_partitions[root];
@@ -81,10 +79,7 @@ init_dskio (func, label, root)
  * same device as the bootstrap.
  */
 int
-devopen (f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen (struct open_file *f, const char *fname, char **file)
 {
 	f->f_devdata = &bootdev;
 	f->f_dev = &devsw[0];
@@ -93,13 +88,7 @@ devopen (f, fname, file)
 }
 
 static int
-rootstrategy (devd, flag, dblk, size, buf, rsize)
-	void	*devd;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+rootstrategy (void *devd, int flag, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	bdevd_t	*dd = devd;
 	daddr_t stb = dd->rst + dblk;
@@ -116,24 +105,19 @@ rootstrategy (devd, flag, dblk, size, buf, rsize)
 }
 
 static int
-rootopen (f)
-	struct open_file *f;
+rootopen (struct open_file *f, ...)
 {
 	return(0);
 }
 
 static int
-rootclose (f)
-	struct open_file *f;
+rootclose (struct open_file *f)
 {
 	return(EIO);
 }
 
 static int
-rootioctl (f, cmd, data)
-	struct open_file *f;
-	u_long	cmd;
-	void	*data;
+rootioctl (struct open_file *f, u_long cmd, void *data)
 {
 	return(EIO);
 }

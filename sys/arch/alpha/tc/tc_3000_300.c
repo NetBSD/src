@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.27 2002/09/27 15:35:39 provos Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.27.126.1 2009/05/13 17:16:07 jym Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.27 2002/09/27 15:35:39 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.27.126.1 2009/05/13 17:16:07 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,10 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.27 2002/09/27 15:35:39 provos Exp 
 #include "sfb.h"
 
 #if NSFB > 0
-extern int	sfb_cnattach __P((tc_addr_t));
+extern int	sfb_cnattach(tc_addr_t);
 #endif
 
-int	tc_3000_300_intrnull __P((void *));
+int	tc_3000_300_intrnull(void *);
 
 #define	C(x)	((void *)(u_long)x)
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
@@ -85,7 +85,7 @@ int tc_3000_300_nbuiltins =
     sizeof(tc_3000_300_builtins) / sizeof(tc_3000_300_builtins[0]);
 
 struct tcintr {
-	int	(*tci_func) __P((void *));
+	int	(*tci_func)(void *);
 	void	*tci_arg;
 	struct evcnt tci_evcnt;
 } tc_3000_300_intr[TC_3000_300_NCOOKIES];
@@ -120,9 +120,7 @@ tc_3000_300_intr_setup()
 }
 
 const struct evcnt *
-tc_3000_300_intr_evcnt(tcadev, cookie)
-	struct device *tcadev;
-	void *cookie;
+tc_3000_300_intr_evcnt(struct device *tcadev, void *cookie)
 {
 	u_long dev = (u_long)cookie;
 
@@ -134,11 +132,7 @@ tc_3000_300_intr_evcnt(tcadev, cookie)
 }
 
 void
-tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
-	struct device *tcadev;
-	void *cookie, *arg;
-	tc_intrlevel_t level;
-	int (*func) __P((void *));
+tc_3000_300_intr_establish(struct device *tcadev, void *cookie, tc_intrlevel_t level, int (*func)(void *), void *arg)
 {
 	volatile u_int32_t *imskp;
 	u_long dev = (u_long)cookie;
@@ -168,9 +162,7 @@ tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
 }
 
 void
-tc_3000_300_intr_disestablish(tcadev, cookie)
-	struct device *tcadev;
-	void *cookie;
+tc_3000_300_intr_disestablish(struct device *tcadev, void *cookie)
 {
 	volatile u_int32_t *imskp;
 	u_long dev = (u_long)cookie;
@@ -201,8 +193,7 @@ tc_3000_300_intr_disestablish(tcadev, cookie)
 }
 
 int
-tc_3000_300_intrnull(val)
-	void *val;
+tc_3000_300_intrnull(void *val)
 {
 
 	panic("tc_3000_300_intrnull: uncaught TC intr for cookie %ld",
@@ -210,9 +201,7 @@ tc_3000_300_intrnull(val)
 }
 
 void
-tc_3000_300_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+tc_3000_300_iointr(void *arg, unsigned long vec)
 {
 	u_int32_t tcir, ioasicir, ioasicimr;
 	int ifound;
@@ -294,8 +283,7 @@ tc_3000_300_iointr(arg, vec)
  * framebuffer as the output side of the console.
  */
 int
-tc_3000_300_fb_cnattach(turbo_slot)
-	u_int64_t turbo_slot;
+tc_3000_300_fb_cnattach(u_int64_t turbo_slot)
 {
 	u_int32_t output_slot;
 

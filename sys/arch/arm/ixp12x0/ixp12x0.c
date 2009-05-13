@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.14 2005/12/11 12:16:50 christos Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.14.94.1 2009/05/13 17:16:18 jym Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.14 2005/12/11 12:16:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.14.94.1 2009/05/13 17:16:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.14 2005/12/11 12:16:50 christos Exp $"
 static struct ixp12x0_softc *ixp12x0_softc;
 
 void
-ixp12x0_attach(sc)
-	struct ixp12x0_softc *sc;
+ixp12x0_attach(struct ixp12x0_softc *sc)
 {
 	struct pcibus_attach_args pba;
 	pcireg_t reg;

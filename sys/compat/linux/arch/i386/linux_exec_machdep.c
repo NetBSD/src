@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/26 20:46:05 christos Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.11.8.1 2009/05/13 17:18:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/26 20:46:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.11.8.1 2009/05/13 17:18:56 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -121,12 +121,13 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
+		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
 	KASSERT(access_size > 0);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE,
+	    VMCMD_STACK);
 
 	return 0;
 }

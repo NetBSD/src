@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.15 2008/04/28 20:23:52 martin Exp $ */
+/* $NetBSD: ics2101.c,v 1.15.14.1 2009/05/13 17:19:52 jym Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.15 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.15.14.1 2009/05/13 17:19:52 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,7 @@ static void ics2101_mix_doit(struct ics2101_softc *, u_int, u_int, u_int,
 
 
 static void
-ics2101_mix_doit(sc, chan, side, value, flags)
-	struct ics2101_softc *sc;
-	u_int chan, side, value, flags;
+ics2101_mix_doit(struct ics2101_softc *sc, u_int chan, u_int side, u_int value, u_int flags)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	unsigned char flip_left[6] = {0x01, 0x01, 0x01, 0x02, 0x01, 0x02};
@@ -133,18 +131,14 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 }
 
 void
-ics2101_mix_mute(sc, chan, side, domute)
-	struct ics2101_softc *sc;
-	unsigned int chan, side, domute;
+ics2101_mix_mute(struct ics2101_softc *sc, unsigned int chan, unsigned int side, unsigned int domute)
 {
     ics2101_mix_doit(sc, chan, side, 0,
 		     domute ? ICS_MUTE|ICS_MUTE_MUTED : ICS_MUTE);
 }
 
 void
-ics2101_mix_attenuate(sc, chan, side, value)
-	struct ics2101_softc *sc;
-	unsigned int chan, side, value;
+ics2101_mix_attenuate(struct ics2101_softc *sc, unsigned int chan, unsigned int side, unsigned int value)
 {
     ics2101_mix_doit(sc, chan, side, value, ICS_VALUE);
 }

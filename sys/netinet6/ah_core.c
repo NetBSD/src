@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.44 2007/05/23 17:15:00 christos Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.44.48.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.44 2007/05/23 17:15:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.44.48.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -86,66 +86,66 @@ __KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.44 2007/05/23 17:15:00 christos Exp $"
 
 #include <net/net_osdep.h>
 
-static int ah_sumsiz_1216 __P((struct secasvar *));
-static int ah_sumsiz_zero __P((struct secasvar *));
-static int ah_common_mature __P((struct secasvar *));
-static int ah_none_mature __P((struct secasvar *));
-static int ah_none_init __P((struct ah_algorithm_state *, struct secasvar *));
-static void ah_none_loop __P((struct ah_algorithm_state *, u_int8_t *, size_t));
-static void ah_none_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_keyed_md5_mature __P((struct secasvar *));
-static int ah_keyed_md5_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_keyed_md5_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_keyed_md5_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_keyed_sha1_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_keyed_sha1_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_keyed_sha1_result __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static int ah_hmac_md5_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_md5_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_md5_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_sha1_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_sha1_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_sha1_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_sha2_256_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_sha2_256_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_sha2_256_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_sha2_384_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_sha2_384_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_sha2_384_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_sha2_512_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_sha2_512_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_sha2_512_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_ripemd160_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_ripemd160_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_ripemd160_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
+static int ah_sumsiz_1216(struct secasvar *);
+static int ah_sumsiz_zero(struct secasvar *);
+static int ah_common_mature(struct secasvar *);
+static int ah_none_mature(struct secasvar *);
+static int ah_none_init(struct ah_algorithm_state *, struct secasvar *);
+static void ah_none_loop(struct ah_algorithm_state *, u_int8_t *, size_t);
+static void ah_none_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_keyed_md5_mature(struct secasvar *);
+static int ah_keyed_md5_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_keyed_md5_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_keyed_md5_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_keyed_sha1_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_keyed_sha1_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_keyed_sha1_result(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static int ah_hmac_md5_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_md5_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_md5_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_sha1_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_sha1_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_sha1_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_sha2_256_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_sha2_256_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_sha2_256_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_sha2_384_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_sha2_384_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_sha2_384_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_sha2_512_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_sha2_512_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_sha2_512_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_ripemd160_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_ripemd160_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_ripemd160_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
 
-static void ah_update_mbuf __P((struct mbuf *, int, int,
-	const struct ah_algorithm *, struct ah_algorithm_state *));
+static void ah_update_mbuf(struct mbuf *, int, int,
+	const struct ah_algorithm *, struct ah_algorithm_state *);
 
 /* checksum algorithms */
 static const struct ah_algorithm ah_algorithms[] = {
@@ -336,7 +336,7 @@ ah_keyed_md5_init(struct ah_algorithm_state *state, struct secasvar *sav)
 		MD5Update((MD5_CTX *)state->foo, &buf[0], 1);
 		padlen--;
 
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		while (sizeof(buf) < padlen) {
 			MD5Update((MD5_CTX *)state->foo, &buf[0], sizeof(buf));
 			padlen -= sizeof(buf);
@@ -381,7 +381,7 @@ ah_keyed_md5_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	}
 	MD5Final(digest, (MD5_CTX *)state->foo);
 	free(state->foo, M_TEMP);
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 }
 
 static int
@@ -421,7 +421,7 @@ ah_keyed_sha1_init(struct ah_algorithm_state *state, struct secasvar *sav)
 		SHA1Update(ctxt, &buf[0], 1);
 		padlen--;
 
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		while (sizeof(buf) < padlen) {
 			SHA1Update(ctxt, &buf[0], sizeof(buf));
 			padlen -= sizeof(buf);
@@ -469,7 +469,7 @@ ah_keyed_sha1_result(struct ah_algorithm_state *state, u_int8_t *addr,
 			(u_int)_KEYLEN(state->sav->key_auth));
 	}
 	SHA1Final((u_int8_t *)digest, ctxt);
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -510,10 +510,10 @@ ah_hmac_md5_init(struct ah_algorithm_state *state, struct secasvar *sav)
 		keylen = _KEYLEN(state->sav->key_auth);
 	}
 
-	bzero(ipad, 64);
-	bzero(opad, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memset(ipad, 0, 64);
+	memset(opad, 0, 64);
+	memcpy(ipad, key, keylen);
+	memcpy(opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -560,7 +560,7 @@ ah_hmac_md5_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	MD5Update(ctxt, digest, sizeof(digest));
 	MD5Final(digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -602,10 +602,10 @@ ah_hmac_sha1_init(struct ah_algorithm_state *state, struct secasvar *sav)
 		keylen = _KEYLEN(state->sav->key_auth);
 	}
 
-	bzero(ipad, 64);
-	bzero(opad, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memset(ipad, 0, 64);
+	memset(opad, 0, 64);
+	memcpy(ipad, key, keylen);
+	memcpy(opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -653,7 +653,7 @@ ah_hmac_sha1_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	SHA1Update(ctxt, (u_int8_t *)digest, sizeof(digest));
 	SHA1Final((u_int8_t *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -684,7 +684,7 @@ ah_hmac_sha2_256_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
-		bzero(tk, sizeof(tk));
+		memset(tk, 0, sizeof(tk));
 		SHA256_Init(ctxt);
 		SHA256_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -696,10 +696,10 @@ ah_hmac_sha2_256_init(struct ah_algorithm_state *state, struct secasvar *sav)
 		keylen = _KEYLEN(state->sav->key_auth);
 	}
 
-	bzero(ipad, 64);
-	bzero(opad, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memset(ipad, 0, 64);
+	memset(opad, 0, 64);
+	memcpy(ipad, key, keylen);
+	memcpy(opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -747,7 +747,7 @@ ah_hmac_sha2_256_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	SHA256_Update(ctxt, (void *)digest, sizeof(digest));
 	SHA256_Final((void *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -771,7 +771,7 @@ ah_hmac_sha2_384_init(struct ah_algorithm_state *state, struct secasvar *sav)
 	    M_TEMP, M_NOWAIT);
 	if (!state->foo)
 		return ENOBUFS;
-	bzero(state->foo, 64 + 64 + sizeof(SHA384_CTX));
+	memset(state->foo, 0, 64 + 64 + sizeof(SHA384_CTX));
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
@@ -779,7 +779,7 @@ ah_hmac_sha2_384_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
-		bzero(tk, sizeof(tk));
+		memset(tk, 0, sizeof(tk));
 		SHA384_Init(ctxt);
 		SHA384_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -791,10 +791,10 @@ ah_hmac_sha2_384_init(struct ah_algorithm_state *state, struct secasvar *sav)
 		keylen = _KEYLEN(state->sav->key_auth);
 	}
 
-	bzero(ipad, 64);
-	bzero(opad, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memset(ipad, 0, 64);
+	memset(opad, 0, 64);
+	memcpy(ipad, key, keylen);
+	memcpy(opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -842,7 +842,7 @@ ah_hmac_sha2_384_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	SHA384_Update(ctxt, (void *)digest, sizeof(digest));
 	SHA384_Final((void *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -866,7 +866,7 @@ ah_hmac_sha2_512_init(struct ah_algorithm_state *state, struct secasvar *sav)
 	    M_TEMP, M_NOWAIT);
 	if (!state->foo)
 		return ENOBUFS;
-	bzero(state->foo, 64 + 64 + sizeof(SHA512_CTX));
+	memset(state->foo, 0, 64 + 64 + sizeof(SHA512_CTX));
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
@@ -874,7 +874,7 @@ ah_hmac_sha2_512_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
-		bzero(tk, sizeof(tk));
+		memset(tk, 0, sizeof(tk));
 		SHA512_Init(ctxt);
 		SHA512_Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -886,10 +886,10 @@ ah_hmac_sha2_512_init(struct ah_algorithm_state *state, struct secasvar *sav)
 		keylen = _KEYLEN(state->sav->key_auth);
 	}
 
-	bzero(ipad, 64);
-	bzero(opad, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memset(ipad, 0, 64);
+	memset(opad, 0, 64);
+	memcpy(ipad, key, keylen);
+	memcpy(opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -937,7 +937,7 @@ ah_hmac_sha2_512_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	SHA512_Update(ctxt, (void *)digest, sizeof(digest));
 	SHA512_Final((void *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -961,7 +961,7 @@ ah_hmac_ripemd160_init(struct ah_algorithm_state *state, struct secasvar *sav)
 	    M_TEMP, M_NOWAIT);
 	if (!state->foo)
 		return ENOBUFS;
-	bzero(state->foo, 64 + 64 + sizeof(RMD160_CTX));
+	memset(state->foo, 0, 64 + 64 + sizeof(RMD160_CTX));
 
 	ipad = (u_char *)state->foo;
 	opad = (u_char *)(ipad + 64);
@@ -969,7 +969,7 @@ ah_hmac_ripemd160_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	/* compress the key if necessery */
 	if (64 < _KEYLEN(state->sav->key_auth)) {
-		bzero(tk, sizeof(tk));
+		memset(tk, 0, sizeof(tk));
 		RMD160Init(ctxt);
 		RMD160Update(ctxt, _KEYBUF(state->sav->key_auth),
 		    _KEYLEN(state->sav->key_auth));
@@ -981,10 +981,10 @@ ah_hmac_ripemd160_init(struct ah_algorithm_state *state, struct secasvar *sav)
 		keylen = _KEYLEN(state->sav->key_auth);
 	}
 
-	bzero(ipad, 64);
-	bzero(opad, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memset(ipad, 0, 64);
+	memset(opad, 0, 64);
+	memcpy(ipad, key, keylen);
+	memcpy(opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -1032,7 +1032,7 @@ ah_hmac_ripemd160_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	RMD160Update(ctxt, (void *)digest, sizeof(digest));
 	RMD160Final((void *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy(addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -1219,7 +1219,7 @@ again:
 					goto fail;
 				}
 				if (skip)
-					bzero(p + i, l);
+					memset(p + i, 0, l);
 				if (p[i + IPOPT_OPTVAL] == IPOPT_EOL)
 					break;
 				i += l;
@@ -1273,7 +1273,7 @@ again:
 			}
 			m_copydata(m, off, totlen, mtod(n, void *));
 			n->m_len = totlen;
-			bzero(mtod(n, u_int8_t *) + hdrsiz, siz);
+			memset(mtod(n, u_int8_t *) + hdrsiz, 0, siz);
 			(algo->update)(&algos, mtod(n, u_int8_t *), n->m_len);
 			m_free(n);
 			n = NULL;
@@ -1302,7 +1302,7 @@ again:
 	}
 
 	(algo->result)(&algos, sumbuf, sizeof(sumbuf));
-	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sav));
+	memcpy(ahdat, &sumbuf[0], (*algo->sumsiz)(sav));
 
 	if (n)
 		m_free(n);
@@ -1418,7 +1418,7 @@ ah6_calccksum(struct mbuf *m, u_int8_t *ahdat, size_t len,
 			}
 			m_copydata(m, off, newoff - off, mtod(n, void *));
 			n->m_len = newoff - off;
-			bzero(mtod(n, u_int8_t *) + hdrsiz, siz);
+			memset(mtod(n, u_int8_t *) + hdrsiz, 0, siz);
 			(algo->update)(&algos, mtod(n, u_int8_t *), n->m_len);
 			m_free(n);
 			n = NULL;
@@ -1493,7 +1493,7 @@ ah6_calccksum(struct mbuf *m, u_int8_t *ahdat, size_t len,
 			}
 
 			if (optp[0] & IP6OPT_MUTABLE)
-				bzero(optp + 2, optlen - 2);
+				memset(optp + 2, 0, optlen - 2);
 
 			optp += optlen;
 		}
@@ -1530,7 +1530,7 @@ ah6_calccksum(struct mbuf *m, u_int8_t *ahdat, size_t len,
 	}
 
 	(algo->result)(&algos, sumbuf, sizeof(sumbuf));
-	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sav));
+	memcpy(ahdat, &sumbuf[0], (*algo->sumsiz)(sav));
 
 	/* just in case */
 	if (n)

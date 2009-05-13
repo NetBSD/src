@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.8 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.8.24.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.8 2007/12/25 18:33:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.8.24.1 2009/05/13 17:22:28 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ esp_aesctr_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 
 	/* setup counter block */
 	nonce = _KEYBUF(sav->key_enc) + _KEYLEN(sav->key_enc) - NONCESIZE;
-	bcopy(nonce, cblock.v.nonce, NONCESIZE);
+	memcpy(cblock.v.nonce, nonce, NONCESIZE);
 	m_copydata(m, ivoff, ivlen, cblock.v.iv);
 	ctr = 1;
 
@@ -246,7 +246,7 @@ esp_aesctr_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 		ctx = (aesctr_ctx *)sav->sched;
 		rijndaelEncrypt(ctx->r_ek, ctx->r_nr, cblock.cblock, keystream);
 
-		bcopy(sp, mtod(d, u_int8_t *) + dn, blocklen);
+		memcpy(mtod(d, u_int8_t *) + dn, sp, blocklen);
 		dst = mtod(d, u_int8_t *) + dn;
 		for (i = 0; i < blocklen; i++)
 			dst[i] ^= keystream[i];
@@ -273,8 +273,8 @@ esp_aesctr_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 	scut->m_next = d0;
 
 	/* just in case */
-	bzero(&cblock, sizeof(cblock));
-	bzero(keystream, sizeof(keystream));
+	memset(&cblock, 0, sizeof(cblock));
+	memset(keystream, 0, sizeof(keystream));
 
 	return 0;
 
@@ -335,7 +335,7 @@ esp_aesctr_encrypt(
 
 	/* setup counter block */
 	nonce = _KEYBUF(sav->key_enc) + _KEYLEN(sav->key_enc) - NONCESIZE;
-	bcopy(nonce, cblock.v.nonce, NONCESIZE);
+	memcpy(cblock.v.nonce, nonce, NONCESIZE);
 	m_copydata(m, ivoff, ivlen, cblock.v.iv);
 	ctr = 1;
 
@@ -423,7 +423,7 @@ esp_aesctr_encrypt(
 		ctx = (aesctr_ctx *)sav->sched;
 		rijndaelEncrypt(ctx->r_ek, ctx->r_nr, cblock.cblock, keystream);
 
-		bcopy(sp, mtod(d, u_int8_t *) + dn, blocklen);
+		memcpy(mtod(d, u_int8_t *) + dn, sp, blocklen);
 		dst = mtod(d, u_int8_t *) + dn;
 		for (i = 0; i < blocklen; i++)
 			dst[i] ^= keystream[i];
@@ -450,8 +450,8 @@ esp_aesctr_encrypt(
 	scut->m_next = d0;
 
 	/* just in case */
-	bzero(&cblock, sizeof(cblock));
-	bzero(keystream, sizeof(keystream));
+	memset(&cblock, 0, sizeof(cblock));
+	memset(keystream, 0, sizeof(keystream));
 
 	key_sa_stir_iv(sav);
 

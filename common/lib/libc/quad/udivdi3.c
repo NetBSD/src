@@ -1,4 +1,4 @@
-/*	$NetBSD: udivdi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: udivdi3.c,v 1.1.36.1 2009/05/13 17:23:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)udivdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: udivdi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: udivdi3.c,v 1.1.36.1 2009/05/13 17:23:12 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,7 @@ __RCSID("$NetBSD: udivdi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
  * Divide two unsigned quads.
  */
 u_quad_t
-__udivdi3(a, b)
-	u_quad_t a, b;
+__udivdi3(u_quad_t a, u_quad_t b)
 {
 
 	return (__qdivrem(a, b, (u_quad_t *)0));

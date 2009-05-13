@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.231 2008/11/30 18:21:36 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.231.4.1 2009/05/13 17:18:36 jym Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,10 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.231 2008/11/30 18:21:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.231.4.1 2009/05/13 17:18:36 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
 
@@ -279,6 +280,7 @@ bootstrap(void)
 
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);
+	curlwp = &lwp0;
 
 #if defined(SUN4M) || defined(SUN4D)
 	/* Switch to sparc v8 multiply/divide functions on v8 machines */
@@ -314,18 +316,6 @@ bootstrap(void)
 	initmsgbuf((void *)KERNBASE, 8192);
 #endif
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
-		if (bi_sym->ssym < KERNBASE) {
-			/* Assume low-loading boot loader */
-			bi_sym->ssym += KERNBASE;
-			bi_sym->esym += KERNBASE;
-		}
-		ksyms_addsyms_elf(bi_sym->nsym, (int *)bi_sym->ssym,
-		    (int *)bi_sym->esym);
-	}
-#endif
-
 #if defined(SUN4M)
 	/*
 	 * sun4m bootstrap is complex and is totally different for "normal" 4m
@@ -351,6 +341,18 @@ bootstrap(void)
 		*((unsigned char *)INTRREG_VA) = 0;
 	}
 #endif /* SUN4 || SUN4C */
+
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
+		if (bi_sym->ssym < KERNBASE) {
+			/* Assume low-loading boot loader */
+			bi_sym->ssym += KERNBASE;
+			bi_sym->esym += KERNBASE;
+		}
+		ksyms_addsyms_elf(bi_sym->nsym, (void*)bi_sym->ssym,
+		    (void*)bi_sym->esym);
+	}
+#endif
 }
 
 #if defined(SUN4M) && !defined(MSIIEP)
@@ -502,7 +504,7 @@ bootpath_build(void)
 	/*
 	 * Grab boot path from PROM and split into `bootpath' components.
 	 */
-	bzero(bootpath, sizeof(bootpath));
+	memset(bootpath, 0, sizeof(bootpath));
 	bp = bootpath;
 	cp = prom_getbootpath();
 	switch (prom_version()) {
@@ -974,7 +976,7 @@ cpu_configure(void)
 	 */
 	{
 		extern struct user *proc0paddr;
-		bzero(proc0paddr, sizeof(struct user));
+		memset(proc0paddr, 0, sizeof(struct user));
 	}
 
 	spl0();
@@ -1182,7 +1184,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 
-		bzero(&ma, sizeof(ma));
+		memset(&ma, 0, sizeof(ma));
 		/* Configure the CPU. */
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
@@ -1245,7 +1247,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 					continue;
 			}
 
-			bzero(&ma, sizeof(ma));
+			memset(&ma, 0, sizeof(ma));
 			ma.ma_bustag = &mainbus_space_tag;
 			ma.ma_dmatag = &mainbus_dma_tag;
 			ma.ma_node = node;
@@ -1257,7 +1259,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			}
 		}
 	} else if (CPU_ISSUN4C) {
-		bzero(&ma, sizeof(ma));
+		memset(&ma, 0, sizeof(ma));
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_node = findroot();
@@ -1273,7 +1275,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			panic(sp);
 		}
 
-		bzero(&ma, sizeof ma);
+		memset(&ma, 0, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = prom_getpropstringA(node, "name",
@@ -1320,7 +1322,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (sp != NULL)
 			continue; /* an "early" device already configured */
 
-		bzero(&ma, sizeof ma);
+		memset(&ma, 0, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = prom_getpropstringA(node, "name",
@@ -1383,7 +1385,7 @@ prom_getprop_reg1(int node, struct openprom_addr *rrp)
 		if (error == ENOENT &&
 		    strcmp(prom_getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") == 0) {
-			bzero(rrp, sizeof(struct openprom_addr));
+			memset(rrp, 0, sizeof(struct openprom_addr));
 			error = 0;
 		}
 		return (error);

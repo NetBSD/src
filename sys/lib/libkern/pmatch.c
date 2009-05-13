@@ -1,4 +1,4 @@
-/*	$NetBSD: pmatch.c,v 1.5 2005/12/11 12:24:37 christos Exp $	*/
+/*	$NetBSD: pmatch.c,v 1.5.90.1 2009/05/13 17:22:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991 The Regents of the University of California.
@@ -40,8 +40,7 @@
  * *estr will point to the end of thelongest exact or substring match.
  */
 int
-pmatch(string, pattern, estr)
-	const char *string, *pattern, **estr;
+pmatch(const char *string, const char *pattern, const char **estr)
 {
 	u_char stringc, patternc, rangec;
 	int match, negate_range;

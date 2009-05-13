@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.4 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.4.94.1 2009/05/13 17:16:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2005/12/11 12:17:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4.94.1 2009/05/13 17:16:36 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,12 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2005/12/11 12:17:04 christos 
 #include "isa.h"
 
 void *
-pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func) __P((void *));
-	void *arg;
+pciide_machdep_compat_intr_establish(struct device *dev, struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 #if NISA > 0
 	int irq;

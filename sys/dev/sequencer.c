@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.51 2009/01/11 10:40:27 cegger Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.51.2.1 2009/05/13 17:19:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.51 2009/01/11 10:40:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.51.2.1 2009/05/13 17:19:05 jym Exp $");
 
 #include "sequencer.h"
 
@@ -1367,7 +1367,7 @@ const struct cdevsw midi_cdevsw = {
  */
 
 int
-midi_unit_count()
+midi_unit_count(void)
 {
 	return (0);
 }

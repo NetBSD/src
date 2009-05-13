@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.48 2008/10/22 12:29:35 matt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.48.8.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -188,16 +188,16 @@ struct	nfsmount {
  */
 VFS_PROTOS(nfs);
 
-int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
+int	mountnfs(struct nfs_args *argp, struct mount *mp,
 		struct mbuf *nam, const char *pth, const char *hst,
-		struct vnode **vpp, struct lwp *p));
-void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *,
-		struct lwp *l));
-int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, kauth_cred_t,
-			struct lwp *));
+		struct vnode **vpp, struct lwp *p);
+void	nfs_decode_args(struct nfsmount *, struct nfs_args *,
+		struct lwp *l);
+int	nfs_fsinfo(struct nfsmount *, struct vnode *, kauth_cred_t,
+			struct lwp *);
 
-void	nfs_vfs_init __P((void));
-void	nfs_vfs_done __P((void));
+void	nfs_vfs_init(void);
+void	nfs_vfs_done(void);
 
 #endif /* _KERNEL */
 

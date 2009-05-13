@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.8 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.8.14.1 2009/05/13 17:20:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct clock_attach_args {
 	void			*ca_arg;
 };
 
-void	clock_config(struct device *, struct clock_attach_args *,
+void	clock_config(device_t, struct clock_attach_args *,
 			struct evcnt *);
 
 /*

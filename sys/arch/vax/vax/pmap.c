@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2008/12/17 20:51:32 cegger Exp $	   */
+/*	$NetBSD: pmap.c,v 1.164.2.1 2009/05/13 17:18:41 jym Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2008/12/17 20:51:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.1 2009/05/13 17:18:41 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_pipe.h"
@@ -472,7 +473,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
 	vm_physmem[0].avail_start += npgs;
 	vm_physmem[0].start += npgs;
-	bzero((void *)v, size);
+	memset((void *)v, 0, size);
 	return v;
 }
 
@@ -809,8 +810,8 @@ grow_p0(struct pmap *pm, int reqlen)
 	    from, to, srclen, dstlen));
 
 	if (inuse)
-		bcopy(from, to, srclen);
-	bzero(to+srclen, dstlen-srclen);
+		memcpy( to, from, srclen);
+	memset(to+srclen, 0, dstlen-srclen);
 	p0br = (u_long)pm->pm_p0br;
 	pm->pm_p0br = (struct pte *)nptespc;
 	pm->pm_p0lr = (len/PPTESZ);
@@ -842,9 +843,9 @@ grow_p1(struct pmap *pm, int len)
 	 * Copy the old ptes to the new space.
 	 * Done by moving on system page table.
 	 */
-	bzero(kvtopte(nptespc), vax_btop(nlen-olen) * PPTESZ);
+	memset(kvtopte(nptespc), 0, vax_btop(nlen-olen) * PPTESZ);
 	if (optespc)
-		bcopy(kvtopte(optespc), kvtopte(nptespc+nlen-olen),
+		memcpy( kvtopte(nptespc+nlen-olen), kvtopte(optespc),
 		    vax_btop(olen) * PPTESZ);
 
 	pm->pm_p1ap = (struct pte *)nptespc;
@@ -1037,12 +1038,12 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			continue;
 		if (pte->pg_sref == 0)
 			panic("pmap_kremove");
-		bzero(pte, LTOHPN * sizeof(struct pte));
+		memset(pte, 0, LTOHPN * sizeof(struct pte));
 		pte += LTOHPN;
 	}
 #else
 	len >>= VAX_PGSHIFT;
-	bzero(pte, len * sizeof(struct pte));
+	memset(pte, 0, len * sizeof(struct pte));
 #endif
 #if defined(MULTIPROCESSOR)
 	cpu_send_ipi(IPI_DEST_ALL, IPI_TBIA);
@@ -1055,7 +1056,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
  * upgrades mappings to more "rights".
  */
 int
-pmap_enter(pmap_t pmap, vaddr_t v, paddr_t p, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pmap, vaddr_t v, paddr_t p, vm_prot_t prot, u_int flags)
 {
 	struct pv_entry *pv, *tmp;
 	int s, newpte, oldpte;
@@ -1337,7 +1338,7 @@ pmap_protect_long(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 					panic("pmap_remove PG_SREF page");
 #endif
 				RECURSESTART;
-				bzero(pts, sizeof(struct pte) * LTOHPN);
+				memset(pts, 0, sizeof(struct pte) * LTOHPN);
 				if (pt != Sysmap) {
 					if (ptpinuse(pts) == 0)
 						rmptep(pts);
@@ -1565,7 +1566,7 @@ pmap_page_protect_long(struct pv_entry *pv, vm_prot_t prot)
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |= 
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
-			bzero(g, sizeof(struct pte) * LTOHPN);
+			memset(g, 0, sizeof(struct pte) * LTOHPN);
 			if (pv->pv_pmap != pmap_kernel()) {
 				if (ptpinuse(g) == 0)
 					rmptep((void *)g);
@@ -1587,7 +1588,7 @@ pmap_page_protect_long(struct pv_entry *pv, vm_prot_t prot)
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
-			bzero(g, sizeof(struct pte) * LTOHPN);
+			memset(g, 0, sizeof(struct pte) * LTOHPN);
 			if (pl->pv_pmap != pmap_kernel()) {
 				if (ptpinuse(g) == 0)
 					rmptep((void *)g);
@@ -1796,7 +1797,7 @@ get_ptp(int w)
 
 	if ((a = ptpp)) {
 		ptpp = (int *)*ptpp;
-		bzero(a, VAX_NBPG);
+		memset(a, 0, VAX_NBPG);
 		return (vaddr_t)a;
 	}
 	a = (int *)getpage(w);

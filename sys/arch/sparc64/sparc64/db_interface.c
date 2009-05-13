@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.116 2009/01/11 09:48:49 nakayama Exp $ */
+/*	$NetBSD: db_interface.c,v 1.116.2.1 2009/05/13 17:18:38 jym Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.116 2009/01/11 09:48:49 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.116.2.1 2009/05/13 17:18:38 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -431,7 +431,7 @@ fill_ddb_regs_from_tf(struct trapframe64 *tf)
 }
 
 void
-ddb_restore_state()
+ddb_restore_state(void)
 {
 	extern void restoretstate(int, struct trapstate *);
 
@@ -560,7 +560,7 @@ db_write_bytes(db_addr_t addr, size_t size, const char *data)
 
 #ifdef DDB
 void
-Debugger()
+Debugger(void)
 {
 	/* We use the breakpoint to trap into DDB */
 	__asm("ta 1; nop");

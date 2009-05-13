@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.14 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.14.14.1 2009/05/13 17:18:56 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.14 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.14.14.1 2009/05/13 17:18:56 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -76,6 +76,8 @@ irix_to_native_resource(int irix_res)
 		bsd_res = RLIMIT_NOFILE;
 		break;
 	case IRIX_RLIMIT_VMEM:
+		bsd_res = RLIMIT_AS;
+		break;
 	case IRIX_RLIMIT_RSS:
 		bsd_res = RLIMIT_RSS;
 		break;

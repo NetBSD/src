@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.11 2007/11/26 19:01:40 pooka Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.11.32.1 2009/05/13 17:21:49 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.11 2007/11/26 19:01:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.11.32.1 2009/05/13 17:21:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.11 2007/11/26 19:01:40 pooka Exp $");
  *	    caller, this will not occur with RENAME or CREATE.
  */
 int
-adosfs_lookup(v)
-	void *v;
+adosfs_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;

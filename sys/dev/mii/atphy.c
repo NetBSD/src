@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.2 2009/01/16 21:50:02 cegger Exp $ */
+/*	$NetBSD: atphy.c,v 1.2.6.1 2009/05/13 17:20:15 jym Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.2 2009/01/16 21:50:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.2.6.1 2009/05/13 17:20:15 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,8 @@ const struct mii_phy_funcs atphy_funcs = {
 static const struct mii_phydesc etphys[] = {
 	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F1,
 	  MII_STR_ATHEROS_F1 },
+	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_L1,
+	  MII_STR_ATTANSIC_L1 },
 	{ 0,			0,
 	  NULL },
 };
@@ -135,7 +137,9 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
+	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
+	aprint_normal("\n");
 }
 
 int
@@ -214,7 +218,8 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * Reset the PHY so all changes take effect.
 		 */
-		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET);
+		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET | BMCR_AUTOEN |
+		    BMCR_STARTNEG);
 done:
 		break;
 

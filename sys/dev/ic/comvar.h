@@ -70,7 +70,9 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_NO_TXPRELOAD	0x200
 
 /* Buffer size for character buffer */
+#ifndef COM_RING_SIZE
 #define	COM_RING_SIZE	2048
+#endif
 
 #ifdef	COM_REGMAP
 #define	COM_REG_RXDATA		0
@@ -226,9 +228,9 @@ int comprobe1(bus_space_tag_t, bus_space_handle_t);
 int comintr(void *);
 void com_attach_subr(struct com_softc *);
 int com_probe_subr(struct com_regs *);
-int com_detach(struct device *, int);
+int com_detach(device_t, int);
 bool com_resume(device_t PMF_FN_PROTO);
-int com_activate(struct device *, enum devact);
+int com_activate(device_t, enum devact);
 bool com_cleanup(device_t, int);
 bool com_suspend(device_t PMF_FN_PROTO);
 

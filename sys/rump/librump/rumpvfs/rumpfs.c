@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.6 2009/01/13 01:57:35 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.6.6.1 2009/05/13 17:22:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6 2009/01/13 01:57:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6.6.1 2009/05/13 17:22:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -42,10 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6 2009/01/13 01:57:35 pooka Exp $");
 #include <sys/queue.h>
 #include <sys/filedesc.h>
 #include <sys/syscallargs.h>
+#include <sys/atomic.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
-#include <miscfs/syncfs/syncfs.h>
 #include <miscfs/genfs/genfs.h>
 
 #include <rump/rumpuser.h>
@@ -54,6 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6 2009/01/13 01:57:35 pooka Exp $");
 #include "rump_vfs_private.h"
 
 static int rump_vop_lookup(void *);
+static int rump_vop_getattr(void *);
+static int rump_vop_mkdir(void *);
+static int rump_vop_inactive(void *);
+static int rump_vop_reclaim(void *);
+static int rump_vop_success(void *);
 
 int (**dead_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
@@ -62,14 +67,6 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 };
 const struct vnodeopv_desc dead_vnodeop_opv_desc =
 	{ &dead_vnodeop_p, dead_vnodeop_entries };
-
-int (**sync_vnodeop_p)(void *);
-const struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
-	{ NULL, NULL }
-};
-const struct vnodeopv_desc sync_vnodeop_opv_desc =
-	{ &sync_vnodeop_p, sync_vnodeop_entries };
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -83,8 +80,14 @@ int (**rump_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, rump_vop_lookup },
+	{ &vop_getattr_desc, rump_vop_getattr },
+	{ &vop_mkdir_desc, rump_vop_mkdir },
+	{ &vop_putpages_desc, genfs_null_putpages },
+	{ &vop_fsync_desc, rump_vop_success },
 	{ &vop_lock_desc, genfs_lock },
 	{ &vop_unlock_desc, genfs_unlock },
+	{ &vop_inactive_desc, rump_vop_inactive },
+	{ &vop_reclaim_desc, rump_vop_reclaim },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
@@ -94,78 +97,109 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 	NULL
 };
 
-static struct mount mnt_dummy;
+static struct mount rump_mnt;
+static int lastino = 1;
+static kmutex_t reclock;
+
+struct rumpfs_dent {
+	char *rd_name;
+	struct rumpfs_node *rd_node;
+
+	LIST_ENTRY(rumpfs_dent) rd_entries;
+};
+
+struct rumpfs_node {
+	struct vattr rn_va;
+	struct vnode *rn_vp;
+
+	/* only for VDIR */
+	LIST_HEAD(, rumpfs_dent) rn_dir;
+};
+
+static struct rumpfs_node *
+makeprivate(enum vtype vt)
+{
+	struct rumpfs_node *rn;
+	struct vattr *va;
+	struct timespec ts;
+
+	rn = kmem_alloc(sizeof(*rn), KM_SLEEP);
+	LIST_INIT(&rn->rn_dir);
+	nanotime(&ts);
+
+	va = &rn->rn_va;
+	va->va_type = vt;
+	va->va_mode = 0755;
+	if (vt == VDIR)
+		va->va_nlink = 2;
+	else
+		va->va_nlink = 1;
+	va->va_uid = 0;
+	va->va_gid = 0;
+	va->va_fsid = 
+	va->va_fileid = atomic_inc_uint_nv(&lastino);
+	va->va_size = 512;
+	va->va_blocksize = 512;
+	va->va_atime = ts;
+	va->va_mtime = ts;
+	va->va_ctime = ts;
+	va->va_birthtime = ts;
+	va->va_gen = 0;
+	va->va_flags = 0;
+	va->va_rdev = -1;
+	va->va_bytes = 512;
+	va->va_filerev = 0;
+	va->va_vaflags = 0;
+
+	return rn;
+}
 
 static int
 rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
 {
 	struct vnode *vp;
+	struct rumpfs_node *rn;
+	int (**vpops)(void *);
 	int rv;
 
-	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
+	if (vt == VREG || vt == VCHR) {
+		vt = VBLK;
+		vpops = spec_vnodeop_p;
+	} else {
+		vpops = rump_vnodeop_p;
+	}
+	if (vt != VBLK && vt != VDIR)
+		panic("rump_makevnode: only VBLK/VDIR vnodes supported");
+
+	rv = getnewvnode(VT_RUMP, &rump_mnt, vpops, &vp);
+	if (rv)
+		return rv;
+
 	vp->v_size = vp->v_writesize = size;
 	vp->v_type = vt;
-	if (vp->v_type != VBLK)
-		if (rump_fakeblk_find(path))
-			vp->v_type = VBLK;
-
-	if (vp->v_type != VBLK && vp->v_type != VDIR)
-		panic("rump_makevnode: only VBLK/VDIR vnodes supported");
 
 	if (vp->v_type == VBLK) {
 		rv = rumpblk_register(path);
-		if (rv == -1) {
-			rv = EINVAL;
-			goto bad;
-		}
+		if (rv == -1)
+			panic("rump_makevnode: lazy bum");
 		spec_node_init(vp, makedev(RUMPBLK, rv));
-		vp->v_op = spec_vnodeop_p;
-	} else {
-		vp->v_op = rump_vnodeop_p;
 	}
-	vp->v_mount = &mnt_dummy;
-	vp->v_vnlock = &vp->v_lock;
-	vp->v_usecount = 1;
-	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
-	memset(&vp->v_lock, 0, sizeof(vp->v_lock));
-	rw_init(&vp->v_lock.vl_lock);
-	cv_init(&vp->v_cv, "vnode");
+	if (vt != VBLK) {
+		rn = makeprivate(vp->v_type);
+		rn->rn_vp = vp;
+		vp->v_data = rn;
+	}
+
+	vn_lock(vp, LK_RETRY | LK_EXCLUSIVE);
 	*vpp = vp;
 
 	return 0;
-
- bad:
-	kmem_free(vp, sizeof(*vp));
-	return rv;
-}
-
-/* from libpuffs, but let's decouple this from that */
-static enum vtype
-mode2vt(mode_t mode)
-{
-
-	switch (mode & S_IFMT) {
-	case S_IFIFO:
-		return VFIFO;
-	case S_IFCHR:
-		return VCHR;
-	case S_IFDIR:
-		return VDIR;
-	case S_IFBLK:
-		return VBLK;
-	case S_IFREG:
-		return VREG;
-	case S_IFLNK:
-		return VLNK;
-	case S_IFSOCK:
-		return VSOCK;
-	default:
-		return VBAD; /* XXX: not really true, but ... */
-	}
 }
 
 /*
- * Simple lookup for faking lookup of device entry for rump file systems 
+ * Simple lookup for faking lookup of device entry for rump file systems
+ * and for locating/creating directories.  Yes, this will panic if you
+ * call it with the wrong arguments.
  */
 static int
 rump_vop_lookup(void *v)
@@ -176,41 +210,184 @@ rump_vop_lookup(void *v)
 		struct componentname *a_cnp;
 	}; */ *ap = v;
 	struct componentname *cnp = ap->a_cnp;
-	struct stat sb_node;
-	int rv, error;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
+	struct vnode *vp;
+	struct rumpfs_node *rn = dvp->v_data;
+	struct rumpfs_dent *rd;
+	uint64_t fsize;
+	enum vtype vt;
+	int rv, error, ft;
 
 	/* we handle only some "non-special" cases */
-	KASSERT(cnp->cn_nameiop == LOOKUP);
+	KASSERT(((cnp->cn_flags & ISLASTCN) == 0)
+	    || (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE));
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
 	KASSERT(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.');
 
-	if (cnp->cn_flags & FOLLOW)
-		rv = rumpuser_stat(cnp->cn_pnbuf, &sb_node, &error);
-	else
-		rv = rumpuser_lstat(cnp->cn_pnbuf, &sb_node, &error);
-	if (rv)
-		return error;
+	/* check if we are returning a faked block device */
+	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
+		if (rump_fakeblk_find(cnp->cn_pnbuf)) {
+			rv = rumpuser_getfileinfo(cnp->cn_pnbuf, &fsize,
+			    &ft, &error);
+			if (rv)
+				return rv;
+			switch (ft) {
+			case RUMPUSER_FT_DIR:
+				vt = VDIR;
+				break;
+			case RUMPUSER_FT_REG:
+				vt = VREG;
+				break;
+			case RUMPUSER_FT_BLK:
+				vt = VBLK;
+				break;
+			case RUMPUSER_FT_CHR:
+				vt = VCHR;
+				break;
+			default:
+				vt = VBAD;
+				break;
+			}
+			error = rump_makevnode(cnp->cn_pnbuf, fsize, vt, vpp);
+			if (error)
+				return error;
+			cnp->cn_consume = strlen(cnp->cn_nameptr
+			    + cnp->cn_namelen);
+			cnp->cn_flags &= ~REQUIREDIR;
 
-	error = rump_makevnode(cnp->cn_pnbuf, sb_node.st_size,
-	    mode2vt(sb_node.st_mode), ap->a_vpp);
-	if (error)
-		return error;
+			return 0;
+		}
+	}
 
-	vn_lock(*ap->a_vpp, LK_RETRY | LK_EXCLUSIVE);
-	cnp->cn_consume = strlen(cnp->cn_nameptr + cnp->cn_namelen);
-	cnp->cn_flags &= ~REQUIREDIR;
+	LIST_FOREACH(rd, &rn->rn_dir, rd_entries) {
+		if (strncmp(rd->rd_name, cnp->cn_nameptr,
+		    cnp->cn_namelen) == 0)
+			break;
+	}
+
+	if (!rd && ((cnp->cn_flags & ISLASTCN) == 0||cnp->cn_nameiop != CREATE))
+		return ENOENT;
+
+	if (!rd && (cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == CREATE) {
+		cnp->cn_flags |= SAVENAME;
+		return EJUSTRETURN;
+	}
+	KASSERT(rd);
+	KASSERT(rd->rd_node->rn_va.va_type == VDIR);
+
+ retry:
+	mutex_enter(&reclock);
+	if ((vp = rd->rd_node->rn_vp)) {
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&reclock);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			goto retry;
+		*vpp = vp;
+	} else {
+		rv = rump_makevnode(cnp->cn_nameptr, DEV_BSIZE, VDIR, vpp);
+		if (rv)
+			return rv;
+	}
+
+	return 0;
+}
+
+static int
+rump_vop_getattr(void *v)
+{
+	struct vop_getattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct rumpfs_node *rn = ap->a_vp->v_data;
+
+	memcpy(ap->a_vap, &rn->rn_va, sizeof(struct vattr));
+	return 0;
+}
+
+static int
+rump_vop_mkdir(void *v)
+{
+	struct vop_mkdir_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+	}; */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
+	struct componentname *cnp = ap->a_cnp;
+	struct rumpfs_node *rnd = dvp->v_data;
+	struct rumpfs_dent *rdent;
+	int rv = 0;
+
+	if ((rv = rump_makevnode(cnp->cn_nameptr, DEV_BSIZE, VDIR, vpp)) != 0)
+		goto out;
+
+	rdent = kmem_alloc(sizeof(*rdent), KM_SLEEP);
+	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
+	rdent->rd_node = (*vpp)->v_data;
+	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
+
+	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
+
+ out:
+	vput(dvp);
+	return rv;
+}
+
+static int
+rump_vop_success(void *v)
+{
+
+	return 0;
+}
+
+static int
+rump_vop_inactive(void *v)
+{
+	struct vop_inactive_args *ap = v;
+
+	VOP_UNLOCK(ap->a_vp, 0);
+	return 0;
+}
+
+static int
+rump_vop_reclaim(void *v)
+{
+	struct vop_reclaim_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+
+	mutex_enter(&reclock);
+	rn->rn_vp = NULL;
+	mutex_exit(&reclock);
+	vp->v_data = NULL;
 
 	return 0;
 }
 
 void
-rumpfs_init()
+rumpfs_init(void)
 {
 	int rv;
+
+	mutex_init(&reclock, MUTEX_DEFAULT, IPL_NONE);
+
+	/* XXX: init properly instead of this crap */
+	rump_mnt.mnt_refcnt = 1;
+	rump_mnt.mnt_flag = MNT_ROOTFS;
+	rw_init(&rump_mnt.mnt_unmounting);
+	TAILQ_INIT(&rump_mnt.mnt_vnodelist);
 
 	vfs_opv_init(rump_opv_descs);
 	rv = rump_makevnode("/", 0, VDIR, &rootvnode);
 	if (rv)
 		panic("could not create root vnode: %d", rv);
 	rootvnode->v_vflag |= VV_ROOT;
+	VOP_UNLOCK(rootvnode, 0);
 }

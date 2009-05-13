@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.93 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.93.2.1 2009/05/13 17:22:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.93 2009/02/06 20:01:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.93.2.1 2009/05/13 17:22:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.93 2009/02/06 20:01:41 pooka Exp $");
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
+#include <sys/evcnt.h>
+#include <sys/event.h>
 #include <sys/filedesc.h>
 #include <sys/iostat.h>
 #include <sys/kauth.h>
@@ -51,11 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.93 2009/02/06 20:01:41 pooka Exp $");
 #include <sys/resourcevar.h>
 #include <sys/select.h>
 #include <sys/sysctl.h>
+#include <sys/syscall.h>
 #include <sys/tty.h>
 #include <sys/uidinfo.h>
 #include <sys/vmem.h>
 
 #include <rump/rumpuser.h>
+
+#include <secmodel/secmodel.h>
 
 #include "rump_private.h"
 #include "rump_net_private.h"
@@ -81,6 +86,9 @@ struct filedesc rump_filedesc0;
 struct proclist allproc;
 char machine[] = "rump";
 static kauth_cred_t rump_susercred;
+
+/* pretend the master rump proc is init */
+struct proc *initproc = &proc0;
 
 struct rumpuser_mtx *rump_giantlock;
 
@@ -132,6 +140,28 @@ pvfsrele_nop(struct proc *p)
 rump_proc_vfs_init_fn rump_proc_vfs_init = pvfsinit_nop;
 rump_proc_vfs_release_fn rump_proc_vfs_release = pvfsrele_nop;
 
+/*
+ * Stir up the stack a bit.  These are exported functions to help
+ * convince the compiler that we don't want these routines completely
+ * optimized out or inlined.  Is there an easier way to do this?
+ */
+void nullfn(uint32_t *);
+void nullfn(uint32_t *arg){}
+void messthestack(void);
+void
+messthestack(void)
+{
+	uint32_t mess[64];
+	uint64_t d1, d2;
+	int i, error;
+
+	for (i = 0; i < 64; i++) {
+		rumpuser_gettime(&d1, &d2, &error);
+		mess[i] = d2;
+	}
+	nullfn(mess);
+}
+
 int
 rump__init(int rump_version)
 {
@@ -144,6 +174,14 @@ rump__init(int rump_version)
 	if (rump_inited)
 		return 0;
 	rump_inited = 1;
+
+	/*
+	 * Seed arc4random() with a "reasonable" amount of randomness.
+	 * Yes, this is a quick kludge which depends on the arc4random
+	 * implementation.
+	 */
+	messthestack();
+	arc4random();
 
 	if (rump_version != RUMP_VERSION) {
 		printf("rump version mismatch, %d vs. %d\n",
@@ -160,14 +198,15 @@ rump__init(int rump_version)
 	rumpuser_mutex_recursive_init(&rump_giantlock);
 	ksyms_init();
 	rumpvm_init();
+	evcnt_init();
 
 	once_init();
 
 	rump_sleepers_init();
-#ifdef RUMP_USE_REAL_ALLOCATORS
+
 	pool_subsystem_init();
 	kmem_init();
-#endif
+
 	kprintf_init();
 	loginit();
 
@@ -183,10 +222,12 @@ rump__init(int rump_version)
 	p->p_fd = &rump_filedesc0;
 	p->p_vmspace = &rump_vmspace;
 	p->p_emul = &emul_rump;
+	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = 1;
-	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INIT(&allproc);
+	LIST_INSERT_HEAD(&allproc, &proc0, p_list);
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
@@ -196,6 +237,7 @@ rump__init(int rump_version)
 	callout_startup();
 	callout_init_cpu(&rump_cpu);
 
+	kqueue_init();
 	iostat_init();
 	uid_init();
 	percpu_init();
@@ -205,6 +247,7 @@ rump__init(int rump_version)
 	softint_init(&rump_cpu);
 	cold = 0;
 	devsw_init();
+	secmodel_start();
 
 	/* these do nothing if not present */
 	rump_vfs_init();
@@ -290,6 +333,25 @@ rump_uio_free(struct uio *uio)
 	return resid;
 }
 
+/* public interface */
+static pid_t nextpid = 1;
+struct lwp *
+rump_newproc_switch()
+{
+	struct lwp *oldlwp = curlwp;
+	pid_t mypid;
+
+	mypid = atomic_inc_uint_nv(&nextpid);
+	if (__predict_false(mypid == 0))
+		mypid = atomic_inc_uint_nv(&nextpid);
+
+	rumpuser_set_curlwp(NULL);
+	rump_setup_curlwp(mypid, 0, 1);
+
+	return oldlwp;
+}
+
+/* rump private */
 struct lwp *
 rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 {
@@ -322,24 +384,35 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	return l;
 }
 
+/* rump private.  NEEDS WORK! */
 void
-rump_clear_curlwp()
+rump_set_vmspace(struct vmspace *vm)
+{
+	struct proc *p = curproc;
+
+	p->p_vmspace = vm;
+}
+
+void
+rump_clear_curlwp(void)
 {
 	struct lwp *l;
+	struct proc *p;
 
 	l = rumpuser_get_curlwp();
-	if (l->l_proc->p_pid != 0) {
+	p = l->l_proc;
+	if (p->p_pid != 0) {
 		fd_free();
-		rump_proc_vfs_release(l->l_proc);
-		rump_cred_destroy(l->l_cred);
-		kmem_free(l->l_proc, sizeof(*l->l_proc));
+		rump_proc_vfs_release(p);
+		rump_cred_put(l->l_cred);
+		kmem_free(p, sizeof(*p));
 	}
 	kmem_free(l, sizeof(*l));
 	rumpuser_set_curlwp(NULL);
 }
 
 struct lwp *
-rump_get_curlwp()
+rump_get_curlwp(void)
 {
 	struct lwp *l;
 
@@ -348,6 +421,16 @@ rump_get_curlwp()
 		l = &lwp0;
 
 	return l;
+}
+
+void
+rump_set_curlwp(struct lwp *l)
+{
+
+	/* clear current */
+	rumpuser_set_curlwp(NULL);
+	/* set new */
+	rumpuser_set_curlwp(l);
 }
 
 kauth_cred_t
@@ -372,41 +455,57 @@ rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 }
 
 void
-rump_cred_destroy(kauth_cred_t cred)
+rump_cred_put(kauth_cred_t cred)
 {
 
 	kauth_cred_free(cred);
 }
 
 kauth_cred_t
-rump_cred_suserget()
+rump_cred_suserget(void)
 {
 
 	kauth_cred_hold(rump_susercred);
 	return rump_susercred;
 }
 
-/* XXX: if they overflow, we're screwed */
+/*
+ * Return the next system lwpid
+ */
 lwpid_t
-rump_nextlid()
+rump_nextlid(void)
 {
-	static unsigned lwpid = 2;
+	lwpid_t retid;
 
-	do {
-		lwpid = atomic_inc_uint_nv(&lwpid);
-	} while (lwpid == 0);
+	mutex_enter(proc0.p_lock);
+	/*
+	 * Take next one, don't return 0
+	 * XXX: most likely we'll have collisions in case this
+	 * wraps around.
+	 */
+	if (++proc0.p_nlwpid == 0)
+		++proc0.p_nlwpid;
+	retid = proc0.p_nlwpid;
+	mutex_exit(proc0.p_lock);
 
-	return (lwpid_t)lwpid;
+	return retid;
 }
 
 int
-rump_module_load(struct modinfo **mi)
+rump_module_init(struct modinfo *mi, prop_dictionary_t props)
 {
 
-	if (!module_compatible((*mi)->mi_version, __NetBSD_Version__))
+	if (!module_compatible(mi->mi_version, __NetBSD_Version__))
 		return EPROGMISMATCH;
 
-	return (*mi)->mi_modcmd(MODULE_CMD_INIT, NULL);
+	return mi->mi_modcmd(MODULE_CMD_INIT, props);
+}
+
+int
+rump_module_fini(struct modinfo *mi)
+{
+
+	return mi->mi_modcmd(MODULE_CMD_FINI, NULL);
 }
 
 int _syspuffs_stub(int, int *);
@@ -417,3 +516,40 @@ _syspuffs_stub(int fd, int *newfd)
 	return ENODEV;
 }
 __weak_alias(rump_syspuffs_glueinit,_syspuffs_stub);
+
+static int
+rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
+	register_t *retval)
+{
+	struct lwp *l;
+	struct sysent *callp;
+
+	if (__predict_false(num >= SYS_NSYSENT))
+		return ENOSYS;
+
+	l = curlwp;
+	callp = rump_sysent + num;
+	return callp->sy_call(l, (void *)data, retval);
+}
+
+rump_sysproxy_t rump_sysproxy = rump_sysproxy_local;
+void *rump_sysproxy_arg;
+
+/*
+ * This whole syscall-via-rpc is still taking form.  For example, it
+ * may be necessary to set syscalls individually instead of lobbing
+ * them all to the same place.  So don't think this interface is
+ * set in stone.
+ */
+int
+rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
+{
+
+	if (rump_sysproxy_arg)
+		return EBUSY;
+
+	rump_sysproxy_arg = arg;
+	rump_sysproxy = proxy;
+
+	return 0;
+}

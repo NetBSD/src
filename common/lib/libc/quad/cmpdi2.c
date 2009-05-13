@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: cmpdi2.c,v 1.1.36.1 2009/05/13 17:23:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmpdi2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cmpdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: cmpdi2.c,v 1.1.36.1 2009/05/13 17:23:11 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,7 @@ __RCSID("$NetBSD: cmpdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
  * signed.
  */
 int
-__cmpdi2(a, b)
-	quad_t a, b;
+__cmpdi2(quad_t a, quad_t b)
 {
 	union uu aa, bb;
 

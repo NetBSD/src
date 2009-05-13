@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.32 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.32.14.1 2009/05/13 17:19:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.32 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.32.14.1 2009/05/13 17:19:52 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.32 2008/04/28 20:23:52 martin Exp $");
 
 #define	BHA_ISA_IOSIZE	4
 
-int	bha_isa_probe(struct device *, struct cfdata *, void *);
-void	bha_isa_attach(struct device *, struct device *, void *);
+int	bha_isa_probe(device_t, cfdata_t, void *);
+void	bha_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(bha_isa, sizeof(struct bha_softc),
     bha_isa_probe, bha_isa_attach, NULL, NULL);
@@ -62,8 +62,7 @@ CFATTACH_DECL(bha_isa, sizeof(struct bha_softc),
  * the actual probe routine to check it out.
  */
 int
-bha_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+bha_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -118,8 +117,7 @@ bha_isa_probe(struct device *parent, struct cfdata *match,
  * Attach all the sub-devices we can find
  */
 void
-bha_isa_attach(struct device *parent, struct device *self,
-    void *aux)
+bha_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct bha_softc *sc = (void *)self;

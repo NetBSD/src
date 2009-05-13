@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.101 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: ugen.c,v 1.101.2.1 2009/05/13 17:21:35 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.101 2009/01/20 18:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.101.2.1 2009/05/13 17:21:35 jym Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -283,6 +283,7 @@ Static int
 ugen_set_config(struct ugen_softc *sc, int configno)
 {
 	usbd_device_handle dev = sc->sc_udev;
+	usb_config_descriptor_t *cdesc;
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
 	struct ugen_endpoint *sce;
@@ -307,7 +308,8 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 		}
 
 	/* Avoid setting the current value. */
-	if (usbd_get_config_descriptor(dev)->bConfigurationValue != configno) {
+	cdesc = usbd_get_config_descriptor(dev);
+	if (!cdesc || cdesc->bConfigurationValue != configno) {
 		err = usbd_set_config_no(dev, configno, 1);
 		if (err)
 			return (err);

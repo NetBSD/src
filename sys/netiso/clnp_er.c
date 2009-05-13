@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.24 2008/01/14 04:17:35 dyoung Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.24.24.1 2009/05/13 17:22:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.24 2008/01/14 04:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.24.24.1 2009/05/13 17:22:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -197,9 +197,9 @@ clnp_er_input(
  *			up the header of the datagram into one mbuf.
  */
 void
-clnp_discard(m, reason)
-	struct mbuf    *m;	/* header of packet to discard */
-	u_int           reason;	/* reason for discard */
+clnp_discard(struct mbuf *m, u_int reason)
+	/* m:	 header of packet to discard */
+	/* reason:	 reason for discard */
 {
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
@@ -240,9 +240,9 @@ clnp_discard(m, reason)
  *			an ER.
  */
 void
-clnp_emit_er(m, reason)
-	struct mbuf    *m;	/* header of packet to discard */
-	u_int           reason;	/* reason for discard */
+clnp_emit_er(struct mbuf *m, u_int reason)
+	/* m:	 header of packet to discard */
+	/* reason:	 reason for discard */
 {
 	struct clnp_fixed *clnp = mtod(m, struct clnp_fixed *);
 	struct clnp_fixed *er;

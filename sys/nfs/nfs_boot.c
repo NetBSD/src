@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.78 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.78.4.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.78 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.78.4.1 2009/05/13 17:22:51 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -73,11 +73,13 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.78 2008/11/19 18:36:09 ad Exp $");
 #include <nfs/nfsdiskless.h>
 
 /*
- * There are two implementations of NFS diskless boot.
+ * There are three implementations of NFS diskless boot.
  * One implementation uses BOOTP (RFC951, RFC1048),
- * the other uses Sun RPC/bootparams.  See the files:
- *    nfs_bootp.c:   BOOTP (RFC951, RFC1048)
- *    nfs_bootsun.c: Sun RPC/bootparams
+ * Sun RPC/bootparams or static configuration.  See the
+ * files:
+ *    nfs_bootdhcp.c:   BOOTP (RFC951, RFC1048)
+ *    nfs_bootparam.c:  Sun RPC/bootparams
+ *    nfs_bootstatic.c: honour config(1) description
  */
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
 int nfs_boot_rfc951 = 1; /* BOOTP enabled (default) */

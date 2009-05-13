@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.10 2008/04/28 20:23:56 martin Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.10.14.1 2009/05/13 17:21:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,10 +36,7 @@
  * Erase columns.
  */
 static void
-NAME(erasecols)(cookie, row, col, num, attr)
-	void *cookie;
-	int row, col, num;
-	long attr;
+NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 {
 	int lmask, rmask, lclr, rclr, clr;
 	struct rasops_info *ri;
@@ -113,8 +110,7 @@ NAME(erasecols)(cookie, row, col, num, attr)
  * Actually paint the cursor.
  */
 static void
-NAME(do_cursor)(ri)
-	struct rasops_info *ri;
+NAME(do_cursor)(struct rasops_info *ri)
 {
 	int lmask, rmask, height, row, col, num;
 	int32_t *dp, *rp;
@@ -154,9 +150,7 @@ NAME(do_cursor)(ri)
  * Copy columns. Ick!
  */
 static void
-NAME(copycols)(cookie, row, src, dst, num)
-	void *cookie;
-	int row, src, dst, num;
+NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 {
 	int tmp, lmask, rmask, height, lnum, rnum, sb, db, cnt, full;
 	int32_t *sp, *dp, *srp, *drp;

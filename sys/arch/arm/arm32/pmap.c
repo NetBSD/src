@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.195 2009/01/08 01:42:48 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.195.2.1 2009/05/13 17:16:12 jym Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195 2009/01/08 01:42:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195.2.1 2009/05/13 17:16:12 jym Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -695,8 +695,8 @@ vaddr_t virtual_avail;
 vaddr_t virtual_end;
 vaddr_t pmap_curmaxkvaddr;
 
-vaddr_t avail_start;
-vaddr_t avail_end;
+paddr_t avail_start;
+paddr_t avail_end;
 
 pv_addrqh_t pmap_boot_freeq = SLIST_HEAD_INITIALIZER(&pmap_boot_freeq);
 pv_addr_t kernelpages;
@@ -2743,8 +2743,8 @@ pmap_create(void)
 }
 
 /*
- * void pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
- *     int flags)
+ * int pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
+ *      u_int flags)
  *  
  *      Insert the given physical page (p) at
  *      the specified virtual address (v) in the
@@ -2755,7 +2755,7 @@ pmap_create(void)
  *      insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct l2_bucket *l2b;
 	struct vm_page *pg, *opg;
@@ -5340,7 +5340,6 @@ pmap_alloc_specials(vaddr_t *availp, int pages, vaddr_t *vap, pt_entry_t **ptep)
 void
 pmap_init(void)
 {
-	extern int physmem;
 
 	/*
 	 * Set the available memory vars - These do not map to real memory
@@ -5349,8 +5348,8 @@ pmap_init(void)
 	 * One could argue whether this should be the entire memory or just
 	 * the memory that is useable in a user process.
 	 */
-	avail_start = 0;
-	avail_end = physmem * PAGE_SIZE;
+	avail_start = ptoa(vm_physmem[0].start);
+	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 
 	/*
 	 * Now we need to free enough pv_entry structures to allow us to get
@@ -6241,7 +6240,7 @@ pmap_uarea(vaddr_t va)
 /*
  * return the PA of the current L1 table, for use when handling a crash dump
  */
-uint32_t pmap_kernel_L1_addr()
+uint32_t pmap_kernel_L1_addr(void)
 {
 	return pmap_kernel()->pm_l1->l1_physaddr;
 }

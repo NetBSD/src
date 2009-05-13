@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: getopt.c,v 1.1.92.1 2009/05/13 17:17:57 jym Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -49,10 +49,7 @@ char	*optarg;		/* argument associated with option */
  *	Parse argc/argv argument vector.
  */
 int
-getopt(nargc, nargv, ostr)
-	int nargc;
-	char * const *nargv;
-	const char *ostr;
+getopt(int nargc, char * const *nargv, const char *ostr)
 {
 	static char *place = EMSG;		/* option letter processing */
 	char *oli;				/* option letter list index */

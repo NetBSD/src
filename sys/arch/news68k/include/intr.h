@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2008/12/21 17:43:49 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.24.2.1 2009/05/13 17:18:09 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _NEWS68K_INTR_H_
 #define	_NEWS68K_INTR_H_
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <machine/psl.h>
 #include <m68k/asm_single.h>

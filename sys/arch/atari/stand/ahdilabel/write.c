@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.5 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: write.c,v 1.5.14.1 2009/05/13 17:16:31 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,10 +49,7 @@
  */
 
 int
-ahdi_writelabel (ptable, diskname, flags)
-	struct ahdi_ptable	*ptable;
-	char			*diskname;
-	int			 flags;
+ahdi_writelabel (struct ahdi_ptable *ptable, char *diskname, int flags)
 {
 	int			 fd, i, j, k, firstxgm, keep, cksum_ok;
 	struct ahdi_root	*root;
@@ -288,8 +285,7 @@ ahdi_writelabel (ptable, diskname, flags)
  * Write a bad sector list (empty).
  */
 int
-write_bsl (fd)
-	int	fd;
+write_bsl (int fd)
 {
 	u_int8_t	*bsl;
 
@@ -314,9 +310,7 @@ write_bsl (fd)
  * Otherwise this make take precedence when we next open the disk.
  */
 int
-invalidate_netbsd_label (fd, nbdsec)
-	int		 fd;
-	u_int32_t	nbdsec;
+invalidate_netbsd_label (int fd, u_int32_t nbdsec)
 {
 	struct bootblock	*bb;
 	u_int			 nsec;

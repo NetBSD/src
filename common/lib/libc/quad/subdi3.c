@@ -1,4 +1,4 @@
-/*	$NetBSD: subdi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: subdi3.c,v 1.1.36.1 2009/05/13 17:23:12 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subdi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: subdi3.c,v 1.1.36.1 2009/05/13 17:23:12 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: subdi3.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
  * from a single u_int difference x-y occurs if and only if (x-y) > x.
  */
 quad_t
-__subdi3(a, b)
-	quad_t a, b;
+__subdi3(quad_t a, quad_t b)
 {
 	union uu aa, bb, diff;
 

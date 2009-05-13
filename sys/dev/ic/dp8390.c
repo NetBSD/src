@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.69 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.69.4.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.69 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.69.4.1 2009/05/13 17:19:22 jym Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -95,8 +95,7 @@ dp8390_media_init(struct dp8390_softc *sc)
  * Do bus-independent setup.
  */
 int
-dp8390_config(sc)
-	struct dp8390_softc *sc;
+dp8390_config(struct dp8390_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int rv;
@@ -172,8 +171,7 @@ out:
  * Media change callback.
  */
 int
-dp8390_mediachange(ifp)
-	struct ifnet *ifp;
+dp8390_mediachange(struct ifnet *ifp)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 
@@ -186,9 +184,7 @@ dp8390_mediachange(ifp)
  * Media status callback.
  */
 void
-dp8390_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+dp8390_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 
@@ -206,8 +202,7 @@ dp8390_mediastatus(ifp, ifmr)
  * Reset interface.
  */
 void
-dp8390_reset(sc)
-	struct dp8390_softc *sc;
+dp8390_reset(struct dp8390_softc *sc)
 {
 	int     s;
 
@@ -221,8 +216,7 @@ dp8390_reset(sc)
  * Take interface offline.
  */
 void
-dp8390_stop(sc)
-	struct dp8390_softc *sc;
+dp8390_stop(struct dp8390_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -253,8 +247,7 @@ dp8390_stop(sc)
  */
 
 void
-dp8390_watchdog(ifp)
-	struct ifnet *ifp;
+dp8390_watchdog(struct ifnet *ifp)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 
@@ -268,8 +261,7 @@ dp8390_watchdog(ifp)
  * Initialize device.
  */
 void
-dp8390_init(sc)
-	struct dp8390_softc *sc;
+dp8390_init(struct dp8390_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -405,8 +397,7 @@ dp8390_init(sc)
  * This routine actually starts the transmission on the interface.
  */
 static inline void
-dp8390_xmit(sc)
-	struct dp8390_softc *sc;
+dp8390_xmit(struct dp8390_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -461,8 +452,7 @@ dp8390_xmit(sc)
  *     (i.e. that the output part of the interface is idle)
  */
 void
-dp8390_start(ifp)
-	struct ifnet *ifp;
+dp8390_start(struct ifnet *ifp)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
@@ -521,8 +511,7 @@ outloop:
  * Ethernet interface receiver interrupt.
  */
 void
-dp8390_rint(sc)
-	struct dp8390_softc *sc;
+dp8390_rint(struct dp8390_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -640,8 +629,7 @@ loop:
 
 /* Ethernet interface interrupt processor. */
 int
-dp8390_intr(arg)
-	void *arg;
+dp8390_intr(void *arg)
 {
 	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -859,10 +847,7 @@ dp8390_intr(arg)
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-dp8390_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *) data;
@@ -965,10 +950,7 @@ dp8390_ioctl(ifp, cmd, data)
  * ether_input().  If there is a BPF listener, give a copy to BPF, too.
  */
 void
-dp8390_read(sc, buf, len)
-	struct dp8390_softc *sc;
-	int buf;
-	u_short len;
+dp8390_read(struct dp8390_softc *sc, int buf, u_short len)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
@@ -1004,9 +986,7 @@ dp8390_read(sc, buf, len)
  * need to listen to.
  */
 void
-dp8390_getmcaf(ec, af)
-	struct ethercom *ec;
-	u_int8_t *af;
+dp8390_getmcaf(struct ethercom *ec, u_int8_t *af)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
@@ -1069,10 +1049,7 @@ dp8390_getmcaf(ec, af)
  * total_len = amount of data to copy
  */
 struct mbuf *
-dp8390_get(sc, src, total_len)
-	struct dp8390_softc *sc;
-	int src;
-	u_short total_len;
+dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m, *m0, *newm;
@@ -1138,8 +1115,7 @@ bad:
  * Zero NIC buffer memory and verify that it is clear.
  */
 static int
-dp8390_test_mem(sc)
-	struct dp8390_softc *sc;
+dp8390_test_mem(struct dp8390_softc *sc)
 {
 	bus_space_tag_t buft = sc->sc_buft;
 	bus_space_handle_t bufh = sc->sc_bufh;
@@ -1162,10 +1138,7 @@ dp8390_test_mem(sc)
  * Read a packet header from the ring, given the source offset.
  */
 static inline void
-dp8390_read_hdr(sc, src, hdrp)
-	struct dp8390_softc *sc;
-	int src;
-	struct dp8390_ring *hdrp;
+dp8390_read_hdr(struct dp8390_softc *sc, int src, struct dp8390_ring *hdrp)
 {
 	bus_space_tag_t buft = sc->sc_buft;
 	bus_space_handle_t bufh = sc->sc_bufh;
@@ -1186,11 +1159,7 @@ dp8390_read_hdr(sc, src, hdrp)
  * Takes into account ring-wrap.
  */
 static inline int
-dp8390_ring_copy(sc, src, dst, amount)
-	struct dp8390_softc *sc;
-	int src;
-	void *dst;
-	u_short amount;
+dp8390_ring_copy(struct dp8390_softc *sc, int src, void *dst, u_short amount)
 {
 	bus_space_tag_t buft = sc->sc_buft;
 	bus_space_handle_t bufh = sc->sc_bufh;
@@ -1219,10 +1188,7 @@ dp8390_ring_copy(sc, src, dst, amount)
  * packet fits in one mbuf.
  */
 static inline int
-dp8390_write_mbuf(sc, m, buf)
-	struct dp8390_softc *sc;
-	struct mbuf *m;
-	int buf;
+dp8390_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 {
 	bus_space_tag_t buft = sc->sc_buft;
 	bus_space_handle_t bufh = sc->sc_bufh;
@@ -1250,8 +1216,7 @@ dp8390_write_mbuf(sc, m, buf)
  * Enable power on the interface.
  */
 int
-dp8390_enable(sc)
-	struct dp8390_softc *sc;
+dp8390_enable(struct dp8390_softc *sc)
 {
 
 	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
@@ -1270,8 +1235,7 @@ dp8390_enable(sc)
  * Disable power on the interface.
  */
 void
-dp8390_disable(sc)
-	struct dp8390_softc *sc;
+dp8390_disable(struct dp8390_softc *sc)
 {
 
 	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
@@ -1281,9 +1245,7 @@ dp8390_disable(sc)
 }
 
 int
-dp8390_activate(self, act)
-	struct device *self;
-	enum devact act;
+dp8390_activate(device_t self, enum devact act)
 {
 	struct dp8390_softc *sc = (struct dp8390_softc *)self;
 	int rv = 0, s;
@@ -1340,8 +1302,7 @@ static void dp8390_ipkdb_send(struct ipkdb_if *, u_char *, int);
  * This is essentially similar to dp8390_config above.
  */
 int
-dp8390_ipkdb_attach(kip)
-	struct ipkdb_if *kip;
+dp8390_ipkdb_attach(struct ipkdb_if *kip)
 {
 	struct dp8390_softc *sc = kip->port;
 
@@ -1372,8 +1333,7 @@ dp8390_ipkdb_attach(kip)
  * Similar to dp8390_init above.
  */
 static void
-dp8390_ipkdb_hwinit(kip)
-	struct ipkdb_if *kip;
+dp8390_ipkdb_hwinit(struct ipkdb_if *kip)
 {
 	struct dp8390_softc *sc = kip->port;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -1434,8 +1394,7 @@ dp8390_ipkdb_hwinit(kip)
 }
 
 static void
-dp8390_ipkdb_init(kip)
-	struct ipkdb_if *kip;
+dp8390_ipkdb_init(struct ipkdb_if *kip)
 {
 	struct dp8390_softc *sc = kip->port;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -1465,8 +1424,7 @@ dp8390_ipkdb_init(kip)
 }
 
 static void
-dp8390_ipkdb_leave(kip)
-	struct ipkdb_if *kip;
+dp8390_ipkdb_leave(struct ipkdb_if *kip)
 {
 	struct dp8390_softc *sc = kip->port;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -1478,10 +1436,7 @@ dp8390_ipkdb_leave(kip)
  * Similar to dp8390_intr above.
  */
 static int
-dp8390_ipkdb_rcv(kip, buf, poll)
-	struct ipkdb_if *kip;
-	u_char *buf;
-	int poll;
+dp8390_ipkdb_rcv(struct ipkdb_if *kip, u_char *buf, int poll)
 {
 	struct dp8390_softc *sc = kip->port;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -1566,10 +1521,7 @@ dp8390_ipkdb_rcv(kip, buf, poll)
 }
 
 static void
-dp8390_ipkdb_send(kip, buf, l)
-	struct ipkdb_if *kip;
-	u_char *buf;
-	int l;
+dp8390_ipkdb_send(struct ipkdb_if *kip, u_char *buf, int l)
 {
 	struct dp8390_softc *sc = kip->port;
 	bus_space_tag_t regt = sc->sc_regt;

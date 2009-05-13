@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.83 2008/11/23 10:09:25 mrg Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.83.4.1 2009/05/13 17:23:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.83 2008/11/23 10:09:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.83.4.1 2009/05/13 17:23:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,11 +408,8 @@ ext2fs_setattr(void *v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, 
-			NULL)) &&
-			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-			(error = VOP_ACCESS(vp, VWRITE, cred))))
+		error = genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred);
+		if (error)
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -442,19 +439,12 @@ static int
 ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct inode *ip = VTOI(vp);
-	int error, ismember = 0;
+	int error;
 
-	if (kauth_cred_geteuid(cred) != ip->i_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)))
+	error = genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode);
+	if (error)
 		return (error);
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		if (vp->v_type != VDIR && (mode & S_ISTXT))
-			return (EFTYPE);
-		if ((kauth_cred_ismember_gid(cred, ip->i_gid, &ismember) != 0 ||
-		    !ismember) && (mode & ISGID))
-			return (EPERM);
-	}
+
 	ip->i_e2fs_mode &= ~ALLPERMS;
 	ip->i_e2fs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
@@ -472,23 +462,17 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	struct inode *ip = VTOI(vp);
 	uid_t ouid;
 	gid_t ogid;
-	int error = 0, ismember = 0;
+	int error;
 
 	if (uid == (uid_t)VNOVAL)
 		uid = ip->i_uid;
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
-	/*
-	 * If we don't own the file, are trying to change the owner
-	 * of the file, or are not a member of the target group,
-	 * the caller must be superuser or the call fails.
-	 */
-	if ((kauth_cred_geteuid(cred) != ip->i_uid || uid != ip->i_uid ||
- 	    (gid != ip->i_gid &&
-	    !(kauth_cred_getegid(cred) == gid ||
-	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)))
+
+	error = genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid);
+	if (error)
 		return (error);
+
 	ogid = ip->i_gid;
 	ouid = ip->i_uid;
 

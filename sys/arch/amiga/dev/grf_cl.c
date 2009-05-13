@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.41 2007/10/17 19:53:15 garbled Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.41.34.1 2009/05/13 17:16:09 jym Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.41 2007/10/17 19:53:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.41.34.1 2009/05/13 17:16:09 jym Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -194,10 +194,7 @@ CFATTACH_DECL(grfcl, sizeof(struct grf_softc),
 static struct cfdata *cfdata;
 
 int
-grfclmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void   *auxp;
+grfclmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 	static int regprod, fbprod, fbprod2;
@@ -336,9 +333,7 @@ grfclmatch(pdp, cfp, auxp)
 }
 
 void
-grfclattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void   *auxp;
+grfclattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	static struct grf_softc congrf;
 	struct zbus_args *zap;
@@ -363,7 +358,7 @@ grfclattach(pdp, dp, auxp)
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
-		bcopy(&congrf.g_display, &gp->g_display,
+		memcpy( &gp->g_display, &congrf.g_display,
 		    (char *) &gp[1] - (char *) &gp->g_display);
 	} else {
 		gp->g_regkva = (volatile void *) cl_regaddr;
@@ -449,9 +444,7 @@ grfclattach(pdp, dp, auxp)
 }
 
 int
-grfclprint(auxp, pnp)
-	void   *auxp;
-	const char *pnp;
+grfclprint(void *auxp, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("ite at %s: ", pnp);
@@ -459,8 +452,7 @@ grfclprint(auxp, pnp)
 }
 
 void
-cl_boardinit(gp)
-	struct grf_softc *gp;
+cl_boardinit(struct grf_softc *gp)
 {
 	volatile unsigned char *ba = gp->g_regkva;
 	int     x;
@@ -599,16 +591,14 @@ cl_boardinit(gp)
 
 
 int
-cl_getvmode(gp, vm)
-	struct grf_softc *gp;
-	struct grfvideo_mode *vm;
+cl_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
 {
 	struct grfvideo_mode *gv;
 
 #ifdef CL5426CONSOLE
 	/* Handle grabbing console mode */
 	if (vm->mode_num == 255) {
-		bcopy(&clconsole_mode, vm, sizeof(struct grfvideo_mode));
+		memcpy( vm, &clconsole_mode, sizeof(struct grfvideo_mode));
 		/* XXX so grfconfig can tell us the correct text dimensions. */
 		vm->depth = clconsole_mode.fy;
 	} else
@@ -622,7 +612,7 @@ cl_getvmode(gp, vm)
                 if (gv->mode_num == 0)
                         return (EINVAL);
 
-                bcopy(gv, vm, sizeof(struct grfvideo_mode));
+                memcpy( vm, gv, sizeof(struct grfvideo_mode));
         }
 
         /* adjust internal values to pixel values */
@@ -637,9 +627,7 @@ cl_getvmode(gp, vm)
 
 
 int
-cl_setvmode(gp, mode)
-	struct grf_softc *gp;
-	unsigned mode;
+cl_setvmode(struct grf_softc *gp, unsigned mode)
 {
 	if (!mode || (mode > monitor_def_max) ||
 	    monitor_def[mode - 1].mode_num == 0)
@@ -652,8 +640,7 @@ cl_setvmode(gp, mode)
 
 #ifndef CL5426CONSOLE
 void
-cl_off(gp)
-	struct grf_softc *gp;
+cl_off(struct grf_softc *gp)
 {
 	char   *ba = gp->g_regkva;
 
@@ -669,9 +656,7 @@ cl_off(gp)
 #endif
 
 int
-cl_blank(gp, on)
-        struct grf_softc *gp;
-        int *on;
+cl_blank(struct grf_softc *gp, int *on)
 {
         WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? 0x01 : 0x21);
         return(0);
@@ -682,12 +667,7 @@ cl_blank(gp, on)
  * Return a UNIX error number or 0 for success.
  */
 int
-cl_mode(gp, cmd, arg, a2, a3)
-	register struct grf_softc *gp;
-	u_long cmd;
-	void *arg;
-	u_long a2;
-	int a3;
+cl_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3)
 {
 	int     error;
 
@@ -733,10 +713,7 @@ cl_mode(gp, cmd, arg, a2, a3)
 }
 
 int
-cl_ioctl(gp, cmd, data)
-	register struct grf_softc *gp;
-	u_long cmd;
-	void   *data;
+cl_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 {
 	switch (cmd) {
 	    case GRFIOCGSPRITEPOS:
@@ -777,9 +754,7 @@ cl_ioctl(gp, cmd, data)
 }
 
 int
-cl_getmousepos(gp, data)
-	struct grf_softc *gp;
-	struct grf_position *data;
+cl_getmousepos(struct grf_softc *gp, struct grf_position *data)
 {
 	data->x = cl_cursprite.pos.x;
 	data->y = cl_cursprite.pos.y;
@@ -787,10 +762,7 @@ cl_getmousepos(gp, data)
 }
 
 void
-cl_writesprpos(ba, x, y)
-	volatile char *ba;
-	short   x;
-	short   y;
+cl_writesprpos(volatile char *ba, short x, short y)
 {
 	/* we want to use a 16-bit write to 3c4 so no macros used */
 	volatile unsigned char *cwp;
@@ -810,10 +782,7 @@ cl_writesprpos(ba, x, y)
 }
 
 void
-writeshifted(to, shiftx, shifty)
-	volatile char *to;
-	signed char shiftx;
-	signed char shifty;
+writeshifted(volatile char *to, signed char shiftx, signed char shifty)
 {
 	int y;
 	unsigned long long *tptr, *iptr, *mptr, line;
@@ -847,9 +816,7 @@ writeshifted(to, shiftx, shifty)
 }
 
 int
-cl_setmousepos(gp, data)
-	struct grf_softc *gp;
-	struct grf_position *data;
+cl_setmousepos(struct grf_softc *gp, struct grf_position *data)
 {
 	volatile char *ba = gp->g_regkva;
         short rx, ry, prx, pry;
@@ -888,9 +855,7 @@ cl_setmousepos(gp, data)
 }
 
 int
-cl_getspriteinfo(gp, data)
-	struct grf_softc *gp;
-	struct grf_spriteinfo *data;
+cl_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *data)
 {
 	copyout(&cl_cursprite, data, sizeof(struct grf_spriteinfo));
 	copyout(cl_cursprite.image, data->image, 64 * 8);
@@ -899,9 +864,7 @@ cl_getspriteinfo(gp, data)
 }
 
 static int
-cl_setspriteinfo(gp, data)
-	struct grf_softc *gp;
-	struct grf_spriteinfo *data;
+cl_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *data)
 {
 	volatile unsigned char *ba = gp->g_regkva, *fb = gp->g_fbkva;
         volatile char *sprite = fb + (cl_fbsize - 1024);
@@ -971,9 +934,9 @@ cl_setspriteinfo(gp, data)
 		copyin(data->cmap.red, red, 2);
 		copyin(data->cmap.green, green, 2);
 		copyin(data->cmap.blue, blue, 2);
-		bcopy(red, cl_cursprite.cmap.red, 2);
-		bcopy(green, cl_cursprite.cmap.green, 2);
-		bcopy(blue, cl_cursprite.cmap.blue, 2);
+		memcpy( cl_cursprite.cmap.red, red, 2);
+		memcpy( cl_cursprite.cmap.green, green, 2);
+		memcpy( cl_cursprite.cmap.blue, blue, 2);
 
                 /* enable and load colors 256 & 257 */
 		WSeq(ba, SEQ_ID_CURSOR_ATTR, 0x06);
@@ -1035,9 +998,7 @@ cl_setspriteinfo(gp, data)
 }
 
 static int
-cl_getspritemax(gp, data)
-	struct grf_softc *gp;
-	struct grf_position *data;
+cl_getspritemax(struct grf_softc *gp, struct grf_position *data)
 {
 	if (gp->g_display.gd_planes == 24)
 		return (EINVAL);
@@ -1047,9 +1008,7 @@ cl_getspritemax(gp, data)
 }
 
 int
-cl_setmonitor(gp, gv)
-	struct grf_softc *gp;
-	struct grfvideo_mode *gv;
+cl_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 {
 	struct grfvideo_mode *md;
 
@@ -1059,7 +1018,7 @@ cl_setmonitor(gp, gv)
 #ifdef CL5426CONSOLE
 	/* handle interactive setting of console mode */
 	if (gv->mode_num == 255) {
-		bcopy(gv, &clconsole_mode.gv, sizeof(struct grfvideo_mode));
+		memcpy( &clconsole_mode.gv, gv, sizeof(struct grfvideo_mode));
 		clconsole_mode.gv.hblank_start /= 8;
 		clconsole_mode.gv.hsync_start /= 8;
 		clconsole_mode.gv.hsync_stop /= 8;
@@ -1074,7 +1033,7 @@ cl_setmonitor(gp, gv)
 #endif
 
 	md = monitor_def + (gv->mode_num - 1);
-	bcopy(gv, md, sizeof(struct grfvideo_mode));
+	memcpy( md, gv, sizeof(struct grfvideo_mode));
 
 	/* adjust pixel oriented values to internal rep. */
 
@@ -1087,9 +1046,7 @@ cl_setmonitor(gp, gv)
 }
 
 int
-cl_getcmap(gfp, cmap)
-	struct grf_softc *gfp;
-	struct grf_colormap *cmap;
+cl_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
 	volatile unsigned char *ba;
 	u_char  red[256], green[256], blue[256], *rp, *gp, *bp;
@@ -1155,9 +1112,7 @@ cl_getcmap(gfp, cmap)
 }
 
 int
-cl_putcmap(gfp, cmap)
-	struct grf_softc *gfp;
-	struct grf_colormap *cmap;
+cl_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
 	volatile unsigned char *ba;
 	u_char  red[256], green[256], blue[256], *rp, *gp, *bp;
@@ -1207,9 +1162,8 @@ cl_putcmap(gfp, cmap)
 
 
 int
-cl_toggle(gp, wopp)
-	struct grf_softc *gp;
-	unsigned short wopp;	/* don't need that one yet, ill */
+cl_toggle(struct grf_softc *gp, unsigned short wopp)
+	/* wopp:	 don't need that one yet, ill */
 {
 	volatile void *ba;
 
@@ -1224,11 +1178,7 @@ cl_toggle(gp, wopp)
 }
 
 static void
-cl_CompFQ(fq, num, denom, clkdoub)
-	u_int   fq;
-	u_char *num;
-	u_char *denom;
-	u_char *clkdoub;
+cl_CompFQ(u_int fq, u_char *num, u_char *denom, u_char *clkdoub)
 {
 #define OSC     14318180
 /* OK, here's what we're doing here:
@@ -1306,8 +1256,7 @@ denom = 0x00 - 0x1f (1) 0x20 - 0x3e (even)
 }
 
 int
-cl_mondefok(gv)
-	struct grfvideo_mode *gv;
+cl_mondefok(struct grfvideo_mode *gv)
 {
         unsigned long maxpix;
 
@@ -1370,9 +1319,7 @@ cl_mondefok(gv)
 }
 
 int
-cl_load_mon(gp, md)
-	struct grf_softc *gp;
-	struct grfcltext_mode *md;
+cl_load_mon(struct grf_softc *gp, struct grfcltext_mode *md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
@@ -1685,8 +1632,7 @@ cl_load_mon(gp, md)
 }
 
 void
-cl_inittextmode(gp)
-	struct grf_softc *gp;
+cl_inittextmode(struct grf_softc *gp)
 {
 	struct grfcltext_mode *tm = (struct grfcltext_mode *) gp->g_data;
 	volatile unsigned char *ba = gp->g_regkva;
@@ -1743,10 +1689,7 @@ cl_inittextmode(gp)
 }
 
 void
-cl_memset(d, c, l)
-	unsigned char *d;
-	unsigned char c;
-	int     l;
+cl_memset(unsigned char *d, unsigned char c, int l)
 {
 	for (; l > 0; l--)
 		*d++ = c;
@@ -1760,8 +1703,7 @@ cl_memset(d, c, l)
  * inline functions.
  */
 static void
-RegWakeup(ba)
-	volatile void *ba;
+RegWakeup(volatile void *ba)
 {
 
 	switch (cltype) {
@@ -1782,8 +1724,7 @@ RegWakeup(ba)
 }
 
 static void
-RegOnpass(ba)
-	volatile void *ba;
+RegOnpass(volatile void *ba)
 {
 
 	switch (cltype) {
@@ -1806,8 +1747,7 @@ RegOnpass(ba)
 }
 
 static void
-RegOffpass(ba)
-	volatile void *ba;
+RegOffpass(volatile void *ba)
 {
 
 	switch (cltype) {

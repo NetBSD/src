@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.5 2009/01/22 04:56:06 agc Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.5.2.1 2009/05/13 17:19:16 jym Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ static dev_type_read(dmread);
 static dev_type_write(dmwrite);
 static dev_type_ioctl(dmioctl);
 static dev_type_strategy(dmstrategy);
-static dev_type_dump(dmdump);
 static dev_type_size(dmsize);
 
 /* attach and detach routines */
@@ -69,12 +68,31 @@ static void dmminphys(struct buf *);
 
 /* ***Variable-definitions*** */
 const struct bdevsw dm_bdevsw = {
-	dmopen, dmclose, dmstrategy, dmioctl, dmdump, dmsize, D_DISK | D_MPSAFE
+	.d_open = dmopen,
+	.d_close = dmclose,
+	.d_strategy = dmstrategy,
+	.d_ioctl = dmioctl,
+	.d_dump = nodump,
+	.d_psize = dmsize,
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw dm_cdevsw = {
-	dmopen, dmclose, dmread, dmwrite, dmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK | D_MPSAFE
+	.d_open = dmopen,
+	.d_close = dmclose,
+	.d_read = dmread,
+	.d_write = dmwrite,
+	.d_ioctl = dmioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK | D_MPSAFE
+};
+
+const struct dkdriver dmdkdriver = {
+	.d_strategy = dmstrategy
 };
 
 extern uint64_t dev_counter;
@@ -89,21 +107,21 @@ extern uint64_t dev_counter;
  *
  */
 struct cmd_function cmd_fn[] = {
-		{"version", dm_get_version_ioctl},
-		{"targets", dm_list_versions_ioctl},
-		{"create",  dm_dev_create_ioctl},
-		{"info",    dm_dev_status_ioctl},
-		{"mknodes", dm_dev_status_ioctl},		
-		{"names",   dm_dev_list_ioctl},
-		{"suspend", dm_dev_suspend_ioctl},
-		{"remove",  dm_dev_remove_ioctl}, 
-		{"rename",  dm_dev_rename_ioctl},
-		{"resume",  dm_dev_resume_ioctl},
-		{"clear",   dm_table_clear_ioctl},
-		{"deps",    dm_table_deps_ioctl},
-		{"reload",  dm_table_load_ioctl},
-		{"status",  dm_table_status_ioctl},
-		{"table",   dm_table_status_ioctl},
+		{ .cmd = "version", .fn = dm_get_version_ioctl},
+		{ .cmd = "targets", .fn = dm_list_versions_ioctl},
+		{ .cmd = "create",  .fn = dm_dev_create_ioctl},
+		{ .cmd = "info",    .fn = dm_dev_status_ioctl},
+		{ .cmd = "mknodes", .fn = dm_dev_status_ioctl},		
+		{ .cmd = "names",   .fn = dm_dev_list_ioctl},
+		{ .cmd = "suspend", .fn = dm_dev_suspend_ioctl},
+		{ .cmd = "remove",  .fn = dm_dev_remove_ioctl}, 
+		{ .cmd = "rename",  .fn = dm_dev_rename_ioctl},
+		{ .cmd = "resume",  .fn = dm_dev_resume_ioctl},
+		{ .cmd = "clear",   .fn = dm_table_clear_ioctl},
+		{ .cmd = "deps",    .fn = dm_table_deps_ioctl},
+		{ .cmd = "reload",  .fn = dm_table_load_ioctl},
+		{ .cmd = "status",  .fn = dm_table_status_ioctl},
+		{ .cmd = "table",   .fn = dm_table_status_ioctl},
 		{NULL, NULL}	
 };
 
@@ -383,6 +401,9 @@ dmstrategy(struct buf *bp)
 		biodone(bp);
 		return;
 	} 
+
+	/* FIXME: have to be called with IPL_BIO*/
+	disk_busy(dmv->diskp);
 	
 	/* Select active table */
 	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
@@ -438,6 +459,9 @@ dmstrategy(struct buf *bp)
 	if (issued_len < buf_len)
 		nestiobuf_done(bp, buf_len - issued_len, EINVAL);
 
+	/* FIXME have to be called with SPL_BIO*/
+	disk_unbusy(dmv->diskp, buf_len, bp != NULL ? bp->b_flags & B_READ : 0);
+	
 	dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 	dm_dev_unbusy(dmv);
 
@@ -455,12 +479,6 @@ static int
 dmwrite(dev_t dev, struct uio *uio, int flag)
 {
 	return (physio(dmstrategy, NULL, dev, B_WRITE, dmminphys, uio));
-}
-
-static int
-dmdump(dev_t dev, daddr_t blkno, void *va, size_t size)
-{
-	return ENODEV;
 }
 
 static int

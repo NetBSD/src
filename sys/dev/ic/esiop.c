@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.42 2008/04/08 12:07:26 cegger Exp $	*/
+/*	$NetBSD: esiop.c,v 1.42.18.1 2009/05/13 17:19:22 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.42 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.42.18.1 2009/05/13 17:19:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,7 @@ void esiop_printstats(void);
 
 static inline void esiop_script_sync(struct esiop_softc *, int);
 static inline void
-esiop_script_sync(sc, ops)
-	struct esiop_softc *sc;
-	int ops;
+esiop_script_sync(struct esiop_softc *sc, int ops)
 {
 	if ((sc->sc_c.features & SF_CHIP_RAM) == 0)
 		bus_dmamap_sync(sc->sc_c.sc_dmat, sc->sc_c.sc_scriptdma, 0,
@@ -126,9 +124,7 @@ esiop_script_sync(sc, ops)
 
 static inline u_int32_t esiop_script_read(struct esiop_softc *, u_int);
 static inline u_int32_t
-esiop_script_read(sc, offset)
-	struct esiop_softc *sc;
-	u_int offset;
+esiop_script_read(struct esiop_softc *sc, u_int offset)
 {
 	if (sc->sc_c.features & SF_CHIP_RAM) {
 		return bus_space_read_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
@@ -141,10 +137,7 @@ esiop_script_read(sc, offset)
 static inline void esiop_script_write(struct esiop_softc *, u_int,
 	u_int32_t);
 static inline void
-esiop_script_write(sc, offset, val)
-	struct esiop_softc *sc;
-	u_int offset;
-	u_int32_t val;
+esiop_script_write(struct esiop_softc *sc, u_int offset, u_int32_t val)
 {
 	if (sc->sc_c.features & SF_CHIP_RAM) {
 		bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
@@ -155,8 +148,7 @@ esiop_script_write(sc, offset, val)
 }
 
 void
-esiop_attach(sc)
-	struct esiop_softc *sc;
+esiop_attach(struct esiop_softc *sc)
 {
 	struct esiop_dsatbl *tagtbl_donering;
 
@@ -213,8 +205,7 @@ esiop_attach(sc)
 }
 
 void
-esiop_reset(sc)
-	struct esiop_softc *sc;
+esiop_reset(struct esiop_softc *sc)
 {
 	int i, j;
 	u_int32_t addr;
@@ -428,8 +419,7 @@ bus_space_write_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSP, sc->sc_c.sc_scriptad
 #endif
 
 int
-esiop_intr(v)
-	void *v;
+esiop_intr(void *v)
 {
 	struct esiop_softc *sc = v;
 	struct esiop_target *esiop_target;
@@ -1159,9 +1149,7 @@ end:
 }
 
 void
-esiop_scsicmd_end(esiop_cmd, offset)
-	struct esiop_cmd *esiop_cmd;
-	int offset;
+esiop_scsicmd_end(struct esiop_cmd *esiop_cmd, int offset)
 {
 	struct scsipi_xfer *xs = esiop_cmd->cmd_c.xs;
 	struct esiop_softc *sc = (struct esiop_softc *)esiop_cmd->cmd_c.siop_sc;
@@ -1230,8 +1218,7 @@ esiop_scsicmd_end(esiop_cmd, offset)
 }
 
 void
-esiop_checkdone(sc)
-	struct esiop_softc *sc;
+esiop_checkdone(struct esiop_softc *sc)
 {
 	int target, lun, tag;
 	struct esiop_target *esiop_target;
@@ -1334,10 +1321,7 @@ next:
 }
 
 void
-esiop_unqueue(sc, target, lun)
-	struct esiop_softc *sc;
-	int target;
-	int lun;
+esiop_unqueue(struct esiop_softc *sc, int target, int lun)
 {
  	int slot, tag;
 	u_int32_t slotdsa;
@@ -1381,8 +1365,7 @@ esiop_unqueue(sc, target, lun)
 
 
 int
-esiop_handle_qtag_reject(esiop_cmd)
-	struct esiop_cmd *esiop_cmd;
+esiop_handle_qtag_reject(struct esiop_cmd *esiop_cmd)
 {
 	struct esiop_softc *sc = (struct esiop_softc *)esiop_cmd->cmd_c.siop_sc;
 	int target = esiop_cmd->cmd_c.xs->xs_periph->periph_target;
@@ -1425,8 +1408,7 @@ esiop_handle_qtag_reject(esiop_cmd)
  * all active commands in a temporary queue.
  */
 void
-esiop_handle_reset(sc)
-	struct esiop_softc *sc;
+esiop_handle_reset(struct esiop_softc *sc)
 {
 	struct esiop_cmd *esiop_cmd;
 	struct esiop_lun *esiop_lun;
@@ -1494,10 +1476,7 @@ esiop_handle_reset(sc)
 }
 
 void
-esiop_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -1700,9 +1679,7 @@ esiop_scsipi_request(chan, req, arg)
 }
 
 static void
-esiop_start(sc, esiop_cmd)
-	struct esiop_softc *sc;
-	struct esiop_cmd *esiop_cmd;
+esiop_start(struct esiop_softc *sc, struct esiop_cmd *esiop_cmd)
 {
 	struct esiop_lun *esiop_lun;
 	struct esiop_target *esiop_target;
@@ -1810,8 +1787,7 @@ esiop_start(sc, esiop_cmd)
 }
 
 void
-esiop_timeout(v)
-	void *v;
+esiop_timeout(void *v)
 {
 	struct esiop_cmd *esiop_cmd = v;
 	struct esiop_softc *sc =
@@ -1864,8 +1840,7 @@ esiop_timeout(v)
 }
 
 void
-esiop_dump_script(sc)
-	struct esiop_softc *sc;
+esiop_dump_script(struct esiop_softc *sc)
 {
 	int i;
 	for (i = 0; i < PAGE_SIZE / 4; i += 2) {
@@ -1882,8 +1857,7 @@ esiop_dump_script(sc)
 }
 
 void
-esiop_morecbd(sc)
-	struct esiop_softc *sc;
+esiop_morecbd(struct esiop_softc *sc)
 {
 	int error, i, s;
 	bus_dma_segment_t seg;
@@ -2007,8 +1981,7 @@ bad3:
 }
 
 void
-esiop_moretagtbl(sc)
-	struct esiop_softc *sc;
+esiop_moretagtbl(struct esiop_softc *sc)
 {
 	int error, i, j, s;
 	bus_dma_segment_t seg;
@@ -2090,9 +2063,7 @@ bad3:
 }
 
 void
-esiop_update_scntl3(sc, _siop_target)
-	struct esiop_softc *sc;
-	struct siop_common_target *_siop_target;
+esiop_update_scntl3(struct esiop_softc *sc, struct siop_common_target *_siop_target)
 {
 	struct esiop_target *esiop_target = (struct esiop_target *)_siop_target;
 	esiop_script_write(sc, esiop_target->lun_table_offset,
@@ -2101,10 +2072,7 @@ esiop_update_scntl3(sc, _siop_target)
 }
 
 void
-esiop_add_dev(sc, target, lun)
-	struct esiop_softc *sc;
-	int target;
-	int lun;
+esiop_add_dev(struct esiop_softc *sc, int target, int lun)
 {
 	struct esiop_target *esiop_target =
 	    (struct esiop_target *)sc->sc_c.targets[target];
@@ -2133,10 +2101,7 @@ esiop_add_dev(sc, target, lun)
 }
 
 void
-esiop_del_dev(sc, target, lun)
-	struct esiop_softc *sc;
-	int target;
-	int lun;
+esiop_del_dev(struct esiop_softc *sc, int target, int lun)
 {
 	struct esiop_target *esiop_target;
 #ifdef SIOP_DEBUG
@@ -2151,9 +2116,7 @@ esiop_del_dev(sc, target, lun)
 }
 
 void
-esiop_target_register(sc, target)
-	struct esiop_softc *sc;
-	u_int32_t target;
+esiop_target_register(struct esiop_softc *sc, u_int32_t target)
 {
 	struct esiop_target *esiop_target =
 	    (struct esiop_target *)sc->sc_c.targets[target];
@@ -2192,7 +2155,7 @@ esiop_target_register(sc, target)
 
 #ifdef SIOP_STATS
 void
-esiop_printstats()
+esiop_printstats(void)
 {
 	printf("esiop_stat_intr %d\n", esiop_stat_intr);
 	printf("esiop_stat_intr_shortxfer %d\n", esiop_stat_intr_shortxfer);

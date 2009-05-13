@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.31 2008/01/14 04:17:35 dyoung Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.31.24.1 2009/05/13 17:22:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.31 2008/01/14 04:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.31.24.1 2009/05/13 17:22:41 jym Exp $");
 
 #include "opt_iso.h"
 
@@ -221,7 +221,7 @@ clnp_ours(
 		 * We are overloading siso_tlen in the if's address, as an nsel length.
 		 */
 		if (dst->isoa_len == ia->ia_addr.siso_nlen &&
-		    bcmp((void *) ia->ia_addr.siso_addr.isoa_genaddr,
+		    memcmp((void *) ia->ia_addr.siso_addr.isoa_genaddr,
 			 (void *) dst->isoa_genaddr,
 			 ia->ia_addr.siso_nlen - ia->ia_addr.siso_tlen) == 0)
 			return 1;
@@ -267,7 +267,7 @@ clnp_forward(
 	extern int      iso_systype;
 
 	clnp = mtod(m, struct clnp_fixed *);
-	bzero((void *) & route, sizeof(route));	/* MUST be done before
+	memset((void *) & route, 0, sizeof(route));	/* MUST be done before
 							 * "bad:" */
 
 	/*
@@ -609,7 +609,7 @@ clnp_echoreply(
 	int             ret;
 
 	/* fill in fake isopcb to pass to output function */
-	bzero(&isopcb, sizeof(isopcb));
+	memset(&isopcb, 0, sizeof(isopcb));
 	isopcb.isop_laddr = ec_dst;
 	isopcb.isop_faddr = ec_src;
 

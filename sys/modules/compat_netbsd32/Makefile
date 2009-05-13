@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/12/08 12:56:00 njoly Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2009/05/13 17:22:18 jym Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -26,12 +26,12 @@ SRCS+=	netbsd32_sysctl.c netbsd32_sysent.c
 SRCS+=	netbsd32_time.c netbsd32_wait.c
 SRCS+=	netbsd32_mod.c
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "x86_64"
 .PATH:	${S}/arch/amd64/amd64
 SRCS+=	netbsd32_machdep.c netbsd32_sigcode.S netbsd32_syscall.c
 .endif
 
-.if ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "sparc64"
 .PATH:	${S}/arch/sparc64/sparc64
 SRCS+=	netbsd32_machdep.c netbsd32_sigcode.S
 .endif

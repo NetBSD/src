@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.368 2009/02/06 13:43:11 drochner Exp $ */
+/*	$NetBSD: wd.c,v 1.368.2.1 2009/05/13 17:19:11 jym Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.368 2009/02/06 13:43:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.368.2.1 2009/05/13 17:19:11 jym Exp $");
 
 #include "opt_ata.h"
 
@@ -126,18 +126,18 @@ int wdcdebug_wd_mask = 0x0;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-int	wdprobe(struct device *, struct cfdata *, void *);
-void	wdattach(struct device *, struct device *, void *);
-int	wddetach(struct device *, int);
-int	wdactivate(struct device *, enum devact);
+int	wdprobe(device_t, cfdata_t, void *);
+void	wdattach(device_t, device_t, void *);
+int	wddetach(device_t, int);
+int	wdactivate(device_t, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
 static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
-CFATTACH_DECL_NEW(wd, sizeof(struct wd_softc),
-    wdprobe, wdattach, wddetach, wdactivate);
+CFATTACH_DECL3_NEW(wd, sizeof(struct wd_softc),
+    wdprobe, wdattach, wddetach, wdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver wd_cd;
 
@@ -274,7 +274,7 @@ wd_lookup_quirks(const char *name)
 }
 
 int
-wdprobe(struct device *parent, struct cfdata *match, void *aux)
+wdprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct ata_device *adev = aux;
 
@@ -290,7 +290,7 @@ wdprobe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-wdattach(struct device *parent, struct device *self, void *aux)
+wdattach(device_t parent, device_t self, void *aux)
 {
 	struct wd_softc *wd = device_private(self);
 	struct ata_device *adev= aux;
@@ -434,7 +434,7 @@ wd_suspend(device_t dv PMF_FN_ARGS)
 }
 
 int
-wdactivate(struct device *self, enum devact act)
+wdactivate(device_t self, enum devact act)
 {
 	int rv = 0;
 
@@ -453,7 +453,7 @@ wdactivate(struct device *self, enum devact act)
 }
 
 int
-wddetach(struct device *self, int flags)
+wddetach(device_t self, int flags)
 {
 	struct wd_softc *sc = device_private(self);
 	int s, bmaj, cmaj, i, mn;

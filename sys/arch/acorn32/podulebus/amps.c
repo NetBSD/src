@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.14 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: amps.c,v 1.14.14.1 2009/05/13 17:16:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.14 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.14.14.1 2009/05/13 17:16:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,7 @@ struct amps_attach_args {
 /* Print function used during child config */
 
 int
-amps_print(aux, name)
-	void *aux;
-	const char *name;
+amps_print(void *aux, const char *name)
 {
 	struct amps_attach_args *aa = aux;
 
@@ -133,10 +131,7 @@ amps_print(aux, name)
  */
 
 int
-amps_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+amps_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podule_attach_args *pa = (void *)aux;
 
@@ -151,9 +146,7 @@ amps_probe(parent, cf, aux)
  */
 
 void
-amps_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+amps_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct amps_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
@@ -201,8 +194,7 @@ amps_attach(parent, self, aux)
  */
 
 /*void
-amps_shutdown(arg)
-	void *arg;
+amps_shutdown(void *arg)
 {
 }*/
 

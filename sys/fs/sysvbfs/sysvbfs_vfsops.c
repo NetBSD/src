@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.26 2008/09/04 12:28:14 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.26.8.1 2009/05/13 17:21:55 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.26 2008/09/04 12:28:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.26.8.1 2009/05/13 17:21:55 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,17 +126,19 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
+	 *
+	 * Permission to update a mount is checked higher, so here we presume
+	 * updating the mount is okay (for example, as far as securelevel goes)
+	 * which leaves us with the normal check.
 	 */
-	if (error == 0 && kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) {
+	if (error == 0) {
 		int accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
+		
+		error = genfs_can_mount(devvp, accessmode, l->l_cred);
 	}
 
 	if (error) {
@@ -179,15 +181,20 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return error;
 
 	/* Get partition information */
-	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred)) != 0)
+	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred)) != 0) {
+		VOP_CLOSE(devvp, oflags, NOCRED);
 		return error;
+	}
 
 	bmp = malloc(sizeof(struct sysvbfs_mount), M_SYSVBFS_VFS, M_WAITOK);
-	if (bmp == NULL)
+	if (bmp == NULL) {
+		VOP_CLOSE(devvp, oflags, NOCRED);
 		return ENOMEM;
+	}
 	bmp->devvp = devvp;
 	bmp->mountp = mp;
 	if ((error = sysvbfs_bfs_init(&bmp->bfs, devvp)) != 0) {
+		VOP_CLOSE(devvp, oflags, NOCRED);
 		free(bmp, M_SYSVBFS_VFS);
 		return error;
 	}
@@ -334,12 +341,24 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		DPRINTF("bfs_inode_lookup failed.\n");
 		return ENOENT;
 	}
+
+ retry:
+	mutex_enter(&mntvnode_lock);
 	for (bnode = LIST_FIRST(&bmp->bnode_head); bnode != NULL;
 	    bnode = LIST_NEXT(bnode, link)) {
 		if (bnode->inode->number == ino) {
-			*vpp = bnode->vnode;
+			vp = bnode->vnode;
+			mutex_enter(&vp->v_interlock);
+			mutex_exit(&mntvnode_lock);
+			if (vget(vp, LK_EXCLUSIVE|LK_RETRY|LK_INTERLOCK) == 0) {
+				*vpp = vp;
+				return 0;
+			} else {
+				goto retry;
+			}
 		}
 	}
+	mutex_exit(&mntvnode_lock);
 
 	/* Allocate v-node. */
 	if ((error = getnewvnode(VT_SYSVBFS, mp, sysvbfs_vnodeop_p, &vp)) !=

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.6 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.6.94.1 2009/05/13 17:16:17 jym Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -56,9 +56,9 @@ struct arm_sync_icache_args {
 
 #ifndef _KERNEL
 __BEGIN_DECLS
-int	arm_sync_icache __P((u_int addr, int len));
-int	arm_drain_writebuf __P((void));
-int	sysarch __P((int, void *));
+int	arm_sync_icache(u_int addr, int len);
+int	arm_drain_writebuf(void);
+int	sysarch(int, void *);
 __END_DECLS
 #endif
 

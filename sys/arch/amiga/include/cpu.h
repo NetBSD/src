@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70 2008/02/27 18:26:15 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70.18.1 2009/05/13 17:16:10 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -189,14 +189,14 @@ extern int machineid;
 /*
  * Prototypes from amiga_init.c
  */
-void	*alloc_z2mem __P((long));
+void	*alloc_z2mem(long);
 
 /*
  * Prototypes from autoconf.c
  */
-int	is_a1200 __P((void));
-int	is_a3000 __P((void));
-int	is_a4000 __P((void));
+int	is_a1200(void);
+int	is_a3000(void);
+int	is_a4000(void);
 #ifdef DRACO
 #define	is_draco() ((machineid >> 24) == 0x7d ? (machineid >> 16) & 0xff : 0)
 #endif
@@ -205,12 +205,12 @@ int	is_a4000 __P((void));
 /*
  * Prototypes from kbd.c
  */
-void	drkbdintr __P((void));
+void	drkbdintr(void);
 
 /*
  * Prototypes from drsc.c
  */
-void	drsc_handler __P((void));
+void	drsc_handler(void);
 #endif
 
 /*
@@ -219,27 +219,27 @@ void	drsc_handler __P((void));
 struct fpframe;
 struct user;
 
-void	clearseg __P((vm_offset_t));
-void	doboot __P((void)) __attribute__((__noreturn__));
-void	loadustp __P((int));
+void	clearseg(vm_offset_t);
+void	doboot(void) __attribute__((__noreturn__));
+void	loadustp(int);
 #ifdef FPCOPROC
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
 #endif
-void	physcopyseg __P((vm_offset_t, vm_offset_t));
-u_int	probeva __P((u_int, u_int));
+void	physcopyseg(vm_offset_t, vm_offset_t);
+u_int	probeva(u_int, u_int);
 
 /*
  * Prototypes from machdep.c
  */
-int	badaddr __P((void *));
-int	badbaddr __P((void *));
-void	bootsync __P((void));
+int	badaddr(void *);
+int	badbaddr(void *);
+void	bootsync(void);
 
 /*
  * Prototypes from pmap.c:
  */
-void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+void	pmap_bootstrap(vm_offset_t, vm_offset_t);
 
 #endif /* _KERNEL */
 

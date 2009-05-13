@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.18 2007/12/03 15:34:13 ad Exp $	*/
+/*	$NetBSD: extintr.c,v 1.18.32.1 2009/05/13 17:18:15 jym Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.18 2007/12/03 15:34:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.18.32.1 2009/05/13 17:18:15 jym Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -285,7 +285,7 @@ intr_establish(
 	int irq,
 	int type,
 	int level,
-	int (*ih_fun) __P((void *)),
+	int (*ih_fun)(void *),
 	void *ih_arg)
 {
 	struct intrsource *is = &intr_sources[irq];
@@ -764,7 +764,7 @@ ext_intr_stat_t *ext_intr_statp = 0;
 ext_intr_hist_t ext_intr_hist[NIRQ][EXT_INTR_STAT_HISTSZ];
 
 static inline u_int64_t
-_mftb()
+_mftb(void)
 {
         u_long scratch;
         u_int64_t tb;
@@ -962,7 +962,7 @@ ext_intr_stats_post(int irq, u_int64_t tstart)
 }
 
 void
-ext_intr_stats_print()
+ext_intr_stats_print(void)
 {
 	unsigned int i;
 	ext_intr_stat_t *statp;
@@ -1078,7 +1078,7 @@ ext_intr_hist_print(u_int32_t lo, u_int32_t hi, u_int32_t gpp, u_int32_t soft)
 }
 
 void
-ext_intr_stats_init()
+ext_intr_stats_init(void)
 {
 	int irq;
 
@@ -1099,7 +1099,7 @@ unsigned int spl_stats_enb = 1;
 
 
 void
-spl_stats_init()
+spl_stats_init(void)
 {
 	spl_stats_histix = 0;
 }
@@ -1136,7 +1136,7 @@ spl_stats_log(int ipl, int cc)
 }
 
 void
-spl_stats_print()
+spl_stats_print(void)
 {
 	spl_hist_t *histp;
 	int i;

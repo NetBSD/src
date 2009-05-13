@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.13 2008/11/22 13:21:21 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.13.4.1 2009/05/13 17:19:21 jym Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.13 2008/11/22 13:21:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.13.4.1 2009/05/13 17:19:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,19 @@ static void spdmem_attach(device_t, device_t, void *);
 SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 static uint8_t spdmem_read(struct spdmem_softc *, uint8_t);
+
+/* Routines for decoding spd data */
+static void decode_edofpm(const struct sysctlnode *, device_t, struct spdmem *);
+static void decode_rom(const struct sysctlnode *, device_t, struct spdmem *);
+static void decode_sdram(const struct sysctlnode *, device_t, struct spdmem *);
+static void decode_ddr(const struct sysctlnode *, device_t, struct spdmem *);
+static void decode_ddr2(const struct sysctlnode *, device_t, struct spdmem *);
+static void decode_ddr3(const struct sysctlnode *, device_t, struct spdmem *);
+static void decode_fbdimm(const struct sysctlnode *, device_t, struct spdmem *);
+
+static void decode_size_speed(const struct sysctlnode *, int, int, int, int,
+			      bool, const char *);
+static void decode_voltage_refresh(device_t, struct spdmem *);
 
 CFATTACH_DECL_NEW(spdmem, sizeof(struct spdmem_softc),
     spdmem_match, spdmem_attach, NULL, NULL);
@@ -221,16 +234,10 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	struct spdmem *s = &(sc->sc_spd_data);
 	const char *type;
-	const char *voltage;
-	const char *refresh;
-	const char *ddr_type_string = NULL;
 	const char *rambus_rev = "Reserved";
-	int num_banks = 0;
-	int per_chip = 0;
-	int dimm_size, cycle_time, d_clk, p_clk, bits;
+	int dimm_size;
 	int i;
 	unsigned int spd_len, spd_size;
-	unsigned int tAA, tRCD, tRP, tRAS;
 	const struct sysctlnode *node = NULL;
 
 	sc->sc_tag = ia->ia_tag;
@@ -353,7 +360,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal("\n");
-	aprint_normal_dev(self, "%s memory", type);
+	aprint_normal_dev(self, "%s", type);
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 	if (node != NULL)
 		sysctl_createv(NULL, 0, NULL, NULL,
@@ -363,272 +370,41 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		    0, sc->sc_type, 0,
 		    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
-	if (IS_RAMBUS_TYPE)
+	if (IS_RAMBUS_TYPE) {
 		aprint_normal(", SPD Revision %s", rambus_rev);
-	else if (s->sm_config < __arraycount(spdmem_parity_types) &&
-		 (s->sm_type == SPDMEM_MEMTYPE_SDRAM ||
-		  s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM ||
-		  s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM))
-		aprint_normal(", %s", spdmem_parity_types[s->sm_config]);
-	else if (s->sm_type == SPDMEM_MEMTYPE_DDR3SDRAM)
-		aprint_normal(", %sECC", s->sm_ddr3.ddr3_hasECC?"":"no ");
+		dimm_size = 1 << (s->sm_rdr.rdr_rows + s->sm_rdr.rdr_cols - 13);
+		if (dimm_size >= 1024)
+			aprint_normal(", %dGB\n", dimm_size / 1024);
+		else
+			aprint_normal(", %dMB\n", dimm_size);
 
-	/* Extract module size info */
-	dimm_size = 0;
-	if (IS_RAMBUS_TYPE) {
-		dimm_size = s->sm_rdr.rdr_rows + s->sm_rdr.rdr_cols - 13;
-		num_banks = 1;
-		per_chip = 1;
-	} else if (s->sm_type == SPDMEM_MEMTYPE_SDRAM) {
-		dimm_size = s->sm_sdr.sdr_rows + s->sm_sdr.sdr_cols - 17;
-		num_banks = s->sm_sdr.sdr_banks;
-		per_chip = s->sm_sdr.sdr_banks_per_chip;
-	} else if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
-		dimm_size = s->sm_ddr.ddr_rows + s->sm_ddr.ddr_cols - 17;
-		num_banks = s->sm_ddr.ddr_ranks;
-		per_chip = s->sm_ddr.ddr_banks_per_chip;
-	} else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		dimm_size = s->sm_ddr2.ddr2_rows + s->sm_ddr2.ddr2_cols - 17;
-		num_banks = s->sm_ddr2.ddr2_ranks + 1;
-		per_chip = s->sm_ddr2.ddr2_banks_per_chip;
-	} else if (s->sm_type == SPDMEM_MEMTYPE_DDR3SDRAM) {
-		/*
-		 * DDR3 size specification is quite different from DDR2
-		 *
-		 * Module capacity is defined as
-		 *	Chip_Capacity_in_bits / 8bits-per-byte 
-		 *		* external_bus_width
-		 *		/ internal_bus_width
-		 * We further divide by 2**20 to get our answer in MB
-		 */
-		dimm_size =
-			(s->sm_ddr3.ddr3_chipsize + 28 - 20) - 3 +
-			(s->sm_ddr3.ddr3_datawidth + 3) -
-			(s->sm_ddr3.ddr3_chipwidth + 2);
-		num_banks = s->sm_ddr3.ddr3_physbanks + 1;
-		per_chip = 1;
-	} else if (s->sm_type == SPDMEM_MEMTYPE_FBDIMM ||
-		   s->sm_type == SPDMEM_MEMTYPE_FBDIMM_PROBE) {
-		/*
-		 * FB-DIMM is very much like DDR3
-		 */
-		dimm_size =
-			s->sm_fbd.fbdimm_rows + 12 +
-			s->sm_fbd.fbdimm_cols +  9 - 20 - 3;
-		num_banks = 1 << (s->sm_fbd.fbdimm_banks + 2);
-		per_chip = 1;
-	}
-	if (IS_RAMBUS_TYPE ||
-	    (num_banks <= 8 && per_chip <= 8 && dimm_size > 0 &&
-	     dimm_size <= 12)) {
-		dimm_size = (1 << dimm_size) * num_banks * per_chip;
-		aprint_normal(", %dMB", dimm_size);
-		if (node != NULL)
-			sysctl_createv(NULL, 0, NULL, NULL,
-			    CTLFLAG_IMMEDIATE,
-			    CTLTYPE_INT, "size",
-			    SYSCTL_DESCR("module size in MB"), NULL,
-			    dimm_size, NULL, 0,
-			    CTL_HW, node->sysctl_num, CTL_CREATE,
-			    CTL_EOL);
-	}
-
-	/* Nothing further for RAMBUS memory */
-	if (IS_RAMBUS_TYPE) {
-		aprint_normal("\n");
+		/* No further decode for RAMBUS memory */
 		return;
 	}
-
-	cycle_time = 0;			/* cycle_time in units of 0.001 ns */
-	tAA = tRCD = tRP = tRAS = 0;	/* Initialize latency values */
-
-	if (s->sm_type == SPDMEM_MEMTYPE_SDRAM) {
-		cycle_time = s->sm_sdr.sdr_cycle_whole * 1000 +
-			     s->sm_sdr.sdr_cycle_tenths * 100;
-		tRCD = s->sm_sdr.sdr_tRCD;
-		tRP  = s->sm_sdr.sdr_tRP;
-		tRAS = s->sm_sdr.sdr_tRAS;
-		tAA  = 0;
-		for (i = 0; i < 8; i++)
-			if (s->sm_sdr.sdr_tCAS & (1 << i))
-				tAA = i;
-		tAA++;
-	}
-	else if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM ||
-		 s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		cycle_time = s->sm_ddr2.ddr2_cycle_whole * 1000 +
-			     spdmem_cycle_frac[s->sm_ddr2.ddr2_cycle_frac];
-		tRCD = ( 250 * s->sm_ddr2.ddr2_tRCD + cycle_time - 1) /
-			cycle_time;
-		tRP  = ( 250 * s->sm_ddr2.ddr2_tRP + cycle_time - 1) /
-			cycle_time;
-		tRAS = (1000 * s->sm_ddr2.ddr2_tRAS + cycle_time - 1) /
-			cycle_time;
-		tAA  = 0;
-		for (i = 2; i < 8; i++)
-			if (s->sm_ddr2.ddr2_tCAS & (1 << i))
-				tAA = i;
-		/* DDR_SDRAM measures tAA in half-cycles */
-		if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM)
-			tAA /= 2;
-	}
-	else if (s->sm_type == SPDMEM_MEMTYPE_DDR3SDRAM) {
-		cycle_time = (1000 * s->sm_ddr3.ddr3_mtb_dividend + 
-				    (s->sm_ddr3.ddr3_mtb_divisor / 2)) /
-			     s->sm_ddr3.ddr3_mtb_divisor;
-		cycle_time *= s->sm_ddr3.ddr3_tCKmin;
-		tAA  = s->sm_ddr3.ddr3_tAAmin  / s->sm_ddr3.ddr3_tCKmin;
-		tRCD = s->sm_ddr3.ddr3_tRCDmin / s->sm_ddr3.ddr3_tCKmin;
-		tRP  = s->sm_ddr3.ddr3_tRPmin  / s->sm_ddr3.ddr3_tCKmin;
-		tRAS = (s->sm_ddr3.ddr3_tRAS_msb * 256 +
-			s->sm_ddr3.ddr3_tRAS_lsb) / s->sm_ddr3.ddr3_tCKmin;
-	}
-	else if (s->sm_type == SPDMEM_MEMTYPE_FBDIMM ||
-		 s->sm_type == SPDMEM_MEMTYPE_FBDIMM_PROBE) {
-		cycle_time = (1000 * s->sm_fbd.fbdimm_mtb_dividend +
-				    (s->sm_fbd.fbdimm_mtb_divisor / 2)) /
-			     s->sm_fbd.fbdimm_mtb_divisor;
-		tAA  = s->sm_fbd.fbdimm_tAAmin  / s->sm_fbd.fbdimm_tCKmin;
-		tRCD = s->sm_fbd.fbdimm_tRCDmin / s->sm_fbd.fbdimm_tCKmin;
-		tRP  = s->sm_fbd.fbdimm_tRPmin  / s->sm_fbd.fbdimm_tCKmin;
-		tRAS = (s->sm_fbd.fbdimm_tRAS_msb * 256 +
-			s->sm_fbd.fbdimm_tRAS_lsb) / s->sm_fbd.fbdimm_tCKmin;
-	}
-	if (cycle_time != 0) {
-		/*
-		 * cycle time is scaled by a factor of 1000 to avoid using
-		 * floating point.  Calculate memory speed as the number
-		 * of cycles per microsecond.
-		 */
-		d_clk = 1000 * 1000;
-		if (s->sm_type == SPDMEM_MEMTYPE_FBDIMM ||
-		    s->sm_type == SPDMEM_MEMTYPE_FBDIMM_PROBE) {
-			/* DDR2 FB-DIMM uses a dual-pumped clock */
-			d_clk *= 2;
-			bits = 1 << (s->sm_fbd.fbdimm_dev_width + 2);
-			ddr_type_string = "PC2";
-		} else if (s->sm_type == SPDMEM_MEMTYPE_DDR3SDRAM) {
-			/* DDR3 uses a dual-pumped clock */
-			d_clk *= 2;
-			bits = 1 << (s->sm_ddr3.ddr3_datawidth + 3);
-			ddr_type_string = "PC3";
-		} else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-			/* DDR2 uses a dual-pumped clock */
-			d_clk *= 2;
-			bits = s->sm_ddr2.ddr2_datawidth;
-			if ((s->sm_config & 0x03) != 0)
-				bits -= 8;
-			ddr_type_string = "PC2";
-		} else if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
-			/* DDR uses a dual-pumped clock */
-			d_clk *= 2;
-			bits = le16toh(s->sm_ddr.ddr_datawidth);
-			if (s->sm_config == 1 || s->sm_config == 2)
-				bits -= 8;
-			ddr_type_string = "PC";
-		} else {	/* SPDMEM_MEMTYPE_SDRAM */
-			bits = le16toh(s->sm_sdr.sdr_datawidth);
-			if (s->sm_config == 1 || s->sm_config == 2)
-				bits -= 8;
-			ddr_type_string = "PC";
-		}
-		/*
-		 * Calculate p_clk first, since for DDR3 we need maximum
-		 * significance.  DDR3 rating is not rounded to a multiple
-		 * of 100.  This results in cycle_time of 1.5ns displayed
-		 * as PC3-10666.
-		 */
-		p_clk = (d_clk * bits) / 8 / cycle_time;
-		d_clk = ((d_clk + cycle_time / 2) ) / cycle_time;
-		if ( s->sm_type != SPDMEM_MEMTYPE_DDR3SDRAM) {
-			if ((p_clk % 100) >= 50)
-				p_clk += 50;
-			p_clk -= p_clk % 100;
-		}
-		aprint_normal(", %dMHz (%s-%d)\n",
-			      d_clk, ddr_type_string, p_clk);
-		if (node != NULL)
-			sysctl_createv(NULL, 0, NULL, NULL,
-				       CTLFLAG_IMMEDIATE,
-				       CTLTYPE_INT, "speed",
-				       SYSCTL_DESCR("memory speed in MHz"),
-				       NULL, d_clk, NULL, 0,
-				       CTL_HW, node->sysctl_num, CTL_CREATE,
-				       CTL_EOL);
-	}
-
-	aprint_verbose_dev(self, "");
 	switch (s->sm_type) {
 	case SPDMEM_MEMTYPE_EDO:
 	case SPDMEM_MEMTYPE_FPM:
-		aprint_verbose(
-		    "%d rows, %d cols, %d banks, %dns tRAC, %dns tCAC\n",
-		    s->sm_fpm.fpm_rows, s->sm_fpm.fpm_cols,
-		    s->sm_fpm.fpm_banks, s->sm_fpm.fpm_tRAC,
-		    s->sm_fpm.fpm_tCAC);
+		decode_edofpm(node, self, s);
 		break;
 	case SPDMEM_MEMTYPE_ROM:
-		aprint_verbose("%d rows, %d cols, %d banks\n",
-			s->sm_rom.rom_rows, s->sm_rom.rom_cols,
-			s->sm_rom.rom_banks);
+		decode_rom(node, self, s);
 		break;
 	case SPDMEM_MEMTYPE_SDRAM:
-		aprint_verbose(
-		    "%d rows, %d cols, %d banks, %d banks/chip, "
-		    "%d.%dns cycle time\n",
-		    s->sm_sdr.sdr_rows, s->sm_sdr.sdr_cols, s->sm_sdr.sdr_banks,
-		    s->sm_sdr.sdr_banks_per_chip, cycle_time/1000,
-		    (cycle_time % 1000) / 100);
-		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
+		decode_sdram(node, self, s);
 		break;
 	case SPDMEM_MEMTYPE_DDRSDRAM:
-		aprint_verbose(
-		    "%d rows, %d cols, %d ranks, %d banks/chip, "
-		    "%d.%dns cycle time\n",
-		    s->sm_ddr.ddr_rows, s->sm_ddr.ddr_cols, s->sm_ddr.ddr_ranks,
-		    s->sm_ddr.ddr_banks_per_chip, cycle_time/1000,
-		    (cycle_time % 1000 + 50) / 100);
-		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
+		decode_ddr(node, self, s);
 		break;
 	case SPDMEM_MEMTYPE_DDR2SDRAM:
-		aprint_verbose(
-		    "%d rows, %d cols, %d ranks, %d banks/chip, "
-		    "%d.%02dns cycle time\n",
-		    s->sm_ddr2.ddr2_rows, s->sm_ddr2.ddr2_cols,
-		    s->sm_ddr2.ddr2_ranks + 1, s->sm_ddr2.ddr2_banks_per_chip,
-		    cycle_time / 1000, (cycle_time % 1000 + 5) /10 );
-		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
+		decode_ddr2(node, self, s);
 		break;
 	case SPDMEM_MEMTYPE_DDR3SDRAM:
-		aprint_verbose(
-		    "%d rows, %d cols, %d internal banks, %d physical banks, "
-		    "%d.%03dns cycle time\n",
-		    s->sm_ddr3.ddr3_rows + 9, s->sm_ddr3.ddr3_cols + 12,
-		    1 << (s->sm_ddr3.ddr3_logbanks + 3),
-		    s->sm_ddr3.ddr3_physbanks + 1,
-		    cycle_time/1000, cycle_time % 1000);
-		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
+		decode_ddr3(node, self, s);
 		break;
-	default:
+	case SPDMEM_MEMTYPE_FBDIMM:
+	case SPDMEM_MEMTYPE_FBDIMM_PROBE:
+		decode_fbdimm(node, self, s);
 		break;
-	}
-
-	if (s->sm_type < SPDMEM_MEMTYPE_DDR3SDRAM) {
-		if (s->sm_voltage < __arraycount(spdmem_voltage_types))
-			voltage = spdmem_voltage_types[s->sm_voltage];
-		else
-			voltage = "unknown";
-
-		if (s->sm_refresh < __arraycount(spdmem_refresh_types))
-			refresh = spdmem_refresh_types[s->sm_refresh];
-		else
-			refresh = "unknown";
-
-		aprint_verbose_dev(self, "voltage %s, refresh time %s",
-				voltage, refresh);
-		if (s->sm_selfrefresh)
-			aprint_verbose(" (self-refreshing)");
-		aprint_verbose("\n");
 	}
 }
 
@@ -637,7 +413,7 @@ spdmem_read(struct spdmem_softc *sc, uint8_t reg)
 {
 	uint8_t val;
 
-	iic_acquire_bus(sc->sc_tag,0);
+	iic_acquire_bus(sc->sc_tag, 0);
 	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
 		 &val, 1, 0);
 	iic_release_bus(sc->sc_tag, 0);
@@ -657,4 +433,296 @@ SYSCTL_SETUP(sysctl_spdmem_setup, "sysctl hw.spdmem subtree setup")
 		return;
 
 	hw_node = node->sysctl_num;
+}
+
+static void
+decode_size_speed(const struct sysctlnode *node, int dimm_size, int cycle_time,
+		  int d_clk, int bits, bool round, const char *ddr_type_string)
+{
+	int p_clk;
+
+	if (dimm_size < 1024)
+		aprint_normal("%dMB", dimm_size);
+	else
+		aprint_normal("%dGB", dimm_size / 1024);
+	if (node != NULL)
+		sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_IMMEDIATE,
+		    CTLTYPE_INT, "size",
+		    SYSCTL_DESCR("module size in MB"), NULL,
+		    dimm_size, NULL, 0,
+		    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	if (cycle_time == 0) {
+		aprint_normal("\n");
+		return;
+	}
+
+	/*
+	 * Calculate p_clk first, since for DDR3 we need maximum significance.
+	 * DDR3 rating is not rounded to a multiple of 100.  This results in
+	 * cycle_time of 1.5ns displayed as PC3-10666.
+	 */
+	d_clk *= 1000 * 1000;
+	p_clk = (d_clk * bits) / 8 / cycle_time;
+	d_clk = ((d_clk + cycle_time / 2) ) / cycle_time;
+	if (round) {
+		if ((p_clk % 100) >= 50)
+			p_clk += 50;
+		p_clk -= p_clk % 100;
+	}
+	aprint_normal(", %dMHz (%s-%d)\n",
+		      d_clk, ddr_type_string, p_clk);
+	if (node != NULL)
+		sysctl_createv(NULL, 0, NULL, NULL,
+			       CTLFLAG_IMMEDIATE,
+			       CTLTYPE_INT, "speed",
+			       SYSCTL_DESCR("memory speed in MHz"),
+			       NULL, d_clk, NULL, 0,
+			       CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+}
+
+static void
+decode_voltage_refresh(device_t self, struct spdmem *s)
+{
+	const char *voltage, *refresh;
+
+	if (s->sm_voltage < __arraycount(spdmem_voltage_types))
+		voltage = spdmem_voltage_types[s->sm_voltage];
+	else
+		voltage = "unknown";
+
+	if (s->sm_refresh < __arraycount(spdmem_refresh_types))
+		refresh = spdmem_refresh_types[s->sm_refresh];
+	else
+		refresh = "unknown";
+
+	aprint_verbose_dev(self, "voltage %s, refresh time %s%s\n",
+			voltage, refresh,
+			s->sm_selfrefresh?" (self-refreshing)":"");
+}
+
+static void
+decode_edofpm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	aprint_normal("\n");
+	aprint_verbose_dev(self,
+	    "%d rows, %d cols, %d banks, %dns tRAC, %dns tCAC\n",
+	    s->sm_fpm.fpm_rows, s->sm_fpm.fpm_cols, s->sm_fpm.fpm_banks,
+	    s->sm_fpm.fpm_tRAC, s->sm_fpm.fpm_tCAC);
+}
+
+static void
+decode_rom(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	aprint_normal("\n");
+	aprint_verbose_dev(self, "%d rows, %d cols, %d banks\n",
+	    s->sm_rom.rom_rows, s->sm_rom.rom_cols, s->sm_rom.rom_banks);
+}
+
+static void
+decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	int dimm_size, cycle_time, bits, tAA, i;
+
+	aprint_normal("%s, %s, ",
+		(s->sm_sdr.sdr_mod_attrs & SPDMEM_SDR_MASK_REG)?
+			" (registered)":"",
+		(s->sm_config < __arraycount(spdmem_parity_types))?
+			spdmem_parity_types[s->sm_config]:"invalid parity");
+
+	dimm_size = 1 << (s->sm_sdr.sdr_rows + s->sm_sdr.sdr_cols - 17);
+	dimm_size *= s->sm_sdr.sdr_banks * s->sm_sdr.sdr_banks_per_chip;
+
+	cycle_time = s->sm_sdr.sdr_cycle_whole * 1000 +
+		     s->sm_sdr.sdr_cycle_tenths * 100;
+	bits = le16toh(s->sm_sdr.sdr_datawidth);
+	if (s->sm_config == 1 || s->sm_config == 2)
+		bits -= 8;
+	decode_size_speed(node, dimm_size, cycle_time, 1, bits, TRUE, "PC");
+
+	aprint_verbose_dev(self,
+	    "%d rows, %d cols, %d banks, %d banks/chip, %d.%dns cycle time\n",
+	    s->sm_sdr.sdr_rows, s->sm_sdr.sdr_cols, s->sm_sdr.sdr_banks,
+	    s->sm_sdr.sdr_banks_per_chip, cycle_time/1000,
+	    (cycle_time % 1000) / 100);
+
+	tAA  = 0;
+	for (i = 0; i < 8; i++)
+		if (s->sm_sdr.sdr_tCAS & (1 << i))
+			tAA = i;
+	tAA++;
+	aprint_verbose_dev(self, latency, tAA, s->sm_sdr.sdr_tRCD,
+	    s->sm_sdr.sdr_tRP, s->sm_sdr.sdr_tRAS);
+
+	decode_voltage_refresh(self, s);
+}
+
+static void
+decode_ddr(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	int dimm_size, cycle_time, bits, tAA, i;
+
+	aprint_normal("%s, %s, ",
+		(s->sm_ddr.ddr_mod_attrs & SPDMEM_DDR_MASK_REG)?
+			" (registered)":"",
+		(s->sm_config < __arraycount(spdmem_parity_types))?
+			spdmem_parity_types[s->sm_config]:"invalid parity");
+
+	dimm_size = 1 << (s->sm_ddr.ddr_rows + s->sm_ddr.ddr_cols - 17);
+	dimm_size *= s->sm_ddr.ddr_ranks * s->sm_ddr.ddr_banks_per_chip;
+
+	cycle_time = s->sm_ddr.ddr_cycle_whole * 1000 +
+		  spdmem_cycle_frac[s->sm_ddr.ddr_cycle_tenths];
+	bits = le16toh(s->sm_ddr.ddr_datawidth);
+	if (s->sm_config == 1 || s->sm_config == 2)
+		bits -= 8;
+	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC");
+
+	aprint_verbose_dev(self,
+	    "%d rows, %d cols, %d ranks, %d banks/chip, %d.%dns cycle time\n",
+	    s->sm_ddr.ddr_rows, s->sm_ddr.ddr_cols, s->sm_ddr.ddr_ranks,
+	    s->sm_ddr.ddr_banks_per_chip, cycle_time/1000,
+	    (cycle_time % 1000 + 50) / 100);
+
+	tAA  = 0;
+	for (i = 2; i < 8; i++)
+		if (s->sm_ddr.ddr_tCAS & (1 << i))
+			tAA = i;
+	tAA /= 2;
+
+#define __DDR_ROUND(scale, field)	\
+		((scale * s->sm_ddr.field + cycle_time - 1) / cycle_time)
+
+	aprint_verbose_dev(self, latency, tAA, __DDR_ROUND(250, ddr_tRCD),
+		__DDR_ROUND(250, ddr_tRP), __DDR_ROUND(1000, ddr_tRAS));
+
+#undef	__DDR_ROUND
+
+	decode_voltage_refresh(self, s);
+}
+
+static void
+decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	int dimm_size, cycle_time, bits, tAA, i;
+
+	aprint_normal("%s, %s, ",
+		(s->sm_ddr2.ddr2_mod_attrs & SPDMEM_DDR2_MASK_REG)?
+			" (registered)":"",
+		(s->sm_config < __arraycount(spdmem_parity_types))?
+			spdmem_parity_types[s->sm_config]:"invalid parity");
+
+	dimm_size = 1 << (s->sm_ddr2.ddr2_rows + s->sm_ddr2.ddr2_cols - 17);
+	dimm_size *= (s->sm_ddr2.ddr2_ranks + 1) *
+		     s->sm_ddr2.ddr2_banks_per_chip;
+
+	cycle_time = s->sm_ddr2.ddr2_cycle_whole * 1000 +
+		 spdmem_cycle_frac[s->sm_ddr2.ddr2_cycle_frac];
+	bits = s->sm_ddr2.ddr2_datawidth;
+	if ((s->sm_config & 0x03) != 0)
+		bits -= 8;
+	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC2");
+
+	aprint_verbose_dev(self,
+	    "%d rows, %d cols, %d ranks, %d banks/chip, %d.%02dns cycle time\n",
+	    s->sm_ddr2.ddr2_rows, s->sm_ddr2.ddr2_cols,
+	    s->sm_ddr2.ddr2_ranks + 1, s->sm_ddr2.ddr2_banks_per_chip,
+	    cycle_time / 1000, (cycle_time % 1000 + 5) /10 );
+
+	tAA  = 0;
+	for (i = 2; i < 8; i++)
+		if (s->sm_ddr2.ddr2_tCAS & (1 << i))
+			tAA = i;
+
+#define __DDR2_ROUND(scale, field)	\
+		((scale * s->sm_ddr2.field + cycle_time - 1) / cycle_time)
+
+	aprint_verbose_dev(self, latency, tAA, __DDR2_ROUND(250, ddr2_tRCD),
+		__DDR2_ROUND(250, ddr2_tRP), __DDR2_ROUND(1000, ddr2_tRAS));
+
+#undef	__DDR_ROUND
+
+	decode_voltage_refresh(self, s);
+}
+
+static void
+decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	int dimm_size, cycle_time, bits;
+
+	if (s->sm_ddr3.ddr3_mod_type ==
+		SPDMEM_DDR3_TYPE_MINI_RDIMM ||
+	    s->sm_ddr3.ddr3_mod_type == SPDMEM_DDR3_TYPE_RDIMM)
+		aprint_normal(" (registered)");
+	aprint_normal(", %sECC, %stemp-sensor, ",
+		(s->sm_ddr3.ddr3_hasECC)?"":"no ",
+		(s->sm_ddr3.ddr3_has_therm_sensor)?"":"no ");
+
+	/*
+	 * DDR3 size specification is quite different from others
+	 *
+	 * Module capacity is defined as
+	 *	Chip_Capacity_in_bits / 8bits-per-byte *
+	 *	external_bus_width / internal_bus_width
+	 * We further divide by 2**20 to get our answer in MB
+	 */
+	dimm_size = (s->sm_ddr3.ddr3_chipsize + 28 - 20) - 3 +
+		    (s->sm_ddr3.ddr3_datawidth + 3) -
+		    (s->sm_ddr3.ddr3_chipwidth + 2);
+	dimm_size = (1 << dimm_size) * (s->sm_ddr3.ddr3_physbanks + 1);
+
+	cycle_time = (1000 * s->sm_ddr3.ddr3_mtb_dividend + 
+			    (s->sm_ddr3.ddr3_mtb_divisor / 2)) /
+		     s->sm_ddr3.ddr3_mtb_divisor;
+	cycle_time *= s->sm_ddr3.ddr3_tCKmin;
+	bits = 1 << (s->sm_ddr3.ddr3_datawidth + 3);
+	decode_size_speed(node, dimm_size, cycle_time, 2, bits, FALSE, "PC3");
+
+	aprint_verbose_dev(self,
+	    "%d rows, %d cols, %d log. banks, %d phys. banks, "
+	    "%d.%03dns cycle time\n",
+	    s->sm_ddr3.ddr3_rows + 9, s->sm_ddr3.ddr3_cols + 12,
+	    1 << (s->sm_ddr3.ddr3_logbanks + 3),
+	    s->sm_ddr3.ddr3_physbanks + 1,
+	    cycle_time/1000, cycle_time % 1000);
+
+#define	__DDR3_CYCLES(field) (s->sm_ddr3.field / s->sm_ddr3.ddr3_tCKmin)
+
+	aprint_verbose_dev(self, latency, __DDR3_CYCLES(ddr3_tAAmin),
+		__DDR3_CYCLES(ddr3_tRCDmin), __DDR3_CYCLES(ddr3_tRPmin), 
+		(s->sm_ddr3.ddr3_tRAS_msb * 256 + s->sm_ddr3.ddr3_tRAS_lsb) /
+		    s->sm_ddr3.ddr3_tCKmin);
+
+#undef	__DDR3_CYCLES
+}
+
+static void
+decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	int dimm_size, cycle_time, bits;
+
+	/*
+	 * FB-DIMM module size calculation is very much like DDR3
+	 */
+	dimm_size = s->sm_fbd.fbdimm_rows + 12 +
+		    s->sm_fbd.fbdimm_cols +  9 - 20 - 3;
+	dimm_size = (1 << dimm_size) * (1 << (s->sm_fbd.fbdimm_banks + 2));
+
+	cycle_time = (1000 * s->sm_fbd.fbdimm_mtb_dividend +
+			    (s->sm_fbd.fbdimm_mtb_divisor / 2)) /
+		     s->sm_fbd.fbdimm_mtb_divisor;
+	bits = 1 << (s->sm_fbd.fbdimm_dev_width + 2);
+	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC2");
+
+	aprint_verbose_dev(self,
+	    "%d rows, %d cols, %d banks, %d.%02dns cycle time\n",
+	    s->sm_fbd.fbdimm_rows, s->sm_fbd.fbdimm_cols,
+	    1 << (s->sm_fbd.fbdimm_banks + 2),
+	    cycle_time / 1000, (cycle_time % 1000 + 5) /10 );
+
+#define	__FBDIMM_CYCLES(field) (s->sm_fbd.field / s->sm_fbd.fbdimm_tCKmin)
+
+	aprint_verbose_dev(self, latency, __FBDIMM_CYCLES(fbdimm_tAAmin),
+		__FBDIMM_CYCLES(fbdimm_tRCDmin), __FBDIMM_CYCLES(fbdimm_tRPmin), 
+		(s->sm_fbd.fbdimm_tRAS_msb * 256 +
+			s->sm_fbd.fbdimm_tRAS_lsb) /
+		    s->sm_fbd.fbdimm_tCKmin);
+
+#undef	__FBDIMM_CYCLES
+
+	decode_voltage_refresh(self, s);
 }

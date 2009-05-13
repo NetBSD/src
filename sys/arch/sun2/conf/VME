@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.34 2008/11/24 11:41:15 ad Exp $
+# $NetBSD: VME,v 1.34.4.1 2009/05/13 17:18:39 jym Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.34 $"
+#ident 		"VME-$Revision: 1.34.4.1 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -24,7 +24,6 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

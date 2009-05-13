@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.74 2008/12/06 20:05:55 joerg Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.74.4.1 2009/05/13 17:23:06 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -152,32 +152,6 @@ void	ffs_snapshot_mount(struct mount *);
 void	ffs_snapshot_unmount(struct mount *);
 void	ffs_snapgone(struct inode *);
 int	ffs_snapshot_read(struct vnode *, struct uio *, int);
-
-/*
- * Soft dependency function prototypes.
- */
-void	softdep_initialize(void);
-void	softdep_reinitialize(void);
-int	softdep_mount(struct vnode *, struct mount *, struct fs *,
-		      kauth_cred_t);
-void	softdep_unmount(struct mount *);
-int	softdep_flushworklist(struct mount *, int *, struct lwp *);
-int	softdep_flushfiles(struct mount *, int, struct lwp *);
-void	softdep_update_inodeblock(struct inode *, struct buf *, int);
-void	softdep_load_inodeblock(struct inode *);
-void	softdep_freefile(struct vnode *, ino_t, int);
-void	softdep_setup_freeblocks(struct inode *, off_t, int);
-void	softdep_setup_inomapdep(struct buf *, struct inode *, ino_t);
-void	softdep_setup_blkmapdep(struct buf *, struct fs *, daddr_t);
-void	softdep_setup_allocdirect(struct inode *, daddr_t, daddr_t,
-				  daddr_t, long, long, struct buf *);
-void	softdep_setup_allocindir_meta(struct buf *, struct inode *,
-				      struct buf *, int, daddr_t);
-void	softdep_setup_allocindir_page(struct inode *, daddr_t,
-				      struct buf *, int, daddr_t, daddr_t,
-				      struct buf *);
-void	softdep_fsync_mountdev(struct vnode *);
-int	softdep_sync_metadata(struct vnode *);
 
 /* Write Ahead Physical Block Logging */
 void	ffs_wapbl_verify_inodes(struct mount *, const char *);

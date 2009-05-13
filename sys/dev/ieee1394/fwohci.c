@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.115 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.115.4.1 2009/05/13 17:19:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.115 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.115.4.1 2009/05/13 17:19:52 jym Exp $");
 
 #define ATRQ_CH 0
 #define ATRS_CH 1
@@ -777,7 +777,7 @@ fwohci_init(struct fwohci_softc *sc, device_t dev)
 	}
 
 #if 0
-	bzero(&sc->fc.config_rom[0], CROMSIZE);
+	memset(&sc->fc.config_rom[0], 0, CROMSIZE);
 	sc->fc.config_rom[1] = 0x31333934;
 	sc->fc.config_rom[2] = 0xf000a002;
 	sc->fc.config_rom[3] = OREAD(sc, OHCI_EUID_HI);
@@ -2696,7 +2696,7 @@ fwohci_add_tx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 	FWOHCI_DMA_WRITE(db[0].db.desc.cmd,
 		OHCI_OUTPUT_MORE | OHCI_KEY_ST2 | 8);
 	FWOHCI_DMA_WRITE(db[0].db.desc.addr, 0);
-	bzero((void *)&db[1].db.immed[0], sizeof(db[1].db.immed));
+	memset((void *)&db[1].db.immed[0], 0, sizeof(db[1].db.immed));
 	FWOHCI_DMA_WRITE(db[2].db.desc.addr,
 	    fwdma_bus_addr(it->buf, poffset) + sizeof(uint32_t));
 
@@ -2924,13 +2924,13 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch, int count)
 					char *p;
 
 					p = (char *)&pktbuf;
-					bcopy(buf, p, rlen);
+					memcpy(p, buf, rlen);
 					p += rlen;
 					/* this must be too long but harmless */
 					rlen = sizeof(pktbuf) - rlen;
 					if (rlen < 0)
 						printf("why rlen < 0\n");
-					bcopy(db_tr->buf, p, rlen);
+					memcpy(p, db_tr->buf, rlen);
 					ld += rlen;
 					len -= rlen;
 					hlen = fwohci_arcv_swap(&pktbuf, sizeof(pktbuf));

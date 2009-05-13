@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2008/12/10 11:10:19 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52.2.1 2009/05/13 17:18:14 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2008/12/10 11:10:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52.2.1 2009/05/13 17:18:14 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -518,8 +518,8 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
  * This is not the most efficient technique but i don't
  * expect it to be called that often.
  */
-extern struct vm_page *vm_page_alloc1 __P((void));
-extern void vm_page_free1 __P((struct vm_page *));
+extern struct vm_page *vm_page_alloc1(void);
+extern void vm_page_free1(struct vm_page *);
 
 vaddr_t kbreak = VM_MIN_KERNEL_ADDRESS;
 
@@ -809,7 +809,7 @@ pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
  * Insert physical page at pa into the given pmap at virtual address va.
  */
 int
-pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int s;
 	u_int tte;
@@ -1636,9 +1636,9 @@ ctx_free(struct pmap *pm)
 /*
  * Test ref/modify handling.
  */
-void pmap_testout __P((void));
+void pmap_testout(void);
 void
-pmap_testout()
+pmap_testout(void)
 {
 	vaddr_t va;
 	volatile int *loc;

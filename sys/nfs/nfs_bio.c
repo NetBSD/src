@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.181 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.181.4.1 2009/05/13 17:22:51 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.181 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.181.4.1 2009/05/13 17:22:51 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -69,9 +69,9 @@ extern int nfs_numasync;
 extern int nfs_commitsize;
 extern struct nfsstats nfsstats;
 
-static int nfs_doio_read __P((struct buf *, struct uio *));
-static int nfs_doio_write __P((struct buf *, struct uio *));
-static int nfs_doio_phys __P((struct buf *, struct uio *));
+static int nfs_doio_read(struct buf *, struct uio *);
+static int nfs_doio_write(struct buf *, struct uio *);
+static int nfs_doio_phys(struct buf *, struct uio *);
 
 /*
  * Vnode op for read using bio
@@ -293,10 +293,10 @@ diragain:
 		if (dp >= edp || (struct dirent *)_DIRENT_NEXT(dp) > edp ||
 		    (en > 0 && NFS_GETCOOKIE(pdp) != ndp->dc_cookie)) {
 #ifdef DEBUG
-		    	printf("invalid cache: %p %p %p off %lx %lx\n",
+		    	printf("invalid cache: %p %p %p off %jx %jx\n",
 				pdp, dp, edp,
-				(unsigned long)uio->uio_offset,
-				(unsigned long)NFS_GETCOOKIE(pdp));
+				(uintmax_t)uio->uio_offset,
+				(uintmax_t)NFS_GETCOOKIE(pdp));
 #endif
 			nfs_putdircache(np, ndp);
 			brelse(bp, 0);

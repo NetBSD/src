@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.20 2008/04/28 20:23:50 martin Exp $ */
+/* $NetBSD: mtd803.c,v 1.20.14.1 2009/05/13 17:19:23 jym Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.20 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.20.14.1 2009/05/13 17:19:23 jym Exp $");
 
 #include "bpfilter.h"
 
@@ -109,9 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.20 2008/04/28 20:23:50 martin Exp $");
 
 #define ETHER_CRC32(buf, len)	(ether_crc32_be((buf), (len)))
 
-int mtd_mii_readreg(struct device *, int, int);
-void mtd_mii_writereg(struct device *, int, int, int);
-void mtd_mii_statchg(struct device *);
+int mtd_mii_readreg(device_t, int, int);
+void mtd_mii_writereg(device_t, int, int, int);
+void mtd_mii_statchg(device_t);
 
 void mtd_start(struct ifnet *);
 void mtd_stop(struct ifnet *, int);
@@ -894,8 +894,7 @@ mtd_reset(struct mtd_softc *sc)
 
 
 void
-mtd_shutdown (arg)
-	void *arg;
+mtd_shutdown (void *arg)
 {
 	struct mtd_softc *sc = arg;
 	struct ifnet *ifp = &sc->ethercom.ec_if;

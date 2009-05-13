@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.35 2008/11/24 11:41:07 ad Exp $
+# $NetBSD: XEN3_DOM0,v 1.35.4.1 2009/05/13 17:16:08 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -60,6 +60,7 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+options		COMPAT_50	# NetBSD 5.0
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
@@ -135,7 +136,8 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
 #options 	NFS_BOOTSTATIC_GWIP="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
@@ -226,6 +228,14 @@ pci*		at pchb? bus ?
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb? bus ?
 
+# pci backend devices, used for PCI pass-through. To export a PCI device
+# to a domU, the device has to be attached to the pciback driver in the dom0.
+# you can force a device to attach to the pciback driver in dom0 passing
+# pciback.hide=(bus:dev.fun)(bus:dev.func) to the dom0 kernel boot parameters.
+# bus and dev are 2-digits hex number, func is a single-digit number:
+# pciback.hide=(00:1a.0)(00:1a.1)(00:1a.7)
+pciback* at pci?                        #pci backend device
+
 # PCI bridges
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
@@ -288,7 +298,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 
 
 # PCI network interfaces
+age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
@@ -340,6 +352,7 @@ xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 # MII/PHY support
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+atphy*	at mii? phy ?			# Attansic/Atheros PHYs
 bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
@@ -725,7 +738,7 @@ pseudo-device	swcrypto	# software crypto implementation
 # disk/mass storage pseudo-devices
 pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.26 2008/05/25 07:04:10 cegger Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.26.12.1 2009/05/13 17:21:35 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.26 2008/05/25 07:04:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.26.12.1 2009/05/13 17:21:35 jym Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -689,10 +689,7 @@ usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static void
-usscanner_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;

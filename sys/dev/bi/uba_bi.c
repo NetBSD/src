@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.13 2008/04/06 07:23:57 cegger Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.13.18.1 2009/05/13 17:19:11 jym Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.13 2008/04/06 07:23:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.13.18.1 2009/05/13 17:19:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -181,17 +181,14 @@ uba_bi_attach(device_t parent, device_t self, void *aux)
 
 
 void
-bua_init(sc)
-	struct uba_softc *sc;
+bua_init(struct uba_softc *sc)
 {
 	BUA(sc->uh_uba)->bn_csr |= BUACSR_UPI;
 	DELAY(500000);
 };
 
 void
-bua_purge(sc, bdp)
-	struct uba_softc *sc;
-	int bdp;
+bua_purge(struct uba_softc *sc, int bdp)
 {
 	BUA(sc->uh_uba)->bn_dpcsr[bdp] |= BUADPR_PURGE;
 }

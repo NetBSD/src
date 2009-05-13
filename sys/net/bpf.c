@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.142 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.142.2.1 2009/05/13 17:22:19 jym Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.142 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.142.2.1 2009/05/13 17:22:19 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.142 2009/01/11 02:45:54 christos Exp $");
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -151,19 +152,21 @@ static int	bpf_write(struct file *, off_t *, struct uio *, kauth_cred_t,
     int);
 static int	bpf_ioctl(struct file *, u_long, void *);
 static int	bpf_poll(struct file *, int);
+static int	bpf_stat(struct file *, struct stat *);
 static int	bpf_close(struct file *);
 static int	bpf_kqfilter(struct file *, struct knote *);
 static void	bpf_softintr(void *);
 
 static const struct fileops bpf_fileops = {
-	bpf_read,
-	bpf_write,
-	bpf_ioctl,
-	fnullop_fcntl,
-	bpf_poll,
-	fbadop_stat,
-	bpf_close,
-	bpf_kqfilter,
+	.fo_read = bpf_read,
+	.fo_write = bpf_write,
+	.fo_ioctl = bpf_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = bpf_poll,
+	.fo_stat = bpf_stat,
+	.fo_close = bpf_close,
+	.fo_kqfilter = bpf_kqfilter,
+	.fo_drain = fnullop_drain,
 };
 
 dev_type_open(bpfopen);
@@ -401,6 +404,8 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_seesent = 1;
 	d->bd_pid = l->l_proc->p_pid;
+	getnanotime(&d->bd_btime);
+	d->bd_atime = d->bd_mtime = d->bd_btime;
 	callout_init(&d->bd_callout, 0);
 	selinit(&d->bd_sel);
 	d->bd_sih = softint_establish(SOFTINT_CLOCK, bpf_softintr, d);
@@ -475,6 +480,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	int error;
 	int s;
 
+	getnanotime(&d->bd_atime);
 	/*
 	 * Restrict application to use a buffer the same size as
 	 * the kernel buffers.
@@ -624,6 +630,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 		KERNEL_UNLOCK_ONE(NULL);
 		return (ENXIO);
 	}
+	getnanotime(&d->bd_mtime);
 
 	ifp = d->bd_bif->bif_ifp;
 
@@ -1117,6 +1124,23 @@ static void
 bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
 {
 	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
+}
+
+static int
+bpf_stat(struct file *fp, struct stat *st)
+{
+	struct bpf_d *d = fp->f_data;
+
+	(void)memset(st, 0, sizeof(*st));
+	KERNEL_LOCK(1, NULL);
+	st->st_dev = makedev(cdevsw_lookup_major(&bpf_cdevsw), d->bd_pid);
+	st->st_atimespec = d->bd_atime;
+	st->st_mtimespec = d->bd_mtime;
+	st->st_ctimespec = st->st_birthtimespec = d->bd_btime;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }
 
 /*
@@ -1846,11 +1870,9 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 			sp += elem_size;
 			len -= elem_size;
 		}
-		if (elem_count > 0) {
-			needed += elem_size;
-			if (elem_count != INT_MAX)
-				elem_count--;
-		}
+		needed += elem_size;
+		if (elem_count > 0 && elem_count != INT_MAX)
+			elem_count--;
 	}
 	mutex_exit(&bpf_mtx);
 

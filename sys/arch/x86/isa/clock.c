@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 2008/12/16 22:35:28 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.31.2.1 2009/05/13 17:18:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2008/12/16 22:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31.2.1 2009/05/13 17:18:44 jym Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -168,8 +168,9 @@ int sysbeepmatch(device_t, cfdata_t, void *);
 void sysbeepattach(device_t, device_t, void *);
 int sysbeepdetach(device_t, int);
 
-CFATTACH_DECL_NEW(sysbeep, 0,
-    sysbeepmatch, sysbeepattach, sysbeepdetach, NULL);
+CFATTACH_DECL3_NEW(sysbeep, 0,
+    sysbeepmatch, sysbeepattach, sysbeepdetach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;

@@ -1,4 +1,4 @@
-/*	$NetBSD: blowfish.h,v 1.7 2005/12/11 12:20:48 christos Exp $	*/
+/*	$NetBSD: blowfish.h,v 1.7.90.1 2009/05/13 17:19:04 jym Exp $	*/
 /*	$KAME: blowfish.h,v 1.10 2000/09/18 21:21:20 itojun Exp $	*/
 
 /* crypto/bf/blowfish.h */
@@ -80,9 +80,9 @@ typedef struct bf_key_st {
 	BF_LONG S[4*256];
 } BF_KEY;
 
-void BF_set_key __P((BF_KEY *, int, const unsigned char *));
-void BF_encrypt __P((BF_LONG *, const BF_KEY *));
-void BF_decrypt __P((BF_LONG *, const BF_KEY *));
+void BF_set_key(BF_KEY *, int, const unsigned char *);
+void BF_encrypt(BF_LONG *, const BF_KEY *);
+void BF_decrypt(BF_LONG *, const BF_KEY *);
 void BF_cbc_encrypt(const unsigned char *, unsigned char *, long,
 		    const BF_KEY *, unsigned char *, int);
 void BF_ecb_encrypt(const unsigned char *, unsigned char *,

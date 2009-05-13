@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.55 2008/02/11 21:43:46 dyoung Exp $
+ * $Id: aic7xxxvar.h,v 1.55.24.1 2009/05/13 17:19:22 jym Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -1020,12 +1020,12 @@ typedef void (*ahc_bus_intr_t)(struct ahc_softc *);
 typedef void ahc_callback_t (void *);
 
 struct ahc_softc {
-	struct device 		  sc_dev;
+	device_t 		  sc_dev;
 
 	struct scsipi_channel	  sc_channel;
 	struct scsipi_channel 	  sc_channel_b;
-	struct device *		  sc_child;
-	struct device *		  sc_child_b;
+	device_t 		  sc_child;
+	device_t 		  sc_child_b;
 	struct scsipi_adapter	  sc_adapter;
 
 	bus_space_tag_t           tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.3 2008/06/22 16:34:15 tsutsui Exp $	*/
+/*	$NetBSD: isr.h,v 1.3.10.1 2009/05/13 17:16:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 struct isr {
 	LIST_ENTRY(isr) isr_link;
-	int		(*isr_func) __P((void *));
+	int		(*isr_func)(void *);
 	void		*isr_arg;
 	int		isr_ipl;
 	int		isr_priority;
@@ -63,7 +63,7 @@ struct isr {
 #define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
-void	isrinit __P((void));
-void	*isrlink __P((int (*)(void *), void *, int, int));
-void	isrunlink __P((void *));
-void	isrdispatch __P((int));
+void	isrinit(void);
+void	*isrlink(int (*)(void *), void *, int, int);
+void	isrunlink(void *);
+void	isrdispatch(int);

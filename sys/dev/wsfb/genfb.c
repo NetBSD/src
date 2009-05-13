@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.17 2008/04/29 06:53:03 martin Exp $ */
+/*	$NetBSD: genfb.c,v 1.17.14.1 2009/05/13 17:21:42 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.17 2008/04/29 06:53:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.17.14.1 2009/05/13 17:21:42 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.17 2008/04/29 06:53:03 martin Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -70,6 +70,9 @@ static int 	genfb_putpalreg(struct genfb_softc *, uint8_t, uint8_t,
 
 extern const u_char rasops_cmap[768];
 
+static int genfb_cnattach_called = 0;
+static int genfb_enabled = 1;
+
 struct wsdisplay_accessops genfb_accessops = {
 	genfb_ioctl,
 	genfb_mmap,
@@ -80,6 +83,8 @@ struct wsdisplay_accessops genfb_accessops = {
 	NULL,	/* pollc */
 	NULL	/* scroll */
 };
+
+static struct genfb_softc *genfb_softc = NULL;
 
 void
 genfb_init(struct genfb_softc *sc)
@@ -139,12 +144,19 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t dict;
 	struct rasops_info *ri;
+	uint16_t crow;
 	long defattr;
 	int i, j;
 	bool console;
 
 	dict = device_properties(&sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &console);
+
+	if (prop_dictionary_get_uint16(dict, "cursor-row", &crow) == false)
+		crow = 0;
+	if (prop_dictionary_get_bool(dict, "clear-screen", &sc->sc_want_clear)
+	    == false)
+		sc->sc_want_clear = true;
 
 	/* do not attach when we're not console */
 	if (!console) {
@@ -153,7 +165,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	}
 
 	aprint_verbose_dev(&sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
-	    "stride %d\n", sc->sc_fbaddr,
+	    "stride %d\n",
+	    sc->sc_fboffset ? (void *)(intptr_t)sc->sc_fboffset : sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
@@ -169,7 +182,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	memcpy(&sc->sc_ops, ops, sizeof(struct genfb_ops));
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
-	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK);
+	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
+	if (sc->sc_want_clear == false && sc->sc_shadowfb != NULL)
+		memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &genfb_accessops);
@@ -188,11 +203,12 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-	wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
+	wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, crow,
 	    defattr);
 
 	/* Clear the whole screen to bring it to a known state. */
-	(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
+	if (sc->sc_want_clear)
+		(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
 
 	j = 0;
 	for (i = 0; i < (1 << sc->sc_depth); i++) {
@@ -204,6 +220,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		    rasops_cmap[j + 2]);
 		j += 3;
 	}
+
+	if (genfb_softc == NULL)
+		genfb_softc = sc;
 
 	aa.console = console;
 	aa.scrdata = &sc->sc_screenlist;
@@ -223,9 +242,9 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct genfb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
+	int new_mode, error;
 
 	switch (cmd) {
-
 		case WSDISPLAYIO_GINFO:
 			if (ms == NULL)
 				return ENODEV;
@@ -249,20 +268,21 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 
 		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
+			new_mode = *(int *)data;
 
-				/* notify the bus backend */
-				if (sc->sc_ops.genfb_ioctl)
-					return sc->sc_ops.genfb_ioctl(sc, vs,
+			/* notify the bus backend */
+			error = 0;
+			if (sc->sc_ops.genfb_ioctl)
+				error = sc->sc_ops.genfb_ioctl(sc, vs,
 					    cmd, data, flag, l);
+			if (error)
+				return error;
 
-				if (new_mode != sc->sc_mode) {
-					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-						genfb_restore_palette(sc);
-						vcons_redraw_screen(ms);
-					}
+			if (new_mode != sc->sc_mode) {
+				sc->sc_mode = new_mode;
+				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+					genfb_restore_palette(sc);
+					vcons_redraw_screen(ms);
 				}
 			}
 			return 0;
@@ -297,7 +317,9 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER;
+	if (sc->sc_want_clear)
+		ri->ri_flg |= RI_FULLCLEAR;
 
 	if (sc->sc_shadowfb != NULL) {
 
@@ -306,7 +328,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	} else
 		ri->ri_bits = (char *)sc->sc_fbaddr;
 
-	if (existing) {
+	if (existing && sc->sc_want_clear) {
 		ri->ri_flg |= RI_CLEAR;
 	}
 
@@ -407,3 +429,36 @@ genfb_putpalreg(struct genfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	return 0;
 }
 
+void
+genfb_cnattach(void)
+{
+	genfb_cnattach_called = 1;
+}
+
+void
+genfb_disable(void)
+{
+	genfb_enabled = 0;
+}
+
+int
+genfb_is_console(void)
+{
+	return genfb_cnattach_called;
+}
+
+int
+genfb_is_enabled(void)
+{
+	return genfb_enabled;
+}
+
+int
+genfb_borrow(bus_addr_t addr, bus_space_handle_t *hdlp)
+{
+	struct genfb_softc *sc = genfb_softc;
+
+	if (sc && sc->sc_ops.genfb_borrow)
+		return sc->sc_ops.genfb_borrow(sc, addr, hdlp);
+	return 0;
+}

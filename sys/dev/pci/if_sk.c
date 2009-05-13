@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.55 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.55.4.1 2009/05/13 17:20:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.55 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.55.4.1 2009/05/13 17:20:26 jym Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -209,6 +209,10 @@ u_int32_t sk_yukon_hash(void *);
 void sk_setfilt(struct sk_if_softc *, void *, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
+
+static bool skc_suspend(device_t dv PMF_FN_ARGS);
+static bool skc_resume(device_t dv PMF_FN_ARGS);
+static bool sk_resume(device_t dv PMF_FN_ARGS);
 
 /* #define SK_DEBUG 2 */
 #ifdef SK_DEBUG
@@ -631,7 +635,7 @@ allmulti:
 		/* First find the tail of the list. */
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 				 ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto allmulti;
@@ -693,7 +697,7 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
 	int			i;
 
-	bzero((char *)rd->sk_rx_ring,
+	memset((char *)rd->sk_rx_ring, 0,
 	    sizeof(struct sk_rx_desc) * SK_RX_RING_CNT);
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
@@ -1210,6 +1214,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	bus_dmamap_t dmamap;
 	void *kva;
 	int i, rseg;
+	int mii_flags = 0;
 
 	aprint_naive("\n");
 
@@ -1367,7 +1372,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	}
 
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
-	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
+	memset(sc_if->sk_rdata, 0, sizeof(struct sk_ring_data));
 
 	ifp = &sc_if->sk_ethercom.ec_if;
 	/* Try to allocate memory for jumbo buffers. */
@@ -1423,6 +1428,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 		sc_if->sk_mii.mii_readreg = sk_marv_miibus_readreg;
 		sc_if->sk_mii.mii_writereg = sk_marv_miibus_writereg;
 		sc_if->sk_mii.mii_statchg = sk_marv_miibus_statchg;
+		mii_flags = MIIF_DOPAUSE;
 		break;
 	}
 
@@ -1430,7 +1436,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    sk_ifmedia_upd, ether_mediastatus);
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, mii_flags);
 	if (LIST_EMPTY(&sc_if->sk_mii.mii_phys)) {
 		aprint_error_dev(sc_if->sk_dev, "no PHY found!\n");
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
@@ -1455,6 +1461,11 @@ sk_attach(device_t parent, device_t self, void *aux)
         rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
             RND_TYPE_NET, 0);
 #endif
+
+	if (!pmf_device_register(self, NULL, sk_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 	DPRINTFN(2, ("sk_attach: end\n"));
 
@@ -1578,7 +1589,8 @@ skc_attach(device_t parent, device_t self, void *aux)
                 return;
 	}
 
-	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase, iosize));
+	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase,
+	    (u_long)iosize));
 #endif
 	sc->sc_dmatag = pa->pa_dmat;
 
@@ -1811,6 +1823,9 @@ skc_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(sc->sk_dev, "couldn't create int_mod sysctl node\n");
 		goto fail_1;
 	}
+
+	if (!pmf_device_register(self, skc_suspend, skc_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
@@ -2934,6 +2949,43 @@ sk_stop(struct ifnet *ifp, int disable)
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+}
+
+/* Power Management Framework */
+
+static bool
+skc_suspend(device_t dv PMF_FN_ARGS)
+{
+	struct sk_softc *sc = device_private(dv);
+
+	DPRINTFN(2, ("skc_suspend\n"));
+
+	/* Turn off the driver is loaded LED */
+	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_OFF);
+
+	return true;
+}
+
+static bool
+skc_resume(device_t dv PMF_FN_ARGS)
+{
+	struct sk_softc *sc = device_private(dv);
+
+	DPRINTFN(2, ("skc_resume\n"));
+
+	sk_reset(sc);
+	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_ON);
+
+	return true;
+}
+
+static bool
+sk_resume(device_t dv PMF_FN_ARGS)
+{
+	struct sk_if_softc *sc_if = device_private(dv);
+
+	sk_init_yukon(sc_if);
+	return true;
 }
 
 CFATTACH_DECL_NEW(skc, sizeof(struct sk_softc),

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 2007/03/04 06:00:24 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3.58.1 2009/05/13 17:18:08 jym Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -43,6 +43,6 @@ struct confargs {
 	/* bus_space_tag_t ca_tag; */
 };
 
-void *mapiodev __P((paddr_t, psize_t));
-paddr_t kvtop __P((void *));
-void *intr_establish __P((int, int, int, int (*)(void *), void *));
+void *mapiodev(paddr_t, psize_t);
+paddr_t kvtop(void *);
+void *intr_establish(int, int, int, int (*)(void *), void *);

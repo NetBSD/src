@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.16 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: copy.S,v 1.16.14.1 2009/05/13 17:17:49 jym Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.16 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.16.14.1 2009/05/13 17:17:49 jym Exp $");
 
 #include "assym.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.16 2008/04/28 20:23:24 martin Exp $");
 
 /*
  * The following primitives are to copy regions of memory.
+ * Label must be before all copy functions.
  */
 	.text
 
@@ -645,6 +646,49 @@ ENTRY(subyte)
 	DEFERRED_SWITCH_CALL
 
 /*
+ * Compare-and-swap the 32-bit integer in the user-space.
+ *
+ * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ */
+ENTRY(ucas_32)
+	DEFERRED_SWITCH_CHECK
+	movl	4(%esp), %edx
+	movl	8(%esp), %eax
+	movl	12(%esp), %ecx
+	/* Fail if kernel-space */
+	cmpl	$VM_MAXUSER_ADDRESS-4, %edx
+	ja	_C_LABEL(ucas_fault)
+	/* Label for fault handler */
+.Lucas32_start:
+	/* Perform the CAS */
+	lock
+	cmpxchgl %ecx, (%edx)
+.Lucas32_end:
+	/*
+	 * Note: %eax is "old" value.
+	 * Set the return values.
+	 */
+	movl	16(%esp), %edx
+	movl	%eax, (%edx)
+	xorl	%eax, %eax
+	ret
+	DEFERRED_SWITCH_CALL
+
+/*
+ * Fault handler for ucas_32().
+ * Unset the handler and return the failure.
+ */
+NENTRY(ucas_fault)
+	movl	$EFAULT, %eax
+	ret
+
+/*
+ * int	ucas_int(volatile int *uptr, int old, int new, int *ret);
+ */
+STRONG_ALIAS(ucas_ptr, ucas_32)
+STRONG_ALIAS(ucas_int, ucas_32)
+
+/*
  * copyin() optimised for bringing in syscall arguments.
  */
 ENTRY(x86_copyargs)
@@ -706,8 +750,14 @@ NENTRY(x86_copyargs_fault)
 	ret
 	DEFERRED_SWITCH_CALL
 
+/*
+ * Label must be after all copy functions.
+ */
 x86_copyfunc_end:	.globl	x86_copyfunc_end
 
+/*
+ * Fault table of copy functions for trap().
+ */
 	.section ".rodata"
 	.globl _C_LABEL(onfault_table)
 _C_LABEL(onfault_table):
@@ -730,6 +780,10 @@ _C_LABEL(onfault_table):
 	.long .Lcopyinstr_start
 	.long .Lcopyinstr_end
 	.long _C_LABEL(copystr_fault)
+
+	.long .Lucas32_start
+	.long .Lucas32_end
+	.long _C_LABEL(ucas_fault)
 
 	.long .Lx86_copyargs_start
 	.long .Lx86_copyargs_end

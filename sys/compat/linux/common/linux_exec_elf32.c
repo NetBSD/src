@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.82 2008/11/20 09:26:06 ad Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.82.4.1 2009/05/13 17:18:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.82 2008/11/20 09:26:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.82.4.1 2009/05/13 17:18:56 jym Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -221,10 +221,7 @@ out:
  * Look for a .gnu_debuglink, specific to x86_64 interpeter
  */
 int
-ELFNAME2(linux,debuglink_signature)(l, epp, eh)
-	struct lwp *l;
-	struct exec_package *epp;
-	Elf_Ehdr *eh;
+ELFNAME2(linux,debuglink_signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh)
 {
 	size_t shsize;
 	int strndx;
@@ -286,11 +283,7 @@ out:
 #endif
 
 int
-ELFNAME2(linux,signature)(l, epp, eh, itp)
-	struct lwp *l;
-	struct exec_package *epp;
-	Elf_Ehdr *eh;
-	char *itp;
+ELFNAME2(linux,signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh, char *itp)
 {
 	size_t i;
 	Elf_Phdr *ph;

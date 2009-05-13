@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.8 2008/04/29 17:09:47 matt Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.8.14.1 2009/05/13 17:16:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -184,7 +184,7 @@
 
 #ifndef _LOCORE
 typedef struct irqhandler {
-	int (*ih_func) __P((void *arg));/* handler function */
+	int (*ih_func)(void *arg);/* handler function */
 	void *ih_arg;			/* Argument to handler */
 	int ih_level;			/* Interrupt level */
 	int ih_num;			/* Interrupt number (for accounting) */
@@ -199,15 +199,15 @@ typedef struct irqhandler {
 extern u_int irqmasks[NIPL];
 extern irqhandler_t *irqhandlers[NIRQS];
 
-void irq_init __P((void));
-int irq_claim __P((int, irqhandler_t *));
-int irq_release __P((int, irqhandler_t *));
-void *intr_claim __P((int irq, int level, const char *name, int (*func) __P((void *)), void *arg));
-int intr_release __P((void *ih));
-void irq_setmasks __P((void));
-void disable_irq __P((int));
-void enable_irq __P((int));
-void stray_irqhandler __P((u_int));
+void irq_init(void);
+int irq_claim(int, irqhandler_t *);
+int irq_release(int, irqhandler_t *);
+void *intr_claim(int irq, int level, const char *name, int (*func)(void *), void *arg);
+int intr_release(void *ih);
+void irq_setmasks(void);
+void disable_irq(int);
+void enable_irq(int);
+void stray_irqhandler(u_int);
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 

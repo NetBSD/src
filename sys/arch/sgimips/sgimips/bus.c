@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.55 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus.c,v 1.55.12.1 2009/05/13 17:18:21 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.55 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.55.12.1 2009/05/13 17:18:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ sgimips_bus_dma_init(void)
 {
 	switch (mach_type) {
 	/* R2000/R3000 */
+	case MACH_SGI_IP6 | MACH_SGI_IP10:
 	case MACH_SGI_IP12:
 		sgimips_default_bus_dma_tag._dmamap_sync =
 		    _bus_dmamap_sync_mips1;
@@ -110,6 +111,8 @@ bus_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 	switch (t) {
 	case SGIMIPS_BUS_SPACE_NORMAL:
 		return *(volatile u_int8_t *)(vaddr_t)(h + o);
+	case SGIMIPS_BUS_SPACE_IP6_DPCLOCK:
+		return *(volatile u_int8_t *)(vaddr_t)(h + (o << 2));
 	case SGIMIPS_BUS_SPACE_HPC:
 		return *(volatile u_int8_t *)(vaddr_t)(h + (o << 2) + 3);
 	case SGIMIPS_BUS_SPACE_MEM:
@@ -128,6 +131,9 @@ bus_space_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_
 	switch (t) {
 	case SGIMIPS_BUS_SPACE_NORMAL:
 		*(volatile u_int8_t *)(vaddr_t)(h + o) = v;
+		break;
+	case SGIMIPS_BUS_SPACE_IP6_DPCLOCK:
+		*(volatile u_int8_t *)(vaddr_t)(h + (o << 2)) = v;
 		break;
 	case SGIMIPS_BUS_SPACE_HPC:
 		*(volatile u_int8_t *)(vaddr_t)(h + (o << 2) + 3) = v;

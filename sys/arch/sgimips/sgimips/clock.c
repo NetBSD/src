@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 2006/12/29 07:00:11 rumble Exp $	*/
+/*	$NetBSD: clock.c,v 1.20.62.1 2009/05/13 17:18:21 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2006/12/29 07:00:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20.62.1 2009/05/13 17:18:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,11 +121,12 @@ setstatclockrate(int newhz)
  * no alternative timer is available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	switch (mach_type) {
 #if defined(MIPS1)
+	case MACH_SGI_IP6 | MACH_SGI_IP10:
 	case MACH_SGI_IP12:
 		/* int(4) will take care of our clocks */
 		/* enable hardware interrupts including hardclock(9) */

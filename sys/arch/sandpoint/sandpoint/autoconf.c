@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2008/04/09 01:56:19 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.18.1 2009/05/13 17:18:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2008/04/09 01:56:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.18.1 2009/05/13 17:18:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ static struct btinfo_bootpath *bi_path;
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	bi_rdev = lookup_bootinfo(BTINFO_ROOTDEVICE);
@@ -71,7 +71,7 @@ cpu_configure()
 char *booted_kernel; /* should be a genuine filename */
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	if (bi_path != NULL)

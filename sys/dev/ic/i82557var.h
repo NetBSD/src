@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.42 2009/01/18 10:37:04 mrg Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.42.2.1 2009/05/13 17:19:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ struct fxp_softc {
 	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS]; /* free receive buffer DMA maps */
 	int	sc_rxfree;		/* free map index */
 	int	sc_rxidle;		/* # of seconds RX has been idle */
-	u_int16_t sc_txcmd;		/* transmit command (LITTLE ENDIAN) */
+	uint16_t sc_txcmd;		/* transmit command (LITTLE ENDIAN) */
 
 	/*
 	 * Control data structures.
@@ -219,12 +219,12 @@ struct fxp_softc {
 #define	FXPF_MWI		0x0010	/* enable PCI MWI */
 #define	FXPF_READ_ALIGN		0x0020	/* align read access w/ cacheline */
 #define	FXPF_WRITE_ALIGN	0x0040	/* end write on cacheline */
-#define	FXPF_EXT_TXCB		0x0080	/* enable extended TxCB */
+#define	FXPF_EXT_TXCB		0x0080	/* has extended TxCB */
 #define	FXPF_UCODE_LOADED	0x0100	/* microcode is loaded */
-#define	FXPF_EXT_RFA		0x0200	/* enable extended RFD */
-#define	FXPF_IPCB		0x0400	/* use IPCB */
+#define	FXPF_EXT_RFA		0x0200	/* has extended RFD and IPCB (82550) */
 #define	FXPF_RECV_WORKAROUND	0x0800	/* receiver lock-up workaround */
 #define	FXPF_FC			0x1000	/* has flow control */
+#define	FXPF_82559_RXCSUM	0x2000	/* has 82559 compat RX checksum */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */
@@ -308,7 +308,7 @@ do {									\
 	bus_dmamap_t __rxmap = M_GETCTX((m), bus_dmamap_t);		\
 	struct mbuf *__p_m;						\
 	struct fxp_rfa *__rfa, *__p_rfa;				\
-	u_int32_t __v;							\
+	uint32_t __v;							\
 									\
 	(m)->m_data = (m)->m_ext.ext_buf + (sc)->sc_rfa_size +		\
 	    RFA_ALIGNMENT_FUDGE;					\
@@ -364,7 +364,7 @@ do {									\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 void	fxp_attach(struct fxp_softc *);
-int	fxp_activate(struct device *, enum devact);
+int	fxp_activate(device_t, enum devact);
 int	fxp_detach(struct fxp_softc *);
 int	fxp_intr(void *);
 

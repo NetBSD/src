@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.57 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.57.16.1 2009/05/13 17:22:28 jym Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.57 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.57.16.1 2009/05/13 17:22:28 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -299,7 +299,7 @@ ah4_input(struct mbuf *m, va_alist)
 		sumpos = (void *)(((struct newah *)ah) + 1);
 	}
 
-	if (bcmp(sumpos, cksum, siz) != 0) {
+	if (memcmp(sumpos, cksum, siz) != 0) {
 		ipseclog((LOG_WARNING,
 		    "checksum mismatch in IPv4 AH input: %s %s\n",
 		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
@@ -726,7 +726,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		sumpos = (void *)(((struct newah *)ah) + 1);
 	}
 
-	if (bcmp(sumpos, cksum, siz) != 0) {
+	if (memcmp(sumpos, cksum, siz) != 0) {
 		ipseclog((LOG_WARNING,
 		    "checksum mismatch in IPv6 AH input: %s %s\n",
 		    ipsec6_logpacketstr(ip6, spi), ipsec_logsastr(sav)));

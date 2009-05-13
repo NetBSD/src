@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.81 2009/01/28 00:43:04 njoly Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.81.2.1 2009/05/13 17:18:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -158,6 +158,7 @@ typedef netbsd32_pointer_t netbsd32_lwpctlp;
 typedef netbsd32_pointer_t netbsd32_fd_setp_t;
 typedef netbsd32_intptr_t netbsd32_semid_t;
 typedef netbsd32_pointer_t netbsd32_semidp_t;
+typedef netbsd32_uint64 netbsd32_dev_t;
 
 /* from <sys/uio.h> */
 typedef netbsd32_pointer_t netbsd32_iovecp_t;
@@ -594,13 +595,13 @@ struct netbsd32_omsghdr {
 /* from <sys/stat.h> */
 typedef netbsd32_pointer_t netbsd32_stat12p_t;
 struct netbsd32_stat12 {		/* NetBSD-1.2 stat struct */
-	dev_t		st_dev;		/* inode's device */
+	uint32_t	st_dev;		/* inode's device */
 	uint32_t	st_ino;		/* inode's number */
 	uint16_t	st_mode;	/* inode protection mode */
 	uint16_t	st_nlink;	/* number of hard links */
 	uid_t		st_uid;		/* user ID of the file's owner */
 	gid_t		st_gid;		/* group ID of the file's group */
-	dev_t		st_rdev;	/* device type */
+	uint32_t	st_rdev;	/* device type */
 	struct netbsd32_timespec st_atimespec;/* time of last access */
 	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
 	struct netbsd32_timespec st_ctimespec;/* time of last file status change */
@@ -676,13 +677,13 @@ struct netbsd32_stat50 {
 
 typedef netbsd32_pointer_t netbsd32_statp_t;
 struct netbsd32_stat {
-	dev_t		st_dev;		/* inode's device */
+	netbsd32_dev_t	st_dev;		/* inode's device */
 	mode_t		st_mode;	/* inode protection mode */
 	netbsd32_uint64	st_ino;		/* inode's number */
 	nlink_t		st_nlink;	/* number of hard links */
 	uid_t		st_uid;		/* user ID of the file's owner */
 	gid_t		st_gid;		/* group ID of the file's group */
-	dev_t		st_rdev;	/* device type */
+	netbsd32_dev_t	st_rdev;	/* device type */
 	struct netbsd32_timespec st_atimespec;/* time of last access */
 	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
 	struct netbsd32_timespec st_ctimespec;/* time of last file status change */

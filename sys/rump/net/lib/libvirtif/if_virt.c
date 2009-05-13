@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.5 2008/12/18 00:24:13 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.5.4.1 2009/05/13 17:23:02 jym Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.5 2008/12/18 00:24:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.5.4.1 2009/05/13 17:23:02 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.5 2008/12/18 00:24:13 pooka Exp $");
  */
 
 #define VIRTIF_BASE "virt"
-static int nunits;
 
 static int	virtif_init(struct ifnet *);
 static int	virtif_ioctl(struct ifnet *, u_long, void *);
@@ -64,23 +63,16 @@ static void	virtif_start(struct ifnet *);
 static void	virtif_stop(struct ifnet *, int);
 
 struct virtif_sc {
-	struct ifnet sc_if;
-	char sc_tapname[IFNAMSIZ];
+	struct ethercom sc_ec;
 	int sc_tapfd;
+	kmutex_t sc_sendmtx;
+	kcondvar_t sc_sendcv;
 };
 
-static int virtif_create(struct ifaliasreq *, struct ifnet **);
 static void virtif_worker(void *);
+static void virtif_sender(void *);
 
-/* XXXXX: this prototype needs to go elsewhere */
-int rump_virtif_create(struct ifaliasreq *, struct ifnet **);
-int
-rump_virtif_create(struct ifaliasreq *ia, struct ifnet **ifpp)
-{
-
-	return virtif_create(ia, ifpp);
-}
-
+#if 0
 /*
  * Create a socket and call ifioctl() to configure the interface.
  * This trickles down to virtif_ioctl().
@@ -101,40 +93,32 @@ configaddr(struct ifnet *ifp, struct ifaliasreq *ia)
 
 	return error;
 }
+#endif
 
-static int
-virtif_create(struct ifaliasreq *ia, struct ifnet **ifpp)
+int
+rump_virtif_create(int num)
 {
 	struct virtif_sc *sc;
-	struct ifreq ifr;
 	struct ifnet *ifp;
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
-	int fd, rv, error;
-	int mynum;
+	char tapdev[16];
+	int fd, error;
 
-	/*
-	 * XXX: this is currently un-sane.  Need to figure out a way
-	 * to configure this with a bridge into a sane network without
-	 * hardcoding it.
-	 */
-	fd = rumpuser_open("/dev/tap0", O_RDWR, &error);
+	snprintf(tapdev, sizeof(tapdev), "/dev/tap%d", num);
+	fd = rumpuser_open(tapdev, O_RDWR, &error);
 	if (fd == -1) {
 		printf("virtif_create: can't open /dev/tap %d\n", error);
 		return error;
 	}
+	KASSERT(num < 0x100);
+	enaddr[2] = arc4random() & 0xff;
+	enaddr[5] = num;
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-	rv = rumpuser_ioctl(fd, TAPGIFNAME, &ifr, &error);
-	if (rv == -1) {
-		kmem_free(sc, sizeof(*sc));
-		return error;
-	}
-	strlcpy(sc->sc_tapname, ifr.ifr_name, IFNAMSIZ);
 	sc->sc_tapfd = fd;
 
-	ifp = &sc->sc_if;
-	mynum = nunits++;
-	sprintf(ifp->if_xname, "%s%d", VIRTIF_BASE, mynum);
+	ifp = &sc->sc_ec.ec_if;
+	sprintf(ifp->if_xname, "%s%d", VIRTIF_BASE, num);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = virtif_init;
@@ -142,24 +126,11 @@ virtif_create(struct ifaliasreq *ia, struct ifnet **ifpp)
 	ifp->if_start = virtif_start;
 	ifp->if_stop = virtif_stop;
 
-	if (rump_threads) {
-		rv = kthread_create(PRI_NONE, 0, NULL, virtif_worker, ifp,
-		    NULL, "virtifi");
-		if (rv) {
-			kmem_free(sc, sizeof(*sc));
-			return rv;
-		}
-	} else {
-		printf("WARNING: threads not enabled, receive NOT working\n");
-	}
+	mutex_init(&sc->sc_sendmtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_sendcv, "virtsnd");
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-
-	if (ia)
-		configaddr(ifp, ia);
-	if (ifpp)
-		*ifpp = ifp;
 
 	return 0;
 }
@@ -167,9 +138,25 @@ virtif_create(struct ifaliasreq *ia, struct ifnet **ifpp)
 static int
 virtif_init(struct ifnet *ifp)
 {
+	int rv;
 
+	if (rump_threads) {
+		rv = kthread_create(PRI_NONE, 0, NULL, virtif_worker, ifp,
+		    NULL, "virtifi");
+		/* XXX: should do proper cleanup */
+		if (rv) {
+			panic("if_virt: can't create worker");
+		}
+		rv = kthread_create(PRI_NONE, 0, NULL, virtif_sender, ifp,
+		    NULL, "virtifs");
+		if (rv) {
+			panic("if_virt: can't create sender");
+		}
+	} else {
+		printf("WARNING: threads not enabled, receive NOT working\n");
+	}
 	ifp->if_flags |= IFF_RUNNING;
-
+	
 	return 0;
 }
 
@@ -190,32 +177,10 @@ static void
 virtif_start(struct ifnet *ifp)
 {
 	struct virtif_sc *sc = ifp->if_softc;
-	struct iovec io[16];
-	struct mbuf *m, *m0;
-	int s, i, error;
 
-	s = splnet();
-	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m0);
-		if (!m0)
-			break;
-		splx(s);
-
-		m = m0;
-		for (i = 0; i < 16 && m; i++) {
-			io[i].iov_base = mtod(m, void *);
-			io[i].iov_len = m->m_len;
-			m = m->m_next;
-		}
-		if (i == 16)
-			panic("lazy bum");
-		rumpuser_writev(sc->sc_tapfd, io, i, &error);
-		m_freem(m0);
-		s = splnet();
-	}
-
-	ifp->if_flags &= ~IFF_OACTIVE;
-	splx(s);
+	mutex_enter(&sc->sc_sendmtx);
+	cv_signal(&sc->sc_sendcv);
+	mutex_exit(&sc->sc_sendmtx);
 }
 
 static void
@@ -251,4 +216,38 @@ virtif_worker(void *arg)
 	}
 
 	panic("virtif_workin is a lazy boy %d\n", error);
+}
+
+static void
+virtif_sender(void *arg)
+{
+	struct ifnet *ifp = arg;
+	struct virtif_sc *sc = ifp->if_softc;
+	struct mbuf *m, *m0;
+	struct rumpuser_iovec io[16];
+	int i, error;
+
+	mutex_enter(&sc->sc_sendmtx);
+	for (;;) {
+		IF_DEQUEUE(&ifp->if_snd, m0);
+		if (!m0) {
+			cv_wait(&sc->sc_sendcv, &sc->sc_sendmtx);
+			continue;
+		}
+		mutex_exit(&sc->sc_sendmtx);
+
+		m = m0;
+		for (i = 0; i < 16 && m; i++) {
+			io[i].iov_base = mtod(m, void *);
+			io[i].iov_len = m->m_len;
+			m = m->m_next;
+		}
+		if (i == 16)
+			panic("lazy bum");
+		rumpuser_writev(sc->sc_tapfd, io, i, &error);
+		m_freem(m0);
+		mutex_enter(&sc->sc_sendmtx);
+	}
+
+	mutex_exit(softnet_lock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.24 2008/12/19 11:21:52 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.24.2.1 2009/05/13 17:18:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24 2008/12/19 11:21:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24.2.1 2009/05/13 17:18:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24 2008/12/19 11:21:52 ad Exp $");
 
 u_int	tsc_get_timecount(struct timecounter *);
 
-uint64_t	tsc_freq;
-int64_t		tsc_drift_max = 250;	/* max cycles */
-int64_t		tsc_drift_observed;
+uint64_t	tsc_freq; /* exported for sysctl */
+static int64_t	tsc_drift_max = 250;	/* max cycles */
+static int64_t	tsc_drift_observed;
 
 static volatile int64_t	tsc_sync_val;
 static volatile struct cpu_info	*tsc_sync_cpu;
@@ -166,10 +166,10 @@ tsc_sync_drift(int64_t drift)
  * Called during startup of APs, by the boot processor.  Interrupts
  * are disabled on entry.
  */
-void
-tsc_sync_bp(struct cpu_info *ci)
+static void
+tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
 {
-	uint64_t tsc;
+	uint64_t bptsc;
 
 	if (atomic_swap_ptr(&tsc_sync_cpu, ci) != NULL) {
 		panic("tsc_sync_bp: 1");
@@ -177,13 +177,13 @@ tsc_sync_bp(struct cpu_info *ci)
 
 	/* Flag it and read our TSC. */
 	atomic_or_uint(&ci->ci_flags, CPUF_SYNCTSC);
-	tsc = rdmsr(MSR_TSC) >> 1;
+	bptsc = rdmsr(MSR_TSC) >> 1;
 
 	/* Wait for remote to complete, and read ours again. */
 	while ((ci->ci_flags & CPUF_SYNCTSC) != 0) {
 		__insn_barrier();
 	}
-	tsc += (rdmsr(MSR_TSC) >> 1);
+	bptsc += (rdmsr(MSR_TSC) >> 1);
 
 	/* Wait for the results to come in. */
 	while (tsc_sync_cpu == ci) {
@@ -193,16 +193,28 @@ tsc_sync_bp(struct cpu_info *ci)
 		panic("tsc_sync_bp: 2");
 	}
 
+	*bptscp = bptsc;
+	*aptscp = tsc_sync_val;
+}
+
+void
+tsc_sync_bp(struct cpu_info *ci)
+{
+	uint64_t bptsc, aptsc;
+
+	tsc_read_bp(ci, &bptsc, &aptsc); /* discarded - cache effects */
+	tsc_read_bp(ci, &bptsc, &aptsc);
+
 	/* Compute final value to adjust for skew. */
-	ci->ci_data.cpu_cc_skew = tsc - tsc_sync_val;
+	ci->ci_data.cpu_cc_skew = bptsc - aptsc;
 }
 
 /*
  * Called during startup of AP, by the AP itself.  Interrupts are
  * disabled on entry.
  */
-void
-tsc_sync_ap(struct cpu_info *ci)
+static void
+tsc_post_ap(struct cpu_info *ci)
 {
 	uint64_t tsc;
 
@@ -222,6 +234,14 @@ tsc_sync_ap(struct cpu_info *ci)
 	if (atomic_swap_ptr(&tsc_sync_cpu, NULL) != ci) {
 		panic("tsc_sync_ap");
 	}
+}
+
+void
+tsc_sync_ap(struct cpu_info *ci)
+{
+
+	tsc_post_ap(ci);
+	tsc_post_ap(ci);
 }
 
 uint64_t

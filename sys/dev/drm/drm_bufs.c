@@ -1,4 +1,4 @@
-/* $NetBSD: drm_bufs.c,v 1.10 2008/06/29 12:49:08 jmcneill Exp $ */
+/* $NetBSD: drm_bufs.c,v 1.10.10.1 2009/05/13 17:19:16 jym Exp $ */
 
 /* drm_bufs.h -- Generic buffer template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.10 2008/06/29 12:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.10.10.1 2009/05/13 17:19:16 jym Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_bufs.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -206,6 +206,7 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 			return DRM_ERR(EINVAL);
 		}
 		map->offset = map->offset + dev->sg->handle;
+		map->handle = (void *)(uintptr_t)map->offset;
 		break;
 	case _DRM_CONSISTENT:
 		/* Unfortunately, we don't get any alignment specification from
@@ -274,10 +275,10 @@ int drm_addmap_ioctl(DRM_IOCTL_ARGS)
 	request.mtrr   = map->mtrr;
 	request.handle = map->handle;
 
-	if (request.type != _DRM_SHM) {
-		request.handle = (void *)request.offset;
-	} else {
+	if (DRM_HANDLE_NEEDS_MASK(request.type)) {
 		request.handle = (void *)DRM_NETBSD_ADDR2HANDLE((uintptr_t)map->handle);
+	} else {
+		request.handle = (void *)request.offset;
 	}
 	DRM_COPY_TO_USER_IOCTL((drm_map_t *)data, request, sizeof(drm_map_t));
 
@@ -1054,6 +1055,8 @@ int drm_mapbufs(DRM_IOCTL_ARGS)
 		}
 		size = round_page(map->size);
 		foff = map->offset;
+		if (DRM_HANDLE_NEEDS_MASK(map->type))
+			foff = DRM_NETBSD_ADDR2HANDLE(foff);
 	} else {
 		size = round_page(dma->byte_count),
 		foff = 0;
@@ -1062,7 +1065,7 @@ int drm_mapbufs(DRM_IOCTL_ARGS)
 	vaddr = p->l_proc->p_emul->e_vm_default_addr(p->l_proc,
 	    (vaddr_t)vms->vm_daddr, size);
 	rsize = round_page(size);
-	DRM_DEBUG("mmap %lx/%ld\n", vaddr, rsize);
+	DRM_DEBUG("mmap %#lx/%#lx foff %#llx\n", vaddr, rsize, (long long)foff);
 	retcode = uvm_mmap(&vms->vm_map, &vaddr, rsize,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
 	    &vn->v_uobj, foff, p->l_proc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);

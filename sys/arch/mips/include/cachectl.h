@@ -1,4 +1,4 @@
-/*	$NetBSD: cachectl.h,v 1.8 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: cachectl.h,v 1.8.14.1 2009/05/13 17:18:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
 /*
  * invalidate a range of addresses from the cache.
  */
-int  _cacheflush __P((void *addr, int nbytes, int cacheflags));
-int  cacheflush __P((void *addr, int nbytes, int cacheflags));
+int  _cacheflush(void *addr, int nbytes, int cacheflags);
+int  cacheflush(void *addr, int nbytes, int cacheflags);
 
 					/* cacheflush() flags: */
 #define ICACHE	0x01			/* invalidate I-cache */
@@ -46,7 +46,7 @@ int  cacheflush __P((void *addr, int nbytes, int cacheflags));
 #define BCACHE	(ICACHE|DCACHE)		/* invalidate both caches, as above */
 
 
-int  cachectl __P((void *addr, int nbytes, int cacheop));
+int  cachectl(void *addr, int nbytes, int cacheop);
 
 					/* cachectl() cache operations: */
 #define CACHEABLE       0x00		/* make page(s) cacheable */

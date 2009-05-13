@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.8 2007/10/17 19:57:05 garbled Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.8.34.1 2009/05/13 17:18:19 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,10 +65,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.8 2007/10/17 19:57:05 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.8.34.1 2009/05/13 17:18:19 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
@@ -239,7 +240,7 @@ mcclock_mace_settime(struct todr_chip_handle *todrch,
 }
 
 void
-mcclock_poweroff()
+mcclock_poweroff(void)
 {
 	int s;
 	uint8_t a, xctl_a, xctl_b;

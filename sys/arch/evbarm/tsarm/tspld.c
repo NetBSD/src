@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.16 2009/01/01 03:34:42 kenh Exp $	*/
+/*	$NetBSD: tspld.c,v 1.16.2.1 2009/05/13 17:16:39 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.16 2009/01/01 03:34:42 kenh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.16.2.1 2009/05/13 17:16:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -96,7 +96,7 @@ struct tspld_softc {
 CFATTACH_DECL(tspld, sizeof(struct tspld_softc),
     tspldmatch, tspldattach, NULL, NULL);
 
-void	tspld_callback __P((struct device *));
+void	tspld_callback(struct device *);
 
 #define GPIO_GET(x)	bus_space_read_4(sc->sc_iot, sc->sc_gpioh, \
 	(EP93XX_GPIO_ ## x))
@@ -123,18 +123,14 @@ void	tspld_callback __P((struct device *));
 	(EP93XX_SSP_ ## x), SSP_GET(x) & (~(y)))
 
 int
-tspldmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tspldmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
 }
 
 void
-boardtemp_poll(arg)
-	void *arg;
+boardtemp_poll(void *arg)
 {
 	struct tspld_softc *sc = arg;
 	u_int16_t val;
@@ -157,9 +153,7 @@ boardtemp_poll(arg)
 }
 
 void
-tspldattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tspldattach(struct device *parent, struct device *self, void *aux)
 {
 	int	i, rev, features, jp, model;
 	struct tspld_softc *sc = (struct tspld_softc *)self;
@@ -457,11 +451,7 @@ tspldattach(parent, self, aux)
 }
 
 int
-tspld_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+tspld_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct tspld_softc *sc = (struct tspld_softc *)parent;
 	struct tspld_attach_args sa;
@@ -475,17 +465,14 @@ tspld_search(parent, cf, ldesc, aux)
 }
 
 int
-tspld_print(aux, name)
-	void *aux;
-	const char *name;
+tspld_print(void *aux, const char *name)
 {
 
 	return (UNCONF);
 }
 
 void
-tspld_callback(self)
-	struct device *self;
+tspld_callback(struct device *self)
 {
 #if NISA > 0
 	extern void isa_bs_mallocok(void);
@@ -508,8 +495,7 @@ tspld_callback(self)
 }
 
 static int
-tspld_wdog_tickle(smw)
-	struct sysmon_wdog *smw;
+tspld_wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct tspld_softc *sc = (struct tspld_softc *)smw->smw_cookie;
 
@@ -518,8 +504,7 @@ tspld_wdog_tickle(smw)
 }
 
 static int
-tspld_wdog_setmode(smw)
-	struct sysmon_wdog *smw;
+tspld_wdog_setmode(struct sysmon_wdog *smw)
 {
 	int i, ret = 0;
 	struct tspld_softc *sc = (struct tspld_softc *)smw->smw_cookie;

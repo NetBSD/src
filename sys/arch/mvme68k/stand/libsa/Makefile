@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2006/02/26 19:20:57 he Exp $
+#	$NetBSD: Makefile,v 1.29.86.1 2009/05/13 17:18:08 jym Exp $
 
 LIB=sa
 
@@ -33,9 +33,6 @@ SRC_sa= alloc.c \
 	udp.c ufs.c
 
 SRC_common+= ashrdi3.c inet_addr.c strncpy.c strlen.c
-
-# XXX Needed until libsa's memcmp.c doesn't depend on bcmp...
-SRC_sa+= bcmp.c
 
 SRC_libc_inet= inet_addr.c
 SRC_libc_quad= ashldi3.c ashrdi3.c

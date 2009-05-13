@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.340 2009/01/12 02:51:30 pooka Exp $	*/
+/*	$NetBSD: param.h,v 1.340.2.1 2009/05/13 17:23:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	599000700	/* NetBSD 5.99.7 */
+#define	__NetBSD_Version__	599001100	/* NetBSD 5.99.11 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -340,7 +340,7 @@
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 #define	rounddown(x,y)	(((x)/(y))*(y))
-#define	roundup2(x, m)	(((x) + m - 1) & ~(m - 1))
+#define	roundup2(x, m)	(((x) + (m) - 1) & ~((m) - 1))
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */

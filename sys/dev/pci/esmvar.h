@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.16 2008/02/23 02:17:16 dyoung Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.16.18.1 2009/05/13 17:20:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -150,7 +150,7 @@ struct esm_chinfo {
 };
 
 struct esm_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	bus_space_tag_t		st;
 	bus_space_handle_t	sh;

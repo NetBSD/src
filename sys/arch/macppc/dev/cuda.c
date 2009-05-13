@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.13 2009/02/04 16:11:12 pgoyette Exp $ */
+/*	$NetBSD: cuda.c,v 1.13.2.1 2009/05/13 17:18:01 jym Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.13 2009/02/04 16:11:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.13.2.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,7 +795,7 @@ cuda_todr_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
 /* poweroff and reboot */
 
 void
-cuda_poweroff()
+cuda_poweroff(void)
 {
 	struct cuda_softc *sc;
 	uint8_t cmd[] = {CUDA_PSEUDO, CMD_POWEROFF};
@@ -810,7 +810,7 @@ cuda_poweroff()
 }
 
 void
-cuda_restart()
+cuda_restart(void)
 {
 	struct cuda_softc *sc;
 	uint8_t cmd[] = {CUDA_PSEUDO, CMD_RESET};

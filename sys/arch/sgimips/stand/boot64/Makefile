@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/02/23 06:51:28 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5.18.1 2009/05/13 17:18:21 jym Exp $
 
 PROG=	ip30boot
 
@@ -66,14 +66,6 @@ SAMISCMAKEFLAGS+=	SA_USE_LOADFILE=yes SA_USE_CREAD=yes \
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
-	@([ -h mips ] || ln -s ${S}/arch/mips/include mips)
-.NOPATH: machine mips
-.endif
-CLEANFILES+= machine mips
-
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
@@ -81,4 +73,9 @@ ip30boot: ${OBJS} ${LIBS}
 	${LD} -m elf64btsmip -Map boot.map -x -Ttext ${LOAD_ADDRESS_IP30} \
 		${LDBUG} -e start -o ${.TARGET} ${OBJS} ${LIBS}
 
+cleandir distclean: cleanlibdir
+cleanlibdir:
+	-rm -rf lib
+
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>

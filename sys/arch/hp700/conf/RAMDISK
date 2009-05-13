@@ -1,7 +1,7 @@
-# $NetBSD: RAMDISK,v 1.5 2009/02/06 18:50:27 jym Exp $
+# $NetBSD: RAMDISK,v 1.5.2.1 2009/05/13 17:17:42 jym Exp $
 #
 # RAMDISK machine description file
-# 
+#
 
 include 	"arch/hp700/conf/GENERIC"
 

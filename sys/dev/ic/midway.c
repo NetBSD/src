@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.85 2008/12/17 20:51:34 cegger Exp $	*/
+/*	$NetBSD: midway.c,v 1.85.2.1 2009/05/13 17:19:23 jym Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.85 2008/12/17 20:51:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.85.2.1 2009/05/13 17:19:23 jym Exp $");
 
 #include "opt_natm.h"
 
@@ -495,11 +495,7 @@ static struct ifnet *en_vci2ifp(struct en_softc *, int);
  * that reads from the card.
  */
 
-STATIC INLINE u_int32_t en_read(sc, r)
-
-struct en_softc *sc;
-u_int32_t r;
-
+STATIC INLINE u_int32_t en_read(struct en_softc *sc, uint32_t r)
 {
 
 #ifdef EN_DEBUG_RANGE
@@ -515,11 +511,7 @@ u_int32_t r;
  * writes to the card.
  */
 
-STATIC INLINE void en_write(sc, r, v)
-
-struct en_softc *sc;
-u_int32_t r, v;
-
+STATIC INLINE void en_write(struct en_softc *sc, uint32_t r, uint32_t v)
 {
 #ifdef EN_DEBUG_RANGE
   if (r > MID_MAXOFF || (r % 4))
@@ -533,10 +525,7 @@ u_int32_t r, v;
  * en_k2sz: convert KBytes to a size parameter (a log2)
  */
 
-STATIC INLINE int en_k2sz(k)
-
-int k;
-
+STATIC INLINE int en_k2sz(int k)
 {
   switch(k) {
     case 1:   return(0);
@@ -558,10 +547,7 @@ int k;
  * en_b2sz: convert a DMA burst code to its byte size
  */
 
-STATIC INLINE int en_b2sz(b)
-
-int b;
-
+STATIC INLINE int en_b2sz(int b)
 {
   switch (b) {
     case MIDDMA_WORD:   return(1*4);
@@ -583,10 +569,7 @@ int b;
  * en_sz2b: convert a burst size (bytes) to DMA burst code
  */
 
-STATIC INLINE int en_sz2b(sz)
-
-int sz;
-
+STATIC INLINE int en_sz2b(int sz)
 {
   switch (sz) {
     case 1*4:  return(MIDDMA_WORD);
@@ -604,12 +587,7 @@ int sz;
  * en_dqneed: calculate number of DTQ/DRQ's needed for a buffer
  */
 
-STATIC INLINE int en_dqneed(sc, data, len, tx)
-
-struct en_softc *sc;
-void *data;
-u_int len, tx;
-
+STATIC INLINE int en_dqneed(struct en_softc *sc, void *data, u_int len, u_int tx)
 {
   int result, needalign, sz;
 
@@ -670,11 +648,7 @@ u_int len, tx;
  * after this call the sum of all the m_len's in the chain will be totlen.
  */
 
-STATIC INLINE struct mbuf *en_mget(sc, totlen, drqneed)
-
-struct en_softc *sc;
-u_int totlen, *drqneed;
-
+STATIC INLINE struct mbuf *en_mget(struct en_softc *sc, u_int totlen, u_int *drqneed)
 {
   struct mbuf *m;
   struct mbuf *top, **mp;
@@ -725,10 +699,7 @@ u_int totlen, *drqneed;
  * autoconfig stuff
  */
 
-void en_attach(sc)
-
-struct en_softc *sc;
-
+void en_attach(struct en_softc *sc)
 {
   struct ifnet *ifp = &sc->enif;
   int sz;
@@ -934,10 +905,7 @@ done_probe:
  * p166:   bestburstlen=64, alburst=0
  */
 
-STATIC void en_dmaprobe(sc)
-
-struct en_softc *sc;
-
+STATIC void en_dmaprobe(struct en_softc *sc)
 {
   u_int32_t srcbuf[64], dstbuf[64];
   u_int8_t *sp, *dp;
@@ -1009,12 +977,7 @@ struct en_softc *sc;
  */
 
 int
-en_dmaprobe_doit(sc, sp, dp, wmtry)
-
-struct en_softc *sc;
-u_int8_t *sp, *dp;
-int wmtry;
-
+en_dmaprobe_doit(struct en_softc *sc, uint8_t *sp, uint8_t *dp, int wmtry)
 {
   int lcv, retval = 4, cnt, count;
   u_int32_t reg, bcode, midvloc;
@@ -1145,12 +1108,7 @@ int wmtry;
  * txspeed[vci].
  */
 
-STATIC int en_ioctl(ifp, cmd, data)
-
-struct ifnet *ifp;
-EN_IOCTL_CMDT cmd;
-void *data;
-
+STATIC int en_ioctl(struct ifnet *ifp, EN_IOCTL_CMDT cmd, void *data)
 {
 #ifdef MISSING_IF_SOFTC
     struct en_softc *sc = (struct en_softc *)device_lookup_private(&en_cd, ifp->if_unit);
@@ -1327,8 +1285,10 @@ void *data;
 		break;
 
 	case SIOCSPVCTX:
-		if ((error = kauth_authorize_generic(curlwp->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) == 0)
+		if ((error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL)) == 0)
 			error = en_pvctx(sc, (struct pvctxreq *)data);
 		break;
 
@@ -1347,12 +1307,7 @@ void *data;
  * en_rxctl: turn on and off VCs for recv.
  */
 
-STATIC int en_rxctl(sc, pi, on)
-
-struct en_softc *sc;
-struct atm_pseudoioctl *pi;
-int on;
-
+STATIC int en_rxctl(struct en_softc *sc, struct atm_pseudoioctl *pi, int on)
 {
   u_int s, vci, flags, slot;
   u_int32_t oldmode, newmode;
@@ -1445,10 +1400,7 @@ int on;
  * must en_init to recover.
  */
 
-void en_reset(sc)
-
-struct en_softc *sc;
-
+void en_reset(struct en_softc *sc)
 {
   struct mbuf *m;
   int lcv, slot;
@@ -1520,10 +1472,7 @@ struct en_softc *sc;
  * en_init: init board and sync the card with the data in the softc.
  */
 
-STATIC void en_init(sc)
-
-struct en_softc *sc;
-
+STATIC void en_init(struct en_softc *sc)
 {
   int vc, slot;
   u_int32_t loc;
@@ -1641,11 +1590,7 @@ struct en_softc *sc;
  * en_loadvc: load a vc tab entry from a slot
  */
 
-STATIC void en_loadvc(sc, vc)
-
-struct en_softc *sc;
-int vc;
-
+STATIC void en_loadvc(struct en_softc *sc, int vc)
 {
   int slot;
   u_int32_t reg = EN_READ(sc, MID_VC(vc));
@@ -1674,10 +1619,7 @@ int vc;
  * if there is one.    note that atm_output() has already splnet()'d us.
  */
 
-STATIC void en_start(ifp)
-
-struct ifnet *ifp;
-
+STATIC void en_start(struct ifnet *ifp)
 {
 #ifdef MISSING_IF_SOFTC
     struct en_softc *sc = (struct en_softc *)device_lookup_private(&en_cd, ifp->if_unit);
@@ -1868,11 +1810,7 @@ struct ifnet *ifp;
 
 #ifndef __FreeBSD__
 
-STATIC int en_mfix(sc, mm, prev)
-
-struct en_softc *sc;
-struct mbuf **mm, *prev;
-
+STATIC int en_mfix(struct en_softc *sc, struct mbuf **mm, struct mbuf *prev)
 {
   struct mbuf *m, *new;
   u_char *d, *cp;
@@ -2076,11 +2014,7 @@ struct mbuf **mm, *prev;
  * en_txdma: start transmit DMA, if possible
  */
 
-STATIC void en_txdma(sc, chan)
-
-struct en_softc *sc;
-int chan;
-
+STATIC void en_txdma(struct en_softc *sc, int chan)
 {
   struct mbuf *tmp;
   struct atm_pseudohdr *ap;
@@ -2307,12 +2241,7 @@ dequeue_drop:
  * en_txlaunch: launch an mbuf into the DMA pool!
  */
 
-STATIC void en_txlaunch(sc, chan, l)
-
-struct en_softc *sc;
-int chan;
-struct en_launch *l;
-
+STATIC void en_txlaunch(struct en_softc *sc, int chan, struct en_launch *l)
 {
   struct mbuf *tmp;
   u_int32_t cur = sc->txslot[chan].cur,
@@ -2664,10 +2593,7 @@ done:
  * interrupt handler
  */
 
-EN_INTR_TYPE en_intr(arg)
-
-void *arg;
-
+EN_INTR_TYPE en_intr(void *arg)
 {
   struct en_softc *sc = (struct en_softc *) arg;
   struct mbuf *m;
@@ -2970,10 +2896,7 @@ void *arg;
  *
  */
 
-STATIC void en_service(sc)
-
-struct en_softc *sc;
-
+STATIC void en_service(struct en_softc *sc)
 {
   struct mbuf *m, *tmp;
   u_int32_t cur, dstart, rbd, pdu, *sav, dma, bcode, count, *data, *datastop;
@@ -3403,10 +3326,7 @@ done:
 
 #define END_BITS "\20\7SWSL\6DRQ\5DTQ\4RX\3TX\2MREGS\1STATS"
 
-int en_dump(unit, level)
-
-int unit, level;
-
+int en_dump(int unit, int level)
 {
   struct en_softc *sc;
   int lcv, cnt, slot;
@@ -3573,10 +3493,7 @@ int unit, level;
  * en_dumpmem: dump the memory
  */
 
-int en_dumpmem(unit, addr, len)
-
-int unit, addr, len;
-
+int en_dumpmem(int unit, int addr, int len)
 {
   struct en_softc *sc;
   u_int32_t reg;
@@ -3612,9 +3529,7 @@ int unit, addr, len;
  * a round-robin fashion when en_start is called from tx complete
  * interrupts.
  */
-static void rrp_add(sc, ifp)
-	struct en_softc *sc;
-	struct ifnet *ifp;
+static void rrp_add(struct en_softc *sc, struct ifnet *ifp)
 {
 	struct rrp *head, *p, *new;
 
@@ -3655,9 +3570,7 @@ static void rrp_add(sc, ifp)
 }
 
 #if 0 /* not used */
-static void rrp_delete(sc, ifp)
-	struct en_softc *sc;
-	struct ifnet *ifp;
+static void rrp_delete(struct en_softc *sc, struct ifnet *ifp)
 {
 	struct rrp *head, *p, *prev;
 
@@ -3698,9 +3611,7 @@ static void rrp_delete(sc, ifp)
 #endif
 
 static struct ifnet *
-en_vci2ifp(sc, vci)
-	struct en_softc *sc;
-	int vci;
+en_vci2ifp(struct en_softc *sc, int vci)
 {
 	struct pvcsif *pvcsif;
 
@@ -3716,8 +3627,7 @@ en_vci2ifp(sc, vci)
  * (currently detach is not supported)
  */
 static struct ifnet *
-en_pvcattach(ifp)
-	struct ifnet *ifp;
+en_pvcattach(struct ifnet *ifp)
 {
 	struct en_softc *sc = (struct en_softc *) ifp->if_softc;
 	struct ifnet *pvc_ifp;
@@ -3750,8 +3660,7 @@ en_pvcattach(ifp)
    by Werner Almesberger, EPFL LRC */
 static const int pre_div[] = { 4,16,128,2048 };
 
-static int en_pcr2txspeed(pcr)
-	int pcr;
+static int en_pcr2txspeed(int pcr)
 {
 	int pre, res, div;
 
@@ -3780,8 +3689,7 @@ static int en_pcr2txspeed(pcr)
 	return ((pre << 6) + res);
 }
 
-static int en_txspeed2pcr(txspeed)
-	int txspeed;
+static int en_txspeed2pcr(int txspeed)
 {
 	int pre, res, pcr;
 
@@ -3797,11 +3705,7 @@ static int en_txspeed2pcr(txspeed)
  * since it assumes a transmit channel is already assigned by en_rxctl
  * to the vc.
  */
-static int en_txctl(sc, vci, joint_vci, pcr)
-	struct en_softc *sc;
-	int vci;
-	int joint_vci;
-	int pcr;
+static int en_txctl(struct en_softc *sc, int vci, int joint_vci, int pcr)
 {
 	int txspeed, txchan, s;
 
@@ -3859,9 +3763,7 @@ static int en_txctl(sc, vci, joint_vci, pcr)
 	return (0);
 }
 
-static int en_pvctx(sc, pvcreq)
-	struct en_softc *sc;
-	struct pvctxreq *pvcreq;
+static int en_pvctx(struct en_softc *sc, struct pvctxreq *pvcreq)
 {
 	struct ifnet *ifp;
 	struct atm_pseudoioctl api;
@@ -3966,9 +3868,7 @@ static int en_pvctx(sc, pvcreq)
 	return error;
 }
 
-static int en_pvctxget(sc, pvcreq)
-	struct en_softc *sc;
-	struct pvctxreq *pvcreq;
+static int en_pvctxget(struct en_softc *sc, struct pvctxreq *pvcreq)
 {
 	struct pvcsif *pvcsif;
 	struct ifnet *ifp;

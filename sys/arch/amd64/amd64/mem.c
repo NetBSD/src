@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 2009/01/29 14:20:50 joerg Exp $	*/
+/*	$NetBSD: mem.c,v 1.17.2.1 2009/05/13 17:16:08 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -101,14 +101,12 @@
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.17 2009/01/29 14:20:50 joerg Exp $");
-
-#include "opt_compat_netbsd.h"
-
 /*
  * Memory special file
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.17.2.1 2009/05/13 17:16:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -144,7 +142,6 @@ const struct cdevsw mem_cdevsw = {
 
 int check_pa_acc(paddr_t, vm_prot_t);
 
-/* ARGSUSED */
 int
 mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -158,9 +155,8 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	return (0);
-}			
+}
 
-/*ARGSUSED*/
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
@@ -180,8 +176,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			continue;
 		}
 		switch (minor(dev)) {
-
 		case DEV_MEM:
+			/* lock against other uses of shared vmmap */
 			mutex_enter(&mm_lock);
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
@@ -193,11 +189,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			}
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, PMAP_WIRED|prot);
+			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
+			pmap_update(pmap_kernel());
 			mutex_exit(&mm_lock);
 			break;
 
@@ -240,12 +238,14 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			return (ENXIO);
 		}
 	}
+
 	return (error);
 }
 
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
+
 	/*
 	 * /dev/mem is the only one that makes sense through this
 	 * interface.  For /dev/kmem any physaddr we return here
@@ -255,10 +255,10 @@ mmmmap(dev_t dev, off_t off, int prot)
 	 * pager in mmap().
 	 */
 	if (minor(dev) != DEV_MEM)
-		return (-1);
+		return -1;
 
 	if (check_pa_acc(off, prot) != 0)
-		return (-1);
+		return -1;
 
-	return (x86_btop(off));
+	return x86_btop(off);
 }

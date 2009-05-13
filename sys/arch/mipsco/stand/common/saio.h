@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.h,v 1.2 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: saio.h,v 1.2.14.1 2009/05/13 17:18:04 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int saioopen __P((struct open_file*, ...));
-int saioclose __P((struct open_file*));
-int saioioctl __P((struct open_file*, u_long, void*));
-int saiostrategy __P((void*, int, daddr_t, size_t, void*, size_t*));
+int saioopen(struct open_file*, ...);
+#if !defined(LIBSA_NO_DEV_CLOSE)
+int saioclose(struct open_file*);
+#endif
+#if !defined(LIBSA_NO_DEV_IOCTL)
+int saioioctl(struct open_file*, u_long, void*);
+#endif
+int saiostrategy(void*, int, daddr_t, size_t, void*, size_t*);

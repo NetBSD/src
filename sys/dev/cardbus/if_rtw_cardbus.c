@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.28 2009/02/06 01:55:19 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.28.2.1 2009/05/13 17:19:15 jym Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.28 2009/02/06 01:55:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.28.2.1 2009/05/13 17:19:15 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -140,7 +140,7 @@ struct rtw_cardbus_softc {
 	cardbus_intr_line_t	sc_intrline;	/* interrupt line */
 };
 
-int	rtw_cardbus_match(device_t, struct cfdata *, void *);
+int	rtw_cardbus_match(device_t, cfdata_t, void *);
 void	rtw_cardbus_attach(device_t, device_t, void *);
 int	rtw_cardbus_detach(device_t, int);
 
@@ -186,7 +186,7 @@ rtw_cardbus_lookup(const struct cardbus_attach_args *ca)
 }
 
 int
-rtw_cardbus_match(device_t parent, struct cfdata *match, void *aux)
+rtw_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 

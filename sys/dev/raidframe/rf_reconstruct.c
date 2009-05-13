@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.106 2008/12/20 17:04:51 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.106.2.1 2009/05/13 17:21:16 jym Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.106 2008/12/20 17:04:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.106.2.1 2009/05/13 17:21:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -676,8 +676,10 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 				   done dealing with the reads that are
 				   finished, we don't want to wait for any
 				   writes */
-				if (status == RF_RECON_WRITE_ERROR)
+				if (status == RF_RECON_WRITE_ERROR) {
 					write_error = 1;
+					num_writes++;
+				}
 				
 			} else if (status == RF_RECON_READ_STOPPED) {
 				/* count this component as being "done" */
@@ -718,12 +720,13 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 			status = ProcessReconEvent(raidPtr, event);
 			
 			if (status == RF_RECON_WRITE_ERROR) {
+				num_writes++;
 				recon_error = 1;
 				raidPtr->reconControl->error = 1;
 				/* an error was encountered at the very end... bail */
 			} else if (status == RF_RECON_WRITE_DONE) {
 				num_writes++;
-			}
+			} /* else it's something else, and we don't care */
 		}
 		if (recon_error || 
 		    (raidPtr->reconControl->lastPSID == lastPSID)) {
@@ -1053,6 +1056,12 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 		/* A write I/O failed to complete */
 	case RF_REVENT_WRITE_FAILED:
 		retcode = RF_RECON_WRITE_ERROR;
+
+		/* This is an error, but it was a pending write.
+		   Account for it. */
+		RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+		raidPtr->reconControl->pending_writes--;
+		RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
 
 		rbuf = (RF_ReconBuffer_t *) event->arg;
 

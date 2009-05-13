@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.10 2006/04/06 06:20:37 simonb Exp $	*/
+/*	$NetBSD: gt.c,v 1.10.80.1 2009/05/13 17:16:40 jym Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.10 2006/04/06 06:20:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.10.80.1 2009/05/13 17:16:40 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,19 +95,13 @@ CFATTACH_DECL(gt, sizeof(struct device),
     gt_match, gt_attach, NULL, NULL);
 
 static int
-gt_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+gt_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
 
 static void
-gt_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct malta_config *mcp = &malta_configuration;
 	struct pcibus_attach_args pba;
@@ -129,9 +123,7 @@ gt_attach(parent, self, aux)
 }
 
 static int
-gt_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+gt_print(void *aux, const char *pnp)
 {
 	/* XXX */
 	return 0;

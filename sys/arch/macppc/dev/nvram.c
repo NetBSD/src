@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.12 2008/06/13 11:54:31 cegger Exp $	*/
+/*	$NetBSD: nvram.c,v 1.12.10.1 2009/05/13 17:18:01 jym Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.12 2008/06/13 11:54:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.12.10.1 2009/05/13 17:18:01 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.12 2008/06/13 11:54:31 cegger Exp $");
 
 #define NVRAM_SIZE 0x2000
 
-static void nvram_attach __P((struct device *, struct device *, void *));
-static int nvram_match __P((struct device *, struct cfdata *, void *));
+static void nvram_attach(struct device *, struct device *, void *);
+static int nvram_match(struct device *, struct cfdata *, void *);
 
 struct nvram_softc {
 	struct device sc_dev;
@@ -77,10 +77,7 @@ const struct cdevsw nvram_cdevsw = {
 };
 
 int
-nvram_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+nvram_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -94,9 +91,7 @@ nvram_match(parent, cf, aux)
 }
 
 void
-nvram_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+nvram_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nvram_softc *sc = (struct nvram_softc *)self;
 	struct confargs *ca = aux;
@@ -183,19 +178,13 @@ out:
 }
 
 int
-nvramwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+nvramwrite(dev_t dev, struct uio *uio, int flag)
 {
 	return ENXIO;
 }
 
 paddr_t
-nvrammmap(dev, off, prot)
-        dev_t dev;
-        off_t off;
-	int prot;
+nvrammmap(dev_t dev, off_t off, int prot)
 {
 	return -1;
 }

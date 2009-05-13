@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.51 2008/07/31 08:49:47 simonb Exp $	*/
+/*	$NetBSD: fs.h,v 1.51.8.1 2009/05/13 17:23:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -80,7 +80,7 @@
  *
  * The ffsv2 superblock layout (which might contain an ffsv1 filesystem)
  * can be detected by checking for sb->fs_old_flags & FS_FLAGS_UPDATED.
- * This is the default suberblock type for NetBSD since ffsv2 support was added.
+ * This is the default superblock type for NetBSD since ffsv2 support was added.
  */
 #define	BBSIZE		8192
 #define	BBOFF		((off_t)(0))
@@ -417,6 +417,7 @@ struct fs {
 #define	FS_INDEXDIRS	0x008	/* kernel supports indexed directories */
 #define	FS_ACLS		0x010	/* file system has ACLs enabled */
 #define	FS_MULTILABEL	0x020	/* file system is MAC multi-label */
+#define	FS_GJOURNAL	0x40	/* gjournaled file system */
 #define	FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
 #define	FS_DOWAPBL	0x100	/* Write ahead physical block logging */
 

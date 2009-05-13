@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: clock.c,v 1.39.14.1 2009/05/13 17:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39.14.1 2009/05/13 17:18:22 jym Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -187,14 +187,14 @@ sh_clock_init(int flags)
 }
 
 int
-sh_clock_get_cpuclock()
+sh_clock_get_cpuclock(void)
 {
 
 	return (sh_clock.cpuclock);
 }
 
 int
-sh_clock_get_pclock()
+sh_clock_get_pclock(void)
 {
 
 	return (sh_clock.pclock);
@@ -227,7 +227,7 @@ delay(int n)
  * Start the clock interrupt.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	if (sh_clock.pclock == 0)

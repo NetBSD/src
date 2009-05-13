@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.44 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.44.8.1 2009/05/13 17:16:08 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44.8.1 2009/05/13 17:16:08 jym Exp $");
 
 #include "opt_sa.h"
 
@@ -95,11 +95,9 @@ syscall(struct trapframe *frame)
 
 	l = curlwp;
 	p = l->l_proc;
-
-	code = frame->tf_rax & (SYS_NSYSENT - 1);
-
 	LWP_CACHE_CREDS(l, p);
 
+	code = frame->tf_rax & (SYS_NSYSENT - 1);
 	callp = p->p_emul->e_sysent + code;
 
 	SYSCALL_COUNT(syscall_counts, code);
@@ -130,6 +128,7 @@ syscall(struct trapframe *frame)
 	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
+		KASSERT(l->l_holdcnt == 0);
 		error = sy_call(callp, l, args, rval);
 	}
 

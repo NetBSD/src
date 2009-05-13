@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.34 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.34.14.1 2009/05/13 17:19:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.34 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.34.14.1 2009/05/13 17:19:53 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.34 2008/04/28 20:23:52 martin Exp $");
 
 #define	UHA_ISA_IOSIZE	16
 
-int	uha_isa_probe(struct device *, struct cfdata *, void *);
-void	uha_isa_attach(struct device *, struct device *, void *);
+int	uha_isa_probe(device_t, cfdata_t, void *);
+void	uha_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(uha_isa, sizeof(struct uha_softc),
     uha_isa_probe, uha_isa_attach, NULL, NULL);
@@ -78,8 +78,7 @@ void	u14_init(struct uha_softc *);
  * the actual probe routine to check it out.
  */
 int
-uha_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+uha_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -134,7 +133,7 @@ uha_isa_probe(struct device *parent, struct cfdata *match,
  * Attach all the sub-devices we can find
  */
 void
-uha_isa_attach(struct device *parent, struct device *self, void *aux)
+uha_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct uha_softc *sc = (void *)self;
@@ -192,10 +191,7 @@ uha_isa_attach(struct device *parent, struct device *self, void *aux)
  * Start the board, ready for normal operation
  */
 int
-u14_find(iot, ioh, sc)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct uha_probe_data *sc;
+u14_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct uha_probe_data *sc)
 {
 	u_int16_t model, config;
 	int irq, drq;
@@ -281,9 +277,7 @@ u14_find(iot, ioh, sc)
  * Function to send a command out through a mailbox
  */
 void
-u14_start_mbox(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+u14_start_mbox(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -317,10 +311,7 @@ u14_start_mbox(sc, mscp)
  *	wait = timeout in msec
  */
 int
-u14_poll(sc, xs, count)
-	struct uha_softc *sc;
-	struct scsipi_xfer *xs;
-	int count;
+u14_poll(struct uha_softc *sc, struct scsipi_xfer *xs, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -344,8 +335,7 @@ u14_poll(sc, xs, count)
  * Catch an interrupt from the adaptor
  */
 int
-u14_intr(arg)
-	void *arg;
+u14_intr(void *arg)
 {
 	struct uha_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -394,8 +384,7 @@ u14_intr(arg)
 }
 
 void
-u14_init(sc)
-	struct uha_softc *sc;
+u14_init(struct uha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
