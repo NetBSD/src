@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.11 2009/05/13 22:25:51 pgoyette Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.12 2009/05/13 23:26:38 pgoyette Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -246,7 +246,7 @@ __CI_TBL(CAI_L2CACHE,  0x44,    4, 1 * 1024 * 1024, 32, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x45,    4, 2 * 1024 * 1024, 32, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x48,   12, 3 * 1024 * 1024, 64, NULL), \
 								\
-/* 0x49 Is L2 on Xeon MP (Failym 0f, Model 06), L3 otherwise */	\
+/* 0x49 Is L2 on Xeon MP (Family 0f, Model 06), L3 otherwise */	\
 __CI_TBL(CAI_L2CACHE,  0x49,   16, 4 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x4e,   24, 6 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_DCACHE,   0x60,    8,       16 * 1024, 64, NULL), \
