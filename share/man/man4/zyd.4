@@ -1,5 +1,5 @@
 .\" $OpenBSD: zyd.4,v 1.22 2007/05/24 02:49:57 cnst Exp $
-.\" $NetBSD: zyd.4,v 1.1 2007/06/09 11:20:55 kiyohara Exp $
+.\" $NetBSD: zyd.4,v 1.2 2009/05/13 12:47:35 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -187,7 +187,7 @@ driver:
 .It Belkin F5D7050 v.4000
 .It Billion BiPAC 3011G
 .It Buffalo WLI-U2-KG54L
-.It CC&C WL-2203B
+.It CC\*[Am]C WL-2203B
 .It DrayTek Vigor 550
 .It Edimax EW-7317UG
 .It Edimax EW-7317LDG
@@ -272,7 +272,7 @@ An attempt to send a command to the firmware failed.
 .It "zyd%d: sorry, radio %s is not supported yet"
 Support for the specified radio chip is not yet implemented in the driver.
 The device will not attach.
-.It "zyd%d: device version mismatch: 0x%x (only >= 43.30 supported)"
+.It "zyd%d: device version mismatch: 0x%x (only \*[Gt]= 43.30 supported)"
 Early revisions of the ZD1211 chipset are not supported by this driver.
 The device will not attach.
 .It "zyd%d: device timeout"
@@ -287,7 +287,7 @@ This should not happen.
 .Xr netintro 4 ,
 .Xr usb 4 ,
 .Xr ifconfig.if 5 ,
-.Xr ifconfig 8,
+.Xr ifconfig 8 ,
 .Xr firmload 9
 .Sh AUTHORS
 .An -nosplit
