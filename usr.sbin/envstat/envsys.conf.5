@@ -1,4 +1,4 @@
-.\" $NetBSD: envsys.conf.5,v 1.11 2008/09/23 21:50:41 reed Exp $
+.\" $NetBSD: envsys.conf.5,v 1.12 2009/05/13 23:03:54 wiz Exp $
 .\"
 .\" -
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -67,7 +67,8 @@ There can be multiple groups of devices and multiple groups of sensors
 in the configuration file.
 .Pp
 A device block consists of one or more sensor blocks and one or more global
-properties. It has the following syntax:
+properties.
+It has the following syntax:
 .Bd -literal -offset indent
 	device_name {
 		prop = value;
@@ -368,14 +369,16 @@ The following properties are available for device blocks:
 .Pp
 This property sets the refresh timeout value in a driver, and will be used
 to refresh data and check for critical conditions any time the timeout
-is met. The value may be specified in seconds, minutes or hours. To specify
-the value in seconds, the
+is met.
+The value may be specified in seconds, minutes or hours.
+To specify the value in seconds, the
 .Em s
 character must be appended last, if minutes is desired, a
 .Em m
 and a
 .Em h
-for hours. For example
+for hours.
+For example
 .Em 10s
 for 10 seconds or
 .Em 1h
