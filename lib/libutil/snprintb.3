@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.13 2009/05/05 13:12:25 pgoyette Exp $
+.\"     $NetBSD: snprintb.3,v 1.14 2009/05/13 02:50:32 pgoyette Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 5, 2009
+.Dd May 7, 2009
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -38,7 +38,10 @@
 .Sh SYNOPSIS
 .In util.h
 .Ft int
-.Fn "snprintb" "char *buf" "size_t buflen" "const char *fmt" "uint_t val"
+.Fn "snprintb" "char *buf" "size_t buflen" "const char *fmt" "uint64_t val"
+.Ft int
+.Fn "snprintb_m" "char *buf" "size_t buflen" "const char *fmt" "uint64_t val" \
+"size_t max"
 .Sh DESCRIPTION
 The
 .Fn snprintb
@@ -181,12 +184,43 @@ character.
 By convention, the format string has an additional NUL character at
 the end, following that delimiting the last bit-position\(endescription
 pair.
+.Pp
+The
+.Fn snprintb_m
+function accepts an additional
+.Fa max
+argument.
+If this argument is zero, the
+.Fn snprintb_m
+function returns exactly the same results in the
+.Fa buf
+as the
+.Fn snprintb
+function.
+If the
+.Fa max
+argument is present and has a non-zero value, it represents the maximum
+length of a formatted string.
+If the formatted string would require more than
+.Fa max
+characters, the
+.Fn snprintb_m
+function returns multiple formatted strings in the output buffer
+.Fa buf .
+Each string is NUL-terminated, and the last string is followed by an
+additional NUL character (or, if you prefer, a zero-length string).
 .Sh RETURN VALUES
 The
 .Fn snprintb
-function returns the number of bytes that would have written to the buffer
-if there was adequate space, excluding the terminating NUL, or \-1 in case
-an error occurred.
+and
+.Fn snprintb_m
+functions return the number of bytes that would have written to the buffer
+if there was adequate space, excluding the final terminating NUL, or \-1 in
+case an error occurred.
+For
+.Fn snprintb_m ,
+the NUL characters terminating each individual string are included in the
+total number of bytes.
 .Sh EXAMPLES
 Two examples of the old formatting style:
 .Bd -literal -offset indent

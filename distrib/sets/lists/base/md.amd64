@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.48 2009/05/12 18:07:54 plunky Exp $
+# $NetBSD: md.amd64,v 1.49 2009/05/13 02:50:31 pgoyette Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -199,7 +199,7 @@
 ./usr/lib/i386/libusbhid.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libusbhid.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libutil.so.7			base-compat-shlib	compat,pic
-./usr/lib/i386/libutil.so.7.16			base-compat-shlib	compat,pic
+./usr/lib/i386/libutil.so.7.17			base-compat-shlib	compat,pic
 ./usr/lib/i386/libwrap.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libwrap.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libz.so.1			base-compat-shlib	compat,pic
