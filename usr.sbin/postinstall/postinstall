@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.17 2009/05/13 00:40:04 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.18 2009/05/13 00:50:23 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1038,7 +1038,7 @@ do_rc()
 		accounting altqd amd apmd \
 		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
-		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
+		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck ftp_proxy ftpd \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
