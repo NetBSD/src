@@ -1,4 +1,4 @@
-.\" $NetBSD: xi.4,v 1.12 2008/04/30 13:10:55 martin Exp $
+.\" $NetBSD: xi.4,v 1.13 2009/05/13 12:41:09 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,13 +36,15 @@
 .Sh SYNOPSIS
 .Cd "xi* at xirc?"
 .Pp
-Configuration of PHYs may also be necessary.  See
+Configuration of PHYs may also be necessary.
+See
 .Xr mii 4 .
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the Xircom CreditCard family of PCMCIA
-Ethernet adapters.  Supported cards include:
+Ethernet adapters.
+Supported cards include:
 .Pp
 .Bl -item -compact -offset indent
 .It
@@ -76,7 +78,8 @@ Media selection is done using
 .Xr ifconfig 8
 using the standard
 .Xr ifmedia 4
-mechanism.  Refer to those manual pages for more information.
+mechanism.
+Refer to those manual pages for more information.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr mii 4 ,
@@ -91,10 +94,12 @@ The
 device driver appeared in
 .Nx 1.5 .
 .Sh BUGS
-The driver suffers from poor performance.  Even with the 10/100 cards,
-do not expect more than ~450KB/s.  Some 10/100 cards may not autonegotiate
+The driver suffers from poor performance.
+Even with the 10/100 cards, do not expect more than ~450KB/s.
+Some 10/100 cards may not autonegotiate
 reliably and require manual media selection.
 .Pp
 The Xircom multifunction cards which contain both Ethernet and modem
-interfaces are known to have problems.  This is due to the card not
+interfaces are known to have problems.
+This is due to the card not
 reporting itself correctly as a multifunction card.
