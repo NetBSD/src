@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.28 2009/05/06 21:41:59 mhitch Exp $	*/
+/* 	$NetBSD: intr.h,v 1.29 2009/05/13 03:38:08 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -73,7 +73,6 @@ static inline void
 _splset(ipl_t ipl)
 {
 	mtpr(ipl, PR_IPL);
-	__insn_barrier();
 }
 
 static inline ipl_t
