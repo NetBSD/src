@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.147 2009/05/11 19:32:22 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.148 2009/05/13 19:41:34 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3062,4 +3062,9 @@ sys/arch/mac68k/obio/esp.c			1.51 via patch
 	which protects itself against multiple invocation with a
 	simple_lock.  Fixes PR mac68k/38758.
 	[hauke, ticket #1315]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.35
+
+	Do not forget to detach rnd(4) device when removing a xennet device.
+	[jym, ticket #1316]
 
