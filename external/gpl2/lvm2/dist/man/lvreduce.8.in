@@ -3,12 +3,12 @@
 lvreduce \- reduce the size of a logical volume
 .SH SYNOPSIS
 .B lvreduce
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-f/\-\-force]
-[\-h/\-?/\-\-help]
-{\-l/\-\-extents [\-]LogicalExtentsNumber[%{VG|LV|FREE}] |
-\-L/\-\-size [\-]LogicalVolumeSize[kKmMgGtT]}
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolume[Path]
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-f|\-\-force]
+[\-h|\-?|\-\-help]
+{\-l|\-\-extents [\-]LogicalExtentsNumber[%{VG|LV|FREE}] |
+\-L|\-\-size [\-]LogicalVolumeSize[kKmMgGtT]}
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolume[Path]
 .SH DESCRIPTION
 lvreduce allows you to reduce the size of a logical volume.
 Be careful when reducing a logical volume's size, because data in the

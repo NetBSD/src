@@ -1,4 +1,4 @@
-/*	$NetBSD: lvmcache.c,v 1.1.1.1 2008/12/22 00:17:52 haad Exp $	*/
+/*	$NetBSD: lvmcache.c,v 1.1.1.1.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -709,11 +709,14 @@ void lvmcache_del(struct lvmcache_info *info)
 
 static int _lvmcache_update_pvid(struct lvmcache_info *info, const char *pvid)
 {
-	if (!strcmp(info->dev->pvid, pvid))
+	/*
+	 * Nothing to do if already stored with same pvid.
+	 */
+	if (((dm_hash_lookup(_pvid_hash, pvid)) == info) &&
+	    !strcmp(info->dev->pvid, pvid))
 		return 1;
-	if (*info->dev->pvid) {
+	if (*info->dev->pvid)
 		dm_hash_remove(_pvid_hash, info->dev->pvid);
-	}
 	strncpy(info->dev->pvid, pvid, sizeof(info->dev->pvid));
 	if (!dm_hash_insert(_pvid_hash, pvid, info)) {
 		log_error("_lvmcache_update: pvid insertion failed: %s", pvid);
@@ -1138,11 +1141,15 @@ struct lvmcache_info *lvmcache_add(struct labeller *labeller, const char *pvid,
 			//else if (dm_is_dm_major(MAJOR(existing->dev->dev)) &&
 				 //dm_is_dm_major(MAJOR(dev->dev)))
 				 //
-			else
+			else if (!strcmp(pvid_s, existing->dev->pvid)) 
 				log_error("Found duplicate PV %s: using %s not "
 					  "%s", pvid, dev_name(dev),
 					  dev_name(existing->dev));
 		}
+		if (strcmp(pvid_s, existing->dev->pvid)) 
+			log_debug("Updating pvid cache to %s (%s) from %s (%s)",
+				  pvid_s, dev_name(dev),
+				  existing->dev->pvid, dev_name(existing->dev));
 		/* Switch over to new preferred device */
 		existing->dev = dev;
 		info = existing;

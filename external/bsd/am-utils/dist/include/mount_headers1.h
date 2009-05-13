@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_headers1.h,v 1.1.1.1 2008/09/19 20:07:22 christos Exp $	*/
+/*	$NetBSD: mount_headers1.h,v 1.1.1.1.8.1 2009/05/13 18:49:07 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -193,6 +193,10 @@
 #ifdef HAVE_ISOFS_CD9660_CD9660_MOUNT_H
 # include <isofs/cd9660/cd9660_mount.h>
 #endif /* HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
+
+#ifdef HAVE_FS_UDF_UDF_MOUNT_H
+# include <fs/udf/udf_mount.h>
+#endif /* HAVE_FS_UDF_UDF_MOUNT_H */
 
 #ifdef HAVE_SYS_FS_PC_FS_H
 # include <sys/fs/pc_fs.h>

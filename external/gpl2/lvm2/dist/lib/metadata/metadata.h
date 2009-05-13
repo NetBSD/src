@@ -1,4 +1,4 @@
-/*	$NetBSD: metadata.h,v 1.1.1.1 2008/12/22 00:18:08 haad Exp $	*/
+/*	$NetBSD: metadata.h,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -36,7 +36,18 @@
 //#define STRIPE_SIZE_LIMIT ((UINT_MAX >> 2) + 1)
 //#define PV_MIN_SIZE ( 512L * 1024L >> SECTOR_SHIFT)	/* 512 KB in sectors */
 //#define MAX_RESTRICTED_LVS 255	/* Used by FMT_RESTRICTED_LVIDS */
-#define MIRROR_LOG_SIZE 1	/* Extents */
+#define MIRROR_LOG_OFFSET	2	/* sectors */
+
+/*
+ * Ceiling(n / sz)
+ */
+#define dm_div_up(n, sz) (((n) + (sz) - 1) / (sz))
+
+/*
+ * Ceiling(n / size) * size
+ */
+#define dm_round_up(n, sz) (dm_div_up((n), (sz)) * (sz))
+
 
 /* Various flags */
 /* Note that the bits no longer necessarily correspond to LVM1 disk format */
@@ -128,6 +139,11 @@ struct metadata_area_ops {
 	 * Returns number of free sectors in given metadata area.
 	 */
 	uint64_t (*mda_free_sectors) (struct metadata_area *mda);
+
+	/*
+	 * Returns number of total sectors in given metadata area.
+	 */
+	uint64_t (*mda_total_sectors) (struct metadata_area *mda);
 
 	/*
 	 * Check if metadata area belongs to vg
@@ -321,6 +337,11 @@ int lv_split_segment(struct logical_volume *lv, uint32_t le);
 int add_seg_to_segs_using_this_lv(struct logical_volume *lv, struct lv_segment *seg);
 int remove_seg_from_segs_using_this_lv(struct logical_volume *lv, struct lv_segment *seg);
 struct lv_segment *get_only_segment_using_this_lv(struct logical_volume *lv);
+
+/*
+ * Count LVs that are visible from user's perspective.
+ */
+unsigned displayable_lvs_in_vg(const struct volume_group *vg);
 
 /*
  * For internal metadata caching.

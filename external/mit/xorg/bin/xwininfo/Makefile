@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.10.1 2009/05/13 18:53:25 jym Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xwininfo
-SRCS=	xwininfo.c dsimple.c
+SRCS=	xwininfo.c clientwin.c dsimple.c
 
 XWININFODIR=	${X11SRCDIR.${PROG}}
 CPPFLAGS+=-I${XWININFODIR} -I${XWININFODIR}/../include

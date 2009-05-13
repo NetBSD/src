@@ -1,0 +1,7 @@
+Private-key-format: v1.2
+Algorithm: 6 (?)
+Prime(p): 50c8zvi1zrCvWeR2s851pF1lyqoi7w+KlRmWrsEyyGS+HmnxyQDaY1+TYi+gJzHVS1kVv98x1ggg8Gb1EtNp+Q==
+Subprime(q): zVTFuNMY3m0bMsXC3ULBHHiaUM8=
+Base(g): TVs1TYPKiksqFlHn7pI3m7tHu2VAIaWZ6wTjIAPaQsFgC8GhJeA+E+f9QNBbPTzHchphW9VxBxwECC57g2H9EQ==
+Private_value(x): LnevSOPwRhakaa7vYh1YBwGWIh8=
+Public_value(y): NwN9ucIKHYWeFToIQrCqIxfrtA1y7lmGOoeilp+MrraOjTAW+YV0g2mDE4IiWDuTEu/XfO+iyDycr95pbJX8tQ==

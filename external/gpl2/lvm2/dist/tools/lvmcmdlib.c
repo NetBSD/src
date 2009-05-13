@@ -1,4 +1,4 @@
-/*	$NetBSD: lvmcmdlib.c,v 1.1.1.1 2008/12/22 00:19:04 haad Exp $	*/
+/*	$NetBSD: lvmcmdlib.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -30,13 +30,14 @@
 #include <time.h>
 #include <sys/resource.h>
 
-void *cmdlib_lvm2_init(unsigned is_static)
+void *cmdlib_lvm2_init(unsigned static_compile)
 {
 	struct cmd_context *cmd;
 
 	lvm_register_commands();
 
-	if (!(cmd = init_lvm(is_static)))
+	init_is_static(static_compile);
+	if (!(cmd = init_lvm()))
 		return NULL;
 
 	return (void *) cmd;

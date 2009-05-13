@@ -1,19 +1,20 @@
-.\"	$NetBSD: lvremove.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"    $NetBSD: lvremove.8,v 1.1.1.1.2.1 2009/05/13 18:52:44 jym Exp $
 .\"
-.TH LVREMOVE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVREMOVE 8 "LVM TOOLS 2.02.44-cvs (02-17-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvremove \- remove a logical volume
 .SH SYNOPSIS
 .B lvremove
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-f/\-\-force]
-[\-h/\-?/\-\-help] 
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-f|\-\-force]
+[\-h|\-?|\-\-help] 
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
 .SH DESCRIPTION
 \fBlvremove\fP removes one or more logical volumes.
 Confirmation will be requested before deactivating any active logical
 volume prior to removal.  Logical volumes cannot be deactivated
 or removed while they are open (e.g. if they contain a mounted filesystem).
+Removing an origin logical volume will also remove all dependent snapshots.
 .sp
 If the logical volume is clustered then it must be deactivated on all
 nodes in the cluster before it can be removed. A single lvchange command

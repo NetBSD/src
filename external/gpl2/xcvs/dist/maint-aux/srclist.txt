@@ -1,0 +1,69 @@
+# Files for which we are not the source.
+
+# In the "Local Modifications" fields below, "I" means the source files were
+# imported using the CVS import command and "NI" means CVS import was not used.
+
+GNU ZLib
+Stream compression and decompression libraries.
+License: zlib/README (Public Domain, but do not misrepresent source.)
+Bug Report Email: bug-zlib@gnu.org
+GNU Web Page: http://www.gnu.org/directory/GNU/zlib.html
+Last Web Location: http://www.zlib.net
+Previous Web Location: http://www.gzip.org/zlib
+
+Imported files					CVS		Local
+						Directory	Modifications
+----------------------------------------------- --------------- ---------------
+$GNUZLIB/*					zlib		build scripts
+								only I
+
+
+
+GNU Diffutils
+License: GPL
+Bug Report Email: bug-gnu-utils@gnu.org
+GNU Web Page: http://www.gnu.org/directory/GNU/diffutils.html
+Project Web Page: http://savannah.gnu.org/projects/diffutils/
+
+Imported files					CVS		Local
+						Directory	Modifications
+----------------------------------------------- --------------- ---------------
+$GNUDIFF/*					diff		yes NI
+
+
+
+GNULib
+Portable implementations of useful functions found on some platforms but not
+others.  We update these files directly from the GNULIB CVS repository.
+Only files which cannot be autoupdated by running the gnulib-update script in
+this directory are tracked here.
+License: GPL
+Bug Report Email: bug-gnulib@gnu.org
+Project Web Page: http://savannah.gnu.org/projects/gnulib
+CVS Repository (via SSH): :ext:anoncvs@savannah.gnu.org/cvsroot/gnulib
+
+Imported files					CVS		Local
+						Directory	Modifications
+----------------------------------------------- --------------- ---------------
+# The following error module is only half-imported to support getdate.y's test
+# hooks when xmalloc, which calls error(), is needed.  We cannot completely
+# import the error module since it would conflict with CVS's error() function,
+# which is needed to send errors across the connection to the client.
+# $GNULIB/modules/error
+$GNULIB/lib/error.c				lib		no NI
+$GNULIB/lib/error.h				lib		no NI
+$GNULIB/m4/strerror_r.m4			lib		no NI
+
+
+
+Windows stat() substitute which works around bass ackwards file time problems
+on Windows.
+License: GPL
+Bug Report Email: ???
+Project Web Page: http://www.codeproject.com/datetime/dstbugs.asp
+
+Imported files					CVS		Local
+						Directory	Modifications
+----------------------------------------------- --------------- ---------------
+JmgStat.c                                       windows-NT      yes NI
+JmgStat.h                                       windows-NT      yes NI

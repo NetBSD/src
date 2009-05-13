@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/01/24 01:15:26 agc Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2009/05/13 18:53:23 jym Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -12,16 +12,18 @@
 SUBDIR+= ../bsd/atf/lib
 .endif
 
+.if (${MKCRYPTO} != "no")
+SUBDIR+= ../../crypto/external/lib .WAIT
+
 .if (${MKLDAP} != "no")
 SUBDIR+= ../bsd/openldap/lib
 .endif
-
-.if (${MKCRYPTO} != "no")
-SUBDIR+= ../../crypto/external/lib
 .endif
 
 SUBDIR+= ../bsd/fetch/lib
 SUBDIR+= ../bsd/libarchive/lib
 SUBDIR+= ../bsd/am-utils/lib
+SUBDIR+= ../bsd/bind/lib
+SUBDIR+= ../bsd/file/lib
 
 .include <bsd.subdir.mk>

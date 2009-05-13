@@ -1,4 +1,4 @@
-/*	$NetBSD: vgrename.c,v 1.1.1.1 2008/12/22 00:19:09 haad Exp $	*/
+/*	$NetBSD: vgrename.c,v 1.1.1.1.2.1 2009/05/13 18:52:48 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -124,24 +124,28 @@ static int vg_rename_path(struct cmd_context *cmd, const char *old_vg_path,
 	/* Change the volume group name */
 	vg_rename(cmd, vg, vg_name_new);
 
+	/* store it on disks */
+	log_verbose("Writing out updated volume group");
+	if (!vg_write(vg) || !vg_commit(vg)) {
+		goto error;
+	}
+
 	sprintf(old_path, "%s%s", dev_dir, vg_name_old);
 	sprintf(new_path, "%s%s", dev_dir, vg_name_new);
 
 	if (activation() && dir_exists(old_path)) {
 		log_verbose("Renaming \"%s\" to \"%s\"", old_path, new_path);
+
 		if (test_mode())
 			log_verbose("Test mode: Skipping rename.");
-		else if (rename(old_path, new_path)) {
-			log_error("Renaming \"%s\" to \"%s\" failed: %s",
-				  old_path, new_path, strerror(errno));
-			goto error;
-		}
-	}
 
-	/* store it on disks */
-	log_verbose("Writing out updated volume group");
-	if (!vg_write(vg) || !vg_commit(vg)) {
-		goto error;
+		else if (lvs_in_vg_activated_by_uuid_only(vg)) {
+			if (!vg_refresh_visible(cmd, vg)) {
+				log_error("Renaming \"%s\" to \"%s\" failed", 
+					old_path, new_path);
+				goto error;
+			}
+		}
 	}
 
 /******* FIXME Rename any active LVs! *****/

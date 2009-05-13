@@ -1,4 +1,4 @@
-/*	$NetBSD: vgcreate.c,v 1.1.1.1 2008/12/22 00:19:09 haad Exp $	*/
+/*	$NetBSD: vgcreate.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -48,11 +48,22 @@ int vgcreate(struct cmd_context *cmd, int argc, char **argv)
 	if (validate_vg_create_params(cmd, &vp_new))
 	    return EINVALID_CMD_LINE;
 
+	if (!lock_vol(cmd, VG_ORPHANS, LCK_VG_WRITE)) {
+		log_error("Can't get lock for orphan PVs");
+		return ECMD_FAILED;
+	}
+
+	if (!lock_vol(cmd, vp_new.vg_name, LCK_VG_WRITE | LCK_NONBLOCK)) {
+		log_error("Can't get lock for %s", vp_new.vg_name);
+		unlock_vg(cmd, VG_ORPHANS);
+		return ECMD_FAILED;
+	}
+
 	/* Create the new VG */
 	if (!(vg = vg_create(cmd, vp_new.vg_name, vp_new.extent_size,
 			     vp_new.max_pv, vp_new.max_lv, vp_new.alloc,
 			     argc - 1, argv + 1)))
-		return ECMD_FAILED;
+		goto bad;
 
 	if (vp_new.max_lv != vg->max_lv)
 		log_warn("WARNING: Setting maxlogicalvolumes to %d "
@@ -65,18 +76,18 @@ int vgcreate(struct cmd_context *cmd, int argc, char **argv)
 	if (arg_count(cmd, addtag_ARG)) {
 		if (!(tag = arg_str_value(cmd, addtag_ARG, NULL))) {
 			log_error("Failed to get tag");
-			return ECMD_FAILED;
+			goto bad;
 		}
 
 		if (!(vg->fid->fmt->features & FMT_TAGS)) {
 			log_error("Volume group format does not support tags");
-			return ECMD_FAILED;
+			goto bad;
 		}
 
 		if (!str_list_add(cmd->mem, &vg->tags, tag)) {
 			log_error("Failed to add tag %s to volume group %s",
 				  tag, vp_new.vg_name);
-			return ECMD_FAILED;
+			goto bad;
 		}
 	}
 
@@ -90,28 +101,13 @@ int vgcreate(struct cmd_context *cmd, int argc, char **argv)
 			clustered_message = "Non-clustered ";
 	}
 
-	if (!lock_vol(cmd, VG_ORPHANS, LCK_VG_WRITE)) {
-		log_error("Can't get lock for orphan PVs");
-		return ECMD_FAILED;
-	}
-
-	if (!lock_vol(cmd, vp_new.vg_name, LCK_VG_WRITE | LCK_NONBLOCK)) {
-		log_error("Can't get lock for %s", vp_new.vg_name);
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
-	}
-
 	if (!archive(vg)) {
-		unlock_vg(cmd, vp_new.vg_name);
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
+		goto bad;
 	}
 
 	/* Store VG on disk(s) */
 	if (!vg_write(vg) || !vg_commit(vg)) {
-		unlock_vg(cmd, vp_new.vg_name);
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
+		goto bad;
 	}
 
 	unlock_vg(cmd, vp_new.vg_name);
@@ -123,4 +119,9 @@ int vgcreate(struct cmd_context *cmd, int argc, char **argv)
 		  clustered_message, *clustered_message ? 'v' : 'V', vg->name);
 
 	return ECMD_PROCESSED;
+
+bad:
+	unlock_vg(cmd, vp_new.vg_name);
+	unlock_vg(cmd, VG_ORPHANS);
+	return ECMD_FAILED;
 }

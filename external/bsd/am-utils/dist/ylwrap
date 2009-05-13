@@ -1,10 +1,10 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2005-02-02.22
+scriptversion=2007-11-22.22
 
-# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005
-#   Free Software Foundation, Inc.
+# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005,
+# 2007  Free Software Foundation, Inc.
 #
 # Written by Tom Tromey <tromey@cygnus.com>.
 #
@@ -20,7 +20,8 @@ scriptversion=2005-02-02.22
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
 
 # As a special exception to the GNU General Public License, if you
 # distribute this file as part of a program that contains a
@@ -53,11 +54,6 @@ Wrapper for lex/yacc invocations, renaming files as desired.
   ARGS are passed to PROG
 
 Any number of OUTPUT,DESIRED pairs may be used.
-
-This wrapper will prefix each conflicting yacc/lex symbol with a unique name
-produced from INPUT.  For example, if INPUT is foo_parse.y, then yyparse()
-becomes foo_parse().  This requires that both your .l and corresponding .y
-files have the same prefix (e.g., foo_parse.y and foo_tok.l).
 
 Report bugs to <bug-automake@gnu.org>.
 EOF
@@ -105,14 +101,14 @@ esac
 # FIXME: add hostname here for parallel makes that run commands on
 # other machines.  But that might take us over the 14-char limit.
 dirname=ylwrap$$
-trap "cd `pwd`; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
+trap "cd '`pwd`'; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
 mkdir $dirname || exit 1
 
 cd $dirname
 
 case $# in
-  0) $prog "$input" ;;
-  *) $prog "$@" "$input" ;;
+  0) "$prog" "$input" ;;
+  *) "$prog" "$@" "$input" ;;
 esac
 ret=$?
 
@@ -180,6 +176,7 @@ if test $ret -eq 0; then
       TARGET=`echo "$2" | sed \
             -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'\
             -e 's/[^ABCDEFGHIJKLMNOPQRSTUVWXYZ]/_/g'`
+
       prefix=`echo $input | sed \
 		-e 's,^.*/,,g' \
 		-e 's/_parse.[yl]$/_/g' \

@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-functions.c,v 1.1.1.1 2008/12/22 00:18:52 haad Exp $	*/
+/*	$NetBSD: lvm-functions.c,v 1.1.1.1.2.1 2009/05/13 18:52:41 jym Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -726,7 +726,7 @@ void lvm_do_backup(const char *vgname)
 /* Called to initialise the LVM context of the daemon */
 int init_lvm(int using_gulm)
 {
-	if (!(cmd = create_toolcontext(NULL, 0, 1))) {
+	if (!(cmd = create_toolcontext(1))) {
 		log_error("Failed to allocate command context");
 		return 0;
 	}
@@ -734,11 +734,6 @@ int init_lvm(int using_gulm)
 	/* Use LOG_DAEMON for syslog messages instead of LOG_USER */
 	init_syslog(LOG_DAEMON);
 	openlog("clvmd", LOG_PID, LOG_DAEMON);
-	init_debug(cmd->current_settings.debug);
-	init_verbose(cmd->current_settings.verbose + VERBOSE_BASE_LEVEL);
-	set_activation(cmd->current_settings.activation);
-	archive_enable(cmd, cmd->current_settings.archive);
-	backup_enable(cmd, cmd->current_settings.backup);
 	cmd->cmd_line = (char *)"clvmd";
 
 	/* Check lvm.conf is setup for cluster-LVM */

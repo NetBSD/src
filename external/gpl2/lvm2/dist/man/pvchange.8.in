@@ -4,12 +4,12 @@ pvchange \- change attributes of a physical volume
 .SH SYNOPSIS
 .B pvchange
 [\-\-addtag Tag]
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] 
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] 
 [\-\-deltag Tag]
-[\-h/\-?/\-\-help]
-[\-t/\-\-test]
-[\-v/\-\-verbose] [\-a/\-\-all] [\-x/\-\-allocatable y/n]
-[\-u/\-\-uuid] [PhysicalVolumePath...]
+[\-h|\-?|\-\-help]
+[\-t|\-\-test]
+[\-v|\-\-verbose] [\-a|\-\-all] [\-x|\-\-allocatable y|n]
+[\-u|\-\-uuid] [PhysicalVolumePath...]
 .SH DESCRIPTION
 pvchange allows you to change the allocation permissions of one or
 more physical volumes.
@@ -23,7 +23,7 @@ physical volumes are searched for and used.
 .I \-u, \-\-uuid
 Generate new random UUID for specified physical volumes.
 .TP
-.I \-x, \-\-allocatable y/n
+.I \-x, \-\-allocatable y|n
 Enable or disable allocation of physical extents on this physical volume.
 .SH Example
 "pvchange -x n /dev/sdk1" disallows the allocation of physical extents

@@ -1,4 +1,4 @@
-/*	$NetBSD: toolcontext.h,v 1.1.1.1 2008/12/22 00:17:53 haad Exp $	*/
+/*	$NetBSD: toolcontext.h,v 1.1.1.1.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -64,11 +64,10 @@ struct cmd_context {
 	const char *hostname;
 	const char *kernel_vsn;
 
+	unsigned rand_seed;
 	char *cmd_line;
 	struct command *command;
-	struct arg *args;
 	char **argv;
-	unsigned is_static:1;	/* Static binary? */
 	unsigned is_long_lived:1;	/* Optimises persistent_filter handling */
 	unsigned handles_missing_pvs:1;
 	unsigned partial_activation:1;
@@ -97,7 +96,7 @@ struct cmd_context {
 	char sysfs_dir[PATH_MAX];
 };
 
-struct cmd_context *create_toolcontext(struct arg *the_args, unsigned is_static, unsigned is_long_lived);
+struct cmd_context *create_toolcontext(unsigned is_long_lived);
 void destroy_toolcontext(struct cmd_context *cmd);
 int refresh_toolcontext(struct cmd_context *cmd);
 int config_files_changed(struct cmd_context *cmd);

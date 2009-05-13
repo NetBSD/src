@@ -3,8 +3,8 @@
 vgmknodes \- recreate volume group directory and logical volume special files
 .SH SYNOPSIS
 .B vgmknodes
-[\-d/\-\-debug] [\-h/\-?/\-\-help] 
-[\-v/\-\-verbose]
+[\-d|\-\-debug] [\-h|\-?|\-\-help] 
+[\-v|\-\-verbose]
 [[VolumeGroupName | LogicalVolumePath]...]
 .SH DESCRIPTION
 Checks the LVM2 special files in /dev that are needed for active 

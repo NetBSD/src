@@ -1,4 +1,4 @@
-/*	$NetBSD: lvdisplay.c,v 1.1.1.1 2008/12/22 00:19:03 haad Exp $	*/
+/*	$NetBSD: lvdisplay.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -20,7 +20,7 @@
 static int _lvdisplay_single(struct cmd_context *cmd, struct logical_volume *lv,
 			     void *handle)
 {
-	if (!arg_count(cmd, all_ARG) && !lv_is_visible(lv))
+	if (!arg_count(cmd, all_ARG) && !lv_is_displayable(lv))
 		return ECMD_PROCESSED;
 
 	if (arg_count(cmd, colon_ARG))

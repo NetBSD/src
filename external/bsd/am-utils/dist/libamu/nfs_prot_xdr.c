@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_xdr.c,v 1.1.1.1 2008/09/19 20:07:22 christos Exp $	*/
+/*	$NetBSD: nfs_prot_xdr.c,v 1.1.1.1.8.1 2009/05/13 18:49:07 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,6 +54,17 @@ bool_t
 xdr_amq_string(XDR *xdrs, amq_string *objp)
 {
   if (!xdr_string(xdrs, objp, AMQ_STRLEN)) {
+    return (FALSE);
+  }
+  return (TRUE);
+}
+
+
+bool_t
+xdr_amq_sync_umnt(XDR *xdrs, amq_sync_umnt *objp)
+{
+
+  if (!xdr_opaque(xdrs, (char *) objp, sizeof(*objp))) {
     return (FALSE);
   }
   return (TRUE);

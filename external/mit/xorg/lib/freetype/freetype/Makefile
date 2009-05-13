@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/10/04 02:29:15 cube Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 2009/05/13 18:53:25 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -8,12 +8,12 @@ SUBDIR=	config internal
 
 INCSDIR=${X11INCDIR}/freetype2/freetype
 
-INCS=	freetype.h ftbbox.h ftbdf.h ftbitmap.h ftcache.h ftchapters.h ftcid.h \
-	fterrdef.h fterrors.h ftgasp.h ftglyph.h ftgxval.h ftgzip.h ftimage.h \
-	ftincrem.h ftlcdfil.h ftlist.h ftlzw.h ftmac.h ftmm.h ftmodapi.h \
-	ftmoderr.h ftotval.h ftoutln.h ftpfr.h ftrender.h ftsizes.h \
-	ftsnames.h ftstroke.h ftsynth.h ftsystem.h fttrigon.h fttypes.h \
-	ftwinfnt.h ftxf86.h \
+INCS=	freetype.h ftadvanc.h ftbbox.h ftbdf.h ftbitmap.h ftcache.h \
+	ftchapters.h ftcid.h fterrdef.h fterrors.h ftgasp.h ftglyph.h \
+	ftgxval.h ftgzip.h ftimage.h ftincrem.h ftlcdfil.h ftlist.h \
+	ftlzw.h ftmac.h ftmm.h ftmodapi.h ftmoderr.h ftotval.h ftoutln.h \
+	ftpfr.h ftrender.h ftsizes.h ftsnames.h ftstroke.h ftsynth.h \
+	ftsystem.h fttrigon.h fttypes.h ftwinfnt.h ftxf86.h \
 	t1tables.h ttnameid.h tttables.h tttags.h ttunpat.h
 
 SCRIPTS=	freetype-config

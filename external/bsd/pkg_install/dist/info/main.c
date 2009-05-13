@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $");
 
 /*
  *
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $");
 #include "lib.h"
 #include "info.h"
 
-static const char Options[] = ".aBbcDde:E:fFhIiK:kLl:mNnpQ:qRsSuvVX";
+static const char Options[] = ".aBbcDde:E:fFhIiK:kLl:mNnpQ:qrRsSuvVX";
 
 int     Flags = 0;
 enum which Which = WHICH_LIST;
@@ -61,7 +61,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n%s\n%s\n",
-	    "usage: pkg_info [-BbcDdFfhIikLmNnpqRSsVvX] [-e package] [-E package]",
+	    "usage: pkg_info [-BbcDdFfhIikLmNnpqrRSsVvX] [-e package] [-E package]",
 	    "                [-K pkg_dbdir] [-l prefix] pkg-name ...",
 	    "       pkg_info [-a | -u] [flags]",
 	    "       pkg_info [-Q variable] pkg-name ...");
@@ -172,6 +172,10 @@ main(int argc, char **argv)
 			Quiet = TRUE;
 			break;
 
+		case 'r':
+			Flags |= SHOW_FULL_REQBY;
+			break;
+
 		case 'R':
 			Flags |= SHOW_REQBY;
 			break;
@@ -241,14 +245,6 @@ main(int argc, char **argv)
 		warnx("can't use both -a/-u and package name");
 		usage();
 	}
-
-	/* Don't do FTP stuff when operating on all pkgs */
-	if (Which != WHICH_LIST && getenv("PKG_PATH") != 0) {
-		warnx("disabling PKG_PATH when operating on all packages.");
-		unsetenv("PKG_PATH");
-	}
-
-	path_create(getenv("PKG_PATH"));
 
 	/* Set some reasonable defaults */
 	if (!Flags)

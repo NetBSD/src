@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_subr.c,v 1.1.1.1 2008/09/19 20:07:15 christos Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.1.1.1.8.1 2009/05/13 18:49:02 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,16 +82,68 @@ amqproc_mnttree_1_svc(voidp argp, struct svc_req *rqstp)
 /*
  * Unmount a single node
  */
-voidp
+int *
 amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp)
 {
-  static char res;
+  static int res = AMQ_UMNT_OK;
   am_node *mp = find_ap(*(char **) argp);
 
   if (mp)
     forcibly_timeout_mp(mp);
 
-  return (voidp) &res;
+  return &res;
+}
+
+
+/*
+ * Synchronously unmount a single node - parent side.
+ */
+int *
+amqproc_sync_umnt_1_svc_parent(voidp argp, struct svc_req *rqstp)
+{
+  amqproc_umnt_1_svc(argp, rqstp);
+  return NULL;
+}
+
+
+/*
+ * Synchronously unmount a single node - child side.
+ */
+amq_sync_umnt *
+amqproc_sync_umnt_1_svc_child(voidp argp, struct svc_req *rqstp)
+{
+  static amq_sync_umnt rv;
+  amq_sync_umnt buf;
+  ssize_t n;
+
+  am_node *mp = find_ap(*(char **) argp);
+
+  memset(&rv, 0, sizeof(rv));
+  rv.au_etype = AMQ_UMNT_READ;
+  if (mp && mp->am_fd[0] >= 0) {
+    n = read(mp->am_fd[0], &buf, sizeof(buf));
+    if (n == sizeof(buf))
+      rv = buf;
+  }
+  return &rv;
+}
+
+
+/*
+ * Synchronously unmount a single node - use if we can't fork (asynchronous).
+ */
+amq_sync_umnt *
+amqproc_sync_umnt_1_svc_async(voidp argp, struct svc_req *rqstp)
+{
+  static amq_sync_umnt rv;
+
+  memset(&rv, 0, sizeof(rv));
+  rv.au_etype = AMQ_UMNT_FORK;
+  rv.au_errno = errno;
+
+  amqproc_umnt_1_svc(argp, rqstp);
+
+  return &rv;
 }
 
 

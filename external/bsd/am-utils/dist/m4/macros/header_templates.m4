@@ -97,6 +97,9 @@ AH_TEMPLATE([HAVE_FS_HSFS],
 AH_TEMPLATE([HAVE_FS_CDFS],
 [Define if have CDFS filesystem])
 
+AH_TEMPLATE([HAVE_FS_UDF],
+[Define if have UDF filesystem])
+
 AH_TEMPLATE([HAVE_FS_TFS],
 [Define if have TFS filesystem])
 
@@ -150,6 +153,9 @@ AH_TEMPLATE([MOUNT_TYPE_LOFS],
 
 AH_TEMPLATE([MOUNT_TYPE_CDFS],
 [Mount(2) type/name for CDFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_UDF],
+[Mount(2) type/name for UDF filesystem])
 
 AH_TEMPLATE([MOUNT_TYPE_TFS],
 [Mount(2) type/name for TFS filesystem])
@@ -207,6 +213,9 @@ AH_TEMPLATE([MNTTAB_TYPE_LOFS],
 
 AH_TEMPLATE([MNTTAB_TYPE_CDFS],
 [Mount-table entry name for CDFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_UDF],
+[Mount-table entry name for UDF filesystem])
 
 AH_TEMPLATE([MNTTAB_TYPE_TFS],
 [Mount-table entry name for TFS filesystem])
@@ -728,6 +737,9 @@ AH_TEMPLATE([MNT2_CDFS_OPT_RRCASEINS],
 AH_TEMPLATE([MNT2_CDFS_OPT_RRIP],
 [Use Rock Ridge Interchange Protocol (RRIP) extensions])
 
+AH_TEMPLATE([MNT2_UDF_OPT_CLOSESESSION],
+[Close session when unmounting])
+
 AH_TEMPLATE([MNT2_PCFS_OPT_LONGNAME],
 [Force Win95 long names])
 
@@ -883,6 +895,9 @@ AH_TEMPLATE([lofs_args_t],
 
 AH_TEMPLATE([cdfs_args_t],
 [Define a type for the cdfs_args structure])
+
+AH_TEMPLATE([udf_args_t],
+[Define a type for the udf_args structure])
 
 AH_TEMPLATE([mfs_args_t],
 [Define a type for the mfs_args structure])

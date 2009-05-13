@@ -1,4 +1,4 @@
-/*	$NetBSD: clvmd-comms.h,v 1.1.1.1 2008/12/22 00:18:49 haad Exp $	*/
+/*	$NetBSD: clvmd-comms.h,v 1.1.1.1.2.1 2009/05/13 18:52:40 jym Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -93,6 +93,23 @@ struct cluster_ops *init_cman_cluster(void);
 #    define MAX_CSID_LEN sizeof(int)
 #  endif
 struct cluster_ops *init_openais_cluster(void);
+#endif
+
+#ifdef USE_COROSYNC
+#  include <corosync/corotypes.h>
+#  define COROSYNC_CSID_LEN (sizeof(int))
+#  define COROSYNC_MAX_CLUSTER_MESSAGE         65535
+#  define COROSYNC_MAX_CLUSTER_MEMBER_NAME_LEN CS_MAX_NAME_LENGTH
+#  ifndef MAX_CLUSTER_MEMBER_NAME_LEN
+#    define MAX_CLUSTER_MEMBER_NAME_LEN       CS_MAX_NAME_LENGTH
+#  endif
+#  ifndef CMAN_MAX_CLUSTER_MESSAGE
+#    define CMAN_MAX_CLUSTER_MESSAGE          65535
+#  endif
+#  ifndef MAX_CSID_LEN
+#    define MAX_CSID_LEN sizeof(int)
+#  endif
+struct cluster_ops *init_corosync_cluster(void);
 #endif
 
 

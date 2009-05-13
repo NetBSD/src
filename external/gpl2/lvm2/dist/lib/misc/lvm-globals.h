@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-globals.h,v 1.1.1.1 2008/12/22 00:18:13 haad Exp $	*/
+/*	$NetBSD: lvm-globals.h,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -29,8 +29,6 @@ void init_full_scan_done(int level);
 void init_trust_cache(int trustcache);
 void init_debug(int level);
 void init_cmd_name(int status);
-void init_msg_prefix(const char *prefix);
-void init_indent(int indent);
 void init_ignorelockingfailure(int level);
 void init_lockingfailed(int level);
 void init_security_level(int level);
@@ -38,6 +36,7 @@ void init_mirror_in_sync(int in_sync);
 void init_dmeventd_monitor(int reg);
 void init_ignore_suspended_devices(int ignore);
 void init_error_message_produced(int produced);
+void init_is_static(unsigned value);
 
 void set_cmd_name(const char *cmd_name);
 
@@ -54,6 +53,7 @@ int security_level(void);
 int mirror_in_sync(void);
 int ignore_suspended_devices(void);
 const char *log_command_name(void);
+unsigned is_static(void);
 
 #define DMEVENTD_MONITOR_IGNORE -1
 int dmeventd_monitor_mode(void);

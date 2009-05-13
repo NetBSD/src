@@ -1,15 +1,15 @@
-.\"	$NetBSD: lvconvert.8,v 1.1.1.1 2008/12/22 00:18:22 haad Exp $
+.\"    $NetBSD: lvconvert.8,v 1.1.1.1.2.1 2009/05/13 18:52:44 jym Exp $
 .\"
-.TH LVCONVERT 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Red Hat, Inc" \" -*- nroff -*-
+.TH LVCONVERT 8 "LVM TOOLS 2.02.44-cvs (02-17-09)" "Red Hat, Inc" \" -*- nroff -*-
 .SH NAME
 lvconvert \- convert a logical volume from linear to mirror or snapshot
 .SH SYNOPSIS
 .B lvconvert
-\-m/\-\-mirrors Mirrors [\-\-mirrorlog {disk|core}] [\-\-corelog] [\-R/\-\-regionsize MirrorLogRegionSize]
-[\-A/\-\-alloc AllocationPolicy]
-[\-b/\-\-background] [\-i/\-\-interval Seconds]
-[\-h/\-?/\-\-help]
-[\-v/\-\-verbose]
+\-m|\-\-mirrors Mirrors [\-\-mirrorlog {disk|core}] [\-\-corelog] [\-R|\-\-regionsize MirrorLogRegionSize]
+[\-A|\-\-alloc AllocationPolicy]
+[\-b|\-\-background] [\-i|\-\-interval Seconds]
+[\-h|\-?|\-\-help]
+[\-v|\-\-verbose]
 [\-\-version]
 .br
 LogicalVolume[Path] [PhysicalVolume[Path]...]
@@ -17,10 +17,10 @@ LogicalVolume[Path] [PhysicalVolume[Path]...]
 
 .br
 .B lvconvert
-\-s/\-\-snapshot [\-c/\-\-chunksize ChunkSize]
-[\-h/\-?/\-\-help]
-[\-v/\-\-verbose]
-[\-Z/\-\-zero y/n]
+\-s|\-\-snapshot [\-c|\-\-chunksize ChunkSize]
+[\-h|\-?|\-\-help]
+[\-v|\-\-verbose]
+[\-Z|\-\-zero y|n]
 [\-\-version]
 .br
 OriginalLogicalVolume[Path] SnapshotLogicalVolume[Path]
@@ -70,7 +70,7 @@ existing logical volume as its origin.
 .I \-c, \-\-chunksize ChunkSize
 Power of 2 chunk size for the snapshot logical volume between 4k and 512k.
 .TP
-.I \-Z, \-\-zero y/n
+.I \-Z, \-\-zero y|n
 Controls zeroing of the first KB of data in the snapshot.
 If the volume is read-only the snapshot will not be zeroed.
 .br

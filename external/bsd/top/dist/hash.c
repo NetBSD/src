@@ -104,14 +104,14 @@ string_hash(hash_table *ht, char *key)
     return (s % ht->num_buckets);
 }
 
-void ll_init(llist *q)
+static void ll_init(llist *q)
 
 {
     q->head = NULL;
     q->count = 0;
 }
 
-llistitem *ll_newitem(int size)
+static llistitem *ll_newitem(int size)
 
 {
     llistitem *qi;
@@ -121,13 +121,13 @@ llistitem *ll_newitem(int size)
     return qi;
 }
 
-void ll_freeitem(llistitem *li)
+static void ll_freeitem(llistitem *li)
 
 {
     free(li);
 }
 
-void ll_add(llist *q, llistitem *new)
+static void ll_add(llist *q, llistitem *new)
 
 {
     new->next = q->head;
@@ -135,7 +135,7 @@ void ll_add(llist *q, llistitem *new)
     q->count++;
 }
 
-void ll_extract(llist *q, llistitem *qi, llistitem *last)
+static void ll_extract(llist *q, llistitem *qi, llistitem *last)
 
 {
     if (last == NULL)
@@ -151,28 +151,31 @@ void ll_extract(llist *q, llistitem *qi, llistitem *last)
 }
 
 #define LL_FIRST(q) ((q)->head)
-llistitem *
+#define LL_NEXT(q, qi)  ((qi) != NULL ? (qi)->next : NULL)
+#define LL_ISEMPTY(ll)  ((ll)->count == 0)
+
+#ifdef notdef
+static llistitem *
 ll_first(llist *q)
 
 {
     return q->head;
 }
 
-#define LL_NEXT(q, qi)  ((qi) != NULL ? (qi)->next : NULL)
-llistitem *
+static llistitem *
 ll_next(llist *q, llistitem *qi)
 
 {
     return (qi != NULL ? qi->next : NULL);
 }
 
-#define LL_ISEMPTY(ll)  ((ll)->count == 0)
-int
+static int
 ll_isempty(llist *ll)
 
 {
     return (ll->count == 0);
 }
+#endif
 
 /*
  * hash_table *hash_create(int num)
@@ -217,7 +220,8 @@ hash_create(int num)
  * Return total number of elements contained in hash table.
  */
 
-unsigned int
+#ifdef notdef
+static unsigned int
 hash_count(hash_table *ht)
 
 {
@@ -234,6 +238,7 @@ hash_count(hash_table *ht)
 
     return cnt;
 }
+#endif
 
 /*
  * void hash_sizeinfo(unsigned int *sizes, int max, hash_table *ht)

@@ -23,3 +23,8 @@ diff -u actual expected
 # Need mdadm for some pvcreate tests
 # verify mdadm is installed and in path (needed for pvcreate tests) ... is it?
 which mdadm
+
+mknod $G_root_/dev/null c 1 3 ||
+  error "Can't create nodes on filesystem"
+echo >$G_root_/dev/null || 
+  error "Filesystem for tests does not allow using device nodes (check nodev)"

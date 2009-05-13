@@ -1,6 +1,65 @@
+2009-03-20  Christos Zoulas <christos@zoulas.com>
+
+	* Fix largefile re-definitions
+
+	* Fix compilation error caused in previous patch
+
+2009-02-19  Christos Zoulas <christos@zoulas.com>
+
+	* Add a synchronous unmount amq rpc that will wait for the remote
+	  filesystem to be unmounted, or return an error. Enabled by amq -uu
+
+2009-01-11  Erez Zadok  <ezk@fsl.cs.sunysb.edu>
+
+	* amd/ops_udf.c: don't define functions/variables which may not be
+	used.
+
+	* amd/ops_tmpfs.c (mount_tmpfs): force gcc not to complain about
+	unused variables.
+
+	* config.guess.long: properly support Fedora Core.
+
+2009-01-09  Christos Zoulas <christos@zoulas.com>
+
+	* Fix nfs mounts on linux 2.6.26 by explicitly initializing context.
+
+	* Treat an empty sublink as an unset sublink; this allows us to
+	  say sublink:=; in a spec to override the default. (This produces
+	  Bad selector error, but it works. XXX: We need to decide how to
+	  unset a selector. I proposed an unset keyword a while ago).
+
+2009-01-06  Christos Zoulas <christos@zoulas.com>
+
+	* re-renerate all generated files with newer versions of the
+	  auto-tools.
+
+	* move INSTALL to INSTALL.am-utils to avoid conflicts
+
+	* fix incompatibilities with new m4 and new autoconf.
+
+	* add UDF filesystem support.
+
+	* fix NetBSD nfs file handle detection.
+	
 2009-01-02  Christos Zoulas <christos@zoulas.com>
 
 	* add nocasetrans, nojoliet, rrcaseins for cd9660 filesystems
+
+2008-12-03  Christos Zoulas <christos@zoulas.com>
+
+	* allow ldap queries try a comma-separated list of servers given as:
+
+		ldap_hostports = host1:port1,host2,host3:port3
+
+	  original patch from Florian Geyer
+
+2008-09-19  Christos Zoulas <christos@zoulas.com>
+
+	* the auth_create gid on NetBSD is int
+
+	* deal with lossage from flex -P
+
+	* fix missing/incorrect prototypes
 
 2008-09-17  Christos Zoulas <christos@zoulas.com>
 

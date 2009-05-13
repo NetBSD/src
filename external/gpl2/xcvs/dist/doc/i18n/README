@@ -1,0 +1,11 @@
+The subdirectories of this directory contain translations of the Cederqvist
+(CVS manual).  For now, you can build these files by copying them into place
+of the cvs.texinfo manual in the `doc' directory and running `make doc',
+`make pdf', `make info', or whatever would have built the regular manual in the
+form you were looking for.  If anyone would like to contribute `Makefile.am's
+for the new directories, we would love to see them.
+
+P.S.  I'm not sure about the organizational scheme I am using for these files.
+If anyone would like to suggest another and point me to a few example projects
+which contain translations of documentation, I would appreciate it.  I've
+never dealt with translations before.  (Derek Price: <derek@ximbiot.com>.)

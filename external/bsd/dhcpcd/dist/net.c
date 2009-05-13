@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -27,44 +27,49 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/if_arp.h>
-#include <arpa/inet.h>
-#include <netinet/in_systm.h>
-#ifdef __linux__
-#include <netinet/ether.h>
-#include <netpacket/packet.h>
+#ifdef AF_LINK
+#  include <net/if_dl.h>
+#  include <net/if_types.h>
 #endif
+#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #define __FAVOR_BSD /* Nasty glibc hack so we can use BSD semantics for UDP */
 #include <netinet/udp.h>
 #undef __FAVOR_BSD
-#ifdef SIOCGIFMEDIA
-#include <net/if_media.h>
+#ifdef AF_PACKET
+#  include <netpacket/packet.h>
 #endif
-#include <arpa/inet.h>
-#ifdef AF_LINK
-# include <net/if_dl.h>
+#ifdef SIOCGIFMEDIA
+#  include <net/if_media.h>
 #endif
 
 #include <ctype.h>
 #include <errno.h>
+#include <ifaddrs.h>
+#include <fnmatch.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
 #include "common.h"
 #include "dhcp.h"
-#include "logger.h"
+#include "if-options.h"
 #include "net.h"
 #include "signals.h"
+
+static char hwaddr_buffer[(HWADDR_LEN * 3) + 1];
 
 int
 inet_ntocidr(struct in_addr address)
@@ -76,7 +81,6 @@ inet_ntocidr(struct in_addr address)
 		cidr++;
 		mask <<= 1;
 	}
-
 	return cidr;
 }
 
@@ -85,7 +89,7 @@ inet_cidrtoaddr(int cidr, struct in_addr *addr)
 {
 	int ocets;
 
-	if (cidr < 0 || cidr > 32) {
+	if (cidr < 1 || cidr > 32) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -94,8 +98,9 @@ inet_cidrtoaddr(int cidr, struct in_addr *addr)
 	addr->s_addr = 0;
 	if (ocets > 0) {
 		memset(&addr->s_addr, 255, (size_t)ocets - 1);
-		memset((unsigned char *)&addr->s_addr + (ocets - 1),
-		       (256 - (1 << (32 - cidr) % 8)), 1);
+	
+	memset((unsigned char *)&addr->s_addr + (ocets - 1),
+		    (256 - (1 << (32 - cidr) % 8)), 1);
 	}
 
 	return 0;
@@ -123,8 +128,7 @@ get_netmask(uint32_t addr)
 char *
 hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen)
 {
-	static char buffer[(HWADDR_LEN * 3) + 1];
-	char *p = buffer;
+	char *p = hwaddr_buffer;
 	size_t i;
 
 	for (i = 0; i < hwlen && i < HWADDR_LEN; i++) {
@@ -135,7 +139,7 @@ hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen)
 
 	*p ++= '\0';
 
-	return buffer;
+	return hwaddr_buffer;
 }
 
 size_t
@@ -176,114 +180,231 @@ hwaddr_aton(unsigned char *buffer, const char *addr)
 	return len;
 }
 
-int
-do_interface(const char *ifname,
-	     _unused unsigned char *hwaddr, _unused size_t *hwlen,
-	     struct in_addr *addr, struct in_addr *net, int get)
+struct interface *
+init_interface(const char *ifname)
 {
 	int s;
-	struct ifconf ifc;
-	int retval = 0, found = 0;
-	int len = 10 * sizeof(struct ifreq);
-	int lastlen = 0;
-	char *p;
-	union {
-		char *buffer;
-		struct ifreq *ifr;
-	} ifreqs;
-	struct sockaddr_in address;
-	struct ifreq *ifr;
-	struct sockaddr_in netmask;
-#ifdef AF_LINK
-	struct sockaddr_dl *sdl;
-#endif
+	struct ifreq ifr;
+	struct interface *iface = NULL;
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		return -1;
+		return NULL;
 
-	/* Not all implementations return the needed buffer size for
-	 * SIOGIFCONF so we loop like so for all until it works */
-	memset(&ifc, 0, sizeof(ifc));
-	for (;;) {
-		ifc.ifc_len = len;
-		ifc.ifc_buf = xmalloc((size_t)len);
-		if (ioctl(s, SIOCGIFCONF, &ifc) == -1) {
-			if (errno != EINVAL || lastlen != 0) {
-				close(s);
-				free(ifc.ifc_buf);	
-				return -1;
-			}
-		} else {
-			if (ifc.ifc_len == lastlen)
-				break;
-			lastlen = ifc.ifc_len;
-		}
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFFLAGS, &ifr) == -1)
+		goto eexit;
 
-		free(ifc.ifc_buf);
-		ifc.ifc_buf = NULL;
-		len *= 2;
+	iface = xzalloc(sizeof(*iface));
+	strlcpy(iface->name, ifname, sizeof(iface->name));
+	iface->flags = ifr.ifr_flags;
+	/* We reserve the 100 range for virtual interfaces, if and when
+	 * we can work them out. */
+	iface->metric = 200 + if_nametoindex(iface->name);
+	if (getifssid(ifname, iface->ssid) != -1) {
+		iface->wireless = 1;
+		iface->metric += 100;
 	}
 
-	for (p = (char *)ifc.ifc_buf; p < (char *)ifc.ifc_buf + ifc.ifc_len;) {
-		/* Cast the ifc buffer to an ifreq cleanly */
-		ifreqs.buffer = p;
-		ifr = ifreqs.ifr;
+	if (ioctl(s, SIOCGIFMTU, &ifr) == -1)
+		goto eexit;
+	/* Ensure that the MTU is big enough for DHCP */
+	if (ifr.ifr_mtu < MTU_MIN) {
+		ifr.ifr_mtu = MTU_MIN;
+		strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+		if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
+			goto eexit;
+	}
 
-#ifndef __linux__
-		if (ifr->ifr_addr.sa_len > sizeof(ifr->ifr_ifru))
-			p += offsetof(struct ifreq, ifr_ifru) +
-				ifr->ifr_addr.sa_len;
-		else
+	if (up_interface(ifname) != 0)
+		goto eexit;
+	snprintf(iface->leasefile, sizeof(iface->leasefile),
+	    LEASEFILE, ifname);
+	/* 0 is a valid fd, so init to -1 */
+	iface->raw_fd = -1;
+	iface->udp_fd = -1;
+	iface->arp_fd = -1;
+	close(s);
+	return iface;
+
+eexit:
+	free(iface);
+	close(s);
+	return NULL;
+}
+
+void
+free_interface(struct interface *iface)
+{
+	if (!iface)
+		return;
+	if (iface->state) {
+		free_options(iface->state->options);
+		free(iface->state->old);
+		free(iface->state->new);
+		free(iface->state->offer);
+		free(iface->state);
+	}
+	free(iface->clientid);
+	free(iface);
+}
+
+struct interface *
+discover_interfaces(int argc, char * const *argv)
+{
+	struct ifaddrs *ifaddrs, *ifa;
+	char *p;
+	int i;
+	struct interface *ifp, *ifs, *ifl;
+#ifdef __linux__
+	char ifn[IF_NAMESIZE];
 #endif
-			p += sizeof(*ifr);
-
-		if (strcmp(ifname, ifr->ifr_name) != 0)
-			continue;
-
-		found = 1;
-
 #ifdef AF_LINK
-		if (hwaddr && hwlen && ifr->ifr_addr.sa_family == AF_LINK) {
-			sdl = xmalloc(ifr->ifr_addr.sa_len);
-			memcpy(sdl, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
-			*hwlen = sdl->sdl_alen;
-			memcpy(hwaddr, LLADDR(sdl), *hwlen);
-			free(sdl);
+	const struct sockaddr_dl *sdl;
+#elif AF_PACKET
+	const struct sockaddr_ll *sll;
+#endif
+
+	if (getifaddrs(&ifaddrs) == -1)
+		return NULL;
+
+	ifs = ifl = NULL;
+	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr != NULL) {
+#ifdef AF_LINK
+			if (ifa->ifa_addr->sa_family != AF_LINK)
+				continue;
+#elif AF_PACKET
+			if (ifa->ifa_addr->sa_family != AF_PACKET)
+				continue;
+#endif
+		}
+
+		/* It's possible for an interface to have >1 AF_LINK.
+		 * For our purposes, we use the first one. */
+		for (ifp = ifs; ifp; ifp = ifp->next)
+			if (strcmp(ifp->name, ifa->ifa_name) == 0)
+				break;
+		if (ifp)
+			continue;
+		if (argc > 0) {
+			for (i = 0; i < argc; i++) {
+#ifdef __linux__
+				/* Check the real interface name */
+				strlcpy(ifn, argv[i], sizeof(ifn));
+				p = strchr(ifn, ':');
+				if (p)
+					*p = '\0';
+				if (strcmp(ifn, ifa->ifa_name) == 0)
+					break;
+#else
+				if (strcmp(argv[i], ifa->ifa_name) == 0)
+					break;
+#endif
+			}
+			if (i == argc)
+				continue;
+			p = argv[i];
+		} else {
+			for (i = 0; i < ifdc; i++)
+				if (!fnmatch(ifdv[i], ifa->ifa_name, 0))
+					break;
+			if (i < ifdc)
+				continue;
+			for (i = 0; i < ifac; i++)
+				if (!fnmatch(ifav[i], ifa->ifa_name, 0))
+					break;
+			if (ifac && i == ifac)
+				continue;
+			p = ifa->ifa_name;
+		}
+		if ((ifp = init_interface(p)) == NULL)
+			continue;
+		/* Don't allow loopback unless explicit */
+		if (ifp->flags & IFF_LOOPBACK) {
+			if (argc == 0 && ifac == 0) {
+				free_interface(ifp);
+				continue;
+			}
+		} else if (ifa->ifa_addr != NULL) {
+#ifdef AF_LINK
+			sdl = (const struct sockaddr_dl *)(void *)ifa->ifa_addr;
+			switch(sdl->sdl_type) {
+			case IFT_ETHER:
+				ifp->family = ARPHRD_ETHER;
+				break;
+			case IFT_IEEE1394:
+				ifp->family = ARPHRD_IEEE1394;
+				break;
+			}
+			ifp->hwlen = sdl->sdl_alen;
+#ifndef CLLADDR
+#  define CLLADDR(s) ((const char *)((s)->sdl_data + (s)->sdl_nlen))
+#endif
+			memcpy(ifp->hwaddr, CLLADDR(sdl), ifp->hwlen);
+#elif AF_PACKET
+			sll = (const struct sockaddr_ll *)(void *)ifa->ifa_addr;
+			ifp->family = sll->sll_hatype;
+			ifp->hwlen = sll->sll_halen;
+			if (ifp->hwlen != 0)
+				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
+#endif
+		}
+		if (ifl)
+			ifl->next = ifp; 
+		else
+			ifs = ifp;
+		ifl = ifp;
+	}
+	freeifaddrs(ifaddrs);
+	return ifs;
+}
+
+int
+do_address(const char *ifname,
+    struct in_addr *addr, struct in_addr *net, struct in_addr *dst, int act)
+{
+	struct ifaddrs *ifaddrs, *ifa;
+	const struct sockaddr_in *a, *n, *d;
+	int retval;
+
+	if (getifaddrs(&ifaddrs) == -1)
+		return -1;
+
+	retval = 0;
+	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET ||
+		    strcmp(ifa->ifa_name, ifname) != 0)
+			continue;
+		a = (const struct sockaddr_in *)(void *)ifa->ifa_addr;
+		n = (const struct sockaddr_in *)(void *)ifa->ifa_netmask;
+		if (ifa->ifa_flags & IFF_POINTOPOINT)
+			d = (const struct sockaddr_in *)(void *)
+				&ifa->ifa_dstaddr;
+		else
+			d = NULL;
+		if (act == 1) {
+			addr->s_addr = a->sin_addr.s_addr;
+			net->s_addr = n->sin_addr.s_addr;
+			if (dst && ifa->ifa_flags & IFF_POINTOPOINT)
+				dst->s_addr = d->sin_addr.s_addr;
 			retval = 1;
 			break;
 		}
-#endif
-
-		if (ifr->ifr_addr.sa_family == AF_INET)	{
-			memcpy(&address, &ifr->ifr_addr, sizeof(address));
-			if (ioctl(s, SIOCGIFNETMASK, ifr) == -1)
-				continue;
-			memcpy(&netmask, &ifr->ifr_addr, sizeof(netmask));
-			if (get) {
-				addr->s_addr = address.sin_addr.s_addr;
-				net->s_addr = netmask.sin_addr.s_addr;
-				retval = 1;
-				break;
-			} else {
-				if (address.sin_addr.s_addr == addr->s_addr &&
-				    (!net ||
-				     netmask.sin_addr.s_addr == net->s_addr))
-				{
-					retval = 1;
-					break;
-				}
-			}
+		if (addr->s_addr == a->sin_addr.s_addr &&
+		    (net == NULL || net->s_addr == n->sin_addr.s_addr))
+		{
+			retval = 1;
+			break;
 		}
-
 	}
-
-	if (!found)
-		errno = ENXIO;
-	close(s);
-	free(ifc.ifc_buf);
+	freeifaddrs(ifaddrs);
 	return retval;
 }
-
+	
 int
 up_interface(const char *ifname)
 {
@@ -348,103 +469,17 @@ carrier_status(const char *ifname)
 #ifdef SIOCGIFMEDIA
 	if (retval == 1) {
 		memset(&ifmr, 0, sizeof(ifmr));
-		strncpy(ifmr.ifm_name, ifr.ifr_name, sizeof(ifmr.ifm_name));
+		strlcpy(ifmr.ifm_name, ifr.ifr_name, sizeof(ifmr.ifm_name));
+		retval = -1;
 		if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1 &&
 		    ifmr.ifm_status & IFM_AVALID)
-		{
-			if (!(ifmr.ifm_status & IFM_ACTIVE))
-				retval = 0;
-		}
+			retval = (ifmr.ifm_status & IFM_ACTIVE) ? 1 : 0;
 	}
 #endif
 	close(s);
 	return retval;
 }
 
-struct interface *
-read_interface(const char *ifname, _unused int metric)
-{
-	int s;
-	struct ifreq ifr;
-	struct interface *iface = NULL;
-	unsigned char *hwaddr = NULL;
-	size_t hwlen = 0;
-	sa_family_t family = 0;
-
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		return NULL;
-
-#ifdef __linux__
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFHWADDR, &ifr) == -1)
-		goto eexit;
-
-	switch (ifr.ifr_hwaddr.sa_family) {
-	case ARPHRD_ETHER:
-	case ARPHRD_IEEE802:
-		hwlen = ETHER_ADDR_LEN;
-		break;
-	case ARPHRD_IEEE1394:
-		hwlen = EUI64_ADDR_LEN;
-	case ARPHRD_INFINIBAND:
-		hwlen = INFINIBAND_ADDR_LEN;
-		break;
-	}
-
-	hwaddr = xmalloc(sizeof(unsigned char) * HWADDR_LEN);
-	memcpy(hwaddr, ifr.ifr_hwaddr.sa_data, hwlen);
-	family = ifr.ifr_hwaddr.sa_family;
-#else
-	ifr.ifr_metric = metric;
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCSIFMETRIC, &ifr) == -1)
-		goto eexit;
-
-	hwaddr = xmalloc(sizeof(unsigned char) * HWADDR_LEN);
-	if (do_interface(ifname, hwaddr, &hwlen, NULL, NULL, 0) != 1)
-		goto eexit;
-
-	family = ARPHRD_ETHER;
-#endif
-
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFMTU, &ifr) == -1)
-		goto eexit;
-
-	/* Ensure that the MTU is big enough for DHCP */
-	if (ifr.ifr_mtu < MTU_MIN) {
-		ifr.ifr_mtu = MTU_MIN;
-		strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-		if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
-			goto eexit;
-	}
-
-	if (up_interface(ifname) != 0)
-		goto eexit;
-
-	iface = xzalloc(sizeof(*iface));
-	strlcpy(iface->name, ifname, IF_NAMESIZE);
-	snprintf(iface->leasefile, PATH_MAX, LEASEFILE, ifname);
-	memcpy(&iface->hwaddr, hwaddr, hwlen);
-	iface->hwlen = hwlen;
-
-	iface->family = family;
-	iface->arpable = !(ifr.ifr_flags & (IFF_NOARP | IFF_LOOPBACK));
-
-	/* 0 is a valid fd, so init to -1 */
-	iface->raw_fd = -1;
-	iface->udp_fd = -1;
-	iface->arp_fd = -1;
-	iface->link_fd = -1;
-
-eexit:
-	close(s);
-	free(hwaddr);
-	return iface;
-}
 
 int
 do_mtu(const char *ifname, short int mtu)
@@ -482,13 +517,11 @@ int
 open_udp_socket(struct interface *iface)
 {
 	int s;
-	union sockunion {
-		struct sockaddr sa;
-		struct sockaddr_in sin;
-	} su;
+	struct sockaddr_in sin;
 	int n;
 #ifdef SO_BINDTODEVICE
 	struct ifreq ifr;
+	char *p;
 #endif
 
 	if ((s = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
@@ -500,7 +533,12 @@ open_udp_socket(struct interface *iface)
 #ifdef SO_BINDTODEVICE
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
-	if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) == -1)
+	/* We can only bind to the real device */
+	p = strchr(ifr.ifr_name, ':');
+	if (p)
+		*p = '\0';
+	if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, &ifr,
+		sizeof(ifr)) == -1)
 		goto eexit;
 #endif
 	/* As we don't use this socket for receiving, set the
@@ -508,11 +546,11 @@ open_udp_socket(struct interface *iface)
 	n = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1)
 		goto eexit;
-	memset(&su, 0, sizeof(su));
-	su.sin.sin_family = AF_INET;
-	su.sin.sin_port = htons(DHCP_CLIENT_PORT);
-	su.sin.sin_addr.s_addr = iface->addr.s_addr;
-	if (bind(s, &su.sa, sizeof(su)) == -1)
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(DHCP_CLIENT_PORT);
+	sin.sin_addr.s_addr = iface->addr.s_addr;
+	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) == -1)
 		goto eexit;
 
 	iface->udp_fd = s;
@@ -526,19 +564,16 @@ eexit:
 
 ssize_t
 send_packet(const struct interface *iface, struct in_addr to,
-	    const uint8_t *data, ssize_t len)
+    const uint8_t *data, ssize_t len)
 {
-	union sockunion {
-		struct sockaddr sa;
-		struct sockaddr_in sin;
-	} su;
+	struct sockaddr_in sin;
 
-	memset(&su, 0, sizeof(su));
-	su.sin.sin_family = AF_INET;
-	su.sin.sin_addr.s_addr = to.s_addr;
-	su.sin.sin_port = htons(DHCP_SERVER_PORT);
-
-	return sendto(iface->udp_fd, data, len, 0, &su.sa, sizeof(su));
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = to.s_addr;
+	sin.sin_port = htons(DHCP_SERVER_PORT);
+	return sendto(iface->udp_fd, data, len, 0,
+	    (struct sockaddr *)&sin, sizeof(sin));
 }
 
 struct udp_dhcp_packet
@@ -574,7 +609,7 @@ checksum(const void *data, uint16_t len)
 
 ssize_t
 make_udp_packet(uint8_t **packet, const uint8_t *data, size_t length,
-		struct in_addr source, struct in_addr dest)
+    struct in_addr source, struct in_addr dest)
 {
 	struct udp_dhcp_packet *udpp;
 	struct ip *ip;
@@ -630,78 +665,54 @@ get_udp_data(const uint8_t **data, const uint8_t *udp)
 
 	memcpy(&packet, udp, sizeof(packet));
 	*data = udp + offsetof(struct udp_dhcp_packet, dhcp);
-	return ntohs(packet.ip.ip_len) - sizeof(packet.ip) - sizeof(packet.udp);
+	return ntohs(packet.ip.ip_len) -
+	    sizeof(packet.ip) -
+	    sizeof(packet.udp);
 }
 
 int
-valid_udp_packet(const uint8_t *data)
+valid_udp_packet(const uint8_t *data, size_t data_len, struct in_addr *from)
 {
 	struct udp_dhcp_packet packet;
-	uint16_t bytes;
-	uint16_t ipsum;
-	uint16_t iplen;
-	uint16_t udpsum;
-	struct in_addr source;
-	struct in_addr dest;
-	int retval = 0;
+	uint16_t bytes, udpsum;
 
-	memcpy(&packet, data, sizeof(packet));
-	bytes = ntohs(packet.ip.ip_len);
-	ipsum = packet.ip.ip_sum;
-	iplen = packet.ip.ip_len;
-	udpsum = packet.udp.uh_sum;
-
-	if (0 != checksum(&packet.ip, sizeof(packet.ip))) {
+	if (data_len < sizeof(packet.ip)) {
+		if (from)
+			from->s_addr = INADDR_ANY;
+		errno = EINVAL;
+		return -1;
+	}
+	memcpy(&packet, data, MIN(data_len, sizeof(packet)));
+	if (from)
+		from->s_addr = packet.ip.ip_src.s_addr;
+	if (data_len > sizeof(packet)) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (checksum(&packet.ip, sizeof(packet.ip)) != 0) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	packet.ip.ip_sum = 0;
-	memcpy(&source, &packet.ip.ip_src, sizeof(packet.ip.ip_src));
-	memcpy(&dest, &packet.ip.ip_dst, sizeof(packet.ip.ip_dst));
-	memset(&packet.ip, 0, sizeof(packet.ip));
-	packet.udp.uh_sum = 0;
-
-	packet.ip.ip_p = IPPROTO_UDP;
-	memcpy(&packet.ip.ip_src, &source, sizeof(packet.ip.ip_src));
-	memcpy(&packet.ip.ip_dst, &dest, sizeof(packet.ip.ip_dst));
-	packet.ip.ip_len = packet.udp.uh_ulen;
-	if (udpsum && udpsum != checksum(&packet, bytes)) {
+	bytes = ntohs(packet.ip.ip_len);
+	if (data_len < bytes) {
 		errno = EINVAL;
-		retval = -1;
+		return -1;
+	}
+	udpsum = packet.udp.uh_sum;
+	packet.udp.uh_sum = 0;
+	packet.ip.ip_hl = 0;
+	packet.ip.ip_v = 0;
+	packet.ip.ip_tos = 0;
+	packet.ip.ip_len = packet.udp.uh_ulen;
+	packet.ip.ip_id = 0;
+	packet.ip.ip_off = 0;
+	packet.ip.ip_ttl = 0;
+	packet.ip.ip_sum = 0;
+	if (udpsum && checksum(&packet, bytes) != udpsum) {
+		errno = EINVAL;
+		return -1;
 	}
 
-	return retval;
-}
-
-int
-send_arp(const struct interface *iface, int op, in_addr_t sip, in_addr_t tip)
-{
-	struct arphdr *arp;
-	size_t arpsize;
-	uint8_t *p;
-	int retval;
-
-	arpsize = sizeof(*arp) + 2 * iface->hwlen + 2 * sizeof(sip);
-	arp = xmalloc(arpsize);
-	arp->ar_hrd = htons(iface->family);
-	arp->ar_pro = htons(ETHERTYPE_IP);
-	arp->ar_hln = iface->hwlen;
-	arp->ar_pln = sizeof(sip);
-	arp->ar_op = htons(op);
-	p = (uint8_t *)arp;
-	p += sizeof(*arp);
-	memcpy(p, iface->hwaddr, iface->hwlen);
-	p += iface->hwlen;
-	memcpy(p, &sip, sizeof(sip));
-	p += sizeof(sip);
-	/* ARP requests should ignore this */
-	retval = iface->hwlen;
-	while (retval--)
-		*p++ = '\0';
-	memcpy(p, &tip, sizeof(tip));
-	p += sizeof(tip);
-	retval = send_raw_packet(iface, ETHERTYPE_ARP, arp, arpsize);
-	free(arp);
-	return retval;
+	return 0;
 }

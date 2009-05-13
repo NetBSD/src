@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_defs.h,v 1.1.1.1 2008/09/19 20:07:22 christos Exp $	*/
+/*	$NetBSD: amq_defs.h,v 1.1.1.1.8.1 2009/05/13 18:49:07 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@
 #define AMQ_VERSION ((u_long)1)
 #define AMQPROC_NULL ((u_long)0)
 #define AMQPROC_MNTTREE ((u_long)1)
-#define AMQPROC_UMNT ((u_long)2)
+#define AMQPROC_UMNT ((u_long)2)	/* asynchronous unmount */
 #define AMQPROC_STATS ((u_long)3)
 #define AMQPROC_EXPORT ((u_long)4)
 #define AMQPROC_SETOPT ((u_long)5)
@@ -66,6 +66,7 @@
 #define AMQPROC_GETVERS ((u_long)8)
 #define AMQPROC_GETPID ((u_long)9)
 #define AMQPROC_PAWD ((u_long)10)
+#define AMQPROC_SYNC_UMNT ((u_long)11)	/* synchronous unmount */
 
 /*
  * TYPEDEFS
@@ -75,6 +76,7 @@ typedef struct amq_mount_info amq_mount_info;
 typedef struct amq_mount_stats amq_mount_stats;
 typedef struct amq_mount_tree amq_mount_tree;
 typedef struct amq_setopt amq_setopt;
+typedef struct amq_sync_umnt amq_sync_umnt;
 typedef amq_mount_tree *amq_mount_tree_p;
 
 /*
@@ -124,6 +126,21 @@ struct amq_mount_stats {
   int as_uerr;
 };
 
+typedef enum {
+  AMQ_UMNT_OK 		= 0,	/* must be zero! */
+  AMQ_UMNT_FAILED 	= 1,	/* unmount failed */
+  AMQ_UMNT_FORK 	= 2,	/* fork failed */
+  AMQ_UMNT_READ 	= 3,	/* pipe read failed */
+  AMQ_UMNT_SERVER 	= 4,	/* server down */
+  AMQ_UMNT_SIGNAL 	= 5	/* received signal */
+} au_etype;
+
+struct amq_sync_umnt {
+	au_etype	au_etype;	/* error type */
+	int		au_errno;	/* error number */
+	int		au_signal;	/* signal received */
+};
+
 enum amq_opt {
   AMOPT_DEBUG = 0,
   AMOPT_LOGFILE = 1,
@@ -153,6 +170,7 @@ extern bool_t xdr_amq_mount_tree_list(XDR *xdrs, amq_mount_tree_list *objp);
 extern bool_t xdr_amq_mount_tree_p(XDR *xdrs, amq_mount_tree_p *objp);
 extern bool_t xdr_amq_opt(XDR *xdrs, amq_opt *objp);
 extern bool_t xdr_amq_setopt(XDR *xdrs, amq_setopt *objp);
+extern bool_t xdr_amq_sync_umnt(XDR *xdrs, amq_sync_umnt *objp);
 extern bool_t xdr_pri_free(XDRPROC_T_TYPE xdr_args, caddr_t args_ptr);
 extern bool_t xdr_time_type(XDR *xdrs, time_type *objp);
 

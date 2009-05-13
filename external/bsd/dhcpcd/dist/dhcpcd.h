@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -28,68 +28,115 @@
 #ifndef DHCPCD_H
 #define DHCPCD_H
 
-#include <sys/param.h>
 #include <sys/socket.h>
-
 #include <net/if.h>
-#include <netinet/in.h>
 
 #include <limits.h>
 
-#include "common.h"
+#include "control.h"
+#include "dhcp.h"
+#include "if-options.h"
 
-#define DEFAULT_TIMEOUT		30
-#define DEFAULT_LEASETIME	3600	/* 1 hour */
+#define HWADDR_LEN 20
+#define IF_SSIDSIZE 33
+#define PROFILE_LEN 64
 
-#define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
-#define VENDORCLASSID_MAX_LEN	48
-#define CLIENTID_MAX_LEN	48
-#define USERCLASS_MAX_LEN	255
-#define VENDOR_MAX_LEN		255
-
-#define DHCPCD_ARP		(1 << 0)
-#define DHCPCD_DOMAIN		(1 << 2)
-#define DHCPCD_GATEWAY		(1 << 3)
-#define DHCPCD_LASTLEASE	(1 << 7)
-#define DHCPCD_INFORM		(1 << 8)
-#define DHCPCD_REQUEST		(1 << 9)
-#define DHCPCD_IPV4LL		(1 << 10)
-#define DHCPCD_DUID		(1 << 11)
-#define DHCPCD_PERSISTENT	(1 << 12)
-#define DHCPCD_DAEMONISE	(1 << 14)
-#define DHCPCD_DAEMONISED	(1 << 15)
-#define DHCPCD_TEST		(1 << 16)
-#define DHCPCD_FORKED		(1 << 17)
-#define DHCPCD_HOSTNAME		(1 << 18)
-#define DHCPCD_CLIENTID		(1 << 19)
-#define DHCPCD_LINK		(1 << 20)
-#define DHCPCD_BACKGROUND	(1 << 21)
-
-struct options {
-	char interface[IF_NAMESIZE];
-	int metric;
-	uint8_t requestmask[256 / 8];
-	uint8_t requiremask[256 / 8];
-	uint8_t nomask[256 / 8];
-	uint32_t leasetime;
-	time_t timeout;
-	int options;
-
-	struct in_addr request_address;
-	struct in_addr request_netmask;
-
-	char **environ;
-	char script[PATH_MAX];
-	char pidfile[PATH_MAX];
-
-	char hostname[HOSTNAME_MAX_LEN + 1]; /* We don't store the lenth */
-	int fqdn;
-	uint8_t vendorclassid[VENDORCLASSID_MAX_LEN + 2];
-	char clientid[CLIENTID_MAX_LEN + 2];
-	uint8_t userclass[USERCLASS_MAX_LEN + 2];
-	uint8_t vendor[VENDOR_MAX_LEN + 2];
-
-	size_t blacklist_len;
-	in_addr_t *blacklist;
+enum DHS {
+	DHS_INIT,
+	DHS_DISCOVER,
+	DHS_REQUEST,
+	DHS_BOUND,
+	DHS_RENEW,
+	DHS_REBIND,
+	DHS_REBOOT,
+	DHS_INFORM,
+	DHS_RENEW_REQUESTED,
+	DHS_INIT_IPV4LL,
+	DHS_PROBE
 };
+
+#define LINK_UP 	1
+#define LINK_UNKNOWN	0
+#define LINK_DOWN 	-1
+
+struct if_state {
+	enum DHS state;
+	char profile[PROFILE_LEN];
+	struct if_options *options;
+	struct dhcp_message *sent;
+	struct dhcp_message *offer;
+	struct dhcp_message *new;
+	struct dhcp_message *old;
+	struct dhcp_lease lease;
+	const char *reason;
+	time_t interval;
+	time_t nakoff;
+	uint32_t xid;
+	int socket;
+	int probes;
+	int claims;
+	int conflicts;
+	time_t defend;
+	struct in_addr fail;
+	size_t arping_index;
+};
+
+struct interface {
+	char name[IF_NAMESIZE];
+	struct if_state *state;
+
+	int flags;
+	sa_family_t family;
+	unsigned char hwaddr[HWADDR_LEN];
+	size_t hwlen;
+	int metric;
+	int carrier;
+	int arpable;
+	int wireless;
+	char ssid[IF_SSIDSIZE];
+
+	int raw_fd;
+	int udp_fd;
+	int arp_fd;
+	size_t buffer_size, buffer_len, buffer_pos;
+	unsigned char *buffer;
+
+	struct in_addr addr;
+	struct in_addr net;
+	struct in_addr dst;
+
+	char leasefile[PATH_MAX];
+	time_t start_uptime;
+
+	unsigned char *clientid;
+
+	struct interface *next;
+};
+
+extern int pidfd;
+extern int options;
+extern int ifac;
+extern char **ifav;
+extern int ifdc;
+extern char **ifdv;
+extern struct interface *ifaces;
+
+struct interface *find_interface(const char *);
+int handle_args(struct fd_list *, int, char **);
+void handle_interface(int, const char *);
+void handle_ifa(int, const char *,
+    struct in_addr *, struct in_addr *, struct in_addr *);
+void handle_exit_timeout(void *);
+void start_interface(void *);
+void start_discover(void *);
+void start_request(void *);
+void start_renew(void *);
+void start_rebind(void *);
+void start_reboot(struct interface *);
+void start_expire(void *);
+void send_decline(struct interface *);
+void close_sockets(struct interface *);
+void drop_config(struct interface *, const char *);
+int select_profile(struct interface *, const char *);
+
 #endif

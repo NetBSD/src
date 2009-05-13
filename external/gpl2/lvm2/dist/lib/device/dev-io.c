@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.3 2009/01/06 23:21:16 haad Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.3.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -310,6 +310,9 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 
 int dev_get_size(const struct device *dev, uint64_t *size)
 {
+	if (!dev)
+		return 0;
+
 	if ((dev->flags & DEV_REGULAR))
 		return _dev_get_size_file(dev, size);
 	else

@@ -131,11 +131,11 @@ static int curr_color;
 /* virtual cursor */
 static int virt_x, virt_y;
 
-static char **procstate_names;
-static char **cpustate_names;
-static char **memory_names;
-static char **swap_names;
-static char **kernel_names;
+static const char **procstate_names;
+static const char **cpustate_names;
+static const char **memory_names;
+static const char **swap_names;
+static const char **kernel_names;
 
 static int num_procstates;
 static int num_cpustates;
@@ -193,7 +193,7 @@ static int *kernel_cidx;
  */
 
 static int
-string_count(char **pp)
+string_count(const char **pp)
 
 {
     register int cnt = 0;
@@ -209,7 +209,7 @@ string_count(char **pp)
 }
 
 void
-display_clear()
+display_clear(void)
 
 {
     dprintf("display_clear\n");
@@ -228,7 +228,7 @@ display_clear()
  * already on the screen.
  */
 
-void
+static void
 display_move(int x, int y)
 
 {
@@ -325,8 +325,8 @@ display_move(int x, int y)
  * escape sequences.
  */
 
-void
-display_write(int x, int y, int newcolor, int eol, char *new)
+static void
+display_write(int x, int y, int newcolor, int eol, const char *new)
 
 {
     char *bufp;
@@ -450,8 +450,8 @@ display_write(int x, int y, int newcolor, int eol, char *new)
     }
 }
 
-void
-display_fmt(int x, int y, int newcolor, int eol, char *fmt, ...)
+static void
+display_fmt(int x, int y, int newcolor, int eol, const char *fmt, ...)
 
 {
     va_list argp;
@@ -462,8 +462,8 @@ display_fmt(int x, int y, int newcolor, int eol, char *fmt, ...)
     display_write(x, y, newcolor, eol, scratchbuf);
 }
 
-void
-display_cte()
+static void
+display_cte(void)
 
 {
     int len;
@@ -528,12 +528,12 @@ display_cte()
 }
 
 static void
-summary_format(int x, int y, int *numbers, char **names, int *cidx)
+summary_format(int x, int y, int *numbers, const char **names, int *cidx)
 
 {
     register int num;
-    register char *thisname;
-    register char *lastname = NULL;
+    register const char *thisname;
+    register const char *lastname = NULL;
     register int color;
 
     /* format each number followed by its string */
@@ -591,13 +591,13 @@ summary_format(int x, int y, int *numbers, char **names, int *cidx)
 }
 
 static void
-summary_format_memory(int x, int y, long *numbers, char **names, int *cidx)
+summary_format_memory(int x, int y, long *numbers, const char **names, int *cidx)
 
 {
     register long num;
     register int color;
-    register char *thisname;
-    register char *lastname = NULL;
+    register const char *thisname;
+    register const char *lastname = NULL;
 
     /* format each number followed by its string */
     while ((thisname = *names++) != NULL)
@@ -717,14 +717,17 @@ display_resize()
 	memzero(colorbuf, bufsize);
     }
 
+    /* for dumb terminals, pretend like we can show any amount */
+    if (!smart_terminal)
+	return Largest;
+
     /* adjust total lines on screen to lines available for procs */
     if (top_lines < y_procs)
 	return -1;
     top_lines -= y_procs;
 
     /* return number of lines available */
-    /* for dumb terminals, pretend like we can show any amount */
-    return(smart_terminal ? top_lines : Largest);
+    return top_lines;
 }
 
 int
@@ -767,7 +770,7 @@ display_setmulti(int m)
 	    y_idlecursor++;
 	    y_procs++;
 	}
-	return (ncpu - 1);
+	return -(ncpu - 1);
     } else {
 	for (i = 1; i < ncpu; i++)
 	{
@@ -780,7 +783,7 @@ display_setmulti(int m)
 	    y_idlecursor--;
 	    y_procs--;
 	}
-	return -(ncpu - 1);
+	return (ncpu - 1);
     }
 }
 
@@ -789,7 +792,7 @@ display_init(struct statics *statics, int percpuinfo)
 
 {
     register int top_lines;
-    register char **pp;
+    register const char **pp;
     register char *p;
     register int *ip;
     register int i;
@@ -1143,16 +1146,16 @@ u_procstates(int total, int *brkdn, int threads)
 
 /* cpustates_tag() calculates the correct tag to use to label the line */
 
-char *
+static char *
 cpustates_tag(int c)
 
 {
-    register char *use;
+    register const char *use;
 
     static char fmttag[100];
 
-    char *short_tag = ncpu > 1 && multi ? "CPU%d: " : "CPU: ";
-    char *long_tag = ncpu > 1 && multi ? "CPU%d states: " : "CPU states: ";
+    const char *short_tag = ncpu > 1 && multi ? "CPU%d: " : "CPU: ";
+    const char *long_tag = ncpu > 1 && multi ? "CPU%d states: " : "CPU states: ";
 
     /* if length + strlen(long_tag) >= screen_width, then we have to
        use the shorter tag (we subtract 2 to account for ": ") */
@@ -1178,8 +1181,8 @@ i_cpustates(int *states)
 
 {
     int value;
-    char **names;
-    char *thisname;
+    const char **names;
+    const char *thisname;
     int *colp;
     int color = 0;
 #ifdef ENABLE_COLOR
@@ -1243,8 +1246,8 @@ u_cpustates(int *states)
 
 {
     int value;
-    char **names;
-    char *thisname;
+    const char **names;
+    const char *thisname;
     int *lp;
     int *colp;
     int color = 0;
@@ -1313,8 +1316,8 @@ z_cpustates()
 
 {
     register int i, c;
-    register char **names = cpustate_names;
-    register char *thisname;
+    register const char **names = cpustate_names;
+    register const char *thisname;
     register int *lp;
 
     /* print tag */
@@ -1631,22 +1634,22 @@ display_header(int t)
 }
 
 void
-message_mark()
+message_mark(void)
 
 {
     message_barrier = Yes;
 }
 
 void
-message_expire()
+message_expire(void)
 
 {
     message_time.tv_sec = 0;
     message_time.tv_usec = 0;
 }
 
-void
-message_flush()
+static void
+message_flush(void)
 
 {
     message_first = message_last;
@@ -1665,8 +1668,8 @@ message_flush()
  */
 
 
-void
-new_message_v(char *msgfmt, va_list ap)
+static void
+new_message_v(const char *msgfmt, va_list ap)
 
 {
     int i;
@@ -1716,7 +1719,7 @@ new_message_v(char *msgfmt, va_list ap)
  */
 
 void
-new_message(char *msgfmt, ...)
+new_message(const char *msgfmt, ...)
 
 {
     va_list ap;
@@ -1735,7 +1738,7 @@ new_message(char *msgfmt, ...)
  */
 
 void
-message_error(char *msgfmt, ...)
+message_error(const char *msgfmt, ...)
 
 {
     va_list ap;
@@ -1779,8 +1782,8 @@ message_clear()
  * prompt.  This call causes all pending messages to be flushed.
  */
 
-void
-message_prompt_v(int so, char *msgfmt, va_list ap)
+static void
+message_prompt_v(int so, const char *msgfmt, va_list ap)
 
 {
     char msg[MAX_COLS];
@@ -1822,7 +1825,7 @@ message_prompt_v(int so, char *msgfmt, va_list ap)
  */
 
 void
-message_prompt(char *msgfmt, ...)
+message_prompt(const char *msgfmt, ...)
 
 {
     va_list ap;
@@ -1833,7 +1836,7 @@ message_prompt(char *msgfmt, ...)
 }
 
 void
-message_prompt_plain(char *msgfmt, ...)
+message_prompt_plain(const char *msgfmt, ...)
 
 {
     va_list ap;
@@ -1971,7 +1974,7 @@ display_pagerend()
 }
 
 void
-display_pager(char *fmt, ...)
+display_pager(const char *fmt, ...)
 
 {
     va_list ap;

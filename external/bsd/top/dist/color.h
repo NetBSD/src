@@ -42,7 +42,7 @@
 #define COLOR_ANSI_SLOTS 20
 
 int color_env_parse(char *env);
-int color_tag(char *tag);
+int color_tag(const char *tag);
 int color_test(int tagidx, int value);
 char *color_setstr(int color);
 void color_dump(FILE *f);

@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-common.c,v 1.2 2008/12/22 00:56:59 haad Exp $	*/
+/*	$NetBSD: libdm-common.c,v 1.2.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -151,16 +151,25 @@ int dm_task_set_name(struct dm_task *dmt, const char *name)
 	 * as its last component.
 	 */
 	if ((pos = strrchr(name, '/'))) {
+		if (dmt->type == DM_DEVICE_CREATE) {
+			log_error("Name \"%s\" invalid. It contains \"/\".", name);
+			return 0;
+		}
+
 		snprintf(path, sizeof(path), "%s/%s", _dm_dir, pos + 1);
 
 		if (stat(name, &st1) || stat(path, &st2) ||
 		    !(st1.st_dev == st2.st_dev)) {
-			log_error("dm_task_set_name: Device %s not found",
-				  name);
+			log_error("Device %s not found", name);
 			return 0;
 		}
 
 		name = pos + 1;
+	}
+
+	if (strlen(name) >= DM_NAME_LEN) {
+		log_error("Name \"%s\" too long", name);
+		return 0;
 	}
 
 	if (!(dmt->dev_name = dm_strdup(name))) {

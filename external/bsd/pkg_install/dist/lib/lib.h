@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.2 2009/02/02 20:44:06 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.2.2.1 2009/05/13 18:52:38 jym Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -63,8 +63,6 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#include "path.h"
 
 /* Macros */
 #define SUCCESS	(0)
@@ -167,12 +165,11 @@ typedef enum pl_ent_t {
 	PLIST_SRC,		/* 10 */
 	PLIST_DISPLAY,		/* 11 */
 	PLIST_PKGDEP,		/* 12 */
-	PLIST_MTREE,		/* 13 */
-	PLIST_DIR_RM,		/* 14 */
-	PLIST_IGNORE_INST,	/* 15 */
-	PLIST_OPTION,		/* 16 */
-	PLIST_PKGCFL,		/* 17 */
-	PLIST_BLDDEP		/* 18 */
+	PLIST_DIR_RM,		/* 13 */
+	PLIST_OPTION,		/* 14 */
+	PLIST_PKGCFL,		/* 15 */
+	PLIST_BLDDEP,		/* 16 */
+	PLIST_PKGDIR		/* 17 */
 }       pl_ent_t;
 
 /* Enumerated constants for build info */
@@ -306,20 +303,23 @@ Boolean isfile(const char *);
 Boolean isbrokenlink(const char *);
 Boolean isempty(const char *);
 int     URLlength(const char *);
-Boolean make_preserve_name(char *, size_t, char *, char *);
+Boolean make_preserve_name(char *, size_t, const char *, const char *);
 void    remove_files(const char *, const char *);
-int     delete_hierarchy(char *, Boolean, Boolean);
 int     format_cmd(char *, size_t, const char *, const char *, const char *);
 
 int	recursive_remove(const char *, int);
+
+void	add_pkgdir(const char *, const char *, const char *);
+void	delete_pkgdir(const char *, const char *, const char *);
+int	has_pkgdir(const char *);
 
 /* pkg_io.c: Local and remote archive handling */
 struct archive;
 struct archive_entry;
 
-struct archive *open_archive(const char *, void **);
-void	close_archive(void *);
-struct archive *find_archive(const char *, void **);
+struct archive *open_archive(const char *);
+struct archive *find_archive(const char *, int);
+void	process_pkg_path(void);
 
 /* Packing list */
 plist_t *new_plist_entry(void);
@@ -338,7 +338,7 @@ void	stringify_plist(package_t *, char **, size_t *, const char *);
 void	parse_plist(package_t *, const char *);
 void    read_plist(package_t *, FILE *);
 void    append_plist(package_t *, FILE *);
-int     delete_package(Boolean, Boolean, package_t *, Boolean, const char *);
+int     delete_package(Boolean, package_t *, Boolean, const char *);
 
 /* Package Database */
 int     pkgdb_open(int);
@@ -376,12 +376,10 @@ void pkg_install_config(void);
 /* Print configuration variable */
 void pkg_install_show_variable(const char *);
 
-#ifdef HAVE_SSL
 /* Package signature creation and validation */
-int pkg_verify_signature(struct archive **, struct archive_entry **, char **,
-    void **);
-int pkg_full_signature_check(struct archive *);
-void pkg_free_signature(void *);
+int pkg_verify_signature(struct archive **, struct archive_entry **, char **);
+int pkg_full_signature_check(struct archive **);
+#ifdef HAVE_SSL
 void pkg_sign_x509(const char *, const char *, const char *, const char *);
 #endif
 
@@ -401,6 +399,13 @@ int detached_gpg_verify(const char *, size_t, const char *, size_t,
 int detached_gpg_sign(const char *, size_t, char **, size_t *, const char *,
     const char *);
 
+/* License handling */
+int add_licenses(const char *);
+int acceptable_license(const char *);
+int acceptable_pkg_license(const char *);
+void load_license_lists(void);
+
+/* Helper functions for memory allocation */
 char *xstrdup(const char *);
 void *xrealloc(void *, size_t);
 void *xcalloc(size_t, size_t);
@@ -416,6 +421,7 @@ extern const char *certs_packages;
 extern const char *certs_pkg_vulnerabilities;
 extern const char *check_vulnerabilities;
 extern const char *config_file;
+extern const char *config_pkg_path;
 extern const char *verified_installation;
 extern const char *gpg_cmd;
 extern const char *gpg_keyring_pkgvuln;
@@ -429,5 +435,8 @@ extern const char *pkg_vulnerabilities_file;
 extern const char *pkg_vulnerabilities_url;
 extern const char *ignore_advisories;
 extern const char tnf_vulnerability_base[];
+
+extern const char *acceptable_licenses;
+extern const char *default_acceptable_licenses;
 
 #endif				/* _INST_LIB_LIB_H_ */

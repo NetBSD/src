@@ -47,13 +47,13 @@
  */
 struct statics
 {
-    char **procstate_names;
-    char **cpustate_names;
-    char **memory_names;
-    char **swap_names;		/* optional */
-    char **order_names;		/* optional */
-    char **top_color_names;	/* optional */
-    char **kernel_names;	/* optional */
+    const char **procstate_names;
+    const char **cpustate_names;
+    const char **memory_names;
+    const char **swap_names;		/* optional */
+    const char **order_names;		/* optional */
+    const char **top_color_names;	/* optional */
+    const char **kernel_names;	/* optional */
     time_t boottime;		/* optional */
     int modemax;		/* optional */
     int ncpu;			/* optional */
@@ -77,7 +77,7 @@ struct statics
 
 struct system_info
 {
-    int    last_pid;
+    pid_t    last_pid;
     double load_avg[NUM_AVERAGES];
     int    p_total;
     int    P_ACTIVE;     /* number of procs considered "active" */
@@ -107,7 +107,7 @@ struct process_select
     char *command;	/* only this command (unless == NULL) */
     int mode;		/* select display mode (0 is default) */
     int threads;	/* show threads separately */
-    int pid;		/* show only this pid (unless pid == -1) */
+    pid_t pid;		/* show only this pid (unless pid == -1) */
 };
 
 /* routines defined by the machine dependent module */

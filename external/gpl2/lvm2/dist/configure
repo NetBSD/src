@@ -1323,6 +1323,8 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-static_link    Use this to link the tools to their libraries
+                          statically.  Default is dynamic linking
   --enable-lvm1_fallback  Use this to fall back and use LVM1 binaries if
                           device-mapper is missing from the kernel
   --disable-readline      Disable readline support
@@ -1337,8 +1339,6 @@ Optional Features:
   --enable-pkgconfig      Install pkgconfig support
   --enable-fsadm          Enable fsadm
   --enable-dmeventd       Enable the device-mapper event daemon
-  --enable-static_link    Use this to link the tools to their libraries
-                          statically.  Default is dynamic linking
   --disable-selinux       Disable selinux support
   --enable-nls            Enable Native Language Support
 
@@ -8398,6 +8398,19 @@ done
 
 
 ################################################################################
+{ echo "$as_me:$LINENO: checking whether to use static linking" >&5
+echo $ECHO_N "checking whether to use static linking... $ECHO_C" >&6; }
+# Check whether --enable-static_link was given.
+if test "${enable_static_link+set}" = set; then
+  enableval=$enable_static_link; STATIC_LINK=$enableval
+else
+  STATIC_LINK=no
+fi
+
+{ echo "$as_me:$LINENO: result: $STATIC_LINK" >&5
+echo "${ECHO_T}$STATIC_LINK" >&6; }
+
+################################################################################
 
 
 ################################################################################
@@ -9137,7 +9150,7 @@ return tgetent ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' ncurses curses termcap termlib; do
+for ac_lib in '' tinfo ncurses curses termcap termlib; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
@@ -9306,19 +9319,6 @@ echo "$as_me: error: Features cannot be 'shared' when building statically
 " >&2;}
    { (exit 1); exit 1; }; }
 fi
-
-################################################################################
-{ echo "$as_me:$LINENO: checking whether to use static linking" >&5
-echo $ECHO_N "checking whether to use static linking... $ECHO_C" >&6; }
-# Check whether --enable-static_link was given.
-if test "${enable_static_link+set}" = set; then
-  enableval=$enable_static_link; STATIC_LINK=$enableval
-else
-  STATIC_LINK=no
-fi
-
-{ echo "$as_me:$LINENO: result: $STATIC_LINK" >&5
-echo "${ECHO_T}$STATIC_LINK" >&6; }
 
 ################################################################################
 { echo "$as_me:$LINENO: checking whether to enable selinux support" >&5
@@ -10609,7 +10609,7 @@ if test "$ac_res" != no; then
   ac_cv_func_getmntent=yes
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_GETMNTENT
+#define HAVE_GETMNTENT 1
 _ACEOF
 
 else
@@ -11720,7 +11720,7 @@ LVM_VERSION="\"`cat VERSION 2>/dev/null || echo Unknown`\""
 
 
 ################################################################################
-ac_config_files="$ac_config_files Makefile make.tmpl daemons/Makefile daemons/clvmd/Makefile daemons/dmeventd/Makefile daemons/dmeventd/libdevmapper-event.pc daemons/dmeventd/plugins/Makefile daemons/dmeventd/plugins/mirror/Makefile daemons/dmeventd/plugins/snapshot/Makefile doc/Makefile include/Makefile lib/Makefile lib/format1/Makefile lib/format_pool/Makefile lib/locking/Makefile lib/mirror/Makefile lib/snapshot/Makefile libdm/Makefile libdm/libdevmapper.pc man/Makefile po/Makefile scripts/Makefile test/Makefile tools/Makefile tools/version.h"
+ac_config_files="$ac_config_files Makefile make.tmpl daemons/Makefile daemons/clvmd/Makefile daemons/dmeventd/Makefile daemons/dmeventd/libdevmapper-event.pc daemons/dmeventd/plugins/Makefile daemons/dmeventd/plugins/mirror/Makefile daemons/dmeventd/plugins/snapshot/Makefile doc/Makefile include/Makefile lib/Makefile lib/format1/Makefile lib/format_pool/Makefile lib/locking/Makefile lib/mirror/Makefile lib/snapshot/Makefile libdm/Makefile libdm/libdevmapper.pc man/Makefile po/Makefile scripts/clvmd_init_red_hat scripts/Makefile test/Makefile test/api/Makefile tools/Makefile tools/version.h"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -12298,8 +12298,10 @@ do
     "libdm/libdevmapper.pc") CONFIG_FILES="$CONFIG_FILES libdm/libdevmapper.pc" ;;
     "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
     "po/Makefile") CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
+    "scripts/clvmd_init_red_hat") CONFIG_FILES="$CONFIG_FILES scripts/clvmd_init_red_hat" ;;
     "scripts/Makefile") CONFIG_FILES="$CONFIG_FILES scripts/Makefile" ;;
     "test/Makefile") CONFIG_FILES="$CONFIG_FILES test/Makefile" ;;
+    "test/api/Makefile") CONFIG_FILES="$CONFIG_FILES test/api/Makefile" ;;
     "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
     "tools/version.h") CONFIG_FILES="$CONFIG_FILES tools/version.h" ;;
 

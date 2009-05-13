@@ -85,7 +85,7 @@ static int num_color_ansi = 0;
 static int max_color_ansi = 0;
 
 static int
-color_slot(char *str)
+color_slot(const char *str)
 
 {
     int i;
@@ -181,7 +181,7 @@ color_env_parse(char *env)
  */
 
 int
-color_tag(char *tag)
+color_tag(const char *tag)
 
 {
     color_entry *entryp;
@@ -334,9 +334,9 @@ color_dump(FILE *f)
     }
 }
 
+#ifdef notdef
 void
 color_debug(FILE *f)
-
 {
     color_entry *ep;
     int i;
@@ -359,6 +359,7 @@ color_debug(FILE *f)
     }
     fprintf(f, "\n");
 }
+#endif
 
 int
 color_activate(int i)

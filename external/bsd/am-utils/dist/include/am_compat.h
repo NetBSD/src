@@ -1,7 +1,7 @@
-/*	$NetBSD: am_compat.h,v 1.2 2009/01/02 16:00:02 christos Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.2.2.1 2009/05/13 18:49:07 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -195,6 +195,12 @@
 # define MNTTAB_OPT_RRCASEINS "rrcaseins"
 #endif /* defined(MNT2_CDFS_OPT_RRCASEINS) && !defined(MNTTAB_OPT_RRCASEINS) */
 
+/*
+ * Complete MNTTAB_OPT_* options based on MNT2_UDF_OPT_* mount options.
+ */
+#if defined(MNT2_UDF_OPT_CLOSESESSION) && !defined(MNTTAB_OPT_CLOSESESSION)
+# define MNTTAB_OPT_CLOSESESSION "closesession"
+#endif /* defined(MNT2_UDF_OPT_CLOSESESSION) && !defined(MNTTAB_OPT_CLOSESESSION) */
 
 /*
  * Complete MNTTAB_OPT_* options based on MNT2_PCFS_OPT_* mount options.
@@ -337,6 +343,20 @@
 # define MNTTAB_OPT_DIRMASK "dirmask"
 #endif /* not MNTTAB_OPT_DIRMASK */
 
+/* useful for udf mounts */
+#ifndef MNTTAB_OPT_USER
+# define MNTTAB_OPT_USER "user"
+#endif /* not MNTTAB_OPT_USER */
+#ifndef MNTTAB_OPT_GROUP
+# define MNTTAB_OPT_GROUP "group"
+#endif /* not MNTTAB_OPT_GROUP */
+#ifndef MNTTAB_OPT_GMTOFF
+# define MNTTAB_OPT_GMTOFF "gmtoff"
+#endif /* not MNTTAB_OPT_GMTOFF */
+#ifndef MNTTAB_OPT_SESSIONNR
+# define MNTTAB_OPT_SESSIONNR "sessionnr"
+#endif /* not MNTTAB_OPT_SESSIONNR */
+
 /*
  * Incomplete filesystem definitions (sunos4, irix6, solaris2)
  */
@@ -372,6 +392,13 @@ struct hsfs_args {
 #if defined(HAVE_FS_UFS) && !defined(ufs_args_t)
 # define ufs_args_t u_int
 #endif /* defined(HAVE_FS_UFS) && !defined(ufs_args_t) */
+
+/*
+ * if does not define struct udf_args, assume integer bit-field (linux)
+ */
+#if defined(HAVE_FS_UDF) && !defined(udf_args_t)
+# define udf_args_t u_int
+#endif /* defined(HAVE_FS_UDF) && !defined(udf_args_t) */
 
 /*
  * if does not define struct efs_args, assume integer bit-field (linux)

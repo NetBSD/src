@@ -3,14 +3,15 @@
 lvs \- report information about logical volumes
 .SH SYNOPSIS
 .B lvs
-[\-\-aligned] [\-d/\-\-debug] [\-h/\-?/\-\-help]
-[\-\-ignorelockingfailure] [\-\-noheadings] [\-\-nosuffix]
-[\-o/\-\-options [+]Field[,Field]]
-[\-O/\-\-sort [+/-]Key1[,[+/-]Key2[,...]]]
-[\-P/\-\-partial] [\-\-segments]
+[\-\-aligned] [\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-\-ignorelockingfailure] [\-\-nameprefixes] [\-\-noheadings] [\-\-nosuffix]
+[\-o|\-\-options [+]Field[,Field]]
+[\-O|\-\-sort [+|-]Key1[,[+|-]Key2[,...]]]
+[\-P|\-\-partial] [\-\-rows] [\-\-segments]
 [\-\-separator Separator] [\-\-unbuffered]
 [\-\-units hsbkmgtHKMGT]
-[\-v/\-\-verbose] 
+[\-\-unquoted]
+[\-v|\-\-verbose] 
 [\-\-version] [VolumeGroupName [VolumeGroupName...]]
 .SH DESCRIPTION
 lvs produces formatted output about logical volumes.
@@ -19,6 +20,11 @@ See \fBlvm\fP for common options.
 .TP
 .I \-\-aligned
 Use with \-\-separator to align the output columns.
+.TP
+.I \-\-nameprefixes
+Add an "LVM2_" prefix plus the field name to the output.  Useful
+with --noheadings to produce a list of field=value pairs that can
+be used to set environment variables (for example, in \fBudev (7)\fP rules).
 .TP
 .I \-\-noheadings
 Suppress the headings line that is normally the first line of output.
@@ -71,6 +77,9 @@ Use default columns that emphasize segment information.
 Comma-separated ordered list of columns to sort by.  Replaces the default
 selection. Precede any column with - for a reverse sort on that column.
 .TP
+.I \-\-rows
+Output columns as rows.
+.TP
 .I \-\-separator Separator
 String to use to separate each column.  Useful if grepping the output.
 .TP
@@ -82,6 +91,9 @@ All sizes are output in these units: (h)uman-readable, (s)ectors, (b)ytes,
 (k)ilobytes, (m)egabytes, (g)igabytes, (t)erabytes.  Capitalise to use multiples
 of 1000 (S.I.) instead of 1024.  Can also specify custom (u)nits e.g.
 \-\-units 3M
+.TP
+.I \-\-unquoted
+When used with --nameprefixes, output values in the field=value pairs are not quoted.
 .SH SEE ALSO
 .BR lvm (8),
 .BR lvdisplay (8),

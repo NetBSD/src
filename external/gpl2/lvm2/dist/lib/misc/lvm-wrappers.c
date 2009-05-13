@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-wrappers.c,v 1.1.1.1 2008/12/22 00:18:13 haad Exp $	*/
+/*	$NetBSD: lvm-wrappers.c,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2006 Red Hat, Inc. All rights reserved.
@@ -17,8 +17,34 @@
 #include "lib.h"
 
 #include <unistd.h>
+#include <fcntl.h>
 
 int lvm_getpagesize(void)
 {
 	return getpagesize();
 }
+
+int read_urandom(void *buf, size_t len)
+{
+	int fd;
+
+	/* FIXME: we should stat here, and handle other cases */
+	/* FIXME: use common _io() routine's open/read/close */
+	if ((fd = open("/dev/urandom", O_RDONLY)) < 0) {
+		log_sys_error("open", "read_urandom: /dev/urandom");
+		return 0;
+	}
+
+	if (read(fd, buf, len) != (ssize_t) len) {
+		log_sys_error("read", "read_urandom: /dev/urandom");
+		if (close(fd))
+			stack;
+		return 0;
+	}
+
+	if (close(fd))
+		stack;
+
+	return 1;
+}
+

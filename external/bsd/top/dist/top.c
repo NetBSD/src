@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-char *copyright =
+const char *copyright =
     "Copyright (c) 1984 through 2008, William LeFebvre";
 
 /*
@@ -112,7 +112,7 @@ static char stdoutbuf[BUFFERSIZE];
 static jmp_buf jmp_int;
 
 /* globals */
-char *myname = "top";
+char *myname;
 
 void
 quit(int status)
@@ -128,7 +128,7 @@ quit(int status)
  *  signal handlers
  */
 
-void
+static void
 set_signal(int sig, RETSIGTYPE (*handler)(int))
 
 {
@@ -143,7 +143,7 @@ set_signal(int sig, RETSIGTYPE (*handler)(int))
 #endif
 }
 
-void
+static void
 release_signal(int sig)
 
 {
@@ -163,7 +163,7 @@ release_signal(int sig)
 #endif
 }
 
-RETSIGTYPE
+static RETSIGTYPE
 sig_leave(int i)	/* exit under normal conditions -- INT handler */
 
 {
@@ -171,7 +171,7 @@ sig_leave(int i)	/* exit under normal conditions -- INT handler */
     exit(EX_OK);
 }
 
-RETSIGTYPE
+static RETSIGTYPE
 sig_tstop(int i)	/* SIGTSTP handler */
 
 {
@@ -201,7 +201,7 @@ sig_tstop(int i)	/* SIGTSTP handler */
 }
 
 #ifdef SIGWINCH
-RETSIGTYPE
+static RETSIGTYPE
 sig_winch(int i)		/* SIGWINCH handler */
 
 {
@@ -217,8 +217,8 @@ sig_winch(int i)		/* SIGWINCH handler */
 static sigset_t signalset;
 #endif
 
-void *
-hold_signals()
+static void *
+hold_signals(void)
 
 {
 #ifdef HAVE_SIGACTION
@@ -256,8 +256,8 @@ hold_signals()
 
 }
 
-void
-set_signals()
+static void
+set_signals(void)
 
 {
     (void) set_signal(SIGINT, sig_leave);
@@ -268,7 +268,7 @@ set_signals()
 #endif
 }
 
-void
+static void
 release_signals(void *parm)
 
 {
@@ -325,7 +325,7 @@ static struct option longopts[] = {
 #endif
 
 
-void
+static void
 do_arguments(globalstate *gstate, int ac, char **av)
 
 {
@@ -489,7 +489,7 @@ Usage: %s [-1CISTabcinqtuv] [-d count] [-m mode] [-o field] [-p pid]\n\
     }
 }
 
-void
+static void
 do_display(globalstate *gstate)
 
 {
@@ -602,7 +602,7 @@ timeval_xdprint(char *s, struct timeval tv)
 }
 #endif
 
-void
+static void
 do_wait(globalstate *gstate)
 
 {
@@ -612,7 +612,7 @@ do_wait(globalstate *gstate)
     select(0, NULL, NULL, NULL, &wait);
 }
 
-void
+static void
 do_command(globalstate *gstate)
 
 {
@@ -687,7 +687,7 @@ do_command(globalstate *gstate)
     } while (timercmp(&now, &(gstate->refresh), < ));
 }
 
-void
+static void
 do_minidisplay(globalstate *gstate)
 
 {
@@ -721,7 +721,8 @@ main(int argc, char *argv[])
     char **preset_argv;
     int preset_argc = 0;
     void *mask;
-    int need_mini = 1;
+    volatile int need_mini = 1;
+    static char top[] = "top";
 
     struct statics statics;
     globalstate *gstate;
@@ -737,7 +738,9 @@ main(int argc, char *argv[])
 	{
 	    myname++;
 	}
-    }
+    } else
+	myname = top;
+
 
     /* binary compatibility check */
 #ifdef HAVE_UNAME

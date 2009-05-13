@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.enc,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile.enc,v 1.1.1.1.10.1 2009/05/13 18:53:30 jym Exp $
 
 FILESDIR=	${X11FONTDIR}/${ENCDIR}
 
@@ -9,7 +9,7 @@ CLEANFILES+=	${GZFILES:S/.gz$/.gz.tmp/}
 .SUFFIXES: .enc .enc.gz
 .enc.enc.gz:
 	${_MKTARGET_CREATE}
-	gzip -9fc ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	gzip -9nfc ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 
 
 realall: ${FILES}

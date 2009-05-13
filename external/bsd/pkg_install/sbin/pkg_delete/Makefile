@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2008/09/30 19:19:56 joerg Exp $
+# $NetBSD: Makefile,v 1.1.8.1 2009/05/13 18:52:38 jym Exp $
 # Original from FreeBSD, no rcs id.
 
 PROG= pkg_delete
-SRCS= main.c perform.c
 
 .include <bsd.init.mk>
 

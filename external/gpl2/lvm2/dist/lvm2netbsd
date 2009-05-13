@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: lvm2netbsd,v 1.1.1.1 2008/12/22 00:17:35 haad Exp $
+#	$NetBSD: lvm2netbsd,v 1.1.1.1.2.1 2009/05/13 18:52:39 jym Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,9 +40,9 @@
 #
 
 # edit this
-lvm2_vers='2.2.02.43'
+lvm2_vers=$(cat VERSION | cut -d ' ' -f 1)
 
-import_date=`date '+%m-%d-%y'`;
+import_date=$(date '+%m-%d-%y');
 #
 # (usually) NO NEED TO EDIT BELOW THIS LINE
 #

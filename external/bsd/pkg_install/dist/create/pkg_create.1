@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd July 28, 2008
+.Dd April 24, 2009
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl ElORUVv
+.Op Fl ElOUVv
 .Bk -words
 .Op Fl B Ar build-info-file
 .Ek
@@ -256,10 +256,6 @@ as the initial directory
 .Pq base
 to start from in selecting files for
 the package.
-.It Fl R
-Re-order any directories in the pkg/PLIST file into reverse alphabetic
-order, so that child directories will automatically be removed before
-parent directories.
 .It Fl S Ar size-all-file
 Store the given file for later querying with the
 .Xr pkg_info 1
@@ -419,21 +415,12 @@ Set default group ownership for all subsequently extracted files to
 Use without an arg to set back to default (extraction)
 group ownership.
 .It Cm @comment Ar string
-Imbed a comment in the packing list.
+Embed a comment in the packing list.
 Useful in trying to document some particularly hairy sequence that
 may trip someone up later.
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
 copy it anywhere), as it's used for some special purpose.
-.It Cm @ignore_inst
-Similar to
-.Cm @ignore ,
-but the ignoring of the next file is delayed one evaluation cycle.
-This makes it possible to use this directive in the
-.Ar packinglist
-file, so you can pack a
-specialized datafile in with a distribution for your install script (or
-something) yet have the installer ignore it.
 .It Cm @name Ar name
 Set the name of the package.
 This is mandatory and is usually put at the top.
@@ -444,20 +431,18 @@ Note that
 will derive this field from the
 .Ar pkg-name
 and add it automatically if none is given.
-.It Cm @dirrm Ar name
+.It Cm @pkgdir Ar name
 Declare directory
 .Pa name
-to be deleted at deinstall time.
-By default, directories created by a package installation are not deleted
-when the package is deinstalled; this provides an explicit directory cleanup
-method.
-This directive should appear at the end of the package list.
-If more than one
-.Cm @dirrm
-directives are used, the directories are removed in the order specified.
-The
+as managed.
+If it does not exist at installation time, it is created.
+If this directory is no longer referenced by packages and the last
+file or directory in it is deleted, the directory is removed as well.
+.It Cm @dirrm Ar name
+This command is supported for compatibility only.
+If directory
 .Pa name
-directory will not be removed unless it is empty.
+exists, it will be deleted at deinstall time.
 .It Cm @display Ar name
 Declare
 .Pa name

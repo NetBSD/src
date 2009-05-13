@@ -37,11 +37,11 @@
 
 #include "globalstate.h"
 
-void display_clear();
-int display_resize();
-int display_lines();
+void display_clear(void);
+int display_resize(void);
+int display_lines(void);
 int display_setmulti(int m);
-int display_columns();
+int display_columns(void);
 int display_init(struct statics *statics, int percpuinfo);
 void i_loadave(int mpid, double *avenrun);
 void u_loadave(int mpid, double *avenrun);
@@ -54,7 +54,7 @@ void i_procstates(int total, int *brkdn, int threads);
 void u_procstates(int total, int *brkdn, int threads);
 void i_cpustates(int *states);
 void u_cpustates(int *states);
-void z_cpustates();
+void z_cpustates(void);
 void i_kernel(int *stats);
 void u_kernel(int *stats);
 void i_memory(long *stats);
@@ -67,19 +67,19 @@ void i_header(char *text);
 void u_header(char *text);
 void i_process(int line, char *thisline);
 void u_process(int, char *);
-void i_endscreen();
-void u_endscreen();
+void i_endscreen(void);
+void u_endscreen(void);
 void display_header(int t);
-void new_message(char *msgfmt, ...);
-void message_error(char *msgfmt, ...);
-void message_mark();
-void message_clear();
-void message_expire();
-void message_prompt(char *msgfmt, ...);
-void message_prompt_plain(char *msgfmt, ...);
+void new_message(const char *msgfmt, ...);
+void message_error(const char *msgfmt, ...);
+void message_mark(void);
+void message_clear(void);
+void message_expire(void);
+void message_prompt(const char *msgfmt, ...);
+void message_prompt_plain(const char *msgfmt, ...);
 int readline(char *buffer, int size, int numeric);
-void display_pagerstart();
-void display_pagerend();
-void display_pager(char *fmt, ...);
+void display_pagerstart(void);
+void display_pagerend(void);
+void display_pager(const char *fmt, ...);
 
 #endif

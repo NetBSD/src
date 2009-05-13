@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -72,6 +72,10 @@ __RCSID("$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $");
 #include <string.h>
 #endif
 
+#ifndef BOOTSTRAP
+#include <archive.h>
+#endif
+
 #include "admin.h"
 #include "lib.h"
 
@@ -106,6 +110,8 @@ usage(void)
 	    " audit-pkg [-es] [-t type] ...   - check listed packages for vulnerabilities\n"
 	    " audit-batch [-es] [-t type] ... - check packages in listed files for vulnerabilities\n"
 	    " audit-history [-t type] ...     - print all advisories for package names\n"
+	    " check-license <condition>       - check if condition is acceptable\n"
+	    " check-single-license <license>  - check if license is acceptable\n"
 	    " config-var name                 - print current value of the configuration variable\n"
 	    " check-signature ...             - verify the signature of packages\n"
 	    " x509-sign-package pkg spkg key cert  - create X509 signature\n"
@@ -171,6 +177,10 @@ add_pkg(const char *pkgdir, void *vp)
 				(*cnt)++;
 			}
 			break;
+		case PLIST_PKGDIR:
+			add_pkgdir(PkgName, dirp, p->name);
+			(*cnt)++;
+			break;
 		case PLIST_CWD:
 			if (strcmp(p->name, ".") != 0) {
 				dirp = p->name;
@@ -193,9 +203,7 @@ add_pkg(const char *pkgdir, void *vp)
 		case PLIST_UNEXEC:
 		case PLIST_DISPLAY:
 		case PLIST_PKGDEP:
-		case PLIST_MTREE:
 		case PLIST_DIR_RM:
-		case PLIST_IGNORE_INST:
 		case PLIST_OPTION:
 		case PLIST_PKGCFL:
 		case PLIST_BLDDEP:
@@ -518,6 +526,37 @@ main(int argc, char *argv[])
 		if (argv == NULL || argv[1] != NULL)
 			errx(EXIT_FAILURE, "config-var takes exactly one argument");
 		pkg_install_show_variable(argv[0]);
+	} else if (strcasecmp(argv[0], "check-license") == 0) {
+		if (argv[1] == NULL)
+			errx(EXIT_FAILURE, "check-license takes exactly one argument");
+
+		load_license_lists();
+
+		switch (acceptable_pkg_license(argv[1])) {
+		case 0:
+			puts("no");
+			return 0;
+		case 1:
+			puts("yes");
+			return 0;
+		case -1:
+			errx(EXIT_FAILURE, "invalid license condition");
+		}
+	} else if (strcasecmp(argv[0], "check-single-license") == 0) {
+		if (argv[1] == NULL)
+			errx(EXIT_FAILURE, "check-license takes exactly one argument");
+		load_license_lists();
+
+		switch (acceptable_license(argv[1])) {
+		case 0:
+			puts("no");
+			return 0;
+		case 1:
+			puts("yes");
+			return 0;
+		case -1:
+			errx(EXIT_FAILURE, "invalid license");
+		}
 	}
 #ifndef BOOTSTRAP
 	else if (strcasecmp(argv[0], "fetch-pkg-vulnerabilities") == 0) {
@@ -533,26 +572,22 @@ main(int argc, char *argv[])
 	} else if (strcasecmp(argv[0], "audit-history") == 0) {
 		audit_history(--argc, ++argv);
 	} else if (strcasecmp(argv[0], "check-signature") == 0) {
-#ifdef HAVE_SSL
 		struct archive *pkg;
-		void *cookie;
 		int rc;
 
 		rc = 0;
 		for (--argc, ++argv; argc > 0; --argc, ++argv) {
-			pkg = open_archive(*argv, &cookie);
+			pkg = open_archive(*argv);
 			if (pkg == NULL) {
 				warnx("%s could not be opened", *argv);
 				continue;
 			}
-			if (pkg_full_signature_check(pkg))
+			if (pkg_full_signature_check(&pkg))
 				rc = 1;
-			close_archive(pkg);
+			if (!pkg)
+				archive_read_finish(pkg);
 		}
 		return rc;
-#else
-		errx(EXIT_FAILURE, "OpenSSL support is not included");
-#endif
 	} else if (strcasecmp(argv[0], "x509-sign-package") == 0) {
 #ifdef HAVE_SSL
 		--argc;

@@ -1,7 +1,7 @@
-/*	$NetBSD: am_ops.c,v 1.1.1.1 2008/09/19 20:07:15 christos Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.1.1.1.8.1 2009/05/13 18:49:02 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -125,6 +125,9 @@ static am_ops *vops[] =
 #ifdef HAVE_FS_UMAPFS
 /* FILL IN */			/* uid/gid mapping F/S */
 #endif /* HAVE_FS_UMAPFS */
+#ifdef HAVE_FS_UDF
+  &udf_ops,			/* UDF F/S */
+#endif /* HAVE_FS_UDF */
 
   /*
    * These 4 should be last, in the order:

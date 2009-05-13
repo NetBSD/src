@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.1.1.1 2008/12/22 00:17:57 haad Exp $	*/
+/*	$NetBSD: display.c,v 1.1.1.1.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -576,8 +576,6 @@ void vgdisplay_full(const struct volume_group *vg)
 {
 	uint32_t access_str;
 	uint32_t active_pvs;
-	uint32_t lv_count = 0;
-	struct lv_list *lvl;
 	char uuid[64] __attribute((aligned(8)));
 
 	active_pvs = vg->pv_count - vg_missing_pv_count(vg);
@@ -609,12 +607,8 @@ void vgdisplay_full(const struct volume_group *vg)
 			  vg->status & SHARED ? "yes" : "no");
 	}
 
-	dm_list_iterate_items(lvl, &vg->lvs)
-		if (lv_is_visible(lvl->lv) && !(lvl->lv->status & SNAPSHOT))
-			lv_count++;
-
 	log_print("MAX LV                %u", vg->max_lv);
-	log_print("Cur LV                %u", lv_count);
+	log_print("Cur LV                %u", displayable_lvs_in_vg(vg));
 	log_print("Open LV               %u", lvs_in_vg_opened(vg));
 /****** FIXME Max LV Size
       log_print ( "MAX LV Size           %s",
@@ -658,16 +652,10 @@ void vgdisplay_full(const struct volume_group *vg)
 void vgdisplay_colons(const struct volume_group *vg)
 {
 	uint32_t active_pvs;
-	uint32_t lv_count;
-	struct lv_list *lvl;
 	const char *access_str;
 	char uuid[64] __attribute((aligned(8)));
 
 	active_pvs = vg->pv_count - vg_missing_pv_count(vg);
-
-	dm_list_iterate_items(lvl, &vg->lvs)
-		if (lv_is_visible(lvl->lv) && !(lvl->lv->status & SNAPSHOT))
-			lv_count++;
 
 	switch (vg->status & (LVM_READ | LVM_WRITE)) {
 		case LVM_READ | LVM_WRITE:
@@ -695,7 +683,7 @@ void vgdisplay_colons(const struct volume_group *vg)
 		vg->status,
 		/* internal volume group number; obsolete */
 		vg->max_lv,
-		vg->lv_count,
+		displayable_lvs_in_vg(vg),
 		lvs_in_vg_opened(vg),
 		/* FIXME: maximum logical volume size */
 		vg->max_pv,

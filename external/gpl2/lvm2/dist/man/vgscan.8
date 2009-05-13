@@ -1,15 +1,15 @@
-.\"	$NetBSD: vgscan.8,v 1.1.1.1 2008/12/22 00:18:25 haad Exp $
+.\"    $NetBSD: vgscan.8,v 1.1.1.1.2.1 2009/05/13 18:52:45 jym Exp $
 .\"
-.TH VGSCAN 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH VGSCAN 8 "LVM TOOLS 2.02.44-cvs (02-17-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 vgscan \- scan all disks for volume groups and rebuild caches
 .SH SYNOPSIS
 .B vgscan
-[\-d/\-\-debug] [\-h/\-?/\-\-help] 
+[\-d|\-\-debug] [\-h|\-?|\-\-help] 
 [\-\-ignorelockingfailure]
 [\-\-mknodes]
-[\-P/\-\-partial]
-[\-v/\-\-verbose]
+[\-P|\-\-partial]
+[\-v|\-\-verbose]
 .SH DESCRIPTION
 vgscan scans all SCSI, (E)IDE disks, multiple devices and a bunch
 of other disk devices in the system looking for LVM physical volumes

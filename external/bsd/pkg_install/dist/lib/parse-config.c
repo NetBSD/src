@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.1.2.1 2009/05/13 18:52:38 jym Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.1.2.1 2009/05/13 18:52:38 jym Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: parse-config.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $");
 
 const char     *config_file = SYSCONFDIR"/pkg_install.conf";
 
-char fetch_flags[10];
+char fetch_flags[10] = ""; /* Workaround Mac OS X linker issues with BSS */
 static const char *active_ftp;
 static const char *verbose_netio;
 static const char *ignore_proxy;
@@ -57,6 +57,7 @@ const char *cert_chain_file;
 const char *certs_packages;
 const char *certs_pkg_vulnerabilities;
 const char *check_vulnerabilities;
+const char *config_pkg_path;
 const char *verified_installation;
 const char *gpg_cmd;
 const char *gpg_keyring_pkgvuln;
@@ -67,18 +68,20 @@ const char *pkg_vulnerabilities_dir;
 const char *pkg_vulnerabilities_file;
 const char *pkg_vulnerabilities_url;
 const char *ignore_advisories = NULL;
-
 const char tnf_vulnerability_base[] = "ftp://ftp.NetBSD.org/pub/NetBSD/packages/vulns";
+const char *acceptable_licenses = NULL;
 
 static struct config_variable {
 	const char *name;
 	const char **var;
 } config_variables[] = {
+	{ "ACCEPTABLE_LICENSES", &acceptable_licenses },
 	{ "ACTIVE_FTP", &active_ftp },
 	{ "CERTIFICATE_ANCHOR_PKGS", &certs_packages },
 	{ "CERTIFICATE_ANCHOR_PKGVULN", &certs_pkg_vulnerabilities },
 	{ "CERTIFICATE_CHAIN", &cert_chain_file },
 	{ "CHECK_VULNERABILITIES", &check_vulnerabilities },
+	{ "DEFAULT_ACCEPTABLE_LICENSES", &default_acceptable_licenses },
 	{ "GPG", &gpg_cmd },
 	{ "GPG_KEYRING_PKGVULN", &gpg_keyring_pkgvuln },
 	{ "GPG_KEYRING_SIGN", &gpg_keyring_sign },
@@ -86,6 +89,7 @@ static struct config_variable {
 	{ "GPG_SIGN_AS", &gpg_sign_as },
 	{ "IGNORE_PROXY", &ignore_proxy },
 	{ "IGNORE_URL", &ignore_advisories },
+	{ "PKG_PATH", &config_pkg_path },
 	{ "PKGVULNDIR", &pkg_vulnerabilities_dir },
 	{ "PKGVULNURL", &pkg_vulnerabilities_url },
 	{ "VERBOSE_NETIO", &verbose_netio },
@@ -118,6 +122,9 @@ pkg_install_config(void)
 
 	if (check_vulnerabilities == NULL)
 		check_vulnerabilities = "never";
+
+	if ((value = getenv("PKG_PATH")) != NULL)
+		config_pkg_path = value;
 
 	snprintf(fetch_flags, sizeof(fetch_flags), "%s%s%s",
 	    (verbose_netio && *verbose_netio) ? "v" : "",

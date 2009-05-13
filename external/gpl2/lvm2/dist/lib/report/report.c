@@ -1,4 +1,4 @@
-/*	$NetBSD: report.c,v 1.1.1.1 2008/12/22 00:18:14 haad Exp $	*/
+/*	$NetBSD: report.c,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -513,7 +513,7 @@ static int _lvname_disp(struct dm_report *rh, struct dm_pool *mem,
 	char *repstr, *lvname;
 	size_t len;
 
-	if (lv_is_visible(lv)) {
+	if (lv_is_displayable(lv)) {
 		repstr = lv->name;
 		return dm_report_field_string(rh, field, (const char **) &repstr);
 	}
@@ -886,6 +886,53 @@ static int _pvmdafree_disp(struct dm_report *rh, struct dm_pool *mem,
 	return _size64_disp(rh, mem, field, &freespace, private);
 }
 
+static uint64_t _find_min_mda_size(struct dm_list *mdas)
+{
+	uint64_t min_mda_size = UINT64_MAX, mda_size;
+	struct metadata_area *mda;
+
+	dm_list_iterate_items(mda, mdas) {
+		if (!mda->ops->mda_total_sectors)
+			continue;
+		mda_size = mda->ops->mda_total_sectors(mda);
+		if (mda_size < min_mda_size)
+			min_mda_size = mda_size;
+	}
+
+	if (min_mda_size == UINT64_MAX)
+		min_mda_size = UINT64_C(0);
+
+	return min_mda_size;
+}
+
+static int _pvmdasize_disp(struct dm_report *rh, struct dm_pool *mem,
+			   struct dm_report_field *field,
+			   const void *data, void *private)
+{
+	struct lvmcache_info *info;
+	uint64_t min_mda_size;
+	const char *pvid = (const char *)(&((struct id *) data)->uuid);
+
+	info = info_from_pvid(pvid, 0);
+
+	/* PVs could have 2 mdas of different sizes (rounding effect) */
+	min_mda_size = _find_min_mda_size(&info->mdas);
+
+	return _size64_disp(rh, mem, field, &min_mda_size, private);
+}
+
+static int _vgmdasize_disp(struct dm_report *rh, struct dm_pool *mem,
+			   struct dm_report_field *field,
+			   const void *data, void *private)
+{
+	const struct volume_group *vg = (const struct volume_group *) data;
+	uint64_t min_mda_size;
+
+	min_mda_size = _find_min_mda_size(&vg->fid->metadata_areas);
+
+	return _size64_disp(rh, mem, field, &min_mda_size, private);
+}
+
 static int _vgmdafree_disp(struct dm_report *rh, struct dm_pool *mem,
 			   struct dm_report_field *field,
 			   const void *data, void *private)
@@ -913,12 +960,9 @@ static int _lvcount_disp(struct dm_report *rh, struct dm_pool *mem,
 			 const void *data, void *private)
 {
 	const struct volume_group *vg = (const struct volume_group *) data;
-        struct lv_list *lvl;
-	uint32_t count = 0;
+	uint32_t count;
 
-        dm_list_iterate_items(lvl, &vg->lvs)
-		if (lv_is_visible(lvl->lv) && !(lvl->lv->status & SNAPSHOT))
-			count++;
+	count = displayable_lvs_in_vg(vg);	
 
 	return _uint32_disp(rh, mem, field, &count, private);
 }
@@ -1027,8 +1071,17 @@ static int _copypercent_disp(struct dm_report *rh __attribute((unused)), struct 
 /* Report object types */
 
 /* necessary for displaying something for PVs not belonging to VG */
+static struct format_instance _dummy_fid = {
+	.metadata_areas = { &(_dummy_fid.metadata_areas), &(_dummy_fid.metadata_areas) },
+};
+
 static struct volume_group _dummy_vg = {
+	.fid = &_dummy_fid,
 	.name = (char *) "",
+	.system_id = (char *) "",
+	.pvs = { &(_dummy_vg.pvs), &(_dummy_vg.pvs) },
+	.lvs = { &(_dummy_vg.lvs), &(_dummy_vg.lvs) },
+	.tags = { &(_dummy_vg.tags), &(_dummy_vg.tags) },
 };
 
 static void *_obj_get_vg(void *obj)
@@ -1113,7 +1166,7 @@ void *report_init(struct cmd_context *cmd, const char *format, const char *keys,
 	rh = dm_report_init(report_type, _report_types, _fields, format,
 			    separator, report_flags, keys, cmd);
 
-	if (field_prefixes)
+	if (rh && field_prefixes)
 		dm_report_set_output_field_name_prefix(rh, "lvm2_");
 
 	return rh;
@@ -1127,6 +1180,10 @@ int report_object(void *handle, struct volume_group *vg,
 		  struct lv_segment *seg, struct pv_segment *pvseg)
 {
 	struct lvm_report_object obj;
+
+	/* The two format fields might as well match. */
+	if (!vg && pv)
+		_dummy_fid.fmt = pv->fmt;
 
 	obj.vg = vg;
 	obj.lv = lv;

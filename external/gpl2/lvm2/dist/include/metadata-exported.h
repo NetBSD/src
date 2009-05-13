@@ -1,4 +1,4 @@
-/*	$NetBSD: metadata-exported.h,v 1.1.1.1 2008/12/22 00:18:44 haad Exp $	*/
+/*	$NetBSD: metadata-exported.h,v 1.1.1.1.2.1 2009/05/13 18:52:41 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -484,6 +484,9 @@ struct lv_segment *first_seg(const struct logical_volume *lv);
 int lv_is_origin(const struct logical_volume *lv);
 int lv_is_cow(const struct logical_volume *lv);
 int lv_is_visible(const struct logical_volume *lv);
+
+/* Test if given LV is visible from user's perspective */
+int lv_is_displayable(const struct logical_volume *lv);
 
 int pv_is_in_vg(struct volume_group *vg, struct physical_volume *pv);
 

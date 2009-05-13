@@ -1,4 +1,4 @@
-/*	$NetBSD: lvresize.c,v 1.1.1.1 2008/12/22 00:19:05 haad Exp $	*/
+/*	$NetBSD: lvresize.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -146,7 +146,7 @@ static int do_resizefs_reduce(const struct cmd_context *cmd,
 		return 0;
 	}
 
-	if (dm_snprintf(size_buf, SIZE_BUF, "%" PRIu64,
+	if (dm_snprintf(size_buf, SIZE_BUF, "%" PRIu64 "K",
 			(uint64_t) lp->extents * vg->extent_size / 2) < 0) {
 		log_error("Couldn't generate new LV size string");
 		return 0;
@@ -637,7 +637,7 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 				  lp->lv_name);
 			return ECMD_FAILED;
 		}
-		if (dm_snprintf(size_buf, SIZE_BUF, "%" PRIu64,
+		if (dm_snprintf(size_buf, SIZE_BUF, "%" PRIu64 "K",
 				(uint64_t) lp->extents * vg->extent_size / 2) < 0) {
 		    log_error("Couldn't generate new LV size string");
 		    return ECMD_FAILED;

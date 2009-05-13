@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: amd2netbsd,v 1.1 2008/09/19 21:38:41 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.1.8.1 2009/05/13 18:49:01 jym Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,9 +34,9 @@
 #
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/amd/release/tar/file
-#	$ sh /usr/src/dist/am-utils/amd2netbsd am-utils-6.x.y `pwd`
+#	$ sh /usr/src/external/bsd/am-utils/dist/amd2netbsd am-utils-6.x.y `pwd`
 #	$ cd src/dist/am-utils
-#	$ cvs import -m "Import am-utils 6.x.y" src/dist/am-utils ezk am-utils-6-x-y
+#	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import am-utils 6.x.y" src/external/bsd/am-utils/dist ezk am-utils-6-x-y
 #	$ cd ../../../am-utils-6.x.y
 #	$ run ./configure
 # merge newly generated config.h with /usr/src/usr.sbin/amd/include/config.h

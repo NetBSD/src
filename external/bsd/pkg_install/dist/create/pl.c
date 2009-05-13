@@ -1,4 +1,4 @@
-/*	$NetBSD: pl.c,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $	*/
+/*	$NetBSD: pl.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pl.c,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $");
+__RCSID("$NetBSD: pl.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -74,39 +74,6 @@ CheckSymlink(char *name, char *prefix, size_t prefixcc)
 }
 
 /*
- * (Reversed) comparison routine for directory name sorting
- */
-static int
-dircmp(const void *vp1, const void *vp2)
-{
-	return strcmp((const char *) vp2, (const char *) vp1);
-}
-
-/*
- * Re-order the PLIST_DIR_RM entries into reverse alphabetic order
- */
-static void
-reorder(package_t *pkg, int dirc)
-{
-	plist_t *p;
-	char  **dirv;
-	int     i;
-
-	dirv = xcalloc(dirc, sizeof(char *));
-
-	for (p = pkg->head, i = 0; p; p = p->next) {
-		if (p->type == PLIST_DIR_RM)
-			dirv[i++] = p->name;
-	}
-	qsort(dirv, dirc, sizeof(char *), dircmp);
-	for (p = pkg->head, i = 0; p; p = p->next) {
-		if (p->type == PLIST_DIR_RM)
-			p->name = dirv[i++];
-	}
-	free(dirv);
-}
-
-/*
  * Check a list for files that require preconversion
  */
 void
@@ -120,17 +87,20 @@ check_list(package_t *pkg, const char *PkgName)
 	char    name[MaxPathSize];
 	char   *cwd = NULL;
 	char   *srcdir = NULL;
-	int     dirc;
+	char   *pkgname = NULL;
 	int	cc;
 
 	/* Open Package Database for writing */
 	if (update_pkgdb && !pkgdb_open(ReadWrite))
 		err(EXIT_FAILURE, "can't open pkgdb");
 
-	for (dirc = 0, p = pkg->head; p; p = p->next) {
+	for (p = pkg->head; p; p = p->next) {
 		switch (p->type) {
 		case PLIST_CWD:
 			cwd = p->name;
+			break;
+		case PLIST_NAME:
+			pkgname = p->name;
 			break;
 		case PLIST_IGNORE:
 			p = p->next;
@@ -138,8 +108,15 @@ check_list(package_t *pkg, const char *PkgName)
 		case PLIST_SRC:
 			srcdir = p->name;
 			break;
-		case PLIST_DIR_RM:
-			dirc++;
+		case PLIST_PKGDIR:
+			if (cwd == NULL)
+				errx(2, "@pkgdir without preceding @cwd found");
+			if (pkgname == NULL)
+				errx(2, "@pkgdir without preceding @name found");
+			if (update_pkgdb) {
+				add_pkgdir(pkgname, cwd, p->name);
+				/* mkdir_p(cwd, p->name); */
+			}
 			break;
 		case PLIST_FILE:
 			/*
@@ -178,9 +155,8 @@ check_list(package_t *pkg, const char *PkgName)
 			}
 			switch (st.st_mode & S_IFMT) {
 			case S_IFDIR:
-				p->type = PLIST_DIR_RM;
-				dirc++;
-				continue;
+				warnx("Warning - directory `%s' in PLIST", name);
+				break;
 			case S_IFLNK:
 				if (RelativeLinks) {
 					CheckSymlink(name, cwd, strlen(cwd));
@@ -235,9 +211,5 @@ check_list(package_t *pkg, const char *PkgName)
 
 	if (update_pkgdb) {
 		pkgdb_close();
-	}
-
-	if (ReorderDirs && dirc > 0) {
-		reorder(pkg, dirc);
 	}
 }

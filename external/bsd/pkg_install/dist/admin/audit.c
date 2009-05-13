@@ -1,4 +1,4 @@
-/*	$NetBSD: audit.c,v 1.1.1.3 2009/02/02 20:44:02 joerg Exp $	*/
+/*	$NetBSD: audit.c,v 1.1.1.3.2.1 2009/05/13 18:52:37 jym Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: audit.c,v 1.1.1.3 2009/02/02 20:44:02 joerg Exp $");
+__RCSID("$NetBSD: audit.c,v 1.1.1.3.2.1 2009/05/13 18:52:37 jym Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -76,11 +76,14 @@ __RCSID("$NetBSD: audit.c,v 1.1.1.3 2009/02/02 20:44:02 joerg Exp $");
 static int check_eol = 0;
 static int check_signature = 0;
 static const char *limit_vul_types = NULL;
+static int update_pkg_vuln = 0;
 
 static struct pkg_vulnerabilities *pv;
 
+static const char audit_options[] = "est:";
+
 static void
-parse_options(int argc, char **argv)
+parse_options(int argc, char **argv, const char *options)
 {
 	int ch;
 
@@ -94,7 +97,7 @@ parse_options(int argc, char **argv)
 	++argc;
 	--argv;
 
-	while ((ch = getopt(argc, argv, "est:")) != -1) {
+	while ((ch = getopt(argc, argv, options)) != -1) {
 		switch (ch) {
 		case 'e':
 			check_eol = 1;
@@ -104,6 +107,9 @@ parse_options(int argc, char **argv)
 			break;
 		case 't':
 			limit_vul_types = optarg;
+			break;
+		case 'u':
+			update_pkg_vuln = 1;
 			break;
 		default:
 			usage();
@@ -211,7 +217,7 @@ audit_pkgdb(int argc, char **argv)
 {
 	int rv;
 
-	parse_options(argc, argv);
+	parse_options(argc, argv, audit_options);
 	argv += optind;
 
 	check_and_read_pkg_vulnerabilities();
@@ -235,7 +241,7 @@ audit_pkg(int argc, char **argv)
 {
 	int rv;
 
-	parse_options(argc, argv);
+	parse_options(argc, argv, audit_options);
 	argv += optind;
 
 	check_and_read_pkg_vulnerabilities();
@@ -255,7 +261,7 @@ audit_batch(int argc, char **argv)
 {
 	int rv;
 
-	parse_options(argc, argv);
+	parse_options(argc, argv, audit_options);
 	argv += optind;
 
 	check_and_read_pkg_vulnerabilities();
@@ -272,7 +278,7 @@ audit_batch(int argc, char **argv)
 void
 check_pkg_vulnerabilities(int argc, char **argv)
 {
-	parse_options(argc, argv);
+	parse_options(argc, argv, "s");
 	if (argc != optind + 1)
 		usage();
 
@@ -287,18 +293,50 @@ fetch_pkg_vulnerabilities(int argc, char **argv)
 	char *buf, *decompressed_input;
 	size_t buf_len, buf_fetched, decompressed_len;
 	ssize_t cur_fetched;
+	struct url *url;
 	struct url_stat st;
 	fetchIO *f;
 	int fd;
+	struct stat sb;
+	char my_flags[20];
+	const char *flags;
 
-	parse_options(argc, argv);
+	parse_options(argc, argv, "su");
 	if (argc != optind)
 		usage();
 
 	if (verbose >= 2)
 		fprintf(stderr, "Fetching %s\n", pkg_vulnerabilities_url);
 
-	f = fetchXGetURL(pkg_vulnerabilities_url, &st, fetch_flags);
+	url = fetchParseURL(pkg_vulnerabilities_url);
+	if (url == NULL)
+		errx(EXIT_FAILURE,
+		    "Could not parse location of pkg_vulnerabilities: %s",
+		    fetchLastErrString);
+
+	flags = fetch_flags;
+	if (update_pkg_vuln) {
+		fd = open(pkg_vulnerabilities_file, O_RDONLY);
+		if (fd != -1 && fstat(fd, &sb) != -1) {
+			url->last_modified = sb.st_mtime;
+			snprintf(my_flags, sizeof(my_flags), "%si",
+			    fetch_flags);
+			flags = my_flags;
+		} else
+			update_pkg_vuln = 0;
+		if (fd != -1)
+			close(fd);
+	}
+
+	f = fetchXGet(url, &st, flags);
+	if (f == NULL && update_pkg_vuln &&
+	    fetchLastErrCode == FETCH_UNCHANGED) {
+		if (verbose >= 1)
+			fprintf(stderr, "%s is not newer\n",
+			    pkg_vulnerabilities_url);
+		exit(EXIT_SUCCESS);
+	}
+
 	if (f == NULL)
 		errx(EXIT_FAILURE, "Could not fetch vulnerability file: %s",
 		    fetchLastErrString);
@@ -460,7 +498,7 @@ check_pkg_history(const char *pkg)
 void
 audit_history(int argc, char **argv)
 {
-	parse_options(argc, argv);
+	parse_options(argc, argv, "st:");
 	argv += optind;
 
 	check_and_read_pkg_vulnerabilities();

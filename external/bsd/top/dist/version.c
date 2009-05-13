@@ -37,9 +37,10 @@
 
 #include "config.h"
 #include "top.h"
+#include "version.h"
 
-char *
-version_string()
+const char *
+version_string(void)
 
 {
     return(PACKAGE_VERSION);

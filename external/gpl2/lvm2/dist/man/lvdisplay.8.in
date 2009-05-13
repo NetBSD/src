@@ -3,10 +3,10 @@
 lvdisplay \- display attributes of a logical volume
 .SH SYNOPSIS
 .B lvdisplay
-[\-c/\-\-colon] [\-d/\-\-debug] [\-h/\-?/\-\-help]
+[\-c|\-\-colon] [\-d|\-\-debug] [\-h|\-?|\-\-help]
 [\-\-ignorelockingfailure]
-[\-\-maps] [\-P/\-\-partial]
-[\-v/\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
+[\-\-maps] [\-P|\-\-partial]
+[\-v|\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
 .SH DESCRIPTION
 lvdisplay allows you to see the attributes of a logical volume
 like size, read/write status, snapshot information etc.

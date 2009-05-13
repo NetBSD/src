@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-file.h,v 1.1.1.1 2008/12/22 00:18:44 haad Exp $	*/
+/*	$NetBSD: lvm-file.h,v 1.1.1.1.2.1 2009/05/13 18:52:41 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -21,7 +21,8 @@
 /*
  * Create a temporary filename, and opens a descriptor to the file.
  */
-int create_temp_name(const char *dir, char *buffer, size_t len, int *fd);
+int create_temp_name(const char *dir, char *buffer, size_t len, int *fd,
+		     unsigned *seed);
 
 /*
  * NFS-safe rename of a temporary file to a common name, designed

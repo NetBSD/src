@@ -1,4 +1,4 @@
-/*	$NetBSD: locking.c,v 1.1.1.1 2008/12/22 00:18:04 haad Exp $	*/
+/*	$NetBSD: locking.c,v 1.1.1.1.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -230,7 +230,7 @@ int init_locking(int type, struct cmd_context *cmd)
 
 #ifdef HAVE_LIBDL
 	case 2:
-		if (!cmd->is_static) {
+		if (!is_static()) {
 			log_very_verbose("External locking selected.");
 			if (init_external_locking(&_locking, cmd))
 				return 1;

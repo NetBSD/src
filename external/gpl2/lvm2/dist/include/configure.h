@@ -28,7 +28,7 @@
 /* #undef DMEVENTD_PIDFILE */
 
 /* Library version */
-#define DM_LIB_VERSION "1.02.29 (2008-11-10)"
+#define DM_LIB_VERSION "1.02.30 (2009-01-26)"
 
 /* Define to 1 if you have `alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
@@ -101,7 +101,7 @@
 /* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
-#define HAVE_LIBREADLINE 1
+/* #undef HAVE_LIBREADLINE */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -160,10 +160,10 @@
 /* #undef HAVE_PTHREAD_H */
 
 /* Define to 1 if you have the <readline/history.h> header file. */
-#define HAVE_READLINE_HISTORY_H 1
+/* #undef HAVE_READLINE_HISTORY_H */
 
 /* Define to 1 if you have the <readline/readline.h> header file. */
-#define HAVE_READLINE_READLINE_H 1
+/* #undef HAVE_READLINE_READLINE_H */
 
 /* Define to 1 to include support for realtime clock. */
 /* #undef HAVE_REALTIME */
@@ -384,7 +384,7 @@
 #define POOL_INTERNAL 1
 
 /* Define to 1 to include the LVM readline shell. */
-#define READLINE_SUPPORT 1
+/* #undef READLINE_SUPPORT */
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $
+.\" $NetBSD: pkg_info.1,v 1.1.1.1.8.1 2009/05/13 18:52:38 jym Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd March 2, 2007
+.Dd March 2, 2009
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl BbcDdFfhIikLmNnpqRSsVvX
+.Op Fl BbcDdFfhIikLmNnpqrRSsVvX
 .Op Fl e Ar package
 .Op Fl E Ar package
 .Op Fl K Ar pkg_dbdir
@@ -176,6 +176,9 @@ in emitting report headers and such, just dump the
 raw info (basically, assume a non-human reading).
 .It Fl R
 For each package, show the packages that require it.
+.It Fl r
+For each package, show the packages that require it.
+Continue recursively to show all dependents.
 .It Fl S
 Show the size of this package and all the packages it requires,
 in bytes.
@@ -301,45 +304,6 @@ flag isn't given, then
 is the location of the package database directory.
 The default package database directory is
 .Pa /var/db/pkg .
-.It Ev PKG_PATH
-This can be used to specify a semicolon-separated list of paths and URLs to search for
-package files.
-If
-.Ev PKG_PATH
-is used, the suffix
-.Pa .tgz
-is automatically appended to the
-.Ar pkg-name ,
-whereas searching in the current directory uses
-.Ar pkg-name
-literally.
-.It Ev PKG_TMPDIR , Ev TMPDIR
-These are tried in turn (if set) as candidate directories in which
-to create a
-.Dq staging area
-for any files extracted by
-.Nm
-from package files.
-If neither
-.Ev PKG_TMPDIR
-nor
-.Ev TMPDIR
-yields a suitable scratch directory,
-.Pa /var/tmp ,
-.Pa /tmp ,
-and
-.Pa /usr/tmp
-are tried in turn.
-Note that
-.Pa /usr/tmp
-may be created, if it doesn't already exist.
-.Pp
-Since
-.Nm
-requires very little information to be extracted from any package
-files examined, it is unlikely that these environment variables would
-ever need to be used to work around limited available space in the
-default locations.
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,

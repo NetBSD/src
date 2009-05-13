@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_nfsx.c,v 1.1.1.1 2008/09/19 20:07:15 christos Exp $	*/
+/*	$NetBSD: amfs_nfsx.c,v 1.1.1.1.8.1 2009/05/13 18:49:02 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -120,7 +120,7 @@ amfs_nfsx_match(am_opts *fo)
   }
 
   /* set default sublink */
-  if (fo->opt_sublink == 0) {
+  if (fo->opt_sublink == NULL || fo->opt_sublink[0] == '\0') {
     ptr = strchr(fo->opt_rfs, ',');
     if (ptr && ptr > (fo->opt_rfs + 1))
       fo->opt_sublink = strnsave(fo->opt_rfs + 1, ptr - fo->opt_rfs - 1);

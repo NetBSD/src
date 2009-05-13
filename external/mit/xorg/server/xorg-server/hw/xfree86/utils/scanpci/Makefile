@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/01/24 17:24:52 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2009/05/13 18:53:29 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ LDADD=	-L${SCANPCIOBJDIR} -lscanpci \
 
 DPADD=	${LIBSCANPCI} ${LIBXORGOS} ${LIBDUMMY} ${LIBM}
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .elif ${MACHINE_ARCH} == "x86_64"

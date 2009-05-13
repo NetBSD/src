@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/28 20:24:12 macallan Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2009/05/13 18:53:27 jym Exp $
 
 DRIVER=		xf86-video-glint
 DRIVER_NAME=	glint_drv
@@ -9,7 +9,7 @@ SRCS+=		pm2_video.c pm2vramdac.c pm3_accel.c pm3_dac.c pm3_video.c
 SRCS+=		pm_accel.c pm_dac.c sx_accel.c TIramdac.c tx_accel.c tx_dac.c
 MAN=		glint.4
 
-.if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
+.if ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
 CPPFLAGS+=	-DSPARC_MMIO_IS_BE
 .endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-static.c,v 1.1.1.1 2008/12/22 00:19:03 haad Exp $	*/
+/*	$NetBSD: lvm-static.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -15,11 +15,13 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "tools.h"
 #include "lvm2cmdline.h"
 
 int main(int argc, char **argv)
 {
-	return lvm2_main(argc, argv, 1);
+	init_is_static(1);
+	return lvm2_main(argc, argv);
 }
 
 int lvm_shell(struct cmd_context *cmd __attribute((unused)),

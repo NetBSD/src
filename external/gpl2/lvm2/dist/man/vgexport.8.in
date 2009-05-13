@@ -3,9 +3,9 @@
 vgexport \- make volume groups unknown to the system
 .SH SYNOPSIS
 .B vgexport
-[\-a/\-\-all]
-[\-d/\-\-debug] [\-h/\-?/\-\-help] 
-[\-v/\-\-verbose]
+[\-a|\-\-all]
+[\-d|\-\-debug] [\-h|\-?|\-\-help] 
+[\-v|\-\-verbose]
 VolumeGroupName [VolumeGroupName...]
 .SH DESCRIPTION
 vgexport allows you to make the inactive 

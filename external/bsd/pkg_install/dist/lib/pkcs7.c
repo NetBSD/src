@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs7.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $	*/
+/*	$NetBSD: pkcs7.c,v 1.1.1.1.2.1 2009/05/13 18:52:38 jym Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkcs7.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $");
+__RCSID("$NetBSD: pkcs7.c,v 1.1.1.1.2.1 2009/05/13 18:52:38 jym Exp $");
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -48,12 +48,15 @@ __RCSID("$NetBSD: pkcs7.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $");
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
-#include <openssl/ui.h>
 
 #include "lib.h"
 
 #ifndef __UNCONST
 #define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
+#endif
+
+#ifndef NS_ANY_CA
+#define NS_ANY_CA		(NS_SSL_CA|NS_SMIME_CA|NS_OBJSIGN_CA)
 #endif
 
 static const int pkg_key_usage = XKU_CODE_SIGN | XKU_SMIME;
@@ -102,6 +105,7 @@ file_to_certs(const char *file)
 			}
 			sk_X509_free(certs);
 			warnx("Can't read certificate in file: %s", file);
+			fclose(f);
 			return NULL;
 		}
 		sk_X509_insert(certs, cert, sk_X509_num(certs));
@@ -227,8 +231,14 @@ static int
 ssl_pass_cb(char *buf, int size, int rwflag, void *u)
 {
 
-	if (UI_UTIL_read_pw_string(buf, size, "Passphrase: ", 0))
+	if (EVP_read_pw_string(buf, size, "Passphrase :", 0)) {
+#if OPENSSL_VERSION >= 0x0090608fL
+		OPENSSL_cleanse(buf, size);
+#else
+		memset(buf, 0, size);
+#endif
 		return 0;
+	}
 	return strlen(buf);
 }
 

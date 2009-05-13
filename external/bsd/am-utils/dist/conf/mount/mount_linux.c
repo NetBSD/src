@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_linux.c,v 1.1.1.1 2008/09/19 20:07:17 christos Exp $	*/
+/*	$NetBSD: mount_linux.c,v 1.1.1.1.8.1 2009/05/13 18:49:04 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -327,6 +327,14 @@ mount_linux_nfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
   /* linux mount version 2 */
   mnt_data->namlen = NAME_MAX;		/* 256 bytes */
 #endif /* HAVE_NFS_ARGS_T_NAMELEN */
+
+#ifdef HAVE_NFS_ARGS_T_PSEUDOFLAVOR
+  mnt_data->pseudoflavor = 0;
+#endif /* HAVE_NFS_ARGS_T_PSEUDOFLAVOR */
+
+#ifdef HAVE_NFS_ARGS_T_CONTEXT
+  memset(mnt_data->context, 0, sizeof(mnt_data->context));
+#endif /* HAVE_NFS_ARGS_T_CONTEXT */
 
   mnt_data->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (mnt_data->fd < 0) {
