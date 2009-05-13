@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.23 2007/06/20 15:29:17 christos Exp $
+.\"	$NetBSD: tcp.4,v 1.24 2009/05/13 13:01:02 wiz Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -163,27 +163,27 @@ will be visible on the system console:
 .Em "tcp_signature_compute: SADB lookup failed for %d.%d.%d.%d" .
 .It Dv TCP_KEEPIDLE
 .\" XXX: We always do it.
-.\" When the 
+.\" When the
 .\" .Dv SO_KEEPALIVE
 .\" option is enabled,
 TCP probes a connection that
 has been idle for some amount of time.
 The default value for this idle period is 4 hours.
-The 
+The
 .Dv TCP_KEEPIDLE
 option can be used to affect this value for a given socket, and specifies
 the number of seconds of idle time between keepalive probes.
 This option takes an
 .Vt "unsigned int"
 value, with a value greater than 0.
-.\" range of 1 to N (where N is 
+.\" range of 1 to N (where N is
 .\" the
 .\" .Xr sysctl 8
 .\" variable
 .\" .Dv net.inet.tcp.keepidle ).
 .\" divided by
-.\" .Dv  PR_SLOWHZ 
-.\" which is defined in the 
+.\" .Dv  PR_SLOWHZ
+.\" which is defined in the
 .\" .In sys/protosw.h
 .\" header file).
 .It Dv TCP_KEEPINTVL
@@ -200,7 +200,7 @@ The
 option can be used to affect this value for
 a given socket, and specifies the number of seconds to wait before
 retransmitting a keepalive probe.
-This option takes an 
+This option takes an
 .Vt "unsigned int"
 value, with a value greater than 0.
 .\" range of 1 to N (where N is the
@@ -208,7 +208,7 @@ value, with a value greater than 0.
 .\" variable
 .\" .Dv net.inet.tcp.keepintvl ).
 .It Dv TCP_KEEPCNT
-When the 
+When the
 .Dv SO_KEEPALIVE
 option is enabled, TCP probes a connection that
 has been idle for some amount of time.
@@ -234,13 +234,13 @@ The default value for this initial connection establishment timeout
 is 150 seconds.
 The
 .Dv TCP_KEEPINIT
- option can be used to affect this initial timeout period for a given
+option can be used to affect this initial timeout period for a given
 socket, and specifies the number of seconds to wait before the connect
 attempt is timed out.
-For passive connections, the 
+For passive connections, the
 .Dv TCP_KEEPINIT
 option value is inherited from the listening socket.
-This option takes an 
+This option takes an
 .Vt "unsigned int"
 value, with a value greater than 0.
 .\" range of 0 to N (where N is the
@@ -347,12 +347,12 @@ exists.
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
 .Xr socket 2 ,
-.Xr sysctl 7 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr intro 4 ,
 .Xr ip 4 ,
-.Xr ip6 4
+.Xr ip6 4 ,
+.Xr sysctl 7
 .Rs
 .%R RFC
 .%N 793
