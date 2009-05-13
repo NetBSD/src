@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.27 2007/06/21 15:12:59 ginsbach Exp $
+.\"	$NetBSD: passwd.5,v 1.28 2009/05/13 22:35:02 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -141,14 +141,14 @@ The
 .Em name
 field is the login used to access the computer account, and the
 .Em uid
-field is the number associated with it.  They should both be unique
-across the system (and often across a group of systems) since they
-control file access.
+field is the number associated with it.
+They should both be unique across the system (and often across a
+group of systems) since they control file access.
 .Pp
 While it is possible to have multiple entries with identical login names
-and/or identical user id's, it is usually a mistake to do so.  Routines
-that manipulate these files will often return only one of the multiple
-entries, and that one by random selection.
+and/or identical user id's, it is usually a mistake to do so.
+Routines that manipulate these files will often return only one of
+the multiple entries, and that one by random selection.
 .Pp
 The login name must never begin with a hyphen
 .Pq Dq \&- ;
@@ -167,7 +167,8 @@ form of the password.
 If the
 .Em password
 field is empty, no password will be required to gain access to the
-machine.  This is almost invariably a mistake.
+machine.
+This is almost invariably a mistake.
 Because these files contain the encrypted user passwords, they should
 not be readable by anyone without appropriate privileges.
 For the possible ciphers used in this field see
@@ -348,7 +349,8 @@ or
 fields, the specified numbers will override the information retrieved
 from the Hesiod domain or the
 .Tn NIS
-maps. As well, if the
+maps.
+As well, if the
 .Em gecos ,
 .Em home_dir
 or
