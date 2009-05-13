@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -183,8 +183,10 @@ read_meta_data_from_archive(struct archive *archive,
 	meta = xcalloc(1, sizeof(*meta));
 
 	last_descr = 0;
-	if (entry != NULL)
+	if (entry != NULL) {
+		r = ARCHIVE_OK;
 		goto has_entry;
+	}
 
 	while ((r = archive_read_next_header(archive, &entry)) == ARCHIVE_OK) {
 has_entry:
@@ -228,12 +230,12 @@ has_entry:
 		if (descr->required_file)
 			--found_required;
 	}
-	if (found_required != 0) {
+
+	meta->is_installed = 0;
+	if (found_required != 0 && r != ARCHIVE_OK && r != ARCHIVE_EOF) {
 		free_pkg_meta(meta);
 		meta = NULL;
 	}
-
-	archive_read_finish(archive);
 
 	return meta;
 }
@@ -279,7 +281,48 @@ read_meta_data_from_pkgdb(const char *pkg)
 		close(fd);
 	}
 
+	meta->is_installed = 1;
+
 	return meta;
+}
+
+static void
+build_full_reqby(lpkg_head_t *reqby, struct pkg_meta *meta)
+{
+	char *iter, *eol, *next;
+	lpkg_t *lpp;
+	struct pkg_meta *meta_dep;
+
+	if (meta->is_installed == 0 || meta->meta_required_by == NULL)
+		return;
+
+	for (iter = meta->meta_required_by; *iter != '\0'; iter = next) {
+		eol = iter + strcspn(iter, "\n");
+		if (*eol == '\n')
+			next = eol + 1;
+		else
+			next = eol;
+		if (iter == eol)
+			continue;
+		TAILQ_FOREACH(lpp, reqby, lp_link) {
+			if (strlen(lpp->lp_name) != eol - iter)
+				continue;
+			if (memcmp(lpp->lp_name, iter, eol - iter) == 0)
+				break;
+		}
+		if (lpp != NULL)
+			continue;
+		*eol = '\0';
+		lpp = alloc_lpkg(iter);
+		if (next != eol)
+			*eol = '\n';
+		TAILQ_INSERT_TAIL(reqby, lpp, lp_link);
+		meta_dep = read_meta_data_from_pkgdb(lpp->lp_name);
+		if (meta_dep == NULL)
+			continue;
+		build_full_reqby(reqby, meta_dep);
+		free_pkg_meta(meta_dep);
+	}
 }
 
 static lfile_head_t files;
@@ -297,31 +340,23 @@ pkg_do(const char *pkg)
 		errx(2, "Binary packages not supported during bootstrap");
 #else
 		struct archive *archive;
-		void *archive_cookie;
-#  ifdef HAVE_SSL
-		void *signature_cookie;
-#  endif
 		struct archive_entry *entry;
 		char *pkgname;
 
-		archive = open_archive(pkg, &archive_cookie);
+		archive = open_archive(pkg);
 		if (archive == NULL) {
 			warnx("can't find package `%s', skipped", pkg);
 			return -1;
 		}
 		pkgname = NULL;
 		entry = NULL;
-#  ifdef HAVE_SSL
-		pkg_verify_signature(&archive, &entry, &pkgname,
-		    &signature_cookie);
-#  endif
+		pkg_verify_signature(&archive, &entry, &pkgname);
+		if (archive == NULL)
+			return -1;
 		free(pkgname);
 
 		meta = read_meta_data_from_archive(archive, entry);
-		close_archive(archive_cookie);
-#  ifdef HAVE_SSL
-		pkg_free_signature(signature_cookie);
-#  endif
+		archive_read_finish(archive);
 		if (!IS_URL(pkg))
 			binpkgfile = pkg;
 #endif
@@ -363,10 +398,15 @@ pkg_do(const char *pkg)
 		show_index(meta->meta_comment, tmp);
 	} else if (Flags & SHOW_BI_VAR) {
 		if (strcspn(BuildInfoVariable, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-		    == strlen(BuildInfoVariable))
-			show_var(meta->meta_installed_info, BuildInfoVariable);
-		else
-			show_var(meta->meta_build_info, BuildInfoVariable);
+		    == strlen(BuildInfoVariable)) {
+			if (meta->meta_installed_info)
+				show_var(meta->meta_installed_info, BuildInfoVariable);
+		} else {
+			if (meta->meta_build_info)
+				show_var(meta->meta_build_info, BuildInfoVariable);
+			else
+				warnx("Build information missing");
+		}
 	} else {
 		package_t plist;
 		
@@ -394,6 +434,12 @@ pkg_do(const char *pkg)
 		}
 		if ((Flags & SHOW_REQBY) && meta->meta_required_by) {
 			show_file(meta->meta_required_by, "Required by:\n", TRUE);
+		}
+		if ((Flags & SHOW_FULL_REQBY) && meta->is_installed) {
+			lpkg_head_t reqby;
+			TAILQ_INIT(&reqby);
+			build_full_reqby(&reqby, meta);
+			show_list(&reqby, "Full required by list:\n");
 		}
 		if (Flags & SHOW_DESC) {
 			show_file(meta->meta_desc, "Description:\n", TRUE);
@@ -586,7 +632,7 @@ pkg_perform(lpkg_head_t *pkghead)
 		desired_meta_data |= LOAD_SIZE_ALL;
 	if (Flags & (SHOW_SUMMARY | SHOW_DESC))
 		desired_meta_data |= LOAD_DESC;
-	if (Flags & SHOW_REQBY)
+	if (Flags & (SHOW_REQBY | SHOW_FULL_REQBY))
 		desired_meta_data |= LOAD_REQUIRED_BY;
 	if (Flags & SHOW_DISPLAY)
 		desired_meta_data |= LOAD_DISPLAY;

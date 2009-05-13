@@ -1,4 +1,4 @@
-/*	$NetBSD: archiver.c,v 1.1.1.1 2008/12/22 00:18:15 haad Exp $	*/
+/*	$NetBSD: archiver.c,v 1.1.1.1.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -38,7 +38,8 @@ struct backup_params {
 };
 
 int archive_init(struct cmd_context *cmd, const char *dir,
-		 unsigned int keep_days, unsigned int keep_min)
+		 unsigned int keep_days, unsigned int keep_min,
+		 int enabled)
 {
 	if (!(cmd->archive_params = dm_pool_zalloc(cmd->libmem,
 						sizeof(*cmd->archive_params)))) {
@@ -58,7 +59,7 @@ int archive_init(struct cmd_context *cmd, const char *dir,
 
 	cmd->archive_params->keep_days = keep_days;
 	cmd->archive_params->keep_number = keep_min;
-	cmd->archive_params->enabled = 1;
+	archive_enable(cmd, enabled);
 
 	return 1;
 }
@@ -151,7 +152,8 @@ int archive_display_file(struct cmd_context *cmd, const char *file)
 	return r;
 }
 
-int backup_init(struct cmd_context *cmd, const char *dir)
+int backup_init(struct cmd_context *cmd, const char *dir,
+		int enabled)
 {
 	if (!(cmd->backup_params = dm_pool_zalloc(cmd->libmem,
 					       sizeof(*cmd->archive_params)))) {
@@ -167,6 +169,7 @@ int backup_init(struct cmd_context *cmd, const char *dir)
 		log_error("Couldn't copy backup directory name.");
 		return 0;
 	}
+	backup_enable(cmd, enabled);
 
 	return 1;
 }

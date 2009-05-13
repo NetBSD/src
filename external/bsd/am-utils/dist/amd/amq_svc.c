@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_svc.c,v 1.1.1.1 2008/09/19 20:07:15 christos Exp $	*/
+/*	$NetBSD: amq_svc.c,v 1.1.1.1.8.1 2009/05/13 18:49:02 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,6 +112,75 @@ amqsvc_is_client_allowed(const struct sockaddr_in *addr, char *remote)
 #endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
 
 
+/*
+ * Prepare the parent and child:
+ * 1) Setup IPC pipe.
+ * 2) Set signal masks.
+ * 3) Fork by calling background() so that NumChildren is updated.
+ */
+static int
+amq_fork(opaque_t argp)
+{
+#ifdef HAVE_SIGACTION
+  sigset_t new, mask;
+#else /* not HAVE_SIGACTION */
+  int mask;
+#endif /* not HAVE_SIGACTION */
+  am_node *mp;
+  pid_t pid;
+
+  mp = find_ap(*(char **) argp);
+  if (mp == NULL) {
+    errno = 0;
+    return -1;
+  }
+
+  if (pipe(mp->am_fd) == -1) {
+    mp->am_fd[0] = -1;
+    mp->am_fd[1] = -1;
+    return -1;
+  }
+
+#ifdef HAVE_SIGACTION
+  sigemptyset(&new);		/* initialize signal set we wish to block */
+  sigaddset(&new, SIGHUP);
+  sigaddset(&new, SIGINT);
+  sigaddset(&new, SIGQUIT);
+  sigaddset(&new, SIGCHLD);
+  sigprocmask(SIG_BLOCK, &new, &mask);
+#else /* not HAVE_SIGACTION */
+  mask =
+      sigmask(SIGHUP) |
+      sigmask(SIGINT) |
+      sigmask(SIGQUIT) |
+      sigmask(SIGCHLD);
+  mask = sigblock(mask);
+#endif /* not HAVE_SIGACTION */
+
+  switch ((pid = background())) {
+  case -1:	/* error */
+    dlog("amq_fork failed");
+    return -1;
+
+  case 0:	/* child */
+    close(mp->am_fd[1]);	/* close output end of pipe */
+    mp->am_fd[1] = -1;
+    return 0;
+
+  default:	/* parent */
+    close(mp->am_fd[0]);	/* close input end of pipe */
+    mp->am_fd[0] = -1;
+
+#ifdef HAVE_SIGACTION
+    sigprocmask(SIG_SETMASK, &mask, NULL);
+#else /* not HAVE_SIGACTION */
+    sigsetmask(mask);
+#endif /* not HAVE_SIGACTION */
+    return pid;
+  }
+}
+
+
 void
 amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
@@ -123,6 +192,9 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
   char *result;
   xdrproc_t xdr_argument, xdr_result;
   amqsvcproc_t local;
+  amqsvcproc_t child;
+  amqsvcproc_t parent;
+  pid_t pid;
 
 #if defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP)
   if (gopt.flags & CFM_USE_TCPWRAPPERS) {
@@ -138,6 +210,10 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     }
   }
 #endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
+
+  local = NULL;
+  child = NULL;
+  parent = NULL;
 
   switch (rqstp->rq_proc) {
 
@@ -201,6 +277,15 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     local = (amqsvcproc_t) amqproc_pawd_1_svc;
     break;
 
+  case AMQPROC_SYNC_UMNT:
+    xdr_argument = (xdrproc_t) xdr_amq_string;
+    xdr_result = (xdrproc_t) xdr_amq_sync_umnt;
+    parent = (amqsvcproc_t) amqproc_sync_umnt_1_svc_parent;
+    child = (amqsvcproc_t) amqproc_sync_umnt_1_svc_child;
+    /* used if fork fails */
+    local = (amqsvcproc_t) amqproc_sync_umnt_1_svc_async;
+    break;
+
   default:
     svcerr_noproc(transp);
     return;
@@ -214,7 +299,28 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     return;
   }
 
-  result = (*local) (&argument, rqstp);
+  pid = -1;
+  result = NULL;
+
+  if (child) {
+    switch ((pid = amq_fork(&argument))) {
+    case -1:	/* error */
+      break;
+
+    case 0:	/* child */
+      result = (*child) (&argument, rqstp);
+      local = NULL;
+      break;
+
+    default:	/* parent */
+      result = (*parent) (&argument, rqstp);
+      local = NULL;
+      break;
+    }
+  }
+
+  if (local)
+    result = (*local) (&argument, rqstp);
 
   if (result != NULL && !svc_sendreply(transp,
 				       (XDRPROC_T_TYPE) xdr_result,
@@ -228,4 +334,7 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     plog(XLOG_FATAL, "unable to free rpc arguments in amqprog_1");
     going_down(1);
   }
+
+  if (pid == 0)
+    exit(0);	/* the child is done! */
 }

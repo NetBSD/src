@@ -1,17 +1,17 @@
-.\"	$NetBSD: lvextend.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"    $NetBSD: lvextend.8,v 1.1.1.1.2.1 2009/05/13 18:52:44 jym Exp $
 .\"
-.TH LVEXTEND 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVEXTEND 8 "LVM TOOLS 2.02.44-cvs (02-17-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvextend \- extend the size of a logical volume
 .SH SYNOPSIS
 .B lvextend
 [\-\-alloc AllocationPolicy]
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-h/\-?/\-\-help]
-[\-i/\-\-stripes Stripes [\-I/\-\-stripesize StripeSize]]
-{\-l/\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
-\-L/\-\-size [+]LogicalVolumeSize[kKmMgGtT]}
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolumePath [PhysicalVolumePath...]
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-i|\-\-stripes Stripes [\-I|\-\-stripesize StripeSize]]
+{\-l|\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
+\-L|\-\-size [+]LogicalVolumeSize[kKmMgGtT]}
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolumePath [PhysicalVolumePath...]
 .SH DESCRIPTION
 lvextend allows you to extend the size of a logical volume.
 Extension of snapshot logical volumes (see

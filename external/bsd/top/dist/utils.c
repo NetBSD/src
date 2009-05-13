@@ -231,7 +231,7 @@ printable(char *str)
  */
 
 char *
-strcpyend(char *to, char *from)
+strcpyend(char *to, const char *from)
 
 {
     while ((*to++ = *from++) != '\0');
@@ -240,13 +240,13 @@ strcpyend(char *to, char *from)
 
 /*
  * char *
- * homogenize(char *str)
+ * homogenize(const char *str)
  *
  * Remove unwanted characters from "str" and make everything lower case.
  * Newly allocated string is returned: the original is not altered.
  */
 
-char *homogenize(char *str)
+char *homogenize(const char *str)
 
 {
     char *ans;
@@ -272,7 +272,7 @@ char *homogenize(char *str)
  */
 
 int
-string_index(char *string, char **array)
+string_index(const char *string, const char **array)
 
 {
     register int i = 0;
@@ -297,12 +297,12 @@ string_index(char *string, char **array)
  * caller is done.  Note that this is not an efficient function.
  */
 
-char *string_list(char **strings)
+char *string_list(const char **strings)
 
 {
     int cnt = 0;
-    char **pp;
-    char *p;
+    const char **pp;
+    const char *p;
     char *result = NULL;
     char *resp = NULL;
 
@@ -484,7 +484,7 @@ extern char *sys_errlist[];
 extern int sys_nerr;
 #endif
 
-char *
+const char *
 errmsg(int errnum)
 
 {
@@ -611,12 +611,12 @@ format_k(long amt)
 
 {
     static char retarray[NUM_STRINGS][16];
-    static int index = 0;
+    static int idx = 0;
     register char *ret;
     register char tag = 'K';
 
-    ret = retarray[index];
-    index = (index + 1) % NUM_STRINGS;
+    ret = retarray[idx];
+    idx = (idx + 1) % NUM_STRINGS;
 
     if (amt >= 10000)
     {
@@ -629,7 +629,7 @@ format_k(long amt)
 	}
     }
 
-    snprintf(ret, sizeof(retarray[index])-1, "%ld%c", amt, tag);
+    snprintf(ret, sizeof(retarray[idx])-1, "%ld%c", amt, tag);
 
     return(ret);
 }

@@ -1,0 +1,19 @@
+$ORIGIN .
+example.de		7200	IN DNSKEY 257 3 5 (
+					BQEAAAABDOkPawC/tCqSITj6lvzcIPwcMEX+
+					Nvz17GBu85jmigMuvZQUYZBVUmJNNBbCNStl
+					z+Y+1pGg9HbWFvn0tpH/bm4mZPlJmk+WxQhH
+					z7eTm5xhSaSEEzq0uf087tAbaq1yaTpTtA2R
+					7JXIPxt6CuD9Ou5bbYOzrFnBq1VBAYrwB6t/
+					us10+Ab7T6Jvie/W+v4jto1Xx912Z8HHTbU4
+					8Mlp1+mUjQ==
+					) ; key id = 37983
+			7200	IN DNSKEY 257 3 5 (
+					BQEAAAABDV7kFHqVcWLoSAShdlXU5LKUdyU4
+					LlsJGYMr8oIpjEzvwonRmX5pRiEjVhTwx+vx
+					6eWluv6txXVu+F0g2ykmqUQdMfPYWmD9AJOq
+					vc2tCKVSRePqZ+HeIZR+heBnFKr5kWQmB5XO
+					lMdWNRA3y78s/LufVB8hD7r260jrVJ0W6wSM
+					GDjN4zQce8rHCe+LNB1GfaIASkMWjdgxNNAs
+					K9bqDM8Euw==
+					) ; key id = 47280

@@ -1,4 +1,4 @@
-/*	$NetBSD: reporter.c,v 1.1.1.1 2008/12/22 00:19:07 haad Exp $	*/
+/*	$NetBSD: reporter.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -38,7 +38,7 @@ static int _vgs_single(struct cmd_context *cmd __attribute((unused)),
 static int _lvs_single(struct cmd_context *cmd, struct logical_volume *lv,
 		       void *handle)
 {
-	if (!arg_count(cmd, all_ARG) && !lv_is_visible(lv))
+	if (!arg_count(cmd, all_ARG) && !lv_is_displayable(lv))
 		return ECMD_PROCESSED;
 
 	if (!report_object(handle, lv->vg, lv, NULL, NULL, NULL))
@@ -90,9 +90,12 @@ static int _pvsegs_sub_single(struct cmd_context *cmd __attribute((unused)),
 
         _free_lv_segment.segtype = get_segtype_from_string(cmd, "free");
 	_free_lv_segment.len = pvseg->len;
+	dm_list_init(&_free_lv_segment.tags);
+	dm_list_init(&_free_lv_segment.origin_list);
 	dm_list_init(&_free_logical_volume.tags);
 	dm_list_init(&_free_logical_volume.segments);
 	dm_list_init(&_free_logical_volume.segs_using_this_lv);
+	dm_list_init(&_free_logical_volume.snapshot_segs);
 
 	if (!report_object(handle, vg, seg ? seg->lv : &_free_logical_volume, pvseg->pv,
 			   seg ? : &_free_lv_segment, pvseg))
@@ -104,7 +107,7 @@ static int _pvsegs_sub_single(struct cmd_context *cmd __attribute((unused)),
 static int _lvsegs_single(struct cmd_context *cmd, struct logical_volume *lv,
 			  void *handle)
 {
-	if (!arg_count(cmd, all_ARG) && !lv_is_visible(lv))
+	if (!arg_count(cmd, all_ARG) && !lv_is_displayable(lv))
 		return ECMD_PROCESSED;
 
 	return process_each_segment_in_lv(cmd, lv, handle, _segs_single);

@@ -1,7 +1,7 @@
-/*	$NetBSD: am_defs.h,v 1.1.1.1 2008/09/19 20:07:22 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.1.1.1.8.1 2009/05/13 18:49:07 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,6 +50,8 @@
 
 #ifndef _AM_DEFS_H
 #define _AM_DEFS_H
+
+#define _LARGEFILE64_SOURCE
 
 /*
  * Actions to take if ANSI C.
@@ -217,12 +219,6 @@ struct sigevent;
  * Actions to take if HAVE_FCNTL_H is defined.
  */
 #if HAVE_FCNTL_H
-# ifdef HAVE_LINUX_LOOP_H
-/* so I can mount large files as loop devices */
-/* XXX: need to move these two LARGEFILE defines to a better place */
-#  define _LARGEFILE64_SOURCE
-#  define __USE_LARGEFILE64
-# endif /* HAVE_LINUX_LOOP_H */
 # include <fcntl.h>
 #endif /* HAVE_FCNTL_H */
 
@@ -966,6 +962,13 @@ struct sockaddr_dl;
 #ifdef HAVE_ISOFS_CD9660_CD9660_MOUNT_H
 # include <isofs/cd9660/cd9660_mount.h>
 #endif /* HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
+
+/*
+ * Actions to take if <fs/udf/udf_mount.h> exists.
+ */
+#ifdef HAVE_FS_UDF_UDF_MOUNT_H
+# include <fs/udf/udf_mount.h>
+#endif /* HAVE_FS_UDF_UDF_MOUNT_H */
 
 /*
  * Actions to take if <mount.h> exists.

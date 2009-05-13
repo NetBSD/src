@@ -1,7 +1,7 @@
-/*	$NetBSD: amq.h,v 1.1.1.1 2008/09/19 20:07:17 christos Exp $	*/
+/*	$NetBSD: amq.h,v 1.1.1.1.8.1 2009/05/13 18:49:03 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,6 +53,7 @@
 extern voidp amqproc_null_1(voidp argp, CLIENT *rqstp);
 extern amq_mount_tree_p *amqproc_mnttree_1(amq_string *argp, CLIENT *rqstp);
 extern voidp amqproc_umnt_1(amq_string *argp, CLIENT *rqstp);
+extern amq_sync_umnt *amqproc_sync_umnt_1(amq_string *argp, CLIENT *rqstp);
 extern amq_mount_stats *amqproc_stats_1(voidp argp, CLIENT *rqstp);
 extern amq_mount_tree_list *amqproc_export_1(voidp argp, CLIENT *rqstp);
 extern int *amqproc_setopt_1(amq_setopt *argp, CLIENT *rqstp);

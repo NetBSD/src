@@ -1,0 +1,112 @@
+#! /bin/sh
+# Update the local files from GNULIB.  Currently assumes that the current
+# GNULIB sources are in a directory parallel with this one.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+if test -f maint-aux/gnulib-modules; then :; else
+  >&2 echo \
+"This script expects to be run from the top level of the CVS source tree."
+  exit 2
+fi
+
+if test -f maint-aux/gnulib-modules; then :; else
+  >&2 echo \
+"Failed to find the modules list (\`maint-aux/gnulib-modules')."
+  exit 2
+fi
+
+# Where to find the GNULIB sources.
+: ${GNULIB="../gnulib"}
+GNULIB_TOOL=$GNULIB/gnulib-tool
+
+# Which modules to update.
+MODULES=`cat maint-aux/gnulib-modules`
+
+# Are the GNULIB sources really where we expect them?
+if test -r $GNULIB && test -d $GNULIB \
+   && test -r $GNULIB_TOOL && test -f $GNULIB_TOOL; then :; else
+  echo GNULIB sources not found. >&2
+  exit 1
+fi
+
+trap \
+'status=$?
+# Restore lib/Makefile.am.
+if test -f lib/Makefile.am.save; then
+  mv lib/Makefile.am.save lib/Makefile.am
+fi
+# Restore m4/error.m4.
+if test -f m4/error.m4.save; then
+  mv m4/error.m4.save m4/error.m4
+fi
+exit $status' EXIT
+	
+# Prevent lib/Makefile.am from being overwritten.
+mv lib/Makefile.am lib/Makefile.am.save
+# Prevent m4/error.m4 from being overwritten unless necessary.
+mv m4/error.m4 m4/error.m4.save
+
+# Run the update.
+if $GNULIB_TOOL --import $MODULES >/dev/null; then :; else
+  exit $?
+fi
+
+# Correct this file for our purposes, but try to avoid munging timestamps
+# unless necessary.
+sed '/AC_FUNC_ERROR_AT_LINE/d' <m4/error.m4 >tmp
+if cmp tmp m4/error.m4.save >/dev/null 2>&1; then
+  mv m4/error.m4.save m4/error.m4
+  rm tmp
+else
+  mv tmp m4/error.m4
+  rm m4/error.m4.save
+fi
+
+# Extract the names of the files we imported.
+$GNULIB_TOOL --extract-filelist $MODULES |sort |uniq |sed '/^$/d' \
+	>maint-aux/gnulib-filelist.new
+
+# Warn the user if the filelist has changed.
+if cmp maint-aux/gnulib-filelist.txt maint-aux/gnulib-filelist.new >/dev/null
+then
+  # Avoid munging timestamps when nothing's changed.
+  rm maint-aux/gnulib-filelist.new
+else
+  cat >&2 <<\EOF
+********************************************************************
+The file list has changed.  You may need to add or remove files from
+CVS.  Use `cvs diff maint-aux/gnulib-filelist.txt' to view changes.
+********************************************************************
+EOF
+  # Save the file list for next time.
+  mv maint-aux/gnulib-filelist.new maint-aux/gnulib-filelist.txt
+fi
+
+
+# Warn the user if changes have been made to the Makefile.am.
+if cmp lib/Makefile.am lib/Makefile.gnulib >/dev/null; then
+  # Avoid munging timestamps when nothing's changed.
+  rm lib/Makefile.am
+else
+  cat >&2 <<\EOF
+********************************************************************
+Makefile.am needs updating. Use `cvs diff lib/Makefile.gnulib' to
+view changes.
+********************************************************************
+EOF
+  # Save the generated lib/Makefile.am for next time.
+  mv lib/Makefile.am lib/Makefile.gnulib
+fi

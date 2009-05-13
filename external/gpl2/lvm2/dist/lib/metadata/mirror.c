@@ -1,4 +1,4 @@
-/*	$NetBSD: mirror.c,v 1.1.1.1 2008/12/22 00:18:09 haad Exp $	*/
+/*	$NetBSD: mirror.c,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -1173,7 +1173,7 @@ int add_mirrors_to_segments(struct cmd_context *cmd, struct logical_volume *lv,
 							   lv->le_count,
 							   region_size);
 
-	if (!(ah = allocate_extents(lv->vg, NULL, segtype, 1, mirrors, 0,
+	if (!(ah = allocate_extents(lv->vg, NULL, segtype, 1, mirrors, 0, 0,
 				    lv->le_count, allocatable_pvs, alloc,
 				    parallel_areas))) {
 		log_error("Unable to allocate mirror extents for %s.", lv->name);
@@ -1390,7 +1390,7 @@ int add_mirror_log(struct cmd_context *cmd, struct logical_volume *lv,
 
 	/* allocate destination extents */
 	ah = allocate_extents(lv->vg, NULL, segtype,
-			      0, 0, log_count, 0,
+			      0, 0, log_count, region_size, 0,
 			      allocatable_pvs, alloc, parallel_areas);
 	if (!ah) {
 		log_error("Unable to allocate extents for mirror log.");
@@ -1445,7 +1445,7 @@ int add_mirror_images(struct cmd_context *cmd, struct logical_volume *lv,
 		return_0;
 
 	ah = allocate_extents(lv->vg, NULL, segtype,
-			      stripes, mirrors, log_count, lv->le_count,
+			      stripes, mirrors, log_count, region_size, lv->le_count,
 			      allocatable_pvs, alloc, parallel_areas);
 	if (!ah) {
 		log_error("Unable to allocate extents for mirror(s).");

@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_sockets.c,v 1.1.1.1 2008/09/19 20:07:19 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.1.1.1.8.1 2009/05/13 18:49:05 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.

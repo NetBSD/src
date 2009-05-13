@@ -1,4 +1,4 @@
-/*	$NetBSD: archiver.h,v 1.1.1.1 2008/12/22 00:18:16 haad Exp $	*/
+/*	$NetBSD: archiver.h,v 1.1.1.1.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -34,7 +34,8 @@
  */
 
 int archive_init(struct cmd_context *cmd, const char *dir,
-		 unsigned int keep_days, unsigned int keep_min);
+		 unsigned int keep_days, unsigned int keep_min,
+		 int enabled);
 void archive_exit(struct cmd_context *cmd);
 
 void archive_enable(struct cmd_context *cmd, int flag);
@@ -42,7 +43,7 @@ int archive(struct volume_group *vg);
 int archive_display(struct cmd_context *cmd, const char *vg_name);
 int archive_display_file(struct cmd_context *cmd, const char *file);
 
-int backup_init(struct cmd_context *cmd, const char *dir);
+int backup_init(struct cmd_context *cmd, const char *dir, int enabled);
 void backup_exit(struct cmd_context *cmd);
 
 void backup_enable(struct cmd_context *cmd, int flag);

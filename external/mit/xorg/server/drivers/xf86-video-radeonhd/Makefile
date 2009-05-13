@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/27 19:42:50 veego Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2009/05/13 18:53:28 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -9,21 +9,23 @@ DRIVER_NAME=	radeonhd_drv
 SRCS.ATOMBIOS=	CD_Operations.c Decoder.c hwserv_drv.c
 
 .if ${X11DRI} != "no"
-SRCS.DRI=	rhd_dri.c
+SRCS.DRI=	rhd_dri.c r6xx_accel.c r600_exa.c
+SRCS.DRI+=	r600_textured_videofuncs.c
 CPPFLAGS+=	-DUSE_DRI
+CPPFLAGS+=	${X11FLAGS.DRI}
 .endif
 
 SRCS.EXA=	r5xx_exa.c radeon_exa_render.c
 
-SRCS=		rhd_atombios.c rhd_i2c.c rhd_crtc.c rhd_connector.c
-SRCS+=		rhd_cursor.c rhd_dac.c rhd_driver.c rhd_edid.c
-SRCS+=		rhd_helper.c rhd_id.c  rhd_lut.c rhd_lvtma.c rhd_modes.c
-SRCS+=		rhd_monitor.c rhd_output.c rhd_pll.c rhd_tmds.c
-SRCS+=		rhd_vga.c rhd_mc.c rhd_shadow.c rhd_randr.c rhd_dig.c
-SRCS+=		rhd_ddia.c rhd_atomout.c rhd_atompll.c rhd_atomcrtc.c
-SRCS+=		rhd_biosscratch.c
-SRCS+=		rhd_cs.c r5xx_accel.c r5xx_xaa.c radeon_3d.c
-SRCS+=		rhd_video.c radeon_textured_videofuncs.c
+SRCS=	r5xx_accel.c r5xx_xaa.c r600_shader.c radeon_3d.c
+SRCS+=	radeon_textured_videofuncs.c rhd_atombios.c rhd_atomcrtc.c
+SRCS+=	rhd_atomout.c rhd_atompll.c rhd_audio.c rhd_biosscratch.c
+SRCS+=	rhd_connector.c rhd_crtc.c rhd_cs.c rhd_cursor.c rhd_dac.c
+SRCS+=	rhd_ddia.c rhd_dig.c rhd_driver.c rhd_edid.c rhd_hdmi.c
+SRCS+=	rhd_helper.c rhd_i2c.c rhd_id.c rhd_lut.c rhd_lvtma.c
+SRCS+=	rhd_mc.c rhd_modes.c rhd_monitor.c rhd_output.c rhd_pll.c
+SRCS+=	rhd_randr.c rhd_shadow.c rhd_tmds.c rhd_vga.c rhd_video.c
+
 SRCS+=		$(SRCS.EXA) $(SRCS.DRI) rhd_atomwrapper.c $(SRCS.ATOMBIOS)
 MAN=		radeonhd.4
 

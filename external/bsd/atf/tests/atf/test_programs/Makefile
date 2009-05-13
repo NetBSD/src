@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/01/20 10:29:59 jmmv Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2009/05/13 18:49:09 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,8 @@ SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/tests/atf/test_programs
 
 CPPFLAGS+=	-I${SRCDIR}/libs
+
+TESTS_C=	h_c
 
 TESTS_CXX=	h_cpp
 

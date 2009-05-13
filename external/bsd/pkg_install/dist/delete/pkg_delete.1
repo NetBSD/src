@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $
+.\" $NetBSD: pkg_delete.1,v 1.1.1.2.2.1 2009/05/13 18:52:37 jym Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd July 30, 2008
+.Dd April 24, 2009
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdFfNnORrVv
+.Op Fl ADFfNnORrVv
 .Bk -words
 .Op Fl K Ar pkg_dbdir
 .Ek
@@ -41,6 +41,18 @@ command is used to delete packages that have been previously installed
 with the
 .Xr pkg_add 1
 command.
+The given packages are sorted, so that the dependencies of a package
+are deleted after the package.
+Before any action is executed,
+.Nm
+checks for packages that are marked as
+.Cm preserved
+or have depending packages left.
+Unless the
+.Fl f
+flag is given,
+.Nm
+stops on the first error.
 .Sh WARNING
 .Bf -emphasis
 Since the
@@ -89,18 +101,14 @@ flag is given, one or more (absolute) filenames may be specified and
 the Package Database will be consulted for the package to which the
 given file belongs.
 These packages are then deinstalled.
+.It Fl A
+Recursively remove all automatically installed packages that were needed
+by the given packages and are no longer required.
+See also the
+.Fl R
+flag.
 .It Fl D
 If a deinstallation script exists for a given package, do not execute it.
-.It Fl d
-Remove empty directories created by file cleanup.
-By default, only files/directories explicitly listed in a package's
-contents (either as normal files/directories or with the
-.Cm @dirrm
-directive) will be removed at deinstallation time.
-This option tells
-.Nm
-to also remove any directories that were emptied as a result of removing
-the package.
 .It Fl F
 Any pkg-name given will be interpreted as pathname which is
 subsequently transformed in a (real) package name via the Package
@@ -148,24 +156,13 @@ For most packages, the prefix will
 be set automatically to the installed location by
 .Xr pkg_add 1 .
 .It Fl R
-This option triggers a recursive delete of the given package and any
-packages it depends on, unless some other package still needs a
-dependent package.
-This
-.Fl R
-option can be used to clean up by deleting a package and all its
-then-unneeded dependent packages.
+Recursively remove all packages that were needed by the given packages
+and that have no other dependencies left.
+This option overrides the
+.Fl A
+flag.
 .It Fl r
-.Nm
-first builds a list of all packages that require (directly and indirectly)
-the one being deleted.
-It then deletes these packages using
-.Nm
-with the given options before deleting the user specified package.
-This
-.Fl r
-option can be used to recursively delete a package and all of the
-packages which depend on that package.
+Recursively remove all packages that require one of the packages given.
 .It Fl V
 Print version number and exit.
 .It Fl v
@@ -291,7 +288,6 @@ appended to the path, e.g.
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_info 1 ,
-.Xr mktemp 3 ,
 .Xr pkgsrc 7
 .Sh AUTHORS
 .Bl -tag -width indent -compact
@@ -304,4 +300,7 @@ refined it for
 .Nx
 wildcard dependency processing, pkgdb, recursive "down"
 delete, etc.
+.It Joerg Sonnenberger
+Rewrote most of the code to compute correct order of deinstallation
+and to improve error handling.
 .El

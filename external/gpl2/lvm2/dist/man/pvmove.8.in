@@ -5,9 +5,9 @@ pvmove \- move physical extents
 .B pvmove
 [\-\-abort]
 [\-\-alloc AllocationPolicy]
-[\-b/\-\-background]
-[\-d/\-\-debug] [\-h/\-\-help] [\-i/\-\-interval Seconds] [\-v/\-\-verbose]
-[\-n/\-\-name LogicalVolume] 
+[\-b|\-\-background]
+[\-d|\-\-debug] [\-h|\-\-help] [\-i|\-\-interval Seconds] [\-v|\-\-verbose]
+[\-n|\-\-name LogicalVolume] 
 [SourcePhysicalVolume[:PE[-PE]...] [DestinationPhysicalVolume[:PE[-PE]...]...]]
 .SH DESCRIPTION
 .B pvmove

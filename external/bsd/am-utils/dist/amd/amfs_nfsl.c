@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_nfsl.c,v 1.1.1.1 2008/09/19 20:07:15 christos Exp $	*/
+/*	$NetBSD: amfs_nfsl.c,v 1.1.1.1.8.1 2009/05/13 18:49:02 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -103,7 +103,7 @@ amfs_nfsl_match(am_opts *fo)
   char *retval;
   struct stat stb;
 
-  if (fo->opt_sublink)
+  if (fo->opt_sublink && fo->opt_sublink[0])
     cp = fo->opt_sublink;
   else
     cp = fo->opt_fs;
@@ -219,7 +219,7 @@ amfs_nfsl_ffserver(mntfs *mf)
   char *ho = mf->mf_fo->opt_rhost;
   struct stat stb;
 
-  if (mf->mf_fo->opt_sublink)
+  if (mf->mf_fo->opt_sublink && mf->mf_fo->opt_sublink[0])
     cp = mf->mf_fo->opt_sublink;
   else
     cp = mf->mf_fo->opt_fs;

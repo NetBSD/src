@@ -1,33 +1,33 @@
-.\"	$NetBSD: lvcreate.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"    $NetBSD: lvcreate.8,v 1.1.1.1.2.1 2009/05/13 18:52:44 jym Exp $
 .\"
-.TH LVCREATE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVCREATE 8 "LVM TOOLS 2.02.44-cvs (02-17-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvcreate \- create a logical volume in an existing volume group
 .SH SYNOPSIS
 .B lvcreate
 [\-\-addtag Tag]
 [\-\-alloc AllocationPolicy]
-[\-A/\-\-autobackup y/n] [\-C/\-\-contiguous y/n] [\-d/\-\-debug]
-[\-h/\-?/\-\-help]
-[\-i/\-\-stripes Stripes [\-I/\-\-stripesize StripeSize]]
-{\-l/\-\-extents LogicalExtentsNumber[%{VG|PVS|FREE}] |
- \-L/\-\-size LogicalVolumeSize[kKmMgGtT]}
-[\-M/\-\-persistent y/n] [\-\-minor minor]
-[\-m/\-\-mirrors Mirrors [\-\-nosync] [\-\-mirrorlog {disk|core}] [\-\-corelog]
-[\-R/\-\-regionsize MirrorLogRegionSize]]
-[\-n/\-\-name LogicalVolumeName]
-[\-p/\-\-permission r|rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
-[\-t/\-\-test]
-[\-v/\-\-verbose] [\-Z/\-\-zero y/n]
+[\-A|\-\-autobackup y|n] [\-C|\-\-contiguous y|n] [\-d|\-\-debug]
+[\-h|\-?|\-\-help]
+[\-i|\-\-stripes Stripes [\-I|\-\-stripesize StripeSize]]
+{\-l|\-\-extents LogicalExtentsNumber[%{VG|PVS|FREE}] |
+ \-L|\-\-size LogicalVolumeSize[kKmMgGtT]}
+[\-M|\-\-persistent y|n] [\-\-minor minor]
+[\-m|\-\-mirrors Mirrors [\-\-nosync] [\-\-mirrorlog {disk|core}] [\-\-corelog]
+[\-R|\-\-regionsize MirrorLogRegionSize]]
+[\-n|\-\-name LogicalVolumeName]
+[\-p|\-\-permission r|rw] [\-r|\-\-readahead ReadAheadSectors|auto|none]
+[\-t|\-\-test]
+[\-v|\-\-verbose] [\-Z|\-\-zero y|n]
 VolumeGroupName [PhysicalVolumePath...]
 .br
 
 .br
 .B lvcreate
-{\-l/\-\-extents LogicalExtentsNumber[%{VG|FREE}] |
- \-L/\-\-size LogicalVolumeSize[kKmMgGtT]}
-[\-c/\-\-chunksize ChunkSize]
-\-s/\-\-snapshot \-n/\-\-name SnapshotLogicalVolumeName OriginalLogicalVolumePath
+{\-l|\-\-extents LogicalExtentsNumber[%{VG|FREE}] |
+ \-L|\-\-size LogicalVolumeSize[kKmMgGtT]}
+[\-c|\-\-chunksize ChunkSize]
+\-s|\-\-snapshot \-n|\-\-name SnapshotLogicalVolumeName OriginalLogicalVolumePath
 .SH DESCRIPTION
 lvcreate creates a new logical volume in a volume group ( see
 .B vgcreate(8), vgchange(8)
@@ -48,7 +48,7 @@ See \fBlvm\fP for common options.
 .I \-c, \-\-chunksize ChunkSize
 Power of 2 chunk size for the snapshot logical volume between 4k and 512k.
 .TP
-.I \-C, \-\-contiguous y/n
+.I \-C, \-\-contiguous y|n
 Sets or resets the contiguous allocation policy for
 logical volumes. Default is no contiguous allocation based
 on a next free principle.
@@ -85,7 +85,7 @@ Default unit is megabytes.
 .I \-\-minor minor
 Set the minor number.
 .TP
-.I \-M, \-\-persistent y/n
+.I \-M, \-\-persistent y|n
 Set to y to make the minor number specified persistent.
 .TP
 .I \-m, \-\-mirrors Mirrors
@@ -147,7 +147,7 @@ as well. Run
 .B lvdisplay(8)
 on the snapshot in order to check how much data is allocated to it.
 .TP
-.I \-Z, \-\-zero y/n
+.I \-Z, \-\-zero y|n
 Controls zeroing of the first KB of data in the new logical volume.
 .br
 Default is yes.

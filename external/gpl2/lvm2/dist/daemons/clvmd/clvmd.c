@@ -1,4 +1,4 @@
-/*	$NetBSD: clvmd.c,v 1.1.1.1 2008/12/22 00:18:51 haad Exp $	*/
+/*	$NetBSD: clvmd.c,v 1.1.1.1.2.1 2009/05/13 18:52:41 jym Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -393,6 +393,15 @@ int main(int argc, char *argv[])
 			syslog(LOG_NOTICE, "Cluster LVM daemon started - connected to OpenAIS");
 		}
 #endif
+#ifdef USE_COROSYNC
+	if (!clops)
+		if ((clops = init_corosync_cluster())) {
+			max_csid_len = COROSYNC_CSID_LEN;
+			max_cluster_message = COROSYNC_MAX_CLUSTER_MESSAGE;
+			max_cluster_member_name_len = COROSYNC_MAX_CLUSTER_MEMBER_NAME_LEN;
+			syslog(LOG_NOTICE, "Cluster LVM daemon started - connected to Corosync");
+		}
+#endif
 
 	if (!clops) {
 		DEBUGLOG("Can't initialise cluster interface\n");
@@ -425,6 +434,9 @@ int main(int argc, char *argv[])
 	/* This needs to be started after cluster initialisation
 	   as it may need to take out locks */
 	DEBUGLOG("starting LVM thread\n");
+
+	/* Don't let anyone else to do work until we are started */
+	pthread_mutex_lock(&lvm_start_mutex);
 	pthread_create(&lvm_thread, NULL, lvm_thread_fn,
 			(void *)(long)using_gulm);
 
@@ -1759,9 +1771,6 @@ static __attribute__ ((noreturn)) void *lvm_thread_fn(void *arg)
 	struct dm_list *cmdl, *tmp;
 	sigset_t ss;
 	int using_gulm = (int)(long)arg;
-
-	/* Don't let anyone else to do work until we are started */
-	pthread_mutex_lock(&lvm_start_mutex);
 
 	DEBUGLOG("LVM thread function started\n");
 

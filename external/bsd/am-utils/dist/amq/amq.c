@@ -1,7 +1,7 @@
-/*	$NetBSD: amq.c,v 1.1.1.1 2008/09/19 20:07:17 christos Exp $	*/
+/*	$NetBSD: amq.c,v 1.1.1.1.8.1 2009/05/13 18:49:03 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,14 +55,16 @@
 
 /* locals */
 static int flush_flag;
-static int minfo_flag;
 static int getpid_flag;
-static int unmount_flag;
-static int stats_flag;
-static int getvers_flag;
-static u_long amd_program_number = AMQ_PROGRAM;
-static int use_tcp_flag, use_udp_flag;
 static int getpwd_flag;
+static int getvers_flag;
+static int minfo_flag;
+static int quiet_flag;
+static int stats_flag;
+static int unmount_flag;
+static int use_tcp_flag;
+static int use_udp_flag;
+static u_long amd_program_number = AMQ_PROGRAM;
 static char *debug_opts;
 static char *amq_logfile;
 static char *xlog_optstr;
@@ -289,6 +291,71 @@ cluster_server(void)
 #endif /* defined(HAVE_CLUSTER_H) && defined(HAVE_CNODEID) && defined(HAVE_GETCCENT) */
 
 
+static void
+print_umnt_error(amq_sync_umnt *rv, const char *fs)
+{
+
+  switch (rv->au_etype) {
+  case AMQ_UMNT_OK:
+    break;
+  case AMQ_UMNT_FAILED:
+    printf("unmount failed: %s\n", strerror(rv->au_errno));
+    break;
+  case AMQ_UMNT_FORK:
+    if (rv->au_errno == 0)
+      printf("%s is not mounted\n", fs);
+    else
+      printf("falling back to asynchronous unmount: %s\n",
+	  strerror(rv->au_errno));
+    break;
+  case AMQ_UMNT_READ:
+    printf("pipe read error: %s\n", strerror(rv->au_errno));
+    break;
+  case AMQ_UMNT_SERVER:
+    printf("amd server down\n");
+    break;
+  case AMQ_UMNT_SIGNAL:
+    printf("got signal: %d\n", rv->au_signal);
+    break;
+  /*
+   * Omit default so the compiler can check for missing cases.
+   *
+  default:
+    break;
+   */
+  }
+}
+
+
+static int
+amu_sync_umnt_to_retval(amq_sync_umnt *rv)
+{
+  switch (rv->au_etype) {
+  case AMQ_UMNT_FORK:
+    if (rv->au_errno == 0) {
+      /*
+       * We allow this error so that things like:
+       *   amq -uu /l/cd0d && eject cd0
+       * will work when /l/cd0d is not mounted.
+       * XXX - We still print an error message.
+       */
+      return 0;
+    }
+  default:
+    return rv->au_etype;
+  }
+}
+
+
+static int
+clnt_failed(CLIENT *clnt, char *server)
+{
+  fprintf(stderr, "%s: ", am_get_progname());
+  clnt_perror(clnt, server);
+  return 1;
+}
+
+
 /*
  * MAIN
  */
@@ -322,7 +389,7 @@ main(int argc, char *argv[])
   /*
    * Parse arguments
    */
-  while ((opt_ch = getopt(argc, argv, "Hfh:l:msuvx:D:pP:TUw")) != -1)
+  while ((opt_ch = getopt(argc, argv, "Hfh:l:mqsuvx:D:pP:TUw")) != -1)
     switch (opt_ch) {
     case 'H':
       goto show_usage;
@@ -352,13 +419,18 @@ main(int argc, char *argv[])
       nodefault = 1;
       break;
 
+    case 'q':
+      quiet_flag = 1;
+      nodefault = 1;
+      break;
+
     case 's':
       stats_flag = 1;
       nodefault = 1;
       break;
 
     case 'u':
-      unmount_flag = 1;
+      unmount_flag++;
       nodefault = 1;
       break;
 
@@ -405,9 +477,9 @@ main(int argc, char *argv[])
   if (errs) {
   show_usage:
     fprintf(stderr, "\
-Usage: %s [-fmpsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
+Usage: %s [-fmpqsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
 \t[-x log_options] [-D debug_options]\n\
-\t[-P program_number] [[-u] directory ...]\n",
+\t[-P program_number] [[-u[u]] directory ...]\n",
 	    am_get_progname()
     );
     exit(1);
@@ -618,7 +690,20 @@ Usage: %s [-fmpsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
   if (optind < argc) {
     do {
       char *fs = argv[optind++];
-      if (unmount_flag) {
+      if (unmount_flag > 1) {
+	amq_sync_umnt *sup;
+	/*
+	 * Synchronous unmount request
+	 */
+        sup = amqproc_sync_umnt_1(&fs, clnt);
+	if (sup) {
+	  if (quiet_flag == 0)
+	    print_umnt_error(sup, fs);
+	  errs = amu_sync_umnt_to_retval(sup);
+	} else {
+	  errs = clnt_failed(clnt, server);
+	}
+      }	else if (unmount_flag) {
 	/*
 	 * Unmount request
 	 */
@@ -643,9 +728,7 @@ Usage: %s [-fmpsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
 	  }
 	  xdr_pri_free((XDRPROC_T_TYPE) xdr_amq_mount_tree_p, (caddr_t) mtp);
 	} else {
-	  fprintf(stderr, "%s: ", am_get_progname());
-	  clnt_perror(clnt, server);
-	  errs = 1;
+	  errs = clnt_failed(clnt, server);
 	}
       }
     } while (optind < argc);
@@ -658,9 +741,7 @@ Usage: %s [-fmpsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
     if (ms) {
       show_ms(ms);
     } else {
-      fprintf(stderr, "%s: ", am_get_progname());
-      clnt_perror(clnt, server);
-      errs = 1;
+      errs = clnt_failed(clnt, server);
     }
 
   } else if (!nodefault) {
@@ -684,9 +765,7 @@ Usage: %s [-fmpsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
       }
 
     } else {
-      fprintf(stderr, "%s: ", am_get_progname());
-      clnt_perror(clnt, server);
-      errs = 1;
+      errs = clnt_failed(clnt, server);
     }
   }
   exit(errs);

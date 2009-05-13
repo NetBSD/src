@@ -1,4 +1,4 @@
-/*	$NetBSD: lv_alloc.h,v 1.1.1.1 2008/12/22 00:18:46 haad Exp $	*/
+/*	$NetBSD: lv_alloc.h,v 1.1.1.1.2.1 2009/05/13 18:52:41 jym Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  
@@ -49,7 +49,7 @@ struct alloc_handle *allocate_extents(struct volume_group *vg,
                                       const struct segment_type *segtype,
                                       uint32_t stripes,
                                       uint32_t mirrors, uint32_t log_count,
-				      uint32_t extents,
+				      uint32_t log_region_size, uint32_t extents,
                                       struct dm_list *allocatable_pvs,
 				      alloc_policy_t alloc,
 				      struct dm_list *parallel_areas);

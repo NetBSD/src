@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2009/01/24 01:15:26 agc Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2009/05/13 18:49:01 jym Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= am-utils dhcpcd fetch libarchive pkg_install
+SUBDIR+= am-utils bind dhcpcd fetch file libarchive pkg_install top
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif
@@ -15,6 +15,5 @@ SUBDIR+= ../../crypto/external/bsd
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
-SUBDIR+= top
 
 .include <bsd.subdir.mk>

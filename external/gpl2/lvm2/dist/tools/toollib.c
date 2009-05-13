@@ -1,4 +1,4 @@
-/*	$NetBSD: toollib.c,v 1.1.1.1 2008/12/22 00:19:08 haad Exp $	*/
+/*	$NetBSD: toollib.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -21,62 +21,6 @@
 
 #include <sys/stat.h>
 #include <sys/wait.h>
-
-/* Command line args */
-unsigned arg_count(const struct cmd_context *cmd, int a)
-{
-	return cmd->args[a].count;
-}
-
-const char *arg_value(struct cmd_context *cmd, int a)
-{
-	return cmd->args[a].value;
-}
-
-const char *arg_str_value(struct cmd_context *cmd, int a, const char *def)
-{
-	return arg_count(cmd, a) ? cmd->args[a].value : def;
-}
-
-int32_t arg_int_value(struct cmd_context *cmd, int a, const int32_t def)
-{
-	return arg_count(cmd, a) ? cmd->args[a].i_value : def;
-}
-
-uint32_t arg_uint_value(struct cmd_context *cmd, int a, const uint32_t def)
-{
-	return arg_count(cmd, a) ? cmd->args[a].ui_value : def;
-}
-
-int64_t arg_int64_value(struct cmd_context *cmd, int a, const int64_t def)
-{
-	return arg_count(cmd, a) ? cmd->args[a].i64_value : def;
-}
-
-uint64_t arg_uint64_value(struct cmd_context *cmd, int a, const uint64_t def)
-{
-	return arg_count(cmd, a) ? cmd->args[a].ui64_value : def;
-}
-
-const void *arg_ptr_value(struct cmd_context *cmd, int a, const void *def)
-{
-	return arg_count(cmd, a) ? cmd->args[a].ptr : def;
-}
-
-sign_t arg_sign_value(struct cmd_context *cmd, int a, const sign_t def)
-{
-	return arg_count(cmd, a) ? cmd->args[a].sign : def;
-}
-
-percent_t arg_percent_value(struct cmd_context *cmd, int a, const percent_t def)
-{
-	return arg_count(cmd, a) ? cmd->args[a].percent : def;
-}
-
-int arg_count_increment(struct cmd_context *cmd, int a)
-{
-	return cmd->args[a].count++;
-}
 
 const char *command_name(struct cmd_context *cmd)
 {
@@ -1289,4 +1233,22 @@ int fill_vg_create_params(struct cmd_context *cmd,
 	}
 
 	return 0;
+}
+
+int lv_refresh(struct cmd_context *cmd, struct logical_volume *lv)
+{
+	return suspend_lv(cmd, lv) && resume_lv(cmd, lv);
+}
+
+int vg_refresh_visible(struct cmd_context *cmd, struct volume_group *vg)
+{
+	struct lv_list *lvl;
+	int r = 1;
+	
+	dm_list_iterate_items(lvl, &vg->lvs)
+		if (lv_is_visible(lvl->lv))
+			if (!lv_refresh(cmd, lvl->lv))
+				r = 0;
+	
+	return r;
 }

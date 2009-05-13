@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-file.c,v 1.1.1.1 2008/12/22 00:18:13 haad Exp $	*/
+/*	$NetBSD: lvm-file.c,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -31,7 +31,8 @@
  * rename the file after successfully writing it.  Grab
  * NFS-supported exclusive fcntl discretionary lock.
  */
-int create_temp_name(const char *dir, char *buffer, size_t len, int *fd)
+int create_temp_name(const char *dir, char *buffer, size_t len, int *fd,
+		     unsigned *seed)
 {
 	int i, num;
 	pid_t pid;
@@ -43,7 +44,7 @@ int create_temp_name(const char *dir, char *buffer, size_t len, int *fd)
 		.l_len = 0
 	};
 
-	num = rand();
+	num = rand_r(seed);
 	pid = getpid();
 	if (gethostname(hostname, sizeof(hostname)) < 0) {
 		log_sys_error("gethostname", "");

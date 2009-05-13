@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:00 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2.2.1 2009/05/13 18:52:36 jym Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:00 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.2.2.1 2009/05/13 18:52:36 jym Exp $");
 
 /*
  *
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 
 	pkg_install_config();
 
-	path_create(getenv("PKG_PATH"));
+	process_pkg_path();
 	TAILQ_INIT(&pkgs);
 
 	if (argc == 0) {

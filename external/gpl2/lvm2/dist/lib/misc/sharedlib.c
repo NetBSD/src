@@ -1,4 +1,4 @@
-/*	$NetBSD: sharedlib.c,v 1.1.1.1 2008/12/22 00:18:13 haad Exp $	*/
+/*	$NetBSD: sharedlib.c,v 1.1.1.1.2.1 2009/05/13 18:52:43 jym Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -46,7 +46,7 @@ void *load_shared_library(struct cmd_context *cmd, const char *libname,
 	char path[PATH_MAX];
 	void *library;
 
-	if (cmd->is_static) {
+	if (is_static()) {
 		log_error("Not loading shared %s library %s in static mode.",
 			  desc, libname);
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lvchange.c,v 1.1.1.1 2008/12/22 00:19:01 haad Exp $	*/
+/*	$NetBSD: lvchange.c,v 1.1.1.1.2.1 2009/05/13 18:52:47 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -170,10 +170,7 @@ static int lvchange_availability(struct cmd_context *cmd,
 static int lvchange_refresh(struct cmd_context *cmd, struct logical_volume *lv)
 {
 	log_verbose("Refreshing logical volume \"%s\" (if active)", lv->name);
-	if (!suspend_lv(cmd, lv) || !resume_lv(cmd, lv))
-		return 0;
-
-	return 1;
+	return lv_refresh(cmd, lv);
 }
 
 static int lvchange_resync(struct cmd_context *cmd,
@@ -592,14 +589,14 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 		return ECMD_FAILED;
 	}
 
-	if (!(lv->status & VISIBLE_LV)) {
+	if (!(lv_is_displayable(lv))) {
 		log_error("Unable to change internal LV %s directly",
 			  lv->name);
 		return ECMD_FAILED;
 	}
 
 	init_dmeventd_monitor(arg_int_value(cmd, monitor_ARG,
-					    (cmd->is_static || arg_count(cmd, ignoremonitoring_ARG)) ?
+					    (is_static() || arg_count(cmd, ignoremonitoring_ARG)) ?
 					    DMEVENTD_MONITOR_IGNORE : DEFAULT_DMEVENTD_MONITOR));
 
 	/* access permission change */

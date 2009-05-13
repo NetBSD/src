@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.2 2009/02/02 20:44:02 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.2.2.1 2009/05/13 18:52:36 jym Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd October 10, 2008
+.Dd April 10, 2009
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -32,7 +32,10 @@
 .Op Fl p Ar prefix
 .Op Fl W Ar viewbase
 .Op Fl w Ar view
-.Ar \fR[[ftp|http]://[\fIuser\fR[:\fIpassword]\fR@]\fIhost\fR[:\fIport\fR]][/\fIpath/\fR]pkg-name ...
+.Ar Oo Oo Li ftp|http Oc Ns Li :// Ns Oo Ar user Oc Ns \
+Oo Li \&: Ns Ar password Oc \
+Ns Li @ Oc Ns Ar host Ns Oo Li \&: Ns Ar port Oc Ns \
+Oo Li / Ns Ar path/ Oc Ns Ar pkg-name ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -87,19 +90,18 @@ The following command line arguments are supported:
 .Bl -tag -width indent
 .It Ar pkg-name [ ... ]
 The named packages are installed.
+.Nm
+will first try to use
 .Ar pkg-name
-may be either a URL or a local pathname,
-a package name of "-" will cause
+as full URL or path name without any wildcard processing.
+If that fails,
 .Nm
-to read from stdin.
-If the packages are not found in the current
-working directory,
-.Nm
-will search them in each directory named by the
-.Ev PKG_PATH
-environment variable.
-Any dependencies required by the installed package will be searched
-in the same location that the original package was installed from.
+will try to match packages using wildcard processing.
+If that fails as well and
+.Ar pkg-name
+does not contain any /, the entries of the
+.Dv PKG_PATH
+variable are searched using the wildcard processing rules.
 .It Fl A
 Mark package as installed automatically, as dependency of another
 package.
@@ -172,7 +174,7 @@ you know what you are doing!
 If the package that's being installed is already installed,
 an update is performed.
 It is currently not possible to update to an identical version.
-If this is specified twice, then any dependant packages that are
+If this is specified twice, then any dependent packages that are
 too old will also be updated to fulfill the dependency.
 See below for a more detailed description of the process.
 .It Fl V
@@ -294,7 +296,7 @@ conflicts with the package.
 If it is, installation is terminated.
 .It
 The file list of the package is compared to the file lists of the
-installed packeges.
+installed packages.
 If there is any overlap, the installation is terminated.
 .It
 All package dependencies (from
@@ -311,7 +313,7 @@ If the
 option was specified twice, any required packages that are installed,
 but which have a version number that is considered to be too old,
 are also updated.
-The dependant packages are found according to the normal
+The dependent packages are found according to the normal
 .Ev PKG_PATH
 rules.
 .It
@@ -330,7 +332,7 @@ If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
 .It
-The files from the file list are extracted to the choosen prefix.
+The files from the file list are extracted to the chosen prefix.
 .It
 If an
 .Ar install
@@ -414,14 +416,16 @@ The default package database directory is
 .It Ev PKG_PATH
 The value of the
 .Ev PKG_PATH
-is used if a given package can't be found, it's usually set to
+variable overrides the
+.Xr pkg_install.conf 5
+variable of the same name.
+It is used if a given package can't be found, it's usually set to
 .Pa /usr/pkgsrc/packages/All .
 The environment variable
 should be a series of entries separated by semicolons.
 Each entry consists of a directory name or URL.
 The current directory may be indicated implicitly by an empty directory
 name, or explicitly by a single period.
-FTP URLs may not end with a slash.
 .It Ev PKG_REFCOUNT_DBDIR
 Location of the package reference counts database directory.
 The default location is the path to the package database directory with
@@ -485,12 +489,12 @@ like this:
 (The quotes are needed because semicolon
 .Pq Sq \&;
 is a shell meta-character.)
-If you do this, consider installing and using the
-.Pa security/audit-packages
-package and running it after every
+If you do this, consider using the audit capabilities in
+.Xr pkg_admin 1
+and running it after every
 .Nm .
 .Sh CONFIGURATION VARIABLES
-The following variables change the behaviour of
+The following variables change the behavior of
 .Nm
 and are described in
 .Xr pkg_install.conf 5 :

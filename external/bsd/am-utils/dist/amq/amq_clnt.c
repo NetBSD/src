@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_clnt.c,v 1.1.1.1 2008/09/19 20:07:17 christos Exp $	*/
+/*	$NetBSD: amq_clnt.c,v 1.1.1.1.8.1 2009/05/13 18:49:03 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -98,6 +98,23 @@ amqproc_umnt_1(amq_string *argp, CLIENT *clnt)
     return (NULL);
   }
   return ((voidp) &res);
+}
+
+
+amq_sync_umnt *
+amqproc_sync_umnt_1(amq_string *argp, CLIENT *clnt)
+{
+  static amq_sync_umnt res;
+  enum clnt_stat rv;
+
+  memset((char *) &res, 0, sizeof(res));
+  if ((rv = clnt_call(clnt, AMQPROC_SYNC_UMNT,
+		(XDRPROC_T_TYPE) xdr_amq_string, (SVC_IN_ARG_TYPE) argp,
+		(XDRPROC_T_TYPE) xdr_amq_sync_umnt, &res,
+		TIMEOUT)) != RPC_SUCCESS) {
+    return (NULL);
+  }
+  return &res;
 }
 
 

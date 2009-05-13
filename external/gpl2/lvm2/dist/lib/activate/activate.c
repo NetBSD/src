@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.c,v 1.1.1.1 2008/12/22 00:18:00 haad Exp $	*/
+/*	$NetBSD: activate.c,v 1.1.1.1.2.1 2009/05/13 18:52:42 jym Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -668,7 +668,7 @@ int lvs_in_vg_opened(const struct volume_group *vg)
 		return 0;
 
 	dm_list_iterate_items(lvl, &vg->lvs) {
-		if (lvl->lv->status & VISIBLE_LV)
+		if (lv_is_displayable(lvl->lv))
 			count += (_lv_open_count(vg->cmd, lvl->lv) > 0);
 	}
 
@@ -1086,9 +1086,10 @@ int lv_mknodes(struct cmd_context *cmd, const struct logical_volume *lv)
 	if (!_lv_info(cmd, lv, 1, &info, 0, 0, 0))
 		return_0;
 
-	if (info.exists)
-		r = dev_manager_lv_mknodes(lv);
-	else
+	if (info.exists) {
+		if (lv_is_visible(lv))
+			r = dev_manager_lv_mknodes(lv);
+	} else
 		r = dev_manager_lv_rmnodes(lv);
 
 	fs_unlock();
