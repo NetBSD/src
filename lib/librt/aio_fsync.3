@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_fsync.3,v 1.4 2009/03/10 13:23:39 joerg Exp $
+.\" $NetBSD: aio_fsync.3,v 1.5 2009/05/13 12:56:05 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,9 +124,8 @@ The
 .Fa aiocbp-\*[Gt]aio_fildes
 is invalid for writing.
 .It Bq Er EINVAL
-This implementation does not support synchronized I/O for this file.
-.It Bq Er EINVAL
-The
+This implementation does not support synchronized I/O for this file,
+or the
 .Fa op
 argument is neither set to
 .Dv O_DSYNC
