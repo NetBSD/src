@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.8 2009/05/11 20:13:47 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.9 2009/05/13 01:09:06 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -76,4 +76,20 @@ sys/arch/sparc64/include/math.h			1.7
 	merge these two files, makes sparc64 sparc/libc work again.
 	only provide __HAVE_LONG_DOUBLE if _LP64.
 	[mrg, ticket #750]
+
+sys/arch/amd64/amd64/lock_stubs.S		1.22, 1.23
+sys/arch/i386/i386/lock_stubs.S			1.23
+sys/arch/x86/include/mutex.h			1.6
+sys/arch/x86/x86/patch.c			1.18
+sys/kern/kern_rwlock.c				1.30
+
+	Add a workaround for a bug with some Opteron revisions where
+	locked operations sometimes do not serve as memory barriers,
+	allowing memory references to bleed outside of critical sections.
+	[ad, ticket #725]
+
+usr.sbin/postinstall/postinstall		1.95
+
+	Teach postinstall about /etc/dhcpcd.conf.
+	[jnemeth, ticket #752]
 
