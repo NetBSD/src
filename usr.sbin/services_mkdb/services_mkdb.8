@@ -1,4 +1,4 @@
-.\"	$NetBSD: services_mkdb.8,v 1.8 2008/04/30 13:11:02 martin Exp $
+.\"	$NetBSD: services_mkdb.8,v 1.9 2009/05/13 22:36:39 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,12 +56,12 @@ The file must be in the correct format (see
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl u
-Print the services file to stdout, omitting duplicate entries and comments.
 .It Fl o Ar database
 Put the output databases in the named file.
 .It Fl q
 Don't warn about duplicate services.
+.It Fl u
+Print the services file to stdout, omitting duplicate entries and comments.
 .El
 .Pp
 The databases are used by the C library services routines (see
