@@ -1,4 +1,4 @@
-/*	$NetBSD: btpand.c,v 1.4 2009/05/12 21:50:38 plunky Exp $	*/
+/*	$NetBSD: btpand.c,v 1.5 2009/05/13 03:21:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008-2009 Iain Hibbert. All rights reserved.");
-__RCSID("$NetBSD: btpand.c,v 1.4 2009/05/12 21:50:38 plunky Exp $");
+__RCSID("$NetBSD: btpand.c,v 1.5 2009/05/13 03:21:41 christos Exp $");
 
 #include <sys/wait.h>
 
@@ -295,7 +295,7 @@ usage(void)
 	    "\t-s service  service name\n"
 	    "\n"
 	    "Known services:\n"
-	    "", p, n, "", p, n, "");
+	    "", p, (int)n, "", p, (int)n, "");
 
 	for (n = 0; n < __arraycount(services); n++)
 		fprintf(stderr, "\t%s\t%s\n", services[n].type, services[n].name);
