@@ -1,4 +1,4 @@
-.\"	$NetBSD: services.5,v 1.9 2007/06/19 19:26:10 christos Exp $
+.\"	$NetBSD: services.5,v 1.10 2009/05/13 12:58:34 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,8 +52,8 @@ aliases
 .Ed
 .Pp
 Items are separated by any number of blanks and/or
-tab characters.  The port number and protocol name
-are considered a single
+tab characters.
+The port number and protocol name are considered a single
 .Em item ;
 a slash
 .Pq Dq /
@@ -65,12 +65,12 @@ indicates the beginning of
 a comment; subsequent characters up to the end of the line are
 not interpreted by the routines which search the file.
 .Pp
-Service names may contain any printable
-character other than a field delimiter, newline,
-or comment character.
+Service names may contain any printable character other than a
+field delimiter, newline, or comment character.
 .Pp
-The database in /var/db/services.db 
-needs to be updated with 
+The database in
+.Pa /var/db/services.db
+needs to be updated with
 .Xr services_mkdb 8
 after changes to the services file have been applied.
 .Sh FILES
@@ -82,7 +82,7 @@ file resides in
 .Pa /etc .
 .El
 .Sh SEE ALSO
-.Xr getservent 3
+.Xr getservent 3 ,
 .Xr services_mkdb 8
 .Sh HISTORY
 The
