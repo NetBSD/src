@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.96 2009/05/12 02:17:49 jnemeth Exp $
+# $NetBSD: postinstall,v 1.97 2009/05/13 23:44:26 jnemeth Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -726,8 +726,10 @@ do_dhcpcd()
 	op="$1"
 	failed=0
 
-	populate_dir "$op" true "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
-		dhcpcd.conf
+	find_file_in_dirlist dhcpcd.conf "dhcpcd.conf" \
+	    "${SRC_DIR}/external/bsd/dhcpcd/dist" "${SRC_DIR}/etc" || return 1
+			# ${dir} is set by find_file_in_dirlist()
+	populate_dir "$op" true "${dir}" "${DEST_DIR}/etc" 644 dhcpcd.conf
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
