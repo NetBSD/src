@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.14.2.1 2009/03/20 14:28:40 msaitoh Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.14.2.2 2009/05/13 19:41:07 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.14.2.1 2009/03/20 14:28:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.14.2.2 2009/05/13 19:41:07 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -377,6 +377,12 @@ xennet_xenbus_detach(struct device *self, int flags)
 		
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->sc_rnd_source);
+#endif
+
 	while (xengnt_status(sc->sc_tx_ring_gntref)) {
 		tsleep(xennet_xenbus_detach, PRIBIO, "xnet_txref", hz/2);
 	}
