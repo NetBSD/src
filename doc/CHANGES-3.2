@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.167 2009/04/30 20:31:40 snj Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.168 2009/05/13 19:39:56 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5247,4 +5247,9 @@ sys/arch/i386/i386/pmap.c			patch
 
 	Fix a pmap race.
 	[bouyer, ticket #2012]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.35
+
+	Do not forget to detach rnd(4) device when removing a xennet device.
+	[jym, ticket #2013]
 
