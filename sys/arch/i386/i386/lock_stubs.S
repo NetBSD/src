@@ -1,7 +1,7 @@
-/*	$NetBSD: lock_stubs.S,v 1.21.6.1 2009/02/02 03:01:12 snj Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.21.6.2 2009/05/13 00:35:16 snj Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.21.6.1 2009/02/02 03:01:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.21.6.2 2009/05/13 00:35:16 snj Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.21.6.1 2009/02/02 03:01:12 snj Exp 
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
 #define	LOCK(num)	.Lpatch/**/num:	lock
+#define	RET(num)	.Lret/**/num: ret; nop; nop; ret
 #define	ENDLABEL(name,a) .align	a; LABEL(name)
 
 #if !defined(LOCKDEBUG)
@@ -59,12 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.21.6.1 2009/02/02 03:01:12 snj Exp 
 
 ENTRY(mutex_enter)
 	movl	4(%esp), %edx
-	movl	CPUVAR(CURLWP), %ecx
 	xorl	%eax, %eax
+	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
 	LOCK(1)
 	cmpxchgl %ecx, (%edx)
 	jnz	1f
-	ret
+	RET(1)
 1:
 	jmp	_C_LABEL(mutex_vector_enter)
 END(mutex_enter)
@@ -80,8 +81,8 @@ END(mutex_enter)
  */
 ENTRY(mutex_exit)
 	movl	4(%esp), %edx
-	movl	CPUVAR(CURLWP), %eax
 	xorl	%ecx, %ecx
+	movl	%fs:CPU_INFO_CURLWP(%ecx), %eax
 	cmpxchgl %ecx, (%edx)
 	jnz	1f
 	ret
@@ -110,20 +111,20 @@ ENTRY(rw_enter)
 	LOCK(2)
 	cmpxchgl %ecx, (%edx)
 	jnz	1f
-	ret
+	RET(2)
 1:
 	jmp	0b
 
 	/*
 	 * Writer
 	 */
-2:	movl	CPUVAR(CURLWP), %ecx
-	xorl	%eax, %eax
+2:	xorl	%eax, %eax
+	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
 	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(3)
 	cmpxchgl %ecx, (%edx)
 	jnz	3f
-	ret
+	RET(3)
 3:
 	jmp	_C_LABEL(rw_vector_enter)
 END(rw_enter)
@@ -187,13 +188,13 @@ ENTRY(rw_tryenter)
 	movl	(%edx), %eax
 0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	jnz	3f
+	jnz	4f
 	leal	RW_READ_INCR(%eax), %ecx
 	LOCK(12)
 	cmpxchgl %ecx, (%edx)
 	jnz	1f
 	movl	%edx, %eax			/* nonzero */
-	ret
+	RET(4)
 1:
 	jmp	0b
 
@@ -201,17 +202,18 @@ ENTRY(rw_tryenter)
 	 * Writer
 	 */
 2:
-	movl	CPUVAR(CURLWP), %ecx
-	orl	$RW_WRITE_LOCKED, %ecx
 	xorl	%eax, %eax
+	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
+	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(13)
 	cmpxchgl %ecx, (%edx)
 	movl	$0, %eax
 	setz	%al
-	ret
 3:
+	RET(5)
+4:
 	xorl	%eax, %eax
-	ret
+	jmp	3b
 END(rw_tryenter)
 
 #ifndef __XEN__
@@ -237,7 +239,7 @@ ENTRY(mutex_spin_enter)
 	xchgb	%al, MTX_LOCK(%edx)		/* lock it */
 	testb	%al, %al
 	jnz	3f
-	ret
+	RET(6)
 3:
 	jmp	_C_LABEL(mutex_spin_retry)
 
@@ -326,7 +328,7 @@ NENTRY(__cpu_simple_lock)
 	LOCK(6)
 	cmpxchgb %ah, (%edx)
 	jnz	2f
-	ret
+	RET(7)
 2:
 	movl	$0x0100, %eax
 	pause
@@ -350,7 +352,7 @@ ENTRY(__cpu_simple_lock_try)
 	cmpxchgb %ah, (%edx)
 	movl	$0, %eax
 	setz	%al	
-	ret
+	RET(8)
 END(__cpu_simple_lock_try)
 
 /*
@@ -365,3 +367,13 @@ LABEL(x86_lockpatch)
 	.long	.Lpatch13
 	.long	0
 #endif
+
+LABEL(x86_retpatch)
+#ifndef LOCKDEBUG
+	.long	.Lret1, .Lret2, .Lret3, .Lret4, .Lret5
+#ifndef __XEN__
+	.long	.Lret6
+#endif
+#endif
+	.long	.Lret7, .Lret8
+	.long	0

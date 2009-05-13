@@ -1,7 +1,7 @@
-/*	$NetBSD: lock_stubs.S,v 1.20.6.1 2009/02/02 03:01:12 snj Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.20.6.2 2009/05/13 00:35:16 snj Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,6 +48,7 @@
 
 #define	ENDLABEL(name,a) .align	a; LABEL(name)
 #define	LOCK(num)	.Lpatch/**/num: lock
+#define	RET(num)	.Lret/**/num: ret; nop; nop; ret
 
 #ifndef LOCKDEBUG
 
@@ -64,7 +65,7 @@ ENTRY(mutex_enter)
 	LOCK(1)
 	cmpxchgq %rcx, (%rdi)
 	jnz	1f
-	ret
+	RET(1)
 1:
 	jmp	_C_LABEL(mutex_vector_enter)
 
@@ -106,7 +107,7 @@ ENTRY(mutex_spin_enter)
 	testb	%al, %al
 	jnz	1f
 #endif
-	ret
+	RET(2)
 1:
 	jmp	_C_LABEL(mutex_spin_retry)	/* failed; hard case */
 
@@ -186,7 +187,7 @@ ENTRY(rw_enter)
 	LOCK(2)
 	cmpxchgq %rdx, (%rdi)
 	jnz	1f
-	ret
+	RET(3)
 1:
 	jmp	0b
 
@@ -199,7 +200,7 @@ ENTRY(rw_enter)
 	LOCK(3)
 	cmpxchgq %rcx, (%rdi)
 	jnz	3f
-	ret
+	RET(4)
 3:
 	jmp	_C_LABEL(rw_vector_enter)
 
@@ -256,13 +257,13 @@ ENTRY(rw_tryenter)
 	movq	(%rdi), %rax
 0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	jnz	3f
+	jnz	4f
 	leaq	RW_READ_INCR(%rax), %rdx 
 	LOCK(8)
 	cmpxchgq %rdx, (%rdi)
 	jnz	1f
 	movl	%edx, %eax			/* nonzero */
-	ret
+	RET(5)
 1:
 	jmp	0b
 
@@ -276,10 +277,12 @@ ENTRY(rw_tryenter)
 	cmpxchgq %rcx, (%rdi)
 	movl	$0, %eax
 	setz	%al
+3:
+	RET(6)
 	ret
-
-3:	xorl	%eax, %eax
-	ret
+4:
+	xorl	%eax, %eax
+	jmp	3b
 
 #endif	/* LOCKDEBUG */
 
@@ -296,7 +299,7 @@ NENTRY(__cpu_simple_lock)
 	LOCK(6)
 	cmpxchgb %ah, (%rdi)
 	jnz	2f
-	ret
+	RET(7)
 2:
 	movl	$0x0100, %eax
 	pause
@@ -315,8 +318,8 @@ ENTRY(__cpu_simple_lock_try)
 	LOCK(7)
 	cmpxchgb %ah, (%rdi)
 	movl	$0, %eax
-	setz	%al	
-	ret
+	setz	%al
+	RET(8)
 
 /*
  * Patchpoints to replace with NOP when ncpu == 1.
@@ -328,3 +331,10 @@ LABEL(x86_lockpatch)
 	.quad	.Lpatch9
 	.quad	0
 #endif
+
+LABEL(x86_retpatch)
+#ifndef LOCKDEBUG
+	.long	.Lret1, .Lret2, .Lret3, .Lret4, .Lret5, .Lret6
+#endif
+	.long	.Lret7, .Lret8
+	.long	0

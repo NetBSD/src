@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.14.4.3 2009/04/03 17:42:36 snj Exp $	*/
+/*	$NetBSD: patch.c,v 1.14.4.4 2009/05/13 00:35:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.14.4.3 2009/04/03 17:42:36 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.14.4.4 2009/05/13 00:35:16 snj Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -74,6 +74,7 @@ void	_atomic_cas_cx8(void);
 void	_atomic_cas_cx8_end(void);
 
 extern void	*x86_lockpatch[];
+extern void	*x86_retpatch[];
 extern void	*atomic_lockpatch[];
 
 #define	X86_NOP		0x90
@@ -124,12 +125,14 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 }
 
 static inline void __unused
-patchbytes(void *addr, const int byte1, const int byte2)
+patchbytes(void *addr, const int byte1, const int byte2, const int byte3)
 {
 
 	((uint8_t *)addr)[0] = (uint8_t)byte1;
 	if (byte2 != -1)
 		((uint8_t *)addr)[1] = (uint8_t)byte2;
+	if (byte3 != -1)
+		((uint8_t *)addr)[2] = (uint8_t)byte3;
 }
 
 void
@@ -138,6 +141,7 @@ x86_patch(bool early)
 	static bool first, second;
 	u_long psl;
 	u_long cr0;
+	int i;
 
 	if (early) {
 		if (first)
@@ -160,13 +164,11 @@ x86_patch(bool early)
 #if !defined(GPROF)
 	if (!early && ncpu == 1) {
 #ifndef LOCKDEBUG
-		int i;
-
 		/* Uniprocessor: kill LOCK prefixes. */
 		for (i = 0; x86_lockpatch[i] != 0; i++)
-			patchbytes(x86_lockpatch[i], X86_NOP, -1);	
+			patchbytes(x86_lockpatch[i], X86_NOP, -1, -1);
 		for (i = 0; atomic_lockpatch[i] != 0; i++)
-			patchbytes(atomic_lockpatch[i], X86_NOP, -1);
+			patchbytes(atomic_lockpatch[i], X86_NOP, -1, -1);
 #endif	/* !LOCKDEBUG */
 	}
 	if (!early && (cpu_feature & CPUID_SSE2) != 0) {
@@ -212,6 +214,21 @@ x86_patch(bool early)
 		    i686_mutex_spin_exit_patch
 		);
 #endif	/* !LOCKDEBUG */
+	}
+
+	/*
+	 * On some Opteron revisions, locked operations erroneously
+	 * allow memory references to be `bled' outside of critical
+	 * sections.  Apply workaround.
+	 */
+	if (cpu_vendor == CPUVENDOR_AMD &&
+	    (CPUID2FAMILY(cpu_info_primary.ci_signature) == 0xe ||
+	    (CPUID2FAMILY(cpu_info_primary.ci_signature) == 0xf &&
+	    CPUID2EXTMODEL(cpu_info_primary.ci_signature) < 0x4))) {
+		for (i = 0; x86_retpatch[i] != 0; i++) {
+			/* ret,nop,nop,ret -> lfence,ret */
+			patchbytes(x86_retpatch[i], 0x0f, 0xae, 0xe8);
+		}
 	}
 
 	/* Write back and invalidate cache, flush pipelines. */
